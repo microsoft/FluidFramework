@@ -302,7 +302,7 @@ export async function getPreReleaseDependencies(
 			catalogCache.set(workspaceRoot, catalogs);
 		}
 
-		for (const { name: depName, version: depVersion } of pkg.combinedDependencies) {
+		for (const { name: depName, version: depVersion, depClass } of pkg.combinedDependencies) {
 			// If it's not a dep we're looking to update, skip to the next dep
 			if (!updateDependenciesOnThesePackages.includes(depName)) {
 				continue;
@@ -310,6 +310,18 @@ export async function getPreReleaseDependencies(
 
 			// Resolve catalog: references before passing to semver
 			const resolvedVersion = resolveCatalogVersion(depName, depVersion, catalogs);
+
+			if (resolvedVersion.startsWith("workspace:")) {
+				// We do not have logic for handling workspace version to packages outside the release group.
+				// Currently we only do this for dev deps,
+				// and allowing prerelease dev deps to go undetected is low risk, so continue here instead of erroring.
+				if (depClass === "dev") {
+					continue;
+				}
+				throw new Error(
+					`Unexpected workspace dependency for non-dev dep ${depName} in package ${pkg.name}. Resolved version: ${resolvedVersion}`,
+				);
+			}
 
 			// Convert the range into the minimum version
 			const minVer = semver.minVersion(resolvedVersion);

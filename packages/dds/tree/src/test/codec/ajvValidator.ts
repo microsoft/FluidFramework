@@ -6,9 +6,9 @@
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISharedObjectHandle } from "@fluidframework/shared-object-base/internal";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
-import type { Static, TSchema } from "@sinclair/typebox";
 // Based on ESM workaround from https://github.com/ajv-validator/ajv/issues/2047#issuecomment-1241470041 .
 // In ESM, this gets the module, in cjs, it gets the default export which is the Ajv class.
+import type { Static, TSchema } from "@sinclair/typebox";
 import ajvModuleOrClass from "ajv";
 import formats from "ajv-formats";
 

@@ -13,7 +13,7 @@ import { normalizeFieldSchema, type ImplicitFieldSchema } from "../fieldSchema.j
 import { toStoredSchema } from "../toStoredSchema.js";
 
 import { TreeViewConfigurationAlpha } from "./configuration.js";
-import { SchemaCompatibilityTester } from "./schemaCompatibilityTester.js";
+import { checkSchemaCompatibility } from "./schemaCompatibilityTester.js";
 import type { SchemaCompatibilityStatus } from "./tree.js";
 
 /**
@@ -53,7 +53,10 @@ export function extractPersistedSchema(
 	minVersionForCollab: MinimumVersionForCollab,
 	includeStaged: (upgrade: SchemaUpgrade) => boolean,
 ): JsonCompatible {
-	const stored = toStoredSchema(schema, { includeStaged });
+	const stored = toStoredSchema(schema, {
+		includeStaged,
+		includeStagedOptional: includeStaged,
+	});
 	const codec = schemaCodecBuilder.build({
 		minVersionForCollab,
 		jsonValidator: FormatValidatorNoOp,
@@ -101,6 +104,5 @@ export function comparePersistedSchema(
 	const config = new TreeViewConfigurationAlpha({
 		schema: normalizeFieldSchema(view),
 	});
-	const viewSchema = new SchemaCompatibilityTester(config);
-	return viewSchema.checkCompatibility(stored);
+	return checkSchemaCompatibility(config, stored);
 }

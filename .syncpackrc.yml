@@ -87,6 +87,9 @@ semverGroups:
   - label: "Must use exact dependency ranges"
     dependencies:
       - "@tiny-calc/*"
+      # @tylerbu/markdown-magic is currently pinned to a tagged prerelease (e.g. 2.4.0-tylerbu-1); a caret range on a
+      # prerelease won't include other prereleases, so an exact pin is the intended behavior.
+      - "@tylerbu/markdown-magic"
       - "@graphql-codegen/cli"
       - "@graphql-codegen/typescript"
       - "@material-ui/*"

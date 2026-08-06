@@ -1,5 +1,12 @@
 # @fluidframework/protocol-definitions Changelog
 
+## vNext
+
+### ⚠ BREAKING CHANGES
+
+-   Node 22 is now the minimum supported Node.js version. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
+-   Removed `IDocumentAttributes.term` and `ISequenceDocumentMessage.term`. These members were related to an experimental feature that did not ship. As a result they are unused/ignored by all consumers. They were deprecated in version 1.2.0.
+
 ## [4.0.0](https://github.com/microsoft/FluidFramework/releases/tag/protocol-definitions_v4.0.0)
 
 ### BREAKING CHANGE: Some APIs no longer exported

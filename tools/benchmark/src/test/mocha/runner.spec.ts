@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { supportParentProcess } from "../../mocha/runner.js";
+import { buildChildArgs, supportParentProcess } from "../../mocha/runner.js";
 import type { CollectedData } from "../../reportTypes.js";
 import { isResultError, ValueType } from "../../reportTypes.js";
 import { isChildProcess } from "../../Configuration.js";
@@ -22,6 +22,62 @@ const sampleResult: CollectedData = [
 ];
 
 describe("runner", () => {
+	describe("buildChildArgs", () => {
+		it("adds --childProcess flag", () => {
+			const result = buildChildArgs("my test", [], ["mocha.js"]);
+			assert(result.includes("--childProcess"));
+		});
+
+		it("adds --grep with anchored exact-match regex", () => {
+			const result = buildChildArgs("my test", [], ["mocha.js"]);
+			const grepIndex = result.indexOf("--grep");
+			assert(grepIndex >= 0, "--grep flag should be present");
+			assert.equal(result[grepIndex + 1], "^my test$");
+		});
+
+		it("escapes regex special characters in the test title", () => {
+			const result = buildChildArgs("test (with) special.*chars?", [], ["mocha.js"]);
+			const grepIndex = result.indexOf("--grep");
+			assert.equal(result[grepIndex + 1], "^test \\(with\\) special\\.\\*chars\\?$");
+		});
+
+		it("removes existing --grep filter from args", () => {
+			const result = buildChildArgs("my test", [], ["mocha.js", "--grep", "old filter"]);
+			const grepIndices = result.reduce<number[]>(
+				(acc, arg, i) => (arg === "--grep" ? [...acc, i] : acc),
+				[],
+			);
+			assert.equal(grepIndices.length, 1, "should have exactly one --grep");
+			assert.equal(result[grepIndices[0] + 1], "^my test$");
+		});
+
+		it("removes existing --fgrep filter from args", () => {
+			const result = buildChildArgs("my test", [], ["mocha.js", "--fgrep", "old filter"]);
+			assert(!result.includes("--fgrep"), "--fgrep should be removed");
+			const grepIndex = result.indexOf("--grep");
+			assert.equal(result[grepIndex + 1], "^my test$");
+		});
+
+		it("removes --inspect and --debug flags", () => {
+			const result = buildChildArgs(
+				"my test",
+				["--inspect", "--inspect-brk=9229"],
+				["mocha.js"],
+			);
+			assert(!result.some((a) => a.startsWith("--inspect")));
+			assert(!result.some((a) => a.startsWith("--debug")));
+		});
+
+		it("preserves execArgv before argv", () => {
+			const result = buildChildArgs("my test", ["--max-old-space-size=4096"], ["mocha.js"]);
+			const maxOldIndex = result.indexOf("--max-old-space-size=4096");
+			const mochaIndex = result.indexOf("mocha.js");
+			assert(maxOldIndex >= 0);
+			assert(mochaIndex >= 0);
+			assert(maxOldIndex < mochaIndex, "execArgv entries should precede argv entries");
+		});
+	});
+
 	describe("supportParentProcess", () => {
 		it("calls run() and returns its result when isParentProcess is false", async () => {
 			const result = await supportParentProcess("test title", false, async () => {

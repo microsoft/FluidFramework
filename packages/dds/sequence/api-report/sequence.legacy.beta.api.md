@@ -179,7 +179,7 @@ export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationT
 export interface ISequenceIntervalCollection extends TypedEventEmitter<ISequenceIntervalCollectionEvents> {
     // (undocumented)
     [Symbol.iterator](): Iterator<SequenceInterval>;
-    add({ start, end, props, }: {
+    add(input: {
         start: SequencePlace;
         end: SequencePlace;
         props?: PropertySet;
@@ -189,7 +189,7 @@ export interface ISequenceIntervalCollection extends TypedEventEmitter<ISequence
     // (undocumented)
     readonly attached: boolean;
     attachIndex(index: SequenceIntervalIndex): void;
-    change(id: string, { start, end, props }: {
+    change(id: string, input: {
         start?: SequencePlace;
         end?: SequencePlace;
         props?: PropertySet;

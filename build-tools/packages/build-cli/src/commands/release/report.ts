@@ -128,6 +128,7 @@ export abstract class ReleaseReportBaseCommand<
 		mode: ReleaseSelectionMode = this.defaultMode,
 		releaseGroupOrPackage?: ReleaseGroup | ReleasePackage,
 		includeDependencies = true,
+		useCurrentVersion = false,
 	): Promise<PackageReleaseData> {
 		const versionData: PackageReleaseData = {};
 
@@ -180,6 +181,7 @@ export abstract class ReleaseReportBaseCommand<
 				rg,
 				rgVerMap?.[rg] ?? context.getVersion(rg),
 				mode,
+				useCurrentVersion,
 			);
 			if (data !== undefined) {
 				versionData[rg] = data;
@@ -192,7 +194,13 @@ export abstract class ReleaseReportBaseCommand<
 
 			ux.action.status = `${pkg} (package)`;
 			// eslint-disable-next-line no-await-in-loop
-			const data = await this.collectRawReleaseData(gitRepo, pkg, repoVersion, mode);
+			const data = await this.collectRawReleaseData(
+				gitRepo,
+				pkg,
+				repoVersion,
+				mode,
+				useCurrentVersion,
+			);
 			if (data !== undefined) {
 				versionData[pkg] = data;
 			}
@@ -216,6 +224,7 @@ export abstract class ReleaseReportBaseCommand<
 		releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
 		repoVersion: string,
 		latestReleaseChooseMode?: ReleaseSelectionMode,
+		useCurrentVersion = false,
 	): Promise<RawReleaseData | undefined> {
 		const versions = await repo.getAllVersions(releaseGroupOrPackage);
 
@@ -273,15 +282,26 @@ export abstract class ReleaseReportBaseCommand<
 			case "inRepo": {
 				latestReleasedVersion = sortedByVersion.find((v) => v.version === repoVersion);
 				if (latestReleasedVersion === undefined) {
-					const [, previousMinor] = getPreviousVersions(repoVersion);
-					this.info(
-						`The in-repo version of ${chalk.blue(releaseGroupOrPackage)} is ${chalk.yellow(
-							repoVersion,
-						)}, but there's no release for that version. Picked previous minor version instead: ${chalk.green(
-							previousMinor ?? "undefined",
-						)}. If you want to create a report for a specific version, check out the tag for the release and re-run this command.`,
-					);
-					latestReleasedVersion = sortedByVersion[0];
+					if (useCurrentVersion) {
+						this.info(
+							`The in-repo version of ${chalk.blue(releaseGroupOrPackage)} is ${chalk.yellow(
+								repoVersion,
+							)}, and there's no release for that version. Using the in-repo unreleased version because ${chalk.bold("--useCurrentVersion")} was provided.`,
+						);
+						latestReleasedVersion = {
+							version: repoVersion,
+						};
+					} else {
+						const [, previousMinor] = getPreviousVersions(repoVersion);
+						this.info(
+							`The in-repo version of ${chalk.blue(releaseGroupOrPackage)} is ${chalk.yellow(
+								repoVersion,
+							)}, but there's no release for that version. Picked previous minor version instead: ${chalk.green(
+								previousMinor ?? "undefined",
+							)}. If you want to create a report for a specific version, check out the tag for the release and re-run this command.`,
+						);
+						latestReleasedVersion = sortedByVersion[0];
+					}
 				}
 				break;
 			}
@@ -307,10 +327,18 @@ export abstract class ReleaseReportBaseCommand<
 			(v) =>
 				v.version === latestReleasedVersion?.version && v.date === latestReleasedVersion?.date,
 		);
-		const previousReleasedVersion =
-			vIndex + 1 <= versionCount
-				? sortedByVersion[vIndex + 1]
-				: { version: DEFAULT_MIN_VERSION };
+		let previousReleasedVersion: VersionDetails | undefined;
+		if (vIndex >= 0) {
+			previousReleasedVersion =
+				vIndex + 1 < versionCount
+					? sortedByVersion[vIndex + 1]
+					: { version: DEFAULT_MIN_VERSION };
+		} else {
+			previousReleasedVersion =
+				latestReleaseChooseMode === "inRepo" && useCurrentVersion
+					? undefined
+					: { version: DEFAULT_MIN_VERSION };
+		}
 
 		return {
 			repoVersion: {
@@ -332,7 +360,7 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 
     The command operates in two modes: "whole repo" or "release group." The default mode is "whole repo." In this mode, the command will look at the git tags in the repo to determine the versions, and will include all release groups and packages in the repo. You can control which version of each package and release group is included in the report using the --interactive, --mostRecent, and --highest flags.
 
-    The "release group" mode can be activated by passing a --releaseGroup flag. In this mode, the specified release group's version will be loaded from the repo, and its immediate Fluid dependencies will be included in the report. This is useful when we want to include only the dependency versions that the release group depends on in the report.`;
+	The "release group" mode can be activated by passing a --releaseGroup flag. In this mode, the specified release group's version will be loaded from the repo, and its immediate Fluid dependencies will be included in the report. This is useful when we want to include only the dependency versions that the release group depends on in the report.`;
 
 	static readonly examples = [
 		{
@@ -348,6 +376,11 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 			description:
 				"Generate a release report for each package and release group in the repo interactively.",
 			command: "<%= config.bin %> <%= command.id %> -i",
+		},
+		{
+			description:
+				"Generate a release report for the historian release group using the current package.json versions.",
+			command: "<%= config.bin %> <%= command.id %> -g historian --useCurrentVersion",
 		},
 	];
 
@@ -387,6 +420,12 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 				"If provided, the output files will be named using this base name followed by the report kind (caret, simple, full, tilde, legacy-compat) and the .json extension. For example, if baseFileName is 'foo', the output files will be named 'foo.caret.json', 'foo.simple.json', etc.",
 			required: false,
 		}),
+		useCurrentVersion: Flags.boolean({
+			description:
+				"When selecting versions in in-repo mode, use current build versions (including unreleased in-repo versions) instead of falling back to the latest released version.",
+			required: false,
+			default: false,
+		}),
 		...ReleaseReportBaseCommand.flags,
 	};
 
@@ -409,6 +448,10 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 						: this.defaultMode;
 		assert(mode !== undefined, `mode is undefined`);
 
+		if (flags.useCurrentVersion && mode !== "inRepo") {
+			this.error(`--useCurrentVersion can only be used in in-repo mode.`);
+		}
+
 		this.releaseGroupName = flags.releaseGroup;
 		const context = await this.getContext();
 
@@ -418,12 +461,14 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 			mode,
 			this.releaseGroupName,
 			/* includeDeps */ mode === "inRepo",
+			flags.useCurrentVersion,
 		);
 
 		if (this.releaseData === undefined) {
 			this.error(`No releases found for ${flags.releaseGroup}`);
 		}
-		const report = await this.generateReleaseReport(this.releaseData);
+		const isPrereleaseReport = mode === "inRepo" && flags.useCurrentVersion;
+		const report = await this.generateReleaseReport(this.releaseData, isPrereleaseReport);
 
 		const tableData = this.generateReleaseTable(report, flags.releaseGroup);
 
@@ -549,28 +594,15 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 		}
 	}
 
-	private async generateReleaseReport(reportData: PackageReleaseData): Promise<ReleaseReport> {
+	private async generateReleaseReport(
+		reportData: PackageReleaseData,
+		isPrereleaseReport: boolean,
+	): Promise<ReleaseReport> {
 		const context = await this.getContext();
 		const report: ReleaseReport = {};
 
 		for (const [pkgName, verDetails] of Object.entries(reportData)) {
-			if (verDetails.previousReleasedVersion === undefined) {
-				this.warning(`No previous version for ${pkgName}.`);
-			}
-
 			const { version: latestVer, date: latestDate } = verDetails.latestReleasedVersion;
-			const { version: prevVer } = verDetails.previousReleasedVersion ?? {
-				version: DEFAULT_MIN_VERSION,
-			};
-
-			const bumpType = detectBumpType(prevVer, latestVer);
-			if (!isVersionBumpType(bumpType)) {
-				this.error(
-					`Invalid bump type (${bumpType}) detected in package ${pkgName}. ${prevVer} => ${latestVer}`,
-				);
-			}
-
-			const isNewRelease = this.isRecentReleaseByDate(latestDate);
 			const scheme = detectVersionScheme(latestVer);
 
 			if (context.flubConfig.releaseReport === undefined) {
@@ -579,17 +611,60 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 
 			const ranges = getRanges(latestVer, context.flubConfig.releaseReport, pkgName);
 
+			if (isPrereleaseReport) {
+				if (isReleaseGroup(pkgName)) {
+					for (const pkg of context.packagesInReleaseGroup(pkgName)) {
+						report[pkg.name] = {
+							version: latestVer,
+							versionScheme: scheme,
+							date: latestDate,
+							releaseGroup: pkg.monoRepo?.releaseGroup,
+							ranges,
+						};
+					}
+				} else {
+					report[pkgName] = {
+						version: latestVer,
+						versionScheme: scheme,
+						date: latestDate,
+						ranges,
+					};
+				}
+
+				continue;
+			}
+
+			if (verDetails.previousReleasedVersion === undefined) {
+				this.warning(`No previous version for ${pkgName}.`);
+			}
+
+			const prevVer = verDetails.previousReleasedVersion?.version;
+			const bumpType =
+				prevVer === undefined
+					? detectBumpType(DEFAULT_MIN_VERSION, latestVer)
+					: detectBumpType(prevVer, latestVer);
+
+			if (!isVersionBumpType(bumpType)) {
+				this.error(
+					`Invalid bump type (${bumpType}) detected in package ${pkgName}. ${
+						prevVer ?? "<none>"
+					} => ${latestVer}`,
+				);
+			}
+
+			const isNewRelease = this.isRecentReleaseByDate(latestDate);
+
 			// Expand the release group to its constituent packages.
 			if (isReleaseGroup(pkgName)) {
 				for (const pkg of context.packagesInReleaseGroup(pkgName)) {
 					report[pkg.name] = {
 						version: latestVer,
 						versionScheme: scheme,
-						previousVersion: prevVer === DEFAULT_MIN_VERSION ? undefined : prevVer,
 						date: latestDate,
-						releaseType: bumpType,
 						releaseGroup: pkg.monoRepo?.releaseGroup,
 						isNewRelease,
+						previousVersion: prevVer === DEFAULT_MIN_VERSION ? undefined : prevVer,
+						releaseType: bumpType,
 						ranges,
 					};
 				}
@@ -597,10 +672,10 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 				report[pkgName] = {
 					version: latestVer,
 					versionScheme: scheme,
-					previousVersion: prevVer === DEFAULT_MIN_VERSION ? undefined : prevVer,
 					date: latestDate,
-					releaseType: bumpType,
 					isNewRelease,
+					previousVersion: prevVer === DEFAULT_MIN_VERSION ? undefined : prevVer,
+					releaseType: bumpType,
 					ranges,
 				};
 			}
@@ -617,12 +692,8 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 		const releaseGroups: ReleaseGroup[] = [];
 
 		for (const [pkgName, verDetails] of Object.entries(reportData)) {
-			const {
-				date: latestDate,
-				version: latestVer,
-				previousVersion: prevVer,
-				releaseGroup,
-			} = verDetails;
+			const { date: latestDate, version: latestVer, releaseGroup } = verDetails;
+			const prevVer = "previousVersion" in verDetails ? verDetails.previousVersion : undefined;
 
 			let displayName: string | undefined;
 			if (releaseGroup !== undefined) {
@@ -636,9 +707,8 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 			const highlight = this.isRecentReleaseByDate(latestDate) ? chalk.green : chalk.white;
 			const displayRelDate = highlight(getDisplayDateRelative(latestDate));
 
-			const displayPreviousVersion = prevVer ?? DEFAULT_MIN_VERSION;
-
-			const bumpType = detectBumpType(prevVer ?? DEFAULT_MIN_VERSION, latestVer);
+			const displayPreviousVersion = prevVer ?? "<none>";
+			const bumpType = "releaseType" in verDetails ? verDetails.releaseType : "prerelease";
 			const displayBumpType = highlight(`${bumpType}`);
 
 			const displayVersionSection = chalk.gray(

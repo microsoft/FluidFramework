@@ -17,10 +17,10 @@ import {
 } from "@fluidframework/driver-utils/internal";
 import type { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	type ITelemetryLoggerExt,
+	loggerToMonitoringContext,
 	type MonitoringContext,
 	PerformanceEvent,
-	loggerToMonitoringContext,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type {
@@ -47,7 +47,7 @@ export class OdspSummaryUploadManager {
 	constructor(
 		private readonly snapshotUrl: string,
 		private readonly getAuthHeader: InstrumentedStorageTokenFetcher,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		private readonly epochTracker: EpochTracker,
 		private readonly relayServiceTenantAndSessionId: () => string | undefined,
 	) {

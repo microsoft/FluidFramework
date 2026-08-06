@@ -154,6 +154,7 @@ describe("memory use", () => {
 	benchmarkIt({
 		title: "empty",
 		...benchmarkMemoryUse({
+			enableAsyncGC: false,
 			benchmarkFn: async (callbacks) => {
 				while (callbacks.continue()) {
 					await callbacks.beforeAllocation();
@@ -167,6 +168,7 @@ describe("memory use", () => {
 	benchmarkIt({
 		title: "empty-unrolled",
 		...benchmarkMemoryUse({
+			enableAsyncGC: false,
 			benchmarkFn: async (callbacks) => {
 				while (callbacks.continue()) {
 					await callbacks.beforeAllocation();

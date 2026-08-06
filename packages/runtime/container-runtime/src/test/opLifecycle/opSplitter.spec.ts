@@ -398,6 +398,73 @@ describe("OpSplitter", () => {
 				);
 			});
 		}
+
+		it("Propagates groupedOpCount onto the last chunk only", () => {
+			const chunkSize = 20;
+			const opSplitter = new OpSplitter(
+				[],
+				mockSubmitBatchFn,
+				chunkSize,
+				maxBatchSizeInBytes,
+				mockLogger,
+			);
+			const groupedOpCount = 7;
+			const largeMessage: OutboundBatchMessage = {
+				...generateChunkableOp(100),
+				metadata: { batch: true, groupedOpCount },
+			};
+
+			const result = opSplitter.splitSingletonBatchMessage({
+				messages: [largeMessage],
+				contentSizeInBytes: largeMessage.contents?.length ?? 0,
+				referenceSequenceNumber: 0,
+			});
+
+			// Intermediate chunks (the ones submitted directly) carry no metadata.
+			for (const submitted of batchesSubmitted) {
+				assert.strictEqual(submitted.messages.length, 1);
+				assert.strictEqual(submitted.messages[0].metadata, undefined);
+			}
+
+			// Last chunk envelope carries both batch flag and groupedOpCount.
+			assert.strictEqual(result.messages.length, 1);
+			assert.deepStrictEqual(result.messages[0].metadata, {
+				batch: true,
+				groupedOpCount,
+			});
+
+			// Reassembly preserves groupedOpCount via originalMetadata on the final chunk's payload.
+			const reassembler = new OpSplitter(
+				[],
+				mockSubmitBatchFn,
+				chunkSize,
+				maxBatchSizeInBytes,
+				mockLogger,
+			);
+			const allChunks = [
+				...batchesSubmitted.map(
+					(b) =>
+						JSON.parse((b.messages[0] as OutboundBatchMessage).contents!) as {
+							contents: IChunkedOp;
+						},
+				),
+				JSON.parse(result.messages[0].contents!) as { contents: IChunkedOp },
+			].map((parsed) => parsed.contents);
+
+			let final: ISequencedDocumentMessage | undefined;
+			for (const chunk of allChunks) {
+				const wrapped = {
+					contents: { type: ContainerMessageType.ChunkedOp, contents: chunk },
+					clientId: "testClient",
+				} as unknown as ISequencedDocumentMessage;
+				const processed = reassembler.processChunk(wrapped);
+				if (processed.isFinalChunk) {
+					final = processed.message;
+				}
+			}
+			assert(final !== undefined, "Expected reassembly to complete");
+			assert.deepStrictEqual(final.metadata, { batch: true, groupedOpCount });
+		});
 	});
 	const assertSameMessage = (
 		result: ISequencedDocumentMessage,

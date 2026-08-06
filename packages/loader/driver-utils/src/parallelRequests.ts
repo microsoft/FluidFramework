@@ -5,6 +5,7 @@
 
 import { performanceNow } from "@fluid-internal/client-utils";
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import type {
 	IDeltasFetchResult,
@@ -12,10 +13,8 @@ import type {
 	IStreamResult,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import {
-	type ITelemetryLoggerExt,
-	PerformanceEvent,
-} from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	canRetryOnError,
@@ -66,7 +65,7 @@ export class ParallelRequests<T> {
 		from: number,
 		private to: number | undefined,
 		private readonly payloadSize: number,
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 		private readonly requestCallback: (
 			request: number,
 			from: number,
@@ -420,7 +419,7 @@ async function getSingleOpBatch(
 	get: (telemetryProps: ITelemetryBaseProperties) => Promise<IDeltasFetchResult>,
 	props: ITelemetryBaseProperties,
 	strongTo: boolean,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	signal?: AbortSignal,
 	scenarioName?: string,
 ): Promise<{ partial: boolean; cancel: boolean; payload: ISequencedDocumentMessage[] }> {
@@ -549,7 +548,7 @@ export function requestOps(
 	fromTotal: number,
 	toTotal: number | undefined,
 	payloadSize: number,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	signal?: AbortSignal,
 	scenarioName?: string,
 ): IStream<ISequencedDocumentMessage[]> {
@@ -563,11 +562,17 @@ export function requestOps(
 		toTotal,
 	};
 
-	const telemetryEvent = PerformanceEvent.start(logger, {
-		eventName: "GetDeltas",
-		...propsTotal,
-		reason: scenarioName,
-	});
+	const telemetryEvent = PerformanceEvent.start(
+		logger,
+		{
+			eventName: "GetDeltas",
+			...propsTotal,
+			reason: scenarioName,
+		},
+		undefined, // markers
+		undefined, // emitLogs
+		LogLevel.info,
+	);
 
 	const manager = new ParallelRequests<ISequencedDocumentMessage>(
 		fromTotal,

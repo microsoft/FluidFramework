@@ -6,17 +6,6 @@
       "additionalProperties": false,
       "type": "object",
       "properties": {
-        "version": {
-          "allOf": [
-            {
-              "type": "number"
-            },
-            {
-              "const": 1,
-              "type": "number"
-            }
-          ]
-        },
         "identifiers": {
           "type": "array",
           "items": {
@@ -29,6 +18,10 @@
             "type": "array",
             "items": {}
           }
+        },
+        "version": {
+          "const": 1,
+          "type": "number"
         },
         "shapes": {
           "type": "array",
@@ -143,9 +136,9 @@
         }
       },
       "required": [
-        "version",
         "identifiers",
         "data",
+        "version",
         "shapes"
       ]
     }
@@ -157,17 +150,6 @@
       "additionalProperties": false,
       "type": "object",
       "properties": {
-        "version": {
-          "allOf": [
-            {
-              "type": "number"
-            },
-            {
-              "const": 2,
-              "type": "number"
-            }
-          ]
-        },
         "identifiers": {
           "type": "array",
           "items": {
@@ -180,6 +162,10 @@
             "type": "array",
             "items": {}
           }
+        },
+        "version": {
+          "const": 2,
+          "type": "number"
         },
         "shapes": {
           "type": "array",
@@ -295,9 +281,9 @@
         }
       },
       "required": [
-        "version",
         "identifiers",
         "data",
+        "version",
         "shapes"
       ]
     }

@@ -58,3 +58,11 @@ variables:
   value: '${{ variables.consistentSourcesDirectory }}/FluidFramework'
 - name: FFPipelineHostDirectory
   value: '${{ variables.consistentSourcesDirectory }}/ff_pipeline_host'
+
+# Suppress warning from 1ES' Guardian task since we know our PR builds can come from forked repositories
+# Original warning reads:
+#   "Guardian is not supported for builds from forked GitHub repositories.
+#   Current Guardian Task will be skipped.
+#   To disable this warning, set the environment variable 'GDN_SUPPRESS_FORKED_BUILD_WARNING' to 'true'."
+- name: GDN_SUPPRESS_FORKED_BUILD_WARNING
+  value: 'true'

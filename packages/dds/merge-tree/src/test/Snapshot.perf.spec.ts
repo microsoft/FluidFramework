@@ -3,35 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
+import { benchmarkDuration, benchmarkIt } from "@fluid-tools/benchmark";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
 
 import { TestString, loadSnapshot } from "./snapshot.utils.js";
 
 describe("MergeTree snapshots", () => {
-	let summary: ISummaryTree | undefined;
-
 	for (const summarySize of [10, 50, 100, 500, 1000, 5000, 10_000]) {
-		const test = benchmark({
-			type: BenchmarkType.Measurement,
+		const test = benchmarkIt({
 			title: `load snapshot with ${summarySize} segments`,
 			category: "snapshot loading",
-			before: () => {
-				const str = new TestString("id", {});
-				for (let i = 0; i < summarySize; i++) {
-					str.append("a", false);
-				}
-
-				str.applyPendingOps();
-				summary = str.getSummary();
-			},
-			benchmarkFnAsync: async () => {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				await loadSnapshot(summary!);
-			},
-			after: () => {
-				summary = undefined;
-			},
+			...benchmarkDuration({
+				benchmarkFnCustom: async (state) => {
+					const str = new TestString("id", {});
+					for (let i = 0; i < summarySize; i++) {
+						str.append("a", false);
+					}
+					str.applyPendingOps();
+					const summary: ISummaryTree = str.getSummary();
+					await state.timeAllBatchesAsync(async () => {
+						await loadSnapshot(summary);
+					});
+				},
+			}),
 		});
 
 		if (summarySize > 5000) {

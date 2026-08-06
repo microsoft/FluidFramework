@@ -7,7 +7,7 @@ import child_process from "child_process";
 
 import { ITestDriver } from "@fluid-internal/test-driver-definitions";
 import {
-	ITelemetryLoggerExt,
+	TelemetryLoggerExt,
 	TelemetryDataTag,
 } from "@fluidframework/telemetry-utils/internal";
 import ps from "ps-node";
@@ -34,7 +34,7 @@ export async function stressTest(
 		createTestId: boolean;
 		testUsers: TestUsers | undefined;
 		profileName: string;
-		logger: ITelemetryLoggerExt;
+		logger: TelemetryLoggerExt;
 		outputDir: string;
 	},
 ): Promise<void> {
@@ -167,7 +167,7 @@ export async function stressTest(
  */
 function setupTelemetry(
 	process: child_process.ChildProcess,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	runId: number,
 	username: string | undefined,
 ): void {
@@ -216,7 +216,7 @@ function setupTelemetry(
 
 function setupDataTelemetry(
 	process: child_process.ChildProcess,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	runId: number,
 	username?: string,
 ): void {

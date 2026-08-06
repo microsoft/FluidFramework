@@ -38,8 +38,12 @@ resources:
 variables:
 - template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
 - group: prague-key-vault
-- name: testPackage
-  value: "@fluid-private/test-end-to-end-tests"
+# Loaded at the root level rather than as stageVariables inside include-test-real-service.yml so
+# that $(containerRegistryConnection) is available before ADO performs service-connection pre-checks
+# on the Docker login task (the value is otherwise treated as a literal connection name).
+- group: container-registry-info
+- name: testPackageDirectory
+  value: packages/test/test-end-to-end-tests
   readonly: true
 - name: pipelineIdentifierForTelemetry
   value: 'EndToEndTests'
@@ -56,10 +60,11 @@ stages:
       stageId: e2e_local_server
       stageDisplayName: e2e - local server
       poolBuild: Large-eastus2 # Need Large pool for full-compat matrix
-      testPackage: ${{ variables.testPackage }}
+      testPackageDirectory: ${{ variables.testPackageDirectory }}
       artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
       testCommand: test:realsvc:local:report:full
-      cacheCompatVersionsInstalls: true
+
       uploadTestPassRateTelemetry: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
@@ -72,10 +77,11 @@ stages:
       stageId: e2e_tinylicious
       stageDisplayName: e2e - tinylicious
       poolBuild: Large-eastus2 # Need Large pool for full-compat matrix
-      testPackage: ${{ variables.testPackage }}
+      testPackageDirectory: ${{ variables.testPackageDirectory }}
       artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
       testCommand: test:realsvc:tinylicious:report:full
-      cacheCompatVersionsInstalls: true
+
       # TODO: AB#8968 tracks figuring out the root cause of the extended delay, and restoring this timeout to 90m or less
       timeoutInMinutes: 120
       uploadTestPassRateTelemetry: true
@@ -93,13 +99,12 @@ stages:
       stageId: e2e_docker
       stageDisplayName: e2e - docker
       poolBuild: Large-eastus2 # Need Large pool for full-compat matrix
-      testPackage: ${{ variables.testPackage }}
+      testPackageDirectory: ${{ variables.testPackageDirectory }}
       artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
       continueOnError: true
       timeoutInMinutes: 360
       testCommand: test:realsvc:r11s:docker
-      stageVariables:
-        - group: container-registry-info
       splitTestVariants:
         - name: Non-compat
           flags: --compatVersion=0
@@ -109,11 +114,11 @@ stages:
           flags: --compatVersion=OCV
         - name: Cross-Client
           flags: --compatVersion=CROSS_CLIENT
-      cacheCompatVersionsInstalls: true
+
       uploadTestPassRateTelemetry: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
 
-      # Checks out the FluidFramework source so we can run the docker service
+      # Spin up the routerlicious docker-compose env for the test stage
       runAgainstDocker: true
 
       # Docker tags to use when constructing the docker environment
@@ -132,8 +137,9 @@ stages:
       stageId: e2e_frs
       stageDisplayName: e2e - AFR
       poolBuild: Small-eastus2
-      testPackage: ${{ variables.testPackage }}
+      testPackageDirectory: ${{ variables.testPackageDirectory }}
       artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
       timeoutInMinutes: 360
       continueOnError: true
       testCommand: test:realsvc:frs:report
@@ -150,7 +156,7 @@ stages:
           flags: --compatVersion=OCV
         - name: Cross-Client
           flags: --compatVersion=CROSS_CLIENT
-      cacheCompatVersionsInstalls: true
+
       uploadTestPassRateTelemetry: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
@@ -165,8 +171,9 @@ stages:
       stageDisplayName: e2e - odsp
       odspTenantType: prod
       poolBuild: Small-eastus2
-      testPackage: ${{ variables.testPackage }}
+      testPackageDirectory: ${{ variables.testPackageDirectory }}
       artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
       timeoutInMinutes: 360
       continueOnError: true
       testCommand: test:realsvc:odsp:report
@@ -182,7 +189,7 @@ stages:
         # Tests N-2 to LTS+3 back compat for loader + driver
         - name: N-2ToLTS+1-back-compat
           flags: --compatVersion=V2_INT_3 --tenantIndex=3
-      cacheCompatVersionsInstalls: true
+
       uploadTestPassRateTelemetry: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:

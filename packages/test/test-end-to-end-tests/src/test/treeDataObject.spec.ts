@@ -7,7 +7,6 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
 	PureDataObjectFactory,
 	TreeDataObject,
 	TreeDataObjectFactory,
@@ -17,61 +16,60 @@ import {
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
-import {
-	SchemaFactory,
-	SharedTree,
-	TreeViewConfiguration,
-	type TreeView,
-} from "@fluidframework/tree/internal";
-
-const schemaFactory = new SchemaFactory("test");
-class TestSchema extends schemaFactory.object("TestSchema", {
-	foo: [schemaFactory.string, schemaFactory.number],
-}) {}
-
-const treeViewConfig = new TreeViewConfiguration({ schema: TestSchema });
-
-class TestTreeDataObject extends TreeDataObject {
-	public static readonly type = "TestTreeDataObject";
-
-	public static getFactory(): PureDataObjectFactory<TestTreeDataObject> {
-		return TestTreeDataObject.factory;
-	}
-
-	private static readonly factory = new TreeDataObjectFactory({
-		type: TestTreeDataObject.type,
-		ctor: TestTreeDataObject,
-		sharedObjects: [SharedTree.getFactory()],
-	});
-
-	#treeView: TreeView<typeof TestSchema> | undefined;
-
-	/**
-	 * The schema-aware view of the tree.
-	 */
-	public get treeView(): TreeView<typeof TestSchema> {
-		if (this.#treeView === undefined) {
-			throw new Error("treeView has not been initialized.");
-		}
-		return this.#treeView;
-	}
-
-	protected override async initializingFirstTime(): Promise<void> {
-		this.#treeView = this.tree.viewWith(treeViewConfig);
-		assert(this.treeView.compatibility.canInitialize, "Incompatible schema");
-
-		this.treeView.initialize({ foo: "Hello world" });
-	}
-
-	protected override async initializingFromExisting(): Promise<void> {
-		this.#treeView = this.tree.viewWith(treeViewConfig);
-		assert(this.treeView.compatibility.canView, "Incompatible schema");
-	}
-}
+import type { TreeView } from "@fluidframework/tree/internal";
 
 // Note: ideally these tests would live directly in the `aqueduct` package,
 // but much of the test infrastructure used below is not reachable from that package.
-describeCompat("TreeDataObject", "NoCompat", (getTestObjectProvider) => {
+describeCompat("TreeDataObject", "NoCompat", (getTestObjectProvider, apis) => {
+	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
+	const { SchemaFactory, TreeViewConfiguration } = apis.dataRuntime.packages.tree;
+	const { SharedTree } = apis.dds;
+
+	const schemaFactory = new SchemaFactory("test");
+	class TestSchema extends schemaFactory.object("TestSchema", {
+		foo: [schemaFactory.string, schemaFactory.number],
+	}) {}
+
+	const treeViewConfig = new TreeViewConfiguration({ schema: TestSchema });
+
+	class TestTreeDataObject extends TreeDataObject {
+		public static readonly type = "TestTreeDataObject";
+
+		public static getFactory(): PureDataObjectFactory<TestTreeDataObject> {
+			return TestTreeDataObject.factory;
+		}
+
+		private static readonly factory = new TreeDataObjectFactory({
+			type: TestTreeDataObject.type,
+			ctor: TestTreeDataObject,
+			sharedObjects: [SharedTree.getFactory()],
+		});
+
+		#treeView: TreeView<typeof TestSchema> | undefined;
+
+		/**
+		 * The schema-aware view of the tree.
+		 */
+		public get treeView(): TreeView<typeof TestSchema> {
+			if (this.#treeView === undefined) {
+				throw new Error("treeView has not been initialized.");
+			}
+			return this.#treeView;
+		}
+
+		protected override async initializingFirstTime(): Promise<void> {
+			this.#treeView = this.tree.viewWith(treeViewConfig);
+			assert(this.treeView.compatibility.canInitialize, "Incompatible schema");
+
+			this.treeView.initialize({ foo: "Hello world" });
+		}
+
+		protected override async initializingFromExisting(): Promise<void> {
+			this.#treeView = this.tree.viewWith(treeViewConfig);
+			assert(this.treeView.compatibility.canView, "Incompatible schema");
+		}
+	}
+
 	// Runtime ID compression is required to use SharedTree.
 	const runtimeOptions: IContainerRuntimeOptions = {
 		enableRuntimeIdCompressor: "on",

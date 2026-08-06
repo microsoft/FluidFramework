@@ -4,20 +4,6 @@
 # Common variables for pipelines that want to use the telemetry-generator tool
 
 variables:
-# Where to install the telemetry-generator tool. Chosen so it won't interfere with any other installed packages.
-# Note: telemetry-generator is not installed by default in any pipeline. In order for this variable to be of any use,
-# it should be passed to the include-telemetry-setup.yml template as the 'pathForTelemetryGeneratorInstall' parameter.
-# Then it can be used when running telemetry-generator.
-- name: pathToTelemetryGenerator
-  value: $(Agent.TempDirectory)/telemetry-generator
-  readonly: true
-
-# Path where the handlers for telemetry-generator are located. Convenient because every call to the tool needs to
-# provide this as an absolute path.
-- name: pathToTelemetryGeneratorHandlers
-  value: $(pathToTelemetryGenerator)/node_modules/@ff-internal/telemetry-generator/dist/handlers
-  readonly: true
-
 # ADO changes the value of Build.SourcesDirectory depending on whether 1 vs. many repositories are checked out.
 # Using 's' is consistent with the behavior when multiple repositories are checked out and allows for more
 # consistent build scripts. See this documentation for more details:

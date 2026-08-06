@@ -990,7 +990,7 @@ export namespace TransactionInternal {
     }
     // (undocumented)
     export type ValidState = SucceedingTransactionState;
-        {};
+    export {};
 }
 
 // @alpha

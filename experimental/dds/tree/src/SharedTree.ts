@@ -26,14 +26,16 @@ import {
 	SharedObject,
 	createSingleBlobSummary,
 } from '@fluidframework/shared-object-base/internal';
+import type { TelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 import {
 	IEventSampler,
 	ITelemetryLoggerPropertyBags,
-	ITelemetryLoggerExt,
 	PerformanceEvent,
 	createChildLogger,
 	createSampledLogger,
 } from '@fluidframework/telemetry-utils/internal';
+// eslint-disable-next-line import-x/no-internal-modules -- Needed to avoid specialized /internal ITelemetryLoggerExt
+import type { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/legacy';
 
 import { BuildNode, BuildTreeNode, Change, ChangeType } from './ChangeTypes.js';
 import { RestOrArray, copyPropertyIfDefined, fail, unwrapRestOrArray } from './Common.js';
@@ -488,6 +490,13 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * logger for SharedTree events.
 	 */
 	public readonly logger: ITelemetryLoggerExt;
+	/**
+	 * Internal and only viable logger for SharedTree events.
+	 * @privateRemarks
+	 * `logger` is public and remains typed for external use with mostly deprecated methods.
+	 * Internally, only loggerInternal should be used and it provides the full set of logging methods.
+	 */
+	private readonly loggerInternal: TelemetryLoggerExt & ITelemetryLoggerExt;
 	private readonly sequencedEditAppliedLogger: ITelemetryLoggerExt;
 
 	private readonly encoder_0_0_2: SharedTreeEncoder_0_0_2;
@@ -552,11 +561,12 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		const historyPolicy = this.getHistoryPolicy(options);
 		this.summarizeHistory = historyPolicy.summarizeHistory;
 
-		this.logger = createChildLogger({
+		this.loggerInternal = createChildLogger({
 			logger: runtime.logger,
 			namespace: 'SharedTree',
 			properties: sharedTreeTelemetryProperties,
 		});
+		this.logger = this.loggerInternal;
 		this.sequencedEditAppliedLogger = createChildLogger({
 			logger: this.logger,
 			namespace: 'SequencedEditApplied',
@@ -577,8 +587,8 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 				},
 			};
 		})();
-		const idCompressorLoger = createSampledLogger(this.logger, idCompressorEventSampler);
-		this.idCompressor = new IdCompressor(createSessionId(), reservedIdCount, attributionId, idCompressorLoger);
+		const idCompressorLogger = createSampledLogger(this.loggerInternal, idCompressorEventSampler);
+		this.idCompressor = new IdCompressor(createSessionId(), reservedIdCount, attributionId, idCompressorLogger);
 		this.editLogSize = options.inMemoryHistorySize;
 		this.editEvictionFrequency = options.inMemoryHistorySize;
 		const { editLog, cachingLogViewer } = this.initializeNewEditLogFromSummary(
@@ -814,7 +824,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 					fail('Unknown version');
 			}
 		} catch (error) {
-			this.logger?.sendErrorEvent({
+			this.loggerInternal?.sendErrorEvent({
 				eventName: 'UnsupportedSummaryWriteFormat',
 				formatVersion: this.writeFormat,
 			});
@@ -830,7 +840,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 
 		if (this.deltaManager.readOnlyInfo.readonly !== true && isUpdateRequired(loadedSummaryVersion, this.writeFormat)) {
 			this.submitOp({ type: SharedTreeOpType.Update, version: this.writeFormat });
-			this.logger.sendTelemetryEvent({
+			this.loggerInternal.sendTelemetryEvent({
 				eventName: 'RequestVersionUpdate',
 				versionFrom: loadedSummaryVersion,
 				versionTo: this.writeFormat,
@@ -873,7 +883,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		this.interner.getOrCreateInternedId(initialTree.definition);
 		if (compareSummaryFormatVersions(loadedSummaryVersion, WriteFormat.v0_1_1) < 0) {
 			const { editIds, editChunks } = editHistory;
-			this.logger.sendTelemetryEvent({
+			this.loggerInternal.sendTelemetryEvent({
 				eventName: 'SummaryConversion',
 				formatVersion: WriteFormat.v0_1_1,
 				historySize: editIds.length,
@@ -922,7 +932,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		// Use previously registered EditAddedHandlers if there is an existing EditLog.
 		const editLog = new EditLog(
 			editHistory,
-			this.logger,
+			this.loggerInternal,
 			this.editLog?.editAddedHandlers,
 			this.editLogSize,
 			this.editEvictionFrequency
@@ -1021,7 +1031,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		if (sameVersion) {
 			if (type === SharedTreeOpType.Handle) {
 				// Edit virtualization is no longer supported, log the event and ignore the op.
-				this.logger.sendErrorEvent({ eventName: 'UnexpectedHistoryChunk' });
+				this.loggerInternal.sendErrorEvent({ eventName: 'UnexpectedHistoryChunk' });
 			} else if (type === SharedTreeOpType.Edit) {
 				if (op.version === WriteFormat.v0_1_1) {
 					this.idCompressor.finalizeCreationRange(op.idRange);
@@ -1038,7 +1048,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 			// An op version newer than our current version should not be received. If this happens, either an
 			// incorrect op version has been written or an update op was skipped.
 			const error = 'Newer op version received by a client that has yet to be updated.';
-			this.logger.sendErrorEvent(
+			this.loggerInternal.sendErrorEvent(
 				{
 					eventName: 'UnexpectedNewerOpVersion',
 				},
@@ -1105,7 +1115,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	private processVersionUpdate(version: WriteFormat): void {
 		if (isUpdateRequired(this.writeFormat, version)) {
 			PerformanceEvent.timedExec(
-				this.logger,
+				this.loggerInternal,
 				{ eventName: 'VersionUpdate', version },
 				() => {
 					if (compareSummaryFormatVersions(version, WriteFormat.v0_1_1) >= 0) {
@@ -1136,7 +1146,12 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		this.interner = new MutableStringInterner([initialTree.definition]);
 		const oldIdCompressor = this.idCompressor;
 		// Create the IdCompressor that will be used after the upgrade
-		const newIdCompressor = new IdCompressor(createSessionId(), reservedIdCount, this.attributionId, this.logger);
+		const newIdCompressor = new IdCompressor(
+			createSessionId(),
+			reservedIdCount,
+			this.attributionId,
+			this.loggerInternal
+		);
 		const newContext = getNodeIdContext(newIdCompressor);
 		// Generate all local IDs in the new compressor that were in the old compressor and preserve their UUIDs.
 		// This will allow the client to continue to use local IDs that were allocated pre-upgrade
@@ -1357,7 +1372,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * @returns the inverse of `changes` or undefined if the changes could not be inverted for the given tree state.
 	 */
 	public revertChanges(changes: readonly InternalizedChange[], before: RevisionView): ChangeInternal[] | undefined {
-		return revert(changes as unknown as readonly ChangeInternal[], before, this.logger, this.emit.bind(this));
+		return revert(changes as unknown as readonly ChangeInternal[], before, this.loggerInternal, this.emit.bind(this));
 	}
 
 	/**

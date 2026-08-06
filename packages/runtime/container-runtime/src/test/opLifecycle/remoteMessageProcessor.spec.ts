@@ -20,7 +20,8 @@ import type {
 	LocalContainerRuntimeMessage,
 } from "../../messageTypes.js";
 import {
-	BatchManager,
+	addBatchMetadata,
+	type LocalBatch,
 	type OutboundBatchMessage,
 	type OutboundBatch,
 	type OutboundSingletonBatch,
@@ -356,32 +357,24 @@ describe("RemoteMessageProcessor", () => {
 	describe("Throws on invalid batches", () => {
 		it("Unexpected batch start marker mid-batch", () => {
 			let csn = 1;
-			const batchManager = new BatchManager({
-				canRebase: false,
-			});
-			batchManager.push(
-				{ runtimeOp: op("A1"), referenceSequenceNumber: 1 },
-				false /* reentrant */,
-			);
-			batchManager.push(
-				{ runtimeOp: op("A2"), referenceSequenceNumber: 1 },
-				false /* reentrant */,
-			);
-			batchManager.push(
-				{ runtimeOp: op("A3"), referenceSequenceNumber: 1 },
-				false /* reentrant */,
-			);
-			const batchA = batchManager.popBatch();
+			const batchA: LocalBatch = {
+				messages: [
+					{ runtimeOp: op("A1"), referenceSequenceNumber: 1 },
+					{ runtimeOp: op("A2"), referenceSequenceNumber: 1 },
+					{ runtimeOp: op("A3"), referenceSequenceNumber: 1 },
+				],
+				referenceSequenceNumber: 1,
+			};
+			addBatchMetadata(batchA);
 			batchA.messages[2].metadata = undefined; // Wipe out the ending metadata so the next batch's start shows up mid-batch
-			batchManager.push(
-				{ runtimeOp: op("B1"), referenceSequenceNumber: 1 },
-				false /* reentrant */,
-			);
-			batchManager.push(
-				{ runtimeOp: op("B2"), referenceSequenceNumber: 1 },
-				false /* reentrant */,
-			);
-			const batchB = batchManager.popBatch();
+			const batchB: LocalBatch = {
+				messages: [
+					{ runtimeOp: op("B1"), referenceSequenceNumber: 1 },
+					{ runtimeOp: op("B2"), referenceSequenceNumber: 1 },
+				],
+				referenceSequenceNumber: 1,
+			};
+			addBatchMetadata(batchB);
 
 			const processor = getMessageProcessor();
 
@@ -411,22 +404,15 @@ describe("RemoteMessageProcessor", () => {
 
 		it("Unexpected batch end marker when no batch has started", () => {
 			let csn = 1;
-			const batchManager = new BatchManager({
-				canRebase: false,
-			});
-			batchManager.push(
-				{ runtimeOp: op("A1"), referenceSequenceNumber: 1 },
-				false /* reentrant */,
-			);
-			batchManager.push(
-				{ runtimeOp: op("A2"), referenceSequenceNumber: 1 },
-				false /* reentrant */,
-			);
-			batchManager.push(
-				{ runtimeOp: op("A3"), referenceSequenceNumber: 1 },
-				false /* reentrant */,
-			);
-			const batchA = batchManager.popBatch();
+			const batchA: LocalBatch = {
+				messages: [
+					{ runtimeOp: op("A1"), referenceSequenceNumber: 1 },
+					{ runtimeOp: op("A2"), referenceSequenceNumber: 1 },
+					{ runtimeOp: op("A3"), referenceSequenceNumber: 1 },
+				],
+				referenceSequenceNumber: 1,
+			};
+			addBatchMetadata(batchA);
 			batchA.messages[0].metadata = undefined; // Wipe out the starting metadata
 
 			const processor = getMessageProcessor();

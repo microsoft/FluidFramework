@@ -79,7 +79,7 @@ async function getUsage(
 }
 
 const defaults: Required<Omit<MemoryUseBenchmark, "benchmarkFn">> = {
-	enableAsyncGC: false,
+	enableAsyncGC: true,
 	logProcessedData: false,
 	logRawData: false,
 	warmUpIterations: 12,
@@ -368,6 +368,9 @@ async function warmupCollectMemoryUseData(): Promise<void> {
 /**
  * Configures a benchmark that uses {@link collectMemoryUseData}
  * to measure memory usage and returns the results in a format suitable for reporting via {@link benchmarkIt}.
+ *
+ * @param args - The configuration for the memory usage benchmark.
+ * Common cases for this can be constructed using {@link memoryUseOfValue} or {@link memoryAddedBy}.
  * @public
  */
 export function benchmarkMemoryUse(

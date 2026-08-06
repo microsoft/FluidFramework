@@ -1,0 +1,27 @@
+diff --git a/lib-commonjs/enhancers/ValidationEnhancer.js b/lib-commonjs/enhancers/ValidationEnhancer.js
+index 881b85e..03c9409 100644
+--- a/lib-commonjs/enhancers/ValidationEnhancer.js
++++ b/lib-commonjs/enhancers/ValidationEnhancer.js
+@@ -197,15 +197,14 @@ class ValidationEnhancer {
+             else {
+                 continue;
+             }
+-            if (collectorEntity && collectorEntity.consumable) {
+-                if (api_extractor_model_1.ReleaseTag.compare(declarationReleaseTag, referencedReleaseTag) > 0) {
+-                    collector.messageRouter.addAnalyzerIssue(ExtractorMessageId_1.ExtractorMessageId.IncompatibleReleaseTags, `The symbol "${astDeclaration.astSymbol.localName}"` +
+-                        ` is marked as ${api_extractor_model_1.ReleaseTag.getTagName(declarationReleaseTag)},` +
+-                        ` but its signature references "${localName}"` +
+-                        ` which is marked as ${api_extractor_model_1.ReleaseTag.getTagName(referencedReleaseTag)}`, astDeclaration);
+-                }
++            // BUG MITIGATION: Always check release tag compatibility.
++            if (api_extractor_model_1.ReleaseTag.compare(declarationReleaseTag, referencedReleaseTag) > 0) {
++                collector.messageRouter.addAnalyzerIssue(ExtractorMessageId_1.ExtractorMessageId.IncompatibleReleaseTags, `The symbol "${astDeclaration.astSymbol.localName}"` +
++                    ` is marked as ${api_extractor_model_1.ReleaseTag.getTagName(declarationReleaseTag)},` +
++                    ` but its signature references "${localName}"` +
++                    ` which is marked as ${api_extractor_model_1.ReleaseTag.getTagName(referencedReleaseTag)}`, astDeclaration);
+             }
+-            else {
++            if (!(collectorEntity === null || collectorEntity === void 0 ? void 0 : collectorEntity.consumable)) {
+                 const entryPointFilename = path.basename(collector.workingPackage.entryPointSourceFile.fileName);
+                 if (!alreadyWarnedEntities.has(referencedEntity)) {
+                     alreadyWarnedEntities.add(referencedEntity);

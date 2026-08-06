@@ -190,16 +190,26 @@ export interface IFluidDataStoreRuntime
 	 * - `undefined` - No local operation activity is currently in progress.
 	 */
 	readonly activeLocalOperationActivity?: "applyStashed" | "rollback" | undefined;
+
+	/**
+	 * Indicates whether the container is currently in staging mode.
+	 *
+	 * @remarks
+	 * See {@link @fluidframework/runtime-definitions#IContainerRuntimeBase.enterStagingMode} for known limitations.
+	 */
+	readonly inStagingMode: boolean;
+
+	/**
+	 * Indicates whether the data store has uncommitted local changes.
+	 */
+	readonly isDirty: boolean;
 }
 
 /**
  * @legacy @alpha
  * @sealed
  */
-export interface IFluidDataStoreRuntimeAlpha extends IFluidDataStoreRuntime {
-	readonly inStagingMode: boolean;
-	readonly isDirty: boolean;
-}
+export interface IFluidDataStoreRuntimeAlpha extends IFluidDataStoreRuntime {}
 
 /**
  * Internal configs possibly implemented by IFuidDataStoreRuntimes, for use only within the runtime layer.
@@ -211,10 +221,12 @@ export interface IFluidDataStoreRuntimeInternalConfig {
 	readonly submitMessagesWithoutEncodingHandles?: boolean;
 
 	/**
-	 * Minimum version of the FF runtime that is required to collaborate on new documents. DDSes may read this value to
-	 * determine which feature flags should be enabled. This property is consumed by SharedObjectFactory (which are
-	 * implementations of {@link @fluidframework/datastore-definitions#IChannelFactory}).
+	 * Minimum version of the Fluid Framework runtime that is required to collaborate on new documents.
+	 * @remarks
+	 * DDSes may read this value to determine which feature flags should be enabled.Expand commentComment on line R313Resolved
+	 * This property is consumed by `SharedObjectFactory` (which are implementations of
+	 * {@link @fluidframework/datastore-definitions#IChannelFactory}).
 	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details.
 	 */
-	readonly minVersionForCollab?: MinimumVersionForCollab | undefined;
+	readonly minVersionForCollab?: MinimumVersionForCollab;
 }

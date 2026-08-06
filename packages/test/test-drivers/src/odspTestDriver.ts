@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import os from "os";
 
 import { ITestDriver, OdspEndpoint } from "@fluid-internal/test-driver-definitions";
@@ -32,26 +31,29 @@ import { compare } from "semver";
 
 import { OdspDriverApi, OdspDriverApiType } from "./odspDriverApi.js";
 
-const passwordLoginCredentials = (username: string, password: string): LoginCredentials => ({
-	type: "password",
-	username,
-	password,
-});
-
-const ficLoginCredentials = (username: string): LoginCredentials => {
+const getFicLoginCredentials = (
+	username: string,
+	odspEndpointName: OdspEndpoint,
+): LoginCredentials => {
 	const fetchToken = async (scopeEndpoint: "storage" | "push"): Promise<string> => {
 		const testTenantCheckoutClient = await getTestTenantCheckoutClient();
-		const tokens = await testTenantCheckoutClient.fetchFicTokens([username], scopeEndpoint);
+		const tokens = await testTenantCheckoutClient.fetchFicTokens(
+			[username],
+			scopeEndpoint,
+			odspEndpointName,
+		);
 		if (!Array.isArray(tokens)) {
 			// This error indicates a mismatch between the dynamically imported token fetcher package and this code.
 			// Double-check that the package specified in 'token__package__import__location' is up to date and its entrypoint
 			// matches the typing of `fetchFicTokens` as defined in `TestTenantCheckoutClient`.
-			throw new TypeError("Expected fetchFicTokens to return an array of tokens.");
+			throw new TypeError(
+				"Expected fetchFicTokens to return an array of tokens. Run the @ff-internal/tenant-setup script to populate this environment variable.",
+			);
 		}
 		const token = tokens.find((a) => a.UserPrincipalName === username);
 		if (!token) {
 			throw new Error(
-				`Unable to fetch token for user '${username}' and scope '${scopeEndpoint}'`,
+				`Unable to fetch token for user '${username}' and scope '${scopeEndpoint}'. Run the @ff-internal/tenant-setup script with the correct endpoint for the desired environment.`,
 			);
 		}
 		return token.Token;
@@ -77,29 +79,6 @@ interface IOdspTestDriverConfig extends TokenConfig {
 	options: HostStoragePolicy | undefined;
 }
 
-// specific a range of user name from <prefix><start> to <prefix><start + count - 1> all having the same password
-interface LoginTenantRange {
-	prefix: string;
-	start: number;
-	count: number;
-	password: string;
-}
-
-interface LoginTenants {
-	[tenant: string]: {
-		range: LoginTenantRange;
-		// add different format here
-	};
-}
-
-/**
- * A simplified version of the credentials returned by the tenant pool containing only username and password values.
- */
-export interface UserPassCredentials {
-	UserPrincipalName: string;
-	Password: string;
-}
-
 /**
  * Credentials containing a username and bearer token for FIC authentication scenarios.
  */
@@ -117,6 +96,7 @@ interface TestTenantCheckoutClient {
 	fetchFicTokens(
 		usernames: string[],
 		tokenScope: "push" | "storage",
+		odspEndpointName: OdspEndpoint,
 	): Promise<TokenCredentials[]>;
 }
 
@@ -131,14 +111,14 @@ async function getTestTenantCheckoutClient(): Promise<TestTenantCheckoutClient> 
 	const packageImportLocation = process.env.token__package__import__location;
 	if (packageImportLocation === undefined) {
 		throw new Error(
-			'The FIC credential flow relies on a test tenant checkout client, but no client was found. Ensure that the environment variable "token__package__import__location" is set to the location of a package that exports a compatible client.',
+			"The FIC credential flow relies on a test tenant checkout client, but no client was found. Populate this environment variable by running the @ff-internal/tenant-setup script.",
 		);
 	}
 
 	const pkg = (await import(packageImportLocation)) as TestTenantCheckoutClient;
 	if (typeof pkg.fetchFicTokens !== "function") {
 		throw new TypeError(
-			`Expected package at '${packageImportLocation}' to export fetchFicTokens.`,
+			`Expected package at '${packageImportLocation}' to export the token fetching function. Run the @ff-internal/tenant-setup script to populate this environment variable.`,
 		);
 	}
 	testTenantCheckoutClientCached = pkg;
@@ -156,7 +136,7 @@ export function assertOdspEndpoint(
 	if (endpoint === undefined || endpoint === "odsp" || endpoint === "odsp-df") {
 		return;
 	}
-	throw new TypeError("Not a odsp endpoint");
+	throw new TypeError("Not an odsp endpoint");
 }
 
 /**
@@ -171,116 +151,52 @@ export function getOdspCredentials(
 	odspEndpointName: OdspEndpoint,
 	tenantIndex: number,
 ): LoginCredentials[] {
-	const creds: { username: string; password: string }[] = [];
-	const loginTenants =
-		odspEndpointName === "odsp"
-			? process.env.login__odsp__test__tenants
-			: process.env.login__odspdf__test__tenants;
-
 	const ficAccounts = process.env.login__odsp__fic__test__users;
-	if (ficAccounts !== undefined) {
-		const { usernames } = JSON.parse(ficAccounts) as {
-			usernames: string[];
-		};
-
-		if (usernames.length === 0) {
-			throw new Error(
-				"login__odsp__fic__test__users was defined but does not have any valid usernames.",
-			);
-		}
-		return usernames.map((username) => ficLoginCredentials(username));
-	} else if (loginTenants !== undefined) {
-		/**
-		 * Parse login credentials using the new tenant format for e2e tests.
-		 * For the expected format of loginTenants, see {@link UserPassCredentials}
-		 */
-		if (loginTenants.includes("UserPrincipalName")) {
-			// Password-based credentials (ROPC OAuth flow)
-			const output: UserPassCredentials[] = JSON.parse(loginTenants);
-			if (output?.[tenantIndex] === undefined) {
-				throw new Error("No resources found in the login tenants");
-			}
-
-			// Return the set of accounts to choose from a single tenant
-
-			return output.map((account) =>
-				passwordLoginCredentials(account.UserPrincipalName, account.Password),
-			);
-		} else {
-			/**
-			 * Parse login credentials using the tenant format for stress tests.
-			 * For the expected format of loginTenants, see {@link LoginTenants}
-			 */
-			const tenants: LoginTenants = JSON.parse(loginTenants);
-			const tenantNames = Object.keys(tenants);
-			const tenant = tenantNames[tenantIndex % tenantNames.length];
-			if (tenant === undefined) {
-				throw new Error("tenant should not be undefined when getting odsp credentials");
-			}
-			const tenantInfo = tenants[tenant];
-			if (tenantInfo === undefined) {
-				throw new Error("tenantInfo should not be undefined when getting odsp credentials");
-			}
-			// Translate all the user from that user to the full user principal name by appending the tenant domain
-			const range = tenantInfo.range;
-
-			// Return the set of account to choose from a single tenant
-			for (let i = 0; i < range.count; i++) {
-				const username = `${range.prefix}${range.start + i}@${tenant}`;
-				creds.push({ username, password: range.password });
-			}
-		}
-	} else {
-		const loginAccounts =
-			odspEndpointName === "odsp"
-				? process.env.login__odsp__test__accounts
-				: process.env.login__odspdf__test__accounts;
-		if (loginAccounts === undefined) {
-			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-			const inCi = !!process.env.TF_BUILD;
-			const odspOrOdspdf = odspEndpointName === "odsp" ? "odsp" : "odspdf";
-			assert.fail(
-				`Missing secrets from environment. At least one of login__${odspOrOdspdf}__test__tenants or login__${odspOrOdspdf}__test__accounts must be set.${
-					inCi ? "" : "\n\nRun getkeys to populate these environment variables."
-				}`,
-			);
-		}
-
-		// Expected format of login__odsp__test__accounts is simply string key-value pairs of username and password
-		const passwords: { [user: string]: string } = JSON.parse(loginAccounts);
-
-		// Need to choose one out of the set as these account might be from different tenant
-		const username = Object.keys(passwords)[0];
-		if (username === undefined) {
-			throw new Error("username should not be undefined when getting odsp credentials");
-		}
-		const userPass = passwords[username];
-		if (userPass === undefined) {
-			throw new Error(
-				"password for username should not be undefined when getting odsp credentials",
-			);
-		}
-		creds.push({ username, password: userPass });
+	if (ficAccounts === undefined) {
+		throw new Error(
+			"login__odsp__fic__test__users is not defined. Run the @ff-internal/tenant-setup script to populate this environment variable.",
+		);
 	}
-	return creds.map((c) => passwordLoginCredentials(c.username, c.password));
+	const { usernames } = JSON.parse(ficAccounts) as {
+		usernames: string[];
+	};
+
+	if (usernames.length === 0) {
+		throw new Error(
+			"login__odsp__fic__test__users was defined but does not have any valid usernames. Run the @ff-internal/tenant-setup script to populate this environment variable.",
+		);
+	}
+	return usernames.map((username) => getFicLoginCredentials(username, odspEndpointName));
 }
+
+// Default token manager — shared across all OdspTestDriver instances that don't supply their own.
+// Uses file-based cache to persist refresh tokens across runs.
+// Callers that need memory-only caching (e.g. stress tests running many child processes
+// simultaneously) can supply their own OdspTokenManager via createFromEnv's tokenManager option.
+const defaultTokenManager = new OdspTokenManager(odspTokensCache);
 
 /**
  * @internal
  */
 export class OdspTestDriver implements ITestDriver {
-	// Share the tokens and driverId across multiple instance of the test driver
-	private static readonly odspTokenManager = new OdspTokenManager(odspTokensCache);
+	// Share the driveId across multiple instances of the test driver.
 	private static readonly driveIdPCache = new Map<string, Promise<string>>();
 	// Choose a single random user up front for legacy driver which doesn't support isolateSocketCache
 	private static readonly legacyDriverUserRandomIndex = Math.random();
 
-	private static async getDriveIdFromConfig(tokenConfig: TokenConfig): Promise<string> {
+	private static async getDriveIdFromConfig(
+		tokenConfig: TokenConfig,
+		tokenManager: OdspTokenManager,
+	): Promise<string> {
 		const { siteUrl } = tokenConfig;
 		return getDriveId(siteUrl, "", undefined, {
-			accessToken: await this.getStorageToken({ siteUrl, refresh: false }, tokenConfig),
+			accessToken: await this.getStorageToken(
+				{ siteUrl, refresh: false },
+				tokenConfig,
+				tokenManager,
+			),
 			refreshTokenFn: async () =>
-				this.getStorageToken({ siteUrl, refresh: true }, tokenConfig),
+				this.getStorageToken({ siteUrl, refresh: true }, tokenConfig, tokenManager),
 		});
 	}
 
@@ -291,6 +207,7 @@ export class OdspTestDriver implements ITestDriver {
 			options?: HostStoragePolicy;
 			tenantIndex?: number;
 			odspEndpointName?: string;
+			tokenManager?: OdspTokenManager;
 		},
 		api: OdspDriverApiType = OdspDriverApi,
 	): Promise<OdspTestDriver> {
@@ -348,16 +265,21 @@ export class OdspTestDriver implements ITestDriver {
 			tenantName,
 			userIndex,
 			endpointName,
+			config?.tokenManager,
 		);
 	}
 
-	private static async getDriveId(siteUrl: string, tokenConfig: TokenConfig): Promise<string> {
+	private static async getDriveId(
+		siteUrl: string,
+		tokenConfig: TokenConfig,
+		tokenManager: OdspTokenManager,
+	): Promise<string> {
 		let driveIdP = this.driveIdPCache.get(siteUrl);
 		if (driveIdP) {
 			return driveIdP;
 		}
 
-		driveIdP = this.getDriveIdFromConfig(tokenConfig);
+		driveIdP = this.getDriveIdFromConfig(tokenConfig, tokenManager);
 		this.driveIdPCache.set(siteUrl, driveIdP);
 		try {
 			return await driveIdP;
@@ -375,13 +297,14 @@ export class OdspTestDriver implements ITestDriver {
 		tenantName?: string,
 		userIndex?: number,
 		endpointName?: string,
+		tokenManager: OdspTokenManager = defaultTokenManager,
 	): Promise<OdspTestDriver> {
 		const tokenConfig: TokenConfig = {
 			...loginInfo,
 			...getMicrosoftConfiguration(),
 		};
 
-		const driveId = await this.getDriveId(loginInfo.siteUrl, tokenConfig);
+		const driveId = await this.getDriveId(loginInfo.siteUrl, tokenConfig, tokenManager);
 		const directoryParts = [directory];
 
 		// if we are in a azure dev ops build use the build id in the dir path
@@ -398,24 +321,29 @@ export class OdspTestDriver implements ITestDriver {
 			options,
 		};
 
-		return new OdspTestDriver(driverConfig, api, tenantName, userIndex, endpointName);
+		return new OdspTestDriver(
+			driverConfig,
+			api,
+			tenantName,
+			userIndex,
+			endpointName,
+			tokenManager,
+		);
 	}
 
 	private static async getStorageToken(
 		options: OdspResourceTokenFetchOptions,
 		config: TokenConfig,
+		tokenManager: OdspTokenManager,
 	): Promise<string> {
-		const host = new URL(options.siteUrl).host;
-		const tokens = await this.odspTokenManager.getOdspTokens(
-			host,
-			config,
-			config.credentials,
-			options.refresh,
-		);
+		const tokens = await tokenManager.getOdspTokens(config.credentials, options.refresh);
 		return tokens.accessToken;
 	}
 
 	public readonly type = "odsp";
+	public readonly endpointName?: string;
+	public readonly tenantName?: string;
+	public readonly userIndex?: number;
 	public get version(): string {
 		return this.api.version;
 	}
@@ -424,10 +352,21 @@ export class OdspTestDriver implements ITestDriver {
 	private constructor(
 		private readonly config: Readonly<IOdspTestDriverConfig>,
 		private readonly api = OdspDriverApi,
-		public readonly tenantName?: string,
-		public readonly userIndex?: number,
-		public readonly endpointName?: string,
-	) {}
+		tenantName?: string,
+		userIndex?: number,
+		endpointName?: string,
+		private readonly tokenManager: OdspTokenManager = defaultTokenManager,
+	) {
+		if (endpointName !== undefined) {
+			this.endpointName = endpointName;
+		}
+		if (tenantName !== undefined) {
+			this.tenantName = tenantName;
+		}
+		if (userIndex !== undefined) {
+			this.userIndex = userIndex;
+		}
+	}
 
 	/**
 	 * Returns the url to container which can be used to load the container through loader.
@@ -474,7 +413,7 @@ export class OdspTestDriver implements ITestDriver {
 			this.config.options,
 		);
 		// Automatically reset the cache after creating the factory
-		this.cache = undefined;
+		delete this.cache;
 		return documentServiceFactory;
 	}
 
@@ -492,14 +431,11 @@ export class OdspTestDriver implements ITestDriver {
 	}
 
 	private async getStorageToken(options: OdspResourceTokenFetchOptions): Promise<string> {
-		return OdspTestDriver.getStorageToken(options, this.config);
+		return OdspTestDriver.getStorageToken(options, this.config, this.tokenManager);
 	}
 
 	private async getPushToken(options: OdspResourceTokenFetchOptions): Promise<string> {
-		const host = new URL(options.siteUrl).host;
-		const tokens = await OdspTestDriver.odspTokenManager.getPushTokens(
-			host,
-			this.config,
+		const tokens = await this.tokenManager.getPushTokens(
 			this.config.credentials,
 			options.refresh,
 		);

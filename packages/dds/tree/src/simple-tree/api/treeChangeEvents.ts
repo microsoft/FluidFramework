@@ -36,7 +36,7 @@ export interface TreeChangeEvents {
 	 *
 	 * - Object nodes define a change as being when the value of one of its properties changes (i.e., the property's value is set, including when set to `undefined`).
 	 *
-	 * - Array nodes define a change as when an element is added, removed, moved or replaced.
+	 * - Array nodes define a change as when an element is added, removed, moved, or replaced.
 	 *
 	 * - Map nodes define a change as when an entry is added, updated, or removed.
 	 *

@@ -92,6 +92,8 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
     readonly idCompressor: IIdCompressor | undefined;
     // (undocumented)
     readonly IFluidHandleContext: IFluidHandleContext;
+    readonly inStagingMode: boolean;
+    readonly isDirty: boolean;
     readonly isReadOnly: () => boolean;
     // (undocumented)
     readonly logger: ITelemetryBaseLogger;
@@ -108,10 +110,6 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
 
 // @alpha @sealed @legacy (undocumented)
 export interface IFluidDataStoreRuntimeAlpha extends IFluidDataStoreRuntime {
-    // (undocumented)
-    readonly inStagingMode: boolean;
-    // (undocumented)
-    readonly isDirty: boolean;
 }
 
 // @beta @legacy

@@ -129,7 +129,7 @@ const schema = {
 	],
 };
 const azureClient = new AzureClient(props);
-const { container, services } = await azureClient.createContainer(schema, "2" /* compatibilityMode */);
+const { container, services } = await azureClient.createContainer(schema, "2.100.0" /* minVersionForCollab */);
 
 // Set any default data on the container's `initialObjects` before attaching
 // Returned ID can be used to fetch the container via `getContainer` below
@@ -144,7 +144,7 @@ Using the `AzureClient` object the developer can create and get Fluid containers
 import { AzureClient } from "@fluidframework/azure-client";
 
 const azureClient = new AzureClient(props);
-const { container, services } = await azureClient.getContainer("_unique-id_", schema, "2" /* compatibilityMode */);
+const { container, services } = await azureClient.getContainer("_unique-id_", schema, "2.100.0" /* minVersionForCollab */);
 ```
 
 **Note:** When using the `AzureClient` with `tenantId` set to `"local"`, all containers that have been created will be deleted when the instance of the local Azure Fluid Relay service (not client) that was run from the terminal window is closed. However, any containers created when running against a remote Azure Fluid Relay service will be persisted. Container IDs **cannot** be reused between local and remote Azure Fluid Relay services to fetch back the same container.
@@ -166,7 +166,7 @@ const schema = {
 };
 
 // Fetch back the container that had been created earlier with the same ID and schema
-const { container, services } = await azureClient.getContainer("_unique-id_", schema, "2" /* compatibilityMode */);
+const { container, services } = await azureClient.getContainer("_unique-id_", schema, "2.100.0" /* minVersionForCollab */);
 
 // Get our list of initial objects that we had defined in the schema. initialObjects here will have the same signature
 const initialObjects = container.initialObjects;
@@ -191,7 +191,7 @@ const schema = {
 	dynamicObjectTypes: [SharedString],
 };
 
-const { container, services } = await azureClient.getContainer("_unique-id_", schema, "2" /* compatibilityMode */);
+const { container, services } = await azureClient.getContainer("_unique-id_", schema, "2.100.0" /* minVersionForCollab */);
 const map1 = container.initialObjects.map1;
 
 const text1 = await container.create(SharedString);
@@ -224,7 +224,7 @@ When making such a request please include if the configuration already works (an
 
 ### Supported Runtimes
 
--   NodeJs ^20.10.0 except that we will drop support for it [when NodeJs 20 loses its upstream support on 2026-04-30](https://github.com/nodejs/release#release-schedule), and will support a newer LTS version of NodeJS (22) at least 1 year before 20 is end-of-life. This same policy applies to NodeJS 22 when it is end of life (2027-04-30).
+-   NodeJs ^22.22.2 except that we will drop support for it [when NodeJs 22 loses its upstream support on 2027-04-30](https://github.com/nodejs/release#release-schedule), and will support a newer LTS version of NodeJS at least 1 year before 22 is end-of-life.
     -   Running Fluid in a Node.js environment with the `--no-experimental-fetch` flag is not supported.
 -   Modern browsers supporting the es2022 standard library: in response to asks we can add explicit support for using babel to polyfill to target specific standards or runtimes (meaning we can avoid/remove use of things that don't polyfill robustly, but otherwise target modern standards).
 

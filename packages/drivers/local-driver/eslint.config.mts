@@ -4,7 +4,7 @@
  */
 
 import type { Linter } from "eslint";
-import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts";
+import { recommended } from "@fluidframework/eslint-config-fluid/flat.mts";
 
 const config: Linter.Config[] = [
 	...recommended,
@@ -23,17 +23,6 @@ const config: Linter.Config[] = [
 			"unicorn/prefer-logical-operator-over-ternary": "off",
 			"unicorn/prefer-node-protocol": "off",
 			"unicorn/text-encoding-identifier-case": "off",
-		},
-	},
-	{
-		files: ["*.spec.ts", "src/test/**"],
-		rules: {
-			"import-x/no-nodejs-modules": [
-				"error",
-				{
-					"allow": ["assert"],
-				},
-			],
 		},
 	},
 ];

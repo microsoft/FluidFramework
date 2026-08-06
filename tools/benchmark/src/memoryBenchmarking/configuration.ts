@@ -33,8 +33,11 @@ export interface MemoryUseCallbacks {
  * @remarks
  * Use with {@link benchmarkMemoryUse} to measure the memory usage of the operation.
  * Only supported in Node.js environments with `--expose-gc`.
+ *
+ * {@link memoryUseOfValue} and {@link memoryAddedBy} can be used to create this for common cases.
+ * When implementing other cases, consider using {@link Box} to manage memory retention issues due to local variables.
+ *
  * @public
- * @input
  */
 export interface MemoryUseBenchmark {
 	/**

@@ -13,10 +13,15 @@ import {
 	type SharedKernelFactory,
 	type SharedObjectOptions,
 	type FactoryOut,
+	type SharedObjectKindAlpha,
 } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { FluidClientVersion, type FormatVersion } from "./codec/index.js";
+import {
+	detachedFieldIndexCodecBuilder,
+	DetachedFieldIndexFormatVersion,
+} from "./core/index.js";
 import {
 	SharedTreeKernel,
 	type ITreePrivate,
@@ -73,7 +78,7 @@ function treeKernelFactory(
 		};
 
 		return new SharedTreeKernel(
-			new Breakable("SharedTree"),
+			new Breakable("SharedTree", args.logger),
 			args.sharedObject,
 			args.serializer,
 			args.submitLocalMessage,
@@ -107,7 +112,14 @@ function treeKernelFactory(
  * of objects, arrays, and other data types.
  * @legacy @beta
  */
-export const SharedTree = configuredSharedTree({});
+export const SharedTree: ISharedObjectKind<ITree> & SharedObjectKind<ITree> =
+	configuredSharedTree({});
+
+/**
+ * {@link SharedTree} but without legacy types, and with alpha types.
+ * @alpha
+ */
+export const SharedTreeAlpha: SharedObjectKindAlpha<ITree> = configuredSharedTree({});
 
 /**
  * {@link SharedTree} but allowing a non-default configuration.
@@ -185,14 +197,14 @@ export function configuredSharedTreeAlpha(
  */
 export function configuredSharedTree(
 	options: SharedTreeOptions,
-): ISharedObjectKind<ITree> & SharedObjectKind<ITree> {
+): ISharedObjectKind<ITree> & SharedObjectKindAlpha<ITree> {
 	const internalOptions = resolveOptions(options);
 	return configuredSharedTreeInternal(internalOptions);
 }
 
 export function configuredSharedTreeInternal(
 	options: SharedTreeOptionsInternal,
-): ISharedObjectKind<ITree> & SharedObjectKind<ITree> {
+): ISharedObjectKind<ITree> & SharedObjectKindAlpha<ITree> {
 	const sharedObjectOptions: SharedObjectOptions<ITree> = {
 		type: SharedTreeFactoryType,
 		attributes: SharedTreeAttributes,
@@ -227,6 +239,7 @@ const sharedBranchesOptions: SharedTreeOptionsInternal = {
 	writeVersionOverrides: new Map<string, FormatVersion>([
 		[editManagerCodecName, EditManagerFormatVersion.vSharedBranches],
 		[messageCodecName, MessageFormatVersion.vSharedBranches],
+		[detachedFieldIndexCodecBuilder.name, DetachedFieldIndexFormatVersion.v2],
 	]),
 	allowPossiblyIncompatibleWriteVersionOverrides: true,
 };

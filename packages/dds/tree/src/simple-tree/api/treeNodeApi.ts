@@ -25,6 +25,7 @@ import {
 	type ImplicitAllowedTypes,
 	type TreeNodeFromImplicitAllowedTypes,
 	normalizeAllowedTypes,
+	type TreeNodeKernel,
 } from "../core/index.js";
 import { type ImplicitFieldSchema, FieldSchema } from "../fieldSchema.js";
 import { tryGetTreeNodeForField } from "../getTreeNodeForField.js";
@@ -41,13 +42,43 @@ import type { TreeChangeEvents } from "./treeChangeEvents.js";
 
 /**
  * A `"retain"` op in an {@link ArrayNodeDeltaOp} sequence.
- * Represents elements that were not added or removed (though they may have nested changes).
+ * Represents elements that were neither inserted into nor removed from the array.
  * @sealed @alpha
  */
 export interface ArrayNodeRetainOp {
 	readonly type: "retain";
 	readonly count: number;
 }
+
+/**
+ * A `"retain"` op in an {@link ArrayNodeTreeChangedDeltaOp} sequence, used in
+ * {@link NodeChangedDataTreeDelta} payloads delivered to
+ * {@link TreeChangeEventsAlpha.treeChanged} on array nodes.
+ *
+ * Extends {@link ArrayNodeRetainOp} with a {@link ArrayNodeTreeChangedRetainOp.subtreeChanged}
+ * flag that indicates whether any descendant of the retained element changed.
+ * @sealed @alpha
+ */
+export interface ArrayNodeTreeChangedRetainOp extends ArrayNodeRetainOp {
+	/**
+	 * Whether any descendant of this retained element changed.
+	 * `true` if the element's subtree changed; `false` if nothing changed within it.
+	 * @remarks
+	 * Subscribe to `nodeChanged` or `treeChanged` on the element node itself for details.
+	 */
+	readonly subtreeChanged: boolean;
+}
+
+/**
+ * A single operation in an array-node delta delivered by {@link TreeChangeEventsAlpha.treeChanged}.
+ * Extends {@link ArrayNodeDeltaOp}: retain ops carry a {@link ArrayNodeTreeChangedRetainOp.subtreeChanged}
+ * flag indicating whether any descendant of the retained element changed.
+ * @alpha
+ */
+export type ArrayNodeTreeChangedDeltaOp =
+	| ArrayNodeTreeChangedRetainOp
+	| ArrayNodeInsertOp
+	| ArrayNodeRemoveOp;
 
 /**
  * An `"insert"` op in an {@link ArrayNodeDeltaOp} sequence.
@@ -84,6 +115,10 @@ export interface ArrayNodeRemoveOp {
  * When an element is moved across two different arrays, the source array's delta contains a
  * `"remove"` and the destination array's delta contains an `"insert"` — they cannot be
  * correlated without additional bookkeeping on the caller's side.
+ *
+ * The operations cover the complete array: trailing elements that were not changed are included
+ * in a final `"retain"` op. Applying every operation therefore consumes the entire pre-edit array
+ * and produces the entire post-edit array.
  *
  * @sealed @alpha
  */
@@ -247,14 +282,32 @@ export const treeNodeApi: TreeNodeApi = {
 				} else if (isArrayNodeSchema(nodeSchema)) {
 					return kernel.events.on("childrenChangedAfterBatch", ({ fieldMarks }) => {
 						const marks = fieldMarks.get(EmptyKey);
+						// nodeChanged fires only for shallow changes (insert, remove, move).
+						// Deep changes (e.g. a property of an element changed) are
+						// surfaced via TreeChangeEventsAlpha.treeChanged with a delta payload instead.
+						// When marks are undefined (marks could not be composed across multiple
+						// internal passes), we conservatively fire nodeChanged rather than silently
+						// dropping the event, even though the underlying change may have been
+						// purely deep. This is a known limitation of the current eventing stack.
+						const hasShallowChange =
+							marks === undefined ||
+							marks.some((m) => m.attach !== undefined || m.detach !== undefined);
+						if (!hasShallowChange) {
+							return;
+						}
 						// `marks` is undefined when the field was modified across multiple batches
 						// within a single flush (e.g. due to an interleaved schema change) and the
 						// marks could not be composed. Emit `undefined` so callers know the delta is
 						// unavailable rather than receiving stale marks from only the first batch.
 						// TODO: Once the eventing stack is rewritten to walk the composed delta at
-						// flush time, `marks` will always be defined. Remove the `undefined` fallback
-						// and simplify to: `const delta = deltaMarksToArrayOps(marks);`
-						const delta = marks === undefined ? undefined : deltaMarksToArrayOps(marks);
+						// flush time, `marks` will always be defined. Remove the `undefined` fallback.
+						const delta =
+							marks === undefined
+								? undefined
+								: deltaMarksToArrayOpsWithRetain(marks, getArrayLength(kernel), (count) => ({
+										type: "retain",
+										count,
+									}));
 						listener({ delta });
 					});
 				} else {
@@ -264,6 +317,28 @@ export const treeNodeApi: TreeNodeApi = {
 				}
 			}
 			case "treeChanged": {
+				if (isArrayNodeSchema(kernel.schema)) {
+					// For array nodes, treeChanged fires via childrenChangedAfterBatch so that a
+					// delta payload can be provided. This covers both shallow changes
+					// (insert/remove/move) and deep element changes. Stable (non-alpha) listeners
+					// typed as () => void will silently ignore the extra argument at runtime.
+					return kernel.events.on("childrenChangedAfterBatch", ({ fieldMarks }) => {
+						const marks = fieldMarks.get(EmptyKey);
+						const delta =
+							marks === undefined
+								? undefined
+								: deltaMarksToArrayOpsWithRetain(
+										marks,
+										getArrayLength(kernel),
+										(count, subtreeChanged) => ({
+											type: "retain",
+											count,
+											subtreeChanged,
+										}),
+									);
+						(listener as (data: { readonly delta: typeof delta }) => void)({ delta });
+					});
+				}
 				return kernel.events.on("subtreeChangedAfterBatch", () => listener({}));
 			}
 			default: {
@@ -297,33 +372,65 @@ export const treeNodeApi: TreeNodeApi = {
 };
 
 /**
- * Converts an array of internal {@link DeltaMark}s for a sequence field into sequential
- * array delta ops suitable for inclusion in {@link NodeChangedData.delta}.
+ * Converts internal {@link DeltaMark}s for an array's sequence field into sequential array delta
+ * operations.
  *
- * Each mark in the delta describes a contiguous run of positions in the original array:
- * - A mark with only `count` (no attach/detach) → `"retain"` (elements unchanged at this level)
- * - A mark with only `attach` → `"insert"` (new elements added)
- * - A mark with only `detach` → `"remove"` (elements removed)
- * - A mark with both `attach` and `detach` → `"remove"` + `"insert"`
+ * @remarks
+ * Each mark describes a contiguous run:
+ * - A mark with only `count` becomes a retain.
+ * - A mark with only `attach` becomes an insert.
+ * - A mark with only `detach` becomes a remove.
+ * - A mark with both `attach` and `detach` becomes a remove followed by an insert.
+ *
+ * Internal mark arrays may omit an unchanged suffix. The returned operations always cover the
+ * complete array, so this function uses the array's post-edit length to append a trailing retain
+ * when needed.
+ *
+ * @param marks - The low-level delta marks for the array's sequence field.
+ * @param postEditLength - The array's length after the edit.
+ * @param buildRetainOp - Builds a retain operation. Its second argument indicates whether the
+ * retained element's subtree changed; it is `false` for a synthesized trailing retain.
  *
  * @privateRemarks
  * The case where both `attach` and `detach` are set is unreachable today: the sequence-field
- * encoder never emits such marks for array (EmptyKey) fields. It is handled defensively.
+ * encoder never emits such marks for array (`EmptyKey`) fields. It is handled defensively.
  */
-function deltaMarksToArrayOps(marks: readonly DeltaMark[]): ArrayNodeDeltaOp[] {
-	const ops: ArrayNodeDeltaOp[] = [];
+export function deltaMarksToArrayOpsWithRetain<TRetain extends ArrayNodeRetainOp>(
+	marks: readonly DeltaMark[],
+	postEditLength: number,
+	buildRetainOp: (count: number, subtreeChanged: boolean) => TRetain,
+): (TRetain | ArrayNodeInsertOp | ArrayNodeRemoveOp)[] {
+	const ops: (TRetain | ArrayNodeInsertOp | ArrayNodeRemoveOp)[] = [];
+	let processedLength = 0;
 	for (const mark of marks) {
 		if (mark.detach !== undefined) {
 			ops.push({ type: "remove", count: mark.count });
 		}
 		if (mark.attach !== undefined) {
 			ops.push({ type: "insert", count: mark.count });
+			processedLength += mark.count;
 		} else if (mark.detach === undefined) {
-			// Neither attach nor detach: elements retained (may have nested changes in mark.fields).
-			ops.push({ type: "retain", count: mark.count });
+			// When `fields` is set, `count` is guaranteed to be 1 (DeltaMark invariant).
+			ops.push(buildRetainOp(mark.count, mark.fields !== undefined));
+			processedLength += mark.count;
 		}
 	}
+	// DeltaMark arrays are allowed to omit the trailing retain, while our user facing array equivalents are not, so add it if necessary.
+	assert(processedLength <= postEditLength, "Array delta exceeds post-edit array length");
+	if (processedLength < postEditLength) {
+		ops.push(buildRetainOp(postEditLength - processedLength, false));
+	}
 	return ops;
+}
+
+/**
+ * Returns the length of the `EmptyKey` field under the provided node kernel.
+ * @remarks
+ * Use this with the kernel of an array node to get the current length of the array.
+ * This is the same as `.length` on the array node, but is usable without having to get (and possible create) the node and narrow to the proper type to access that.
+ */
+function getArrayLength(arrayNodeKernel: TreeNodeKernel): number {
+	return arrayNodeKernel.getInnerNode().getBoxed(EmptyKey).length;
 }
 
 /**

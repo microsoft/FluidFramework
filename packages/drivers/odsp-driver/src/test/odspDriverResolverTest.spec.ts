@@ -7,7 +7,6 @@ import { strict as assert } from "node:assert";
 
 import type { IRequest } from "@fluidframework/core-interfaces";
 import { DriverHeader } from "@fluidframework/driver-definitions/internal";
-import type { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
 
 import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest.js";
 import { createOdspUrl } from "../createOdspUrl.js";
@@ -63,7 +62,7 @@ describe("Odsp Driver Resolver", () => {
 
 	it("Should resolve url with a data store", async () => {
 		const resolvedUrl = await resolver.resolve(request);
-		const expected: IOdspResolvedUrl = {
+		const expected = {
 			endpoints: {
 				snapshotStorageUrl: "",
 				attachmentGETStorageUrl: "",

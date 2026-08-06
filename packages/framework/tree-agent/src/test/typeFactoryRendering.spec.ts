@@ -6,9 +6,10 @@
 import { strict as assert } from "node:assert";
 
 import { SchemaFactory } from "@fluidframework/tree/internal";
+import type { TypeFactoryType } from "@fluidframework/type-factory/alpha";
 
 import { renderTypeFactoryTypeScript } from "../renderTypeFactoryTypeScript.js";
-import { typeFactory as tf, type TypeFactoryType } from "../treeAgentTypes.js";
+import { typeFactory as tf } from "../treeAgentTypes.js";
 
 const sf = new SchemaFactory("test");
 

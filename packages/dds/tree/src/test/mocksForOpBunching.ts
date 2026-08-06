@@ -53,6 +53,10 @@ export class MockContainerRuntimeFactoryWithOpBunching extends MockContainerRunt
 		return containerRuntime;
 	}
 
+	public peekNextMessage(): ISequencedDocumentMessage | undefined {
+		return this.messages[0];
+	}
+
 	/**
 	 * Processes the specified number of messages from the pending messages queue. In turn based
 	 * mode, it sends them all together in an array to the runtimes for processing.

@@ -7,14 +7,16 @@ import { assert, oob } from "@fluidframework/core-utils/internal";
 import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 
 import {
-	ClientVersionDispatchingCodecBuilder,
+	VersionDispatchingCodecBuilder,
 	type CodecAndSchema,
 	type CodecWriteOptions,
+	type VersionDispatchingCodec,
 	FluidClientVersion,
 } from "../../codec/index.js";
 import type { FieldKey, ITreeCursorSynchronous } from "../../core/index.js";
 import {
 	fieldBatchCodecBuilder,
+	type FieldBatchDecodingContext,
 	type FieldBatchEncodingContext,
 } from "../chunked-forest/index.js";
 
@@ -24,12 +26,17 @@ import { ForestFormatVersion, FormatCommon } from "./formatCommon.js";
  * Uses field cursors
  */
 export type FieldSet = ReadonlyMap<FieldKey, ITreeCursorSynchronous>;
-export type ForestCodec = ReturnType<typeof forestCodecBuilder.build>;
+export type ForestCodec = VersionDispatchingCodec<
+	FieldSet,
+	FieldBatchEncodingContext,
+	ForestFormatVersion,
+	FieldBatchDecodingContext
+>;
 
 function makeForestSummarizerCodec(
 	options: CodecWriteOptions,
 	version: ForestFormatVersion,
-): CodecAndSchema<FieldSet, FieldBatchEncodingContext> {
+): CodecAndSchema<FieldSet, FieldBatchEncodingContext, FieldBatchDecodingContext> {
 	// Performance: Since multiple places (including multiple versions of this codec) use the field batch codec,
 	// we may end up with multiple copies of it, including compiling its format validation multiple times.
 	// This is not ideal, but is not too bad as it is a small fixed number of copies and thus should not be too expensive.
@@ -50,7 +57,7 @@ function makeForestSummarizerCodec(
 				version,
 			};
 		},
-		decode: (data: FormatCommon, context: FieldBatchEncodingContext): FieldSet => {
+		decode: (data: FormatCommon, context: FieldBatchDecodingContext): FieldSet => {
 			const out: Map<FieldKey, ITreeCursorSynchronous> = new Map();
 			const fields = fieldBatchCodec.decode(data.fields, context);
 			assert(data.keys.length === fields.length, 0x891 /* mismatched lengths */);
@@ -64,9 +71,9 @@ function makeForestSummarizerCodec(
 }
 
 /**
- * {@link ClientVersionDispatchingCodecBuilder} for forest summarizer codecs.
+ * {@link VersionDispatchingCodecBuilder} for forest summarizer codecs.
  */
-export const forestCodecBuilder = ClientVersionDispatchingCodecBuilder.build("Forest", [
+export const forestCodecBuilder = VersionDispatchingCodecBuilder.build("Forest", [
 	{
 		minVersionForCollab: lowestMinVersionForCollab,
 		formatVersion: ForestFormatVersion.v1,

@@ -14,7 +14,7 @@ import {
 	DocumentStorageServiceProxy,
 	PrefetchDocumentStorageService,
 } from "@fluidframework/driver-utils/internal";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type { ICache } from "./cache.js";
 import type { INormalizedWholeSnapshot } from "./contracts.js";
@@ -34,7 +34,7 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
 	private static loadInternalDocumentStorageService(
 		id: string,
 		manager: GitManager,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		policies: IDocumentStorageServicePolicies,
 		driverPolicies?: IRouterliciousDriverPolicies,
 		blobCache?: ICache<ArrayBufferLike>,
@@ -78,7 +78,7 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
 	constructor(
 		public readonly id: string,
 		public manager: GitManager,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		policies: IDocumentStorageServicePolicies,
 		driverPolicies?: IRouterliciousDriverPolicies,
 		blobCache?: ICache<ArrayBufferLike>,

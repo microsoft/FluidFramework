@@ -10,13 +10,13 @@ import { ITestDataObject, describeCompat, itExpects } from "@fluid-private/test-
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerMessageType,
-	ContainerRuntime,
+	type ContainerRuntime,
 	IGCRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
 import { blobsTreeName } from "@fluidframework/container-runtime/internal/test/blobManager";
 import { ISweepMessage } from "@fluidframework/container-runtime/internal/test/gc";
 import {
-	ISummarizer,
+	type ISummarizer,
 	RetriableSummaryError,
 	defaultMaxAttemptsForSubmitFailures,
 } from "@fluidframework/container-runtime/internal/test/summary";

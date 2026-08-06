@@ -41,7 +41,10 @@ import {
 	type ISharedObjectEvents,
 	SharedObject,
 } from "@fluidframework/shared-object-base/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import {
+	UsageError,
+	extractTelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 import type {
 	IMatrixConsumer,
 	IMatrixProducer,
@@ -970,7 +973,10 @@ export class SharedMatrix<T = any>
 							cellLastWriteTracker: SparseArray2D.load(cellLastWriteTracker),
 						};
 		} catch (error) {
-			this.logger.sendErrorEvent({ eventName: "MatrixLoadFailed" }, error);
+			extractTelemetryLoggerExt(this.logger).sendErrorEvent(
+				{ eventName: "MatrixLoadFailed" },
+				error,
+			);
 		}
 	}
 

@@ -108,6 +108,9 @@ export {
 	makeDetachedNodeId,
 	offsetDetachId,
 	emptyDelta,
+	areDetachedNodeIdsEqual,
+	deltaFieldMapHasVisibleChanges,
+	deltaFieldChangesHaveVisibleChanges,
 } from "./deltaUtil.js";
 
 export {
@@ -123,6 +126,8 @@ export {
 	type DetachedFieldIndexCheckpoint,
 	type ReadOnlyDetachedFieldIndex,
 } from "./detachedFieldIndex.js";
+
+export { type DetachedFieldSummaryData } from "./detachedFieldIndexTypes.js";
 
 export { detachedFieldIndexCodecBuilder } from "./detachedFieldIndexCodecs.js";
 export { DetachedFieldIndexFormatVersion } from "./detachedFieldIndexFormatCommon.js";

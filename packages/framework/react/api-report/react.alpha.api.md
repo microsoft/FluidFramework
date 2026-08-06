@@ -43,6 +43,21 @@ export interface SchemaIncompatibleProps {
     readonly upgradeSchema: () => void;
 }
 
+// @alpha @sealed
+export interface SynchronizedString {
+    readonly selection: TextSelection | undefined;
+    readonly text: string;
+}
+
+// @alpha
+export function syncTextToTree(root: PlainText.Tree, newText: string): void;
+
+// @alpha @input
+export interface TextSelection {
+    readonly end: number;
+    readonly start: number;
+}
+
 // @alpha
 export function toPropTreeNode<T extends TreeNode | TreeLeafValue>(node: T): PropTreeValue<T>;
 
@@ -53,7 +68,7 @@ export function toPropTreeRecord<T extends NodeRecord>(node: T): WrapPropTreeNod
 export function treeDataObject<TSchema extends ImplicitFieldSchema>(treeConfiguration: TreeViewConfiguration<TSchema>, createInitialTree: () => InsertableTreeFieldFromImplicitField<TSchema>): SharedObjectKind<IReactTreeDataObject<TSchema> & IFluidLoadable>;
 
 // @alpha
-export function TreeViewComponent<TSchema extends ImplicitFieldSchema>({ tree, viewComponent: ViewComponent, errorComponent, }: TreeViewProps<TSchema> & {
+export function TreeViewComponent<TSchema extends ImplicitFieldSchema>(input: TreeViewProps<TSchema> & {
     tree: Pick<IReactTreeDataObject<TSchema>, "treeView">;
 }): JSX_2.Element;
 
@@ -90,6 +105,9 @@ export function useTree(subtreeRoot: TreeNode): number;
 
 // @alpha
 export function useTreeObservations<TResult>(trackDuring: () => TResult, options?: ObservationOptions): TResult;
+
+// @alpha
+export function useTreeSynchronizedString(tree: PlainText.Tree, initialSelection?: TextSelection): SynchronizedString;
 
 // @alpha
 export function withMemoizedTreeObservations<TIn>(component: FC<TIn>, options?: ObservationOptions & {

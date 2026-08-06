@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { IIdCompressor } from "./idCompressor.js";
+
 /**
  * A compressed ID that has been normalized into "session space" (see `IdCompressor` for more).
  * Consumer-facing APIs and data structures should use session-space IDs as their lifetime and equality is stable and tied to
@@ -15,8 +17,16 @@ export type SessionSpaceCompressedId = number & {
 
 /**
  * A compressed ID that has been normalized into "op space".
- * Serialized/persisted structures (e.g. ops) should use op-space IDs as a performance optimization, as they require less normalizing when
- * received by a remote client due to the fact that op space for a given compressor is session space for all other compressors.
+ * @remarks
+ * Use {@link IIdCompressor.normalizeToOpSpace} to encode IDs for serialized/persisted structures (e.g. ops), and
+ * {@link IIdCompressor.normalizeToSessionSpace} to decode them for local use.
+ * Note that {@link IIdCompressor.normalizeToSessionSpace} requires additional information to be able to decode the ID: see its documentation for details.
+ *
+ * Op-space IDs are the compressed representation intended for serialization.
+ * Consumer-facing APIs and runtime data structures should generally use {@link SessionSpaceCompressedId},
+ * or {@link StableId}.
+ * @privateRemarks
+ * Session relative IDs are encoded as negative numbers while final IDs are encoded as positive ones.
  * @public
  */
 export type OpSpaceCompressedId = number & {

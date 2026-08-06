@@ -3,17 +3,19 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import-x/no-internal-modules -- #26908: `core-interfaces` internal used in examples
-import { IFluidRunnable } from "@fluidframework/core-interfaces/internal";
 import { SharedCounter } from "@fluidframework/counter/legacy";
 
-// Sample agent to run.
-export class ClickerAgent implements IFluidRunnable {
-	constructor(private readonly counter: SharedCounter) {}
+/**
+ * Simple interface for a runnable agent.
+ */
+interface IRunnable {
+	run(...args: any[]): Promise<void>;
+	stop(reason?: string): void;
+}
 
-	public get IFluidRunnable(): IFluidRunnable {
-		return this;
-	}
+// Sample agent to run.
+export class ClickerAgent implements IRunnable {
+	constructor(private readonly counter: SharedCounter) {}
 
 	private readonly logIncrement = (incrementValue: number, currentValue: number): void => {
 		console.log(`Incremented by ${incrementValue}. New value ${currentValue}`);

@@ -26,6 +26,7 @@ export type BenchmarkResult = BenchmarkError | CollectedData;
 
 /**
  * Returns true if `result` is a {@link BenchmarkError}.
+ * @public
  */
 export function isResultError(result: BenchmarkResult): result is BenchmarkError {
 	return (result as Partial<BenchmarkError>).error !== undefined;

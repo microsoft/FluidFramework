@@ -15,6 +15,7 @@ import type { CounterFilter } from "../../../../feature-libraries/chunked-forest
 import { decode } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { updateShapesAndIdentifiersEncoding } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
+import { IdDecodingContext } from "../../../../util/index.js";
 import type {
 	BufferFormat,
 	EncoderContext,
@@ -41,13 +42,14 @@ export function checkNodeEncode(
 	context: EncoderContext,
 	tree: JsonableTree,
 	incrementalDecoder?: IncrementalDecoder,
+	idCompressor?: IIdCompressor,
 ): BufferFormat {
 	const buffer: BufferFormat = [nodeEncoder.shape];
 	const cursor = cursorForJsonableTreeNode(tree);
 	nodeEncoder.encodeNode(cursor, context, buffer);
 
 	// Check round-trip
-	checkDecode([buffer], [[tree]], context.version, undefined, incrementalDecoder);
+	checkDecode([buffer], [[tree]], context.version, idCompressor, incrementalDecoder);
 
 	return buffer.slice(1);
 }
@@ -93,7 +95,7 @@ function testDecode(
 	expectedTree: JsonableTree[][],
 	identifierFilter: CounterFilter<string>,
 	version: FieldBatchFormatVersion,
-	idCompressor?: IIdCompressor,
+	idCompressor: IIdCompressor = testIdCompressor,
 	incrementalDecoder?: IncrementalDecoder,
 ): EncodedFieldBatchV1OrV2 {
 	const chunk = updateShapesAndIdentifiersEncoding(
@@ -104,18 +106,17 @@ function testDecode(
 
 	// TODO: check chunk matches schema
 
+	// This assumes the encoded data was encoded using the same localSessionId of the current session.
+	// This is ok for these tests which comply with this, but would be very bad to assume in any real use-case.
+	const context = new IdDecodingContext({
+		idCompressor,
+		originatorId: idCompressor.localSessionId,
+	});
 	// Check decode
 	const result = decode(
 		chunk,
-		idCompressor === undefined
-			? {
-					idCompressor: testIdCompressor,
-					originatorId: testIdCompressor.localSessionId,
-				}
-			: {
-					idCompressor,
-					originatorId: idCompressor.localSessionId,
-				},
+
+		context,
 		incrementalDecoder,
 	);
 	assertChunkCursorBatchEquals(result, expectedTree);
@@ -142,19 +143,7 @@ function testDecode(
 		// can't check this due to undefined fields
 		// assert.deepEqual(parsed, chunk);
 		// Instead check that it works properly:
-		const parsedResult = decode(
-			parsed,
-			idCompressor === undefined
-				? {
-						idCompressor: testIdCompressor,
-						originatorId: testIdCompressor.localSessionId,
-					}
-				: {
-						idCompressor,
-						originatorId: idCompressor.localSessionId,
-					},
-			incrementalDecoder,
-		);
+		const parsedResult = decode(parsed, context, incrementalDecoder);
 		assert.deepEqual(parsedResult, result);
 	}
 

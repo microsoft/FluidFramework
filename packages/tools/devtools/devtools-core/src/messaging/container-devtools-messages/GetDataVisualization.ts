@@ -31,6 +31,19 @@ export namespace GetDataVisualization {
 	 *
 	 * Will result in the {@link DataVisualization.Message} message being posted.
 	 *
+	 * @remarks
+	 *
+	 * In addition to requesting the initial visualization, this message registers the consumer's interest in the DDS.
+	 * While interest is registered, the devtools will broadcast automatic {@link DataVisualization.Message} updates
+	 * whenever the DDS changes.
+	 *
+	 * Consumers are expected to release their interest by sending a {@link CloseDataVisualization.Message} once they are
+	 * no longer displaying the DDS (e.g. when the corresponding view is collapsed or unmounted).
+	 * Interest is reference-counted, so each {@link GetDataVisualization.Message} should be balanced by a corresponding
+	 * {@link CloseDataVisualization.Message}.
+	 * Failing to do so will leak the subscription on the client side and will continue broadcasting updates for the DDS until the
+	 * devtools instance is disposed.
+	 *
 	 * @internal
 	 */
 	export interface Message extends IDevtoolsMessage<MessageData> {

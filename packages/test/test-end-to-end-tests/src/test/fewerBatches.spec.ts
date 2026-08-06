@@ -164,7 +164,13 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 		"Op reentry submits two batches due to flush before processing",
 		expectedErrors,
 		async () => {
-			await processOutOfOrderOp({});
+			// The fake sequenced op injected below reuses a sequence number that the
+			// DuplicateBatchDetector has already seen, which would trip its invariants and
+			// short-circuit the flow before the deltaManager's non-Sequential check fires.
+			// Disable batchId tracking here so the test can exercise its actual scenario.
+			await processOutOfOrderOp({
+				"Fluid.ContainerRuntime.DisableBatchIdTracking": true,
+			});
 			assert.strictEqual(capturedBatches.length, 2);
 		},
 	);

@@ -267,7 +267,11 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 
 	private stripTree(tree: ISnapshotTreeEx, groupId: string | undefined): void {
 		tree.blobs = {};
-		tree.groupId = groupId;
+		if (groupId === undefined) {
+			delete tree.groupId;
+		} else {
+			tree.groupId = groupId;
+		}
 		tree.trees = {};
 	}
 

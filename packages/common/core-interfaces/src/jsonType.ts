@@ -15,7 +15,7 @@
  * Prefer using `JsonSerializable<unknown>` or `JsonDeserialized<unknown>` over this type that
  * is an implementation detail.
  *
- * @beta
+ * @public
  */
 export type JsonTypeWith<T> =
 	// eslint-disable-next-line @rushstack/no-new-null
@@ -30,7 +30,7 @@ export type JsonTypeWith<T> =
 /**
  * Portion of {@link JsonTypeWith} that is an object (including array) and not null.
  *
- * @beta
+ * @public
  */
 export type NonNullJsonObjectWith<T> =
 	| { [key: string | number]: JsonTypeWith<T> }
@@ -51,7 +51,7 @@ export type NonNullJsonObjectWith<T> =
  * ```
  * does not prevent later `x = 5`. (Does prevent `x.a = 2`.)
  *
- * @beta
+ * @public
  */
 export type ReadonlyJsonTypeWith<TReadonlyAlternates> =
 	// eslint-disable-next-line @rushstack/no-new-null

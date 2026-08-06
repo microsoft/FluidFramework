@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { defaultLogger } from "./logging";
+import { defaultLogger } from "./logging.js";
 
 const { log } = defaultLogger;
 

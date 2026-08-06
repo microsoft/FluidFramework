@@ -54,7 +54,7 @@ export interface IUrlResolver {
 }
 
 /**
- * Information that can be returned by a lightweight, seperately exported driver function. Used to preanalyze a URL
+ * Information that can be returned by a lightweight, separately exported driver function. Used to preanalyze a URL
  * for driver compatibility and preload information.
  * @legacy @beta
  */

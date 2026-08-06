@@ -14,7 +14,7 @@ import {
 
 import { FluidClientVersion, Versioned } from "../../../codec/index.js";
 import {
-	ClientVersionDispatchingCodecBuilder,
+	VersionDispatchingCodecBuilder,
 	type CodecAndSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../codec/versioned/codec.js";
@@ -22,7 +22,7 @@ import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import { pkgVersion } from "../../../packageVersion.js";
 
 describe("versioned Codecs", () => {
-	describe("ClientVersionDispatchingCodecBuilder", () => {
+	describe("VersionDispatchingCodecBuilder", () => {
 		interface V1 {
 			version: 1;
 			value1: number;
@@ -51,7 +51,7 @@ describe("versioned Codecs", () => {
 			schema: Versioned,
 		};
 
-		const builder = ClientVersionDispatchingCodecBuilder.build("Test", [
+		const builder = VersionDispatchingCodecBuilder.build("Test", [
 			{
 				minVersionForCollab: lowestMinVersionForCollab,
 				formatVersion: 1,
@@ -142,8 +142,41 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 			);
 		});
 
+		it("distinct encode and decode context types", () => {
+			interface EncodeContext {
+				encodeOffset: number;
+			}
+			interface DecodeContext {
+				decodeOffset: number;
+			}
+			interface Encoded {
+				version: 1;
+				value: number;
+			}
+			const contextualCodec: CodecAndSchema<number, EncodeContext, DecodeContext> = {
+				encode: (value, context) => ({ version: 1, value: value + context.encodeOffset }),
+				decode: (data, context) => (data as unknown as Encoded).value + context.decodeOffset,
+				schema: Versioned,
+			};
+			const contextualBuilder = VersionDispatchingCodecBuilder.build("Contextual", [
+				{
+					minVersionForCollab: lowestMinVersionForCollab,
+					formatVersion: 1,
+					codec: contextualCodec,
+				},
+			]);
+			const codec = contextualBuilder.build({
+				minVersionForCollab: "2.0.0",
+				jsonValidator: FormatValidatorBasic,
+			});
+
+			const encoded = codec.encode(5, { encodeOffset: 10 });
+			assert.deepEqual(encoded, { version: 1, value: 15 });
+			assert.equal(codec.decode(encoded, { decodeOffset: -10 }), 5);
+		});
+
 		it("good builds", () => {
-			ClientVersionDispatchingCodecBuilder.build("Test", [
+			VersionDispatchingCodecBuilder.build("Test", [
 				{
 					minVersionForCollab: lowestMinVersionForCollab,
 					formatVersion: 1,
@@ -177,7 +210,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 			if (nonProductionConditionalsIncluded()) {
 				assert.throws(
 					() =>
-						ClientVersionDispatchingCodecBuilder.build("Test", [
+						VersionDispatchingCodecBuilder.build("Test", [
 							{
 								minVersionForCollab: lowestMinVersionForCollab,
 								formatVersion: "1",
@@ -191,7 +224,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 
 				assert.throws(
 					() =>
-						ClientVersionDispatchingCodecBuilder.build("Test", [
+						VersionDispatchingCodecBuilder.build("Test", [
 							{
 								minVersionForCollab: undefined,
 								formatVersion: 1,
@@ -205,7 +238,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 
 				assert.throws(
 					() =>
-						ClientVersionDispatchingCodecBuilder.build("Test", [
+						VersionDispatchingCodecBuilder.build("Test", [
 							{
 								minVersionForCollab: lowestMinVersionForCollab,
 								formatVersion: 1,
@@ -224,7 +257,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 
 				assert.throws(
 					() =>
-						ClientVersionDispatchingCodecBuilder.build("Test", [
+						VersionDispatchingCodecBuilder.build("Test", [
 							{
 								minVersionForCollab: lowestMinVersionForCollab,
 								formatVersion: 1,

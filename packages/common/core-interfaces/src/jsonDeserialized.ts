@@ -8,7 +8,7 @@ import type { InternalUtilityTypes } from "./exposedInternalUtilityTypes.js";
 /**
  * Options for {@link JsonDeserialized}.
  *
- * @beta
+ * @public
  */
 export interface JsonDeserializedOptions {
 	/**
@@ -107,7 +107,7 @@ export interface JsonDeserializedOptions {
  * function foo<T>(): JsonDeserialized<T> { ... }
  * ```
  *
- * @beta
+ * @public
  */
 export type JsonDeserialized<
 	T,

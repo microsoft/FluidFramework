@@ -17,7 +17,7 @@ import {
 import { getApiExtractorConfigFilePath, type PackageJson } from "@fluidframework/build-tools";
 import { writeJson } from "fs-extra/esm";
 import JSON5 from "json5";
-import replace from "replace-in-file";
+import { replaceInFileSync } from "replace-in-file";
 import sortPackageJson from "sort-package-json";
 import {
 	getFlubConfig,
@@ -987,7 +987,7 @@ export const handlers: Handler[] = [
 				);
 			}
 			if (readmeInfo.title !== packageName) {
-				replace.sync({
+				replaceInFileSync({
 					files: readmeInfo.filePath,
 					from: /^(.*)/,
 					to: expectedTitle,

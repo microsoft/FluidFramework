@@ -35,6 +35,10 @@ parameters:
     - default
     - skip
     - force
+- name: allowPublishingToNpmjs
+  displayName: Allow publishing to npmjs.org
+  type: boolean
+  default: false
 - name: interdependencyRange
   displayName: Range to use for interdependencies (only affects releases) (default = ~)
   type: string
@@ -105,6 +109,7 @@ trigger:
     - tools/markdown-magic/*
     - tools/pipelines/build-client.yml
     - tools/pipelines/templates/build-npm-client-package.yml
+    - tools/pipelines/templates/include-generate-publish-metadata.yml
     - tools/pipelines/templates/include-build-lint.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -114,9 +119,10 @@ trigger:
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
     - tools/pipelines/templates/include-git-tag-steps.yml
     - tools/pipelines/templates/include-use-node-version.yml
-    - tools/pipelines/templates/include-process-test-results.yml
     - tools/pipelines/templates/include-policy-check.yml
+    - tools/pipelines/templates/include-vars-telemetry-generator.yml
     - tools/pipelines/templates/upload-dev-manifest.yml
+    - tools/pipelines/templates/upload-telemetry/*
 
 pr:
   branches:
@@ -172,14 +178,16 @@ pr:
     - tools/markdown-magic/*
     - tools/pipelines/build-client.yml
     - tools/pipelines/templates/build-npm-client-package.yml
+    - tools/pipelines/templates/include-generate-publish-metadata.yml
     - tools/pipelines/templates/include-build-lint.yml
     - tools/pipelines/templates/include-policy-check.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-use-node-version.yml
-    - tools/pipelines/templates/include-process-test-results.yml
+    - tools/pipelines/templates/include-vars-telemetry-generator.yml
     - tools/pipelines/templates/upload-dev-manifest.yml
+    - tools/pipelines/templates/upload-telemetry/*
 
 variables:
   - template: /tools/pipelines/templates/include-vars.yml@self
@@ -191,14 +199,19 @@ extends:
   template: /tools/pipelines/templates/build-npm-client-package.yml@self
   parameters:
     publish: ${{ variables.publish }}
+    allowPublishingToNpmjs: ${{ parameters.allowPublishingToNpmjs }}
+    # Client still publishes from this pipeline. Flip to false to hand publishing over to the
+    # dedicated publish pipeline.
+    publishAsPartOfBuild: false
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     packageTypesOverride: ${{ parameters.packageTypesOverride }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     interdependencyRange: ${{ parameters.interdependencyRange }}
-    packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
-    packageManager: pnpm
-    testCoverage: ${{ eq(variables['System.TeamProject'], 'public' ) }} # disabling code coverage for internal project since we don't use it
+    # Disabled: coverage performance regressed in Node 22 and further in Node 24, causing test timeouts
+    # that need mitigation before coverage can be reenabled.
+    # testCoverage: ${{ eq(variables['System.TeamProject'], 'public' ) }} # disabling code coverage for internal project since we don't use it
+    testCoverage: false
     reportCodeCoverageComparison: ${{ eq(variables['Build.Reason'], 'PullRequest') }}
     buildDirectory: ${{ variables.FluidFrameworkDirectory }}
     tagName: client
@@ -224,9 +237,5 @@ extends:
     coverageTests:
     - { name: "ci:test:mocha", jobName: "MochaTest" }
     - { name: "ci:test:realsvc:local", jobName: "RealsvcLocalTest" }
-    testResultDirs:
-    - nyc/examples
-    - nyc/experimental
-    - nyc/packages
     checks:
     - checks

@@ -1,0 +1,235 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { strict as assert } from "node:assert";
+
+import type { ClientConnectionId } from "@fluid-internal/presence-definitions";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { IClient, ISequencedClient } from "@fluidframework/driver-definitions";
+import { MockAudience, MockQuorumClients } from "@fluidframework/test-runtime-utils/internal";
+import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
+
+import type { IEphemeralRuntime } from "@fluid-internal/presence-runtime/internal/test";
+
+/**
+ * Mock {@link ClientConnectionId} for the local client in tests.
+ */
+export const initialLocalClientConnectionId =
+	"localClient" as const satisfies ClientConnectionId;
+
+type ClientData = [string, IClient];
+
+function buildClientDataArray(clientIds: string[], numWriteClients: number): ClientData[] {
+	const clients: ClientData[] = [];
+	for (const [index, clientId] of clientIds.entries()) {
+		// eslint-disable-next-line unicorn/prefer-code-point
+		const stringId = String.fromCharCode(index + 65);
+		const name = stringId.repeat(10);
+		const userId = `${name}@microsoft.com`;
+		const user = {
+			id: userId,
+		};
+		clients.push([
+			clientId,
+			{
+				mode: index < numWriteClients ? "write" : "read",
+				details: { capabilities: { interactive: true } },
+				permission: [],
+				user,
+				scopes: [],
+			},
+		]);
+	}
+	return clients;
+}
+
+/**
+ * Creates a mock {@link @fluidframework/protocol-definitions#IQuorumClients} for testing.
+ */
+function makeMockQuorum(clients: ClientData[]): MockQuorumClients {
+	return new MockQuorumClients(
+		...clients
+			.filter(([, client]) => client.mode === "write")
+			.map(([clientId, client], index): [string, Partial<ISequencedClient>] => [
+				clientId,
+				{ client, sequenceNumber: 10 * index },
+			]),
+	);
+}
+
+/**
+ * Creates a mock {@link @fluidframework/container-definitions#IAudience} for testing.
+ */
+function makeMockAudience(clients: ClientData[]): MockAudience {
+	const audience = new MockAudience();
+	for (const [clientId, client] of clients) {
+		audience.addMember(clientId, client);
+	}
+	return audience;
+}
+
+/**
+ * Mock ephemeral runtime for testing
+ */
+export class MockEphemeralRuntime implements IEphemeralRuntime {
+	public clientId: string | undefined;
+	public joined: boolean = false;
+	public logger: ITelemetryBaseLogger;
+	public readonly quorum: MockQuorumClients;
+	public readonly audience: MockAudience;
+
+	public readonly listeners: {
+		joined: ((props: { clientId: ClientConnectionId; canWrite: boolean }) => void)[];
+		disconnected: (() => void)[];
+	} = {
+		joined: [],
+		disconnected: [],
+	};
+
+	private isSupportedEvent(event: string): event is keyof typeof this.listeners {
+		return event in this.listeners;
+	}
+
+	public constructor(
+		logger: ITelemetryBaseLogger = new EventAndErrorTrackingLogger(),
+		public readonly signalsExpected: Parameters<IEphemeralRuntime["submitSignal"]>[] = [],
+	) {
+		this.logger = logger;
+
+		const numWriteClients = 6;
+		const clientsData = buildClientDataArray(
+			[
+				"client0",
+				"client1",
+				initialLocalClientConnectionId,
+				"client3",
+				"client4",
+				"client5",
+				"client6",
+				"client7",
+			],
+			numWriteClients,
+		);
+		this.quorum = makeMockQuorum(clientsData);
+		this.audience = makeMockAudience(clientsData);
+		this.events = {
+			on: (
+				event: string,
+				listener: (...args: any[]) => void,
+				// Events style eventing does not lend itself to union that
+				// IEphemeralRuntime is derived from, so we are using `any` here
+				// but meet the intent of the interface.
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			): any => {
+				if (!this.isSupportedEvent(event)) {
+					throw new Error(`Event ${event} is not supported`);
+				}
+				// Switch to allowing a single listener as commented when
+				// implementation uses a single "joined" listener.
+				// if (this.listeners[event]) {
+				// 	throw new Error(`Event ${event} already has a listener`);
+				// }
+				// this.listeners[event] = listener;
+				if (this.listeners[event].length > 1) {
+					throw new Error(`Event ${event} already has multiple listeners`);
+				}
+				this.listeners[event].push(listener);
+				return this;
+			},
+			off: (
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			): any => {
+				throw new Error("IEphemeralRuntime.off method not implemented.");
+			},
+		};
+	}
+
+	public assertAllSignalsSubmitted(): void {
+		assert.strictEqual(
+			this.signalsExpected.length,
+			0,
+			`Missing signals [\n${this.signalsExpected
+				.map(
+					([m]) =>
+						`\t{ type: ${m.type}, content: ${JSON.stringify(m.content, undefined, "\t")}, targetClientId: ${m.targetClientId} }`,
+				)
+				.join(",\n\t")}\n]`,
+		);
+	}
+
+	/**
+	 * Removes a member from both audience and quorum.
+	 */
+	public removeMember(clientId: ClientConnectionId): void {
+		const client = this.audience.getMember(clientId);
+		assert(client !== undefined, `Attempting to remove unknown connection: ${clientId}`);
+		if (client.mode === "write") {
+			this.quorum.removeMember(clientId);
+		}
+		this.audience.removeMember(clientId);
+	}
+
+	public connect(clientId: string, oldClientId: string | undefined): void {
+		// during connect audience is refreshed - snapshot current members
+		const members = this.audience.getMembers();
+
+		this.audience.setCurrentClientId(clientId);
+
+		this.clientId = clientId;
+		this.joined = true;
+		for (const listener of this.listeners.joined) {
+			listener({ clientId, canWrite: false });
+		}
+
+		// simulate expected "clear"
+		for (const [memberClientId] of members) {
+			assert(
+				memberClientId !== clientId,
+				"`connect` should not use clientId already in audience",
+			);
+			this.audience.removeMember(memberClientId);
+		}
+		// restore members
+		for (const [memberClientId, client] of members) {
+			if (memberClientId !== oldClientId) {
+				this.audience.addMember(memberClientId, client);
+			}
+		}
+		// finally add new connection to audience
+		for (const [newClientId, newMember] of buildClientDataArray([clientId], 1)) {
+			this.audience.addMember(newClientId, newMember);
+		}
+	}
+
+	public disconnect(): void {
+		this.joined = false;
+		for (const listener of this.listeners.disconnected) {
+			listener();
+		}
+	}
+
+	// #region IEphemeralRuntime
+	public getJoinedStatus = (): ReturnType<IEphemeralRuntime["getJoinedStatus"]> => {
+		return this.joined ? "joinedForReading" : "disconnected";
+	};
+	public getClientId = (): ReturnType<IEphemeralRuntime["getClientId"]> => this.clientId;
+
+	public events: IEphemeralRuntime["events"];
+
+	public getQuorum: () => ReturnType<IEphemeralRuntime["getQuorum"]> = () => this.quorum;
+	public getAudience: () => ReturnType<IEphemeralRuntime["getAudience"]> = () => this.audience;
+
+	public submitSignal: IEphemeralRuntime["submitSignal"] = (...args: unknown[]) => {
+		if (this.signalsExpected.length === 0) {
+			throw new Error(`Unexpected signal: ${JSON.stringify(args)}`);
+		}
+		const expected = this.signalsExpected.shift();
+		assert.deepStrictEqual(args, expected, "Unexpected signal");
+	};
+
+	public supportedFeatures: ReadonlySet<string> = new Set(["submit_signals_v2"]);
+
+	// #endregion
+}

@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { type Static, Type } from "@sinclair/typebox";
+import * as Type from "@sinclair/typebox";
+import type { Static } from "@sinclair/typebox";
 
 import { unionOptions } from "../../../../codec/index.js";
 
@@ -17,15 +18,19 @@ export type EncodedIncrementalChunkShape = Static<typeof EncodedIncrementalChunk
 export const EncodedIncrementalChunkShape = Type.Literal(0);
 
 /**
+ * The chunk shapes supported by the V2 format.
+ * @remarks
+ * See {@link EncodedChunkShapeV2}.
+ */
+export const shapesV2 = {
+	...shapesV1,
+	e: Type.Optional(EncodedIncrementalChunkShape),
+} as const;
+
+/**
  * V2 extension of {@link EncodedChunkShapeV1}.
  * @remarks
  * See {@link DiscriminatedUnionDispatcher} for more information on this pattern.
  */
 export type EncodedChunkShapeV2 = Static<typeof EncodedChunkShapeV2>;
-export const EncodedChunkShapeV2 = Type.Object(
-	{
-		...shapesV1,
-		e: Type.Optional(EncodedIncrementalChunkShape),
-	},
-	unionOptions,
-);
+export const EncodedChunkShapeV2 = Type.Object(shapesV2, unionOptions);

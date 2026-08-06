@@ -9,7 +9,13 @@ import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { take } from "@fluid-private/stochastic-test-utils";
 import { createChildLogger, MockLogger } from "@fluidframework/telemetry-utils/internal";
 
-import { IdCompressor, createIdCompressor, deserializeIdCompressor } from "../idCompressor.js";
+import {
+	IdCompressor,
+	createIdCompressor,
+	deserializeIdCompressor,
+	serializeIdCompressor,
+	toIdCompressorWithCore,
+} from "../idCompressor.js";
 import type {
 	OpSpaceCompressedId,
 	SerializedIdCompressorWithNoSession,
@@ -841,6 +847,87 @@ describe("IdCompressor", () => {
 			);
 			assert.equal(normalizedToClient1SessionSpace, id);
 		});
+
+		describe("tryNormalizeToSessionSpaceWithoutSession", () => {
+			it("returns undefined for a non-final op-space ID", () => {
+				// A local ID generated before finalization is non-final, and is
+				// indistinguishable from a remote local without the originator session.
+				const compressor = CompressorFactory.createCompressor(Client.Client1);
+				const localId = compressor.generateCompressedId();
+				assert(isLocalId(localId));
+				const opSpaceId = compressor.normalizeToOpSpace(localId);
+				assert(isLocalId(opSpaceId));
+				assert.equal(
+					compressor.tryNormalizeToSessionSpaceWithoutSession(opSpaceId),
+					undefined,
+				);
+			});
+
+			it("normalizes a finalized id created by the local session back to its local form", () => {
+				// A final id that corresponds to a local id in the local session must map
+				// back to that local id — the cast-to-SessionSpace would have returned the
+				// wrong value (the final id) and lost the local-equivalence relationship.
+				const compressor = CompressorFactory.createCompressor(Client.Client1);
+				const localId = compressor.generateCompressedId();
+				compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+				const opSpaceId = compressor.normalizeToOpSpace(localId);
+				assert(isFinalId(opSpaceId));
+				const sessionSpaceId = compressor.tryNormalizeToSessionSpaceWithoutSession(opSpaceId);
+				// Round-trips through normalizeToSessionSpace with the local session,
+				// proving the value is correct.
+				assert.equal(
+					sessionSpaceId,
+					compressor.normalizeToSessionSpace(opSpaceId, compressor.localSessionId),
+				);
+				// Specifically, it maps back to the original local id, not the final id.
+				assert.equal(sessionSpaceId, localId);
+			});
+
+			it("normalizes a finalized id from a remote session", () => {
+				const compressor1 = CompressorFactory.createCompressor(Client.Client1);
+				const compressor2 = CompressorFactory.createCompressor(Client.Client2);
+				const remoteId = compressor1.generateCompressedId();
+				const range = compressor1.takeNextCreationRange();
+				compressor1.finalizeCreationRange(range);
+				compressor2.finalizeCreationRange(range);
+				const remoteOpSpaceId = compressor1.normalizeToOpSpace(remoteId);
+				assert(isFinalId(remoteOpSpaceId));
+				// compressor2 has observed this id as finalized.
+				const result = compressor2.tryNormalizeToSessionSpaceWithoutSession(remoteOpSpaceId);
+				// Without the originator the result equals the with-originator normalization.
+				assert.equal(
+					result,
+					compressor2.normalizeToSessionSpace(remoteOpSpaceId, compressor1.localSessionId),
+				);
+			});
+
+			it("normalizes an eagerly-allocated final ID created by the local session", () => {
+				const compressor = CompressorFactory.createCompressor(Client.Client1, 5);
+				compressor.generateCompressedId();
+				compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+				const eagerFinalId = compressor.generateCompressedId();
+				assert(isFinalId(eagerFinalId));
+				const opSpaceId = compressor.normalizeToOpSpace(eagerFinalId);
+				assert.equal(
+					compressor.tryNormalizeToSessionSpaceWithoutSession(opSpaceId),
+					eagerFinalId,
+				);
+			});
+
+			it("throws if the final id is beyond the finalized id limit", () => {
+				// A final id that has never been observed as finalized cannot be safely
+				// returned — the cast-to-SessionSpace would have silently produced a value
+				// the compressor cannot decompress.
+				const compressor = CompressorFactory.createCompressor(Client.Client1);
+				// 999_999 is well beyond anything this compressor has finalized.
+				const unknownFinalId = 999_999 as OpSpaceCompressedId;
+				assert(isFinalId(unknownFinalId));
+				assert.throws(
+					() => compressor.tryNormalizeToSessionSpaceWithoutSession(unknownFinalId),
+					(e: Error) => e.message === "Unknown op space ID.",
+				);
+			});
+		});
 	});
 
 	describe("Telemetry", () => {
@@ -1006,7 +1093,7 @@ describe("IdCompressor", () => {
 
 		it("correctly passes logger when no session specified", () => {
 			const mockLogger = new MockLogger();
-			const compressor = createIdCompressor(mockLogger);
+			const compressor = toIdCompressorWithCore(createIdCompressor(mockLogger));
 			compressor.generateCompressedId();
 			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
 			mockLogger.assertMatchAny([
@@ -1088,9 +1175,11 @@ describe("IdCompressor", () => {
 			compressor.generateCompressedId();
 			const serializedWithSession = compressor.serialize(true);
 			// Resume with logger and ensure telemetry emits on serialize
-			const resumed = deserializeIdCompressor(
-				serializedWithSession,
-				createChildLogger({ logger: mockLogger }),
+			const resumed = toIdCompressorWithCore(
+				deserializeIdCompressor(
+					serializedWithSession,
+					createChildLogger({ logger: mockLogger }),
+				),
 			);
 			resumed.serialize(false);
 			mockLogger.assertMatchAny([
@@ -1106,10 +1195,12 @@ describe("IdCompressor", () => {
 			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
 			const serializedNoSession = compressor.serialize(false);
 			const newSessionId = createSessionId();
-			const resumed = deserializeIdCompressor(
-				serializedNoSession,
-				newSessionId,
-				createChildLogger({ logger: mockLogger }),
+			const resumed = toIdCompressorWithCore(
+				deserializeIdCompressor(
+					serializedNoSession,
+					newSessionId,
+					createChildLogger({ logger: mockLogger }),
+				),
 			);
 			resumed.serialize(false);
 			mockLogger.assertMatchAny([
@@ -1148,6 +1239,25 @@ describe("IdCompressor", () => {
 			mockLogger.assertMatchAny([
 				{ eventName: "RuntimeIdCompressor:SerializedIdCompressorSize" },
 			]);
+		});
+	});
+
+	describe("serializeIdCompressor", () => {
+		it("produces the same result as the underlying serialize(true)", () => {
+			const compressor = CompressorFactory.createCompressor(Client.Client1);
+			compressor.generateCompressedId();
+			const direct = compressor.serialize(true);
+			const wrapper = serializeIdCompressor(compressor, true);
+			assert.deepStrictEqual(wrapper, direct);
+		});
+
+		it("produces the same result as the underlying serialize(false)", () => {
+			const compressor = CompressorFactory.createCompressor(Client.Client1);
+			compressor.generateCompressedId();
+			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+			const direct = compressor.serialize(false);
+			const wrapper = serializeIdCompressor(compressor, false);
+			assert.deepStrictEqual(wrapper, direct);
 		});
 	});
 

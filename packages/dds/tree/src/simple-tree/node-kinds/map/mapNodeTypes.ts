@@ -13,10 +13,10 @@ import type {
 } from "../../core/index.js";
 import type { SchemaType, SimpleMapNodeSchema } from "../../simpleSchema.js";
 
-import type { MapNodeInsertableData, TreeMapNode } from "./mapNode.js";
+import type { MapNodeInsertableData, TreeMapNodeAlpha } from "./mapNode.js";
 
 /**
- * A schema for customizable {@link (TreeMapNode:interface)}s.
+ * A schema for customizable {@link (TreeMapNodeAlpha:interface)}s.
  * @system @sealed @alpha
  */
 export interface MapNodeCustomizableSchema<
@@ -27,7 +27,7 @@ export interface MapNodeCustomizableSchema<
 > extends TreeNodeSchemaClass<
 			TName,
 			NodeKind.Map,
-			TreeMapNode<T> & WithType<TName, NodeKind.Map, T>,
+			TreeMapNodeAlpha<T> & WithType<TName, NodeKind.Map, T>,
 			MapNodeInsertableData<T>,
 			ImplicitlyConstructable,
 			T,
@@ -37,7 +37,7 @@ export interface MapNodeCustomizableSchema<
 		SimpleMapNodeSchema<SchemaType.View, TCustomMetadata> {}
 
 /**
- * A schema for POJO emulation mode {@link (TreeMapNode:interface)}s.
+ * A schema for POJO emulation mode {@link (TreeMapNodeAlpha:interface)}s.
  * @system @sealed @alpha
  */
 export interface MapNodePojoEmulationSchema<
@@ -48,7 +48,7 @@ export interface MapNodePojoEmulationSchema<
 > extends TreeNodeSchemaNonClass<
 			TName,
 			NodeKind.Map,
-			TreeMapNode<T> & WithType<TName, NodeKind.Map, T>,
+			TreeMapNodeAlpha<T> & WithType<TName, NodeKind.Map, T>,
 			MapNodeInsertableData<T>,
 			ImplicitlyConstructable,
 			T,
@@ -58,7 +58,7 @@ export interface MapNodePojoEmulationSchema<
 		SimpleMapNodeSchema<SchemaType.View, TCustomMetadata> {}
 
 /**
- * A schema for {@link (TreeMapNode:interface)}s.
+ * A schema for {@link (TreeMapNodeAlpha:interface)}s.
  * @privateRemarks
  * This could have generic arguments added and forwarded.
  * The expected use-cases for this don't need them however, and if they did want an argument it would probably be the allowed types;

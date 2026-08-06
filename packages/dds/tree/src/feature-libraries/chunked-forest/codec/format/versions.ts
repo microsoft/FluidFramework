@@ -10,6 +10,7 @@ import { strictEnum, type Values } from "../../../../util/index.js";
 import { EncodedFieldBatchGeneric } from "./formatGeneric.js";
 import { EncodedChunkShapeV1 } from "./formatV1.js";
 import { EncodedChunkShapeV2 } from "./formatV2.js";
+import { EncodedChunkShapeVTextExperimental } from "./formatVText.js";
 
 /**
  * The format version for the field batch.
@@ -29,7 +30,26 @@ export const FieldBatchFormatVersion = strictEnum("FieldBatchFormatVersion", {
 	 * {@link EncodedIncrementalChunkShape} was added in this version.
 	 */
 	v2: 2,
+	/**
+	 * Experimental codec with optimizations for text.
+	 */
+	vTextExperimental: "text",
 });
+
+/**
+ * Whether the given format version supports incremental chunk encoding.
+ *
+ * @remarks
+ * This helper should be used for comparison since experimental versions
+ * can be a string.
+ */
+export function supportsIncrementalEncoding(version: FieldBatchFormatVersion): boolean {
+	if (version === FieldBatchFormatVersion.v1) {
+		return false;
+	}
+
+	return true;
+}
 
 /**
  * Encoded {@link FieldBatch} using V1 format.
@@ -54,6 +74,17 @@ export const EncodedFieldBatchV2 = EncodedFieldBatchGeneric(
 );
 
 /**
+ * Encoded {@link FieldBatch} using the experimental text optimized format.
+ */
+export type EncodedFieldBatchVTextExperimental = Static<
+	typeof EncodedFieldBatchVTextExperimental
+>;
+export const EncodedFieldBatchVTextExperimental = EncodedFieldBatchGeneric(
+	FieldBatchFormatVersion.vTextExperimental,
+	EncodedChunkShapeVTextExperimental,
+);
+
+/**
  * Encoded {@link FieldBatch}, which might use V2 features, but might also have been from a V1 encoder.
  * @remarks
  * Type wise, equivalent to V2, as that is a superset of V1.
@@ -73,9 +104,14 @@ export type EncodedFieldBatchV1OrV2 = EncodedFieldBatchV1 | EncodedFieldBatchV2;
 export type EncodedFieldBatchV1AndV2 = EncodedFieldBatchV1 & EncodedFieldBatchV2;
 
 /**
- * Encoded chunk shape, which might use V2 features, but might also have been from a V1 encoder.
+ * An encoded chunk shape from any known {@link FieldBatchFormatVersion}.
+ *
  * @remarks
- * Type wise, equivalent to V2, as that is a superset of V1.
- * Used instead of just V2 for clarity.
+ * Use this when working with chunk shapes uniformly across versions — for example, in the
+ * shared decoder dispatcher and in encoder shape base classes. New format versions should
+ * add their chunk shape variant to this union.
  */
-export type EncodedChunkShapeV1OrV2 = EncodedChunkShapeV1 | EncodedChunkShapeV2;
+export type EncodedChunkShape =
+	| EncodedChunkShapeV1
+	| EncodedChunkShapeV2
+	| EncodedChunkShapeVTextExperimental;

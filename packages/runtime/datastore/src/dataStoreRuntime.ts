@@ -29,7 +29,6 @@ import type {
 	IFluidDataStoreRuntime,
 	IFluidDataStoreRuntimeEvents,
 	IDeltaManagerErased,
-	IFluidDataStoreRuntimeAlpha,
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	type IClientDetails,
@@ -64,7 +63,6 @@ import {
 	encodeHandlesInContainerRuntime,
 	type IFluidDataStorePolicies,
 	type MinimumVersionForCollab,
-	asLegacyAlpha,
 	currentSummarizeStepPrefix,
 	currentSummarizeStepPropertyName,
 } from "@fluidframework/runtime-definitions/internal";
@@ -80,22 +78,26 @@ import {
 	exceptionToResponse,
 	generateHandleContextPath,
 	processAttachMessageGCData,
+	dataStoreLoadTelemetryProps,
 	toFluidHandleInternal,
 	unpackChildNodesUsedRoutes,
 	toDeltaManagerErased,
 	encodeCompactIdToString,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	type ITelemetryLoggerExt,
 	DataProcessingError,
 	LoggingError,
 	type MonitoringContext,
 	UsageError,
 	createChildMonitoringContext,
+	extractTelemetryLoggerExt,
 	generateStack,
 	raiseConnectedEvent,
 	tagCodeArtifacts,
+	toITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
+// eslint-disable-next-line import-x/no-internal-modules -- Needed to avoid specialized /internal ITelemetryLoggerExt
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/legacy";
 import { v4 as uuid } from "uuid";
 
 import { type IChannelContext, summarizeChannel } from "./channelContext.js";
@@ -354,7 +356,7 @@ export class FluidDataStoreRuntime
 	private readonly audience: IAudience;
 	private readonly mc: MonitoringContext;
 	public get logger(): ITelemetryLoggerExt {
-		return this.mc.logger;
+		return toITelemetryLoggerExt(this.mc.logger);
 	}
 
 	/**
@@ -383,9 +385,13 @@ export class FluidDataStoreRuntime
 	private readonly submitMessagesWithoutEncodingHandles: boolean;
 
 	/**
-	 * See `IFluidDataStoreRuntimeInternalConfig.minVersionForCollab`.
+	 * See IFluidDataStoreRuntimeInternalConfig.minVersionForCollab
+	 *
+	 * Note: this class doesn't declare that it implements IFluidDataStoreRuntimeInternalConfig,
+	 * and we keep this property as private, but consumers may optimistically cast
+	 * to the internal interface to access this property.
 	 */
-	public readonly minVersionForCollab?: MinimumVersionForCollab | undefined;
+	public readonly minVersionForCollab: MinimumVersionForCollab;
 
 	/**
 	 * Create an instance of a DataStore runtime.
@@ -417,8 +423,12 @@ export class FluidDataStoreRuntime
 			logger: dataStoreContext.baseLogger,
 			namespace: "FluidDataStoreRuntime",
 			properties: {
-				all: { dataStoreId: uuid(), dataStoreVersion: pkgVersion },
-				error: { inStagingMode: () => this.inStagingMode, isDirty: () => this.isDirty },
+				all: {
+					dataStoreVersion: pkgVersion,
+					...dataStoreLoadTelemetryProps(dataStoreContext),
+					inStagingMode: () => this.inStagingMode,
+					isDirty: () => this.isDirty,
+				},
 			},
 		});
 
@@ -498,7 +508,28 @@ export class FluidDataStoreRuntime
 		}
 
 		this.entryPoint = new FluidObjectHandle<FluidObject>(
-			new LazyPromise(async () => provideEntryPoint(this)),
+			new LazyPromise(async () =>
+				provideEntryPoint(this).catch((error) => {
+					let packagePath: readonly string[] = [];
+					try {
+						packagePath = this.dataStoreContext.packagePath;
+					} catch {
+						// `packagePath` may not be available during early load failures.
+					}
+					const errorWrapped = DataProcessingError.wrapIfUnrecognized(
+						error,
+						"entryPointInitialization",
+					);
+					errorWrapped.addTelemetryProperties(
+						dataStoreLoadTelemetryProps({ id: this.dataStoreContext.id, packagePath }),
+					);
+					this.mc.logger.sendErrorEvent(
+						{ eventName: "EntryPointInitializationFailure" },
+						errorWrapped,
+					);
+					throw errorWrapped;
+				}),
+			),
 			"",
 			this.objectsRoutingContext,
 		);
@@ -538,16 +569,16 @@ export class FluidDataStoreRuntime
 	}
 
 	/**
-	 * Implementation of IFluidDataStoreRuntimeAlpha.inStagingMode
+	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.inStagingMode}
 	 */
-	private get inStagingMode(): IFluidDataStoreRuntimeAlpha["inStagingMode"] {
-		return asLegacyAlpha(this.dataStoreContext.containerRuntime)?.inStagingMode;
+	public get inStagingMode(): boolean {
+		return this.dataStoreContext.containerRuntime.inStagingMode;
 	}
 
 	/**
-	 * Implementation of IFluidDataStoreRuntimeAlpha.isDirty
+	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.isDirty}
 	 */
-	private get isDirty(): IFluidDataStoreRuntimeAlpha["isDirty"] {
+	public get isDirty(): boolean {
 		return this.pendingOpCount.value > 0;
 	}
 
@@ -721,7 +752,7 @@ export class FluidDataStoreRuntime
 			this,
 			this.dataStoreContext,
 			this.dataStoreContext.storage,
-			this.logger,
+			extractTelemetryLoggerExt(this.logger),
 			(content, localOpMetadata) => this.submitChannelOp(channel.id, content, localOpMetadata),
 			(address: string) => this.setChannelDirty(address),
 		);
@@ -739,7 +770,7 @@ export class FluidDataStoreRuntime
 			this,
 			this.dataStoreContext,
 			this.dataStoreContext.storage,
-			this.logger,
+			extractTelemetryLoggerExt(this.logger),
 			(content, localOpMetadata) => this.submitChannelOp(id, content, localOpMetadata),
 			(address: string) => this.setChannelDirty(address),
 			tree,
@@ -830,7 +861,7 @@ export class FluidDataStoreRuntime
 			object.setConnectionState(connected, clientId);
 		}
 
-		raiseConnectedEvent(this.logger, this, connected, clientId);
+		raiseConnectedEvent(extractTelemetryLoggerExt(this.logger), this, connected, clientId);
 	}
 
 	private _readonly: boolean;
@@ -1544,8 +1575,9 @@ export class FluidDataStoreRuntime
 			...tagCodeArtifacts({
 				channelType,
 				channelId,
-				fluidDataStoreId: this.id,
-				fluidDataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
+				// Properties renamed in 2.103.0 (present via logger common props):
+				// fluidDataStoreId -> dataStoreId
+				// fluidDataStorePackagePath -> dataStorePackagePath
 			}),
 			stack: generateStack(30),
 		});
@@ -1628,6 +1660,9 @@ export const mixinRequestHandler = (
  * Or undefined not to add anything to summary.
  * @param Base - base class, inherits from FluidDataStoreRuntime
  * @legacy @beta
+ * @deprecated This API is deprecated and will be removed in a future release. There is no replacement for it.
+ * @privateRemarks
+ * This should not be removed until all consumers are migrated off using it. See AB#78575.
  */
 export const mixinSummaryHandler = (
 	handler: (

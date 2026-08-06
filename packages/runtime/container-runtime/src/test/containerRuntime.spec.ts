@@ -53,6 +53,7 @@ import type {
 	ISequencedMessageEnvelope,
 	ITelemetryContext,
 	ISummarizeInternalResult,
+	StagingModeChangedEvent,
 } from "@fluidframework/runtime-definitions/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
@@ -79,6 +80,7 @@ import {
 	ContainerRuntime,
 	type IContainerRuntimeOptions,
 	type IPendingRuntimeState,
+	agentSchedulerId,
 	defaultPendingOpsWaitTimeoutMs,
 	getSingleUseLegacyLogCallback,
 	type ContainerRuntimeOptionsInternal,
@@ -436,11 +438,7 @@ describe("Runtime", () => {
 				let batchEnd = 0;
 				let callsToEnsure = 0;
 				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
-					context: getMockContext({
-						settings: {
-							"Fluid.ContainerRuntime.enableBatchIdTracking": true,
-						},
-					}) as IContainerContext,
+					context: getMockContext() as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					runtimeOptions: {},
@@ -480,13 +478,19 @@ describe("Runtime", () => {
 				assert.strictEqual(containerRuntime.isDirty, false);
 			});
 
-			for (const enableBatchIdTracking of [true, undefined])
-				it("Replaying ops should resend in correct order, with batch ID if applicable", async () => {
+			// BatchId tracking is on by default (TurnBased mode); the kill-switch suppresses stamping.
+			for (const variant of [
+				{ name: "default (no settings)", settings: {}, expectStamped: true },
+				{
+					name: "kill-switch active",
+					settings: { "Fluid.ContainerRuntime.DisableBatchIdTracking": true },
+					expectStamped: false,
+				},
+			])
+				it(`Replaying ops should resend in correct order, with batch ID if applicable (${variant.name})`, async () => {
 					const { runtime } = await ContainerRuntime.loadRuntime2({
 						context: getMockContext({
-							settings: {
-								"Fluid.ContainerRuntime.enableBatchIdTracking": enableBatchIdTracking, // batchId only stamped if true
-							},
+							settings: variant.settings,
 						}) as IContainerContext,
 						registry: new FluidDataStoreRegistry([]),
 						existing: false,
@@ -524,7 +528,7 @@ describe("Runtime", () => {
 						);
 					}
 
-					if (enableBatchIdTracking === true) {
+					if (variant.expectStamped) {
 						assert(
 							batchIdMatchesUnsentFormat(
 								// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -649,21 +653,41 @@ describe("Runtime", () => {
 				await Promise.resolve();
 
 				// Generate another ID and submit a data store op referencing it.
-				// This triggers submitIdAllocationOpIfNeeded → takeNextCreationRange.
+				// At flush time, the JIT generateIdAllocationOp callback calls takeNextCreationRange.
 				// Because the unfinalized range was released during replay, both IDs
 				// are included in the resulting allocation range.
 				const id2 = compressor.generateCompressedId();
 				submitDataStoreOp(containerRuntime, "someDS", genTestDataStoreMessage({ id: id2 }));
 
-				// Let the Outbox flush so we can check submittedOps length
+				// Let the Outbox flush so we can check submittedOps length.
+				// With JIT ID allocation, the ID alloc op is prepended to the main batch,
+				// which gets grouped into a single grouped batch op.
 				await Promise.resolve();
-				assert.strictEqual(submittedOps.length, 2, "Expected 1 ID Allocation + 1 data op");
+				assert.strictEqual(
+					submittedOps.length,
+					1,
+					"Expected 1 grouped batch (containing ID Allocation + data op)",
+				);
+
+				// The grouped batch contains the ID allocation as its first inner message.
+				// Extract the ID allocation range from it to finalize.
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any -- test-only: extracting untyped grouped batch contents
+				const groupedContents = submittedOps[0].contents;
+				assert(
+					Array.isArray(groupedContents),
+					"Expected grouped batch contents to be an array",
+				);
+				assert.strictEqual(
+					groupedContents.length,
+					2,
+					"Expected 2 inner messages in grouped batch",
+				);
 
 				// Simulate processing the ID Allocation ack — finalize the range.
 				// Without the call to resetUnfinalizedCreationRange in replayPendingStates,
 				// this results in a "Ranges finalized out of order" error.
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
-				compressor.finalizeCreationRange(submittedOps[0].contents);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access -- test-only: extracting untyped grouped batch contents
+				compressor.finalizeCreationRange(groupedContents[0].contents.contents);
 
 				// Both IDs should now be finalized (positive final IDs in op space).
 				// Without resetUnfinalizedCreationRange, id1 would remain a local-only
@@ -900,8 +924,20 @@ describe("Runtime", () => {
 							{ batch: false },
 						];
 
+						// In TurnBased mode batchId tracking is on by default, so resubmitted batches
+						// will also carry a batchId on their first message. Strip it before comparing
+						// — this test cares about batch boundaries, not batchId stamping.
+						const normalizedMetadata = submittedOpsMetadata.map((m) => {
+							if (m === undefined) {
+								return undefined;
+							}
+							// eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-unsafe-assignment
+							const { batchId: _ignored, ...rest } = m as { batchId?: string };
+							return Object.keys(rest).length === 0 ? undefined : rest;
+						});
+
 						assert.deepStrictEqual(
-							submittedOpsMetadata,
+							normalizedMetadata,
 							expectedBatchMetadata,
 							"batch metadata does not match",
 						);
@@ -1145,6 +1181,61 @@ describe("Runtime", () => {
 			});
 		});
 
+		describe("Staged changes flag", () => {
+			const createMockContext = (
+				attachState: AttachState,
+				addPendingMsg: boolean,
+			): Partial<IContainerContext> => {
+				const pendingState = {
+					pending: {
+						pendingStates: [
+							{
+								type: "message",
+								content: `{"type": "${ContainerMessageType.BlobAttach}", "contents": {}}`,
+							},
+						],
+					},
+					savedOps: [],
+				};
+
+				return {
+					deltaManager: new MockDeltaManager(),
+					audience: new MockAudience(),
+					quorum: new MockQuorumClients(),
+					taggedLogger: new MockLogger(),
+					clientDetails: { capabilities: { interactive: true } },
+					updateDirtyContainerState: (_dirty: boolean) => {},
+					attachState,
+					pendingLocalState: addPendingMsg ? pendingState : undefined,
+					getLoadedFromVersion: () => undefined,
+				};
+			};
+
+			// Stashed/initial pending ops from a previous session are never considered "staged" —
+			// only ops submitted while in Staging Mode are. So hasStagedChanges should always start
+			// false at load time, regardless of attach state or pending ops.
+			for (const attachState of [
+				AttachState.Attached,
+				AttachState.Attaching,
+				AttachState.Detached,
+			]) {
+				for (const addPendingMsg of [false, true]) {
+					it(`should NOT be set to have staged changes when loaded (attachState=${AttachState[attachState]}, pendingOps=${addPendingMsg})`, async () => {
+						const mockContext = createMockContext(attachState, addPendingMsg);
+						const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
+							context: mockContext as IContainerContext,
+							registry: new FluidDataStoreRegistry([]),
+							existing: false,
+							runtimeOptions: undefined,
+							containerScope: {},
+							provideEntryPoint: mockProvideEntryPoint,
+						});
+						assert.deepStrictEqual(containerRuntime.hasStagedChanges, false);
+					});
+				}
+			}
+		});
+
 		describe("Pending state progress tracking", () => {
 			const maxReconnects = 7; // 7 is the default used by ContainerRuntime for the max reconnection attempts
 
@@ -1176,6 +1267,7 @@ describe("Runtime", () => {
 					replayPendingStates: () => [],
 					hasPendingMessages: (): boolean => pendingMessages > 0,
 					hasPendingUserChanges: (): boolean => pendingMessages > 0,
+					hasStagedChanges: (): boolean => false,
 					processInboundMessages: (inbound: InboundMessageResult, _local: boolean) => {
 						const messages =
 							inbound.type === "fullBatch" ? inbound.messages : [inbound.nextMessage];
@@ -1562,6 +1654,125 @@ describe("Runtime", () => {
 				);
 			});
 		});
+
+		describe("Submit during stashed-op apply", () => {
+			let containerRuntime: ContainerRuntime;
+			let mockLogger: MockLogger;
+			let containerErrors: ICriticalContainerError[];
+
+			async function createRuntime(settings: Record<string, ConfigTypes> = {}): Promise<void> {
+				mockLogger = new MockLogger();
+				containerErrors = [];
+				const context = {
+					...getMockContext({ logger: mockLogger, settings }),
+					closeFn: (error?: ICriticalContainerError): void => {
+						if (error !== undefined) {
+							containerErrors.push(error);
+						}
+					},
+				};
+				const { runtime } = await ContainerRuntime.loadRuntime2({
+					context: context as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					requestHandler: undefined,
+					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+				containerRuntime = runtime;
+			}
+
+			function setApplyingStashedOps(isApplying: boolean): void {
+				const psm = (
+					containerRuntime as unknown as { pendingStateManager: PendingStateManager }
+				).pendingStateManager;
+				Object.defineProperty(psm, "isApplyingStashedOps", {
+					configurable: true,
+					get: () => isApplying,
+				});
+			}
+
+			function submitBlobAttach(): void {
+				// Mirrors `sendBlobAttachMessage` in ContainerRuntime; submit() is private.
+				(
+					containerRuntime as unknown as {
+						submit: (
+							message: { type: ContainerMessageType; contents: unknown },
+							localOpMetadata: unknown,
+							metadata: { localId: string; blobId: string },
+						) => void;
+					}
+				).submit({ type: ContainerMessageType.BlobAttach, contents: undefined }, undefined, {
+					localId: "local-1",
+					blobId: "blob-1",
+				});
+			}
+
+			it("logs but does not throw by default on submit during apply", async () => {
+				await createRuntime();
+				setApplyingStashedOps(true);
+				assert.doesNotThrow(() =>
+					submitDataStoreOp(containerRuntime, "1", testDataStoreMessage),
+				);
+				mockLogger.assertMatchAny([
+					{
+						eventName: "ContainerRuntime:SubmitDuringStashedOpApply",
+						category: "error",
+						messageType: ContainerMessageType.FluidDataStoreOp,
+					},
+				]);
+				assert.strictEqual(
+					containerErrors.length,
+					0,
+					"closeFn should not have been invoked when throw is not enabled",
+				);
+			});
+
+			it("does not throw when the apply window is closed", async () => {
+				await createRuntime();
+				setApplyingStashedOps(false);
+				assert.doesNotThrow(() =>
+					submitDataStoreOp(containerRuntime, "1", testDataStoreMessage),
+				);
+			});
+
+			it("does not throw for BlobAttach during apply (allowlisted)", async () => {
+				await createRuntime();
+				setApplyingStashedOps(true);
+				assert.doesNotThrow(() => submitBlobAttach());
+			});
+
+			it("on-switch throws, logs, and closes the container on submit during apply", async () => {
+				await createRuntime({
+					"Fluid.ContainerRuntime.EnableSubmitDuringStashedApplyThrow": true,
+				});
+				setApplyingStashedOps(true);
+				assert.throws(
+					() => submitDataStoreOp(containerRuntime, "1", testDataStoreMessage),
+					(error: IErrorBase) =>
+						error.errorType === ContainerErrorTypes.usageError &&
+						error.message === "Local op submitted during stashed-op apply window",
+				);
+				mockLogger.assertMatchAny([
+					{
+						eventName: "ContainerRuntime:SubmitDuringStashedOpApply",
+						category: "error",
+						messageType: ContainerMessageType.FluidDataStoreOp,
+					},
+				]);
+				assert.strictEqual(
+					containerErrors.length,
+					1,
+					"closeFn should have been invoked exactly once",
+				);
+				assert.strictEqual(
+					containerErrors[0].errorType,
+					ContainerErrorTypes.usageError,
+					"closeFn should have received the UsageError",
+				);
+			});
+		});
+
 		describe("Supports mixin classes", () => {
 			it("new loadRuntime2 method works", async () => {
 				const makeMixin = <T>(
@@ -2183,6 +2394,9 @@ describe("Runtime", () => {
 								case "pendingMessagesCount": {
 									return 0;
 								}
+								case "hasStagedChanges": {
+									return () => false;
+								}
 								default: {
 									assert.fail(`unexpected access to pendingStateManager.${p}`);
 								}
@@ -2230,6 +2444,9 @@ describe("Runtime", () => {
 								}
 								case "pendingMessagesCount": {
 									return 5;
+								}
+								case "hasStagedChanges": {
+									return () => false;
 								}
 								default: {
 									assert.fail(`unexpected access to pendingStateManager.${p}`);
@@ -2302,6 +2519,9 @@ describe("Runtime", () => {
 								case "pendingMessagesCount": {
 									return 5;
 								}
+								case "hasStagedChanges": {
+									return () => false;
+								}
 								default: {
 									assert.fail(`unexpected access to pendingStateManager.${p}`);
 								}
@@ -2322,13 +2542,21 @@ describe("Runtime", () => {
 		});
 
 		describe("Duplicate Batch Detection", () => {
-			for (const enableBatchIdTracking of [undefined, true]) {
-				it(`DuplicateBatchDetector is disabled if Batch Id Tracking isn't needed (${enableBatchIdTracking === true ? "ENABLED" : "DISABLED"})`, async () => {
+			// BatchId tracking is on by default (TurnBased); the kill-switch suppresses detection.
+			for (const variant of [
+				{ name: "default (no settings)", settings: {}, expectDetection: true },
+				{
+					name: "kill-switch active",
+					settings: { "Fluid.ContainerRuntime.DisableBatchIdTracking": true },
+					expectDetection: false,
+				},
+			]) {
+				it(`DuplicateBatchDetector reflects batch-id tracking enablement (${variant.name})`, async () => {
+					const logger = new MockLogger();
 					const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
 						context: getMockContext({
-							settings: {
-								"Fluid.ContainerRuntime.enableBatchIdTracking": enableBatchIdTracking,
-							},
+							logger,
+							settings: variant.settings,
 						}) as IContainerContext,
 						registry: new FluidDataStoreRegistry([]),
 						existing: false,
@@ -2348,38 +2576,202 @@ describe("Runtime", () => {
 						} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
 						false,
 					);
-					// Process a duplicate batch "batchId1" with different seqNum 234
-					const assertThrowsOnlyIfExpected =
-						enableBatchIdTracking === true ? assert.throws : assert.doesNotThrow;
-					const errorPredicate = (e: Error) =>
-						e.message === "Duplicate batch - The same batch was sequenced twice";
-					assertThrowsOnlyIfExpected(
-						() => {
-							containerRuntime.process(
-								{
-									sequenceNumber: 234,
-									type: MessageType.Operation,
-									contents: { type: ContainerMessageType.Rejoin, contents: undefined },
-									metadata: { batchId: "batchId1" },
-								} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
-								false,
-							);
-						},
-						errorPredicate,
-						"Expected duplicate batch detection to match Offline Load enablement",
-					);
+					// Both batches here carry an explicit batchId (stamped in `metadata`), so when detection
+					// is enabled, the duplicate is a meaningful scenario (not a server-outage artifact) and
+					// should throw a DataCorruptionError, in addition to emitting DuplicateBatch telemetry.
+					// When tracking is disabled via the kill-switch, no detection occurs and processing succeeds.
+					const processDuplicate = (): void =>
+						containerRuntime.process(
+							{
+								sequenceNumber: 234,
+								type: MessageType.Operation,
+								contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+								metadata: { batchId: "batchId1" },
+							} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+							false,
+						);
+					const duplicateEvent = { eventName: "ContainerRuntime:DuplicateBatch" };
+					if (variant.expectDetection) {
+						assert.throws(
+							processDuplicate,
+							(error: Error) =>
+								error.message === "Duplicate batch - The same batch was sequenced twice",
+							"Expected DataCorruptionError for duplicate batch with explicit batchId",
+						);
+						logger.assertMatchAny(
+							[duplicateEvent],
+							"Expected DuplicateBatch telemetry when tracking is enabled",
+						);
+					} else {
+						assert.doesNotThrow(
+							processDuplicate,
+							"Should not throw when batch-id tracking is disabled",
+						);
+						logger.assertMatchNone(
+							[duplicateEvent],
+							"DuplicateBatch telemetry should not fire when tracking is disabled",
+						);
+					}
 				});
 			}
 
-			it("Can roundrip DuplicateBatchDetector state through summary/snapshot", async () => {
-				// Duplicate Batch Detection requires OfflineLoad enabled
-				const settings_enableOfflineLoad = {
-					"Fluid.ContainerRuntime.enableBatchIdTracking": true,
-				};
+			it("Default-on tracking is silently skipped in FlushMode.Immediate (no UsageError)", async () => {
 				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
-					context: getMockContext({
-						settings: settings_enableOfflineLoad,
-					}) as IContainerContext,
+					context: getMockContext() as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					runtimeOptions: {
+						flushMode: FlushMode.Immediate,
+						enableRuntimeIdCompressor: "on",
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+				// Sending a duplicate batchId should not throw because tracking is inactive in Immediate mode.
+				containerRuntime.process(
+					{
+						sequenceNumber: 123,
+						type: MessageType.Operation,
+						contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+						metadata: { batchId: "batchId1" },
+					} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+					false,
+				);
+				assert.doesNotThrow(() =>
+					containerRuntime.process(
+						{
+							sequenceNumber: 234,
+							type: MessageType.Operation,
+							contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+							metadata: { batchId: "batchId1" },
+						} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+						false,
+					),
+				);
+			});
+
+			it("Offline Load opt-in still errors in FlushMode.Immediate (back-compat)", async () => {
+				const containerErrors: ICriticalContainerError[] = [];
+				const context = {
+					...getMockContext({
+						settings: {
+							"Fluid.Container.enableOfflineFull": true,
+						},
+					}),
+					closeFn: (error?: ICriticalContainerError): void => {
+						if (error !== undefined) {
+							containerErrors.push(error);
+						}
+					},
+				};
+				await assert.rejects(
+					ContainerRuntime.loadRuntime2({
+						context: context as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: { flushMode: FlushMode.Immediate },
+						provideEntryPoint: mockProvideEntryPoint,
+					}),
+					(error: Error) => error instanceof UsageError,
+				);
+				assert.strictEqual(containerErrors.length, 1);
+			});
+
+			// Regression: enabling default-on batchId tracking when grouped batching is disabled
+			// asserts 0xa00 in OpGroupingManager.createEmptyGroupedBatch the first time a resubmit
+			// produces an empty batch. Tracking must be silently skipped in that configuration.
+			it("Default-on tracking is silently skipped when grouped batching is disabled", async () => {
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
+					context: getMockContext() as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					runtimeOptions: {
+						enableGroupedBatching: false,
+						enableRuntimeIdCompressor: "on",
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+				// Sending a duplicate batchId should not throw because tracking is inactive
+				// when grouped batching is off.
+				containerRuntime.process(
+					{
+						sequenceNumber: 123,
+						type: MessageType.Operation,
+						contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+						metadata: { batchId: "batchId1" },
+					} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+					false,
+				);
+				assert.doesNotThrow(() =>
+					containerRuntime.process(
+						{
+							sequenceNumber: 234,
+							type: MessageType.Operation,
+							contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+							metadata: { batchId: "batchId1" },
+						} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+						false,
+					),
+				);
+			});
+
+			it("Offline Load opt-in errors when grouped batching is disabled", async () => {
+				const containerErrors: ICriticalContainerError[] = [];
+				const context = {
+					...getMockContext({
+						settings: {
+							"Fluid.Container.enableOfflineFull": true,
+						},
+					}),
+					closeFn: (error?: ICriticalContainerError): void => {
+						if (error !== undefined) {
+							containerErrors.push(error);
+						}
+					},
+				};
+				await assert.rejects(
+					ContainerRuntime.loadRuntime2({
+						context: context as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: { enableGroupedBatching: false },
+						provideEntryPoint: mockProvideEntryPoint,
+					}),
+					(error: Error) => error instanceof UsageError,
+				);
+				assert.strictEqual(containerErrors.length, 1);
+			});
+
+			it("Offline Load opt-in errors when batchId tracking is disabled via kill-switch", async () => {
+				const containerErrors: ICriticalContainerError[] = [];
+				const context = {
+					...getMockContext({
+						settings: {
+							"Fluid.Container.enableOfflineFull": true,
+							"Fluid.ContainerRuntime.DisableBatchIdTracking": true,
+						},
+					}),
+					closeFn: (error?: ICriticalContainerError): void => {
+						if (error !== undefined) {
+							containerErrors.push(error);
+						}
+					},
+				};
+				await assert.rejects(
+					ContainerRuntime.loadRuntime2({
+						context: context as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						provideEntryPoint: mockProvideEntryPoint,
+					}),
+					(error: Error) => error instanceof UsageError,
+				);
+				assert.strictEqual(containerErrors.length, 1);
+			});
+
+			it("Can roundtrip DuplicateBatchDetector state through summary/snapshot", async () => {
+				// Duplicate Batch Detection is on by default in TurnBased mode.
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
+					context: getMockContext() as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					runtimeOptions: {
@@ -2409,9 +2801,10 @@ describe("Runtime", () => {
 					// Hardcode readblob fn to return the blob contents put in the summary
 					readBlob: async (_id) => stringToBuffer(blob.content as string, "utf8"),
 				};
+				const logger = new MockLogger();
 				const { runtime: containerRuntime2 } = await ContainerRuntime.loadRuntime2({
 					context: getMockContext({
-						settings: settings_enableOfflineLoad,
+						logger,
 						baseSnapshot: {
 							trees: {},
 							blobs: { [recentBatchInfoBlobName]: "nonempty_id_ignored_by_mockStorage" },
@@ -2426,9 +2819,12 @@ describe("Runtime", () => {
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 
-				// Process an op with a duplicate batchId to what was loaded with
+				// Process an op with a duplicate batchId to what was loaded with.
+				// The incoming batch carries an explicit batchId, so this is a meaningful duplicate
+				// scenario and should throw a DataCorruptionError (in addition to emitting telemetry),
+				// even though the "other" batch info came from a snapshot (and thus has no explicit flag).
 				assert.throws(
-					() => {
+					() =>
 						containerRuntime2.process(
 							{
 								sequenceNumber: 234,
@@ -2437,10 +2833,59 @@ describe("Runtime", () => {
 								metadata: { batchId: "batchId1" },
 							} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
 							false,
-						);
-					},
-					(e: Error) => e.message === "Duplicate batch - The same batch was sequenced twice",
+						),
+					(error: Error) =>
+						error.message === "Duplicate batch - The same batch was sequenced twice",
+					"Expected DataCorruptionError for duplicate batch with explicit batchId",
+				);
+				logger.assertMatchAny(
+					[{ eventName: "ContainerRuntime:DuplicateBatch" }],
 					"Expected duplicate batch detected after loading with recentBatchInfo",
+				);
+			});
+
+			it("Does not throw for a duplicate batch with no explicit batchId on either side (service-outage scenario)", async () => {
+				// When neither the incoming batch nor the previously-recorded batch has an explicit
+				// batchId (i.e. both batchIds were derived from clientId + batchStartCsn rather than
+				// stamped via resubmit), the duplicate is presumed to be caused by the known service bug
+				// that can redeliver batches, rather than a real container-forking issue. In that case we
+				// only log telemetry and must not throw a DataCorruptionError.
+				const logger = new MockLogger();
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
+					context: getMockContext({ logger }) as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					runtimeOptions: {
+						enableRuntimeIdCompressor: "on",
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				// Note: no explicit `metadata.batchId` here, so the effective batchId is derived from
+				// (clientId, batchStartCsn), both of which are undefined/identical across the two calls below.
+				containerRuntime.process(
+					{
+						sequenceNumber: 123,
+						type: MessageType.Operation,
+						contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+					} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+					false,
+				);
+				assert.doesNotThrow(
+					() =>
+						containerRuntime.process(
+							{
+								sequenceNumber: 234,
+								type: MessageType.Operation,
+								contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+							} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+							false,
+						),
+					"Should not throw when neither batch has an explicit batchId",
+				);
+				logger.assertMatchAny(
+					[{ eventName: "ContainerRuntime:DuplicateBatch" }],
+					"Expected DuplicateBatch telemetry to still be logged",
 				);
 			});
 		});
@@ -4387,6 +4832,123 @@ describe("Runtime", () => {
 				assert.equal(containerRuntime.isDirty, false, "Runtime should not be dirty anymore");
 			});
 
+			it("hasStagedChanges reflects staged ops lifecycle, reset by discardChanges", () => {
+				stubChannelCollection(containerRuntime);
+
+				assert.equal(
+					containerRuntime.hasStagedChanges,
+					false,
+					"Should not have staged changes before entering staging mode",
+				);
+
+				const controls = containerRuntime.enterStagingMode();
+				assert.equal(
+					containerRuntime.hasStagedChanges,
+					false,
+					"Should not have staged changes immediately after entering staging mode (no ops yet)",
+				);
+
+				submitDataStoreOp(
+					containerRuntime,
+					"1",
+					genTestDataStoreMessage("staged-op"),
+					"LOCAL_OP_METADATA",
+				);
+				assert.equal(
+					containerRuntime.hasStagedChanges,
+					true,
+					"Should have staged changes immediately after submitting a staged op (from Outbox), before flush",
+				);
+
+				containerRuntime.flush();
+				assert.equal(
+					containerRuntime.hasStagedChanges,
+					true,
+					"Should still have staged changes after flushing a staged op (now from PendingStateManager)",
+				);
+
+				controls.discardChanges();
+
+				assert.equal(
+					containerRuntime.hasStagedChanges,
+					false,
+					"Should not have staged changes after discardChanges",
+				);
+			});
+
+			it("hasStagedChanges reflects staged ops lifecycle, reset by commitChanges", () => {
+				stubChannelCollection(containerRuntime);
+
+				assert.equal(
+					containerRuntime.hasStagedChanges,
+					false,
+					"Should not have staged changes before entering staging mode",
+				);
+
+				const controls = containerRuntime.enterStagingMode();
+
+				submitDataStoreOp(
+					containerRuntime,
+					"1",
+					genTestDataStoreMessage("staged-op"),
+					"LOCAL_OP_METADATA",
+				);
+				containerRuntime.flush();
+				assert.equal(
+					containerRuntime.hasStagedChanges,
+					true,
+					"Should have staged changes after submitting and flushing a staged op",
+				);
+
+				controls.commitChanges();
+
+				assert.equal(
+					containerRuntime.hasStagedChanges,
+					false,
+					"Should not have staged changes after commitChanges",
+				);
+			});
+
+			it("hasStagedChanges is true for a non-dirtyable op sitting in the Outbox while staging", () => {
+				stubChannelCollection(containerRuntime);
+
+				const controls = containerRuntime.enterStagingMode();
+
+				// Submit an op that is NOT "dirtyable" (agentScheduler ops are excluded from dirty tracking
+				// via isContainerMessageDirtyable). hasStagedChanges doesn't care about op type though -
+				// unlike isDirty, it should become true as soon as anything is queued in the Outbox while staging.
+				submitDataStoreOp(
+					containerRuntime,
+					agentSchedulerId,
+					genTestDataStoreMessage("staged-op"),
+					"LOCAL_OP_METADATA",
+				);
+				assert.equal(
+					containerRuntime.hasStagedChanges,
+					true,
+					"Should have staged changes for a non-dirtyable op still sitting in the Outbox",
+				);
+				assert.equal(
+					containerRuntime.isDirty,
+					false,
+					"Should NOT be dirty for a non-dirtyable op, unlike hasStagedChanges",
+				);
+
+				containerRuntime.flush();
+				assert.equal(
+					containerRuntime.hasStagedChanges,
+					true,
+					"Should still have staged changes after flushing the non-dirtyable op (now from PendingStateManager)",
+				);
+
+				controls.discardChanges();
+				assert.equal(
+					containerRuntime.hasStagedChanges,
+					false,
+					"Should not have staged changes after discardChanges",
+				);
+			});
+
 			describe("stagingModeAutoFlushThreshold", () => {
 				let runtimeWithThreshold: ContainerRuntime_WithPrivates;
 				let mockContext: Partial<IContainerContext>;
@@ -4757,12 +5319,10 @@ describe("Runtime", () => {
 				});
 
 				it("IdAllocation + reconnect while in staging mode does not hit coherency check", async () => {
-					// This is the highest-risk scenario from Mark's test plan.
-					// The fix in b4e1fd1dd25 added scheduleFlush() after submitIdAllocationOpIfNeeded
-					// during replayPendingStates. With threshold suppression, that scheduleFlush()
-					// returns early if in staging mode and under threshold. But the "op" handler
-					// calls flush() directly, so the IdAllocation op still gets flushed before
-					// new ops with different refSeqs are submitted.
+					// With JIT ID allocation, the ID alloc op is generated at flush time
+					// (via generateIdAllocationOp callback), so it naturally gets the correct refSeq.
+					// The "op" handler calls flush() directly, so the IdAllocation op still gets
+					// flushed before new ops with different refSeqs are submitted.
 
 					// Start disconnected so we can trigger IdAllocation on reconnect
 					mockContext = getMockContext({ connected: false }) as IContainerContext;
@@ -4953,6 +5513,437 @@ describe("Runtime", () => {
 					"Staged op should be submitted after commitChanges",
 				);
 				runtime.dispose();
+			});
+
+			describe("stagingModeChanged event", () => {
+				it("emits with { inStagingMode: true } on enter, and inStagingMode is true when handler runs", () => {
+					const events: StagingModeChangedEvent[] = [];
+					const inStagingModeAtEventTime: boolean[] = [];
+
+					containerRuntime.on("stagingModeChanged", (e) => {
+						events.push(e);
+						inStagingModeAtEventTime.push(containerRuntime.inStagingMode);
+					});
+
+					containerRuntime.enterStagingMode();
+
+					assert.equal(events.length, 1, "Expected exactly one event on enter");
+					assert.deepEqual(
+						events[0],
+						{ inStagingMode: true },
+						"Event payload should be { inStagingMode: true }",
+					);
+					assert.equal(
+						inStagingModeAtEventTime[0],
+						true,
+						"inStagingMode should be true when the enter event fires",
+					);
+				});
+
+				it("emits with { inStagingMode: false, commit: true } on commitChanges, and inStagingMode is false when handler runs", () => {
+					stubChannelCollection(containerRuntime);
+					const events: StagingModeChangedEvent[] = [];
+					const inStagingModeAtEventTime: boolean[] = [];
+
+					containerRuntime.on("stagingModeChanged", (e) => {
+						events.push(e);
+						inStagingModeAtEventTime.push(containerRuntime.inStagingMode);
+					});
+
+					const controls = containerRuntime.enterStagingMode();
+					controls.commitChanges();
+
+					assert.equal(events.length, 2, "Expected enter + commit events");
+					assert.deepEqual(
+						events[1],
+						{ inStagingMode: false, commit: true },
+						"Commit event payload should be { inStagingMode: false, commit: true }",
+					);
+					assert.equal(
+						inStagingModeAtEventTime[1],
+						false,
+						"inStagingMode should be false when the commit event fires",
+					);
+				});
+
+				it("emits with { inStagingMode: false, commit: false } on discardChanges, and inStagingMode is false when handler runs", () => {
+					stubChannelCollection(containerRuntime);
+					const events: StagingModeChangedEvent[] = [];
+					const inStagingModeAtEventTime: boolean[] = [];
+
+					containerRuntime.on("stagingModeChanged", (e) => {
+						events.push(e);
+						inStagingModeAtEventTime.push(containerRuntime.inStagingMode);
+					});
+
+					const controls = containerRuntime.enterStagingMode();
+					controls.discardChanges();
+
+					assert.equal(events.length, 2, "Expected enter + discard events");
+					assert.deepEqual(
+						events[1],
+						{ inStagingMode: false, commit: false },
+						"Discard event payload should be { inStagingMode: false, commit: false }",
+					);
+					assert.equal(
+						inStagingModeAtEventTime[1],
+						false,
+						"inStagingMode should be false when the discard event fires",
+					);
+				});
+
+				it("does not fire when orderSequentially uses staging mode internally (EnableRollback=true)", async () => {
+					// orderSequentially with EnableRollback calls enterStagingModeCore(silent=true)
+					// internally. The stagingModeChanged event should NOT be emitted.
+					const context = getMockContext({
+						settings: { "Fluid.ContainerRuntime.EnableRollback": true },
+					}) as IContainerContext;
+					const { runtime: rawRuntime } = await ContainerRuntime.loadRuntime2({
+						context,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: {},
+						provideEntryPoint: mockProvideEntryPoint,
+					});
+					const runtime = rawRuntime as unknown as ContainerRuntime_WithPrivates;
+					stubChannelCollection(runtime);
+					submittedOps.length = 0;
+
+					const events: StagingModeChangedEvent[] = [];
+					runtime.on("stagingModeChanged", (e) => events.push(e));
+
+					// internally enters staging mode then commits
+					runtime.orderSequentially(() => {
+						submitDataStoreOp(runtime, "1", genTestDataStoreMessage("op1"));
+					});
+
+					assert.equal(
+						events.length,
+						0,
+						"stagingModeChanged should NOT fire for successful orderSequentially",
+					);
+
+					// internally enters staging mode then rolls back
+					assert.throws(() =>
+						runtime.orderSequentially(() => {
+							throw new Error("test error");
+						}),
+					);
+
+					assert.equal(
+						events.length,
+						0,
+						"stagingModeChanged should NOT fire when orderSequentially rolls back",
+					);
+
+					runtime.dispose();
+				});
+
+				it("still fires for explicit enterStagingMode() when EnableRollback=true", async () => {
+					// Sanity-check that the silent flag only suppresses orderSequentially's
+					// internal usage — direct calls to enterStagingMode() still emit normally.
+					const context = getMockContext({
+						settings: { "Fluid.ContainerRuntime.EnableRollback": true },
+					}) as IContainerContext;
+					const { runtime: rawRuntime } = await ContainerRuntime.loadRuntime2({
+						context,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: {},
+						provideEntryPoint: mockProvideEntryPoint,
+					});
+					const runtime = rawRuntime as unknown as ContainerRuntime_WithPrivates;
+					stubChannelCollection(runtime);
+					submittedOps.length = 0;
+
+					const events: StagingModeChangedEvent[] = [];
+					runtime.on("stagingModeChanged", (e) => events.push(e));
+
+					const controls = runtime.enterStagingMode();
+					controls.commitChanges();
+
+					assert.equal(
+						events.length,
+						2,
+						"Expected enter + commit events for explicit staging",
+					);
+					assert.deepEqual(events[0], { inStagingMode: true }, "Enter event");
+					assert.deepEqual(events[1], { inStagingMode: false, commit: true }, "Commit event");
+
+					runtime.dispose();
+				});
+
+				it("throws UsageError when calling commitChanges on stale controls after discard", () => {
+					stubChannelCollection(containerRuntime);
+					const controls = containerRuntime.enterStagingMode();
+					controls.discardChanges();
+
+					assert.throws(
+						() => controls.commitChanges(),
+						(error: IErrorBase) =>
+							error.errorType === ContainerErrorTypes.usageError &&
+							error.message === "Not in staging mode",
+						"Calling commitChanges on stale controls should throw UsageError",
+					);
+				});
+
+				it("throws UsageError when calling discardChanges on old controls after re-entering staging mode", () => {
+					stubChannelCollection(containerRuntime);
+					const oldControls = containerRuntime.enterStagingMode();
+					oldControls.discardChanges();
+
+					// Enter staging mode again — new controls
+					containerRuntime.enterStagingMode();
+
+					assert.throws(
+						() => oldControls.discardChanges(),
+						(error: IErrorBase) =>
+							error.errorType === ContainerErrorTypes.usageError &&
+							error.message === "Not in staging mode",
+						"Calling discardChanges on old controls should throw UsageError",
+					);
+				});
+				it("does not emit exit event when container is disposed while in staging mode", () => {
+					const events: StagingModeChangedEvent[] = [];
+					containerRuntime.on("stagingModeChanged", (e) => events.push(e));
+
+					containerRuntime.enterStagingMode();
+					assert.equal(events.length, 1, "Expected enter event");
+
+					containerRuntime.dispose();
+
+					assert.equal(
+						events.length,
+						1,
+						"No exit event should fire on dispose — only the original enter event",
+					);
+				});
+			});
+
+			describe("hasStagedChangesChanged event", () => {
+				it("emits with true after submitting a staged op (before flush), and hasStagedChanges is true when handler runs", () => {
+					stubChannelCollection(containerRuntime);
+					const events: boolean[] = [];
+					const hasStagedChangesAtEventTime: boolean[] = [];
+
+					containerRuntime.on("hasStagedChangesChanged", (hasStagedChanges) => {
+						events.push(hasStagedChanges);
+						hasStagedChangesAtEventTime.push(containerRuntime.hasStagedChanges);
+					});
+
+					containerRuntime.enterStagingMode();
+					assert.equal(
+						events.length,
+						0,
+						"Entering staging mode alone (no ops) should not emit hasStagedChangesChanged",
+					);
+
+					submitDataStoreOp(
+						containerRuntime,
+						"1",
+						genTestDataStoreMessage("staged-op"),
+						"LOCAL_OP_METADATA",
+					);
+
+					assert.equal(
+						events.length,
+						1,
+						"Expected exactly one event immediately after submitting (from Outbox), before flush",
+					);
+					assert.equal(events[0], true, "Event payload should be true");
+					assert.equal(
+						hasStagedChangesAtEventTime[0],
+						true,
+						"hasStagedChanges should be true when the event fires",
+					);
+
+					containerRuntime.flush();
+					assert.equal(
+						events.length,
+						1,
+						"Flushing should not emit again since hasStagedChanges was already true",
+					);
+				});
+
+				it("emits with false after commitChanges", () => {
+					stubChannelCollection(containerRuntime);
+					const events: boolean[] = [];
+
+					const controls = containerRuntime.enterStagingMode();
+					submitDataStoreOp(
+						containerRuntime,
+						"1",
+						genTestDataStoreMessage("staged-op"),
+						"LOCAL_OP_METADATA",
+					);
+					containerRuntime.flush();
+
+					containerRuntime.on("hasStagedChangesChanged", (hasStagedChanges) =>
+						events.push(hasStagedChanges),
+					);
+
+					controls.commitChanges();
+
+					assert.equal(events.length, 1, "Expected exactly one event after commitChanges");
+					assert.equal(events[0], false, "Event payload should be false");
+					assert.equal(
+						containerRuntime.hasStagedChanges,
+						false,
+						"hasStagedChanges should be false after commitChanges",
+					);
+				});
+
+				it("emits with false after discardChanges", () => {
+					stubChannelCollection(containerRuntime);
+					const events: boolean[] = [];
+
+					const controls = containerRuntime.enterStagingMode();
+					submitDataStoreOp(
+						containerRuntime,
+						"1",
+						genTestDataStoreMessage("staged-op"),
+						"LOCAL_OP_METADATA",
+					);
+					containerRuntime.flush();
+
+					containerRuntime.on("hasStagedChangesChanged", (hasStagedChanges) =>
+						events.push(hasStagedChanges),
+					);
+
+					controls.discardChanges();
+
+					assert.equal(events.length, 1, "Expected exactly one event after discardChanges");
+					assert.equal(events[0], false, "Event payload should be false");
+					assert.equal(
+						containerRuntime.hasStagedChanges,
+						false,
+						"hasStagedChanges should be false after discardChanges",
+					);
+				});
+
+				it("does not emit again for a second staged op in the same staging session", () => {
+					stubChannelCollection(containerRuntime);
+					const events: boolean[] = [];
+					containerRuntime.on("hasStagedChangesChanged", (hasStagedChanges) =>
+						events.push(hasStagedChanges),
+					);
+
+					containerRuntime.enterStagingMode();
+
+					submitDataStoreOp(
+						containerRuntime,
+						"1",
+						genTestDataStoreMessage("staged-op-1"),
+						"LOCAL_OP_METADATA",
+					);
+					containerRuntime.flush();
+					assert.equal(events.length, 1, "Expected one event after the first staged op");
+
+					submitDataStoreOp(
+						containerRuntime,
+						"2",
+						genTestDataStoreMessage("staged-op-2"),
+						"LOCAL_OP_METADATA",
+					);
+					containerRuntime.flush();
+					assert.equal(
+						events.length,
+						1,
+						"Should not emit again while hasStagedChanges stays true",
+					);
+				});
+
+				it("fires during orderSequentially's internal staging mode usage (EnableRollback=true), unlike stagingModeChanged", async () => {
+					// orderSequentially with EnableRollback calls enterStagingModeCore(silent=true) internally,
+					// which suppresses stagingModeChanged. hasStagedChangesChanged is driven by
+					// updateDocumentDirtyState/updateHasStagedChangesState instead, which are not gated by
+					// the `silent` flag, so it CAN fire in this scenario.
+					const context = getMockContext({
+						settings: { "Fluid.ContainerRuntime.EnableRollback": true },
+					}) as IContainerContext;
+					const { runtime: rawRuntime } = await ContainerRuntime.loadRuntime2({
+						context,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: {},
+						provideEntryPoint: mockProvideEntryPoint,
+					});
+					const runtime = rawRuntime as unknown as ContainerRuntime_WithPrivates;
+					stubChannelCollection(runtime);
+					submittedOps.length = 0;
+
+					const stagingModeChangedEvents: StagingModeChangedEvent[] = [];
+					const hasStagedChangesChangedEvents: boolean[] = [];
+					runtime.on("stagingModeChanged", (e) => stagingModeChangedEvents.push(e));
+					runtime.on("hasStagedChangesChanged", (e) => hasStagedChangesChangedEvents.push(e));
+
+					// internally enters staging mode then commits
+					runtime.orderSequentially(() => {
+						submitDataStoreOp(runtime, "1", genTestDataStoreMessage("op1"));
+					});
+
+					assert.equal(
+						stagingModeChangedEvents.length,
+						0,
+						"stagingModeChanged should NOT fire for successful orderSequentially",
+					);
+					assert.deepEqual(
+						hasStagedChangesChangedEvents,
+						[true, false],
+						"hasStagedChangesChanged SHOULD fire (true then false) since staged data genuinely existed transiently",
+					);
+					assert.equal(
+						runtime.hasStagedChanges,
+						false,
+						"hasStagedChanges should be false once orderSequentially completes",
+					);
+
+					runtime.dispose();
+				});
+
+				it("never emits when entering and discarding staging mode with no ops submitted", () => {
+					stubChannelCollection(containerRuntime);
+					const events: boolean[] = [];
+					containerRuntime.on("hasStagedChangesChanged", (hasStagedChanges) =>
+						events.push(hasStagedChanges),
+					);
+
+					const controls = containerRuntime.enterStagingMode();
+					controls.discardChanges();
+
+					assert.equal(
+						events.length,
+						0,
+						"hasStagedChangesChanged should never fire since no ops were ever staged",
+					);
+					assert.equal(
+						containerRuntime.hasStagedChanges,
+						false,
+						"hasStagedChanges should remain false throughout",
+					);
+				});
+
+				it("never emits when entering and committing staging mode with no ops submitted", () => {
+					stubChannelCollection(containerRuntime);
+					const events: boolean[] = [];
+					containerRuntime.on("hasStagedChangesChanged", (hasStagedChanges) =>
+						events.push(hasStagedChanges),
+					);
+
+					const controls = containerRuntime.enterStagingMode();
+					controls.commitChanges();
+
+					assert.equal(
+						events.length,
+						0,
+						"hasStagedChangesChanged should never fire since no ops were ever staged",
+					);
+					assert.equal(
+						containerRuntime.hasStagedChanges,
+						false,
+						"hasStagedChanges should remain false throughout",
+					);
+				});
 			});
 		});
 	});

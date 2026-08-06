@@ -12,11 +12,8 @@ import {
 import { FluidTestDriverConfig, createFluidTestDriver } from "@fluid-private/test-drivers";
 import { FluidObject, IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
 import { IFluidHandleContext, type IResponse } from "@fluidframework/core-interfaces/internal";
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import {
-	IFluidDataStoreRuntime,
-	IChannelFactory,
-} from "@fluidframework/datastore-definitions/internal";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { ISharedDirectory } from "@fluidframework/map/internal";
 import {
 	IContainerRuntimeBase,
@@ -27,7 +24,6 @@ import {
 import {
 	ITestContainerConfig,
 	DataObjectFactoryType,
-	ChannelFactoryRegistry,
 	createTestContainerRuntimeFactory,
 	TestObjectProvider,
 	TestObjectProviderWithVersionedLoad,
@@ -50,14 +46,13 @@ import { getRequestedVersion } from "./versionUtils.js";
 export const TestDataObjectType = "@fluid-example/test-dataStore";
 
 /**
- * Determines the MinimumVersionForCollab that should be used for cross-client compatibility tests.
+ * Determines the MinimumVersionForCollab that should be used for compatibility tests.
  *
- * In cross-client compat tests, a different version of the runtime is being used to create and load
- * containers. The MinimumVersionForCollab returned will be the lesser of the two versions:
+ * The MinimumVersionForCollab returned will be the lesser of the two versions:
  * - runtimeVersion: The version of the runtime that is being used to create the container.
  * - runtimeVersionForLoading: The version of the runtime that is being used to load the container.
- * Additionally, runtimeVersionForLoading is only defined in cross-client compat tests, so if it's undefined
- * we will just use runtimeVersion.
+ * Outside of cross-client compat tests these two versions are the same, so the result is simply that
+ * shared version.
  *
  * Note: The MinimumVersionForCollab returned will only be used if a minVersionForCollab was not provided
  * in the ITestContainerConfig object.
@@ -69,17 +64,12 @@ export const TestDataObjectType = "@fluid-example/test-dataStore";
  */
 function getMinVersionForCollab(
 	runtimeVersion: string,
-	runtimeVersionForLoading: string | undefined,
+	runtimeVersionForLoading: string,
 ): MinimumVersionForCollab {
 	assertValidMinVersionForCollab(runtimeVersion);
-	if (runtimeVersionForLoading === undefined) {
-		// If `containerRuntimeForLoading` is not defined, then this is not a cross-client compat scenario.
-		// In this case, we can use the `runtimeVersion` as the default minVersionForCollab.
-		return runtimeVersion;
-	}
 	assertValidMinVersionForCollab(runtimeVersionForLoading);
-	// If `containerRuntimeForLoading` is defined, we will use the lower of the two versions to ensure
-	// compatibility between the two runtimes.
+	// Use the lower of the two versions to ensure compatibility between the two runtimes.
+	// (Outside of cross-client compat the two versions are the same, so this is a no-op.)
 	return semver.compare(runtimeVersion, runtimeVersionForLoading) <= 0
 		? runtimeVersion
 		: runtimeVersionForLoading;
@@ -120,32 +110,8 @@ function createGetDataStoreFactoryFunction(
 		}
 	}
 
-	const registryMapping = {};
-	for (const value of Object.values(api.dds)) {
-		/**
-		 * Skip dds that may not be available in this version of the api.
-		 * Not all versions have all dds. See {@link PackageToInstall} for details.
-		 */
-		if (value?.getFactory === undefined) {
-			continue;
-		}
-		registryMapping[value.getFactory().type] = value.getFactory();
-	}
-
-	function convertRegistry(registry: ChannelFactoryRegistry = []): ChannelFactoryRegistry {
-		const oldRegistry: [string | undefined, IChannelFactory][] = [];
-		for (const [key, factory] of registry) {
-			const oldFactory = registryMapping[factory.type];
-			if (oldFactory === undefined) {
-				throw Error(`Invalid or unimplemented channel factory: ${factory.type}`);
-			}
-			oldRegistry.push([key, oldFactory]);
-		}
-		return oldRegistry;
-	}
-
 	return function (containerOptions?: ITestContainerConfig): IFluidDataStoreFactory {
-		const registry = convertRegistry(containerOptions?.registry);
+		const registry = containerOptions?.registry ?? [];
 		const fluidDataObjectType = containerOptions?.fluidDataObjectType;
 		switch (fluidDataObjectType) {
 			case undefined:
@@ -179,7 +145,7 @@ export const getDataStoreFactory = createGetDataStoreFactoryFunction(
  * @internal
  */
 export async function getVersionedTestObjectProviderFromApis(
-	apis: Omit<CompatApis, "dds" | "mode">,
+	apis: Omit<CompatApis, "dds" | "ddsForLoading" | "mode">,
 	driverConfig?: {
 		type?: TestDriverTypes;
 		config?: FluidTestDriverConfig;
@@ -205,7 +171,7 @@ export async function getVersionedTestObjectProviderFromApis(
 			containerOptions?.minVersionForCollab ??
 				getMinVersionForCollab(
 					apis.containerRuntime.version,
-					apis.containerRuntimeForLoading?.version,
+					apis.containerRuntimeForLoading.version,
 				),
 		);
 	};
@@ -227,14 +193,28 @@ export async function getVersionedTestObjectProvider(
 	runtimeVersion?: number | string,
 	dataRuntimeVersion?: number | string,
 ): Promise<TestObjectProvider> {
+	// This path is not cross-client compat, so the same set of APIs is used for both creating and
+	// loading containers; the "ForLoading" APIs mirror the ones used for creating.
+	const loader = getLoaderApi(getRequestedVersion({ baseVersion, requested: loaderVersion }));
+	const containerRuntime = getContainerRuntimeApi(
+		getRequestedVersion({ baseVersion, requested: runtimeVersion }),
+	);
+	const dataRuntime = getDataRuntimeApi(
+		getRequestedVersion({ baseVersion, requested: dataRuntimeVersion }),
+	);
+	const driver = getDriverApi(
+		getRequestedVersion({ baseVersion, requested: driverConfig?.version }),
+	);
 	return getVersionedTestObjectProviderFromApis(
 		{
-			loader: getLoaderApi(getRequestedVersion(baseVersion, loaderVersion)),
-			containerRuntime: getContainerRuntimeApi(
-				getRequestedVersion(baseVersion, runtimeVersion),
-			),
-			dataRuntime: getDataRuntimeApi(getRequestedVersion(baseVersion, dataRuntimeVersion)),
-			driver: getDriverApi(getRequestedVersion(baseVersion, driverConfig?.version)),
+			loader,
+			loaderForLoading: loader,
+			containerRuntime,
+			containerRuntimeForLoading: containerRuntime,
+			dataRuntime,
+			dataRuntimeForLoading: dataRuntime,
+			driver,
+			driverForLoading: driver,
 		},
 		driverConfig,
 	);
@@ -250,10 +230,6 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 		config: FluidTestDriverConfig;
 	},
 ): Promise<TestObjectProviderWithVersionedLoad> {
-	assert(apis.driverForLoading !== undefined, "driverForLoading must be defined");
-	assert(apis.loaderForLoading !== undefined, "loaderForLoading must be defined");
-	assert(apis.dataRuntimeForLoading !== undefined, "dataRuntimeForLoading must be defined");
-
 	const driverForCreating = await createFluidTestDriver(
 		driverConfig.type,
 		driverConfig.config,
@@ -283,7 +259,7 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 	// We want to ensure that we are testing all latest runtime features, but only if both runtimes
 	// (one that creates containers and one that loads them) support them.
 	//
-	// Theoretically it should be fine to use config for apis.containerRuntimeForLoading?.version.
+	// Theoretically it should be fine to use config for apis.containerRuntimeForLoading.version.
 	// If it's higher then apis.containerRuntime, then unknown to lower version of apis.containerRuntime
 	// would be ignored.
 	//
@@ -292,10 +268,8 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 	// Many use non-first container instance to send ops, so that screws things up.
 	//
 	// As result, we absolutly need to use the min between two versions!
-	const versionForCreating = apis.containerRuntime?.version;
-	assert(versionForCreating !== undefined, "versionForCreating");
-	const versionForLoading = apis.containerRuntimeForLoading?.version;
-	assert(versionForLoading !== undefined, "versionForLoading");
+	const versionForCreating = apis.containerRuntime.version;
+	const versionForLoading = apis.containerRuntimeForLoading.version;
 
 	const minVersion =
 		// First, check if any of the versions is current version of the package.
@@ -322,7 +296,7 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 			containerOptions?.minVersionForCollab ??
 				getMinVersionForCollab(
 					apis.containerRuntime.version,
-					apis.containerRuntimeForLoading?.version,
+					apis.containerRuntimeForLoading.version,
 				),
 			[innerRequestHandler],
 		);
@@ -334,10 +308,6 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 		}
 
 		const dataStoreFactory = getDataStoreFactoryFnForLoading(containerOptions);
-		assert(
-			apis.containerRuntimeForLoading !== undefined,
-			"containerRuntimeForLoading must be defined",
-		);
 		const factoryCtor = createTestContainerRuntimeFactory(
 			apis.containerRuntimeForLoading.ContainerRuntime,
 		);

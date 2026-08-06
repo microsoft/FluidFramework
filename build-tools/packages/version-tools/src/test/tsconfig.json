@@ -8,6 +8,7 @@
 		"outDir": "../../lib/test",
 		"types": ["node", "mocha", "chai"],
 		"skipLibCheck": true,
+		"exactOptionalPropertyTypes": true,
 	},
 	"include": ["./**/*"],
 	"references": [

@@ -16,7 +16,11 @@ import {
 	makeCodecFamily,
 	withSchemaValidation,
 } from "../codec/index.js";
-import type { ChangeEncodingContext, TreeStoredSchema } from "../core/index.js";
+import type {
+	ChangeEncodingContext,
+	ChangeDecodingContext,
+	TreeStoredSchema,
+} from "../core/index.js";
 import {
 	ModularChangeFormatVersion,
 	type ModularChangeset,
@@ -39,9 +43,13 @@ import {
 import type { SharedTreeChange, SharedTreeInnerChange } from "./sharedTreeChangeTypes.js";
 
 export function makeSharedTreeChangeCodecFamily(
-	modularChangeCodecFamily: ICodecFamily<ModularChangeset, ChangeEncodingContext>,
+	modularChangeCodecFamily: ICodecFamily<
+		ModularChangeset,
+		ChangeEncodingContext,
+		ChangeDecodingContext
+	>,
 	options: CodecWriteOptions,
-): ICodecFamily<SharedTreeChange, ChangeEncodingContext> {
+): ICodecFamily<SharedTreeChange, ChangeEncodingContext, ChangeDecodingContext> {
 	const versions: [
 		FormatVersion,
 		IJsonCodec<
@@ -194,6 +202,7 @@ function makeSharedTreeChangeCodec(
 								schema: schemaAndPolicy,
 								idCompressor: context.idCompressor,
 								revision: context.revision,
+								isSummary: context.isSummary,
 							}),
 						});
 					} else if (decodedChange.type === "schema") {

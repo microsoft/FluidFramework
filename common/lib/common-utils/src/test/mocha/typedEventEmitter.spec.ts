@@ -5,8 +5,8 @@
 
 import { strict as assert } from "assert";
 
-import { TypedEventEmitter } from "../..";
-import type { IErrorEvent } from "../../typedEventEmitter";
+import { TypedEventEmitter } from "../../indexNode.js";
+import type { IErrorEvent } from "../../typedEventEmitter.js";
 
 describe("TypedEventEmitter", () => {
 	it("Validate Function proxies", () => {

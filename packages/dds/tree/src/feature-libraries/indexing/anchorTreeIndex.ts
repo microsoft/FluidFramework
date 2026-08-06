@@ -51,6 +51,7 @@ export type KeyFinder<TKey> = (tree: ITreeSubscriptionCursor) => TKey;
  * calling {@link keys} will not include any keys that are stored in the index but only map to detached nodes.
  */
 export class AnchorTreeIndex<TKey, TValue> implements TreeIndex<TKey, TValue> {
+	public readonly [Symbol.toStringTag] = "AnchorTreeIndex";
 	public disposed = false;
 	/**
 	 * Caches {@link KeyFinder}s for each schema definition. If a schema maps to null, it does not

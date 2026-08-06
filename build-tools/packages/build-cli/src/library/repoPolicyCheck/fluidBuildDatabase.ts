@@ -165,7 +165,7 @@ function tscOutput(
 		configJson,
 		ts.sys,
 		configDir,
-		commandOptions,
+		tscUtils.castOptionsUnionToIntersection(commandOptions),
 		configFile,
 	);
 

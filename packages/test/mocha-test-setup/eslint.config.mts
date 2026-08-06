@@ -4,7 +4,7 @@
  */
 
 import type { Linter } from "eslint";
-import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts";
+import { recommended } from "@fluidframework/eslint-config-fluid/flat.mts";
 
 const config: Linter.Config[] = [
 	...recommended,
@@ -15,6 +15,7 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-unsafe-assignment": "off",
 			"@typescript-eslint/no-unsafe-call": "off",
 			"@typescript-eslint/no-unsafe-member-access": "off",
+			"import-x/no-nodejs-modules": "off",
 			"unicorn/no-negated-condition": "off",
 			"unicorn/no-null": "off",
 		},

@@ -16,8 +16,9 @@
  */
 
 export {
+	BenchmarkMode,
 	BenchmarkType,
-	type MochaExclusiveOptions,
+	currentBenchmarkMode,
 	isInPerformanceTestingMode,
 	qualifiedTitle,
 	type Titled,
@@ -31,26 +32,29 @@ export {
 	type DurationBenchmarkAsync,
 	type DurationBenchmark,
 	type BenchmarkTimingOptions,
-	type OnBatch,
-	type HookFunction,
-	type HookArguments,
-	type BenchmarkTimer,
+	type BatchedDurationTimer,
 	type DurationBenchmarkCustom,
 	Phase,
 	collectDurationData,
 	runBenchmarkSync,
 	benchmarkDuration,
+	type BatchlessDurationTimer,
+	type DurationBenchmarkBatchless,
+	benchmarkDurationBatchless,
 } from "./durationBenchmarking/index.js";
-export { benchmarkIt } from "./mocha/index.js";
+export { benchmarkIt, type MochaBenchmarkOptions } from "./mocha/index.js";
 export {
 	formatResultArrayTable,
 	finishLoggingReport,
+	fullName,
 	recordTestResult,
+	visitSuitesArray,
 	type ReportPath,
 	type ReportSuiteWithPath,
 	type SuiteData,
 } from "./reporterUtilities.js";
 export {
+	isResultError,
 	isSuiteNode,
 	parseBenchmarkResult,
 	parseReport,
@@ -73,6 +77,8 @@ export {
 	type MemoryUseCallbacks,
 	benchmarkMemoryUse,
 	collectMemoryUseData,
+	Box,
+	type MemoryUseModifier,
+	memoryAddedBy,
+	memoryUseOfValue,
 } from "./memoryBenchmarking/index.js";
-
-export { benchmark, benchmarkCustom } from "./legacy.js";

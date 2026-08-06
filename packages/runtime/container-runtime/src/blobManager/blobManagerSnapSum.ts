@@ -7,7 +7,7 @@ import type { IContainerContext } from "@fluidframework/container-definitions/in
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Information from a snapshot needed to load BlobManager
@@ -18,6 +18,9 @@ export interface IBlobManagerLoadInfo {
 	redirectTable?: [string, string][];
 }
 
+/**
+ * @internal
+ */
 export const redirectTableBlobName = ".redirectTable";
 
 /**
@@ -55,13 +58,17 @@ const loadV1 = async (
 
 export const toRedirectTable = (
 	blobManagerLoadInfo: IBlobManagerLoadInfo,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 ): Map<string, string> => {
-	logger.sendTelemetryEvent({
-		eventName: "AttachmentBlobsLoaded",
-		count: blobManagerLoadInfo.ids?.length ?? 0,
-		redirectTable: blobManagerLoadInfo.redirectTable?.length,
-	});
+	const count = blobManagerLoadInfo.ids?.length ?? 0;
+	const redirectTableLength = blobManagerLoadInfo.redirectTable?.length ?? 0;
+	if (count > 0 || redirectTableLength > 0) {
+		logger.sendTelemetryEvent({
+			eventName: "AttachmentBlobsLoaded",
+			count,
+			redirectTable: redirectTableLength,
+		});
+	}
 	const redirectTable = new Map<string, string>(blobManagerLoadInfo.redirectTable);
 	if (blobManagerLoadInfo.ids !== undefined) {
 		for (const storageId of blobManagerLoadInfo.ids) {

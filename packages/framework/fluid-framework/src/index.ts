@@ -33,6 +33,7 @@ export type {
 	MemberChangedListener,
 	Myself,
 } from "@fluidframework/fluid-static";
+export { getPresence, getPresenceAlpha } from "@fluidframework/fluid-static/internal";
 export type { SharedObjectKind } from "@fluidframework/shared-object-base";
 export type {
 	IErrorBase,
@@ -44,10 +45,14 @@ export type {
 	ErasedType,
 	IFluidHandle,
 	IFluidLoadable,
+	ITelemetryBaseEvent,
+	ITelemetryBaseLogger,
 	ITelemetryBaseProperties,
 	IEventTransformer,
 	IProvideFluidLoadable,
 	IFluidHandleErased,
+	LogLevel,
+	LogLevelConst,
 	TransformedEvent,
 	TelemetryBaseEventPropertyType,
 	Tagged,
@@ -61,9 +66,14 @@ export type {
 	Off,
 	/* eslint-enable import-x/export */
 } from "@fluidframework/core-interfaces";
-export type { ErasedBaseType } from "@fluidframework/core-interfaces/internal";
-
-// This is an alpha API, but this package doesn't have an alpha entry point so its imported from "internal".
+export type {
+	ErasedBaseType,
+	FluidIterable,
+	FluidIterableIterator,
+	FluidMap,
+	FluidReadonlyArray,
+	FluidReadonlyMap,
+} from "@fluidframework/core-interfaces/internal";
 export { onAssertionFailure } from "@fluidframework/core-utils/internal";
 
 export type { isFluidHandle } from "@fluidframework/runtime-utils";
@@ -83,6 +93,41 @@ export * from "@fluidframework/tree/alpha";
 // ---------------------------------------------------------------
 // #region Custom re-exports
 
+// These are alpha APIs, but this package doesn't have an alpha entry point so they are imported from "internal".
+export {
+	defineDataStore,
+	sharedObjectRegistryFromIterable,
+} from "@fluidframework/shared-object-base/internal";
+export type {
+	DataStoreOptions,
+	SharedObjectCreator,
+	SharedObjectRegistry,
+	SharedObjectKey,
+	SharedObjectKindAlpha,
+	DataStoreContext,
+} from "@fluidframework/shared-object-base/internal";
+export type {
+	DataStoreCreator,
+	DataStoreKey,
+	DataStoreKind,
+	DataStoreRegistry,
+	FluidContainer,
+	FluidContainerAttached,
+	FluidContainerWithService,
+	MinimumVersionForCollaboration,
+	Registry,
+	RegistryKey,
+	ServiceClient,
+	ServiceOptions,
+} from "@fluidframework/driver-definitions/internal";
+export {
+	createBasicRegistryKey,
+	lookupInRegistry,
+	// Due to this currently referencing several existing public types we do not want to stabilize as reexports from here,
+	// do not reexport getContainerAudience for now.
+	// getContainerAudience,
+} from "@fluidframework/driver-definitions/internal";
+
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import type { ITree } from "@fluidframework/tree";
 import {
@@ -95,10 +140,10 @@ import {
  * A hierarchical data structure for collaboratively editing strongly typed JSON-like trees
  * of objects, arrays, and other data types.
  * @privateRemarks
- * Here we reexport SharedTree, but with the `@alpha` types (`ISharedObjectKind`) removed, just keeping the `SharedObjectKind`.
+ * Here we reexport SharedTree, but with the `@legacy` types (`ISharedObjectKind`) removed, just keeping the `SharedObjectKind`.
  * Doing this requires creating this new typed export rather than relying on a reexport directly from the tree package.
  * The tree package itself does not do this because it's API needs to be usable from the encapsulated API which requires `ISharedObjectKind`.
- * This package however is not intended for use by users of the encapsulated API, and therefor it can discard that interface.
+ * This package however is not intended for use by users of the encapsulated API, and therefore it can discard that interface.
  * @public
  */
 export const SharedTree: SharedObjectKind<ITree> = OriginalSharedTree;
@@ -182,6 +227,7 @@ export { SharedString } from "@fluidframework/sequence/internal";
 export type {
 	ISharedObject,
 	ISharedObjectEvents,
+	ISharedObjectKind,
 } from "@fluidframework/shared-object-base/internal";
 
 export type {

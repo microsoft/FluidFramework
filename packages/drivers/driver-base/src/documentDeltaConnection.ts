@@ -15,23 +15,22 @@ import type {
 	IConnect,
 	IConnected,
 	IDocumentMessage,
+	ISentSignalMessage,
 	ISignalClient,
 	ITokenClaims,
 	ISequencedDocumentMessage,
 	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
-import {
-	type ISentSignalMessage,
-	ScopeType,
-} from "@fluidframework/driver-definitions/internal";
+import { ScopeType } from "@fluidframework/driver-definitions/internal";
 import {
 	UsageError,
 	createGenericNetworkError,
 	type DriverErrorTelemetryProps,
 } from "@fluidframework/driver-utils/internal";
 import type {
-	ITelemetryLoggerExt,
+	IFluidErrorBase,
 	MonitoringContext,
+	TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import {
 	EventEmitterWithErrorHandling,
@@ -40,7 +39,6 @@ import {
 	getCircularReplacer,
 	isFluidError,
 	normalizeError,
-	type IFluidErrorBase,
 } from "@fluidframework/telemetry-utils/internal";
 import type { Socket } from "socket.io-client";
 
@@ -75,7 +73,7 @@ export class DocumentDeltaConnection
 	 * for "read" connections. "write" connections may use own "join" op to similar information,
 	 * that is likely to be more up-to-date.
 	 */
-	public checkpointSequenceNumber: number | undefined;
+	public checkpointSequenceNumber?: number;
 
 	// Listen for ops sent before we receive a response to connect_document
 	protected readonly queuedMessages: ISequencedDocumentMessage[] = [];
@@ -122,7 +120,7 @@ export class DocumentDeltaConnection
 	 *
 	 * @deprecated Implementors should manage their own logger or monitoring context
 	 */
-	protected get logger(): ITelemetryLoggerExt {
+	protected get logger(): TelemetryLoggerExt {
 		return this.mc.logger;
 	}
 
@@ -142,7 +140,7 @@ export class DocumentDeltaConnection
 	protected constructor(
 		protected readonly socket: Socket,
 		public documentId: string,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		private readonly enableLongPollingDowngrades: boolean = false,
 		protected readonly connectionId?: string,
 	) {
@@ -647,7 +645,11 @@ export class DocumentDeltaConnection
 					LogLevel.verbose,
 				);
 
-				this.checkpointSequenceNumber = response.checkpointSequenceNumber;
+				if (response.checkpointSequenceNumber === undefined) {
+					delete response.checkpointSequenceNumber;
+				} else {
+					this.checkpointSequenceNumber = response.checkpointSequenceNumber;
+				}
 
 				this.removeConnectionListeners();
 				resolve(response);

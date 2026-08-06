@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "node:assert";
-import { isNullOrUndefined } from "node:util";
 
 import {
 	IMergeTreeDeltaCallbackArgs,
@@ -1995,10 +1994,7 @@ describe("collab", () => {
 					assert.equal(event.ranges[i].segment.properties?.[key], expected[i].props[key]);
 				}
 				if (expected[i].propDeltas === undefined) {
-					assert(
-						isNullOrUndefined(event.ranges[i].propertyDeltas) ||
-							Object.keys(event.ranges[i].propertyDeltas).length === 0,
-					);
+					assert(Object.keys(event.ranges[i].propertyDeltas).length === 0);
 				} else {
 					assert.equal(
 						Object.keys(event.ranges[i].propertyDeltas).length,

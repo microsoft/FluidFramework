@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { BenchmarkType, benchmark } from '@fluid-tools/benchmark';
+import { benchmarkDuration, benchmarkIt } from '@fluid-tools/benchmark';
 
 import { Change, StablePlace } from '../ChangeTypes.js';
 import { EditLog } from '../EditLog.js';
@@ -23,29 +23,31 @@ describe('EditLog Perf', () => {
 			edits.push(newEdit(Change.insertTree(testTree.buildLeaf(), StablePlace.atEndOf(testTree.traitLocation))));
 		}
 
-		benchmark({
-			type: BenchmarkType.Measurement,
+		benchmarkIt({
 			title: `process ${numberOfInserts} sequenced inserts`,
-			benchmarkFn: () => {
-				const log = new EditLog();
+			...benchmarkDuration({
+				benchmarkFn: () => {
+					const log = new EditLog();
 
-				edits.forEach((edit) => {
-					log.addSequencedEdit(edit, { sequenceNumber: 1, referenceSequenceNumber: 0 });
-				});
-			},
+					edits.forEach((edit) => {
+						log.addSequencedEdit(edit, { sequenceNumber: 1, referenceSequenceNumber: 0 });
+					});
+				},
+			}),
 		});
 
 		const targetEditLogSize = Math.floor(numberOfInserts / 4);
-		benchmark({
-			type: BenchmarkType.Measurement,
+		benchmarkIt({
 			title: `process ${numberOfInserts} sequenced inserts with a target edit log size of ${targetEditLogSize}`,
-			benchmarkFn: () => {
-				const log = new EditLog(undefined, undefined, undefined, targetEditLogSize);
+			...benchmarkDuration({
+				benchmarkFn: () => {
+					const log = new EditLog(undefined, undefined, undefined, targetEditLogSize);
 
-				edits.forEach((edit) => {
-					log.addSequencedEdit(edit, { sequenceNumber: 1, referenceSequenceNumber: 0 });
-				});
-			},
+					edits.forEach((edit) => {
+						log.addSequencedEdit(edit, { sequenceNumber: 1, referenceSequenceNumber: 0 });
+					});
+				},
+			}),
 		});
 	});
 });

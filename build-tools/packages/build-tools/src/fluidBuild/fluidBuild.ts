@@ -6,16 +6,16 @@
 import chalk from "picocolors";
 import { Spinner } from "picospinner";
 
-import { GitRepo } from "../common/gitRepo";
-import { defaultLogger } from "../common/logging";
-import { Timer } from "../common/timer";
-import type { BuildGraph } from "./buildGraph";
-import { BuildResult } from "./buildResult";
-import { commonOptions } from "./commonOptions";
-import { DEFAULT_FLUIDBUILD_CONFIG } from "./fluidBuildConfig";
-import { FluidRepoBuild } from "./fluidRepoBuild";
-import { getFluidBuildConfig, getResolvedFluidRoot } from "./fluidUtils";
-import { options, parseOptions } from "./options";
+import { GitRepo } from "../common/gitRepo.js";
+import { defaultLogger } from "../common/logging.js";
+import { Timer } from "../common/timer.js";
+import type { BuildGraph } from "./buildGraph.js";
+import { BuildResult } from "./buildResult.js";
+import { commonOptions } from "./commonOptions.js";
+import { DEFAULT_FLUIDBUILD_CONFIG } from "./fluidBuildConfig.js";
+import { FluidRepoBuild } from "./fluidRepoBuild.js";
+import { getFluidBuildConfig, getResolvedFluidRoot } from "./fluidUtils.js";
+import { options, parseOptions } from "./options.js";
 
 const { log, errorLog: error, warning: warn } = defaultLogger;
 
@@ -128,6 +128,25 @@ async function main(): Promise<void> {
 			log(`Build ${buildStatus}`);
 		}
 		failureSummary = buildGraph.taskFailureSummary;
+
+		// Build cache metrics
+		const extendedMetrics = ["true", "1"].includes(
+			process.env.FLUID_BUILD_EXTENDED_METRICS_DISPLAY?.toLowerCase() ?? "",
+		);
+		if (extendedMetrics) {
+			buildGraph.buildMetrics.printSummary();
+			if (commonOptions.verbose) {
+				buildGraph.buildMetrics.printVerboseDetails();
+			}
+		}
+		if (options.metricsFile) {
+			try {
+				await buildGraph.buildMetrics.writeJsonFile(options.metricsFile);
+				log(`Build metrics written to ${options.metricsFile}`);
+			} catch (e: unknown) {
+				warn(`Failed to write metrics file: ${(e as Error).message}`);
+			}
+		}
 
 		exitCode = buildResult === BuildResult.Failed ? -1 : 0;
 	}

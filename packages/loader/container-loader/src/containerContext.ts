@@ -32,7 +32,7 @@ import type {
 	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type { ConnectionState } from "./connectionState.js";
 import { loaderCompatDetailsForRuntime } from "./loaderLayerCompatState.js";
@@ -69,7 +69,7 @@ export interface IContainerContextConfig
 	readonly getAttachState: () => AttachState;
 	readonly getConnected: () => boolean;
 	readonly existing: boolean;
-	readonly taggedLogger: ITelemetryLoggerExt;
+	readonly taggedLogger: TelemetryLoggerExt;
 	// This "overrides" IContainerContext.snapshotWithContents to be required but allow `undefined`.
 	readonly snapshotWithContents: IContainerContext["snapshotWithContents"] | undefined;
 }
@@ -136,7 +136,7 @@ export class ContainerContext
 	public readonly getAbsoluteUrl: (relativeUrl: string) => Promise<string | undefined>;
 	public readonly clientDetails: IClientDetails;
 	public readonly existing: boolean;
-	public readonly taggedLogger: ITelemetryLoggerExt;
+	public readonly taggedLogger: TelemetryLoggerExt;
 	public readonly pendingLocalState: unknown;
 	public readonly snapshotWithContents?: ISnapshot;
 

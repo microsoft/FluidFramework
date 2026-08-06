@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
-import { Type } from "@sinclair/typebox";
+import * as Type from "@sinclair/typebox";
 
 import { type IJsonCodec, withSchemaValidation } from "../../codec/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";

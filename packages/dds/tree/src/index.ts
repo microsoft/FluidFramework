@@ -12,6 +12,8 @@ export {
 	CommitKind,
 	RevertibleStatus,
 	type CommitMetadata,
+	CommitOutcome,
+	type LocalCommitEvents,
 	type LocalChangeMetadata,
 	type RemoteChangeMetadata,
 	type ChangeMetadata,
@@ -78,12 +80,14 @@ export {
 	type TreeIdentifierUtils,
 	independentView,
 	type IndependentViewOptions,
+	type IndependentViewTelemetryOptions,
 	createIndependentTreeBeta,
 	createIndependentTreeAlpha,
 	type CreateIndependentTreeAlphaOptions,
 	ForestTypeOptimized,
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
+	minimize,
 } from "./shared-tree/index.js";
 
 export {
@@ -97,6 +101,7 @@ export {
 	type TreeNodeSchema,
 	TreeViewConfiguration,
 	type ITreeViewConfiguration,
+	type ITreeViewConfigurationAlpha,
 	type ITreeConfigurationOptions,
 	type TreeView,
 	type TreeViewEvents,
@@ -111,6 +116,7 @@ export {
 	type TreeChangeEvents,
 	type NodeFromSchema,
 	type TreeMapNode,
+	type TreeMapNodeAlpha,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type TreeLeafValue,
 	FieldKind,
@@ -136,10 +142,13 @@ export {
 	type ArrayNodeInsertOp,
 	type ArrayNodeRemoveOp,
 	type ArrayNodeRetainOp,
+	type ArrayNodeTreeChangedDeltaOp,
+	type ArrayNodeTreeChangedRetainOp,
 	type NodeChangedData,
 	type NodeChangedDataAlpha,
 	type NodeChangedDataDelta,
 	type NodeChangedDataProperties,
+	type NodeChangedDataTreeDelta,
 	type SchemaUpgrade,
 	contentSchemaSymbol,
 	// Types not really intended for public use, but used in links.
@@ -269,17 +278,21 @@ export {
 	type NodeSchemaMetadata,
 	type SchemaStatics,
 	type ITreeAlpha,
+	type NoChangeConstraint,
+	type NodeInDocumentConstraint,
+	type RunTransactionParamsAlpha,
+	type RunTransactionParamsBeta,
+	type TransactionCallbackStatusAlpha,
+	type TransactionCallbackStatusBeta,
 	type TransactionConstraint,
 	type TransactionConstraintAlpha,
-	type NodeInDocumentConstraint,
-	type NoChangeConstraint,
-	type RunTransactionParams,
-	type VoidTransactionCallbackStatus,
-	type TransactionCallbackStatus,
-	type TransactionResult,
-	type TransactionResultExt,
-	type TransactionResultSuccess,
+	type TransactionPostProcessor,
 	type TransactionResultFailed,
+	type TransactionResultSuccess,
+	type TransactionValueResult,
+	type TransactionVoidResult,
+	type VoidTransactionCallbackStatusAlpha,
+	type VoidTransactionCallbackStatusBeta,
 	rollback,
 	generateSchemaFromSimpleSchema,
 	evaluateLazySchema,
@@ -324,6 +337,8 @@ export {
 	type ErasedNode,
 	type ErasedSchemaSubclassable,
 	type SnapshotSchemaCompatibilityOptions,
+	StagedSchemaUpgradePolicy,
+	type StagedSchemaUpgradePolicyFactory,
 	type ArrayPlaceAnchor,
 	createArrayInsertionAnchor,
 	type WithValue,
@@ -331,6 +346,7 @@ export {
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
+	SharedTreeAlpha,
 	configuredSharedTree,
 	configuredSharedTreeAlpha,
 	configuredSharedTreeBeta,
@@ -399,5 +415,15 @@ export { FluidSerializableAsTree } from "./serializableDomainSchema.js";
 export { TableSchema, type System_TableSchema } from "./tableSchema.js";
 export { asAlpha, asBeta } from "./api.js";
 
-export { TextAsTree, FormattedTextAsTree } from "./text/index.js";
+export {
+	PlainText,
+	FormattedText,
+	FormattedTextDefault,
+	codePointCount,
+	utf16LengthForCodePoints,
+} from "./text/index.js";
 export { ExtensibleUnionNode } from "./extensibleUnionNode.js";
+export { Component } from "./componentApi.js";
+
+export { defineTreeDataStore, instantiateTreeFirstTime } from "./treeDataStore.js";
+export type { TreeDataStoreOptions } from "./treeDataStore.js";

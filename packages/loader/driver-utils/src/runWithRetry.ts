@@ -9,7 +9,7 @@ import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import {
 	isFluidError,
 	wrapError,
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { NonRetryableError, canRetryOnError, getRetryDelayFromError } from "./network.js";
@@ -56,7 +56,7 @@ export interface IProgress {
 export async function runWithRetry<T>(
 	api: (cancel?: AbortSignal) => Promise<T>,
 	fetchCallName: string,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	progress: IProgress,
 	maxRetries?: number,
 ): Promise<T> {

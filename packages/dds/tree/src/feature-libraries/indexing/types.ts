@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import type { FluidReadonlyMap } from "@fluidframework/core-interfaces/internal";
+
 /**
  * an array of nodes that is guaranteed to have at least one element
  *
- * @alpha
+ * @beta
  */
 export type TreeIndexNodes<TNode> = readonly [first: TNode, ...rest: TNode[]];
 
@@ -23,9 +25,9 @@ export type TreeIndexNodes<TNode> = readonly [first: TNode, ...rest: TNode[]];
  * Since currently partially loading a tree is not supported, there is no need for this.
  * At some point the low level shared tree index type for persisted indexes could be leveraged to provide user facing extensible sets of persisted indexes.
  * @sealed
- * @alpha
+ * @beta
  */
-export interface TreeIndex<TKey, TValue> extends ReadonlyMap<TKey, TValue> {
+export interface TreeIndex<TKey, TValue> extends FluidReadonlyMap<TKey, TValue> {
 	/**
 	 * Disposes the index such that it can no longer be used and receives no updates for changes in the tree.
 	 * @remarks

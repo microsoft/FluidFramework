@@ -26,7 +26,7 @@ describe("Minimum Compat Version", () => {
 					compatVersion: "2.0.0-internal.8.0.0",
 				}),
 			(error: Error) => {
-				return error.message?.startsWith("Error trying to getRequestedVersion:") === true;
+				return /Invalid version/.exec(error.message) !== null;
 			},
 			"Should fail when not sending a correct version",
 		);
@@ -36,11 +36,15 @@ describe("Minimum Compat Version", () => {
 	for (let i = 1; i < numCompatVersions; i++) {
 		it(`compatVersion N-${i} < ${baseVersionForMinCompat}`, () => {
 			assert.strictEqual(
-				isCompatVersionBelowMinVersion(baseVersionForMinCompat, {
-					name: `test`,
-					kind: CompatKind.None,
-					compatVersion: -i,
-				}),
+				isCompatVersionBelowMinVersion(
+					baseVersionForMinCompat,
+					{
+						name: `test`,
+						kind: CompatKind.None,
+						compatVersion: -i,
+					},
+					true,
+				),
 				true,
 				`N-${i} version is not lower than min version: ${baseVersionForMinCompat}`,
 			);
@@ -51,11 +55,15 @@ describe("Minimum Compat Version", () => {
 	for (let i = 1; i < numCompatVersions; i++) {
 		it(`compatVersion N-${i} > ${oldVersion}`, () => {
 			assert.strictEqual(
-				isCompatVersionBelowMinVersion(oldVersion, {
-					name: `test`,
-					kind: CompatKind.None,
-					compatVersion: -i,
-				}),
+				isCompatVersionBelowMinVersion(
+					oldVersion,
+					{
+						name: `test`,
+						kind: CompatKind.None,
+						compatVersion: -i,
+					},
+					true,
+				),
 				false,
 				`N-${i} version: is lower than min version: ${oldVersion}`,
 			);
@@ -64,46 +72,62 @@ describe("Minimum Compat Version", () => {
 
 	it("cross compat. filters out if loadVersion is lower than minVersion", () => {
 		assert.strictEqual(
-			isCompatVersionBelowMinVersion(greaterVersion, {
-				name: "test",
-				kind: CompatKind.CrossClient,
-				compatVersion: greaterVersion,
-				loadVersion: lowerVersion,
-			}),
+			isCompatVersionBelowMinVersion(
+				greaterVersion,
+				{
+					name: "test",
+					kind: CompatKind.CrossClient,
+					compatVersion: greaterVersion,
+					loadVersion: lowerVersion,
+				},
+				true,
+			),
 			true,
 		);
 	});
 
 	it("cross compat. filters out if compatVersion is lower than minVersion", () => {
 		assert.strictEqual(
-			isCompatVersionBelowMinVersion(greaterVersion, {
-				name: "test",
-				kind: CompatKind.CrossClient,
-				compatVersion: lowerVersion,
-				loadVersion: greaterVersion,
-			}),
+			isCompatVersionBelowMinVersion(
+				greaterVersion,
+				{
+					name: "test",
+					kind: CompatKind.CrossClient,
+					compatVersion: lowerVersion,
+					loadVersion: greaterVersion,
+				},
+				true,
+			),
 			true,
 		);
 	});
 
 	it("cross compat. does not filter out valid versions", () => {
 		assert.strictEqual(
-			isCompatVersionBelowMinVersion(lowerVersion, {
-				name: "test",
-				kind: CompatKind.CrossClient,
-				compatVersion: greaterVersion,
-				loadVersion: lowerVersion,
-			}),
+			isCompatVersionBelowMinVersion(
+				lowerVersion,
+				{
+					name: "test",
+					kind: CompatKind.CrossClient,
+					compatVersion: greaterVersion,
+					loadVersion: lowerVersion,
+				},
+				true,
+			),
 			false,
 			`fails with minVersion: ${lowerVersion} compatversion: ${greaterVersion} loadVersion: ${lowerVersion}`,
 		);
 		assert.strictEqual(
-			isCompatVersionBelowMinVersion(lowerVersion, {
-				name: "test",
-				kind: CompatKind.CrossClient,
-				compatVersion: lowerVersion,
-				loadVersion: greaterVersion,
-			}),
+			isCompatVersionBelowMinVersion(
+				lowerVersion,
+				{
+					name: "test",
+					kind: CompatKind.CrossClient,
+					compatVersion: lowerVersion,
+					loadVersion: greaterVersion,
+				},
+				true,
+			),
 			false,
 			`fails with minVersion: ${lowerVersion} compatversion: ${lowerVersion} loadVersion: ${greaterVersion}`,
 		);

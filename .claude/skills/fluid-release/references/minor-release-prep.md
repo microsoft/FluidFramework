@@ -86,6 +86,26 @@ If feedback requires changeset wording changes:
 2. Regenerate release notes and changelogs
 3. This ensures changeset changes have a commit in main (since changesets are deleted during changelog generation)
 
+### If release notes need to be reverted and regenerated
+
+If the release notes PR has already merged but needs to be redone (e.g., new changesets landed after generation, or content needs correction), the workflow is: revert the original PR, then regenerate. However, `flub generate changelog` determines the PR link and commit hash for each changelog entry by looking at which commit last created or modified the changeset file in the working tree. When changesets are restored via `git revert`, flub sees the revert commit as the source — so **all restored changesets get linked to the revert commit** instead of their original PRs.
+
+**After regenerating changelogs in a revert-and-regenerate flow, always verify and fix the PR/commit references.** The steps:
+
+1. Search for the revert commit hash in CHANGELOG.md files to find incorrect entries:
+   ```bash
+   grep -r '<REVERT_COMMIT_SHORT_HASH>' --include='CHANGELOG.md' -l
+   ```
+
+2. For each affected changeset, find the original commit that introduced it:
+   ```bash
+   git log upstream/main --reverse --oneline --diff-filter=A -- ".changeset/<name>.md" | head -1
+   ```
+
+3. Replace the incorrect PR number and commit hash with the correct ones from step 2. Match the SHA display length used by existing entries in the file (typically 10 characters) for consistency.
+
+Note: only changesets that were _restored by the revert_ are affected. New changesets that were already on the branch before the revert will have correct references.
+
 ## Step 4: Bump Main to Next Version
 
 ### Determine the next version
@@ -111,6 +131,22 @@ pnpm -r --include-workspace-root exec npm pkg set version=<NEXT_VERSION>
 pnpm -r run build:genver
 pnpm install --no-frozen-lockfile
 ```
+
+### Update compat workspace versions
+
+The compat-test workspaces under `packages/test/test-version-utils/compat-workspaces/` are pinned to specific prior versions and must be refreshed after every version bump (per the docstring in `packages/test/test-version-utils/scripts/updateCompatVersions.ts`):
+
+```bash
+pnpm run --filter=@fluid-private/test-version-utils update-compat-versions
+```
+
+This regenerates:
+- `compat-workspaces/generated-versions.cjs`
+- `compat-workspaces/full/<version>/package.json` files (adds/removes as needed)
+- `compat-workspaces/full/pnpm-lock.yaml`
+- The auto-generated table in `CompatibilityCheckpoints.md`
+
+If the bump doesn't cross a compatibility checkpoint and the newly released version isn't yet on npm, this is often a no-op — but **always run it** so the next release doesn't conflate changes. The script will be re-run during [type test updates](type-test-updates.md) Step 8 to pick up the freshly published version as N-1.
 
 Create branch `release-prep/<VERSION>/4-bump-<NEXT_VERSION>`, commit, push to upstream, and create a PR. **This PR must merge LAST.**
 

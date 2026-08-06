@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { benchmarkIt } from "./benchmarkIt.js";
+export { benchmarkIt, type MochaBenchmarkOptions } from "./benchmarkIt.js";

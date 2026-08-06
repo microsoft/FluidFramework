@@ -63,7 +63,7 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 		}),
 		normalize: Flags.boolean({
 			char: "n",
-			description: `Removes any unrecognized data from "typeValidation" in the package.json and adds any missing default settings.`,
+			description: `Normalizes type test configuration in package.json. Removes unrecognized data from "typeValidation" and adds any missing default settings. Also updates the "typetests:gen" script: adds or replaces it when type tests are enabled, or removes it when disabled.`,
 			exclusive: ["enable"],
 		}),
 		...PackageCommand.flags,
@@ -111,6 +111,7 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 
 			if (this.flags.normalize) {
 				json.typeValidation = normalizeConfig(json.typeValidation);
+				normalizeTypeTestScript(json);
 			}
 		});
 	}
@@ -148,6 +149,28 @@ export function normalizeConfig(
 		normalized.broken = { ...defaultTypeValidationConfig.broken };
 	}
 	return normalized;
+}
+
+const typetestsGenScript = "flub generate typetests --dir . -v";
+
+/**
+ * Normalizes the `typetests:gen` script in the package.json `scripts` section when the
+ * `typeValidation` node is present.
+ *
+ * If `typeValidation.disabled` is `true`, the script is removed. Otherwise, if `typeValidation`
+ * is defined, the script is added or replaced. If `typeValidation` is `undefined`, this function
+ * does not modify `scripts`.
+ */
+export function normalizeTypeTestScript(pkgJson: PackageWithTypeTestSettings): void {
+	if (pkgJson.typeValidation?.disabled === true) {
+		if (pkgJson.scripts?.["typetests:gen"] !== undefined) {
+			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+			delete pkgJson.scripts["typetests:gen"];
+		}
+	} else if (pkgJson.typeValidation !== undefined) {
+		pkgJson.scripts ??= {};
+		pkgJson.scripts["typetests:gen"] = typetestsGenScript;
+	}
 }
 
 export enum VersionOptions {

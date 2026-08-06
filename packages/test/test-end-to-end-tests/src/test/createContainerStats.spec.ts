@@ -14,7 +14,7 @@ import {
 	ISummaryConfiguration,
 	SummaryCollection,
 } from "@fluidframework/container-runtime/internal";
-import { ISharedDirectory } from "@fluidframework/map/internal";
+import type { ISharedDirectory } from "@fluidframework/map/internal";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {

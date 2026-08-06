@@ -11,10 +11,7 @@ import path from "node:path";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import { cleanedPackageVersion } from "@fluidframework/runtime-utils/internal";
 
-import type {
-	ClientVersionDispatchingCodecBuilder,
-	ICodecOptions,
-} from "../../codec/index.js";
+import type { VersionDispatchingCodecBuilder, ICodecOptions } from "../../codec/index.js";
 import {
 	snapshotSchemaCompatibility,
 	type TreeViewConfiguration,
@@ -192,7 +189,7 @@ export function testSchemaCompatibilitySnapshots(
  * @param options - The options to apply to the codec before snapshotting.
  */
 export function snapshotCodecFormats<TBuildOptions extends Record<string, unknown>>(
-	codec: ClientVersionDispatchingCodecBuilder<TBuildOptions & ICodecOptions>,
+	codec: VersionDispatchingCodecBuilder<TBuildOptions & ICodecOptions>,
 	options: TBuildOptions,
 ): void {
 	const versions = codec

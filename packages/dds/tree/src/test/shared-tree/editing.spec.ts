@@ -1627,13 +1627,6 @@ describe("Editing", () => {
 			expectJsonTree(tree, expectedState);
 		});
 
-		it("can move a node out from a field and into a field under a sibling", () => {
-			const tree = makeTreeFromJsonSequence(["A", {}]);
-			tree.editor.move(rootField, 0, 1, { parent: rootNode2, field: brand("foo") }, 0);
-			const expectedState: JsonCompatible = [{ foo: "A" }];
-			expectJsonTree(tree, expectedState);
-		});
-
 		it("can rebase a move over the deletion of the source parent", () => {
 			const tree = makeTreeFromJson({ src: ["A", "B"], dst: ["C", "D"] });
 			const childBranch = tree.fork();
@@ -3218,6 +3211,34 @@ describe("Editing", () => {
 
 				stack.unsubscribe();
 			});
+
+			it("inverse node existence constraint on moved node not violated by unrelated change", () => {
+				const tree = makeTreeFromJsonSequence(["A", "B"]);
+				const branch = tree.fork();
+				const stack = createTestUndoRedoStacks(tree.events);
+
+				// Make transaction that does the following:
+				// 1. Moves "A" after "B".
+				// 2. Adds inverse constraint on existence of node "A".
+				branch.transaction.start();
+				branch.editor.move(rootField, 0, 1, rootField, 2);
+				branch.editor.addNodeExistsConstraintOnRevert(rootNode2);
+				branch.transaction.commit();
+				expectJsonTree(branch, ["B", "A"]);
+
+				insert(tree, 2, "C");
+				expectJsonTree(tree, ["A", "B", "C"]);
+
+				tree.merge(branch);
+				expectJsonTree(tree, ["B", "A", "C"]);
+				const moveRevertible = stack.undoStack[1] ?? assert.fail("Missing undo");
+
+				// The inverse constraint should not be violated.
+				moveRevertible.revert();
+				expectJsonTree(tree, ["A", "B", "C"]);
+
+				stack.unsubscribe();
+			});
 		});
 
 		it("Rebase over conflicted change", () => {
@@ -3437,6 +3458,130 @@ describe("Editing", () => {
 				expectJsonTree(branch, ["A", "B"]);
 				branch.rebaseOnto(tree);
 				expectJsonTree(branch, ["A", "B"]);
+				unsubscribe();
+			});
+
+			it("Should not be violated when there are multiple inserts reverted", () => {
+				const tree = makeTreeFromJsonSequence(["A", "B"], {
+					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
+				});
+				const branch = tree.fork();
+				const { undoStack, unsubscribe } = createTestUndoRedoStacks(branch.events);
+
+				branch.transaction.start();
+				branch.editor.addNoChangeConstraintOnRevert();
+				branch.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["X"]));
+				branch.transaction.commit();
+
+				branch.transaction.start();
+				branch.editor.addNoChangeConstraintOnRevert();
+				branch.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["Y"]));
+				branch.transaction.commit();
+
+				branch.transaction.start();
+				branch.editor.addNoChangeConstraintOnRevert();
+				branch.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["Z"]));
+				branch.transaction.commit();
+
+				branch.transaction.start();
+				branch.editor.addNoChangeConstraintOnRevert();
+				branch.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["W"]));
+				branch.transaction.commit();
+
+				const undo1 = undoStack.pop() ?? assert.fail("Missing undo");
+				undo1.revert();
+				const undo2 = undoStack.pop() ?? assert.fail("Missing undo");
+				undo2.revert();
+				const undo3 = undoStack.pop() ?? assert.fail("Missing undo");
+				undo3.revert();
+
+				expectJsonTree(branch, ["A", "X", "B"]);
+				unsubscribe();
+			});
+
+			it("Should not be violated when there are multiple moves reverted", () => {
+				const tree = makeTreeFromJsonSequence([{ "A": 1, "B": 2, "C": 3 }], {
+					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
+				});
+				const branch = tree.fork();
+				const { undoStack, unsubscribe } = createTestUndoRedoStacks(branch.events);
+
+				branch.transaction.start();
+				branch.editor.addNoChangeConstraintOnRevert();
+				branch.editor.move(
+					{ parent: rootNode, field: brand("A") },
+					0,
+					1,
+					{ parent: rootNode, field: brand("X") },
+					0,
+				);
+				branch.transaction.commit();
+
+				branch.transaction.start();
+				branch.editor.addNoChangeConstraintOnRevert();
+				branch.editor.move(
+					{ parent: rootNode, field: brand("B") },
+					0,
+					1,
+					{ parent: rootNode, field: brand("Y") },
+					0,
+				);
+				branch.transaction.commit();
+
+				branch.transaction.start();
+				branch.editor.addNoChangeConstraintOnRevert();
+				branch.editor.move(
+					{ parent: rootNode, field: brand("C") },
+					0,
+					1,
+					{ parent: rootNode, field: brand("Z") },
+					0,
+				);
+				branch.transaction.commit();
+
+				const undo1 = undoStack.pop() ?? assert.fail("Missing undo");
+				undo1.revert();
+				const undo2 = undoStack.pop() ?? assert.fail("Missing undo");
+				undo2.revert();
+
+				expectJsonTree(branch, [{ "X": 1, "B": 2, "C": 3 }]);
+				unsubscribe();
+			});
+
+			it("Should not be violated when a non-constrained edit is inserted but then removed by later edits", () => {
+				const tree = makeTreeFromJsonSequence([], {
+					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
+				});
+				const branch = tree.fork();
+				const { undoStack, unsubscribe } = createTestUndoRedoStacks(branch.events);
+
+				// Insert "B" with a no-change constraint on revert
+				branch.transaction.start();
+				branch.editor.addNoChangeConstraintOnRevert();
+				branch.editor.sequenceField(rootField).insert(0, chunkFromJsonTrees(["B"]));
+				branch.transaction.commit();
+
+				// Insert "C" (no constraint)
+				branch.transaction.start();
+				branch.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["C"]));
+				branch.transaction.commit();
+
+				// Delete "C"
+				branch.transaction.start();
+				branch.editor.sequenceField(rootField).remove(1, 1);
+				branch.transaction.commit();
+
+				expectJsonTree(branch, ["B"]);
+
+				// Pop the non-constrained edits off the undo stack; we're looking for the insert of "B"
+				undoStack.pop();
+				undoStack.pop();
+
+				// Revert the constrained insert of "B"
+				const undo = undoStack.pop() ?? assert.fail("Missing undo");
+				undo.revert();
+
+				expectJsonTree(branch, []);
 				unsubscribe();
 			});
 		});

@@ -80,9 +80,18 @@ flowchart
 
 ### Error Handling
 
-When incompatibility is detected, an error of type `FluidErrorTypes.layerIncompatibilityError` which implements the `ILayerIncompatibilityError` interface is thrown.
-In all layer validations except at the Runtime ↔ DataStore boundary, the error causes the container to close. This prevents any potential data corruption that could occur from incompatible operations.
-In case of the Runtime ↔ DataStore boundary, the data store creation / load will fail to prevent corruption of the data store from incompatible operations. The container may also close, e.g. if the data store is created / loaded during container create / load.
+Layer incompatibility is detected when a layer interacts with another layer for the first time. When that happens, an error of type `FluidErrorTypes.layerIncompatibilityError` is thrown. The error implements the `ILayerIncompatibilityError` interface, whose properties provide detailed information about the incompatibility. Throwing this error prevents potentially incompatible operations that could lead to data corruption.
+
+The incompatibilities between the layers are detected as follows:
+
+- **Loader ↔ Driver** and **Loader ↔ Runtime**: Incompatibility is detected during container create / load. If incompatibility is detected, a `FluidErrorTypes.layerIncompatibilityError` error is thrown, failing the container creation / load.
+- **Runtime ↔ DataStore**: Incompatibility is detected during data store create / load. If incompatibility is detected, a `FluidErrorTypes.layerIncompatibilityError` error is thrown, failing the data store creation / load.
+  If the data store is being created / loaded during container create / load, that will also throw a `FluidErrorTypes.layerIncompatibilityError` error, failing the container creation / load.
+
+#### Telemetry
+
+A telemetry event named `LayerIncompatibilityError` will be logged whenever a layer incompatibility is detected. The event will include key properties defined in the `ILayerIncompatibilityError` interface.
+
 
 ## Layer Compatibility Policy
 

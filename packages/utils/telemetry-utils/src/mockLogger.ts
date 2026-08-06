@@ -13,7 +13,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { createChildLogger } from "./logger.js";
 import type {
 	ITelemetryEventExt,
-	ITelemetryLoggerExt,
+	TelemetryLoggerExt,
 	ITelemetryPropertiesExt,
 } from "./telemetryTypes.js";
 
@@ -41,7 +41,7 @@ export class MockLogger implements ITelemetryBaseLogger {
 	public readonly minLogLevel: LogLevel;
 
 	public constructor(minLogLevel?: LogLevel) {
-		this.minLogLevel = minLogLevel ?? LogLevel.default;
+		this.minLogLevel = minLogLevel ?? LogLevel.info;
 	}
 
 	/**
@@ -51,7 +51,7 @@ export class MockLogger implements ITelemetryBaseLogger {
 		this._events = [];
 	}
 
-	public toTelemetryLogger(): ITelemetryLoggerExt {
+	public toTelemetryLogger(): ReturnType<typeof createChildLogger> {
 		return createChildLogger({ logger: this });
 	}
 
@@ -59,7 +59,7 @@ export class MockLogger implements ITelemetryBaseLogger {
 	 * {@inheritDoc @fluidframework/core-interfaces#ITelemetryBaseLogger.send}
 	 */
 	public send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
-		if ((logLevel ?? LogLevel.default) >= this.minLogLevel) {
+		if ((logLevel ?? LogLevel.essential) >= this.minLogLevel) {
 			this._events.push(event);
 		}
 	}
@@ -357,13 +357,13 @@ function matchObjects(
 }
 
 /**
- * Mock {@link ITelemetryLoggerExt} implementation.
+ * Mock {@link TelemetryLoggerExt} implementation.
  *
  * @remarks Can be created via {@link createMockLoggerExt}.
  *
  * @internal
  */
-export interface IMockLoggerExt extends ITelemetryLoggerExt {
+export interface IMockLoggerExt extends TelemetryLoggerExt {
 	/**
 	 * Gets the events that have been logged so far.
 	 */

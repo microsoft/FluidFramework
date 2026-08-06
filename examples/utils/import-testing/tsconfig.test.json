@@ -10,6 +10,7 @@
 	"compilerOptions": {
 		"target": "es2022",
 		"module": "Node16",
+		"types": ["node", "mocha"],
 		"strict": true,
 		"skipLibCheck": false,
 		"incremental": false,

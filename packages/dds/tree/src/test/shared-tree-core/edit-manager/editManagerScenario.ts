@@ -10,8 +10,8 @@ import type { SessionId } from "@fluidframework/id-compressor";
 
 import type { ChangeFamilyEditor, ChangeRebaser } from "../../../core/index.js";
 import type { Commit, EditManager, SeqNumber } from "../../../shared-tree-core/index.js";
-import { brand, clone } from "../../../util/index.js";
-import { TestChange, type TestChangeFamily, asDelta } from "../../testChange.js";
+import { brand } from "../../../util/index.js";
+import { TestChange, asDelta } from "../../testChange.js";
 import { mintRevisionTag } from "../../utils.js";
 
 import {
@@ -19,7 +19,7 @@ import {
 	checkChangeList,
 	testChangeEditManagerFactory,
 } from "./editManagerTestUtils.js";
-export type TestEditManager = EditManager<ChangeFamilyEditor, TestChange, TestChangeFamily>;
+export type TestEditManager = EditManager<ChangeFamilyEditor, TestChange>;
 
 /**
  * Represents the minting and sending of a new local change.
@@ -470,7 +470,7 @@ export function runUnitTestScenario(
 						rebaser,
 						sessionId: `Join${joiners.length}` as SessionId,
 					}).manager;
-					const summary = clone(summarizer.getSummaryData());
+					const summary = structuredClone(summarizer.getSummaryData());
 					joiner.loadSummaryData(summary);
 					joiners.push(joiner);
 				}

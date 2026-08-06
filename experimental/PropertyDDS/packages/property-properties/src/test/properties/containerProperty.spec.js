@@ -8,9 +8,10 @@
  * this will also tests parts of Property Factory that creates Container property
  */
 
-const MSG = require("@fluid-experimental/property-common").constants.MSG;
+import { constants } from "@fluid-experimental/property-common";
+const { MSG } = constants;
 
-const PropertyFactory = require("../..").PropertyFactory;
+import { PropertyFactory } from "../../index.js";
 
 describe("ContainerProperty", function () {
 	beforeEach(() => {
@@ -230,7 +231,7 @@ describe("ContainerProperty", function () {
 
 			expect(() => {
 				instance.remove("num");
-			}).to.throw(MSG.CANNOT_REMOVE_NONE_OPTIONAL_PROP + "num");
+			}).to.throw(MSG.CANNOT_REMOVE_NON_OPTIONAL_PROP + "num");
 		});
 	});
 });

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { BrandedType } from "@fluidframework/core-interfaces/internal";
+import type { BrandedType } from "@fluidframework/core-interfaces";
 
 import { createInstanceOf } from "./testUtils.js";
 import type { BrandedString } from "./testValues.js";

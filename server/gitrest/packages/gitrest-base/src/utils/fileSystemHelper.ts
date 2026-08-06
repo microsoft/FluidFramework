@@ -149,31 +149,54 @@ export function filepathToString(filepath: PathLike | FileHandle): string {
 export function getStats(type?: FsEntityType, lastModified?: Date, size?: number): fs.Stats {
 	const computedLastModified = new Date(0);
 	const computedLastModifiedInMs = computedLastModified.getTime();
-	const defaultStats = new fs.Stats();
+
+	let mode: number;
 	switch (type) {
 		case "file":
-			defaultStats.mode = fs.constants.S_IFREG;
+			mode = fs.constants.S_IFREG;
 			break;
 		case "directory":
-			defaultStats.mode = fs.constants.S_IFDIR;
+			mode = fs.constants.S_IFDIR;
 			break;
 		case "symlink":
-			defaultStats.mode = fs.constants.S_IFLNK;
+			mode = fs.constants.S_IFLNK;
 			break;
 		default:
-			defaultStats.mode = fs.constants.S_IFREG;
+			mode = fs.constants.S_IFREG;
 	}
 	const lastModifiedInMs = lastModified?.getTime();
+	const mtime = lastModified ?? computedLastModified;
+	const mtimeMs = lastModifiedInMs ?? computedLastModifiedInMs;
 
-	defaultStats.size = size ?? 1;
-	defaultStats.uid = 0;
-	defaultStats.gid = 0;
-	defaultStats.ino = 0;
-	defaultStats.dev = 0;
-	defaultStats.mtime = lastModified ?? computedLastModified;
-	defaultStats.mtimeMs = lastModifiedInMs ?? computedLastModifiedInMs;
-	defaultStats.ctime = lastModified ?? computedLastModified;
-	defaultStats.ctimeMs = lastModifiedInMs ?? computedLastModifiedInMs;
-
-	return defaultStats;
+	// The fs.Stats constructor is private as of @types/node@22, so we construct a
+	// plain object with the needed properties and is*() methods. The is*() methods
+	// use simple string comparisons against the `type` parameter rather than bitwise
+	// mode checks, which produces the same results for all inputs this function receives.
+	return {
+		mode,
+		size: size ?? 1,
+		uid: 0,
+		gid: 0,
+		ino: 0,
+		dev: 0,
+		nlink: 1,
+		rdev: 0,
+		blksize: 4096,
+		blocks: 0,
+		mtime,
+		mtimeMs,
+		ctime: mtime,
+		ctimeMs: mtimeMs,
+		atime: mtime,
+		atimeMs: mtimeMs,
+		birthtime: mtime,
+		birthtimeMs: mtimeMs,
+		isFile: () => type === "file" || type === undefined,
+		isDirectory: () => type === "directory",
+		isSymbolicLink: () => type === "symlink",
+		isBlockDevice: () => false,
+		isCharacterDevice: () => false,
+		isFIFO: () => false,
+		isSocket: () => false,
+	} as fs.Stats;
 }

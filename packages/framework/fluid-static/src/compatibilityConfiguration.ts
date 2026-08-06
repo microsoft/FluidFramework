@@ -4,19 +4,20 @@
  */
 
 import type { IContainerRuntimeOptionsInternal } from "@fluidframework/container-runtime/internal";
-
-import type { CompatibilityMode } from "./types.js";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import { gte } from "semver-ts";
 
 /**
- * The CompatibilityMode selected determines the set of runtime options to use. In "1" mode we support
- * full interop with true 1.x clients, while in "2" mode we only support interop with 2.x clients.
+ * Fluid-static-specific runtime option overrides keyed by `minVersionForCollab`.
  *
- * @privateRemarks In general, we can use the `compatibilityMode` property of `LoadContainerRuntimeParams` to apply
- * the proper configurations. However, there are some options that we need to explicity set that differ
- * from the default values (i.e. `enableRuntimeIdCompressor` below).
+ * @remarks
+ * These are layered on top of the runtime defaults that container-runtime selects from
+ * `minVersionForCollab` (via `getMinVersionForCollabDefaults`). Only options that
+ * fluid-static needs to set differently from those defaults belong here
+ * (e.g. enableRuntimeIdCompressor to support SharedTree).
  */
-export const compatibilityModeRuntimeOptions: Record<
-	CompatibilityMode,
+const minVersionForCollabToDefaultRuntimeOptions: Record<
+	"1" | "2",
 	IContainerRuntimeOptionsInternal
 > = {
 	"1": {},
@@ -27,3 +28,20 @@ export const compatibilityModeRuntimeOptions: Record<
 		enableRuntimeIdCompressor: "on",
 	},
 };
+
+/**
+ * Returns the fluid-static-specific runtime option overrides for the given `minVersionForCollab`.
+ *
+ * @remarks
+ * The bulk of runtime defaults for a given `minVersionForCollab` are selected by container-runtime
+ * (via `getMinVersionForCollabDefaults`). This function only contributes the additional overrides
+ * that fluid-static needs to layer on top of those defaults.
+ * @internal
+ */
+export function defaultRuntimeOptionsForMinVersion(
+	minVersionForCollab: MinimumVersionForCollab,
+): IContainerRuntimeOptionsInternal {
+	return minVersionForCollabToDefaultRuntimeOptions[
+		gte(minVersionForCollab, "2.0.0") ? "2" : "1"
+	];
+}

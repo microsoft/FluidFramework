@@ -5,8 +5,8 @@
 
 import type { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import type {
-	ITelemetryLoggerExt,
 	TelemetryEventPropertyTypeExt,
+	TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 const defaultTelemetrySignalSampleCount = 100;
@@ -101,7 +101,7 @@ export class SignalTelemetryManager {
 	 */
 	public trackReceivedSignal(
 		envelope: ISignalEnvelope,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		consecutiveReconnects: number,
 	): void {
 		const {

@@ -1,5 +1,58 @@
 # @fluid-tools/benchmark
 
+## 0.60.0
+
+## 0.59.0
+
+-   Added `BenchmarkMode` enum with `Correctness` and `Performance` values to represent the mode in which benchmarks are run.
+-   Added `currentBenchmarkMode` constant that reflects the active `BenchmarkMode` at process startup (determined by `--perfMode` flag or `FLUID_TEST_PERF_MODE` environment variable).
+-   `isInPerformanceTestingMode` is now deprecated. Use `currentBenchmarkMode === BenchmarkMode.Performance` instead.
+-   Added `MochaBenchmarkOptions` as the options type for `benchmarkIt`, replacing `BenchmarkOptions`. It adds:
+    -   `correctnessTimeoutMs?: number` — sets the Mocha timeout for this test when running in `BenchmarkMode.Correctness`. Useful for extending correctness-mode timeouts without affecting the (typically much longer) performance-mode timeouts.
+    -   `skip?: BenchmarkMode | true` — skips this test. When set to `true`, the test is skipped in all modes. When set to a `BenchmarkMode` value, the test is skipped only in that mode.
+    -   `only?: boolean` — restricts the run to this test (equivalent to Mocha's `it.only`).
+-   Added `benchmarkDurationBatchless` and the `BatchlessDurationTimer` interface for benchmarks that require per-iteration setup and/or teardown, making batching impractical. Each timed sample covers exactly one invocation of the operation. Prefer `benchmarkDuration` with batching when possible, as batchless measurements have significantly higher noise and measurement bias.
+    Tests previously using `minBatchDurationSeconds: 0` to force a single iteration per batch should migrate to this API.
+-   Improved error reporting: if a benchmark function exits before data collection is complete (e.g. by never recording timing data via the relevant API, such as `state.timeBatch()`/`state.recordBatch()` for custom duration benchmarks or `time()`/`timeAsync()` for batchless benchmarks, or by breaking out of the timing loop while it is still returning `true`), an error is now thrown with a descriptive message.
+
+### ⚠ BREAKING CHANGES
+
+-   `BenchmarkTimer` has been renamed to `BatchedDurationTimer`.
+-   Removed `MochaExclusiveOptions` interface. Consumers who referenced this type should use `MochaBenchmarkOptions` instead, which includes the same `only` field plus the new `correctnessTimeoutMs` and `skip` options.
+
+## 0.58.0
+
+-   Default value for `BenchmarkDescription.type` is now documented to be `BenchmarkType.Measurement` (no functional change: just added missing documentation).
+-   Added `timeBatchAsync` and `timeAllBatchesAsync` methods to `BenchmarkTimer` for benchmarking async operations via `DurationBenchmarkCustom`.
+-   Recommend use of `benchmarkDuration` in dcoumentation for `collectDurationData`.
+-   Suggest setting `testType: TestType.ExecutionTime` when using `collectDurationData` in a `BenchmarkFunction`.
+
+### ⚠ BREAKING CHANGES
+
+-   Removed deprecated `benchmark` and `benchmarkCustom` functions. Use `benchmarkIt` with `benchmarkDuration` instead.
+-   Removed deprecated `HookArguments` interface and its `before`/`after` fields from `DurationBenchmarkSync` and `DurationBenchmarkAsync`. Use `DurationBenchmarkCustom` or call `collectDurationData` directly from a wrapper function containing setup/teardown.
+-   Removed deprecated `OnBatch` interface and its `beforeEachBatch` field from `DurationBenchmarkSync` and `DurationBenchmarkAsync`. Use `DurationBenchmarkCustom` for per-batch setup.
+-   Removed deprecated `HookFunction` type.
+
+## 0.57.0
+
+-   Mocha dependency updated from v10 to v11.
+-   Error messages from Mocha, including timeouts, are now included in the console and output files properly.
+
+## 0.56.0
+
+-   Add `after` to `MemoryUseModifier`.
+
+## 0.55.0
+
+-   Added `memoryUseOfValue` and `memoryAddedBy` helper functions for constructing common `MemoryUseBenchmark` cases without hand-writing the callback loop.
+-   Added `Box<T>`, a simple optional-value container useful for controlling object lifetime in memory benchmarks when stack variable lifetimes would otherwise retain memory longer than intended.
+-   `MemoryUseBenchmark.enableAsyncGC` now defaults to `true`. Benchmarks that do not require async GC can set `enableAsyncGC: false` to avoid the small runtime and per-iteration memory overhead it introduces.
+
+## 0.54.0
+
+-   Fixed `--parentProcess` mode incorrectly matching tests whose full title is a substring of another test's full title. The child process filter now uses an exact-match regex (`--grep ^title$`) instead of substring matching (`--fgrep title`). For example, if a suite contained tests named `foo` and `foobar` in the same suite, running `foo` in a child process with `--fgrep foo` would also match `foobar`, causing both tests to run and assuming both are benchmarks, produce an error (versions prior to 0.53 would produce incorrect results instead of an error).
+
 ## 0.53.0
 
 -   Memory benchmarks now have much more aggressive GC to collect more stable results.
