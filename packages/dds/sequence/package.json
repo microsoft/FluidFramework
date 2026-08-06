@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/sequence",
-	"version": "2.114.0",
+	"version": "2.115.0",
 	"description": "Distributed sequence",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -69,9 +69,6 @@
 	"main": "lib/index.js",
 	"types": "lib/public.d.ts",
 	"scripts": {
-		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "flub generate entrypoints --resolutionConditions require --outFileLegacyBeta legacy --outDir ./dist",
-		"api-extractor:esnext": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib --node10TypeCompat",
 		"bench": "cross-env FLUID_TEST_PERF_MODE=1 mocha --parentProcess",
 		"build": "fluid-build . --task build",
 		"build:api-reports": "concurrently \"npm:build:api-reports:*\"",
@@ -80,9 +77,12 @@
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
+		"build:entrypoints": "fluid-build . --task build:entrypoints",
+		"build:entrypoints:cjs": "flub generate entrypoints --resolutionConditions require --outFileLegacyBeta legacy --outDir ./dist",
+		"build:entrypoints:esm": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib --node10TypeCompat",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:genver": "gen-version",
-		"build:test": "npm run build:test:esm && npm run build:test:cjs",
+		"build:test": "concurrently npm:build:test:esm npm:build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack . --exclude-entrypoints ./internal/test/intervalCollection ./internal/test",
@@ -165,7 +165,7 @@
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
-		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.111.0",
+		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.112.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.58.1",
 		"@types/diff": "^3.5.1",
@@ -185,6 +185,9 @@
 		"rimraf": "^6.1.3",
 		"typescript": "~5.4.5"
 	},
+	"comments": [
+		"Sequence test builds and eslint depend on the corresponding Merge Tree test builds because Sequence tests import @fluidframework/merge-tree/internal/test, which resolves to generated test output."
+	],
 	"fluidBuild": {
 		"tasks": {
 			"build:test:cjs": [
@@ -192,6 +195,10 @@
 				"@fluidframework/merge-tree#build:test:cjs"
 			],
 			"build:test:esm": [
+				"...",
+				"@fluidframework/merge-tree#build:test:esm"
+			],
+			"eslint": [
 				"...",
 				"@fluidframework/merge-tree#build:test:esm"
 			]

@@ -127,6 +127,8 @@ export {
 	type ReadOnlyDetachedFieldIndex,
 } from "./detachedFieldIndex.js";
 
+export { type DetachedFieldSummaryData } from "./detachedFieldIndexTypes.js";
+
 export { detachedFieldIndexCodecBuilder } from "./detachedFieldIndexCodecs.js";
 export { DetachedFieldIndexFormatVersion } from "./detachedFieldIndexFormatCommon.js";
 export { type FormatV1 } from "./detachedFieldIndexFormatV1.js";

@@ -5,13 +5,14 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { fieldKinds, minimizeModularChangeset } from "../feature-libraries/index.js";
+import { minimizeModularChangeset } from "../feature-libraries/index.js";
 import { ChangeProcessorApplicability } from "../shared-tree-core/index.js";
 import type { TransactionPostProcessor } from "../simple-tree/index.js";
 
 import { mapDataChanges } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import { createTransactionPostProcessor } from "./transactionPostProcessor.js";
+import type { SharedTreeChangeProcessingContext } from "./sharedTreeChangeFamily.js";
 
 /**
  * "Minimizes" a {@link SharedTreeChange} so that it contains no extraneous
@@ -26,7 +27,10 @@ import { createTransactionPostProcessor } from "./transactionPostProcessor.js";
  *
  * Schema changes are left unchanged.
  */
-function minimizeSharedTreeChange(change: SharedTreeChange): SharedTreeChange {
+function minimizeSharedTreeChange(
+	change: SharedTreeChange,
+	context: SharedTreeChangeProcessingContext,
+): SharedTreeChange {
 	const countOfDataChanges = change.changes.filter(
 		(innerChange) => innerChange.type === "data",
 	).length;
@@ -36,7 +40,7 @@ function minimizeSharedTreeChange(change: SharedTreeChange): SharedTreeChange {
 		);
 	}
 	return mapDataChanges(change, (dataChange) =>
-		minimizeModularChangeset(dataChange, fieldKinds),
+		minimizeModularChangeset(dataChange, context.modularChangeFamily),
 	);
 }
 

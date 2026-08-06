@@ -63,7 +63,7 @@ describe("EditManager - Bench", () => {
 
 	interface Family<TChange> {
 		readonly name: string;
-		readonly changeFamily: ChangeFamily<ChangeFamilyEditor, TChange>;
+		readonly changeFamily: ChangeFamily<ChangeFamilyEditor, TChange, unknown>;
 		readonly mintChange: (revision: RevisionTag | undefined) => TChange;
 		readonly maxEditCount: number;
 	}

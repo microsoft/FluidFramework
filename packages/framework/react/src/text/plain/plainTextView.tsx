@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TreeAlpha, type TextAsTree } from "@fluidframework/tree/internal";
+import { TreeAlpha, type PlainText } from "@fluidframework/tree/internal";
 import { type ChangeEvent, type FC, useCallback, useLayoutEffect, useRef } from "react";
 
 import { unwrapPropTreeNode, type PropTreeNode } from "../../propNode.js";
@@ -18,17 +18,17 @@ import { useTreeSynchronizedString } from "./useTreeSynchronizedString.js";
  */
 export interface MainViewProps extends TextEditorProps {
 	/** The plain text tree to edit. */
-	readonly root: PropTreeNode<TextAsTree.Tree>;
+	readonly root: PropTreeNode<PlainText.Tree>;
 }
 
 type MainViewPropsInner = Omit<MainViewProps, "root"> & {
-	readonly root: TextAsTree.Tree;
+	readonly root: PlainText.Tree;
 };
 
 /**
  * A React component for plain text editing.
  * @remarks
- * Uses {@link @fluidframework/tree#TextAsTree.Tree} for the data-model and an HTML textarea for the UI.
+ * Uses {@link @fluidframework/tree#PlainText.Tree} for the data-model and an HTML textarea for the UI.
  * Pass an `undoRedo` prop to enable undo/redo buttons scoped to this editor's transactions.
  * @internal
  */
@@ -44,13 +44,13 @@ export const MainView: FC<MainViewProps> = ({ root, undoRedo, editLabel }) => {
 
 /**
  * A plain text editor view component using a native HTML textarea.
- * Uses TextAsTree for collaborative plain text storage.
+ * Uses PlainText for collaborative plain text storage.
  *
  * @remarks
  * A controlled textarea driven by {@link useTreeSynchronizedString} (tree → string); local edits
  * are written back to the tree via {@link syncTextToTree}, wrapped in a transaction so each edit is
  * atomically undoable/redoable (string → tree). Doubles as a reference
- * for binding a text input to a {@link @fluidframework/tree#TextAsTree.Tree}.
+ * for binding a text input to a {@link @fluidframework/tree#PlainText.Tree}.
  */
 const PlainTextEditorView: FC<MainViewPropsInner> = ({ root, undoRedo, editLabel }) => {
 	const effectiveLabel = editLabel ?? root;

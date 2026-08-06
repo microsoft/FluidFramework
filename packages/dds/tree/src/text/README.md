@@ -5,7 +5,8 @@ A collection of text related types, schema and utilities for working with text b
 ## Status
 
 Very early work in progress.
-See doc comment on `TextAsTree` for more details.
+See doc comment on `PlainText` for more details.
+
 
 ## Extrinsic Ranges
 

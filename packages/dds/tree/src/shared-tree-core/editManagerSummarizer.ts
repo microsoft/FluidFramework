@@ -15,11 +15,14 @@ import type {
 import type { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
 import type { IJsonCodec } from "../codec/index.js";
-import type { ChangeFamily, ChangeFamilyEditor, SchemaAndPolicy } from "../core/index.js";
+import type { ChangeFamilyEditor, SchemaAndPolicy } from "../core/index.js";
 import type { IdentifierHealingConfig, JsonCompatibleReadOnly } from "../util/index.js";
 
 import type { EditManager, SummaryData } from "./editManager.js";
-import type { EditManagerEncodingContext } from "./editManagerCodecs.js";
+import type {
+	EditManagerDecodingContext,
+	EditManagerEncodingContext,
+} from "./editManagerCodecsCommons.js";
 import type {
 	Summarizable,
 	SummaryElementParser,
@@ -65,7 +68,7 @@ function minVersionToEditManagerSummaryFormatVersion(
 /**
  * Provides methods for summarizing and loading an `EditManager`
  */
-export class EditManagerSummarizer<TChangeset>
+export class EditManagerSummarizer<TChangeset, TChangeProcessingContext>
 	extends VersionedSummarizer<EditManagerSummaryFormatVersion>
 	implements Summarizable
 {
@@ -74,13 +77,14 @@ export class EditManagerSummarizer<TChangeset>
 		private readonly editManager: EditManager<
 			ChangeFamilyEditor,
 			TChangeset,
-			ChangeFamily<ChangeFamilyEditor, TChangeset>
+			TChangeProcessingContext
 		>,
 		private readonly codec: IJsonCodec<
 			SummaryData<TChangeset>,
 			JsonCompatibleReadOnly,
 			JsonCompatibleReadOnly,
-			EditManagerEncodingContext
+			EditManagerEncodingContext,
+			EditManagerDecodingContext
 		>,
 		private readonly idCompressor: IIdCompressor,
 		minVersionForCollab: MinimumVersionForCollab,
@@ -109,7 +113,6 @@ export class EditManagerSummarizer<TChangeset>
 			idCompressor: this.idCompressor,
 			schema: this.schemaAndPolicy,
 			isSummary: true,
-			healing: this.healing,
 		};
 		const jsonCompatible = this.codec.encode(this.editManager.getSummaryData(), context);
 		const dataString = stringify(jsonCompatible);
