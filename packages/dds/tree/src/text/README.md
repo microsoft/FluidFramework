@@ -18,7 +18,7 @@ then deletions need to shrink the range they apply to, but never remove it fully
 This complications deletes (which contain all or part of the range) and moves.
 Presumably a delete should just shorten the range, as should detaches, but if a portion is detached containing the entire range, and moved elsewhere in the same range, maybe it should move?
 Maybe optionally detect such moves, and if some constraints pass, move the ranges with the main content?
-Relations to anchors, cursors, presense?
+Relations to anchors, cursors, presence?
 
 Designs:
 
@@ -36,28 +36,12 @@ Can we do better anchoring for better semantics? Does this require knowing both 
 ### Bulk editing:
 
 How does this work in our setup? Allow all nodes (or maybe fields) in changesets to be roots for structural bulk edits?
-Do we need to make it more limited, like can only do edits which don't change the tree shape? (Like replace leaf nodes)
+Do we need to make it more limited, like can only do edits which don't change the tree shape (Like replace leaf nodes)?
+Changing the shape means rebased are more complex. 
+Do the later parts of this work (which impact merge results, not just optimized encoding) need to wait for
+ongoing rebaser/changeset work?
 
-
-### Extrinsic Ranges Update:
-
-
-
-After some initial design exploration, I think its possible to implement:
-
-1. An extrinsic range MVP leveraging the "NoChangeConstraint" which can maintain its data invariants. I think we can do this with no currently unreleased features (just needs sufficient min version for collab for the constraint). This will not be robust to AI editing of the data generally, but we can expose methods which are safe for it to use. (Won't work for agents without view schema, but I don't think that's a priority). We could either make the implementation minimal (just store index numbers) or a parallel array approach. Items below will assume the array version, but I'll provide a comparison of the approaches in more detail later.
-2. Optimized encoding for the extrinsic ranges (Brennan's current work for optimizing text's codec should actually be sufficient)
-3. Optimized in memory format and traversal for the parallel arrays similar to the encoded format for chunked forest.
-4. Add a "no shallow change" constraint (also desired for tables): when using the parallel array approach, this can allow concurrent editing of the main range/string as well as comments: you just can't concurrently add and/or remove ranges.
-5. Bulk editing op, to allow expressing an update to all ranges at once with a wild card. When this is supported we can disable the shallow change constraint and get full concurrency. I think there might still be some issues with edge cases around un-removal (like delete undo): that needs some further investigation. Part of this (which could be delivered first and not avoid the need for the constraint) could be done separately and makes the Ops more efficient and (which is important as each character typed produces one) and not scale with the number of ranges.
-
-All of these can be done in parallel.
-
-
-
-The 1-4 subset has relatively few unknowns (mostly around the now shallow change constraint, and possibly some complications with undo/redo) does not need any new kinds of things we don't know how to incrementally add/maintain/version (Just an optimized codec, and a new constraint gated by min version for collab), and should be sufficient as long as the number of ranges isn't particularly large.
-
-### Design Again
+### Planed work
 
 Currently actionable work (Phase 1):
 
@@ -70,14 +54,16 @@ Currently actionable work (Phase 1):
 7. "Drill down" aka "Batch" editing: way to apply same edit to all nodes at a path which can include wildcards and/or ranges. Also consider table and range formatting use-cases in design.
 8. Work through the merge edge cases of planned final design (see below). Validate undo/redo. Determine implications of moves within character and range arrays. Consider cases where range ends can get swapped.
 9. Design a safe rollout process for production apps using text without extrinsic ranges to get extrinsic range support.
+10. Design anchors for presence (Not really part of this work, but has some overlap).
 
 These can all be done in parallel.
 
 Later:
 These can overlap with phase one, but have some minimal dependency on parts of it and each-other.
 
-1. Factor out Utilities for implementing terminal (no edits below them) and/or "static" (no edit to them can impact paths to content below them field kinds). Consider using for identifier field kind. Use for new "index" field kind. Add counter as a trivial feature using this as well (demo in inventory app).
+1. Factor out Utilities for implementing terminal (no edits below them) and/or "static" (no edit to them can impact paths to content below them field kinds). Consider using for identifier field kind. Use for new "index" field kind. Add counter as a trivial feature using this as well (demo in inventory app). Should support multiple children: make things like a range kind with 2 children (start and end) easier we end up having to do that. Using this to add range start and range end, or fields with other kinds of anchoring are also options.
 2. Improve MVP concurrency 1: (Optional: Skip is shallow change constraint is ready): Use index field kinds for range ends. Add dummy child node to range container, which is replaced for every change to the set of ranges (adding or removing a range). Replace "NoChangeConstraint" with "NodeInDocumentConstraint" pointing to current dummy node.
 2. Improve MVP concurrency 2: (Optional: Skip is shallow change constraint is ready): Use index field kinds for range ends. Replace above dummy node scheme with no shallow change constraint pointing at array of ranges.
 3. Improve MVP concurrency 3: Replace constraints with "Drill down" editing of index fields. No more rejected transactions.
 4. Deliver stable APIs, including safe rollout/evolution for existing text users.
+5. Presence integration for arrays. Maybe share some logic with new field kind[s]? (Not really part of this work, but has some overlap)
