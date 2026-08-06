@@ -25,7 +25,11 @@ const RangeData = SchemaFactory.string;
  */
 const ArrayData = SchemaFactory.string;
 
-class ExtrinsicRangeManager extends sf.object("Manager", {
+/**
+ * @privateRemarks
+ * Extra wrapper layer to make schema evolution and API erasure easier.
+ */
+export class ExtrinsicRangeManager extends sf.object("Manager", {
 	content: SchemaFactory.required([() => ExtrinsicRangeManagerInner], { key: EmptyKey }),
 }) {}
 
