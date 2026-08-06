@@ -67,6 +67,7 @@ export interface BaseContainerRuntimeFactoryProps {
 	/**
 	 * Oldest version of Fluid Framework client that must be able to open and process documents
 	 * written by this container runtime.
+	 * @remarks
 	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.oldestSupportedClient} for more details on this property.
 	 */
 	oldestSupportedClient?: OldestSupportedClientVersion | undefined;
