@@ -912,6 +912,7 @@ extends:
                     testResultsFiles: '**/*junit-report.xml'
                     searchFolder: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/nyc
                     mergeTestResults: false
+                  # Failed test runs still produce JUnit reports that should be published.
                   condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
 
       # Publish stage
