@@ -3,7 +3,6 @@
 "@fluidframework/tree-agent-langchain": minor
 "__section": tree
 ---
-
 Removes legacy tree-agent APIs
 
 The legacy stateful `SharedTreeSemanticAgent` API and its associated `SharedTreeChatModel.query`,
