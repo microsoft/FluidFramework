@@ -4,8 +4,8 @@
  */
 
 /**
- * Oldest version of Fluid Framework client packages that must be able to open and process
- * documents written by a client using this setting.
+ * Oldest Fluid Framework client version that must be able to open and process documents written
+ * by newer clients.
  * @remarks
  * A string in SemVer format indicating a specific version of the Fluid Framework client package, or the special case of {@link @fluidframework/runtime-utils#defaultMinVersionForCollab}.
  *

@@ -800,6 +800,7 @@ export interface LoadContainerRuntimeParams {
 	/**
 	 * Oldest version of Fluid Framework client that must be able to open and process documents
 	 * written by this container runtime.
+	 * @remarks
 	 * The input should be a string that represents the oldest version of the FF runtime that should
 	 * be supported for document access. The format of the string must be in valid semver format.
 	 *
