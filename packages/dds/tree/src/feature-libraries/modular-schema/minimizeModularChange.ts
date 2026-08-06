@@ -236,6 +236,10 @@ export function minimizeModularChangeset(
 			endpoint?: ChangeAtomId,
 		): RangeQueryResult<EditFilterStatus> => {
 			let countProcessed = count;
+			if (!isNodeAttachedInOutput(nodeId)) {
+				return { value: EditFilterStatus.Remove, length: countProcessed };
+			}
+
 			const moveId = endpoint ?? id;
 
 			const moveEndpointEntry = change.crossFieldKeys.getFirst(
