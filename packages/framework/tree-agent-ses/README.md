@@ -11,12 +11,15 @@ npm install @fluidframework/tree-agent-ses
 ## Usage
 
 ```typescript
-import { createSesEditExecutor } from "@fluidframework/tree-agent-ses";
+import { createSesEditExecutor } from "@fluidframework/tree-agent-ses/alpha";
+import { executeSemanticEditing } from "@fluidframework/tree-agent/alpha";
 
-const executeEdit = createSesEditExecutor();
+const editor = createSesEditExecutor();
+await executeSemanticEditing(model, tree, prompt, { editor });
 ```
 
-The returned callback can be provided as the `executeEdit` option when constructing a `SharedTreeSemanticAgent` from `@fluidframework/tree-agent`.
+The returned callback can be provided as the `editor` option to `createTreeAgent` or
+`executeSemanticEditing` from `@fluidframework/tree-agent`.
 
 ## Licensing
 
