@@ -115,7 +115,7 @@ describe("summary ownership", function () {
 			await clock.runAllAsync();
 			await validation;
 
-			sinon.assert.callCount(readDocument, 4);
+			sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId);
 			sinon.assert.calledWithMatch(
 				info,
 				"HistorianSummaryDocumentOwnershipValidation",
@@ -163,9 +163,11 @@ describe("summary ownership", function () {
 
 		it("propagates Alfred dependency failures", async () => {
 			const clock = sandbox.useFakeTimers();
-			const dependencyError = new NetworkError(503, "Alfred unavailable");
+			const dependencyError = new NetworkError(503, "Alfred unavailable", true, false);
 			const documentManager = new TestDocumentManager();
-			sandbox.stub(documentManager, "readDocument").rejects(dependencyError);
+			const readDocument = sandbox
+				.stub(documentManager, "readDocument")
+				.rejects(dependencyError);
 			const logError = sandbox.spy(Lumberjack, "error");
 
 			const rejection = assert.rejects(
@@ -179,6 +181,7 @@ describe("summary ownership", function () {
 			await clock.runAllAsync();
 			await rejection;
 
+			sinon.assert.callCount(readDocument, 4);
 			sinon.assert.calledWithMatch(
 				logError,
 				"HistorianSummaryDocumentOwnershipValidation",
@@ -348,23 +351,32 @@ describe("summary ownership", function () {
 	});
 
 	for (const testCase of [
-		{ name: "network failure", error: new Error("socket reset"), status: undefined },
+		{
+			name: "unclassified failure",
+			error: new Error("socket reset"),
+			status: undefined,
+			expectedCallCount: 1,
+		},
 		{
 			name: "timeout",
-			error: new NetworkError(504, "Alfred timed out"),
+			error: new NetworkError(504, "Alfred timed out", true, false),
 			status: 504,
+			expectedCallCount: 4,
 		},
 		{
 			name: "5xx",
-			error: new NetworkError(503, "Alfred unavailable"),
+			error: new NetworkError(503, "Alfred unavailable", true, false),
 			status: 503,
+			expectedCallCount: 4,
 		},
 	]) {
 		it(`propagates Alfred ${testCase.name} as a dependency error`, async () => {
 			const clock = sandbox.useFakeTimers();
 			const documentManager = new TestDocumentManager();
 			const logError = sandbox.spy(Lumberjack, "error");
-			sandbox.stub(documentManager, "readDocument").rejects(testCase.error);
+			const readDocument = sandbox
+				.stub(documentManager, "readDocument")
+				.rejects(testCase.error);
 
 			const rejection = assert.rejects(
 				validateSummaryDocument({
@@ -379,6 +391,7 @@ describe("summary ownership", function () {
 			);
 			await clock.runAllAsync();
 			await rejection;
+			sinon.assert.callCount(readDocument, testCase.expectedCallCount);
 			sinon.assert.calledWithMatch(
 				logError,
 				"HistorianSummaryDocumentOwnershipValidation",
@@ -396,7 +409,7 @@ describe("summary ownership", function () {
 		const clock = sandbox.useFakeTimers();
 		const documentManager = new TestDocumentManager();
 		const info = sandbox.spy(Lumberjack, "info");
-		sandbox
+		const readDocument = sandbox
 			.stub(documentManager, "readDocument")
 			.rejects(new NetworkError(404, "Alfred document not found"));
 
@@ -416,6 +429,7 @@ describe("summary ownership", function () {
 		);
 		await clock.runAllAsync();
 		await rejection;
+		sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId);
 		sinon.assert.calledWithMatch(
 			info,
 			"HistorianSummaryDocumentOwnershipValidation",
