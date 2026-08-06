@@ -1,0 +1,75 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+.ffcom-rounded-video {
+	height: 100%;
+	overflow: hidden;
+	border-radius: 15px;
+}
+
+.ffcom-rounded-video iframe {
+	display: block;
+	border: 0;
+}
+
+.ffcom-youtube-facade {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	display: block;
+	padding: 0;
+	border: 0;
+	background: #0e1726;
+	cursor: pointer;
+	overflow: hidden;
+}
+
+.ffcom-youtube-facade:focus-visible {
+	outline: 3px solid var(--ifm-color-primary);
+	outline-offset: -6px;
+}
+
+.ffcom-youtube-facade-poster {
+	width: 100%;
+	height: 100%;
+	display: block;
+	object-fit: cover;
+}
+
+.ffcom-youtube-facade::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.25);
+	transition: background 150ms ease-in-out;
+}
+
+.ffcom-youtube-facade:hover::before,
+.ffcom-youtube-facade:focus-visible::before {
+	background: rgba(0, 0, 0, 0.15);
+}
+
+.ffcom-youtube-facade-play-icon {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 72px;
+	height: 50px;
+	transform: translate(-50%, -50%);
+	border-radius: 14px;
+	background: rgba(255, 0, 0, 0.9);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.ffcom-youtube-facade-play-icon::before {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-40%, -50%);
+	border-top: 12px solid transparent;
+	border-bottom: 12px solid transparent;
+	border-left: 18px solid #fff;
+}
