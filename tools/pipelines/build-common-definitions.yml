@@ -67,6 +67,7 @@ extends:
   template: templates/build-npm-package.yml
   parameters:
     publishOverride: ${{ parameters.publishOverride }}
+    publishAsPartOfBuild: true
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: common/lib/common-definitions
