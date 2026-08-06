@@ -23,11 +23,11 @@ But latest version of packages known at 2026-08-05 use versions prior to 5.58 an
 Example override for pnpm:
 
 ```yaml
-  # @typescript-eslint/eslint-utils overrides
-  #   As of 2026-08-05 @rushstack/eslint-plugin (v0.23.2), does not have a version using v8.58 or later.
-  "@rushstack/eslint-plugin>@typescript-eslint/utils@<8.58.0": ~8.58.0
-  #   As of 2026-08-05 eslint-plugin-tsdoc (v0.5.2), does not have a version using v8.58 or later.
-  "eslint-plugin-tsdoc>@typescript-eslint/utils@<8.58.0": ~8.58.0
+# @typescript-eslint/eslint-utils overrides
+#   As of 2026-08-05 @rushstack/eslint-plugin (v0.23.2), does not have a version using v8.58 or later.
+"@rushstack/eslint-plugin>@typescript-eslint/utils@<8.58.0": ~8.58.0
+#   As of 2026-08-05 eslint-plugin-tsdoc (v0.5.2), does not have a version using v8.58 or later.
+"eslint-plugin-tsdoc>@typescript-eslint/utils@<8.58.0": ~8.58.0
 ```
 
 ##### Additional overrides
@@ -36,9 +36,9 @@ Example override for pnpm:
 Example override for pnpm:
 
 ```yaml
-  # @typescript-eslint/eslint-plugin overrides
-  #   As of 2026-08-05 eslint-plugin-jest (v29.6.2), does not have a version using v8.58 or later.
-  "eslint-plugin-jest>@typescript-eslint/eslint-plugin@<8.58.0": ~8.58.0
+# @typescript-eslint/eslint-plugin overrides
+#   As of 2026-08-05 eslint-plugin-jest (v29.6.2), does not have a version using v8.58 or later.
+"eslint-plugin-jest>@typescript-eslint/eslint-plugin@<8.58.0": ~8.58.0
 ```
 
 ### Breaking: `@eslint-react/eslint-plugin` upgraded to v5
