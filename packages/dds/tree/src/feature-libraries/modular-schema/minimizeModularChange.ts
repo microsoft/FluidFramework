@@ -88,14 +88,6 @@ export function minimizeModularChangeset(
 	const outputToInputRootId = outputToInputRootIdFromDelta(delta);
 	const outputAttachStates = getOutputNodeAttachStates(change, fieldKinds);
 
-	function isNodeAttachedInOutput(nodeId: NodeId | undefined): boolean {
-		return (
-			nodeId === undefined ||
-			(getFromChangeAtomIdMap(outputAttachStates, nodeId) ??
-				fail("Should have attach state for every node ID")) === NodeAttachState.Attached
-		);
-	}
-
 	function isNodeIdInBuiltTree(nodeId: NodeId | undefined): boolean {
 		return (
 			nodeId !== undefined &&
@@ -104,8 +96,94 @@ export function minimizeModularChangeset(
 		);
 	}
 
-	function isFieldIdInBuiltTree(fieldId: FieldId): boolean {
-		return isNodeIdInBuiltTree(fieldId.nodeId);
+	function isNodeDetachedInOutput(nodeId: NodeId): boolean {
+		return (
+			(getFromChangeAtomIdMap(
+				outputAttachStates,
+				normalizeNodeId(nodeId, change.nodeAliases),
+			) ?? fail("Should have attach state for every node ID")) === NodeAttachState.Detached
+		);
+	}
+
+	function shouldSquashDetach(nodeId: NodeId | undefined): boolean {
+		return isNodeIdInBuiltTree(nodeId);
+	}
+
+	function shouldSquashAttach(
+		nodeId: NodeId | undefined,
+		rootInputId: ChangeAtomId,
+		count: number,
+		endpoint: NodeId | undefined,
+	): RangeQueryResult<boolean> {
+		if (!isNodeIdInBuiltTree(nodeId)) {
+			return { value: false, length: count };
+		}
+
+		let countProcessed = count;
+		const isMoveOfBuiltRootEntry = builtRootIds.getFirst(rootInputId, countProcessed);
+		countProcessed = isMoveOfBuiltRootEntry.length;
+
+		const isAttachOfBuiltRoot = isMoveOfBuiltRootEntry?.value ?? false;
+		const isMoveFromBuiltTree = endpoint !== undefined && isNodeIdInBuiltTree(endpoint);
+
+		const isAttachOfBuiltNode = isAttachOfBuiltRoot || isMoveFromBuiltTree;
+		return { value: isAttachOfBuiltNode, length: countProcessed };
+	}
+
+	function shouldDropAttach(
+		nodeId: NodeId | undefined,
+		rootInputId: ChangeAtomId,
+		count: number,
+		endpoint: NodeId | undefined,
+		isTransientAttach: boolean,
+	): RangeQueryResult<boolean> {
+		const isInDetachedTree = nodeId !== undefined && isNodeDetachedInOutput(nodeId);
+
+		let countProcessed = count;
+		const isBuiltRootEntry = builtRootIds.getFirst(rootInputId, countProcessed);
+		countProcessed = isBuiltRootEntry.length;
+
+		const isTransientAttachOfRoot = isTransientAttach && isBuiltRootEntry.value === true;
+		const shouldSquashAttachEntry = shouldSquashAttach(
+			nodeId,
+			rootInputId,
+			countProcessed,
+			endpoint,
+		);
+		countProcessed = shouldSquashAttachEntry.length;
+		return {
+			value: isInDetachedTree || shouldSquashAttachEntry.value || isTransientAttachOfRoot,
+			length: countProcessed,
+		};
+	}
+
+	function shouldDropDetach(
+		nodeId: NodeId | undefined,
+		rootInputId: ChangeAtomId | undefined,
+		count: number,
+	): RangeQueryResult<boolean> {
+		if (
+			shouldSquashDetach(nodeId) ||
+			(nodeId !== undefined && isNodeDetachedInOutput(nodeId))
+		) {
+			return { value: true, length: count };
+		}
+
+		if (rootInputId !== undefined) {
+			// `inputRootId` is defined when this detach represents the rename of a detached root.
+			const isDetachOfBuiltRootEntry = builtRootIds.getFirst(rootInputId, count);
+			const isDetachOfBuiltRoot = isDetachOfBuiltRootEntry.value !== undefined;
+
+			// If this is a rename of a built node, either it ends detached, or is moved elsewhere.
+			// If moved, we squash the detach away, leaving only an attach at the destination.
+			// If detached, the build is not used, so we drop the rename.
+			return {
+				value: isDetachOfBuiltRoot,
+				length: isDetachOfBuiltRootEntry.length,
+			};
+		}
+
+		return { value: false, length: count };
 	}
 
 	const filterEditsForBuildChange = (
@@ -113,57 +191,92 @@ export function minimizeModularChangeset(
 		nodeId: NodeId | undefined,
 	): FieldChange => {
 		const filterDetach = (
-			id: ChangeAtomId,
+			detachId: ChangeAtomId,
 			count: number,
 			inputRootId: ChangeAtomId | undefined,
 			endpoint?: ChangeAtomId,
 		): RangeQueryResult<EditFilterStatus> => {
-			if (!isNodeIdInBuiltTree(nodeId)) {
+			if (!shouldSquashDetach(nodeId)) {
 				return { value: EditFilterStatus.Remove, length: count };
 			}
 
+			let countProcessed = count;
 			const moveEndpointEntry = change.crossFieldKeys.getFirst(
-				{ ...(endpoint ?? id), target: CrossFieldTarget.Destination },
-				count,
+				{ ...(endpoint ?? detachId), target: CrossFieldTarget.Destination },
+				countProcessed,
 			);
+			countProcessed = moveEndpointEntry.length;
 
-			const isMoveToExistingTree =
-				moveEndpointEntry.value !== undefined &&
-				!isFieldIdInBuiltTree(moveEndpointEntry.value);
+			if (moveEndpointEntry.value !== undefined) {
+				const willSquashEndpointEntry = shouldSquashAttach(
+					moveEndpointEntry.value.nodeId,
+					inputRootId ?? detachId,
+					countProcessed,
+					nodeId,
+				);
+				countProcessed = willSquashEndpointEntry.length;
 
-			// If the original change moves from a newly built node to an existing tree,
-			// we apply only the detach part of the move to the built tree.
-			const result = isMoveToExistingTree
-				? EditFilterStatus.PreserveWithoutMove
-				: EditFilterStatus.Preserve;
+				const action = willSquashEndpointEntry.value
+					? EditFilterStatus.Preserve
+					: EditFilterStatus.PreserveWithoutMove;
 
-			return { value: result, length: moveEndpointEntry.length };
+				return { value: action, length: moveEndpointEntry.length };
+			}
+
+			return { value: EditFilterStatus.Preserve, length: moveEndpointEntry.length };
 		};
 
 		const filterAttach = (
 			id: ChangeAtomId,
 			count: number,
-			inputRootId: ChangeAtomId | undefined,
+			_onputRootId: ChangeAtomId | undefined,
 			endpoint?: ChangeAtomId,
 		): RangeQueryResult<FilterAttachResult> => {
-			if (!isNodeIdInBuiltTree(nodeId)) {
-				return { value: { action: EditFilterStatus.Remove }, length: count };
+			let countProcessed = count;
+			const moveId = endpoint ?? id;
+			const moveEndpointEntry = change.crossFieldKeys.getFirst(
+				{ ...moveId, target: CrossFieldTarget.Source },
+				countProcessed,
+			);
+			countProcessed = moveEndpointEntry.length;
+
+			const inputIdEntry = outputToInputRootId.getFirst(moveId, countProcessed);
+			countProcessed = inputIdEntry.length;
+
+			const rootInputId = inputIdEntry.value ?? moveId;
+			const shouldSquashEntry = shouldSquashAttach(
+				nodeId,
+				rootInputId,
+				countProcessed,
+				moveEndpointEntry.value?.nodeId,
+			);
+			countProcessed = shouldSquashEntry.length;
+
+			const isMove = moveEndpointEntry.value !== undefined;
+			if (!shouldSquashEntry.value) {
+				return { value: { action: EditFilterStatus.Remove }, length: countProcessed };
 			}
 
-			const moveEndpointEntry = change.crossFieldKeys.getFirst(
-				{ ...(endpoint ?? id), target: CrossFieldTarget.Source },
-				count,
-			);
+			if (isMove) {
+				const movedNodeId = getFromChangeAtomIdMap(rootIdToNodeId, moveId);
+				return {
+					value: {
+						action: EditFilterStatus.PreserveWithoutMove,
+						nodeId: movedNodeId,
+						newAttachId: rootInputId,
+					},
+					length: countProcessed,
+				};
+			}
 
-			const isMoveFromExistingTree =
-				moveEndpointEntry.value !== undefined &&
-				!isFieldIdInBuiltTree(moveEndpointEntry.value);
+			const action = shouldSquashEntry.value
+				? EditFilterStatus.Preserve
+				: EditFilterStatus.Remove;
 
-			const action = isMoveFromExistingTree
-				? EditFilterStatus.Remove
-				: EditFilterStatus.Preserve;
-
-			return { value: { action }, length: moveEndpointEntry.length };
+			return {
+				value: { action },
+				length: countProcessed,
+			};
 		};
 
 		return {
@@ -223,23 +336,51 @@ export function minimizeModularChangeset(
 		nodeId: NodeId | undefined,
 	): FieldChange => {
 		const filterDetach = (
-			id: ChangeAtomId,
+			detachId: ChangeAtomId,
 			count: number,
 			inputRootId: ChangeAtomId | undefined,
 			endpoint?: ChangeAtomId,
 		): RangeQueryResult<EditFilterStatus> => {
-			// If `inputId` is defined, this represents the rename of a detached root.
-			// If that detached root is newly built, then we should remove it from the residual change.
-			const isDetachOfBuiltRootEntry =
-				inputRootId === undefined ? undefined : builtRootIds.getFirst(inputRootId, count);
+			let countProcessed = count;
+			const shouldDropEntry = shouldDropDetach(nodeId, inputRootId, countProcessed);
+			countProcessed = shouldDropEntry.length;
 
-			const isDetachOfBuiltNode =
-				isDetachOfBuiltRootEntry?.value ?? isNodeIdInBuiltTree(nodeId);
+			if (shouldDropEntry.value) {
+				return {
+					value: EditFilterStatus.Remove,
+					length: countProcessed,
+				};
+			}
 
-			const shouldRemove = isDetachOfBuiltNode || !isNodeAttachedInOutput(nodeId);
+			const moveEndpointEntry = change.crossFieldKeys.getFirst(
+				{ ...(endpoint ?? detachId), target: CrossFieldTarget.Destination },
+				count,
+			);
+			countProcessed = moveEndpointEntry.length;
+
+			if (moveEndpointEntry.value === undefined) {
+				// KLUDGE: We can't easily determine whether the nodes are transiently attached,
+				// but it is safe to pass `false`, because the flag is only used for built nodes,
+				// and we already drop detaches for built nodes.
+				const willDropAttachEntry = shouldDropAttach(
+					moveEndpointEntry.value,
+					inputRootId ?? detachId,
+					countProcessed,
+					nodeId,
+					false, // isTransientAttach
+				);
+				countProcessed = willDropAttachEntry.length;
+				if (willDropAttachEntry.value) {
+					return {
+						value: EditFilterStatus.PreserveWithoutMove,
+						length: countProcessed,
+					};
+				}
+			}
+
 			return {
-				value: shouldRemove ? EditFilterStatus.Remove : EditFilterStatus.Preserve,
-				length: isDetachOfBuiltRootEntry?.length ?? count,
+				value: EditFilterStatus.Preserve,
+				length: countProcessed,
 			};
 		};
 
@@ -250,12 +391,7 @@ export function minimizeModularChangeset(
 			endpoint?: ChangeAtomId,
 		): RangeQueryResult<FilterAttachResult> => {
 			let countProcessed = count;
-			if (!isNodeAttachedInOutput(nodeId)) {
-				return { value: { action: EditFilterStatus.Remove }, length: countProcessed };
-			}
-
 			const moveId = endpoint ?? id;
-
 			const moveEndpointEntry = change.crossFieldKeys.getFirst(
 				{ ...moveId, target: CrossFieldTarget.Source },
 				countProcessed,
@@ -265,62 +401,47 @@ export function minimizeModularChangeset(
 			const inputIdEntry = outputToInputRootId.getFirst(moveId, countProcessed);
 			countProcessed = inputIdEntry.length;
 
-			const inputId = inputIdEntry.value ?? moveId;
-			const isMoveOfBuiltRootEntry = builtRootIds.getFirst(inputId, countProcessed);
-			countProcessed = isMoveOfBuiltRootEntry.length;
+			const rootInputId = inputIdEntry.value ?? moveId;
+			const shouldDropEntry = shouldDropAttach(
+				nodeId,
+				rootInputId,
+				countProcessed,
+				moveEndpointEntry.value?.nodeId,
+				outputRootId !== undefined,
+			);
+			countProcessed = shouldDropEntry.length;
 
-			const isMoveOfBuiltRoot = isMoveOfBuiltRootEntry?.value ?? false;
-			const isMoveFromBuiltTree =
-				moveEndpointEntry.value !== undefined && isFieldIdInBuiltTree(moveEndpointEntry.value);
-
-			const isMoveOfBuiltNode = isMoveOfBuiltRoot || isMoveFromBuiltTree;
-
-			if (outputRootId !== undefined && isMoveOfBuiltNode) {
-				// The built node is only transiently attached.
-				return { value: { action: EditFilterStatus.Remove }, length: countProcessed };
+			if (shouldDropEntry.value) {
+				return {
+					value: { action: EditFilterStatus.Remove },
+					length: countProcessed,
+				};
 			}
 
-			if (nodeId !== undefined && isNodeIdInBuiltTree(nodeId)) {
-				const outputAttachState =
-					getFromChangeAtomIdMap(outputAttachStates, nodeId) ??
-					fail("Should have attach state for every node ID");
-
-				if (outputAttachState === NodeAttachState.Detached) {
-					// Edits to unused builds should be removed.
-					return { value: { action: EditFilterStatus.Remove }, length: countProcessed };
+			if (moveEndpointEntry.value !== undefined) {
+				const willDropEndpointEntry = shouldDropDetach(
+					moveEndpointEntry.value.nodeId,
+					inputIdEntry.value,
+					countProcessed,
+				);
+				countProcessed = willDropEndpointEntry.length;
+				if (willDropEndpointEntry.value) {
+					const movedNodeId = getFromChangeAtomIdMap(rootIdToNodeId, moveId);
+					return {
+						value: {
+							action: EditFilterStatus.PreserveWithoutMove,
+							nodeId: movedNodeId,
+							newAttachId: inputIdEntry.value,
+						},
+						length: countProcessed,
+					};
 				}
-
-				const isMoveFromExistingTree =
-					moveEndpointEntry.value !== undefined && !isMoveFromBuiltTree;
-
-				// Moves of existing content could not be squashed into the build,
-				// so they must remain in the residual change.
-				return {
-					value: {
-						action:
-							isMoveFromExistingTree && !isMoveOfBuiltRoot
-								? EditFilterStatus.Preserve
-								: EditFilterStatus.Remove,
-					},
-					length: countProcessed,
-				};
 			}
 
-			if (isMoveOfBuiltNode) {
-				// The detach of the moved node will have already been squashed into the builds,
-				// so we only need to preserve the attach.
-				const movedNodeId = getFromChangeAtomIdMap(rootIdToNodeId, moveId);
-				return {
-					value: {
-						action: EditFilterStatus.PreserveWithoutMove,
-						nodeId: movedNodeId,
-						newAttachId: inputId,
-					},
-					length: countProcessed,
-				};
-			}
-
-			return { value: { action: EditFilterStatus.Preserve }, length: countProcessed };
+			return {
+				value: { action: EditFilterStatus.Preserve },
+				length: countProcessed,
+			};
 		};
 
 		return {
