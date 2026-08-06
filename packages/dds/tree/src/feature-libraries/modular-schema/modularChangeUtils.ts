@@ -388,3 +388,22 @@ function filterNodeEdits(
 		fieldChanges: filterFieldMapEdits(change.fieldChanges, nodeId, filterFieldEdits),
 	};
 }
+
+/**
+ * @returns The canonical form of nodeId, according to nodeAliases
+ */
+export function normalizeNodeId(
+	nodeId: NodeId,
+	nodeAliases: ChangeAtomIdBTree<NodeId>,
+): NodeId {
+	let currentId = nodeId;
+
+	while (true) {
+		const dealiased = getFromChangeAtomIdMap(nodeAliases, currentId);
+		if (dealiased === undefined) {
+			return currentId;
+		}
+
+		currentId = dealiased;
+	}
+}

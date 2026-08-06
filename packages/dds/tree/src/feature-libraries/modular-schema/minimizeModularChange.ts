@@ -48,7 +48,12 @@ import type {
 	NodeChangeset,
 	NodeId,
 } from "./modularChangeTypes.js";
-import { filterEdits, getChangeHandler, nodeChangeFromId } from "./modularChangeUtils.js";
+import {
+	filterEdits,
+	getChangeHandler,
+	nodeChangeFromId,
+	normalizeNodeId,
+} from "./modularChangeUtils.js";
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import { pruneFieldMap } from "./prune.js";
 
@@ -88,7 +93,11 @@ export function minimizeModularChangeset(
 	}
 
 	function isNodeIdInBuiltTree(nodeId: NodeId | undefined): boolean {
-		return nodeId !== undefined && getFromChangeAtomIdMap(builtNodeIds, nodeId) === true;
+		return (
+			nodeId !== undefined &&
+			getFromChangeAtomIdMap(builtNodeIds, normalizeNodeId(nodeId, change.nodeAliases)) ===
+				true
+		);
 	}
 
 	function isFieldIdInBuiltTree(fieldId: FieldId): boolean {
@@ -344,6 +353,7 @@ function getInputNodeAttachStates(
 		NodeAttachState.Attached,
 		change.fieldChanges,
 		change.nodeChanges,
+		change.nodeAliases,
 		fieldKinds,
 		nodeAttachStates,
 	);
@@ -354,6 +364,7 @@ function addInputNodeAttachStatesForFields(
 	parentState: NodeAttachState,
 	fields: FieldChangeMap,
 	nodes: ChangeAtomIdBTree<NodeChangeset>,
+	nodeAliases: ChangeAtomIdBTree<NodeId>,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 	nodeAttachStates: ChangeAtomIdBTree<NodeAttachState>,
 ): void {
@@ -363,19 +374,21 @@ function addInputNodeAttachStatesForFields(
 		);
 
 		for (const [nodeId, inputId, _outputId] of children) {
+			const normalizedNodeId = normalizeNodeId(nodeId, nodeAliases);
 			const attachState =
 				parentState === NodeAttachState.Attached && inputId === undefined
 					? NodeAttachState.Attached
 					: NodeAttachState.Detached;
 
-			nodeAttachStates.set([nodeId.revision, nodeId.localId], attachState);
+			nodeAttachStates.set([normalizedNodeId.revision, normalizedNodeId.localId], attachState);
 
-			const nodeChangeset = nodeChangeFromId(nodes, nodeId);
+			const nodeChangeset = nodeChangeFromId(nodes, normalizedNodeId);
 			if (nodeChangeset.fieldChanges !== undefined) {
 				addInputNodeAttachStatesForFields(
 					attachState,
 					nodeChangeset.fieldChanges,
 					nodes,
+					nodeAliases,
 					fieldKinds,
 					nodeAttachStates,
 				);
@@ -409,6 +422,7 @@ function getNodeInfo(
 		false,
 		change.fieldChanges,
 		change.nodeChanges,
+		change.nodeAliases,
 		builtRootIds,
 		fieldKinds,
 		builtNodeIds,
@@ -422,6 +436,7 @@ function addNodeInfoForFields(
 	parentIsBuilt: boolean,
 	fields: FieldChangeMap,
 	nodes: ChangeAtomIdBTree<NodeChangeset>,
+	nodeAliases: ChangeAtomIdBTree<NodeId>,
 	buildIds: ChangeAtomIdRangeMap<true>,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 	builtNodeIds: ChangeAtomIdBTree<true>,
@@ -433,28 +448,30 @@ function addNodeInfoForFields(
 		);
 
 		for (const [nodeId, inputId, detachId] of children) {
+			const normalizedNodeId = normalizeNodeId(nodeId, nodeAliases);
 			const isPartOfBuild =
 				parentIsBuilt ||
 				(inputId !== undefined && buildIds.getFirst(inputId, 1).value === true);
 
 			if (isPartOfBuild) {
-				builtNodeIds.set([nodeId.revision, nodeId.localId], true);
+				builtNodeIds.set([normalizedNodeId.revision, normalizedNodeId.localId], true);
 			}
 
 			if (inputId !== undefined) {
-				setInChangeAtomIdMap(rootIdToNodeId, inputId, nodeId);
+				setInChangeAtomIdMap(rootIdToNodeId, inputId, normalizedNodeId);
 			}
 
 			if (detachId !== undefined) {
-				setInChangeAtomIdMap(rootIdToNodeId, detachId, nodeId);
+				setInChangeAtomIdMap(rootIdToNodeId, detachId, normalizedNodeId);
 			}
 
-			const nodeChangeset = nodeChangeFromId(nodes, nodeId);
+			const nodeChangeset = nodeChangeFromId(nodes, normalizedNodeId);
 			if (nodeChangeset.fieldChanges !== undefined) {
 				addNodeInfoForFields(
 					isPartOfBuild,
 					nodeChangeset.fieldChanges,
 					nodes,
+					nodeAliases,
 					buildIds,
 					fieldKinds,
 					builtNodeIds,

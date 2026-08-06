@@ -103,6 +103,7 @@ import {
 	newConstraintState,
 	newCrossFieldTable,
 	nodeChangeFromId,
+	normalizeNodeId,
 	removeAllEditsFilter,
 	revisionInfoFromTaggedChange,
 	updateConstraintsForFields,
@@ -2535,22 +2536,6 @@ export function normalizeFieldId(
 	return fieldId.nodeId === undefined
 		? fieldId
 		: { ...fieldId, nodeId: normalizeNodeId(fieldId.nodeId, nodeAliases) };
-}
-
-/**
- * @returns The canonical form of nodeId, according to nodeAliases
- */
-function normalizeNodeId(nodeId: NodeId, nodeAliases: ChangeAtomIdBTree<NodeId>): NodeId {
-	let currentId = nodeId;
-
-	while (true) {
-		const dealiased = getFromChangeAtomIdMap(nodeAliases, currentId);
-		if (dealiased === undefined) {
-			return currentId;
-		}
-
-		currentId = dealiased;
-	}
 }
 
 /**
