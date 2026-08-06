@@ -472,6 +472,85 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 	);
 }
 
+describeCompat(
+	"Detached blob single-request create",
+	"NoCompat",
+	(getTestObjectProvider, apis) => {
+		const testContainerConfig: ITestContainerConfig = {
+			...makeTestContainerConfig(
+				[["sharedString", apis.dds.SharedString.getFactory()]],
+				undefined,
+			),
+			minVersionForCollab: "2.115.0",
+			runtimeOptions: {
+				...makeTestContainerConfig([], undefined).runtimeOptions,
+				explicitSchemaControl: true,
+			},
+		};
+		const loaderProps = {
+			configProvider: createTestConfigProvider({
+				"Fluid.Container.InlineDetachedBlobsAsSummaryBlobs": true,
+			}),
+		};
+		let provider: ITestObjectProvider;
+
+		beforeEach(() => {
+			provider = getTestObjectProvider();
+		});
+
+		it("creates and loads an inlined detached binary blob on every service", async () => {
+			const loader = provider.makeTestLoader({
+				...testContainerConfig,
+				loaderProps,
+			});
+			const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+			const dataStore = (await container.getEntryPoint()) as ITestDataObject;
+			const expected = new Uint8Array([0xff, 0x00, 0x80, 0x7f]);
+			dataStore._root.set("blob", await dataStore._runtime.uploadBlob(expected.buffer));
+
+			await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
+			const url = await container.getAbsoluteUrl("");
+			assert(url !== undefined);
+			const loaded = await loader.resolve({ url });
+			const loadedDataStore = (await loaded.getEntryPoint()) as ITestDataObject;
+			assert.deepStrictEqual(
+				[...new Uint8Array(await loadedDataStore._root.get("blob").get())],
+				[...expected],
+			);
+		});
+
+		it("round-trips serialized detached blobs through every service", async () => {
+			const loader = provider.makeTestLoader({
+				...testContainerConfig,
+				loaderProps,
+			});
+			let container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+			const dataStore = (await container.getEntryPoint()) as ITestDataObject;
+			const first = new Uint8Array([0xfe, 0x01, 0x00]);
+			const second = new Uint8Array([0x10, 0x20, 0x30, 0xff]);
+			dataStore._root.set("first", await dataStore._runtime.uploadBlob(first.buffer));
+			dataStore._root.set("second", await dataStore._runtime.uploadBlob(second.buffer));
+			const serializedState = container.serialize();
+			container.close();
+			container = await loader.rehydrateDetachedContainerFromSnapshot(serializedState);
+
+			await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
+			const url = await container.getAbsoluteUrl("");
+			assert(url !== undefined);
+			const loaded = await loader.resolve({ url });
+			const loadedDataStore = (await loaded.getEntryPoint()) as ITestDataObject;
+			assert.deepStrictEqual(
+				[...new Uint8Array(await loadedDataStore._root.get("first").get())],
+				[...first],
+			);
+			assert.deepStrictEqual(
+				[...new Uint8Array(await loadedDataStore._root.get("second").get())],
+				[...second],
+			);
+		});
+	},
+);
+
 function serializationTests({
 	testContainerConfig,
 }: {
@@ -485,6 +564,7 @@ function serializationTests({
 			beforeEach(async function () {
 				provider = getTestObjectProvider();
 			});
+
 			for (const summarizeProtocolTree of [undefined, true, false]) {
 				itExpects(
 					`works in detached container. summarizeProtocolTree: ${summarizeProtocolTree}`,

@@ -6,6 +6,7 @@
 import {
 	generation,
 	LayerCompatibilityPolicyWindowMonths,
+	supportsInlinedDetachedBlobSummary,
 	type ILayerCompatDetails,
 	type ILayerCompatSupportRequirements,
 } from "@fluid-internal/client-utils";
@@ -117,6 +118,7 @@ export function validateLoaderCompatibility(
 	maybeLoaderCompatDetailsForRuntime: ILayerCompatDetails | undefined,
 	disposeFn: (error?: ICriticalContainerError) => void,
 	mc: MonitoringContext,
+	requiredFeatures: readonly string[] = loaderSupportRequirementsForRuntime.requiredFeatures,
 ): void {
 	// By default, use strictCompatibilityCheck here - If the Loader doesn't provide compatibility details,
 	// assume it's a very old version and should be considered incompatible,
@@ -130,13 +132,24 @@ export function validateLoaderCompatibility(
 		"runtime",
 		"loader",
 		runtimeCompatDetailsForLoader,
-		loaderSupportRequirementsForRuntime,
+		{
+			...loaderSupportRequirementsForRuntime,
+			requiredFeatures,
+		},
 		maybeLoaderCompatDetailsForRuntime,
 		disposeFn,
 		mc,
 		disableStrictLoaderLayerCompatibilityCheck !== true /* strictCompatibilityCheck */,
 	);
 }
+
+/**
+ * Loader features required when detached blobs are stored as summary blobs.
+ * @internal
+ */
+export const loaderFeaturesForInlinedDetachedBlobSummary = [
+	supportsInlinedDetachedBlobSummary,
+] as const;
 
 /**
  * Validates that the DataStore layer is compatible with this Runtime.

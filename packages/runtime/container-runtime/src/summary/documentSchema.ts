@@ -149,6 +149,7 @@ export interface IDocumentSchemaFeatures {
 	idCompressorMode: IdCompressorMode;
 	opGroupingEnabled: boolean;
 	createBlobPayloadPending: true | undefined;
+	inlineDetachedBlobsAsSummaryBlobs: true | undefined;
 
 	/**
 	 * List of disallowed versions of the runtime.
@@ -300,6 +301,7 @@ const documentSchemaSupportedConfigs = {
 	opGroupingEnabled: new TrueOrUndefined(),
 	compressionLz4: new TrueOrUndefined(),
 	createBlobPayloadPending: new TrueOrUndefined(),
+	inlineDetachedBlobsAsSummaryBlobs: new TrueOrUndefined(),
 	disallowedVersions: new CheckVersions(),
 };
 
@@ -676,6 +678,7 @@ export class DocumentsSchemaController {
 				idCompressorMode: features.idCompressorMode,
 				opGroupingEnabled: boolToProp(features.opGroupingEnabled),
 				createBlobPayloadPending: features.createBlobPayloadPending,
+				inlineDetachedBlobsAsSummaryBlobs: features.inlineDetachedBlobsAsSummaryBlobs,
 				disallowedVersions: arrayToProp(features.disallowedVersions),
 				...retiredFeatureValues(),
 			},

@@ -33,6 +33,9 @@ export type { IBlobManagerLoadInfo } from "./blobManager/index.js";
 export {
 	blobManagerBasePath,
 	blobsTreeName,
+	inlinedAttachmentBlobContentName,
+	inlinedAttachmentBlobGroupIdPrefix,
+	inlinedAttachmentBlobManifestName,
 	redirectTableBlobName,
 } from "./blobManager/index.js";
 export type { IDataStoreAliasMessage } from "./dataStore.js";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { stringToBuffer } from "@fluid-internal/client-utils";
+import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import type { IRuntime } from "@fluidframework/container-definitions/internal";
 import type {
 	IEventProvider,
@@ -36,6 +36,10 @@ import {
 	type IBase64BlobContents,
 	type ISerializableBlobContents,
 } from "./containerStorageAdapter.js";
+import {
+	readInlinedAttachmentBlobContents,
+	readInlinedAttachmentBlobContentsFromTree,
+} from "./captureReferencedContents.js";
 import { SnapshotRefresher } from "./snapshotRefresher.js";
 import {
 	convertISnapshotToSnapshotWithBlobs,
@@ -58,6 +62,10 @@ export interface SnapshotWithBlobs {
 	 * storage is not available.
 	 */
 	snapshotBlobs: ISerializableBlobContents;
+	/**
+	 * Binary snapshot blobs encoded as base64, keyed by blob id.
+	 */
+	attachmentBlobContents?: IBase64BlobContents;
 }
 
 /**
@@ -84,21 +92,6 @@ export interface IPendingContainerState extends SnapshotWithBlobs {
 	 * Any group snapshots (aka delay-loaded) we've downloaded from the service for this container
 	 */
 	loadedGroupIdSnapshots?: Record<string, SerializedSnapshotInfo>;
-	/**
-	 * Attachment blob contents inlined by storage id, encoded as base64.
-	 *
-	 * Carried separately from {@link SnapshotWithBlobs.snapshotBlobs} because
-	 * attachment blobs may contain arbitrary binary payloads, and the
-	 * UTF-8 encoding used for `snapshotBlobs` (which holds JSON/text the
-	 * runtime authors) would corrupt non-UTF-8 byte sequences with
-	 * replacement characters. Populated by `captureFullContainerState`; the
-	 * live container's pending-state path leaves this `undefined` because
-	 * it does not inline attachment blob contents.
-	 *
-	 * On load, entries are decoded from base64 and merged into the same
-	 * blob cache that `snapshotBlobs` populates.
-	 */
-	attachmentBlobContents?: IBase64BlobContents;
 	/**
 	 * All ops since base snapshot sequence number up to the latest op
 	 * seen when the container was closed. Used to apply stashed (saved pending)
@@ -447,20 +440,22 @@ export class SerializedStateManager implements IDisposable {
 				let hasGroupIdSnapshots = false;
 				const groupIdSnapshots = Object.entries(this.storageAdapter.loadedGroupIdSnapshots);
 				if (groupIdSnapshots.length > 0) {
-					for (const [groupId, snapshot] of groupIdSnapshots) {
+					for (const [groupId, groupSnapshot] of groupIdSnapshots) {
 						hasGroupIdSnapshots = true;
-						loadedGroupIdSnapshots[groupId] = convertSnapshotToSnapshotInfo(snapshot);
+						loadedGroupIdSnapshots[groupId] = convertSnapshotToSnapshotInfo(groupSnapshot);
 					}
 				}
 
-				const snapshotWithBlobs: SnapshotWithBlobs = isInstanceOfISnapshot(
-					this.snapshotInfo.snapshot,
-				)
-					? convertISnapshotToSnapshotWithBlobs(this.snapshotInfo.snapshot)
-					: await convertSnapshotTreeToSnapshotWithBlobs(
-							this.snapshotInfo.snapshot,
-							this.storageAdapter,
-						);
+				const snapshot = this.snapshotInfo.snapshot;
+				const snapshotWithBlobs: SnapshotWithBlobs = isInstanceOfISnapshot(snapshot)
+					? convertISnapshotToSnapshotWithBlobs({
+							...snapshot,
+							blobContents: new Map([
+								...snapshot.blobContents,
+								...(await readInlinedAttachmentBlobContents(snapshot, this.storageAdapter)),
+							]),
+						})
+					: await convertSnapshotTreeToSnapshotWithBlobs(snapshot, this.storageAdapter);
 
 				const pendingState: IPendingContainerState = {
 					attached: true,
@@ -482,10 +477,18 @@ async function convertSnapshotTreeToSnapshotWithBlobs(
 	snapshot: ISnapshotTree,
 	storageAdapter: ISerializedStateManagerDocumentStorageService,
 ): Promise<SnapshotWithBlobs> {
-	const snapshotBlobs = await getBlobContentsFromTree(snapshot, storageAdapter);
+	const [snapshotBlobs, inlinedAttachmentBlobContents] = await Promise.all([
+		getBlobContentsFromTree(snapshot, storageAdapter),
+		readInlinedAttachmentBlobContentsFromTree(snapshot, storageAdapter),
+	]);
+	const attachmentBlobContents: IBase64BlobContents = {};
+	for (const [blobId, content] of inlinedAttachmentBlobContents) {
+		attachmentBlobContents[blobId] = bufferToString(content, "base64");
+	}
 	return {
 		baseSnapshot: snapshot,
 		snapshotBlobs,
+		...(Object.keys(attachmentBlobContents).length === 0 ? {} : { attachmentBlobContents }),
 	};
 }
 

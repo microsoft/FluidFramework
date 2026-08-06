@@ -30,7 +30,14 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import type { ISerializableBlobContents } from "./containerStorageAdapter.js";
+import type {
+	IBase64BlobContents,
+	ISerializableBlobContents,
+} from "./containerStorageAdapter.js";
+import {
+	getInlinedAttachmentBlobIds,
+	wireFormatConstants,
+} from "./captureReferencedContents.js";
 import type {
 	IPendingContainerState,
 	IPendingDetachedContainerState,
@@ -211,13 +218,8 @@ export function convertSnapshotToSnapshotInfo(snapshot: ISnapshot): SerializedSn
 		snapshot.sequenceNumber !== undefined,
 		0x93a /* Snapshot sequence number is missing */,
 	);
-	const snapshotBlobs: ISerializableBlobContents = {};
-	for (const [blobId, arrayBufferLike] of snapshot.blobContents.entries()) {
-		snapshotBlobs[blobId] = bufferToString(arrayBufferLike, "utf8");
-	}
 	return {
-		baseSnapshot: snapshot.snapshotTree,
-		snapshotBlobs,
+		...convertISnapshotToSnapshotWithBlobs(snapshot),
 		snapshotSequenceNumber: snapshot.sequenceNumber,
 	};
 }
@@ -235,6 +237,11 @@ export function convertSnapshotInfoToSnapshot(
 	const blobContents = new Map<string, ArrayBuffer>();
 	for (const [blobId, serializedContent] of Object.entries(snapshotInfo.snapshotBlobs)) {
 		blobContents.set(blobId, stringToBuffer(serializedContent, "utf8"));
+	}
+	for (const [blobId, serializedContent] of Object.entries(
+		snapshotInfo.attachmentBlobContents ?? {},
+	)) {
+		blobContents.set(blobId, stringToBuffer(serializedContent, "base64"));
 	}
 	return {
 		snapshotTree: snapshotInfo.baseSnapshot,
@@ -350,12 +357,24 @@ function isPendingDetachedContainerState(
  */
 export function convertISnapshotToSnapshotWithBlobs(snapshot: ISnapshot): SnapshotWithBlobs {
 	const snapshotBlobs: ISerializableBlobContents = {};
+	const attachmentBlobContents: IBase64BlobContents = {};
+	const inlinedAttachmentBlobIds = new Set(
+		getInlinedAttachmentBlobIds(
+			snapshot.snapshotTree.trees[wireFormatConstants.blobsTreeName],
+			snapshot.blobContents,
+		).values(),
+	);
 	for (const [id, blob] of snapshot.blobContents.entries()) {
-		snapshotBlobs[id] = bufferToString(blob, "utf8");
+		if (inlinedAttachmentBlobIds.has(id)) {
+			attachmentBlobContents[id] = bufferToString(blob, "base64");
+		} else {
+			snapshotBlobs[id] = bufferToString(blob, "utf8");
+		}
 	}
 	return {
 		baseSnapshot: snapshot.snapshotTree,
 		snapshotBlobs,
+		...(Object.keys(attachmentBlobContents).length === 0 ? {} : { attachmentBlobContents }),
 	};
 }
 

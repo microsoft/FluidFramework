@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { AttachState } from "@fluidframework/container-definitions";
 import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import type { ISequencedMessageEnvelope } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -18,7 +19,10 @@ import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 import { BlobHandle } from "../../blobManager/blobManager.js";
 import {
 	getGCNodePathFromLocalId,
+	inlinedAttachmentBlobContentName,
+	inlinedAttachmentBlobManifestName,
 	type IBlobManagerLoadInfo,
+	loadBlobManagerLoadInfo,
 } from "../../blobManager/index.js";
 
 import {
@@ -63,6 +67,156 @@ describe("BlobHandle", () => {
 
 		assert.strictEqual(handle.payloadState, "shared");
 		assert.strictEqual(sharePayloadCallbackCalls, 0);
+	});
+});
+
+describe("Inlined detached attachment blobs", () => {
+	it("loads detached and attached forms of the summary", async () => {
+		const redirectTableId = "redirect-table";
+		const manifestId = "manifest";
+		const actualBlobId = "actual-blob";
+		const detachedStorageId = "detached-blob";
+		const localId = "local-blob";
+		const blob = textToBlob("blob-content");
+		const baseSnapshot = {
+			blobs: {},
+			trees: {
+				".blobs": {
+					blobs: {
+						".redirectTable": redirectTableId,
+						[inlinedAttachmentBlobManifestName]: manifestId,
+					},
+					trees: {
+						".inline_0": {
+							blobs: { [inlinedAttachmentBlobContentName]: actualBlobId },
+							trees: {},
+						},
+					},
+				},
+			},
+		};
+		const storage = {
+			readBlob: async (id: string): Promise<ArrayBufferLike> => {
+				if (id === redirectTableId) {
+					return textToBlob(JSON.stringify([[localId, detachedStorageId]]));
+				}
+				if (id === manifestId) {
+					return textToBlob(JSON.stringify([[".inline_0", detachedStorageId]]));
+				}
+				assert.strictEqual(id, actualBlobId);
+				return blob;
+			},
+		};
+
+		const detached = await loadBlobManagerLoadInfo({
+			attachState: AttachState.Detached,
+			baseSnapshot,
+			storage,
+		});
+		assert.deepStrictEqual(detached.redirectTable, [[localId, detachedStorageId]]);
+		assert.deepStrictEqual(detached.ids, []);
+		const detachedBlob = detached.summaryBlobs?.get(detachedStorageId);
+		assert(detachedBlob !== undefined);
+		assert.strictEqual(blobToText(detachedBlob), "blob-content");
+
+		const attached = await loadBlobManagerLoadInfo({
+			attachState: AttachState.Attached,
+			baseSnapshot,
+			storage,
+		});
+		assert.deepStrictEqual(attached.redirectTable, [[localId, actualBlobId]]);
+		assert.deepStrictEqual(attached.ids, [actualBlobId]);
+		assert.strictEqual(attached.summaryBlobs, undefined);
+
+		const attachedFromPendingState = await loadBlobManagerLoadInfo({
+			attachState: AttachState.Attached,
+			baseSnapshot,
+			pendingLocalState: {},
+			storage,
+		});
+		assert.deepStrictEqual(attachedFromPendingState.redirectTable, [
+			[localId, detachedStorageId],
+		]);
+		assert.deepStrictEqual(attachedFromPendingState.ids, []);
+		const pendingBlob = attachedFromPendingState.summaryBlobs?.get(detachedStorageId);
+		assert(pendingBlob !== undefined);
+		assert.strictEqual(blobToText(pendingBlob), "blob-content");
+
+		const { blobManager: pendingBlobManager } = createTestMaterial({
+			attached: true,
+			blobManagerLoadInfo: attachedFromPendingState,
+			createBlobPayloadPending: false,
+			inlineDetachedBlobsAsSummaryBlobs: false,
+		});
+		assert.strictEqual(
+			blobToText(await pendingBlobManager.getBlob(localId, false)),
+			"blob-content",
+		);
+		assert.strictEqual(pendingBlobManager.lookupTemporaryBlobStorageId(localId), undefined);
+		assert.strictEqual(
+			getSummaryContentsWithFormatValidation(pendingBlobManager).summaryBlobs?.size,
+			1,
+		);
+
+		const attachedFromCreateCache = await loadBlobManagerLoadInfo({
+			attachState: AttachState.Attached,
+			baseSnapshot,
+			snapshotWithContents: {
+				snapshotTree: baseSnapshot,
+				blobContents: new Map([[actualBlobId, blob]]),
+				ops: [],
+				sequenceNumber: 0,
+				latestSequenceNumber: 0,
+				snapshotFormatV: 1,
+			},
+			storage,
+		});
+		assert.deepStrictEqual(attachedFromCreateCache.redirectTable, [
+			[localId, detachedStorageId],
+		]);
+		assert.strictEqual(attachedFromCreateCache.summaryBlobs?.size, 1);
+	});
+
+	it("summarizes, reloads, and garbage-collects detached blobs", async () => {
+		const { blobManager } = createTestMaterial({
+			attached: false,
+			createBlobPayloadPending: false,
+			inlineDetachedBlobsAsSummaryBlobs: true,
+		});
+		const handle = await blobManager.createBlob(textToBlob("hello"));
+		const { localId } = unpackHandle(handle);
+
+		const loadInfo = getSummaryContentsWithFormatValidation(blobManager);
+		assert.strictEqual(loadInfo.ids, undefined);
+		assert.strictEqual(loadInfo.redirectTable?.length, 1);
+		assert.strictEqual(loadInfo.summaryBlobs?.size, 1);
+
+		const { blobManager: reloadedBlobManager } = createTestMaterial({
+			attached: false,
+			blobManagerLoadInfo: loadInfo,
+			createBlobPayloadPending: false,
+			inlineDetachedBlobsAsSummaryBlobs: true,
+		});
+		assert.strictEqual(blobToText(await reloadedBlobManager.getBlob(localId, false)), "hello");
+
+		reloadedBlobManager.deleteSweepReadyNodes([getGCNodePathFromLocalId(localId)]);
+		const afterGc = getSummaryContentsWithFormatValidation(reloadedBlobManager);
+		assert.strictEqual(afterGc.redirectTable, undefined);
+		assert.strictEqual(afterGc.summaryBlobs, undefined);
+	});
+
+	it("does not expose a detached pseudo storage ID after inline attach", async () => {
+		const { blobManager, mockRuntime } = createTestMaterial({
+			attached: false,
+			createBlobPayloadPending: false,
+			inlineDetachedBlobsAsSummaryBlobs: true,
+		});
+		const handle = await blobManager.createBlob(textToBlob("hello"));
+		const { localId } = unpackHandle(handle);
+		mockRuntime.attachState = AttachState.Attaching;
+		mockRuntime.attachState = AttachState.Attached;
+
+		assert.strictEqual(blobManager.lookupTemporaryBlobStorageId(localId), undefined);
 	});
 });
 

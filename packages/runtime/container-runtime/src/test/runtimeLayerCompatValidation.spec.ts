@@ -36,6 +36,7 @@ import { ContainerRuntime } from "../containerRuntime.js";
 import { pkgVersion } from "../packageVersion.js";
 import {
 	loaderSupportRequirementsForRuntime,
+	loaderFeaturesForInlinedDetachedBlobSummary,
 	validateLoaderCompatibility,
 	validateDatastoreCompatibility,
 	dataStoreSupportRequirementsForRuntime,
@@ -284,6 +285,29 @@ describe("Runtime Layer compatibility", () => {
 				});
 			});
 		}
+
+		it("requires loader support for inlined detached blob summaries when requested", () => {
+			const disposeFn = Sinon.fake();
+			const loaderCompatDetails: ILayerCompatDetails = {
+				pkgVersion,
+				generation: loaderSupportRequirementsForRuntime.minSupportedGeneration,
+				supportedFeatures: new Set(),
+			};
+			assert.throws(
+				() =>
+					validateLoaderCompatibility(
+						loaderCompatDetails,
+						disposeFn,
+						mc,
+						loaderFeaturesForInlinedDetachedBlobSummary,
+					),
+				(error: Error) =>
+					validateFailureProperties(error, true, loaderCompatDetails.generation, "loader", [
+						...loaderFeaturesForInlinedDetachedBlobSummary,
+					]),
+			);
+			assert(disposeFn.calledOnce);
+		});
 	});
 
 	/**

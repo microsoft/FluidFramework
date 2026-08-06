@@ -286,6 +286,8 @@ export class BlobManager {
 	private readonly runtime: IBlobManagerRuntime;
 
 	private readonly createBlobPayloadPending: boolean;
+	private readonly inlineDetachedBlobsAsSummaryBlobs: boolean;
+	private readonly summaryBlobs: Map<string, ArrayBufferLike>;
 
 	public constructor(props: {
 		readonly routeContext: IFluidHandleContext;
@@ -312,6 +314,7 @@ export class BlobManager {
 		readonly runtime: IBlobManagerRuntime;
 		pendingBlobs: IPendingBlobs | undefined;
 		readonly createBlobPayloadPending: boolean;
+		readonly inlineDetachedBlobsAsSummaryBlobs: boolean;
 	}) {
 		const {
 			routeContext,
@@ -323,6 +326,7 @@ export class BlobManager {
 			runtime,
 			pendingBlobs,
 			createBlobPayloadPending,
+			inlineDetachedBlobsAsSummaryBlobs,
 		} = props;
 		this.routeContext = routeContext;
 		this.storage = storage;
@@ -331,6 +335,7 @@ export class BlobManager {
 		this.isBlobDeleted = isBlobDeleted;
 		this.runtime = runtime;
 		this.createBlobPayloadPending = createBlobPayloadPending;
+		this.inlineDetachedBlobsAsSummaryBlobs = inlineDetachedBlobsAsSummaryBlobs;
 
 		this.mc = createChildMonitoringContext({
 			logger: this.runtime.baseLogger,
@@ -338,6 +343,13 @@ export class BlobManager {
 		});
 
 		this.redirectTable = toRedirectTable(blobManagerLoadInfo, this.mc.logger);
+		this.summaryBlobs = new Map(blobManagerLoadInfo.summaryBlobs);
+		for (const [localId, storageId] of this.redirectTable) {
+			const blob = this.summaryBlobs.get(storageId);
+			if (blob !== undefined && localId !== storageId) {
+				this.localBlobCache.set(localId, { state: "attached", blob });
+			}
+		}
 
 		// We populate the localBlobCache with any pending blobs we are provided, which makes them available
 		// to access even though they are not shared yet. However, we don't start the share flow until it is
@@ -384,7 +396,8 @@ export class BlobManager {
 			return undefined;
 		}
 		// Get the storage ID from the redirect table
-		return this.redirectTable.get(localId);
+		const storageId = this.redirectTable.get(localId);
+		return storageId !== undefined && this.summaryBlobs.has(storageId) ? undefined : storageId;
 	}
 
 	/**
@@ -500,6 +513,9 @@ export class BlobManager {
 		// upload/attach process at container attach time is treated as opaque to this tracking.
 		this.localBlobCache.set(localId, { state: "attached", blob });
 		this.redirectTable.set(localId, detachedStorageId);
+		if (this.inlineDetachedBlobsAsSummaryBlobs) {
+			this.summaryBlobs.set(detachedStorageId, blob);
+		}
 		return this.getNonPayloadPendingBlobHandle(localId);
 	}
 
@@ -792,7 +808,12 @@ export class BlobManager {
 	}
 
 	public summarize(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
-		return summarizeBlobManagerState(this.redirectTable);
+		return summarizeBlobManagerState(
+			this.redirectTable,
+			this.inlineDetachedBlobsAsSummaryBlobs || this.summaryBlobs.size > 0
+				? this.summaryBlobs
+				: undefined,
+		);
 	}
 
 	/**
@@ -871,6 +892,7 @@ export class BlobManager {
 		// and possible solutions.
 		for (const storageId of maybeUnusedStorageIds) {
 			this.redirectTable.delete(storageId);
+			this.summaryBlobs.delete(storageId);
 		}
 		return [...sweepReadyBlobRoutes];
 	}
@@ -929,6 +951,7 @@ export class BlobManager {
 			// set identity (id -> id) entry
 			this.redirectTable.set(newStorageId, newStorageId);
 		}
+		this.summaryBlobs.clear();
 	};
 
 	/**

@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { bufferToString } from "@fluid-internal/client-utils";
+import { bufferToString, Uint8ArrayToArrayBuffer } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	IDocumentStorageService,
 	ISequencedDocumentMessage,
@@ -35,6 +36,9 @@ import type {
 export const wireFormatConstants = {
 	blobsTreeName: ".blobs",
 	redirectTableBlobName: ".redirectTable",
+	inlinedAttachmentBlobContentName: "content",
+	inlinedAttachmentBlobGroupIdPrefix: "fluid-internal:attachment-blob:",
+	inlinedAttachmentBlobManifestName: ".inlinedAttachmentBlobs",
 	blobManagerBasePath: "_blobs",
 	gcTreeKey: "gc",
 	gcBlobPrefix: "__gc",
@@ -45,6 +49,9 @@ export const wireFormatConstants = {
 const {
 	blobsTreeName,
 	redirectTableBlobName,
+	inlinedAttachmentBlobContentName,
+	inlinedAttachmentBlobGroupIdPrefix,
+	inlinedAttachmentBlobManifestName,
 	blobManagerBasePath,
 	gcTreeKey,
 	gcBlobPrefix,
@@ -190,9 +197,14 @@ function collectReferencedBlobIds(
 	}
 	for (const [key, subTree] of Object.entries(tree.trees)) {
 		if (isRoot && key === blobsTreeName) {
-			const tableBlobId = subTree.blobs[redirectTableBlobName];
-			if (tableBlobId !== undefined) {
-				ids.add(tableBlobId);
+			for (const structuralBlobName of [
+				redirectTableBlobName,
+				inlinedAttachmentBlobManifestName,
+			]) {
+				const structuralBlobId = subTree.blobs[structuralBlobName];
+				if (structuralBlobId !== undefined) {
+					ids.add(structuralBlobId);
+				}
 			}
 		} else {
 			collectReferencedBlobIds(subTree, false, ids);
@@ -273,20 +285,204 @@ async function readRedirectTable(
 	storage: Pick<IDocumentStorageService, "readBlob">,
 ): Promise<Map<string, string>> {
 	const redirectTable = new Map<string, string>();
+	const inlinedBlobIds = await getInlinedAttachmentBlobIdsFromSnapshot(blobsTree, storage);
 	const tableBlobId: string | undefined = blobsTree.blobs[redirectTableBlobName];
 	if (tableBlobId !== undefined) {
 		const entries = await readAndParse<[string, string][]>(storage, tableBlobId);
 		for (const [localId, storageId] of entries) {
-			redirectTable.set(localId, storageId);
+			redirectTable.set(localId, inlinedBlobIds.get(storageId) ?? storageId);
 		}
 	}
 	for (const [key, storageId] of Object.entries(blobsTree.blobs)) {
-		if (key !== redirectTableBlobName) {
+		if (key !== redirectTableBlobName && key !== inlinedAttachmentBlobManifestName) {
 			// Identity mapping: storage ids referenced directly in handles (legacy).
 			redirectTable.set(storageId, storageId);
 		}
 	}
 	return redirectTable;
+}
+
+async function getInlinedAttachmentBlobIdsFromSnapshot(
+	blobsTree: ISnapshotTree,
+	storage: Pick<IDocumentStorageService, "readBlob">,
+	blobContents?: ReadonlyMap<string, ArrayBufferLike>,
+): Promise<Map<string, string>> {
+	const manifestId = blobsTree.blobs[inlinedAttachmentBlobManifestName];
+	if (manifestId === undefined) {
+		return getInlinedAttachmentBlobIds(blobsTree);
+	}
+	const manifestContent = blobContents?.get(manifestId);
+	const manifest =
+		manifestContent === undefined
+			? await readAndParse<[string, string][]>(storage, manifestId)
+			: (JSON.parse(bufferToString(manifestContent, "utf8")) as [string, string][]);
+	const inlinedBlobIds = new Map<string, string>();
+	for (const [treeName, detachedStorageId] of manifest) {
+		const childTree = blobsTree.trees[treeName];
+		assert(childTree !== undefined, "Inlined attachment blob tree must be present");
+		const blobId = childTree.blobs[inlinedAttachmentBlobContentName];
+		assert(blobId !== undefined, "Inlined attachment blob tree must contain content");
+		inlinedBlobIds.set(detachedStorageId, blobId);
+	}
+	return inlinedBlobIds;
+}
+
+/**
+ * Reads every inlined attachment payload referenced by a snapshot, preferring
+ * contents already returned with the snapshot.
+ *
+ * @internal
+ */
+export async function readInlinedAttachmentBlobContents(
+	snapshot: ISnapshot,
+	storage: Pick<IDocumentStorageService, "readBlob">,
+): Promise<Map<string, ArrayBuffer>> {
+	return readInlinedAttachmentBlobContentsFromTree(
+		snapshot.snapshotTree,
+		storage,
+		snapshot.blobContents,
+	);
+}
+
+/**
+ * Reads every inlined attachment payload referenced by a snapshot tree.
+ *
+ * @internal
+ */
+export async function readInlinedAttachmentBlobContentsFromTree(
+	snapshotTree: ISnapshotTree,
+	storage: Pick<IDocumentStorageService, "readBlob">,
+	blobContents?: ReadonlyMap<string, ArrayBufferLike>,
+): Promise<Map<string, ArrayBuffer>> {
+	const blobsTree = snapshotTree.trees[blobsTreeName];
+	if (blobsTree === undefined) {
+		return new Map();
+	}
+	const inlinedBlobIds = await getInlinedAttachmentBlobIdsFromSnapshot(
+		blobsTree,
+		storage,
+		blobContents,
+	);
+	const contents = new Map<string, ArrayBuffer>();
+	await mapWithConcurrency(
+		[...new Set(inlinedBlobIds.values())],
+		maxReadConcurrency,
+		async (blobId) => {
+			const content = blobContents?.get(blobId) ?? (await storage.readBlob(blobId));
+			contents.set(blobId, Uint8ArrayToArrayBuffer(new Uint8Array(content)));
+		},
+	);
+	return contents;
+}
+
+/**
+ * Maps detached storage IDs encoded in internal blob loading-group IDs to the
+ * snapshot blob IDs assigned by storage.
+ *
+ * @internal
+ */
+export function getInlinedAttachmentBlobIds(
+	blobsTree: ISnapshotTree | undefined,
+	blobContents?: ReadonlyMap<string, ArrayBufferLike>,
+): Map<string, string> {
+	const inlinedBlobIds = new Map<string, string>();
+	if (blobsTree === undefined) {
+		return inlinedBlobIds;
+	}
+	const manifestId = blobsTree.blobs[inlinedAttachmentBlobManifestName];
+	const manifestContent = manifestId === undefined ? undefined : blobContents?.get(manifestId);
+	if (manifestContent !== undefined) {
+		const manifest = JSON.parse(bufferToString(manifestContent, "utf8")) as [string, string][];
+		for (const [treeName, detachedStorageId] of manifest) {
+			const childTree = blobsTree.trees[treeName];
+			assert(childTree !== undefined, "Inlined attachment blob tree must be present");
+			const blobId = childTree.blobs[inlinedAttachmentBlobContentName];
+			assert(blobId !== undefined, "Inlined attachment blob tree must contain content");
+			inlinedBlobIds.set(detachedStorageId, blobId);
+		}
+		return inlinedBlobIds;
+	}
+	for (const childTree of Object.values(blobsTree.trees)) {
+		const { groupId } = childTree;
+		if (groupId?.startsWith(inlinedAttachmentBlobGroupIdPrefix) !== true) {
+			continue;
+		}
+		const detachedStorageId = groupId.slice(inlinedAttachmentBlobGroupIdPrefix.length);
+		const blobId = childTree.blobs[inlinedAttachmentBlobContentName];
+		assert(blobId !== undefined, "Inlined attachment blob tree must contain content");
+		inlinedBlobIds.set(detachedStorageId, blobId);
+	}
+	return inlinedBlobIds;
+}
+
+/**
+ * Removes GC-filtered inline attachment payload trees from a captured snapshot
+ * and rewrites the manifest and redirect table to match.
+ *
+ * @internal
+ */
+export function pruneUnreferencedInlinedAttachmentBlobs(
+	baseSnapshot: ISnapshotTree,
+	snapshotBlobs: ISerializableBlobContents,
+	gcData: IGcSnapshotData | undefined,
+): ISnapshotTree {
+	const unreferencedLocalIds = unreferencedAttachmentBlobLocalIds(gcData);
+	if (unreferencedLocalIds === undefined || unreferencedLocalIds.size === 0) {
+		return baseSnapshot;
+	}
+	const blobsTree = baseSnapshot.trees[blobsTreeName];
+	if (blobsTree === undefined) {
+		return baseSnapshot;
+	}
+	const manifestId = blobsTree.blobs[inlinedAttachmentBlobManifestName];
+	const redirectTableId = blobsTree.blobs[redirectTableBlobName];
+	if (manifestId === undefined || redirectTableId === undefined) {
+		return baseSnapshot;
+	}
+	const manifestContent = snapshotBlobs[manifestId];
+	const redirectTableContent = snapshotBlobs[redirectTableId];
+	assert(manifestContent !== undefined, "Inlined attachment blob manifest must be captured");
+	assert(
+		redirectTableContent !== undefined,
+		"Attachment blob redirect table must be captured",
+	);
+	const manifest = JSON.parse(manifestContent) as [string, string][];
+	const redirectTable = JSON.parse(redirectTableContent) as [string, string][];
+	const retainedRedirectTable = redirectTable.filter(
+		([localId]) => !unreferencedLocalIds.has(localId),
+	);
+	const retainedDetachedStorageIds = new Set(
+		retainedRedirectTable.map(([_, storageId]) => storageId),
+	);
+	const retainedManifest = manifest.filter(([_, detachedStorageId]) =>
+		retainedDetachedStorageIds.has(detachedStorageId),
+	);
+	if (
+		retainedRedirectTable.length === redirectTable.length &&
+		retainedManifest.length === manifest.length
+	) {
+		return baseSnapshot;
+	}
+
+	snapshotBlobs[redirectTableId] = JSON.stringify(retainedRedirectTable);
+	snapshotBlobs[manifestId] = JSON.stringify(retainedManifest);
+	const inlineTreeNames = new Set(manifest.map(([treeName]) => treeName));
+	const retainedTreeNames = new Set(retainedManifest.map(([treeName]) => treeName));
+	const retainedTrees = Object.fromEntries(
+		Object.entries(blobsTree.trees).filter(
+			([treeName]) => !inlineTreeNames.has(treeName) || retainedTreeNames.has(treeName),
+		),
+	);
+	return {
+		...baseSnapshot,
+		trees: {
+			...baseSnapshot.trees,
+			[blobsTreeName]: {
+				...blobsTree,
+				trees: retainedTrees,
+			},
+		},
+	};
 }
 
 /**
@@ -431,14 +627,23 @@ export async function inlineAttachmentBlobsByReference(
  * rather than silently producing a pending state that omits group data.
  */
 export function snapshotHasLoadingGroups(baseSnapshot: ISnapshotTree): boolean {
+	return snapshotHasLoadingGroupsCore(baseSnapshot, true);
+}
+
+function snapshotHasLoadingGroupsCore(baseSnapshot: ISnapshotTree, isRoot: boolean): boolean {
 	if (baseSnapshot.unreferenced === true) {
 		return false;
 	}
 	if (baseSnapshot.groupId !== undefined) {
 		return true;
 	}
-	for (const child of Object.values(baseSnapshot.trees)) {
-		if (snapshotHasLoadingGroups(child)) {
+	for (const [key, child] of Object.entries(baseSnapshot.trees)) {
+		// BlobManager's internal groups are self-contained summary blobs whose
+		// IDs can be read directly. They do not require a group snapshot fetch.
+		if (isRoot && key === blobsTreeName) {
+			continue;
+		}
+		if (snapshotHasLoadingGroupsCore(child, false)) {
 			return true;
 		}
 	}

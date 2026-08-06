@@ -5,7 +5,7 @@
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import { type ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import type {
 	IDocumentStorageService,
 	ISnapshot,
@@ -13,6 +13,7 @@ import type {
 import type { CombinedAppAndProtocolSummary } from "@fluidframework/driver-utils/internal";
 
 import type { MemoryDetachedBlobStorage } from "./memoryBlobStorage.js";
+import { wireFormatConstants } from "./captureReferencedContents.js";
 import { getISnapshotFromSerializedContainer } from "./utils.js";
 
 /**
@@ -64,6 +65,16 @@ export interface AttachingDataWithoutBlobs {
 }
 
 /**
+ * Attachment state used when detached attachment blobs are embedded in the
+ * create summary.
+ */
+export interface AttachingDataWithInlinedBlobs {
+	readonly state: AttachState.Attaching;
+	readonly summary: CombinedAppAndProtocolSummary;
+	readonly blobs: "inline";
+}
+
+/**
  * The final attachment state which signals the container is fully attached.
  * The baseSnapshotAndBlobs will only be enabled when offline load is enabled.
  */
@@ -79,6 +90,7 @@ export type AttachmentData =
 	| DetachedDefaultData
 	| DetachedDataWithOutstandingBlobs
 	| AttachingDataWithoutBlobs
+	| AttachingDataWithInlinedBlobs
 	| AttachingDataWithBlobs
 	| AttachedData;
 
@@ -126,6 +138,44 @@ export interface AttachProcessProps {
 	readonly createAttachmentSummary: (
 		redirectTable?: Map<string, string>,
 	) => CombinedAppAndProtocolSummary;
+
+	/**
+	 * Whether the runtime should attempt to embed detached blobs in the create summary.
+	 */
+	readonly inlineDetachedBlobsAsSummaryBlobs?: boolean;
+}
+
+function hasInlinedDetachedBlobs(
+	summary: CombinedAppAndProtocolSummary,
+	expectedBlobCount: number,
+): boolean {
+	const blobsSummary = summary.tree[".app"].tree[wireFormatConstants.blobsTreeName];
+	if (blobsSummary?.type !== SummaryType.Tree) {
+		return false;
+	}
+	if (
+		blobsSummary.tree[wireFormatConstants.inlinedAttachmentBlobManifestName]?.type !==
+		SummaryType.Blob
+	) {
+		return false;
+	}
+	let inlinedBlobCount = 0;
+	for (const summaryObject of Object.values(blobsSummary.tree)) {
+		if (summaryObject.type === SummaryType.Attachment) {
+			return false;
+		}
+		if (
+			summaryObject.type === SummaryType.Tree &&
+			summaryObject.groupId?.startsWith(
+				wireFormatConstants.inlinedAttachmentBlobGroupIdPrefix,
+			) === true &&
+			summaryObject.tree[wireFormatConstants.inlinedAttachmentBlobContentName]?.type ===
+				SummaryType.Blob
+		) {
+			inlinedBlobCount++;
+		}
+	}
+	return inlinedBlobCount === expectedBlobCount;
 }
 
 /**
@@ -142,27 +192,36 @@ export const runRetriableAttachProcess = async ({
 	setAttachmentData,
 	createAttachmentSummary,
 	initialAttachmentData,
+	inlineDetachedBlobsAsSummaryBlobs,
 }: AttachProcessProps): Promise<ISnapshot> => {
-	let currentData: AttachmentData = initialAttachmentData;
+	let currentData: Exclude<AttachmentData, AttachedData> = initialAttachmentData;
 
 	if (currentData.blobs === undefined) {
 		// If attachment blobs were uploaded in detached state we will go through a different attach flow
-		const outstandingAttachmentBlobs =
-			detachedBlobStorage !== undefined && detachedBlobStorage.size > 0;
+		const detachedBlobCount = detachedBlobStorage?.size ?? 0;
+		const outstandingAttachmentBlobs = detachedBlobCount > 0;
+		const inlinedSummary =
+			outstandingAttachmentBlobs && inlineDetachedBlobsAsSummaryBlobs === true
+				? createAttachmentSummary()
+				: undefined;
+		const blobsAreInlined =
+			inlinedSummary !== undefined &&
+			hasInlinedDetachedBlobs(inlinedSummary, detachedBlobCount);
 		// Determine the next phase of attaching which depends on if there are attachment blobs
 		// if there are, we will stay detached, so an empty file can be created, and the blobs
 		// uploaded, otherwise we will get the summary to create the file with and move to attaching
-		currentData = outstandingAttachmentBlobs
-			? {
-					state: AttachState.Detached,
-					blobs: "outstanding",
-					redirectTable: new Map<string, string>(),
-				}
-			: {
-					state: AttachState.Attaching,
-					summary: createAttachmentSummary(),
-					blobs: "none",
-				};
+		currentData =
+			outstandingAttachmentBlobs && !blobsAreInlined
+				? {
+						state: AttachState.Detached,
+						blobs: "outstanding",
+						redirectTable: new Map<string, string>(),
+					}
+				: {
+						state: AttachState.Attaching,
+						summary: inlinedSummary ?? createAttachmentSummary(),
+						blobs: blobsAreInlined ? "inline" : "none",
+					};
 		setAttachmentData(currentData);
 	}
 
@@ -212,10 +271,6 @@ export const runRetriableAttachProcess = async ({
 
 	const snapshot = getISnapshotFromSerializedContainer(currentData.summary);
 
-	setAttachmentData(
-		(currentData = {
-			state: AttachState.Attached,
-		}),
-	);
+	setAttachmentData({ state: AttachState.Attached });
 	return snapshot;
 };

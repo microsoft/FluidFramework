@@ -18,9 +18,11 @@ import {
 	inlineAttachmentBlobsByReference,
 	mapWithConcurrency,
 	parseGcSnapshotData,
+	pruneUnreferencedInlinedAttachmentBlobs,
 	readReferencedSnapshotBlobs,
 	snapshotHasLoadingGroups,
 	unreferencedAttachmentBlobLocalIds,
+	wireFormatConstants,
 	type IBlobAttachReference,
 	type IGcSnapshotData,
 } from "../captureReferencedContents.js";
@@ -328,6 +330,36 @@ describe("captureReferencedContents", () => {
 			});
 		});
 
+		it("resolves inlined attachment summary blobs to their snapshot blob ids", async () => {
+			const snapshot = tree({
+				trees: {
+					[wireFormatConstants.blobsTreeName]: tree({
+						blobs: {
+							[wireFormatConstants.redirectTableBlobName]: "rt",
+							[wireFormatConstants.inlinedAttachmentBlobManifestName]: "manifest",
+						},
+						trees: {
+							".inline_0": tree({
+								blobs: {
+									[wireFormatConstants.inlinedAttachmentBlobContentName]: "snapshot-blob-id",
+								},
+							}),
+						},
+					}),
+				},
+			});
+			const storage = mockStorage({
+				rt: JSON.stringify([["local-id", "detached-id"]]),
+				manifest: JSON.stringify([[".inline_0", "detached-id"]]),
+				"snapshot-blob-id": "INLINE",
+			});
+
+			const result = await captureReferencedAttachmentBlobs(snapshot, storage, undefined);
+			assert.deepStrictEqual(result, {
+				"snapshot-blob-id": toB64("INLINE"),
+			});
+		});
+
 		it("ignores gc nodes for non-attachment-blob paths", async () => {
 			// gcState may contain unreferenced/tombstoned nodes for data stores,
 			// channels, etc. Those paths must not be confused with blob localIds
@@ -410,6 +442,67 @@ describe("captureReferencedContents", () => {
 		});
 	});
 
+	describe("pruneUnreferencedInlinedAttachmentBlobs", () => {
+		it("removes filtered payload trees and rewrites structural blobs", () => {
+			const snapshot = tree({
+				trees: {
+					[wireFormatConstants.blobsTreeName]: tree({
+						blobs: {
+							[wireFormatConstants.redirectTableBlobName]: "redirect",
+							[wireFormatConstants.inlinedAttachmentBlobManifestName]: "manifest",
+						},
+						trees: {
+							liveTree: tree({
+								blobs: {
+									[wireFormatConstants.inlinedAttachmentBlobContentName]: "live-content",
+								},
+							}),
+							deadTree: tree({
+								blobs: {
+									[wireFormatConstants.inlinedAttachmentBlobContentName]: "dead-content",
+								},
+							}),
+						},
+					}),
+				},
+			});
+			const snapshotBlobs = {
+				redirect: JSON.stringify([
+					["live-local", "live-detached"],
+					["dead-local", "dead-detached"],
+				]),
+				manifest: JSON.stringify([
+					["liveTree", "live-detached"],
+					["deadTree", "dead-detached"],
+				]),
+			};
+			const gcData: IGcSnapshotData = {
+				gcState: {
+					gcNodes: {
+						"/_blobs/dead-local": {
+							outboundRoutes: [],
+							unreferencedTimestampMs: 1,
+						},
+					},
+				},
+				tombstones: undefined,
+				deletedNodes: undefined,
+			};
+
+			const pruned = pruneUnreferencedInlinedAttachmentBlobs(snapshot, snapshotBlobs, gcData);
+			assert.deepStrictEqual(JSON.parse(snapshotBlobs.redirect), [
+				["live-local", "live-detached"],
+			]);
+			assert.deepStrictEqual(JSON.parse(snapshotBlobs.manifest), [
+				["liveTree", "live-detached"],
+			]);
+			assert.deepStrictEqual(
+				Object.keys(pruned.trees[wireFormatConstants.blobsTreeName].trees),
+				["liveTree"],
+			);
+		});
+	});
+
 	describe("snapshotHasLoadingGroups", () => {
 		it("returns false for a snapshot with no groupIds anywhere", () => {
 			const snapshot = tree({
@@ -459,6 +552,21 @@ describe("captureReferencedContents", () => {
 
 		it("returns false when the entire snapshot is unreferenced", () => {
 			const snapshot = tree({ unreferenced: true, groupId: "g1" });
+			assert.strictEqual(snapshotHasLoadingGroups(snapshot), false);
+		});
+
+		it("ignores BlobManager internal loading groups", () => {
+			const snapshot = tree({
+				trees: {
+					[wireFormatConstants.blobsTreeName]: tree({
+						trees: {
+							".inline_0": tree({
+								groupId: `${wireFormatConstants.inlinedAttachmentBlobGroupIdPrefix}0`,
+							}),
+						},
+					}),
+				},
+			});
 			assert.strictEqual(snapshotHasLoadingGroups(snapshot), false);
 		});
 	});

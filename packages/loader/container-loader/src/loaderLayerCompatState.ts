@@ -6,6 +6,7 @@
 import {
 	generation,
 	LayerCompatibilityPolicyWindowMonths,
+	supportsInlinedDetachedBlobSummary,
 	type ILayerCompatDetails,
 	type ILayerCompatSupportRequirements,
 } from "@fluid-internal/client-utils";
@@ -41,7 +42,7 @@ export const loaderCompatDetailsForRuntime: ILayerCompatDetails = {
 	/**
 	 * The features supported by the Loader layer across the Loader / Runtime boundary.
 	 */
-	supportedFeatures: new Set<string>(),
+	supportedFeatures: new Set<string>([supportsInlinedDetachedBlobSummary]),
 };
 
 /**

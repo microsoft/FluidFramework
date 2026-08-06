@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { stringToBuffer } from "@fluid-internal/client-utils";
+import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import type {
 	IDocumentStorageService,
 	ISnapshot,
@@ -14,6 +14,7 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 
 import type { ISerializableBlobContents } from "../containerStorageAdapter.js";
+import { wireFormatConstants } from "../captureReferencedContents.js";
 import type { SerializedSnapshotInfo } from "../serializedStateManager.js";
 import {
 	convertSnapshotInfoToSnapshot,
@@ -184,6 +185,47 @@ describe("container-loader utils", () => {
 				snapshotSequenceNumber: snapshot.sequenceNumber ?? 0,
 				snapshotBlobs,
 			});
+		});
+
+		it("round-trips inlined attachment summary blobs as base64", () => {
+			const binaryBlobId = "binary-blob";
+			const binaryBlob = new Uint8Array([0xff, 0xfe, 0x00, 0x80]).buffer;
+			const binarySnapshot: ISnapshot = {
+				snapshotTree: {
+					blobs: {},
+					trees: {
+						[wireFormatConstants.blobsTreeName]: {
+							blobs: {},
+							trees: {
+								".inline_0": {
+									blobs: {
+										[wireFormatConstants.inlinedAttachmentBlobContentName]: binaryBlobId,
+									},
+									trees: {},
+									groupId: `${wireFormatConstants.inlinedAttachmentBlobGroupIdPrefix}0`,
+								},
+							},
+						},
+					},
+				},
+				blobContents: new Map([[binaryBlobId, binaryBlob]]),
+				ops: [],
+				sequenceNumber: 123,
+				latestSequenceNumber: undefined,
+				snapshotFormatV: 1,
+			};
+
+			const serialized = convertSnapshotToSnapshotInfo(binarySnapshot);
+			assert.deepStrictEqual(serialized.snapshotBlobs, {});
+			assert.deepStrictEqual(serialized.attachmentBlobContents, {
+				[binaryBlobId]: bufferToString(binaryBlob, "base64"),
+			});
+
+			const restored = convertSnapshotInfoToSnapshot(serialized);
+			assert.deepStrictEqual(
+				new Uint8Array(restored.blobContents.get(binaryBlobId) ?? new ArrayBuffer(0)),
+				new Uint8Array(binaryBlob),
+			);
 		});
 	});
 });

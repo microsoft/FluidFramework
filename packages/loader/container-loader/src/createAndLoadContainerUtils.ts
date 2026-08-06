@@ -46,6 +46,7 @@ import {
 	extractBlobAttachReferences,
 	inlineAttachmentBlobsByReference,
 	parseGcSnapshotData,
+	pruneUnreferencedInlinedAttachmentBlobs,
 	readReferencedSnapshotBlobs,
 	snapshotHasLoadingGroups,
 	unreferencedAttachmentBlobLocalIds,
@@ -620,6 +621,11 @@ export async function captureFullContainerState({
 			readReferencedSnapshotBlobs(snapshot, storage), // utf8 encoded
 			captureReferencedAttachmentBlobs(baseSnapshot, storage, gcData), // base64 encoded
 		]);
+		const capturedBaseSnapshot = pruneUnreferencedInlinedAttachmentBlobs(
+			baseSnapshot,
+			snapshotBlobs,
+			gcData,
+		);
 
 		const deltaStorage = await documentService.connectToDeltaStorage();
 		const opsStream = deltaStorage.fetchMessages(
@@ -660,7 +666,7 @@ export async function captureFullContainerState({
 
 		const pendingState: IPendingContainerState = {
 			attached: true,
-			baseSnapshot,
+			baseSnapshot: capturedBaseSnapshot,
 			snapshotBlobs,
 			attachmentBlobContents:
 				Object.keys(attachmentBlobContents).length === 0 ? undefined : attachmentBlobContents,

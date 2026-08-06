@@ -36,5 +36,6 @@ export {
 	type IProvideLayerCompatDetails,
 	type ILayerCompatSupportRequirements,
 	LayerCompatibilityPolicyWindowMonths,
+	supportsInlinedDetachedBlobSummary,
 } from "./layerCompat.js";
 export { generation } from "./layerGenerationState.js";
