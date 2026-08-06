@@ -86,8 +86,13 @@ export const allEndpoints = [
 
 /**
  * A census of node flows between different locations in the tree.
+ * Each entry `census[from][to]` represents the number of nodes that flowed from `from` to `to` during a change.
+ * In order to be counted, a node must be either built, renamed, attached, or detached during the change.
  *
- * Each entry `census[from][to]` represents the number of nodes that moved from the `from` location to the `to` location.
+ * @remarks
+ * Note that the following combinations of `from` and `to` are impossible, and should always have a count of 0:
+ * - Any source endpoint with "Built" in its name cannot end up as NodeFlowEndpoint.DetachedPriorRoot.
+ * - Any source endpoint with "Prior" in its name cannot end up as NodeFlowEndpoint.DetachedBuiltRoot.
  */
 export type NodeFlowCensus = Record<NodeFlowEndpoint, Record<NodeFlowEndpoint, number>>;
 
@@ -103,6 +108,12 @@ export function makeEmptyCensus(): NodeFlowCensus {
 	return census as NodeFlowCensus;
 }
 
+/**
+ * Generates a census of node flows from a given delta.
+ *
+ * @param delta - The delta representing changes in the tree.
+ * @returns A NodeFlowCensus representing the number of nodes that flowed between different kinds of endpoints.
+ */
 export function nodeFlowCensusFromDelta(delta: DeltaRoot): NodeFlowCensus {
 	const census: NodeFlowCensus = makeEmptyCensus();
 	return census;

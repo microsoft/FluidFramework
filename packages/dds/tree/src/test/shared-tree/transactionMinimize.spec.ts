@@ -2658,16 +2658,17 @@ describe("transaction minimize post-processor", () => {
 	});
 
 	describe("minimizes edits to content that ends up detached", () => {
-		const locationsUnderNodesThatEndUpAttached = new Set([
-			NodeFlowEndpoint.UnderAttachedPriorTree,
-			NodeFlowEndpoint.UnderAttachingPriorTree,
-			NodeFlowEndpoint.UnderAttachingBuiltTree,
-		]);
-		const locationsUnderNodesThatEndUpDetached = new Set([
+		const endpointsUnderNodesThatEndUpDetached = new Set([
 			NodeFlowEndpoint.UnderDetachingPriorTree,
 			NodeFlowEndpoint.UnderDetachedPriorTree,
 			NodeFlowEndpoint.UnderTransientBuiltTree,
 		]);
+		const endpointsThatEndUpDetached = new Set([
+			...endpointsUnderNodesThatEndUpDetached,
+			NodeFlowEndpoint.DetachedBuiltRoot,
+			NodeFlowEndpoint.DetachedPriorRoot,
+		]);
+
 		for (const [scenarioName, scenario] of Object.entries(generateEditedTreeScenarios())) {
 			it(scenarioName, () => {
 				const { tree: unminimizedTree } = runScenario(scenario, {
@@ -2682,19 +2683,17 @@ describe("transaction minimize post-processor", () => {
 				const minimizedDelta = intoDelta(makeAnonChange(changes[0].innerChange));
 				const minimizedNodeFlow = nodeFlowCensusFromDelta(minimizedDelta);
 
-				// No node should be attached under a tree that ends up detached
-				for (const source of allEndpoints) {
-					for (const destination of locationsUnderNodesThatEndUpDetached) {
-						assert.equal(minimizedNodeFlow[source][destination], 0);
+				// No node, no matter its starting endpoint, should be transferred under a tree that ends up detached
+				for (const fromAnywhere of allEndpoints) {
+					for (const toUnderDetached of endpointsUnderNodesThatEndUpDetached) {
+						assert.equal(minimizedNodeFlow[fromAnywhere][toUnderDetached], 0);
 					}
 				}
 
-				// All nodes detached from a tree that ends up detached must be attached under a tree that ends up attached
-				for (const source of locationsUnderNodesThatEndUpDetached) {
-					for (const destination of allEndpoints) {
-						if (!locationsUnderNodesThatEndUpAttached.has(destination)) {
-							assert.equal(minimizedNodeFlow[source][destination], 0);
-						}
+				// No node detached from a tree that ends up detached should end up detached or be transferred under a tree that ends up detached
+				for (const fromUnderDetached of endpointsUnderNodesThatEndUpDetached) {
+					for (const toDetached of endpointsThatEndUpDetached) {
+						assert.equal(minimizedNodeFlow[fromUnderDetached][toDetached], 0);
 					}
 				}
 			});
