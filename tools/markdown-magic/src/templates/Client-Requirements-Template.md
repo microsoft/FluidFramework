@@ -8,11 +8,10 @@ When making such a request please include if the configuration already works (an
 
 # Supported Runtimes
 
--   NodeJS versions 22 and 24 for as long as they are receiving [upstream support](https://nodejs.org/en/about/previous-releases).
+-   Node.js versions 22 and 24 for as long as they are receiving [upstream support](https://nodejs.org/en/about/previous-releases).
     -   Support for version 22 will be dropped [when it loses upstream support on 2027-04-30](https://github.com/nodejs/release#release-schedule).
     -   Running Fluid in a Node.js environment with the `--no-experimental-fetch` flag is not supported.
 -   Modern browsers supporting the es2022 standard library.
-    -   In response to requests, we can add explicit support for using babel to polyfill to target specific standards or runtimes (meaning we can avoid/remove use of things that don't polyfill robustly, but otherwise target modern standards).
 
 # Supported Tools
 
