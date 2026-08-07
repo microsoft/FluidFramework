@@ -341,7 +341,7 @@ export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "
 // @alpha @legacy
 export interface IVersionMarkResolver {
     onBatchSequenced(listener: (batchId: string, sequenceNumber: number) => void): () => void;
-    resolve(batchId: string, sequenceNumberLowerBound: number): Promise<ResolveResult>;
+    resolve(batchId: string, referenceSequenceNumber: number): Promise<ResolveResult>;
     sealAndCaptureVersionMark(): VersionMarkCapture;
 }
 
@@ -442,7 +442,7 @@ export const TombstoneResponseHeaderKey = "isTombstoned";
 export type VersionMarkCapture = {
     readonly kind: "pending";
     readonly batchId: string;
-    readonly sequenceNumberLowerBound: number;
+    readonly referenceSequenceNumber: number;
 } | {
     readonly kind: "resolved";
     readonly sequenceNumber: number;

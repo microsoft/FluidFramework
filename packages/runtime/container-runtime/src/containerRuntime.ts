@@ -1550,10 +1550,7 @@ export class ContainerRuntime
 	/**
 	 * Host-facing version mark resolver.
 	 */
-	public get versionMarkResolver(): IVersionMarkResolver {
-		return this.versionMarkResolverInternal;
-	}
-
+	public readonly versionMarkResolver: IVersionMarkResolver;
 	private readonly versionMarkResolverInternal: VersionMarkResolver;
 	private readonly outbox: Outbox;
 	private readonly garbageCollector: IGarbageCollector;
@@ -1946,6 +1943,7 @@ export class ContainerRuntime
 					}
 				: undefined,
 		});
+		this.versionMarkResolver = this.versionMarkResolverInternal;
 
 		let outerDeltaManager: IDeltaManagerFull = this.innerDeltaManager;
 		this.useDeltaManagerOpsProxy =

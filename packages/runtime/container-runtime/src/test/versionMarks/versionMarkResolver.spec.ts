@@ -156,7 +156,7 @@ function makeRecordingUnpackerFactory(
 
 describe("VersionMarkResolver", () => {
 	describe("sealAndCaptureVersionMark", () => {
-		it("returns a pending capture with the pending batchId and sequence number lower bound", () => {
+		it("returns a pending capture with the pending batchId and reference sequence number", () => {
 			const resolver = makeResolver({
 				currentSequenceNumber: 42,
 				currentPendingBatchId: "client_[3]",
@@ -164,7 +164,7 @@ describe("VersionMarkResolver", () => {
 			assert.deepEqual(resolver.sealAndCaptureVersionMark(), {
 				kind: "pending",
 				batchId: "client_[3]",
-				sequenceNumberLowerBound: 42,
+				referenceSequenceNumber: 42,
 			});
 		});
 
@@ -192,7 +192,7 @@ describe("VersionMarkResolver", () => {
 			assert.deepEqual(resolver.sealAndCaptureVersionMark(), {
 				kind: "pending",
 				batchId: "client_[9]",
-				sequenceNumberLowerBound: 100,
+				referenceSequenceNumber: 100,
 			});
 		});
 	});
@@ -544,8 +544,8 @@ describe("VersionMarkResolver", () => {
 			});
 		});
 
-		it("pending when nothing has sequenced past the lower bound", async () => {
-			// tip (5) == sequenceNumberLowerBound, so `from` (6) is beyond the tip: the batch cannot have landed.
+		it("pending when nothing has sequenced past the reference point", async () => {
+			// tip (5) == referenceSequenceNumber, so `from` (6) is beyond the tip: the batch cannot have landed.
 			const reader = makeReader([]);
 			const resolver = makeResolver({ reader, currentSequenceNumber: 5 });
 			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 9), 5), {
@@ -553,7 +553,7 @@ describe("VersionMarkResolver", () => {
 			});
 		});
 
-		it("reads from sequenceNumberLowerBound + 1", async () => {
+		it("reads from referenceSequenceNumber + 1 (the exclusive lower-bound anchor)", async () => {
 			const calls: { from: number; to?: number }[] = [];
 			const reader = makeReader([], calls);
 			const resolver = makeResolver({ reader });
