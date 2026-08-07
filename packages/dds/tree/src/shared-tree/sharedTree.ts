@@ -252,7 +252,7 @@ export class SharedTreeKernel
 			idCompressor,
 			healing:
 				options.healUnresolvableIdentifiersOnDecode === true
-					? { sharedObjectId: sharedObject.id }
+					? { sharedObjectId: sharedObject.id, logger }
 					: undefined,
 		});
 		const forestSummarizer = new ForestSummarizer(
@@ -603,6 +603,11 @@ export interface SharedTreeOptionsBeta extends ForestOptions, Partial<CodecWrite
 	 * so every reader of the same blob (other than the originator) agrees on the resulting in-memory id.
 	 * Healed identifiers are written back out at the next summary in their stable UUID form,
 	 * so the inconsistency does not need to be re-healed on every load.
+	 *
+	 * When this flag is enabled, each time an unresolvable identifier is healed a
+	 * `HealUnresolvableIdentifierOnDecode` telemetry event is emitted (at
+	 * {@link @fluidframework/core-interfaces#LogLevelConst.info | LogLevel.info}) through the shared
+	 * object's logger, allowing applications to detect which documents actually required healing.
 	 *
 	 * Off by default because enabling it for documents that are not actually corrupt
 	 * would mask genuine bugs that otherwise surface as decode failures.

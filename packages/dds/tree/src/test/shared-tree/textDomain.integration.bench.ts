@@ -48,7 +48,7 @@ import {
 	type TreeView,
 	type ValidateRecursiveSchema,
 } from "../../simple-tree/index.js";
-import { FormattedTextAsTreeDefault, TextAsTree } from "../../text/index.js";
+import { FormattedTextDefault, PlainText } from "../../text/index.js";
 import { configuredSharedTree } from "../../treeFactory.js";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -82,7 +82,7 @@ describe("TextDomain benchmarks", () => {
 		// A single recursive map schema covers all key-length variants.
 		class WrapperMap extends schemaFactory.mapRecursive("bench.textDepth.WrapperMap", [
 			() => WrapperMap,
-			TextAsTree.Tree,
+			PlainText.Tree,
 		]) {}
 		{
 			type _check = ValidateRecursiveSchema<typeof WrapperMap>;
@@ -95,7 +95,7 @@ describe("TextDomain benchmarks", () => {
 		}
 
 		function makeTree(depth: number, key: string, text: string): WrapperMap {
-			const textNode = TextAsTree.Tree.fromString(text);
+			const textNode = PlainText.Tree.fromString(text);
 			let current: WrapperMap = new WrapperMap([[key, textNode]]);
 			for (let i = 1; i < depth; i++) {
 				current = new WrapperMap([[key, current]]);
@@ -103,14 +103,14 @@ describe("TextDomain benchmarks", () => {
 			return current;
 		}
 
-		function getLeaf(root: WrapperMap, key: string): TextAsTree.Tree {
-			let current: WrapperMap | TextAsTree.Tree = root;
+		function getLeaf(root: WrapperMap, key: string): PlainText.Tree {
+			let current: WrapperMap | PlainText.Tree = root;
 			while (Tree.is(current, WrapperMap)) {
 				const next = current.get(key);
 				assert(next !== undefined);
 				current = next;
 			}
-			assert(Tree.is(current, TextAsTree.Tree));
+			assert(Tree.is(current, PlainText.Tree));
 			return current;
 		}
 
@@ -514,9 +514,9 @@ describe("TextDomain benchmarks", () => {
 			(configuration) => isInPerformanceTestingMode || configuration.runInCorrectnessMode,
 		);
 
-		const viewConfiguration = new TreeViewConfiguration({ schema: TextAsTree.Tree });
+		const viewConfiguration = new TreeViewConfiguration({ schema: PlainText.Tree });
 
-		describe("TextAsTree.Tree node encoded size", () => {
+		describe("PlainText.Tree node encoded size", () => {
 			benchmarkIt({
 				type: BenchmarkType.Measurement,
 				title: `exportVerbose encoded size by string length`,
@@ -526,7 +526,7 @@ describe("TextDomain benchmarks", () => {
 					for (const { stringLength } of filteredConfigurations) {
 						const independentTree = createIndependentTreeAlpha({});
 						const view = independentTree.viewWith(viewConfiguration);
-						view.initialize(TextAsTree.Tree.fromString(makeTestString(stringLength)));
+						view.initialize(PlainText.Tree.fromString(makeTestString(stringLength)));
 
 						const encoded = TreeAlpha.exportVerbose(view.root);
 						const encodedSize = utf8Length(encoded as JsonCompatibleReadOnly);
@@ -575,14 +575,14 @@ describe("TextDomain benchmarks", () => {
 
 		// #region Document construction helpers
 
-		const plainTextViewConfiguration = new TreeViewConfiguration({ schema: TextAsTree.Tree });
+		const plainTextViewConfiguration = new TreeViewConfiguration({ schema: PlainText.Tree });
 		const formattedTextViewConfiguration = new TreeViewConfiguration({
-			schema: FormattedTextAsTreeDefault.Tree,
+			schema: FormattedTextDefault.Tree,
 		});
 
 		/**
-		 * The subset of the text-node API the whole-document benchmarks use. Both {@link TextAsTree.Tree}
-		 * and {@link FormattedTextAsTreeDefault.Tree} share these, so the read/edit helpers below work
+		 * The subset of the text-node API the whole-document benchmarks use. Both {@link PlainText.Tree}
+		 * and {@link FormattedTextDefault.Tree} share these, so the read/edit helpers below work
 		 * against either domain (and against an unhydrated node).
 		 */
 		type TextRoot = TreeNode & {
@@ -710,25 +710,25 @@ describe("TextDomain benchmarks", () => {
 					buildDocument: (size) =>
 						buildTextView(
 							plainTextViewConfiguration,
-							TextAsTree.Tree.fromString(makeTestString(size)),
+							PlainText.Tree.fromString(makeTestString(size)),
 							forest,
 						),
 					buildForest: (size) =>
 						getForestOf(
 							buildTextView(
 								plainTextViewConfiguration,
-								TextAsTree.Tree.fromString(makeTestString(size)),
+								PlainText.Tree.fromString(makeTestString(size)),
 								forest,
 							),
 						),
 					// The concrete schema node implements the `TextRoot` surface, but the compiler can't see it
 					// as that structural type, so erase through `unknown`.
 					makeUnhydratedRoot: (size) =>
-						TextAsTree.Tree.fromString(makeTestString(size)) as unknown as TextRoot,
+						PlainText.Tree.fromString(makeTestString(size)) as unknown as TextRoot,
 					attachSummary: (size) =>
 						getTextAttachSummary(
 							plainTextViewConfiguration,
-							TextAsTree.Tree.fromString(makeTestString(size)),
+							PlainText.Tree.fromString(makeTestString(size)),
 							forest,
 						),
 				},
@@ -738,27 +738,25 @@ describe("TextDomain benchmarks", () => {
 					buildDocument: (size) =>
 						buildTextView(
 							formattedTextViewConfiguration,
-							FormattedTextAsTreeDefault.Tree.fromString(makeTestString(size)),
+							FormattedTextDefault.Tree.fromString(makeTestString(size)),
 							forest,
 						),
 					buildForest: (size) =>
 						getForestOf(
 							buildTextView(
 								formattedTextViewConfiguration,
-								FormattedTextAsTreeDefault.Tree.fromString(makeTestString(size)),
+								FormattedTextDefault.Tree.fromString(makeTestString(size)),
 								forest,
 							),
 						),
 					// The concrete schema node implements the `TextRoot` surface, but the compiler can't see it
 					// as that structural type, so erase through `unknown`.
 					makeUnhydratedRoot: (size) =>
-						FormattedTextAsTreeDefault.Tree.fromString(
-							makeTestString(size),
-						) as unknown as TextRoot,
+						FormattedTextDefault.Tree.fromString(makeTestString(size)) as unknown as TextRoot,
 					attachSummary: (size) =>
 						getTextAttachSummary(
 							formattedTextViewConfiguration,
-							FormattedTextAsTreeDefault.Tree.fromString(makeTestString(size)),
+							FormattedTextDefault.Tree.fromString(makeTestString(size)),
 							forest,
 						),
 				},

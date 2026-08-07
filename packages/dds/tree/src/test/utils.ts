@@ -961,6 +961,8 @@ const sf = new SchemaFactory("com.fluidframework.json");
 
 export const NumberArray = sf.array("array", sf.number);
 export const StringArray = sf.array("array", sf.string);
+export const StringAndNumberArray = sf.array("array", [sf.string, sf.number]);
+export const StringAndBoolArray = sf.array("array", [sf.string, sf.boolean]);
 
 export const IdentifierSchema = sf.object("identifier-object", {
 	identifier: sf.identifier,

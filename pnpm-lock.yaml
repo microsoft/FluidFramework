@@ -3544,9 +3544,6 @@ importers:
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../../packages/test/mocha-test-setup
-      '@fluid-private/test-version-utils':
-        specifier: workspace:~
-        version: link:../../../packages/test/test-version-utils
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
         version: 0.65.0(@types/node@22.19.17)(clean-css@5.3.3)(html-minifier-terser@7.2.0)(postcss@8.5.16)(supports-color@10.2.2)(uglify-js@3.19.3)(webpack-cli@5.1.4)
@@ -3556,15 +3553,18 @@ importers:
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
         version: 0.65.0(@types/node@22.19.17)(supports-color@10.2.2)
+      '@fluidframework/container-loader':
+        specifier: workspace:~
+        version: link:../../../packages/loader/container-loader
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 13.0.0(@typescript-eslint/utils@8.61.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
-      '@fluidframework/runtime-utils':
+      '@fluidframework/local-driver':
         specifier: workspace:~
-        version: link:../../../packages/runtime/runtime-utils
-      '@fluidframework/test-utils':
-        specifier: workspace:~
-        version: link:../../../packages/test/test-utils
+        version: link:../../../packages/drivers/local-driver
+      '@fluidframework/server-local-server':
+        specifier: ^7.0.1
+        version: 7.0.1(supports-color@10.2.2)
       '@microsoft/api-extractor':
         specifier: 7.58.1
         version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
@@ -6661,6 +6661,9 @@ importers:
       chai:
         specifier: ^4.5.0
         version: 4.5.0
+      concurrently:
+        specifier: ^10.0.3
+        version: 10.0.3
       cross-env:
         specifier: ^10.1.0
         version: 10.1.0

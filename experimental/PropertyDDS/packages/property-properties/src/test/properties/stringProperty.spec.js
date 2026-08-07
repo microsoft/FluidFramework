@@ -7,12 +7,13 @@
  * @fileoverview In this file, we will test the string property object described in /src/properties/stringProperty.js
  */
 
-const { ChangeSet } = require("@fluid-experimental/property-changeset");
-const { MSG } = require("@fluid-experimental/property-common").constants;
-const _ = require("lodash");
+import { ChangeSet } from "@fluid-experimental/property-changeset";
+import { constants } from "@fluid-experimental/property-common";
+const { MSG } = constants;
+import _ from "lodash";
 
-const { PropertyFactory } = require("../..");
-const { BaseProperty } = require("../..");
+import { PropertyFactory } from "../../index.js";
+import { BaseProperty } from "../../index.js";
 const deepCopy = _.cloneDeep;
 
 describe("StringProperty", function () {
