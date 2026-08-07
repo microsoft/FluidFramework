@@ -107,8 +107,11 @@ export function minimizeModularChangeset(
 		return fieldId.nodeId !== undefined && isNodeDetachedInOutput(fieldId.nodeId);
 	}
 
-	function shouldSquashDetach(fieldId: FieldId): boolean {
-		return isNodeIdInBuiltTree(fieldId.nodeId);
+	function shouldSquashDetach(
+		fieldId: FieldId,
+		rootInputId: ChangeAtomId | undefined,
+	): boolean {
+		return isNodeIdInBuiltTree(fieldId.nodeId) && rootInputId === undefined;
 	}
 
 	function shouldSquashAttach(
@@ -167,8 +170,14 @@ export function minimizeModularChangeset(
 		endpoint: FieldId | undefined,
 	): RangeQueryResult<boolean> {
 		const isInDetachedTree = isFieldDetachedInOutput(fieldId);
+
+		// XXX: Instead of checking if the move is to an attached tree,
+		// we should check whether we're dropping the attach, as it could be a move and remove of a build.
 		const isMoveToAttachedTree = endpoint !== undefined && !isFieldDetachedInOutput(endpoint);
-		if (shouldSquashDetach(fieldId) || (isInDetachedTree && !isMoveToAttachedTree)) {
+		if (
+			shouldSquashDetach(fieldId, rootInputId) ||
+			(isInDetachedTree && !isMoveToAttachedTree)
+		) {
 			return { value: true, length: count };
 		}
 
@@ -199,7 +208,7 @@ export function minimizeModularChangeset(
 			inputRootId: ChangeAtomId | undefined,
 			endpoint?: ChangeAtomId,
 		): RangeQueryResult<EditFilterStatus> => {
-			if (!shouldSquashDetach(fieldId)) {
+			if (!shouldSquashDetach(fieldId, inputRootId)) {
 				return { value: EditFilterStatus.Remove, length: count };
 			}
 
