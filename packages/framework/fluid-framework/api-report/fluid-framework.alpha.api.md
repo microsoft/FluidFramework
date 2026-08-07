@@ -713,6 +713,56 @@ export const ForestTypeOptimized: ForestType;
 // @beta
 export const ForestTypeReference: ForestType;
 
+// @alpha
+export namespace FormattedText {
+    export function createSchema<const TUserScope extends string, const FormatSchema extends ImplicitAllowedTypes, const ExtraAtomsSchema extends readonly LazyItem<TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>>[]>(inputSchemaFactory: SchemaFactoryBeta<TUserScope>, formatSchema: FormatSchema, extraAtoms: ExtraAtomsSchema, defaultFormatInsertable: InsertableTreeFieldFromImplicitField<FormatSchema>): FormattedTextSchema<TUserScope, FormatSchema, ExtraAtomsSchema>;
+    // @sealed
+    export interface FormattedAtom<TFormat, TText> {
+        readonly content: TText;
+        format: TFormat;
+    }
+    // @input
+    export interface FormattedAtomInsertable<TFormat, TContent> {
+        // (undocumented)
+        readonly content: TContent;
+        // (undocumented)
+        readonly format: TFormat;
+    }
+    // @sealed
+    export type FormattedTextSchema<TUserScope extends string, FormatSchema extends ImplicitAllowedTypes, ExtraAtomsSchema extends readonly LazyItem<TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>>[]> = Statics<ErasedNode<Members<FormatSchema, ExtraAtomsSchema>, FormattedTextSchemaIdentifier<TUserScope>>, FormatSchema> & ErasedSchemaSubclassable<Members<FormatSchema, ExtraAtomsSchema>, FormattedTextSchemaIdentifier<TUserScope>>;
+    const // @sealed
+    StringTextAtom: StringTextAtomStatics & TreeNodeSchema<"com.fluidframework.text.formatted.StringTextAtom", NodeKind, TextAtom & TreeNode & WithType<"com.fluidframework.text.formatted.StringTextAtom", NodeKind, unknown>, never, false>;
+    export type FormattedTextSchemaIdentifier<TUserScope extends string> = ScopedSchemaName<`com.fluidframework.text.formatted<${TUserScope}>`, "Text">;
+    // @sealed
+    export interface Members<FormatSchema extends ImplicitAllowedTypes, ExtraAtomsSchema extends readonly LazyItem<TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>>[]> extends PlainText.Members {
+        charactersWithFormatting(): readonly FormattedAtom<TreeNodeFromImplicitAllowedTypes<FormatSchema>, TreeNodeFromImplicitAllowedTypes<TextAtomSchemas<ExtraAtomsSchema>>>[];
+        formatRange(startIndex: number | undefined, endIndex: number | undefined, format: Partial<TreeNodeFromImplicitAllowedTypes<FormatSchema>>): void;
+        getString(startIndex: number, endIndex?: number): string;
+        getUniformRun(startIndex: number, endIndex?: number): number;
+        // @override
+        insertAt(index: number, additionalCharacters: string | Iterable<TreeNodeFromImplicitAllowedTypes<TextAtomSchemas<ExtraAtomsSchema>>>, format?: InsertableTreeFieldFromImplicitField<FormatSchema>): void;
+        insertWithFormattingAt(index: number, additionalCharacters: Iterable<FormattedAtomInsertable<InsertableTreeNodeFromImplicitAllowedTypes<FormatSchema>, InsertableTreeNodeFromImplicitAllowedTypes<TextAtomSchemas<ExtraAtomsSchema>>>>): void;
+        onContentChanged(callback: (ops: readonly PlainText.TextOp[] | undefined) => void): () => void;
+        reformat(startIndex?: number | undefined, endIndex?: number | undefined, format?: InsertableTreeFieldFromImplicitField<FormatSchema>): void;
+    }
+    // @sealed
+    export interface Statics<TTree, FormatSchema extends ImplicitAllowedTypes> {
+        fromString(value: string, format?: InsertableTreeFieldFromImplicitField<FormatSchema>): TTree;
+    }
+    // @sealed
+    export type StringTextAtom = ErasedNode<TextAtom, "com.fluidframework.text.formatted.StringTextAtom">;
+    // @sealed
+    export interface StringTextAtomStatics {
+        fromCharacter(value: string): StringTextAtom;
+        fromString(value: string): StringTextAtom[];
+    }
+    export interface TextAtom {
+        readonly content: string;
+    }
+    // @sealed
+    export type TextAtomSchemas<ExtraAtomsSchema extends readonly LazyItem<TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>>[]> = readonly [typeof StringTextAtom, ...ExtraAtomsSchema];
+}
+
 // @alpha @sealed
 export interface FormatValidator extends ErasedType<"FormatValidator"> {
 }
@@ -1771,9 +1821,9 @@ export const SchemaFactory_base: SchemaStatics & (new () => SchemaStatics);
 export class SchemaFactoryAlpha<out TScope extends string | undefined = string | undefined, TName extends number | string = string> extends SchemaFactoryBeta<TScope, TName> {
     arrayAlpha<const Name extends TName, const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>): ArrayNodeCustomizableSchemaAlpha<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata>;
     arrayRecursive<const Name extends TName, const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>): ArrayNodeCustomizableSchemaUnsafe<ScopedSchemaName<TScope, Name>, T, TCustomMetadata>;
-    static readonly identifier: <const TCustomMetadata = unknown>(props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchemaAlpha<FieldKind.Identifier, LeafSchema<"string", string> & SimpleLeafNodeSchema<SchemaType>, TCustomMetadata, FieldPropsAlpha<TCustomMetadata>>;
-    static readonly leaves: readonly [LeafSchema<"string", string> & SimpleLeafNodeSchema<SchemaType>, LeafSchema<"number", number> & SimpleLeafNodeSchema<SchemaType>, LeafSchema<"boolean", boolean> & SimpleLeafNodeSchema<SchemaType>, LeafSchema<"null", null> & SimpleLeafNodeSchema<SchemaType>, LeafSchema<"handle", IFluidHandle<unknown>> & SimpleLeafNodeSchema<SchemaType>];
-    readonly leaves: readonly [LeafSchema<"string", string> & SimpleLeafNodeSchema<SchemaType>, LeafSchema<"number", number> & SimpleLeafNodeSchema<SchemaType>, LeafSchema<"boolean", boolean> & SimpleLeafNodeSchema<SchemaType>, LeafSchema<"null", null> & SimpleLeafNodeSchema<SchemaType>, LeafSchema<"handle", IFluidHandle<unknown>> & SimpleLeafNodeSchema<SchemaType>];
+    static readonly identifier: <const TCustomMetadata = unknown>(props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchemaAlpha<FieldKind.Identifier, StringSchema, TCustomMetadata, FieldPropsAlpha<TCustomMetadata>>;
+    static readonly leaves: readonly [StringSchema, LeafSchema<"number", number> & SimpleLeafNodeSchema<SchemaType>, LeafSchema<"boolean", boolean> & SimpleLeafNodeSchema<SchemaType>, LeafSchema<"null", null> & SimpleLeafNodeSchema<SchemaType>, LeafSchema<"handle", IFluidHandle<unknown>> & SimpleLeafNodeSchema<SchemaType>];
+    readonly leaves: readonly [StringSchema, LeafSchema<"number", number> & SimpleLeafNodeSchema<SchemaType>, LeafSchema<"boolean", boolean> & SimpleLeafNodeSchema<SchemaType>, LeafSchema<"null", null> & SimpleLeafNodeSchema<SchemaType>, LeafSchema<"handle", IFluidHandle<unknown>> & SimpleLeafNodeSchema<SchemaType>];
     mapAlpha<Name extends TName, const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>): MapNodeCustomizableSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata>;
     mapRecursive<Name extends TName, const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>): MapNodeCustomizableSchemaUnsafe<ScopedSchemaName<TScope, Name>, T, TCustomMetadata>;
     objectAlpha<const Name extends TName, const T extends RestrictiveStringRecord<ImplicitFieldSchema>, const TCustomMetadata = unknown>(name: Name, fields: T, options?: ObjectSchemaOptionsAlpha<TCustomMetadata>): ObjectNodeSchemaWorkaround<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata>;
@@ -2073,6 +2123,9 @@ export interface StagedSchemaUpgradePolicyFactory {
     readonly permissive: StagedSchemaUpgradePolicy;
     readonly restrictive: StagedSchemaUpgradePolicy;
 }
+
+// @alpha @sealed @system
+export type StringSchema = LeafSchema<"string", string> & SimpleLeafNodeSchema;
 
 // @beta @system
 export namespace System_TableSchema {

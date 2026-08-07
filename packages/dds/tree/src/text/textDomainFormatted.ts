@@ -115,14 +115,17 @@ export class StringTextAtomNode
 
 /**
  * A collection of text related types, schema and utilities for working with text beyond the basic {@link SchemaStatics.string}.
+ *
  * @remarks
  * This is generic over formatting an embedded object/atom types.
- * See {@link FormattedTextDefault} for a default parameterization.
+ *
  * @privateRemarks
+ * See {@link FormattedTextDefault} for an example parameterization.
+ *
  * TODO:
  * - Add more comprehensive tests for generic parameterizations other than default.
  * - Sort out API around overwriting subsets of formatting information.
- * @internal
+ * @alpha
  */
 export namespace FormattedText {
 	/**
@@ -139,9 +142,10 @@ export namespace FormattedText {
 	 * @param defaultFormatInsertable - The formatting applied to text inserted via non-formatted APIs
 	 * (for example {@link FormattedText.Members.insertAt} and {@link FormattedText.Statics.fromString} when no explicit format is provided).
 	 * @returns The schema for the formatted text node, whose nodes implement {@link FormattedText.Members} and whose statics implement {@link FormattedText.Statics}.
-	 * @remarks
-	 * See {@link FormattedTextDefault} for a default parameterization of this factory.
+	 *
 	 * @privateRemarks
+	 * See {@link FormattedTextDefault} for an example parameterization of this factory.
+	 *
 	 * TODO: The choice to always include the built-in {@link FormattedText.(StringTextAtom:variable)} is a design decision that should be re-evaluated before stabilizing.
 	 */
 	export function createSchema<
@@ -629,7 +633,7 @@ export namespace FormattedText {
 	 * This is implemented {@link StringAtom}, but we avoid leaking the fact this is a TreeNode in the API surface to
 	 * preserve more future flexibility.
 	 * @sealed
-	 * @internal
+	 * @alpha
 	 */
 	export interface FormattedAtom<TFormat, TText> {
 		/**
@@ -649,7 +653,7 @@ export namespace FormattedText {
 	 * @remarks
 	 * Additional kinds of text atoms (also known as embedded objects) which can occur inside a string can implement this.
 	 * The schema for them can then be provided to {@link FormattedText.createSchema}.
-	 * @internal
+	 * @alpha
 	 */
 	export interface TextAtom {
 		/**
@@ -666,7 +670,7 @@ export namespace FormattedText {
 	 * Other strings should work, but our intention is to provide no type-safe API which can produce them, so an application can take their lack of existence as an invariant if they want.
 	 * It is still however possible to produce them, like export/import round trips with editing in the middle of the process, or collaboration with an equivalent schema which doesn't enforce this invariant.
 	 * @sealed
-	 * @internal
+	 * @alpha
 	 */
 	export interface StringTextAtomStatics {
 		/**
@@ -684,7 +688,7 @@ export namespace FormattedText {
 	/**
 	 * Schema for a {@link FormattedText.(StringTextAtom:variable)} node.
 	 * @sealed
-	 * @internal
+	 * @alpha
 	 */
 	export const StringTextAtom = eraseSchemaDetails<TextAtom, StringTextAtomStatics>()(
 		StringTextAtomNode,
@@ -693,7 +697,7 @@ export namespace FormattedText {
 	/**
 	 * Node for the {@link FormattedText.(StringTextAtom:variable)} schema.
 	 * @sealed
-	 * @internal
+	 * @alpha
 	 */
 	export type StringTextAtom = ErasedNode<
 		TextAtom,
@@ -703,7 +707,7 @@ export namespace FormattedText {
 	/**
 	 * Statics for formatted text nodes.
 	 * @sealed
-	 * @internal
+	 * @alpha
 	 */
 	export interface Statics<TTree, FormatSchema extends ImplicitAllowedTypes> {
 		/**
@@ -732,7 +736,7 @@ export namespace FormattedText {
 	 * @see {@link FormattedText.Statics.fromString} for construction.
 	 * @see {@link FormattedText.createSchema} for creating schemas whose nodes implement this.
 	 * @sealed
-	 * @internal
+	 * @alpha
 	 */
 	export interface Members<
 		FormatSchema extends ImplicitAllowedTypes,
@@ -879,7 +883,7 @@ export namespace FormattedText {
 	/**
 	 * Insertable shape for a formatted text atom used by {@link FormattedText.Members.insertWithFormattingAt}.
 	 * @input
-	 * @internal
+	 * @alpha
 	 */
 	export interface FormattedAtomInsertable<TFormat, TContent> {
 		readonly content: TContent;
@@ -890,7 +894,7 @@ export namespace FormattedText {
 	 * Schema identifier for the a generic formatted text schema.
 	 * @privateRemarks
 	 * Eventually this should probably be given a better name and/or made a system type in a system namespace.
-	 * @internal
+	 * @alpha
 	 */
 	export type FormattedTextSchemaIdentifier<TUserScope extends string> = ScopedSchemaName<
 		`com.fluidframework.text.formatted<${TUserScope}>`,
@@ -903,7 +907,7 @@ export namespace FormattedText {
 	 * This is just schema for the text atom {@link AllowedTypes},
 	 * and does not include the actual formatting (which is higher up in the tree).
 	 * @sealed
-	 * @internal
+	 * @alpha
 	 */
 	export type TextAtomSchemas<
 		ExtraAtomsSchema extends readonly LazyItem<
@@ -914,7 +918,7 @@ export namespace FormattedText {
 	/**
 	 * A generic type for a formatted text schema.
 	 * @sealed
-	 * @internal
+	 * @alpha
 	 */
 	export type FormattedTextSchema<
 		TUserScope extends string,

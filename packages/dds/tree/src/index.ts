@@ -302,6 +302,7 @@ export {
 	type HandleConverter,
 	allowUnused,
 	type LeafSchema,
+	type StringSchema,
 	type ArrayNodeCustomizableSchema,
 	type ArrayNodeCustomizableSchemaAlpha,
 	type ArrayNodePojoEmulationSchema,
