@@ -9,11 +9,7 @@ import type { JsonString } from "@fluidframework/core-interfaces/internal";
 import { JsonStringify } from "@fluidframework/core-interfaces/internal";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
-import type {
-	ImplicitFieldSchema,
-	TreeArrayNode,
-	ValidateRecursiveSchema,
-} from "@fluidframework/tree";
+import type { ImplicitFieldSchema, ValidateRecursiveSchema } from "@fluidframework/tree";
 import type {
 	InsertableField,
 	JsonCompatibleReadOnly,
@@ -25,7 +21,13 @@ import { SchematizingSimpleTreeView, SharedTreeChange } from "../../shared-tree/
 import { allEndpoints, nodeFlowCensusFromDelta, NodeFlowEndpoint } from "../getDeltaCensus.js";
 import { TestTreeProviderLite, validateViewConsistency } from "../utils.js";
 import { makeAnonChange } from "../../core/index.js";
-import { hasSingle } from "../../util/index.js";
+import {
+	compareStrings,
+	createTupleComparator,
+	hasSingle,
+	newTupleBTree,
+	type TupleBTree,
+} from "../../util/index.js";
 import { intoDelta } from "../../feature-libraries/index.js";
 
 /**
@@ -1404,279 +1406,494 @@ const doubleMoveScenarios = {
 
 // #region Generated edit trees scenarios
 
+class BoxRecord extends sf.object("BoxRecord", {
+	origin: sf.string,
+	destiny: sf.string,
+	required: Box,
+	optional: sf.optional(Box),
+	sequence: BoxArray,
+}) {}
+class Records extends sf.object("Records", {
+	attachedPrior: sf.optional(BoxRecord),
+	detachingPrior: sf.optional(BoxRecord),
+	attachingPrior: sf.optional(BoxRecord),
+	attachingBuilt: sf.optional(BoxRecord),
+	detachedPrior: sf.optional(BoxRecord),
+	detachedBuilt: sf.optional(BoxRecord),
+}) {}
+type EditScenario = TransactionScenario<typeof Records> & {
+	unminimizedBuildExpectations: BuildStatistics;
+};
+
+type EditTreeScenariosKey = [
+	source: NodeFlowEndpoint,
+	destination: NodeFlowEndpoint,
+	field: string,
+];
+type EditTreeScenarios = TupleBTree<EditTreeScenariosKey, EditScenario>;
+const compareKeys = createTupleComparator<EditTreeScenariosKey>([
+	compareStrings,
+	compareStrings,
+	compareStrings,
+]);
+
+const editLocations = [
+	NodeFlowEndpoint.UnderAttachedPriorTree,
+	NodeFlowEndpoint.UnderDetachingPriorTree,
+	NodeFlowEndpoint.UnderDetachedPriorTree,
+	NodeFlowEndpoint.UnderDetachedBuiltTree,
+	NodeFlowEndpoint.UnderAttachingPriorTree,
+	NodeFlowEndpoint.UnderAttachingBuiltTree,
+] as const;
+type EditTreeLocation = (typeof editLocations)[number];
+
 /**
  * Generates the combinatorial set of scenarios where a Pallet is edited internally.
  */
-function generateEditedTreeScenarios(): Record<string, PalletArrayScenario> {
-	const scenarios: Record<string, PalletArrayScenario> = {};
-	const initialContentGenerator = (): Pallet[] => {
-		return [
-			new Pallet({ id: "detachingPallet⌚☠️", boxes: [new Box({})] }),
-			new Pallet({ id: "attachedPallet⌚❤️", boxes: [new Box({})] }),
-		];
+function generateEditedTreeScenarios(): EditTreeScenarios {
+	const scenarios: EditTreeScenarios = newTupleBTree(compareKeys);
+	const initialContentGenerator = (): Records => {
+		return new Records({
+			attachedPrior: new BoxRecord({
+				origin: "⌚",
+				destiny: "❤️",
+				required: new Box({}),
+				optional: new Box({}),
+				sequence: [new Box({})],
+			}),
+			detachingPrior: new BoxRecord({
+				origin: "⌚",
+				destiny: "☠️",
+				required: new Box({}),
+				optional: new Box({}),
+				sequence: [new Box({})],
+			}),
+		});
 	};
-	function applyIntroAttachEdits(root: TreeArrayNode<typeof Pallet>) {
-		root.insertAtEnd(
-			new Pallet({
-				id: "attachingBuiltPallet🐣❤️",
-				boxes: [new Box({})],
-			}),
-			new Pallet({
-				id: "transientBuiltPallet🐣☠️",
-				boxes: [new Box({})],
-			}),
-		);
+	function applyIntroAttachEdits(root: Records) {
+		root.attachingBuilt = new BoxRecord({
+			origin: "🐣",
+			destiny: "❤️",
+			required: new Box({}),
+			optional: new Box({}),
+			sequence: [new Box({})],
+		});
+		root.detachedBuilt = new BoxRecord({
+			origin: "🐣",
+			destiny: "☠️",
+			required: new Box({}),
+			optional: new Box({}),
+			sequence: [new Box({})],
+		});
 	}
-	function applyOutroDetachEdits(root: TreeArrayNode<typeof Pallet>) {
-		// Remove the detaching Pallet
-		root.removeAt(0);
-		// Remove the built Pallet
-		root.removeAt(root.length - 1);
+	function applyOutroDetachEdits(root: Records) {
+		delete root.detachedBuilt;
+		delete root.detachedPrior;
+		delete root.detachingPrior;
 	}
-	const getPallet = (
-		root: TreeArrayNode<typeof Pallet>,
+	function getMarkers(start: NodeFlowEndpoint, end: NodeFlowEndpoint): string {
+		const origin = start.includes("Built") ? "🐣" : "⌚";
+		const destiny = end.includes("Attach") ? "❤️" : "☠️";
+		return origin + destiny;
+	}
+	function tryGetRecord(
+		root: Records,
 		locationOfEditedTree: NodeFlowEndpoint,
-	): Pallet => {
+	): BoxRecord | undefined {
 		switch (locationOfEditedTree) {
-			case NodeFlowEndpoint.DetachedPriorRoot:
-			case NodeFlowEndpoint.UnderAttachingPriorTree:
+			case NodeFlowEndpoint.UnderAttachingPriorTree: {
+				return root.attachingPrior;
+			}
 			case NodeFlowEndpoint.UnderDetachedPriorTree: {
-				fail(`TODO: add handling for editing ${locationOfEditedTree} location`);
+				return root.detachedPrior;
 			}
 			case NodeFlowEndpoint.UnderDetachingPriorTree: {
-				return root[0];
+				return root.detachingPrior;
 			}
 			case NodeFlowEndpoint.UnderAttachedPriorTree: {
-				return root[1];
+				return root.attachedPrior;
 			}
 			case NodeFlowEndpoint.UnderAttachingBuiltTree: {
-				return root[2];
+				return root.attachingBuilt;
+			}
+			case NodeFlowEndpoint.UnderDetachedBuiltTree: {
+				return root.detachedBuilt;
 			}
 			case NodeFlowEndpoint.DetachedBuiltRoot:
-			case NodeFlowEndpoint.UnderTransientBuiltTree: {
-				return root[3];
+			case NodeFlowEndpoint.DetachedPriorRoot: {
+				fail(`No record is present at ${locationOfEditedTree}`);
 			}
 			default: {
 				unreachableCase(locationOfEditedTree);
 			}
 		}
-	};
-	const editLocations = [
-		NodeFlowEndpoint.UnderAttachedPriorTree,
-		NodeFlowEndpoint.UnderDetachingPriorTree,
-		NodeFlowEndpoint.UnderDetachedPriorTree,
-		NodeFlowEndpoint.UnderTransientBuiltTree,
-		NodeFlowEndpoint.UnderAttachingPriorTree,
-		NodeFlowEndpoint.UnderAttachingBuiltTree,
-	] as const;
+	}
+	function getRecord(root: Records, locationOfEditedTree: NodeFlowEndpoint): BoxRecord {
+		const pallet = tryGetRecord(root, locationOfEditedTree);
+		assert.ok(pallet, `Expected pallet to be present at ${locationOfEditedTree}`);
+		return pallet;
+	}
 
-	for (const fieldKind of ["sequence", "optional", "required"] as const) {
-		for (const editLocation of editLocations) {
+	for (const sourceEndpoint of allEndpoints) {
+		for (const destinationEndpoint of allEndpoints) {
 			if (
-				editLocation === NodeFlowEndpoint.UnderAttachingPriorTree ||
-				editLocation === NodeFlowEndpoint.UnderDetachedPriorTree
+				(sourceEndpoint === NodeFlowEndpoint.DetachedPriorRoot ||
+					sourceEndpoint === NodeFlowEndpoint.DetachedBuiltRoot) &&
+				(destinationEndpoint === NodeFlowEndpoint.DetachedPriorRoot ||
+					destinationEndpoint === NodeFlowEndpoint.DetachedBuiltRoot)
 			) {
-				// TODO: cover these cases once editing of prior detached tree is supported.
+				// This either is a no-op or is an invalid flow
 				continue;
 			}
 
-			for (const detachDestination of allEndpoints) {
-				if (
-					detachDestination === NodeFlowEndpoint.UnderAttachingPriorTree ||
-					detachDestination === NodeFlowEndpoint.UnderDetachedPriorTree
-				) {
-					// TODO: cover these cases once editing of prior detached tree is supported.
-					continue;
-				}
-
-				if (fieldKind === "optional" && detachDestination.startsWith("Under")) {
-					// TODO: cover these cases once attaching of tree detached from optional field is supported.
-					continue;
-				}
-
-				if (fieldKind === "required") {
-					// Detaching from a required field requires attaching in the field at the same time.
-					// Such cases are handled below.
-					continue;
-				}
-
-				if (
-					(editLocation === NodeFlowEndpoint.UnderAttachedPriorTree ||
-						editLocation === NodeFlowEndpoint.UnderDetachingPriorTree) &&
-					detachDestination === NodeFlowEndpoint.DetachedBuiltRoot
-				) {
-					// This case makes no sense: a tree that starts out under an existing tree cannot end up as a built root.
-					continue;
-				}
-				if (
-					(editLocation === NodeFlowEndpoint.UnderAttachingBuiltTree ||
-						editLocation === NodeFlowEndpoint.UnderTransientBuiltTree) &&
-					detachDestination === NodeFlowEndpoint.DetachedPriorRoot
-				) {
-					// This case makes no sense: a tree that starts out under a built tree cannot end up as a built root.
-					continue;
-				}
-
-				const scenarioName = `detach from ${fieldKind} field ${editLocation} and send detached node to ${detachDestination}`;
-				scenarios[scenarioName] = {
-					schema: PalletArray,
-					initialContent: initialContentGenerator,
-					apply: (root) => {
-						applyIntroAttachEdits(root);
-						const editedPallet = getPallet(root, editLocation);
-						switch (fieldKind) {
-							case "sequence": {
-								switch (detachDestination) {
-									case NodeFlowEndpoint.DetachedPriorRoot:
-									case NodeFlowEndpoint.DetachedBuiltRoot: {
-										editedPallet.boxes.removeAt(0);
-										break;
-									}
-									case NodeFlowEndpoint.UnderAttachedPriorTree:
-									case NodeFlowEndpoint.UnderDetachingPriorTree:
-									case NodeFlowEndpoint.UnderAttachingBuiltTree:
-									case NodeFlowEndpoint.UnderTransientBuiltTree: {
-										getPallet(root, detachDestination).boxes.moveToEnd(0, editedPallet.boxes);
-										break;
-									}
-									default: {
-										unreachableCase(detachDestination);
-									}
-								}
-								break;
-							}
-							case "optional": {
-								switch (detachDestination) {
-									case NodeFlowEndpoint.DetachedPriorRoot:
-									case NodeFlowEndpoint.DetachedBuiltRoot: {
-										delete editedPallet.boxes[0].value;
-										break;
-									}
-									case NodeFlowEndpoint.UnderAttachedPriorTree:
-									case NodeFlowEndpoint.UnderDetachingPriorTree:
-									case NodeFlowEndpoint.UnderAttachingBuiltTree:
-									case NodeFlowEndpoint.UnderTransientBuiltTree: {
-										fail(`TODO: add handling for destination ${detachDestination}`);
-									}
-									default: {
-										unreachableCase(detachDestination);
-									}
-								}
-								break;
-							}
-							default: {
-								unreachableCase(fieldKind);
-							}
-						}
-						applyOutroDetachEdits(root);
-					},
-					unminimizedBuildExpectations: {
-						builds: 1,
-						tops: 2,
-					},
-					expectSurvivingMarker: true,
-				} as const satisfies PalletArrayScenario;
+			if (
+				sourceEndpoint === NodeFlowEndpoint.DetachedPriorRoot ||
+				sourceEndpoint === NodeFlowEndpoint.UnderAttachingPriorTree ||
+				sourceEndpoint === NodeFlowEndpoint.UnderDetachedPriorTree ||
+				destinationEndpoint === NodeFlowEndpoint.UnderAttachingPriorTree ||
+				destinationEndpoint === NodeFlowEndpoint.UnderDetachedPriorTree
+			) {
+				// TODO: cover these cases once editing and attaching of prior detached tree is supported.
+				continue;
 			}
 
-			for (const attachSource of allEndpoints) {
-				if (
-					attachSource === NodeFlowEndpoint.DetachedPriorRoot ||
-					attachSource === NodeFlowEndpoint.UnderAttachingPriorTree ||
-					attachSource === NodeFlowEndpoint.UnderDetachedPriorTree
-				) {
-					// TODO: cover these cases once attaching of prior detached tree is supported.
-					continue;
-				}
+			const buildsForSource = sourceEndpoint === NodeFlowEndpoint.DetachedBuiltRoot ? 1 : 0;
 
-				if (
-					(fieldKind === "optional" || fieldKind === "required") &&
-					attachSource !== NodeFlowEndpoint.DetachedBuiltRoot
-				) {
-					// TODO: cover these cases once attaching of detached tree is supported.
-					continue;
-				}
-
-				const scenarioName = `take node ${attachSource} and attach it in ${fieldKind} field ${editLocation}`;
-				const extraBuilds = attachSource === NodeFlowEndpoint.DetachedBuiltRoot ? 1 : 0;
-				scenarios[scenarioName] = {
-					schema: PalletArray,
+			// Sequence field
+			{
+				const scenario = {
+					schema: Records,
 					initialContent: initialContentGenerator,
 					apply: (root) => {
 						applyIntroAttachEdits(root);
-						const editedPallet = getPallet(root, editLocation);
-						const palletDestinyMarker = editedPallet.id.at(-1);
-						const newValue = `🐣${palletDestinyMarker}`;
-						switch (fieldKind) {
-							case "sequence": {
-								switch (attachSource) {
-									case NodeFlowEndpoint.DetachedBuiltRoot: {
-										editedPallet.boxes.insertAtEnd(new Box({ value: newValue }));
-										break;
-									}
-									case NodeFlowEndpoint.UnderAttachedPriorTree:
-									case NodeFlowEndpoint.UnderDetachingPriorTree:
-									case NodeFlowEndpoint.UnderAttachingBuiltTree:
-									case NodeFlowEndpoint.UnderTransientBuiltTree: {
-										editedPallet.boxes.moveToEnd(0, getPallet(root, attachSource).boxes);
-										break;
-									}
-									default: {
-										unreachableCase(attachSource);
-									}
+						if (sourceEndpoint.includes("Root") || destinationEndpoint.includes("Root")) {
+							if (sourceEndpoint.includes("Root")) {
+								let toInsert: Box;
+								if (sourceEndpoint.includes("Prior")) {
+									fail("TODO: add handling for detached root source");
+								} else {
+									toInsert = new Box({
+										value: getMarkers(sourceEndpoint, destinationEndpoint),
+									});
 								}
-								break;
+								const destination = getRecord(root, destinationEndpoint);
+								destination.sequence.insertAtEnd(toInsert);
 							}
-							case "optional": {
-								switch (attachSource) {
-									case NodeFlowEndpoint.DetachedBuiltRoot: {
-										editedPallet.boxes[0].value = newValue;
-										break;
-									}
-									case NodeFlowEndpoint.UnderAttachedPriorTree:
-									case NodeFlowEndpoint.UnderDetachingPriorTree:
-									case NodeFlowEndpoint.UnderAttachingBuiltTree:
-									case NodeFlowEndpoint.UnderTransientBuiltTree: {
-										fail(`TODO: add handling for editing location ${editLocation}`);
-									}
-									default: {
-										unreachableCase(attachSource);
-									}
-								}
-								break;
+							if (destinationEndpoint.includes("Root")) {
+								const source = getRecord(root, sourceEndpoint);
+								source.sequence.removeAt(0);
 							}
-							case "required": {
-								switch (attachSource) {
-									case NodeFlowEndpoint.DetachedBuiltRoot: {
-										editedPallet.id = newValue;
-										break;
-									}
-									case NodeFlowEndpoint.UnderAttachedPriorTree:
-									case NodeFlowEndpoint.UnderDetachingPriorTree:
-									case NodeFlowEndpoint.UnderAttachingBuiltTree:
-									case NodeFlowEndpoint.UnderTransientBuiltTree: {
-										fail(`TODO: add handling for editing location ${editLocation}`);
-									}
-									default: {
-										unreachableCase(attachSource);
-									}
-								}
-								break;
-							}
-							default: {
-								unreachableCase(fieldKind);
-							}
+						} else {
+							const source = getRecord(root, sourceEndpoint);
+							const destination = getRecord(root, destinationEndpoint);
+							destination.sequence.moveToEnd(0, source.sequence);
 						}
 						applyOutroDetachEdits(root);
 					},
 					unminimizedBuildExpectations: {
-						builds: 1 + extraBuilds,
-						tops: 2 + extraBuilds,
+						builds: 1 + buildsForSource,
+						tops: 2 + buildsForSource,
 					},
 					expectSurvivingMarker: true,
-				} as const satisfies PalletArrayScenario;
+				} as const satisfies EditScenario;
+				scenarios.set([sourceEndpoint, destinationEndpoint, "sequence"], scenario);
+			}
+
+			// Optional field
+			{
+				const scenario = {
+					schema: Records,
+					initialContent: initialContentGenerator,
+					apply: (root) => {
+						applyIntroAttachEdits(root);
+						if (sourceEndpoint.includes("Root") || destinationEndpoint.includes("Root")) {
+							if (sourceEndpoint.includes("Root")) {
+								let toInsert: Box;
+								if (sourceEndpoint.includes("Prior")) {
+									fail("TODO: add handling for detached root source");
+								} else {
+									toInsert = new Box({
+										value: getMarkers(sourceEndpoint, destinationEndpoint),
+									});
+								}
+								const destination = getRecord(root, destinationEndpoint);
+								destination.optional = toInsert;
+							}
+							if (destinationEndpoint.includes("Root")) {
+								const source = getRecord(root, sourceEndpoint);
+								delete source.optional;
+							}
+						} else {
+							const source = getRecord(root, sourceEndpoint);
+							const destination = getRecord(root, destinationEndpoint);
+							const movedBox = source.optional;
+							delete source.optional;
+							destination.optional = movedBox;
+						}
+						applyOutroDetachEdits(root);
+					},
+					unminimizedBuildExpectations: {
+						builds: 1 + buildsForSource,
+						tops: 2 + buildsForSource,
+					},
+					expectSurvivingMarker: true,
+				} as const satisfies EditScenario;
+				scenarios.set([sourceEndpoint, destinationEndpoint, "optional"], scenario);
+			}
+
+			// Required field
+			{
+				const buildsFoReplace = destinationEndpoint.includes("Root") ? 1 : 0;
+				const scenario = {
+					schema: Records,
+					initialContent: initialContentGenerator,
+					apply: (root) => {
+						applyIntroAttachEdits(root);
+						if (sourceEndpoint.includes("Root") || destinationEndpoint.includes("Root")) {
+							if (sourceEndpoint.includes("Root")) {
+								let toInsert: Box;
+								if (sourceEndpoint.includes("Prior")) {
+									fail("TODO: add handling for detached root source");
+								} else {
+									toInsert = new Box({
+										value: getMarkers(sourceEndpoint, destinationEndpoint),
+									});
+								}
+								const destination = getRecord(root, destinationEndpoint);
+								destination.required = toInsert;
+							}
+							if (destinationEndpoint.includes("Root")) {
+								const source = getRecord(root, sourceEndpoint);
+								const value = `🐣${source.destiny}`;
+								source.required = new Box({ value });
+							}
+						} else {
+							fail(
+								"We do not support moving nodes between fields when either field is required. This scenario should never be generated.",
+							);
+						}
+						applyOutroDetachEdits(root);
+					},
+					unminimizedBuildExpectations: {
+						builds: 2 + buildsForSource + buildsFoReplace,
+						tops: 2 + buildsForSource + buildsFoReplace,
+					},
+					expectSurvivingMarker: true,
+				} as const satisfies EditScenario;
+				scenarios.set([sourceEndpoint, destinationEndpoint, "required"], scenario);
 			}
 		}
 	}
+
+	// for (const fieldKind of ["sequence", "optional", "required"] as const) {
+	// 	for (const editLocation of editLocations) {
+	// 		if (
+	// 			editLocation === NodeFlowEndpoint.UnderAttachingPriorTree ||
+	// 			editLocation === NodeFlowEndpoint.UnderDetachedPriorTree
+	// 		) {
+	// 			// TODO: cover these cases once editing of prior detached tree is supported.
+	// 			continue;
+	// 		}
+
+	// 		for (const detachDestination of allEndpoints) {
+	// 			if (
+	// 				detachDestination === NodeFlowEndpoint.UnderAttachingPriorTree ||
+	// 				detachDestination === NodeFlowEndpoint.UnderDetachedPriorTree
+	// 			) {
+	// 				// TODO: cover these cases once editing of prior detached tree is supported.
+	// 				continue;
+	// 			}
+
+	// 			if (fieldKind === "optional" && detachDestination.startsWith("Under")) {
+	// 				// TODO: cover these cases once attaching of tree detached from optional field is supported.
+	// 				continue;
+	// 			}
+
+	// 			if (fieldKind === "required") {
+	// 				// Detaching from a required field requires attaching in the field at the same time.
+	// 				// Such cases are handled below.
+	// 				continue;
+	// 			}
+
+	// 			if (
+	// 				(editLocation === NodeFlowEndpoint.UnderAttachedPriorTree ||
+	// 					editLocation === NodeFlowEndpoint.UnderDetachingPriorTree) &&
+	// 				detachDestination === NodeFlowEndpoint.DetachedBuiltRoot
+	// 			) {
+	// 				// This case makes no sense: a tree that starts out under an existing tree cannot end up as a built root.
+	// 				continue;
+	// 			}
+	// 			if (
+	// 				(editLocation === NodeFlowEndpoint.UnderAttachingBuiltTree ||
+	// 					editLocation === NodeFlowEndpoint.UnderDetachedBuiltTree) &&
+	// 				detachDestination === NodeFlowEndpoint.DetachedPriorRoot
+	// 			) {
+	// 				// This case makes no sense: a tree that starts out under a built tree cannot end up as a built root.
+	// 				continue;
+	// 			}
+
+	// 			const scenarioName = `detach from ${fieldKind} field ${editLocation} and send detached node to ${detachDestination}`;
+	// 			const scenario = {
+	// 				schema: PalletArray,
+	// 				initialContent: initialContentGenerator,
+	// 				apply: (root) => {
+	// 					applyIntroAttachEdits(root);
+	// 					const editedPallet = getRecord(root, editLocation);
+	// 					switch (fieldKind) {
+	// 						case "sequence": {
+	// 							switch (detachDestination) {
+	// 								case NodeFlowEndpoint.DetachedPriorRoot:
+	// 								case NodeFlowEndpoint.DetachedBuiltRoot: {
+	// 									editedPallet.boxes.removeAt(0);
+	// 									break;
+	// 								}
+	// 								case NodeFlowEndpoint.UnderAttachedPriorTree:
+	// 								case NodeFlowEndpoint.UnderDetachingPriorTree:
+	// 								case NodeFlowEndpoint.UnderAttachingBuiltTree:
+	// 								case NodeFlowEndpoint.UnderDetachedBuiltTree: {
+	// 									getRecord(root, detachDestination).boxes.moveToEnd(0, editedPallet.boxes);
+	// 									break;
+	// 								}
+	// 								default: {
+	// 									unreachableCase(detachDestination);
+	// 								}
+	// 							}
+	// 							break;
+	// 						}
+	// 						case "optional": {
+	// 							switch (detachDestination) {
+	// 								case NodeFlowEndpoint.DetachedPriorRoot:
+	// 								case NodeFlowEndpoint.DetachedBuiltRoot: {
+	// 									delete editedPallet.boxes[0].value;
+	// 									break;
+	// 								}
+	// 								case NodeFlowEndpoint.UnderAttachedPriorTree:
+	// 								case NodeFlowEndpoint.UnderDetachingPriorTree:
+	// 								case NodeFlowEndpoint.UnderAttachingBuiltTree:
+	// 								case NodeFlowEndpoint.UnderDetachedBuiltTree: {
+	// 									fail(`TODO: add handling for destination ${detachDestination}`);
+	// 								}
+	// 								default: {
+	// 									unreachableCase(detachDestination);
+	// 								}
+	// 							}
+	// 							break;
+	// 						}
+	// 						default: {
+	// 							unreachableCase(fieldKind);
+	// 						}
+	// 					}
+	// 					applyOutroDetachEdits(root);
+	// 				},
+	// 				unminimizedBuildExpectations: {
+	// 					builds: 1,
+	// 					tops: 2,
+	// 				},
+	// 				expectSurvivingMarker: true,
+	// 			} as const satisfies PalletArrayScenario;
+	// 			scenarios.set(["detach", editLocation, detachDestination, fieldKind], scenario);
+	// 		}
+
+	// 		for (const attachSource of allEndpoints) {
+	// 			if (
+	// 				attachSource === NodeFlowEndpoint.DetachedPriorRoot ||
+	// 				attachSource === NodeFlowEndpoint.UnderAttachingPriorTree ||
+	// 				attachSource === NodeFlowEndpoint.UnderDetachedPriorTree
+	// 			) {
+	// 				// TODO: cover these cases once attaching of prior detached tree is supported.
+	// 				continue;
+	// 			}
+
+	// 			if (
+	// 				(fieldKind === "optional" || fieldKind === "required") &&
+	// 				attachSource !== NodeFlowEndpoint.DetachedBuiltRoot
+	// 			) {
+	// 				// TODO: cover these cases once attaching of detached tree is supported.
+	// 				continue;
+	// 			}
+
+	// 			const scenarioName = `take node ${attachSource} and attach it in ${fieldKind} field ${editLocation}`;
+	// 			const extraBuilds = attachSource === NodeFlowEndpoint.DetachedBuiltRoot ? 1 : 0;
+	// 			const scenario = {
+	// 				schema: PalletArray,
+	// 				initialContent: initialContentGenerator,
+	// 				apply: (root) => {
+	// 					applyIntroAttachEdits(root);
+	// 					const editedPallet = getRecord(root, editLocation);
+	// 					const palletDestinyMarker = editedPallet.id.at(-1);
+	// 					const newValue = `🐣${palletDestinyMarker}`;
+	// 					switch (fieldKind) {
+	// 						case "sequence": {
+	// 							switch (attachSource) {
+	// 								case NodeFlowEndpoint.DetachedBuiltRoot: {
+	// 									editedPallet.boxes.insertAtEnd(new Box({ value: newValue }));
+	// 									break;
+	// 								}
+	// 								case NodeFlowEndpoint.UnderAttachedPriorTree:
+	// 								case NodeFlowEndpoint.UnderDetachingPriorTree:
+	// 								case NodeFlowEndpoint.UnderAttachingBuiltTree:
+	// 								case NodeFlowEndpoint.UnderDetachedBuiltTree: {
+	// 									editedPallet.boxes.moveToEnd(0, getRecord(root, attachSource).boxes);
+	// 									break;
+	// 								}
+	// 								default: {
+	// 									unreachableCase(attachSource);
+	// 								}
+	// 							}
+	// 							break;
+	// 						}
+	// 						case "optional": {
+	// 							switch (attachSource) {
+	// 								case NodeFlowEndpoint.DetachedBuiltRoot: {
+	// 									editedPallet.boxes[0].value = newValue;
+	// 									break;
+	// 								}
+	// 								case NodeFlowEndpoint.UnderAttachedPriorTree:
+	// 								case NodeFlowEndpoint.UnderDetachingPriorTree:
+	// 								case NodeFlowEndpoint.UnderAttachingBuiltTree:
+	// 								case NodeFlowEndpoint.UnderDetachedBuiltTree: {
+	// 									fail(`TODO: add handling for editing location ${editLocation}`);
+	// 								}
+	// 								default: {
+	// 									unreachableCase(attachSource);
+	// 								}
+	// 							}
+	// 							break;
+	// 						}
+	// 						case "required": {
+	// 							switch (attachSource) {
+	// 								case NodeFlowEndpoint.DetachedBuiltRoot: {
+	// 									editedPallet.id = newValue;
+	// 									break;
+	// 								}
+	// 								case NodeFlowEndpoint.UnderAttachedPriorTree:
+	// 								case NodeFlowEndpoint.UnderDetachingPriorTree:
+	// 								case NodeFlowEndpoint.UnderAttachingBuiltTree:
+	// 								case NodeFlowEndpoint.UnderDetachedBuiltTree: {
+	// 									fail(`TODO: add handling for editing location ${editLocation}`);
+	// 								}
+	// 								default: {
+	// 									unreachableCase(attachSource);
+	// 								}
+	// 							}
+	// 							break;
+	// 						}
+	// 						default: {
+	// 							unreachableCase(fieldKind);
+	// 						}
+	// 					}
+	// 					applyOutroDetachEdits(root);
+	// 				},
+	// 				unminimizedBuildExpectations: {
+	// 					builds: 1 + extraBuilds,
+	// 					tops: 2 + extraBuilds,
+	// 				},
+	// 				expectSurvivingMarker: true,
+	// 			} as const satisfies PalletArrayScenario;
+	// 			scenarios.set(["attach", attachSource, editLocation, fieldKind], scenario);
+	// 		}
+	// 	}
+	// }
 	return scenarios;
 }
 
@@ -2661,7 +2878,7 @@ describe("transaction minimize post-processor", () => {
 		const endpointsUnderNodesThatEndUpDetached = new Set([
 			NodeFlowEndpoint.UnderDetachingPriorTree,
 			NodeFlowEndpoint.UnderDetachedPriorTree,
-			NodeFlowEndpoint.UnderTransientBuiltTree,
+			NodeFlowEndpoint.UnderDetachedBuiltTree,
 		]);
 		const endpointsThatEndUpDetached = new Set([
 			...endpointsUnderNodesThatEndUpDetached,
@@ -2669,8 +2886,11 @@ describe("transaction minimize post-processor", () => {
 			NodeFlowEndpoint.DetachedPriorRoot,
 		]);
 
-		for (const [scenarioName, scenario] of Object.entries(editedDetachedTreeScenarios)) {
-			it(scenarioName, () => {
+		for (const [
+			[source, destination, field],
+			scenario,
+		] of editedDetachedTreeScenarios.entries()) {
+			it(`${source} -> ${destination} (${field} field)`, () => {
 				const { tree: unminimizedTree } = runScenario(scenario, {
 					doNotMinimize: true,
 				});

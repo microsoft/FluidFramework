@@ -50,7 +50,7 @@ export enum NodeFlowEndpoint {
 	 * - is transitively under a detached field before the change
 	 * - is transitively under a detached field after the change
 	 */
-	UnderTransientBuiltTree = "UnderTransientBuiltTree",
+	UnderDetachedBuiltTree = "UnderDetachedBuiltTree",
 
 	/**
 	 * In a field under an already existing parent that both...
@@ -79,7 +79,7 @@ export const allEndpoints = [
 	NodeFlowEndpoint.DetachedPriorRoot,
 	NodeFlowEndpoint.UnderAttachedPriorTree,
 	NodeFlowEndpoint.UnderDetachingPriorTree,
-	NodeFlowEndpoint.UnderTransientBuiltTree,
+	NodeFlowEndpoint.UnderDetachedBuiltTree,
 	NodeFlowEndpoint.UnderDetachedPriorTree,
 	NodeFlowEndpoint.UnderAttachingBuiltTree,
 	NodeFlowEndpoint.UnderAttachingPriorTree,
@@ -96,6 +96,16 @@ export const allEndpoints = [
  * - Any source endpoint with "Prior" in its name cannot end up as NodeFlowEndpoint.DetachedBuiltRoot.
  */
 export type NodeFlowCensus = Record<NodeFlowEndpoint, Record<NodeFlowEndpoint, number>>;
+
+export function isPossibleFlow(from: NodeFlowEndpoint, to: NodeFlowEndpoint): boolean {
+	if (from.includes("Built") && to === NodeFlowEndpoint.DetachedPriorRoot) {
+		return false;
+	}
+	if (from.includes("Prior") && to === NodeFlowEndpoint.DetachedBuiltRoot) {
+		return false;
+	}
+	return true;
+}
 
 export function makeEmptyCensus(): NodeFlowCensus {
 	const census: Partial<NodeFlowCensus> = {};
@@ -278,7 +288,7 @@ export function nodeFlowCensusFromDelta(delta: DeltaRoot): NodeFlowCensus {
 					? NodeFlowEndpoint.UnderAttachingBuiltTree
 					: NodeFlowEndpoint.UnderAttachingPriorTree
 				: built
-					? NodeFlowEndpoint.UnderTransientBuiltTree
+					? NodeFlowEndpoint.UnderDetachedBuiltTree
 					: NodeFlowEndpoint.UnderDetachedPriorTree;
 		return endpoint;
 	}
