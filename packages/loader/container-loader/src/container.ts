@@ -2443,6 +2443,17 @@ export class Container
 					this.submitBatch(batch, referenceSequenceNumber),
 				submitSignalFn: (content, targetClientId) =>
 					this.submitSignal(content, targetClientId),
+				// Read counterpart of submitFn: the container owns delta storage, so it injects a reader for
+				// the runtime to pull historical ops. Connects per call so it always uses the current service
+				// (no stale handle); cost is one connect per out-of-session mark resolution. Future: cache the
+				// handle (invalidated on reconnect/epoch-change/dispose) if a caller batch-resolves many marks.
+				fetchOps: async (from, to, abortSignal) => {
+					const deltaStorage = await this.service?.connectToDeltaStorage();
+					if (deltaStorage === undefined) {
+						throw new Error("Cannot fetch ops: delta storage is unavailable");
+					}
+					return deltaStorage.fetchMessages(from, to, abortSignal);
+				},
 				disposeFn: (error?: ICriticalContainerError) => this.dispose(error),
 				closeFn: (error?: ICriticalContainerError) => this.close(error),
 				updateDirtyContainerState: this.updateDirtyContainerState,
