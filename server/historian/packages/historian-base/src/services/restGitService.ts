@@ -15,6 +15,7 @@ import {
 	type IWholeFlatSummary,
 	type IWholeSummaryPayloadType,
 	LatestSummaryId,
+	NetworkError,
 } from "@fluidframework/server-services-client";
 import { type ITenantStorage, runWithRetry } from "@fluidframework/server-services-core";
 import {
@@ -37,6 +38,8 @@ const packageDetails = require("../../package.json");
 const userAgent = `Historian/${packageDetails.version}`;
 
 const LatestSummaryShaKey = `${LatestSummaryId}-sha`;
+// eslint-disable-next-line unicorn/better-regex
+const canonicalGitShaRegex = /^[0-9a-f]{40}$/i;
 
 export interface IDocument {
 	existing: boolean;
@@ -52,6 +55,12 @@ function endsWith(value: string, endings: string[]): boolean {
 	}
 
 	return false;
+}
+
+function validateGitSha(sha: string): void {
+	if (!canonicalGitShaRegex.test(sha)) {
+		throw new NetworkError(400, "Invalid Git object SHA.");
+	}
 }
 
 export class RestGitService {
@@ -132,6 +141,7 @@ export class RestGitService {
 	}
 
 	public async getBlob(tenantId: string, sha: string, useCache: boolean): Promise<git.IBlob> {
+		validateGitSha(sha);
 		const cacheKey = `${tenantId}:${sha}`;
 		return this.resolve(
 			cacheKey,
@@ -184,6 +194,7 @@ export class RestGitService {
 	}
 
 	public async getCommit(sha: string, useCache: boolean): Promise<git.ICommit> {
+		validateGitSha(sha);
 		return this.resolve(
 			sha,
 			async () =>
@@ -370,6 +381,7 @@ export class RestGitService {
 	}
 
 	public async getTree(sha: string, recursive: boolean, useCache: boolean): Promise<git.ITree> {
+		validateGitSha(sha);
 		const key = recursive ? `${sha}:recursive` : sha;
 		return this.resolve(
 			key,
