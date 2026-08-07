@@ -372,20 +372,21 @@ export function convertSnapshotTreeToSummaryTree(
 	const builder = new SummaryTreeBuilder();
 	for (const [path, id] of Object.entries(snapshot.blobs)) {
 		let decoded: string | undefined;
-		if (snapshot.blobsContents === undefined) {
-			// 0.44 back-compat We still put contents in same blob for back-compat so need to add blob
-			// only for blobPath -> blobId mapping and not for blobId -> blob value contents.
-			const encodedBlob = snapshot.blobs[id];
-			if (encodedBlob !== undefined) {
-				decoded = fromBase64ToUtf8(encodedBlob);
-			}
-		} else {
-			const content = snapshot.blobsContents[id];
+		if (snapshot.blobsContents !== undefined) {
+			// TODO Why are we non null asserting here?
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const content: ArrayBufferLike = snapshot.blobsContents[id]!;
 			if (content !== undefined) {
 				// Cannot change "utf-8" to "utf8" as this encoding value is stored in summaries and would be a breaking change which needs to be done first before changing to utf8.
 				// eslint-disable-next-line unicorn/text-encoding-identifier-case -- External on-disk format is 'utf-8'.
 				decoded = bufferToString(content, "utf-8");
 			}
+			// 0.44 back-compat We still put contents in same blob for back-compat so need to add blob
+			// only for blobPath -> blobId mapping and not for blobId -> blob value contents.
+		} else if (snapshot.blobs[id] !== undefined) {
+			// Non null asserting here because of the undefined check above
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			decoded = fromBase64ToUtf8(snapshot.blobs[id]!);
 		}
 		if (decoded !== undefined) {
 			builder.addBlob(path, decoded);
