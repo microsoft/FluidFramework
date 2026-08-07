@@ -34,7 +34,7 @@ overrides:
   uuid@>=7 <12: ^11.1.1
 
   # Resolve known js-yaml vulnerability (CVE-2025-64718: prototype pollution via merge keys).
-  js-yaml: ^4.3.0
+  js-yaml: 4.3.0
 
   # Resolve known vulnerabilities in older versions.
   qs: ^6.15.0

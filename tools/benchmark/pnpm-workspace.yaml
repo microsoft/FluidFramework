@@ -56,7 +56,7 @@ overrides:
   diff@>=5 <6: ^5.2.2
 
   # Resolve known js-yaml vulnerability (CVE-2025-64718: prototype pollution via merge keys).
-  js-yaml: ^4.3.0
+  js-yaml: 4.3.0
 
   # Resolve known security vulnerabilities across all major version ranges.
   minimatch@>=3 <4: ^3.1.5
