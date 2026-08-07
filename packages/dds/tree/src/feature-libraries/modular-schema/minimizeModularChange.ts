@@ -445,7 +445,7 @@ export function minimizeModularChangeset(
 						value: {
 							action: EditFilterStatus.PreserveWithoutMove,
 							nodeId: movedNodeId,
-							newAttachId: inputIdEntry.value,
+							newAttachId: inputIdEntry.value ?? moveId,
 						},
 						length: countProcessed,
 					};
