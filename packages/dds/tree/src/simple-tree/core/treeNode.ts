@@ -9,8 +9,12 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { markEager } from "./flexList.js";
 import { tryGetTreeNodeSchema } from "./treeNodeKernel.js";
 import { NodeKind, type TreeNodeSchemaClass } from "./treeNodeSchema.js";
-// eslint-disable-next-line import-x/no-deprecated -- Required to implement the deprecated typeNameSymbol API.
-import type { WithType, typeNameSymbol, typeSchemaSymbol } from "./withType.js";
+import type {
+	WithType,
+	// eslint-disable-next-line import-x/no-deprecated -- Required to implement the deprecated typeNameSymbol API.
+	typeNameSymbol,
+	typeSchemaSymbol,
+} from "./withType.js";
 
 /**
  * A non-{@link NodeKind.Leaf|leaf} SharedTree node. Includes objects, arrays, and maps.
