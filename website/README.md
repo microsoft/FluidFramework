@@ -202,7 +202,7 @@ For an overview of Docusaurus's versioning functionality, see [here](https://doc
 We currently offer versioned documentation for each of our supported major versions.
 This documentation is intended to be kept up-to-date with the most recent release of each major version series.
 
-For now, this means we publish documentation (including generated API documentation) for versions `1.x` and `2.x`.
+For now, this means we publish documentation (including generated API documentation) for versions `1.x`, `2.x`, and `3.x`.
 
 -   We also support generating API documentation for the local repo code in local development only.
     See [Local API docs build](#local-api-docs-build), but these are not intended to be published.
@@ -221,8 +221,8 @@ These steps are based on Docusaurus's tutorial [here](https://docusaurus.io/docs
 
 Note: generating the API documentation for the new "current" version will fail if the release branch for that version has not yet been created.
 
-1. Run `npx --no-install docusaurus docs:version v<current-major-version-number>` from the root of this directory.
-   E.g., `... docusaurus docs:version v2` when prepping for `v3` documentation.
+1. Run `npx --no-install docusaurus docs:version <current-major-version-number>` from the root of this directory.
+   E.g., `... docusaurus docs:version 2` when prepping for `v3` documentation.
     - This will copy the contents of `docs` into `versioned_docs` under the specified version ID.
     - This will also generate a sidebar configuration for the copied version under `versioned_sidebars`.
 1. Update `config/docs-versions.mjs` to update the version ID for the "current" version, and add the newly frozen version to the `otherVersions` list.
