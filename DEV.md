@@ -162,13 +162,18 @@ All workspace `pnpm-workspace.yaml` files include security-hardening settings to
 
 The default value for this setting is 1440 (1 day).
 The azure artifact feeds that are used by internal developers and our PR/CI pipelines already have similar built-in protections against recently released packages.
-Specifically, these feeds quaratine recently released packages based on risk profile (on the order of 1 to 7 days, where packages with install-time scripts are quaratined for longer).
+Specifically, these feeds quarantine recently released packages based on risk profile (on the order of 1 to 7 days, where packages with install-time scripts are quarantined for longer).
 
 Unfortunately, artifact feeds do not preserve package publish time when ingesting a package from npmjs upstream.
 Rather, they record when the package was first added to the downstream artifact feed.
 Therefore using a nonzero value here may arbitrarily block internal developers from installing a package until an additional delay period after they first try to install it.
 
 This does not solve the issue that users of the public registry can make changes which can get through CI and merge but include dependencies internal developers cannot install: such cases are expected to be uncommon and for now will require case by case handling to avoid or fix.
+
+#### Updating dependencies while respecting minimum release age
+
+Contributors should use `pnpm --config.minimum-release-age=10080 i --no-frozen-lockfile` when updating dependencies to mimic the repository policy for consuming packages from npmjs registry.
+
 ### Why `resolutionMode: highest` instead of `time-based`
 
 We would prefer to use `resolutionMode: time-based` to avoid pulling in the newest packages from npm. This delays ingestion of newly published packages, which helps avoid supply chain attacks.
