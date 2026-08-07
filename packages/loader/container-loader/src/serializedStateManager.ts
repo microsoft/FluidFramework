@@ -130,7 +130,8 @@ export interface IPendingDetachedContainerState extends SnapshotWithBlobs {
 	 */
 	hasAttachmentBlobs: boolean;
 	/**
-	 * Used by the memory blob storage to persisted attachment blobs
+	 * Versioned serialized contents of the memory detached blob storage.
+	 * Current snapshots encode attachment blob bytes as base64.
 	 */
 	attachmentBlobs?: string;
 	/**

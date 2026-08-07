@@ -16,6 +16,7 @@ import type {
 import {
 	createDetachedContainer,
 	loadExistingContainer,
+	rehydrateDetachedContainer,
 } from "@fluidframework/container-loader/legacy";
 import { createElement } from "react";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -115,6 +116,33 @@ globalThis.loadAdditionalContainer = async () => {
 	}
 	return loadExistingContainer({
 		request: await createLoadExistingRequest(id),
+		urlResolver,
+		documentServiceFactory,
+		codeLoader,
+	});
+};
+
+globalThis.getContainerForTesting = () => container;
+globalThis.rehydrateDetachedContainerForTesting = (serializedState: string) =>
+	rehydrateDetachedContainer({
+		serializedState,
+		urlResolver,
+		documentServiceFactory,
+		codeLoader,
+	});
+globalThis.attachAndLoadContainerForTesting = async (
+	containerToAttach: IContainer,
+) => {
+	let containerId = `${Date.now()}-detached-blob-test`;
+	await containerToAttach.attach(createCreateNewRequest(containerId));
+	if (service !== "odsp") {
+		if (containerToAttach.resolvedUrl === undefined) {
+			throw new Error("Resolved URL unexpectedly missing after attach");
+		}
+		containerId = containerToAttach.resolvedUrl.id;
+	}
+	return loadExistingContainer({
+		request: await createLoadExistingRequest(containerId),
 		urlResolver,
 		documentServiceFactory,
 		codeLoader,
