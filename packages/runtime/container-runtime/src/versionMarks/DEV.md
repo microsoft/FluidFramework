@@ -34,7 +34,7 @@ A `pending` locator carries two things: `batchId` identifies which op the mark p
 
 `BatchManager.generateBatchId(originalClientId, batchStartCsn)` produces `${originalClientId}_[${batchStartCsn}]`. `getEffectiveBatchId(...)` returns explicit batch metadata on resubmit, or derives the same id from the original wire client/csn for first submission. `PendingStateManager` preserves that batch info across reconnect and stamps the batchId during resubmit.
 
-For capture, `PendingStateManager.getMostRecentPendingBatchId()` locates the first message of the most recently flushed pending batch and derives its effective id from that batch start. This preserves the explicit reconnect-stable id stamped on the first op of a resubmitted multi-op batch rather than deriving a new id from its final op. Stashed `initialMessages` are ignored until they are applied into the current session's pending queue.
+For capture, `PendingStateManager.getMostRecentPendingBatchId()` derives the effective id from the most recently flushed pending message. Stashed `initialMessages` are ignored until they are applied into the current session's pending queue.
 
 ## Resolver API
 
@@ -246,7 +246,6 @@ Per-inbound-batch work (deriving the batch identity and populating the map/notif
 
 ## Current test map
 
-- `src/test/pendingStateManager.spec.ts` covers selecting the first op of the latest multi-op pending batch so an explicit reconnect-stable id is preserved, and ignoring unapplied stashed `initialMessages`.
 - `src/test/versionMarks/inboundBatch.spec.ts` covers full, empty, derived-id, explicit-id, and piecemeal batch updates.
 - `src/test/versionMarks/versionMarkResolver.spec.ts` covers capture ordering/results, the tracking gate, live-map precedence, no-reader behavior, fresh and resubmitted batches, multi-op batches across stream reads, chunk reassembly, clipped leading ordinary batches, miss classifications, range arguments, reader-contract assertion, abort behavior, listener isolation/unsubscribe/deduplication, and MSN eviction.
 - `src/test/containerRuntime.spec.ts` covers the context `fetchOps` -> real unpack pipeline -> resolver path, filtering system/server ops, aborting after a match, and the ordering guarantee that failed inbound validation does not notify listeners.
