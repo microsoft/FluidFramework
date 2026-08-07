@@ -13,6 +13,7 @@ import {
 import {
 	ContainerErrorTypes,
 	type IContainerContext,
+	type IContainerContextInternal,
 	type IBatchMessage,
 	type IContainerStorageService,
 } from "@fluidframework/container-definitions/internal";
@@ -36,6 +37,7 @@ import {
 	type ISnapshotTree,
 	MessageType,
 	type ISequencedDocumentMessage,
+	type IStream,
 	type IVersion,
 	type FetchSource,
 	type IDocumentAttributes,
@@ -2891,6 +2893,69 @@ describe("Runtime", () => {
 		});
 
 		describe("Version mark inbound update", () => {
+			it("resolves historical ops through the context fetchOps pipeline", async () => {
+				let fetchArgs:
+					| { from: number; to: number | undefined; abortSignal: AbortSignal | undefined }
+					| undefined;
+				const ops = [
+					{
+						sequenceNumber: 1,
+						type: MessageType.NoOp,
+						clientId: "server",
+					},
+					{
+						sequenceNumber: 2,
+						type: MessageType.Operation,
+						// eslint-disable-next-line unicorn/no-null -- covers server-generated ops with no client id
+						clientId: null,
+					},
+					{
+						sequenceNumber: 3,
+						type: MessageType.Operation,
+						clientId: "historicalClient",
+						clientSequenceNumber: 7,
+						contents: JSON.stringify({
+							type: ContainerMessageType.Rejoin,
+							contents: undefined,
+						}),
+					},
+				] as ISequencedDocumentMessage[];
+				const context = {
+					...getMockContext(),
+					fetchOps: async (
+						from: number,
+						to?: number,
+						abortSignal?: AbortSignal,
+					): Promise<IStream<ISequencedDocumentMessage[]>> => {
+						fetchArgs = { from, to, abortSignal };
+						let read = false;
+						return {
+							async read() {
+								if (read) {
+									return { done: true };
+								}
+								read = true;
+								return { done: false, value: ops };
+							},
+						};
+					},
+				} satisfies Partial<IContainerContextInternal>;
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
+					context: context as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				assert.deepEqual(
+					await containerRuntime.versionMarkResolver.resolve("historicalClient_[7]", 0),
+					{ kind: "resolved", sequenceNumber: 3 },
+				);
+				assert.equal(fetchArgs?.from, 1);
+				assert.equal(fetchArgs?.to, undefined);
+				assert.equal(fetchArgs?.abortSignal?.aborted, true);
+			});
+
 			it("does not notify version-mark listeners when inbound validation throws", async () => {
 				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
 					context: getMockContext() as IContainerContext,
