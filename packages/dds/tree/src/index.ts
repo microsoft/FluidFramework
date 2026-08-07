@@ -192,6 +192,7 @@ export {
 	singletonSchema,
 	type UnsafeUnknownSchema,
 	type TreeViewAlpha,
+	type StagedUpgradeStatus,
 	type TreeViewBeta,
 	type InsertableField,
 	type Insertable,

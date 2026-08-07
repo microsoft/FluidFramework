@@ -10,7 +10,7 @@ import { toUpgradeSchema } from "../toStoredSchema.js";
 import type { TreeSchema } from "../treeSchema.js";
 
 import { getDiscrepanciesInAllowedContent } from "./discrepancies.js";
-import { findEnabledUpgrades } from "./stagedUpgradeQuery.js";
+import { findEnabledUpgrades, type StagedUpgradeStatus } from "./stagedUpgradeQuery.js";
 import type { SchemaCompatibilityStatus } from "./tree.js";
 
 /**
@@ -31,7 +31,7 @@ export function checkSchemaCompatibility(
 	stored: TreeStoredSchema,
 	stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
 ): Omit<SchemaCompatibilityStatus, "canInitialize"> & {
-	enabledUpgrades: ReadonlySet<SchemaUpgrade>;
+	enabledUpgrades: ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus>;
 } {
 	// The public API surface assumes defaultSchemaPolicy
 	const policy = defaultSchemaPolicy;

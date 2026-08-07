@@ -17,6 +17,7 @@ import {
 	type ImplicitFieldSchema,
 	type SchemaCompatibilityStatus,
 	type SchemaUpgrade,
+	type StagedUpgradeStatus,
 	TreeViewConfigurationAlpha,
 	toUpgradeSchema,
 } from "../../../simple-tree/index.js";
@@ -32,13 +33,13 @@ const factory = new SchemaFactoryAlpha("");
 function expectCompatibility(
 	{ view, stored }: { view: ImplicitFieldSchema; stored: TreeStoredSchema },
 	expected: Omit<ReturnType<typeof checkSchemaCompatibility>, "enabledUpgrades"> & {
-		enabledUpgrades?: ReadonlySet<SchemaUpgrade>;
+		enabledUpgrades?: ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus>;
 	},
 ) {
 	const viewSchema = new TreeViewConfigurationAlpha({ schema: view });
 	const compatibility = checkSchemaCompatibility(viewSchema, stored);
 	assert.deepEqual(compatibility, {
-		enabledUpgrades: new Set(),
+		enabledUpgrades: new Map(),
 		...expected,
 	});
 
@@ -521,7 +522,7 @@ describe("checkSchemaCompatibility", () => {
 
 				expectCompatibility(
 					{ view: Compatible1, stored: toUpgradeSchema(Compatible2) },
-					{ canView: true, canUpgrade: false, isEquivalent: false, enabledUpgrades: new Set([upgrade]) },
+					{ canView: true, canUpgrade: false, isEquivalent: false, enabledUpgrades: new Map([[upgrade, "enabled"]]) },
 				);
 			});
 
@@ -566,7 +567,7 @@ describe("checkSchemaCompatibility", () => {
 
 				expectCompatibility(
 					{ view: Compatible1, stored: toUpgradeSchema(Compatible2) },
-					{ canView: false, canUpgrade: false, isEquivalent: false, enabledUpgrades: new Set([upgrade]) },
+					{ canView: false, canUpgrade: false, isEquivalent: false, enabledUpgrades: new Map([[upgrade, "enabled"]]) },
 				);
 			});
 		});

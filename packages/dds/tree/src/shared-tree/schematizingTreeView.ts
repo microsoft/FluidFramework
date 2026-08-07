@@ -61,6 +61,7 @@ import {
 	type TreeBranchAlpha,
 	type TreeSchema,
 	type SchemaUpgrade,
+	type StagedUpgradeStatus,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -99,10 +100,10 @@ export class SchematizingSimpleTreeView<
 	 */
 	private currentCompatibility: SchemaCompatibilityStatus | undefined;
 	/**
-	 * Cached set of enabled schema upgrades, computed alongside compatibility.
+	 * Cached map of upgrade statuses, computed alongside compatibility.
 	 * @remarks `undefined` only when uninitialized or disposed.
 	 */
-	private currentEnabledUpgrades: ReadonlySet<SchemaUpgrade> | undefined;
+	private currentEnabledUpgrades: ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus> | undefined;
 	public readonly events: Listenable<TreeViewEvents & TreeBranchEvents> &
 		IEmitter<TreeViewEvents & TreeBranchEvents> &
 		HasListeners<TreeViewEvents & TreeBranchEvents> = createEmitter();
@@ -174,7 +175,7 @@ export class SchematizingSimpleTreeView<
 			isEquivalent: false,
 			canInitialize: true,
 		};
-		this.currentEnabledUpgrades = new Set();
+		this.currentEnabledUpgrades = new Map();
 		this.update();
 
 		this.unregisterCallbacks.add(
@@ -285,11 +286,11 @@ export class SchematizingSimpleTreeView<
 		this.runSchemaEdit(() => this.checkout.updateSchema(newSchema));
 	}
 
-	public isStagedUpgradeEnabled(upgrade: SchemaUpgrade): boolean {
+	public isStagedUpgradeEnabled(upgrade: SchemaUpgrade): StagedUpgradeStatus {
 		if (!this.currentEnabledUpgrades) {
 			this.failDisposed();
 		}
-		return this.currentEnabledUpgrades.has(upgrade);
+		return this.currentEnabledUpgrades.get(upgrade) ?? "disabled";
 	}
 
 	/**

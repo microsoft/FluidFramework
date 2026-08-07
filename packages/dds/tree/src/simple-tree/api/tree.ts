@@ -32,6 +32,7 @@ import type { SimpleTreeSchema } from "../simpleSchema.js";
 import type { UnsafeUnknownSchema } from "../unsafeUnknownSchema.js";
 
 import type { TreeViewConfiguration } from "./configuration.js";
+import type { StagedUpgradeStatus } from "./stagedUpgradeQuery.js";
 import type {
 	RunTransactionParamsAlpha,
 	RunTransactionParamsBeta,
@@ -647,14 +648,16 @@ export interface TreeViewAlpha<
 	/**
 	 * Checks whether a staged schema upgrade has been applied to the document's stored schema.
 	 *
-	 * @returns `true` if and only if at least one location guarded by the provided staged `upgrade` token
-	 * is already enabled in the document's stored schema.
+	 * @returns The enablement status of the upgrade:
+	 * - `"disabled"` — no locations guarded by the upgrade are enabled.
+	 * - `"partial"` — at least one location is enabled but not all of them.
+	 * - `"enabled"` — all locations guarded by the upgrade are enabled.
 	 *
 	 * @remarks
 	 * This API is used for rollout safety checks.
 	 * It derives results from this view schema and the current stored schema.
 	 */
-	isStagedUpgradeEnabled(upgrade: SchemaUpgrade): boolean;
+	isStagedUpgradeEnabled(upgrade: SchemaUpgrade): StagedUpgradeStatus;
 
 	readonly events: Listenable<TreeViewEvents & TreeBranchEvents>;
 

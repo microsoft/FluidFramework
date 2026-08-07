@@ -42,15 +42,25 @@ import type { TreeSchema } from "../treeSchema.js";
 import { tryStoredSchemaAsArray } from "./customTree.js";
 
 /**
- * Computes the set of all {@link SchemaUpgrade} tokens that are enabled in the given stored schema.
- *
- * A token is considered enabled if at least one staged member guarded by it in the view schema
- * has its corresponding upgrade present in the stored schema. This covers both staged allowed types
- * (type identifier present in stored allowed types) and staged optional fields (stored field kind
- * is optional).
+ * The enablement status of a staged schema upgrade in a document's stored schema.
  *
  * @remarks
- * This uses a view→stored parallel walk that iterates `viewSchema.definitions` and pairs each
+ * - `"disabled"` — no locations guarded by the upgrade are enabled in stored schema.
+ * - `"partial"` — at least one location is enabled but not all of them.
+ * - `"enabled"` — all locations guarded by the upgrade are enabled in stored schema.
+ *
+ * @alpha
+ */
+export type StagedUpgradeStatus = "disabled" | "partial" | "enabled";
+
+/**
+ * Computes the enablement status of all {@link SchemaUpgrade} tokens in the given stored schema.
+ *
+ * For each token, tracks how many locations it guards and how many are enabled,
+ * producing a `"disabled"`, `"partial"`, or `"enabled"` status.
+ *
+ * @remarks
+ * This uses a view->stored parallel walk that iterates `viewSchema.definitions` and pairs each
  * element with its corresponding stored schema entry. The same structural pattern exists in
  * `discrepancies.ts` (`getDiscrepanciesInAllowedContent` and helpers). If discrepancies is
  * refactored to use the shared `enumerateNodeFieldPairs` utility, this code could be further
@@ -59,11 +69,13 @@ import { tryStoredSchemaAsArray } from "./customTree.js";
 export function findEnabledUpgrades(
 	viewSchema: TreeSchema,
 	stored: TreeStoredSchema,
-): ReadonlySet<SchemaUpgrade> {
-	const enabled = new Set<SchemaUpgrade>();
+): ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus> {
+	// Track total locations and enabled locations per upgrade token.
+	const totalLocations = new Map<SchemaUpgrade, number>();
+	const enabledLocations = new Map<SchemaUpgrade, number>();
 
 	// Check root field.
-	collectEnabledUpgradesFromField(viewSchema.root, stored.rootFieldSchema, enabled);
+	collectUpgradeLocationsFromField(viewSchema.root, stored.rootFieldSchema, totalLocations, enabledLocations);
 
 	// Check each view node definition paired with its stored counterpart.
 	for (const [identifier, viewNode] of viewSchema.definitions) {
@@ -72,10 +84,20 @@ export function findEnabledUpgrades(
 			continue;
 		}
 
-		collectEnabledUpgradesFromNode(viewNode, storedNode, enabled);
+		collectUpgradeLocationsFromNode(viewNode, storedNode, totalLocations, enabledLocations);
 	}
 
-	return enabled;
+	// Compute status from counts. Only include non-disabled entries.
+	const result = new Map<SchemaUpgrade, StagedUpgradeStatus>();
+	for (const [upgrade, total] of totalLocations) {
+		const enabled = enabledLocations.get(upgrade) ?? 0;
+		if (enabled > 0 && enabled < total) {
+			result.set(upgrade, "partial");
+		} else if (enabled >= total && enabled > 0) {
+			result.set(upgrade, "enabled");
+		}
+	}
+	return result;
 }
 
 // #region Node field pair traversal
@@ -181,63 +203,70 @@ function* enumerateNodeFieldPairs(
 
 // #region Upgrade collection helpers
 
-function collectEnabledUpgradesFromNode(
+function collectUpgradeLocationsFromNode(
 	viewNode: TreeNodeSchema,
 	storedNode: TreeNodeStoredSchema,
-	enabled: Set<SchemaUpgrade>,
+	totalLocations: Map<SchemaUpgrade, number>,
+	enabledLocations: Map<SchemaUpgrade, number>,
 ): void {
 	for (const pair of enumerateNodeFieldPairs(viewNode, storedNode)) {
 		if (pair.kind === "field") {
-			collectEnabledUpgradesFromField(pair.viewField, pair.storedField, enabled);
+			collectUpgradeLocationsFromField(pair.viewField, pair.storedField, totalLocations, enabledLocations);
 		} else {
 			// Arrays: check allowed types directly (no field-level structure).
-			collectEnabledUpgradesFromAllowedTypes(
+			collectUpgradeLocationsFromAllowedTypes(
 				pair.viewAllowedTypes,
 				pair.storedAllowedTypes,
-				enabled,
+				totalLocations,
+				enabledLocations,
 			);
 		}
 	}
 }
 
-function collectEnabledUpgradesFromField(
+function collectUpgradeLocationsFromField(
 	viewField: FieldSchema,
 	storedField: TreeFieldStoredSchema,
-	enabled: Set<SchemaUpgrade>,
+	totalLocations: Map<SchemaUpgrade, number>,
+	enabledLocations: Map<SchemaUpgrade, number>,
 ): void {
 	assert(
 		viewField instanceof FieldSchemaAlpha,
 		"all field schema should be FieldSchemaAlpha",
 	);
 
-	// Staged-optional enablement: the view field is staged-optional and stored field is optional.
-	if (
-		viewField.isStagedOptional !== false &&
-		storedField.kind === FieldKinds.optional.identifier
-	) {
-		enabled.add(viewField.isStagedOptional);
+	// Staged-optional: count this location.
+	if (viewField.isStagedOptional !== false) {
+		const upgrade = viewField.isStagedOptional;
+		totalLocations.set(upgrade, (totalLocations.get(upgrade) ?? 0) + 1);
+		if (storedField.kind === FieldKinds.optional.identifier) {
+			enabledLocations.set(upgrade, (enabledLocations.get(upgrade) ?? 0) + 1);
+		}
 	}
 
 	if (storedField.types !== undefined) {
-		collectEnabledUpgradesFromAllowedTypes(
+		collectUpgradeLocationsFromAllowedTypes(
 			viewField.allowedTypesFull.evaluate().types,
 			storedField.types,
-			enabled,
+			totalLocations,
+			enabledLocations,
 		);
 	}
 }
 
-function collectEnabledUpgradesFromAllowedTypes(
+function collectUpgradeLocationsFromAllowedTypes(
 	viewAllowedTypes: readonly AnnotatedAllowedType<TreeNodeSchema>[],
 	storedAllowedTypes: TreeTypeSet,
-	enabled: Set<SchemaUpgrade>,
+	totalLocations: Map<SchemaUpgrade, number>,
+	enabledLocations: Map<SchemaUpgrade, number>,
 ): void {
 	for (const allowedType of viewAllowedTypes) {
-		if (
-			allowedType.metadata.stagedSchemaUpgrade !== undefined &&
-			storedAllowedTypes.has(brand(allowedType.type.identifier))
-		) {
-			enabled.add(allowedType.metadata.stagedSchemaUpgrade);
+		if (allowedType.metadata.stagedSchemaUpgrade !== undefined) {
+			const upgrade = allowedType.metadata.stagedSchemaUpgrade;
+			totalLocations.set(upgrade, (totalLocations.get(upgrade) ?? 0) + 1);
+			if (storedAllowedTypes.has(brand(allowedType.type.identifier))) {
+				enabledLocations.set(upgrade, (enabledLocations.get(upgrade) ?? 0) + 1);
+			}
 		}
 	}
 }
