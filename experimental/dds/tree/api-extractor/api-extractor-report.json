@@ -1,10 +1,8 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-	"extends": "<projectFolder>/../../../common/build/build-common/api-extractor-report.esm.current.json",
-	"mainEntryPointFilePath": "<projectFolder>/lib/index.d.ts",
+	"extends": "<projectFolder>/../../../common/build/build-common/api-extractor-report-base.esm.json",
 	"apiReport": {
 		// Note: `tree.api.md` is the file used for the public tree DDS's API report.
-		"reportFileName": "experimental-<unscopedPackageName>.api.md",
-		"reportVariants": ["public", "beta", "alpha"]
+		"reportFileName": "experimental-<unscopedPackageName>.api.md"
 	}
 }
