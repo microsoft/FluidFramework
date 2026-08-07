@@ -97,8 +97,10 @@ export const contentSchemaSymbol: unique symbol = Symbol("SharedTree Schema");
  * @privateRemarks
  * The properties of this are implemented as getters rather than instance properties as that is the easiest way to make them non-enumerable,
  * and also saves memory and time as they only have to be setup on the prototype.
- * We want these to be non-enumerable as they should not be shown to users as they are internal typing brands.
- * How we declare them here actually doesn't impact that, but is a good way to communicate to users and internal devs that these should be implemented as getters to accomplish the above.
+ * These being non-enumerable inherited properties minimizes impact on users,
+ * hiding them from things like `Reflect.ownKeys`, Object spread, `Object.getOwnPropertyDescriptors`, and `for...in` loops.
+ * How we declare them here actually doesn't impact that,
+ * but is a good way to communicate to users and internal devs that these should be implemented as inherited getters to accomplish the above.
  * @sealed @public
  */
 export interface WithType<
