@@ -165,18 +165,15 @@ const config = new TreeViewConfiguration({ schema: Board });
 ## Understanding Irreversibility
 
 Once a document's stored schema has been upgraded, it cannot be downgraded.
-However, rolling back a feature flag is safe — this is handled automatically.
-When a document has already been upgraded, <ApiLink packageName="fluid-framework" apiName="TreeViewAlpha" apiType="Interface" headingId="initialize-methodsignature">initialize</ApiLink> and <ApiLink packageName="fluid-framework" apiName="TreeViewAlpha" apiType="Interface" headingId="upgradeschema-methodsignature">upgradeSchema</ApiLink> automatically detect the enabled upgrades in stored schema and continue including them, even if the feature flag is off.
-You do not need to manually check or pass upgrade tokens for already-upgraded documents.
+However, rolling back a feature flag is safe.
 With the feature flag rolled back, new documents and any documents that haven't been upgraded yet will not have the upgrade enabled.
+You can use <ApiLink packageName="fluid-framework" apiName="TreeViewAlpha" apiType="Interface" headingId="isstagedupgradeenabled-methodsignature">isStagedUpgradeEnabled</ApiLink> to check whether a document has already been upgraded and conditionally include that upgrade token for those documents.
 
 Disabling the feature flag prevents **new** documents from being upgraded, but documents that have already been upgraded retain the new schema.
 This means:
 
 - **Clients running the staged code** (Step 1 and above) can still open and read upgraded documents — their view schema is compatible.
 - **Clients running older code** (before the staged type was added) **cannot** open upgraded documents. This is why [client saturation](./index.mdx#staged-rollouts) of the staged code is important before enabling the flag.
-- Documents that have already been upgraded are automatically handled — <ApiLink packageName="fluid-framework" apiName="TreeViewAlpha" apiType="Interface" headingId="initialize-methodsignature">initialize</ApiLink> and <ApiLink packageName="fluid-framework" apiName="TreeViewAlpha" apiType="Interface" headingId="upgradeschema-methodsignature">upgradeSchema</ApiLink> detect enabled upgrades in stored schema and preserve them without any manual intervention.
-  You can optionally use <ApiLink packageName="fluid-framework" apiName="TreeViewAlpha" apiType="Interface" headingId="isstagedupgradeenabled-methodsignature">isStagedUpgradeEnabled</ApiLink> for observability (e.g., logging which documents have been upgraded).
 
 Plan your rollout with this in mind: ensure that all active clients have the staged code before turning on the flag.
 

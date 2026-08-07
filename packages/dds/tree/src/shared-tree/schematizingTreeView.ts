@@ -211,7 +211,7 @@ export class SchematizingSimpleTreeView<
 		}
 
 		this.runSchemaEdit(() => {
-			const schema = toInitialSchema(this.config.schema, this.effectiveUpgradePolicy);
+			const schema = toInitialSchema(this.config.schema, this.stagedUpgradePolicy);
 			// This has to be the contextless version, since when "initialize" is called (right after this),
 			// it will do a schema change which would dispose of the current context (see inside `update`).
 			// Thus using the current context (if any) would hydrate nodes then
@@ -269,7 +269,7 @@ export class SchematizingSimpleTreeView<
 	public upgradeSchema(): void {
 		this.ensureUndisposed();
 
-		const newSchema = toUpgradeSchema(this.viewSchema.root, this.effectiveUpgradePolicy);
+		const newSchema = toUpgradeSchema(this.viewSchema.root, this.stagedUpgradePolicy);
 		const storedSchema = this.checkout.storedSchema.clone();
 		if (!allowsRepoSuperset(defaultSchemaPolicy, storedSchema, newSchema)) {
 			throw new UsageError(
@@ -291,24 +291,6 @@ export class SchematizingSimpleTreeView<
 			this.currentCompatibility = this.computeCompatibility();
 		}
 		return this.currentEnabledUpgrades?.has(upgrade) ?? false;
-	}
-
-	/**
-	 * Returns an effective upgrade policy that includes both the configured `stagedUpgradePolicy`
-	 * and any upgrades already enabled in the current stored schema.
-	 * This ensures that initialize/upgradeSchema never regresses already-enabled upgrades.
-	 */
-	private get effectiveUpgradePolicy(): StagedSchemaUpgradePolicy {
-		const base = this.stagedUpgradePolicy;
-		const enabled = this.currentEnabledUpgrades;
-		if (enabled === undefined || enabled.size === 0) {
-			return base;
-		}
-		return {
-			includeStaged: (upgrade) => base.includeStaged(upgrade) || enabled.has(upgrade),
-			includeStagedOptional: (upgrade) =>
-				base.includeStagedOptional(upgrade) || enabled.has(upgrade),
-		};
 	}
 
 	/**

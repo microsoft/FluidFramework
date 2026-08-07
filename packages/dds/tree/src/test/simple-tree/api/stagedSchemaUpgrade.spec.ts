@@ -514,7 +514,7 @@ describe("staged optional upgrade", () => {
 		assert.equal(viewOptional.root, undefined);
 	});
 
-	it("a view without upgrades can upgradeSchema on a document already upgraded by another view due to auto-include", () => {
+	it("throws when a view without upgrades tries to upgradeSchema on a document already upgraded by another view", () => {
 		const provider = new TestTreeProviderLite(3);
 		const [treeRequired, treeStaged, treeOptional] = provider.trees;
 
@@ -535,13 +535,15 @@ describe("staged optional upgrade", () => {
 		viewStaged.dispose();
 		provider.synchronizeMessages();
 
-		// A new view without the explicit upgrade token can still upgradeSchema — the stored schema
-		// already has the upgrade applied and auto-include detects it.
+		// A new view without the upgrade token cannot upgrade further — the stored schema already has the upgrade
+		// and the new target (without the token) would narrow it.
 		const viewStagedNarrow = treeOptional.viewWith(
 			new TreeViewConfigurationAlpha({ schema: stagedOptionalSchema }),
 		);
-		// Should not throw — auto-include preserves the already-applied upgrade
-		viewStagedNarrow.upgradeSchema();
+		assert.throws(
+			() => viewStagedNarrow.upgradeSchema(),
+			/cannot be upgraded to the requested schema/,
+		);
 	});
 
 	it("checks compatibility through staged optional rollout", () => {
