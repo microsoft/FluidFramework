@@ -361,7 +361,7 @@ export function removeAllAttachesFilter(
 
 export function filterEdits(
 	change: ModularChangeset,
-	filterFieldEdits: (fieldChange: FieldChange, nodeId: NodeId | undefined) => FieldChange,
+	filterFieldEdits: (fieldChange: FieldChange, fieldId: FieldId) => FieldChange,
 ): ModularChangeset {
 	const fieldChanges = filterFieldMapEdits(change.fieldChanges, undefined, filterFieldEdits);
 
@@ -377,17 +377,20 @@ export function filterEdits(
 function filterFieldMapEdits(
 	change: FieldChangeMap,
 	nodeId: NodeId | undefined,
-	filterFieldEdits: (fieldChange: FieldChange, nodeId: NodeId | undefined) => FieldChange,
+	filterFieldEdits: (fieldChange: FieldChange, fieldId: FieldId) => FieldChange,
 ): FieldChangeMap {
 	return new Map(
-		Array.from(change.entries(), ([key, value]) => [key, filterFieldEdits(value, nodeId)]),
+		Array.from(change.entries(), ([field, fieldChange]) => [
+			field,
+			filterFieldEdits(fieldChange, { nodeId, field }),
+		]),
 	);
 }
 
 function filterNodeEdits(
 	nodeId: NodeId,
 	change: NodeChangeset,
-	filterFieldEdits: (fieldChange: FieldChange, nodeId: NodeId | undefined) => FieldChange,
+	filterFieldEdits: (fieldChange: FieldChange, fieldId: FieldId) => FieldChange,
 ): NodeChangeset {
 	if (change.fieldChanges === undefined) {
 		return change;

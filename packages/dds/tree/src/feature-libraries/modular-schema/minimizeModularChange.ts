@@ -45,6 +45,7 @@ import { intoDelta } from "./modularChangeFamily.js";
 import type {
 	FieldChange,
 	FieldChangeMap,
+	FieldId,
 	ModularChangeset,
 	NodeChangeset,
 	NodeId,
@@ -102,17 +103,21 @@ export function minimizeModularChangeset(
 		);
 	}
 
-	function shouldSquashDetach(nodeId: NodeId | undefined): boolean {
-		return isNodeIdInBuiltTree(nodeId);
+	function isFieldDetachedInOutput(fieldId: FieldId): boolean {
+		return fieldId.nodeId !== undefined && isNodeDetachedInOutput(fieldId.nodeId);
+	}
+
+	function shouldSquashDetach(fieldId: FieldId): boolean {
+		return isNodeIdInBuiltTree(fieldId.nodeId);
 	}
 
 	function shouldSquashAttach(
-		nodeId: NodeId | undefined,
+		fieldId: FieldId,
 		rootInputId: ChangeAtomId,
 		count: number,
-		endpoint: NodeId | undefined,
+		endpoint: FieldId | undefined,
 	): RangeQueryResult<boolean> {
-		if (!isNodeIdInBuiltTree(nodeId)) {
+		if (!isNodeIdInBuiltTree(fieldId.nodeId)) {
 			return { value: false, length: count };
 		}
 
@@ -121,20 +126,21 @@ export function minimizeModularChangeset(
 		countProcessed = isMoveOfBuiltRootEntry.length;
 
 		const isAttachOfBuiltRoot = isMoveOfBuiltRootEntry?.value ?? false;
-		const isMoveFromBuiltTree = endpoint !== undefined && isNodeIdInBuiltTree(endpoint);
+		const isMoveFromBuiltTree =
+			endpoint?.nodeId !== undefined && isNodeIdInBuiltTree(endpoint.nodeId);
 
 		const isAttachOfBuiltNode = isAttachOfBuiltRoot || isMoveFromBuiltTree;
 		return { value: isAttachOfBuiltNode, length: countProcessed };
 	}
 
 	function shouldDropAttach(
-		nodeId: NodeId | undefined,
+		fieldId: FieldId,
 		rootInputId: ChangeAtomId,
 		count: number,
-		endpoint: NodeId | undefined,
+		endpoint: FieldId | undefined,
 		isTransientAttach: boolean,
 	): RangeQueryResult<boolean> {
-		const isInDetachedTree = nodeId !== undefined && isNodeDetachedInOutput(nodeId);
+		const isInDetachedTree = isFieldDetachedInOutput(fieldId);
 
 		let countProcessed = count;
 		const isBuiltRootEntry = builtRootIds.getFirst(rootInputId, countProcessed);
@@ -142,7 +148,7 @@ export function minimizeModularChangeset(
 
 		const isTransientAttachOfRoot = isTransientAttach && isBuiltRootEntry.value === true;
 		const shouldSquashAttachEntry = shouldSquashAttach(
-			nodeId,
+			fieldId,
 			rootInputId,
 			countProcessed,
 			endpoint,
@@ -155,14 +161,14 @@ export function minimizeModularChangeset(
 	}
 
 	function shouldDropDetach(
-		nodeId: NodeId | undefined,
+		fieldId: FieldId,
 		rootInputId: ChangeAtomId | undefined,
 		count: number,
+		endpoint: FieldId | undefined,
 	): RangeQueryResult<boolean> {
-		if (
-			shouldSquashDetach(nodeId) ||
-			(nodeId !== undefined && isNodeDetachedInOutput(nodeId))
-		) {
+		const isInDetachedTree = isFieldDetachedInOutput(fieldId);
+		const isMoveToAttachedTree = endpoint !== undefined && !isFieldDetachedInOutput(endpoint);
+		if (shouldSquashDetach(fieldId) || (isInDetachedTree && !isMoveToAttachedTree)) {
 			return { value: true, length: count };
 		}
 
@@ -185,7 +191,7 @@ export function minimizeModularChangeset(
 
 	const filterEditsForBuildChange = (
 		fieldChange: FieldChange,
-		nodeId: NodeId | undefined,
+		fieldId: FieldId,
 	): FieldChange => {
 		const filterDetach = (
 			detachId: ChangeAtomId,
@@ -193,7 +199,7 @@ export function minimizeModularChangeset(
 			inputRootId: ChangeAtomId | undefined,
 			endpoint?: ChangeAtomId,
 		): RangeQueryResult<EditFilterStatus> => {
-			if (!shouldSquashDetach(nodeId)) {
+			if (!shouldSquashDetach(fieldId)) {
 				return { value: EditFilterStatus.Remove, length: count };
 			}
 
@@ -206,10 +212,10 @@ export function minimizeModularChangeset(
 
 			if (moveEndpointEntry.value !== undefined) {
 				const willSquashEndpointEntry = shouldSquashAttach(
-					moveEndpointEntry.value.nodeId,
+					moveEndpointEntry.value,
 					inputRootId ?? detachId,
 					countProcessed,
-					nodeId,
+					fieldId,
 				);
 				countProcessed = willSquashEndpointEntry.length;
 
@@ -242,10 +248,10 @@ export function minimizeModularChangeset(
 
 			const rootInputId = inputIdEntry.value ?? moveId;
 			const shouldSquashEntry = shouldSquashAttach(
-				nodeId,
+				fieldId,
 				rootInputId,
 				countProcessed,
-				moveEndpointEntry.value?.nodeId,
+				moveEndpointEntry.value,
 			);
 			countProcessed = shouldSquashEntry.length;
 
@@ -326,7 +332,7 @@ export function minimizeModularChangeset(
 
 	const filterEditsForResidualChange = (
 		fieldChange: FieldChange,
-		nodeId: NodeId | undefined,
+		fieldId: FieldId,
 	): FieldChange => {
 		const filterDetach = (
 			detachId: ChangeAtomId,
@@ -335,7 +341,18 @@ export function minimizeModularChangeset(
 			endpoint?: ChangeAtomId,
 		): RangeQueryResult<EditFilterStatus> => {
 			let countProcessed = count;
-			const shouldDropEntry = shouldDropDetach(nodeId, inputRootId, countProcessed);
+			const moveEndpointEntry = change.crossFieldKeys.getFirst(
+				{ ...(endpoint ?? detachId), target: CrossFieldTarget.Destination },
+				count,
+			);
+			countProcessed = moveEndpointEntry.length;
+
+			const shouldDropEntry = shouldDropDetach(
+				fieldId,
+				inputRootId,
+				countProcessed,
+				moveEndpointEntry.value,
+			);
 			countProcessed = shouldDropEntry.length;
 
 			if (shouldDropEntry.value) {
@@ -345,13 +362,7 @@ export function minimizeModularChangeset(
 				};
 			}
 
-			const moveEndpointEntry = change.crossFieldKeys.getFirst(
-				{ ...(endpoint ?? detachId), target: CrossFieldTarget.Destination },
-				count,
-			);
-			countProcessed = moveEndpointEntry.length;
-
-			if (moveEndpointEntry.value === undefined) {
+			if (moveEndpointEntry.value !== undefined) {
 				// KLUDGE: We can't easily determine whether the nodes are transiently attached,
 				// but it is safe to pass `false`, because the flag is only used for built nodes,
 				// and we already drop detaches for built nodes.
@@ -359,7 +370,7 @@ export function minimizeModularChangeset(
 					moveEndpointEntry.value,
 					inputRootId ?? detachId,
 					countProcessed,
-					nodeId,
+					fieldId,
 					false, // isTransientAttach
 				);
 				countProcessed = willDropAttachEntry.length;
@@ -396,10 +407,10 @@ export function minimizeModularChangeset(
 
 			const rootInputId = inputIdEntry.value ?? moveId;
 			const shouldDropEntry = shouldDropAttach(
-				nodeId,
+				fieldId,
 				rootInputId,
 				countProcessed,
-				moveEndpointEntry.value?.nodeId,
+				moveEndpointEntry.value,
 				outputRootId !== undefined,
 			);
 			countProcessed = shouldDropEntry.length;
@@ -413,9 +424,10 @@ export function minimizeModularChangeset(
 
 			if (moveEndpointEntry.value !== undefined) {
 				const willDropEndpointEntry = shouldDropDetach(
-					moveEndpointEntry.value.nodeId,
+					moveEndpointEntry.value,
 					inputIdEntry.value,
 					countProcessed,
+					fieldId,
 				);
 				countProcessed = willDropEndpointEntry.length;
 				if (willDropEndpointEntry.value) {
