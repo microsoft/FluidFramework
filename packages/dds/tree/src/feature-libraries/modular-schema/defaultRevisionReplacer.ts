@@ -8,6 +8,7 @@ import { assert, fail } from "@fluidframework/core-utils/internal";
 import {
 	newChangeAtomIdRangeMap,
 	offsetChangeAtomId,
+	offsetChangesetLocalId,
 	type ChangeAtomId,
 	type ChangeAtomIdRangeMap,
 	type ChangesetLocalId,
@@ -21,9 +22,6 @@ import {
 	type RangeMap,
 	type Mutable,
 } from "../../util/index.js";
-
-const offsetChangesetLocalId = (value: ChangesetLocalId, offset: number): ChangesetLocalId =>
-	brand(value + offset);
 
 export class DefaultRevisionReplacer implements RevisionReplacer {
 	/**
