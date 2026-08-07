@@ -56,22 +56,7 @@ flub-ai() {
 		echo "Failed to create a temporary launch file." >&2
 		return 1
 	}
-	local copilot_cli_path="${COPILOT_CLI_PATH:-}"
-	if [[ -z "$copilot_cli_path" ]]; then
-		local pnpm_home="${PNPM_HOME:-$HOME/.local/share/pnpm}"
-		local candidate
-		for candidate in "$pnpm_home/bin/copilot" "$pnpm_home/copilot"; do
-			if [[ -x "$candidate" ]]; then
-				copilot_cli_path="$candidate"
-				break
-			fi
-		done
-	fi
-	if [[ -n "$copilot_cli_path" ]]; then
-		COPILOT_CLI_PATH="$copilot_cli_path" pnpm exec flub ai --launchFile "$launch_file" "$@"
-	else
-		pnpm exec flub ai --launchFile "$launch_file" "$@"
-	fi
+	flub ai --launchFile "$launch_file" "$@"
 	local rc=$?
 	if [ "$rc" -eq 0 ] && [ -s "$launch_file" ]; then
 		local cmd

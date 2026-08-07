@@ -81,7 +81,6 @@
 		"@fluid-tools/build-infrastructure": "workspace:~",
 		"@fluid-tools/version-tools": "workspace:~",
 		"@fluidframework/build-tools": "workspace:~",
-		"@github/copilot": "^1.0.43",
 		"@github/copilot-sdk": "^0.2.2",
 		"@inquirer/prompts": "^8.0.1",
 		"@microsoft/api-extractor": "^7.58.1",

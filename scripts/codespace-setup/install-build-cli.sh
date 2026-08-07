@@ -6,8 +6,8 @@
 
 set -euo pipefail
 
-echo "Installing @fluid-tools/build-cli and its Copilot CLI runtime globally..."
-pnpm add -g @fluid-tools/build-cli '@github/copilot@^1.0.43'
+echo "Installing @fluid-tools/build-cli globally..."
+pnpm add -g '@fluid-tools/build-cli@>=0.67.0'
 
 echo "flub installed: $(which flub)"
 flub --version
