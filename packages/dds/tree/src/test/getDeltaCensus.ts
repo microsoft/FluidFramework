@@ -232,7 +232,7 @@ export function nodeFlowCensusFromDelta(delta: DeltaRoot): NodeFlowCensus {
 	function detachedEndpointForRoot(
 		id: NodeId,
 	): NodeFlowEndpoint.DetachedBuiltRoot | NodeFlowEndpoint.DetachedPriorRoot {
-		return builds.has(id)
+		return isBuilt(id)
 			? NodeFlowEndpoint.DetachedBuiltRoot
 			: NodeFlowEndpoint.DetachedPriorRoot;
 	}
