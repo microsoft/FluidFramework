@@ -34,7 +34,7 @@ A `pending` locator carries two things: `batchId` identifies which op the mark p
 
 `BatchManager.generateBatchId(originalClientId, batchStartCsn)` produces `${originalClientId}_[${batchStartCsn}]`. `getEffectiveBatchId(...)` returns explicit batch metadata on resubmit, or derives the same id from the original wire client/csn for first submission. `PendingStateManager` preserves that batch info across reconnect and stamps the batchId during resubmit.
 
-For capture, `PendingStateManager.getMostRecentPendingBatchId()` reads the most recently flushed pending message and derives its effective id. Stashed `initialMessages` are ignored until they are applied into the current session's pending queue. A known multi-op resubmission issue is tracked in [Future work](#future-work): explicit reconnect-stable identity is stamped on the batch's first op, so capture must ultimately read the batch start rather than the batch-end message.
+For capture, `PendingStateManager.getMostRecentPendingBatchId()` locates the first message of the most recently flushed pending batch and derives its effective id from that batch start. This preserves the explicit reconnect-stable id stamped on the first op of a resubmitted multi-op batch rather than deriving a new id from its final op. Stashed `initialMessages` are ignored until they are applied into the current session's pending queue.
 
 ## Resolver API
 
@@ -246,6 +246,7 @@ Per-inbound-batch work (deriving the batch identity and populating the map/notif
 
 ## Current test map
 
+- `src/test/pendingStateManager.spec.ts` covers selecting the first op of the latest multi-op pending batch so an explicit reconnect-stable id is preserved, and ignoring unapplied stashed `initialMessages`.
 - `src/test/versionMarks/inboundBatch.spec.ts` covers full, empty, derived-id, explicit-id, and piecemeal batch updates.
 - `src/test/versionMarks/versionMarkResolver.spec.ts` covers capture ordering/results, the tracking gate, live-map precedence, no-reader behavior, fresh and resubmitted batches, multi-op batches across stream reads, chunk reassembly, clipped leading ordinary batches, miss classifications, range arguments, reader-contract assertion, abort behavior, listener isolation/unsubscribe/deduplication, and MSN eviction.
 - `src/test/containerRuntime.spec.ts` covers the context `fetchOps` -> real unpack pipeline -> resolver path, filtering system/server ops, aborting after a match, and the ordering guarantee that failed inbound validation does not notify listeners.
@@ -254,7 +255,6 @@ Per-inbound-batch work (deriving the batch identity and populating the map/notif
 
 - Review the `IContainerContextInternal extends IContainerContext` cross-layer integration with Navin to establish the preferred pattern for features that span loader and runtime layers. In particular, determine whether explicit layer-compat support would make this interface evolution safer or more maintainable.
 - Consider merging `getCurrentPendingBatchId` into `flushPendingBatch` so sealing the batch returns its resulting `batchId`. This would keep the ordered flush-then-read operation inside one runtime hook instead of requiring the resolver to call two hooks in sequence.
-- Update `PendingStateManager.getMostRecentPendingBatchId()` to read the first pending message of the most recently flushed batch. Explicit reconnect-stable identity for a multi-op resubmission is stamped on the batch start, while the current implementation reads the batch end and can derive a new id from the resubmitting client. Add coverage for preserving the original id and for ignoring unapplied stashed `initialMessages`.
 - Reevaluate whether distinguishing `pending` from `unresolvable` is valuable enough to justify the driver-dependent heuristics in `classifyMiss`. The current implementation makes educated guesses from empty reads and sequence gaps, so its confidence depends on how each driver's delta storage reports trimmed ranges. Consider returning the conservative `pending` result for ambiguous misses, collapsing the states, or deferring a definitive `unresolvable` result until delta storage exposes an explicit retention boundary.
 - Before promoting this API to `@beta`, try extending the existing `batchEnd` event to expose the effective stable batch ID and reuse that event for mark promotion. Avoid finalizing `onBatchSequenced` as a parallel batch-sequenced notification API unless the existing event cannot support this use case.
 
