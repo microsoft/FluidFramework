@@ -174,6 +174,7 @@ export class SchematizingSimpleTreeView<
 			isEquivalent: false,
 			canInitialize: true,
 		};
+		this.currentEnabledUpgrades = new Set();
 		this.update();
 
 		this.unregisterCallbacks.add(
@@ -285,12 +286,10 @@ export class SchematizingSimpleTreeView<
 	}
 
 	public isStagedUpgradeEnabled(upgrade: SchemaUpgrade): boolean {
-		this.ensureUndisposed();
-		if (this.currentEnabledUpgrades === undefined) {
-			// Force computation if not yet computed (shouldn't normally happen after init).
-			this.currentCompatibility = this.computeCompatibility();
+		if (!this.currentEnabledUpgrades) {
+			this.failDisposed();
 		}
-		return this.currentEnabledUpgrades?.has(upgrade) ?? false;
+		return this.currentEnabledUpgrades.has(upgrade);
 	}
 
 	/**
