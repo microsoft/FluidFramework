@@ -9,7 +9,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { markEager } from "./flexList.js";
 import { tryGetTreeNodeSchema } from "./treeNodeKernel.js";
 import { NodeKind, type TreeNodeSchemaClass } from "./treeNodeSchema.js";
-// eslint-disable-next-line import-x/no-deprecated -- Required to implement the deprecated compatibility member.
+// eslint-disable-next-line import-x/no-deprecated -- Required to implement the deprecated typeNameSymbol API.
 import type { WithType, typeNameSymbol, typeSchemaSymbol } from "./withType.js";
 
 /**
@@ -80,7 +80,7 @@ export abstract class TreeNode implements WithType {
 	 * @privateRemarks Subclasses provide more specific values to distinguish otherwise type-compatible nodes.
 	 * @deprecated Use {@link typeSchemaSymbol} instead.
 	 */
-	// eslint-disable-next-line import-x/no-deprecated -- Required to implement the deprecated compatibility member.
+	// eslint-disable-next-line import-x/no-deprecated -- Required to implement the deprecated typeNameSymbol API.
 	public abstract get [typeNameSymbol](): string;
 
 	/**
