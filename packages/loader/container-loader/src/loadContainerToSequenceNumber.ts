@@ -27,7 +27,7 @@ import {
  * point-in-time capability the loader detects. For ODSP, pass an
  * `OdspPointInTimeDocumentServiceFactory` directly.
  *
- * @internal
+ * @legacy @alpha
  */
 export interface ILoadContainerToSequenceNumberProps
 	extends IContainerHostProps,
@@ -62,7 +62,11 @@ export interface ILoadContainerToSequenceNumberProps
  * `@fluidframework/odsp-driver`) directly - the loader materializes the point-in-time view itself,
  * so no wrapping or decoration is required.
  *
- * @internal
+ * @param props - The load options, point-in-time-capable driver services, target sequence number, and
+ * optional cancellation signal.
+ * @returns A disconnected, read-only container materialized at the requested sequence number.
+ *
+ * @legacy @alpha
  */
 export async function loadContainerToSequenceNumber(
 	props: ILoadContainerToSequenceNumberProps,
