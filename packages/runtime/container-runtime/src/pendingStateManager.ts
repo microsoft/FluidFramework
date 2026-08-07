@@ -366,6 +366,17 @@ export class PendingStateManager implements IDisposable {
 		return this.pendingMessagesCount !== 0;
 	}
 
+	/**
+	 * Returns the effective batchId for the most recently flushed local batch still waiting for server ack.
+	 *
+	 * @remarks Used for version mark capture. Ignores `initialMessages` (stashed ops from a prior session),
+	 * since capture points reference newly submitted local work in this session.
+	 */
+	public getMostRecentPendingBatchId(): string | undefined {
+		const pendingMessage = this.pendingMessages.peekBack();
+		return pendingMessage === undefined ? undefined : getEffectiveBatchId(pendingMessage);
+	}
+
 	public getLocalState(snapshotSequenceNumber?: number): {
 		pending: IPendingLocalState;
 	} {

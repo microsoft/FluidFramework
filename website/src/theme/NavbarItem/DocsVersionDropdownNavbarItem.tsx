@@ -49,9 +49,6 @@ function getVersionTargetDoc(
 
 type AccessibleLinkProps = LinkLikeNavbarItemProps & {
 	"aria-label"?: string;
-	"role"?: string;
-	"aria-setsize"?: number;
-	"aria-posinset"?: number;
 	"className"?: string;
 };
 
@@ -77,23 +74,26 @@ export default function DocsVersionDropdownNavbarItem({
 	const versions = useVersions(docsPluginId);
 	const { savePreferredVersionName } = useDocsPreferredVersion(docsPluginId);
 
-	function versionToAccessibleLink(version: GlobalVersion, index: number): AccessibleLinkProps {
+	function versionToAccessibleLink(version: GlobalVersion): AccessibleLinkProps {
 		const targetDoc = getVersionTargetDoc(version, activeDocContext);
 		return {
 			"label": version.label,
 			"to": `${targetDoc.path}${search}${hash}`,
 			"isActive": () => version === activeDocContext.activeVersion,
 			"onClick": () => savePreferredVersionName(version.name),
-			"aria-label": `Version ${version.label}, item ${index + 1} of ${versions.length}`,
-			"aria-setsize": versions.length,
-			"aria-posinset": index + 1,
+			// The link text alone ("v1", "v2") is ambiguous out of context, so name each item
+			// explicitly. Deliberately omit `aria-setsize`/`aria-posinset`: Docusaurus renders these
+			// items as `<a>` inside `<li>`, and those attributes are invalid on the implicit `link`
+			// role (axe `aria-allowed-attr`, WCAG 4.1.2). The surrounding list already exposes set
+			// size and position natively, so stating them here would also be announced twice.
+			"aria-label": `Version ${version.label}`,
 			"className": "version-dropdown__item",
 		};
 	}
 
 	const items: AccessibleLinkProps[] = [
 		...dropdownItemsBefore,
-		...versions.map((version, index) => versionToAccessibleLink(version, index)),
+		...versions.map((version) => versionToAccessibleLink(version)),
 		...dropdownItemsAfter,
 	];
 
