@@ -46,6 +46,11 @@ steps:
     - task: Bash@3
       name: InstallBuildTools
       displayName: Install Fluid Build Tools (from repo)
+      env:
+        NPM_CONFIG_USERCONFIG: $(NPM_CONFIG_USERCONFIG)
+        PNPM_CONFIG_MINIMUM_RELEASE_AGE: '0'
+        PNPM_CONFIG_TRUST_LOCKFILE: 'true'
+        PNPM_CONFIG_TRUST_POLICY: 'off'
       inputs:
         targetType: 'inline'
         workingDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/build-tools
@@ -64,6 +69,8 @@ steps:
     - task: Bash@3
       name: InstallBuildTools
       displayName: Install Fluid Build Tools (from npm)
+      env:
+        NPM_CONFIG_USERCONFIG: $(NPM_CONFIG_USERCONFIG)
       inputs:
         targetType: 'inline'
         workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}

@@ -52,6 +52,10 @@ stages:
 
     - task: Bash@3
       displayName: 'Install dependencies'
+      env:
+        NPM_CONFIG_USERCONFIG: $(NPM_CONFIG_USERCONFIG)
+        PNPM_CONFIG_MINIMUM_RELEASE_AGE: '0'
+        PNPM_CONFIG_TRUST_POLICY: 'off'
       inputs:
         targetType: 'inline'
         script: |
