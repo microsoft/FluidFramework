@@ -75,8 +75,8 @@ overrides:
   fast-uri: ^4.1.2
 
   diff@>=8 <9: ^8.0.3
-  js-yaml@<4: ^3.15.0
-  js-yaml@>=4: ^4.3.0
+  js-yaml@<4: 3.15.0
+  js-yaml@>=4: 4.3.0
   jws: ^3.2.3
   oclif>@aws-sdk/client-cloudfront: '-'
   oclif>@aws-sdk/client-s3: '-'

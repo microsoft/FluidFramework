@@ -115,8 +115,8 @@ overrides:
   oclif>@aws-sdk/client-s3: "-"
 
   # Resolve known js-yaml vulnerability (prototype pollution via merge keys).
-  js-yaml@<4: ^3.15.0
-  js-yaml@>=4: ^4.3.0
+  js-yaml@<4: 3.15.0
+  js-yaml@>=4: 4.3.0
 
   # Resolve known vulnerabilities in older versions.
   qs: ^6.15.2

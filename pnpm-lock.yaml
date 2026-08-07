@@ -37,8 +37,8 @@ overrides:
   brace-expansion@>=5 <6: ^5.0.8
   http-proxy-middleware@>=2 <3: ^2.0.10
   ip-address@>=9 <10: ^10.1.1
-  js-yaml@>=3 <4: ^3.15.0
-  js-yaml@>=4 <5: ^4.3.0
+  js-yaml@>=3 <4: 3.15.0
+  js-yaml@>=4 <5: 4.3.0
   keyv@>=4 <5: ^5.5.3
   launch-editor@>=2 <3: ^2.14.1
   on-headers@>=1 <2: ^1.1.0
