@@ -1411,8 +1411,8 @@ function generateEditedTreeScenarios(): Record<string, PalletArrayScenario> {
 	const scenarios: Record<string, PalletArrayScenario> = {};
 	const initialContentGenerator = (): Pallet[] => {
 		return [
-			new Pallet({ id: "detachingPallet⌚", boxes: [new Box({})] }),
-			new Pallet({ id: "attachedPallet⌚", boxes: [new Box({})] }),
+			new Pallet({ id: "detachingPallet⌚☠️", boxes: [new Box({})] }),
+			new Pallet({ id: "attachedPallet⌚❤️", boxes: [new Box({})] }),
 		];
 	};
 	function applyIntroAttachEdits(root: TreeArrayNode<typeof Pallet>) {
@@ -1431,7 +1431,7 @@ function generateEditedTreeScenarios(): Record<string, PalletArrayScenario> {
 		// Remove the detaching Pallet
 		root.removeAt(0);
 		// Remove the built Pallet
-		root.removeAt(-1);
+		root.removeAt(root.length - 1);
 	}
 	const getPallet = (
 		root: TreeArrayNode<typeof Pallet>,
@@ -1517,7 +1517,7 @@ function generateEditedTreeScenarios(): Record<string, PalletArrayScenario> {
 					continue;
 				}
 
-				const scenarioName = `detach from ${fieldKind} field under ${editLocation} and send detached node to ${detachDestination}`;
+				const scenarioName = `detach from ${fieldKind} field ${editLocation} and send detached node to ${detachDestination}`;
 				scenarios[scenarioName] = {
 					schema: PalletArray,
 					initialContent: initialContentGenerator,
@@ -1596,7 +1596,7 @@ function generateEditedTreeScenarios(): Record<string, PalletArrayScenario> {
 					continue;
 				}
 
-				const scenarioName = `attach node from ${attachSource} in ${fieldKind} field under ${editLocation}`;
+				const scenarioName = `take node ${attachSource} and attach it in ${fieldKind} field ${editLocation}`;
 				const extraBuilds = attachSource === NodeFlowEndpoint.DetachedBuiltRoot ? 1 : 0;
 				scenarios[scenarioName] = {
 					schema: PalletArray,
@@ -2657,7 +2657,7 @@ describe("transaction minimize post-processor", () => {
 		});
 	});
 
-	describe("minimizes edits to content that ends up detached", () => {
+	describe.only("minimizes edits to content that ends up detached", () => {
 		const endpointsUnderNodesThatEndUpDetached = new Set([
 			NodeFlowEndpoint.UnderDetachingPriorTree,
 			NodeFlowEndpoint.UnderDetachedPriorTree,
@@ -2669,7 +2669,7 @@ describe("transaction minimize post-processor", () => {
 			NodeFlowEndpoint.DetachedPriorRoot,
 		]);
 
-		for (const [scenarioName, scenario] of Object.entries(generateEditedTreeScenarios())) {
+		for (const [scenarioName, scenario] of Object.entries(editedDetachedTreeScenarios)) {
 			it(scenarioName, () => {
 				const { tree: unminimizedTree } = runScenario(scenario, {
 					doNotMinimize: true,

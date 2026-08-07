@@ -99,7 +99,7 @@ const detachNodes0Through10: DeltaFieldMap = new Map([
 	],
 ]);
 
-describe.only("getDeltaCensus", () => {
+describe("getDeltaCensus", () => {
 	describe(`counts nodes that go from ${NodeFlowEndpoint.DetachedPriorRoot}`, () => {
 		it(`to ${NodeFlowEndpoint.DetachedPriorRoot}`, () => {
 			const delta: DeltaRoot = {
