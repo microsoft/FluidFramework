@@ -26,6 +26,7 @@ import type {
 	ISnapshotFetchOptions,
 	FetchSource,
 	IDocumentStorageServicePolicies,
+	IStream,
 } from "@fluidframework/driver-definitions/internal";
 
 import type { IAudience } from "./audience.js";
@@ -480,6 +481,27 @@ export interface IContainerContext {
 	 * This contains all parts of a snapshot like blobContents, ops etc.
 	 */
 	readonly snapshotWithContents?: ISnapshot;
+}
+
+/**
+ * Internal extension of {@link IContainerContext} for capabilities the loader injects into the runtime
+ * that are not part of the public container/runtime contract.
+ *
+ * @internal
+ */
+export interface IContainerContextInternal extends IContainerContext {
+	/**
+	 * Reads a range of sequenced ops from delta storage, the read counterpart of `submitFn`. The container
+	 * owns delta storage and injects this so the runtime can pull historical ops (e.g. to resolve a batch
+	 * identity to a sequence number). `abortSignal` cancels an in-flight fetch when the runtime stops reading
+	 * early. The range is `[from, to)`: `from` is inclusive and `to` is exclusive. Optional: absent means the
+	 * runtime has no historical-op read.
+	 */
+	readonly fetchOps?: (
+		from: number,
+		to?: number,
+		abortSignal?: AbortSignal,
+	) => Promise<IStream<ISequencedDocumentMessage[]>>;
 }
 
 /**

@@ -66,6 +66,7 @@ import {
 	type ISequencedProposal,
 	type ISnapshotTree,
 	type ISummaryContent,
+	type IStream,
 	type IVersion,
 	MessageType,
 	type ISequencedDocumentMessage,
@@ -2312,6 +2313,23 @@ export class Container
 	}
 
 	/**
+	 * Read counterpart of `submitContainerMessage`. Connects per call so it always uses the current service
+	 * rather than a stale handle. Future: cache the handle (invalidated on reconnect, epoch change, or
+	 * disposal) if callers batch-resolve many marks.
+	 */
+	private async fetchOps(
+		from: number,
+		to?: number,
+		abortSignal?: AbortSignal,
+	): Promise<IStream<ISequencedDocumentMessage[]>> {
+		const deltaStorage = await this.service?.connectToDeltaStorage();
+		if (deltaStorage === undefined) {
+			throw new Error("Cannot fetch ops: delta storage is unavailable");
+		}
+		return deltaStorage.fetchMessages(from, to, abortSignal);
+	}
+
+	/**
 	 * Processes incoming delta messages
 	 * @param message - delta message received from the server
 	 */
@@ -2443,6 +2461,7 @@ export class Container
 					this.submitBatch(batch, referenceSequenceNumber),
 				submitSignalFn: (content, targetClientId) =>
 					this.submitSignal(content, targetClientId),
+				fetchOps: async (from, to, abortSignal) => this.fetchOps(from, to, abortSignal),
 				disposeFn: (error?: ICriticalContainerError) => this.dispose(error),
 				closeFn: (error?: ICriticalContainerError) => this.close(error),
 				updateDirtyContainerState: this.updateDirtyContainerState,

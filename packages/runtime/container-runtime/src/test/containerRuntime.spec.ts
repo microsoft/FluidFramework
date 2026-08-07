@@ -13,6 +13,7 @@ import {
 import {
 	ContainerErrorTypes,
 	type IContainerContext,
+	type IContainerContextInternal,
 	type IBatchMessage,
 	type IContainerStorageService,
 } from "@fluidframework/container-definitions/internal";
@@ -36,6 +37,7 @@ import {
 	type ISnapshotTree,
 	MessageType,
 	type ISequencedDocumentMessage,
+	type IStream,
 	type IVersion,
 	type FetchSource,
 	type IDocumentAttributes,
@@ -2886,6 +2888,116 @@ describe("Runtime", () => {
 				logger.assertMatchAny(
 					[{ eventName: "ContainerRuntime:DuplicateBatch" }],
 					"Expected DuplicateBatch telemetry to still be logged",
+				);
+			});
+		});
+
+		describe("Version mark inbound update", () => {
+			it("resolves historical ops through the context fetchOps pipeline", async () => {
+				let fetchArgs:
+					| { from: number; to: number | undefined; abortSignal: AbortSignal | undefined }
+					| undefined;
+				const ops = [
+					{
+						sequenceNumber: 1,
+						type: MessageType.NoOp,
+						clientId: "server",
+					},
+					{
+						sequenceNumber: 2,
+						type: MessageType.Operation,
+						// eslint-disable-next-line unicorn/no-null -- covers server-generated ops with no client id
+						clientId: null,
+					},
+					{
+						sequenceNumber: 3,
+						type: MessageType.Operation,
+						clientId: "historicalClient",
+						clientSequenceNumber: 7,
+						contents: JSON.stringify({
+							type: ContainerMessageType.Rejoin,
+							contents: undefined,
+						}),
+					},
+				] as ISequencedDocumentMessage[];
+				const context = {
+					...getMockContext(),
+					fetchOps: async (
+						from: number,
+						to?: number,
+						abortSignal?: AbortSignal,
+					): Promise<IStream<ISequencedDocumentMessage[]>> => {
+						fetchArgs = { from, to, abortSignal };
+						let read = false;
+						return {
+							async read() {
+								if (read) {
+									return { done: true };
+								}
+								read = true;
+								return { done: false, value: ops };
+							},
+						};
+					},
+				} satisfies Partial<IContainerContextInternal>;
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
+					context: context as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				assert.deepEqual(
+					await containerRuntime.versionMarkResolver.resolve("historicalClient_[7]", 0),
+					{ kind: "resolved", sequenceNumber: 3 },
+				);
+				assert.equal(fetchArgs?.from, 1);
+				assert.equal(fetchArgs?.to, undefined);
+				assert.equal(fetchArgs?.abortSignal?.aborted, true);
+			});
+
+			it("does not notify version-mark listeners when inbound validation throws", async () => {
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
+					context: getMockContext() as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				// Record every version-mark notification.
+				const notifications: [string, number][] = [];
+				containerRuntime.versionMarkResolver.onBatchSequenced((batchId, sequenceNumber) =>
+					notifications.push([batchId, sequenceNumber]),
+				);
+
+				// Simulate a validation failure (fork detection / pending-content mismatch):
+				// processInboundMessages throws for a batch that must be rejected.
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- patch a private field
+				(containerRuntime as any).pendingStateManager.processInboundMessages = (): never => {
+					throw new Error("inbound validation failed");
+				};
+
+				assert.throws(
+					() =>
+						containerRuntime.process(
+							{
+								sequenceNumber: 123,
+								type: MessageType.Operation,
+								contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+								metadata: { batchId: "batchId1" },
+							} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+							false,
+						),
+					/inbound validation failed/,
+					"the inbound batch should be rejected by validation",
+				);
+
+				// The version-mark update + notification run only after processInboundMessages validates,
+				// so a rejected batch must not have promoted a mark in an external store.
+				assert.deepEqual(
+					notifications,
+					[],
+					"no version-mark notification should fire for a batch validation rejected",
 				);
 			});
 		});
