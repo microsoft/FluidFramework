@@ -265,24 +265,20 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 	}
 
 	/**
-	 * Reads a file from the devcontainer ai-agent directories, checking
-	 * ai-agent-insiders/ first then ai-agent/ in both cwd and repoRoot.
+	 * Reads a file from the devcontainer ai-agent directory in both cwd and repoRoot.
 	 */
 	private async readDevcontainerFile(
 		repoRoot: string | undefined,
 		filename: string,
 	): Promise<string | undefined> {
-		const dirs = [".devcontainer/ai-agent-insiders", ".devcontainer/ai-agent"];
 		const candidates: string[] = [];
 		const seen = new Set<string>();
 		for (const base of [process.cwd(), repoRoot]) {
 			if (base === undefined) continue;
-			for (const dir of dirs) {
-				const candidate = resolve(base, dir, filename);
-				if (!seen.has(candidate)) {
-					seen.add(candidate);
-					candidates.push(candidate);
-				}
+			const candidate = resolve(base, ".devcontainer/ai-agent", filename);
+			if (!seen.has(candidate)) {
+				seen.add(candidate);
+				candidates.push(candidate);
 			}
 		}
 

@@ -45,6 +45,5 @@ jobs:
             echo "  .devcontainer/devcontainer.json"
             echo "  .devcontainer/lightweight/devcontainer.json"
             echo "  .devcontainer/ai-agent/devcontainer.json"
-            echo "  .devcontainer/ai-agent-insiders/devcontainer.json"
             exit 1
           fi
