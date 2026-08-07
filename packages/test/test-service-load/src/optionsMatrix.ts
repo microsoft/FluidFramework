@@ -116,6 +116,7 @@ export function generateRuntimeOptions(
 		enableRuntimeIdCompressor: ["on", undefined, "delayed"],
 		enableGroupedBatching: [true, false],
 		createBlobPayloadPending: [true, undefined],
+		inlineDetachedBlobsAsSummaryBlobs: [undefined],
 		explicitSchemaControl: [true, false],
 		disableSchemaUpgrade: [false],
 		stagingModeAutoFlushThreshold: [undefined],
