@@ -15,8 +15,8 @@ import {
 } from "../../codec/index.js";
 import {
 	type ChangeEncodingContext,
+	type ChangeDecodingContext,
 	type ChangeFamily,
-	type ChangeFamilyEditor,
 	type ChangeRebaser,
 	type ChangesetLocalId,
 	type DeltaDetachedNodeBuild,
@@ -47,6 +47,7 @@ import {
 	type RevisionReplacer,
 	comparePartialRevisions,
 	comparePartialChangesetLocalIds,
+	type ProcessChangeFn,
 } from "../../core/index.js";
 import {
 	type IdAllocationState,
@@ -119,7 +120,7 @@ import { pruneFieldMap } from "./prune.js";
  */
 export class ModularChangeFamily
 	implements
-		ChangeFamily<ModularEditBuilder, ModularChangeset>,
+		ChangeFamily<ModularEditBuilder, ModularChangeset, ModularChangeFamily>,
 		ChangeRebaser<ModularChangeset>
 {
 	public static readonly emptyChange: ModularChangeset = makeModularChangeset();
@@ -128,7 +129,11 @@ export class ModularChangeFamily
 
 	public constructor(
 		fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
-		public readonly codecs: ICodecFamily<ModularChangeset, ChangeEncodingContext>,
+		public readonly codecs: ICodecFamily<
+			ModularChangeset,
+			ChangeEncodingContext,
+			ChangeDecodingContext
+		>,
 		public readonly codecOptions: CodecWriteOptions,
 	) {
 		this.fieldKinds = fieldKinds;
@@ -136,6 +141,12 @@ export class ModularChangeFamily
 
 	public get rebaser(): ChangeRebaser<ModularChangeset> {
 		return this;
+	}
+
+	public buildProcessor(
+		processFn: ProcessChangeFn<ModularChangeset, ModularChangeFamily>,
+	): (change: ModularChangeset) => ModularChangeset {
+		return (change: ModularChangeset) => processFn(change, this);
 	}
 
 	/**
@@ -1317,7 +1328,12 @@ export class ModularChangeFamily
 		mintRevisionTag: () => RevisionTag,
 		changeReceiver: (change: TaggedChange<ModularChangeset>) => void,
 	): ModularEditBuilder {
-		return new ModularEditBuilder(this, this.fieldKinds, changeReceiver, this.codecOptions);
+		return new ModularEditBuilder(
+			this.rebaser,
+			this.fieldKinds,
+			changeReceiver,
+			this.codecOptions,
+		);
 	}
 
 	private createEmptyFieldChange(fieldKind: FieldKindIdentifier): FieldChange {
@@ -2111,12 +2127,12 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	private readonly codecOptions: CodecWriteOptions;
 
 	public constructor(
-		family: ChangeFamily<ChangeFamilyEditor, ModularChangeset>,
+		private readonly rebaser: ChangeRebaser<ModularChangeset>,
 		private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 		changeReceiver: (change: TaggedChange<ModularChangeset>) => void,
 		codecOptions: CodecWriteOptions,
 	) {
-		super(family, changeReceiver);
+		super(changeReceiver);
 		this.idAllocator = idAllocatorFromMaxId();
 		this.codecOptions = codecOptions;
 	}
@@ -2233,7 +2249,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		});
 		const revInfo = [...revisions].map((revision) => ({ revision }));
 		const composedChange: Mutable<ModularChangeset> = {
-			...this.changeFamily.rebaser.compose(changeMaps),
+			...this.rebaser.compose(changeMaps),
 			revisions: revInfo,
 		};
 

@@ -17,7 +17,7 @@ import {
 	omitMarkEffect,
 } from "./utils.js";
 import { MarkQueueBase } from "./markQueue.js";
-import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 export function filterEdits(
 	change: Changeset,

@@ -9,6 +9,7 @@ import { filterEdits } from "../../../feature-libraries/sequence-field/filterEdi
 import {
 	EditFilterStatus,
 	type FilterAttachResult,
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import {
 	areEqualChangeAtomIds,

@@ -1,5 +1,13 @@
 # @fluidframework/runtime-definitions
 
+## 2.114.0
+
+Dependency updates only.
+
+## 2.113.0
+
+Dependency updates only.
+
 ## 2.112.0
 
 ### Minor Changes

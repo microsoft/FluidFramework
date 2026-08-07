@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	makeAnonChange,
 	makeChangeAtomId,
@@ -19,7 +18,6 @@ import {
 	type DeltaRoot,
 	type FieldKindIdentifier,
 	type IEditableForest,
-	type RevisionTagCodec,
 	type TreeChunk,
 } from "../../core/index.js";
 import {
@@ -47,7 +45,6 @@ import { intoDelta } from "./modularChangeFamily.js";
 import type {
 	FieldChange,
 	FieldChangeMap,
-	FieldId,
 	ModularChangeset,
 	NodeChangeset,
 	NodeId,
@@ -75,7 +72,7 @@ import { pruneFieldMap } from "./prune.js";
  * future change.
  *
  * @param change - The change to minimize.
- * @param fieldKinds - The field kinds to delegate to when computing the change's delta.
+ * @param changeFamily - The change family used to compute the change's delta and identify built nodes.
  */
 export function minimizeModularChangeset(
 	change: ModularChangeset,
@@ -297,11 +294,7 @@ export function minimizeModularChangeset(
 	const changeForBuilds = filterEdits(change, filterEditsForBuildChange);
 	const deltaForBuilds = intoDelta(makeAnonChange(changeForBuilds), fieldKinds);
 	const forest = forestFactory();
-	const detachedFieldIndex = makeDetachedFieldIndex(
-		undefined,
-		undefined as unknown as RevisionTagCodec,
-		undefined as unknown as IIdCompressor,
-	);
+	const detachedFieldIndex = makeDetachedFieldIndex();
 
 	visitDelta(deltaForBuilds, forest.acquireVisitor(), detachedFieldIndex, undefined);
 	const squashedBuilds = newChangeAtomIdBTree<TreeChunk>();

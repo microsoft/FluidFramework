@@ -35,8 +35,6 @@ import {
 	chunkFromJsonableTrees,
 	failCodecFamily,
 	mintRevisionTag,
-	testIdCompressor,
-	testRevisionTagCodec,
 } from "../../utils.js";
 import { initializeForest } from "../initializeForest.js";
 
@@ -44,8 +42,7 @@ const codecOptions = {
 	jsonValidator: FormatValidatorBasic,
 	minVersionForCollab: FluidClientVersion.v2_0,
 };
-const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily, codecOptions);
-const family = defaultChangeFamily;
+const rebaser = new DefaultChangeFamily(failCodecFamily, codecOptions).rebaser;
 
 const rootKey = rootFieldKey;
 const fooKey = brand<FieldKey>("foo");
@@ -121,22 +118,13 @@ function initializeEditableForest(data?: JsonableTree): {
 } {
 	const forest = buildTestForest({ additionalAsserts: true });
 	if (data !== undefined) {
-		initializeForest(
-			forest,
-			cursorForJsonableTreeField([data]),
-			testRevisionTagCodec,
-			testIdCompressor,
-		);
+		initializeForest(forest, cursorForJsonableTreeField([data]));
 	}
 	const changes: TaggedChange<DefaultChangeset>[] = [];
 	const deltas: DeltaRoot[] = [];
-	const detachedFieldIndex = makeDetachedFieldIndex(
-		undefined,
-		testRevisionTagCodec,
-		testIdCompressor,
-	);
+	const detachedFieldIndex = makeDetachedFieldIndex();
 	const builder = new DefaultEditBuilder(
-		family,
+		rebaser,
 		mintRevisionTag,
 		(taggedChange) => {
 			changes.push(taggedChange);

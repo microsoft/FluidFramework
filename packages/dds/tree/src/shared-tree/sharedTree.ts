@@ -52,6 +52,7 @@ import {
 	TreeCompressionStrategy,
 	buildChunkedForest,
 	buildForest,
+	ComparisonForest,
 	defaultIncrementalEncodingPolicy,
 	defaultSchemaPolicy,
 	fieldBatchCodecBuilder,
@@ -105,6 +106,7 @@ import {
 	getCodecTreeForChangeFormat,
 	SharedTreeChangeFormatVersion,
 } from "./sharedTreeChangeCodecs.js";
+import type { SharedTreeChangeProcessingContext } from "./sharedTreeChangeFamily.js";
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
@@ -174,7 +176,11 @@ export type SharedTreeKernelView = Omit<ITreePrivate, keyof (IChannelView & IFlu
  */
 @breakingClass
 export class SharedTreeKernel
-	extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>
+	extends SharedTreeCore<
+		SharedTreeEditBuilder,
+		SharedTreeChange,
+		SharedTreeChangeProcessingContext
+	>
 	implements SharedKernel
 {
 	public readonly checkout: TreeCheckout;
@@ -219,13 +225,7 @@ export class SharedTreeKernel
 			idCompressor,
 			options.shouldEncodeIncrementally,
 		);
-		const revisionTagCodec = new RevisionTagCodec(idCompressor);
-		const removedRoots = makeDetachedFieldIndex(
-			"repair",
-			revisionTagCodec,
-			idCompressor,
-			options,
-		);
+		const removedRoots = makeDetachedFieldIndex("repair");
 		const schemaCodec = schemaCodecBuilder.build(options);
 		const schemaSummarizer = new SchemaSummarizer(
 			schema,
@@ -252,12 +252,11 @@ export class SharedTreeKernel
 			idCompressor,
 			healing:
 				options.healUnresolvableIdentifiersOnDecode === true
-					? { sharedObjectId: sharedObject.id }
+					? { sharedObjectId: sharedObject.id, logger }
 					: undefined,
 		});
 		const forestSummarizer = new ForestSummarizer(
 			forest,
-			revisionTagCodec,
 			encoderContext,
 			decoderContext,
 			options,
@@ -265,9 +264,12 @@ export class SharedTreeKernel
 			initialSequenceNumber,
 			options.shouldEncodeIncrementally,
 		);
+		const revisionTagCodec = new RevisionTagCodec(idCompressor);
 		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(
 			removedRoots,
-			options.minVersionForCollab,
+			revisionTagCodec,
+			idCompressor,
+			options,
 		);
 		const innerChangeFamily = new SharedTreeChangeFamily(
 			revisionTagCodec,
@@ -436,7 +438,11 @@ export class SharedTreeKernel
 
 	public override applyStashedOp(
 		...args: Parameters<
-			SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>["applyStashedOp"]
+			SharedTreeCore<
+				SharedTreeEditBuilder,
+				SharedTreeChange,
+				SharedTreeChangeProcessingContext
+			>["applyStashedOp"]
 		>
 	): void {
 		for (const checkout of this.checkouts.values()) {
@@ -596,6 +602,11 @@ export interface SharedTreeOptionsBeta extends ForestOptions, Partial<CodecWrite
 	 * Healed identifiers are written back out at the next summary in their stable UUID form,
 	 * so the inconsistency does not need to be re-healed on every load.
 	 *
+	 * When this flag is enabled, each time an unresolvable identifier is healed a
+	 * `HealUnresolvableIdentifierOnDecode` telemetry event is emitted (at
+	 * {@link @fluidframework/core-interfaces#LogLevelConst.info | LogLevel.info}) through the shared
+	 * object's logger, allowing applications to detect which documents actually required healing.
+	 *
 	 * Off by default because enabling it for documents that are not actually corrupt
 	 * would mask genuine bugs that otherwise surface as decode failures.
 	 *
@@ -739,12 +750,26 @@ export const ForestTypeOptimized = toForestType(
  * Includes validation with scales poorly.
  * May be asymptotically slower than {@link ForestTypeReference}, and may perform very badly with larger data sizes.
  * @privateRemarks
- * The "ObjectForest" forest type with expensive asserts for debugging.
+ * A {@link ComparisonForest} which uses the "ChunkedForest" forest type as its main forest and validates every delta
+ * against a reference "ObjectForest" (with expensive asserts enabled for schema validation).
+ * This exercises the optimized forest while asserting that its contents stay consistent with the reference implementation.
  * @beta
  */
 export const ForestTypeExpensiveDebug = toForestType(
-	(breaker: Breakable, schema: TreeStoredSchemaSubscription) =>
-		buildForest(breaker, schema, undefined, true),
+	(
+		breaker: Breakable,
+		schema: TreeStoredSchemaSubscription,
+		idCompressor: IIdCompressor,
+		shouldEncodeIncrementally: IncrementalEncodingPolicy,
+	) =>
+		new ComparisonForest(
+			buildChunkedForest(
+				makeTreeChunker(schema, defaultSchemaPolicy, shouldEncodeIncrementally),
+				undefined,
+				idCompressor,
+			),
+			buildForest(breaker, schema, undefined, true),
+		),
 );
 
 type ForestFactory = (

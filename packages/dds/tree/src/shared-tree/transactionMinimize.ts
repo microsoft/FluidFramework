@@ -13,7 +13,10 @@ import {
 import { ChangeProcessorApplicability } from "../shared-tree-core/index.js";
 import type { TransactionPostProcessor } from "../simple-tree/index.js";
 
-import { mapDataChanges } from "./sharedTreeChangeFamily.js";
+import {
+	mapDataChanges,
+	type SharedTreeChangeProcessingContext,
+} from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import { createTransactionPostProcessor } from "./transactionPostProcessor.js";
 import { Breakable } from "../util/index.js";
@@ -31,7 +34,10 @@ import { Breakable } from "../util/index.js";
  *
  * Schema changes are left unchanged.
  */
-function minimizeSharedTreeChange(change: SharedTreeChange): SharedTreeChange {
+function minimizeSharedTreeChange(
+	change: SharedTreeChange,
+	context: SharedTreeChangeProcessingContext,
+): SharedTreeChange {
 	const countOfDataChanges = change.changes.filter(
 		(innerChange) => innerChange.type === "data",
 	).length;

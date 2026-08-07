@@ -151,13 +151,24 @@ All workspace `pnpm-workspace.yaml` files include security-hardening settings to
 
 | Setting | Value | Purpose |
 |---------|-------|---------|
-| `minimumReleaseAge` | 1440 | Block packages published less than 24 hours ago |
+| `minimumReleaseAge` | 0 | See "Why `minimumReleaseAge` 0" |
 | `resolutionMode` | highest | Use highest matching version (see explanation below) |
 | `blockExoticSubdeps` | true | Block transitive deps from using git/tarball sources |
 | `trustPolicy` | no-downgrade | Fail if package trust/verification level decreases |
 | `trustPolicyExclude` | [] | Packages excluded from `trustPolicy` enforcement (see note below) |
 | `strictDepBuilds` | true | Require explicit approval for dependency build scripts |
 
+### Why `minimumReleaseAge` 0
+
+The default value for this setting is 1440 (1 day).
+The azure artifact feeds that are used by internal developers and our PR/CI pipelines already have similar built-in protections against recently released packages.
+Specifically, these feeds quaratine recently released packages based on risk profile (on the order of 1 to 7 days, where packages with install-time scripts are quaratined for longer).
+
+Unfortunately, artifact feeds do not preserve package publish time when ingesting a package from npmjs upstream.
+Rather, they record when the package was first added to the downstream artifact feed.
+Therefore using a nonzero value here may arbitrarily block internal developers from installing a package until an additional delay period after they first try to install it.
+
+This does not solve the issue that users of the public registry can make changes which can get through CI and merge but include dependencies internal developers cannot install: such cases are expected to be uncommon and for now will require case by case handling to avoid or fix.
 ### Why `resolutionMode: highest` instead of `time-based`
 
 We would prefer to use `resolutionMode: time-based` to avoid pulling in the newest packages from npm. This delays ingestion of newly published packages, which helps avoid supply chain attacks.
@@ -171,7 +182,7 @@ However, with `resolutionMode: time-based`, the "anchor" time for a transitive d
 
 This behavior is desired. However, pnpm does NOT attempt downward resolution to find a version that works (e.g., 1.0.0). Instead, it throws an error with no automatic fallback.
 
-With `resolutionMode: highest`, we still get protection from `minimumReleaseAge: 1440`, which blocks any package published within the last 24 hours. This provides supply chain protection without the transitive dependency resolution issues.
+With `resolutionMode: highest`, Microsoft devs and infrastructure still get protection from installing packages via internal artifacts feeds.
 
 ### Trust Policy Exclusions (`trustPolicyExclude`)
 

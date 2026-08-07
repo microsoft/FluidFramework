@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { TextAsTree } from "@fluidframework/tree/internal";
+import { PlainText } from "@fluidframework/tree/internal";
 import { act, renderHook } from "@testing-library/react";
 import globalJsdom from "global-jsdom";
 
@@ -23,14 +23,14 @@ describe("useTreeSynchronizedString", () => {
 	});
 
 	it("returns the tree's current text", () => {
-		const text = TextAsTree.Tree.fromString("Hello");
+		const text = PlainText.Tree.fromString("Hello");
 		const { result } = renderHook(() => useTreeSynchronizedString(text));
 
 		assert.equal(result.current.text, "Hello");
 	});
 
 	it("syncs character changes into the returned text", () => {
-		const text = TextAsTree.Tree.fromString("Hello");
+		const text = PlainText.Tree.fromString("Hello");
 		const { result } = renderHook(() => useTreeSynchronizedString(text));
 
 		act(() => text.insertAt(5, " World"));
@@ -41,8 +41,8 @@ describe("useTreeSynchronizedString", () => {
 	});
 
 	it("re-seeds the text when a different tree is bound", () => {
-		const treeA = TextAsTree.Tree.fromString("A");
-		const treeB = TextAsTree.Tree.fromString("B");
+		const treeA = PlainText.Tree.fromString("A");
+		const treeB = PlainText.Tree.fromString("B");
 		const { result, rerender } = renderHook(({ tree }) => useTreeSynchronizedString(tree), {
 			initialProps: { tree: treeA },
 		});
@@ -54,7 +54,7 @@ describe("useTreeSynchronizedString", () => {
 
 	describe("selection", () => {
 		it("adjusts the tracked selection across edits", () => {
-			const text = TextAsTree.Tree.fromString("Hello");
+			const text = PlainText.Tree.fromString("Hello");
 			// Caret after "Hello".
 			const { result } = renderHook(() =>
 				useTreeSynchronizedString(text, { start: 5, end: 5 }),
@@ -67,7 +67,7 @@ describe("useTreeSynchronizedString", () => {
 		});
 
 		it("collapses the selection to an empty range when its text is deleted", () => {
-			const text = TextAsTree.Tree.fromString("Hello");
+			const text = PlainText.Tree.fromString("Hello");
 			// Select the whole word.
 			const { result } = renderHook(() =>
 				useTreeSynchronizedString(text, { start: 0, end: 5 }),
@@ -79,7 +79,7 @@ describe("useTreeSynchronizedString", () => {
 		});
 
 		it("pulls the selection back within bounds after a shrinking edit", () => {
-			const text = TextAsTree.Tree.fromString("Hello World");
+			const text = PlainText.Tree.fromString("Hello World");
 			// Select "World".
 			const { result } = renderHook(() =>
 				useTreeSynchronizedString(text, { start: 6, end: 11 }),
@@ -92,7 +92,7 @@ describe("useTreeSynchronizedString", () => {
 		});
 
 		it("leaves the selection undefined when none was provided", () => {
-			const text = TextAsTree.Tree.fromString("Hello");
+			const text = PlainText.Tree.fromString("Hello");
 			const { result } = renderHook(() => useTreeSynchronizedString(text));
 
 			assert.equal(result.current.selection, undefined);

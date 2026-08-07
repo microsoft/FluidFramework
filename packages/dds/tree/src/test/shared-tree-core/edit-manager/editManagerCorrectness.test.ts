@@ -8,13 +8,14 @@ import { strict as assert } from "node:assert";
 import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils";
 import type { SessionId } from "@fluidframework/id-compressor";
 
-import type { ChangeFamily, ChangeFamilyEditor, RevisionTag } from "../../../core/index.js";
+import type { ChangeFamilyEditor, GraphCommit, RevisionTag } from "../../../core/index.js";
 import type {
 	Commit,
 	EditManager,
 	SharedTreeBranch,
 } from "../../../shared-tree-core/index.js";
 import { brand, makeArray } from "../../../util/index.js";
+import type { TestChangeFamily } from "../../testChange.js";
 import { NoOpChangeRebaser, TestChange } from "../../testChange.js";
 import { mintRevisionTag } from "../../utils.js";
 
@@ -26,7 +27,7 @@ const peer1: SessionId = "1" as SessionId;
 const peer2: SessionId = "2" as SessionId;
 
 export function testCorrectness(): void {
-	describe("Correctness", () => {
+	describe("Rebasing Correctness", () => {
 		describe("Unit Tests", () => {
 			runUnitTestScenario(
 				"Can handle non-concurrent local changes being sequenced immediately",
@@ -890,14 +891,225 @@ export function testCorrectness(): void {
 			});
 		});
 	});
+	describe("Eventing Correctness", () => {
+		it("the main branch should not emit a sequencing event for local commits that are not yet sequenced", () => {
+			// Setup
+			const { manager } = testChangeEditManagerFactory({});
+			const main = manager.getLocalBranch("main");
+			const emitted: GraphCommit<TestChange>[] = [];
+			main.events.on("commitSequenced", (commit) => {
+				emitted.push(commit);
+			});
+
+			// Act
+			applyLocalCommit(manager);
+
+			// Verify
+			assert.deepStrictEqual(emitted, []);
+		});
+		it("the main branch should not emit a sequencing event for sequenced commits from peers", () => {
+			// Setup
+			const { manager } = testChangeEditManagerFactory({});
+			const main = manager.getLocalBranch("main");
+			const emitted: GraphCommit<TestChange>[] = [];
+			main.events.on("commitSequenced", (commit) => {
+				emitted.push(commit);
+			});
+
+			// Act
+			const peerCommit1 = peerCommit();
+			manager.addSequencedChanges(
+				[peerCommit1],
+				peerCommit1.sessionId,
+				brand(1),
+				brand(0),
+				"main",
+			);
+
+			// Verify
+			assert.deepStrictEqual(emitted, []);
+		});
+		it("the main branch should emit a sequencing event for commits that are sequenced without being rebased", () => {
+			// Setup
+			const { manager } = testChangeEditManagerFactory({});
+			const main = manager.getLocalBranch("main");
+			const emitted: GraphCommit<TestChange>[] = [];
+			main.events.on("commitSequenced", (commit) => {
+				emitted.push(commit);
+			});
+			applyLocalCommit(manager);
+			const localCommit = main.getHead();
+
+			// Act
+			manager.addSequencedChanges(
+				[localCommit],
+				manager.localSessionId,
+				brand(1),
+				brand(0),
+				"main",
+			);
+
+			// Verify
+			assert.deepStrictEqual(emitted, [localCommit]);
+		});
+		it("the main branch should emit a sequencing event for commits that are sequenced after being rebased", () => {
+			// Setup
+			const { manager } = testChangeEditManagerFactory({});
+			const main = manager.getLocalBranch("main");
+			const emitted: GraphCommit<TestChange>[] = [];
+			main.events.on("commitSequenced", (commit) => {
+				emitted.push(commit);
+			});
+
+			applyLocalCommit(manager);
+			const localCommitV1 = main.getHead();
+
+			const peerCommit1 = peerCommit();
+			manager.addSequencedChanges(
+				[peerCommit1],
+				peerCommit1.sessionId,
+				brand(1),
+				brand(0),
+				"main",
+			);
+
+			const localCommitV2 = main.getHead();
+
+			// Self-check: the local commit should have been rebased onto the peer commit
+			assert.equal(localCommitV1.revision, localCommitV2.revision);
+			assert.notEqual(localCommitV1, localCommitV2);
+
+			// Act
+			manager.addSequencedChanges(
+				[localCommitV1],
+				manager.localSessionId,
+				brand(1),
+				brand(0),
+				"main",
+			);
+
+			// Verify
+			// The rebased version of the local commit should be emitted, not the original version
+			assert.deepStrictEqual(emitted, [localCommitV2]);
+		});
+		it("a fork that does not have the sequenced commit should not emit a sequencing event", () => {
+			// Setup
+			const { manager } = testChangeEditManagerFactory({});
+			const main = manager.getLocalBranch("main");
+			const fork = main.fork();
+			const emittedOnFork: GraphCommit<TestChange>[] = [];
+			fork.events.on("commitSequenced", (commit) => {
+				emittedOnFork.push(commit);
+			});
+
+			// note: the fork is created before this commit is applied, so it will not have that commit
+			applyLocalCommit(manager);
+
+			// Act
+			const mainCommit = main.getHead();
+			manager.addSequencedChanges(
+				[mainCommit],
+				manager.localSessionId,
+				brand(1),
+				brand(0),
+				"main",
+			);
+
+			// Verify
+			assert.deepStrictEqual(emittedOnFork, []);
+		});
+		it("a fork that has a different version of the sequenced commit should not emit a sequencing event", () => {
+			const { manager } = testChangeEditManagerFactory({});
+			const main = manager.getLocalBranch("main");
+
+			// note: the fork is created after this commit is applied, so it will have that commit
+			applyLocalCommit(manager);
+			const localCommitV1 = main.getHead();
+
+			const fork = main.fork();
+			const emittedOnFork: GraphCommit<TestChange>[] = [];
+			fork.events.on("commitSequenced", (commit) => {
+				emittedOnFork.push(commit);
+			});
+
+			const peerCommit1 = peerCommit();
+			manager.addSequencedChanges(
+				[peerCommit1],
+				peerCommit1.sessionId,
+				brand(1),
+				brand(0),
+				"main",
+			);
+
+			// Self-check: the fork and main branches should have different versions of the local commit
+			const localCommitV2 = main.getHead();
+			assert.equal(localCommitV1.revision, localCommitV2.revision);
+			assert.equal(fork.getHead(), localCommitV1);
+
+			// Act
+			manager.addSequencedChanges(
+				[localCommitV2],
+				manager.localSessionId,
+				brand(2),
+				brand(0),
+				"main",
+			);
+
+			// Verify
+			assert.deepStrictEqual(emittedOnFork, []);
+		});
+		it("a fork that has the same version of the sequenced commit should emit a sequencing event", () => {
+			const { manager } = testChangeEditManagerFactory({});
+			const main = manager.getLocalBranch("main");
+
+			// note: the fork is created after this commit is applied, so it will have commit A
+			applyLocalCommit(manager);
+			const localCommitA = main.getHead();
+
+			const fork = main.fork();
+			const emittedOnFork: GraphCommit<TestChange>[] = [];
+			fork.events.on("commitSequenced", (commit) => {
+				emittedOnFork.push(commit);
+			});
+
+			// note: the fork is created before this commit is applied, so it will not have commit B yet
+			applyLocalCommit(manager);
+			const localCommitB = main.getHead();
+
+			// Act
+			manager.addSequencedChanges(
+				[localCommitA],
+				manager.localSessionId,
+				brand(1),
+				brand(0),
+				"main",
+			);
+
+			// Verify
+			assert.deepStrictEqual(emittedOnFork, [localCommitA]);
+
+			// Setup
+			// Make the fork acquire commit B by rebasing it onto the main branch
+			fork.rebaseOnto(main);
+
+			// Act
+			emittedOnFork.length = 0;
+			manager.addSequencedChanges(
+				[localCommitB],
+				manager.localSessionId,
+				brand(2),
+				brand(0),
+				"main",
+			);
+
+			// Verify
+			assert.deepStrictEqual(emittedOnFork, [localCommitB]);
+		});
+	});
 }
 
 function applyLocalCommit(
-	manager: EditManager<
-		ChangeFamilyEditor,
-		TestChange,
-		ChangeFamily<ChangeFamilyEditor, TestChange>
-	>,
+	manager: EditManager<ChangeFamilyEditor, TestChange>,
 	inputContext: readonly number[] = [],
 	intention: number | number[] = [],
 ): Commit<TestChange> {
@@ -905,7 +1117,7 @@ function applyLocalCommit(
 }
 
 function applyBranchCommit(
-	branch: SharedTreeBranch<ChangeFamilyEditor, TestChange>,
+	branch: SharedTreeBranch<ChangeFamilyEditor, TestChange, TestChangeFamily>,
 	inputContext: readonly number[] = [],
 	intention: number | number[] = [],
 ): Commit<TestChange> {
@@ -923,7 +1135,7 @@ function applyBranchCommit(
 }
 
 function peerCommit(
-	peer: typeof peer1 | typeof peer2,
+	peer: typeof peer1 | typeof peer2 = peer1,
 	inputContext: readonly number[] = [],
 	intention: number | number[] = [],
 ): Commit<TestChange> {
@@ -935,7 +1147,7 @@ function peerCommit(
 }
 
 function trackTrimmed(
-	branch: SharedTreeBranch<ChangeFamilyEditor, TestChange>,
+	branch: SharedTreeBranch<ChangeFamilyEditor, TestChange, TestChangeFamily>,
 ): ReadonlySet<RevisionTag> {
 	const trimmedCommits = new Set<RevisionTag>();
 	branch.events.on("ancestryTrimmed", (trimmedRevisions) => {
