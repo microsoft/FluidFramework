@@ -96,12 +96,12 @@ export class SchematizingSimpleTreeView<
 	private flexTreeContext: Context | undefined;
 
 	/**
-	 * Undefined only when uninitialized or disposed.
+	 * Undefined if and only if uninitialized or disposed.
 	 */
 	private currentCompatibility: SchemaCompatibilityStatus | undefined;
 	/**
 	 * Cached map of upgrade statuses, computed alongside compatibility.
-	 * @remarks `undefined` only when uninitialized or disposed.
+	 * @remarks Undefined if and only if uninitialized or disposed.
 	 */
 	private currentEnabledUpgrades: ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus> | undefined;
 	public readonly events: Listenable<TreeViewEvents & TreeBranchEvents> &
