@@ -2461,7 +2461,7 @@ export class Container
 					this.submitBatch(batch, referenceSequenceNumber),
 				submitSignalFn: (content, targetClientId) =>
 					this.submitSignal(content, targetClientId),
-				fetchOps: (from, to, abortSignal) => this.fetchOps(from, to, abortSignal),
+				fetchOps: async (from, to, abortSignal) => this.fetchOps(from, to, abortSignal),
 				disposeFn: (error?: ICriticalContainerError) => this.dispose(error),
 				closeFn: (error?: ICriticalContainerError) => this.close(error),
 				updateDirtyContainerState: this.updateDirtyContainerState,
