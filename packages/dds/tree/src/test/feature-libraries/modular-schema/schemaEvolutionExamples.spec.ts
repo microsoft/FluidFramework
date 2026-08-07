@@ -80,7 +80,7 @@ describe("Schema Evolution Examples", () => {
 			// nor did we provide an adapter capable of handling empty roots.
 			// This means our application is unable to view this document.
 			// And since the view schema currently excludes empty roots, its also incompatible for upgrading:
-			assert.deepEqual(compat, { canView: false, canUpgrade: false, isEquivalent: false });
+			assert.deepEqual(compat, { canView: false, canUpgrade: false, isEquivalent: false, enabledUpgrades: new Set() });
 
 			// This is where the app would inform the user that the document
 			// is not compatible with their version of the application.
@@ -142,7 +142,7 @@ describe("Schema Evolution Examples", () => {
 			];
 			assert.deepEqual(report, []);
 			// It is now possible to write our date into the document.
-			assert.deepEqual(compatNew, { canView: true, canUpgrade: true, isEquivalent: true });
+			assert.deepEqual(compatNew, { canView: true, canUpgrade: true, isEquivalent: true, enabledUpgrades: new Set() });
 
 			// Now lets imagine some time passes, and the developers want to add a second content type:
 
@@ -163,7 +163,7 @@ describe("Schema Evolution Examples", () => {
 
 			// With this new schema, we can load the document just like before:
 			const compat2 = checkSchemaCompatibility(viewSchema3, stored);
-			assert.deepEqual(compat2, { canView: false, canUpgrade: true, isEquivalent: false });
+			assert.deepEqual(compat2, { canView: false, canUpgrade: true, isEquivalent: false, enabledUpgrades: new Set() });
 
 			// This is the same case as above where we can choose to do a schema update if we want:
 			assert(stored.tryUpdateTreeSchema(positionedCanvasItem2));
@@ -171,7 +171,7 @@ describe("Schema Evolution Examples", () => {
 
 			// And recheck compat:
 			const compat3 = checkSchemaCompatibility(viewSchema3, stored);
-			assert.deepEqual(compat3, { canView: true, canUpgrade: true, isEquivalent: true });
+			assert.deepEqual(compat3, { canView: true, canUpgrade: true, isEquivalent: true, enabledUpgrades: new Set() });
 		}
 	});
 

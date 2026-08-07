@@ -60,6 +60,7 @@ import {
 	toUpgradeSchema,
 	type TreeBranchAlpha,
 	type TreeSchema,
+	type SchemaUpgrade,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -94,9 +95,14 @@ export class SchematizingSimpleTreeView<
 	private flexTreeContext: Context | undefined;
 
 	/**
-	 * Undefined iff uninitialized or disposed.
+	 * Undefined only when uninitialized or disposed.
 	 */
 	private currentCompatibility: SchemaCompatibilityStatus | undefined;
+	/**
+	 * Cached set of enabled schema upgrades, computed alongside compatibility.
+	 * @remarks `undefined` only when uninitialized or disposed.
+	 */
+	private currentEnabledUpgrades: ReadonlySet<SchemaUpgrade> | undefined;
 	public readonly events: Listenable<TreeViewEvents & TreeBranchEvents> &
 		IEmitter<TreeViewEvents & TreeBranchEvents> &
 		HasListeners<TreeViewEvents & TreeBranchEvents> = createEmitter();
@@ -154,9 +160,7 @@ export class SchematizingSimpleTreeView<
 		const stagedUpgradePolicy =
 			config instanceof TreeViewConfigurationAlpha ? config.stagedUpgradePolicy : undefined;
 		const configAlpha = new TreeViewConfigurationAlpha({
-			schema: config.schema,
-			enableSchemaValidation: config.enableSchemaValidation,
-			preventAmbiguity: config.preventAmbiguity,
+			...config,
 			stagedUpgradePolicy,
 		});
 		this.stagedUpgradePolicy = configAlpha.stagedUpgradePolicy;
@@ -207,7 +211,7 @@ export class SchematizingSimpleTreeView<
 		}
 
 		this.runSchemaEdit(() => {
-			const schema = toInitialSchema(this.config.schema, this.stagedUpgradePolicy);
+			const schema = toInitialSchema(this.config.schema, this.effectiveUpgradePolicy);
 			// This has to be the contextless version, since when "initialize" is called (right after this),
 			// it will do a schema change which would dispose of the current context (see inside `update`).
 			// Thus using the current context (if any) would hydrate nodes then
@@ -265,7 +269,7 @@ export class SchematizingSimpleTreeView<
 	public upgradeSchema(): void {
 		this.ensureUndisposed();
 
-		const newSchema = toUpgradeSchema(this.viewSchema.root, this.stagedUpgradePolicy);
+		const newSchema = toUpgradeSchema(this.viewSchema.root, this.effectiveUpgradePolicy);
 		const storedSchema = this.checkout.storedSchema.clone();
 		if (!allowsRepoSuperset(defaultSchemaPolicy, storedSchema, newSchema)) {
 			throw new UsageError(
@@ -278,6 +282,33 @@ export class SchematizingSimpleTreeView<
 		}
 
 		this.runSchemaEdit(() => this.checkout.updateSchema(newSchema));
+	}
+
+	public isStagedUpgradeEnabled(upgrade: SchemaUpgrade): boolean {
+		this.ensureUndisposed();
+		if (this.currentEnabledUpgrades === undefined) {
+			// Force computation if not yet computed (shouldn't normally happen after init).
+			this.currentCompatibility = this.computeCompatibility();
+		}
+		return this.currentEnabledUpgrades?.has(upgrade) ?? false;
+	}
+
+	/**
+	 * Returns an effective upgrade policy that includes both the configured `stagedUpgradePolicy`
+	 * and any upgrades already enabled in the current stored schema.
+	 * This ensures that initialize/upgradeSchema never regresses already-enabled upgrades.
+	 */
+	private get effectiveUpgradePolicy(): StagedSchemaUpgradePolicy {
+		const base = this.stagedUpgradePolicy;
+		const enabled = this.currentEnabledUpgrades;
+		if (enabled === undefined || enabled.size === 0) {
+			return base;
+		}
+		return {
+			includeStaged: (upgrade) => base.includeStaged(upgrade) || enabled.has(upgrade),
+			includeStagedOptional: (upgrade) =>
+				base.includeStagedOptional(upgrade) || enabled.has(upgrade),
+		};
 	}
 
 	/**
@@ -437,12 +468,16 @@ export class SchematizingSimpleTreeView<
 		}
 	}
 
+	/**
+	 * Computes the current schema compatibility status and updates the cached enabled upgrades.
+	 */
 	private computeCompatibility(): SchemaCompatibilityStatus {
-		const compatibility = checkSchemaCompatibility(
+		const { enabledUpgrades, ...compatibility } = checkSchemaCompatibility(
 			this.viewSchema,
 			this.checkout.storedSchema,
 			this.stagedUpgradePolicy,
 		);
+		this.currentEnabledUpgrades = enabledUpgrades;
 		return {
 			...compatibility,
 			canInitialize: canInitialize(this.checkout),
@@ -496,6 +531,7 @@ export class SchematizingSimpleTreeView<
 		}
 		this.checkout.forest.anchors.slots.delete(ViewSlot);
 		this.currentCompatibility = undefined;
+		this.currentEnabledUpgrades = undefined;
 		this.onDispose?.();
 		if (!this.checkout.isSharedBranch && !this.checkout.disposed) {
 			// All non-shared branches are 1:1 with views, so if a user manually disposes a view, we should also dispose the checkout/branch.

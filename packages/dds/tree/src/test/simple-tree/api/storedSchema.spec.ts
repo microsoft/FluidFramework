@@ -66,6 +66,7 @@ describe("simple-tree storedSchema", () => {
 						isEquivalent: true,
 						canView: true,
 						canUpgrade: true,
+						enabledUpgrades: new Set(),
 					});
 				});
 			}
