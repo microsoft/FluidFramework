@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
+import {
+	Uint8ArrayToArrayBuffer,
+	Uint8ArrayToString,
+	stringToBuffer,
+} from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	type ISummaryBlob,
@@ -90,7 +94,12 @@ function convertCreateNewSummaryTreeToTreeAndBlobsCore(
 						: summaryObject.content;
 				const blobId = uuid();
 				treeNode.blobs[key] = blobId;
-				blobs.set(blobId, contentBuffer);
+				blobs.set(
+					blobId,
+					contentBuffer instanceof Uint8Array
+						? Uint8ArrayToArrayBuffer(contentBuffer)
+						: contentBuffer,
+				);
 				break;
 			}
 			case SummaryType.Handle:

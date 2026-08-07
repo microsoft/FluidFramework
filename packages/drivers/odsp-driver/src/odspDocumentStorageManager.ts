@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { performanceNow } from "@fluid-internal/client-utils";
+import { Uint8ArrayToArrayBuffer, performanceNow } from "@fluid-internal/client-utils";
 import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils/internal";
 import { promiseRaceWithWinner } from "@fluidframework/driver-base/internal";
@@ -158,7 +158,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 						this.epochTracker.fetchAndParseAsJSON<ICreateBlobResponse>(
 							url,
 							{
-								body: file,
+								body: Uint8ArrayToArrayBuffer(new Uint8Array(file)),
 								headers,
 								method,
 							},
