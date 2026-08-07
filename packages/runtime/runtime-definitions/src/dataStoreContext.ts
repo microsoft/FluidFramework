@@ -27,7 +27,7 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
-import type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
+import type { OldestSupportedClientVersion } from "./compatibilityDefinitions.js";
 import type { ContainerExtensionProvider } from "./containerExtensionProvider.js";
 import type {
 	IFluidDataStoreFactory,
@@ -589,7 +589,7 @@ export interface IFluidParentContext
 	 * Consumed by {@link @fluidframework/container-runtime#FluidDataStoreContext}.
 	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details.
 	 */
-	readonly minVersionForCollab: MinimumVersionForCollab;
+	readonly minVersionForCollab: OldestSupportedClientVersion;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	readonly storage: IRuntimeStorageService;
 	readonly baseLogger: ITelemetryBaseLogger;

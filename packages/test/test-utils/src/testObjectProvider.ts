@@ -29,7 +29,7 @@ import {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import { isOdspResolvedUrl } from "@fluidframework/odsp-driver/internal";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/internal";
 import {
 	createChildLogger,
 	createMultiSinkLogger,
@@ -272,7 +272,7 @@ export interface ITestContainerConfig {
 	 * Minimum version of the FF runtime that is required to collaborate on new documents.
 	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details.
 	 */
-	minVersionForCollab?: MinimumVersionForCollab | undefined;
+	minVersionForCollab?: OldestSupportedClientVersion | undefined;
 }
 
 /**

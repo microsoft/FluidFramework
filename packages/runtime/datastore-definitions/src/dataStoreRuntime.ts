@@ -19,7 +19,7 @@ import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitio
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
 	IInboundSignalMessage,
-	MinimumVersionForCollab,
+	OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
 
 import type { IChannel } from "./channel.js";
@@ -228,5 +228,5 @@ export interface IFluidDataStoreRuntimeInternalConfig {
 	 * {@link @fluidframework/datastore-definitions#IChannelFactory}).
 	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details.
 	 */
-	readonly minVersionForCollab?: MinimumVersionForCollab;
+	readonly minVersionForCollab?: OldestSupportedClientVersion;
 }
