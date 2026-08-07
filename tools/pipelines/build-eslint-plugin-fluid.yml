@@ -90,6 +90,7 @@ extends:
   parameters:
     publish: ${{ variables.publish }}
     publishOverride: ${{ parameters.publishOverride }}
+    publishAsPartOfBuild: false
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: ${{ variables.FluidFrameworkDirectory }}/common/build/eslint-plugin-fluid

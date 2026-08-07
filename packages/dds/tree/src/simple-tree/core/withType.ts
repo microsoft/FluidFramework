@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// Used by doc links:
-// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
+// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports -- Used by doc links
 import type { TreeAlpha } from "../../shared-tree/index.js";
 
 import type { TreeNode } from "./treeNode.js";

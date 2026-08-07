@@ -10,7 +10,7 @@ import {
 	type TextEditorProps,
 } from "@fluidframework/react/internal";
 import {
-	type TextAsTree,
+	type PlainText,
 	TreeAlpha,
 	utf16LengthForCodePoints,
 } from "@fluidframework/tree/internal";
@@ -27,17 +27,17 @@ import { runGuarded } from "../shared/index.js";
  */
 export interface MainViewProps extends TextEditorProps {
 	/** The plain text tree to edit. */
-	readonly root: PropTreeNode<TextAsTree.Tree>;
+	readonly root: PropTreeNode<PlainText.Tree>;
 }
 
 type MainViewPropsInner = Omit<MainViewProps, "root"> & {
-	readonly root: TextAsTree.Tree;
+	readonly root: PlainText.Tree;
 };
 
 /**
  * A React component for plain text editing.
  * @remarks
- * Uses {@link @fluidframework/tree#TextAsTree.Tree} for the data-model and Quill for the UI.
+ * Uses {@link @fluidframework/tree#PlainText.Tree} for the data-model and Quill for the UI.
  * Pass an `undoRedo` prop to enable undo/redo buttons scoped to this editor's transactions.
  * @internal
  */
@@ -53,11 +53,11 @@ export const MainView: FC<MainViewProps> = ({ root, undoRedo, editLabel }) => {
 
 /**
  * The text editor view component with Quill integration.
- * Uses TextAsTree for collaborative plain text storage.
+ * Uses PlainText for collaborative plain text storage.
  *
  * @remarks
  * Subscribes to incremental character-level deltas from the tree via
- * {@link @fluidframework/tree#TextAsTree.Members.onCharactersChanged} to apply
+ * {@link @fluidframework/tree#PlainText.Members.onCharactersChanged} to apply
  * remote changes through {@link https://quilljs.com/docs/delta/ | Quill Delta} without
  * a full setText on every change.
  */
@@ -112,13 +112,14 @@ const TextEditorView: FC<MainViewPropsInner> = ({ root, undoRedo, editLabel }) =
 		const handleTextChange = (_delta: unknown, _oldDelta: unknown, source: string): void => {
 			if (source !== "user") return;
 			runGuarded(isUpdatingRef, () => {
+				const text = quill.getText(0, quill.getLength() - 1);
 				const context = TreeAlpha.context(root);
 				if (context.isBranch()) {
-					context.runTransaction(() => syncTextToTree(root, quill.getText()), {
+					context.runTransaction(() => syncTextToTree(root, text), {
 						label: editLabelRef.current,
 					});
 				} else {
-					syncTextToTree(root, quill.getText());
+					syncTextToTree(root, text);
 				}
 			});
 		};

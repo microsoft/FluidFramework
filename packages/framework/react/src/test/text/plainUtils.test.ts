@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { TextAsTree, TreeAlpha } from "@fluidframework/tree/internal";
+import { PlainText, TreeAlpha } from "@fluidframework/tree/internal";
 import {
 	independentView,
 	TreeViewConfiguration,
@@ -176,14 +176,14 @@ describe("plainUtils", () => {
 	});
 
 	describe("syncTextToTree", () => {
-		function createTextView(initial: string): TreeViewAlpha<typeof TextAsTree.Tree> {
-			const view = independentView(new TreeViewConfiguration({ schema: TextAsTree.Tree }));
-			view.initialize(TextAsTree.Tree.fromString(initial));
+		function createTextView(initial: string): TreeViewAlpha<typeof PlainText.Tree> {
+			const view = independentView(new TreeViewConfiguration({ schema: PlainText.Tree }));
+			view.initialize(PlainText.Tree.fromString(initial));
 			return view;
 		}
 
 		it("replaces the tree's content with the new text", () => {
-			const root = TextAsTree.Tree.fromString("hello");
+			const root = PlainText.Tree.fromString("hello");
 			syncTextToTree(root, "hello world");
 			assert.equal(root.fullString(), "hello world");
 		});

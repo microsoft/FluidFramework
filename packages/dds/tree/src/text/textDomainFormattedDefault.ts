@@ -9,7 +9,7 @@ import type {
 	InsertableTreeNodeFromImplicitAllowedTypes,
 } from "../simple-tree/index.js";
 
-import { FormattedTextAsTree } from "./textDomainFormatted.js";
+import { FormattedText } from "./textDomainFormatted.js";
 
 /**
  * Schema factory for default formatted text types which are not generic.
@@ -25,21 +25,18 @@ const defaultFormat = {
 } as const;
 
 /**
- * A default parameterization of the generic {@link FormattedTextAsTree} with hard-coded assumptions about what kind of embedded content and what kind of formatting is supported.
+ * A default parameterization of the generic {@link FormattedText} with hard-coded assumptions about what kind of embedded content and what kind of formatting is supported.
  * @remarks
- * It is unlikely this meets the needs of most users, but it can serve as an unstable example of how to use the generic {@link FormattedTextAsTree}.
+ * It is unlikely this meets the needs of most users, but it can serve as an unstable example of how to use the generic {@link FormattedText}.
  * @internal
  */
-export namespace FormattedTextAsTreeDefault {
+export namespace FormattedTextDefault {
 	/**
 	 * Portion of a string with formatting.
 	 * @sealed
 	 * @internal
 	 */
-	export type FormattedAtom = FormattedTextAsTree.FormattedAtom<
-		CharacterFormat,
-		StringAtomContent
-	>;
+	export type FormattedAtom = FormattedText.FormattedAtom<CharacterFormat, StringAtomContent>;
 
 	/**
 	 * Formatting options for characters.
@@ -74,7 +71,7 @@ export namespace FormattedTextAsTreeDefault {
 		"codeBlock",
 	]);
 	/**
-	 * {@inheritdoc FormattedTextAsTreeDefault.(LineTag:variable)}
+	 * {@inheritdoc FormattedTextDefault.(LineTag:variable)}
 	 * @sealed
 	 * @internal
 	 */
@@ -104,12 +101,9 @@ export namespace FormattedTextAsTreeDefault {
 	 * @sealed
 	 * @internal
 	 */
-	export const StringAtomContent = [
-		FormattedTextAsTree.StringTextAtom,
-		StringLineAtom,
-	] as const;
+	export const StringAtomContent = [FormattedText.StringTextAtom, StringLineAtom] as const;
 	/**
-	 * {@inheritdoc FormattedTextAsTreeDefault.(StringAtomContent:variable)}
+	 * {@inheritdoc FormattedTextDefault.(StringAtomContent:variable)}
 	 * @sealed
 	 * @internal
 	 */
@@ -120,19 +114,16 @@ export namespace FormattedTextAsTreeDefault {
 	 * @sealed
 	 * @internal
 	 */
-	export type Statics<TTree = Tree> = FormattedTextAsTree.Statics<
-		TTree,
-		typeof CharacterFormat
-	>;
+	export type Statics<TTree = Tree> = FormattedText.Statics<TTree, typeof CharacterFormat>;
 
 	/**
-	 * Insertable shape for a formatted text atom used by {@link FormattedTextAsTree.Members.insertWithFormattingAt}.
+	 * Insertable shape for a formatted text atom used by {@link FormattedText.Members.insertWithFormattingAt}.
 	 * @sealed
 	 * @internal
 	 */
-	export type FormattedAtomInsertable = FormattedTextAsTree.FormattedAtom<
+	export type FormattedAtomInsertable = FormattedText.FormattedAtom<
 		InsertableTreeNodeFromImplicitAllowedTypes<typeof CharacterFormat>,
-		InsertableTreeNodeFromImplicitAllowedTypes<FormattedTextAtoms>
+		InsertableTreeNodeFromImplicitAllowedTypes<TextAtomSchemas>
 	>;
 
 	/**
@@ -142,17 +133,15 @@ export namespace FormattedTextAsTreeDefault {
 	 * @sealed
 	 * @internal
 	 */
-	export type FormattedTextAtoms = FormattedTextAsTree.FormattedTextAtoms<
-		[typeof StringLineAtom]
-	>;
+	export type TextAtomSchemas = FormattedText.TextAtomSchemas<[typeof StringLineAtom]>;
 
 	/**
-	 * The schema produced using {@link FormattedTextAsTree.createSchema} with hard-coded assumptions
+	 * The schema produced using {@link FormattedText.createSchema} with hard-coded assumptions
 	 * about what kind of embedded content and what kind of formatting is supported.
 	 * @sealed
 	 * @internal
 	 */
-	export class Tree extends FormattedTextAsTree.createSchema(
+	export class Tree extends FormattedText.createSchema(
 		sf,
 		CharacterFormat,
 		[StringLineAtom],

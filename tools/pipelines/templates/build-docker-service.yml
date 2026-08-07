@@ -53,6 +53,16 @@ parameters:
     type: string
     default: default
 
+  # Indicates who owns the publish step for this build:
+  #   true  - publishing happens as part of this build pipeline's own publish stages.
+  #   false - publishing is delegated to the dedicated publish pipeline, which consumes the packed tarballs
+  #           and publish-metadata.json produced here.
+  # This is recorded in publish-metadata.json so the publish pipeline can tell which runs it owns.
+  # Deliberately has no default: every pipeline must state which side owns its publishing, so that a search
+  # for `publishAsPartOfBuild: true` is an accurate list of what has not been migrated yet.
+  - name: publishAsPartOfBuild
+    type: boolean
+
   - name: tagName
     type: string
     default:
@@ -137,6 +147,11 @@ parameters:
 
   # Whether the docker build for this package includes a bump of the package version.
   - name: dockerBuildBumpsVersion
+    type: boolean
+    default: false
+
+  # Whether to append the pushed Docker candidate's digest to publish-metadata.json.
+  - name: emitDockerImageDigest
     type: boolean
     default: false
 
@@ -250,6 +265,7 @@ extends:
                 isReleaseGroup=${{ parameters.isReleaseGroup }}
                 installPackages=${{ parameters.installPackages }}
                 installWorkspaceRootOnly=${{ parameters.installWorkspaceRootOnly }}
+                emitDockerImageDigest=${{ parameters.emitDockerImageDigest }}
                 releaseKind=${{ parameters.releaseKind }}
                 setVersion=${{ parameters.setVersion }}
                 shouldPublishNpmPackages=${{ parameters.shouldPublishNpmPackages }}
@@ -366,6 +382,22 @@ extends:
                 echo "$(containerTagSuffix)"
                 echo "##vso[task.setvariable variable=version;isOutput=true]$(containerTagSuffix)"
 
+        # GitSSH has no npm package or base image stage, but its downstream Docker publisher still consumes
+        # the common pack artifact and publish metadata contract.
+        - ${{ if and(eq(parameters.tagName, 'gitssh'), eq(parameters.emitDockerImageDigest, true)) }}:
+          - task: Bash@3
+            displayName: Create publish artifact directory
+            inputs:
+              targetType: inline
+              script: |
+                set -eu -o pipefail
+                mkdir -p $(hostPathToPackArtifact)
+
+          - template: /tools/pipelines/templates/include-generate-publish-metadata.yml@self
+            parameters:
+              publishOverride: ${{ parameters.publishOverride }}
+              publishAsPartOfBuild: ${{ parameters.publishAsPartOfBuild }}
+
         - task: Bash@3
           name: DockerBuildArgs
           displayName: Set docker build arguments
@@ -478,6 +510,7 @@ extends:
                   publishOverride: skip
                 ${{ else }}:
                   publishOverride: ${{ parameters.publishOverride }}
+                publishAsPartOfBuild: ${{ parameters.publishAsPartOfBuild }}
 
           # At this point we want to publish the artifact with npm-packed packages, but as part of 1ES migration that's
           # now part of templateContext.outputs below.
@@ -613,6 +646,9 @@ extends:
               localImage: $(containerTag)
               remoteImage: $(ComputeFinalTagList.FinalTagList)
 
+          - ${{ if eq(parameters.emitDockerImageDigest, true) }}:
+            - template: /tools/pipelines/templates/include-add-docker-image-digest.yml@self
+
         - ${{ if eq(parameters.installPackages, true) }}:
           # Prune the pnpm store before it's cached. This removes any deps that are not used by the current build.
           - task: Bash@3
@@ -651,14 +687,14 @@ extends:
     # This is also true if the releaseKind is 'npm' (meaning we only want to publish the npm packages).
     # But if the releaseKind is 'docker' (meaning we only want to publish the docker images, not the npm packages),
     # then those steps should tag the repo.
-    - ${{ if and(eq(parameters.shouldPublishNpmPackages, true), ne(parameters.releaseKind, 'docker')) }}:
+    - ${{ if and(eq(parameters.publishAsPartOfBuild, true), eq(parameters.shouldPublishNpmPackages, true), ne(parameters.releaseKind, 'docker')) }}:
       - template: /tools/pipelines/templates/include-publish-npm-package.yml@self
         parameters:
           tagName: ${{ parameters.tagName }}
           isReleaseGroup: ${{ parameters.isReleaseGroup }}
           buildDirectory: ${{ parameters.buildDirectory }}
 
-    - ${{ if eq(parameters.shouldReleaseDockerImage, true) }}:
+    - ${{ if and(eq(parameters.publishAsPartOfBuild, true), eq(parameters.shouldReleaseDockerImage, true)) }}:
       - stage: publish_docker_official
         dependsOn: build
         displayName: Publish Official Docker Image

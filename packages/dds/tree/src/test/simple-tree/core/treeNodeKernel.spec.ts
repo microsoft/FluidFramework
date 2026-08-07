@@ -387,9 +387,6 @@ describe("array node delta in nodeChanged", () => {
 	});
 
 	it("delta contains retain before insert for insert at middle position", () => {
-		// The sequence-field encoder strips trailing no-op marks, so elements after the
-		// insertion point are not included as a trailing retain — consumers should treat
-		// the remainder of the array as implicitly retained.
 		const myArray = hydrate(MyArray, [1, 2, 3]);
 
 		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
@@ -403,12 +400,11 @@ describe("array node delta in nodeChanged", () => {
 		assert.deepEqual(deltas[0], [
 			{ type: "retain", count: 1 },
 			{ type: "insert", count: 1 },
+			{ type: "retain", count: 2 },
 		]);
 	});
 
 	it("delta contains retain and remove for removeAt from middle of array", () => {
-		// The sequence-field encoder strips trailing no-op marks, so the element after the
-		// removed position is not included as a trailing retain.
 		const myArray = hydrate(MyArray, [1, 2, 3]);
 
 		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
@@ -422,11 +418,11 @@ describe("array node delta in nodeChanged", () => {
 		assert.deepEqual(deltas[0], [
 			{ type: "retain", count: 1 },
 			{ type: "remove", count: 1 },
+			{ type: "retain", count: 1 },
 		]);
 	});
 
-	it("insert at position 0 produces no leading retain", () => {
-		// Sparse encoding: no retain is emitted before the insert when operating at the start.
+	it("insert at position 0 retains the unchanged suffix", () => {
 		const myArray = hydrate(MyArray, [1, 2, 3]);
 
 		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
@@ -437,11 +433,13 @@ describe("array node delta in nodeChanged", () => {
 		myArray.insertAt(0, 99);
 
 		assert.equal(deltas.length, 1);
-		assert.deepEqual(deltas[0], [{ type: "insert", count: 1 }]);
+		assert.deepEqual(deltas[0], [
+			{ type: "insert", count: 1 },
+			{ type: "retain", count: 3 },
+		]);
 	});
 
-	it("remove at position 0 produces no leading retain", () => {
-		// Sparse encoding: no retain is emitted before the remove when operating at the start.
+	it("remove at position 0 retains the unchanged suffix", () => {
 		const myArray = hydrate(MyArray, [1, 2, 3]);
 
 		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
@@ -452,7 +450,10 @@ describe("array node delta in nodeChanged", () => {
 		myArray.removeAt(0);
 
 		assert.equal(deltas.length, 1);
-		assert.deepEqual(deltas[0], [{ type: "remove", count: 1 }]);
+		assert.deepEqual(deltas[0], [
+			{ type: "remove", count: 1 },
+			{ type: "retain", count: 2 },
+		]);
 	});
 
 	it("object node nodeChanged does not include delta", () => {
@@ -534,6 +535,7 @@ describe("array node delta in nodeChanged", () => {
 		assert.deepEqual(deltas[0], [
 			{ type: "retain", count: 1 },
 			{ type: "insert", count: 3 },
+			{ type: "retain", count: 1 },
 		]);
 	});
 
@@ -551,6 +553,7 @@ describe("array node delta in nodeChanged", () => {
 		assert.deepEqual(deltas[0], [
 			{ type: "retain", count: 1 },
 			{ type: "remove", count: 3 },
+			{ type: "retain", count: 1 },
 		]);
 	});
 
@@ -715,8 +718,13 @@ describe("array move events", () => {
 					{ type: "insert", count: 1 },
 				],
 			]);
-			// Source: the moved element is removed from position 0.
-			assert.deepEqual(delta2, [[{ type: "remove", count: 1 }]]);
+			// Source: remove the moved element, then retain the remaining element.
+			assert.deepEqual(delta2, [
+				[
+					{ type: "remove", count: 1 },
+					{ type: "retain", count: 1 },
+				],
+			]);
 		});
 
 		it("moveRangeToEnd emits correct count in remove and insert ops", () => {

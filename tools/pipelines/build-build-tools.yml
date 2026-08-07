@@ -101,6 +101,7 @@ extends:
   parameters:
     publish: ${{ variables.publish }}
     publishOverride: ${{ parameters.publishOverride }}
+    publishAsPartOfBuild: false
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     interdependencyRange: ${{ parameters.interdependencyRange }}
