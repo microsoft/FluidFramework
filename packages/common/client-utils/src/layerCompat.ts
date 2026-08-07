@@ -10,11 +10,10 @@
 export type FluidLayer = "loader" | "driver" | "runtime" | "dataStore";
 
 /**
- * Loader support for serializing and capturing detached attachment blobs that
- * the runtime stores as summary blobs.
+ * Loader support for preserving arbitrary binary snapshot blobs in serialized state.
  * @internal
  */
-export const supportsInlinedDetachedBlobSummary = "supportsInlinedDetachedBlobSummary";
+export const supportsBinarySnapshotBlobs = "supportsBinarySnapshotBlobs";
 
 /**
  * The policy for compatibility windows that a layer uses to validate compatibility with another layer.

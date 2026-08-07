@@ -327,7 +327,6 @@ class BlobOnlyStorage implements IDocumentStorageService {
 // need to make sure the blob redirect table is saved.
 const blobsTreeName = ".blobs";
 const redirectTableBlobName = ".redirectTable";
-const inlinedAttachmentBlobManifestName = ".inlinedAttachmentBlobs";
 
 /**
  * Get blob contents of a snapshot tree from storage (or, ideally, cache)
@@ -371,23 +370,17 @@ async function getBlobContentsFromTreeCore(
 	return Promise.all(treePs);
 }
 
-// Save the structural BlobManager blobs, but not attachment payloads.
+// Save the redirect table from .blobs tree but nothing else.
 async function getBlobManagerTreeFromTree(
 	tree: ISnapshotTree,
 	blobs: ISerializableBlobContents,
 	storage: Pick<IDocumentStorageService, "readBlob">,
 ): Promise<void> {
-	const redirectTableId = tree.blobs[redirectTableBlobName];
-	assert(
-		redirectTableId !== undefined,
-		0x9ce /* id is undefined in getBlobManagerTreeFromTree */,
-	);
-	for (const id of [redirectTableId, tree.blobs[inlinedAttachmentBlobManifestName]]) {
-		if (id !== undefined) {
-			const blob = await storage.readBlob(id);
-			// ArrayBufferLike will not survive JSON.stringify()
-			blobs[id] = bufferToString(blob, "utf8");
-		}
+	const id = tree.blobs[redirectTableBlobName];
+	if (id !== undefined) {
+		const blob = await storage.readBlob(id);
+		// ArrayBufferLike will not survive JSON.stringify()
+		blobs[id] = bufferToString(blob, "utf8");
 	}
 }
 
@@ -422,22 +415,16 @@ function getBlobContentsFromTreeWithBlobContentsCore(
 	}
 }
 
-// Save the structural BlobManager blobs, but not attachment payloads.
+// Save the redirect table from .blobs tree but nothing else.
 function getBlobManagerTreeFromTreeWithBlobContents(
 	tree: ISnapshotTreeWithBlobContents,
 	blobs: ISerializableBlobContents,
 ): void {
-	const redirectTableId = tree.blobs[redirectTableBlobName];
-	assert(
-		redirectTableId !== undefined,
-		0x9cf /* id is undefined in getBlobManagerTreeFromTreeWithBlobContents */,
-	);
-	for (const id of [redirectTableId, tree.blobs[inlinedAttachmentBlobManifestName]]) {
-		if (id !== undefined) {
-			const blob = tree.blobsContents?.[id];
-			assert(blob !== undefined, 0x70f /* Blob must be present in blobsContents */);
-			// ArrayBufferLike will not survive JSON.stringify()
-			blobs[id] = bufferToString(blob, "utf8");
-		}
+	const id = tree.blobs[redirectTableBlobName];
+	if (id !== undefined) {
+		const blob = tree.blobsContents?.[id];
+		assert(blob !== undefined, 0x70f /* Blob must be present in blobsContents */);
+		// ArrayBufferLike will not survive JSON.stringify()
+		blobs[id] = bufferToString(blob, "utf8");
 	}
 }

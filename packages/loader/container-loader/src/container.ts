@@ -9,7 +9,6 @@ import {
 	TypedEventEmitter,
 	performanceNow,
 	type ILayerCompatDetails,
-	Uint8ArrayToArrayBuffer,
 } from "@fluid-internal/client-utils";
 import {
 	AttachState,
@@ -138,10 +137,6 @@ import {
 	tryInitializeMemoryDetachedBlobStorage,
 	type MemoryDetachedBlobStorage,
 } from "./memoryBlobStorage.js";
-import {
-	getInlinedAttachmentBlobIds,
-	wireFormatConstants,
-} from "./captureReferencedContents.js";
 import { NoopHeuristic } from "./noopHeuristic.js";
 import { pkgVersion } from "./packageVersion.js";
 import type { IQuorumSnapshot } from "./protocol/index.js";
@@ -1206,11 +1201,9 @@ export class Container
 			attachingData === undefined ? undefined : this.runtime.getPendingLocalState();
 		assert(!isPromiseLike(pendingRuntimeState), 0x8e3 /* should not be a promise */);
 
-		const { baseSnapshot, snapshotBlobs } = convertISnapshotToSnapshotWithBlobs(snapshot);
 		const detachedContainerState: IPendingDetachedContainerState = {
 			attached: false,
-			baseSnapshot,
-			snapshotBlobs,
+			...convertISnapshotToSnapshotWithBlobs(snapshot),
 			pendingRuntimeState,
 			hasAttachmentBlobs:
 				this.detachedBlobStorage !== undefined && this.detachedBlobStorage.size > 0,
@@ -1306,10 +1299,6 @@ export class Container
 						setAttachmentData,
 						createAttachmentSummary,
 						createOrGetStorageService,
-						inlineDetachedBlobsAsSummaryBlobs:
-							this.mc.config.getBoolean(
-								"Fluid.Container.InlineDetachedBlobsAsSummaryBlobs",
-							) === true,
 					});
 
 					// only enable the new behavior if the config is set
@@ -1830,18 +1819,6 @@ export class Container
 			attachmentBlobContents,
 			snapshotSequenceNumber: 0,
 		});
-		const inlinedAttachmentBlobIds = getInlinedAttachmentBlobIds(
-			snapshot.snapshotTree.trees[wireFormatConstants.blobsTreeName],
-			snapshot.blobContents,
-		);
-		if (this.detachedBlobStorage !== undefined) {
-			for (const [detachedStorageId, blobId] of inlinedAttachmentBlobIds) {
-				if (!snapshot.blobContents.has(blobId)) {
-					const content = await this.detachedBlobStorage.readBlob(detachedStorageId);
-					snapshot.blobContents.set(blobId, Uint8ArrayToArrayBuffer(new Uint8Array(content)));
-				}
-			}
-		}
 
 		this.storageAdapter.cacheSnapshotBlobs(snapshot.blobContents);
 		const attributes = await getDocumentAttributes(this.storageAdapter, snapshot.snapshotTree);

@@ -35,8 +35,8 @@ import Sinon from "sinon";
 import { ContainerRuntime } from "../containerRuntime.js";
 import { pkgVersion } from "../packageVersion.js";
 import {
+	loaderFeaturesForBinarySnapshotBlobs,
 	loaderSupportRequirementsForRuntime,
-	loaderFeaturesForInlinedDetachedBlobSummary,
 	validateLoaderCompatibility,
 	validateDatastoreCompatibility,
 	dataStoreSupportRequirementsForRuntime,
@@ -286,7 +286,7 @@ describe("Runtime Layer compatibility", () => {
 			});
 		}
 
-		it("requires loader support for inlined detached blob summaries when requested", () => {
+		it("requires loader support for binary snapshot blob serialization when requested", () => {
 			const disposeFn = Sinon.fake();
 			const loaderCompatDetails: ILayerCompatDetails = {
 				pkgVersion,
@@ -299,11 +299,11 @@ describe("Runtime Layer compatibility", () => {
 						loaderCompatDetails,
 						disposeFn,
 						mc,
-						loaderFeaturesForInlinedDetachedBlobSummary,
+						loaderFeaturesForBinarySnapshotBlobs,
 					),
 				(error: Error) =>
 					validateFailureProperties(error, true, loaderCompatDetails.generation, "loader", [
-						...loaderFeaturesForInlinedDetachedBlobSummary,
+						...loaderFeaturesForBinarySnapshotBlobs,
 					]),
 			);
 			assert(disposeFn.calledOnce);

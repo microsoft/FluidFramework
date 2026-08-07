@@ -17,6 +17,7 @@ import type { ISerializableBlobContents } from "../containerStorageAdapter.js";
 import { wireFormatConstants } from "../captureReferencedContents.js";
 import type { SerializedSnapshotInfo } from "../serializedStateManager.js";
 import {
+	convertISnapshotToSnapshotWithBlobs,
 	convertSnapshotInfoToSnapshot,
 	convertSnapshotToSnapshotInfo,
 	getDocumentAttributes,
@@ -197,7 +198,7 @@ describe("container-loader utils", () => {
 						[wireFormatConstants.blobsTreeName]: {
 							blobs: {},
 							trees: {
-								".inline_0": {
+								[`${wireFormatConstants.inlinedAttachmentBlobTreePrefix}0`]: {
 									blobs: {
 										[wireFormatConstants.inlinedAttachmentBlobContentName]: binaryBlobId,
 									},
@@ -226,6 +227,30 @@ describe("container-loader utils", () => {
 				new Uint8Array(restored.blobContents.get(binaryBlobId) ?? new ArrayBuffer(0)),
 				new Uint8Array(binaryBlob),
 			);
+		});
+
+		it("preserves known ordinary attachment blobs as base64", () => {
+			const binaryBlobId = "attachment-blob";
+			const binaryBlob = new Uint8Array([0xff, 0x00, 0x80]).buffer;
+			const binarySnapshot: ISnapshot = {
+				snapshotTree: {
+					blobs: { attachment: binaryBlobId },
+					trees: {},
+				},
+				blobContents: new Map([[binaryBlobId, binaryBlob]]),
+				ops: [],
+				sequenceNumber: 123,
+				latestSequenceNumber: undefined,
+				snapshotFormatV: 1,
+			};
+			const serialized = convertISnapshotToSnapshotWithBlobs(
+				binarySnapshot,
+				new Set([binaryBlobId]),
+			);
+			assert.deepStrictEqual(serialized.snapshotBlobs, {});
+			assert.deepStrictEqual(serialized.attachmentBlobContents, {
+				[binaryBlobId]: bufferToString(binaryBlob, "base64"),
+			});
 		});
 	});
 });

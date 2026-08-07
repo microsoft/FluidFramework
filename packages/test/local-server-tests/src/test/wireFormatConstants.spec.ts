@@ -11,7 +11,7 @@ import {
 	blobsTreeName,
 	inlinedAttachmentBlobContentName,
 	inlinedAttachmentBlobGroupIdPrefix,
-	inlinedAttachmentBlobManifestName,
+	inlinedAttachmentBlobTreePrefix,
 	redirectTableBlobName,
 } from "@fluidframework/container-runtime/internal";
 import {
@@ -37,7 +37,7 @@ describe("wireFormatConstants contract", () => {
 			redirectTableBlobName,
 			inlinedAttachmentBlobContentName,
 			inlinedAttachmentBlobGroupIdPrefix,
-			inlinedAttachmentBlobManifestName,
+			inlinedAttachmentBlobTreePrefix,
 			blobManagerBasePath,
 			gcTreeKey,
 			gcBlobPrefix,

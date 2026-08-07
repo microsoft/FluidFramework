@@ -46,10 +46,9 @@ import {
 	extractBlobAttachReferences,
 	inlineAttachmentBlobsByReference,
 	parseGcSnapshotData,
-	pruneUnreferencedInlinedAttachmentBlobs,
 	readReferencedSnapshotBlobs,
 	snapshotHasLoadingGroups,
-	unreferencedAttachmentBlobLocalIds,
+	deletedAttachmentBlobLocalIds,
 	type IBlobAttachReference,
 } from "./captureReferencedContents.js";
 import { DebugLogger } from "./debugLogger.js";
@@ -523,8 +522,9 @@ export interface ICaptureFullContainerStateProps {
  *
  * Reachability respects GC. Snapshot subtrees flagged `unreferenced: true`
  * are skipped (their contents are not inlined). Attachment blobs that GC has
- * marked unreferenced, tombstoned, or deleted are skipped. When the snapshot
- * has no GC tree (GC disabled or pre-GC document), no filtering is applied.
+ * permanently deleted are skipped. Unreferenced and tombstoned blobs are
+ * retained because post-snapshot ops may revive them. When the snapshot has
+ * no GC tree (GC disabled or pre-GC document), no filtering is applied.
  *
  * Blob reads on load hit the `ContainerStorageAdapter` cache populated from
  * the captured `snapshotBlobs` map, so a frozen loader can serve the full
@@ -621,11 +621,6 @@ export async function captureFullContainerState({
 			readReferencedSnapshotBlobs(snapshot, storage), // utf8 encoded
 			captureReferencedAttachmentBlobs(baseSnapshot, storage, gcData), // base64 encoded
 		]);
-		const capturedBaseSnapshot = pruneUnreferencedInlinedAttachmentBlobs(
-			baseSnapshot,
-			snapshotBlobs,
-			gcData,
-		);
 
 		const deltaStorage = await documentService.connectToDeltaStorage();
 		const opsStream = deltaStorage.fetchMessages(
@@ -658,7 +653,7 @@ export async function captureFullContainerState({
 			const added = await inlineAttachmentBlobsByReference(
 				postSnapshotBlobReferences,
 				storage,
-				unreferencedAttachmentBlobLocalIds(gcData),
+				deletedAttachmentBlobLocalIds(gcData),
 				attachmentBlobContents,
 			);
 			Object.assign(attachmentBlobContents, added);
@@ -666,7 +661,7 @@ export async function captureFullContainerState({
 
 		const pendingState: IPendingContainerState = {
 			attached: true,
-			baseSnapshot: capturedBaseSnapshot,
+			baseSnapshot,
 			snapshotBlobs,
 			attachmentBlobContents:
 				Object.keys(attachmentBlobContents).length === 0 ? undefined : attachmentBlobContents,

@@ -35,7 +35,7 @@ export {
 	blobsTreeName,
 	inlinedAttachmentBlobContentName,
 	inlinedAttachmentBlobGroupIdPrefix,
-	inlinedAttachmentBlobManifestName,
+	inlinedAttachmentBlobTreePrefix,
 	redirectTableBlobName,
 } from "./blobManager/index.js";
 export type { IDataStoreAliasMessage } from "./dataStore.js";

@@ -355,17 +355,19 @@ function isPendingDetachedContainerState(
  * @param snapshot - The ISnapshot to convert.
  * @returns A SnapshotWithBlobs containing the base snapshot and serialized blob contents.
  */
-export function convertISnapshotToSnapshotWithBlobs(snapshot: ISnapshot): SnapshotWithBlobs {
+export function convertISnapshotToSnapshotWithBlobs(
+	snapshot: ISnapshot,
+	binaryBlobIds?: ReadonlySet<string>,
+): SnapshotWithBlobs {
 	const snapshotBlobs: ISerializableBlobContents = {};
 	const attachmentBlobContents: IBase64BlobContents = {};
 	const inlinedAttachmentBlobIds = new Set(
 		getInlinedAttachmentBlobIds(
 			snapshot.snapshotTree.trees[wireFormatConstants.blobsTreeName],
-			snapshot.blobContents,
 		).values(),
 	);
 	for (const [id, blob] of snapshot.blobContents.entries()) {
-		if (inlinedAttachmentBlobIds.has(id)) {
+		if (inlinedAttachmentBlobIds.has(id) || binaryBlobIds?.has(id) === true) {
 			attachmentBlobContents[id] = bufferToString(blob, "base64");
 		} else {
 			snapshotBlobs[id] = bufferToString(blob, "utf8");

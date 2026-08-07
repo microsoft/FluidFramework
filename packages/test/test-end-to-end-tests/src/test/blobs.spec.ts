@@ -13,6 +13,7 @@ import {
 	itExpects,
 } from "@fluid-private/test-version-utils";
 import { AttachState } from "@fluidframework/container-definitions";
+import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
@@ -28,8 +29,10 @@ import {
 	ChannelFactoryRegistry,
 	ITestContainerConfig,
 	ITestObjectProvider,
+	createSummarizer,
 	createTestConfigProvider,
 	getContainerEntryPointBackCompat,
+	summarizeNow,
 	waitForContainerConnection,
 	timeoutPromise,
 } from "@fluidframework/test-utils/internal";
@@ -546,6 +549,50 @@ describeCompat(
 			assert.deepStrictEqual(
 				[...new Uint8Array(await loadedDataStore._root.get("second").get())],
 				[...second],
+			);
+		});
+
+		it("preserves an inlined blob through a later summary", async () => {
+			const loader = provider.makeTestLoader({
+				...testContainerConfig,
+				loaderProps,
+			});
+			const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+			const dataStore = (await container.getEntryPoint()) as ITestDataObject;
+			const expected = new Uint8Array([0xff, 0x80, 0x01]);
+			dataStore._root.set("blob", await dataStore._runtime.uploadBlob(expected.buffer));
+			await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
+			const url = await container.getAbsoluteUrl("");
+			assert(url !== undefined);
+
+			const fresh = await loader.resolve({ url });
+			const { summarizer } = await createSummarizer(provider, fresh, {
+				...testContainerConfig,
+				loaderProps,
+			});
+			const { summaryVersion } = await summarizeNow(summarizer, "inline blob handle summary");
+			const summarized = await loader.resolve({
+				url,
+				headers: { [LoaderHeader.version]: summaryVersion },
+			});
+			const summarizedDataStore = (await summarized.getEntryPoint()) as ITestDataObject;
+			assert.deepStrictEqual(
+				[...new Uint8Array(await summarizedDataStore._root.get("blob").get())],
+				[...expected],
+			);
+
+			const { summaryVersion: fullTreeSummaryVersion } = await summarizeNow(summarizer, {
+				reason: "inline blob full-tree summary",
+				fullTree: true,
+			});
+			const fullTreeSummarized = await loader.resolve({
+				url,
+				headers: { [LoaderHeader.version]: fullTreeSummaryVersion },
+			});
+			const fullTreeDataStore = (await fullTreeSummarized.getEntryPoint()) as ITestDataObject;
+			assert.deepStrictEqual(
+				[...new Uint8Array(await fullTreeDataStore._root.get("blob").get())],
+				[...expected],
 			);
 		});
 	},

@@ -38,7 +38,7 @@ export const wireFormatConstants = {
 	redirectTableBlobName: ".redirectTable",
 	inlinedAttachmentBlobContentName: "content",
 	inlinedAttachmentBlobGroupIdPrefix: "fluid-internal:attachment-blob:",
-	inlinedAttachmentBlobManifestName: ".inlinedAttachmentBlobs",
+	inlinedAttachmentBlobTreePrefix: ".inline_",
 	blobManagerBasePath: "_blobs",
 	gcTreeKey: "gc",
 	gcBlobPrefix: "__gc",
@@ -50,8 +50,7 @@ const {
 	blobsTreeName,
 	redirectTableBlobName,
 	inlinedAttachmentBlobContentName,
-	inlinedAttachmentBlobGroupIdPrefix,
-	inlinedAttachmentBlobManifestName,
+	inlinedAttachmentBlobTreePrefix,
 	blobManagerBasePath,
 	gcTreeKey,
 	gcBlobPrefix,
@@ -197,14 +196,9 @@ function collectReferencedBlobIds(
 	}
 	for (const [key, subTree] of Object.entries(tree.trees)) {
 		if (isRoot && key === blobsTreeName) {
-			for (const structuralBlobName of [
-				redirectTableBlobName,
-				inlinedAttachmentBlobManifestName,
-			]) {
-				const structuralBlobId = subTree.blobs[structuralBlobName];
-				if (structuralBlobId !== undefined) {
-					ids.add(structuralBlobId);
-				}
+			const tableBlobId = subTree.blobs[redirectTableBlobName];
+			if (tableBlobId !== undefined) {
+				ids.add(tableBlobId);
 			}
 		} else {
 			collectReferencedBlobIds(subTree, false, ids);
@@ -228,9 +222,10 @@ function toTreeAndReader(
 
 /**
  * Fetches attachment blob contents from a snapshot, filtered by GC
- * reachability. Blobs GC has explicitly marked unreferenced, tombstoned, or
- * deleted are skipped. Blobs absent from the GC graph are kept — GC state
- * lags behind recent attachments and dropping them would lose live data.
+ * reachability. Only attachment blobs GC has permanently deleted are skipped.
+ * Unreferenced and tombstoned blobs are retained because post-snapshot ops may
+ * revive them. Blobs absent from the GC graph are also kept — GC state lags
+ * behind recent attachments and dropping them would lose live data.
  * If `gcData` is `undefined`, every attachment blob is returned.
  *
  * The returned map is keyed by attachment blob storage id. Values are the
@@ -257,13 +252,12 @@ export async function captureReferencedAttachmentBlobs(
 	if (localIdToStorageId.size === 0) {
 		return {};
 	}
-
-	const unreferencedLocalIds =
-		gcData === undefined ? undefined : collectUnreferencedBlobLocalIds(gcData);
+	const deletedLocalIds =
+		gcData === undefined ? undefined : collectDeletedBlobLocalIds(gcData);
 
 	const storageIdsToFetch = new Set<string>();
 	for (const [localId, storageId] of localIdToStorageId) {
-		if (unreferencedLocalIds?.has(localId) !== true) {
+		if (deletedLocalIds?.has(localId) !== true) {
 			storageIdsToFetch.add(storageId);
 		}
 	}
@@ -285,46 +279,23 @@ async function readRedirectTable(
 	storage: Pick<IDocumentStorageService, "readBlob">,
 ): Promise<Map<string, string>> {
 	const redirectTable = new Map<string, string>();
-	const inlinedBlobIds = await getInlinedAttachmentBlobIdsFromSnapshot(blobsTree, storage);
 	const tableBlobId: string | undefined = blobsTree.blobs[redirectTableBlobName];
 	if (tableBlobId !== undefined) {
 		const entries = await readAndParse<[string, string][]>(storage, tableBlobId);
 		for (const [localId, storageId] of entries) {
-			redirectTable.set(localId, inlinedBlobIds.get(storageId) ?? storageId);
+			redirectTable.set(localId, storageId);
 		}
 	}
 	for (const [key, storageId] of Object.entries(blobsTree.blobs)) {
-		if (key !== redirectTableBlobName && key !== inlinedAttachmentBlobManifestName) {
+		if (key !== redirectTableBlobName) {
 			// Identity mapping: storage ids referenced directly in handles (legacy).
 			redirectTable.set(storageId, storageId);
 		}
 	}
+	for (const [localId, storageId] of getInlinedAttachmentBlobIds(blobsTree)) {
+		redirectTable.set(localId, storageId);
+	}
 	return redirectTable;
-}
-
-async function getInlinedAttachmentBlobIdsFromSnapshot(
-	blobsTree: ISnapshotTree,
-	storage: Pick<IDocumentStorageService, "readBlob">,
-	blobContents?: ReadonlyMap<string, ArrayBufferLike>,
-): Promise<Map<string, string>> {
-	const manifestId = blobsTree.blobs[inlinedAttachmentBlobManifestName];
-	if (manifestId === undefined) {
-		return getInlinedAttachmentBlobIds(blobsTree);
-	}
-	const manifestContent = blobContents?.get(manifestId);
-	const manifest =
-		manifestContent === undefined
-			? await readAndParse<[string, string][]>(storage, manifestId)
-			: (JSON.parse(bufferToString(manifestContent, "utf8")) as [string, string][]);
-	const inlinedBlobIds = new Map<string, string>();
-	for (const [treeName, detachedStorageId] of manifest) {
-		const childTree = blobsTree.trees[treeName];
-		assert(childTree !== undefined, "Inlined attachment blob tree must be present");
-		const blobId = childTree.blobs[inlinedAttachmentBlobContentName];
-		assert(blobId !== undefined, "Inlined attachment blob tree must contain content");
-		inlinedBlobIds.set(detachedStorageId, blobId);
-	}
-	return inlinedBlobIds;
 }
 
 /**
@@ -358,11 +329,7 @@ export async function readInlinedAttachmentBlobContentsFromTree(
 	if (blobsTree === undefined) {
 		return new Map();
 	}
-	const inlinedBlobIds = await getInlinedAttachmentBlobIdsFromSnapshot(
-		blobsTree,
-		storage,
-		blobContents,
-	);
+	const inlinedBlobIds = getInlinedAttachmentBlobIds(blobsTree);
 	const contents = new Map<string, ArrayBuffer>();
 	await mapWithConcurrency(
 		[...new Set(inlinedBlobIds.values())],
@@ -376,142 +343,40 @@ export async function readInlinedAttachmentBlobContentsFromTree(
 }
 
 /**
- * Maps detached storage IDs encoded in internal blob loading-group IDs to the
- * snapshot blob IDs assigned by storage.
+ * Maps BlobManager local IDs encoded in inline tree names to the snapshot blob
+ * IDs assigned by storage.
  *
  * @internal
  */
 export function getInlinedAttachmentBlobIds(
 	blobsTree: ISnapshotTree | undefined,
-	blobContents?: ReadonlyMap<string, ArrayBufferLike>,
 ): Map<string, string> {
 	const inlinedBlobIds = new Map<string, string>();
 	if (blobsTree === undefined) {
 		return inlinedBlobIds;
 	}
-	const manifestId = blobsTree.blobs[inlinedAttachmentBlobManifestName];
-	const manifestContent = manifestId === undefined ? undefined : blobContents?.get(manifestId);
-	if (manifestContent !== undefined) {
-		const manifest = JSON.parse(bufferToString(manifestContent, "utf8")) as [string, string][];
-		for (const [treeName, detachedStorageId] of manifest) {
-			const childTree = blobsTree.trees[treeName];
-			assert(childTree !== undefined, "Inlined attachment blob tree must be present");
-			const blobId = childTree.blobs[inlinedAttachmentBlobContentName];
-			assert(blobId !== undefined, "Inlined attachment blob tree must contain content");
-			inlinedBlobIds.set(detachedStorageId, blobId);
-		}
-		return inlinedBlobIds;
-	}
-	for (const childTree of Object.values(blobsTree.trees)) {
-		const { groupId } = childTree;
-		if (groupId?.startsWith(inlinedAttachmentBlobGroupIdPrefix) !== true) {
+	for (const [treeName, childTree] of Object.entries(blobsTree.trees)) {
+		if (!treeName.startsWith(inlinedAttachmentBlobTreePrefix)) {
 			continue;
 		}
-		const detachedStorageId = groupId.slice(inlinedAttachmentBlobGroupIdPrefix.length);
+		const localId = treeName.slice(inlinedAttachmentBlobTreePrefix.length);
 		const blobId = childTree.blobs[inlinedAttachmentBlobContentName];
 		assert(blobId !== undefined, "Inlined attachment blob tree must contain content");
-		inlinedBlobIds.set(detachedStorageId, blobId);
+		inlinedBlobIds.set(localId, blobId);
 	}
 	return inlinedBlobIds;
 }
 
-/**
- * Removes GC-filtered inline attachment payload trees from a captured snapshot
- * and rewrites the manifest and redirect table to match.
- *
- * @internal
- */
-export function pruneUnreferencedInlinedAttachmentBlobs(
-	baseSnapshot: ISnapshotTree,
-	snapshotBlobs: ISerializableBlobContents,
-	gcData: IGcSnapshotData | undefined,
-): ISnapshotTree {
-	const unreferencedLocalIds = unreferencedAttachmentBlobLocalIds(gcData);
-	if (unreferencedLocalIds === undefined || unreferencedLocalIds.size === 0) {
-		return baseSnapshot;
-	}
-	const blobsTree = baseSnapshot.trees[blobsTreeName];
-	if (blobsTree === undefined) {
-		return baseSnapshot;
-	}
-	const manifestId = blobsTree.blobs[inlinedAttachmentBlobManifestName];
-	const redirectTableId = blobsTree.blobs[redirectTableBlobName];
-	if (manifestId === undefined || redirectTableId === undefined) {
-		return baseSnapshot;
-	}
-	const manifestContent = snapshotBlobs[manifestId];
-	const redirectTableContent = snapshotBlobs[redirectTableId];
-	assert(manifestContent !== undefined, "Inlined attachment blob manifest must be captured");
-	assert(
-		redirectTableContent !== undefined,
-		"Attachment blob redirect table must be captured",
-	);
-	const manifest = JSON.parse(manifestContent) as [string, string][];
-	const redirectTable = JSON.parse(redirectTableContent) as [string, string][];
-	const retainedRedirectTable = redirectTable.filter(
-		([localId]) => !unreferencedLocalIds.has(localId),
-	);
-	const retainedDetachedStorageIds = new Set(
-		retainedRedirectTable.map(([_, storageId]) => storageId),
-	);
-	const retainedManifest = manifest.filter(([_, detachedStorageId]) =>
-		retainedDetachedStorageIds.has(detachedStorageId),
-	);
-	if (
-		retainedRedirectTable.length === redirectTable.length &&
-		retainedManifest.length === manifest.length
-	) {
-		return baseSnapshot;
-	}
-
-	snapshotBlobs[redirectTableId] = JSON.stringify(retainedRedirectTable);
-	snapshotBlobs[manifestId] = JSON.stringify(retainedManifest);
-	const inlineTreeNames = new Set(manifest.map(([treeName]) => treeName));
-	const retainedTreeNames = new Set(retainedManifest.map(([treeName]) => treeName));
-	const retainedTrees = Object.fromEntries(
-		Object.entries(blobsTree.trees).filter(
-			([treeName]) => !inlineTreeNames.has(treeName) || retainedTreeNames.has(treeName),
-		),
-	);
-	return {
-		...baseSnapshot,
-		trees: {
-			...baseSnapshot.trees,
-			[blobsTreeName]: {
-				...blobsTree,
-				trees: retainedTrees,
-			},
-		},
-	};
-}
-
-/**
- * Collects the set of blob localIds that GC has explicitly marked as
- * unreferenced (via `unreferencedTimestampMs` on a gc node), tombstoned, or
- * deleted. Tombstones and deletedNodes are applied regardless of whether
- * `gcState` is present — they are authoritative on their own and must not
- * be silently dropped when gc state is absent but tombstone/deleted lists
- * exist.
- */
-function collectUnreferencedBlobLocalIds(gcData: IGcSnapshotData): Set<string> {
+/** Collects attachment blob local IDs that GC has permanently deleted. */
+function collectDeletedBlobLocalIds(gcData: IGcSnapshotData): Set<string> {
 	const blobPathPrefix = `/${blobManagerBasePath}/`;
-	const unreferenced = new Set<string>();
-	if (gcData.gcState !== undefined) {
-		for (const [nodePath, nodeData] of Object.entries(gcData.gcState.gcNodes)) {
-			if (
-				nodePath.startsWith(blobPathPrefix) &&
-				nodeData.unreferencedTimestampMs !== undefined
-			) {
-				unreferenced.add(nodePath.slice(blobPathPrefix.length));
-			}
-		}
-	}
-	for (const nodePath of [...(gcData.tombstones ?? []), ...(gcData.deletedNodes ?? [])]) {
+	const deleted = new Set<string>();
+	for (const nodePath of gcData.deletedNodes ?? []) {
 		if (nodePath.startsWith(blobPathPrefix)) {
-			unreferenced.add(nodePath.slice(blobPathPrefix.length));
+			deleted.add(nodePath.slice(blobPathPrefix.length));
 		}
 	}
-	return unreferenced;
+	return deleted;
 }
 
 /**
@@ -567,23 +432,22 @@ export function extractBlobAttachReferences(
 }
 
 /**
- * Set of attachment-blob localIds that GC has marked unreferenced,
- * tombstoned, or deleted in the base snapshot. `undefined` if `gcData`
- * is `undefined` (GC disabled / pre-GC document).
+ * Set of attachment-blob localIds that GC has permanently deleted in the base
+ * snapshot. `undefined` if `gcData` is undefined.
  *
  * @internal
  */
-export function unreferencedAttachmentBlobLocalIds(
+export function deletedAttachmentBlobLocalIds(
 	gcData: IGcSnapshotData | undefined,
 ): Set<string> | undefined {
-	return gcData === undefined ? undefined : collectUnreferencedBlobLocalIds(gcData);
+	return gcData === undefined ? undefined : collectDeletedBlobLocalIds(gcData);
 }
 
 /**
  * Inline attachment blob contents for the given `(localId, storageId)`
  * references. Skips entries already present in `existing` (de-dupe with
- * the snapshot path) and entries whose `localId` is in
- * `unreferencedLocalIds`. Returns only the freshly-read entries; the
+ * the snapshot path) and entries whose `localId` is in `excludedLocalIds`.
+ * Returns only the freshly-read entries; the
  * caller merges them into the existing map.
  *
  * @internal
@@ -591,12 +455,12 @@ export function unreferencedAttachmentBlobLocalIds(
 export async function inlineAttachmentBlobsByReference(
 	references: readonly IBlobAttachReference[],
 	storage: Pick<IDocumentStorageService, "readBlob">,
-	unreferencedLocalIds: ReadonlySet<string> | undefined,
+	excludedLocalIds: ReadonlySet<string> | undefined,
 	existing: Readonly<IBase64BlobContents>,
 ): Promise<IBase64BlobContents> {
 	const storageIdsToFetch = new Set<string>();
 	for (const { localId, storageId } of references) {
-		if (unreferencedLocalIds?.has(localId) === true) {
+		if (excludedLocalIds?.has(localId) === true) {
 			continue;
 		}
 		if (existing[storageId] !== undefined) {

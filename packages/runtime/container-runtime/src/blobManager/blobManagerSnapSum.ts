@@ -6,7 +6,7 @@
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IContainerContext } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import { SummaryType } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
@@ -21,9 +21,13 @@ export interface IBlobManagerLoadInfo {
 	redirectTable?: [string, string][];
 	/**
 	 * Detached attachment blobs represented as summary blobs, keyed by their
-	 * detached storage IDs.
+	 * local IDs.
 	 */
 	summaryBlobs?: Map<string, ArrayBufferLike>;
+	/**
+	 * Local IDs whose payload can be referenced by handle from the previous summary.
+	 */
+	summaryBlobHandles?: Set<string>;
 }
 
 /**
@@ -49,10 +53,11 @@ export const inlinedAttachmentBlobContentName = "content";
 export const inlinedAttachmentBlobGroupIdPrefix = "fluid-internal:attachment-blob:";
 
 /**
- * Root-level manifest mapping inlined blob tree names to detached storage IDs.
+ * Prefix for trees containing inlined attachment blobs. The suffix is the
+ * BlobManager local ID.
  * @internal
  */
-export const inlinedAttachmentBlobManifestName = ".inlinedAttachmentBlobs";
+export const inlinedAttachmentBlobTreePrefix = ".inline_";
 
 /**
  * Reads blobs needed to load BlobManager from storage.
@@ -86,59 +91,62 @@ const loadV1 = async (
 		redirectTableEntries = await readAndParse(context.storage, tableId);
 	}
 	const ids = Object.entries(blobsTree.blobs)
-		.filter(([k, _]) => k !== redirectTableBlobName && k !== inlinedAttachmentBlobManifestName)
+		.filter(([k, _]) => k !== redirectTableBlobName)
 		.map(([_, v]) => v);
 
 	const inlinedBlobIds = new Map<string, string>();
-	const manifestId: string | undefined = blobsTree.blobs[inlinedAttachmentBlobManifestName];
-	if (manifestId === undefined) {
-		for (const childTree of Object.values(blobsTree.trees)) {
-			const { groupId } = childTree;
-			if (groupId?.startsWith(inlinedAttachmentBlobGroupIdPrefix) !== true) {
-				continue;
-			}
-			const detachedStorageId = groupId.slice(inlinedAttachmentBlobGroupIdPrefix.length);
-			const blobId: string | undefined = childTree.blobs[inlinedAttachmentBlobContentName];
-			assert(blobId !== undefined, "Inlined attachment blob tree must contain content");
-			inlinedBlobIds.set(detachedStorageId, blobId);
+	for (const [treeName, childTree] of Object.entries(blobsTree.trees)) {
+		if (!treeName.startsWith(inlinedAttachmentBlobTreePrefix)) {
+			continue;
 		}
-	} else {
-		const manifest = await readAndParse<[string, string][]>(context.storage, manifestId);
-		for (const [treeName, detachedStorageId] of manifest) {
-			const childTree: ISnapshotTree | undefined = blobsTree.trees[treeName];
-			assert(childTree !== undefined, "Inlined attachment blob tree must be present");
-			const blobId: string | undefined = childTree.blobs[inlinedAttachmentBlobContentName];
-			assert(blobId !== undefined, "Inlined attachment blob tree must contain content");
-			inlinedBlobIds.set(detachedStorageId, blobId);
-		}
+		const localId = treeName.slice(inlinedAttachmentBlobTreePrefix.length);
+		const blobId: string | undefined = childTree.blobs[inlinedAttachmentBlobContentName];
+		assert(blobId !== undefined, "Inlined attachment blob tree must contain content");
+		inlinedBlobIds.set(localId, blobId);
 	}
 
-	if (
-		context.attachState === AttachState.Detached ||
-		context.pendingLocalState !== undefined ||
-		[...inlinedBlobIds.values()].some(
-			(blobId) => context.snapshotWithContents?.blobContents.has(blobId) === true,
-		)
-	) {
-		const summaryBlobs = new Map<string, ArrayBufferLike>();
+	if (context.attachState === AttachState.Detached) {
+		const detachedSummaryBlobs = new Map<string, ArrayBufferLike>();
 		await Promise.all(
-			[...inlinedBlobIds].map(async ([detachedStorageId, blobId]) => {
-				summaryBlobs.set(
-					detachedStorageId,
+			[...inlinedBlobIds].map(async ([localId, blobId]) => {
+				detachedSummaryBlobs.set(
+					localId,
 					context.snapshotWithContents?.blobContents.get(blobId) ??
 						(await context.storage.readBlob(blobId)),
 				);
 			}),
 		);
-		return { ids, redirectTable: redirectTableEntries, summaryBlobs };
+		redirectTableEntries.push(
+			...[...inlinedBlobIds.keys()].map((localId) => [localId, localId] as [string, string]),
+		);
+		return {
+			ids,
+			redirectTable: redirectTableEntries,
+			summaryBlobs: detachedSummaryBlobs,
+		};
 	}
 
-	redirectTableEntries = redirectTableEntries.map(([localId, storageId]) => [
-		localId,
-		inlinedBlobIds.get(storageId) ?? storageId,
-	]);
-	ids.push(...inlinedBlobIds.values());
-	return { ids, redirectTable: redirectTableEntries };
+	const summaryBlobs = new Map<string, ArrayBufferLike>();
+	const summaryBlobHandles = new Set<string>();
+	for (const [localId, blobId] of inlinedBlobIds) {
+		redirectTableEntries.push([localId, blobId]);
+		ids.push(blobId);
+		summaryBlobHandles.add(localId);
+		const content =
+			context.snapshotWithContents?.blobContents.get(blobId) ??
+			(context.pendingLocalState === undefined
+				? undefined
+				: await context.storage.readBlob(blobId));
+		if (content !== undefined) {
+			summaryBlobs.set(localId, content);
+		}
+	}
+	return {
+		ids,
+		redirectTable: redirectTableEntries,
+		summaryBlobs: summaryBlobs.size === 0 ? undefined : summaryBlobs,
+		summaryBlobHandles,
+	};
 };
 
 export const toRedirectTable = (
@@ -171,34 +179,49 @@ export const toRedirectTable = (
 export const summarizeBlobManagerState = (
 	redirectTable: Map<string, string>,
 	summaryBlobs?: ReadonlyMap<string, ArrayBufferLike>,
-): ISummaryTreeWithStats => summarizeV1(redirectTable, summaryBlobs);
+	summaryBlobHandles?: ReadonlySet<string>,
+): ISummaryTreeWithStats => summarizeV1(redirectTable, summaryBlobs, summaryBlobHandles);
 
 const summarizeV1 = (
 	redirectTable: Map<string, string>,
 	summaryBlobs?: ReadonlyMap<string, ArrayBufferLike>,
+	summaryBlobHandles?: ReadonlySet<string>,
 ): ISummaryTreeWithStats => {
 	const builder = new SummaryTreeBuilder();
 	const storageIds = getStorageIds(redirectTable);
-	const manifest: [string, string][] = [];
-	let summaryBlobIndex = 0;
-	for (const storageId of storageIds) {
-		const summaryBlob = summaryBlobs?.get(storageId);
+	const inlineStorageIds = new Set<string>();
+	for (const localId of new Set([
+		...(summaryBlobs?.keys() ?? []),
+		...(summaryBlobHandles ?? []),
+	])) {
+		const storageId = redirectTable.get(localId);
+		if (storageId !== undefined) {
+			inlineStorageIds.add(storageId);
+		}
+		const blobBuilder = new SummaryTreeBuilder({
+			groupId: `${inlinedAttachmentBlobGroupIdPrefix}${localId}`,
+		});
+		const summaryBlob = summaryBlobs?.get(localId);
 		if (summaryBlob === undefined) {
+			blobBuilder.addHandle(
+				inlinedAttachmentBlobContentName,
+				SummaryType.Blob,
+				`/${blobsTreeName}/${inlinedAttachmentBlobTreePrefix}${localId}/${inlinedAttachmentBlobContentName}`,
+			);
+		} else {
+			blobBuilder.addBlob(inlinedAttachmentBlobContentName, new Uint8Array(summaryBlob));
+		}
+		builder.addWithStats(
+			`${inlinedAttachmentBlobTreePrefix}${localId}`,
+			blobBuilder.getSummaryTree(),
+		);
+	}
+	for (const storageId of storageIds) {
+		if (!inlineStorageIds.has(storageId)) {
 			// The Attachment is inspectable by storage, which lets it detect that the blob is referenced
 			// and therefore should not be GC'd.
 			builder.addAttachment(storageId);
-		} else {
-			const treeName = `.inline_${summaryBlobIndex++}`;
-			const blobBuilder = new SummaryTreeBuilder({
-				groupId: `${inlinedAttachmentBlobGroupIdPrefix}${storageId}`,
-			});
-			blobBuilder.addBlob(inlinedAttachmentBlobContentName, new Uint8Array(summaryBlob));
-			builder.addWithStats(treeName, blobBuilder.getSummaryTree());
-			manifest.push([treeName, storageId]);
 		}
-	}
-	if (manifest.length > 0) {
-		builder.addBlob(inlinedAttachmentBlobManifestName, JSON.stringify(manifest));
 	}
 
 	// Exclude identity mappings from the redirectTable summary. Note that
@@ -207,7 +230,10 @@ const summarizeV1 = (
 	// time in toRedirectTable even if there is no non-identity mapping in
 	// the redirectTable.
 	const nonIdentityRedirectTableEntries = [...redirectTable.entries()].filter(
-		([localId, storageId]) => localId !== storageId,
+		([localId, storageId]) =>
+			localId !== storageId &&
+			summaryBlobs?.has(localId) !== true &&
+			summaryBlobHandles?.has(localId) !== true,
 	);
 	if (nonIdentityRedirectTableEntries.length > 0) {
 		builder.addBlob(redirectTableBlobName, JSON.stringify(nonIdentityRedirectTableEntries));

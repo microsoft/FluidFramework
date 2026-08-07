@@ -37,8 +37,11 @@ import {
 	type ISerializableBlobContents,
 } from "./containerStorageAdapter.js";
 import {
+	extractBlobAttachReferences,
+	getInlinedAttachmentBlobIds,
 	readInlinedAttachmentBlobContents,
 	readInlinedAttachmentBlobContentsFromTree,
+	wireFormatConstants,
 } from "./captureReferencedContents.js";
 import { SnapshotRefresher } from "./snapshotRefresher.js";
 import {
@@ -163,6 +166,7 @@ interface ISerializerEvent extends IEvent {
  */
 export class SerializedStateManager implements IDisposable {
 	private readonly processedOps: ISequencedDocumentMessage[] = [];
+	private readonly attachmentBlobIds = new Set<string>();
 	private readonly mc: MonitoringContext;
 	private snapshotInfo: ISnapshotInfo | undefined;
 	private latestSnapshot: ISnapshotInfo | undefined;
@@ -287,6 +291,7 @@ export class SerializedStateManager implements IDisposable {
 			// between the two namespaces should resolve to the binary form.
 			if (attachmentBlobContents !== undefined) {
 				for (const [id, value] of Object.entries(attachmentBlobContents)) {
+					this.attachmentBlobIds.add(id);
 					blobContents.set(id, stringToBuffer(value, "base64"));
 				}
 			}
@@ -369,7 +374,10 @@ export class SerializedStateManager implements IDisposable {
 			// Snapshot seq num is between the first and last processed op.
 			// Remove the ops that are already part of the snapshot
 			this.processedOps.splice(0, snapshotSequenceNumber - firstProcessedOpSequenceNumber + 1);
-			this.snapshotInfo = this.latestSnapshot;
+			const refreshedSnapshot = this.latestSnapshot;
+			assert(refreshedSnapshot !== undefined, "Latest snapshot must be present");
+			this.snapshotInfo = refreshedSnapshot;
+			this.pruneAttachmentBlobIds(refreshedSnapshot.snapshot);
 			this.latestSnapshot = undefined;
 			this.snapshotRefresher?.clearLatestSnapshot();
 			this.snapshotRefresher?.restartTimer();
@@ -382,6 +390,31 @@ export class SerializedStateManager implements IDisposable {
 			});
 		}
 		return snapshotSequenceNumber;
+	}
+
+	private pruneAttachmentBlobIds(snapshot: ISnapshot | ISnapshotTree): void {
+		const retainedBlobIds = new Set<string>();
+		const blobsTree = getSnapshotTree(snapshot).trees[wireFormatConstants.blobsTreeName];
+		if (blobsTree !== undefined) {
+			for (const [key, blobId] of Object.entries(blobsTree.blobs)) {
+				if (key !== wireFormatConstants.redirectTableBlobName) {
+					retainedBlobIds.add(blobId);
+				}
+			}
+			for (const blobId of getInlinedAttachmentBlobIds(blobsTree).values()) {
+				retainedBlobIds.add(blobId);
+			}
+		}
+		for (const op of this.processedOps) {
+			for (const { storageId } of extractBlobAttachReferences(op)) {
+				retainedBlobIds.add(storageId);
+			}
+		}
+		for (const blobId of this.attachmentBlobIds) {
+			if (!retainedBlobIds.has(blobId)) {
+				this.attachmentBlobIds.delete(blobId);
+			}
+		}
 	}
 
 	/**
@@ -447,15 +480,33 @@ export class SerializedStateManager implements IDisposable {
 				}
 
 				const snapshot = this.snapshotInfo.snapshot;
+				const missingAttachmentBlobContents = isInstanceOfISnapshot(snapshot)
+					? await Promise.all(
+							[...this.attachmentBlobIds]
+								.filter((blobId) => !snapshot.blobContents.has(blobId))
+								.map(
+									async (blobId) =>
+										[blobId, await this.storageAdapter.readBlob(blobId)] as const,
+								),
+						)
+					: [];
 				const snapshotWithBlobs: SnapshotWithBlobs = isInstanceOfISnapshot(snapshot)
-					? convertISnapshotToSnapshotWithBlobs({
-							...snapshot,
-							blobContents: new Map([
-								...snapshot.blobContents,
-								...(await readInlinedAttachmentBlobContents(snapshot, this.storageAdapter)),
-							]),
-						})
-					: await convertSnapshotTreeToSnapshotWithBlobs(snapshot, this.storageAdapter);
+					? convertISnapshotToSnapshotWithBlobs(
+							{
+								...snapshot,
+								blobContents: new Map([
+									...snapshot.blobContents,
+									...(await readInlinedAttachmentBlobContents(snapshot, this.storageAdapter)),
+									...missingAttachmentBlobContents,
+								]),
+							},
+							this.attachmentBlobIds,
+						)
+					: await convertSnapshotTreeToSnapshotWithBlobs(
+							snapshot,
+							this.storageAdapter,
+							this.attachmentBlobIds,
+						);
 
 				const pendingState: IPendingContainerState = {
 					attached: true,
@@ -476,13 +527,23 @@ export class SerializedStateManager implements IDisposable {
 async function convertSnapshotTreeToSnapshotWithBlobs(
 	snapshot: ISnapshotTree,
 	storageAdapter: ISerializedStateManagerDocumentStorageService,
+	knownAttachmentBlobIds: ReadonlySet<string>,
 ): Promise<SnapshotWithBlobs> {
-	const [snapshotBlobs, inlinedAttachmentBlobContents] = await Promise.all([
-		getBlobContentsFromTree(snapshot, storageAdapter),
-		readInlinedAttachmentBlobContentsFromTree(snapshot, storageAdapter),
-	]);
+	const [snapshotBlobs, inlinedAttachmentBlobContents, knownAttachmentBlobContents] =
+		await Promise.all([
+			getBlobContentsFromTree(snapshot, storageAdapter),
+			readInlinedAttachmentBlobContentsFromTree(snapshot, storageAdapter),
+			Promise.all(
+				[...knownAttachmentBlobIds].map(
+					async (blobId) => [blobId, await storageAdapter.readBlob(blobId)] as const,
+				),
+			),
+		]);
 	const attachmentBlobContents: IBase64BlobContents = {};
-	for (const [blobId, content] of inlinedAttachmentBlobContents) {
+	for (const [blobId, content] of [
+		...inlinedAttachmentBlobContents,
+		...knownAttachmentBlobContents,
+	]) {
 		attachmentBlobContents[blobId] = bufferToString(content, "base64");
 	}
 	return {

@@ -161,8 +161,9 @@ function assertInlinedSummary(
 	const blobsSummary: SummaryObject | undefined =
 		appSummary.tree[wireFormatConstants.blobsTreeName];
 	assert(blobsSummary?.type === SummaryType.Tree);
-	const inlinedBlobCount = Object.values(blobsSummary.tree).filter(
-		(summaryObject) =>
+	const inlinedBlobCount = Object.entries(blobsSummary.tree).filter(
+		([treeName, summaryObject]) =>
+			treeName.startsWith(wireFormatConstants.inlinedAttachmentBlobTreePrefix) &&
 			summaryObject.type === SummaryType.Tree &&
 			summaryObject.groupId?.startsWith(
 				wireFormatConstants.inlinedAttachmentBlobGroupIdPrefix,
@@ -184,7 +185,11 @@ function assertPendingStateContainsBinaryBlobs(
 	);
 }
 
-function initialize(options?: { countStorageCalls?: boolean; offline?: boolean }): {
+function initialize(options?: {
+	countStorageCalls?: boolean;
+	inline?: boolean;
+	offline?: boolean;
+}): {
 	codeDetails: IFluidCodeDetails;
 	codeLoader: ICodeDetailsLoader;
 	counts: StorageCallCounts;
@@ -214,7 +219,7 @@ function initialize(options?: { countStorageCalls?: boolean; offline?: boolean }
 			? wrapDocumentServiceFactory(base.documentServiceFactory, counts)
 			: base.documentServiceFactory;
 	const configProvider = createTestConfigProvider({
-		[inlineDetachedBlobsConfig]: true,
+		[inlineDetachedBlobsConfig]: options?.inline ?? true,
 		...(options?.offline === true ? { "Fluid.Container.enableOfflineFull": true } : {}),
 	});
 	const loaderProps = {
@@ -274,9 +279,11 @@ describe("Detached blob single-request create", () => {
 		const serialized = JSON.parse(serializedState) as {
 			attachmentBlobContents?: Record<string, string>;
 			attachmentBlobs?: string;
+			hasAttachmentBlobs?: boolean;
 		};
-		assert.strictEqual(serialized.attachmentBlobContents, undefined);
-		assert(serialized.attachmentBlobs !== undefined);
+		assert.strictEqual(Object.keys(serialized.attachmentBlobContents ?? {}).length, 1);
+		assert.strictEqual(serialized.attachmentBlobs, undefined);
+		assert.strictEqual(serialized.hasAttachmentBlobs, false);
 		container.close();
 
 		const rehydrated = await rehydrateDetachedContainer({
@@ -293,34 +300,24 @@ describe("Detached blob single-request create", () => {
 		assertInlinedSummary(counts.createSummary, 1);
 	});
 
-	it("preserves binary blobs when rehydration falls back to legacy attachment upload", async () => {
+	it("uses legacy attachment upload when the feature is disabled", async () => {
 		const { codeDetails, counts, loaderProps, urlResolver } = initialize({
 			countStorageCalls: true,
+			inline: false,
 		});
 		const container = await createDetachedContainer({ codeDetails, ...loaderProps });
 		const fluidObject = await getTestFluidObject(container);
 		const expected = new Uint8Array([0xff, 0xfe, 0x00, 0x80, 0x7f]);
 		fluidObject.root.set("blob", await fluidObject.runtime.uploadBlob(expected.buffer));
-		const serializedState = container.serialize();
-		container.close();
-
-		const fallbackLoaderProps = {
-			...loaderProps,
-			configProvider: createTestConfigProvider({}),
-		};
-		const rehydrated = await rehydrateDetachedContainer({
-			...fallbackLoaderProps,
-			serializedState,
-		});
-		await rehydrated.attach(urlResolver.createCreateNewRequest("legacy-fallback"));
+		await container.attach(urlResolver.createCreateNewRequest("legacy-fallback"));
 
 		assert.strictEqual(counts.createContainer, 1);
 		assert.strictEqual(counts.createBlob, 1);
 		assert.strictEqual(counts.uploadSummaryWithContext, 1);
-		const url = await rehydrated.getAbsoluteUrl("");
+		const url = await container.getAbsoluteUrl("");
 		assert(url !== undefined);
 		const loaded = await loadExistingContainer({
-			...fallbackLoaderProps,
+			...loaderProps,
 			request: { url },
 		});
 		const loadedObject = await getTestFluidObject(loaded);
@@ -395,5 +392,36 @@ describe("Detached blob single-request create", () => {
 		});
 		const frozenObject = await getTestFluidObject(frozen);
 		assertBytes(await getBlob(frozenObject.root, "blob"), expected);
+	});
+
+	it("re-stashes ordinary captured attachment blobs without binary corruption", async () => {
+		const { codeDetails, codeLoader, documentServiceFactory, loaderProps, urlResolver } =
+			initialize({ inline: false });
+		const container = await createDetachedContainer({ codeDetails, ...loaderProps });
+		const fluidObject = await getTestFluidObject(container);
+		const expected = new Uint8Array([0xff, 0x00, 0x80]);
+		fluidObject.root.set("blob", await fluidObject.runtime.uploadBlob(expected.buffer));
+		await container.attach(urlResolver.createCreateNewRequest("captured-legacy-state"));
+		const url = await container.getAbsoluteUrl("");
+		assert(url !== undefined);
+
+		const capturedState = await captureFullContainerState({
+			documentServiceFactory,
+			request: { url },
+			urlResolver,
+		});
+		const frozen = await loadFrozenContainerFromPendingState({
+			codeLoader,
+			pendingLocalState: capturedState,
+			readOnly: false,
+		});
+		const restashedState = await getRequiredPendingLocalState(frozen);
+		assertPendingStateContainsBinaryBlobs(restashedState, 1);
+		const reloaded = await loadFrozenContainerFromPendingState({
+			codeLoader,
+			pendingLocalState: restashedState,
+		});
+		const reloadedObject = await getTestFluidObject(reloaded);
+		assertBytes(await getBlob(reloadedObject.root, "blob"), expected);
 	});
 });

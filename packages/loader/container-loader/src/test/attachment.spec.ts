@@ -17,14 +17,12 @@ import { v4 as uuid } from "uuid";
 import {
 	type AttachProcessProps,
 	type AttachingDataWithBlobs,
-	type AttachingDataWithInlinedBlobs,
 	type AttachingDataWithoutBlobs,
 	type AttachmentData,
 	type DetachedDataWithOutstandingBlobs,
 	type DetachedDefaultData,
 	runRetriableAttachProcess,
 } from "../attachment.js";
-import { wireFormatConstants } from "../captureReferencedContents.js";
 import { combineAppAndProtocolSummary } from "../utils.js";
 
 import type { PartialOrAbsent } from "./failProxy.js";
@@ -32,34 +30,6 @@ import { AbsentProperty } from "./failProxy.js";
 
 const emptySummary = combineAppAndProtocolSummary(
 	{ tree: {}, type: SummaryType.Tree },
-	{ tree: {}, type: SummaryType.Tree },
-);
-
-const inlinedBlobSummary = combineAppAndProtocolSummary(
-	{
-		type: SummaryType.Tree,
-		tree: {
-			[wireFormatConstants.blobsTreeName]: {
-				type: SummaryType.Tree,
-				tree: {
-					[wireFormatConstants.inlinedAttachmentBlobManifestName]: {
-						type: SummaryType.Blob,
-						content: JSON.stringify([[".inline_0", "0"]]),
-					},
-					".inline_0": {
-						type: SummaryType.Tree,
-						groupId: `${wireFormatConstants.inlinedAttachmentBlobGroupIdPrefix}0`,
-						tree: {
-							[wireFormatConstants.inlinedAttachmentBlobContentName]: {
-								type: SummaryType.Blob,
-								content: "0-content",
-							},
-						},
-					},
-				},
-			},
-		},
-	},
 	{ tree: {}, type: SummaryType.Tree },
 );
 
@@ -153,62 +123,6 @@ describe("runRetriableAttachProcess", () => {
 			});
 
 			assert.strictEqual(attachmentData?.state, AttachState.Attached, "should be attached");
-		});
-
-		it("creates with inlined detached blobs in a single request", async () => {
-			const initial: DetachedDefaultData = {
-				state: AttachState.Detached,
-			};
-			let attachmentData: AttachmentData | undefined;
-			const detachedBlobStorage = createDetachStorage(1);
-			const storageAdapter = addCallCounts({
-				createBlob: async () => ({ id: uuid() }),
-				uploadSummaryWithContext: async () => uuid(),
-			});
-			let createSummaryCalls = 0;
-			await runRetriableAttachProcess({
-				initialAttachmentData: initial,
-				setAttachmentData: (data) => (attachmentData = data),
-				createAttachmentSummary: () => {
-					createSummaryCalls++;
-					return inlinedBlobSummary;
-				},
-				createOrGetStorageService: async (summary) => {
-					assert.strictEqual(summary, inlinedBlobSummary);
-					return storageAdapter;
-				},
-				detachedBlobStorage,
-				inlineDetachedBlobsAsSummaryBlobs: true,
-			});
-
-			assert.strictEqual(createSummaryCalls, 1);
-			assert.strictEqual(detachedBlobStorage.calls.readBlob, 0);
-			assert.strictEqual(storageAdapter.calls.createBlob, 0);
-			assert.strictEqual(storageAdapter.calls.uploadSummaryWithContext, 0);
-			assert.strictEqual(attachmentData?.state, AttachState.Attached);
-		});
-
-		it("falls back when the runtime does not inline detached blobs", async () => {
-			const initial: DetachedDefaultData = {
-				state: AttachState.Detached,
-			};
-			const detachedBlobStorage = createDetachStorage(1);
-			const storageAdapter = addCallCounts({
-				createBlob: async () => ({ id: uuid() }),
-				uploadSummaryWithContext: async () => uuid(),
-			});
-			await runRetriableAttachProcess({
-				initialAttachmentData: initial,
-				setAttachmentData: () => {},
-				createAttachmentSummary: () => emptySummary,
-				createOrGetStorageService: async () => storageAdapter,
-				detachedBlobStorage,
-				inlineDetachedBlobsAsSummaryBlobs: true,
-			});
-
-			assert.strictEqual(detachedBlobStorage.calls.readBlob, 1);
-			assert.strictEqual(storageAdapter.calls.createBlob, 1);
-			assert.strictEqual(storageAdapter.calls.uploadSummaryWithContext, 1);
 		});
 
 		it("From DetachedDefaultData with offline and without blobs", async () => {
@@ -578,27 +492,6 @@ describe("runRetriableAttachProcess", () => {
 
 			assert.strictEqual(attachmentData?.state, AttachState.Attached, "should be attached");
 			assert.notStrictEqual(snapshot, undefined, "should have snapshot");
-		});
-
-		it("From AttachingDataWithInlinedBlobs", async () => {
-			const initial: AttachingDataWithInlinedBlobs = {
-				state: AttachState.Attaching,
-				blobs: "inline",
-				summary: inlinedBlobSummary,
-			};
-			let attachmentData: AttachmentData | undefined;
-			await runRetriableAttachProcess(
-				createProxyWithFailDefault<AttachProcessProps>({
-					initialAttachmentData: initial,
-					setAttachmentData: (data) => (attachmentData = data),
-					createOrGetStorageService: async (summary) => {
-						assert.strictEqual(summary, inlinedBlobSummary);
-						return createProxyWithFailDefault();
-					},
-				}),
-			);
-
-			assert.strictEqual(attachmentData?.state, AttachState.Attached);
 		});
 	});
 });

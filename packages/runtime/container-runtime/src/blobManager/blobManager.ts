@@ -288,6 +288,7 @@ export class BlobManager {
 	private readonly createBlobPayloadPending: boolean;
 	private readonly inlineDetachedBlobsAsSummaryBlobs: boolean;
 	private readonly summaryBlobs: Map<string, ArrayBufferLike>;
+	private readonly summaryBlobHandles: Set<string>;
 
 	public constructor(props: {
 		readonly routeContext: IFluidHandleContext;
@@ -344,9 +345,10 @@ export class BlobManager {
 
 		this.redirectTable = toRedirectTable(blobManagerLoadInfo, this.mc.logger);
 		this.summaryBlobs = new Map(blobManagerLoadInfo.summaryBlobs);
-		for (const [localId, storageId] of this.redirectTable) {
-			const blob = this.summaryBlobs.get(storageId);
-			if (blob !== undefined && localId !== storageId) {
+		this.summaryBlobHandles = new Set(blobManagerLoadInfo.summaryBlobHandles);
+		for (const [localId] of this.redirectTable) {
+			const blob = this.summaryBlobs.get(localId);
+			if (blob !== undefined) {
 				this.localBlobCache.set(localId, { state: "attached", blob });
 			}
 		}
@@ -397,7 +399,7 @@ export class BlobManager {
 		}
 		// Get the storage ID from the redirect table
 		const storageId = this.redirectTable.get(localId);
-		return storageId !== undefined && this.summaryBlobs.has(storageId) ? undefined : storageId;
+		return storageId !== undefined && this.summaryBlobs.has(localId) ? undefined : storageId;
 	}
 
 	/**
@@ -504,6 +506,12 @@ export class BlobManager {
 			throw createAbortError();
 		}
 		const localId = uuid();
+		if (this.inlineDetachedBlobsAsSummaryBlobs) {
+			this.localBlobCache.set(localId, { state: "attached", blob });
+			this.redirectTable.set(localId, localId);
+			this.summaryBlobs.set(localId, blob);
+			return this.getNonPayloadPendingBlobHandle(localId);
+		}
 		this.localBlobCache.set(localId, { state: "uploading", blob });
 		// Blobs created while the container is detached are stored in IDetachedBlobStorage.
 		// The 'IContainerStorageService.createBlob()' call below will respond with a pseudo storage ID.
@@ -513,9 +521,6 @@ export class BlobManager {
 		// upload/attach process at container attach time is treated as opaque to this tracking.
 		this.localBlobCache.set(localId, { state: "attached", blob });
 		this.redirectTable.set(localId, detachedStorageId);
-		if (this.inlineDetachedBlobsAsSummaryBlobs) {
-			this.summaryBlobs.set(detachedStorageId, blob);
-		}
 		return this.getNonPayloadPendingBlobHandle(localId);
 	}
 
@@ -807,13 +812,40 @@ export class BlobManager {
 		this.internalEvents.emit("processedBlobAttach", localId, storageId);
 	}
 
-	public summarize(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
+	public summarize(
+		telemetryContext?: ITelemetryContext,
+		materializedSummaryBlobs?: ReadonlyMap<string, ArrayBufferLike>,
+	): ISummaryTreeWithStats {
+		const summaryBlobs =
+			materializedSummaryBlobs === undefined
+				? this.summaryBlobs
+				: new Map([...this.summaryBlobs, ...materializedSummaryBlobs]);
 		return summarizeBlobManagerState(
 			this.redirectTable,
-			this.inlineDetachedBlobsAsSummaryBlobs || this.summaryBlobs.size > 0
-				? this.summaryBlobs
+			this.inlineDetachedBlobsAsSummaryBlobs || summaryBlobs.size > 0
+				? summaryBlobs
 				: undefined,
+			this.summaryBlobHandles,
 		);
+	}
+
+	/**
+	 * Materializes payloads that would otherwise be summarized by handle.
+	 * Used only when producing a full-tree summary.
+	 */
+	public async loadSummaryBlobs(): Promise<Map<string, ArrayBufferLike>> {
+		const materializedSummaryBlobs = new Map<string, ArrayBufferLike>();
+		await Promise.all(
+			[...this.summaryBlobHandles].map(async (localId) => {
+				if (this.summaryBlobs.has(localId)) {
+					return;
+				}
+				const storageId = this.redirectTable.get(localId);
+				assert(storageId !== undefined, "Inlined attachment blob must have a storage ID");
+				materializedSummaryBlobs.set(localId, await this.storage.readBlob(storageId));
+			}),
+		);
+		return materializedSummaryBlobs;
 	}
 
 	/**
@@ -827,7 +859,7 @@ export class BlobManager {
 		for (const [localId, storageId] of this.redirectTable) {
 			// Don't report the identity mappings to GC - these exist to service old handles that referenced the storage
 			// IDs directly. We'll implicitly clean them up if all of their localId references get GC'd first.
-			if (localId !== storageId) {
+			if (localId !== storageId || this.summaryBlobs.has(storageId)) {
 				// The outbound routes are empty because a blob node cannot reference other nodes. It can only be referenced
 				// by adding its handle to a referenced DDS.
 				gcData.gcNodes[getGCNodePathFromLocalId(localId)] = [];
@@ -875,6 +907,8 @@ export class BlobManager {
 			}
 			maybeUnusedStorageIds.add(storageId);
 			this.redirectTable.delete(localId);
+			this.summaryBlobs.delete(localId);
+			this.summaryBlobHandles.delete(localId);
 		}
 
 		// Remove any storage IDs that still have local IDs referring to them (excluding the identity mapping).
@@ -892,7 +926,6 @@ export class BlobManager {
 		// and possible solutions.
 		for (const storageId of maybeUnusedStorageIds) {
 			this.redirectTable.delete(storageId);
-			this.summaryBlobs.delete(storageId);
 		}
 		return [...sweepReadyBlobRoutes];
 	}
@@ -936,14 +969,17 @@ export class BlobManager {
 		// The values of the redirect table are the pseudo storage IDs, which are the keys of the
 		// detachedStorageTable. We expect to have a many:1 mapping from local IDs to pseudo
 		// storage IDs (many in the case that the storage dedupes the blob).
+		const redirectTableEntries = [...this.redirectTable.entries()].filter(
+			([localId]) => !this.summaryBlobs.has(localId) && !this.summaryBlobHandles.has(localId),
+		);
 		assert(
-			new Set(this.redirectTable.values()).size === detachedStorageTable.size,
+			new Set(redirectTableEntries.map(([_, storageId]) => storageId)).size ===
+				detachedStorageTable.size,
 			0x391 /* Redirect table size must match BlobManager's local ID count */,
 		);
 		// Taking a snapshot of the redirect table entries before iterating, because
 		// we will be adding identity mappings to the the redirect table as we iterate
 		// and we don't want to include those in the iteration.
-		const redirectTableEntries = [...this.redirectTable.entries()];
 		for (const [localId, detachedStorageId] of redirectTableEntries) {
 			const newStorageId = detachedStorageTable.get(detachedStorageId);
 			assert(newStorageId !== undefined, 0xc53 /* Couldn't find a matching storage ID */);
@@ -951,7 +987,6 @@ export class BlobManager {
 			// set identity (id -> id) entry
 			this.redirectTable.set(newStorageId, newStorageId);
 		}
-		this.summaryBlobs.clear();
 	};
 
 	/**

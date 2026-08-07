@@ -6,7 +6,7 @@
 import {
 	generation,
 	LayerCompatibilityPolicyWindowMonths,
-	supportsInlinedDetachedBlobSummary,
+	supportsBinarySnapshotBlobs,
 	type ILayerCompatDetails,
 	type ILayerCompatSupportRequirements,
 } from "@fluid-internal/client-utils";
@@ -144,12 +144,10 @@ export function validateLoaderCompatibility(
 }
 
 /**
- * Loader features required when detached blobs are stored as summary blobs.
+ * Loader features required by runtimes that emit binary summary blobs.
  * @internal
  */
-export const loaderFeaturesForInlinedDetachedBlobSummary = [
-	supportsInlinedDetachedBlobSummary,
-] as const;
+export const loaderFeaturesForBinarySnapshotBlobs = [supportsBinarySnapshotBlobs] as const;
 
 /**
  * Validates that the DataStore layer is compatible with this Runtime.

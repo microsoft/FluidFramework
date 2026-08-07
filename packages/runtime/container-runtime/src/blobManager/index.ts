@@ -17,7 +17,7 @@ export {
 	blobsTreeName,
 	inlinedAttachmentBlobContentName,
 	inlinedAttachmentBlobGroupIdPrefix,
-	inlinedAttachmentBlobManifestName,
+	inlinedAttachmentBlobTreePrefix,
 	type IBlobManagerLoadInfo,
 	loadBlobManagerLoadInfo,
 	redirectTableBlobName,
