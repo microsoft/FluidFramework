@@ -155,28 +155,28 @@ function makeRecordingUnpackerFactory(
 }
 
 describe("VersionMarkResolver", () => {
-	describe("captureVersionMark", () => {
-		it("returns a pending capture with the pending batchId and reference sequence number", async () => {
+	describe("sealAndCaptureVersionMark", () => {
+		it("returns a pending capture with the pending batchId and sequence number lower bound", () => {
 			const resolver = makeResolver({
 				currentSequenceNumber: 42,
 				currentPendingBatchId: "client_[3]",
 			});
-			assert.deepEqual(await resolver.captureVersionMark(), {
+			assert.deepEqual(resolver.sealAndCaptureVersionMark(), {
 				kind: "pending",
 				batchId: "client_[3]",
-				referenceSequenceNumber: 42,
+				sequenceNumberLowerBound: 42,
 			});
 		});
 
-		it("returns a resolved capture at the current sequence number when nothing is pending", async () => {
+		it("returns a resolved capture at the current sequence number when nothing is pending", () => {
 			const resolver = makeResolver({ currentSequenceNumber: 42 });
-			assert.deepEqual(await resolver.captureVersionMark(), {
+			assert.deepEqual(resolver.sealAndCaptureVersionMark(), {
 				kind: "resolved",
 				sequenceNumber: 42,
 			});
 		});
 
-		it("flushes the current batch before reading, so a just-submitted edit's batchId is captured", async () => {
+		it("flushes the current batch before reading, so a just-submitted edit's batchId is captured", () => {
 			// Before flush there is no pending batch; the flush "seals" it and assigns the batchId. Capture
 			// must flush first, so it observes the sealed batch rather than the pre-flush undefined.
 			let pendingBatchId: string | undefined;
@@ -189,10 +189,10 @@ describe("VersionMarkResolver", () => {
 				},
 				logger: new MockLogger().toTelemetryLogger(),
 			});
-			assert.deepEqual(await resolver.captureVersionMark(), {
+			assert.deepEqual(resolver.sealAndCaptureVersionMark(), {
 				kind: "pending",
 				batchId: "client_[9]",
-				referenceSequenceNumber: 100,
+				sequenceNumberLowerBound: 100,
 			});
 		});
 	});
@@ -203,16 +203,16 @@ describe("VersionMarkResolver", () => {
 			assert.equal(resolver.isTracking, false);
 		});
 
-		it("starts tracking after a pending capture", async () => {
+		it("starts tracking after a pending capture", () => {
 			const resolver = makeResolver({ currentPendingBatchId: "client_[3]" });
 			assert.equal(resolver.isTracking, false);
-			await resolver.captureVersionMark();
+			resolver.sealAndCaptureVersionMark();
 			assert.equal(resolver.isTracking, true);
 		});
 
-		it("does not start tracking after a resolved capture (nothing to promote)", async () => {
+		it("does not start tracking after a resolved capture (nothing to promote)", () => {
 			const resolver = makeResolver();
-			await resolver.captureVersionMark();
+			resolver.sealAndCaptureVersionMark();
 			assert.equal(resolver.isTracking, false);
 		});
 
@@ -544,8 +544,8 @@ describe("VersionMarkResolver", () => {
 			});
 		});
 
-		it("pending when nothing has sequenced past the reference point", async () => {
-			// tip (5) == referenceSequenceNumber, so `from` (6) is beyond the tip: the batch cannot have landed.
+		it("pending when nothing has sequenced past the lower bound", async () => {
+			// tip (5) == sequenceNumberLowerBound, so `from` (6) is beyond the tip: the batch cannot have landed.
 			const reader = makeReader([]);
 			const resolver = makeResolver({ reader, currentSequenceNumber: 5 });
 			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 9), 5), {
@@ -553,7 +553,7 @@ describe("VersionMarkResolver", () => {
 			});
 		});
 
-		it("reads from referenceSequenceNumber + 1 (the exclusive lower-bound anchor)", async () => {
+		it("reads from sequenceNumberLowerBound + 1", async () => {
 			const calls: { from: number; to?: number }[] = [];
 			const reader = makeReader([], calls);
 			const resolver = makeResolver({ reader });

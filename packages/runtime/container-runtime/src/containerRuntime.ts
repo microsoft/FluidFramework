@@ -1550,7 +1550,10 @@ export class ContainerRuntime
 	/**
 	 * Host-facing version mark resolver.
 	 */
-	public readonly versionMarkResolver: IVersionMarkResolver;
+	public get versionMarkResolver(): IVersionMarkResolver {
+		return this.versionMarkResolverInternal;
+	}
+
 	private readonly versionMarkResolverInternal: VersionMarkResolver;
 	private readonly outbox: Outbox;
 	private readonly garbageCollector: IGarbageCollector;
@@ -1903,7 +1906,7 @@ export class ContainerRuntime
 				namespace: "VersionMarkResolver",
 			}),
 			// Seal the current outbound batch so a just-submitted edit gets a stable batchId in the pending
-			// state before captureVersionMark reads it (a batchId is only assigned when a batch is flushed).
+			// state before sealAndCaptureVersionMark reads it (a batchId is only assigned when flushed).
 			flushPendingBatch: () => this.flush(),
 			// Wire the container-provided op reader (if any) so resolution can read historical ops.
 			getHistoricalOpReader: fetchOps ? () => ({ fetchMessages: fetchOps }) : undefined,
@@ -1943,7 +1946,6 @@ export class ContainerRuntime
 					}
 				: undefined,
 		});
-		this.versionMarkResolver = this.versionMarkResolverInternal;
 
 		let outerDeltaManager: IDeltaManagerFull = this.innerDeltaManager;
 		this.useDeltaManagerOpsProxy =
