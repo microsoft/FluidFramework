@@ -1593,7 +1593,7 @@ describe("summary ownership routes", () => {
 		const clock = sandbox.useFakeTimers({ toFake: ["setTimeout"] });
 		const readDocument = sandbox
 			.stub(documentManager, "readDocument")
-			.rejects(new NetworkError(503, "Alfred unavailable"));
+			.rejects(new NetworkError(503, "Alfred unavailable", true, false));
 		const createSummary = sandbox.stub(RestGitService.prototype, "createSummary");
 		const waitForCallCount = async (expectedCallCount: number): Promise<void> => {
 			while (readDocument.callCount < expectedCallCount) {
@@ -1642,7 +1642,7 @@ describe("summary ownership routes", () => {
 		const clock = sandbox.useFakeTimers({ toFake: ["setTimeout"] });
 		const readDocument = sandbox
 			.stub(documentManager, "readDocument")
-			.rejects(new NetworkError(503, "Alfred unavailable"));
+			.rejects(new NetworkError(503, "Alfred unavailable", true, false));
 		const getSummary = sandbox.stub(RestGitService.prototype, "getSummary");
 		const waitForCallCount = async (expectedCallCount: number): Promise<void> => {
 			while (readDocument.callCount < expectedCallCount) {
