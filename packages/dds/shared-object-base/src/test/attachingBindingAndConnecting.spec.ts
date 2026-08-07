@@ -62,6 +62,7 @@ type OverridableType = Overridable<{
 		serializer: IFluidSerializer,
 		telemetryContext?: ITelemetryContext | undefined,
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined,
+		fullTree?: boolean,
 	) => ISummaryTreeWithStats;
 	loadCore: (this: SharedObject, services: IChannelStorageService) => Promise<void>;
 	processMessagesCore: (
@@ -78,11 +79,36 @@ function createTestSharedObject(overrides: OverridableType): {
 	sharedObject: SharedObject;
 } {
 	class TestSharedObject extends SharedObject {
-		protected summarizeCore = overrides?.summarizeCore?.bind(this);
-		protected loadCore = overrides?.loadCore?.bind(this);
-		protected processMessagesCore = overrides?.processMessagesCore?.bind(this);
-		protected onDisconnect = overrides?.onDisconnect?.bind(this);
-		protected applyStashedOp = overrides?.applyStashedOp?.bind(this);
+		protected summarizeCore(
+			serializer: IFluidSerializer,
+			telemetryContext?: ITelemetryContext,
+			incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
+			fullTree?: boolean,
+		): ISummaryTreeWithStats {
+			assert(overrides.summarizeCore !== undefined, "summarizeCore not set");
+			return overrides.summarizeCore.call(
+				this,
+				serializer,
+				telemetryContext,
+				incrementalSummaryContext,
+				fullTree,
+			);
+		}
+		protected async loadCore(services: IChannelStorageService): Promise<void> {
+			await overrides.loadCore?.call(this, services);
+		}
+		protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+			assert(overrides.processMessagesCore !== undefined, "processMessagesCore not set");
+			overrides.processMessagesCore.call(this, messagesCollection);
+		}
+		protected onDisconnect(): void {
+			assert(overrides.onDisconnect !== undefined, "onDisconnect not set");
+			overrides.onDisconnect.call(this);
+		}
+		protected applyStashedOp(content: unknown): void {
+			assert(overrides.applyStashedOp !== undefined, "applyStashedOp not set");
+			overrides.applyStashedOp.call(this, content);
+		}
 		protected didAttach =
 			overrides.didAttach?.bind(this) ?? (() => assert.fail("didAttach not set"));
 	}
