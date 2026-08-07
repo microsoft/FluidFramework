@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "node:assert";
-
 import { asAlpha } from "../../api.js";
 import { Tree } from "../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -242,6 +241,73 @@ describeHydration(
 			// Clear an already empty map
 			map.clear();
 			assert.equal(map.size, 0);
+		});
+
+		it("getOrInsert", () => {
+			const root = init(schema, initialTree);
+			const map = asAlpha<typeof schemaFactory.string>(root.map);
+			// Existing key: returns the existing value without overwriting.
+			assert.equal(map.getOrInsert("foo", "42"), "Hello");
+			assert.equal(map.get("foo"), "Hello");
+			// Absent key: inserts and returns the fallback.
+			assert.equal(map.getOrInsert("baz", "42"), "42");
+			assert.equal(map.get("baz"), "42");
+		});
+
+		it("getOrInsert object identity", () => {
+			const root = init(schema, initialTree);
+			const map = asAlpha<typeof object>(root.objectMap);
+			const o = new object({ content: 42 });
+			// The inserted node is the one returned and readable at the key, and is not replaced by a second call.
+			assert.equal(map.getOrInsert("foo", o), o);
+			assert.equal(map.getOrInsert("foo", new object({ content: 43 })), o);
+		});
+
+		it("getOrInsertComputed", () => {
+			const root = init(schema, initialTree);
+			const map = asAlpha<typeof schemaFactory.string>(root.map);
+			// Existing key: returns the existing value without invoking the callback.
+			assert.equal(
+				map.getOrInsertComputed("foo", () => assert.fail("callback should not be invoked")),
+				"Hello",
+			);
+			assert.equal(map.get("foo"), "Hello");
+			// Absent key: invokes the callback with the key, inserts and returns the produced value.
+			assert.equal(
+				map.getOrInsertComputed("baz", (key) => `${key}-42`),
+				"baz-42",
+			);
+			assert.equal(map.get("baz"), "baz-42");
+		});
+
+		it("getOrInsertComputed object identity", () => {
+			const root = init(schema, initialTree);
+			const map = asAlpha<typeof object>(root.objectMap);
+			const o = new object({ content: 67 });
+			// The inserted node is the one returned and readable at the key, and is not replaced by a second call.
+			assert.equal(
+				map.getOrInsertComputed("foo", () => o),
+				o,
+			);
+			assert.equal(
+				map.getOrInsertComputed("foo", () => new object({ content: 68 })),
+				o,
+			);
+		});
+
+		it("getOrInsertComputed callback throws", () => {
+			const root = init(schema, initialTree);
+			const map = asAlpha<typeof schemaFactory.string>(root.map);
+			const error = new Error("callback error");
+			assert.throws(
+				() =>
+					map.getOrInsertComputed("baz", () => {
+						throw error;
+					}),
+				error,
+			);
+			// No entry was inserted.
+			assert(!map.has("baz"));
 		});
 	},
 	() => {

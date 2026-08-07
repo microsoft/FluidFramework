@@ -7,6 +7,7 @@ import type { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { NetworkError } from "@fluidframework/server-services-client";
 import {
 	runWithRetry,
+	shouldRetryNetworkError,
 	type IStorageNameRetriever,
 	type IRevokedTokenChecker,
 	type IDocument,
@@ -366,6 +367,8 @@ export async function validateInitialSummaryUpload({
 			3,
 			1000,
 			getLumberBaseProperties(documentId, tenantId),
+			undefined,
+			shouldRetryNetworkError,
 		);
 	} catch (error) {
 		if (error instanceof NetworkError && error.code === 404) {
@@ -410,6 +413,8 @@ export async function validateSummaryDocument({
 			3,
 			1000,
 			getLumberBaseProperties(documentId, tenantId),
+			undefined,
+			shouldRetryNetworkError,
 		);
 	} catch (error) {
 		if (error instanceof NetworkError && error.code === 404) {

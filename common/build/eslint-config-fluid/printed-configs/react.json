@@ -2,7 +2,7 @@
 	"language": "@/js",
 	"languageOptions": {
 		"ecmaVersion": 2026,
-		"parser": "typescript-eslint/parser@8.54.0",
+		"parser": "typescript-eslint/parser@8.58.2",
 		"parserOptions": {
 			"project": null,
 			"projectService": true
@@ -14,7 +14,7 @@
 	},
 	"plugins": [
 		"@",
-		"@typescript-eslint:@typescript-eslint/eslint-plugin@8.54.0",
+		"@typescript-eslint:@typescript-eslint/eslint-plugin@8.58.2",
 		"import-x:eslint-plugin-import-x@4.16.1",
 		"@eslint-community/eslint-comments",
 		"@fluid-internal/fluid",
@@ -25,12 +25,7 @@
 		"unicorn:eslint-plugin-unicorn@54.0.0",
 		"unused-imports:unused-imports",
 		"depend:eslint-plugin-depend@1.4.0",
-		"@eslint-react:eslint-plugin-react-x@2.13.0",
-		"@eslint-react/rsc:eslint-plugin-react-rsc@2.13.0",
-		"@eslint-react/dom:eslint-plugin-react-dom@2.13.0",
-		"@eslint-react/web-api:eslint-plugin-react-web-api@2.13.0",
-		"@eslint-react/hooks-extra:eslint-plugin-react-hooks-extra@2.13.0",
-		"@eslint-react/naming-convention:eslint-plugin-react-naming-convention@2.13.0",
+		"@eslint-react:@eslint-react/eslint-plugin@5.9.5",
 		"react-hooks:eslint-plugin-react-hooks@7.0.0"
 	],
 	"rules": {
@@ -61,82 +56,83 @@
 		"@eslint-community/eslint-comments/require-description": [
 			"warn"
 		],
-		"@eslint-react/dom/no-dangerously-set-innerhtml": [
+		"@eslint-react/dom-no-dangerously-set-innerhtml": [
 			"warn"
 		],
-		"@eslint-react/dom/no-dangerously-set-innerhtml-with-children": [
+		"@eslint-react/dom-no-dangerously-set-innerhtml-with-children": [
 			"error"
 		],
-		"@eslint-react/dom/no-find-dom-node": [
+		"@eslint-react/dom-no-find-dom-node": [
 			"error"
 		],
-		"@eslint-react/dom/no-flush-sync": [
+		"@eslint-react/dom-no-flush-sync": [
 			"error"
 		],
-		"@eslint-react/dom/no-hydrate": [
+		"@eslint-react/dom-no-hydrate": [
 			"error"
 		],
-		"@eslint-react/dom/no-namespace": [
+		"@eslint-react/dom-no-render": [
 			"error"
 		],
-		"@eslint-react/dom/no-render": [
+		"@eslint-react/dom-no-render-return-value": [
 			"error"
 		],
-		"@eslint-react/dom/no-render-return-value": [
-			"error"
-		],
-		"@eslint-react/dom/no-script-url": [
+		"@eslint-react/dom-no-script-url": [
 			"warn"
 		],
-		"@eslint-react/dom/no-string-style-prop": [
-			"off"
-		],
-		"@eslint-react/dom/no-unknown-property": [
-			"off"
-		],
-		"@eslint-react/dom/no-unsafe-iframe-sandbox": [
+		"@eslint-react/dom-no-unsafe-iframe-sandbox": [
 			"warn"
 		],
-		"@eslint-react/dom/no-unsafe-target-blank": [
+		"@eslint-react/dom-no-unsafe-target-blank": [
 			"error"
 		],
-		"@eslint-react/dom/no-use-form-state": [
+		"@eslint-react/dom-no-use-form-state": [
 			"error"
 		],
-		"@eslint-react/dom/no-void-elements-with-children": [
+		"@eslint-react/dom-no-void-elements-with-children": [
 			"error"
 		],
-		"@eslint-react/hooks-extra/no-direct-set-state-in-use-effect": [
+		"@eslint-react/error-boundaries": [
+			"error"
+		],
+		"@eslint-react/exhaustive-deps": [
 			"warn"
 		],
-		"@eslint-react/jsx-key-before-spread": [
-			"warn"
+		"@eslint-react/jsx-no-children-prop": [
+			"error"
+		],
+		"@eslint-react/jsx-no-children-prop-with-children": [
+			"error"
 		],
 		"@eslint-react/jsx-no-comment-textnodes": [
 			"error"
 		],
-		"@eslint-react/jsx-no-duplicate-props": [
-			"off"
+		"@eslint-react/jsx-no-key-after-spread": [
+			"error"
 		],
-		"@eslint-react/jsx-no-undef": [
-			"off"
-		],
-		"@eslint-react/jsx-uses-react": [
-			"off"
-		],
-		"@eslint-react/jsx-uses-vars": [
-			"off"
-		],
-		"@eslint-react/naming-convention/context-name": [
+		"@eslint-react/jsx-no-leaked-dollar": [
 			"warn"
 		],
-		"@eslint-react/naming-convention/id-name": [
+		"@eslint-react/jsx-no-leaked-semicolon": [
 			"warn"
 		],
-		"@eslint-react/naming-convention/ref-name": [
+		"@eslint-react/jsx-no-namespace": [
+			"error"
+		],
+		"@eslint-react/jsx-no-useless-fragment": [
+			"error",
+			{
+				"allowEmptyFragment": false,
+				"allowExpressions": true
+			}
+		],
+		"@eslint-react/naming-convention-context-name": [
 			"warn"
 		],
-		"@eslint-react/naming-convention/use-state": [
+		"@eslint-react/naming-convention-id-name": [
+			"warn"
+		],
+		"@eslint-react/naming-convention-ref-name": [
 			"warn"
 		],
 		"@eslint-react/no-access-state-in-setstate": [
@@ -156,9 +152,6 @@
 		],
 		"@eslint-react/no-children-only": [
 			"warn"
-		],
-		"@eslint-react/no-children-prop": [
-			"error"
 		],
 		"@eslint-react/no-children-to-array": [
 			"warn"
@@ -181,9 +174,6 @@
 		"@eslint-react/no-create-ref": [
 			"error"
 		],
-		"@eslint-react/no-default-props": [
-			"error"
-		],
 		"@eslint-react/no-direct-mutation-state": [
 			"error"
 		],
@@ -199,12 +189,6 @@
 		"@eslint-react/no-nested-lazy-component-declarations": [
 			"error"
 		],
-		"@eslint-react/no-prop-types": [
-			"error"
-		],
-		"@eslint-react/no-redundant-should-component-update": [
-			"error"
-		],
 		"@eslint-react/no-set-state-in-component-did-mount": [
 			"warn"
 		],
@@ -213,9 +197,6 @@
 		],
 		"@eslint-react/no-set-state-in-component-will-update": [
 			"warn"
-		],
-		"@eslint-react/no-string-refs": [
-			"error"
 		],
 		"@eslint-react/no-unnecessary-use-prefix": [
 			"warn"
@@ -235,32 +216,49 @@
 		"@eslint-react/no-use-context": [
 			"warn"
 		],
-		"@eslint-react/no-useless-forward-ref": [
+		"@eslint-react/purity": [
 			"warn"
 		],
-		"@eslint-react/no-useless-fragment": [
-			"error",
-			{
-				"allowEmptyFragment": false,
-				"allowExpressions": true
-			}
-		],
-		"@eslint-react/prefer-use-state-lazy-initialization": [
-			"warn"
-		],
-		"@eslint-react/rsc/function-definition": [
+		"@eslint-react/rsc-function-definition": [
 			"error"
 		],
-		"@eslint-react/web-api/no-leaked-event-listener": [
+		"@eslint-react/rules-of-hooks": [
+			"error"
+		],
+		"@eslint-react/set-state-in-effect": [
 			"warn"
 		],
-		"@eslint-react/web-api/no-leaked-interval": [
+		"@eslint-react/set-state-in-render": [
+			"error"
+		],
+		"@eslint-react/static-components": [
+			"error"
+		],
+		"@eslint-react/unsupported-syntax": [
+			"error"
+		],
+		"@eslint-react/use-memo": [
+			"error"
+		],
+		"@eslint-react/use-state": [
 			"warn"
 		],
-		"@eslint-react/web-api/no-leaked-resize-observer": [
+		"@eslint-react/web-api-no-leaked-event-listener": [
 			"warn"
 		],
-		"@eslint-react/web-api/no-leaked-timeout": [
+		"@eslint-react/web-api-no-leaked-fetch": [
+			"warn"
+		],
+		"@eslint-react/web-api-no-leaked-intersection-observer": [
+			"warn"
+		],
+		"@eslint-react/web-api-no-leaked-interval": [
+			"warn"
+		],
+		"@eslint-react/web-api-no-leaked-resize-observer": [
+			"warn"
+		],
+		"@eslint-react/web-api-no-leaked-timeout": [
 			"warn"
 		],
 		"@fluid-internal/fluid/no-file-path-links-in-jsdoc": [

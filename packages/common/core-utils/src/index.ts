@@ -34,4 +34,5 @@ export { unreachableCase } from "./unreachable.js";
 export { isObject, isPromiseLike } from "./typesGuards.js";
 export { oob } from "./oob.js";
 export { transformMapValues } from "./map.js";
+export { clamp } from "./math.js";
 export { validateAllOrNone, type AllOrNoneResult } from "./allOrNone.js";

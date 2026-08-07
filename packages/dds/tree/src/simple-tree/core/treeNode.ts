@@ -72,7 +72,7 @@ export abstract class TreeNode implements WithType {
 	 * someone could manually (or via Intellisense auto-implement completion, or in response to a type error)
 	 * make an object literal with the [type] field and pass it off as a node: this private brand prevents that.
 	 */
-	// eslint-disable-next-line no-unused-private-class-members
+	// eslint-disable-next-line no-unused-private-class-members -- Exists for type checking sideeffect. See private remarks above.
 	readonly #brand!: unknown;
 
 	/**
@@ -152,7 +152,7 @@ export const privateToken = {};
  * @param base - prototype to search for
  * @returns true iff `base` is in the prototype chain starting at `derived`.
  */
-// eslint-disable-next-line @rushstack/no-new-null
+// eslint-disable-next-line @rushstack/no-new-null -- getPrototypeOf uses null.
 export function inPrototypeChain(derived: object | null, base: object): boolean {
 	let checking = derived;
 	while (checking !== null) {

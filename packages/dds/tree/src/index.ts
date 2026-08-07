@@ -12,6 +12,8 @@ export {
 	CommitKind,
 	RevertibleStatus,
 	type CommitMetadata,
+	CommitOutcome,
+	type LocalCommitEvents,
 	type LocalChangeMetadata,
 	type RemoteChangeMetadata,
 	type ChangeMetadata,
@@ -300,6 +302,7 @@ export {
 	type HandleConverter,
 	allowUnused,
 	type LeafSchema,
+	type StringSchema,
 	type ArrayNodeCustomizableSchema,
 	type ArrayNodeCustomizableSchemaAlpha,
 	type ArrayNodePojoEmulationSchema,
@@ -414,9 +417,9 @@ export { TableSchema, type System_TableSchema } from "./tableSchema.js";
 export { asAlpha, asBeta } from "./api.js";
 
 export {
-	TextAsTree,
-	FormattedTextAsTree,
-	FormattedTextAsTreeDefault,
+	PlainText,
+	FormattedText,
+	FormattedTextDefault,
 	codePointCount,
 	utf16LengthForCodePoints,
 } from "./text/index.js";

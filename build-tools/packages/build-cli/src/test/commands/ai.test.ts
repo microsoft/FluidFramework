@@ -14,6 +14,10 @@ import {
 } from "../../commands/ai.js";
 
 describe("ai command", () => {
+	it("supports the configured Copilot launchers", () => {
+		expect(SUPPORTED_ALIASES).to.deep.equal(["dev", "copilot", "oce"]);
+	});
+
 	it("allows all supported aliases", () => {
 		const aliasSet = new Set<string>(SUPPORTED_ALIASES);
 		for (const alias of SUPPORTED_ALIASES) {
@@ -37,13 +41,13 @@ describe("ai command", () => {
 	});
 
 	it("maps numbered prompt selections to the selected choice", () => {
-		expect(normalizePromptAnswer("2", ["claude", "dev", "copilot"])).to.equal("dev");
+		expect(normalizePromptAnswer("2", ["dev", "copilot", "oce"])).to.equal("copilot");
 	});
 
 	it("keeps freeform prompt answers unchanged", () => {
-		expect(normalizePromptAnswer("help me debug", ["claude", "dev"])).to.equal(
+		expect(normalizePromptAnswer("help me debug", ["dev", "copilot"])).to.equal(
 			"help me debug",
 		);
-		expect(normalizePromptAnswer("4", ["claude", "dev"])).to.equal("4");
+		expect(normalizePromptAnswer("4", ["dev", "copilot"])).to.equal("4");
 	});
 });

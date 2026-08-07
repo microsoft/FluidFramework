@@ -217,6 +217,9 @@
 		"rimraf": "^6.1.3",
 		"typescript": "~5.4.5"
 	},
+	"comments": [
+		"Tree test builds and eslint depend on the corresponding ID Compressor test builds because Tree tests import its internal/test-utils export, which resolves to generated test output."
+	],
 	"fluidBuild": {
 		"tasks": {
 			"build:test:cjs": [
@@ -229,6 +232,10 @@
 			],
 			"ci:build:docs": [
 				"build:esnext"
+			],
+			"eslint": [
+				"...",
+				"@fluidframework/id-compressor#build:test:esm"
 			]
 		}
 	},
