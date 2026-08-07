@@ -14,15 +14,6 @@ parameters:
     - none
     - release
 
-- name: releaseKind
-  displayName: Release Kind
-  type: string
-  default: both
-  values:
-    - both
-    - npm
-    - docker
-
 - name: publishOverride
   displayName: Publish Override (default = based on branch)
   type: string
@@ -100,7 +91,7 @@ extends:
     shouldPushDockerImage: ${{ variables.pushImage }}
     shouldReleaseDockerImage: ${{ variables.releaseImage }}
     shouldPublishNpmPackages: ${{ variables.publish }}
-    releaseKind: ${{ parameters.releaseKind }}
+    releaseKind: both
     publishOverride: ${{ parameters.publishOverride }}
     publishAsPartOfBuild: true
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
