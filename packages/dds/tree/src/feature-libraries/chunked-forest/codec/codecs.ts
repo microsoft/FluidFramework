@@ -194,6 +194,19 @@ export class FieldBatchDecodingContext {
 	}
 
 	/**
+	 * Construct a decode context that reuses an existing {@link IdDecodingContext}.
+	 *
+	 * Used by callers that already hold a fully-configured decode context (for example,
+	 * carried on a change codec's decode context) and need a {@link FieldBatchDecodingContext}
+	 * to decode a field batch. Incremental decoding is not available on the result.
+	 */
+	public static fromIdDecodingContext(
+		idDecodingContext: IdDecodingContext,
+	): FieldBatchDecodingContext {
+		return new FieldBatchDecodingContext(idDecodingContext);
+	}
+
+	/**
 	 * Returns a copy of this context with `incrementalDecoder` swapped in. Used by
 	 * the forest summarizer to attach the per-call incremental builder to a base
 	 * decode context.

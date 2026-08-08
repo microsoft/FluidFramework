@@ -19,6 +19,7 @@ import {
 	makeDiscontinuedCodecAndSchema,
 } from "../codec/index.js";
 import type {
+	ChangeDecodingContext,
 	ChangeEncodingContext,
 	EncodedRevisionTag,
 	RevisionTag,
@@ -53,7 +54,7 @@ export const messageCodecName = "Message";
  */
 interface MessageCodecBuilderOptions<TChangeset> extends ICodecOptions {
 	/** Codecs for encoding changesets. */
-	changeCodecs: ICodecFamily<TChangeset, ChangeEncodingContext>;
+	changeCodecs: ICodecFamily<TChangeset, ChangeEncodingContext, ChangeDecodingContext>;
 	/** Maps each MessageFormatVersion to the corresponding changeset format version. */
 	dependentChangeFormatVersion: DependentFormatVersion<MessageFormatVersion>;
 	/** Codec for encoding revision tags within changesets. */
@@ -61,7 +62,8 @@ interface MessageCodecBuilderOptions<TChangeset> extends ICodecOptions {
 		RevisionTag,
 		EncodedRevisionTag,
 		EncodedRevisionTag,
-		ChangeEncodingContext
+		ChangeEncodingContext,
+		ChangeDecodingContext
 	>;
 }
 

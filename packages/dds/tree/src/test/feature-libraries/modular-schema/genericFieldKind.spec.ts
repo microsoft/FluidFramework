@@ -19,7 +19,12 @@ import {
 	genericChangeHandler,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
-import { fakeIdAllocator, brand, idAllocatorFromMaxId } from "../../../util/index.js";
+import {
+	fakeIdAllocator,
+	brand,
+	idAllocatorFromMaxId,
+	IdDecodingContext,
+} from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
 import {
@@ -208,6 +213,14 @@ describe("GenericField", () => {
 			isSummary: false,
 			revision: undefined,
 			idCompressor: testIdCompressor,
+			idDecodingContext: new IdDecodingContext({
+				idCompressor: testIdCompressor,
+				originatorId: "session1" as SessionId,
+			}),
+			forestIdDecodingContext: new IdDecodingContext({
+				idCompressor: testIdCompressor,
+				originatorId: "session1" as SessionId,
+			}),
 		};
 
 		const encodingTestData: EncodingTestData<

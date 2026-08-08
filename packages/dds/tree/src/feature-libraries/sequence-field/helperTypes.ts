@@ -6,6 +6,7 @@
 import type { DiscriminatedUnionLibrary, IJsonCodec } from "../../codec/index.js";
 import type {
 	ChangeAtomId,
+	ChangeDecodingContext,
 	ChangeEncodingContext,
 	EncodedRevisionTag,
 	RevisionTag,
@@ -40,21 +41,23 @@ export interface SequenceCodecHelpers<TDecodedMarkEffect, TEncodedMarkEffect ext
 		ChangeAtomId,
 		EncodedChangeAtomId,
 		EncodedChangeAtomId,
-		ChangeEncodingContext
+		ChangeEncodingContext,
+		ChangeDecodingContext
 	>;
 	readonly markEffectCodec: IJsonCodec<
 		TDecodedMarkEffect,
 		TEncodedMarkEffect,
 		TEncodedMarkEffect,
-		ChangeEncodingContext
+		ChangeEncodingContext,
+		ChangeDecodingContext
 	>;
 	readonly decoderLibrary: DiscriminatedUnionLibrary<
 		TEncodedMarkEffect,
-		/* args */ [context: ChangeEncodingContext],
+		/* args */ [context: ChangeDecodingContext],
 		TDecodedMarkEffect
 	>;
 	readonly decodeRevision: (
 		encodedRevision: EncodedRevisionTag | undefined,
-		context: ChangeEncodingContext,
+		context: ChangeDecodingContext,
 	) => RevisionTag;
 }

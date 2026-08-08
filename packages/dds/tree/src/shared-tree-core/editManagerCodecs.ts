@@ -17,7 +17,12 @@ import {
 	type IJsonCodec,
 	makeDiscontinuedCodecAndSchema,
 } from "../codec/index.js";
-import type { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../core/index.js";
+import type {
+	ChangeDecodingContext,
+	ChangeEncodingContext,
+	EncodedRevisionTag,
+	RevisionTag,
+} from "../core/index.js";
 
 import type { SummaryData } from "./editManager.js";
 import type {
@@ -38,7 +43,7 @@ export const editManagerCodecName = "EditManager";
  */
 interface EditManagerCodecOptions<TChangeset> extends ICodecOptions {
 	/** Codecs for encoding changesets. */
-	changeCodecs: ICodecFamily<TChangeset, ChangeEncodingContext>;
+	changeCodecs: ICodecFamily<TChangeset, ChangeEncodingContext, ChangeDecodingContext>;
 	/** Maps each EditManager format version to the corresponding changeset format version. */
 	dependentChangeFormatVersion: DependentFormatVersion<EditManagerFormatVersion>;
 	/** Codec for encoding revision tags within changesets. */
@@ -46,7 +51,8 @@ interface EditManagerCodecOptions<TChangeset> extends ICodecOptions {
 		RevisionTag,
 		EncodedRevisionTag,
 		EncodedRevisionTag,
-		ChangeEncodingContext
+		ChangeEncodingContext,
+		ChangeDecodingContext
 	>;
 }
 

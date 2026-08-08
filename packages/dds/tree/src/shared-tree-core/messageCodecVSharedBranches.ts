@@ -9,12 +9,13 @@ import type { TAnySchema } from "@sinclair/typebox";
 
 import type { CodecAndSchema, IJsonCodec, Versioned } from "../codec/index.js";
 import type {
+	ChangeDecodingContext,
 	ChangeEncodingContext,
 	ChangeFamilyCodec,
 	EncodedRevisionTag,
 	RevisionTag,
 } from "../core/index.js";
-import type { JsonCompatibleReadOnlyObject } from "../util/index.js";
+import { IdDecodingContext, type JsonCompatibleReadOnlyObject } from "../util/index.js";
 
 import { decodeBranchId, encodeBranchId } from "./branchIdCodec.js";
 import type { MessageDecodingContext, MessageEncodingContext } from "./messageCodecs.js";
@@ -28,7 +29,8 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 		RevisionTag,
 		EncodedRevisionTag,
 		EncodedRevisionTag,
-		ChangeEncodingContext
+		ChangeEncodingContext,
+		ChangeDecodingContext
 	>,
 	version: typeof MessageFormatVersion.vSharedBranches,
 ): CodecAndSchema<DecodedMessage<TChangeset>, MessageEncodingContext> {
@@ -89,14 +91,21 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 				branchName: encodedBranchName,
 			} = encoded;
 
-			const changeContext: ChangeEncodingContext = {
+			const idDecodingContext = new IdDecodingContext({
+				idCompressor: context.idCompressor,
 				originatorId,
+			});
+			const changeContext: ChangeDecodingContext = {
 				revision: undefined,
 				idCompressor: context.idCompressor,
-				isSummary: false,
+				idDecodingContext,
+				// For ops the originator session resolves forest identifiers too.
+				forestIdDecodingContext: idDecodingContext,
 			};
 
-			const branchId = decodeBranchId(context.idCompressor, encodedBranchId, changeContext);
+			const branchId = decodeBranchId(context.idCompressor, encodedBranchId, {
+				originatorId,
+			});
 
 			if (changeset === undefined) {
 				return {
@@ -114,12 +123,7 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 				type: "commit",
 				commit: {
 					revision,
-					change: changeCodec.decode(changeset, {
-						originatorId,
-						revision,
-						idCompressor: context.idCompressor,
-						isSummary: false,
-					}),
+					change: changeCodec.decode(changeset, { ...changeContext, revision }),
 				},
 				branchId,
 				sessionId: originatorId,

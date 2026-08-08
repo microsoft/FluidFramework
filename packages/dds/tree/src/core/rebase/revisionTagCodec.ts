@@ -7,12 +7,18 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 
 import type { JsonCodecPart } from "../../codec/index.js";
-import type { ChangeEncodingContext } from "../change-family/index.js";
+import type { ChangeDecodingContext, ChangeEncodingContext } from "../change-family/index.js";
 
 import { RevisionTagSchema, type EncodedRevisionTag, type RevisionTag } from "./types.js";
 
 export class RevisionTagCodec
-	implements JsonCodecPart<RevisionTag, typeof RevisionTagSchema, ChangeEncodingContext>
+	implements
+		JsonCodecPart<
+			RevisionTag,
+			typeof RevisionTagSchema,
+			ChangeEncodingContext,
+			ChangeDecodingContext
+		>
 {
 	public localSessionId: SessionId;
 	public readonly encodedSchema = RevisionTagSchema;
@@ -26,7 +32,7 @@ export class RevisionTagCodec
 			? tag
 			: (this.idCompressor.normalizeToOpSpace(tag) as EncodedRevisionTag);
 	}
-	public decode(tag: EncodedRevisionTag, context: ChangeEncodingContext): RevisionTag {
+	public decode(tag: EncodedRevisionTag, context: ChangeDecodingContext): RevisionTag {
 		if (tag === "root") {
 			return tag;
 		}
@@ -35,6 +41,14 @@ export class RevisionTagCodec
 			typeof tag === "number",
 			0x88d /* String revision tag must be the literal 'root' */,
 		);
-		return this.idCompressor.normalizeToSessionSpace(tag, context.originatorId);
+		// Revision tags share the unified identifier-resolution path with forest identifiers.
+		// For the finalized identifiers revision tags always are, this produces the same result
+		// as the originator-based normalization did, without needing the originator session id.
+		const resolved = context.idDecodingContext.resolveEncodedId(tag);
+		assert(
+			typeof resolved !== "string",
+			"Revision tag must resolve to a compressed identifier",
+		);
+		return resolved;
 	}
 }
