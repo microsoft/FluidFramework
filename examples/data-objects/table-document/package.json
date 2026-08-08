@@ -1,6 +1,7 @@
 {
 	"name": "@fluid-example/table-document",
 	"version": "2.115.0",
+	"private": true,
 	"description": "Chaincode component containing a table's data",
 	"homepage": "https://fluidframework.com",
 	"repository": {

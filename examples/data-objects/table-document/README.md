@@ -29,12 +29,6 @@ When a function is called that set a cell value or annotates a cell, it calls pr
 
 For example, to support a feature like simple user attribution, the app can append the user information to the properties in the callback. The user information can than be retrieved by getting the properties of the cell.
 
-## Remarks
-
-Being an example, this package should have `private: true` in `package.json` but alas there's one consumer of Fluid
-taking a dependency on it, so we can't do that yet.
-Once it can be converted, or once that consumer confirms they don't need both ESNext and CommonJS modules, it should also drop the CommonJS build (this has already been done for the package's tests, but not its public API).
-
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
