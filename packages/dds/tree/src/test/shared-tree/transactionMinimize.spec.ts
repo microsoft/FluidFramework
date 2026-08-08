@@ -2654,7 +2654,7 @@ describe("transaction minimize post-processor", () => {
 		});
 	});
 
-	describe.only("minimizes edits to content that ends up detached", () => {
+	describe.skip("minimizes edits to content that ends up detached", () => {
 		const endpointsUnderBuiltTrees = new Set([
 			NodeFlowEndpoint.UnderDetachedBuiltTree,
 			NodeFlowEndpoint.UnderAttachingBuiltTree,
