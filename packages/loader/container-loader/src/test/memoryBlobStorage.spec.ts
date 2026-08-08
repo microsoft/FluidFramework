@@ -91,7 +91,7 @@ describe("MemoryBlobStorage", () => {
 		];
 		const storage = createMemoryDetachedBlobStorage();
 		const blobResponses = await Promise.all(
-			blobContents.map((blobContent) => storage.createBlob(blobContent.buffer)),
+			blobContents.map(async (blobContent) => storage.createBlob(blobContent.buffer)),
 		);
 
 		assert.deepStrictEqual(
@@ -113,11 +113,11 @@ describe("MemoryBlobStorage", () => {
 		const rehydratedBlobContents = await Promise.all(
 			newStorage
 				.getBlobIds()
-				.map(async (id) => Array.from(new Uint8Array(await newStorage.readBlob(id)))),
+				.map(async (id) => [...new Uint8Array(await newStorage.readBlob(id))]),
 		);
 		assert.deepStrictEqual(
 			rehydratedBlobContents,
-			blobContents.map((blobContent) => Array.from(blobContent)),
+			blobContents.map((blobContent) => [...blobContent]),
 		);
 	});
 
@@ -131,12 +131,12 @@ describe("MemoryBlobStorage", () => {
 		const rehydratedBlobContents = await Promise.all(
 			storage
 				.getBlobIds()
-				.map(async (id) => Array.from(new Uint8Array(await storage.readBlob(id)))),
+				.map(async (id) => [...new Uint8Array(await storage.readBlob(id))]),
 		);
 		assert.deepStrictEqual(
 			rehydratedBlobContents,
 			legacyBlobContents.map((blobContent) =>
-				Array.from(new Uint8Array(stringToBuffer(blobContent, "utf8"))),
+				[...new Uint8Array(stringToBuffer(blobContent, "utf8"))],
 			),
 		);
 	});

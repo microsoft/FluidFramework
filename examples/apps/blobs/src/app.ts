@@ -123,16 +123,14 @@ globalThis.loadAdditionalContainer = async () => {
 };
 
 globalThis.getContainerForTesting = () => container;
-globalThis.rehydrateDetachedContainerForTesting = (serializedState: string) =>
+globalThis.rehydrateDetachedContainerForTesting = async (serializedState: string) =>
 	rehydrateDetachedContainer({
 		serializedState,
 		urlResolver,
 		documentServiceFactory,
 		codeLoader,
 	});
-globalThis.attachAndLoadContainerForTesting = async (
-	containerToAttach: IContainer,
-) => {
+globalThis.attachAndLoadContainerForTesting = async (containerToAttach: IContainer) => {
 	let containerId = `${Date.now()}-detached-blob-test`;
 	await containerToAttach.attach(createCreateNewRequest(containerId));
 	if (service !== "odsp") {

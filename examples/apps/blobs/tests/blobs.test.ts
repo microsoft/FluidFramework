@@ -36,11 +36,7 @@ describe("blobs", () => {
 	});
 
 	it("preserves binary blobs through detached serialize, rehydrate, and attach", async () => {
-		const blobContents = [
-			[0x00, 0x01, 0x02, 0x03, 0xfe, 0xff],
-			[],
-			[0x80, 0x00, 0x7f],
-		];
+		const blobContents = [[0x00, 0x01, 0x02, 0x03, 0xfe, 0xff], [], [0x80, 0x00, 0x7f]];
 		const roundTrippedBlobContents = await page.evaluate(async (contents) => {
 			const waitForBlobCount = async (
 				collection: IBlobCollection,
@@ -61,14 +57,11 @@ describe("blobs", () => {
 				Promise.all(
 					collection
 						.getBlobs()
-						.map(async ({ blob }) =>
-							Array.from(new Uint8Array(await blob.arrayBuffer())),
-						),
+						.map(async ({ blob }) => Array.from(new Uint8Array(await blob.arrayBuffer()))),
 				);
 
 			const originalContainer = globalThis.getContainerForTesting();
-			const originalCollection =
-				(await originalContainer.getEntryPoint()) as IBlobCollection;
+			const originalCollection = (await originalContainer.getEntryPoint()) as IBlobCollection;
 			const blobsUploaded = waitForBlobCount(originalCollection, contents.length);
 			for (const content of contents) {
 				originalCollection.addBlob(new Blob([new Uint8Array(content)]));
@@ -86,8 +79,7 @@ describe("blobs", () => {
 
 			const attachedContainer =
 				await globalThis.attachAndLoadContainerForTesting(rehydratedContainer);
-			const attachedCollection =
-				(await attachedContainer.getEntryPoint()) as IBlobCollection;
+			const attachedCollection = (await attachedContainer.getEntryPoint()) as IBlobCollection;
 			await waitForBlobCount(attachedCollection, contents.length);
 			const attached = await readBlobContents(attachedCollection);
 

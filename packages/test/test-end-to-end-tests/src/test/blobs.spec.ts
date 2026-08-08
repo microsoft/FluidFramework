@@ -579,16 +579,14 @@ function serializationTests({
 							configProvider: createTestConfigProvider({}),
 						},
 					});
-					const container = await loader.createDetachedContainer(
-						provider.defaultCodeDetails,
-					);
+					const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 					const dataStore = (await container.getEntryPoint()) as ITestDataObject;
 					const blobContents = [
 						new Uint8Array([0x00, 0x01, 0x02, 0x03, 0xfe, 0xff]),
 						new Uint8Array([0x80, 0x00, 0x7f]),
 					];
 					const blobHandles = await Promise.all(
-						blobContents.map((blobContent) =>
+						blobContents.map(async (blobContent) =>
 							dataStore._runtime.uploadBlob(blobContent.buffer),
 						),
 					);
@@ -596,9 +594,7 @@ function serializationTests({
 						dataStore._root.set(`binary blob ${index}`, blobHandle);
 					});
 
-					const assertBlobContents = async (
-						dataObject: ITestDataObject,
-					): Promise<void> => {
+					const assertBlobContents = async (dataObject: ITestDataObject): Promise<void> => {
 						const rehydratedBlobContents = await Promise.all(
 							blobContents.map(async (_, index) => {
 								const blobHandle: IFluidHandle<ArrayBufferLike> | undefined =
