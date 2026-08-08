@@ -261,6 +261,13 @@ export interface IChannelServices {
 	deltaConnection: IDeltaConnection;
 
 	objectStorage: IChannelStorageService;
+
+	/**
+	 * Indicates this channel is being loaded from pending local state and was never
+	 * actually attached (its handle was never stored in an attached DDS).
+	 * When true, the channel should not report isAttached()=true after loading.
+	 */
+	loadingFromPendingState?: boolean;
 }
 
 /**
