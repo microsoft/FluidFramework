@@ -279,14 +279,30 @@ The existing real-service ODSP suites under `packages/test/test-end-to-end-tests
 
 The flush side effect in `sealAndCaptureVersionMark()` is acceptable, but it creates corner cases that should be handled explicitly and covered in tests and consumer documentation.
 
-Ideally, capture should preflight whether flushing is unsafe, including during reentrant/inbound processing and inside `orderSequentially`. In those contexts it should return an explicit failure result without flushing or closing the container. This would be an API change because it adds another `kind` to `VersionMarkCapture`.
+Consider adding a `notCaptured` result to `VersionMarkCapture` for expected caller-state conditions where capture cannot safely begin:
+
+```ts
+type VersionMarkCapture =
+	| { kind: "pending"; batchId: string; sequenceNumberLowerBound: number }
+	| { kind: "resolved"; sequenceNumber: number }
+	| {
+			kind: "notCaptured";
+			reason: "unsafeToFlush" | "stagingNotSupported";
+	  };
+```
+
+This is preferable to throwing when the runtime can detect the condition before changing batch state. In particular, capture should preflight reentrant/inbound processing, manual batch accumulation inside `orderSequentially`, and staging mode before calling `flush()`. Today `ContainerRuntime.flush()` treats failures as critical: for example, flushing inside `orderSequentially` asserts, closes the container, and rethrows. A mark request made at an inconvenient but recoverable time should instead return `notCaptured`, perform no flush, create no locator, and leave the container usable.
+
+`notCaptured` should not become a catch-all for failures after flushing starts. Unexpected submission failures, an oversized or invalid batch, a closed/disposed runtime, and other operational or data-processing errors should continue to throw and follow their existing container lifecycle. Returning a normal result after partial mutation would hide an indeterminate capture. Keep the reason union small and actionable; callers can retry `unsafeToFlush` after leaving the current callback, while `stagingNotSupported` means they must wait for commit/discard or use a future staging-aware capture contract.
+
+Adding this variant is an API change. Before promotion, decide whether `sealAndCaptureVersionMark()` should always return the three-way union or whether unsafe contexts should remain programmer errors. If `notCaptured` is adopted, document that it guarantees no mark was produced and no capture-triggered flush occurred.
 
 Staging mode also needs an explicit contract for both commit and discard. Capturing staged edits should not send them immediately. Committing should preserve the captured batch identity through submission/resubmission so the mark resolves normally. After discard, the captured batch will never sequence, so the resulting mark behavior must be defined and documented.
 
 Suggested test coverage:
 
 1. **Real batch cut:** Submit an op through `ContainerRuntime`, call capture before the TurnBased flush, and verify that capture flushes the op into `PendingStateManager` and returns that exact batch's ID rather than a mocked ID.
-2. **Unsafe contexts:** Call capture during inbound processing and inside `orderSequentially`; verify an explicit failure result, no flush, and no container closure.
+2. **Unsafe contexts:** Call capture during inbound processing and inside `orderSequentially`; verify `notCaptured` with `reason: "unsafeToFlush"`, no flush, and no container closure. Also verify a later retry succeeds.
 3. **Staging commit and discard:** Capture staged edits and verify nothing is sent immediately. Verify that commit preserves the captured ID through resubmit and resolution, and define and test the result after discard.
 4. **Offline rehydration:** Capture while disconnected, stash and rehydrate, resubmit from the new client, and resolve using the original ID. This also covers end-to-end preservation and stamping of the batch identity through pending-state rehydration, beyond the existing unit tests for explicit original `batchId` metadata.
 
