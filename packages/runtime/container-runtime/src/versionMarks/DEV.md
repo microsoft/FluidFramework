@@ -255,6 +255,21 @@ Per-inbound-batch work (deriving the batch identity and populating the map/notif
 
 ## Future work
 
+### Missing end-to-end coverage
+
+The existing real-service ODSP suites under `packages/test/test-end-to-end-tests/src/test/pointInTime/` begin with a known sequence number and exercise loading. They do not create that sequence number through the version-mark API. Extend `pointInTimeTestUtils.ts` with a host entry point that exposes `IVersionMarkResolver`, then add:
+
+1. **Pending mark to historical load:** Make a local edit, call `sealAndCaptureVersionMark()`, persist the pending locator outside the runtime, sequence the batch, resolve the locator, and load the resulting sequence number. Verify the loaded state includes the marked edit and excludes later edits.
+2. **Already-resolved capture:** Capture with no local pending batch and load the returned sequence number directly, proving the no-resolution path produces the expected historical state.
+3. **Live promotion from another client:** Capture on one client and use `onBatchSequenced` on another connected client to promote the stored locator, proving batch identity is observable across clients.
+4. **Reconnect and resubmission:** Capture before disconnect, reconnect and resubmit the multi-op batch with its original explicit `batchId`, then verify both live and historical resolution still find the mark.
+5. **Capturing-client loss:** Close the capturing client before its acknowledgement, open a fresh client, resolve from retained historical ops, and load the marked state. This is the primary cross-session recovery scenario.
+6. **Transformed batches:** Capture edits that produce grouped, compressed, and chunked batches and verify the real inbound/history pipelines recover the same effective batch identity.
+7. **Pending and retention outcomes:** Resolve before the batch sequences and observe `pending`; when the test environment can deterministically trim the target ops, verify the same stored locator becomes `unresolvable`.
+8. **Offline and staging lifecycles:** Cover stash/rehydration plus staging commit and discard once those capture contracts are finalized.
+
+### API and design follow-ups
+
 - Review the `IContainerContextInternal extends IContainerContext` cross-layer integration with Navin to establish the preferred pattern for features that span loader and runtime layers. In particular, determine whether explicit layer-compat support would make this interface evolution safer or more maintainable.
 - Consider merging `getCurrentPendingBatchId` into `flushPendingBatch` so sealing the batch returns its resulting `batchId`. This would keep the ordered flush-then-read operation inside one runtime hook instead of requiring the resolver to call two hooks in sequence.
 - Reevaluate whether distinguishing `pending` from `unresolvable` is valuable enough to justify the driver-dependent heuristics in `classifyMiss`. The current implementation makes educated guesses from empty reads and sequence gaps, so its confidence depends on how each driver's delta storage reports trimmed ranges. Consider returning the conservative `pending` result for ambiguous misses, collapsing the states, or deferring a definitive `unresolvable` result until delta storage exposes an explicit retention boundary.
