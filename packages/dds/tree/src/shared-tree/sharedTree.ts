@@ -13,7 +13,7 @@ import type {
 	IFluidSerializer,
 	SharedKernel,
 } from "@fluidframework/shared-object-base/internal";
-import { type TelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	type CodecTree,
@@ -206,7 +206,6 @@ export class SharedTreeKernel
 		submitLocalMessage: (content: unknown, localOpMetadata?: unknown) => void,
 		lastSequenceNumber: () => number | undefined,
 		initialSequenceNumber: number,
-		private readonly logger: TelemetryLoggerExt | undefined,
 		idCompressor: IIdCompressor,
 		optionsParam: SharedTreeOptionsInternal,
 	) {
@@ -252,7 +251,7 @@ export class SharedTreeKernel
 			idCompressor,
 			healing:
 				options.healUnresolvableIdentifiersOnDecode === true
-					? { sharedObjectId: sharedObject.id, logger }
+					? { sharedObjectId: sharedObject.id, logger: breaker.logger }
 					: undefined,
 		});
 		const forestSummarizer = new ForestSummarizer(
@@ -305,7 +304,6 @@ export class SharedTreeKernel
 			sharedObject,
 			serializer,
 			submitLocalMessage,
-			logger,
 			[schemaSummarizer, forestSummarizer, removedRootsSummarizer],
 			changeFamily,
 			options,
@@ -324,7 +322,6 @@ export class SharedTreeKernel
 			fieldBatchCodec,
 			removedRoots,
 			chunkCompressionStrategy: options.treeEncodeType,
-			logger,
 			breaker: this.breaker,
 		});
 

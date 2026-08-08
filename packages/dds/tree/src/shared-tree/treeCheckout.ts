@@ -11,7 +11,7 @@ import type {
 } from "@fluidframework/core-interfaces/internal";
 import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import { type TelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	FluidClientVersion,
@@ -334,12 +334,11 @@ export function createTreeCheckout(
 		fieldBatchCodec?: FieldBatchCodec;
 		removedRoots?: DetachedFieldIndex;
 		chunkCompressionStrategy?: TreeCompressionStrategy;
-		logger?: TelemetryLoggerExt;
 		breaker?: Breakable;
 		codecOptions?: Partial<CodecWriteOptions>;
 	},
 ): TreeCheckout {
-	const breaker = args?.breaker ?? new Breakable("TreeCheckout", args?.logger);
+	const breaker = args?.breaker ?? new Breakable("TreeCheckout");
 	const schema = args?.schema ?? new TreeStoredSchemaRepository();
 	const forest = args?.forest ?? buildForest(breaker, schema);
 	const defaultCodecOptions: CodecWriteOptions = {
@@ -380,7 +379,6 @@ export function createTreeCheckout(
 		revisionTagCodec,
 		idCompressor,
 		args?.removedRoots,
-		args?.logger,
 		breaker,
 	);
 }
@@ -566,9 +564,7 @@ export class TreeCheckout implements ITreeCheckout {
 		private readonly revisionTagCodec: RevisionTagCodec,
 		private readonly idCompressor: IIdCompressor,
 		private readonly _removedRoots: DetachedFieldIndex = makeDetachedFieldIndex("repair"),
-		/** Optional logger for telemetry. */
-		private readonly logger?: TelemetryLoggerExt,
-		public readonly breaker: Breakable = new Breakable("TreeCheckout", logger),
+		public readonly breaker: Breakable = new Breakable("TreeCheckout"),
 		public readonly disposeForksAfterTransaction = true,
 	) {
 		this.#transaction = this.createTransactionStack(branch);
@@ -1170,7 +1166,7 @@ export class TreeCheckout implements ITreeCheckout {
 				}
 
 				const revertMetrics = checkout.revertRevertible(revision, kind, labelTree);
-				checkout.logger?.sendTelemetryEvent({
+				checkout.breaker.logger?.sendTelemetryEvent({
 					eventName: TreeCheckout.revertTelemetryEventName,
 					...revertMetrics,
 				});
@@ -1292,7 +1288,7 @@ export class TreeCheckout implements ITreeCheckout {
 
 		const branch = this.#transaction.activeBranch.fork();
 		const storedSchema = this.storedSchema.clone();
-		const forkBreaker = new Breakable("TreeCheckout", this.logger);
+		const forkBreaker = new Breakable("TreeCheckout", this.breaker.logger);
 		const forest = this.forest.clone(storedSchema, forkBreaker);
 		const checkout = new TreeCheckout(
 			branch,
@@ -1304,7 +1300,6 @@ export class TreeCheckout implements ITreeCheckout {
 			this.revisionTagCodec,
 			this.idCompressor,
 			this._removedRoots.clone(),
-			this.logger,
 			forkBreaker,
 		);
 		this.#events.emit("fork", checkout);
