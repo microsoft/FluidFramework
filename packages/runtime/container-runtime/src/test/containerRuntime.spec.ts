@@ -1090,6 +1090,345 @@ describe("Runtime", () => {
 			}
 		});
 
+		describe("orderSequentially + Staging Mode: batch cohesion", () => {
+			// These tests check whether ops submitted across a Staging Mode session and any
+			// orderSequentially() calls nested inside it stay in a single outbox batch (i.e. no
+			// intermediate flush splits them apart) until the Staging Mode session is explicitly
+			// committed or discarded. The "caveats" sub-suite below highlights the scenarios where
+			// that is NOT the case.
+			let containerRuntime: ContainerRuntime_WithPrivates;
+			let mockDeltaManager: MockDeltaManager;
+			const containerErrors: ICriticalContainerError[] = [];
+			let submittedOpsCount: number = 0;
+
+			async function createRuntime(
+				runtimeOptions: Partial<IContainerRuntimeOptionsInternal> = {},
+			): Promise<ContainerRuntime_WithPrivates> {
+				mockDeltaManager = new MockDeltaManager();
+				const context: Partial<IContainerContext> = {
+					attachState: AttachState.Attached,
+					connected: true,
+					clientId: "client-id",
+					supportedFeatures: new Map([["referenceSequenceNumbers", true]]),
+					deltaManager: mockDeltaManager,
+					audience: new MockAudience(),
+					quorum: new MockQuorumClients(),
+					taggedLogger: mixinMonitoringContext(
+						new MockLogger(),
+						configProvider({
+							"Fluid.ContainerRuntime.EnableRollback": true,
+						}),
+					) as unknown as MockLogger,
+					clientDetails: { capabilities: { interactive: true } },
+					closeFn: (error?: ICriticalContainerError): void => {
+						if (error !== undefined) {
+							containerErrors.push(error);
+						}
+					},
+					submitFn: (...args) => {
+						return ++submittedOpsCount; // clientSequenceNumber
+					},
+					updateDirtyContainerState: (_dirty: boolean) => {},
+					getLoadedFromVersion: () => undefined,
+				};
+				const { runtime } = await ContainerRuntime.loadRuntime2({
+					context: context as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					runtimeOptions: {
+						summaryOptions: {
+							summaryConfigOverrides: { state: "disabled" },
+						},
+						flushMode: FlushMode.TurnBased,
+						...runtimeOptions,
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+				return runtime as unknown as ContainerRuntime_WithPrivates;
+			}
+
+			function outboxMessageCount(runtime: ContainerRuntime_WithPrivates): number {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+				return (runtime as any).outbox.mainBatchMessageCount as number;
+			}
+
+			beforeEach(async () => {
+				containerErrors.length = 0;
+				submittedOpsCount = 0;
+				containerRuntime = await createRuntime();
+			});
+
+			afterEach(() => {
+				containerRuntime?.dispose();
+				containerRuntime = undefined as unknown as ContainerRuntime_WithPrivates;
+			});
+
+			describe("confirmed: batch stays cohesive (no flush) across combinations", () => {
+				it("staging mode -> submit op -> orderSequentially (success) -> commit", () => {
+					stubChannelCollection(containerRuntime);
+					const stageControls = containerRuntime.enterStagingMode();
+
+					submitDataStoreOp(containerRuntime, "1", genTestDataStoreMessage("staged-1"), "M1");
+					assert.equal(outboxMessageCount(containerRuntime), 1, "1 staged op in the outbox");
+
+					containerRuntime.orderSequentially(() => {
+						submitDataStoreOp(
+							containerRuntime,
+							"2",
+							genTestDataStoreMessage("staged-2"),
+							"M2",
+						);
+						submitDataStoreOp(
+							containerRuntime,
+							"3",
+							genTestDataStoreMessage("staged-3"),
+							"M3",
+						);
+					});
+
+					assert.equal(
+						outboxMessageCount(containerRuntime),
+						3,
+						"All 3 ops remain in the same (still open) outbox batch - orderSequentially reused " +
+							"the existing Staging Mode session instead of flushing/entering its own",
+					);
+					assert.equal(submittedOpsCount, 0, "Nothing should have hit the wire yet");
+
+					stageControls.commitChanges();
+
+					assert.equal(
+						submittedOpsCount,
+						1,
+						"All 3 ops should be sent together as a single (grouped) batch on commit",
+					);
+					assert.strictEqual(containerErrors.length, 0);
+				});
+
+				it("staging mode -> submit op -> orderSequentially (success) -> discard", () => {
+					const channelCollectionStub = stubChannelCollection(containerRuntime);
+					const stageControls = containerRuntime.enterStagingMode();
+
+					submitDataStoreOp(containerRuntime, "1", genTestDataStoreMessage("staged-1"), "M1");
+					containerRuntime.orderSequentially(() => {
+						submitDataStoreOp(
+							containerRuntime,
+							"2",
+							genTestDataStoreMessage("staged-2"),
+							"M2",
+						);
+					});
+
+					assert.equal(
+						outboxMessageCount(containerRuntime),
+						2,
+						"Both ops remain in the same outbox batch",
+					);
+
+					stageControls.discardChanges();
+
+					assert.equal(submittedOpsCount, 0, "Nothing should ever have hit the wire");
+					assert.equal(
+						channelCollectionStub.rollbackDataStoreOp.callCount,
+						2,
+						"Both ops rolled back together (LIFO) as one staged unit",
+					);
+					assert.strictEqual(containerErrors.length, 0);
+				});
+
+				it("staging mode -> submit op -> orderSequentially throws -> only its own ops roll back, batch stays open -> commit", () => {
+					stubChannelCollection(containerRuntime);
+					const stageControls = containerRuntime.enterStagingMode();
+
+					submitDataStoreOp(containerRuntime, "1", genTestDataStoreMessage("keep-me"), "M1");
+
+					assert.throws(() =>
+						containerRuntime.orderSequentially(() => {
+							submitDataStoreOp(
+								containerRuntime,
+								"2",
+								genTestDataStoreMessage("rollback-me"),
+								"M2",
+							);
+							throw new Error("Tables-style rollback");
+						}),
+					);
+
+					assert.equal(
+						outboxMessageCount(containerRuntime),
+						1,
+						"Only op 1 remains - op 2 was rolled back via checkpoint, but the batch itself was never flushed",
+					);
+					assert.equal(
+						containerRuntime.inStagingMode,
+						true,
+						"The outer Staging Mode session should still be active",
+					);
+					assert.strictEqual(
+						containerErrors.length,
+						0,
+						"Rollback should not close the container",
+					);
+
+					stageControls.commitChanges();
+					assert.equal(
+						submittedOpsCount,
+						1,
+						"Only the surviving op is committed, still as part of a single batch",
+					);
+				});
+
+				it("staging mode -> submit op -> orderSequentially throws -> discard remaining", () => {
+					const channelCollectionStub = stubChannelCollection(containerRuntime);
+					const stageControls = containerRuntime.enterStagingMode();
+
+					submitDataStoreOp(containerRuntime, "1", genTestDataStoreMessage("keep-me"), "M1");
+
+					assert.throws(() =>
+						containerRuntime.orderSequentially(() => {
+							submitDataStoreOp(
+								containerRuntime,
+								"2",
+								genTestDataStoreMessage("rollback-me"),
+								"M2",
+							);
+							throw new Error("Tables-style rollback");
+						}),
+					);
+
+					stageControls.discardChanges();
+
+					assert.equal(submittedOpsCount, 0, "Nothing should ever have hit the wire");
+					// op "2" was already rolled back by orderSequentially's own checkpoint; only op "1"
+					// remains to be rolled back by discardChanges.
+					assert.equal(
+						channelCollectionStub.rollbackDataStoreOp.callCount,
+						2,
+						"op 2 rolled back by orderSequentially, then op 1 rolled back by discardChanges",
+					);
+				});
+
+				it("staging mode -> nested orderSequentially calls all share the same batch -> commit", () => {
+					stubChannelCollection(containerRuntime);
+					const stageControls = containerRuntime.enterStagingMode();
+
+					submitDataStoreOp(containerRuntime, "1", genTestDataStoreMessage("outer"), "M1");
+
+					containerRuntime.orderSequentially(() => {
+						submitDataStoreOp(containerRuntime, "2", genTestDataStoreMessage("mid"), "M2");
+						containerRuntime.orderSequentially(() => {
+							submitDataStoreOp(containerRuntime, "3", genTestDataStoreMessage("inner"), "M3");
+						});
+					});
+
+					assert.equal(
+						outboxMessageCount(containerRuntime),
+						3,
+						"All 3 ops (outer staged op + 2 levels of nested orderSequentially) share one outbox batch",
+					);
+
+					stageControls.commitChanges();
+					assert.equal(
+						submittedOpsCount,
+						1,
+						"Everything is sent together as a single (grouped) batch",
+					);
+				});
+			});
+
+			describe("caveats: scenarios where the batch does NOT stay cohesive", () => {
+				it("orderSequentially without an existing Staging Mode session flushes pre-existing pending ops as their own separate batch", () => {
+					stubChannelCollection(containerRuntime);
+
+					// An ordinary (non-staged) op submitted before entering orderSequentially at all.
+					submitDataStoreOp(containerRuntime, "1", genTestDataStoreMessage("pre-existing"));
+					assert.equal(submittedOpsCount, 0, "Op 1 still sitting unflushed in the outbox");
+
+					containerRuntime.orderSequentially(() => {
+						// orderSequentially is NOT nested in an existing Staging Mode session here, so
+						// it enters its OWN (silent) Staging Mode. Doing so requires the outbox to be
+						// empty first (see enterStagingModeCore's precondition flush), so it flushes op
+						// "1" - as its own complete, separate batch, sent straight to the wire - before
+						// orderSequentially's own ops are even submitted.
+						assert.equal(
+							submittedOpsCount,
+							1,
+							"Op 1 was already sent as its own batch, split apart from orderSequentially's ops",
+						);
+						submitDataStoreOp(containerRuntime, "2", genTestDataStoreMessage("inside"));
+					});
+				});
+
+				it("exceeding stagingModeAutoFlushThreshold mid-sequence splits the staged batch in two", async () => {
+					const threshold = 2;
+					const runtime = await createRuntime({
+						stagingModeAutoFlushThreshold: threshold,
+						enableGroupedBatching: false,
+					});
+					stubChannelCollection(runtime);
+
+					const stageControls = runtime.enterStagingMode();
+
+					submitDataStoreOp(runtime, "1", genTestDataStoreMessage("staged-1"));
+					assert.equal(outboxMessageCount(runtime), 1, "1 op in the outbox, under threshold");
+
+					// This 2nd op, submitted from inside orderSequentially, reaches the threshold and
+					// triggers an automatic flush - moving both ops from the outbox into the
+					// PendingStateManager as a completed staged batch, distinct from anything
+					// submitted afterwards.
+					runtime.orderSequentially(() => {
+						submitDataStoreOp(runtime, "2", genTestDataStoreMessage("staged-2"));
+					});
+					await Promise.resolve(); // let scheduleFlush's queued flush (if any) run
+
+					assert.equal(
+						outboxMessageCount(runtime),
+						0,
+						"Outbox was emptied by the auto-flush threshold - ops 1 and 2 are now a completed " +
+							"staged batch in the PendingStateManager",
+					);
+
+					submitDataStoreOp(runtime, "3", genTestDataStoreMessage("staged-3"));
+					assert.equal(
+						outboxMessageCount(runtime),
+						1,
+						"Op 3 starts a brand new outbox batch, distinct from the batch containing ops 1 and 2",
+					);
+
+					// Both batches are still committed/discarded together, but as two separate
+					// wire sends/PSM batches rather than one.
+					stageControls.commitChanges();
+					runtime.dispose();
+				});
+
+				it("an incoming op between staged submits flushes the batch regardless of orderSequentially", () => {
+					stubChannelCollection(containerRuntime);
+
+					containerRuntime.enterStagingMode();
+					submitDataStoreOp(containerRuntime, "1", genTestDataStoreMessage("staged-1"));
+					assert.equal(outboxMessageCount(containerRuntime), 1, "1 op in the outbox");
+
+					// Incoming ops call this.flush() directly, bypassing the Staging Mode auto-flush
+					// suppression entirely - this happens whether or not orderSequentially is involved,
+					// or even entered at all.
+					++mockDeltaManager.lastSequenceNumber;
+					mockDeltaManager.emit("op", {
+						clientId: "client-id",
+						sequenceNumber: mockDeltaManager.lastSequenceNumber,
+						clientSequenceNumber: 1,
+						type: MessageType.ClientJoin,
+						contents: "test content",
+					});
+
+					assert.equal(
+						outboxMessageCount(containerRuntime),
+						0,
+						"The incoming op forced a flush, splitting off op 1 into its own staged batch " +
+							"before anything else (including a subsequent orderSequentially call) is submitted",
+					);
+				});
+			});
+		});
+
 		describe("Dirty flag", () => {
 			const createMockContext = (
 				attachState: AttachState,
