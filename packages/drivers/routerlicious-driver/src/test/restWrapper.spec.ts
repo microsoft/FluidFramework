@@ -60,7 +60,7 @@ interface MockFetchEntry {
 	/** Response body. Objects are JSON-serialized with content-type: application/json. */
 	body?: string | object;
 	/** Simulate a network error by rejecting fetch with a TypeError */
-	networkError?: { code: string };
+	networkError?: { code?: string; message?: string };
 	/** Dynamically compute the response as [status, body] */
 	replyFn?: () => [number, string | object];
 }
@@ -138,8 +138,10 @@ function createMockFetch(entries: MockFetchEntry[]): MockFetch {
 
 		// Simulate network error
 		if (entry.networkError) {
-			const err = new TypeError(`request to ${inputUrl} failed`);
-			(err as any).code = entry.networkError.code;
+			const err = new TypeError(entry.networkError.message ?? `request to ${inputUrl} failed`);
+			if (entry.networkError.code !== undefined) {
+				(err as any).code = entry.networkError.code;
+			}
 			throw err;
 		}
 
@@ -330,8 +332,22 @@ describe("RouterliciousDriverRestWrapper", () => {
 				errorType: RouterliciousErrorTypes.fileNotFoundOrAccessDeniedError,
 			});
 		});
-		it("throws retriable error on Network Error", async () => {
+		it("throws retriable error on Network Error after exhausting retries", async () => {
+			// request() now retries transient network errors, so mock a failure for each of the
+			// 3 attempts (1 initial + 2 retries) before it gives up.
 			mockFetch = createMockFetch([
+				{
+					method: "GET",
+					origin: testHost,
+					path: testPath,
+					networkError: { code: "ECONNRESET" },
+				},
+				{
+					method: "GET",
+					origin: testHost,
+					path: testPath,
+					networkError: { code: "ECONNRESET" },
+				},
 				{
 					method: "GET",
 					origin: testHost,
@@ -542,8 +558,22 @@ describe("RouterliciousDriverRestWrapper", () => {
 				errorType: RouterliciousErrorTypes.fileNotFoundOrAccessDeniedError,
 			});
 		});
-		it("throws retriable error on Network Error", async () => {
+		it("throws retriable error on Network Error after exhausting retries", async () => {
+			// request() now retries transient network errors, so mock a failure for each of the
+			// 3 attempts (1 initial + 2 retries) before it gives up.
 			mockFetch = createMockFetch([
+				{
+					method: "POST",
+					origin: testHost,
+					path: testPath,
+					networkError: { code: "ECONNRESET" },
+				},
+				{
+					method: "POST",
+					origin: testHost,
+					path: testPath,
+					networkError: { code: "ECONNRESET" },
+				},
 				{
 					method: "POST",
 					origin: testHost,
@@ -661,8 +691,22 @@ describe("RouterliciousDriverRestWrapper", () => {
 				errorType: RouterliciousErrorTypes.fileNotFoundOrAccessDeniedError,
 			});
 		});
-		it("throws retriable error on Network Error", async () => {
+		it("throws retriable error on Network Error after exhausting retries", async () => {
+			// request() now retries transient network errors, so mock a failure for each of the
+			// 3 attempts (1 initial + 2 retries) before it gives up.
 			mockFetch = createMockFetch([
+				{
+					method: "PATCH",
+					origin: testHost,
+					path: testPath,
+					networkError: { code: "ECONNRESET" },
+				},
+				{
+					method: "PATCH",
+					origin: testHost,
+					path: testPath,
+					networkError: { code: "ECONNRESET" },
+				},
 				{
 					method: "PATCH",
 					origin: testHost,
@@ -780,8 +824,22 @@ describe("RouterliciousDriverRestWrapper", () => {
 				errorType: RouterliciousErrorTypes.fileNotFoundOrAccessDeniedError,
 			});
 		});
-		it("throws retriable error on Network Error", async () => {
+		it("throws retriable error on Network Error after exhausting retries", async () => {
+			// request() now retries transient network errors, so mock a failure for each of the
+			// 3 attempts (1 initial + 2 retries) before it gives up.
 			mockFetch = createMockFetch([
+				{
+					method: "DELETE",
+					origin: testHost,
+					path: testPath,
+					networkError: { code: "ECONNRESET" },
+				},
+				{
+					method: "DELETE",
+					origin: testHost,
+					path: testPath,
+					networkError: { code: "ECONNRESET" },
+				},
 				{
 					method: "DELETE",
 					origin: testHost,
@@ -792,6 +850,87 @@ describe("RouterliciousDriverRestWrapper", () => {
 			await assert.rejects(restWrapper.delete(testUrl), {
 				canRetry: true,
 				errorType: RouterliciousErrorTypes.genericNetworkError,
+			});
+		});
+	});
+
+	// Transport-level retry: the routerlicious driver runs in AWS Lambda, whose execution context
+	// is frozen between invocations. A keep-alive socket pooled by the underlying fetch transport
+	// can be closed by the peer (e.g. an ALB) during the freeze; the next request reuses the dead
+	// socket and rejects with "socket hang up" / ECONNRESET / EPIPE. request() retries such
+	// transient network errors (a fresh socket is opened on retry) up to a small bound before
+	// surfacing the error.
+	describe("transient network error retry", () => {
+		it("retries a transient network error and succeeds when a later attempt connects", async () => {
+			mockFetch = createMockFetch([
+				{
+					method: "GET",
+					origin: testHost,
+					path: testPath,
+					networkError: { code: "ECONNRESET", message: "socket hang up" },
+				},
+				{ method: "GET", origin: testHost, path: testPath, status: 200 },
+			]);
+			await assert.doesNotReject(restWrapper.get(testUrl));
+		});
+
+		it("retries POST requests too", async () => {
+			mockFetch = createMockFetch([
+				{
+					method: "POST",
+					origin: testHost,
+					path: testPath,
+					networkError: { code: "ECONNRESET", message: "socket hang up" },
+				},
+				{ method: "POST", origin: testHost, path: testPath, status: 200 },
+			]);
+			await assert.doesNotReject(restWrapper.post(testUrl, { test: "payload" }));
+		});
+
+		it("gives up after 3 attempts and throws a retriable network error", async () => {
+			// Fail all 3 attempts (1 initial + 2 retries). afterEach's mockFetch.done() asserts
+			// exactly 3 fetch calls were made, proving the loop doesn't retry beyond the bound.
+			mockFetch = createMockFetch([
+				{
+					method: "GET",
+					origin: testHost,
+					path: testPath,
+					networkError: { code: "ECONNRESET", message: "socket hang up" },
+				},
+				{
+					method: "GET",
+					origin: testHost,
+					path: testPath,
+					networkError: { code: "ECONNRESET", message: "socket hang up" },
+				},
+				{
+					method: "GET",
+					origin: testHost,
+					path: testPath,
+					networkError: { code: "ECONNRESET", message: "socket hang up" },
+				},
+			]);
+			await assert.rejects(restWrapper.get(testUrl), {
+				canRetry: true,
+				errorType: RouterliciousErrorTypes.genericNetworkError,
+			});
+		});
+
+		it("does not retry a self-signed certificate error (non-retriable)", async () => {
+			mockFetch = createMockFetch([
+				{
+					method: "GET",
+					origin: testHost,
+					path: testPath,
+					networkError: {
+						message:
+							"request to https://localhost/ failed, reason: self signed certificate in certificate chain",
+					},
+				},
+			]);
+			await assert.rejects(restWrapper.get(testUrl), {
+				canRetry: false,
+				errorType: RouterliciousErrorTypes.sslCertError,
 			});
 		});
 	});
