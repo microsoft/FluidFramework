@@ -46,10 +46,11 @@ import {
 	type NodeId,
 	type RelevantRemovedRootsFromChild,
 	type ToDelta,
-	type NestedChangesIndices,
+	type NestedChangesInfo,
 	type FieldChangeDelta,
 	FlexFieldKind,
-	type EditFilterFunc,
+	type FilterDetachFunc,
+	type FilterAttachFunc,
 } from "../modular-schema/index.js";
 
 import type {
@@ -537,16 +538,6 @@ function areEqualRegisterIds(id1: RegisterId, id2: RegisterId): boolean {
 	return id1 === "self" || id2 === "self" ? id1 === id2 : areEqualChangeAtomIds(id1, id2);
 }
 
-function areEqualRegisterIdsOpt(
-	id1: RegisterId | undefined,
-	id2: RegisterId | undefined,
-): boolean {
-	if (id1 === undefined || id2 === undefined) {
-		return id1 === id2;
-	}
-	return areEqualRegisterIds(id1, id2);
-}
-
 function getBidirectionalMaps(moves: OptionalChangeset["moves"]): {
 	srcToDst: ChangeAtomIdMap<ChangeAtomId>;
 	dstToSrc: ChangeAtomIdMap<ChangeAtomId>;
@@ -692,7 +683,9 @@ export function optionalFieldIntoDelta(
 		const globals: DeltaDetachedNodeChanges[] = [];
 		for (const [id, childChange] of change.childChanges) {
 			const childDelta = deltaFromChild(childChange);
-			if (id === "self") {
+			if (childDelta.size === 0) {
+				// The delta is empty for this child.
+			} else if (id === "self") {
 				mark.fields = childDelta;
 				markIsANoop = false;
 			} else {
@@ -738,28 +731,14 @@ export const optionalChangeHandler: FieldChangeHandler<
 	getCrossFieldKeys: (_change) => [],
 };
 
-function getNestedChanges(change: OptionalChangeset): NestedChangesIndices {
+function getNestedChanges(change: OptionalChangeset): NestedChangesInfo {
 	// True iff the content of the field changes in some way
-	const isFieldContentChanged =
-		change.valueReplace !== undefined && change.valueReplace.src !== "self";
-
-	// The node that is moved into the field (if any).
-	const nodeMovedIntoField = change.valueReplace?.src;
+	const detachId = change.valueReplace?.dst;
 
 	return change.childChanges.map(([register, nodeId]) => {
-		// The node is removed in the input context iif register is not self.
-		const inputIndex = register === "self" ? 0 : undefined;
-		const outputIndex =
-			register === "self"
-				? // If the node starts out as not-removed, it is removed in the output context iff the field content is changed
-					isFieldContentChanged
-					? undefined
-					: 0
-				: // If the node starts out as removed, then it remains removed in the output context iff it is not the node that is moved into the field
-					areEqualRegisterIdsOpt(register, nodeMovedIntoField)
-					? 0
-					: undefined;
-		return [nodeId, inputIndex, outputIndex];
+		// The node is attached in the input context iif register is self.
+		const inputDetachId = register === "self" ? undefined : register;
+		return [nodeId, inputDetachId, register === "self" ? detachId : undefined];
 	});
 }
 
@@ -818,21 +797,25 @@ export const optional: Optional = new FlexFieldKind(
 function filterEdits(
 	change: OptionalChangeset,
 	options: {
-		filterDetach: EditFilterFunc;
-		filterAttach: EditFilterFunc;
+		filterDetach: FilterDetachFunc;
+		filterAttach: FilterAttachFunc;
 		preserveOtherEdits: boolean;
 	},
 ): OptionalChangeset {
 	const filtered: Mutable<OptionalChangeset> = { ...change };
-	if (filtered.valueReplace !== undefined) {
-		if (isReplaceEffectful(filtered.valueReplace)) {
-			const detachId = getEffectfulDst(filtered.valueReplace);
+	if (change.valueReplace !== undefined) {
+		if (isReplaceEffectful(change.valueReplace)) {
+			const detachId = getEffectfulDst(change.valueReplace);
 			const detachResult =
-				detachId === undefined ? undefined : options.filterDetach(detachId, 1).value;
+				detachId === undefined
+					? undefined
+					: options.filterDetach(detachId, 1, undefined).value;
 
-			const attachId = filtered.valueReplace.src;
+			const attachId = change.valueReplace.src;
 			const attachResult =
-				attachId === undefined ? undefined : options.filterAttach(attachId, 1).value;
+				attachId === undefined
+					? undefined
+					: options.filterAttach(attachId, 1, undefined).value.action;
 
 			if (detachResult === EditFilterStatus.Remove) {
 				assert(
@@ -842,7 +825,8 @@ function filterEdits(
 
 				delete filtered.valueReplace;
 			} else if (attachResult === EditFilterStatus.Remove) {
-				delete filtered.valueReplace.src;
+				filtered.valueReplace = { ...change.valueReplace };
+				delete (filtered.valueReplace as Mutable<Replace>).src;
 			}
 		} else if (!options.preserveOtherEdits) {
 			delete filtered.valueReplace;

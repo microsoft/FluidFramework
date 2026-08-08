@@ -56,7 +56,6 @@ import {
 	brand,
 	idAllocatorFromMaxId,
 	idAllocatorFromState,
-	type RangeQueryResult,
 	getOrCreate,
 	mergeTupleBTrees,
 	type TupleBTree,
@@ -76,7 +75,6 @@ import type { TreeChunk } from "../chunked-forest/index.js";
 
 import type { CrossFieldTarget } from "./crossFieldQueries.js";
 import {
-	EditFilterStatus,
 	type FieldChangeHandler,
 	NodeAttachState,
 	type RebaseRevisionMetadata,
@@ -106,6 +104,9 @@ import {
 	newConstraintState,
 	newCrossFieldTable,
 	nodeChangeFromId,
+	normalizeNodeId,
+	removeAllAttachesFilter,
+	removeAllDetachesFilter,
 	revisionInfoFromTaggedChange,
 	updateConstraintsForFields,
 	type CrossFieldTable,
@@ -1374,7 +1375,9 @@ export class ModularChangeFamily
 		for (const [field, fieldChange] of fieldChanges.entries()) {
 			const fieldId = { nodeId: nodeParent, field };
 			const handler = getChangeHandler(this.fieldKinds, fieldChange.fieldKind);
-			for (const [child, _index] of handler.getNestedChanges(fieldChange.change)) {
+			for (const [child, _inputId, _outputId] of handler.getNestedChanges(
+				fieldChange.change,
+			)) {
 				const parentFieldId = getParentFieldId(change, child);
 				assert(
 					areEqualFieldIds(parentFieldId, fieldId),
@@ -1439,21 +1442,13 @@ export class ModularChangeFamily
 			fieldKind: change.fieldKind,
 			change: brand(
 				handler.rebaser.filterEdits(change.change, {
-					filterDetach: removeAllEditsFilter,
-					filterAttach: removeAllEditsFilter,
+					filterDetach: removeAllDetachesFilter,
+					filterAttach: removeAllAttachesFilter,
 					preserveOtherEdits: false,
 				}),
 			),
 		};
 	}
-}
-
-function removeAllEditsFilter(
-	_id: ChangeAtomId,
-	count: number,
-	_endpointId?: ChangeAtomId,
-): RangeQueryResult<EditFilterStatus> {
-	return { value: EditFilterStatus.Remove, length: count };
 }
 
 function replaceCrossFieldKeyTableRevisions(
@@ -2558,22 +2553,6 @@ export function normalizeFieldId(
 	return fieldId.nodeId === undefined
 		? fieldId
 		: { ...fieldId, nodeId: normalizeNodeId(fieldId.nodeId, nodeAliases) };
-}
-
-/**
- * @returns The canonical form of nodeId, according to nodeAliases
- */
-function normalizeNodeId(nodeId: NodeId, nodeAliases: ChangeAtomIdBTree<NodeId>): NodeId {
-	let currentId = nodeId;
-
-	while (true) {
-		const dealiased = getFromChangeAtomIdMap(nodeAliases, currentId);
-		if (dealiased === undefined) {
-			return currentId;
-		}
-
-		currentId = dealiased;
-	}
 }
 
 /**
