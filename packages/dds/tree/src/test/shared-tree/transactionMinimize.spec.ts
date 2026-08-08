@@ -1430,14 +1430,12 @@ type EditScenario = TransactionScenario<typeof Records> & {
 	unminimizedBuildExpectations: BuildStatistics;
 };
 
-type EditTreeScenariosKey = [
-	source: NodeFlowEndpoint,
-	destination: NodeFlowEndpoint,
-	field: string,
-];
-type EditTreeScenarios = TupleBTree<EditTreeScenariosKey, EditScenario>;
+type EditTreeScenariosKey = [source: NodeFlowEndpoint, destination: NodeFlowEndpoint];
+type EditTreeScenarios = TupleBTree<
+	EditTreeScenariosKey,
+	{ sequence?: EditScenario; optional?: EditScenario; required?: EditScenario }
+>;
 const compareKeys = createTupleComparator<EditTreeScenariosKey>([
-	compareStrings,
 	compareStrings,
 	compareStrings,
 ]);
@@ -1553,8 +1551,13 @@ function generateEditedTreeScenarios(): EditTreeScenarios {
 
 			const buildsForSource = sourceEndpoint === NodeFlowEndpoint.DetachedBuiltRoot ? 1 : 0;
 
-			// Sequence field
-			scenarios.set([sourceEndpoint, destinationEndpoint, "sequence"], {
+			const scenariosSet: {
+				sequence?: EditScenario;
+				optional?: EditScenario;
+				required?: EditScenario;
+			} = {};
+
+			scenariosSet.sequence = {
 				schema: Records,
 				initialContent: initialContentGenerator,
 				apply: (root) => {
@@ -1584,14 +1587,14 @@ function generateEditedTreeScenarios(): EditTreeScenarios {
 					applyOutroDetachEdits(root);
 				},
 				unminimizedBuildExpectations: {
-					builds: 1 + buildsForSource,
+					builds: 2 + buildsForSource,
 					tops: 2 + buildsForSource,
 				},
 				expectSurvivingMarker: true,
-			} as const satisfies EditScenario);
+			};
 
 			if (sourceEndpoint.includes("Root") || destinationEndpoint.includes("Root")) {
-				scenarios.set([sourceEndpoint, destinationEndpoint, "optional"], {
+				scenariosSet.optional = {
 					schema: Records,
 					initialContent: initialContentGenerator,
 					apply: (root) => {
@@ -1623,15 +1626,14 @@ function generateEditedTreeScenarios(): EditTreeScenarios {
 						applyOutroDetachEdits(root);
 					},
 					unminimizedBuildExpectations: {
-						builds: 1 + buildsForSource,
+						builds: 2 + buildsForSource,
 						tops: 2 + buildsForSource,
 					},
 					expectSurvivingMarker: true,
-				} as const satisfies EditScenario);
+				};
 
-				// Required field
 				const buildsFoReplace = destinationEndpoint.includes("Root") ? 1 : 0;
-				scenarios.set([sourceEndpoint, destinationEndpoint, "required"], {
+				scenariosSet.required = {
 					schema: Records,
 					initialContent: initialContentGenerator,
 					apply: (root) => {
@@ -1666,8 +1668,10 @@ function generateEditedTreeScenarios(): EditTreeScenarios {
 						tops: 2 + buildsForSource + buildsFoReplace,
 					},
 					expectSurvivingMarker: true,
-				} as const satisfies EditScenario);
+				};
 			}
+
+			scenarios.set([sourceEndpoint, destinationEndpoint], scenariosSet);
 		}
 	}
 	return scenarios;
@@ -2651,6 +2655,10 @@ describe("transaction minimize post-processor", () => {
 	});
 
 	describe.only("minimizes edits to content that ends up detached", () => {
+		const endpointsUnderBuiltTrees = new Set([
+			NodeFlowEndpoint.UnderDetachedBuiltTree,
+			NodeFlowEndpoint.UnderAttachingBuiltTree,
+		]);
 		const endpointsUnderNodesThatEndUpDetached = new Set([
 			NodeFlowEndpoint.UnderDetachingPriorTree,
 			NodeFlowEndpoint.UnderDetachedPriorTree,
@@ -2662,47 +2670,62 @@ describe("transaction minimize post-processor", () => {
 			NodeFlowEndpoint.DetachedPriorRoot,
 		]);
 
-		for (const [
-			[source, destination, field],
-			scenario,
-		] of editedDetachedTreeScenarios.entries()) {
-			it(`${source} -> ${destination} (${field} field)`, () => {
-				const { tree: unminimizedTree } = runScenario(scenario, {
-					doNotMinimize: true,
-				});
-				const { tree: minimizedTree, view: minimizedView } = runScenario(scenario, {
-					validateConsistency: true,
-				});
-				assert.deepEqual(minimizedTree.exportVerbose(), unminimizedTree.exportVerbose());
-				const { changes } = getHeadChange(minimizedView);
-				assert(hasSingle(changes) && changes[0].type === "data");
-				const minimizedDelta = intoDelta(makeAnonChange(changes[0].innerChange));
-				const minimizedNodeFlow = nodeFlowCensusFromDelta(minimizedDelta);
+		for (const [[source, destination], scenarioSet] of editedDetachedTreeScenarios.entries()) {
+			describe(`${source} -> ${destination}`, () => {
+				for (const [field, scenario] of Object.entries(scenarioSet)) {
+					it(`${field} field`, () => {
+						const { tree: unminimizedTree, view: unminimizedView } = runScenario(scenario, {
+							doNotMinimize: true,
+						});
+						const { tree: minimizedTree, view: minimizedView } = runScenario(scenario, {
+							validateConsistency: true,
+						});
+						assert.deepEqual(minimizedTree.exportVerbose(), unminimizedTree.exportVerbose());
+						const { changes } = getHeadChange(minimizedView);
+						assert(hasSingle(changes) && changes[0].type === "data");
+						const minimizedDelta = intoDelta(makeAnonChange(changes[0].innerChange));
+						const minimizedNodeFlow = nodeFlowCensusFromDelta(minimizedDelta);
 
-				// No node, no matter its starting endpoint, should be transferred under a tree that ends up detached
-				for (const fromAnywhere of allEndpoints) {
-					for (const toUnderDetached of endpointsUnderNodesThatEndUpDetached) {
-						assert.equal(minimizedNodeFlow[fromAnywhere][toUnderDetached], 0);
-					}
-				}
+						// Testing self-check: verify that the unminimized view has the expected build counts.
+						assertUnminimizedExpectations(
+							scenario.unminimizedBuildExpectations,
+							unminimizedView,
+							`${source} -> ${destination} (${field} field)`,
+						);
 
-				// No node detached from a tree that ends up detached should end up detached or be transferred under a tree that ends up detached
-				for (const fromUnderDetached of endpointsUnderNodesThatEndUpDetached) {
-					for (const toDetached of endpointsThatEndUpDetached) {
-						assert.equal(minimizedNodeFlow[fromUnderDetached][toDetached], 0);
-					}
-				}
+						// No node, no matter its source endpoint, should be transferred under a tree that ends up detached
+						for (const fromAnywhere of allEndpoints) {
+							for (const toUnderDetached of endpointsUnderNodesThatEndUpDetached) {
+								assert.equal(
+									minimizedNodeFlow[fromAnywhere][toUnderDetached],
+									0,
+									`Unexpected transfer of node from ${fromAnywhere} to ${toUnderDetached}`,
+								);
+							}
+						}
 
-				// No node should be detached from a built tree
-				for (const toAnywhere of allEndpoints) {
-					assert.equal(
-						minimizedNodeFlow[NodeFlowEndpoint.UnderDetachedBuiltTree][toAnywhere],
-						0,
-					);
-					assert.equal(
-						minimizedNodeFlow[NodeFlowEndpoint.UnderAttachingBuiltTree][toAnywhere],
-						0,
-					);
+						// No node detached from a tree that ends up detached should end up detached or be transferred under a tree that ends up detached
+						for (const fromUnderDetached of endpointsUnderNodesThatEndUpDetached) {
+							for (const toDetached of endpointsThatEndUpDetached) {
+								assert.equal(
+									minimizedNodeFlow[fromUnderDetached][toDetached],
+									0,
+									`Unexpected transfer of node from ${fromUnderDetached} to ${toDetached}`,
+								);
+							}
+						}
+
+						// No node, no matter its destination endpoint, should be detached from a built tree
+						for (const fromUnderBuilt of endpointsUnderBuiltTrees) {
+							for (const toAnywhere of allEndpoints) {
+								assert.equal(
+									minimizedNodeFlow[fromUnderBuilt][toAnywhere],
+									0,
+									`Unexpected transfer of node from ${fromUnderBuilt} to ${toAnywhere}`,
+								);
+							}
+						}
+					});
 				}
 			});
 		}
