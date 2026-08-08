@@ -10,7 +10,9 @@ import {
 	createEmitter,
 	gitHashFile,
 	IsoBuffer,
+	stringToBuffer,
 	TypedEventEmitter,
+	Uint8ArrayToArrayBuffer,
 } from "@fluid-internal/client-utils";
 import {
 	AttachState,
@@ -34,6 +36,9 @@ import { v4 as uuid } from "uuid";
 
 import {
 	BlobManager,
+	inlinedAttachmentBlobContentName,
+	inlinedAttachmentBlobGroupIdPrefix,
+	inlinedAttachmentBlobTreePrefix,
 	type IBlobManagerLoadInfo,
 	type IBlobManagerRuntime,
 	type ICreateBlobResponseWithTTL,
@@ -438,6 +443,7 @@ interface TestMaterial {
 	blobManagerLoadInfo: IBlobManagerLoadInfo;
 	pendingBlobs: IPendingBlobs | undefined;
 	createBlobPayloadPending: boolean;
+	inlineDetachedBlobsAsSummaryBlobs: boolean;
 	blobManager: BlobManager;
 }
 
@@ -456,6 +462,8 @@ export const createTestMaterial = (
 	const blobManagerLoadInfo = overrides?.blobManagerLoadInfo ?? {};
 	const pendingBlobs = overrides?.pendingBlobs ?? undefined;
 	const createBlobPayloadPending = overrides?.createBlobPayloadPending ?? false;
+	const inlineDetachedBlobsAsSummaryBlobs =
+		overrides?.inlineDetachedBlobsAsSummaryBlobs ?? false;
 
 	const blobManager = new BlobManager({
 		// The routeContext is only needed by the BlobHandles to determine isAttached, so this
@@ -470,6 +478,7 @@ export const createTestMaterial = (
 		runtime: mockRuntime,
 		pendingBlobs,
 		createBlobPayloadPending,
+		inlineDetachedBlobsAsSummaryBlobs,
 	});
 
 	mockOrderingService.events.on("messageSequenced", (message: ISequencedMessageEnvelope) => {
@@ -493,6 +502,7 @@ export const createTestMaterial = (
 		blobManagerLoadInfo,
 		pendingBlobs,
 		createBlobPayloadPending,
+		inlineDetachedBlobsAsSummaryBlobs,
 		blobManager,
 	};
 };
@@ -513,14 +523,40 @@ export const simulateAttach = async (
 
 export const getSummaryContentsWithFormatValidation = (
 	blobManager: BlobManager,
+	materializedSummaryBlobs?: ReadonlyMap<string, ArrayBufferLike>,
 ): IBlobManagerLoadInfo => {
-	const summary = blobManager.summarize();
+	const summary = blobManager.summarize(undefined, materializedSummaryBlobs);
 	let ids: string[] | undefined;
 	let redirectTable: [string, string][] | undefined;
+	let summaryBlobs: Map<string, ArrayBufferLike> | undefined;
+	let summaryBlobHandles: Set<string> | undefined;
 	for (const [key, summaryObject] of Object.entries(summary.summary.tree)) {
 		if (summaryObject.type === SummaryType.Attachment) {
 			ids ??= [];
 			ids.push(summaryObject.id);
+		} else if (summaryObject.type === SummaryType.Tree) {
+			assert(key.startsWith(inlinedAttachmentBlobTreePrefix));
+			const localId = key.slice(inlinedAttachmentBlobTreePrefix.length);
+			const { groupId } = summaryObject;
+			assert(groupId !== undefined);
+			assert(groupId.startsWith(inlinedAttachmentBlobGroupIdPrefix));
+			const content = summaryObject.tree[inlinedAttachmentBlobContentName];
+			redirectTable ??= [];
+			redirectTable.push([localId, localId]);
+			if (content?.type === SummaryType.Blob) {
+				summaryBlobs ??= new Map();
+				summaryBlobs.set(
+					localId,
+					typeof content.content === "string"
+						? stringToBuffer(content.content, "base64")
+						: Uint8ArrayToArrayBuffer(content.content),
+				);
+			} else {
+				assert(content?.type === SummaryType.Handle);
+				assert.strictEqual(content.handleType, SummaryType.Blob);
+				summaryBlobHandles ??= new Set();
+				summaryBlobHandles.add(localId);
+			}
 		} else {
 			assert.strictEqual(key, redirectTableBlobName);
 			assert(summaryObject.type === SummaryType.Blob);
@@ -532,7 +568,7 @@ export const getSummaryContentsWithFormatValidation = (
 			];
 		}
 	}
-	return { ids, redirectTable };
+	return { ids, redirectTable, summaryBlobs, summaryBlobHandles };
 };
 
 export const textToBlob = (text: string): ArrayBufferLike => {

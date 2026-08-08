@@ -57,6 +57,7 @@ describe("Runtime", () => {
 		opGroupingEnabled: false,
 		idCompressorMode: "delayed",
 		createBlobPayloadPending: undefined,
+		inlineDetachedBlobsAsSummaryBlobs: undefined,
 		disallowedVersions: [],
 	} as const satisfies IDocumentSchemaFeatures;
 
@@ -92,6 +93,23 @@ describe("Runtime", () => {
 	// on something else that they are not modifying.
 	it("valid config", () => {
 		createController(validConfig);
+	});
+
+	it("persists support for inlined detached attachment blobs", () => {
+		const controller = new DocumentsSchemaController(
+			false,
+			0,
+			undefined,
+			{ ...features, inlineDetachedBlobsAsSummaryBlobs: true },
+			() => {},
+			{ minVersionForCollab: "2.115.0" },
+			logger,
+			false,
+		);
+		assert.strictEqual(
+			controller.sessionSchema.runtime.inlineDetachedBlobsAsSummaryBlobs,
+			true,
+		);
 	});
 
 	// It's hard to say if we will allow additional propeorty trees here like this sample shows.

@@ -83,6 +83,30 @@ describe("MemoryBlobStorage", () => {
 		);
 	});
 
+	it("round-trips binary blobs without UTF-8 corruption", async () => {
+		const blobContent = new Uint8Array([0xff, 0xfe, 0x00, 0x80, 0x7f]).buffer;
+		const storage = createMemoryDetachedBlobStorage();
+		const blobResponse = await storage.createBlob(blobContent);
+		const serializedStorage = storage.serialize();
+		assert(serializedStorage !== undefined);
+
+		const newStorage = createMemoryDetachedBlobStorage();
+		tryInitializeMemoryDetachedBlobStorage(newStorage, serializedStorage);
+		assert.deepStrictEqual(
+			new Uint8Array(await newStorage.readBlob(blobResponse.id)),
+			new Uint8Array(blobContent),
+		);
+	});
+
+	it("reads legacy UTF-8 serialized storage", async () => {
+		const newStorage = createMemoryDetachedBlobStorage();
+		tryInitializeMemoryDetachedBlobStorage(newStorage, JSON.stringify(["legacy content"]));
+		assert.deepStrictEqual(
+			new Uint8Array(await newStorage.readBlob("0")),
+			new Uint8Array(stringToBuffer("legacy content", "utf8")),
+		);
+	});
+
 	it("Throws error when initializing from invalid serialized storage", async () => {
 		const newStorage = createMemoryDetachedBlobStorage();
 		const invalidSerializedStorage = "invalid serialized storage";

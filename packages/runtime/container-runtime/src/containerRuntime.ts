@@ -269,6 +269,7 @@ import {
 	runtimeCompatDetailsForLoader,
 	runtimeCoreCompatDetails,
 	validateLoaderCompatibility,
+	validateLoaderCompatibilityForBlobManagerLoadingGroups,
 } from "./runtimeLayerCompatState.js";
 import { SignalTelemetryManager } from "./signalTelemetryProcessing.js";
 import {
@@ -541,6 +542,11 @@ export interface ContainerRuntimeOptionsInternal extends ContainerRuntimeOptions
 	 * In that case, batched messages will be sent individually (but still all at the same time).
 	 */
 	readonly enableGroupedBatching: boolean;
+
+	/**
+	 * Stores detached attachment blobs as summary blobs in internal loading groups.
+	 */
+	readonly inlineDetachedBlobsAsSummaryBlobs: true | undefined;
 }
 
 /**
@@ -986,7 +992,16 @@ export class ContainerRuntime
 		});
 
 		const mc = loggerToMonitoringContext(logger);
-
+		const inlineDetachedBlobsAsSummaryBlobsGate =
+			mc.config.getBoolean("Fluid.Container.InlineDetachedBlobsAsSummaryBlobs") === true
+				? true
+				: undefined;
+		const effectiveRuntimeOptions: IContainerRuntimeOptionsInternal = {
+			...runtimeOptions,
+			inlineDetachedBlobsAsSummaryBlobs:
+				runtimeOptions.inlineDetachedBlobsAsSummaryBlobs ??
+				inlineDetachedBlobsAsSummaryBlobsGate,
+		};
 		// Some options require a minimum version of the FF runtime to operate, so the default configs will be generated
 		// based on the minVersionForCollab.
 		// For example, if minVersionForCollab is set to "1.0.0", the default configs will ensure compatibility with FF runtime
@@ -999,7 +1014,7 @@ export class ContainerRuntime
 		}
 		// We also validate that there is not a mismatch between `minVersionForCollab` and runtime options that
 		// were manually set.
-		validateRuntimeOptions(minVersionForCollab, runtimeOptions);
+		validateRuntimeOptions(minVersionForCollab, effectiveRuntimeOptions);
 
 		const defaultsAffectingDocSchema = getMinVersionForCollabDefaults(minVersionForCollab);
 
@@ -1039,17 +1054,18 @@ export class ContainerRuntime
 				? disabledCompressionConfig
 				: defaultConfigs.compressionOptions,
 			createBlobPayloadPending = defaultConfigs.createBlobPayloadPending,
+			inlineDetachedBlobsAsSummaryBlobs = defaultConfigs.inlineDetachedBlobsAsSummaryBlobs,
 			stagingModeAutoFlushThreshold = defaultConfigs.stagingModeAutoFlushThreshold,
 			disableSchemaUpgrade = defaultConfigs.disableSchemaUpgrade,
-		}: IContainerRuntimeOptionsInternal = runtimeOptions;
+		}: IContainerRuntimeOptionsInternal = effectiveRuntimeOptions;
 
 		// If explicitSchemaControl is off, ensure that options which require explicitSchemaControl are not enabled.
 		if (!explicitSchemaControl) {
-			const disallowedKeys = Object.keys(runtimeOptions).filter(
+			const disallowedKeys = Object.keys(effectiveRuntimeOptions).filter(
 				(key) =>
 					runtimeOptionKeysThatRequireExplicitSchemaControl.includes(
 						key as RuntimeOptionKeysThatRequireExplicitSchemaControl,
-					) && runtimeOptions[key] !== undefined,
+					) && effectiveRuntimeOptions[key] !== undefined,
 			);
 			if (disallowedKeys.length > 0) {
 				throw new UsageError(`explicitSchemaControl must be enabled to use ${disallowedKeys}`);
@@ -1095,6 +1111,17 @@ export class ContainerRuntime
 			tryFetchBlob<[string, string][]>(aliasBlobName),
 			tryFetchBlob<SerializedIdCompressorWithNoSession>(idCompressorBlobName),
 		]);
+		if (
+			effectiveRuntimeOptions.inlineDetachedBlobsAsSummaryBlobs === true ||
+			metadata?.documentSchema?.runtime?.inlineDetachedBlobsAsSummaryBlobs === true
+		) {
+			const maybeLoaderCompatDetailsForRuntime = context as FluidObject<ILayerCompatDetails>;
+			validateLoaderCompatibilityForBlobManagerLoadingGroups(
+				maybeLoaderCompatDetailsForRuntime.ILayerCompatDetails,
+				context.disposeFn ?? context.closeFn,
+				mc,
+			);
+		}
 
 		// read snapshot blobs needed for BlobManager to load
 		const blobManagerLoadInfo = await loadBlobManagerLoadInfo(context);
@@ -1236,6 +1263,7 @@ export class ContainerRuntime
 				idCompressorMode,
 				opGroupingEnabled: enableGroupedBatching,
 				createBlobPayloadPending,
+				inlineDetachedBlobsAsSummaryBlobs,
 				disallowedVersions: [],
 			},
 			(schema) => {
@@ -1274,6 +1302,7 @@ export class ContainerRuntime
 			enableGroupedBatching,
 			explicitSchemaControl,
 			createBlobPayloadPending,
+			inlineDetachedBlobsAsSummaryBlobs,
 			stagingModeAutoFlushThreshold,
 			disableSchemaUpgrade,
 		};
@@ -2162,6 +2191,8 @@ export class ContainerRuntime
 			runtime: this,
 			pendingBlobs: pendingRuntimeState?.pendingAttachmentBlobs,
 			createBlobPayloadPending: this.sessionSchema.createBlobPayloadPending === true,
+			inlineDetachedBlobsAsSummaryBlobs:
+				this.sessionSchema.inlineDetachedBlobsAsSummaryBlobs === true,
 		});
 
 		this.deltaScheduler = new DeltaScheduler(
@@ -2843,6 +2874,7 @@ export class ContainerRuntime
 		fullTree: boolean,
 		trackState: boolean,
 		telemetryContext?: ITelemetryContext,
+		materializedSummaryBlobs?: ReadonlyMap<string, ArrayBufferLike>,
 	): void {
 		this.addMetadataToSummary(summaryTree);
 
@@ -2874,7 +2906,10 @@ export class ContainerRuntime
 			addBlobToSummary(summaryTree, electedSummarizerBlobName, electedSummarizerContent);
 		}
 
-		const blobManagerSummary = this.blobManager.summarize();
+		const blobManagerSummary = this.blobManager.summarize(
+			telemetryContext,
+			materializedSummaryBlobs,
+		);
 		// Some storage (like git) doesn't allow empty tree, so we can omit it.
 		// and the blob manager can handle the tree not existing when loading
 		if (Object.keys(blobManagerSummary.summary.tree).length > 0) {
@@ -4271,8 +4306,17 @@ export class ContainerRuntime
 		const pathPartsForChildren = [channelsTreeName];
 
 		this.loadIdCompressor();
+		const materializedSummaryBlobs = fullTree
+			? await this.blobManager.loadSummaryBlobs()
+			: undefined;
 
-		this.addContainerStateToSummary(summarizeResult, fullTree, trackState, telemetryContext);
+		this.addContainerStateToSummary(
+			summarizeResult,
+			fullTree,
+			trackState,
+			telemetryContext,
+			materializedSummaryBlobs,
+		);
 		return {
 			...summarizeResult,
 			id: "",

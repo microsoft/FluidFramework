@@ -15,6 +15,9 @@ export {
 } from "./blobManager.js";
 export {
 	blobsTreeName,
+	inlinedAttachmentBlobContentName,
+	inlinedAttachmentBlobGroupIdPrefix,
+	inlinedAttachmentBlobTreePrefix,
 	type IBlobManagerLoadInfo,
 	loadBlobManagerLoadInfo,
 	redirectTableBlobName,

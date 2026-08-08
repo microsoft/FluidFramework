@@ -194,6 +194,9 @@ function collectReferencedBlobIds(
 			if (tableBlobId !== undefined) {
 				ids.add(tableBlobId);
 			}
+			for (const childTree of Object.values(subTree.trees)) {
+				collectReferencedBlobIds(childTree, false, ids);
+			}
 		} else {
 			collectReferencedBlobIds(subTree, false, ids);
 		}
@@ -216,9 +219,10 @@ function toTreeAndReader(
 
 /**
  * Fetches attachment blob contents from a snapshot, filtered by GC
- * reachability. Blobs GC has explicitly marked unreferenced, tombstoned, or
- * deleted are skipped. Blobs absent from the GC graph are kept — GC state
- * lags behind recent attachments and dropping them would lose live data.
+ * reachability. Only attachment blobs GC has permanently deleted are skipped.
+ * Unreferenced and tombstoned blobs are retained because post-snapshot ops may
+ * revive them. Blobs absent from the GC graph are also kept — GC state lags
+ * behind recent attachments and dropping them would lose live data.
  * If `gcData` is `undefined`, every attachment blob is returned.
  *
  * The returned map is keyed by attachment blob storage id. Values are the
@@ -245,13 +249,12 @@ export async function captureReferencedAttachmentBlobs(
 	if (localIdToStorageId.size === 0) {
 		return {};
 	}
-
-	const unreferencedLocalIds =
-		gcData === undefined ? undefined : collectUnreferencedBlobLocalIds(gcData);
+	const deletedLocalIds =
+		gcData === undefined ? undefined : collectDeletedBlobLocalIds(gcData);
 
 	const storageIdsToFetch = new Set<string>();
 	for (const [localId, storageId] of localIdToStorageId) {
-		if (unreferencedLocalIds?.has(localId) !== true) {
+		if (deletedLocalIds?.has(localId) !== true) {
 			storageIdsToFetch.add(storageId);
 		}
 	}
@@ -289,33 +292,16 @@ async function readRedirectTable(
 	return redirectTable;
 }
 
-/**
- * Collects the set of blob localIds that GC has explicitly marked as
- * unreferenced (via `unreferencedTimestampMs` on a gc node), tombstoned, or
- * deleted. Tombstones and deletedNodes are applied regardless of whether
- * `gcState` is present — they are authoritative on their own and must not
- * be silently dropped when gc state is absent but tombstone/deleted lists
- * exist.
- */
-function collectUnreferencedBlobLocalIds(gcData: IGcSnapshotData): Set<string> {
+/** Collects attachment blob local IDs that GC has permanently deleted. */
+function collectDeletedBlobLocalIds(gcData: IGcSnapshotData): Set<string> {
 	const blobPathPrefix = `/${blobManagerBasePath}/`;
-	const unreferenced = new Set<string>();
-	if (gcData.gcState !== undefined) {
-		for (const [nodePath, nodeData] of Object.entries(gcData.gcState.gcNodes)) {
-			if (
-				nodePath.startsWith(blobPathPrefix) &&
-				nodeData.unreferencedTimestampMs !== undefined
-			) {
-				unreferenced.add(nodePath.slice(blobPathPrefix.length));
-			}
-		}
-	}
-	for (const nodePath of [...(gcData.tombstones ?? []), ...(gcData.deletedNodes ?? [])]) {
+	const deleted = new Set<string>();
+	for (const nodePath of gcData.deletedNodes ?? []) {
 		if (nodePath.startsWith(blobPathPrefix)) {
-			unreferenced.add(nodePath.slice(blobPathPrefix.length));
+			deleted.add(nodePath.slice(blobPathPrefix.length));
 		}
 	}
-	return unreferenced;
+	return deleted;
 }
 
 /**
@@ -371,23 +357,22 @@ export function extractBlobAttachReferences(
 }
 
 /**
- * Set of attachment-blob localIds that GC has marked unreferenced,
- * tombstoned, or deleted in the base snapshot. `undefined` if `gcData`
- * is `undefined` (GC disabled / pre-GC document).
+ * Set of attachment-blob localIds that GC has permanently deleted in the base
+ * snapshot. `undefined` if `gcData` is undefined.
  *
  * @internal
  */
-export function unreferencedAttachmentBlobLocalIds(
+export function deletedAttachmentBlobLocalIds(
 	gcData: IGcSnapshotData | undefined,
 ): Set<string> | undefined {
-	return gcData === undefined ? undefined : collectUnreferencedBlobLocalIds(gcData);
+	return gcData === undefined ? undefined : collectDeletedBlobLocalIds(gcData);
 }
 
 /**
  * Inline attachment blob contents for the given `(localId, storageId)`
  * references. Skips entries already present in `existing` (de-dupe with
- * the snapshot path) and entries whose `localId` is in
- * `unreferencedLocalIds`. Returns only the freshly-read entries; the
+ * the snapshot path) and entries whose `localId` is in `excludedLocalIds`.
+ * Returns only the freshly-read entries; the
  * caller merges them into the existing map.
  *
  * @internal
@@ -395,12 +380,12 @@ export function unreferencedAttachmentBlobLocalIds(
 export async function inlineAttachmentBlobsByReference(
 	references: readonly IBlobAttachReference[],
 	storage: Pick<IDocumentStorageService, "readBlob">,
-	unreferencedLocalIds: ReadonlySet<string> | undefined,
+	excludedLocalIds: ReadonlySet<string> | undefined,
 	existing: Readonly<IBase64BlobContents>,
 ): Promise<IBase64BlobContents> {
 	const storageIdsToFetch = new Set<string>();
 	for (const { localId, storageId } of references) {
-		if (unreferencedLocalIds?.has(localId) === true) {
+		if (excludedLocalIds?.has(localId) === true) {
 			continue;
 		}
 		if (existing[storageId] !== undefined) {
@@ -431,14 +416,23 @@ export async function inlineAttachmentBlobsByReference(
  * rather than silently producing a pending state that omits group data.
  */
 export function snapshotHasLoadingGroups(baseSnapshot: ISnapshotTree): boolean {
+	return snapshotHasLoadingGroupsCore(baseSnapshot, true);
+}
+
+function snapshotHasLoadingGroupsCore(baseSnapshot: ISnapshotTree, isRoot: boolean): boolean {
 	if (baseSnapshot.unreferenced === true) {
 		return false;
 	}
 	if (baseSnapshot.groupId !== undefined) {
 		return true;
 	}
-	for (const child of Object.values(baseSnapshot.trees)) {
-		if (snapshotHasLoadingGroups(child)) {
+	for (const [key, child] of Object.entries(baseSnapshot.trees)) {
+		// BlobManager's internal groups are self-contained summary blobs whose
+		// IDs can be read directly. They do not require a group snapshot fetch.
+		if (isRoot && key === blobsTreeName) {
+			continue;
+		}
+		if (snapshotHasLoadingGroupsCore(child, false)) {
 			return true;
 		}
 	}

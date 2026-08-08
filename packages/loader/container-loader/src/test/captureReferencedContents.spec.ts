@@ -14,13 +14,14 @@ import type {
 
 import {
 	captureReferencedAttachmentBlobs,
+	deletedAttachmentBlobLocalIds,
 	extractBlobAttachReferences,
 	inlineAttachmentBlobsByReference,
 	mapWithConcurrency,
 	parseGcSnapshotData,
 	readReferencedSnapshotBlobs,
 	snapshotHasLoadingGroups,
-	unreferencedAttachmentBlobLocalIds,
+	wireFormatConstants,
 	type IBlobAttachReference,
 	type IGcSnapshotData,
 } from "../captureReferencedContents.js";
@@ -89,7 +90,7 @@ describe("captureReferencedContents", () => {
 			assert.deepStrictEqual(result, { kept: "KEPT" });
 		});
 
-		it("special-cases root .blobs: reads only the redirect table", async () => {
+		it("special-cases root .blobs: reads structural child trees but not direct attachments", async () => {
 			const snapshot = tree({
 				trees: {
 					".blobs": tree({
@@ -97,14 +98,17 @@ describe("captureReferencedContents", () => {
 							".redirectTable": "rt",
 							"attachment-storage-id": "attachment-storage-id",
 						},
+						trees: {
+							runtimePayload: tree({ blobs: { content: "inline" } }),
+						},
 					}),
 				},
 			});
-			const storage = mockStorage({ rt: "RT" });
+			const storage = mockStorage({ rt: "RT", inline: "ENCODED" });
 			const result = await readReferencedSnapshotBlobs(snapshot, storage);
 			assert.deepStrictEqual(
 				result,
-				{ rt: "RT" },
+				{ rt: "RT", inline: "ENCODED" },
 				"attachment blob contents must not be read via the general walker",
 			);
 		});
@@ -204,13 +208,13 @@ describe("captureReferencedContents", () => {
 			assert.deepStrictEqual(result, { s1: toB64("S1"), s2: toB64("S2") });
 		});
 
-		it("skips blobs marked unreferenced in gc state", async () => {
+		it("keeps blobs marked unreferenced in gc state", async () => {
 			const { snapshot, storage } = attachmentsOnly(
 				[
 					["keep", "keep-storage"],
 					["drop", "drop-storage"],
 				],
-				{ "keep-storage": "K", "drop-storage": "must-not-read" },
+				{ "keep-storage": "K", "drop-storage": "DROP" },
 			);
 			const gcData: IGcSnapshotData = {
 				gcState: {
@@ -223,17 +227,20 @@ describe("captureReferencedContents", () => {
 				deletedNodes: undefined,
 			};
 			const result = await captureReferencedAttachmentBlobs(snapshot, storage, gcData);
-			assert.deepStrictEqual(result, { "keep-storage": toB64("K") });
+			assert.deepStrictEqual(result, {
+				"keep-storage": toB64("K"),
+				"drop-storage": toB64("DROP"),
+			});
 		});
 
-		it("skips blobs listed in tombstones or deletedNodes", async () => {
+		it("keeps tombstoned blobs but skips deleted blobs", async () => {
 			const { snapshot, storage } = attachmentsOnly(
 				[
 					["tomb", "tomb-storage"],
 					["del", "del-storage"],
 					["ok", "ok-storage"],
 				],
-				{ "tomb-storage": "x", "del-storage": "y", "ok-storage": "OK" },
+				{ "tomb-storage": "TOMB", "ok-storage": "OK" },
 			);
 			const gcData: IGcSnapshotData = {
 				gcState: { gcNodes: {} },
@@ -241,17 +248,20 @@ describe("captureReferencedContents", () => {
 				deletedNodes: ["/_blobs/del"],
 			};
 			const result = await captureReferencedAttachmentBlobs(snapshot, storage, gcData);
-			assert.deepStrictEqual(result, { "ok-storage": toB64("OK") });
+			assert.deepStrictEqual(result, {
+				"tomb-storage": toB64("TOMB"),
+				"ok-storage": toB64("OK"),
+			});
 		});
 
-		it("still applies tombstones and deletedNodes when gcState is undefined", async () => {
+		it("still applies deletedNodes when gcState is undefined", async () => {
 			const { snapshot, storage } = attachmentsOnly(
 				[
 					["tomb", "tomb-storage"],
 					["del", "del-storage"],
 					["ok", "ok-storage"],
 				],
-				{ "tomb-storage": "x", "del-storage": "y", "ok-storage": "OK" },
+				{ "tomb-storage": "TOMB", "ok-storage": "OK" },
 			);
 			const gcData: IGcSnapshotData = {
 				gcState: undefined,
@@ -261,8 +271,11 @@ describe("captureReferencedContents", () => {
 			const result = await captureReferencedAttachmentBlobs(snapshot, storage, gcData);
 			assert.deepStrictEqual(
 				result,
-				{ "ok-storage": toB64("OK") },
-				"tombstones and deletedNodes are authoritative even without gcState",
+				{
+					"tomb-storage": toB64("TOMB"),
+					"ok-storage": toB64("OK"),
+				},
+				"deletedNodes are authoritative even without gcState",
 			);
 		});
 
@@ -393,9 +406,8 @@ describe("captureReferencedContents", () => {
 				"ts-blob": JSON.stringify(["/_blobs/tomb"]),
 				"del-blob": JSON.stringify(["/_blobs/del"]),
 				"live-storage": "LIVE",
-				"unref-storage": "must-not-read",
-				"tomb-storage": "must-not-read",
-				"del-storage": "must-not-read",
+				"unref-storage": "UNREF",
+				"tomb-storage": "TOMB",
 			});
 
 			const gcData = await parseGcSnapshotData(snapshot, storage);
@@ -404,8 +416,12 @@ describe("captureReferencedContents", () => {
 
 			assert.deepStrictEqual(
 				result,
-				{ "live-storage": toB64("LIVE") },
-				"only the live blob survives all three GC mechanisms",
+				{
+					"live-storage": toB64("LIVE"),
+					"unref-storage": toB64("UNREF"),
+					"tomb-storage": toB64("TOMB"),
+				},
+				"only permanently deleted blobs are omitted",
 			);
 		});
 	});
@@ -459,6 +475,21 @@ describe("captureReferencedContents", () => {
 
 		it("returns false when the entire snapshot is unreferenced", () => {
 			const snapshot = tree({ unreferenced: true, groupId: "g1" });
+			assert.strictEqual(snapshotHasLoadingGroups(snapshot), false);
+		});
+
+		it("ignores loading groups under the reserved .blobs tree", () => {
+			const snapshot = tree({
+				trees: {
+					[wireFormatConstants.blobsTreeName]: tree({
+						trees: {
+							runtimePayload: tree({
+								groupId: "runtime-group",
+							}),
+						},
+					}),
+				},
+			});
 			assert.strictEqual(snapshotHasLoadingGroups(snapshot), false);
 		});
 	});
@@ -516,13 +547,13 @@ describe("captureReferencedContents", () => {
 		});
 	});
 
-	describe("unreferencedAttachmentBlobLocalIds", () => {
+	describe("deletedAttachmentBlobLocalIds", () => {
 		it("returns undefined when gcData is undefined", () => {
-			assert.strictEqual(unreferencedAttachmentBlobLocalIds(undefined), undefined);
+			assert.strictEqual(deletedAttachmentBlobLocalIds(undefined), undefined);
 		});
 
-		it("returns an empty set when gcData has no unreferenced/tombstoned/deleted blobs", () => {
-			const result = unreferencedAttachmentBlobLocalIds({
+		it("returns an empty set when gcData has no deleted blobs", () => {
+			const result = deletedAttachmentBlobLocalIds({
 				gcState: {
 					gcNodes: { "/_blobs/live": { outboundRoutes: [] } },
 				},
@@ -532,8 +563,8 @@ describe("captureReferencedContents", () => {
 			assert.deepStrictEqual([...(result ?? [])], []);
 		});
 
-		it("collects localIds from gcState, tombstones, and deletedNodes", () => {
-			const result = unreferencedAttachmentBlobLocalIds({
+		it("collects localIds only from deletedNodes", () => {
+			const result = deletedAttachmentBlobLocalIds({
 				gcState: {
 					gcNodes: {
 						"/_blobs/unref": {
@@ -546,11 +577,11 @@ describe("captureReferencedContents", () => {
 				tombstones: ["/_blobs/tomb"],
 				deletedNodes: ["/_blobs/del"],
 			});
-			assert.deepStrictEqual([...(result ?? [])].sort(), ["del", "tomb", "unref"]);
+			assert.deepStrictEqual([...(result ?? [])], ["del"]);
 		});
 
-		it("ignores non-/_blobs/ paths in all three sources", () => {
-			const result = unreferencedAttachmentBlobLocalIds({
+		it("ignores non-/_blobs/ paths", () => {
+			const result = deletedAttachmentBlobLocalIds({
 				gcState: {
 					gcNodes: {
 						"/dataStores/x": {

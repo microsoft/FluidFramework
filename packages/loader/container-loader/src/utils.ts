@@ -30,7 +30,10 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import type { ISerializableBlobContents } from "./containerStorageAdapter.js";
+import type {
+	IBase64BlobContents,
+	ISerializableBlobContents,
+} from "./containerStorageAdapter.js";
 import type {
 	IPendingContainerState,
 	IPendingDetachedContainerState,
@@ -211,13 +214,8 @@ export function convertSnapshotToSnapshotInfo(snapshot: ISnapshot): SerializedSn
 		snapshot.sequenceNumber !== undefined,
 		0x93a /* Snapshot sequence number is missing */,
 	);
-	const snapshotBlobs: ISerializableBlobContents = {};
-	for (const [blobId, arrayBufferLike] of snapshot.blobContents.entries()) {
-		snapshotBlobs[blobId] = bufferToString(arrayBufferLike, "utf8");
-	}
 	return {
-		baseSnapshot: snapshot.snapshotTree,
-		snapshotBlobs,
+		...convertISnapshotToSnapshotWithBlobs(snapshot),
 		snapshotSequenceNumber: snapshot.sequenceNumber,
 	};
 }
@@ -348,14 +346,23 @@ function isPendingDetachedContainerState(
  * @param snapshot - The ISnapshot to convert.
  * @returns A SnapshotWithBlobs containing the base snapshot and serialized blob contents.
  */
-export function convertISnapshotToSnapshotWithBlobs(snapshot: ISnapshot): SnapshotWithBlobs {
+export function convertISnapshotToSnapshotWithBlobs(
+	snapshot: ISnapshot,
+	binaryBlobIds?: ReadonlySet<string>,
+): SnapshotWithBlobs & Pick<IPendingContainerState, "attachmentBlobContents"> {
 	const snapshotBlobs: ISerializableBlobContents = {};
+	const attachmentBlobContents: IBase64BlobContents = {};
 	for (const [id, blob] of snapshot.blobContents.entries()) {
-		snapshotBlobs[id] = bufferToString(blob, "utf8");
+		if (binaryBlobIds?.has(id) === true) {
+			attachmentBlobContents[id] = bufferToString(blob, "base64");
+		} else {
+			snapshotBlobs[id] = bufferToString(blob, "utf8");
+		}
 	}
 	return {
 		baseSnapshot: snapshot.snapshotTree,
 		snapshotBlobs,
+		...(Object.keys(attachmentBlobContents).length === 0 ? {} : { attachmentBlobContents }),
 	};
 }
 

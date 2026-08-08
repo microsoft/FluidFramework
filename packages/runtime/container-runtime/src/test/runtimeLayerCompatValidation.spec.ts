@@ -37,6 +37,7 @@ import { pkgVersion } from "../packageVersion.js";
 import {
 	loaderSupportRequirementsForRuntime,
 	validateLoaderCompatibility,
+	validateLoaderCompatibilityForBlobManagerLoadingGroups,
 	validateDatastoreCompatibility,
 	dataStoreSupportRequirementsForRuntime,
 	runtimeCoreCompatDetails,
@@ -137,6 +138,47 @@ async function createAndLoadDataStore(
 }
 
 describe("Runtime Layer compatibility", () => {
+	describe("BlobManager loading groups", () => {
+		const mc = createChildMonitoringContext({ logger: createChildLogger() });
+		const loaderCompatDetails: ILayerCompatDetails = {
+			pkgVersion,
+			generation: loaderSupportRequirementsForRuntime.minSupportedGeneration,
+			supportedFeatures: new Set(),
+		};
+
+		it("rejects a loader that cannot preserve the loading groups", () => {
+			const disposeFn = Sinon.fake();
+			assert.throws(
+				() =>
+					validateLoaderCompatibilityForBlobManagerLoadingGroups(
+						loaderCompatDetails,
+						disposeFn,
+						mc,
+					),
+				(error: Error) =>
+					validateFailureProperties(error, true, loaderCompatDetails.generation, "loader", [
+						"supportsBlobManagerLoadingGroups",
+					]),
+			);
+			assert(disposeFn.calledOnce);
+		});
+
+		it("accepts a loader that can preserve the loading groups", () => {
+			assert.doesNotThrow(() =>
+				validateLoaderCompatibilityForBlobManagerLoadingGroups(
+					{
+						...loaderCompatDetails,
+						supportedFeatures: new Set(["supportsBlobManagerLoadingGroups"]),
+					},
+					() => {
+						throw new Error("should not dispose");
+					},
+					mc,
+				),
+			);
+		});
+	});
+
 	/**
 	 * These tests ensure that the validation logic for layer compatibility is correct
 	 * and has the correct error / properties.
