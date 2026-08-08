@@ -3,16 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/legacy";
-import { Loader } from "@fluidframework/container-loader/legacy";
-import {
-	LocalDocumentServiceFactory,
-	LocalResolver,
-	createLocalResolverCreateNewRequest,
-} from "@fluidframework/local-driver/legacy";
-import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { startEphemeralService } from "@fluidframework/local-driver/alpha";
+import { adaptLegacyDataStoreFactory } from "@fluidframework/runtime-utils/legacy/alpha";
 
 import { TableDocument } from "../document.js";
 
@@ -21,50 +13,26 @@ interface LocalTableDocumentTestContext {
 	readonly tableDocument: TableDocument;
 	/** Waits for locally submitted changes to be acknowledged by the local service. */
 	readonly ensureSynchronized: () => Promise<void>;
-	/** Closes the container and its in-memory local service. */
+	/** Closes the container and its ephemeral service. */
 	readonly disposeContainerAndLocalService: () => Promise<void>;
 }
 
+const tableDocumentKind = adaptLegacyDataStoreFactory<TableDocument>(
+	TableDocument.getFactory(),
+);
+
 /**
- * Creates a `TableDocument` connected to an in-memory local service using the current Fluid version.
+ * Creates a `TableDocument` connected to an ephemeral service using the current Fluid version.
  *
- * @returns The table document and functions for synchronizing and disposing its local test context.
+ * @returns The table document and functions for synchronizing and disposing its local container.
  */
 export async function createLocalTableDocument(): Promise<LocalTableDocumentTestContext> {
-	const deltaConnectionServer = LocalDeltaConnectionServer.create();
-	const codeDetails = { package: "table-document-test" };
-	const tableDocumentFactory = TableDocument.getFactory();
-	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
-		defaultFactory: tableDocumentFactory,
-		registryEntries: [tableDocumentFactory.registryEntry],
-	});
-	const loader = new Loader({
-		urlResolver: new LocalResolver(),
-		documentServiceFactory: new LocalDocumentServiceFactory(deltaConnectionServer),
-		codeLoader: {
-			load: async () => ({
-				module: { fluidExport: runtimeFactory },
-				details: codeDetails,
-			}),
-		},
-	});
-	const container = await loader.createDetachedContainer(codeDetails);
-	await container.attach(createLocalResolverCreateNewRequest("table-document-test"));
-	const tableDocument = await container.getEntryPoint();
-	assert(tableDocument instanceof TableDocument, "Expected a TableDocument entry point");
+	const service = startEphemeralService();
+	const container = await service.defaultClient.createAttachedContainer(tableDocumentKind);
 
 	return {
-		tableDocument,
-		ensureSynchronized: async () => {
-			// Yield so locally submitted changes can mark the container dirty before checking it.
-			await new Promise<void>((resolve) => setTimeout(resolve, 0));
-			if (container.isDirty) {
-				await new Promise<void>((resolve) => container.once("saved", () => resolve()));
-			}
-		},
-		disposeContainerAndLocalService: async () => {
-			container.close();
-			await deltaConnectionServer.close();
-		},
+		tableDocument: container.data,
+		ensureSynchronized: async () => service.synchronize(),
+		disposeContainerAndLocalService: async () => service.close(),
 	};
 }
