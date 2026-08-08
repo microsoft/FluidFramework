@@ -69,6 +69,8 @@ export {
 	deltaForRootInitialization,
 	makeDetachedNodeId,
 	offsetDetachId,
+	offsetDetachIdOpt,
+	subtractDetachedNodeId,
 	emptyDelta,
 	type AnchorSlot,
 	type AnchorNode,
