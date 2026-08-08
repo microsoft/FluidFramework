@@ -15,8 +15,7 @@ import type { CounterFilter } from "../../../../feature-libraries/chunked-forest
 import { decode } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { updateShapesAndIdentifiersEncoding } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { FieldBatchDecodingContext } from "../../../../feature-libraries/chunked-forest/codec/codecs.js";
+import { IdDecodingContext } from "../../../../util/index.js";
 import type {
 	BufferFormat,
 	EncoderContext,
@@ -96,7 +95,7 @@ function testDecode(
 	expectedTree: JsonableTree[][],
 	identifierFilter: CounterFilter<string>,
 	version: FieldBatchFormatVersion,
-	idCompressor?: IIdCompressor,
+	idCompressor: IIdCompressor = testIdCompressor,
 	incrementalDecoder?: IncrementalDecoder,
 ): EncodedFieldBatchV1OrV2 {
 	const chunk = updateShapesAndIdentifiersEncoding(
@@ -107,18 +106,17 @@ function testDecode(
 
 	// TODO: check chunk matches schema
 
+	// This assumes the encoded data was encoded using the same localSessionId of the current session.
+	// This is ok for these tests which comply with this, but would be very bad to assume in any real use-case.
+	const context = new IdDecodingContext({
+		idCompressor,
+		originatorId: idCompressor.localSessionId,
+	});
 	// Check decode
 	const result = decode(
 		chunk,
-		idCompressor === undefined
-			? FieldBatchDecodingContext.forOp({
-					idCompressor: testIdCompressor,
-					originatorId: testIdCompressor.localSessionId,
-				})
-			: FieldBatchDecodingContext.forOp({
-					idCompressor,
-					originatorId: idCompressor.localSessionId,
-				}),
+
+		context,
 		incrementalDecoder,
 	);
 	assertChunkCursorBatchEquals(result, expectedTree);
@@ -145,19 +143,7 @@ function testDecode(
 		// can't check this due to undefined fields
 		// assert.deepEqual(parsed, chunk);
 		// Instead check that it works properly:
-		const parsedResult = decode(
-			parsed,
-			idCompressor === undefined
-				? FieldBatchDecodingContext.forOp({
-						idCompressor: testIdCompressor,
-						originatorId: testIdCompressor.localSessionId,
-					})
-				: FieldBatchDecodingContext.forOp({
-						idCompressor,
-						originatorId: idCompressor.localSessionId,
-					}),
-			incrementalDecoder,
-		);
+		const parsedResult = decode(parsed, context, incrementalDecoder);
 		assert.deepEqual(parsedResult, result);
 	}
 

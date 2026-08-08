@@ -18,7 +18,8 @@ export {
 export { checkUrl } from "./checkUrl.js";
 export { createOdspUrl } from "./createOdspUrl.js";
 export { getHashedDocumentId, type ISnapshotContents } from "./odspPublicUtils.js";
-export { getOdspUrlParts, isOdcUrl, isSpoUrl } from "./odspUrlHelper.js";
+export { getApiRoot, getOdspUrlParts, isOdcUrl, isSpoUrl } from "./odspUrlHelper.js";
+export { getHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
 
 // prefetch latest snapshot before container load
 export { prefetchLatestSnapshot } from "./prefetchLatestSnapshot.js";
@@ -29,6 +30,8 @@ export {
 	OdspDocumentServiceFactory,
 } from "./odspDocumentServiceFactory.js";
 export { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore.js";
+// eslint-disable-next-line import-x/no-internal-modules
+export { OdspPointInTimeDocumentServiceFactory } from "./pointInTimeDriver/odspPointInTimeDocumentServiceFactory.js";
 
 // File creation
 export { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest.js";

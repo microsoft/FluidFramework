@@ -334,6 +334,22 @@ export class PendingStateManager implements IDisposable {
 	}
 
 	/**
+	 * Checks the pending messages to see if any of them are staged (submitted while in Staging Mode).
+	 * Unlike {@link PendingStateManager.hasPendingUserChanges}, this does not filter by "dirtyable" messages:
+	 * anything submitted while in Staging Mode counts as a staged change that must be committed or discarded,
+	 * regardless of whether it would otherwise count towards dirty tracking.
+	 */
+	public hasStagedChanges(): boolean {
+		for (let i = 0; i < this.pendingMessages.length; i++) {
+			const element = this.pendingMessages.get(i);
+			if (element?.batchInfo.staged === true) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * The minimumPendingMessageSequenceNumber is the minimum of the first pending message and the first initial message.
 	 *
 	 * We need this so that we can properly keep local data and maintain the correct sequence window.
@@ -348,6 +364,17 @@ export class PendingStateManager implements IDisposable {
 	 */
 	public hasPendingMessages(): boolean {
 		return this.pendingMessagesCount !== 0;
+	}
+
+	/**
+	 * Returns the effective batchId for the most recently flushed local batch still waiting for server ack.
+	 *
+	 * @remarks Used for version mark capture. Ignores `initialMessages` (stashed ops from a prior session),
+	 * since capture points reference newly submitted local work in this session.
+	 */
+	public getMostRecentPendingBatchId(): string | undefined {
+		const pendingMessage = this.pendingMessages.peekBack();
+		return pendingMessage === undefined ? undefined : getEffectiveBatchId(pendingMessage);
 	}
 
 	public getLocalState(snapshotSequenceNumber?: number): {

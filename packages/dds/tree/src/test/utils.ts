@@ -18,13 +18,14 @@ import type {
 	IEmitter,
 	Listenable,
 } from "@fluidframework/core-interfaces/internal";
-import { emulateProductionBuild } from "@fluidframework/core-utils/internal";
+import { emulateProductionBuild, fail } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	IChannelServices,
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import {
 	assertIsStableId,
@@ -39,7 +40,7 @@ import {
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type {
 	ISharedObjectKind,
-	SharedObjectKind,
+	SharedObjectKindAlpha,
 } from "@fluidframework/shared-object-base/internal";
 import {
 	createMockLoggerExt,
@@ -193,7 +194,7 @@ import {
 	unhydratedFlexTreeFromInsertable,
 	type SimpleNodeSchema,
 	type TreeNodeSchema,
-	restrictiveStoredSchemaGenerationOptions,
+	StagedSchemaUpgradePolicy,
 	toInitialSchema,
 	toStoredSchema,
 	type SnapshotFileSystem,
@@ -233,7 +234,7 @@ export const DefaultTestSharedTreeKind = configuredSharedTree({
 	jsonValidator: FormatValidatorBasic,
 	// Default to v2_80 to support noChange constraints in table operations
 	minVersionForCollab: FluidClientVersion.v2_80,
-}) as SharedObjectKind<ISharedTree> & ISharedObjectKind<ISharedTree>;
+}) as SharedObjectKindAlpha<ISharedTree> & ISharedObjectKind<ISharedTree>;
 
 /**
  * A {@link IJsonCodec} implementation which fails on encode and decode.
@@ -451,8 +452,15 @@ export class TestTreeProviderLite {
 	private readonly runtimeFactory: MockContainerRuntimeFactoryWithOpBunching;
 	public readonly trees: readonly SharedTreeWithContainerRuntime[];
 	public readonly logger: IMockLoggerExt = createMockLoggerExt();
+	/**
+	 * Map from clientId to container runtime.
+	 */
 	private readonly containerRuntimeMap: Map<string, MockContainerRuntimeWithOpBunching> =
 		new Map();
+	/**
+	 * Map from clientId to IIdCompressor.
+	 */
+	private readonly compressorMap: Map<string, IIdCompressor> = new Map();
 
 	/**
 	 * Create a new {@link TestTreeProviderLite} with a number of trees pre-initialized.
@@ -484,10 +492,13 @@ export class TestTreeProviderLite {
 		const random = useDeterministicSessionIds ? makeRandom(0xdeadbeef) : makeRandom();
 		for (let i = 0; i < trees; i++) {
 			const sessionId = random.uuid4() as SessionId;
+			const idCompressor = createIdCompressor(sessionId);
+			this.compressorMap.set(`tree-${i}`, idCompressor);
+			const clientId = `test-client-${i}`;
 			const runtime = new MockFluidDataStoreRuntime({
-				clientId: `test-client-${i}`,
+				clientId,
 				id: "test",
-				idCompressor: createIdCompressor(sessionId),
+				idCompressor,
 				logger: this.logger,
 			});
 			const tree = this.factory.create(runtime, `tree-${i}`);
@@ -501,6 +512,10 @@ export class TestTreeProviderLite {
 			t.push(tree as SharedTreeWithContainerRuntime);
 		}
 		this.trees = t;
+	}
+
+	public getCompressor(tree: ISharedTree): IIdCompressor {
+		return this.compressorMap.get(tree.id) ?? fail("Tree not found");
 	}
 
 	/**
@@ -534,6 +549,10 @@ export class TestTreeProviderLite {
 		} else {
 			this.runtimeFactory.processSomeMessages(count);
 		}
+	}
+
+	public peekNextMessage(): ISequencedDocumentMessage | undefined {
+		return this.runtimeFactory.peekNextMessage();
 	}
 
 	public get minimumSequenceNumber(): number {
@@ -866,7 +885,7 @@ function createCheckoutWithContent(
 		testIdCompressor,
 		args?.shouldEncodeIncrementally ?? defaultIncrementalEncodingPolicy,
 	);
-	initializeForest(forest, fieldCursor, testRevisionTagCodec, testIdCompressor);
+	initializeForest(forest, fieldCursor);
 
 	const logger = createMockLoggerExt();
 	const checkout = createTreeCheckout(
@@ -942,6 +961,8 @@ const sf = new SchemaFactory("com.fluidframework.json");
 
 export const NumberArray = sf.array("array", sf.number);
 export const StringArray = sf.array("array", sf.string);
+export const StringAndNumberArray = sf.array("array", [sf.string, sf.number]);
+export const StringAndBoolArray = sf.array("array", [sf.string, sf.boolean]);
 
 export const IdentifierSchema = sf.object("identifier-object", {
 	identifier: sf.identifier,
@@ -1064,8 +1085,8 @@ const testedFamilies = new WeakSet<ICodecFamily<unknown, unknown>>();
  * Tracks tested versions and registers an after hook to validate that all supported
  * versions in the codec family have corresponding tests.
  */
-function registerValidationHook<TDecoded, TContext>(
-	family: ICodecFamily<TDecoded, TContext>,
+function registerValidationHook<TDecoded, TEncodeContext, TDecodeContext>(
+	family: ICodecFamily<TDecoded, TEncodeContext, TDecodeContext>,
 	versions: readonly FormatVersion[],
 ): void {
 	let tested = testedVersionsByFamily.get(family);
@@ -1111,17 +1132,22 @@ function registerValidationHook<TDecoded, TContext>(
  * Maybe generalize test cases to each have an optional encoded and optional decoded form (require at least one), for example via:
  * `{name: string, encoded?: JsonCompatibleReadOnly, decoded?: TDecoded}`.
  */
-export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
-	family: ICodecFamily<TDecoded, TContext>,
-	encodingTestData: EncodingTestData<TDecoded, TEncoded, TContext>,
+export function makeEncodingTestSuite<
+	TDecoded,
+	TEncoded,
+	TEncodeContext,
+	TDecodeContext = TEncodeContext,
+>(
+	family: ICodecFamily<TDecoded, TEncodeContext, TDecodeContext>,
+	encodingTestData: EncodingTestData<TDecoded, TEncoded, TEncodeContext & TDecodeContext>,
 	assertEquivalent: (a: TDecoded, b: TDecoded) => void = assertDeepEqual,
 	supportedVersions?: FormatVersion[],
 ): void {
-	// Type cast away the conditional type: if TContext is void, indexing off the end of this will get undefined which works, making this safe.
+	// Type cast away the conditional type: if the context is void, indexing off the end of this will get undefined which works, making this safe.
 	const successes = encodingTestData.successes as [
 		name: string,
 		data: TDecoded,
-		context: TContext,
+		context: TEncodeContext & TDecodeContext,
 	][];
 	const supportedVersionsToTest = supportedVersions ?? [...family.getSupportedFormats()];
 	registerValidationHook(family, supportedVersionsToTest);
@@ -1163,9 +1189,8 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 				describe("rejects malformed data", () => {
 					for (const [name, encodedData, context] of failureCases) {
 						it(name, () => {
-							assert.throws(() =>
-								jsonCodec.decode(encodedData as JsonCompatible, context as TContext),
-							);
+							assert(context !== undefined);
+							assert.throws(() => jsonCodec.decode(encodedData as JsonCompatible, context));
 						});
 					}
 				});
@@ -1219,10 +1244,12 @@ export function makeDiscontinuedEncodingTestSuite(
  * convenience, but is otherwise unused.
  * @returns a change receiver function and a function that will return all changes received
  */
-export function testChangeReceiver<TChange>(
-	_changeFamily?: ChangeFamily<ChangeFamilyEditor, TChange>,
+export function testChangeReceiver<TChange, TChangeProcessingContext>(
+	_changeFamily?: ChangeFamily<ChangeFamilyEditor, TChange, TChangeProcessingContext>,
 ): [
-	changeReceiver: Parameters<ChangeFamily<ChangeFamilyEditor, TChange>["buildEditor"]>[1],
+	changeReceiver: Parameters<
+		ChangeFamily<ChangeFamilyEditor, TChange, TChangeProcessingContext>["buildEditor"]
+	>[1],
 	getChanges: () => readonly TChange[],
 ] {
 	const changes: TChange[] = [];
@@ -1289,8 +1316,7 @@ export function applyTestDelta(
 		rootDelta,
 		revision,
 		deltaProcessor,
-		detachedFieldIndex ??
-			makeDetachedFieldIndex(undefined, testRevisionTagCodec, testIdCompressor),
+		detachedFieldIndex ?? makeDetachedFieldIndex(),
 	);
 }
 
@@ -1552,6 +1578,9 @@ export class MockTreeCheckout implements ITreeCheckout {
 	public rebaseOnto(branch: unknown): void {
 		throw new Error("Method 'rebaseOnto' not implemented in MockTreeCheckout.");
 	}
+	public computeNetChangeIfRebasedOnto(branch: unknown): never {
+		throw new Error("Method 'getRebaseChanges' not implemented in MockTreeCheckout.");
+	}
 	public isMissingEditsFrom(branch: unknown): never {
 		throw new Error("Method 'isMissingEditsFrom' not implemented in MockTreeCheckout.");
 	}
@@ -1723,7 +1752,7 @@ export class TestSchemaRepository extends TreeStoredSchemaRepository {
 	public tryUpdateTreeSchema(schema: SimpleNodeSchema & TreeNodeSchema): boolean {
 		const name: TreeNodeSchemaIdentifier = brand(schema.identifier);
 		const storedSchema =
-			toStoredSchema(schema, restrictiveStoredSchemaGenerationOptions).nodeSchema.get(name) ??
+			toStoredSchema(schema, StagedSchemaUpgradePolicy.restrictive).nodeSchema.get(name) ??
 			assert.fail();
 		const original = this.nodeSchema.get(name);
 		if (allowsTreeSuperset(this.policy, this, original, storedSchema)) {

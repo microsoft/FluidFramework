@@ -197,21 +197,42 @@ export async function retrieveLatestFullSummaryFromStorage(
 }
 
 /**
+ * Determines whether a repo path component (tenantId, documentId, or owner) is invalid.
+ *
+ * A valid component must be a single path segment: it cannot be empty, "." or "..",
+ * cannot contain a path separator, and cannot be an absolute path. This prevents path
+ * traversal when the components are joined into a filesystem path.
+ *
+ * Note: the previous check relied on `path.parse(x).dir !== ""`, but Node returns an
+ * empty `dir` for a bare "..", so a lone ".." bypassed validation.
+ */
+export function isInvalidRepoPathComponent(value: string): boolean {
+	return (
+		value === "." ||
+		value === ".." ||
+		value.includes("/") ||
+		value.includes("\\") ||
+		path.posix.isAbsolute(value) ||
+		path.win32.isAbsolute(value)
+	);
+}
+
+/**
  * Retrieves the full repository path. Or throws an error if not valid.
  */
 export function getRepoPath(tenantId: string, documentId?: string, owner?: string): string {
 	// `tenantId` needs to be always present and valid.
-	if (!tenantId || path.parse(tenantId).dir !== "") {
+	if (!tenantId || isInvalidRepoPathComponent(tenantId)) {
 		throw new NetworkError(400, `Invalid repo name (tenantId) provided: ${tenantId}`);
 	}
 
 	// When `owner` is present, it needs to be valid.
-	if (owner && path.parse(owner).dir !== "") {
+	if (owner && isInvalidRepoPathComponent(owner)) {
 		throw new NetworkError(400, `Invalid repo owner provided: ${owner}`);
 	}
 
 	// When `documentId` is present, it needs to be valid.
-	if (documentId && path.parse(documentId).dir !== "") {
+	if (documentId && isInvalidRepoPathComponent(documentId)) {
 		throw new NetworkError(400, `Invalid repo name (documentId) provided: ${documentId}`);
 	}
 

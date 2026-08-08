@@ -53,6 +53,7 @@ trigger:
     - common/build/build-common
     - tools/pipelines/build-build-tools.yml
     - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/include-generate-publish-metadata.yml
     - tools/pipelines/templates/include-build-lint.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -79,6 +80,7 @@ pr:
     - common/build/build-common
     - tools/pipelines/build-build-tools.yml
     - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/include-generate-publish-metadata.yml
     - tools/pipelines/templates/include-build-lint.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -99,6 +101,7 @@ extends:
   parameters:
     publish: ${{ variables.publish }}
     publishOverride: ${{ parameters.publishOverride }}
+    publishAsPartOfBuild: false
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     interdependencyRange: ${{ parameters.interdependencyRange }}

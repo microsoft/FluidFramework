@@ -17,6 +17,7 @@ import { AttachState } from "@fluidframework/container-definitions";
 import {
 	IContainer,
 	type IFluidCodeDetails,
+	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import type { Loader } from "@fluidframework/container-loader/internal";
 import {
@@ -805,9 +806,22 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider, com
 		dds: { SharedDirectory },
 	} = compatAPIs;
 	const disableConfig: ITestContainerConfig = {
-		runtimeOptions: { enableRuntimeIdCompressor: undefined },
+		runtimeOptions: {
+			enableRuntimeIdCompressor: undefined,
+			summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
+		},
 	};
 	const enabledConfig: ITestContainerConfig = {
+		runtimeOptions: {
+			enableRuntimeIdCompressor: "on",
+			summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
+		},
+	};
+
+	const summarizerDisableConfig: ITestContainerConfig = {
+		runtimeOptions: { enableRuntimeIdCompressor: undefined },
+	};
+	const summarizerEnabledConfig: ITestContainerConfig = {
 		runtimeOptions: { enableRuntimeIdCompressor: "on" },
 	};
 
@@ -816,12 +830,16 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider, com
 	): Promise<IContainer> => provider.makeTestContainer(config);
 
 	beforeEach("getTestObjectProvider", async () => {
-		provider = getTestObjectProvider();
+		provider = getTestObjectProvider({ syncSummarizer: true });
 	});
 
 	it("Summary includes IdCompressor when enabled", async () => {
 		const container = await createContainer(enabledConfig);
-		const { summarizer } = await createSummarizer(provider, container, enabledConfig);
+		const { summarizer } = await createSummarizer(
+			provider,
+			container,
+			summarizerEnabledConfig,
+		);
 		const { summaryTree } = await summarizeNow(summarizer);
 
 		assert(
@@ -832,7 +850,11 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider, com
 
 	it("Summary does not include IdCompressor when disabled", async () => {
 		const container = await createContainer();
-		const { summarizer } = await createSummarizer(provider, container, disableConfig);
+		const { summarizer } = await createSummarizer(
+			provider,
+			container,
+			summarizerDisableConfig,
+		);
 		const { summaryTree } = await summarizeNow(summarizer);
 
 		assert(
@@ -860,7 +882,11 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider, com
 		const defaultDataStore = (await container.getEntryPoint()) as ITestDataObject;
 		const idCompressor: IIdCompressor = (defaultDataStore._root as any).runtime.idCompressor;
 
-		const { summarizer } = await createSummarizer(provider, container, enabledConfig);
+		const { summarizer } = await createSummarizer(
+			provider,
+			container,
+			summarizerEnabledConfig,
+		);
 
 		assert(idCompressor !== undefined, "IdCompressor should be present");
 		idCompressor.generateCompressedId();
@@ -884,7 +910,11 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider, com
 		const defaultDataStore = (await container.getEntryPoint()) as ITestDataObject;
 		const idCompressor: IIdCompressor = (defaultDataStore._root as any).runtime.idCompressor;
 
-		const { summarizer } = await createSummarizer(provider, container, enabledConfig);
+		const { summarizer } = await createSummarizer(
+			provider,
+			container,
+			summarizerEnabledConfig,
+		);
 
 		assert(idCompressor !== undefined, "IdCompressor should be present");
 
@@ -919,7 +949,7 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider, com
 		const { summarizer: summarizer1 } = await createSummarizer(
 			provider,
 			container,
-			enabledConfig,
+			summarizerEnabledConfig,
 		);
 
 		assert(idCompressor !== undefined, "IdCompressor should be present");
@@ -927,7 +957,7 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider, com
 		defaultDataStore._root.set("key", "value");
 		await provider.ensureSynchronized();
 
-		const { summaryTree } = await summarizeNow(summarizer1);
+		const { summaryTree, summaryVersion } = await summarizeNow(summarizer1);
 		const summaryStats = getCompressorSummaryStats(summaryTree);
 		assert.equal(
 			summaryStats.sessionCount,
@@ -940,7 +970,9 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider, com
 			"Should have a local cluster as all ids are ack'd",
 		);
 
-		const container2 = await provider.loadTestContainer(enabledConfig);
+		const container2 = await provider.loadTestContainer(enabledConfig, {
+			[LoaderHeader.version]: summaryVersion,
+		});
 		const container2DataStore = (await container2.getEntryPoint()) as ITestDataObject;
 		const container2IdCompressor: IIdCompressor = (container2DataStore._root as any).runtime
 			.idCompressor;
