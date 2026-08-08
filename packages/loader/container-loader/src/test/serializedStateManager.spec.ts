@@ -27,6 +27,7 @@ import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
 import { MockLogger, mixinMonitoringContext } from "@fluidframework/telemetry-utils/internal";
 import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
+import { getBlobContentsFromTree } from "../containerStorageAdapter.js";
 import {
 	type IPendingContainerState,
 	SerializedStateManager,
@@ -165,6 +166,34 @@ const resolvedUrl: IResolvedUrl = {
 	tokens: {},
 	endpoints: {},
 };
+
+describe("snapshot blob serialization", () => {
+	it("does not fetch omitted blobs from unreferenced ISnapshot subtrees", async () => {
+		const snapshot: ISnapshot = {
+			...initialSnapshot,
+			snapshotTree: {
+				...snapshotTree,
+				trees: {
+					...snapshotTree.trees,
+					unreferenced: {
+						blobs: { omitted: "omittedBlobId" },
+						trees: {},
+						unreferenced: true,
+					},
+				},
+			},
+		};
+		const readBlob = async (id: string): Promise<ArrayBufferLike> => {
+			throw new Error(`Unexpected read of ${id}`);
+		};
+
+		const blobs = await getBlobContentsFromTree(snapshot, { readBlob });
+
+		assert.deepStrictEqual(blobs, {
+			"attributesId-0": '{"minimumSequenceNumber" : 0, "sequenceNumber": 0}',
+		});
+	});
+});
 
 const errorFn = (error: Error, expected: string): boolean => {
 	assert.notStrictEqual(error.message, undefined, "error is undefined");

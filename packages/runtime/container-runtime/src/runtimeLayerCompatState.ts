@@ -6,7 +6,6 @@
 import {
 	generation,
 	LayerCompatibilityPolicyWindowMonths,
-	supportsBinarySnapshotBlobs,
 	type ILayerCompatDetails,
 	type ILayerCompatSupportRequirements,
 } from "@fluid-internal/client-utils";
@@ -21,6 +20,8 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { pkgVersion } from "./packageVersion.js";
+
+const supportsBlobManagerLoadingGroups = "supportsBlobManagerLoadingGroups";
 
 /**
  * The config key to disable strict loader layer compatibility check.
@@ -118,7 +119,34 @@ export function validateLoaderCompatibility(
 	maybeLoaderCompatDetailsForRuntime: ILayerCompatDetails | undefined,
 	disposeFn: (error?: ICriticalContainerError) => void,
 	mc: MonitoringContext,
-	requiredFeatures: readonly string[] = loaderSupportRequirementsForRuntime.requiredFeatures,
+): void {
+	validateLoaderCompatibilityCore(
+		maybeLoaderCompatDetailsForRuntime,
+		disposeFn,
+		mc,
+		loaderSupportRequirementsForRuntime,
+	);
+}
+
+/**
+ * Validates Loader compatibility when the document uses BlobManager loading groups.
+ */
+export function validateLoaderCompatibilityForBlobManagerLoadingGroups(
+	maybeLoaderCompatDetailsForRuntime: ILayerCompatDetails | undefined,
+	disposeFn: (error?: ICriticalContainerError) => void,
+	mc: MonitoringContext,
+): void {
+	validateLoaderCompatibilityCore(maybeLoaderCompatDetailsForRuntime, disposeFn, mc, {
+		...loaderSupportRequirementsForRuntime,
+		requiredFeatures: [supportsBlobManagerLoadingGroups],
+	});
+}
+
+function validateLoaderCompatibilityCore(
+	maybeLoaderCompatDetailsForRuntime: ILayerCompatDetails | undefined,
+	disposeFn: (error?: ICriticalContainerError) => void,
+	mc: MonitoringContext,
+	supportRequirements: ILayerCompatSupportRequirements,
 ): void {
 	// By default, use strictCompatibilityCheck here - If the Loader doesn't provide compatibility details,
 	// assume it's a very old version and should be considered incompatible,
@@ -132,22 +160,13 @@ export function validateLoaderCompatibility(
 		"runtime",
 		"loader",
 		runtimeCompatDetailsForLoader,
-		{
-			...loaderSupportRequirementsForRuntime,
-			requiredFeatures,
-		},
+		supportRequirements,
 		maybeLoaderCompatDetailsForRuntime,
 		disposeFn,
 		mc,
 		disableStrictLoaderLayerCompatibilityCheck !== true /* strictCompatibilityCheck */,
 	);
 }
-
-/**
- * Loader features required by runtimes that emit binary summary blobs.
- * @internal
- */
-export const loaderFeaturesForBinarySnapshotBlobs = [supportsBinarySnapshotBlobs] as const;
 
 /**
  * Validates that the DataStore layer is compatible with this Runtime.

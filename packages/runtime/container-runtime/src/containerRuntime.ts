@@ -265,10 +265,10 @@ import {
 } from "./pendingStateManager.js";
 import { BatchRunCounter, RunCounter } from "./runCounter.js";
 import {
-	loaderFeaturesForBinarySnapshotBlobs,
 	runtimeCompatDetailsForLoader,
 	runtimeCoreCompatDetails,
 	validateLoaderCompatibility,
+	validateLoaderCompatibilityForBlobManagerLoadingGroups,
 } from "./runtimeLayerCompatState.js";
 import { SignalTelemetryManager } from "./signalTelemetryProcessing.js";
 // These types are imported as types here because they are present in summaryDelayLoadedModule, which is loaded dynamically when required.
@@ -1110,11 +1110,10 @@ export class ContainerRuntime
 			metadata?.documentSchema?.runtime?.inlineDetachedBlobsAsSummaryBlobs === true
 		) {
 			const maybeLoaderCompatDetailsForRuntime = context as FluidObject<ILayerCompatDetails>;
-			validateLoaderCompatibility(
+			validateLoaderCompatibilityForBlobManagerLoadingGroups(
 				maybeLoaderCompatDetailsForRuntime.ILayerCompatDetails,
 				context.disposeFn ?? context.closeFn,
 				mc,
-				loaderFeaturesForBinarySnapshotBlobs,
 			);
 		}
 

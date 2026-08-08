@@ -399,7 +399,10 @@ export class BlobManager {
 		}
 		// Get the storage ID from the redirect table
 		const storageId = this.redirectTable.get(localId);
-		return storageId !== undefined && this.summaryBlobs.has(localId) ? undefined : storageId;
+		return storageId !== undefined &&
+			(this.summaryBlobs.has(localId) || this.summaryBlobHandles.has(localId))
+			? undefined
+			: storageId;
 	}
 
 	/**
@@ -450,14 +453,21 @@ export class BlobManager {
 			this.mc.logger,
 			{ eventName: "AttachmentReadBlob", id: storageId },
 			async (event) => {
-				return this.storage.readBlob(storageId).catch((error) => {
-					if (this.runtime.disposed) {
-						// If the runtime is disposed, this is not an error we care to track, it's expected behavior.
-						event.cancel({ category: "generic" });
-					}
+				return this.storage
+					.readBlob(storageId)
+					.then((blob) => {
+						return this.summaryBlobHandles.has(localId)
+							? stringToBuffer(bufferToString(blob, "utf8"), "base64")
+							: blob;
+					})
+					.catch((error) => {
+						if (this.runtime.disposed) {
+							// If the runtime is disposed, this is not an error we care to track, it's expected behavior.
+							event.cancel({ category: "generic" });
+						}
 
-					throw error;
-				});
+						throw error;
+					});
 			},
 			{ end: true, cancel: "error" },
 		);
@@ -842,7 +852,13 @@ export class BlobManager {
 				}
 				const storageId = this.redirectTable.get(localId);
 				assert(storageId !== undefined, "Inlined attachment blob must have a storage ID");
-				materializedSummaryBlobs.set(localId, await this.storage.readBlob(storageId));
+				materializedSummaryBlobs.set(
+					localId,
+					stringToBuffer(
+						bufferToString(await this.storage.readBlob(storageId), "utf8"),
+						"base64",
+					),
+				);
 			}),
 		);
 		return materializedSummaryBlobs;
@@ -859,7 +875,11 @@ export class BlobManager {
 		for (const [localId, storageId] of this.redirectTable) {
 			// Don't report the identity mappings to GC - these exist to service old handles that referenced the storage
 			// IDs directly. We'll implicitly clean them up if all of their localId references get GC'd first.
-			if (localId !== storageId || this.summaryBlobs.has(storageId)) {
+			if (
+				localId !== storageId ||
+				this.summaryBlobs.has(localId) ||
+				this.summaryBlobHandles.has(localId)
+			) {
 				// The outbound routes are empty because a blob node cannot reference other nodes. It can only be referenced
 				// by adding its handle to a referenced DDS.
 				gcData.gcNodes[getGCNodePathFromLocalId(localId)] = [];

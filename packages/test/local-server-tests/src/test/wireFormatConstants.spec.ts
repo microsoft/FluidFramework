@@ -9,9 +9,6 @@ import { wireFormatConstants } from "@fluidframework/container-loader/internal";
 import {
 	blobManagerBasePath,
 	blobsTreeName,
-	inlinedAttachmentBlobContentName,
-	inlinedAttachmentBlobGroupIdPrefix,
-	inlinedAttachmentBlobTreePrefix,
 	redirectTableBlobName,
 } from "@fluidframework/container-runtime/internal";
 import {
@@ -35,9 +32,6 @@ describe("wireFormatConstants contract", () => {
 		assert.deepStrictEqual(wireFormatConstants, {
 			blobsTreeName,
 			redirectTableBlobName,
-			inlinedAttachmentBlobContentName,
-			inlinedAttachmentBlobGroupIdPrefix,
-			inlinedAttachmentBlobTreePrefix,
 			blobManagerBasePath,
 			gcTreeKey,
 			gcBlobPrefix,

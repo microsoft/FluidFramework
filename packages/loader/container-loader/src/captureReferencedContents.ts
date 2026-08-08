@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { bufferToString, Uint8ArrayToArrayBuffer } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils/internal";
+import { bufferToString } from "@fluid-internal/client-utils";
 import type {
 	IDocumentStorageService,
 	ISequencedDocumentMessage,
@@ -36,9 +35,6 @@ import type {
 export const wireFormatConstants = {
 	blobsTreeName: ".blobs",
 	redirectTableBlobName: ".redirectTable",
-	inlinedAttachmentBlobContentName: "content",
-	inlinedAttachmentBlobGroupIdPrefix: "fluid-internal:attachment-blob:",
-	inlinedAttachmentBlobTreePrefix: ".inline_",
 	blobManagerBasePath: "_blobs",
 	gcTreeKey: "gc",
 	gcBlobPrefix: "__gc",
@@ -49,8 +45,6 @@ export const wireFormatConstants = {
 const {
 	blobsTreeName,
 	redirectTableBlobName,
-	inlinedAttachmentBlobContentName,
-	inlinedAttachmentBlobTreePrefix,
 	blobManagerBasePath,
 	gcTreeKey,
 	gcBlobPrefix,
@@ -200,6 +194,9 @@ function collectReferencedBlobIds(
 			if (tableBlobId !== undefined) {
 				ids.add(tableBlobId);
 			}
+			for (const childTree of Object.values(subTree.trees)) {
+				collectReferencedBlobIds(childTree, false, ids);
+			}
 		} else {
 			collectReferencedBlobIds(subTree, false, ids);
 		}
@@ -292,79 +289,7 @@ async function readRedirectTable(
 			redirectTable.set(storageId, storageId);
 		}
 	}
-	for (const [localId, storageId] of getInlinedAttachmentBlobIds(blobsTree)) {
-		redirectTable.set(localId, storageId);
-	}
 	return redirectTable;
-}
-
-/**
- * Reads every inlined attachment payload referenced by a snapshot, preferring
- * contents already returned with the snapshot.
- *
- * @internal
- */
-export async function readInlinedAttachmentBlobContents(
-	snapshot: ISnapshot,
-	storage: Pick<IDocumentStorageService, "readBlob">,
-): Promise<Map<string, ArrayBuffer>> {
-	return readInlinedAttachmentBlobContentsFromTree(
-		snapshot.snapshotTree,
-		storage,
-		snapshot.blobContents,
-	);
-}
-
-/**
- * Reads every inlined attachment payload referenced by a snapshot tree.
- *
- * @internal
- */
-export async function readInlinedAttachmentBlobContentsFromTree(
-	snapshotTree: ISnapshotTree,
-	storage: Pick<IDocumentStorageService, "readBlob">,
-	blobContents?: ReadonlyMap<string, ArrayBufferLike>,
-): Promise<Map<string, ArrayBuffer>> {
-	const blobsTree = snapshotTree.trees[blobsTreeName];
-	if (blobsTree === undefined) {
-		return new Map();
-	}
-	const inlinedBlobIds = getInlinedAttachmentBlobIds(blobsTree);
-	const contents = new Map<string, ArrayBuffer>();
-	await mapWithConcurrency(
-		[...new Set(inlinedBlobIds.values())],
-		maxReadConcurrency,
-		async (blobId) => {
-			const content = blobContents?.get(blobId) ?? (await storage.readBlob(blobId));
-			contents.set(blobId, Uint8ArrayToArrayBuffer(new Uint8Array(content)));
-		},
-	);
-	return contents;
-}
-
-/**
- * Maps BlobManager local IDs encoded in inline tree names to the snapshot blob
- * IDs assigned by storage.
- *
- * @internal
- */
-export function getInlinedAttachmentBlobIds(
-	blobsTree: ISnapshotTree | undefined,
-): Map<string, string> {
-	const inlinedBlobIds = new Map<string, string>();
-	if (blobsTree === undefined) {
-		return inlinedBlobIds;
-	}
-	for (const [treeName, childTree] of Object.entries(blobsTree.trees)) {
-		if (!treeName.startsWith(inlinedAttachmentBlobTreePrefix)) {
-			continue;
-		}
-		const localId = treeName.slice(inlinedAttachmentBlobTreePrefix.length);
-		const blobId = childTree.blobs[inlinedAttachmentBlobContentName];
-		assert(blobId !== undefined, "Inlined attachment blob tree must contain content");
-		inlinedBlobIds.set(localId, blobId);
-	}
-	return inlinedBlobIds;
 }
 
 /** Collects attachment blob local IDs that GC has permanently deleted. */

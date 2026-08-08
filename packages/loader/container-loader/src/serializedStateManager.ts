@@ -38,17 +38,10 @@ import {
 } from "./containerStorageAdapter.js";
 import {
 	extractBlobAttachReferences,
-	getInlinedAttachmentBlobIds,
-	readInlinedAttachmentBlobContents,
-	readInlinedAttachmentBlobContentsFromTree,
 	wireFormatConstants,
 } from "./captureReferencedContents.js";
 import { SnapshotRefresher } from "./snapshotRefresher.js";
-import {
-	convertISnapshotToSnapshotWithBlobs,
-	convertSnapshotToSnapshotInfo,
-	getDocumentAttributes,
-} from "./utils.js";
+import { convertSnapshotToSnapshotInfo, getDocumentAttributes } from "./utils.js";
 
 /**
  * This is very similar to {@link @fluidframework/protocol-definitions/internal#ISnapshot}, but the difference is
@@ -65,10 +58,6 @@ export interface SnapshotWithBlobs {
 	 * storage is not available.
 	 */
 	snapshotBlobs: ISerializableBlobContents;
-	/**
-	 * Binary snapshot blobs encoded as base64, keyed by blob id.
-	 */
-	attachmentBlobContents?: IBase64BlobContents;
 }
 
 /**
@@ -95,6 +84,13 @@ export interface IPendingContainerState extends SnapshotWithBlobs {
 	 * Any group snapshots (aka delay-loaded) we've downloaded from the service for this container
 	 */
 	loadedGroupIdSnapshots?: Record<string, SerializedSnapshotInfo>;
+	/**
+	 * Attachment blob contents inlined by storage id, encoded as base64.
+	 *
+	 * Carried separately from {@link SnapshotWithBlobs.snapshotBlobs} because
+	 * attachment blobs may contain arbitrary binary payloads.
+	 */
+	attachmentBlobContents?: IBase64BlobContents;
 	/**
 	 * All ops since base snapshot sequence number up to the latest op
 	 * seen when the container was closed. Used to apply stashed (saved pending)
@@ -401,9 +397,6 @@ export class SerializedStateManager implements IDisposable {
 					retainedBlobIds.add(blobId);
 				}
 			}
-			for (const blobId of getInlinedAttachmentBlobIds(blobsTree).values()) {
-				retainedBlobIds.add(blobId);
-			}
 		}
 		for (const op of this.processedOps) {
 			for (const { storageId } of extractBlobAttachReferences(op)) {
@@ -480,33 +473,11 @@ export class SerializedStateManager implements IDisposable {
 				}
 
 				const snapshot = this.snapshotInfo.snapshot;
-				const missingAttachmentBlobContents = isInstanceOfISnapshot(snapshot)
-					? await Promise.all(
-							[...this.attachmentBlobIds]
-								.filter((blobId) => !snapshot.blobContents.has(blobId))
-								.map(
-									async (blobId) =>
-										[blobId, await this.storageAdapter.readBlob(blobId)] as const,
-								),
-						)
-					: [];
-				const snapshotWithBlobs: SnapshotWithBlobs = isInstanceOfISnapshot(snapshot)
-					? convertISnapshotToSnapshotWithBlobs(
-							{
-								...snapshot,
-								blobContents: new Map([
-									...snapshot.blobContents,
-									...(await readInlinedAttachmentBlobContents(snapshot, this.storageAdapter)),
-									...missingAttachmentBlobContents,
-								]),
-							},
-							this.attachmentBlobIds,
-						)
-					: await convertSnapshotTreeToSnapshotWithBlobs(
-							snapshot,
-							this.storageAdapter,
-							this.attachmentBlobIds,
-						);
+				const snapshotWithBlobs = await convertSnapshotToSnapshotWithBlobs(
+					snapshot,
+					this.storageAdapter,
+					this.attachmentBlobIds,
+				);
 
 				const pendingState: IPendingContainerState = {
 					attached: true,
@@ -524,30 +495,35 @@ export class SerializedStateManager implements IDisposable {
 	}
 }
 
-async function convertSnapshotTreeToSnapshotWithBlobs(
-	snapshot: ISnapshotTree,
+async function convertSnapshotToSnapshotWithBlobs(
+	snapshot: ISnapshot | ISnapshotTree,
 	storageAdapter: ISerializedStateManagerDocumentStorageService,
 	knownAttachmentBlobIds: ReadonlySet<string>,
-): Promise<SnapshotWithBlobs> {
-	const [snapshotBlobs, inlinedAttachmentBlobContents, knownAttachmentBlobContents] =
-		await Promise.all([
-			getBlobContentsFromTree(snapshot, storageAdapter),
-			readInlinedAttachmentBlobContentsFromTree(snapshot, storageAdapter),
-			Promise.all(
-				[...knownAttachmentBlobIds].map(
-					async (blobId) => [blobId, await storageAdapter.readBlob(blobId)] as const,
-				),
+): Promise<SnapshotWithBlobs & Pick<IPendingContainerState, "attachmentBlobContents">> {
+	const knownSnapshotBlobContents = isInstanceOfISnapshot(snapshot)
+		? snapshot.blobContents
+		: undefined;
+	const [allSnapshotBlobs, knownAttachmentBlobContents] = await Promise.all([
+		getBlobContentsFromTree(snapshot, storageAdapter),
+		Promise.all(
+			[...knownAttachmentBlobIds].map(
+				async (blobId) =>
+					[
+						blobId,
+						knownSnapshotBlobContents?.get(blobId) ?? (await storageAdapter.readBlob(blobId)),
+					] as const,
 			),
-		]);
+		),
+	]);
+	const snapshotBlobs = Object.fromEntries(
+		Object.entries(allSnapshotBlobs).filter(([blobId]) => !knownAttachmentBlobIds.has(blobId)),
+	);
 	const attachmentBlobContents: IBase64BlobContents = {};
-	for (const [blobId, content] of [
-		...inlinedAttachmentBlobContents,
-		...knownAttachmentBlobContents,
-	]) {
+	for (const [blobId, content] of knownAttachmentBlobContents) {
 		attachmentBlobContents[blobId] = bufferToString(content, "base64");
 	}
 	return {
-		baseSnapshot: snapshot,
+		baseSnapshot: getSnapshotTree(snapshot),
 		snapshotBlobs,
 		...(Object.keys(attachmentBlobContents).length === 0 ? {} : { attachmentBlobContents }),
 	};

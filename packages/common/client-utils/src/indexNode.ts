@@ -36,6 +36,5 @@ export {
 	type IProvideLayerCompatDetails,
 	type ILayerCompatSupportRequirements,
 	LayerCompatibilityPolicyWindowMonths,
-	supportsBinarySnapshotBlobs,
 } from "./layerCompat.js";
 export { generation } from "./layerGenerationState.js";

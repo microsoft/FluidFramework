@@ -1794,7 +1794,6 @@ export class Container
 	private async rehydrateDetachedFromSnapshot({
 		baseSnapshot,
 		snapshotBlobs,
-		attachmentBlobContents,
 		hasAttachmentBlobs,
 		attachmentBlobs,
 		pendingRuntimeState,
@@ -1816,7 +1815,6 @@ export class Container
 		const snapshot = convertSnapshotInfoToSnapshot({
 			baseSnapshot,
 			snapshotBlobs,
-			attachmentBlobContents,
 			snapshotSequenceNumber: 0,
 		});
 

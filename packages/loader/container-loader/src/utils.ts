@@ -34,10 +34,6 @@ import type {
 	IBase64BlobContents,
 	ISerializableBlobContents,
 } from "./containerStorageAdapter.js";
-import {
-	getInlinedAttachmentBlobIds,
-	wireFormatConstants,
-} from "./captureReferencedContents.js";
 import type {
 	IPendingContainerState,
 	IPendingDetachedContainerState,
@@ -238,11 +234,6 @@ export function convertSnapshotInfoToSnapshot(
 	for (const [blobId, serializedContent] of Object.entries(snapshotInfo.snapshotBlobs)) {
 		blobContents.set(blobId, stringToBuffer(serializedContent, "utf8"));
 	}
-	for (const [blobId, serializedContent] of Object.entries(
-		snapshotInfo.attachmentBlobContents ?? {},
-	)) {
-		blobContents.set(blobId, stringToBuffer(serializedContent, "base64"));
-	}
 	return {
 		snapshotTree: snapshotInfo.baseSnapshot,
 		blobContents,
@@ -358,16 +349,11 @@ function isPendingDetachedContainerState(
 export function convertISnapshotToSnapshotWithBlobs(
 	snapshot: ISnapshot,
 	binaryBlobIds?: ReadonlySet<string>,
-): SnapshotWithBlobs {
+): SnapshotWithBlobs & Pick<IPendingContainerState, "attachmentBlobContents"> {
 	const snapshotBlobs: ISerializableBlobContents = {};
 	const attachmentBlobContents: IBase64BlobContents = {};
-	const inlinedAttachmentBlobIds = new Set(
-		getInlinedAttachmentBlobIds(
-			snapshot.snapshotTree.trees[wireFormatConstants.blobsTreeName],
-		).values(),
-	);
 	for (const [id, blob] of snapshot.blobContents.entries()) {
-		if (inlinedAttachmentBlobIds.has(id) || binaryBlobIds?.has(id) === true) {
+		if (binaryBlobIds?.has(id) === true) {
 			attachmentBlobContents[id] = bufferToString(blob, "base64");
 		} else {
 			snapshotBlobs[id] = bufferToString(blob, "utf8");

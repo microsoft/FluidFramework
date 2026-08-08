@@ -6,7 +6,6 @@
 import {
 	generation,
 	LayerCompatibilityPolicyWindowMonths,
-	supportsBinarySnapshotBlobs,
 	type ILayerCompatDetails,
 	type ILayerCompatSupportRequirements,
 } from "@fluid-internal/client-utils";
@@ -17,6 +16,8 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { pkgVersion } from "./packageVersion.js";
+
+const supportsBlobManagerLoadingGroups = "supportsBlobManagerLoadingGroups";
 
 /**
  * The core compatibility details of the Loader layer that is the same across all layer boundaries.
@@ -42,7 +43,7 @@ export const loaderCompatDetailsForRuntime: ILayerCompatDetails = {
 	/**
 	 * The features supported by the Loader layer across the Loader / Runtime boundary.
 	 */
-	supportedFeatures: new Set<string>([supportsBinarySnapshotBlobs]),
+	supportedFeatures: new Set<string>([supportsBlobManagerLoadingGroups]),
 };
 
 /**

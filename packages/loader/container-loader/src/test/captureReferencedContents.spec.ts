@@ -90,7 +90,7 @@ describe("captureReferencedContents", () => {
 			assert.deepStrictEqual(result, { kept: "KEPT" });
 		});
 
-		it("special-cases root .blobs: reads only the redirect table", async () => {
+		it("special-cases root .blobs: reads structural child trees but not direct attachments", async () => {
 			const snapshot = tree({
 				trees: {
 					".blobs": tree({
@@ -98,14 +98,17 @@ describe("captureReferencedContents", () => {
 							".redirectTable": "rt",
 							"attachment-storage-id": "attachment-storage-id",
 						},
+						trees: {
+							runtimePayload: tree({ blobs: { content: "inline" } }),
+						},
 					}),
 				},
 			});
-			const storage = mockStorage({ rt: "RT" });
+			const storage = mockStorage({ rt: "RT", inline: "ENCODED" });
 			const result = await readReferencedSnapshotBlobs(snapshot, storage);
 			assert.deepStrictEqual(
 				result,
-				{ rt: "RT" },
+				{ rt: "RT", inline: "ENCODED" },
 				"attachment blob contents must not be read via the general walker",
 			);
 		});
@@ -338,66 +341,6 @@ describe("captureReferencedContents", () => {
 			});
 		});
 
-		it("resolves inlined attachment summary blobs to their snapshot blob ids", async () => {
-			const snapshot = tree({
-				trees: {
-					[wireFormatConstants.blobsTreeName]: tree({
-						trees: {
-							[`${wireFormatConstants.inlinedAttachmentBlobTreePrefix}local-id`]: tree({
-								blobs: {
-									[wireFormatConstants.inlinedAttachmentBlobContentName]: "snapshot-blob-id",
-								},
-							}),
-						},
-					}),
-				},
-			});
-			const storage = mockStorage({
-				"snapshot-blob-id": "INLINE",
-			});
-
-			const result = await captureReferencedAttachmentBlobs(snapshot, storage, undefined);
-			assert.deepStrictEqual(result, {
-				"snapshot-blob-id": toB64("INLINE"),
-			});
-		});
-
-		it("retains unreferenced inline blobs that later ops may revive", async () => {
-			const snapshot = tree({
-				trees: {
-					[wireFormatConstants.blobsTreeName]: tree({
-						trees: {
-							[`${wireFormatConstants.inlinedAttachmentBlobTreePrefix}local-id`]: tree({
-								blobs: {
-									[wireFormatConstants.inlinedAttachmentBlobContentName]: "snapshot-blob-id",
-								},
-							}),
-						},
-					}),
-				},
-			});
-			const gcData: IGcSnapshotData = {
-				gcState: {
-					gcNodes: {
-						"/_blobs/local-id": {
-							outboundRoutes: [],
-							unreferencedTimestampMs: 1,
-						},
-					},
-				},
-				tombstones: undefined,
-				deletedNodes: undefined,
-			};
-			const result = await captureReferencedAttachmentBlobs(
-				snapshot,
-				mockStorage({ "snapshot-blob-id": "INLINE" }),
-				gcData,
-			);
-			assert.deepStrictEqual(result, {
-				"snapshot-blob-id": toB64("INLINE"),
-			});
-		});
-
 		it("ignores gc nodes for non-attachment-blob paths", async () => {
 			// gcState may contain unreferenced/tombstoned nodes for data stores,
 			// channels, etc. Those paths must not be confused with blob localIds
@@ -535,13 +478,13 @@ describe("captureReferencedContents", () => {
 			assert.strictEqual(snapshotHasLoadingGroups(snapshot), false);
 		});
 
-		it("ignores BlobManager internal loading groups", () => {
+		it("ignores loading groups under the reserved .blobs tree", () => {
 			const snapshot = tree({
 				trees: {
 					[wireFormatConstants.blobsTreeName]: tree({
 						trees: {
-							[`${wireFormatConstants.inlinedAttachmentBlobTreePrefix}0`]: tree({
-								groupId: `${wireFormatConstants.inlinedAttachmentBlobGroupIdPrefix}0`,
+							runtimePayload: tree({
+								groupId: "runtime-group",
 							}),
 						},
 					}),

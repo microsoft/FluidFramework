@@ -336,15 +336,19 @@ export async function getBlobContentsFromTree(
 	storage: Pick<IDocumentStorageService, "readBlob">,
 ): Promise<ISerializableBlobContents> {
 	const blobs = {};
-	if (isInstanceOfISnapshot(snapshot)) {
-		const blobContents = snapshot.blobContents;
-		for (const [id, content] of blobContents.entries()) {
-			// ArrayBufferLike will not survive JSON.stringify()
-			blobs[id] = bufferToString(content, "utf8");
-		}
-	} else {
-		await getBlobContentsFromTreeCore(snapshot, blobs, storage);
-	}
+	const snapshotTree = isInstanceOfISnapshot(snapshot) ? snapshot.snapshotTree : snapshot;
+	const blobReader = isInstanceOfISnapshot(snapshot)
+		? {
+				readBlob: async (id: string) => snapshot.blobContents.get(id) ?? storage.readBlob(id),
+			}
+		: storage;
+	await getBlobContentsFromTreeCore(
+		snapshotTree,
+		blobs,
+		blobReader,
+		true,
+		isInstanceOfISnapshot(snapshot),
+	);
 	return blobs;
 }
 
@@ -353,13 +357,19 @@ async function getBlobContentsFromTreeCore(
 	blobs: ISerializableBlobContents,
 	storage: Pick<IDocumentStorageService, "readBlob">,
 	root = true,
+	skipUnreferenced = false,
 ): Promise<unknown[]> {
+	if (skipUnreferenced && tree.unreferenced === true) {
+		return [];
+	}
 	const treePs: Promise<unknown>[] = [];
 	for (const [key, subTree] of Object.entries(tree.trees)) {
 		if (root && key === blobsTreeName) {
-			treePs.push(getBlobManagerTreeFromTree(subTree, blobs, storage));
+			treePs.push(getBlobManagerTreeFromTree(subTree, blobs, storage, skipUnreferenced));
 		} else {
-			treePs.push(getBlobContentsFromTreeCore(subTree, blobs, storage, false));
+			treePs.push(
+				getBlobContentsFromTreeCore(subTree, blobs, storage, false, skipUnreferenced),
+			);
 		}
 	}
 	for (const id of Object.values(tree.blobs)) {
@@ -375,6 +385,7 @@ async function getBlobManagerTreeFromTree(
 	tree: ISnapshotTree,
 	blobs: ISerializableBlobContents,
 	storage: Pick<IDocumentStorageService, "readBlob">,
+	skipUnreferenced: boolean,
 ): Promise<void> {
 	const id = tree.blobs[redirectTableBlobName];
 	if (id !== undefined) {
@@ -382,6 +393,11 @@ async function getBlobManagerTreeFromTree(
 		// ArrayBufferLike will not survive JSON.stringify()
 		blobs[id] = bufferToString(blob, "utf8");
 	}
+	await Promise.all(
+		Object.values(tree.trees).map(async (childTree) =>
+			getBlobContentsFromTreeCore(childTree, blobs, storage, false, skipUnreferenced),
+		),
+	);
 }
 
 /**
@@ -426,5 +442,8 @@ function getBlobManagerTreeFromTreeWithBlobContents(
 		assert(blob !== undefined, 0x70f /* Blob must be present in blobsContents */);
 		// ArrayBufferLike will not survive JSON.stringify()
 		blobs[id] = bufferToString(blob, "utf8");
+	}
+	for (const childTree of Object.values(tree.trees)) {
+		getBlobContentsFromTreeWithBlobContentsCore(childTree, blobs, false);
 	}
 }

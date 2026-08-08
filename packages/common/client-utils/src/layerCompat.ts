@@ -10,12 +10,6 @@
 export type FluidLayer = "loader" | "driver" | "runtime" | "dataStore";
 
 /**
- * Loader support for preserving arbitrary binary snapshot blobs in serialized state.
- * @internal
- */
-export const supportsBinarySnapshotBlobs = "supportsBinarySnapshotBlobs";
-
-/**
  * The policy for compatibility windows that a layer uses to validate compatibility with another layer.
  * The other layer must be within this window relative to the layer to be compatible.
  * Note that the policy is defined in terms of months, but the actual compatibility check is done using generations.

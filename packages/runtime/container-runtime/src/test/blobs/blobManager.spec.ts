@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { bufferToString } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import type { ISequencedMessageEnvelope } from "@fluidframework/runtime-definitions/internal";
@@ -75,6 +76,7 @@ describe("Inlined detached attachment blobs", () => {
 		const actualBlobId = "actual-blob";
 		const localId = "local-blob";
 		const blob = textToBlob("blob-content");
+		const encodedBlob = textToBlob(bufferToString(blob, "base64"));
 		const baseSnapshot = {
 			blobs: {},
 			trees: {
@@ -92,7 +94,7 @@ describe("Inlined detached attachment blobs", () => {
 		const storage = {
 			readBlob: async (id: string): Promise<ArrayBufferLike> => {
 				assert.strictEqual(id, actualBlobId);
-				return blob;
+				return encodedBlob;
 			},
 		};
 
@@ -154,7 +156,7 @@ describe("Inlined detached attachment blobs", () => {
 			baseSnapshot,
 			snapshotWithContents: {
 				snapshotTree: baseSnapshot,
-				blobContents: new Map([[actualBlobId, blob]]),
+				blobContents: new Map([[actualBlobId, encodedBlob]]),
 				ops: [],
 				sequenceNumber: 0,
 				latestSequenceNumber: 0,
@@ -172,6 +174,10 @@ describe("Inlined detached attachment blobs", () => {
 			createBlobPayloadPending: false,
 			inlineDetachedBlobsAsSummaryBlobs: false,
 		});
+		assert.strictEqual(
+			authoritativeBlobManager.lookupTemporaryBlobStorageId(localId),
+			undefined,
+		);
 		assert.deepStrictEqual(
 			[
 				...(getSummaryContentsWithFormatValidation(authoritativeBlobManager)
@@ -180,7 +186,7 @@ describe("Inlined detached attachment blobs", () => {
 			[localId],
 		);
 		const authoritativeStorage = new MockStorageAdapter(true);
-		authoritativeStorage.attachedStorage.blobs.set(actualBlobId, blob);
+		authoritativeStorage.attachedStorage.blobs.set(actualBlobId, encodedBlob);
 		const { blobManager: fullTreeBlobManager } = createTestMaterial({
 			attached: true,
 			blobManagerLoadInfo: attached,

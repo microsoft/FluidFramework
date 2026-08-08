@@ -17,9 +17,13 @@ import {
 	loadExistingContainer,
 	loadFrozenContainerFromPendingState,
 	rehydrateDetachedContainer,
-	wireFormatConstants,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
+import {
+	blobsTreeName,
+	inlinedAttachmentBlobGroupIdPrefix,
+	inlinedAttachmentBlobTreePrefix,
+} from "@fluidframework/container-runtime/internal";
 import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import {
 	SummaryType,
@@ -158,16 +162,13 @@ function assertInlinedSummary(
 	assert(summary?.type === SummaryType.Tree);
 	const appSummary: SummaryObject | undefined = summary.tree[".app"];
 	assert(appSummary?.type === SummaryType.Tree);
-	const blobsSummary: SummaryObject | undefined =
-		appSummary.tree[wireFormatConstants.blobsTreeName];
+	const blobsSummary: SummaryObject | undefined = appSummary.tree[blobsTreeName];
 	assert(blobsSummary?.type === SummaryType.Tree);
 	const inlinedBlobCount = Object.entries(blobsSummary.tree).filter(
 		([treeName, summaryObject]) =>
-			treeName.startsWith(wireFormatConstants.inlinedAttachmentBlobTreePrefix) &&
+			treeName.startsWith(inlinedAttachmentBlobTreePrefix) &&
 			summaryObject.type === SummaryType.Tree &&
-			summaryObject.groupId?.startsWith(
-				wireFormatConstants.inlinedAttachmentBlobGroupIdPrefix,
-			) === true,
+			summaryObject.groupId?.startsWith(inlinedAttachmentBlobGroupIdPrefix) === true,
 	).length;
 	assert.strictEqual(inlinedBlobCount, expectedBlobCount);
 }
@@ -281,7 +282,7 @@ describe("Detached blob single-request create", () => {
 			attachmentBlobs?: string;
 			hasAttachmentBlobs?: boolean;
 		};
-		assert.strictEqual(Object.keys(serialized.attachmentBlobContents ?? {}).length, 1);
+		assert.strictEqual(serialized.attachmentBlobContents, undefined);
 		assert.strictEqual(serialized.attachmentBlobs, undefined);
 		assert.strictEqual(serialized.hasAttachmentBlobs, false);
 		container.close();
@@ -335,7 +336,6 @@ describe("Detached blob single-request create", () => {
 		await container.attach(urlResolver.createCreateNewRequest("pending-state"));
 
 		const pendingLocalState = await getRequiredPendingLocalState(container);
-		assertPendingStateContainsBinaryBlobs(pendingLocalState, 1);
 		const frozen = await loadFrozenContainerFromPendingState({
 			codeLoader,
 			pendingLocalState,
@@ -361,7 +361,6 @@ describe("Detached blob single-request create", () => {
 			request: { url },
 		});
 		const pendingLocalState = await getRequiredPendingLocalState(fresh);
-		assertPendingStateContainsBinaryBlobs(pendingLocalState, 1);
 		const frozen = await loadFrozenContainerFromPendingState({
 			codeLoader,
 			pendingLocalState,

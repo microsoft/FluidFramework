@@ -6,6 +6,7 @@
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IContainerContext } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
+import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
@@ -111,8 +112,14 @@ const loadV1 = async (
 			[...inlinedBlobIds].map(async ([localId, blobId]) => {
 				detachedSummaryBlobs.set(
 					localId,
-					context.snapshotWithContents?.blobContents.get(blobId) ??
-						(await context.storage.readBlob(blobId)),
+					stringToBuffer(
+						bufferToString(
+							context.snapshotWithContents?.blobContents.get(blobId) ??
+								(await context.storage.readBlob(blobId)),
+							"utf8",
+						),
+						"base64",
+					),
 				);
 			}),
 		);
@@ -138,7 +145,7 @@ const loadV1 = async (
 				? undefined
 				: await context.storage.readBlob(blobId));
 		if (content !== undefined) {
-			summaryBlobs.set(localId, content);
+			summaryBlobs.set(localId, stringToBuffer(bufferToString(content, "utf8"), "base64"));
 		}
 	}
 	return {
@@ -209,7 +216,10 @@ const summarizeV1 = (
 				`/${blobsTreeName}/${inlinedAttachmentBlobTreePrefix}${localId}/${inlinedAttachmentBlobContentName}`,
 			);
 		} else {
-			blobBuilder.addBlob(inlinedAttachmentBlobContentName, new Uint8Array(summaryBlob));
+			blobBuilder.addBlob(
+				inlinedAttachmentBlobContentName,
+				bufferToString(summaryBlob, "base64"),
+			);
 		}
 		builder.addWithStats(
 			`${inlinedAttachmentBlobTreePrefix}${localId}`,

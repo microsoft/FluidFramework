@@ -10,6 +10,7 @@ import {
 	createEmitter,
 	gitHashFile,
 	IsoBuffer,
+	stringToBuffer,
 	TypedEventEmitter,
 	Uint8ArrayToArrayBuffer,
 } from "@fluid-internal/client-utils";
@@ -547,7 +548,7 @@ export const getSummaryContentsWithFormatValidation = (
 				summaryBlobs.set(
 					localId,
 					typeof content.content === "string"
-						? textToBlob(content.content)
+						? stringToBuffer(content.content, "base64")
 						: Uint8ArrayToArrayBuffer(content.content),
 				);
 			} else {
