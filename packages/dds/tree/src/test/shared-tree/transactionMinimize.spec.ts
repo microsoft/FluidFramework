@@ -1554,48 +1554,44 @@ function generateEditedTreeScenarios(): EditTreeScenarios {
 			const buildsForSource = sourceEndpoint === NodeFlowEndpoint.DetachedBuiltRoot ? 1 : 0;
 
 			// Sequence field
-			{
-				const scenario = {
-					schema: Records,
-					initialContent: initialContentGenerator,
-					apply: (root) => {
-						applyIntroAttachEdits(root);
-						if (sourceEndpoint.includes("Root") || destinationEndpoint.includes("Root")) {
-							if (sourceEndpoint.includes("Root")) {
-								let toInsert: Box;
-								if (sourceEndpoint.includes("Prior")) {
-									fail("TODO: add handling for detached root source");
-								} else {
-									toInsert = new Box({
-										value: getMarkers(sourceEndpoint, destinationEndpoint),
-									});
-								}
-								const destination = getRecord(root, destinationEndpoint);
-								destination.sequence.insertAtEnd(toInsert);
+			scenarios.set([sourceEndpoint, destinationEndpoint, "sequence"], {
+				schema: Records,
+				initialContent: initialContentGenerator,
+				apply: (root) => {
+					applyIntroAttachEdits(root);
+					if (sourceEndpoint.includes("Root") || destinationEndpoint.includes("Root")) {
+						if (sourceEndpoint.includes("Root")) {
+							let toInsert: Box;
+							if (sourceEndpoint.includes("Prior")) {
+								fail("TODO: add handling for detached root source");
+							} else {
+								toInsert = new Box({
+									value: getMarkers(sourceEndpoint, destinationEndpoint),
+								});
 							}
-							if (destinationEndpoint.includes("Root")) {
-								const source = getRecord(root, sourceEndpoint);
-								source.sequence.removeAt(0);
-							}
-						} else {
-							const source = getRecord(root, sourceEndpoint);
 							const destination = getRecord(root, destinationEndpoint);
-							destination.sequence.moveToEnd(0, source.sequence);
+							destination.sequence.insertAtEnd(toInsert);
 						}
-						applyOutroDetachEdits(root);
-					},
-					unminimizedBuildExpectations: {
-						builds: 1 + buildsForSource,
-						tops: 2 + buildsForSource,
-					},
-					expectSurvivingMarker: true,
-				} as const satisfies EditScenario;
-				scenarios.set([sourceEndpoint, destinationEndpoint, "sequence"], scenario);
-			}
+						if (destinationEndpoint.includes("Root")) {
+							const source = getRecord(root, sourceEndpoint);
+							source.sequence.removeAt(0);
+						}
+					} else {
+						const source = getRecord(root, sourceEndpoint);
+						const destination = getRecord(root, destinationEndpoint);
+						destination.sequence.moveToEnd(0, source.sequence);
+					}
+					applyOutroDetachEdits(root);
+				},
+				unminimizedBuildExpectations: {
+					builds: 1 + buildsForSource,
+					tops: 2 + buildsForSource,
+				},
+				expectSurvivingMarker: true,
+			} as const satisfies EditScenario);
 
-			// Optional field
-			{
-				const scenario = {
+			if (sourceEndpoint.includes("Root") || destinationEndpoint.includes("Root")) {
+				scenarios.set([sourceEndpoint, destinationEndpoint, "optional"], {
 					schema: Records,
 					initialContent: initialContentGenerator,
 					apply: (root) => {
@@ -1631,14 +1627,11 @@ function generateEditedTreeScenarios(): EditTreeScenarios {
 						tops: 2 + buildsForSource,
 					},
 					expectSurvivingMarker: true,
-				} as const satisfies EditScenario;
-				scenarios.set([sourceEndpoint, destinationEndpoint, "optional"], scenario);
-			}
+				} as const satisfies EditScenario);
 
-			// Required field
-			{
+				// Required field
 				const buildsFoReplace = destinationEndpoint.includes("Root") ? 1 : 0;
-				const scenario = {
+				scenarios.set([sourceEndpoint, destinationEndpoint, "required"], {
 					schema: Records,
 					initialContent: initialContentGenerator,
 					apply: (root) => {
@@ -1673,8 +1666,7 @@ function generateEditedTreeScenarios(): EditTreeScenarios {
 						tops: 2 + buildsForSource + buildsFoReplace,
 					},
 					expectSurvivingMarker: true,
-				} as const satisfies EditScenario;
-				scenarios.set([sourceEndpoint, destinationEndpoint, "required"], scenario);
+				} as const satisfies EditScenario);
 			}
 		}
 	}
@@ -2699,6 +2691,18 @@ describe("transaction minimize post-processor", () => {
 					for (const toDetached of endpointsThatEndUpDetached) {
 						assert.equal(minimizedNodeFlow[fromUnderDetached][toDetached], 0);
 					}
+				}
+
+				// No node should be detached from a built tree
+				for (const toAnywhere of allEndpoints) {
+					assert.equal(
+						minimizedNodeFlow[NodeFlowEndpoint.UnderDetachedBuiltTree][toAnywhere],
+						0,
+					);
+					assert.equal(
+						minimizedNodeFlow[NodeFlowEndpoint.UnderAttachingBuiltTree][toAnywhere],
+						0,
+					);
 				}
 			});
 		}
