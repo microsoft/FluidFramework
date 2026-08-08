@@ -12,7 +12,6 @@ import {
 	calculateRequestedRange,
 	getRequestedVersion,
 	readVersionsManifest,
-	resolveRangeViaManifest,
 	versionHasMovedSparsedMatrix,
 } from "../versionUtils.js";
 
@@ -158,28 +157,23 @@ describe("versionUtils", () => {
 		it("error cases for malformed versions", () => {
 			assert.throws(
 				() => getRequestedVersion({ baseVersion: "-1.-2.-1", requested: -1 }),
-				Error,
-				"TypeError: Invalid Version: -1.-2.-1",
+				new TypeError("Invalid Version: -1.-2.-1"),
 			);
 			assert.throws(
 				() => getRequestedVersion({ baseVersion: "1.-2.-1", requested: -1 }),
-				Error,
-				"TypeError: Invalid Version: 1.-2.-1",
+				new TypeError("Invalid Version: 1.-2.-1"),
 			);
 			assert.throws(
 				() => getRequestedVersion({ baseVersion: "1.-2.-1", requested: -1 }),
-				Error,
-				"TypeError: Invalid Version: 1.-2.-1",
+				new TypeError("Invalid Version: 1.-2.-1"),
 			);
 			assert.throws(
 				() => getRequestedVersion({ baseVersion: "badString", requested: -1 }),
-				Error,
-				"TypeError: Invalid Version: badString",
+				new TypeError("Invalid Version: badString"),
 			);
 			assert.throws(
 				() => getRequestedVersion({ baseVersion: "1.0.0", requested: 1 }),
-				Error,
-				"Only negative values are supported for `requested` param.",
+				new Error("Only negative values are supported for `requested` param."),
 			);
 		});
 
@@ -215,31 +209,51 @@ describe("versionUtils", () => {
 	});
 
 	describe("manifest-backed resolution", () => {
-		it("returns exact versions directly when resolving via manifest", () => {
-			const exactVersion = "9.9.9";
-			assert.strictEqual(resolveRangeViaManifest(exactVersion), exactVersion);
-		});
+		/**
+		 * Given a version and prior spec, return latest version satisfying that in manifest.
+		 */
+		function getLatestPriorVersionInManifest(version: string, adjustment: -1 | -2): string {
+			// Get a range for before the given version
+			const range = calculateRequestedRange(version, adjustment, false);
+			const latestPrior = readVersionsManifest()
+				.versions.filter((v) => semverSatisfies(v, range))
+				.sort(rcompare)[0];
 
-		it("returns baseVersion for current-version requests without manifest lookup", () => {
+			assert.ok(latestPrior, `Expected at least one manifest version satisfying ${range}`);
+			return latestPrior;
+		}
+
+		it("returns baseVersion for current-version requests without manifest lookup when nothing different is requested", () => {
 			const baseVersion = "2.110.0-405442";
 			assert.strictEqual(getRequestedVersion({ baseVersion, requested: 0 }), baseVersion);
-			assert.strictEqual(getRequestedVersion({ baseVersion }), baseVersion);
+			assert.strictEqual(
+				getRequestedVersion({ baseVersion, requested: undefined }),
+				baseVersion,
+			);
 		});
 
-		it("returns explicit string requests without manifest lookup", () => {
+		it("throws for explicit string requests when not in manifest", () => {
 			const baseVersion = "2.110.0";
 			const requested = "2.110.0-405442";
+			assert.throws(
+				() => getRequestedVersion({ baseVersion, requested }),
+				/No version in manifest satisfies range/,
+			);
+		});
+
+		it("returns explicit string requests when in manifest", () => {
+			const baseVersion = "2.110.0";
+			// Find something in the manifest.
+			// This requested version is dynamic to allow for the manifest to\
+			// change over time and not require case update.
+			const requested = getLatestPriorVersionInManifest(pkgVersion, -1);
+			// Request it specifically (independent of relationship to baseVersion)
 			assert.strictEqual(getRequestedVersion({ baseVersion, requested }), requested);
 		});
 
 		it("defaults to resolving N-1 using committed manifest versions", () => {
 			const baseVersion = pkgVersion;
-			const range = calculateRequestedRange(baseVersion, -1, false);
-			const expected = readVersionsManifest()
-				.versions.filter((v) => semverSatisfies(v, range))
-				.sort(rcompare)[0];
-
-			assert.ok(expected, `Expected at least one manifest version satisfying ${range}`);
+			const expected = getLatestPriorVersionInManifest(baseVersion, -1);
 			assert.strictEqual(getRequestedVersion({ baseVersion, requested: -1 }), expected);
 		});
 	});
