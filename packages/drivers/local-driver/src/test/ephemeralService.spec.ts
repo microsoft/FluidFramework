@@ -15,7 +15,7 @@ import {
 	EphemeralServiceContainer,
 } from "../ephemeralService.js";
 
-const options = { minVersionForCollaboration: "2.20.0" } as const;
+const options = { oldestSupportedClient: "2.20.0" } as const;
 const stubFactory = makeStubDataStoreKind("ephemeral-test-stub");
 
 describe("EphemeralService", () => {
@@ -33,6 +33,27 @@ describe("EphemeralService", () => {
 		}
 		// Clear the default service (if any) so the next test can start a fresh one.
 		await cleanupEphemeralService();
+	});
+
+	it("continues to accept minVersionForCollaboration", () => {
+		const service = newService();
+		assert.doesNotThrow(
+			// eslint-disable-next-line import-x/no-deprecated -- verifies the compatibility property
+			() => service.newClient({ minVersionForCollaboration: "2.20.0" }),
+		);
+	});
+
+	it("rejects both version options", () => {
+		const service = newService();
+		assert.throws(
+			() =>
+				service.newClient({
+					oldestSupportedClient: "2.20.0",
+					// eslint-disable-next-line import-x/no-deprecated -- verifies conflicting options
+					minVersionForCollaboration: "2.20.0",
+				}),
+			/Specify only one/,
+		);
 	});
 
 	it("closing the service closes its open containers", async () => {

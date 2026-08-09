@@ -4,7 +4,9 @@
 "@fluidframework/aqueduct": minor
 "@fluidframework/azure-client": minor
 "@fluidframework/datastore": minor
+"@fluidframework/driver-definitions": minor
 "@fluidframework/fluid-static": minor
+"@fluidframework/local-driver": minor
 "@fluidframework/odsp-client": minor
 "@fluidframework/test-runtime-utils": minor
 "@fluidframework/tree": minor
@@ -21,10 +23,12 @@ The cross-client compatibility parameter has new names:
 -   `BaseContainerRuntimeFactoryProps.minVersionForCollab` is now `oldestSupportedClient`.
 -   `createTreeContainerRuntimeFactory` now accepts `oldestSupportedClient`.
     `minVersionForCollaboration` remains available as a deprecated overload.
+-   `driver-definitions` now exports its minor-only version type as
+    `OldestSupportedClientMinorVersion`, and `ServiceOptions` accepts `oldestSupportedClient`.
 -   Azure, ODSP, and Tinylicious client methods now use `oldestSupportedClient` and
     `OldestSupportedClientVersion` in their signatures.
 
-The previous property names and `MinimumVersionForCollab` are deprecated and will be removed in future releases. Specifying both `oldestSupportedClient` and `minVersionForCollab` is an error. `MinimumVersionForCollab` continues to work as an alias of `OldestSupportedClientVersion`.
+The previous property and type names are deprecated and will be removed in future releases. Specifying both old and new property names is an error. `MinimumVersionForCollab` and `MinimumVersionForCollaboration` continue to work as aliases of their respective preferred types.
 
 ```typescript
 // Before
