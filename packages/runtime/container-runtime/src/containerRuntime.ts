@@ -121,7 +121,6 @@ import type {
 	IDataStore,
 	IFluidDataStoreContextDetached,
 	IFluidDataStoreRegistry,
-	IFluidParentContext,
 	ISummarizeInternalResult,
 	InboundAttachMessage,
 	NamedFluidDataStoreRegistryEntries,
@@ -894,12 +893,9 @@ export class ContainerRuntime
 		IGarbageCollectionRuntime,
 		ISummarizerRuntime,
 		ISummarizerInternalsProvider,
-		// If ContainerRuntime stops being exported from this package, this can
-		// be updated to implement IFluidRootParentContextPrivate and leave
-		// submitMessage included.
-		// IFluidParentContextPrivate is also better than IFluidParentContext
-		// and is also internal only; so, not usable here.
-		Omit<IFluidParentContext, "submitMessage" | "submitSignal">,
+		// If IContainerRuntimeBase is merged into IFluidDataStoreContext as TODO
+		// says, this could be updated to leave submitSignal included.
+		Omit<IFluidRootParentContextPrivate, "submitSignal">,
 		IProvideFluidHandleContext,
 		IProvideLayerCompatDetails
 {
@@ -5033,7 +5029,6 @@ export class ContainerRuntime
 		}
 	}
 
-	// Keep in sync with IFluidRootParentContextPrivate.submitMessage.
 	public submitMessage(
 		containerRuntimeMessage:
 			| ContainerRuntimeDataStoreOpMessage
