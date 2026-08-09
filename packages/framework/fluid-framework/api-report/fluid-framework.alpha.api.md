@@ -1947,7 +1947,6 @@ export interface ServiceClient {
 
 // @alpha @input
 export interface ServiceOptions {
-    // (undocumented)
     readonly minVersionForCollaboration: MinimumVersionForCollaboration;
 }
 
