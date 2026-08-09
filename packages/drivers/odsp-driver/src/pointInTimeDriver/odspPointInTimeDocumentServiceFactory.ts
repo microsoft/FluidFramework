@@ -49,7 +49,7 @@ import { OdspPointInTimeDocumentService } from "./odspPointInTimeDocumentService
  * hosts that want to load a container to a target sequence number must construct this factory
  * (rather than the legacy `OdspDocumentServiceFactory`) and pass it to the loader.
  *
- * @internal
+ * @legacy @alpha
  */
 export class OdspPointInTimeDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
 	/**
@@ -57,6 +57,14 @@ export class OdspPointInTimeDocumentServiceFactory extends OdspDocumentServiceFa
 	 */
 	private readonly getStorageTokenForVersions: TokenFetcher<OdspResourceTokenFetchOptions>;
 
+	/**
+	 * Creates a point-in-time-capable ODSP document service factory.
+	 *
+	 * @param getStorageToken - Fetches storage access tokens.
+	 * @param getWebsocketToken - Fetches websocket access tokens, or `undefined` when unavailable.
+	 * @param persistedCache - Optional persisted ODSP cache.
+	 * @param hostPolicy - Optional host storage policy.
+	 */
 	constructor(
 		getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>,
 		getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined,
@@ -71,6 +79,12 @@ export class OdspPointInTimeDocumentServiceFactory extends OdspDocumentServiceFa
 	 * Creates a document service that reads its snapshot from the closest file version at or before
 	 * the target and its deltas from the live document, materializing a requested sequence number
 	 * through replay.
+	 *
+	 * @param resolvedUrl - The resolved ODSP document URL.
+	 * @param targetSequenceNumber - The sequence number at which to materialize the document.
+	 * @param logger - Optional telemetry logger.
+	 * @param clientIsSummarizer - Whether the requesting client is a summarizer.
+	 * @returns A read-only document service materialized at the requested sequence number.
 	 */
 	public async createPointInTimeDocumentService(
 		resolvedUrl: IResolvedUrl,
