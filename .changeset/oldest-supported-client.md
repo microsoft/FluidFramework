@@ -24,7 +24,7 @@ The cross-client compatibility parameter has new names:
 -   `createTreeContainerRuntimeFactory` now accepts `oldestSupportedClient`.
     `minVersionForCollaboration` remains available as a deprecated overload.
 -   `driver-definitions` now exports its minor-only version type as
-    `OldestSupportedClientMinorVersion`, and `ServiceOptions` accepts `oldestSupportedClient`.
+    `OldestSupportedClient`, and `ServiceOptions` accepts `oldestSupportedClient`.
 -   Azure, ODSP, and Tinylicious client methods now use `oldestSupportedClient` and
     `OldestSupportedClientVersion` in their signatures.
 

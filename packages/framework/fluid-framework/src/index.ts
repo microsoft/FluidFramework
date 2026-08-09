@@ -116,7 +116,7 @@ export type {
 	FluidContainerWithService,
 	// eslint-disable-next-line import-x/no-deprecated -- re-exported for compatibility until 3.10. See #27851
 	MinimumVersionForCollaboration,
-	OldestSupportedClientMinorVersion,
+	OldestSupportedClient,
 	Registry,
 	RegistryKey,
 	ServiceClient,
