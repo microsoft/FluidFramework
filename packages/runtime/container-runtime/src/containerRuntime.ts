@@ -824,11 +824,12 @@ export interface LoadContainerRuntimeParams {
 	 * Oldest version of Fluid Framework client that must be able to open and process documents
 	 * written by this container runtime.
 	 *
+	 * @remarks
+	 * Specifying both `oldestSupportedClient` and `minVersionForCollab` is an error.
+	 *
 	 * @deprecated 2.115.0. Removed in 3.10.0. Use
 	 * {@link LoadContainerRuntimeParams.oldestSupportedClient} instead.
 	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
-	 *
-	 * Specifying both `oldestSupportedClient` and `minVersionForCollab` is an error.
 	 */
 	minVersionForCollab?: OldestSupportedClientVersion;
 }
@@ -3578,11 +3579,7 @@ export class ContainerRuntime
 				// Remove the metadata from the message before sending it to the channel collection. The metadata
 				// is added by the container runtime and is not part of the message that the channel collection and
 				// layers below it expect.
-				this.channelCollection.processMessages({
-					envelope: message,
-					messagesContent,
-					local,
-				});
+				this.channelCollection.processMessages({ envelope: message, messagesContent, local });
 				break;
 			}
 			case ContainerMessageType.BlobAttach: {

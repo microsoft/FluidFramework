@@ -30,6 +30,7 @@ import type {
 	OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { defaultRuntimeOptionsForMinVersion } from "./compatibilityConfiguration.js";
 import type {
@@ -149,7 +150,7 @@ class TreeContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 				...config.runtimeOptions,
 			},
 			provideEntryPoint,
-			minVersionForCollab: config.minVersionForCollab,
+			oldestSupportedClient: config.minVersionForCollab,
 		});
 		this.#treeRootDataObjectFactory = treeRootDataObjectFactory;
 	}
@@ -209,7 +210,44 @@ export function createTreeContainerRuntimeFactory(props: {
 	readonly schema: TreeContainerSchema;
 
 	/**
-	 * Minimum Fluid Framework version required for collaboration as a
+	 * Oldest Fluid Framework client version that must be able to open and process documents written
+	 * by this runtime.
+	 */
+	readonly oldestSupportedClient: OldestSupportedClientVersion;
+	/**
+	 * Optional registry of data stores to pass to the DataObject factory.
+	 * If not provided, one will be created based on the schema.
+	 */
+	readonly rootDataStoreRegistry?: IFluidDataStoreRegistry;
+	/**
+	 * Optional overrides for the container runtime options.
+	 * If not provided, only the default options for the given `oldestSupportedClient` will be used.
+	 */
+	readonly runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
+}): IRuntimeFactory;
+
+/**
+ * Creates an {@link @fluidframework/aqueduct#IRuntimeFactory} which constructs containers
+ * with an entry point containing single tree-based root data object.
+ *
+ * @remarks
+ * The entry point is opaque to caller.
+ * The root data object's registry and shared objects are configured based on the provided
+ * SharedTree and optionally data store registry.
+ *
+ * @deprecated 2.115.0. Removed in 3.10.0. Pass `oldestSupportedClient` instead.
+ * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
+ *
+ * @legacy @beta
+ */
+export function createTreeContainerRuntimeFactory(props: {
+	/**
+	 * The schema for the container.
+	 */
+	readonly schema: TreeContainerSchema;
+
+	/**
+	 * Minimum Fluid Framework version required for collaboration as an
 	 * {@link @fluidframework/runtime-definitions#OldestSupportedClientVersion} SemVer string.
 	 */
 	readonly minVersionForCollaboration: OldestSupportedClientVersion;
@@ -220,7 +258,8 @@ export function createTreeContainerRuntimeFactory(props: {
 	readonly rootDataStoreRegistry?: IFluidDataStoreRegistry;
 	/**
 	 * Optional overrides for the container runtime options.
-	 * If not provided, only the default options for the given minVersionForCollaboration will be used.
+	 * If not provided, only the default options for the given `minVersionForCollaboration` will be
+	 * used.
 	 */
 	readonly runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
 }): IRuntimeFactory;
@@ -234,7 +273,7 @@ export function createTreeContainerRuntimeFactory(props: {
  * The root data object's registry and shared objects are configured based on the provided
  * SharedTree and optional data store registry.
  *
- * @deprecated Pass `minVersionForCollaboration` directly instead of using `compatibilityMode`.
+ * @deprecated Pass `oldestSupportedClient` directly instead of using `compatibilityMode`.
  *
  * @legacy @beta
  */
@@ -247,7 +286,7 @@ export function createTreeContainerRuntimeFactory(props: {
 	/**
 	 * Legacy compatibility mode for the container.
 	 */
-	// eslint-disable-next-line import-x/no-deprecated -- specify minVersionForCollaboration instead; see #23289
+	// eslint-disable-next-line import-x/no-deprecated -- specify oldestSupportedClient instead. See #23289
 	readonly compatibilityMode: CompatibilityMode;
 	/**
 	 * Optional registry of data stores to pass to the DataObject factory.
@@ -264,29 +303,42 @@ export function createTreeContainerRuntimeFactory(props: {
 // Implementation
 export function createTreeContainerRuntimeFactory(props: {
 	readonly schema: TreeContainerSchema;
-	// eslint-disable-next-line import-x/no-deprecated -- specify minVersionForCollaboration instead; see #23289
+	// eslint-disable-next-line import-x/no-deprecated -- specify oldestSupportedClient instead. See #23289
 	readonly compatibilityMode?: CompatibilityMode;
 	readonly minVersionForCollaboration?: OldestSupportedClientVersion;
+	readonly oldestSupportedClient?: OldestSupportedClientVersion;
 	readonly rootDataStoreRegistry?: IFluidDataStoreRegistry;
 	readonly runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
 }): IRuntimeFactory {
 	const {
 		compatibilityMode,
 		minVersionForCollaboration,
+		oldestSupportedClient,
 		rootDataStoreRegistry,
 		runtimeOptionOverrides,
 		schema,
 	} = props;
 
-	let minVersionForCollab: OldestSupportedClientVersion;
-	if (minVersionForCollaboration !== undefined) {
-		minVersionForCollab = minVersionForCollaboration;
-	} else if (compatibilityMode === undefined) {
-		throw new Error(
-			"Either minVersionForCollaboration or compatibilityMode (deprecated) must be provided.",
+	const specifiedVersionOptions = [
+		compatibilityMode,
+		minVersionForCollaboration,
+		oldestSupportedClient,
+	].filter((value) => value !== undefined).length;
+	if (specifiedVersionOptions !== 1) {
+		throw new UsageError(
+			"Specify exactly one of oldestSupportedClient, minVersionForCollaboration (deprecated), or compatibilityMode (deprecated).",
 		);
-	} else {
+	}
+
+	let minVersionForCollab: OldestSupportedClientVersion;
+	if (oldestSupportedClient !== undefined) {
+		minVersionForCollab = oldestSupportedClient;
+	} else if (minVersionForCollaboration === undefined) {
+		// The exactly-one check above guarantees this is defined.
+		assert(compatibilityMode !== undefined, "compatibilityMode must be defined");
 		minVersionForCollab = resolveCompatibilityModeToMinVersionForCollab(compatibilityMode);
+	} else {
+		minVersionForCollab = minVersionForCollaboration;
 	}
 
 	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);

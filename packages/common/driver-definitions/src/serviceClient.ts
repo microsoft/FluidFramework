@@ -117,12 +117,13 @@ export function createBasicRegistryKey<T>(type: string): RegistryKey<T, T> {
 // #region ServiceClient types
 
 /**
- * Oldest version of Fluid Framework client packages to support collaborating with.
+ * Oldest Fluid Framework client version that must be able to open and process documents written
+ * by a service client.
  * @remarks
  * A string in SemVer format indicating a specific version of the Fluid Framework client package, or the special case of {@link @fluidframework/runtime-utils#defaultMinVersionForCollab}.
  *
- * Collaboration with other clients is only supported when all Fluid Framework client packages used by the client have a version that is greater than or equal
- * to the specified `MinimumVersionForCollaboration`.
+ * Service clients use this value to select write formats and features supported by clients using
+ * this version or newer.
  *
  * Cannot exceed the version of any Fluid Framework client package in use by the local client.
  *
@@ -130,7 +131,6 @@ export function createBasicRegistryKey<T>(type: string): RegistryKey<T, T> {
  * @privateRemarks
  * This is similar to, and a subset of, the `OldestSupportedClientVersion` type in `@fluidframework/runtime-definitions`.
  * This differs in that:
- * - This avoids the shorthand "collab" to instead align with our preferred whole word naming convention.
  * - This is `alpha` instead of `public`.
  * - This is available to drivers due to its location in `driver-definitions` instead of `runtime-definitions`.
  * - This does not allow requesting collaboration with pre-2.0.0 versions, including the special case of `2.0.0-defaults`.
@@ -175,6 +175,10 @@ export function featureVersion<major extends `${bigint}`, minor extends `${bigin
  * @alpha
  */
 export interface ServiceOptions {
+	/**
+	 * Oldest Fluid Framework client version that must be able to open and process documents written
+	 * by the service client.
+	 */
 	readonly minVersionForCollaboration: MinimumVersionForCollaboration;
 }
 

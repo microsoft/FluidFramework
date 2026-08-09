@@ -306,9 +306,10 @@ export interface KernelArgs {
 	 */
 	readonly initialSequenceNumber: number;
 	/**
-	 * Minimum version of the FF runtime that is required to collaborate on new documents. Used so that a
-	 * compatible set of feature flags and formats can be enabled in the SharedObject implementation.
-	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details.
+	 * Oldest Fluid Framework client version that must be able to process documents written by the
+	 * SharedObject implementation. Used to select compatible feature flags and formats.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.oldestSupportedClient}
+	 * for more details.
 	 */
 	readonly minVersionForCollab: OldestSupportedClientVersion;
 }

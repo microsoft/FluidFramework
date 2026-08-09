@@ -19,6 +19,8 @@ The cross-client compatibility parameter has new names:
 -   The `MinimumVersionForCollab` type is now `OldestSupportedClientVersion`.
 -   `LoadContainerRuntimeParams.minVersionForCollab` is now `oldestSupportedClient`.
 -   `BaseContainerRuntimeFactoryProps.minVersionForCollab` is now `oldestSupportedClient`.
+-   `createTreeContainerRuntimeFactory` now accepts `oldestSupportedClient`.
+    `minVersionForCollaboration` remains available as a deprecated overload.
 -   Azure, ODSP, and Tinylicious client methods now use `oldestSupportedClient` and
     `OldestSupportedClientVersion` in their signatures.
 

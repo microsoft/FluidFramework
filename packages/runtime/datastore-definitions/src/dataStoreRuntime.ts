@@ -221,12 +221,16 @@ export interface IFluidDataStoreRuntimeInternalConfig {
 	readonly submitMessagesWithoutEncodingHandles?: boolean;
 
 	/**
-	 * Minimum version of the Fluid Framework runtime that is required to collaborate on new documents.
+	 * Oldest Fluid Framework client version that must be able to process documents written by DDSes.
 	 * @remarks
-	 * DDSes may read this value to determine which feature flags should be enabled.Expand commentComment on line R313Resolved
+	 * DDSes may read this value to determine which feature flags should be enabled.
 	 * This property is consumed by `SharedObjectFactory` (which are implementations of
 	 * {@link @fluidframework/datastore-definitions#IChannelFactory}).
-	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.oldestSupportedClient}
+	 * for more details.
+	 *
+	 * The property name is retained while the cross-layer dual-property migration in
+	 * {@link https://github.com/microsoft/FluidFramework/issues/27851} is completed.
 	 */
 	readonly minVersionForCollab?: OldestSupportedClientVersion;
 }
