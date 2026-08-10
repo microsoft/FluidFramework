@@ -18,7 +18,7 @@ import type {
 import { createIndependentTreeAlpha, minimize } from "@fluidframework/tree/alpha";
 
 import { SchematizingSimpleTreeView, SharedTreeChange } from "../../shared-tree/index.js";
-import { nodeFlowCensusFromDelta } from "../getDeltaCensus.js";
+import { nodeFlowCensusFromDelta } from "../nodeFlowCensusFromDelta.js";
 import { TestTreeProviderLite, validateViewConsistency } from "../utils.js";
 import { makeAnonChange } from "../../core/index.js";
 import {

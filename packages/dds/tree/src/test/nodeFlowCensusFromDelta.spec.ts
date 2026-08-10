@@ -10,7 +10,7 @@ import {
 	type DeltaRoot,
 	type FieldKey,
 } from "../core/index.js";
-import { nodeFlowCensusFromDelta } from "./getDeltaCensus.js";
+import { nodeFlowCensusFromDelta } from "./nodeFlowCensusFromDelta.js";
 import { brand } from "../util/index.js";
 import { chunkFromJsonTrees } from "./utils.js";
 import { allEndpoints, NodeFlowEndpoint, type NodeFlowCensus } from "./nodeFlowCensus.js";
