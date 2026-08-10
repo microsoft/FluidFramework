@@ -11,17 +11,14 @@ import type { TreeNode } from "./treeNode.js";
 import type { NodeKind, TreeNodeSchemaClass } from "./treeNodeSchema.js";
 
 /**
- * The type of a {@link TreeNode}.
+ * An internal brand to improve compiler performance.
  * For more information about the type, use `Tree.schema(theNode)` instead.
  * @remarks
- * This symbol mainly exists on nodes to allow TypeScript to provide more accurate type checking.
  * `Tree.is` and `Tree.schema` provide a superset of this information in more friendly ways.
- *
- * This symbol should not manually be added to objects as doing so allows the object to be invalidly used where nodes are expected.
- * Instead construct a real node of the desired type using its constructor.
  * @privateRemarks
- * This prevents non-nodes from being accidentally used as nodes, as well as allows the type checker to distinguish different node types.
- * @deprecated External code should use `Tree.schema(theNode)` for schema related runtime data access. For type narrowing, use `WithType` instead of the symbols directly.
+ * The identifier of a {@link TreeNode}'s schema.
+ * This allows the type checker to distinguish different node types more efficiently than via {@link typeSchemaSymbol}.
+ * @deprecated External code should use `Tree.schema(theNode)` for schema related runtime data access. For type narrowing, use {@link WithType} instead of the symbols directly.
  * @system @public
  */
 export const typeNameSymbol: unique symbol = Symbol("TreeNode Type");
@@ -97,6 +94,13 @@ export const contentSchemaSymbol: unique symbol = Symbol("SharedTree Schema");
  * 	}
  * }
  * ```
+ * @privateRemarks
+ * The properties of this are implemented as getters rather than instance properties as that is the easiest way to make them non-enumerable,
+ * and also saves memory and time as they only have to be setup on the prototype.
+ * These being non-enumerable inherited properties minimizes impact on users,
+ * hiding them from things like `Reflect.ownKeys`, Object spread, `Object.getOwnPropertyDescriptors`, and `for...in` loops.
+ * How we declare them here actually doesn't impact that,
+ * but is a good way to communicate to users and internal devs that these should be implemented as inherited getters to accomplish the above.
  * @sealed @public
  */
 export interface WithType<
@@ -106,6 +110,15 @@ export interface WithType<
 > {
 	/**
 	 * Type symbol, marking a type in a way to increase type safety via strong type checking.
+	 *
+	 * Use `Tree.schema(theNode)` for schema related runtime data access. For type narrowing, use `WithType` instead of the symbols directly.
+	 * @remarks
+	 * This should be redundant with {@link typeSchemaSymbol}, but is kept for improved compiler performance.
+	 * If we just rely on {@link typeSchemaSymbol}, the compiler has to work much harder to distinguish schema in unions,
+	 * which can cause large schema unions to hit "error TS2859: Excessive complexity comparing types".
+	 *
+	 * This property is not intended for any use other than helping the compiler distinguish schema types,
+	 * and should not be referenced in any code other than internal to the tree package.
 	 * @deprecated Use {@link typeSchemaSymbol} instead.
 	 */
 	get [typeNameSymbol](): TName;
