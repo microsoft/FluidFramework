@@ -1,5 +1,422 @@
 # @fluidframework/tree
 
+## 2.114.0
+
+### Minor Changes
+
+- Add clear method to TreeMapNodeAlpha ([#27765](https://github.com/microsoft/FluidFramework/pull/27765)) [30c889b99c](https://github.com/microsoft/FluidFramework/commit/30c889b99caca3d6ad1ab276761092d94118eab1)
+
+  [`TreeMapNodeAlpha`](https://fluidframework.com/docs/api/fluid-framework/treemapnodealpha-interface) now has a `clear` method, further aligning it with JavaScript's built-in Map API. It removes all elements from the map.
+
+  The merge semantics of `clear` are loosely specified: either of the following may occur:
+  - `clear` may remove all elements that were in the map when the edit was authored, even if some of those elements have since been moved elsewhere in the tree (in which case they are removed from their new location).
+  - `clear` may remove all elements that are in the map when the edit is sequenced, even if some of those elements were not yet in the map when the edit was authored.
+
+  This method is available on `TreeMapNodeAlpha`, which can be obtained from an existing `TreeMapNode` via `asAlpha`, or by declaring the schema with `SchemaFactoryAlpha`'s `mapAlpha`.
+
+  ```typescript
+  const schemaFactory = new SchemaFactoryAlpha("example");
+  class Inventory extends schemaFactory.mapAlpha(
+    "Inventory",
+    schemaFactory.number,
+  ) {}
+
+  const inventory = new Inventory(
+    new Map([
+      ["apples", 5],
+      ["pears", 3],
+    ]),
+  );
+
+  inventory.size; // 2
+  inventory.clear();
+  inventory.size; // 0
+  ```
+
+- Add new @alpha ServiceClient API for creating and loading Fluid containers ([#27693](https://github.com/microsoft/FluidFramework/pull/27693)) [ee47192d4a](https://github.com/microsoft/FluidFramework/commit/ee47192d4ae91bc28f9154c4d1ead2acad762f3c)
+
+  This introduces an experimental (`@alpha`), service-agnostic API for working with Fluid containers whose root is an arbitrary data store, along with an in-memory implementation for testing.
+
+  The new surface is made up of:
+  - `ServiceClient` (`@fluidframework/driver-definitions`): the entry point for creating and loading containers. Along with it come the supporting container types (`FluidContainer`, `FluidContainerWithService`, `FluidContainerAttached`), the data store model (`DataStoreKind`, `DataStoreKey`, `DataStoreRegistry`, `DataStoreCreator`), and the generic registry primitives (`Registry`, `RegistryKey`, `lookupInRegistry`, `createBasicRegistryKey`).
+  - `defineDataStore` and `sharedObjectRegistryFromIterable` (`@fluidframework/shared-object-base`): build a `DataStoreKind` from a root shared object and a registry of shared object kinds.
+  - `defineTreeDataStore` and `instantiateTreeFirstTime` (`@fluidframework/tree`): a SharedTree-specific convenience wrapper that produces a `DataStoreKind` backed by a `TreeView`.
+  - `startEphemeralService` (`@fluidframework/local-driver`): starts an in-memory `EphemeralService` for tests. The service owns the lifetime of the in-memory documents and resources, and produces `ServiceClient`s connected to it (via `EphemeralService.newClient` or `EphemeralService.defaultClient`). The helpers `cleanupEphemeralService` and `getDefaultEphemeralService` manage an optional default service instance.
+
+  Apart from the `@fluidframework/local-driver` helpers (which come from `@fluidframework/local-driver/alpha`), these APIs are also re-exported from `fluid-framework`. None reference any `@legacy` types.
+
+  Example:
+
+  ```typescript
+  import { startEphemeralService } from "@fluidframework/local-driver/alpha";
+  import {
+    ServiceClient,
+    defineTreeDataStore,
+    TreeViewConfiguration,
+    SchemaFactory,
+  } from "fluid-framework/alpha";
+  import { strict as assert } from "node:assert";
+
+  // Start an ephemeral in-memory service and get a ServiceClient connected to it.
+  const service = startEphemeralService();
+  const client: ServiceClient = service.defaultClient;
+  // Define a DataStoreKind which uses a SharedTree.
+  // In this case the schema is for a single number with an initializer that starts the it at 1.
+  // This schema is captures in the type allowing for strongly typed access to the data in the tree,
+  // where the type matches the schema based runtime enforcement of the schema.
+  const numberStore = defineTreeDataStore({
+    type: "my-app-root",
+    config: new TreeViewConfiguration({ schema: SchemaFactory.number }),
+    initializer: () => 1,
+  });
+
+  // Create a container in the service with the above DataStoreKind.
+  // Ideally this creation would use a service independent API, and only the attach call would be service dependent,
+  // but that is not supported yet.
+  const detachedContainer1 = await client.createContainer(numberStore);
+  const container1 = await detachedContainer1.attach();
+
+  // We now have easy and type safe access to the data in the tree, which will be synced over the service.
+  assert.equal(container1.data.root, 1);
+
+  // A second client can load the same container from the service, and will see the same data.
+  const container2 = await client.loadContainer(container1.id, numberStore);
+  assert.equal(container2.data.root, 1);
+
+  // Both clients can modify the data, and the changes will be synced over the service.
+  container2.data.root = 2;
+  // Since we are using an ephemeral service, we can await the synchronization using service.synchronize.
+  await service.synchronize();
+
+  // And now the changes are visible for all clients.
+  assert.equal(container1.data.root, 2);
+  assert.equal(container2.data.root, 2);
+  ```
+
+  Note that this example does a couple of things which are difficult to do with the other API surfaces:
+  1. It creates a container, then loads a second copy of it, allowing for collaboration. There is currently no non-legacy API surface which allows this without spawning a server process. This is also cleaner than the exacting legacy API options, and can replace the test specific APIs for this as well.
+  2. It creates a container which has a SharedTree at the root, and nothing else. This avoids depending on legacy DDS implementations, which is great for long-term document support and bundle size. This is currently impossible using `fluid-static`, which forces a special root data store. It is also impossible if using `aqueduct`, which forces a root directory in every data store. It can be done using the low level legacy APIs directly, but this new API for it is much simpler.
+  3. There is a common interface all services implement (`ServiceClient`), making the container creation part of the code work for any service implementation.
+
+## 2.113.0
+
+### Minor Changes
+
+- Enable select staged schema upgrades at runtime via view configuration ([#27542](https://github.com/microsoft/FluidFramework/pull/27542)) [44f40e8411](https://github.com/microsoft/FluidFramework/commit/44f40e8411d53bc22939a8f53343863f420bb0de)
+
+  SharedTree now supports enabling selected staged schema upgrades when initializing or upgrading a document's stored schema.
+  This lets applications deploy code that understands a schema change before enabling that change in documents.
+  It separates code rollout from feature rollout.
+
+  #### API
+
+  Pass `stagedUpgradePolicy` in the configuration object to
+  [`ITreeAlpha.viewWith`](https://fluidframework.com/docs/api/tree/viewabletree-interface#viewwith-methodsignature)
+  to select which schema upgrades to enable at runtime.
+
+  Use `StagedSchemaUpgradePolicy.enabledStagedUpgrades(...)` with `SchemaUpgrade` objects from
+  [`SchemaFactoryBeta.staged`](https://fluidframework.com/docs/api/tree/schemastaticsbeta-interface#staged-propertysignature)
+  or [`SchemaFactoryAlpha.stagedOptional`](https://fluidframework.com/docs/api/tree/schemafactoryalpha-class#stagedoptional-property):
+
+  The following example defines a staged type, extracts its `SchemaUpgrade` token, and passes it to the view configuration so the staged type is enabled when the schema is upgraded:
+
+  ```typescript
+  const sf = new SchemaFactoryBeta("my-app");
+
+  class ChecklistItem extends sf.object("ChecklistItem", { text: sf.string }) {}
+
+  // `staged` wraps the type so it can be enabled at runtime.
+  const stagedChecklist = SchemaFactoryBeta.staged(ChecklistItem);
+  // The SchemaUpgrade token identifies this staged type.
+  const checklistUpgrade = stagedChecklist.metadata.stagedSchemaUpgrade;
+
+  class AppSchema extends sf.object("AppSchema", {
+    items: sf.array([sf.string, stagedChecklist]),
+  }) {}
+
+  const view = tree.viewWith(
+    new TreeViewConfigurationAlpha({
+      schema: AppSchema,
+      stagedUpgradePolicy:
+        StagedSchemaUpgradePolicy.enabledStagedUpgrades(checklistUpgrade),
+    }),
+  );
+  ```
+
+  When `stagedUpgradePolicy` is omitted or `undefined`, the default is
+  `StagedSchemaUpgradePolicy.restrictive`.
+  This excludes all staged schema upgrades, producing the most conservative stored schema.
+
+  Advanced callers can provide a custom `StagedSchemaUpgradePolicy` object:
+
+  ```typescript
+  const enabledFeatures = new Set<SchemaUpgrade>([checklistUpgrade]);
+
+  const view = tree.viewWith(
+    new TreeViewConfigurationAlpha({
+      schema: AppSchema,
+      stagedUpgradePolicy: {
+        includeStaged: (upgrade) => enabledFeatures.has(upgrade),
+        includeStagedOptional: (upgrade) => enabledFeatures.has(upgrade),
+      },
+    }),
+  );
+  ```
+
+  This is useful for fine-grained rollout control or integration tests.
+
+  #### Pre-built Policies
+
+  The `StagedSchemaUpgradePolicy` namespace provides convenient pre-built policies:
+  - **`restrictive`** (default): excludes all staged upgrades.
+  - **`permissive`**: includes all staged upgrades. Useful in tests.
+  - **`enabledStagedUpgrades(...)`**: includes only the specified upgrades.
+
+  #### Production
+
+  Applications can use feature flags to control when staged schema upgrades are enabled.
+  Previously, enabling a staged schema required a code change that removed the staged wrapper.
+  With this API, the staged wrapper stays in code while `stagedUpgradePolicy` decides at runtime which documents enable it.
+
+  For example, an application adding checklist items can deploy clients that understand the new schema first,
+  then enable the stored-schema upgrade only where a feature flag is active:
+
+  ```typescript
+  const sf = new SchemaFactoryBeta("example-app");
+
+  class ChecklistItem extends sf.object("ChecklistItem", {
+    text: sf.string,
+  }) {}
+
+  const stagedChecklistItem = SchemaFactoryBeta.staged(ChecklistItem);
+  const checklistItemSchemaUpgrade =
+    stagedChecklistItem.metadata.stagedSchemaUpgrade;
+
+  class AppSchema extends sf.object("AppSchema", {
+    // `taskItem` allows plain text today; the staged type is added for future rollout.
+    taskItem: sf.optional([sf.string, stagedChecklistItem]),
+  }) {}
+
+  const enableChecklistItems = featureFlags.enableChecklistItems;
+
+  const view = tree.viewWith(
+    new TreeViewConfigurationAlpha({
+      schema: AppSchema,
+      stagedUpgradePolicy: enableChecklistItems
+        ? StagedSchemaUpgradePolicy.enabledStagedUpgrades(
+            checklistItemSchemaUpgrade,
+          )
+        : undefined,
+    }),
+  );
+
+  if (view.compatibility.canInitialize) {
+    // New documents include the checklist schema only while the rollout is enabled.
+    view.initialize(initialContent);
+  } else if (view.compatibility.canUpgrade) {
+    // Writes the staged type into the stored schema for this document.
+    view.upgradeSchema();
+  }
+  ```
+
+  Once a staged schema upgrade has been written to a document's stored schema, that change is permanent.
+  If `upgradeSchema` is later called from a view that does not include the previously enabled token,
+  it throws a `UsageError` because the new target would narrow the stored schema.
+
+  In practice, keep the upgrade token configured for as long as any document may have been upgraded.
+  Once the staged wrapper is removed from the code, the token is no longer needed.
+
+  #### Testing
+
+  Tests can verify that the current application version handles documents with staged types enabled.
+  Without such testing, it is hard to confirm that staging prepared the application—not just the schema—for the new types.
+
+  ```typescript
+  const currentView = currentAppTree.viewWith(
+    new TreeViewConfiguration({ schema: CurrentAppSchema }),
+  );
+  currentView.initialize(existingTaskDocument);
+  await ensureSynchronized();
+
+  const nextView = asAlpha(nextAppTree).viewWith(
+    new TreeViewConfigurationAlpha({
+      schema: AppSchemaWithStagedChecklist,
+      stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(
+        checklistItemSchemaUpgrade,
+      ),
+    }),
+  );
+
+  // The next version can read the document, but the checklist shape is not yet
+  // in stored schema and cannot be written.
+  assert.throws(() =>
+    addChecklistItem(nextView.root, { text: "Review rollout" }),
+  );
+
+  nextView.upgradeSchema();
+  await ensureSynchronized();
+
+  // Older clients are now incompatible; the next version can use the staged shape.
+  assert.equal(currentView.compatibility.canView, false);
+  addChecklistItem(nextView.root, { text: "Review rollout" });
+  await validateChecklistScenario(nextView);
+  ```
+
+- Fix assert when inserting the same node multiple times ([#27734](https://github.com/microsoft/FluidFramework/pull/27734)) [b509d00166](https://github.com/microsoft/FluidFramework/commit/b509d00166773585c42c60e97ec30a86fbd20cd5)
+
+  When inserting the same node multiple times in a single array insertion, a `UsageError` is now thrown instead of an assert `0xa2b`.
+
+  For example, this now throws a `UsageError` with message `A "ArrayNodeTest.Item" node was provided more than once in a single insertion. A node may not be in more than one place in the tree.`:
+
+  ```TypeScript
+  array.insertAtEnd(item, item);
+  ```
+
+## 2.112.0
+
+### Minor Changes
+
+- Add Component utilities for composing open-polymorphic schema ([#27628](https://github.com/microsoft/FluidFramework/pull/27628)) [7a56d096bf](https://github.com/microsoft/FluidFramework/commit/7a56d096bffab133ab4e7ab9c8f9c465b7ba9e81)
+
+  A new `@alpha` `Component` namespace is now exported from `@fluidframework/tree` (and re-exported from `fluid-framework`). It provides utilities for composing independently authored application "components" that contribute to a shared configuration, which is useful for implementing ["open polymorphism"](<https://en.wikipedia.org/wiki/Polymorphism_(computer_science)>) schema patterns where the set of allowed types for a field or collection can be extended by separate libraries.
+
+  Each component is expressed as a `Component.Factory`: a function which receives a lazy reference to the composed configuration and returns the content that component contributes. Because the configuration is provided lazily, components may reference (including recursively) types contributed by other components. `Component.compose` combines a set of components into a `Component.Composed`, from which the aggregated configuration and per-component content can be read.
+
+  ```typescript
+  /** Example application component content type. */
+  interface MyAppComponentContent {
+    /**
+     * Item types contributed by this component.
+     * We are just typing them as TreeNodeSchema here to keep things simple.
+     * Real use would often provide some static factory to be able to create instances, as well as some APIs all item nodes should implement.
+     */
+    readonly items: Component.LazyArray<TreeNodeSchema>;
+  }
+
+  type MyAppComponent = Component.Factory<MyAppComponentContent>;
+
+  // A simple component, which does not depend on any other context.
+  const textComponent: MyAppComponent = () => ({
+    items: () => [() => TextItem],
+  });
+
+  // A component which creates an item type which recursively depends on all item types.
+  const containerComponent: MyAppComponent = (config) => ({
+    items: () => [
+      () =>
+        class extends sf.array("Container", config().getComposed("items")) {},
+    ],
+  });
+
+  const appConfig = Component.compose([containerComponent, textComponent]);
+
+  // The config's items can now be used to create a TreeViewConfiguration, root schema, or whatever else is needed.
+  class Root extends sf.object("Root", {
+    content: appConfig.getComposed("items"),
+  }) {}
+  ```
+
+  See the worked examples in [openPolymorphism.integration.ts](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/openPolymorphism.integration.ts) for end-to-end usage with SharedTree schema.
+
+- Independent tree views now accept an optional telemetry logger ([#27567](https://github.com/microsoft/FluidFramework/pull/27567)) [5fbbcab0af](https://github.com/microsoft/FluidFramework/commit/5fbbcab0aff87519ae6f112611f0c1e62f30d97e)
+
+  The alpha `independentView`, `independentInitializedView`, and `createIndependentTreeAlpha` APIs now accept an optional `logger` on their options.
+  Previously these standalone (non-`SharedTree`) views had no way to surface telemetry,
+  so internal events—including those emitted when the tree enters a broken state—were dropped.
+  Passing a logger forwards those events to the caller's telemetry pipeline.
+  This makes it possible to diagnose failures in scenarios that use independent tree views, such as snapshot import/export, schema migration, and other out-of-container workflows.
+
+  Events emitted by an independent tree view are tagged with the `independentView` namespace.
+  If no logger is provided, behavior is unchanged and telemetry events continue to be dropped.
+
+  The `logger` option is typed as `ITelemetryBaseLogger` from `@fluidframework/core-interfaces`,
+  so any standard Fluid telemetry logger can be passed directly.
+
+  ```typescript
+  // ...
+  const view = independentView(
+    new TreeViewConfiguration({ schema: MySchema }),
+    {
+      logger: myTelemetryLogger,
+    },
+  );
+  // ...
+  ```
+
+- Shared branch names ([#27708](https://github.com/microsoft/FluidFramework/pull/27708)) [1f08b9210b](https://github.com/microsoft/FluidFramework/commit/1f08b9210bf7ba3adbc98c45b02ab8a6a58929f5)
+
+  The existing [`createSharedBranch`](https://fluidframework.com/docs/api/tree/itreealpha-interface#createsharedbranch-methodsignature) alpha API now takes an optional `name` string parameter that is associated with the shared branch.
+  This name can be retrieved by passing the shared branch ID to `getSharedBranchName`.
+
+  Note that, unlike the shared branch IDs, shared branch names are not guaranteed to be unique.
+
+  #### Compatibility Implications
+
+  This change breaks compatibility in the following ways:
+  - A document written by a client running an earlier FF version cannot be opened by a client running this version.
+  - A document written by a client running this version cannot be opened by a client running an earlier FF version.
+  - Clients running earlier FF versions will crash upon receiving ops from clients running this version.
+  - Clients running this version will crash upon receiving ops from clients running earlier FF versions.
+
+  These breaks are only applicable for clients with `enableSharedBranches` turned on. Other clients are unaffected.
+
+- Add at, pop, shift, unshift, findLast, and findLastIndex methods to TreeArrayNodeAlpha ([#27686](https://github.com/microsoft/FluidFramework/pull/27686)) [59669008b9](https://github.com/microsoft/FluidFramework/commit/59669008b9f9f70ccb94030a6382afcdf8f28cd4)
+
+  `TreeArrayNodeAlpha` now has `at`, `pop`, `shift`, `unshift`, `findLast`, and `findLastIndex` methods, further aligning it with JavaScript's built-in Array API:
+  - `at(index)` `at` was already implemented at runtime, and consumers compiling with `lib: ES2022` or later could already see it through the inherited `ReadonlyArray` typings. This change adds no new runtime behavior, but makes `at` an explicitly declared, documented part of the API, independent of the consumer's TypeScript `lib` configuration.
+  - `unshift(...items)` is an alias for `insertAtStart`, mirroring how `push` aliases `insertAtEnd`: it inserts new item(s) at the start of the array. Unlike `Array.prototype.unshift`, it does not return the new length of the array.
+  - `pop()` removes and returns the last item in the array, or returns `undefined` (without modifying the array) if it is empty.
+  - `shift()` removes and returns the first item in the array, or returns `undefined` (without modifying the array) if it is empty.
+  - `findLast(predicate, thisArg?)` and `findLastIndex(predicate, thisArg?)` search the array from the last item to the first, returning the last matching item (or `undefined`) and its index (or `-1`) respectively, like their `Array.prototype` equivalents. As with `Array.prototype.findLast`, passing a type guard as the `findLast` predicate narrows the returned item's type.
+
+  These methods are available on `TreeArrayNodeAlpha`, which can be obtained from an existing `TreeArrayNode` via `asAlpha`, or by declaring the schema with `SchemaFactoryAlpha`'s `arrayAlpha`.
+
+  #### Usage
+
+  ```typescript
+  import { SchemaFactory, asAlpha } from "@fluidframework/tree/alpha";
+
+  const sf = new SchemaFactory("example");
+  const Inventory = sf.array("Inventory", sf.string);
+  const inventory = asAlpha(new Inventory(["Apples", "Bananas", "Pears"]));
+
+  // inventory: ["Apples", "Bananas", "Pears"]
+  inventory.unshift("Oranges", "Grapes");
+  // inventory: ["Oranges", "Grapes", "Apples", "Bananas", "Pears"]
+
+  inventory.at(0); // "Oranges"
+  inventory.at(-1); // "Pears"
+  inventory.at(10); // undefined
+
+  inventory.findLast((item) => item.startsWith("G")); // "Grapes"
+  inventory.findLastIndex((item) => item.startsWith("G")); // 1
+
+  // inventory: ["Oranges", "Grapes", "Apples", "Bananas", "Pears"]
+  inventory.pop(); // "Pears"
+  // inventory ["Oranges", "Grapes", "Apples", "Bananas"]
+
+  inventory.shift(); // "Oranges"
+  // inventory: ["Grapes", "Apples", "Bananas"]
+  ```
+
+- Retain history option ([#27696](https://github.com/microsoft/FluidFramework/pull/27696)) [2fa44c6ed2](https://github.com/microsoft/FluidFramework/commit/2fa44c6ed222a8ed88a632a0bf3cad0c26e72514)
+
+  Adds a new `retainHistory` flag to [`SharedTreeOptions`](https://fluidframework.com/docs/api/tree/sharedtreeoptions-interface) (defaults to `false`).
+  Setting `retainHistory` to `true` will prevent SharedTree from garbage-collecting historical data about old changes.
+  Note that this will cause unbounded growth both in memory on the client and in summaries/snapshots (the at-rest data representing a Fluid document).
+  For these reasons, this option is only intended for debugging and experimentation.
+
+### Patch Changes
+
+- Fix insertable types when using typesRecursive with multiple allowed types ([#27698](https://github.com/microsoft/FluidFramework/pull/27698)) [b72f836d09](https://github.com/microsoft/FluidFramework/commit/b72f836d09437654e0ef5787625073f9da41cf9f)
+
+  The allowed types produced by `SchemaFactoryBeta.typesRecursive` (and `SchemaFactoryAlpha.typesRecursive`) are now processed correctly when used in a recursive schema that permits more than one type.
+
+  Previously, passing their output to a recursive schema (for example `factory.arrayRecursive` or `factory.mapRecursive`) computed the node's insertable content type as `never`.
+  This caused valid insertions to fail to compile.
+  Recursive schemas built from a `typesRecursive` list with two or more types now accept insertable content for each of the allowed types as expected.
+  Recursive schemas that use a single type were unaffected.
+
 ## 2.111.0
 
 ### Minor Changes

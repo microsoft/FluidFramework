@@ -13,25 +13,6 @@ import DocsVersions from "./config/docs-versions.mjs";
 
 dotenv.config();
 const includeLocalApiDocs = process.env.LOCAL_API_DOCS === "true";
-const TYPESENSE_HOST = process.env.TYPESENSE_HOST;
-const TYPESENSE_API_KEY = process.env.TYPESENSE_API_KEY;
-
-const isTypesenseConfigured = TYPESENSE_HOST !== undefined && TYPESENSE_API_KEY !== undefined;
-
-// Each entry is [field, weight, allowedTypos]. Order determines priority: first = highest ranked.
-// allowedTypos controls typo tolerance per field: 0 = exact match only, 1 = one typo allowed.
-const typesenseSearchFields: [field: string, weight: number, allowedTypos: number][] = [
-	["hierarchy.lvl1", 20, 1],
-	["hierarchy.lvl2", 5, 1],
-	["hierarchy.lvl3", 4, 1],
-	["hierarchy.lvl4", 3, 1],
-	["hierarchy.lvl5", 2, 1],
-];
-const typesenseQueryBy = typesenseSearchFields.map(([field]) => field).join(",");
-const typesenseQueryByWeights = typesenseSearchFields.map(([, weight]) => weight).join(",");
-const typesenseAllowedTypos = typesenseSearchFields
-	.map(([, , allowedTypos]) => allowedTypos)
-	.join(",");
 
 const githubUrl = "https://github.com/microsoft/FluidFramework";
 const githubMainBranchUrl = `${githubUrl}/tree/main`;
@@ -98,7 +79,6 @@ const config: Config = {
 
 	onBrokenAnchors: "throw",
 	onBrokenLinks: "throw",
-	onBrokenMarkdownLinks: "throw",
 	onDuplicateRoutes: "throw",
 
 	// Even if you don't use internationalization, you can use this field to set
@@ -143,13 +123,16 @@ const config: Config = {
 		// `.mdx` files will be treated as MDX, and `.md` files will be treated as standard Markdown.
 		// Needed to support current API docs output, which is not MDX compatible.
 		format: "detect",
+		hooks: {
+			onBrokenMarkdownLinks: "throw",
+		},
 		mermaid: true,
 	},
 	themes: [
 		// Theme for rendering Mermaid diagrams in markdown.
 		"@docusaurus/theme-mermaid",
-		...(isTypesenseConfigured ? ["docusaurus-theme-search-typesense"] : []),
 	],
+	stylesheets: ["/pagefind/pagefind-component-ui.css"],
 	themeConfig: {
 		colorMode: {
 			// Default to user's browser preference
@@ -191,30 +174,6 @@ const config: Config = {
 			theme: prismThemes.vsLight,
 			darkTheme: prismThemes.vsDark,
 		},
-		...(isTypesenseConfigured && {
-			typesense: {
-				typesenseCollectionName: "fluidframeworkdocs",
-				typesenseServerConfig: {
-					nodes: [
-						{
-							host: TYPESENSE_HOST,
-							port: 443,
-							protocol: "https",
-						},
-					],
-					apiKey: TYPESENSE_API_KEY,
-				},
-				contextualSearch: true,
-				typesenseSearchParameters: {
-					query_by: typesenseQueryBy,
-					query_by_weights: typesenseQueryByWeights,
-					sort_by: "_text_match(buckets:10):desc,item_priority:desc",
-					prioritize_exact_match: true,
-					prioritize_token_position: true,
-					num_typos: typesenseAllowedTypos,
-				},
-			},
-		}),
 	} satisfies Preset.ThemeConfig,
 	customFields: {
 		INSTRUMENTATION_KEY: process.env.INSTRUMENTATION_KEY,

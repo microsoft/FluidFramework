@@ -44,6 +44,10 @@ export {
 } from "./loaderLayerCompatState.js";
 export { loadContainerPaused } from "./loadPaused.js";
 export {
+	loadContainerToSequenceNumber,
+	type ILoadContainerToSequenceNumberProps,
+} from "./loadContainerToSequenceNumber.js";
+export {
 	isLocationRedirectionError,
 	resolveWithLocationRedirectionHandling,
 } from "./location-redirection-utilities/index.js";
