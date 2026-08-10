@@ -13,7 +13,7 @@ The shared configuration is layered so common validation rules and package-speci
 - Package-level model configurations enable API model generation for the complete API surface used by the documentation toolchain.
 
 Packages without a `./legacy` export generally use a `api-extractor-report.json` config file for report generation, and `api-extractor-model.json` config file for model generation.
-Packages _with_ a `./legacy` export use separate `.current.json` and `.legacy.json` configurations because the two entrypoints expose different API surfaces.
+Packages _with_ a `./legacy` export use separate `api-extractor-report.current.json` and `api-extractor-report.legacy.json` report configurations because the two entrypoints expose different API surfaces.
 
 API reports and API models intentionally use separate configurations.
 Reports are generated for individual release levels and bundle local dependencies so cross-package re-exports can be reviewed.
