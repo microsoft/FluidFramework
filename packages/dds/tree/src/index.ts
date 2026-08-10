@@ -12,6 +12,8 @@ export {
 	CommitKind,
 	RevertibleStatus,
 	type CommitMetadata,
+	CommitOutcome,
+	type LocalCommitEvents,
 	type LocalChangeMetadata,
 	type RemoteChangeMetadata,
 	type ChangeMetadata,
@@ -300,6 +302,7 @@ export {
 	type HandleConverter,
 	allowUnused,
 	type LeafSchema,
+	type StringSchema,
 	type ArrayNodeCustomizableSchema,
 	type ArrayNodeCustomizableSchemaAlpha,
 	type ArrayNodePojoEmulationSchema,
@@ -404,7 +407,7 @@ import * as InternalTypes from "./internalTypes.js";
 export { InternalTypes };
 
 // Internal/System types:
-// These would be put in `internalTypes` except doing so tents to cause errors like:
+// These would be put in `internalTypes` except doing so tends to cause errors like:
 // The inferred type of 'NodeMap' cannot be named without a reference to '../../node_modules/@fluidframework/tree/lib/internalTypes.js'. This is likely not portable. A type annotation is necessary.
 export type { MapNodeInsertableData } from "./simple-tree/index.js";
 
@@ -414,9 +417,9 @@ export { TableSchema, type System_TableSchema } from "./tableSchema.js";
 export { asAlpha, asBeta } from "./api.js";
 
 export {
-	TextAsTree,
-	FormattedTextAsTree,
-	FormattedTextAsTreeDefault,
+	PlainText,
+	FormattedText,
+	FormattedTextDefault,
 	codePointCount,
 	utf16LengthForCodePoints,
 } from "./text/index.js";

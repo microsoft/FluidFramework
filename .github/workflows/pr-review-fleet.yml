@@ -73,7 +73,7 @@ jobs:
     steps:
       - name: Download dispatch params
         if: github.event_name == 'workflow_run'
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # ratchet:actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: dispatch-params
           path: dispatch
@@ -133,7 +133,7 @@ jobs:
       # surfaces this run in the PR UI with a link back to the workflow logs.
       - name: Create check run
         id: check
-        uses: LouisBrunner/checks-action@937cbbcde3259005b50746dc91cde29098aac2ff # ratchet:LouisBrunner/checks-action@v3.1.0
+        uses: LouisBrunner/checks-action@937cbbcde3259005b50746dc91cde29098aac2ff # v3.1.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           name: "Fleet Review"
@@ -160,7 +160,7 @@ jobs:
 
       - name: Post in-progress comment
         # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v3.0.4
-        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # ratchet:marocchino/sticky-pull-request-comment@v3
+        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # v3.0.4
         with:
           header: pr-review-fleet
           number: ${{ steps.params.outputs.pr_number }}
@@ -182,7 +182,7 @@ jobs:
     steps:
       # ── Checkout ──
       - name: Checkout PR head
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ needs.setup.outputs.head_sha }}
           fetch-depth: 0
@@ -237,7 +237,7 @@ jobs:
 
       # ── Install Copilot CLI ──
       - name: Set up Node.js
-        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # ratchet:actions/setup-node@v6
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: 22
 
@@ -266,7 +266,7 @@ jobs:
       # ── Upload results as artifact ──
       - name: Upload review output
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # ratchet:actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: review-${{ matrix.reviewer }}
           path: review-${{ matrix.reviewer }}.json
@@ -285,13 +285,13 @@ jobs:
       has_findings: ${{ steps.consolidate.outputs.has_findings }}
     steps:
       - name: Checkout scripts
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           sparse-checkout: .github/scripts
           persist-credentials: false
 
       - name: Download all review artifacts
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # ratchet:actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           path: reviews
           pattern: review-*
@@ -355,7 +355,7 @@ jobs:
 
       - name: Post or update PR comment
         # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v3.0.4
-        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # ratchet:marocchino/sticky-pull-request-comment@v3
+        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # v3.0.4
         with:
           header: pr-review-fleet
           number: ${{ needs.setup.outputs.pr_number }}
@@ -402,7 +402,7 @@ jobs:
           fi
 
       - name: Finalize check run
-        uses: LouisBrunner/checks-action@937cbbcde3259005b50746dc91cde29098aac2ff # ratchet:LouisBrunner/checks-action@v3.1.0
+        uses: LouisBrunner/checks-action@937cbbcde3259005b50746dc91cde29098aac2ff # v3.1.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           check_id: ${{ needs.setup.outputs.check_run_id }}
