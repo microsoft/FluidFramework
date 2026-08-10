@@ -33,8 +33,7 @@ import {
 	type InnerNode,
 	NodeKind,
 	type TreeNodeSchema,
-	// eslint-disable-next-line import-x/no-deprecated -- Required to implement the deprecated typeNameSymbol API.
-	typeNameSymbol,
+	schemaIdentifierBrand,
 	type TreeNode,
 	typeSchemaSymbol,
 	getInnerNode,
@@ -485,8 +484,7 @@ export function mapSchema<
 		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
 			persistedMetadata;
 
-		// eslint-disable-next-line import-x/no-deprecated -- Required to implement the deprecated typeNameSymbol API.
-		public get [typeNameSymbol](): TName {
+		public get [schemaIdentifierBrand](): TName {
 			return identifier;
 		}
 		public get [typeSchemaSymbol](): typeof schemaErased {

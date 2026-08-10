@@ -11,8 +11,7 @@ import { tryGetTreeNodeSchema } from "./treeNodeKernel.js";
 import { NodeKind, type TreeNodeSchemaClass } from "./treeNodeSchema.js";
 import type {
 	WithType,
-	// eslint-disable-next-line import-x/no-deprecated -- Required to implement the deprecated typeNameSymbol API.
-	typeNameSymbol,
+	schemaIdentifierBrand,
 	typeSchemaSymbol,
 } from "./withType.js";
 
@@ -82,10 +81,8 @@ export abstract class TreeNode implements WithType {
 	/**
 	 * Adds a schema identifier brand for stronger and more efficient type checking.
 	 * @privateRemarks Subclasses provide more specific values to distinguish otherwise type-compatible nodes.
-	 * @deprecated Use {@link typeSchemaSymbol} instead.
 	 */
-	// eslint-disable-next-line import-x/no-deprecated -- Required to implement the deprecated typeNameSymbol API.
-	public abstract get [typeNameSymbol](): string;
+	public abstract get [schemaIdentifierBrand](): string;
 
 	/**
 	 * {@inheritDoc typeSchemaSymbol}

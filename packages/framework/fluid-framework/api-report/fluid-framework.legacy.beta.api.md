@@ -762,7 +762,7 @@ declare namespace InternalTypes {
         FieldHasDefault,
         ScopedSchemaName,
         DefaultProvider,
-        typeNameSymbol,
+        schemaIdentifierBrand,
         InsertableObjectFromSchemaRecord,
         FlexList,
         FlexListToUnion,
@@ -1330,6 +1330,9 @@ export class SchemaFactoryBeta<out TScope extends string | undefined = string | 
     typesRecursive: <const T extends readonly unknown[]>(t: T, metadata?: AllowedTypesMetadata | undefined) => AllowedTypesFullFromMixedUnsafe<T>;
 }
 
+// @public @system
+const schemaIdentifierBrand: unique symbol;
+
 // @public @sealed @system
 export interface SchemaStatics {
     readonly boolean: LeafSchema<"boolean", boolean>;
@@ -1878,10 +1881,9 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTyp
 
 // @public @sealed
 export abstract class TreeNode implements WithType {
+    abstract get [schemaIdentifierBrand](): string;
     static [Symbol.hasInstance](value: unknown): value is TreeNode;
     static [Symbol.hasInstance]<TSchema extends abstract new (...args: any[]) => TreeNode>(this: TSchema, value: unknown): value is InstanceType<TSchema>;
-    // @deprecated
-    abstract get [typeNameSymbol](): string;
     abstract get [typeSchemaSymbol](): TreeNodeSchemaClass;
     protected constructor(token: unknown);
 }
@@ -1992,9 +1994,6 @@ export interface TreeViewEvents {
     schemaChanged(): void;
 }
 
-// @public @deprecated @system
-const typeNameSymbol: unique symbol;
-
 // @public @system
 export const typeSchemaSymbol: unique symbol;
 
@@ -2055,8 +2054,7 @@ export type VoidTransactionCallbackStatusBeta = Omit<TransactionCallbackStatusBe
 
 // @public @sealed
 export interface WithType<out TName extends string = string, out TKind extends NodeKind = NodeKind, out TInfo = unknown> {
-    // @deprecated
-    get [typeNameSymbol](): TName;
+    get [schemaIdentifierBrand](): TName;
     get [typeSchemaSymbol](): TreeNodeSchemaClass<TName, TKind, TreeNode, never, boolean, TInfo>;
 }
 

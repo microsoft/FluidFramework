@@ -28,7 +28,7 @@ export {
 	InsertableTreeNodeFromImplicitAllowedTypes, 
 	InsertableTypedNode, 
 	InternalTreeNode, 
-	InternalTypes, 
+	type InternalTypes, 
 	IsListener, 
 	IsUnion, 
 	IterableTreeArrayContent, 
