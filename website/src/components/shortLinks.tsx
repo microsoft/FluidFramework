@@ -49,7 +49,10 @@ export interface ApiLinkProps {
 	/**
 	 * The kind of API item to link to.
 	 *
-	 * @remarks May be omitted when the package exports only one API item with the specified name.
+	 * @remarks
+	 * May be omitted when the package exports only one API item with the specified name.
+	 *
+	 * {@link ApiLink} will throw an error if this is omitted and multiple API item kinds with the specified name are exported by the package.
 	 */
 	apiType?: ApiItemKind;
 
@@ -70,6 +73,9 @@ export interface ApiLinkProps {
 
 /**
  * A convenient mechanism for linking to the API documentation for a specified API item.
+ *
+ * @throws
+ * If {@link ApiLinkProps.apiType} is omitted and multiple API item kinds with the specified name are exported by the package.
  *
  * @privateRemarks
  * TODOs:
