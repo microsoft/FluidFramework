@@ -48,7 +48,7 @@ import {
 	parseGcSnapshotData,
 	readReferencedSnapshotBlobs,
 	snapshotHasLoadingGroups,
-	deletedAttachmentBlobLocalIds,
+	unreferencedAttachmentBlobLocalIds,
 	type IBlobAttachReference,
 } from "./captureReferencedContents.js";
 import { DebugLogger } from "./debugLogger.js";
@@ -522,9 +522,8 @@ export interface ICaptureFullContainerStateProps {
  *
  * Reachability respects GC. Snapshot subtrees flagged `unreferenced: true`
  * are skipped (their contents are not inlined). Attachment blobs that GC has
- * permanently deleted are skipped. Unreferenced and tombstoned blobs are
- * retained because post-snapshot ops may revive them. When the snapshot has
- * no GC tree (GC disabled or pre-GC document), no filtering is applied.
+ * marked unreferenced, tombstoned, or deleted are skipped. When the snapshot
+ * has no GC tree (GC disabled or pre-GC document), no filtering is applied.
  *
  * Blob reads on load hit the `ContainerStorageAdapter` cache populated from
  * the captured `snapshotBlobs` map, so a frozen loader can serve the full
@@ -653,7 +652,7 @@ export async function captureFullContainerState({
 			const added = await inlineAttachmentBlobsByReference(
 				postSnapshotBlobReferences,
 				storage,
-				deletedAttachmentBlobLocalIds(gcData),
+				unreferencedAttachmentBlobLocalIds(gcData),
 				attachmentBlobContents,
 			);
 			Object.assign(attachmentBlobContents, added);

@@ -173,19 +173,6 @@ function assertInlinedSummary(
 	assert.strictEqual(inlinedBlobCount, expectedBlobCount);
 }
 
-function assertPendingStateContainsBinaryBlobs(
-	pendingLocalState: string,
-	expectedBlobCount: number,
-): void {
-	const pendingState = JSON.parse(pendingLocalState) as {
-		attachmentBlobContents?: Record<string, string>;
-	};
-	assert.strictEqual(
-		Object.keys(pendingState.attachmentBlobContents ?? {}).length,
-		expectedBlobCount,
-	);
-}
-
 function initialize(options?: {
 	countStorageCalls?: boolean;
 	inline?: boolean;
@@ -391,36 +378,5 @@ describe("Detached blob single-request create", () => {
 		});
 		const frozenObject = await getTestFluidObject(frozen);
 		assertBytes(await getBlob(frozenObject.root, "blob"), expected);
-	});
-
-	it("re-stashes ordinary captured attachment blobs without binary corruption", async () => {
-		const { codeDetails, codeLoader, documentServiceFactory, loaderProps, urlResolver } =
-			initialize({ inline: false });
-		const container = await createDetachedContainer({ codeDetails, ...loaderProps });
-		const fluidObject = await getTestFluidObject(container);
-		const expected = new Uint8Array([0xff, 0x00, 0x80]);
-		fluidObject.root.set("blob", await fluidObject.runtime.uploadBlob(expected.buffer));
-		await container.attach(urlResolver.createCreateNewRequest("captured-legacy-state"));
-		const url = await container.getAbsoluteUrl("");
-		assert(url !== undefined);
-
-		const capturedState = await captureFullContainerState({
-			documentServiceFactory,
-			request: { url },
-			urlResolver,
-		});
-		const frozen = await loadFrozenContainerFromPendingState({
-			codeLoader,
-			pendingLocalState: capturedState,
-			readOnly: false,
-		});
-		const restashedState = await getRequiredPendingLocalState(frozen);
-		assertPendingStateContainsBinaryBlobs(restashedState, 1);
-		const reloaded = await loadFrozenContainerFromPendingState({
-			codeLoader,
-			pendingLocalState: restashedState,
-		});
-		const reloadedObject = await getTestFluidObject(reloaded);
-		assertBytes(await getBlob(reloadedObject.root, "blob"), expected);
 	});
 });

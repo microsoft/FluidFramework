@@ -30,13 +30,8 @@ export interface MemoryDetachedBlobStorage
 	 * After the container is attached, the detached blob storage is no longer needed and will be disposed.
 	 */
 	dispose?(): void;
-	initialize(attachmentBlobs: string[], encoding: "utf8" | "base64"): void;
+	initialize(attachmentBlobs: string[]): void;
 	serialize(): string | undefined;
-}
-
-interface SerializedMemoryDetachedBlobStorage {
-	version: 1;
-	blobs: string[];
 }
 
 export function tryInitializeMemoryDetachedBlobStorage(
@@ -44,24 +39,12 @@ export function tryInitializeMemoryDetachedBlobStorage(
 	attachmentBlobs: string,
 ): void {
 	assert(detachedStorage.size === 0, 0x99e /* Blob storage already initialized */);
-	const maybeAttachmentBlobs: unknown = JSON.parse(attachmentBlobs);
-	if (Array.isArray(maybeAttachmentBlobs)) {
-		// Legacy detached state encoded blob strings as UTF-8.
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-		detachedStorage.initialize(maybeAttachmentBlobs, "utf8");
-		return;
-	}
-	assert(
-		typeof maybeAttachmentBlobs === "object" &&
-			maybeAttachmentBlobs !== null &&
-			"version" in maybeAttachmentBlobs &&
-			maybeAttachmentBlobs.version === 1 &&
-			"blobs" in maybeAttachmentBlobs &&
-			Array.isArray(maybeAttachmentBlobs.blobs),
-		"Invalid attachmentBlobs",
-	);
-	const serializedStorage = maybeAttachmentBlobs as SerializedMemoryDetachedBlobStorage;
-	detachedStorage.initialize(serializedStorage.blobs, "base64");
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+	const maybeAttachmentBlobs = JSON.parse(attachmentBlobs);
+	assert(Array.isArray(maybeAttachmentBlobs), 0x99f /* Invalid attachmentBlobs */);
+
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+	detachedStorage.initialize(maybeAttachmentBlobs);
 }
 
 /**
@@ -85,13 +68,10 @@ export function createMemoryDetachedBlobStorage(): MemoryDetachedBlobStorage {
 		dispose: () => blobs.splice(0),
 		serialize: () =>
 			blobs.length > 0
-				? JSON.stringify({
-						version: 1,
-						blobs: blobs.map((b) => bufferToString(b, "base64")),
-					} satisfies SerializedMemoryDetachedBlobStorage)
+				? JSON.stringify(blobs.map((b) => bufferToString(b, "utf8")))
 				: undefined,
-		initialize: (attachmentBlobs: string[], encoding: "utf8" | "base64") =>
-			blobs.push(...attachmentBlobs.map((maybeBlob) => stringToBuffer(maybeBlob, encoding))),
+		initialize: (attachmentBlobs: string[]) =>
+			blobs.push(...attachmentBlobs.map((maybeBlob) => stringToBuffer(maybeBlob, "utf8"))),
 	};
 	return storage;
 }

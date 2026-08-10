@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
+import { stringToBuffer } from "@fluid-internal/client-utils";
 import type {
 	IDocumentStorageService,
 	ISnapshot,
@@ -14,10 +14,8 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 
 import type { ISerializableBlobContents } from "../containerStorageAdapter.js";
-import { wireFormatConstants } from "../captureReferencedContents.js";
 import type { SerializedSnapshotInfo } from "../serializedStateManager.js";
 import {
-	convertISnapshotToSnapshotWithBlobs,
 	convertSnapshotInfoToSnapshot,
 	convertSnapshotToSnapshotInfo,
 	getDocumentAttributes,
@@ -185,71 +183,6 @@ describe("container-loader utils", () => {
 				baseSnapshot: snapshot.snapshotTree,
 				snapshotSequenceNumber: snapshot.sequenceNumber ?? 0,
 				snapshotBlobs,
-			});
-		});
-
-		it("round-trips textual payloads nested under .blobs as UTF-8", () => {
-			const binaryBlobId = "binary-blob";
-			const binaryBlob = new Uint8Array([0xff, 0xfe, 0x00, 0x80]).buffer;
-			const encodedBlob = bufferToString(binaryBlob, "base64");
-			const binarySnapshot: ISnapshot = {
-				snapshotTree: {
-					blobs: {},
-					trees: {
-						[wireFormatConstants.blobsTreeName]: {
-							blobs: {},
-							trees: {
-								runtimePayload: {
-									blobs: {
-										content: binaryBlobId,
-									},
-									trees: {},
-									groupId: "runtime-group",
-								},
-							},
-						},
-					},
-				},
-				blobContents: new Map([[binaryBlobId, stringToBuffer(encodedBlob, "utf8")]]),
-				ops: [],
-				sequenceNumber: 123,
-				latestSequenceNumber: undefined,
-				snapshotFormatV: 1,
-			};
-
-			const serialized = convertSnapshotToSnapshotInfo(binarySnapshot);
-			assert.deepStrictEqual(serialized.snapshotBlobs, {
-				[binaryBlobId]: encodedBlob,
-			});
-
-			const restored = convertSnapshotInfoToSnapshot(serialized);
-			assert.deepStrictEqual(
-				bufferToString(restored.blobContents.get(binaryBlobId) ?? new ArrayBuffer(0), "utf8"),
-				encodedBlob,
-			);
-		});
-
-		it("preserves known ordinary attachment blobs as base64", () => {
-			const binaryBlobId = "attachment-blob";
-			const binaryBlob = new Uint8Array([0xff, 0x00, 0x80]).buffer;
-			const binarySnapshot: ISnapshot = {
-				snapshotTree: {
-					blobs: { attachment: binaryBlobId },
-					trees: {},
-				},
-				blobContents: new Map([[binaryBlobId, binaryBlob]]),
-				ops: [],
-				sequenceNumber: 123,
-				latestSequenceNumber: undefined,
-				snapshotFormatV: 1,
-			};
-			const serialized = convertISnapshotToSnapshotWithBlobs(
-				binarySnapshot,
-				new Set([binaryBlobId]),
-			);
-			assert.deepStrictEqual(serialized.snapshotBlobs, {});
-			assert.deepStrictEqual(serialized.attachmentBlobContents, {
-				[binaryBlobId]: bufferToString(binaryBlob, "base64"),
 			});
 		});
 	});

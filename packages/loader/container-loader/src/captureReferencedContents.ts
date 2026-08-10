@@ -173,9 +173,9 @@ export async function readReferencedSnapshotBlobs(
 /**
  * Synchronously walks the snapshot tree and gathers the set of blob ids that
  * should be inlined. Subtrees flagged `unreferenced: true` are skipped
- * entirely. The root-level `.blobs` subtree is special-cased: only its
- * `.redirectTable` id is collected, because attachment blob contents are
- * captured separately via {@link captureReferencedAttachmentBlobs}.
+ * entirely. The root-level `.blobs` subtree is special-cased: direct
+ * attachment entries are skipped, while its `.redirectTable` and structural
+ * child-tree blobs are collected.
  */
 function collectReferencedBlobIds(
 	tree: ISnapshotTree,
@@ -219,10 +219,9 @@ function toTreeAndReader(
 
 /**
  * Fetches attachment blob contents from a snapshot, filtered by GC
- * reachability. Only attachment blobs GC has permanently deleted are skipped.
- * Unreferenced and tombstoned blobs are retained because post-snapshot ops may
- * revive them. Blobs absent from the GC graph are also kept — GC state lags
- * behind recent attachments and dropping them would lose live data.
+ * reachability. Blobs GC has explicitly marked unreferenced, tombstoned, or
+ * deleted are skipped. Blobs absent from the GC graph are kept — GC state
+ * lags behind recent attachments and dropping them would lose live data.
  * If `gcData` is `undefined`, every attachment blob is returned.
  *
  * The returned map is keyed by attachment blob storage id. Values are the
@@ -249,12 +248,13 @@ export async function captureReferencedAttachmentBlobs(
 	if (localIdToStorageId.size === 0) {
 		return {};
 	}
-	const deletedLocalIds =
-		gcData === undefined ? undefined : collectDeletedBlobLocalIds(gcData);
+
+	const unreferencedLocalIds =
+		gcData === undefined ? undefined : collectUnreferencedBlobLocalIds(gcData);
 
 	const storageIdsToFetch = new Set<string>();
 	for (const [localId, storageId] of localIdToStorageId) {
-		if (deletedLocalIds?.has(localId) !== true) {
+		if (unreferencedLocalIds?.has(localId) !== true) {
 			storageIdsToFetch.add(storageId);
 		}
 	}
@@ -292,16 +292,33 @@ async function readRedirectTable(
 	return redirectTable;
 }
 
-/** Collects attachment blob local IDs that GC has permanently deleted. */
-function collectDeletedBlobLocalIds(gcData: IGcSnapshotData): Set<string> {
+/**
+ * Collects the set of blob localIds that GC has explicitly marked as
+ * unreferenced (via `unreferencedTimestampMs` on a gc node), tombstoned, or
+ * deleted. Tombstones and deletedNodes are applied regardless of whether
+ * `gcState` is present — they are authoritative on their own and must not
+ * be silently dropped when gc state is absent but tombstone/deleted lists
+ * exist.
+ */
+function collectUnreferencedBlobLocalIds(gcData: IGcSnapshotData): Set<string> {
 	const blobPathPrefix = `/${blobManagerBasePath}/`;
-	const deleted = new Set<string>();
-	for (const nodePath of gcData.deletedNodes ?? []) {
-		if (nodePath.startsWith(blobPathPrefix)) {
-			deleted.add(nodePath.slice(blobPathPrefix.length));
+	const unreferenced = new Set<string>();
+	if (gcData.gcState !== undefined) {
+		for (const [nodePath, nodeData] of Object.entries(gcData.gcState.gcNodes)) {
+			if (
+				nodePath.startsWith(blobPathPrefix) &&
+				nodeData.unreferencedTimestampMs !== undefined
+			) {
+				unreferenced.add(nodePath.slice(blobPathPrefix.length));
+			}
 		}
 	}
-	return deleted;
+	for (const nodePath of [...(gcData.tombstones ?? []), ...(gcData.deletedNodes ?? [])]) {
+		if (nodePath.startsWith(blobPathPrefix)) {
+			unreferenced.add(nodePath.slice(blobPathPrefix.length));
+		}
+	}
+	return unreferenced;
 }
 
 /**
@@ -357,22 +374,23 @@ export function extractBlobAttachReferences(
 }
 
 /**
- * Set of attachment-blob localIds that GC has permanently deleted in the base
- * snapshot. `undefined` if `gcData` is undefined.
+ * Set of attachment-blob localIds that GC has marked unreferenced,
+ * tombstoned, or deleted in the base snapshot. `undefined` if `gcData`
+ * is `undefined` (GC disabled / pre-GC document).
  *
  * @internal
  */
-export function deletedAttachmentBlobLocalIds(
+export function unreferencedAttachmentBlobLocalIds(
 	gcData: IGcSnapshotData | undefined,
 ): Set<string> | undefined {
-	return gcData === undefined ? undefined : collectDeletedBlobLocalIds(gcData);
+	return gcData === undefined ? undefined : collectUnreferencedBlobLocalIds(gcData);
 }
 
 /**
  * Inline attachment blob contents for the given `(localId, storageId)`
  * references. Skips entries already present in `existing` (de-dupe with
- * the snapshot path) and entries whose `localId` is in `excludedLocalIds`.
- * Returns only the freshly-read entries; the
+ * the snapshot path) and entries whose `localId` is in
+ * `unreferencedLocalIds`. Returns only the freshly-read entries; the
  * caller merges them into the existing map.
  *
  * @internal
@@ -380,12 +398,12 @@ export function deletedAttachmentBlobLocalIds(
 export async function inlineAttachmentBlobsByReference(
 	references: readonly IBlobAttachReference[],
 	storage: Pick<IDocumentStorageService, "readBlob">,
-	excludedLocalIds: ReadonlySet<string> | undefined,
+	unreferencedLocalIds: ReadonlySet<string> | undefined,
 	existing: Readonly<IBase64BlobContents>,
 ): Promise<IBase64BlobContents> {
 	const storageIdsToFetch = new Set<string>();
 	for (const { localId, storageId } of references) {
-		if (excludedLocalIds?.has(localId) === true) {
+		if (unreferencedLocalIds?.has(localId) === true) {
 			continue;
 		}
 		if (existing[storageId] !== undefined) {
