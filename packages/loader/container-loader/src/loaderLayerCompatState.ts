@@ -108,13 +108,19 @@ export function validateRuntimeCompatibility(
 	mc: MonitoringContext,
 ): void {
 	validateLayerCompatibility(
-		"loader",
-		"runtime",
-		loaderCompatDetailsForRuntime,
-		runtimeSupportRequirementsForLoader,
-		maybeRuntimeCompatDetails,
-		() => {} /* disposeFn - no op. This will be handled by the caller */,
-		mc,
+		/* validatingLayer */ {
+			layer: "loader",
+			compatDetails: loaderCompatDetailsForRuntime,
+			compatSupportRequirements: runtimeSupportRequirementsForLoader,
+		},
+		/* targetLayer */ {
+			layer: "runtime",
+			compatDetails: maybeRuntimeCompatDetails,
+		},
+		{
+			disposeFn: () => {} /* no op. This will be handled by the caller */,
+			mc,
+		},
 	);
 }
 
@@ -128,13 +134,16 @@ export function validateDriverCompatibility(
 	mc: MonitoringContext,
 ): void {
 	validateLayerCompatibility(
-		"loader",
-		"driver",
-		loaderCompatDetailsForDriver,
-		driverSupportRequirementsForLoader,
-		maybeDriverCompatDetails,
-		disposeFn,
-		mc,
+		/* validatingLayer */ {
+			layer: "loader",
+			compatDetails: loaderCompatDetailsForDriver,
+			compatSupportRequirements: driverSupportRequirementsForLoader,
+		},
+		/* targetLayer */ {
+			layer: "driver",
+			compatDetails: maybeDriverCompatDetails,
+		},
+		{ disposeFn, mc },
 	);
 }
 
@@ -166,12 +175,15 @@ export function validateLoaderCompatibilityWithDriver(
 		return;
 	}
 	validateLayerCompatibility(
-		"driver",
-		"loader",
-		maybeDriverCompatDetails ?? defaultLayerCompatDetails,
-		maybeDriverCompatRequirements,
-		loaderCompatDetailsForDriver,
-		disposeFn,
-		mc,
+		/* validatingLayer */ {
+			layer: "driver",
+			compatDetails: maybeDriverCompatDetails ?? defaultLayerCompatDetails,
+			compatSupportRequirements: maybeDriverCompatRequirements,
+		},
+		/* targetLayer */ {
+			layer: "loader",
+			compatDetails: loaderCompatDetailsForDriver,
+		},
+		{ disposeFn, mc },
 	);
 }
