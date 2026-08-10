@@ -52,13 +52,13 @@ export interface TinyliciousServiceOptions extends ServiceOptions {
 	/**
 	 * The full endpoint URL Tinylicious is listening on.
 	 * In GitHub Codespaces, use the forwarded URL for the tinylicious port.
-	 * @defaultValue `http://localhost:7070`
+	 * @defaultValue `http://localhost:7070`, or the forwarded Tinylicious URL in GitHub Codespaces.
 	 */
 	readonly endpoint?: string;
 }
 
 /**
- * Creates a {@link @fluidframework/runtime-definitions#ServiceClient} backed by a local tinylicious server.
+ * Creates a {@link @fluidframework/driver-definitions#ServiceClient} backed by a local tinylicious server.
  *
  * @remarks
  * Requires a tinylicious server to be running (e.g. `pnpm tinylicious`).

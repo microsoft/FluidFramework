@@ -42,6 +42,12 @@ export const defaultServiceOptions: ServiceOptions = {
  * Accepts `ephemeral`, `session`, or `tinylicious`:
  * missing and unknown values default to the ephemeral service.
  *
+ * This is intended to be invoked once on startup:
+ * it may start a local service as a side-effect.
+ *
+ * When used in testing, and cleanup is required, use the default ephemeral service,
+ * which can be cleaned up using `cleanupEphemeralService()`.
+ *
  * @param options - Options used to configure the service client. Defaults to {@link defaultServiceOptions}.
  * @returns A client for the selected service, or the ephemeral service by default.
  * @internal
@@ -49,7 +55,8 @@ export const defaultServiceOptions: ServiceOptions = {
 export function getExampleServiceClient(
 	options: ServiceOptions = defaultServiceOptions,
 ): ServiceClient {
-	const fluidClient = new URLSearchParams(location.search).get("fluidClient") ?? "ephemeral";
+	const fluidClient =
+		new URLSearchParams(globalThis.location?.search ?? "").get("fluidClient") ?? "ephemeral";
 	switch (fluidClient) {
 		case "session": {
 			return startSessionService().newClient(options);

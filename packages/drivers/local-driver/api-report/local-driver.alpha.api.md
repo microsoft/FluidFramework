@@ -26,6 +26,7 @@ export function getDefaultEphemeralService(): EphemeralService;
 // @alpha @sealed
 export interface SessionService extends EphemeralService {
     close(): Promise<void>;
+    newClient(options: ServiceOptions): EphemeralServiceClient;
 }
 
 // @alpha

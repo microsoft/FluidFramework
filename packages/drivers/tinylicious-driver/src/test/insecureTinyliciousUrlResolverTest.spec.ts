@@ -48,6 +48,20 @@ describe("Insecure Url Resolver Test", () => {
 		assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
 	});
 
+	it("Should use the default Tinylicious port with a custom endpoint", async () => {
+		const customResolver = new InsecureTinyliciousUrlResolver(
+			undefined,
+			"http://custom-endpoint.io",
+		);
+
+		const resolvedUrl = await customResolver.resolve({ url: documentId });
+
+		assert.strictEqual(
+			resolvedUrl.url,
+			`http://custom-endpoint.io:7070/tinylicious/${documentId}`,
+		);
+	});
+
 	it("Should preserve a port included in a custom endpoint", async () => {
 		const customResolver = new InsecureTinyliciousUrlResolver(
 			undefined,
@@ -62,9 +76,9 @@ describe("Insecure Url Resolver Test", () => {
 		);
 	});
 
-	it("Should use the standard HTTPS port for a forwarded endpoint", async () => {
+	it("Should use an explicit standard HTTPS port for a forwarded endpoint", async () => {
 		const customResolver = new InsecureTinyliciousUrlResolver(
-			undefined,
+			443,
 			"https://codespace-7070.app.github.dev",
 		);
 

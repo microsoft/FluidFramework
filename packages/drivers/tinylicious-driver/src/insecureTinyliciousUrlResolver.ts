@@ -22,8 +22,6 @@ export const defaultTinyliciousPort = 7070;
  */
 export const defaultTinyliciousEndpoint = "http://localhost";
 
-const defaultTinyliciousUrl = `${defaultTinyliciousEndpoint}:${defaultTinyliciousPort}`;
-
 /**
  * InsecureTinyliciousUrlResolver knows how to get the URLs to the service (in this case Tinylicious) to use
  * for a given request.  This particular implementation has a goal to avoid imposing requirements on the app's
@@ -34,9 +32,9 @@ const defaultTinyliciousUrl = `${defaultTinyliciousEndpoint}:${defaultTinyliciou
 export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 	private readonly tinyliciousEndpoint: string;
 	public constructor(port?: number, endpoint?: string) {
-		const endpointUrl = new URL(endpoint ?? defaultTinyliciousUrl);
-		if (port !== undefined) {
-			endpointUrl.port = `${port}`;
+		const endpointUrl = new URL(endpoint ?? defaultTinyliciousEndpoint);
+		if (port !== undefined || endpointUrl.port === "") {
+			endpointUrl.port = `${port ?? defaultTinyliciousPort}`;
 		}
 		this.tinyliciousEndpoint = endpointUrl.origin;
 	}

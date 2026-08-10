@@ -251,6 +251,15 @@ export interface EphemeralService extends ErasedBaseType<readonly ["EphemeralSer
  */
 export interface SessionService extends EphemeralService {
 	/**
+	 * Creates a client connected to this session-storage-backed service.
+	 *
+	 * @param options - Collaboration options for the client.
+	 * @remarks Documents attached through the client remain available after the service closes and
+	 * can be loaded by a new session service in the same browser tab.
+	 */
+	newClient(options: ServiceOptions): EphemeralServiceClient;
+
+	/**
 	 * Closes active containers and releases service resources without clearing persisted documents.
 	 */
 	close(): Promise<void>;
