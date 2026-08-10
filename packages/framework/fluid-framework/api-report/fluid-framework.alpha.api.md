@@ -1617,6 +1617,7 @@ export namespace PlainText {
         characterCount(): number;
         characters(): Iterable<string>;
         charactersCopy(): string[];
+        createInsertionAnchor(index: number): ArrayPlaceAnchor;
         fullString(): string;
         insertAt(index: number, additionalCharacters: string): void;
         onCharactersChanged(callback: (ops: readonly TextOp[] | undefined) => void): () => void;

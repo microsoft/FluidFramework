@@ -66,6 +66,23 @@ describe("textDomain", () => {
 		expensiveInternalValidationAssert(() => "error");
 	});
 
+	describeHydration("createInsertionAnchor", (_init, hydrated) => {
+		it("tracks a character insertion point across edits", () => {
+			const text = PlainText.Tree.fromString("hello");
+			if (hydrated) {
+				hydrateNode(text);
+			}
+			const anchor = text.createInsertionAnchor(4);
+
+			text.insertAt(0, "Oh ");
+			assert.equal(anchor.index, 7);
+
+			text.removeRange(3, 6);
+			assert.equal(anchor.index, 4);
+			anchor.dispose();
+		});
+	});
+
 	// Hydrated and unhydrated trees implement cursors differently which impacts observation tracking, so test both.
 	// Specifically unhydrated tree cursors do observation tracking while hydrated ones do not.
 	describeHydration("observation tracking", (init, hydrated) => {

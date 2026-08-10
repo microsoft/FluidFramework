@@ -4,7 +4,14 @@
  */
 
 import { TreeAlpha, type PlainText } from "@fluidframework/tree/internal";
-import { type ChangeEvent, type FC, useCallback, useLayoutEffect, useRef } from "react";
+import {
+	type ChangeEvent,
+	type FC,
+	type SyntheticEvent,
+	useCallback,
+	useLayoutEffect,
+	useRef,
+} from "react";
 
 import { unwrapPropTreeNode, type PropTreeNode } from "../../propNode.js";
 import type { TextEditorProps } from "../textEditorProps.js";
@@ -56,10 +63,12 @@ const PlainTextEditorView: FC<MainViewPropsInner> = ({ root, undoRedo, editLabel
 	const effectiveLabel = editLabel ?? root;
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 	// Distinguishes the local user's own edit (browser keeps the caret) from a remote one.
-	const isLocalEditRef = useRef<boolean>(false);
+	const isLocalEditRef = useRef(false);
 
 	// Tree → string (one-way). The component supplies the other direction below.
-	const { text, selection } = useTreeSynchronizedString(root);
+	const { text, selection, setSelection } = useTreeSynchronizedString(root);
+	const selectionRef = useRef(selection);
+	selectionRef.current = selection;
 
 	// A controlled value resets the caret on every change. For the user's own edit the browser
 	// already placed the caret correctly, so only restore the tracked selection for remote edits.
@@ -69,10 +78,11 @@ const PlainTextEditorView: FC<MainViewPropsInner> = ({ root, undoRedo, editLabel
 			return;
 		}
 		const textarea = textareaRef.current;
-		if (textarea !== null && selection !== undefined) {
-			textarea.setSelectionRange(selection.start, selection.end);
+		const trackedSelection = selectionRef.current;
+		if (textarea !== null && trackedSelection !== undefined) {
+			textarea.setSelectionRange(trackedSelection.start, trackedSelection.end);
 		}
-	}, [text, selection]);
+	}, [text]);
 
 	// String → tree: write the user's edit back into the tree. `syncTextToTree` already applies its
 	// edits atomically; this outer transaction just tags them with `effectiveLabel` for undo/redo.
@@ -82,8 +92,22 @@ const PlainTextEditorView: FC<MainViewPropsInner> = ({ root, undoRedo, editLabel
 			TreeAlpha.context(root).runTransaction(() => syncTextToTree(root, event.target.value), {
 				label: effectiveLabel,
 			});
+			setSelection({
+				start: event.target.selectionStart,
+				end: event.target.selectionEnd,
+			});
 		},
-		[root, effectiveLabel],
+		[root, effectiveLabel, setSelection],
+	);
+
+	const onSelect = useCallback(
+		(event: SyntheticEvent<HTMLTextAreaElement>) => {
+			setSelection({
+				start: event.currentTarget.selectionStart,
+				end: event.currentTarget.selectionEnd,
+			});
+		},
+		[setSelection],
 	);
 
 	return (
@@ -141,6 +165,7 @@ const PlainTextEditorView: FC<MainViewPropsInner> = ({ root, undoRedo, editLabel
 				ref={textareaRef}
 				value={text}
 				onChange={onChange}
+				onSelect={onSelect}
 				placeholder="Start typing..."
 				style={{
 					flex: 1,
