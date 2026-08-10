@@ -36,11 +36,13 @@ Part 1 is built in three components:
 - **Component A — the version manager**: choose which file version to load or replay from. **This
   folder is Component A**, and this document is mostly about it.
 - **Component B — the recomposed driver**: load the chosen version and replay ops forward to the exact
-  target. **Built** in `../pointInTimeDriver/` (`OdspPointInTimeDocumentServiceFactory` /
+  target. **Built** in `../pointInTimeDriver/` (`getOdspPointInTimeDocumentServiceFactory` /
   `OdspPointInTimeDocumentService`) — see [Part V](#part-v--components-b--c-as-built).
 - **Component C — the loader hookup**: expose Component B through the container loader. **Built** in
   `@fluidframework/container-loader` (`loadContainerToSequenceNumber`) — see
-  [Part V](#part-v--components-b--c-as-built).
+  [Part V](#part-v--components-b--c-as-built). This is the current prototype-era package
+  placement; the planned feature-package boundary is documented in the
+  [point-in-time loading guide](../../../../loader/container-loader/src/pointInTime/DEV.md#package-ownership-and-planned-extraction).
 
 ### Vocabulary (the overloaded terms)
 
@@ -418,6 +420,126 @@ The `/content` download also contains a version's snapshot, but wrapped in a con
 snapshot parser does not read directly. If the version-scoped snapshot endpoint is ever unavailable,
 unwrapping `/content` could be a fallback path.
 
+### How should near-head targets work when there is no sealed base?
+
+The newest file-version row is intentionally excluded because its sequence number can still advance.
+When it is the only row, or when sequence number `0` predates every sealed row, the current factory
+returns `noBaseVersion` and the loader surfaces a `UsageError`. Decide whether the driver should keep
+that strict behavior or use a separately fetched live/creation snapshot as a read-only base when it can
+prove the snapshot is at or before the target. Add real-service coverage for sequence number `0`, an
+only-tip file, a target equal to the current tip, and a target just behind the tip.
+
+### What numeric target range does the ODSP capability accept?
+
+`loadContainerToSequenceNumber` rejects negative and fractional values, but the ODSP factory is also an
+exported capability that can be called directly, and the bounded delta wrapper computes
+`targetSequenceNumber + 1`. Define and enforce a non-negative safe-integer contract at the driver
+boundary too, including `Number.MAX_SAFE_INTEGER`, so the exclusive upper bound cannot overflow or lose
+precision.
+
+### What happens when version history changes while a load is being built?
+
+The list can add a new head, age out an old row, or lose the selected version between enumeration,
+sequence-number resolution, lineage validation, URL resolution, and the eventual snapshot read. Add
+tests for each churn point. A disappeared base should trigger one bounded re-enumeration/reselection
+when safe, or surface a clear non-retryable availability error; it must not reuse stale list membership
+or fall through to a different version silently. If a long-lived manager is ever reused, reconcile the
+sequence/epoch caches with versions that have aged out.
+
+### How is partial construction cleaned up?
+
+`createPointInTimeDocumentService` creates the recoverable service before the live service. If live
+service creation or later composition fails, the already-created recoverable service must be disposed.
+Add fault-injection coverage at base selection, version URL resolution, recoverable-service creation,
+live-service creation, storage connection, and delta-storage connection, and verify cleanup preserves
+the original error.
+
+### Does the complete point-in-time path preserve retries, cancellation, and authentication?
+
+Fetcher unit tests cover token refresh for version enumeration and sequence-number resolution, but the
+composed load has no end-to-end regression spanning version discovery, base snapshot fetch, and live-op
+replay. Cover an auth refresh in each phase, an abort during each phase, and a retrying op fetch that is
+canceled by the caller. Cancellation should reach the active ODSP request rather than merely closing the
+loader-side container while background retries continue.
+
+### Is the snapshot-op to live-op handoff explicitly covered?
+
+The ordinary ODSP delta stack reads trailing ops bundled in the selected snapshot, then persisted ops
+cache, then network storage. Add a focused integration test where the target crosses each source, with
+the handoffs exactly at `latestSequenceNumber` and an ops-cache batch boundary. Cover duplicate and
+missing boundary ops, a partial dirty cache batch that has not yet been flushed, and a cache gap that
+forces all later reads to storage. Verify the bounded wrapper neither replays one twice nor skips one.
+
+### How are sequenced but not yet persisted ops materialized?
+
+`OdspDeltaStorageWithCache` calls `requestFromSocket(from, to)` before consulting persisted cache and
+storage. In a normal connected load, that sends PUSH `get_ops`; its response is emitted on the delta
+connection and can supply ops that have sequenced but have not yet been flushed to the ODSP op-stream
+endpoint. The storage request still runs, while the live connection gives DeltaManager another route to
+make progress.
+
+The point-in-time service advertises `storageOnly`, so the connection manager never creates that live
+delta connection. Its live ODSP document service therefore has no `currentDeltaConnection`, making
+`requestFromSocket` a no-op. A target can be resolved by a live version-mark resolver and still be
+temporarily unavailable to the historical loader until the ordering service persists it. For a known
+bounded range, `getSingleOpBatch` retries an empty storage response and fails after roughly 30 seconds.
+
+Define the product contract for this window: wait for eventual persistence, expose a retryable
+“sequenced but not persisted” result, coordinate an explicit PUSH `flush_ops`, or give the historical
+service a narrowly scoped way to retrieve PUSH-only ops without becoming a writable/live container.
+Add a real-service test that resolves a mark and immediately loads it, plus delayed-persistence,
+cancellation, and never-persisted variants.
+
+### How does `ParallelRequests` batching interact with the target bound?
+
+The point-in-time wrapper converts every DeltaManager request, including one with no `to`, into the
+known bounded range `[from, target + 1)`. `requestOps` divides that range into transport pages using
+`opsBatchSize` and may issue `concurrentOpsBatches` pages concurrently. `ParallelRequests` buffers
+out-of-order responses by their starting sequence number and dispatches only contiguous pages. A
+partial snapshot/cache response continues from its first missing sequence number; an oversized response
+is split; a known final page is retried until complete; and cancellation may leave later buffered pages
+intentionally undispatched. Its separate “learn the end from a short response” mode is not used by
+point-in-time loading because `target + 1` is always known.
+
+Point-in-time coverage currently tests only the wrapper's per-call `to` clamp and simple ordered streams.
+Add integration coverage with small page sizes and concurrency greater than one: targets on every page
+boundary, out-of-order completion, partial and oversized pages, a final short page, cancellation with
+requests in flight, and verification that speculative requests and buffered results beyond
+`target + 1` are never delivered.
+
+Also cover failure ordering: allow later pages to complete while the first missing page retries, then
+make that earlier page fail. No later page may cross the gap, the stream must surface the terminal error
+once, and late completions after cancellation/failure must be ignored. Deep-history loads need a
+backpressure/memory test because both the out-of-order `results` map and the stream `Queue` can retain
+whole pages when producers outrun the consumer.
+
+Finally, validate `opsBatchSize` and `concurrentOpsBatches` at the ODSP boundary. Zero or negative
+concurrency currently reaches a `ParallelRequests.run()` assertion, while very large values can create
+excessive requests and buffered data. Define positive-integer requirements and practical upper bounds,
+with explicit `UsageError` behavior rather than an internal assertion or resource spike.
+
+### Which `OpsCache` batches are visible to a historical load?
+
+`OpsCache` groups ops into persisted-cache batches (100 ops by default). Full batches are written
+immediately; partial dirty batches are written only by the timer or document-service disposal, and
+`OpsCache.get()` reads persisted entries rather than another service instance's in-memory dirty batch.
+A newly created point-in-time service can therefore miss recently received ops that are neither in its
+snapshot nor flushed to persisted cache/storage.
+
+Cover full and partial cache batches, leading/trailing empty slots, timer and dispose flushes racing a
+historical read, gaps between cache batches, and the `useCacheForOps` transition that permanently stops
+consulting cache after the first miss. The source merge must remain contiguous when the same op is
+available from snapshot, cache, PUSH, or storage, even though the current storage-only point-in-time
+path cannot consume the PUSH source.
+
+### Are concurrent and routed historical loads isolated?
+
+Each point-in-time load creates a fresh `NonPersistentCache` and per-load shared `EpochTracker`, but this
+is not covered under concurrency. Run simultaneous loads to different targets, dispose one while the
+other is reading, then perform a normal live load with the same credentials. Also cover a resolved URL
+with `dataStorePath` and `codeHint` so version URL rewriting preserves routing metadata without leaking
+historical cache entries into another load.
+
 ## Part V — Components B & C, as built
 
 Component A (this folder) only selects the base. Components B and C — which materialize the document at
@@ -434,8 +556,9 @@ is what ships today.
 
 ### Component B — how does the recomposed driver materialize the target?
 
-`OdspPointInTimeDocumentServiceFactory` (in `../pointInTimeDriver/`) extends
-`OdspDocumentServiceFactoryCore` and adds `createPointInTimeDocumentService(resolvedUrl, targetSequenceNumber)`:
+The factory returned by `getOdspPointInTimeDocumentServiceFactory` (in `../pointInTimeDriver/`)
+extends `OdspDocumentServiceFactoryCore` internally and adds
+`createPointInTimeDocumentService(resolvedUrl, targetSequenceNumber)`:
 
 1. Build a version manager (Component A), sharing the single `EpochTracker` described below, and call
    `findBaseForSeq(target)`. It picks the closest version *and* proves that base shares the live
@@ -539,7 +662,8 @@ and the `opStream` endpoint is queried for exactly `[from, target]`.
 1. Validates `loadToSequenceNumber` is a non-negative integer (`UsageError` otherwise).
 2. Detects the point-in-time capability with `asPointInTimeCapableFactory`, which checks the passed
    `documentServiceFactory` exposes `createPointInTimeDocumentService`. A plain factory is a
-   `UsageError` — the caller must pass `OdspPointInTimeDocumentServiceFactory` directly, with no wrapping.
+   `UsageError` — the caller must pass the result of `getOdspPointInTimeDocumentServiceFactory`
+   directly, with no wrapping.
 3. Wraps it in a `PointInTimeDocumentServiceFactory` adapter so the container's normal
    `createDocumentService(resolvedUrl)` routes to `createPointInTimeDocumentService(resolvedUrl, target)`.
    (`createContainer` throws — the adapter is load-only.)
