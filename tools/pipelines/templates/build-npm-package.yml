@@ -108,6 +108,16 @@ parameters:
 - name: publish
   type: boolean
 
+# Indicates who owns the publish step for this build:
+#   true  - publishing happens as part of this build pipeline's own publish stages.
+#   false - publishing is delegated to the dedicated publish pipeline, which consumes the packed tarballs
+#           and publish-metadata.json produced here.
+# This is recorded in publish-metadata.json so the publish pipeline can tell which runs it owns.
+# Deliberately has no default: every pipeline must state which side owns its publishing, so that a search
+# for `publishAsPartOfBuild: true` is an accurate list of what has not been migrated yet.
+- name: publishAsPartOfBuild
+  type: boolean
+
 # Indicates if we should or should not skip all publish stages
 - name: shouldPublish
   type: boolean
@@ -398,6 +408,11 @@ extends:
               workingDirectory: '${{ parameters.buildDirectory }}'
               filePath: $(Build.SourcesDirectory)/scripts/pack-packages.sh
 
+          - template: /tools/pipelines/templates/include-generate-publish-metadata.yml@self
+            parameters:
+              publishOverride: ${{ parameters.publishOverride }}
+              publishAsPartOfBuild: ${{ parameters.publishAsPartOfBuild }}
+
         # Collect/publish/run bundle analysis
         - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
           - task: Npm@1
@@ -440,7 +455,7 @@ extends:
               fi
 
     # Publish stage
-    - ${{ if eq(parameters.publish, true) }}:
+    - ${{ if and(eq(parameters.publish, true), eq(parameters.publishAsPartOfBuild, true)) }}:
       - template: /tools/pipelines/templates/include-publish-npm-package.yml@self
         parameters:
           tagName: ${{ parameters.tagName }}
