@@ -278,7 +278,6 @@ export {
 	StagedSchemaUpgradePolicyFactory, 
 	StagedUpgradeStatus, 
 	StringSchema, 
-	TextAsTree, 
 	TransactionCallbackStatusAlpha, 
 	TransactionConstraintAlpha, 
 	TransactionLabels, 

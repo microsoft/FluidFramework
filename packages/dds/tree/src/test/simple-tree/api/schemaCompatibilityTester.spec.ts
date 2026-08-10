@@ -754,18 +754,20 @@ describe("checkSchemaCompatibility enabledUpgrades", () => {
 	it("detects enabled upgrades in recursive types", () => {
 		const sfLocal = new SchemaFactoryAlpha("recursiveUpgrade");
 
+		// Create the recursive field separately so we can access its metadata
+		const childField = sfLocal.stagedOptionalRecursive([() => TreeNode]);
+
 		// Define a recursive node where the child uses stagedOptionalRecursive
 		class TreeNode extends sfLocal.objectRecursiveAlpha("TreeNode", {
 			value: sfLocal.number,
-			child: sfLocal.stagedOptionalRecursive([() => TreeNode]),
+			child: childField,
 		}) {}
 		{
 			type _check = ValidateRecursiveSchema<typeof TreeNode>;
 		}
 
-		const childUpgrade =
-			schemaStatics(TreeNode).fields.child.metadata?.stagedSchemaUpgrade;
-		assert(childUpgrade !== undefined);
+		const childUpgrade = childField.isStagedOptional;
+		assert(childUpgrade !== false && childUpgrade !== undefined);
 
 		const stored = new TestSchemaRepository(
 			defaultSchemaPolicy,
