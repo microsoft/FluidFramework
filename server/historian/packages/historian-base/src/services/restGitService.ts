@@ -39,7 +39,7 @@ const userAgent = `Historian/${packageDetails.version}`;
 
 const LatestSummaryShaKey = `${LatestSummaryId}-sha`;
 // eslint-disable-next-line unicorn/better-regex
-const canonicalGitShaRegex = /^[0-9a-f]{40}$/i;
+const canonicalGitShaRegex = /^[0-9a-f]{40}$/;
 
 export interface IDocument {
 	existing: boolean;

@@ -15,6 +15,10 @@ import { TestCache } from "./utils";
 const tenantId = "tenant";
 const documentId = "document";
 const canonicalSha = "0123456789abcdef0123456789abcdef01234567";
+const invalidGitShaError = (error: unknown): boolean =>
+	error instanceof NetworkError &&
+	error.code === 400 &&
+	error.message === "Invalid Git object SHA.";
 const storage: ITenantStorage = {
 	historianUrl: "http://historian",
 	internalHistorianUrl: "http://historian",
@@ -58,10 +62,7 @@ describe("RestGitService Git object SHA validation", () => {
 
 			await assert.rejects(
 				testCase.read(`${tenantId}:${documentId}:summary:container`),
-				(error: unknown) =>
-					error instanceof NetworkError &&
-					error.code === 400 &&
-					error.message === "Invalid Git object SHA.",
+				invalidGitShaError,
 			);
 
 			sinon.assert.notCalled(cacheGet);
@@ -72,11 +73,12 @@ describe("RestGitService Git object SHA validation", () => {
 		"0123456789abcdef0123456789abcdef0123456",
 		"0123456789abcdef0123456789abcdef012345678",
 		"g123456789abcdef0123456789abcdef01234567",
+		"0123456789ABCDEF0123456789ABCDEF01234567",
 	]) {
 		it(`rejects noncanonical SHA ${invalidSha}`, async () => {
 			const cacheGet = sandbox.spy(cache, "get");
 
-			await assert.rejects(service.getCommit(invalidSha, true), NetworkError);
+			await assert.rejects(service.getCommit(invalidSha, true), invalidGitShaError);
 
 			sinon.assert.notCalled(cacheGet);
 		});
