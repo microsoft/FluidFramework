@@ -196,6 +196,9 @@ locator --resolve()--> sequenceNumber --loadContainerToSequenceNumber()--> ICont
 2. `loadContainerToSequenceNumber({ request, loadToSequenceNumber, ... })` (the loader's point-in-time primitive) materializes a read-only container at that sequence number.
 
 The load primitive stays **mark-agnostic** — it takes a raw `sequenceNumber` and never learns what a "mark" is. This is the deliberate design choice (decision A): the resolver owns the locator→sequence translation, the loader owns materialization, and the two do not merge.
+Its current container-loader placement is prototype-era ownership; the planned extraction of the
+host-facing load orchestration into a dedicated feature package is documented in the
+[point-in-time loading guide](../../../../loader/container-loader/src/pointInTime/DEV.md#package-ownership-and-planned-extraction).
 
 ### Why the load takes a sequence number, not a locator
 

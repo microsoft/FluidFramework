@@ -40,7 +40,9 @@ Part 1 is built in three components:
   `OdspPointInTimeDocumentService`) — see [Part V](#part-v--components-b--c-as-built).
 - **Component C — the loader hookup**: expose Component B through the container loader. **Built** in
   `@fluidframework/container-loader` (`loadContainerToSequenceNumber`) — see
-  [Part V](#part-v--components-b--c-as-built).
+  [Part V](#part-v--components-b--c-as-built). This is the current prototype-era package
+  placement; the planned feature-package boundary is documented in the
+  [point-in-time loading guide](../../../../loader/container-loader/src/pointInTime/DEV.md#package-ownership-and-planned-extraction).
 
 ### Vocabulary (the overloaded terms)
 

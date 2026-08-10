@@ -76,6 +76,78 @@ That service must satisfy the following:
 
 The loader detects this capability structurally so callers pass the driver's factory directly. The adapter is internal and cannot create new containers.
 
+## Package ownership and planned extraction
+
+The current placement in `@fluidframework/container-loader` was explicitly described as
+prototype-only in the [original review discussion](https://github.com/microsoft/FluidFramework/pull/27703#discussion_r3623422928).
+The follow-up package extraction is not otherwise captured in the current implementation docs.
+
+The architectural concern is slightly narrower than "the loader is ODSP-specific":
+
+- `loadContainerToSequenceNumber` does not import ODSP code. It is structurally driver-agnostic and
+  can work with any `IDocumentServiceFactory` that implements
+  `createPointInTimeDocumentService`.
+- ODSP is currently the only driver that implements that capability. In particular, the current
+  recoverable-base selection relies on ODSP file-version history and epoch validation.
+- Exposing this optional, currently ODSP-only workflow from the core container-loader package makes
+  the loader own a feature-level API even though its reusable responsibility is only loading and
+  pausing a container.
+
+The proposed boundary is a dedicated point-in-time feature package (working name
+`@fluidframework/point-in-time`; final naming is a package/API review decision). The package should
+own the host-facing orchestration while depending on the generic loader primitive and accepting a
+capable driver factory.
+
+### Move to the feature package
+
+| Current location | Responsibility after extraction |
+| --- | --- |
+| `container-loader/src/loadContainerToSequenceNumber.ts` | Public `loadContainerToSequenceNumber` entry point, target validation, and `ILoadContainerToSequenceNumberProps`. |
+| `container-loader/src/pointInTimeServices.ts` | Point-in-time factory capability contract, structural capability check, and adapter to `IDocumentServiceFactory`. |
+| `container-loader/src/test/loadContainerToSequenceNumber.spec.ts` | Feature-entry-point validation and capability-boundary tests. |
+| `container-loader/src/test/pointInTimeServices.spec.ts` | Capability detection and adapter tests. |
+| This `pointInTime/DEV.md` | Cross-package feature flow, package boundary, host contract, and end-to-end test map. |
+
+The move also requires removing the two host-facing exports from the container-loader entry point
+and generated API surface, adding them to the new package's alpha entry point, and updating
+consumers and point-in-time end-to-end tests to import from the new package. API report files must
+be regenerated rather than edited by hand.
+
+### Keep in existing packages
+
+| Current owner | What remains | Why |
+| --- | --- | --- |
+| `@fluidframework/container-loader` | `loadContainerPaused` and its general loading machinery | This is the driver-agnostic loader primitive. It predates point-in-time loading and is also used by non-ODSP callers. The feature package should compose it rather than duplicate loader internals. |
+| `@fluidframework/odsp-driver` | `pointInTimeDriver/`, `odspVersionManager/`, and `getOdspPointInTimeDocumentServiceFactory` | These components depend on ODSP file-version APIs, resolved URLs, caches, storage policies, and epoch tracking. Moving them would either leak ODSP internals into the feature package or duplicate driver construction logic. |
+| `@fluidframework/container-runtime` | `versionMarks/` resolver implementation and runtime hooks | Capture and locator resolution are driver-agnostic but tightly coupled to outbound batching, pending state, inbound processing, and the runtime lifecycle. They produce the sequence number consumed by the feature package; they do not perform historical loading. |
+
+The new package should not import ODSP directly. Its contract remains capability-based so another
+driver can implement point-in-time loading later. ODSP remains the only supported provider until
+another driver can supply a recoverable snapshot at or before the target, all bridging ops, and an
+equivalent lineage-safety guarantee.
+
+### Extraction dependency direction
+
+The intended dependency flow is:
+
+```text
+container-runtime version mark resolver
+              |
+              v
+       resolved sequence number
+              |
+              v
+@fluidframework/point-in-time
+  |                         |
+  v                         v
+container-loader       capable driver factory
+loadContainerPaused    (currently ODSP only)
+```
+
+This preserves the existing two-step contract: the runtime resolves an app-owned locator to a
+sequence number, and the feature package materializes that sequence number. The feature package
+must not make container-loader depend on ODSP or merge mark resolution into container loading.
+
 ## ODSP implementation
 
 ODSP resolves the closest recoverable driveItem version at or before the target. It then composes:
