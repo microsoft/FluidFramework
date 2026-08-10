@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/claims",
-	"version": "2.114.0",
+	"version": "2.116.0",
 	"private": true,
 	"description": "Distributed data structure for first-writer-wins claim management",
 	"homepage": "https://fluidframework.com",

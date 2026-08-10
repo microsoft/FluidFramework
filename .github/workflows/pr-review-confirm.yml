@@ -60,14 +60,14 @@ jobs:
       # repo permission directly. `require: write` accepts write|maintain|admin.
       - name: Verify editor has write access
         id: authz
-        uses: actions-cool/check-user-permission@7b90a27f92f3961b368376107661682c441f6103 # ratchet:actions-cool/check-user-permission@v2.3.0
+        uses: actions-cool/check-user-permission@7b90a27f92f3961b368376107661682c441f6103 # v2.3.0
         with:
           require: write
           username: ${{ github.event.sender.login }}
 
       - name: Checkout scripts
         if: steps.authz.outputs.require-result == 'true'
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           sparse-checkout: |
             .github/scripts

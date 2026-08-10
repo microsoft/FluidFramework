@@ -38,7 +38,7 @@ export { Ctor }
 // @alpha
 export interface EditResult {
     message: string;
-    type: "success" | "disabledError" | "editingError" | "tooManyEditsError" | "expiredError";
+    type: "success" | "editingError" | "tooManyEditsError";
 }
 
 // @alpha
@@ -92,34 +92,10 @@ export class PropertyDef {
 }
 
 // @alpha
-export interface SemanticAgentOptions<TSchema extends ImplicitFieldSchema> {
-    domainHints?: string;
-    editor?: SynchronousEditor<TSchema> | AsynchronousEditor<TSchema>;
-    logger?: Logger;
-    maximumSequentialEdits?: number;
-}
-
-// @alpha
 export interface SharedTreeChatModel {
-    // @deprecated
-    appendContext?(text: string): void;
     editToolName?: string;
-    invoke?(history: readonly TreeAgentChatMessage[]): Promise<TreeAgentChatResponse>;
+    invoke(history: readonly TreeAgentChatMessage[]): Promise<TreeAgentChatResponse>;
     name?: string;
-    // @deprecated
-    query?(message: SharedTreeChatQuery): Promise<string>;
-}
-
-// @alpha @deprecated
-export interface SharedTreeChatQuery {
-    edit(js: string): Promise<EditResult>;
-    text: string;
-}
-
-// @alpha @sealed
-export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
-    constructor(client: SharedTreeChatModel, tree: ViewOrTree<TSchema>, options?: Readonly<SemanticAgentOptions<TSchema>> | undefined);
-    query(userPrompt: string): Promise<string>;
 }
 
 // @alpha

@@ -1,13 +1,14 @@
 {
-	"extends": "../../../../common/build/build-common/ts-common-config.json",
+	"extends": "../../../../common/build/build-common/tsconfig.node16.json",
+	"include": ["src/**/*"],
 	"exclude": ["src/test/**/*"],
 	"compilerOptions": {
 		"strict": false,
 		"allowJs": true,
 		"checkJs": false,
 		"rootDir": "./src",
-		"outDir": "./dist",
+		"outDir": "invalid use tsconfig.esm.json or tsconfig.cjs.json to build",
 		"composite": true,
+		"exactOptionalPropertyTypes": false,
 	},
-	"include": ["src/**/*"],
 }

@@ -32,7 +32,7 @@ import {
 	type TreeNodeSchema,
 	NodeKind,
 	type WithType,
-	// eslint-disable-next-line import-x/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated -- Required to handle the deprecated typeNameSymbol API.
 	typeNameSymbol,
 	typeSchemaSymbol,
 	type InternalTreeNode,
@@ -335,7 +335,7 @@ function createProxyHandler(
 			if (propertyKey === typeSchemaSymbol) {
 				return schema;
 			}
-			// eslint-disable-next-line import-x/no-deprecated
+			// eslint-disable-next-line import-x/no-deprecated -- Required to handle the deprecated typeNameSymbol API.
 			if (propertyKey === typeNameSymbol) {
 				return schema.identifier;
 			}
@@ -633,7 +633,7 @@ export function objectSchema<
 		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
 			nodeOptions.persistedMetadata;
 
-		// eslint-disable-next-line import-x/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated -- Required to implement the deprecated typeNameSymbol API.
 		public get [typeNameSymbol](): TName {
 			return identifier;
 		}
