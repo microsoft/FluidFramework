@@ -44,9 +44,6 @@ steps:
     retryCountOnTaskFailure: 4
     env:
       NPM_CONFIG_USERCONFIG: ${{ parameters.userNpmrcPath }}
-      PNPM_CONFIG_MINIMUM_RELEASE_AGE: '0'
-      PNPM_CONFIG_TRUST_LOCKFILE: 'true'
-      PNPM_CONFIG_TRUST_POLICY: 'off'
     inputs:
       targetType: 'inline'
       workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'

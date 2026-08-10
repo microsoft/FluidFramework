@@ -106,10 +106,6 @@ extends:
 
         - task: Bash@3
           displayName: Install root dependencies
-          env:
-            PNPM_CONFIG_MINIMUM_RELEASE_AGE: '0'
-            PNPM_CONFIG_TRUST_LOCKFILE: 'true'
-            PNPM_CONFIG_TRUST_POLICY: 'off'
           inputs:
             targetType: 'inline'
             workingDirectory: $(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}
@@ -120,10 +116,6 @@ extends:
         - task: Bash@3
           name: InstallBuildTools
           displayName: Install Fluid Build Tools (from repo)
-          env:
-            PNPM_CONFIG_MINIMUM_RELEASE_AGE: '0'
-            PNPM_CONFIG_TRUST_LOCKFILE: 'true'
-            PNPM_CONFIG_TRUST_POLICY: 'off'
           inputs:
             targetType: 'inline'
             workingDirectory: $(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}/build-tools
