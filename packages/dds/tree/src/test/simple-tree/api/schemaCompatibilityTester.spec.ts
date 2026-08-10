@@ -18,6 +18,7 @@ import {
 	type SchemaCompatibilityStatus,
 	type SchemaUpgrade,
 	type StagedUpgradeStatus,
+	type ValidateRecursiveSchema,
 	schemaStatics,
 	StagedSchemaUpgradePolicy,
 	TreeViewConfigurationAlpha,
@@ -748,5 +749,37 @@ describe("checkSchemaCompatibility enabledUpgrades", () => {
 		const { enabledUpgrades } = checkSchemaCompatibility(config, stored);
 		assert.equal(enabledUpgrades.size, 1);
 		assert.equal(enabledUpgrades.get(upgrade), "partial");
+	});
+
+	it("detects enabled upgrades in recursive types", () => {
+		const sfLocal = new SchemaFactoryAlpha("recursiveUpgrade");
+
+		// Define a recursive node where the child uses stagedOptionalRecursive
+		class TreeNode extends sfLocal.objectRecursiveAlpha("TreeNode", {
+			value: sfLocal.number,
+			child: sfLocal.stagedOptionalRecursive([() => TreeNode]),
+		}) {}
+		{
+			type _check = ValidateRecursiveSchema<typeof TreeNode>;
+		}
+
+		const childUpgrade =
+			schemaStatics(TreeNode).fields.child.metadata?.stagedSchemaUpgrade;
+		assert(childUpgrade !== undefined);
+
+		const stored = new TestSchemaRepository(
+			defaultSchemaPolicy,
+			toUpgradeSchema(
+				sfLocal.required(TreeNode),
+				StagedSchemaUpgradePolicy.enabledStagedUpgrades(childUpgrade),
+			),
+		);
+
+		const result = checkSchemaCompatibility(
+			new TreeViewConfigurationAlpha({ schema: TreeNode }),
+			stored,
+		);
+		assert(result.enabledUpgrades !== undefined);
+		assert.equal(result.enabledUpgrades.get(childUpgrade), "enabled");
 	});
 });
