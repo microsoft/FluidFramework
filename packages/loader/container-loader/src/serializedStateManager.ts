@@ -37,7 +37,11 @@ import {
 	type ISerializableBlobContents,
 } from "./containerStorageAdapter.js";
 import { SnapshotRefresher } from "./snapshotRefresher.js";
-import { convertSnapshotToSnapshotInfo, getDocumentAttributes } from "./utils.js";
+import {
+	convertISnapshotToSnapshotWithBlobs,
+	convertSnapshotToSnapshotInfo,
+	getDocumentAttributes,
+} from "./utils.js";
 
 /**
  * This is very similar to {@link @fluidframework/protocol-definitions/internal#ISnapshot}, but the difference is
@@ -452,13 +456,7 @@ export class SerializedStateManager implements IDisposable {
 				const snapshotWithBlobs: SnapshotWithBlobs = isInstanceOfISnapshot(
 					this.snapshotInfo.snapshot,
 				)
-					? {
-							baseSnapshot: this.snapshotInfo.snapshot.snapshotTree,
-							snapshotBlobs: await getBlobContentsFromTree(
-								this.snapshotInfo.snapshot,
-								this.storageAdapter,
-							),
-						}
+					? convertISnapshotToSnapshotWithBlobs(this.snapshotInfo.snapshot)
 					: await convertSnapshotTreeToSnapshotWithBlobs(
 							this.snapshotInfo.snapshot,
 							this.storageAdapter,
