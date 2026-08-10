@@ -236,13 +236,13 @@ export interface FilterAttachResult {
 	readonly action: EditFilterStatus;
 
 	/**
-	 * When `value` is `EditFilterStatus.PreserveWithoutMove`,
+	 * When `action` is `EditFilterStatus.PreserveWithoutMove`,
 	 * the filtered change should include a child change with this ID.
 	 */
 	readonly nodeId?: NodeId;
 
 	/**
-	 * When `value` is `EditFilterStatus.PreserveWithoutMove`,
+	 * When `action` is `EditFilterStatus.PreserveWithoutMove`,
 	 * this ID should be used as the attach ID for the filtered change.
 	 */
 	readonly newAttachId?: ChangeAtomId;
