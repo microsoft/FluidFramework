@@ -41,40 +41,12 @@ steps:
       restoreKeys: |
         pnpm-store | "$(Agent.OS)"
 
-# Seed the userconfig .npmrc with the primary registry. This propagates to subsequent tasks so
-# that npmAuthenticate (below) and any later pnpm/npm invocation in the job reuse the same file.
-- task: Bash@3
-  displayName: Configure npm registry
-  # The previous task (cache restoration) can timeout, which is classified as canceled, but since it's just cache
-  # restoration, we want to continue even if it timed out.
-  condition: or(succeeded(), canceled())
-  inputs:
-    targetType: 'inline'
-    workingDirectory: ${{ parameters.buildDirectory }}
-    script: |
-      set -eu -o pipefail
-      echo "Using node $(node --version)"
-      # This ensures all subsequent tasks in this job will use the npm configuration set here.
-      echo "##vso[task.setvariable variable=NPM_CONFIG_USERCONFIG]$NPM_CONFIG_USERCONFIG"
-      echo "Primary registry: ${NPM_REGISTRY}"
-      echo "registry=${NPM_REGISTRY}" > "$NPM_CONFIG_USERCONFIG"
-      if [ "${NPM_REGISTRY}" == "https://registry.npmjs.org/" ]; then
-        echo "##vso[task.setvariable variable=registryType]public"
-      else
-        echo "##vso[task.setvariable variable=registryType]private"
-      fi
-  env:
-    NPM_REGISTRY: $(ado-feeds-primary-registry)
-    NPM_CONFIG_USERCONFIG: ${{ parameters.userNpmrcPath}}
-
-# Authenticate to the npm feed if required. Runs before pnpm is installed so that
-# `npm install -g pnpm@<version>` can fetch pnpm itself from the authenticated feed.
-- task: npmAuthenticate@0
-  displayName: 'Npm authenticate'
-  condition: and(succeeded(), eq(variables['registryType'], 'private'))
-  retryCountOnTaskFailure: 1
-  inputs:
-    workingFile: ${{ parameters.userNpmrcPath }}
+# Point npm at the authenticated feed before installing pnpm, so that `npm install -g pnpm@<version>` can
+# fetch pnpm itself from that feed.
+- template: /tools/pipelines/templates/include-configure-npm-registry.yml@self
+  parameters:
+    buildDirectory: ${{ parameters.buildDirectory }}
+    userNpmrcPath: ${{ parameters.userNpmrcPath }}
 
 - task: Bash@3
   displayName: Install pnpm
