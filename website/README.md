@@ -64,6 +64,38 @@ To include repo-local API documentation when building the site locally, you will
 So long as the `LOCAL_API_DOCS` environment variable is set to `true`, local API documentation will be included when building the site.
 To remove the local API docs, simply remove the above variable or set it to `false`, `npm run clean` and rebuild as needed.
 
+## Testing
+
+The website has two complementary test suites:
+
+-   **Unit tests** use [Vitest](https://vitest.dev/) and live under `test/unit`.
+    Use these for isolated components, utilities, data transformations, and error handling that do not require a browser or a complete website build.
+    Unit tests should generally be preferred when either test flavor can cover the behavior because they run quickly and make failures easier to diagnose.
+-   **Site tests** use [Playwright](https://playwright.dev/) and live under `test/site-tests`.
+    Use these for browser-visible behavior, navigation, accessibility, layout, search, and workflows that cross component or page boundaries.
+    Playwright serves the previously built static site, so run `pnpm run build:site` before running site tests when the build output is not current.
+
+Run only the unit tests with:
+
+```shell
+pnpm run test:unit
+```
+
+Run only the site tests with:
+
+```shell
+pnpm run test:site
+```
+
+Run both suites with:
+
+```shell
+pnpm test
+```
+
+The aggregate command installs Playwright's browser dependencies before running the suites.
+`pnpm run build:test` type-checks all test code without executing it.
+
 ## User Telemetry
 
 The Fluid Framework website collects basic user telemetry to help improve the experience for our users.
