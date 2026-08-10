@@ -44,6 +44,7 @@ trigger:
     - main
     - next
     - lts
+    - test/agents/network-isolation-compliance-fixes
   paths:
     include:
     - .prettierignore
