@@ -14,7 +14,11 @@ import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/interna
 import type { InboundMessageResult } from "../opLifecycle/index.js";
 import { asBatchMetadata } from "../metadata.js";
 
-import { inboundVersionMarkUpdate } from "./inboundBatch.js";
+import {
+	inboundVersionMarkUpdate,
+	shouldSkipClippedChunk,
+	type ChunkStreamAlignment,
+} from "./inboundBatch.js";
 
 /**
  * Reads sequenced ops in `[from, to)` from delta storage, injected by the container so the runtime stays
@@ -191,8 +195,10 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 	 * sequence number when found and aborting the fetch once found or exhausted. Each op is routed through
 	 * the same unpack pipeline the live inbound path uses (chunk reassembly, ungroup, decompress) and
 	 * {@link inboundVersionMarkUpdate} derives its batch identity, so chunked batches resolve here too. The
-	 * scan anchor is not guaranteed to be a batch boundary, so a leading batch clipped by the anchor is
-	 * tolerated (its orphan end marker is dropped rather than fed to the processor). On a miss,
+	 * scan anchor is not guaranteed to be a batch or chunk boundary, so a leading batch clipped by the
+	 * anchor is tolerated (its orphan end marker is dropped rather than fed to the processor), and a
+	 * leading chunk stream clipped by the anchor is likewise skipped (its trailing chunks would otherwise
+	 * make the fresh {@link OpSplitter} throw "Chunk Id mismatch"). On a miss,
 	 * {@link classifyMiss} distinguishes `pending` (not sequenced yet) from `unresolvable` (ops trimmed).
 	 * See DEV.md.
 	 */
@@ -210,6 +216,8 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 			let carriedBatchId: string | undefined;
 			// Mirrors the processor's batch-in-progress state so we can drop an orphan end marker (below).
 			let inBatch = false;
+			// Per-clientId chunk-stream alignment for the clipped-leading-stream guard (see below).
+			const chunkAlignment: ChunkStreamAlignment = new Map();
 			while (true) {
 				const result = await stream.read();
 				if (result.done) {
@@ -221,6 +229,12 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 						// The anchor (`sequenceNumberLowerBound + 1`) may land inside a batch whose start
 						// precedes the window; its orphan end marker would trip the processor's 0x9d5 assert.
 						// Drop the clipped tail. The target batch is fully in-window, so this can't skip it.
+						continue;
+					}
+					// The anchor may likewise land mid-chunk-stream: a fresh OpSplitter fed chunk 2+ throws
+					// `DataCorruptionError("Chunk Id mismatch")`, rejecting resolve(). Skip such a clipped
+					// leading stream until it completes. The target batch is in-window, so this can't skip it.
+					if (shouldSkipClippedChunk(op, chunkAlignment)) {
 						continue;
 					}
 					// undefined = a system op, or an incomplete chunk awaiting later fragments.

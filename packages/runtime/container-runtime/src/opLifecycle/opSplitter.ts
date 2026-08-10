@@ -30,6 +30,16 @@ export function isChunkedMessage(message: ISequencedDocumentMessage): boolean {
 	return isChunkedContents(message.contents);
 }
 
+/**
+ * If `message` is a chunked op, returns its {@link IChunkedOp} descriptor (`chunkId`, `totalChunks`,
+ * …); otherwise `undefined`. Requires deserialized contents. Lets callers inspect chunk-stream
+ * sequencing — e.g. the version-mark history scan skipping a leading chunk stream that its scan anchor
+ * clipped — without re-deriving the ChunkedOp contents shape.
+ */
+export function tryGetChunkedOp(message: ISequencedDocumentMessage): IChunkedOp | undefined {
+	return isChunkedContents(message.contents) ? message.contents.contents : undefined;
+}
+
 interface IChunkedContents {
 	readonly type: typeof ContainerMessageType.ChunkedOp;
 	readonly contents: IChunkedOp;
