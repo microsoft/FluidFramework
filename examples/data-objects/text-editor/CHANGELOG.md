@@ -1,5 +1,9 @@
 # @fluid-example/text-editor
 
+## 2.115.0
+
+Dependency updates only.
+
 ## 2.114.0
 
 Dependency updates only.
