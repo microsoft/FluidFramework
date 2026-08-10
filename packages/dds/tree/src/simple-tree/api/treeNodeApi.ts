@@ -416,7 +416,10 @@ export function deltaMarksToArrayOpsWithRetain<TRetain extends ArrayNodeRetainOp
 		}
 	}
 	// DeltaMark arrays are allowed to omit the trailing retain, while our user facing array equivalents are not, so add it if necessary.
-	assert(processedLength <= postEditLength, "Array delta exceeds post-edit array length");
+	assert(
+		processedLength <= postEditLength,
+		0xd19 /* Array delta exceeds post-edit array length */,
+	);
 	if (processedLength < postEditLength) {
 		ops.push(buildRetainOp(postEditLength - processedLength, false));
 	}
