@@ -22,6 +22,7 @@ This insulates consumers from breaking changes in TypeScript's standard library 
 - `IDirectoryBeta` has been removed; use `IDirectory`, which now provides the Fluid-owned map contract
 - `StateMap.keys()` now returns `FluidIterableIterator` instead of `IterableIterator`
 - `PendingLocalStateStore` iteration methods now return `FluidIterableIterator` instead of built-in iterator types
+- BubbleBench's shared model contracts now use Fluid-owned iterable types and a minimal read-only collection shape so both Tree arrays and native arrays remain compatible
 
 #### Migration
 
@@ -35,6 +36,8 @@ const reversed = arrayNode.toReversed();
 // After
 const reversed = [...arrayNode].toReversed();
 ```
+
+Shared application interfaces that accept both Fluid containers and native containers should use `FluidIterable<T>` or declare only the collection members they require instead of requiring a built-in container type.
 
 Assignments to compatible built-in container types continue to work:
 
