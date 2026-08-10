@@ -85,8 +85,7 @@ steps:
           release: $release,
           publishOverride: $publishOverride,
           isLatest: $isLatest,
-          publishAsPartOfBuild: $publishAsPartOfBuild,
-          supportsDevFeed: false
+          publishAsPartOfBuild: $publishAsPartOfBuild
         }' > publish-metadata.json
 
       echo "Generated publish-metadata.json:"
