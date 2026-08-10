@@ -180,15 +180,11 @@ class ModularChangeMinimizer {
 		rootInputId: ChangeAtomId,
 		count: number,
 		endpoint: FieldId | undefined,
-		isTransientAttach: boolean,
+		isTransientAttachOfBuild: boolean,
 	): RangeQueryResult<boolean> {
 		const isInDetachedTree = this.isFieldDetachedInOutput(fieldId);
 
 		let countProcessed = count;
-		const isBuiltRootEntry = this.builtRootIds.getFirst(rootInputId, countProcessed);
-		countProcessed = isBuiltRootEntry.length;
-
-		const isTransientAttachOfRoot = isTransientAttach && isBuiltRootEntry.value === true;
 		const shouldSquashAttachEntry = this.shouldSquashAttach(
 			fieldId,
 			rootInputId,
@@ -197,45 +193,57 @@ class ModularChangeMinimizer {
 		);
 		countProcessed = shouldSquashAttachEntry.length;
 		return {
-			value: isInDetachedTree || shouldSquashAttachEntry.value || isTransientAttachOfRoot,
+			value: isInDetachedTree || shouldSquashAttachEntry.value || isTransientAttachOfBuild,
 			length: countProcessed,
 		};
 	}
 
 	private shouldDropDetach(
 		fieldId: FieldId,
+		detachId: ChangeAtomId,
 		rootInputId: ChangeAtomId | undefined,
 		count: number,
 		endpoint: FieldId | undefined,
 	): RangeQueryResult<boolean> {
-		const isInDetachedTree = this.isFieldDetachedInOutput(fieldId);
-
-		// XXX: Instead of checking if the move is to an attached tree,
-		// we should check whether we're dropping the attach, as it could be a move and remove of a build.
-		const isMoveToAttachedTree =
-			endpoint !== undefined && !this.isFieldDetachedInOutput(endpoint);
-		if (
-			this.shouldSquashDetach(fieldId, rootInputId) ||
-			(isInDetachedTree && !isMoveToAttachedTree)
-		) {
-			return { value: true, length: count };
+		let countProcessed = count;
+		if (this.shouldSquashDetach(fieldId, rootInputId)) {
+			return { value: true, length: countProcessed };
 		}
 
 		if (rootInputId !== undefined) {
 			// `inputRootId` is defined when this detach represents the rename of a detached root.
-			const isDetachOfBuiltRootEntry = this.builtRootIds.getFirst(rootInputId, count);
+			const isDetachOfBuiltRootEntry = this.builtRootIds.getFirst(rootInputId, countProcessed);
+			countProcessed = isDetachOfBuiltRootEntry.length;
 			const isDetachOfBuiltRoot = isDetachOfBuiltRootEntry.value !== undefined;
-
-			// If this is a rename of a built node, either it ends detached, or is moved elsewhere.
-			// If moved, we squash the detach away, leaving only an attach at the destination.
-			// If detached, the build is not used, so we drop the rename.
-			return {
-				value: isDetachOfBuiltRoot,
-				length: isDetachOfBuiltRootEntry.length,
-			};
+			if (isDetachOfBuiltRoot)
+				// If this is a rename of a built node, either it ends detached, or is moved elsewhere.
+				// If moved, we squash the detach away, leaving only an attach at the destination.
+				// If detached, the build is not used, so we drop the rename.
+				return {
+					value: true,
+					length: countProcessed,
+				};
 		}
 
-		return { value: false, length: count };
+		if (endpoint !== undefined) {
+			// We would have returned above if the detached nodes were newly built.
+			const isTransientAttachOfBuild = false;
+			const shouldDropAttachEntry = this.shouldDropAttach(
+				endpoint,
+				rootInputId ?? detachId,
+				countProcessed,
+				fieldId,
+				isTransientAttachOfBuild,
+			);
+			countProcessed = shouldDropAttachEntry.length;
+
+			if (!shouldDropAttachEntry.value) {
+				// This detach is part of a move, and we are not dropping the attach, so we must preserve the detach as well.
+				return { value: false, length: countProcessed };
+			}
+		}
+
+		return { value: this.isFieldDetachedInOutput(fieldId), length: countProcessed };
 	}
 
 	private filterEditsForBuildChange(fieldChange: FieldChange, fieldId: FieldId): FieldChange {
@@ -381,6 +389,7 @@ class ModularChangeMinimizer {
 
 		const shouldDropEntry = this.shouldDropDetach(
 			fieldId,
+			detachId,
 			inputRootId,
 			countProcessed,
 			moveEndpointEntry.value,
@@ -395,15 +404,14 @@ class ModularChangeMinimizer {
 		}
 
 		if (moveEndpointEntry.value !== undefined) {
-			// KLUDGE: We can't easily determine whether the nodes are transiently attached,
-			// but it is safe to pass `false`, because the flag is only used for built nodes,
-			// and we already drop detaches for built nodes.
+			// `shouldDropDetach` would be true and we would have returned already if the moved nodes were newly built.
+			const isTransientAttachOfBuild = false;
 			const willDropAttachEntry = this.shouldDropAttach(
 				moveEndpointEntry.value,
 				inputRootId ?? detachId,
 				countProcessed,
 				fieldId,
-				false, // isTransientAttach
+				isTransientAttachOfBuild,
 			);
 			countProcessed = willDropAttachEntry.length;
 			if (willDropAttachEntry.value) {
@@ -439,12 +447,19 @@ class ModularChangeMinimizer {
 		countProcessed = inputIdEntry.length;
 
 		const rootInputId = inputIdEntry.value ?? moveId;
+
+		const isBuiltRootEntry = this.builtRootIds.getFirst(rootInputId, countProcessed);
+		countProcessed = isBuiltRootEntry.length;
+
+		const isTransientAttachOfRoot =
+			outputRootId !== undefined && isBuiltRootEntry.value === true;
+
 		const shouldDropEntry = this.shouldDropAttach(
 			fieldId,
 			rootInputId,
 			countProcessed,
 			moveEndpointEntry.value,
-			outputRootId !== undefined,
+			isTransientAttachOfRoot,
 		);
 		countProcessed = shouldDropEntry.length;
 
@@ -458,6 +473,7 @@ class ModularChangeMinimizer {
 		if (moveEndpointEntry.value !== undefined) {
 			const willDropEndpointEntry = this.shouldDropDetach(
 				moveEndpointEntry.value,
+				moveId,
 				inputIdEntry.value,
 				countProcessed,
 				fieldId,
