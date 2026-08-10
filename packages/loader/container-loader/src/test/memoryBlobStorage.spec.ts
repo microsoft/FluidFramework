@@ -129,15 +129,13 @@ describe("MemoryBlobStorage", () => {
 
 		assert.deepStrictEqual(storage.getBlobIds(), ["0", "1"]);
 		const rehydratedBlobContents = await Promise.all(
-			storage
-				.getBlobIds()
-				.map(async (id) => [...new Uint8Array(await storage.readBlob(id))]),
+			storage.getBlobIds().map(async (id) => [...new Uint8Array(await storage.readBlob(id))]),
 		);
 		assert.deepStrictEqual(
 			rehydratedBlobContents,
-			legacyBlobContents.map((blobContent) =>
-				[...new Uint8Array(stringToBuffer(blobContent, "utf8"))],
-			),
+			legacyBlobContents.map((blobContent) => [
+				...new Uint8Array(stringToBuffer(blobContent, "utf8")),
+			]),
 		);
 	});
 
