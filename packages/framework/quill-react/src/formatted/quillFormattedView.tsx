@@ -248,7 +248,7 @@ function contentOpsToQuillDelta(
 	if (remainingQuillContent.length > 0) {
 		assert(
 			remainingQuillContent === "\n",
-			"Expected only Quill's mandatory terminal newline to remain",
+			0xd1a /* Expected only Quill's mandatory terminal newline to remain */,
 		);
 		// Delete the extra new line which is required by quill.
 		quillOps.push({ delete: 1 });
