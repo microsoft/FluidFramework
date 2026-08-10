@@ -166,6 +166,43 @@ describe("Tree change event ordering", () => {
 			]);
 		});
 
+		it("event ordering follows edit order, not tree depth — parent-first edit produces top-down events", () => {
+			class Child3 extends sf.object("Child3", {
+				value: sf.number,
+			}) {}
+
+			class Parent3 extends sf.object("Parent3", {
+				child: Child3,
+				ownProp: sf.string,
+			}) {}
+
+			const { root } = createViewWithRoot(Parent3, {
+				child: { value: 1 },
+				ownProp: "hello",
+			});
+
+			const log: string[] = [];
+
+			subscribeToNodeEvents(root.child, log, "child");
+			subscribeToNodeEvents(root, log, "parent");
+
+			// Edit parent FIRST, then child — events follow edit order, not tree depth
+			withBufferedTreeEvents(() => {
+				root.ownProp = "world";
+				root.child.value = 42;
+			});
+
+			// Events fire in the order nodes were first edited (parent before child),
+			// NOT bottom-up by tree depth. The "bottom-up" behavior observed in other tests
+			// is a consequence of editing the child first.
+			assert.deepEqual(log, [
+				"parent:nodeChanged",
+				"parent:treeChanged",
+				"child:nodeChanged",
+				"child:treeChanged",
+			]);
+		});
+
 		it("three-level deep hierarchy: events propagate bottom-up", () => {
 			const { root } = createViewWithRoot(RootObject, {
 				nested: { child: { value: 1 }, name: "outer" },
