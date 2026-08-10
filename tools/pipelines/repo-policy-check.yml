@@ -99,7 +99,6 @@ extends:
         - task: Bash@3
           displayName: Install root dependencies
           env:
-            NPM_CONFIG_USERCONFIG: $(NPM_CONFIG_USERCONFIG)
             PNPM_CONFIG_MINIMUM_RELEASE_AGE: '0'
             PNPM_CONFIG_TRUST_LOCKFILE: 'true'
             PNPM_CONFIG_TRUST_POLICY: 'off'

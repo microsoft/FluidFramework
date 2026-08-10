@@ -298,7 +298,6 @@ stages:
           displayName: Install ff_pipeline_host dependencies
           retryCountOnTaskFailure: 4
           env:
-            NPM_CONFIG_USERCONFIG: $(NPM_CONFIG_USERCONFIG)
             PNPM_CONFIG_MINIMUM_RELEASE_AGE: '0'
             PNPM_CONFIG_TRUST_LOCKFILE: 'true'
             PNPM_CONFIG_TRUST_POLICY: 'off'
@@ -314,7 +313,6 @@ stages:
           displayName: Install FluidFramework dependencies
           retryCountOnTaskFailure: 4
           env:
-            NPM_CONFIG_USERCONFIG: $(NPM_CONFIG_USERCONFIG)
             PNPM_CONFIG_MINIMUM_RELEASE_AGE: '0'
             PNPM_CONFIG_TRUST_LOCKFILE: 'true'
             PNPM_CONFIG_TRUST_POLICY: 'off'
