@@ -22,7 +22,7 @@ parameters:
 # unique AND all use of pnpm to install should be done before another use of this template.
 - name: pnpmStorePath
   type: string
-  default: $(Pipeline.Workspace)/.pnpm-store
+  default: $(Pipeline.Workspace)/.pnpm-store-cold-$(Build.BuildId)-$(System.JobId)
 
 # Where to place the user-level .npmrc file. Pnpm will be configured to reference this file for the duration of the job.
 # Rather than rely on the default $HOME/.npmrc, we specify a known-reasonable location here.
@@ -79,9 +79,9 @@ steps:
       # in the cache key.
       # The pnpm lockfile path is kept as an explicit key to avoid job cross-pollination
       # when using multiple workspaces in a pipeline.
-      key: '"pnpm-store" | "$(Agent.OS)" | "${{ parameters.buildDirectory }}/pnpm-lock.yaml" | ${{ parameters.requiredCacheKey }} | $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/pnpm-lock.yaml | ${{ parameters.additionalOptionalCacheKey }}'
+      key: '"pnpm-store-cold-validation" | "$(Build.BuildId)" | "$(System.JobId)" | "$(Agent.OS)" | "${{ parameters.buildDirectory }}/pnpm-lock.yaml" | ${{ parameters.requiredCacheKey }} | $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/pnpm-lock.yaml | ${{ parameters.additionalOptionalCacheKey }}'
       restoreKeys: |
-        "pnpm-store" | "$(Agent.OS)" | "${{ parameters.buildDirectory }}/pnpm-lock.yaml" | ${{ parameters.requiredCacheKey }}
+        "pnpm-store-cold-validation" | "$(Build.BuildId)" | "$(System.JobId)" | "$(Agent.OS)" | "${{ parameters.buildDirectory }}/pnpm-lock.yaml" | ${{ parameters.requiredCacheKey }}
 
 # Seed the userconfig .npmrc with the primary registry. This propagates to subsequent tasks so
 # that npmAuthenticate (below) and any later pnpm/npm invocation in the job reuse the same file.
