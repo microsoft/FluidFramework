@@ -128,7 +128,7 @@ function resolveApiDocument(
 	apiName: string,
 	apiType: ApiItemKind | undefined,
 ): GlobalDoc {
-	const documentIdPrefix = `api/${packageName}/${apiName.toLocaleLowerCase()}-`;
+	const documentIdPrefix = `api/${packageName}/${apiName.toLowerCase()}-`;
 	const candidates = documents.filter(
 		(document) =>
 			document.id.startsWith(documentIdPrefix) &&
