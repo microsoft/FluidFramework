@@ -13,6 +13,7 @@ import {
 import {
 	ContainerErrorTypes,
 	type IContainerContext,
+	type IContainerContextInternal,
 	type IBatchMessage,
 	type IContainerStorageService,
 } from "@fluidframework/container-definitions/internal";
@@ -2891,6 +2892,67 @@ describe("Runtime", () => {
 		});
 
 		describe("Version mark inbound update", () => {
+			it("resolves through context fetchOps and the historical unpack pipeline", async () => {
+				let capturedSignal: AbortSignal | undefined;
+				let readCount = 0;
+				const context = {
+					...getMockContext(),
+					fetchOps: async (from, to, abortSignal) => {
+						assert.equal(from, 11, "the history read starts after the exclusive lower bound");
+						assert.equal(to, undefined, "the history read has no fixed upper bound");
+						capturedSignal = abortSignal;
+						return {
+							read: async () => {
+								readCount++;
+								if (readCount === 1) {
+									return {
+										done: false as const,
+										value: [
+											{
+												type: MessageType.ClientJoin,
+												sequenceNumber: 11,
+												clientId: "system",
+											} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+											{
+												type: MessageType.Operation,
+												sequenceNumber: 12,
+												// eslint-disable-next-line unicorn/no-null -- server-generated ops have a null clientId
+												clientId: null,
+											} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+											{
+												type: MessageType.Operation,
+												sequenceNumber: 13,
+												clientId: "targetClient",
+												clientSequenceNumber: 7,
+												contents: {
+													type: ContainerMessageType.Rejoin,
+													contents: undefined,
+												},
+												metadata: { batchId: "targetBatch" },
+											} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+										],
+									};
+								}
+								return { done: true as const };
+							},
+						};
+					},
+				} satisfies Partial<IContainerContextInternal>;
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
+					context: context as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				assert.deepEqual(
+					await containerRuntime.versionMarkResolver.resolve("targetBatch", 10),
+					{ kind: "resolved", sequenceNumber: 13 },
+				);
+				assert.equal(readCount, 1, "the stream stops reading after the target batch");
+				assert.equal(capturedSignal?.aborted, true, "the fetch is aborted after the match");
+			});
+
 			it("does not notify version-mark listeners when inbound validation throws", async () => {
 				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
 					context: getMockContext() as IContainerContext,

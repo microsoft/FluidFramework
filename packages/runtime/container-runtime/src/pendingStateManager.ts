@@ -373,8 +373,15 @@ export class PendingStateManager implements IDisposable {
 	 * since capture points reference newly submitted local work in this session.
 	 */
 	public getMostRecentPendingBatchId(): string | undefined {
-		const pendingMessage = this.pendingMessages.peekBack();
-		return pendingMessage === undefined ? undefined : getEffectiveBatchId(pendingMessage);
+		const lastPendingMessage = this.pendingMessages.peekBack();
+		if (lastPendingMessage === undefined) {
+			return undefined;
+		}
+		const batchStart = this.pendingMessages.get(
+			this.pendingMessages.length - lastPendingMessage.batchInfo.length,
+		);
+		assert(batchStart !== undefined, "pending batch start message is missing");
+		return getEffectiveBatchId(batchStart);
 	}
 
 	public getLocalState(snapshotSequenceNumber?: number): {
