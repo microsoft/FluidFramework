@@ -224,7 +224,7 @@ export type FilterAttachFunc = (
 	/**
 	 * The output-context ID of the nodes being attached, if they are only transiently attached.
 	 */
-	inputRootId: ChangeAtomId | undefined,
+	outputRootId: ChangeAtomId | undefined,
 
 	/**
 	 * The ID of the associated detach, if this is part of a move with a different detach ID.
