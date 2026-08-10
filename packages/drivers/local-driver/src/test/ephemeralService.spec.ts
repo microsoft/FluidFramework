@@ -11,6 +11,7 @@ import {
 	cleanupEphemeralService,
 	getDefaultEphemeralService,
 	startEphemeralService,
+	startSessionService,
 	type EphemeralService,
 	EphemeralServiceContainer,
 } from "../ephemeralService.js";
@@ -190,6 +191,56 @@ describe("EphemeralService", () => {
 			await cleanupEphemeralService();
 			// Calling it again should also not throw.
 			await cleanupEphemeralService();
+		});
+	});
+
+	describe("SessionService", () => {
+		const storedValues = new Map<string, string>();
+		const sessionStorageDescriptor = Object.getOwnPropertyDescriptor(
+			globalThis,
+			"sessionStorage",
+		);
+
+		before(() => {
+			Object.defineProperty(globalThis, "sessionStorage", {
+				configurable: true,
+				value: {
+					clear: () => storedValues.clear(),
+					getItem: (key: string) => storedValues.get(key) ?? null,
+					key: (index: number) => [...storedValues.keys()][index] ?? null,
+					get length() {
+						return storedValues.size;
+					},
+					removeItem: (key: string) => storedValues.delete(key),
+					setItem: (key: string, value: string) => storedValues.set(key, value),
+				} satisfies Storage,
+			});
+		});
+
+		after(() => {
+			if (sessionStorageDescriptor === undefined) {
+				Reflect.deleteProperty(globalThis, "sessionStorage");
+			} else {
+				Object.defineProperty(globalThis, "sessionStorage", sessionStorageDescriptor);
+			}
+		});
+
+		it("persists a document across service instances", async () => {
+			const firstService = startSessionService();
+			services.push(firstService);
+			const firstClient = firstService.newClient(options);
+			const firstContainer = await firstClient.createAttachedContainer(stubFactory);
+			const { id } = firstContainer;
+			await firstService.synchronize();
+			await firstService.close();
+
+			const secondService = startSessionService();
+			services.push(secondService);
+			const secondContainer = await secondService
+				.newClient(options)
+				.loadContainer(id, stubFactory);
+
+			assert.strictEqual(secondContainer.id, id);
 		});
 	});
 });
