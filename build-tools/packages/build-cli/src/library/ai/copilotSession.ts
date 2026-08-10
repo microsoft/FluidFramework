@@ -150,7 +150,8 @@ export async function runAiSession(
 }
 
 export function resolveCopilotCliPath(): string {
-	// The SDK's default resolver constructs an invalid path for pnpm's scoped package layout.
+	// Resolve from the SDK's dependency context so pnpm selects its nested Copilot CLI.
+	// import.meta.resolve's parentURL overload is experimental, so use createRequire here.
 	const requireFromSdk = createRequire(import.meta.resolve("@github/copilot-sdk"));
 	return requireFromSdk.resolve("@github/copilot/npm-loader.js");
 }
