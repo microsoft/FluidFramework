@@ -146,7 +146,7 @@ export type OldestSupportedClient = `2.${bigint}.0`;
  * Oldest Fluid Framework client version that must be able to open and process documents written
  * by a service client.
  *
- * @deprecated 2.115.0. Removed in 3.10.0. Use {@link OldestSupportedClient} instead.
+ * @deprecated 2.116.0. Removed in 3.10.0. Use {@link OldestSupportedClient} instead.
  * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
  *
  * @input
@@ -205,7 +205,7 @@ export interface ServiceOptions {
 	 * @remarks
 	 * Specify at most one of `oldestSupportedClient` and `minVersionForCollaboration`.
 	 *
-	 * @deprecated 2.115.0. Removed in 3.10.0. Use
+	 * @deprecated 2.116.0. Removed in 3.10.0. Use
 	 * {@link ServiceOptions.oldestSupportedClient} instead.
 	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
 	 */

@@ -833,7 +833,7 @@ export interface LoadContainerRuntimeParams {
 	 * @remarks
 	 * Specifying both `oldestSupportedClient` and `minVersionForCollab` is an error.
 	 *
-	 * @deprecated 2.115.0. Removed in 3.10.0. Use
+	 * @deprecated 2.116.0. Removed in 3.10.0. Use
 	 * {@link LoadContainerRuntimeParams.oldestSupportedClient} instead.
 	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
 	 */
