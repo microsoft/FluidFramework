@@ -102,7 +102,7 @@ export type { TreeSchemaEncodingOptions } from "./getJsonSchema.js";
 export { getJsonSchema } from "./getJsonSchema.js";
 export { getSimpleSchema } from "./getSimpleSchema.js";
 export { checkSchemaCompatibility } from "./schemaCompatibilityTester.js";
-export { findEnabledUpgrades, type StagedUpgradeStatus } from "./stagedUpgradeQuery.js";
+export { type StagedUpgradeStatus } from "./schemaCompatibilityTester.js";
 export type {
 	Unenforced,
 	FieldSchemaAlphaUnsafe,

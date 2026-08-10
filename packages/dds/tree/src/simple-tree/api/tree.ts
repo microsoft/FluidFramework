@@ -32,7 +32,7 @@ import type { SimpleTreeSchema } from "../simpleSchema.js";
 import type { UnsafeUnknownSchema } from "../unsafeUnknownSchema.js";
 
 import type { TreeViewConfiguration } from "./configuration.js";
-import type { StagedUpgradeStatus } from "./stagedUpgradeQuery.js";
+import type { StagedUpgradeStatus } from "./schemaCompatibilityTester.js";
 import type {
 	RunTransactionParamsAlpha,
 	RunTransactionParamsBeta,
@@ -656,6 +656,8 @@ export interface TreeViewAlpha<
 	 * @remarks
 	 * This API is used for rollout safety checks.
 	 * It derives results from this view schema and the current stored schema.
+	 * When the view is not compatible with the stored schema (i.e. `compatibility.canView` is
+	 * false), the result may be incomplete because the schema walk is interrupted early.
 	 */
 	isStagedUpgradeEnabled(upgrade: SchemaUpgrade): StagedUpgradeStatus;
 

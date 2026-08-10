@@ -703,7 +703,7 @@ export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = Im
     readonly schema: TSchema;
 }
 
-// @alpha
+// @alpha @input
 export interface ITreeViewConfigurationAlpha<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> extends ITreeViewConfiguration<TSchema> {
     readonly stagedUpgradePolicy?: StagedSchemaUpgradePolicy;
 }
@@ -1429,6 +1429,9 @@ export interface StagedSchemaUpgradePolicyFactory {
     readonly restrictive: StagedSchemaUpgradePolicy;
 }
 
+// @alpha
+export type StagedUpgradeStatus = "disabled" | "partial" | "enabled";
+
 // @beta @system
 export namespace System_TableSchema {
     // @sealed @system
@@ -2065,7 +2068,7 @@ export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | Unsa
     // (undocumented)
     fork(): ReturnType<TreeBranch["fork"]> & TreeViewAlpha<TSchema>;
     initialize(content: InsertableField<TSchema>): void;
-    isStagedUpgradeEnabled(upgrade: SchemaUpgrade): boolean;
+    isStagedUpgradeEnabled(upgrade: SchemaUpgrade): StagedUpgradeStatus;
     // (undocumented)
     get root(): ReadableField<TSchema>;
     set root(newRoot: InsertableField<TSchema>);
