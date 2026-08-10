@@ -86,7 +86,7 @@ extends:
   parameters:
     publish: ${{ variables.publish }}
     publishOverride: ${{ parameters.publishOverride }}
-    publishAsPartOfBuild: true
+    publishAsPartOfBuild: false
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildDirectory: ${{ variables.FluidFrameworkDirectory }}/tools/api-markdown-documenter
     testCoverage: ${{ variables.testCoverage }}
