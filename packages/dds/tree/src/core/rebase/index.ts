@@ -12,6 +12,8 @@ export {
 	type GraphCommit,
 	CommitKind,
 	type CommitMetadata,
+	CommitOutcome,
+	type LocalCommitEvents,
 	type LocalChangeMetadata,
 	type RemoteChangeMetadata,
 	type ChangeMetadata,

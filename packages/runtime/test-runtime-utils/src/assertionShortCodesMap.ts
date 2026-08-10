@@ -1957,5 +1957,10 @@ export const shortCodeMap = {
 	"0xd14": "id should be defined when loading a container",
 	"0xd15": "Container not detached",
 	"0xd16": "Container failed to attach",
-	"0xd17": "Registry must be a function"
+	"0xd17": "Registry must be a function",
+	"0xd18": "clamp requires min <= max",
+	"0xd19": "Array delta exceeds post-edit array length",
+	"0xd1a": "Expected only Quill's mandatory terminal newline to remain",
+	"0xd1b": "pending batch start message is missing",
+	"0xd1c": "historical op reader returned an op before the requested range start"
 };

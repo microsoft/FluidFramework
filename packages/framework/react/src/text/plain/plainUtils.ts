@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { clamp } from "@fluidframework/core-utils/internal";
 import {
-	type TextAsTree,
+	type PlainText,
 	TreeAlpha,
 	utf16LengthForCodePoints,
 } from "@fluidframework/tree/internal";
-
-import { clamp } from "../../utilities.js";
 
 /**
  * A text selection or cursor range expressed as UTF-16 code-unit offsets.
@@ -45,7 +44,7 @@ export interface ApplyTextOpsResult {
  * Apply a character-level delta to an existing text value, producing the new value and a
  * selection range adjusted to track the same logical position across the edit.
  * @remarks
- * `ops` are the deltas delivered by {@link @fluidframework/tree#TextAsTree.Members.onCharactersChanged}.
+ * `ops` are the deltas delivered by {@link @fluidframework/tree#PlainText.Members.onCharactersChanged}.
  * Applying them incrementally avoids a full O(N) re-read of the text on every change.
  *
  * This function is intentionally DOM-free so consumers maintaining their own UI (a custom React
@@ -60,7 +59,7 @@ export interface ApplyTextOpsResult {
 export function applyTextOps(
 	oldValue: string,
 	selection: TextSelection,
-	ops: readonly TextAsTree.TextOp[],
+	ops: readonly PlainText.TextOp[],
 ): ApplyTextOpsResult {
 	const { start: selectionStart, end: selectionEnd } = selection;
 
@@ -153,7 +152,7 @@ function commonAffixLengths<T>(
  * Best-effort remap of a tracked selection across a text change that arrived without an incremental
  * delta (so the whole string had to be re-read).
  * @remarks
- * When no delta is available (see {@link @fluidframework/tree#TextAsTree.Members.onCharactersChanged}),
+ * When no delta is available (see {@link @fluidframework/tree#PlainText.Members.onCharactersChanged}),
  * the ops that transformed `oldText` into `newText` are unknown, so a selection range cannot be
  * moved faithfully. This makes a best effort by inferring a single contiguous edit the same way
  * {@link computeSync} does — the longest shared prefix/suffix between `oldText` and `newText`, with
@@ -225,7 +224,7 @@ export function remapSelectionOnReread(
  * @example Avoiding re-entrant edits
  *
  * Mutating the tree synchronously fires
- * {@link @fluidframework/tree#TextAsTree.Members.onCharactersChanged}. If you also subscribe to that
+ * {@link @fluidframework/tree#PlainText.Members.onCharactersChanged}. If you also subscribe to that
  * event to apply remote edits to your view, set a re-entrancy flag
  * before calling this and ignore the event while it is set — otherwise the edit you just made is
  * echoed straight back onto your view:
@@ -248,7 +247,7 @@ export function remapSelectionOnReread(
  * ```
  * @alpha
  */
-export function syncTextToTree(root: TextAsTree.Tree, newText: string): void {
+export function syncTextToTree(root: PlainText.Tree, newText: string): void {
 	const sync = computeSync(root.charactersCopy(), [...newText]);
 
 	if (sync.remove === undefined && sync.insert === undefined) {
