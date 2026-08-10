@@ -33,7 +33,7 @@ export interface IHistoricalOpReader {
 /**
  * Result of resolving a pending batchId.
  *
- * @internal
+ * @legacy @alpha
  */
 export type ResolveResult =
 	| { readonly kind: "resolved"; readonly sequenceNumber: number }
@@ -46,7 +46,7 @@ export type ResolveResult =
  * work, so the mark already points at a durable sequence number. The app packs its own stored record from
  * this — the runtime does not define the stored locator shape.
  *
- * @internal
+ * @legacy @alpha
  */
 export type VersionMarkCapture =
 	| {
@@ -59,7 +59,7 @@ export type VersionMarkCapture =
 /**
  * Runtime-owned resolver for app-stored version mark locators.
  *
- * @internal
+ * @legacy @alpha
  */
 export interface IVersionMarkResolver {
 	/**
@@ -68,19 +68,29 @@ export interface IVersionMarkResolver {
 	 * mark data atomically: a `pending` capture (`batchId` + `referenceSequenceNumber`) when there is an
 	 * unacked local batch, or a `resolved` capture (`sequenceNumber`) when there is no in-flight local work.
 	 *
-	 * @remarks Async because a correct capture must wait for the flush before the `batchId` exists — a
-	 * synchronous read would return an older batch or `undefined`. Sealing the batch is a side effect
-	 * (it submits the current batch), so capture at savepoint boundaries, not per keystroke.
+	 * @remarks Sealing the batch is a side effect (it submits the current batch), so capture at savepoint
+	 * boundaries, not per keystroke.
+	 *
+	 * @returns The pending batch identity and reference sequence number, or the current sequence number
+	 * when there is no pending local batch.
 	 */
-	captureVersionMark(): Promise<VersionMarkCapture>;
+	sealAndCaptureVersionMark(): VersionMarkCapture;
 	/**
 	 * Resolves a pending mark's batchId to a global sequence number (`referenceSequenceNumber` is the lower
 	 * bound for a history read). A `resolved` sequence number feeds the loader's `loadContainerToSequenceNumber`.
+	 *
+	 * @param batchId - The stable identity of the pending batch.
+	 * @param referenceSequenceNumber - The exclusive lower bound for the historical op search.
+	 * @returns The resolved sequence number, or a result indicating that the batch remains pending or can
+	 * no longer be resolved.
 	 */
 	resolve(batchId: string, referenceSequenceNumber: number): Promise<ResolveResult>;
 	/**
 	 * Subscribes to inbound batch sequencing: fires `(batchId, sequenceNumber)` per batch so any connected
 	 * client can promote a matching pending mark. Returns an unsubscribe function.
+	 *
+	 * @param listener - Called with the stable batch identity and its final sequence number.
+	 * @returns A function that unsubscribes the listener.
 	 */
 	onBatchSequenced(listener: (batchId: string, sequenceNumber: number) => void): () => void;
 }
@@ -96,7 +106,8 @@ export interface VersionMarkResolverRuntimeHooks {
 	readonly logger: TelemetryLoggerExt;
 	/**
 	 * Seals the current outbound batch (flushes the runtime), so a just-submitted local edit is moved into
-	 * the pending state with a stable `batchId` before {@link IVersionMarkResolver.captureVersionMark} reads it.
+	 * the pending state with a stable `batchId` before
+	 * {@link IVersionMarkResolver.sealAndCaptureVersionMark} reads it.
 	 */
 	readonly flushPendingBatch: () => void;
 	/**
@@ -140,7 +151,7 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 		return this.tracking;
 	}
 
-	public async captureVersionMark(): Promise<VersionMarkCapture> {
+	public sealAndCaptureVersionMark(): VersionMarkCapture {
 		// Seal the current batch so a just-submitted local edit is flushed into the pending state with a
 		// stable batchId (which is only assigned at flush) before we read it.
 		this.hooks.flushPendingBatch();

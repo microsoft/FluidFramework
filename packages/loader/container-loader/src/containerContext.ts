@@ -74,8 +74,7 @@ export interface IContainerContextConfig
 	// This "overrides" IContainerContext.snapshotWithContents to be required but allow `undefined`.
 	readonly snapshotWithContents: IContainerContext["snapshotWithContents"] | undefined;
 	// fetchOps is an internal-only capability (IContainerContextInternal), not part of the public
-	// IContainerContext contract. The config key is required so support is explicit, but its value may be
-	// undefined because fetchOps is optional on IContainerContextInternal.
+	// IContainerContext contract. Optional: hosts may not provide op reading.
 	readonly fetchOps: IContainerContextInternal["fetchOps"];
 }
 

@@ -1903,7 +1903,7 @@ export class ContainerRuntime
 				namespace: "VersionMarkResolver",
 			}),
 			// Seal the current outbound batch so a just-submitted edit gets a stable batchId in the pending
-			// state before captureVersionMark reads it (a batchId is only assigned when a batch is flushed).
+			// state before sealAndCaptureVersionMark reads it (a batchId is only assigned when flushed).
 			flushPendingBatch: () => this.flush(),
 			// Wire the container-provided op reader (if any) so resolution can read historical ops.
 			getHistoricalOpReader: fetchOps ? () => ({ fetchMessages: fetchOps }) : undefined,
