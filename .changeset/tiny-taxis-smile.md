@@ -2,7 +2,6 @@
 "@fluidframework/tinylicious-driver": minor
 "__section": feature
 ---
+Add ServiceClient for Tinylicious
 
-Add a Unified ServiceClient for Tinylicious
-
-The new alpha `createTinyliciousServiceClient` API creates and loads containers backed by a Tinylicious service, including forwarded HTTPS endpoints such as GitHub Codespaces.
+The new alpha `createTinyliciousServiceClient` API creates a `ServiceClient` backed by a Tinylicious service.

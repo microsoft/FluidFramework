@@ -138,6 +138,9 @@ Arguments:
 -   `usesTinylicious`: Whether or not running the example app requires running [Tinylicious][] from another terminal.
     -   Default: `true`.
     -   Only observed if `gettingStarted` is `true`.
+-   `serviceClient`: Whether or not to generate instructions for examples that use the unified ServiceClient workflow.
+    -   Default: `false`.
+    -   Only observed if `gettingStarted` is `true`.
 
 #### `README_FOOTER`
 

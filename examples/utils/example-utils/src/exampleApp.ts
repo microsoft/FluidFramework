@@ -35,10 +35,12 @@ export const defaultServiceOptions: ServiceOptions = {
  * Configures a service client based on the `fluidClient` URL query parameter.
  *
  * @remarks
- * This helper is designed to work with `exampleAppConfig` from
- * `@fluid-example/webpack-fluid-loader`, which provides the browser compatibility required by
- * the local-driver services. Set `fluidClient` to `ephemeral`, `session`, or `tinylicious`;
- * missing and unknown values use the ephemeral service.
+ * This helper is designed to work with
+ * {@link @fluid-example/webpack-fluid-loader#exampleAppConfig}, which provides the browser
+ * compatibility required by the local-driver services.
+ * Reads the `fluidClient` URL query parameter.
+ * Accepts `ephemeral`, `session`, or `tinylicious`:
+ * missing and unknown values default to the ephemeral service.
  *
  * @param options - Options used to configure the service client. Defaults to {@link defaultServiceOptions}.
  * @returns A client for the selected service, or the ephemeral service by default.

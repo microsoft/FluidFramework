@@ -304,6 +304,9 @@ function libraryReadmeHeaderTransform(content, options, config) {
  * @param {"TRUE" | "FALSE" | undefined} options.usesTinylicious - (optional) Whether or not the example app workflow uses {@link https://github.com/microsoft/FluidFramework/tree/main/server/routerlicious/packages/tinylicious | Tinylicious}.
  * Only used if `gettingStarted` is specified.
  * Default: `TRUE`.
+ * @param {"TRUE" | "FALSE" | undefined} options.serviceClient - (optional) Whether or not to generate instructions for the unified ServiceClient example workflow.
+ * Only used if `gettingStarted` is specified.
+ * Default: `FALSE`.
  * @param {object} config - Transform configuration.
  * @param {string} config.originalPath - Path to the document being modified.
  */
@@ -326,6 +329,7 @@ function exampleAppReadmeHeaderTransform(content, options, config) {
 			generateExampleGettingStartedSection(
 				resolvedPackageJsonPath,
 				/* includeTinyliciousStep: */ options.usesTinylicious !== "FALSE",
+				/* usesServiceClient: */ options.serviceClient === "TRUE",
 				/* headingOptions: */ sectionHeadingOptions,
 			),
 		);
