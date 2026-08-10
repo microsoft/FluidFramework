@@ -265,7 +265,7 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 		// trim inference below is meaningless, so fail loudly rather than misclassify.
 		assert(
 			firstScannedSequenceNumber === undefined || firstScannedSequenceNumber >= from,
-			"historical op reader returned an op before the requested range start",
+			0xd1c /* historical op reader returned an op before the requested range start */,
 		);
 		const tip = this.hooks.getCurrentSequenceNumber();
 		if (from > tip) {

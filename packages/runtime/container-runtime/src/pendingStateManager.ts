@@ -380,7 +380,7 @@ export class PendingStateManager implements IDisposable {
 		const batchStart = this.pendingMessages.get(
 			this.pendingMessages.length - lastPendingMessage.batchInfo.length,
 		);
-		assert(batchStart !== undefined, "pending batch start message is missing");
+		assert(batchStart !== undefined, 0xd1b /* pending batch start message is missing */);
 		return getEffectiveBatchId(batchStart);
 	}
 
