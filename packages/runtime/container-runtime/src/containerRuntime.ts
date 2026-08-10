@@ -1547,11 +1547,13 @@ export class ContainerRuntime
 	private readonly blobManager: BlobManager;
 	private readonly pendingStateManager: PendingStateManager;
 	private readonly duplicateBatchDetector: DuplicateBatchDetector | undefined;
+	private readonly versionMarkResolverInternal: VersionMarkResolver;
 	/**
 	 * Host-facing version mark resolver.
 	 */
-	public readonly versionMarkResolver: IVersionMarkResolver;
-	private readonly versionMarkResolverInternal: VersionMarkResolver;
+	public get versionMarkResolver(): IVersionMarkResolver {
+		return this.versionMarkResolverInternal;
+	}
 	private readonly outbox: Outbox;
 	private readonly garbageCollector: IGarbageCollector;
 
@@ -1943,7 +1945,6 @@ export class ContainerRuntime
 					}
 				: undefined,
 		});
-		this.versionMarkResolver = this.versionMarkResolverInternal;
 
 		let outerDeltaManager: IDeltaManagerFull = this.innerDeltaManager;
 		this.useDeltaManagerOpsProxy =
