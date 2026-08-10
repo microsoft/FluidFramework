@@ -1481,9 +1481,9 @@ function generateEditedTreeScenarios(): EditTreeScenarios {
 		});
 	}
 	function applyOutroDetachEdits(root: Records) {
-		delete root.detachedBuilt;
-		delete root.detachedPrior;
-		delete root.detachingPrior;
+		root.detachedBuilt = undefined;
+		root.detachedPrior = undefined;
+		root.detachingPrior = undefined;
 	}
 	function getMarkers(start: NodeFlowEndpoint, end: NodeFlowEndpoint): string {
 		const origin = start.includes("Built") ? "🐣" : "⌚";
@@ -1618,13 +1618,13 @@ function generateEditedTreeScenarios(): EditTreeScenarios {
 							}
 							if (destinationEndpoint.includes("Root")) {
 								const source = getRecord(root, sourceEndpoint);
-								delete source.optional;
+								source.optional = undefined;
 							}
 						} else {
 							const source = getRecord(root, sourceEndpoint);
 							const destination = getRecord(root, destinationEndpoint);
 							const movedBox = source.optional;
-							delete source.optional;
+							source.optional = undefined;
 							destination.optional = movedBox;
 						}
 						applyOutroDetachEdits(root);
@@ -1636,7 +1636,7 @@ function generateEditedTreeScenarios(): EditTreeScenarios {
 					expectSurvivingMarker: true,
 				};
 
-				const buildsFoReplace = destinationEndpoint.includes("Root") ? 1 : 0;
+				const buildsForReplace = destinationEndpoint.includes("Root") ? 1 : 0;
 				scenariosSet.required = {
 					schema: Records,
 					initialContent: initialContentGenerator,
@@ -1668,8 +1668,8 @@ function generateEditedTreeScenarios(): EditTreeScenarios {
 						applyOutroDetachEdits(root);
 					},
 					unminimizedBuildExpectations: {
-						builds: 2 + buildsForSource + buildsFoReplace,
-						tops: 2 + buildsForSource + buildsFoReplace,
+						builds: 2 + buildsForSource + buildsForReplace,
+						tops: 2 + buildsForSource + buildsForReplace,
 					},
 					expectSurvivingMarker: true,
 				};
