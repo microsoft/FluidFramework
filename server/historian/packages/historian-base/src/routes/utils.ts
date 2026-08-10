@@ -345,7 +345,7 @@ function validateAlfredDocumentResponse(
 			typeof document.scheduledDeletionTime !== "string") ||
 		(document.isEphemeralContainer !== undefined &&
 			typeof document.isEphemeralContainer !== "boolean") ||
-		(document.storageName !== undefined && typeof document.storageName !== "string")
+		(document.storageName != null && typeof document.storageName !== "string")
 	) {
 		const error = new NetworkError(502, "Invalid document response from Alfred.");
 		logOwnershipOutcome(tenantId, documentId, operation, routeType, "dependencyError", error);

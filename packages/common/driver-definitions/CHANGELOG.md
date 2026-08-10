@@ -1,5 +1,18 @@
 # @fluidframework/driver-definitions
 
+## 2.115.0
+
+### Minor Changes
+
+- Simplify creating attached Fluid containers with ServiceClient ([#27789](https://github.com/microsoft/FluidFramework/pull/27789)) [1671447b57](https://github.com/microsoft/FluidFramework/commit/1671447b57852875ec90a9d1c16b3817ce25e004)
+
+  Added `ServiceClient.createAttachedContainer` which creates and attaches a Fluid container in one operation.
+  It is a convenient shorthand for calling `createContainer` followed by `attach` when detached-container access is not needed.
+
+  ```typescript
+  const container = await client.createAttachedContainer(dataStoreKind);
+  ```
+
 ## 2.114.0
 
 ### Minor Changes
