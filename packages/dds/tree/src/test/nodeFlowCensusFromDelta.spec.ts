@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
 import {
 	rootFieldKey,
 	type DeltaFieldMap,
@@ -13,34 +12,12 @@ import {
 import { nodeFlowCensusFromDelta } from "./nodeFlowCensusFromDelta.js";
 import { brand } from "../util/index.js";
 import { chunkFromJsonTrees } from "./utils.js";
-import { allEndpoints, NodeFlowEndpoint, type NodeFlowCensus } from "./nodeFlowCensus.js";
+import { assertOnlyFlows, NodeFlowEndpoint } from "./nodeFlowCensus.js";
 
 const id0 = { minor: 0 };
 const id1 = { minor: 1 };
 const id10 = { minor: 10 };
 const id100 = { minor: 100 };
-
-type PartialCensus = Partial<
-	Record<NodeFlowEndpoint, Partial<Record<NodeFlowEndpoint, number>>>
->;
-
-function assertPartial(
-	actual: NodeFlowCensus,
-	expected: PartialCensus,
-	implicitValue: number = 0,
-): void {
-	for (const from of allEndpoints) {
-		for (const to of allEndpoints) {
-			const actualCount = actual[from][to];
-			const expectedCount = expected[from]?.[to] ?? implicitValue;
-			assert.equal(
-				actualCount,
-				expectedCount,
-				`Expected ${expectedCount} nodes to flow from ${from} to ${to}, but got ${actualCount}`,
-			);
-		}
-	}
-}
 
 const fooKey: FieldKey = brand("foo");
 const barKey: FieldKey = brand("bar");
@@ -105,7 +82,7 @@ describe("getDeltaCensus", () => {
 				],
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedPriorRoot]: { [NodeFlowEndpoint.DetachedPriorRoot]: 3 },
 			});
 		});
@@ -120,7 +97,7 @@ describe("getDeltaCensus", () => {
 				]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedPriorRoot]: {
 					[NodeFlowEndpoint.UnderAttachedPriorTree]: 11,
 				},
@@ -137,7 +114,7 @@ describe("getDeltaCensus", () => {
 				]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.UnderAttachedPriorTree]: { [NodeFlowEndpoint.DetachedPriorRoot]: 1 },
 				[NodeFlowEndpoint.DetachedPriorRoot]: {
 					[NodeFlowEndpoint.UnderDetachingPriorTree]: 10,
@@ -148,7 +125,7 @@ describe("getDeltaCensus", () => {
 		it(`to ${NodeFlowEndpoint.UnderDetachedPriorTree}`, () => {
 			const delta: DeltaRoot = { global: [{ id: id0, fields: attachNodes1Through10 }] };
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedPriorRoot]: {
 					[NodeFlowEndpoint.DetachedPriorRoot]: 1,
 					[NodeFlowEndpoint.UnderDetachedPriorTree]: 10,
@@ -162,7 +139,7 @@ describe("getDeltaCensus", () => {
 				global: [{ id: id0, fields: attachNodes1Through10 }],
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedBuiltRoot]: { [NodeFlowEndpoint.DetachedBuiltRoot]: 1 },
 				[NodeFlowEndpoint.DetachedPriorRoot]: {
 					[NodeFlowEndpoint.UnderDetachedBuiltTree]: 10,
@@ -176,7 +153,7 @@ describe("getDeltaCensus", () => {
 				fields: new Map([[rootFieldKey, { marks: [{ count: 1, attach: id0 }] }]]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedPriorRoot]: {
 					[NodeFlowEndpoint.UnderAttachedPriorTree]: 1,
 					[NodeFlowEndpoint.UnderAttachingPriorTree]: 10,
@@ -191,7 +168,7 @@ describe("getDeltaCensus", () => {
 				fields: new Map([[rootFieldKey, { marks: [{ count: 1, attach: id0 }] }]]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedBuiltRoot]: {
 					[NodeFlowEndpoint.UnderAttachedPriorTree]: 1,
 				},
@@ -212,7 +189,7 @@ describe("getDeltaCensus", () => {
 				rename: [{ oldId: id1, newId: id10, count: 5 }],
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedBuiltRoot]: { [NodeFlowEndpoint.DetachedBuiltRoot]: 11 },
 			});
 		});
@@ -231,7 +208,7 @@ describe("getDeltaCensus", () => {
 				]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedBuiltRoot]: {
 					[NodeFlowEndpoint.UnderAttachedPriorTree]: 11,
 				},
@@ -249,7 +226,7 @@ describe("getDeltaCensus", () => {
 				]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.UnderAttachedPriorTree]: { [NodeFlowEndpoint.DetachedPriorRoot]: 1 },
 				[NodeFlowEndpoint.DetachedBuiltRoot]: {
 					[NodeFlowEndpoint.UnderDetachingPriorTree]: 10,
@@ -263,7 +240,7 @@ describe("getDeltaCensus", () => {
 				global: [{ id: id0, fields: attachNodes1Through10 }],
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedPriorRoot]: { [NodeFlowEndpoint.DetachedPriorRoot]: 1 },
 				[NodeFlowEndpoint.DetachedBuiltRoot]: {
 					[NodeFlowEndpoint.UnderDetachedPriorTree]: 10,
@@ -280,7 +257,7 @@ describe("getDeltaCensus", () => {
 				global: [{ id: id0, fields: attachNodes1Through10 }],
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedBuiltRoot]: {
 					[NodeFlowEndpoint.DetachedBuiltRoot]: 1,
 					[NodeFlowEndpoint.UnderDetachedBuiltTree]: 10,
@@ -295,7 +272,7 @@ describe("getDeltaCensus", () => {
 				fields: new Map([[rootFieldKey, { marks: [{ count: 1, attach: id0 }] }]]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedPriorRoot]: { [NodeFlowEndpoint.UnderAttachedPriorTree]: 1 },
 				[NodeFlowEndpoint.DetachedBuiltRoot]: {
 					[NodeFlowEndpoint.UnderAttachingPriorTree]: 10,
@@ -313,7 +290,7 @@ describe("getDeltaCensus", () => {
 				fields: new Map([[rootFieldKey, { marks: [{ count: 1, attach: id0 }] }]]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedBuiltRoot]: {
 					[NodeFlowEndpoint.UnderAttachedPriorTree]: 1,
 					[NodeFlowEndpoint.UnderAttachingBuiltTree]: 10,
@@ -338,7 +315,7 @@ describe("getDeltaCensus", () => {
 				]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.UnderAttachedPriorTree]: {
 					[NodeFlowEndpoint.DetachedPriorRoot]: 11,
 				},
@@ -362,7 +339,7 @@ describe("getDeltaCensus", () => {
 				]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.UnderAttachedPriorTree]: {
 					[NodeFlowEndpoint.UnderAttachedPriorTree]: 11,
 				},
@@ -385,7 +362,7 @@ describe("getDeltaCensus", () => {
 				]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.UnderAttachedPriorTree]: {
 					[NodeFlowEndpoint.DetachedPriorRoot]: 1,
 					[NodeFlowEndpoint.UnderDetachingPriorTree]: 11,
@@ -409,7 +386,7 @@ describe("getDeltaCensus", () => {
 				]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedPriorRoot]: { [NodeFlowEndpoint.DetachedPriorRoot]: 1 },
 				[NodeFlowEndpoint.UnderAttachedPriorTree]: {
 					[NodeFlowEndpoint.UnderDetachedPriorTree]: 11,
@@ -434,7 +411,7 @@ describe("getDeltaCensus", () => {
 				]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedBuiltRoot]: { [NodeFlowEndpoint.DetachedBuiltRoot]: 1 },
 				[NodeFlowEndpoint.UnderAttachedPriorTree]: {
 					[NodeFlowEndpoint.UnderDetachedBuiltTree]: 11,
@@ -458,7 +435,7 @@ describe("getDeltaCensus", () => {
 				]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedPriorRoot]: { [NodeFlowEndpoint.UnderAttachedPriorTree]: 1 },
 				[NodeFlowEndpoint.UnderAttachedPriorTree]: {
 					[NodeFlowEndpoint.UnderAttachingPriorTree]: 11,
@@ -483,7 +460,7 @@ describe("getDeltaCensus", () => {
 				]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedBuiltRoot]: { [NodeFlowEndpoint.UnderAttachedPriorTree]: 1 },
 				[NodeFlowEndpoint.UnderAttachedPriorTree]: {
 					[NodeFlowEndpoint.UnderAttachingBuiltTree]: 11,
@@ -503,7 +480,7 @@ describe("getDeltaCensus", () => {
 				]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.UnderAttachedPriorTree]: { [NodeFlowEndpoint.DetachedPriorRoot]: 1 },
 				[NodeFlowEndpoint.UnderDetachingPriorTree]: {
 					[NodeFlowEndpoint.DetachedPriorRoot]: 10,
@@ -527,7 +504,7 @@ describe("getDeltaCensus", () => {
 				]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.UnderAttachedPriorTree]: { [NodeFlowEndpoint.DetachedPriorRoot]: 1 },
 				[NodeFlowEndpoint.UnderDetachingPriorTree]: {
 					[NodeFlowEndpoint.UnderAttachedPriorTree]: 11,
@@ -550,7 +527,7 @@ describe("getDeltaCensus", () => {
 				]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.UnderAttachedPriorTree]: { [NodeFlowEndpoint.DetachedPriorRoot]: 2 },
 				[NodeFlowEndpoint.UnderDetachingPriorTree]: {
 					[NodeFlowEndpoint.UnderDetachingPriorTree]: 10,
@@ -569,7 +546,7 @@ describe("getDeltaCensus", () => {
 				]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedPriorRoot]: { [NodeFlowEndpoint.DetachedPriorRoot]: 1 },
 				[NodeFlowEndpoint.UnderAttachedPriorTree]: {
 					[NodeFlowEndpoint.DetachedPriorRoot]: 1,
@@ -592,7 +569,7 @@ describe("getDeltaCensus", () => {
 				]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedBuiltRoot]: { [NodeFlowEndpoint.DetachedBuiltRoot]: 1 },
 				[NodeFlowEndpoint.UnderAttachedPriorTree]: {
 					[NodeFlowEndpoint.DetachedPriorRoot]: 1,
@@ -619,7 +596,7 @@ describe("getDeltaCensus", () => {
 				]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedPriorRoot]: { [NodeFlowEndpoint.UnderAttachedPriorTree]: 1 },
 				[NodeFlowEndpoint.UnderAttachedPriorTree]: { [NodeFlowEndpoint.DetachedPriorRoot]: 1 },
 				[NodeFlowEndpoint.UnderDetachingPriorTree]: {
@@ -645,7 +622,7 @@ describe("getDeltaCensus", () => {
 				]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedBuiltRoot]: { [NodeFlowEndpoint.UnderAttachedPriorTree]: 1 },
 				[NodeFlowEndpoint.UnderAttachedPriorTree]: { [NodeFlowEndpoint.DetachedPriorRoot]: 1 },
 				[NodeFlowEndpoint.UnderDetachingPriorTree]: {
@@ -662,7 +639,7 @@ describe("getDeltaCensus", () => {
 				global: [{ id: id100, fields: detachNodes1Through10 }],
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedBuiltRoot]: { [NodeFlowEndpoint.DetachedBuiltRoot]: 1 },
 				[NodeFlowEndpoint.UnderDetachedBuiltTree]: {
 					[NodeFlowEndpoint.DetachedBuiltRoot]: 10,
@@ -687,7 +664,7 @@ describe("getDeltaCensus", () => {
 				]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedBuiltRoot]: { [NodeFlowEndpoint.DetachedBuiltRoot]: 1 },
 				[NodeFlowEndpoint.UnderDetachedBuiltTree]: {
 					[NodeFlowEndpoint.UnderAttachedPriorTree]: 11,
@@ -707,7 +684,7 @@ describe("getDeltaCensus", () => {
 				]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedBuiltRoot]: { [NodeFlowEndpoint.DetachedBuiltRoot]: 1 },
 				[NodeFlowEndpoint.UnderAttachedPriorTree]: { [NodeFlowEndpoint.DetachedPriorRoot]: 1 },
 				[NodeFlowEndpoint.UnderDetachedBuiltTree]: {
@@ -725,7 +702,7 @@ describe("getDeltaCensus", () => {
 				],
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedBuiltRoot]: { [NodeFlowEndpoint.DetachedBuiltRoot]: 1 },
 				[NodeFlowEndpoint.DetachedPriorRoot]: { [NodeFlowEndpoint.DetachedPriorRoot]: 1 },
 				[NodeFlowEndpoint.UnderDetachedBuiltTree]: {
@@ -746,7 +723,7 @@ describe("getDeltaCensus", () => {
 				],
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedBuiltRoot]: { [NodeFlowEndpoint.DetachedBuiltRoot]: 2 },
 				[NodeFlowEndpoint.UnderDetachedBuiltTree]: {
 					[NodeFlowEndpoint.UnderDetachedBuiltTree]: 10,
@@ -764,7 +741,7 @@ describe("getDeltaCensus", () => {
 				fields: new Map([[rootFieldKey, { marks: [{ count: 1, attach: id0 }] }]]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedBuiltRoot]: { [NodeFlowEndpoint.DetachedBuiltRoot]: 1 },
 				[NodeFlowEndpoint.DetachedPriorRoot]: { [NodeFlowEndpoint.UnderAttachedPriorTree]: 1 },
 				[NodeFlowEndpoint.UnderDetachedBuiltTree]: {
@@ -786,7 +763,7 @@ describe("getDeltaCensus", () => {
 				fields: new Map([[rootFieldKey, { marks: [{ count: 1, attach: id0 }] }]]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedBuiltRoot]: {
 					[NodeFlowEndpoint.DetachedBuiltRoot]: 1,
 					[NodeFlowEndpoint.UnderAttachedPriorTree]: 1,
@@ -802,7 +779,7 @@ describe("getDeltaCensus", () => {
 		it(`to ${NodeFlowEndpoint.DetachedPriorRoot}`, () => {
 			const delta: DeltaRoot = { global: [{ id: id100, fields: detachNodes1Through10 }] };
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedPriorRoot]: { [NodeFlowEndpoint.DetachedPriorRoot]: 1 },
 				[NodeFlowEndpoint.UnderDetachedPriorTree]: {
 					[NodeFlowEndpoint.DetachedPriorRoot]: 10,
@@ -826,7 +803,7 @@ describe("getDeltaCensus", () => {
 				]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedPriorRoot]: { [NodeFlowEndpoint.DetachedPriorRoot]: 1 },
 				[NodeFlowEndpoint.UnderDetachedPriorTree]: {
 					[NodeFlowEndpoint.UnderAttachedPriorTree]: 11,
@@ -845,7 +822,7 @@ describe("getDeltaCensus", () => {
 				]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedPriorRoot]: { [NodeFlowEndpoint.DetachedPriorRoot]: 1 },
 				[NodeFlowEndpoint.UnderAttachedPriorTree]: { [NodeFlowEndpoint.DetachedPriorRoot]: 1 },
 				[NodeFlowEndpoint.UnderDetachedPriorTree]: {
@@ -862,7 +839,7 @@ describe("getDeltaCensus", () => {
 				],
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedPriorRoot]: { [NodeFlowEndpoint.DetachedPriorRoot]: 2 },
 				[NodeFlowEndpoint.UnderDetachedPriorTree]: {
 					[NodeFlowEndpoint.UnderDetachedPriorTree]: 10,
@@ -879,7 +856,7 @@ describe("getDeltaCensus", () => {
 				],
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedPriorRoot]: { [NodeFlowEndpoint.DetachedPriorRoot]: 1 },
 				[NodeFlowEndpoint.DetachedBuiltRoot]: { [NodeFlowEndpoint.DetachedBuiltRoot]: 1 },
 				[NodeFlowEndpoint.UnderDetachedPriorTree]: {
@@ -897,7 +874,7 @@ describe("getDeltaCensus", () => {
 				fields: new Map([[rootFieldKey, { marks: [{ count: 1, attach: id0 }] }]]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedPriorRoot]: {
 					[NodeFlowEndpoint.DetachedPriorRoot]: 1,
 					[NodeFlowEndpoint.UnderAttachedPriorTree]: 1,
@@ -918,7 +895,7 @@ describe("getDeltaCensus", () => {
 				fields: new Map([[rootFieldKey, { marks: [{ count: 1, attach: id0 }] }]]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedBuiltRoot]: {
 					[NodeFlowEndpoint.UnderAttachedPriorTree]: 1,
 				},
@@ -939,7 +916,7 @@ describe("getDeltaCensus", () => {
 				fields: new Map([[rootFieldKey, { marks: [{ count: 1, attach: id100 }] }]]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedPriorRoot]: { [NodeFlowEndpoint.UnderAttachedPriorTree]: 1 },
 				[NodeFlowEndpoint.UnderAttachingPriorTree]: {
 					[NodeFlowEndpoint.DetachedPriorRoot]: 10,
@@ -964,7 +941,7 @@ describe("getDeltaCensus", () => {
 				]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedPriorRoot]: { [NodeFlowEndpoint.UnderAttachedPriorTree]: 1 },
 				[NodeFlowEndpoint.UnderAttachingPriorTree]: {
 					[NodeFlowEndpoint.UnderAttachedPriorTree]: 11,
@@ -988,7 +965,7 @@ describe("getDeltaCensus", () => {
 				]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedPriorRoot]: { [NodeFlowEndpoint.UnderAttachedPriorTree]: 1 },
 				[NodeFlowEndpoint.UnderAttachedPriorTree]: { [NodeFlowEndpoint.DetachedPriorRoot]: 1 },
 				[NodeFlowEndpoint.UnderAttachingPriorTree]: {
@@ -1006,7 +983,7 @@ describe("getDeltaCensus", () => {
 				fields: new Map([[rootFieldKey, { marks: [{ count: 1, attach: id100 }] }]]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedPriorRoot]: {
 					[NodeFlowEndpoint.DetachedPriorRoot]: 1,
 					[NodeFlowEndpoint.UnderAttachedPriorTree]: 1,
@@ -1027,7 +1004,7 @@ describe("getDeltaCensus", () => {
 				fields: new Map([[rootFieldKey, { marks: [{ count: 1, attach: id100 }] }]]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedPriorRoot]: { [NodeFlowEndpoint.UnderAttachedPriorTree]: 1 },
 				[NodeFlowEndpoint.DetachedBuiltRoot]: { [NodeFlowEndpoint.DetachedBuiltRoot]: 1 },
 				[NodeFlowEndpoint.UnderAttachingPriorTree]: {
@@ -1055,7 +1032,7 @@ describe("getDeltaCensus", () => {
 				]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedPriorRoot]: { [NodeFlowEndpoint.UnderAttachedPriorTree]: 2 },
 				[NodeFlowEndpoint.UnderAttachingPriorTree]: {
 					[NodeFlowEndpoint.UnderAttachingPriorTree]: 10,
@@ -1083,7 +1060,7 @@ describe("getDeltaCensus", () => {
 				]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedPriorRoot]: { [NodeFlowEndpoint.UnderAttachedPriorTree]: 1 },
 				[NodeFlowEndpoint.DetachedBuiltRoot]: { [NodeFlowEndpoint.UnderAttachedPriorTree]: 1 },
 				[NodeFlowEndpoint.UnderAttachingPriorTree]: {
@@ -1101,7 +1078,7 @@ describe("getDeltaCensus", () => {
 				fields: new Map([[rootFieldKey, { marks: [{ count: 1, attach: id100 }] }]]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedBuiltRoot]: { [NodeFlowEndpoint.UnderAttachedPriorTree]: 1 },
 				[NodeFlowEndpoint.UnderAttachingBuiltTree]: {
 					[NodeFlowEndpoint.DetachedBuiltRoot]: 10,
@@ -1127,7 +1104,7 @@ describe("getDeltaCensus", () => {
 				]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedBuiltRoot]: { [NodeFlowEndpoint.UnderAttachedPriorTree]: 1 },
 				[NodeFlowEndpoint.UnderAttachingBuiltTree]: {
 					[NodeFlowEndpoint.UnderAttachedPriorTree]: 11,
@@ -1152,7 +1129,7 @@ describe("getDeltaCensus", () => {
 				]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedBuiltRoot]: { [NodeFlowEndpoint.UnderAttachedPriorTree]: 1 },
 				[NodeFlowEndpoint.UnderAttachedPriorTree]: { [NodeFlowEndpoint.DetachedPriorRoot]: 1 },
 				[NodeFlowEndpoint.UnderAttachingBuiltTree]: {
@@ -1171,7 +1148,7 @@ describe("getDeltaCensus", () => {
 				fields: new Map([[rootFieldKey, { marks: [{ count: 1, attach: id100 }] }]]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedBuiltRoot]: { [NodeFlowEndpoint.UnderAttachedPriorTree]: 1 },
 				[NodeFlowEndpoint.DetachedPriorRoot]: { [NodeFlowEndpoint.DetachedPriorRoot]: 1 },
 				[NodeFlowEndpoint.UnderAttachingBuiltTree]: {
@@ -1193,7 +1170,7 @@ describe("getDeltaCensus", () => {
 				fields: new Map([[rootFieldKey, { marks: [{ count: 1, attach: id100 }] }]]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedBuiltRoot]: {
 					[NodeFlowEndpoint.DetachedBuiltRoot]: 1,
 					[NodeFlowEndpoint.UnderAttachedPriorTree]: 1,
@@ -1224,7 +1201,7 @@ describe("getDeltaCensus", () => {
 				]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedPriorRoot]: { [NodeFlowEndpoint.UnderAttachedPriorTree]: 1 },
 				[NodeFlowEndpoint.DetachedBuiltRoot]: { [NodeFlowEndpoint.UnderAttachedPriorTree]: 1 },
 				[NodeFlowEndpoint.UnderAttachingBuiltTree]: {
@@ -1256,7 +1233,7 @@ describe("getDeltaCensus", () => {
 				]),
 			};
 			const census = nodeFlowCensusFromDelta(delta);
-			assertPartial(census, {
+			assertOnlyFlows(census, {
 				[NodeFlowEndpoint.DetachedBuiltRoot]: { [NodeFlowEndpoint.UnderAttachedPriorTree]: 2 },
 				[NodeFlowEndpoint.UnderAttachingBuiltTree]: {
 					[NodeFlowEndpoint.UnderAttachingBuiltTree]: 10,

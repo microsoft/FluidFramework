@@ -29,7 +29,12 @@ import {
 	type TupleBTree,
 } from "../../util/index.js";
 import { intoDelta } from "../../feature-libraries/index.js";
-import { allEndpoints, isPossibleFlow, NodeFlowEndpoint } from "../nodeFlowCensus.js";
+import {
+	allEndpoints,
+	assertNoFlow,
+	isPossibleFlow,
+	NodeFlowEndpoint,
+} from "../nodeFlowCensus.js";
 
 /**
  * Reads the change associated with the head commit on the main branch.
@@ -1529,8 +1534,11 @@ function generateEditedTreeScenarios(): EditTreeScenarios {
 				continue;
 			}
 
-			if (sourceEndpoint.includes("Root") && destinationEndpoint.includes("Root")) {
-				// This is a no-op flow. Nothing to test.
+			if (
+				sourceEndpoint === NodeFlowEndpoint.DetachedBuiltRoot &&
+				destinationEndpoint === NodeFlowEndpoint.DetachedBuiltRoot
+			) {
+				// This case is tested by `BoxRecord.attachingBuilt` being transient in every scenario.
 				continue;
 			}
 
@@ -2695,62 +2703,34 @@ describe("transaction minimize post-processor", () => {
 							`${source} -> ${destination} (${field} field)`,
 						);
 
-						// No built node should end up unused
-						for (const builtNode of endpointsFromBuiltTrees) {
-							assert.equal(
-								minimizedNodeFlow[builtNode][NodeFlowEndpoint.DetachedBuiltRoot],
-								0,
-								`Unexpected transfer of node from ${builtNode} to ${NodeFlowEndpoint.DetachedBuiltRoot}`,
-							);
-						}
-
 						// No node, no matter its source endpoint, should be transferred under a tree that ends up detached
-						for (const fromAnywhere of allEndpoints) {
-							for (const toUnderDetached of endpointsUnderNodesThatEndUpDetached) {
-								assert.equal(
-									minimizedNodeFlow[fromAnywhere][toUnderDetached],
-									0,
-									`Unexpected transfer of node from ${fromAnywhere} to ${toUnderDetached}`,
-								);
-							}
-						}
+						assertNoFlow(
+							minimizedNodeFlow,
+							allEndpoints,
+							endpointsUnderNodesThatEndUpDetached,
+						);
 
 						// No node detached from a tree that ends up detached should end up detached or be transferred under a tree that ends up detached
-						for (const fromUnderDetached of endpointsUnderNodesThatEndUpDetached) {
-							for (const toDetached of endpointsThatEndUpDetached) {
-								assert.equal(
-									minimizedNodeFlow[fromUnderDetached][toDetached],
-									0,
-									`Unexpected transfer of node from ${fromUnderDetached} to ${toDetached}`,
-								);
-							}
-						}
+						assertNoFlow(
+							minimizedNodeFlow,
+							endpointsUnderNodesThatEndUpDetached,
+							endpointsThatEndUpDetached,
+						);
+
+						// No built node should end up unused
+						assertNoFlow(minimizedNodeFlow, endpointsFromBuiltTrees, [
+							NodeFlowEndpoint.DetachedBuiltRoot,
+						]);
 
 						// Note: the assertions below are not necessary for ensuring that no invisible edit remains.
 						// We do nonetheless expect them to hold based on the intended minimization algorithm.
 						// These assertions could therefore be removed if the minimization algorithm changes.
 
 						// No node, no matter its destination endpoint, should be detached from a built tree
-						for (const fromUnderBuilt of endpointsUnderBuiltTrees) {
-							for (const toAnywhere of allEndpoints) {
-								assert.equal(
-									minimizedNodeFlow[fromUnderBuilt][toAnywhere],
-									0,
-									`Unexpected transfer of node from ${fromUnderBuilt} to ${toAnywhere}`,
-								);
-							}
-						}
+						assertNoFlow(minimizedNodeFlow, endpointsUnderBuiltTrees, allEndpoints);
 
 						// No built node should be attached under a built tree
-						for (const builtTree of endpointsFromBuiltTrees) {
-							for (const toUnderBuiltTree of endpointsUnderBuiltTrees) {
-								assert.equal(
-									minimizedNodeFlow[builtTree][toUnderBuiltTree],
-									0,
-									`Unexpected transfer of node from ${builtTree} to ${toUnderBuiltTree}`,
-								);
-							}
-						}
+						assertNoFlow(minimizedNodeFlow, endpointsFromBuiltTrees, endpointsUnderBuiltTrees);
 					});
 				}
 			});

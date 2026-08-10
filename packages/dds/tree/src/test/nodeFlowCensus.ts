@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
 /**
  * A type of location for a node to be in either before or after a change.
  */
@@ -117,4 +119,44 @@ export function makeEmptyCensus(): NodeFlowCensus {
 		census[from] = inner as Record<NodeFlowEndpoint, number>;
 	}
 	return census as NodeFlowCensus;
+}
+
+/**
+ * A partially specified {@link NodeFlowCensus|census}.
+ */
+export type PartialCensus = Partial<
+	Record<NodeFlowEndpoint, Partial<Record<NodeFlowEndpoint, number>>>
+>;
+
+/**
+ * Asserts that `actual` has the same flows as `expected`, and no other flows.
+ */
+export function assertOnlyFlows(actual: NodeFlowCensus, expected: PartialCensus): void {
+	for (const from of allEndpoints) {
+		for (const to of allEndpoints) {
+			const actualCount = actual[from][to];
+			const expectedCount = expected[from]?.[to] ?? 0;
+			assert.equal(
+				actualCount,
+				expectedCount,
+				`Expected ${expectedCount} nodes to flow from ${from} to ${to}, but got ${actualCount}`,
+			);
+		}
+	}
+}
+
+/**
+ * Asserts that `census` has no flows from any of the `sources` to any of the `destinations`.
+ */
+export function assertNoFlow(
+	census: NodeFlowCensus,
+	sources: Iterable<NodeFlowEndpoint>,
+	destinations: Iterable<NodeFlowEndpoint>,
+): void {
+	for (const from of sources) {
+		for (const to of destinations) {
+			const actualCount = census[from][to];
+			assert.equal(actualCount, 0, `Unexpected flow from ${from} to ${to}`);
+		}
+	}
 }
