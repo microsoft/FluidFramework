@@ -1595,6 +1595,28 @@ describe("summary ownership routes", () => {
 		sinon.assert.calledTwice(createSummary);
 	});
 
+	it("rejects a non-string storage name from Alfred", async () => {
+		const document = { ...activeDocument };
+		Object.assign(document, { storageName: 123 });
+		sandbox.stub(documentManager, "readDocument").resolves(document);
+		const createSummary = sandbox.stub(RestGitService.prototype, "createSummary");
+		const logError = sandbox.spy(Lumberjack, "error");
+
+		const response = await superTest
+			.post(`/repos/${tenantId}/git/summaries`)
+			.set("Authorization", authorization)
+			.send({ type: "container", trees: [], blobs: [] })
+			.expect(502);
+
+		assert.strictEqual(response.body, "Invalid document response from Alfred.");
+		sinon.assert.notCalled(createSummary);
+		sinon.assert.calledWithMatch(
+			logError,
+			"HistorianSummaryDocumentOwnershipValidation",
+			sinon.match({ operation: "post", outcome: "dependencyError" }),
+		);
+	});
+
 	for (const testCase of [
 		{ name: "active", document: activeDocument },
 		{
