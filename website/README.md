@@ -326,7 +326,9 @@ The following npm scripts are supported in this directory:
 | `prestart` | Runs pre-site build metadata generation. |
 | `start` | Runs the website in watch mode with Docusaurus. |
 | `pretest` | Install necessary `playwright` dependencies before running tests. |
-| `test` | Run tests using `playwright` |
+| `test` | Run all tests (`playwright` UX tests and `vitest` unit tests) |
+| `test:site` | Run UX tests using `playwright` |
+| `test:unit` | Run unit tests using `vitest` |
 
 <!-- prettier-ignore-end -->
 
