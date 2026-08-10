@@ -74,7 +74,7 @@ export interface ApiLinkProps {
  * @privateRemarks
  * TODOs:
  * - Allow version overrides for cases where a user wants to link to a different version than the current one.
- * - Allow linking to API items that are rendered to their parent item's page.
+ * - Allow linking to API items that are rendered to their parent item's page. (Currently this is done via page headings.)
  * - Allow linking to child members of namespaces, classes, interfaces, etc. (Currently this is done via page headings,
  * but it would be better to consume aspects of the API docs config and automatically derive the right path to link to
  * any kind of API item, regardless of whether or not it is configured to render to its own page or its parents.
