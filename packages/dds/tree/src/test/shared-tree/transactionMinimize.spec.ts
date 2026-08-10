@@ -1555,8 +1555,8 @@ describe("transaction minimize post-processor", () => {
 			// None were inserted; should always pass.
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
-			// "A❤️", "B❤️", and "C❤️" all survive (only reordered), so both builds (A and B-C) should remain.
-			assert.deepEqual(countBuilds(change), { builds: 2, tops: 3 });
+			// "A❤️", "B❤️", and "C❤️" all survive (only reordered).
+			assert.deepEqual(countBuilds(change), { builds: 3, tops: 3 });
 		});
 
 		// If any of these tests start to fail, the system has new capabilities
@@ -2021,7 +2021,7 @@ describe("transaction minimize post-processor", () => {
 	// These tests assert that the squashed change carries no extraneous information about nodes that are not
 	// present in the final document. They are NOT EXPECTED TO PASS (though some may by accident) until the
 	// minimization algorithm is implemented. (`minimize` is currently a no-op.)
-	describe.skip("removes extraneous data from the squashed changes (expected to fail until minimize is implemented)", () => {
+	describe("removes extraneous data from the squashed changes (expected to fail until minimize is implemented)", () => {
 		it("drops the build and destroy for a create-then-remove", () => {
 			const { view, stringifiedChange } = runScenario(arrayScenarios.A_added_then_removed);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
@@ -2286,9 +2286,9 @@ describe("transaction minimize post-processor", () => {
 			);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
-			// Both the inserted root Box (originally carrying "x☠️") and the separately inserted "y❤️" survive
-			// in the final document, so both builds should remain.
-			assert.deepEqual(countBuilds(change), { builds: 2, tops: 2 });
+			// A single build should remain, containing both the inserted root Box (originally carrying "x☠️")
+			// with the separately inserted "y❤️" within it.
+			assert.deepEqual(countBuilds(change), { builds: 1, tops: 1 });
 		});
 
 		it("keeps the surviving box's build when boxes are inserted and one moved to sibling that is then removed", () => {
@@ -2362,10 +2362,9 @@ describe("transaction minimize post-processor", () => {
 			);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
-			// Only the final Box value "D❤️" survives the transaction but the
-			// Box insert was separate action, so two builds should remain
-			// with the first one having been altered.
-			assert.deepEqual(countBuilds(change), { builds: 2, tops: 2 });
+			// A single build should remain,
+			// containing both the inserted root Box and the separately inserted "D❤️" within it.
+			assert.deepEqual(countBuilds(change), { builds: 1, tops: 1 });
 		});
 	});
 });
