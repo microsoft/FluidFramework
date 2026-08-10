@@ -9,6 +9,7 @@ import * as sinon from "sinon";
 import request from "supertest";
 import * as nconf from "nconf";
 import { TestThrottler } from "@fluidframework/server-test-utils";
+import type { IDocument } from "@fluidframework/server-services-core";
 import { Lumberjack, TestEngine1 } from "@fluidframework/server-services-telemetry";
 import { configureGlobalTelemetryContext } from "@fluidframework/server-services-utils";
 import * as historianApp from "../app";
@@ -1556,6 +1557,42 @@ describe("summary ownership routes", () => {
 				outcome: "exempted",
 			}),
 		);
+	});
+
+	it("allows a normal summary after initial creation while denying a cross-tenant document", async () => {
+		let document: IDocument | null = null;
+		const readDocument = sandbox
+			.stub(documentManager, "readDocument")
+			.callsFake(async () => document);
+		const createSummary = sandbox
+			.stub(RestGitService.prototype, "createSummary")
+			.resolves({ id: sha });
+
+		await superTest
+			.post(`/repos/${tenantId}/git/summaries`)
+			.query({ initial: "true" })
+			.set("Authorization", authorization)
+			.send({ type: "container", trees: [], blobs: [] })
+			.expect(201);
+
+		document = { ...activeDocument };
+		// MongoDB persists an explicitly undefined optional field as null.
+		Object.assign(document, { storageName: null });
+		await superTest
+			.post(`/repos/${tenantId}/git/summaries`)
+			.set("Authorization", authorization)
+			.send({ type: "container", trees: [], blobs: [] })
+			.expect(201);
+
+		document = { ...document, tenantId: "victim-tenant" };
+		await superTest
+			.post(`/repos/${tenantId}/git/summaries`)
+			.set("Authorization", authorization)
+			.send({ type: "container", trees: [], blobs: [] })
+			.expect(404);
+
+		sinon.assert.callCount(readDocument, 3);
+		sinon.assert.calledTwice(createSummary);
 	});
 
 	for (const testCase of [
