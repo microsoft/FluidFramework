@@ -42,8 +42,6 @@ steps:
   - task: Bash@3
     displayName: ${{ parameters.installDependenciesDescription }}
     retryCountOnTaskFailure: 4
-    env:
-      NPM_CONFIG_USERCONFIG: ${{ parameters.userNpmrcPath }}
     inputs:
       targetType: 'inline'
       workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
