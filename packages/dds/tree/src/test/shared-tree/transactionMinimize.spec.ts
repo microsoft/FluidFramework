@@ -18,12 +18,7 @@ import type {
 import { createIndependentTreeAlpha, minimize } from "@fluidframework/tree/alpha";
 
 import { SchematizingSimpleTreeView, SharedTreeChange } from "../../shared-tree/index.js";
-import {
-	allEndpoints,
-	isPossibleFlow,
-	nodeFlowCensusFromDelta,
-	NodeFlowEndpoint,
-} from "../getDeltaCensus.js";
+import { nodeFlowCensusFromDelta } from "../getDeltaCensus.js";
 import { TestTreeProviderLite, validateViewConsistency } from "../utils.js";
 import { makeAnonChange } from "../../core/index.js";
 import {
@@ -34,6 +29,7 @@ import {
 	type TupleBTree,
 } from "../../util/index.js";
 import { intoDelta } from "../../feature-libraries/index.js";
+import { allEndpoints, isPossibleFlow, NodeFlowEndpoint } from "../nodeFlowCensus.js";
 
 /**
  * Reads the change associated with the head commit on the main branch.
@@ -2654,11 +2650,7 @@ describe("transaction minimize post-processor", () => {
 		});
 	});
 
-	describe.skip("minimizes edits to content that ends up detached", () => {
-		const endpointsUnderBuiltTrees = new Set([
-			NodeFlowEndpoint.UnderDetachedBuiltTree,
-			NodeFlowEndpoint.UnderAttachingBuiltTree,
-		]);
+	describe.skip("minimizes edits not visible in the output document tree", () => {
 		const endpointsUnderNodesThatEndUpDetached = new Set([
 			NodeFlowEndpoint.UnderDetachingPriorTree,
 			NodeFlowEndpoint.UnderDetachedPriorTree,
@@ -2668,6 +2660,16 @@ describe("transaction minimize post-processor", () => {
 			...endpointsUnderNodesThatEndUpDetached,
 			NodeFlowEndpoint.DetachedBuiltRoot,
 			NodeFlowEndpoint.DetachedPriorRoot,
+		]);
+
+		const endpointsUnderBuiltTrees = new Set([
+			NodeFlowEndpoint.UnderDetachedBuiltTree,
+			NodeFlowEndpoint.UnderAttachingBuiltTree,
+		]);
+
+		const endpointsFromBuiltTrees = new Set([
+			...endpointsUnderBuiltTrees,
+			NodeFlowEndpoint.DetachedBuiltRoot,
 		]);
 
 		for (const [[source, destination], scenarioSet] of editedDetachedTreeScenarios.entries()) {
@@ -2693,6 +2695,15 @@ describe("transaction minimize post-processor", () => {
 							`${source} -> ${destination} (${field} field)`,
 						);
 
+						// No built node should end up unused
+						for (const builtNode of endpointsFromBuiltTrees) {
+							assert.equal(
+								minimizedNodeFlow[builtNode][NodeFlowEndpoint.DetachedBuiltRoot],
+								0,
+								`Unexpected transfer of node from ${builtNode} to ${NodeFlowEndpoint.DetachedBuiltRoot}`,
+							);
+						}
+
 						// No node, no matter its source endpoint, should be transferred under a tree that ends up detached
 						for (const fromAnywhere of allEndpoints) {
 							for (const toUnderDetached of endpointsUnderNodesThatEndUpDetached) {
@@ -2715,6 +2726,10 @@ describe("transaction minimize post-processor", () => {
 							}
 						}
 
+						// Note: the assertions below are not necessary for ensuring that no invisible edit remains.
+						// We do nonetheless expect them to hold based on the intended minimization algorithm.
+						// These assertions could therefore be removed if the minimization algorithm changes.
+
 						// No node, no matter its destination endpoint, should be detached from a built tree
 						for (const fromUnderBuilt of endpointsUnderBuiltTrees) {
 							for (const toAnywhere of allEndpoints) {
@@ -2722,6 +2737,17 @@ describe("transaction minimize post-processor", () => {
 									minimizedNodeFlow[fromUnderBuilt][toAnywhere],
 									0,
 									`Unexpected transfer of node from ${fromUnderBuilt} to ${toAnywhere}`,
+								);
+							}
+						}
+
+						// No built node should be attached under a built tree
+						for (const builtTree of endpointsFromBuiltTrees) {
+							for (const toUnderBuiltTree of endpointsUnderBuiltTrees) {
+								assert.equal(
+									minimizedNodeFlow[builtTree][toUnderBuiltTree],
+									0,
+									`Unexpected transfer of node from ${builtTree} to ${toUnderBuiltTree}`,
 								);
 							}
 						}

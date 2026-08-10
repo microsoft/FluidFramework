@@ -13,117 +13,13 @@ import {
 	type DeltaRoot,
 } from "../core/index.js";
 import { RangeMap } from "../util/index.js";
-
-/**
- * A type of location for a node to be in either before or after a change.
- */
-export enum NodeFlowEndpoint {
-	/**
-	 * In a detached field (i.e., not under the document root field).
-	 * Used for newly built nodes only.
-	 */
-	DetachedBuiltRoot = "DetachedBuiltRoot",
-
-	/**
-	 * In a detached field (i.e., not under the document root field).
-	 * Used for already existing nodes only.
-	 */
-	DetachedPriorRoot = "DetachedPriorRoot",
-
-	/**
-	 * Either directly in the document root field,
-	 * or in a field under an already existing parent that both...
-	 * - is transitively under the document root field before the change
-	 * - is transitively under the document root field after the change
-	 */
-	UnderAttachedPriorTree = "UnderAttachedPriorTree",
-
-	/**
-	 * In a field under an already existing parent that both...
-	 * - is transitively under the document root field before the change
-	 * - is transitively under a detached field after the change
-	 */
-	UnderDetachingPriorTree = "UnderDetachingPriorTree",
-
-	/**
-	 * In a field under a newly built parent that both...
-	 * - is transitively under a detached field before the change
-	 * - is transitively under a detached field after the change
-	 */
-	UnderDetachedBuiltTree = "UnderDetachedBuiltTree",
-
-	/**
-	 * In a field under an already existing parent that both...
-	 * - is transitively under a detached field before the change
-	 * - is transitively under a detached field after the change
-	 */
-	UnderDetachedPriorTree = "UnderDetachedPriorTree",
-
-	/**
-	 * In a field under a newly built parent that both...
-	 * - is transitively under a detached field before the change
-	 * - is transitively under the document root field after the change
-	 */
-	UnderAttachingBuiltTree = "UnderAttachingBuiltTree",
-
-	/**
-	 * In a field under an already existing parent that both...
-	 * - is transitively under a detached field before the change
-	 * - is transitively under the document root field after the change
-	 */
-	UnderAttachingPriorTree = "UnderAttachingPriorTree",
-}
-
-export const allEndpoints = [
-	NodeFlowEndpoint.DetachedBuiltRoot,
-	NodeFlowEndpoint.DetachedPriorRoot,
-	NodeFlowEndpoint.UnderAttachedPriorTree,
-	NodeFlowEndpoint.UnderDetachingPriorTree,
-	NodeFlowEndpoint.UnderDetachedBuiltTree,
-	NodeFlowEndpoint.UnderDetachedPriorTree,
-	NodeFlowEndpoint.UnderAttachingBuiltTree,
-	NodeFlowEndpoint.UnderAttachingPriorTree,
-] as const;
-
-/**
- * A census of node flows between different locations in the tree.
- * Each entry `census[from][to]` represents the number of nodes that flowed from `from` to `to` during a change.
- * In order to be counted, a node must be either built, renamed, attached, or detached during the change.
- *
- * @remarks
- * Note that the following combinations of `from` and `to` are impossible, and should always have a count of 0:
- * - Any source endpoint with "Built" in its name cannot end up as NodeFlowEndpoint.DetachedPriorRoot.
- * - Any source endpoint with "Prior" in its name cannot end up as NodeFlowEndpoint.DetachedBuiltRoot.
- */
-export type NodeFlowCensus = Record<NodeFlowEndpoint, Record<NodeFlowEndpoint, number>>;
-
-export function isPossibleFlow(from: NodeFlowEndpoint, to: NodeFlowEndpoint): boolean {
-	if (from.includes("Built") && to === NodeFlowEndpoint.DetachedPriorRoot) {
-		return false;
-	}
-	if (from.includes("Prior") && to === NodeFlowEndpoint.DetachedBuiltRoot) {
-		return false;
-	}
-	return true;
-}
-
-export function makeEmptyCensus(): NodeFlowCensus {
-	const census: Partial<NodeFlowCensus> = {};
-	for (const from of allEndpoints) {
-		const inner: Partial<Record<NodeFlowEndpoint, number>> = {};
-		for (const to of allEndpoints) {
-			inner[to] = 0;
-		}
-		census[from] = inner as Record<NodeFlowEndpoint, number>;
-	}
-	return census as NodeFlowCensus;
-}
+import { makeEmptyCensus, NodeFlowCensus, NodeFlowEndpoint } from "./nodeFlowCensus.js";
 
 /**
  * Generates a census of node flows from a given delta.
  *
- * @param delta - The delta representing changes in the tree.
- * @returns A NodeFlowCensus representing the number of nodes that flowed between different kinds of endpoints.
+ * @param delta - The delta to produce the census from.
+ * @returns A NodeFlowCensus representing the number of nodes that flow between different kinds of endpoints in the given `delta`.
  */
 export function nodeFlowCensusFromDelta(delta: DeltaRoot): NodeFlowCensus {
 	type NodeId = `${string}:${number}-${string}:${number}`;
@@ -321,30 +217,5 @@ export function nodeFlowCensusFromDelta(delta: DeltaRoot): NodeFlowCensus {
 		const to = endEndpoint(id);
 		census[from][to] += 1;
 	}
-
-	// const newNameFromOld: Map<NodeId, NodeId> = new Map();
-	// const oldNameFromNew: Map<NodeId, NodeId> = new Map();
-	// for (const { count, oldId, newId } of delta.rename ?? []) {
-	// 	for (let i = 0; i < count; i += 1) {
-	// 		const oldNodeId = nodeIdFromOldId(offsetDetachId(oldId, i));
-	// 		const newNodeId = nodeIdFromNewId(offsetDetachId(newId, i));
-
-	// 		const source = detachSource.get(oldNodeId);
-	// 		const destination = attachDestination.get(newNodeId);
-
-	// 		if (source === undefined && destination === undefined) {
-	// 			// Count the roots that are neither detached or attached but just renamed
-	// 			const builtOrPrior = detachedEndpointForRoot(oldNodeId);
-	// 			census[builtOrPrior][builtOrPrior] += 1;
-	// 		} else {
-	// 			const sourceEndpoint =
-	// 				source === undefined ? detachedEndpointForRoot(oldNodeId) : startsInDoc(source);
-	// 		}
-
-	// 		newNameFromOld.set(oldNodeId, newNodeId);
-	// 		oldNameFromNew.set(newNodeId, oldNodeId);
-	// 	}
-	// }
-
 	return census;
 }
