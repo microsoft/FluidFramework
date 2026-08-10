@@ -170,7 +170,6 @@ export {
 	verboseFromCursor,
 	conciseFromCursor,
 	createFromCursor,
-	asTreeViewAlpha,
 	customFromCursorStored,
 	type CustomTreeNode,
 	type CustomTreeValue,

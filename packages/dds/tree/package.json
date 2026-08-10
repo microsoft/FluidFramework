@@ -242,7 +242,24 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"TypeAlias_IsListener": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"TypeAlias_Listenable": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"TypeAlias_Listeners": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"TypeAlias_Off": {
+				"backCompat": false,
+				"forwardCompat": false
+			}
+		},
 		"entrypoint": "public"
 	}
 }

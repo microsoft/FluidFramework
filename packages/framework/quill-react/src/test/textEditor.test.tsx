@@ -871,10 +871,13 @@ describe("textEditor", () => {
 						const rendered = render(content, { reactStrictMode });
 
 						// Two operations in one transaction
-						TreeAlpha.branch(text)?.runTransaction(() => {
-							text.insertAt(0, "A");
-							text.insertAt(1, "B");
-						});
+						const context = TreeAlpha.context(text);
+						if (context.isBranch()) {
+							context.runTransaction(() => {
+								text.insertAt(0, "A");
+								text.insertAt(1, "B");
+							});
+						}
 						rendered.rerender(content);
 						assert.match(rendered.baseElement.textContent ?? "", /AB/);
 

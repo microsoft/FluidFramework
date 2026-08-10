@@ -324,9 +324,6 @@ declare namespace InternalTypes {
 }
 export { InternalTypes }
 
-// @public @deprecated
-export type IsListener<T> = IsListener_2<T>;
-
 // @public @system
 export type IsUnion<T, T2 = T> = T extends unknown ? [T2] extends [T] ? false : true : "error";
 
@@ -371,12 +368,6 @@ export type LazyItem<Item = unknown> = Item | (() => Item);
 // @public @sealed @system
 export interface LeafSchema<Name extends string, T extends TreeLeafValue> extends TreeNodeSchemaNonClass<`com.fluidframework.leaf.${Name}`, NodeKind.Leaf, T, T, true> {
 }
-
-// @public @deprecated
-export type Listenable<T extends object> = Listenable_2<T>;
-
-// @public @deprecated
-export type Listeners<T extends object> = Listeners_2<T>;
 
 // @public @sealed
 export interface MakeNominal {
@@ -438,9 +429,6 @@ export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFie
 export interface ObjectSchemaOptions<TCustomMetadata = unknown> extends NodeSchemaOptions<TCustomMetadata> {
     readonly allowUnknownOptionalFields?: boolean;
 }
-
-// @public @deprecated
-export type Off = Off_2;
 
 // @beta @system
 export type PopUnion<Union, AsOverloadedFunction = UnionToIntersection<Union extends unknown ? (f: Union) => void : never>> = AsOverloadedFunction extends (a: infer First) => void ? First : never;
@@ -813,16 +801,6 @@ export namespace TableSchema {
     export function column<const TUserScope extends string, const TCell extends ImplicitAllowedTypes, const TProps extends ImplicitFieldSchema>(params: System_TableSchema.CreateColumnOptionsBase<TUserScope, SchemaFactoryBeta<TUserScope>, TCell> & {
         readonly props: TProps;
     }): System_TableSchema.ColumnSchemaBase<TUserScope, TCell, TProps>;
-    // @deprecated @input
-    export interface InsertColumnsParameters<TColumn extends ImplicitAllowedTypes> {
-        readonly columns: InsertableTreeNodeFromImplicitAllowedTypes<TColumn>[];
-        readonly index?: number | undefined;
-    }
-    // @deprecated @input
-    export interface InsertRowsParameters<TRow extends ImplicitAllowedTypes> {
-        readonly index?: number | undefined;
-        readonly rows: InsertableTreeNodeFromImplicitAllowedTypes<TRow>[];
-    }
     // @sealed
     export interface Row<TCell extends ImplicitAllowedTypes, TProps extends ImplicitFieldSchema = ImplicitFieldSchema> {
         readonly id: string;
@@ -833,11 +811,6 @@ export namespace TableSchema {
     export function row<const TUserScope extends string, const TCell extends ImplicitAllowedTypes, const TProps extends ImplicitFieldSchema>(params: System_TableSchema.CreateRowOptionsBase<TUserScope, SchemaFactoryBeta<TUserScope>, TCell> & {
         readonly props: TProps;
     }): System_TableSchema.RowSchemaBase<TUserScope, TCell, TProps>;
-    // @deprecated @input
-    export interface SetCellParameters<TCell extends ImplicitAllowedTypes, TColumn extends ImplicitAllowedTypes, TRow extends ImplicitAllowedTypes> {
-        readonly cell: InsertableTreeNodeFromImplicitAllowedTypes<TCell>;
-        readonly key: CellKey<TColumn, TRow>;
-    }
     // @sealed
     export interface Table<TUserScope extends string, TCell extends ImplicitAllowedTypes, TColumn extends System_TableSchema.ColumnSchemaBase<TUserScope, TCell>, TRow extends System_TableSchema.RowSchemaBase<TUserScope, TCell>> {
         readonly columns: System_TableSchema.RearrangeableList<TColumn>;
@@ -847,14 +820,8 @@ export namespace TableSchema {
         getRow(id: string): TreeNodeFromImplicitAllowedTypes<TRow> | undefined;
         getRow(index: number): TreeNodeFromImplicitAllowedTypes<TRow> | undefined;
         insertColumns(columns: readonly InsertableTreeNodeFromImplicitAllowedTypes<TColumn>[], index?: number): TreeNodeFromImplicitAllowedTypes<TColumn>[];
-        // @deprecated
-        insertColumns(params: InsertColumnsParameters<TColumn>): TreeNodeFromImplicitAllowedTypes<TColumn>[];
         insertRows(rows: readonly InsertableTreeNodeFromImplicitAllowedTypes<TRow>[], index?: number): TreeNodeFromImplicitAllowedTypes<TRow>[];
-        // @deprecated
-        insertRows(params: InsertRowsParameters<TRow>): TreeNodeFromImplicitAllowedTypes<TRow>[];
         removeCell(row: string | number | TreeNodeFromImplicitAllowedTypes<TRow>, column: string | number | TreeNodeFromImplicitAllowedTypes<TColumn>): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
-        // @deprecated
-        removeCell(key: CellKey<TColumn, TRow>): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
         removeColumns(index?: number | undefined, count?: number | undefined): TreeNodeFromImplicitAllowedTypes<TColumn>[];
         removeColumns(columns: readonly TreeNodeFromImplicitAllowedTypes<TColumn>[]): TreeNodeFromImplicitAllowedTypes<TColumn>[];
         removeColumns(columns: readonly string[]): TreeNodeFromImplicitAllowedTypes<TColumn>[];
@@ -863,8 +830,6 @@ export namespace TableSchema {
         removeRows(rows: readonly string[]): TreeNodeFromImplicitAllowedTypes<TRow>[];
         readonly rows: System_TableSchema.RearrangeableList<TRow>;
         setCell(row: string | number | TreeNodeFromImplicitAllowedTypes<TRow>, column: string | number | TreeNodeFromImplicitAllowedTypes<TColumn>, cell: InsertableTreeNodeFromImplicitAllowedTypes<TCell>): void;
-        // @deprecated
-        setCell(params: SetCellParameters<TCell, TColumn, TRow>): void;
     }
     export function table<const TUserScope extends string, const TCell extends ImplicitAllowedTypes>(params: System_TableSchema.TableFactoryOptionsBase<TUserScope, SchemaFactoryBeta<TUserScope>, TCell>): System_TableSchema.TableSchemaBase<TUserScope, TCell, System_TableSchema.ColumnSchemaBase<TUserScope, TCell, System_TableSchema.DefaultPropsType>, System_TableSchema.RowSchemaBase<TUserScope, TCell, System_TableSchema.DefaultPropsType>>;
     export function table<const TUserScope extends string, const TCell extends ImplicitAllowedTypes, const TColumn extends System_TableSchema.ColumnSchemaBase<TUserScope, TCell>>(params: System_TableSchema.TableFactoryOptionsBase<TUserScope, SchemaFactoryBeta<TUserScope>, TCell> & {
@@ -1093,7 +1058,7 @@ export enum TreeStatus {
 // @public @sealed
 export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends IDisposable {
     readonly compatibility: SchemaCompatibilityStatus;
-    readonly events: Listenable_2<TreeViewEvents>;
+    readonly events: Listenable<TreeViewEvents>;
     initialize(content: InsertableTreeFieldFromImplicitField<TSchema>): void;
     get root(): TreeFieldFromImplicitField<TSchema>;
     set root(newRoot: InsertableTreeFieldFromImplicitField<TSchema>);

@@ -24,38 +24,6 @@ export {
 	type RevertibleAlpha,
 } from "./core/index.js";
 
-import type {
-	Listeners as EventListeners,
-	IsListener as EventIsListener,
-	Listenable as EventListenable,
-	Off as EventOff,
-} from "@fluidframework/core-interfaces";
-
-/**
- * {@inheritdoc @fluidframework/core-interfaces#Listeners}
- * @public
- * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
- */
-export type Listeners<T extends object> = EventListeners<T>;
-/**
- * {@inheritdoc @fluidframework/core-interfaces#IsListener}
- * @public
- * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
- */
-export type IsListener<T> = EventIsListener<T>;
-/**
- * {@inheritdoc @fluidframework/core-interfaces#Listenable}
- * @public
- * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
- */
-export type Listenable<T extends object> = EventListenable<T>;
-/**
- * {@inheritdoc @fluidframework/core-interfaces#Off}
- * @public
- * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
- */
-export type Off = EventOff;
-
 export {
 	TreeStatus,
 	TreeCompressionStrategy,
@@ -272,7 +240,6 @@ export {
 	type TreeBranch,
 	type TreeBranchAlpha,
 	type TreeBranchEvents,
-	asTreeViewAlpha,
 	type NodeSchemaOptions,
 	type NodeSchemaOptionsAlpha,
 	type NodeSchemaMetadata,

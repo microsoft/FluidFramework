@@ -288,7 +288,7 @@ export interface TreeContextAlpha {
 /**
  * {@link TreeBranch} with alpha-level APIs.
  * @remarks
- * The `TreeBranch` for a specific {@link TreeNode} may be acquired by calling `TreeAlpha.branch`.
+ * The `TreeBranch` for a specific {@link TreeNode} may be acquired by calling `TreeAlpha.context` and checking {@link TreeContextAlpha.isBranch}.
  *
  * A branch does not necessarily know the schema of its SharedTree - to convert a branch to a {@link TreeViewAlpha | view with a schema}, use {@link TreeBranchAlpha.hasRootSchema | hasRootSchema()}.
  * @sealed @alpha
@@ -420,8 +420,6 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
  * Thus this design was chosen at the risk of apps blindly accessing `root` then breaking unexpectedly when the document is incompatible.
  *
  * @see {@link TreeViewAlpha}
- * @see {@link asTreeViewAlpha}
- *
  * @sealed @public
  */
 export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends IDisposable {
@@ -803,16 +801,4 @@ export interface TreeViewEvents {
 	 * this commit is not revertible.
 	 */
 	commitApplied(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
-}
-
-/**
- * Retrieve the {@link TreeViewAlpha | alpha API} for a {@link TreeView}.
- * @alpha
- * @deprecated Use {@link (asAlpha:1)} instead.
- * @privateRemarks Despite being deprecated, this function should be used within the tree package (outside of tests) rather than `asAlpha` in order to avoid circular import dependencies.
- */
-export function asTreeViewAlpha<TSchema extends ImplicitFieldSchema>(
-	view: TreeView<TSchema>,
-): TreeViewAlpha<TSchema> {
-	return view as TreeViewAlpha<TSchema>;
 }

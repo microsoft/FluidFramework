@@ -61,9 +61,9 @@ Transactions are started via [runTransaction](../../api/fluid-framework/treebran
 import { TreeAlpha } from "@fluidframework/tree/alpha";
 
 // Using a branch:
-const branch = TreeAlpha.branch(myNode);
-if (branch !== undefined) {
-    branch.runTransaction(/* ... */);
+const context = TreeAlpha.context(myNode);
+if (context.isBranch()) {
+    context.runTransaction(/* ... */);
 }
 
 // Using a view directly:

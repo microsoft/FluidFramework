@@ -9,11 +9,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { markEager } from "./flexList.js";
 import { tryGetTreeNodeSchema } from "./treeNodeKernel.js";
 import { NodeKind, type TreeNodeSchemaClass } from "./treeNodeSchema.js";
-import type {
-	WithType,
-	schemaIdentifierBrand,
-	typeSchemaSymbol,
-} from "./withType.js";
+import type { WithType, schemaIdentifierBrand, typeSchemaSymbol } from "./withType.js";
 
 /**
  * A non-{@link NodeKind.Leaf|leaf} SharedTree node. Includes objects, arrays, and maps.
