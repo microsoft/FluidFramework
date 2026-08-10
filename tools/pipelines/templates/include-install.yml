@@ -14,8 +14,15 @@ parameters:
   type: string
 
 steps:
+  # Both branches configure the npm registry. The pnpm template does it itself, since it needs an authenticated
+  # feed to install pnpm from; npm-based pipelines need it here so that dependency installs and the later global
+  # build-tools installs resolve against the feed rather than the public registry.
   - ${{ if eq(parameters.packageManager, 'pnpm') }}:
     - template: /tools/pipelines/templates/include-install-pnpm.yml@self
+      parameters:
+        buildDirectory: ${{ parameters.buildDirectory }}
+  - ${{ else }}:
+    - template: /tools/pipelines/templates/include-configure-npm-registry.yml@self
       parameters:
         buildDirectory: ${{ parameters.buildDirectory }}
 

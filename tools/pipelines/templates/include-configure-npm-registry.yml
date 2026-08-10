@@ -1,0 +1,57 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# include-configure-npm-registry
+#
+# Points npm at the primary Azure Artifacts registry and authenticates against it. The registry is written to a
+# user-level .npmrc whose path is exported as NPM_CONFIG_USERCONFIG, so every later step in the job inherits it.
+# This is required for any pipeline that installs packages, not just the ones that use pnpm, because the repo's
+# .npmrc does not set a registry and npm would otherwise fall back to the public registry.
+
+parameters:
+# The path containing the project(s) to build.
+- name: buildDirectory
+  type: string
+
+# Where to place the user-level .npmrc file. It is referenced for the duration of the job.
+# Rather than rely on the default $HOME/.npmrc, we specify a known-reasonable location here.
+# Users of the template probably don't need to change this.
+- name: userNpmrcPath
+  type: string
+  default: $(Agent.TempDirectory)/.npmrc
+
+steps:
+# Seed the userconfig .npmrc with the primary registry. This propagates to subsequent tasks so
+# that npmAuthenticate (below) and any later pnpm/npm invocation in the job reuse the same file.
+- task: Bash@3
+  displayName: Configure npm registry
+  # A preceding cache restoration task can timeout, which is classified as canceled, but since it's just cache
+  # restoration, we want to continue even if it timed out.
+  condition: or(succeeded(), canceled())
+  inputs:
+    targetType: 'inline'
+    workingDirectory: ${{ parameters.buildDirectory }}
+    script: |
+      set -eu -o pipefail
+      echo "Using node $(node --version)"
+      # This ensures all subsequent tasks in this job will use the npm configuration set here.
+      echo "##vso[task.setvariable variable=NPM_CONFIG_USERCONFIG]$NPM_CONFIG_USERCONFIG"
+      echo "Primary registry: ${NPM_REGISTRY}"
+      echo "registry=${NPM_REGISTRY}" > "$NPM_CONFIG_USERCONFIG"
+      if [ "${NPM_REGISTRY}" == "https://registry.npmjs.org/" ]; then
+        echo "##vso[task.setvariable variable=registryType]public"
+      else
+        echo "##vso[task.setvariable variable=registryType]private"
+      fi
+  env:
+    NPM_REGISTRY: $(ado-feeds-primary-registry)
+    NPM_CONFIG_USERCONFIG: ${{ parameters.userNpmrcPath}}
+
+# Authenticate to the npm feed if required. Runs before any package manager is installed so that
+# `npm install -g <package manager>` can fetch it from the authenticated feed.
+- task: npmAuthenticate@0
+  displayName: 'Npm authenticate'
+  condition: and(succeeded(), eq(variables['registryType'], 'private'))
+  retryCountOnTaskFailure: 1
+  inputs:
+    workingFile: ${{ parameters.userNpmrcPath }}
