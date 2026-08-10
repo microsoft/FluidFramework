@@ -7,13 +7,13 @@ pipelines:
         credscan:
           lastModifiedDate: 2024-09-17
         eslint:
-          lastModifiedDate: 2026-08-10
+          lastModifiedDate: 2024-09-17
         bandit:
-          lastModifiedDate: 2026-08-10
+          lastModifiedDate: 2024-09-17
         psscriptanalyzer:
-          lastModifiedDate: 2026-08-10
+          lastModifiedDate: 2024-09-17
         armory:
-          lastModifiedDate: 2026-08-10
+          lastModifiedDate: 2024-09-17
   12:
     retail:
       source:
@@ -365,9 +365,9 @@ pipelines:
         credscan:
           lastModifiedDate: 2024-11-04
         eslint:
-          lastModifiedDate: 2024-11-04
+          lastModifiedDate: 2026-08-10
         armory:
-          lastModifiedDate: 2024-11-04
+          lastModifiedDate: 2026-08-10
   11:
     usedNonDefaultBranch: true
     retail:
