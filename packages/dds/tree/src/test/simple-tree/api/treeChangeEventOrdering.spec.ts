@@ -186,15 +186,13 @@ describe("Tree change event ordering", () => {
 			subscribeToNodeEvents(root.child, log, "child");
 			subscribeToNodeEvents(root, log, "parent");
 
-			// Edit parent FIRST, then child — events follow edit order, not tree depth
 			withBufferedTreeEvents(() => {
 				root.ownProp = "world";
 				root.child.value = 42;
 			});
 
 			// Events fire in the order nodes were first edited (parent before child),
-			// NOT bottom-up by tree depth. The "bottom-up" behavior observed in other tests
-			// is a consequence of editing the child first.
+            // but nodeChanged still comes before treeChanged
 			assert.deepEqual(log, [
 				"parent:nodeChanged",
 				"parent:treeChanged",
