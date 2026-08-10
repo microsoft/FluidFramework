@@ -17,8 +17,6 @@ import {
 
 import { pkgVersion } from "./packageVersion.js";
 
-const supportsBlobManagerLoadingGroups = "supportsBlobManagerLoadingGroups";
-
 /**
  * The core compatibility details of the Loader layer that is the same across all layer boundaries.
  * @internal
@@ -43,7 +41,7 @@ export const loaderCompatDetailsForRuntime: ILayerCompatDetails = {
 	/**
 	 * The features supported by the Loader layer across the Loader / Runtime boundary.
 	 */
-	supportedFeatures: new Set<string>([supportsBlobManagerLoadingGroups]),
+	supportedFeatures: new Set<string>(),
 };
 
 /**

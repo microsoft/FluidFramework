@@ -268,7 +268,6 @@ import {
 	runtimeCompatDetailsForLoader,
 	runtimeCoreCompatDetails,
 	validateLoaderCompatibility,
-	validateLoaderCompatibilityForBlobManagerLoadingGroups,
 } from "./runtimeLayerCompatState.js";
 import { SignalTelemetryManager } from "./signalTelemetryProcessing.js";
 // These types are imported as types here because they are present in summaryDelayLoadedModule, which is loaded dynamically when required.
@@ -1105,18 +1104,6 @@ export class ContainerRuntime
 			tryFetchBlob<[string, string][]>(aliasBlobName),
 			tryFetchBlob<SerializedIdCompressorWithNoSession>(idCompressorBlobName),
 		]);
-		if (
-			effectiveRuntimeOptions.inlineDetachedBlobsAsSummaryBlobs === true ||
-			metadata?.documentSchema?.runtime?.inlineDetachedBlobsAsSummaryBlobs === true
-		) {
-			const maybeLoaderCompatDetailsForRuntime = context as FluidObject<ILayerCompatDetails>;
-			validateLoaderCompatibilityForBlobManagerLoadingGroups(
-				maybeLoaderCompatDetailsForRuntime.ILayerCompatDetails,
-				context.disposeFn ?? context.closeFn,
-				mc,
-			);
-		}
-
 		// read snapshot blobs needed for BlobManager to load
 		const blobManagerLoadInfo = await loadBlobManagerLoadInfo(context);
 
