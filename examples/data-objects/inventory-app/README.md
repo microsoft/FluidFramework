@@ -22,6 +22,17 @@ You can run this example using the following steps:
 
 <!-- AUTO-GENERATED-CONTENT:END -->
 
+## Service selection
+
+The app uses an ephemeral in-browser service by default. The container ID is stored in the URL hash.
+
+To retain the container across reloads in the current browser tab, open
+<http://localhost:8080/?fluidClient=session>.
+
+To use Tinylicious and share documents between browser sessions, start Tinylicious and then run
+`pnpm start:tinylicious`. In GitHub Codespaces, set the forwarded Tinylicious port 7070 visibility to
+**Public** before opening the app.
+
 ## Testing
 
 ```bash
