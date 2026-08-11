@@ -295,10 +295,10 @@ class ModularChangeMinimizer {
 				? EditFilterStatus.Preserve
 				: EditFilterStatus.PreserveWithoutMove;
 
-			return { value: action, length: moveEndpointEntry.length };
+			return { value: action, length: countProcessed };
 		}
 
-		return { value: EditFilterStatus.Preserve, length: moveEndpointEntry.length };
+		return { value: EditFilterStatus.Preserve, length: countProcessed };
 	}
 
 	private filterAttachForBuildChange(
