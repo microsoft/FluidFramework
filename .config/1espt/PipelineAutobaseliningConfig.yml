@@ -7,13 +7,13 @@ pipelines:
         credscan:
           lastModifiedDate: 2024-09-17
         eslint:
-          lastModifiedDate: 2024-09-17
+          lastModifiedDate: 2026-08-11
         bandit:
-          lastModifiedDate: 2024-09-17
+          lastModifiedDate: 2026-08-11
         psscriptanalyzer:
-          lastModifiedDate: 2024-09-17
+          lastModifiedDate: 2026-08-11
         armory:
-          lastModifiedDate: 2024-09-17
+          lastModifiedDate: 2026-08-11
   12:
     retail:
       source:
@@ -196,44 +196,44 @@ pipelines:
         credscan:
           lastModifiedDate: 2024-09-17
         eslint:
-          lastModifiedDate: 2026-08-11
+          lastModifiedDate: 2024-09-17
         bandit:
-          lastModifiedDate: 2026-08-11
+          lastModifiedDate: 2024-09-17
         psscriptanalyzer:
-          lastModifiedDate: 2026-08-11
+          lastModifiedDate: 2024-09-17
         armory:
-          lastModifiedDate: 2026-08-11
+          lastModifiedDate: 2024-09-17
       binary:
         credscan:
           lastModifiedDate: 2024-09-17
         binskim:
-          lastModifiedDate: 2026-08-11
+          lastModifiedDate: 2025-04-25
         spotbugs:
-          lastModifiedDate: 2026-08-11
+          lastModifiedDate: 2024-09-17
         roslyn:
-          lastModifiedDate: 2026-08-11
+          lastModifiedDate: 2024-09-17
   25:
     retail:
       source:
         credscan:
           lastModifiedDate: 2024-09-17
         eslint:
-          lastModifiedDate: 2026-08-11
+          lastModifiedDate: 2024-09-17
         bandit:
-          lastModifiedDate: 2026-08-11
+          lastModifiedDate: 2024-09-17
         psscriptanalyzer:
-          lastModifiedDate: 2026-08-11
+          lastModifiedDate: 2024-09-17
         armory:
-          lastModifiedDate: 2026-08-11
+          lastModifiedDate: 2024-09-17
       binary:
         credscan:
           lastModifiedDate: 2024-09-17
         binskim:
-          lastModifiedDate: 2026-08-11
+          lastModifiedDate: 2025-04-25
         spotbugs:
-          lastModifiedDate: 2026-08-11
+          lastModifiedDate: 2024-09-17
         roslyn:
-          lastModifiedDate: 2026-08-11
+          lastModifiedDate: 2024-09-17
   30:
     retail:
       source:
