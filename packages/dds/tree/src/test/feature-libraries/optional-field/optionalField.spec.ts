@@ -1017,8 +1017,8 @@ describe("optionalField", () => {
 			);
 			const actual = optionalChangeHandler.getNestedChanges(change);
 			const expected: ChildChangeInfo[] = [
-				{ nodeId: nodeId1, inputRootId: rootId1, detachId: rootId1 },
-				{ nodeId: nodeId2, inputRootId: rootId2, detachId: rootId2 },
+				{ nodeId: nodeId1, inputRootId: rootId1, detachId: undefined },
+				{ nodeId: nodeId2, inputRootId: rootId2, detachId: undefined },
 			];
 			assert.deepEqual(actual, expected);
 		});

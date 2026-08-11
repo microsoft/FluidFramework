@@ -53,7 +53,7 @@ export function testGetNestedChanges(): void {
 			const actual = sequenceFieldChangeHandler.getNestedChanges(change);
 			const expected: ChildChangeInfo[] = [
 				{ nodeId: nodeId1, inputRootId: cellId1, detachId: undefined },
-				{ nodeId: nodeId2, inputRootId: cellId2, detachId: cellId2 },
+				{ nodeId: nodeId2, inputRootId: cellId2, detachId: undefined },
 			];
 			assert.deepEqual(actual, expected);
 		});
