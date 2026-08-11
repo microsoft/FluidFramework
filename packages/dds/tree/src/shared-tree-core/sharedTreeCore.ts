@@ -11,6 +11,7 @@ import type {
 	IIdCompressor,
 	SessionId,
 	SessionSpaceCompressedId,
+	StableId,
 } from "@fluidframework/id-compressor";
 import type {
 	IExperimentalIncrementalSummaryContext,
@@ -23,7 +24,7 @@ import type {
 	IChannelView,
 	IFluidSerializer,
 } from "@fluidframework/shared-object-base/internal";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { createChildLogger, UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { CodecWriteOptions, DependentFormatVersion, IJsonCodec } from "../codec/index.js";
 import {
@@ -78,6 +79,11 @@ export interface SharedTreeCoreOptionsInternal extends CodecWriteOptions {
 	 * See {@link SharedTreeOptionsBeta.healUnresolvableIdentifiersOnDecode}.
 	 */
 	readonly healUnresolvableIdentifiersOnDecode?: boolean;
+
+	/**
+	 * {@inheritDoc SharedTreeOptions.retainHistory}
+	 */
+	readonly retainHistory?: boolean;
 }
 
 export interface EnrichmentConfig<TChange> {
@@ -89,12 +95,19 @@ export interface EnrichmentConfig<TChange> {
  * Generic shared tree, which needs to be configured with indexes, field kinds and other configuration.
  */
 @breakingClass
-export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
+export class SharedTreeCore<
+		TEditor extends ChangeFamilyEditor,
+		TChange,
+		TChangeProcessingContext,
+	>
 	extends VersionedSummarizer<SharedTreeSummaryFormatVersion>
 	implements WithBreakable, Summarizable
 {
-	private readonly editManager: EditManager<TEditor, TChange, ChangeFamily<TEditor, TChange>>;
-	private readonly summarizables: readonly [EditManagerSummarizer<TChange>, ...Summarizable[]];
+	private readonly editManager: EditManager<TEditor, TChange, TChangeProcessingContext>;
+	private readonly summarizables: readonly [
+		EditManagerSummarizer<TChange, TChangeProcessingContext>,
+		...Summarizable[],
+	];
 	/**
 	 * The sequence number that this instance is at.
 	 * This number is artificial in that it is made up by this instance as opposed to being provided by the runtime.
@@ -124,6 +137,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 
 	private readonly schemaAndPolicy: ClonableSchemaAndPolicy;
 
+	private static readonly maxBranchNameLength = 1024;
+
 	/**
 	 * @param summarizables - Summarizers for all indexes used by this tree
 	 * @param changeFamily - The change family
@@ -139,7 +154,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		public readonly submitLocalMessage: (content: unknown, localOpMetadata?: unknown) => void,
 		logger: ITelemetryBaseLogger | undefined,
 		summarizables: readonly Summarizable[],
-		protected readonly changeFamily: ChangeFamily<TEditor, TChange>,
+		protected readonly changeFamily: ChangeFamily<TEditor, TChange, TChangeProcessingContext>,
 		options: SharedTreeCoreOptionsInternal,
 		changeFormatVersionForEditManager: DependentFormatVersion<EditManagerFormatVersion>,
 		changeFormatVersionForMessage: DependentFormatVersion<MessageFormatVersion>,
@@ -179,6 +194,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			this.mintRevisionTag,
 			(branchId) => this.registerSharedBranch(branchId),
 			rebaseLogger,
+			options.retainHistory ?? false,
 		);
 
 		this.registerSharedBranch("main");
@@ -197,8 +213,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				this.idCompressor,
 				options.minVersionForCollab,
 				this.schemaAndPolicy,
-				options.healUnresolvableIdentifiersOnDecode,
-				sharedObject.id,
+				options.healUnresolvableIdentifiersOnDecode === true
+					? { sharedObjectId: sharedObject.id, logger }
+					: undefined,
 			),
 			...summarizables,
 		];
@@ -390,9 +407,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		this.getResubmitMachine(branchId).onCommitSubmitted(enrichedCommit);
 	}
 
-	protected submitBranchCreation(branchId: BranchId): void {
+	protected submitBranchCreation(branchId: BranchId, branchName?: string): void {
 		this.submitMessage(
-			{ type: "branch", sessionId: this.editManager.localSessionId, branchId },
+			{ type: "branch", sessionId: this.editManager.localSessionId, branchId, branchName },
 			this.schemaAndPolicy,
 		);
 	}
@@ -470,6 +487,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 						messagesSessionId,
 						brand(envelope.referenceSequenceNumber),
 						message.branchId,
+						message.branchName,
 					);
 					break;
 				}
@@ -508,7 +526,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		}
 	}
 
-	public getLocalBranch(): SharedTreeBranch<TEditor, TChange> {
+	public getLocalBranch(): SharedTreeBranch<TEditor, TChange, TChangeProcessingContext> {
 		return this.editManager.getLocalBranch("main");
 	}
 
@@ -518,19 +536,34 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			.filter((id): id is SessionSpaceCompressedId => id !== "main")
 			.map((id) => this.idCompressor.decompress(id));
 	}
-	public createSharedBranch(): string {
+	public createSharedBranch(branchName?: string): string {
+		if (branchName !== undefined && branchName.length > SharedTreeCore.maxBranchNameLength) {
+			throw new UsageError(
+				`Branch name is too long: ${branchName.length} > maxBranchNameLength`,
+			);
+		}
 		const branchId = this.idCompressor.generateCompressedId();
-		this.addBranch(branchId);
-		this.submitBranchCreation(branchId);
+		this.addBranch(branchId, branchName);
+		this.submitBranchCreation(branchId, branchName);
 		return this.idCompressor.decompress(branchId);
 	}
 
-	protected addBranch(branchId: BranchId): void {
-		this.editManager.addNewBranch(branchId);
+	protected addBranch(branchId: BranchId, branchName?: string): void {
+		this.editManager.addNewBranch(branchId, branchName);
 	}
 
-	public getSharedBranch(branchId: BranchId): SharedTreeBranch<TEditor, TChange> {
+	public getSharedBranch(
+		branchId: BranchId,
+	): SharedTreeBranch<TEditor, TChange, TChangeProcessingContext> {
 		return this.editManager.getLocalBranch(branchId);
+	}
+
+	public getSharedBranchName(branchId: string): string | undefined {
+		const compressedId = this.idCompressor.tryRecompress(branchId as StableId);
+		if (compressedId === undefined) {
+			throw new UsageError(`No branch found with id: ${branchId}`);
+		}
+		return this.editManager.getSharedBranchName(compressedId);
 	}
 
 	public didAttach(): void {
@@ -573,7 +606,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				break;
 			}
 			case "branch": {
-				this.submitBranchCreation(message.branchId);
+				this.submitBranchCreation(message.branchId, message.branchName);
 				break;
 			}
 			default: {
@@ -630,7 +663,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				break;
 			}
 			case "branch": {
-				this.editManager.addNewBranch(message.branchId);
+				this.editManager.addNewBranch(message.branchId, message.branchName);
 				break;
 			}
 			default: {

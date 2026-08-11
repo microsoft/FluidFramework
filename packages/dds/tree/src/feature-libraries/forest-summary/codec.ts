@@ -16,6 +16,7 @@ import {
 import type { FieldKey, ITreeCursorSynchronous } from "../../core/index.js";
 import {
 	fieldBatchCodecBuilder,
+	type FieldBatchDecodingContext,
 	type FieldBatchEncodingContext,
 } from "../chunked-forest/index.js";
 
@@ -28,13 +29,14 @@ export type FieldSet = ReadonlyMap<FieldKey, ITreeCursorSynchronous>;
 export type ForestCodec = VersionDispatchingCodec<
 	FieldSet,
 	FieldBatchEncodingContext,
-	ForestFormatVersion
+	ForestFormatVersion,
+	FieldBatchDecodingContext
 >;
 
 function makeForestSummarizerCodec(
 	options: CodecWriteOptions,
 	version: ForestFormatVersion,
-): CodecAndSchema<FieldSet, FieldBatchEncodingContext> {
+): CodecAndSchema<FieldSet, FieldBatchEncodingContext, FieldBatchDecodingContext> {
 	// Performance: Since multiple places (including multiple versions of this codec) use the field batch codec,
 	// we may end up with multiple copies of it, including compiling its format validation multiple times.
 	// This is not ideal, but is not too bad as it is a small fixed number of copies and thus should not be too expensive.
@@ -55,7 +57,7 @@ function makeForestSummarizerCodec(
 				version,
 			};
 		},
-		decode: (data: FormatCommon, context: FieldBatchEncodingContext): FieldSet => {
+		decode: (data: FormatCommon, context: FieldBatchDecodingContext): FieldSet => {
 			const out: Map<FieldKey, ITreeCursorSynchronous> = new Map();
 			const fields = fieldBatchCodec.decode(data.fields, context);
 			assert(data.keys.length === fields.length, 0x891 /* mismatched lengths */);

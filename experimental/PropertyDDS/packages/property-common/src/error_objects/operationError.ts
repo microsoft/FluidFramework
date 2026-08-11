@@ -11,7 +11,7 @@
  */
 import _ from "lodash";
 
-import { FlaggedError } from "./flaggedError";
+import { FlaggedError } from "./flaggedError.js";
 
 /**
  * @internal

@@ -20,8 +20,8 @@ import type {
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import type {
-	TelemetryLoggerExt,
 	MonitoringContext,
+	TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import {
 	PerformanceEvent,

@@ -43,8 +43,8 @@ function buildHierarchy(
 			const newTree: ISnapshotTree = {
 				blobs: {},
 				trees: {},
-				unreferenced: entry.unreferenced,
-				groupId: entry.groupId,
+				...(entry.unreferenced === undefined ? {} : { unreferenced: entry.unreferenced }),
+				...(entry.groupId === undefined ? {} : { groupId: entry.groupId }),
 			};
 			node.trees[decodeURIComponent(entryPathBase)] = newTree;
 			lookup[entryPath] = newTree;

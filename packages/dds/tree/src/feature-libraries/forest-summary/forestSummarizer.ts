@@ -20,7 +20,6 @@ import {
 	type IEditableForest,
 	type ITreeCursorSynchronous,
 	type ITreeSubscriptionCursor,
-	type RevisionTagCodec,
 	TreeNavigationResult,
 	applyDelta,
 	forEachField,
@@ -41,6 +40,7 @@ import {
 import { chunkFieldSingle, defaultChunkPolicy } from "../chunked-forest/chunkTree.js";
 import {
 	defaultIncrementalEncodingPolicy,
+	type FieldBatchDecodingContext,
 	type FieldBatchEncodingContext,
 	type IncrementalEncodingPolicy,
 } from "../chunked-forest/index.js";
@@ -78,8 +78,8 @@ export class ForestSummarizer
 	 */
 	public constructor(
 		private readonly forest: IEditableForest,
-		private readonly revisionTagCodec: RevisionTagCodec,
 		private readonly encoderContext: FieldBatchEncodingContext,
+		private readonly decoderContext: FieldBatchDecodingContext,
 		options: CodecWriteOptions,
 		private readonly idCompressor: IIdCompressor,
 		initialSequenceNumber: number,
@@ -160,7 +160,7 @@ export class ForestSummarizer
 		});
 		const encoderContext: FieldBatchEncodingContext = {
 			...this.encoderContext,
-			incrementalEncoderDecoder:
+			incrementalEncoder:
 				incrementalSummaryBehavior === ForestIncrementalSummaryBehavior.Incremental
 					? this.incrementalSummaryBuilder
 					: undefined,
@@ -212,10 +212,7 @@ export class ForestSummarizer
 				parse,
 				// TODO: this type cast assumes there are no handles, which should probably be enforced at runtime or the need for this cast should be removed altogether.
 			)) as JsonCompatibleReadOnly,
-			{
-				...this.encoderContext,
-				incrementalEncoderDecoder: this.incrementalSummaryBuilder,
-			},
+			this.decoderContext.withIncrementalDecoder(this.incrementalSummaryBuilder),
 		);
 		const allocator = idAllocatorFromMaxId();
 		const fieldChanges: [FieldKey, DeltaFieldChanges][] = [];
@@ -241,7 +238,7 @@ export class ForestSummarizer
 			{ build, fields: new Map(fieldChanges) },
 			undefined,
 			this.forest,
-			makeDetachedFieldIndex("init", this.revisionTagCodec, this.idCompressor),
+			makeDetachedFieldIndex("init"),
 		);
 	}
 }

@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
+	collectContiguousRanges,
 	validateIndex,
 	validateIndexRange,
 	validatePositiveIndex,
@@ -166,5 +167,67 @@ describe("arrayUtilities unit tests", () => {
 				/Malformed range passed to test. Start index 2 is greater than end index 1./,
 			),
 		);
+	});
+
+	describe("collectContiguousRanges", () => {
+		it("returns no ranges for an empty array", () => {
+			assert.deepEqual(
+				collectContiguousRanges([], () => true),
+				[],
+			);
+		});
+
+		it("returns no ranges when nothing matches", () => {
+			assert.deepEqual(
+				collectContiguousRanges([1, 2, 3, 4], () => false),
+				[],
+			);
+		});
+
+		it("returns a single full-array range when everything matches", () => {
+			assert.deepEqual(
+				collectContiguousRanges([1, 2, 3, 4], () => true),
+				[{ start: 0, end: 4 }],
+			);
+		});
+
+		it("coalesces adjacent matching indices into one range", () => {
+			// matches: 1, 2, 3 -> single range [1, 4)
+			assert.deepEqual(
+				collectContiguousRanges([0, 1, 1, 1, 0], (v) => v === 1),
+				[{ start: 1, end: 4 }],
+			);
+		});
+
+		it("emits separate ranges for non-adjacent matches", () => {
+			// matches: 0, 2, 4 -> three singleton ranges
+			assert.deepEqual(
+				collectContiguousRanges([1, 0, 1, 0, 1], (v) => v === 1),
+				[
+					{ start: 0, end: 1 },
+					{ start: 2, end: 3 },
+					{ start: 4, end: 5 },
+				],
+			);
+		});
+
+		it("mixes singleton and multi-element ranges", () => {
+			// matches at indices: 0, 2, 3, 4, 6, 7 -> [0,1) [2,5) [6,8)
+			assert.deepEqual(
+				collectContiguousRanges([1, 0, 1, 1, 1, 0, 1, 1], (v) => v === 1),
+				[
+					{ start: 0, end: 1 },
+					{ start: 2, end: 5 },
+					{ start: 6, end: 8 },
+				],
+			);
+		});
+
+		it("handles a match at the final index", () => {
+			assert.deepEqual(
+				collectContiguousRanges([0, 0, 1], (v) => v === 1),
+				[{ start: 2, end: 3 }],
+			);
+		});
 	});
 });

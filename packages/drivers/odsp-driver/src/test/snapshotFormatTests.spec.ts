@@ -184,8 +184,9 @@ describe("Snapshot Format Conversion Tests", () => {
 		assert.deepStrictEqual(result.ops, ops, "Ops should match");
 		assert(result.sequenceNumber === 0, "Seq number should match");
 		assert(result.latestSequenceNumber === 2, "Latest sequence number should match");
-		assert(
-			(result.snapshotTree.id = snapshotContents.snapshotTree.id),
+		assert.equal(
+			result.snapshotTree.id,
+			snapshotContents.snapshotTree.id,
 			"Snapshot id should match",
 		);
 
@@ -220,8 +221,9 @@ describe("Snapshot Format Conversion Tests", () => {
 		assert.deepStrictEqual(result.ops, [], "Ops should match");
 		assert(result.sequenceNumber === 0, "Seq number should match");
 		assert(result.latestSequenceNumber === 2, "Latest sequence number should match");
-		assert(
-			(result.snapshotTree.id = snapshotContents.snapshotTree.id),
+		assert.equal(
+			result.snapshotTree.id,
+			snapshotContents.snapshotTree.id,
 			"Snapshot id should match",
 		);
 		assert(result.telemetryProps.slowBlobStructureCount === 0);
@@ -259,8 +261,9 @@ describe("Snapshot Format Conversion Tests", () => {
 		assert.deepStrictEqual(result.ops, ops, "Ops should match");
 		assert(result.sequenceNumber === 0, "Seq number should match");
 		assert(result.latestSequenceNumber === 2, "Latest sequence number should match");
-		assert(
-			(result.snapshotTree.id = snapshotContents.snapshotTree.id),
+		assert.equal(
+			result.snapshotTree.id,
+			snapshotContents.snapshotTree.id,
 			"Snapshot id should match",
 		);
 		assert(result.telemetryProps.slowBlobStructureCount === 0);

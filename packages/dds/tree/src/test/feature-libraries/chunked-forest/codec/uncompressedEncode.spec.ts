@@ -17,7 +17,7 @@ import {
 } from "../../../../feature-libraries/index.js";
 import { ajvValidator } from "../../../codec/index.js";
 import { testTrees } from "../../../cursorTestSuite.js";
-import { testIdCompressor } from "../../../utils.js";
+import { makeTestFieldBatchContexts } from "../../../utils.js";
 
 describe("uncompressedEncode", () => {
 	// TODO: test non size 1 batches
@@ -25,18 +25,15 @@ describe("uncompressedEncode", () => {
 		for (const [name, jsonable] of testTrees) {
 			it(name, () => {
 				const input = cursorForJsonableTreeField([jsonable]);
-				const context = {
+				const { encode, decode } = makeTestFieldBatchContexts({
 					encodeType: TreeCompressionStrategy.Uncompressed,
-					originatorId: testIdCompressor.localSessionId,
-					isSummary: false,
-					idCompressor: testIdCompressor,
-				};
+				});
 				const codec = fieldBatchCodecBuilder.build({
 					jsonValidator: ajvValidator,
 					minVersionForCollab: currentVersion,
 				});
-				const result = codec.encode([input], context);
-				const decoded = codec.decode(result, context);
+				const result = codec.encode([input], encode);
+				const decoded = codec.decode(result, decode);
 				const decodedJson = decoded.map(jsonableTreeFromFieldCursor);
 				assert.deepEqual([[jsonable]], decodedJson);
 			});

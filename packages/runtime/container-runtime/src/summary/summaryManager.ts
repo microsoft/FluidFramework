@@ -17,9 +17,9 @@ import type {
 import { assert } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import {
-	type TelemetryLoggerExt,
-	PerformanceEvent,
 	createChildLogger,
+	PerformanceEvent,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { IThrottler } from "../throttler.js";

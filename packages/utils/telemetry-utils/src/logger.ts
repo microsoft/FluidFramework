@@ -430,7 +430,7 @@ function toEitherTelemetryLoggerExt(
  * exactly an {@link ITelemetryLoggerExt}.
  */
 export function createChildLogger(props?: {
-	logger?: ITelemetryBaseLogger;
+	logger?: ITelemetryBaseLogger | undefined;
 	namespace?: string;
 	properties?: ITelemetryLoggerPropertyBags;
 }): TelemetryLoggerExt & ITelemetryLoggerExt {
@@ -453,8 +453,8 @@ export class ChildLogger extends TelemetryLogger {
 	 * @param properties - Base properties to add to all events
 	 */
 	public static create(
-		baseLogger?: ITelemetryBaseLogger,
-		namespace?: string,
+		baseLogger: ITelemetryBaseLogger | undefined,
+		namespace: string | undefined,
 		properties?: ITelemetryLoggerPropertyBags,
 	): TelemetryLogger {
 		// if we are creating a child of a child, rather than nest, which will increase
@@ -805,9 +805,9 @@ export class PerformanceEvent {
 		return performanceNow() - this.startTime;
 	}
 
-	private event?: ITelemetryGenericEventExt;
+	private event: ITelemetryGenericEventExt | undefined;
 	private readonly startTime = performanceNow();
-	private startMark?: string;
+	private startMark: string | undefined;
 
 	private constructor(
 		private readonly logger: TelemetryLoggerExt,

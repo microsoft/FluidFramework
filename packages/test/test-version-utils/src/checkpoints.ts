@@ -9,7 +9,7 @@
  * Designated checkpoints drive the runtime test matrix. Future / TBD checkpoints are
  * listed below for documentation purposes only. Both sets populate the table in
  * `CompatibilityCheckpoints.md` at the repo root; run
- * `pnpm --filter @fluid-private/test-version-utils run update-compat-versions`
+ * `pnpm -r --filter @fluid-private/test-version-utils run update-compat-versions`
  * after any change to regenerate that table (and the compat workspaces).
  *
  * For more information, see CrossClientCompatibility.md, CrossClientCompatibilityDevGuide.md,
@@ -27,7 +27,7 @@ import * as semver from "semver";
  */
 export interface Checkpoint {
 	/**
-	 * Identifier for the checkpoint (i.e."CC-3").
+	 * Identifier for the checkpoint (i.e."CC#3").
 	 */
 	readonly name: string;
 	/**
@@ -48,7 +48,7 @@ export interface Checkpoint {
 	readonly startDate: string;
 	/**
 	 * Extra semver ranges for versions that generic semver ranges do not
-	 * capture (i.e. the `2.0.0-internal.x.y.z` releases for CC-1).
+	 * capture (i.e. the `2.0.0-internal.x.y.z` releases for CC#1).
 	 */
 	readonly additionalRanges?: readonly string[];
 }
@@ -78,26 +78,26 @@ interface DocumentedCheckpoint extends Checkpoint {
  */
 export const checkpoints: readonly Checkpoint[] = [
 	{
-		name: "CC-1",
+		name: "CC#1",
 		index: 1,
 		lowerBoundVersion: "1.4.0",
 		startDate: "2024-04-09",
 		additionalRanges: ["2.0.0-internal*", "2.0.0-rc*"],
 	},
 	{
-		name: "CC-2",
+		name: "CC#2",
 		index: 2,
 		lowerBoundVersion: "2.0.0",
 		startDate: "2024-06-26",
 	},
 	{
-		name: "CC-3",
+		name: "CC#3",
 		index: 3,
 		lowerBoundVersion: "2.40.0",
 		startDate: "2025-05-12",
 	},
 	{
-		name: "CC-4",
+		name: "CC#4",
 		index: 4,
 		lowerBoundVersion: "2.80.0",
 		startDate: "2026-01-06",
@@ -113,24 +113,24 @@ export const checkpoints: readonly Checkpoint[] = [
  */
 const futureCheckpoints: readonly DocumentedCheckpoint[] = [
 	{
-		name: "CC-5",
+		name: "CC#5",
 		index: 5,
 		lowerBoundVersion: "3.0.0",
-		startDate: "2026-07-06",
+		startDate: "2026-08-24",
 		status: "tbd",
 	},
 	{
-		name: "CC-6",
+		name: "CC#6",
 		index: 6,
 		lowerBoundVersion: "4.0.0",
-		startDate: "2027-01-06",
+		startDate: "2027-04-19",
 		status: "tbd",
 	},
 	{
-		name: "CC-7",
+		name: "CC#7",
 		index: 7,
 		lowerBoundVersion: "5.0.0",
-		startDate: "2027-07-06",
+		startDate: "2027-12-06",
 		status: "tbd",
 		closingVersion: "6.0.0",
 	},
@@ -173,7 +173,7 @@ export function getCurrentCheckpoint(version: string): Checkpoint {
 		}
 		// A prerelease whose `major.minor.patch` equals a checkpoint's
 		// `lowerBoundVersion` belongs to that checkpoint — `2.100.0-rc.0` is the
-		// release-candidate of CC-4, not the tail end of CC-3, even though
+		// release-candidate of CC#4, not the tail end of CC#3, even though
 		// `semver.gte("2.100.0-rc.0", "2.100.0")` is `false`.
 		if (parsed !== null && parsed.prerelease.length > 0) {
 			const lowerBound = semver.parse(c.lowerBoundVersion);
@@ -194,7 +194,7 @@ export function getCurrentCheckpoint(version: string): Checkpoint {
 /**
  * Returns the prior in-window checkpoints relative to `current` from newest
  * to oldest. May return fewer than `fullCompatibilityWindowSize` entries when `current`
- * is near the start of the checkpoint list (e.g., `current === CC-1` returns
+ * is near the start of the checkpoint list (e.g., `current === CC#1` returns
  * `[]`).
  *
  * @internal
@@ -248,21 +248,25 @@ const tableEndMarker = "<!-- GENERATED-TABLE-END -->";
 
 const doNotEditNotice = [
 	"<!-- NOTE: This table is automatically generated. Do not update it directly. -->",
-	`<!-- To modify this table, edit \`${designatedSourceRelativePath}\` then run \`pnpm --filter @fluid-private/test-version-utils run update-compat-versions\` -->`,
+	`<!-- To modify this table, edit \`${designatedSourceRelativePath}\` then run \`pnpm -r --filter @fluid-private/test-version-utils run update-compat-versions\` -->`,
 ].join("\n");
 
 /**
  * Explicit upper bounds for designated checkpoints whose range does not end at
- * the next checkpoint's `lowerBoundVersion`.
+ * the next checkpoint's `lowerBoundVersion`. Normally empty: a designated
+ * checkpoint's range runs up to the next checkpoint's lower bound (the next
+ * entry in {@link futureCheckpoints} when it is the latest designated one).
  */
-const designatedClosingVersions: Readonly<Record<string, string>> = { "CC-4": "2.101.0" };
+const designatedClosingVersions: Readonly<Record<string, string>> = {};
 
 const documentedCheckpoints: readonly DocumentedCheckpoint[] = [
 	...checkpoints.map(
 		(c): DocumentedCheckpoint => ({
 			...c,
 			status: "designated",
-			closingVersion: designatedClosingVersions[c.name],
+			...(designatedClosingVersions[c.name] === undefined
+				? {}
+				: { closingVersion: designatedClosingVersions[c.name] }),
 		}),
 	),
 	...futureCheckpoints,
@@ -272,15 +276,23 @@ function escapeCell(value: string): string {
 	return value.replace(/\|/g, "\\|");
 }
 
-function closingVersionOf(checkpoint: DocumentedCheckpoint, index: number): string {
-	if (checkpoint.closingVersion !== undefined) return checkpoint.closingVersion;
+function closingVersionOf(
+	checkpoint: DocumentedCheckpoint,
+	index: number,
+): { version: string; estimated: boolean } {
+	if (checkpoint.closingVersion !== undefined) {
+		return { version: checkpoint.closingVersion, estimated: checkpoint.status === "tbd" };
+	}
 	const next = documentedCheckpoints[index + 1];
 	if (next === undefined) {
 		throw new Error(
 			`Checkpoint "${checkpoint.name}" has no following checkpoint and no closingVersion.`,
 		);
 	}
-	return next.lowerBoundVersion;
+	// The upper bound is the next checkpoint's lower bound; it is an estimate when
+	// that next checkpoint is not yet designated (e.g. the latest designated
+	// checkpoint closes at the first forecasted future checkpoint).
+	return { version: next.lowerBoundVersion, estimated: next.status === "tbd" };
 }
 
 function renderName(c: DocumentedCheckpoint): string {
@@ -294,8 +306,8 @@ function renderDate(c: DocumentedCheckpoint): string {
 function renderVersionRange(c: DocumentedCheckpoint, i: number): string {
 	const closing = closingVersionOf(c, i);
 	const additional = (c.additionalRanges ?? []).map((r) => ` | ${r}`).join("");
-	const range = `\`>=${c.lowerBoundVersion} <${closing}${additional}\``;
-	return c.status === "tbd" ? `${range}(estimated)` : range;
+	const range = `\`>=${c.lowerBoundVersion} <${closing.version}${additional}\``;
+	return closing.estimated ? `${range}(estimated)` : range;
 }
 
 function compatibleCheckpointsOf(c: DocumentedCheckpoint): DocumentedCheckpoint[] {
@@ -314,14 +326,14 @@ function renderCompatibleSemanticVersions(c: DocumentedCheckpoint): string {
 	const window = compatibleCheckpointsOf(c);
 	const lowest = window[0];
 	const highest = window[window.length - 1];
-	const upper = closingVersionOf(highest, documentedCheckpoints.indexOf(highest));
-	const estimated = highest.status === "tbd" ? "(estimated)" : "";
+	const closing = closingVersionOf(highest, documentedCheckpoints.indexOf(highest));
+	const estimated = closing.estimated ? "(estimated)" : "";
 	const additionalRanges = window.flatMap((x) => x.additionalRanges ?? []);
 	// Wrap additional ranges in their own code span (e.g. `| 2.0.0-internal* | 2.0.0-rc*`),
 	// adjacent to the version range span. The `|` chars are escaped by escapeCell later.
 	const additionalPart =
 		additionalRanges.length > 0 ? `\` | ${additionalRanges.join(" | ")}\`` : "";
-	return `\`>=${lowest.lowerBoundVersion} <${upper}\`${estimated}${additionalPart}`;
+	return `\`>=${lowest.lowerBoundVersion} <${closing.version}\`${estimated}${additionalPart}`;
 }
 
 function renderRow(c: DocumentedCheckpoint, i: number): string {

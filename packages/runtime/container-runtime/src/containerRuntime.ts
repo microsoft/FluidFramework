@@ -22,6 +22,7 @@ import type {
 import { AttachState } from "@fluidframework/container-definitions";
 import type {
 	IContainerContext,
+	IContainerContextInternal,
 	IGetPendingLocalStateProps,
 	IRuntime,
 	IDeltaManager,
@@ -152,8 +153,8 @@ import type {
 	IEventSampler,
 	IFluidErrorBase,
 	ITelemetryGenericEventExt,
-	TelemetryLoggerExt,
 	MonitoringContext,
+	TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import {
 	DataCorruptionError,
@@ -270,6 +271,11 @@ import {
 	validateLoaderCompatibility,
 } from "./runtimeLayerCompatState.js";
 import { SignalTelemetryManager } from "./signalTelemetryProcessing.js";
+import {
+	VersionMarkResolver,
+	type IVersionMarkResolver,
+	inboundVersionMarkUpdate,
+} from "./versionMarks/index.js";
 // These types are imported as types here because they are present in summaryDelayLoadedModule, which is loaded dynamically when required.
 import {
 	aliasBlobName,
@@ -1523,6 +1529,7 @@ export class ContainerRuntime
 
 	private lastEmittedDirty: boolean;
 	private emitDirtyDocumentEvent = true;
+	private lastEmittedHasStagedChanges: boolean;
 	private readonly useDeltaManagerOpsProxy: boolean;
 	private readonly closeSummarizerDelayMs: number;
 
@@ -1540,11 +1547,19 @@ export class ContainerRuntime
 	private readonly blobManager: BlobManager;
 	private readonly pendingStateManager: PendingStateManager;
 	private readonly duplicateBatchDetector: DuplicateBatchDetector | undefined;
+	private readonly versionMarkResolverInternal: VersionMarkResolver;
+	/**
+	 * Host-facing version mark resolver.
+	 */
+	public get versionMarkResolver(): IVersionMarkResolver {
+		return this.versionMarkResolverInternal;
+	}
 	private readonly outbox: Outbox;
 	private readonly garbageCollector: IGarbageCollector;
 
 	private readonly channelCollection: ChannelCollection;
 	private readonly remoteMessageProcessor: RemoteMessageProcessor;
+	private versionMarkInboundBatchId: string | undefined;
 
 	/**
 	 * The last message processed at the time of the last summary.
@@ -1878,6 +1893,58 @@ export class ContainerRuntime
 				},
 			},
 		);
+		// fetchOps is an internal-only capability the loader injects (IContainerContextInternal), not part
+		// of the public IContainerContext contract, so narrow to read it.
+		const fetchOps = (context as IContainerContextInternal).fetchOps;
+		this.versionMarkResolverInternal = new VersionMarkResolver({
+			getCurrentSequenceNumber: () => this.deltaManager.lastSequenceNumber,
+			getCurrentMinimumSequenceNumber: () => this.deltaManager.minimumSequenceNumber,
+			getCurrentPendingBatchId: () => this.pendingStateManager.getMostRecentPendingBatchId(),
+			logger: createChildLogger({
+				logger: this.baseLogger,
+				namespace: "VersionMarkResolver",
+			}),
+			// Seal the current outbound batch so a just-submitted edit gets a stable batchId in the pending
+			// state before sealAndCaptureVersionMark reads it (a batchId is only assigned when flushed).
+			flushPendingBatch: () => this.flush(),
+			// Wire the container-provided op reader (if any) so resolution can read historical ops.
+			getHistoricalOpReader: fetchOps ? () => ({ fetchMessages: fetchOps }) : undefined,
+			// Unpack scanned historical ops through the same pipeline the live inbound path uses, so a
+			// chunked batch's batchId (only restored after reassembly) is observed by the history scan too.
+			createHistoricalOpUnpacker: fetchOps
+				? () => {
+						// A fresh processor per scan: it holds chunk-reassembly state, so it must not share
+						// the live inbound processor's state. submit/size args are unused on the read path.
+						const scanProcessor = new RemoteMessageProcessor(
+							new OpSplitter(
+								[],
+								submitBatchFn,
+								runtimeOptions.chunkSizeInBytes,
+								runtimeOptions.maxBatchSizeInBytes,
+								this.mc.logger,
+							),
+							new OpDecompressor(this.mc.logger),
+							new OpGroupingManager(
+								{ groupedBatchingEnabled: this.groupedBatchingEnabled },
+								this.mc.logger,
+							),
+						);
+						return (op) => {
+							// Mirror the live path: only modern runtime-envelope ops (type Operation, with a
+							// client id) carry batches; skip system/server ops.
+							if (op.type !== MessageType.Operation || typeof op.clientId !== "string") {
+								return undefined;
+							}
+							const messageCopy = { ...op };
+							ensureContentsDeserialized(messageCopy);
+							return scanProcessor.process(
+								messageCopy,
+								getSingleUseLegacyLogCallback(this.mc.logger, messageCopy.type),
+							);
+						};
+					}
+				: undefined,
+		});
 
 		let outerDeltaManager: IDeltaManagerFull = this.innerDeltaManager;
 		this.useDeltaManagerOpsProxy =
@@ -2196,6 +2263,9 @@ export class ContainerRuntime
 		this.lastEmittedDirty = this.computeCurrentDirtyState();
 		context.updateDirtyContainerState(this.lastEmittedDirty);
 
+		// We haven't emitted hasStagedChangesChanged yet, but this is the baseline so we know to emit when it changes
+		this.lastEmittedHasStagedChanges = this.computeCurrentHasStagedChanges();
+
 		// Reference Sequence Number may have just changed, and it must be consistent across a batch,
 		// so we should flush now to clear the way for the next ops.
 		// NOTE: This will be redundant whenever CR.process was called for the op (since we flush there too) -
@@ -2360,8 +2430,18 @@ export class ContainerRuntime
 		if (this.isSummarizerClient) {
 			// We want to dynamically import any thing inside summaryDelayLoadedModule module only when we are the summarizer client,
 			// so that all non summarizer clients don't have to load the code inside this module.
+			// Import the delay-loaded module by its leaf path rather than through the `./summary/index.js` barrel,
+			// which is also statically imported above for summarization dependencies every client loads
+			// (SummaryManager, SummaryCollection, SummarizerClientElection, etc.). A bundler that traces re-exports
+			// per symbol (e.g. webpack honoring sideEffects + providedExports) already keeps the summarizer out of
+			// the initial chunk even if this dynamic import targets the barrel, because the barrel's static importers
+			// use only non-summarizer symbols. A bundler without that analysis would instead treat the
+			// statically-imported barrel as making the whole summarizer subgraph available and fold it into the
+			// initial chunk. Targeting summaryDelayLoadedModule/index.js directly makes the split deterministic
+			// across bundlers.
 			const module = await import(
-				/* webpackChunkName: "summarizerDelayLoadedModule" */ "./summary/index.js"
+				// eslint-disable-next-line import-x/no-internal-modules -- Needed to import the delay-loaded module directly.
+				/* webpackChunkName: "summarizerDelayLoadedModule" */ "./summary/summaryDelayLoadedModule/index.js"
 			);
 			this._summarizer = new module.Summarizer(
 				this /* ISummarizerRuntime */,
@@ -3234,13 +3314,14 @@ export class ContainerRuntime
 						"Duplicate batch - The same batch was sequenced twice",
 						{ batchId: batchStart.batchId },
 					);
-
+					const batchIdExplicit = batchStart.batchId !== undefined;
+					const otherBatchIdExplicit = result.otherBatchInfo?.batchIdExplicit ?? false;
 					this.mc.logger.sendTelemetryEvent(
 						{
 							eventName: "DuplicateBatch",
 							details: {
 								batchId: batchStart.batchId,
-								batchIdExplicit: batchStart.batchId !== undefined,
+								batchIdExplicit,
 								clientId: batchStart.clientId,
 								batchStartCsn: batchStart.batchStartCsn,
 								size: inboundResult.length,
@@ -3251,7 +3332,7 @@ export class ContainerRuntime
 								// loaded from a summary snapshot rather than seen at runtime.
 								otherClientId: result.otherBatchInfo?.clientId,
 								otherBatchStartCsn: result.otherBatchInfo?.batchStartCsn,
-								otherBatchIdExplicit: result.otherBatchInfo?.batchIdExplicit,
+								otherBatchIdExplicit,
 								otherFromSnapshot: result.otherBatchInfo === undefined,
 								...extractSafePropertiesFromMessage(batchStart.keyMessage),
 								// For grouped batches, `keyMessage` is one of the sub-messages produced by
@@ -3264,10 +3345,12 @@ export class ContainerRuntime
 						},
 						error,
 					);
-					// Due to a live incident where we had a bug in the service that caused duplicate batches to be sent to clients, we want to log when we detect a duplicate batch, but we don't want to throw an error
-					// as it could hit the same service bug. We need to monitor below event to catch legitimate container forking scenarios and reenable throwing the data corruption error once the service bug is fixed and we stop seeing duplicate batches in the wild
-					// or once we are able to identify batch duplication reason (forking vs service bug).
-					// throw error;
+					// Only throw the error if either the current batch or the other batch has an explicit batchId since that indicates a meaningful duplication scenario
+					// coming from our batch readings rather than a server outage scenario.
+					const shouldThrowOnDuplicate = batchIdExplicit || otherBatchIdExplicit;
+					if (shouldThrowOnDuplicate) {
+						throw error;
+					}
 				}
 			}
 
@@ -3278,6 +3361,27 @@ export class ContainerRuntime
 				message: ISequencedDocumentMessage;
 				localOpMetadata?: unknown;
 			}[] = this.pendingStateManager.processInboundMessages(inboundResult, local);
+
+			// Record the version-mark point for a completed batch (its last op's sequence number), carrying
+			// the batch id across a piecemeal batch's messages. This runs only AFTER processInboundMessages
+			// has validated the batch: that call throws (fork detection / pending-content mismatch) for a
+			// batch that must be rejected. processInboundBatch synchronously notifies listeners, which an
+			// app uses to promote a mark in an external store - an irreversible side effect - so it must not
+			// fire for a batch validation is about to reject. Gated on isTracking so a container that never
+			// uses version marks does no per-batch work here (mirrors #22497's DuplicateBatchDetector gating).
+			if (this.versionMarkResolverInternal.isTracking) {
+				const versionMarkUpdate = inboundVersionMarkUpdate(
+					inboundResult,
+					this.versionMarkInboundBatchId,
+				);
+				if (versionMarkUpdate.sequenced !== undefined) {
+					this.versionMarkResolverInternal.processInboundBatch(
+						versionMarkUpdate.sequenced.batchId,
+						versionMarkUpdate.sequenced.sequenceNumber,
+					);
+				}
+				this.versionMarkInboundBatchId = versionMarkUpdate.carriedBatchId;
+			}
 
 			if (inboundResult.type !== "fullBatch") {
 				assert(
@@ -3707,6 +3811,12 @@ export class ContainerRuntime
 			this.closeFn(error2);
 			throw error2;
 		}
+
+		// Flushing moves any staged batch from the Outbox into the PendingStateManager. Since
+		// computeCurrentHasStagedChanges() now also considers a non-empty Outbox in Staging Mode, the
+		// externally-visible value shouldn't change here, but re-checking is cheap and keeps this
+		// method robust to future changes in how the two are tracked.
+		this.updateHasStagedChangesState();
 	}
 
 	/**
@@ -3889,6 +3999,7 @@ export class ContainerRuntime
 						},
 					);
 					this.updateDocumentDirtyState();
+					this.updateHasStagedChangesState();
 					return batchInfos;
 				}, "discard"),
 			commitChanges: (options) => {
@@ -3896,10 +4007,12 @@ export class ContainerRuntime
 				exitStagingMode(() => {
 					// Replay all staged batches in typical FIFO order.
 					// We'll be out of staging mode so they'll be sent to the service finally.
-					return this.pendingStateManager.replayPendingStates({
+					const batchInfos = this.pendingStateManager.replayPendingStates({
 						committingStagedBatches: true,
 						squash,
 					});
+					this.updateHasStagedChangesState();
+					return batchInfos;
 				}, "commit");
 			},
 		};
@@ -4023,6 +4136,38 @@ export class ContainerRuntime
 			this.attachState !== AttachState.Attached ||
 			this.pendingStateManager.hasPendingUserChanges() ||
 			this.outbox.containsUserChanges()
+		);
+	}
+
+	/**
+	 * Returns true if there are any staged changes, i.e. changes submitted while in Staging Mode
+	 * (see {@link @fluidframework/runtime-definitions#IContainerRuntimeBaseInternal.enterStagingMode})
+	 * that have not yet been discarded or committed.
+	 *
+	 * @remarks This is distinct from {@link ContainerRuntime.isDirty}: a container may be dirty due to
+	 * ordinary unacknowledged local changes without having any staged changes.
+	 */
+	public get hasStagedChanges(): boolean {
+		// Rather than recomputing this in the moment, just regurgitate the last emitted state.
+		return this.lastEmittedHasStagedChanges;
+	}
+
+	/**
+	 * Returns true if there are currently any staged (not yet discarded or committed) changes pending.
+	 *
+	 * @remarks While in Staging Mode, newly submitted ops sit in the Outbox until the next flush before
+	 * they're moved to the PendingStateManager (where `pendingStateManager.hasStagedChanges()` looks).
+	 * So we also check the Outbox here, otherwise there would be a window between submit and flush where
+	 * staged changes exist but this would incorrectly report false.
+	 *
+	 * @remarks We don't care about the type of ops in the Outbox here (unlike dirty state), just whether
+	 * there's anything queued at all, for consistency with how `pendingStateManager.hasStagedChanges()`
+	 * doesn't discriminate by op type either.
+	 */
+	private computeCurrentHasStagedChanges(): boolean {
+		return (
+			this.pendingStateManager.hasStagedChanges() ||
+			(this.inStagingMode && !this.outbox.isEmpty)
 		);
 	}
 
@@ -4861,13 +5006,31 @@ export class ContainerRuntime
 	private updateDocumentDirtyState(): void {
 		const dirty: boolean = this.computeCurrentDirtyState();
 
-		if (this.lastEmittedDirty === dirty) {
+		if (this.lastEmittedDirty !== dirty) {
+			this.lastEmittedDirty = dirty;
+			if (this.emitDirtyDocumentEvent) {
+				this.emit(dirty ? "dirty" : "saved");
+			}
+		}
+	}
+
+	/**
+	 * Emit "hasStagedChangesChanged" if the current staged-changes state differs from what was last emitted.
+	 * This must be called explicitly at each place staged changes can be added or removed (submit, flush,
+	 * discardChanges, commitChanges) -- unlike {@link ContainerRuntime.updateDocumentDirtyState}, it is not
+	 * safe to call this unconditionally alongside dirty tracking, since most dirty-state transitions (e.g.
+	 * acking ops, reconnecting) can't affect staged changes.
+	 */
+	private updateHasStagedChangesState(): void {
+		const hasStagedChanges: boolean = this.computeCurrentHasStagedChanges();
+
+		if (this.lastEmittedHasStagedChanges === hasStagedChanges) {
 			return;
 		}
 
-		this.lastEmittedDirty = dirty;
+		this.lastEmittedHasStagedChanges = hasStagedChanges;
 		if (this.emitDirtyDocumentEvent) {
-			this.emit(dirty ? "dirty" : "saved");
+			this.emit("hasStagedChangesChanged", hasStagedChanges);
 		}
 	}
 
@@ -5046,6 +5209,7 @@ export class ContainerRuntime
 		}
 
 		this.updateDocumentDirtyState();
+		this.updateHasStagedChangesState();
 	}
 
 	private scheduleFlush(): void {

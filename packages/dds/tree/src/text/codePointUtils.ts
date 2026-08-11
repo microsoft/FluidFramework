@@ -9,7 +9,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
  * Returns the number of Unicode code points in `value`.
  * @remarks
  * Use this to translate a JavaScript string length (which is in UTF-16 code units) into
- * the atom/code-point space used by {@link TextAsTree}.
+ * the atom/code-point space used by {@link PlainText} and {@link FormattedText}.
  *
  * @example
  * ```typescript
@@ -33,7 +33,7 @@ export function codePointCount(value: string): number {
  * Returns the number of UTF-16 code units occupied by the first `count` Unicode code points in `value`,
  * starting at UTF-16 index `start`.
  * @remarks
- * Use this to translate {@link TextAsTree}-space counts (code points) into JavaScript string indices (UTF-16).
+ * Use this to translate {@link PlainText}-space counts (code points) into JavaScript string indices (UTF-16).
  * One code point outside the Basic Multilingual Plane (e.g. most emoji) occupies two UTF-16 code units.
  *
  * Validates that the requested `count` code points are fully consumable from `start`; silent truncation

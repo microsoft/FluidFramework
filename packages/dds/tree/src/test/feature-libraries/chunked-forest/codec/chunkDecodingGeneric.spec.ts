@@ -23,6 +23,7 @@ import {
 	readStreamIdentifier,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkDecodingGeneric.js";
+import { IdDecodingContext } from "../../../../util/index.js";
 import {
 	EncodedFieldBatchGeneric,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -119,11 +120,10 @@ const rootDecoder: ChunkDecoder = {
 	},
 };
 
-const idDecodingContext = {
+const idDecodingContext = new IdDecodingContext({
 	idCompressor: testIdCompressor,
 	originatorId: testIdCompressor.localSessionId,
-	isSummary: false,
-};
+});
 
 describe("chunkDecodingGeneric", () => {
 	it("DecoderContext", () => {

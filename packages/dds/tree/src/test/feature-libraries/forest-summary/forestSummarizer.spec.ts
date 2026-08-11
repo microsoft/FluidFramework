@@ -39,7 +39,6 @@ import {
 	ForestSummarizer,
 	TreeCompressionStrategy,
 	defaultSchemaPolicy,
-	type FieldBatchEncodingContext,
 	type IncrementalEncodingPolicy,
 } from "../../../feature-libraries/index.js";
 import {
@@ -55,7 +54,7 @@ import {
 import {
 	incrementalEncodingPolicyForAllowedTypes,
 	incrementalSummaryHint,
-	permissiveStoredSchemaGenerationOptions,
+	StagedSchemaUpgradePolicy,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	toStoredSchema,
@@ -69,8 +68,8 @@ import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
 import {
 	checkoutWithContent,
 	fieldCursorFromInsertable,
+	makeTestFieldBatchContexts,
 	testIdCompressor,
-	testRevisionTagCodec,
 	type TreeStoredContentStrict,
 } from "../../utils.js";
 
@@ -102,19 +101,17 @@ function createForestSummarizer(args: {
 		forestType,
 		shouldEncodeIncrementally,
 	});
-	const encoderContext: FieldBatchEncodingContext = {
+	const { encode: encoderContext, decode: decoderContext } = makeTestFieldBatchContexts({
 		encodeType,
-		idCompressor: testIdCompressor,
-		originatorId: testIdCompressor.localSessionId,
-		isSummary: false,
+		isSummary: true,
 		schema: { schema: initialContent.schema, policy: defaultSchemaPolicy },
-	};
+	});
 	return {
 		checkout,
 		forestSummarizer: new ForestSummarizer(
 			checkout.forest,
-			testRevisionTagCodec,
 			encoderContext,
+			decoderContext,
 			options,
 			testIdCompressor,
 			0 /* initialSequenceNumber */,
@@ -237,7 +234,7 @@ async function summarizeAndValidateIncrementality<TSchema extends ImplicitFieldS
 	);
 
 	const initialContent: TreeStoredContentStrict = {
-		schema: toStoredSchema(schema, permissiveStoredSchemaGenerationOptions),
+		schema: toStoredSchema(schema, StagedSchemaUpgradePolicy.permissive),
 		initialTree: fieldCursorFromInsertable(schema, data),
 	};
 
@@ -385,7 +382,7 @@ describe("ForestSummarizer", () => {
 			it(`can summarize ${testType} forest with simple content and load from it`, async () => {
 				const schema = SchemaFactory.number;
 				const initialContent: TreeStoredContentStrict = {
-					schema: toStoredSchema(schema, permissiveStoredSchemaGenerationOptions),
+					schema: toStoredSchema(schema, StagedSchemaUpgradePolicy.permissive),
 					get initialTree() {
 						return fieldJsonCursor([5]);
 					},
@@ -518,7 +515,7 @@ describe("ForestSummarizer", () => {
 					? fieldCursorFromInsertable(Root, initialBoard)
 					: fieldJsonCursor([]);
 				const initialContent: TreeStoredContentStrict = {
-					schema: toStoredSchema(Root, permissiveStoredSchemaGenerationOptions),
+					schema: toStoredSchema(Root, StagedSchemaUpgradePolicy.permissive),
 					initialTree: fieldCursor,
 				};
 
@@ -880,7 +877,7 @@ describe("ForestSummarizer", () => {
 					? fieldCursorFromInsertable(Workspace, initialData)
 					: fieldJsonCursor([]);
 				const initialContent: TreeStoredContentStrict = {
-					schema: toStoredSchema(Workspace, permissiveStoredSchemaGenerationOptions),
+					schema: toStoredSchema(Workspace, StagedSchemaUpgradePolicy.permissive),
 					initialTree: fieldCursor,
 				};
 				return createForestSummarizer({

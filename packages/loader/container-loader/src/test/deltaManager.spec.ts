@@ -20,9 +20,9 @@ import {
 	type IStreamResult,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	type TelemetryLoggerExt,
-	MockLogger,
 	createChildLogger,
+	MockLogger,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { type SinonFakeTimers, useFakeTimers } from "sinon";
 

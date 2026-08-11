@@ -73,7 +73,7 @@ export class DocumentDeltaConnection
 	 * for "read" connections. "write" connections may use own "join" op to similar information,
 	 * that is likely to be more up-to-date.
 	 */
-	public checkpointSequenceNumber: number | undefined;
+	public checkpointSequenceNumber?: number;
 
 	// Listen for ops sent before we receive a response to connect_document
 	protected readonly queuedMessages: ISequencedDocumentMessage[] = [];
@@ -645,7 +645,11 @@ export class DocumentDeltaConnection
 					LogLevel.verbose,
 				);
 
-				this.checkpointSequenceNumber = response.checkpointSequenceNumber;
+				if (response.checkpointSequenceNumber === undefined) {
+					delete response.checkpointSequenceNumber;
+				} else {
+					this.checkpointSequenceNumber = response.checkpointSequenceNumber;
+				}
 
 				this.removeConnectionListeners();
 				resolve(response);

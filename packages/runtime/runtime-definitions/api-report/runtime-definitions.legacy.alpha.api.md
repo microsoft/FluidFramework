@@ -92,6 +92,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
         snapshotTree: ISnapshotTree;
         sequenceNumber: number;
     }>;
+    readonly hasStagedChanges: boolean;
     readonly inStagingMode: boolean;
     orderSequentially(callback: () => void): void;
     submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
@@ -109,6 +110,7 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
     // (undocumented)
     (event: "dispose", listener: () => void): any;
     (event: "stagingModeChanged", listener: (stagingModeInfo: StagingModeChangedEvent) => void): any;
+    (event: "hasStagedChangesChanged", listener: (hasStagedChanges: boolean) => void): any;
 }
 
 // @beta @legacy

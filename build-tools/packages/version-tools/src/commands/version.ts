@@ -189,7 +189,7 @@ export default class VersionCommand extends Command {
 			this.error(`The version you provided isn't valid: "${parsedInput}"`);
 		}
 		return {
-			bumpType,
+			...(bumpType === undefined ? {} : { bumpType }),
 			parsedVersion,
 			isFluidInternalFormat: isInternalVersionScheme(parsedVersion) === true,
 		};

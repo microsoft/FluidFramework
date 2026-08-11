@@ -78,7 +78,7 @@ export class ArrayChildren extends builder.arrayRecursive(
 /**
  * We use a more flexible set of allowed types to help during compile time, but during a fuzz test's runtime,
  * different trees will have different views over the currently allowed schema.
- * This extremely permissive schema is a valid superset over all possible schema and is a reasonable type to use at compile time,
+ * This extremely permissive schema is a valid superset over all possible schemas and is a reasonable type to use at compile time,
  * but generators/reducers working with trees over the course of a fuzz test need to be careful
  * to appropriately narrow their edits to be valid for the tree's current schema at runtime.
  *
@@ -170,7 +170,6 @@ export class SharedTreeFuzzTestFactory extends SharedTreeTestFactory {
 		super(onCreate, onLoad, {
 			...options,
 			jsonValidator: FormatValidatorBasic,
-			disposeForksAfterTransaction: false,
 		});
 	}
 }

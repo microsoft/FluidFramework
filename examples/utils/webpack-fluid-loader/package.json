@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/webpack-fluid-loader",
-	"version": "2.110.0",
+	"version": "2.116.0",
 	"private": true,
 	"description": "Fluid object loader for webpack-dev-server",
 	"homepage": "https://fluidframework.com",
@@ -25,16 +25,13 @@
 		}
 	},
 	"main": "lib/index.js",
-	"browser": {
-		"moniker": "@fluidframework/server-services-client/dist/generateNames.js"
-	},
 	"types": "lib/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.json",
-		"build:test": "npm run build:test:esm && npm run build:test:cjs",
+		"build:test": "concurrently npm:build:test:esm npm:build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"build:webpack": "npm run webpack",
@@ -99,14 +96,16 @@
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/tool-utils": "workspace:~",
-		"axios": "^1.15.0",
+		"axios": "^1.15.1",
 		"buffer": "^6.0.3",
 		"express": "^4.21.2",
 		"isomorphic-fetch": "^3.0.0",
 		"nconf": "^0.12.0",
 		"sillyname": "^0.1.0",
+		"source-map-loader": "^5.0.0",
+		"ts-loader": "^9.5.1",
 		"uuid": "^11.1.0",
-		"webpack-dev-server": "~4.15.2"
+		"webpack-dev-server": "~5.2.6"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.18.2",
@@ -121,6 +120,7 @@
 		"@types/mocha": "^10.0.10",
 		"@types/node": "catalog:types",
 		"c8": "^10.1.3",
+		"concurrently": "^10.0.3",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^10.1.0",
 		"eslint": "catalog:eslint",
@@ -129,8 +129,6 @@
 		"mocha": "^11.7.5",
 		"mocha-multi-reporters": "^1.5.1",
 		"rimraf": "^6.1.3",
-		"source-map-loader": "^5.0.0",
-		"ts-loader": "^9.5.1",
 		"typescript": "~5.4.5",
 		"webpack": "^5.94.0",
 		"webpack-cli": "^5.1.4"
@@ -145,7 +143,7 @@
 				"webpack"
 			],
 			"webpack": [
-				"^api-extractor:esnext",
+				"^build:entrypoints:esm",
 				"^build:esnext"
 			]
 		}

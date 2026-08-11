@@ -25,8 +25,8 @@ import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
-	type TelemetryLoggerExt,
 	LoggingError,
+	type TelemetryLoggerExt,
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 

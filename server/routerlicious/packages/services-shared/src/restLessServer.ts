@@ -119,10 +119,9 @@ export class RestLessServer {
 		const bodyField: RequestField = fields[RestLessFieldNames.Body];
 		// Tell body-parser middleware not to parse the body
 		(request as any)._body = true;
-		request.body = bodyField instanceof Array ? bodyField[0] : bodyField;
-		request.headers["content-length"] = request.body
-			? `${(request.body as string).length}`
-			: undefined;
+		const body: string | undefined = bodyField instanceof Array ? bodyField[0] : bodyField;
+		request.body = body;
+		request.headers["content-length"] = body ? `${body.length}` : undefined;
 	}
 
 	private parseRequestBody(request: IncomingMessageEx): void {

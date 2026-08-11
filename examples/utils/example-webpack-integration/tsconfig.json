@@ -6,5 +6,7 @@
 		"outDir": "./lib",
 		"types": ["node"],
 		"exactOptionalPropertyTypes": false,
+		// webpack-dev-server@5 types reference open@10 (ESM-only), which trips TS1479 under Node16 CJS resolution.
+		"skipLibCheck": true,
 	},
 }

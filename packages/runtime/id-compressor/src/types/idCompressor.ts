@@ -207,6 +207,7 @@ export interface IIdCompressorCore {
  * const sessionSpaceId3 = idCompressor.normalizeToSessionSpace(receivedMessage.ids[2], receivedMessage.sessionID);
  * ```
  * @public
+ * @sealed
  */
 export interface IIdCompressor {
 	/**
@@ -266,6 +267,40 @@ export interface IIdCompressor {
 		id: OpSpaceCompressedId,
 		originSessionId: SessionId,
 	): SessionSpaceCompressedId;
+
+	/**
+	 * Attempts to normalize an op-space ID into session space without an originator session id.
+	 * This mainly exists for data recovery purposes, when the originator session id was lost.
+	 * When possible, use {@link IIdCompressor.normalizeToSessionSpace} instead.
+	 *
+	 * @remarks
+	 * When the id is a final ID, this will return the properly translated session-space ID,
+	 * or throw if it detects that the final id is not valid in this compressor.
+	 *
+	 * Returns `undefined` if `id` is a non-final op-space ID — those are local to the
+	 * originating session and require its session id to resolve. Callers which have the
+	 * originating session id should call {@link IIdCompressor.normalizeToSessionSpace} instead.
+	 *
+	 * @param id - The ID to normalize.
+	 * @returns The session-space ID corresponding to `id`, or `undefined` if `id` is
+	 * non-final and therefore requires an originator session id to resolve.
+	 * @throws If `id` is final but is not known to this compressor (i.e. it refers to
+	 * a final id that has never been observed as finalized).
+	 * Note that it is possible (even likely) for a finalized id from another id compressor to pass this check,
+	 * and return an incorrect session-space ID.
+	 * This error is thrown only in cases where it is possible to detect the input is invalid,
+	 * and intended to help with catching bugs where invalid identifiers are being provided.
+	 * It cannot be relied upon for validation.
+	 *
+	 * @privateRemarks
+	 * Currently this is only used for data recovery in the case of lost session ids,
+	 * but we could theoretically provide an API to determine if the session id is required when encoding data (some IDs were non-final):
+	 * in such a setup, this API, and/or a version of normalizeToSessionSpace where the session id is optional,
+	 * could be used for a regular non-recovery use-case.
+	 */
+	tryNormalizeToSessionSpaceWithoutSession(
+		id: OpSpaceCompressedId,
+	): SessionSpaceCompressedId | undefined;
 
 	/**
 	 * Decompresses a previously compressed ID into a UUID.

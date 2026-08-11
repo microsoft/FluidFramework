@@ -12,6 +12,8 @@ export {
 	CommitKind,
 	RevertibleStatus,
 	type CommitMetadata,
+	CommitOutcome,
+	type LocalCommitEvents,
 	type LocalChangeMetadata,
 	type RemoteChangeMetadata,
 	type ChangeMetadata,
@@ -78,12 +80,14 @@ export {
 	type TreeIdentifierUtils,
 	independentView,
 	type IndependentViewOptions,
+	type IndependentViewTelemetryOptions,
 	createIndependentTreeBeta,
 	createIndependentTreeAlpha,
 	type CreateIndependentTreeAlphaOptions,
 	ForestTypeOptimized,
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
+	minimize,
 } from "./shared-tree/index.js";
 
 export {
@@ -97,6 +101,7 @@ export {
 	type TreeNodeSchema,
 	TreeViewConfiguration,
 	type ITreeViewConfiguration,
+	type ITreeViewConfigurationAlpha,
 	type ITreeConfigurationOptions,
 	type TreeView,
 	type TreeViewEvents,
@@ -273,17 +278,21 @@ export {
 	type NodeSchemaMetadata,
 	type SchemaStatics,
 	type ITreeAlpha,
+	type NoChangeConstraint,
+	type NodeInDocumentConstraint,
+	type RunTransactionParamsAlpha,
+	type RunTransactionParamsBeta,
+	type TransactionCallbackStatusAlpha,
+	type TransactionCallbackStatusBeta,
 	type TransactionConstraint,
 	type TransactionConstraintAlpha,
-	type NodeInDocumentConstraint,
-	type NoChangeConstraint,
-	type RunTransactionParams,
-	type VoidTransactionCallbackStatus,
-	type TransactionCallbackStatus,
-	type TransactionResult,
-	type TransactionResultExt,
-	type TransactionResultSuccess,
+	type TransactionPostProcessor,
 	type TransactionResultFailed,
+	type TransactionResultSuccess,
+	type TransactionValueResult,
+	type TransactionVoidResult,
+	type VoidTransactionCallbackStatusAlpha,
+	type VoidTransactionCallbackStatusBeta,
 	rollback,
 	generateSchemaFromSimpleSchema,
 	evaluateLazySchema,
@@ -293,6 +302,7 @@ export {
 	type HandleConverter,
 	allowUnused,
 	type LeafSchema,
+	type StringSchema,
 	type ArrayNodeCustomizableSchema,
 	type ArrayNodeCustomizableSchemaAlpha,
 	type ArrayNodePojoEmulationSchema,
@@ -328,6 +338,8 @@ export {
 	type ErasedNode,
 	type ErasedSchemaSubclassable,
 	type SnapshotSchemaCompatibilityOptions,
+	StagedSchemaUpgradePolicy,
+	type StagedSchemaUpgradePolicyFactory,
 	type ArrayPlaceAnchor,
 	createArrayInsertionAnchor,
 	type WithValue,
@@ -335,6 +347,7 @@ export {
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
+	SharedTreeAlpha,
 	configuredSharedTree,
 	configuredSharedTreeAlpha,
 	configuredSharedTreeBeta,
@@ -394,7 +407,7 @@ import * as InternalTypes from "./internalTypes.js";
 export { InternalTypes };
 
 // Internal/System types:
-// These would be put in `internalTypes` except doing so tents to cause errors like:
+// These would be put in `internalTypes` except doing so tends to cause errors like:
 // The inferred type of 'NodeMap' cannot be named without a reference to '../../node_modules/@fluidframework/tree/lib/internalTypes.js'. This is likely not portable. A type annotation is necessary.
 export type { MapNodeInsertableData } from "./simple-tree/index.js";
 
@@ -404,9 +417,14 @@ export { TableSchema, type System_TableSchema } from "./tableSchema.js";
 export { asAlpha, asBeta } from "./api.js";
 
 export {
-	TextAsTree,
-	FormattedTextAsTree,
+	PlainText,
+	FormattedText,
+	FormattedTextDefault,
 	codePointCount,
 	utf16LengthForCodePoints,
 } from "./text/index.js";
 export { ExtensibleUnionNode } from "./extensibleUnionNode.js";
+export { Component } from "./componentApi.js";
+
+export { defineTreeDataStore, instantiateTreeFirstTime } from "./treeDataStore.js";
+export type { TreeDataStoreOptions } from "./treeDataStore.js";

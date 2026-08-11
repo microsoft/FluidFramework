@@ -9,12 +9,80 @@ packages:
   - "."
 
 # Supply chain security settings - see /DEV.md for documentation
-minimumReleaseAge: 1440
+# Use minimumReleaseAge at 10080 when updating dependencies to ensure that
+# each package has been published for at least 7 days (10080 minutes) before
+# it is consumed to match repository policies regarding npmjs registry.
+# Use `pnpm install-no-frozen`.
+minimumReleaseAge: 0
+minimumReleaseAgeExclude:
+  - "@fluid-internal/*"
+  - "@fluidframework/*"
 resolutionMode: highest
 blockExoticSubdeps: true
 trustPolicy: no-downgrade
 # List of packages known to be safe but for whatever reason were published at a date after another version of the same
 # package (including later major versions) which had better provenance information.
 # ALWAYS REVIEW CAREFULLY BEFORE ADDING SOMETHING TO THIS LIST.
-trustPolicyExclude: []
+trustPolicyExclude:
+  # semver 5.x/6.x are legacy maintenance lines hand-published by a maintainer.
+  # Current 7.x line publishes through npm-cli OIDC/Actions pipeline.
+  - "semver@5.7.2||6.3.1"
+  # undici-types@6.21.0 (published 2024-11-13, by matteo.collina) — pipeline regression.
+  # Prior trusted: undici-types@6.19.2 (provenance, 2024-06-18, by matteo.collina).
+  - "undici-types@6.21.0"
 strictDepBuilds: true
+
+engineStrict: true
+frozenLockfile: true
+strictPeerDependencies: true
+updateNotifier: false
+
+overrides:
+  # Uncomment to use the local fluid eslint-plugin while developing the packages together.
+  #"@fluid-internal/eslint-plugin-fluid": "link:../eslint-plugin-fluid"
+
+  # @typescript-eslint/eslint-utils need to be 5.58 or later for TypeScript 6 support.
+  #   As of 2026-08-05 @rushstack/eslint-plugin (v0.23.2), does not have a version using v8.58 or later.
+  "@rushstack/eslint-plugin>@typescript-eslint/utils@<8.58.0": ~8.58.0
+  #   As of 2026-08-05 eslint-plugin-tsdoc (v0.5.2), does not have a version using v8.58 or later.
+  "eslint-plugin-tsdoc>@typescript-eslint/utils@<8.58.0": ~8.58.0
+
+  # Feed ingestion workaround for own package consumption
+  # @fluid-internal/eslint-plugin-fluid@^0.5.0 is the package intended to be consumed but
+  # it is not consumable by ADO pipelines until 2026-08-10. For example see:
+  # https://dev.azure.com/fluidframework/public/_artifacts/feed/publicPackages/Npm/@fluid-internal%2Feslint-plugin-fluid/upstreams/0.4.1
+  # Until then keep 0.5.0 in the package.json but override here. The only required element
+  # of 0.5.0 versus 0.4.1 for TypeScript 6 compatibility are the updates to
+  # @typescript-eslint/parser and @typescript-eslint/utils. So override those (to 8.58.0
+  # as in 0.5.0) as well.
+  "@fluid-internal/eslint-plugin-fluid@^0.5.0": ^0.4.1
+  "@fluid-internal/eslint-plugin-fluid@^0.4.1>@typescript-eslint/parser@<8.58.0": ~8.58.0
+  "@fluid-internal/eslint-plugin-fluid@^0.4.1>@typescript-eslint/utils@<8.58.0": ~8.58.0
+
+  # Security overrides.
+  # Resolve known security vulnerabilities in transitive dependencies.
+  "@babel/core@>=7 <8": ^7.29.6
+  brace-expansion@>=1 <2: ^1.1.17
+  brace-expansion@>=2 <3: ^2.1.3
+  brace-expansion@>=5 <6: ^5.0.8
+  chokidar: ^5
+  diff@>=5 <6: ^5.2.2
+  diff@>=7 <8: ^8.0.3
+  # fast-uri: CVE-2026-16221 fixed in 4.1.1 and CVE-2026-18446 fixed in 4.1.2.
+  fast-uri: ^4.1.2
+  js-yaml: 4.3.0
+  keyv@>=4 <5: ^5.5.3
+  minimatch@>=3 <4: ^3.1.5
+  minimatch@>=5 <6: ^5.1.9
+  minimatch@>=6 <7: ^6.2.3
+  minimatch@>=7 <8: ^7.4.9
+  minimatch@>=8 <9: ^8.0.7
+  minimatch@>=9 <10: ^9.0.9
+  minimatch@>=10 <11: ^10.2.4
+  serialize-javascript@>=6 <7: ^7.0.4
+  picomatch@>=2 <3: ^2.3.2
+  picomatch@>=4 <5: ^4.0.4
+
+allowBuilds:
+  esbuild: true
+  unrs-resolver: true
