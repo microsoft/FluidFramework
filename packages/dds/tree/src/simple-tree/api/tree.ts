@@ -288,7 +288,7 @@ export interface TreeContextAlpha {
 /**
  * {@link TreeBranch} with alpha-level APIs.
  * @remarks
- * The `TreeBranch` for a specific {@link TreeNode} may be acquired by calling `TreeAlpha.context` and checking {@link TreeContextAlpha.isBranch}.
+ * The `TreeBranch` for a specific {@link TreeNode} may be acquired by calling {@link TreeAlpha.context} and checking {@link TreeContextAlpha.isBranch}.
  *
  * A branch does not necessarily know the schema of its SharedTree - to convert a branch to a {@link TreeViewAlpha | view with a schema}, use {@link TreeBranchAlpha.hasRootSchema | hasRootSchema()}.
  * @sealed @alpha
