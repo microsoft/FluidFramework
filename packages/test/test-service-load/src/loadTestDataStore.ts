@@ -63,6 +63,45 @@ const taskTimeKey = "taskTime";
 const gcDataStoreKey = "dataStore";
 const defaultBlobSize = 1024;
 
+export async function waitForContainerCatchUpOrDispose(
+	runtime: IFluidDataStoreRuntime,
+): Promise<void> {
+	await new Promise<void>((resolve) => {
+		const resolveIfConnectedOrDisposed = (): void => {
+			if (runtime.connected || runtime.disposed) {
+				runtime.off("dispose", resolveIfConnectedOrDisposed);
+				runtime.off("connected", resolveIfConnectedOrDisposed);
+				resolve();
+			}
+		};
+		runtime.once("connected", resolveIfConnectedOrDisposed);
+		runtime.once("dispose", resolveIfConnectedOrDisposed);
+		resolveIfConnectedOrDisposed();
+	});
+
+	const deltaManager = toDeltaManagerInternal(runtime.deltaManager);
+	const lastKnownSeq = deltaManager.lastKnownSeqNumber;
+	assert(
+		deltaManager.lastSequenceNumber <= lastKnownSeq,
+		"lastKnownSeqNumber should never be below last processed sequence number",
+	);
+
+	await new Promise<void>((resolve) => {
+		const resolveIfDisposedOrCaughtUp = (op?: ISequencedDocumentMessage): void => {
+			const lastProcessedSeq = op?.sequenceNumber ?? deltaManager.lastSequenceNumber;
+			if (runtime.disposed || lastKnownSeq <= lastProcessedSeq) {
+				deltaManager.off("op", resolveIfDisposedOrCaughtUp);
+				runtime.off("dispose", resolveIfDisposedOrCaughtUp);
+				resolve();
+			}
+		};
+
+		deltaManager.on("op", resolveIfDisposedOrCaughtUp);
+		runtime.once("dispose", resolveIfDisposedOrCaughtUp);
+		resolveIfDisposedOrCaughtUp();
+	});
+}
+
 /**
  * Encapsulate the data model and to not expose raw DSS to the main loop.
  * Eventually this can  spawn isolated sub-dirs for workloads,
@@ -70,43 +109,6 @@ const defaultBlobSize = 1024;
  * via task picking.
  */
 class LoadTestDataStoreModel {
-	private static async waitForCatchupOrDispose(
-		runtime: IFluidDataStoreRuntime,
-	): Promise<void> {
-		await new Promise<void>((resolve) => {
-			const resolveIfConnectedOrDisposed = (): void => {
-				if (runtime.connected || runtime.disposed) {
-					runtime.off("dispose", resolveIfConnectedOrDisposed);
-					runtime.off("connected", resolveIfConnectedOrDisposed);
-					resolve();
-				}
-			};
-			runtime.once("connected", resolveIfConnectedOrDisposed);
-			runtime.once("dispose", resolveIfConnectedOrDisposed);
-			resolveIfConnectedOrDisposed();
-		});
-
-		const deltaManager = toDeltaManagerInternal(runtime.deltaManager);
-		const lastKnownSeq = deltaManager.lastKnownSeqNumber;
-		assert(
-			deltaManager.lastSequenceNumber <= lastKnownSeq,
-			"lastKnownSeqNumber should never be below last processed sequence number",
-		);
-
-		await new Promise<void>((resolve) => {
-			const resolveIfDisposedOrCaughtUp = (op?: ISequencedDocumentMessage): void => {
-				if (runtime.disposed || (op !== undefined && lastKnownSeq <= op.sequenceNumber)) {
-					deltaManager.off("op", resolveIfDisposedOrCaughtUp);
-					runtime.off("dispose", resolveIfDisposedOrCaughtUp);
-					resolve();
-				}
-			};
-
-			deltaManager.on("op", resolveIfDisposedOrCaughtUp);
-			runtime.once("dispose", resolveIfDisposedOrCaughtUp);
-			resolveIfDisposedOrCaughtUp();
-		});
-	}
 
 	/**
 	 * For GC testing - We create a data store for each client pair. The url of the data store is stored in a key
@@ -152,7 +154,7 @@ class LoadTestDataStoreModel {
 		runtime: IFluidDataStoreRuntime,
 		containerRuntime: IContainerRuntimeBase,
 	): Promise<LoadTestDataStoreModel | undefined> {
-		await LoadTestDataStoreModel.waitForCatchupOrDispose(runtime);
+		await waitForContainerCatchUpOrDispose(runtime);
 		if (runtime.disposed) {
 			return;
 		}
@@ -210,7 +212,7 @@ class LoadTestDataStoreModel {
 		);
 
 		if (reset) {
-			await LoadTestDataStoreModel.waitForCatchupOrDispose(runtime);
+			await waitForContainerCatchUpOrDispose(runtime);
 			runDir.set(startTimeKey, Date.now());
 			runDir.delete(taskTimeKey);
 			counter.increment(-1 * counter.value);
