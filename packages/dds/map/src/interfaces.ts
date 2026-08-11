@@ -80,7 +80,7 @@ export interface IDirectory
 	clear(): void;
 
 	/**
-	 * Removes the specified element from this IDirectory by its key.
+	 * Removes the specified element from this directory by its key.
 	 * @param key - The key of the element to remove
 	 * @returns `true` if an element existed and has been removed, or `false` if the element does not exist
 	 */
