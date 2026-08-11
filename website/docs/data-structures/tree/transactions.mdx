@@ -55,16 +55,14 @@ This new API enables developers to customize how their application handles this 
 
 ### Running a Transaction
 
-Transactions are started via [runTransaction](../../api/fluid-framework/treebranchalpha-interface#runtransaction-methodsignature) on any [TreeBranchAlpha](../../api/fluid-framework/treebranchalpha-interface)
+For a node in a tree, use [TreeAlpha.context](../../api/fluid-framework/treealpha-interface#context-methodsignature) to get its [TreeContextAlpha](../../api/fluid-framework/treecontextalpha-interface), then call [runTransaction](../../api/fluid-framework/treecontextalpha-interface#runtransaction-methodsignature) on that context.
 
 ```typescript
 import { TreeAlpha } from "@fluidframework/tree/alpha";
 
-// Using a branch:
+// Using a context:
 const context = TreeAlpha.context(myNode);
-if (context.isBranch()) {
-    context.runTransaction(/* ... */);
-}
+context.runTransaction(/* ... */);
 
 // Using a view directly:
 const view = tree.viewWith(config);
