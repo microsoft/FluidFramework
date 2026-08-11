@@ -226,7 +226,7 @@ async function connectOrderer(
 			connectDocumentStartTime: startTime,
 		};
 	}
-	connection.connect(clientJoinMessageServerMetadata).catch(async (error) => {
+	await connection.connect(clientJoinMessageServerMetadata).catch(async (error) => {
 		const errMsg = "Failed to connect to the orderer connection.";
 		connectDocumentOrdererConnectionMetric.error(
 			"Failed to establish orderer connection",
