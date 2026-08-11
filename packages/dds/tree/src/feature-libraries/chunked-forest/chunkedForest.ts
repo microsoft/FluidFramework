@@ -105,7 +105,7 @@ export function locateNodeInChunks(
 export function ensureExclusiveBasicChunk(
 	chunks: TreeChunk[],
 	index: number,
-	policy: ChunkCompressor,
+	compressor: ChunkCompressor,
 ): BasicChunk {
 	const { chunk, indexOfChunk, indexWithinChunk } = locateNodeInChunks(chunks, index);
 
@@ -122,7 +122,7 @@ export function ensureExclusiveBasicChunk(
 		//
 		// Maybe build path when visitor navigates then lazily sync to chunk tree when editing?
 		const newChunks = mapCursorField(chunk.cursor(), (cursor) =>
-			basicChunkTree(cursor, policy),
+			basicChunkTree(cursor, compressor),
 		);
 		// TODO: this could fail for really long chunks being split (due to argument count limits).
 		// Current implementations of chunks shouldn't ever be that long, but it could be an issue if they get bigger.
@@ -382,7 +382,7 @@ export class ChunkedForest implements IEditableForest {
 			enterNode(index: number): void {
 				assert(this.mutableChunk === undefined, 0x535 /* should be in field */);
 
-				// Get the mutable parent, which we might have to modify to ensure the desired child is a exclusively owned (and thus mutable) BasicChunk.
+				// Get the mutable parent, which we might have to modify to ensure the desired child is an exclusively owned (and thus mutable) BasicChunk.
 				const parent = this.getParent();
 
 				// Lookup the current location of the node to be entered
