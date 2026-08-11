@@ -81,5 +81,8 @@ export interface IOrderer {
  */
 export interface IOrdererManager {
 	getOrderer(tenantId: string, documentId: string): Promise<IOrderer>;
+
+	getCheckpointSequenceNumber?(tenantId: string, documentId: string): Promise<number | undefined>;
+
 	removeOrderer(tenantId: string, documentId: string): void;
 }

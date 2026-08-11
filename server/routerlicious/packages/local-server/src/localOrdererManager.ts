@@ -76,6 +76,14 @@ export class LocalOrdererManager implements IOrdererManager {
 		return orderer;
 	}
 
+	public getCheckpointSequenceNumber?: (
+		tenantId: string,
+		documentId: string,
+	) => Promise<number | undefined> = async (tenantId, documentId) => {
+		const orderer = (await this.getOrderer(tenantId, documentId)) as LocalOrderer;
+		return orderer.getCheckpointSequenceNumber?.();
+	};
+
 	private async createLocalOrderer(tenantId: string, documentId: string): Promise<IOrderer> {
 		const historian = await this.createHistorian(tenantId);
 		const gitManager = new GitManager(historian);

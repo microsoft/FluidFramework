@@ -242,6 +242,33 @@ describe("LocalDeltaConnectionServer", () => {
 		socket2.disconnect();
 	});
 
+	it("reports the latest sequence number to read clients", async () => {
+		const [writeSocket, writeConnectedP] = connectNewClient("write", "writer");
+		const joinP = addJoinHandler(writeSocket);
+		const writeConnected = await writeConnectedP;
+		await joinP;
+
+		const messageP = addMessagehandler(writeSocket);
+		writeSocket.emit("submitOp", writeConnected.clientId, [
+			{
+				clientSequenceNumber: 1,
+				contents: "content",
+				metadata: undefined,
+				referenceSequenceNumber: 0,
+				traces: [],
+				type: MessageType.Operation,
+			},
+		]);
+		await messageP;
+
+		const [readSocket, readConnectedP] = connectNewClient("read", "reader");
+		const readConnected = await readConnectedP;
+		assert.equal(readConnected.checkpointSequenceNumber, 2);
+
+		writeSocket.disconnect();
+		readSocket.disconnect();
+	});
+
 	it("can receive ops on client in read mode", async () => {
 		// Connect the first client in "write" mode.
 		const [socket1, connected1P] = connectNewClient("write", "userId1");

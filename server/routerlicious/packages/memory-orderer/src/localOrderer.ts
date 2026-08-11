@@ -80,7 +80,10 @@ const DefaultDeli: IDeliState = {
 };
 
 class LocalSocketPublisher implements IPublisher {
-	constructor(private readonly publisher: IPubSub) {}
+	constructor(
+		private readonly publisher: IPubSub,
+		private readonly onEmit: (event: string, args: unknown[]) => void,
+	) {}
 
 	public on(event: string, listener: (...args: any[]) => void) {
 		return;
@@ -88,7 +91,10 @@ class LocalSocketPublisher implements IPublisher {
 
 	public to(topic: string): ITopic {
 		return {
-			emit: (event: string, ...args: any[]) => this.publisher.publish(topic, event, ...args),
+			emit: (event: string, ...args: any[]) => {
+				this.onEmit(event, args);
+				this.publisher.publish(topic, event, ...args);
+			},
 		};
 	}
 
@@ -162,6 +168,7 @@ export class LocalOrderer implements IOrderer {
 	private readonly socketPublisher: LocalSocketPublisher;
 	private readonly dbObject: IDocument;
 	private existing: boolean;
+	private latestSequenceNumber: number;
 
 	constructor(
 		private readonly setup: ILocalOrdererSetup,
@@ -179,7 +186,33 @@ export class LocalOrderer implements IOrderer {
 	) {
 		this.existing = details.existing;
 		this.dbObject = this.getDeliState();
-		this.socketPublisher = new LocalSocketPublisher(this.pubSub);
+		const deliState: IDeliState =
+			typeof this.dbObject.deli === "string"
+				? JSON.parse(this.dbObject.deli)
+				: this.dbObject.deli;
+		this.latestSequenceNumber = deliState.sequenceNumber;
+		this.socketPublisher = new LocalSocketPublisher(this.pubSub, (event, args) => {
+			if (event !== "op") {
+				return;
+			}
+			const messages = args[1];
+			if (!Array.isArray(messages)) {
+				return;
+			}
+			for (const message of messages) {
+				if (
+					typeof message === "object" &&
+					message !== null &&
+					"sequenceNumber" in message &&
+					typeof message.sequenceNumber === "number"
+				) {
+					this.latestSequenceNumber = Math.max(
+						this.latestSequenceNumber,
+						message.sequenceNumber,
+					);
+				}
+			}
+		});
 
 		this.setupKafkas();
 
@@ -197,6 +230,9 @@ export class LocalOrderer implements IOrderer {
 		const orderer = this.connectInternal(socketSubscriber, clientId, client);
 		return orderer;
 	}
+
+	public getCheckpointSequenceNumber?: () => number | undefined = () =>
+		this.latestSequenceNumber;
 
 	public connectInternal(
 		subscriber: ISubscriber,
