@@ -73,7 +73,8 @@ import { pruneFieldMap } from "./prune.js";
  * future change.
  *
  * @param change - The change to minimize.
- * @param changeFamily - The change family used to compute the change's delta and identify built nodes.
+ * @param fieldKinds - The field kinds used in the changeset.
+ * @param forestFactory - A function that returns a new forest instance.
  */
 export function minimizeModularChangeset(
 	change: ModularChangeset,
@@ -699,7 +700,7 @@ interface ChangeAtomIdRange {
 type ChangeAtomIdRangeSet = ChangeAtomIdRangeMap<true>;
 
 /**
- * Collects the set of node IDs whose content ends up attached within the live document tree
+ * Collects the set of IDs whose content ends up attached within the live document tree
  * once the given change is applied.
  *
  * @remarks

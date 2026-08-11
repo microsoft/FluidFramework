@@ -75,10 +75,11 @@ function filterMark(
 					// Insert marks use the cell ID as the attach ID, so we must change the cell ID here.
 					// This could be a problem if there were references to the old cell ID outside this changeset,
 					// but PreserveWithoutMove is only used for transaction minimization, where that is not a problem.
-					const newCellId = result.value.newAttachId ?? {
-						revision: mark.revision,
-						localId: mark.id,
-					};
+					const newCellId = result.value.newAttachId ??
+						endpoint ?? {
+							revision: mark.revision,
+							localId: mark.id,
+						};
 					filtered = {
 						type: "Insert",
 						count: result.length,

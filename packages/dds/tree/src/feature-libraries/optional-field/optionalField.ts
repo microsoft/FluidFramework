@@ -732,7 +732,6 @@ export const optionalChangeHandler: FieldChangeHandler<
 };
 
 function getNestedChanges(change: OptionalChangeset): NestedChangesInfo {
-	// True iff the content of the field changes in some way
 	const detachId = change.valueReplace?.dst;
 
 	return change.childChanges.map(([register, nodeId]) => {
