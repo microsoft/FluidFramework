@@ -5,6 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+
 import {
 	type FieldKey,
 	type TreeChunk,
@@ -206,10 +208,24 @@ describe("ChunkedForest", () => {
 		it("rejects invalid node indices", () => {
 			const chunks = [new BasicChunk(numberShape.type, new Map(), 0)];
 
-			for (const index of [-1, 0.5, 1, Number.MAX_SAFE_INTEGER + 1]) {
-				assert.throws(() => locateNodeInChunks(chunks, index));
+			assert.throws(
+				() => locateNodeInChunks(chunks, -1),
+				validateAssertionError("index must be non-negative"),
+			);
+			for (const index of [0.5, Number.MAX_SAFE_INTEGER + 1]) {
+				assert.throws(
+					() => locateNodeInChunks(chunks, index),
+					validateAssertionError("index must be an integer"),
+				);
 			}
-			assert.throws(() => locateNodeInChunks([], 0));
+			assert.throws(
+				() => locateNodeInChunks(chunks, 1),
+				validateAssertionError("missing edited node"),
+			);
+			assert.throws(
+				() => locateNodeInChunks([], 0),
+				validateAssertionError("Index out of bounds"),
+			);
 		});
 
 		it("returns an exclusively owned BasicChunk unchanged", () => {
@@ -227,7 +243,10 @@ describe("ChunkedForest", () => {
 			const uniform = new UniformChunk(numberShape.withTopLevelLength(2), [0, 1]);
 			const chunks: TreeChunk[] = [uniform];
 
-			assert.throws(() => ensureExclusiveBasicChunk(chunks, 2, makeCompressor()));
+			assert.throws(
+				() => ensureExclusiveBasicChunk(chunks, 2, makeCompressor()),
+				validateAssertionError("missing edited node"),
+			);
 
 			assert.deepEqual(chunks, [uniform]);
 			assert.equal(uniform.isUnreferenced(), false);
@@ -454,7 +473,10 @@ describe("ChunkedForest", () => {
 
 			const visitor = forest.acquireVisitor();
 			visitor.enterField(rootFieldKey);
-			assert.throws(() => visitor.attach(detachedKey, 1, 6));
+			assert.throws(
+				() => visitor.attach(detachedKey, 1, 6),
+				validateAssertionError("nodeIndex exceeds total node count in field"),
+			);
 			visitor.exitField(rootFieldKey);
 			visitor.free();
 
@@ -466,7 +488,10 @@ describe("ChunkedForest", () => {
 			const forest = setupForest();
 			const visitor = forest.acquireVisitor();
 			visitor.enterField(rootFieldKey);
-			assert.throws(() => visitor.attach(detachedKey, 1, 0));
+			assert.throws(
+				() => visitor.attach(detachedKey, 1, 0),
+				validateAssertionError("Attach source field must exist"),
+			);
 			visitor.exitField(rootFieldKey);
 			visitor.free();
 
@@ -480,7 +505,10 @@ describe("ChunkedForest", () => {
 
 			const visitor = forest.acquireVisitor();
 			visitor.enterField(rootFieldKey);
-			assert.throws(() => visitor.attach(detachedKey, 1, 0));
+			assert.throws(
+				() => visitor.attach(detachedKey, 1, 0),
+				validateAssertionError("Attach must consume all nodes in source field"),
+			);
 			visitor.exitField(rootFieldKey);
 			visitor.free();
 
@@ -497,8 +525,9 @@ describe("ChunkedForest", () => {
 
 			const visitor = forest.acquireVisitor();
 			visitor.enterField(rootFieldKey);
-			assert.throws(() =>
-				visitor.detach({ start: 4, end: 6 }, detachedKey, detachedId, false),
+			assert.throws(
+				() => visitor.detach({ start: 4, end: 6 }, detachedKey, detachedId, false),
+				validateAssertionError("Detach range must not exceed field length"),
 			);
 			visitor.exitField(rootFieldKey);
 			visitor.free();
@@ -514,7 +543,10 @@ describe("ChunkedForest", () => {
 
 			const visitor = forest.acquireVisitor();
 			visitor.enterField(rootFieldKey);
-			assert.throws(() => visitor.attach(rootFieldKey, 5, 0));
+			assert.throws(
+				() => visitor.attach(rootFieldKey, 5, 0),
+				validateAssertionError("Attach source field must be different from current field"),
+			);
 			visitor.exitField(rootFieldKey);
 			visitor.free();
 
@@ -528,8 +560,9 @@ describe("ChunkedForest", () => {
 
 			const visitor = forest.acquireVisitor();
 			visitor.enterField(rootFieldKey);
-			assert.throws(() =>
-				visitor.detach({ start: 1, end: 2 }, rootFieldKey, detachedId, false),
+			assert.throws(
+				() => visitor.detach({ start: 1, end: 2 }, rootFieldKey, detachedId, false),
+				validateAssertionError("Detach destination must be a new empty field"),
 			);
 			visitor.exitField(rootFieldKey);
 			visitor.free();
@@ -547,7 +580,10 @@ describe("ChunkedForest", () => {
 			assert(cursor.firstNode());
 
 			const visitor = forest.acquireVisitor();
-			assert.throws(() => visitor.create([cursor], detachedKey));
+			assert.throws(
+				() => visitor.create([cursor], detachedKey),
+				validateAssertionError("Create destination must be a new empty field"),
+			);
 			visitor.free();
 
 			assert.deepEqual(forest.roots.fields.get(detachedKey), [existing]);
@@ -559,7 +595,10 @@ describe("ChunkedForest", () => {
 			forest.roots.fields.set(detachedKey, [source]);
 
 			const visitor = forest.acquireVisitor();
-			assert.throws(() => visitor.destroy(detachedKey, 1));
+			assert.throws(
+				() => visitor.destroy(detachedKey, 1),
+				validateAssertionError("Destroy count must match field length"),
+			);
 			visitor.free();
 
 			assert.deepEqual(forest.roots.fields.get(detachedKey), [source]);
