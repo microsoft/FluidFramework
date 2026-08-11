@@ -9,7 +9,11 @@ import type { JsonString } from "@fluidframework/core-interfaces/internal";
 import { JsonStringify } from "@fluidframework/core-interfaces/internal";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
-import type { ImplicitFieldSchema, ValidateRecursiveSchema } from "@fluidframework/tree";
+import type {
+	ImplicitFieldSchema,
+	TreeArrayNode,
+	ValidateRecursiveSchema,
+} from "@fluidframework/tree";
 import type {
 	InsertableField,
 	JsonCompatibleReadOnly,
@@ -17,7 +21,11 @@ import type {
 } from "@fluidframework/tree/alpha";
 import { createIndependentTreeAlpha, minimize } from "@fluidframework/tree/alpha";
 
-import { SchematizingSimpleTreeView, SharedTreeChange } from "../../shared-tree/index.js";
+import {
+	SchematizingSimpleTreeView,
+	SharedTreeChange,
+	Tree,
+} from "../../shared-tree/index.js";
 import { nodeFlowCensusFromDelta } from "../nodeFlowCensusFromDelta.js";
 import { TestTreeProviderLite, validateViewConsistency } from "../utils.js";
 import { makeAnonChange } from "../../core/index.js";
@@ -1564,7 +1572,7 @@ function generateEditedTreeScenarios(): EditTreeScenarios {
 			scenariosSet.sequence = {
 				schema: Records,
 				initialContent: initialContentGenerator,
-				apply: (root) => {
+				apply: (root: Records) => {
 					applyIntroAttachEdits(root);
 					if (sourceEndpoint.includes("Root") || destinationEndpoint.includes("Root")) {
 						if (sourceEndpoint.includes("Root")) {
@@ -1601,7 +1609,7 @@ function generateEditedTreeScenarios(): EditTreeScenarios {
 				scenariosSet.optional = {
 					schema: Records,
 					initialContent: initialContentGenerator,
-					apply: (root) => {
+					apply: (root: Records) => {
 						applyIntroAttachEdits(root);
 						if (sourceEndpoint.includes("Root") || destinationEndpoint.includes("Root")) {
 							if (sourceEndpoint.includes("Root")) {
@@ -1640,7 +1648,7 @@ function generateEditedTreeScenarios(): EditTreeScenarios {
 				scenariosSet.required = {
 					schema: Records,
 					initialContent: initialContentGenerator,
-					apply: (root) => {
+					apply: (root: Records) => {
 						applyIntroAttachEdits(root);
 						if (sourceEndpoint.includes("Root") || destinationEndpoint.includes("Root")) {
 							if (sourceEndpoint.includes("Root")) {
@@ -1844,8 +1852,8 @@ describe("transaction minimize post-processor", () => {
 			// None were inserted; should always pass.
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
-			// "A❤️", "B❤️", and "C❤️" all survive (only reordered), so both builds (A and B-C) should remain.
-			assert.deepEqual(countBuilds(change), { builds: 2, tops: 3 });
+			// "A❤️", "B❤️", and "C❤️" all survive (only reordered).
+			assert.deepEqual(countBuilds(change), { builds: 3, tops: 3 });
 		});
 
 		// If any of these tests start to fail, the system has new capabilities
@@ -2310,7 +2318,7 @@ describe("transaction minimize post-processor", () => {
 	// These tests assert that the squashed change carries no extraneous information about nodes that are not
 	// present in the final document. They are NOT EXPECTED TO PASS (though some may by accident) until the
 	// minimization algorithm is implemented. (`minimize` is currently a no-op.)
-	describe.skip("removes extraneous data from the squashed changes (expected to fail until minimize is implemented)", () => {
+	describe("removes extraneous data from the squashed changes (expected to fail until minimize is implemented)", () => {
 		it("drops the build and destroy for a create-then-remove", () => {
 			const { view, stringifiedChange } = runScenario(arrayScenarios.A_added_then_removed);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
@@ -2575,9 +2583,9 @@ describe("transaction minimize post-processor", () => {
 			);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
-			// Both the inserted root Box (originally carrying "x☠️") and the separately inserted "y❤️" survive
-			// in the final document, so both builds should remain.
-			assert.deepEqual(countBuilds(change), { builds: 2, tops: 2 });
+			// A single build should remain, containing both the inserted root Box (originally carrying "x☠️")
+			// with the separately inserted "y❤️" within it.
+			assert.deepEqual(countBuilds(change), { builds: 1, tops: 1 });
 		});
 
 		it("keeps the surviving box's build when boxes are inserted and one moved to sibling that is then removed", () => {
@@ -2651,14 +2659,13 @@ describe("transaction minimize post-processor", () => {
 			);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
-			// Only the final Box value "D❤️" survives the transaction but the
-			// Box insert was separate action, so two builds should remain
-			// with the first one having been altered.
-			assert.deepEqual(countBuilds(change), { builds: 2, tops: 2 });
+			// A single build should remain,
+			// containing both the inserted root Box and the separately inserted "D❤️" within it.
+			assert.deepEqual(countBuilds(change), { builds: 1, tops: 1 });
 		});
 	});
 
-	describe.skip("minimizes edits not visible in the output document tree", () => {
+	describe("minimizes edits not visible in the output document tree", () => {
 		const endpointsUnderNodesThatEndUpDetached = new Set([
 			NodeFlowEndpoint.UnderDetachingPriorTree,
 			NodeFlowEndpoint.UnderDetachedPriorTree,
@@ -2680,60 +2687,237 @@ describe("transaction minimize post-processor", () => {
 			NodeFlowEndpoint.DetachedBuiltRoot,
 		]);
 
+		function testNodeFlow<
+			TSchema extends ImplicitFieldSchema,
+			TApplyReturn extends
+				void | SchematizingSimpleTreeView<ImplicitFieldSchema> = void | SchematizingSimpleTreeView<ImplicitFieldSchema>,
+		>(scenario: TransactionScenario<TSchema, TApplyReturn>, scenarioName: string): void {
+			const { tree: unminimizedTree, view: unminimizedView } = runScenario(scenario, {
+				doNotMinimize: true,
+			});
+			const { tree: minimizedTree, view: minimizedView } = runScenario(scenario, {
+				validateConsistency: true,
+			});
+			assert.deepEqual(minimizedTree.exportVerbose(), unminimizedTree.exportVerbose());
+			const { changes } = getHeadChange(minimizedView);
+			assert(hasSingle(changes) && changes[0].type === "data");
+			const minimizedDelta = intoDelta(makeAnonChange(changes[0].innerChange));
+			const minimizedNodeFlow = nodeFlowCensusFromDelta(minimizedDelta);
+
+			// Testing self-check: verify that the unminimized view has the expected build counts.
+			if (scenario.unminimizedBuildExpectations !== undefined) {
+				assertUnminimizedExpectations(
+					scenario.unminimizedBuildExpectations,
+					unminimizedView,
+					scenarioName,
+				);
+			}
+
+			// No node, no matter its source endpoint, should be transferred under a tree that ends up detached
+			assertNoFlow(minimizedNodeFlow, allEndpoints, endpointsUnderNodesThatEndUpDetached);
+
+			// No node detached from a tree that ends up detached should end up detached or be transferred under a tree that ends up detached
+			assertNoFlow(
+				minimizedNodeFlow,
+				endpointsUnderNodesThatEndUpDetached,
+				endpointsThatEndUpDetached,
+			);
+
+			// No built node should end up unused
+			assertNoFlow(minimizedNodeFlow, endpointsFromBuiltTrees, [
+				NodeFlowEndpoint.DetachedBuiltRoot,
+			]);
+
+			// Note: the assertions below are not necessary for ensuring that no invisible edit remains.
+			// We do nonetheless expect them to hold based on the intended minimization algorithm.
+			// These assertions could therefore be removed if the minimization algorithm changes.
+
+			// No node, no matter its destination endpoint, should be detached from a built tree
+			assertNoFlow(minimizedNodeFlow, endpointsUnderBuiltTrees, allEndpoints);
+
+			// No built node should be attached under a built tree
+			assertNoFlow(minimizedNodeFlow, endpointsFromBuiltTrees, endpointsUnderBuiltTrees);
+		}
+
 		for (const [[source, destination], scenarioSet] of editedDetachedTreeScenarios.entries()) {
 			describe(`${source} -> ${destination}`, () => {
 				for (const [field, scenario] of Object.entries(scenarioSet)) {
 					it(`${field} field`, () => {
-						const { tree: unminimizedTree, view: unminimizedView } = runScenario(scenario, {
-							doNotMinimize: true,
-						});
-						const { tree: minimizedTree, view: minimizedView } = runScenario(scenario, {
-							validateConsistency: true,
-						});
-						assert.deepEqual(minimizedTree.exportVerbose(), unminimizedTree.exportVerbose());
-						const { changes } = getHeadChange(minimizedView);
-						assert(hasSingle(changes) && changes[0].type === "data");
-						const minimizedDelta = intoDelta(makeAnonChange(changes[0].innerChange));
-						const minimizedNodeFlow = nodeFlowCensusFromDelta(minimizedDelta);
-
-						// Testing self-check: verify that the unminimized view has the expected build counts.
-						assertUnminimizedExpectations(
-							scenario.unminimizedBuildExpectations,
-							unminimizedView,
-							`${source} -> ${destination} (${field} field)`,
-						);
-
-						// No node, no matter its source endpoint, should be transferred under a tree that ends up detached
-						assertNoFlow(
-							minimizedNodeFlow,
-							allEndpoints,
-							endpointsUnderNodesThatEndUpDetached,
-						);
-
-						// No node detached from a tree that ends up detached should end up detached or be transferred under a tree that ends up detached
-						assertNoFlow(
-							minimizedNodeFlow,
-							endpointsUnderNodesThatEndUpDetached,
-							endpointsThatEndUpDetached,
-						);
-
-						// No built node should end up unused
-						assertNoFlow(minimizedNodeFlow, endpointsFromBuiltTrees, [
-							NodeFlowEndpoint.DetachedBuiltRoot,
-						]);
-
-						// Note: the assertions below are not necessary for ensuring that no invisible edit remains.
-						// We do nonetheless expect them to hold based on the intended minimization algorithm.
-						// These assertions could therefore be removed if the minimization algorithm changes.
-
-						// No node, no matter its destination endpoint, should be detached from a built tree
-						assertNoFlow(minimizedNodeFlow, endpointsUnderBuiltTrees, allEndpoints);
-
-						// No built node should be attached under a built tree
-						assertNoFlow(minimizedNodeFlow, endpointsFromBuiltTrees, endpointsUnderBuiltTrees);
+						testNodeFlow(scenario, `${source} -> ${destination} (${field} field)`);
 					});
 				}
 			});
 		}
+
+		// This test exercises the minimization algorithm's ability to handle detaches...
+		// - at shallow depths and deep depths
+		// - under subtrees to be kept and under subtrees to be removed
+		// - within prior attached trees and newly built trees
+		// ... and attaches...
+		// - starting with a prior attached node and starting with a newly built node
+		// - nested under a prior attached node and nested under a newly built node
+		// - nested in an order that is consistent with detach depth and nested in an order that is the reverse of detach depth
+		it("minimizes deeply nested detached and attaches", () => {
+			class Node extends sf.objectRecursive("Node", {
+				nested: sf.requiredRecursive([() => NodeArray]),
+				destinationSubtree: sf.optional(sf.string),
+				destinationDepth: sf.optional(sf.number),
+				tags: sf.optional(sf.string),
+			}) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof Node>;
+			}
+			const NodeArray = sf.arrayRecursive("NodeArray", Node);
+			{
+				type _check = ValidateRecursiveSchema<typeof NodeArray>;
+			}
+
+			/**
+			 * Recursively Traverses the `source`, moving each node to be kept to the `destination` array, and removing the rest.
+			 */
+			function atomizeTree(
+				source: TreeArrayNode<typeof Node>,
+				destination: TreeArrayNode<typeof Node>,
+			): void {
+				const count = source.length;
+				for (let i = count - 1; i >= 0; i--) {
+					atomizeTree(source[i].nested, destination);
+					if (source[i].destinationSubtree === undefined) {
+						source.removeAt(i);
+					} else {
+						destination.moveToEnd(i, source);
+					}
+				}
+			}
+
+			/**
+			 * Assembles the subset of nodes in `source` whose `destinationSubtree` matches `treeId` into a nested tree.
+			 */
+			function assembleTree(source: TreeArrayNode<typeof Node>, treeId: string): void {
+				const nodes: Node[] = source.filter((node) => node.destinationSubtree === treeId);
+				nodes.sort((a, b) => (a.destinationDepth ?? 0) - (b.destinationDepth ?? 0));
+				while (nodes.length > 1) {
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- Length is checked in the while condition
+					const deepest = nodes.pop()!;
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- Length is checked in the while condition
+					const parent = nodes.at(-1)!;
+					parent.nested.moveToEnd(
+						Tree.key(deepest) as number,
+						Tree.parent(deepest) as TreeArrayNode<typeof Node>,
+					);
+				}
+			}
+
+			const scenario = {
+				schema: NodeArray,
+				initialContent: () =>
+					new NodeArray([
+						new Node({
+							tags: "⌚❤️",
+							destinationSubtree: "A",
+							destinationDepth: 0,
+							nested: new NodeArray([
+								new Node({
+									tags: "⌚☠️",
+									nested: new NodeArray([
+										new Node({
+											tags: "⌚❤️",
+											destinationSubtree: "A",
+											destinationDepth: 2,
+											nested: new NodeArray([
+												new Node({
+													tags: "⌚☠️",
+													nested: new NodeArray(),
+												}),
+											]),
+										}),
+									]),
+								}),
+							]),
+						}),
+						new Node({
+							tags: "⌚☠️",
+							nested: new NodeArray([
+								new Node({
+									tags: "⌚❤️",
+									destinationSubtree: "B",
+									destinationDepth: 2,
+									nested: new NodeArray([
+										new Node({
+											tags: "⌚☠️",
+											nested: new NodeArray([
+												new Node({
+													tags: "⌚❤️",
+													destinationSubtree: "B",
+													destinationDepth: 0,
+													nested: new NodeArray(),
+												}),
+											]),
+										}),
+									]),
+								}),
+							]),
+						}),
+					]),
+				apply: (root, tree, view) => {
+					const newNodes = [
+						new Node({
+							tags: "🐣❤️",
+							destinationSubtree: "B",
+							destinationDepth: 3,
+							nested: new NodeArray([
+								new Node({
+									tags: "🐣☠️",
+									nested: new NodeArray([
+										new Node({
+											tags: "🐣❤️",
+											destinationSubtree: "B",
+											destinationDepth: 1,
+											nested: new NodeArray([
+												new Node({
+													tags: "🐣☠️",
+													nested: new NodeArray(),
+												}),
+											]),
+										}),
+									]),
+								}),
+							]),
+						}),
+						new Node({
+							tags: "🐣☠️",
+							nested: new NodeArray([
+								new Node({
+									tags: "🐣❤️",
+									destinationSubtree: "A",
+									destinationDepth: 1,
+									nested: new NodeArray([
+										new Node({
+											tags: "🐣☠️",
+											nested: new NodeArray([
+												new Node({
+													tags: "🐣❤️",
+													destinationSubtree: "A",
+													destinationDepth: 3,
+													nested: new NodeArray(),
+												}),
+											]),
+										}),
+									]),
+								}),
+							]),
+						}),
+					];
+					root.insertAtStart(...newNodes);
+					atomizeTree(view.root, view.root);
+
+					assembleTree(view.root, "A");
+					assembleTree(view.root, "B");
+				},
+				unminimizedBuildExpectations: { builds: 1, tops: 2 },
+				expectSurvivingMarker: true,
+			} as const satisfies TransactionScenario<typeof NodeArray>;
+			testNodeFlow(scenario, "Deeply nesting boxes attach");
+		});
 	});
 });
