@@ -75,7 +75,7 @@ export abstract class TreeNode implements WithType {
 	readonly #brand!: unknown;
 
 	/**
-	 * Adds a schema identifier brand for stronger and more efficient type checking.
+	 * Adds a {@link schemaIdentifierBrand} for stronger and more efficient type checking.
 	 * @privateRemarks Subclasses provide more specific values to distinguish otherwise type-compatible nodes.
 	 */
 	public abstract get [schemaIdentifierBrand](): string;

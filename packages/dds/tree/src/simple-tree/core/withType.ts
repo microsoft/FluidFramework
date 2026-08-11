@@ -4,7 +4,7 @@
  */
 
 // Used by doc links:
-// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
+// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports -- Imported only for documentation links.
 import type { TreeAlpha } from "../../shared-tree/index.js";
 
 import type { TreeNode } from "./treeNode.js";
@@ -12,9 +12,9 @@ import type { NodeKind, TreeNodeSchemaClass } from "./treeNodeSchema.js";
 
 /**
  * An internal brand to improve compiler performance.
- * For more information about the type, use `Tree.schema(theNode)` instead.
+ * For more information about the type, use {@link TreeNodeApi.schema | Tree.schema(theNode)} instead.
  * @remarks
- * `Tree.is` and `Tree.schema` provide a superset of this information in more friendly ways.
+ * {@link TreeNodeApi.is | Tree.is} and {@link TreeNodeApi.schema | Tree.schema} provide a superset of this information in more friendly ways.
  * @privateRemarks
  * The identifier of a {@link TreeNode}'s schema.
  * This allows the type checker to distinguish different node types more efficiently than via {@link typeSchemaSymbol}.
@@ -24,10 +24,10 @@ export const schemaIdentifierBrand: unique symbol = Symbol("TreeNode Schema Iden
 
 /**
  * The type of a {@link TreeNode}.
- * For more information about the type, use `Tree.schema(theNode)` instead.
+ * For more information about the type, use {@link TreeNodeApi.schema | Tree.schema(theNode)} instead.
  * @remarks
  * This symbol mainly exists on nodes to allow TypeScript to provide more accurate type checking.
- * `Tree.is` and `Tree.schema` provide a superset of this information in more friendly ways.
+ * {@link TreeNodeApi.is | Tree.is} and {@link TreeNodeApi.schema | Tree.schema} provide a superset of this information in more friendly ways.
  *
  * This symbol should not manually be added to objects as doing so allows the object to be invalidly used where specific nodes are expected.
  * Instead construct a real node of the desired type using its constructor.
@@ -110,7 +110,7 @@ export interface WithType<
 	/**
 	 * Type symbol, marking a type in a way to increase type safety via strong type checking.
 	 *
-	 * Use `Tree.schema(theNode)` for schema related runtime data access. For type narrowing, use `WithType` instead of the symbols directly.
+	 * Use {@link TreeNodeApi.schema | Tree.schema(theNode)} for schema related runtime data access. For type narrowing, use {@link WithType} instead of the symbols directly.
 	 * @remarks
 	 * This should be redundant with {@link typeSchemaSymbol}, but is kept for improved compiler performance.
 	 * If we just rely on {@link typeSchemaSymbol}, the compiler has to work much harder to distinguish schema in unions,
