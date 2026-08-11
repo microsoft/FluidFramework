@@ -120,19 +120,38 @@ steps:
 # Install and configure pnpm
 - task: Bash@3
   displayName: Install pnpm
+  env:
+    NPM_CONFIG_USERCONFIG: ${{ parameters.userNpmrcPath }}
+    NPM_REGISTRY: ${{ parameters.primaryRegistry }}
   inputs:
     targetType: 'inline'
     workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
     script: |
       set -eu -o pipefail
+      # Trim whitespace before normalizing the registry URL to one trailing slash.
+      expected_registry="$(printf '%s' "$NPM_REGISTRY" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')"
+      expected_registry="${expected_registry%/}/"
+      npm_registry="$(npm config get registry)"
+      if [ "$npm_registry" != "$expected_registry" ]; then
+        echo "##vso[task.logissue type=error]npm resolved registry '$npm_registry'; expected '$expected_registry'"
+        exit 1
+      fi
+      echo "npm registry: $npm_registry"
+
       # Parse the pnpm version pinned in package.json's "packageManager" field
       # (e.g. "pnpm@10.33.0+sha512..." -> "pnpm@10.33.0").
       # This discards the integrity hash suffix, which npm does not provide a practical way to use,
       # and trusts the package repository to serve the correct version.
       PNPM_VERSION=$(node -e "const p=require('./package.json');console.log(p.packageManager.split('+')[0])")
-      npm install -g "$PNPM_VERSION" --userconfig "${{ parameters.userNpmrcPath }}"
+      npm install -g "$PNPM_VERSION"
       echo "Using pnpm $(pnpm -v)"
-      echo "Pnpm user config location: $(pnpm config get userconfig)"
+      pnpm_registry="$(pnpm config get registry)"
+      if [ "$pnpm_registry" != "$expected_registry" ]; then
+        echo "##vso[task.logissue type=error]pnpm resolved registry '$pnpm_registry'; expected '$expected_registry'"
+        exit 1
+      fi
+      echo "pnpm registry: $pnpm_registry"
+      echo "Pnpm user config location: $NPM_CONFIG_USERCONFIG"
       pnpm config set store-dir ${{ parameters.pnpmStorePath }}
       echo "Pnpm store: ${{ parameters.pnpmStorePath }}"
       # CI uses mirrored registries that may not preserve trust metadata consistently.
@@ -143,3 +162,7 @@ steps:
       # Disable minimum release age checks in CI to avoid false positives.
       echo "Disabling pnpm minimumReleaseAge check as workaround for npm mirror publish time issues"
       echo "##vso[task.setvariable variable=PNPM_CONFIG_MINIMUM_RELEASE_AGE]0"
+      # CI installs use reviewed, committed lockfiles. Trust them so pnpm does not query
+      # registry metadata to reapply supply-chain policies to every locked dependency.
+      echo "Trusting committed lockfiles for CI installs"
+      echo "##vso[task.setvariable variable=PNPM_CONFIG_TRUST_LOCKFILE]true"
