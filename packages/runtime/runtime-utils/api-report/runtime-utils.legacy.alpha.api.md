@@ -5,6 +5,9 @@
 ```ts
 
 // @alpha @legacy
+export function adaptLegacyDataStoreFactory<T>(factory: ServiceClientLegacyDataStoreFactory): DataStoreKind<T>;
+
+// @alpha @legacy
 export function asLegacyAlpha(runtime: IContainerRuntimeBase): ContainerRuntimeBaseAlpha;
 
 // @alpha @legacy
@@ -79,6 +82,11 @@ export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRu
     // (undocumented)
     get IRuntimeFactory(): this;
     abstract preInitialize(context: IContainerContext, existing: boolean): Promise<IRuntime & T>;
+}
+
+// @alpha @legacy
+export interface ServiceClientLegacyDataStoreFactory extends IFluidDataStoreFactory {
+    readonly IFluidDataStoreRegistry?: IFluidDataStoreRegistry;
 }
 
 // @beta @legacy
