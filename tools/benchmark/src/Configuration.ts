@@ -1,0 +1,277 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { fail } from "./assert.js";
+import type { CollectedData } from "./reportTypes.js";
+import type { Timer } from "./timer.js";
+
+/**
+ * Kinds of benchmarks.
+ *
+ * Example: if you have two tests on the same scenario —
+ * one with a feature enabled and one without — the test with the feature should be `Measurement`,
+ * and the baseline should be `Perspective`.
+ *
+ * When comparing two versions for regressions: run `Measurement` tests.
+ *
+ * When profiling a single version (e.g., the current main branch) for optimization opportunities:
+ * run `Measurement` and `Perspective` tests.
+ *
+ * When investigating a specific issue: use `.only` to restrict mocha to the relevant tests,
+ * then run without a type filter so all types (`Perspective`, `Measurement`, and `Diagnostic`) are included.
+ *
+ * @public
+ */
+export enum BenchmarkType {
+	/**
+	 * Tests which exist to be compared to other tests to reason about cost/overhead of features.
+	 */
+	Perspective,
+
+	/**
+	 * Tests that measure the actual performance of features.
+	 * These are the tests to optimize to improve user experience, and should be compared across versions
+	 * to detect regressions and improvements.
+	 */
+	Measurement,
+
+	/**
+	 * Tests that provide extra details not typically needed unless investigating a specific area.
+	 *
+	 * Use `Diagnostic` for tests that help confirm other tests are measuring what they claim,
+	 * or for supplementary tests that are useful during investigations but not worth running routinely.
+	 */
+	Diagnostic,
+
+	/**
+	 * Tests which verify correctness of this benchmarking library. Generally not useful for any other scenario.
+	 */
+	OwnCorrectness,
+}
+
+/**
+ * A set of well known kinds of tests that can be used to categorize benchmarks.
+ * @remarks
+ * This is not an exhaustive list of test types:
+ * other categories can be added by using the `category` field of {@link BenchmarkDescription} or just included directly in the test's name.
+ * @public
+ */
+export enum TestType {
+	/**
+	 * Tests that measure execution time
+	 */
+	ExecutionTime,
+
+	/**
+	 * Tests that measure memory usage
+	 */
+	MemoryUsage,
+}
+
+/**
+ * Names of all BenchmarkTypes.
+ */
+export const benchmarkTypes: readonly string[] = Object.values(BenchmarkType).filter(
+	(v): v is string => typeof v === "string",
+);
+
+/**
+ * Names of all TestTypes.
+ */
+export const testTypes: readonly string[] = Object.values(TestType).filter(
+	(v): v is string => typeof v === "string",
+);
+
+/**
+ * An object with a title.
+ * @public
+ * @input
+ */
+export interface Titled {
+	/**
+	 * The title of the benchmark. This will show up in the output file, as well as the mocha reporter.
+	 */
+	readonly title: string;
+}
+
+/**
+ * Set of options to describe a benchmark.
+ * @public
+ * @input
+ */
+export interface BenchmarkDescription {
+	/**
+	 * The kind of benchmark.
+	 * @defaultValue {@link BenchmarkType.Measurement}
+	 */
+	readonly type?: BenchmarkType;
+
+	/**
+	 * The type of test being performed, which is used to categorize the benchmark.
+	 * This gets added as a tag to the test name.
+	 */
+	readonly testType?: TestType;
+
+	/**
+	 * A free-form field to add a category to the test. This gets added to an internal version of the test name
+	 * with `@` prepended to it, so it can be leveraged in combination with mocha's --grep/--fgrep options to
+	 * only execute specific tests.
+	 */
+	readonly category?: string;
+}
+
+/**
+ * Options to configure a benchmark that reports custom measurements.
+ * @public
+ * @input
+ */
+export interface BenchmarkFunction {
+	/**
+	 * Runs the benchmark and returns the collected measurements.
+	 * @param timer - A high-resolution timer that can be used to measure durations if needed.
+	 */
+	readonly run: <TimeStamp>(timer: Timer<TimeStamp>) => CollectedData | Promise<CollectedData>;
+}
+
+/**
+ * Formats and tags the title from the supplied {@link BenchmarkDescription} for use by the reporter.
+ *
+ * @param args - See {@link BenchmarkDescription} and {@link Titled}
+ * @returns A tagged, formatted title.
+ *
+ * @public
+ */
+export function qualifiedTitle(
+	args: BenchmarkDescription & Titled & { testType?: TestType | undefined },
+): string {
+	const benchmarkTypeTag =
+		BenchmarkType[args.type ?? BenchmarkType.Measurement] ?? fail("Invalid BenchmarkType");
+	const tags = [performanceTestSuiteTag, `@${benchmarkTypeTag}`];
+	if (args.testType !== undefined) {
+		const testTypeTag = TestType[args.testType] ?? fail(`Invalid TestType: ${args.testType}`);
+		tags.push(`@${testTypeTag}`);
+	}
+
+	let title = `${tags.join(" ")} ${args.title}`;
+
+	if (args.category !== "" && args.category !== undefined) {
+		title = `${title} ${userCategoriesSplitter} @${args.category}`;
+	}
+	return title;
+}
+
+/**
+ * Determines if we are in a mode where we actually want to run benchmarks and output data.
+ * @remarks
+ * When not in performance testing mode, performance tests should be run as correctness tests, and should be
+ * adjusted to run quickly (e.g., smaller iteration counts or data sizes).
+ *
+ * Use the `--perfMode` flag or set `FLUID_TEST_PERF_MODE` environment variable to either "1" or "true" (case insensitive) to enable.
+ * If the tests are run in a separate process and do not receive the arguments given to the parent,
+ * as is done with Mocha's parallel mode,
+ * the environment variable must be used instead of the flag.
+ *
+ * @deprecated Use {@link currentBenchmarkMode} instead to determine the current benchmark mode.
+ * @public
+ */
+export const isInPerformanceTestingMode =
+	process.argv.includes("--perfMode") || getEnvFlag("FLUID_TEST_PERF_MODE");
+
+/**
+ * The mode in which a benchmark can be run.
+ * @remarks
+ * See {@link currentBenchmarkMode} for the current mode in which benchmarks are being run.
+ *
+ * When in {@link BenchmarkMode.Correctness} mode, performance tests should be run as correctness tests,
+ * and will be adjusted to run quickly (e.g., smaller iteration counts or data sizes).
+ * When in {@link BenchmarkMode.Performance} mode, benchmarks are run and output data.
+ * @public
+ */
+export enum BenchmarkMode {
+	/**
+	 * Benchmarks will be run as correctness tests,
+	 * and thus will be adjusted to run quickly (e.g., smaller iteration counts or data sizes).
+	 */
+	Correctness = "correctness",
+	/**
+	 * Benchmarks will be run as performance tests and output performance data.
+	 * A benchmark specific test reporter is typically used to collect this data.
+	 */
+	Performance = "performance",
+}
+
+/**
+ * The current {@link BenchmarkMode}, determined at process startup.
+ * @remarks
+ * Use the `--perfMode` flag or set `FLUID_TEST_PERF_MODE` environment variable to either "1" or "true" (case insensitive) to enable {@link BenchmarkMode.Performance} mode.
+ * If the tests are run in a separate process and do not receive the arguments given to the parent,
+ * as is done with Mocha's parallel mode,
+ * the environment variable must be used instead of the flag.
+ * @public
+ */
+export const currentBenchmarkMode: BenchmarkMode = isInPerformanceTestingMode
+	? BenchmarkMode.Performance
+	: BenchmarkMode.Correctness;
+
+/**
+ * Check for an environment variables flag.
+ * @remarks
+ * Defaults to `false` unless set to "1" or "true" (case insensitive) in the environment variables.
+ */
+function getEnvFlag(name: string): boolean {
+	const envValue = process.env[name];
+	return envValue === "1" || envValue?.toLowerCase() === "true";
+}
+
+/**
+ * Indicates that this process is a child process spawned by a `--parentProcess` run.
+ * Only the specific test assigned to this child process is run, and results are returned
+ * via stdout as JSON for the parent process to collect.
+ */
+export const isChildProcess = process.argv.includes("--childProcess");
+
+/**
+ * Performance test suites are tagged with this to allow filtering to only performance tests.
+ */
+export const performanceTestSuiteTag = "@Benchmark";
+
+/**
+ * When a consumer specifies a category for a test, we append this value to the test name followed by the
+ * user-specified category. This is so we can then strip that information from the name safely, before
+ * writing the test name in reporters.
+ */
+export const userCategoriesSplitter = ":ff-cat:";
+
+/**
+ * Options to configure a benchmark test.
+ * @remarks
+ * See {@link benchmarkIt}.
+ * @public
+ * @input
+ */
+export interface BenchmarkOptions extends Titled, BenchmarkDescription, BenchmarkFunction {}
+/**
+ * Tags used to mark tests.
+ */
+const tags = [
+	performanceTestSuiteTag,
+	...benchmarkTypes.map((x) => `@${x}`),
+	...testTypes.map((x) => `@${x}`),
+];
+
+/**
+ * Strip tags and user-specified category from the specified test/suite name.
+ */
+export function getName(name: string): string {
+	let s = name;
+	for (const tag of tags) {
+		s = s.replace(tag, "");
+	}
+	const indexOfSplitter = s.indexOf(userCategoriesSplitter);
+	if (indexOfSplitter >= 0) {
+		s = s.slice(0, indexOfSplitter);
+	}
+	return s.trim();
+}

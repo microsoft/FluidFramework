@@ -1,0 +1,28 @@
+.ffcom-key-features-card-grid {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-around;
+	align-items: flex-start;
+	flex-wrap: wrap;
+
+	width: 100%;
+
+	gap: 16px;
+}
+
+.ffcom-key-feature-card {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+
+	max-width: 500px;
+
+	padding: 0px;
+	isolation: isolate;
+
+	background: #fefefe;
+	box-shadow:
+		0px 0px 2px rgba(0, 0, 0, 0.12),
+		0px 2px 4px rgba(0, 0, 0, 0.14);
+	border-radius: 24px;
+}

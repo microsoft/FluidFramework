@@ -1,0 +1,28 @@
+{
+	"name": "@fluidframework/build-common",
+	"version": "3.0.0",
+	"description": "Package containing common configs",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "common/build/build-common"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"sideEffects": false,
+	"bin": {
+		"gen-version": "bin/gen-version"
+	},
+	"scripts": {
+		"format": "npm run prettier:fix",
+		"lint": "npm run prettier && npm run eslint",
+		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
+		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
+		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore"
+	},
+	"devDependencies": {
+		"prettier": "~3.0.3"
+	},
+	"packageManager": "pnpm@11.15.1+sha512.81350b07e53c9538a02f1f2303b4290fa2d7be04e56e2a970c4cc4b417dc761de196edabd49d55c7dc9580db81007c44143e4e3d7e462b3000d23c255122d065"
+}

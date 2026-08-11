@@ -1,0 +1,540 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { assert, oob } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
+import type { CodecWriteOptions, ICodecFamily } from "../../codec/index.js";
+import {
+	type ChangeAtomId,
+	type ChangeEncodingContext,
+	type ChangeDecodingContext,
+	type ChangeFamily,
+	type ChangeFamilyEditor,
+	type ChangeRebaser,
+	type DeltaDetachedNodeId,
+	type DeltaRoot,
+	type FieldUpPath,
+	type NormalizedFieldUpPath,
+	type NormalizedUpPath,
+	type RevisionTag,
+	type TaggedChange,
+	type TreeChunk,
+	type UpPath,
+	compareFieldUpPaths,
+	topDownPath,
+	type ProcessChangeFn,
+} from "../../core/index.js";
+import { brand } from "../../util/index.js";
+import {
+	type EditDescription,
+	type FieldChangeset,
+	type FieldEditDescription,
+	ModularChangeFamily,
+	type ModularChangeset,
+	ModularEditBuilder,
+	intoDelta as intoModularDelta,
+	relevantRemovedRoots as relevantModularRemovedRoots,
+} from "../modular-schema/index.js";
+import { optional, type OptionalChangeset, required } from "../optional-field/index.js";
+import { sequence, type CellId } from "../sequence-field/index.js";
+
+import { fieldKinds } from "./defaultFieldKinds.js";
+
+export type DefaultChangeset = ModularChangeset;
+
+export type DefaultChangeProcessingContext = ModularChangeFamily;
+
+/**
+ * Implementation of {@link ChangeFamily} based on the default set of supported field kinds.
+ *
+ * @sealed
+ */
+export class DefaultChangeFamily
+	implements ChangeFamily<DefaultEditBuilder, DefaultChangeset, DefaultChangeProcessingContext>
+{
+	private readonly modularFamily: ModularChangeFamily;
+
+	public constructor(
+		codecs: ICodecFamily<ModularChangeset, ChangeEncodingContext, ChangeDecodingContext>,
+		codecOptions: CodecWriteOptions,
+	) {
+		this.modularFamily = new ModularChangeFamily(fieldKinds, codecs, codecOptions);
+	}
+
+	public get rebaser(): ChangeRebaser<DefaultChangeset> {
+		return this.modularFamily.rebaser;
+	}
+
+	public get codecs(): ICodecFamily<
+		DefaultChangeset,
+		ChangeEncodingContext,
+		ChangeDecodingContext
+	> {
+		return this.modularFamily.codecs;
+	}
+
+	public buildEditor(
+		mintRevisionTag: () => RevisionTag,
+		changeReceiver: (change: TaggedChange<DefaultChangeset>) => void,
+	): DefaultEditBuilder {
+		return new DefaultEditBuilder(
+			this.modularFamily.rebaser,
+			mintRevisionTag,
+			changeReceiver,
+			this.modularFamily.codecOptions,
+		);
+	}
+
+	public buildProcessor(
+		processFn: ProcessChangeFn<DefaultChangeset, DefaultChangeProcessingContext>,
+	): (change: DefaultChangeset) => DefaultChangeset {
+		return this.modularFamily.buildProcessor(processFn);
+	}
+}
+
+/**
+ * @param change - The change to convert into a delta.
+ */
+export function intoDelta(taggedChange: TaggedChange<ModularChangeset>): DeltaRoot {
+	return intoModularDelta(taggedChange, fieldKinds);
+}
+
+/**
+ * Returns the set of removed roots that should be in memory for the given change to be applied.
+ * A removed root is relevant if any of the following is true:
+ * - It is being inserted
+ * - It is being restored
+ * - It is being edited
+ * - The ID it is associated with is being changed
+ *
+ * May be conservative by returning more removed roots than strictly necessary.
+ *
+ * Will never return IDs for non-root trees, even if they are removed.
+ *
+ * @param change - The change to be applied.
+ */
+export function relevantRemovedRoots(change: ModularChangeset): Iterable<DeltaDetachedNodeId> {
+	return relevantModularRemovedRoots(change, fieldKinds);
+}
+
+/**
+ * Default editor for transactional tree data changes.
+ * @privateRemarks
+ * When taking into account not just the content of the tree,
+ * but also how the merge identities (and thus anchors, flex-tree and simple-tree nodes) of nodes before and after the edits correspond,
+ * some edits are currently impossible to express.
+ * Examples of these non-expressible edits include:
+ *
+ * - Changing the type of a node while keeping its merge identity.
+ * - Changing the value of a leaf while keeping its merge identity.
+ * - Swapping subtrees between two value fields.
+ * - Replacing a node in the middle of a tree while reusing some of the old nodes decedents that were under value fields.
+ *
+ * At some point it will likely be worth supporting at least some of these, possibly using a mechanism that could support all of them if desired.
+ * If/when such a mechanism becomes available, an evaluation should be done to determine if any existing editing operations should be changed to leverage it
+ * (Possibly by adding opt ins at the view schema layer).
+ */
+export interface IDefaultEditBuilder<TContent = TreeChunk> {
+	/**
+	 * @param field - the value field which is being edited under the parent node
+	 * @returns An object with methods to edit the given field of the given parent.
+	 * The returned object can be used (i.e., have its methods called) multiple times but its lifetime
+	 * is bounded by the lifetime of this edit builder.
+	 */
+	valueField(field: NormalizedFieldUpPath): ValueFieldEditBuilder<TContent>;
+
+	/**
+	 * @param field - the optional field which is being edited under the parent node
+	 * @returns An object with methods to edit the given field of the given parent.
+	 * The returned object can be used (i.e., have its methods called) multiple times but its lifetime
+	 * is bounded by the lifetime of this edit builder.
+	 */
+	optionalField(field: NormalizedFieldUpPath): OptionalFieldEditBuilder<TContent>;
+
+	/**
+	 * @param field - the sequence field which is being edited under the parent node
+	 *
+	 * @returns An object with methods to edit the given field of the given parent.
+	 * The returned object can be used (i.e., have its methods called) multiple times but its lifetime
+	 * is bounded by the lifetime of this edit builder.
+	 */
+	sequenceField(field: NormalizedFieldUpPath): SequenceFieldEditBuilder<TContent>;
+
+	/**
+	 * Moves a subsequence from one sequence field to another sequence field.
+	 *
+	 * Note that the `destinationIndex` is interpreted based on the state of the sequence *before* the move operation.
+	 * For example, `move(field, 0, 1, field, 2)` changes `[A, B, C]` to `[B, A, C]`.
+	 */
+	move(
+		sourceField: NormalizedFieldUpPath,
+		sourceIndex: number,
+		count: number,
+		destinationField: NormalizedFieldUpPath,
+		destinationIndex: number,
+	): void;
+
+	/**
+	 * Add a constraint that, for this change to apply, the node at the given path must exist immediately before the change is applied.
+	 * @param path - The path to the node that must exist.
+	 */
+	addNodeExistsConstraint(path: NormalizedUpPath): void;
+
+	/**
+	 * Add a constraint that, for the revert of this change to apply, the node at the given path must exist immediately before the revert is applied.
+	 * @param path - The path to the node that must exist when reverting a change.
+	 */
+	addNodeExistsConstraintOnRevert(path: NormalizedUpPath): void;
+
+	/**
+	 * Add a constraint that, for this change to apply, the document must be in the same state immediately before this change is applied as it was before this change was authored.
+	 */
+	addNoChangeConstraint(): void;
+
+	/**
+	 * Add a constraint that, for the revert of this change to apply, the document must be in the same state immediately before the revert is applied as it was after this change was applied.
+	 */
+	addNoChangeConstraintOnRevert(): void;
+}
+
+/**
+ * Implementation of {@link IDefaultEditBuilder} based on the default set of supported field kinds.
+ * @sealed
+ */
+export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuilder {
+	private readonly modularBuilder: ModularEditBuilder;
+
+	public constructor(
+		rebaser: ChangeRebaser<DefaultChangeset>,
+		private readonly mintRevisionTag: () => RevisionTag,
+		changeReceiver: (change: TaggedChange<DefaultChangeset>) => void,
+		codecOptions: CodecWriteOptions,
+	) {
+		this.modularBuilder = new ModularEditBuilder(
+			rebaser,
+			fieldKinds,
+			changeReceiver,
+			codecOptions,
+		);
+	}
+
+	public enterTransaction(): void {
+		this.modularBuilder.enterTransaction();
+	}
+	public exitTransaction(): void {
+		this.modularBuilder.exitTransaction();
+	}
+
+	public addNodeExistsConstraint(path: UpPath): void {
+		this.modularBuilder.addNodeExistsConstraint(path, this.mintRevisionTag());
+	}
+
+	public addNodeExistsConstraintOnRevert(path: UpPath): void {
+		this.modularBuilder.addNodeExistsConstraintOnRevert(path, this.mintRevisionTag());
+	}
+
+	public addNoChangeConstraint(): void {
+		this.modularBuilder.addNoChangeConstraint(this.mintRevisionTag());
+	}
+
+	public addNoChangeConstraintOnRevert(): void {
+		this.modularBuilder.addNoChangeConstraintOnRevert(this.mintRevisionTag());
+	}
+
+	public valueField(field: FieldUpPath): ValueFieldEditBuilder<TreeChunk> {
+		return {
+			set: (newContent: TreeChunk): void => {
+				assert(
+					newContent.topLevelLength === 1,
+					0xc12 /* Value fields should have a single top level node */,
+				);
+				const revision = this.mintRevisionTag();
+				const fill: ChangeAtomId = { localId: this.modularBuilder.generateId(), revision };
+				const detach: ChangeAtomId = { localId: this.modularBuilder.generateId(), revision };
+				const build = this.modularBuilder.buildTrees(fill.localId, newContent, revision);
+				const change: FieldChangeset = brand(
+					required.changeHandler.editor.set({
+						fill,
+						detach,
+					}),
+				);
+
+				const edit: FieldEditDescription = {
+					type: "field",
+					field,
+					fieldKind: required.identifier,
+					change,
+					revision,
+				};
+				this.modularBuilder.submitChanges([build, edit], revision);
+			},
+		};
+	}
+
+	public optionalField(field: FieldUpPath): OptionalFieldEditBuilder<TreeChunk> {
+		return {
+			set: (newContent: TreeChunk | undefined, wasEmpty: boolean): void => {
+				// The choice to ban empty chunks here instead of treating them as a clear is a subjective choice made to err of the side of more explicitness and stricter validation.
+				assert(
+					newContent === undefined || newContent.topLevelLength === 1,
+					0xc13 /* optional fields should have a single top level node, or undefined */,
+				);
+				const edits: EditDescription[] = [];
+				let optionalChange: OptionalChangeset;
+				const revision = this.mintRevisionTag();
+				const detach: ChangeAtomId = { localId: this.modularBuilder.generateId(), revision };
+				if (newContent === undefined) {
+					optionalChange = optional.changeHandler.editor.clear(wasEmpty, detach);
+				} else {
+					const fill: ChangeAtomId = { localId: this.modularBuilder.generateId(), revision };
+					const build = this.modularBuilder.buildTrees(fill.localId, newContent, revision);
+					edits.push(build);
+
+					optionalChange = optional.changeHandler.editor.set(wasEmpty, {
+						fill,
+						detach,
+					});
+				}
+
+				const change: FieldChangeset = brand(optionalChange);
+				const edit: FieldEditDescription = {
+					type: "field",
+					field,
+					fieldKind: optional.identifier,
+					change,
+					revision,
+				};
+				edits.push(edit);
+
+				this.modularBuilder.submitChanges(edits, revision);
+			},
+		};
+	}
+
+	public move(
+		sourceField: FieldUpPath,
+		sourceIndex: number,
+		count: number,
+		destinationField: FieldUpPath,
+		destIndex: number,
+	): void {
+		if (count === 0) {
+			return;
+		} else if (count < 0 || !Number.isSafeInteger(count)) {
+			throw new UsageError(`Expected non-negative integer count, got ${count}.`);
+		}
+		const revision = this.mintRevisionTag();
+		const detachCellId = this.modularBuilder.generateId(count);
+		const attachCellId: CellId = { localId: this.modularBuilder.generateId(count), revision };
+		if (compareFieldUpPaths(sourceField, destinationField)) {
+			// The source and destination fields are the same.
+			const change = sequence.changeHandler.editor.move(
+				sourceIndex,
+				count,
+				destIndex,
+				detachCellId,
+				attachCellId,
+				revision,
+			);
+			this.modularBuilder.submitChange(
+				sourceField,
+				sequence.identifier,
+				brand(change),
+				revision,
+			);
+		} else {
+			// The source and destination fields are different.
+			const detachPath = topDownPath(sourceField.parent);
+			const attachPath = topDownPath(destinationField.parent);
+			/**
+			 * The number of elements, starting from the root, that both paths have in common.
+			 * This defines the lowest common ancestor node (LCA) of the source and destination fields.
+			 */
+			const sharedDepth = getSharedPrefixLength(detachPath, attachPath);
+			let adjustedAttachField = destinationField;
+			// Check if the detach parent
+			// (the node directly above the location of detach)
+			// is along the attach path,
+			// in which case the attach path might need to be adjusted.
+			// This is synonymous with checking if the attach parent
+			// (the node directly above the location of attach)
+			// is either below or the same as the detach parent.
+			// If not, then the move does not need to be adjusted
+			// as the attach path will not be affected by the detach.
+			if (sharedDepth === detachPath.length) {
+				const fieldOnDetachPathUnderLCA = sourceField.field;
+				const firstDifferentAttachAncestor = attachPath[sharedDepth];
+				// Check if the detach location uses the same field as in
+				// the attach path.
+				// Note that when `firstDifferentAttachAncestor` is undefined,
+				// that means the parents are the same. Since earlier call
+				// to `compareFieldUpPaths` returned false, we know that the
+				// fields must be different AND thus no adjustment is needed.
+				if (fieldOnDetachPathUnderLCA === firstDifferentAttachAncestor?.parentField) {
+					// Now working at the level where detach happens along the
+					// attach path.
+					if (firstDifferentAttachAncestor.parentIndex < sourceIndex) {
+						// The attach path runs through a node located before the detached nodes.
+						// No need to adjust the attach path.
+					} else if (sourceIndex + count <= firstDifferentAttachAncestor.parentIndex) {
+						// The attach path runs through a node located after the detached nodes.
+						// Adjust the index for the node at that depth of the path, so that it is interpreted correctly
+						// in the composition performed by `submitChanges`.
+						// Start with path to root that remains intact.
+						let parent = firstDifferentAttachAncestor.parent;
+						// Extend with index-adjusted parent.
+						parent = {
+							parent,
+							parentIndex: firstDifferentAttachAncestor.parentIndex - count,
+							parentField: firstDifferentAttachAncestor.parentField,
+						};
+						// Extend with the rest of the attach path, which is unaffected
+						// apart from parentage replacements.
+						for (let i = sharedDepth + 1; i < attachPath.length; i += 1) {
+							parent = {
+								...(attachPath[i] ?? oob()),
+								parent,
+							};
+						}
+						adjustedAttachField = { parent, field: destinationField.field };
+					} else {
+						throw new UsageError(
+							"Invalid move operation: the destination is located under one of the moved elements. Consider using the Tree.contains API to detect this.",
+						);
+					}
+				}
+			}
+			const moveOut = sequence.changeHandler.editor.moveOut(
+				sourceIndex,
+				count,
+				detachCellId,
+				revision,
+			);
+			const moveIn = sequence.changeHandler.editor.moveIn(
+				destIndex,
+				count,
+				detachCellId,
+				attachCellId,
+				revision,
+			);
+			this.modularBuilder.submitChanges(
+				[
+					{
+						type: "field",
+						field: sourceField,
+						fieldKind: sequence.identifier,
+						change: brand(moveOut),
+						revision,
+					},
+					{
+						type: "field",
+						field: adjustedAttachField,
+						fieldKind: sequence.identifier,
+						change: brand(moveIn),
+						revision,
+					},
+				],
+				revision,
+			);
+		}
+	}
+
+	public sequenceField(field: FieldUpPath): SequenceFieldEditBuilder<TreeChunk> {
+		return {
+			insert: (index: number, content: TreeChunk): void => {
+				const length = content.topLevelLength;
+				if (length === 0) {
+					return;
+				}
+
+				const revision = this.mintRevisionTag();
+				const firstId: CellId = { localId: this.modularBuilder.generateId(length), revision };
+				const build = this.modularBuilder.buildTrees(firstId.localId, content, revision);
+				const change: FieldChangeset = brand(
+					sequence.changeHandler.editor.insert(index, length, firstId, revision),
+				);
+				const attach: FieldEditDescription = {
+					type: "field",
+					field,
+					fieldKind: sequence.identifier,
+					change,
+					revision,
+				};
+				// The changes have to be submitted together, otherwise they will be assigned different revisions,
+				// which will prevent the build ID and the insert ID from matching.
+				this.modularBuilder.submitChanges([build, attach], revision);
+			},
+			remove: (index: number, count: number): void => {
+				if (count === 0) {
+					return;
+				}
+				const revision = this.mintRevisionTag();
+				const id = this.modularBuilder.generateId(count);
+				const change: FieldChangeset = brand(
+					sequence.changeHandler.editor.remove(index, count, id, revision),
+				);
+				this.modularBuilder.submitChange(field, sequence.identifier, change, revision);
+			},
+		};
+	}
+}
+
+export interface ValueFieldEditBuilder<TContent> {
+	/**
+	 * Issues a change which replaces the current newContent of the field with `newContent`.
+	 * @param newContent - the new content for the field.
+	 */
+	set(newContent: TContent): void;
+}
+
+export interface OptionalFieldEditBuilder<TContent> {
+	/**
+	 * Issues a change which replaces the current newContent of the field with `newContent`.
+	 * @param newContent - the new content for the field.
+	 * @param wasEmpty - whether the field is empty when creating this change.
+	 */
+	set(newContent: TContent | undefined, wasEmpty: boolean): void;
+}
+
+/**
+ * Edit builder for the sequence field kind.
+ */
+export interface SequenceFieldEditBuilder<TContent, TRemoved = void> {
+	/**
+	 * Issues a change which inserts the `newContent` at the given `index`.
+	 * @param index - the index at which to insert the `newContent`.
+	 * @param newContent - the new content to be inserted in the field. Cursor can be in either Field or Node mode.
+	 */
+	insert(index: number, newContent: TContent): void;
+
+	/**
+	 * Issues a change which removes `count` elements starting at the given `index`.
+	 * @param index - The index of the first removed element.
+	 * @param count - The number of elements to remove.
+	 */
+	remove(index: number, count: number): TRemoved;
+}
+
+/**
+ * Gets the number of path elements that both paths share, starting at index 0.
+ */
+function getSharedPrefixLength(pathA: readonly UpPath[], pathB: readonly UpPath[]): number {
+	const minDepth = Math.min(pathA.length, pathB.length);
+	let sharedDepth = 0;
+	while (sharedDepth < minDepth) {
+		const detachStep = pathA[sharedDepth] ?? oob();
+		const attachStep = pathB[sharedDepth] ?? oob();
+		if (
+			detachStep !== attachStep &&
+			(detachStep.parentField !== attachStep.parentField ||
+				detachStep.parentIndex !== attachStep.parentIndex)
+		) {
+			break;
+		}
+		sharedDepth += 1;
+	}
+	return sharedDepth;
+}

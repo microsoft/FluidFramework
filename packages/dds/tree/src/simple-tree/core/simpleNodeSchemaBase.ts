@@ -1,0 +1,36 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import type { NodeKind, NodeSchemaMetadata } from "./treeNodeSchema.js";
+
+/**
+ * Base interface for {@link TreeNodeSchema} and {@link SimpleNodeSchema} types.
+ * Once simple schema is stable this doesn't have a reason to be kept `@system`, but it could be.
+ * @system
+ * @public
+ * @sealed
+ */
+export interface SimpleNodeSchemaBase<
+	out TNodeKind extends NodeKind,
+	out TCustomMetadata = unknown,
+> {
+	/**
+	 * The {@link NodeKind}.
+	 *
+	 * @remarks can be used to type-switch between implementations.
+	 */
+	readonly kind: TNodeKind;
+
+	/**
+	 * User-provided {@link NodeSchemaMetadata} for this schema.
+	 *
+	 * @remarks
+	 * Note: this metadata is not persisted nor made part of the collaborative state; it is strictly client-local.
+	 * Different clients in the same collaborative session may see different metadata for the same field.
+	 *
+	 * Set via {@link NodeSchemaOptions.metadata}.
+	 */
+	readonly metadata: NodeSchemaMetadata<TCustomMetadata>;
+}

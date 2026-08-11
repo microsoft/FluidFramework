@@ -1,0 +1,13 @@
+# Compiled typescript
+dist
+lib
+
+# Logs
+logs
+*.log
+
+# Dependencies
+node_modules
+
+# nyc test coverage
+.nyc_output

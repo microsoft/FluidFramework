@@ -1,0 +1,141 @@
+{
+	"name": "server-release-group-root",
+	"version": "8.0.0",
+	"private": true,
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "server/routerlicious"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"scripts": {
+		"build": "fluid-build -g server --task build",
+		"build:compile": "fluid-build -g server --task compile",
+		"build:docker": "docker build . --build-context root=../..",
+		"build:docs": "fluid-build -g server --task build:docs",
+		"build:fast": "fluid-build -g server --task build --worker",
+		"build:gendocs": "api-documenter markdown -i _api-extractor-temp/doc-models -o docs/api",
+		"build:genver": "pnpm run -r --no-sort --stream build:genver",
+		"changeset": "flub changeset add --releaseGroup server",
+		"check:versions": "flub check buildVersion -g server --path .",
+		"checks": "fluid-build --task checks",
+		"ci:build": "npm run build:genver && pnpm run -r --stream build:compile",
+		"ci:build:docs": "pnpm run -r --no-sort --stream ci:build:docs",
+		"ci:eslint": "pnpm run -r --no-sort --stream --no-bail eslint",
+		"ci:test": "npm run test:report;t1=$?;npm run test:copyresults; exit $t1",
+		"ci:test:coverage": "npm run test:coverage;t1=$?;npm run test:copyresults; exit $t1",
+		"clean": "pnpm run -r --no-sort --stream clean && npm run clean:docs && npm run clean:nyc",
+		"clean:docs": "rimraf --glob \"**/_api-extractor-temp\"",
+		"clean:nyc": "rimraf --glob \"nyc/**\"",
+		"docker-build": "docker compose build",
+		"docker-clean": "docker compose down --rmi local -v",
+		"eslint": "fluid-build --task eslint",
+		"eslint:fix": "fluid-build --task eslint:fix",
+		"format": "npm run prettier:fix",
+		"generate:packageList": "concurrently npm:generate:packageList:*",
+		"generate:packageList:internal-build": "flub list server --no-private --feed internal-build --outFile feeds/internal-build.txt",
+		"generate:packageList:internal-dev": "flub list server --no-private --feed internal-dev --outFile feeds/internal-dev.txt",
+		"generate:packageList:internal-test": "flub list server --no-private --feed internal-test --outFile feeds/internal-test.txt",
+		"generate:packageList:public": "flub list server --no-private --feed public --outFile feeds/public.txt",
+		"preinstall": "node ../../scripts/only-pnpm.cjs",
+		"layer-check": "flub check layers --info ../../layerInfo.json",
+		"lint": "npm run prettier && npm run ci:eslint",
+		"lint:fix": "npm run prettier:fix && pnpm run -r --no-sort --stream lint:fix",
+		"policy-check": "flub check policy",
+		"policy-check-help": "echo Detect (and error on) policy-check violations, like package.json sorting, copyright headers etc. Run the check or \"pnpm flub check policy --listHandlers\" for a full list.",
+		"policy-check:asserts": "flub generate assertTags --all && npm run format",
+		"policy-check:fix": "flub check policy --fix",
+		"policy-check:fix-help": "echo Fix policy-check violations",
+		"prettier": "prettier --check . --cache --ignore-path ./.prettierignore",
+		"prettier:fix": "prettier --write . --cache --ignore-path ./.prettierignore",
+		"restart": "docker compose restart alfred && docker-compose restart deli && docker-compose restart scriptorium",
+		"start": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up",
+		"start:debug": "docker compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.debug.yml up",
+		"start:debug:service": "docker compose -f docker-compose.service.yml -f docker-compose.dev.yml -f docker-compose.debug.yml up -V",
+		"start:rdkafka": "docker compose -f docker-compose.rdkafka.yml -f docker-compose.dev.yml up",
+		"start:service": "docker compose -f docker-compose.service.yml -f docker-compose.dev.yml up -V",
+		"stop": "docker compose down",
+		"stop:full": "docker compose down -v",
+		"test": "pnpm run -r --no-sort --stream --no-bail test",
+		"test:copyresults": "copyfiles --exclude \"**/node_modules/**\" \"packages/**/nyc/**\" nyc",
+		"test:coverage": "c8 npm run test:report",
+		"test:fromroot": "mocha \"packages/**/dist/test/**/*.spec.*js\" --exit",
+		"test:report": "pnpm run -r --no-sort --stream --no-bail test -- -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
+		"tsc": "pnpm run -r --stream tsc",
+		"typetests:gen": "pnpm -r typetests:gen",
+		"typetests:prepare": "flub typetests -g server --reset --normalize",
+		"watch": "concurrently \"npm run watch:tsc\" \"npm run watch:esnext\"",
+		"watch:esnext": "pnpm run -r --no-sort --stream build:esnext -- -- --watch",
+		"watch:tsc": "pnpm run -r --no-sort --stream tsc -- -- --watch"
+	},
+	"c8": {
+		"all": true,
+		"cache-dir": "nyc/.cache",
+		"exclude": [
+			"**/*.d.*ts",
+			"**/src/test/**/*.*ts",
+			"**/dist/test/**/*.*js",
+			"**/lib/test/**/*.*js",
+			"**/node_modules/**/*"
+		],
+		"include": [
+			"packages/**/src/**/*.*ts",
+			"packages/**/dist/**/*.*js",
+			"packages/**/lib/**/*.*js"
+		],
+		"report-dir": "nyc/report",
+		"reporter": [
+			"cobertura",
+			"html",
+			"text"
+		],
+		"temp-directory": "nyc/.nyc_output"
+	},
+	"devDependencies": {
+		"@changesets/cli": "^2.27.8",
+		"@fluid-private/changelog-generator-wrapper": "file:../../packages/tools/changelog-generator-wrapper",
+		"@fluid-tools/build-cli": "^0.65.0",
+		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-tools": "^0.65.0",
+		"@fluidframework/eslint-config-fluid": "^9.0.0",
+		"@microsoft/api-extractor": "7.58.1",
+		"c8": "^10.1.3",
+		"changesets-format-with-issue-links": "^0.3.0",
+		"concurrently": "^10.0.3",
+		"copyfiles": "^2.4.1",
+		"eslint": "~9.39.2",
+		"mocha": "^10.8.2",
+		"prettier": "~3.0.3",
+		"rimraf": "^6.1.3",
+		"run-script-os": "^1.1.5",
+		"typescript": "~5.1.6"
+	},
+	"packageManager": "pnpm@11.15.1+sha512.81350b07e53c9538a02f1f2303b4290fa2d7be04e56e2a970c4cc4b417dc761de196edabd49d55c7dc9580db81007c44143e4e3d7e462b3000d23c255122d065",
+	"engines": {
+		"node": ">=22.22.2"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"build": {
+				"dependsOn": [
+					"^build",
+					"build:docs",
+					"checks"
+				],
+				"script": false
+			},
+			"checks": {
+				"dependsOn": [
+					"prettier",
+					"generate:packageList",
+					"check:versions",
+					"layer-check",
+					"policy-check"
+				],
+				"script": false
+			}
+		}
+	}
+}

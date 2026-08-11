@@ -1,0 +1,42 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { strict as assert } from "node:assert";
+
+import { currentVersion } from "../../../../codec/index.js";
+import {
+	fieldBatchCodecBuilder,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../../feature-libraries/chunked-forest/codec/codecs.js";
+import {
+	TreeCompressionStrategy,
+	cursorForJsonableTreeField,
+	jsonableTreeFromFieldCursor,
+} from "../../../../feature-libraries/index.js";
+import { ajvValidator } from "../../../codec/index.js";
+import { testTrees } from "../../../cursorTestSuite.js";
+import { makeTestFieldBatchContexts } from "../../../utils.js";
+
+describe("uncompressedEncode", () => {
+	// TODO: test non size 1 batches
+	describe("test trees", () => {
+		for (const [name, jsonable] of testTrees) {
+			it(name, () => {
+				const input = cursorForJsonableTreeField([jsonable]);
+				const { encode, decode } = makeTestFieldBatchContexts({
+					encodeType: TreeCompressionStrategy.Uncompressed,
+				});
+				const codec = fieldBatchCodecBuilder.build({
+					jsonValidator: ajvValidator,
+					minVersionForCollab: currentVersion,
+				});
+				const result = codec.encode([input], encode);
+				const decoded = codec.decode(result, decode);
+				const decodedJson = decoded.map(jsonableTreeFromFieldCursor);
+				assert.deepEqual([[jsonable]], decodedJson);
+			});
+		}
+	});
+});

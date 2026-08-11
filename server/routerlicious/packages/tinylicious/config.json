@@ -1,0 +1,44 @@
+{
+	"logger": {
+		"colorize": true,
+		"morganFormat": "dev",
+		"json": false,
+		"level": "info",
+		"timestamp": true,
+		"label": "winston"
+	},
+	"alfred": {
+		"maxMessageSize": "16KB",
+		"restJsonSize": "50mb",
+		"maxNumberOfClientsPerDocument": 1000000
+	},
+	"deli": {},
+	"scribe": {},
+	"mongo": {
+		"endpoint": "mongodb://mongodb:27017",
+		"collectionNames": {
+			"content": "content",
+			"deltas": "deltas",
+			"documents": "documents",
+			"checkpoints": "checkpoints",
+			"partitions": "partitions",
+			"tenants": "tenants",
+			"nodes": "nodes",
+			"reservations": "reservations",
+			"scribeDeltas": "scribeDeltas"
+		}
+	},
+	"storage": "/var/tmp/tinylicious",
+	"db": {
+		"inMemory": true,
+		"path": "/var/tmp/db"
+	},
+	"moira": {
+		"enable": false,
+		"endpoint": "http://localhost:3070"
+	},
+	"error": {
+		"track": false,
+		"endpoint": ""
+	}
+}

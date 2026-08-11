@@ -1,0 +1,10 @@
+nyc
+*.log
+**/*.tsbuildinfo
+src/test
+dist/test
+lib/test
+api-extractor
+**/_api-extractor-temp/**
+prettier.config.cjs
+tsdoc.json

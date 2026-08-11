@@ -1,0 +1,21 @@
+{
+  "table": {
+    "rows": [
+      {
+        "id": "row-0",
+        "cells": {
+          "column-0": {
+            "value": "Hello World!"
+          }
+        },
+        "props": {}
+      }
+    ],
+    "columns": [
+      {
+        "id": "column-0",
+        "props": {}
+      }
+    ]
+  }
+}

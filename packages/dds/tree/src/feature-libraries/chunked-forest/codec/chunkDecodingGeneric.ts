@@ -1,0 +1,91 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { assert } from "@fluidframework/core-utils/internal";
+
+import type { DiscriminatedUnionDispatcher } from "../../../codec/index.js";
+import type { TreeChunk } from "../../../core/index.js";
+import type { BrandedType, IdDecodingContext } from "../../../util/index.js";
+
+import {
+	type ChunkDecoder,
+	type StreamCursor,
+	getChecked,
+	readStream,
+} from "./chunkCodecUtilities.js";
+import type { IncrementalDecoder } from "./codecs.js";
+import type { EncodedFieldBatchGeneric, IdentifierOrIndex } from "./format/index.js";
+
+/**
+ * General purpose shape based tree decoder which gets its support for specific shapes from the caller.
+ */
+export function decode<TEncodedShape extends object, TContext>(
+	decoderLibrary: DiscriminatedUnionDispatcher<
+		TEncodedShape,
+		[context: TContext],
+		ChunkDecoder
+	>,
+	context: TContext,
+	batch: EncodedFieldBatchGeneric<TEncodedShape>,
+	rootDecoder: ChunkDecoder,
+): TreeChunk[] {
+	const decoders = batch.shapes.map((shape) => decoderLibrary.dispatch(shape, context));
+	const chunks: TreeChunk[] = [];
+	for (const field of batch.data) {
+		const stream = { data: field, offset: 0 };
+		const result = rootDecoder.decode(decoders, stream);
+		assert(
+			stream.offset === stream.data.length,
+			0x73a /* expected decode to consume full stream */,
+		);
+		chunks.push(result);
+	}
+
+	return chunks;
+}
+
+/**
+ * Shared data for use in constructing decoders.
+ */
+export class DecoderContext<TEncodedShape = unknown> {
+	public constructor(
+		/**
+		 * Identifier substitution table (use to replace numeric identifier indexes with the actual identifiers from this table).
+		 */
+		public readonly identifiers: readonly string[],
+		public readonly shapes: readonly TEncodedShape[],
+		public readonly idDecodingContext: IdDecodingContext,
+		/**
+		 * To be used to decode incremental chunks, if any.
+		 * @remarks
+		 * See {@link IncrementalDecoder} for more information.
+		 */
+		public readonly incrementalDecoder: IncrementalDecoder | undefined,
+	) {}
+
+	public identifier<T extends string & BrandedType<string, string>>(
+		encoded: IdentifierOrIndex,
+	): T {
+		if (typeof encoded === "string") {
+			return encoded as T;
+		}
+		return getChecked(this.identifiers, encoded) as T;
+	}
+}
+
+/**
+ * Read one identifier from the stream, advancing the stream offset.
+ */
+export function readStreamIdentifier<T extends string & BrandedType<string, string>>(
+	stream: StreamCursor,
+	context: DecoderContext,
+): T {
+	const content = readStream(stream);
+	assert(
+		typeof content === "number" || typeof content === "string",
+		0x73b /* content to be a number or string */,
+	);
+	return context.identifier(content);
+}

@@ -1,0 +1,142 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import {
+	subtractChangeAtomIds,
+	type ChangeAtomId,
+	type ChangesetLocalId,
+	type FieldKey,
+	type FieldKindIdentifier,
+	type RevisionInfo,
+} from "../../core/index.js";
+import { brand, RangeMap, type Brand } from "../../util/index.js";
+import type { ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
+import type { TreeChunk } from "../chunked-forest/index.js";
+
+import type { CrossFieldTarget } from "./crossFieldQueries.js";
+
+export interface ModularChangeset extends Readonly<HasFieldChanges> {
+	/**
+	 * The numerically highest `ChangesetLocalId` used in this changeset.
+	 * If undefined then this changeset contains no IDs.
+	 */
+	readonly maxId?: ChangesetLocalId;
+	/**
+	 * The revisions included in this changeset, ordered temporally (oldest to newest).
+	 * Undefined for anonymous changesets.
+	 * Should never be empty.
+	 */
+	readonly revisions?: readonly RevisionInfo[];
+	readonly fieldChanges: FieldChangeMap;
+
+	/**
+	 * Maps from this changeset's canonical ID for a node (see comment on node aliases) to the changes for that node.
+	 */
+	readonly nodeChanges: ChangeAtomIdBTree<NodeChangeset>;
+
+	/**
+	 * Maps from this changeset's canonical ID for a node to the ID for the field which contains that node.
+	 */
+	// TODO: Should this be merged with `nodeChanges`?
+	readonly nodeToParent: ChangeAtomIdBTree<FieldId>;
+
+	/**
+	 * Maps from a node ID to another ID for the same node.
+	 * If a node ID used in this changeset has no entry in this table, then it is the canonical ID for that node.
+	 * The aliases form a set of trees, where the root of each tree is a canonical ID.
+	 *
+	 * When composing changesets with different canonical IDs for the same node,
+	 * one of those IDs becomes the canonical ID for the composition, while the other is added to this table as an alias.
+	 *
+	 * Node aliases are preserved when composing changesets so we can avoid having to find and update all changed node IDs
+	 * in the field IDs in nodeToParent and crossFieldKeys.
+	 */
+	readonly nodeAliases: ChangeAtomIdBTree<NodeId>;
+	readonly crossFieldKeys: CrossFieldKeyTable;
+	/**
+	 * The number of constraint violations that apply to the input context of the changeset, i.e., before this change is applied.
+	 * If this count is greater than 0, it will prevent the changeset from being applied.
+	 */
+	readonly constraintViolationCount?: number;
+	/** Constraint that the document must be in the same state before this change is applied as it was before this change was authored */
+	readonly noChangeConstraint?: NoChangeConstraint;
+	/** Constraint that the document must be in the same state before the revert of this change is applied as it was after this change was applied */
+	readonly noChangeConstraintOnRevert?: NoChangeConstraint;
+	readonly builds?: ChangeAtomIdBTree<TreeChunk>;
+	readonly destroys?: ChangeAtomIdBTree<number>;
+	readonly refreshers?: ChangeAtomIdBTree<TreeChunk>;
+}
+
+export type CrossFieldKeyTable = RangeMap<CrossFieldKey, FieldId>;
+
+export function newCrossFieldKeyTable(): CrossFieldKeyTable {
+	return new RangeMap(offsetCrossFieldKey, subtractCrossFieldKeys);
+}
+
+function offsetCrossFieldKey(key: CrossFieldKey, offset: number): CrossFieldKey {
+	return {
+		...key,
+		localId: brand(key.localId + offset),
+	};
+}
+
+function subtractCrossFieldKeys(a: CrossFieldKey, b: CrossFieldKey): number {
+	const cmpTarget = a.target - b.target;
+	if (cmpTarget !== 0) {
+		return cmpTarget * Number.POSITIVE_INFINITY;
+	}
+
+	return subtractChangeAtomIds(a, b);
+}
+
+export interface CrossFieldKey extends ChangeAtomId {
+	readonly target: CrossFieldTarget;
+}
+
+export interface CrossFieldKeyRange {
+	readonly key: CrossFieldKey;
+	readonly count: number;
+}
+
+export interface FieldId {
+	readonly nodeId: NodeId | undefined;
+	readonly field: FieldKey;
+}
+
+export interface NodeExistsConstraint {
+	violated: boolean;
+}
+
+/**
+ * A constraint that is violated whenever the state of the document is different from when the change was authored.
+ */
+export interface NoChangeConstraint {
+	violated: boolean;
+}
+
+/**
+ * Changeset for a subtree rooted at a specific node.
+ */
+export interface NodeChangeset extends HasFieldChanges {
+	/** Keeps track of whether node exists constraint has been violated by this change */
+	nodeExistsConstraint?: NodeExistsConstraint;
+	/** Keeps track of whether node exists constraint will be violated when this change is reverted */
+	nodeExistsConstraintOnRevert?: NodeExistsConstraint;
+}
+
+export type NodeId = ChangeAtomId;
+
+export interface HasFieldChanges {
+	fieldChanges?: FieldChangeMap;
+}
+
+export type FieldChangeMap = Map<FieldKey, FieldChange>;
+
+export interface FieldChange {
+	readonly fieldKind: FieldKindIdentifier;
+	change: FieldChangeset;
+}
+
+export type FieldChangeset = Brand<unknown, "FieldChangeset">;

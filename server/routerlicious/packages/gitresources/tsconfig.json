@@ -1,0 +1,13 @@
+{
+	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"exclude": ["dist", "node_modules"],
+	"compilerOptions": {
+		"strictNullChecks": true,
+		"paths": {
+			"@fluidframework/gitresources": ["./src/index.ts"],
+		},
+		"rootDir": "./src",
+		"outDir": "./dist",
+	},
+	"include": ["src/**/*"],
+}

@@ -1,0 +1,93 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import type {
+	IChannelAttributes,
+	IChannelFactory,
+	IFluidDataStoreRuntime,
+	IChannelServices,
+} from "@fluidframework/datastore-definitions/internal";
+import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
+
+import type { ISharedSummaryBlock } from "./interfaces.js";
+import { pkgVersion } from "./packageVersion.js";
+import { SharedSummaryBlockClass } from "./sharedSummaryBlock.js";
+
+/**
+ * The factory that defines the shared summary block.
+ */
+export class SharedSummaryBlockFactory implements IChannelFactory<ISharedSummaryBlock> {
+	/**
+	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
+	 */
+	// New type string, to be activated once the migration has been fully shipped dark and is safe to flip.
+	// See LegacyTypeAwareRegistry in packages/runtime/datastore/src/dataStoreRuntime.ts.
+	// public static readonly Type = "shared-summary-block";
+	public static readonly Type = "https://graph.microsoft.com/types/shared-summary-block";
+
+	/**
+	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
+	 */
+	public static readonly Attributes: IChannelAttributes = {
+		type: SharedSummaryBlockFactory.Type,
+		snapshotFormatVersion: "0.1",
+		packageVersion: pkgVersion,
+	};
+
+	/**
+	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
+	 */
+	public get type(): string {
+		return SharedSummaryBlockFactory.Type;
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
+	 */
+	public get attributes(): IChannelAttributes {
+		return SharedSummaryBlockFactory.Attributes;
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
+	 */
+	public async load(
+		runtime: IFluidDataStoreRuntime,
+		id: string,
+		services: IChannelServices,
+		attributes: IChannelAttributes,
+	): Promise<ISharedSummaryBlock> {
+		const sharedSummaryBlock = new SharedSummaryBlockClass(id, runtime, attributes);
+		await sharedSummaryBlock.load(services);
+
+		return sharedSummaryBlock;
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
+	 */
+	public create(runtime: IFluidDataStoreRuntime, id: string): ISharedSummaryBlock {
+		const sharedSummaryBlock = new SharedSummaryBlockClass(
+			id,
+			runtime,
+			SharedSummaryBlockFactory.Attributes,
+		);
+		sharedSummaryBlock.initializeLocal();
+
+		return sharedSummaryBlock;
+	}
+}
+
+/**
+ * {@inheritDoc ISharedSummaryBlock}
+ * @legacy @beta
+ */
+export const SharedSummaryBlock = createSharedObjectKind(SharedSummaryBlockFactory);
+
+/**
+ * {@inheritDoc ISharedSummaryBlock}
+ * @legacy @beta
+ */
+export type SharedSummaryBlock = ISharedSummaryBlock;

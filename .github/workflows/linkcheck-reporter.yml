@@ -1,0 +1,38 @@
+name: Update link report
+on:
+  workflow_run:
+    workflows: ["Website validation"]
+    types:
+      - completed
+
+permissions:
+  contents: read
+  actions: read # for dawidd6/action-download-artifact to query and download artifacts
+
+jobs:
+  load_report:
+    permissions:
+      pull-requests: write # for marocchino/sticky-pull-request-comment to create or update PR comment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download results
+        # release notes: https://github.com/dawidd6/action-download-artifact/releases/tag/v11
+        uses: dawidd6/action-download-artifact@8305c0f1062bb0d184d09ef4493ecb9288447732 # v20
+        with:
+          workflow: website-validation.yml
+          # workflow_conclusion: completed
+          run_id: ${{ github.event.workflow_run.id }}
+          name: website-validation-results
+          path: ./results
+      - name: Load PR number
+        id: load_pr
+        run: echo "pr=$(cat pr)" >> $GITHUB_OUTPUT
+        working-directory: ./results
+      - name: Post report in comment
+        # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v3.0.4
+        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # v3.0.4
+        with:
+          header: linkreport
+          recreate: true
+          number: ${{ steps.load_pr.outputs.pr }}
+          path: ./results/linkcheck

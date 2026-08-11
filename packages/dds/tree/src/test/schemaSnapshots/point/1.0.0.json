@@ -1,0 +1,45 @@
+{
+	"version": 1,
+	"root": {
+		"kind": 1,
+		"simpleAllowedTypes": {
+			"test.Point": {
+				"isStaged": false
+			}
+		}
+	},
+	"definitions": {
+		"com.fluidframework.leaf.number": {
+			"leaf": {
+				"kind": 3,
+				"leafKind": 0
+			}
+		},
+		"test.Point": {
+			"object": {
+				"kind": 2,
+				"fields": {
+					"x": {
+						"kind": 1,
+						"simpleAllowedTypes": {
+							"com.fluidframework.leaf.number": {
+								"isStaged": false
+							}
+						},
+						"storedKey": "x"
+					},
+					"y": {
+						"kind": 1,
+						"simpleAllowedTypes": {
+							"com.fluidframework.leaf.number": {
+								"isStaged": false
+							}
+						},
+						"storedKey": "y"
+					}
+				},
+				"allowUnknownOptionalFields": false
+			}
+		}
+	}
+}

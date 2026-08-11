@@ -1,0 +1,192 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { strict as assert, fail } from "node:assert";
+
+import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
+
+import type { ITreeCursor } from "../../../core/index.js";
+import { cursorForJsonableTreeNode } from "../../../feature-libraries/index.js";
+import {
+	applySchemaToParserOptions,
+	cursorFromVerbose,
+	replaceVerboseTreeHandles,
+	verboseFromCursor,
+	type VerboseTree,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../simple-tree/api/verboseTree.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
+import {
+	KeyEncodingOptions,
+	SchemaFactory,
+	type TreeEncodingOptions,
+} from "../../../simple-tree/index.js";
+import { brand } from "../../../util/index.js";
+import { testSpecializedCursor, type TestTree } from "../../cursorTestSuite.js";
+
+const schema = new SchemaFactory("Test");
+
+describe("simple-tree verboseTree", () => {
+	describe("applySchemaToParserOptions", () => {
+		it("keyConverter", () => {
+			class A extends schema.object("A", {
+				a: schema.number,
+				b: schema.required(schema.number, { key: "stored" }),
+			}) {}
+			class B extends schema.object("B", {
+				b: schema.number,
+			}) {}
+			{
+				const options = applySchemaToParserOptions([A, B], {
+					keys: KeyEncodingOptions.usePropertyKeys,
+				});
+				assert(options.keyConverter !== undefined);
+				assert.equal(options.keyConverter.parse(A.identifier, "a"), "a");
+				assert.equal(options.keyConverter.parse(A.identifier, "b"), "stored");
+				assert.equal(options.keyConverter.parse(B.identifier, "b"), "b");
+				assert.equal(options.keyConverter.encode(A.identifier, brand("a")), "a");
+				assert.equal(options.keyConverter.encode(A.identifier, brand("stored")), "b");
+				assert.equal(options.keyConverter.encode(B.identifier, brand("b")), "b");
+			}
+			{
+				const options = applySchemaToParserOptions([A, B], {
+					keys: KeyEncodingOptions.allStoredKeys,
+				});
+				assert(options.keyConverter === undefined);
+			}
+			{
+				const options = applySchemaToParserOptions([A, B], {});
+				assert(options.keyConverter !== undefined);
+				assert.equal(options.keyConverter.encode(A.identifier, brand("stored")), "b");
+				assert.equal(options.keyConverter.parse(A.identifier, "b"), "stored");
+			}
+		});
+	});
+
+	describe("verboseFromCursor", () => {
+		it("minimal", () => {
+			const encodeOptions: TreeEncodingOptions = {};
+			class TestObject extends schema.object("T", {}) {}
+			const cursor = cursorForJsonableTreeNode({ type: brand("Test.T") });
+			const verbose = verboseFromCursor(
+				cursor,
+				getUnhydratedContext(TestObject),
+				encodeOptions,
+			);
+			assert.deepEqual(verbose, { type: "Test.T", fields: {} });
+		});
+	});
+
+	describe("verboseTreeAdapter", () => {
+		class TestObject extends schema.object("A", {
+			a: schema.optional(schema.number),
+			b: schema.optional(schema.number, { key: "stored" }),
+		}) {}
+		class TestMap extends schema.map("M", [schema.number, TestObject]) {}
+
+		const sharedCases: readonly VerboseTree[] = [
+			"leaf",
+			null,
+			{ type: TestObject.identifier, fields: { a: 1 } },
+			{ type: TestMap.identifier, fields: {} },
+			{ type: TestMap.identifier, fields: { a: 1 } },
+			{ type: TestMap.identifier, fields: { b: 2, c: 3 } },
+			{
+				type: TestMap.identifier,
+				fields: { a: { type: TestObject.identifier, fields: { a: 1 } } },
+			},
+		];
+
+		const storedKeyCases: readonly VerboseTree[] = [
+			...sharedCases,
+			{ type: TestObject.identifier, fields: { stored: 2 } },
+			{ type: TestObject.identifier, fields: { a: 1, stored: 2 } },
+			{
+				type: TestMap.identifier,
+				fields: { a: { type: TestObject.identifier, fields: { stored: 1 } } },
+			},
+		];
+
+		const propertyKeyCases: readonly VerboseTree[] = [
+			...sharedCases,
+			{ type: TestObject.identifier, fields: { b: 2 } },
+			{ type: TestObject.identifier, fields: { a: 1, b: 2 } },
+			{
+				type: TestMap.identifier,
+				fields: { a: { type: TestObject.identifier, fields: { b: 1 } } },
+			},
+		];
+
+		const RootSchema = [TestMap, TestObject, schema.string, schema.null] as const;
+
+		for (const keysSetting of [
+			KeyEncodingOptions.usePropertyKeys,
+			KeyEncodingOptions.allStoredKeys,
+			KeyEncodingOptions.knownStoredKeys,
+		]) {
+			describe(keysSetting, () => {
+				const testTrees: TestTree<VerboseTree>[] = [];
+
+				for (const testCase of keysSetting === KeyEncodingOptions.usePropertyKeys
+					? propertyKeyCases
+					: storedKeyCases) {
+					testTrees.push({
+						name: JSON.stringify(testCase),
+						dataFactory: () => testCase,
+					});
+				}
+
+				const options: TreeEncodingOptions = {
+					keys: keysSetting,
+				};
+				const encodeOptions: TreeEncodingOptions = {
+					keys: keysSetting,
+				};
+
+				const finalOptions = applySchemaToParserOptions(RootSchema, options);
+
+				testSpecializedCursor<VerboseTree, ITreeCursor>({
+					cursorName: "verboseTree",
+					cursorFactory: (data) => cursorFromVerbose(data, finalOptions),
+					dataFromCursor: (cursor) =>
+						verboseFromCursor(cursor, getUnhydratedContext(RootSchema), encodeOptions),
+					testData: testTrees,
+					builders: {
+						withKeys: (keys) => {
+							const obj = {};
+							for (const key of keys) {
+								Object.defineProperty(obj, key, {
+									enumerable: true,
+									configurable: true,
+									writable: true,
+									value: 5, // Arbitrary child node value
+								});
+							}
+							return { type: TestMap.identifier, fields: obj };
+						},
+					},
+				});
+			});
+		}
+	});
+
+	describe("replaceVerboseTreeHandles", () => {
+		it("no handles", () => {
+			const tree = { type: "a", fields: { b: 1 } };
+			const clone = replaceVerboseTreeHandles(tree, () => {
+				fail();
+			});
+			assert.notEqual(clone, tree);
+			assert.deepEqual(clone, tree);
+		});
+
+		it("handles", () => {
+			const tree = { type: "a", fields: { b: new MockHandle(1) } };
+			const clone = replaceVerboseTreeHandles(tree, () => "handle");
+			assert.deepEqual(clone, { type: "a", fields: { b: "handle" } });
+		});
+	});
+});

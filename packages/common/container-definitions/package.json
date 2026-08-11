@@ -1,0 +1,115 @@
+{
+	"name": "@fluidframework/container-definitions",
+	"version": "2.116.0",
+	"description": "Fluid container definitions",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "packages/common/container-definitions"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"sideEffects": false,
+	"type": "module",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/public.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/public.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./legacy": {
+			"import": {
+				"types": "./lib/legacy.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/legacy.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./internal": {
+			"import": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		}
+	},
+	"main": "lib/index.js",
+	"types": "lib/public.d.ts",
+	"scripts": {
+		"build": "fluid-build . --task build",
+		"build:api-reports": "concurrently \"npm:build:api-reports:*\"",
+		"build:api-reports:current": "api-extractor run --local --config api-extractor/api-extractor.current.json",
+		"build:api-reports:legacy": "api-extractor run --local --config api-extractor/api-extractor.legacy.json",
+		"build:commonjs": "fluid-build . --task commonjs",
+		"build:compile": "fluid-build . --task compile",
+		"build:docs": "api-extractor run --local",
+		"build:entrypoints": "fluid-build . --task build:entrypoints",
+		"build:entrypoints:cjs": "flub generate entrypoints --resolutionConditions require --outFileLegacyBeta legacy --outDir ./dist",
+		"build:entrypoints:esm": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib --node10TypeCompat",
+		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:test": "concurrently npm:build:test:esm npm:build:test:cjs",
+		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
+		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
+		"check:are-the-types-wrong": "attw --pack .",
+		"check:biome": "biome check .",
+		"check:exports": "concurrently \"npm:check:exports:*\"",
+		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
+		"check:exports:cjs:legacy": "api-extractor run --config api-extractor/api-extractor-lint-legacy.cjs.json",
+		"check:exports:cjs:public": "api-extractor run --config api-extractor/api-extractor-lint-public.cjs.json",
+		"check:exports:esm:legacy": "api-extractor run --config api-extractor/api-extractor-lint-legacy.esm.json",
+		"check:exports:esm:public": "api-extractor run --config api-extractor/api-extractor-lint-public.esm.json",
+		"check:format": "npm run check:biome",
+		"ci:build:api-reports": "concurrently \"npm:ci:build:api-reports:*\"",
+		"ci:build:api-reports:current": "api-extractor run --config api-extractor/api-extractor.current.json",
+		"ci:build:api-reports:legacy": "api-extractor run --config api-extractor/api-extractor.legacy.json",
+		"ci:build:docs": "api-extractor run",
+		"ci:test": "echo No test for this package",
+		"ci:test:coverage": "echo No test for this package",
+		"clean": "rimraf --glob dist lib {alpha,beta,internal,legacy}.d.ts \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
+		"eslint": "eslint --quiet --format stylish src",
+		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
+		"format": "npm run format:biome",
+		"format:biome": "biome check . --write",
+		"lint": "fluid-build . --task lint",
+		"lint:fix": "fluid-build . --task eslint:fix --task format",
+		"place:cjs:package-stub": "copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && npm run place:cjs:package-stub",
+		"tsc:watch": "npm run place:cjs:package-stub && fluid-tsc commonjs --project ./tsconfig.cjs.json --watch",
+		"typetests:gen": "flub generate typetests --dir . -v"
+	},
+	"dependencies": {
+		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/driver-definitions": "workspace:~"
+	},
+	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.18.2",
+		"@biomejs/biome": "~2.4.5",
+		"@fluid-tools/build-cli": "catalog:buildTools",
+		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-tools": "catalog:buildTools",
+		"@fluidframework/container-definitions-previous": "npm:@fluidframework/container-definitions@2.112.0",
+		"@fluidframework/eslint-config-fluid": "catalog:eslint",
+		"@microsoft/api-extractor": "7.58.1",
+		"concurrently": "^10.0.3",
+		"copyfiles": "^2.4.1",
+		"eslint": "catalog:eslint",
+		"jiti": "^2.6.1",
+		"rimraf": "^6.1.3",
+		"typescript": "~5.4.5"
+	},
+	"typeValidation": {
+		"broken": {},
+		"entrypoint": "legacy"
+	}
+}

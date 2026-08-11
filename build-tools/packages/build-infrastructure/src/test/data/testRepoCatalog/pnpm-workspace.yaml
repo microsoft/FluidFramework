@@ -1,0 +1,5 @@
+packages:
+  - "packages/**"
+catalog:
+  pkg-b: "^2.0.0"
+  pkg-c: "^3.0.0"

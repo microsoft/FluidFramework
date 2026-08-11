@@ -1,0 +1,47 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import path from "node:path";
+
+import { RevisionTagCodec } from "../../../core/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { sequenceFieldChangeCodecFactory } from "../../../feature-libraries/sequence-field/sequenceFieldCodecs.js";
+import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
+import { TestNodeId } from "../../testNodeId.js";
+import { createSnapshotCompressor, testIdCompressor } from "../../utils.js";
+
+import { generatePopulatedMarks } from "./populatedMarks.js";
+
+export function testSnapshots(): void {
+	describe("Snapshots", () => {
+		const compressor = createSnapshotCompressor();
+		const baseContext = {
+			originatorId: compressor.localSessionId,
+			isSummary: false,
+			revision: undefined,
+			idCompressor: testIdCompressor,
+		};
+
+		const family = sequenceFieldChangeCodecFactory(new RevisionTagCodec(compressor));
+		const marks = generatePopulatedMarks(compressor);
+		for (const version of family.getSupportedFormats()) {
+			describe(`version ${version}`, () => {
+				const dir = path.join("sequence-field", `V${version}`);
+				useSnapshotDirectory(dir);
+				const codec = family.resolve(version);
+				for (const [index, mark] of marks.entries()) {
+					it(`${index} - ${"type" in mark ? mark.type : "NoOp"}`, () => {
+						const changeset = [mark];
+						const encoded = codec.encode(changeset, {
+							baseContext,
+							encodeNode: (node) => TestNodeId.encode(node, baseContext),
+						});
+						takeJsonSnapshot(encoded);
+					});
+				}
+			});
+		}
+	});
+}

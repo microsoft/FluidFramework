@@ -1,0 +1,18 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { getInstalledPackageVersion } from "../taskUtils.js";
+import { TscDependentTask } from "./tscTask.js";
+
+export class GenerateEntrypointsTask extends TscDependentTask {
+	protected get taskSpecificConfigFiles(): string[] {
+		// Add package.json, which tsc should also depend on, but currently doesn't.
+		return [this.node.pkg.packageJsonFileName];
+	}
+
+	protected async getToolVersion(): Promise<string> {
+		return getInstalledPackageVersion("@fluid-tools/build-cli", this.node.pkg.directory);
+	}
+}

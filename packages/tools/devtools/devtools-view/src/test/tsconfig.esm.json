@@ -1,0 +1,13 @@
+{
+	// This config must be used in a "type": "module" environment. (Use fluid-tsc module.)
+	"extends": "./tsconfig.jest.json",
+	"compilerOptions": {
+		"outDir": "../../lib/test",
+		"noUncheckedIndexedAccess": false,
+	},
+	"references": [
+		{
+			"path": "../../tsconfig.esm.json",
+		},
+	],
+}

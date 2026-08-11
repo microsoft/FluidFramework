@@ -1,0 +1,250 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { unreachableCase } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
+import { ValueSchema } from "../../core/index.js";
+import { copyProperty, hasSingle, type Mutable } from "../../util/index.js";
+import { NodeKind, type TreeNodeSchema } from "../core/index.js";
+import { FieldKind } from "../fieldSchema.js";
+import { LeafNodeSchema } from "../leafNodeSchema.js";
+import {
+	ArrayNodeSchema,
+	isMapNodeSchema,
+	isRecordNodeSchema,
+	ObjectNodeSchema,
+} from "../node-kinds/index.js";
+import type {
+	SimpleArrayNodeSchema,
+	SimpleLeafNodeSchema,
+	SimpleMapNodeSchema,
+	SimpleRecordNodeSchema,
+} from "../simpleSchema.js";
+import type { TreeSchema } from "../treeSchema.js";
+
+import { KeyEncodingOptions } from "./customTree.js";
+import type { TreeSchemaEncodingOptions } from "./getJsonSchema.js";
+import type {
+	JsonArrayNodeSchema,
+	JsonFieldSchema,
+	JsonSchemaRef,
+	JsonRefPath,
+	JsonLeafNodeSchema,
+	JsonMapNodeSchema,
+	JsonNodeSchema,
+	JsonObjectNodeSchema,
+	JsonTreeSchema,
+	JsonLeafSchemaType,
+	JsonRecordNodeSchema,
+} from "./jsonSchema.js";
+
+/**
+ * Generates a JSON Schema representation from a simple tree schema.
+ * @remarks
+ * This expects the data to be in the {@link ConciseTree} format.
+ *
+ * This cannot handle the case where the root is undefined since undefined is not a concept in JSON.
+ * This also cannot handle {@link SchemaStatics.handle} since they also are not supported in JSON.
+ */
+export function toJsonSchema(
+	schema: TreeSchema,
+	options: Required<TreeSchemaEncodingOptions>,
+): JsonTreeSchema {
+	const definitions = convertDefinitions(schema.definitions, options);
+
+	const allowedTypes: JsonSchemaRef[] = [];
+	for (const allowedType of schema.root.allowedTypesIdentifiers) {
+		allowedTypes.push(createSchemaRef(allowedType));
+	}
+
+	// TODO: deduplicate field handling logic from convertObjectNodeSchema: at least include metadata's description.
+	// TODO: maybe account for consider schema.kind, or just take in ImplicitAllowedTypes
+	// TODO: handle case where allowedTypes is empty.
+	// TODO: handle staged types in a controllable way.
+	return hasSingle(allowedTypes)
+		? {
+				...allowedTypes[0],
+				$defs: definitions,
+			}
+		: {
+				$defs: definitions,
+				anyOf: allowedTypes,
+			};
+}
+
+function convertDefinitions(
+	definitions: ReadonlyMap<string, TreeNodeSchema>,
+	options: Required<TreeSchemaEncodingOptions>,
+): Record<string, JsonNodeSchema> {
+	const result: Record<string, JsonNodeSchema> = {};
+	for (const [key, value] of definitions) {
+		result[key] = convertNodeSchema(value, options);
+	}
+	return result;
+}
+
+/**
+ * Converts an input {@link SimpleNodeSchema} to a {@link JsonNodeSchema}.
+ *
+ * @remarks Caches the result on the input schema for future calls.
+ */
+function convertNodeSchema(
+	schema: TreeNodeSchema,
+	options: Required<TreeSchemaEncodingOptions>,
+): JsonNodeSchema {
+	if (schema instanceof ArrayNodeSchema) {
+		return convertArrayNodeSchema(schema);
+	} else if (isMapNodeSchema(schema) || isRecordNodeSchema(schema)) {
+		return convertRecordLikeNodeSchema(schema);
+	} else if (schema instanceof ObjectNodeSchema) {
+		return convertObjectNodeSchema(schema, options);
+	} else if (schema instanceof LeafNodeSchema) {
+		return convertLeafNodeSchema(schema);
+	}
+	throw new TypeError(`Unknown node schema kind: ${schema.kind}`);
+}
+
+function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): JsonArrayNodeSchema {
+	const allowedTypes: JsonSchemaRef[] = [];
+	const allowedTypesIdentifiers: ReadonlySet<string> = new Set(
+		schema.simpleAllowedTypes.keys(),
+	);
+	for (const type of allowedTypesIdentifiers) {
+		allowedTypes.push(createSchemaRef(type));
+	}
+
+	const items: JsonFieldSchema = hasSingle(allowedTypes)
+		? allowedTypes[0]
+		: { anyOf: allowedTypes };
+
+	const output: Mutable<JsonArrayNodeSchema> = {
+		type: "array",
+		_treeNodeSchemaKind: NodeKind.Array,
+		items,
+	};
+
+	copyProperty(schema.metadata, "description", output);
+
+	return output;
+}
+
+function convertLeafNodeSchema(schema: SimpleLeafNodeSchema): JsonLeafNodeSchema {
+	let type: JsonLeafSchemaType;
+	switch (schema.leafKind) {
+		case ValueSchema.String: {
+			type = "string";
+			break;
+		}
+		case ValueSchema.Number: {
+			type = "number";
+			break;
+		}
+		case ValueSchema.Boolean: {
+			type = "boolean";
+			break;
+		}
+		case ValueSchema.Null: {
+			type = "null";
+			break;
+		}
+		case ValueSchema.FluidHandle: {
+			throw new UsageError("Fluid handles are not supported via JSON Schema.");
+		}
+		default: {
+			unreachableCase(schema.leafKind);
+		}
+	}
+
+	return {
+		type,
+		_treeNodeSchemaKind: NodeKind.Leaf,
+	};
+}
+
+export function convertObjectNodeSchema(
+	schema: ObjectNodeSchema,
+	options: Required<TreeSchemaEncodingOptions>,
+): JsonObjectNodeSchema {
+	const properties: Record<string, JsonFieldSchema> = {};
+	const required: string[] = [];
+	for (const [propertyKey, fieldSchema] of schema.fields) {
+		const key =
+			options.keys === KeyEncodingOptions.usePropertyKeys
+				? propertyKey
+				: fieldSchema.storedKey;
+		const allowedTypes: JsonSchemaRef[] = [];
+		for (const allowedType of fieldSchema.allowedTypesIdentifiers) {
+			allowedTypes.push(createSchemaRef(allowedType));
+		}
+
+		const output: Mutable<JsonFieldSchema> = hasSingle(allowedTypes)
+			? allowedTypes[0]
+			: {
+					anyOf: allowedTypes,
+				};
+
+		copyProperty(fieldSchema.metadata, "description", output);
+		properties[key] = output;
+
+		if (
+			fieldSchema.kind !== FieldKind.Optional &&
+			(options.requireFieldsWithDefaults || fieldSchema.props?.defaultProvider === undefined)
+		) {
+			required.push(key);
+		}
+	}
+
+	const transformedNode: Mutable<JsonObjectNodeSchema> = {
+		type: "object",
+		_treeNodeSchemaKind: NodeKind.Object,
+		properties,
+		required,
+		// TODO: support unknown optional fields (only when using "allStoredKeys", and constrain the content to be in schema somehow)
+		additionalProperties: false,
+	};
+
+	copyProperty(schema.metadata, "description", transformedNode);
+
+	return transformedNode;
+}
+
+function convertRecordLikeNodeSchema(
+	schema: SimpleRecordNodeSchema | SimpleMapNodeSchema,
+): JsonMapNodeSchema | JsonRecordNodeSchema {
+	const allowedTypes: JsonSchemaRef[] = [];
+	const allowedTypesIdentifiers: ReadonlySet<string> = new Set(
+		schema.simpleAllowedTypes.keys(),
+	);
+	for (const type of allowedTypesIdentifiers) {
+		allowedTypes.push(createSchemaRef(type));
+	}
+
+	const output = {
+		type: "object",
+		_treeNodeSchemaKind: schema.kind,
+		patternProperties: {
+			"^.*$": hasSingle(allowedTypes)
+				? allowedTypes[0]
+				: {
+						anyOf: allowedTypes,
+					},
+		},
+	} as const;
+
+	copyProperty(schema.metadata, "description", output);
+
+	return output;
+}
+
+function createSchemaRef(schemaId: string): JsonSchemaRef {
+	return {
+		"$ref": createRefPath(schemaId),
+	};
+}
+
+function createRefPath(schemaId: string): JsonRefPath {
+	return `#/$defs/${schemaId}`;
+}

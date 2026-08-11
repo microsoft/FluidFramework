@@ -1,0 +1,96 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import {
+	type ITreeCursorSynchronous,
+	forEachField,
+	forEachNode,
+} from "../../../core/index.js";
+import { brand } from "../../../util/index.js";
+import type { FluidSerializableReadOnly } from "../../valueUtilities.js";
+
+import type { FieldBatch } from "./fieldBatch.js";
+import type {
+	EncodedFieldBatchV1,
+	EncodedFieldBatchV1AndV2,
+	EncodedFieldBatchV2,
+	EncodedNestedArrayShape,
+	EncodedNodeShape,
+	ShapeIndex,
+} from "./format/index.js";
+import { FieldBatchFormatVersion } from "./format/index.js";
+
+/**
+ * Encode data from `cursor` in the simplest way supported by `EncodedChunk` using {@link FieldBatchFormatVersion.v1}.
+ * @remarks See {@link uncompressedEncode} for more details.
+ */
+export function uncompressedEncodeV1(batch: FieldBatch): EncodedFieldBatchV1 {
+	return uncompressedEncode(batch, brand(FieldBatchFormatVersion.v1));
+}
+
+/**
+ * Encode data from `cursor` in the simplest way supported by `EncodedChunk` using {@link FieldBatchFormatVersion.v2}.
+ * @remarks See {@link uncompressedEncode} for more details.
+ */
+export function uncompressedEncodeV2(batch: FieldBatch): EncodedFieldBatchV2 {
+	return uncompressedEncode(batch, brand(FieldBatchFormatVersion.v2));
+}
+
+/**
+ * Encode data from `cursor` in the simplest way supported by `EncodedChunk`.
+ *
+ * No polymorphism, identifier deduplication or schema based compression.
+ * Just uses two hard coded shapes and inline identifiers.
+ *
+ * This is intended as a simple reference implementation with minimal code and dependencies.
+ */
+function uncompressedEncode(
+	batch: FieldBatch,
+	version: FieldBatchFormatVersion,
+): EncodedFieldBatchV1AndV2 {
+	const rootFields = batch.map(encodeSequence);
+	return {
+		version,
+		identifiers: [],
+		// A single shape used to encode all fields.
+		shapes: [{ c: anyNodeShape }, { a: anyArray }],
+		// Wrap up each field as an indicator to use the above shape, and its encoded data.
+		data: rootFields.map((data) => [arrayIndex, data]),
+	};
+}
+
+const treeIndex: ShapeIndex = 0;
+const arrayIndex: ShapeIndex = 1;
+
+const anyNodeShape: EncodedNodeShape = {
+	extraFields: arrayIndex,
+};
+
+const anyArray: EncodedNestedArrayShape = treeIndex;
+
+/**
+ * Encode a field using the hard coded shape above.
+ * @remarks
+ * Since this shape contains no information about the actual schema, all schema/shape information is inline in the data:
+ * that is why this encoding is called "uncompressed".
+ */
+function encodeSequence(cursor: ITreeCursorSynchronous): FluidSerializableReadOnly[] {
+	const data: FluidSerializableReadOnly[] = [];
+	forEachNode(cursor, () => {
+		data.push(cursor.type);
+		const value = cursor.value;
+		data.push(value !== undefined);
+		if (value !== undefined) {
+			data.push(value);
+		}
+		const local: FluidSerializableReadOnly[] = [];
+		forEachField(cursor, () => {
+			const key = cursor.getFieldKey();
+			local.push(key, encodeSequence(cursor));
+		});
+		data.push(local);
+	});
+	return data;
+}

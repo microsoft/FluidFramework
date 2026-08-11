@@ -1,0 +1,150 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import * as fs from "fs";
+
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import {
+	type TelemetryLoggerExt,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
+
+import { CSVFileLogger } from "./csvFileLogger.js";
+import {
+	type IFileLogger,
+	type IFileLoggerTelemetryOptions,
+	OutputFormat,
+} from "./fileLogger.js";
+import { JSONFileLogger } from "./jsonFileLogger.js";
+
+/**
+ * Create a telemetry logger wrapped around an {@link IFileLogger} that writes to the given file path.
+ *
+ * @remarks
+ * All telemetry events should be sent through the returned `logger`. The returned `fileLogger` is the
+ * underlying sink — its `close()` method must be called at the end of execution to flush any buffered
+ * events to disk.
+ *
+ * If `options.outputFormat` is not supplied, telemetry is written as JSON. Use {@link OutputFormat.CSV}
+ * to write CSV instead. See {@link IFileLoggerTelemetryOptions} for supported options including default
+ * properties applied to every event and flush batching.
+ *
+ * @param filePath - Path to the file telemetry will be written to. If the file already exists its
+ * contents will be overwritten or corrupted — callers should verify the path is unused before calling.
+ * @param options - Optional telemetry configuration. See {@link IFileLoggerTelemetryOptions}.
+ * @returns The wrapped telemetry logger to send events through, and the underlying `IFileLogger`
+ * which must be closed when telemetry collection is finished.
+ *
+ * @legacy
+ * @beta
+ */
+export function createFluidRunnerLogger(
+	filePath: string,
+	options?: IFileLoggerTelemetryOptions,
+): { logger: ITelemetryBaseLogger; fileLogger: IFileLogger } {
+	return createLogger(filePath, options);
+}
+
+/**
+ * Create an {@link @fluidframework/telemetry-utils#TelemetryLoggerExt} wrapped around provided {@link IFileLogger}.
+ *
+ * @remarks
+ *
+ * It is expected that all events be sent through the returned "logger" value.
+ *
+ * The "fileLogger" value should have its "close()" method called at the end of execution.
+ *
+ * Note: if an output format is not supplied, default is JSON.
+ *
+ * @returns Both the `IFileLogger` implementation and `TelemetryLoggerExt` wrapper to be called.
+ *
+ * @deprecated Use {@link createFluidRunnerLogger}.
+ * @internal
+ */
+export function createLogger(
+	filePath: string,
+	options?: IFileLoggerTelemetryOptions,
+): { logger: TelemetryLoggerExt; fileLogger: IFileLogger } {
+	const fileLogger =
+		options?.outputFormat === OutputFormat.CSV
+			? new CSVFileLogger(filePath, options?.eventsPerFlush, options?.defaultProps)
+			: new JSONFileLogger(filePath, options?.eventsPerFlush, options?.defaultProps);
+
+	const logger = createChildLogger({
+		logger: fileLogger,
+		namespace: "LocalSnapshotRunnerApp",
+		properties: {
+			all: { Event_Time: () => Date.now() },
+		},
+	});
+
+	return { logger, fileLogger };
+}
+
+/**
+ * Validate the telemetryFile command line argument
+ * @param telemetryFile - path where telemetry will be written
+ * @internal
+ */
+export function getTelemetryFileValidationError(telemetryFile: string): string | undefined {
+	if (!telemetryFile) {
+		return "Telemetry file argument is missing.";
+	} else if (fs.existsSync(telemetryFile)) {
+		return `Telemetry file already exists [${telemetryFile}].`;
+	}
+
+	return undefined;
+}
+
+/**
+ * Validate the provided output format and default properties
+ * @param format - desired output format of the telemetry
+ * @param props - default properties to be added to every telemetry entry
+ * @internal
+ */
+export function validateAndParseTelemetryOptions(
+	format?: string,
+	props?: (string | number)[],
+	eventsPerFlush?: number,
+):
+	| { success: false; error: string }
+	| { success: true; telemetryOptions: IFileLoggerTelemetryOptions } {
+	let outputFormat: OutputFormat | undefined;
+	const defaultProps: Record<string, string | number> = {};
+
+	if (format) {
+		outputFormat = OutputFormat[format];
+		if (outputFormat === undefined) {
+			return { success: false, error: `Invalid telemetry format [${format}]` };
+		}
+	}
+
+	if (props && props.length > 0) {
+		if (props.length % 2 !== 0) {
+			return {
+				success: false,
+				error: `Invalid number of telemetry properties to add [${props.length}]`,
+			};
+		}
+		for (let i = 0; i < props.length; i += 2) {
+			if (typeof props[i] === "number") {
+				return {
+					success: false,
+					error: `Property name cannot be number at index [${i}] -> [${props[i]}]`,
+				};
+			}
+			defaultProps[props[i]] = props[i + 1];
+		}
+	}
+
+	if (eventsPerFlush !== undefined && isNaN(eventsPerFlush)) {
+		return {
+			success: false,
+			error: "Invalid eventsPerFlush",
+		};
+	}
+
+	return { success: true, telemetryOptions: { outputFormat, defaultProps, eventsPerFlush } };
+}

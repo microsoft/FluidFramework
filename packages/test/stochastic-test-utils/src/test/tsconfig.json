@@ -1,0 +1,17 @@
+{
+	"extends": "../../../../../common/build/build-common/tsconfig.test.node16.json",
+	"compilerOptions": {
+		"rootDir": "./",
+		"outDir": "../../lib/test",
+		"types": ["mocha", "node"],
+		// test types are used in downstream projects, so we need to generate them
+		"declaration": true,
+		"noUncheckedIndexedAccess": false,
+	},
+	"include": ["./**/*"],
+	"references": [
+		{
+			"path": "../..",
+		},
+	],
+}

@@ -1,0 +1,232 @@
+# @fluidframework/driver-web-cache
+
+This package provides an implementation of the `IPersistedCache` interface in the odsp-driver package. This cache enables
+storing of user content on the user's machine in order to provide faster boot experiences when opening the same Fluid
+containers more than once. This implementation has a dependency on indexeddb, so it is intended to only be used in a browser
+context.
+
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+## Using Fluid Framework libraries
+
+When taking a dependency on a Fluid Framework library's public APIs, we recommend using a `^` (caret) version range, such as `^1.3.4`.
+While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
+library consumers should always prefer `^`.
+
+If using any of Fluid Framework's unstable APIs (for example, its `beta` APIs), we recommend using a more constrained version range, such as `~`.
+
+## Installation
+
+To get started, install the package by running the following command:
+
+```bash
+npm i @fluidframework/driver-web-cache
+```
+
+## Importing from this package
+
+This package leverages [package.json exports](https://nodejs.org/api/packages.html#exports) to separate its APIs by support level.
+For more information on the related support guarantees, see [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
+
+To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidframework/driver-web-cache` like normal.
+
+To access the `legacy` APIs, import via `@fluidframework/driver-web-cache/legacy`.
+
+## API Documentation
+
+API documentation for **@fluidframework/driver-web-cache** is available at <https://fluidframework.com/docs/apis/driver-web-cache>.
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
+## Usage
+
+```typescript
+import { FluidCache } from "@fluidframework/driver-web-cache";
+
+new FluidCache({
+	partitionKey: userId,
+	logger,
+	maxCacheItemAge,
+});
+```
+
+### Parameters
+
+-   `partitionKey` - Used to determine what partition of the cache is being used, and can prevent multiple users on the
+    same machine from sharing a snapshot cache. If you absolutely know that users will not share the cache,
+    can also be set to `null`. Currently optional, but is proposed to be required in the next major bump.
+    The recommendation is to use this key to differentiate users for the cache data.
+-   `logger` - An optional implementation of the logger contract where diagnostic data can be logged.
+-   `maxCacheItemAge` - The cache tracks a timestamp with each entry. This flag specifies the maximum age (in milliseconds)
+    for a cache entry to be used. This flag does not control when cached content is deleted since different scenarios and
+    applications may have different staleness thresholds for the same data.
+
+## Atomic updates (`update`)
+
+`FluidCache` exposes an `update` method that performs an atomic read-modify-write. The currently-cached
+value is read and the updater callback decides whether — and what — to write, inside a single IndexedDB
+`readwrite` transaction. This gives consistent update semantics across consumers sharing the same
+underlying IndexedDB instance (e.g. multiple browser tabs racing to persist offline pending state).
+
+```typescript
+// Conditional overwrite (active tab wins): only write if our revision is higher.
+const wrote = await fluidCache.update(entry, (existing, set) => {
+	const existingRev = (existing as { rev?: number } | undefined)?.rev ?? -1;
+	if (mine.rev > existingRev) {
+		set(mine);
+	}
+});
+
+// Read-modify-write: increment a counter atomically.
+await fluidCache.update(entry, (existing, set) => {
+	const prev = (existing as { count: number } | undefined)?.count ?? 0;
+	set({ count: prev + 1 });
+});
+```
+
+The `updater` callback is invoked with `(existing, set)`. `existing` is `undefined` when the cached
+row would be invisible to `get` — that is, no entry exists for the key, the existing entry belongs to
+a different partition, or the existing entry is older than `maxCacheItemAge`. To commit a write, call
+`set(value)`; to leave the cache untouched, return without calling `set`.
+
+Calling `set(undefined)` removes the row at the key (equivalent to `removeEntry` inside the same
+atomic transaction). `get` already collapses "no entry" and "entry stored as undefined" into the same
+observable result, so the delete-on-undefined semantics gives callers an atomic conditional-delete
+without ambiguity for any meaningful use case.
+
+The updater itself must be synchronous and `set` must be called from within it. IndexedDB
+transactions auto-close on any non-IDB await, which would silently break the atomicity that makes
+the update correct. Two guards make misuse loud rather than silent: calling `set` after the updater
+has returned throws a `UsageError` at the call site (so deferred-`set` patterns like invoking it
+from a `setTimeout` fail noisily); returning a thenable — for example, declaring the updater
+`async` — is detected after the updater returns, aborts the transaction, and is logged under
+`FluidCacheUpdateCallbackError`. If the updater calls `set` more than once, the last value wins.
+If the updater throws — including after calling `set` — the transaction is aborted and the existing
+row is preserved.
+
+When `set` is called, the write (or delete) atomically replaces whatever row exists at the key,
+including cross-partition or stale rows the updater saw as `undefined` (matching the unconditional
+overwrite behavior of `put`). Callers that must preserve cross-partition rows should not use
+`update`.
+
+`update` returns `true` if `set` was called and the write (or delete) committed, and `false` if the
+updater returned without calling `set`, threw, or an IDB error occurred.
+
+**Compare-and-set callers:** the `false` return collapses three distinct outcomes — the updater
+returned without calling `set` (a lost race), the updater threw (including the async-updater misuse
+case), and the IDB write itself failed. Callers that need to distinguish these must consult
+telemetry: updater-side failures log under `FluidCacheUpdateCallbackError`; IDB-write failures log
+under `FluidCachePutError`. A lost compare-and-set race is not logged.
+
+## Clearing cache entries
+
+Whenever any Fluid content is loaded with the web cache enabled, a task is scheduled to clear out all "stale" cache
+entries. This task is scheduled with the `setIdleCallback` browser API. We define stale cache entries as any cache
+entries that have not been used (read or written to) within the last 4 weeks. The cache is cleared of all stale cache
+entries corresponding to all documents, not just the ones corresponding to the Fluid document being loaded.
+
+The `deleteFluidCacheIndexDbInstance` API that an application can use to clear out the entire contents of the snapshot
+cache at any time. We recommend calling this API when the user explicitly signs out. Hosting applications
+are on point for ensuring responsible usage of the snapshot caching capability to still meet any relevant
+customer promises, such as clearing out storage when appropriate or disabling snapshot caching under certain circumstances,
+such as when it is known the user is logged in to a public computer.
+
+```typescript
+import { deleteFluidCacheIndexDbInstance } from "@fluidframework/driver-web-cache";
+
+// We put a catch here because Firefox Incognito will throw an error here. This is why we claim this method is a "best effort", since sometimes the browser won't let us access storage
+deleteFluidCacheIndexDbInstance().catch(() => {});
+```
+
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+## Minimum Client Requirements
+
+These are the platform requirements for the current version of Fluid Framework Client Packages.
+These requirements err on the side of being too strict since within a major version they can be relaxed over time, but not made stricter.
+For Long Term Support (LTS) versions this can require supporting these platforms for several years.
+
+It is likely that other configurations will work, but they are not supported: if they stop working, we do not consider that a bug.
+If you would benefit from support for something not listed here, file an issue and the product team will evaluate your request.
+When making such a request please include if the configuration already works (and thus the request is just that it becomes officially supported), or if changes are required to get it working.
+
+### Supported Runtimes
+
+-   NodeJs ^22.22.2 except that we will drop support for it [when NodeJs 22 loses its upstream support on 2027-04-30](https://github.com/nodejs/release#release-schedule), and will support a newer LTS version of NodeJS at least 1 year before 22 is end-of-life.
+    -   Running Fluid in a Node.js environment with the `--no-experimental-fetch` flag is not supported.
+-   Modern browsers supporting the es2022 standard library: in response to asks we can add explicit support for using babel to polyfill to target specific standards or runtimes (meaning we can avoid/remove use of things that don't polyfill robustly, but otherwise target modern standards).
+
+### Supported Tools
+
+-   TypeScript 5.4:
+    -   All [`strict`](https://www.typescriptlang.org/tsconfig) options are supported.
+    -   [`strictNullChecks`](https://www.typescriptlang.org/tsconfig) is required.
+    -   [Configuration options deprecated in 5.0](https://github.com/microsoft/TypeScript/issues/51909) are not supported.
+    -   `exactOptionalPropertyTypes` is currently not fully supported.
+        If used, narrowing members of Fluid Framework types types using `in`, `Reflect.has`, `Object.hasOwn` or `Object.prototype.hasOwnProperty` should be avoided as they may incorrectly exclude `undefined` from the possible values in some cases.
+-   [webpack](https://webpack.js.org/) 5
+    -   We are not intending to be prescriptive about what bundler to use.
+        Other bundlers which can handle ES Modules should work, but webpack is the only one we actively test.
+
+### Module Resolution
+
+[`Node16`, `NodeNext`, or `Bundler`](https://www.typescriptlang.org/tsconfig#moduleResolution) resolution should be used with TypeScript compilerOptions to follow the [Node.js v12+ ESM Resolution and Loading algorithm](https://nodejs.github.io/nodejs.dev/en/api/v20/esm/#resolution-and-loading-algorithm).
+Node10 resolution is not supported as it does not support Fluid Framework's API structuring pattern that is used to distinguish stable APIs from those that are in development.
+
+### Module Formats
+
+-   ES Modules:
+    ES Modules are the preferred way to consume our client packages (including in NodeJs) and consuming our client packages from ES Modules is fully supported.
+-   CommonJs:
+    Consuming our client packages as CommonJs is supported only in NodeJS and only for the cases listed below.
+    This is done to accommodate some workflows without good ES Module support.
+    If you have a workflow you would like included in this list, file an issue.
+    Once this list of workflows motivating CommonJS support is empty, we may drop support for CommonJS one year after notice of the change is posted here.
+
+    -   Testing with Jest (which lacks [stable ESM support](https://jestjs.io/docs/ecmascript-modules) due to [unstable APIs in NodeJs](https://github.com/nodejs/node/issues/37648))
+
+## Contribution Guidelines
+
+There are many ways to [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid.
+
+-   Participate in Q&A in our [GitHub Discussions](https://github.com/microsoft/FluidFramework/discussions).
+-   [Submit bugs](https://github.com/microsoft/FluidFramework/issues) and help us verify fixes as they are checked in.
+-   Review the [source code changes](https://github.com/microsoft/FluidFramework/pulls).
+-   [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
+
+Detailed instructions for working in the repo can be found in the [Wiki](https://github.com/microsoft/FluidFramework/wiki).
+
+This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
+For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
+Use of these trademarks or logos must follow Microsoft’s [Trademark & Brand Guidelines](https://www.microsoft.com/trademarks).
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
+
+## Help
+
+Not finding what you're looking for in this README? Check out [fluidframework.com](https://fluidframework.com/docs/).
+
+Still not finding what you're looking for? Please [file an issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
+
+Thank you!
+
+## Trademark
+
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
+
+Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->

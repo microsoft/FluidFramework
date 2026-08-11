@@ -1,0 +1,57 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+export {
+	type ArrayNodeCustomizableSchema,
+	type ArrayNodeCustomizableSchemaAlpha,
+	type ArrayNodePojoEmulationSchema,
+	ArrayNodeSchema,
+	arraySchema,
+	asIndex,
+	isArrayNodeSchema,
+	IterableTreeArrayContent,
+	TreeArrayNode,
+	type TreeArrayNodeAlpha,
+	type ReadonlyArrayNode,
+	type ArrayPlaceAnchor,
+	createArrayInsertionAnchor,
+} from "./array/index.js";
+
+export {
+	isMapNodeSchema,
+	type MapNodeCustomizableSchema,
+	type MapNodeInsertableData,
+	type MapNodePojoEmulationSchema,
+	MapNodeSchema,
+	mapSchema,
+	type TreeMapNode,
+	type TreeMapNodeAlpha,
+} from "./map/index.js";
+
+export {
+	type FieldHasDefault,
+	type FieldHasDefaultAlpha,
+	type InsertableObjectFromSchemaRecord,
+	type InsertableObjectFromSchemaRecordAlpha,
+	isObjectNodeSchema,
+	type ObjectFromSchemaRecord,
+	ObjectNodeSchema,
+	type ObjectNodeSchemaWorkaround,
+	type ObjectNodeSchemaPrivate,
+	objectSchema,
+	setField,
+	type TreeObjectNode,
+	type SimpleKeyMap,
+} from "./object/index.js";
+
+export {
+	isRecordNodeSchema,
+	type RecordNodeCustomizableSchema,
+	type RecordNodeInsertableData,
+	type RecordNodePojoEmulationSchema,
+	RecordNodeSchema,
+	recordSchema,
+	type TreeRecordNode,
+} from "./record/index.js";

@@ -1,0 +1,31 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+parameters:
+- name: buildDirectory
+  type: string
+- name: requireNotice
+  type: boolean
+
+steps:
+# Note: even though we get component governance tasks auto-injected through the 1ES pipeline template, this one is
+# currently necessary because the NOTICE file generation task right below requires that CG has run first.
+# We're trying to see if we could leverage the auto-injected ones for that.
+- task: ComponentGovernanceComponentDetection@0
+  displayName: Component Detection
+  inputs:
+    sourceScanPath: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
+    verbosity: Verbose
+    scanType: Register
+    alertWarningLevel: High
+
+- task: msospo.ospo-extension.8d7f9abb-6896-461d-9e25-4f74ed65ddb2.notice@0
+  displayName: 'NOTICE File Generator'
+  continueOnError: ${{ parameters.requireNotice }}
+
+- task: DownloadPipelineArtifact@2
+  displayName: 'Download NOTICE'
+  continueOnError: ${{ parameters.requireNotice }}
+  inputs:
+    artifact: NOTICE.txt
+    path: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}

@@ -1,0 +1,11 @@
+{
+	"_comment": "In order for us to test this directory like a normal TypeScript project, eslint needs this tsconfig.json file.",
+	"compilerOptions": {
+		"target": "ESNext",
+		"module": "NodeNext",
+		"strict": true,
+		"allowImportingTsExtensions": true,
+		"noEmit": true,
+	},
+	"include": ["./**/*"],
+}

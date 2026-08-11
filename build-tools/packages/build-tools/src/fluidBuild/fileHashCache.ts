@@ -1,0 +1,36 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { readFile } from "fs/promises";
+import { sha256 } from "./hash.js";
+
+type hashFn = (buffer: Buffer) => string;
+export class FileHashCache {
+	private fileHashCaches = new Map<hashFn, Map<string, Promise<string>>>();
+
+	private getFileHashCache(hash: hashFn): Map<string, Promise<string>> {
+		let fileHashCache = this.fileHashCaches.get(hash);
+		if (fileHashCache === undefined) {
+			fileHashCache = new Map<string, Promise<string>>();
+			this.fileHashCaches.set(hash, fileHashCache);
+		}
+		return fileHashCache;
+	}
+	public async getFileHash(path: string, hash: hashFn = sha256): Promise<string> {
+		const fileHashCache = this.getFileHashCache(hash);
+		const cachedHashP = fileHashCache.get(path);
+		if (cachedHashP) {
+			return cachedHashP;
+		}
+
+		const newHashP = readFile(path).then(hash);
+		fileHashCache.set(path, newHashP);
+		return newHashP;
+	}
+
+	public clear(): void {
+		this.fileHashCaches.clear();
+	}
+}

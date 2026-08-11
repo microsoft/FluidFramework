@@ -1,0 +1,13 @@
+{
+	"extends": "../../../common/build/build-common/tsconfig.node16.json",
+	"include": ["src/**/*"],
+	"exclude": ["src/test/**/*"],
+	"compilerOptions": {
+		"rootDir": "./src",
+		"outDir": "./lib",
+		"exactOptionalPropertyTypes": false,
+		"noUnusedLocals": false,
+		// ES2021 needed for FinalizationRegistry
+		"lib": ["ES2021", "DOM", "DOM.Iterable"],
+	},
+}

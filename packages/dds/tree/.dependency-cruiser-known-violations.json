@@ -1,0 +1,15 @@
+[
+  {
+    "type": "cycle",
+    "from": "src/feature-libraries/flex-tree/lazyField.ts",
+    "to": "src/feature-libraries/flex-tree/lazyNode.ts",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "src/feature-libraries/flex-tree/lazyNode.ts",
+      "src/feature-libraries/flex-tree/lazyField.ts"
+    ]
+  }
+]

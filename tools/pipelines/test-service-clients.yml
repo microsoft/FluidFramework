@@ -1,0 +1,102 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# test-service-clients pipeline
+# pipeline: https://dev.azure.com/fluidframework/internal/_build?definitionId=80
+
+name: $(Build.BuildId)
+
+trigger: none
+pr: none
+
+resources:
+  pipelines:
+  - pipeline: client   # Name of the pipeline resource
+    source: Build - client packages
+    branch: main # Default branch for manual/scheduled triggers if none is selected
+    trigger:
+      branches:
+      - release/*
+      - main
+      - next
+      - lts
+  repositories:
+    - repository: ff_pipeline_host
+      type: git
+      name: ff_pipeline_host
+
+variables:
+- template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
+- group: prague-key-vault
+- name: testPackageDirectory
+  value: packages/service-clients/end-to-end-tests/azure-client
+  readonly: true
+- name: testOdspPackageDirectory
+  value: packages/service-clients/end-to-end-tests/odsp-client
+  readonly: true
+- name: pipelineIdentifierForTelemetry
+  value: 'ServiceClientsEndToEndTests'
+  readonly: true
+# This is a test pipeline, not a build one, so we don't need to run CodeQL tasks
+# Note that using this variable only works for non-1ES-template pipelines.
+- name: Codeql.SkipTaskAutoInjection
+  value: true
+
+stages:
+  # Run Azure Client AFR Tests
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
+    parameters:
+      stageId: e2e_azure_client_frs
+      stageDisplayName: e2e - azure-client with AFR
+      poolBuild: Large-eastus2
+      testPackageDirectory: ${{ variables.testPackageDirectory }}
+      testCommand: test:realsvc:azure
+      artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
+      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
+      env:
+        FLUID_TEST_SCALE: true # run longer duration tests
+        FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains createTestLogger impl to inject
+        FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
+        azure__fluid__relay__service__tenantId: $(azure-fluid-relay-service-tenantId)
+        azure__fluid__relay__service__endpoint: $(azure-fluid-relay-service-endpoint)
+        azure__fluid__relay__service__key: $(azure-fluid-relay-service-key)
+
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
+    parameters:
+      stageId: e2e_azure_client_local_server
+      stageDisplayName: e2e - azure-client with Azure local service
+      poolBuild: Large-eastus2
+      testPackageDirectory: ${{ variables.testPackageDirectory }}
+      testCommand: test:realsvc:tinylicious
+      artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
+      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
+      env:
+        FLUID_TEST_SCALE: true # run longer duration tests
+        FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains createTestLogger impl to inject
+        FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
+        # Disable colorization for tinylicious logs (not useful when printing to a file)
+        logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
+        logger__morganFormat: tiny
+
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
+    parameters:
+      stageId: e2e_odsp_client_odsp_server
+      stageDisplayName: e2e - odsp-client with ODSP service
+      # TODO: Remove condition to re-enable ODSP client tests. ADO#58239
+      condition: false
+      poolBuild: Small-eastus2
+      testPackageDirectory: ${{ variables.testOdspPackageDirectory }}
+      testCommand: test:realsvc:odsp
+      artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
+      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
+      env:
+        FLUID_TEST_SCALE: true # run longer duration tests
+        FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains createTestLogger impl to inject
+        FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
+        odsp__client__clientId: $(odsp-client-clientId)
+        odsp__client__siteUrl: $(odsp-client-siteUrl)
+        odsp__client__driveId: $(odsp-client-driveId)
+        login__odspclient__spe__test__tenants: $(login-odspclient-spe-test-tenants)

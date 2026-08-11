@@ -1,0 +1,9 @@
+services:
+  gitrest:
+    volumes:
+      - .:/home/node/server
+      - /home/node/server/node_modules
+networks:
+  default:
+    external:
+      name: routerlicious_default

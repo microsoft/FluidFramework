@@ -1,0 +1,1706 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { strict as assert, fail } from "node:assert";
+
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
+
+import { CommitKind, type RevertibleAlpha, type TransactionLabels } from "../../core/index.js";
+import { MockNodeIdentifierManager, TreeStatus } from "../../feature-libraries/index.js";
+import {
+	ForestTypeExpensiveDebug,
+	ForestTypeReference,
+	Tree,
+	type TreeCheckout,
+} from "../../shared-tree/index.js";
+import {
+	SchematizingSimpleTreeView,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../shared-tree/schematizingTreeView.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { UnhydratedFlexTreeNode } from "../../simple-tree/core/unhydratedFlexTree.js";
+import {
+	SchemaFactory,
+	SchemaFactoryAlpha,
+	TreeViewConfiguration,
+	type ImplicitFieldSchema,
+	type InsertableField,
+	type InsertableTypedNode,
+	type UnsafeUnknownSchema,
+	type TransactionVoidResult,
+	type TransactionValueResult,
+	getKernel,
+	toInitialSchema,
+	toUpgradeSchema,
+	SchemaFactoryBeta,
+} from "../../simple-tree/index.js";
+import type { Mutable } from "../../util/index.js";
+import { brand } from "../../util/index.js";
+import { fieldJsonCursor } from "../json/index.js";
+import { insert, makeTreeFromJsonSequence } from "../sequenceRootUtils.js";
+import { testDocumentIndependentView } from "../testTrees.js";
+import {
+	checkoutWithContent,
+	createTestUndoRedoStacks,
+	fieldCursorFromInsertable,
+	getView,
+	TestTreeProviderLite,
+	validateViewConsistency,
+	type TreeStoredContentStrict,
+} from "../utils.js";
+
+const schema = new SchemaFactoryAlpha("com.example");
+const config = new TreeViewConfiguration({ schema: schema.number });
+const configGeneralized = new TreeViewConfiguration({
+	schema: [schema.number, schema.string],
+});
+const configGeneralized2 = new TreeViewConfiguration({
+	schema: [schema.number, schema.boolean],
+});
+
+function checkoutWithInitialTree(
+	viewConfig: TreeViewConfiguration,
+	unhydratedInitialTree: InsertableField<UnsafeUnknownSchema>,
+): TreeCheckout {
+	const initialTree = fieldCursorFromInsertable<UnsafeUnknownSchema>(
+		viewConfig.schema,
+		unhydratedInitialTree,
+	);
+	const treeContent: TreeStoredContentStrict = {
+		schema: toInitialSchema(viewConfig.schema),
+		initialTree,
+	};
+	return checkoutWithContent(treeContent);
+}
+
+// Schema for tree that must always be empty.
+const emptySchema = toInitialSchema(schema.optional([]));
+
+describe("SchematizingSimpleTreeView", () => {
+	describe("initialize", () => {
+		it("Initialize document", () => {
+			const emptyContent = {
+				schema: emptySchema,
+				initialTree: undefined,
+			};
+			const checkout = checkoutWithContent(emptyContent);
+			const view = new SchematizingSimpleTreeView(
+				checkout,
+				config,
+				new MockNodeIdentifierManager(),
+			);
+
+			assert.equal(view.compatibility.canView, false);
+			assert.equal(view.compatibility.canUpgrade, false);
+			assert.equal(view.compatibility.canInitialize, true);
+
+			view.initialize(5);
+			assert.equal(view.root, 5);
+
+			assert.throws(
+				() => view.initialize(5),
+				validateUsageError(/initialized more than once/),
+			);
+		});
+		{
+			const emptyContent = {
+				schema: emptySchema,
+				initialTree: undefined,
+			};
+			class SimpleTestObject extends schema.object("TestObject", {
+				content: schema.number,
+			}) {}
+			const configNode = new TreeViewConfiguration({ schema: SimpleTestObject });
+			it("Initialize node", () => {
+				const checkout = checkoutWithContent(emptyContent);
+				const view = new SchematizingSimpleTreeView(
+					checkout,
+					configNode,
+					new MockNodeIdentifierManager(),
+				);
+
+				assert.equal(view.compatibility.canView, false);
+				assert.equal(view.compatibility.canUpgrade, false);
+				assert.equal(view.compatibility.canInitialize, true);
+
+				view.initialize({ content: 5 });
+				assert.equal(view.root.content, 5);
+			});
+			it("Initialize node with hydration", () => {
+				const checkout = checkoutWithContent(emptyContent);
+				const view = new SchematizingSimpleTreeView(
+					checkout,
+					configNode,
+					new MockNodeIdentifierManager(),
+				);
+
+				assert.equal(view.compatibility.canView, false);
+				assert.equal(view.compatibility.canUpgrade, false);
+				assert.equal(view.compatibility.canInitialize, true);
+
+				const node = new SimpleTestObject({ content: 5 });
+				assert.equal(Tree.status(node), TreeStatus.New);
+				view.initialize(node);
+				assert.equal(view.root, node);
+				assert.equal(Tree.status(node), TreeStatus.InDocument);
+			});
+		}
+
+		for (const additionalAsserts of [true, false]) {
+			for (const enableSchemaValidation of [true, false]) {
+				it(`Initialize invalid content: enableSchemaValidation: ${enableSchemaValidation}, additionalAsserts: ${additionalAsserts}`, () => {
+					class Root extends schema.object("Root", {
+						content: schema.number,
+					}) {}
+
+					const config2 = new TreeViewConfiguration({
+						schema: Root,
+						enableSchemaValidation,
+					});
+
+					const view = getView(config2, {
+						forest: additionalAsserts ? ForestTypeExpensiveDebug : ForestTypeReference,
+					});
+
+					const root = new Root({ content: 5 });
+
+					const inner = getKernel(root).getInnerNode();
+					const field = inner.getBoxed(brand("content"));
+					const child = field.boxedAt(0) ?? assert.fail("Expected child");
+					assert(child instanceof UnhydratedFlexTreeNode);
+
+					// Modify the tree so that it is out of schema.
+					// The public API is supposed to prevent out of schema trees (other than staged allowed types),
+					// so this hack using internal APIs is needed a workaround to test the additional schema validation layer.
+					// In production cases this extra validation exists to help prevent corruption when bugs
+					// allow invalid data through the public API.
+					(child.data as Mutable<typeof child.data>).value = "invalid value";
+
+					// Attempt to initialize with invalid content.
+					// Currently src/simple-tree/prepareForInsertion.ts has `validateSchema` unconditionally enabled, so this is detected regardless of the value of `enableSchemaValidation`.
+					assert.throws(
+						() => view.initialize(root),
+						validateUsageError(/Tree does not conform to schema./),
+					);
+
+					assert.throws(() => view.root, validateUsageError(/invalid state by another error/));
+				});
+
+				it(`Initialize invalid content: staged allowed type with enableSchemaValidation: ${enableSchemaValidation}, additionalAsserts: ${additionalAsserts}`, () => {
+					class StagedSchema extends schema.arrayAlpha(
+						"TestArray",
+						SchemaFactoryAlpha.types([
+							SchemaFactoryAlpha.number,
+							SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+						]),
+					) {}
+
+					const emptyContent = {
+						schema: emptySchema,
+						initialTree: undefined,
+					};
+					const checkout = checkoutWithContent(emptyContent);
+					const view = new SchematizingSimpleTreeView(
+						checkout,
+						new TreeViewConfiguration({ schema: StagedSchema }),
+						new MockNodeIdentifierManager(),
+					);
+
+					const { compatibility } = view;
+					assert.equal(compatibility.canView, false);
+					assert.equal(compatibility.canUpgrade, false);
+					assert.equal(compatibility.canInitialize, true);
+
+					assert.throws(
+						() => view.initialize([5, "test"]),
+						validateUsageError(/Tree does not conform to schema./),
+					);
+				});
+			}
+		}
+	});
+
+	it("Broken state", () => {
+		const emptyContent = {
+			schema: emptySchema,
+			initialTree: undefined,
+		};
+		const checkout = checkoutWithContent(emptyContent);
+		const view = new SchematizingSimpleTreeView(
+			checkout,
+			config,
+			new MockNodeIdentifierManager(),
+		);
+
+		// Put into broken state by trying incompatible upgrade
+		assert.throws(() => view.upgradeSchema(), validateUsageError(/cannot be upgraded/));
+
+		assert.throws(
+			() => view.initialize(5),
+			validateUsageError(/invalid state by another error/),
+		);
+		assert.throws(
+			() => view.upgradeSchema(),
+			validateUsageError(/invalid state by another error/),
+		);
+		assert.throws(() => view.root, validateUsageError(/invalid state by another error/));
+	});
+
+	const getChangeData = <T extends ImplicitFieldSchema>(
+		view: SchematizingSimpleTreeView<T>,
+	) => {
+		return view.compatibility.canView
+			? view.root
+			: `SchemaCompatibilityStatus canView: ${view.compatibility.canView} canUpgrade: ${view.compatibility.canUpgrade}`;
+	};
+
+	it("Open and close existing document", () => {
+		const checkout = checkoutWithInitialTree(config, 5);
+		const view = new SchematizingSimpleTreeView(
+			checkout,
+			config,
+			new MockNodeIdentifierManager(),
+		);
+		assert.equal(view.compatibility.isEquivalent, true);
+		const root = view.root;
+		assert.equal(root, 5);
+		const log: [string, unknown][] = [];
+		const unsubscribe = view.events.on("schemaChanged", () =>
+			log.push(["schemaChanged", getChangeData(view)]),
+		);
+		const unsubscribe2 = view.events.on("rootChanged", () =>
+			log.push(["rootChanged", view.root]),
+		);
+
+		// Should be a no op since not in an error state;
+		view.upgradeSchema();
+
+		view.dispose();
+		assert.throws(
+			() => view.root,
+			(e) => e instanceof UsageError,
+		);
+
+		unsubscribe();
+		unsubscribe2();
+
+		assert.deepEqual(log, []);
+	});
+
+	it("Modify root", () => {
+		const checkout = checkoutWithInitialTree(config, 5);
+		const view = new SchematizingSimpleTreeView(
+			checkout,
+			config,
+			new MockNodeIdentifierManager(),
+		);
+		view.events.on("schemaChanged", () => log.push(["schemaChanged", getChangeData(view)]));
+		view.events.on("rootChanged", () => log.push(["rootChanged", getChangeData(view)]));
+		assert.equal(view.root, 5);
+		const log: [string, unknown][] = [];
+
+		view.root = 6;
+
+		assert.deepEqual(log, [["rootChanged", 6]]);
+	});
+
+	it("Modify root to undefined", () => {
+		const config2 = new TreeViewConfiguration({
+			schema: SchemaFactory.optional(schema.number),
+		});
+		const checkout = checkoutWithInitialTree(config2, 5);
+		const view = new SchematizingSimpleTreeView(
+			checkout,
+			config2,
+			new MockNodeIdentifierManager(),
+		);
+		view.events.on("schemaChanged", () => log.push(["schemaChanged", getChangeData(view)]));
+		view.events.on("rootChanged", () => log.push(["rootChanged", getChangeData(view)]));
+		assert.equal(view.root, 5);
+		const log: [string, unknown][] = [];
+
+		view.root = undefined;
+
+		assert.deepEqual(log, [["rootChanged", undefined]]);
+	});
+
+	it("Schema becomes un-upgradeable then exact match again", () => {
+		const checkout = checkoutWithInitialTree(config, 5);
+		const view = new SchematizingSimpleTreeView(
+			checkout,
+			config,
+			new MockNodeIdentifierManager(),
+		);
+		assert.equal(view.root, 5);
+		const log: [string, unknown][] = [];
+		view.events.on("schemaChanged", () => log.push(["schemaChanged", getChangeData(view)]));
+
+		// Modify schema to invalidate view
+		checkout.updateSchema(toUpgradeSchema([schema.number, schema.string]));
+
+		assert.deepEqual(log, [
+			["schemaChanged", "SchemaCompatibilityStatus canView: false canUpgrade: false"],
+		]);
+		log.length = 0;
+		assert.equal(view.compatibility.isEquivalent, false);
+		assert.equal(view.compatibility.canUpgrade, false);
+		assert.equal(view.compatibility.canView, false);
+
+		assert.throws(
+			() => view.upgradeSchema(),
+			(e) => e instanceof UsageError,
+		);
+		view.breaker.clearError();
+		// Modify schema to be compatible again
+		checkout.updateSchema(toUpgradeSchema([schema.number]), true);
+		assert.equal(view.compatibility.isEquivalent, true);
+		assert.equal(view.compatibility.canUpgrade, true);
+		assert.equal(view.compatibility.canView, true);
+
+		assert.deepEqual(log, [["schemaChanged", 5]]);
+		assert.equal(view.root, 5);
+		view.dispose();
+	});
+
+	it("Open document whose stored schema has additional optional fields", () => {
+		// This sort of scenario might be reasonably encountered when an "older" version of an application opens
+		// up a document that has been created and/or edited by a "newer" version of an application (which has
+		// expanded the schema to include more information).
+		const factory = new SchemaFactoryBeta(undefined);
+		class PersonGeneralized extends factory.object("Person", {
+			name: factory.string,
+			age: factory.number,
+			address: factory.optional(factory.string),
+		}) {}
+		class PersonSpecific extends factory.object(
+			"Person",
+			{
+				name: factory.string,
+				age: factory.number,
+			},
+			{ allowUnknownOptionalFields: true },
+		) {}
+
+		const personConfig = new TreeViewConfiguration({
+			schema: PersonSpecific,
+		});
+		const personConfigGeneralied = new TreeViewConfiguration({
+			schema: PersonGeneralized,
+		});
+		const checkout = checkoutWithInitialTree(
+			personConfigGeneralied,
+			new PersonGeneralized({ name: "Alice", age: 42, address: "123 Main St" }),
+		);
+		const viewSpecific = new SchematizingSimpleTreeView(
+			checkout,
+			personConfig,
+			new MockNodeIdentifierManager(),
+		);
+
+		assert.deepEqual(viewSpecific.compatibility, {
+			canView: true,
+			canUpgrade: false,
+			isEquivalent: false,
+			canInitialize: false,
+		});
+
+		assert.equal(Object.keys(viewSpecific.root).length, 2);
+		assert.equal(Object.entries(viewSpecific.root).length, 2);
+		assert.equal(viewSpecific.root.name, "Alice");
+		assert.equal(viewSpecific.root.age, 42);
+
+		viewSpecific.dispose();
+		const viewGeneralized = new SchematizingSimpleTreeView(
+			checkout,
+			personConfigGeneralied,
+			new MockNodeIdentifierManager(),
+		);
+		assert.deepEqual(viewGeneralized.compatibility, {
+			canView: true,
+			canUpgrade: true,
+			isEquivalent: true,
+			canInitialize: false,
+		});
+		assert.equal(Object.keys(viewGeneralized.root).length, 3);
+		assert.equal(Object.entries(viewGeneralized.root).length, 3);
+		assert.equal(viewGeneralized.root.name, "Alice");
+		assert.equal(viewGeneralized.root.age, 42);
+		assert.equal(viewGeneralized.root.address, "123 Main St");
+	});
+
+	it("Calling moveToEnd on a more specific schema preserves a node's optional fields that were unknown to that schema", () => {
+		const factorySpecific = new SchemaFactoryBeta(undefined);
+		const factoryGeneral = new SchemaFactoryBeta(undefined);
+		class PersonGeneralized extends factorySpecific.object("Person", {
+			name: factoryGeneral.string,
+			age: factoryGeneral.number,
+			address: factoryGeneral.optional(factoryGeneral.string),
+		}) {}
+		class PersonSpecific extends factorySpecific.object(
+			"Person",
+			{
+				name: factorySpecific.string,
+				age: factorySpecific.number,
+			},
+			{ allowUnknownOptionalFields: true },
+		) {}
+
+		const peopleConfig = new TreeViewConfiguration({
+			schema: factorySpecific.array(PersonSpecific),
+		});
+		const peopleGeneralizedConfig = new TreeViewConfiguration({
+			schema: factoryGeneral.array(PersonGeneralized),
+		});
+		const checkout = checkoutWithInitialTree(peopleGeneralizedConfig, [
+			new PersonGeneralized({ name: "Alice", age: 42, address: "123 Main St" }),
+			new PersonGeneralized({ name: "Bob", age: 24 }),
+		]);
+		const viewSpecific = new SchematizingSimpleTreeView(
+			checkout,
+			peopleConfig,
+			new MockNodeIdentifierManager(),
+		);
+
+		assert.deepEqual(viewSpecific.compatibility, {
+			canView: true,
+			canUpgrade: false,
+			isEquivalent: false,
+			canInitialize: false,
+		});
+
+		viewSpecific.root.moveRangeToEnd(0, 1);
+
+		// To the view that doesn't have "address" in its schema, the node appears as if it doesn't
+		// have an address...
+		assert.equal(Object.keys(viewSpecific.root[1]).length, 2);
+		assert.equal(viewSpecific.root[1].name, "Alice");
+		assert.equal(viewSpecific.root[1].age, 42);
+		viewSpecific.dispose();
+
+		const viewGeneralized = new SchematizingSimpleTreeView(
+			checkout,
+			peopleGeneralizedConfig,
+			new MockNodeIdentifierManager(),
+		);
+		assert.deepEqual(viewGeneralized.compatibility, {
+			canView: true,
+			canUpgrade: true,
+			isEquivalent: true,
+			canInitialize: false,
+		});
+
+		// ...however, despite that client making an edit to Alice, the field is preserved via the move APIs.
+		assert.equal(Object.keys(viewGeneralized.root[1]).length, 3);
+		assert.equal(viewGeneralized.root[1].name, "Alice");
+		assert.equal(viewGeneralized.root[1].age, 42);
+		assert.equal(viewGeneralized.root[1].address, "123 Main St");
+	});
+
+	describe("upgradeSchema", () => {
+		const builder = new SchemaFactory("test");
+		const root = builder.number;
+
+		const schemaGeneralized = builder.optional([root, builder.string]);
+		const schemaValueRoot = [root, builder.string];
+
+		// Schema for tree that must always be empty.
+		const emptyViewSchema = builder.optional([]);
+
+		it("compatible empty schema", () => {
+			const view = testDocumentIndependentView({
+				ambiguous: false,
+				schema: emptyViewSchema,
+				schemaData: emptySchema,
+				treeFactory: () => [],
+			});
+
+			view.events.on("rootChanged", () => assert.fail());
+			view.events.on("schemaChanged", () => assert.fail());
+
+			assert(view.compatibility.isEquivalent);
+			assert(view.compatibility.canUpgrade);
+			view.upgradeSchema();
+		});
+
+		it("compatible: upgrade optional root", () => {
+			const view = testDocumentIndependentView({
+				ambiguous: false,
+				schema: schemaGeneralized,
+				schemaData: emptySchema,
+				treeFactory: () => [],
+			});
+
+			view.upgradeSchema();
+			const reference = checkoutWithContent({
+				schema: toInitialSchema(schemaGeneralized),
+				initialTree: fieldJsonCursor([]),
+			});
+			validateViewConsistency(reference, view.checkout);
+		});
+
+		it("incompatible: empty to required root", () => {
+			const view = testDocumentIndependentView({
+				ambiguous: false,
+				schema: schemaValueRoot,
+				schemaData: emptySchema,
+				treeFactory: () => [],
+			});
+
+			assert(!view.compatibility.isEquivalent);
+			assert(!view.compatibility.canUpgrade);
+
+			// Case which doesn't update due to root being required
+			assert.throws(() => view.upgradeSchema(), validateUsageError(/cannot be upgraded/));
+
+			const reference = checkoutWithContent({
+				schema: emptySchema,
+				initialTree: fieldJsonCursor([]),
+			});
+			validateViewConsistency(reference, view.checkout);
+		});
+
+		it("update non-empty", () => {
+			const view = testDocumentIndependentView({
+				ambiguous: false,
+				schema: schemaGeneralized,
+				schemaData: toInitialSchema(builder.number),
+				treeFactory: () => [
+					{ type: brand(SchemaFactory.number.identifier), value: 5, fields: {} },
+				],
+			});
+
+			const updatedCheckout = checkoutWithContent({
+				schema: toInitialSchema(schemaGeneralized),
+				initialTree: fieldJsonCursor([5]),
+			});
+
+			assert(!view.compatibility.isEquivalent);
+			assert(view.compatibility.canUpgrade);
+
+			view.upgradeSchema();
+			validateViewConsistency(view.checkout, updatedCheckout);
+		});
+	});
+
+	it("Open upgradable document, then upgrade schema", () => {
+		const checkout = checkoutWithInitialTree(config, 5);
+		const view = new SchematizingSimpleTreeView(
+			checkout,
+			configGeneralized,
+			new MockNodeIdentifierManager(),
+		);
+		const log: [string, unknown][] = [];
+		view.events.on("rootChanged", () => log.push(["rootChanged", getChangeData(view)]));
+
+		assert.equal(view.compatibility.canView, false);
+		assert.equal(view.compatibility.canUpgrade, true);
+		assert.equal(view.compatibility.isEquivalent, false);
+		assert.throws(
+			() => view.root,
+			(e) => e instanceof UsageError,
+		);
+
+		view.upgradeSchema();
+
+		assert.deepEqual(log, [["rootChanged", 5]]);
+
+		assert.equal(view.compatibility.isEquivalent, true);
+		assert.equal(view.root, 5);
+	});
+
+	it("Attempt to open document using view schema that is incompatible due to being too strict compared to the stored schema", () => {
+		const checkout = checkoutWithInitialTree(configGeneralized, 6);
+		const view = new SchematizingSimpleTreeView(
+			checkout,
+			config,
+			new MockNodeIdentifierManager(),
+		);
+
+		assert.equal(view.compatibility.canView, false);
+		assert.equal(view.compatibility.canUpgrade, false);
+		assert.equal(view.compatibility.isEquivalent, false);
+		assert.throws(
+			() => view.root,
+			(e) => e instanceof UsageError,
+		);
+
+		assert.throws(
+			() => view.upgradeSchema(),
+			(e) => e instanceof UsageError,
+		);
+	});
+
+	it("Open incompatible document", () => {
+		const checkout = checkoutWithInitialTree(configGeneralized, 6);
+		const view = new SchematizingSimpleTreeView(
+			checkout,
+			configGeneralized2,
+			new MockNodeIdentifierManager(),
+		);
+
+		assert.equal(view.compatibility.canView, false);
+		assert.equal(view.compatibility.canUpgrade, false);
+		assert.equal(view.compatibility.isEquivalent, false);
+		assert.throws(
+			() => view.root,
+			(e) => e instanceof UsageError,
+		);
+
+		assert.throws(
+			() => view.upgradeSchema(),
+			(e) => e instanceof UsageError,
+		);
+	});
+
+	it("supports revertibles", () => {
+		const checkout = makeTreeFromJsonSequence([]);
+		const view = new SchematizingSimpleTreeView(
+			checkout,
+			config,
+			new MockNodeIdentifierManager(),
+		);
+
+		const { undoStack, redoStack } = createTestUndoRedoStacks(view.events);
+
+		insert(checkout, 0, "a");
+		assert.equal(undoStack.length, 1);
+		assert.equal(redoStack.length, 0);
+
+		undoStack.pop()?.revert();
+		assert.equal(undoStack.length, 0);
+		assert.equal(redoStack.length, 1);
+	});
+
+	const schemaFactory = new SchemaFactory(undefined);
+	class ChildObject extends schemaFactory.object("ChildObject", {
+		content: schemaFactory.number,
+	}) {}
+	class TestObject extends schemaFactory.object("TestObject", {
+		content: schemaFactory.number,
+		child: schemaFactory.optional(ChildObject),
+	}) {}
+
+	function getTestObjectView(child?: InsertableTypedNode<typeof ChildObject>) {
+		const view = getView(new TreeViewConfiguration({ schema: TestObject }));
+		view.initialize({
+			content: 42,
+			child,
+		});
+		return view;
+	}
+
+	it("breaks on error", () => {
+		const view = getTestObjectView();
+		const node = view.root;
+		assert.throws(() => view.breaker.break(new Error("Oh no")));
+
+		assert.throws(() => view.root, validateUsageError(/Oh no/));
+
+		// Ideally this would error, but thats not too important: reads are less dangerous.
+		// assert.throws(() => node.content, validateUsageError(/Oh no/));
+
+		// Its important that editing errors when we might be in an invalid state.
+		assert.throws(() => {
+			node.content = 5;
+		}, validateUsageError(/Oh no/));
+	});
+
+	describe("events", () => {
+		it("schemaChanged", () => {
+			const content = {
+				schema: toInitialSchema(SchemaFactory.optional([])),
+				initialTree: undefined,
+			};
+			const checkout = checkoutWithContent(content);
+			const view = new SchematizingSimpleTreeView(
+				checkout,
+				new TreeViewConfiguration({ schema: SchemaFactory.optional(SchemaFactory.number) }),
+				new MockNodeIdentifierManager(),
+			);
+			const log: string[] = [];
+			view.events.on("schemaChanged", () => log.push("changed"));
+			assert.deepEqual(log, []);
+			view.upgradeSchema();
+			assert.deepEqual(log, ["changed"]);
+		});
+
+		it("emits changed events for local edits", () => {
+			const view = getView(config);
+			view.initialize(1);
+
+			let localChanges = 0;
+
+			const unsubscribe = view.events.on("changed", (data) => {
+				if (data.isLocal) {
+					localChanges++;
+				}
+			});
+
+			view.root = 2;
+			assert.equal(localChanges, 1);
+			unsubscribe();
+		});
+
+		it("does not emit changed events for rebases", () => {
+			const stringArraySchema = schema.array([schema.string]);
+			const stringArrayStoredSchema = toInitialSchema(stringArraySchema);
+			const stringArrayContent = {
+				schema: stringArrayStoredSchema,
+				initialTree: fieldCursorFromInsertable(stringArraySchema, ["a", "b", "c"]),
+			};
+			const checkout = checkoutWithContent(stringArrayContent);
+			const main = new SchematizingSimpleTreeView(
+				checkout,
+				new TreeViewConfiguration({ schema: stringArraySchema }),
+				new MockNodeIdentifierManager(),
+			);
+			const branch = main.fork();
+			const mainRoot = main.root;
+			const branchRoot = branch.root;
+
+			mainRoot.insertAt(0, "a");
+			assert.deepEqual([...mainRoot], ["a", "a", "b", "c"]);
+
+			let changes = 0;
+			branch.events.on("changed", (data) => {
+				changes++;
+			});
+
+			branch.rebaseOnto(main);
+			assert.deepEqual([...branchRoot], ["a", "a", "b", "c"]);
+			assert.equal(changes, 0);
+		});
+	});
+
+	describe("runTransaction", () => {
+		describe("transaction callback return values", () => {
+			it("implicit success", () => {
+				const view = getTestObjectView();
+				const runTransactionResult = view.runTransaction(() => {
+					view.root.content = 43;
+				});
+				assert.equal(view.root.content, 43, "The transaction did not commit");
+				const expectedResult: TransactionVoidResult = { success: true };
+				assert.deepStrictEqual(
+					runTransactionResult,
+					expectedResult,
+					"The runTransaction result is incorrect",
+				);
+			});
+
+			it("explicit success", () => {
+				const view = getTestObjectView();
+				const runTransactionResult = view.runTransaction(() => {
+					view.root.content = 43;
+					return { rollback: false };
+				});
+				assert.equal(view.root.content, 43, "The transaction did not commit");
+				const expectedResult: TransactionVoidResult = { success: true };
+				assert.deepStrictEqual(
+					runTransactionResult,
+					expectedResult,
+					"The runTransaction result is incorrect",
+				);
+			});
+
+			it("rollback", () => {
+				const view = getTestObjectView();
+				const runTransactionResult = view.runTransaction(() => {
+					view.root.content = 43;
+					return { rollback: true };
+				});
+				assert.equal(view.root.content, 42, "The transaction did not rollback");
+				const expectedResult: TransactionVoidResult = { success: false };
+				assert.deepStrictEqual(
+					runTransactionResult,
+					expectedResult,
+					"The runTransaction result is incorrect",
+				);
+			});
+
+			it("success + user defined value", () => {
+				const view = getTestObjectView();
+				const runTransactionResult = view.runTransaction(() => {
+					view.root.content = 43;
+					return { value: view.root.content };
+				});
+				assert.equal(view.root.content, 43, "The transaction did not commit");
+				const expectedResult: TransactionValueResult<number, undefined> = {
+					success: true,
+					value: 43,
+				};
+				assert.deepStrictEqual(
+					runTransactionResult,
+					expectedResult,
+					"The runTransaction result is incorrect",
+				);
+			});
+
+			it("rollback + user defined value", () => {
+				const view = getTestObjectView();
+				const runTransactionResult = view.runTransaction(() => {
+					view.root.content = 43;
+					return { rollback: true, value: view.root.content };
+				});
+				// The transaction is rolled back. So, the content is reverted to the original value.
+				assert.equal(view.root.content, 42, "The transaction did not rollback");
+				const expectedResult: TransactionValueResult<undefined, number> = {
+					success: false,
+					// Note that this is the value that was returned before the transaction was rolled back.
+					value: 43,
+				};
+				assert.deepStrictEqual(
+					runTransactionResult,
+					expectedResult,
+					"The runTransaction result is incorrect",
+				);
+			});
+
+			it("success + preconditions on revert", () => {
+				const view = getTestObjectView();
+				const runTransactionResult = view.runTransaction(() => {
+					view.root.content = 43;
+					return {
+						preconditionsOnRevert: [{ type: "nodeInDocument", node: view.root }],
+					};
+				});
+				assert.equal(view.root.content, 43, "The transaction did not commit");
+				const expectedResult: TransactionVoidResult = {
+					success: true,
+				};
+				assert.deepStrictEqual(
+					runTransactionResult,
+					expectedResult,
+					"The runTransaction result is incorrect",
+				);
+			});
+
+			it("rollback + preconditions on revert", () => {
+				const view = getTestObjectView();
+				const runTransactionResult = view.runTransaction(() => {
+					view.root.content = 43;
+					return {
+						rollback: true,
+						preconditionsOnRevert: [{ type: "nodeInDocument", node: view.root }],
+					};
+				});
+				assert.equal(view.root.content, 42, "The transaction did not rollback");
+				const expectedResult: TransactionVoidResult = {
+					success: false,
+				};
+				assert.deepStrictEqual(
+					runTransactionResult,
+					expectedResult,
+					"The runTransaction result is incorrect",
+				);
+			});
+		});
+
+		describe("transactions", () => {
+			it("runs transactions", () => {
+				const view = getTestObjectView();
+				const runTransactionResult = view.runTransaction(() => {
+					view.root.content = 43;
+				});
+				assert.equal(view.root.content, 43);
+				const expectedResult: TransactionVoidResult = { success: true };
+				assert.deepStrictEqual(
+					runTransactionResult,
+					expectedResult,
+					"The runTransaction result is incorrect",
+				);
+			});
+
+			it("can be rolled back", () => {
+				const view = getTestObjectView();
+				const runTransactionResult = view.runTransaction(() => {
+					view.root.content = 43;
+					return { rollback: true };
+				});
+				assert.equal(view.root.content, 42);
+				const expectedResult: TransactionVoidResult = { success: false };
+				assert.deepStrictEqual(
+					runTransactionResult,
+					expectedResult,
+					"The runTransaction result is incorrect",
+				);
+			});
+
+			it("breaks the view on error", () => {
+				const view = getTestObjectView();
+				const node = view.root;
+				assert.throws(
+					() =>
+						view.runTransaction(() => {
+							view.root.content = 43;
+							throw new Error("Oh no");
+						}),
+					(e) => {
+						return e instanceof Error && e.message === "Oh no";
+					},
+				);
+				assert.throws(() => view.root, validateUsageError(/Oh no/));
+			});
+
+			it("undoes and redoes entire transaction", () => {
+				const view = getTestObjectView();
+				const { undoStack, redoStack } = createTestUndoRedoStacks(view.checkout.events);
+
+				const runTransactionResult = view.runTransaction(() => {
+					view.root.content = 43;
+					view.root.content = 44;
+				});
+				const expectedResult: TransactionVoidResult = { success: true };
+				assert.deepStrictEqual(
+					runTransactionResult,
+					expectedResult,
+					"The runTransaction result is incorrect",
+				);
+
+				assert.equal(view.root.content, 44);
+				assert.equal(undoStack.length, 1);
+				undoStack[0].revert();
+				assert.equal(view.root.content, 42);
+				assert.equal(redoStack.length, 1);
+				redoStack[0].revert();
+				assert.equal(view.root.content, 44);
+			});
+
+			it("fails if node existence constraint is already violated", () => {
+				const view = getTestObjectView({ content: 42 });
+				const childB = view.root.child;
+				assert(childB !== undefined);
+				// The node given to the constraint is deleted from the document, so the transaction can't possibly succeed even locally/optimistically
+				view.root.child = undefined;
+				assert.throws(
+					() =>
+						view.runTransaction(
+							() => {
+								view.root.content = 43;
+							},
+							{
+								preconditions: [{ type: "nodeInDocument", node: childB }],
+							},
+						),
+					(e) => {
+						return (
+							e instanceof UsageError &&
+							e.message.startsWith(
+								`Attempted to add a "nodeInDocument" constraint, but the node is not currently in the document`,
+							)
+						);
+					},
+				);
+				assert.throws(() => view.root.content, "View should be broken");
+			});
+
+			it("respects a violated node existence constraint after sequencing", () => {
+				// Create two connected trees with child nodes
+				const viewConfig = new TreeViewConfiguration({ schema: TestObject });
+				const provider = new TestTreeProviderLite(2);
+				const [treeA, treeB] = provider.trees;
+				const viewA = treeA.viewWith(viewConfig);
+				const viewB = treeB.kernel.viewWith(viewConfig);
+				viewA.initialize({
+					content: 42,
+					child: { content: 42 },
+				});
+				provider.synchronizeMessages();
+
+				// Tree A removes the child node (this will be sequenced before anything else because the provider sequences ops in the order of submission).
+				viewA.root.child = undefined;
+				// Tree B runs a transaction to change the root content to 43, but it should only succeed if the child node exists.
+				const childB = viewB.root.child;
+				assert(childB !== undefined);
+				const runTransactionResult = viewB.runTransaction(
+					() => {
+						viewB.root.content = 43;
+					},
+					{
+						preconditions: [{ type: "nodeInDocument", node: childB }],
+					},
+				);
+				const expectedResult: TransactionVoidResult = { success: true };
+				assert.deepStrictEqual(
+					runTransactionResult,
+					expectedResult,
+					"The runTransaction result is incorrect",
+				);
+
+				// The transaction does apply optimistically...
+				assert.equal(viewA.root.content, 42);
+				assert.equal(viewB.root.content, 43);
+				// ...but then is rolled back after sequencing because the child node was removed by Tree A.
+				provider.synchronizeMessages();
+				assert.equal(viewB.root.content, 42);
+				assert.equal(viewB.root.content, 42);
+			});
+
+			/**
+			 * This test exercises the precondition on revert constraints API with a representative scenario.
+			 * For more in-depth testing of undo precondition constraints, see editing.spec.ts.
+			 */
+			it("constraint on revert violated by transaction body", () => {
+				const view = getTestObjectView({ content: 42 });
+				const child = view.root.child;
+				assert(child !== undefined);
+
+				// Called by the transaction body. This violates the constraint on revert but the transaction
+				// body doesn't know about it.
+				const doSomething = () => {
+					view.root.child = undefined;
+				};
+				assert.throws(
+					() =>
+						view.runTransaction(() => {
+							child.content = 43;
+							// Simulates a side effect where a code that the transaction calls ends up violating the
+							// constraint on revert.
+							doSomething();
+							return {
+								preconditionsOnRevert: [{ type: "nodeInDocument", node: child }],
+							};
+						}),
+					(e) => {
+						return (
+							e instanceof UsageError &&
+							e.message.startsWith(
+								`Attempted to add a "nodeInDocument" constraint on revert, but the node is not currently in the document`,
+							)
+						);
+					},
+				);
+				assert.throws(() => view.root.content, "View should be broken");
+			});
+
+			/**
+			 * This test exercises the precondition on revert constraints API with a representative scenario.
+			 * For more in-depth testing of undo precondition constraints, see editing.spec.ts.
+			 */
+			it("constraint on revert violated by interim change", () => {
+				const view = getTestObjectView({ content: 42 });
+				const child = view.root.child;
+				assert(child !== undefined);
+
+				const stack = createTestUndoRedoStacks(view.events);
+
+				const runTransactionResult = view.runTransaction(() => {
+					view.root.content = 43;
+					return {
+						preconditionsOnRevert: [{ type: "nodeInDocument", node: child }],
+					};
+				});
+				assert.equal(view.root.content, 43, "The transaction did not succeed");
+				const expectedResult: TransactionVoidResult = {
+					success: true,
+				};
+				assert.deepStrictEqual(
+					runTransactionResult,
+					expectedResult,
+					"The runTransaction result is incorrect",
+				);
+
+				const changed42To43 = stack.undoStack[0] ?? fail("Missing undo");
+
+				// This change should violate the constraint in the revert
+				view.root.child = undefined;
+
+				// This revert should do nothing since its constraint has been violated
+				changed42To43.revert();
+				assert.equal(view.root.content, 43, "The revert should have been ignored");
+
+				stack.unsubscribe();
+			});
+		});
+	});
+
+	describe("transaction labels", () => {
+		it("exposes label via CommitMetadataAlpha during commitApplied", () => {
+			const view = getTestObjectView();
+
+			const labels: unknown[] = [];
+
+			view.checkout.events.on("changed", (meta) => {
+				labels.push(meta.label);
+			});
+
+			const testLabel = "testLabel";
+			const runTransactionResult = view.runTransaction(
+				() => {
+					view.root.content = 0;
+				},
+				{ label: testLabel },
+			);
+
+			// Check that transaction was applied.
+			assert.equal(runTransactionResult.success, true);
+
+			// Check that correct label was exposed.
+			assert.deepEqual(labels, [testLabel]);
+		});
+
+		it("CommitMetadataAlpha.label is undefined for unlabeled transactions", () => {
+			const view = getTestObjectView();
+
+			const labels: unknown[] = [];
+
+			view.checkout.events.on("changed", (meta) => {
+				labels.push(meta.label);
+			});
+
+			const runTransactionResult = view.runTransaction(() => {
+				view.root.content = 0;
+			});
+
+			// Check that transaction was applied.
+			assert.equal(runTransactionResult.success, true);
+			assert.equal(view.root.content, 0);
+
+			// Check that correct label was exposed.
+			assert.deepEqual(labels, [undefined]);
+		});
+
+		it("exposes the correct labels for multiple transactions", () => {
+			const view = getTestObjectView();
+
+			const labels: unknown[] = [];
+
+			view.checkout.events.on("changed", (meta) => {
+				labels.push(meta.label);
+			});
+
+			const testLabel1 = "testLabel1";
+			const runTransactionResult1 = view.runTransaction(
+				() => {
+					view.root.content = 0;
+				},
+				{ label: testLabel1 },
+			);
+
+			// run second transaction with no label
+			const runTransactionResult2 = view.runTransaction(() => {
+				view.root.content = 1;
+			});
+
+			const testLabel3 = "testLabel3";
+			const runTransactionResult3 = view.runTransaction(
+				() => {
+					view.root.content = 2;
+				},
+				{ label: testLabel3 },
+			);
+			// Check that transactions were applied.
+			assert.equal(runTransactionResult1.success, true);
+			assert.equal(runTransactionResult2.success, true);
+			assert.equal(runTransactionResult3.success, true);
+
+			// Check that correct label was exposed.
+			assert.deepEqual(labels, [testLabel1, undefined, testLabel3]);
+		});
+
+		it("nested transactions only expose outer label", () => {
+			const view = getTestObjectView();
+
+			const labels: unknown[] = [];
+
+			view.checkout.events.on("changed", (meta) => {
+				labels.push(meta.label);
+			});
+
+			const outerLabel = "outerLabel";
+			const innerLabel1 = "innerLabel1";
+			const innerLabel2 = "innerLabel2";
+
+			const runTransactionResult = view.runTransaction(
+				() => {
+					view.root.content = 1;
+
+					// Nested transaction with different label
+					view.runTransaction(
+						() => {
+							view.root.content = 2;
+						},
+						{ label: innerLabel1 },
+					);
+
+					view.root.content = 3;
+
+					// Another nested transaction with different label
+					view.runTransaction(
+						() => {
+							view.root.content = 4;
+						},
+						{ label: innerLabel2 },
+					);
+				},
+				{ label: outerLabel },
+			);
+
+			// Check that transaction was applied.
+			assert.equal(runTransactionResult.success, true);
+			assert.equal(view.root.content, 4);
+
+			// Check that only the outer label was exposed, not the inner labels
+			assert.deepEqual(labels, [outerLabel]);
+		});
+
+		it("separate views maintain independent transaction labels", () => {
+			const view1 = getTestObjectView();
+			const view2 = getTestObjectView();
+
+			const labels1: unknown[] = [];
+			const labels2: unknown[] = [];
+
+			view1.checkout.events.on("changed", (meta) => {
+				labels1.push(meta.label);
+			});
+
+			view2.checkout.events.on("changed", (meta) => {
+				labels2.push(meta.label);
+			});
+
+			const label1 = "view1Label";
+			const label2 = "view2Label";
+
+			// Start a transaction in view1 with label1
+			view1.runTransaction(
+				() => {
+					view1.root.content = 1;
+
+					// Nested transaction in view2 with label2 (within view1's transaction)
+					view2.runTransaction(
+						() => {
+							view2.root.content = 100;
+						},
+						{ label: label2 },
+					);
+
+					view1.root.content = 2;
+				},
+				{ label: label1 },
+			);
+
+			// Check that view1 only shows its label
+			assert.deepEqual(labels1, [label1]);
+
+			// Check that view2 shows its own label (not view1's label)
+			assert.deepEqual(labels2, [label2]);
+		});
+
+		it("composes a LabelTree from nested transaction labels", () => {
+			const view = getTestObjectView();
+
+			let receivedLabels: TransactionLabels | undefined;
+			view.checkout.events.on("changed", (meta) => {
+				if (meta.isLocal) {
+					receivedLabels = meta.labels;
+				}
+			});
+
+			view.runTransaction(
+				() => {
+					view.runTransaction(
+						() => {
+							view.runTransaction(
+								() => {
+									view.root.content = 1;
+								},
+								{ label: "deep" },
+							);
+						},
+						{ label: "middle1" },
+					);
+					view.runTransaction(
+						() => {
+							view.root.content = 2;
+						},
+						{ label: "middle2" },
+					);
+				},
+				{ label: "outer" },
+			);
+
+			assert(receivedLabels !== undefined, "labels should be captured");
+			// Set-based lookups
+			assert.equal(receivedLabels.has("outer"), true);
+			assert.equal(receivedLabels.has("middle1"), true);
+			assert.equal(receivedLabels.has("deep"), true);
+			assert.equal(receivedLabels.has("middle2"), true);
+			assert.equal(receivedLabels.size, 4);
+			// Tree structure
+			assert(receivedLabels.tree !== undefined, "tree should be defined");
+			assert.equal(receivedLabels.tree.label, "outer");
+			assert.equal(receivedLabels.tree.sublabels.length, 2);
+			assert.equal(receivedLabels.tree.sublabels[0]?.label, "middle1");
+			assert.equal(receivedLabels.tree.sublabels[0]?.sublabels.length, 1);
+			assert.equal(receivedLabels.tree.sublabels[0]?.sublabels[0]?.label, "deep");
+			assert.equal(receivedLabels.tree.sublabels[1]?.label, "middle2");
+			assert.equal(receivedLabels.tree.sublabels[1]?.sublabels.length, 0);
+		});
+
+		it("direct (non-transaction) edit from a changed listener throws", () => {
+			// Exercises the internal `changed` event. The equivalent guarantee through the public
+			// `nodeChanged`/`treeChanged` API is covered in the treeNodeApi tests.
+			const view = getTestObjectView();
+
+			view.checkout.events.on("changed", () => {
+				view.root.content = view.root.content + 1;
+			});
+
+			assert.throws(
+				() => (view.root.content = 1),
+				validateUsageError("Editing the tree is forbidden during a change event callback"),
+			);
+		});
+
+		it("creates a single-node LabelTree for a non-nested labeled transaction", () => {
+			const view = getTestObjectView();
+
+			let receivedLabels: TransactionLabels | undefined;
+			view.checkout.events.on("changed", (meta) => {
+				if (meta.isLocal) {
+					receivedLabels = meta.labels;
+				}
+			});
+
+			view.runTransaction(
+				() => {
+					view.root.content = 42;
+				},
+				{ label: "single" },
+			);
+
+			assert(receivedLabels !== undefined, "labels should be captured");
+			assert.equal(receivedLabels.has("single"), true);
+			assert.equal(receivedLabels.size, 1);
+			assert(receivedLabels.tree !== undefined, "tree should be defined");
+			assert.equal(receivedLabels.tree.label, "single");
+			assert.equal(receivedLabels.tree.sublabels.length, 0);
+		});
+
+		it("labels is an empty set with no tree when no labels are provided", () => {
+			const view = getTestObjectView();
+
+			let receivedLabels: TransactionLabels | undefined;
+			view.checkout.events.on("changed", (meta) => {
+				if (meta.isLocal) {
+					receivedLabels = meta.labels;
+				}
+			});
+
+			view.runTransaction(() => {
+				view.runTransaction(() => {
+					view.root.content = 99;
+				});
+			});
+
+			assert(receivedLabels !== undefined, "labels should be captured");
+			assert.equal(receivedLabels.size, 0);
+			assert.equal(receivedLabels.tree, undefined);
+		});
+
+		it("aborted transaction labels are excluded and subsequent siblings are correctly placed", () => {
+			const view = getTestObjectView();
+
+			let receivedLabels: TransactionLabels | undefined;
+			view.checkout.events.on("changed", (meta) => {
+				if (meta.isLocal) {
+					receivedLabels = meta.labels;
+				}
+			});
+
+			view.runTransaction(
+				() => {
+					// Committed nested transactions — closes happen at multiple levels.
+					view.runTransaction(
+						() => {
+							view.runTransaction(
+								() => {
+									view.root.content = 1;
+								},
+								{ label: "deep" },
+							);
+						},
+						{ label: "middle" },
+					);
+					// Aborted subtree with its own nested commits.
+					// After abort, the previously-closed "middle" node is re-exposed on the right spine.
+					view.runTransaction(
+						() => {
+							view.runTransaction(
+								() => {
+									view.root.content = 2;
+								},
+								{ label: "abortedInner" },
+							);
+							return { rollback: true };
+						},
+						{ label: "abortedOuter" },
+					);
+					// This transaction runs after the abort. It should be a sibling of "middle"
+					// under "outer", not a descendant of "deep".
+					view.runTransaction(
+						() => {
+							view.root.content = 3;
+						},
+						{ label: "after" },
+					);
+				},
+				{ label: "outer" },
+			);
+
+			assert(receivedLabels !== undefined, "labels should be captured");
+			// Set-based lookups
+			assert.equal(receivedLabels.has("middle"), true);
+			assert.equal(receivedLabels.has("deep"), true);
+			assert.equal(receivedLabels.has("after"), true);
+			assert.equal(receivedLabels.has("abortedOuter"), false);
+			assert.equal(receivedLabels.has("abortedInner"), false);
+			// Tree structure
+			assert(receivedLabels.tree !== undefined, "tree should be defined");
+			assert.equal(receivedLabels.tree.label, "outer");
+			assert.equal(receivedLabels.tree.sublabels.length, 2);
+			assert.equal(receivedLabels.tree.sublabels[0]?.label, "middle");
+			assert.equal(receivedLabels.tree.sublabels[0]?.sublabels.length, 1);
+			assert.equal(receivedLabels.tree.sublabels[0]?.sublabels[0]?.label, "deep");
+			assert.equal(receivedLabels.tree.sublabels[1]?.label, "after");
+		});
+
+		it("revert commit inherits the original commit's label", () => {
+			const view = getTestObjectView();
+
+			const events: { kind: CommitKind; label: unknown; labels: TransactionLabels }[] = [];
+			let revertible: RevertibleAlpha | undefined;
+			view.checkout.events.on("changed", (meta, getRevertible) => {
+				if (meta.isLocal) {
+					events.push({ kind: meta.kind, label: meta.label, labels: meta.labels });
+					if (meta.kind === CommitKind.Default) {
+						revertible = getRevertible?.();
+					}
+				}
+			});
+
+			const testLabel = "testLabel";
+			view.runTransaction(
+				() => {
+					view.root.content = 1;
+				},
+				{ label: testLabel },
+			);
+
+			assert(revertible !== undefined);
+			revertible.revert();
+
+			assert.equal(events.length, 2);
+			assert.equal(events[1]?.kind, CommitKind.Undo);
+			assert.equal(events[1]?.label, testLabel);
+			assert.deepEqual(events[1]?.labels.tree, { label: testLabel, sublabels: [] });
+		});
+
+		it("revert of revert reuses the original label tree", () => {
+			const view = getTestObjectView();
+
+			const events: { kind: CommitKind; labels: TransactionLabels }[] = [];
+			const revertibles: RevertibleAlpha[] = [];
+			view.checkout.events.on("changed", (meta, getRevertible) => {
+				if (meta.isLocal) {
+					events.push({ kind: meta.kind, labels: meta.labels });
+					const r = getRevertible?.();
+					if (r !== undefined) {
+						revertibles.push(r);
+					}
+				}
+			});
+
+			const testLabel = "testLabel";
+			view.runTransaction(
+				() => {
+					view.root.content = 1;
+				},
+				{ label: testLabel },
+			);
+
+			revertibles[0]?.revert(); // undo
+			revertibles[1]?.revert(); // redo
+
+			assert.deepEqual(
+				events.map((e) => e.kind),
+				[CommitKind.Default, CommitKind.Undo, CommitKind.Redo],
+			);
+
+			// All three commits share the same label tree — revert-of-revert does not introduce new nesting.
+			const expectedTree = { label: testLabel, sublabels: [] };
+			assert.deepEqual(events[0]?.labels.tree, expectedTree);
+			assert.deepEqual(events[1]?.labels.tree, expectedTree);
+			assert.deepEqual(events[2]?.labels.tree, expectedTree);
+		});
+
+		it("revert of an unlabeled edit produces empty labels", () => {
+			const view = getTestObjectView();
+
+			const events: { kind: CommitKind; label: unknown; labels: TransactionLabels }[] = [];
+			let revertible: RevertibleAlpha | undefined;
+			view.checkout.events.on("changed", (meta, getRevertible) => {
+				if (meta.isLocal) {
+					events.push({ kind: meta.kind, label: meta.label, labels: meta.labels });
+					if (meta.kind === CommitKind.Default) {
+						revertible = getRevertible?.();
+					}
+				}
+			});
+
+			view.runTransaction(() => {
+				view.root.content = 1;
+			});
+
+			assert(revertible !== undefined);
+			revertible.revert();
+
+			assert.equal(events.length, 2);
+			assert.equal(events[1]?.kind, CommitKind.Undo);
+			assert.equal(events[1]?.label, undefined);
+			assert.equal(events[1]?.labels.size, 0);
+		});
+
+		it("labelTreeNode is restored if revert apply throws", () => {
+			// Verify the finally in `revertRevertible` runs even when `apply` throws.
+			// If `labelTreeNode` weren't restored, the next labeled transaction would
+			// nest under the leftover state.
+			const view = getTestObjectView();
+
+			let revertible: RevertibleAlpha | undefined;
+			let lastLabel: unknown;
+			view.checkout.events.on("changed", (meta, getRevertible) => {
+				if (!meta.isLocal) return;
+				if (meta.kind === CommitKind.Default) {
+					revertible ??= getRevertible?.();
+					lastLabel = meta.label;
+				}
+				if (meta.kind === CommitKind.Undo) {
+					throw new Error("simulated revert failure");
+				}
+			});
+
+			view.runTransaction(
+				() => {
+					view.root.content = 1;
+				},
+				{ label: "first" },
+			);
+			assert(revertible !== undefined);
+			assert.throws(() => revertible?.revert());
+
+			view.runTransaction(
+				() => {
+					view.root.content = 2;
+				},
+				{ label: "second" },
+			);
+			assert.equal(lastLabel, "second");
+		});
+
+		it("cloned revertible inherits the original commit's labels", () => {
+			const sourceView = getTestObjectView();
+
+			let sourceRevertible: RevertibleAlpha | undefined;
+			sourceView.checkout.events.on("changed", (meta, getRevertible) => {
+				if (meta.isLocal && meta.kind === CommitKind.Default) {
+					sourceRevertible = getRevertible?.();
+				}
+			});
+
+			const testLabel = "testLabel";
+			sourceView.runTransaction(
+				() => {
+					sourceView.root.content = 1;
+				},
+				{ label: testLabel },
+			);
+
+			// Fork after the labeled commit so the cloned revertible's source commit is reachable on the target.
+			const targetView = sourceView.fork();
+			let undoLabels: TransactionLabels | undefined;
+			targetView.checkout.events.on("changed", (meta) => {
+				if (meta.isLocal && meta.kind === CommitKind.Undo) {
+					undoLabels = meta.labels;
+				}
+			});
+
+			assert(sourceRevertible !== undefined);
+			sourceRevertible.clone(targetView).revert();
+
+			assert.deepEqual(undoLabels?.tree, { label: testLabel, sublabels: [] });
+		});
+
+		it("revert of a nested transaction preserves the nested label structure", () => {
+			const view = getTestObjectView();
+
+			const events: { kind: CommitKind; label: unknown; labels: TransactionLabels }[] = [];
+			let revertible: RevertibleAlpha | undefined;
+			view.checkout.events.on("changed", (meta, getRevertible) => {
+				if (meta.isLocal) {
+					events.push({ kind: meta.kind, label: meta.label, labels: meta.labels });
+					if (meta.kind === CommitKind.Default) {
+						revertible = getRevertible?.();
+					}
+				}
+			});
+
+			view.runTransaction(
+				() => {
+					view.runTransaction(
+						() => {
+							view.root.content = 1;
+						},
+						{ label: "inner" },
+					);
+				},
+				{ label: "outer" },
+			);
+
+			assert(revertible !== undefined);
+			revertible.revert();
+
+			assert.equal(events.length, 2);
+			assert.equal(events[1]?.kind, CommitKind.Undo);
+			// metadata.label is the outermost label; labels.tree captures the full nesting.
+			assert.equal(events[1]?.label, "outer");
+			assert.deepEqual(events[1]?.labels.tree, {
+				label: "outer",
+				sublabels: [{ label: "inner", sublabels: [] }],
+			});
+		});
+
+		it("inner labels are surfaced with undefined root when outer transaction has no label", () => {
+			const view = getTestObjectView();
+
+			let receivedLabels: TransactionLabels | undefined;
+			view.checkout.events.on("changed", (meta) => {
+				if (meta.isLocal) {
+					receivedLabels = meta.labels;
+				}
+			});
+
+			view.runTransaction(() => {
+				view.runTransaction(
+					() => {
+						view.root.content = 1;
+					},
+					{ label: "inner" },
+				);
+			});
+
+			// When outer has no label but inner labels exist, the tree is present
+			// with an undefined root to surface the inner labels.
+			assert(receivedLabels !== undefined, "labels should be captured");
+			assert.equal(receivedLabels.has("inner"), true);
+			assert(receivedLabels.tree !== undefined, "tree should be defined");
+			assert.equal(receivedLabels.tree.label, undefined);
+			assert.equal(receivedLabels.tree.sublabels.length, 1);
+			assert.equal(receivedLabels.tree.sublabels[0]?.label, "inner");
+		});
+	});
+});

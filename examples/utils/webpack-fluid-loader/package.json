@@ -1,0 +1,154 @@
+{
+	"name": "@fluid-example/webpack-fluid-loader",
+	"version": "2.116.0",
+	"private": true,
+	"description": "Fluid object loader for webpack-dev-server",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "examples/utils/webpack-fluid-loader"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"type": "module",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		}
+	},
+	"main": "lib/index.js",
+	"types": "lib/index.d.ts",
+	"scripts": {
+		"build": "fluid-build . --task build",
+		"build:commonjs": "fluid-build . --task commonjs",
+		"build:compile": "fluid-build . --task compile",
+		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:test": "concurrently npm:build:test:esm npm:build:test:cjs",
+		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
+		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
+		"build:webpack": "npm run webpack",
+		"check:are-the-types-wrong": "attw --pack .",
+		"check:biome": "biome check .",
+		"check:format": "npm run check:biome",
+		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
+		"eslint": "eslint --quiet --format stylish src",
+		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
+		"format": "npm run format:biome",
+		"format:biome": "biome check . --write",
+		"lint": "fluid-build . --task lint",
+		"lint:fix": "fluid-build . --task eslint:fix --task format",
+		"prepack": "npm run webpack",
+		"test": "npm run test:mocha",
+		"test:coverage": "c8 npm test",
+		"test:mocha": "npm run test:mocha:esm && echo skipping cjs to avoid overhead - npm run test:mocha:cjs",
+		"test:mocha:cjs": "cross-env FLUID_TEST_MODULE_SYSTEM=CJS mocha",
+		"test:mocha:esm": "mocha",
+		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
+		"webpack": "webpack --color --config webpack.config.cjs"
+	},
+	"c8": {
+		"all": true,
+		"cache-dir": "nyc/.cache",
+		"exclude": [
+			"src/test/**/*.*ts",
+			"dist/test/**/*.*js",
+			"lib/test/**/*.*js"
+		],
+		"exclude-after-remap": false,
+		"include": [
+			"src/**/*.*ts",
+			"dist/**/*.*js",
+			"lib/**/*.*js"
+		],
+		"report-dir": "nyc/report",
+		"reporter": [
+			"cobertura",
+			"html",
+			"text"
+		],
+		"temp-directory": "nyc/.nyc_output"
+	},
+	"dependencies": {
+		"@fluid-example/example-utils": "workspace:~",
+		"@fluid-private/test-drivers": "workspace:~",
+		"@fluidframework/container-definitions": "workspace:~",
+		"@fluidframework/container-loader": "workspace:~",
+		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/core-utils": "workspace:~",
+		"@fluidframework/driver-definitions": "workspace:~",
+		"@fluidframework/driver-utils": "workspace:~",
+		"@fluidframework/local-driver": "workspace:~",
+		"@fluidframework/odsp-doclib-utils": "workspace:~",
+		"@fluidframework/odsp-driver": "workspace:~",
+		"@fluidframework/odsp-driver-definitions": "workspace:~",
+		"@fluidframework/routerlicious-driver": "workspace:~",
+		"@fluidframework/runtime-utils": "workspace:~",
+		"@fluidframework/server-local-server": "^7.0.1",
+		"@fluidframework/telemetry-utils": "workspace:~",
+		"@fluidframework/test-runtime-utils": "workspace:~",
+		"@fluidframework/tool-utils": "workspace:~",
+		"axios": "^1.15.1",
+		"buffer": "^6.0.3",
+		"express": "^4.21.2",
+		"isomorphic-fetch": "^3.0.0",
+		"nconf": "^0.12.0",
+		"sillyname": "^0.1.0",
+		"source-map-loader": "^5.0.0",
+		"ts-loader": "^9.5.1",
+		"uuid": "^11.1.0",
+		"webpack-dev-server": "~5.2.6"
+	},
+	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.18.2",
+		"@biomejs/biome": "~2.4.5",
+		"@fluid-internal/mocha-test-setup": "workspace:~",
+		"@fluid-tools/build-cli": "catalog:buildTools",
+		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-tools": "catalog:buildTools",
+		"@fluidframework/eslint-config-fluid": "catalog:eslint",
+		"@types/express": "^4.17.21",
+		"@types/fs-extra": "^9.0.11",
+		"@types/mocha": "^10.0.10",
+		"@types/node": "catalog:types",
+		"c8": "^10.1.3",
+		"concurrently": "^10.0.3",
+		"copyfiles": "^2.4.1",
+		"cross-env": "^10.1.0",
+		"eslint": "catalog:eslint",
+		"fs-extra": "^9.1.0",
+		"jiti": "^2.6.1",
+		"mocha": "^11.7.5",
+		"mocha-multi-reporters": "^1.5.1",
+		"rimraf": "^6.1.3",
+		"typescript": "~5.4.5",
+		"webpack": "^5.94.0",
+		"webpack-cli": "^5.1.4"
+	},
+	"fluidBuild": {
+		"_tasksComment1": "webpack-fluid-loader injects a script tag pointing at its own bundle (/code/fluid-loader.bundle.js) into the page. This bundle must remain up to date for webpack-fluid-loader users.",
+		"_tasksComment2": "Using build:esnext over something like compile guarantees that this happens, since the build:esnext target depends on all transitive dependencies' build:esnext targets.",
+		"_tasksComment3": "The webpack task is then set to depend on ^build:esnext overriding default that also include ^tsc",
+		"tasks": {
+			"build:esnext": [
+				"...",
+				"webpack"
+			],
+			"webpack": [
+				"^build:entrypoints:esm",
+				"^build:esnext"
+			]
+		}
+	},
+	"typeValidation": {
+		"disabled": true
+	}
+}

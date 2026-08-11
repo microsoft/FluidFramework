@@ -1,0 +1,7 @@
+---
+blank_issues_enabled: true
+contact_links:
+  -
+    about: "Please ask and answer usage questions in our GitHub Discussions."
+    name: Question
+    url: "https://github.com/microsoft/FluidFramework/discussions"

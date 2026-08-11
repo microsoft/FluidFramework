@@ -1,0 +1,69 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import path from "path-browserify";
+
+import type { SaveInfo } from "./types.js";
+
+/**
+ * @internal
+ */
+export interface HasWorkloadName {
+	workloadName: string;
+}
+
+/**
+ * Gets the save directory path for the provided workload model.
+ *
+ * @internal
+ */
+export function getSaveDirectory(directory: string, model: HasWorkloadName): string {
+	const workloadFriendly = model.workloadName.replace(/[\s_]+/g, "-").toLowerCase();
+	return path.join(directory, workloadFriendly);
+}
+
+function getSavePath(
+	directory: string,
+	model: HasWorkloadName,
+	seed: number,
+	suffix: string = "",
+): string {
+	return path.join(getSaveDirectory(directory, model), `${seed}${suffix}.json`);
+}
+
+/**
+ * @internal
+ */
+export interface SaveOptions {
+	saveFailures?: undefined | false | { directory: string };
+	saveSuccesses?: undefined | false | { directory: string };
+	saveFluidOps?: undefined | false | { directory: string };
+}
+
+/**
+ * Gets save information for the provided workload model and options.
+ *
+ * @internal
+ */
+export function getSaveInfo(
+	model: HasWorkloadName,
+	options: SaveOptions,
+	seed: number,
+): SaveInfo {
+	return {
+		saveOnFailure:
+			options.saveFailures !== undefined && options.saveFailures !== false
+				? { path: getSavePath(options.saveFailures.directory, model, seed) }
+				: false,
+		saveOnSuccess:
+			options.saveSuccesses !== undefined && options.saveSuccesses !== false
+				? { path: getSavePath(options.saveSuccesses.directory, model, seed) }
+				: false,
+		saveFluidOps:
+			options.saveFluidOps !== undefined && options.saveFluidOps !== false
+				? { path: getSavePath(options.saveFluidOps.directory, model, seed, "-fluid-ops") }
+				: false,
+	};
+}

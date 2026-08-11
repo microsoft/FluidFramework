@@ -1,0 +1,774 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { strict as assert } from "node:assert";
+
+import { ValueSchema } from "../../../core/index.js";
+import { TreeAlpha } from "../../../shared-tree/index.js";
+import {
+	convertObjectNodeSchema,
+	toJsonSchema,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../simple-tree/api/simpleSchemaToJsonSchema.js";
+import {
+	FieldKind,
+	generateSchemaFromSimpleSchema,
+	getJsonSchema,
+	KeyEncodingOptions,
+	NodeKind,
+	normalizeFieldSchema,
+	numberSchema,
+	SchemaFactoryAlpha,
+	stringSchema,
+	TreeBeta,
+	type JsonObjectNodeSchema,
+	type JsonTreeSchema,
+	type UnsafeUnknownSchema,
+} from "../../../simple-tree/index.js";
+import type {
+	SimpleAllowedTypeAttributes,
+	SimpleNodeSchema,
+	SimpleTreeSchema,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../simple-tree/simpleSchema.js";
+import { testSimpleTrees } from "../../testTrees.js";
+
+import { getJsonValidator } from "./jsonSchemaUtilities.js";
+
+function simpleToJsonSchema(simpleSchema: SimpleTreeSchema): JsonTreeSchema {
+	const schema = generateSchemaFromSimpleSchema(simpleSchema);
+	return toJsonSchema(schema, {
+		requireFieldsWithDefaults: false,
+		keys: KeyEncodingOptions.usePropertyKeys,
+	});
+}
+
+describe("simpleSchemaToJsonSchema", () => {
+	it("Leaf schema", () => {
+		const input: SimpleTreeSchema = {
+			root: {
+				kind: FieldKind.Required,
+				metadata: {},
+				simpleAllowedTypes: new Map<string, SimpleAllowedTypeAttributes>([
+					[stringSchema.identifier, { isStaged: false }],
+				]),
+			},
+			definitions: new Map<string, SimpleNodeSchema>([
+				[stringSchema.identifier, stringSchema],
+			]),
+		};
+
+		const actual = simpleToJsonSchema(input);
+
+		const expected: JsonTreeSchema = {
+			$defs: {
+				"com.fluidframework.leaf.string": {
+					type: "string",
+					_treeNodeSchemaKind: NodeKind.Leaf,
+				},
+			},
+			$ref: "#/$defs/com.fluidframework.leaf.string",
+		};
+		assert.deepEqual(actual, expected);
+
+		// Verify that the generated schema is valid.
+		const validator = getJsonValidator(actual);
+
+		// Verify expected data validation behavior.
+		validator("Hello world", true);
+		validator({}, false);
+		validator([], false);
+	});
+
+	// Fluid Handles are not supported in JSON Schema export.
+	// Ensure the code throws if a handle is encountered.
+	it("Leaf node (Fluid Handle)", () => {
+		const input: SimpleTreeSchema = {
+			root: {
+				kind: FieldKind.Required,
+				metadata: {},
+				simpleAllowedTypes: new Map<string, SimpleAllowedTypeAttributes>([
+					["test.handle", { isStaged: false }],
+				]),
+			},
+			definitions: new Map<string, SimpleNodeSchema>([
+				[
+					"test.handle",
+					{
+						leafKind: ValueSchema.FluidHandle,
+						metadata: {},
+						persistedMetadata: undefined,
+						kind: NodeKind.Leaf,
+					},
+				],
+			]),
+		};
+
+		assert.throws(() => simpleToJsonSchema(input));
+	});
+
+	it("Array schema", () => {
+		const input: SimpleTreeSchema = {
+			root: {
+				kind: FieldKind.Required,
+				simpleAllowedTypes: new Map<string, SimpleAllowedTypeAttributes>([
+					["test.array", { isStaged: false }],
+				]),
+				metadata: {},
+			},
+			definitions: new Map<string, SimpleNodeSchema>([
+				[
+					"test.array",
+					{
+						kind: NodeKind.Array,
+						metadata: {},
+						persistedMetadata: undefined,
+						simpleAllowedTypes: new Map<string, SimpleAllowedTypeAttributes>([
+							[stringSchema.identifier, { isStaged: false }],
+						]),
+					},
+				],
+				[stringSchema.identifier, stringSchema],
+			]),
+		};
+
+		const actual = simpleToJsonSchema(input);
+
+		const expected: JsonTreeSchema = {
+			$defs: {
+				"test.array": {
+					type: "array",
+					_treeNodeSchemaKind: NodeKind.Array,
+					items: {
+						$ref: "#/$defs/com.fluidframework.leaf.string",
+					},
+				},
+				[stringSchema.identifier]: {
+					type: "string",
+					_treeNodeSchemaKind: NodeKind.Leaf,
+				},
+			},
+			$ref: "#/$defs/test.array",
+		};
+		assert.deepEqual(actual, expected);
+
+		// Verify that the generated schema is valid.
+		const validator = getJsonValidator(actual);
+
+		// Verify expected data validation behavior.
+		validator("Hello world", false);
+		validator({}, false);
+		validator([], true);
+		validator([42], false);
+		validator(["Hello", "world"], true);
+		validator(["Hello", 42, "world"], false);
+	});
+
+	it("Map schema", () => {
+		const input: SimpleTreeSchema = {
+			root: {
+				kind: FieldKind.Required,
+				simpleAllowedTypes: new Map<string, SimpleAllowedTypeAttributes>([
+					["test.map", { isStaged: false }],
+				]),
+				metadata: {},
+			},
+			definitions: new Map<string, SimpleNodeSchema>([
+				[
+					"test.map",
+					{
+						kind: NodeKind.Map,
+						metadata: {},
+						persistedMetadata: undefined,
+						simpleAllowedTypes: new Map<string, SimpleAllowedTypeAttributes>([
+							[stringSchema.identifier, { isStaged: false }],
+						]),
+					},
+				],
+				[stringSchema.identifier, stringSchema],
+			]),
+		};
+
+		const actual = simpleToJsonSchema(input);
+
+		const expected: JsonTreeSchema = {
+			$defs: {
+				"test.map": {
+					type: "object",
+					_treeNodeSchemaKind: NodeKind.Map,
+					patternProperties: {
+						"^.*$": { $ref: "#/$defs/com.fluidframework.leaf.string" },
+					},
+				},
+				[stringSchema.identifier]: {
+					type: "string",
+					_treeNodeSchemaKind: NodeKind.Leaf,
+				},
+			},
+			$ref: "#/$defs/test.map",
+		};
+		assert.deepEqual(actual, expected);
+
+		// Verify that the generated schema is valid.
+		const validator = getJsonValidator(actual);
+
+		// Verify expected data validation behavior.
+		validator("Hello world", false);
+		validator([], false);
+		validator({}, true);
+		validator(
+			{
+				foo: "Hello",
+				bar: "World",
+			},
+			true,
+		);
+		validator(
+			{
+				foo: "Hello",
+				bar: "World",
+				baz: 42,
+			},
+			false,
+		);
+	});
+
+	it("Record schema", () => {
+		const input: SimpleTreeSchema = {
+			root: {
+				kind: FieldKind.Required,
+				simpleAllowedTypes: new Map<string, SimpleAllowedTypeAttributes>([
+					["test.record", { isStaged: false }],
+				]),
+				metadata: {},
+			},
+			definitions: new Map<string, SimpleNodeSchema>([
+				[
+					"test.record",
+					{
+						kind: NodeKind.Record,
+						metadata: {},
+						persistedMetadata: undefined,
+						simpleAllowedTypes: new Map<string, SimpleAllowedTypeAttributes>([
+							[stringSchema.identifier, { isStaged: false }],
+						]),
+					},
+				],
+				[stringSchema.identifier, stringSchema],
+			]),
+		};
+
+		const actual = simpleToJsonSchema(input);
+
+		const expected: JsonTreeSchema = {
+			$defs: {
+				"test.record": {
+					type: "object",
+					_treeNodeSchemaKind: NodeKind.Record,
+					patternProperties: {
+						"^.*$": { $ref: "#/$defs/com.fluidframework.leaf.string" },
+					},
+				},
+				[stringSchema.identifier]: {
+					type: "string",
+					_treeNodeSchemaKind: NodeKind.Leaf,
+				},
+			},
+			$ref: "#/$defs/test.record",
+		};
+		assert.deepEqual(actual, expected);
+
+		// Verify that the generated schema is valid.
+		const validator = getJsonValidator(actual);
+
+		// Verify expected data validation behavior.
+		validator("Hello world", false);
+		validator([], false);
+		validator({}, true);
+		validator(
+			{
+				foo: "Hello",
+				bar: "World",
+			},
+			true,
+		);
+		validator(
+			{
+				foo: "Hello",
+				bar: "World",
+				baz: 42,
+			},
+			false,
+		);
+	});
+
+	describe("convertObjectNodeSchema", () => {
+		it("empty", () => {
+			const schemaFactory = new SchemaFactoryAlpha("test");
+			const empty = schemaFactory.objectAlpha("empty", {});
+			const emptyJson = convertObjectNodeSchema(empty, {
+				requireFieldsWithDefaults: false,
+				keys: KeyEncodingOptions.usePropertyKeys,
+			});
+			const expectedEmpty: JsonObjectNodeSchema = {
+				type: "object",
+				_treeNodeSchemaKind: NodeKind.Object,
+				properties: {},
+				required: [],
+				additionalProperties: false,
+			};
+			assert.deepEqual(emptyJson, expectedEmpty);
+		});
+
+		it("withField", () => {
+			const schemaFactory = new SchemaFactoryAlpha("test");
+			class WithField extends schemaFactory.objectAlpha("withField", {
+				prop: schemaFactory.optional(schemaFactory.number, {
+					key: "stored",
+					metadata: { description: "The description" },
+				}),
+			}) {}
+			const withFieldJson = convertObjectNodeSchema(WithField, {
+				requireFieldsWithDefaults: false,
+				keys: KeyEncodingOptions.usePropertyKeys,
+			});
+			const expectedWithField: JsonObjectNodeSchema = {
+				type: "object",
+				_treeNodeSchemaKind: NodeKind.Object,
+				properties: {
+					prop: {
+						$ref: "#/$defs/com.fluidframework.leaf.number",
+						description: "The description",
+					},
+				},
+				required: [],
+				additionalProperties: false,
+			};
+			assert.deepEqual(withFieldJson, expectedWithField);
+		});
+	});
+
+	it("Object schema", () => {
+		const input: SimpleTreeSchema = {
+			root: {
+				kind: FieldKind.Required,
+				metadata: {},
+				simpleAllowedTypes: new Map<string, SimpleAllowedTypeAttributes>([
+					["test.object", { isStaged: false }],
+				]),
+			},
+			definitions: new Map<string, SimpleNodeSchema>([
+				[
+					"test.object",
+					{
+						kind: NodeKind.Object,
+						metadata: {},
+						persistedMetadata: undefined,
+						allowUnknownOptionalFields: false,
+						fields: new Map([
+							[
+								"foo",
+								{
+									kind: FieldKind.Optional,
+									simpleAllowedTypes: new Map<string, SimpleAllowedTypeAttributes>([
+										[numberSchema.identifier, { isStaged: false }],
+									]),
+									metadata: { description: "A number representing the concept of Foo." },
+									persistedMetadata: undefined,
+									storedKey: "foo",
+								},
+							],
+							[
+								"bar",
+								{
+									kind: FieldKind.Required,
+									simpleAllowedTypes: new Map<string, SimpleAllowedTypeAttributes>([
+										[stringSchema.identifier, { isStaged: false }],
+									]),
+									metadata: { description: "A string representing the concept of Bar." },
+									persistedMetadata: undefined,
+									storedKey: "bar",
+								},
+							],
+							[
+								"id",
+								{
+									kind: FieldKind.Identifier,
+									simpleAllowedTypes: new Map<string, SimpleAllowedTypeAttributes>([
+										[stringSchema.identifier, { isStaged: false }],
+									]),
+									metadata: {
+										description: "Unique identifier for the test object.",
+									},
+									persistedMetadata: undefined,
+									storedKey: "id",
+								},
+							],
+						]),
+					},
+				],
+				[stringSchema.identifier, stringSchema],
+				[numberSchema.identifier, numberSchema],
+			]),
+		};
+
+		const actual = simpleToJsonSchema(input);
+
+		const expected: JsonTreeSchema = {
+			$defs: {
+				"test.object": {
+					type: "object",
+					_treeNodeSchemaKind: NodeKind.Object,
+					properties: {
+						foo: {
+							$ref: "#/$defs/com.fluidframework.leaf.number",
+							description: "A number representing the concept of Foo.",
+						},
+						bar: {
+							$ref: "#/$defs/com.fluidframework.leaf.string",
+							description: "A string representing the concept of Bar.",
+						},
+						id: {
+							$ref: "#/$defs/com.fluidframework.leaf.string",
+							description: "Unique identifier for the test object.",
+						},
+					},
+					required: ["bar", "id"],
+					additionalProperties: false,
+				},
+				[numberSchema.identifier]: {
+					type: "number",
+					_treeNodeSchemaKind: NodeKind.Leaf,
+				},
+				[stringSchema.identifier]: {
+					type: "string",
+					_treeNodeSchemaKind: NodeKind.Leaf,
+				},
+			},
+			$ref: "#/$defs/test.object",
+		};
+		assert.deepEqual(actual, expected);
+
+		// Verify that the generated schema is valid.
+		const validator = getJsonValidator(actual);
+
+		// Verify expected data validation behavior.
+		validator("Hello world", false);
+		validator([], false);
+		validator({}, false);
+		validator(
+			{
+				foo: 42,
+			},
+			false,
+		);
+		validator(
+			{
+				bar: "Hello World",
+			},
+			false,
+		);
+		validator(
+			{
+				bar: "Hello World",
+				id: "text",
+			},
+			true,
+		);
+		validator(
+			{
+				foo: 42,
+				bar: "Hello World",
+				id: "text",
+			},
+			true,
+		);
+		validator(
+			{
+				foo: 42,
+				bar: "Hello World",
+				baz: true,
+				id: "text",
+			},
+			false,
+		);
+	});
+
+	it("Object schema including an identifier field", () => {
+		const input: SimpleTreeSchema = {
+			root: {
+				kind: FieldKind.Required,
+				metadata: {},
+				simpleAllowedTypes: new Map<string, SimpleAllowedTypeAttributes>([
+					["test.object", { isStaged: false }],
+				]),
+			},
+			definitions: new Map<string, SimpleNodeSchema>([
+				[
+					"test.object",
+					{
+						kind: NodeKind.Object,
+						metadata: {},
+						persistedMetadata: undefined,
+						allowUnknownOptionalFields: false,
+						fields: new Map([
+							[
+								"id",
+								{
+									kind: FieldKind.Identifier,
+									simpleAllowedTypes: new Map<string, SimpleAllowedTypeAttributes>([
+										[stringSchema.identifier, { isStaged: false }],
+									]),
+									storedKey: "id",
+									metadata: {},
+								},
+							],
+						]),
+					},
+				],
+				[stringSchema.identifier, stringSchema],
+			]),
+		};
+
+		const actual = simpleToJsonSchema(input);
+
+		const expected: JsonTreeSchema = {
+			$defs: {
+				"test.object": {
+					type: "object",
+					_treeNodeSchemaKind: NodeKind.Object,
+					properties: {
+						id: { $ref: "#/$defs/com.fluidframework.leaf.string" },
+					},
+					// The identifier field is technically required, it just has a default provider.
+					// TODO: Support for generating schema for insertable content (concise tree with fields that have default providers as optional) is now implemented: refactor tests so it can be validated.
+					required: ["id"],
+					additionalProperties: false,
+				},
+				"com.fluidframework.leaf.string": {
+					type: "string",
+					_treeNodeSchemaKind: NodeKind.Leaf,
+				},
+			},
+			$ref: "#/$defs/test.object",
+		};
+		assert.deepEqual(actual, expected);
+	});
+
+	it("Object schema including a union field", () => {
+		const input: SimpleTreeSchema = {
+			root: {
+				kind: FieldKind.Required,
+				metadata: {},
+				simpleAllowedTypes: new Map<string, SimpleAllowedTypeAttributes>([
+					["test.object", { isStaged: false }],
+				]),
+			},
+			definitions: new Map<string, SimpleNodeSchema>([
+				[
+					"test.object",
+					{
+						kind: NodeKind.Object,
+						metadata: {},
+						persistedMetadata: undefined,
+						allowUnknownOptionalFields: false,
+						fields: new Map([
+							[
+								"foo",
+								{
+									kind: FieldKind.Required,
+									metadata: {},
+									persistedMetadata: undefined,
+									simpleAllowedTypes: new Map<string, SimpleAllowedTypeAttributes>([
+										[numberSchema.identifier, { isStaged: false }],
+										[stringSchema.identifier, { isStaged: false }],
+									]),
+									storedKey: "foo",
+								},
+							],
+						]),
+					},
+				],
+				[numberSchema.identifier, numberSchema],
+				[stringSchema.identifier, stringSchema],
+			]),
+		};
+
+		const actual = simpleToJsonSchema(input);
+
+		const expected: JsonTreeSchema = {
+			$defs: {
+				"test.object": {
+					type: "object",
+					_treeNodeSchemaKind: NodeKind.Object,
+					properties: {
+						foo: {
+							anyOf: [
+								{ $ref: "#/$defs/com.fluidframework.leaf.number" },
+								{ $ref: "#/$defs/com.fluidframework.leaf.string" },
+							],
+						},
+					},
+					required: ["foo"],
+					additionalProperties: false,
+				},
+				[numberSchema.identifier]: {
+					type: "number",
+					_treeNodeSchemaKind: NodeKind.Leaf,
+				},
+				[stringSchema.identifier]: {
+					type: "string",
+					_treeNodeSchemaKind: NodeKind.Leaf,
+				},
+			},
+			$ref: "#/$defs/test.object",
+		};
+		assert.deepEqual(actual, expected);
+	});
+
+	it("Recursive object schema", () => {
+		const input: SimpleTreeSchema = {
+			root: {
+				kind: FieldKind.Required,
+				metadata: {},
+				simpleAllowedTypes: new Map<string, SimpleAllowedTypeAttributes>([
+					["test.recursive-object", { isStaged: false }],
+				]),
+			},
+			definitions: new Map<string, SimpleNodeSchema>([
+				[
+					"test.recursive-object",
+					{
+						kind: NodeKind.Object,
+						metadata: {},
+						persistedMetadata: undefined,
+						allowUnknownOptionalFields: false,
+						fields: new Map([
+							[
+								"foo",
+								{
+									kind: FieldKind.Optional,
+									metadata: {},
+									persistedMetadata: undefined,
+									simpleAllowedTypes: new Map<string, SimpleAllowedTypeAttributes>([
+										[stringSchema.identifier, { isStaged: false }],
+										["test.recursive-object", { isStaged: false }],
+									]),
+									storedKey: "foo",
+								},
+							],
+						]),
+					},
+				],
+				[stringSchema.identifier, stringSchema],
+			]),
+		};
+		const actual = simpleToJsonSchema(input);
+
+		const expected: JsonTreeSchema = {
+			$defs: {
+				"test.recursive-object": {
+					type: "object",
+					_treeNodeSchemaKind: NodeKind.Object,
+					properties: {
+						foo: {
+							anyOf: [
+								{ $ref: "#/$defs/com.fluidframework.leaf.string" },
+								{ $ref: "#/$defs/test.recursive-object" },
+							],
+						},
+					},
+					required: [],
+					additionalProperties: false,
+				},
+				[stringSchema.identifier]: {
+					type: "string",
+					_treeNodeSchemaKind: NodeKind.Leaf,
+				},
+			},
+			$ref: "#/$defs/test.recursive-object",
+		};
+		assert.deepEqual(actual, expected);
+
+		// Verify that the generated schema is valid.
+		const validator = getJsonValidator(actual);
+
+		// Verify expected data validation behavior.
+		validator({}, true);
+		validator({ foo: {} }, true);
+		validator({ foo: "Hello world" }, true);
+		validator({ foo: { foo: "Hello world" } }, true);
+
+		validator("Hello world", false);
+		validator([], false);
+		validator({ foo: 42 }, false);
+		validator({ foo: { foo: 42 } }, false);
+		validator({ bar: "Hello world" }, false);
+		validator({ foo: { bar: "Hello world" } }, false);
+	});
+
+	describe("test trees", () => {
+		for (const testTree of testSimpleTrees) {
+			// Skip these unsupported cases
+			if (testTree.name === "empty" || testTree.name === "handle") {
+				continue;
+			}
+
+			it(testTree.name, () => {
+				const data = testTree.root;
+				const tree = TreeAlpha.create<UnsafeUnknownSchema>(testTree.schema, data());
+				const testSchema = normalizeFieldSchema(testTree.schema).allowedTypes;
+
+				{
+					const withPropertyKeys = TreeBeta.exportConcise(tree, {
+						keys: KeyEncodingOptions.usePropertyKeys,
+					});
+					const jsonSchema = getJsonSchema(testSchema, {
+						requireFieldsWithDefaults: true,
+						keys: KeyEncodingOptions.usePropertyKeys,
+					});
+					const validator = getJsonValidator(jsonSchema);
+					validator(withPropertyKeys, true);
+				}
+
+				{
+					const withStoredKeys = TreeBeta.exportConcise(tree, {
+						keys: KeyEncodingOptions.knownStoredKeys,
+					});
+					const jsonSchema = getJsonSchema(testSchema, {
+						requireFieldsWithDefaults: true,
+						keys: KeyEncodingOptions.knownStoredKeys,
+					});
+					const validator = getJsonValidator(jsonSchema);
+					validator(withStoredKeys, true);
+				}
+
+				{
+					const withPropertyKeys = TreeBeta.exportConcise(tree, {
+						keys: KeyEncodingOptions.usePropertyKeys,
+					});
+					const jsonSchema = getJsonSchema(testSchema, {
+						requireFieldsWithDefaults: false,
+						keys: KeyEncodingOptions.usePropertyKeys,
+					});
+					const validator = getJsonValidator(jsonSchema);
+					validator(withPropertyKeys, true);
+				}
+
+				{
+					const withStoredKeys = TreeBeta.exportConcise(tree, {
+						keys: KeyEncodingOptions.knownStoredKeys,
+					});
+					const jsonSchema = getJsonSchema(testSchema, {
+						requireFieldsWithDefaults: false,
+						keys: KeyEncodingOptions.knownStoredKeys,
+					});
+					const validator = getJsonValidator(jsonSchema);
+					validator(withStoredKeys, true);
+				}
+			});
+		}
+	});
+});

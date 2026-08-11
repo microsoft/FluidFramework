@@ -1,0 +1,68 @@
+/*
+	This configuration is specifically constructed to be used as a "linter" configuration.
+	It runs api-extractor in a mode where all other Fluid packages are bundled in its analysis.
+	Here we are specifically looking to ensure that cross-package references are release-tag-compatible.
+*/
+{
+	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
+	"extends": "./api-extractor-base.json",
+	"apiReport": {
+		// Don't generate API report in lint pass
+		"enabled": false
+	},
+	"docModel": {
+		// Don't generate doc-model in lint pass
+		"enabled": false
+	},
+	"dtsRollup": {
+		// Don't generate rollups in lint pass
+		"enabled": false
+	},
+	"tsdocMetadata": {
+		// Don't generate docs metadata in lint pass
+		"enabled": false
+	},
+	"messages": {
+		"extractorMessageReporting": {
+			// Don't validate forgotten exports across package boundaries.
+			// This is an explicit policy choice.
+			"ae-forgotten-export": {
+				"logLevel": "none"
+			},
+			// Don't check for explicit release tags in other packages.
+			// Each package validates this for themselves, so there is no need to re-validate here.
+			"ae-missing-release-tag": {
+				"logLevel": "none"
+			},
+
+			// Since we generate API reports for different release levels, it is possible (and valid) for `@link` tags
+			// to reference an API item that won't be visible at that level.
+			// For example, a public API may note that a newer feature is available in a beta release and link to that item.
+			// We want that to be possible, so we suppress this error for report generation.
+			// It will be enabled for `model` generation, which is used for generating API documentation for the entire suite.
+			//
+			// Also note that links with implicit (unannotated) package name specifiers don't currently resolve correctly
+			// when their members are bundled.
+			// See https://github.com/microsoft/rushstack/issues/3521
+			// Omit this check from the cross-package lint step.
+			"ae-unresolved-link": {
+				"logLevel": "none"
+			},
+
+			// This is the primary error we are looking for with the linter pass.
+			// Ensure that release tags of API members are compatible **across package boundaries**.
+			"ae-incompatible-release-tags": {
+				"logLevel": "error",
+				"addToApiReportFile": false
+			}
+		}
+	},
+	// Bundle local dependencies so we can validate cross-package relationships
+	"bundledPackages": [
+		"@fluidframework/*",
+		"@fluid-internal/*",
+		"@fluid-experimental/*",
+		"@fluid-private/*",
+		"@fluid-tools/*"
+	]
+}

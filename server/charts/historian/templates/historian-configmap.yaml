@@ -1,0 +1,77 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "historian.fullname" . }}
+  labels:
+    app: {{ template "historian.fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    component: "{{ .Values.historian.name }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+data:
+  config.json: |
+    {
+        "logger": {
+            "colorize": false,
+            "morganFormat": "json",
+            "json": false,
+            "level": "verbose",
+            "timestamp": false
+        },
+        "lumberjack": {
+            "options": {
+                "enableGlobalTelemetryContext": {{ .Values.lumberjack.options.enableGlobalTelemetryContext }},
+                "enableSanitization": {{ .Values.lumberjack.options.enableSanitization }}
+            }
+        },
+        "config": {
+            "configDumpEnabled": {{ .Values.historian.config.configDumpEnabled }},
+            "secretNamesToRedactInConfigDump": [
+                {{- $lastIndex := sub (len .Values.historian.config.secretNamesToRedactInConfigDump) 1}}
+                {{- range $i, $secret := .Values.historian.config.secretNamesToRedactInConfigDump }}
+                {{ toJson . }}{{- if ne $i $lastIndex -}}, {{ end }}
+                {{- end }}
+            ]
+        },
+        "requestSizeLimit": "1gb",
+        "enableResponseCloseLatencyMetric": {{ .Values.historian.enableResponseCloseLatencyMetric }},
+        "riddler": "{{ .Values.historian.riddler }}",
+        "ignoreEphemeralFlag": {{ .Values.historian.ignoreEphemeralFlag }},
+        "redis": {
+            "host": "{{ .Values.historian.redis.url }}",
+            "port": "{{ .Values.historian.redis.port }}",
+            "tls": {{ .Values.historian.redis.tls }},
+            "pass": "{{ .Values.historian.redis.password }}"
+        },
+        "redisForThrottling": {
+            "host": "{{ .Values.historian.redisForThrottling.url }}",
+            "port": "{{ .Values.historian.redisForThrottling.port }}",
+            "tls": {{ .Values.historian.redisForThrottling.tls }},
+            "pass": "{{ .Values.historian.redisForThrottling.password }}"
+        },
+        "error": {
+            "track": {{ .Values.historian.error.track }},
+            "endpoint": "{{ .Values.historian.error.endpoint }}"
+        },
+        "throttling": {
+            "restCallsPerTenant": {
+                "generalRestCall": {{ toJson .Values.historian.throttling.restCallsPerTenant.generalRestCall }},
+                "getSummary": {{ toJson .Values.historian.throttling.restCallsPerTenant.getSummary }},
+                "createSummary": {{ toJson .Values.historian.throttling.restCallsPerTenant.createSummary }}
+            },
+            "restCallsPerCluster": {
+                "getSummary": {{ toJson .Values.historian.throttling.restCallsPerCluster.getSummary }},
+                "createSummary": {{ toJson .Values.historian.throttling.restCallsPerCluster.createSummary }}
+            }
+        },
+        "restGitService": {
+            "ephemeralDocumentTTLSec": {{ .Values.historian.restGitService.ephemeralDocumentTTLSec }},
+            "disableGitCache": {{ .Values.historian.restGitService.disableGitCache }}
+        },
+        "storageUrl": "{{ .Values.historian.storageUrl }}",
+        "system": {
+            "httpServer": {
+                "connectionTimeoutMs": {{ .Values.historian.system.httpServer.connectionTimeoutMs }}
+            }
+        }
+    }

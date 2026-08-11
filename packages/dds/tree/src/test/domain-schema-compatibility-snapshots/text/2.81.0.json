@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "root": {
+    "kind": 1,
+    "simpleAllowedTypes": {
+      "com.fluidframework.text.Text": {
+        "isStaged": false
+      }
+    }
+  },
+  "definitions": {
+    "com.fluidframework.leaf.string": {
+      "leaf": {
+        "kind": 3,
+        "leafKind": 1
+      }
+    },
+    "com.fluidframework.text.StringArray": {
+      "array": {
+        "kind": 1,
+        "simpleAllowedTypes": {
+          "com.fluidframework.leaf.string": {
+            "isStaged": false
+          }
+        }
+      }
+    },
+    "com.fluidframework.text.Text": {
+      "object": {
+        "kind": 2,
+        "fields": {
+          "content": {
+            "kind": 1,
+            "simpleAllowedTypes": {
+              "com.fluidframework.text.StringArray": {
+                "isStaged": false
+              }
+            },
+            "storedKey": ""
+          }
+        },
+        "allowUnknownOptionalFields": false
+      }
+    }
+  }
+}

@@ -1,0 +1,156 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import type { ApiItem, ApiModel } from "@microsoft/api-extractor-model";
+
+import { defaultConsoleLogger } from "../../Logging.js";
+import type { LoggingConfiguration } from "../../LoggingConfiguration.js";
+import type { Section } from "../../mdast/index.js";
+import { createSectionForApiItem } from "../default-implementations/index.js";
+
+import {
+	type DocumentationSuiteConfiguration,
+	type DocumentationSuiteOptions,
+	getDocumentationSuiteConfigurationWithDefaults,
+} from "./DocumentationSuite.js";
+import {
+	type ApiItemTransformations,
+	getApiItemTransformationsWithDefaults,
+} from "./Transformations.js";
+
+/**
+ * Shared base type for {@link ApiItemTransformationConfiguration} and {@link ApiItemTransformationOptions}.
+ *
+ * @remarks Not intended to be used directly.
+ *
+ * @sealed
+ * @public
+ */
+export interface ApiItemTransformationConfigurationBase {
+	/**
+	 * API Model for which the documentation is being generated.
+	 * This is the output of {@link https://api-extractor.com/ | API-Extractor}.
+	 *
+	 * @remarks
+	 *
+	 * Beyond being the root entry for rendering, this is used to resolve member links globally, etc.
+	 *
+	 * If you need to generate a model from API reports on disk, see {@link loadModel}.
+	 */
+	readonly apiModel: ApiModel;
+}
+
+/**
+ * System configuration for API Item transformation functionality.
+ *
+ * @privateRemarks
+ * TODO: ideally this type should not appear in the public API.
+ * Users should only need {@link ApiItemTransformationOptions}.
+ *
+ * @public
+ */
+export interface ApiItemTransformationConfiguration
+	extends ApiItemTransformationConfigurationBase,
+		DocumentationSuiteConfiguration,
+		Required<LoggingConfiguration> {
+	/**
+	 * Default root URI used when generating content links.
+	 *
+	 * @example
+	 * For a generated document `foo/bar` and a `uriRoot` of `docs`, any generated links to that document would be `docs/foo/bar`.
+	 */
+	readonly uriRoot: string;
+
+	/**
+	 * {@inheritDoc ApiItemTransformations}
+	 */
+	readonly transformations: ApiItemTransformations;
+
+	/**
+	 * Optional override for the starting heading level of a document.
+	 *
+	 * @remarks Must be an integer on [1, ∞).
+	 */
+	readonly startingHeadingLevel: number;
+
+	/**
+	 * Generates the default section layout used by all default {@link ApiItemTransformations}.
+	 *
+	 * @remarks
+	 *
+	 * Can be used to uniformly control the default output layout for all API item kinds.
+	 *
+	 * API item kind-specific details are passed in, and can be displayed as desired.
+	 *
+	 * @returns The list of {@link Section}s that comprise the top-level section body for the API item.
+	 */
+	readonly defaultSectionLayout: (
+		apiItem: ApiItem,
+		childSections: Section[] | undefined,
+		config: ApiItemTransformationConfiguration,
+	) => Section[];
+}
+
+/**
+ * Input options for API Item transformation APIs.
+ *
+ * @public
+ */
+export interface ApiItemTransformationOptions
+	extends ApiItemTransformationConfigurationBase,
+		DocumentationSuiteOptions,
+		LoggingConfiguration {
+	/**
+	 * {@inheritDoc ApiItemTransformationConfiguration.uriRoot}
+	 *
+	 * @defaultValue ""
+	 */
+	readonly uriRoot?: string | undefined;
+
+	/**
+	 * Optional overrides for the default transformations.
+	 */
+	readonly transformations?: Partial<ApiItemTransformations>;
+
+	/**
+	 * {@inheritDoc ApiItemTransformationConfiguration.startingHeadingLevel}
+	 *
+	 * @defaultValue 1
+	 */
+	readonly startingHeadingLevel?: number | undefined;
+
+	/**
+	 * {@inheritDoc ApiItemTransformationConfiguration.defaultSectionLayout}
+	 */
+	readonly defaultSectionLayout?: (
+		apiItem: ApiItem,
+		childSections: Section[] | undefined,
+		config: ApiItemTransformationConfiguration,
+	) => Section[];
+}
+
+/**
+ * Gets a complete {@link ApiItemTransformationConfiguration} using the provided partial configuration, and filling
+ * in the remainder with the documented defaults.
+ *
+ * @public
+ */
+export function getApiItemTransformationConfigurationWithDefaults(
+	options: ApiItemTransformationOptions,
+): ApiItemTransformationConfiguration {
+	const logger = options.logger ?? defaultConsoleLogger;
+	const defaultSectionLayout = options.defaultSectionLayout ?? createSectionForApiItem;
+	const documentationSuiteOptions = getDocumentationSuiteConfigurationWithDefaults(options);
+	const transformations = getApiItemTransformationsWithDefaults(options?.transformations);
+	return {
+		...documentationSuiteOptions,
+		transformations,
+		apiModel: options.apiModel,
+		uriRoot: options.uriRoot ?? "",
+		startingHeadingLevel: options.startingHeadingLevel ?? 1,
+		logger,
+		defaultSectionLayout,
+	};
+}

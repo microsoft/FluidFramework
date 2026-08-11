@@ -1,0 +1,482 @@
+# @fluid-experimental/presence
+
+## 2.115.0
+
+Dependency updates only.
+
+## 2.114.0
+
+Dependency updates only.
+
+## 2.113.0
+
+Dependency updates only.
+
+## 2.112.0
+
+Dependency updates only.
+
+## 2.111.0
+
+Dependency updates only.
+
+## 2.110.0
+
+### Minor Changes
+
+- getPresence export removed ([#27536](https://github.com/microsoft/FluidFramework/pull/27536)) [a3c731f4a6c](https://github.com/microsoft/FluidFramework/commit/a3c731f4a6ccae3056f6dce1c535487f13de69ff)
+
+  Import from `fluid-framework` instead.
+  See [#26397](https://github.com/microsoft/FluidFramework/issues/26397).
+
+## 2.103.0
+
+Dependency updates only.
+
+## 2.102.0
+
+Dependency updates only.
+
+## 2.101.0
+
+Dependency updates only.
+
+## 2.100.0
+
+### Minor Changes
+
+- Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
+
+  All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
+
+## 2.93.0
+
+### Minor Changes
+
+- `getPresence` from `@fluidframework/presence` is deprecated and will be removed in a future release. ([#26399](https://github.com/microsoft/FluidFramework/pull/26399)) [d533c19c7c](https://github.com/microsoft/FluidFramework/commit/d533c19c7cb25d48ecab1b742e44dfe560d20534)
+
+  Now `getPresence` is available for import from the `fluid-framework` package.
+
+  To prepare, make changes following this pattern:
+
+  ```diff
+  -import { getPresence } from "@fluidframework/presence/beta";
+  +import { getPresence } from "fluid-framework";
+  ```
+
+  See [issue #26397](https://github.com/microsoft/FluidFramework/issues/26397) for more details.
+
+- presence API set now at public support level ([#27001](https://github.com/microsoft/FluidFramework/pull/27001)) [97d14a7e84](https://github.com/microsoft/FluidFramework/commit/97d14a7e8411ff2dd17dc497a09823a276fd78e0)
+
+  All `@fluidframework/presence` APIs that had been `@beta` have been promoted to `@public` support with the exception of `getPresence` which has been relocated to `fluid-framework`. (See [issue #26397](https://github.com/microsoft/FluidFramework/issues/26397) for more `getPresence` details.)
+
+  See [Presence API overview](https://fluidframework.com/docs/build/presence) and [Presence package API details](https://fluidframework.com/docs/api/presence/) with [getPresence API](https://fluidframework.com/docs/api/fluid-framework/#getPresence) to get started.
+
+## 2.92.0
+
+Dependency updates only.
+
+## 2.91.0
+
+Dependency updates only.
+
+## 2.90.0
+
+Dependency updates only.
+
+## 2.83.0
+
+Dependency updates only.
+
+## 2.82.0
+
+Dependency updates only.
+
+## 2.81.0
+
+### Minor Changes
+
+- Self attendee is announced via "attendeeConnected" ([#26247](https://github.com/microsoft/FluidFramework/pull/26247)) [f838524b41](https://github.com/microsoft/FluidFramework/commit/f838524b41dcc71aae58d48955af3f1c9cca9309)
+
+  Local attendee connection is now announced via "attendeeConnected" presence event.
+
+## 2.80.0
+
+### Minor Changes
+
+- Removal of number key support in LatestMap ([#25904](https://github.com/microsoft/FluidFramework/pull/25904)) [c1d91d8b5f4](https://github.com/microsoft/FluidFramework/commit/c1d91d8b5f4f141f890c848a7f344d4238d4a85a)
+
+  `number` keys have never been successfully propagated as `number`s at runtime and this type clarification makes that clear. See [issue 25919](https://github.com/microsoft/FluidFramework/issues/25919) for more details.
+
+- Attendee status fixes on reconnect ([#26111](https://github.com/microsoft/FluidFramework/pull/26111)) [836f22fac9e](https://github.com/microsoft/FluidFramework/commit/836f22fac9e8728324ee1f3c34ea27ce8392f07e)
+
+  Fix "Connected" status for Attendees when local client reconnects (intermittent connection or transition from read-only to read-write connection).
+  This includes no longer emitting incorrect "attendeeDisconnected" events.
+
+## 2.74.0
+
+Dependency updates only.
+
+## 2.73.0
+
+Dependency updates only.
+
+## 2.72.0
+
+Dependency updates only.
+
+## 2.71.0
+
+Dependency updates only.
+
+## 2.70.0
+
+### Minor Changes
+
+- Improved join scalability ([#25371](https://github.com/microsoft/FluidFramework/pull/25371)) [98dadd30ae](https://github.com/microsoft/FluidFramework/commit/98dadd30aebbf202c9fad268013d27719129c774)
+
+  Protocol for attendees joining has been updated to more efficiently accommodate a larger number of attendees, including when few-to-none have write access.
+
+## 2.63.0
+
+Dependency updates only.
+
+## 2.62.0
+
+Dependency updates only.
+
+## 2.61.0
+
+Dependency updates only.
+
+## 2.60.0
+
+Dependency updates only.
+
+## 2.53.0
+
+### Minor Changes
+
+- StateFactory.latestMap now accepts a validator parameter ([#25172](https://github.com/microsoft/FluidFramework/pull/25172)) [cac39eb33d0](https://github.com/microsoft/FluidFramework/commit/cac39eb33d0c5371c9fce34ce45a299e5f51d194)
+
+  The StateFactory.latestMap API now accepts a `validator` argument.
+  The `validator` is a function that will be called at runtime to verify that the data is valid.
+  This is especially useful when changing the schema of presence data.
+
+  See [the presence documentation](https://fluidframework.com/docs/build/presence) for more details.
+
+## 2.52.0
+
+Dependency updates only.
+
+## 2.51.0
+
+Dependency updates only.
+
+## 2.50.0
+
+### Minor Changes
+
+- StateFactory.latest now accepts a validator parameter ([#24958](https://github.com/microsoft/FluidFramework/pull/24958)) [839ce9af20](https://github.com/microsoft/FluidFramework/commit/839ce9af203dd3ade2d7234865057092ec12d608)
+
+  The StateFactory.latest API now accepts a `validator` argument. The `validator` is a function
+  that will be called at runtime to verify that the data is valid. This is especially useful when changing the schema of
+  presence data.
+
+  See [the presence documentation](https://fluidframework.com/docs/build/presence) for more details.
+
+## 2.43.0
+
+Dependency updates only.
+
+## 2.42.0
+
+Dependency updates only.
+
+## 2.41.0
+
+### Minor Changes
+
+- Presence APIs promoted to beta [cc10c102f1](https://github.com/microsoft/FluidFramework/commit/cc10c102f150ca09d7a8b409852a7a0c14f8c2f1)
+
+  [Presence APIs](https://fluidframework.com/docs/build/presence) are now beta and can be imported via `@fluidframework/presence/beta`.
+
+  Note: `Notifications` are only supported via `/alpha` imports. To access notifications-only workspace support, cast `Presence` to `PresenceWithNotifications`.
+
+- "getPresence(container: IFluidContainer): Presence" now supported ([#24399](https://github.com/microsoft/FluidFramework/pull/24399)) [5c6824a48d](https://github.com/microsoft/FluidFramework/commit/5c6824a48da7dad6cb5911e6b1af02dfaf6382e1)
+
+  You can now use the `getPresence` function to directly acquire `Presence`. In previous releases, you were required to
+  use `ExperimentalPresenceManager` in container schema and calling `getPresenceViaDataObject`, but that is no longer
+  required. Both `ExperimentalPresenceManager` and `getPresenceViaDataObject` are now deprecated.
+
+## 2.40.0
+
+Dependency updates only.
+
+## 2.33.0
+
+### Minor Changes
+
+- Latest and LatestMap support more types ([#24417](https://github.com/microsoft/FluidFramework/pull/24417)) [619af0b05e2](https://github.com/microsoft/FluidFramework/commit/619af0b05e23c469feb754e93351b7edca1a74a4)
+  - `Latest` (`StateFactory.latest`) permits `null` so that nullable types may be used.
+  - `LatestMap` (`StateFactory.latestMap`) permits `boolean`, `number`, `string`, and `null`.
+
+- StateFactory.latest/latestMap take an object as its only argument ([#24414](https://github.com/microsoft/FluidFramework/pull/24414)) [446d4183769](https://github.com/microsoft/FluidFramework/commit/446d418376907317179b19b1111c170b9120103c)
+
+  The `StateFactory.latest` and `StateFactory.latestMap` functions now take a single object argument.
+  To convert existing code, pass any initial data in the `local` argument and broadcast settings in the `settings` argument.
+  For example:
+
+  Before:
+
+  ```ts
+  const statesWorkspace = presence.states.getWorkspace("name:workspace", {
+    cursor: StateFactory.latest(
+      { x: 0, y: 0 },
+      { allowableUpdateLatencyMs: 100 },
+    ),
+  });
+  ```
+
+  After:
+
+  ```ts
+  const statesWorkspace = presence.states.getWorkspace("name:workspace", {
+    cursor: StateFactory.latest({
+      local: { x: 0, y: 0 },
+      settings: { allowableUpdateLatencyMs: 100 },
+    }),
+  });
+  ```
+
+- Presence object is accessible from Workspaces and State objects ([#24396](https://github.com/microsoft/FluidFramework/pull/24396)) [c056567dcdf](https://github.com/microsoft/FluidFramework/commit/c056567dcdfaf5cc126e0487db2451220d3609ba)
+
+  Users can now access the `Presence` object through `.presence` on all Workspaces and State objects:
+
+  `Latest.presence`
+  `LatestMap.presence`
+  `Notifications.presence`
+  `NotificationsWorkspace.presence`
+  `StatesWorkspace.presence`
+
+- Presence APIs have been renamed ([#24384](https://github.com/microsoft/FluidFramework/pull/24384)) [ea95ef0a4f3](https://github.com/microsoft/FluidFramework/commit/ea95ef0a4f372c3fe01187a24515dafc1bfcef91)
+
+  The following API changes have been made to improve clarity and consistency:
+
+  | Before 2.33.0                              | 2.33.0                                              |
+  | ------------------------------------------ | --------------------------------------------------- |
+  | `acquirePresence`                          | `getPresence`                                       |
+  | `acquirePresenceViaDataObject`             | `getPresenceViaDataObject`                          |
+  | `ClientSessionId`                          | `AttendeeId`                                        |
+  | `IPresence`                                | `Presence`                                          |
+  | `IPresence.events["attendeeJoined"]`       | `Presence.attendees.events["attendeeConnected"]`    |
+  | `IPresence.events["attendeeDisconnected"]` | `Presence.attendees.events["attendeeDisconnected"]` |
+  | `IPresence.getAttendee`                    | `Presence.attendees.getAttendee`                    |
+  | `IPresence.getAttendees`                   | `Presence.attendees.getAttendees`                   |
+  | `IPresence.getMyself`                      | `Presence.attendees.getMyself`                      |
+  | `IPresence.getNotifications`               | `Presence.notifications.getWorkspace`               |
+  | `IPresence.getStates`                      | `Presence.states.getWorkspace`                      |
+  | `ISessionClient`                           | `Attendee`                                          |
+  | `Latest` (import)                          | `StateFactory`                                      |
+  | `Latest` (call)                            | `StateFactory.latest`                               |
+  | `LatestEvents.updated`                     | `LatestRawEvents.remoteUpdated`                     |
+  | `LatestMap` (import)                       | `StateFactory`                                      |
+  | `LatestMap` (call)                         | `StateFactory.latestMap`                            |
+  | `LatestMapEvents.itemRemoved`              | `LatestMapRawEvents.remoteItemRemoved`              |
+  | `LatestMapEvents.itemUpdated`              | `LatestMapRawEvents.remoteItemUpdated`              |
+  | `LatestMapEvents.updated`                  | `LatestMapRawEvents.remoteUpdated`                  |
+  | `LatestMapItemValueClientData`             | `LatestMapItemUpdatedClientData`                    |
+  | `LatestMapValueClientData`                 | `LatestMapClientData`                               |
+  | `LatestMapValueManager`                    | `LatestMapRaw`                                      |
+  | `LatestMapValueManager.clients`            | `LatestMapRaw.getStateAttendees`                    |
+  | `LatestMapValueManager.clientValue`        | `LatestMapRaw.getRemote`                            |
+  | `LatestMapValueManager.clientValues`       | `LatestMapRaw.getRemotes`                           |
+  | `LatestMapValueManagerEvents`              | `LatestMapRawEvents`                                |
+  | `LatestValueClientData`                    | `LatestClientData`                                  |
+  | `LatestValueData`                          | `LatestData`                                        |
+  | `LatestValueManager`                       | `LatestRaw`                                         |
+  | `LatestValueManager.clients`               | `LatestRaw.getStateAttendees`                       |
+  | `LatestValueManager.clientValue`           | `LatestRaw.getRemote`                               |
+  | `LatestValueManager.clientValues`          | `LatestRaw.getRemotes`                              |
+  | `LatestValueManagerEvents`                 | `LatestRawEvents`                                   |
+  | `LatestValueMetadata`                      | `LatestMetadata`                                    |
+  | `PresenceEvents.attendeeDisconnected`      | `AttendeesEvents.attendeeDisconnected`              |
+  | `PresenceEvents.attendeeJoined`            | `AttendeesEvents.attendeeConnected`                 |
+  | `PresenceNotifications`                    | `NotificationsWorkspace`                            |
+  | `PresenceNotifications.props`              | `NotificationsWorkspace.notifications`              |
+  | `PresenceNotificationsSchema`              | `NotificationsWorkspaceSchema`                      |
+  | `PresenceStates`                           | `StatesWorkspace`                                   |
+  | `PresenceStates.props`                     | `StatesWorkspace.states`                            |
+  | `PresenceStatesEntries`                    | `StatesWorkspaceEntries`                            |
+  | `PresenceStatesSchema`                     | `StatesWorkspaceSchema`                             |
+  | `PresenceWorkspaceAddress`                 | `WorkspaceAddress`                                  |
+  | `PresenceWorkspaceEntry`                   | `StatesWorkspaceEntry`                              |
+  | `SessionClientStatus`                      | `AttendeeStatus`                                    |
+  | `ValueMap`                                 | `StateMap`                                          |
+
+  > [!NOTE]
+  > To fully replace the former `Latest` and `LatestMap` functions, you should import `StateFactory` and call `StateFactory.latest` and `StateFactory.latestMap` respectively.
+  > The new `LatestRaw` and `LatestMapRaw` APIs replace `LatestValueManager` and `LatestMapValueManager` respectively.
+
+## 2.32.0
+
+Dependency updates only.
+
+## 2.31.0
+
+Dependency updates only.
+
+## 2.30.0
+
+Dependency updates only.
+
+## 2.23.0
+
+### Minor Changes
+
+- Local value changes in presence now raise events ([#23858](https://github.com/microsoft/FluidFramework/pull/23858)) [2896983fef9](https://github.com/microsoft/FluidFramework/commit/2896983fef96ccc193182f6bcc723ad8ded602b4)
+
+  The [presence value managers](https://fluidframework.com/docs/build/presence#value-managers) now raise events for local
+  value changes. The new events are as follows:
+  - LatestValueManager
+    - `localUpdated` raised when `local` is assigned
+  - LatestMapValueManager
+    - `localItemUpdated` raised when `local.set` is called
+    - `localItemRemoved` raised when `local.delete` is called
+
+## 2.22.0
+
+Dependency updates only.
+
+## 2.21.0
+
+Dependency updates only.
+
+## 2.20.0
+
+Dependency updates only.
+
+## 2.13.0
+
+Dependency updates only.
+
+## 2.12.0
+
+Dependency updates only.
+
+## 2.11.0
+
+### Minor Changes
+
+- Presence updates are now grouped and throttled ([#23075](https://github.com/microsoft/FluidFramework/pull/23075)) [abde76d8de](https://github.com/microsoft/FluidFramework/commit/abde76d8decbaf2cde8aac68b3fa061a0fe75d92)
+
+  Presence updates are grouped together and throttled to prevent flooding the network with messages when presence values are rapidly updated. This means the presence infrastructure will not immediately broadcast updates but will broadcast them after a configurable delay.
+
+  The `allowableUpdateLatencyMs` property configures how long a local update may be delayed under normal circumstances,
+  enabling grouping with other updates. The default `allowableUpdateLatencyMs` is **60 milliseconds** but may be (1)
+  specified during configuration of a [States
+  Workspace](https://github.com/microsoft/FluidFramework/tree/main/packages/framework/presence#states-workspace)
+  or [Value
+  Manager](https://github.com/microsoft/FluidFramework/tree/main/packages/framework/presence#value-managers)
+  and/or (2) updated later using the `controls` member of a Workspace or Value Manager. The [States
+  Workspace](https://github.com/microsoft/FluidFramework/tree/main/packages/framework/presence#states-workspace)
+  configuration applies when a Value Manager does not have its own setting.
+
+  Notifications are never queued; they effectively always have an `allowableUpdateLatencyMs` of 0. However, they may be grouped with other updates that were already queued.
+
+  Note that due to throttling, clients receiving updates may not see updates for all values set by another. For example,
+  with `Latest*ValueManagers`, the only value sent is the value at the time the outgoing grouped message is sent. Previous
+  values set by the client will not be broadcast or seen by other clients.
+
+  #### Example
+
+  You can configure the grouping and throttling behavior using the `allowableUpdateLatencyMs` property as in the following example:
+
+  ```ts
+  // Create and configure a states workspace
+  const stateWorkspace = presence.getStates(
+    "app:v1states",
+    {
+      // This value manager has an allowable latency of 100ms.
+      position: Latest({ x: 0, y: 0 }, { allowableUpdateLatencyMs: 100 }),
+      // This value manager uses the workspace default allowable latency of 60ms.
+      count: Latest({ num: 0 }),
+    },
+    // Set the default allowable latency for all value managers in this workspace to 200ms,
+    // overriding the default value of 60ms.
+    { allowableUpdateLatencyMs: 200 },
+  );
+
+  // Temporarily set count updates to send as soon as possible.
+  const countState = stateWorkspace.props.count;
+  countState.controls.allowableUpdateLatencyMs = 0;
+  countState.local = { num: 5000 };
+
+  // Reset the update latency to the workspace default of 60ms.
+  countState.controls.allowableUpdateLatencyMs = undefined;
+  ```
+
+- Presence-related events now support the `off` event deregistration pattern ([#23196](https://github.com/microsoft/FluidFramework/pull/23196)) [f7be9651da](https://github.com/microsoft/FluidFramework/commit/f7be9651daeba09853627c0953e5969a60674ce3)
+
+  Event subscriptions within `@fluidframework/presence` may now use `off` to deregister event listeners, including initial listeners provided to `Notifications`.
+
+  Some type names have shifted within the API though no consumers are expected to be using those types directly. The most visible rename is `NotificationSubscribable` to `NotificationListenable`. Other shifts are to use types now exported through `@fluidframework/core-interfaces` where the most notable is `ISubscribable` that is now `Listenable`.
+
+## 2.10.0
+
+### Minor Changes
+
+- Presence package updates ([#23021](https://github.com/microsoft/FluidFramework/pull/23021)) [365c5c0643](https://github.com/microsoft/FluidFramework/commit/365c5c06437ea27786385fe1caae8b4ddfbe7480)
+
+  #### Package scope advanced from `@fluid-experimental` ([#23073](https://github.com/microsoft/FluidFramework/pull/23073))
+
+  To update existing:
+  - package.json: replace `@fluid-experimental/presence` with `@fluidframework/presence`
+  - code imports: replace `@fluid-experimental/presence` with `@fluidframework/presence/alpha`
+
+  #### The methods and properties of `PresenceStates` have been reorganized ([#23021](https://github.com/microsoft/FluidFramework/pull/23021))
+
+  The `PresenceStatesEntries` object, which represents each of the states in the `PresenceStates` schema, has been moved from directly within `PresenceStates` to under property names `props`. Only the `add` method remains directly within `PresenceStates`. The type `PresenceStatesMethods` has also been removed since it is no longer used.
+
+  To update existing code, access your presence states from the `props` property instead of directly on the `PresenceStates` object. For example:
+
+  ```patch
+  - presenceStatesWorkspace.myMap.local.get("key1");
+  + presenceStatesWorkspace.props.myMap.local.get("key1");
+  ```
+
+  #### `BroadcastControls` replace `LatestValueControls` ([#23120](https://github.com/microsoft/FluidFramework/pull/23120))
+
+  `BroadcastControls` maybe specified on `PresenceStates` thru new `controls` property as defaults for all value managers.
+
+  `allowableUpdateLatencyMs` was renamed from `allowableUpdateLatency` to clarify units are milliseconds. Specifying this value currently has no effect, but use is recommended to light up as implementation comes online.
+
+  Unsupported `forcedRefreshInterval` has been removed until implementation is closer.
+
+## 2.5.0
+
+### Minor Changes
+
+ISessionClient now exposes connectivity information
+
+    1. `ISessionClient` has a new method, `getConnectionStatus()`, with two possible states: `Connected` and `Disconnected`. ([#22833](https://github.com/microsoft/FluidFramework/pull/22833))
+    2. `ISessionClient`'s `connectionId()` member has been renamed to `getConnectionId()` for consistency. ([#22973](https://github.com/microsoft/FluidFramework/issues/22973))
+    3. `IPresence` event `attendeeDisconnected` is now implemented. ([#22833](https://github.com/microsoft/FluidFramework/pull/22833))
+
+## 2.4.0
+
+Various implementation improvements.
+
+## 2.3.0
+
+### Major Changes
+
+- Experimental Presence package added ([#22499](https://github.com/microsoft/FluidFramework/pull/22499)) [42b323cdbf1](https://github.com/microsoft/FluidFramework/commit/42b323cdbf129c897cf9bb51c1f1b9de5642ef8a)
+
+  **[@fluid-experimental/presence](https://github.com/microsoft/FluidFramework/tree/main/packages/framework/presence#readme)** is now available for investigation. The new package is meant to support presence of collaborators connected to the same container. Use this library to quickly share simple, non-persisted data among all clients or send/receive fire and forget notifications.
+
+  API documentation for **@fluid-experimental/presence** is available at <https://fluidframework.com/docs/apis/presence>.
+
+  There are some limitations; see the README.md of installed package for most relevant notes.
+
+  We're just getting started. Please give it a go and share feedback.

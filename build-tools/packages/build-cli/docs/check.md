@@ -1,0 +1,318 @@
+`flub check`
+============
+
+Check commands are used to verify repo state, apply policy, etc.
+
+* [`flub check buildVersion`](#flub-check-buildversion)
+* [`flub check bundleAnalysisReposComparison`](#flub-check-bundleanalysisreposcomparison)
+* [`flub check bundleSize`](#flub-check-bundlesize)
+* [`flub check changeset`](#flub-check-changeset)
+* [`flub check latestVersions VERSION PACKAGE_OR_RELEASE_GROUP`](#flub-check-latestversions-version-package_or_release_group)
+* [`flub check layers`](#flub-check-layers)
+* [`flub check policy`](#flub-check-policy)
+* [`flub check prApproval`](#flub-check-prapproval)
+* [`flub check trustPolicy`](#flub-check-trustpolicy)
+
+## `flub check buildVersion`
+
+Checks that all packages have the same version set in package.json. The packages checked can be filtered by standard criteria. THIS COMMAND IS INTENDED FOR USE IN FLUID FRAMEWORK CI PIPELINES ONLY.
+
+```
+USAGE
+  $ flub check buildVersion [-v | --quiet] [--version <value> | --path <value>] [--fix] [--concurrency <value>]
+    [--branch <value> [--changed | [--all | --dir <value>... | --packages | -g
+    client|server|azure|build-tools|gitrest|historian|all... | --releaseGroupRoot
+    client|server|azure|build-tools|gitrest|historian|all...]]] [--private] [--scope <value>... | --skipScope
+    <value>...]
+
+FLAGS
+  --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
+  --fix                  Fix invalid versions in the package.json file.
+  --path=<value>         Path to a directory containing a package. The version will be loaded from the package.json in
+                         this directory.
+  --version=<value>      The version against which to check all the packages.
+
+PACKAGE SELECTION FLAGS
+  -g, --releaseGroup=<option>...      Run on all child packages within the specified release groups. This does not
+                                      include release group root packages. To include those, use the --releaseGroupRoot
+                                      argument. Cannot be used with --all.
+                                      <options: client|server|azure|build-tools|gitrest|historian|all>
+      --all                           Run on all packages and release groups. Cannot be used with --dir, --packages,
+                                      --releaseGroup, or --releaseGroupRoot.
+      --branch=<value>                [default: main] Select only packages that have been changed when compared to this
+                                      base branch. Can only be used with --changed.
+      --changed                       Select packages that have changed when compared to a base branch. Use the --branch
+                                      option to specify a different base branch. Cannot be used with --all.
+      --dir=<value>...                Run on the package in this directory. Cannot be used with --all.
+      --packages                      Run on all independent packages in the repo. Cannot be used with --all.
+      --releaseGroupRoot=<option>...  Run on the root package of the specified release groups. This does not include any
+                                      child packages within the release group. To include those, use the --releaseGroup
+                                      argument. Cannot be used with --all.
+                                      <options: client|server|azure|build-tools|gitrest|historian|all>
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+PACKAGE FILTER FLAGS
+  --[no-]private          Only include private packages. Use --no-private to exclude private packages instead.
+  --scope=<value>...      Package scopes to filter to. If provided, only packages whose scope matches the flag will be
+                          included. Cannot be used with --skipScope.
+  --skipScope=<value>...  Package scopes to filter out. If provided, packages whose scope matches the flag will be
+                          excluded. Cannot be used with --scope.
+
+DESCRIPTION
+  Checks that all packages have the same version set in package.json. The packages checked can be filtered by standard
+  criteria. THIS COMMAND IS INTENDED FOR USE IN FLUID FRAMEWORK CI PIPELINES ONLY.
+```
+
+_See code: [src/commands/check/buildVersion.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/buildVersion.ts)_
+
+## `flub check bundleAnalysisReposComparison`
+
+Compare the two bundles previously collected by 'flub generate bundleAnalysisRepo' (base = --base-label, current = --current-label).
+
+```
+USAGE
+  $ flub check bundleAnalysisReposComparison [-v | --quiet] [--base-label <value>] [--current-label <value>]
+  [--webpack-dir <value>]
+
+FLAGS
+  --base-label=<value>     [default: main] Label subdirectory under compareBundlesOutput/analysis holding the base-side
+                           bundle stats. Matches the label 'flub generate bundleAnalysisRepo' saves in revision mode
+                           (the sanitized revision).
+  --current-label=<value>  [default: current] Label subdirectory under compareBundlesOutput/analysis holding the
+                           current-side bundle stats. Matches the label 'flub generate bundleAnalysisRepo' saves in
+                           local mode (a timestamped 'current_<epoch>').
+  --webpack-dir=<value>    [default: .] Directory whose compareBundlesOutput subdirectory holds the bundle stats to
+                           compare. Matches the --webpack-dir passed to 'flub generate bundleAnalysisRepo' (defaults to
+                           the current directory).
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+DESCRIPTION
+  Compare the two bundles previously collected by 'flub generate bundleAnalysisRepo' (base = --base-label, current =
+  --current-label).
+
+  To learn more see the detailed documentation at
+  https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/bundleAnalysisRepoDetails.md
+
+EXAMPLES
+  $ flub check bundleAnalysisReposComparison
+
+  $ flub check bundleAnalysisReposComparison --base-label some-revision
+```
+
+_See code: [src/commands/check/bundleAnalysisReposComparison.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/bundleAnalysisReposComparison.ts)_
+
+## `flub check bundleSize`
+
+Compare the locally-collected bundle reports against the CI build of the merge-base commit (between HEAD and a target ref) and print the diff. By default, the target is auto-detected as `<canonical-remote>/main` where `<canonical-remote>` is whichever remote points at `microsoft/FluidFramework`; pass `--target` to override. Prints a human-readable summary by default; pass --json for the structured result.
+
+```
+USAGE
+  $ flub check bundleSize [--json] [-v | --quiet] [--localReportPath <value>] [--target <value>]
+
+FLAGS
+  --localReportPath=<value>  [default: ./artifacts/bundleAnalyzerJson] Path to the locally-collected bundle reports (as
+                             produced by `flub generate bundleStats`).
+  --target=<value>           Target ref — the ref you'd be PRing against. Typically `<remote>/<branch>` (e.g.
+                             'upstream/main', 'origin/release/2.x'), but accepts any ref `git merge-base` understands.
+                             Skips auto-detection of the canonical remote. The bundles aren't compared against this ref
+                             directly — the baseline commit is `git merge-base <target> HEAD`.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+GLOBAL FLAGS
+  --json  Format output as json.
+
+DESCRIPTION
+  Compare the locally-collected bundle reports against the CI build of the merge-base commit (between HEAD and a target
+  ref) and print the diff. By default, the target is auto-detected as `<canonical-remote>/main` where
+  `<canonical-remote>` is whichever remote points at `microsoft/FluidFramework`; pass `--target` to override. Prints a
+  human-readable summary by default; pass --json for the structured result.
+```
+
+_See code: [src/commands/check/bundleSize.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/bundleSize.ts)_
+
+## `flub check changeset`
+
+Checks if a changeset was added when compared against a branch. This is used in CI to enforce that changesets are present for a PR.
+
+```
+USAGE
+  $ flub check changeset -b <value> [--json] [-v | --quiet]
+
+FLAGS
+  -b, --branch=<value>  (required) The branch to compare against.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+GLOBAL FLAGS
+  --json  Format output as json.
+
+EXAMPLES
+  Check if a changeset was added when compared to the 'main' branch.
+
+    $ flub check changeset -b main
+
+  Check if a changeset was added when compared to the 'next' branch.
+
+    $ flub check changeset -b next
+```
+
+_See code: [src/commands/check/changeset.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/changeset.ts)_
+
+## `flub check latestVersions VERSION PACKAGE_OR_RELEASE_GROUP`
+
+Determines if an input version matches a latest minor release version. Intended to be used in the Fluid Framework CI pipeline only.
+
+```
+USAGE
+  $ flub check latestVersions VERSION PACKAGE_OR_RELEASE_GROUP [-v | --quiet]
+
+ARGUMENTS
+  VERSION                   The version to check. When running in CI, this value corresponds to the pipeline trigger
+                            branch.
+  PACKAGE_OR_RELEASE_GROUP  The name of a package or a release group.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+DESCRIPTION
+  Determines if an input version matches a latest minor release version. Intended to be used in the Fluid Framework CI
+  pipeline only.
+
+  This command is used in CI to determine if a pipeline was triggered by a release branch with the latest minor version
+  of a major version.
+```
+
+_See code: [src/commands/check/latestVersions.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/latestVersions.ts)_
+
+## `flub check layers`
+
+Checks that the dependencies between Fluid Framework packages are properly layered.
+
+```
+USAGE
+  $ flub check layers --info <value> [-v | --quiet] [--md <value>] [--dot <value>]
+
+FLAGS
+  --dot=<value>   Generate *.dot for GraphViz
+  --info=<value>  (required) Path to the layer graph json file
+  --md=<value>    Generate PACKAGES.md file at this path relative to repo root
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+DESCRIPTION
+  Checks that the dependencies between Fluid Framework packages are properly layered.
+```
+
+_See code: [src/commands/check/layers.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/layers.ts)_
+
+## `flub check policy`
+
+Checks and applies policies to the files in the repository, such as ensuring a consistent header comment in files, assert tagging, etc.
+
+```
+USAGE
+  $ flub check policy [-v | --quiet] [-D <value>... | -d <value>] [--listHandlers | --stdin | -p <value> | -f | ]
+
+FLAGS
+  -D, --excludeHandler=<value>...  Exclude policy handler by name. Can be specified multiple times to exclude multiple
+                                   handlers.
+  -d, --handler=<value>            Filter policy handler names by <regex>.
+  -f, --fix                        Fix errors if possible.
+  -p, --path=<value>               Filter file paths by <regex>.
+      --listHandlers               List all policy handlers by name.
+      --stdin                      Read list of files from stdin.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+DESCRIPTION
+  Checks and applies policies to the files in the repository, such as ensuring a consistent header comment in files,
+  assert tagging, etc.
+```
+
+_See code: [src/commands/check/policy.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/policy.ts)_
+
+## `flub check prApproval`
+
+Check if a PR has been approved by a list of users or members of a team.
+
+```
+USAGE
+  $ flub check prApproval --repo <value> --pr <value> --token <value> [--json] [-v | --quiet] [--team <value>]
+    [--approvers <value>...] [--ghActions]
+
+FLAGS
+  --approvers=<value>...  GitHub users who should be considered approvers. If at least one of these users has approved
+                          the PR, it is considered approved. Cannot be used with the --team flag. You can provide
+                          multiple names as a space-delimited list, e.g. '--approvers user1 user2'
+  --ghActions             [env: GITHUB_ACTIONS] Set to true to output logs in a GitHub Actions-compatible format. This
+                          value will be set to true automatically when running in GitHub Actions.
+  --pr=<value>            (required) The PR number to check.
+  --repo=<value>          (required) The name of the GitHub repository to check. This should be in the form
+                          'owner/repo-name'. For example, 'microsoft/FluidFramework'
+  --team=<value>          The team whose membership should be checked. If at least one of the members of the team has
+                          approved the PR, it is considered approved. The team must be in the same GitHub organization
+                          as the repo. Only the team name should be provided - the org is inferred from the repo
+                          details.
+  --token=<value>         (required) [env: GITHUB_TOKEN] GitHub access token. This parameter should be passed using the
+                          GITHUB_TOKEN environment variable for security purposes.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+GLOBAL FLAGS
+  --json  Format output as json.
+
+DESCRIPTION
+  Check if a PR has been approved by a list of users or members of a team.
+```
+
+_See code: [src/commands/check/prApproval.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/prApproval.ts)_
+
+## `flub check trustPolicy`
+
+Audits the repo's lockfile against pnpm's `no-downgrade` trust policy.
+
+```
+USAGE
+  $ flub check trustPolicy [--json] [-v | --quiet] [--keep] [--path <value>] [--tempDir <value>]
+
+FLAGS
+  --keep             Do not delete the scratch workspace after running.
+  --path=<value>     Path inside the workspace to audit. The most specific workspace (e.g. a release group like
+                     `server/routerlicious` rather than the repo root) containing this path is used. Defaults to the
+                     current working directory.
+  --tempDir=<value>  Scratch workspace directory (default: <workspace>/.trust-audit-temp).
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+GLOBAL FLAGS
+  --json  Format output as json.
+
+DESCRIPTION
+  Audits the repo's lockfile against pnpm's `no-downgrade` trust policy.
+
+  Materializes a scratch workspace under `.trust-audit-temp/` containing one leaf project per pinned dependency, then
+  runs `pnpm install --trust-policy no-downgrade` and iteratively excludes each violation until pnpm either succeeds or
+  stops surfacing new violations. Reports the full list of trust-downgrade violations.
+```
+
+_See code: [src/commands/check/trustPolicy.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/trustPolicy.ts)_

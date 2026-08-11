@@ -1,0 +1,20 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+name: $(Build.BuildId)
+
+pr: none
+trigger:
+  branches:
+    include:
+    - main
+  paths:
+    include:
+    - server/charts/historian
+    - tools/pipelines/chart-historian.yml
+    - tools/pipelines/templates/include-package-chart.yml
+
+extends:
+  template: templates/include-package-chart.yml
+  parameters:
+    chartPath: server/charts/historian

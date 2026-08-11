@@ -1,0 +1,640 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { strict as assert } from "node:assert";
+
+import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
+import type { FluidObject, IErrorBase } from "@fluidframework/core-interfaces";
+import type {
+	IChannel,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions/internal";
+import { SummaryType } from "@fluidframework/driver-definitions";
+import type {
+	IContainerRuntimeBase,
+	IFluidDataStoreContext,
+	IGarbageCollectionData,
+	IRuntimeMessageCollection,
+	IRuntimeMessagesContent,
+	ISequencedMessageEnvelope,
+	MinimumVersionForCollab,
+} from "@fluidframework/runtime-definitions/internal";
+import {
+	isFluidError,
+	MockLogger,
+	TelemetryDataTag,
+} from "@fluidframework/telemetry-utils/internal";
+import {
+	MockFluidDataStoreContext,
+	validateAssertionError,
+} from "@fluidframework/test-runtime-utils/internal";
+import sinon from "sinon";
+
+import {
+	DataStoreMessageType,
+	FluidDataStoreRuntime,
+	LegacyTypeAwareRegistry,
+	type ISharedObjectRegistry,
+} from "../dataStoreRuntime.js";
+
+type Patch<T, U> = Omit<T, keyof U> & U;
+
+// This patching exposes FluidDataStoreRuntime private properties as public for
+// testing purposes. The patching is in no way type safe and is not recommended.
+type FluidDataStoreRuntime_ForTesting = Patch<
+	FluidDataStoreRuntime,
+	IFluidDataStoreRuntime & {
+		contexts: Map<unknown, unknown>;
+		submit(type: DataStoreMessageType, content: unknown, localOpMetadata?: unknown): void;
+	}
+>;
+
+describe("FluidDataStoreRuntime Tests", () => {
+	let dataStoreContext: MockFluidDataStoreContext;
+	let sharedObjectRegistry: ISharedObjectRegistry;
+	function createRuntime(
+		context: IFluidDataStoreContext,
+		registry: ISharedObjectRegistry,
+		entrypointInitializationFn?: (rt: IFluidDataStoreRuntime) => Promise<FluidObject>,
+	): FluidDataStoreRuntime {
+		const runtime: FluidDataStoreRuntime = new FluidDataStoreRuntime(
+			context,
+			registry,
+			/* existing */ false,
+			entrypointInitializationFn ?? (async () => runtime),
+		);
+		return runtime;
+	}
+
+	beforeEach(() => {
+		dataStoreContext = new MockFluidDataStoreContext();
+		// back-compat 0.38 - DataStoreRuntime looks in container runtime for certain properties that are unavailable
+		// in the data store context.
+		dataStoreContext.containerRuntime = {} as unknown as IContainerRuntimeBase;
+		dataStoreContext.packagePath = [];
+		sharedObjectRegistry = {
+			get(type: string) {
+				return {
+					type,
+					attributes: { type, snapshotFormatVersion: "0" },
+					create: (runtime, id: string) =>
+						({
+							id,
+							type,
+							attributes: { type, snapshotFormatVersion: "0" },
+							clientDetails: {},
+						}) as unknown as IChannel,
+					load: async (): Promise<IChannel> => ({}) as unknown as IChannel,
+				};
+			},
+		};
+	});
+
+	it("constructor rejects ids with forward slashes", () => {
+		const invalidId = "beforeSlash/afterSlash";
+		dataStoreContext = new MockFluidDataStoreContext(invalidId);
+		const codeBlock = (): FluidDataStoreRuntime =>
+			new FluidDataStoreRuntime(
+				dataStoreContext,
+				sharedObjectRegistry,
+				false,
+				async (dataStoreRuntime) => {
+					throw new Error("This shouldn't be called during the test");
+				},
+			);
+		assert.throws(
+			codeBlock,
+			validateAssertionError(
+				"Id cannot contain slashes. DataStoreContext should have validated this.",
+			),
+		);
+	});
+
+	it("can create a data store runtime", () => {
+		let failed: boolean = false;
+		let dataStoreRuntime: FluidDataStoreRuntime | undefined;
+		try {
+			dataStoreRuntime = createRuntime(dataStoreContext, sharedObjectRegistry);
+		} catch {
+			failed = true;
+		}
+		assert.strictEqual(failed, false, "Data store runtime creation failed");
+		assert.strictEqual(
+			dataStoreRuntime?.id,
+			dataStoreContext.id,
+			"Data store runtime's id in incorrect",
+		);
+	});
+
+	it("can summarize an empty data store runtime", async () => {
+		const dataStoreRuntime = createRuntime(dataStoreContext, sharedObjectRegistry);
+		const summarizeResult = await dataStoreRuntime.summarize(true, false);
+		assert(
+			summarizeResult.summary.type === SummaryType.Tree,
+			"Data store runtime did not return a summary tree",
+		);
+		assert(
+			Object.keys(summarizeResult.summary.tree).length === 0,
+			"The summary should be empty",
+		);
+	});
+
+	it("can get GC data of an empty data store runtime", async () => {
+		// The GC data should have a single node for the data store runtime with empty outbound routes.
+		const expectedGCData: IGarbageCollectionData = {
+			gcNodes: { "/": [] },
+		};
+		const dataStoreRuntime = createRuntime(dataStoreContext, sharedObjectRegistry);
+		const gcData = await dataStoreRuntime.getGCData();
+		assert.deepStrictEqual(gcData, expectedGCData, "The GC data is incorrect");
+	});
+
+	it("createChannel rejects ids with slashes", async () => {
+		const dataStoreRuntime = createRuntime(dataStoreContext, sharedObjectRegistry);
+		const invalidId = "beforeSlash/afterSlash";
+		const codeBlock = (): IChannel => dataStoreRuntime.createChannel(invalidId, "SomeType");
+		assert.throws(
+			codeBlock,
+			(e: IErrorBase) =>
+				e.errorType === ContainerErrorTypes.usageError &&
+				e.message === `Id cannot contain slashes: ${invalidId}`,
+		);
+	});
+
+	it("createChannel with default guid", async () => {
+		const dataStoreRuntime = createRuntime(dataStoreContext, sharedObjectRegistry);
+		const type = "SomeType";
+		const channel = dataStoreRuntime.createChannel(undefined, type);
+		assert(channel !== undefined, "channel should be created");
+		assert(type === channel.attributes.type, "type should be as expected");
+	});
+
+	it("createChannel and then attach to dataStore runtime", async () => {
+		const dataStoreRuntime = createRuntime(dataStoreContext, sharedObjectRegistry);
+		const type = "SomeType";
+		const channel = {
+			id: "id",
+			type,
+			attributes: { type, snapshotFormatVersion: "0" },
+			clientDetails: {},
+		} as unknown as IChannel;
+		dataStoreRuntime.addChannel(channel);
+		const channel1 = await dataStoreRuntime.getChannel(channel.id);
+		assert.deepStrictEqual(channel, channel1, "both channel should match");
+	});
+
+	it("createChannel rejects ids with slashes when channel is created first", async () => {
+		const dataStoreRuntime = createRuntime(dataStoreContext, sharedObjectRegistry);
+		const invalidId = "beforeSlash/afterSlash";
+		const type = "SomeType";
+		const channel = {
+			id: invalidId,
+			type,
+			attributes: { type, snapshotFormatVersion: "0" },
+			clientDetails: {},
+		} as unknown as IChannel;
+		const codeBlock = (): void => dataStoreRuntime.addChannel(channel);
+		assert.throws(
+			codeBlock,
+			(e: IErrorBase) =>
+				e.errorType === ContainerErrorTypes.usageError &&
+				e.message === `Id cannot contain slashes: ${invalidId}`,
+		);
+	});
+
+	it("getChannel - Channel Not Found case is distinguishable from other errors", async () => {
+		// IMPORTANT:
+		// If this string ever changes, it may break error handling in other places that depend on this exact text
+		// Why would anyone depend on an error message for control flow?
+		// Because it's a new use case and haven't added an API for this yet (See AB#50886)
+		const CHANNEL_NOT_FOUND = "Channel does not exist";
+
+		const dataStoreRuntime = createRuntime(dataStoreContext, sharedObjectRegistry);
+
+		await assert.rejects(
+			dataStoreRuntime.getChannel("nonExistentChannel"),
+			(error: Error) => error.message === CHANNEL_NOT_FOUND,
+			"Error message must be specific so that it can be handled differently from other errors",
+		);
+	});
+
+	it("entryPoint is initialized correctly", async () => {
+		const myObj: FluidObject = { fakeProp: "fakeValue" };
+		const dataStoreRuntime = createRuntime(
+			dataStoreContext,
+			sharedObjectRegistry,
+			async (dsRuntime) => myObj,
+		);
+		assert(
+			(await dataStoreRuntime.entryPoint?.get()) === myObj,
+			"entryPoint was not initialized",
+		);
+	});
+
+	describe("entryPoint initialization failure", () => {
+		it("entryPoint provider is not invoked until entryPoint is consumed", () => {
+			let invoked = false;
+			createRuntime(dataStoreContext, sharedObjectRegistry, async () => {
+				invoked = true;
+				return {};
+			});
+			assert.strictEqual(
+				invoked,
+				false,
+				"entryPoint provider should not run during construction",
+			);
+		});
+
+		it("rejected entryPoint provider is wrapped and logged", async () => {
+			const mockLogger = new MockLogger();
+			const contextWithMockLogger = new MockFluidDataStoreContext(
+				"testDataStoreId",
+				false,
+				mockLogger.toTelemetryLogger(),
+			);
+			contextWithMockLogger.containerRuntime = {} as unknown as IContainerRuntimeBase;
+			contextWithMockLogger.packagePath = ["pkgA", "pkgB"];
+			const dataStoreRuntime = createRuntime(
+				contextWithMockLogger,
+				sharedObjectRegistry,
+				async () => {
+					throw new Error("entryPoint failed");
+				},
+			);
+			await assert.rejects(
+				async () => dataStoreRuntime.entryPoint.get(),
+				(error: IErrorBase) => {
+					assert.strictEqual(
+						error.errorType,
+						ContainerErrorTypes.dataProcessingError,
+						"thrown error should be a DataProcessingError",
+					);
+					assert(isFluidError(error), "thrown error should be a Fluid error");
+					const props = error.getTelemetryProperties();
+					assert.deepStrictEqual(
+						props.dataStoreId,
+						{ value: "testDataStoreId", tag: TelemetryDataTag.CodeArtifact },
+						"error should carry tagged dataStoreId",
+					);
+					assert.deepStrictEqual(
+						props.dataStorePackagePath,
+						{ value: "pkgA/pkgB", tag: TelemetryDataTag.CodeArtifact },
+						"error should carry tagged dataStorePackagePath",
+					);
+					return true;
+				},
+			);
+			const failureEvent = mockLogger.events.find(
+				(event) =>
+					typeof event.eventName === "string" &&
+					event.eventName.endsWith("EntryPointInitializationFailure"),
+			);
+			assert(
+				failureEvent !== undefined,
+				"EntryPointInitializationFailure event should have been logged",
+			);
+			assert.deepStrictEqual(
+				failureEvent.dataStoreId,
+				{ value: "testDataStoreId", tag: TelemetryDataTag.CodeArtifact },
+				"event should include tagged dataStoreId",
+			);
+			assert.deepStrictEqual(
+				failureEvent.dataStorePackagePath,
+				{ value: "pkgA/pkgB", tag: TelemetryDataTag.CodeArtifact },
+				"event should include tagged dataStorePackagePath",
+			);
+		});
+	});
+});
+
+describe("FluidDataStoreRuntime.isDirty tracking", () => {
+	function createRuntime(id: string): FluidDataStoreRuntime_ForTesting {
+		return new FluidDataStoreRuntime(
+			new MockFluidDataStoreContext(id),
+			{} as unknown as ISharedObjectRegistry,
+			/* existing */ false,
+			async (rt) => rt,
+		) as unknown as FluidDataStoreRuntime_ForTesting;
+	}
+
+	// Dummy content
+	const content: IRuntimeMessagesContent = {
+		contents: {},
+		clientSequenceNumber: 1,
+		localOpMetadata: {},
+	};
+
+	// Helper to create a dummy ack with one more more messages
+	const ack = ({
+		local,
+		messageCount,
+	}: {
+		local: boolean;
+		messageCount: number;
+	}): IRuntimeMessageCollection => ({
+		envelope: {
+			type: "other", // allows us to test top-level logic of runtime.processMessages without actually providing a legit message
+		} satisfies Partial<ISequencedMessageEnvelope> as ISequencedMessageEnvelope,
+		local,
+		messagesContent: Array.from({ length: messageCount }, () => content),
+	});
+
+	it("Submitting and processing local/non-local ops correctly updates isDirty", () => {
+		const runtime = createRuntime("runtime1");
+
+		assert.strictEqual(runtime.isDirty, false, "Runtime should start clean");
+
+		runtime.submit(DataStoreMessageType.ChannelOp, {}, undefined);
+		assert.strictEqual(runtime.isDirty, true, "Runtime should be dirty after local op");
+
+		// Submit a few more
+		runtime.submit(DataStoreMessageType.ChannelOp, {}, undefined);
+		runtime.submit(DataStoreMessageType.ChannelOp, {}, undefined);
+
+		// Non-local ops should not affect isDirty
+		const nonLocalOps = ack({ local: false, messageCount: 4 });
+		runtime.processMessages(nonLocalOps);
+		assert.strictEqual(
+			runtime.isDirty,
+			true,
+			"Runtime should still be dirty after non-local ops",
+		);
+
+		// Simulate processing the "first" local op (it doesn't matter that the incoming content here is fake)
+		const firstLocalOp = ack({ local: true, messageCount: 1 });
+		runtime.processMessages(firstLocalOp);
+		assert.strictEqual(
+			runtime.isDirty,
+			true,
+			"Runtime should still be dirty, more ops to process",
+		);
+
+		// Simulate processing the remaining local ops
+		const remainingLocalOps = ack({ local: true, messageCount: 2 });
+		runtime.processMessages(remainingLocalOps);
+
+		assert.strictEqual(
+			runtime.isDirty,
+			false,
+			"Runtime should not be dirty after processing acks of all pending local op",
+		);
+	});
+	it("maintains isDirty correctly with simple resubmitted channel ops", () => {
+		const runtime = createRuntime("resubmitChannel");
+		assert.strictEqual(runtime.isDirty, false, "Runtime should start clean");
+
+		const submitSingleMessage = (): void =>
+			runtime.submit(DataStoreMessageType.ChannelOp, { address: "foo" }, undefined);
+
+		// Simulate a channel context with a reSubmit method for internals of runtime.reSubmit call below
+		sinon
+			.stub(runtime, "contexts")
+			.get(() => new Map([["foo", { reSubmit: submitSingleMessage }]]));
+
+		// Initial local op
+		runtime.submit(DataStoreMessageType.ChannelOp, { address: "foo" }, undefined);
+		assert.strictEqual(
+			runtime.isDirty,
+			true,
+			"Runtime should be dirty after the first local op",
+		);
+
+		// Resubmit the op (simulating reconnect). Should still be dirty
+		runtime.reSubmit(DataStoreMessageType.ChannelOp, { address: "foo" }, undefined, false);
+		assert.strictEqual(
+			runtime.isDirty,
+			true,
+			"Runtime should remain dirty after resubmitting the op",
+		);
+
+		// Simulate processing the local op's ack - now clean
+		runtime.processMessages(ack({ local: true, messageCount: 1 }));
+		assert.strictEqual(
+			runtime.isDirty,
+			false,
+			"Runtime should be clean after the resubmitted op is acked",
+		);
+	});
+
+	it("maintains isDirty correctly when resubmitting channel op results in nothing to submit", () => {
+		const runtime = createRuntime("resubmitChannel");
+		assert.strictEqual(runtime.isDirty, false, "Runtime should start clean");
+
+		// Simulate a channel context with a reSubmit method that chooses not to submit anything, for internals of runtime.reSubmit call below
+		sinon.stub(runtime, "contexts").get(() => new Map([["foo", { reSubmit: () => {} }]]));
+
+		// Initial local op
+		runtime.submit(DataStoreMessageType.ChannelOp, { address: "foo" }, undefined);
+		assert.strictEqual(
+			runtime.isDirty,
+			true,
+			"Runtime should be dirty after the first local op",
+		);
+
+		// Resubmit the op (simulating reconnect). Should be clean since resubmit didn't result in a new op
+		runtime.reSubmit(DataStoreMessageType.ChannelOp, { address: "foo" }, undefined, false);
+		assert.strictEqual(
+			runtime.isDirty,
+			false,
+			"Runtime should be clean after resubmitting since it was a no-op",
+		);
+	});
+
+	it("maintains isDirty with resubmitted attach ops", () => {
+		const runtime = createRuntime("resubmitAttach");
+		assert.strictEqual(runtime.isDirty, false, "Runtime should start clean");
+
+		// Submit a local attach op
+		const attachMessage = {
+			id: "attachId",
+			type: "SomeType",
+			snapshot: { type: SummaryType.Tree, tree: {} },
+		};
+		runtime.submit(DataStoreMessageType.Attach, attachMessage, undefined);
+		assert.strictEqual(runtime.isDirty, true, "Runtime should be dirty after attach op");
+
+		// Resubmit same attach op
+		runtime.reSubmit(DataStoreMessageType.Attach, attachMessage, undefined, false);
+		assert.strictEqual(
+			runtime.isDirty,
+			true,
+			"Runtime should remain dirty after resubmitting attach op",
+		);
+
+		// Ack the resubmitted attach op
+		runtime.processMessages(ack({ local: true, messageCount: 1 }));
+
+		assert.strictEqual(runtime.isDirty, false, "Runtime should be clean after all acks");
+	});
+
+	it("sets dirty state when applying stashed ops and clears after ack", async () => {
+		const runtime = createRuntime("applyStashed");
+		assert.strictEqual(runtime.isDirty, false, "Runtime should start clean");
+
+		// Simulate a channel context with applyStashedOp and getChannel methods (don't need to implement them though)
+		sinon
+			.stub(runtime, "contexts")
+			.get(() => new Map([["foo", { applyStashedOp: () => {}, getChannel: () => ({}) }]]));
+
+		// Apply a stashed channel op
+		await runtime.applyStashedOp({
+			type: DataStoreMessageType.ChannelOp,
+			content: { address: "foo" },
+		});
+		assert.strictEqual(
+			runtime.isDirty,
+			true,
+			"Runtime should be dirty after applying stashed op",
+		);
+
+		runtime.processMessages(ack({ local: true, messageCount: 1 }));
+
+		assert.strictEqual(
+			runtime.isDirty,
+			false,
+			"Runtime should be clean after acking stashed op",
+		);
+	});
+
+	it("clears dirty state on rollback", () => {
+		const runtime = createRuntime("rollback");
+		assert(
+			typeof runtime.rollback === "function",
+			"PRECONDITION: Rollback must be present on base runtime",
+		);
+
+		// Simulate a channel context with a rollback method (don't need to implement them though)
+		sinon.stub(runtime, "contexts").get(() => new Map([["foo", { rollback: () => {} }]]));
+
+		runtime.submit(DataStoreMessageType.ChannelOp, { address: "foo" }, undefined);
+		assert.strictEqual(runtime.isDirty, true, "Runtime should be dirty after local op");
+
+		// Roll back the op
+		runtime.rollback(
+			DataStoreMessageType.ChannelOp,
+			{ address: "foo" },
+			/* localOpMetadata: */ undefined,
+		);
+
+		assert.strictEqual(runtime.isDirty, false, "Runtime should be clean after rollback");
+	});
+});
+
+describe("LegacyTypeAwareRegistry", () => {
+	/**
+	 * Returns a simple registry backed by a plain-object map.
+	 * Each value is used as the `type` property on the returned stub factory,
+	 * which is sufficient for asserting which factory was found.
+	 */
+	function makeBaseRegistry(entries: Record<string, string>): ISharedObjectRegistry {
+		return {
+			get(name) {
+				const type = entries[name];
+				if (type === undefined) return undefined;
+				return {
+					type,
+					attributes: { type, snapshotFormatVersion: "0" },
+					create: () => {
+						throw new Error("not implemented");
+					},
+					load: async () => {
+						throw new Error("not implemented");
+					},
+				};
+			},
+		};
+	}
+
+	// The expected decoded value of legacyTypeUrlPrefix.
+	const prefix = "https://graph.microsoft.com/types/";
+
+	it("returns factory when name matches directly", () => {
+		const r = new LegacyTypeAwareRegistry(makeBaseRegistry({ map: "map" }));
+		assert.strictEqual(r.get("map")?.type, "map");
+	});
+
+	it("returns undefined for a completely unknown name", () => {
+		const r = new LegacyTypeAwareRegistry(makeBaseRegistry({}));
+		assert.strictEqual(r.get("unknownType"), undefined);
+	});
+
+	describe("back-compat: old URL in document, new short name in registry", () => {
+		it("strips the URL prefix and finds the factory by path segment", () => {
+			const r = new LegacyTypeAwareRegistry(makeBaseRegistry({ map: "map" }));
+			assert.strictEqual(r.get(`${prefix}map`)?.type, "map");
+		});
+
+		it("returns undefined when the path segment is also unregistered", () => {
+			const r = new LegacyTypeAwareRegistry(makeBaseRegistry({ other: "other" }));
+			assert.strictEqual(r.get(`${prefix}unknown`), undefined);
+		});
+
+		it("works for a multi-word path segment (e.g. consensus-queue)", () => {
+			const r = new LegacyTypeAwareRegistry(makeBaseRegistry({ "consensus-queue": "cq" }));
+			assert.strictEqual(r.get(`${prefix}consensus-queue`)?.type, "cq");
+		});
+	});
+
+	describe("temporary compat: new short name in document, old URL in registry", () => {
+		it("prepends the URL prefix and finds the factory", () => {
+			const r = new LegacyTypeAwareRegistry(makeBaseRegistry({ [`${prefix}map`]: "map-url" }));
+			assert.strictEqual(r.get("map")?.type, "map-url");
+		});
+
+		it("returns undefined when neither the short name nor the prefixed form is registered", () => {
+			const r = new LegacyTypeAwareRegistry(makeBaseRegistry({ other: "other" }));
+			assert.strictEqual(r.get("unknownType"), undefined);
+		});
+	});
+
+	describe("reverse-proxy compat: mangled graph.microsoft URL in document", () => {
+		it("extracts the final path segment and finds the factory by short name", () => {
+			const r = new LegacyTypeAwareRegistry(makeBaseRegistry({ map: "map" }));
+			assert.strictEqual(
+				r.get("https://graph.microsoft.proxy.contoso.com/types/map")?.type,
+				"map",
+			);
+		});
+
+		it("extracts the final path segment and finds the factory by legacy URL", () => {
+			const r = new LegacyTypeAwareRegistry(makeBaseRegistry({ [`${prefix}map`]: "map-url" }));
+			assert.strictEqual(
+				r.get("https://graph.microsoft.proxy.contoso.com/types/map")?.type,
+				"map-url",
+			);
+		});
+
+		it("returns undefined for a URL that does not contain 'graph.microsoft'", () => {
+			const r = new LegacyTypeAwareRegistry(makeBaseRegistry({ map: "map" }));
+			assert.strictEqual(r.get("https://otherdds.contoso.com/types/map"), undefined);
+		});
+
+		it("returns undefined for a URL whose final path segment is empty", () => {
+			const r = new LegacyTypeAwareRegistry(makeBaseRegistry({ map: "map" }));
+			assert.strictEqual(r.get("https://graph.microsoft.proxy.contoso.com/"), undefined);
+		});
+	});
+});
+
+describe("FluidDataStoreRuntime.minVersionForCollab", () => {
+	function createRuntime(
+		id: string,
+		minVersionForCollab: MinimumVersionForCollab,
+	): FluidDataStoreRuntime_ForTesting {
+		const context = new MockFluidDataStoreContext(id);
+		context.minVersionForCollab = minVersionForCollab;
+		return new FluidDataStoreRuntime(
+			context,
+			{} as unknown as ISharedObjectRegistry,
+			/* existing */ false,
+			async (rt) => rt,
+		) as unknown as FluidDataStoreRuntime_ForTesting;
+	}
+
+	it("minVersionForCollab is read from the FluidDataStoreContext and stored on FluidDataStoreRuntime", () => {
+		const runtime = createRuntime("minVersionTest", "1.2.3");
+		assert.deepStrictEqual(runtime.minVersionForCollab, "1.2.3");
+	});
+});

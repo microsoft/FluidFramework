@@ -1,0 +1,377 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import type { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import {
+	FluidErrorTypes,
+	type IGenericError,
+	type ILayerIncompatibilityError,
+	type IUsageError,
+} from "@fluidframework/core-interfaces/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+
+import {
+	LoggingError,
+	NORMALIZED_ERROR_TYPE,
+	isExternalError,
+	normalizeError,
+	wrapError,
+} from "./errorLogging.js";
+import type { IFluidErrorBase } from "./fluidErrorBase.js";
+import type { ITelemetryPropertiesExt } from "./telemetryTypes.js";
+
+/**
+ * A subset of `ISequencedDocumentMessage` properties that are safe to log for telemetry.
+ * @internal
+ */
+export type MessageLike = Partial<
+	Pick<
+		ISequencedDocumentMessage,
+		| "clientId"
+		| "sequenceNumber"
+		| "clientSequenceNumber"
+		| "referenceSequenceNumber"
+		| "minimumSequenceNumber"
+		| "timestamp"
+	>
+>;
+
+/**
+ * Throws a UsageError with the given message if the condition is not met.
+ * Use this API when `false` indicates a precondition is not met on a public API (for any FF layer).
+ *
+ * @param condition - The condition that should be true, if the condition is false a UsageError will be thrown.
+ * @param message - The message to include in the error when the condition does not hold.
+ * @param props - Telemetry props to include on the error when the condition does not hold.
+ * @internal
+ */
+export function validatePrecondition(
+	condition: boolean,
+	message: string,
+	props?: ITelemetryBaseProperties,
+): asserts condition {
+	if (!condition) {
+		throw new UsageError(message, props);
+	}
+}
+
+/**
+ * Creates an error during data processing (DataProcessingError or DataCorruptionError) with telemetry properties.
+ *
+ * @remarks
+ * This helper allows customizing the stack trace limit during error creation, which is useful
+ * for capturing more context in error scenarios. It delegates to {@link wrapOrAnnotateError}
+ * for the actual error wrapping/annotation logic.
+ *
+ * @param factory - Factory function that creates the specific error type.
+ * @param errorMessage - The error message to use.
+ * @param codepath - Identifier for the code path where the error was detected.
+ * @param messageLike - Optional message properties to include in telemetry.
+ * @param props - Additional telemetry properties to attach to the error.
+ * @param stackTraceLimit - Optional limit for the stack trace depth.
+ * @returns The created error with telemetry properties attached.
+ */
+function buildDataProcessingError(
+	factory: (message: string) => LoggingError & IFluidErrorBase,
+	errorMessage: string,
+	codepath: string,
+	messageLike?: MessageLike,
+	props: ITelemetryPropertiesExt = {},
+	stackTraceLimit?: number,
+): IFluidErrorBase {
+	const ErrorConfig = Error as unknown as { stackTraceLimit: number };
+	const originalStackTraceLimit = ErrorConfig.stackTraceLimit;
+	try {
+		if (stackTraceLimit !== undefined) {
+			ErrorConfig.stackTraceLimit = stackTraceLimit;
+		}
+
+		const error = wrapDataProcessingErrorIfUnrecognized(
+			factory,
+			errorMessage,
+			codepath,
+			messageLike,
+		);
+		error.addTelemetryProperties(props);
+
+		return error;
+	} finally {
+		// Reset the stack trace limit to the original value
+		if (stackTraceLimit !== undefined) {
+			ErrorConfig.stackTraceLimit = originalStackTraceLimit;
+		}
+	}
+}
+
+/**
+ * Wraps an unrecognized error into a data processing error (DataProcessingError or DataCorruptionError)
+ * using the provided factory.
+ *
+ * @remarks
+ * This function handles two cases:
+ * - **Unrecognized/external errors**: Wrapped using the provided factory function to create a proper
+ * Fluid error type (DataProcessingError or DataCorruptionError).
+ * - **Recognized Fluid errors**: Not wrapped, but annotated with data processing telemetry properties.
+ *
+ * An error is considered "unrecognized" if it's external (from outside Fluid) or has the
+ * {@link NORMALIZED_ERROR_TYPE} error type (indicating it was normalized but not classified).
+ *
+ * We wrap conditionally since known error types represent well-understood failure modes, and ideally
+ * one day we will move away from throwing these errors but rather we'll return them.
+ * But an unrecognized error needs to be classified appropriately (e.g., as DataProcessingError).
+ *
+ * @param factory - Factory function that creates the specific error type for wrapping unrecognized errors.
+ * @param originalError - The error to be wrapped or annotated.
+ * @param codepath - Identifier for the code path where the error was detected.
+ * @param messageLike - Optional message properties to include in telemetry.
+ * @returns The wrapped or annotated error as an {@link IFluidErrorBase}.
+ */
+function wrapDataProcessingErrorIfUnrecognized(
+	factory: (message: string) => LoggingError & IFluidErrorBase,
+	originalError: unknown,
+	codepath: string,
+	messageLike?: MessageLike,
+): IFluidErrorBase {
+	const props = {
+		dataProcessingError: 1,
+		dataProcessingCodepath: codepath,
+		...(messageLike === undefined ? undefined : extractSafePropertiesFromMessage(messageLike)),
+	};
+
+	const normalizedError = normalizeError(originalError, { props });
+	// Note that other errors may have the NORMALIZED_ERROR_TYPE errorType,
+	// but if so they are still suitable to be wrapped as DataProcessingError.
+	if (
+		isExternalError(normalizedError) ||
+		normalizedError.errorType === NORMALIZED_ERROR_TYPE
+	) {
+		// Create a new DataProcessingError to wrap this external error
+		const error = wrapError(normalizedError, (message: string) => factory(message));
+
+		// Copy over the props above and any others added to this error since first being normalized
+		error.addTelemetryProperties(normalizedError.getTelemetryProperties());
+
+		return error;
+	}
+	return normalizedError;
+}
+
+/**
+ * Generic wrapper for an unrecognized/uncategorized error object
+ *
+ * @internal
+ */
+export class GenericError extends LoggingError implements IGenericError, IFluidErrorBase {
+	public readonly errorType = FluidErrorTypes.genericError;
+
+	/**
+	 * Create a new GenericError
+	 * @param message - Error message
+	 * @param error - inner error object
+	 * @param props - Telemetry props to include when the error is logged
+	 */
+	public constructor(
+		message: string,
+		// TODO: Use `unknown` instead (API breaking change because error is not just an input parameter, but a public member of the class)
+		// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
+		public readonly error?: any,
+		props?: ITelemetryBaseProperties,
+	) {
+		// Don't try to log the inner error
+		super(message, props, new Set(["error"]));
+	}
+}
+
+/**
+ * Error indicating an API is being used improperly resulting in an invalid operation.
+ *
+ * @internal
+ */
+export class UsageError extends LoggingError implements IUsageError, IFluidErrorBase {
+	public readonly errorType = FluidErrorTypes.usageError;
+
+	public constructor(message: string, props?: ITelemetryBaseProperties) {
+		super(message, { ...props, usageError: true });
+	}
+}
+
+/**
+ * DataCorruptionError indicates that we encountered definitive evidence that the data at rest
+ * backing this container is corrupted, and this container would never be expected to load properly again
+ *
+ * @internal
+ */
+export class DataCorruptionError extends LoggingError implements IErrorBase, IFluidErrorBase {
+	public readonly errorType = FluidErrorTypes.dataCorruptionError;
+	public readonly canRetry = false;
+
+	public constructor(message: string, props: ITelemetryBaseProperties) {
+		super(message, { ...props, dataProcessingError: 1 });
+	}
+
+	/**
+	 * Create a new `DataCorruptionError` detected and raised within the Fluid Framework.
+	 */
+	public static create(
+		errorMessage: string,
+		dataCorruptionCodepath: string,
+		messageLike?: MessageLike,
+		props: ITelemetryPropertiesExt = {},
+		stackTraceLimit?: number,
+	): IFluidErrorBase {
+		return buildDataProcessingError(
+			(message: string) => new DataCorruptionError(message, {}),
+			errorMessage,
+			dataCorruptionCodepath,
+			messageLike,
+			props,
+			stackTraceLimit,
+		);
+	}
+}
+
+/**
+ * Indicates we hit a fatal error while processing incoming data from the Fluid Service.
+ *
+ * @remarks
+ *
+ * The error will often originate in the dataStore or DDS implementation that is responding to incoming changes.
+ * This differs from {@link DataCorruptionError} in that this may be a transient error that will not repro in another
+ * client or session.
+ *
+ * @internal
+ */
+export class DataProcessingError extends LoggingError implements IErrorBase, IFluidErrorBase {
+	/**
+	 * {@inheritDoc IFluidErrorBase.errorType}
+	 */
+	public readonly errorType = FluidErrorTypes.dataProcessingError;
+
+	public readonly canRetry = false;
+
+	private constructor(errorMessage: string, props?: ITelemetryBaseProperties) {
+		super(errorMessage, props);
+	}
+
+	/**
+	 * Create a new `DataProcessingError` detected and raised within the Fluid Framework.
+	 */
+	public static create(
+		errorMessage: string,
+		dataProcessingCodepath: string,
+		messageLike?: MessageLike,
+		props: ITelemetryPropertiesExt = {},
+		stackTraceLimit?: number,
+	): IFluidErrorBase {
+		return buildDataProcessingError(
+			(message: string) => new DataProcessingError(message),
+			errorMessage,
+			dataProcessingCodepath,
+			messageLike,
+			props,
+			stackTraceLimit,
+		);
+	}
+
+	/**
+	 * Wrap the given error in a `DataProcessingError`, unless the error is already of a known type
+	 * with the exception of a normalized {@link LoggingError}, which will still be wrapped.
+	 *
+	 * In either case, the error will have some relevant properties added for telemetry.
+	 *
+	 * @remarks See `wrapDataProcessingErrorIfUnrecognized` for details on wrapping behavior.
+	 *
+	 * @param originalError - The error to be converted.
+	 * @param dataProcessingCodepath - Which code-path failed while processing data.
+	 * @param messageLike - Message to include info about via telemetry props.
+	 *
+	 * @returns Either a new `DataProcessingError`, or (if wrapping is deemed unnecessary) the given error.
+	 */
+	public static wrapIfUnrecognized(
+		originalError: unknown,
+		dataProcessingCodepath: string,
+		messageLike?: MessageLike,
+	): IFluidErrorBase {
+		return wrapDataProcessingErrorIfUnrecognized(
+			(errorMessage: string) => new DataProcessingError(errorMessage),
+			originalError,
+			dataProcessingCodepath,
+			messageLike,
+		);
+	}
+}
+
+/**
+ * Error indicating that two Fluid layers are incompatible.
+ * See {@link @fluidframework/core-interfaces#ILayerIncompatibilityError} for more details.
+ *
+ * @internal
+ */
+export class LayerIncompatibilityError
+	extends LoggingError
+	implements ILayerIncompatibilityError
+{
+	public readonly errorType = FluidErrorTypes.layerIncompatibilityError;
+	public readonly layer: string;
+	public readonly layerVersion: string;
+	public readonly incompatibleLayer: string;
+	public readonly incompatibleLayerVersion: string;
+	public readonly compatibilityRequirementsInMonths: number;
+	public readonly actualDifferenceInMonths: number;
+	public readonly details: string;
+
+	public constructor(
+		message: string,
+		incompatibilityProps: {
+			layer: string;
+			layerVersion: string;
+			incompatibleLayer: string;
+			incompatibleLayerVersion: string;
+			compatibilityRequirementsInMonths: number;
+			actualDifferenceInMonths: number;
+			details: string;
+		},
+		telemetryProps?: ITelemetryBaseProperties,
+	) {
+		super(message, {
+			...incompatibilityProps,
+			...telemetryProps,
+			layerIncompatibilityError: true,
+		});
+		this.layer = incompatibilityProps.layer;
+		this.layerVersion = incompatibilityProps.layerVersion;
+		this.incompatibleLayer = incompatibilityProps.incompatibleLayer;
+		this.incompatibleLayerVersion = incompatibilityProps.incompatibleLayerVersion;
+		this.compatibilityRequirementsInMonths =
+			incompatibilityProps.compatibilityRequirementsInMonths;
+		this.actualDifferenceInMonths = incompatibilityProps.actualDifferenceInMonths;
+		this.details = incompatibilityProps.details;
+	}
+}
+
+/**
+ * Extracts specific properties from the provided message that we know are safe to log.
+ *
+ * @param messageLike - Message to include info about via telemetry props.
+ *
+ * @internal
+ */
+export const extractSafePropertiesFromMessage = (
+	messageLike: MessageLike,
+): {
+	messageClientId: string | undefined;
+	messageSequenceNumber: number | undefined;
+	messageClientSequenceNumber: number | undefined;
+	messageReferenceSequenceNumber: number | undefined;
+	messageMinimumSequenceNumber: number | undefined;
+	messageTimestamp: number | undefined;
+} => ({
+	messageClientId: messageLike.clientId === null ? "null" : messageLike.clientId,
+	messageSequenceNumber: messageLike.sequenceNumber,
+	messageClientSequenceNumber: messageLike.clientSequenceNumber,
+	messageReferenceSequenceNumber: messageLike.referenceSequenceNumber,
+	messageMinimumSequenceNumber: messageLike.minimumSequenceNumber,
+	messageTimestamp: messageLike.timestamp,
+});

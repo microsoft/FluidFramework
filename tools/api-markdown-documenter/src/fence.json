@@ -1,0 +1,6 @@
+{
+	"tags": ["common"],
+	// Root exports available to other code in the package
+	"exports": ["ConfigurationBase", "Heading", "Logging", "Link"],
+	"imports": ["common"]
+}

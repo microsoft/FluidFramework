@@ -1,0 +1,82 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+export {
+	onForkTransitive,
+	SharedTreeBranch,
+	type SharedTreeBranchChange,
+	type SharedTreeBranchEvents,
+	type BranchId,
+} from "./branch.js";
+
+export {
+	type ChangeProcessor,
+	type OnPop,
+	type OnPush,
+	type SquashingTransactionOptions,
+	type TransactionEvents,
+	type Transactor,
+	ChangeProcessorApplicability,
+	SquashingTransactionStack,
+	TransactionResult,
+	TransactionStack,
+} from "./transaction.js";
+
+export {
+	SharedTreeCore,
+	type ClonableSchemaAndPolicy,
+	type SharedTreeCoreOptionsInternal,
+	type EnrichmentConfig,
+} from "./sharedTreeCore.js";
+export {
+	SharedTreeSummaryFormatVersion,
+	type SharedTreeSummarizableMetadata,
+	type Summarizable,
+	type SummaryElementParser,
+	type SummaryElementStringifier,
+	summarizablesMetadataKey,
+} from "./summaryTypes.js";
+export { VersionedSummarizer } from "./versionedSummarizer.js";
+
+export type { ResubmitMachine } from "./resubmitMachine.js";
+export { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
+
+export { type ChangeEnricher } from "./changeEnricher.js";
+
+export {
+	makeEditManagerCodecBuilder,
+	getCodecTreeForEditManagerFormatWithChange,
+	editManagerCodecName,
+} from "./editManagerCodecs.js";
+export {
+	EditManagerFormatVersion,
+	supportedEditManagerFormatVersions,
+} from "./editManagerFormatCommons.js";
+export { EditManagerSummarizer } from "./editManagerSummarizer.js";
+export {
+	EditManager,
+	minimumPossibleSequenceNumber,
+	type SummaryData,
+	type SharedBranchSummaryData,
+} from "./editManager.js";
+export type {
+	Commit,
+	SeqNumber,
+	SequencedCommit,
+	SummarySessionBranch,
+	EncodedCommit,
+} from "./editManagerFormatCommons.js";
+
+export type { DecodedMessage } from "./messageTypes.js";
+export {
+	getCodecTreeForMessageFormatWithChange,
+	makeMessageCodecBuilder,
+	messageCodecName,
+	type MessageEncodingContext,
+} from "./messageCodecs.js";
+export {
+	MessageFormatVersion,
+	supportedMessageFormatVersions,
+} from "./messageFormat.js";

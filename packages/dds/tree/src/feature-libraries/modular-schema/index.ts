@@ -1,0 +1,89 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+export {
+	allowsRepoSuperset,
+	allowsTreeSchemaIdentifierSuperset,
+	allowsFieldSuperset,
+	allowsTreeSuperset,
+	allowsMultiplicitySuperset,
+} from "./comparison.js";
+export { isNeverField, isNeverTree } from "./isNeverTree.js";
+export {
+	addCrossFieldQuery,
+	type CrossFieldManager,
+	type CrossFieldMap,
+	type CrossFieldQuerySet,
+	CrossFieldTarget,
+	setInCrossFieldMap,
+} from "./crossFieldQueries.js";
+export {
+	ChangesetLocalIdSchema,
+	EncodedChangeAtomId,
+	EncodedRevisionInfo,
+	EncodedModularChangesetV1,
+	EncodedNodeChangeset,
+} from "./modularChangeFormatV1.js";
+export { EncodedModularChangesetV2 } from "./modularChangeFormatV2.js";
+export { FlexFieldKind, type FullSchemaPolicy } from "./fieldKind.js";
+export {
+	type EditFilterFunc,
+	EditFilterStatus,
+	type FieldChangeHandler,
+	type FieldChangeDelta,
+	type FieldChangeEncodingContext,
+	type FieldChangeDecodingContext,
+	type FieldChangeRebaser,
+	type FieldEditor,
+	type NestedChangesIndices,
+	type NodeChangeComposer,
+	type NodeChangeInverter,
+	type NodeChangeRebaser,
+	type NodeChangePruner,
+	referenceFreeFieldChangeRebaser,
+	type RebaseRevisionMetadata,
+	type RelevantRemovedRootsFromChild,
+	type ToDelta,
+	NodeAttachState,
+} from "./fieldChangeHandler.js";
+export type {
+	CrossFieldKey,
+	CrossFieldKeyRange,
+	FieldChange,
+	FieldChangeMap,
+	FieldChangeset,
+	HasFieldChanges,
+	ModularChangeset,
+	NoChangeConstraint,
+	NodeExistsConstraint,
+	NodeId,
+} from "./modularChangeTypes.js";
+export {
+	convertGenericChange,
+	genericChangeHandler,
+	genericFieldKind,
+} from "./genericFieldKind.js";
+export type { GenericChangeset } from "./genericFieldKindTypes.js";
+export {
+	ModularChangeFamily,
+	ModularEditBuilder,
+	type EditDescription,
+	type GlobalEditDescription,
+	type FieldEditDescription,
+	rebaseRevisionMetadataFromInfo,
+	intoDelta,
+	relevantRemovedRoots,
+	updateRefreshers,
+} from "./modularChangeFamily.js";
+export {
+	ModularChangeFormatVersion,
+	makeModularChangeCodecFamily,
+} from "./modularChangeCodecs.js";
+export type {
+	FieldKindConfiguration,
+	FieldKindConfigurationEntry,
+} from "./fieldKindConfiguration.js";
+export { DefaultRevisionReplacer } from "./defaultRevisionReplacer.js";
+export { minimizeModularChangeset } from "./minimizeModularChange.js";

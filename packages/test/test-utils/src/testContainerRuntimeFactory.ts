@@ -1,0 +1,196 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { IContainerContext, IRuntime } from "@fluidframework/container-definitions/internal";
+import {
+	ContainerRuntime,
+	DefaultSummaryConfiguration,
+	type IContainerRuntimeOptionsInternal,
+} from "@fluidframework/container-runtime/internal";
+import {
+	IContainerRuntime,
+	// eslint-disable-next-line import-x/no-deprecated
+	IContainerRuntimeWithResolveHandle_Deprecated,
+} from "@fluidframework/container-runtime-definitions/internal";
+import { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import { assert } from "@fluidframework/core-utils/internal";
+import {
+	// eslint-disable-next-line import-x/no-deprecated
+	RuntimeRequestHandler,
+	// eslint-disable-next-line import-x/no-deprecated
+	buildRuntimeRequestHandler,
+} from "@fluidframework/request-handler/internal";
+import {
+	IFluidDataStoreFactory,
+	NamedFluidDataStoreRegistryEntries,
+	type MinimumVersionForCollab,
+} from "@fluidframework/runtime-definitions/internal";
+import { RequestParser, RuntimeFactoryHelper } from "@fluidframework/runtime-utils/internal";
+
+interface backCompat_IFluidRouter {
+	IFluidRouter?: backCompat_IFluidRouter;
+	request(request: IRequest): Promise<IResponse>;
+}
+
+const backCompat_DefaultRouteRequestHandler = (defaultRootId: string) => {
+	return async (request: IRequest, runtime: IContainerRuntime) => {
+		const parser = RequestParser.create(request);
+		if (parser.pathParts.length === 0) {
+			return (
+				runtime as any as Required<FluidObject<IFluidHandleContext>>
+			).IFluidHandleContext.resolveHandle({
+				url: `/${defaultRootId}${parser.query}`,
+				headers: request.headers,
+			});
+		}
+		return undefined; // continue search
+	};
+};
+
+interface backCompat_ContainerRuntime {
+	load(
+		context: IContainerContext,
+		registryEntries: NamedFluidDataStoreRegistryEntries,
+		requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
+		runtimeOptions?: IContainerRuntimeOptionsInternal,
+		containerScope?: FluidObject,
+		existing?: boolean,
+		containerRuntimeCtor?: typeof ContainerRuntime,
+	): Promise<ContainerRuntime>;
+}
+
+/**
+ * Create a container runtime factory class that allows you to set runtime options
+ * @internal
+ */
+export const createTestContainerRuntimeFactory = (
+	containerRuntimeCtor: typeof ContainerRuntime,
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Returning anonymous class type
+) => {
+	return class extends RuntimeFactoryHelper {
+		constructor(
+			public type: string,
+			public dataStoreFactory: IFluidDataStoreFactory,
+			public runtimeOptions: IContainerRuntimeOptionsInternal = {
+				summaryOptions: {
+					summaryConfigOverrides: {
+						...DefaultSummaryConfiguration,
+						...{
+							initialSummarizerDelayMs: 0,
+						},
+					},
+				},
+			},
+			public minVersionForCollab: MinimumVersionForCollab | undefined = undefined,
+			// eslint-disable-next-line import-x/no-deprecated
+			public requestHandlers: RuntimeRequestHandler[] = [],
+		) {
+			super();
+		}
+
+		public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
+			// Back-compat - old code does not return IDataStore for rootContext.attachRuntime() call!
+			// Thus need to leverage old API createDetachedRootDataStore() that is gone in latest releases.
+			const rootContext =
+				"createDetachedRootDataStore" in runtime
+					? (runtime as any).createDetachedRootDataStore([this.type], "default")
+					: runtime.createDetachedDataStore([this.type]);
+
+			const rootRuntime = await this.dataStoreFactory.instantiateDataStore(
+				rootContext,
+				/* existing */ false,
+			);
+			const dataStore = await rootContext.attachRuntime(this.dataStoreFactory, rootRuntime);
+
+			const result = await dataStore?.trySetAlias("default");
+			assert(result === "Success" || result === undefined, "success");
+		}
+
+		public async instantiateFromExisting(runtime: ContainerRuntime): Promise<void> {
+			// Validate we can load root data stores.
+			// We should be able to load any data store that was created in initializeFirstTime!
+			// Note: We use the deprecated `getRootDataStore` from v1.X here to allow for cross-major version compat
+			// testing. Can be removed when we no longer support v1.X.
+			await (runtime.getAliasedDataStoreEntryPoint?.("default") ??
+				(
+					runtime as any as {
+						getRootDataStore(id: string, wait?: boolean): Promise<backCompat_IFluidRouter>;
+					}
+				).getRootDataStore("default"));
+		}
+
+		async preInitialize(
+			context: IContainerContext,
+			existing: boolean,
+		): Promise<IRuntime & IContainerRuntime> {
+			if (containerRuntimeCtor.loadRuntime === undefined) {
+				// Note: We use the deprecated `load` from v1.X here to allow for cross-major version compat testing.
+				// Can be removed when we no longer support v1.X.
+				return (containerRuntimeCtor as any as backCompat_ContainerRuntime).load(
+					context,
+					[
+						["default", Promise.resolve(this.dataStoreFactory)],
+						[this.type, Promise.resolve(this.dataStoreFactory)],
+					],
+					// eslint-disable-next-line import-x/no-deprecated
+					buildRuntimeRequestHandler(
+						backCompat_DefaultRouteRequestHandler("default"),
+						...this.requestHandlers,
+					),
+					this.runtimeOptions,
+					context.scope,
+					existing,
+				);
+			}
+			const provideEntryPoint = async (runtime: IContainerRuntime): Promise<FluidObject> => {
+				const entryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
+				if (entryPoint === undefined) {
+					throw new Error("default dataStore must exist");
+				}
+				return entryPoint.get();
+			};
+			const getDefaultObject = async (
+				request: IRequest,
+				runtime: IContainerRuntime,
+			): Promise<IResponse | undefined> => {
+				const parser = RequestParser.create(request);
+				if (parser.pathParts.length === 0) {
+					// This cast is safe as loadContainerRuntime is called below
+					// eslint-disable-next-line import-x/no-deprecated
+					return (runtime as IContainerRuntimeWithResolveHandle_Deprecated).resolveHandle({
+						url: `/default${parser.query}`,
+						headers: request.headers,
+					});
+				}
+				return undefined; // continue search
+			};
+
+			// This usage of `containerRuntimeCtor.loadRuntime`, an `@internal` API, called on past versions of this package,
+			// adds an extra constraint that makes changing that API more difficult than it otherwise would be.
+			// Actual customers / apps should not be dependent on stability of this API, but this code is, at least for now.
+			return containerRuntimeCtor.loadRuntime({
+				context,
+				registryEntries: [
+					["default", Promise.resolve(this.dataStoreFactory)],
+					[this.type, Promise.resolve(this.dataStoreFactory)],
+				],
+				// eslint-disable-next-line import-x/no-deprecated
+				requestHandler: buildRuntimeRequestHandler(getDefaultObject, ...this.requestHandlers),
+				provideEntryPoint,
+				runtimeOptions: this.runtimeOptions,
+				containerScope: context.scope,
+				existing,
+				minVersionForCollab: this.minVersionForCollab,
+			});
+		}
+	};
+};
+
+/**
+ * A container runtime factory that allows you to set runtime options
+ * @internal
+ */
+export const TestContainerRuntimeFactory = createTestContainerRuntimeFactory(ContainerRuntime);

@@ -1,0 +1,254 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { strict as assert } from "assert";
+
+import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { AttachState } from "@fluidframework/container-definitions";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import type { ISharedMap, IValueChanged } from "@fluidframework/map/internal";
+import type { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence/internal";
+import {
+	ITestFluidObject,
+	getContainerEntryPointBackCompat,
+	getDataStoreEntryPointBackCompat,
+	timeoutPromise,
+} from "@fluidframework/test-utils/internal";
+
+// during these point succeeding objects won't even exist locally
+const ContainerCreated = 0;
+const DatastoreCreated = 1;
+const DdsCreated = 2;
+
+// these points are after all objects at least exist locally
+const sharedPoints = [3, 4, 5];
+
+const ddsKey = "string";
+
+const testConfigs = generatePairwiseOptions({
+	containerAttachPoint: [ContainerCreated, DatastoreCreated, DdsCreated, ...sharedPoints],
+	containerSaveAfterAttach: [true, false],
+	datastoreAttachPoint: [DatastoreCreated, DdsCreated, ...sharedPoints],
+	datastoreSaveAfterAttach: [true, false],
+	ddsAttachPoint: [DdsCreated, ...sharedPoints],
+	ddsSaveAfterAttach: [true, false],
+});
+
+describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider, apis) => {
+	const { SharedString } = apis.dds;
+	// In cross-client compat, the validation loader (which loads the previously-created container)
+	// may be a different version than the init loader (which created the container). Use
+	// ddsForLoading so the validation loader reconstructs SharedString factories from the load-side
+	// version. (Outside cross-client compat it matches apis.dds.)
+	const SharedStringForLoading = apis.ddsForLoading.SharedString;
+	before(function () {
+		const provider = getTestObjectProvider();
+		switch (provider.driver.type) {
+			case "local":
+			case "tinylicious":
+				break;
+			default:
+				this.skip();
+		}
+	});
+	for (const testConfig of testConfigs) {
+		it(`Validate attach orders: ${JSON.stringify(
+			testConfig ?? "undefined",
+		)}`, async function () {
+			// setup shared states
+			const provider = getTestObjectProvider();
+			let containerUrl: IResolvedUrl | undefined;
+			const sharedStringFactory = SharedString.getFactory();
+			const sharedStringFactoryForLoading = SharedStringForLoading.getFactory();
+			const createChannelFactoryRegistry: [string | undefined, IChannelFactory][] = [
+				[sharedStringFactory.type, sharedStringFactory],
+			];
+			const loadChannelFactoryRegistry: [string | undefined, IChannelFactory][] = [
+				[sharedStringFactoryForLoading.type, sharedStringFactoryForLoading],
+			];
+			const createContainerConfig = { registry: createChannelFactoryRegistry };
+			const loadContainerConfig = { registry: loadChannelFactoryRegistry };
+
+			// act code block
+			{
+				const initLoader = provider.makeTestLoader(createContainerConfig);
+
+				const initContainer = await initLoader.createDetachedContainer(
+					provider.defaultCodeDetails,
+				);
+				const attachContainer = async (): Promise<void> => {
+					const attachP = initContainer.attach(
+						provider.driver.createCreateNewRequest(provider.documentId),
+					);
+					if (testConfig.containerSaveAfterAttach) {
+						await attachP;
+					}
+				};
+				if (testConfig.containerAttachPoint === ContainerCreated) {
+					// point 0 - at container create, datastore and dss don't exist
+					await attachContainer();
+				}
+
+				const initDataObject =
+					await getContainerEntryPointBackCompat<ITestFluidObject>(initContainer);
+
+				const ds = await initDataObject.context.containerRuntime.createDataStore("default");
+				const newDataObj = await getDataStoreEntryPointBackCompat<ITestFluidObject>(ds);
+				const attachDatastore = async (): Promise<void> => {
+					initDataObject.root.set("ds", newDataObj.handle);
+					while (
+						testConfig.datastoreSaveAfterAttach &&
+						initContainer.isDirty &&
+						initContainer.attachState !== AttachState.Detached
+					) {
+						await timeoutPromise((resolve) => initContainer.once("saved", () => resolve()), {
+							errorMsg: "datastoreSaveAfterAttach timeout",
+						});
+					}
+				};
+				if (testConfig.datastoreAttachPoint === DatastoreCreated) {
+					// point 1 - at datastore create, dds does not exist
+					await attachDatastore();
+				}
+				if (testConfig.containerAttachPoint === DatastoreCreated) {
+					// point 1 - datastore exists as least locally, but dds does not.
+					await attachContainer();
+				}
+
+				const newString = SharedString.create(newDataObj.runtime);
+				const attachDds = async (): Promise<void> => {
+					newDataObj.root.set(ddsKey, newString.handle);
+					while (
+						testConfig.ddsSaveAfterAttach &&
+						initContainer.isDirty &&
+						initContainer.attachState !== AttachState.Detached
+					) {
+						await timeoutPromise((resolve) => initContainer.once("saved", () => resolve()), {
+							errorMsg: "ddsSaveAfterAttach timeout",
+						});
+					}
+				};
+				if (testConfig.ddsAttachPoint === DdsCreated) {
+					await attachDds();
+				}
+				if (testConfig.datastoreAttachPoint === DdsCreated) {
+					await attachDatastore();
+				}
+				if (testConfig.containerAttachPoint === DdsCreated) {
+					await attachContainer();
+				}
+
+				// all objects, container, datastore, and dds are created, at least in memory at this point
+				// so now we can attach whatever is not in the presence of all the others
+				for (const i of sharedPoints) {
+					// also send an op at these points
+					// we'll use these to validate
+					newString.insertText(convertSharedPointToPos(i), i.toString());
+
+					if (testConfig.containerAttachPoint === i) {
+						await attachContainer();
+					}
+					if (testConfig.datastoreAttachPoint === i) {
+						await attachDatastore();
+					}
+					if (testConfig.ddsAttachPoint === i) {
+						await attachDds();
+					}
+				}
+
+				while (initContainer.attachState !== AttachState.Attached) {
+					await timeoutPromise((resolve) => initContainer.once("attached", () => resolve()), {
+						errorMsg: "container attach timeout",
+					});
+				}
+
+				while (initContainer.isDirty) {
+					await timeoutPromise((resolve) => initContainer.once("saved", () => resolve()), {
+						errorMsg: "final save timeout",
+					});
+				}
+				containerUrl = initContainer.resolvedUrl;
+
+				initContainer.close();
+			}
+
+			// validation code block
+			{
+				const validationLoader = provider.makeTestLoader(loadContainerConfig);
+				const validationContainer = await validationLoader.resolve({
+					url: await provider.driver.createContainerUrl(provider.documentId, containerUrl),
+				});
+
+				const initDataObject =
+					await getContainerEntryPointBackCompat<ITestFluidObject>(validationContainer);
+
+				const newDatastore = await (
+					await waitKey<IFluidHandle<ITestFluidObject>>(initDataObject.root, "ds")
+				).get();
+
+				const newString = await (
+					await waitKey<IFluidHandle<SharedString>>(newDatastore.root, ddsKey)
+				).get();
+
+				for (const i of sharedPoints) {
+					assert.equal(
+						await waitChar(newString, convertSharedPointToPos(i)),
+						i.toString(),
+						`No match at {i}`,
+					);
+				}
+			}
+		});
+	}
+});
+
+function convertSharedPointToPos(i: number): number {
+	return i - sharedPoints[0];
+}
+
+async function waitChar(sharedString: SharedString, pos: number): Promise<string> {
+	return timeoutPromise<string>(
+		(resolve) => {
+			const text = sharedString.getText();
+			if (text.length > pos) {
+				resolve(text[pos]);
+			} else {
+				const waitFunc = (event: SequenceDeltaEvent): void => {
+					const range = event.ranges.find((value) => value.position === pos);
+					if (range) {
+						sharedString.off("sequenceDelta", waitFunc);
+						resolve(sharedString.getText()[pos]);
+					}
+				};
+				sharedString.on("sequenceDelta", waitFunc);
+			}
+		},
+		{ errorMsg: `${pos} not available before timeout` },
+	);
+}
+
+async function waitKey<T>(map: ISharedMap, key: string): Promise<T> {
+	return timeoutPromise<T>(
+		(resolve) => {
+			if (map.has(key)) {
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				resolve(map.get<T>(key)!);
+			} else {
+				const waitFunc = (changed: IValueChanged): void => {
+					if (changed.key === key) {
+						map.off("valueChanged", waitFunc);
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						resolve(map.get<T>(key)!);
+					}
+				};
+				map.on("valueChanged", waitFunc);
+			}
+		},
+		{ errorMsg: `${key} not available before timeout` },
+	);
+}

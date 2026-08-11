@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "nodes": {
+    "com.fluidframework.leaf.number": {
+      "leaf": 0
+    },
+    "test.numericMap": {
+      "map": {
+        "kind": "Optional",
+        "types": [
+          "com.fluidframework.leaf.number"
+        ]
+      }
+    }
+  },
+  "root": {
+    "kind": "Value",
+    "types": [
+      "test.numericMap"
+    ]
+  }
+}

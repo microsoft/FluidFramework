@@ -1,0 +1,136 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+/* eslint-disable @typescript-eslint/dot-notation */
+
+import { strict as assert } from "node:assert";
+
+import { delay } from "@fluidframework/core-utils/internal";
+import { ICacheEntry } from "@fluidframework/driver-definitions/internal";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { openDB } from "idb";
+
+import { FluidCache } from "../FluidCache.js";
+import { FluidDriverCacheDBName } from "../FluidCacheIndexedDb.js";
+
+const mockPartitionKey = "FAKEPARTITIONKEY";
+
+function getFluidCache(config?: {
+	maxCacheItemAge?: number;
+	// eslint-disable-next-line @rushstack/no-new-null
+	partitionKey?: string | null;
+	logger?: MockLogger;
+}): FluidCache {
+	const logger = config?.logger;
+	return new FluidCache({
+		partitionKey: config?.partitionKey ?? mockPartitionKey,
+		maxCacheItemAge: config?.maxCacheItemAge ?? 3 * 24 * 60 * 60 * 1000,
+		...(logger === undefined ? {} : { logger }),
+		closeDbAfterMs: 100,
+	});
+}
+
+class DateMock {
+	// The current time being used by the mock
+	public static mockTimeMs: number = 0;
+
+	public static now(): number {
+		return DateMock.mockTimeMs;
+	}
+
+	public getTime(): number {
+		return DateMock.mockTimeMs;
+	}
+}
+
+// Sets up a mock date time for the current test. Returns a function that should be called to reset the environment
+export function setupDateMock(startMockTime: number): () => void {
+	const realDate = window.Date;
+	DateMock.mockTimeMs = startMockTime;
+	(window.Date as unknown) = DateMock;
+
+	return () => (window.Date = realDate);
+}
+
+// Gets a mock cache entry from an item key, all entries returned will be for the same document.
+function getMockCacheEntry(itemKey: string, options?: { docId: string }): ICacheEntry {
+	return {
+		file: {
+			docId: options?.docId ?? "myDocument",
+			resolvedUrl: {
+				type: "fluid",
+				url: "https://bing.com/myDocument",
+				id: "mockContainer",
+				tokens: {},
+				endpoints: {},
+			},
+		},
+		type: "snapshot",
+		key: itemKey,
+	};
+}
+
+describe("FluidCacheTimer tests", () => {
+	let fluidCache: FluidCache;
+	let extraDb: Awaited<ReturnType<typeof openDB>> | undefined;
+
+	beforeEach(() => {
+		// Reset the indexed db before each test so that it starts off in an empty state
+		// eslint-disable-next-line import-x/no-internal-modules, @typescript-eslint/no-require-imports
+		const FDBFactory = require("fake-indexeddb/lib/FDBFactory");
+		(window.indexedDB as unknown) = new FDBFactory();
+	});
+
+	afterEach(() => {
+		if (fluidCache !== undefined) {
+			clearTimeout(fluidCache["dbCloseTimer"]);
+			fluidCache["db"]?.close();
+		}
+		extraDb?.close();
+		extraDb = undefined;
+	});
+
+	it("db should be closed after the close timer", async () => {
+		const logger = new MockLogger();
+		fluidCache = getFluidCache({ logger });
+
+		const cacheEntry = getMockCacheEntry("someKey");
+		const cachedItem = { dateToStore: "foo" };
+		await fluidCache.put(cacheEntry, cachedItem);
+		assert.notStrictEqual(fluidCache["db"], undefined);
+		// Wait for timer to pass.
+		await delay(101);
+		assert.strictEqual(fluidCache["db"], undefined);
+		assert.strictEqual(fluidCache["dbCloseTimer"], undefined);
+	});
+
+	it("db should be closed after the version upgrade", async () => {
+		const logger = new MockLogger();
+		fluidCache = getFluidCache({ logger });
+
+		const cacheEntry = getMockCacheEntry("someKey");
+		const cachedItem = { dateToStore: "foo" };
+		await fluidCache.put(cacheEntry, cachedItem);
+		assert.notStrictEqual(fluidCache["db"], undefined);
+		// Create a DB with a much newer version number to force version upgrade on older cache causing it to close.
+		extraDb = await openDB(FluidDriverCacheDBName, 1000000);
+		assert.strictEqual(fluidCache["db"], undefined);
+		assert.strictEqual(fluidCache["dbCloseTimer"], undefined);
+	});
+
+	it("db should be closed after the version upgrade", async () => {
+		const logger = new MockLogger();
+		fluidCache = getFluidCache({ logger });
+
+		const cacheEntry = getMockCacheEntry("someKey");
+		const cachedItem = { dateToStore: "foo" };
+		await fluidCache.put(cacheEntry, cachedItem);
+		assert.notStrictEqual(fluidCache["db"], undefined);
+		// Create a DB with a much newer version number to force version upgrade on older cache causing it to close.
+		extraDb = await openDB(FluidDriverCacheDBName, 1000000);
+		assert.strictEqual(fluidCache["db"], undefined);
+		assert.strictEqual(fluidCache["dbCloseTimer"], undefined);
+	});
+});

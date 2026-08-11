@@ -1,0 +1,14 @@
+{
+	"name": "@group2/pkg-e",
+	"version": "1.0.0",
+	"description": "Test package",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "build-tools/packages/build-infrastructure/src/test/data/testRepo/packages/group2/pkg-e"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"dependencies": {}
+}

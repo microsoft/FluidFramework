@@ -1,0 +1,517 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import * as assert from "node:assert";
+import { type BigIntStats, existsSync, lstatSync, type Stats } from "node:fs";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import isEqual from "lodash.isequal";
+import type * as ts54Types from "typescript-5.4";
+import type * as ts59Types from "typescript-5.9";
+import type * as ts60Types from "typescript-6.0";
+
+import type { TscUtil } from "../../tscUtils.js";
+import {
+	getResolvedTsConfig,
+	getTsBuildInfoFullPath,
+	getTscUtils,
+	remapOutFile,
+} from "../../tscUtils.js";
+import { getInstalledPackageVersion } from "../taskUtils.js";
+import { LeafTask, LeafWithDoneFileTask } from "./leafTask.js";
+
+type tsParsedCommandLine =
+	| ts54Types.ParsedCommandLine
+	| ts59Types.ParsedCommandLine
+	| ts60Types.ParsedCommandLine;
+
+interface ITsBuildInfo {
+	program: {
+		fileNames: string[];
+		fileInfos: (
+			| string
+			| { version: string; affectsGlobalScope?: true; impliedFormat?: number }
+		)[];
+		affectedFilesPendingEmit?: any[];
+		emitDiagnosticsPerFile?: any[];
+		semanticDiagnosticsPerFile?: any[];
+		changeFileSet?: number[];
+		options: any;
+	};
+	version: string;
+}
+
+/**
+ * Normalizes a raw tsbuildinfo JSON object into the canonical {@link ITsBuildInfo} shape.
+ *
+ * TypeScript 5.x stores build info under a `program` wrapper, while TypeScript 6+
+ * places the same keys at the top level. This function detects which format is present
+ * and returns a unified structure, or `undefined` if the input is not recognizable.
+ */
+export function normalizeTsBuildInfo(raw: any): ITsBuildInfo | undefined {
+	// TS5 format: { program: { fileNames, fileInfos, options, ... }, version }
+	if (raw.program?.fileNames && raw.program?.fileInfos && raw.program?.options) {
+		return raw as ITsBuildInfo;
+	}
+	// TS6 format: { fileNames, fileInfos, options, ..., version }
+	if (raw.fileNames && raw.fileInfos && raw.options) {
+		return {
+			program: {
+				fileNames: raw.fileNames,
+				fileInfos: raw.fileInfos,
+				options: raw.options,
+				affectedFilesPendingEmit: raw.affectedFilesPendingEmit,
+				emitDiagnosticsPerFile: raw.emitDiagnosticsPerFile,
+				semanticDiagnosticsPerFile: raw.semanticDiagnosticsPerFile,
+				changeFileSet: raw.changeFileSet,
+			},
+			version: raw.version,
+		};
+	}
+	return undefined;
+}
+
+export class TscTask extends LeafTask {
+	private _tsBuildInfoFullPath: string | undefined;
+	private _tsBuildInfo: ITsBuildInfo | undefined;
+	private _tsConfig: tsParsedCommandLine | undefined;
+	private _tsConfigFullPath: string | undefined;
+	private _projectReference: TscTask | undefined;
+	private _sourceStats: (Stats | BigIntStats)[] | undefined;
+	private _tscUtils: TscUtil | undefined;
+
+	private getTscUtils(): TscUtil {
+		if (this._tscUtils) {
+			return this._tscUtils;
+		}
+		this._tscUtils = getTscUtils(this.node.pkg.directory);
+		return this._tscUtils;
+	}
+
+	protected get executionCommand(): string {
+		const parsedCommandLine = this.parsedCommandLine;
+		if (parsedCommandLine?.options.build) {
+			// https://github.com/microsoft/TypeScript/issues/57780
+			// `tsc -b` by design doesn't rebuild if dependent packages changed
+			// but not a referenced project. Just force it if we detected the change and
+			// invoke the build.
+			// `--force` is not fully supported, due to workaround in createTscUtil, so this may not actually work.
+			return `${this.command} --force`;
+		}
+		return this.command;
+	}
+	protected get isIncremental(): boolean {
+		const config = this.readTsConfig();
+		return config?.options.incremental ?? false;
+	}
+
+	protected async checkLeafIsUpToDate(): Promise<boolean> {
+		const parsedCommandLine = this.parsedCommandLine;
+		if (parsedCommandLine?.options.build) {
+			return this.checkReferencesIsUpToDate(
+				parsedCommandLine.fileNames.length === 0 ? ["."] : parsedCommandLine.fileNames,
+				new Set(),
+			);
+		}
+		// Check is Up to date without project references
+		return this.checkTscIsUpToDate();
+	}
+
+	private async checkReferencesIsUpToDate(
+		checkDir: string[],
+		checkedProjects: Set<string>,
+	): Promise<boolean> {
+		for (const dir of checkDir) {
+			if (checkedProjects.has(dir)) {
+				continue;
+			}
+			checkedProjects.add(dir);
+			const tempTscTask = new TscTask(
+				this.node,
+				`tsc -p ${dir}`,
+				this.context,
+				undefined,
+				true,
+			);
+			if (!(await tempTscTask.checkTscIsUpToDate(checkedProjects))) {
+				this.traceTrigger(`project reference ${dir} is not up to date`);
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private async checkTscIsUpToDate(checkedProjects?: Set<string>): Promise<boolean> {
+		const config = this.readTsConfig();
+		if (!config) {
+			this.traceTrigger("unable to read ts config");
+			return false;
+		}
+
+		// Only check project reference if we are in build mode
+		if (checkedProjects && config.projectReferences) {
+			const referencePaths = config.projectReferences.map((p) => p.path);
+			if (!(await this.checkReferencesIsUpToDate(referencePaths, checkedProjects))) {
+				return false;
+			}
+		}
+
+		if (config.fileNames.length === 0) {
+			// No file to build, no need to check the the build info.
+			return true;
+		}
+
+		const tsBuildInfoFileFullPath = this.tsBuildInfoFileFullPath;
+		if (tsBuildInfoFileFullPath === undefined) {
+			this.traceTrigger("no tsBuildInfo file path");
+			return false;
+		}
+
+		const tsBuildInfoFileDirectory = path.dirname(tsBuildInfoFileFullPath);
+
+		// Using tsc incremental information
+		const tsBuildInfo = await this.readTsBuildInfo();
+		if (tsBuildInfo === undefined) {
+			this.traceTrigger("tsBuildInfo not found");
+			return false;
+		}
+
+		const program = tsBuildInfo.program;
+		const noEmit = config.options.noEmit ?? false;
+		const hasChangedFiles = (program.changeFileSet?.length ?? 0) > 0;
+		const hasEmitErrorsOrPending =
+			(program.affectedFilesPendingEmit?.length ?? 0) > 0 ||
+			(program.emitDiagnosticsPerFile?.length ?? 0) > 0;
+		const hasSemanticErrors =
+			program.semanticDiagnosticsPerFile?.some((item) => Array.isArray(item)) ?? false;
+
+		const previousBuildError = noEmit
+			? hasChangedFiles || hasSemanticErrors
+			: hasChangedFiles || hasSemanticErrors || hasEmitErrorsOrPending;
+
+		// Check previous build errors
+		if (previousBuildError) {
+			this.traceTrigger("previous build error");
+			return false;
+		}
+
+		const tscUtils = this.getTscUtils();
+
+		// Keep a list of files that need to be compiled based on the command line flags and config, and
+		// remove the files that we sees from the tsBuildInfo.  The remaining files are
+		// new files that need to be rebuilt.
+		const configFileNames = new Set(
+			config.fileNames.map((p) => tscUtils.getCanonicalFileName(path.normalize(p))),
+		);
+
+		// Check dependencies file hashes
+		const fileNames = program.fileNames;
+		const fileInfos = program.fileInfos;
+		for (let i = 0; i < fileInfos.length; i++) {
+			const fileInfo = fileInfos[i];
+			const fileName = fileNames[i];
+			if (fileName === undefined) {
+				this.traceTrigger(`missing file name for file info id ${i}`);
+				return false;
+			}
+			try {
+				// Resolve relative path based on the directory of the tsBuildInfo file
+				let fullPath = path.resolve(tsBuildInfoFileDirectory, fileName);
+
+				// If we have project reference, see if this is in reference to one of the file, and map it to the d.ts file instead
+				if (this._projectReference) {
+					fullPath = this._projectReference.remapSrcDeclFile(fullPath, config);
+				}
+				const hash = await this.node.context.fileHashCache.getFileHash(
+					fullPath,
+					tscUtils.getSourceFileVersion,
+				);
+				const version = typeof fileInfo === "string" ? fileInfo : fileInfo.version;
+				if (hash !== version) {
+					this.traceTrigger(`version mismatch for ${fileName}, ${hash}, ${version}`);
+					return false;
+				}
+
+				// Remove files that we have built before
+				configFileNames.delete(tscUtils.getCanonicalFileName(path.normalize(fullPath)));
+			} catch (e: any) {
+				this.traceTrigger(`exception generating hash for ${fileName}\n\t${e.stack}`);
+				return false;
+			}
+		}
+
+		if (configFileNames.size !== 0) {
+			// New files that are not in the previous build, we are not up to date.
+			this.traceTrigger(`new file detected ${[...configFileNames.values()].join(",")}`);
+			return false;
+		}
+		try {
+			const tsVersion = await getInstalledPackageVersion(
+				"typescript",
+				this.node.pkg.directory,
+			);
+
+			if (tsVersion !== tsBuildInfo.version) {
+				this.traceTrigger("mismatched type script version");
+				return false;
+			}
+		} catch (e) {
+			this.traceTrigger(
+				`Unable to get installed package version for typescript from ${this.node.pkg.directory}: ${e}`,
+			);
+			return false;
+		}
+
+		// Check tsconfig.json
+		return this.checkTsConfig(tsBuildInfoFileDirectory, tsBuildInfo, config);
+	}
+
+	private remapSrcDeclFile(fullPath: string, config: tsParsedCommandLine): string {
+		if (!this._sourceStats) {
+			this._sourceStats = config ? config.fileNames.map((v) => lstatSync(v)) : [];
+		}
+
+		const stat = lstatSync(fullPath);
+		if (this._sourceStats.some((value) => isEqual(value, stat))) {
+			const parsed = path.parse(fullPath);
+			const directory = parsed.dir;
+			return remapOutFile(config, directory, `${parsed.name}.d.ts`);
+		}
+		return fullPath;
+	}
+
+	private checkTsConfig(
+		tsBuildInfoFileDirectory: string,
+		tsBuildInfo: ITsBuildInfo,
+		options: tsParsedCommandLine,
+	): boolean {
+		const configFileFullPath = this.configFileFullPath;
+		if (!configFileFullPath) {
+			assert.fail();
+		}
+
+		const tscUtils = this.getTscUtils();
+		// Patch relative path based on the file directory where the config comes from
+		const configOptions = tscUtils.filterIncrementalOptions(
+			tscUtils.convertOptionPaths(
+				options.options,
+				path.dirname(configFileFullPath),
+				path.resolve,
+			),
+		);
+		const tsBuildInfoOptions = tscUtils.convertOptionPaths(
+			tsBuildInfo.program.options,
+			tsBuildInfoFileDirectory,
+			path.resolve,
+		);
+
+		if (!isEqual(configOptions, tsBuildInfoOptions)) {
+			this.traceTrigger(`ts option changed ${configFileFullPath}`);
+			this.traceTrigger("Config:");
+			this.traceTrigger(JSON.stringify(configOptions, undefined, 2));
+			this.traceTrigger("BuildInfo:");
+			this.traceTrigger(JSON.stringify(tsBuildInfoOptions, undefined, 2));
+			return false;
+		}
+		return true;
+	}
+
+	private readTsConfig(): tsParsedCommandLine | undefined {
+		if (this._tsConfig == undefined) {
+			const parsedCommand = this.parsedCommandLine;
+			if (!parsedCommand) {
+				return undefined;
+			}
+
+			const configFileFullPath = this.configFileFullPath;
+			if (!configFileFullPath) {
+				return undefined;
+			}
+
+			const options = getResolvedTsConfig(
+				this.getTscUtils(),
+				this.node.pkg.directory,
+				parsedCommand,
+				configFileFullPath,
+			);
+			if (options === undefined) {
+				this.traceError(`ts fail to parse ${configFileFullPath}`);
+				return undefined;
+			}
+			this._tsConfig = options;
+		}
+
+		return this._tsConfig;
+	}
+	protected get recheckLeafIsUpToDate(): boolean {
+		return true;
+	}
+
+	private get configFileFullPath(): string | undefined {
+		if (this._tsConfigFullPath === undefined) {
+			const parsedCommand = this.parsedCommandLine;
+			if (!parsedCommand) {
+				return undefined;
+			}
+
+			this._tsConfigFullPath = this.getTscUtils().findConfigFile(
+				this.node.pkg.directory,
+				parsedCommand,
+			);
+		}
+		return this._tsConfigFullPath;
+	}
+
+	private get parsedCommandLine(): tsParsedCommandLine | undefined {
+		const parsedCommand = this.getTscUtils().parseCommandLine(this.command);
+		if (!parsedCommand) {
+			this.traceError(`ts fail to parse command line ${this.command}`);
+		}
+		return parsedCommand;
+	}
+
+	private get tsBuildInfoFileFullPath(): string | undefined {
+		if (this._tsBuildInfoFullPath === undefined) {
+			const options = this.readTsConfig();
+			const configFileFullPath = this.configFileFullPath;
+			if (options && configFileFullPath) {
+				this._tsBuildInfoFullPath = getTsBuildInfoFullPath(
+					options,
+					this.node.pkg.directory,
+					configFileFullPath,
+				);
+			}
+		}
+		return this._tsBuildInfoFullPath;
+	}
+
+	protected getVsCodeErrorMessages(errorMessages: string): string {
+		const lines = errorMessages.split("\n");
+		for (let i = 0; i < lines.length; i++) {
+			const line = lines[i];
+			if (line.length && line[0] !== " ") {
+				lines[i] = `${this.node.pkg.directory}/${line}`;
+			}
+		}
+		return lines.join("\n");
+	}
+
+	public async readTsBuildInfo(): Promise<ITsBuildInfo | undefined> {
+		if (this._tsBuildInfo === undefined) {
+			const tsBuildInfoFileFullPath = this.tsBuildInfoFileFullPath;
+			if (tsBuildInfoFileFullPath && existsSync(tsBuildInfoFileFullPath)) {
+				try {
+					const raw = JSON.parse(await readFile(tsBuildInfoFileFullPath, "utf8"));
+					const normalized = normalizeTsBuildInfo(raw);
+					if (normalized) {
+						this._tsBuildInfo = normalized;
+					} else {
+						this.traceError(`Invalid format ${tsBuildInfoFileFullPath}`);
+					}
+				} catch {
+					this.traceError(`Unable to load ${tsBuildInfoFileFullPath}`);
+				}
+			} else {
+				this.traceError(`${tsBuildInfoFileFullPath} file not found`);
+			}
+		}
+		return this._tsBuildInfo;
+	}
+
+	protected async markExecDone(): Promise<void> {
+		// force reload
+		this._tsBuildInfo = undefined;
+	}
+
+	protected get useWorker(): boolean {
+		// TODO: Worker doesn't implement all mode.  This is not comprehensive filtering yet.
+		const parsed = this.parsedCommandLine;
+		return (
+			parsed !== undefined &&
+			(parsed.fileNames.length === 0 || parsed.options.project === undefined) &&
+			!parsed.watchOptions
+		);
+	}
+}
+
+// Base class for tasks that are dependent on a tsc compile
+export abstract class TscDependentTask extends LeafWithDoneFileTask {
+	private _configFileFullPaths: string[] | undefined;
+
+	protected get recheckLeafIsUpToDate(): boolean {
+		return true;
+	}
+
+	/**
+	 * All config files to track: task-specific configs plus any additional config files from the task definition.
+	 */
+	protected get configFileFullPaths(): string[] {
+		if (this._configFileFullPaths === undefined) {
+			this._configFileFullPaths = [
+				...this.taskSpecificConfigFiles,
+				...this.additionalConfigFiles,
+			];
+		}
+
+		return this._configFileFullPaths;
+	}
+
+	protected async getDoneFileContent(): Promise<string | undefined> {
+		try {
+			const tsBuildInfoFiles: ITsBuildInfo[] = [];
+			const tscTasks = [...this.getDependentLeafTasks()].filter(
+				(task) => task instanceof TscTask,
+			) as TscTask[];
+			const ownTscTasks = tscTasks.filter((task) => task.package == this.package);
+
+			// Take only the tsc task in the same package if possible.
+			// Sort by task name to provide some stability
+			const tasks = (ownTscTasks.length === 0 ? tscTasks : ownTscTasks).sort((a, b) =>
+				a.name.localeCompare(b.name),
+			);
+
+			for (const dep of tasks) {
+				const tsBuildInfo = await dep.readTsBuildInfo();
+				if (tsBuildInfo === undefined) {
+					// If any of the tsc task don't have build info, we can't track
+					return undefined;
+				}
+				tsBuildInfoFiles.push(tsBuildInfo);
+			}
+
+			const configs: string[] = [];
+			const configFiles = this.configFileFullPaths;
+			for (const configFile of configFiles) {
+				if (existsSync(configFile)) {
+					// Include the config file if it exists so that we can detect changes
+					configs.push(await readFile(configFile, "utf8"));
+				}
+			}
+
+			return JSON.stringify({
+				version: await this.getToolVersion(),
+				configs,
+				tsBuildInfoFiles,
+			});
+		} catch (e) {
+			// Re-throw so that the user-visible warning in markExecDone surfaces the real
+			// cause (e.g. a ReferenceError from missing tooling). Returning undefined here
+			// would silently mark the task as non-incremental with no actionable detail.
+			this.traceError(`error generating done file content ${e}`);
+			throw e;
+		}
+	}
+
+	/**
+	 * Config files specific to this task type (e.g., .eslintrc for eslint, package.json for generate-entrypoints).
+	 *
+	 * @remarks
+	 * Ideally, implementations should include any parent or extended configs (e.g., configs referenced
+	 * via `extends`). Some task implementations (like biome) do this, but others (like eslint) currently
+	 * only track the local config file.
+	 */
+	protected abstract get taskSpecificConfigFiles(): string[];
+	protected abstract getToolVersion(): Promise<string>;
+}

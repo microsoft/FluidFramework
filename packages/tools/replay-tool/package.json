@@ -1,0 +1,97 @@
+{
+	"name": "@fluid-internal/replay-tool",
+	"version": "2.116.0",
+	"private": true,
+	"description": "A tool that lets the user to replay ops.",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "packages/tools/replay-tool"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"sideEffects": false,
+	"type": "module",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		}
+	},
+	"main": "lib/index.js",
+	"types": "lib/index.d.ts",
+	"bin": {
+		"replayTool": "bin/replayTool"
+	},
+	"scripts": {
+		"build": "fluid-build . --task build",
+		"build:compile": "fluid-build . --task compile",
+		"build:esnext": "tsc --project ./tsconfig.json",
+		"check:are-the-types-wrong": "attw --pack .",
+		"check:biome": "biome check .",
+		"check:format": "npm run check:biome",
+		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
+		"eslint": "eslint --quiet --format stylish src",
+		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
+		"format": "npm run format:biome",
+		"format:biome": "biome check . --write",
+		"lint": "fluid-build . --task lint",
+		"lint:fix": "fluid-build . --task eslint:fix --task format",
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
+	},
+	"dependencies": {
+		"@fluid-experimental/ink": "workspace:~",
+		"@fluid-experimental/sequence-deprecated": "workspace:~",
+		"@fluidframework/cell": "workspace:~",
+		"@fluidframework/container-definitions": "workspace:~",
+		"@fluidframework/container-loader": "workspace:~",
+		"@fluidframework/container-runtime": "workspace:~",
+		"@fluidframework/container-runtime-definitions": "workspace:~",
+		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/core-utils": "workspace:~",
+		"@fluidframework/datastore": "workspace:~",
+		"@fluidframework/datastore-definitions": "workspace:~",
+		"@fluidframework/driver-definitions": "workspace:~",
+		"@fluidframework/file-driver": "workspace:~",
+		"@fluidframework/map": "workspace:~",
+		"@fluidframework/matrix": "workspace:~",
+		"@fluidframework/ordered-collection": "workspace:~",
+		"@fluidframework/register-collection": "workspace:~",
+		"@fluidframework/replay-driver": "workspace:~",
+		"@fluidframework/request-handler": "workspace:~",
+		"@fluidframework/runtime-definitions": "workspace:~",
+		"@fluidframework/runtime-utils": "workspace:~",
+		"@fluidframework/sequence": "workspace:~",
+		"@fluidframework/shared-object-base": "workspace:~",
+		"@fluidframework/shared-summary-block": "workspace:~",
+		"@fluidframework/telemetry-utils": "workspace:~",
+		"@fluidframework/test-runtime-utils": "workspace:~",
+		"@fluidframework/tool-utils": "workspace:~",
+		"json-stable-stringify": "^1.0.1"
+	},
+	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.18.2",
+		"@biomejs/biome": "~2.4.5",
+		"@fluid-tools/build-cli": "catalog:buildTools",
+		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-tools": "catalog:buildTools",
+		"@fluidframework/eslint-config-fluid": "catalog:eslint",
+		"@types/json-stable-stringify": "^1.0.32",
+		"@types/node": "catalog:types",
+		"copyfiles": "^2.4.1",
+		"eslint": "catalog:eslint",
+		"jiti": "^2.6.1",
+		"rimraf": "^6.1.3",
+		"typescript": "~5.4.5"
+	},
+	"typeValidation": {
+		"disabled": true
+	}
+}

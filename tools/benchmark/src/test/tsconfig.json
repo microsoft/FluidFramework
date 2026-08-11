@@ -1,0 +1,14 @@
+{
+	"extends": "../../../../common/build/build-common/ts-common-config.json",
+	"compilerOptions": {
+		"rootDir": "./",
+		"outDir": "../../dist/test",
+		"types": ["mocha", "node"],
+	},
+	"include": ["./**/*"],
+	"references": [
+		{
+			"path": "../..",
+		},
+	],
+}

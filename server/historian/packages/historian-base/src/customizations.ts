@@ -1,0 +1,26 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import type {
+	IDocumentManager,
+	IStorageNameRetriever,
+	IRevokedTokenChecker,
+	IReadinessCheck,
+} from "@fluidframework/server-services-core";
+import type { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
+
+import type { IPostEphemeralContainerChecker, ISimplifiedCustomDataRetriever } from "./services";
+
+export interface IHistorianResourcesCustomizations {
+	documentManager?: IDocumentManager;
+	storageNameRetriever?: IStorageNameRetriever;
+	revokedTokenChecker?: IRevokedTokenChecker;
+	redisClientConnectionManager?: IRedisClientConnectionManager;
+	redisClientConnectionManagerForThrottling?: IRedisClientConnectionManager;
+	redisClientConnectionManagerForInvalidTokenCache?: IRedisClientConnectionManager;
+	readinessCheck?: IReadinessCheck;
+	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever;
+	postEphemeralContainerChecker?: IPostEphemeralContainerChecker;
+}

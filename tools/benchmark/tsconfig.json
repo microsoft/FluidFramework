@@ -1,0 +1,13 @@
+{
+	"extends": "../../common/build/build-common/ts-common-config.json",
+	"compilerOptions": {
+		"rootDir": "./src",
+		"outDir": "./dist",
+		"composite": true,
+		// Uses Node types to detect Node and do special case optimization for it.
+		// This package should still support browser.
+		"types": ["node"],
+	},
+	"include": ["src/**/*"],
+	"exclude": ["src/test/**/*"],
+}

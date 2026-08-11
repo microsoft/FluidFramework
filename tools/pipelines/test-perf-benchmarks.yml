@@ -1,0 +1,306 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+name: $(Build.BuildId)
+
+trigger:
+  branches:
+    include:
+    - release/*
+    - main
+    - next
+    - lts
+  paths:
+    include:
+    - .npmrc
+    - .nvmrc
+    - .pnpmfile.cjs
+    - _buildProject.config.cjs
+    - common/build/build-common
+    - examples
+    - experimental
+    - fluidBuild.config.cjs
+    - package.json
+    - packages
+    - patches/*
+    - pnpm-lock.yaml
+    - pnpm-workspace.yaml
+    - tools/pipelines/test-perf-benchmarks.yml
+    - tools/pipelines/templates/include-install.yml
+    - tools/pipelines/templates/include-upload-npm-logs.yml
+    - tools/pipelines/templates/include-use-node-version.yml
+    - tools/pipelines/templates/include-vars-telemetry-generator.yml
+    - tools/pipelines/templates/upload-telemetry
+pr: none
+
+parameters:
+- name: poolBuild
+  type: object
+  default: Large-eastus2
+
+# Each entry generates a stage that checks out the repo, builds, runs the specified test script,
+# collects results with test:benchmark:copyresults, uploads telemetry, and publishes artifacts.
+- name: benchmarkJobs
+  type: object
+  default:
+  - stageName: perf_benchmark_duration
+    displayName: Perf benchmarks - duration
+    testScript: test:benchmark:duration:report
+    artifactName: duration
+    testPackageDir: '.'
+  - stageName: perf_benchmark_other
+    displayName: Perf benchmarks - other
+    testScript: test:benchmark:other:report
+    artifactName: other
+    testPackageDir: '.'
+  - stageName: perf_e2e_local
+    displayName: Perf e2e benchmarks - local
+    testScript: test:benchmark:local
+    artifactName: e2e-local
+    testPackageDir: packages/test/test-end-to-end-tests
+    endpointName: local
+  - stageName: perf_e2e_frs
+    displayName: Perf e2e benchmarks - FRS
+    testScript: test:benchmark:frs
+    artifactName: e2e-frs
+    testPackageDir: packages/test/test-end-to-end-tests
+    endpointName: frs
+    lockVariableGroupName: perf-frs-lock
+    timeoutInMinutes: 360
+  - stageName: perf_e2e_odsp
+    displayName: Perf e2e benchmarks - ODSP
+    testScript: test:benchmark:odsp
+    artifactName: e2e-odsp
+    testPackageDir: packages/test/test-end-to-end-tests
+    endpointName: odsp
+    timeoutInMinutes: 360
+
+resources:
+  repositories:
+  - repository: ff_pipeline_host
+    type: git
+    name: ff_pipeline_host
+    ref: main
+
+variables:
+  - template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
+  # We use 'chalk' to colorize output, which auto-detects color support in the
+  # running terminal.  The log output shown in Azure DevOps job runs only has
+  # basic ANSI color support though, so force that in the pipeline
+  - name: FORCE_COLOR
+    value: 1
+    readonly: true
+  - name: pipelineIdentifierForTelemetry
+    value: 'PerformanceBenchmark'
+    readonly: true
+  # This is a test pipeline, not a build one, so we don't need to run CodeQL tasks
+  # Note that using this variable only works for non-1ES-template pipelines.
+  - name: Codeql.SkipTaskAutoInjection
+    value: true
+  - group: prague-key-vault
+  - group: ado-feeds
+
+stages:
+  - ${{ each job in parameters.benchmarkJobs }}:
+
+    - stage: ${{ job.stageName }}
+      displayName: ${{ job.displayName }}
+      dependsOn: []
+      ${{ if ne(coalesce(job.lockVariableGroupName, ''), '') }}:
+        lockBehavior: sequential
+        variables:
+          - group: ${{ job.lockVariableGroupName }}
+      jobs:
+      - job: run
+        displayName: ${{ job.displayName }}
+        pool: ${{ parameters.poolBuild }}
+        timeoutInMinutes: ${{ coalesce(job.timeoutInMinutes, 180) }}
+        steps:
+        # Checkout the FluidFramework repo (for workspace scripts and source code)
+        - checkout: self
+          path: $(FluidFrameworkDirectory)
+          fetchDepth: 1
+          fetchTags: false
+
+        # Checkout ff_pipeline_host (provides telemetry-generator and trips-setup/cleanup)
+        - checkout: ff_pipeline_host
+          path: $(FFPipelineHostDirectory)
+          fetchDepth: 1
+          fetchTags: false
+
+        - task: Bash@3
+          displayName: Print parameter/variable values for troubleshooting
+          inputs:
+            targetType: 'inline'
+            script: |
+              set -eu -o pipefail
+              echo "
+              Test configuration:
+                testScript=${{ job.testScript }}
+                testPackageDir=${{ job.testPackageDir }}
+                endpointName=${{ coalesce(job.endpointName, '(none)') }}
+
+              Build Params:
+                SourceBranch=$(Build.SourceBranch)
+              "
+
+        - template: /tools/pipelines/templates/include-use-node-version.yml@self
+
+        # Install FluidFramework dependencies
+        - template: /tools/pipelines/templates/include-install.yml@self
+          parameters:
+            buildDirectory: $(FluidFrameworkDirectory)
+            installDependenciesDescription: Install FluidFramework dependencies
+            installPnpm: true
+            primaryRegistry: $(ado-feeds-ff-download-only)
+            # The compat-workspaces lockfile is committed to the FluidFramework repo and changes
+            # whenever legacy package versions are added or removed. Including it in the pnpm store
+            # cache key ensures a cache miss whenever the set of compat packages changes.
+            # The ff_pipeline_host lockfile is included so the cache key also invalidates when the
+            # internal tooling dependencies change.
+            additionalLockFilePaths: '$(FluidFrameworkDirectory)/packages/test/test-version-utils/compat-workspaces/full/pnpm-lock.yaml | $(FFPipelineHostDirectory)/pnpm-lock.yaml'
+
+        # Install ff_pipeline_host dependencies (provides telemetry-generator and trips-setup/cleanup)
+        - template: /tools/pipelines/templates/include-install.yml@self
+          parameters:
+            buildDirectory: $(FFPipelineHostDirectory)
+            installDependenciesDescription: Install ff_pipeline_host dependencies
+            # Note that skipping pnpm install means client pnpm version must suffice for ff_pipeline_host.
+            # TODO #74732: consider separating pnpm stores and caches if later ff_pipeline_host
+            # steps can remain version agnostic and then this install can be restored to take
+            # place before FluidFramework install.
+            installPnpm: false
+            primaryRegistry: $(ado-feeds-ff-download-only)
+
+        # Build the workspace so compiled test code is available for benchmarks
+        - task: Bash@3
+          displayName: Build workspace
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)
+            script: |
+              set -eu -o pipefail
+              pnpm exec fluid-build --nolint --task build:test:esm --worker
+
+        # ODSP tenant setup
+        - ${{ if eq(job.endpointName, 'odsp') }}:
+          - task: AzureCLI@2
+            displayName: 'Log in to retrieve tenant credentials'
+            inputs:
+              azureSubscription: 'FF Pipeline Authentication'
+              addSpnToEnvironment: true
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                set -eu -o pipefail
+                az login --service-principal -u $servicePrincipalId -p $idToken --tenant $tenantId
+
+          - task: Bash@3
+            displayName: 'Run tenant setup script'
+            env:
+              SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+            inputs:
+              targetType: 'inline'
+              workingDirectory: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
+              script: |
+                set -eu -o pipefail
+                # Increase the maximum time to wait for a tenant to 1 hour to accommodate multiple test runs at the same time.
+                pnpm exec trips-setup --waitTime=3600 --accessToken=$SYSTEM_ACCESSTOKEN --useFic
+                echo "##vso[task.setvariable variable=tenantSetupSuccess;]true"
+
+        # Run benchmark tests
+        - task: Bash@3
+          displayName: Run ${{ job.testScript }}
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/${{ job.testPackageDir }}
+            script: |
+              set -eu -o pipefail
+              npm run ${{ job.testScript }}
+          ${{ if ne(coalesce(job.endpointName, ''), '') }}:
+            env:
+              FLUID_BUILD_ID: $(Build.BuildId)
+              FLUID_ENDPOINTNAME: ${{ job.endpointName }}
+              FLUID_LOGGER_PROPS: '{ "hostName": "Benchmark", "displayName": "${{ variables.pipelineIdentifierForTelemetry }}" }'
+              login__microsoft__clientId: $(login-microsoft-clientId)
+              ${{ if eq(job.endpointName, 'odsp') }}:
+                token__package__import__location: $(token__package__import__location)
+                login__odsp__fic__test__users: $(login__odsp__fic__test__users)
+                SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+              ${{ if eq(job.endpointName, 'frs') }}:
+                fluid__test__driver__frs: $(automation-fluid-test-driver-frs-perf-test)
+
+        # Collect benchmark results into a single output directory
+        - task: Bash@3
+          displayName: Collect benchmark results
+          condition: succeededOrFailed()
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)
+            script: |
+              set -eu -o pipefail
+              npm run test:benchmark:copyresults
+              echo "Collected benchmark results:"
+              ls -laR benchmarkOutput || echo "No benchmark output found"
+
+        # Write measurements to Aria/Kusto
+        - task: Bash@3
+          displayName: Write measurements to Aria/Kusto
+          condition: succeededOrFailed()
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
+            script: |
+              set -eu -o pipefail
+              pnpm exec telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlersNew)/benchmarkHandler.js --dir '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/benchmarkOutput'
+          ${{ if ne(coalesce(job.endpointName, ''), '') }}:
+            env:
+              FLUID_ENDPOINTNAME: ${{ job.endpointName }}
+
+        # Publish benchmark output as pipeline artifact
+        - task: PublishPipelineArtifact@1
+          displayName: Publish Artifact - ${{ job.artifactName }}
+          condition: succeededOrFailed()
+          inputs:
+            targetPath: '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/benchmarkOutput'
+            artifactName: 'perf-test-outputs_${{ job.artifactName }}_attempt-$(System.JobAttempt)'
+
+        # ODSP tenant cleanup
+        - ${{ if eq(job.endpointName, 'odsp') }}:
+          - task: AzureCLI@2
+            displayName: 'Log in to release tenant credentials'
+            inputs:
+              azureSubscription: 'FF Pipeline Authentication'
+              addSpnToEnvironment: true
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                set -eu -o pipefail
+                az login --service-principal -u $servicePrincipalId -p $idToken --tenant $tenantId
+            condition: eq(variables['tenantSetupSuccess'], 'true')
+
+          - task: Bash@3
+            displayName: 'Release tenant credentials'
+            env:
+              login__odsp__fic__test__users: $(login__odsp__fic__test__users)
+              SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+            inputs:
+              targetType: 'inline'
+              workingDirectory: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
+              script: |
+                set -eu -o pipefail
+                pnpm exec trips-cleanup --useFic
+            condition: eq(variables['tenantSetupSuccess'], 'true')
+
+        - template: /tools/pipelines/templates/include-upload-npm-logs.yml@self
+
+    - template: /tools/pipelines/templates/upload-telemetry/include-stage-upload-telemetry.yml@self
+      parameters:
+        telemetryDescription: ${{ job.stageName }}
+        dependsOn:
+          - ${{ job.stageName }}
+        telemetry_upload_steps:
+          - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-stage-timing.yml@self
+            parameters:
+              stageIdFilter: ${{ job.stageName }}
+              pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}

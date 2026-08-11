@@ -1,0 +1,107 @@
+{
+	"name": "@fluid-experimental/odsp-end-to-end-tests",
+	"version": "2.116.0",
+	"description": "Odsp client end to end tests",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "packages/service-clients/end-to-end-tests/odsp-client"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"sideEffects": false,
+	"type": "module",
+	"scripts": {
+		"build": "fluid-build . --task build",
+		"build:compile": "fluid-build . --task compile",
+		"build:genver": "gen-version",
+		"build:test": "npm run build:test:esm",
+		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
+		"check:biome": "biome check .",
+		"check:format": "npm run check:biome",
+		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
+		"eslint": "eslint --quiet --format stylish src",
+		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
+		"format": "npm run format:biome",
+		"format:biome": "biome check . --write",
+		"lint": "fluid-build . --task lint",
+		"lint:fix": "fluid-build . --task eslint:fix --task format",
+		"test": "npm run test:realsvc:odsp",
+		"test:coverage": "c8 npm test",
+		"test:realsvc:odsp": "npm run test:realsvc:odsp:run -- --driver=odsp --odspEndpointName=odsp",
+		"test:realsvc:odsp:run": "mocha --exit --timeout 20000 --config src/test/.mocharc.js",
+		"test:realsvc:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:realsvc:odsp"
+	},
+	"c8": {
+		"all": true,
+		"cache-dir": "nyc/.cache",
+		"exclude": [
+			"src/test/**/*.*ts",
+			"lib/test/**/*.*js"
+		],
+		"exclude-after-remap": false,
+		"include": [
+			"src/**/*.*ts",
+			"lib/**/*.*js"
+		],
+		"report-dir": "nyc/report",
+		"reporter": [
+			"cobertura",
+			"html",
+			"text"
+		],
+		"temp-directory": "nyc/.nyc_output"
+	},
+	"dependencies": {
+		"@fluid-internal/mocha-test-setup": "workspace:~",
+		"@fluid-private/test-version-utils": "workspace:~",
+		"@fluidframework/aqueduct": "workspace:~",
+		"@fluidframework/container-definitions": "workspace:~",
+		"@fluidframework/container-loader": "workspace:~",
+		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/counter": "workspace:~",
+		"@fluidframework/fluid-static": "workspace:~",
+		"@fluidframework/map": "workspace:~",
+		"@fluidframework/matrix": "workspace:~",
+		"@fluidframework/odsp-client": "workspace:~",
+		"@fluidframework/odsp-doclib-utils": "workspace:~",
+		"@fluidframework/odsp-driver-definitions": "workspace:~",
+		"@fluidframework/sequence": "workspace:~",
+		"@fluidframework/telemetry-utils": "workspace:~",
+		"@fluidframework/test-utils": "workspace:~",
+		"mocha": "^11.7.5",
+		"mocha-multi-reporters": "^1.5.1",
+		"sinon": "^18.0.1",
+		"uuid": "^11.1.0"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "~2.4.5",
+		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-tools": "catalog:buildTools",
+		"@fluidframework/eslint-config-fluid": "catalog:eslint",
+		"@types/mocha": "^10.0.10",
+		"@types/nock": "^9.3.0",
+		"@types/node": "catalog:types",
+		"@types/sinon": "^17.0.3",
+		"c8": "^10.1.3",
+		"cross-env": "^10.1.0",
+		"eslint": "catalog:eslint",
+		"jiti": "^2.6.1",
+		"nock": "^13.3.3",
+		"rimraf": "^6.1.3",
+		"typescript": "~5.4.5"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"build:test:esm": [
+				"^build:entrypoints:esm",
+				"^build:esnext",
+				"build:genver"
+			]
+		}
+	},
+	"typeValidation": {
+		"disabled": true
+	}
+}

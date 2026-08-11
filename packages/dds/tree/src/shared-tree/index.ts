@@ -1,0 +1,73 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+export {
+	type ITreePrivate,
+	type SharedTreeOptionsInternal,
+	type SharedTreeOptions,
+	type SharedTreeOptionsBeta,
+	SharedTreeKernel,
+	type ForestType,
+	type SharedTreeContentSnapshot,
+	type SharedTreeFormatOptions,
+	buildConfiguredForest,
+	defaultSharedTreeOptions,
+	type ForestOptions,
+	type ITreeInternal,
+	ForestTypeOptimized,
+	ForestTypeExpensiveDebug,
+	ForestTypeReference,
+	exportSimpleSchema,
+	type SharedTreeKernelView,
+	persistedToSimpleSchema,
+	getCodecTreeForSharedTreeFormat,
+} from "./sharedTree.js";
+
+export {
+	createTreeCheckout,
+	TreeCheckout,
+	type ITreeCheckout,
+	type CheckoutEvents,
+	type TreeTransactor,
+} from "./treeCheckout.js";
+
+export { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
+
+export { initialize, initializerFromChunk } from "./schematizeTree.js";
+
+export type {
+	ISharedTreeEditor,
+	ISchemaEditor,
+	SharedTreeEditBuilder,
+} from "./sharedTreeEditBuilder.js";
+
+export { minimize } from "./transactionMinimize.js";
+
+export { Tree } from "./tree.js";
+export type { RunTransaction } from "./tree.js";
+
+export {
+	TreeAlpha,
+	type TreeIdentifierUtils,
+	type ObservationResults,
+} from "./treeAlpha.js";
+
+export {
+	independentInitializedView,
+	type ViewContent,
+	independentView,
+	type IndependentViewOptions,
+	type IndependentViewTelemetryOptions,
+	createIndependentTreeBeta,
+	createIndependentTreeAlpha,
+	type CreateIndependentTreeAlphaOptions,
+} from "./independentView.js";
+
+export type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
+
+export {
+	getCodecTreeForChangeFormat,
+	type SharedTreeChangeFormatVersion,
+} from "./sharedTreeChangeCodecs.js";

@@ -1,0 +1,29 @@
+{
+	"compilerOptions": {
+		"target": "es2022",
+		"module": "node16",
+		"moduleResolution": "node16",
+		"declaration": false,
+		"declarationMap": false,
+		"sourceMap": true,
+		"outDir": "../../dist/test",
+		"rootDir": ".",
+		"strict": true,
+		"noImplicitAny": true,
+		"strictNullChecks": true,
+		"strictFunctionTypes": true,
+		"strictBindCallApply": true,
+		"strictPropertyInitialization": true,
+		"noImplicitThis": true,
+		"types": ["node", "mocha"],
+		"esModuleInterop": true,
+		"incremental": true,
+	},
+	"include": ["./**/*"],
+	"exclude": [],
+	"references": [
+		{
+			"path": "../..",
+		},
+	],
+}

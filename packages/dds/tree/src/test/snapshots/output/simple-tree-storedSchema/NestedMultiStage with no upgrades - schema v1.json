@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "nodes": {
+    "com.fluidframework.leaf.null": {
+      "leaf": 4
+    },
+    "com.fluidframework.leaf.number": {
+      "leaf": 0
+    },
+    "com.fluidframework.leaf.string": {
+      "leaf": 1
+    },
+    "test.ArrayWithStaged": {
+      "object": {
+        "": {
+          "kind": "Sequence",
+          "types": [
+            "com.fluidframework.leaf.number",
+            "com.fluidframework.leaf.string"
+          ]
+        }
+      }
+    },
+    "test.MapWithStaged": {
+      "map": {
+        "kind": "Optional",
+        "types": [
+          "com.fluidframework.leaf.number",
+          "com.fluidframework.leaf.string"
+        ]
+      }
+    },
+    "test.NestedMultiStage": {
+      "object": {
+        "a": {
+          "kind": "Optional",
+          "types": [
+            "com.fluidframework.leaf.number"
+          ]
+        },
+        "b": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.leaf.null",
+            "test.MapWithStaged"
+          ]
+        },
+        "c": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.leaf.null",
+            "test.ArrayWithStaged"
+          ]
+        }
+      }
+    }
+  },
+  "root": {
+    "kind": "Value",
+    "types": [
+      "test.NestedMultiStage"
+    ]
+  }
+}

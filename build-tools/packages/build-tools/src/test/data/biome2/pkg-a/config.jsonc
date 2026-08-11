@@ -1,0 +1,13 @@
+{
+	"$schema": "../../../../../../node_modules/@biomejs/biome/configuration_schema.json",
+	"extends": ["../baseconfig.jsonc"],
+	"files": {
+		"includes": ["pkg-a-include/**", "!pkg-a-ignore/**"]
+	},
+	"formatter": {
+		"includes": ["include-formatter/**", "!ignore-formatter/**"]
+	},
+	"linter": {
+		"includes": ["include-linter/**", "!ignore-linter/**"]
+	}
+}

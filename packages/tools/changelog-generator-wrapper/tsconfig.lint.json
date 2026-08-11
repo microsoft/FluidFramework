@@ -1,0 +1,11 @@
+/*!
+ * This file exists strictly to make eslint happy, since our shared config currently assumes packages are TypeScript-based.
+ */
+{
+	"compilerOptions": {
+		"allowJs": true,
+		"strictNullChecks": true,
+	},
+	"include": ["**/*.js"],
+	"exclude": ["node_modules"],
+}

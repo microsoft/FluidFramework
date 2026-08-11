@@ -1,0 +1,137 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# test-real-service-stress pipeline
+
+name: $(Build.BuildId)
+
+trigger: none
+pr: none
+
+resources:
+  pipelines:
+  - pipeline: client   # Name of the pipeline resource
+    source: Build - client packages
+    branch: main # Default branch for manual/scheduled triggers if none is selected
+    trigger:
+      branches:
+      - release/*
+      - main
+      - next
+  repositories:
+  - repository: ff_pipeline_host
+    type: git
+    name: ff_pipeline_host
+
+variables:
+- template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
+- group: prague-key-vault
+- name: testPackageDirectory
+  value: packages/test/test-service-load
+  readonly: true
+- name: pipelineIdentifierForTelemetry
+  value: 'RealStressService'
+  readonly: true
+# This is a test pipeline, not a build one, so we don't need to run CodeQL tasks
+# Note that using this variable only works for non-1ES-template pipelines.
+- name: Codeql.SkipTaskAutoInjection
+  value: true
+
+stages:
+  # stress tests odsp
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
+    parameters:
+      stageId: stress_tests_odsp
+      stageDisplayName: Stress tests - Odsp
+      odspTenantType: prod
+      poolBuild: Large-eastus2
+      testPackageDirectory: ${{ variables.testPackageDirectory }}
+      artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
+      timeoutInMinutes: 120
+      testCommand: start:odsp
+      skipTestResultPublishing: true
+      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
+      env:
+        FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
+        FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
+
+  # stress tests odsp dogfood
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
+    parameters:
+      stageId: stress_tests_odspdf
+      stageDisplayName: Stress tests - Odspdf
+      odspTenantType: dogfood
+      poolBuild: Large-eastus2
+      testPackageDirectory: ${{ variables.testPackageDirectory }}
+      artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
+      timeoutInMinutes: 120
+      testCommand: start:odspdf
+      skipTestResultPublishing: true
+      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
+      env:
+        FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
+        FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
+
+  # stress tests tinylicious
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
+    parameters:
+      stageId: stress_tests_tinylicious
+      stageDisplayName: Stress tests - tinylicious
+      poolBuild: Large-eastus2
+      testPackageDirectory: ${{ variables.testPackageDirectory }}
+      artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
+      timeoutInMinutes: 120
+      testCommand: start:t9s
+      skipTestResultPublishing: true
+      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
+      env:
+        FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
+        FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
+        # Disable colorization for tinylicious logs (not useful when printing to a file)
+        logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
+        logger__morganFormat: tiny
+
+  # stress tests AFR
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
+    parameters:
+      stageId: stress_tests_frs
+      stageDisplayName: Stress tests - AFR
+      poolBuild: Large-eastus2
+      testPackageDirectory: ${{ variables.testPackageDirectory }}
+      artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
+      timeoutInMinutes: 120
+      testCommand: start:frs
+      lockBehavior: sequential
+      skipTestResultPublishing: true
+      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
+      stageVariables:
+        - group: stress-frs-lock
+      env:
+        fluid__test__driver__frs: $(automation-fluid-test-driver-frs-stress-test)
+        FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
+        FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
+
+  # stress tests AFR canary
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
+    parameters:
+      stageId: stress_tests_frs_canary
+      stageDisplayName: Stress tests - AFR canary
+      poolBuild: Large-eastus2
+      testPackageDirectory: ${{ variables.testPackageDirectory }}
+      artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
+      timeoutInMinutes: 120
+      testCommand: start:frs:canary
+      lockBehavior: sequential
+      skipTestResultPublishing: true
+      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
+      stageVariables:
+        - group: stress-frs-canary
+      env:
+        fluid__test__driver__frsCanary: $(automation-fluid-driver-frs-canary-stress-test)
+        FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
+        FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'

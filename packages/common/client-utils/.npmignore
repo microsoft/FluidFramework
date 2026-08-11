@@ -1,0 +1,9 @@
+nyc
+*.log
+**/*.tsbuildinfo
+src/test
+dist/test
+lib/test
+lib/client-utils.browser.*.d.ts
+lib/client-utils.node.*.d.ts
+**/_api-extractor-temp/**

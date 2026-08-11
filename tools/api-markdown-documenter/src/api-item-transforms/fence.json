@@ -1,0 +1,5 @@
+{
+	"tags": ["api-item-transforms"],
+	"exports": ["index"],
+	"imports": ["common", "documentation-domain", "utilities"]
+}

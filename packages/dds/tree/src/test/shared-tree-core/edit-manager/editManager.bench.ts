@@ -1,0 +1,302 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import {
+	BenchmarkMode,
+	BenchmarkType,
+	benchmarkDurationBatchless,
+	benchmarkIt,
+	currentBenchmarkMode,
+} from "@fluid-tools/benchmark";
+
+import {
+	type ChangeFamily,
+	type RevisionTag,
+	rootFieldKey,
+	type ChangeFamilyEditor,
+} from "../../../core/index.js";
+import {
+	DefaultChangeFamily,
+	DefaultRevisionReplacer,
+} from "../../../feature-libraries/index.js";
+import { FluidClientVersion, FormatValidatorBasic } from "../../../index.js";
+import type { Commit } from "../../../shared-tree-core/index.js";
+import { brand } from "../../../util/index.js";
+import { type Editor, makeEditMinter } from "../../editMinter.js";
+import { NoOpChangeRebaser, TestChange, testChangeFamilyFactory } from "../../testChange.js";
+import { chunkFromJsonTrees, failCodecFamily, mintRevisionTag } from "../../utils.js";
+
+import {
+	editManagerFactory,
+	rebaseAdvancingPeerEditsOverTrunkEdits,
+	rebaseConcurrentPeerEdits,
+	rebaseLocalEditsOverTrunkEdits,
+	rebasePeerEditsOverTrunkEdits,
+} from "./editManagerTestUtils.js";
+
+describe("EditManager - Bench", () => {
+	interface Scenario {
+		readonly type: BenchmarkType;
+		readonly rebasedEditCount: number;
+		readonly trunkEditCount: number;
+	}
+
+	const scenarios: Scenario[] = [
+		{ type: BenchmarkType.Perspective, rebasedEditCount: 1, trunkEditCount: 1 },
+		// These tests, even in correctness mode, are a bit slow, and occasionally time out,
+		// so run a smaller set with smaller sizes in correctness mode.
+		...(currentBenchmarkMode === BenchmarkMode.Performance
+			? [
+					{ type: BenchmarkType.Perspective, rebasedEditCount: 10, trunkEditCount: 1 },
+					{ type: BenchmarkType.Perspective, rebasedEditCount: 100, trunkEditCount: 1 },
+					{ type: BenchmarkType.Perspective, rebasedEditCount: 1000, trunkEditCount: 1 },
+					{ type: BenchmarkType.Perspective, rebasedEditCount: 1, trunkEditCount: 10 },
+					{ type: BenchmarkType.Perspective, rebasedEditCount: 1, trunkEditCount: 100 },
+					{ type: BenchmarkType.Perspective, rebasedEditCount: 1, trunkEditCount: 1000 },
+					{ type: BenchmarkType.Measurement, rebasedEditCount: 100, trunkEditCount: 100 },
+				]
+			: // Ensure in correctness mode we have a case where both counts are greater than 1
+				[{ type: BenchmarkType.Perspective, rebasedEditCount: 2, trunkEditCount: 2 }]),
+	];
+
+	interface Family<TChange> {
+		readonly name: string;
+		readonly changeFamily: ChangeFamily<ChangeFamilyEditor, TChange, unknown>;
+		readonly mintChange: (revision: RevisionTag | undefined) => TChange;
+		readonly maxEditCount: number;
+	}
+
+	const defaultFamily = new DefaultChangeFamily(failCodecFamily, {
+		jsonValidator: FormatValidatorBasic,
+		minVersionForCollab: FluidClientVersion.v2_0,
+	});
+	const sequencePrepend: Editor = (builder) => {
+		builder
+			.sequenceField({ parent: undefined, field: rootFieldKey })
+			.insert(0, chunkFromJsonTrees([1]));
+	};
+
+	// Family is invariant over the change type, so using any is required to write generic Family processing code.
+	// Refactors to make this more type safe are possible for some usages (ex: extracting a non generic base interface), but are not practical for the tests here.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const families: readonly Family<any>[] = [
+		{
+			name: "TestChange",
+			changeFamily: testChangeFamilyFactory(new NoOpChangeRebaser()),
+			mintChange: () => TestChange.emptyChange,
+			maxEditCount: Number.POSITIVE_INFINITY,
+		},
+		{
+			name: "Default - Sequence Insert",
+			changeFamily: defaultFamily,
+			mintChange: (revision) => {
+				const change = makeEditMinter(defaultFamily, sequencePrepend)();
+				return revision === undefined
+					? change
+					: defaultFamily.rebaser.changeRevision(
+							change,
+							new DefaultRevisionReplacer(
+								revision,
+								defaultFamily.rebaser.getRevisions(change),
+							),
+						);
+			},
+			maxEditCount: 350,
+		},
+	];
+	for (const family of families) {
+		describe(`family: ${family.name}`, () => {
+			describe("Local commit rebasing", () => {
+				for (const { type, rebasedEditCount, trunkEditCount } of scenarios) {
+					if (rebasedEditCount * trunkEditCount > family.maxEditCount) {
+						continue;
+					}
+					benchmarkIt({
+						type,
+						title: `Rebase ${rebasedEditCount} local commits over ${trunkEditCount} trunk commits`,
+						...benchmarkDurationBatchless({
+							benchmarkFn: (state) => {
+								let running: boolean;
+								do {
+									// Setup
+									const manager = editManagerFactory(family.changeFamily);
+									const rebasing = rebaseLocalEditsOverTrunkEdits(
+										rebasedEditCount,
+										trunkEditCount,
+										manager,
+										family.mintChange,
+										true,
+									);
+
+									running = state.time(rebasing);
+								} while (running);
+							},
+						}),
+					});
+				}
+			});
+			describe("Peer commit rebasing (fix ref seq#)", () => {
+				for (const { type, rebasedEditCount: peerEditCount, trunkEditCount } of scenarios) {
+					if (peerEditCount * trunkEditCount > family.maxEditCount) {
+						continue;
+					}
+					benchmarkIt({
+						type,
+						title: `Receive ${peerEditCount} peer commits that need to be rebased over ${trunkEditCount} trunk commits`,
+						...benchmarkDurationBatchless({
+							benchmarkFn: (state) => {
+								let running: boolean;
+								do {
+									// Setup
+									const manager = editManagerFactory(family.changeFamily);
+									const rebasing = rebasePeerEditsOverTrunkEdits(
+										peerEditCount,
+										trunkEditCount,
+										manager,
+										family.mintChange,
+										true,
+									);
+
+									running = state.time(rebasing);
+								} while (running);
+							},
+						}),
+					});
+				}
+			});
+			describe("Peer commit rebasing (advancing ref seq#)", () => {
+				for (const { type, editCount } of [
+					{ type: BenchmarkType.Perspective, editCount: 1 },
+					{ type: BenchmarkType.Perspective, editCount: 10 },
+					{ type: BenchmarkType.Measurement, editCount: 100 },
+				]) {
+					if (editCount ** 2 > family.maxEditCount) {
+						continue;
+					}
+					benchmarkIt({
+						type,
+						title: `for ${editCount} peer commits and ${editCount} trunk commits`,
+						...benchmarkDurationBatchless({
+							benchmarkFn: (state) => {
+								let running: boolean;
+								do {
+									// Setup
+									const manager = editManagerFactory(family.changeFamily);
+									const rebasing = rebaseAdvancingPeerEditsOverTrunkEdits(
+										editCount,
+										manager,
+										family.mintChange,
+										true,
+									);
+
+									running = state.time(rebasing);
+								} while (running);
+							},
+						}),
+					});
+				}
+			});
+			describe("Multi-peer commit rebasing", () => {
+				interface MultiPeerScenario {
+					readonly type: BenchmarkType;
+					readonly peerCount: number;
+					readonly editsPerPeerCount: number;
+				}
+
+				const multiPeerScenarios: MultiPeerScenario[] = [
+					{ type: BenchmarkType.Perspective, peerCount: 10, editsPerPeerCount: 10 },
+					{ type: BenchmarkType.Perspective, peerCount: 10, editsPerPeerCount: 20 },
+					{ type: BenchmarkType.Perspective, peerCount: 20, editsPerPeerCount: 10 },
+					{ type: BenchmarkType.Measurement, peerCount: 20, editsPerPeerCount: 20 },
+				];
+				for (const { type, peerCount, editsPerPeerCount } of multiPeerScenarios) {
+					if (peerCount * editsPerPeerCount > family.maxEditCount) {
+						continue;
+					}
+					benchmarkIt({
+						type,
+						title: `Rebase edits from ${peerCount} peers each sending ${editsPerPeerCount} commits`,
+						// Occasionally exceeds the default 2s mocha timeout in correctness mode on
+						// slow CI agents (ICM 792323064 / 787811568).
+						// TODO:AB#72685: Speed up these tests and/or address cause of occasional slowdowns on CI,
+						// and remove (or at least reduce) this timeout override.
+						correctnessTimeoutMs: 5000,
+						...benchmarkDurationBatchless({
+							benchmarkFn: (state) => {
+								let running: boolean;
+								do {
+									// Setup
+									const manager = editManagerFactory(family.changeFamily);
+									const rebasing = rebaseConcurrentPeerEdits(
+										peerCount,
+										editsPerPeerCount,
+										manager,
+										family.mintChange,
+										true,
+									);
+
+									running = state.time(rebasing);
+								} while (running);
+							},
+						}),
+					});
+				}
+			});
+		});
+	}
+
+	describe("No concurrency", () => {
+		describe("Many local edits", () => {
+			for (const [type, count] of [
+				[BenchmarkType.Perspective, 1],
+				[BenchmarkType.Perspective, 10],
+				[BenchmarkType.Perspective, 100],
+				[BenchmarkType.Perspective, 1000],
+			]) {
+				benchmarkIt({
+					type,
+					title: `Process the sequencing of ${count} local commits`,
+					...benchmarkDurationBatchless({
+						benchmarkFn: (state) => {
+							let running: boolean;
+							do {
+								// Setup
+								const family = testChangeFamilyFactory(new NoOpChangeRebaser());
+								const manager = editManagerFactory(family);
+								// Subscribe to the local branch to emulate the behavior of SharedTree
+								manager.getLocalBranch("main").events.on("afterChange", ({ change }) => {});
+								const sequencedEdits: Commit<TestChange>[] = [];
+								for (let iChange = 0; iChange < count; iChange++) {
+									const revision = mintRevisionTag();
+									manager
+										.getLocalBranch("main")
+										.apply({ change: TestChange.emptyChange, revision });
+									sequencedEdits.push({
+										change: TestChange.emptyChange,
+										revision,
+										sessionId: manager.localSessionId,
+									});
+								}
+
+								running = state.time(() => {
+									for (let iChange = 0; iChange < count; iChange++) {
+										const commit = sequencedEdits[iChange];
+										manager.addSequencedChanges(
+											[commit],
+											commit.sessionId,
+											brand(iChange + 1),
+											brand(0),
+											"main",
+										);
+									}
+								});
+							} while (running);
+						},
+					}),
+				});
+			}
+		});
+	});
+});

@@ -1,0 +1,14 @@
+{
+	"extends": "../../../../common/build/build-common/tsconfig.node16.json",
+	"compilerOptions": {
+		"rootDir": "src",
+		"outDir": "./lib/tsc",
+		"types": ["chai", "chrome", "mocha", "node"],
+		"jsx": "react-jsx",
+		"forceConsistentCasingInFileNames": true,
+		"skipLibCheck": true,
+		"noUncheckedIndexedAccess": false,
+		"exactOptionalPropertyTypes": false,
+	},
+	"include": ["src/**/*"],
+}

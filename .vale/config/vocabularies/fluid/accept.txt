@@ -1,0 +1,20 @@
+Fluid Framework
+FluidFramework
+API
+APIs
+JavaScript
+SharedTree
+TypeScript
+namespace
+UUID
+UUIDs
+enum
+Enum
+openable
+Datastore
+DDSes
+accessor
+accessors
+Zod
+unhydrated
+rollout

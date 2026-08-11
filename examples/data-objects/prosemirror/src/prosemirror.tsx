@@ -1,0 +1,206 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
+import { EventEmitter } from "@fluid-example/example-utils";
+import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
+import { FluidDataStoreRuntime, FluidObjectHandle } from "@fluidframework/datastore/legacy";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/legacy";
+import { ISharedMap, SharedMap } from "@fluidframework/map/legacy";
+import {
+	IFluidDataStoreContext,
+	IFluidDataStoreFactory,
+} from "@fluidframework/runtime-definitions/legacy";
+// eslint-disable-next-line import-x/no-internal-modules -- #26904: `sequence` internals used in examples
+import { reservedRangeLabelsKey } from "@fluidframework/sequence/internal";
+import { ReferenceType, SharedString } from "@fluidframework/sequence/legacy";
+import { EditorView } from "prosemirror-view";
+import { type FC, useEffect, useRef } from "react";
+
+import { nodeTypeKey, stackTypeBegin, stackTypeEnd, stackTypeKey } from "./fluidBridge.js";
+import { FluidCollabManager, IProvideRichTextEditor } from "./fluidCollabManager.js";
+
+function insertMarkers(
+	text: SharedString,
+	treeRangeLabel: string,
+	position: number,
+	nodeType: string,
+): void {
+	const endMarkerProps = {};
+	endMarkerProps[reservedRangeLabelsKey] = [treeRangeLabel];
+	endMarkerProps[nodeTypeKey] = nodeType;
+	endMarkerProps[stackTypeKey] = stackTypeEnd;
+
+	const beginMarkerProps = {};
+	beginMarkerProps[reservedRangeLabelsKey] = [treeRangeLabel];
+	beginMarkerProps[nodeTypeKey] = nodeType;
+	beginMarkerProps[stackTypeKey] = stackTypeBegin;
+
+	text.insertMarker(position, ReferenceType.Simple, beginMarkerProps);
+	text.insertMarker(position + 1, ReferenceType.Simple, endMarkerProps);
+}
+
+/**
+ * ProseMirror builds a Fluid collaborative text editor on top of the open source text editor ProseMirror.
+ * It has its own implementation of IFluidLoadable and does not extend PureDataObject / DataObject. This is
+ * done intentionally to serve as an example of exposing the URL and handle via IFluidLoadable.
+ * @internal
+ */
+export class ProseMirror
+	extends EventEmitter
+	implements IFluidLoadable, IProvideRichTextEditor
+{
+	public static async load(
+		runtime: IFluidDataStoreRuntime,
+		existing: boolean,
+	): Promise<ProseMirror> {
+		const collection = new ProseMirror(runtime);
+		await collection.initialize(existing);
+
+		return collection;
+	}
+
+	public get handle(): IFluidHandle<this> {
+		return this.innerHandle;
+	}
+
+	public get IFluidLoadable(): IFluidLoadable {
+		return this;
+	}
+
+	public get IRichTextEditor(): FluidCollabManager {
+		return this._collabManager!;
+	}
+
+	public text: SharedString | undefined;
+	private root: ISharedMap | undefined;
+	private _collabManager: FluidCollabManager | undefined;
+	public get collabManager(): FluidCollabManager {
+		if (this._collabManager === undefined) {
+			throw new Error("Collab manager used before initialized");
+		}
+		return this._collabManager;
+	}
+	private readonly innerHandle: IFluidHandle<this>;
+
+	constructor(private readonly runtime: IFluidDataStoreRuntime) {
+		super();
+
+		this.innerHandle = new FluidObjectHandle(this, "", runtime.objectsRoutingContext);
+	}
+
+	private async initialize(existing: boolean): Promise<void> {
+		if (!existing) {
+			this.root = SharedMap.create(this.runtime, "root");
+			const text = SharedString.create(this.runtime);
+
+			insertMarkers(text, "prosemirror", 0, "paragraph");
+			text.insertText(1, "Hello, world!");
+
+			this.root.set("text", text.handle);
+			this.root.bindToContext();
+		}
+
+		this.root = (await this.runtime.getChannel("root")) as ISharedMap;
+		this.text = await this.root.get<IFluidHandle<SharedString>>("text")!.get();
+
+		this._collabManager = new FluidCollabManager(this.text);
+
+		// Access for debugging
+		// eslint-disable-next-line @typescript-eslint/dot-notation
+		window["easyComponent"] = this;
+	}
+}
+
+/**
+ * @internal
+ */
+export class ProseMirrorFactory implements IFluidDataStoreFactory {
+	public static readonly type = "@fluid-example/prosemirror";
+	public readonly type = ProseMirrorFactory.type;
+
+	public get IFluidDataStoreFactory(): IFluidDataStoreFactory {
+		return this;
+	}
+
+	public async instantiateDataStore(
+		context: IFluidDataStoreContext,
+		existing: boolean,
+	): Promise<FluidDataStoreRuntime> {
+		return new FluidDataStoreRuntime(
+			context,
+			new Map(
+				[SharedMap.getFactory(), SharedString.getFactory()].map((factory) => [
+					factory.type,
+					factory,
+				]),
+			),
+			existing,
+			async (runtime: IFluidDataStoreRuntime) => ProseMirror.load(runtime, existing),
+		);
+	}
+}
+
+class ProseMirrorView {
+	private content: HTMLDivElement | undefined;
+	private editorView: EditorView | undefined;
+	private textArea: HTMLDivElement | undefined;
+
+	public constructor(private readonly collabManager: FluidCollabManager) {}
+
+	public render(elm: HTMLElement): void {
+		// Create base textarea
+		if (!this.textArea) {
+			this.textArea = document.createElement("div");
+			this.textArea.classList.add("editor");
+			this.content = document.createElement("div");
+			this.content.style.display = "none";
+			this.content.innerHTML = "";
+		}
+
+		// Reparent if needed
+		if (this.textArea.parentElement !== elm) {
+			this.textArea.remove();
+			this.content!.remove();
+			elm.appendChild(this.textArea);
+			elm.appendChild(this.content!);
+		}
+
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- intentional behavior
+		if (!this.editorView) {
+			this.editorView = this.collabManager.setupEditor(this.textArea);
+		}
+	}
+
+	public remove(): void {
+		// Maybe implement this some time.
+	}
+}
+
+export interface IProseMirrorReactViewProps {
+	readonly collabManager: FluidCollabManager;
+}
+
+/**
+ * React component that renders a ProseMirror editor with collaborative features.
+ *
+ * @internal
+ */
+export const ProseMirrorReactView: FC<IProseMirrorReactViewProps> = (
+	props: IProseMirrorReactViewProps,
+) => {
+	const { collabManager } = props;
+	const htmlView = useRef<ProseMirrorView>(new ProseMirrorView(collabManager));
+	const divRef = useRef<HTMLDivElement>(null);
+	useEffect(() => {
+		if (divRef.current !== null) {
+			htmlView.current.render(divRef.current);
+		} else {
+			htmlView.current.remove();
+		}
+	}, [divRef.current]);
+	return <div ref={divRef}></div>;
+};

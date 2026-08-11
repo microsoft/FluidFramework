@@ -1,0 +1,9 @@
+nyc
+*.log
+**/*.tsbuildinfo
+src/test
+dist/test
+lib/test
+**/_api-extractor-temp/**
+
+closeAndGetPendingLocalState.md

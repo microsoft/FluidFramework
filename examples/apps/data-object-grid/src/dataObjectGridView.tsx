@@ -1,0 +1,214 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import {
+	type FC,
+	type PropsWithChildren,
+	type ReactElement,
+	useEffect,
+	useState,
+} from "react";
+import RGL, { WidthProvider, type Layout } from "react-grid-layout";
+
+import type { IDataObjectGrid, IDataObjectGridItem } from "./dataObjectGrid.js";
+import {
+	type IDataObjectGridItemEntry,
+	dataObjectRegistry,
+	type ISingleHandleItem,
+} from "./dataObjectRegistry.js";
+import { DataObjectGridToolbar } from "./toolbar.js";
+
+// eslint-disable-next-line import-x/no-internal-modules
+import "react-grid-layout/css/styles.css";
+import "./dataObjectGridView.css";
+
+const ReactGridLayout = WidthProvider(RGL);
+
+interface IEditPaneProps {
+	url: string;
+	removeItem(): void;
+}
+
+const EditPane: FC<IEditPaneProps> = (props: PropsWithChildren<IEditPaneProps>) => {
+	const { url, removeItem } = props;
+	return (
+		<div className="data-grid-edit-pane">
+			<button className="data-grid-button" onClick={removeItem} title="Delete">
+				❌
+			</button>
+			<button
+				className="data-grid-button"
+				onClick={() => window.open(url, "_blank")}
+				title="Open in new window"
+			>
+				↗️
+			</button>
+		</div>
+	);
+};
+
+interface IItemViewProps {
+	url: string;
+	getItemView(): Promise<JSX.Element | undefined>;
+	removeItem(): void;
+}
+
+const ItemView: FC<IItemViewProps> = (props: PropsWithChildren<IItemViewProps>) => {
+	const { url, getItemView, removeItem } = props;
+	const [itemView, setItemView] = useState<JSX.Element | undefined>(undefined);
+
+	useEffect(() => {
+		getItemView()
+			.then(setItemView)
+			.catch((error) => console.error(`Error in getting item`, error));
+	}, [getItemView]);
+
+	return (
+		<div className="data-grid-item-view">
+			<div className="data-grid-embedded-item-wrapper">{itemView}</div>
+			<EditPane url={url} removeItem={removeItem} />
+		</div>
+	);
+};
+
+// Stronger typing here maybe?
+interface IDataObjectGridViewProps {
+	getUrlForItem: (itemId: string) => string;
+	model: IDataObjectGrid<ISingleHandleItem>;
+	registry: Map<string, IDataObjectGridItemEntry<ISingleHandleItem>>;
+	editable: boolean;
+}
+
+const DataObjectGridView: FC<IDataObjectGridViewProps> = (
+	props: PropsWithChildren<IDataObjectGridViewProps>,
+) => {
+	const { getUrlForItem, model, registry, editable } = props;
+	// Again stronger typing would be good
+	const [itemList, setItemList] = useState<IDataObjectGridItem<ISingleHandleItem>[]>(
+		model.getItems(),
+	);
+
+	useEffect(() => {
+		const onItemListChanged = (newList: IDataObjectGridItem<ISingleHandleItem>[]): void => {
+			setItemList(newList);
+		};
+		model.on("itemListChanged", onItemListChanged);
+		return () => {
+			model.off("itemListChanged", onItemListChanged);
+		};
+	});
+
+	// Render nothing if there are no items
+	if (model.getItems().length === 0) {
+		return null;
+	}
+
+	const onGridChangeEvent = (
+		layout: Layout[],
+		oldItem: Layout,
+		newItem: Layout,
+		placeholder: Layout,
+		event: MouseEvent,
+		element: HTMLElement,
+	): void => {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const key: string = newItem.i.split("_")[0]!;
+		model.updateLayout(key, newItem);
+	};
+
+	const itemViews: JSX.Element[] = [];
+	const layouts: Layout[] = [];
+	for (const item of itemList) {
+		const getItemView = async (): Promise<ReactElement> => {
+			const registryEntry = registry.get(item.type);
+
+			if (registryEntry === undefined) {
+				// Probably would be ok to return undefined instead
+				throw new Error("Cannot get view, unknown widget type");
+			}
+
+			return registryEntry.getView(item.serializableData);
+		};
+
+		const layout = item.layout;
+		// We use separate layout from array because using GridLayout
+		// without passing in a new layout doesn't trigger a re-render.
+		layout.i = item.id;
+		layouts.push(layout);
+		itemViews.push(
+			<div key={item.id} className="data-grid-item-view-wrapper">
+				<ItemView
+					url={getUrlForItem(item.id)}
+					getItemView={getItemView}
+					removeItem={() => model.removeItem(item.id)}
+				/>
+			</div>,
+		);
+	}
+
+	return (
+		<ReactGridLayout
+			className={`data-grid-view${editable ? " editable" : ""}`}
+			cols={36}
+			rowHeight={50}
+			width={1800}
+			compactType={null}
+			isDroppable={editable}
+			isDraggable={editable}
+			isResizable={editable}
+			preventCollision={true}
+			onResizeStop={onGridChangeEvent}
+			onDragStop={onGridChangeEvent}
+			layout={layouts}
+		>
+			{itemViews}
+		</ReactGridLayout>
+	);
+};
+
+/**
+ * React props for our app's view.
+ */
+export interface IDataObjectGridAppViewProps {
+	/**
+	 * The app's model to render.
+	 */
+	readonly model: IDataObjectGrid<ISingleHandleItem>;
+	/**
+	 * The view provides a button to direct link to each individual data object.  The host can specify the URL format
+	 * that should be used for these direct links here (and should then also specifically load and render the
+	 * requested data object in response to loading with that URL).
+	 */
+	readonly getDirectUrl: (id: string) => string;
+}
+
+/**
+ * The main React view for the app.
+ */
+export const DataObjectGridAppView: FC<IDataObjectGridAppViewProps> = (
+	props: IDataObjectGridAppViewProps,
+) => {
+	const { model, getDirectUrl } = props;
+	const [editable, setEditable] = useState<boolean>(model.getItems().length === 0);
+	return (
+		<div className="data-grid-view">
+			<DataObjectGridToolbar
+				editable={editable}
+				setEditable={setEditable}
+				addItem={(type: string) => {
+					model.addItem(type).catch(console.error);
+				}}
+				registry={dataObjectRegistry}
+			/>
+			<DataObjectGridView
+				// TODO: Maybe can just pass in the views rather than making it go fetch
+				getUrlForItem={getDirectUrl}
+				model={model}
+				registry={dataObjectRegistry}
+				editable={editable}
+			/>
+		</div>
+	);
+};

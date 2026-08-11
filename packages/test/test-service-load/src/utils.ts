@@ -1,0 +1,177 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import {
+	DriverEndpoint,
+	ITestDriver,
+	TestDriverTypes,
+} from "@fluid-internal/test-driver-definitions";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
+import {
+	OdspTestDriver,
+	createFluidTestDriver,
+	generateOdspHostStoragePolicy,
+	type LocalServerTestDriver,
+	type RouterliciousTestDriver,
+	type TinyliciousTestDriver,
+} from "@fluid-private/test-drivers";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
+import {
+	createDetachedContainer,
+	type ILoaderProps,
+} from "@fluidframework/container-loader/internal";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
+import { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { LocalCodeLoader } from "@fluidframework/test-utils/internal";
+import { OdspTokenManager } from "@fluidframework/tool-utils/internal";
+
+import { createFluidExport, type ILoadTest, type IRunConfig } from "./loadTestDataStore.js";
+import {
+	generateConfigurations,
+	generateLoaderOptions,
+	generateRuntimeOptions,
+	getOptionOverride,
+} from "./optionsMatrix.js";
+import { pkgName, pkgVersion } from "./packageVersion.js";
+import type { TestConfiguration } from "./testConfigFile.js";
+
+const packageName = `${pkgName}@${pkgVersion}`;
+
+const codeDetails: IFluidCodeDetails = {
+	package: packageName,
+	config: {},
+};
+
+export const createCodeLoader = (
+	options?: IContainerRuntimeOptions | undefined,
+): LocalCodeLoader => new LocalCodeLoader([[codeDetails, createFluidExport(options)]]);
+
+export async function initialize(
+	testDriver: ITestDriver,
+	seed: number,
+	testConfig: TestConfiguration,
+	verbose: boolean,
+	logger: TelemetryLoggerExt,
+	requestedTestId?: string,
+): Promise<string> {
+	const random = makeRandom(seed);
+	const optionsOverride = getOptionOverride(
+		testConfig,
+		testDriver.type,
+		testDriver.endpointName,
+	);
+
+	const loaderOptions = random.pick(generateLoaderOptions(seed, optionsOverride?.loader));
+	const containerRuntimeOptions = random.pick(
+		generateRuntimeOptions(seed, optionsOverride?.container),
+	);
+	const configurations = random.pick(
+		generateConfigurations(seed, optionsOverride?.configurations),
+	);
+
+	logger.sendTelemetryEvent({
+		eventName: "RunConfigOptions",
+		details: JSON.stringify({
+			loaderOptions,
+			containerOptions: containerRuntimeOptions,
+			configurations: { ...globalConfigurations, ...configurations },
+		}),
+	});
+
+	// Construct the loaderProps
+	const loaderProps: ILoaderProps = {
+		urlResolver: testDriver.createUrlResolver(),
+		documentServiceFactory: testDriver.createDocumentServiceFactory(),
+		codeLoader: createCodeLoader(containerRuntimeOptions),
+		logger,
+		options: loaderOptions,
+		configProvider: configProvider(configurations),
+	};
+
+	const container: IContainer = await createDetachedContainer({ ...loaderProps, codeDetails });
+	if ((testConfig.detachedBlobCount ?? 0) > 0) {
+		assert(
+			testDriver.type === "odsp",
+			"attachment blobs in detached container not supported on this service",
+		);
+		const ds = (await container.getEntryPoint()) as ILoadTest;
+		const dsm = await ds.detached({ testConfig, verbose, random, logger });
+		if (dsm !== undefined) {
+			await Promise.all(
+				[...Array(testConfig.detachedBlobCount).keys()].map(async (i) => dsm.writeBlob(i)),
+			);
+		}
+	}
+
+	const testId = requestedTestId ?? Date.now().toString();
+	assert(testId !== "", "testId specified cannot be an empty string");
+	const request = testDriver.createCreateNewRequest(testId);
+	await container.attach(request);
+	assert(container.resolvedUrl !== undefined, "Container missing resolved URL after attach");
+	const resolvedUrl = container.resolvedUrl;
+	container.dispose();
+
+	if ((testConfig.detachedBlobCount ?? 0) > 0 && testDriver.type === "odsp") {
+		const url = (testDriver as OdspTestDriver).getUrlFromItemId((resolvedUrl as any).itemId);
+		return url;
+	}
+	return testDriver.createContainerUrl(testId, resolvedUrl);
+}
+
+export async function createTestDriver(
+	driver: TestDriverTypes,
+	endpointName: DriverEndpoint | undefined,
+	seed: number,
+	runId: number | undefined,
+): Promise<
+	LocalServerTestDriver | TinyliciousTestDriver | RouterliciousTestDriver | OdspTestDriver
+> {
+	const options = generateOdspHostStoragePolicy(seed);
+	return createFluidTestDriver(driver, {
+		odsp: {
+			directory: "stress",
+			options: options[(runId ?? seed) % options.length],
+			odspEndpointName: endpointName,
+			// Use a memory-only token manager to avoid cross-process file lock contention
+			// when many stress test workers run simultaneously.
+			tokenManager: new OdspTokenManager(),
+		},
+		r11s: {
+			r11sEndpointName: endpointName,
+		},
+	});
+}
+
+/**
+ * Global feature gates for all tests. They can be overwritten by individual test configs.
+ */
+export const globalConfigurations: Record<string, ConfigTypes> = {
+	"Fluid.SharedObject.DdsCallbacksTelemetrySampling": 10000,
+	"Fluid.SharedObject.OpProcessingTelemetrySampling": 10000,
+	"Fluid.Driver.ReadBlobTelemetrySampling": 100,
+	"Fluid.ContainerRuntime.OrderedClientElection.EnablePerformanceEvents": true,
+};
+
+/**
+ * Config provider to be used for managing feature gates in the stress tests.
+ * It will return values based on the configs supplied as parameters if they are not found
+ * in the global test configuration {@link globalConfigurations}.
+ *
+ * @param configs - the supplied configs
+ * @returns an instance of a config provider
+ */
+export const configProvider = (configs: Record<string, ConfigTypes>): IConfigProviderBase => {
+	return {
+		getRawConfig: (name: string): ConfigTypes => globalConfigurations[name] ?? configs[name],
+	};
+};
+
+export function printStatus(runConfig: IRunConfig, message: string): void {
+	if (runConfig.verbose) {
+		console.log(`${runConfig.runId.toString().padStart(3)}> ${message}`);
+	}
+}

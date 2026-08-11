@@ -1,0 +1,51 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { strict as assert } from "node:assert";
+
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
+
+import type { ChangeAtomId } from "../../../core/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { Mark } from "../../../feature-libraries/sequence-field/types.js";
+import {
+	areInputCellsEmpty,
+	splitMark,
+	tryMergeMarks,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/sequence-field/utils.js";
+import { brand } from "../../../util/index.js";
+import { testIdCompressor } from "../../utils.js";
+
+import { generatePopulatedMarks } from "./populatedMarks.js";
+
+const vestigialEndpoint: ChangeAtomId = {
+	revision: testIdCompressor.generateCompressedId(),
+	localId: brand(42),
+};
+
+export function testUtils(): void {
+	describe("Utils", () => {
+		describe("round-trip splitMark and tryMergeMarks", () => {
+			const marks = generatePopulatedMarks(testIdCompressor);
+			const allMarks = [
+				...marks,
+				...marks
+					.filter((mark) => !areInputCellsEmpty(mark))
+					.map((mark) => ({ ...mark, vestigialEndpoint })),
+			];
+			for (const [index, mark] of allMarks.entries()) {
+				it(`${index}: ${"type" in mark ? mark.type : "NoOp"}`, () => {
+					const splitable: Mark = { ...mark, count: 3 };
+					delete splitable.changes;
+					deepFreeze(splitable);
+					const [part1, part2] = splitMark(splitable, 2);
+					const merged = tryMergeMarks(part1, part2);
+					assert.deepEqual(merged, splitable);
+				});
+			}
+		});
+	});
+}
