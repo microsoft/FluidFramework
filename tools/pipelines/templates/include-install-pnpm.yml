@@ -128,7 +128,9 @@ steps:
     workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
     script: |
       set -eu -o pipefail
-      expected_registry="${NPM_REGISTRY%/}/"
+      # Trim whitespace before normalizing the registry URL to one trailing slash.
+      expected_registry="$(printf '%s' "$NPM_REGISTRY" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')"
+      expected_registry="${expected_registry%/}/"
       npm_registry="$(npm config get registry)"
       if [ "$npm_registry" != "$expected_registry" ]; then
         echo "##vso[task.logissue type=error]npm resolved registry '$npm_registry'; expected '$expected_registry'"
