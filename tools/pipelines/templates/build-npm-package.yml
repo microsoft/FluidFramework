@@ -345,7 +345,7 @@ extends:
               env:
                 # Avoid dynamic npm installs of old package versions during network-isolated CI/PR runs.
                 # This keeps current-version tests running while skipping cross-version compat tests.
-                fluid__test__compatKind: '["None"]'
+                fluid__test__compatVersion: '["0"]'
               inputs:
                 command: 'custom'
                 workingDir: ${{ parameters.buildDirectory }}
@@ -358,7 +358,7 @@ extends:
               env:
                 # Avoid dynamic npm installs of old package versions during network-isolated CI/PR runs.
                 # This keeps current-version tests running while skipping cross-version compat tests.
-                fluid__test__compatKind: '["None"]'
+                fluid__test__compatVersion: '["0"]'
               inputs:
                 command: 'custom'
                 workingDir: ${{ parameters.buildDirectory }}
