@@ -231,8 +231,7 @@ export class LocalOrderer implements IOrderer {
 		return orderer;
 	}
 
-	public getCheckpointSequenceNumber?: () => number | undefined = () =>
-		this.latestSequenceNumber;
+	public getCheckpointSequenceNumber?: () => number | undefined = () => this.latestSequenceNumber;
 
 	public connectInternal(
 		subscriber: ISubscriber,
