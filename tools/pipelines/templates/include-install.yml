@@ -29,6 +29,8 @@ steps:
   - task: Bash@3
     displayName: Install dependencies
     retryCountOnTaskFailure: 4
+    env:
+      NPM_CONFIG_USERCONFIG: $(NPM_CONFIG_USERCONFIG)
     inputs:
       targetType: 'inline'
       workingDirectory: ${{ parameters.buildDirectory }}

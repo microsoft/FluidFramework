@@ -50,12 +50,32 @@ steps:
 
 - task: Bash@3
   displayName: Install pnpm
+  env:
+    NPM_CONFIG_USERCONFIG: $(NPM_CONFIG_USERCONFIG)
+    NPM_REGISTRY: $(ado-feeds-primary-registry)
+    SOURCES_DIR: $(Build.SourcesDirectory)
   inputs:
     targetType: 'inline'
     workingDirectory: ${{ parameters.buildDirectory }}
     # workspace-concurrency 0 means use use the CPU core count. This is better than the default (4) for larger agents.
     script: |
       set -eu -o pipefail
+      normalize_registry() {
+        local registry="$1"
+        while [ "${registry%/}" != "$registry" ]; do
+          registry="${registry%/}"
+        done
+        printf '%s/' "$registry"
+      }
+
+      expected_registry="$(normalize_registry "$NPM_REGISTRY")"
+      npm_registry="$(normalize_registry "$(npm config get registry)")"
+      if [ "$npm_registry" != "$expected_registry" ]; then
+        echo "##vso[task.logissue type=error]npm resolved registry '$npm_registry'; expected '$expected_registry'"
+        exit 1
+      fi
+      echo "npm registry: $npm_registry"
+
       # Resolve the pnpm version from the "packageManager" field (e.g. "pnpm@9.15.7+sha512..." -> "pnpm@9.15.7").
       # The integrity hash suffix is discarded, since npm provides no practical way to use it; we trust the
       # feed to serve the correct version. Not every caller passes a buildDirectory that contains a
@@ -78,9 +98,13 @@ steps:
       echo "Installing ${PNPM_VERSION}"
       npm install -g "$PNPM_VERSION" --userconfig "${{ parameters.userNpmrcPath }}"
       echo "Using pnpm $(pnpm -v)"
+      pnpm_registry="$(normalize_registry "$(pnpm config get registry)")"
+      if [ "$pnpm_registry" != "$expected_registry" ]; then
+        echo "##vso[task.logissue type=error]pnpm resolved registry '$pnpm_registry'; expected '$expected_registry'"
+        exit 1
+      fi
+      echo "pnpm registry: $pnpm_registry"
       echo "Pnpm user config location: $(pnpm config get userconfig)"
       pnpm config set store-dir ${{ parameters.pnpmStorePath }}
       echo "Pnpm store: ${{ parameters.pnpmStorePath }}"
       pnpm config set -g workspace-concurrency 0
-  env:
-    SOURCES_DIR: $(Build.SourcesDirectory)
