@@ -144,10 +144,10 @@ export class Collection<T> implements ICollection<T> {
 			if (!query[key]) {
 				continue;
 			}
-			// A range bound of 0 is meaningful and must be distinguished from an absent bound. For example the
-			// routerlicious driver asks for the ops of a document from the very beginning with `{ $gt: 0 }`;
-			// treating that as "not a range query" would degrade it to an equality match and return nothing,
-			// which makes clients unable to ever catch up.
+			// A range bound of 0 is meaningful and must be distinguished from an absent bound. For
+			// example the routerlicious driver asks for the ops of a document from the very beginning
+			// with `{ $gt: 0 }`; treating that as "not a range query" would degrade it to an equality
+			// match and return no ops at all, leaving clients unable to ever catch up.
 			const lowerBound: unknown = query[key].$gt;
 			const upperBound: unknown = query[key].$lt;
 			const hasLowerBound = typeof lowerBound === "number";

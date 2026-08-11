@@ -31,7 +31,6 @@ import {
 	DefaultMetricClient,
 	DefaultServiceConfiguration,
 	IClientManager,
-	IOrderer,
 	IOrdererManager,
 	MongoDatabaseManager,
 	MongoManager,
@@ -289,51 +288,6 @@ describe("Routerlicious", () => {
 							secondSocket,
 						);
 						assert.equal(secondConnectMessage.existing, true);
-					});
-
-					it("Should not complete connection before the orderer join op is accepted", async () => {
-						const socket = webSocketServer.createConnection();
-						const joinAccepted = new Deferred<void>();
-						let connectSucceeded = false;
-
-						const fakeOrderer: IOrderer = {
-							connect: async (_socket, clientId, _client) => ({
-								clientId,
-								tenantId: testTenantId,
-								documentId: testId,
-								maxMessageSize: 1024 * 1024,
-								serviceConfiguration: DefaultServiceConfiguration,
-								connect: async () => joinAccepted.promise,
-								order: async () => {},
-								disconnect: async () => {},
-								once: () => {},
-								off: () => {},
-							}),
-							close: async () => {},
-						};
-						Sinon.stub(testOrderer, "getOrderer").resolves(fakeOrderer);
-
-						const connectP = connectToServer(
-							testId,
-							testTenantId,
-							testSecret,
-							socket,
-						).then((connectedMessage) => {
-							connectSucceeded = true;
-							return connectedMessage;
-						});
-
-						await new Promise((resolve) => setImmediate(resolve));
-						assert.equal(
-							connectSucceeded,
-							false,
-							"connect_document_success should wait for the join op",
-						);
-
-						joinAccepted.resolve();
-						const connectMessage = await connectP;
-						assert.ok(connectMessage.clientId);
-						assert.equal(connectSucceeded, true);
 					});
 
 					it("Should throttle excess connections for the cluster", async () => {

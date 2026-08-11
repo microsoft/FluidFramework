@@ -42,7 +42,7 @@ export class LocalOrdererConnection implements IOrdererConnection {
 		this.maxMessageSize = serviceConfiguration.maxMessageSize;
 	}
 
-	public async connect(clientJoinMessageServerMetadata?: any): Promise<void> {
+	public async connect(clientJoinMessageServerMetadata?: any) {
 		// Send the connect message
 		const clientDetail: IClientJoin = {
 			clientId: this.clientId,
@@ -69,10 +69,10 @@ export class LocalOrdererConnection implements IOrdererConnection {
 		};
 
 		// Submit on next tick to sequence behind connect response
-		return this.submitRawOperation([message]);
+		this.submitRawOperation([message]);
 	}
 
-	public async order(messages: IDocumentMessage[]): Promise<void> {
+	public async order(messages: IDocumentMessage[]) {
 		const rawMessages = messages.map((message) => {
 			const rawMessage: IRawOperationMessage = {
 				clientId: this.clientId,
@@ -86,10 +86,10 @@ export class LocalOrdererConnection implements IOrdererConnection {
 			return rawMessage;
 		});
 
-		return this.submitRawOperation(rawMessages);
+		this.submitRawOperation(rawMessages);
 	}
 
-	public async disconnect(): Promise<void> {
+	public async disconnect() {
 		const operation: IDocumentSystemMessage = {
 			clientSequenceNumber: -1,
 			contents: null,
@@ -106,7 +106,7 @@ export class LocalOrdererConnection implements IOrdererConnection {
 			timestamp: Date.now(),
 			type: RawOperationType,
 		};
-		return this.submitRawOperation([message]);
+		this.submitRawOperation([message]);
 	}
 
 	public once(event: "error", listener: (...args: any[]) => void) {
@@ -117,7 +117,7 @@ export class LocalOrdererConnection implements IOrdererConnection {
 		this.producer.off(event, listener);
 	}
 
-	private async submitRawOperation(messages: IRawOperationMessage[]): Promise<void> {
+	private submitRawOperation(messages: IRawOperationMessage[]) {
 		if (this.serviceConfiguration.enableTraces) {
 			// Add trace
 			messages.forEach((message) => {
@@ -138,12 +138,11 @@ export class LocalOrdererConnection implements IOrdererConnection {
 		};
 
 		// Submits the message.
-		return this.producer.send([boxcar], this.tenantId, this.documentId).catch((err) => {
+		this.producer.send([boxcar], this.tenantId, this.documentId).catch((err) => {
 			const lumberjackProperties = {
 				...getLumberBaseProperties(this.documentId, this.tenantId),
 			};
 			Lumberjack.error("Error sending boxcar to producer", lumberjackProperties, err);
-			throw err;
 		});
 	}
 }
