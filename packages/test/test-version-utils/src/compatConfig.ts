@@ -176,12 +176,7 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
  * Mocha start up to ensure legacy versions are installed
  */
 export async function mochaGlobalSetup() {
-    // The non-compat configuration uses the packages already installed in the workspace.
-    const versions = new Set(
-        configList.value
-            .map((value) => value.compatVersion)
-            .filter((value) => value !== 0),
-    );
+    const versions = new Set(configList.value.map((value) => value.compatVersion));
     if (versions.size === 0) { return; }
 
     // Make sure we wait for all before returning, even if one of them has error.
