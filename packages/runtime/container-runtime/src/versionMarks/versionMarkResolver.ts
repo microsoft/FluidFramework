@@ -175,19 +175,42 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 		batchId: string,
 		sequenceNumberLowerBound: number,
 	): Promise<ResolveResult> {
+		const startTime = Date.now();
+		let path: "session" | "history" | "noReader";
+		let clippedLeadingOpsSkipped = 0;
+		let result: ResolveResult;
+
 		// Fast path: batch sequenced live this session.
 		const sequenceNumber = this.sessionSequenceFor(batchId);
-		if (sequenceNumber !== undefined) {
-			return { kind: "resolved", sequenceNumber };
+		if (sequenceNumber === undefined) {
+			const reader = this.hooks.getHistoricalOpReader?.();
+			if (reader === undefined) {
+				// No reader: the batch may still sequence live, so report pending.
+				path = "noReader";
+				result = { kind: "pending" };
+			} else {
+				// Otherwise scan history from the mark's reference point.
+				path = "history";
+				const scan = await this.resolveFromHistory(reader, batchId, sequenceNumberLowerBound);
+				result = scan.result;
+				clippedLeadingOpsSkipped = scan.clippedLeadingOpsSkipped;
+			}
+		} else {
+			path = "session";
+			result = { kind: "resolved", sequenceNumber };
 		}
 
-		// Otherwise scan history from the mark's reference point.
-		const reader = this.hooks.getHistoricalOpReader?.();
-		if (reader === undefined) {
-			// No reader: the batch may still sequence live, so report pending.
-			return { kind: "pending" };
-		}
-		return this.resolveFromHistory(reader, batchId, sequenceNumberLowerBound);
+		// See DEV.md "Telemetry". `clippedLeadingOpsSkipped > 0 && outcome !== "resolved"` is the near-miss
+		// signal for a clipped-skip that the static "target is in-window" invariant should never allow.
+		this.hooks.logger.sendTelemetryEvent({
+			eventName: "Resolve",
+			outcome: result.kind,
+			path,
+			clippedLeadingOpsSkipped,
+			durationMs: Date.now() - startTime,
+			...(result.kind === "resolved" ? { sequenceNumber: result.sequenceNumber } : {}),
+		});
+		return result;
 	}
 
 	/**
@@ -200,16 +223,18 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 	 * leading chunk stream clipped by the anchor is likewise skipped (its trailing chunks would otherwise
 	 * make the fresh {@link OpSplitter} throw "Chunk Id mismatch"). On a miss,
 	 * {@link classifyMiss} distinguishes `pending` (not sequenced yet) from `unresolvable` (ops trimmed).
-	 * See DEV.md.
+	 * Also reports `clippedLeadingOpsSkipped` (leading orphan-batch / clipped-chunk ops dropped by the
+	 * anchor guards) for the resolve telemetry. See DEV.md.
 	 */
 	private async resolveFromHistory(
 		reader: IHistoricalOpReader,
 		batchId: string,
 		sequenceNumberLowerBound: number,
-	): Promise<ResolveResult> {
+	): Promise<{ result: ResolveResult; clippedLeadingOpsSkipped: number }> {
 		const from = sequenceNumberLowerBound + 1;
 		const unpack = this.hooks.createHistoricalOpUnpacker?.();
 		const abortController = new AbortController();
+		let clippedLeadingOpsSkipped = 0;
 		try {
 			const stream = await reader.fetchMessages(from, undefined, abortController.signal);
 			let firstScannedSequenceNumber: number | undefined;
@@ -229,12 +254,14 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 						// The anchor (`sequenceNumberLowerBound + 1`) may land inside a batch whose start
 						// precedes the window; its orphan end marker would trip the processor's 0x9d5 assert.
 						// Drop the clipped tail. The target batch is fully in-window, so this can't skip it.
+						clippedLeadingOpsSkipped++;
 						continue;
 					}
 					// The anchor may likewise land mid-chunk-stream: a fresh OpSplitter fed chunk 2+ throws
 					// `DataCorruptionError("Chunk Id mismatch")`, rejecting resolve(). Skip such a clipped
 					// leading stream until it completes. The target batch is in-window, so this can't skip it.
 					if (shouldSkipClippedChunk(op, chunkAlignment)) {
+						clippedLeadingOpsSkipped++;
 						continue;
 					}
 					// undefined = a system op, or an incomplete chunk awaiting later fragments.
@@ -256,12 +283,18 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 					const update = inboundVersionMarkUpdate(inboundResult, carriedBatchId);
 					carriedBatchId = update.carriedBatchId;
 					if (update.sequenced?.batchId === batchId) {
-						return { kind: "resolved", sequenceNumber: update.sequenced.sequenceNumber };
+						return {
+							result: { kind: "resolved", sequenceNumber: update.sequenced.sequenceNumber },
+							clippedLeadingOpsSkipped,
+						};
 					}
 				}
 			}
 			// Not found: distinguish "not sequenced yet" from "trimmed" via the tip and where the scan landed.
-			return this.classifyMiss(from, firstScannedSequenceNumber);
+			return {
+				result: this.classifyMiss(from, firstScannedSequenceNumber),
+				clippedLeadingOpsSkipped,
+			};
 		} finally {
 			// Cancel any in-flight fetch once we stop reading (found or exhausted).
 			abortController.abort();

@@ -26,6 +26,7 @@ export { DuplicateBatchDetector } from "./duplicateBatchDetector.js";
 export {
 	serializeOp,
 	ensureContentsDeserialized,
+	tryGetDeserializedRuntimeOpCopy,
 } from "./opSerialization.js";
 export {
 	type BatchResubmitInfo,

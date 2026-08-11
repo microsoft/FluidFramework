@@ -253,6 +253,7 @@ import {
 	OpSplitter,
 	Outbox,
 	RemoteMessageProcessor,
+	tryGetDeserializedRuntimeOpCopy,
 	type OutboundBatch,
 	type BatchResubmitInfo,
 } from "./opLifecycle/index.js";
@@ -1974,13 +1975,11 @@ export class ContainerRuntime
 							),
 						);
 						return (op) => {
-							// Mirror the live path: only modern runtime-envelope ops (type Operation, with a
-							// client id) carry batches; skip system/server ops.
-							if (op.type !== MessageType.Operation || typeof op.clientId !== "string") {
+							// Only runtime ops carry batches; deserialize a copy so the reader-owned op stays untouched.
+							const messageCopy = tryGetDeserializedRuntimeOpCopy(op);
+							if (messageCopy === undefined) {
 								return undefined;
 							}
-							const messageCopy = { ...op };
-							ensureContentsDeserialized(messageCopy);
 							return scanProcessor.process(
 								messageCopy,
 								getSingleUseLegacyLogCallback(this.mc.logger, messageCopy.type),

@@ -1007,4 +1007,99 @@ describe("VersionMarkResolver", () => {
 			});
 		});
 	});
+
+	describe("resolve telemetry (Resolve event)", () => {
+		it("emits a Resolve event for a history-resolved mark, including the clipped-skip count", async () => {
+			const logger = new MockLogger();
+			const reader = makeReader([
+				[
+					makeChunkOp({ sequenceNumber: 11, clientId: "chunker", chunkId: 2, totalChunks: 3 }),
+					makeChunkOp({ sequenceNumber: 12, clientId: "chunker", chunkId: 3, totalChunks: 3 }),
+					makeOp({
+						sequenceNumber: 20,
+						clientId: "target",
+						clientSequenceNumber: 1,
+						metadata: { batch: true },
+					}),
+					makeOp({
+						sequenceNumber: 21,
+						clientId: "target",
+						clientSequenceNumber: 2,
+						metadata: { batch: false },
+					}),
+				],
+			]);
+			const resolver = makeResolver({ reader, logger });
+			assert.deepEqual(await resolver.resolve(generateBatchId("target", 1), 5), {
+				kind: "resolved",
+				sequenceNumber: 21,
+			});
+			logger.assertMatch([
+				{
+					eventName: "Resolve",
+					outcome: "resolved",
+					path: "history",
+					clippedLeadingOpsSkipped: 2,
+					sequenceNumber: 21,
+				},
+			]);
+		});
+
+		it("emits the near-miss shape (skipped > 0, outcome !== resolved) when a scan skips but misses", async () => {
+			const logger = new MockLogger();
+			const reader = makeReader([
+				[
+					makeChunkOp({ sequenceNumber: 11, clientId: "chunker", chunkId: 2, totalChunks: 3 }),
+					makeChunkOp({ sequenceNumber: 12, clientId: "chunker", chunkId: 3, totalChunks: 3 }),
+				],
+			]);
+			const resolver = makeResolver({ reader, logger, currentSequenceNumber: 0 });
+			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 1), 5), {
+				kind: "pending",
+			});
+			logger.assertMatch([
+				{
+					eventName: "Resolve",
+					outcome: "pending",
+					path: "history",
+					clippedLeadingOpsSkipped: 2,
+				},
+			]);
+		});
+
+		it("emits path 'noReader' when no historical reader is wired", async () => {
+			const logger = new MockLogger();
+			const resolver = makeResolver({ logger });
+			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 1), 5), {
+				kind: "pending",
+			});
+			logger.assertMatch([
+				{
+					eventName: "Resolve",
+					outcome: "pending",
+					path: "noReader",
+					clippedLeadingOpsSkipped: 0,
+				},
+			]);
+		});
+
+		it("emits path 'session' with no skips on a live fast-path hit", async () => {
+			const logger = new MockLogger();
+			const resolver = makeResolver({ logger });
+			resolver.processInboundBatch("live_[1]", 7);
+			assert.deepEqual(await resolver.resolve("live_[1]", 5), {
+				kind: "resolved",
+				sequenceNumber: 7,
+			});
+			logger.assertMatch([
+				{
+					eventName: "Resolve",
+					outcome: "resolved",
+					path: "session",
+					clippedLeadingOpsSkipped: 0,
+					sequenceNumber: 7,
+				},
+			]);
+		});
+	});
 });

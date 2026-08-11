@@ -3,15 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import {
-	MessageType,
-	type ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import {
-	ensureContentsDeserialized,
 	getEffectiveBatchId,
 	tryGetChunkedOp,
+	tryGetDeserializedRuntimeOpCopy,
 	type InboundMessageResult,
 } from "../opLifecycle/index.js";
 
@@ -100,26 +97,24 @@ export function shouldSkipClippedChunk(
 	op: ISequencedDocumentMessage,
 	alignment: ChunkStreamAlignment,
 ): boolean {
-	// Mirror the historical unpacker: only modern runtime-envelope ops carry chunks, and only they may
-	// be deserialized. Deserialize a copy (never the reader-owned op) before inspecting chunk contents.
-	if (op.type !== MessageType.Operation || typeof op.clientId !== "string") {
+	// Only runtime ops carry chunks; work on a deserialized copy (leaves the reader-owned op untouched).
+	const runtimeOp = tryGetDeserializedRuntimeOpCopy(op);
+	if (runtimeOp === undefined) {
 		return false;
 	}
-	const messageCopy = { ...op };
-	ensureContentsDeserialized(messageCopy);
-	const chunkedOp = tryGetChunkedOp(messageCopy);
+	const chunkedOp = tryGetChunkedOp(runtimeOp);
 	if (chunkedOp === undefined) {
 		return false;
 	}
 	const sync =
-		alignment.get(op.clientId) ?? (chunkedOp.chunkId === 1 ? "aligned" : "skipping");
+		alignment.get(runtimeOp.clientId) ?? (chunkedOp.chunkId === 1 ? "aligned" : "skipping");
 	if (sync === "aligned") {
-		alignment.set(op.clientId, "aligned");
+		alignment.set(runtimeOp.clientId, "aligned");
 		return false;
 	}
 	// Realign once the clipped stream's final chunk passes; subsequent in-window streams feed normally.
 	alignment.set(
-		op.clientId,
+		runtimeOp.clientId,
 		chunkedOp.chunkId >= chunkedOp.totalChunks ? "aligned" : "skipping",
 	);
 	return true;

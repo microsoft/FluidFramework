@@ -143,13 +143,14 @@ The runtime does not store or mutate app marks. The listener only lets the app r
 3. Set `from = sequenceNumberLowerBound + 1`, create a fresh unpacker, and create an `AbortController`.
 4. Request `fetchMessages(from, undefined, abortSignal)`.
 5. Read every stream chunk until the target is found or the stream returns `done`.
-6. Return the matched completed batch's last sequence number, or classify the miss.
+6. Return the matched completed batch's last sequence number (with the count of leading ops skipped), or classify the miss.
 7. Abort the controller in `finally`, both on success and on exhaustion/error, so the underlying fetch can stop any remaining work.
+8. `resolve()` emits one `Resolve` telemetry event (`outcome`, `path`, `clippedLeadingOpsSkipped`, `durationMs`) before returning — see [Telemetry](#telemetry).
 
 For each raw op, the scan records the first returned sequence number before filtering because that value is also the trim-availability signal. It then:
 
-1. Drops a `batch: false` marker when no batch is currently in progress. The scan anchor may land on the clipped tail of an ordinary batch whose start was before `from`; feeding that orphan end marker to `RemoteMessageProcessor` would violate its batch-state invariant.
-2. Skips a **clipped leading chunk stream** (see Scan-anchor handling below): a chunk op whose stream started before `from`, tracked per `clientId`, so the fresh `OpSplitter` never receives a non-leading chunk (which would throw `Chunk Id mismatch`).
+1. Drops a `batch: false` marker when no batch is currently in progress (counting it into `clippedLeadingOpsSkipped`). The scan anchor may land on the clipped tail of an ordinary batch whose start was before `from`; feeding that orphan end marker to `RemoteMessageProcessor` would violate its batch-state invariant.
+2. Skips a **clipped leading chunk stream** (see Scan-anchor handling below; also counted into `clippedLeadingOpsSkipped`): a chunk op whose stream started before `from`, tracked per `clientId`, so the fresh `OpSplitter` never receives a non-leading chunk (which would throw `Chunk Id mismatch`).
 3. Passes the op to the unpacker. `undefined` means a filtered system op or an incomplete chunk waiting for more fragments.
 4. Mirrors the unpacker's batch-in-progress state from `batchStartingMessage` and final `nextBatchMessage` results.
 5. Calls `inboundVersionMarkUpdate`, carrying the batch id across piecemeal results exactly as the live path does.
@@ -184,6 +185,36 @@ This is an **interim, read-derived** signal: it infers availability from how the
 - Listener failures are isolated, logged, and skipped because a missed live promotion remains recoverable through history.
 - Inbound pending-state validation runs before notification. A rejected or forked batch cannot cause an app-side promotion.
 - `sequenceNumberByBatchId` is only a session cache. Correctness must not depend on an entry remaining present; a miss can fall back to retained history.
+
+## Telemetry
+
+Version-mark telemetry is greenfield; this section is the **contract** every event (FF-side and app-side) codes against, so all apps can feed one shared dashboard. Design events around the questions a dashboard asks, not around code lines.
+
+### Principles
+
+- **One event per logical operation, with a low-cardinality `outcome`/`path` enum** — not many scattered events. Group-by dimensions must stay low-cardinality (enums, booleans, counts, durations).
+- **Never put high-cardinality/PII values (`batchId`, `clientId`, `docId`) in group-by dimensions.** When a correlation key is needed, emit it as a **tagged detail** (`TelemetryDataTag`), not a dimension.
+- **Severity discipline:** informational (`sendTelemetryEvent`) for usage/health and *smells*; `sendErrorEvent` only for provable faults (corruption is already covered by asserts).
+- **Instrument the infrequent control points** (capture, resolve) directly — they are savepoint/load-time, not hot. Never emit per-op/per-batch events on `onBatchSequenced`; aggregate (counters or `SampledTelemetryHelper`) if per-batch signal is ever needed.
+- The resolver's logger is namespaced `VersionMarkResolver`, so event names below are emitted as `VersionMarkResolver:<name>`.
+
+### Events
+
+| Event | When | Dimensions | Answers |
+| --- | --- | --- | --- |
+| `Resolve` **(implemented)** | end of `resolve()` | `outcome` (`resolved`\|`pending`\|`unresolvable`), `path` (`session`\|`history`\|`noReader`), `clippedLeadingOpsSkipped` (number), `durationMs`, `sequenceNumber` (when resolved) | success rate; how often history is needed; latency; the **near-miss** signal; `unresolvable` = data-loss KPI |
+| `Capture` *(planned — AB#80270)* | `sealAndCaptureVersionMark()` | `kind` (`pending`\|`resolved`) | capture volume; pending ratio |
+
+`clippedLeadingOpsSkipped` counts leading orphan-batch-end and clipped-chunk ops dropped by the scan-anchor guards. The static invariant (the target batch is pending at capture, so it sequences at/after `from` and is never clipped) means a *correct* skip never drops the target. The one thing the invariant cannot self-verify in the field is a future violation of it; the **near-miss filter `clippedLeadingOpsSkipped > 0 && outcome !== "resolved"`** surfaces exactly that (kept informational because `pending` can be legitimate).
+
+### Correlation and the app funnel (planned)
+
+FF emits only what it can observe (the runtime mechanism). The product funnel — locator persisted, restore initiated/applied, trigger source (user vs. NiTL agent), user accept/discard — is owned by the app/host (office-bohemia; AB#80271) and cannot be emitted from FF. For a shared cross-app dashboard, both layers must:
+
+- use this **stable, app-agnostic schema** plus an `app`/`host` dimension (the host logger supplies host context), and
+- stamp shared **correlation keys** — `containerId` (auto-tagged by the FF logger) and the mark's `batchId` (as a tagged detail) — so FF `Resolve` events join to the app's restore events for the same mark.
+
+The shared rollout dashboard is tracked in AB#80150.
 
 ## Loading a mark
 
@@ -253,7 +284,8 @@ Per-inbound-batch work (deriving the batch identity and populating the map/notif
 ## Current test map
 
 - `src/test/versionMarks/inboundBatch.spec.ts` covers full, empty, derived-id, explicit-id, and piecemeal batch updates.
-- `src/test/versionMarks/versionMarkResolver.spec.ts` covers capture ordering/results, the tracking gate, live-map precedence, no-reader behavior, fresh and resubmitted batches, multi-op batches across stream reads, chunk reassembly, clipped leading ordinary batches, clipped leading chunk streams (every intermediate-chunk anchor, in-window streams, interleaved per-client streams), miss classifications, range arguments, reader-contract assertion, abort behavior, listener isolation/unsubscribe/deduplication, and MSN eviction.
+- `src/test/versionMarks/versionMarkResolver.spec.ts` covers capture ordering/results, the tracking gate, live-map precedence, no-reader behavior, fresh and resubmitted batches, multi-op batches across stream reads, chunk reassembly, clipped leading ordinary batches, clipped leading chunk streams (every intermediate-chunk anchor, in-window streams, interleaved per-client streams), miss classifications, range arguments, reader-contract assertion, abort behavior, listener isolation/unsubscribe/deduplication, MSN eviction, and the `Resolve` telemetry event (outcome/path/clipped-skip count across the session, history, near-miss, and no-reader paths).
+- `src/test/opLifecycle/opSerialization.spec.ts` covers `tryGetDeserializedRuntimeOpCopy` (runtime-op copy with deserialized contents; non-runtime and clientless ops return undefined without deserializing).
 - `src/test/pendingStateManager.spec.ts` covers ignoring unapplied stashed messages and reading an explicit reconnect-stable id from the start of the most recently flushed multi-op batch.
 - `src/test/containerRuntime.spec.ts` covers the complete context `fetchOps` -> historical unpack -> resolver path (including system/server-op filtering and abort-after-match), plus the ordering guarantee that failed inbound validation does not notify listeners.
 
