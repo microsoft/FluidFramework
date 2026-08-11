@@ -139,7 +139,7 @@ export type {
 	FluidContainer,
 	FluidContainerAttached,
 	FluidContainerWithService,
-	OldestSupportedClientMinorVersion,
+	OldestSupportedClientVersion,
 	Registry,
 	RegistryKey,
 	ServiceClient,
