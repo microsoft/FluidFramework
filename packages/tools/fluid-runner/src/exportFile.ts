@@ -19,7 +19,11 @@ import {
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
-import type { IFluidFileConverter } from "./codeLoaderBundle.js";
+import type {
+	FluidFileConverter,
+	IFluidFileConverter,
+	IFluidFileConverterWithBinaryOutput,
+} from "./codeLoaderBundle.js";
 import { FakeUrlResolver } from "./fakeUrlResolver.js";
 /* eslint-disable import-x/no-internal-modules */
 import type { IFileLoggerTelemetryOptions } from "./logger/fileLogger.js";
@@ -56,11 +60,11 @@ const clientArgsValidationError = "Client_ArgsValidationError";
 
 /**
  * Execute code on a Fluid {@link @fluidframework/container-definitions#IContainer} loaded from an ODSP snapshot
- * file and write the resulting string to disk.
+ * file and write the result to disk.
  * @internal
  */
 export async function exportFile(
-	fluidFileConverter: IFluidFileConverter,
+	fluidFileConverter: FluidFileConverter,
 	inputFile: string,
 	outputFile: string,
 	telemetryFile: string,
@@ -94,14 +98,15 @@ export async function exportFile(
 
 				fs.writeFileSync(
 					outputFile,
-					await createFluidRunnerContainerAndExecute(
+					await createContainerAndExecute(
 						getSnapshotFileContent(inputFile),
 						fluidFileConverter,
-						baseLogger,
+						logger,
 						options,
 						timeout,
 						disableNetworkFetch,
 					),
+					{ flag: "wx" },
 				);
 
 				return { success: true };
@@ -171,9 +176,33 @@ export async function createContainerAndExecute(
 	logger: TelemetryLoggerExt,
 	options?: string,
 	timeout?: number,
+	disableNetworkFetch?: boolean,
+): Promise<string>;
+export async function createContainerAndExecute(
+	localOdspSnapshot: string | Uint8Array,
+	fluidFileConverter: IFluidFileConverterWithBinaryOutput,
+	logger: TelemetryLoggerExt,
+	options?: string,
+	timeout?: number,
+	disableNetworkFetch?: boolean,
+): Promise<Uint8Array>;
+export async function createContainerAndExecute(
+	localOdspSnapshot: string | Uint8Array,
+	fluidFileConverter: FluidFileConverter,
+	logger: TelemetryLoggerExt,
+	options?: string,
+	timeout?: number,
+	disableNetworkFetch?: boolean,
+): Promise<string | Uint8Array>;
+export async function createContainerAndExecute(
+	localOdspSnapshot: string | Uint8Array,
+	fluidFileConverter: FluidFileConverter,
+	logger: TelemetryLoggerExt,
+	options?: string,
+	timeout?: number,
 	disableNetworkFetch: boolean = false,
-): Promise<string> {
-	const fn = async (): Promise<string> => {
+): Promise<string | Uint8Array> {
+	const fn = async (): Promise<string | Uint8Array> => {
 		if (disableNetworkFetch) {
 			global.fetch = async () => {
 				throw new Error("Network fetch is not allowed");
@@ -197,20 +226,21 @@ export async function createContainerAndExecute(
 				},
 			},
 		});
-		await waitContainerToCatchUp(container);
-
-		return PerformanceEvent.timedExecAsync(logger, { eventName: "ExportFile" }, async () => {
-			try {
-				return await fluidFileConverter.execute(container, options);
-			} finally {
-				container.dispose();
-			}
-		});
+		try {
+			await waitContainerToCatchUp(container);
+			return PerformanceEvent.timedExecAsync(
+				logger,
+				{ eventName: "ExportFile" },
+				async () => fluidFileConverter.execute(container, options),
+			);
+		} finally {
+			container.dispose();
+		}
 	};
 
 	// eslint-disable-next-line unicorn/prefer-ternary
 	if (timeout !== undefined) {
-		return timeoutPromise<string>((resolve, reject) => {
+		return timeoutPromise<string | Uint8Array>((resolve, reject) => {
 			fn()
 				.then((value) => resolve(value))
 				.catch((error) => reject(error));

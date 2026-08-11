@@ -11,7 +11,7 @@ import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-u
 import { isCodeLoaderBundle, isFluidFileConverter } from "./codeLoaderBundle.js";
 import {
 	type IExportFileResponse,
-	createFluidRunnerContainerAndExecute,
+	createContainerAndExecute,
 } from "./exportFile.js";
 /* eslint-disable import-x/no-internal-modules */
 import type { IFileLoggerTelemetryOptions } from "./logger/fileLogger.js";
@@ -86,14 +86,15 @@ export async function parseBundleAndExportFile(
 
 				fs.writeFileSync(
 					outputFile,
-					await createFluidRunnerContainerAndExecute(
+					await createContainerAndExecute(
 						getSnapshotFileContent(inputFile),
 						fluidExport,
-						baseLogger, // Pass baseLogger with ITelemetryBaseLogger type
+						logger,
 						options,
 						timeout,
 						disableNetworkFetch,
 					),
+					{ flag: "wx" },
 				);
 
 				return { success: true };

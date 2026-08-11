@@ -4,7 +4,12 @@
  */
 
 /* eslint-disable import-x/no-internal-modules */
-export type { ICodeLoaderBundle, IFluidFileConverter } from "./codeLoaderBundle.js";
+export type {
+	FluidFileConverter,
+	ICodeLoaderBundle,
+	IFluidFileConverter,
+	IFluidFileConverterWithBinaryOutput,
+} from "./codeLoaderBundle.js";
 export {
 	createContainerAndExecute,
 	createFluidRunnerContainerAndExecute,

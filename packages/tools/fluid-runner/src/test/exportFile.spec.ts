@@ -10,7 +10,12 @@ import path from "path";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 /* eslint-disable import-x/no-internal-modules */
-import { createFluidRunnerContainerAndExecute, exportFile } from "../exportFile.js";
+import type { IFluidFileConverterWithBinaryOutput } from "../codeLoaderBundle.js";
+import {
+	createContainerAndExecute,
+	createFluidRunnerContainerAndExecute,
+	exportFile,
+} from "../exportFile.js";
 import { getSnapshotFileContent } from "../utils.js";
 
 import { _dirname } from "./dirname.cjs";
@@ -25,6 +30,11 @@ describe("exportFile", () => {
 	const outputFilePath = path.join(outputFolder, "result.txt");
 	const telemetryFile = path.join(outputFolder, "telemetry.txt");
 	const snapshotFolder = path.join(folderRoot, "localOdspSnapshots");
+	const binaryExecuteResult = Uint8Array.from([0, 1, 127, 128, 255]);
+	const binaryFluidExport: IFluidFileConverterWithBinaryOutput = {
+		...fluidExport,
+		execute: () => Promise.resolve(binaryExecuteResult),
+	};
 
 	beforeEach(() => {
 		fs.mkdirSync(outputFolder);
@@ -64,6 +74,69 @@ describe("exportFile", () => {
 				assert.deepStrictEqual(result, executeResult, "result objects do not match");
 			});
 		});
+	});
+
+	it("preserves internal helper text and binary output types", async () => {
+		const snapshot = getSnapshotFileContent(
+			path.join(snapshotFolder, "odspSnapshot1.json"),
+		);
+		const logger = new MockLogger().toTelemetryLogger();
+
+		const textResult: string = await createContainerAndExecute(snapshot, fluidExport, logger);
+		assert.strictEqual(textResult, executeResult, "text execution output is not correct");
+
+		const binaryResult: Uint8Array = await createContainerAndExecute(
+			snapshot,
+			binaryFluidExport,
+			logger,
+		);
+		assert.deepStrictEqual(
+			binaryResult,
+			binaryExecuteResult,
+			"binary execution output is not correct",
+		);
+	});
+
+	it("writes binary execution output unchanged", async () => {
+		const result = await exportFile(
+			binaryFluidExport,
+			path.join(snapshotFolder, "odspSnapshot1.json"),
+			outputFilePath,
+			telemetryFile,
+		);
+
+		assert(result.success, "exportFile call was not successful");
+		assert.deepStrictEqual(
+			fs.readFileSync(outputFilePath),
+			Buffer.from(binaryExecuteResult),
+			"binary file output is not correct",
+		);
+	});
+
+	it("does not overwrite an output file created during conversion", async () => {
+		const racedOutput = Uint8Array.from([222, 173, 190, 239]);
+		const racingFluidExport: IFluidFileConverterWithBinaryOutput = {
+			...binaryFluidExport,
+			execute: async () => {
+				fs.writeFileSync(outputFilePath, racedOutput);
+				return binaryExecuteResult;
+			},
+		};
+
+		const result = await exportFile(
+			racingFluidExport,
+			path.join(snapshotFolder, "odspSnapshot1.json"),
+			outputFilePath,
+			telemetryFile,
+		);
+
+		assert(!result.success, "exportFile call should fail");
+		assert.strictEqual(result.error?.code, "EEXIST", "expected an exclusive-write error");
+		assert.deepStrictEqual(
+			fs.readFileSync(outputFilePath),
+			Buffer.from(racedOutput),
+			"the raced output file was overwritten",
+		);
 	});
 
 	it("fails on timeout", async () => {

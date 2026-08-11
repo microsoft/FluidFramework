@@ -57,13 +57,21 @@ For more details on what exports are needed, see [codeLoaderBundle.ts](./src/cod
 
 You may notice the command line argument `codeLoader` is optional. If you choose not to provide a value for `codeLoader`, you must extend this library
 and provide a [`IFluidFileConverter`](./src/codeLoaderBundle.ts) implementation to the [`fluidRunner(...)`](./src/fluidRunner.ts) method.
+`IFluidFileConverter` retains its string output contract. Trusted converters that produce binary files can instead implement the internal
+`IFluidFileConverterWithBinaryOutput` contract; `exportFile(...)` writes the returned `Uint8Array` bytes directly without text encoding.
 
 ```typescript
-import { fluidRunner } from "@fluidframework/fluid-runner";
+import {
+	fluidRunner,
+	type IFluidFileConverterWithBinaryOutput,
+} from "@fluidframework/fluid-runner/internal";
 
-await fluidRunner({
-	/* IFluidFileConverter implementation here */
-});
+const converter: IFluidFileConverterWithBinaryOutput = {
+	getCodeLoader: async () => codeLoader,
+	execute: async () => Uint8Array.from([0x50, 0x4b /* ZIP bytes */]),
+};
+
+await fluidRunner(converter);
 ```
 
 > **Note**: Only one of `codeLoader` or `fluidRunner(...)` argument is allowed. If both or none are provided, an error will be thrown at the start of execution.
@@ -111,11 +119,11 @@ The code around `exportFile` can be consumed in multiple different layers. It is
 -   [`createLogger(...)`](./src/logger/loggerUtils.ts)
     -   Creates and wraps an `IFileLogger` and adds some useful telemetry data to every entry
 -   [`createContainerAndExecute(...)`](./src/exportFile.ts)
-    -   This is the core logic for running some action based on a local ODSP snapshot
+    -   This internal helper preserves the converter's output type: text converters return `Promise<string>`, while binary converters return `Promise<Uint8Array>`
 -   [`getSnapshotFileContent(...)`](./src/utils.ts)
     -   Reads a local ODSP snapshot from both JSON and binary formats for usage in `createContainerAndExecute(...)`
 
-For an example of a consumption path that differs slightly to [`exportFile(...)`](./src/exportFile.ts), see [`parseBundleAndExportFile(...)`](./src/parseBundleAndExportFile.ts). In addition to running the same logic as [`exportFile`](./src/exportFile.ts) method, it implements the logic around parsing a dynamically provided bundle path into an `IFluidFileConverter` object.
+For an example of a consumption path that differs slightly to [`exportFile(...)`](./src/exportFile.ts), see [`parseBundleAndExportFile(...)`](./src/parseBundleAndExportFile.ts). In addition to running the same logic as [`exportFile`](./src/exportFile.ts) method, it implements the logic around parsing a dynamically provided bundle path into a `FluidFileConverter` object.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER:clientRequirements=FALSE) -->
 

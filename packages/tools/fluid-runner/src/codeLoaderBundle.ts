@@ -18,7 +18,7 @@ export interface ICodeLoaderBundle {
 	/**
 	 * Fluid export of all the required objects and functions
 	 */
-	fluidExport: Promise<IFluidFileConverter>;
+	fluidExport: Promise<FluidFileConverter>;
 }
 
 /**
@@ -47,6 +47,39 @@ export interface IFluidFileConverter {
 }
 
 /**
+ * Instance that holds all the details for Fluid file conversion with binary output.
+ * @internal
+ */
+export interface IFluidFileConverterWithBinaryOutput {
+	/**
+	 * Get code loader details to provide at Loader creation
+	 * @param logger - created logger object to pass to code loader
+	 */
+	getCodeLoader(logger: ITelemetryBaseLogger): Promise<ICodeDetailsLoader>;
+
+	/**
+	 * Get scope object to provide at Loader creation
+	 * @param logger - created logger object to pass to scope object
+	 */
+	getScope?(logger: ITelemetryBaseLogger): Promise<FluidObject>;
+
+	/**
+	 * Executes code on container and returns the binary result
+	 * @param container - container created by this application
+	 * @param options - additional options
+	 */
+	execute(container: IContainer, options?: string): Promise<Uint8Array>;
+}
+
+/**
+ * A Fluid file converter with either text or binary output.
+ * @internal
+ */
+export type FluidFileConverter =
+	| IFluidFileConverter
+	| IFluidFileConverterWithBinaryOutput;
+
+/**
  * Type cast to ensure necessary methods are present in the provided bundle
  * @param bundle - bundle provided to this application
  */
@@ -55,7 +88,7 @@ export function isCodeLoaderBundle(bundle: any): bundle is ICodeLoaderBundle {
 	return bundle?.fluidExport && typeof bundle.fluidExport === "object";
 }
 
-export function isFluidFileConverter(obj: any): obj is IFluidFileConverter {
+export function isFluidFileConverter(obj: any): obj is FluidFileConverter {
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 	return (
 		obj?.getCodeLoader &&

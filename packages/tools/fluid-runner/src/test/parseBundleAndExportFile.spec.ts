@@ -11,6 +11,11 @@ import { parseBundleAndExportFile } from "../parseBundleAndExportFile.js";
 
 import { _dirname } from "./dirname.cjs";
 // eslint-disable-next-line import-x/no-internal-modules
+import {
+	binaryExecuteResult,
+	racedOutput,
+} from "./sampleCodeLoaders/binaryCodeLoader.js";
+// eslint-disable-next-line import-x/no-internal-modules
 import { executeResult } from "./sampleCodeLoaders/sampleCodeLoader.js";
 
 describe("parseBundleAndExportFile", () => {
@@ -50,6 +55,40 @@ describe("parseBundleAndExportFile", () => {
 				assert.strictEqual(resultFileContent, executeResult, "result output is not correct");
 			});
 		});
+	});
+
+	it("writes dynamic-bundle binary output unchanged", async () => {
+		const result = await parseBundleAndExportFile(
+			path.join(sampleCodeLoadersFolder, "binaryCodeLoader.js"),
+			path.join(snapshotFolder, "odspSnapshot1.json"),
+			outputFilePath,
+			telemetryFile,
+		);
+
+		assert(result.success, "exportFile call was not successful");
+		assert.deepStrictEqual(
+			fs.readFileSync(outputFilePath),
+			Buffer.from(binaryExecuteResult),
+			"binary file output is not correct",
+		);
+	});
+
+	it("does not overwrite an output file created by a dynamic bundle", async () => {
+		const result = await parseBundleAndExportFile(
+			path.join(sampleCodeLoadersFolder, "binaryCodeLoader.js"),
+			path.join(snapshotFolder, "odspSnapshot1.json"),
+			outputFilePath,
+			telemetryFile,
+			outputFilePath,
+		);
+
+		assert(!result.success, "exportFile call should fail");
+		assert.strictEqual(result.error?.code, "EEXIST", "expected an exclusive-write error");
+		assert.deepStrictEqual(
+			fs.readFileSync(outputFilePath),
+			Buffer.from(racedOutput),
+			"the raced output file was overwritten",
+		);
 	});
 
 	it("fails on timeout", async () => {
