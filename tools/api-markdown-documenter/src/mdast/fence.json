@@ -1,5 +1,0 @@
-{
-	"tags": ["mdast"],
-	"exports": ["index"],
-	"imports": []
-}

@@ -1,9 +1,0 @@
-/*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
-
-export {
-	MainView as QuillMainView,
-	type MainViewProps as QuillMainViewProps,
-} from "./quillView.js";

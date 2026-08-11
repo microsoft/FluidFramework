@@ -1,4 +1,0 @@
-{
-	"extends": "../../../../.markdownlint.json",
-	"line_length": false
-}

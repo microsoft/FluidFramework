@@ -1,8 +1,0 @@
-{
-	"extends": "./tsconfig.crossPackage.node16.json",
-	"compilerOptions": {
-		"outDir": "./lib/crossPackage/bundler",
-		"moduleResolution": "bundler",
-		"module": "esnext",
-	},
-}

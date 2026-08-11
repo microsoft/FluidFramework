@@ -1,7 +1,0 @@
-teams:
-  internal: ['FluidFramework-Admin', 'FluidFramework-Contributors', 'FRS-Contributors' ]
-
-labels:
-  externalPRs: ['community-contribution']
-
-sync: true

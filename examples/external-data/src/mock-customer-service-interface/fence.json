@@ -1,5 +1,0 @@
-{
-	"tags": ["mock-customer-service-interface"],
-	"exports": ["index"],
-	"imports": ["utilities"]
-}

@@ -1,5 +1,0 @@
-{
-	"tags": ["external-utilities"],
-	"exports": ["index"],
-	"imports": ["codec"]
-}

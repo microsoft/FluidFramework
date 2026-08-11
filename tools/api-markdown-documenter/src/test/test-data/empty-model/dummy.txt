@@ -1,1 +1,0 @@
-Dummy file to ensure the parent directory exists to serve as an empty "API Model".

@@ -1,9 +1,0 @@
-# Dependencies
-/node_modules
-
-# Prettier cache
-.prettier-cache
-
-# Misc
-.DS_Store
-npm-debug.log*
