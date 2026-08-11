@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
+import { waitContainerToCatchUp } from "@fluidframework/container-loader/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import {
@@ -31,6 +32,29 @@ describeCompat("t9s issue regression test", "NoCompat", (getTestObjectProvider, 
 			},
 		},
 	};
+
+	// TODO: Unskip once a Tinylicious version containing the fix for range queries with a lower bound of 0 is published.
+	it.skip("waitContainerToCatchUp catches up from the first op", async () => {
+		const provider = getTestObjectProvider();
+		const container1 = await provider.makeTestContainer(testContainerConfig);
+		const url = await container1.getAbsoluteUrl("");
+		assert(typeof url === "string");
+
+		const dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
+		const map1 = await dataStore1.getSharedObject<ISharedMap>(mapId);
+		map1.set("key", "value");
+		await provider.ensureSynchronized();
+		container1.close();
+
+		const loader = provider.makeTestLoader(testContainerConfig);
+		const container2 = await loader.resolve({ url });
+		await waitContainerToCatchUp(container2);
+
+		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
+		assert.equal(map2.get("key"), "value");
+	});
+
 	it("handles long logtail", async function () {
 		const provider = getTestObjectProvider();
 		const loader1 = provider.makeTestLoader(testContainerConfig);
