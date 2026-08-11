@@ -62,16 +62,15 @@ describeCompat("t9s issue regression test", "NoCompat", (getTestObjectProvider, 
 			{
 				createDocumentService: {
 					connectToDeltaStorage: {
-						fetchMessages:
-							() => (from) =>
-								streamFromMessages(
-									fetch(
-										`http://localhost:7070/deltas/tinylicious/${provider.documentId}?from=${from - 1}`,
-									).then(async (response) => {
-										assert(response.ok, `Failed to fetch ops: ${response.status}`);
-										return (await response.json()) as ISequencedDocumentMessage[];
-									}),
-								),
+						fetchMessages: () => (from) =>
+							streamFromMessages(
+								fetch(
+									`http://localhost:7070/deltas/tinylicious/${provider.documentId}?from=${from - 1}`,
+								).then(async (response) => {
+									assert(response.ok, `Failed to fetch ops: ${response.status}`);
+									return (await response.json()) as ISequencedDocumentMessage[];
+								}),
+							),
 					},
 					connectToDeltaStream: (documentService) => async (client) => {
 						const connection = await documentService.connectToDeltaStream(client);
