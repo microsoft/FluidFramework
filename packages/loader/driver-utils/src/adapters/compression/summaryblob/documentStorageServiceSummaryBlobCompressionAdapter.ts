@@ -144,13 +144,10 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	): SummaryObject => {
 		if (input.type === SummaryType.Blob) {
 			const summaryBlob: ISummaryBlob = input;
-			const original: ArrayBufferLike = DocumentStorageServiceCompressionAdapter.toBinaryArray(
+			const original = DocumentStorageServiceCompressionAdapter.toBinaryArray(
 				summaryBlob.content,
 			);
-			const processed: ArrayBufferLike = DocumentStorageServiceCompressionAdapter.encodeBlob(
-				original,
-				config,
-			);
+			const processed = DocumentStorageServiceCompressionAdapter.encodeBlob(original, config);
 			const newSummaryBlob = {
 				type: SummaryType.Blob,
 				content: IsoBuffer.from(processed),
@@ -169,11 +166,10 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	private static readonly blobDecoder = (input: SummaryObject): SummaryObject => {
 		if (input.type === SummaryType.Blob) {
 			const summaryBlob: ISummaryBlob = input;
-			const original: Uint8Array = DocumentStorageServiceCompressionAdapter.toBinaryArray(
+			const original = DocumentStorageServiceCompressionAdapter.toBinaryArray(
 				summaryBlob.content,
 			);
-			const processed: ArrayBufferLike =
-				DocumentStorageServiceCompressionAdapter.decodeBlob(original);
+			const processed = DocumentStorageServiceCompressionAdapter.decodeBlob(original);
 			const newSummaryBlob = {
 				type: SummaryType.Blob,
 				content: IsoBuffer.from(processed),
