@@ -5,6 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+
 import {
 	CursorLocationType,
 	EmptyKey,
@@ -1060,7 +1062,10 @@ describe("chunkTree", () => {
 			];
 			const snapshot = [...chunks];
 
-			assert.throws(() => splitFieldAtIndex(chunks, 5, compressor));
+			assert.throws(
+				() => splitFieldAtIndex(chunks, 5, compressor),
+				validateAssertionError("nodeIndex exceeds total node count in field"),
+			);
 
 			assertChunksUnchanged(chunks, snapshot);
 		});

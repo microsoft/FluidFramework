@@ -224,7 +224,7 @@ describe("ChunkedForest", () => {
 			);
 			assert.throws(
 				() => locateNodeInChunks([], 0),
-				validateAssertionError("Index out of bounds"),
+				validateAssertionError("Array index is out of bounds"),
 			);
 		});
 
