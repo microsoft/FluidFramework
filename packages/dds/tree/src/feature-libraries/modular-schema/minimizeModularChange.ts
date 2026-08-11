@@ -103,7 +103,7 @@ class ModularChangeMinimizer {
 		this.rootIdToNodeId = nodeInfo.rootIdToNodeId;
 
 		const delta = intoDelta(makeAnonChange(change), fieldKinds);
-		this.attachedRootIds = collectAttachedRootIds(delta, indexGlobalById(delta));
+		this.attachedRootIds = collectAttachedRootIds(delta, getDeltaNodeChangesByDetachId(delta));
 		this.outputToInputRootId = outputToInputRootIdFromDelta(delta);
 	}
 
@@ -709,7 +709,7 @@ type ChangeAtomIdRangeSet = ChangeAtomIdRangeMap<true>;
  */
 function collectAttachedRootIds(
 	delta: DeltaRoot,
-	globalById: ChangeAtomIdMap<DeltaFieldMap>,
+	detachIdToNodeChanges: ChangeAtomIdMap<DeltaFieldMap>,
 ): ChangeAtomIdRangeSet {
 	const attached: ChangeAtomIdRangeSet = newChangeAtomIdRangeMap<true>();
 	// Worklist of detached node ID ranges newly discovered to be live, whose own nested content must be visited.
@@ -760,7 +760,7 @@ function collectAttachedRootIds(
 		const { id, count } = next;
 		// Nested content in `global` is keyed per node, so it must be visited one ID at a time.
 		for (let offset = 0; offset < count; offset += 1) {
-			visitLiveFields(globalById.get(id.revision)?.get(brand(id.localId + offset)));
+			visitLiveFields(detachIdToNodeChanges.get(id.revision)?.get(brand(id.localId + offset)));
 		}
 		if (delta.rename !== undefined) {
 			for (const { oldId, newId, count: renameCount } of delta.rename) {
@@ -796,14 +796,38 @@ function collectAttachedRootIds(
  * those per-node {@link DeltaFieldMap | field changes} can be resolved quickly (for example,
  * when trimming transient content out of a surviving node's build tree).
  */
-function indexGlobalById(delta: DeltaRoot): ChangeAtomIdMap<DeltaFieldMap> {
-	const globalById: ChangeAtomIdMap<DeltaFieldMap> = new Map();
+function getDeltaNodeChangesByDetachId(delta: DeltaRoot): ChangeAtomIdMap<DeltaFieldMap> {
+	const detachIdToChanges: ChangeAtomIdMap<DeltaFieldMap> = new Map();
 	if (delta.global !== undefined) {
 		for (const { id, fields } of delta.global) {
-			setInNestedMap(globalById, id.major, id.minor, fields);
+			setInNestedMap(detachIdToChanges, id.major, id.minor, fields);
 		}
 	}
-	return globalById;
+
+	if (delta.fields !== undefined) {
+		const visitFields = (fields: DeltaFieldMap): void => {
+			for (const fieldChange of fields.values()) {
+				for (const mark of fieldChange.marks) {
+					if (mark.fields !== undefined) {
+						visitFields(mark.fields);
+
+						if (mark.detach !== undefined) {
+							setInNestedMap(
+								detachIdToChanges,
+								mark.detach.major,
+								mark.detach.minor,
+								mark.fields,
+							);
+						}
+					}
+				}
+			}
+		};
+
+		visitFields(delta.fields);
+	}
+
+	return detachIdToChanges;
 }
 
 function outputToInputRootIdFromDelta(delta: DeltaRoot): ChangeAtomIdRangeMap<ChangeAtomId> {
