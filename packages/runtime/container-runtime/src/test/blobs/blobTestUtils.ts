@@ -523,13 +523,13 @@ export const simulateAttach = async (
 
 export const getSummaryContentsWithFormatValidation = (
 	blobManager: BlobManager,
-	materializedSummaryBlobs?: ReadonlyMap<string, ArrayBufferLike>,
+	materializedDetachedBlobSummaryContents?: ReadonlyMap<string, ArrayBufferLike>,
 ): IBlobManagerLoadInfo => {
-	const summary = blobManager.summarize(undefined, materializedSummaryBlobs);
+	const summary = blobManager.summarize(undefined, materializedDetachedBlobSummaryContents);
 	let ids: string[] | undefined;
 	let redirectTable: [string, string][] | undefined;
-	let summaryBlobs: Map<string, ArrayBufferLike> | undefined;
-	let summaryBlobHandles: Set<string> | undefined;
+	let detachedBlobSummaryContents: Map<string, ArrayBufferLike> | undefined;
+	let detachedBlobSummaryHandles: Set<string> | undefined;
 	for (const [key, summaryObject] of Object.entries(summary.summary.tree)) {
 		if (summaryObject.type === SummaryType.Attachment) {
 			ids ??= [];
@@ -544,8 +544,8 @@ export const getSummaryContentsWithFormatValidation = (
 			redirectTable ??= [];
 			redirectTable.push([localId, localId]);
 			if (content?.type === SummaryType.Blob) {
-				summaryBlobs ??= new Map();
-				summaryBlobs.set(
+				detachedBlobSummaryContents ??= new Map();
+				detachedBlobSummaryContents.set(
 					localId,
 					typeof content.content === "string"
 						? stringToBuffer(content.content, "base64")
@@ -554,8 +554,8 @@ export const getSummaryContentsWithFormatValidation = (
 			} else {
 				assert(content?.type === SummaryType.Handle);
 				assert.strictEqual(content.handleType, SummaryType.Blob);
-				summaryBlobHandles ??= new Set();
-				summaryBlobHandles.add(localId);
+				detachedBlobSummaryHandles ??= new Set();
+				detachedBlobSummaryHandles.add(localId);
 			}
 		} else {
 			assert.strictEqual(key, redirectTableBlobName);
@@ -568,7 +568,12 @@ export const getSummaryContentsWithFormatValidation = (
 			];
 		}
 	}
-	return { ids, redirectTable, summaryBlobs, summaryBlobHandles };
+	return {
+		ids,
+		redirectTable,
+		detachedBlobSummaryContents,
+		detachedBlobSummaryHandles,
+	};
 };
 
 export const textToBlob = (text: string): ArrayBufferLike => {

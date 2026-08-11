@@ -2796,7 +2796,7 @@ export class ContainerRuntime
 		fullTree: boolean,
 		trackState: boolean,
 		telemetryContext?: ITelemetryContext,
-		materializedSummaryBlobs?: ReadonlyMap<string, ArrayBufferLike>,
+		materializedDetachedBlobSummaryContents?: ReadonlyMap<string, ArrayBufferLike>,
 	): void {
 		this.addMetadataToSummary(summaryTree);
 
@@ -2830,7 +2830,7 @@ export class ContainerRuntime
 
 		const blobManagerSummary = this.blobManager.summarize(
 			telemetryContext,
-			materializedSummaryBlobs,
+			materializedDetachedBlobSummaryContents,
 		);
 		// Some storage (like git) doesn't allow empty tree, so we can omit it.
 		// and the blob manager can handle the tree not existing when loading
@@ -4207,8 +4207,8 @@ export class ContainerRuntime
 		const pathPartsForChildren = [channelsTreeName];
 
 		this.loadIdCompressor();
-		const materializedSummaryBlobs = fullTree
-			? await this.blobManager.loadSummaryBlobs()
+		const materializedDetachedBlobSummaryContents = fullTree
+			? await this.blobManager.loadDetachedBlobSummaryContents()
 			: undefined;
 
 		this.addContainerStateToSummary(
@@ -4216,7 +4216,7 @@ export class ContainerRuntime
 			fullTree,
 			trackState,
 			telemetryContext,
-			materializedSummaryBlobs,
+			materializedDetachedBlobSummaryContents,
 		);
 		return {
 			...summarizeResult,

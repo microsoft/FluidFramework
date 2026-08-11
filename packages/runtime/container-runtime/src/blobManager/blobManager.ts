@@ -287,8 +287,11 @@ export class BlobManager {
 
 	private readonly createBlobPayloadPending: boolean;
 	private readonly inlineDetachedBlobsAsSummaryBlobs: boolean;
-	private readonly summaryBlobs: Map<string, ArrayBufferLike>;
-	private readonly summaryBlobHandles: Set<string>;
+	// Bytes owned by a runtime that created or rehydrated the blobs while detached.
+	// Attached loads leave this undefined and read the prior summary through storage.
+	private detachedBlobSummaryContents: Map<string, ArrayBufferLike> | undefined;
+	// Local IDs loaded from an attached snapshot whose prior summary content can be reused by handle.
+	private readonly detachedBlobSummaryHandles: Set<string>;
 
 	public constructor(props: {
 		readonly routeContext: IFluidHandleContext;
@@ -344,13 +347,13 @@ export class BlobManager {
 		});
 
 		this.redirectTable = toRedirectTable(blobManagerLoadInfo, this.mc.logger);
-		this.summaryBlobs = new Map(blobManagerLoadInfo.summaryBlobs);
-		this.summaryBlobHandles = new Set(blobManagerLoadInfo.summaryBlobHandles);
-		for (const [localId] of this.redirectTable) {
-			const blob = this.summaryBlobs.get(localId);
-			if (blob !== undefined) {
-				this.localBlobCache.set(localId, { state: "attached", blob });
-			}
+		this.detachedBlobSummaryContents =
+			blobManagerLoadInfo.detachedBlobSummaryContents === undefined
+				? undefined
+				: new Map(blobManagerLoadInfo.detachedBlobSummaryContents);
+		this.detachedBlobSummaryHandles = new Set(blobManagerLoadInfo.detachedBlobSummaryHandles);
+		for (const [localId, blob] of this.detachedBlobSummaryContents ?? []) {
+			this.localBlobCache.set(localId, { state: "attached", blob });
 		}
 
 		// We populate the localBlobCache with any pending blobs we are provided, which makes them available
@@ -400,7 +403,8 @@ export class BlobManager {
 		// Get the storage ID from the redirect table
 		const storageId = this.redirectTable.get(localId);
 		return storageId !== undefined &&
-			(this.summaryBlobs.has(localId) || this.summaryBlobHandles.has(localId))
+			(this.detachedBlobSummaryContents?.has(localId) === true ||
+				this.detachedBlobSummaryHandles.has(localId))
 			? undefined
 			: storageId;
 	}
@@ -456,7 +460,7 @@ export class BlobManager {
 				return this.storage
 					.readBlob(storageId)
 					.then((blob) => {
-						return this.summaryBlobHandles.has(localId)
+						return this.detachedBlobSummaryHandles.has(localId)
 							? stringToBuffer(bufferToString(blob, "utf8"), "base64")
 							: blob;
 					})
@@ -519,7 +523,7 @@ export class BlobManager {
 		if (this.inlineDetachedBlobsAsSummaryBlobs) {
 			this.localBlobCache.set(localId, { state: "attached", blob });
 			this.redirectTable.set(localId, localId);
-			this.summaryBlobs.set(localId, blob);
+			(this.detachedBlobSummaryContents ??= new Map()).set(localId, blob);
 			return this.getNonPayloadPendingBlobHandle(localId);
 		}
 		this.localBlobCache.set(localId, { state: "uploading", blob });
@@ -824,18 +828,25 @@ export class BlobManager {
 
 	public summarize(
 		telemetryContext?: ITelemetryContext,
-		materializedSummaryBlobs?: ReadonlyMap<string, ArrayBufferLike>,
+		materializedDetachedBlobSummaryContents?: ReadonlyMap<string, ArrayBufferLike>,
 	): ISummaryTreeWithStats {
-		const summaryBlobs =
-			materializedSummaryBlobs === undefined
-				? this.summaryBlobs
-				: new Map([...this.summaryBlobs, ...materializedSummaryBlobs]);
+		if (this.runtime.attachState === AttachState.Detached) {
+			assert(
+				this.detachedBlobSummaryHandles.size === 0,
+				"Detached BlobManager cannot summarize handles to a prior summary",
+			);
+		}
+		const detachedBlobSummaryContents =
+			materializedDetachedBlobSummaryContents === undefined
+				? this.detachedBlobSummaryContents
+				: new Map([
+						...(this.detachedBlobSummaryContents ?? []),
+						...materializedDetachedBlobSummaryContents,
+					]);
 		return summarizeBlobManagerState(
 			this.redirectTable,
-			this.inlineDetachedBlobsAsSummaryBlobs || summaryBlobs.size > 0
-				? summaryBlobs
-				: undefined,
-			this.summaryBlobHandles,
+			detachedBlobSummaryContents,
+			this.detachedBlobSummaryHandles,
 		);
 	}
 
@@ -843,16 +854,22 @@ export class BlobManager {
 	 * Materializes payloads that would otherwise be summarized by handle.
 	 * Used only when producing a full-tree summary.
 	 */
-	public async loadSummaryBlobs(): Promise<Map<string, ArrayBufferLike>> {
-		const materializedSummaryBlobs = new Map<string, ArrayBufferLike>();
+	public async loadDetachedBlobSummaryContents(): Promise<Map<string, ArrayBufferLike>> {
+		const materializedDetachedBlobSummaryContents = new Map(this.detachedBlobSummaryContents);
 		await Promise.all(
-			[...this.summaryBlobHandles].map(async (localId) => {
-				if (this.summaryBlobs.has(localId)) {
+			[...this.detachedBlobSummaryHandles].map(async (localId) => {
+				const localBlobRecord = this.localBlobCache.get(localId);
+				if (localBlobRecord !== undefined) {
+					assert(
+						localBlobRecord.state === "attached",
+						"Detached blob summary handle must reference an attached blob",
+					);
+					materializedDetachedBlobSummaryContents.set(localId, localBlobRecord.blob);
 					return;
 				}
 				const storageId = this.redirectTable.get(localId);
 				assert(storageId !== undefined, "Inlined attachment blob must have a storage ID");
-				materializedSummaryBlobs.set(
+				materializedDetachedBlobSummaryContents.set(
 					localId,
 					stringToBuffer(
 						bufferToString(await this.storage.readBlob(storageId), "utf8"),
@@ -861,7 +878,7 @@ export class BlobManager {
 				);
 			}),
 		);
-		return materializedSummaryBlobs;
+		return materializedDetachedBlobSummaryContents;
 	}
 
 	/**
@@ -877,8 +894,8 @@ export class BlobManager {
 			// IDs directly. We'll implicitly clean them up if all of their localId references get GC'd first.
 			if (
 				localId !== storageId ||
-				this.summaryBlobs.has(localId) ||
-				this.summaryBlobHandles.has(localId)
+				this.detachedBlobSummaryContents?.has(localId) === true ||
+				this.detachedBlobSummaryHandles.has(localId)
 			) {
 				// The outbound routes are empty because a blob node cannot reference other nodes. It can only be referenced
 				// by adding its handle to a referenced DDS.
@@ -927,8 +944,11 @@ export class BlobManager {
 			}
 			maybeUnusedStorageIds.add(storageId);
 			this.redirectTable.delete(localId);
-			this.summaryBlobs.delete(localId);
-			this.summaryBlobHandles.delete(localId);
+			this.detachedBlobSummaryContents?.delete(localId);
+			this.detachedBlobSummaryHandles.delete(localId);
+		}
+		if (this.detachedBlobSummaryContents?.size === 0) {
+			this.detachedBlobSummaryContents = undefined;
 		}
 
 		// Remove any storage IDs that still have local IDs referring to them (excluding the identity mapping).
@@ -990,7 +1010,9 @@ export class BlobManager {
 		// detachedStorageTable. We expect to have a many:1 mapping from local IDs to pseudo
 		// storage IDs (many in the case that the storage dedupes the blob).
 		const redirectTableEntries = [...this.redirectTable.entries()].filter(
-			([localId]) => !this.summaryBlobs.has(localId) && !this.summaryBlobHandles.has(localId),
+			([localId]) =>
+				this.detachedBlobSummaryContents?.has(localId) !== true &&
+				!this.detachedBlobSummaryHandles.has(localId),
 		);
 		assert(
 			new Set(redirectTableEntries.map(([_, storageId]) => storageId)).size ===
