@@ -8,8 +8,7 @@ Most packages keep their API-Extractor configuration in an `api-extractor` direc
 The shared configuration is layered so common validation rules and package-specific output concerns stay separate:
 
 - [`api-extractor-base.json`](../../../common/build/build-common/api-extractor-base.json) defines validation, message reporting, output locations, and other defaults, but leaves all outputs disabled.
-- [`api-extractor-base.esm.json`](../../../common/build/build-common/api-extractor-base.esm.json) selects `lib/index.d.ts` as the standard ESM entrypoint and enables TSDoc metadata.
-- [`api-extractor-report-base.esm.json`](../../../common/build/build-common/api-extractor-report-base.esm.json) configures API reports and bundles Fluid package dependencies so re-exported APIs appear in review files.
+- [`api-extractor-report-base.esm.json`](../../../common/build/build-common/api-extractor-report-base.esm.json) configures API reports and TSDoc metadata and bundles Fluid package dependencies so re-exported APIs appear in review files.
 - Package-level model configurations enable API model generation for the complete API surface used by the documentation toolchain.
 
 Packages without a `./legacy` export generally use a `api-extractor-report.json` config file for report generation, and `api-extractor-model.json` config file for model generation.
