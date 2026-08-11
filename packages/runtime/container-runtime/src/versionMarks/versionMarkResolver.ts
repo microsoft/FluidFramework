@@ -176,41 +176,52 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 		sequenceNumberLowerBound: number,
 	): Promise<ResolveResult> {
 		const startTime = Date.now();
-		let path: "session" | "history" | "noReader";
+		// Defaults cover the throw path (only the history scan can throw — e.g. an unpacker
+		// DataCorruptionError or the 0xd1c reader-contract assert): the Resolve event still fires via
+		// `finally`, with outcome "error".
+		let path: "session" | "history" | "noReader" = "history";
 		let clippedLeadingOpsSkipped = 0;
-		let result: ResolveResult;
-
-		// Fast path: batch sequenced live this session.
-		const sequenceNumber = this.sessionSequenceFor(batchId);
-		if (sequenceNumber === undefined) {
-			const reader = this.hooks.getHistoricalOpReader?.();
-			if (reader === undefined) {
-				// No reader: the batch may still sequence live, so report pending.
-				path = "noReader";
-				result = { kind: "pending" };
-			} else {
+		let outcome: ResolveResult["kind"] | "error" = "error";
+		let resolvedSequenceNumber: number | undefined;
+		try {
+			// Fast path: batch sequenced live this session.
+			const sequenceNumber = this.sessionSequenceFor(batchId);
+			if (sequenceNumber === undefined) {
+				const reader = this.hooks.getHistoricalOpReader?.();
+				if (reader === undefined) {
+					// No reader: the batch may still sequence live, so report pending.
+					path = "noReader";
+					outcome = "pending";
+					return { kind: "pending" };
+				}
 				// Otherwise scan history from the mark's reference point.
 				path = "history";
 				const scan = await this.resolveFromHistory(reader, batchId, sequenceNumberLowerBound);
-				result = scan.result;
 				clippedLeadingOpsSkipped = scan.clippedLeadingOpsSkipped;
+				outcome = scan.result.kind;
+				if (scan.result.kind === "resolved") {
+					resolvedSequenceNumber = scan.result.sequenceNumber;
+				}
+				return scan.result;
 			}
-		} else {
 			path = "session";
-			result = { kind: "resolved", sequenceNumber };
+			outcome = "resolved";
+			resolvedSequenceNumber = sequenceNumber;
+			return { kind: "resolved", sequenceNumber };
+		} finally {
+			// See DEV.md "Telemetry". `clippedLeadingOpsSkipped > 0 && outcome !== "resolved"` is the
+			// near-miss signal for a clipped-skip the "target is in-window" invariant should never allow.
+			this.hooks.logger.sendTelemetryEvent({
+				eventName: "Resolve",
+				outcome,
+				path,
+				clippedLeadingOpsSkipped,
+				durationMs: Date.now() - startTime,
+				...(resolvedSequenceNumber === undefined
+					? {}
+					: { sequenceNumber: resolvedSequenceNumber }),
+			});
 		}
-
-		// See DEV.md "Telemetry". `clippedLeadingOpsSkipped > 0 && outcome !== "resolved"` is the near-miss
-		// signal for a clipped-skip that the static "target is in-window" invariant should never allow.
-		this.hooks.logger.sendTelemetryEvent({
-			eventName: "Resolve",
-			outcome: result.kind,
-			path,
-			clippedLeadingOpsSkipped,
-			durationMs: Date.now() - startTime,
-			...(result.kind === "resolved" ? { sequenceNumber: result.sequenceNumber } : {}),
-		});
-		return result;
 	}
 
 	/**
@@ -355,6 +366,12 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 		if (existingSequenceNumber === sequenceNumber) {
 			return;
 		}
+		// The protocol guarantees a `batchId` maps to one sequence number; a conflicting remap would also
+		// break the insertion-order invariant MSN eviction relies on, so fail loudly instead of overwriting.
+		assert(
+			existingSequenceNumber === undefined,
+			0xd34 /* version mark batchId remapped to a different sequence number */,
+		);
 
 		this.sequenceNumberByBatchId.set(batchId, sequenceNumber);
 		this.evictBelowMinimumSequenceNumber();

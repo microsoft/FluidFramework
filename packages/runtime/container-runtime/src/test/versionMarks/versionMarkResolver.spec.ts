@@ -930,6 +930,17 @@ describe("VersionMarkResolver", () => {
 			assert.deepEqual(events, [["client_[1]", 5]]);
 		});
 
+		it("asserts on a conflicting remap (same batchId, different sequence number)", () => {
+			const resolver = makeResolver();
+			resolver.processInboundBatch("client_[1]", 5);
+			// The protocol forbids a batchId remapping to a different sequence number; the resolver fails
+			// loudly rather than silently overwrite (which would also break the MSN-eviction ordering).
+			assert.throws(
+				() => resolver.processInboundBatch("client_[1]", 6),
+				validateAssertionError(/remapped to a different sequence number/),
+			);
+		});
+
 		it("makes a processed batch resolvable via the live fast path", async () => {
 			const resolver = makeResolver();
 			resolver.processInboundBatch("client_[7]", 21);
@@ -1100,6 +1111,20 @@ describe("VersionMarkResolver", () => {
 					sequenceNumber: 7,
 				},
 			]);
+		});
+
+		it("emits outcome 'error' (via finally) when the history scan throws", async () => {
+			const logger = new MockLogger();
+			const reader: IHistoricalOpReader = {
+				async fetchMessages(): Promise<IStream<ISequencedDocumentMessage[]>> {
+					throw new Error("delta storage boom");
+				},
+			};
+			const resolver = makeResolver({ reader, logger });
+			// The throw propagates (resolve does not swallow it)...
+			await assert.rejects(resolver.resolve(generateBatchId("missing", 1), 5), /boom/);
+			// ...but the Resolve event still fires with outcome "error".
+			logger.assertMatch([{ eventName: "Resolve", outcome: "error", path: "history" }]);
 		});
 	});
 });

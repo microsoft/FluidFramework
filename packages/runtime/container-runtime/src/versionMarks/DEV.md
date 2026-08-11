@@ -145,7 +145,7 @@ The runtime does not store or mutate app marks. The listener only lets the app r
 5. Read every stream chunk until the target is found or the stream returns `done`.
 6. Return the matched completed batch's last sequence number (with the count of leading ops skipped), or classify the miss.
 7. Abort the controller in `finally`, both on success and on exhaustion/error, so the underlying fetch can stop any remaining work.
-8. `resolve()` emits one `Resolve` telemetry event (`outcome`, `path`, `clippedLeadingOpsSkipped`, `durationMs`) before returning — see [Telemetry](#telemetry).
+8. `resolve()` emits one `Resolve` telemetry event (`outcome`, `path`, `clippedLeadingOpsSkipped`, `durationMs`) before returning — on every path, including a thrown scan (`outcome: "error"`, emitted via `finally`). See [Telemetry](#telemetry).
 
 For each raw op, the scan records the first returned sequence number before filtering because that value is also the trim-availability signal. It then:
 
@@ -202,7 +202,7 @@ Version-mark telemetry is greenfield; this section is the **contract** every eve
 
 | Event | When | Dimensions | Answers |
 | --- | --- | --- | --- |
-| `Resolve` **(implemented)** | end of `resolve()` | `outcome` (`resolved`\|`pending`\|`unresolvable`), `path` (`session`\|`history`\|`noReader`), `clippedLeadingOpsSkipped` (number), `durationMs`, `sequenceNumber` (when resolved) | success rate; how often history is needed; latency; the **near-miss** signal; `unresolvable` = data-loss KPI |
+| `Resolve` **(implemented)** | end of `resolve()` (via `finally`, so a thrown scan is still reported) | `outcome` (`resolved`\|`pending`\|`unresolvable`\|`error`), `path` (`session`\|`history`\|`noReader`), `clippedLeadingOpsSkipped` (number), `durationMs`, `sequenceNumber` (when resolved) | success rate; how often history is needed; latency; the **near-miss** signal; `unresolvable` = data-loss KPI; `error` = the scan threw (e.g. an uncovered chunk-mismatch or driver failure) |
 | `Capture` *(planned — AB#80270)* | `sealAndCaptureVersionMark()` | `kind` (`pending`\|`resolved`) | capture volume; pending ratio |
 
 `clippedLeadingOpsSkipped` counts leading orphan-batch-end and clipped-chunk ops dropped by the scan-anchor guards. The static invariant (the target batch is pending at capture, so it sequences at/after `from` and is never clipped) means a *correct* skip never drops the target. The one thing the invariant cannot self-verify in the field is a future violation of it; the **near-miss filter `clippedLeadingOpsSkipped > 0 && outcome !== "resolved"`** surfaces exactly that (kept informational because `pending` can be legitimate).
@@ -275,7 +275,7 @@ MSN speaks only about active clients in the current collaboration window. A disc
 1. Delete each entry whose `sequenceNumber < minimumSequenceNumber`.
 2. Stop at the first entry whose `sequenceNumber >= minimumSequenceNumber`; all later entries are also expected to be in the collaboration window.
 
-This makes cleanup proportional to the number of entries actually evicted (amortized O(evicted)). The just-recorded inbound batch is at or above the current MSN, so it is retained. The implementation also relies on the invariant that a stable `batchId` never remaps to a different sequence number; changing an existing key without moving its insertion position would otherwise break the ordered early-exit assumption.
+This makes cleanup proportional to the number of entries actually evicted (amortized O(evicted)). The just-recorded inbound batch is at or above the current MSN, so it is retained. The implementation also relies on the invariant that a stable `batchId` never remaps to a different sequence number (the protocol guarantees this); `processInboundBatch` **asserts** it rather than silently overwriting, because changing an existing key without moving its insertion position would break the ordered early-exit assumption.
 
 ### Tracking gate (`isTracking`)
 
@@ -284,7 +284,7 @@ Per-inbound-batch work (deriving the batch identity and populating the map/notif
 ## Current test map
 
 - `src/test/versionMarks/inboundBatch.spec.ts` covers full, empty, derived-id, explicit-id, and piecemeal batch updates.
-- `src/test/versionMarks/versionMarkResolver.spec.ts` covers capture ordering/results, the tracking gate, live-map precedence, no-reader behavior, fresh and resubmitted batches, multi-op batches across stream reads, chunk reassembly, clipped leading ordinary batches, clipped leading chunk streams (every intermediate-chunk anchor, in-window streams, interleaved per-client streams), miss classifications, range arguments, reader-contract assertion, abort behavior, listener isolation/unsubscribe/deduplication, MSN eviction, and the `Resolve` telemetry event (outcome/path/clipped-skip count across the session, history, near-miss, and no-reader paths).
+- `src/test/versionMarks/versionMarkResolver.spec.ts` covers capture ordering/results, the tracking gate, live-map precedence, no-reader behavior, fresh and resubmitted batches, multi-op batches across stream reads, chunk reassembly, clipped leading ordinary batches, clipped leading chunk streams (every intermediate-chunk anchor, in-window streams, interleaved per-client streams), miss classifications, range arguments, reader-contract assertion, abort behavior, listener isolation/unsubscribe/deduplication, the conflicting-remap assertion, MSN eviction, and the `Resolve` telemetry event (outcome/path/clipped-skip count across the session, history, near-miss, and no-reader paths).
 - `src/test/opLifecycle/opSerialization.spec.ts` covers `tryGetDeserializedRuntimeOpCopy` (runtime-op copy with deserialized contents; non-runtime and clientless ops return undefined without deserializing).
 - `src/test/pendingStateManager.spec.ts` covers ignoring unapplied stashed messages and reading an explicit reconnect-stable id from the start of the most recently flushed multi-op batch.
 - `src/test/containerRuntime.spec.ts` covers the complete context `fetchOps` -> historical unpack -> resolver path (including system/server-op filtering and abort-after-match), plus the ordering guarantee that failed inbound validation does not notify listeners.
@@ -312,8 +312,7 @@ The existing real-service ODSP suites under `packages/test/test-end-to-end-tests
 1. **Live/history resolution races:** A batch can be recorded by `processInboundBatch` while a history scan for the same `batchId` is in progress. Recheck the live map before returning a miss so `resolve()` does not return stale `pending` or `unresolvable` after the batch has resolved in-session. Also decide whether concurrent calls for the same locator should share one scan rather than issuing duplicate delta-storage reads.
 2. **Finite and cancelable history reads:** The current scan requests `[lowerBound + 1, undefined)`, has no caller-supplied cancellation signal, and can inherit long driver retry behavior. Consider snapshotting an upper bound from the observed tip, accepting an `AbortSignal`, and canceling outstanding scans when the runtime is disposed. Cover cancellation before fetch, during `fetchMessages`, during `stream.read()`, and after a match races cancellation.
 3. **Stored-locator validation:** `batchId` and `sequenceNumberLowerBound` may come from app-owned persisted data. Define whether `resolve()` trusts that data or rejects an empty batch ID, negative/fractional/non-safe sequence numbers, and a lower bound whose `+ 1` overflows safe integer precision. Invalid persisted coordinates must not silently scan the wrong range or be classified as a legitimate mark state.
-5. **Conflicting batch identity:** `processInboundBatch` suppresses an identical repeated `(batchId, sequenceNumber)` pair but currently overwrites the map if the same `batchId` appears at a different sequence number. The protocol says that remapping is impossible, and map insertion order is used by MSN eviction. Assert or fail explicitly on a conflicting remap and add a regression test so corruption cannot invalidate the eviction ordering assumption.
-6. **Historical stream contract:** Add direct coverage for duplicated, decreasing, gapped, and malformed batch/chunk sequences, plus a target found after a trim gap. Define which violations are rejected by the driver, which are rejected by the resolver, and which conservatively return `pending`; never infer `unresolvable` from a stream that violated the requested range contract.
+4. **Historical stream contract:** Add direct coverage for duplicated, decreasing, gapped, and malformed batch/chunk sequences, plus a target found after a trim gap. Define which violations are rejected by the driver, which are rejected by the resolver, and which conservatively return `pending`; never infer `unresolvable` from a stream that violated the requested range contract.
 
 ### API and design follow-ups
 
