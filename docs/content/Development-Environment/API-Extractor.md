@@ -8,7 +8,8 @@ See the [`@fluidframework/build-common` README](../../../common/build/build-comm
 
 ## Working with API-Extractor
 
-The package-level `build:api-reports` task regenerates committed `*.api.md` review files after `build:esnext` produces declarations.
+The package-level `build:api-reports` task regenerates committed `*.api.md` review files.
+Required declaration files and generated release-level entrypoints must exist before report generation runs.
 CI runs the corresponding `ci:build:api-reports` task and fails when committed reports are out of date.
 Packages with "current" and "legacy" surfaces run child tasks for each generated entrypoint.
 
