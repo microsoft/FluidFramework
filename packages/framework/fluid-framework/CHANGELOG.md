@@ -1,5 +1,650 @@
 # fluid-framework
 
+## 2.115.0
+
+### Minor Changes
+
+- Promote FormattedText APIs to alpha ([#27843](https://github.com/microsoft/FluidFramework/pull/27843)) [71895da92a](https://github.com/microsoft/FluidFramework/commit/71895da92ad598a366694ae6cd2cd8c296533804)
+
+  The [`FormattedText`](https://fluidframework.com/docs/api/fluid-framework/formattedtext-namespace) namespace is now available from the `fluid-framework/alpha` entrypoint.
+  It provides a generic, collaborative rich-text domain built on SharedTree, parameterized by the formatting you want to associate with each unit of text and by any extra "atom" (embedded object) types you want to allow alongside plain characters.
+
+  Use `FormattedText.createSchema` to generate a text schema for your chosen formatting, then treat the resulting node like a formatted string.
+
+  ```typescript
+  import { SchemaFactory } from "fluid-framework";
+  import { SchemaFactoryBeta } from "fluid-framework/beta";
+  import { FormattedText } from "fluid-framework/alpha";
+
+  // Note that a beta schema factory is currently required for use with `FormattedText`
+  const schemaFactory = new SchemaFactoryBeta("com.example.doc");
+
+  // Describe the formatting associated with each character.
+  class CharacterFormat extends schemaFactory.object("CharacterFormat", {
+    bold: SchemaFactory.boolean,
+    italic: SchemaFactory.boolean,
+  }) {}
+
+  // Generate the formatted-text schema. The last argument is the format applied
+  // to text inserted through the non-formatted APIs (for example `fromString`).
+  class RichText extends FormattedText.createSchema(
+    schemaFactory,
+    CharacterFormat,
+    [], // No extra embedded atom types.
+    { bold: false, italic: false },
+  ) {}
+  ```
+
+  Once you have a schema, you can construct and edit formatted text:
+
+  ```typescript
+  // Create some text using the default format.
+  const text = RichText.fromString("hello world");
+
+  // Append more text with an explicit format.
+  text.insertAt(text.characterCount(), "!", { bold: true, italic: false });
+
+  // Bold everything from index 0 up to (but not including) index 5.
+  text.formatRange(0, 5, { bold: true });
+
+  // Read back the content with its associated formatting.
+  for (const atom of text.charactersWithFormatting()) {
+    console.log(atom.content, atom.format.bold, atom.format.italic);
+  }
+  ```
+
+  `FormattedText` is currently surfaced as an alpha API and is subject to change.
+
+- Array node deltas now cover the complete array ([#27809](https://github.com/microsoft/FluidFramework/pull/27809)) [6af2aba044](https://github.com/microsoft/FluidFramework/commit/6af2aba044e050b20386ae9e67111693117da5bd)
+
+  `ArrayNodeDeltaOp` and `ArrayNodeTreeChangedDeltaOp` sequences now include a final retain operation for an unchanged trailing portion of the array. Consumers can process the operations as a complete delta without separately retaining an omitted suffix.
+
+  Text deltas inherit the same complete-coverage behavior.
+
+  This should not break any existing users as this behavior was allowed under the old specification, but may allow some users to simplify their processing of the delta.
+
+- Settled change notification ([#27814](https://github.com/microsoft/FluidFramework/pull/27814)) [73360b3d70](https://github.com/microsoft/FluidFramework/commit/73360b3d7036a5ce8be1f88a1ada3cfbe680541b)
+
+  `LocalChangeMetadata` now exposes an `events: Listenable<LocalCommitEvents>` property that fires a `"settled"` event once a commit has been ordered by the sequencing service.
+
+  Once a commit is sequenced, the following guarantees hold:
+  1. The changes carried by the commit have been persisted and other peers are able to see them.
+  2. There can be no more concurrent changes sequenced before this commit, which means this commit has reached its settled form.
+
+  The `"settled"` event provides details about the outcome of applying this settled form.
+  This can be used by an application to determine whether any constraints associated with the commits were violated.
+
+  This event can be used by applications to inform the end user that their changes have been saved (`CommitOutcome.FullyApplied`) or rejected (`CommitOutcome.FullyDropped` and `CommitOutcome.NewContentOnly`).
+  It can also be used to queue up a new attempt at making the rejected changes. Note however that new edits must be made outside of the event callback.
+
+  Example:
+
+  ```typescript
+  // Use `asAlpha` API to access the settled event API
+  const view = asAlpha(tree.viewWith(config));
+
+  // Function to clear all contents of the tree, with a precondition that no changes have occurred.
+  const clearAllContents = () => {
+    view.runTransaction(
+      () => {
+        // Remove all contents at the root
+        view.root.removeRange();
+      },
+      { preconditions: [{ type: "noChange" }] },
+    );
+  };
+
+  // Register the logic for notifying the user of the outcome and allow them to retry
+  view.events.on("changed", (metadata) => {
+    if (metadata.isLocal) {
+      metadata.events.on("settled", (outcome) => {
+        if (outcome === CommitOutcome.FullyApplied) {
+          alert("Clear operation succeeded.");
+        } else {
+          const shouldTryAgain = confirm(
+            "The contents have changed. Do you still want to clear everything?",
+          );
+          if (shouldTryAgain) {
+            // It is invalid to make edits during the event callback, so we schedule the retry to occur asynchronously.
+            setTimeout(clearAllContents);
+          } else {
+            alert("Clear operation aborted.");
+          }
+        }
+      });
+    }
+  });
+
+  // First attempt to clear all contents.
+  // This will synchronously trigger the changed "event" and register the listener for the settled event.
+  clearAllContents();
+  ```
+
+- SharedTree now emits telemetry when it heals an unresolvable identifier on decode ([#27756](https://github.com/microsoft/FluidFramework/pull/27756)) [e5ada10ff4](https://github.com/microsoft/FluidFramework/commit/e5ada10ff41a959abe599bb407300e42e1008be3)
+
+  When [`SharedTreeOptionsBeta.healUnresolvableIdentifiersOnDecode`](https://fluidframework.com/docs/api/tree/sharedtreeoptionsbeta-interface#healunresolvableidentifiersondecode-propertysignature) is enabled and an unresolvable identifier is healed while loading a summary, SharedTree now records a `HealUnresolvableIdentifierOnDecode` telemetry event (at `LogLevel.essential`). This lets applications relying on the healing workaround detect which documents actually required healing.
+
+  This only affects applications that have opted into `healUnresolvableIdentifiersOnDecode`; the telemetry is emitted through the same logger the DDS already uses, and no behavior other than the added telemetry has changed.
+
+- Simplify creating attached Fluid containers with ServiceClient ([#27789](https://github.com/microsoft/FluidFramework/pull/27789)) [1671447b57](https://github.com/microsoft/FluidFramework/commit/1671447b57852875ec90a9d1c16b3817ce25e004)
+
+  Added `ServiceClient.createAttachedContainer` which creates and attaches a Fluid container in one operation.
+  It is a convenient shorthand for calling `createContainer` followed by `attach` when detached-container access is not needed.
+
+  ```typescript
+  const container = await client.createAttachedContainer(dataStoreKind);
+  ```
+
+- Array insertion anchors now track their index from change deltas ([#27697](https://github.com/microsoft/FluidFramework/pull/27697)) [99d71d7054](https://github.com/microsoft/FluidFramework/commit/99d71d7054dd3ae5b2451c902bb7f7daf925c9f3)
+
+  The `@alpha` [`ArrayPlaceAnchor`](https://fluidframework.com/docs/api/tree/arrayplaceanchor-interface) returned by [`createArrayInsertionAnchor`](https://fluidframework.com/docs/api/tree/#createarrayinsertionanchor-function) now maintains its `index` incrementally from the array node's change delta instead of re-deriving it from the child that happened to sit at the anchor point when it was created. Inserts and removes before the anchor shift it, while edits after it leave it in place.
+
+  As a result, removing the child originally at the anchor's index no longer sends the anchor to the end of the array: it now stays in the gap between the surviving neighbors, which is the behavior an insertion point (such as a text cursor) needs.
+
+  Because the anchor now holds a subscription to the array node to receive those deltas, `ArrayPlaceAnchor` gained a `dispose()` method. Call it when the anchor is no longer needed to release the subscription. Interacting with an anchor after it has been disposed is invalid and will throw.
+
+  ```typescript
+  const anchor = createArrayInsertionAnchor(array, 1);
+  // ... use anchor.index as content is inserted and removed around it ...
+  anchor.dispose(); // release the subscription when done
+  ```
+
+- Rename the TextAsTree domain to PlainText ([#27853](https://github.com/microsoft/FluidFramework/pull/27853)) [cd26d781f4](https://github.com/microsoft/FluidFramework/commit/cd26d781f436da469abb79c9d63e40d3c3b8c5dc)
+
+  The experimental (`@alpha`) text domain namespace exported from `@fluidframework/tree` has been renamed: `TextAsTree` is now `PlainText`.
+  This is a breaking rename.
+
+  Consumers should update their imports and usages accordingly. For example:
+
+  ```typescript
+  // Before
+  import { TextAsTree } from "@fluidframework/tree/alpha";
+  const node = TextAsTree.Tree.fromString("hello");
+
+  // After
+  import { PlainText } from "@fluidframework/tree/alpha";
+  const node = PlainText.Tree.fromString("hello");
+  ```
+
+  The persisted schema identifiers for this domain are unchanged, so existing documents remain compatible.
+
+- Add getOrInsert and getOrInsertComputed methods to TreeMapNodeAlpha ([#27787](https://github.com/microsoft/FluidFramework/pull/27787)) [e84cb5f754](https://github.com/microsoft/FluidFramework/commit/e84cb5f754d4e916b02896c128c11b6526c8cef3)
+
+  [`TreeMapNodeAlpha`](https://fluidframework.com/docs/api/fluid-framework/treemapnodealpha-interface) now has `getOrInsert` and `getOrInsertComputed` methods, further aligning it with JavaScript's built-in Map API.
+  Both return the value at a key, first inserting a value if the map has no entry for that key: `getOrInsert` takes the fallback value directly, while `getOrInsertComputed` takes a callback which is only invoked (with the key) when an insert is needed, which is preferable when producing the fallback value is expensive.
+
+  When the fallback value is inserted and is not already a [`TreeNode`](https://fluidframework.com/docs/api/fluid-framework/treenode-class), the inserted and returned value is the result of implicitly constructing a node from it.
+
+  These methods are available on `TreeMapNodeAlpha`, which can be obtained from an existing `TreeMapNode` via `asAlpha`, or by declaring the schema with `SchemaFactoryAlpha`'s `mapAlpha`.
+
+  ```typescript
+  const schemaFactory = new SchemaFactoryAlpha("example");
+  class Inventory extends schemaFactory.mapAlpha(
+    "Inventory",
+    schemaFactory.number,
+  ) {}
+
+  const inventory = new Inventory(
+    new Map([
+      ["apples", 5],
+      ["pears", 3],
+    ]),
+  );
+
+  inventory.getOrInsert("apples", 10); // 5 (existing value returned, not overwritten)
+  inventory.getOrInsert("oranges", 10); // 10 (inserted and returned)
+
+  inventory.getOrInsertComputed("pears", () => computeRestockAmount()); // 3 (existing value returned, callback not invoked)
+  inventory.getOrInsertComputed("plums", () => computeRestockAmount()); // inserts and returns the computed value
+
+  inventory.size; // 4
+  ```
+
+## 2.114.0
+
+### Minor Changes
+
+- Add FluidReadonlyArray type independent of TypeScript lib ([#27747](https://github.com/microsoft/FluidFramework/pull/27747)) [040d35bc29](https://github.com/microsoft/FluidFramework/commit/040d35bc29901d58e9e778f5f2e75ba581a80dc0)
+
+  `FluidReadonlyArray<T>` provides an equivalent of the built-in `ReadonlyArray` type that is independent of TypeScript [`lib`](https://www.typescriptlang.org/tsconfig/#lib), following the same pattern as `FluidReadonlyMap` and `FluidMap`.
+  The interface includes stable methods through ES2023 (`at()`, `findLast()`, `findLastIndex()`) but excludes newer copy-on-write methods (`toReversed()`, `toSorted()`, `toSpliced()`, `with()`) that Fluid Framework implementations don't yet support.
+  This ensures these types remain safe to implement without `lib` changes breaking them.
+
+- Add clear method to TreeMapNodeAlpha ([#27765](https://github.com/microsoft/FluidFramework/pull/27765)) [30c889b99c](https://github.com/microsoft/FluidFramework/commit/30c889b99caca3d6ad1ab276761092d94118eab1)
+
+  [`TreeMapNodeAlpha`](https://fluidframework.com/docs/api/fluid-framework/treemapnodealpha-interface) now has a `clear` method, further aligning it with JavaScript's built-in Map API. It removes all elements from the map.
+
+  The merge semantics of `clear` are loosely specified: either of the following may occur:
+  - `clear` may remove all elements that were in the map when the edit was authored, even if some of those elements have since been moved elsewhere in the tree (in which case they are removed from their new location).
+  - `clear` may remove all elements that are in the map when the edit is sequenced, even if some of those elements were not yet in the map when the edit was authored.
+
+  This method is available on `TreeMapNodeAlpha`, which can be obtained from an existing `TreeMapNode` via `asAlpha`, or by declaring the schema with `SchemaFactoryAlpha`'s `mapAlpha`.
+
+  ```typescript
+  const schemaFactory = new SchemaFactoryAlpha("example");
+  class Inventory extends schemaFactory.mapAlpha(
+    "Inventory",
+    schemaFactory.number,
+  ) {}
+
+  const inventory = new Inventory(
+    new Map([
+      ["apples", 5],
+      ["pears", 3],
+    ]),
+  );
+
+  inventory.size; // 2
+  inventory.clear();
+  inventory.size; // 0
+  ```
+
+- Promote Fluid container type interfaces to public ([#27746](https://github.com/microsoft/FluidFramework/pull/27746)) [33e014ac63](https://github.com/microsoft/FluidFramework/commit/33e014ac636d43a5f90b1ce1f64b95e60aaf2bca)
+
+  `FluidIterable`, `FluidIterableIterator`, `FluidReadonlyMap`, `FluidMap`, and `FluidReadonlyArray` are promoted from `@beta` to `@public`.
+  These sealed interfaces provide equivalents of the built-in `Iterable`, `IterableIterator`, `ReadonlyMap`, `Map`, and `ReadonlyArray` types that are independent of TypeScript [`lib`](https://www.typescriptlang.org/tsconfig/#lib).
+  They can now be used in public API surfaces.
+
+- Add new @alpha ServiceClient API for creating and loading Fluid containers ([#27693](https://github.com/microsoft/FluidFramework/pull/27693)) [ee47192d4a](https://github.com/microsoft/FluidFramework/commit/ee47192d4ae91bc28f9154c4d1ead2acad762f3c)
+
+  This introduces an experimental (`@alpha`), service-agnostic API for working with Fluid containers whose root is an arbitrary data store, along with an in-memory implementation for testing.
+
+  The new surface is made up of:
+  - `ServiceClient` (`@fluidframework/driver-definitions`): the entry point for creating and loading containers. Along with it come the supporting container types (`FluidContainer`, `FluidContainerWithService`, `FluidContainerAttached`), the data store model (`DataStoreKind`, `DataStoreKey`, `DataStoreRegistry`, `DataStoreCreator`), and the generic registry primitives (`Registry`, `RegistryKey`, `lookupInRegistry`, `createBasicRegistryKey`).
+  - `defineDataStore` and `sharedObjectRegistryFromIterable` (`@fluidframework/shared-object-base`): build a `DataStoreKind` from a root shared object and a registry of shared object kinds.
+  - `defineTreeDataStore` and `instantiateTreeFirstTime` (`@fluidframework/tree`): a SharedTree-specific convenience wrapper that produces a `DataStoreKind` backed by a `TreeView`.
+  - `startEphemeralService` (`@fluidframework/local-driver`): starts an in-memory `EphemeralService` for tests. The service owns the lifetime of the in-memory documents and resources, and produces `ServiceClient`s connected to it (via `EphemeralService.newClient` or `EphemeralService.defaultClient`). The helpers `cleanupEphemeralService` and `getDefaultEphemeralService` manage an optional default service instance.
+
+  Apart from the `@fluidframework/local-driver` helpers (which come from `@fluidframework/local-driver/alpha`), these APIs are also re-exported from `fluid-framework`. None reference any `@legacy` types.
+
+  Example:
+
+  ```typescript
+  import { startEphemeralService } from "@fluidframework/local-driver/alpha";
+  import {
+    ServiceClient,
+    defineTreeDataStore,
+    TreeViewConfiguration,
+    SchemaFactory,
+  } from "fluid-framework/alpha";
+  import { strict as assert } from "node:assert";
+
+  // Start an ephemeral in-memory service and get a ServiceClient connected to it.
+  const service = startEphemeralService();
+  const client: ServiceClient = service.defaultClient;
+  // Define a DataStoreKind which uses a SharedTree.
+  // In this case the schema is for a single number with an initializer that starts the it at 1.
+  // This schema is captures in the type allowing for strongly typed access to the data in the tree,
+  // where the type matches the schema based runtime enforcement of the schema.
+  const numberStore = defineTreeDataStore({
+    type: "my-app-root",
+    config: new TreeViewConfiguration({ schema: SchemaFactory.number }),
+    initializer: () => 1,
+  });
+
+  // Create a container in the service with the above DataStoreKind.
+  // Ideally this creation would use a service independent API, and only the attach call would be service dependent,
+  // but that is not supported yet.
+  const detachedContainer1 = await client.createContainer(numberStore);
+  const container1 = await detachedContainer1.attach();
+
+  // We now have easy and type safe access to the data in the tree, which will be synced over the service.
+  assert.equal(container1.data.root, 1);
+
+  // A second client can load the same container from the service, and will see the same data.
+  const container2 = await client.loadContainer(container1.id, numberStore);
+  assert.equal(container2.data.root, 1);
+
+  // Both clients can modify the data, and the changes will be synced over the service.
+  container2.data.root = 2;
+  // Since we are using an ephemeral service, we can await the synchronization using service.synchronize.
+  await service.synchronize();
+
+  // And now the changes are visible for all clients.
+  assert.equal(container1.data.root, 2);
+  assert.equal(container2.data.root, 2);
+  ```
+
+  Note that this example does a couple of things which are difficult to do with the other API surfaces:
+  1. It creates a container, then loads a second copy of it, allowing for collaboration. There is currently no non-legacy API surface which allows this without spawning a server process. This is also cleaner than the exacting legacy API options, and can replace the test specific APIs for this as well.
+  2. It creates a container which has a SharedTree at the root, and nothing else. This avoids depending on legacy DDS implementations, which is great for long-term document support and bundle size. This is currently impossible using `fluid-static`, which forces a special root data store. It is also impossible if using `aqueduct`, which forces a root directory in every data store. It can be done using the low level legacy APIs directly, but this new API for it is much simpler.
+  3. There is a common interface all services implement (`ServiceClient`), making the container creation part of the code work for any service implementation.
+
+## 2.113.0
+
+### Minor Changes
+
+- Enable select staged schema upgrades at runtime via view configuration ([#27542](https://github.com/microsoft/FluidFramework/pull/27542)) [44f40e8411](https://github.com/microsoft/FluidFramework/commit/44f40e8411d53bc22939a8f53343863f420bb0de)
+
+  SharedTree now supports enabling selected staged schema upgrades when initializing or upgrading a document's stored schema.
+  This lets applications deploy code that understands a schema change before enabling that change in documents.
+  It separates code rollout from feature rollout.
+
+  #### API
+
+  Pass `stagedUpgradePolicy` in the configuration object to
+  [`ITreeAlpha.viewWith`](https://fluidframework.com/docs/api/tree/viewabletree-interface#viewwith-methodsignature)
+  to select which schema upgrades to enable at runtime.
+
+  Use `StagedSchemaUpgradePolicy.enabledStagedUpgrades(...)` with `SchemaUpgrade` objects from
+  [`SchemaFactoryBeta.staged`](https://fluidframework.com/docs/api/tree/schemastaticsbeta-interface#staged-propertysignature)
+  or [`SchemaFactoryAlpha.stagedOptional`](https://fluidframework.com/docs/api/tree/schemafactoryalpha-class#stagedoptional-property):
+
+  The following example defines a staged type, extracts its `SchemaUpgrade` token, and passes it to the view configuration so the staged type is enabled when the schema is upgraded:
+
+  ```typescript
+  const sf = new SchemaFactoryBeta("my-app");
+
+  class ChecklistItem extends sf.object("ChecklistItem", { text: sf.string }) {}
+
+  // `staged` wraps the type so it can be enabled at runtime.
+  const stagedChecklist = SchemaFactoryBeta.staged(ChecklistItem);
+  // The SchemaUpgrade token identifies this staged type.
+  const checklistUpgrade = stagedChecklist.metadata.stagedSchemaUpgrade;
+
+  class AppSchema extends sf.object("AppSchema", {
+    items: sf.array([sf.string, stagedChecklist]),
+  }) {}
+
+  const view = tree.viewWith(
+    new TreeViewConfigurationAlpha({
+      schema: AppSchema,
+      stagedUpgradePolicy:
+        StagedSchemaUpgradePolicy.enabledStagedUpgrades(checklistUpgrade),
+    }),
+  );
+  ```
+
+  When `stagedUpgradePolicy` is omitted or `undefined`, the default is
+  `StagedSchemaUpgradePolicy.restrictive`.
+  This excludes all staged schema upgrades, producing the most conservative stored schema.
+
+  Advanced callers can provide a custom `StagedSchemaUpgradePolicy` object:
+
+  ```typescript
+  const enabledFeatures = new Set<SchemaUpgrade>([checklistUpgrade]);
+
+  const view = tree.viewWith(
+    new TreeViewConfigurationAlpha({
+      schema: AppSchema,
+      stagedUpgradePolicy: {
+        includeStaged: (upgrade) => enabledFeatures.has(upgrade),
+        includeStagedOptional: (upgrade) => enabledFeatures.has(upgrade),
+      },
+    }),
+  );
+  ```
+
+  This is useful for fine-grained rollout control or integration tests.
+
+  #### Pre-built Policies
+
+  The `StagedSchemaUpgradePolicy` namespace provides convenient pre-built policies:
+  - **`restrictive`** (default): excludes all staged upgrades.
+  - **`permissive`**: includes all staged upgrades. Useful in tests.
+  - **`enabledStagedUpgrades(...)`**: includes only the specified upgrades.
+
+  #### Production
+
+  Applications can use feature flags to control when staged schema upgrades are enabled.
+  Previously, enabling a staged schema required a code change that removed the staged wrapper.
+  With this API, the staged wrapper stays in code while `stagedUpgradePolicy` decides at runtime which documents enable it.
+
+  For example, an application adding checklist items can deploy clients that understand the new schema first,
+  then enable the stored-schema upgrade only where a feature flag is active:
+
+  ```typescript
+  const sf = new SchemaFactoryBeta("example-app");
+
+  class ChecklistItem extends sf.object("ChecklistItem", {
+    text: sf.string,
+  }) {}
+
+  const stagedChecklistItem = SchemaFactoryBeta.staged(ChecklistItem);
+  const checklistItemSchemaUpgrade =
+    stagedChecklistItem.metadata.stagedSchemaUpgrade;
+
+  class AppSchema extends sf.object("AppSchema", {
+    // `taskItem` allows plain text today; the staged type is added for future rollout.
+    taskItem: sf.optional([sf.string, stagedChecklistItem]),
+  }) {}
+
+  const enableChecklistItems = featureFlags.enableChecklistItems;
+
+  const view = tree.viewWith(
+    new TreeViewConfigurationAlpha({
+      schema: AppSchema,
+      stagedUpgradePolicy: enableChecklistItems
+        ? StagedSchemaUpgradePolicy.enabledStagedUpgrades(
+            checklistItemSchemaUpgrade,
+          )
+        : undefined,
+    }),
+  );
+
+  if (view.compatibility.canInitialize) {
+    // New documents include the checklist schema only while the rollout is enabled.
+    view.initialize(initialContent);
+  } else if (view.compatibility.canUpgrade) {
+    // Writes the staged type into the stored schema for this document.
+    view.upgradeSchema();
+  }
+  ```
+
+  Once a staged schema upgrade has been written to a document's stored schema, that change is permanent.
+  If `upgradeSchema` is later called from a view that does not include the previously enabled token,
+  it throws a `UsageError` because the new target would narrow the stored schema.
+
+  In practice, keep the upgrade token configured for as long as any document may have been upgraded.
+  Once the staged wrapper is removed from the code, the token is no longer needed.
+
+  #### Testing
+
+  Tests can verify that the current application version handles documents with staged types enabled.
+  Without such testing, it is hard to confirm that staging prepared the application—not just the schema—for the new types.
+
+  ```typescript
+  const currentView = currentAppTree.viewWith(
+    new TreeViewConfiguration({ schema: CurrentAppSchema }),
+  );
+  currentView.initialize(existingTaskDocument);
+  await ensureSynchronized();
+
+  const nextView = asAlpha(nextAppTree).viewWith(
+    new TreeViewConfigurationAlpha({
+      schema: AppSchemaWithStagedChecklist,
+      stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(
+        checklistItemSchemaUpgrade,
+      ),
+    }),
+  );
+
+  // The next version can read the document, but the checklist shape is not yet
+  // in stored schema and cannot be written.
+  assert.throws(() =>
+    addChecklistItem(nextView.root, { text: "Review rollout" }),
+  );
+
+  nextView.upgradeSchema();
+  await ensureSynchronized();
+
+  // Older clients are now incompatible; the next version can use the staged shape.
+  assert.equal(currentView.compatibility.canView, false);
+  addChecklistItem(nextView.root, { text: "Review rollout" });
+  await validateChecklistScenario(nextView);
+  ```
+
+- Fix assert when inserting the same node multiple times ([#27734](https://github.com/microsoft/FluidFramework/pull/27734)) [b509d00166](https://github.com/microsoft/FluidFramework/commit/b509d00166773585c42c60e97ec30a86fbd20cd5)
+
+  When inserting the same node multiple times in a single array insertion, a `UsageError` is now thrown instead of an assert `0xa2b`.
+
+  For example, this now throws a `UsageError` with message `A "ArrayNodeTest.Item" node was provided more than once in a single insertion. A node may not be in more than one place in the tree.`:
+
+  ```TypeScript
+  array.insertAtEnd(item, item);
+  ```
+
+## 2.112.0
+
+### Minor Changes
+
+- Add Component utilities for composing open-polymorphic schema ([#27628](https://github.com/microsoft/FluidFramework/pull/27628)) [7a56d096bf](https://github.com/microsoft/FluidFramework/commit/7a56d096bffab133ab4e7ab9c8f9c465b7ba9e81)
+
+  A new `@alpha` `Component` namespace is now exported from `@fluidframework/tree` (and re-exported from `fluid-framework`). It provides utilities for composing independently authored application "components" that contribute to a shared configuration, which is useful for implementing ["open polymorphism"](<https://en.wikipedia.org/wiki/Polymorphism_(computer_science)>) schema patterns where the set of allowed types for a field or collection can be extended by separate libraries.
+
+  Each component is expressed as a `Component.Factory`: a function which receives a lazy reference to the composed configuration and returns the content that component contributes. Because the configuration is provided lazily, components may reference (including recursively) types contributed by other components. `Component.compose` combines a set of components into a `Component.Composed`, from which the aggregated configuration and per-component content can be read.
+
+  ```typescript
+  /** Example application component content type. */
+  interface MyAppComponentContent {
+    /**
+     * Item types contributed by this component.
+     * We are just typing them as TreeNodeSchema here to keep things simple.
+     * Real use would often provide some static factory to be able to create instances, as well as some APIs all item nodes should implement.
+     */
+    readonly items: Component.LazyArray<TreeNodeSchema>;
+  }
+
+  type MyAppComponent = Component.Factory<MyAppComponentContent>;
+
+  // A simple component, which does not depend on any other context.
+  const textComponent: MyAppComponent = () => ({
+    items: () => [() => TextItem],
+  });
+
+  // A component which creates an item type which recursively depends on all item types.
+  const containerComponent: MyAppComponent = (config) => ({
+    items: () => [
+      () =>
+        class extends sf.array("Container", config().getComposed("items")) {},
+    ],
+  });
+
+  const appConfig = Component.compose([containerComponent, textComponent]);
+
+  // The config's items can now be used to create a TreeViewConfiguration, root schema, or whatever else is needed.
+  class Root extends sf.object("Root", {
+    content: appConfig.getComposed("items"),
+  }) {}
+  ```
+
+  See the worked examples in [openPolymorphism.integration.ts](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/openPolymorphism.integration.ts) for end-to-end usage with SharedTree schema.
+
+- Independent tree views now accept an optional telemetry logger ([#27567](https://github.com/microsoft/FluidFramework/pull/27567)) [5fbbcab0af](https://github.com/microsoft/FluidFramework/commit/5fbbcab0aff87519ae6f112611f0c1e62f30d97e)
+
+  The alpha `independentView`, `independentInitializedView`, and `createIndependentTreeAlpha` APIs now accept an optional `logger` on their options.
+  Previously these standalone (non-`SharedTree`) views had no way to surface telemetry,
+  so internal events—including those emitted when the tree enters a broken state—were dropped.
+  Passing a logger forwards those events to the caller's telemetry pipeline.
+  This makes it possible to diagnose failures in scenarios that use independent tree views, such as snapshot import/export, schema migration, and other out-of-container workflows.
+
+  Events emitted by an independent tree view are tagged with the `independentView` namespace.
+  If no logger is provided, behavior is unchanged and telemetry events continue to be dropped.
+
+  The `logger` option is typed as `ITelemetryBaseLogger` from `@fluidframework/core-interfaces`,
+  so any standard Fluid telemetry logger can be passed directly.
+
+  ```typescript
+  // ...
+  const view = independentView(
+    new TreeViewConfiguration({ schema: MySchema }),
+    {
+      logger: myTelemetryLogger,
+    },
+  );
+  // ...
+  ```
+
+- Shared branch names ([#27708](https://github.com/microsoft/FluidFramework/pull/27708)) [1f08b9210b](https://github.com/microsoft/FluidFramework/commit/1f08b9210bf7ba3adbc98c45b02ab8a6a58929f5)
+
+  The existing [`createSharedBranch`](https://fluidframework.com/docs/api/tree/itreealpha-interface#createsharedbranch-methodsignature) alpha API now takes an optional `name` string parameter that is associated with the shared branch.
+  This name can be retrieved by passing the shared branch ID to `getSharedBranchName`.
+
+  Note that, unlike the shared branch IDs, shared branch names are not guaranteed to be unique.
+
+  #### Compatibility Implications
+
+  This change breaks compatibility in the following ways:
+  - A document written by a client running an earlier FF version cannot be opened by a client running this version.
+  - A document written by a client running this version cannot be opened by a client running an earlier FF version.
+  - Clients running earlier FF versions will crash upon receiving ops from clients running this version.
+  - Clients running this version will crash upon receiving ops from clients running earlier FF versions.
+
+  These breaks are only applicable for clients with `enableSharedBranches` turned on. Other clients are unaffected.
+
+- Add at, pop, shift, unshift, findLast, and findLastIndex methods to TreeArrayNodeAlpha ([#27686](https://github.com/microsoft/FluidFramework/pull/27686)) [59669008b9](https://github.com/microsoft/FluidFramework/commit/59669008b9f9f70ccb94030a6382afcdf8f28cd4)
+
+  `TreeArrayNodeAlpha` now has `at`, `pop`, `shift`, `unshift`, `findLast`, and `findLastIndex` methods, further aligning it with JavaScript's built-in Array API:
+  - `at(index)` `at` was already implemented at runtime, and consumers compiling with `lib: ES2022` or later could already see it through the inherited `ReadonlyArray` typings. This change adds no new runtime behavior, but makes `at` an explicitly declared, documented part of the API, independent of the consumer's TypeScript `lib` configuration.
+  - `unshift(...items)` is an alias for `insertAtStart`, mirroring how `push` aliases `insertAtEnd`: it inserts new item(s) at the start of the array. Unlike `Array.prototype.unshift`, it does not return the new length of the array.
+  - `pop()` removes and returns the last item in the array, or returns `undefined` (without modifying the array) if it is empty.
+  - `shift()` removes and returns the first item in the array, or returns `undefined` (without modifying the array) if it is empty.
+  - `findLast(predicate, thisArg?)` and `findLastIndex(predicate, thisArg?)` search the array from the last item to the first, returning the last matching item (or `undefined`) and its index (or `-1`) respectively, like their `Array.prototype` equivalents. As with `Array.prototype.findLast`, passing a type guard as the `findLast` predicate narrows the returned item's type.
+
+  These methods are available on `TreeArrayNodeAlpha`, which can be obtained from an existing `TreeArrayNode` via `asAlpha`, or by declaring the schema with `SchemaFactoryAlpha`'s `arrayAlpha`.
+
+  #### Usage
+
+  ```typescript
+  import { SchemaFactory, asAlpha } from "@fluidframework/tree/alpha";
+
+  const sf = new SchemaFactory("example");
+  const Inventory = sf.array("Inventory", sf.string);
+  const inventory = asAlpha(new Inventory(["Apples", "Bananas", "Pears"]));
+
+  // inventory: ["Apples", "Bananas", "Pears"]
+  inventory.unshift("Oranges", "Grapes");
+  // inventory: ["Oranges", "Grapes", "Apples", "Bananas", "Pears"]
+
+  inventory.at(0); // "Oranges"
+  inventory.at(-1); // "Pears"
+  inventory.at(10); // undefined
+
+  inventory.findLast((item) => item.startsWith("G")); // "Grapes"
+  inventory.findLastIndex((item) => item.startsWith("G")); // 1
+
+  // inventory: ["Oranges", "Grapes", "Apples", "Bananas", "Pears"]
+  inventory.pop(); // "Pears"
+  // inventory ["Oranges", "Grapes", "Apples", "Bananas"]
+
+  inventory.shift(); // "Oranges"
+  // inventory: ["Grapes", "Apples", "Bananas"]
+  ```
+
+- Re-export telemetry types from `fluid-framework` ([#27567](https://github.com/microsoft/FluidFramework/pull/27567)) [5fbbcab0af](https://github.com/microsoft/FluidFramework/commit/5fbbcab0aff87519ae6f112611f0c1e62f30d97e)
+
+  The `fluid-framework` package now re-exports the following telemetry types from `@fluidframework/core-interfaces`:
+  - `ITelemetryBaseEvent`
+  - `ITelemetryBaseLogger`
+  - `LogLevel`
+  - `LogLevelConst`
+
+  Consumers can now import these types directly from `fluid-framework` without needing a separate dependency on `@fluidframework/core-interfaces`.
+
+- Retain history option ([#27696](https://github.com/microsoft/FluidFramework/pull/27696)) [2fa44c6ed2](https://github.com/microsoft/FluidFramework/commit/2fa44c6ed222a8ed88a632a0bf3cad0c26e72514)
+
+  Adds a new `retainHistory` flag to [`SharedTreeOptions`](https://fluidframework.com/docs/api/tree/sharedtreeoptions-interface) (defaults to `false`).
+  Setting `retainHistory` to `true` will prevent SharedTree from garbage-collecting historical data about old changes.
+  Note that this will cause unbounded growth both in memory on the client and in summaries/snapshots (the at-rest data representing a Fluid document).
+  For these reasons, this option is only intended for debugging and experimentation.
+
+### Patch Changes
+
+- Fix insertable types when using typesRecursive with multiple allowed types ([#27698](https://github.com/microsoft/FluidFramework/pull/27698)) [b72f836d09](https://github.com/microsoft/FluidFramework/commit/b72f836d09437654e0ef5787625073f9da41cf9f)
+
+  The allowed types produced by `SchemaFactoryBeta.typesRecursive` (and `SchemaFactoryAlpha.typesRecursive`) are now processed correctly when used in a recursive schema that permits more than one type.
+
+  Previously, passing their output to a recursive schema (for example `factory.arrayRecursive` or `factory.mapRecursive`) computed the node's insertable content type as `never`.
+  This caused valid insertions to fail to compile.
+  Recursive schemas built from a `typesRecursive` list with two or more types now accept insertable content for each of the allowed types as expected.
+  Recursive schemas that use a single type were unaffected.
+
+- Throw DataCorruptionError for meaningful duplicate batch detections ([#27668](https://github.com/microsoft/FluidFramework/pull/27668)) [46a69e3d8e](https://github.com/microsoft/FluidFramework/commit/46a69e3d8e68a344bbfc277bd5c9e70699c29542)
+
+  Previously, all detected duplicate batches were only logged via the `DuplicateBatch` telemetry event, and the corresponding `DataCorruptionError` was never thrown. This was a temporary mitigation for a service-side bug that could redeliver batches.
+
+  Now, the error is thrown when either the incoming batch or the previously-seen batch has an explicit `batchId` (i.e. the batch was resubmitted, as opposed to a fresh batch whose `batchId` is derived from `clientId` and `batchStartCsn`). This distinguishes genuine duplicate-batch scenarios (e.g. container forking) from the known service-outage artifact, which only ever produces duplicates without explicit batch ids. Duplicates without an explicit `batchId` on either side continue to be log-only.
+
 ## 2.111.0
 
 ### Minor Changes

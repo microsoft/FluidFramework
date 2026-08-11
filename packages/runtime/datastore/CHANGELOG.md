@@ -1,5 +1,25 @@
 # @fluidframework/datastore
 
+## 2.115.0
+
+Dependency updates only.
+
+## 2.114.0
+
+### Minor Changes
+
+- Deprecate mixinSummaryHandler ([#27769](https://github.com/microsoft/FluidFramework/pull/27769)) [a7d64c6d61](https://github.com/microsoft/FluidFramework/commit/a7d64c6d6199c463fe537af70cb31f656a819366)
+
+  The `mixinSummaryHandler` function from `@fluidframework/datastore` is now deprecated and will be removed in a future release. There is no replacement for it.
+
+## 2.113.0
+
+Dependency updates only.
+
+## 2.112.0
+
+Dependency updates only.
+
 ## 2.111.0
 
 Dependency updates only.

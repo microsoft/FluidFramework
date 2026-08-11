@@ -23,11 +23,11 @@ We are now surfacing errors on FluidContainer "disposed" event, so the applicati
 
 ## fluid-framework
 
--   Add the missing <ApiLink packageName="container-loader" apiName="ConnectionState" apiType="Enum" /> export to `fluid-framework`
+-   Add the missing <ApiLink packageName="container-loader" apiName="ConnectionState" /> export to `fluid-framework`
 
 ## @fluidframework/azure-client
 
--   Fix <ApiLink packageName="azure-client" apiName="AzureClient" apiType="Class" /> issue where the second user could not connect in `local` mode
+-   Fix <ApiLink packageName="azure-client" apiName="AzureClient" /> issue where the second user could not connect in `local` mode
 
 # 1.0.0
 
@@ -40,17 +40,11 @@ We've added two new methods to AzureClient that will enable developers to recove
 -   <ApiLink
     	packageName="azure-client"
     	apiName="AzureClient"
-    	apiType="Class"
     	headingId="getcontainerversions-method"
     >
     	`getContainerVersions(id, options)`
     </ApiLink>
--   <ApiLink
-    	packageName="azure-client"
-    	apiName="AzureClient"
-    	apiType="Class"
-    	headingId="copycontainer-method"
-    >
+-   <ApiLink packageName="azure-client" apiName="AzureClient" headingId="copycontainer-method">
     	`copyContainer(id, containerSchema)`
     </ApiLink>
 

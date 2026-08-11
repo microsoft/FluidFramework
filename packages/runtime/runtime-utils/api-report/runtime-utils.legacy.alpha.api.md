@@ -10,6 +10,9 @@ export function asLegacyAlpha(runtime: IContainerRuntimeBase): ContainerRuntimeB
 // @alpha @legacy
 export function asLegacyAlpha(runtime: IFluidDataStoreRuntime): IFluidDataStoreRuntimeAlpha;
 
+// @alpha @sealed
+export type Audience = IAudience;
+
 // @public
 export function compareFluidHandles(a: IFluidHandle, b: IFluidHandle): boolean;
 
@@ -34,12 +37,16 @@ export abstract class FluidHandleBase<T> implements IFluidHandleInternal<T> {
     abstract readonly isAttached: boolean;
 }
 
+// @alpha
+export function getContainerAudience(container: FluidContainerAttached): Audience;
+
 // @beta @legacy
 export interface IDisposalEventSource {
     readonly disposed?: boolean;
     off(event: "disposed", listener: (...args: unknown[]) => void): unknown;
     once(event: "disposed", listener: (...args: unknown[]) => void): unknown;
 }
+
 
 // @public
 export function isFluidHandle(value: unknown): value is IFluidHandle;

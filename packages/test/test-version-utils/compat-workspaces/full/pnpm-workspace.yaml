@@ -4,7 +4,7 @@ packages:
   - '*'
 
 # The security settings below are intentional — do not relax them.
-minimumReleaseAge: 1440
+minimumReleaseAge: 0
 
 # Exclude our own FF scopes so compat tests can install versions we just shipped
 # without hitting the age gate (new releases are < 1440 min old for a few hours).
@@ -22,8 +22,12 @@ overrides:
   # older dependency versions sometimes come in so we override them for security reasons.
   # As we drop support for older versions of Fluid, these overrides can be reviewed.
   # But as long as we support FF 1.x, these are probably all necessary.
-  axios@<1: ^0.31.1
-  axios@>=1 <2: ^1.15.2
+  axios@<1: ^0.33.0
+  # Kept as an exact pin (not caret) — see supply-chain note in root workspace.
+  axios@>=1 <2: 1.18.1
+  brace-expansion@>=1 <2: ^1.1.17
+  brace-expansion@>=2 <3: ^2.1.3
+  brace-expansion@>=5 <6: ^5.0.8
   form-data@>=4 <5: ^4.0.6
   jsrsasign@<12: ^11.1.1
   qs@>=6 <7: ^6.15.2

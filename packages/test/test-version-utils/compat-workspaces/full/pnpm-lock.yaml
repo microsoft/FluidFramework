@@ -5,8 +5,11 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  axios@<1: ^0.31.1
-  axios@>=1 <2: ^1.15.2
+  axios@<1: ^0.33.0
+  axios@>=1 <2: 1.18.1
+  brace-expansion@>=1 <2: ^1.1.17
+  brace-expansion@>=2 <3: ^2.1.3
+  brace-expansion@>=5 <6: ^5.0.8
   form-data@>=4 <5: ^4.0.6
   jsrsasign@<12: ^11.1.1
   qs@>=6 <7: ^6.15.2
@@ -25,13 +28,13 @@ importers:
     dependencies:
       '@fluidframework/agent-scheduler':
         specifier: 0.56.0
-        version: 0.56.0
+        version: 0.56.0(debug@4.4.3)
       '@fluidframework/aqueduct':
         specifier: 0.56.0
         version: 0.56.0(debug@4.4.3)
       '@fluidframework/cell':
         specifier: 0.56.0
-        version: 0.56.0
+        version: 0.56.0(debug@4.4.3)
       '@fluidframework/container-loader':
         specifier: 0.56.0
         version: 0.56.0(debug@4.4.3)
@@ -40,7 +43,7 @@ importers:
         version: 0.56.0(debug@4.4.3)
       '@fluidframework/counter':
         specifier: 0.56.0
-        version: 0.56.0
+        version: 0.56.0(debug@4.4.3)
       '@fluidframework/datastore':
         specifier: 0.56.0
         version: 0.56.0(debug@4.4.3)
@@ -52,22 +55,22 @@ importers:
         version: 0.56.0(debug@4.4.3)
       '@fluidframework/matrix':
         specifier: 0.56.0
-        version: 0.56.0
+        version: 0.56.0(debug@4.4.3)
       '@fluidframework/odsp-driver':
         specifier: 0.56.0
-        version: 0.56.0
+        version: 0.56.0(debug@4.4.3)
       '@fluidframework/ordered-collection':
         specifier: 0.56.0
-        version: 0.56.0
+        version: 0.56.0(debug@4.4.3)
       '@fluidframework/register-collection':
         specifier: 0.56.0
-        version: 0.56.0
+        version: 0.56.0(debug@4.4.3)
       '@fluidframework/routerlicious-driver':
         specifier: 0.56.0
         version: 0.56.0(debug@4.4.3)
       '@fluidframework/sequence':
         specifier: 0.56.0
-        version: 0.56.0
+        version: 0.56.0(debug@4.4.3)
       '@fluidframework/test-utils':
         specifier: 0.56.0
         version: 0.56.0
@@ -76,13 +79,13 @@ importers:
     dependencies:
       '@fluidframework/agent-scheduler':
         specifier: 1.4.0
-        version: 1.4.0
+        version: 1.4.0(debug@4.4.3)
       '@fluidframework/aqueduct':
         specifier: 1.4.0
         version: 1.4.0(debug@4.4.3)
       '@fluidframework/cell':
         specifier: 1.4.0
-        version: 1.4.0
+        version: 1.4.0(debug@4.4.3)
       '@fluidframework/container-loader':
         specifier: 1.4.0
         version: 1.4.0(debug@4.4.3)
@@ -91,7 +94,7 @@ importers:
         version: 1.4.0(debug@4.4.3)
       '@fluidframework/counter':
         specifier: 1.4.0
-        version: 1.4.0
+        version: 1.4.0(debug@4.4.3)
       '@fluidframework/datastore':
         specifier: 1.4.0
         version: 1.4.0(debug@4.4.3)
@@ -103,22 +106,22 @@ importers:
         version: 1.4.0(debug@4.4.3)
       '@fluidframework/matrix':
         specifier: 1.4.0
-        version: 1.4.0
+        version: 1.4.0(debug@4.4.3)
       '@fluidframework/odsp-driver':
         specifier: 1.4.0
-        version: 1.4.0
+        version: 1.4.0(debug@4.4.3)
       '@fluidframework/ordered-collection':
         specifier: 1.4.0
-        version: 1.4.0
+        version: 1.4.0(debug@4.4.3)
       '@fluidframework/register-collection':
         specifier: 1.4.0
-        version: 1.4.0
+        version: 1.4.0(debug@4.4.3)
       '@fluidframework/routerlicious-driver':
         specifier: 1.4.0
         version: 1.4.0(debug@4.4.3)
       '@fluidframework/sequence':
         specifier: 1.4.0
-        version: 1.4.0
+        version: 1.4.0(debug@4.4.3)
       '@fluidframework/test-utils':
         specifier: 1.4.0
         version: 1.4.0
@@ -127,13 +130,13 @@ importers:
     dependencies:
       '@fluidframework/agent-scheduler':
         specifier: 2.0.0-internal.1.4.6
-        version: 2.0.0-internal.1.4.6
+        version: 2.0.0-internal.1.4.6(debug@4.4.3)
       '@fluidframework/aqueduct':
         specifier: 2.0.0-internal.1.4.6
         version: 2.0.0-internal.1.4.6(debug@4.4.3)
       '@fluidframework/cell':
         specifier: 2.0.0-internal.1.4.6
-        version: 2.0.0-internal.1.4.6
+        version: 2.0.0-internal.1.4.6(debug@4.4.3)
       '@fluidframework/container-loader':
         specifier: 2.0.0-internal.1.4.6
         version: 2.0.0-internal.1.4.6(debug@4.4.3)
@@ -142,7 +145,7 @@ importers:
         version: 2.0.0-internal.1.4.6(debug@4.4.3)
       '@fluidframework/counter':
         specifier: 2.0.0-internal.1.4.6
-        version: 2.0.0-internal.1.4.6
+        version: 2.0.0-internal.1.4.6(debug@4.4.3)
       '@fluidframework/datastore':
         specifier: 2.0.0-internal.1.4.6
         version: 2.0.0-internal.1.4.6(debug@4.4.3)
@@ -154,22 +157,22 @@ importers:
         version: 2.0.0-internal.1.4.6(debug@4.4.3)
       '@fluidframework/matrix':
         specifier: 2.0.0-internal.1.4.6
-        version: 2.0.0-internal.1.4.6
+        version: 2.0.0-internal.1.4.6(debug@4.4.3)
       '@fluidframework/odsp-driver':
         specifier: 2.0.0-internal.1.4.6
-        version: 2.0.0-internal.1.4.6
+        version: 2.0.0-internal.1.4.6(debug@4.4.3)
       '@fluidframework/ordered-collection':
         specifier: 2.0.0-internal.1.4.6
-        version: 2.0.0-internal.1.4.6
+        version: 2.0.0-internal.1.4.6(debug@4.4.3)
       '@fluidframework/register-collection':
         specifier: 2.0.0-internal.1.4.6
-        version: 2.0.0-internal.1.4.6
+        version: 2.0.0-internal.1.4.6(debug@4.4.3)
       '@fluidframework/routerlicious-driver':
         specifier: 2.0.0-internal.1.4.6
         version: 2.0.0-internal.1.4.6(debug@4.4.3)
       '@fluidframework/sequence':
         specifier: 2.0.0-internal.1.4.6
-        version: 2.0.0-internal.1.4.6
+        version: 2.0.0-internal.1.4.6(debug@4.4.3)
       '@fluidframework/test-utils':
         specifier: 2.0.0-internal.1.4.6
         version: 2.0.0-internal.1.4.6
@@ -178,16 +181,16 @@ importers:
     dependencies:
       '@fluid-experimental/sequence-deprecated':
         specifier: 2.0.0-internal.5.4.2
-        version: 2.0.0-internal.5.4.2
+        version: 2.0.0-internal.5.4.2(debug@4.4.3)
       '@fluidframework/agent-scheduler':
         specifier: 2.0.0-internal.5.4.2
-        version: 2.0.0-internal.5.4.2
+        version: 2.0.0-internal.5.4.2(debug@4.4.3)
       '@fluidframework/aqueduct':
         specifier: 2.0.0-internal.5.4.2
         version: 2.0.0-internal.5.4.2(debug@4.4.3)
       '@fluidframework/cell':
         specifier: 2.0.0-internal.5.4.2
-        version: 2.0.0-internal.5.4.2
+        version: 2.0.0-internal.5.4.2(debug@4.4.3)
       '@fluidframework/container-loader':
         specifier: 2.0.0-internal.5.4.2
         version: 2.0.0-internal.5.4.2
@@ -196,7 +199,7 @@ importers:
         version: 2.0.0-internal.5.4.2(debug@4.4.3)
       '@fluidframework/counter':
         specifier: 2.0.0-internal.5.4.2
-        version: 2.0.0-internal.5.4.2
+        version: 2.0.0-internal.5.4.2(debug@4.4.3)
       '@fluidframework/datastore':
         specifier: 2.0.0-internal.5.4.2
         version: 2.0.0-internal.5.4.2(debug@4.4.3)
@@ -208,22 +211,22 @@ importers:
         version: 2.0.0-internal.5.4.2(debug@4.4.3)
       '@fluidframework/matrix':
         specifier: 2.0.0-internal.5.4.2
-        version: 2.0.0-internal.5.4.2
+        version: 2.0.0-internal.5.4.2(debug@4.4.3)
       '@fluidframework/odsp-driver':
         specifier: 2.0.0-internal.5.4.2
-        version: 2.0.0-internal.5.4.2
+        version: 2.0.0-internal.5.4.2(debug@4.4.3)
       '@fluidframework/ordered-collection':
         specifier: 2.0.0-internal.5.4.2
-        version: 2.0.0-internal.5.4.2
+        version: 2.0.0-internal.5.4.2(debug@4.4.3)
       '@fluidframework/register-collection':
         specifier: 2.0.0-internal.5.4.2
-        version: 2.0.0-internal.5.4.2
+        version: 2.0.0-internal.5.4.2(debug@4.4.3)
       '@fluidframework/routerlicious-driver':
         specifier: 2.0.0-internal.5.4.2
         version: 2.0.0-internal.5.4.2(debug@4.4.3)
       '@fluidframework/sequence':
         specifier: 2.0.0-internal.5.4.2
-        version: 2.0.0-internal.5.4.2
+        version: 2.0.0-internal.5.4.2(debug@4.4.3)
       '@fluidframework/test-utils':
         specifier: 2.0.0-internal.5.4.2
         version: 2.0.0-internal.5.4.2
@@ -232,16 +235,16 @@ importers:
     dependencies:
       '@fluid-experimental/sequence-deprecated':
         specifier: 2.0.0-internal.7.0.0
-        version: 2.0.0-internal.7.0.0
+        version: 2.0.0-internal.7.0.0(debug@4.4.3)
       '@fluidframework/agent-scheduler':
         specifier: 2.0.0-internal.7.0.0
-        version: 2.0.0-internal.7.0.0
+        version: 2.0.0-internal.7.0.0(debug@4.4.3)
       '@fluidframework/aqueduct':
         specifier: 2.0.0-internal.7.0.0
         version: 2.0.0-internal.7.0.0(debug@4.4.3)
       '@fluidframework/cell':
         specifier: 2.0.0-internal.7.0.0
-        version: 2.0.0-internal.7.0.0
+        version: 2.0.0-internal.7.0.0(debug@4.4.3)
       '@fluidframework/container-loader':
         specifier: 2.0.0-internal.7.0.0
         version: 2.0.0-internal.7.0.0
@@ -250,7 +253,7 @@ importers:
         version: 2.0.0-internal.7.0.0(debug@4.4.3)
       '@fluidframework/counter':
         specifier: 2.0.0-internal.7.0.0
-        version: 2.0.0-internal.7.0.0
+        version: 2.0.0-internal.7.0.0(debug@4.4.3)
       '@fluidframework/datastore':
         specifier: 2.0.0-internal.7.0.0
         version: 2.0.0-internal.7.0.0(debug@4.4.3)
@@ -262,22 +265,22 @@ importers:
         version: 2.0.0-internal.7.0.0(debug@4.4.3)
       '@fluidframework/matrix':
         specifier: 2.0.0-internal.7.0.0
-        version: 2.0.0-internal.7.0.0
+        version: 2.0.0-internal.7.0.0(debug@4.4.3)
       '@fluidframework/odsp-driver':
         specifier: 2.0.0-internal.7.0.0
-        version: 2.0.0-internal.7.0.0
+        version: 2.0.0-internal.7.0.0(debug@4.4.3)
       '@fluidframework/ordered-collection':
         specifier: 2.0.0-internal.7.0.0
-        version: 2.0.0-internal.7.0.0
+        version: 2.0.0-internal.7.0.0(debug@4.4.3)
       '@fluidframework/register-collection':
         specifier: 2.0.0-internal.7.0.0
-        version: 2.0.0-internal.7.0.0
+        version: 2.0.0-internal.7.0.0(debug@4.4.3)
       '@fluidframework/routerlicious-driver':
         specifier: 2.0.0-internal.7.0.0
         version: 2.0.0-internal.7.0.0(debug@4.4.3)
       '@fluidframework/sequence':
         specifier: 2.0.0-internal.7.0.0
-        version: 2.0.0-internal.7.0.0
+        version: 2.0.0-internal.7.0.0(debug@4.4.3)
       '@fluidframework/test-utils':
         specifier: 2.0.0-internal.7.0.0
         version: 2.0.0-internal.7.0.0
@@ -286,16 +289,16 @@ importers:
     dependencies:
       '@fluid-experimental/sequence-deprecated':
         specifier: 2.0.0-rc.5.0.8
-        version: 2.0.0-rc.5.0.8
+        version: 2.0.0-rc.5.0.8(debug@4.4.3)
       '@fluidframework/agent-scheduler':
         specifier: 2.0.0-rc.5.0.8
-        version: 2.0.0-rc.5.0.8
+        version: 2.0.0-rc.5.0.8(debug@4.4.3)
       '@fluidframework/aqueduct':
         specifier: 2.0.0-rc.5.0.8
         version: 2.0.0-rc.5.0.8(debug@4.4.3)
       '@fluidframework/cell':
         specifier: 2.0.0-rc.5.0.8
-        version: 2.0.0-rc.5.0.8
+        version: 2.0.0-rc.5.0.8(debug@4.4.3)
       '@fluidframework/container-loader':
         specifier: 2.0.0-rc.5.0.8
         version: 2.0.0-rc.5.0.8
@@ -304,7 +307,7 @@ importers:
         version: 2.0.0-rc.5.0.8(debug@4.4.3)
       '@fluidframework/counter':
         specifier: 2.0.0-rc.5.0.8
-        version: 2.0.0-rc.5.0.8
+        version: 2.0.0-rc.5.0.8(debug@4.4.3)
       '@fluidframework/datastore':
         specifier: 2.0.0-rc.5.0.8
         version: 2.0.0-rc.5.0.8(debug@4.4.3)
@@ -316,22 +319,22 @@ importers:
         version: 2.0.0-rc.5.0.8(debug@4.4.3)
       '@fluidframework/matrix':
         specifier: 2.0.0-rc.5.0.8
-        version: 2.0.0-rc.5.0.8
+        version: 2.0.0-rc.5.0.8(debug@4.4.3)
       '@fluidframework/odsp-driver':
         specifier: 2.0.0-rc.5.0.8
-        version: 2.0.0-rc.5.0.8
+        version: 2.0.0-rc.5.0.8(debug@4.4.3)
       '@fluidframework/ordered-collection':
         specifier: 2.0.0-rc.5.0.8
-        version: 2.0.0-rc.5.0.8
+        version: 2.0.0-rc.5.0.8(debug@4.4.3)
       '@fluidframework/register-collection':
         specifier: 2.0.0-rc.5.0.8
-        version: 2.0.0-rc.5.0.8
+        version: 2.0.0-rc.5.0.8(debug@4.4.3)
       '@fluidframework/routerlicious-driver':
         specifier: 2.0.0-rc.5.0.8
         version: 2.0.0-rc.5.0.8(debug@4.4.3)
       '@fluidframework/sequence':
         specifier: 2.0.0-rc.5.0.8
-        version: 2.0.0-rc.5.0.8
+        version: 2.0.0-rc.5.0.8(debug@4.4.3)
       '@fluidframework/test-utils':
         specifier: 2.0.0-rc.5.0.8
         version: 2.0.0-rc.5.0.8
@@ -340,16 +343,16 @@ importers:
     dependencies:
       '@fluid-experimental/sequence-deprecated':
         specifier: 2.0.9
-        version: 2.0.9
+        version: 2.0.9(debug@4.4.3)
       '@fluidframework/agent-scheduler':
         specifier: 2.0.9
-        version: 2.0.9
+        version: 2.0.9(debug@4.4.3)
       '@fluidframework/aqueduct':
         specifier: 2.0.9
         version: 2.0.9(debug@4.4.3)
       '@fluidframework/cell':
         specifier: 2.0.9
-        version: 2.0.9
+        version: 2.0.9(debug@4.4.3)
       '@fluidframework/container-loader':
         specifier: 2.0.9
         version: 2.0.9
@@ -358,7 +361,7 @@ importers:
         version: 2.0.9(debug@4.4.3)
       '@fluidframework/counter':
         specifier: 2.0.9
-        version: 2.0.9
+        version: 2.0.9(debug@4.4.3)
       '@fluidframework/datastore':
         specifier: 2.0.9
         version: 2.0.9(debug@4.4.3)
@@ -370,28 +373,28 @@ importers:
         version: 2.0.9(debug@4.4.3)
       '@fluidframework/matrix':
         specifier: 2.0.9
-        version: 2.0.9
+        version: 2.0.9(debug@4.4.3)
       '@fluidframework/odsp-driver':
         specifier: 2.0.9
-        version: 2.0.9
+        version: 2.0.9(debug@4.4.3)
       '@fluidframework/ordered-collection':
         specifier: 2.0.9
-        version: 2.0.9
+        version: 2.0.9(debug@4.4.3)
       '@fluidframework/register-collection':
         specifier: 2.0.9
-        version: 2.0.9
+        version: 2.0.9(debug@4.4.3)
       '@fluidframework/routerlicious-driver':
         specifier: 2.0.9
         version: 2.0.9(debug@4.4.3)
       '@fluidframework/sequence':
         specifier: 2.0.9
-        version: 2.0.9
+        version: 2.0.9(debug@4.4.3)
       '@fluidframework/test-utils':
         specifier: 2.0.9
         version: 2.0.9
       '@fluidframework/tree':
         specifier: 2.0.9
-        version: 2.0.9
+        version: 2.0.9(debug@4.4.3)
 
   2.103.0:
     dependencies:
@@ -454,16 +457,16 @@ importers:
     dependencies:
       '@fluid-experimental/sequence-deprecated':
         specifier: 2.13.0
-        version: 2.13.0
+        version: 2.13.0(debug@4.4.3)
       '@fluidframework/agent-scheduler':
         specifier: 2.13.0
-        version: 2.13.0
+        version: 2.13.0(debug@4.4.3)
       '@fluidframework/aqueduct':
         specifier: 2.13.0
         version: 2.13.0(debug@4.4.3)
       '@fluidframework/cell':
         specifier: 2.13.0
-        version: 2.13.0
+        version: 2.13.0(debug@4.4.3)
       '@fluidframework/container-loader':
         specifier: 2.13.0
         version: 2.13.0
@@ -472,7 +475,7 @@ importers:
         version: 2.13.0(debug@4.4.3)
       '@fluidframework/counter':
         specifier: 2.13.0
-        version: 2.13.0
+        version: 2.13.0(debug@4.4.3)
       '@fluidframework/datastore':
         specifier: 2.13.0
         version: 2.13.0(debug@4.4.3)
@@ -484,43 +487,43 @@ importers:
         version: 2.13.0(debug@4.4.3)
       '@fluidframework/matrix':
         specifier: 2.13.0
-        version: 2.13.0
+        version: 2.13.0(debug@4.4.3)
       '@fluidframework/odsp-driver':
         specifier: 2.13.0
         version: 2.13.0(debug@4.4.3)
       '@fluidframework/ordered-collection':
         specifier: 2.13.0
-        version: 2.13.0
+        version: 2.13.0(debug@4.4.3)
       '@fluidframework/register-collection':
         specifier: 2.13.0
-        version: 2.13.0
+        version: 2.13.0(debug@4.4.3)
       '@fluidframework/routerlicious-driver':
         specifier: 2.13.0
         version: 2.13.0(debug@4.4.3)
       '@fluidframework/sequence':
         specifier: 2.13.0
-        version: 2.13.0
+        version: 2.13.0(debug@4.4.3)
       '@fluidframework/test-utils':
         specifier: 2.13.0
         version: 2.13.0
       '@fluidframework/tree':
         specifier: 2.13.0
-        version: 2.13.0
+        version: 2.13.0(debug@4.4.3)
 
   2.23.0:
     dependencies:
       '@fluid-experimental/sequence-deprecated':
         specifier: 2.23.0
-        version: 2.23.0
+        version: 2.23.0(debug@4.4.3)
       '@fluidframework/agent-scheduler':
         specifier: 2.23.0
-        version: 2.23.0
+        version: 2.23.0(debug@4.4.3)
       '@fluidframework/aqueduct':
         specifier: 2.23.0
-        version: 2.23.0
+        version: 2.23.0(debug@4.4.3)
       '@fluidframework/cell':
         specifier: 2.23.0
-        version: 2.23.0
+        version: 2.23.0(debug@4.4.3)
       '@fluidframework/container-loader':
         specifier: 2.23.0
         version: 2.23.0
@@ -529,7 +532,7 @@ importers:
         version: 2.23.0(debug@4.4.3)
       '@fluidframework/counter':
         specifier: 2.23.0
-        version: 2.23.0
+        version: 2.23.0(debug@4.4.3)
       '@fluidframework/datastore':
         specifier: 2.23.0
         version: 2.23.0(debug@4.4.3)
@@ -541,43 +544,43 @@ importers:
         version: 2.23.0(debug@4.4.3)
       '@fluidframework/matrix':
         specifier: 2.23.0
-        version: 2.23.0
+        version: 2.23.0(debug@4.4.3)
       '@fluidframework/odsp-driver':
         specifier: 2.23.0
         version: 2.23.0(debug@4.4.3)
       '@fluidframework/ordered-collection':
         specifier: 2.23.0
-        version: 2.23.0
+        version: 2.23.0(debug@4.4.3)
       '@fluidframework/register-collection':
         specifier: 2.23.0
-        version: 2.23.0
+        version: 2.23.0(debug@4.4.3)
       '@fluidframework/routerlicious-driver':
         specifier: 2.23.0
         version: 2.23.0(debug@4.4.3)
       '@fluidframework/sequence':
         specifier: 2.23.0
-        version: 2.23.0
+        version: 2.23.0(debug@4.4.3)
       '@fluidframework/test-utils':
         specifier: 2.23.0
         version: 2.23.0
       '@fluidframework/tree':
         specifier: 2.23.0
-        version: 2.23.0
+        version: 2.23.0(debug@4.4.3)
 
   2.33.2:
     dependencies:
       '@fluid-experimental/sequence-deprecated':
         specifier: 2.33.2
-        version: 2.33.2
+        version: 2.33.2(debug@4.4.3)
       '@fluidframework/agent-scheduler':
         specifier: 2.33.2
-        version: 2.33.2
+        version: 2.33.2(debug@4.4.3)
       '@fluidframework/aqueduct':
         specifier: 2.33.2
-        version: 2.33.2
+        version: 2.33.2(debug@4.4.3)
       '@fluidframework/cell':
         specifier: 2.33.2
-        version: 2.33.2
+        version: 2.33.2(debug@4.4.3)
       '@fluidframework/container-loader':
         specifier: 2.33.2
         version: 2.33.2
@@ -586,7 +589,7 @@ importers:
         version: 2.33.2(debug@4.4.3)
       '@fluidframework/counter':
         specifier: 2.33.2
-        version: 2.33.2
+        version: 2.33.2(debug@4.4.3)
       '@fluidframework/datastore':
         specifier: 2.33.2
         version: 2.33.2(debug@4.4.3)
@@ -598,43 +601,43 @@ importers:
         version: 2.33.2(debug@4.4.3)
       '@fluidframework/matrix':
         specifier: 2.33.2
-        version: 2.33.2
+        version: 2.33.2(debug@4.4.3)
       '@fluidframework/odsp-driver':
         specifier: 2.33.2
         version: 2.33.2(debug@4.4.3)
       '@fluidframework/ordered-collection':
         specifier: 2.33.2
-        version: 2.33.2
+        version: 2.33.2(debug@4.4.3)
       '@fluidframework/register-collection':
         specifier: 2.33.2
-        version: 2.33.2
+        version: 2.33.2(debug@4.4.3)
       '@fluidframework/routerlicious-driver':
         specifier: 2.33.2
         version: 2.33.2(debug@4.4.3)
       '@fluidframework/sequence':
         specifier: 2.33.2
-        version: 2.33.2
+        version: 2.33.2(debug@4.4.3)
       '@fluidframework/test-utils':
         specifier: 2.33.2
         version: 2.33.2
       '@fluidframework/tree':
         specifier: 2.33.2
-        version: 2.33.2
+        version: 2.33.2(debug@4.4.3)
 
   2.40.0:
     dependencies:
       '@fluid-experimental/sequence-deprecated':
         specifier: 2.40.0
-        version: 2.40.0
+        version: 2.40.0(debug@4.4.3)
       '@fluidframework/agent-scheduler':
         specifier: 2.40.0
-        version: 2.40.0
+        version: 2.40.0(debug@4.4.3)
       '@fluidframework/aqueduct':
         specifier: 2.40.0
-        version: 2.40.0
+        version: 2.40.0(debug@4.4.3)
       '@fluidframework/cell':
         specifier: 2.40.0
-        version: 2.40.0
+        version: 2.40.0(debug@4.4.3)
       '@fluidframework/container-loader':
         specifier: 2.40.0
         version: 2.40.0
@@ -643,7 +646,7 @@ importers:
         version: 2.40.0(debug@4.4.3)
       '@fluidframework/counter':
         specifier: 2.40.0
-        version: 2.40.0
+        version: 2.40.0(debug@4.4.3)
       '@fluidframework/datastore':
         specifier: 2.40.0
         version: 2.40.0(debug@4.4.3)
@@ -655,43 +658,43 @@ importers:
         version: 2.40.0(debug@4.4.3)
       '@fluidframework/matrix':
         specifier: 2.40.0
-        version: 2.40.0
+        version: 2.40.0(debug@4.4.3)
       '@fluidframework/odsp-driver':
         specifier: 2.40.0
         version: 2.40.0(debug@4.4.3)
       '@fluidframework/ordered-collection':
         specifier: 2.40.0
-        version: 2.40.0
+        version: 2.40.0(debug@4.4.3)
       '@fluidframework/register-collection':
         specifier: 2.40.0
-        version: 2.40.0
+        version: 2.40.0(debug@4.4.3)
       '@fluidframework/routerlicious-driver':
         specifier: 2.40.0
         version: 2.40.0(debug@4.4.3)
       '@fluidframework/sequence':
         specifier: 2.40.0
-        version: 2.40.0
+        version: 2.40.0(debug@4.4.3)
       '@fluidframework/test-utils':
         specifier: 2.40.0
         version: 2.40.0
       '@fluidframework/tree':
         specifier: 2.40.0
-        version: 2.40.0
+        version: 2.40.0(debug@4.4.3)
 
   2.43.0:
     dependencies:
       '@fluid-experimental/sequence-deprecated':
         specifier: 2.43.0
-        version: 2.43.0
+        version: 2.43.0(debug@4.4.3)
       '@fluidframework/agent-scheduler':
         specifier: 2.43.0
-        version: 2.43.0
+        version: 2.43.0(debug@4.4.3)
       '@fluidframework/aqueduct':
         specifier: 2.43.0
-        version: 2.43.0
+        version: 2.43.0(debug@4.4.3)
       '@fluidframework/cell':
         specifier: 2.43.0
-        version: 2.43.0
+        version: 2.43.0(debug@4.4.3)
       '@fluidframework/container-loader':
         specifier: 2.43.0
         version: 2.43.0
@@ -700,7 +703,7 @@ importers:
         version: 2.43.0(debug@4.4.3)
       '@fluidframework/counter':
         specifier: 2.43.0
-        version: 2.43.0
+        version: 2.43.0(debug@4.4.3)
       '@fluidframework/datastore':
         specifier: 2.43.0
         version: 2.43.0(debug@4.4.3)
@@ -712,43 +715,43 @@ importers:
         version: 2.43.0(debug@4.4.3)
       '@fluidframework/matrix':
         specifier: 2.43.0
-        version: 2.43.0
+        version: 2.43.0(debug@4.4.3)
       '@fluidframework/odsp-driver':
         specifier: 2.43.0
         version: 2.43.0(debug@4.4.3)
       '@fluidframework/ordered-collection':
         specifier: 2.43.0
-        version: 2.43.0
+        version: 2.43.0(debug@4.4.3)
       '@fluidframework/register-collection':
         specifier: 2.43.0
-        version: 2.43.0
+        version: 2.43.0(debug@4.4.3)
       '@fluidframework/routerlicious-driver':
         specifier: 2.43.0
         version: 2.43.0(debug@4.4.3)
       '@fluidframework/sequence':
         specifier: 2.43.0
-        version: 2.43.0
+        version: 2.43.0(debug@4.4.3)
       '@fluidframework/test-utils':
         specifier: 2.43.0
         version: 2.43.0
       '@fluidframework/tree':
         specifier: 2.43.0
-        version: 2.43.0
+        version: 2.43.0(debug@4.4.3)
 
   2.5.0:
     dependencies:
       '@fluid-experimental/sequence-deprecated':
         specifier: 2.5.0
-        version: 2.5.0
+        version: 2.5.0(debug@4.4.3)
       '@fluidframework/agent-scheduler':
         specifier: 2.5.0
-        version: 2.5.0
+        version: 2.5.0(debug@4.4.3)
       '@fluidframework/aqueduct':
         specifier: 2.5.0
         version: 2.5.0(debug@4.4.3)
       '@fluidframework/cell':
         specifier: 2.5.0
-        version: 2.5.0
+        version: 2.5.0(debug@4.4.3)
       '@fluidframework/container-loader':
         specifier: 2.5.0
         version: 2.5.0
@@ -757,7 +760,7 @@ importers:
         version: 2.5.0(debug@4.4.3)
       '@fluidframework/counter':
         specifier: 2.5.0
-        version: 2.5.0
+        version: 2.5.0(debug@4.4.3)
       '@fluidframework/datastore':
         specifier: 2.5.0
         version: 2.5.0(debug@4.4.3)
@@ -769,43 +772,43 @@ importers:
         version: 2.5.0(debug@4.4.3)
       '@fluidframework/matrix':
         specifier: 2.5.0
-        version: 2.5.0
+        version: 2.5.0(debug@4.4.3)
       '@fluidframework/odsp-driver':
         specifier: 2.5.0
         version: 2.5.0(debug@4.4.3)
       '@fluidframework/ordered-collection':
         specifier: 2.5.0
-        version: 2.5.0
+        version: 2.5.0(debug@4.4.3)
       '@fluidframework/register-collection':
         specifier: 2.5.0
-        version: 2.5.0
+        version: 2.5.0(debug@4.4.3)
       '@fluidframework/routerlicious-driver':
         specifier: 2.5.0
         version: 2.5.0(debug@4.4.3)
       '@fluidframework/sequence':
         specifier: 2.5.0
-        version: 2.5.0
+        version: 2.5.0(debug@4.4.3)
       '@fluidframework/test-utils':
         specifier: 2.5.0
         version: 2.5.0
       '@fluidframework/tree':
         specifier: 2.5.0
-        version: 2.5.0
+        version: 2.5.0(debug@4.4.3)
 
   2.53.1:
     dependencies:
       '@fluid-experimental/sequence-deprecated':
         specifier: 2.53.1
-        version: 2.53.1
+        version: 2.53.1(debug@4.4.3)
       '@fluidframework/agent-scheduler':
         specifier: 2.53.1
-        version: 2.53.1
+        version: 2.53.1(debug@4.4.3)
       '@fluidframework/aqueduct':
         specifier: 2.53.1
-        version: 2.53.1
+        version: 2.53.1(debug@4.4.3)
       '@fluidframework/cell':
         specifier: 2.53.1
-        version: 2.53.1
+        version: 2.53.1(debug@4.4.3)
       '@fluidframework/container-loader':
         specifier: 2.53.1
         version: 2.53.1
@@ -814,7 +817,7 @@ importers:
         version: 2.53.1(debug@4.4.3)
       '@fluidframework/counter':
         specifier: 2.53.1
-        version: 2.53.1
+        version: 2.53.1(debug@4.4.3)
       '@fluidframework/datastore':
         specifier: 2.53.1
         version: 2.53.1(debug@4.4.3)
@@ -826,43 +829,43 @@ importers:
         version: 2.53.1(debug@4.4.3)
       '@fluidframework/matrix':
         specifier: 2.53.1
-        version: 2.53.1
+        version: 2.53.1(debug@4.4.3)
       '@fluidframework/odsp-driver':
         specifier: 2.53.1
         version: 2.53.1(debug@4.4.3)
       '@fluidframework/ordered-collection':
         specifier: 2.53.1
-        version: 2.53.1
+        version: 2.53.1(debug@4.4.3)
       '@fluidframework/register-collection':
         specifier: 2.53.1
-        version: 2.53.1
+        version: 2.53.1(debug@4.4.3)
       '@fluidframework/routerlicious-driver':
         specifier: 2.53.1
         version: 2.53.1(debug@4.4.3)
       '@fluidframework/sequence':
         specifier: 2.53.1
-        version: 2.53.1
+        version: 2.53.1(debug@4.4.3)
       '@fluidframework/test-utils':
         specifier: 2.53.1
         version: 2.53.1
       '@fluidframework/tree':
         specifier: 2.53.1
-        version: 2.53.1
+        version: 2.53.1(debug@4.4.3)
 
   2.63.0:
     dependencies:
       '@fluid-experimental/sequence-deprecated':
         specifier: 2.63.0
-        version: 2.63.0
+        version: 2.63.0(debug@4.4.3)
       '@fluidframework/agent-scheduler':
         specifier: 2.63.0
-        version: 2.63.0
+        version: 2.63.0(debug@4.4.3)
       '@fluidframework/aqueduct':
         specifier: 2.63.0
-        version: 2.63.0
+        version: 2.63.0(debug@4.4.3)
       '@fluidframework/cell':
         specifier: 2.63.0
-        version: 2.63.0
+        version: 2.63.0(debug@4.4.3)
       '@fluidframework/container-loader':
         specifier: 2.63.0
         version: 2.63.0
@@ -871,7 +874,7 @@ importers:
         version: 2.63.0(debug@4.4.3)
       '@fluidframework/counter':
         specifier: 2.63.0
-        version: 2.63.0
+        version: 2.63.0(debug@4.4.3)
       '@fluidframework/datastore':
         specifier: 2.63.0
         version: 2.63.0(debug@4.4.3)
@@ -883,43 +886,43 @@ importers:
         version: 2.63.0(debug@4.4.3)
       '@fluidframework/matrix':
         specifier: 2.63.0
-        version: 2.63.0
+        version: 2.63.0(debug@4.4.3)
       '@fluidframework/odsp-driver':
         specifier: 2.63.0
         version: 2.63.0(debug@4.4.3)
       '@fluidframework/ordered-collection':
         specifier: 2.63.0
-        version: 2.63.0
+        version: 2.63.0(debug@4.4.3)
       '@fluidframework/register-collection':
         specifier: 2.63.0
-        version: 2.63.0
+        version: 2.63.0(debug@4.4.3)
       '@fluidframework/routerlicious-driver':
         specifier: 2.63.0
         version: 2.63.0(debug@4.4.3)
       '@fluidframework/sequence':
         specifier: 2.63.0
-        version: 2.63.0
+        version: 2.63.0(debug@4.4.3)
       '@fluidframework/test-utils':
         specifier: 2.63.0
         version: 2.63.0
       '@fluidframework/tree':
         specifier: 2.63.0
-        version: 2.63.0
+        version: 2.63.0(debug@4.4.3)
 
   2.74.0:
     dependencies:
       '@fluid-experimental/sequence-deprecated':
         specifier: 2.74.0
-        version: 2.74.0
+        version: 2.74.0(debug@4.4.3)
       '@fluidframework/agent-scheduler':
         specifier: 2.74.0
-        version: 2.74.0
+        version: 2.74.0(debug@4.4.3)
       '@fluidframework/aqueduct':
         specifier: 2.74.0
-        version: 2.74.0
+        version: 2.74.0(debug@4.4.3)
       '@fluidframework/cell':
         specifier: 2.74.0
-        version: 2.74.0
+        version: 2.74.0(debug@4.4.3)
       '@fluidframework/container-loader':
         specifier: 2.74.0
         version: 2.74.0
@@ -928,7 +931,7 @@ importers:
         version: 2.74.0(debug@4.4.3)
       '@fluidframework/counter':
         specifier: 2.74.0
-        version: 2.74.0
+        version: 2.74.0(debug@4.4.3)
       '@fluidframework/datastore':
         specifier: 2.74.0
         version: 2.74.0(debug@4.4.3)
@@ -940,43 +943,43 @@ importers:
         version: 2.74.0(debug@4.4.3)
       '@fluidframework/matrix':
         specifier: 2.74.0
-        version: 2.74.0
+        version: 2.74.0(debug@4.4.3)
       '@fluidframework/odsp-driver':
         specifier: 2.74.0
         version: 2.74.0(debug@4.4.3)
       '@fluidframework/ordered-collection':
         specifier: 2.74.0
-        version: 2.74.0
+        version: 2.74.0(debug@4.4.3)
       '@fluidframework/register-collection':
         specifier: 2.74.0
-        version: 2.74.0
+        version: 2.74.0(debug@4.4.3)
       '@fluidframework/routerlicious-driver':
         specifier: 2.74.0
         version: 2.74.0(debug@4.4.3)
       '@fluidframework/sequence':
         specifier: 2.74.0
-        version: 2.74.0
+        version: 2.74.0(debug@4.4.3)
       '@fluidframework/test-utils':
         specifier: 2.74.0
         version: 2.74.0
       '@fluidframework/tree':
         specifier: 2.74.0
-        version: 2.74.0
+        version: 2.74.0(debug@4.4.3)
 
   2.80.0:
     dependencies:
       '@fluid-experimental/sequence-deprecated':
         specifier: 2.80.0
-        version: 2.80.0
+        version: 2.80.0(debug@4.4.3)
       '@fluidframework/agent-scheduler':
         specifier: 2.80.0
-        version: 2.80.0
+        version: 2.80.0(debug@4.4.3)
       '@fluidframework/aqueduct':
         specifier: 2.80.0
-        version: 2.80.0
+        version: 2.80.0(debug@4.4.3)
       '@fluidframework/cell':
         specifier: 2.80.0
-        version: 2.80.0
+        version: 2.80.0(debug@4.4.3)
       '@fluidframework/container-loader':
         specifier: 2.80.0
         version: 2.80.0
@@ -985,7 +988,7 @@ importers:
         version: 2.80.0(debug@4.4.3)
       '@fluidframework/counter':
         specifier: 2.80.0
-        version: 2.80.0
+        version: 2.80.0(debug@4.4.3)
       '@fluidframework/datastore':
         specifier: 2.80.0
         version: 2.80.0(debug@4.4.3)
@@ -997,28 +1000,28 @@ importers:
         version: 2.80.0(debug@4.4.3)
       '@fluidframework/matrix':
         specifier: 2.80.0
-        version: 2.80.0
+        version: 2.80.0(debug@4.4.3)
       '@fluidframework/odsp-driver':
         specifier: 2.80.0
         version: 2.80.0(debug@4.4.3)
       '@fluidframework/ordered-collection':
         specifier: 2.80.0
-        version: 2.80.0
+        version: 2.80.0(debug@4.4.3)
       '@fluidframework/register-collection':
         specifier: 2.80.0
-        version: 2.80.0
+        version: 2.80.0(debug@4.4.3)
       '@fluidframework/routerlicious-driver':
         specifier: 2.80.0
         version: 2.80.0(debug@4.4.3)
       '@fluidframework/sequence':
         specifier: 2.80.0
-        version: 2.80.0
+        version: 2.80.0(debug@4.4.3)
       '@fluidframework/test-utils':
         specifier: 2.80.0
         version: 2.80.0
       '@fluidframework/tree':
         specifier: 2.80.0
-        version: 2.80.0
+        version: 2.80.0(debug@4.4.3)
 
   2.83.0:
     dependencies:
@@ -3789,6 +3792,10 @@ packages:
   after@0.8.2:
     resolution: {integrity: sha512-QbJ0NTQ/I9DI3uSJA4cbexiwQeRAfjPScqIbSjUDd9TOrcg6pTkdgziesOqxBMBzit8vFCTwrP27t13vFOORRA==}
 
+  agent-base@6.0.2:
+    resolution: {integrity: sha512-RZNwNclF7+MS/8bDg70amg32dyeZGZxiDuQmZxKLAlQjr3jGyLx+4Kkk58UO7D2QdgFIQCovuSuZESne6RG6XQ==}
+    engines: {node: '>= 6.0.0'}
+
   ansi-regex@5.0.1:
     resolution: {integrity: sha512-quJQXlTSUGL2LH9SUXo8VwsY4soanhgo6LNSm84E1LBcE8s3O0wpdiRzyR9z/ZZJMlMWv37qOOb9pdJlMUEKFQ==}
     engines: {node: '>=8'}
@@ -3816,11 +3823,11 @@ packages:
     resolution: {integrity: sha512-wvUjBtSGN7+7SjNpq/9M2Tg350UZD3q62IFZLbRAR1bSMlCo1ZaeW+BJ+D090e4hIIZLBcTDWe4Mh4jvUDajzQ==}
     engines: {node: '>= 0.4'}
 
-  axios@0.31.1:
-    resolution: {integrity: sha512-Ef8DUZSZQP6igY48mjGaoEjwhely97lserep0IFJifBH4YdKvwH5eMLniy3kig2HQoBNR8EkZpDjowxwTJcmbg==}
+  axios@0.33.0:
+    resolution: {integrity: sha512-juz19g7B3UWT9r3+tgRFQf2Bdy6IKDVroiyuVOUrkILVKHpqHL++K1l8ybvfdEP9B/VE72vk8vllbnedVCm/og==}
 
-  axios@1.16.0:
-    resolution: {integrity: sha512-6hp5CwvTPlN2A31g5dxnwAX0orzM7pmCRDLnZSX772mv8WDqICwFjowHuPs04Mc8deIld1+ejhtaMn5vp6b+1w==}
+  axios@1.18.1:
+    resolution: {integrity: sha512-3nTvFlvpn9Zu/RkHUqtc7/+al4UpRW5az71ap5zccp6e8RAYEzhMTecX8Dz1wWDYrPpUoB1HAQEGEAEvUr7S9g==}
 
   backo2@1.0.2:
     resolution: {integrity: sha512-zj6Z6M7Eq+PBZ7PQxl5NT665MvJdAkzp0f60nAJ+sLaSCBPMwVak5ZegFbgVCzFcCJTKFoMizvM5Ld7+JrRJHA==}
@@ -4060,6 +4067,10 @@ packages:
   hasown@2.0.4:
     resolution: {integrity: sha512-T2UbfbBEF32wiepXIsMlTW9+dDYC6wMh/t/vYA4tuOMKqWz/n3vr1NFSxQiyP+zk2mXsoMA/i/7qV6LKut1t1A==}
     engines: {node: '>= 0.4'}
+
+  https-proxy-agent@5.0.1:
+    resolution: {integrity: sha512-dFcAjpTQFgoLMzC2VwU+C/CbS7uRL0lWmxDITmqm7C+7F0Odmj6s9l6alZc6AELXhrnggM2CeWSXHGOdX2YtwA==}
+    engines: {node: '>= 6'}
 
   ieee754@1.2.1:
     resolution: {integrity: sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA==}
@@ -4469,49 +4480,49 @@ packages:
 
 snapshots:
 
-  '@fluid-experimental/sequence-deprecated@2.0.0-internal.5.4.2':
+  '@fluid-experimental/sequence-deprecated@2.0.0-internal.5.4.2(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': 2.0.0-internal.5.4.2
       '@fluidframework/datastore-definitions': 2.0.0-internal.5.4.2
-      '@fluidframework/merge-tree': 2.0.0-internal.5.4.2
-      '@fluidframework/sequence': 2.0.0-internal.5.4.2
+      '@fluidframework/merge-tree': 2.0.0-internal.5.4.2(debug@4.4.3)
+      '@fluidframework/sequence': 2.0.0-internal.5.4.2(debug@4.4.3)
       '@fluidframework/shared-object-base': 2.0.0-internal.5.4.2(debug@4.4.3)
     transitivePeerDependencies:
       - debug
       - supports-color
 
-  '@fluid-experimental/sequence-deprecated@2.0.0-internal.7.0.0':
+  '@fluid-experimental/sequence-deprecated@2.0.0-internal.7.0.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/core-interfaces': 2.0.0-internal.7.0.3
       '@fluidframework/core-utils': 2.0.0-internal.7.0.3
       '@fluidframework/datastore-definitions': 2.0.0-internal.7.0.3
-      '@fluidframework/merge-tree': 2.0.0-internal.7.0.3
-      '@fluidframework/sequence': 2.0.0-internal.7.0.0
+      '@fluidframework/merge-tree': 2.0.0-internal.7.0.3(debug@4.4.3)
+      '@fluidframework/sequence': 2.0.0-internal.7.0.0(debug@4.4.3)
       '@fluidframework/shared-object-base': 2.0.0-internal.7.0.3(debug@4.4.3)
     transitivePeerDependencies:
       - debug
       - supports-color
 
-  '@fluid-experimental/sequence-deprecated@2.0.0-rc.5.0.8':
+  '@fluid-experimental/sequence-deprecated@2.0.0-rc.5.0.8(debug@4.4.3)':
     dependencies:
       '@fluidframework/core-interfaces': 2.0.0-rc.5.0.8
       '@fluidframework/core-utils': 2.0.0-rc.5.0.8
       '@fluidframework/datastore-definitions': 2.0.0-rc.5.0.8
       '@fluidframework/merge-tree': 2.0.0-rc.5.0.8(debug@4.4.3)
-      '@fluidframework/sequence': 2.0.0-rc.5.0.8
+      '@fluidframework/sequence': 2.0.0-rc.5.0.8(debug@4.4.3)
       '@fluidframework/shared-object-base': 2.0.0-rc.5.0.8(debug@4.4.3)
     transitivePeerDependencies:
       - debug
       - supports-color
 
-  '@fluid-experimental/sequence-deprecated@2.0.9':
+  '@fluid-experimental/sequence-deprecated@2.0.9(debug@4.4.3)':
     dependencies:
       '@fluidframework/core-interfaces': 2.0.9
       '@fluidframework/core-utils': 2.0.9
       '@fluidframework/datastore-definitions': 2.0.9
       '@fluidframework/merge-tree': 2.0.9(debug@4.4.3)
-      '@fluidframework/sequence': 2.0.9
+      '@fluidframework/sequence': 2.0.9(debug@4.4.3)
       '@fluidframework/shared-object-base': 2.0.9(debug@4.4.3)
     transitivePeerDependencies:
       - debug
@@ -4528,121 +4539,121 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluid-experimental/sequence-deprecated@2.13.0':
+  '@fluid-experimental/sequence-deprecated@2.13.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/core-interfaces': 2.13.0
       '@fluidframework/core-utils': 2.13.0
       '@fluidframework/datastore-definitions': 2.13.0
       '@fluidframework/merge-tree': 2.13.0(debug@4.4.3)
-      '@fluidframework/sequence': 2.13.0
+      '@fluidframework/sequence': 2.13.0(debug@4.4.3)
       '@fluidframework/shared-object-base': 2.13.0(debug@4.4.3)
     transitivePeerDependencies:
       - debug
       - supports-color
 
-  '@fluid-experimental/sequence-deprecated@2.23.0':
+  '@fluid-experimental/sequence-deprecated@2.23.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/core-interfaces': 2.23.0
       '@fluidframework/core-utils': 2.23.0
       '@fluidframework/datastore-definitions': 2.23.0
       '@fluidframework/merge-tree': 2.23.0(debug@4.4.3)
-      '@fluidframework/sequence': 2.23.0
+      '@fluidframework/sequence': 2.23.0(debug@4.4.3)
       '@fluidframework/shared-object-base': 2.23.0(debug@4.4.3)
     transitivePeerDependencies:
       - debug
       - supports-color
 
-  '@fluid-experimental/sequence-deprecated@2.33.2':
+  '@fluid-experimental/sequence-deprecated@2.33.2(debug@4.4.3)':
     dependencies:
       '@fluidframework/core-interfaces': 2.33.2
       '@fluidframework/core-utils': 2.33.2
       '@fluidframework/datastore-definitions': 2.33.2
       '@fluidframework/merge-tree': 2.33.2(debug@4.4.3)
-      '@fluidframework/sequence': 2.33.2
+      '@fluidframework/sequence': 2.33.2(debug@4.4.3)
       '@fluidframework/shared-object-base': 2.33.2(debug@4.4.3)
     transitivePeerDependencies:
       - debug
       - supports-color
 
-  '@fluid-experimental/sequence-deprecated@2.40.0':
+  '@fluid-experimental/sequence-deprecated@2.40.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/core-interfaces': 2.40.0
       '@fluidframework/core-utils': 2.40.0
       '@fluidframework/datastore-definitions': 2.40.0
       '@fluidframework/merge-tree': 2.40.0(debug@4.4.3)
-      '@fluidframework/sequence': 2.40.0
+      '@fluidframework/sequence': 2.40.0(debug@4.4.3)
       '@fluidframework/shared-object-base': 2.40.0(debug@4.4.3)
     transitivePeerDependencies:
       - debug
       - supports-color
 
-  '@fluid-experimental/sequence-deprecated@2.43.0':
+  '@fluid-experimental/sequence-deprecated@2.43.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/core-interfaces': 2.43.0
       '@fluidframework/core-utils': 2.43.0
       '@fluidframework/datastore-definitions': 2.43.0
       '@fluidframework/merge-tree': 2.43.0(debug@4.4.3)
-      '@fluidframework/sequence': 2.43.0
+      '@fluidframework/sequence': 2.43.0(debug@4.4.3)
       '@fluidframework/shared-object-base': 2.43.0(debug@4.4.3)
     transitivePeerDependencies:
       - debug
       - supports-color
 
-  '@fluid-experimental/sequence-deprecated@2.5.0':
+  '@fluid-experimental/sequence-deprecated@2.5.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/core-interfaces': 2.5.0
       '@fluidframework/core-utils': 2.5.0
       '@fluidframework/datastore-definitions': 2.5.0
       '@fluidframework/merge-tree': 2.5.0(debug@4.4.3)
-      '@fluidframework/sequence': 2.5.0
+      '@fluidframework/sequence': 2.5.0(debug@4.4.3)
       '@fluidframework/shared-object-base': 2.5.0(debug@4.4.3)
     transitivePeerDependencies:
       - debug
       - supports-color
 
-  '@fluid-experimental/sequence-deprecated@2.53.1':
+  '@fluid-experimental/sequence-deprecated@2.53.1(debug@4.4.3)':
     dependencies:
       '@fluidframework/core-interfaces': 2.53.1
       '@fluidframework/core-utils': 2.53.1
       '@fluidframework/datastore-definitions': 2.53.1
       '@fluidframework/merge-tree': 2.53.1(debug@4.4.3)
-      '@fluidframework/sequence': 2.53.1
+      '@fluidframework/sequence': 2.53.1(debug@4.4.3)
       '@fluidframework/shared-object-base': 2.53.1(debug@4.4.3)
     transitivePeerDependencies:
       - debug
       - supports-color
 
-  '@fluid-experimental/sequence-deprecated@2.63.0':
+  '@fluid-experimental/sequence-deprecated@2.63.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/core-interfaces': 2.63.0
       '@fluidframework/core-utils': 2.63.0
       '@fluidframework/datastore-definitions': 2.63.0
-      '@fluidframework/merge-tree': 2.63.0
-      '@fluidframework/sequence': 2.63.0
+      '@fluidframework/merge-tree': 2.63.0(debug@4.4.3)
+      '@fluidframework/sequence': 2.63.0(debug@4.4.3)
       '@fluidframework/shared-object-base': 2.63.0(debug@4.4.3)
     transitivePeerDependencies:
       - debug
       - supports-color
 
-  '@fluid-experimental/sequence-deprecated@2.74.0':
+  '@fluid-experimental/sequence-deprecated@2.74.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/core-interfaces': 2.74.0
       '@fluidframework/core-utils': 2.74.0
       '@fluidframework/datastore-definitions': 2.74.0
-      '@fluidframework/merge-tree': 2.74.0
-      '@fluidframework/sequence': 2.74.0
+      '@fluidframework/merge-tree': 2.74.0(debug@4.4.3)
+      '@fluidframework/sequence': 2.74.0(debug@4.4.3)
       '@fluidframework/shared-object-base': 2.74.0(debug@4.4.3)
     transitivePeerDependencies:
       - debug
       - supports-color
 
-  '@fluid-experimental/sequence-deprecated@2.80.0':
+  '@fluid-experimental/sequence-deprecated@2.80.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/core-interfaces': 2.80.0
       '@fluidframework/core-utils': 2.80.0
       '@fluidframework/datastore-definitions': 2.80.0
-      '@fluidframework/merge-tree': 2.80.0
-      '@fluidframework/sequence': 2.80.0
+      '@fluidframework/merge-tree': 2.80.0(debug@4.4.3)
+      '@fluidframework/sequence': 2.80.0(debug@4.4.3)
       '@fluidframework/shared-object-base': 2.80.0(debug@4.4.3)
     transitivePeerDependencies:
       - debug
@@ -4906,7 +4917,7 @@ snapshots:
       '@fluidframework/core-interfaces': 2.93.0
       '@fluidframework/driver-definitions': 2.93.0
 
-  '@fluidframework/agent-scheduler@0.56.0':
+  '@fluidframework/agent-scheduler@0.56.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 0.32.2
@@ -4915,7 +4926,7 @@ snapshots:
       '@fluidframework/datastore': 0.56.0(debug@4.4.3)
       '@fluidframework/datastore-definitions': 0.56.11
       '@fluidframework/map': 0.56.0(debug@4.4.3)
-      '@fluidframework/register-collection': 0.56.0
+      '@fluidframework/register-collection': 0.56.0(debug@4.4.3)
       '@fluidframework/runtime-definitions': 0.56.11
       '@fluidframework/runtime-utils': 0.56.11
       uuid: 11.1.1
@@ -4923,7 +4934,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/agent-scheduler@1.4.0':
+  '@fluidframework/agent-scheduler@1.4.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 0.32.2
@@ -4932,7 +4943,7 @@ snapshots:
       '@fluidframework/datastore': 1.4.0(debug@4.4.3)
       '@fluidframework/datastore-definitions': 1.4.0
       '@fluidframework/map': 1.4.0(debug@4.4.3)
-      '@fluidframework/register-collection': 1.4.0
+      '@fluidframework/register-collection': 1.4.0(debug@4.4.3)
       '@fluidframework/runtime-definitions': 1.4.0
       '@fluidframework/runtime-utils': 1.4.0
       uuid: 11.1.1
@@ -4940,7 +4951,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/agent-scheduler@2.0.0-internal.1.4.6':
+  '@fluidframework/agent-scheduler@2.0.0-internal.1.4.6(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
@@ -4949,7 +4960,7 @@ snapshots:
       '@fluidframework/datastore': 2.0.0-internal.1.4.6(debug@4.4.3)
       '@fluidframework/datastore-definitions': 2.0.0-internal.1.4.9
       '@fluidframework/map': 2.0.0-internal.1.4.6(debug@4.4.3)
-      '@fluidframework/register-collection': 2.0.0-internal.1.4.6
+      '@fluidframework/register-collection': 2.0.0-internal.1.4.6(debug@4.4.3)
       '@fluidframework/runtime-definitions': 2.0.0-internal.1.4.9
       '@fluidframework/runtime-utils': 2.0.0-internal.1.4.9
       uuid: 11.1.1
@@ -4957,7 +4968,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/agent-scheduler@2.0.0-internal.5.4.2':
+  '@fluidframework/agent-scheduler@2.0.0-internal.5.4.2(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
@@ -4967,7 +4978,7 @@ snapshots:
       '@fluidframework/datastore': 2.0.0-internal.5.4.2(debug@4.4.3)
       '@fluidframework/datastore-definitions': 2.0.0-internal.5.4.2
       '@fluidframework/map': 2.0.0-internal.5.4.2(debug@4.4.3)
-      '@fluidframework/register-collection': 2.0.0-internal.5.4.2
+      '@fluidframework/register-collection': 2.0.0-internal.5.4.2(debug@4.4.3)
       '@fluidframework/runtime-definitions': 2.0.0-internal.5.4.2
       '@fluidframework/runtime-utils': 2.0.0-internal.5.4.2(debug@4.4.3)
       '@fluidframework/telemetry-utils': 2.0.0-internal.5.4.2
@@ -4976,7 +4987,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/agent-scheduler@2.0.0-internal.7.0.0':
+  '@fluidframework/agent-scheduler@2.0.0-internal.7.0.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.7.0.3
       '@fluidframework/container-definitions': 2.0.0-internal.7.0.3
@@ -4985,7 +4996,7 @@ snapshots:
       '@fluidframework/datastore': 2.0.0-internal.7.0.0(debug@4.4.3)
       '@fluidframework/datastore-definitions': 2.0.0-internal.7.0.3
       '@fluidframework/map': 2.0.0-internal.7.0.0(debug@4.4.3)
-      '@fluidframework/register-collection': 2.0.0-internal.7.0.0
+      '@fluidframework/register-collection': 2.0.0-internal.7.0.0(debug@4.4.3)
       '@fluidframework/runtime-definitions': 2.0.0-internal.7.0.3
       '@fluidframework/runtime-utils': 2.0.0-internal.7.0.3(debug@4.4.3)
       '@fluidframework/telemetry-utils': 2.0.0-internal.7.0.3
@@ -4994,7 +5005,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/agent-scheduler@2.0.0-rc.5.0.8':
+  '@fluidframework/agent-scheduler@2.0.0-rc.5.0.8(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-rc.5.0.8
       '@fluidframework/container-definitions': 2.0.0-rc.5.0.8
@@ -5003,7 +5014,7 @@ snapshots:
       '@fluidframework/datastore': 2.0.0-rc.5.0.8(debug@4.4.3)
       '@fluidframework/datastore-definitions': 2.0.0-rc.5.0.8
       '@fluidframework/map': 2.0.0-rc.5.0.8(debug@4.4.3)
-      '@fluidframework/register-collection': 2.0.0-rc.5.0.8
+      '@fluidframework/register-collection': 2.0.0-rc.5.0.8(debug@4.4.3)
       '@fluidframework/runtime-definitions': 2.0.0-rc.5.0.8
       '@fluidframework/runtime-utils': 2.0.0-rc.5.0.8(debug@4.4.3)
       '@fluidframework/telemetry-utils': 2.0.0-rc.5.0.8
@@ -5012,7 +5023,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/agent-scheduler@2.0.9':
+  '@fluidframework/agent-scheduler@2.0.9(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.0.9
       '@fluidframework/container-definitions': 2.0.9
@@ -5021,7 +5032,7 @@ snapshots:
       '@fluidframework/datastore': 2.0.9(debug@4.4.3)
       '@fluidframework/datastore-definitions': 2.0.9
       '@fluidframework/map': 2.0.9(debug@4.4.3)
-      '@fluidframework/register-collection': 2.0.9
+      '@fluidframework/register-collection': 2.0.9(debug@4.4.3)
       '@fluidframework/runtime-definitions': 2.0.9
       '@fluidframework/runtime-utils': 2.0.9(debug@4.4.3)
       '@fluidframework/telemetry-utils': 2.0.9
@@ -5047,7 +5058,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/agent-scheduler@2.13.0':
+  '@fluidframework/agent-scheduler@2.13.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.13.0
       '@fluidframework/container-definitions': 2.13.0
@@ -5056,7 +5067,7 @@ snapshots:
       '@fluidframework/datastore': 2.13.0(debug@4.4.3)
       '@fluidframework/datastore-definitions': 2.13.0
       '@fluidframework/map': 2.13.0(debug@4.4.3)
-      '@fluidframework/register-collection': 2.13.0
+      '@fluidframework/register-collection': 2.13.0(debug@4.4.3)
       '@fluidframework/runtime-definitions': 2.13.0
       '@fluidframework/runtime-utils': 2.13.0(debug@4.4.3)
       '@fluidframework/telemetry-utils': 2.13.0
@@ -5065,7 +5076,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/agent-scheduler@2.23.0':
+  '@fluidframework/agent-scheduler@2.23.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.23.0
       '@fluidframework/container-definitions': 2.23.0
@@ -5074,7 +5085,7 @@ snapshots:
       '@fluidframework/datastore': 2.23.0(debug@4.4.3)
       '@fluidframework/datastore-definitions': 2.23.0
       '@fluidframework/map': 2.23.0(debug@4.4.3)
-      '@fluidframework/register-collection': 2.23.0
+      '@fluidframework/register-collection': 2.23.0(debug@4.4.3)
       '@fluidframework/runtime-definitions': 2.23.0
       '@fluidframework/runtime-utils': 2.23.0(debug@4.4.3)
       '@fluidframework/telemetry-utils': 2.23.0
@@ -5083,7 +5094,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/agent-scheduler@2.33.2':
+  '@fluidframework/agent-scheduler@2.33.2(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.33.2
       '@fluidframework/container-definitions': 2.33.2
@@ -5092,7 +5103,7 @@ snapshots:
       '@fluidframework/datastore': 2.33.2(debug@4.4.3)
       '@fluidframework/datastore-definitions': 2.33.2
       '@fluidframework/map': 2.33.2(debug@4.4.3)
-      '@fluidframework/register-collection': 2.33.2
+      '@fluidframework/register-collection': 2.33.2(debug@4.4.3)
       '@fluidframework/runtime-definitions': 2.33.2
       '@fluidframework/runtime-utils': 2.33.2(debug@4.4.3)
       '@fluidframework/telemetry-utils': 2.33.2
@@ -5101,7 +5112,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/agent-scheduler@2.40.0':
+  '@fluidframework/agent-scheduler@2.40.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.40.0
       '@fluidframework/container-definitions': 2.40.0
@@ -5110,7 +5121,7 @@ snapshots:
       '@fluidframework/datastore': 2.40.0(debug@4.4.3)
       '@fluidframework/datastore-definitions': 2.40.0
       '@fluidframework/map': 2.40.0(debug@4.4.3)
-      '@fluidframework/register-collection': 2.40.0
+      '@fluidframework/register-collection': 2.40.0(debug@4.4.3)
       '@fluidframework/runtime-definitions': 2.40.0
       '@fluidframework/runtime-utils': 2.40.0(debug@4.4.3)
       '@fluidframework/telemetry-utils': 2.40.0
@@ -5119,7 +5130,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/agent-scheduler@2.43.0':
+  '@fluidframework/agent-scheduler@2.43.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.43.0
       '@fluidframework/container-definitions': 2.43.0
@@ -5128,7 +5139,7 @@ snapshots:
       '@fluidframework/datastore': 2.43.0(debug@4.4.3)
       '@fluidframework/datastore-definitions': 2.43.0
       '@fluidframework/map': 2.43.0(debug@4.4.3)
-      '@fluidframework/register-collection': 2.43.0
+      '@fluidframework/register-collection': 2.43.0(debug@4.4.3)
       '@fluidframework/runtime-definitions': 2.43.0
       '@fluidframework/runtime-utils': 2.43.0(debug@4.4.3)
       '@fluidframework/telemetry-utils': 2.43.0
@@ -5137,7 +5148,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/agent-scheduler@2.5.0':
+  '@fluidframework/agent-scheduler@2.5.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.5.0
       '@fluidframework/container-definitions': 2.5.0
@@ -5146,7 +5157,7 @@ snapshots:
       '@fluidframework/datastore': 2.5.0(debug@4.4.3)
       '@fluidframework/datastore-definitions': 2.5.0
       '@fluidframework/map': 2.5.0(debug@4.4.3)
-      '@fluidframework/register-collection': 2.5.0
+      '@fluidframework/register-collection': 2.5.0(debug@4.4.3)
       '@fluidframework/runtime-definitions': 2.5.0
       '@fluidframework/runtime-utils': 2.5.0(debug@4.4.3)
       '@fluidframework/telemetry-utils': 2.5.0
@@ -5155,7 +5166,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/agent-scheduler@2.53.1':
+  '@fluidframework/agent-scheduler@2.53.1(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.53.1
       '@fluidframework/container-definitions': 2.53.1
@@ -5164,7 +5175,7 @@ snapshots:
       '@fluidframework/datastore': 2.53.1(debug@4.4.3)
       '@fluidframework/datastore-definitions': 2.53.1
       '@fluidframework/map': 2.53.1(debug@4.4.3)
-      '@fluidframework/register-collection': 2.53.1
+      '@fluidframework/register-collection': 2.53.1(debug@4.4.3)
       '@fluidframework/runtime-definitions': 2.53.1
       '@fluidframework/runtime-utils': 2.53.1(debug@4.4.3)
       '@fluidframework/telemetry-utils': 2.53.1
@@ -5173,7 +5184,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/agent-scheduler@2.63.0':
+  '@fluidframework/agent-scheduler@2.63.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.63.0
       '@fluidframework/container-definitions': 2.63.0
@@ -5182,7 +5193,7 @@ snapshots:
       '@fluidframework/datastore': 2.63.0(debug@4.4.3)
       '@fluidframework/datastore-definitions': 2.63.0
       '@fluidframework/map': 2.63.0(debug@4.4.3)
-      '@fluidframework/register-collection': 2.63.0
+      '@fluidframework/register-collection': 2.63.0(debug@4.4.3)
       '@fluidframework/runtime-definitions': 2.63.0
       '@fluidframework/runtime-utils': 2.63.0(debug@4.4.3)
       '@fluidframework/telemetry-utils': 2.63.0
@@ -5191,7 +5202,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/agent-scheduler@2.74.0':
+  '@fluidframework/agent-scheduler@2.74.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.74.0
       '@fluidframework/container-definitions': 2.74.0
@@ -5200,7 +5211,7 @@ snapshots:
       '@fluidframework/datastore': 2.74.0(debug@4.4.3)
       '@fluidframework/datastore-definitions': 2.74.0
       '@fluidframework/map': 2.74.0(debug@4.4.3)
-      '@fluidframework/register-collection': 2.74.0
+      '@fluidframework/register-collection': 2.74.0(debug@4.4.3)
       '@fluidframework/runtime-definitions': 2.74.0
       '@fluidframework/runtime-utils': 2.74.0(debug@4.4.3)
       '@fluidframework/telemetry-utils': 2.74.0
@@ -5209,7 +5220,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/agent-scheduler@2.80.0':
+  '@fluidframework/agent-scheduler@2.80.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.80.0
       '@fluidframework/container-definitions': 2.80.0
@@ -5218,7 +5229,7 @@ snapshots:
       '@fluidframework/datastore': 2.80.0(debug@4.4.3)
       '@fluidframework/datastore-definitions': 2.80.0
       '@fluidframework/map': 2.80.0(debug@4.4.3)
-      '@fluidframework/register-collection': 2.80.0
+      '@fluidframework/register-collection': 2.80.0(debug@4.4.3)
       '@fluidframework/runtime-definitions': 2.80.0
       '@fluidframework/runtime-utils': 2.80.0(debug@4.4.3)
       '@fluidframework/telemetry-utils': 2.80.0
@@ -5450,7 +5461,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/aqueduct@2.23.0':
+  '@fluidframework/aqueduct@2.23.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.23.0
       '@fluidframework/container-definitions': 2.23.0
@@ -5470,7 +5481,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/aqueduct@2.33.2':
+  '@fluidframework/aqueduct@2.33.2(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.33.2
       '@fluidframework/container-definitions': 2.33.2
@@ -5487,12 +5498,12 @@ snapshots:
       '@fluidframework/shared-object-base': 2.33.2(debug@4.4.3)
       '@fluidframework/synthesize': 2.33.2
       '@fluidframework/telemetry-utils': 2.33.2
-      '@fluidframework/tree': 2.33.2
+      '@fluidframework/tree': 2.33.2(debug@4.4.3)
     transitivePeerDependencies:
       - debug
       - supports-color
 
-  '@fluidframework/aqueduct@2.40.0':
+  '@fluidframework/aqueduct@2.40.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.40.0
       '@fluidframework/container-definitions': 2.40.0
@@ -5509,12 +5520,12 @@ snapshots:
       '@fluidframework/shared-object-base': 2.40.0(debug@4.4.3)
       '@fluidframework/synthesize': 2.40.0
       '@fluidframework/telemetry-utils': 2.40.0
-      '@fluidframework/tree': 2.40.0
+      '@fluidframework/tree': 2.40.0(debug@4.4.3)
     transitivePeerDependencies:
       - debug
       - supports-color
 
-  '@fluidframework/aqueduct@2.43.0':
+  '@fluidframework/aqueduct@2.43.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.43.0
       '@fluidframework/container-definitions': 2.43.0
@@ -5531,7 +5542,7 @@ snapshots:
       '@fluidframework/shared-object-base': 2.43.0(debug@4.4.3)
       '@fluidframework/synthesize': 2.43.0
       '@fluidframework/telemetry-utils': 2.43.0
-      '@fluidframework/tree': 2.43.0
+      '@fluidframework/tree': 2.43.0(debug@4.4.3)
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -5556,7 +5567,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/aqueduct@2.53.1':
+  '@fluidframework/aqueduct@2.53.1(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.53.1
       '@fluidframework/container-definitions': 2.53.1
@@ -5573,12 +5584,12 @@ snapshots:
       '@fluidframework/shared-object-base': 2.53.1(debug@4.4.3)
       '@fluidframework/synthesize': 2.53.1
       '@fluidframework/telemetry-utils': 2.53.1
-      '@fluidframework/tree': 2.53.1
+      '@fluidframework/tree': 2.53.1(debug@4.4.3)
     transitivePeerDependencies:
       - debug
       - supports-color
 
-  '@fluidframework/aqueduct@2.63.0':
+  '@fluidframework/aqueduct@2.63.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.63.0
       '@fluidframework/container-definitions': 2.63.0
@@ -5595,12 +5606,12 @@ snapshots:
       '@fluidframework/shared-object-base': 2.63.0(debug@4.4.3)
       '@fluidframework/synthesize': 2.63.0
       '@fluidframework/telemetry-utils': 2.63.0
-      '@fluidframework/tree': 2.63.0
+      '@fluidframework/tree': 2.63.0(debug@4.4.3)
     transitivePeerDependencies:
       - debug
       - supports-color
 
-  '@fluidframework/aqueduct@2.74.0':
+  '@fluidframework/aqueduct@2.74.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.74.0
       '@fluidframework/container-definitions': 2.74.0
@@ -5617,12 +5628,12 @@ snapshots:
       '@fluidframework/shared-object-base': 2.74.0(debug@4.4.3)
       '@fluidframework/synthesize': 2.74.0
       '@fluidframework/telemetry-utils': 2.74.0
-      '@fluidframework/tree': 2.74.0
+      '@fluidframework/tree': 2.74.0(debug@4.4.3)
     transitivePeerDependencies:
       - debug
       - supports-color
 
-  '@fluidframework/aqueduct@2.80.0':
+  '@fluidframework/aqueduct@2.80.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.80.0
       '@fluidframework/container-definitions': 2.80.0
@@ -5639,7 +5650,7 @@ snapshots:
       '@fluidframework/shared-object-base': 2.80.0(debug@4.4.3)
       '@fluidframework/synthesize': 2.80.0
       '@fluidframework/telemetry-utils': 2.80.0
-      '@fluidframework/tree': 2.80.0
+      '@fluidframework/tree': 2.80.0(debug@4.4.3)
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -5691,7 +5702,7 @@ snapshots:
       '@fluidframework/protocol-definitions': 0.1026.0
       jsrsasign: 11.1.2
 
-  '@fluidframework/cell@0.56.0':
+  '@fluidframework/cell@0.56.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-utils': 0.32.2
       '@fluidframework/core-interfaces': 0.42.0
@@ -5704,7 +5715,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/cell@1.4.0':
+  '@fluidframework/cell@1.4.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-utils': 0.32.2
       '@fluidframework/core-interfaces': 1.4.0
@@ -5717,7 +5728,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/cell@2.0.0-internal.1.4.6':
+  '@fluidframework/cell@2.0.0-internal.1.4.6(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': 2.0.0-internal.1.4.9
@@ -5730,7 +5741,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/cell@2.0.0-internal.5.4.2':
+  '@fluidframework/cell@2.0.0-internal.5.4.2(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': 2.0.0-internal.5.4.2
@@ -5743,7 +5754,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/cell@2.0.0-internal.7.0.0':
+  '@fluidframework/cell@2.0.0-internal.7.0.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/core-interfaces': 2.0.0-internal.7.0.3
       '@fluidframework/core-utils': 2.0.0-internal.7.0.3
@@ -5756,7 +5767,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/cell@2.0.0-rc.5.0.8':
+  '@fluidframework/cell@2.0.0-rc.5.0.8(debug@4.4.3)':
     dependencies:
       '@fluidframework/core-interfaces': 2.0.0-rc.5.0.8
       '@fluidframework/core-utils': 2.0.0-rc.5.0.8
@@ -5769,7 +5780,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/cell@2.0.9':
+  '@fluidframework/cell@2.0.9(debug@4.4.3)':
     dependencies:
       '@fluidframework/core-interfaces': 2.0.9
       '@fluidframework/core-utils': 2.0.9
@@ -5794,7 +5805,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/cell@2.13.0':
+  '@fluidframework/cell@2.13.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/core-interfaces': 2.13.0
       '@fluidframework/core-utils': 2.13.0
@@ -5807,7 +5818,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/cell@2.23.0':
+  '@fluidframework/cell@2.23.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/core-interfaces': 2.23.0
       '@fluidframework/core-utils': 2.23.0
@@ -5820,7 +5831,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/cell@2.33.2':
+  '@fluidframework/cell@2.33.2(debug@4.4.3)':
     dependencies:
       '@fluidframework/core-interfaces': 2.33.2
       '@fluidframework/core-utils': 2.33.2
@@ -5833,7 +5844,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/cell@2.40.0':
+  '@fluidframework/cell@2.40.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/core-interfaces': 2.40.0
       '@fluidframework/core-utils': 2.40.0
@@ -5846,7 +5857,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/cell@2.43.0':
+  '@fluidframework/cell@2.43.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/core-interfaces': 2.43.0
       '@fluidframework/core-utils': 2.43.0
@@ -5859,7 +5870,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/cell@2.5.0':
+  '@fluidframework/cell@2.5.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/core-interfaces': 2.5.0
       '@fluidframework/core-utils': 2.5.0
@@ -5872,7 +5883,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/cell@2.53.1':
+  '@fluidframework/cell@2.53.1(debug@4.4.3)':
     dependencies:
       '@fluidframework/core-interfaces': 2.53.1
       '@fluidframework/core-utils': 2.53.1
@@ -5885,7 +5896,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/cell@2.63.0':
+  '@fluidframework/cell@2.63.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/core-interfaces': 2.63.0
       '@fluidframework/core-utils': 2.63.0
@@ -5898,7 +5909,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/cell@2.74.0':
+  '@fluidframework/cell@2.74.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/core-interfaces': 2.74.0
       '@fluidframework/core-utils': 2.74.0
@@ -5911,7 +5922,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/cell@2.80.0':
+  '@fluidframework/cell@2.80.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/core-interfaces': 2.80.0
       '@fluidframework/core-utils': 2.80.0
@@ -7268,7 +7279,7 @@ snapshots:
 
   '@fluidframework/core-utils@2.93.0': {}
 
-  '@fluidframework/counter@0.56.0':
+  '@fluidframework/counter@0.56.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-utils': 0.32.2
       '@fluidframework/core-interfaces': 0.42.0
@@ -7281,7 +7292,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/counter@1.4.0':
+  '@fluidframework/counter@1.4.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-utils': 0.32.2
       '@fluidframework/core-interfaces': 1.4.0
@@ -7294,7 +7305,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/counter@2.0.0-internal.1.4.6':
+  '@fluidframework/counter@2.0.0-internal.1.4.6(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': 2.0.0-internal.1.4.9
@@ -7307,7 +7318,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/counter@2.0.0-internal.5.4.2':
+  '@fluidframework/counter@2.0.0-internal.5.4.2(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': 2.0.0-internal.5.4.2
@@ -7320,7 +7331,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/counter@2.0.0-internal.7.0.0':
+  '@fluidframework/counter@2.0.0-internal.7.0.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/core-interfaces': 2.0.0-internal.7.0.3
       '@fluidframework/core-utils': 2.0.0-internal.7.0.3
@@ -7333,7 +7344,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/counter@2.0.0-rc.5.0.8':
+  '@fluidframework/counter@2.0.0-rc.5.0.8(debug@4.4.3)':
     dependencies:
       '@fluidframework/core-interfaces': 2.0.0-rc.5.0.8
       '@fluidframework/core-utils': 2.0.0-rc.5.0.8
@@ -7346,7 +7357,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/counter@2.0.9':
+  '@fluidframework/counter@2.0.9(debug@4.4.3)':
     dependencies:
       '@fluidframework/core-interfaces': 2.0.9
       '@fluidframework/core-utils': 2.0.9
@@ -7371,7 +7382,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/counter@2.13.0':
+  '@fluidframework/counter@2.13.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/core-interfaces': 2.13.0
       '@fluidframework/core-utils': 2.13.0
@@ -7384,7 +7395,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/counter@2.23.0':
+  '@fluidframework/counter@2.23.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/core-interfaces': 2.23.0
       '@fluidframework/core-utils': 2.23.0
@@ -7397,7 +7408,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/counter@2.33.2':
+  '@fluidframework/counter@2.33.2(debug@4.4.3)':
     dependencies:
       '@fluidframework/core-interfaces': 2.33.2
       '@fluidframework/core-utils': 2.33.2
@@ -7410,7 +7421,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/counter@2.40.0':
+  '@fluidframework/counter@2.40.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/core-interfaces': 2.40.0
       '@fluidframework/core-utils': 2.40.0
@@ -7423,7 +7434,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/counter@2.43.0':
+  '@fluidframework/counter@2.43.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/core-interfaces': 2.43.0
       '@fluidframework/core-utils': 2.43.0
@@ -7436,7 +7447,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/counter@2.5.0':
+  '@fluidframework/counter@2.5.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/core-interfaces': 2.5.0
       '@fluidframework/core-utils': 2.5.0
@@ -7449,7 +7460,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/counter@2.53.1':
+  '@fluidframework/counter@2.53.1(debug@4.4.3)':
     dependencies:
       '@fluidframework/core-interfaces': 2.53.1
       '@fluidframework/core-utils': 2.53.1
@@ -7462,7 +7473,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/counter@2.63.0':
+  '@fluidframework/counter@2.63.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/core-interfaces': 2.63.0
       '@fluidframework/core-utils': 2.63.0
@@ -7475,7 +7486,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/counter@2.74.0':
+  '@fluidframework/counter@2.74.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/core-interfaces': 2.74.0
       '@fluidframework/core-utils': 2.74.0
@@ -7488,7 +7499,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/counter@2.80.0':
+  '@fluidframework/counter@2.80.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/core-interfaces': 2.80.0
       '@fluidframework/core-utils': 2.80.0
@@ -8494,7 +8505,7 @@ snapshots:
       '@fluidframework/protocol-base': 0.1034.0
       '@fluidframework/protocol-definitions': 0.1026.0
       '@fluidframework/telemetry-utils': 0.56.11
-      axios: 0.31.1(debug@4.4.3)
+      axios: 0.33.0(debug@4.4.3)
       uuid: 11.1.1
     transitivePeerDependencies:
       - debug
@@ -8510,7 +8521,7 @@ snapshots:
       '@fluidframework/protocol-base': 0.1036.5002
       '@fluidframework/protocol-definitions': 0.1028.2000
       '@fluidframework/telemetry-utils': 1.4.0
-      axios: 0.31.1(debug@4.4.3)
+      axios: 0.33.0(debug@4.4.3)
       uuid: 11.1.1
     transitivePeerDependencies:
       - debug
@@ -8526,7 +8537,7 @@ snapshots:
       '@fluidframework/protocol-base': 0.1037.2001
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/telemetry-utils': 2.0.0-internal.1.4.9
-      axios: 0.31.1(debug@4.4.3)
+      axios: 0.33.0(debug@4.4.3)
       url: 0.11.4
       uuid: 11.1.1
     transitivePeerDependencies:
@@ -8542,7 +8553,7 @@ snapshots:
       '@fluidframework/protocol-base': 0.1039.1000
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/telemetry-utils': 2.0.0-internal.5.4.2
-      axios: 0.31.1(debug@4.4.3)
+      axios: 0.33.0(debug@4.4.3)
       lz4js: 0.2.0
       url: 0.11.4
       uuid: 11.1.1
@@ -8560,7 +8571,7 @@ snapshots:
       '@fluidframework/protocol-base': 2.0.3
       '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/telemetry-utils': 2.0.0-internal.7.0.3
-      axios: 0.31.1(debug@4.4.3)
+      axios: 0.33.0(debug@4.4.3)
       lz4js: 0.2.0
       url: 0.11.4
       uuid: 11.1.1
@@ -8575,7 +8586,7 @@ snapshots:
       '@fluidframework/core-utils': 2.0.0-rc.5.0.8
       '@fluidframework/driver-definitions': 2.0.0-rc.5.0.8
       '@fluidframework/telemetry-utils': 2.0.0-rc.5.0.8
-      axios: 1.16.0(debug@4.4.3)
+      axios: 1.18.1(debug@4.4.3)
       lz4js: 0.2.0
       uuid: 11.1.1
     transitivePeerDependencies:
@@ -8589,7 +8600,7 @@ snapshots:
       '@fluidframework/core-utils': 2.0.9
       '@fluidframework/driver-definitions': 2.0.9
       '@fluidframework/telemetry-utils': 2.0.9
-      axios: 1.16.0(debug@4.4.3)
+      axios: 1.18.1(debug@4.4.3)
       lz4js: 0.2.0
       uuid: 11.1.1
     transitivePeerDependencies:
@@ -8615,7 +8626,7 @@ snapshots:
       '@fluidframework/core-utils': 2.13.0
       '@fluidframework/driver-definitions': 2.13.0
       '@fluidframework/telemetry-utils': 2.13.0
-      axios: 1.16.0(debug@4.4.3)
+      axios: 1.18.1(debug@4.4.3)
       lz4js: 0.2.0
       uuid: 11.1.1
     transitivePeerDependencies:
@@ -8629,7 +8640,7 @@ snapshots:
       '@fluidframework/core-utils': 2.23.0
       '@fluidframework/driver-definitions': 2.23.0
       '@fluidframework/telemetry-utils': 2.23.0
-      axios: 1.16.0(debug@4.4.3)
+      axios: 1.18.1(debug@4.4.3)
       lz4js: 0.2.0
       uuid: 11.1.1
     transitivePeerDependencies:
@@ -8643,7 +8654,7 @@ snapshots:
       '@fluidframework/core-utils': 2.33.2
       '@fluidframework/driver-definitions': 2.33.2
       '@fluidframework/telemetry-utils': 2.33.2
-      axios: 1.16.0(debug@4.4.3)
+      axios: 1.18.1(debug@4.4.3)
       lz4js: 0.2.0
       uuid: 11.1.1
     transitivePeerDependencies:
@@ -8657,7 +8668,7 @@ snapshots:
       '@fluidframework/core-utils': 2.40.0
       '@fluidframework/driver-definitions': 2.40.0
       '@fluidframework/telemetry-utils': 2.40.0
-      axios: 1.16.0(debug@4.4.3)
+      axios: 1.18.1(debug@4.4.3)
       lz4js: 0.2.0
       uuid: 11.1.1
     transitivePeerDependencies:
@@ -8671,7 +8682,7 @@ snapshots:
       '@fluidframework/core-utils': 2.43.0
       '@fluidframework/driver-definitions': 2.43.0
       '@fluidframework/telemetry-utils': 2.43.0
-      axios: 1.16.0(debug@4.4.3)
+      axios: 1.18.1(debug@4.4.3)
       lz4js: 0.2.0
       uuid: 11.1.1
     transitivePeerDependencies:
@@ -8685,7 +8696,7 @@ snapshots:
       '@fluidframework/core-utils': 2.5.0
       '@fluidframework/driver-definitions': 2.5.0
       '@fluidframework/telemetry-utils': 2.5.0
-      axios: 1.16.0(debug@4.4.3)
+      axios: 1.18.1(debug@4.4.3)
       lz4js: 0.2.0
       uuid: 11.1.1
     transitivePeerDependencies:
@@ -8699,7 +8710,7 @@ snapshots:
       '@fluidframework/core-utils': 2.53.1
       '@fluidframework/driver-definitions': 2.53.1
       '@fluidframework/telemetry-utils': 2.53.1
-      axios: 1.16.0(debug@4.4.3)
+      axios: 1.18.1(debug@4.4.3)
       lz4js: 0.2.0
       uuid: 11.1.1
     transitivePeerDependencies:
@@ -8713,7 +8724,7 @@ snapshots:
       '@fluidframework/core-utils': 2.63.0
       '@fluidframework/driver-definitions': 2.63.0
       '@fluidframework/telemetry-utils': 2.63.0
-      axios: 1.16.0(debug@4.4.3)
+      axios: 1.18.1(debug@4.4.3)
       lz4js: 0.2.0
       uuid: 11.1.1
     transitivePeerDependencies:
@@ -8727,7 +8738,7 @@ snapshots:
       '@fluidframework/core-utils': 2.74.0
       '@fluidframework/driver-definitions': 2.74.0
       '@fluidframework/telemetry-utils': 2.74.0
-      axios: 1.16.0(debug@4.4.3)
+      axios: 1.18.1(debug@4.4.3)
       lz4js: 0.2.0
       uuid: 11.1.1
     transitivePeerDependencies:
@@ -8741,7 +8752,7 @@ snapshots:
       '@fluidframework/core-utils': 2.80.0
       '@fluidframework/driver-definitions': 2.80.0
       '@fluidframework/telemetry-utils': 2.80.0
-      axios: 1.16.0(debug@4.4.3)
+      axios: 1.18.1(debug@4.4.3)
       lz4js: 0.2.0
       uuid: 11.1.1
     transitivePeerDependencies:
@@ -9795,13 +9806,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/matrix@0.56.0':
+  '@fluidframework/matrix@0.56.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 0.32.2
       '@fluidframework/core-interfaces': 0.42.0
       '@fluidframework/datastore-definitions': 0.56.11
-      '@fluidframework/merge-tree': 0.56.11
+      '@fluidframework/merge-tree': 0.56.11(debug@4.4.3)
       '@fluidframework/protocol-base': 0.1034.0
       '@fluidframework/protocol-definitions': 0.1026.0
       '@fluidframework/runtime-definitions': 0.56.11
@@ -9814,13 +9825,13 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/matrix@1.4.0':
+  '@fluidframework/matrix@1.4.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 0.32.2
       '@fluidframework/core-interfaces': 1.4.0
       '@fluidframework/datastore-definitions': 1.4.0
-      '@fluidframework/merge-tree': 1.4.0
+      '@fluidframework/merge-tree': 1.4.0(debug@4.4.3)
       '@fluidframework/protocol-base': 0.1036.5002
       '@fluidframework/protocol-definitions': 0.1028.2000
       '@fluidframework/runtime-definitions': 1.4.0
@@ -9834,13 +9845,13 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/matrix@2.0.0-internal.1.4.6':
+  '@fluidframework/matrix@2.0.0-internal.1.4.6(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': 2.0.0-internal.1.4.9
       '@fluidframework/datastore-definitions': 2.0.0-internal.1.4.9
-      '@fluidframework/merge-tree': 2.0.0-internal.1.4.9
+      '@fluidframework/merge-tree': 2.0.0-internal.1.4.9(debug@4.4.3)
       '@fluidframework/protocol-base': 0.1037.2001
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.1.4.9
@@ -9853,14 +9864,14 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/matrix@2.0.0-internal.5.4.2':
+  '@fluidframework/matrix@2.0.0-internal.5.4.2(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': 2.0.0-internal.5.4.2
       '@fluidframework/datastore-definitions': 2.0.0-internal.5.4.2
       '@fluidframework/driver-utils': 2.0.0-internal.5.4.2(debug@4.4.3)
-      '@fluidframework/merge-tree': 2.0.0-internal.5.4.2
+      '@fluidframework/merge-tree': 2.0.0-internal.5.4.2(debug@4.4.3)
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.5.4.2
       '@fluidframework/runtime-utils': 2.0.0-internal.5.4.2(debug@4.4.3)
@@ -9873,14 +9884,14 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/matrix@2.0.0-internal.7.0.0':
+  '@fluidframework/matrix@2.0.0-internal.7.0.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.7.0.3
       '@fluidframework/core-interfaces': 2.0.0-internal.7.0.3
       '@fluidframework/core-utils': 2.0.0-internal.7.0.3
       '@fluidframework/datastore-definitions': 2.0.0-internal.7.0.3
       '@fluidframework/driver-utils': 2.0.0-internal.7.0.3(debug@4.4.3)
-      '@fluidframework/merge-tree': 2.0.0-internal.7.0.3
+      '@fluidframework/merge-tree': 2.0.0-internal.7.0.3(debug@4.4.3)
       '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.7.0.3
       '@fluidframework/runtime-utils': 2.0.0-internal.7.0.3(debug@4.4.3)
@@ -9893,7 +9904,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/matrix@2.0.0-rc.5.0.8':
+  '@fluidframework/matrix@2.0.0-rc.5.0.8(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-rc.5.0.8
       '@fluidframework/core-interfaces': 2.0.0-rc.5.0.8
@@ -9913,7 +9924,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/matrix@2.0.9':
+  '@fluidframework/matrix@2.0.9(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.0.9
       '@fluidframework/core-interfaces': 2.0.9
@@ -9951,7 +9962,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/matrix@2.13.0':
+  '@fluidframework/matrix@2.13.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.13.0
       '@fluidframework/core-interfaces': 2.13.0
@@ -9971,7 +9982,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/matrix@2.23.0':
+  '@fluidframework/matrix@2.23.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.23.0
       '@fluidframework/core-interfaces': 2.23.0
@@ -9991,7 +10002,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/matrix@2.33.2':
+  '@fluidframework/matrix@2.33.2(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.33.2
       '@fluidframework/core-interfaces': 2.33.2
@@ -10011,7 +10022,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/matrix@2.40.0':
+  '@fluidframework/matrix@2.40.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.40.0
       '@fluidframework/core-interfaces': 2.40.0
@@ -10031,7 +10042,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/matrix@2.43.0':
+  '@fluidframework/matrix@2.43.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.43.0
       '@fluidframework/core-interfaces': 2.43.0
@@ -10051,7 +10062,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/matrix@2.5.0':
+  '@fluidframework/matrix@2.5.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.5.0
       '@fluidframework/core-interfaces': 2.5.0
@@ -10071,7 +10082,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/matrix@2.53.1':
+  '@fluidframework/matrix@2.53.1(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.53.1
       '@fluidframework/core-interfaces': 2.53.1
@@ -10091,7 +10102,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/matrix@2.63.0':
+  '@fluidframework/matrix@2.63.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.63.0
       '@fluidframework/core-interfaces': 2.63.0
@@ -10099,7 +10110,7 @@ snapshots:
       '@fluidframework/datastore-definitions': 2.63.0
       '@fluidframework/driver-definitions': 2.63.0
       '@fluidframework/driver-utils': 2.63.0(debug@4.4.3)
-      '@fluidframework/merge-tree': 2.63.0
+      '@fluidframework/merge-tree': 2.63.0(debug@4.4.3)
       '@fluidframework/runtime-definitions': 2.63.0
       '@fluidframework/runtime-utils': 2.63.0(debug@4.4.3)
       '@fluidframework/shared-object-base': 2.63.0(debug@4.4.3)
@@ -10111,7 +10122,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/matrix@2.74.0':
+  '@fluidframework/matrix@2.74.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.74.0
       '@fluidframework/core-interfaces': 2.74.0
@@ -10119,7 +10130,7 @@ snapshots:
       '@fluidframework/datastore-definitions': 2.74.0
       '@fluidframework/driver-definitions': 2.74.0
       '@fluidframework/driver-utils': 2.74.0(debug@4.4.3)
-      '@fluidframework/merge-tree': 2.74.0
+      '@fluidframework/merge-tree': 2.74.0(debug@4.4.3)
       '@fluidframework/runtime-definitions': 2.74.0
       '@fluidframework/runtime-utils': 2.74.0(debug@4.4.3)
       '@fluidframework/shared-object-base': 2.74.0(debug@4.4.3)
@@ -10131,7 +10142,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/matrix@2.80.0':
+  '@fluidframework/matrix@2.80.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.80.0
       '@fluidframework/core-interfaces': 2.80.0
@@ -10139,7 +10150,7 @@ snapshots:
       '@fluidframework/datastore-definitions': 2.80.0
       '@fluidframework/driver-definitions': 2.80.0
       '@fluidframework/driver-utils': 2.80.0(debug@4.4.3)
-      '@fluidframework/merge-tree': 2.80.0
+      '@fluidframework/merge-tree': 2.80.0(debug@4.4.3)
       '@fluidframework/runtime-definitions': 2.80.0
       '@fluidframework/runtime-utils': 2.80.0(debug@4.4.3)
       '@fluidframework/shared-object-base': 2.80.0(debug@4.4.3)
@@ -10188,7 +10199,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/merge-tree@0.56.11':
+  '@fluidframework/merge-tree@0.56.11(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 0.32.2
@@ -10204,7 +10215,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/merge-tree@1.4.0':
+  '@fluidframework/merge-tree@1.4.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 0.32.2
@@ -10221,7 +10232,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/merge-tree@2.0.0-internal.1.4.9':
+  '@fluidframework/merge-tree@2.0.0-internal.1.4.9(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
@@ -10238,7 +10249,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/merge-tree@2.0.0-internal.5.4.2':
+  '@fluidframework/merge-tree@2.0.0-internal.5.4.2(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
@@ -10255,7 +10266,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/merge-tree@2.0.0-internal.7.0.3':
+  '@fluidframework/merge-tree@2.0.0-internal.7.0.3(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.7.0.3
       '@fluidframework/container-definitions': 2.0.0-internal.7.0.3
@@ -10430,7 +10441,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/merge-tree@2.63.0':
+  '@fluidframework/merge-tree@2.63.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.63.0
       '@fluidframework/container-definitions': 2.63.0
@@ -10446,7 +10457,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/merge-tree@2.74.0':
+  '@fluidframework/merge-tree@2.74.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.74.0
       '@fluidframework/container-definitions': 2.74.0
@@ -10462,7 +10473,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/merge-tree@2.80.0':
+  '@fluidframework/merge-tree@2.80.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.80.0
       '@fluidframework/container-definitions': 2.80.0
@@ -10508,7 +10519,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/odsp-doclib-utils@0.56.11':
+  '@fluidframework/odsp-doclib-utils@0.56.11(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 0.32.2
@@ -10522,7 +10533,7 @@ snapshots:
       - encoding
       - supports-color
 
-  '@fluidframework/odsp-doclib-utils@1.4.0':
+  '@fluidframework/odsp-doclib-utils@1.4.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 0.32.2
@@ -10536,7 +10547,7 @@ snapshots:
       - encoding
       - supports-color
 
-  '@fluidframework/odsp-doclib-utils@2.0.0-internal.1.4.9':
+  '@fluidframework/odsp-doclib-utils@2.0.0-internal.1.4.9(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
@@ -10550,7 +10561,7 @@ snapshots:
       - encoding
       - supports-color
 
-  '@fluidframework/odsp-doclib-utils@2.0.0-internal.5.4.2':
+  '@fluidframework/odsp-doclib-utils@2.0.0-internal.5.4.2(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
@@ -10564,7 +10575,7 @@ snapshots:
       - encoding
       - supports-color
 
-  '@fluidframework/odsp-doclib-utils@2.0.0-internal.7.0.3':
+  '@fluidframework/odsp-doclib-utils@2.0.0-internal.7.0.3(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.7.0.3
       '@fluidframework/core-interfaces': 2.0.0-internal.7.0.3
@@ -10579,7 +10590,7 @@ snapshots:
       - encoding
       - supports-color
 
-  '@fluidframework/odsp-doclib-utils@2.0.0-rc.5.0.8':
+  '@fluidframework/odsp-doclib-utils@2.0.0-rc.5.0.8(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-rc.5.0.8
       '@fluidframework/core-interfaces': 2.0.0-rc.5.0.8
@@ -10594,7 +10605,7 @@ snapshots:
       - encoding
       - supports-color
 
-  '@fluidframework/odsp-doclib-utils@2.0.9':
+  '@fluidframework/odsp-doclib-utils@2.0.9(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.0.9
       '@fluidframework/core-interfaces': 2.0.9
@@ -10877,7 +10888,7 @@ snapshots:
     dependencies:
       '@fluidframework/driver-definitions': 2.93.0
 
-  '@fluidframework/odsp-driver@0.56.0':
+  '@fluidframework/odsp-driver@0.56.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 0.32.2
@@ -10886,7 +10897,7 @@ snapshots:
       '@fluidframework/driver-definitions': 0.44.0
       '@fluidframework/driver-utils': 0.56.11(debug@4.4.3)
       '@fluidframework/gitresources': 0.1034.0
-      '@fluidframework/odsp-doclib-utils': 0.56.11
+      '@fluidframework/odsp-doclib-utils': 0.56.11(debug@4.4.3)
       '@fluidframework/odsp-driver-definitions': 0.56.11
       '@fluidframework/protocol-base': 0.1034.0
       '@fluidframework/protocol-definitions': 0.1026.0
@@ -10902,7 +10913,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/odsp-driver@1.4.0':
+  '@fluidframework/odsp-driver@1.4.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 0.32.2
@@ -10911,7 +10922,7 @@ snapshots:
       '@fluidframework/driver-definitions': 1.4.0
       '@fluidframework/driver-utils': 1.4.0(debug@4.4.3)
       '@fluidframework/gitresources': 0.1036.5002
-      '@fluidframework/odsp-doclib-utils': 1.4.0
+      '@fluidframework/odsp-doclib-utils': 1.4.0(debug@4.4.3)
       '@fluidframework/odsp-driver-definitions': 1.4.0
       '@fluidframework/protocol-base': 0.1036.5002
       '@fluidframework/protocol-definitions': 0.1028.2000
@@ -10927,7 +10938,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/odsp-driver@2.0.0-internal.1.4.6':
+  '@fluidframework/odsp-driver@2.0.0-internal.1.4.6(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
@@ -10936,7 +10947,7 @@ snapshots:
       '@fluidframework/driver-definitions': 2.0.0-internal.1.4.9
       '@fluidframework/driver-utils': 2.0.0-internal.1.4.9(debug@4.4.3)
       '@fluidframework/gitresources': 0.1037.2001
-      '@fluidframework/odsp-doclib-utils': 2.0.0-internal.1.4.9
+      '@fluidframework/odsp-doclib-utils': 2.0.0-internal.1.4.9(debug@4.4.3)
       '@fluidframework/odsp-driver-definitions': 2.0.0-internal.1.4.9
       '@fluidframework/protocol-base': 0.1037.2001
       '@fluidframework/protocol-definitions': 1.2.0
@@ -10952,7 +10963,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/odsp-driver@2.0.0-internal.5.4.2':
+  '@fluidframework/odsp-driver@2.0.0-internal.5.4.2(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
@@ -10962,7 +10973,7 @@ snapshots:
       '@fluidframework/driver-definitions': 2.0.0-internal.5.4.2
       '@fluidframework/driver-utils': 2.0.0-internal.5.4.2(debug@4.4.3)
       '@fluidframework/gitresources': 0.1039.1000
-      '@fluidframework/odsp-doclib-utils': 2.0.0-internal.5.4.2
+      '@fluidframework/odsp-doclib-utils': 2.0.0-internal.5.4.2(debug@4.4.3)
       '@fluidframework/odsp-driver-definitions': 2.0.0-internal.5.4.2
       '@fluidframework/protocol-base': 0.1039.1000
       '@fluidframework/protocol-definitions': 1.2.0
@@ -10977,7 +10988,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/odsp-driver@2.0.0-internal.7.0.0':
+  '@fluidframework/odsp-driver@2.0.0-internal.7.0.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.7.0.3
       '@fluidframework/core-interfaces': 2.0.0-internal.7.0.3
@@ -10985,7 +10996,7 @@ snapshots:
       '@fluidframework/driver-base': 2.0.0-internal.7.0.3(debug@4.4.3)
       '@fluidframework/driver-definitions': 2.0.0-internal.7.0.3
       '@fluidframework/driver-utils': 2.0.0-internal.7.0.3(debug@4.4.3)
-      '@fluidframework/odsp-doclib-utils': 2.0.0-internal.7.0.3
+      '@fluidframework/odsp-doclib-utils': 2.0.0-internal.7.0.3(debug@4.4.3)
       '@fluidframework/odsp-driver-definitions': 2.0.0-internal.7.0.3
       '@fluidframework/protocol-base': 2.0.3
       '@fluidframework/protocol-definitions': 3.2.0
@@ -11000,7 +11011,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/odsp-driver@2.0.0-rc.5.0.8':
+  '@fluidframework/odsp-driver@2.0.0-rc.5.0.8(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-rc.5.0.8
       '@fluidframework/core-interfaces': 2.0.0-rc.5.0.8
@@ -11008,7 +11019,7 @@ snapshots:
       '@fluidframework/driver-base': 2.0.0-rc.5.0.8(debug@4.4.3)
       '@fluidframework/driver-definitions': 2.0.0-rc.5.0.8
       '@fluidframework/driver-utils': 2.0.0-rc.5.0.8(debug@4.4.3)
-      '@fluidframework/odsp-doclib-utils': 2.0.0-rc.5.0.8
+      '@fluidframework/odsp-doclib-utils': 2.0.0-rc.5.0.8(debug@4.4.3)
       '@fluidframework/odsp-driver-definitions': 2.0.0-rc.5.0.8
       '@fluidframework/telemetry-utils': 2.0.0-rc.5.0.8
       node-fetch: 2.7.0
@@ -11021,7 +11032,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/odsp-driver@2.0.9':
+  '@fluidframework/odsp-driver@2.0.9(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.0.9
       '@fluidframework/core-interfaces': 2.0.9
@@ -11029,7 +11040,7 @@ snapshots:
       '@fluidframework/driver-base': 2.0.9(debug@4.4.3)
       '@fluidframework/driver-definitions': 2.0.9
       '@fluidframework/driver-utils': 2.0.9(debug@4.4.3)
-      '@fluidframework/odsp-doclib-utils': 2.0.9
+      '@fluidframework/odsp-doclib-utils': 2.0.9(debug@4.4.3)
       '@fluidframework/odsp-driver-definitions': 2.0.9
       '@fluidframework/telemetry-utils': 2.0.9
       node-fetch: 2.7.0
@@ -11299,7 +11310,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/ordered-collection@0.56.0':
+  '@fluidframework/ordered-collection@0.56.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-utils': 0.32.2
       '@fluidframework/core-interfaces': 0.42.0
@@ -11313,7 +11324,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/ordered-collection@1.4.0':
+  '@fluidframework/ordered-collection@1.4.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-utils': 0.32.2
       '@fluidframework/core-interfaces': 1.4.0
@@ -11327,7 +11338,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/ordered-collection@2.0.0-internal.1.4.6':
+  '@fluidframework/ordered-collection@2.0.0-internal.1.4.6(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': 2.0.0-internal.1.4.9
@@ -11341,7 +11352,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/ordered-collection@2.0.0-internal.5.4.2':
+  '@fluidframework/ordered-collection@2.0.0-internal.5.4.2(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': 2.0.0-internal.5.4.2
@@ -11355,7 +11366,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/ordered-collection@2.0.0-internal.7.0.0':
+  '@fluidframework/ordered-collection@2.0.0-internal.7.0.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.7.0.3
       '@fluidframework/core-interfaces': 2.0.0-internal.7.0.3
@@ -11370,7 +11381,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/ordered-collection@2.0.0-rc.5.0.8':
+  '@fluidframework/ordered-collection@2.0.0-rc.5.0.8(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-rc.5.0.8
       '@fluidframework/core-interfaces': 2.0.0-rc.5.0.8
@@ -11386,7 +11397,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/ordered-collection@2.0.9':
+  '@fluidframework/ordered-collection@2.0.9(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.0.9
       '@fluidframework/core-interfaces': 2.0.9
@@ -11417,7 +11428,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/ordered-collection@2.13.0':
+  '@fluidframework/ordered-collection@2.13.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.13.0
       '@fluidframework/core-interfaces': 2.13.0
@@ -11433,7 +11444,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/ordered-collection@2.23.0':
+  '@fluidframework/ordered-collection@2.23.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.23.0
       '@fluidframework/core-interfaces': 2.23.0
@@ -11449,7 +11460,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/ordered-collection@2.33.2':
+  '@fluidframework/ordered-collection@2.33.2(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.33.2
       '@fluidframework/core-interfaces': 2.33.2
@@ -11465,7 +11476,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/ordered-collection@2.40.0':
+  '@fluidframework/ordered-collection@2.40.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.40.0
       '@fluidframework/core-interfaces': 2.40.0
@@ -11481,7 +11492,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/ordered-collection@2.43.0':
+  '@fluidframework/ordered-collection@2.43.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.43.0
       '@fluidframework/core-interfaces': 2.43.0
@@ -11497,7 +11508,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/ordered-collection@2.5.0':
+  '@fluidframework/ordered-collection@2.5.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.5.0
       '@fluidframework/core-interfaces': 2.5.0
@@ -11513,7 +11524,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/ordered-collection@2.53.1':
+  '@fluidframework/ordered-collection@2.53.1(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.53.1
       '@fluidframework/core-interfaces': 2.53.1
@@ -11529,7 +11540,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/ordered-collection@2.63.0':
+  '@fluidframework/ordered-collection@2.63.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.63.0
       '@fluidframework/core-interfaces': 2.63.0
@@ -11545,7 +11556,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/ordered-collection@2.74.0':
+  '@fluidframework/ordered-collection@2.74.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.74.0
       '@fluidframework/core-interfaces': 2.74.0
@@ -11561,7 +11572,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/ordered-collection@2.80.0':
+  '@fluidframework/ordered-collection@2.80.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.80.0
       '@fluidframework/core-interfaces': 2.80.0
@@ -11678,7 +11689,7 @@ snapshots:
 
   '@fluidframework/protocol-definitions@3.2.0': {}
 
-  '@fluidframework/register-collection@0.56.0':
+  '@fluidframework/register-collection@0.56.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-utils': 0.32.2
       '@fluidframework/core-interfaces': 0.42.0
@@ -11691,7 +11702,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/register-collection@1.4.0':
+  '@fluidframework/register-collection@1.4.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-utils': 0.32.2
       '@fluidframework/core-interfaces': 1.4.0
@@ -11704,7 +11715,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/register-collection@2.0.0-internal.1.4.6':
+  '@fluidframework/register-collection@2.0.0-internal.1.4.6(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': 2.0.0-internal.1.4.9
@@ -11717,7 +11728,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/register-collection@2.0.0-internal.5.4.2':
+  '@fluidframework/register-collection@2.0.0-internal.5.4.2(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': 2.0.0-internal.5.4.2
@@ -11730,7 +11741,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/register-collection@2.0.0-internal.7.0.0':
+  '@fluidframework/register-collection@2.0.0-internal.7.0.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.7.0.3
       '@fluidframework/core-interfaces': 2.0.0-internal.7.0.3
@@ -11744,7 +11755,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/register-collection@2.0.0-rc.5.0.8':
+  '@fluidframework/register-collection@2.0.0-rc.5.0.8(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-rc.5.0.8
       '@fluidframework/core-interfaces': 2.0.0-rc.5.0.8
@@ -11758,7 +11769,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/register-collection@2.0.9':
+  '@fluidframework/register-collection@2.0.9(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.0.9
       '@fluidframework/core-interfaces': 2.0.9
@@ -11785,7 +11796,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/register-collection@2.13.0':
+  '@fluidframework/register-collection@2.13.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.13.0
       '@fluidframework/core-interfaces': 2.13.0
@@ -11799,7 +11810,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/register-collection@2.23.0':
+  '@fluidframework/register-collection@2.23.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.23.0
       '@fluidframework/core-interfaces': 2.23.0
@@ -11813,7 +11824,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/register-collection@2.33.2':
+  '@fluidframework/register-collection@2.33.2(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.33.2
       '@fluidframework/core-interfaces': 2.33.2
@@ -11827,7 +11838,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/register-collection@2.40.0':
+  '@fluidframework/register-collection@2.40.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.40.0
       '@fluidframework/core-interfaces': 2.40.0
@@ -11841,7 +11852,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/register-collection@2.43.0':
+  '@fluidframework/register-collection@2.43.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.43.0
       '@fluidframework/core-interfaces': 2.43.0
@@ -11855,7 +11866,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/register-collection@2.5.0':
+  '@fluidframework/register-collection@2.5.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.5.0
       '@fluidframework/core-interfaces': 2.5.0
@@ -11869,7 +11880,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/register-collection@2.53.1':
+  '@fluidframework/register-collection@2.53.1(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.53.1
       '@fluidframework/core-interfaces': 2.53.1
@@ -11883,7 +11894,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/register-collection@2.63.0':
+  '@fluidframework/register-collection@2.63.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.63.0
       '@fluidframework/core-interfaces': 2.63.0
@@ -11897,7 +11908,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/register-collection@2.74.0':
+  '@fluidframework/register-collection@2.74.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.74.0
       '@fluidframework/core-interfaces': 2.74.0
@@ -11911,7 +11922,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/register-collection@2.80.0':
+  '@fluidframework/register-collection@2.80.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.80.0
       '@fluidframework/core-interfaces': 2.80.0
@@ -13191,13 +13202,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/sequence@0.56.0':
+  '@fluidframework/sequence@0.56.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 0.32.2
       '@fluidframework/core-interfaces': 0.42.0
       '@fluidframework/datastore-definitions': 0.56.11
-      '@fluidframework/merge-tree': 0.56.11
+      '@fluidframework/merge-tree': 0.56.11(debug@4.4.3)
       '@fluidframework/protocol-definitions': 0.1026.0
       '@fluidframework/runtime-definitions': 0.56.11
       '@fluidframework/runtime-utils': 0.56.11
@@ -13208,14 +13219,14 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/sequence@1.4.0':
+  '@fluidframework/sequence@1.4.0(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 0.32.2
       '@fluidframework/container-utils': 1.4.0
       '@fluidframework/core-interfaces': 1.4.0
       '@fluidframework/datastore-definitions': 1.4.0
-      '@fluidframework/merge-tree': 1.4.0
+      '@fluidframework/merge-tree': 1.4.0(debug@4.4.3)
       '@fluidframework/protocol-definitions': 0.1028.2000
       '@fluidframework/runtime-definitions': 1.4.0
       '@fluidframework/runtime-utils': 1.4.0
@@ -13226,14 +13237,14 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/sequence@2.0.0-internal.1.4.6':
+  '@fluidframework/sequence@2.0.0-internal.1.4.6(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-utils': 2.0.0-internal.1.4.9
       '@fluidframework/core-interfaces': 2.0.0-internal.1.4.9
       '@fluidframework/datastore-definitions': 2.0.0-internal.1.4.9
-      '@fluidframework/merge-tree': 2.0.0-internal.1.4.9
+      '@fluidframework/merge-tree': 2.0.0-internal.1.4.9(debug@4.4.3)
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.1.4.9
       '@fluidframework/runtime-utils': 2.0.0-internal.1.4.9
@@ -13244,14 +13255,14 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/sequence@2.0.0-internal.5.4.2':
+  '@fluidframework/sequence@2.0.0-internal.5.4.2(debug@4.4.3)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-utils': 2.0.0-internal.5.4.2
       '@fluidframework/core-interfaces': 2.0.0-internal.5.4.2
       '@fluidframework/datastore-definitions': 2.0.0-internal.5.4.2
-      '@fluidframework/merge-tree': 2.0.0-internal.5.4.2
+      '@fluidframework/merge-tree': 2.0.0-internal.5.4.2(debug@4.4.3)
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.5.4.2
       '@fluidframework/runtime-utils': 2.0.0-internal.5.4.2(debug@4.4.3)
@@ -13262,13 +13273,13 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/sequence@2.0.0-internal.7.0.0':
+  '@fluidframework/sequence@2.0.0-internal.7.0.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.7.0.3
       '@fluidframework/core-interfaces': 2.0.0-internal.7.0.3
       '@fluidframework/core-utils': 2.0.0-internal.7.0.3
       '@fluidframework/datastore-definitions': 2.0.0-internal.7.0.3
-      '@fluidframework/merge-tree': 2.0.0-internal.7.0.3
+      '@fluidframework/merge-tree': 2.0.0-internal.7.0.3(debug@4.4.3)
       '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.7.0.3
       '@fluidframework/runtime-utils': 2.0.0-internal.7.0.3(debug@4.4.3)
@@ -13279,7 +13290,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/sequence@2.0.0-rc.5.0.8':
+  '@fluidframework/sequence@2.0.0-rc.5.0.8(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-rc.5.0.8
       '@fluidframework/core-interfaces': 2.0.0-rc.5.0.8
@@ -13297,7 +13308,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/sequence@2.0.9':
+  '@fluidframework/sequence@2.0.9(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.0.9
       '@fluidframework/core-interfaces': 2.0.9
@@ -13332,7 +13343,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/sequence@2.13.0':
+  '@fluidframework/sequence@2.13.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.13.0
       '@fluidframework/core-interfaces': 2.13.0
@@ -13350,7 +13361,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/sequence@2.23.0':
+  '@fluidframework/sequence@2.23.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.23.0
       '@fluidframework/core-interfaces': 2.23.0
@@ -13368,7 +13379,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/sequence@2.33.2':
+  '@fluidframework/sequence@2.33.2(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.33.2
       '@fluidframework/core-interfaces': 2.33.2
@@ -13386,7 +13397,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/sequence@2.40.0':
+  '@fluidframework/sequence@2.40.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.40.0
       '@fluidframework/core-interfaces': 2.40.0
@@ -13404,7 +13415,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/sequence@2.43.0':
+  '@fluidframework/sequence@2.43.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.43.0
       '@fluidframework/core-interfaces': 2.43.0
@@ -13422,7 +13433,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/sequence@2.5.0':
+  '@fluidframework/sequence@2.5.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.5.0
       '@fluidframework/core-interfaces': 2.5.0
@@ -13440,7 +13451,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/sequence@2.53.1':
+  '@fluidframework/sequence@2.53.1(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.53.1
       '@fluidframework/core-interfaces': 2.53.1
@@ -13458,14 +13469,14 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/sequence@2.63.0':
+  '@fluidframework/sequence@2.63.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.63.0
       '@fluidframework/core-interfaces': 2.63.0
       '@fluidframework/core-utils': 2.63.0
       '@fluidframework/datastore-definitions': 2.63.0
       '@fluidframework/driver-definitions': 2.63.0
-      '@fluidframework/merge-tree': 2.63.0
+      '@fluidframework/merge-tree': 2.63.0(debug@4.4.3)
       '@fluidframework/runtime-definitions': 2.63.0
       '@fluidframework/runtime-utils': 2.63.0(debug@4.4.3)
       '@fluidframework/shared-object-base': 2.63.0(debug@4.4.3)
@@ -13476,14 +13487,14 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/sequence@2.74.0':
+  '@fluidframework/sequence@2.74.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.74.0
       '@fluidframework/core-interfaces': 2.74.0
       '@fluidframework/core-utils': 2.74.0
       '@fluidframework/datastore-definitions': 2.74.0
       '@fluidframework/driver-definitions': 2.74.0
-      '@fluidframework/merge-tree': 2.74.0
+      '@fluidframework/merge-tree': 2.74.0(debug@4.4.3)
       '@fluidframework/runtime-definitions': 2.74.0
       '@fluidframework/runtime-utils': 2.74.0(debug@4.4.3)
       '@fluidframework/shared-object-base': 2.74.0(debug@4.4.3)
@@ -13494,14 +13505,14 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/sequence@2.80.0':
+  '@fluidframework/sequence@2.80.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.80.0
       '@fluidframework/core-interfaces': 2.80.0
       '@fluidframework/core-utils': 2.80.0
       '@fluidframework/datastore-definitions': 2.80.0
       '@fluidframework/driver-definitions': 2.80.0
-      '@fluidframework/merge-tree': 2.80.0
+      '@fluidframework/merge-tree': 2.80.0(debug@4.4.3)
       '@fluidframework/runtime-definitions': 2.80.0
       '@fluidframework/runtime-utils': 2.80.0(debug@4.4.3)
       '@fluidframework/shared-object-base': 2.80.0(debug@4.4.3)
@@ -13666,7 +13677,7 @@ snapshots:
       '@fluidframework/server-services-telemetry': 0.1034.0
       '@types/semver': 6.2.7
       async: 3.2.6
-      axios: 0.31.1(debug@4.4.3)
+      axios: 0.33.0(debug@4.4.3)
       double-ended-queue: 2.1.0-0
       json-stringify-safe: 5.0.1
       lodash: 4.18.1
@@ -13691,7 +13702,7 @@ snapshots:
       '@fluidframework/server-services-telemetry': 0.1036.5002
       '@types/semver': 6.2.7
       async: 3.2.6
-      axios: 0.31.1(debug@4.4.3)
+      axios: 0.33.0(debug@4.4.3)
       double-ended-queue: 2.1.0-0
       json-stringify-safe: 5.0.1
       lodash: 4.18.1
@@ -13716,7 +13727,7 @@ snapshots:
       '@fluidframework/server-services-telemetry': 0.1037.2001
       '@types/semver': 6.2.7
       async: 3.2.6
-      axios: 0.31.1(debug@4.4.3)
+      axios: 0.33.0(debug@4.4.3)
       buffer: 6.0.3
       double-ended-queue: 2.1.0-0
       json-stringify-safe: 5.0.1
@@ -13743,7 +13754,7 @@ snapshots:
       '@types/semver': 6.2.7
       assert: 2.1.0
       async: 3.2.6
-      axios: 0.31.1(debug@4.4.3)
+      axios: 0.33.0(debug@4.4.3)
       buffer: 6.0.3
       double-ended-queue: 2.1.0-0
       events: 3.3.0
@@ -13771,7 +13782,7 @@ snapshots:
       '@types/semver': 7.7.1
       assert: 2.1.0
       async: 3.2.6
-      axios: 0.31.1(debug@4.4.3)
+      axios: 0.33.0(debug@4.4.3)
       buffer: 6.0.3
       double-ended-queue: 2.1.0-0
       events: 3.3.0
@@ -13798,7 +13809,7 @@ snapshots:
       '@types/semver': 7.7.1
       assert: 2.1.0
       async: 3.2.6
-      axios: 1.16.0(debug@4.4.3)
+      axios: 1.18.1(debug@4.4.3)
       buffer: 6.0.3
       double-ended-queue: 2.1.0-0
       events: 3.3.0
@@ -13825,7 +13836,7 @@ snapshots:
       '@types/semver': 7.7.1
       assert: 2.1.0
       async: 3.2.6
-      axios: 1.16.0(debug@4.4.3)
+      axios: 1.18.1(debug@4.4.3)
       buffer: 6.0.3
       double-ended-queue: 2.1.0-0
       events: 3.3.0
@@ -13854,7 +13865,7 @@ snapshots:
       '@types/semver': 7.7.1
       assert: 2.1.0
       async: 3.2.6
-      axios: 1.16.0(debug@4.4.3)
+      axios: 1.18.1(debug@4.4.3)
       buffer: 6.0.3
       double-ended-queue: 2.1.0-0
       events: 3.3.0
@@ -14235,7 +14246,7 @@ snapshots:
       '@fluidframework/gitresources': 0.1034.0
       '@fluidframework/protocol-base': 0.1034.0
       '@fluidframework/protocol-definitions': 0.1026.0
-      axios: 0.31.1(debug@4.4.3)
+      axios: 0.33.0(debug@4.4.3)
       crc-32: 1.2.0
       debug: 4.4.3
       jsrsasign: 11.1.2
@@ -14251,7 +14262,7 @@ snapshots:
       '@fluidframework/gitresources': 0.1036.5002
       '@fluidframework/protocol-base': 0.1036.5002
       '@fluidframework/protocol-definitions': 0.1028.2000
-      axios: 0.31.1(debug@4.4.3)
+      axios: 0.33.0(debug@4.4.3)
       crc-32: 1.2.0
       debug: 4.4.3
       json-stringify-safe: 5.0.1
@@ -14269,7 +14280,7 @@ snapshots:
       '@fluidframework/gitresources': 0.1037.2001
       '@fluidframework/protocol-base': 0.1037.2001
       '@fluidframework/protocol-definitions': 1.2.0
-      axios: 0.31.1(debug@4.4.3)
+      axios: 0.33.0(debug@4.4.3)
       crc-32: 1.2.0
       debug: 4.4.3
       json-stringify-safe: 5.0.1
@@ -14287,7 +14298,7 @@ snapshots:
       '@fluidframework/gitresources': 0.1039.1000
       '@fluidframework/protocol-base': 0.1039.1000
       '@fluidframework/protocol-definitions': 1.2.0
-      axios: 0.31.1(debug@4.4.3)
+      axios: 0.33.0(debug@4.4.3)
       crc-32: 1.2.0
       debug: 4.4.3
       json-stringify-safe: 5.0.1
@@ -14305,7 +14316,7 @@ snapshots:
       '@fluidframework/gitresources': 2.0.3
       '@fluidframework/protocol-base': 2.0.3
       '@fluidframework/protocol-definitions': 3.2.0
-      axios: 0.31.1(debug@4.4.3)
+      axios: 0.33.0(debug@4.4.3)
       crc-32: 1.2.0
       debug: 4.4.3
       json-stringify-safe: 5.0.1
@@ -14323,7 +14334,7 @@ snapshots:
       '@fluidframework/gitresources': 5.0.0
       '@fluidframework/protocol-base': 5.0.0
       '@fluidframework/protocol-definitions': 3.2.0
-      axios: 1.16.0(debug@4.4.3)
+      axios: 1.18.1(debug@4.4.3)
       crc-32: 1.2.0
       debug: 4.4.3
       json-stringify-safe: 5.0.1
@@ -14340,7 +14351,7 @@ snapshots:
       '@fluidframework/gitresources': 7.0.0
       '@fluidframework/protocol-base': 7.0.0
       '@fluidframework/protocol-definitions': 3.2.0
-      axios: 1.16.0(debug@4.4.3)
+      axios: 1.18.1(debug@4.4.3)
       crc-32: 1.2.0
       debug: 4.4.3
       json-stringify-safe: 5.0.1
@@ -14357,7 +14368,7 @@ snapshots:
       '@fluidframework/gitresources': 7.0.1
       '@fluidframework/protocol-base': 7.0.1
       '@fluidframework/protocol-definitions': 3.2.0
-      axios: 1.16.0(debug@4.4.3)
+      axios: 1.18.1(debug@4.4.3)
       crc-32: 1.2.0
       debug: 4.4.3
       json-stringify-safe: 5.0.1
@@ -15402,7 +15413,7 @@ snapshots:
       '@fluidframework/runtime-definitions': 0.56.11
       '@fluidframework/runtime-utils': 0.56.11
       '@fluidframework/telemetry-utils': 0.56.11
-      axios: 0.31.1(debug@4.4.3)
+      axios: 0.33.0(debug@4.4.3)
       uuid: 11.1.1
     transitivePeerDependencies:
       - bufferutil
@@ -15425,7 +15436,7 @@ snapshots:
       '@fluidframework/runtime-definitions': 1.4.0
       '@fluidframework/runtime-utils': 1.4.0
       '@fluidframework/telemetry-utils': 1.4.0
-      axios: 0.31.1(debug@4.4.3)
+      axios: 0.33.0(debug@4.4.3)
       events: 3.3.0
       jsrsasign: 11.1.2
       uuid: 11.1.1
@@ -15450,7 +15461,7 @@ snapshots:
       '@fluidframework/runtime-definitions': 2.0.0-internal.1.4.9
       '@fluidframework/runtime-utils': 2.0.0-internal.1.4.9
       '@fluidframework/telemetry-utils': 2.0.0-internal.1.4.9
-      axios: 0.31.1(debug@4.4.3)
+      axios: 0.33.0(debug@4.4.3)
       jsrsasign: 11.1.2
       uuid: 11.1.1
     transitivePeerDependencies:
@@ -15474,7 +15485,7 @@ snapshots:
       '@fluidframework/runtime-definitions': 2.0.0-internal.5.4.2
       '@fluidframework/runtime-utils': 2.0.0-internal.5.4.2(debug@4.4.3)
       '@fluidframework/telemetry-utils': 2.0.0-internal.5.4.2
-      axios: 0.31.1(debug@4.4.3)
+      axios: 0.33.0(debug@4.4.3)
       events: 3.3.0
       jsrsasign: 11.1.2
       uuid: 11.1.1
@@ -15499,7 +15510,7 @@ snapshots:
       '@fluidframework/runtime-definitions': 2.0.0-internal.7.0.3
       '@fluidframework/runtime-utils': 2.0.0-internal.7.0.3(debug@4.4.3)
       '@fluidframework/telemetry-utils': 2.0.0-internal.7.0.3
-      axios: 0.31.1(debug@4.4.3)
+      axios: 0.33.0(debug@4.4.3)
       events: 3.3.0
       jsrsasign: 11.1.2
       uuid: 11.1.1
@@ -16131,7 +16142,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/tree@2.0.9':
+  '@fluidframework/tree@2.0.9(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.0.9
       '@fluidframework/container-runtime': 2.0.9(debug@4.4.3)
@@ -16173,7 +16184,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/tree@2.13.0':
+  '@fluidframework/tree@2.13.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.13.0
       '@fluidframework/container-runtime': 2.13.0(debug@4.4.3)
@@ -16195,7 +16206,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/tree@2.23.0':
+  '@fluidframework/tree@2.23.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.23.0
       '@fluidframework/container-runtime': 2.23.0(debug@4.4.3)
@@ -16217,7 +16228,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/tree@2.33.2':
+  '@fluidframework/tree@2.33.2(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.33.2
       '@fluidframework/container-runtime': 2.33.2(debug@4.4.3)
@@ -16239,7 +16250,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/tree@2.40.0':
+  '@fluidframework/tree@2.40.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.40.0
       '@fluidframework/container-runtime': 2.40.0(debug@4.4.3)
@@ -16261,7 +16272,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/tree@2.43.0':
+  '@fluidframework/tree@2.43.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.43.0
       '@fluidframework/container-runtime': 2.43.0(debug@4.4.3)
@@ -16283,7 +16294,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/tree@2.5.0':
+  '@fluidframework/tree@2.5.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.5.0
       '@fluidframework/container-runtime': 2.5.0(debug@4.4.3)
@@ -16305,7 +16316,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/tree@2.53.1':
+  '@fluidframework/tree@2.53.1(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.53.1
       '@fluidframework/container-runtime': 2.53.1(debug@4.4.3)
@@ -16327,7 +16338,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/tree@2.63.0':
+  '@fluidframework/tree@2.63.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.63.0
       '@fluidframework/container-runtime': 2.63.0(debug@4.4.3)
@@ -16350,7 +16361,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/tree@2.74.0':
+  '@fluidframework/tree@2.74.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.74.0
       '@fluidframework/container-runtime': 2.74.0(debug@4.4.3)
@@ -16373,7 +16384,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/tree@2.80.0':
+  '@fluidframework/tree@2.80.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.80.0
       '@fluidframework/container-runtime': 2.80.0(debug@4.4.3)
@@ -16535,6 +16546,12 @@ snapshots:
 
   after@0.8.2: {}
 
+  agent-base@6.0.2:
+    dependencies:
+      debug: 4.4.3
+    transitivePeerDependencies:
+      - supports-color
+
   ansi-regex@5.0.1: {}
 
   ansi-styles@4.3.0:
@@ -16561,7 +16578,7 @@ snapshots:
     dependencies:
       possible-typed-array-names: 1.1.0
 
-  axios@0.31.1(debug@4.4.3):
+  axios@0.33.0(debug@4.4.3):
     dependencies:
       follow-redirects: 1.16.0(debug@4.4.3)
       form-data: 4.0.6
@@ -16569,13 +16586,15 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  axios@1.16.0(debug@4.4.3):
+  axios@1.18.1(debug@4.4.3):
     dependencies:
       follow-redirects: 1.16.0(debug@4.4.3)
       form-data: 4.0.6
+      https-proxy-agent: 5.0.1
       proxy-from-env: 2.1.0
     transitivePeerDependencies:
       - debug
+      - supports-color
 
   backo2@1.0.2: {}
 
@@ -16747,7 +16766,7 @@ snapshots:
       es-errors: 1.3.0
       get-intrinsic: 1.3.0
       has-tostringtag: 1.0.2
-      hasown: 2.0.2
+      hasown: 2.0.4
 
   escalade@3.2.0: {}
 
@@ -16833,6 +16852,13 @@ snapshots:
     dependencies:
       function-bind: 1.1.2
 
+  https-proxy-agent@5.0.1:
+    dependencies:
+      agent-base: 6.0.2
+      debug: 4.4.3
+    transitivePeerDependencies:
+      - supports-color
+
   ieee754@1.2.1: {}
 
   indexof@0.0.1: {}
@@ -16892,7 +16918,7 @@ snapshots:
       call-bound: 1.0.4
       gopd: 1.2.0
       has-tostringtag: 1.0.2
-      hasown: 2.0.2
+      hasown: 2.0.4
 
   is-typed-array@1.1.15:
     dependencies:

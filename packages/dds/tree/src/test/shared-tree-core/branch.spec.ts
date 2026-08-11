@@ -16,6 +16,7 @@ import {
 } from "../../core/index.js";
 import {
 	DefaultChangeFamily,
+	type DefaultChangeProcessingContext,
 	type DefaultChangeset,
 	type DefaultEditBuilder,
 } from "../../feature-libraries/index.js";
@@ -33,7 +34,11 @@ const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily, {
 	minVersionForCollab: FluidClientVersion.v2_0,
 });
 
-type DefaultBranch = SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;
+type DefaultBranch = SharedTreeBranch<
+	DefaultEditBuilder,
+	DefaultChangeset,
+	DefaultChangeProcessingContext
+>;
 
 describe("Branches", () => {
 	/** The tag used for the "origin commit" (the commit that all other commits share as a common ancestor) */

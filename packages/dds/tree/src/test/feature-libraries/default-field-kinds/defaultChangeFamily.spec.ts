@@ -15,8 +15,6 @@ import {
 	type UpPath,
 	applyDelta,
 	makeDetachedFieldIndex,
-	mapCursorField,
-	moveToDetachedField,
 	rootFieldKey,
 } from "../../../core/index.js";
 import {
@@ -25,7 +23,7 @@ import {
 	DefaultEditBuilder,
 	cursorForJsonableTreeField,
 	intoDelta,
-	jsonableTreeFromCursor,
+	jsonableTreeFromForest,
 } from "../../../feature-libraries/index.js";
 import { FluidClientVersion, FormatValidatorBasic } from "../../../index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
@@ -37,8 +35,6 @@ import {
 	chunkFromJsonableTrees,
 	failCodecFamily,
 	mintRevisionTag,
-	testIdCompressor,
-	testRevisionTagCodec,
 } from "../../utils.js";
 import { initializeForest } from "../initializeForest.js";
 
@@ -46,8 +42,7 @@ const codecOptions = {
 	jsonValidator: FormatValidatorBasic,
 	minVersionForCollab: FluidClientVersion.v2_0,
 };
-const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily, codecOptions);
-const family = defaultChangeFamily;
+const rebaser = new DefaultChangeFamily(failCodecFamily, codecOptions).rebaser;
 
 const rootKey = rootFieldKey;
 const fooKey = brand<FieldKey>("foo");
@@ -123,22 +118,13 @@ function initializeEditableForest(data?: JsonableTree): {
 } {
 	const forest = buildTestForest({ additionalAsserts: true });
 	if (data !== undefined) {
-		initializeForest(
-			forest,
-			cursorForJsonableTreeField([data]),
-			testRevisionTagCodec,
-			testIdCompressor,
-		);
+		initializeForest(forest, cursorForJsonableTreeField([data]));
 	}
 	const changes: TaggedChange<DefaultChangeset>[] = [];
 	const deltas: DeltaRoot[] = [];
-	const detachedFieldIndex = makeDetachedFieldIndex(
-		undefined,
-		testRevisionTagCodec,
-		testIdCompressor,
-	);
+	const detachedFieldIndex = makeDetachedFieldIndex();
 	const builder = new DefaultEditBuilder(
-		family,
+		rebaser,
 		mintRevisionTag,
 		(taggedChange) => {
 			changes.push(taggedChange);
@@ -160,10 +146,7 @@ function expectForest(
 	actual: IForestSubscription,
 	expected: JsonableTree | JsonableTree[],
 ): void {
-	const reader = actual.allocateCursor();
-	moveToDetachedField(actual, reader);
-	const copy = mapCursorField(reader, jsonableTreeFromCursor);
-	reader.free();
+	const copy = jsonableTreeFromForest(actual);
 	const expectedArray = Array.isArray(expected) ? expected : [expected];
 	assert.deepEqual(copy, expectedArray);
 }
@@ -447,7 +430,7 @@ describe("DefaultEditBuilder", () => {
 				},
 			});
 			builder.move({ parent: root, field: fooKey }, 0, 3, { parent: root, field: fooKey }, 4);
-			const treeView = toJsonableTreeFromForest(forest);
+			const treeView = jsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
 				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
@@ -475,7 +458,7 @@ describe("DefaultEditBuilder", () => {
 				},
 			});
 			builder.move({ parent: root, field: fooKey }, 1, 3, { parent: root, field: fooKey }, 0);
-			const treeView = toJsonableTreeFromForest(forest);
+			const treeView = jsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
 				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
@@ -503,7 +486,7 @@ describe("DefaultEditBuilder", () => {
 				},
 			});
 			builder.move({ parent: root, field: fooKey }, 1, 2, { parent: root, field: fooKey }, 2);
-			const treeView = toJsonableTreeFromForest(forest);
+			const treeView = jsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
 				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
@@ -532,7 +515,7 @@ describe("DefaultEditBuilder", () => {
 				},
 			});
 			builder.move({ parent: root, field: fooKey }, 1, 3, { parent: root, field: barKey }, 1);
-			const treeView = toJsonableTreeFromForest(forest);
+			const treeView = jsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
 				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
@@ -580,7 +563,7 @@ describe("DefaultEditBuilder", () => {
 				{ parent: root_foo1, field: fooKey },
 				1,
 			);
-			const treeView = toJsonableTreeFromForest(forest);
+			const treeView = jsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
 				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
@@ -640,7 +623,7 @@ describe("DefaultEditBuilder", () => {
 				{ parent: root_foo0, field: fooKey },
 				1,
 			);
-			const treeView = toJsonableTreeFromForest(forest);
+			const treeView = jsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
 				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
@@ -702,7 +685,7 @@ describe("DefaultEditBuilder", () => {
 				{ parent: root_bar0, field: barKey },
 				1,
 			);
-			const treeView = toJsonableTreeFromForest(forest);
+			const treeView = jsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
 				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
@@ -759,7 +742,7 @@ describe("DefaultEditBuilder", () => {
 				{ parent: root_bar0, field: barKey },
 				1,
 			);
-			const treeView = toJsonableTreeFromForest(forest);
+			const treeView = jsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
 				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
@@ -808,7 +791,7 @@ describe("DefaultEditBuilder", () => {
 				{ parent: root, field: fooKey },
 				0,
 			);
-			const treeView = toJsonableTreeFromForest(forest);
+			const treeView = jsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
 				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
@@ -854,7 +837,7 @@ describe("DefaultEditBuilder", () => {
 				{ parent: root, field: fooKey },
 				1,
 			);
-			const treeView = toJsonableTreeFromForest(forest);
+			const treeView = jsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
 				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
@@ -908,7 +891,7 @@ describe("DefaultEditBuilder", () => {
 				},
 				1,
 			);
-			const treeView = toJsonableTreeFromForest(forest);
+			const treeView = jsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
 				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
@@ -957,7 +940,7 @@ describe("DefaultEditBuilder", () => {
 				{ parent: root_foo0, field: fooKey },
 				1,
 			);
-			const treeView = toJsonableTreeFromForest(forest);
+			const treeView = jsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
 				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
@@ -1000,7 +983,7 @@ describe("DefaultEditBuilder", () => {
 					0,
 				),
 			);
-			const treeView = toJsonableTreeFromForest(forest);
+			const treeView = jsonableTreeFromForest(forest);
 			assert.deepEqual(treeView, [statingState]);
 		});
 
@@ -1052,7 +1035,7 @@ describe("DefaultEditBuilder", () => {
 				{ parent: root_bar0_bar0, field: barKey },
 				1,
 			);
-			const treeView = toJsonableTreeFromForest(forest);
+			const treeView = jsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
 				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
@@ -1109,7 +1092,7 @@ describe("DefaultEditBuilder", () => {
 				},
 			});
 			builder.move({ parent: root, field: fooKey }, 0, 3, { parent: root, field: barKey }, 1);
-			const treeView = toJsonableTreeFromForest(forest);
+			const treeView = jsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
 				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
@@ -1130,7 +1113,7 @@ describe("DefaultEditBuilder", () => {
 			});
 			const sequencePath = { parent: root, field: EmptyKey };
 			builder.move(sequencePath, 0, 0, sequencePath, 0);
-			const treeView = toJsonableTreeFromForest(forest);
+			const treeView = jsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
 				type: brand(JsonAsTree.Array.identifier),
 			};
@@ -1138,11 +1121,3 @@ describe("DefaultEditBuilder", () => {
 		});
 	});
 });
-
-function toJsonableTreeFromForest(forest: IForestSubscription): JsonableTree[] {
-	const readCursor = forest.allocateCursor();
-	moveToDetachedField(forest, readCursor);
-	const jsonable = mapCursorField(readCursor, jsonableTreeFromCursor);
-	readCursor.free();
-	return jsonable;
-}

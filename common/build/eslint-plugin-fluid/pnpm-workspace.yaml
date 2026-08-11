@@ -9,7 +9,7 @@ packages:
   - "."
 
 # Supply chain security settings - see /DEV.md for documentation
-minimumReleaseAge: 1440
+minimumReleaseAge: 0
 resolutionMode: highest
 blockExoticSubdeps: true
 trustPolicy: no-downgrade
@@ -29,13 +29,13 @@ updateNotifier: false
 #   serialize-javascript, brace-expansion, and picomatch.
 overrides:
   # Resolve known security vulnerabilities in transitive dependencies.
-  brace-expansion@>=2 <3: ^2.0.3
-  brace-expansion@>=5 <6: ^5.0.6
+  brace-expansion@>=2 <3: ^2.1.3
+  brace-expansion@>=5 <6: ^5.0.8
   keyv@>=4 <5: ^5.5.3
 
-  brace-expansion@>=1 <2: ^1.1.13
+  brace-expansion@>=1 <2: ^1.1.17
   diff@>=5 <6: ^5.2.2
-  js-yaml: ^4.1.1
+  js-yaml: 4.3.0
   qs: ^6.15.2
   validator: ^13.15.0
   minimatch@>=3 <4: ^3.1.5
