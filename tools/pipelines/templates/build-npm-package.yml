@@ -345,6 +345,7 @@ extends:
               env:
                 # Avoid dynamic npm installs of old package versions during network-isolated CI/PR runs.
                 # This keeps current-version tests running while skipping cross-version compat tests.
+                # Versions older than LTS are unsupported, so LTS does not need to maintain compatibility with them.
                 fluid__test__compatVersion: '["0"]'
               inputs:
                 command: 'custom'
@@ -358,6 +359,7 @@ extends:
               env:
                 # Avoid dynamic npm installs of old package versions during network-isolated CI/PR runs.
                 # This keeps current-version tests running while skipping cross-version compat tests.
+                # Versions older than LTS are unsupported, so LTS does not need to maintain compatibility with them.
                 fluid__test__compatVersion: '["0"]'
               inputs:
                 command: 'custom'
