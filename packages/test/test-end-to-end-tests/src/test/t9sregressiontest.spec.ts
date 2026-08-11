@@ -7,6 +7,11 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { waitContainerToCatchUp } from "@fluidframework/container-loader/internal";
+import type {
+	IDocumentServiceFactory,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import { streamFromMessages } from "@fluidframework/driver-utils/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import {
@@ -50,19 +55,33 @@ describeCompat("t9s issue regression test", "NoCompat", (getTestObjectProvider, 
 		map1.set("key", "value");
 		await provider.ensureSynchronized();
 
-		// Force the container to retrieve the first op from delta storage rather than from the
-		// delta stream's initial messages.
-		const documentServiceFactory = wrapObjectAndOverride(provider.documentServiceFactory, {
-			createDocumentService: {
-				connectToDeltaStream: (documentService) => async (client) => {
-					const connection = await documentService.connectToDeltaStream(client);
-					const noop = (): void => {};
-					connection.on("op", noop);
-					connection.initialMessages.length = 0;
-					return wrapObjectAndOverride(connection, { initialMessages: () => [] });
+		// Force the container to retrieve the first op from delta storage using the lower-bound-only
+		// query that exposed the Tinylicious bug, rather than receiving it from the delta stream.
+		const documentServiceFactory = wrapObjectAndOverride<IDocumentServiceFactory>(
+			provider.documentServiceFactory,
+			{
+				createDocumentService: {
+					connectToDeltaStorage: {
+						fetchMessages: () => (from) =>
+							streamFromMessages(
+								fetch(
+									`http://localhost:7070/deltas/tinylicious/${provider.documentId}?from=${from - 1}`,
+								).then(async (response) => {
+									assert(response.ok, `Failed to fetch ops: ${response.status}`);
+									return (await response.json()) as ISequencedDocumentMessage[];
+								}),
+							),
+					},
+					connectToDeltaStream: (documentService) => async (client) => {
+						const connection = await documentService.connectToDeltaStream(client);
+						const noop = (): void => {};
+						connection.on("op", noop);
+						connection.initialMessages.length = 0;
+						return wrapObjectAndOverride(connection, { initialMessages: () => [] });
+					},
 				},
 			},
-		});
+		);
 		const loader = provider.makeTestLoader({
 			...testContainerConfig,
 			loaderProps: { documentServiceFactory },
