@@ -642,6 +642,59 @@ describe("VersionMarkResolver", () => {
 				kind: "pending",
 			});
 		});
+
+		it("skips a clipped leading chunk stream through the REAL unpack pipeline and resolves the target", async () => {
+			// End-to-end via a real RemoteMessageProcessor/OpSplitter (not a stand-in). The clipped chunks
+			// (2/3, 3/3 from "chunker") would make the real OpSplitter throw "Chunk Id mismatch" if fed; the
+			// guard skips them so the scan reaches a real (non-chunked) target batch and resolves it.
+			const runtimeContents = { type: ContainerMessageType.FluidDataStoreOp, contents: {} };
+			const reader = makeReader([
+				[
+					makeChunkOp({ sequenceNumber: 11, clientId: "chunker", chunkId: 2, totalChunks: 3 }),
+					makeChunkOp({ sequenceNumber: 12, clientId: "chunker", chunkId: 3, totalChunks: 3 }),
+					makeOp({
+						sequenceNumber: 20,
+						clientId: "target",
+						clientSequenceNumber: 1,
+						type: MessageType.Operation,
+						metadata: { batch: true },
+						contents: runtimeContents,
+					}),
+					makeOp({
+						sequenceNumber: 21,
+						clientId: "target",
+						clientSequenceNumber: 2,
+						type: MessageType.Operation,
+						metadata: { batch: false },
+						contents: runtimeContents,
+					}),
+				],
+			]);
+			const resolver = makeResolver({ reader, unpackerFactory: makeRealUnpackerFactory() });
+			assert.deepEqual(await resolver.resolve(generateBatchId("target", 1), 5), {
+				kind: "resolved",
+				sequenceNumber: 21,
+			});
+		});
+
+		it("the real pipeline throws on a clipped chunk, confirming the harness reproduces AB#80025", () => {
+			// Sanity-check the above harness: fed a non-leading chunk first (as a clipped scan anchor would),
+			// the real RemoteMessageProcessor/OpSplitter throws "Chunk Id mismatch". This is exactly what the
+			// guard prevents the resolver from reaching, so it proves the e2e test above is meaningful.
+			const unpack = makeRealUnpackerFactory()();
+			assert.throws(
+				() =>
+					unpack(
+						makeChunkOp({
+							sequenceNumber: 11,
+							clientId: "chunker",
+							chunkId: 2,
+							totalChunks: 3,
+						}),
+					),
+				/Chunk Id mismatch/,
+			);
+		});
 	});
 
 	describe("resolveFromHistory - mid-batch scan anchor (clipped leading batch)", () => {
