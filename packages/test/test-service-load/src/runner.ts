@@ -93,11 +93,33 @@ async function main(): Promise<void> {
 		process.env.DEBUG = log;
 	}
 
-	const { logger, flush } = await createLogger(outputDir, runId.toString(), {
+	const baseLoggerDimensions = {
 		runId,
 		driverType: driver,
 		driverEndpointName: endpoint,
 		profile: profileName,
+	};
+
+	// The driver is created before the logger so its tenant name can be logged as a dimension.
+	let testDriver: ITestDriver;
+	try {
+		testDriver = await createTestDriver(driver, endpoint, seed, runId);
+	} catch (error) {
+		// No driver means no tenant name, but the failure itself still needs to be reported.
+		const { logger: setupLogger, flush: flushSetup } = await createLogger(
+			outputDir,
+			runId.toString(),
+			{ ...baseLoggerDimensions, driverTenantName: undefined },
+		);
+		setupLogger.sendErrorEvent({ eventName: "runnerFailed" }, error);
+		// Flush before rethrowing: the top-level handler exits the process immediately.
+		await flushSetup();
+		throw error;
+	}
+
+	const { logger, flush } = await createLogger(outputDir, runId.toString(), {
+		...baseLoggerDimensions,
+		driverTenantName: testDriver.tenantName,
 	});
 
 	// this will enabling capturing the full stack for errors
@@ -149,6 +171,7 @@ async function main(): Promise<void> {
 		const random = makeRandom(seed, runId);
 
 		await runnerProcess(
+			testDriver,
 			driver,
 			endpoint,
 			{
@@ -221,6 +244,7 @@ function* factoryPermutations<T extends IDocumentServiceFactory>(
  * Implementation of the runner process. Returns the return code to exit the process with.
  */
 async function runnerProcess(
+	testDriver: ITestDriver,
 	driver: TestDriverTypes,
 	endpoint: DriverEndpoint | undefined,
 	runConfig: IRunConfig,
@@ -236,13 +260,6 @@ async function runnerProcess(
 	const loaderOptions = generateLoaderOptions(seed, optionsOverride?.loader);
 	const containerOptions = generateRuntimeOptions(seed, optionsOverride?.container);
 	const configurations = generateConfigurations(seed, optionsOverride?.configurations);
-
-	const testDriver: ITestDriver = await createTestDriver(
-		driver,
-		endpoint,
-		seed,
-		runConfig.runId,
-	);
 
 	// Cycle between creating new factory vs. reusing factory.
 	// Certain behavior (like driver caches) are per factory instance, and by reusing it we hit those code paths
