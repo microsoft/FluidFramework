@@ -7,13 +7,13 @@ pipelines:
         credscan:
           lastModifiedDate: 2024-09-17
         eslint:
-          lastModifiedDate: 2026-08-10
+          lastModifiedDate: 2024-09-17
         bandit:
-          lastModifiedDate: 2026-08-10
+          lastModifiedDate: 2024-09-17
         psscriptanalyzer:
-          lastModifiedDate: 2026-08-10
+          lastModifiedDate: 2024-09-17
         armory:
-          lastModifiedDate: 2026-08-10
+          lastModifiedDate: 2024-09-17
   12:
     retail:
       source:
@@ -582,12 +582,12 @@ pipelines:
     retail:
       source:
         eslint:
-          lastModifiedDate: 2026-01-27
+          lastModifiedDate: 2026-08-11
         armory:
-          lastModifiedDate: 2026-01-27
+          lastModifiedDate: 2026-08-11
       binary:
         binskim:
-          lastModifiedDate: 2026-03-28
+          lastModifiedDate: 2026-08-11
   191:
     retail:
       source:
