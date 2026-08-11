@@ -192,7 +192,7 @@ describe("Tree change event ordering", () => {
 			});
 
 			// Events fire in the order nodes were first edited (parent before child),
-            // but nodeChanged still comes before treeChanged
+			// but nodeChanged still comes before treeChanged
 			assert.deepEqual(log, [
 				"parent:nodeChanged",
 				"parent:treeChanged",
