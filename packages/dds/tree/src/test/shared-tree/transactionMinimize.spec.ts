@@ -1450,7 +1450,8 @@ const compareKeys = createTupleComparator<EditTreeScenariosKey>([
 ]);
 
 /**
- * Generates all possible scenarios where a tree is edited.
+ * Generates a set of scenarios where a tree is edited.
+ * Emphasis is placed on the movement of content between different trees, themselves moving in different ways.
  */
 function generateEditedTreeScenarios(): EditTreeScenarios {
 	const scenarios: EditTreeScenarios = newTupleBTree(compareKeys);
@@ -1531,9 +1532,9 @@ function generateEditedTreeScenarios(): EditTreeScenarios {
 		}
 	}
 	function getRecord(root: Records, locationOfEditedTree: NodeFlowEndpoint): BoxRecord {
-		const pallet = tryGetRecord(root, locationOfEditedTree);
-		assert.ok(pallet, `Expected pallet to be present at ${locationOfEditedTree}`);
-		return pallet;
+		const record = tryGetRecord(root, locationOfEditedTree);
+		assert.ok(record, `Expected pallet to be present at ${locationOfEditedTree}`);
+		return record;
 	}
 
 	for (const sourceEndpoint of allEndpoints) {
@@ -2687,11 +2688,10 @@ describe("transaction minimize post-processor", () => {
 			NodeFlowEndpoint.DetachedBuiltRoot,
 		]);
 
-		function testNodeFlow<
-			TSchema extends ImplicitFieldSchema,
-			TApplyReturn extends
-				void | SchematizingSimpleTreeView<ImplicitFieldSchema> = void | SchematizingSimpleTreeView<ImplicitFieldSchema>,
-		>(scenario: TransactionScenario<TSchema, TApplyReturn>, scenarioName: string): void {
+		function testNodeFlow<TSchema extends ImplicitFieldSchema>(
+			scenario: TransactionScenario<TSchema>,
+			scenarioName: string,
+		): void {
 			const { tree: unminimizedTree, view: unminimizedView } = runScenario(scenario, {
 				doNotMinimize: true,
 			});
