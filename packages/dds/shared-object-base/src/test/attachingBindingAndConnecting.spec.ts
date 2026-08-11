@@ -85,7 +85,10 @@ function createTestSharedObject(overrides: OverridableType): {
 			incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 			fullTree?: boolean,
 		): ISummaryTreeWithStats {
-			assert(overrides.summarizeCore !== undefined, "summarizeCore not set");
+			assert(
+				overrides.summarizeCore !== undefined,
+				"overrides.summarizeCore was not provided",
+			);
 			return overrides.summarizeCore.call(
 				this,
 				serializer,
@@ -95,18 +98,25 @@ function createTestSharedObject(overrides: OverridableType): {
 			);
 		}
 		protected async loadCore(services: IChannelStorageService): Promise<void> {
-			await overrides.loadCore?.call(this, services);
+			assert(overrides.loadCore !== undefined, "overrides.loadCore was not provided");
+			await overrides.loadCore.call(this, services);
 		}
 		protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
-			assert(overrides.processMessagesCore !== undefined, "processMessagesCore not set");
+			assert(
+				overrides.processMessagesCore !== undefined,
+				"overrides.processMessagesCore was not provided",
+			);
 			overrides.processMessagesCore.call(this, messagesCollection);
 		}
 		protected onDisconnect(): void {
-			assert(overrides.onDisconnect !== undefined, "onDisconnect not set");
+			assert(overrides.onDisconnect !== undefined, "overrides.onDisconnect was not provided");
 			overrides.onDisconnect.call(this);
 		}
 		protected applyStashedOp(content: unknown): void {
-			assert(overrides.applyStashedOp !== undefined, "applyStashedOp not set");
+			assert(
+				overrides.applyStashedOp !== undefined,
+				"overrides.applyStashedOp was not provided",
+			);
 			overrides.applyStashedOp.call(this, content);
 		}
 		protected didAttach =
