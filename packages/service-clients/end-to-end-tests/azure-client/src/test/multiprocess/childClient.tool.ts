@@ -216,6 +216,21 @@ function isStringOrNumberRecord(value: unknown): value is Record<string, string 
 	return true;
 }
 
+function isObjectRecord(value: unknown): value is Record<string, unknown> {
+	return value !== null && typeof value === "object";
+}
+
+function getErrorEventDetails(error: unknown): { errorType?: string; statusCode?: number } {
+	if (!isObjectRecord(error)) {
+		return {};
+	}
+
+	return {
+		errorType: typeof error.errorType === "string" ? error.errorType : undefined,
+		statusCode: typeof error.statusCode === "number" ? error.statusCode : undefined,
+	};
+}
+
 // NOTE:
 // - This schema intentionally uses optional keys (latest?, latestMap?) so tests can register
 //   states conditionally at runtime.
@@ -742,7 +757,11 @@ function setupMessageHandler(): void {
 	process.on("message", (msg: MessageFromParent) => {
 		messageHandler.onMessage(msg).catch((error: Error) => {
 			console.error(`[${testLabel}] Error in client ${process_id}`, error);
-			send({ event: "error", error: `${process_id}: ${error.message}` });
+			send({
+				event: "error",
+				error: `${process_id}: ${error.message}`,
+				...getErrorEventDetails(error),
+			});
 		});
 	});
 }

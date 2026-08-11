@@ -267,7 +267,9 @@ interface WorkspaceRegisteredEvent {
 /**
  * Sent at any time to indicate an error.
  */
-interface ErrorEvent {
+export interface ErrorEvent {
 	event: "error";
 	error: string;
+	errorType?: string;
+	statusCode?: number;
 }

@@ -19,6 +19,7 @@ import type {
 	LatestMapValueGetResponseEvent,
 	MessageToChild,
 	EventEntry,
+	ErrorEvent,
 } from "./messageTypes.js";
 
 /**
@@ -41,6 +42,43 @@ export const testConsole = {
 	warn: console.warn,
 	error: console.error,
 };
+
+interface ErrorWithAfrAvailabilityDipTelemetry {
+	errorType?: unknown;
+	statusCode?: unknown;
+	message?: unknown;
+}
+
+function isObjectRecord(value: unknown): value is Record<string, unknown> {
+	return value !== null && typeof value === "object";
+}
+
+// ADO 78423 / bug 59980: AFR can transiently return Azure Front Door 502s to these
+// live-service tests; detect only that signature so client regressions still fail.
+export function isAfrAvailabilityDip(error: unknown): boolean {
+	if (!isObjectRecord(error)) {
+		return false;
+	}
+
+	const { errorType, statusCode, message } = error as ErrorWithAfrAvailabilityDipTelemetry;
+	if (errorType !== "genericNetworkError" || statusCode !== 502) {
+		return false;
+	}
+
+	return (
+		typeof message !== "string" ||
+		message.includes("isn't responding to Azure Front Door") ||
+		message.includes("OriginConnectionAborted")
+	);
+}
+
+function createChildProcessError(childId: number | string, msg: ErrorEvent): Error {
+	const error = new Error(`Child ${childId} process error: ${msg.error}`) as Error &
+		ErrorWithAfrAvailabilityDipTelemetry;
+	error.errorType = msg.errorType;
+	error.statusCode = msg.statusCode;
+	return error;
+}
 
 interface ChildProcess extends AnyChildProcess {
 	send(message: MessageToChild): boolean;
@@ -195,7 +233,7 @@ function listenForConnectedResponse({
 			onConnected(msg);
 		} else if (msg.event === "error") {
 			child.off("message", listener);
-			reject(new Error(`Child ${childId} process error: ${msg.error}`));
+			reject(createChildProcessError(childId, msg));
 		} else if (msg.event !== "ack") {
 			child.off("message", listener);
 			// This is not strictly required, but is current expectation.
