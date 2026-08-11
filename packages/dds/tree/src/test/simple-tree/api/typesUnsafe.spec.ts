@@ -27,6 +27,7 @@ type MapInlined = System_Unsafe.ReadonlyMapInlined<string, typeof numberSchema>;
 
 type _check = requireAssignableTo<MapInlined, FluidReadonlyMap<string, number>>;
 
+// Verify that unsafe record iteration uses the Fluid-owned iterator type.
 type _recordNodeUnsafeIterator = requireAssignableTo<
 	ReturnType<TreeRecordNodeUnsafe<typeof numberSchema>[typeof Symbol.iterator]>,
 	FluidIterableIterator<[string, number]>
