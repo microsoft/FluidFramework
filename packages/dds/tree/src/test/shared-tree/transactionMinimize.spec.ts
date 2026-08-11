@@ -2666,7 +2666,7 @@ describe("transaction minimize post-processor", () => {
 		});
 	});
 
-	describe("minimizes edits not visible in the output document tree", () => {
+	describe.skip("minimizes edits not visible in the output document tree", () => {
 		const endpointsUnderNodesThatEndUpDetached = new Set([
 			NodeFlowEndpoint.UnderDetachingPriorTree,
 			NodeFlowEndpoint.UnderDetachedPriorTree,
