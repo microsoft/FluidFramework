@@ -103,7 +103,7 @@ class ModularChangeMinimizer {
 		this.rootIdToNodeId = nodeInfo.rootIdToNodeId;
 
 		const delta = intoDelta(makeAnonChange(change), fieldKinds);
-		this.attachedRootIds = collectAttachedRootIds(delta, getDeltaNodeChangesByDetachId(delta));
+		this.attachedRootIds = collectAttachedRootIds(delta);
 		this.outputToInputRootId = outputToInputRootIdFromDelta(delta);
 	}
 
@@ -707,10 +707,8 @@ type ChangeAtomIdRangeSet = ChangeAtomIdRangeMap<true>;
  * These are the "used" nodes: any build whose nodes are not in this set has no observable
  * effect on the resulting document and can be dropped.
  */
-function collectAttachedRootIds(
-	delta: DeltaRoot,
-	detachIdToNodeChanges: ChangeAtomIdMap<DeltaFieldMap>,
-): ChangeAtomIdRangeSet {
+function collectAttachedRootIds(delta: DeltaRoot): ChangeAtomIdRangeSet {
+	const detachIdToNodeChanges = getDeltaNodeChangesByDetachId(delta);
 	const attached: ChangeAtomIdRangeSet = newChangeAtomIdRangeMap<true>();
 	// Worklist of detached node ID ranges newly discovered to be live, whose own nested content must be visited.
 	const worklist: ChangeAtomIdRange[] = [];
@@ -798,33 +796,35 @@ function collectAttachedRootIds(
  */
 function getDeltaNodeChangesByDetachId(delta: DeltaRoot): ChangeAtomIdMap<DeltaFieldMap> {
 	const detachIdToChanges: ChangeAtomIdMap<DeltaFieldMap> = new Map();
-	if (delta.global !== undefined) {
-		for (const { id, fields } of delta.global) {
-			setInNestedMap(detachIdToChanges, id.major, id.minor, fields);
-		}
-	}
 
-	if (delta.fields !== undefined) {
-		const visitFields = (fields: DeltaFieldMap): void => {
-			for (const fieldChange of fields.values()) {
-				for (const mark of fieldChange.marks) {
-					if (mark.fields !== undefined) {
-						visitFields(mark.fields);
+	const visitFields = (fields: DeltaFieldMap): void => {
+		for (const fieldChange of fields.values()) {
+			for (const mark of fieldChange.marks) {
+				if (mark.fields !== undefined) {
+					visitFields(mark.fields);
 
-						if (mark.detach !== undefined) {
-							setInNestedMap(
-								detachIdToChanges,
-								mark.detach.major,
-								mark.detach.minor,
-								mark.fields,
-							);
-						}
+					if (mark.detach !== undefined) {
+						setInNestedMap(
+							detachIdToChanges,
+							mark.detach.major,
+							mark.detach.minor,
+							mark.fields,
+						);
 					}
 				}
 			}
-		};
+		}
+	};
 
+	if (delta.fields !== undefined) {
 		visitFields(delta.fields);
+	}
+
+	if (delta.global !== undefined) {
+		for (const { id, fields } of delta.global) {
+			setInNestedMap(detachIdToChanges, id.major, id.minor, fields);
+			visitFields(fields);
+		}
 	}
 
 	return detachIdToChanges;
