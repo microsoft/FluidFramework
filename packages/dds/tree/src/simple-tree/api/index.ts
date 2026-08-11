@@ -21,7 +21,7 @@ export type {
 	TreeViewAlpha,
 	TreeViewBeta,
 	TreeBranch,
-	TreeBranchAlpha,
+	UntypedTreeViewAlpha,
 	TreeBranchEvents,
 	TreeContextAlpha,
 	ITreeAlpha,

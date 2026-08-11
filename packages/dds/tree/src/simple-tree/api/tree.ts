@@ -149,7 +149,7 @@ export interface ITreeAlpha extends ITree {
  *
  * The branch associated directly with the {@link ITree | SharedTree} is the "main" branch, and all other branches fork (directly or transitively) from that main branch.
  *
- * See {@link TreeBranchAlpha} for additional APIs that are in an earlier stage of development.
+ * See {@link UntypedTreeViewAlpha} for additional APIs that are in an earlier stage of development.
  * @sealed @beta
  */
 export interface TreeBranch extends IDisposable {
@@ -223,7 +223,7 @@ export interface TreeContextAlpha {
 	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
 	 *
 	 * `runTransaction` may be invoked on the context of a {@link TreeStatus.InDocument | hydrated } or {@link Unhydrated | unhydrated } node.
-	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether this context is associated with a branch and gain {@link TreeBranchAlpha.(runTransaction:1) | access to more transaction capabilities} if so.
+	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether this context is associated with a branch and gain {@link UntypedTreeViewAlpha.(runTransaction:1) | access to more transaction capabilities} if so.
 	 */
 	runTransaction<TValue>(
 		transaction: () => WithValue<TValue>,
@@ -271,18 +271,18 @@ export interface TreeContextAlpha {
 	): Promise<TransactionVoidResult>;
 
 	/**
-	 * True if this context is associated with a {@link TreeBranchAlpha | branch} and false if it is associated with an {@link Unhydrated | unhydrated } node.
-	 * @remarks If this returns true, the context can be safely inferred or cast to {@link TreeBranchAlpha} to access additional branch-specific APIs.
+	 * True if this context is associated with a {@link UntypedTreeViewAlpha | branch} and false if it is associated with an {@link Unhydrated | unhydrated } node.
+	 * @remarks If this returns true, the context can be safely inferred or cast to {@link UntypedTreeViewAlpha} to access additional branch-specific APIs.
 	 * @example
 	 * ```typescript
 	 * const context = tree.context(someNode);
 	 * if (context.isBranch()) {
-	 *   assert(context.hasRootSchema(MySchema)) // `hasRootSchema` is a method on TreeBranchAlpha, so this is only accessible if `context` is a branch context.
+	 *   assert(context.hasRootSchema(MySchema)) // `hasRootSchema` is a method on UntypedTreeViewAlpha, so this is only accessible if `context` is a branch context.
 	 *   context.root.foo = "bar"; // Edit the root of the SharedTree that `someNode` belongs to.
 	 * }
 	 * ```
 	 */
-	isBranch(): this is TreeBranchAlpha;
+	isBranch(): this is UntypedTreeViewAlpha;
 }
 
 /**
@@ -290,10 +290,10 @@ export interface TreeContextAlpha {
  * @remarks
  * The `TreeBranch` for a specific {@link TreeNode} may be acquired by calling `TreeAlpha.branch`.
  *
- * A branch does not necessarily know the schema of its SharedTree - to convert a branch to a {@link TreeViewAlpha | view with a schema}, use {@link TreeBranchAlpha.hasRootSchema | hasRootSchema()}.
+ * A branch does not necessarily know the schema of its SharedTree - to convert a branch to a {@link TreeViewAlpha | view with a schema}, use {@link UntypedTreeViewAlpha.hasRootSchema | hasRootSchema()}.
  * @sealed @alpha
  */
-export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
+export interface UntypedTreeViewAlpha extends TreeBranch, TreeContextAlpha {
 	/**
 	 * Events for the branch
 	 */
@@ -318,7 +318,7 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	): this is TreeViewAlpha<TSchema>;
 
 	// Override the base fork method to return the alpha variant.
-	fork(): TreeBranchAlpha;
+	fork(): UntypedTreeViewAlpha;
 
 	/**
 	 * {@link TreeContextAlpha.(runTransaction:1) | Run a transaction} on a branch of the SharedTree.
@@ -332,7 +332,7 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	): TransactionValueResult<TSuccessValue, TFailureValue>;
 
 	/**
-	 * An overload of {@link TreeBranchAlpha.(runTransaction:1) | runTransaction } which does not return a value.
+	 * An overload of {@link UntypedTreeViewAlpha.(runTransaction:1) | runTransaction } which does not return a value.
 	 *
 	 * @privateRemarks
 	 * TODO: Consider updating these methods to avoid the need for overloads.
@@ -344,7 +344,7 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	): TransactionVoidResult;
 
 	/**
-	 * An asynchronous version of {@link TreeBranchAlpha.(runTransaction:1) | runTransaction}.
+	 * An asynchronous version of {@link UntypedTreeViewAlpha.(runTransaction:1) | runTransaction}.
 	 * @remarks See {@link TreeContextAlpha.(runTransactionAsync:1) | runTransactionAsync} for additional information about asynchronous transactions.
 	 */
 
@@ -354,7 +354,7 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	): Promise<TransactionValueResult<TSuccessValue, TFailureValue>>;
 
 	/**
-	 * An overload of {@link TreeBranchAlpha.(runTransactionAsync:1) | runTransactionAsync } which does not return a value.
+	 * An overload of {@link UntypedTreeViewAlpha.(runTransactionAsync:1) | runTransactionAsync } which does not return a value.
 	 *
 	 * @privateRemarks
 	 * TODO: Consider updating these methods to avoid the need for overloads.
@@ -622,7 +622,7 @@ export interface TreeViewAlpha<
 			TreeViewBeta<ReadSchema<TSchema>>,
 			"root" | "initialize" | "fork" | "runTransaction" | "runTransactionAsync"
 		>,
-		TreeBranchAlpha {
+		UntypedTreeViewAlpha {
 	get root(): ReadableField<TSchema>;
 
 	set root(newRoot: InsertableField<TSchema>);

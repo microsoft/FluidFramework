@@ -7,7 +7,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type {
 	TreeContextAlpha,
-	TreeBranchAlpha,
+	UntypedTreeViewAlpha,
 	RunTransactionParamsAlpha,
 	TransactionVoidResult,
 	TransactionValueResult,
@@ -24,7 +24,7 @@ export class UnhydratedTreeContext implements TreeContextAlpha {
 	private transactionCount = 0;
 	private constructor() {}
 
-	public isBranch(): this is TreeBranchAlpha {
+	public isBranch(): this is UntypedTreeViewAlpha {
 		return false;
 	}
 

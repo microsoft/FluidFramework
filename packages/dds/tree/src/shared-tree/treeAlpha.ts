@@ -84,7 +84,7 @@ import {
 	type TreeContextAlpha,
 	type TreeNodeSchema,
 	getUnhydratedContext,
-	type TreeBranchAlpha,
+	type UntypedTreeViewAlpha,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 
@@ -262,9 +262,9 @@ export interface TreeAlpha {
 	 * This does not fork a new branch, but rather retrieves the _existing_ branch for the node.
 	 * To create a new branch, use e.g. {@link TreeBranch.fork | `myBranch.fork()`}.
 	 *
-	 * @deprecated To obtain a {@link TreeBranchAlpha | branch }, use `TreeAlpha.context(node)` to obtain a {@link TreeContextAlpha | context} and then check {@link TreeContextAlpha.isBranch | isBranch()}.
+	 * @deprecated To obtain a {@link UntypedTreeViewAlpha | branch }, use `TreeAlpha.context(node)` to obtain a {@link TreeContextAlpha | context} and then check {@link TreeContextAlpha.isBranch | isBranch()}.
 	 */
-	branch(node: TreeNode): TreeBranchAlpha | undefined;
+	branch(node: TreeNode): UntypedTreeViewAlpha | undefined;
 
 	/**
 	 * Retrieve the {@link TreeContextAlpha | context} for the given node.
@@ -845,7 +845,7 @@ export const TreeAlpha: TreeAlpha = {
 		return this.branch(node) ?? UnhydratedTreeContext.instance;
 	},
 
-	branch(node: TreeNode): TreeBranchAlpha | undefined {
+	branch(node: TreeNode): UntypedTreeViewAlpha | undefined {
 		const kernel = getKernel(node);
 		if (!kernel.isHydrated()) {
 			return undefined;

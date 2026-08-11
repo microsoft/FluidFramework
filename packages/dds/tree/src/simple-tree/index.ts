@@ -160,7 +160,7 @@ export {
 	type TreeViewAlpha,
 	type TreeViewBeta,
 	type TreeBranch,
-	type TreeBranchAlpha,
+	type UntypedTreeViewAlpha,
 	type TreeBranchEvents,
 	getPropertyKeyFromStoredKey,
 	getStoredKey,

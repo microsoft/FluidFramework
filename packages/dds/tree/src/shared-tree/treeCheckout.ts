@@ -92,7 +92,7 @@ import {
 	type UnsafeUnknownSchema,
 	type ViewableTree,
 	type TreeBranch,
-	type TreeBranchAlpha,
+	type UntypedTreeViewAlpha,
 	type VerboseTree,
 	type VoidTransactionCallbackStatusAlpha,
 	type TransactionCallbackStatusAlpha,
@@ -235,7 +235,7 @@ export type TreeTransactor = Transactor<
  * Implementations of this interface must implement the {@link branchKey} property.
  */
 export interface ITreeCheckout
-	extends TreeBranchAlpha,
+	extends UntypedTreeViewAlpha,
 		AnchorLocator,
 		ViewableTree,
 		WithBreakable {
@@ -948,14 +948,14 @@ export class TreeCheckout implements ITreeCheckout {
 		this.#transaction.branch.apply(change);
 	}
 
-	// #region TreeBranchAlpha
+	// #region UntypedTreeViewAlpha
 
 	@throwIfBroken
 	public applyChange(change: JsonCompatibleReadOnly): void {
 		this.applySerializedChange(change);
 	}
 
-	public isBranch(): this is TreeBranchAlpha {
+	public isBranch(): this is UntypedTreeViewAlpha {
 		return true;
 	}
 
@@ -1067,7 +1067,7 @@ export class TreeCheckout implements ITreeCheckout {
 			: { success: true, value: value as TSuccessValue };
 	}
 
-	// #endregion TreeBranchAlpha
+	// #endregion UntypedTreeViewAlpha
 
 	// Revision is the revision of the commit, if any, which caused this change.
 	private applyInternalChange(change: SharedTreeChange, revision?: RevisionTag): void {
