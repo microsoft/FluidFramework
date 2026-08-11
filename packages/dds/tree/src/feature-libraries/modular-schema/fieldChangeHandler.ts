@@ -23,18 +23,20 @@ import type { CrossFieldManager } from "./crossFieldQueries.js";
 import type { EncodedNodeChangeset } from "./modularChangeFormatV1.js";
 import type { CrossFieldKeyRange, NodeId } from "./modularChangeTypes.js";
 
-export type NestedChangesInfo = [
-	NodeId,
+export interface ChildChangeInfo {
+	nodeId: NodeId;
+
 	/**
 	 * The root ID for this node in the input context of the changeset.
 	 * Undefined if the node was attached in the input context.
 	 */
-	inputRootId: ChangeAtomId | undefined,
+	inputRootId: ChangeAtomId | undefined;
+
 	/**
 	 * The ID this changeset detaches this node with.
 	 */
-	detachId: ChangeAtomId | undefined,
-][];
+	detachId: ChangeAtomId | undefined;
+}
 
 /**
  * The return value of calling {@link FieldChangeHandler.intoDelta}.
@@ -113,7 +115,7 @@ export interface FieldChangeHandler<
 	 * the indices are are ordered from smallest to largest (with no duplicates).
 	 * The returned array is owned by the caller.
 	 */
-	getNestedChanges(change: TChangeset): NestedChangesInfo;
+	getNestedChanges(change: TChangeset): ChildChangeInfo[];
 
 	/**
 	 * @returns A list of all cross-field keys contained in the change.

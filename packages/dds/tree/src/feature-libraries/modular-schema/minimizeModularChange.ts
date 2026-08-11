@@ -578,7 +578,7 @@ function addInputNodeAttachStatesForFields(
 			fieldChange.change,
 		);
 
-		for (const [nodeId, inputId, _outputId] of children) {
+		for (const { nodeId, inputRootId: inputId } of children) {
 			const normalizedNodeId = normalizeNodeId(nodeId, nodeAliases);
 			const attachState =
 				parentState === NodeAttachState.Attached && inputId === undefined
@@ -652,7 +652,7 @@ function addNodeInfoForFields(
 			fieldChange.change,
 		);
 
-		for (const [nodeId, inputId, detachId] of children) {
+		for (const { nodeId, inputRootId: inputId, detachId } of children) {
 			const normalizedNodeId = normalizeNodeId(nodeId, nodeAliases);
 			const isPartOfBuild =
 				parentIsBuilt ||

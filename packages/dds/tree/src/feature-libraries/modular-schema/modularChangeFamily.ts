@@ -1375,10 +1375,8 @@ export class ModularChangeFamily
 		for (const [field, fieldChange] of fieldChanges.entries()) {
 			const fieldId = { nodeId: nodeParent, field };
 			const handler = getChangeHandler(this.fieldKinds, fieldChange.fieldKind);
-			for (const [child, _inputId, _outputId] of handler.getNestedChanges(
-				fieldChange.change,
-			)) {
-				const parentFieldId = getParentFieldId(change, child);
+			for (const { nodeId } of handler.getNestedChanges(fieldChange.change)) {
+				const parentFieldId = getParentFieldId(change, nodeId);
 				assert(
 					areEqualFieldIds(parentFieldId, fieldId),
 					0xa4e /* Inconsistent node parentage */,

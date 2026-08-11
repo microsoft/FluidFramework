@@ -29,6 +29,7 @@ export {
 export { EncodedModularChangesetV2 } from "./modularChangeFormatV2.js";
 export { FlexFieldKind, type FullSchemaPolicy } from "./fieldKind.js";
 export {
+	type ChildChangeInfo,
 	type FilterDetachFunc,
 	type FilterAttachFunc,
 	EditFilterStatus,
@@ -39,7 +40,6 @@ export {
 	type FieldChangeDecodingContext,
 	type FieldChangeRebaser,
 	type FieldEditor,
-	type NestedChangesInfo,
 	type NodeChangeComposer,
 	type NodeChangeInverter,
 	type NodeChangeRebaser,

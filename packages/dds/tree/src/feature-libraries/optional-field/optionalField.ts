@@ -46,11 +46,11 @@ import {
 	type NodeId,
 	type RelevantRemovedRootsFromChild,
 	type ToDelta,
-	type NestedChangesInfo,
 	type FieldChangeDelta,
 	FlexFieldKind,
 	type FilterDetachFunc,
 	type FilterAttachFunc,
+	type ChildChangeInfo,
 } from "../modular-schema/index.js";
 
 import type {
@@ -731,13 +731,17 @@ export const optionalChangeHandler: FieldChangeHandler<
 	getCrossFieldKeys: (_change) => [],
 };
 
-function getNestedChanges(change: OptionalChangeset): NestedChangesInfo {
+function getNestedChanges(change: OptionalChangeset): ChildChangeInfo[] {
 	const detachId = change.valueReplace?.dst;
 
 	return change.childChanges.map(([register, nodeId]) => {
 		// The node is attached in the input context iif register is self.
 		const inputDetachId = register === "self" ? undefined : register;
-		return [nodeId, inputDetachId, register === "self" ? detachId : undefined];
+		return {
+			nodeId,
+			inputRootId: inputDetachId,
+			detachId: register === "self" ? detachId : undefined,
+		};
 	});
 }
 

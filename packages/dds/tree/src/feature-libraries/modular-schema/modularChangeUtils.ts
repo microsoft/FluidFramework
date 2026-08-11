@@ -289,8 +289,8 @@ export function updateConstraintsForFields(
 ): void {
 	for (const field of fields.values()) {
 		const handler = getChangeHandler(fieldKinds, field.fieldKind);
-		for (const [nodeId, inputIndex, _outputIndex] of handler.getNestedChanges(field.change)) {
-			const isInputDetached = inputIndex === undefined;
+		for (const { nodeId, inputRootId } of handler.getNestedChanges(field.change)) {
+			const isInputDetached = inputRootId !== undefined;
 			const inputAttachState =
 				parentInputAttachState === NodeAttachState.Detached || isInputDetached
 					? NodeAttachState.Detached

@@ -19,7 +19,7 @@ import {
 	CrossFieldTarget,
 	type NodeId,
 	type CrossFieldKeyRange,
-	type NestedChangesInfo,
+	type ChildChangeInfo,
 } from "../modular-schema/index.js";
 
 import type {
@@ -62,13 +62,13 @@ export function createEmpty(): Changeset {
 	return [];
 }
 
-export function getNestedChanges(change: Changeset): NestedChangesInfo {
-	const output: NestedChangesInfo = [];
+export function getNestedChanges(change: Changeset): ChildChangeInfo[] {
+	const output: ChildChangeInfo[] = [];
 
 	for (const mark of change) {
 		if (mark.changes !== undefined) {
 			const detachId = isDetach(mark) ? getDetachedNodeId(mark) : undefined;
-			output.push([mark.changes, mark.cellId, detachId]);
+			output.push({ nodeId: mark.changes, inputRootId: mark.cellId, detachId });
 		}
 	}
 	return output;

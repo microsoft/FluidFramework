@@ -7,8 +7,10 @@ import { strict as assert } from "node:assert";
 
 import type { ChangeAtomId, RevisionTag } from "../../../core/index.js";
 import type { NodeId } from "../../../feature-libraries/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { NestedChangesInfo } from "../../../feature-libraries/modular-schema/fieldChangeHandler.js";
+import type {
+	ChildChangeInfo,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/modular-schema/fieldChangeHandler.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { sequenceFieldChangeHandler } from "../../../feature-libraries/sequence-field/sequenceFieldChangeHandler.js";
 import { brand } from "../../../util/index.js";
@@ -35,9 +37,9 @@ export function testGetNestedChanges(): void {
 				Mark.modify(nodeId2),
 			];
 			const actual = sequenceFieldChangeHandler.getNestedChanges(change);
-			const expected: NestedChangesInfo = [
-				[nodeId1, undefined, detachId],
-				[nodeId2, undefined, undefined],
+			const expected: ChildChangeInfo[] = [
+				{ nodeId: nodeId1, inputRootId: undefined, detachId },
+				{ nodeId: nodeId2, inputRootId: undefined, detachId: undefined },
 			];
 			assert.deepEqual(actual, expected);
 		});
@@ -49,9 +51,9 @@ export function testGetNestedChanges(): void {
 				Mark.modify(nodeId2, cellId2),
 			];
 			const actual = sequenceFieldChangeHandler.getNestedChanges(change);
-			const expected: NestedChangesInfo = [
-				[nodeId1, cellId1, undefined],
-				[nodeId2, cellId2, cellId2],
+			const expected: ChildChangeInfo[] = [
+				{ nodeId: nodeId1, inputRootId: cellId1, detachId: undefined },
+				{ nodeId: nodeId2, inputRootId: cellId2, detachId: cellId2 },
 			];
 			assert.deepEqual(actual, expected);
 		});

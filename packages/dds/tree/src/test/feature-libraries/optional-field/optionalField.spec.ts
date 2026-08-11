@@ -20,9 +20,9 @@ import type {
 	RelevantRemovedRootsFromChild,
 } from "../../../feature-libraries/index.js";
 import type {
+	ChildChangeInfo,
 	FieldChangeDelta,
 	FilterAttachResult,
-	NestedChangesInfo,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/fieldChangeHandler.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -977,7 +977,9 @@ describe("optionalField", () => {
 		it("includes changes to the node in the field", () => {
 			const change: OptionalChangeset = Change.child(nodeId1);
 			const actual = optionalChangeHandler.getNestedChanges(change);
-			const expected: NestedChangesInfo = [[nodeId1, undefined, undefined]];
+			const expected: ChildChangeInfo[] = [
+				{ nodeId: nodeId1, inputRootId: undefined, detachId: undefined },
+			];
 			assert.deepEqual(actual, expected);
 		});
 		it("includes changes to a node being removed from the field", () => {
@@ -987,7 +989,9 @@ describe("optionalField", () => {
 				Change.clear("self", rootId),
 			);
 			const actual = optionalChangeHandler.getNestedChanges(change);
-			const expected: NestedChangesInfo = [[nodeId1, undefined, rootId]];
+			const expected: ChildChangeInfo[] = [
+				{ nodeId: nodeId1, inputRootId: undefined, detachId: rootId },
+			];
 			assert.deepEqual(actual, expected);
 		});
 		it("includes changes to a node being moved into from the field", () => {
@@ -998,7 +1002,9 @@ describe("optionalField", () => {
 				Change.move(rootId, "self"),
 			);
 			const actual = optionalChangeHandler.getNestedChanges(change);
-			const expected: NestedChangesInfo = [[nodeId1, rootId, undefined]];
+			const expected: ChildChangeInfo[] = [
+				{ nodeId: nodeId1, inputRootId: rootId, detachId: undefined },
+			];
 			assert.deepEqual(actual, expected);
 		});
 		it("includes changes to removed nodes", () => {
@@ -1010,9 +1016,9 @@ describe("optionalField", () => {
 				Change.childAt(rootId2, nodeId2),
 			);
 			const actual = optionalChangeHandler.getNestedChanges(change);
-			const expected: NestedChangesInfo = [
-				[nodeId1, rootId1, rootId1],
-				[nodeId2, rootId2, rootId2],
+			const expected: ChildChangeInfo[] = [
+				{ nodeId: nodeId1, inputRootId: rootId1, detachId: rootId1 },
+				{ nodeId: nodeId2, inputRootId: rootId2, detachId: rootId2 },
 			];
 			assert.deepEqual(actual, expected);
 		});
