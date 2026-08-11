@@ -7,8 +7,9 @@ import { strict as assert } from "node:assert";
 
 import {
 	cleanupEphemeralService,
-	type EphemeralServiceClient,
+	type EphemeralService,
 	getDefaultEphemeralService,
+	type LocalServiceClient,
 } from "@fluidframework/local-driver/alpha";
 
 import { getExampleServiceClient } from "../exampleApp.js";
@@ -19,7 +20,7 @@ describe("getExampleServiceClient", () => {
 	});
 
 	it("selects default service by default", () => {
-		const exampleClient = getExampleServiceClient() as EphemeralServiceClient;
+		const exampleClient = getExampleServiceClient() as LocalServiceClient<EphemeralService>;
 		const defaultService = getDefaultEphemeralService();
 		assert.equal(exampleClient.service, defaultService);
 	});
@@ -38,12 +39,15 @@ describe("getExampleServiceClient", () => {
 
 		try {
 			selectService("ephemeral");
-			const ephemeralClient = getExampleServiceClient() as EphemeralServiceClient;
+			const ephemeralClient =
+				getExampleServiceClient() as LocalServiceClient<EphemeralService>;
 			const defaultService = getDefaultEphemeralService();
 			assert.equal(ephemeralClient.service, defaultService);
 
 			selectService("tinylicious");
-			const tinyliciousClient = getExampleServiceClient() as Partial<EphemeralServiceClient>;
+			const tinyliciousClient = getExampleServiceClient() as Partial<
+				LocalServiceClient<EphemeralService>
+			>;
 			// We don't have a robust way to narrow or downcast the returned client, but this at least ensures they are different.
 			assert.equal("service" in ephemeralClient, true);
 			assert.equal("service" in tinyliciousClient, false);

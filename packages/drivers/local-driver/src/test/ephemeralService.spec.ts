@@ -14,6 +14,7 @@ import {
 	startSessionService,
 	type EphemeralService,
 	EphemeralServiceContainer,
+	type LocalService,
 } from "../ephemeralService.js";
 
 const options = { minVersionForCollaboration: "2.20.0" } as const;
@@ -22,7 +23,7 @@ const stubFactory = makeStubDataStoreKind("ephemeral-test-stub");
 describe("EphemeralService", () => {
 	// Track every service a test starts so failing tests still release their resources here (instead of in
 	// each test), preventing timer leaks that would prevent a clean test exit.
-	const services: EphemeralService[] = [];
+	const services: LocalService[] = [];
 	function newService(isDefault = false): EphemeralService {
 		const service = startEphemeralService(isDefault);
 		services.push(service);
@@ -49,7 +50,7 @@ describe("EphemeralService", () => {
 		assert.strictEqual(container.container.closed, true);
 	});
 
-	describe("EphemeralServiceClient", () => {
+	describe("LocalServiceClient", () => {
 		it("createContainer returns a detached container without an id", async () => {
 			const client = newService().newClient(options);
 			const detached = await client.createContainer(stubFactory);
@@ -229,6 +230,7 @@ describe("EphemeralService", () => {
 			const firstService = startSessionService();
 			services.push(firstService);
 			const firstClient = firstService.newClient(options);
+			assert.strictEqual(firstClient.service, firstService);
 			const firstContainer = await firstClient.createAttachedContainer(stubFactory);
 			const { id } = firstContainer;
 			await firstService.synchronize();
@@ -236,9 +238,9 @@ describe("EphemeralService", () => {
 
 			const secondService = startSessionService();
 			services.push(secondService);
-			const secondContainer = await secondService
-				.newClient(options)
-				.loadContainer(id, stubFactory);
+			const secondClient = secondService.newClient(options);
+			assert.strictEqual(secondClient.service, secondService);
+			const secondContainer = await secondClient.loadContainer(id, stubFactory);
 
 			assert.strictEqual(secondContainer.id, id);
 		});

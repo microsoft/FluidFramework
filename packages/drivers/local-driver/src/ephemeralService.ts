@@ -64,7 +64,7 @@ export function startEphemeralService(isDefault = true): EphemeralService {
 		throw new UsageError("A default EphemeralService is already running");
 	}
 
-	const service = new EphemeralServiceImplementation();
+	const service = new LocalServiceImplementation();
 	if (isDefault) {
 		defaultEphemeralService = service;
 	}
@@ -87,7 +87,7 @@ export function startSessionService(): SessionService {
 	if (typeof sessionStorage === "undefined") {
 		throw new UsageError("SessionService requires browser session storage");
 	}
-	return new EphemeralServiceImplementation(new LocalSessionStorageDbFactory());
+	return new LocalServiceImplementation(new LocalSessionStorageDbFactory());
 }
 
 /**
@@ -122,20 +122,71 @@ export function getDefaultEphemeralService(): EphemeralService {
 }
 
 /**
- * Internal Options for creating an {@link EphemeralServiceClient}, extending {@link @fluidframework/driver-definitions#ServiceOptions}
- * with the {@link EphemeralService} the client should connect to.
+ * Internal options for creating a local service client, extending
+ * {@link @fluidframework/driver-definitions#ServiceOptions} with the service the client should connect to.
  * @input
  * @internal
  */
-export interface EphemeralServiceOptions extends ServiceOptions {
+export interface LocalServiceOptions<TService extends LocalService = LocalService>
+	extends ServiceOptions {
 	/**
 	 * The service instance to connect to.
 	 */
-	readonly service: EphemeralService;
+	readonly service: TService;
 }
 
 /**
- * An in-memory Fluid service that can produce connected {@link EphemeralServiceClient}s.
+ * Internal options for creating a {@link LocalServiceClient} connected to an {@link EphemeralService}.
+ * @input
+ * @internal
+ */
+export interface EphemeralServiceOptions extends LocalServiceOptions<EphemeralService> {}
+
+/**
+ * A local Fluid service with an explicitly managed lifecycle.
+ * @remarks
+ * There are two implementations of this interface with different document lifetimes:
+ * {@link EphemeralService} and {@link SessionService}.
+ *
+ * @typeParam TClient - The type of client this service creates.
+ * @alpha @sealed
+ */
+export interface LocalService<out TClient extends ServiceClient = LocalServiceClient>
+	extends ErasedBaseType<readonly ["LocalService", TClient]> {
+	/**
+	 * Closes all containers connected to this service and releases its active resources.
+	 * Closing is idempotent.
+	 */
+	close(): Promise<void>;
+
+	/**
+	 * Drives all containers connected to this service toward convergence, processing pending operations and
+	 * waiting for all dirty containers to save.
+	 *
+	 * @param timeoutMilliseconds - The maximum time to wait for containers to quiesce, in milliseconds. Defaults to 30_000.
+	 *
+	 * @privateRemarks
+	 * This is a best-effort implementation simplified from `LoaderContainerTracker.ensureSynchronized`.
+	 * Currently it does not perform receiver-side sequence-number quiescence or wait for join/leave (audience) ops.
+	 * See `LoaderContainerTracker.ensureSynchronized` for the fuller version this is based on.
+	 */
+	synchronize(timeoutMilliseconds?: number): Promise<void>;
+
+	/**
+	 * Creates a client connected to this service.
+	 *
+	 * @param options - Collaboration options for the client.
+	 */
+	newClient(options: ServiceOptions): TClient;
+
+	/**
+	 * A client connected to this service using the default options.
+	 */
+	readonly defaultClient: TClient;
+}
+
+/**
+ * An in-memory Fluid service that can produce connected {@link LocalServiceClient}s.
  * @remarks
  * All documents created through clients connected to a given `EphemeralService` are held in-memory by that service.
  * Closing the service (via {@link EphemeralService.close} or {@link cleanupEphemeralService}) closes the connections
@@ -153,20 +204,20 @@ export interface EphemeralServiceOptions extends ServiceOptions {
  * document with different minVersionForCollaboration values.
  * This also exposes a place to put APIs for preloading and exporting document contents in the future.
  *
- * This is an erased type: its only implementation is the module-private {@link EphemeralServiceImplementation}, which holds
+ * This is an erased type: its only implementation is the module-private `LocalServiceImplementation`, which holds
  * the mutable server and container state so it does not appear on this public type.
  *
  * TODO: formalize this lifecycle with an interface which documents these stages.
  * Lifecycle:
  * The intended lifecycle of an {@link EphemeralService} follows roughly the same pattern as containers:
  *
- * 1. Open: accepts connections from {@link EphemeralServiceClient}s, which can create and load containers.
+ * 1. Open: accepts connections from {@link LocalServiceClient}s, which can create and load containers.
  * Might have timers and event registrations which can trigger asynchronous work, and retain the object in memory.
  *
  * 2. Closing: asynchronous transition from open to closed. New use should behave as it closed, but may be cleaning up or saving resources asynchronously.
  * Timers and event registrations may still be active, but should be cleaned up by the time the transition to closed completes.
  *
- * 3. Closed: no longer accepts connections from {@link EphemeralServiceClient}s, and all containers connected to it are closed.
+ * 3. Closed: no longer accepts connections from {@link LocalServiceClient}s, and all containers connected to it are closed.
  * Should have no subscriptions to events or timers which could retain it in memory or trigger asynchronous work.
  * The object can still be used in a limited capacity (typically just to inspect its status (e.g. `isClosed`), and to view (but not edit) the final state of any containers which were connected to it before it closed.)
  *
@@ -175,110 +226,45 @@ export interface EphemeralServiceOptions extends ServiceOptions {
  *
  * @alpha @sealed
  */
-export interface EphemeralService extends ErasedBaseType<readonly ["EphemeralService"]> {
+export interface EphemeralService extends LocalService<LocalServiceClient<EphemeralService>> {
 	/**
-	 * Close this service, which closes all containers connected to it and releases its resources.
+	 * Specializes {@link LocalService.close} with ephemeral document-lifetime behavior.
+	 *
 	 * @remarks
-	 * All documents held by this service are discarded, and any timers it (or its containers) were keeping alive
-	 * are cleaned up.
-	 * The returned promise resolves once all asynchronous cleanup (including shutting down the in-memory server)
-	 * has completed.
-	 * Closing is idempotent: calling it again after the service is closed resolves without doing anything.
+	 * Unlike local services backed by persistent storage, closing an ephemeral service permanently discards all
+	 * documents it holds, so their IDs can no longer be loaded.
 	 */
 	close(): Promise<void>;
-
-	/**
-	 * Drives all containers connected to this service toward convergence, processing pending operations and
-	 * waiting for all dirty containers to save.
-	 *
-	 * @param timeoutMilliseconds - The maximum time to wait for containers to quiesce, in milliseconds. Defaults to 30_000.
-	 *
-	 * @privateRemarks
-	 * This is a best-effort implementation simplified from `LoaderContainerTracker.ensureSynchronized`.
-	 * Currently it does not perform receiver-side sequence-number quiescence or wait for join/leave (audience) ops.
-	 * See `LoaderContainerTracker.ensureSynchronized` for the fuller version this is based on.
-	 * For the currently exposed API surface, this should be sufficient,
-	 * but users down casting to internal types might run into some limitations.
-	 */
-	synchronize(timeoutMilliseconds?: number): Promise<void>;
-
-	/**
-	 * Creates and returns a {@link EphemeralServiceClient} for an in-memory, ephemeral Fluid service.
-	 *
-	 * @param options - Options for the client. `minVersionForCollaboration` may be omitted (since all collaborators
-	 * are in the same process, it defaults to the current version). `service` may be omitted to allocate a new
-	 * {@link EphemeralService} dedicated to this client, or provided to connect the client to an existing service instance.
-	 *
-	 * @remarks
-	 * The service is ephemeral and in-memory: all documents are held by the {@link EphemeralService} the client is
-	 * connected to, and live for as long as that service is open — independent of whether any container for them is open.
-	 * A document created and attached (obtaining an `id`) can be loaded by `id` for as long as its service remains open,
-	 * even after every container for it has been closed.
-	 * Closing the service (via {@link EphemeralService.close} or {@link cleanupEphemeralService}) discards all of its
-	 * documents and releases its resources; afterwards those `id`s can no longer be loaded.
-	 *
-	 * When no `service` is provided, a new one is allocated for this client (accessible via {@link EphemeralServiceClient.service}).
-	 * Provide the same {@link EphemeralService} to multiple clients (via `options.service`) to have them collaborate on the
-	 * same documents, and control that service's lifetime explicitly.
-	 *
-	 * Since a service holds timers while open, tests should close the services they use (e.g. via
-	 * {@link cleanupEphemeralService} in an `afterEach`) to avoid lingering timers that can hang test runners.
-	 *
-	 * @privateRemarks
-	 * TODO: We should provide a way to extract (for potential serialization as test data) and load documents into a service.
-	 * This is needed to use this API surface for testing reference documents.
-	 * Ideally we would provide a service agnostic way to do the export, but likely only support loading them into the local service.
-	 * This can be done via an API on FluidContainer (or a free function taking one) to do the export, then adding a
-	 * service specific API (on {@link EphemeralService}) to load from the export format and return the ID of the loaded document.
-	 */
-	newClient(options: ServiceOptions): EphemeralServiceClient;
-
-	/**
-	 * A client connected to this service using the default options.
-	 */
-	readonly defaultClient: EphemeralServiceClient;
 }
 
 /**
  * A browser-local Fluid service that persists documents in session storage.
  *
  * @remarks
- * This service uses the same clients and lifecycle as {@link EphemeralService}, but its attached documents
- * remain available after a page reload within the same browser tab.
+ * This service uses the {@link LocalService} lifecycle, and its attached documents remain available after a
+ * page reload within the same browser tab.
  *
  * Create one with {@link startSessionService}.
  * @alpha @sealed
  */
-export interface SessionService extends EphemeralService {
-	/**
-	 * Creates a client connected to this session-storage-backed service.
-	 *
-	 * @param options - Collaboration options for the client.
-	 * @remarks Documents attached through the client remain available after the service closes and
-	 * can be loaded by a new session service in the same browser tab.
-	 */
-	newClient(options: ServiceOptions): EphemeralServiceClient;
-
-	/**
-	 * Closes active containers and releases service resources without clearing persisted documents.
-	 */
-	close(): Promise<void>;
-}
+export interface SessionService extends LocalService<LocalServiceClient<SessionService>> {}
 
 /**
  * The {@link defaultEphemeralService} if one has been {@link startEphemeralService|started}.
  */
-let defaultEphemeralService: EphemeralServiceImplementation | undefined;
+let defaultEphemeralService: LocalServiceImplementation | undefined;
 
 /**
- * The concrete implementation of {@link EphemeralService}.
+ * The concrete implementation of local services.
  * @remarks
  * Kept module-private so its mutable state and internal helpers are not part of the public API.
- * Narrow an {@link EphemeralService} to it with `EphemeralServiceImplementation.narrow`.
+ * Narrow a {@link LocalService} to it with `LocalServiceImplementation.narrow`.
  */
-class EphemeralServiceImplementation
-	extends ErasedTypeImplementation<EphemeralService>
-	implements EphemeralService
+class LocalServiceImplementation
+	extends ErasedTypeImplementation<
+		LocalService<LocalServiceClientImplementation<LocalServiceImplementation>>
+	>
+	implements LocalService<LocalServiceClientImplementation<LocalServiceImplementation>>
 {
 	// A single server is shared by all containers connected to this service so they can communicate with each other.
 	private readonly server: ILocalDeltaConnectionServer;
@@ -292,15 +278,17 @@ class EphemeralServiceImplementation
 		this.documentServiceFactory = new LocalDocumentServiceFactory(this.server);
 		this.defaultClient = this.newClient();
 	}
-	public newClient(options?: Partial<ServiceOptions>): EphemeralServiceClient {
-		const finalOptions: EphemeralServiceOptions = {
+	public newClient(
+		options?: Partial<ServiceOptions>,
+	): LocalServiceClientImplementation<LocalServiceImplementation> {
+		const finalOptions: LocalServiceOptions<LocalServiceImplementation> = {
 			minVersionForCollaboration:
 				options?.minVersionForCollaboration ?? featureVersion(pkgVersion),
 			service: this,
 		};
-		return new EphemeralServiceClientImplementation(finalOptions);
+		return new LocalServiceClientImplementation(finalOptions);
 	}
-	public readonly defaultClient: EphemeralServiceClient;
+	public readonly defaultClient: LocalServiceClientImplementation<LocalServiceImplementation>;
 
 	public async close(): Promise<void> {
 		if (this.closed) {
@@ -433,23 +421,27 @@ class EphemeralServiceImplementation
 }
 
 /**
- * A {@link @fluidframework/driver-definitions#ServiceClient} connected to a specific {@link EphemeralService}.
+ * A {@link @fluidframework/driver-definitions#ServiceClient} connected to a specific {@link LocalService}.
+ *
+ * @typeParam TService - The type of local service this client is connected to.
  * @alpha @sealed
  */
-export interface EphemeralServiceClient extends ServiceClient {
+export interface LocalServiceClient<
+	out TService extends LocalService<ServiceClient> = LocalService<ServiceClient>,
+> extends ServiceClient {
 	/**
 	 * The service instance this client is connected to.
 	 */
-	readonly service: EphemeralService;
+	readonly service: TService;
 }
 
-class EphemeralServiceClientImplementation
-	extends ServiceClientImplementation<EphemeralServiceOptions>
-	implements EphemeralServiceClient
+class LocalServiceClientImplementation<TService extends LocalService>
+	extends ServiceClientImplementation<LocalServiceOptions<TService>>
+	implements LocalServiceClient
 {
-	public readonly service: EphemeralService;
+	public readonly service: TService;
 
-	public constructor(options: EphemeralServiceOptions) {
+	public constructor(options: LocalServiceOptions<TService>) {
 		super(options, EphemeralServiceContainer);
 		this.service = options.service;
 	}
@@ -505,17 +497,17 @@ const createLoadExistingRequest = (documentId: string): IRequest => {
  * @internal
  */
 export class EphemeralServiceContainer<TData>
-	extends ServiceContainerBase<TData, EphemeralServiceOptions>
+	extends ServiceContainerBase<TData, LocalServiceOptions>
 	implements FluidContainerWithService<TData>
 {
-	public readonly service: EphemeralService;
+	public readonly service: LocalService;
 
 	public static async createDetached<T>(
 		registry: DataStoreRegistry<T>,
-		options: EphemeralServiceOptions,
+		options: LocalServiceOptions,
 		root: DataStoreKind<T>,
 	): Promise<EphemeralServiceContainer<T>> {
-		EphemeralServiceImplementation.narrow(options.service);
+		LocalServiceImplementation.narrow(options.service);
 		const container: IContainer = await createDetachedContainer({
 			codeDetails: { package: "1.0" },
 			urlResolver,
@@ -539,10 +531,10 @@ export class EphemeralServiceContainer<TData>
 
 	public static async load<T>(
 		registry: DataStoreRegistry<T>,
-		options: EphemeralServiceOptions,
+		options: LocalServiceOptions,
 		id: string,
 	): Promise<EphemeralServiceContainer<T> & FluidContainerAttached<T>> {
-		EphemeralServiceImplementation.narrow(options.service);
+		LocalServiceImplementation.narrow(options.service);
 		const containerInner = await loadExistingContainer({
 			request: createLoadExistingRequest(id),
 			urlResolver,
@@ -570,21 +562,21 @@ export class EphemeralServiceContainer<TData>
 
 	private constructor(
 		registry: Registry<Promise<DataStoreKind<TData>>>,
-		options: EphemeralServiceOptions,
+		options: LocalServiceOptions,
 		container: IContainer,
 		data: TData,
 		id: string | undefined,
 	) {
 		super(registry, options, container, data, id);
 		this.service = options.service;
-		EphemeralServiceImplementation.narrow(this.service);
+		LocalServiceImplementation.narrow(this.service);
 		this.service.addContainer(this);
 	}
 
 	public override close(): void {
 		super.close();
 		// Remove this now-closed container from its service's set of open containers.
-		EphemeralServiceImplementation.narrow(this.service);
+		LocalServiceImplementation.narrow(this.service);
 		this.service.removeContainer(this);
 	}
 

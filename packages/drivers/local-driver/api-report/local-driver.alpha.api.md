@@ -8,25 +8,28 @@
 export function cleanupEphemeralService(service?: EphemeralService): Promise<void>;
 
 // @alpha @sealed
-export interface EphemeralService extends ErasedBaseType<readonly ["EphemeralService"]> {
+export interface EphemeralService extends LocalService<LocalServiceClient<EphemeralService>> {
     close(): Promise<void>;
-    readonly defaultClient: EphemeralServiceClient;
-    newClient(options: ServiceOptions): EphemeralServiceClient;
-    synchronize(timeoutMilliseconds?: number): Promise<void>;
-}
-
-// @alpha @sealed
-export interface EphemeralServiceClient extends ServiceClient {
-    readonly service: EphemeralService;
 }
 
 // @alpha
 export function getDefaultEphemeralService(): EphemeralService;
 
 // @alpha @sealed
-export interface SessionService extends EphemeralService {
+export interface LocalService<out TClient extends ServiceClient = LocalServiceClient> extends ErasedBaseType<readonly ["LocalService", TClient]> {
     close(): Promise<void>;
-    newClient(options: ServiceOptions): EphemeralServiceClient;
+    readonly defaultClient: TClient;
+    newClient(options: ServiceOptions): TClient;
+    synchronize(timeoutMilliseconds?: number): Promise<void>;
+}
+
+// @alpha @sealed
+export interface LocalServiceClient<out TService extends LocalService<ServiceClient> = LocalService<ServiceClient>> extends ServiceClient {
+    readonly service: TService;
+}
+
+// @alpha @sealed
+export interface SessionService extends LocalService<LocalServiceClient<SessionService>> {
 }
 
 // @alpha
