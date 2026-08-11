@@ -36,7 +36,7 @@ describeCompat("t9s issue regression test", "NoCompat", (getTestObjectProvider, 
 	};
 
 	// TODO: Unskip once a Tinylicious version containing the fix for range queries with a lower bound of 0 is published.
-	it("waitContainerToCatchUp catches up from the first op", async function () {
+	it.skip("waitContainerToCatchUp catches up from the first op", async function () {
 		const provider = getTestObjectProvider();
 		if (provider.driver.type !== "tinylicious" && provider.driver.type !== "t9s") {
 			this.skip();
