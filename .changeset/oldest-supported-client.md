@@ -24,11 +24,17 @@ The cross-client compatibility parameter has new names:
 -   `createTreeContainerRuntimeFactory` now accepts `oldestSupportedClient`.
     `minVersionForCollaboration` remains available as a deprecated overload.
 -   `driver-definitions` now exports its minor-only version type as
-    `OldestSupportedClient`, and `ServiceOptions` accepts `oldestSupportedClient`.
+    `OldestSupportedClientMinorVersion`, and `ServiceOptions` accepts
+    `oldestSupportedClient`.
 -   Azure, ODSP, and Tinylicious client methods now use `oldestSupportedClient` and
     `OldestSupportedClientVersion` in their signatures.
 
-The previous property and type names are deprecated and will be removed in future releases. Specifying both old and new property names is an error. `MinimumVersionForCollab` and `MinimumVersionForCollaboration` continue to work as aliases of their respective preferred types.
+The previous runtime, aqueduct, and fluid-static property and type names are
+deprecated and will be removed in future releases. Where both old and new property
+names remain available, specifying both is an error. The alpha
+`MinimumVersionForCollaboration` type and
+`ServiceOptions.minVersionForCollaboration` property are replaced directly rather
+than retained as aliases.
 
 ```typescript
 // Before

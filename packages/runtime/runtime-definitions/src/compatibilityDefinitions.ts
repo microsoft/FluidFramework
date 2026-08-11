@@ -51,7 +51,7 @@ export type OldestSupportedClientVersion =
  * Oldest version of Fluid Framework client packages that must be able to open and process
  * documents written by newer clients.
  *
- * @deprecated 2.116.0. Removed in 4.0.0. Use {@link OldestSupportedClientVersion} instead.
+ * @deprecated 2.116.0. To be removed in 4.0.0. Use {@link OldestSupportedClientVersion} instead.
  * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
  * @input
  * @public

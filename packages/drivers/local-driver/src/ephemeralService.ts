@@ -24,7 +24,7 @@ import {
 	type DataStoreRegistry,
 	type FluidContainerAttached,
 	type FluidContainerWithService,
-	type OldestSupportedClient,
+	type OldestSupportedClientMinorVersion,
 	type Registry,
 	type ServiceClient,
 	type ServiceOptions,
@@ -111,7 +111,7 @@ export interface EphemeralServiceOptions extends ServiceOptions {
 	/**
 	 * {@inheritdoc @fluidframework/driver-definitions#ServiceOptions.oldestSupportedClient}
 	 */
-	readonly oldestSupportedClient: OldestSupportedClient;
+	readonly oldestSupportedClient: OldestSupportedClientMinorVersion;
 	/**
 	 * The service instance to connect to.
 	 */
@@ -252,16 +252,8 @@ class EphemeralServiceImplementation
 		this.defaultClient = this.newClient();
 	}
 	public newClient(options?: Partial<ServiceOptions>): EphemeralServiceClient {
-		// eslint-disable-next-line import-x/no-deprecated -- accepted for compatibility. See #27851
-		const deprecatedMinVersion = options?.minVersionForCollaboration;
-		if (options?.oldestSupportedClient !== undefined && deprecatedMinVersion !== undefined) {
-			throw new UsageError(
-				"Specify only one of oldestSupportedClient or minVersionForCollaboration (deprecated).",
-			);
-		}
 		const finalOptions: EphemeralServiceOptions = {
-			oldestSupportedClient:
-				options?.oldestSupportedClient ?? deprecatedMinVersion ?? featureVersion(pkgVersion),
+			oldestSupportedClient: options?.oldestSupportedClient ?? featureVersion(pkgVersion),
 			service: this,
 		};
 		return new EphemeralServiceClientImplementation(finalOptions);

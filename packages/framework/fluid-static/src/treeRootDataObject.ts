@@ -235,7 +235,7 @@ export function createTreeContainerRuntimeFactory(props: {
  * The root data object's registry and shared objects are configured based on the provided
  * SharedTree and optionally data store registry.
  *
- * @deprecated 2.116.0. Removed in 3.10.0. Pass `oldestSupportedClient` instead.
+ * @deprecated 2.116.0. To be removed in 3.10.0. Pass `oldestSupportedClient` instead.
  * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
  *
  * @legacy @beta

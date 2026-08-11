@@ -140,31 +140,19 @@ export function createBasicRegistryKey<T>(type: string): RegistryKey<T, T> {
  * @input
  * @alpha
  */
-export type OldestSupportedClient = `2.${bigint}.0`;
-
-/**
- * Oldest Fluid Framework client version that must be able to open and process documents written
- * by a service client.
- *
- * @deprecated 2.116.0. Removed in 3.10.0. Use {@link OldestSupportedClient} instead.
- * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
- *
- * @input
- * @alpha
- */
-export type MinimumVersionForCollaboration = OldestSupportedClient;
+export type OldestSupportedClientMinorVersion = `2.${bigint}.0`;
 
 /**
  * Strips patch and prerelease from a SemVer string, returning only the major and minor version.
  * @remarks
- * This formats a version in the same style used by {@link OldestSupportedClient}, specifying only the major and minor versions,
+ * This formats a version in the same style used by {@link OldestSupportedClientMinorVersion}, specifying only the major and minor versions,
  * which are the portions used for feature selection.
  * @typeParam major - The major version number of `version` as a string, preserved in the result type.
  * @typeParam minor - The minor version number of `version` as a string, preserved in the result type.
  * @privateRemarks
  * This fills a similar role as cleanedPackageVersion in `@fluidframework/runtime-utils`.
  * It can be used to workaround our generated pkgVersion values being invalid
- * `OldestSupportedClient` on CI due to prerelease or patched release branches.
+ * `OldestSupportedClientMinorVersion` on CI due to prerelease or patched release branches.
  * @alpha
  */
 export function featureVersion<major extends `${bigint}`, minor extends `${bigint}`>(
@@ -193,23 +181,9 @@ export interface ServiceOptions {
 	 * by the service client.
 	 *
 	 * @remarks
-	 * Specify at most one of `oldestSupportedClient` and `minVersionForCollaboration`.
-	 * A service may provide a default when neither is specified.
+	 * A service may provide a default when this option is omitted.
 	 */
-	readonly oldestSupportedClient?: OldestSupportedClient;
-
-	/**
-	 * Oldest Fluid Framework client version that must be able to open and process documents written
-	 * by the service client.
-	 *
-	 * @remarks
-	 * Specify at most one of `oldestSupportedClient` and `minVersionForCollaboration`.
-	 *
-	 * @deprecated 2.116.0. Removed in 3.10.0. Use
-	 * {@link ServiceOptions.oldestSupportedClient} instead.
-	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
-	 */
-	readonly minVersionForCollaboration?: OldestSupportedClient;
+	readonly oldestSupportedClient?: OldestSupportedClientMinorVersion;
 }
 
 /**

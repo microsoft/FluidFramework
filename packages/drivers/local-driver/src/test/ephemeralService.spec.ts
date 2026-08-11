@@ -35,27 +35,6 @@ describe("EphemeralService", () => {
 		await cleanupEphemeralService();
 	});
 
-	it("continues to accept minVersionForCollaboration", () => {
-		const service = newService();
-		assert.doesNotThrow(
-			// eslint-disable-next-line import-x/no-deprecated -- verifies the compatibility property
-			() => service.newClient({ minVersionForCollaboration: "2.20.0" }),
-		);
-	});
-
-	it("rejects both version options", () => {
-		const service = newService();
-		assert.throws(
-			() =>
-				service.newClient({
-					oldestSupportedClient: "2.20.0",
-					// eslint-disable-next-line import-x/no-deprecated -- verifies conflicting options
-					minVersionForCollaboration: "2.20.0",
-				}),
-			/Specify only one/,
-		);
-	});
-
 	it("closing the service closes its open containers", async () => {
 		const service = newService();
 		const client = service.newClient(options);

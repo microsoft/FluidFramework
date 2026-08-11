@@ -1479,9 +1479,6 @@ export type MemberChangedListener<M extends IMember> = (clientId: string, member
 // @alpha @deprecated
 export const minimize: TransactionPostProcessor;
 
-// @alpha @deprecated @input
-export type MinimumVersionForCollaboration = OldestSupportedClient;
-
 // @public
 export type Myself<M extends IMember = IMember> = M & {
     readonly currentConnection: string;
@@ -1605,7 +1602,7 @@ export interface ObservationResults<TResult> {
 export type Off = () => void;
 
 // @alpha @input
-export type OldestSupportedClient = `2.${bigint}.0`;
+export type OldestSupportedClientMinorVersion = `2.${bigint}.0`;
 
 // @beta
 export function onAssertionFailure(handler: (error: Error) => void): () => void;
@@ -1950,9 +1947,7 @@ export interface ServiceClient {
 
 // @alpha @input
 export interface ServiceOptions {
-    // @deprecated
-    readonly minVersionForCollaboration?: OldestSupportedClient;
-    readonly oldestSupportedClient?: OldestSupportedClient;
+    readonly oldestSupportedClient?: OldestSupportedClientMinorVersion;
 }
 
 // @alpha @sealed
