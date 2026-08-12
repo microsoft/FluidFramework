@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
 import { loadExistingContainer } from "@fluidframework/container-loader/internal";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
 	createAndAttachContainerUsingProps,
@@ -17,13 +18,21 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 import { type ITree, SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
-import { asAlpha, CommitOutcome, FluidClientVersion } from "@fluidframework/tree/alpha";
+// This import should be updated to beta/public once the relevant transaction & constraint APIs are stabilized.
+import {
+	asAlpha,
+	CommitOutcome,
+	FluidClientVersion,
+	type TreeViewAlpha,
+} from "@fluidframework/tree/alpha";
 import { configuredSharedTree } from "@fluidframework/tree/internal";
 
 import { createLoader } from "./utils.js";
 
 describe("SharedTree transaction constraints", () => {
-	it("does not apply a noChange-constrained transaction resubmitted after a sequenced edit", async () => {
+	// This is a regression test for an issue where commit enrichment did not appropriately propagate constraint metadata.
+	// It is intentionally a bit particular about delta manager queue choreography to ensure that it exercises that enrichment code path.
+	it("respects noChange constraints across op resubmission", async () => {
 		const treeId = "tree";
 		const schemaFactory = new SchemaFactory("sharedTreeConstraintTest");
 		class StringArray extends schemaFactory.array("StringArray", schemaFactory.string) {}
@@ -39,7 +48,7 @@ describe("SharedTree transaction constraints", () => {
 		);
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: dataStoreFactory,
-			registryEntries: [[dataStoreFactory.type, Promise.resolve(dataStoreFactory)]],
+			registryEntries: [[dataStoreFactory.type, dataStoreFactory]],
 			runtimeOptions: { enableRuntimeIdCompressor: "on" },
 		});
 		const { codeDetails, loaderProps, urlResolver } = createLoader({
@@ -49,15 +58,21 @@ describe("SharedTree transaction constraints", () => {
 		});
 		const tracker = new LoaderContainerTracker();
 
+		const getTreeView = async (
+			container: IContainer,
+		): Promise<TreeViewAlpha<typeof StringArray>> => {
+			const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+			const tree = await dataObject.getSharedObject<ITree>(treeId);
+			return asAlpha(tree.viewWith(viewConfiguration));
+		};
+
 		try {
 			const containerA = await createAndAttachContainerUsingProps(
 				{ ...loaderProps, codeDetails },
 				urlResolver.createCreateNewRequest("shared-tree-constraint-resubmit"),
 			);
 			tracker.addContainer(containerA);
-			const dataObjectA = (await containerA.getEntryPoint()) as ITestFluidObject;
-			const treeA = await dataObjectA.getSharedObject<ITree>(treeId);
-			const viewA = asAlpha(treeA.viewWith(viewConfiguration));
+			const viewA = await getTreeView(containerA);
 			viewA.initialize(["initial"]);
 			await tracker.ensureSynchronized();
 
@@ -68,9 +83,7 @@ describe("SharedTree transaction constraints", () => {
 				request: { url },
 			});
 			tracker.addContainer(containerB);
-			const dataObjectB = (await containerB.getEntryPoint()) as ITestFluidObject;
-			const treeB = await dataObjectB.getSharedObject<ITree>(treeId);
-			const viewB = asAlpha(treeB.viewWith(viewConfiguration));
+			const viewB = await getTreeView(containerB);
 
 			const settledOutcome = new Promise<CommitOutcome>((resolve) => {
 				const unsubscribe = viewA.events.on("changed", (metadata) => {
@@ -86,7 +99,6 @@ describe("SharedTree transaction constraints", () => {
 			});
 
 			const deltaManagerA = toIDeltaManagerFull(containerA.deltaManager);
-			// Enrich and submit the transaction locally, but keep its op pending for resubmission.
 			await deltaManagerA.outbound.pause();
 			viewA.runTransaction(
 				() => {

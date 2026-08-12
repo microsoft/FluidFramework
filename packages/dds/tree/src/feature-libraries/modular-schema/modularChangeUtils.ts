@@ -53,7 +53,7 @@ export function makeModularChangeset(props?: {
 	nodeToParent?: ChangeAtomIdBTree<FieldId>;
 	nodeAliases?: ChangeAtomIdBTree<NodeId>;
 	crossFieldKeys?: CrossFieldKeyTable;
-	maxId: number;
+	maxId: number | undefined;
 	revisions?: readonly RevisionInfo[];
 	constraintViolationCount?: number;
 	noChangeConstraint?: NoChangeConstraint;
@@ -74,7 +74,7 @@ export function makeModularChangeset(props?: {
 	if (p.revisions !== undefined && p.revisions.length > 0) {
 		changeset.revisions = p.revisions;
 	}
-	if (p.maxId >= 0) {
+	if (p.maxId !== undefined && p.maxId >= 0) {
 		changeset.maxId = brand(p.maxId);
 	}
 	if (p.constraintViolationCount !== undefined && p.constraintViolationCount > 0) {
