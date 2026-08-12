@@ -192,7 +192,9 @@ describe("prepareForInsertion", () => {
 								...schemaValidationPolicy,
 								createFieldSchema(FieldKinds.required, [brand(stringSchema.identifier)]),
 							),
-						validateUsageError(/LeafNode_InvalidValue/),
+						validateUsageError(
+							/Leaf node "com\.fluidframework\.leaf\.string" requires a value matching "Number", but found "string"/,
+						),
 					);
 				});
 			});

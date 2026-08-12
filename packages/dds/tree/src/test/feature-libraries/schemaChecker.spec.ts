@@ -5,6 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
+
 // Reaching into internal module just to test it
 import {
 	LeafNodeStoredSchema,
@@ -34,6 +36,7 @@ import {
 	compliesWithMultiplicity,
 	isFieldInSchema,
 	isNodeInSchema,
+	throwOutOfSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/schemaChecker.js";
 import { brand } from "../../util/index.js";
@@ -637,8 +640,7 @@ describe("schema validation", () => {
 			assert.equal(result.context.unexpectedFields.size, 2);
 		});
 
-		it("errors without enhanced context do not include context", () => {
-			// LeafNode_InvalidValue: no enhanced context is provided for this error type
+		it("LeafNode_InvalidValue includes the node and value types", () => {
 			const { node, schema } = createLeafNode("myNode", "string", ValueSchema.Number);
 			const schemaAndPolicy = createSchemaAndPolicy(new Map([[node.type, schema]]));
 
@@ -646,7 +648,11 @@ describe("schema validation", () => {
 
 			assert(result !== undefined);
 			assert.equal(result.error, SchemaValidationError.LeafNode_InvalidValue);
-			assert.equal(result.context, undefined);
+			assert.deepEqual(result.context, {
+				nodeType: "myNode",
+				expectedValueSchema: ValueSchema.Number,
+				actualValueType: "string",
+			});
 		});
 
 		it("Field_NodeTypeNotAllowed context reflects all allowed types in a union field", () => {
@@ -684,5 +690,58 @@ describe("schema validation", () => {
 			assert(result.context.allowedTypes.has("myStringNode"));
 			assert.equal(result.context.allowedTypes.size, 2);
 		});
+	});
+
+	describe("throwOutOfSchema", () => {
+		const cases: readonly [SchemaValidationError, SchemaValidationErrorContext, RegExp][] = [
+			[
+				SchemaValidationError.Field_KindNotInSchemaPolicy,
+				{ fieldKind: "Unsupported" },
+				/Field kind "Unsupported" is not supported by the schema policy/,
+			],
+			[
+				SchemaValidationError.Field_MissingRequiredChild,
+				{ fieldKind: "Value", childCount: 0 },
+				/A required field of kind "Value" must contain exactly one child, but found 0/,
+			],
+			[
+				SchemaValidationError.Field_MultipleChildrenNotAllowed,
+				{ fieldKind: "Optional", childCount: 2 },
+				/A field of kind "Optional" allows at most one child, but found 2/,
+			],
+			[
+				SchemaValidationError.Field_ChildInForbiddenField,
+				{ fieldKind: "Forbidden", childCount: 1 },
+				/A forbidden field of kind "Forbidden" must be empty, but found 1 children/,
+			],
+			[
+				SchemaValidationError.LeafNode_InvalidValue,
+				{
+					nodeType: "com.example.Number",
+					expectedValueSchema: ValueSchema.Number,
+					actualValueType: "string",
+				},
+				/Leaf node "com.example.Number" requires a value matching "Number", but found "string"/,
+			],
+			[
+				SchemaValidationError.LeafNode_FieldsNotAllowed,
+				{
+					nodeType: "com.example.Number",
+					unexpectedFields: new Set(["extra"]),
+				},
+				/Leaf node "com.example.Number" must not contain fields. Unexpected fields: \["extra"\]/,
+			],
+			[
+				SchemaValidationError.NonLeafNode_ValueNotAllowed,
+				{ nodeType: "com.example.Object", actualValueType: "number" },
+				/Non-leaf node "com.example.Object" must not have a value, but found "number"/,
+			],
+		];
+
+		for (const [error, context, expected] of cases) {
+			it(`describes ${SchemaValidationError[error]}`, () => {
+				assert.throws(() => throwOutOfSchema(error, context), validateUsageError(expected));
+			});
+		}
 	});
 });
