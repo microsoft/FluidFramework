@@ -12,7 +12,6 @@ import {
 	type RevisionInfo,
 	type RevisionTag,
 	type TaggedChange,
-	type TreeChunk,
 } from "../../core/index.js";
 import { brand, type Mutable, type RangeQueryResult } from "../../util/index.js";
 import {
@@ -33,12 +32,9 @@ import type { FlexFieldKind } from "./fieldKind.js";
 import { genericFieldKind } from "./genericFieldKind.js";
 import {
 	newCrossFieldKeyTable,
-	type CrossFieldKeyTable,
 	type FieldChange,
 	type FieldChangeMap,
-	type FieldId,
 	type ModularChangeset,
-	type NoChangeConstraint,
 	type NodeChangeset,
 	type NodeId,
 } from "./modularChangeTypes.js";
@@ -47,22 +43,17 @@ export function hasConflicts(change: ModularChangeset): boolean {
 	return (change.constraintViolationCount ?? 0) > 0;
 }
 
-export function makeModularChangeset(props?: {
-	fieldChanges?: FieldChangeMap;
-	nodeChanges?: ChangeAtomIdBTree<NodeChangeset>;
-	nodeToParent?: ChangeAtomIdBTree<FieldId>;
-	nodeAliases?: ChangeAtomIdBTree<NodeId>;
-	crossFieldKeys?: CrossFieldKeyTable;
-	maxId: number | undefined;
-	revisions?: readonly RevisionInfo[];
-	constraintViolationCount?: number;
-	noChangeConstraint?: NoChangeConstraint;
-	noChangeConstraintOnRevert?: NoChangeConstraint;
-	builds?: ChangeAtomIdBTree<TreeChunk>;
-	destroys?: ChangeAtomIdBTree<number>;
-	refreshers?: ChangeAtomIdBTree<TreeChunk>;
-}): ModularChangeset {
-	const p = props ?? { maxId: -1 };
+/**
+ * Creates a normalized changeset from the provided properties.
+ *
+ * Required changeset maps are initialized when omitted, and empty optional properties are not
+ * included in the returned changeset. `maxId` accepts an unbranded allocator ID; `undefined`
+ * indicates that the changeset contains no IDs.
+ */
+export function makeModularChangeset(
+	props: Partial<Omit<ModularChangeset, "maxId">> & { maxId?: number } = {},
+): ModularChangeset {
+	const p = props;
 	const changeset: Mutable<ModularChangeset> = {
 		fieldChanges: p.fieldChanges ?? new Map<FieldKey, FieldChange>(),
 		nodeChanges: p.nodeChanges ?? newChangeAtomIdBTree(),
