@@ -32,12 +32,7 @@ import prettierConfig from "eslint-config-prettier";
 import globals from "globals";
 import type { ESLint, Linter } from "eslint";
 
-import noFilePathLinksInJsdoc from "../../src/rules/no-file-path-links-in-jsdoc.js";
-import noHyphenAfterJsdocTag from "../../src/rules/no-hyphen-after-jsdoc-tag.js";
-import noMarkdownLinksInJsdoc from "../../src/rules/no-markdown-links-in-jsdoc.js";
-import noMemberReleaseTags from "../../src/rules/no-member-release-tags.js";
-import noRestrictedTagsImports from "../../src/rules/no-restricted-tags-imports.js";
-import noUncheckedRecordAccess from "../../src/rules/no-unchecked-record-access.js";
+import fluidPlugin from "../../src/rules/index.cjs";
 import { globalIgnores } from "../constants.mjs";
 import { importXSettings, jsdocSettings } from "../settings.mjs";
 import { baseRules, eslintCommentsRecommendedRules } from "../rules/base.mjs";
@@ -76,16 +71,7 @@ export const baseConfig: FlatConfigArray = [
 	{
 		plugins: {
 			"@eslint-community/eslint-comments": eslintCommentsPlugin,
-			"@fluid-internal/fluid": {
-				rules: {
-					"no-file-path-links-in-jsdoc": noFilePathLinksInJsdoc,
-					"no-hyphen-after-jsdoc-tag": noHyphenAfterJsdocTag,
-					"no-markdown-links-in-jsdoc": noMarkdownLinksInJsdoc,
-					"no-member-release-tags": noMemberReleaseTags,
-					"no-restricted-tags-imports": noRestrictedTagsImports,
-					"no-unchecked-record-access": noUncheckedRecordAccess,
-				},
-			},
+			"@fluid-internal/fluid": fluidPlugin,
 			// Type assertion needed: @rushstack/eslint-plugin's type declarations haven't been
 			// updated to match ESLint 9's Plugin interface.
 			"@rushstack": rushstackPlugin as unknown as ESLint.Plugin,

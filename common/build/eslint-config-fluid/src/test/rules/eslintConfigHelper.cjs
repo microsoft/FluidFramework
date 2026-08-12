@@ -14,16 +14,7 @@ const path = require("node:path");
 const eslintPackage = process.env.ESLINT_PACKAGE || "eslint";
 const eslintVersion = parseInt(require(`${eslintPackage}/package.json`).version.split(".")[0]);
 const { ESLint } = require(eslintPackage);
-const plugin = {
-	rules: {
-		"no-file-path-links-in-jsdoc": require("../../rules/no-file-path-links-in-jsdoc"),
-		"no-hyphen-after-jsdoc-tag": require("../../rules/no-hyphen-after-jsdoc-tag"),
-		"no-markdown-links-in-jsdoc": require("../../rules/no-markdown-links-in-jsdoc"),
-		"no-member-release-tags": require("../../rules/no-member-release-tags"),
-		"no-restricted-tags-imports": require("../../rules/no-restricted-tags-imports"),
-		"no-unchecked-record-access": require("../../rules/no-unchecked-record-access"),
-	},
-};
+const plugin = require("../../rules/index.cjs");
 
 /**
  * Creates ESLint options object compatible with both ESLint 8 and 9.

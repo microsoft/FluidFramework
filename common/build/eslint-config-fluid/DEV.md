@@ -17,6 +17,7 @@ This guide outlines the steps required to add custom ESLint rules, update depend
     eslint-config-fluid/
     └── src/
         ├── rules/
+        │   ├── index.cjs
         │   ├── rule-one.js
         │   └── rule-two.js
         └── test/rules/
@@ -27,7 +28,7 @@ This guide outlines the steps required to add custom ESLint rules, update depend
                 └── rule-two/
     ```
 
-3. **Register the rule**: Import and register the rule in `library/configs/base.mts`, then enable it in the appropriate shared config.
+3. **Register the rule**: Add the rule to `src/rules/index.cjs`, then enable it in the appropriate shared config.
 
 4. **Update Changelog**: Record the new rule in `CHANGELOG.md`.
 
