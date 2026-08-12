@@ -82,6 +82,7 @@ describe("Hardware Stats", () => {
 				myProp: "myValue",
 			}),
 			existing: false,
+			oldestSupportedClient: "2.0.0-defaults",
 		});
 
 	afterEach(() => {

@@ -104,6 +104,7 @@ describeCompat(
 		]);
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: dataStoreFactory1,
+			oldestSupportedClient: "2.0.0-defaults",
 			registryEntries: registryStoreEntries,
 			runtimeOptions: {
 				summaryOptions: {

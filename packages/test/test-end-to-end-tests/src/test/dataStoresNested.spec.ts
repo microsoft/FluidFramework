@@ -69,6 +69,7 @@ describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) =>
 
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: dataStoreFactory,
+		oldestSupportedClient: "2.0.0-defaults",
 		registryEntries: [[dataStoreFactory.type, Promise.resolve(dataStoreFactory)]],
 		runtimeOptions,
 	});

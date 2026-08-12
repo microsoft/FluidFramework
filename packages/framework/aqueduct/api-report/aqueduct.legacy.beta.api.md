@@ -16,18 +16,19 @@ export class BaseContainerRuntimeFactory extends RuntimeFactoryHelper implements
 }
 
 // @beta @legacy @input
-export interface BaseContainerRuntimeFactoryProps {
-    // @deprecated (undocumented)
-    dependencyContainer?: IFluidDependencySynthesizer;
-    // @deprecated
-    minVersionForCollab?: OldestSupportedClientVersion | undefined;
-    oldestSupportedClient?: OldestSupportedClientVersion | undefined;
-    provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+export type BaseContainerRuntimeFactoryProps = {
     registryEntries: NamedFluidDataStoreRegistryEntries;
-    // @deprecated
+    dependencyContainer?: IFluidDependencySynthesizer;
     requestHandlers?: RuntimeRequestHandler[];
     runtimeOptions?: IContainerRuntimeOptions;
-}
+    provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+} & ({
+    oldestSupportedClient: OldestSupportedClientVersion;
+    minVersionForCollab?: never;
+} | {
+    oldestSupportedClient?: never;
+    minVersionForCollab: OldestSupportedClientVersion;
+});
 
 // @beta @legacy
 export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRuntimeFactory {
@@ -40,17 +41,16 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 }
 
 // @beta @legacy
-export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
-    // (undocumented)
+export type ContainerRuntimeFactoryWithDefaultDataStoreProps = Omit<BaseContainerRuntimeFactoryProps, "minVersionForCollab" | "oldestSupportedClient" | "provideEntryPoint"> & {
     defaultFactory: IFluidDataStoreFactory;
-    // @deprecated (undocumented)
-    dependencyContainer?: IFluidDependencySynthesizer;
     provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
-    registryEntries: NamedFluidDataStoreRegistryEntries;
-    // @deprecated
-    requestHandlers?: RuntimeRequestHandler[];
-    runtimeOptions?: IContainerRuntimeOptions;
-}
+} & ({
+    oldestSupportedClient: OldestSupportedClientVersion;
+    minVersionForCollab?: never;
+} | {
+    oldestSupportedClient?: never;
+    minVersionForCollab: OldestSupportedClientVersion;
+});
 
 // @beta @legacy
 export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> extends PureDataObject<I> {

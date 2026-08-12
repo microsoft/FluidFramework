@@ -7,7 +7,7 @@
  * Oldest Fluid Framework client version that must be able to open and process documents written
  * by newer clients.
  * @remarks
- * A string in SemVer format indicating a specific version of the Fluid Framework client package, or the special case of {@link @fluidframework/runtime-utils#defaultMinVersionForCollab}.
+ * A string in SemVer format indicating a specific version of the Fluid Framework client package.
  *
  * The framework uses this value to select write formats and features. Clients using this version
  * or newer must be able to open and process documents written by newer clients. Choosing an older
@@ -37,7 +37,7 @@
  * TODO: before stabilizing this further, some restrictions should be considered (since once stabilized, this can be relaxed, but not more constrained).
  * For example it might make sense to constrain this to something like:
  * ```ts
- * "1.4.0" | typeof defaultMinVersionForCollab | `2.${bigint}.0`
+ * "1.4.0" | "2.0.0-defaults" | `2.${bigint}.0`
  * ```
  *
  * @input

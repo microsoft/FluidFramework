@@ -65,7 +65,6 @@ import {
 	type OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	defaultMinVersionForCollab,
 	getNormalizedObjectStoragePathParts,
 	mergeStats,
 	toDeltaManagerErased,
@@ -902,7 +901,7 @@ export class MockFluidDataStoreRuntime
 			this.registry = new Map(registry.map((factory) => [factory.type, factory]));
 		}
 
-		this.minVersionForCollab = overrides?.minVersionForCollab ?? defaultMinVersionForCollab;
+		this.minVersionForCollab = overrides?.minVersionForCollab ?? "2.0.0";
 		this.inStagingMode = overrides?.inStagingMode ?? false;
 		this.isDirty = overrides?.isDirty ?? false;
 	}

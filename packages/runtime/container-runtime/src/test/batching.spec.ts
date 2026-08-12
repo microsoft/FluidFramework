@@ -84,6 +84,7 @@ describe("Runtime batching", () => {
 			context: getMockContext(mockDeltaManager) as IContainerContext,
 			registry: new FluidDataStoreRegistry([]),
 			existing: false,
+			oldestSupportedClient: "2.0.0-defaults",
 			runtimeOptions: {},
 			provideEntryPoint: mockProvideEntryPoint,
 		}));

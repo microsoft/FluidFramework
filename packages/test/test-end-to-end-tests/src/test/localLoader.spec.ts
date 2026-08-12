@@ -115,6 +115,7 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider, apis) => {
 	): Promise<IContainer> {
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory,
+			oldestSupportedClient: "2.0.0-defaults",
 			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
 		});
 		const loader = createLoader(
@@ -139,6 +140,7 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider, apis) => {
 	): Promise<IContainer> {
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory,
+			oldestSupportedClient: "2.0.0-defaults",
 			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
 		});
 		const loader = createLoader(

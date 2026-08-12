@@ -132,9 +132,9 @@ const runtimeOptionsAffectingDocSchemaConfigMap: ConfigMap<RuntimeOptionsAffecti
 			// to >=2.0.0 (explicitly). This is different than other 2.0 defaults
 			// because it was not enabled by default prior to the implementation of
 			// `minVersionForCollab`.
-			// `defaultMinVersionForCollab` is set to "2.0.0-defaults" which "2.0.0"
-			// does not satisfy to avoiding enabling this option by default as of
-			// `minVersionForCollab` introduction, which could be unexpected.
+			// The historical defaults checkpoint is "2.0.0-defaults", which "2.0.0"
+			// does not satisfy. This avoided enabling the option by default when
+			// `minVersionForCollab` was introduced, which could have been unexpected.
 			// Only enable as a default when `minVersionForCollab` is specified at
 			// 2.0.0+.
 			"2.0.0": true,

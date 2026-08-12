@@ -110,6 +110,7 @@ describeCompat(
 		// The 1st runtime factory, V1 of the code
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: dataObjectFactory,
+			oldestSupportedClient: "2.0.0-defaults",
 			registryEntries: [dataObjectFactory.registryEntry],
 			runtimeOptions,
 		});

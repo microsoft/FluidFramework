@@ -349,19 +349,21 @@ export interface IVersionMarkResolver {
 export function loadContainerRuntime(params: LoadContainerRuntimeParams): Promise<IContainerRuntime & IRuntime>;
 
 // @beta @legacy
-export interface LoadContainerRuntimeParams {
-    containerScope?: FluidObject;
+export type LoadContainerRuntimeParams = {
     context: IContainerContext;
-    existing: boolean;
-    // @deprecated
-    minVersionForCollab?: OldestSupportedClientVersion;
-    oldestSupportedClient?: OldestSupportedClientVersion;
-    provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
     registryEntries: NamedFluidDataStoreRegistryEntries;
-    // @deprecated
-    requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
+    existing: boolean;
     runtimeOptions?: IContainerRuntimeOptions;
-}
+    containerScope?: FluidObject;
+    provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
+    requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
+} & ({
+    oldestSupportedClient: OldestSupportedClientVersion;
+    minVersionForCollab?: never;
+} | {
+    oldestSupportedClient?: never;
+    minVersionForCollab: OldestSupportedClientVersion;
+});
 
 // @beta @deprecated @legacy (undocumented)
 export type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;

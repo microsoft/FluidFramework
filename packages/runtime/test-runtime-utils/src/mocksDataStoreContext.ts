@@ -27,7 +27,6 @@ import {
 	type IRuntimeStorageService,
 	type OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
-import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 // eslint-disable-next-line import-x/no-internal-modules -- Needed to avoid specialized /internal ITelemetryLoggerExt
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/legacy";
@@ -83,7 +82,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	/**
 	 * {@inheritdoc @fluidframework/runtime-definitions#IFluidDataStoreContext.minVersionForCollab}
 	 */
-	public minVersionForCollab: OldestSupportedClientVersion = defaultMinVersionForCollab;
+	public minVersionForCollab: OldestSupportedClientVersion = "2.0.0";
 
 	constructor(
 		public readonly id: string = uuid(),

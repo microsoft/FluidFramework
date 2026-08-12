@@ -12,6 +12,7 @@ export {
 	loadContainerRuntime,
 	loadContainerRuntimeAlpha,
 	type LoadContainerRuntimeParams,
+	type LoadContainerRuntime2Params,
 	agentSchedulerId,
 	ContainerRuntime,
 	DeletedResponseHeaderKey,

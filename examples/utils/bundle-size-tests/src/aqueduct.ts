@@ -22,6 +22,7 @@ export function apisToBundle(): void {
 
 	new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory,
+		oldestSupportedClient: "2.0.0",
 		registryEntries: [["BundleTestDo", Promise.resolve(defaultFactory)]],
 		provideEntryPoint: async (runtime: IContainerRuntime) => {
 			const dataStoreHandle = await runtime.getAliasedDataStoreEntryPoint("default");

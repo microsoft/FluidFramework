@@ -61,7 +61,7 @@ export interface IMigratorEvents extends IEvent {
 export type ImportDataCallback = (destinationContainer: IContainer, exportedData: unknown) => Promise<void>;
 
 // @alpha
-export const loadCompositeRuntime: (context: IContainerContext, existing: boolean, compositeEntryPoint: CompositeEntryPoint, runtimeOptions?: IContainerRuntimeOptions) => Promise<IContainerRuntime & IRuntime>;
+export const loadCompositeRuntime: (context: IContainerContext, existing: boolean, compositeEntryPoint: CompositeEntryPoint, oldestSupportedClient: OldestSupportedClientVersion, runtimeOptions?: IContainerRuntimeOptions) => Promise<IContainerRuntime & IRuntime>;
 
 // @alpha
 export type LoadSourceContainerCallback = () => Promise<IContainer>;

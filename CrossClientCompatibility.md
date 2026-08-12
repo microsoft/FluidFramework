@@ -81,11 +81,11 @@ compatibility window for a client toward the end of a Range can be up to ~24 mon
 1. **Document access enforcement**: Clients running a Fluid version older than what the document requires may be blocked from opening it, preventing data corruption or runtime errors. This applies even when only one client reads the document. See [Errors and Warnings to Monitor](#errors-and-warnings-to-monitor) for the specific error signals.
 2. **Write format and feature selection**: It automatically enables or disables features based on the specified version so clients at that version or newer can interpret the resulting data format. For example, if `oldestSupportedClient` is set to `"2.0.0"`, features like grouped batching are safely enabled because all clients at version 2.0.0 or later can interpret that format.
 
-If `oldestSupportedClient` is not explicitly set, the runtime uses a default derived from the currently supported compatibility checkpoints. Passing a value below the supported floor is not permitted — the runtime will fail to instantiate and throw a `UsageError` (see [Errors and Warnings to Monitor](#errors-and-warnings-to-monitor)). For details on the default value, see `defaultMinVersionForCollab` in [compatibilityBase.ts](./packages/runtime/runtime-utils/src/compatibilityBase.ts).
+Applications must explicitly set `oldestSupportedClient` when configuring the container runtime. The deprecated `minVersionForCollab` name remains temporarily available for existing callers, but exactly one of these properties must be supplied. Passing neither, both, or a value below the supported floor causes runtime instantiation to fail with a `UsageError` (see [Errors and Warnings to Monitor](#errors-and-warnings-to-monitor)).
 
 ### What This Means for an Application
 
-As an application developer, you need to manage your Fluid Framework version upgrades carefully to ensure uninterrupted document access and collaboration for your users. It is **highly recommended** to explicitly configure `oldestSupportedClient` and monitor your client version distribution. Setting `oldestSupportedClient` explicitly surfaces version mismatches at build and verification time. This prevents a release from shipping and silently raising the floor, locking older clients out.
+As an application developer, you need to manage your Fluid Framework version upgrades carefully to ensure uninterrupted document access and collaboration for your users. You must explicitly configure `oldestSupportedClient` and monitor your client version distribution. This surfaces version mismatches at build and verification time and prevents a release from shipping with a silently raised floor that locks older clients out.
 
 #### Encapsulated vs Declarative Models
 
@@ -149,9 +149,9 @@ const runtime = await loadContainerRuntime(loadContainerRuntimeParams);
 
 You may also set individual runtime options via `IContainerRuntimeOptions`, but they must be consistent with your `oldestSupportedClient` value. If there is a mismatch (e.g., enabling a 2.x feature with `oldestSupportedClient: "1.0.0"`), a `UsageError` will be thrown (see [Errors and Warnings to Monitor](#errors-and-warnings-to-monitor)).
 
-If `oldestSupportedClient` is not explicitly set, the runtime uses a default derived from the currently supported compatibility checkpoints (see `defaultMinVersionForCollab` in [compatibilityBase.ts](./packages/runtime/runtime-utils/src/compatibilityBase.ts)). Passing a value below the supported floor is not permitted and will throw a `UsageError`.
+`oldestSupportedClient` is required. The deprecated `minVersionForCollab` name remains temporarily available for existing callers, but exactly one of these properties must be supplied. Passing neither, both, or a value below the supported floor throws a `UsageError`.
 
-Setting `oldestSupportedClient` explicitly is **highly recommended**. Set it to the oldest Fluid Framework
+Set `oldestSupportedClient` to the oldest Fluid Framework
 version your users are [saturated](#terminology) on. This will ensure:
 
 1. Older clients can access documents written by newer clients, and multiple clients can collaborate safely.
