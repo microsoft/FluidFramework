@@ -16,7 +16,7 @@ Editing semantics:
 
 Assuming we want the behavior where Extrinsic Ranges have lifetime of tied to the container, not the content,
 then deletions need to shrink the range they apply to, but never remove it fully.
-This complications deletes (which contain all or part of the range) and moves.
+This complicates deletes (which contain all or part of the range) and moves.
 Presumably a delete should just shorten the range, as should detaches, but if a portion is detached containing the entire range, and moved elsewhere in the same range, maybe it should move?
 Maybe optionally detect such moves, and if some constraints pass, move the ranges with the main content?
 Relations to anchors, cursors, presence?
@@ -65,8 +65,8 @@ Later:
 These can overlap with phase one, but have some minimal dependency on parts of it and each-other.
 
 1. Factor out Utilities for implementing terminal (no edits below them) and/or "static" (no edit to them can impact paths to content below them field kinds). Consider using for identifier field kind. Use for new "index" field kind. Add counter as a trivial feature using this as well (demo in inventory app). Should support multiple children: make things like a range kind with 2 children (start and end) easier we end up having to do that. Using this to add range start and range end, or fields with other kinds of anchoring are also options.
-2. Improve MVP concurrency 1: (Optional: Skip is shallow change constraint is ready): Use index field kinds for range ends. Add dummy child node to range container, which is replaced for every change to the set of ranges (adding or removing a range). Replace "NoChangeConstraint" with "NodeInDocumentConstraint" pointing to current dummy node.
-2. Improve MVP concurrency 2: (Optional: Skip is shallow change constraint is ready): Use index field kinds for range ends. Replace above dummy node scheme with no shallow change constraint pointing at array of ranges.
+2. Improve MVP concurrency 1: (Optional: Skip if shallow change constraint is ready): Use index field kinds for range ends. Add dummy child node to range container, which is replaced for every change to the set of ranges (adding or removing a range). Replace "NoChangeConstraint" with "NodeInDocumentConstraint" pointing to current dummy node.
+2. Improve MVP concurrency 2: (Optional: Skip if shallow change constraint is ready): Use index field kinds for range ends. Replace above dummy node scheme with no shallow change constraint pointing at array of ranges.
 3. Improve MVP concurrency 3: Replace constraints with "Drill down" editing of index fields. No more rejected transactions.
 4. Deliver stable APIs, including safe rollout/evolution for existing text users.
 5. Presence integration for arrays. Maybe share some logic with new field kind[s]? (Not really part of this work, but has some overlap)
