@@ -233,14 +233,7 @@ export interface TreeIdentifierUtils {
  */
 export interface TreeAlpha {
 	/**
-	 * Register an event listener on the given node.
-	 * @param node - The node whose events should be subscribed to.
-	 * @param eventName - Which event to subscribe to.
-	 * @param listener - The callback to trigger for the event. The tree can be read during the callback, but it is invalid to modify the tree during this callback.
-	 * @returns A callback function which will deregister the event.
-	 * This callback should be called only once.
-	 * @remarks
-	 * This event API is also available from {@link (TreeBeta:interface).on}.
+	 * {@inheritDoc (TreeBeta:interface).on}
 	 */
 	on<K extends keyof TreeChangeEventsAlpha<TNode>, TNode extends TreeNode>(
 		node: TNode,
@@ -809,7 +802,7 @@ export const TreeAlpha: TreeAlpha = {
 		eventName: K,
 		listener: NoInfer<TreeChangeEventsAlpha<TNode>[K]>,
 	): () => void {
-		return treeNodeApi.on(node, eventName, listener);
+		return TreeBeta.on(node, eventName, listener);
 	},
 
 	trackObservations<TResult>(
