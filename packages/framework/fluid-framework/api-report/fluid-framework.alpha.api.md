@@ -393,9 +393,6 @@ export interface DirtyTreeMap {
 // @alpha
 export type DirtyTreeStatus = "new" | "changed" | "moved";
 
-// @alpha @input
-export type DriverOldestSupportedClientVersion = `2.${bigint}.0`;
-
 // @alpha
 export function encodeSchemaCompatibilitySnapshot(simpleSchema: SimpleTreeSchema): JsonCompatibleReadOnly;
 
@@ -1604,6 +1601,9 @@ export interface ObservationResults<TResult> {
 // @public
 export type Off = () => void;
 
+// @alpha @input
+export type OldestSupportedServiceClientVersion = `2.${bigint}.0`;
+
 // @beta
 export function onAssertionFailure(handler: (error: Error) => void): () => void;
 
@@ -1947,7 +1947,7 @@ export interface ServiceClient {
 
 // @alpha @input
 export interface ServiceOptions {
-    readonly oldestSupportedClient?: DriverOldestSupportedClientVersion;
+    readonly oldestSupportedClient?: OldestSupportedServiceClientVersion;
 }
 
 // @alpha @sealed

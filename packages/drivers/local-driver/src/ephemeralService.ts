@@ -24,7 +24,7 @@ import {
 	type DataStoreRegistry,
 	type FluidContainerAttached,
 	type FluidContainerWithService,
-	type OldestSupportedClientVersion,
+	type OldestSupportedServiceClientVersion,
 	type Registry,
 	type ServiceClient,
 	type ServiceOptions,
@@ -111,7 +111,7 @@ export interface EphemeralServiceOptions extends ServiceOptions {
 	/**
 	 * {@inheritdoc @fluidframework/driver-definitions#ServiceOptions.oldestSupportedClient}
 	 */
-	readonly oldestSupportedClient: OldestSupportedClientVersion;
+	readonly oldestSupportedClient: OldestSupportedServiceClientVersion;
 	/**
 	 * The service instance to connect to.
 	 */

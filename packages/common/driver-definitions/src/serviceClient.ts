@@ -140,19 +140,19 @@ export function createBasicRegistryKey<T>(type: string): RegistryKey<T, T> {
  * @input
  * @alpha
  */
-export type OldestSupportedClientVersion = `2.${bigint}.0`;
+export type OldestSupportedServiceClientVersion = `2.${bigint}.0`;
 
 /**
  * Strips patch and prerelease from a SemVer string, returning only the major and minor version.
  * @remarks
- * This formats a version in the same style used by {@link OldestSupportedClientVersion}, specifying only the major and minor versions,
+ * This formats a version in the same style used by {@link OldestSupportedServiceClientVersion}, specifying only the major and minor versions,
  * which are the portions used for feature selection.
  * @typeParam major - The major version number of `version` as a string, preserved in the result type.
  * @typeParam minor - The minor version number of `version` as a string, preserved in the result type.
  * @privateRemarks
  * This fills a similar role as cleanedPackageVersion in `@fluidframework/runtime-utils`.
  * It can be used to workaround our generated pkgVersion values being invalid
- * `OldestSupportedClientVersion` on CI due to prerelease or patched release branches.
+ * `OldestSupportedServiceClientVersion` on CI due to prerelease or patched release branches.
  * @alpha
  */
 export function featureVersion<major extends `${bigint}`, minor extends `${bigint}`>(
@@ -183,7 +183,7 @@ export interface ServiceOptions {
 	 * @remarks
 	 * A service may provide a default when this option is omitted.
 	 */
-	readonly oldestSupportedClient?: OldestSupportedClientVersion;
+	readonly oldestSupportedClient?: OldestSupportedServiceClientVersion;
 }
 
 /**

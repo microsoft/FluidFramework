@@ -114,8 +114,7 @@ export type {
 	FluidContainer,
 	FluidContainerAttached,
 	FluidContainerWithService,
-	// The driver type is minor-only, so qualify it where this package also exposes the broader runtime type.
-	OldestSupportedClientVersion as DriverOldestSupportedClientVersion,
+	OldestSupportedServiceClientVersion,
 	Registry,
 	RegistryKey,
 	ServiceClient,
