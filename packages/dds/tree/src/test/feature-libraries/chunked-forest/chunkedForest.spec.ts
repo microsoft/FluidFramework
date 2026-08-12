@@ -151,32 +151,14 @@ describe("ChunkedForest", () => {
 		});
 	}
 
-	describe("chunk lookup and normalization", () => {
-		const numberShape = new TreeShape(
-			brand<TreeNodeSchemaIdentifier>(numberSchema.identifier),
-			true,
-			[],
-		);
+	/** Shape used to construct the uniform chunks in these tests. */
+	const numberShape = new TreeShape(
+		brand<TreeNodeSchemaIdentifier>(numberSchema.identifier),
+		true,
+		[],
+	);
 
-		function makeCompressor(): ChunkCompressor {
-			const schema = new TreeStoredSchemaRepository(toInitialSchema(SchemaFactory.number));
-			return {
-				policy: makeTreeChunker(schema, defaultSchemaPolicy, defaultIncrementalEncodingPolicy),
-				idCompressor: undefined,
-			};
-		}
-
-		function valuesFromChunks(chunks: readonly TreeChunk[]): unknown[] {
-			const values: unknown[] = [];
-			for (const chunk of chunks) {
-				const cursor = chunk.cursor();
-				for (let hasNode = cursor.firstNode(); hasNode; hasNode = cursor.nextNode()) {
-					values.push(cursor.value);
-				}
-			}
-			return values;
-		}
-
+	describe("locateNodeInChunks", () => {
 		it("locates nodes by chunk index and offset", () => {
 			const first = new BasicChunk(numberShape.type, new Map(), 0);
 			const middle = new UniformChunk(numberShape.withTopLevelLength(3), [1, 2, 3]);
@@ -227,6 +209,27 @@ describe("ChunkedForest", () => {
 				validateAssertionError("Array index is out of bounds"),
 			);
 		});
+	});
+
+	describe("ensureExclusiveBasicChunk", () => {
+		function makeCompressor(): ChunkCompressor {
+			const schema = new TreeStoredSchemaRepository(toInitialSchema(SchemaFactory.number));
+			return {
+				policy: makeTreeChunker(schema, defaultSchemaPolicy, defaultIncrementalEncodingPolicy),
+				idCompressor: undefined,
+			};
+		}
+
+		function valuesFromChunks(chunks: readonly TreeChunk[]): unknown[] {
+			const values: unknown[] = [];
+			for (const chunk of chunks) {
+				const cursor = chunk.cursor();
+				for (let hasNode = cursor.firstNode(); hasNode; hasNode = cursor.nextNode()) {
+					values.push(cursor.value);
+				}
+			}
+			return values;
+		}
 
 		it("returns an exclusively owned BasicChunk unchanged", () => {
 			const basic = new BasicChunk(numberShape.type, new Map(), 0);
@@ -297,13 +300,6 @@ describe("ChunkedForest", () => {
 	});
 
 	describe("mutation of chunks array inside a multi-node chunkShape", () => {
-		/** Shape used to construct the uniform chunks in these tests. */
-		const numberShape = new TreeShape(
-			brand<TreeNodeSchemaIdentifier>(numberSchema.identifier),
-			true,
-			[],
-		);
-
 		/** Field key for the detached field used as the source/destination of attach/detach ops. */
 		const detachedKey: FieldKey = brand("detached");
 
