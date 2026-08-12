@@ -168,6 +168,11 @@ export class LocalOrderer implements IOrderer {
 	private readonly socketPublisher: LocalSocketPublisher;
 	private readonly dbObject: IDocument;
 	private existing: boolean;
+
+	/**
+	 * Tracks the highest sequence number broadcast by the local orderer. Read-mode clients do not
+	 * submit a join op, so they need this value to know how far they must catch up.
+	 */
 	private latestSequenceNumber: number;
 
 	constructor(
@@ -228,6 +233,11 @@ export class LocalOrderer implements IOrderer {
 		return orderer;
 	}
 
+	/**
+	 * Gets the latest sequence number broadcast by this orderer.
+	 *
+	 * @returns The sequence number a connecting client must process through to be caught up.
+	 */
 	public getCheckpointSequenceNumber?: () => number | undefined = () => this.latestSequenceNumber;
 
 	public connectInternal(

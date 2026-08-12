@@ -82,6 +82,14 @@ export interface IOrderer {
 export interface IOrdererManager {
 	getOrderer(tenantId: string, documentId: string): Promise<IOrderer>;
 
+	/**
+	 * Gets the latest sequence number known to the orderer so a connecting client can determine
+	 * whether it has processed all operations known to the service.
+	 *
+	 * @param tenantId - The tenant that owns the document.
+	 * @param documentId - The document whose latest sequence number should be returned.
+	 * @returns The latest known sequence number, or `undefined` when the orderer cannot provide one.
+	 */
 	getCheckpointSequenceNumber?(tenantId: string, documentId: string): Promise<number | undefined>;
 
 	removeOrderer(tenantId: string, documentId: string): void;

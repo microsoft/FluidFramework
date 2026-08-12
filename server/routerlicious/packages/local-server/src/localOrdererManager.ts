@@ -76,6 +76,14 @@ export class LocalOrdererManager implements IOrdererManager {
 		return orderer;
 	}
 
+	/**
+	 * Gets the latest sequence number known by the document's local orderer. Nexus includes this
+	 * value in the connected message so read-mode clients can reliably wait until they are caught up.
+	 *
+	 * @param tenantId - The tenant that owns the document.
+	 * @param documentId - The document whose latest sequence number should be returned.
+	 * @returns The latest sequence number known to the local orderer.
+	 */
 	public getCheckpointSequenceNumber?: (
 		tenantId: string,
 		documentId: string,
