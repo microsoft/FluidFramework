@@ -183,7 +183,11 @@ export class ChunkedForest implements IEditableForest {
 					policy: this.forest.chunker,
 					idCompressor: this.forest.idCompressor,
 				});
-				// TODO: this will fail for very large moves due to argument limits.
+				// TODO: this fails with a RangeError for public moves containing enough chunks because
+				// spreading sourceField into splice exceeds the JavaScript engine's argument limit.
+				// Heterogeneous sequences can produce one chunk per node, making this reachable without
+				// an unusually large individual chunk. A public reproducer requires enough nodes to reach
+				// the engine-specific limit and is too slow and memory-intensive for an integration test.
 				destinationField.splice(destinationChunkIndex, 0, ...sourceField);
 			},
 			/**

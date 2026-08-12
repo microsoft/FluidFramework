@@ -428,6 +428,10 @@ export class SharedTreeKernel
 			if (checkout.transaction.size > 0) {
 				// Attaching during a transaction is not currently supported.
 				// At least part of of the system is known to not handle this case correctly - commit enrichment - and there may be others.
+				// This hook runs inside SharedTree's Breakable boundary, so throwing this expected UsageError
+				// permanently marks the tree broken. Public callers can start attach inside a synchronous
+				// Tree.runTransaction callback; the subsequent transaction commit then fails with the
+				// generic "Invalid use of SharedTree" error instead of leaving a usable detached tree.
 				throw new UsageError(
 					"Cannot attach while a transaction is in progress. Commit or abort the transaction before attaching.",
 				);

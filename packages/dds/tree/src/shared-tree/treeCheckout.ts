@@ -915,6 +915,10 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	private readonly onAfterChange = (event: SharedTreeBranchChange<SharedTreeChange>): void => {
+		// A public Tree.on(node, "nodeChanged", listener) callback which throws while afterBatch
+		// is emitted skips unlock below. Although the delta has already been applied, all subsequent
+		// public edits then fail as forbidden re-entrant edits. This needs an exception boundary that
+		// preserves a usable checkout or explicitly marks it broken.
 		this.editLock.lock("a change event callback");
 		this.#events.emit("beforeBatch", event);
 		if (event.change !== undefined) {
@@ -1122,6 +1126,11 @@ export class TreeCheckout implements ITreeCheckout {
 	private withCombinedVisitor(fn: (visitor: DeltaVisitor) => void): void {
 		const anchorVisitor = this.forest.anchors.acquireVisitor();
 		const combinedVisitor = combineVisitors([this.forest.acquireVisitor(), anchorVisitor]);
+		// An exception from any visitor callback skips free(), leaving the forest's active visitor
+		// installed and potentially leaving the forest and anchors at different points in a partially
+		// applied delta. Public edit paths can trigger such exceptions, but there is no rollback here;
+		// a later valid edit then fails at an unrelated internal invariant. No small public operation
+		// is known to reliably throw mid-visit; the known large-move path is too expensive for a test.
 		fn(combinedVisitor);
 		combinedVisitor.free();
 	}
