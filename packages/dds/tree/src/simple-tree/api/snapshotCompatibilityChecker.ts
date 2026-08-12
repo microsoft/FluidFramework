@@ -11,6 +11,7 @@ import * as semver from "semver-ts";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import { toInitialSchema } from "../toStoredSchema.js";
 import { createTreeSchema } from "../treeSchema.js";
+import { SimpleSchemaFormatVersion } from "../simpleSchemaFormatV2.js";
 
 import { TreeViewConfigurationAlpha, TreeViewConfiguration } from "./configuration.js";
 import { checkSchemaCompatibility } from "./schemaCompatibilityTester.js";
@@ -361,9 +362,9 @@ export interface SnapshotSchemaCompatibilityOptions {
 	readonly rejectSchemaChangesWithNoVersionChange?: true;
 
 	/**
-	 * The mode of operation, either "assert" or "update".
+	 * The mode of operation: "assert", "update", or "normalize".
 	 * @remarks
-	 * Both modes will throw errors if any compatibility issues are detected (but after updating snapshots in "update" mode so the diff can be used to help debug).
+	 * All modes will throw errors if any compatibility issues are detected (but after updating snapshots in "update" mode so the diff can be used to help debug).
 	 *
 	 * In "assert" mode, an error is additionally thrown if the latest snapshot is not up to date (meaning "update" mode would make a change).
 	 *
@@ -371,15 +372,18 @@ export interface SnapshotSchemaCompatibilityOptions {
 	 * If {@link SnapshotSchemaCompatibilityOptions.rejectVersionsWithNoSchemaChange} or
 	 * {@link SnapshotSchemaCompatibilityOptions.rejectSchemaChangesWithNoVersionChange} disallows the update, an error is thrown instead.
 	 *
+	 * In "normalize" mode, the latest snapshot is rewritten using the latest snapshot format, but only if its schema has
+	 * identical compatibility to the current schema. This can be used after upgrading Fluid Framework to minimize future
+	 * snapshot diffs without combining the format update with a schema change.
+	 *
 	 * It is recommended that "assert" mode be used in automated tests to verify schema compatibility,
-	 * and "update" mode only be used manually to update snapshots when making schema or version changes.
+	 * and "update" or "normalize" mode only be used manually.
 	 *
 	 * @privateRemarks
 	 * Modes we might want to add in the future:
-	 * - normalize: update the latest snapshot (or maybe all of them) to the latest encoded format.
 	 * - some mode like assert but returns information instead of throwing.
 	 */
-	readonly mode: "assert" | "update";
+	readonly mode: "assert" | "update" | "normalize";
 }
 
 /**
@@ -387,7 +391,7 @@ export interface SnapshotSchemaCompatibilityOptions {
  *
  * @throws Throws errors if the input version strings (including those in snapshot file names) are not valid semver versions when using default semver version comparison.
  * @throws Throws errors if the input version strings (including those in snapshot file names) are not ordered as expected (current being the highest, and `minVersionForCollaboration` corresponding to the current version or a lower snapshotted version).
- * @throws In `test` mode, throws an error if there is not an up to date snapshot for the current version.
+ * @throws In `assert` mode, throws an error if there is not an up to date snapshot for the current version.
  * @throws Throws an error if any snapshotted schema cannot be upgraded to the current schema.
  * @throws Throws an error if any snapshotted schema with a version greater than or equal to `minVersionForCollaboration` cannot view documents created with the current schema.
  * @remarks
@@ -436,7 +440,7 @@ export interface SnapshotSchemaCompatibilityOptions {
  * 		schema: config,
  * 		fileSystem: { ...fs, ...path },
  * 		minVersionForCollaboration: "2.0.0",
- * 		mode: process.argv.includes("--snapshot") ? "update" : "test",
+ * 		mode: process.argv.includes("--snapshot") ? "update" : "assert",
  * 		snapshotDirectory,
  * 	});
  * });
@@ -524,14 +528,17 @@ export function snapshotSchemaCompatibility(
 		);
 	}
 
-	if (mode !== "assert" && mode !== "update") {
+	if (mode !== "assert" && mode !== "update" && mode !== "normalize") {
 		throw new UsageError(
-			`Invalid mode: ${JSON.stringify(mode)}. Must be either "assert" or "update".`,
+			`Invalid mode: ${JSON.stringify(mode)}. Must be "assert", "update", or "normalize".`,
 		);
 	}
 
 	const currentEncodedForSnapshotting = exportCompatibilitySchemaSnapshot(currentViewSchema);
 	const snapshots = checker.readAllSchemaSnapshots(versionComparer);
+	const rawSnapshots = transformMapValues(snapshots, (_snapshot, version) =>
+		checker.readSchemaSnapshotRaw(version),
+	);
 
 	const compatibilityErrors: string[] = [];
 
@@ -558,6 +565,7 @@ export function snapshotSchemaCompatibility(
 	// - the updateError message (update in update mode, error otherwise)
 	// - an error if the update is disallowed by the flags
 	let wouldUpdate: false | string | Error;
+	let snapshotToNormalize: string | undefined;
 
 	// Set wouldUpdate
 	{
@@ -572,7 +580,18 @@ export function snapshotSchemaCompatibility(
 			const schemaChange = !latestCompatibility.identicalCompatibility;
 			const versionChange = versionComparer(latestSnapshot[0], currentVersion) !== 0;
 
-			if (rejectVersionsWithNoSchemaChange === true && versionChange && !schemaChange) {
+			if (mode === "normalize") {
+				wouldUpdate = schemaChange
+					? `Snapshot for current version ${JSON.stringify(currentVersion)} cannot be normalized because its schema has changed since latest existing snapshot version ${JSON.stringify(latestSnapshot[0])}.`
+					: false;
+				if (
+					!schemaChange &&
+					JSON.stringify(rawSnapshots.get(latestSnapshot[0])) !==
+						JSON.stringify(currentEncodedForSnapshotting)
+				) {
+					snapshotToNormalize = latestSnapshot[0];
+				}
+			} else if (rejectVersionsWithNoSchemaChange === true && versionChange && !schemaChange) {
 				wouldUpdate = errorWithContext(
 					`Rejecting version change (${JSON.stringify(latestSnapshot[0])} to ${JSON.stringify(currentVersion)}) due to rejectVersionsWithNoSchemaChange being set.`,
 				);
@@ -588,10 +607,7 @@ export function snapshotSchemaCompatibility(
 				const currentRead = snapshots.get(currentVersion);
 				if (currentRead === undefined) {
 					wouldUpdate = `No snapshot found for version ${JSON.stringify(currentVersion)}: snapshotUnchangedVersions is true, so every version must be snapshotted.`;
-				} else if (
-					JSON.stringify(exportCompatibilitySchemaSnapshot(currentRead)) ===
-					JSON.stringify(currentEncodedForSnapshotting)
-				) {
+				} else if (snapshotMatchesCurrentSchema(currentVersion, currentRead)) {
 					wouldUpdate = false;
 				} else {
 					wouldUpdate = `Snapshot for current version ${JSON.stringify(currentVersion)} is out of date.`;
@@ -607,20 +623,19 @@ export function snapshotSchemaCompatibility(
 					);
 				}
 			}
-
-			if (!schemaChange && (snapshotUnchangedVersions !== true || !versionChange)) {
-				// eslint-disable-next-line unicorn/no-lonely-if
-				if (
-					JSON.stringify(exportCompatibilitySchemaSnapshot(latestSnapshot[1])) !==
-					JSON.stringify(currentEncodedForSnapshotting)
-				) {
-					// Schema are compatibility wise equivalent, but differ in some way (excluding json formatting).
-					// TODO: add a "normalize" mode, which do an update only in this case (or maybe even normalize json formatting as well and just always rewrite when !schemaChange)
-					// This would be useful to minimize diffs from future schema changes.
-					// This would be particularly useful if adding a second version of the format used in the snapshots.
-				}
-			}
 		}
+	}
+
+	function snapshotMatchesCurrentSchema(
+		snapshotVersion: string,
+		snapshot: TreeViewConfiguration,
+	): boolean {
+		const rawSnapshot =
+			rawSnapshots.get(snapshotVersion) ?? fail("missing raw schema snapshot");
+		if (getSnapshotFormatVersion(rawSnapshot) < SimpleSchemaFormatVersion.v2) {
+			return getCompatibility(currentViewSchema, snapshot).identicalCompatibility;
+		}
+		return JSON.stringify(rawSnapshot) === JSON.stringify(currentEncodedForSnapshotting);
 	}
 
 	if (wouldUpdate !== false) {
@@ -728,6 +743,10 @@ export function snapshotSchemaCompatibility(
 	if (compatibilityErrors.length > 0) {
 		throw errorWithContext(compatibilityErrors.map((e) => ` - ${e}`).join("\n"));
 	}
+
+	if (snapshotToNormalize !== undefined) {
+		checker.writeSchemaSnapshot(snapshotToNormalize, currentEncodedForSnapshotting);
+	}
 }
 
 /**
@@ -800,6 +819,19 @@ export class SnapshotCompatibilityChecker {
 	public ensureSnapshotDirectoryExists(): void {
 		this.fileSystemMethods.mkdirSync(this.snapshotDirectory, { recursive: true });
 	}
+}
+
+function getSnapshotFormatVersion(snapshot: JsonCompatibleReadOnly): number {
+	if (
+		snapshot !== null &&
+		typeof snapshot === "object" &&
+		!Array.isArray(snapshot) &&
+		"version" in snapshot &&
+		typeof snapshot.version === "number"
+	) {
+		return snapshot.version;
+	}
+	return -1;
 }
 
 /**

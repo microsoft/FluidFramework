@@ -33,6 +33,10 @@ import {
 	numberSchema,
 	allowUnused,
 } from "../../../simple-tree/index.js";
+import type {
+	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnlyObject,
+} from "../../../util/index.js";
 import { testSrcPath } from "../../testSrcPath.cjs";
 import { inMemorySnapshotFileSystem } from "../../utils.js";
 
@@ -40,6 +44,56 @@ const nodeFileSystem = {
 	...fs,
 	...path,
 };
+
+function isJsonObject(
+	value: JsonCompatibleReadOnly | undefined,
+): value is JsonCompatibleReadOnlyObject {
+	return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function convertObjectSnapshotToV1(
+	snapshot: JsonCompatibleReadOnly,
+	schemaIdentifier: string,
+	propertyKeys: string | readonly string[],
+): JsonCompatibleReadOnly {
+	assert(isJsonObject(snapshot));
+	const definitions = snapshot.definitions;
+	assert(isJsonObject(definitions));
+	const definition = definitions[schemaIdentifier];
+	assert(isJsonObject(definition));
+	const objectSchema = definition.object;
+	assert(isJsonObject(objectSchema));
+	const fields = objectSchema.fields;
+	assert(isJsonObject(fields));
+	const fieldEntries = Object.entries(fields);
+	assert.equal(fieldEntries.length, 1);
+	const [storedKey, fieldSchema] = fieldEntries[0] ?? assert.fail("expected one object field");
+	assert(isJsonObject(fieldSchema));
+	const keys = typeof propertyKeys === "string" ? [propertyKeys] : propertyKeys;
+
+	return {
+		...snapshot,
+		version: 1,
+		definitions: {
+			...definitions,
+			[schemaIdentifier]: {
+				...definition,
+				object: {
+					...objectSchema,
+					fields: Object.fromEntries(
+						keys.map((propertyKey) => [
+							propertyKey,
+							{
+								...fieldSchema,
+								storedKey,
+							},
+						]),
+					),
+				},
+			},
+		},
+	};
+}
 
 describe("snapshotCompatibilityChecker", () => {
 	it("parse and snapshot can roundtrip schema", () => {
@@ -293,6 +347,203 @@ Snapshots exist for versions: [
 				mode: "assert",
 				snapshotDirectory,
 			});
+		});
+
+		it("property keys do not impact schema compatibility snapshots", () => {
+			const factory = new SchemaFactory("test");
+
+			class Original extends factory.object("User", {
+				userName: factory.required(factory.string, { key: "name" }),
+			}) {}
+
+			class Renamed extends factory.object("User", {
+				displayName: factory.required(factory.string, { key: "name" }),
+			}) {}
+
+			class ChangedStoredKey extends factory.object("User", {
+				displayName: factory.string,
+			}) {}
+
+			class PrototypeStoredKey extends factory.object("PrototypeStoredKey", {
+				value: factory.required(factory.string, { key: "__proto__" }),
+			}) {}
+
+			const original = new TreeViewConfiguration({ schema: Original });
+			const renamed = new TreeViewConfiguration({ schema: Renamed });
+			const changedStoredKey = new TreeViewConfiguration({ schema: ChangedStoredKey });
+
+			assert.deepEqual(
+				exportCompatibilitySchemaSnapshot(original),
+				exportCompatibilitySchemaSnapshot(renamed),
+			);
+			assert.equal(getCompatibility(renamed, original).identicalCompatibility, true);
+			assert.equal(getCompatibility(changedStoredKey, original).identicalCompatibility, false);
+
+			const prototypeStoredKey = new TreeViewConfiguration({ schema: PrototypeStoredKey });
+			const prototypeSnapshot = exportCompatibilitySchemaSnapshot(prototypeStoredKey);
+			assert(isJsonObject(prototypeSnapshot));
+			const definitions = prototypeSnapshot.definitions;
+			assert(isJsonObject(definitions));
+			const definition = definitions["test.PrototypeStoredKey"];
+			assert(isJsonObject(definition));
+			const objectSchema = definition.object;
+			assert(isJsonObject(objectSchema));
+			const fields = objectSchema.fields;
+			assert(isJsonObject(fields));
+			assert.equal(Object.hasOwn(fields, "__proto__"), true);
+			assert.equal(
+				getCompatibility(
+					prototypeStoredKey,
+					importCompatibilitySchemaSnapshot(prototypeSnapshot),
+				).identicalCompatibility,
+				true,
+			);
+		});
+
+		it("rejects duplicate stored keys in version 1 snapshots", () => {
+			const factory = new SchemaFactory("test");
+
+			class Original extends factory.object("User", {
+				userName: factory.required(factory.string, { key: "name" }),
+			}) {}
+
+			const version1Snapshot = convertObjectSnapshotToV1(
+				exportCompatibilitySchemaSnapshot(new TreeViewConfiguration({ schema: Original })),
+				"test.User",
+				["firstProperty", "secondProperty"],
+			);
+
+			assert.throws(
+				() => importCompatibilitySchemaSnapshot(version1Snapshot),
+				validateUsageError(/duplicate stored key "name"/),
+			);
+		});
+
+		it("asserts and normalizes version 1 snapshots", () => {
+			const snapshotDirectory = "dir";
+			const [fileSystem, snapshots] = inMemorySnapshotFileSystem();
+			const factory = new SchemaFactory("test");
+
+			class Original extends factory.object("User", {
+				userName: factory.required(factory.string, { key: "name" }),
+			}) {}
+
+			class Renamed extends factory.object("User", {
+				displayName: factory.required(factory.string, { key: "name" }),
+			}) {}
+
+			const renamed = new TreeViewConfiguration({ schema: Renamed });
+			const version1Snapshot = convertObjectSnapshotToV1(
+				exportCompatibilitySchemaSnapshot(new TreeViewConfiguration({ schema: Original })),
+				"test.User",
+				"userName",
+			);
+			snapshots.set("1.0.0.json", JSON.stringify(version1Snapshot));
+
+			snapshotSchemaCompatibility({
+				version: "1.0.0",
+				schema: renamed,
+				fileSystem,
+				minVersionForCollaboration: "1.0.0",
+				mode: "assert",
+				snapshotDirectory,
+				rejectSchemaChangesWithNoVersionChange: true,
+				snapshotUnchangedVersions: true,
+			});
+
+			snapshotSchemaCompatibility({
+				version: "2.0.0",
+				schema: renamed,
+				fileSystem,
+				minVersionForCollaboration: "1.0.0",
+				mode: "normalize",
+				snapshotDirectory,
+			});
+
+			assert.deepEqual([...snapshots.keys()], ["1.0.0.json"]);
+			assert.deepEqual(
+				JSON.parse(snapshots.get("1.0.0.json") ?? assert.fail("missing snapshot")),
+				exportCompatibilitySchemaSnapshot(renamed),
+			);
+		});
+
+		it("does not normalize a snapshot with a compatibility change", () => {
+			const snapshotDirectory = "dir";
+			const [fileSystem, snapshots] = inMemorySnapshotFileSystem();
+			const factory = new SchemaFactory("test");
+
+			class Original extends factory.object("User", {
+				userName: factory.required(factory.string, { key: "name" }),
+			}) {}
+
+			class ChangedStoredKey extends factory.object("User", {
+				displayName: factory.string,
+			}) {}
+
+			const version1Snapshot = convertObjectSnapshotToV1(
+				exportCompatibilitySchemaSnapshot(new TreeViewConfiguration({ schema: Original })),
+				"test.User",
+				"userName",
+			);
+			const originalSnapshotText = JSON.stringify(version1Snapshot);
+			snapshots.set("1.0.0.json", originalSnapshotText);
+
+			assert.throws(
+				() =>
+					snapshotSchemaCompatibility({
+						version: "1.0.0",
+						schema: new TreeViewConfiguration({ schema: ChangedStoredKey }),
+						fileSystem,
+						minVersionForCollaboration: "1.0.0",
+						mode: "normalize",
+						snapshotDirectory,
+					}),
+				/cannot be normalized because its schema has changed/,
+			);
+			assert.equal(snapshots.get("1.0.0.json"), originalSnapshotText);
+		});
+
+		it("does not normalize when historical compatibility validation fails", () => {
+			const snapshotDirectory = "dir";
+			const [fileSystem, snapshots] = inMemorySnapshotFileSystem();
+			const factory = new SchemaFactory("test");
+
+			class Historical extends factory.object("User", {
+				value: factory.string,
+			}) {}
+
+			class Current extends factory.object("User", {
+				value: factory.number,
+			}) {}
+
+			snapshots.set(
+				"1.0.0.json",
+				JSON.stringify(
+					exportCompatibilitySchemaSnapshot(new TreeViewConfiguration({ schema: Historical })),
+				),
+			);
+			const version1CurrentSnapshot = JSON.stringify(
+				convertObjectSnapshotToV1(
+					exportCompatibilitySchemaSnapshot(new TreeViewConfiguration({ schema: Current })),
+					"test.User",
+					"value",
+				),
+			);
+			snapshots.set("2.0.0.json", version1CurrentSnapshot);
+
+			assert.throws(
+				() =>
+					snapshotSchemaCompatibility({
+						version: "2.0.0",
+						schema: new TreeViewConfiguration({ schema: Current }),
+						fileSystem,
+						minVersionForCollaboration: "2.0.0",
+						mode: "normalize",
+						snapshotDirectory,
+					}),
+				/Cannot upgrade documents from "1.0.0"/i,
+			);
+			assert.equal(snapshots.get("2.0.0.json"), version1CurrentSnapshot);
 		});
 
 		// Tests the various operations a user of the snapshotSchemaCompatibility function might perform across various versions of their codebase.
