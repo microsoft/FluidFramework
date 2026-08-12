@@ -8,7 +8,6 @@ Trusted Fluid file converters can now return a `Uint8Array` for a binary file or
 `IFluidFileConverterDirectoryOutput` for a directory tree. File bytes are preserved, and directory output is
 materialized safely at a new output path. Use the internal `IFluidFileConverterWithBinaryOutput` or
 `IFluidFileConverterWithDirectoryOutput` contract when supplying a converter to `fluidRunner`.
-Fluid runner leaves archive creation to consumers that need a ZIP or another packaged format.
 
 ```typescript
 import {

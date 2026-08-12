@@ -100,8 +100,7 @@ await fluidRunner(converter);
 The output path must not already exist. Directory paths must be portable, non-empty, forward-slash-separated relative
 paths without `.` or `..` segments; duplicate and conflicting paths are rejected. All paths are validated before the
 output root is created, files are created exclusively, and a partially materialized root is removed if writing fails.
-Fluid runner does not archive directory output. Consumers that need a ZIP or another archive format package the
-completed directory separately.
+Directory output materializes the returned folder and file structure at the requested output path.
 
 > **Note**: Only one of `codeLoader` or `fluidRunner(...)` argument is allowed. If both or none are provided, an error will be thrown at the start of execution.
 
