@@ -261,11 +261,11 @@ describeHydration(
 					() => method.call(node),
 					(error: Error) =>
 						error instanceof TypeError &&
-						error.message.includes(methodName) &&
-						error.message.includes("MapNode"),
+					error.message ===
+						`MapNode does not support '${methodName}'. Use the MapNode API (e.g., set, get, delete, keys, values, entries).`,
 				);
 			} finally {
-				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- Cleaning up test-only method added to Map.prototype
 				delete (Map.prototype as unknown as Record<string, unknown>)[methodName];
 			}
 		});

@@ -1443,8 +1443,8 @@ describe("ArrayNode", () => {
 			() => sort.call(array),
 			(error: Error) =>
 				error instanceof TypeError &&
-				error.message.includes("sort") &&
-				error.message.includes("ArrayNode"),
+				error.message ===
+					"ArrayNode does not support 'sort'. Use the ArrayNode API (e.g., insertAt, removeAt, moveToIndex, splice).",
 		);
 	});
 
@@ -1463,11 +1463,11 @@ describe("ArrayNode", () => {
 				() => method.call(array),
 				(error: Error) =>
 					error instanceof TypeError &&
-					error.message.includes(methodName) &&
-					error.message.includes("ArrayNode"),
+					error.message ===
+						`ArrayNode does not support '${methodName}'. Use the ArrayNode API (e.g., insertAt, removeAt, moveToIndex, splice).`,
 			);
 		} finally {
-			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- Cleaning up test-only method added to Array.prototype
 			delete (Array.prototype as unknown as Record<string, unknown>)[methodName];
 		}
 	});

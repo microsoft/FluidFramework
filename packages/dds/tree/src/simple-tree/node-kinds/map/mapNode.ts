@@ -202,7 +202,7 @@ const handler: ProxyHandler<TreeMapNodeAlpha<any>> = {
 			key in Map.prototype &&
 			typeof (Map.prototype as unknown as Record<string, unknown>)[key] === "function"
 		) {
-			return (...args: unknown[]) => {
+			return () => {
 				throw new TypeError(
 					`MapNode does not support '${key}'. Use the MapNode API (e.g., set, get, delete, keys, values, entries).`,
 				);
