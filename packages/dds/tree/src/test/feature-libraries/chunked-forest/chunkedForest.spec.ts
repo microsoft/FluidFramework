@@ -281,6 +281,22 @@ describe("ChunkedForest", () => {
 			assert.deepEqual(valuesFromChunks(chunks), [0, 1, 2]);
 		});
 
+		it("selects the requested node when the containing chunk and node offsets are nonzero", () => {
+			const leading = new BasicChunk(numberShape.type, new Map(), -1);
+			const uniform = new UniformChunk(numberShape.withTopLevelLength(3), [0, 1, 2]);
+			const trailing = new BasicChunk(numberShape.type, new Map(), 3);
+			const chunks: TreeChunk[] = [leading, uniform, trailing];
+
+			const result = ensureExclusiveBasicChunk(chunks, 3, makeCompressor());
+
+			assert.equal(result, chunks[3]);
+			assert.equal(result.value, 2);
+			assert.equal(chunks[0], leading);
+			assert.equal(chunks[4], trailing);
+			assert.equal(uniform.isUnreferenced(), true);
+			assert.deepEqual(valuesFromChunks(chunks), [-1, 0, 1, 2, 3]);
+		});
+
 		it("normalizes a shared SequenceChunk without replacing a sibling", () => {
 			const sequence = new SequenceChunk([
 				new BasicChunk(numberShape.type, new Map(), 0),
