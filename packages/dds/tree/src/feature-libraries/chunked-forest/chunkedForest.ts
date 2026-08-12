@@ -232,9 +232,9 @@ export class ChunkedForest implements IEditableForest {
 		// Annoyingly declaring the type here or in a satisfies clause causes this code not to build,
 		// so the type is inferred.
 		//
-		// This visitor works by shallow copying (where needed) the forest as its walked down
+		// This visitor works by shallow copying (where needed) the forest as it's walked down
 		// to ensure the location being traversed (and thus possibly edited) is an exclusively owned BasicChunk.
-		// Future optimizations may improve thus, but currently that is a requirement for the editing code to work.
+		// Future optimizations may improve this, but currently that is a requirement for the editing code to work.
 		const forestVisitor = {
 			forest: this,
 			/**
