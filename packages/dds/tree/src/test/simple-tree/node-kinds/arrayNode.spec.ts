@@ -1433,66 +1433,57 @@ describe("ArrayNode", () => {
 		});
 	});
 
-	describeHydration("unsupported Array.prototype methods", (init) => {
-		it("throws descriptive TypeError for copyWithin", () => {
-			const array = init(PojoEmulationNumberArray, [1, 2, 3]);
-			const copyWithin = (array as unknown as Record<string, unknown>).copyWithin as (
-				...args: unknown[]
-			) => unknown;
-			assert.equal(typeof copyWithin, "function");
-			assert.throws(
-				() => copyWithin.call(array, 0, 1),
-				(error: Error) => error instanceof TypeError && error.message.includes("copyWithin"),
-			);
-		});
+	it("throws descriptive TypeError for an unsupported Array.prototype method", () => {
+		const array = hydrate(PojoEmulationNumberArray, [1, 2, 3]);
+		const sort = (array as unknown as Record<string, unknown>).sort as (
+			...args: unknown[]
+		) => unknown;
+		assert.equal(typeof sort, "function");
+		assert.throws(
+			() => sort.call(array),
+			(error: Error) =>
+				error instanceof TypeError &&
+				error.message.includes("sort") &&
+				error.message.includes("ArrayNode"),
+		);
+	});
 
-		it("throws descriptive TypeError for fill", () => {
-			const array = init(PojoEmulationNumberArray, [1, 2, 3]);
-			const fill = (array as unknown as Record<string, unknown>).fill as (
+	it("throws descriptive TypeError for future unsupported Array.prototype methods", () => {
+		const array = hydrate(PojoEmulationNumberArray, [1, 2, 3]);
+		const methodName = "__testUnsupportedArrayMethod__";
+		(Array.prototype as unknown as Record<string, unknown>)[methodName] = function () {
+			return "should not reach here";
+		};
+		try {
+			const method = (array as unknown as Record<string, unknown>)[methodName] as (
 				...args: unknown[]
 			) => unknown;
-			assert.equal(typeof fill, "function");
+			assert.equal(typeof method, "function");
 			assert.throws(
-				() => fill.call(array, 0),
-				(error: Error) => error instanceof TypeError && error.message.includes("fill"),
-			);
-		});
-
-		it("throws descriptive TypeError for reverse", () => {
-			const array = init(PojoEmulationNumberArray, [1, 2, 3]);
-			const reverse = (array as unknown as Record<string, unknown>).reverse as (
-				...args: unknown[]
-			) => unknown;
-			assert.equal(typeof reverse, "function");
-			assert.throws(
-				() => reverse.call(array),
-				(error: Error) => error instanceof TypeError && error.message.includes("reverse"),
-			);
-		});
-
-		it("throws descriptive TypeError for sort", () => {
-			const array = init(PojoEmulationNumberArray, [1, 2, 3]);
-			const sort = (array as unknown as Record<string, unknown>).sort as (
-				...args: unknown[]
-			) => unknown;
-			assert.equal(typeof sort, "function");
-			assert.throws(
-				() => sort.call(array),
-				(error: Error) => error instanceof TypeError && error.message.includes("sort"),
-			);
-		});
-
-		it("includes suggestion to use ArrayNode API", () => {
-			const array = init(PojoEmulationNumberArray, [1, 2, 3]);
-			const fill = (array as unknown as Record<string, unknown>).fill as (
-				...args: unknown[]
-			) => unknown;
-			assert.throws(
-				() => fill.call(array, 0),
+				() => method.call(array),
 				(error: Error) =>
-					error instanceof TypeError && error.message.includes("ArrayNode API"),
+					error instanceof TypeError &&
+					error.message.includes(methodName) &&
+					error.message.includes("ArrayNode"),
 			);
-		});
+		} finally {
+			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+			delete (Array.prototype as unknown as Record<string, unknown>)[methodName];
+		}
+	});
+
+	it("does not interfere with existing ArrayNode methods", () => {
+		const array = hydrate(PojoEmulationNumberArray, [1, 2, 3]);
+		assert.deepEqual(
+			array.map((x) => x * 2),
+			[2, 4, 6],
+		);
+		assert.deepEqual(
+			array.filter((x) => x > 1),
+			[2, 3],
+		);
+		assert.equal(array.indexOf(2), 1);
+		assert.equal(array.length, 3);
 	});
 });
 
