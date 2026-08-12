@@ -311,6 +311,10 @@ export class ChunkedForest implements IEditableForest {
 					"Attach must consume all nodes in source field",
 				);
 				const destinationField = getOrAddEmptyToMap(parent.mutableChunk.fields, parent.key);
+				assert(
+					destination <= getFieldLength(destinationField),
+					"Attach destination must not exceed field length",
+				);
 				const destinationChunkIndex = splitFieldAtIndex(destinationField, destination, {
 					policy: this.forest.chunker,
 					idCompressor: this.forest.idCompressor,
@@ -336,12 +340,16 @@ export class ChunkedForest implements IEditableForest {
 				this.forest.#events.emit("beforeChange");
 				const parent = this.getParent();
 				const sourceField = parent.mutableChunk.fields.get(parent.key) ?? [];
-				assert(source.start <= source.end, 0xcf8 /* detach range start must not exceed end */);
+				assert(source.start <= source.end, "Detach range start must not exceed end");
 				assert(
 					source.end <= getFieldLength(sourceField),
 					"Detach range must not exceed field length",
 				);
 				if (destination !== undefined) {
+					assert(
+						parent.mutableChunk !== this.forest.roots || parent.key !== destination,
+						"Detach destination field must be different from current field",
+					);
 					assert(
 						!this.forest.roots.fields.has(destination),
 						"Detach destination must be a new empty field",

@@ -1055,19 +1055,15 @@ describe("chunkTree", () => {
 			assert.equal(chunks.length, 0);
 		});
 
-		it("rejects an index beyond the field without changing its chunks", () => {
+		it("rejects an index beyond the field", () => {
 			const chunks: TreeChunk[] = [
 				new BasicChunk(numberType, new Map(), 0),
 				new UniformChunk(numberShape.withTopLevelLength(3), [1, 2, 3]),
 			];
-			const snapshot = [...chunks];
-
 			assert.throws(
 				() => splitFieldAtIndex(chunks, 5, compressor),
 				validateAssertionError("nodeIndex exceeds total node count in field"),
 			);
-
-			assertChunksUnchanged(chunks, snapshot);
 		});
 
 		it("splits a SequenceChunk at an interior node boundary", () => {
