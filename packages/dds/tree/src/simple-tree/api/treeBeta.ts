@@ -142,7 +142,7 @@ export interface NodeChangedDataTreeDelta {
  * @sealed @beta
  */
 export interface TreeChangeEventsBeta<TNode extends TreeNode = TreeNode>
-	extends TreeChangeEvents {
+	extends Omit<TreeChangeEvents, "nodeChanged" | "treeChanged"> {
 	/**
 	 * Emitted by a node after a batch of changes has been applied to the tree, if any of the changes affected the node.
 	 *
