@@ -50,8 +50,6 @@ The flat config is organized into a modular structure for maintainability:
 
 ```
 eslint-config-fluid/
-├── fluidPlugin.cjs              # Custom Fluid plugin registration
-├── rules/                       # Custom Fluid rule implementations
 ├── flat.mts                    # Main entry point (~30 lines)
 ├── library/
 │   ├── constants.mts           # Shared constants (ignores, file patterns, import restrictions)
@@ -64,6 +62,9 @@ eslint-config-fluid/
 │       ├── base.mts            # Base config builder with all plugins
 │       ├── overrides.mts       # Shared overrides (test files, React, JS files)
 │       └── factory.mts         # Config factory functions
+├── src/
+│   ├── rules/                  # Custom Fluid rule implementations
+│   └── test/                   # Config and custom rule tests
 ```
 
 ### Custom Fluid Rules
@@ -145,16 +146,19 @@ a diff to review as part of a PR -- just like we do with API reports for code ch
 
 | Script | Description |
 |--------|-------------|
-| `build` | `npm run print-config` |
-| `build:readme:disabled` | `markdown-magic --files "**/*.md"` |
-| `clean` | `rimraf --glob dist "**/*.build.log"` |
+| `build` | `npm run build:readme && npm run build:test:examples && npm run print-configs && npm run prettier` |
+| `build:readme` | `markdown-magic --files "**/*.md"` |
+| `build:test:examples` | `tsc --project ./src/test/rules/test-cases/tsconfig.json` |
+| `clean` | `rimraf --glob dist "**/*.build.log" nyc` |
 | `format` | `npm run prettier:fix` |
 | `install-no-frozen` | `pnpm --config.minimum-release-age=10080 i --no-frozen-lockfile` |
-| `prettier` | `prettier --check .` |
-| `prettier:fix` | `prettier --write .` |
-| `print-configs` | `tsx scripts/print-configs.ts printed-configs` |
-| `test` | `echo TODO: add tests in @fluidframework/eslint-config-fluid` |
-| `test:mocha` | `mocha "src/test/**/*.test.mts"` |
+| `prettier` | `prettier --check . --cache --ignore-path ../../../.prettierignore` |
+| `prettier:fix` | `prettier --write . --cache --ignore-path ../../../.prettierignore` |
+| `print-configs` | `jiti scripts/print-configs.ts printed-configs` |
+| `test` | `npm run test:eslint9 && npm run test:eslint8` |
+| `test:eslint8` | `cross-env ESLINT_PACKAGE=eslint8 mocha "src/test/rules/**/*.test.js"` |
+| `test:eslint9` | `npm run test:mocha` |
+| `test:mocha` | `mocha "src/test/**/*.test.{js,mts}"` |
 
 <!-- prettier-ignore-end -->
 

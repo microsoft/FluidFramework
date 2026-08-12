@@ -7,7 +7,7 @@ This guide outlines the steps required to add custom ESLint rules, update depend
 ### 1. Add a custom rule
 
 1. **Create the Rule**: Write the new rule following best practices for ESLint. If you need guidance, refer to [ESLint's rule documentation](https://eslint.org/docs/latest/developer-guide/working-with-rules).
-    - [List of Custom Rules](https://github.com/microsoft/FluidFramework/tree/main/common/build/eslint-config-fluid/rules)
+    - [List of Custom Rules](https://github.com/microsoft/FluidFramework/tree/main/common/build/eslint-config-fluid/src/rules)
 
 2. **Testing**: Ensure the rule is thoroughly tested. Tests help validate that the rule behaves as expected across various code scenarios.
 
@@ -15,19 +15,19 @@ This guide outlines the steps required to add custom ESLint rules, update depend
 
     ```plaintext
     eslint-config-fluid/
-    ├── fluidPlugin.cjs
-    ├── rules/
-    │   ├── rule-one.js
-    │   └── rule-two.js
-    └── src/test/rules/
-        ├── rule-one.test.js
-        ├── rule-two.test.js
-        └── test-cases/
-            ├── rule-one/
-            └── rule-two/
+    └── src/
+        ├── rules/
+        │   ├── rule-one.js
+        │   └── rule-two.js
+        └── test/rules/
+            ├── rule-one.test.js
+            ├── rule-two.test.js
+            └── test-cases/
+                ├── rule-one/
+                └── rule-two/
     ```
 
-3. **Register the rule**: Add the rule to `fluidPlugin.cjs` and enable it in the appropriate shared config.
+3. **Register the rule**: Import and register the rule in `library/configs/base.mts`, then enable it in the appropriate shared config.
 
 4. **Update Changelog**: Record the new rule in `CHANGELOG.md`.
 
