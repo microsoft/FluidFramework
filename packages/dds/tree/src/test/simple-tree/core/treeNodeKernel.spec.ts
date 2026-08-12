@@ -8,7 +8,6 @@ import { strict as assert } from "node:assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import { rootFieldKey, type UpPath } from "../../../core/index.js";
-import { TreeAlpha } from "../../../shared-tree/index.js";
 import {
 	TEST_activeBufferCount,
 	getKernel,
@@ -261,7 +260,7 @@ describe("array node delta in nodeChanged", () => {
 			const myArray = init(MyArray, [1, 2, 3]);
 
 			const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-			TreeAlpha.on(myArray, "nodeChanged", ({ delta }) => {
+			TreeBeta.on(myArray, "nodeChanged", ({ delta }) => {
 				deltas.push(delta);
 			});
 
@@ -276,7 +275,7 @@ describe("array node delta in nodeChanged", () => {
 		const myArray = hydrate(MyArray, [1, 2, 3]);
 
 		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-		TreeAlpha.on(myArray, "nodeChanged", ({ delta }) => {
+		TreeBeta.on(myArray, "nodeChanged", ({ delta }) => {
 			deltas.push(delta);
 		});
 
@@ -293,7 +292,7 @@ describe("array node delta in nodeChanged", () => {
 		const myArray = hydrate(MyArray, [1, 2, 3]);
 
 		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-		TreeAlpha.on(myArray, "nodeChanged", ({ delta }) => {
+		TreeBeta.on(myArray, "nodeChanged", ({ delta }) => {
 			deltas.push(delta);
 		});
 
@@ -320,7 +319,7 @@ describe("array node delta in nodeChanged", () => {
 		const myArray = hydrate(MyArray, [1, 2, 3]);
 
 		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-		TreeAlpha.on(myArray, "nodeChanged", ({ delta }) => {
+		TreeBeta.on(myArray, "nodeChanged", ({ delta }) => {
 			deltas.push(delta);
 		});
 
@@ -344,7 +343,7 @@ describe("array node delta in nodeChanged", () => {
 		const myArray = hydrate(MyArray, [1, 2, 3]);
 
 		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-		TreeAlpha.on(myArray, "nodeChanged", ({ delta }) => {
+		TreeBeta.on(myArray, "nodeChanged", ({ delta }) => {
 			deltas.push(delta);
 		});
 
@@ -368,7 +367,7 @@ describe("array node delta in nodeChanged", () => {
 		const myArray = hydrate(MyArray, [1, 2, 3]);
 
 		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-		TreeAlpha.on(myArray, "nodeChanged", ({ delta }) => {
+		TreeBeta.on(myArray, "nodeChanged", ({ delta }) => {
 			deltas.push(delta);
 		});
 
@@ -390,7 +389,7 @@ describe("array node delta in nodeChanged", () => {
 		const myArray = hydrate(MyArray, [1, 2, 3]);
 
 		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-		TreeAlpha.on(myArray, "nodeChanged", ({ delta }) => {
+		TreeBeta.on(myArray, "nodeChanged", ({ delta }) => {
 			deltas.push(delta);
 		});
 
@@ -408,7 +407,7 @@ describe("array node delta in nodeChanged", () => {
 		const myArray = hydrate(MyArray, [1, 2, 3]);
 
 		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-		TreeAlpha.on(myArray, "nodeChanged", ({ delta }) => {
+		TreeBeta.on(myArray, "nodeChanged", ({ delta }) => {
 			deltas.push(delta);
 		});
 
@@ -426,7 +425,7 @@ describe("array node delta in nodeChanged", () => {
 		const myArray = hydrate(MyArray, [1, 2, 3]);
 
 		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-		TreeAlpha.on(myArray, "nodeChanged", ({ delta }) => {
+		TreeBeta.on(myArray, "nodeChanged", ({ delta }) => {
 			deltas.push(delta);
 		});
 
@@ -443,7 +442,7 @@ describe("array node delta in nodeChanged", () => {
 		const myArray = hydrate(MyArray, [1, 2, 3]);
 
 		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-		TreeAlpha.on(myArray, "nodeChanged", ({ delta }) => {
+		TreeBeta.on(myArray, "nodeChanged", ({ delta }) => {
 			deltas.push(delta);
 		});
 
@@ -511,7 +510,7 @@ describe("array node delta in nodeChanged", () => {
 		const myArray = hydrate(MyArray, []);
 
 		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-		TreeAlpha.on(myArray, "nodeChanged", ({ delta }) => {
+		TreeBeta.on(myArray, "nodeChanged", ({ delta }) => {
 			deltas.push(delta);
 		});
 
@@ -525,7 +524,7 @@ describe("array node delta in nodeChanged", () => {
 		const myArray = hydrate(MyArray, [1, 2]);
 
 		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-		TreeAlpha.on(myArray, "nodeChanged", ({ delta }) => {
+		TreeBeta.on(myArray, "nodeChanged", ({ delta }) => {
 			deltas.push(delta);
 		});
 
@@ -543,7 +542,7 @@ describe("array node delta in nodeChanged", () => {
 		const myArray = hydrate(MyArray, [1, 2, 3, 4, 5]);
 
 		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-		TreeAlpha.on(myArray, "nodeChanged", ({ delta }) => {
+		TreeBeta.on(myArray, "nodeChanged", ({ delta }) => {
 			deltas.push(delta);
 		});
 
@@ -568,8 +567,8 @@ describe("array node delta in nodeChanged", () => {
 
 		const delta1: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
 		const delta2: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-		TreeAlpha.on(parent.array1, "nodeChanged", ({ delta }) => delta1.push(delta));
-		TreeAlpha.on(parent.array2, "nodeChanged", ({ delta }) => delta2.push(delta));
+		TreeBeta.on(parent.array1, "nodeChanged", ({ delta }) => delta1.push(delta));
+		TreeBeta.on(parent.array2, "nodeChanged", ({ delta }) => delta2.push(delta));
 
 		withBufferedTreeEvents(() => {
 			parent.array1.insertAtEnd(5);
@@ -684,7 +683,7 @@ describe("array move events", () => {
 		it("move within array emits remove + retain + insert delta", () => {
 			const arr = hydrate(MoveArray, [1, 2, 3]);
 			const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-			TreeAlpha.on(arr, "nodeChanged", ({ delta }) => deltas.push(delta));
+			TreeBeta.on(arr, "nodeChanged", ({ delta }) => deltas.push(delta));
 
 			arr.moveToEnd(0);
 
@@ -705,8 +704,8 @@ describe("array move events", () => {
 			const parent = hydrate(MoveParent, { array1: [1, 2, 3], array2: [4, 5] });
 			const delta1: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
 			const delta2: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-			TreeAlpha.on(parent.array1, "nodeChanged", ({ delta }) => delta1.push(delta));
-			TreeAlpha.on(parent.array2, "nodeChanged", ({ delta }) => delta2.push(delta));
+			TreeBeta.on(parent.array1, "nodeChanged", ({ delta }) => delta1.push(delta));
+			TreeBeta.on(parent.array2, "nodeChanged", ({ delta }) => delta2.push(delta));
 
 			// Move element 0 of array2 (value 4) to the end of array1.
 			parent.array1.moveToEnd(0, parent.array2);
@@ -730,7 +729,7 @@ describe("array move events", () => {
 		it("moveRangeToEnd emits correct count in remove and insert ops", () => {
 			const arr = hydrate(MoveArray, [1, 2, 3, 4, 5]);
 			const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-			TreeAlpha.on(arr, "nodeChanged", ({ delta }) => deltas.push(delta));
+			TreeBeta.on(arr, "nodeChanged", ({ delta }) => deltas.push(delta));
 
 			// Move elements at indices 1 and 2 (values 2, 3) to the end.
 			arr.moveRangeToEnd(1, 3);

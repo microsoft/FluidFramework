@@ -2883,7 +2883,7 @@ describe("treeNodeApi", () => {
 				const root = view.root;
 
 				const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-				TreeAlpha.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
+				TreeBeta.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
 
 				root.insertAt(0, 0);
 
@@ -2901,7 +2901,7 @@ describe("treeNodeApi", () => {
 				const root = view.root;
 
 				const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-				TreeAlpha.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
+				TreeBeta.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
 
 				root.removeAt(0);
 
@@ -2919,7 +2919,7 @@ describe("treeNodeApi", () => {
 				const root = view.root;
 
 				const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-				TreeAlpha.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
+				TreeBeta.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
 
 				root.removeAt(2);
 
@@ -2937,7 +2937,7 @@ describe("treeNodeApi", () => {
 				const root = view.root;
 
 				const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-				TreeAlpha.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
+				TreeBeta.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
 
 				root.moveRangeToEnd(0, 1);
 
@@ -2966,7 +2966,7 @@ describe("treeNodeApi", () => {
 				const root = view.root;
 
 				const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-				TreeAlpha.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
+				TreeBeta.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
 
 				// Use a fork to compose two changes into a single delta: modify
 				// element 0's nested property and remove element 1. The merged
@@ -2990,7 +2990,7 @@ describe("treeNodeApi", () => {
 				it(`insertAtEnd fires nodeChanged with correct delta`, () => {
 					const root = init(TestArray, [1, 2, 3]);
 					const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-					TreeAlpha.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
+					TreeBeta.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
 					root.insertAtEnd(4);
 					assert.deepEqual(deltas, [
 						[
@@ -3003,7 +3003,7 @@ describe("treeNodeApi", () => {
 				it(`removeAt fires nodeChanged with correct delta`, () => {
 					const root = init(TestArray, [1, 2, 3]);
 					const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-					TreeAlpha.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
+					TreeBeta.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
 					root.removeAt(0);
 					assert.deepEqual(deltas, [
 						[
@@ -3016,7 +3016,7 @@ describe("treeNodeApi", () => {
 				it(`moveToEnd fires nodeChanged with correct delta`, () => {
 					const root = init(TestArray, [1, 2, 3]);
 					const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-					TreeAlpha.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
+					TreeBeta.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
 					// Move first element to end: [1,2,3] → [2,3,1]
 					root.moveToEnd(0);
 					assert.deepEqual(deltas, [
@@ -3076,11 +3076,11 @@ describe("treeNodeApi", () => {
 					let treeChangedCount = 0;
 					const nodeChangedDeltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
 					const treeChangedDeltas: (readonly ArrayNodeTreeChangedDeltaOp[] | undefined)[] = [];
-					TreeAlpha.on(root, "nodeChanged", ({ delta }) => {
+					TreeBeta.on(root, "nodeChanged", ({ delta }) => {
 						nodeChangedCount++;
 						nodeChangedDeltas.push(delta);
 					});
-					TreeAlpha.on(root, "treeChanged", ({ delta }) => {
+					TreeBeta.on(root, "treeChanged", ({ delta }) => {
 						treeChangedCount++;
 						treeChangedDeltas.push(delta);
 					});
@@ -3112,8 +3112,8 @@ describe("treeNodeApi", () => {
 
 					const nodeChangedDeltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
 					const treeChangedDeltas: (readonly ArrayNodeTreeChangedDeltaOp[] | undefined)[] = [];
-					TreeAlpha.on(root, "nodeChanged", ({ delta }) => nodeChangedDeltas.push(delta));
-					TreeAlpha.on(root, "treeChanged", ({ delta }) => treeChangedDeltas.push(delta));
+					TreeBeta.on(root, "nodeChanged", ({ delta }) => nodeChangedDeltas.push(delta));
+					TreeBeta.on(root, "treeChanged", ({ delta }) => treeChangedDeltas.push(delta));
 
 					const { forkView, forkCheckout } = getViewForForkedBranch(view);
 					forkView.root[1].v = 42;
@@ -3144,7 +3144,7 @@ describe("treeNodeApi", () => {
 					const root = view.root;
 
 					const treeChangedDeltas: (readonly ArrayNodeTreeChangedDeltaOp[] | undefined)[] = [];
-					TreeAlpha.on(root, "treeChanged", ({ delta }) => treeChangedDeltas.push(delta));
+					TreeBeta.on(root, "treeChanged", ({ delta }) => treeChangedDeltas.push(delta));
 
 					// Modify two elements in one transaction — both should appear as separate
 					// retain-with-subtreeChanged ops, confirming per-element granularity.
@@ -3168,7 +3168,7 @@ describe("treeNodeApi", () => {
 					const root = view.root;
 
 					const treeChangedDeltas: (readonly ArrayNodeTreeChangedDeltaOp[] | undefined)[] = [];
-					TreeAlpha.on(root, "treeChanged", ({ delta }) => treeChangedDeltas.push(delta));
+					TreeBeta.on(root, "treeChanged", ({ delta }) => treeChangedDeltas.push(delta));
 
 					root.removeAt(2);
 
@@ -3186,7 +3186,7 @@ describe("treeNodeApi", () => {
 					const root = view.root;
 
 					const treeChangedDeltas: (readonly ArrayNodeTreeChangedDeltaOp[] | undefined)[] = [];
-					TreeAlpha.on(root, "treeChanged", ({ delta }) => treeChangedDeltas.push(delta));
+					TreeBeta.on(root, "treeChanged", ({ delta }) => treeChangedDeltas.push(delta));
 
 					root.insertAtEnd({ v: 3 });
 
@@ -3204,7 +3204,7 @@ describe("treeNodeApi", () => {
 					const root = view.root;
 
 					const treeChangedDeltas: (readonly ArrayNodeTreeChangedDeltaOp[] | undefined)[] = [];
-					TreeAlpha.on(root, "treeChanged", ({ delta }) => treeChangedDeltas.push(delta));
+					TreeBeta.on(root, "treeChanged", ({ delta }) => treeChangedDeltas.push(delta));
 
 					root.insertAt(0, { v: 0 });
 
@@ -3217,7 +3217,7 @@ describe("treeNodeApi", () => {
 				});
 
 				describe(`unhydrated array`, () => {
-					// These tests verify that TreeAlpha.on("treeChanged") works correctly on
+					// These tests verify that TreeBeta.on("treeChanged") works correctly on
 					// unhydrated arrays, exercising #emitDeepChangesToAncestorArrays.
 					// For shallow changes (insert/remove/move) on unhydrated arrays, delta is
 					// undefined because no field marks are available from the delta pipeline.
@@ -3256,7 +3256,7 @@ describe("treeNodeApi", () => {
 
 						const treeChangedDeltas: (readonly ArrayNodeTreeChangedDeltaOp[] | undefined)[] =
 							[];
-						TreeAlpha.on(root, "treeChanged", ({ delta }) => treeChangedDeltas.push(delta));
+						TreeBeta.on(root, "treeChanged", ({ delta }) => treeChangedDeltas.push(delta));
 
 						root[1].v = 99;
 
@@ -3274,7 +3274,7 @@ describe("treeNodeApi", () => {
 
 						const treeChangedDeltas: (readonly ArrayNodeTreeChangedDeltaOp[] | undefined)[] =
 							[];
-						TreeAlpha.on(root, "treeChanged", ({ delta }) => treeChangedDeltas.push(delta));
+						TreeBeta.on(root, "treeChanged", ({ delta }) => treeChangedDeltas.push(delta));
 
 						root.insertAtEnd({ v: 3 });
 
@@ -3289,9 +3289,9 @@ describe("treeNodeApi", () => {
 			});
 		});
 
-		it(`TreeAlpha.on 'treeChanged' on a non-array node falls through to base subtree behavior`, () => {
-			// Verifies that the alpha treeChanged override only applies to array nodes.
-			// For object/map/record nodes, TreeAlpha.on should behave identically to Tree.on.
+		it(`TreeBeta.on 'treeChanged' on a non-array node falls through to base subtree behavior`, () => {
+			// Verifies that the beta treeChanged override only applies to array nodes.
+			// For object/map/record nodes, TreeBeta.on should behave identically to Tree.on.
 			const sfObj = new SchemaFactory("non-array-treeChanged");
 			class Inner extends sfObj.object("Inner", { v: sfObj.number }) {}
 			class Outer extends sfObj.object("Outer", { inner: Inner }) {}
@@ -3301,15 +3301,15 @@ describe("treeNodeApi", () => {
 			const root = view.root;
 
 			let baseFired = 0;
-			let alphaFired = 0;
+			let betaFired = 0;
 			Tree.on(root, "treeChanged", () => baseFired++);
-			TreeAlpha.on(root, "treeChanged", () => alphaFired++);
+			TreeBeta.on(root, "treeChanged", () => betaFired++);
 
 			root.inner.v = 42;
 
 			// Both subscriptions should fire exactly once for the subtree change.
 			assert.equal(baseFired, 1);
-			assert.equal(alphaFired, 1);
+			assert.equal(betaFired, 1);
 		});
 
 		it(`'nodeChanged' uses property keys, not stored keys, for the list of changed properties`, () => {
