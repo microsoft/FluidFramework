@@ -78,8 +78,46 @@ await fluidRunner(converter);
 
 ### Input file format
 
-The input file is expected to be an ODSP snapshot.
+The input file is the unmodified response body of an ODSP whole-file request. It is not the Code Loader bundle.
+Both JSON snapshots and compact `application/ms-fluid` snapshots are supported.
 For some examples, see the files in the [localOdspSnapshots folder](./src/test/localOdspSnapshots).
+
+#### Producing an input file from ODSP
+
+Trusted ODSP integrations can download the whole-file payload from:
+
+```text
+https://{host}/_api/v2.1/drives/{driveId}/items/{itemId}/opStream/content?attachments=1
+```
+
+This read uses ODSP's auth-in-body request format: send an HTTP `POST` with these headers:
+
+```text
+Accept: application/json, application/ms-fluid; v=1.0
+Content-Type: multipart/form-data;boundary={boundary}
+```
+
+Construct the body using CRLF line endings and a blank line before the closing boundary:
+
+```text
+--{boundary}
+Authorization: {authorization-header}
+X-HTTP-Method-Override: GET
+prefer: manualredirect
+_post: 1
+
+--{boundary}--
+```
+
+Include other lines required by the resolved ODSP URL, such as `X-CLP-Compliant-App` or share-link redemption
+information. This is the same request convention used by the ODSP driver's
+[snapshot fetcher](../../drivers/odsp-driver/src/fetchSnapshot.ts). Obtain the authorization header from the
+host's ODSP storage-token provider; do not place bearer tokens in source, command lines, telemetry, or logs.
+
+After checking the HTTP response status, write `response.arrayBuffer()` to `--inputFile` unchanged. Do not decode
+and re-encode a compact response as text.
+
+Keep `attachments=1` in the URL so the downloaded input also contains attachment bytes needed during conversion.
 
 ### Telemetry format
 
