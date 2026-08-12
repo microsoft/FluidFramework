@@ -186,10 +186,7 @@ export class LocalOrderer implements IOrderer {
 	) {
 		this.existing = details.existing;
 		this.dbObject = this.getDeliState();
-		const deliState: IDeliState =
-			typeof this.dbObject.deli === "string"
-				? JSON.parse(this.dbObject.deli)
-				: this.dbObject.deli;
+		const deliState: IDeliState = JSON.parse(this.dbObject.deli);
 		this.latestSequenceNumber = deliState.sequenceNumber;
 		this.socketPublisher = new LocalSocketPublisher(this.pubSub, (event, args) => {
 			if (event !== "op") {
