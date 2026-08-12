@@ -150,20 +150,22 @@ export {
 	borrowCursorFromTreeNodeOrValue,
 	exportConcise,
 	importConcise,
-	type NodeChangedData,
-	type NodeChangedDataDelta,
-	type NodeChangedDataProperties,
-	type NodeChangedDataTreeDelta,
 	TreeBeta,
-	type TreeChangeEventsBeta,
 } from "./treeBeta.js";
+export type {
+	ArrayNodeDeltaOp,
+	ArrayNodeInsertOp,
+	ArrayNodeRemoveOp,
+	ArrayNodeRetainOp,
+	ArrayNodeTreeChangedDeltaOp,
+	ArrayNodeTreeChangedRetainOp,
+	NodeChangedData,
+	NodeChangedDataDelta,
+	NodeChangedDataProperties,
+	NodeChangedDataTreeDelta,
+	TreeChangeEventsBeta,
+} from "./treeChangeEventsBeta.js";
 export {
-	type ArrayNodeDeltaOp,
-	type ArrayNodeInsertOp,
-	type ArrayNodeRemoveOp,
-	type ArrayNodeRetainOp,
-	type ArrayNodeTreeChangedDeltaOp,
-	type ArrayNodeTreeChangedRetainOp,
 	type NodeChangedDataAlpha,
 	type TreeChangeEventsAlpha,
 } from "./treeAlpha.js";

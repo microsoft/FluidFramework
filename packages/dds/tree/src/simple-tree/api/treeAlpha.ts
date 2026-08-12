@@ -10,15 +10,7 @@ import type {
 	NodeChangedDataDelta,
 	NodeChangedDataProperties,
 	TreeChangeEventsBeta,
-} from "./treeBeta.js";
-export type {
-	ArrayNodeDeltaOp,
-	ArrayNodeInsertOp,
-	ArrayNodeRemoveOp,
-	ArrayNodeRetainOp,
-	ArrayNodeTreeChangedDeltaOp,
-	ArrayNodeTreeChangedRetainOp,
-} from "./treeNodeApi.js";
+} from "./treeChangeEventsBeta.js";
 
 /**
  * Compatibility alias for the event data now available from {@link TreeChangeEventsBeta.nodeChanged}.
