@@ -234,7 +234,8 @@
 	"typeValidation": {
 		"broken": {
 			"Interface_LoadContainerRuntimeParams": {
-				"backCompat": false
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		},
 		"entrypoint": "legacy"

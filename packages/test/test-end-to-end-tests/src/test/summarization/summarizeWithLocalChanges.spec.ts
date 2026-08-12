@@ -230,6 +230,7 @@ describeCompat(
 			};
 			const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 				defaultFactory: rootDataObjectFactory,
+				oldestSupportedClient: "2.0.0-defaults",
 				registryEntries: registryStoreEntries,
 				runtimeOptions,
 			});

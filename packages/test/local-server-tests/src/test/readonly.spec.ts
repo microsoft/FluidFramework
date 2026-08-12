@@ -93,6 +93,7 @@ const runtimeFactory: IRuntimeFactory = {
 		return loadContainerRuntime({
 			context,
 			existing,
+			oldestSupportedClient: "2.0.0-defaults",
 			registryEntries: [
 				[
 					DefaultDataStoreFactory.instance.type,

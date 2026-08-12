@@ -17,7 +17,6 @@ import {
 	type IBatchMessage,
 	type IContainerStorageService,
 } from "@fluidframework/container-definitions/internal";
-import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type {
 	ConfigTypes,
 	FluidObject,
@@ -57,7 +56,6 @@ import type {
 	StagingModeChangedEvent,
 } from "@fluidframework/runtime-definitions/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
-import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import {
 	type IFluidErrorBase,
 	MockLogger,
@@ -79,7 +77,6 @@ import { ChannelCollection } from "../channelCollection.js";
 import { CompressionAlgorithms, enabledCompressionConfig } from "../compressionDefinitions.js";
 import {
 	ContainerRuntime,
-	type IContainerRuntimeOptions,
 	type IPendingRuntimeState,
 	agentSchedulerId,
 	defaultPendingOpsWaitTimeoutMs,
@@ -343,6 +340,7 @@ describe("Runtime", () => {
 					context: getMockContext({ logger }) as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
+					oldestSupportedClient: "2.0.0-defaults",
 					runtimeOptions: {
 						enableRuntimeIdCompressor: "on",
 					},
@@ -371,6 +369,7 @@ describe("Runtime", () => {
 					context: getMockContext() as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
+					oldestSupportedClient: "2.0.0-defaults",
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
@@ -386,6 +385,7 @@ describe("Runtime", () => {
 					context: getMockContext() as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
+					oldestSupportedClient: "2.0.0-defaults",
 					runtimeOptions,
 					provideEntryPoint: mockProvideEntryPoint,
 				});
@@ -411,6 +411,7 @@ describe("Runtime", () => {
 						context: context as IContainerContext,
 						registry: new FluidDataStoreRegistry([]),
 						existing: false,
+						oldestSupportedClient: "2.0.0-defaults",
 						runtimeOptions: { flushMode: invalidFlushMode },
 						provideEntryPoint: mockProvideEntryPoint,
 					}),
@@ -442,6 +443,7 @@ describe("Runtime", () => {
 					context: getMockContext() as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
+					oldestSupportedClient: "2.0.0-defaults",
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
@@ -495,6 +497,7 @@ describe("Runtime", () => {
 						}) as IContainerContext,
 						registry: new FluidDataStoreRegistry([]),
 						existing: false,
+						oldestSupportedClient: "2.0.0-defaults",
 						runtimeOptions: {},
 						provideEntryPoint: mockProvideEntryPoint,
 					});
@@ -572,6 +575,7 @@ describe("Runtime", () => {
 					context: mockContext as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
+					oldestSupportedClient: "2.0.0-defaults",
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
@@ -630,6 +634,7 @@ describe("Runtime", () => {
 					context: mockContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
+					oldestSupportedClient: "2.0.0-defaults",
 					runtimeOptions: { enableRuntimeIdCompressor: "on" },
 					provideEntryPoint: mockProvideEntryPoint,
 				});
@@ -771,6 +776,7 @@ describe("Runtime", () => {
 							context: mockContext as IContainerContext,
 							registry: new FluidDataStoreRegistry([]),
 							existing: false,
+							oldestSupportedClient: "2.0.0-defaults",
 							runtimeOptions,
 							provideEntryPoint: mockProvideEntryPoint,
 						});
@@ -992,6 +998,7 @@ describe("Runtime", () => {
 							context: getMockContextForOrderSequentially() as IContainerContext,
 							registry: new FluidDataStoreRegistry([]),
 							existing: false,
+							oldestSupportedClient: "2.0.0-defaults",
 							runtimeOptions,
 							provideEntryPoint: mockProvideEntryPoint,
 						});
@@ -1128,6 +1135,7 @@ describe("Runtime", () => {
 					context: mockContext as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
+					oldestSupportedClient: "2.0.0-defaults",
 					runtimeOptions: undefined,
 					containerScope: {},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -1143,6 +1151,7 @@ describe("Runtime", () => {
 					context: mockContext as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
+					oldestSupportedClient: "2.0.0-defaults",
 					requestHandler: undefined,
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -1158,6 +1167,7 @@ describe("Runtime", () => {
 					context: mockContext as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
+					oldestSupportedClient: "2.0.0-defaults",
 					requestHandler: undefined,
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -1173,6 +1183,7 @@ describe("Runtime", () => {
 					context: mockContext as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
+					oldestSupportedClient: "2.0.0-defaults",
 					requestHandler: undefined,
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -1227,6 +1238,7 @@ describe("Runtime", () => {
 							context: mockContext as IContainerContext,
 							registry: new FluidDataStoreRegistry([]),
 							existing: false,
+							oldestSupportedClient: "2.0.0-defaults",
 							runtimeOptions: undefined,
 							containerScope: {},
 							provideEntryPoint: mockProvideEntryPoint,
@@ -1306,6 +1318,7 @@ describe("Runtime", () => {
 					context: getMockContextForPendingStateProgressTracking() as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
+					oldestSupportedClient: "2.0.0-defaults",
 					requestHandler: undefined,
 					runtimeOptions: {
 						summaryOptions: {
@@ -1574,6 +1587,7 @@ describe("Runtime", () => {
 					context: getMockContext() as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
+					oldestSupportedClient: "2.0.0-defaults",
 					requestHandler: undefined,
 					runtimeOptions,
 					provideEntryPoint: mockProvideEntryPoint,
@@ -1676,6 +1690,7 @@ describe("Runtime", () => {
 					context: context as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
+					oldestSupportedClient: "2.0.0-defaults",
 					requestHandler: undefined,
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
@@ -1782,15 +1797,9 @@ describe("Runtime", () => {
 					methodReturn: T,
 				) =>
 					class MixinContainerRuntime extends Base {
-						public static async loadRuntime2(params: {
-							context: IContainerContext;
-							containerRuntimeCtor?: typeof ContainerRuntime;
-							provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
-							existing: boolean;
-							runtimeOptions: IContainerRuntimeOptions;
-							registry: IFluidDataStoreRegistry;
-							containerScope: FluidObject;
-						}): Promise<{ runtime: ContainerRuntime }> {
+						public static async loadRuntime2(
+							params: Parameters<typeof ContainerRuntime.loadRuntime2>[0],
+						): Promise<{ runtime: ContainerRuntime }> {
 							// Note: we're mutating the parameter object here, normally a no-no, but shouldn't be
 							// an issue in our tests.
 							params.containerRuntimeCtor =
@@ -1817,6 +1826,7 @@ describe("Runtime", () => {
 					provideEntryPoint: async (containerRuntime) => myEntryPoint,
 					existing: false,
 					registry: new FluidDataStoreRegistry([]),
+					oldestSupportedClient: "2.0.0-defaults",
 				});
 
 				assert.equal(
@@ -1833,6 +1843,7 @@ describe("Runtime", () => {
 					context: getMockContext() as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
+					oldestSupportedClient: "2.0.0-defaults",
 					provideEntryPoint: mockProvideEntryPoint,
 				})) as unknown as {
 					summarizeInternal(
@@ -1864,6 +1875,7 @@ describe("Runtime", () => {
 					provideEntryPoint: async (ctrRuntime) => myEntryPoint,
 					existing: false,
 					registry: new FluidDataStoreRegistry([]),
+					oldestSupportedClient: "2.0.0-defaults",
 				});
 
 				// The entryPoint should come from the provided initialization function.
@@ -1892,6 +1904,7 @@ describe("Runtime", () => {
 					provideEntryPoint: async (ctrRuntime) => myEntryPoint,
 					existing: false,
 					registry: new FluidDataStoreRegistry([]),
+					oldestSupportedClient: "2.0.0-defaults",
 				});
 
 				// Calling request on the runtime should use the request handler we passed in the runtime's constructor.
@@ -1925,6 +1938,7 @@ describe("Runtime", () => {
 					context: getMockContext() as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
+					oldestSupportedClient: "2.0.0-defaults",
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
 				}));
@@ -2020,6 +2034,7 @@ describe("Runtime", () => {
 					context: localGetMockContext({}) as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
+					oldestSupportedClient: "2.0.0-defaults",
 					runtimeOptions,
 					provideEntryPoint: mockProvideEntryPoint,
 				});
@@ -2043,6 +2058,7 @@ describe("Runtime", () => {
 					context: localGetMockContext(featureGates) as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
+					oldestSupportedClient: "2.0.0-defaults",
 					runtimeOptions,
 					provideEntryPoint: mockProvideEntryPoint,
 				});
@@ -2079,6 +2095,7 @@ describe("Runtime", () => {
 					context: getMockContext(settings) as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
+					oldestSupportedClient: "2.0.0-defaults",
 					provideEntryPoint: mockProvideEntryPoint,
 				}));
 			});
@@ -2344,6 +2361,7 @@ describe("Runtime", () => {
 					context: mockContext as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
+					oldestSupportedClient: "2.0.0-defaults",
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 
@@ -2373,6 +2391,7 @@ describe("Runtime", () => {
 					context: getMockContext({ logger }) as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
+					oldestSupportedClient: "2.0.0-defaults",
 					runtimeOptions: {
 						enableRuntimeIdCompressor: "on",
 					},
@@ -2416,6 +2435,7 @@ describe("Runtime", () => {
 					context: getMockContext({ logger }) as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
+					oldestSupportedClient: "2.0.0-defaults",
 					runtimeOptions: {
 						enableRuntimeIdCompressor: "on",
 					},
@@ -2469,6 +2489,7 @@ describe("Runtime", () => {
 					context: getMockContext({ logger }) as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
+					oldestSupportedClient: "2.0.0-defaults",
 					runtimeOptions: {
 						enableRuntimeIdCompressor: "on",
 					},
@@ -2490,6 +2511,7 @@ describe("Runtime", () => {
 					context: getMockContext({ logger }) as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
+					oldestSupportedClient: "2.0.0-defaults",
 					runtimeOptions: {
 						enableRuntimeIdCompressor: "on",
 					},
@@ -2558,6 +2580,7 @@ describe("Runtime", () => {
 						}) as IContainerContext,
 						registry: new FluidDataStoreRegistry([]),
 						existing: false,
+						oldestSupportedClient: "2.0.0-defaults",
 						runtimeOptions: {
 							enableRuntimeIdCompressor: "on",
 						},
@@ -2618,6 +2641,7 @@ describe("Runtime", () => {
 					context: getMockContext() as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
+					oldestSupportedClient: "2.0.0-defaults",
 					runtimeOptions: {
 						flushMode: FlushMode.Immediate,
 						enableRuntimeIdCompressor: "on",
@@ -2666,6 +2690,7 @@ describe("Runtime", () => {
 						context: context as IContainerContext,
 						registry: new FluidDataStoreRegistry([]),
 						existing: false,
+						oldestSupportedClient: "2.0.0-defaults",
 						runtimeOptions: { flushMode: FlushMode.Immediate },
 						provideEntryPoint: mockProvideEntryPoint,
 					}),
@@ -2682,6 +2707,7 @@ describe("Runtime", () => {
 					context: getMockContext() as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
+					oldestSupportedClient: "2.0.0-defaults",
 					runtimeOptions: {
 						enableGroupedBatching: false,
 						enableRuntimeIdCompressor: "on",
@@ -2731,6 +2757,7 @@ describe("Runtime", () => {
 						context: context as IContainerContext,
 						registry: new FluidDataStoreRegistry([]),
 						existing: false,
+						oldestSupportedClient: "2.0.0-defaults",
 						runtimeOptions: { enableGroupedBatching: false },
 						provideEntryPoint: mockProvideEntryPoint,
 					}),
@@ -2759,6 +2786,7 @@ describe("Runtime", () => {
 						context: context as IContainerContext,
 						registry: new FluidDataStoreRegistry([]),
 						existing: false,
+						oldestSupportedClient: "2.0.0-defaults",
 						provideEntryPoint: mockProvideEntryPoint,
 					}),
 					(error: Error) => error instanceof UsageError,
@@ -2772,6 +2800,7 @@ describe("Runtime", () => {
 					context: getMockContext() as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
+					oldestSupportedClient: "2.0.0-defaults",
 					runtimeOptions: {
 						enableRuntimeIdCompressor: "on",
 					},
@@ -2811,6 +2840,7 @@ describe("Runtime", () => {
 					}) as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
+					oldestSupportedClient: "2.0.0-defaults",
 					runtimeOptions: {
 						enableRuntimeIdCompressor: "on",
 					},
@@ -2853,6 +2883,7 @@ describe("Runtime", () => {
 					context: getMockContext({ logger }) as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
+					oldestSupportedClient: "2.0.0-defaults",
 					runtimeOptions: {
 						enableRuntimeIdCompressor: "on",
 					},
@@ -2939,6 +2970,7 @@ describe("Runtime", () => {
 					context: context as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
+					oldestSupportedClient: "2.0.0-defaults",
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 
@@ -2955,6 +2987,7 @@ describe("Runtime", () => {
 					context: getMockContext() as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
+					oldestSupportedClient: "2.0.0-defaults",
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 
@@ -3191,6 +3224,7 @@ describe("Runtime", () => {
 						["@fluid-example/smde", Promise.resolve(entryDefault)],
 					]),
 					existing: true,
+					oldestSupportedClient: "2.0.0-defaults",
 					runtimeOptions: {
 						enableRuntimeIdCompressor: "on",
 					},
@@ -3221,6 +3255,7 @@ describe("Runtime", () => {
 						["@fluid-example/smde", Promise.resolve(entryDefault)],
 					]),
 					existing: true,
+					oldestSupportedClient: "2.0.0-defaults",
 					runtimeOptions: {
 						enableRuntimeIdCompressor: "on",
 					},
@@ -3271,6 +3306,7 @@ describe("Runtime", () => {
 						["@fluid-example/smde", Promise.resolve(entryDefault)],
 					]),
 					existing: true,
+					oldestSupportedClient: "2.0.0-defaults",
 					runtimeOptions: {
 						enableRuntimeIdCompressor: "on",
 					},
@@ -3335,6 +3371,7 @@ describe("Runtime", () => {
 						["@fluid-example/smde", Promise.resolve(entryDefault)],
 					]),
 					existing: true,
+					oldestSupportedClient: "2.0.0-defaults",
 					runtimeOptions: {
 						enableRuntimeIdCompressor: "on",
 					},
@@ -3380,6 +3417,7 @@ describe("Runtime", () => {
 						["@fluid-example/smde", Promise.resolve(entryDefault)],
 					]),
 					existing: true,
+					oldestSupportedClient: "2.0.0-defaults",
 					runtimeOptions: {
 						enableRuntimeIdCompressor: "on",
 					},
@@ -3477,6 +3515,7 @@ describe("Runtime", () => {
 					context: getMockContext({ logger }) as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
+					oldestSupportedClient: "2.0.0-defaults",
 					requestHandler: undefined,
 					runtimeOptions,
 					provideEntryPoint: mockProvideEntryPoint,
@@ -4049,6 +4088,7 @@ describe("Runtime", () => {
 						) as IContainerContext,
 						registry: new FluidDataStoreRegistry([]),
 						existing: false,
+						oldestSupportedClient: "2.0.0-defaults",
 						requestHandler: undefined,
 						runtimeOptions,
 						provideEntryPoint: mockProvideEntryPoint,
@@ -4244,6 +4284,7 @@ describe("Runtime", () => {
 								context: getMockContext() as IContainerContext,
 								registry: new FluidDataStoreRegistry([]),
 								existing: false,
+								oldestSupportedClient: "2.0.0-defaults",
 								runtimeOptions: {
 									enableGroupedBatching: false,
 									compressionOptions: {
@@ -4270,8 +4311,10 @@ describe("Runtime", () => {
 								context: getMockContext() as IContainerContext,
 								registry: new FluidDataStoreRegistry([]),
 								existing: false,
+								oldestSupportedClient: "2.40.0",
 								runtimeOptions: {
 									createBlobPayloadPending: true,
+									explicitSchemaControl: false,
 								},
 								provideEntryPoint: mockProvideEntryPoint,
 							}),
@@ -4289,42 +4332,63 @@ describe("Runtime", () => {
 		});
 
 		describe("Default Configurations", () => {
-			it("minVersionForCollab not provided", async () => {
-				const logger = new MockLogger();
-				await ContainerRuntime.loadRuntime2({
-					context: getMockContext({ logger }) as IContainerContext,
+			const verifyVersionPropertiesAtCompileTime = (): void => {
+				const acceptVersionProperties = (
+					_params: Parameters<typeof ContainerRuntime.loadRuntime2>[0],
+				): void => {};
+				const commonParams = {
+					context: getMockContext() as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
-				});
-
-				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
-					summaryOptions: {},
-					gcOptions: {},
-					loadSequenceNumberVerification: "close",
-					flushMode: FlushMode.TurnBased,
-					compressionOptions: {
-						minimumBatchSizeInBytes: 614400,
-						compressionAlgorithm: CompressionAlgorithms.lz4,
-					},
-					maxBatchSizeInBytes: 716800,
-					chunkSizeInBytes: 204800,
-					enableRuntimeIdCompressor: undefined,
-					enableGroupedBatching: true,
-					explicitSchemaControl: false,
-					stagingModeAutoFlushThreshold: 1000,
-					disableSchemaUpgrade: false,
 				};
 
-				logger.assertMatchAny([
-					{
-						eventName: "ContainerRuntime:ContainerLoadStats",
-						category: "generic",
-						options: JSON.stringify(expectedRuntimeOptions),
-						minVersionForCollab: defaultMinVersionForCollab,
-					},
-				]);
+				acceptVersionProperties({
+					...commonParams,
+					oldestSupportedClient: "2.0.0",
+				});
+				acceptVersionProperties({
+					...commonParams,
+					minVersionForCollab: "2.0.0",
+				});
+				// @ts-expect-error -- exactly one compatibility version property is required.
+				acceptVersionProperties(commonParams);
+				acceptVersionProperties({
+					...commonParams,
+					oldestSupportedClient: "2.0.0",
+					// @ts-expect-error -- both compatibility version properties cannot be supplied.
+					minVersionForCollab: "2.0.0",
+				});
+			};
+			verifyVersionPropertiesAtCompileTime();
+
+			it("throws when neither version property is provided", async () => {
+				await assert.rejects(
+					ContainerRuntime.loadRuntime2({
+						context: getMockContext() as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: {},
+						provideEntryPoint: mockProvideEntryPoint,
+					} as unknown as Parameters<typeof ContainerRuntime.loadRuntime2>[0]),
+					/Specify exactly one/,
+				);
+			});
+
+			it("throws when both version properties are provided", async () => {
+				await assert.rejects(
+					ContainerRuntime.loadRuntime2({
+						context: getMockContext() as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: {},
+						provideEntryPoint: mockProvideEntryPoint,
+						oldestSupportedClient: "2.0.0",
+						minVersionForCollab: "2.0.0",
+					} as unknown as Parameters<typeof ContainerRuntime.loadRuntime2>[0]),
+					/Specify exactly one/,
+				);
 			});
 
 			// These are examples of minVersionForCollab inputs that are not valid.
@@ -4388,7 +4452,7 @@ describe("Runtime", () => {
 				]);
 			});
 
-			it('minVersionForCollab = 2.0.0-defaults ("default")', async () => {
+			it("minVersionForCollab = 2.0.0-defaults", async () => {
 				const minVersionForCollab = "2.0.0-defaults";
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime2({
@@ -4423,13 +4487,13 @@ describe("Runtime", () => {
 						eventName: "ContainerRuntime:ContainerLoadStats",
 						category: "generic",
 						options: JSON.stringify(expectedRuntimeOptions),
-						minVersionForCollab: defaultMinVersionForCollab,
+						minVersionForCollab: "2.0.0-defaults",
 					},
 				]);
 			});
 
-			it("minVersionForCollab = 2.0.0 (explicit)", async () => {
-				const minVersionForCollab = "2.0.0";
+			it("oldestSupportedClient = 2.0.0", async () => {
+				const oldestSupportedClient = "2.0.0";
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime2({
 					context: getMockContext({ logger }) as IContainerContext,
@@ -4437,7 +4501,7 @@ describe("Runtime", () => {
 					existing: false,
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
-					minVersionForCollab,
+					oldestSupportedClient,
 				});
 
 				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
@@ -4463,7 +4527,7 @@ describe("Runtime", () => {
 						eventName: "ContainerRuntime:ContainerLoadStats",
 						category: "generic",
 						options: JSON.stringify(expectedRuntimeOptions),
-						minVersionForCollab,
+						minVersionForCollab: oldestSupportedClient,
 					},
 				]);
 			});
@@ -4507,12 +4571,13 @@ describe("Runtime", () => {
 				]);
 			});
 
-			it("minVersionForCollab not provided, with manual configs", async () => {
+			it("oldestSupportedClient = 2.0.0-defaults, with manual configs", async () => {
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime2({
 					context: getMockContext({ logger }) as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
+					oldestSupportedClient: "2.0.0-defaults",
 					runtimeOptions: {
 						summaryOptions: { initialSummarizerDelayMs: 1 },
 						gcOptions: { enableGCSweep: true },
@@ -4549,7 +4614,7 @@ describe("Runtime", () => {
 						eventName: "ContainerRuntime:ContainerLoadStats",
 						category: "generic",
 						options: JSON.stringify(expectedRuntimeOptions),
-						minVersionForCollab: defaultMinVersionForCollab,
+						minVersionForCollab: "2.0.0-defaults",
 					},
 				]);
 			});
@@ -4584,6 +4649,7 @@ describe("Runtime", () => {
 						context: getMockContext({ logger }) as IContainerContext,
 						registry: new FluidDataStoreRegistry([]),
 						existing: false,
+						oldestSupportedClient: "2.0.0-defaults",
 						runtimeOptions,
 						provideEntryPoint: mockProvideEntryPoint,
 					});
@@ -4611,7 +4677,7 @@ describe("Runtime", () => {
 							eventName: "ContainerRuntime:ContainerLoadStats",
 							category: "generic",
 							options: JSON.stringify(expectedRuntimeOptions),
-							minVersionForCollab: defaultMinVersionForCollab,
+							minVersionForCollab: "2.0.0-defaults",
 						},
 					]);
 				});
@@ -4688,15 +4754,13 @@ describe("Runtime", () => {
 					});
 				});
 			}
-			it("does not throw if minVersionForCollab is not set and the default is incompatible with runtimeOptions", async () => {
-				const logger = new MockLogger();
-				await assert.doesNotReject(async () => {
+			it("throws if oldestSupportedClient is incompatible with runtimeOptions", async () => {
+				await assert.rejects(async () => {
 					await ContainerRuntime.loadRuntime2({
-						context: getMockContext({ logger }) as IContainerContext,
+						context: getMockContext() as IContainerContext,
 						registry: new FluidDataStoreRegistry([]),
 						existing: false,
-						// We would normally throw (since `createBlobPayloadPending` requires 2.40), but since we did
-						// not explicity set minVersionForCollab, we allow it.
+						oldestSupportedClient: "2.0.0",
 						runtimeOptions: { createBlobPayloadPending: true, explicitSchemaControl: true },
 						provideEntryPoint: mockProvideEntryPoint,
 					});
@@ -4712,6 +4776,7 @@ describe("Runtime", () => {
 					context: getMockContext() as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
+					oldestSupportedClient: "2.0.0-defaults",
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
@@ -4779,6 +4844,7 @@ describe("Runtime", () => {
 					context: mockContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
+					oldestSupportedClient: "2.0.0-defaults",
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
@@ -4798,6 +4864,7 @@ describe("Runtime", () => {
 					context: mockContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
+					oldestSupportedClient: "2.0.0-defaults",
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
@@ -5067,6 +5134,7 @@ describe("Runtime", () => {
 						context: mockContext as IContainerContext,
 						registry: new FluidDataStoreRegistry([]),
 						existing: false,
+						oldestSupportedClient: "2.0.0-defaults",
 						runtimeOptions: {
 							stagingModeAutoFlushThreshold: threshold,
 							// Disable grouped batching so each op is individually submitted to the wire,
@@ -5130,6 +5198,7 @@ describe("Runtime", () => {
 						context: mockContext as IContainerContext,
 						registry: new FluidDataStoreRegistry([]),
 						existing: false,
+						oldestSupportedClient: "2.0.0-defaults",
 						runtimeOptions: {
 							stagingModeAutoFlushThreshold: threshold,
 							enableGroupedBatching: false,
@@ -5268,6 +5337,7 @@ describe("Runtime", () => {
 						context: mockContext as IContainerContext,
 						registry: new FluidDataStoreRegistry([]),
 						existing: false,
+						oldestSupportedClient: "2.0.0-defaults",
 						runtimeOptions: {},
 						provideEntryPoint: mockProvideEntryPoint,
 					});
@@ -5359,6 +5429,7 @@ describe("Runtime", () => {
 						context: mockContext as IContainerContext,
 						registry: new FluidDataStoreRegistry([]),
 						existing: false,
+						oldestSupportedClient: "2.0.0-defaults",
 						runtimeOptions: {
 							stagingModeAutoFlushThreshold: runtimeOptionThreshold,
 							enableGroupedBatching: false,
@@ -5438,6 +5509,7 @@ describe("Runtime", () => {
 						context: mockContext as IContainerContext,
 						registry: new FluidDataStoreRegistry([]),
 						existing: false,
+						oldestSupportedClient: "2.0.0-defaults",
 						runtimeOptions: {
 							stagingModeAutoFlushThreshold: Infinity,
 							enableRuntimeIdCompressor: "on",
@@ -5491,6 +5563,7 @@ describe("Runtime", () => {
 					context,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
+					oldestSupportedClient: "2.0.0-defaults",
 					runtimeOptions: {
 						enableGroupedBatching: false,
 					},
@@ -5529,6 +5602,7 @@ describe("Runtime", () => {
 					context,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
+					oldestSupportedClient: "2.0.0-defaults",
 					runtimeOptions: {
 						enableGroupedBatching: false,
 					},
@@ -5571,6 +5645,7 @@ describe("Runtime", () => {
 					context,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
+					oldestSupportedClient: "2.0.0-defaults",
 					runtimeOptions: {
 						enableGroupedBatching: false,
 					},
@@ -5708,6 +5783,7 @@ describe("Runtime", () => {
 						context,
 						registry: new FluidDataStoreRegistry([]),
 						existing: false,
+						oldestSupportedClient: "2.0.0-defaults",
 						runtimeOptions: {},
 						provideEntryPoint: mockProvideEntryPoint,
 					});
@@ -5755,6 +5831,7 @@ describe("Runtime", () => {
 						context,
 						registry: new FluidDataStoreRegistry([]),
 						existing: false,
+						oldestSupportedClient: "2.0.0-defaults",
 						runtimeOptions: {},
 						provideEntryPoint: mockProvideEntryPoint,
 					});
@@ -5971,6 +6048,7 @@ describe("Runtime", () => {
 						context,
 						registry: new FluidDataStoreRegistry([]),
 						existing: false,
+						oldestSupportedClient: "2.0.0-defaults",
 						runtimeOptions: {},
 						provideEntryPoint: mockProvideEntryPoint,
 					});

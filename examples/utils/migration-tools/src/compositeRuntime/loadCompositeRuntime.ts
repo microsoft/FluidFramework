@@ -16,6 +16,7 @@ import type { FluidObject } from "@fluidframework/core-interfaces";
 import type {
 	NamedFluidDataStoreRegistryEntries,
 	NamedFluidDataStoreRegistryEntry2,
+	OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/legacy";
 
 import type { IEntryPointPiece } from "./interfaces.js";
@@ -90,6 +91,7 @@ export const loadCompositeRuntime = async (
 	context: IContainerContext,
 	existing: boolean,
 	compositeEntryPoint: CompositeEntryPoint,
+	oldestSupportedClient: OldestSupportedClientVersion,
 	runtimeOptions?: IContainerRuntimeOptions,
 ): Promise<IContainerRuntime & IRuntime> => {
 	const runtime = await loadContainerRuntime({
@@ -98,6 +100,7 @@ export const loadCompositeRuntime = async (
 		provideEntryPoint: compositeEntryPoint.provideEntryPoint,
 		runtimeOptions,
 		existing,
+		oldestSupportedClient,
 	});
 
 	if (!existing) {

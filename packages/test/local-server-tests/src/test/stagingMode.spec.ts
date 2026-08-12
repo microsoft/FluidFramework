@@ -143,6 +143,7 @@ const runtimeFactory: IRuntimeFactory = {
 		return loadContainerRuntime({
 			context,
 			existing,
+			oldestSupportedClient: "2.0.0-defaults",
 			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
 			runtimeOptions,
 			provideEntryPoint: async (rt) => {

@@ -70,6 +70,7 @@ export class ReplayRuntimeFactory extends RuntimeFactoryHelper {
 			existing,
 			runtimeOptions: this.runtimeOptions,
 			registry: new FluidDataStoreRegistry(this.registries),
+			oldestSupportedClient: "2.0.0",
 		});
 	}
 }

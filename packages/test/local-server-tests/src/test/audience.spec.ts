@@ -38,6 +38,7 @@ describe("Audience correctness", () => {
 
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: factory,
+		oldestSupportedClient: "2.0.0-defaults",
 		registryEntries: [[factory.type, Promise.resolve(factory)]],
 	});
 

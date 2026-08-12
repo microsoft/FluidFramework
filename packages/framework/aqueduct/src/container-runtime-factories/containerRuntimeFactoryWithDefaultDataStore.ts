@@ -3,23 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import type {
 	IContainerRuntime,
 	// eslint-disable-next-line import-x/no-deprecated
 	IContainerRuntimeWithResolveHandle_Deprecated,
 } from "@fluidframework/container-runtime-definitions/internal";
 import type { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
-// eslint-disable-next-line import-x/no-deprecated
-import type { RuntimeRequestHandler } from "@fluidframework/request-handler/internal";
 import type {
 	IFluidDataStoreFactory,
-	NamedFluidDataStoreRegistryEntries,
+	OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
 import { RequestParser } from "@fluidframework/runtime-utils/internal";
-import type { IFluidDependencySynthesizer } from "@fluidframework/synthesize/internal";
 
-import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory.js";
+import {
+	BaseContainerRuntimeFactory,
+	type BaseContainerRuntimeFactoryProps,
+} from "./baseContainerRuntimeFactory.js";
 
 const defaultDataStoreId = "default";
 
@@ -36,32 +35,37 @@ async function getDefaultFluidObject(runtime: IContainerRuntime): Promise<FluidO
  * @legacy
  * @beta
  */
-export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
+export type ContainerRuntimeFactoryWithDefaultDataStoreProps = Omit<
+	BaseContainerRuntimeFactoryProps,
+	"minVersionForCollab" | "oldestSupportedClient" | "provideEntryPoint"
+> & {
 	defaultFactory: IFluidDataStoreFactory;
-	/**
-	 * The data store registry for containers produced.
-	 */
-	registryEntries: NamedFluidDataStoreRegistryEntries;
-	/**
-	 * @deprecated Will be removed in a future release.
-	 */
-	dependencyContainer?: IFluidDependencySynthesizer;
-	/**
-	 * Request handlers for containers produced.
-	 * @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	// eslint-disable-next-line import-x/no-deprecated
-	requestHandlers?: RuntimeRequestHandler[];
-	/**
-	 * The runtime options passed to the IContainerRuntime when instantiating it
-	 */
-	runtimeOptions?: IContainerRuntimeOptions;
 	/**
 	 * Function that will initialize the entryPoint of the IContainerRuntime instances
 	 * created with this factory
 	 */
 	provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
-}
+} & (
+		| {
+				/**
+				 * Oldest version of Fluid Framework client that must be able to open and process
+				 * documents written by this container runtime.
+				 */
+				oldestSupportedClient: OldestSupportedClientVersion;
+				minVersionForCollab?: never;
+		  }
+		| {
+				oldestSupportedClient?: never;
+				/**
+				 * Oldest version of Fluid Framework client that must be able to open and process
+				 * documents written by this container runtime.
+				 *
+				 * @deprecated 2.116.0. To be removed in 3.10.0. Use `oldestSupportedClient` instead.
+				 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
+				 */
+				minVersionForCollab: OldestSupportedClientVersion;
+		  }
+	);
 
 /**
  * A ContainerRuntimeFactory that initializes Containers with a single default data store, which can be requested from

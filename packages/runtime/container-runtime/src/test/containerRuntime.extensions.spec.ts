@@ -191,6 +191,7 @@ async function createRuntimeWithMockContext(isReadonly: boolean = false): Promis
 		context,
 		registry: new FluidDataStoreRegistry([]),
 		existing: false,
+		oldestSupportedClient: "2.0.0-defaults",
 		provideEntryPoint: async () => ({}),
 	});
 	return { runtime, context };
@@ -208,6 +209,7 @@ async function createRuntimeWithoutConnectionState(isReadonly: boolean = false):
 		context,
 		registry: new FluidDataStoreRegistry([]),
 		existing: false,
+		oldestSupportedClient: "2.0.0-defaults",
 		provideEntryPoint: async () => ({}),
 	});
 	return { runtime, context };

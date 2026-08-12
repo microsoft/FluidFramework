@@ -120,7 +120,7 @@ export function createBasicRegistryKey<T>(type: string): RegistryKey<T, T> {
  * Oldest Fluid Framework client version that must be able to open and process documents written
  * by a service client.
  * @remarks
- * A string in SemVer format indicating a specific version of the Fluid Framework client package, or the special case of {@link @fluidframework/runtime-utils#defaultMinVersionForCollab}.
+ * A string in SemVer format indicating a specific version of the Fluid Framework client package.
  *
  * Service clients use this value to select write formats and features. Clients using this version
  * or newer must be able to open and process documents written by the service client. Choosing an

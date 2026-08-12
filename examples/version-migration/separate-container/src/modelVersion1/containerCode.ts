@@ -76,6 +76,12 @@ export class InventoryListContainerRuntimeFactory implements IRuntimeFactory {
 		compositeEntryPoint.addEntryPointPiece(modelEntryPointPiece);
 		const migratorEntryPointPiece = makeMigratorEntryPointPiece(exportDataCallback);
 		compositeEntryPoint.addEntryPointPiece(migratorEntryPointPiece);
-		return loadCompositeRuntime(context, existing, compositeEntryPoint, this.runtimeOptions);
+		return loadCompositeRuntime(
+			context,
+			existing,
+			compositeEntryPoint,
+			"2.0.0",
+			this.runtimeOptions,
+		);
 	}
 }

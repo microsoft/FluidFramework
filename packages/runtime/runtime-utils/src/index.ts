@@ -64,7 +64,6 @@ export {
 } from "./deltaManager.js";
 export {
 	configValueToMinVersionForCollab,
-	defaultMinVersionForCollab,
 	validateConfigMapOverrides,
 	getConfigForMinVersionForCollab,
 	getConfigsForMinVersionForCollab,

@@ -42,6 +42,7 @@ class ProseMirrorRuntimeFactory extends RuntimeFactoryHelper {
 			context,
 			registryEntries,
 			existing,
+			oldestSupportedClient: "2.0.0",
 			containerScope: context.scope,
 			provideEntryPoint: async (
 				containerRuntime: IContainerRuntime,

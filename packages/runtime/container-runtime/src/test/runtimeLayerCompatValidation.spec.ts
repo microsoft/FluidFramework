@@ -124,6 +124,7 @@ async function createAndLoadRuntime(
 		context: mockContext as IContainerContext,
 		registry: new FluidDataStoreRegistry([]),
 		existing: false,
+		oldestSupportedClient: "2.0.0",
 		provideEntryPoint: async () => ({
 			myProp: "myValue",
 		}),

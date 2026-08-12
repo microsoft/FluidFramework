@@ -74,6 +74,7 @@ describe("Logging Last Connection Mode ", () => {
 
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory,
+			oldestSupportedClient: "2.0.0-defaults",
 			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
 		});
 

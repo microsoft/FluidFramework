@@ -57,6 +57,7 @@ export abstract class ModelContainerRuntimeFactory<ModelType> implements IRuntim
 			}),
 			runtimeOptions: this.runtimeOptions,
 			existing,
+			oldestSupportedClient: "2.0.0",
 		});
 
 		if (!existing) {
