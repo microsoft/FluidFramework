@@ -22,8 +22,10 @@ import { promisify } from "node:util";
  * ESM-only: its CommonJS `exports` condition resolves to a stub that does not include
  * `PackageJson`, and this file is also compiled as CommonJS.
  *
- * TODO: AB#80348: once this test no longer has a CommonJS compilation, remove this interface and
- * restore `import type { PackageJson } from "@fluidframework/build-tools"`.
+ * TODO: AB#80348: once this test's CommonJS compilation is able to import ESM, remove this
+ * interface and restore `import type { PackageJson } from "@fluidframework/build-tools"`. That
+ * requires both a `module-sync` export condition in build-tools and a TypeScript upgrade:
+ * 5.4.5 fails under `node16` and `nodenext` alike, while 5.9 resolves it under `nodenext`.
  */
 interface PackageJsonDevDependencies {
 	readonly devDependencies: Readonly<Record<string, string>>;
