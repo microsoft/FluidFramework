@@ -234,6 +234,7 @@ export interface TreeIdentifierUtils {
 export interface TreeAlpha {
 	/**
 	 * {@inheritDoc (TreeBeta:interface).on}
+	 * @deprecated Use {@link (TreeBeta:interface).on} instead.
 	 */
 	on<K extends keyof TreeChangeEventsAlpha<TNode>, TNode extends TreeNode>(
 		node: TNode,

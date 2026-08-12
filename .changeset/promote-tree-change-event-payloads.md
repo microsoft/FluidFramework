@@ -11,7 +11,7 @@ The [`treeChanged`](https://fluidframework.com/docs/api/tree/treechangeevents-in
 For object nodes, `nodeChanged` identifies directly changed fields through [`changedProperties`](https://fluidframework.com/docs/api/tree/nodechangeddata-interface#changedproperties-propertysignature).
 
 The corresponding payload and operation types are now exported from the beta entrypoint.
-Existing [`TreeAlpha.on`](https://fluidframework.com/docs/api/tree/treealpha-interface#on-methodsignature) usage remains supported.
+Existing [`TreeAlpha.on`](https://fluidframework.com/docs/api/tree/treealpha-interface#on-methodsignature) usage remains, but is now deprecated in favor of the `TreeBeta` API.
 
 #### Examples
 
