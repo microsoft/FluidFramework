@@ -1682,6 +1682,8 @@ export function updateRefreshers(
 		maxId,
 		revisions,
 		constraintViolationCount,
+		noChangeConstraint,
+		noChangeConstraintOnRevert,
 		builds,
 		destroys,
 	} = change;
@@ -1695,6 +1697,8 @@ export function updateRefreshers(
 		maxId: maxId as number,
 		revisions,
 		constraintViolationCount,
+		noChangeConstraint,
+		noChangeConstraintOnRevert,
 		builds,
 		destroys,
 		refreshers,
