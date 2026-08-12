@@ -409,7 +409,7 @@ export function testForest(config: ForestTestConfiguration): void {
 	/**
 	 * This suite checks that forests assert on invalid deltas.
 	 *
-	 * Generally asserts like this are not part of the contract we would expect form an interface implementation,
+	 * Generally asserts like this are not part of the contract we would expect from an interface implementation,
 	 * but malformed deltas and corrupted forests are difficult to triage and have a high risk for persisted data corruption,
 	 * so we make an exception and ensure the validation is consistent.
 	 *
