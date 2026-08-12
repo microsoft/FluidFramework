@@ -648,14 +648,18 @@ export interface TreeViewAlpha<
 	/**
 	 * Checks whether a staged schema upgrade has been applied to the document's stored schema.
 	 *
+	 * @param upgrade - The upgrade token to check.
+	 *
 	 * @returns The enablement status of the upgrade:
 	 * - `"disabled"` — no locations guarded by the upgrade are enabled.
 	 * - `"partial"` — at least one location is enabled but not all of them.
 	 * - `"enabled"` — all locations guarded by the upgrade are enabled.
 	 *
 	 * @remarks
-	 * This API is used for rollout safety checks.
-	 * It derives results from this view schema and the current stored schema.
+	 * Use this to determine whether a document has already been upgraded, for example when deciding
+	 * whether to include an upgrade token in the view configuration after a feature flag rollback.
+	 *
+	 * Results are derived from this view's schema and the current stored schema.
 	 * When the view is not compatible with the stored schema (i.e. `compatibility.canView` is
 	 * false), the result may be incomplete because the schema walk is interrupted early.
 	 */

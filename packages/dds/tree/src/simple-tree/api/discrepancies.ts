@@ -51,7 +51,7 @@ import { tryStoredSchemaAsArray } from "./customTree.js";
 
 /**
  * Collects upgrade location data during a schema walk.
- * Called for each staged type or staged optional field encountered.
+ * @remarks Called for each staged type or staged optional field encountered.
  */
 export interface UpgradeLocationCollector {
 	/**
