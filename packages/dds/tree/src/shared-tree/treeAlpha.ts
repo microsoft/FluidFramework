@@ -240,12 +240,7 @@ export interface TreeAlpha {
 	 * @returns A callback function which will deregister the event.
 	 * This callback should be called only once.
 	 * @remarks
-	 * Provides richer events than {@link (TreeBeta:interface).on} for array nodes:
-	 * - `nodeChanged` includes a {@link NodeChangedDataDelta.delta | delta} payload for direct
-	 * changes (insert, remove, move).
-	 * - `treeChanged` also includes a {@link NodeChangedDataDelta.delta | delta} payload and fires
-	 * for both shallow changes and deep changes (e.g. a property of an element changed without
-	 * any direct array change).
+	 * This event API is also available from {@link (TreeBeta:interface).on}.
 	 */
 	on<K extends keyof TreeChangeEventsAlpha<TNode>, TNode extends TreeNode>(
 		node: TNode,

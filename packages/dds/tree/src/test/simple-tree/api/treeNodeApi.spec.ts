@@ -2652,13 +2652,13 @@ describe("treeNodeApi", () => {
 			// @ts-expect-error Check map is included
 			TreeBeta.on(oneOf(ab, map1), "nodeChanged", out<"A" | "B">);
 
-			// Array nodes: TreeBeta.on gives the changedProperties-only type (delta not included)
-			// @ts-expect-error changedProperties is required for typed array node via TreeBeta
+			// Array nodes provide delta payloads instead of changedProperties.
+			// @ts-expect-error Array node payloads do not include changedProperties.
 			TreeBeta.on(array, "nodeChanged", out<string>);
+			// Existing callbacks using the optional beta property remain compatible.
 			TreeBeta.on(array, "nodeChanged", outOpt<string>);
-
-			// Use TreeAlpha.on to get the full delta-aware NodeChangedDataDelta for array nodes
-			TreeAlpha.on(array, "nodeChanged", outDelta);
+			TreeBeta.on(array, "nodeChanged", outDelta);
+			TreeBeta.on(array, "treeChanged", outDelta);
 		});
 
 		it(`'nodeChanged' strong typing example`, () => {
@@ -2865,7 +2865,7 @@ describe("treeNodeApi", () => {
 				const root = view.root;
 
 				const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-				TreeAlpha.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
+				TreeBeta.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
 
 				root.insertAtEnd(4);
 
@@ -3029,8 +3029,8 @@ describe("treeNodeApi", () => {
 				});
 			});
 
-			describe(`'treeChanged' alpha delta payload for array nodes`, () => {
-				// TreeAlpha.on(array, "treeChanged") fires for both shallow changes
+			describe(`'treeChanged' delta payload for array nodes`, () => {
+				// The detailed treeChanged event fires for both shallow changes
 				// (insert/remove/move) and deep changes (a property of an element changed
 				// without any shallow array change). The delta uses subtreeChanged: true to
 				// flag elements with deep changes.
@@ -3045,8 +3045,8 @@ describe("treeNodeApi", () => {
 
 					const nodeChangedFired: unknown[] = [];
 					const treeChangedDeltas: (readonly ArrayNodeTreeChangedDeltaOp[] | undefined)[] = [];
-					TreeAlpha.on(root, "nodeChanged", (data) => nodeChangedFired.push(data));
-					TreeAlpha.on(root, "treeChanged", ({ delta }) => treeChangedDeltas.push(delta));
+					TreeBeta.on(root, "nodeChanged", (data) => nodeChangedFired.push(data));
+					TreeBeta.on(root, "treeChanged", ({ delta }) => treeChangedDeltas.push(delta));
 
 					// Modify a deep property — no shallow change on the array.
 					root[0].v = 99;
@@ -3231,8 +3231,8 @@ describe("treeNodeApi", () => {
 
 						const treeChangedDeltas: (readonly ArrayNodeTreeChangedDeltaOp[] | undefined)[] =
 							[];
-						TreeAlpha.on(root, "nodeChanged", (data) => nodeChangedFired.push(data));
-						TreeAlpha.on(root, "treeChanged", ({ delta }) => treeChangedDeltas.push(delta));
+						TreeBeta.on(root, "nodeChanged", (data) => nodeChangedFired.push(data));
+						TreeBeta.on(root, "treeChanged", ({ delta }) => treeChangedDeltas.push(delta));
 
 						root[0].v = 99;
 

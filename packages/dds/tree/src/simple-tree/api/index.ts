@@ -151,6 +151,9 @@ export {
 	exportConcise,
 	importConcise,
 	type NodeChangedData,
+	type NodeChangedDataDelta,
+	type NodeChangedDataProperties,
+	type NodeChangedDataTreeDelta,
 	TreeBeta,
 	type TreeChangeEventsBeta,
 } from "./treeBeta.js";
@@ -162,9 +165,6 @@ export {
 	type ArrayNodeTreeChangedDeltaOp,
 	type ArrayNodeTreeChangedRetainOp,
 	type NodeChangedDataAlpha,
-	type NodeChangedDataDelta,
-	type NodeChangedDataProperties,
-	type NodeChangedDataTreeDelta,
 	type TreeChangeEventsAlpha,
 } from "./treeAlpha.js";
 export { createTreeIndex, type TreeIndexKey } from "./simpleTreeIndex.js";

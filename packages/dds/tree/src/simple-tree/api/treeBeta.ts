@@ -40,7 +40,11 @@ import type { TreeEncodingOptions } from "./customTree.js";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used by docs
 import type { ObjectSchemaOptions } from "./schemaFactory.js";
 import type { TreeChangeEvents } from "./treeChangeEvents.js";
-import { treeNodeApi } from "./treeNodeApi.js";
+import {
+	treeNodeApi,
+	type ArrayNodeDeltaOp,
+	type ArrayNodeTreeChangedDeltaOp,
+} from "./treeNodeApi.js";
 import { cursorFromVerbose } from "./verboseTree.js";
 
 // Tests for this file are grouped with those for treeNodeApi.ts as that is where this functionality will eventually land,
@@ -52,20 +56,84 @@ import { cursorFromVerbose } from "./verboseTree.js";
  */
 export interface NodeChangedData<TNode extends TreeNode = TreeNode> {
 	/**
-	 * When the node changed is an object or Map node, this lists all the properties which changed.
+	 * When the changed node is an object, map, or record node, this lists all the properties which changed.
 	 * @remarks
 	 * This only includes changes to the node itself (which would trigger {@link TreeChangeEvents.nodeChanged}).
 	 *
-	 * Not present when the {@link NodeKind} does not support this feature (currently just ArrayNodes).
+	 * Not present when the {@link NodeKind} does not support this feature (currently just array nodes).
 	 *
 	 * When defined, the set should never be empty, since `nodeChanged` will only be triggered when there is a change, and for the supported node types, the only things that can change are properties.
 	 */
 	readonly changedProperties?: ReadonlySet<
-		// For Object nodes, make changedProperties required and strongly typed with the property names from the schema:
+		// For Object nodes, strongly type with the property names from the schema:
 		TNode extends WithType<string, NodeKind.Object, infer TInfo>
 			? string & keyof TInfo
 			: string
 	>;
+
+	/**
+	 * When the changed node is an array node, the sequential operations describing what changed.
+	 * @remarks
+	 * Not present for non-array nodes. When present, the value may be `undefined` when the
+	 * document was updated in a way that required multiple internal change passes in a single
+	 * operation (for example, a data change combined with a schema upgrade).
+	 */
+	readonly delta?: readonly ArrayNodeDeltaOp[] | undefined;
+}
+
+/**
+ * Data included for {@link TreeChangeEventsBeta.nodeChanged} when the node is an object, map, or record node.
+ * @sealed @beta
+ */
+export interface NodeChangedDataProperties<TNode extends TreeNode = TreeNode>
+	extends NodeChangedData<TNode> {
+	/**
+	 * Lists all the properties which changed on the node.
+	 */
+	readonly changedProperties: ReadonlySet<
+		TNode extends WithType<string, NodeKind.Object, infer TInfo>
+			? string & keyof TInfo
+			: string
+	>;
+}
+
+/**
+ * Data carried by the {@link TreeChangeEventsBeta.nodeChanged} event for array nodes.
+ * @sealed @beta
+ */
+export interface NodeChangedDataDelta extends NodeChangedData {
+	/**
+	 * The sequential operations describing what changed in the array node.
+	 * @remarks
+	 * The value may be `undefined` when the document was updated in a way that required multiple
+	 * internal change passes in a single operation (for example, a data change combined with a
+	 * schema upgrade).
+	 *
+	 * See {@link ArrayNodeDeltaOp} for op semantics.
+	 */
+	readonly delta: readonly ArrayNodeDeltaOp[] | undefined;
+}
+
+/**
+ * Data carried by the {@link TreeChangeEventsBeta.treeChanged} event for array nodes.
+ * @remarks
+ * Extends {@link NodeChangedDataDelta}: the retain ops in the delta additionally carry a
+ * {@link ArrayNodeTreeChangedRetainOp.subtreeChanged} flag indicating whether any descendant
+ * of the retained element changed.
+ * @sealed @beta
+ */
+export interface NodeChangedDataTreeDelta {
+	/**
+	 * The sequential operations describing what changed in the array node,
+	 * including subtree-change information on retain ops.
+	 * @remarks
+	 * The value may be `undefined` when the document was updated in a way that required multiple
+	 * internal change passes in a single operation (for example, a data change combined with a
+	 * schema upgrade).
+	 *
+	 * See {@link ArrayNodeTreeChangedDeltaOp} for op semantics.
+	 */
+	readonly delta: readonly ArrayNodeTreeChangedDeltaOp[] | undefined;
 }
 
 /**
@@ -110,12 +178,29 @@ export interface TreeChangeEventsBeta<TNode extends TreeNode = TreeNode>
 	 * This defines a property which is a function instead of using the method syntax to avoid function bi-variance issues with the input data to the callback.
 	 */
 	nodeChanged: (
-		data: NodeChangedData<TNode> &
-			// Make the properties of object, map, and record nodes required:
-			(TNode extends WithType<string, NodeKind.Map | NodeKind.Object | NodeKind.Record>
-				? Required<Pick<NodeChangedData<TNode>, "changedProperties">>
-				: unknown),
+		data: TNode extends WithType<string, NodeKind.Array>
+			? NodeChangedDataDelta
+			: TNode extends WithType<string, NodeKind.Map | NodeKind.Object | NodeKind.Record>
+				? NodeChangedDataProperties<TNode>
+				: NodeChangedData<TNode>,
 	) => void;
+
+	/**
+	 * Emitted when something in the subtree rooted at this node changes.
+	 *
+	 * @remarks
+	 * For array nodes, the event data carries a {@link NodeChangedDataTreeDelta.delta | delta}
+	 * payload describing both shallow and deep changes. Retain operations use
+	 * {@link ArrayNodeTreeChangedRetainOp.subtreeChanged} to indicate whether an element's
+	 * descendants changed.
+	 *
+	 * For non-array nodes, this has the same signature as {@link TreeChangeEvents.treeChanged}.
+	 * @privateRemarks
+	 * This defines a property which is a function instead of using the method syntax to avoid function bi-variance issues with the input data to the callback.
+	 */
+	treeChanged: TNode extends WithType<string, NodeKind.Array>
+		? (data: NodeChangedDataTreeDelta) => void
+		: TreeChangeEvents["treeChanged"];
 }
 
 /**

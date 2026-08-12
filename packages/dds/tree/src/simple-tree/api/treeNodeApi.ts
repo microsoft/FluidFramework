@@ -43,7 +43,7 @@ import type { TreeChangeEvents } from "./treeChangeEvents.js";
 /**
  * A `"retain"` op in an {@link ArrayNodeDeltaOp} sequence.
  * Represents elements that were neither inserted into nor removed from the array.
- * @sealed @alpha
+ * @sealed @beta
  */
 export interface ArrayNodeRetainOp {
 	readonly type: "retain";
@@ -53,11 +53,11 @@ export interface ArrayNodeRetainOp {
 /**
  * A `"retain"` op in an {@link ArrayNodeTreeChangedDeltaOp} sequence, used in
  * {@link NodeChangedDataTreeDelta} payloads delivered to
- * {@link TreeChangeEventsAlpha.treeChanged} on array nodes.
+ * {@link TreeChangeEventsBeta.treeChanged} on array nodes.
  *
  * Extends {@link ArrayNodeRetainOp} with a {@link ArrayNodeTreeChangedRetainOp.subtreeChanged}
  * flag that indicates whether any descendant of the retained element changed.
- * @sealed @alpha
+ * @sealed @beta
  */
 export interface ArrayNodeTreeChangedRetainOp extends ArrayNodeRetainOp {
 	/**
@@ -70,10 +70,10 @@ export interface ArrayNodeTreeChangedRetainOp extends ArrayNodeRetainOp {
 }
 
 /**
- * A single operation in an array-node delta delivered by {@link TreeChangeEventsAlpha.treeChanged}.
+ * A single operation in an array-node delta delivered by {@link TreeChangeEventsBeta.treeChanged}.
  * Extends {@link ArrayNodeDeltaOp}: retain ops carry a {@link ArrayNodeTreeChangedRetainOp.subtreeChanged}
  * flag indicating whether any descendant of the retained element changed.
- * @alpha
+ * @beta
  */
 export type ArrayNodeTreeChangedDeltaOp =
 	| ArrayNodeTreeChangedRetainOp
@@ -84,7 +84,7 @@ export type ArrayNodeTreeChangedDeltaOp =
  * An `"insert"` op in an {@link ArrayNodeDeltaOp} sequence.
  * Represents elements added to the array.
  * Read the new element values from the current tree at the positions described by this op.
- * @sealed @alpha
+ * @sealed @beta
  */
 export interface ArrayNodeInsertOp {
 	readonly type: "insert";
@@ -94,7 +94,7 @@ export interface ArrayNodeInsertOp {
 /**
  * A `"remove"` op in an {@link ArrayNodeDeltaOp} sequence.
  * Represents elements removed from the array.
- * @sealed @alpha
+ * @sealed @beta
  */
 export interface ArrayNodeRemoveOp {
 	readonly type: "remove";
@@ -120,7 +120,7 @@ export interface ArrayNodeRemoveOp {
  * in a final `"retain"` op. Applying every operation therefore consumes the entire pre-edit array
  * and produces the entire post-edit array.
  *
- * @sealed @alpha
+ * @sealed @beta
  */
 export type ArrayNodeDeltaOp = ArrayNodeRetainOp | ArrayNodeInsertOp | ArrayNodeRemoveOp;
 
@@ -284,7 +284,7 @@ export const treeNodeApi: TreeNodeApi = {
 						const marks = fieldMarks.get(EmptyKey);
 						// nodeChanged fires only for shallow changes (insert, remove, move).
 						// Deep changes (e.g. a property of an element changed) are
-						// surfaced via TreeChangeEventsAlpha.treeChanged with a delta payload instead.
+						// surfaced via TreeChangeEventsBeta.treeChanged with a delta payload instead.
 						// When marks are undefined (marks could not be composed across multiple
 						// internal passes), we conservatively fire nodeChanged rather than silently
 						// dropping the event, even though the underlying change may have been
