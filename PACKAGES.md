@@ -111,7 +111,7 @@ The dependencies between layers are enforced by the layer-check command._
 
 | Packages | Layer Dependencies |
 | --- | --- |
-| - [@fluidframework/build-common](/common/build/build-common)</br>- [@fluidframework/eslint-config-fluid](/common/build/eslint-config-fluid)</br>- [@fluid-internal/eslint-plugin-fluid](/common/build/eslint-plugin-fluid)</br>- [@fluid-tools/benchmark](/tools/benchmark) | &nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp; |
+| - [@fluidframework/build-common](/common/build/build-common)</br>- [@fluidframework/eslint-config-fluid](/common/build/eslint-config-fluid)</br>- [@fluid-tools/benchmark](/tools/benchmark) | &nbsp;</br>&nbsp;</br>&nbsp; |
 
 ### AzureClient
 
@@ -214,4 +214,3 @@ The dependencies between layers are enforced by the layer-check command._
 | Packages | Layer Dependencies |
 | --- | --- |
 | - [@fluidframework/server-routerlicious](/server/routerlicious/packages/routerlicious)</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp; | - [Common-Definitions](#Common-Definitions)</br>- [Protocol-Definitions](#Protocol-Definitions)</br>- [Common-Utils](#Common-Utils)</br>- [Server-Shared-Utils](#Server-Shared-Utils)</br>- [Server-Libs](#Server-Libs) |
-

@@ -14,7 +14,7 @@ const path = require("node:path");
 const eslintPackage = process.env.ESLINT_PACKAGE || "eslint";
 const eslintVersion = parseInt(require(`${eslintPackage}/package.json`).version.split(".")[0]);
 const { ESLint } = require(eslintPackage);
-const plugin = require("../../index.js");
+const plugin = require("../../../fluidPlugin.cjs");
 
 /**
  * Creates ESLint options object compatible with both ESLint 8 and 9.

@@ -1,6 +1,8 @@
 # @fluidframework/eslint-config-fluid
 
 This package contains a shared ESLint config used by all the packages in the Fluid Framework repo.
+It also contains the custom Fluid ESLint rules, registered under the existing
+`@fluid-internal/fluid` plugin namespace.
 
 ## Requirements
 
@@ -48,6 +50,8 @@ The flat config is organized into a modular structure for maintainability:
 
 ```
 eslint-config-fluid/
+├── fluidPlugin.cjs              # Custom Fluid plugin registration
+├── rules/                       # Custom Fluid rule implementations
 ├── flat.mts                    # Main entry point (~30 lines)
 ├── library/
 │   ├── constants.mts           # Shared constants (ignores, file patterns, import restrictions)
@@ -61,6 +65,17 @@ eslint-config-fluid/
 │       ├── overrides.mts       # Shared overrides (test files, React, JS files)
 │       └── factory.mts         # Config factory functions
 ```
+
+### Custom Fluid Rules
+
+The shared configs register these rules under `@fluid-internal/fluid`:
+
+- `no-file-path-links-in-jsdoc`
+- `no-hyphen-after-jsdoc-tag`
+- `no-markdown-links-in-jsdoc`
+- `no-member-release-tags`
+- `no-restricted-tags-imports`
+- `no-unchecked-record-access`
 
 This structure ensures:
 
