@@ -134,6 +134,7 @@ a diff to review as part of a PR -- just like we do with API reports for code ch
 | `build:readme:disabled` | `markdown-magic --files "**/*.md"` |
 | `clean` | `rimraf --glob dist "**/*.build.log"` |
 | `format` | `npm run prettier:fix` |
+| `install-no-frozen` | `pnpm --config.minimum-release-age=10080 i --no-frozen-lockfile` |
 | `prettier` | `prettier --check .` |
 | `prettier:fix` | `prettier --write .` |
 | `print-configs` | `tsx scripts/print-configs.ts printed-configs` |

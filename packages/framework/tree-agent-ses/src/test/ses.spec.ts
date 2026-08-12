@@ -10,7 +10,7 @@ import {
 	TreeViewConfiguration,
 	independentView,
 } from "@fluidframework/tree/alpha";
-import { SharedTreeSemanticAgent } from "@fluidframework/tree-agent/alpha";
+import { executeSemanticEditing } from "@fluidframework/tree-agent/alpha";
 import type { SharedTreeChatModel } from "@fluidframework/tree-agent/alpha";
 
 import { createSesEditExecutor } from "../executor.js";
@@ -47,15 +47,20 @@ describe.skip("SES edit executor", () => {
 		});
 		const model: SharedTreeChatModel = {
 			editToolName: "EditTreeTool",
-			async query({ edit }) {
-				const editResult = await edit("context.root = extraGlobal");
-				assert.equal(editResult.type, "success", editResult.message);
-				return editResult.message;
+			async invoke(history) {
+				const lastMessage = history.at(-1);
+				if (lastMessage?.role === "tool_result") {
+					return { role: "assistant", content: lastMessage.content };
+				}
+				return {
+					role: "tool_call",
+					toolName: "EditTreeTool",
+					toolArgs: { code: "context.root = extraGlobal" },
+				};
 			},
 		};
 
-		const agent = new SharedTreeSemanticAgent(model, view, { editor });
-		await agent.query("");
+		await executeSemanticEditing(model, view, "", { editor });
 		assert.equal(view.root, "globalValue");
 	});
 
@@ -65,15 +70,22 @@ describe.skip("SES edit executor", () => {
 		const editor = createSesEditExecutor({ lockdownOptions });
 		const model: SharedTreeChatModel = {
 			editToolName: "EditTreeTool",
-			async query({ edit }) {
-				const editResult = await edit("Object.prototype.polluted = 'hacked!';");
-				assert.equal(editResult.type, "editingError", editResult.message);
-				return editResult.message;
+			async invoke(history) {
+				const lastMessage = history.at(-1);
+				if (lastMessage?.role === "tool_result") {
+					return { role: "assistant", content: lastMessage.content };
+				}
+				return {
+					role: "tool_call",
+					toolName: "EditTreeTool",
+					toolArgs: { code: "Object.prototype.polluted = 'hacked!';" },
+				};
 			},
 		};
 
-		const agent = new SharedTreeSemanticAgent(model, view, { editor });
-		const response = await agent.query("Attempt forbidden edit");
+		const response = await executeSemanticEditing(model, view, "Attempt forbidden edit", {
+			editor,
+		});
 		assert.match(response, /is not extensible/i);
 		assert.equal(view.root, "Initial", "Tree should not change after SES rejection");
 	});

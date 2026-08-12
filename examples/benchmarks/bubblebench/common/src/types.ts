@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { FluidIterable } from "@fluidframework/core-interfaces";
+
 import { normal, randomColor, rnd } from "./rnd.js";
 
 /**
@@ -16,14 +18,20 @@ export interface IBubble {
 	vy: number;
 }
 
+interface ReadonlyBubbleCollection extends FluidIterable<IBubble> {
+	readonly length: number;
+	readonly [index: number]: IBubble;
+	map<U>(callbackfn: (value: IBubble, index: number) => U): U[];
+}
+
 /**
  * @internal
  */
 export interface IClient {
 	readonly clientId: string;
 	readonly color: string;
-	// Mark `IBubble[]` as read-only, as SharedTree ArrayNodes are not compatible with JavaScript arrays for writing purposes.
-	readonly bubbles: readonly IBubble[];
+	// SharedTree ArrayNodes are not compatible with JavaScript arrays for writing purposes.
+	readonly bubbles: ReadonlyBubbleCollection;
 }
 
 /**
@@ -31,7 +39,7 @@ export interface IClient {
  */
 export interface IAppState {
 	readonly localClient: IClient;
-	readonly clients: Iterable<IClient>;
+	readonly clients: FluidIterable<IClient>;
 	readonly width: number;
 	readonly height: number;
 	setSize(width?: number, height?: number);
