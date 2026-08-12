@@ -40,7 +40,7 @@ export async function fluidRunner(fluidFileConverter?: FluidFileConverter): Prom
 					})
 					.option("outputFile", {
 						describe:
-							"Path of output file (cannot already exist).\nExecution result will be written here",
+							"Path of output file or directory (cannot already exist).\nExecution result will be written here",
 						type: "string",
 						demandOption: true,
 					})

@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import * as fs from "fs";
-
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	loadExistingContainer,
@@ -22,7 +20,9 @@ import {
 import type {
 	FluidFileConverter,
 	IFluidFileConverter,
+	IFluidFileConverterDirectoryOutput,
 	IFluidFileConverterWithBinaryOutput,
+	IFluidFileConverterWithDirectoryOutput,
 } from "./codeLoaderBundle.js";
 import { FakeUrlResolver } from "./fakeUrlResolver.js";
 /* eslint-disable import-x/no-internal-modules */
@@ -32,6 +32,7 @@ import {
 	getTelemetryFileValidationError,
 } from "./logger/loggerUtils.js";
 import { getArgsValidationError, getSnapshotFileContent, timeoutPromise } from "./utils.js";
+import { writeFluidFileConverterOutput } from "./writeFluidFileConverterOutput.js";
 /* eslint-enable import-x/no-internal-modules */
 
 /**
@@ -96,7 +97,7 @@ export async function exportFile(
 					return { success: false, eventName, errorMessage: argsValidationError };
 				}
 
-				fs.writeFileSync(
+				writeFluidFileConverterOutput(
 					outputFile,
 					await createContainerAndExecute(
 						getSnapshotFileContent(inputFile),
@@ -106,7 +107,6 @@ export async function exportFile(
 						timeout,
 						disableNetworkFetch,
 					),
-					{ flag: "wx" },
 				);
 
 				return { success: true };
@@ -188,12 +188,20 @@ export async function createContainerAndExecute(
 ): Promise<Uint8Array>;
 export async function createContainerAndExecute(
 	localOdspSnapshot: string | Uint8Array,
+	fluidFileConverter: IFluidFileConverterWithDirectoryOutput,
+	logger: TelemetryLoggerExt,
+	options?: string,
+	timeout?: number,
+	disableNetworkFetch?: boolean,
+): Promise<IFluidFileConverterDirectoryOutput>;
+export async function createContainerAndExecute(
+	localOdspSnapshot: string | Uint8Array,
 	fluidFileConverter: FluidFileConverter,
 	logger: TelemetryLoggerExt,
 	options?: string,
 	timeout?: number,
 	disableNetworkFetch?: boolean,
-): Promise<string | Uint8Array>;
+): Promise<string | Uint8Array | IFluidFileConverterDirectoryOutput>;
 export async function createContainerAndExecute(
 	localOdspSnapshot: string | Uint8Array,
 	fluidFileConverter: FluidFileConverter,
@@ -201,8 +209,8 @@ export async function createContainerAndExecute(
 	options?: string,
 	timeout?: number,
 	disableNetworkFetch: boolean = false,
-): Promise<string | Uint8Array> {
-	const fn = async (): Promise<string | Uint8Array> => {
+): Promise<string | Uint8Array | IFluidFileConverterDirectoryOutput> {
+	const fn = async (): Promise<string | Uint8Array | IFluidFileConverterDirectoryOutput> => {
 		if (disableNetworkFetch) {
 			global.fetch = async () => {
 				throw new Error("Network fetch is not allowed");
@@ -240,11 +248,14 @@ export async function createContainerAndExecute(
 
 	// eslint-disable-next-line unicorn/prefer-ternary
 	if (timeout !== undefined) {
-		return timeoutPromise<string | Uint8Array>((resolve, reject) => {
-			fn()
-				.then((value) => resolve(value))
-				.catch((error) => reject(error));
-		}, timeout);
+		return timeoutPromise<string | Uint8Array | IFluidFileConverterDirectoryOutput>(
+			(resolve, reject) => {
+				fn()
+					.then((value) => resolve(value))
+					.catch((error) => reject(error));
+			},
+			timeout,
+		);
 	} else {
 		return fn();
 	}

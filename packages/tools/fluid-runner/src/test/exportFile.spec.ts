@@ -10,7 +10,11 @@ import path from "path";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 /* eslint-disable import-x/no-internal-modules */
-import type { IFluidFileConverterWithBinaryOutput } from "../codeLoaderBundle.js";
+import type {
+	IFluidFileConverterDirectoryOutput,
+	IFluidFileConverterWithBinaryOutput,
+	IFluidFileConverterWithDirectoryOutput,
+} from "../codeLoaderBundle.js";
 import {
 	createContainerAndExecute,
 	createFluidRunnerContainerAndExecute,
@@ -34,6 +38,17 @@ describe("exportFile", () => {
 	const binaryFluidExport: IFluidFileConverterWithBinaryOutput = {
 		...fluidExport,
 		execute: () => Promise.resolve(binaryExecuteResult),
+	};
+	const directoryExecuteResult: IFluidFileConverterDirectoryOutput = {
+		directories: ["empty"],
+		files: [
+			{ path: "nested/readme.txt", content: "Fluid \u03c0" },
+			{ path: "nested/data.bin", content: binaryExecuteResult },
+		],
+	};
+	const directoryFluidExport: IFluidFileConverterWithDirectoryOutput = {
+		...fluidExport,
+		execute: () => Promise.resolve(directoryExecuteResult),
 	};
 
 	beforeEach(() => {
@@ -76,7 +91,7 @@ describe("exportFile", () => {
 		});
 	});
 
-	it("preserves internal helper text and binary output types", async () => {
+	it("preserves internal helper text, binary, and directory output types", async () => {
 		const snapshot = getSnapshotFileContent(
 			path.join(snapshotFolder, "odspSnapshot1.json"),
 		);
@@ -95,6 +110,14 @@ describe("exportFile", () => {
 			binaryExecuteResult,
 			"binary execution output is not correct",
 		);
+
+		const directoryResult: IFluidFileConverterDirectoryOutput =
+			await createContainerAndExecute(snapshot, directoryFluidExport, logger);
+		assert.deepStrictEqual(
+			directoryResult,
+			directoryExecuteResult,
+			"directory execution output is not correct",
+		);
 	});
 
 	it("writes binary execution output unchanged", async () => {
@@ -110,6 +133,215 @@ describe("exportFile", () => {
 			fs.readFileSync(outputFilePath),
 			Buffer.from(binaryExecuteResult),
 			"binary file output is not correct",
+		);
+	});
+
+	it("writes mixed directory output and preserves empty directories", async () => {
+		const result = await exportFile(
+			directoryFluidExport,
+			path.join(snapshotFolder, "odspSnapshot1.json"),
+			outputFilePath,
+			telemetryFile,
+		);
+
+		assert(result.success, "exportFile call was not successful");
+		assert(fs.statSync(outputFilePath).isDirectory(), "output root is not a directory");
+		assert(
+			fs.statSync(path.join(outputFilePath, "empty")).isDirectory(),
+			"empty directory was not created",
+		);
+		assert.strictEqual(
+			fs.readFileSync(path.join(outputFilePath, "nested", "readme.txt"), "utf8"),
+			"Fluid \u03c0",
+			"text file output is not correct",
+		);
+		assert.deepStrictEqual(
+			fs.readFileSync(path.join(outputFilePath, "nested", "data.bin")),
+			Buffer.from(binaryExecuteResult),
+			"binary directory file output is not correct",
+		);
+	});
+
+	const invalidPaths = [
+		{ name: "empty paths", value: "" },
+		{ name: "absolute paths", value: "/outside.txt" },
+		{ name: "drive paths", value: "C:/outside.txt" },
+		{ name: "UNC paths", value: "//server/share/outside.txt" },
+		{ name: "dot segments", value: "./outside.txt" },
+		{ name: "parent traversal", value: "nested/../outside.txt" },
+		{ name: "backslashes", value: "nested\\outside.txt" },
+		{ name: "NUL bytes", value: "outside\0.txt" },
+	];
+	for (const invalidPath of invalidPaths) {
+		it(`rejects directory output with ${invalidPath.name} before creating the root`, async () => {
+			const secretContent = "document-controlled-secret";
+			const invalidConverter: IFluidFileConverterWithDirectoryOutput = {
+				...directoryFluidExport,
+				execute: async () => ({
+					files: [{ path: invalidPath.value, content: secretContent }],
+				}),
+			};
+
+			const result = await exportFile(
+				invalidConverter,
+				path.join(snapshotFolder, "odspSnapshot1.json"),
+				outputFilePath,
+				telemetryFile,
+			);
+
+			assert(!result.success, "exportFile call should fail");
+			assert(!fs.existsSync(outputFilePath), "invalid output root should not be created");
+			assert.strictEqual(
+				result.error?.message,
+				"Invalid Fluid file converter directory output",
+				"unexpected validation error",
+			);
+			const telemetry = fs.readFileSync(telemetryFile, "utf8");
+			assert(
+				!telemetry.includes(invalidPath.value) && !telemetry.includes(secretContent),
+				"converter-controlled path or content was included in telemetry",
+			);
+		});
+	}
+
+	it("rejects traversal in an explicit directory path before creating the root", async () => {
+		const invalidConverter: IFluidFileConverterWithDirectoryOutput = {
+			...directoryFluidExport,
+			execute: async () => ({ directories: ["../outside"], files: [] }),
+		};
+
+		const result = await exportFile(
+			invalidConverter,
+			path.join(snapshotFolder, "odspSnapshot1.json"),
+			outputFilePath,
+			telemetryFile,
+		);
+
+		assert(!result.success, "exportFile call should fail");
+		assert(!fs.existsSync(outputFilePath), "invalid output root should not be created");
+	});
+
+	const conflictingOutputs: {
+		readonly name: string;
+		readonly output: IFluidFileConverterDirectoryOutput;
+	}[] = [
+		{
+			name: "duplicate file paths",
+			output: {
+				files: [
+					{ path: "duplicate.txt", content: "first" },
+					{ path: "duplicate.txt", content: "second" },
+				],
+			},
+		},
+		{
+			name: "duplicate directory paths",
+			output: { directories: ["duplicate", "duplicate"], files: [] },
+		},
+		{
+			name: "file and directory path conflicts",
+			output: {
+				directories: ["conflict"],
+				files: [{ path: "conflict", content: "content" }],
+			},
+		},
+		{
+			name: "file and descendant path conflicts",
+			output: {
+				files: [
+					{ path: "conflict", content: "parent" },
+					{ path: "conflict/child.txt", content: "child" },
+				],
+			},
+		},
+	];
+	for (const conflictingOutput of conflictingOutputs) {
+		it(`rejects directory output with ${conflictingOutput.name}`, async () => {
+			const invalidConverter: IFluidFileConverterWithDirectoryOutput = {
+				...directoryFluidExport,
+				execute: async () => conflictingOutput.output,
+			};
+
+			const result = await exportFile(
+				invalidConverter,
+				path.join(snapshotFolder, "odspSnapshot1.json"),
+				outputFilePath,
+				telemetryFile,
+			);
+
+			assert(!result.success, "exportFile call should fail");
+			assert(!fs.existsSync(outputFilePath), "conflicting output root should not be created");
+		});
+	}
+
+	it("does not replace an existing directory output root", async () => {
+		const markerPath = path.join(outputFilePath, "marker.txt");
+		fs.mkdirSync(outputFilePath);
+		fs.writeFileSync(markerPath, "existing");
+
+		const result = await exportFile(
+			directoryFluidExport,
+			path.join(snapshotFolder, "odspSnapshot1.json"),
+			outputFilePath,
+			telemetryFile,
+		);
+
+		assert(!result.success, "exportFile call should fail");
+		assert.strictEqual(fs.readFileSync(markerPath, "utf8"), "existing");
+	});
+
+	it("does not replace a directory output root created during conversion", async () => {
+		const markerPath = path.join(outputFilePath, "marker.txt");
+		const racingConverter: IFluidFileConverterWithDirectoryOutput = {
+			...directoryFluidExport,
+			execute: async () => {
+				fs.mkdirSync(outputFilePath);
+				fs.writeFileSync(markerPath, "raced");
+				return directoryExecuteResult;
+			},
+		};
+
+		const result = await exportFile(
+			racingConverter,
+			path.join(snapshotFolder, "odspSnapshot1.json"),
+			outputFilePath,
+			telemetryFile,
+		);
+
+		assert(!result.success, "exportFile call should fail");
+		assert.strictEqual(result.error?.code, "EEXIST", "expected an exclusive-root error");
+		assert.strictEqual(fs.readFileSync(markerPath, "utf8"), "raced");
+	});
+
+	it("cleans up a partially written directory output", async () => {
+		const longFileName = `${"x".repeat(300)}.bin`;
+		const failingConverter: IFluidFileConverterWithDirectoryOutput = {
+			...directoryFluidExport,
+			execute: async () => ({
+				files: [
+					{ path: "written-before-failure.txt", content: "partial" },
+					{ path: longFileName, content: binaryExecuteResult },
+				],
+			}),
+		};
+
+		const result = await exportFile(
+			failingConverter,
+			path.join(snapshotFolder, "odspSnapshot1.json"),
+			outputFilePath,
+			telemetryFile,
+		);
+
+		assert(!result.success, "exportFile call should fail");
+		assert(!fs.existsSync(outputFilePath), "partial output root was not removed");
+		assert.strictEqual(
+			result.error?.message,
+			"Failed to materialize Fluid file converter directory output",
+			"unexpected write failure",
+		);
+		assert(
+			!fs.readFileSync(telemetryFile, "utf8").includes(longFileName),
+			"converter-controlled path was included in telemetry",
 		);
 	});
 

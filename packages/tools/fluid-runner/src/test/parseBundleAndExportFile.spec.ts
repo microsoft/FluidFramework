@@ -16,6 +16,13 @@ import {
 	racedOutput,
 } from "./sampleCodeLoaders/binaryCodeLoader.js";
 // eslint-disable-next-line import-x/no-internal-modules
+import {
+	directoryBinaryContent,
+	directoryTextContent,
+	racedDirectoryContent,
+	racedDirectoryFile,
+} from "./sampleCodeLoaders/directoryCodeLoader.js";
+// eslint-disable-next-line import-x/no-internal-modules
 import { executeResult } from "./sampleCodeLoaders/sampleCodeLoader.js";
 
 describe("parseBundleAndExportFile", () => {
@@ -71,6 +78,98 @@ describe("parseBundleAndExportFile", () => {
 			Buffer.from(binaryExecuteResult),
 			"binary file output is not correct",
 		);
+	});
+
+	it("writes dynamic-bundle mixed directory output and empty directories", async () => {
+		const result = await parseBundleAndExportFile(
+			path.join(sampleCodeLoadersFolder, "directoryCodeLoader.js"),
+			path.join(snapshotFolder, "odspSnapshot1.json"),
+			outputFilePath,
+			telemetryFile,
+		);
+
+		assert(result.success, "exportFile call was not successful");
+		assert(fs.statSync(outputFilePath).isDirectory(), "output root is not a directory");
+		assert(
+			fs.statSync(path.join(outputFilePath, "empty")).isDirectory(),
+			"empty directory was not created",
+		);
+		assert.strictEqual(
+			fs.readFileSync(path.join(outputFilePath, "nested", "readme.txt"), "utf8"),
+			directoryTextContent,
+			"text file output is not correct",
+		);
+		assert.deepStrictEqual(
+			fs.readFileSync(path.join(outputFilePath, "nested", "data.bin")),
+			Buffer.from(directoryBinaryContent),
+			"binary directory file output is not correct",
+		);
+	});
+
+	for (const invalidOutput of ["traversal", "duplicate", "conflict"]) {
+		it(`rejects dynamic-bundle ${invalidOutput} directory output`, async () => {
+			const result = await parseBundleAndExportFile(
+				path.join(sampleCodeLoadersFolder, "directoryCodeLoader.js"),
+				path.join(snapshotFolder, "odspSnapshot1.json"),
+				outputFilePath,
+				telemetryFile,
+				invalidOutput,
+			);
+
+			assert(!result.success, "exportFile call should fail");
+			assert(!fs.existsSync(outputFilePath), "invalid output root should not be created");
+		});
+	}
+
+	it("does not replace a directory root created by a dynamic bundle", async () => {
+		const result = await parseBundleAndExportFile(
+			path.join(sampleCodeLoadersFolder, "directoryCodeLoader.js"),
+			path.join(snapshotFolder, "odspSnapshot1.json"),
+			outputFilePath,
+			telemetryFile,
+			`raceOutputRoot:${outputFilePath}`,
+		);
+
+		assert(!result.success, "exportFile call should fail");
+		assert.strictEqual(result.error?.code, "EEXIST", "expected an exclusive-root error");
+		assert.strictEqual(
+			fs.readFileSync(path.join(outputFilePath, racedDirectoryFile), "utf8"),
+			racedDirectoryContent,
+			"the raced directory root was replaced",
+		);
+	});
+
+	it("does not replace an existing directory root for a dynamic bundle", async () => {
+		const markerPath = path.join(outputFilePath, racedDirectoryFile);
+		fs.mkdirSync(outputFilePath);
+		fs.writeFileSync(markerPath, racedDirectoryContent);
+
+		const result = await parseBundleAndExportFile(
+			path.join(sampleCodeLoadersFolder, "directoryCodeLoader.js"),
+			path.join(snapshotFolder, "odspSnapshot1.json"),
+			outputFilePath,
+			telemetryFile,
+		);
+
+		assert(!result.success, "exportFile call should fail");
+		assert.strictEqual(
+			fs.readFileSync(markerPath, "utf8"),
+			racedDirectoryContent,
+			"the existing directory root was replaced",
+		);
+	});
+
+	it("cleans up dynamic-bundle directory output after a write failure", async () => {
+		const result = await parseBundleAndExportFile(
+			path.join(sampleCodeLoadersFolder, "directoryCodeLoader.js"),
+			path.join(snapshotFolder, "odspSnapshot1.json"),
+			outputFilePath,
+			telemetryFile,
+			"writeFailure",
+		);
+
+		assert(!result.success, "exportFile call should fail");
+		assert(!fs.existsSync(outputFilePath), "partial output root was not removed");
 	});
 
 	it("does not overwrite an output file created by a dynamic bundle", async () => {

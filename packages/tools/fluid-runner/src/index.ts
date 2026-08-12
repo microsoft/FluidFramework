@@ -8,7 +8,10 @@ export type {
 	FluidFileConverter,
 	ICodeLoaderBundle,
 	IFluidFileConverter,
+	IFluidFileConverterDirectoryFile,
+	IFluidFileConverterDirectoryOutput,
 	IFluidFileConverterWithBinaryOutput,
+	IFluidFileConverterWithDirectoryOutput,
 } from "./codeLoaderBundle.js";
 export {
 	createContainerAndExecute,

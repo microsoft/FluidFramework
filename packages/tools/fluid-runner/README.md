@@ -57,8 +57,9 @@ For more details on what exports are needed, see [codeLoaderBundle.ts](./src/cod
 
 You may notice the command line argument `codeLoader` is optional. If you choose not to provide a value for `codeLoader`, you must extend this library
 and provide a [`IFluidFileConverter`](./src/codeLoaderBundle.ts) implementation to the [`fluidRunner(...)`](./src/fluidRunner.ts) method.
-`IFluidFileConverter` retains its string output contract. Trusted converters that produce binary files can instead implement the internal
-`IFluidFileConverterWithBinaryOutput` contract; `exportFile(...)` writes the returned `Uint8Array` bytes directly without text encoding.
+`IFluidFileConverter` retains its string output contract. Trusted converters can instead implement the internal
+`IFluidFileConverterWithBinaryOutput` or `IFluidFileConverterWithDirectoryOutput` contracts. `exportFile(...)` writes returned
+`Uint8Array` bytes directly without text encoding. Directory output is materialized beneath the requested output path.
 
 ```typescript
 import {
@@ -68,11 +69,39 @@ import {
 
 const converter: IFluidFileConverterWithBinaryOutput = {
 	getCodeLoader: async () => codeLoader,
-	execute: async () => Uint8Array.from([0x50, 0x4b /* ZIP bytes */]),
+	execute: async () => Uint8Array.from([0x00, 0xff]),
 };
 
 await fluidRunner(converter);
 ```
+
+Directory converters return plain data with forward-slash-separated relative paths:
+
+```typescript
+import {
+	fluidRunner,
+	type IFluidFileConverterWithDirectoryOutput,
+} from "@fluidframework/fluid-runner/internal";
+
+const converter: IFluidFileConverterWithDirectoryOutput = {
+	getCodeLoader: async () => codeLoader,
+	execute: async () => ({
+		directories: ["empty"],
+		files: [
+			{ path: "content/readme.txt", content: "Exported from Fluid" },
+			{ path: "content/data.bin", content: Uint8Array.from([0x00, 0xff]) },
+		],
+	}),
+};
+
+await fluidRunner(converter);
+```
+
+The output path must not already exist. Directory paths must be portable, non-empty, forward-slash-separated relative
+paths without `.` or `..` segments; duplicate and conflicting paths are rejected. All paths are validated before the
+output root is created, files are created exclusively, and a partially materialized root is removed if writing fails.
+Fluid runner does not archive directory output. Consumers that need a ZIP or another archive format package the
+completed directory separately.
 
 > **Note**: Only one of `codeLoader` or `fluidRunner(...)` argument is allowed. If both or none are provided, an error will be thrown at the start of execution.
 
@@ -157,7 +186,7 @@ The code around `exportFile` can be consumed in multiple different layers. It is
 -   [`createLogger(...)`](./src/logger/loggerUtils.ts)
     -   Creates and wraps an `IFileLogger` and adds some useful telemetry data to every entry
 -   [`createContainerAndExecute(...)`](./src/exportFile.ts)
-    -   This internal helper preserves the converter's output type: text converters return `Promise<string>`, while binary converters return `Promise<Uint8Array>`
+    -   This internal helper preserves the converter's output type: text converters return `Promise<string>`, binary converters return `Promise<Uint8Array>`, and directory converters return `Promise<IFluidFileConverterDirectoryOutput>`
 -   [`getSnapshotFileContent(...)`](./src/utils.ts)
     -   Reads a local ODSP snapshot from both JSON and binary formats for usage in `createContainerAndExecute(...)`
 
