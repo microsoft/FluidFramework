@@ -1,12 +1,8 @@
 ---
-"@fluidframework/server-lambdas": patch
-"@fluidframework/server-local-server": patch
-"@fluidframework/server-memory-orderer": patch
-"@fluidframework/server-services-core": patch
-"tinylicious": patch
+"tinylicious": minor
 "__section": fix
 ---
-Tinylicious now supports confirmed catch-up from the start of a document
+Fix checkpoint catch-up bugs
 
 Tinylicious' in-memory database treated a range query bound of `0` as "no bound". Because the ops REST API uses an
 exclusive lower bound, a client asking for the ops of a document starting at sequence number 1 issues a

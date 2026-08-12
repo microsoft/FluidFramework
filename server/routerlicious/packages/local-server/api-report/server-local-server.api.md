@@ -4,22 +4,6 @@
 
 ```ts
 
-import { ICheckpointRepository } from '@fluidframework/server-services-core';
-import type { IClient } from '@fluidframework/protocol-definitions';
-import type { IConnected } from '@fluidframework/protocol-definitions';
-import { IDatabaseManager } from '@fluidframework/server-services-core';
-import { IDocumentRepository } from '@fluidframework/server-services-core';
-import { IDocumentStorage } from '@fluidframework/server-services-core';
-import { IHistorian } from '@fluidframework/server-services-client';
-import { ILogger } from '@fluidframework/server-services-core';
-import { IOrderer } from '@fluidframework/server-services-core';
-import { IOrdererManager } from '@fluidframework/server-services-core';
-import { IPubSub } from '@fluidframework/server-memory-orderer';
-import { IServiceConfiguration } from '@fluidframework/server-services-core';
-import { ITestDbFactory } from '@fluidframework/server-test-utils';
-import { IWebSocket } from '@fluidframework/server-services-core';
-import { IWebSocketServer } from '@fluidframework/server-services-core';
-
 // @alpha
 export interface ILocalDeltaConnectionServer {
     // (undocumented)
@@ -58,8 +42,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
 export class LocalOrdererManager implements IOrdererManager {
     constructor(storage: IDocumentStorage, databaseManager: IDatabaseManager, createHistorian: (tenant: string) => Promise<IHistorian>, logger: ILogger, serviceConfiguration?: Partial<IServiceConfiguration> | undefined, pubsub?: IPubSub | undefined, documentRepository?: IDocumentRepository | undefined, checkpointRepository?: ICheckpointRepository | undefined);
     close(): Promise<void>;
-    // (undocumented)
-    getCheckpointSequenceNumber?: (tenantId: string, documentId: string) => Promise<number | undefined>;
+    getCheckpointSequenceNumber?(tenantId: string, documentId: string): Promise<number>;
     // (undocumented)
     getOrderer(tenantId: string, documentId: string): Promise<IOrderer>;
     hasPendingWork(): Promise<boolean>;

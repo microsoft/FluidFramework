@@ -236,9 +236,14 @@ export class LocalOrderer implements IOrderer {
 	/**
 	 * Gets the latest sequence number broadcast by this orderer.
 	 *
+	 * @remarks This method is optional in the class type to preserve compatibility with previous
+	 * versions of the exported class. Every instance created by this version defines it.
+	 *
 	 * @returns The sequence number a connecting client must process through to be caught up.
 	 */
-	public getCheckpointSequenceNumber?: () => number | undefined = () => this.latestSequenceNumber;
+	public getCheckpointSequenceNumber?(): number {
+		return this.latestSequenceNumber;
+	}
 
 	public connectInternal(
 		subscriber: ISubscriber,

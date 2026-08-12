@@ -77,20 +77,22 @@ export class LocalOrdererManager implements IOrdererManager {
 	}
 
 	/**
-	 * Gets the latest sequence number known by the document's local orderer. Nexus includes this
-	 * value in the connected message so read-mode clients can reliably wait until they are caught up.
+	 * Implements
+	 * {@link @fluidframework/server-services-core#IOrdererManager.getCheckpointSequenceNumber}.
 	 *
-	 * @param tenantId - The tenant that owns the document.
-	 * @param documentId - The document whose latest sequence number should be returned.
-	 * @returns The latest sequence number known to the local orderer.
+	 * @remarks This method is optional in the class type to preserve compatibility with previous
+	 * versions of the exported class. Every instance created by this version defines it.
 	 */
-	public getCheckpointSequenceNumber?: (
+	public async getCheckpointSequenceNumber?(
 		tenantId: string,
 		documentId: string,
-	) => Promise<number | undefined> = async (tenantId, documentId) => {
+	): Promise<number> {
 		const orderer = (await this.getOrderer(tenantId, documentId)) as LocalOrderer;
-		return orderer.getCheckpointSequenceNumber?.();
-	};
+		if (orderer.getCheckpointSequenceNumber === undefined) {
+			throw new Error("LocalOrderer does not support checkpoint sequence numbers");
+		}
+		return orderer.getCheckpointSequenceNumber();
+	}
 
 	private async createLocalOrderer(tenantId: string, documentId: string): Promise<IOrderer> {
 		const historian = await this.createHistorian(tenantId);
