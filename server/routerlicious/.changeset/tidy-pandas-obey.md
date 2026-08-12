@@ -1,14 +1,22 @@
 ---
+"@fluidframework/server-lambdas": patch
+"@fluidframework/server-local-server": patch
+"@fluidframework/server-memory-orderer": patch
+"@fluidframework/server-services-core": patch
 "tinylicious": patch
 "__section": fix
 ---
-Tinylicious now returns ops when they are requested from the start of a document
+Tinylicious now supports confirmed catch-up from the start of a document
 
 Tinylicious' in-memory database treated a range query bound of `0` as "no bound". Because the ops REST API uses an
 exclusive lower bound, a client asking for the ops of a document starting at sequence number 1 issues a
 `{ $gt: 0 }` query, which was interpreted as an equality match and returned no ops at all.
 
-Clients that had to catch up from the beginning of a document (for example a read-mode connection to a document that
-has no summary yet) therefore never received the missing ops. They either spun retrying the fetch and never reached
-the last known sequence number - so anything waiting for catch-up, such as `waitContainerToCatchUp`, never resolved -
-or eventually closed the container with "Failed to retrieve ops from storage (Too Many Retries)".
+The local server also did not populate the existing optional `checkpointSequenceNumber` field in connected messages.
+Read-mode clients could fetch available ops but could not confirm how far they needed to catch up, causing
+`waitContainerToCatchUp` to return `false`.
+
+Tinylicious now handles zero-valued range bounds and reports the local orderer's latest sequence number through the
+existing connected-message contract. Read-mode clients can retrieve all missing ops and confirm when they are caught
+up. The shared Nexus path only forwards the checkpoint when its orderer manager provides one, so deployed
+Routerlicious orderers that do not implement this optional capability retain their existing behavior.
