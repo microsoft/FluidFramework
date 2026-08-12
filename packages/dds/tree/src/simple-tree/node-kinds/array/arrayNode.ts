@@ -918,7 +918,7 @@ function createArrayNodeProxy(
 					key in Array.prototype &&
 					typeof (Array.prototype as unknown as Record<string, unknown>)[key] === "function"
 				) {
-					return (...args: unknown[]) => {
+					return () => {
 						throw new TypeError(
 							`ArrayNode does not support '${key}'. Use the ArrayNode API (e.g., insertAt, removeAt, moveToIndex, splice).`,
 						);
