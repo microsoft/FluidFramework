@@ -920,7 +920,7 @@ function createArrayNodeProxy(
 				) {
 					return (...args: unknown[]) => {
 						throw new TypeError(
-							`ArrayNode does not support '${key}'. For mutations, use the ArrayNode API (e.g., insertAt, removeAt, moveToIndex, splice).`,
+							`ArrayNode does not support '${key}'. Use the ArrayNode API (e.g., insertAt, removeAt, moveToIndex, splice).`,
 						);
 					};
 				}

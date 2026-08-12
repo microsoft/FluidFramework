@@ -1428,7 +1428,7 @@ describe("ArrayNode", () => {
 			const array = init(CustomizableNumberArray, [1, 2, 3]);
 			const anchor = createArrayInsertionAnchor(array, 1);
 			array.removeAt(1);
-			// It's good to test this still gives a valid index and does not crash, but ideally this would anchor to the range between items rather than jumping to the end.
+			// It's good to test that this still gives a valid index and does not crash, but ideally this would anchor to the range between items rather than jumping to the end.
 			assert.equal(anchor.index, 2);
 		});
 	});
