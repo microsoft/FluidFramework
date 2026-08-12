@@ -13,17 +13,17 @@ import type {
 import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
+import type { InboundSequencedContainerRuntimeMessage } from "../../messageTypes.js";
+import { ContainerMessageType } from "../../messageTypes.js";
 import {
 	generateBatchId,
 	ensureContentsDeserialized,
 	OpDecompressor,
 	OpGroupingManager,
 	OpSplitter,
-	RemoteMessageProcessor,
 	type InboundMessageResult,
+	RemoteMessageProcessor,
 } from "../../opLifecycle/index.js";
-import type { InboundSequencedContainerRuntimeMessage } from "../../messageTypes.js";
-import { ContainerMessageType } from "../../messageTypes.js";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	VersionMarkResolver,
@@ -54,9 +54,7 @@ function makeOp(fields: {
 }
 
 /**
- * Builds a raw chunk op (`chunkId` of `totalChunks`) for a client's chunk stream, shaped as the wire
- * `ChunkedOp` the {@link tryGetChunkedOp} guard inspects. Used to exercise a scan anchor landing inside
- * a chunk stream whose leading chunk(s) precede the scan window.
+ * Builds a raw chunk op (`chunkId` of `totalChunks`) for a client's chunk stream.
  */
 function makeChunkOp(fields: {
 	sequenceNumber: number;
@@ -64,6 +62,8 @@ function makeChunkOp(fields: {
 	clientSequenceNumber?: number;
 	chunkId: number;
 	totalChunks: number;
+	chunkContents?: string;
+	originalMetadata?: { batchId?: string; batch?: boolean };
 }): ISequencedDocumentMessage {
 	return makeOp({
 		sequenceNumber: fields.sequenceNumber,
@@ -72,7 +72,12 @@ function makeChunkOp(fields: {
 		type: MessageType.Operation,
 		contents: {
 			type: ContainerMessageType.ChunkedOp,
-			contents: { chunkId: fields.chunkId, totalChunks: fields.totalChunks, contents: "" },
+			contents: {
+				chunkId: fields.chunkId,
+				totalChunks: fields.totalChunks,
+				contents: fields.chunkContents ?? "",
+				originalMetadata: fields.originalMetadata,
+			},
 		},
 	});
 }
@@ -175,27 +180,8 @@ function makeUnpacker(): (op: ISequencedDocumentMessage) => InboundMessageResult
 }
 
 /**
- * Wraps {@link makeUnpacker}, recording the sequence number of every op actually fed to the unpacker.
- * Lets a test assert that the scan drops an orphan batch-end marker (never handing it to the unpacker,
- * which the real `RemoteMessageProcessor` would reject with an assert).
- */
-function makeRecordingUnpackerFactory(
-	fed: number[],
-): () => (op: ISequencedDocumentMessage) => InboundMessageResult | undefined {
-	return () => {
-		const inner = makeUnpacker();
-		return (op) => {
-			fed.push(op.sequenceNumber);
-			return inner(op);
-		};
-	};
-}
-
-/**
  * Builds the REAL inbound unpack pipeline, matching the container's `createHistoricalOpUnpacker`: a
- * fresh `RemoteMessageProcessor` over a real `OpSplitter`/`OpDecompressor`/`OpGroupingManager`. Unlike
- * the stand-in unpackers, this actually reassembles chunks — so a clipped leading chunk stream that
- * reaches it throws `DataCorruptionError("Chunk Id mismatch")`, exercising the guard end-to-end.
+ * fresh `RemoteMessageProcessor` over a real `OpSplitter`/`OpDecompressor`/`OpGroupingManager`.
  */
 function makeRealUnpackerFactory(): () => (
 	op: ISequencedDocumentMessage,
@@ -203,7 +189,9 @@ function makeRealUnpackerFactory(): () => (
 	const logger = new MockLogger();
 	return () => {
 		const processor = new RemoteMessageProcessor(
-			new OpSplitter([], undefined, 0, Number.POSITIVE_INFINITY, logger),
+			new OpSplitter([], undefined, 0, Number.POSITIVE_INFINITY, logger, {
+				allowInitialPartialChunkStream: true,
+			}),
 			new OpDecompressor(logger),
 			new OpGroupingManager({ groupedBatchingEnabled: false }, logger),
 		);
@@ -489,144 +477,55 @@ describe("VersionMarkResolver", () => {
 		});
 	});
 
-	describe("resolveFromHistory - mid-chunk-stream scan anchor (clipped leading chunk stream)", () => {
-		// The target batch that follows the clipped chunk stream in every case below.
-		const targetOps = (): ISequencedDocumentMessage[] => [
-			makeOp({
-				sequenceNumber: 20,
-				clientId: "target",
-				clientSequenceNumber: 1,
-				metadata: { batch: true },
-			}),
-			makeOp({
-				sequenceNumber: 21,
-				clientId: "target",
-				clientSequenceNumber: 2,
-				metadata: { batch: false },
-			}),
-		];
-
-		// A 4-chunk stream from "chunker" at seq 10..13. An anchor can clip it so the scan begins at chunk
-		// 2, 3, or 4 — the fresh OpSplitter would then get a non-leading chunk first and throw "Chunk Id
-		// mismatch". Cover every intermediate anchor.
-		for (const startChunkId of [2, 3, 4]) {
-			it(`skips a leading chunk stream clipped at chunk ${startChunkId} and resolves the target`, async () => {
-				const clippedChunks: ISequencedDocumentMessage[] = [];
-				for (let chunkId = startChunkId; chunkId <= 4; chunkId++) {
-					clippedChunks.push(
-						makeChunkOp({
-							// seq 10 is chunk 1; chunk N is at seq 9 + N.
-							sequenceNumber: 9 + chunkId,
-							clientId: "chunker",
-							chunkId,
-							totalChunks: 4,
-						}),
-					);
-				}
-				const reader = makeReader([[...clippedChunks, ...targetOps()]]);
-				const fed: number[] = [];
-				const resolver = makeResolver({
-					reader,
-					unpackerFactory: makeRecordingUnpackerFactory(fed),
-				});
-				assert.deepEqual(await resolver.resolve(generateBatchId("target", 1), 5), {
-					kind: "resolved",
-					sequenceNumber: 21,
-				});
-				for (const chunk of clippedChunks) {
-					assert.ok(
-						!fed.includes(chunk.sequenceNumber),
-						`clipped chunk seq ${chunk.sequenceNumber} must not reach the unpacker`,
-					);
-				}
+	describe("resolveFromHistory - partial initial chunk stream", () => {
+		it("resolves a complete chunked target interleaved with another client's partial stream", async () => {
+			const targetContents = JSON.stringify({
+				type: ContainerMessageType.FluidDataStoreOp,
+				contents: {},
 			});
-		}
-
-		it("does not skip a chunk stream that starts in-window (chunk 1 present)", async () => {
-			// The full stream is in-window, so every chunk must be fed to the unpacker to reassemble — none
-			// are dropped as a clipped leading stream.
-			const chunks = [1, 2, 3, 4].map((chunkId) =>
-				makeChunkOp({
-					sequenceNumber: 9 + chunkId,
-					clientId: "chunker",
-					chunkId,
-					totalChunks: 4,
-				}),
-			);
-			const reader = makeReader([[...chunks, ...targetOps()]]);
-			const fed: number[] = [];
-			const resolver = makeResolver({
-				reader,
-				unpackerFactory: makeRecordingUnpackerFactory(fed),
-			});
-			assert.deepEqual(await resolver.resolve(generateBatchId("target", 1), 5), {
-				kind: "resolved",
-				sequenceNumber: 21,
-			});
-			for (const chunk of chunks) {
-				assert.ok(
-					fed.includes(chunk.sequenceNumber),
-					`in-window chunk seq ${chunk.sequenceNumber} must reach the unpacker`,
-				);
-			}
-		});
-
-		it("tracks clipped streams per clientId when two streams interleave", async () => {
-			// "clippedClient" is mid-stream (chunk 2/2 only) while "freshClient" starts a full stream
-			// (chunk 1/2, 2/2) interleaved. The clipped one must be skipped; the fresh one must be fed.
-			const clippedChunk = makeChunkOp({
-				sequenceNumber: 30,
-				clientId: "clippedClient",
-				chunkId: 2,
-				totalChunks: 2,
-			});
-			const freshChunk1 = makeChunkOp({
-				sequenceNumber: 31,
-				clientId: "freshClient",
-				chunkId: 1,
-				totalChunks: 2,
-			});
-			const freshChunk2 = makeChunkOp({
-				sequenceNumber: 32,
-				clientId: "freshClient",
-				chunkId: 2,
-				totalChunks: 2,
-			});
-			const reader = makeReader([[clippedChunk, freshChunk1, freshChunk2, ...targetOps()]]);
-			const fed: number[] = [];
-			const resolver = makeResolver({
-				reader,
-				unpackerFactory: makeRecordingUnpackerFactory(fed),
-			});
-			assert.deepEqual(await resolver.resolve(generateBatchId("target", 1), 5), {
-				kind: "resolved",
-				sequenceNumber: 21,
-			});
-			assert.ok(
-				!fed.includes(30),
-				"clippedClient's mid-stream chunk must not reach the unpacker",
-			);
-			assert.ok(fed.includes(31), "freshClient's chunk 1 must reach the unpacker");
-			assert.ok(fed.includes(32), "freshClient's chunk 2 must reach the unpacker");
-		});
-
-		it("returns a defined pending result (not a rejection) when only a clipped stream is scanned", async () => {
-			// A clipped stream with no matching target must still yield a defined miss, never throw.
+			const splitAt = Math.ceil(targetContents.length / 2);
 			const reader = makeReader([
 				[
-					makeChunkOp({ sequenceNumber: 11, clientId: "chunker", chunkId: 2, totalChunks: 3 }),
-					makeChunkOp({ sequenceNumber: 12, clientId: "chunker", chunkId: 3, totalChunks: 3 }),
+					makeChunkOp({
+						sequenceNumber: 11,
+						clientId: "partialClient",
+						chunkId: 2,
+						totalChunks: 3,
+					}),
+					makeChunkOp({
+						sequenceNumber: 12,
+						clientId: "targetClient",
+						clientSequenceNumber: 1,
+						chunkId: 1,
+						totalChunks: 2,
+						chunkContents: targetContents.slice(0, splitAt),
+					}),
+					makeChunkOp({
+						sequenceNumber: 13,
+						clientId: "partialClient",
+						chunkId: 3,
+						totalChunks: 3,
+					}),
+					makeChunkOp({
+						sequenceNumber: 14,
+						clientId: "targetClient",
+						clientSequenceNumber: 2,
+						chunkId: 2,
+						totalChunks: 2,
+						chunkContents: targetContents.slice(splitAt),
+						originalMetadata: { batchId: "target_[1]" },
+					}),
 				],
 			]);
-			const resolver = makeResolver({ reader, currentSequenceNumber: 0 });
-			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 1), 5), {
-				kind: "pending",
+			const resolver = makeResolver({ reader, unpackerFactory: makeRealUnpackerFactory() });
+
+			assert.deepEqual(await resolver.resolve("target_[1]", 5), {
+				kind: "resolved",
+				sequenceNumber: 14,
 			});
 		});
 
-		it("does not deserialize (or throw on) a non-runtime op with non-JSON string contents", async () => {
-			// A system/server op (type !== "op") may carry a non-JSON string payload. The guard must skip
-			// it before deserializing — a JSON.parse throw here would reject resolve() (the AB#80025 miss).
+		it("does not deserialize a non-runtime op with non-JSON string contents", async () => {
 			const reader = makeReader([
 				[
 					makeOp({
@@ -637,148 +536,15 @@ describe("VersionMarkResolver", () => {
 					}),
 				],
 			]);
-			const resolver = makeResolver({ reader, currentSequenceNumber: 0 });
+			const resolver = makeResolver({
+				reader,
+				currentSequenceNumber: 0,
+				unpackerFactory: makeRealUnpackerFactory(),
+			});
+
 			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 1), 5), {
 				kind: "pending",
 			});
-		});
-
-		it("skips a clipped leading chunk stream through the REAL unpack pipeline and resolves the target", async () => {
-			// End-to-end via a real RemoteMessageProcessor/OpSplitter (not a stand-in). The clipped chunks
-			// (2/3, 3/3 from "chunker") would make the real OpSplitter throw "Chunk Id mismatch" if fed; the
-			// guard skips them so the scan reaches a real (non-chunked) target batch and resolves it.
-			const runtimeContents = { type: ContainerMessageType.FluidDataStoreOp, contents: {} };
-			const reader = makeReader([
-				[
-					makeChunkOp({ sequenceNumber: 11, clientId: "chunker", chunkId: 2, totalChunks: 3 }),
-					makeChunkOp({ sequenceNumber: 12, clientId: "chunker", chunkId: 3, totalChunks: 3 }),
-					makeOp({
-						sequenceNumber: 20,
-						clientId: "target",
-						clientSequenceNumber: 1,
-						type: MessageType.Operation,
-						metadata: { batch: true },
-						contents: runtimeContents,
-					}),
-					makeOp({
-						sequenceNumber: 21,
-						clientId: "target",
-						clientSequenceNumber: 2,
-						type: MessageType.Operation,
-						metadata: { batch: false },
-						contents: runtimeContents,
-					}),
-				],
-			]);
-			const resolver = makeResolver({ reader, unpackerFactory: makeRealUnpackerFactory() });
-			assert.deepEqual(await resolver.resolve(generateBatchId("target", 1), 5), {
-				kind: "resolved",
-				sequenceNumber: 21,
-			});
-		});
-
-		it("the real pipeline throws on a clipped chunk, confirming the harness reproduces AB#80025", () => {
-			// Sanity-check the above harness: fed a non-leading chunk first (as a clipped scan anchor would),
-			// the real RemoteMessageProcessor/OpSplitter throws "Chunk Id mismatch". This is exactly what the
-			// guard prevents the resolver from reaching, so it proves the e2e test above is meaningful.
-			const unpack = makeRealUnpackerFactory()();
-			assert.throws(
-				() =>
-					unpack(
-						makeChunkOp({
-							sequenceNumber: 11,
-							clientId: "chunker",
-							chunkId: 2,
-							totalChunks: 3,
-						}),
-					),
-				/Chunk Id mismatch/,
-			);
-		});
-	});
-
-	describe("resolveFromHistory - mid-batch scan anchor (clipped leading batch)", () => {
-		it("tolerates an anchor landing on the end op of a prior multi-op batch", async () => {
-			// First fetched op (seq 12) is the END marker of a batch clipped by the scan start. The real
-			// unpacker's processor would assert on it, so the scan must drop it (never feed it) and go on
-			// to find the target.
-			const reader = makeReader([
-				[
-					makeOp({
-						sequenceNumber: 12,
-						clientId: "clipped",
-						clientSequenceNumber: 6,
-						metadata: { batch: false },
-					}),
-					makeOp({
-						sequenceNumber: 13,
-						clientId: "target",
-						clientSequenceNumber: 1,
-						metadata: { batch: true },
-					}),
-					makeOp({ sequenceNumber: 14, clientId: "target", clientSequenceNumber: 2 }),
-					makeOp({
-						sequenceNumber: 15,
-						clientId: "target",
-						clientSequenceNumber: 3,
-						metadata: { batch: false },
-					}),
-				],
-			]);
-			const fed: number[] = [];
-			const resolver = makeResolver({
-				reader,
-				unpackerFactory: makeRecordingUnpackerFactory(fed),
-			});
-			assert.deepEqual(await resolver.resolve(generateBatchId("target", 1), 0), {
-				kind: "resolved",
-				sequenceNumber: 15,
-			});
-			assert.ok(
-				!fed.includes(12),
-				"the clipped batch's orphan end marker must not reach the unpacker",
-			);
-		});
-
-		it("tolerates an anchor landing on a middle op of a prior multi-op batch", async () => {
-			// Scan starts on a MIDDLE op (seq 11) of the clipped batch, then its end marker (seq 12). The
-			// middle op reads as a lone batch (id can't match the target); the orphan end (seq 12) is dropped.
-			const reader = makeReader([
-				[
-					makeOp({ sequenceNumber: 11, clientId: "clipped", clientSequenceNumber: 5 }),
-					makeOp({
-						sequenceNumber: 12,
-						clientId: "clipped",
-						clientSequenceNumber: 6,
-						metadata: { batch: false },
-					}),
-					makeOp({
-						sequenceNumber: 13,
-						clientId: "target",
-						clientSequenceNumber: 1,
-						metadata: { batch: true },
-					}),
-					makeOp({
-						sequenceNumber: 14,
-						clientId: "target",
-						clientSequenceNumber: 2,
-						metadata: { batch: false },
-					}),
-				],
-			]);
-			const fed: number[] = [];
-			const resolver = makeResolver({
-				reader,
-				unpackerFactory: makeRecordingUnpackerFactory(fed),
-			});
-			assert.deepEqual(await resolver.resolve(generateBatchId("target", 1), 0), {
-				kind: "resolved",
-				sequenceNumber: 14,
-			});
-			assert.ok(
-				!fed.includes(12),
-				"the clipped batch's orphan end marker must not reach the unpacker",
-			);
 		});
 	});
 
@@ -1020,12 +786,10 @@ describe("VersionMarkResolver", () => {
 	});
 
 	describe("resolve telemetry (Resolve event)", () => {
-		it("emits a Resolve event for a history-resolved mark, including the clipped-skip count", async () => {
+		it("emits a Resolve event for a history-resolved mark", async () => {
 			const logger = new MockLogger();
 			const reader = makeReader([
 				[
-					makeChunkOp({ sequenceNumber: 11, clientId: "chunker", chunkId: 2, totalChunks: 3 }),
-					makeChunkOp({ sequenceNumber: 12, clientId: "chunker", chunkId: 3, totalChunks: 3 }),
 					makeOp({
 						sequenceNumber: 20,
 						clientId: "target",
@@ -1050,30 +814,7 @@ describe("VersionMarkResolver", () => {
 					eventName: "Resolve",
 					outcome: "resolved",
 					path: "history",
-					clippedLeadingOpsSkipped: 2,
 					sequenceNumber: 21,
-				},
-			]);
-		});
-
-		it("emits the near-miss shape (skipped > 0, outcome !== resolved) when a scan skips but misses", async () => {
-			const logger = new MockLogger();
-			const reader = makeReader([
-				[
-					makeChunkOp({ sequenceNumber: 11, clientId: "chunker", chunkId: 2, totalChunks: 3 }),
-					makeChunkOp({ sequenceNumber: 12, clientId: "chunker", chunkId: 3, totalChunks: 3 }),
-				],
-			]);
-			const resolver = makeResolver({ reader, logger, currentSequenceNumber: 0 });
-			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 1), 5), {
-				kind: "pending",
-			});
-			logger.assertMatch([
-				{
-					eventName: "Resolve",
-					outcome: "pending",
-					path: "history",
-					clippedLeadingOpsSkipped: 2,
 				},
 			]);
 		});
@@ -1089,12 +830,11 @@ describe("VersionMarkResolver", () => {
 					eventName: "Resolve",
 					outcome: "pending",
 					path: "noReader",
-					clippedLeadingOpsSkipped: 0,
 				},
 			]);
 		});
 
-		it("emits path 'session' with no skips on a live fast-path hit", async () => {
+		it("emits path 'session' on a live fast-path hit", async () => {
 			const logger = new MockLogger();
 			const resolver = makeResolver({ logger });
 			resolver.processInboundBatch("live_[1]", 7);
@@ -1107,7 +847,6 @@ describe("VersionMarkResolver", () => {
 					eventName: "Resolve",
 					outcome: "resolved",
 					path: "session",
-					clippedLeadingOpsSkipped: 0,
 					sequenceNumber: 7,
 				},
 			]);

@@ -1967,6 +1967,7 @@ export class ContainerRuntime
 								runtimeOptions.chunkSizeInBytes,
 								runtimeOptions.maxBatchSizeInBytes,
 								this.mc.logger,
+								{ allowInitialPartialChunkStream: true },
 							),
 							new OpDecompressor(this.mc.logger),
 							new OpGroupingManager(

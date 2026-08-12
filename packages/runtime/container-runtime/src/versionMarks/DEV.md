@@ -51,10 +51,10 @@ Host exposure: `ContainerRuntime` exposes an `@internal` `versionMarkResolver` g
 `VersionMarkResolver.sealAndCaptureVersionMark()` executes synchronously in this order:
 
 1. Call the `flushPendingBatch` hook (`ContainerRuntime.flush`) so the current outbox batch is moved into `PendingStateManager` and assigned stable batch information.
-2. Read `getCurrentSequenceNumber()` (`deltaManager.lastSequenceNumber`) as the capture's globally sequenced exclusive lower bound.
-3. Read `getCurrentPendingBatchId()` (`PendingStateManager.getMostRecentPendingBatchId()`).
-4. If no pending batch exists, return `{ kind: "resolved", sequenceNumber }`. This path does not enable inbound tracking because there is no pending batch to promote.
-5. If a pending batch exists, set the sticky `tracking` flag and return `{ kind: "pending", batchId, sequenceNumberLowerBound }`.
+1. Read `getCurrentSequenceNumber()` (`deltaManager.lastSequenceNumber`) as the capture's globally sequenced exclusive lower bound.
+1. Read `getCurrentPendingBatchId()` (`PendingStateManager.getMostRecentPendingBatchId()`).
+1. If no pending batch exists, return `{ kind: "resolved", sequenceNumber }`. This path does not enable inbound tracking because there is no pending batch to promote.
+1. If a pending batch exists, set the sticky `tracking` flag and return `{ kind: "pending", batchId, sequenceNumberLowerBound }`.
 
 Keeping sealing and capture in one synchronous operation prevents callers from observing or persisting intermediate state between flushing, reading the sequence number, and reading the batch id.
 
@@ -139,30 +139,25 @@ The runtime does not store or mutate app marks. The listener only lets the app r
 `resolve(batchId, sequenceNumberLowerBound)` performs:
 
 1. Look up `batchId` in the session map. A hit immediately returns `resolved` and never consults storage.
-2. Call `getHistoricalOpReader` on a miss. If no reader is available, return `pending`.
-3. Set `from = sequenceNumberLowerBound + 1`, create a fresh unpacker, and create an `AbortController`.
-4. Request `fetchMessages(from, undefined, abortSignal)`.
-5. Read every stream chunk until the target is found or the stream returns `done`.
-6. Return the matched completed batch's last sequence number (with the count of leading ops skipped), or classify the miss.
-7. Abort the controller in `finally`, both on success and on exhaustion/error, so the underlying fetch can stop any remaining work.
-8. `resolve()` emits one `Resolve` telemetry event (`outcome`, `path`, `clippedLeadingOpsSkipped`, `durationMs`) before returning — on every path, including a thrown scan (`outcome: "error"`, emitted via `finally`). See [Telemetry](#telemetry).
+1. Call `getHistoricalOpReader` on a miss. If no reader is available, return `pending`.
+1. Set `from = sequenceNumberLowerBound + 1`, create a fresh unpacker, and create an `AbortController`.
+1. Request `fetchMessages(from, undefined, abortSignal)`.
+1. Read every stream chunk until the target is found or the stream returns `done`.
+1. Return the matched completed batch's last sequence number, or classify the miss.
+1. Abort the controller in `finally`, both on success and on exhaustion/error, so the underlying fetch can stop any remaining work.
+1. `resolve()` emits one `Resolve` telemetry event (`outcome`, `path`, `durationMs`) before returning — on every path, including a thrown scan (`outcome: "error"`, emitted via `finally`). See [Telemetry](#telemetry).
 
 For each raw op, the scan records the first returned sequence number before filtering because that value is also the trim-availability signal. It then:
 
-1. Drops a `batch: false` marker when no batch is currently in progress (counting it into `clippedLeadingOpsSkipped`). The scan anchor may land on the clipped tail of an ordinary batch whose start was before `from`; feeding that orphan end marker to `RemoteMessageProcessor` would violate its batch-state invariant.
-2. Skips a **clipped leading chunk stream** (see Scan-anchor handling below; also counted into `clippedLeadingOpsSkipped`): a chunk op whose stream started before `from`, tracked per `clientId`, so the fresh `OpSplitter` never receives a non-leading chunk (which would throw `Chunk Id mismatch`).
-3. Passes the op to the unpacker. `undefined` means a filtered system op or an incomplete chunk waiting for more fragments.
-4. Mirrors the unpacker's batch-in-progress state from `batchStartingMessage` and final `nextBatchMessage` results.
-5. Calls `inboundVersionMarkUpdate`, carrying the batch id across piecemeal results exactly as the live path does.
-6. Returns immediately when the completed batch id matches the requested id.
-
-The target batch was pending at capture, so it must sequence after `sequenceNumberLowerBound` and cannot be the clipped ordinary batch.
+1. Passes the op to the injected historical unpacker. `undefined` means the op produced no complete inbound result.
+1. Calls `inboundVersionMarkUpdate`, carrying the batch id across piecemeal results exactly as the live path does.
+1. Returns immediately when the completed batch id matches the requested id.
 
 Routing scanned ops through the live unpack pipeline is required for **chunked batches**. Chunking strips the `batchId` from the final chunk's wire metadata and restores it only after `OpSplitter` reassembly. A raw metadata scan would therefore miss a resubmitted chunked batch. The shared pipeline also keeps grouped and compressed batch handling consistent with live processing.
 
 **Scan-anchor handling (chunk streams).** Ordinary multi-op batches are not split by the capture anchor: `InboundBatchAggregator` keeps them atomic when delivering them to the runtime. Chunk streams are different. The DeltaManager advances `lastSequenceNumber` for each intermediate chunk before `OpSplitter` has reconstructed the original message, so `sequenceNumberLowerBound + 1` can start in the middle of a chunk stream.
 
-Each historical scan uses a fresh `OpSplitter` (chunk-reassembly state must not be shared across scans). If the scan starts mid-stream, that splitter would receive chunk 2+ with no chunk-1 state and throw `DataCorruptionError("Chunk Id mismatch")`, rejecting `resolve()` instead of returning a defined result. The scan therefore **detects and skips a clipped leading chunk stream** before feeding the op to the unpacker (via `tryGetChunkedOp`, using deserialized contents): the first chunk seen for a `clientId` with `chunkId > 1` marks that client `skipping`; its chunks are dropped until the final chunk (`chunkId >= totalChunks`) passes, after which the client is `aligned` and its subsequent in-window streams are fed normally. Alignment is tracked **per `clientId`** because chunk streams from different clients can interleave. This is safe for the same reason as the orphan batch-end guard: the target batch was pending at capture, so its own chunk 1 is after `from`, and skipping a clipped *leading* stream can never skip the target. See the `resolveFromHistory - mid-chunk-stream scan anchor` tests, which cover every intermediate-chunk anchor, an in-window stream that must not be skipped, interleaved per-client streams, and a defined miss.
+Each historical scan uses a fresh `OpSplitter` (chunk-reassembly state must not be shared across scans) configured to allow the first observed stream for each client to begin after chunk 1. It discards the unreconstructable remainder of that stream, then enforces normal chunk ordering for that client. The live inbound `OpSplitter` remains strict. This behavior stays within the injected unpack pipeline so `VersionMarkResolver` does not inspect or track virtualization details. `opSplitter.spec.ts` covers partial and complete streams interleaved across clients, and `versionMarkResolver.spec.ts` retains one integration regression through the real unpack pipeline.
 
 ### `pending` vs `unresolvable` on a miss (read-derived availability)
 
@@ -202,10 +197,8 @@ Version-mark telemetry is greenfield; this section is the **contract** every eve
 
 | Event | When | Dimensions | Answers |
 | --- | --- | --- | --- |
-| `Resolve` **(implemented)** | end of `resolve()` (via `finally`, so a thrown scan is still reported) | `outcome` (`resolved`\|`pending`\|`unresolvable`\|`error`), `path` (`session`\|`history`\|`noReader`), `clippedLeadingOpsSkipped` (number), `durationMs`, `sequenceNumber` (when resolved) | success rate; how often history is needed; latency; the **near-miss** signal; `unresolvable` = data-loss KPI; `error` = the scan threw (e.g. an uncovered chunk-mismatch or driver failure) |
+| `Resolve` **(implemented)** | end of `resolve()` (via `finally`, so a thrown scan is still reported) | `outcome` (`resolved`\|`pending`\|`unresolvable`\|`error`), `path` (`session`\|`history`\|`noReader`), `durationMs`, `sequenceNumber` (when resolved) | success rate; how often history is needed; latency; `unresolvable` = data-loss KPI; `error` = the scan threw |
 | `Capture` *(planned — AB#80270)* | `sealAndCaptureVersionMark()` | `kind` (`pending`\|`resolved`) | capture volume; pending ratio |
-
-`clippedLeadingOpsSkipped` counts leading orphan-batch-end and clipped-chunk ops dropped by the scan-anchor guards. The static invariant (the target batch is pending at capture, so it sequences at/after `from` and is never clipped) means a *correct* skip never drops the target. The one thing the invariant cannot self-verify in the field is a future violation of it; the **near-miss filter `clippedLeadingOpsSkipped > 0 && outcome !== "resolved"`** surfaces exactly that (kept informational because `pending` can be legitimate).
 
 ### Correlation and the app funnel (planned)
 
@@ -225,7 +218,7 @@ locator --resolve()--> sequenceNumber --loadContainerToSequenceNumber()--> ICont
 ```
 
 1. `resolve(batchId, sequenceNumberLowerBound)` turns the locator into a concrete `sequenceNumber` (a `resolved` mark already carries its `sequenceNumber`, so it skips this step entirely).
-2. `loadContainerToSequenceNumber({ request, loadToSequenceNumber, ... })` (the loader's point-in-time primitive) materializes a read-only container at that sequence number.
+1. `loadContainerToSequenceNumber({ request, loadToSequenceNumber, ... })` (the loader's point-in-time primitive) materializes a read-only container at that sequence number.
 
 The load primitive stays **mark-agnostic** — it takes a raw `sequenceNumber` and never learns what a "mark" is. This is the deliberate design choice (decision A): the resolver owns the locator→sequence translation, the loader owns materialization, and the two do not merge.
 Its current container-loader placement is prototype-era ownership; the planned extraction of the
@@ -273,7 +266,7 @@ MSN speaks only about active clients in the current collaboration window. A disc
 `processInboundBatch` inserts the completed batch, then calls `evictBelowMinimumSequenceNumber()`. Entries are observed and inserted in sequence order. The eviction loop walks the `Map` from its oldest insertion:
 
 1. Delete each entry whose `sequenceNumber < minimumSequenceNumber`.
-2. Stop at the first entry whose `sequenceNumber >= minimumSequenceNumber`; all later entries are also expected to be in the collaboration window.
+1. Stop at the first entry whose `sequenceNumber >= minimumSequenceNumber`; all later entries are also expected to be in the collaboration window.
 
 This makes cleanup proportional to the number of entries actually evicted (amortized O(evicted)). The just-recorded inbound batch is at or above the current MSN, so it is retained. The implementation also relies on the invariant that a stable `batchId` never remaps to a different sequence number (the protocol guarantees this); `processInboundBatch` **asserts** it rather than silently overwriting, because changing an existing key without moving its insertion position would break the ordered early-exit assumption.
 
@@ -284,7 +277,8 @@ Per-inbound-batch work (deriving the batch identity and populating the map/notif
 ## Current test map
 
 - `src/test/versionMarks/inboundBatch.spec.ts` covers full, empty, derived-id, explicit-id, and piecemeal batch updates.
-- `src/test/versionMarks/versionMarkResolver.spec.ts` covers capture ordering/results, the tracking gate, live-map precedence, no-reader behavior, fresh and resubmitted batches, multi-op batches across stream reads, chunk reassembly, clipped leading ordinary batches, clipped leading chunk streams (every intermediate-chunk anchor, in-window streams, interleaved per-client streams), miss classifications, range arguments, reader-contract assertion, abort behavior, listener isolation/unsubscribe/deduplication, the conflicting-remap assertion, MSN eviction, and the `Resolve` telemetry event (outcome/path/clipped-skip count across the session, history, near-miss, and no-reader paths).
+- `src/test/versionMarks/versionMarkResolver.spec.ts` covers capture ordering/results, the tracking gate, live-map precedence, no-reader behavior, fresh and resubmitted batches, multi-op batches across stream reads, chunk reassembly, a partial initial stream interleaved with a complete chunked target through the real unpack pipeline, miss classifications, range arguments, reader-contract assertion, abort behavior, listener isolation/unsubscribe/deduplication, MSN eviction, and the `Resolve` telemetry event.
+- `src/test/opLifecycle/opSplitter.spec.ts` covers strict chunk ordering plus the historical configuration that discards only a client's first partial stream while independently reconstructing complete interleaved streams.
 - `src/test/opLifecycle/opSerialization.spec.ts` covers `tryGetDeserializedRuntimeOpCopy` (runtime-op copy with deserialized contents; non-runtime and clientless ops return undefined without deserializing).
 - `src/test/pendingStateManager.spec.ts` covers ignoring unapplied stashed messages and reading an explicit reconnect-stable id from the start of the most recently flushed multi-op batch.
 - `src/test/containerRuntime.spec.ts` covers the complete context `fetchOps` -> historical unpack -> resolver path (including system/server-op filtering and abort-after-match), plus the ordering guarantee that failed inbound validation does not notify listeners.
@@ -296,23 +290,23 @@ Per-inbound-batch work (deriving the batch identity and populating the map/notif
 The existing real-service ODSP suites under `packages/test/test-end-to-end-tests/src/test/pointInTime/` begin with a known sequence number and exercise loading. They do not create that sequence number through the version-mark API. Extend `pointInTimeTestUtils.ts` with a host entry point that exposes `IVersionMarkResolver`, then add:
 
 1. **Pending mark to historical load:** Make a local edit, call `sealAndCaptureVersionMark()`, persist the pending locator outside the runtime, sequence the batch, resolve the locator, and load the resulting sequence number. Verify the loaded state includes the marked edit and excludes later edits.
-2. **Already-resolved capture:** Capture with no local pending batch and load the returned sequence number directly, proving the no-resolution path produces the expected historical state.
-3. **Live promotion from another client:** Capture on one client and use `onBatchSequenced` on another connected client to promote the stored locator, proving batch identity is observable across clients.
-4. **Reconnect and resubmission:** Capture before disconnect, reconnect and resubmit the multi-op batch with its original explicit `batchId`, then verify both live and historical resolution still find the mark.
-5. **Capturing-client loss:** Close the capturing client before its acknowledgement, open a fresh client, resolve from retained historical ops, and load the marked state. This is the primary cross-session recovery scenario.
-6. **Transformed batches:** Capture edits that produce grouped, compressed, and chunked batches and verify the real inbound/history pipelines recover the same effective batch identity.
-7. **Pending and retention outcomes:** Resolve before the batch sequences and observe `pending`; when the test environment can deterministically trim the target ops, verify the same stored locator becomes `unresolvable`.
-8. **Offline and staging lifecycles:** Cover stash/rehydration plus staging commit and discard once those capture contracts are finalized.
-9. **Repeated capture and multiple pending batches:** Capture twice while the same batch remains unacknowledged, then capture after a second local batch is flushed. Verify each mark identifies the latest batch whose state it includes and that changing remote sequence numbers between captures does not produce an invalid lower bound.
-10. **Tracking activation boundaries:** Subscribe while an inbound batch is already being processed and immediately after a batch completed. Verify the documented behavior at each boundary and prove that a missed notification remains recoverable through `resolve()`.
-11. **Sequenced-before-persisted restore:** Resolve a mark from the live map as soon as its batch sequences, then immediately start a point-in-time load before ODSP has flushed that op to durable delta storage. Define whether the host waits, explicitly requests an op flush, or retries later, and verify a resolved locator never implies that the target is already materializable by a storage-only loader.
+1. **Already-resolved capture:** Capture with no local pending batch and load the returned sequence number directly, proving the no-resolution path produces the expected historical state.
+1. **Live promotion from another client:** Capture on one client and use `onBatchSequenced` on another connected client to promote the stored locator, proving batch identity is observable across clients.
+1. **Reconnect and resubmission:** Capture before disconnect, reconnect and resubmit the multi-op batch with its original explicit `batchId`, then verify both live and historical resolution still find the mark.
+1. **Capturing-client loss:** Close the capturing client before its acknowledgement, open a fresh client, resolve from retained historical ops, and load the marked state. This is the primary cross-session recovery scenario.
+1. **Transformed batches:** Capture edits that produce grouped, compressed, and chunked batches and verify the real inbound/history pipelines recover the same effective batch identity.
+1. **Pending and retention outcomes:** Resolve before the batch sequences and observe `pending`; when the test environment can deterministically trim the target ops, verify the same stored locator becomes `unresolvable`.
+1. **Offline and staging lifecycles:** Cover stash/rehydration plus staging commit and discard once those capture contracts are finalized.
+1. **Repeated capture and multiple pending batches:** Capture twice while the same batch remains unacknowledged, then capture after a second local batch is flushed. Verify each mark identifies the latest batch whose state it includes and that changing remote sequence numbers between captures does not produce an invalid lower bound.
+1. **Tracking activation boundaries:** Subscribe while an inbound batch is already being processed and immediately after a batch completed. Verify the documented behavior at each boundary and prove that a missed notification remains recoverable through `resolve()`.
+1. **Sequenced-before-persisted restore:** Resolve a mark from the live map as soon as its batch sequences, then immediately start a point-in-time load before ODSP has flushed that op to durable delta storage. Define whether the host waits, explicitly requests an op flush, or retries later, and verify a resolved locator never implies that the target is already materializable by a storage-only loader.
 
 ### Resolver correctness and robustness gaps
 
 1. **Live/history resolution races:** A batch can be recorded by `processInboundBatch` while a history scan for the same `batchId` is in progress. Recheck the live map before returning a miss so `resolve()` does not return stale `pending` or `unresolvable` after the batch has resolved in-session. Also decide whether concurrent calls for the same locator should share one scan rather than issuing duplicate delta-storage reads.
-2. **Finite and cancelable history reads:** The current scan requests `[lowerBound + 1, undefined)`, has no caller-supplied cancellation signal, and can inherit long driver retry behavior. Consider snapshotting an upper bound from the observed tip, accepting an `AbortSignal`, and canceling outstanding scans when the runtime is disposed. Cover cancellation before fetch, during `fetchMessages`, during `stream.read()`, and after a match races cancellation.
-3. **Stored-locator validation:** `batchId` and `sequenceNumberLowerBound` may come from app-owned persisted data. Define whether `resolve()` trusts that data or rejects an empty batch ID, negative/fractional/non-safe sequence numbers, and a lower bound whose `+ 1` overflows safe integer precision. Invalid persisted coordinates must not silently scan the wrong range or be classified as a legitimate mark state.
-4. **Historical stream contract:** Add direct coverage for duplicated, decreasing, gapped, and malformed batch/chunk sequences, plus a target found after a trim gap. Define which violations are rejected by the driver, which are rejected by the resolver, and which conservatively return `pending`; never infer `unresolvable` from a stream that violated the requested range contract.
+1. **Finite and cancelable history reads:** The current scan requests `[lowerBound + 1, undefined)`, has no caller-supplied cancellation signal, and can inherit long driver retry behavior. Consider snapshotting an upper bound from the observed tip, accepting an `AbortSignal`, and canceling outstanding scans when the runtime is disposed. Cover cancellation before fetch, during `fetchMessages`, during `stream.read()`, and after a match races cancellation.
+1. **Stored-locator validation:** `batchId` and `sequenceNumberLowerBound` may come from app-owned persisted data. Define whether `resolve()` trusts that data or rejects an empty batch ID, negative/fractional/non-safe sequence numbers, and a lower bound whose `+ 1` overflows safe integer precision. Invalid persisted coordinates must not silently scan the wrong range or be classified as a legitimate mark state.
+1. **Historical stream contract:** Add direct coverage for duplicated, decreasing, gapped, and malformed batch/chunk sequences, plus a target found after a trim gap. Define which violations are rejected by the driver, which are rejected by the resolver, and which conservatively return `pending`; never infer `unresolvable` from a stream that violated the requested range contract.
 
 ### API and design follow-ups
 
@@ -349,9 +343,9 @@ Staging mode also needs an explicit contract for both commit and discard. Captur
 Suggested test coverage:
 
 1. **Real batch cut:** Submit an op through `ContainerRuntime`, call capture before the TurnBased flush, and verify that capture flushes the op into `PendingStateManager` and returns that exact batch's ID rather than a mocked ID.
-2. **Unsafe contexts:** Call capture during inbound processing and inside `orderSequentially`; verify `notCaptured` with `reason: "unsafeToFlush"`, no flush, and no container closure. Also verify a later retry succeeds.
-3. **Staging commit and discard:** Capture staged edits and verify nothing is sent immediately. Verify that commit preserves the captured ID through resubmit and resolution, and define and test the result after discard.
-4. **Offline rehydration:** Capture while disconnected, stash and rehydrate, resubmit from the new client, and resolve using the original ID. This also covers end-to-end preservation and stamping of the batch identity through pending-state rehydration, beyond the existing unit tests for explicit original `batchId` metadata.
+1. **Unsafe contexts:** Call capture during inbound processing and inside `orderSequentially`; verify `notCaptured` with `reason: "unsafeToFlush"`, no flush, and no container closure. Also verify a later retry succeeds.
+1. **Staging commit and discard:** Capture staged edits and verify nothing is sent immediately. Verify that commit preserves the captured ID through resubmit and resolution, and define and test the result after discard.
+1. **Offline rehydration:** Capture while disconnected, stash and rehydrate, resubmit from the new client, and resolve using the original ID. This also covers end-to-end preservation and stamping of the batch identity through pending-state rehydration, beyond the existing unit tests for explicit original `batchId` metadata.
 
 ## Historical-op retention limitation
 

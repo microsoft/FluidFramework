@@ -37,7 +37,12 @@ export {
 } from "./outbox.js";
 export { OpCompressor } from "./opCompressor.js";
 export { OpDecompressor } from "./opDecompressor.js";
-export { OpSplitter, splitOp, isChunkedMessage, tryGetChunkedOp } from "./opSplitter.js";
+export {
+	type OpSplitterOptions,
+	OpSplitter,
+	splitOp,
+	isChunkedMessage,
+} from "./opSplitter.js";
 export {
 	type InboundMessageResult,
 	type BatchStartInfo,

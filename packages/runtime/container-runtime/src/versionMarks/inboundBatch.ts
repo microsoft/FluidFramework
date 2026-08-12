@@ -3,14 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-
-import {
-	getEffectiveBatchId,
-	tryGetChunkedOp,
-	tryGetDeserializedRuntimeOpCopy,
-	type InboundMessageResult,
-} from "../opLifecycle/index.js";
+import { getEffectiveBatchId, type InboundMessageResult } from "../opLifecycle/index.js";
 
 /**
  * The version-mark resolver update derived from an inbound batch result.
@@ -74,48 +67,4 @@ export function inboundVersionMarkUpdate(
 	}
 	// A mid-batch message, or a batch end with no carried id: no change.
 	return { carriedBatchId };
-}
-
-/**
- * Per-scan chunk-stream alignment, keyed by clientId. A client is `aligned` once we've seen a clean
- * stream start (chunk 1) or fully skipped a clipped leading stream; `skipping` while dropping one.
- *
- * @internal
- */
-export type ChunkStreamAlignment = Map<string, "skipping" | "aligned">;
-
-/**
- * Decides whether `op` belongs to a clipped *leading* chunk stream a history scan must skip. A scan
- * anchored mid-stream can hand a fresh OpSplitter chunk 2+ with no chunk-1 state, throwing
- * `DataCorruptionError("Chunk Id mismatch")`. The first chunk seen per client decides: chunkId 1 is a
- * clean start (`aligned`, feed it); higher means the anchor clipped this stream (`skipping`, drop until
- * its final chunk, then realign). Non-runtime, non-chunk, and clientless ops never skip. Mutates `alignment`.
- *
- * @internal
- */
-export function shouldSkipClippedChunk(
-	op: ISequencedDocumentMessage,
-	alignment: ChunkStreamAlignment,
-): boolean {
-	// Only runtime ops carry chunks; work on a deserialized copy (leaves the reader-owned op untouched).
-	const runtimeOp = tryGetDeserializedRuntimeOpCopy(op);
-	if (runtimeOp === undefined) {
-		return false;
-	}
-	const chunkedOp = tryGetChunkedOp(runtimeOp);
-	if (chunkedOp === undefined) {
-		return false;
-	}
-	const sync =
-		alignment.get(runtimeOp.clientId) ?? (chunkedOp.chunkId === 1 ? "aligned" : "skipping");
-	if (sync === "aligned") {
-		alignment.set(runtimeOp.clientId, "aligned");
-		return false;
-	}
-	// Realign once the clipped stream's final chunk passes; subsequent in-window streams feed normally.
-	alignment.set(
-		runtimeOp.clientId,
-		chunkedOp.chunkId >= chunkedOp.totalChunks ? "aligned" : "skipping",
-	);
-	return true;
 }
