@@ -151,6 +151,20 @@ describe("ChunkedForest", () => {
 		});
 	}
 
+	it("rejects destroying a missing detached field", () => {
+		const schema = new TreeStoredSchemaRepository();
+		const forest = buildChunkedForest(
+			makeTreeChunker(schema, defaultSchemaPolicy, defaultIncrementalEncodingPolicy),
+		);
+		const visitor = forest.acquireVisitor();
+
+		assert.throws(
+			() => visitor.destroy(brand<FieldKey>("missing"), 0),
+			validateAssertionError("Destroyed field must exist"),
+		);
+		visitor.free();
+	});
+
 	describe("chunk lookup and normalization", () => {
 		const numberShape = new TreeShape(
 			brand<TreeNodeSchemaIdentifier>(numberSchema.identifier),
