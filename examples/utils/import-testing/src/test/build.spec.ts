@@ -13,14 +13,21 @@ import { promisify } from "node:util";
 
 // When available (typescript 5.8+), update dynamic parsing to static import
 // import typescriptHostPackageJson from "@fluid-example/typescript-versions-host/package.json"; : with { type: "json" };
-// `resolution-mode` is required because @fluidframework/build-tools is ESM-only: its CJS `exports`
-// condition resolves to a stub that does not include `PackageJson`, and this file is also compiled
-// as CommonJS. The attribute is safe here because `import type` is fully erased, so no `require`
-// call is emitted.
-// biome-ignore syntax/correctness/noTypeOnlyImportAttributes: `resolution-mode` is a TypeScript-only attribute that is erased at compile time
-import type { PackageJson } from "@fluidframework/build-tools" with {
-	"resolution-mode": "import",
-};
+
+/**
+ * Minimal shape of the parts of package.json this test reads.
+ *
+ * @remarks
+ * Declared locally rather than imported from `@fluidframework/build-tools` because that package is
+ * ESM-only: its CommonJS `exports` condition resolves to a stub that does not include
+ * `PackageJson`, and this file is also compiled as CommonJS.
+ *
+ * TODO: AB#80348: once this test no longer has a CommonJS compilation, remove this interface and
+ * restore `import type { PackageJson } from "@fluidframework/build-tools"`.
+ */
+interface PackageJsonDevDependencies {
+	readonly devDependencies: Readonly<Record<string, string>>;
+}
 
 // Resolve the typescript-versions-host package which hosts the aliased TypeScript versions.
 // Use process.cwd() as the base for createRequire so this works in both ESM
@@ -35,7 +42,7 @@ const typescriptHostDir = path.dirname(
 
 const typescriptHostPackageJson = JSON.parse(
 	readFileSync(path.join(typescriptHostDir, "package.json"), "utf8"),
-) as Required<Pick<PackageJson, "devDependencies">>;
+) as PackageJsonDevDependencies;
 
 // All are expected to match, but be cautious.
 const typescriptVersions = Object.entries(typescriptHostPackageJson.devDependencies).filter(
