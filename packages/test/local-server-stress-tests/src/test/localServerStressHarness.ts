@@ -263,7 +263,6 @@ export interface LocalServerStressOptions {
 		 * If the current number of clients has reached the maximum, this probability is ignored.
 		 */
 		clientAddProbability: number;
-
 	};
 
 	/**
@@ -588,10 +587,10 @@ function mixinSummarizeOnDemand<TOperation extends BaseOperation>(
 		};
 	};
 
-	const reducer: AsyncReducer<
-		TOperation | SummarizeOnDemand,
-		LocalServerStressState
-	> = async (state, operation) => {
+	const reducer: AsyncReducer<TOperation | SummarizeOnDemand, LocalServerStressState> = async (
+		state,
+		operation,
+	) => {
 		if (isOperationType<SummarizeOnDemand>("summarizeOnDemand", operation)) {
 			const url = await state.validationClient.container.getAbsoluteUrl("");
 			assert(url !== undefined, "url of container must be available");

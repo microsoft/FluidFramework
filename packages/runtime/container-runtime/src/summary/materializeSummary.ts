@@ -5,12 +5,12 @@
 
 import type { IContainerStorageService } from "@fluidframework/container-definitions/internal";
 import type {
-	ISnapshotTree,
 	ISummaryBlob,
 	ISummaryTree,
 	SummaryObject,
 } from "@fluidframework/driver-definitions";
 import { SummaryType } from "@fluidframework/driver-definitions";
+import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 
 const materializeSummaryScenarioName = "MaterializeFullTreeSummary";
 

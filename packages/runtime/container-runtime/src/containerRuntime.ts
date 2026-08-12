@@ -321,10 +321,7 @@ import {
 	validateSummaryHeuristicConfiguration,
 	wrapSummaryInChannelsTree,
 } from "./summary/index.js";
-import {
-	fetchSnapshotForSummary,
-	materializeSummary,
-} from "./summary/materializeSummary.js";
+import { fetchSnapshotForSummary, materializeSummary } from "./summary/materializeSummary.js";
 import { Throttler, formExponentialFn } from "./throttler.js";
 
 /**
@@ -625,8 +622,7 @@ export interface IPendingRuntimeState {
 }
 
 const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconnects";
-const snapshotBasedFullTreeSummaryKey =
-	"Fluid.ContainerRuntime.SnapshotBasedFullTreeSummary";
+const snapshotBasedFullTreeSummaryKey = "Fluid.ContainerRuntime.SnapshotBasedFullTreeSummary";
 
 // The actual limit is 1Mb (socket.io and Kafka limits)
 // We can't estimate it fully, as we
@@ -4455,13 +4451,10 @@ export class ContainerRuntime
 			const minimumSequenceNumber = this.deltaManager.minimumSequenceNumber;
 			const message = `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
 			const lastAckedContext = this.lastAckedSummaryContext;
-			const parentSummaryHandle =
-				lastAckedContext?.ackHandle ?? this.loadedFromVersionId;
+			const parentSummaryHandle = lastAckedContext?.ackHandle ?? this.loadedFromVersionId;
 			// Preserve fullTree's handle-free result without forcing unchanged children to regenerate.
 			const shouldMaterializeFullTree =
-				fullTree &&
-				this.snapshotBasedFullTreeSummary &&
-				parentSummaryHandle !== undefined;
+				fullTree && this.snapshotBasedFullTreeSummary && parentSummaryHandle !== undefined;
 
 			const startSummaryResult = this.summarizerNode.startSummary(
 				summaryRefSeqNum,
@@ -4591,10 +4584,8 @@ export class ContainerRuntime
 						this.storage,
 						parentSummaryHandle,
 					);
-					summaryTree = await materializeSummary(
-						summaryTree,
-						parentSnapshot,
-						async (id) => this.storage.readBlob(id),
+					summaryTree = await materializeSummary(summaryTree, parentSnapshot, async (id) =>
+						this.storage.readBlob(id),
 					);
 					partialStats = calculateStats(summaryTree);
 				} catch (error) {

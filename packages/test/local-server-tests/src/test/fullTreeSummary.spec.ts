@@ -5,10 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import {
-	stringToBuffer,
-	Uint8ArrayToString,
-} from "@fluid-internal/client-utils";
+import { stringToBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
@@ -18,16 +15,10 @@ import {
 	type IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import type {
-	ISummaryTree,
-	SummaryObject,
-} from "@fluidframework/driver-definitions";
+import type { ISummaryTree, SummaryObject } from "@fluidframework/driver-definitions";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import { SharedMap } from "@fluidframework/map/internal";
-import {
-	channelsTreeName,
-	gcTreeKey,
-} from "@fluidframework/runtime-definitions/internal";
+import { channelsTreeName, gcTreeKey } from "@fluidframework/runtime-definitions/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
 	createSummarizerCore,
@@ -41,8 +32,7 @@ import {
 
 import { createLoader } from "./utils.js";
 
-const snapshotBasedFullTreeSummaryKey =
-	"Fluid.ContainerRuntime.SnapshotBasedFullTreeSummary";
+const snapshotBasedFullTreeSummaryKey = "Fluid.ContainerRuntime.SnapshotBasedFullTreeSummary";
 
 const runtimeOptions: IContainerRuntimeOptions = {
 	summaryOptions: {
@@ -95,16 +85,15 @@ describe("Snapshot-based full tree summary", () => {
 		const container = await loader.createDetachedContainer(codeDetails);
 		const root = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 
-		const secondaryDataStore =
-			await root.context.containerRuntime.createDataStore(dataStoreFactory.type);
+		const secondaryDataStore = await root.context.containerRuntime.createDataStore(
+			dataStoreFactory.type,
+		);
 		const secondary = (await secondaryDataStore.entryPoint.get()) as ITestFluidObject;
 		secondary.root.set("stable", "unchanged");
 		root.root.set("secondary", secondary.handle);
 
 		const blobPayload = "materialized attachment content";
-		const blobHandle = await root.runtime.uploadBlob(
-			stringToBuffer(blobPayload, "utf8"),
-		);
+		const blobHandle = await root.runtime.uploadBlob(stringToBuffer(blobPayload, "utf8"));
 		root.root.set("blob", blobHandle);
 		root.root.set("beforeParent", "parent value");
 
@@ -175,8 +164,7 @@ describe("Snapshot-based full tree summary", () => {
 		const loadedSecondary = await loadedSecondaryHandle.get();
 		assert.equal(loadedSecondary.root.get("stable"), "unchanged");
 
-		const loadedBlobHandle =
-			loadedRoot.root.get<IFluidHandle<ArrayBufferLike>>("blob");
+		const loadedBlobHandle = loadedRoot.root.get<IFluidHandle<ArrayBufferLike>>("blob");
 		assert(loadedBlobHandle !== undefined, "Expected the attachment blob handle");
 		assert.equal(
 			Uint8ArrayToString(new Uint8Array(await loadedBlobHandle.get()), "utf8"),

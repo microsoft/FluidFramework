@@ -7,12 +7,9 @@ import { strict as assert } from "node:assert";
 
 import { stringToBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
 import type { IContainerStorageService } from "@fluidframework/container-definitions/internal";
-import type {
-	ISnapshotTree,
-	ISummaryTree,
-	SummaryObject,
-} from "@fluidframework/driver-definitions";
+import type { ISummaryTree, SummaryObject } from "@fluidframework/driver-definitions";
 import { SummaryType } from "@fluidframework/driver-definitions";
+import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 
 import {
 	fetchSnapshotForSummary,
@@ -81,11 +78,7 @@ describe("Full tree summary materialization", () => {
 			},
 		};
 
-		const result = await materializeSummary(
-			incrementalSummary,
-			parentSnapshot,
-			readBlob,
-		);
+		const result = await materializeSummary(incrementalSummary, parentSnapshot, readBlob);
 
 		assertNoHandles(result);
 		const tree = getSummaryObject(result, "tree", SummaryType.Tree);
