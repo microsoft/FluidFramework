@@ -4647,6 +4647,7 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: true,
 					explicitSchemaControl: true,
+					createBlobPayloadPending: true,
 					stagingModeAutoFlushThreshold: 1000,
 					disableSchemaUpgrade: false,
 				};
@@ -4659,6 +4660,50 @@ describe("Runtime", () => {
 						minVersionForCollab,
 					},
 				]);
+			});
+
+			it("createBlobPayloadPending: schema defaults on at 2.40.0+ but BlobManager behavior stays off unless explicitly requested", async () => {
+				const { runtime } = await ContainerRuntime.loadRuntime2({
+					context: getMockContext() as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
+					minVersionForCollab: pkgVersion,
+				});
+
+				// The document schema declaration defaults on (negotiable across the fleet)...
+				assert.strictEqual(
+					(runtime as unknown as { sessionSchema: { createBlobPayloadPending?: boolean } })
+						.sessionSchema.createBlobPayloadPending,
+					true,
+					"document schema should declare createBlobPayloadPending support by default at 2.40.0+",
+				);
+				// ...but BlobManager itself must not exercise the new behavior unless the caller explicitly asked for it.
+				assert.strictEqual(
+					(runtime as unknown as { blobManager: { createBlobPayloadPending: boolean } })
+						.blobManager.createBlobPayloadPending,
+					false,
+					"BlobManager should not use pending-payload behavior unless explicitly requested by the caller",
+				);
+			});
+
+			it("createBlobPayloadPending: BlobManager behavior turns on when explicitly requested", async () => {
+				const { runtime } = await ContainerRuntime.loadRuntime2({
+					context: getMockContext() as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					runtimeOptions: { createBlobPayloadPending: true, explicitSchemaControl: true },
+					provideEntryPoint: mockProvideEntryPoint,
+					minVersionForCollab: pkgVersion,
+				});
+
+				assert.strictEqual(
+					(runtime as unknown as { blobManager: { createBlobPayloadPending: boolean } })
+						.blobManager.createBlobPayloadPending,
+					true,
+					"BlobManager should use pending-payload behavior when explicitly requested",
+				);
 			});
 
 			for (const runtimeOption of [

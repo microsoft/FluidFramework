@@ -50,7 +50,7 @@ If a change affects the data format (see above), it should be gated by a **conta
 
 The runtime uses `minVersionForCollab` to automatically set certain container runtime options. This is handled by the `runtimeOptionsAffectingDocSchemaConfigMap` in [containerCompatibility.ts](./packages/runtime/container-runtime/src/containerCompatibility.ts).
 
-**Example:** If `minVersionForCollab` is set to `"2.0.0"`, then features such as grouped batching are safely enabled, since the lowest version we need to support collaboration with understands the associated data format changes. On the other hand, features such as `createBlobPayloadPending` remain disabled, as clients need to be running runtime version 2.40.0 or later to understand the associated data format changes.
+**Example:** If `minVersionForCollab` is set to `"2.0.0"`, then features such as grouped batching are safely enabled, since the lowest version we need to support collaboration with understands the associated data format changes. `createBlobPayloadPending` remains disabled at `"2.0.0"` and only defaults on once `minVersionForCollab` reaches `"2.40.0"`, since clients need to be running runtime version 2.40.0 or later to understand the associated data format changes.
 
 ```typescript
 // Simplified view of the config map (see containerCompatibility.ts for full details)
@@ -61,11 +61,13 @@ const runtimeOptionsAffectingDocSchemaConfigMap: ConfigMap<RuntimeOptionsAffecti
 	},
 	createBlobPayloadPending: {
 		"1.0.0": undefined,
-		// Could be enabled by default in a future version
+		"2.40.0": true,
 	},
 	// ... other options
 };
 ```
+
+> **Note on decoupling the schema declaration from client behavior:** For `createBlobPayloadPending`, the default above only controls what gets negotiated into the *document schema* - it does not, by itself, turn on the corresponding client behavior (in this case, `BlobManager`'s pending-payload upload path). `containerRuntime.ts` separately tracks whether the option was *explicitly* set by the caller (the same "explicit vs defaulted" idiom used for `enableRuntimeIdCompressor`), and only that explicit request drives the actual behavior change. This split exists because a document schema declaration is effectively permanent once other clients observe it in a document (undoing it would require excluding old documents or a slow compatibility window), whereas client-side behavior can be safely rolled forward or back with a simple package update.
 
 > **Note on `"2.0.0-defaults"`:** This is a special version string (considered less than `"2.0.0"` by `semver`) used as the default when a customer does not explicitly set `minVersionForCollab`. It exists to distinguish the unspecified case from an explicit `"2.0.0"` setting. Some options (e.g., `explicitSchemaControl`) use a threshold of `"2.0.0"` rather than `"2.0.0-defaults"`, meaning they only activate when the customer _explicitly_ sets `minVersionForCollab` to `"2.0.0"` or higher. See `defaultMinVersionForCollab` in [compatibilityBase.ts](./packages/runtime/runtime-utils/src/compatibilityBase.ts) for more information.
 

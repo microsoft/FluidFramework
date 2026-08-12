@@ -481,8 +481,18 @@ export interface ContainerRuntimeOptions {
 	readonly explicitSchemaControl: boolean;
 
 	/**
-	 * Create blob handles with pending payloads when calling createBlob (default is `undefined` (disabled)).
+	 * Create blob handles with pending payloads when calling createBlob (default is `undefined` (disabled), except
+	 * for the document schema declaration described below).
 	 * When enabled (`true`), createBlob will return a handle before the blob upload completes.
+	 *
+	 * @remarks
+	 * This option affects the document schema (i.e. it is negotiated across all clients collaborating on a
+	 * document), so once `minVersionForCollab` is 2.40.0 or later, the document schema will declare support for
+	 * this capability by default. However, actually exercising the new pending-payload behavior in `createBlob`
+	 * still requires this option to be explicitly set to `true` by the caller - the default value is never used
+	 * to turn on the behavior itself, only the document schema declaration. This split exists because a document
+	 * schema declaration is effectively permanent for a document once other clients observe it, whereas the
+	 * client-side behavior can be safely changed (including reverted) via a package update.
 	 */
 	readonly createBlobPayloadPending: true | undefined;
 
@@ -1063,6 +1073,18 @@ export class ContainerRuntime
 				? runtimeOptions.enableRuntimeIdCompressor
 				: defaultConfigs.enableRuntimeIdCompressor;
 
+		// `createBlobPayloadPending`'s default (from `defaultConfigs`, based on `minVersionForCollab`) only controls
+		// whether we declare/negotiate the pending-blob-payload capability in the document schema. It intentionally
+		// does NOT turn on the actual pending-payload behavior in BlobManager, since we want to stage the schema
+		// change and the client-side behavior change independently: schema changes are slow/sticky (once documents
+		// declare a capability, that can't be walked back), whereas behavior changes are cheap to roll out or roll
+		// back via a new package version. So we track whether the caller *explicitly* requested the behavior,
+		// and only that explicit request (not the defaulted value) is used to drive BlobManager's actual behavior
+		// below. See `createBlobPayloadPendingExplicitlyRequested` usage further down.
+		const createBlobPayloadPendingExplicitlyRequested =
+			"createBlobPayloadPending" in runtimeOptions &&
+			runtimeOptions.createBlobPayloadPending === true;
+
 		const tryFetchBlob = async <T>(blobName: string): Promise<T | undefined> => {
 			const blobId = context.baseSnapshot?.blobs[blobName];
 			if (context.baseSnapshot !== undefined && blobId !== undefined) {
@@ -1297,6 +1319,7 @@ export class ContainerRuntime
 			featureGatesForTelemetry,
 			provideEntryPoint,
 			updatedMinVersionForCollab,
+			createBlobPayloadPendingExplicitlyRequested,
 			requestHandler,
 			undefined, // summaryConfiguration
 			recentBatchInfo,
@@ -1656,6 +1679,10 @@ export class ContainerRuntime
 		featureGatesForTelemetry: Record<string, boolean | number | undefined>,
 		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
 		public readonly minVersionForCollab: MinimumVersionForCollab,
+		// Whether the caller explicitly requested `createBlobPayloadPending` behavior (as opposed to it merely
+		// being the defaulted value for the document schema declaration). See the comment where this is computed
+		// in `loadRuntime2` for why this is tracked separately from `runtimeOptions.createBlobPayloadPending`.
+		private readonly createBlobPayloadPendingExplicitlyRequested: boolean,
 		private readonly requestHandler?: (
 			request: IRequest,
 			runtime: IContainerRuntime,
@@ -2162,7 +2189,13 @@ export class ContainerRuntime
 			isBlobDeleted: (blobPath: string) => this.garbageCollector.isNodeDeleted(blobPath),
 			runtime: this,
 			pendingBlobs: pendingRuntimeState?.pendingAttachmentBlobs,
-			createBlobPayloadPending: this.sessionSchema.createBlobPayloadPending === true,
+			// The document schema must permit the pending-payload format (negotiated across clients), AND the
+			// caller of this session must have explicitly opted into the behavior. See the comment on
+			// `createBlobPayloadPendingExplicitlyRequested` for why the defaulted schema value alone is not
+			// sufficient to turn on this behavior.
+			createBlobPayloadPending:
+				this.sessionSchema.createBlobPayloadPending === true &&
+				this.createBlobPayloadPendingExplicitlyRequested,
 		});
 
 		this.deltaScheduler = new DeltaScheduler(

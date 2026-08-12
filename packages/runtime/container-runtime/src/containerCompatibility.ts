@@ -157,10 +157,15 @@ const runtimeOptionsAffectingDocSchemaConfigMap: ConfigMap<RuntimeOptionsAffecti
 			// "3.0.0": { enableGCSweep: true },
 		},
 		createBlobPayloadPending: {
-			// This feature is new and disabled by default. In the future we will enable it by default, but we have not
-			// closed on the version where that will happen yet.  Probably a .10 release since blob functionality is not
-			// exposed on the `@public` API surface.
+			// NOTE: This default only controls what gets declared/negotiated in the document schema (i.e. whether
+			// documents record that clients here understand the pending-blob-payload format). It does NOT turn on
+			// the actual pending-payload behavior in BlobManager - that remains opt-in (see the "explicit vs
+			// defaulted" handling in containerRuntime.ts) until we have higher confidence in the client-side
+			// behavior. Pre-enabling the schema declaration now means documents will already be schema-compatible
+			// by the time we're ready to flip the behavior default too, which then becomes a simple code change
+			// rather than requiring a slow, fleet-wide document schema migration.
 			"1.0.0": undefined,
+			"2.40.0": true,
 		},
 	};
 
