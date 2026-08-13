@@ -4,32 +4,20 @@
  */
 
 import { createRequire } from "node:module";
-import { defineConfig, devices } from "@playwright/test";
+import { defineConfig } from "@playwright/test";
 import { getTestPort } from "@fluidframework/test-tools";
+import { baseConfig } from "../playwright.config.base.js";
 
 const { name } = createRequire(import.meta.url)("./package.json") as { name: string };
 const testPort = getTestPort(name);
 const baseURL = `http://localhost:${testPort}`;
 
-export default defineConfig({
-	testDir: "tests",
+export default defineConfig(baseConfig, {
 	// These tests start their own services on fixed ports (e.g. 5236), so they cannot run
 	// in parallel without colliding on EADDRINUSE. Run sequentially in a single worker.
 	fullyParallel: false,
 	workers: 1,
-	forbidOnly: !!process.env.CI,
-	retries: 0,
-	timeout: 60_000,
-	outputDir: "nyc/test-results",
-	reporter: [["list"], ["junit", { outputFile: "nyc/junit-report.xml" }]],
-	use: {
-		baseURL,
-		headless: true,
-		launchOptions: {
-			args: ["--no-sandbox", "--disable-setuid-sandbox"],
-		},
-	},
-	projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+	use: { baseURL },
 	webServer: {
 		command: `npm run start:client:test -- --port ${testPort}`,
 		url: baseURL,

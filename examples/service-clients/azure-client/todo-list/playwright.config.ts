@@ -4,29 +4,18 @@
  */
 
 import { createRequire } from "node:module";
-import { defineConfig, devices } from "@playwright/test";
+import { defineConfig } from "@playwright/test";
 import { getTestPort } from "@fluidframework/test-tools";
+import { baseConfig } from "../../../playwright.config.base.js";
 
 const { name } = createRequire(import.meta.url)("./package.json") as { name: string };
 const testPort = getTestPort(name);
 const baseURL = `http://localhost:${testPort}`;
 
-export default defineConfig({
+export default defineConfig(baseConfig, {
 	testDir: "test",
 	testMatch: /.*\.spec\.ts$/,
-	forbidOnly: !!process.env.CI,
-	retries: 0,
-	timeout: 60_000,
-	outputDir: "nyc/test-results",
-	reporter: [["list"], ["junit", { outputFile: "nyc/junit-report.xml" }]],
-	use: {
-		baseURL,
-		headless: true,
-		launchOptions: {
-			args: ["--no-sandbox", "--disable-setuid-sandbox"],
-		},
-	},
-	projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+	use: { baseURL },
 	webServer: {
 		command: `npm run start:client:test -- --no-hot --no-live-reload --port ${testPort}`,
 		url: baseURL,
