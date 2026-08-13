@@ -112,7 +112,7 @@ extends:
     shouldPublishNpmPackages: ${{ variables.publish }}
     releaseKind: both
     publishOverride: ${{ parameters.publishOverride }}
-    publishAsPartOfBuild: true
+    publishAsPartOfBuild: false
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     interdependencyRange: ${{ parameters.interdependencyRange }}
     buildDirectory: ${{ variables.FluidFrameworkDirectory }}/server/routerlicious
