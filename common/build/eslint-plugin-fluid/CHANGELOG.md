@@ -1,6 +1,8 @@
 # @fluidframework/eslint-plugin-fluid Changelog
 
-## [0.4.2](https://github.com/microsoft/FluidFramework/releases/tag/eslint-plugin-fluid_v0.4.2)
+## [0.5.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-plugin-fluid_v0.5.0)
+
+Updates plugin to support TypeScript 6.
 
 The `@fluid-internal/fluid/no-file-path-links-in-jsdoc` rule has been updated to allow file path links in `@privateRemarks` comment blocks, where they won't cause problems for generated API docs.
 

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/sequence",
-	"version": "2.114.0",
+	"version": "2.116.0",
 	"description": "Distributed sequence",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -165,7 +165,7 @@
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
-		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.112.0",
+		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.114.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.58.1",
 		"@types/diff": "^3.5.1",
@@ -185,6 +185,9 @@
 		"rimraf": "^6.1.3",
 		"typescript": "~5.4.5"
 	},
+	"comments": [
+		"Sequence test builds and eslint depend on the corresponding Merge Tree test builds because Sequence tests import @fluidframework/merge-tree/internal/test, which resolves to generated test output."
+	],
 	"fluidBuild": {
 		"tasks": {
 			"build:test:cjs": [
@@ -192,6 +195,10 @@
 				"@fluidframework/merge-tree#build:test:cjs"
 			],
 			"build:test:esm": [
+				"...",
+				"@fluidframework/merge-tree#build:test:esm"
+			],
+			"eslint": [
 				"...",
 				"@fluidframework/merge-tree#build:test:esm"
 			]

@@ -2,7 +2,7 @@
 {
 	"name": "AI-enabled (Unstable)",
 	// Bump this version to force a codespace prebuild rebuild. See .devcontainer/README.md.
-	// prebuild-version: 1.0.4
+	// prebuild-version: 1.0.8
 	"build": {
 		"dockerfile": "../Dockerfile",
 		"args": {
@@ -35,7 +35,7 @@
 			}
 		},
 		"codespaces": {
-			"openFiles": [".devcontainer/ai-agent-insiders/GETTING_STARTED.md"]
+			"openFiles": [".devcontainer/ai-agent/GETTING_STARTED.md"]
 		}
 	},
 	"containerEnv": {

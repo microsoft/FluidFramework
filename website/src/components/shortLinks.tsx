@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { useDoc } from "@docusaurus/plugin-content-docs/client";
+import {
+	type GlobalDoc,
+	useActivePluginAndVersion,
+	useDoc,
+} from "@docusaurus/plugin-content-docs/client";
 import type { ApiItemKind } from "@fluid-tools/api-markdown-documenter";
 import type { ReactNode } from "react";
 
@@ -42,8 +46,15 @@ export interface ApiLinkProps {
 	children?: ReactNode;
 	packageName: string;
 	apiName: string;
-	// TODO: do we have enough context to determine this automatically when unambiguous?
-	apiType: ApiItemKind;
+	/**
+	 * The kind of API item to link to.
+	 *
+	 * @remarks
+	 * May be omitted when the package exports only one API item with the specified name.
+	 *
+	 * {@link ApiLink} will throw an error if this is omitted and multiple API item kinds with the specified name are exported by the package.
+	 */
+	apiType?: ApiItemKind;
 
 	/**
 	 * (Optional) heading ID on the target page to link to.
@@ -62,6 +73,19 @@ export interface ApiLinkProps {
 
 /**
  * A convenient mechanism for linking to the API documentation for a specified API item.
+ *
+ * @throws
+ * If {@link ApiLinkProps.apiType} is omitted and multiple API item kinds with the specified name are exported by the package.
+ *
+ * @privateRemarks
+ * TODOs:
+ * - Allow version overrides for cases where a user wants to link to a different version than the current one.
+ * - Allow linking to API items that are rendered to their parent item's page. (Currently this is done via page headings.)
+ * - Allow linking to child members of namespaces, classes, interfaces, etc. (Currently this is done via page headings,
+ * but it would be better to consume aspects of the API docs config and automatically derive the right path to link to
+ * any kind of API item, regardless of whether or not it is configured to render to its own page or its parents.
+ * Additionally, there is currently no way to link items are rendered in sub-directories of their parent item, e.g.
+ * children of namespaces.)
  */
 export function ApiLink({
 	apiName,
@@ -70,12 +94,74 @@ export function ApiLink({
 	headingId,
 	children,
 }: ApiLinkProps): JSX.Element {
-	const root = useLinkPathBase();
+	const activePluginAndVersion = useActivePluginAndVersion();
+	const activeVersion = activePluginAndVersion?.activeVersion;
+	if (activeVersion === undefined) {
+		throw new Error("ApiLink must be rendered within a versioned Docusaurus document.");
+	}
+
+	const apiDocument = resolveApiDocument(activeVersion.docs, packageName, apiName, apiType);
 	const headingPostfix = headingId === undefined ? "" : `#${headingId}`;
-	// `api-documenter` generates all lowercase entries for API item names and types.
-	// Convert input names and types to lowercase to match.
-	const path = `${root}${packageName}/${apiName.toLocaleLowerCase()}-${apiType.toLocaleLowerCase()}${headingPostfix}`;
-	return <a href={path}>{children ?? apiName}</a>;
+	return <a href={`${apiDocument.path}${headingPostfix}`}>{children ?? apiName}</a>;
+}
+
+/**
+ * Resolves the Docusaurus document for an API item in a particular documentation version.
+ *
+ * @param documents - All documents registered for the active Docusaurus documentation version.
+ * @param packageName - The unscoped package name used as the package directory in the generated API docs.
+ * @param apiName - The exported API item name.
+ * @param apiType - The API item kind. When omitted, the name must identify exactly one document in the package.
+ * @returns The matching Docusaurus document, whose path includes the active documentation version.
+ *
+ * @throws If no document matches the package, name, and optional API item kind.
+ * @throws If {@link apiType} is omitted and the package contains multiple API item kinds with the same name.
+ *
+ * @remarks
+ * API Markdown document IDs follow the pattern `api/<package>/<lowercase-name>-<lowercase-kind>`.
+ * Resolution uses document IDs rather than paths because IDs are stable across documentation versions, while
+ * Docusaurus supplies the correctly versioned path on the returned document.
+ */
+function resolveApiDocument(
+	documents: GlobalDoc[],
+	packageName: string,
+	apiName: string,
+	apiType: ApiItemKind | undefined,
+): GlobalDoc {
+	const documentIdPrefix = `api/${packageName}/${apiName.toLowerCase()}-`;
+	const candidates = documents.filter(
+		(document) =>
+			document.id.startsWith(documentIdPrefix) &&
+			// Exclude descendants of folders (e.g. for namespaces) whose qualified name shares this prefix.
+			!document.id.slice(documentIdPrefix.length).includes("/"),
+	);
+
+	if (apiType !== undefined) {
+		const documentId = `${documentIdPrefix}${apiType.toLocaleLowerCase()}`;
+		const match = candidates.find((document) => document.id === documentId);
+		if (match !== undefined) {
+			return match;
+		}
+		throw new Error(
+			`No API documentation found for "${packageName}/${apiName}" with type "${apiType}".`,
+		);
+	}
+
+	const firstCandidate = candidates[0];
+	if (firstCandidate === undefined) {
+		throw new Error(`No API documentation found for "${packageName}/${apiName}".`);
+	}
+	if (candidates.length === 1) {
+		return firstCandidate;
+	}
+
+	const candidateTypes = candidates
+		// The portion after the qualified-name prefix is the lowercase API item kind.
+		.map((document) => document.id.slice(documentIdPrefix.length))
+		.join(", ");
+	throw new Error(
+		`Multiple API documents found for "${packageName}/${apiName}" (${candidateTypes}). Specify \`apiType\` to disambiguate the link.`,
+	);
 }
 
 /**

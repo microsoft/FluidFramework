@@ -157,6 +157,7 @@ module.exports = {
 		},
 		"build:entrypoints:esm": ["build:esnext"],
 		"build:entrypoints:cjs": ["tsc"],
+		"build:entrypoints:node10": [],
 		// Generic build:test script should be replaced by :esm or :cjs specific versions.
 		// "tsc" would be nice to eliminate from here, but plenty of packages still focus
 		// on CommonJS.

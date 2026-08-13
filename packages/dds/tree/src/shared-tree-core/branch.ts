@@ -86,6 +86,7 @@ export interface SharedTreeBranchEvents<
 
 	/**
 	 * Fired when a commit is ordered by the sequencing service.
+	 * @param commit - The commit that was sequenced
 	 *
 	 * @remarks
 	 * Once a commit is sequenced, the following guarantees hold:
