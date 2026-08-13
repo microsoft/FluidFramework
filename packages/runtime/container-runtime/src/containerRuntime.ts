@@ -807,8 +807,8 @@ export interface LoadContainerRuntimeParams {
 	 * Oldest version of Fluid Framework client that must be able to open and process documents
 	 * written by this container runtime.
 	 * @remarks
-	 * The input should be a string that represents the oldest version of the FF runtime that should
-	 * be supported for document access. The format of the string must be in valid semver format.
+	 * Choosing an older version may limit the features and write formats the application can use to
+	 * those supported by that version. The value must be valid SemVer.
 	 *
 	 * The inputted version will be used to determine the default configuration for
 	 * {@link IContainerRuntimeOptionsInternal} to ensure compatibility with the specified version.
@@ -831,6 +831,8 @@ export interface LoadContainerRuntimeParams {
 	 * written by this container runtime.
 	 *
 	 * @remarks
+	 * See {@link LoadContainerRuntimeParams.oldestSupportedClient} for compatibility implications.
+	 *
 	 * Specifying both `oldestSupportedClient` and `minVersionForCollab` is an error.
 	 *
 	 * @deprecated 2.116.0. To be removed in 3.10.0. Use

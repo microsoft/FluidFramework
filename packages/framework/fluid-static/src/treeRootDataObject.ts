@@ -212,6 +212,10 @@ export function createTreeContainerRuntimeFactory(props: {
 	/**
 	 * Oldest Fluid Framework client version that must be able to open and process documents written
 	 * by this runtime.
+	 *
+	 * @remarks
+	 * Choosing an older version may limit the features and write formats the application can use to
+	 * those supported by that version.
 	 */
 	readonly oldestSupportedClient: OldestSupportedClientVersion;
 	/**

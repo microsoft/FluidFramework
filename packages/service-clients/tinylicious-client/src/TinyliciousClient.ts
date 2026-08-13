@@ -76,7 +76,8 @@ export class TinyliciousClient {
 	 * Creates a new detached container instance in Tinylicious server.
 	 * @param containerSchema - Container schema for the new container.
 	 * @param oldestSupportedClient - Oldest Fluid Framework client version that must be able to
-	 * open and process documents written by this client.
+	 * open and process documents written by this client. Choosing an older version may limit
+	 * available features and write formats.
 	 * @returns New detached container instance along with associated services.
 	 */
 	public async createContainer<TContainerSchema extends ContainerSchema>(
@@ -155,7 +156,8 @@ export class TinyliciousClient {
 	 * @param id - Unique ID of the container.
 	 * @param containerSchema - Container schema used to access data objects in the container.
 	 * @param oldestSupportedClient - Oldest Fluid Framework client version that must be able to
-	 * open and process documents written by this client.
+	 * open and process documents written by this client. Choosing an older version may limit
+	 * available features and write formats.
 	 * @returns Existing container instance along with associated services.
 	 */
 	public async getContainer<TContainerSchema extends ContainerSchema>(

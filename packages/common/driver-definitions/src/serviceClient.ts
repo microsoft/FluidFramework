@@ -122,12 +122,13 @@ export function createBasicRegistryKey<T>(type: string): RegistryKey<T, T> {
  * @remarks
  * A string in SemVer format indicating a specific version of the Fluid Framework client package, or the special case of {@link @fluidframework/runtime-utils#defaultMinVersionForCollab}.
  *
- * Service clients use this value to select write formats and features supported by clients using
- * this version or newer.
+ * Service clients use this value to select write formats and features. Clients using this version
+ * or newer must be able to open and process documents written by the service client. Choosing an
+ * older version may limit the features and write formats the application can use to those
+ * supported by that version.
  *
  * Cannot exceed the version of any Fluid Framework client package in use by the local client.
  *
- * The higher the version specified, the more features and optimizations will be enabled. *
  * @privateRemarks
  * This is similar to, and a subset of, the `OldestSupportedClientVersion` type in `@fluidframework/runtime-definitions`.
  * This differs in that:
@@ -181,6 +182,9 @@ export interface ServiceOptions {
 	 * by the service client.
 	 *
 	 * @remarks
+	 * Choosing an older version may limit the features and write formats the application can use to
+	 * those supported by that version.
+	 *
 	 * A service may provide a default when this option is omitted.
 	 */
 	readonly oldestSupportedClient?: OldestSupportedServiceClientVersion;

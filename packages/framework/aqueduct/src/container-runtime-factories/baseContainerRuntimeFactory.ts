@@ -68,6 +68,9 @@ export interface BaseContainerRuntimeFactoryProps {
 	 * Oldest version of Fluid Framework client that must be able to open and process documents
 	 * written by this container runtime.
 	 * @remarks
+	 * Choosing an older version may limit the features and write formats the application can use to
+	 * those supported by that version.
+	 *
 	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.oldestSupportedClient} for more details on this property.
 	 */
 	oldestSupportedClient?: OldestSupportedClientVersion | undefined;
@@ -77,6 +80,8 @@ export interface BaseContainerRuntimeFactoryProps {
 	 * written by this container runtime.
 	 *
 	 * @remarks
+	 * See {@link BaseContainerRuntimeFactoryProps.oldestSupportedClient} for compatibility implications.
+	 *
 	 * Specifying both `oldestSupportedClient` and `minVersionForCollab` is an error.
 	 *
 	 * @deprecated 2.116.0. To be removed in 3.10.0. Use
