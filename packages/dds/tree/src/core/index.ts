@@ -50,6 +50,7 @@ export {
 	visitDelta,
 	createAnnouncedVisitor,
 	combineVisitors,
+	makeBreakingVisitor,
 	announceDelta,
 	applyDelta,
 	makeDetachedFieldIndex,

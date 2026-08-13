@@ -98,6 +98,7 @@ export {
 	applyDelta,
 	createAnnouncedVisitor,
 	combineVisitors,
+	makeBreakingVisitor,
 	makeDetachedFieldIndex,
 } from "./visitorUtils.js";
 

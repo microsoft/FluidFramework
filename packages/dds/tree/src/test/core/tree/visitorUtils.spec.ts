@@ -10,8 +10,9 @@ import {
 	type DeltaVisitor,
 	type FieldKey,
 	combineVisitors,
+	makeBreakingVisitor,
 } from "../../../core/index.js";
-import { brand } from "../../../util/index.js";
+import { Breakable, brand } from "../../../util/index.js";
 
 class LoggingVisitor implements DeltaVisitor {
 	public readonly name: string;
@@ -137,9 +138,10 @@ describe("combineVisitors", () => {
 	});
 	it("combines CombinedVisitor instances in a way that preserves before/after ordering", () => {
 		const actual: string[] = [];
+		const breaker = new Breakable("visitor scope");
 		const combined = combineVisitors([
 			combineVisitors([new LoggingAnnouncedVisitor("av1", actual)]),
-			new LoggingVisitor("v", actual),
+			makeBreakingVisitor(new LoggingVisitor("v", actual), breaker),
 			combineVisitors([new LoggingAnnouncedVisitor("av2", actual)]),
 		]);
 		combined.detach({ start: 0, end: 1 }, fieldKey, { minor: 42 }, false);
