@@ -9,12 +9,13 @@ import { toPropTreeNode, createUndoRedo, type UndoRedo } from "@fluidframework/r
 import { TreeViewConfiguration } from "@fluidframework/tree";
 import { TreeAlpha, type TreeViewAlpha } from "@fluidframework/tree/alpha";
 import {
-	FormattedTextAsTreeDefault,
+	FormattedTextDefault,
 	independentView,
-	TextAsTree,
+	PlainText,
 } from "@fluidframework/tree/internal";
 import { render } from "@testing-library/react";
 import globalJsdom from "global-jsdom";
+import Quill from "quill";
 import DeltaPackage from "quill-delta";
 
 import {
@@ -38,17 +39,17 @@ const Delta = DeltaPackage.default;
 
 // Configuration for creating formatted text views
 const formattedTreeConfig = new TreeViewConfiguration({
-	schema: FormattedTextAsTreeDefault.Tree,
+	schema: FormattedTextDefault.Tree,
 });
 
 /**
  * Creates a TreeView for formatted text, initialized with the provided initial value.
  */
 function createFormattedTreeView(initialValue = ""): {
-	tree: FormattedTextAsTreeDefault.Tree;
+	tree: FormattedTextDefault.Tree;
 } {
 	const treeView = independentView(formattedTreeConfig);
-	treeView.initialize(FormattedTextAsTreeDefault.Tree.fromString(initialValue));
+	treeView.initialize(FormattedTextDefault.Tree.fromString(initialValue));
 	return { tree: treeView.root };
 }
 
@@ -57,9 +58,9 @@ function createFormattedTreeView(initialValue = ""): {
  */
 function createFormattedTreeViewWithEvents(
 	initialValue = "",
-): TreeViewAlpha<typeof FormattedTextAsTreeDefault.Tree> {
+): TreeViewAlpha<typeof FormattedTextDefault.Tree> {
 	const treeView = independentView(formattedTreeConfig);
-	treeView.initialize(FormattedTextAsTreeDefault.Tree.fromString(initialValue));
+	treeView.initialize(FormattedTextDefault.Tree.fromString(initialValue));
 	return treeView;
 }
 
@@ -90,8 +91,47 @@ describe("textEditor", () => {
 				describe(`StrictMode: ${reactStrictMode}`, () => {
 					const ViewComponent = QuillMainView;
 
+					it("keeps remote editor DOM in sync after a user edit", () => {
+						const text = PlainText.Tree.fromString("");
+						const root = toPropTreeNode(text);
+						const rendered = render(
+							<>
+								<ViewComponent root={root} />
+								<ViewComponent root={root} />
+							</>,
+							{ reactStrictMode },
+						);
+						const sourceContainer =
+							rendered.container.querySelector<HTMLElement>(".ql-container");
+						const editors = rendered.container.querySelectorAll<HTMLElement>(".ql-editor");
+						const sourceEditor = editors[0];
+						const remoteEditor = editors[1];
+						assert.ok(
+							sourceContainer !== null &&
+								sourceEditor !== undefined &&
+								remoteEditor !== undefined,
+						);
+						const source = Quill.find(sourceContainer) as Quill;
+
+						source.setText("Hello", "user");
+
+						assert.equal(sourceEditor.innerHTML, "<p>Hello</p>");
+						// Check that the editors have the same content: they should be kept in sync
+						assert.equal(remoteEditor.innerHTML, sourceEditor.innerHTML);
+
+						source.setText("Hello\nWorld", "user");
+
+						// Check the edit did not cause the views to de-sync.
+						assert.equal(sourceEditor.innerHTML, "<p>Hello</p><p>World</p>");
+						assert.equal(remoteEditor.innerHTML, sourceEditor.innerHTML);
+
+						// Check a trailing new line also does not cause de-sync.
+						source.setText("Hello\nWorld\n", "user");
+						assert.equal(remoteEditor.innerHTML, sourceEditor.innerHTML);
+					});
+
 					it("renders MainView with editor container", () => {
-						const text = TextAsTree.Tree.fromString("");
+						const text = PlainText.Tree.fromString("");
 						const content = <ViewComponent root={toPropTreeNode(text)} />;
 						const rendered = render(content, { reactStrictMode });
 
@@ -102,7 +142,7 @@ describe("textEditor", () => {
 					});
 
 					it("renders MainView with initial text content", () => {
-						const text = TextAsTree.Tree.fromString("Hello World");
+						const text = PlainText.Tree.fromString("Hello World");
 						const content = <ViewComponent root={toPropTreeNode(text)} />;
 						const rendered = render(content, { reactStrictMode });
 
@@ -110,7 +150,7 @@ describe("textEditor", () => {
 					});
 
 					it("invalidates view when tree is mutated", () => {
-						const text = TextAsTree.Tree.fromString("Hello");
+						const text = PlainText.Tree.fromString("Hello");
 						const content = <ViewComponent root={toPropTreeNode(text)} />;
 						const rendered = render(content, { reactStrictMode });
 
@@ -123,7 +163,7 @@ describe("textEditor", () => {
 					});
 
 					it("invalidates view when text is removed", () => {
-						const text = TextAsTree.Tree.fromString("Hello World");
+						const text = PlainText.Tree.fromString("Hello World");
 						const content = <ViewComponent root={toPropTreeNode(text)} />;
 						const rendered = render(content, { reactStrictMode });
 
@@ -138,7 +178,7 @@ describe("textEditor", () => {
 					});
 
 					it("invalidates view when text is cleared and replaced", () => {
-						const text = TextAsTree.Tree.fromString("Original");
+						const text = PlainText.Tree.fromString("Original");
 						const content = <ViewComponent root={toPropTreeNode(text)} />;
 						const rendered = render(content, { reactStrictMode });
 
@@ -161,7 +201,7 @@ describe("textEditor", () => {
 
 					it("renders MainView with surrogate pair characters", () => {
 						// 😀 is a surrogate pair: "😀".length === 2, but [..."😀"].length === 1
-						const text = TextAsTree.Tree.fromString("Hello 😀 World");
+						const text = PlainText.Tree.fromString("Hello 😀 World");
 						const content = <ViewComponent root={toPropTreeNode(text)} />;
 						const rendered = render(content, { reactStrictMode });
 
@@ -169,7 +209,7 @@ describe("textEditor", () => {
 					});
 
 					it("inserts text after surrogate pair characters", () => {
-						const text = TextAsTree.Tree.fromString("A😀B");
+						const text = PlainText.Tree.fromString("A😀B");
 						const content = <ViewComponent root={toPropTreeNode(text)} />;
 						const rendered = render(content, { reactStrictMode });
 
@@ -181,7 +221,7 @@ describe("textEditor", () => {
 					});
 
 					it("removes surrogate pair characters", () => {
-						const text = TextAsTree.Tree.fromString("A😀B");
+						const text = PlainText.Tree.fromString("A😀B");
 						const content = <ViewComponent root={toPropTreeNode(text)} />;
 						const rendered = render(content, { reactStrictMode });
 
@@ -195,7 +235,7 @@ describe("textEditor", () => {
 					});
 
 					it("handles multiple surrogate pair characters", () => {
-						const text = TextAsTree.Tree.fromString("👋🌍🎉");
+						const text = PlainText.Tree.fromString("👋🌍🎉");
 						const content = <ViewComponent root={toPropTreeNode(text)} />;
 						const rendered = render(content, { reactStrictMode });
 
@@ -215,7 +255,7 @@ describe("textEditor", () => {
 			for (const reactStrictMode of [false, true]) {
 				describe(`StrictMode: ${reactStrictMode}`, () => {
 					it("undo and redo buttons are disabled when undoRedo is not provided", () => {
-						const text = TextAsTree.Tree.fromString("");
+						const text = PlainText.Tree.fromString("");
 						const rendered = render(<QuillMainView root={toPropTreeNode(text)} />, {
 							reactStrictMode,
 						});
@@ -235,7 +275,7 @@ describe("textEditor", () => {
 							dispose: () => {},
 						};
 
-						const text = TextAsTree.Tree.fromString("");
+						const text = PlainText.Tree.fromString("");
 						const rendered = render(
 							<QuillMainView
 								root={toPropTreeNode(text)}
@@ -260,6 +300,46 @@ describe("textEditor", () => {
 		describe("dom tests", () => {
 			for (const reactStrictMode of [false, true]) {
 				describe(`StrictMode: ${reactStrictMode}`, () => {
+					it("keeps remote editor DOM in sync after a user edit", () => {
+						const { tree } = createFormattedTreeView();
+						const root = toPropTreeNode(tree);
+						const rendered = render(
+							<>
+								<FormattedMainView root={root} />
+								<FormattedMainView root={root} />
+							</>,
+							{ reactStrictMode },
+						);
+						const sourceContainer =
+							rendered.container.querySelector<HTMLElement>(".ql-container");
+						const editors = rendered.container.querySelectorAll<HTMLElement>(".ql-editor");
+						const sourceEditor = editors[0];
+						const remoteEditor = editors[1];
+						assert.ok(
+							sourceContainer !== null &&
+								sourceEditor !== undefined &&
+								remoteEditor !== undefined,
+						);
+						const source = Quill.find(sourceContainer) as Quill;
+
+						source.setText("Hello", "user");
+
+						assert.equal(sourceEditor.innerHTML, "<p>Hello</p>");
+						// Check that the editors have the same content: they should be kept in sync
+						assert.equal(remoteEditor.innerHTML, sourceEditor.innerHTML);
+
+						// Do a formatting operation that adds a line atom to the end of the string.
+						// This hits an edge case in the Quill integration because Quill requires a trailing newline,
+						// so our integration replaces its synthetic newline with the real line atom added by this change.
+						source.formatLine(0, source.getLength(), "list", "bullet", "user");
+						// Check that the above format operation added the expected list item.
+						assert.match(sourceEditor.innerHTML, /^<ol>/);
+
+						// Check that the editors have the same content, ensuring they didn't get out of sync.
+						// This validates, among other things, that the fix for handling of the trailing new line doesn't regress.
+						assert.equal(remoteEditor.innerHTML, sourceEditor.innerHTML);
+					});
+
 					it("renders FormattedMainView with editor container", () => {
 						const { tree } = createFormattedTreeView();
 						const content = <FormattedMainView root={toPropTreeNode(tree)} />;
@@ -384,8 +464,8 @@ describe("textEditor", () => {
 		});
 
 		// Helper to create default format
-		function createPlainFormat(): FormattedTextAsTreeDefault.CharacterFormat {
-			return new FormattedTextAsTreeDefault.CharacterFormat({
+		function createPlainFormat(): FormattedTextDefault.CharacterFormat {
+			return new FormattedTextDefault.CharacterFormat({
 				bold: false,
 				italic: false,
 				underline: false,
@@ -418,14 +498,13 @@ describe("textEditor", () => {
 
 							assert.ok(!rendered.container.querySelector("strong"), "Initially: no <strong>");
 
-							text.defaultFormat = new FormattedTextAsTreeDefault.CharacterFormat({
+							text.insertAt(2, "BOLD", {
 								bold: true,
 								italic: false,
 								underline: false,
 								size: 12,
 								font: "Arial",
 							});
-							text.insertAt(2, "BOLD");
 
 							rendered.rerender(content);
 							const el = rendered.container.querySelector("strong");
@@ -435,16 +514,14 @@ describe("textEditor", () => {
 
 						it("deletes bold text and removes <strong> tag", () => {
 							const { tree: text } = createFormattedTreeView();
-							text.defaultFormat = new FormattedTextAsTreeDefault.CharacterFormat({
+							text.insertAt(0, "BOLD", {
 								bold: true,
 								italic: false,
 								underline: false,
 								size: 12,
 								font: "Arial",
 							});
-							text.insertAt(0, "BOLD");
-							text.defaultFormat = createPlainFormat();
-							text.insertAt(4, "plain");
+							text.insertAt(4, "plain", createPlainFormat());
 
 							const content = <FormattedMainView root={toPropTreeNode(text)} />;
 							const rendered = render(content, { reactStrictMode });
@@ -482,14 +559,13 @@ describe("textEditor", () => {
 
 							assert.ok(!rendered.container.querySelector("em"), "Initially: no <em>");
 
-							text.defaultFormat = new FormattedTextAsTreeDefault.CharacterFormat({
+							text.insertAt(2, "ITAL", {
 								bold: false,
 								italic: true,
 								underline: false,
 								size: 12,
 								font: "Arial",
 							});
-							text.insertAt(2, "ITAL");
 
 							rendered.rerender(content);
 							const el = rendered.container.querySelector("em");
@@ -499,16 +575,14 @@ describe("textEditor", () => {
 
 						it("deletes italic text and removes <em> tag", () => {
 							const { tree: text } = createFormattedTreeView();
-							text.defaultFormat = new FormattedTextAsTreeDefault.CharacterFormat({
+							text.insertAt(0, "ITAL", {
 								bold: false,
 								italic: true,
 								underline: false,
 								size: 12,
 								font: "Arial",
 							});
-							text.insertAt(0, "ITAL");
-							text.defaultFormat = createPlainFormat();
-							text.insertAt(4, "plain");
+							text.insertAt(4, "plain", createPlainFormat());
 
 							const content = <FormattedMainView root={toPropTreeNode(text)} />;
 							const rendered = render(content, { reactStrictMode });
@@ -543,14 +617,13 @@ describe("textEditor", () => {
 
 							assert.ok(!rendered.container.querySelector("u"), "Initially: no <u>");
 
-							text.defaultFormat = new FormattedTextAsTreeDefault.CharacterFormat({
+							text.insertAt(2, "UNDER", {
 								bold: false,
 								italic: false,
 								underline: true,
 								size: 12,
 								font: "Arial",
 							});
-							text.insertAt(2, "UNDER");
 
 							rendered.rerender(content);
 							const el = rendered.container.querySelector("u");
@@ -560,16 +633,14 @@ describe("textEditor", () => {
 
 						it("deletes underlined text and removes <u> tag", () => {
 							const { tree: text } = createFormattedTreeView();
-							text.defaultFormat = new FormattedTextAsTreeDefault.CharacterFormat({
+							text.insertAt(0, "UNDER", {
 								bold: false,
 								italic: false,
 								underline: true,
 								size: 12,
 								font: "Arial",
 							});
-							text.insertAt(0, "UNDER");
-							text.defaultFormat = createPlainFormat();
-							text.insertAt(5, "plain");
+							text.insertAt(5, "plain", createPlainFormat());
 
 							const content = <FormattedMainView root={toPropTreeNode(text)} />;
 							const rendered = render(content, { reactStrictMode });
@@ -607,14 +678,13 @@ describe("textEditor", () => {
 								"Initially: no .ql-size-huge",
 							);
 
-							text.defaultFormat = new FormattedTextAsTreeDefault.CharacterFormat({
+							text.insertAt(2, "HUGE", {
 								bold: false,
 								italic: false,
 								underline: false,
 								size: 24,
 								font: "Arial",
 							});
-							text.insertAt(2, "HUGE");
 
 							rendered.rerender(content);
 							const el = rendered.container.querySelector(".ql-size-huge");
@@ -624,16 +694,14 @@ describe("textEditor", () => {
 
 						it("deletes huge size text and removes .ql-size-huge", () => {
 							const { tree: text } = createFormattedTreeView();
-							text.defaultFormat = new FormattedTextAsTreeDefault.CharacterFormat({
+							text.insertAt(0, "HUGE", {
 								bold: false,
 								italic: false,
 								underline: false,
 								size: 24,
 								font: "Arial",
 							});
-							text.insertAt(0, "HUGE");
-							text.defaultFormat = createPlainFormat();
-							text.insertAt(4, "plain");
+							text.insertAt(4, "plain", createPlainFormat());
 
 							const content = <FormattedMainView root={toPropTreeNode(text)} />;
 							const rendered = render(content, { reactStrictMode });
@@ -677,14 +745,13 @@ describe("textEditor", () => {
 								"Initially: no .ql-font-monospace",
 							);
 
-							text.defaultFormat = new FormattedTextAsTreeDefault.CharacterFormat({
+							text.insertAt(2, "MONO", {
 								bold: false,
 								italic: false,
 								underline: false,
 								size: 12,
 								font: "monospace",
 							});
-							text.insertAt(2, "MONO");
 
 							rendered.rerender(content);
 							const el = rendered.container.querySelector(".ql-font-monospace");
@@ -694,16 +761,14 @@ describe("textEditor", () => {
 
 						it("deletes monospace font text and removes .ql-font-monospace", () => {
 							const { tree: text } = createFormattedTreeView();
-							text.defaultFormat = new FormattedTextAsTreeDefault.CharacterFormat({
+							text.insertAt(0, "MONO", {
 								bold: false,
 								italic: false,
 								underline: false,
 								size: 12,
 								font: "monospace",
 							});
-							text.insertAt(0, "MONO");
-							text.defaultFormat = createPlainFormat();
-							text.insertAt(4, "plain");
+							text.insertAt(4, "plain", createPlainFormat());
 
 							const content = <FormattedMainView root={toPropTreeNode(text)} />;
 							const rendered = render(content, { reactStrictMode });
@@ -1018,8 +1083,8 @@ describe("textEditor", () => {
 				tree.removeRange(5, 6);
 				tree.insertWithFormattingAt(5, [
 					{
-						content: new FormattedTextAsTreeDefault.StringLineAtom({
-							tag: FormattedTextAsTreeDefault.LineTag("h1"),
+						content: new FormattedTextDefault.StringLineAtom({
+							tag: FormattedTextDefault.LineTag("h1"),
 							indent: 0,
 						}),
 						format: createPlainFormat(),
@@ -1035,8 +1100,8 @@ describe("textEditor", () => {
 				tree.removeRange(4, 5);
 				tree.insertWithFormattingAt(4, [
 					{
-						content: new FormattedTextAsTreeDefault.StringLineAtom({
-							tag: FormattedTextAsTreeDefault.LineTag("li"),
+						content: new FormattedTextDefault.StringLineAtom({
+							tag: FormattedTextDefault.LineTag("li"),
 							indent: 0,
 						}),
 						format: createPlainFormat(),
@@ -1056,8 +1121,8 @@ describe("textEditor", () => {
 				const { tree } = createFormattedTreeView("abc");
 				tree.insertWithFormattingAt(3, [
 					{
-						content: new FormattedTextAsTreeDefault.StringLineAtom({
-							tag: FormattedTextAsTreeDefault.LineTag("ol"),
+						content: new FormattedTextDefault.StringLineAtom({
+							tag: FormattedTextDefault.LineTag("ol"),
 							indent: 2,
 						}),
 						format: createPlainFormat(),
@@ -1075,8 +1140,8 @@ describe("textEditor", () => {
 				const { tree } = createFormattedTreeView("abc");
 				tree.insertWithFormattingAt(3, [
 					{
-						content: new FormattedTextAsTreeDefault.StringLineAtom({
-							tag: FormattedTextAsTreeDefault.LineTag("ol"),
+						content: new FormattedTextDefault.StringLineAtom({
+							tag: FormattedTextDefault.LineTag("ol"),
 							indent: 0,
 						}),
 						format: createPlainFormat(),

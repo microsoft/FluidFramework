@@ -200,6 +200,9 @@ extends:
   parameters:
     publish: ${{ variables.publish }}
     allowPublishingToNpmjs: ${{ parameters.allowPublishingToNpmjs }}
+    # Client still publishes from this pipeline. Flip to false to hand publishing over to the
+    # dedicated publish pipeline.
+    publishAsPartOfBuild: false
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     packageTypesOverride: ${{ parameters.packageTypesOverride }}

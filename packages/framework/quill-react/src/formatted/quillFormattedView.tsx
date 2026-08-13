@@ -12,13 +12,11 @@ import {
 } from "@fluidframework/react/internal";
 import {
 	codePointCount,
-	FormattedTextAsTree,
-	FormattedTextAsTreeDefault,
-	type TextAsTree,
+	FormattedTextDefault,
+	type PlainText,
 	TreeAlpha,
 	utf16LengthForCodePoints,
 } from "@fluidframework/tree/internal";
-export { FormattedTextAsTree } from "@fluidframework/tree/internal";
 import Quill, { type EmitterSource } from "quill";
 import DeltaPackage from "quill-delta";
 import {
@@ -62,7 +60,7 @@ const Delta = DeltaPackage.default;
  */
 export interface FormattedMainViewProps extends TextEditorProps {
 	/** The formatted text tree to edit. */
-	readonly root: PropTreeNode<FormattedTextAsTreeDefault.Tree>;
+	readonly root: PropTreeNode<FormattedTextDefault.Tree>;
 }
 
 /**
@@ -74,7 +72,7 @@ export type FormattedEditorHandle = Pick<UndoRedo, "undo" | "redo">;
 /**
  * A React component for formatted text editing.
  * @remarks
- * Uses {@link @fluidframework/tree#FormattedTextAsTree.Tree} for the data-model and Quill for the rich text editor UI.
+ * Uses {@link @fluidframework/tree#FormattedText.Tree} for the data-model and Quill for the rich text editor UI.
  * @internal
  */
 export const FormattedMainView = forwardRef<FormattedEditorHandle, FormattedMainViewProps>(
@@ -93,20 +91,36 @@ FormattedMainView.displayName = "FormattedMainView";
 
 /** Create a StringAtom containing a StringLineAtom with the given line tag. */
 function createLineAtom(
-	lineTag: FormattedTextAsTreeDefault.LineTag,
+	lineTag: FormattedTextDefault.LineTag,
 	indent: number = 0,
-): FormattedTextAsTreeDefault.FormattedAtomInsertable {
+): FormattedTextDefault.FormattedAtomInsertable {
 	return {
-		content: new FormattedTextAsTreeDefault.StringLineAtom({
+		content: new FormattedTextDefault.StringLineAtom({
 			tag: lineTag,
 			indent,
 		}),
-		format: new FormattedTextAsTreeDefault.CharacterFormat(quillAttributesToFormat()),
+		format: new FormattedTextDefault.CharacterFormat(quillAttributesToFormat()),
 	};
 }
 
 /**
- * Convert {@link TextAsTree.TextOp}s from `onContentChanged` into Quill delta ops
+ * Convert a line atom's tag and indentation to Quill block attributes.
+ */
+function lineAtomToQuillAttributes(
+	lineAtom: FormattedTextDefault.StringLineAtom,
+): Record<string, unknown> {
+	const attributes: Record<string, unknown> = {
+		...lineTagToQuillAttributes[lineAtom.tag.value],
+	};
+	// Omitting an indentation of zero uses Quill's default unindented representation.
+	if (lineAtom.indent) {
+		attributes.indent = lineAtom.indent;
+	}
+	return attributes;
+}
+
+/**
+ * Convert {@link PlainText.TextOp}s from `onContentChanged` into Quill delta ops
  * that can be applied via `Quill.updateContents()`.
  *
  * @remarks
@@ -127,14 +141,14 @@ function createLineAtom(
  * The caller should fall back to a full diff in that case.
  */
 function contentOpsToQuillDelta(
-	root: FormattedTextAsTreeDefault.Tree,
-	ops: readonly TextAsTree.TextOp[],
+	root: FormattedTextDefault.Tree,
+	ops: readonly PlainText.TextOp[],
 	preEditContent: string,
 ): QuillDeltaOp[] | undefined {
 	const quillOps: QuillDeltaOp[] = [];
 	// treePos: atom index in the post-edit tree. Advances for retain and insert, not remove.
 	let treePos = 0;
-	// quillPos: UTF-16 index in preEditContent. Advances for retain and remove, not insert.
+	// quillPos: UTF-16 index in preEditContent. Advances when existing Quill content is consumed.
 	let quillPos = 0;
 	// Cache the atoms array so we don't pay tree-traversal cost on every index read.
 	const atoms = root.charactersWithFormatting();
@@ -163,7 +177,7 @@ function contentOpsToQuillDelta(
 					return undefined;
 				}
 
-				if (atom.content instanceof FormattedTextAsTreeDefault.StringLineAtom) {
+				if (atom.content instanceof FormattedTextDefault.StringLineAtom) {
 					// Line atom is always "\n" — 1 UTF-16 unit.
 					const attributes: Record<string, unknown> = formatToFullQuillAttributes(atom.format);
 					const lineTag = atom.content.tag.value;
@@ -196,19 +210,12 @@ function contentOpsToQuillDelta(
 					return undefined;
 				}
 
-				if (atom.content instanceof FormattedTextAsTreeDefault.StringLineAtom) {
+				if (atom.content instanceof FormattedTextDefault.StringLineAtom) {
 					// Line atom: insert newline with line tag attributes.
-					const attributes: Record<string, unknown> = {};
-					const lineTag = atom.content.tag.value;
-					Object.assign(attributes, lineTagToQuillAttributes[lineTag]);
-					if (atom.content.indent) {
-						attributes.indent = atom.content.indent;
-					}
-					const quillOp: QuillDeltaOp = { insert: "\n" };
-					if (Object.keys(attributes).length > 0) {
-						quillOp.attributes = attributes;
-					}
-					quillOps.push(quillOp);
+					quillOps.push({
+						insert: "\n",
+						attributes: lineAtomToQuillAttributes(atom.content),
+					});
 					i++;
 				} else {
 					// Text atom: group consecutive atoms with the same formatting.
@@ -224,7 +231,6 @@ function contentOpsToQuillDelta(
 				}
 			}
 			treePos = insertEnd;
-			// quillPos does not advance: inserts are new content not in preEditContent.
 		} else {
 			// remove: atoms are gone from the tree; use preEditContent to get UTF-16 width.
 			const utf16Count = utf16LengthForCodePoints(preEditContent, quillPos, op.count);
@@ -234,11 +240,30 @@ function contentOpsToQuillDelta(
 		}
 	}
 
+	// Fixup required new line: quill requires one at the end, so we add an extra if needed.
+	// This simply deletes the old one if there was one, then adds a new one if needed.
+	// Such an approach was deemed slightly simpler and less error prone than reusing one if preexisting,
+	// since it avoids any potential for the extra new line to accidentally be reused when it has formatting applied.
+	const remainingQuillContent = preEditContent.slice(quillPos);
+	if (remainingQuillContent.length > 0) {
+		assert(
+			remainingQuillContent === "\n",
+			0xd1a /* Expected only Quill's mandatory terminal newline to remain */,
+		);
+		// Delete the extra new line which is required by quill.
+		quillOps.push({ delete: 1 });
+	}
+
+	if (!root.fullString().endsWith("\n")) {
+		// If needed add the extra new line which is required by quill.
+		quillOps.push({ insert: "\n" });
+	}
+
 	return quillOps;
 }
 
 /**
- * Apply a Quill `Delta` (the editor's outgoing change description) to a {@link FormattedTextAsTree.Tree}.
+ * Apply a Quill `Delta` (the editor's outgoing change description) to a {@link @fluidframework/tree#FormattedText.Tree}.
  *
  * @remarks
  * This is the inverse of {@link contentOpsToQuillDelta}: Quill produces a Delta of `retain`/`insert`/`delete`
@@ -256,7 +281,7 @@ function contentOpsToQuillDelta(
  * @internal
  */
 export function applyQuillDeltaToTree(
-	root: FormattedTextAsTreeDefault.Tree,
+	root: FormattedTextDefault.Tree,
 	delta: Delta,
 	label?: unknown,
 ): void {
@@ -272,7 +297,7 @@ export function applyQuillDeltaToTree(
 			if (op.retain !== undefined) {
 				// The docs for retain imply this is always a number, but the type definitions allow a record here.
 				// It is unknown why the type definitions allow a record as they have no doc comments.
-				// For now this assert seems to be passing, so we just assume its always a number.
+				// For now this assert seems to be passing, so we just assume it's always a number.
 				assert(
 					typeof op.retain === "number",
 					0xcdf /* Expected retain count to be a number */,
@@ -307,7 +332,7 @@ export function applyQuillDeltaToTree(
 					) {
 						// Indent only change on an existing line atom
 						const lineAtom = root.charactersWithFormatting()[cpPos]?.content;
-						if (lineAtom instanceof FormattedTextAsTreeDefault.StringLineAtom) {
+						if (lineAtom instanceof FormattedTextDefault.StringLineAtom) {
 							lineAtom.indent = indent ?? 0;
 						}
 						// Case 4: clearing line formatting. Deletes StringLineAtom and inserts a plain
@@ -316,7 +341,7 @@ export function applyQuillDeltaToTree(
 						lineTag === undefined &&
 						content[utf16Pos] === "\n" &&
 						root.charactersWithFormatting()[cpPos]?.content instanceof
-							FormattedTextAsTreeDefault.StringLineAtom
+							FormattedTextDefault.StringLineAtom
 					) {
 						// Quill is clearing line formatting (e.g. { retain: 1, attributes: { header: null } }).
 						// StringLineAtom and StringTextAtom are distinct schema types in the tree,
@@ -348,10 +373,7 @@ export function applyQuillDeltaToTree(
 					root.insertWithFormattingAt(cpPos, [createLineAtom(lineTag, indent)]);
 				} else {
 					// Insert: add new text with formatting at current position
-					root.defaultFormat = new FormattedTextAsTreeDefault.CharacterFormat(
-						quillAttributesToFormat(op.attributes),
-					);
-					root.insertAt(cpPos, op.insert);
+					root.insertAt(cpPos, op.insert, quillAttributesToFormat(op.attributes));
 				}
 				// Update content to reflect insertion
 				content = content.slice(0, utf16Pos) + op.insert + content.slice(utf16Pos);
@@ -384,7 +406,7 @@ export function applyQuillDeltaToTree(
  * This is used to sync Quill's display when the tree changes externally
  * (e.g., from a remote collaborator's edit).
  */
-export function buildDeltaFromTree(root: FormattedTextAsTreeDefault.Tree): QuillDeltaOp[] {
+export function buildDeltaFromTree(root: FormattedTextDefault.Tree): QuillDeltaOp[] {
 	const ops: QuillDeltaOp[] = [];
 	let index = 0;
 
@@ -393,7 +415,7 @@ export function buildDeltaFromTree(root: FormattedTextAsTreeDefault.Tree): Quill
 		if (atom === undefined) {
 			break;
 		}
-		if (atom.content instanceof FormattedTextAsTreeDefault.StringLineAtom) {
+		if (atom.content instanceof FormattedTextDefault.StringLineAtom) {
 			// Line atom (header, bullet lists) emit a newline with a line tag attribute
 			const currentAttributes = formatToQuillAttributes(atom.format);
 			const lineTag = atom.content.tag.value;
@@ -435,11 +457,11 @@ export function buildDeltaFromTree(root: FormattedTextAsTreeDefault.Tree): Quill
 
 /**
  * The formatted text editor view component with Quill integration.
- * Uses FormattedTextAsTree for collaborative rich text storage with formatting.
+ * Uses FormattedText for collaborative rich text storage with formatting.
  *
  * @remarks
  * This component uses event-based synchronization via
- * {@link FormattedTextAsTree.Members.onContentChanged} to efficiently apply external
+ * {@link FormattedText.Members.onContentChanged} to efficiently apply external
  * changes without rebuilding the full delta from the tree. Structural changes
  * (insert/remove) and formatting changes are applied incrementally through Quill's
  * delta operations.
@@ -447,7 +469,7 @@ export function buildDeltaFromTree(root: FormattedTextAsTreeDefault.Tree): Quill
 const FormattedTextEditorView = forwardRef<
 	FormattedEditorHandle,
 	{
-		root: PropTreeNode<FormattedTextAsTreeDefault.Tree>;
+		root: PropTreeNode<FormattedTextDefault.Tree>;
 		undoRedo?: UndoRedo;
 		editLabel?: unknown;
 	}

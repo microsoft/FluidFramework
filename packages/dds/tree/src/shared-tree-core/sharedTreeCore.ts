@@ -214,7 +214,7 @@ export class SharedTreeCore<
 				options.minVersionForCollab,
 				this.schemaAndPolicy,
 				options.healUnresolvableIdentifiersOnDecode === true
-					? { sharedObjectId: sharedObject.id }
+					? { sharedObjectId: sharedObject.id, logger }
 					: undefined,
 			),
 			...summarizables,

@@ -13,7 +13,7 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { FluidClientVersion } from "../../../codec/index.js";
-import { type NormalizedUpPath, rootFieldKey } from "../../../core/index.js";
+import { type DeltaMark, type NormalizedUpPath, rootFieldKey } from "../../../core/index.js";
 import {
 	currentObserver,
 	defaultSchemaPolicy,
@@ -28,8 +28,12 @@ import {
 	TreeAlpha,
 	type TreeCheckout,
 } from "../../../shared-tree/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { tryGetSchema } from "../../../simple-tree/api/treeNodeApi.js";
+/* eslint-disable import-x/no-internal-modules */
+import {
+	deltaMarksToArrayOpsWithRetain,
+	tryGetSchema,
+} from "../../../simple-tree/api/treeNodeApi.js";
+/* eslint-enable import-x/no-internal-modules */
 // eslint-disable-next-line import-x/no-internal-modules
 import { fieldCursorFromVerbose } from "../../../simple-tree/api/verboseTree.js";
 import {
@@ -2741,13 +2745,117 @@ describe("treeNodeApi", () => {
 			assert.equal(eventCount, 1);
 		});
 
+		describe("deltaMarksToArrayOpsWithRetain", () => {
+			const detachedNodeId = { minor: 0 };
+			const buildRetain = (count: number, subtreeChanged: boolean) => ({
+				type: "retain" as const,
+				count,
+				subtreeChanged,
+			});
+
+			const cases: readonly {
+				name: string;
+				marks: readonly DeltaMark[];
+				postEditLength: number;
+				expected: readonly ArrayNodeTreeChangedDeltaOp[];
+			}[] = [
+				{
+					name: "empty array",
+					marks: [],
+					postEditLength: 0,
+					expected: [],
+				},
+				{
+					name: "omitted unchanged suffix",
+					marks: [],
+					postEditLength: 3,
+					expected: [{ type: "retain", count: 3, subtreeChanged: false }],
+				},
+				{
+					name: "explicit full retain",
+					marks: [{ count: 3 }],
+					postEditLength: 3,
+					expected: [{ type: "retain", count: 3, subtreeChanged: false }],
+				},
+				{
+					name: "middle insert",
+					marks: [{ count: 1 }, { count: 2, attach: detachedNodeId }],
+					postEditLength: 5,
+					expected: [
+						{ type: "retain", count: 1, subtreeChanged: false },
+						{ type: "insert", count: 2 },
+						{ type: "retain", count: 2, subtreeChanged: false },
+					],
+				},
+				{
+					name: "middle remove",
+					marks: [{ count: 1 }, { count: 2, detach: detachedNodeId }],
+					postEditLength: 3,
+					expected: [
+						{ type: "retain", count: 1, subtreeChanged: false },
+						{ type: "remove", count: 2 },
+						{ type: "retain", count: 2, subtreeChanged: false },
+					],
+				},
+				{
+					name: "replacement",
+					marks: [{ count: 2, attach: detachedNodeId, detach: { minor: 1 } }],
+					postEditLength: 4,
+					expected: [
+						{ type: "remove", count: 2 },
+						{ type: "insert", count: 2 },
+						{ type: "retain", count: 2, subtreeChanged: false },
+					],
+				},
+				{
+					name: "deep change",
+					marks: [{ count: 1 }, { count: 1, fields: new Map() }],
+					postEditLength: 3,
+					expected: [
+						{ type: "retain", count: 1, subtreeChanged: false },
+						{ type: "retain", count: 1, subtreeChanged: true },
+						{ type: "retain", count: 1, subtreeChanged: false },
+					],
+				},
+			];
+
+			for (const { name, marks, postEditLength, expected } of cases) {
+				it(name, () => {
+					assert.deepEqual(
+						deltaMarksToArrayOpsWithRetain(marks, postEditLength, buildRetain),
+						expected,
+					);
+				});
+			}
+
+			it("supports retain ops without subtree metadata", () => {
+				assert.deepEqual(
+					deltaMarksToArrayOpsWithRetain([{ count: 1, fields: new Map() }], 2, (count) => ({
+						type: "retain",
+						count,
+					})),
+					[
+						{ type: "retain", count: 1 },
+						{ type: "retain", count: 1 },
+					],
+				);
+			});
+
+			it("rejects operations beyond the post-edit length", () => {
+				assert.throws(
+					() => deltaMarksToArrayOpsWithRetain([{ count: 2 }], 1, buildRetain),
+					validateAssertionError(/Array delta exceeds post-edit array length/),
+				);
+			});
+		});
+
 		describe(`'nodeChanged' delta payload for array operations`, () => {
 			// These tests verify the concrete ArrayNodeDeltaOp values emitted for specific
 			// array mutations.  The delta follows Quill-style semantics:
-			//   retain  – elements that remain in place (leading unchanged elements)
+			//   retain  – elements that remain in place
 			//   insert  – elements added to the array
 			//   remove  – elements removed from the array
-			// Trailing unchanged elements are NOT represented by a trailing retain op.
+			// The operations cover the complete array, including trailing unchanged elements.
 			const sf = new SchemaFactory("nodeChanged-delta-content");
 			class TestArray extends sf.array("TestArray", [sf.number]) {}
 
@@ -2769,7 +2877,7 @@ describe("treeNodeApi", () => {
 				]);
 			});
 
-			it(`insertAt(0) emits only an insert op (no leading retain)`, () => {
+			it(`insertAt(0) retains the unchanged suffix`, () => {
 				const view = getView(new TreeViewConfiguration({ schema: TestArray }));
 				view.initialize([1, 2, 3]);
 				const root = view.root;
@@ -2779,10 +2887,15 @@ describe("treeNodeApi", () => {
 
 				root.insertAt(0, 0);
 
-				assert.deepEqual(deltas, [[{ type: "insert", count: 1 }]]);
+				assert.deepEqual(deltas, [
+					[
+						{ type: "insert", count: 1 },
+						{ type: "retain", count: 3 },
+					],
+				]);
 			});
 
-			it(`removeAt(0) emits only a remove op (no leading retain)`, () => {
+			it(`removeAt(0) retains the unchanged suffix`, () => {
 				const view = getView(new TreeViewConfiguration({ schema: TestArray }));
 				view.initialize([1, 2, 3]);
 				const root = view.root;
@@ -2792,7 +2905,12 @@ describe("treeNodeApi", () => {
 
 				root.removeAt(0);
 
-				assert.deepEqual(deltas, [[{ type: "remove", count: 1 }]]);
+				assert.deepEqual(deltas, [
+					[
+						{ type: "remove", count: 1 },
+						{ type: "retain", count: 2 },
+					],
+				]);
 			});
 
 			it(`removeAt(end) emits a leading retain followed by a remove`, () => {
@@ -2853,7 +2971,7 @@ describe("treeNodeApi", () => {
 				// Use a fork to compose two changes into a single delta: modify
 				// element 0's nested property and remove element 1. The merged
 				// delta's marks are [{count:1,fields:{...}}, {count:1,detach:id}].
-				// For nodeChanged (no subtreeChanged), this produces [retain, remove 1].
+				// For nodeChanged (no subtreeChanged), this produces [retain, remove 1, retain].
 				const { forkView, forkCheckout } = getViewForForkedBranch(view);
 				forkView.root[0].value = 99;
 				forkView.root.removeAt(1);
@@ -2863,6 +2981,7 @@ describe("treeNodeApi", () => {
 					[
 						{ type: "retain", count: 1 },
 						{ type: "remove", count: 1 },
+						{ type: "retain", count: 1 },
 					],
 				]);
 			});
@@ -2886,7 +3005,12 @@ describe("treeNodeApi", () => {
 					const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
 					TreeAlpha.on(root, "nodeChanged", ({ delta }) => deltas.push(delta));
 					root.removeAt(0);
-					assert.deepEqual(deltas, [[{ type: "remove", count: 1 }]]);
+					assert.deepEqual(deltas, [
+						[
+							{ type: "remove", count: 1 },
+							{ type: "retain", count: 2 },
+						],
+					]);
 				});
 
 				it(`moveToEnd fires nodeChanged with correct delta`, () => {
@@ -2933,7 +3057,10 @@ describe("treeNodeApi", () => {
 						"nodeChanged should not fire for deep change",
 					);
 					assert.deepEqual(treeChangedDeltas, [
-						[{ type: "retain", count: 1, subtreeChanged: true }],
+						[
+							{ type: "retain", count: 1, subtreeChanged: true },
+							{ type: "retain", count: 2, subtreeChanged: false },
+						],
 					]);
 				});
 
@@ -3071,7 +3198,7 @@ describe("treeNodeApi", () => {
 					]);
 				});
 
-				it(`insertAt(0) emits only an insert op (no spurious leading retain)`, () => {
+				it(`insertAt(0) retains the unchanged suffix`, () => {
 					const view = getView(new TreeViewConfiguration({ schema: ItemArray }));
 					view.initialize([{ v: 1 }, { v: 2 }]);
 					const root = view.root;
@@ -3081,7 +3208,12 @@ describe("treeNodeApi", () => {
 
 					root.insertAt(0, { v: 0 });
 
-					assert.deepEqual(treeChangedDeltas, [[{ type: "insert", count: 1 }]]);
+					assert.deepEqual(treeChangedDeltas, [
+						[
+							{ type: "insert", count: 1 },
+							{ type: "retain", count: 2, subtreeChanged: false },
+						],
+					]);
 				});
 
 				describe(`unhydrated array`, () => {
@@ -3110,7 +3242,10 @@ describe("treeNodeApi", () => {
 							"nodeChanged should not fire for deep change",
 						);
 						assert.deepEqual(treeChangedDeltas, [
-							[{ type: "retain", count: 1, subtreeChanged: true }],
+							[
+								{ type: "retain", count: 1, subtreeChanged: true },
+								{ type: "retain", count: 2, subtreeChanged: false },
+							],
 						]);
 					});
 
@@ -3129,6 +3264,7 @@ describe("treeNodeApi", () => {
 							[
 								{ type: "retain", count: 1, subtreeChanged: false },
 								{ type: "retain", count: 1, subtreeChanged: true },
+								{ type: "retain", count: 1, subtreeChanged: false },
 							],
 						]);
 					});

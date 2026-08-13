@@ -14,15 +14,6 @@ parameters:
     - none
     - release
 
-- name: releaseKind
-  displayName: Release Kind
-  type: string
-  default: both
-  values:
-    - both
-    - npm
-    - docker
-
 - name: publishOverride
   displayName: Publish Override (default = based on branch)
   type: string
@@ -48,6 +39,7 @@ trigger:
     - server/gitrest
     - tools/pipelines/server-gitrest.yml
     - tools/pipelines/templates/build-docker-service.yml
+    - tools/pipelines/templates/include-add-docker-image-digest.yml
     - tools/pipelines/templates/include-generate-publish-metadata.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -73,6 +65,7 @@ pr:
     - server/gitrest
     - tools/pipelines/server-gitrest.yml
     - tools/pipelines/templates/build-docker-service.yml
+    - tools/pipelines/templates/include-add-docker-image-digest.yml
     - tools/pipelines/templates/include-generate-publish-metadata.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -99,10 +92,12 @@ extends:
     shouldPushDockerImage: ${{ variables.pushImage }}
     shouldReleaseDockerImage: ${{ variables.releaseImage }}
     shouldPublishNpmPackages: ${{ variables.publish }}
-    releaseKind: ${{ parameters.releaseKind }}
+    releaseKind: both
     publishOverride: ${{ parameters.publishOverride }}
+    publishAsPartOfBuild: true
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     dockerBuildBumpsVersion: true
+    emitDockerImageDigest: true
     # Root-only install: gitrest has native deps that don't install in CI; the real build runs in Docker.
     # Root deps are still needed for the version-setting step.
     installWorkspaceRootOnly: true

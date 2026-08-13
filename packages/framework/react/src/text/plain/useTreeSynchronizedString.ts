@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { TextAsTree } from "@fluidframework/tree/internal";
+import type { PlainText } from "@fluidframework/tree/internal";
 import { useEffect, useRef, useState } from "react";
 
 import { applyTextOps, remapSelectionOnReread, type TextSelection } from "./plainUtils.js";
@@ -32,7 +32,7 @@ export interface SynchronizedString {
 }
 
 /**
- * React hook that provides a one-way sync from a {@link @fluidframework/tree#TextAsTree.Tree} to a
+ * React hook that provides a one-way sync from a {@link @fluidframework/tree#PlainText.Tree} to a
  * string: it returns the tree's current text (and a tracked selection), recomputed whenever the
  * tree's characters change.
  * @remarks
@@ -60,7 +60,7 @@ export interface SynchronizedString {
  * @alpha
  */
 export function useTreeSynchronizedString(
-	tree: TextAsTree.Tree,
+	tree: PlainText.Tree,
 	initialSelection?: TextSelection,
 ): SynchronizedString {
 	const [text, setText] = useState<string>(() => tree.fullString());

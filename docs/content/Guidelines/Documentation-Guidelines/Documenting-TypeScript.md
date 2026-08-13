@@ -1,4 +1,6 @@
-# Comment Syntax
+# Documenting TypeScript
+
+## Comment Syntax
 
 When documenting TypeScript code, we generally use one of three syntaxes:
 
@@ -8,14 +10,14 @@ When documenting TypeScript code, we generally use one of three syntaxes:
 
 This document outlines basic guidance for when to use each variant.
 
-# TSDoc syntax
+## TSDoc syntax
 
-## When to use
+### When to use
 
 As a general rule, TSDoc syntax should be used any time you are documenting a particular declaration or API.
 Regardless of whether or not that declaration is exported by the package or even by the module, TSDoc syntax should be used over alternatives.
 
-### Example
+#### Example
 
 ```typescript
 /**
@@ -24,22 +26,22 @@ Regardless of whether or not that declaration is exported by the package or even
 export interface Foo { ... }
 ```
 
-## When to avoid
+### When to avoid
 
 TSDoc comments are applied to whatever declaration follows them.
 For this reason, you should not use TSDoc syntax when the comment is not associated with a specific declaration.
 
-## TSDoc Guidance
+### TSDoc Guidance
 
 For more specific guidance and examples of leveraging TSDoc syntax, see [TSDoc Guidelines](./Documenting-TypeScript/TSDoc-Guidelines.md).
 
-# Inline syntax
+## Inline syntax
 
-## When to use
+### When to use
 
 As a general rule, inline comment syntax should be used when describing what code is _doing_.
 
-### Example
+#### Example
 
 Good:
 
@@ -52,23 +54,23 @@ return sum;
 
 In this example, the comment is intended to describe what the subsequent lines of code are _doing_, rather than attempting to annotate the local variable `sum`, so an inline comment is preferred.
 
-## When not to use
+### When not to use
 
 Declarations, and particularly _APIs_, should generally prefer TSDoc syntax over inline syntax.
 
-# Block syntax
+## Block syntax
 
 As a general rule, block syntax should only be used when neither [TSDoc syntax](#tsdoc-syntax) nor [Inline syntax](#inline-syntax) are appropriate.
 
-## Examples
+### Examples
 
-### Labeling function parameters
+#### Labeling function parameters
 
 ```typescript
 const myFoo = foo(/* bar */ true, /* baz */ true);
 ```
 
-### JSX
+#### JSX
 
 ```tsx
 return (
@@ -79,15 +81,15 @@ return (
 );
 ```
 
-# Rules of thumb
+## Rules of thumb
 
 - If documentation is intended to describe a specific declaration or API, use [TSDoc syntax](#tsdoc-syntax).
 - If documentation is intended to describe what code is doing, use [Inline syntax](#inline-syntax).
 - If neither of the above are appropriate, use [Block syntax](#block-syntax).
 
-# Advanced
+## Advanced
 
-## Region comments
+### Region comments
 
 When you wish to break up code into logical groupings, and refactoring the code along those logical groupings isn't applicable, consider using region comments.
 
@@ -98,7 +100,7 @@ Using this syntax makes it much more clear exactly which lines of code are being
 
 Intellisense understands this syntax and will let you collapse and expand these region blocks, making it easier to navigate the code!
 
-### Example
+#### Example
 
 ```typescript
 it("foo", () => {
@@ -119,6 +121,6 @@ it("foo", () => {
 });
 ```
 
-# See Also
+## See Also
 
 - [TSDoc Guidelines](./Documenting-TypeScript/TSDoc-Guidelines.md)

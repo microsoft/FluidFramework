@@ -155,6 +155,7 @@ export interface ArrayNodeTreeChangedRetainOp extends ArrayNodeRetainOp {
 
 // @alpha @sealed
 export interface ArrayPlaceAnchor {
+    dispose(): void;
     get index(): number;
 }
 
@@ -220,6 +221,13 @@ export enum CommitKind {
 export interface CommitMetadata {
     readonly isLocal: boolean;
     readonly kind: CommitKind;
+}
+
+// @alpha
+export enum CommitOutcome {
+    FullyApplied = 0,
+    FullyDropped = 1,
+    NewContentOnly = 2
 }
 
 // @alpha
@@ -576,12 +584,12 @@ export interface FluidContainerWithService<TData = unknown> extends FluidContain
     attach(): Promise<FluidContainerAttached<TData>>;
 }
 
-// @beta @sealed
+// @public @sealed
 export interface FluidIterable<T> {
     [Symbol.iterator](): FluidIterableIterator<T>;
 }
 
-// @beta @sealed
+// @public @sealed
 export interface FluidIterableIterator<T> extends FluidIterable<T> {
     next(): {
         value: T;
@@ -592,7 +600,7 @@ export interface FluidIterableIterator<T> extends FluidIterable<T> {
     };
 }
 
-// @beta @sealed
+// @public @sealed
 export interface FluidMap<K, V> extends FluidReadonlyMap<K, V> {
     delete(key: K): void;
     forEach(callbackfn: (value: V, key: K, map: FluidMap<K, V>) => void, thisArg?: any): void;
@@ -607,7 +615,50 @@ export type FluidObject<T = unknown> = {
 // @public
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
 
-// @beta @sealed
+// @public @sealed
+export interface FluidReadonlyArray<T> {
+    [Symbol.iterator](): FluidIterableIterator<T>;
+    readonly [Symbol.unscopables]: {
+        [K in keyof (readonly any[])]?: boolean;
+    };
+    readonly [n: number]: T;
+    at(index: number): T | undefined;
+    concat(...items: ConcatArray<T>[]): T[];
+    concat(...items: (T | ConcatArray<T>)[]): T[];
+    entries(): FluidIterableIterator<[number, T]>;
+    every<S extends T>(predicate: (value: T, index: number, array: readonly T[]) => value is S, thisArg?: any): this is FluidReadonlyArray<S>;
+    every(predicate: (value: T, index: number, array: readonly T[]) => unknown, thisArg?: any): boolean;
+    filter<S extends T>(predicate: (value: T, index: number, array: readonly T[]) => value is S, thisArg?: any): S[];
+    filter(predicate: (value: T, index: number, array: readonly T[]) => unknown, thisArg?: any): T[];
+    find<S extends T>(predicate: (value: T, index: number, obj: readonly T[]) => value is S, thisArg?: any): S | undefined;
+    find(predicate: (value: T, index: number, obj: readonly T[]) => unknown, thisArg?: any): T | undefined;
+    findIndex(predicate: (value: T, index: number, obj: readonly T[]) => unknown, thisArg?: any): number;
+    findLast<S extends T>(predicate: (value: T, index: number, obj: readonly T[]) => value is S, thisArg?: any): S | undefined;
+    findLast(predicate: (value: T, index: number, obj: readonly T[]) => unknown, thisArg?: any): T | undefined;
+    findLastIndex(predicate: (value: T, index: number, obj: readonly T[]) => unknown, thisArg?: any): number;
+    flat<A, D extends number = 1>(this: A, depth?: D): FlatArray<A, D>[];
+    flatMap<U, This = undefined>(callback: (this: This, value: T, index: number, array: T[]) => U | readonly U[], thisArg?: This): U[];
+    forEach(callbackfn: (value: T, index: number, array: readonly T[]) => void, thisArg?: any): void;
+    includes(searchElement: T, fromIndex?: number): boolean;
+    indexOf(searchElement: T, fromIndex?: number): number;
+    join(separator?: string): string;
+    keys(): FluidIterableIterator<number>;
+    lastIndexOf(searchElement: T, fromIndex?: number): number;
+    readonly length: number;
+    map<U>(callbackfn: (value: T, index: number, array: readonly T[]) => U, thisArg?: any): U[];
+    reduce(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: readonly T[]) => T): T;
+    reduce<U>(callbackfn: (previousValue: U, currentValue: T, currentIndex: number, array: readonly T[]) => U, initialValue: U): U;
+    reduceRight(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: readonly T[]) => T): T;
+    reduceRight<U>(callbackfn: (previousValue: U, currentValue: T, currentIndex: number, array: readonly T[]) => U, initialValue: U): U;
+    slice(start?: number, end?: number): T[];
+    some(predicate: (value: T, index: number, array: readonly T[]) => unknown, thisArg?: any): boolean;
+    // (undocumented)
+    toLocaleString(): string;
+    toString(): string;
+    values(): FluidIterableIterator<T>;
+}
+
+// @public @sealed
 export interface FluidReadonlyMap<K, V> {
     [Symbol.iterator](): FluidIterableIterator<[K, V]>;
     readonly [Symbol.toStringTag]: string;
@@ -661,6 +712,56 @@ export const ForestTypeOptimized: ForestType;
 
 // @beta
 export const ForestTypeReference: ForestType;
+
+// @alpha
+export namespace FormattedText {
+    export function createSchema<const TUserScope extends string, const FormatSchema extends ImplicitAllowedTypes, const ExtraAtomsSchema extends readonly LazyItem<TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>>[]>(inputSchemaFactory: SchemaFactoryBeta<TUserScope>, formatSchema: FormatSchema, extraAtoms: ExtraAtomsSchema, defaultFormatInsertable: InsertableTreeFieldFromImplicitField<FormatSchema>): FormattedTextSchema<TUserScope, FormatSchema, ExtraAtomsSchema>;
+    // @sealed
+    export interface FormattedAtom<TFormat, TText> {
+        readonly content: TText;
+        format: TFormat;
+    }
+    // @input
+    export interface FormattedAtomInsertable<TFormat, TContent> {
+        // (undocumented)
+        readonly content: TContent;
+        // (undocumented)
+        readonly format: TFormat;
+    }
+    // @sealed
+    export type FormattedTextSchema<TUserScope extends string, FormatSchema extends ImplicitAllowedTypes, ExtraAtomsSchema extends readonly LazyItem<TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>>[]> = Statics<ErasedNode<Members<FormatSchema, ExtraAtomsSchema>, FormattedTextSchemaIdentifier<TUserScope>>, FormatSchema> & ErasedSchemaSubclassable<Members<FormatSchema, ExtraAtomsSchema>, FormattedTextSchemaIdentifier<TUserScope>>;
+    const // @sealed
+    StringTextAtom: StringTextAtomStatics & TreeNodeSchema<"com.fluidframework.text.formatted.StringTextAtom", NodeKind, TextAtom & TreeNode & WithType<"com.fluidframework.text.formatted.StringTextAtom", NodeKind, unknown>, never, false>;
+    export type FormattedTextSchemaIdentifier<TUserScope extends string> = ScopedSchemaName<`com.fluidframework.text.formatted<${TUserScope}>`, "Text">;
+    // @sealed
+    export interface Members<FormatSchema extends ImplicitAllowedTypes, ExtraAtomsSchema extends readonly LazyItem<TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>>[]> extends PlainText.Members {
+        charactersWithFormatting(): readonly FormattedAtom<TreeNodeFromImplicitAllowedTypes<FormatSchema>, TreeNodeFromImplicitAllowedTypes<TextAtomSchemas<ExtraAtomsSchema>>>[];
+        formatRange(startIndex: number | undefined, endIndex: number | undefined, format: Partial<TreeNodeFromImplicitAllowedTypes<FormatSchema>>): void;
+        getString(startIndex: number, endIndex?: number): string;
+        getUniformRun(startIndex: number, endIndex?: number): number;
+        // @override
+        insertAt(index: number, additionalCharacters: string | Iterable<TreeNodeFromImplicitAllowedTypes<TextAtomSchemas<ExtraAtomsSchema>>>, format?: InsertableTreeFieldFromImplicitField<FormatSchema>): void;
+        insertWithFormattingAt(index: number, additionalCharacters: Iterable<FormattedAtomInsertable<InsertableTreeNodeFromImplicitAllowedTypes<FormatSchema>, InsertableTreeNodeFromImplicitAllowedTypes<TextAtomSchemas<ExtraAtomsSchema>>>>): void;
+        onContentChanged(callback: (ops: readonly PlainText.TextOp[] | undefined) => void): () => void;
+        reformat(startIndex?: number | undefined, endIndex?: number | undefined, format?: InsertableTreeFieldFromImplicitField<FormatSchema>): void;
+    }
+    // @sealed
+    export interface Statics<TTree, FormatSchema extends ImplicitAllowedTypes> {
+        fromString(value: string, format?: InsertableTreeFieldFromImplicitField<FormatSchema>): TTree;
+    }
+    // @sealed
+    export type StringTextAtom = ErasedNode<TextAtom, "com.fluidframework.text.formatted.StringTextAtom">;
+    // @sealed
+    export interface StringTextAtomStatics {
+        fromCharacter(value: string): StringTextAtom;
+        fromString(value: string): StringTextAtom[];
+    }
+    export interface TextAtom {
+        readonly content: string;
+    }
+    // @sealed
+    export type TextAtomSchemas<ExtraAtomsSchema extends readonly LazyItem<TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>>[]> = readonly [typeof StringTextAtom, ...ExtraAtomsSchema];
+}
 
 // @alpha @sealed
 export interface FormatValidator extends ErasedType<"FormatValidator"> {
@@ -1305,11 +1406,17 @@ export type Listeners<T extends object> = {
 
 // @alpha @sealed
 export interface LocalChangeMetadata extends CommitMetadata {
+    readonly events: Listenable<LocalCommitEvents>;
     getChange(): JsonCompatibleReadOnly;
     getRevertible(onDisposed?: (revertible: RevertibleAlpha) => void): RevertibleAlpha | undefined;
     readonly isLocal: true;
     readonly label?: unknown;
     readonly labels: TransactionLabels;
+}
+
+// @alpha @sealed
+export interface LocalCommitEvents {
+    settled(outcome: CommitOutcome): void;
 }
 
 // @public
@@ -1503,6 +1610,42 @@ export function onAssertionFailure(handler: (error: Error) => void): () => void;
 // @alpha
 export function persistedToSimpleSchema(persisted: JsonCompatible, options: ICodecOptions): SimpleTreeSchema;
 
+// @alpha
+export namespace PlainText {
+    // @sealed
+    export interface Members {
+        characterCount(): number;
+        characters(): Iterable<string>;
+        charactersCopy(): string[];
+        fullString(): string;
+        insertAt(index: number, additionalCharacters: string): void;
+        onCharactersChanged(callback: (ops: readonly TextOp[] | undefined) => void): () => void;
+        removeRange(startIndex: number | undefined, endIndex: number | undefined): void;
+    }
+    export interface Statics {
+        fromString(value: string): Tree;
+    }
+    // @sealed
+    export interface TextInsertOp {
+        readonly text: string;
+        readonly type: "insert";
+    }
+    export type TextOp = TextRetainOp | TextInsertOp | TextRemoveOp;
+    // @sealed
+    export interface TextRemoveOp {
+        readonly count: number;
+        readonly type: "remove";
+    }
+    // @sealed
+    export interface TextRetainOp {
+        readonly count: number;
+        readonly formattingChanged?: boolean;
+        readonly type: "retain";
+    }
+    const Tree: Statics & TreeNodeSchema<"com.fluidframework.text.Text", NodeKind, Members & TreeNode & WithType<"com.fluidframework.text.Text", NodeKind, unknown>, never, false>;
+    export type Tree = Members & TreeNode & WithType<"com.fluidframework.text.Text">;
+}
+
 // @beta @system
 export type PopUnion<Union, AsOverloadedFunction = UnionToIntersection<Union extends unknown ? (f: Union) => void : never>> = AsOverloadedFunction extends (a: infer First) => void ? First : never;
 
@@ -1678,9 +1821,9 @@ export const SchemaFactory_base: SchemaStatics & (new () => SchemaStatics);
 export class SchemaFactoryAlpha<out TScope extends string | undefined = string | undefined, TName extends number | string = string> extends SchemaFactoryBeta<TScope, TName> {
     arrayAlpha<const Name extends TName, const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>): ArrayNodeCustomizableSchemaAlpha<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata>;
     arrayRecursive<const Name extends TName, const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>): ArrayNodeCustomizableSchemaUnsafe<ScopedSchemaName<TScope, Name>, T, TCustomMetadata>;
-    static readonly identifier: <const TCustomMetadata = unknown>(props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchemaAlpha<FieldKind.Identifier, LeafSchema<"string", string> & SimpleLeafNodeSchema<SchemaType>, TCustomMetadata, FieldPropsAlpha<TCustomMetadata>>;
-    static readonly leaves: readonly [LeafSchema<"string", string> & SimpleLeafNodeSchema<SchemaType>, LeafSchema<"number", number> & SimpleLeafNodeSchema<SchemaType>, LeafSchema<"boolean", boolean> & SimpleLeafNodeSchema<SchemaType>, LeafSchema<"null", null> & SimpleLeafNodeSchema<SchemaType>, LeafSchema<"handle", IFluidHandle<unknown>> & SimpleLeafNodeSchema<SchemaType>];
-    readonly leaves: readonly [LeafSchema<"string", string> & SimpleLeafNodeSchema<SchemaType>, LeafSchema<"number", number> & SimpleLeafNodeSchema<SchemaType>, LeafSchema<"boolean", boolean> & SimpleLeafNodeSchema<SchemaType>, LeafSchema<"null", null> & SimpleLeafNodeSchema<SchemaType>, LeafSchema<"handle", IFluidHandle<unknown>> & SimpleLeafNodeSchema<SchemaType>];
+    static readonly identifier: <const TCustomMetadata = unknown>(props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchemaAlpha<FieldKind.Identifier, StringSchema, TCustomMetadata, FieldPropsAlpha<TCustomMetadata>>;
+    static readonly leaves: readonly [StringSchema, LeafSchema<"number", number> & SimpleLeafNodeSchema<SchemaType>, LeafSchema<"boolean", boolean> & SimpleLeafNodeSchema<SchemaType>, LeafSchema<"null", null> & SimpleLeafNodeSchema<SchemaType>, LeafSchema<"handle", IFluidHandle<unknown>> & SimpleLeafNodeSchema<SchemaType>];
+    readonly leaves: readonly [StringSchema, LeafSchema<"number", number> & SimpleLeafNodeSchema<SchemaType>, LeafSchema<"boolean", boolean> & SimpleLeafNodeSchema<SchemaType>, LeafSchema<"null", null> & SimpleLeafNodeSchema<SchemaType>, LeafSchema<"handle", IFluidHandle<unknown>> & SimpleLeafNodeSchema<SchemaType>];
     mapAlpha<Name extends TName, const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>): MapNodeCustomizableSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata>;
     mapRecursive<Name extends TName, const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>): MapNodeCustomizableSchemaUnsafe<ScopedSchemaName<TScope, Name>, T, TCustomMetadata>;
     objectAlpha<const Name extends TName, const T extends RestrictiveStringRecord<ImplicitFieldSchema>, const TCustomMetadata = unknown>(name: Name, fields: T, options?: ObjectSchemaOptionsAlpha<TCustomMetadata>): ObjectNodeSchemaWorkaround<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata>;
@@ -1795,6 +1938,8 @@ type ScopedSchemaName<TScope extends string | undefined, TName extends number | 
 
 // @alpha @sealed
 export interface ServiceClient {
+    createAttachedContainer<T>(root: DataStoreKind<T>): Promise<FluidContainerAttached<T>>;
+    createAttachedContainer<T>(root: DataStoreKey<T>, registry: DataStoreRegistry): Promise<FluidContainerAttached<T>>;
     createContainer<T>(root: DataStoreKind<T>): Promise<FluidContainerWithService<T>>;
     createContainer<T>(root: DataStoreKey<T>, registry: DataStoreRegistry): Promise<FluidContainerWithService<T>>;
     loadContainer<T>(id: string, root: DataStoreKind<T> | DataStoreRegistry<T>): Promise<FluidContainerAttached<T>>;
@@ -1978,6 +2123,9 @@ export interface StagedSchemaUpgradePolicyFactory {
     readonly permissive: StagedSchemaUpgradePolicy;
     readonly restrictive: StagedSchemaUpgradePolicy;
 }
+
+// @alpha @sealed @system
+export type StringSchema = LeafSchema<"string", string> & SimpleLeafNodeSchema;
 
 // @beta @system
 export namespace System_TableSchema {
@@ -2223,42 +2371,6 @@ export interface Tagged<V, T extends string = string> {
 
 // @public
 export type TelemetryBaseEventPropertyType = string | number | boolean | undefined;
-
-// @alpha
-export namespace TextAsTree {
-    // @sealed
-    export interface Members {
-        characterCount(): number;
-        characters(): Iterable<string>;
-        charactersCopy(): string[];
-        fullString(): string;
-        insertAt(index: number, additionalCharacters: string): void;
-        onCharactersChanged(callback: (ops: readonly TextOp[] | undefined) => void): () => void;
-        removeRange(startIndex: number | undefined, endIndex: number | undefined): void;
-    }
-    export interface Statics {
-        fromString(value: string): Tree;
-    }
-    // @sealed
-    export interface TextInsertOp {
-        readonly text: string;
-        readonly type: "insert";
-    }
-    export type TextOp = TextRetainOp | TextInsertOp | TextRemoveOp;
-    // @sealed
-    export interface TextRemoveOp {
-        readonly count: number;
-        readonly type: "remove";
-    }
-    // @sealed
-    export interface TextRetainOp {
-        readonly count: number;
-        readonly formattingChanged?: boolean;
-        readonly type: "retain";
-    }
-    const Tree: Statics & TreeNodeSchema<"com.fluidframework.text.Text", NodeKind, Members & TreeNode & WithType<"com.fluidframework.text.Text", NodeKind, unknown>, never, false>;
-    export type Tree = Members & TreeNode & WithType<"com.fluidframework.text.Text">;
-}
 
 // @alpha
 export function trackDirtyNodes(view: TreeViewAlpha<ImplicitFieldSchema>, dirty: DirtyTreeMap): () => void;
@@ -2515,6 +2627,8 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTyp
 // @alpha @sealed
 export interface TreeMapNodeAlpha<T extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends FluidReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>, TreeNode, Pick<TreeMapNode<T>, "set" | "delete"> {
     clear(): void;
+    getOrInsert(key: string, fallbackValue: InsertableTreeNodeFromImplicitAllowedTypes<T>): TreeNodeFromImplicitAllowedTypes<T>;
+    getOrInsertComputed(key: string, callback: (key: string) => InsertableTreeNodeFromImplicitAllowedTypes<T>): TreeNodeFromImplicitAllowedTypes<T>;
 }
 
 // @public @sealed
