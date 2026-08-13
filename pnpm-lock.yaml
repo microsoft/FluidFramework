@@ -37198,7 +37198,7 @@ snapshots:
 
   eslint-config-prettier@10.1.8(eslint@9.39.1):
     dependencies:
-      eslint: 9.39.1(jiti@2.6.1)(supports-color@10.2.2)
+      eslint: 9.39.1(jiti@2.6.1)(supports-color@8.1.1)
 
   eslint-import-context@0.1.9(unrs-resolver@1.11.1):
     dependencies:
