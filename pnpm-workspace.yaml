@@ -14,7 +14,6 @@ allowBuilds:
   '@azure/msal-node-extensions': true
   '@azure/msal-node-runtime': true
   '@biomejs/biome': true
-  '@parcel/watcher': true
   '@vvago/vale': true
   classic-level: true
   core-js: true
@@ -165,6 +164,15 @@ overrides:
   # Resolve known security vulnerabilities.
   node-forge: ^1.4.0
 
+  # PM2's optional system-monitoring daemon is not used by our start/stop scripts, and PM2 handles its absence.
+  # Dropping it removes 6 dependency snapshots used only for host telemetry.
+  pm2>pm2-sysmonit: "-"
+
+  # Sass uses @parcel/watcher only to optimize its standalone CLI watch mode; our Sass builds run through webpack.
+  # Sass falls back when the watcher is absent. Dropping it removes 14 dependency snapshots, including 13
+  # platform-specific native packages with build scripts, and makes the existing @parcel/watcher build allowlist moot.
+  sass>@parcel/watcher: "-"
+
   # oclif includes some AWS-related features, but we don't use them, so we drop those dependencies.
   # This helps reduce lockfile churn since the deps release very frequently.
   oclif>@aws-sdk/client-cloudfront: "-"
@@ -195,6 +203,11 @@ overrides:
   # Security overrides to address path traversal CVEs (GHSA-8qq5-rm4j-mr97, GHSA-r6q2-hw4h-h46w,
   # GHSA-34x7-hfp2-rc4v).
   tar: ^7.5.11
+
+  # tar-fs uses these optional adapters only under the Bare JavaScript runtime; Fluid supports Node.js.
+  # Dropping both removes 6 dependency snapshots while Node continues to use its built-in fs and path modules.
+  tar-fs>bare-fs: "-"
+  tar-fs>bare-path: "-"
 
   # Resolve a known security vulnerability. No patched release exists in the 0.0.x/0.1.x lines,
   # so affected consumers are moved forward to the patched 0.2.x line.
