@@ -1017,7 +1017,7 @@ export const TreeArrayNode: {
 // @public @sealed
 export interface TreeChangeEvents {
     nodeChanged(unstable?: unknown): void;
-    treeChanged(): void;
+    treeChanged(unstable?: unknown): void;
 }
 
 // @public
