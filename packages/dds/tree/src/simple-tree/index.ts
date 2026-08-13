@@ -257,7 +257,6 @@ export {
 	type FieldPropsAlpha,
 	normalizeFieldSchema,
 	getStagedRequiredUpgrade,
-	throwStagedRequiredFieldMissing,
 	areFieldSchemaEqual,
 	areImplicitFieldSchemaEqual,
 	type ApplyKind,

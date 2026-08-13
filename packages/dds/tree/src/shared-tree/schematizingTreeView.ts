@@ -35,8 +35,6 @@ import {
 	normalizeFieldSchema,
 	checkSchemaCompatibility,
 	computeUpgradeSchema,
-	getStagedRequiredUpgrade,
-	throwStagedRequiredFieldMissing,
 	type InsertableContent,
 	type StagedSchemaUpgradePolicy,
 	type TreeViewConfiguration,
@@ -527,11 +525,7 @@ export class SchematizingSimpleTreeView<
 	}
 
 	public get root(): ReadableField<TRootSchema> {
-		const value = tryGetTreeNodeForField(this.flexRoot);
-		if (value === undefined && getStagedRequiredUpgrade(this.rootFieldSchema) !== false) {
-			throwStagedRequiredFieldMissing("root");
-		}
-		return value as ReadableField<TRootSchema>;
+		return tryGetTreeNodeForField(this.flexRoot) as ReadableField<TRootSchema>;
 	}
 
 	public set root(newRoot: InsertableField<TRootSchema>) {
@@ -548,10 +542,6 @@ export class SchematizingSimpleTreeView<
 			newRoot as InsertableContent | undefined,
 			this.checkout.storedSchema.rootFieldSchema,
 		);
-	}
-
-	public isRootPresent(): boolean {
-		return tryGetTreeNodeForField(this.flexRoot) !== undefined;
 	}
 
 	// #region Branching

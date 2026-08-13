@@ -500,24 +500,6 @@ export function getStagedRequiredUpgrade(schema: FieldSchema): false | SchemaUpg
 }
 
 /**
- * Throws a `UsageError` describing that a {@link SchemaStaticsAlpha.stagedRequired | staged required} field
- * has no value in the document.
- * @remarks
- * This is the lazy, read-time failure for the staged optional-to-required migration:
- * the field is required in the view schema, but the stored schema still allows it to be empty because the
- * staged upgrade has not been applied (or the value was cleared by a client from an earlier rollout generation).
- *
- * No value is synthesized and nothing is written during reads.
- */
-export function throwStagedRequiredFieldMissing(fieldDescription: string): never {
-	throw new UsageError(
-		`Staged required field ${fieldDescription} has no value in this document. ` +
-			`This field is required by the view schema, but the stored schema still allows it to be empty because it was declared with "stagedRequired". ` +
-			`Check for presence before reading it (see SchemaStaticsAlpha.stagedRequired), or repair the document by assigning a value.`,
-	);
-}
-
-/**
  * Returns true if the given {@link ImplicitFieldSchema} are equivalent, otherwise false.
  * @remarks Two ImplicitFieldSchema are considered equivalent if all of the following are true:
  * 1. They have the same {@link FieldKind | kinds}.

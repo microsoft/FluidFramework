@@ -735,7 +735,7 @@ describe("staged required upgrade", () => {
 		assert.equal(checkSchemaCompatibility(viewSchemaA, stored).canView, false);
 	});
 
-	it("reads a present value and fails lazily on an absent root", () => {
+	it("reads a present value and reads undefined for an absent root", () => {
 		const provider = new TestTreeProviderLite(3);
 		const [treeA, treeB1, treeB2] = provider.trees;
 		const synchronizeTrees = () => provider.synchronizeMessages();
@@ -751,7 +751,6 @@ describe("staged required upgrade", () => {
 		// The value is present, so it reads normally.
 		assert.equal(viewB1.compatibility.canView, true);
 		assert.equal(viewB1.root, 5);
-		assert.equal(asTreeViewAlpha(viewB1).isRootPresent(), true);
 
 		// A client from version N clears the value (it is Optional in the stored schema).
 		viewA.root = undefined;
@@ -762,30 +761,25 @@ describe("staged required upgrade", () => {
 		// Opening the document still works: nothing is scanned or materialized at view creation time.
 		assert.equal(viewB2.compatibility.canView, true);
 
-		// The non-throwing presence check reports the absence without needing try/catch.
-		assert.equal(viewB2.isRootPresent(), false);
-
-		// Reading the field itself reports the missing value explicitly.
-		assert.throws(
-			() => viewB2.root,
-			validateUsageError(/Staged required field root has no value/),
-		);
+		// The view schema is Optional during the staged phase, so reading an absent root simply yields
+		// undefined rather than throwing: the TypeScript type honestly describes every document this
+		// client can open.
+		assert.equal(viewB2.root, undefined);
 
 		// Clearing a staged required field is blocked by the staged required client itself.
 		assert.throws(
 			() => {
-				viewB2.root = undefined as unknown as number;
+				viewB2.root = undefined;
 			},
 			validateUsageError(/Cannot clear a staged required field/),
 		);
 
 		// Writing an actual value repairs the document.
 		viewB2.root = 7;
-		assert.equal(viewB2.isRootPresent(), true);
 		assert.equal(viewB2.root, 7);
 	});
 
-	it("fails lazily on an absent object field while leaving the rest of the document usable", () => {
+	it("reads undefined for an absent object field while leaving the rest of the document usable", () => {
 		const sf = new SchemaFactoryAlpha("stagedRequiredObjectTest");
 
 		class BeforeObj extends sf.objectAlpha("Obj", {
@@ -812,19 +806,15 @@ describe("staged required upgrade", () => {
 		// Unrelated fields of the same node remain usable.
 		assert.equal(root.other, 1);
 
-		// The non-throwing presence check: `TreeAlpha.child` returns undefined rather than throwing.
+		// The staged required field is Optional in the view schema, so reading it yields undefined
+		// rather than throwing.
+		assert.equal(root.value, undefined);
 		assert.equal(TreeAlpha.child(root, "value"), undefined);
-
-		// Reading the staged required field reports the missing value.
-		assert.throws(
-			() => root.value,
-			validateUsageError(/Staged required field "value" of node/),
-		);
 
 		// Clearing the field is blocked.
 		assert.throws(
 			() => {
-				(root as { value: number | undefined }).value = undefined;
+				root.value = undefined;
 			},
 			validateUsageError(/Cannot clear staged required field/),
 		);
@@ -841,7 +831,7 @@ describe("staged required upgrade", () => {
 		assert.equal(TreeAlpha.child(root, "value"), 3);
 	});
 
-	it("requires a value when constructing nodes", () => {
+	it("requires a value at runtime when constructing nodes", () => {
 		const sf = new SchemaFactoryAlpha("stagedRequiredConstructionTest");
 		class Obj extends sf.objectAlpha("Obj", { value: sf.stagedRequired(sf.number) }) {}
 
@@ -849,10 +839,15 @@ describe("staged required upgrade", () => {
 		assert(withValue instanceof Obj);
 		assert.equal(withValue.value, 42);
 
-		// The field is Required in the view schema, so a value must be provided.
+		// The field is Optional in the TypeScript types (a mapped type cannot make the write type required
+		// while the read type is optional), so this is a runtime error rather than a compile error.
 		assert.throws(
-			() => new Obj({ value: undefined as unknown as number }),
-			(error: Error) => error instanceof Error,
+			() => new Obj({ value: undefined }),
+			validateUsageError(/Staged required field "value" of node/),
+		);
+		assert.throws(
+			() => new Obj({} as unknown as { value: number }),
+			validateUsageError(/Staged required field "value" of node/),
 		);
 	});
 
@@ -868,7 +863,8 @@ describe("staged required upgrade", () => {
 			type _check = ValidateRecursiveSchema<typeof NodeB>;
 		}
 
-		// The view field is Required, but the stored field stays Optional until the upgrade is enabled.
+		// The view field is Optional during the staged phase, and the stored field stays Optional
+		// until the upgrade is enabled.
 		const storedB = toUpgradeSchema(NodeB);
 		const nodeStored = storedB.nodeSchema.get(brand("stagedRequiredRecursiveTest.TreeNode"));
 		assert(nodeStored instanceof ObjectNodeStoredSchema);

@@ -460,8 +460,8 @@ function filterFieldAllowedTypes(
  * For {@link SchemaFactoryAlpha.stagedOptional | staged optional} fields, the stored field kind is Required
  * when the staged optional is not being included (i.e., restrictive options).
  *
- * For {@link SchemaStaticsAlpha.stagedRequired | staged required} fields, the stored field kind is Optional
- * unless the corresponding upgrade has been explicitly enabled, in which case it is Required.
+ * For {@link SchemaStaticsAlpha.stagedRequired | staged required} fields, the view field kind is Optional and the
+ * stored field kind is tightened to Required once the corresponding upgrade has been explicitly enabled.
  */
 function getStoredFieldKind(
 	f: SimpleFieldSchema,
@@ -476,10 +476,11 @@ function getStoredFieldKind(
 		return options.includeStagedOptional(isStagedOptional) ? f.kind : FieldKind.Required;
 	}
 	if (isStagedRequired instanceof SchemaUpgrade) {
-		// isStagedRequired is a SchemaUpgrade — until the upgrade is enabled the stored field stays Optional.
+		// isStagedRequired is a SchemaUpgrade — the view field is Optional, and enabling the upgrade
+		// tightens the stored field to Required.
 		return options.includeStagedRequired?.(isStagedRequired) === true
-			? f.kind
-			: FieldKind.Optional;
+			? FieldKind.Required
+			: f.kind;
 	}
 	return f.kind;
 }

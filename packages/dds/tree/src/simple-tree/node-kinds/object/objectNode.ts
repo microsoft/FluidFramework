@@ -72,7 +72,6 @@ import {
 	isConstant,
 	type DefaultProvider,
 	getStagedRequiredUpgrade,
-	throwStagedRequiredFieldMissing,
 } from "../../fieldSchema.js";
 import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
 import { prepareForInsertion } from "../../prepareForInsertion.js";
@@ -330,16 +329,6 @@ function createProxyHandler(
 					return tryGetTreeNodeForField(field);
 				}
 
-				// The field is empty. For a staged required field this is not a valid state for the view schema,
-				// so report it explicitly rather than silently returning undefined.
-				// This check is deliberately performed only here, on read of this specific field, so that loading a
-				// document and using unrelated parts of it are unaffected.
-				if (getStagedRequiredUpgrade(fieldInfo.schema) !== false) {
-					throwStagedRequiredFieldMissing(
-						`"${String(propertyKey)}" of node "${schema.identifier}"`,
-					);
-				}
-
 				return undefined;
 			}
 
@@ -427,7 +416,7 @@ export function setField(
 ): void {
 	if (value === undefined && getStagedRequiredUpgrade(simpleFieldSchema) !== false) {
 		throw new UsageError(
-			"Cannot clear a staged required field: it is required by the view schema even though the stored schema still declares it as optional.",
+			"Cannot clear a staged required field: it is optional in the view schema only because the stored schema has not been tightened yet (see SchemaStaticsAlpha.stagedRequired).",
 		);
 	}
 
@@ -739,6 +728,14 @@ function objectToFlexContent(
 	for (const [key, fieldInfo] of schema.flexKeyMap) {
 		const value = getFieldProperty(data, key);
 
+		if (value === undefined && getStagedRequiredUpgrade(fieldInfo.schema) !== false) {
+			throw new UsageError(
+				`Staged required field "${String(key)}" of node "${schema.identifier}" must be provided with a value. ` +
+					`The field is optional in the view schema only because the stored schema has not been tightened yet (see SchemaStaticsAlpha.stagedRequired); ` +
+					`a client using this schema must not create new nodes where it is empty.`,
+			);
+		}
+
 		let children: UnhydratedFlexTreeNode[] | ContextualFieldProvider;
 		if (value === undefined) {
 			const defaultProvider =
@@ -829,7 +826,7 @@ function applyFieldChange(
 	if (value === undefined && getStagedRequiredUpgrade(fieldInfo.schema) !== false) {
 		throw new UsageError(
 			`Cannot clear staged required field "${fieldInfo.storedKey}" of node "${schema.identifier}". ` +
-				`The field is required by the view schema even though the stored schema still declares it as optional.`,
+				`The field is optional in the view schema only because the stored schema has not been tightened yet (see SchemaStaticsAlpha.stagedRequired); a client using this schema must not clear it.`,
 		);
 	}
 

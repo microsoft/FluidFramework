@@ -644,25 +644,6 @@ export interface TreeViewAlpha<
 	 */
 	initialize(content: InsertableField<TSchema>): void;
 
-	/**
-	 * Whether the root field currently holds a value.
-	 *
-	 * @remarks
-	 * This is a non-throwing presence check, primarily intended for roots declared with
-	 * {@link SchemaStaticsAlpha.stagedRequired}: such a root is required by the view schema, but the stored schema
-	 * still permits it to be empty, so reading {@link TreeViewAlpha.root} throws a `UsageError` when it is empty.
-	 * Call this first to test for presence without needing `try`/`catch`.
-	 *
-	 * For an optional root this simply reports whether the root is populated, and for a required (non-staged) root
-	 * this always returns `true`.
-	 *
-	 * For object node fields, the equivalent non-throwing check is {@link (TreeAlpha:interface).child}.
-	 *
-	 * @throws Throws a `UsageError` if the document is out of schema
-	 * (see {@link SchemaCompatibilityStatus.canView}), matching {@link TreeViewAlpha.root}.
-	 */
-	isRootPresent(): boolean;
-
 	readonly events: Listenable<TreeViewEvents & TreeBranchEvents>;
 
 	// Override the base fork method to return a TreeViewAlpha.
