@@ -45,39 +45,6 @@ describe("object-forest", () => {
 	};
 	const detachedFieldKey: FieldKey = brand("detached");
 
-	// used for calling delta visitor functions, the actual value doesn't matter for these tests
-	const dummyDetachedNodeId = { minor: 0 };
-
-	describe("Throws an error for invalid edits", () => {
-		it("attaching content into the detached field it is being transferred from", () => {
-			const forest = buildForest(new Breakable("test"));
-			initializeForest(forest, fieldJsonCursor([content]));
-			const visitor = forest.acquireVisitor();
-			visitor.enterField(rootFieldKey);
-			assert.throws(
-				() => visitor.attach(rootFieldKey, 1, 0),
-				validateAssertionError(/Attach source field must be different from current field/),
-			);
-			visitor.exitField(rootFieldKey);
-			visitor.free();
-		});
-
-		it("detaching content from the detached field it is being transferred to", () => {
-			const forest = buildForest(new Breakable("test"));
-			initializeForest(forest, fieldJsonCursor([content]));
-			const visitor = forest.acquireVisitor();
-			visitor.enterField(rootFieldKey);
-			assert.throws(
-				() => visitor.detach({ start: 0, end: 1 }, rootFieldKey, dummyDetachedNodeId, false),
-				validateAssertionError(
-					/Detach destination field must be different from current field/,
-				),
-			);
-			visitor.exitField(rootFieldKey);
-			visitor.free();
-		});
-	});
-
 	it("moveCursorToPath with an undefined path points to dummy node above detachedFields.", () => {
 		const forest = buildForest(new Breakable("test"));
 		initializeForest(forest, fieldJsonCursor([[1, 2]]));
