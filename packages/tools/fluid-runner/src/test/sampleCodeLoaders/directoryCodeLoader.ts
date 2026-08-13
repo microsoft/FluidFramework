@@ -13,7 +13,7 @@ import type {
 
 import { SampleCodeLoader } from "./sampleCodeLoader.js";
 
-export const directoryTextContent = "Fluid \u03c0";
+export const directoryTextContent = "Fluid \u03C0";
 export const directoryBinaryContent = Uint8Array.from([0, 1, 127, 128, 255]);
 export const racedDirectoryContent = "raced";
 export const racedDirectoryFile = "marker.txt";
@@ -60,6 +60,8 @@ export const fluidExport: IFluidFileConverterWithDirectoryOutput = {
 			fs.mkdirSync(outputRoot);
 			fs.writeFileSync(path.join(outputRoot, racedDirectoryFile), racedDirectoryContent);
 		}
-		return (options === undefined ? undefined : invalidOutputs[options]) ?? directoryExecuteResult;
+		return (
+			(options === undefined ? undefined : invalidOutputs[options]) ?? directoryExecuteResult
+		);
 	},
 };

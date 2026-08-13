@@ -8,10 +8,7 @@ import * as path from "node:path";
 
 import type { IFluidFileConverterDirectoryOutput } from "./codeLoaderBundle.js";
 
-type FluidFileConverterOutput =
-	| string
-	| Uint8Array
-	| IFluidFileConverterDirectoryOutput;
+type FluidFileConverterOutput = string | Uint8Array | IFluidFileConverterDirectoryOutput;
 
 interface IPlannedPath {
 	readonly path: string;
@@ -122,8 +119,8 @@ function planDirectoryOutput(
 		throwInvalidDirectoryOutput();
 	}
 
-	const directoryValues = output.directories ?? [];
-	const fileValues = output.files;
+	const directoryValues: unknown = output.directories ?? [];
+	const fileValues: unknown = output.files;
 	if (!isReadonlyArray(directoryValues) || !isReadonlyArray(fileValues)) {
 		throwInvalidDirectoryOutput();
 	}
@@ -147,7 +144,7 @@ function planDirectoryOutput(
 			throwInvalidDirectoryOutput();
 		}
 
-		const content = fileValue.content;
+		const content: unknown = fileValue.content;
 		if (typeof content !== "string" && !(content instanceof Uint8Array)) {
 			throwInvalidDirectoryOutput();
 		}

@@ -37,18 +37,18 @@ describe("exportFile", () => {
 	const binaryExecuteResult = Uint8Array.from([0, 1, 127, 128, 255]);
 	const binaryFluidExport: IFluidFileConverterWithBinaryOutput = {
 		...fluidExport,
-		execute: () => Promise.resolve(binaryExecuteResult),
+		execute: async () => binaryExecuteResult,
 	};
 	const directoryExecuteResult: IFluidFileConverterDirectoryOutput = {
 		directories: ["empty"],
 		files: [
-			{ path: "nested/readme.txt", content: "Fluid \u03c0" },
+			{ path: "nested/readme.txt", content: "Fluid \u03C0" },
 			{ path: "nested/data.bin", content: binaryExecuteResult },
 		],
 	};
 	const directoryFluidExport: IFluidFileConverterWithDirectoryOutput = {
 		...fluidExport,
-		execute: () => Promise.resolve(directoryExecuteResult),
+		execute: async () => directoryExecuteResult,
 	};
 
 	beforeEach(() => {
@@ -92,9 +92,7 @@ describe("exportFile", () => {
 	});
 
 	it("preserves internal helper text, binary, and directory output types", async () => {
-		const snapshot = getSnapshotFileContent(
-			path.join(snapshotFolder, "odspSnapshot1.json"),
-		);
+		const snapshot = getSnapshotFileContent(path.join(snapshotFolder, "odspSnapshot1.json"));
 		const logger = new MockLogger().toTelemetryLogger();
 
 		const textResult: string = await createContainerAndExecute(snapshot, fluidExport, logger);
@@ -152,7 +150,7 @@ describe("exportFile", () => {
 		);
 		assert.strictEqual(
 			fs.readFileSync(path.join(outputFilePath, "nested", "readme.txt"), "utf8"),
-			"Fluid \u03c0",
+			"Fluid \u03C0",
 			"text file output is not correct",
 		);
 		assert.deepStrictEqual(

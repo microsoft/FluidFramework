@@ -8,10 +8,7 @@ import * as path from "node:path";
 import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { isCodeLoaderBundle, isFluidFileConverter } from "./codeLoaderBundle.js";
-import {
-	type IExportFileResponse,
-	createContainerAndExecute,
-} from "./exportFile.js";
+import { type IExportFileResponse, createContainerAndExecute } from "./exportFile.js";
 /* eslint-disable import-x/no-internal-modules */
 import type { IFileLoggerTelemetryOptions } from "./logger/fileLogger.js";
 import {

@@ -10,20 +10,16 @@ import path from "path";
 import { parseBundleAndExportFile } from "../parseBundleAndExportFile.js";
 
 import { _dirname } from "./dirname.cjs";
-// eslint-disable-next-line import-x/no-internal-modules
-import {
-	binaryExecuteResult,
-	racedOutput,
-} from "./sampleCodeLoaders/binaryCodeLoader.js";
-// eslint-disable-next-line import-x/no-internal-modules
+/* eslint-disable import-x/no-internal-modules */
+import { binaryExecuteResult, racedOutput } from "./sampleCodeLoaders/binaryCodeLoader.js";
 import {
 	directoryBinaryContent,
 	directoryTextContent,
 	racedDirectoryContent,
 	racedDirectoryFile,
 } from "./sampleCodeLoaders/directoryCodeLoader.js";
-// eslint-disable-next-line import-x/no-internal-modules
 import { executeResult } from "./sampleCodeLoaders/sampleCodeLoader.js";
+/* eslint-enable import-x/no-internal-modules */
 
 describe("parseBundleAndExportFile", () => {
 	const folderRoot = path.join(_dirname, "../../src/test");

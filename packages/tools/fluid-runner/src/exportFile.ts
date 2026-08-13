@@ -178,6 +178,9 @@ export async function createContainerAndExecute(
 	timeout?: number,
 	disableNetworkFetch?: boolean,
 ): Promise<string>;
+/**
+ * @internal
+ */
 export async function createContainerAndExecute(
 	localOdspSnapshot: string | Uint8Array,
 	fluidFileConverter: IFluidFileConverterWithBinaryOutput,
@@ -186,6 +189,9 @@ export async function createContainerAndExecute(
 	timeout?: number,
 	disableNetworkFetch?: boolean,
 ): Promise<Uint8Array>;
+/**
+ * @internal
+ */
 export async function createContainerAndExecute(
 	localOdspSnapshot: string | Uint8Array,
 	fluidFileConverter: IFluidFileConverterWithDirectoryOutput,
@@ -194,6 +200,9 @@ export async function createContainerAndExecute(
 	timeout?: number,
 	disableNetworkFetch?: boolean,
 ): Promise<IFluidFileConverterDirectoryOutput>;
+/**
+ * @internal
+ */
 export async function createContainerAndExecute(
 	localOdspSnapshot: string | Uint8Array,
 	fluidFileConverter: FluidFileConverter,
@@ -236,7 +245,7 @@ export async function createContainerAndExecute(
 		});
 		try {
 			await waitContainerToCatchUp(container);
-			return PerformanceEvent.timedExecAsync(
+			return await PerformanceEvent.timedExecAsync(
 				logger,
 				{ eventName: "ExportFile" },
 				async () => fluidFileConverter.execute(container, options),
