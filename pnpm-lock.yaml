@@ -10,6 +10,12 @@ catalogs:
     '@fluid-tools/build-cli':
       specifier: ^0.65.0
       version: 0.65.0
+    '@fluid-tools/build-infrastructure':
+      specifier: ^0.65.0
+      version: 0.65.0
+    '@fluid-tools/version-tools':
+      specifier: ^0.65.0
+      version: 0.65.0
     '@fluidframework/build-tools':
       specifier: ^0.65.0
       version: 0.65.0
@@ -20,6 +26,9 @@ catalogs:
     eslint:
       specifier: ~9.39.1
       version: 9.39.1
+    eslint-config-prettier:
+      specifier: ~10.1.8
+      version: 10.1.8
 
 overrides:
   '@babel/core@>=7 <8': ^7.29.6
