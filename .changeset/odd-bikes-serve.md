@@ -1,4 +1,5 @@
 ---
+"@fluidframework/container-runtime": minor
 "@fluidframework/runtime-definitions": minor
 "@fluidframework/runtime-utils": minor
 "@fluidframework/datastore-definitions": minor
