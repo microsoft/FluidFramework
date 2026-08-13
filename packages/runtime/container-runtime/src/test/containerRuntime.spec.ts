@@ -4344,7 +4344,7 @@ describe("Runtime", () => {
 							existing: false,
 							runtimeOptions: {},
 							provideEntryPoint: mockProvideEntryPoint,
-							// @ts-expect-error - Invalid version strings are not castable to MinimumVersionForCollab
+							// @ts-expect-error - Invalid version strings are not castable to OldestSupportedClientVersion
 							minVersionForCollab: version,
 						});
 					});

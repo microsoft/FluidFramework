@@ -55,7 +55,7 @@ import {
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { stringSchema } from "../../simple-tree/leafNodeSchema.js";
-import { brand } from "../../util/index.js";
+import { brand, Breakable } from "../../util/index.js";
 import {
 	TestTreeProviderLite,
 	buildTestForest,
@@ -2316,7 +2316,7 @@ function itView<
 			{
 				forest: buildTestForest({ additionalAsserts: true, schema }),
 				schema,
-				logger,
+				breaker: new Breakable("createTreeCheckout", logger),
 			},
 		);
 		const view = new SchematizingSimpleTreeView<TRootSchema>(

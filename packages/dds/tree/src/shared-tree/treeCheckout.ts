@@ -334,12 +334,11 @@ export function createTreeCheckout(
 		fieldBatchCodec?: FieldBatchCodec;
 		removedRoots?: DetachedFieldIndex;
 		chunkCompressionStrategy?: TreeCompressionStrategy;
-		logger?: TelemetryLoggerExt;
 		breaker?: Breakable;
 		codecOptions?: Partial<CodecWriteOptions>;
 	},
 ): TreeCheckout {
-	const breaker = args?.breaker ?? new Breakable("TreeCheckout", args?.logger);
+	const breaker = args?.breaker ?? new Breakable("TreeCheckout");
 	const schema = args?.schema ?? new TreeStoredSchemaRepository();
 	const forest = args?.forest ?? buildForest(breaker, schema);
 	const defaultCodecOptions: CodecWriteOptions = {
@@ -380,7 +379,6 @@ export function createTreeCheckout(
 		revisionTagCodec,
 		idCompressor,
 		args?.removedRoots,
-		args?.logger,
 		breaker,
 	);
 }
@@ -489,6 +487,16 @@ export function assertValidConstraint(
 export class TreeCheckout implements ITreeCheckout {
 	public disposed = false;
 
+	/**
+	 * Logger for telemetry events related to this checkout.
+	 * @remarks
+	 * This logger is provided by the {@link Breakable} passed to the constructor, and may be `undefined` if no logger was provided.
+	 * See the explanation on {@link Breakable.logger} for why this pattern makes sense.
+	 */
+	private get logger(): TelemetryLoggerExt | undefined {
+		return this.breaker.logger;
+	}
+
 	private editLock: EditLock;
 
 	/**
@@ -566,9 +574,7 @@ export class TreeCheckout implements ITreeCheckout {
 		private readonly revisionTagCodec: RevisionTagCodec,
 		private readonly idCompressor: IIdCompressor,
 		private readonly _removedRoots: DetachedFieldIndex = makeDetachedFieldIndex("repair"),
-		/** Optional logger for telemetry. */
-		private readonly logger?: TelemetryLoggerExt,
-		public readonly breaker: Breakable = new Breakable("TreeCheckout", logger),
+		public readonly breaker: Breakable = new Breakable("TreeCheckout"),
 		public readonly disposeForksAfterTransaction = true,
 	) {
 		this.#transaction = this.createTransactionStack(branch);
@@ -1304,7 +1310,6 @@ export class TreeCheckout implements ITreeCheckout {
 			this.revisionTagCodec,
 			this.idCompressor,
 			this._removedRoots.clone(),
-			this.logger,
 			forkBreaker,
 		);
 		this.#events.emit("fork", checkout);
