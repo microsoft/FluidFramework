@@ -7,7 +7,7 @@ import { createEmitter } from "@fluid-internal/client-utils";
 import type { IFluidHandle, Listenable } from "@fluidframework/core-interfaces/internal";
 import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { type TelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	FluidClientVersion,
@@ -475,6 +475,16 @@ export function assertValidConstraint(
  */
 export class TreeCheckout implements ITreeCheckout {
 	public disposed = false;
+
+	/**
+	 * Logger for telemetry events related to this checkout.
+	 * @remarks
+	 * This logger is provided by the {@link Breakable} passed to the constructor, and may be `undefined` if no logger was provided.
+	 * See the explanation on {@link Breakable.logger} for why this pattern makes sense.
+	 */
+	private get logger(): TelemetryLoggerExt | undefined {
+		return this.breaker.logger;
+	}
 
 	private editLock: EditLock;
 
@@ -1106,7 +1116,7 @@ export class TreeCheckout implements ITreeCheckout {
 				}
 
 				const revertMetrics = checkout.revertRevertible(revision, kind, labelTree);
-				checkout.breaker.logger?.sendTelemetryEvent({
+				checkout.logger?.sendTelemetryEvent({
 					eventName: TreeCheckout.revertTelemetryEventName,
 					...revertMetrics,
 				});
@@ -1228,7 +1238,7 @@ export class TreeCheckout implements ITreeCheckout {
 
 		const branch = this.#transaction.activeBranch.fork();
 		const storedSchema = this.storedSchema.clone();
-		const forkBreaker = new Breakable("TreeCheckout", this.breaker.logger);
+		const forkBreaker = new Breakable("TreeCheckout", this.logger);
 		const forest = this.forest.clone(storedSchema, forkBreaker);
 		const checkout = new TreeCheckout(
 			branch,
