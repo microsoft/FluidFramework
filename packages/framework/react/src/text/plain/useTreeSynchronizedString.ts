@@ -130,6 +130,7 @@ export function useTreeSynchronizedString(
 		const full = tree.fullString();
 		textRef.current = full;
 		setText(full);
+		// Recreate the anchors against the newly bound tree while preserving the tracked offsets.
 		if (selectionRef.current !== undefined) {
 			setSelection(selectionRef.current);
 		}
