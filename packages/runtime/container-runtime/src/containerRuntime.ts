@@ -1654,6 +1654,15 @@ export class ContainerRuntime
 	private lastAckedSummaryContext: ISummaryContext | undefined;
 
 	/**
+	 * Handle of the most recent summary this client uploaded.
+	 *
+	 * @remarks
+	 * The summarize2 flow has no summarizer nodes to ask whether an ack belongs to a summary this client
+	 * submitted, so the runtime remembers it here.
+	 */
+	private lastSubmittedSummaryHandle: string | undefined;
+
+	/**
 	 * It a cache for holding mapping for loading groupIds with its snapshot from the service. Add expiry policy of 1 minute.
 	 * Starting with 1 min and based on recorded usage we can tweak it later on.
 	 */
@@ -5113,6 +5122,7 @@ export class ContainerRuntime
 					error: wrapError(error, (msg) => new RetriableSummaryError(msg)),
 				};
 			}
+			this.lastSubmittedSummaryHandle = handle;
 
 			const parent = summaryContext.ackHandle;
 			const summaryMessage: ISummaryContent = {
@@ -5716,10 +5726,14 @@ export class ContainerRuntime
 		const { proposalHandle, ackHandle, summaryRefSeq, summaryLogger } = options;
 		// proposalHandle is always passed from RunningSummarizer.
 		assert(proposalHandle !== undefined, 0x766 /* proposalHandle should be available */);
-		const result = await this.summarizerNode.refreshLatestSummary(
-			proposalHandle,
-			summaryRefSeq,
-		);
+		const result = this.summarizeV2Enabled
+			? {
+					// Without summarizer nodes, the only thing that makes an acked summary "ours" is having
+					// uploaded it. There is no per-node state to refresh either way.
+					isSummaryTracked: proposalHandle === this.lastSubmittedSummaryHandle,
+					isSummaryNewer: summaryRefSeq > this.latestSummarySequenceNumber,
+				}
+			: await this.summarizerNode.refreshLatestSummary(proposalHandle, summaryRefSeq);
 
 		/* eslint-disable jsdoc/check-indentation */
 		/**
