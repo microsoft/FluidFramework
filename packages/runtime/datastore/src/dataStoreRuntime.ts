@@ -46,6 +46,7 @@ import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	type ISummaryTreeWithStats,
+	type ISummaryBuilder,
 	type ITelemetryContext,
 	type IGarbageCollectionData,
 	type CreateChildSummarizerNodeParam,
@@ -100,7 +101,11 @@ import {
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/legacy";
 import { v4 as uuid } from "uuid";
 
-import { type IChannelContext, summarizeChannel } from "./channelContext.js";
+import {
+	type IChannelContext,
+	neverSummarizedSequenceNumber,
+	summarizeChannel,
+} from "./channelContext.js";
 import {
 	dataStoreCompatDetailsForRuntime,
 	validateRuntimeCompatibility,
@@ -354,6 +359,12 @@ export class FluidDataStoreRuntime
 	private readonly sharedObjectRegistry: ISharedObjectRegistry;
 	private readonly quorum: IQuorumClients;
 	private readonly audience: IAudience;
+
+	/**
+	 * Sequence number this data store's content was loaded at. Used as the starting "last changed at" sequence
+	 * number for channels created from the base snapshot.
+	 */
+	private readonly loadedFromSequenceNumber: number;
 	private readonly mc: MonitoringContext;
 	public get logger(): ITelemetryLoggerExt {
 		return toITelemetryLoggerExt(this.mc.logger);
@@ -460,6 +471,10 @@ export class FluidDataStoreRuntime
 		this.deltaManagerInternal = dataStoreContext.deltaManager;
 		this.quorum = dataStoreContext.getQuorum();
 		this.audience = dataStoreContext.getAudience();
+		// Older container runtimes do not report this. Treat the content as never summarized in that case so that
+		// the summarize2 flow stays correct (at the cost of not reusing anything).
+		this.loadedFromSequenceNumber =
+			dataStoreContext.loadedFromSequenceNumber ?? neverSummarizedSequenceNumber;
 
 		const tree = dataStoreContext.baseSnapshot;
 
@@ -500,6 +515,7 @@ export class FluidDataStoreRuntime
 						this.dataStoreContext.getCreateChildSummarizerNodeFn(path, {
 							type: CreateSummarizerNodeSource.FromSummary,
 						}),
+						this.loadedFromSequenceNumber,
 					);
 				}
 
@@ -898,6 +914,7 @@ export class FluidDataStoreRuntime
 	private createRemoteChannelContext(
 		attachMessage: IAttachMessage,
 		summarizerNodeParams: CreateChildSummarizerNodeParam,
+		messageSequenceNumber: number,
 	): RemoteChannelContext {
 		const flatBlobs = new Map<string, ArrayBufferLike>();
 		const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
@@ -917,6 +934,7 @@ export class FluidDataStoreRuntime
 				attachMessage.id,
 				summarizerNodeParams,
 			),
+			messageSequenceNumber,
 			attachMessage.type,
 		);
 	}
@@ -1008,6 +1026,7 @@ export class FluidDataStoreRuntime
 				const remoteChannelContext = this.createRemoteChannelContext(
 					attachMessage,
 					summarizerNodeParams,
+					envelope.sequenceNumber,
 				);
 				this.contexts.set(id, remoteChannelContext);
 			}
@@ -1117,6 +1136,32 @@ export class FluidDataStoreRuntime
 			},
 		);
 		return summaryBuilder.getSummaryTree();
+	}
+
+	/**
+	 * Writes this data store's channels into the given builder.
+	 *
+	 * @remarks
+	 * Summarizer-node-free counterpart to {@link FluidDataStoreRuntime.summarize}. Each channel decides for itself
+	 * whether its content changed since `latestSummarySequenceNumber`; there is no state to start, complete or
+	 * refresh here.
+	 */
+	public async summarize2(
+		summaryBuilder: ISummaryBuilder,
+		latestSummarySequenceNumber: number,
+		fullTree: boolean,
+		telemetryContext: ITelemetryContext,
+	): Promise<void> {
+		await this.visitContextsDuringSummary(
+			async (contextId: string, context: IChannelContext) => {
+				await context.summarize2(
+					summaryBuilder.createBuilderForChild(contextId, fullTree),
+					latestSummarySequenceNumber,
+					fullTree,
+					telemetryContext,
+				);
+			},
+		);
 	}
 
 	/**

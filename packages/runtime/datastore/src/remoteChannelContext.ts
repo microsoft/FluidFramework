@@ -19,6 +19,7 @@ import type {
 	ISummarizeInternalResult,
 	ISummarizeResult,
 	ISummarizerNodeWithGC,
+	ISummaryBuilder,
 	IPendingMessagesState,
 	IRuntimeMessageCollection,
 	IRuntimeStorageService,
@@ -38,7 +39,9 @@ import {
 	createChannelServiceEndpoints,
 	loadChannel,
 	loadChannelFactoryAndAttributes,
+	neverSummarizedSequenceNumber,
 	summarizeChannelAsync,
+	summarizeChannelAsync2,
 } from "./channelContext.js";
 import type { ISharedObjectRegistry } from "./dataStoreRuntime.js";
 
@@ -59,6 +62,11 @@ export class RemoteChannelContext implements IChannelContext {
 	private readonly thresholdOpsCounter: ThresholdCounter;
 	private static readonly pendingOpsCountThreshold = 1000;
 
+	/**
+	 * Sequence number at which this context's content last changed, used by the summarize2 flow.
+	 */
+	private lastChangedSequenceNumber: number;
+
 	constructor(
 		runtime: IFluidDataStoreRuntime,
 		dataStoreContext: IFluidDataStoreContext,
@@ -70,9 +78,12 @@ export class RemoteChannelContext implements IChannelContext {
 		registry: ISharedObjectRegistry,
 		extraBlobs: Map<string, ArrayBufferLike> | undefined,
 		createSummarizerNode: CreateChildSummarizerNodeFn,
+		loadedFromSequenceNumber: number,
 		attachMessageType?: string,
 	) {
 		assert(!this.id.includes("/"), 0x310 /* Channel context ID cannot contain slashes */);
+
+		this.lastChangedSequenceNumber = loadedFromSequenceNumber;
 
 		// `channelType` is not known until the LazyPromise body runs `loadChannelFactoryAndAttributes`.
 		// Pass a getter to `tagCodeArtifacts` so events log the type as soon as it's available.
@@ -94,7 +105,11 @@ export class RemoteChannelContext implements IChannelContext {
 		this.services = createChannelServiceEndpoints(
 			dataStoreContext.connected,
 			submitFn,
-			() => dirtyFn(this.id),
+			() => {
+				// The local change is not represented by a sequence number until its op is processed.
+				this.lastChangedSequenceNumber = neverSummarizedSequenceNumber;
+				dirtyFn(this.id);
+			},
 			() => runtime.attachState !== AttachState.Detached,
 			storageService,
 			this.subLogger,
@@ -207,6 +222,7 @@ export class RemoteChannelContext implements IChannelContext {
 	public processMessages(messageCollection: IRuntimeMessageCollection): void {
 		const { envelope, messagesContent, local } = messageCollection;
 		this.summarizerNode.invalidate(envelope.sequenceNumber);
+		this.lastChangedSequenceNumber = envelope.sequenceNumber;
 
 		if (this.isLoaded) {
 			this.services.deltaConnection.processMessages(messageCollection);
@@ -238,6 +254,26 @@ export class RemoteChannelContext implements IChannelContext {
 		assert(this.isLoaded, 0x2f0 /* "Remote channel must be loaded when rolling back op" */);
 
 		this.services.deltaConnection.rollback(content, localOpMetadata);
+	}
+
+	public async summarize2(
+		summaryBuilder: ISummaryBuilder,
+		latestSummarySequenceNumber: number,
+		fullTree: boolean,
+		telemetryContext: ITelemetryContext,
+	): Promise<void> {
+		if (!fullTree && latestSummarySequenceNumber >= this.lastChangedSequenceNumber) {
+			summaryBuilder.nodeDidNotChange();
+			return;
+		}
+		const channel = await this.getChannel();
+		await summarizeChannelAsync2(
+			channel,
+			summaryBuilder,
+			latestSummarySequenceNumber,
+			fullTree,
+			telemetryContext,
+		);
 	}
 
 	/**

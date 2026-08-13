@@ -32,12 +32,14 @@ import {
 	type ISummaryTreeWithStats,
 	type ITelemetryContext,
 	type IGarbageCollectionData,
+	type ISummaryBuilder,
 	blobCountPropertyName,
 	totalBlobSizePropertyName,
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
 } from "@fluidframework/runtime-definitions/internal";
 import {
+	addSummaryTreeToBuilder,
 	toDeltaManagerInternal,
 	type TelemetryContext,
 } from "@fluidframework/runtime-utils/internal";
@@ -839,6 +841,50 @@ export abstract class SharedObject<
 	}
 
 	/**
+	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).summarize2}
+	 */
+	public async summarize2(
+		summaryBuilder: ISummaryBuilder,
+		latestSummarySequenceNumber: number,
+		fullTree: boolean,
+		telemetryContext: ITelemetryContext,
+	): Promise<void> {
+		if (this.summarizeCore2 === undefined) {
+			// This shared object has not implemented the incremental path yet. Produce the same content the old
+			// API would have, just written through the builder.
+			addSummaryTreeToBuilder(
+				summaryBuilder,
+				this.summarizeCore(
+					this.serializer,
+					telemetryContext,
+					undefined /* incrementalSummaryContext */,
+					fullTree,
+				).summary,
+			);
+		} else {
+			this.summarizeCore2(
+				summaryBuilder,
+				this.serializer,
+				latestSummarySequenceNumber,
+				fullTree,
+				telemetryContext,
+			);
+		}
+
+		const { stats } = summaryBuilder.getSummaryTreeWithStats();
+		this.incrementTelemetryMetric(
+			blobCountPropertyName,
+			stats.blobNodeCount,
+			telemetryContext,
+		);
+		this.incrementTelemetryMetric(
+			totalBlobSizePropertyName,
+			stats.totalBlobSize,
+			telemetryContext,
+		);
+	}
+
+	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).getGCData}
 	 */
 	public getGCData(fullGC: boolean = false): IGarbageCollectionData {
@@ -894,6 +940,24 @@ export abstract class SharedObject<
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 		fullTree?: boolean,
 	): ISummaryTreeWithStats;
+
+	/**
+	 * Writes this object's content into the given builder, reusing the previous summary where possible.
+	 *
+	 * @remarks
+	 * Optional opt-in counterpart to {@link SharedObject.summarizeCore}. Implement it to participate in
+	 * incremental summarization; shared objects that do not are summarized in full via `summarizeCore`.
+	 *
+	 * @param latestSummarySequenceNumber - Reference sequence number of the latest successful summary, or -1 if
+	 * there has not been one. Content that has not changed since then can be emitted as a handle.
+	 */
+	protected summarizeCore2?(
+		summaryBuilder: ISummaryBuilder,
+		serializer: IFluidSerializer,
+		latestSummarySequenceNumber: number,
+		fullTree: boolean,
+		telemetryContext: ITelemetryContext,
+	): void;
 
 	private incrementTelemetryMetric(
 		propertyName: string,

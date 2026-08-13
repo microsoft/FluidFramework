@@ -27,7 +27,11 @@ import type {
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces/internal";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
-import type { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
+import type {
+	IClientDetails,
+	IQuorumClients,
+	ISummaryTree,
+} from "@fluidframework/driver-definitions";
 import type {
 	ISnapshot,
 	IDocumentMessage,
@@ -60,6 +64,7 @@ import type {
 	ISummarizeInternalResult,
 	ISummarizeResult,
 	ISummarizerNodeWithGC,
+	ISummaryBuilder,
 	SummarizeInternalFn,
 	IInboundSignalMessage,
 	IPendingMessagesState,
@@ -90,6 +95,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { IFluidParentContextPrivate } from "./channelCollection.js";
+import { neverSummarizedSequenceNumber } from "./channelCollection.js";
 import { BaseDeltaManagerProxy } from "./deltaManagerProxies.js";
 import {
 	runtimeCompatDetailsForDataStore,
@@ -158,6 +164,14 @@ export interface IFluidDataStoreContextProps {
 	readonly storage: IRuntimeStorageService;
 	readonly scope: FluidObject;
 	readonly createSummarizerNodeFn: CreateChildSummarizerNodeFn;
+	/**
+	 * See {@link @fluidframework/runtime-definitions#IFluidParentContext.loadedFromSequenceNumber}.
+	 *
+	 * @remarks
+	 * Defaults to a value no summary can reach, which makes the summarize2 flow treat this data store as always
+	 * changed. Callers that know when this content first became summarizable should pass it.
+	 */
+	readonly loadedFromSequenceNumber?: number;
 	/**
 	 * See {@link FluidDataStoreContext.pkg}.
 	 */
@@ -456,6 +470,20 @@ export abstract class FluidDataStoreContext
 	 */
 	protected pkg?: PackagePath;
 
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#IFluidParentContext.loadedFromSequenceNumber}
+	 */
+	public readonly loadedFromSequenceNumber: number;
+
+	/**
+	 * Sequence number at which this data store's content last changed, used by the summarize2 flow.
+	 *
+	 * @remarks
+	 * This is the only per-node summarization state in the new flow. Everything else - what the latest successful
+	 * summary was, and therefore what may be reused - lives in the container runtime.
+	 */
+	private lastChangedSequenceNumber: number;
+
 	public constructor(
 		props: IFluidDataStoreContextProps,
 		private readonly existing: boolean,
@@ -472,6 +500,9 @@ export abstract class FluidDataStoreContext
 		this.scope = props.scope;
 		this.pkg = props.pkg;
 		this.loadingGroupId = props.loadingGroupId;
+		this.loadedFromSequenceNumber =
+			props.loadedFromSequenceNumber ?? neverSummarizedSequenceNumber;
+		this.lastChangedSequenceNumber = this.loadedFromSequenceNumber;
 
 		// URIs use slashes as delimiters. Handles use URIs.
 		// Thus having slashes in types almost guarantees trouble down the road!
@@ -762,6 +793,7 @@ export abstract class FluidDataStoreContext
 		this.verifyNotClosed("process", false /* checkTombstone */, safeTelemetryProps);
 
 		this.summarizerNode.recordChange(envelope as ISequencedDocumentMessage);
+		this.lastChangedSequenceNumber = envelope.sequenceNumber;
 
 		if (this.loaded) {
 			assert(this.channel !== undefined, 0xa68 /* Channel is not loaded */);
@@ -815,6 +847,67 @@ export abstract class FluidDataStoreContext
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummarizeResult> {
 		return this.summarizerNode.summarize(fullTree, trackState, telemetryContext);
+	}
+
+	/**
+	 * Writes this data store's summary into the given builder, or declares it unchanged since the latest
+	 * successful summary.
+	 *
+	 * @remarks
+	 * Summarizer-node-free counterpart to {@link FluidDataStoreContext.summarize}. Note that a data store which
+	 * declares itself unchanged is not realized, which is the main win over the old flow.
+	 */
+	public async summarize2(
+		summaryBuilder: ISummaryBuilder,
+		latestSummarySequenceNumber: number,
+		fullTree: boolean,
+		telemetryContext: ITelemetryContext,
+	): Promise<void> {
+		if (!fullTree && latestSummarySequenceNumber >= this.lastChangedSequenceNumber) {
+			summaryBuilder.nodeDidNotChange();
+			return;
+		}
+
+		const channel = await this.realize();
+		if (channel.summarize2 === undefined) {
+			// Data store runtimes that predate this API fall back to the old flow. The resulting tree is added
+			// wholesale, so nothing below this data store is incremental.
+			const summarizeResult = await channel.summarize(
+				fullTree,
+				false /* trackState */,
+				telemetryContext,
+			);
+			wrapSummaryInChannelsTree(summarizeResult);
+			summaryBuilder.addTree(channelsTreeName, {
+				summary: summarizeResult.summary.tree[channelsTreeName] as ISummaryTree,
+				stats: summarizeResult.stats,
+			});
+		} else {
+			await channel.summarize2(
+				summaryBuilder.createBuilderForChild(channelsTreeName, fullTree),
+				latestSummarySequenceNumber,
+				fullTree,
+				telemetryContext,
+			);
+		}
+
+		// Add data store's attributes to the summary.
+		const { pkg } = await this.getInitialSnapshotDetails();
+		const isRoot = await this.isRoot();
+		summaryBuilder.addBlob(
+			dataStoreAttributesBlobName,
+			JSON.stringify(createAttributes(pkg, isRoot)),
+		);
+
+		// If we are not referenced, mark the summary tree as unreferenced. Also, update unreferenced blob
+		// size in the summary stats with the blobs size of this data store.
+		if (!this.summarizerNode.isReferenced()) {
+			summaryBuilder.markUnreferenced();
+		}
+
+		if (this.loadingGroupId !== undefined) {
+			summaryBuilder.setGroupId(this.loadingGroupId);
+		}
 	}
 
 	private async summarizeInternal(
@@ -950,8 +1043,10 @@ export abstract class FluidDataStoreContext
 	public setChannelDirty(address: string): void {
 		this.verifyNotClosed("setChannelDirty");
 
-		// Get the latest sequence number.
 		const latestSequenceNumber = this.deltaManager.lastSequenceNumber;
+
+		// The local change is not represented by a sequence number until its op is processed.
+		this.lastChangedSequenceNumber = neverSummarizedSequenceNumber;
 
 		this.summarizerNode.invalidate(latestSequenceNumber);
 

@@ -123,6 +123,7 @@ import type {
 	IFluidDataStoreRegistry,
 	IFluidParentContext,
 	ISummarizeInternalResult,
+	ISummaryBuilder,
 	InboundAttachMessage,
 	NamedFluidDataStoreRegistryEntries,
 	SummarizeInternalFn,
@@ -147,6 +148,7 @@ import {
 	RuntimeHeaders,
 	validateMinimumVersionForCollab,
 	seqFromTree,
+	SummaryBuilder,
 	TelemetryContext,
 } from "@fluidframework/runtime-utils/internal";
 import type {
@@ -2801,9 +2803,9 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Adds the container's metadata to the given summary tree.
+	 * Builds the container's metadata blob contents.
 	 */
-	private addMetadataToSummary(summaryTree: ISummaryTreeWithStats): void {
+	private getMetadata(): IContainerRuntimeMetadata {
 		// The last message processed at the time of summary. If there are no new messages, use the message from the
 		// last summary.
 		const message =
@@ -2836,7 +2838,7 @@ export class ContainerRuntime
 			documentSchema,
 		};
 
-		addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(metadata));
+		return metadata;
 	}
 
 	protected addContainerStateToSummary(
@@ -2845,7 +2847,7 @@ export class ContainerRuntime
 		trackState: boolean,
 		telemetryContext?: ITelemetryContext,
 	): void {
-		this.addMetadataToSummary(summaryTree);
+		addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(this.getMetadata()));
 
 		if (this._idCompressor) {
 			const idCompressorState = JSON.stringify(this._idCompressor.serialize(false));
@@ -2885,6 +2887,69 @@ export class ContainerRuntime
 		const gcSummary = this.garbageCollector.summarize(fullTree, trackState, telemetryContext);
 		if (gcSummary !== undefined) {
 			addSummarizeResultToSummary(summaryTree, gcTreeKey, gcSummary);
+		}
+	}
+
+	/**
+	 * Writes the container-level state (metadata, id compressor, chunks, aliases, blobs, GC) into the builder.
+	 *
+	 * @remarks
+	 * Counterpart to {@link ContainerRuntime.addContainerStateToSummary} for the summarize2 flow. None of this
+	 * state is incremental today - it is regenerated on every summary, exactly as it is in the old flow.
+	 */
+	private addContainerStateToSummary2(
+		summaryBuilder: ISummaryBuilder,
+		fullTree: boolean,
+		telemetryContext?: ITelemetryContext,
+	): void {
+		summaryBuilder.addBlob(metadataBlobName, JSON.stringify(this.getMetadata()));
+
+		if (this._idCompressor) {
+			summaryBuilder.addBlob(
+				idCompressorBlobName,
+				JSON.stringify(this._idCompressor.serialize(false)),
+			);
+		}
+
+		if (this.remoteMessageProcessor.partialMessages.size > 0) {
+			summaryBuilder.addBlob(
+				chunksBlobName,
+				JSON.stringify([...this.remoteMessageProcessor.partialMessages]),
+			);
+		}
+
+		const recentBatchInfo =
+			this.duplicateBatchDetector?.getRecentBatchInfoForSummary(telemetryContext);
+		if (recentBatchInfo !== undefined) {
+			summaryBuilder.addBlob(recentBatchInfoBlobName, JSON.stringify(recentBatchInfo));
+		}
+
+		const dataStoreAliases = this.channelCollection.aliases;
+		if (dataStoreAliases.size > 0) {
+			summaryBuilder.addBlob(aliasBlobName, JSON.stringify([...dataStoreAliases]));
+		}
+
+		if (this.summarizerClientElection) {
+			summaryBuilder.addBlob(
+				electedSummarizerBlobName,
+				JSON.stringify(this.summarizerClientElection.serialize()),
+			);
+		}
+
+		const blobManagerSummary = this.blobManager.summarize();
+		// Some storage (like git) doesn't allow empty tree, so we can omit it.
+		// and the blob manager can handle the tree not existing when loading
+		if (Object.keys(blobManagerSummary.summary.tree).length > 0) {
+			summaryBuilder.addTree(blobsTreeName, blobManagerSummary);
+		}
+
+		const gcSummary = this.garbageCollector.summarize(
+			fullTree,
+			true /* trackState */,
+			telemetryContext,
+		);
+		if (gcSummary !== undefined) {
+			summaryBuilder.addTree(gcTreeKey, gcSummary);
 		}
 	}
 
@@ -4355,6 +4420,119 @@ export class ContainerRuntime
 			);
 
 			return { stats, summary };
+		} finally {
+			summaryLogger.sendTelemetryEvent({
+				eventName: "SummarizeTelemetry",
+				details: telemetryContext.serialize(),
+			});
+		}
+	}
+
+	/**
+	 * Reference sequence number of the latest successful summary, or -1 if there has not been one.
+	 *
+	 * @remarks
+	 * This is the single piece of state the summarize2 flow needs in order to decide what every node in the tree
+	 * may reuse. It only advances when a summary is acked, so a failed or nacked summary automatically leaves
+	 * every node's decision unchanged - which is the class of bug the summarizer node state machine kept hitting.
+	 */
+	private get latestSummarySequenceNumber(): number {
+		if (this.lastAckedSummaryContext !== undefined) {
+			return this.lastAckedSummaryContext.referenceSequenceNumber;
+		}
+		// Nothing has been acked in this session. If this runtime was loaded from a summary, that summary's
+		// sequence number is the reference point. Otherwise there is no summary to reuse anything from.
+		return this.loadedFromVersionId === undefined ? -1 : this.deltaManager.initialSequenceNumber;
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#IFluidParentContext.loadedFromSequenceNumber}
+	 */
+	public get loadedFromSequenceNumber(): number {
+		return this.deltaManager.initialSequenceNumber;
+	}
+
+	/**
+	 * Returns a summary of the runtime at the current sequence number, built without summarizer nodes.
+	 *
+	 * @remarks
+	 * This is the summarizer-node-free summarization flow. All the state that decides what can be reused lives
+	 * here in the container runtime ({@link ContainerRuntime.latestSummarySequenceNumber}); data stores and DDSs
+	 * only track the sequence number at which they last changed. There are no start/complete/refresh stages to
+	 * get out of sync, and a failed summary needs no rollback.
+	 *
+	 * This is intentionally a separate API from {@link ContainerRuntime.summarize} so that it can be rolled out
+	 * and validated against the existing flow before replacing it.
+	 */
+	public async summarize2(options: {
+		/**
+		 * True to generate the full tree with no handle reuse optimizations; defaults to false
+		 */
+		fullTree?: boolean;
+		/**
+		 * Logger to use for correlated summary events
+		 */
+		summaryLogger?: TelemetryLoggerExt;
+		/**
+		 * True to run garbage collection before summarizing; defaults to true
+		 */
+		runGC?: boolean;
+		/**
+		 * True to generate full GC data
+		 */
+		fullGC?: boolean;
+		/**
+		 * True to run GC sweep phase after the mark phase
+		 */
+		runSweep?: boolean;
+		/**
+		 * Telemetry context to populate during summarization.
+		 */
+		telemetryContext?: TelemetryContext;
+	}): Promise<ISummaryTreeWithStats> {
+		this.verifyNotClosed();
+
+		const {
+			fullTree = false,
+			summaryLogger = this.mc.logger,
+			runGC = this.garbageCollector.shouldRunGC,
+			runSweep,
+			fullGC,
+			telemetryContext = new TelemetryContext(),
+		} = options;
+
+		telemetryContext.setMultiple("fluid_Summarize", "Options", {
+			fullTree,
+			runGC,
+			fullGC,
+			runSweep,
+		});
+
+		try {
+			if (runGC) {
+				await this.collectGarbage(
+					{ logger: summaryLogger, runSweep, fullGC },
+					telemetryContext,
+				);
+			}
+
+			this.loadIdCompressor();
+
+			const summaryBuilder = SummaryBuilder.createRootBuilder(fullTree);
+			await this.channelCollection.summarize2(
+				summaryBuilder.createBuilderForChild(channelsTreeName, fullTree),
+				this.latestSummarySequenceNumber,
+				fullTree,
+				telemetryContext,
+			);
+			this.addContainerStateToSummary2(summaryBuilder, fullTree, telemetryContext);
+
+			const { summary, stats } = summaryBuilder.getSummaryTreeWithStats();
+			assert(
+				summary.type === SummaryType.Tree,
+				0x12f /* "Container Runtime's summarize should always return a tree" */,
+			);
+			return { summary, stats };
 		} finally {
 			summaryLogger.sendTelemetryEvent({
 				eventName: "SummarizeTelemetry",

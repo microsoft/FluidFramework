@@ -47,7 +47,9 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     // (undocumented)
     protected get serializer(): IFluidSerializer;
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext): Promise<ISummaryTreeWithStats>;
+    summarize2(summaryBuilder: ISummaryBuilder, latestSummarySequenceNumber: number, fullTree: boolean, telemetryContext: ITelemetryContext): Promise<void>;
     protected abstract summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext, fullTree?: boolean): ISummaryTreeWithStats;
+    protected summarizeCore2?(summaryBuilder: ISummaryBuilder, serializer: IFluidSerializer, latestSummarySequenceNumber: number, fullTree: boolean, telemetryContext: ITelemetryContext): void;
 }
 
 // @beta @legacy

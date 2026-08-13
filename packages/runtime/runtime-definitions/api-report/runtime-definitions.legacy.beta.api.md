@@ -146,6 +146,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
     setConnectionState(connected: boolean, clientId?: string): void;
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
+    summarize2?(summaryBuilder: ISummaryBuilder, latestSummarySequenceNumber: number, fullTree: boolean, telemetryContext: ITelemetryContext): Promise<void>;
     updateUsedRoutes(usedRoutes: string[]): void;
 }
 
@@ -227,6 +228,7 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     // (undocumented)
     readonly idCompressor?: IIdCompressor;
     readonly isReadOnly?: () => boolean;
+    readonly loadedFromSequenceNumber?: number;
     readonly loadingGroupId?: string;
     makeLocallyVisible(): void;
     readonly minVersionForCollab: MinimumVersionForCollab;
@@ -359,6 +361,19 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     isReferenced(): boolean;
     updateUsedRoutes(usedRoutes: string[]): void;
+}
+
+// @beta @legacy
+export interface ISummaryBuilder {
+    addAttachment(key: string, id: string): void;
+    addBlob(key: string, content: string | Uint8Array): void;
+    addHandle(key: string, handleType: SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment, handle: string): void;
+    addTree(key: string, summarizeResult: ISummarizeResult): void;
+    createBuilderForChild(childId: string, fullTree: boolean): ISummaryBuilder;
+    getSummaryTreeWithStats(): ISummaryTreeWithStats;
+    markUnreferenced(): void;
+    nodeDidNotChange(): void;
+    setGroupId(groupId: string): void;
 }
 
 // @beta @legacy

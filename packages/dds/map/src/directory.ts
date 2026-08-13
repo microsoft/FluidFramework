@@ -16,6 +16,7 @@ import type {
 import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type {
+	ISummaryBuilder,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	IRuntimeMessageCollection,
@@ -664,6 +665,25 @@ export class SharedDirectory
 	}
 
 	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore2}
+	 *
+	 * @remarks
+	 * This writes the whole directory on every summary - it is not incremental yet. It exists so that the
+	 * summarize2 flow is exercised end to end by a real DDS.
+	 */
+	protected override summarizeCore2(
+		summaryBuilder: ISummaryBuilder,
+		serializer: IFluidSerializer,
+		latestSummarySequenceNumber: number,
+		fullTree: boolean,
+		telemetryContext: ITelemetryContext,
+	): void {
+		this.serializeDirectoryInto(this.root, serializer, (key, content) =>
+			summaryBuilder.addBlob(key, content),
+		);
+	}
+
+	/**
 	 * Submits an operation
 	 * @param op - Op to submit
 	 * @param localOpMetadata - The local metadata associated with the op. We send a unique id that is used to track
@@ -1018,9 +1038,27 @@ export class SharedDirectory
 		serializer: IFluidSerializer,
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTreeWithStats {
+		const builder = new SummaryTreeBuilder();
+		this.serializeDirectoryInto(root, serializer, (key, content) =>
+			builder.addBlob(key, content),
+		);
+		return builder.getSummaryTree();
+	}
+
+	/**
+	 * Serializes the directory, handing each resulting blob to `addBlob`.
+	 *
+	 * @remarks
+	 * The blob sink is abstracted so the same serialization drives both {@link SharedDirectory.summarizeCore} and
+	 * {@link SharedDirectory.summarizeCore2}.
+	 */
+	private serializeDirectoryInto(
+		root: SubDirectory,
+		serializer: IFluidSerializer,
+		addBlob: (key: string, content: string) => void,
+	): void {
 		const MinValueSizeSeparateSnapshotBlob = 8 * 1024;
 
-		const builder = new SummaryTreeBuilder();
 		let counter = 0;
 		const blobs: string[] = [];
 
@@ -1055,7 +1093,7 @@ export class SharedDirectory
 					const blobName = `blob${counter}`;
 					counter++;
 					blobs.push(blobName);
-					builder.addBlob(blobName, JSON.stringify(extraContent));
+					addBlob(blobName, JSON.stringify(extraContent));
 				} else {
 					currentSubDirObject.storage[key] = result;
 				}
@@ -1075,9 +1113,7 @@ export class SharedDirectory
 			blobs,
 			content,
 		};
-		builder.addBlob(snapshotFileName, JSON.stringify(newFormat));
-
-		return builder.getSummaryTree();
+		addBlob(snapshotFileName, JSON.stringify(newFormat));
 	}
 }
 

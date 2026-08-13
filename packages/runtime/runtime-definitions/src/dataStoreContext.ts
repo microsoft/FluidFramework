@@ -46,6 +46,7 @@ import type {
 import type {
 	CreateChildSummarizerNodeParam,
 	ISummarizerNodeWithGC,
+	ISummaryBuilder,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	SummarizeInternalFn,
@@ -453,6 +454,26 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	): Promise<ISummaryTreeWithStats>;
 
 	/**
+	 * Writes this channel's summary into the given builder.
+	 *
+	 * @remarks
+	 * Summarizer-node-free counterpart to {@link IFluidDataStoreChannel.summarize}. Optional so that older data
+	 * store runtimes keep working; the container runtime falls back to `summarize` when it is not implemented.
+	 *
+	 * @param summaryBuilder - Builder for this channel's node in the summary tree.
+	 * @param latestSummarySequenceNumber - Reference sequence number of the latest successful summary, or -1 if
+	 * there has not been one.
+	 * @param fullTree - true to bypass optimizations and force a full summary tree.
+	 * @param telemetryContext - summary data passed through the layers for telemetry purposes.
+	 */
+	summarize2?(
+		summaryBuilder: ISummaryBuilder,
+		latestSummarySequenceNumber: number,
+		fullTree: boolean,
+		telemetryContext: ITelemetryContext,
+	): Promise<void>;
+
+	/**
 	 * Returns the data used for garbage collection. This includes a list of GC nodes that represent this context
 	 * including any of its children. Each node has a list of outbound routes to other GC nodes in the document.
 	 * @param fullGC - true to bypass optimizations and force full generation of GC data.
@@ -620,6 +641,20 @@ export interface IFluidParentContext
 	 * @deprecated this functionality has been removed.
 	 */
 	readonly gcTombstoneEnforcementAllowed: boolean;
+
+	/**
+	 * The sequence number this context's content was loaded at, i.e. the sequence number at or before which all
+	 * of its content is already captured in a previously uploaded summary.
+	 *
+	 * @remarks
+	 * Used by the summarize2 flow as the starting value for a child's "last changed at" sequence number. For a
+	 * context loaded from a snapshot this is the snapshot's sequence number; for one created from an attach op it
+	 * is that op's sequence number.
+	 *
+	 * Optional for back-compat with older parent contexts. When it is undefined, children conservatively treat
+	 * themselves as always changed and no summary content is reused.
+	 */
+	readonly loadedFromSequenceNumber?: number;
 
 	/**
 	 * Returns the current quorum.

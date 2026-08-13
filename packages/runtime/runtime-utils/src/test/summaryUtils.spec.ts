@@ -17,8 +17,10 @@ import type { ISnapshotTree, ITree } from "@fluidframework/driver-definitions/in
 import { BlobTreeEntry, TreeTreeEntry } from "@fluidframework/driver-utils/internal";
 
 import {
+	SummaryBuilder,
 	SummaryTreeBuilder,
 	TelemetryContext,
+	addSummaryTreeToBuilder,
 	convertSnapshotTreeToSummaryTree,
 	convertSummaryTreeToITree,
 	convertToSummaryTree,
@@ -51,6 +53,90 @@ describe("Summary Utils", () => {
 			assert.fail("Object should be summary handle");
 		}
 	}
+
+	describe("SummaryBuilder", () => {
+		it("builds nested trees and accumulates stats at the root", () => {
+			const root = SummaryBuilder.createRootBuilder(false);
+			const dataStore = root.createBuilderForChild(".channels", false);
+			const dds = dataStore.createBuilderForChild("dds", false);
+			dds.addBlob("header", "content");
+
+			const { summary, stats } = root.getSummaryTreeWithStats();
+			const channelsTree = assertSummaryTree(summary.tree[".channels"]);
+			const ddsTree = assertSummaryTree(channelsTree.tree.dds);
+			assert.equal(assertSummaryBlob(ddsTree.tree.header).content, "content");
+			assert.deepEqual(stats, {
+				treeNodeCount: 3,
+				blobNodeCount: 1,
+				handleNodeCount: 0,
+				totalBlobSize: 7,
+				unreferencedBlobSize: 0,
+			});
+		});
+
+		it("uses the summary-tree path when a child did not change", () => {
+			const root = SummaryBuilder.createRootBuilder(false);
+			const channels = root.createBuilderForChild(".channels", false);
+			const dataStore = channels.createBuilderForChild("dataStore", false);
+			dataStore.nodeDidNotChange();
+
+			const channelsTree = assertSummaryTree(
+				root.getSummaryTreeWithStats().summary.tree[".channels"],
+			);
+			assert.deepEqual(assertSummaryHandle(channelsTree.tree.dataStore), {
+				type: SummaryType.Handle,
+				handleType: SummaryType.Tree,
+				handle: "/.channels/dataStore",
+			});
+		});
+
+		it("preserves attachment keys when copying an existing summary", () => {
+			const root = SummaryBuilder.createRootBuilder(false);
+			addSummaryTreeToBuilder(root, {
+				type: SummaryType.Tree,
+				tree: {
+					"custom-key": { type: SummaryType.Attachment, id: "storage-id" },
+				},
+			});
+
+			assert.deepEqual(root.getSummaryTreeWithStats().summary.tree["custom-key"], {
+				type: SummaryType.Attachment,
+				id: "storage-id",
+			});
+		});
+
+		it("rejects invalid node state transitions", () => {
+			const root = SummaryBuilder.createRootBuilder(false);
+			assert.throws(() => root.nodeDidNotChange(), /Root node cannot be a handle/);
+
+			const unchanged = root.createBuilderForChild("unchanged", false);
+			unchanged.nodeDidNotChange();
+			assert.throws(
+				() => unchanged.addBlob("blob", "content"),
+				/Content cannot be added to a node that declared itself unchanged/,
+			);
+
+			const changed = root.createBuilderForChild("changed", false);
+			changed.addBlob("blob", "content");
+			assert.throws(
+				() => changed.nodeDidNotChange(),
+				/Node cannot be a handle after content has been added to it/,
+			);
+		});
+
+		it("rejects handles in a full-tree summary", () => {
+			const root = SummaryBuilder.createRootBuilder(true);
+			const child = root.createBuilderForChild("child", true);
+			assert.throws(
+				() => child.nodeDidNotChange(),
+				/Node cannot be a handle when fullTree is enabled/,
+			);
+			assert.throws(
+				() => child.addHandle("handle", SummaryType.Blob, "/blob"),
+				/Cannot add a handle when fullTree is enabled/,
+			);
+		});
+	});
 
 	describe("ITree <-> ISummaryTree", () => {
 		let tree: ITree;

@@ -18,10 +18,14 @@ import type {
 	IGarbageCollectionData,
 	IFluidDataStoreContext,
 	ISummarizeResult,
+	ISummaryBuilder,
 	IRuntimeMessageCollection,
 	IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
-import { addBlobToSummary } from "@fluidframework/runtime-utils/internal";
+import {
+	addBlobToSummary,
+	addSummaryTreeToBuilder,
+} from "@fluidframework/runtime-utils/internal";
 import {
 	DataCorruptionError,
 	tagCodeArtifacts,
@@ -33,6 +37,15 @@ import { ChannelStorageService } from "./channelStorageService.js";
 import type { ISharedObjectRegistry } from "./dataStoreRuntime.js";
 
 export const attributesBlobKey = ".attributes";
+
+/**
+ * "Last changed at" sequence number for content that is known not to be present in any uploaded summary yet.
+ *
+ * @remarks
+ * The summarize2 flow reuses a node's previous summary when `latestSummarySequenceNumber >= lastChangedSequenceNumber`.
+ * Using a value no summary can ever reach forces the node to be summarized in full.
+ */
+export const neverSummarizedSequenceNumber = Number.MAX_SAFE_INTEGER;
 
 export interface IChannelContext {
 	getChannel(): Promise<IChannel>;
@@ -50,6 +63,17 @@ export interface IChannelContext {
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummarizeResult>;
+
+	/**
+	 * Writes this context's summary into `summaryBuilder`, or declares it unchanged since
+	 * `latestSummarySequenceNumber`.
+	 */
+	summarize2(
+		summaryBuilder: ISummaryBuilder,
+		latestSummarySequenceNumber: number,
+		fullTree: boolean,
+		telemetryContext: ITelemetryContext,
+	): Promise<void>;
 
 	reSubmit(content: unknown, localOpMetadata: unknown, squash: boolean): void;
 
@@ -135,6 +159,41 @@ export async function summarizeChannelAsync(
 	// Add the channel attributes to the returned result.
 	addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(channel.attributes));
 	return summarizeResult;
+}
+
+/**
+ * Writes a channel's summary into `summaryBuilder` using the channel's summarize2 implementation.
+ *
+ * @remarks
+ * Channels that have not implemented `summarize2` fall back to `summarize` so that the new flow produces a
+ * correct (if not incremental) summary for every DDS during rollout.
+ */
+export async function summarizeChannelAsync2(
+	channel: IChannel,
+	summaryBuilder: ISummaryBuilder,
+	latestSummarySequenceNumber: number,
+	fullTree: boolean,
+	telemetryContext: ITelemetryContext,
+): Promise<void> {
+	if (channel.summarize2 === undefined) {
+		// Fall back to the old API and copy the resulting tree into the builder.
+		const summarizeResult = await channel.summarize(
+			fullTree,
+			false /* trackState */,
+			telemetryContext,
+		);
+		addSummaryTreeToBuilder(summaryBuilder, summarizeResult.summary);
+	} else {
+		await channel.summarize2(
+			summaryBuilder,
+			latestSummarySequenceNumber,
+			fullTree,
+			telemetryContext,
+		);
+	}
+
+	// Add the channel attributes to the summary.
+	summaryBuilder.addBlob(attributesBlobKey, JSON.stringify(channel.attributes));
 }
 
 export async function loadChannelFactoryAndAttributes(

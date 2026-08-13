@@ -80,6 +80,7 @@ export type {
 	ISummarizerNodeConfig,
 	ISummarizerNodeConfigWithGC,
 	ISummarizerNodeWithGC,
+	ISummaryBuilder,
 	ISummaryStats,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
