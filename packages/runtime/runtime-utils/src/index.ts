@@ -48,6 +48,7 @@ export {
 	processAttachMessageGCData,
 	SummaryTreeBuilder,
 	SummaryBuilder,
+	addSummaryTreeToBuilder,
 	TelemetryContext,
 	utf8ByteLength,
 } from "./summaryUtils.js";

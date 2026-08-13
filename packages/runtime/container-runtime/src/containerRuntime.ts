@@ -5734,6 +5734,11 @@ export class ContainerRuntime
 					isSummaryNewer: summaryRefSeq > this.latestSummarySequenceNumber,
 				}
 			: await this.summarizerNode.refreshLatestSummary(proposalHandle, summaryRefSeq);
+		// An ack can be delivered more than once. Consume the handle so only the first delivery counts as
+		// tracked - downstream refresh (GC) moves pending state to latest and is not idempotent.
+		if (result.isSummaryTracked) {
+			this.lastSubmittedSummaryHandle = undefined;
+		}
 
 		/* eslint-disable jsdoc/check-indentation */
 		/**

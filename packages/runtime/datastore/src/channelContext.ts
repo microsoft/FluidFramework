@@ -23,7 +23,10 @@ import type {
 	IRuntimeMessageCollection,
 	IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
-import { addBlobToSummary } from "@fluidframework/runtime-utils/internal";
+import {
+	addBlobToSummary,
+	addSummaryTreeToBuilder,
+} from "@fluidframework/runtime-utils/internal";
 import {
 	DataCorruptionError,
 	tagCodeArtifacts,
@@ -153,8 +156,8 @@ export async function summarizeChannelAsync(
  * Writes a channel's summary into `summaryBuilder` using the channel's summarize2 implementation.
  *
  * @remarks
- * A summary is produced entirely by one flow or the other, so a channel that does not implement `summarize2`
- * cannot take part in this one.
+ * A channel from a version that predates `summarize2` cannot participate in this flow, so its content is
+ * produced by the old API and copied in. Nothing in that channel is incremental.
  */
 export async function summarizeChannelAsync2(
 	channel: IChannel,
@@ -164,17 +167,18 @@ export async function summarizeChannelAsync2(
 	telemetryContext: ITelemetryContext,
 ): Promise<void> {
 	if (channel.summarize2 === undefined) {
-		throw new UsageError(
-			"Channel does not implement summarize2 and cannot be summarized by the summarize2 flow",
-			tagCodeArtifacts({ channelId: channel.id, channelType: channel.attributes.type }),
+		addSummaryTreeToBuilder(
+			summaryBuilder,
+			(await channel.summarize(fullTree, false /* trackState */, telemetryContext)).summary,
+		);
+	} else {
+		await channel.summarize2(
+			summaryBuilder,
+			latestSummarySequenceNumber,
+			fullTree,
+			telemetryContext,
 		);
 	}
-	await channel.summarize2(
-		summaryBuilder,
-		latestSummarySequenceNumber,
-		fullTree,
-		telemetryContext,
-	);
 
 	// Add the channel attributes to the summary.
 	summaryBuilder.addBlob(attributesBlobKey, JSON.stringify(channel.attributes));

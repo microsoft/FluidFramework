@@ -70,6 +70,7 @@ export type {
 export {
 	encodeHandlesInContainerRuntime,
 	notifiesReadOnlyState,
+	summarize2,
 } from "./runtimeLayerCompatFeatureNames.js";
 export type {
 	CreateChildSummarizerNodeParam,

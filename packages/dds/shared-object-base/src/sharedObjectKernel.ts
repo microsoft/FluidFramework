@@ -24,6 +24,7 @@ import type {
 	IRuntimeMessageCollection,
 	MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
+import { addSummaryTreeToBuilder } from "@fluidframework/runtime-utils/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
 	extractTelemetryLoggerExt,
@@ -201,18 +202,26 @@ class SharedObjectFromKernel<
 	): void {
 		const kernel = this.#kernel;
 		if (kernel.summarizeCore2 === undefined) {
-			throw new UsageError(
-				"Kernel does not implement summarizeCore2 and cannot be summarized by the summarize2 flow",
-				tagCodeArtifacts({ channelId: this.id, channelType: this.attributes.type }),
+			// A kernel that has not implemented the incremental path still produces the same content, just
+			// written through the builder.
+			addSummaryTreeToBuilder(
+				summaryBuilder,
+				kernel.summarizeCore(
+					serializer,
+					telemetryContext,
+					undefined /* incrementalSummaryContext */,
+					fullTree,
+				).summary,
+			);
+		} else {
+			kernel.summarizeCore2(
+				summaryBuilder,
+				serializer,
+				latestSummarySequenceNumber,
+				fullTree,
+				telemetryContext,
 			);
 		}
-		kernel.summarizeCore2(
-			summaryBuilder,
-			serializer,
-			latestSummarySequenceNumber,
-			fullTree,
-			telemetryContext,
-		);
 	}
 
 	protected override initializeLocalCore(): void {

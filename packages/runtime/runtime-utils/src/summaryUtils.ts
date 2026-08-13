@@ -635,6 +635,37 @@ export class GCDataBuilder implements IGarbageCollectionData {
 }
 
 /**
+ * Copies the top level entries of `summary` into `summaryBuilder`.
+ *
+ * @remarks
+ * Bridges a node that only implements the old tree-returning summarize API into the summarize2 flow. Used at
+ * version boundaries, where the node comes from a release that predates the new API. The copied content is
+ * never incremental - it is whatever the old API produced.
+ *
+ * @internal
+ */
+export function addSummaryTreeToBuilder(
+	summaryBuilder: ISummaryBuilder,
+	summary: ISummaryTree,
+): void {
+	for (const [key, value] of Object.entries(summary.tree)) {
+		switch (value.type) {
+			case SummaryType.Blob: {
+				summaryBuilder.addBlob(key, value.content);
+				break;
+			}
+			case SummaryType.Attachment: {
+				summaryBuilder.addAttachment(key, value.id);
+				break;
+			}
+			default: {
+				summaryBuilder.addTree(key, { summary: value, stats: calculateStats(value) });
+			}
+		}
+	}
+}
+
+/**
  * Adds `source` into `target` in place.
  *
  * @remarks

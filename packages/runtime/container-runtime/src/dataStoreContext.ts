@@ -72,7 +72,7 @@ import type {
 	ContainerExtensionId,
 	ContainerExtensionExpectations,
 } from "@fluidframework/runtime-definitions/internal";
-import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
+import { channelsTreeName, summarize2 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
 	isSnapshotFetchRequiredForLoadingGroupId,
@@ -118,6 +118,34 @@ function createAttributes(
 		summaryFormatVersion: 2,
 		isRootDataStore,
 	};
+}
+
+/**
+ * The used-state comparison implemented by the concrete summarizer node.
+ *
+ * @remarks
+ * Structural rather than an import so that the summarize2 flow can use it without widening
+ * {@link @fluidframework/runtime-definitions#ISummarizerNodeWithGC}.
+ */
+interface IUsedStateComparer {
+	hasUsedStateChanged(): boolean;
+}
+
+/**
+ * Whether this data store runtime can be summarized by the summarize2 flow.
+ *
+ * @remarks
+ * Determined by the layer compatibility details rather than by probing for the method, so that a data store
+ * runtime from a version that predates the API is handled at the version boundary rather than failing.
+ */
+function channelSummarizesWithBuilder(
+	channel: IFluidDataStoreChannel,
+): channel is IFluidDataStoreChannel & Required<Pick<IFluidDataStoreChannel, "summarize2">> {
+	const { ILayerCompatDetails } = channel as FluidObject<ILayerCompatDetails>;
+	return (
+		(ILayerCompatDetails?.supportedFeatures.has(summarize2) ?? false) &&
+		channel.summarize2 !== undefined
+	);
 }
 export function createAttributesBlob(
 	pkg: readonly string[],
@@ -479,6 +507,11 @@ export abstract class FluidDataStoreContext
 	 * summary was, and therefore what may be reused - lives in the container runtime.
 	 */
 	private lastChangedSequenceNumber: number;
+
+	/**
+	 * Used routes as of the last time they were seen, to detect a reference state change.
+	 */
+	private lastSummarizedUsedRoutes: string | undefined;
 
 	public constructor(
 		props: IFluidDataStoreContextProps,
@@ -861,18 +894,28 @@ export abstract class FluidDataStoreContext
 		}
 
 		const channel = await this.realize();
-		if (channel.summarize2 === undefined) {
-			throw new UsageError(
-				"Data store does not implement summarize2 and cannot be summarized by the summarize2 flow",
-				tagCodeArtifacts({ dataStoreId: this.id, dataStorePackagePath: this.pkg?.join("/") }),
+		if (channelSummarizesWithBuilder(channel)) {
+			await channel.summarize2(
+				summaryBuilder.createBuilderForChild(channelsTreeName, fullTree),
+				latestSummarySequenceNumber,
+				fullTree,
+				telemetryContext,
 			);
+		} else {
+			// A data store runtime from a version that predates summarize2 is summarized by the old API. Its
+			// channels cannot be reused either: their summarizer nodes are only usable when the summary was
+			// started through the summarizer node tree, which this flow does not do.
+			const summarizeResult = await channel.summarize(
+				fullTree,
+				false /* trackState */,
+				telemetryContext,
+			);
+			wrapSummaryInChannelsTree(summarizeResult);
+			summaryBuilder.addTree(channelsTreeName, {
+				summary: summarizeResult.summary.tree[channelsTreeName] as ISummaryTree,
+				stats: summarizeResult.stats,
+			});
 		}
-		await channel.summarize2(
-			summaryBuilder.createBuilderForChild(channelsTreeName, fullTree),
-			latestSummarySequenceNumber,
-			fullTree,
-			telemetryContext,
-		);
 
 		// Add data store's attributes to the summary.
 		const { pkg } = await this.getInitialSnapshotDetails();
@@ -975,6 +1018,20 @@ export abstract class FluidDataStoreContext
 	public updateUsedRoutes(usedRoutes: string[]): void {
 		// Update the used routes in this data store's summarizer node.
 		this.summarizerNode.updateUsedRoutes(usedRoutes);
+
+		// A change in reference state changes this data store's summary (its `unreferenced` flag) even though its
+		// content did not change, so it counts as a change for the summarize2 flow. The first time around there is
+		// no local baseline, so use the summarizer node's - its reference used routes come from the base snapshot,
+		// which catches a reference state that changed before this client loaded.
+		const serializedUsedRoutes = JSON.stringify([...usedRoutes].sort());
+		const usedStateChanged =
+			this.lastSummarizedUsedRoutes === undefined
+				? (this.summarizerNode as Partial<IUsedStateComparer>).hasUsedStateChanged?.() === true
+				: serializedUsedRoutes !== this.lastSummarizedUsedRoutes;
+		if (usedStateChanged) {
+			this.lastChangedSequenceNumber = this.deltaManager.lastSequenceNumber;
+		}
+		this.lastSummarizedUsedRoutes = serializedUsedRoutes;
 
 		// If the channel doesn't exist yet (data store is not realized), the summarizer node will update it
 		// when it creates child nodes.

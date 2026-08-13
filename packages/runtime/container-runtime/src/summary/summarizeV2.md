@@ -75,16 +75,23 @@ ContainerRuntime.summarize2
 `ISummarizable` declares `summarize2` once; `IChannel` and `IFluidDataStoreChannel` pick it up via
 `Partial<ISummarizable>`, so it stays optional for external implementers.
 
-## One flow per summary
+## One flow per node, decided at the version boundary
 
-`summarize` and `summarize2` are never both used within a single summary. Mixing them would build part of the
-tree with different semantics (no incremental reuse, different realization and telemetry behavior), which makes
-comparing the flows meaningless and hides which path produced what.
+Within a single version of the code, a summary is produced by `summarize2` alone - the two flows are not
+interleaved for nodes that support the new one. Mixing would build part of the tree with different semantics (no
+incremental reuse, different realization and telemetry behavior), which makes comparing the flows harder and
+hides which path produced what.
 
-Every participant must therefore implement the new API. If one does not, summarization asserts rather than
-silently falling back - for `IChannel.summarize2`, `IFluidDataStoreChannel.summarize2`,
-`SharedObject.summarizeCore2` and `SharedKernel.summarizeCore2`. Everything in this repo implements it, so these
-asserts only fire for external implementations; that is the signal not to enable the gate for that container.
+The exception is a version boundary, which is unavoidable: a container can contain a data store runtime from a
+release that predates this API. That case is detected up front rather than by probing for a method. The
+DataStore layer advertises the `summarize2` layer-compat feature
+(`@fluidframework/runtime-definitions/internal`), and `FluidDataStoreContext.summarize2` uses `summarize` for
+any data store whose runtime does not advertise it. Channels and shared objects fall back the same way when
+they predate `summarize2` / `summarizeCore2`.
+
+A legacy data store is written in full: its subtree cannot be incremental, and neither can its channels. Their
+summarizer nodes are only usable when the summary was started through the summarizer node tree, which this flow
+does not do - calling `summarize` with `trackState: true` from here asserts `0x5df`.
 
 `SharedObject.summarize2` and `FluidDataStoreRuntime.summarize2` are optional properties rather than methods, so
 adding them changes no class shape and needs no type-test exceptions. Since a property cannot be overridden via
@@ -99,6 +106,73 @@ adding them changes no class shape and needs no type-test exceptions. Since a pr
   `nodeDidNotChange`.
 - **Container-level state** (metadata, ID compressor, chunks, aliases, blobs, GC) is regenerated every summary,
   exactly as in the old flow.
+
+## Known end-to-end failures
+
+State of `test-end-to-end-tests` against the local driver with the gate forced on: **583 passing, 9 failing**
+(the old flow passes all of them). Each is understood; none is unexplained. Nothing here blocks development,
+but each needs a decision before the gate is enabled anywhere.
+
+### Version boundary - 4 tests
+
+`can do incremental dds summary` ×2 (legacy data store runtime) and the sub-DDS pair below share a cause with
+[Not ported yet](#not-ported-yet): a legacy data store, or a DDS relying on
+`IExperimentalIncrementalSummaryContext`, is written in full.
+
+| Test                                                     | File                                                                                                                                     |
+| -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `can do incremental dds summary` (compat variants only)  | [summarizeIncrementally.spec.ts](../../../../test/test-end-to-end-tests/src/test/summarization/summarizeIncrementally.spec.ts)             |
+| `can create summary handles for trees in DDSes that do not change` | [summarizeIncrementallySubDds.spec.ts](../../../../test/test-end-to-end-tests/src/test/summarization/summarizeIncrementallySubDds.spec.ts) |
+| `can create summary handles for blobs in DDSes that do not change` | [summarizeIncrementallySubDds.spec.ts](../../../../test/test-end-to-end-tests/src/test/summarization/summarizeIncrementallySubDds.spec.ts) |
+
+**Resolution:** deferred. The gate will not be enabled until the compatibility requirements are satisfied, so
+these are expected until then.
+
+### Asserting summarizer node telemetry - 2 tests
+
+Both assert `fluid:telemetry:SummarizerNode:refreshLatestSummary_start` / `_end`, which this flow never emits
+because it has no summarizer nodes to refresh.
+
+| Test                                                            | File                                                                                                                                       |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `The summarizing client will immediately refresh its own summaries` | [summarizeRefreshLatestSummary.spec.ts](../../../../test/test-end-to-end-tests/src/test/summarization/summarizeRefreshLatestSummary.spec.ts) |
+| `Closes the summarizing client instead of refreshing with two clients` | [summarizeRestart.spec.ts](../../../../test/test-end-to-end-tests/src/test/summarization/summarizeRestart.spec.ts)                     |
+
+**Resolution:** these tests, or the summarizer node telemetry validation in them, can likely just be removed.
+
+### `NodeDidNotSummarize` - 2 tests
+
+Both expect a summary to fail with `NodeDidNotSummarize` when a data store is created while summarization is in
+progress. That check comes from `summarizerNode.validateSummary()`, which this flow skips.
+
+| Test                                                                       | File                                                                                                                                 |
+| ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `Summary should fail before generate stage when data store is created during summarize` | [summarizeWithLocalChanges.spec.ts](../../../../test/test-end-to-end-tests/src/test/summarization/summarizeWithLocalChanges.spec.ts) |
+| `Heuristic based summaries should pass on retry when NodeDidNotSummarize is hit` | [summarizeWithLocalChanges.spec.ts](../../../../test/test-end-to-end-tests/src/test/summarization/summarizeWithLocalChanges.spec.ts) |
+
+**Resolution:** the validation is likely no longer needed. A node created during summarization simply is not
+part of that summary, which is expected. The check existed because the old flow would otherwise leave the
+summarizer nodes for those data stores in an inconsistent state - a state this flow does not have.
+
+### Reference state
+
+A data store's reference state is part of its summary (the `unreferenced` flag) even when its content did not
+change, so a change in used routes has to count as a change. `FluidDataStoreContext.updateUsedRoutes` records
+that as a change at the current sequence number, which the normal comparison then handles.
+
+The first observation in a session has no local baseline. It uses the summarizer node's
+`hasUsedStateChanged()` instead, whose reference used routes come from the base snapshot - that is what catches
+a reference state which changed before this client loaded, and it is why a freshly elected summarizer does not
+wrongly reuse a stale `unreferenced` flag.
+
+### Summary handle resolution - 1 test
+
+| Test                                                                                      | File                                                                                                                                                             |
+| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `realizes an attached data store between summarize and refresh via the app's data store loader (prod-like)` | [summarizeWithOutOfOrderDataStoreRealization.spec.ts](../../../../test/test-end-to-end-tests/src/test/summarization/summarizeWithOutOfOrderDataStoreRealization.spec.ts) |
+
+**Resolution:** the test can go away, or its assertion can be reverted. It expects the summary upload to fail
+with an unresolvable summary handle; under this flow the summary should simply succeed.
 
 ## Rollout
 
@@ -150,7 +224,7 @@ Every row is sliced by `summarizeFlow`. "Watch for" describes the v2 cohort rela
 | Panel                          | Signal                                                     | Watch for                                                                                          |
 | ------------------------------ | ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
 | Success rate                   | `Summarize` vs `SummarizeFailed`                           | Must not regress. This is the first stop-the-rollout signal.                                        |
-| Failure reasons                | `SummarizeFailed` error / `UsageError` props               | A node that cannot participate reports `channelId`/`channelType` or `dataStoreId`. Any occurrence means the cohort includes an unmigrated implementation. |
+| Failure reasons                | `SummarizeFailed` error                                    | Any increase. A cohort on this flow should not fail more often than one on the old flow.  |
 | Duration                       | `Summarize` `generateDuration`, `uploadDuration`           | Should be flat or better.                                                                           |
 | Reuse - data stores            | `summarizedDataStoreCount` / `dataStoreCount`              | Should be equal or lower. Higher means reuse regressed.                                             |
 | Reuse - channels               | `reusedChannelCount` / `channelCount`                      | Should be equal or higher. A drop means DDS-level reuse regressed.                                  |
@@ -172,8 +246,8 @@ Two cautions:
 - `summarizeFlow` on every summarizer event and on `IGeneratedSummaryStats`.
 - `realizedDataStoreCount`, `channelCount` and `reusedChannelCount` on `IGeneratedSummaryStats`, all derived
   from the generated summary tree or from context state common to both flows.
-- A `UsageError` carrying node type and id when a node cannot participate in the new flow, in place of a bare
-  assert.
+- A `summarize2` layer-compat feature on the DataStore layer, so a data store runtime that predates the API is
+  detected at the version boundary rather than by probing for the method.
 
 Still worth adding when stage 2 is built: an event carrying the first differing path when the offline
 comparison finds a mismatch, so a failure is actionable rather than "trees differ".

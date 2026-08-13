@@ -40,6 +40,7 @@ import {
 	type IRuntimeMessagesContent,
 } from "@fluidframework/runtime-definitions/internal";
 import {
+	addSummaryTreeToBuilder,
 	toDeltaManagerInternal,
 	type TelemetryContext,
 } from "@fluidframework/runtime-utils/internal";
@@ -852,18 +853,26 @@ export abstract class SharedObject<
 		telemetryContext,
 	): Promise<void> => {
 		if (this.summarizeCore2 === undefined) {
-			throw new UsageError(
-				"Shared object does not implement summarizeCore2 and cannot be summarized by the summarize2 flow",
-				tagCodeArtifacts({ channelId: this.id, channelType: this.attributes.type }),
+			// A shared object that has not implemented the incremental path still produces the same content,
+			// just written through the builder.
+			addSummaryTreeToBuilder(
+				summaryBuilder,
+				this.summarizeCore(
+					this.serializer,
+					telemetryContext,
+					undefined /* incrementalSummaryContext */,
+					fullTree,
+				).summary,
+			);
+		} else {
+			this.summarizeCore2(
+				summaryBuilder,
+				this.serializer,
+				latestSummarySequenceNumber,
+				fullTree,
+				telemetryContext,
 			);
 		}
-		this.summarizeCore2(
-			summaryBuilder,
-			this.serializer,
-			latestSummarySequenceNumber,
-			fullTree,
-			telemetryContext,
-		);
 
 		const { stats } = summaryBuilder.getSummaryTreeWithStats();
 		this.incrementTelemetryMetric(

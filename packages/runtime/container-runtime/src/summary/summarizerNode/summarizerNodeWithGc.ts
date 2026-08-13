@@ -487,8 +487,12 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	 * This tells whether the used state of this node has changed since last successful summary. If the used routes
 	 * of this node changed, its used state is considered changed. Basically, if this node or any of its child nodes
 	 * was previously used and became unused (or vice versa), its used state has changed.
+	 *
+	 * @remarks
+	 * The reference used routes this compares against are initialized from the base snapshot, so this is also
+	 * usable by the summarize2 flow to tell whether the reference state changed since the summary it loaded from.
 	 */
-	private hasUsedStateChanged(): boolean {
+	public hasUsedStateChanged(): boolean {
 		// If GC is disabled, it should not affect summary state, return false.
 		if (this.gcDisabled) {
 			return false;
