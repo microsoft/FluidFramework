@@ -45,6 +45,7 @@ export interface TreeChangeEvents {
 	 * Users of this event should ensure that they do not provide a listener callback which has an optional parameter
 	 * in this position, since unexpected data might get provided to it.
 	 * This parameter exists to capture this fact in the type system.
+	 *
 	 * Using an inline lambda expression as the listener callback is a good pattern to avoid cases like this where
 	 * arguments are added from breaking due to optional arguments.
 	 *
@@ -99,6 +100,7 @@ export interface TreeChangeEvents {
 	 * Users of this event should ensure that they do not provide a listener callback which has an optional parameter
 	 * in this position, since unexpected data might get provided to it.
 	 * This parameter exists to capture this fact in the type system.
+	 *
 	 * Using an inline lambda expression as the listener callback is a good pattern to avoid cases like this where
 	 * arguments are added from breaking due to optional arguments.
 	 */
