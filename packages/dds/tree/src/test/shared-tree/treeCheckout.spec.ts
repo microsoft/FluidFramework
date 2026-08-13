@@ -13,6 +13,7 @@ import { validateUsageError } from "@fluidframework/test-runtime-utils/internal"
 
 import { asAlpha } from "../../api.js";
 import {
+	createAnnouncedVisitor,
 	type Revertible,
 	rootFieldKey,
 	RevertibleStatus,
@@ -2129,6 +2130,20 @@ describe("sharedTreeView", () => {
 				applied: 0,
 			});
 		});
+	});
+
+	itView("breaks the checkout when an announced visitor throws", ({ view, tree }) => {
+		const error = new Error("Announced visitor failure");
+		tree.forest.registerAnnouncedVisitor(() =>
+			createAnnouncedVisitor({
+				afterCreate: () => {
+					throw error;
+				},
+			}),
+		);
+
+		assert.throws(() => view.root.insertAtEnd("x"), error);
+		assert.throws(() => view.root, validateUsageError(/invalid state/));
 	});
 
 	describe("fork breaker isolation", () => {
