@@ -25429,9 +25429,6 @@ packages:
   node-addon-api@4.3.0:
     resolution: {integrity: sha512-73sE9+3UaLYYFmDsFZnqCInzPyh3MqIwZO9cw58yIqAZhONrrabrYyYe3TuIqtIiOuTXVhsGau8hcrhhwSsDIQ==}
 
-  node-addon-api@7.1.1:
-    resolution: {integrity: sha512-5m3bsyrjFWE1xf7nz7YXdN4udnVtXK6/Yfgn5qnahL6bCkf2yKt4k3nuTKAtT4r3IG8JNR2ncsIMdZuAzJjHQQ==}
-
   node-domexception@1.0.0:
     resolution: {integrity: sha512-/jKZoMpw0F8GRwl4/eLROPA3cfcXtLApP0QzLmUT/HuPCZWyB7IY9ZrMeKw2O/nFIqPQB3PVM9aYm0F312AXDQ==}
     engines: {node: '>=10.5.0'}
@@ -40949,9 +40946,6 @@ snapshots:
 
   node-addon-api@4.3.0: {}
 
-  node-addon-api@7.1.1:
-    optional: true
-
   node-domexception@1.0.0: {}
 
   node-emoji@2.2.0:
@@ -41498,17 +41492,6 @@ snapshots:
     dependencies:
       charm: 0.1.2
 
-  pm2-sysmonit@1.2.8(supports-color@10.2.2):
-    dependencies:
-      async: 3.2.6
-      debug: 4.4.3(supports-color@10.2.2)
-      pidusage: 2.0.21
-      systeminformation: 5.31.14
-      tx2: 1.0.5
-    transitivePeerDependencies:
-      - supports-color
-    optional: true
-
   pm2@5.4.3(supports-color@10.2.2):
     dependencies:
       '@pm2/agent': 2.0.4(supports-color@10.2.2)
@@ -41540,8 +41523,6 @@ snapshots:
       source-map-support: 0.5.21
       sprintf-js: 1.1.2
       vizion: 2.2.1
-    optionalDependencies:
-      pm2-sysmonit: 1.2.8(supports-color@10.2.2)
     transitivePeerDependencies:
       - bufferutil
       - supports-color
