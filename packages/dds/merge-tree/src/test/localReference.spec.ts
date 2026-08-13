@@ -53,6 +53,29 @@ function walk(
 	return visited;
 }
 
+/**
+ * Slides references into the `before` bucket at offset 0, or the `after` bucket at the last
+ * offset, of `collection`. Tombstoned references arrive from a segment that was removed, so
+ * they are created on a donor segment and re-linked by the collection.
+ */
+function addTombstones(
+	collection: LocalReferenceCollection,
+	position: "before" | "after",
+	ids: string[],
+): LocalReferencePosition[] {
+	const donor = TextSegment.make("x") as ISegmentInternal;
+	const donorCollection = LocalReferenceCollection.setOrGet(donor);
+	const refs = ids.map((id) =>
+		donorCollection.createLocalRef(0, ReferenceType.SlideOnRemove, { id }),
+	);
+	if (position === "before") {
+		collection.addBeforeTombstones(refs);
+	} else {
+		collection.addAfterTombstones(refs);
+	}
+	return refs;
+}
+
 describe("LocalReferenceCollection", () => {
 	describe("walkReferences", () => {
 		it("walks all references when no start is provided", () => {
@@ -111,6 +134,83 @@ describe("LocalReferenceCollection", () => {
 			}, refs[2]);
 			assert.equal(completed, false);
 			assert.deepEqual(visited, ["1-0", "1-1"]);
+		});
+
+		describe("when an offset holds multiple buckets", () => {
+			/**
+			 * Builds a collection over "abc" with an `at` reference at every offset, a `before`
+			 * bucket coexisting with `at` at offset 0, and an `after` bucket coexisting with `at`
+			 * at offset 2.
+			 */
+			function setupMultiBucket(): {
+				collection: LocalReferenceCollection;
+				at: LocalReferencePosition[];
+				before: LocalReferencePosition[];
+				after: LocalReferencePosition[];
+			} {
+				const { collection, refs: at } = setup("abc", 1);
+				const before = addTombstones(collection, "before", ["b-0", "b-1"]);
+				const after = addTombstones(collection, "after", ["a-0", "a-1"]);
+				return { collection, at, before, after };
+			}
+
+			it("walks buckets in before/at/after order", () => {
+				const { collection } = setupMultiBucket();
+				assert.deepEqual(walk(collection), ["b-0", "b-1", "0-0", "1-0", "2-0", "a-0", "a-1"]);
+				assert.deepEqual(walk(collection, undefined, false), [
+					"a-1",
+					"a-0",
+					"2-0",
+					"1-0",
+					"0-0",
+					"b-1",
+					"b-0",
+				]);
+			});
+
+			it("skips sibling buckets preceding the bucket holding start", () => {
+				const { collection, at } = setupMultiBucket();
+				// Starting at the `at` bucket must discard the `before` bucket at the same offset,
+				// without discarding the `at` bucket itself.
+				assert.deepEqual(walk(collection, at[0]), ["0-0", "1-0", "2-0", "a-0", "a-1"]);
+				// Starting at the `at` bucket of the last offset must discard nothing it needs,
+				// and still reach the trailing `after` bucket.
+				assert.deepEqual(walk(collection, at[2]), ["2-0", "a-0", "a-1"]);
+			});
+
+			it("skips sibling buckets following the bucket holding start when walking backward", () => {
+				const { collection, at } = setupMultiBucket();
+				// Walking backward from the `at` bucket must discard the trailing `after` bucket
+				// at the same offset, then continue into the `before` bucket.
+				assert.deepEqual(walk(collection, at[2], false), ["2-0", "1-0", "0-0", "b-1", "b-0"]);
+				assert.deepEqual(walk(collection, at[0], false), ["0-0", "b-1", "b-0"]);
+			});
+
+			it("starts within the before bucket", () => {
+				const { collection, before } = setupMultiBucket();
+				assert.deepEqual(walk(collection, before[1]), [
+					"b-1",
+					"0-0",
+					"1-0",
+					"2-0",
+					"a-0",
+					"a-1",
+				]);
+				assert.deepEqual(walk(collection, before[1], false), ["b-1", "b-0"]);
+			});
+
+			it("starts within the after bucket", () => {
+				const { collection, after } = setupMultiBucket();
+				assert.deepEqual(walk(collection, after[0]), ["a-0", "a-1"]);
+				assert.deepEqual(walk(collection, after[0], false), [
+					"a-0",
+					"2-0",
+					"1-0",
+					"0-0",
+					"b-1",
+					"b-0",
+				]);
+			});
 		});
 	});
 });

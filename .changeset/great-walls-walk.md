@@ -2,7 +2,7 @@
 "@fluidframework/merge-tree": patch
 "__section": fix
 ---
-Fix `LocalReferenceCollection.walkReferences` skipping the starting reference
+Fix LocalReferenceCollection.walkReferences skipping the starting reference
 
 `LocalReferenceCollection.walkReferences` compared the wrong objects when locating the
 before/at/after bucket containing the supplied `start` reference. It compared list nodes of the
