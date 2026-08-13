@@ -15,7 +15,6 @@ allowBuilds:
   '@azure/msal-node-runtime': true
   '@biomejs/biome': true
   '@parcel/watcher': true
-  '@vvago/vale': true
   classic-level: true
   core-js: true
   esbuild: true
