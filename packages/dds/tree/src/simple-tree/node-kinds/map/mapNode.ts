@@ -33,7 +33,7 @@ import {
 	type InnerNode,
 	NodeKind,
 	type TreeNodeSchema,
-	// eslint-disable-next-line import-x/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated -- Required to implement the deprecated typeNameSymbol API.
 	typeNameSymbol,
 	type TreeNode,
 	typeSchemaSymbol,
@@ -322,9 +322,9 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 	public has(key: string): boolean {
 		return this.innerNode.tryGetField(brand(key)) !== undefined;
 	}
-	public keys(): IterableIterator<string> {
+	public *keys(): IterableIterator<string> {
 		const node = this.innerNode;
-		return node.keys();
+		yield* node.keys();
 	}
 	public set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T>): this {
 		const kernel = getKernel(this);
@@ -485,7 +485,7 @@ export function mapSchema<
 		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
 			persistedMetadata;
 
-		// eslint-disable-next-line import-x/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated -- Required to implement the deprecated typeNameSymbol API.
 		public get [typeNameSymbol](): TName {
 			return identifier;
 		}

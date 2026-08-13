@@ -4,7 +4,11 @@
  */
 
 import { createEmitter } from "@fluid-internal/client-utils";
-import type { IFluidHandle, Listenable } from "@fluidframework/core-interfaces/internal";
+import type {
+	IEmitter,
+	IFluidHandle,
+	Listenable,
+} from "@fluidframework/core-interfaces/internal";
 import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { type TelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils/internal";
@@ -21,6 +25,7 @@ import {
 	type AnchorSetRootEvents,
 	type ChangeFamily,
 	CommitKind,
+	CommitOutcome,
 	type DeltaVisitor,
 	type DetachedFieldIndex,
 	type IEditableForest,
@@ -57,6 +62,7 @@ import {
 	deltaFieldMapHasVisibleChanges,
 	findCommonAncestor,
 	rebaseBranch,
+	type LocalCommitEvents,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -115,7 +121,12 @@ import {
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import { SharedTreeChangeEnricher } from "./sharedTreeChangeEnricher.js";
 import type { SharedTreeChangeProcessingContext } from "./sharedTreeChangeFamily.js";
-import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
+import {
+	ConstraintStatus,
+	SharedTreeChangeFamily,
+	getConstraintStatus,
+	hasSchemaChange,
+} from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import { extractTransactionChangeProcessor } from "./transactionPostProcessor.js";
@@ -509,6 +520,14 @@ export class TreeCheckout implements ITreeCheckout {
 	private readonly views = new Set<TreeView<ImplicitFieldSchema>>();
 
 	/**
+	 * Event emitters for local commits.
+	 */
+	private readonly localCommitEventEmitters = new Map<
+		RevisionTag,
+		IEmitter<LocalCommitEvents>
+	>();
+
+	/**
 	 * Revertibles maintained for automatic disposal
 	 */
 	private readonly revertibles = new Map<RevisionTag, RevertibleAlpha>();
@@ -674,12 +693,14 @@ export class TreeCheckout implements ITreeCheckout {
 
 	private registerForBranchEvents(): void {
 		this.#transaction.branch.events.on("afterChange", this.onAfterBranchChange);
+		this.#transaction.branch.events.on("commitSequenced", this.onCommitSequenced);
 		this.#transaction.activeBranchEvents.on("afterChange", this.onAfterChange);
 		this.#transaction.activeBranchEvents.on("ancestryTrimmed", this.onAncestryTrimmed);
 	}
 
 	private unregisterFromBranchEvents(): void {
 		this.#transaction.branch.events.off("afterChange", this.onAfterBranchChange);
+		this.#transaction.branch.events.off("commitSequenced", this.onCommitSequenced);
 		this.#transaction.activeBranchEvents.off("afterChange", this.onAfterChange);
 		this.#transaction.activeBranchEvents.off("ancestryTrimmed", this.onAncestryTrimmed);
 	}
@@ -745,6 +766,39 @@ export class TreeCheckout implements ITreeCheckout {
 		}
 	}
 
+	private readonly onCommitSequenced = (commit: GraphCommit<SharedTreeChange>): void => {
+		const emitter = this.localCommitEventEmitters.get(commit.revision);
+		if (emitter === undefined) {
+			// If the commit predates the creation of this checkout, there will be no emitter associated with the commit.
+			// In that case, we don't need to emit any events.
+			return;
+		}
+		const constraintStatus = getConstraintStatus(commit.change);
+		let outcome: CommitOutcome;
+		switch (constraintStatus) {
+			case ConstraintStatus.Satisfied: {
+				outcome = CommitOutcome.FullyApplied;
+				break;
+			}
+			case ConstraintStatus.ImplicitViolation: {
+				outcome = CommitOutcome.FullyDropped;
+				break;
+			}
+			case ConstraintStatus.ExplicitViolation: {
+				outcome = CommitOutcome.NewContentOnly;
+				break;
+			}
+			default: {
+				unreachableCase(constraintStatus);
+			}
+		}
+		this.emitChangedLocked(() => {
+			emitter.emit("settled", outcome);
+		}, "a commit settled event callback");
+		// No more events will be emitted for this commit, so we can remove the emitter from the map.
+		this.localCommitEventEmitters.delete(commit.revision);
+	};
+
 	private readonly onAfterBranchChange = (
 		event: SharedTreeBranchChange<SharedTreeChange>,
 	): void => {
@@ -793,6 +847,8 @@ export class TreeCheckout implements ITreeCheckout {
 
 				let withinEventContext = true;
 
+				const events = createEmitter<LocalCommitEvents>();
+				this.localCommitEventEmitters.set(commit.revision, events);
 				const metadata: ChangeMetadata = {
 					kind,
 					isLocal: true,
@@ -811,6 +867,7 @@ export class TreeCheckout implements ITreeCheckout {
 					getRevertible: (onDisposed) => getRevertible?.(onDisposed),
 					label: this.labelTreeNode?.label,
 					labels: buildLabelsSet(this.labelTreeNode),
+					events,
 				};
 
 				this.emitChangedLocked(() => {
@@ -844,8 +901,11 @@ export class TreeCheckout implements ITreeCheckout {
 	 * Shared by both the local and remote `changed` emission paths in {@link TreeCheckout.onAfterBranchChange}.
 	 * The `try`/`finally` ensures the lock is released even if a listener throws.
 	 */
-	private emitChangedLocked(emit: () => void): void {
-		this.editLock.lock();
+	private emitChangedLocked(
+		emit: () => void,
+		reason: string = "a change event callback",
+	): void {
+		this.editLock.lock(reason);
 		try {
 			emit();
 		} finally {
@@ -861,7 +921,7 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	private readonly onAfterChange = (event: SharedTreeBranchChange<SharedTreeChange>): void => {
-		this.editLock.lock();
+		this.editLock.lock("a change event callback");
 		this.#events.emit("beforeBatch", event);
 		if (event.change !== undefined) {
 			const revision =
@@ -1708,7 +1768,13 @@ class EditLock {
 	 * @remarks Edits will throw an error if the lock is currently locked.
 	 */
 	public readonly editor: ISharedTreeEditor;
-	private locked = false;
+	/**
+	 * The current status of the lock.
+	 * The `reason` string will be included in the error message if an attempt is made to edit the tree while the lock is held.
+	 */
+	private status:
+		| { readonly isLocked: false }
+		| { readonly isLocked: true; readonly reason: string } = { isLocked: false };
 
 	/**
 	 * @param editor - an editor which will be used to create a new editor that is monitored to determine if any changes are happening to the tree.
@@ -1772,14 +1838,15 @@ class EditLock {
 
 	/**
 	 * Prevent further changes from being made to {@link EditLock.editor} until {@link EditLock.unlock} is called.
+	 * @param reason - A string describing why the lock is being acquired. This will be included in the error message if an attempt is made to edit while the lock is held.
 	 * @remarks May only be called when the lock is not already locked.
 	 */
-	public lock(): void {
-		if (this.locked) {
+	public lock(reason: string): void {
+		if (this.status.isLocked) {
 			debugger;
 		}
-		assert(!this.locked, 0xaa7 /* Checkout has already been locked */);
-		this.locked = true;
+		assert(!this.status.isLocked, 0xaa7 /* Checkout has already been locked */);
+		this.status = { isLocked: true, reason };
 	}
 
 	/**
@@ -1788,8 +1855,8 @@ class EditLock {
 	 * This must start with a capital letter, as it shows up as the first part of the error message and we want it to look nice.
 	 */
 	public checkUnlocked<T extends string>(action: T extends Capitalize<T> ? T : never): void {
-		if (this.locked) {
-			throw new UsageError(`${action} is forbidden during a change event callback`);
+		if (this.status.isLocked) {
+			throw new UsageError(`${action} is forbidden during ${this.status.reason}`);
 		}
 	}
 
@@ -1798,8 +1865,8 @@ class EditLock {
 	 * @remarks May only be called when the lock is currently locked.
 	 */
 	public unlock(): void {
-		assert(this.locked, 0xaa8 /* Checkout has not been locked */);
-		this.locked = false;
+		assert(this.status.isLocked, 0xaa8 /* Checkout has not been locked */);
+		this.status = { isLocked: false };
 	}
 }
 

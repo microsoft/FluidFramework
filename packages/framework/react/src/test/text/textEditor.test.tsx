@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { TextAsTree } from "@fluidframework/tree/internal";
+import { PlainText } from "@fluidframework/tree/internal";
 import { act, render } from "@testing-library/react";
 import globalJsdom from "global-jsdom";
 
@@ -37,7 +37,7 @@ describe("Plain TextArea view", () => {
 				const ViewComponent = PlainTextMainView;
 
 				it("renders MainView with editor container", () => {
-					const text = TextAsTree.Tree.fromString("");
+					const text = PlainText.Tree.fromString("");
 					const content = <ViewComponent root={toPropTreeNode(text)} />;
 					const rendered = render(content, { reactStrictMode });
 
@@ -48,7 +48,7 @@ describe("Plain TextArea view", () => {
 				});
 
 				it("renders MainView with initial text content", () => {
-					const text = TextAsTree.Tree.fromString("Hello World");
+					const text = PlainText.Tree.fromString("Hello World");
 					const content = <ViewComponent root={toPropTreeNode(text)} />;
 					const rendered = render(content, { reactStrictMode });
 
@@ -56,7 +56,7 @@ describe("Plain TextArea view", () => {
 				});
 
 				it("invalidates view when tree is mutated", () => {
-					const text = TextAsTree.Tree.fromString("Hello");
+					const text = PlainText.Tree.fromString("Hello");
 					const content = <ViewComponent root={toPropTreeNode(text)} />;
 					const rendered = render(content, { reactStrictMode });
 
@@ -67,7 +67,7 @@ describe("Plain TextArea view", () => {
 				});
 
 				it("invalidates view when text is removed", () => {
-					const text = TextAsTree.Tree.fromString("Hello World");
+					const text = PlainText.Tree.fromString("Hello World");
 					const content = <ViewComponent root={toPropTreeNode(text)} />;
 					const rendered = render(content, { reactStrictMode });
 
@@ -78,7 +78,7 @@ describe("Plain TextArea view", () => {
 				});
 
 				it("invalidates view when text is cleared and replaced", () => {
-					const text = TextAsTree.Tree.fromString("Original");
+					const text = PlainText.Tree.fromString("Original");
 					const content = <ViewComponent root={toPropTreeNode(text)} />;
 					const rendered = render(content, { reactStrictMode });
 
@@ -96,7 +96,7 @@ describe("Plain TextArea view", () => {
 
 				it("renders MainView with surrogate pair characters", () => {
 					// 😀 is a surrogate pair: "😀".length === 2, but [..."😀"].length === 1
-					const text = TextAsTree.Tree.fromString("Hello 😀 World");
+					const text = PlainText.Tree.fromString("Hello 😀 World");
 					const content = <ViewComponent root={toPropTreeNode(text)} />;
 					const rendered = render(content, { reactStrictMode });
 
@@ -104,7 +104,7 @@ describe("Plain TextArea view", () => {
 				});
 
 				it("inserts text after surrogate pair characters", () => {
-					const text = TextAsTree.Tree.fromString("A😀B");
+					const text = PlainText.Tree.fromString("A😀B");
 					const content = <ViewComponent root={toPropTreeNode(text)} />;
 					const rendered = render(content, { reactStrictMode });
 
@@ -115,7 +115,7 @@ describe("Plain TextArea view", () => {
 				});
 
 				it("removes surrogate pair characters", () => {
-					const text = TextAsTree.Tree.fromString("A😀B");
+					const text = PlainText.Tree.fromString("A😀B");
 					const content = <ViewComponent root={toPropTreeNode(text)} />;
 					const rendered = render(content, { reactStrictMode });
 
@@ -126,7 +126,7 @@ describe("Plain TextArea view", () => {
 				});
 
 				it("handles multiple surrogate pair characters", () => {
-					const text = TextAsTree.Tree.fromString("👋🌍🎉");
+					const text = PlainText.Tree.fromString("👋🌍🎉");
 					const content = <ViewComponent root={toPropTreeNode(text)} />;
 					const rendered = render(content, { reactStrictMode });
 
@@ -152,7 +152,7 @@ describe("Plain TextArea view", () => {
 		for (const reactStrictMode of [false, true]) {
 			describe(`StrictMode: ${reactStrictMode}`, () => {
 				it("does not render a toolbar when undoRedo is not provided", () => {
-					const text = TextAsTree.Tree.fromString("");
+					const text = PlainText.Tree.fromString("");
 					const rendered = render(<PlainTextMainView root={toPropTreeNode(text)} />, {
 						reactStrictMode,
 					});
@@ -166,7 +166,7 @@ describe("Plain TextArea view", () => {
 				});
 
 				it("renders toolbar with undo and redo buttons when undoRedo is provided", () => {
-					const text = TextAsTree.Tree.fromString("");
+					const text = PlainText.Tree.fromString("");
 					const rendered = render(
 						<PlainTextMainView
 							root={toPropTreeNode(text)}

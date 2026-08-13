@@ -9,6 +9,7 @@ import * as sinon from "sinon";
 import request from "supertest";
 import * as nconf from "nconf";
 import { TestThrottler } from "@fluidframework/server-test-utils";
+import type { IDocument } from "@fluidframework/server-services-core";
 import { Lumberjack, TestEngine1 } from "@fluidframework/server-services-telemetry";
 import { configureGlobalTelemetryContext } from "@fluidframework/server-services-utils";
 import * as historianApp from "../app";
@@ -1558,6 +1559,64 @@ describe("summary ownership routes", () => {
 		);
 	});
 
+	it("allows a normal summary after initial creation while denying a cross-tenant document", async () => {
+		let document: IDocument | null = null;
+		const readDocument = sandbox
+			.stub(documentManager, "readDocument")
+			.callsFake(async () => document);
+		const createSummary = sandbox
+			.stub(RestGitService.prototype, "createSummary")
+			.resolves({ id: sha });
+
+		await superTest
+			.post(`/repos/${tenantId}/git/summaries`)
+			.query({ initial: "true" })
+			.set("Authorization", authorization)
+			.send({ type: "container", trees: [], blobs: [] })
+			.expect(201);
+
+		document = { ...activeDocument };
+		// MongoDB persists an explicitly undefined optional field as null.
+		Object.assign(document, { storageName: null });
+		await superTest
+			.post(`/repos/${tenantId}/git/summaries`)
+			.set("Authorization", authorization)
+			.send({ type: "container", trees: [], blobs: [] })
+			.expect(201);
+
+		document = { ...document, tenantId: "victim-tenant" };
+		await superTest
+			.post(`/repos/${tenantId}/git/summaries`)
+			.set("Authorization", authorization)
+			.send({ type: "container", trees: [], blobs: [] })
+			.expect(404);
+
+		sinon.assert.callCount(readDocument, 3);
+		sinon.assert.calledTwice(createSummary);
+	});
+
+	it("rejects a non-string storage name from Alfred", async () => {
+		const document = { ...activeDocument };
+		Object.assign(document, { storageName: 123 });
+		sandbox.stub(documentManager, "readDocument").resolves(document);
+		const createSummary = sandbox.stub(RestGitService.prototype, "createSummary");
+		const logError = sandbox.spy(Lumberjack, "error");
+
+		const response = await superTest
+			.post(`/repos/${tenantId}/git/summaries`)
+			.set("Authorization", authorization)
+			.send({ type: "container", trees: [], blobs: [] })
+			.expect(502);
+
+		assert.strictEqual(response.body, "Invalid document response from Alfred.");
+		sinon.assert.notCalled(createSummary);
+		sinon.assert.calledWithMatch(
+			logError,
+			"HistorianSummaryDocumentOwnershipValidation",
+			sinon.match({ operation: "post", outcome: "dependencyError" }),
+		);
+	});
+
 	for (const testCase of [
 		{ name: "active", document: activeDocument },
 		{
@@ -1593,7 +1652,7 @@ describe("summary ownership routes", () => {
 		const clock = sandbox.useFakeTimers({ toFake: ["setTimeout"] });
 		const readDocument = sandbox
 			.stub(documentManager, "readDocument")
-			.rejects(new NetworkError(503, "Alfred unavailable"));
+			.rejects(new NetworkError(503, "Alfred unavailable", true, false));
 		const createSummary = sandbox.stub(RestGitService.prototype, "createSummary");
 		const waitForCallCount = async (expectedCallCount: number): Promise<void> => {
 			while (readDocument.callCount < expectedCallCount) {
@@ -1642,7 +1701,7 @@ describe("summary ownership routes", () => {
 		const clock = sandbox.useFakeTimers({ toFake: ["setTimeout"] });
 		const readDocument = sandbox
 			.stub(documentManager, "readDocument")
-			.rejects(new NetworkError(503, "Alfred unavailable"));
+			.rejects(new NetworkError(503, "Alfred unavailable", true, false));
 		const getSummary = sandbox.stub(RestGitService.prototype, "getSummary");
 		const waitForCallCount = async (expectedCallCount: number): Promise<void> => {
 			while (readDocument.callCount < expectedCallCount) {

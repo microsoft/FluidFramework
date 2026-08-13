@@ -79,7 +79,6 @@ const config: Config = {
 
 	onBrokenAnchors: "throw",
 	onBrokenLinks: "throw",
-	onBrokenMarkdownLinks: "throw",
 	onDuplicateRoutes: "throw",
 
 	// Even if you don't use internationalization, you can use this field to set
@@ -124,6 +123,9 @@ const config: Config = {
 		// `.mdx` files will be treated as MDX, and `.md` files will be treated as standard Markdown.
 		// Needed to support current API docs output, which is not MDX compatible.
 		format: "detect",
+		hooks: {
+			onBrokenMarkdownLinks: "throw",
+		},
 		mermaid: true,
 	},
 	themes: [

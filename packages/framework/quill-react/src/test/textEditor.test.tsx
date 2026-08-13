@@ -9,9 +9,9 @@ import { toPropTreeNode, createUndoRedo, type UndoRedo } from "@fluidframework/r
 import { TreeViewConfiguration } from "@fluidframework/tree";
 import { TreeAlpha, type TreeViewAlpha } from "@fluidframework/tree/alpha";
 import {
-	FormattedTextAsTreeDefault,
+	FormattedTextDefault,
 	independentView,
-	TextAsTree,
+	PlainText,
 } from "@fluidframework/tree/internal";
 import { render } from "@testing-library/react";
 import globalJsdom from "global-jsdom";
@@ -39,17 +39,17 @@ const Delta = DeltaPackage.default;
 
 // Configuration for creating formatted text views
 const formattedTreeConfig = new TreeViewConfiguration({
-	schema: FormattedTextAsTreeDefault.Tree,
+	schema: FormattedTextDefault.Tree,
 });
 
 /**
  * Creates a TreeView for formatted text, initialized with the provided initial value.
  */
 function createFormattedTreeView(initialValue = ""): {
-	tree: FormattedTextAsTreeDefault.Tree;
+	tree: FormattedTextDefault.Tree;
 } {
 	const treeView = independentView(formattedTreeConfig);
-	treeView.initialize(FormattedTextAsTreeDefault.Tree.fromString(initialValue));
+	treeView.initialize(FormattedTextDefault.Tree.fromString(initialValue));
 	return { tree: treeView.root };
 }
 
@@ -58,9 +58,9 @@ function createFormattedTreeView(initialValue = ""): {
  */
 function createFormattedTreeViewWithEvents(
 	initialValue = "",
-): TreeViewAlpha<typeof FormattedTextAsTreeDefault.Tree> {
+): TreeViewAlpha<typeof FormattedTextDefault.Tree> {
 	const treeView = independentView(formattedTreeConfig);
-	treeView.initialize(FormattedTextAsTreeDefault.Tree.fromString(initialValue));
+	treeView.initialize(FormattedTextDefault.Tree.fromString(initialValue));
 	return treeView;
 }
 
@@ -92,7 +92,7 @@ describe("textEditor", () => {
 					const ViewComponent = QuillMainView;
 
 					it("keeps remote editor DOM in sync after a user edit", () => {
-						const text = TextAsTree.Tree.fromString("");
+						const text = PlainText.Tree.fromString("");
 						const root = toPropTreeNode(text);
 						const rendered = render(
 							<>
@@ -131,7 +131,7 @@ describe("textEditor", () => {
 					});
 
 					it("renders MainView with editor container", () => {
-						const text = TextAsTree.Tree.fromString("");
+						const text = PlainText.Tree.fromString("");
 						const content = <ViewComponent root={toPropTreeNode(text)} />;
 						const rendered = render(content, { reactStrictMode });
 
@@ -142,7 +142,7 @@ describe("textEditor", () => {
 					});
 
 					it("renders MainView with initial text content", () => {
-						const text = TextAsTree.Tree.fromString("Hello World");
+						const text = PlainText.Tree.fromString("Hello World");
 						const content = <ViewComponent root={toPropTreeNode(text)} />;
 						const rendered = render(content, { reactStrictMode });
 
@@ -150,7 +150,7 @@ describe("textEditor", () => {
 					});
 
 					it("invalidates view when tree is mutated", () => {
-						const text = TextAsTree.Tree.fromString("Hello");
+						const text = PlainText.Tree.fromString("Hello");
 						const content = <ViewComponent root={toPropTreeNode(text)} />;
 						const rendered = render(content, { reactStrictMode });
 
@@ -163,7 +163,7 @@ describe("textEditor", () => {
 					});
 
 					it("invalidates view when text is removed", () => {
-						const text = TextAsTree.Tree.fromString("Hello World");
+						const text = PlainText.Tree.fromString("Hello World");
 						const content = <ViewComponent root={toPropTreeNode(text)} />;
 						const rendered = render(content, { reactStrictMode });
 
@@ -178,7 +178,7 @@ describe("textEditor", () => {
 					});
 
 					it("invalidates view when text is cleared and replaced", () => {
-						const text = TextAsTree.Tree.fromString("Original");
+						const text = PlainText.Tree.fromString("Original");
 						const content = <ViewComponent root={toPropTreeNode(text)} />;
 						const rendered = render(content, { reactStrictMode });
 
@@ -201,7 +201,7 @@ describe("textEditor", () => {
 
 					it("renders MainView with surrogate pair characters", () => {
 						// 😀 is a surrogate pair: "😀".length === 2, but [..."😀"].length === 1
-						const text = TextAsTree.Tree.fromString("Hello 😀 World");
+						const text = PlainText.Tree.fromString("Hello 😀 World");
 						const content = <ViewComponent root={toPropTreeNode(text)} />;
 						const rendered = render(content, { reactStrictMode });
 
@@ -209,7 +209,7 @@ describe("textEditor", () => {
 					});
 
 					it("inserts text after surrogate pair characters", () => {
-						const text = TextAsTree.Tree.fromString("A😀B");
+						const text = PlainText.Tree.fromString("A😀B");
 						const content = <ViewComponent root={toPropTreeNode(text)} />;
 						const rendered = render(content, { reactStrictMode });
 
@@ -221,7 +221,7 @@ describe("textEditor", () => {
 					});
 
 					it("removes surrogate pair characters", () => {
-						const text = TextAsTree.Tree.fromString("A😀B");
+						const text = PlainText.Tree.fromString("A😀B");
 						const content = <ViewComponent root={toPropTreeNode(text)} />;
 						const rendered = render(content, { reactStrictMode });
 
@@ -235,7 +235,7 @@ describe("textEditor", () => {
 					});
 
 					it("handles multiple surrogate pair characters", () => {
-						const text = TextAsTree.Tree.fromString("👋🌍🎉");
+						const text = PlainText.Tree.fromString("👋🌍🎉");
 						const content = <ViewComponent root={toPropTreeNode(text)} />;
 						const rendered = render(content, { reactStrictMode });
 
@@ -255,7 +255,7 @@ describe("textEditor", () => {
 			for (const reactStrictMode of [false, true]) {
 				describe(`StrictMode: ${reactStrictMode}`, () => {
 					it("undo and redo buttons are disabled when undoRedo is not provided", () => {
-						const text = TextAsTree.Tree.fromString("");
+						const text = PlainText.Tree.fromString("");
 						const rendered = render(<QuillMainView root={toPropTreeNode(text)} />, {
 							reactStrictMode,
 						});
@@ -275,7 +275,7 @@ describe("textEditor", () => {
 							dispose: () => {},
 						};
 
-						const text = TextAsTree.Tree.fromString("");
+						const text = PlainText.Tree.fromString("");
 						const rendered = render(
 							<QuillMainView
 								root={toPropTreeNode(text)}
@@ -464,8 +464,8 @@ describe("textEditor", () => {
 		});
 
 		// Helper to create default format
-		function createPlainFormat(): FormattedTextAsTreeDefault.CharacterFormat {
-			return new FormattedTextAsTreeDefault.CharacterFormat({
+		function createPlainFormat(): FormattedTextDefault.CharacterFormat {
+			return new FormattedTextDefault.CharacterFormat({
 				bold: false,
 				italic: false,
 				underline: false,
@@ -1083,8 +1083,8 @@ describe("textEditor", () => {
 				tree.removeRange(5, 6);
 				tree.insertWithFormattingAt(5, [
 					{
-						content: new FormattedTextAsTreeDefault.StringLineAtom({
-							tag: FormattedTextAsTreeDefault.LineTag("h1"),
+						content: new FormattedTextDefault.StringLineAtom({
+							tag: FormattedTextDefault.LineTag("h1"),
 							indent: 0,
 						}),
 						format: createPlainFormat(),
@@ -1100,8 +1100,8 @@ describe("textEditor", () => {
 				tree.removeRange(4, 5);
 				tree.insertWithFormattingAt(4, [
 					{
-						content: new FormattedTextAsTreeDefault.StringLineAtom({
-							tag: FormattedTextAsTreeDefault.LineTag("li"),
+						content: new FormattedTextDefault.StringLineAtom({
+							tag: FormattedTextDefault.LineTag("li"),
 							indent: 0,
 						}),
 						format: createPlainFormat(),
@@ -1121,8 +1121,8 @@ describe("textEditor", () => {
 				const { tree } = createFormattedTreeView("abc");
 				tree.insertWithFormattingAt(3, [
 					{
-						content: new FormattedTextAsTreeDefault.StringLineAtom({
-							tag: FormattedTextAsTreeDefault.LineTag("ol"),
+						content: new FormattedTextDefault.StringLineAtom({
+							tag: FormattedTextDefault.LineTag("ol"),
 							indent: 2,
 						}),
 						format: createPlainFormat(),
@@ -1140,8 +1140,8 @@ describe("textEditor", () => {
 				const { tree } = createFormattedTreeView("abc");
 				tree.insertWithFormattingAt(3, [
 					{
-						content: new FormattedTextAsTreeDefault.StringLineAtom({
-							tag: FormattedTextAsTreeDefault.LineTag("ol"),
+						content: new FormattedTextDefault.StringLineAtom({
+							tag: FormattedTextDefault.LineTag("ol"),
 							indent: 0,
 						}),
 						format: createPlainFormat(),
