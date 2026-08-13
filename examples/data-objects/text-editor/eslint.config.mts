@@ -15,7 +15,6 @@ const config: Linter.Config[] = [
 		rules: {
 			"react-hooks/exhaustive-deps": ["error"],
 			"react-hooks/rules-of-hooks": "error",
-			"@eslint-react/jsx-key-before-spread": "error",
 		},
 	},
 ];
