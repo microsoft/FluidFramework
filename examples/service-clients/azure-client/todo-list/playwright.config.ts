@@ -17,6 +17,7 @@ export default defineConfig({
 	forbidOnly: !!process.env.CI,
 	retries: 0,
 	timeout: 60_000,
+	outputDir: "nyc/test-results",
 	reporter: [["list"], ["junit", { outputFile: "nyc/junit-report.xml" }]],
 	use: {
 		baseURL,

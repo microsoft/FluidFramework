@@ -197,9 +197,6 @@
 			"build:exports:node": [
 				"build:esnext"
 			],
-			"build:test:jest": [
-				"tsc"
-			],
 			"build:test:mocha:cjs": [
 				"tsc"
 			],
