@@ -23434,9 +23434,6 @@ packages:
   fengari@0.1.4:
     resolution: {integrity: sha512-6ujqUuiIYmcgkGz8MGAdERU57EIluGGPSUgGPTsco657EHa+srq0S3/YUl/r9kx1+D+d4rGfYObd+m8K22gB1g==}
 
-  fflate@0.8.2:
-    resolution: {integrity: sha512-cPJU47OaAoCbg0pBvzsgpTPhmhqI5eJjh/JIu8tPj5q+T7iLvW/JAYUqmE7KOB4R1ZyEhzBaIQpQpardBF5z8A==}
-
   fflate@0.8.3:
     resolution: {integrity: sha512-tbZNuJrLwGUp3zshBtdy4W+ORxZuIh8a5ilyIEQDC5rY1f3U20JMry0Ll3WBzU58EZKsEuJFXhb5gwv8CsPvgA==}
 
@@ -28637,7 +28634,7 @@ snapshots:
       '@andrewbranch/untar.js': 1.0.3
       '@loaderkit/resolve': 1.0.4
       cjs-module-lexer: 1.4.1
-      fflate: 0.8.2
+      fflate: 0.8.3
       lru-cache: 11.2.6
       semver: 7.7.4
       typescript: 5.6.1-rc
@@ -38259,8 +38256,6 @@ snapshots:
       readline-sync: 1.4.10
       sprintf-js: 1.1.3
       tmp: 0.2.7
-
-  fflate@0.8.2: {}
 
   fflate@0.8.3: {}
 
