@@ -751,6 +751,12 @@ export namespace FormattedText {
 		>[],
 	> extends PlainText.Members {
 		/**
+		 * {@inheritDoc PlainText.Members.createInsertionAnchor}
+		 * @override
+		 */
+		createInsertionAnchor(index: number): ArrayPlaceAnchor;
+
+		/**
 		 * {@link PlainText.Members.insertAt} with optional formatting to apply to all additional characters,
 		 * and allowing an array of atoms instead of a string.
 		 * @param format - Optional formatting to apply to all additional characters. If not specified, the default formatting (from {@link FormattedText.createSchema}) will be used.

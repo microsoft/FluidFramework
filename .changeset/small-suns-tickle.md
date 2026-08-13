@@ -4,7 +4,6 @@
 "fluid-framework": minor
 "__section": tree
 ---
-
 Plain text selection tracking now uses insertion anchors
 
 `PlainText.Tree` now exposes `createInsertionAnchor`, which tracks a character insertion point across edits using the underlying array node anchor.

@@ -44,7 +44,7 @@ export interface SynchronizedString {
 	readonly selection: TextSelection | undefined;
 	/**
 	 * Update the selection range tracked across subsequent tree edits.
-	 * @param selection - The current selection, or `undefined` to stop tracking one.
+	 * @param selection - The new selection, or `undefined` to stop tracking one.
 	 */
 	readonly setSelection: (selection: TextSelection | undefined) => void;
 }
@@ -70,15 +70,23 @@ export interface SynchronizedString {
  *   <textarea
  *     value={text}
  *     onSelect={(e) =>
- *       setSelection({ start: e.currentTarget.selectionStart, end: e.currentTarget.selectionEnd })
+ *       setSelection({
+ *         start: e.currentTarget.selectionStart ?? 0,
+ *         end: e.currentTarget.selectionEnd ?? 0,
+ *       })
  *     }
  *     onChange={(e) => {
  *       TreeAlpha.context(tree).runTransaction(() => syncTextToTree(tree, e.target.value));
- *       setSelection({ start: e.target.selectionStart, end: e.target.selectionEnd });
+ *       setSelection({
+ *         start: e.target.selectionStart ?? 0,
+ *         end: e.target.selectionEnd ?? 0,
+ *       });
  *     }}
  *   />
  * );
  * ```
+ * @param tree - The plain-text tree whose content should be synchronized.
+ * @param initialSelection - The initial selection to track, expressed as UTF-16 string offsets.
  * @alpha
  */
 export function useTreeSynchronizedString(
@@ -93,6 +101,7 @@ export function useTreeSynchronizedString(
 	const anchorsRef = useRef<SelectionAnchors | undefined>(undefined);
 
 	const disposeSelectionAnchors = useCallback(() => {
+		// Replacing or clearing a selection transfers ownership away from its previous anchors.
 		anchorsRef.current?.start.dispose();
 		anchorsRef.current?.end.dispose();
 		anchorsRef.current = undefined;
@@ -111,6 +120,7 @@ export function useTreeSynchronizedString(
 					end: tree.createInsertionAnchor(codePointCount(value.slice(0, end))),
 				};
 			}
+			// Anchor updates do not affect React state, so explicitly publish the new selection.
 			setSelectionVersion((version) => version + 1);
 		},
 		[disposeSelectionAnchors, tree],
@@ -155,6 +165,7 @@ export function useTreeSynchronizedString(
 		};
 	}, [disposeSelectionAnchors, setSelection, tree]);
 
+	// Resolve the live code-point anchor indices back to the UTF-16 offsets used by DOM selections.
 	const anchors = anchorsRef.current;
 	const selection =
 		anchors === undefined

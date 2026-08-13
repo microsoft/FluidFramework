@@ -67,8 +67,6 @@ const PlainTextEditorView: FC<MainViewPropsInner> = ({ root, undoRedo, editLabel
 
 	// Tree → string (one-way). The component supplies the other direction below.
 	const { text, selection, setSelection } = useTreeSynchronizedString(root);
-	const selectionRef = useRef(selection);
-	selectionRef.current = selection;
 
 	// A controlled value resets the caret on every change. For the user's own edit the browser
 	// already placed the caret correctly, so only restore the tracked selection for remote edits.
@@ -78,11 +76,10 @@ const PlainTextEditorView: FC<MainViewPropsInner> = ({ root, undoRedo, editLabel
 			return;
 		}
 		const textarea = textareaRef.current;
-		const trackedSelection = selectionRef.current;
-		if (textarea !== null && trackedSelection !== undefined) {
-			textarea.setSelectionRange(trackedSelection.start, trackedSelection.end);
+		if (textarea !== null && selection !== undefined) {
+			textarea.setSelectionRange(selection.start, selection.end);
 		}
-	}, [text]);
+	}, [text, selection]);
 
 	// String → tree: write the user's edit back into the tree. `syncTextToTree` already applies its
 	// edits atomically; this outer transaction just tags them with `effectiveLabel` for undo/redo.
@@ -93,8 +90,8 @@ const PlainTextEditorView: FC<MainViewPropsInner> = ({ root, undoRedo, editLabel
 				label: effectiveLabel,
 			});
 			setSelection({
-				start: event.target.selectionStart,
-				end: event.target.selectionEnd,
+				start: event.target.selectionStart ?? 0,
+				end: event.target.selectionEnd ?? 0,
 			});
 		},
 		[root, effectiveLabel, setSelection],
@@ -103,8 +100,8 @@ const PlainTextEditorView: FC<MainViewPropsInner> = ({ root, undoRedo, editLabel
 	const onSelect = useCallback(
 		(event: SyntheticEvent<HTMLTextAreaElement>) => {
 			setSelection({
-				start: event.currentTarget.selectionStart,
-				end: event.currentTarget.selectionEnd,
+				start: event.currentTarget.selectionStart ?? 0,
+				end: event.currentTarget.selectionEnd ?? 0,
 			});
 		},
 		[setSelection],

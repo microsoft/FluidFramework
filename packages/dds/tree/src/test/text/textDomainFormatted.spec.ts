@@ -65,6 +65,23 @@ describe("textDomainFormatted", () => {
 		setEnableExpensiveDebugAsserts(false);
 	});
 
+	describeHydration("createInsertionAnchor", (_init, hydrated) => {
+		it("tracks a character insertion point across edits", () => {
+			const text = OptionalFormatText.fromString("hello");
+			if (hydrated) {
+				hydrateNode(text);
+			}
+			const anchor = text.createInsertionAnchor(4);
+
+			text.insertAt(0, "Oh ");
+			assert.equal(anchor.index, 7);
+
+			text.removeRange(3, 6);
+			assert.equal(anchor.index, 4);
+			anchor.dispose();
+		});
+	});
+
 	it("compatibility-minimal", () => {
 		const scopingFactory = new SchemaFactoryBeta("minimal");
 		const currentViewSchema = new TreeViewConfiguration({
