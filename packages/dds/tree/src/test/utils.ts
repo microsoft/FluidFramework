@@ -878,8 +878,10 @@ function createCheckoutWithContent(
 	const fieldCursor = normalizeNewFieldContent(content.initialTree);
 	const schema = new TreeStoredSchemaRepository(content.schema);
 
+	const logger = createMockLoggerExt();
+	const breaker = new Breakable("createCheckoutWithContent", logger);
 	const forest = buildConfiguredForest(
-		new Breakable("buildTestForest"),
+		breaker,
 		args?.forestType ?? ForestTypeReference,
 		schema,
 		testIdCompressor,
@@ -887,7 +889,6 @@ function createCheckoutWithContent(
 	);
 	initializeForest(forest, fieldCursor);
 
-	const logger = createMockLoggerExt();
 	const checkout = createTreeCheckout(
 		testIdCompressor,
 		mintRevisionTag,
@@ -896,7 +897,7 @@ function createCheckoutWithContent(
 			...args,
 			forest,
 			schema,
-			logger,
+			breaker,
 		},
 	);
 	return { checkout, logger };
