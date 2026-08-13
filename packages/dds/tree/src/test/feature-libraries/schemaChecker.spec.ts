@@ -743,5 +743,22 @@ describe("schema validation", () => {
 				assert.throws(() => throwOutOfSchema(error, context), validateUsageError(expected));
 			});
 		}
+
+		it("escapes schema identifiers", () => {
+			assert.throws(
+				() =>
+					throwOutOfSchema(SchemaValidationError.Field_NodeTypeNotAllowed, {
+						nodeType: 'node"type',
+						allowedTypes: new Set(["allowed\ntype"]),
+					}),
+				(error: Error) => {
+					assert.equal(
+						error.message,
+						'Tree does not conform to schema. A node of type "node\\"type" is not allowed in this field. Allowed types: ["allowed\\ntype"]. If using a staged allowed type, the stored schema has not been upgraded to include this type yet. Either upgrade the schema to enable the staged type or avoid inserting content of this type until the schema is upgraded.',
+					);
+					return true;
+				},
+			);
+		});
 	});
 });

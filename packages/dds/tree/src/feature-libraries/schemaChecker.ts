@@ -84,9 +84,10 @@ function formatSchemaValidationError(
 	error: SchemaValidationError,
 	context: SchemaValidationErrorContext | undefined,
 ): string {
-	const nodeDesc = context?.nodeType === undefined ? "unknown" : `"${context.nodeType}"`;
+	const nodeDesc =
+		context?.nodeType === undefined ? "unknown" : JSON.stringify(context.nodeType);
 	const fieldKindDesc =
-		context?.fieldKind === undefined ? "unknown" : `"${context.fieldKind}"`;
+		context?.fieldKind === undefined ? "unknown" : JSON.stringify(context.fieldKind);
 	const childCountDesc = context?.childCount ?? "unknown";
 	switch (error) {
 		case SchemaValidationError.Field_KindNotInSchemaPolicy: {
@@ -119,7 +120,7 @@ function formatSchemaValidationError(
 					? "unknown"
 					: `[${[...context.allowedTypes]
 							.sort()
-							.map((type) => `"${type}"`)
+							.map((type) => JSON.stringify(type))
 							.join(", ")}]`;
 			return (
 				`Tree does not conform to schema. ` +
@@ -146,7 +147,7 @@ function formatSchemaValidationError(
 					? "unknown"
 					: `[${[...context.unexpectedFields]
 							.sort()
-							.map((field) => `"${field}"`)
+							.map((field) => JSON.stringify(field))
 							.join(", ")}]`;
 			return (
 				`Tree does not conform to schema. ` +
@@ -174,7 +175,7 @@ function formatSchemaValidationError(
 					? undefined
 					: `[${[...context.unexpectedFields]
 							.sort()
-							.map((field) => `"${field}"`)
+							.map((field) => JSON.stringify(field))
 							.join(", ")}]`;
 			const fieldsPart =
 				fieldsDesc === undefined
