@@ -151,9 +151,10 @@ export async function parseGcSnapshotData(
  * from GC state, so honouring it filters out dead subtrees without a
  * separate GC-path traversal.
  *
- * The root-level `.blobs` subtree is special-cased: only its `.redirectTable`
- * blob is read, because attachment blob contents are captured separately via
- * {@link captureReferencedAttachmentBlobs}.
+ * The root-level `.blobs` subtree is special-cased because its direct blob
+ * entries are attachment payloads captured separately via
+ * {@link captureReferencedAttachmentBlobs}. Its `.redirectTable` and blobs in
+ * child trees are ordinary structural summary data and are captured here.
  */
 export async function readReferencedSnapshotBlobs(
 	snapshot: ISnapshot | ISnapshotTree,
@@ -423,10 +424,12 @@ export async function inlineAttachmentBlobsByReference(
 }
 
 /**
- * Returns true if any referenced subtree of `baseSnapshot` declares a
- * `groupId` — the snapshot-tree wire field that carries the runtime's
- * loading-group identifier. Subtrees flagged `unreferenced` are skipped —
- * a dead subtree's `groupId` would not be loaded by the runtime either.
+ * Returns true if any referenced subtree outside the root `.blobs` tree
+ * declares a `groupId` — the snapshot-tree wire field that carries the
+ * runtime's loading-group identifier. Subtrees flagged `unreferenced` are
+ * skipped because a dead subtree's `groupId` would not be loaded either.
+ * Groups under `.blobs` are self-contained structural summary trees whose
+ * blob IDs are present in the base snapshot, so they are captured normally.
  *
  * `captureFullContainerState` does not yet support loading groups: prefetching
  * per-group snapshots adds a code path that has no end-to-end coverage and no
