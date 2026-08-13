@@ -27,7 +27,6 @@ import type { ICreateBlobResponse } from "@fluidframework/driver-definitions/int
 import type {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
-	ITelemetryContext,
 	ISequencedMessageEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -826,9 +825,16 @@ export class BlobManager {
 		this.internalEvents.emit("processedBlobAttach", localId, storageId);
 	}
 
-	public summarize(
-		telemetryContext?: ITelemetryContext,
-		materializedDetachedBlobSummaryContents?: ReadonlyMap<string, ArrayBufferLike>,
+	public getAttachSummary(): ISummaryTreeWithStats {
+		return this.summarizeInternal(undefined);
+	}
+
+	public async summarize(fullTree: boolean): Promise<ISummaryTreeWithStats> {
+		return this.summarizeInternal(fullTree ? await this.loadFullTreeContents() : undefined);
+	}
+
+	private summarizeInternal(
+		fullTreeContents: ReadonlyMap<string, ArrayBufferLike> | undefined,
 	): ISummaryTreeWithStats {
 		if (this.runtime.attachState === AttachState.Detached) {
 			assert(
@@ -837,12 +843,9 @@ export class BlobManager {
 			);
 		}
 		const detachedBlobSummaryContents =
-			materializedDetachedBlobSummaryContents === undefined
+			fullTreeContents === undefined
 				? this.detachedBlobSummaryContents
-				: new Map([
-						...(this.detachedBlobSummaryContents ?? []),
-						...materializedDetachedBlobSummaryContents,
-					]);
+				: new Map([...(this.detachedBlobSummaryContents ?? []), ...fullTreeContents]);
 		return summarizeBlobManagerState(
 			this.redirectTable,
 			detachedBlobSummaryContents,
@@ -854,8 +857,8 @@ export class BlobManager {
 	 * Materializes payloads that would otherwise be summarized by handle.
 	 * Used only when producing a full-tree summary.
 	 */
-	public async loadDetachedBlobSummaryContents(): Promise<Map<string, ArrayBufferLike>> {
-		const materializedDetachedBlobSummaryContents = new Map(this.detachedBlobSummaryContents);
+	private async loadFullTreeContents(): Promise<Map<string, ArrayBufferLike>> {
+		const fullTreeContents = new Map(this.detachedBlobSummaryContents);
 		await Promise.all(
 			[...this.detachedBlobSummaryHandles].map(async (localId) => {
 				const localBlobRecord = this.localBlobCache.get(localId);
@@ -864,12 +867,12 @@ export class BlobManager {
 						localBlobRecord.state === "attached",
 						"Detached blob summary handle must reference an attached blob",
 					);
-					materializedDetachedBlobSummaryContents.set(localId, localBlobRecord.blob);
+					fullTreeContents.set(localId, localBlobRecord.blob);
 					return;
 				}
 				const storageId = this.redirectTable.get(localId);
 				assert(storageId !== undefined, "Inlined attachment blob must have a storage ID");
-				materializedDetachedBlobSummaryContents.set(
+				fullTreeContents.set(
 					localId,
 					stringToBuffer(
 						bufferToString(await this.storage.readBlob(storageId), "utf8"),
@@ -878,7 +881,7 @@ export class BlobManager {
 				);
 			}),
 		);
-		return materializedDetachedBlobSummaryContents;
+		return fullTreeContents;
 	}
 
 	/**

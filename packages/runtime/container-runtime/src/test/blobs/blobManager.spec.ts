@@ -31,6 +31,7 @@ import {
 	blobToText,
 	createTestMaterial,
 	ensureBlobsShared,
+	getSummaryContentsFromSummaryWithFormatValidation,
 	getSummaryContentsWithFormatValidation,
 	MockStorageAdapter,
 	simulateAttach,
@@ -136,11 +137,9 @@ describe("Detached blob summaries", () => {
 			lazilyLoadedBlobManager.lookupTemporaryBlobStorageId(localId),
 			undefined,
 		);
-		assert.strictEqual(
-			getSummaryContentsWithFormatValidation(lazilyLoadedBlobManager)
-				.detachedBlobSummaryHandles?.size,
-			1,
-		);
+		const lazilyLoadedSummary =
+			await getSummaryContentsWithFormatValidation(lazilyLoadedBlobManager);
+		assert.strictEqual(lazilyLoadedSummary.detachedBlobSummaryHandles?.size, 1);
 
 		const attachedFromCreateCache = await loadBlobManagerLoadInfo({
 			attachState: AttachState.Attached,
@@ -172,11 +171,11 @@ describe("Detached blob summaries", () => {
 			authoritativeBlobManager.lookupTemporaryBlobStorageId(localId),
 			undefined,
 		);
+		const authoritativeSummary = await getSummaryContentsWithFormatValidation(
+			authoritativeBlobManager,
+		);
 		assert.deepStrictEqual(
-			[
-				...(getSummaryContentsWithFormatValidation(authoritativeBlobManager)
-					.detachedBlobSummaryHandles ?? []),
-			],
+			[...(authoritativeSummary.detachedBlobSummaryHandles ?? [])],
 			[localId],
 		);
 		const authoritativeStorage = new MockStorageAdapter(true);
@@ -188,19 +187,15 @@ describe("Detached blob summaries", () => {
 			inlineDetachedBlobsAsSummaryBlobs: false,
 			mockBlobStorage: authoritativeStorage,
 		});
-		const materializedDetachedBlobSummaryContents =
-			await fullTreeBlobManager.loadDetachedBlobSummaryContents();
-		const fullTreeSummary = getSummaryContentsWithFormatValidation(
-			fullTreeBlobManager,
-			materializedDetachedBlobSummaryContents,
+		const fullTreeSummary = getSummaryContentsFromSummaryWithFormatValidation(
+			await fullTreeBlobManager.summarize(true),
 		);
 		assert.strictEqual(fullTreeSummary.detachedBlobSummaryContents?.size, 1);
 		assert.strictEqual(fullTreeSummary.detachedBlobSummaryHandles, undefined);
+		const incrementalSummary =
+			await getSummaryContentsWithFormatValidation(fullTreeBlobManager);
 		assert.deepStrictEqual(
-			[
-				...(getSummaryContentsWithFormatValidation(fullTreeBlobManager)
-					.detachedBlobSummaryHandles ?? []),
-			],
+			[...(incrementalSummary.detachedBlobSummaryHandles ?? [])],
 			[localId],
 		);
 	});
@@ -215,7 +210,7 @@ describe("Detached blob summaries", () => {
 		const { localId } = unpackHandle(handle);
 		assert.strictEqual(mockBlobStorage.detachedStorage.blobsCreated, 0);
 
-		const loadInfo = getSummaryContentsWithFormatValidation(blobManager);
+		const loadInfo = await getSummaryContentsWithFormatValidation(blobManager);
 		assert.strictEqual(loadInfo.ids, undefined);
 		assert.strictEqual(loadInfo.redirectTable?.length, 1);
 		assert.strictEqual(loadInfo.detachedBlobSummaryContents?.size, 1);
@@ -229,7 +224,7 @@ describe("Detached blob summaries", () => {
 		assert.strictEqual(blobToText(await reloadedBlobManager.getBlob(localId, false)), "hello");
 
 		reloadedBlobManager.deleteSweepReadyNodes([getGCNodePathFromLocalId(localId)]);
-		const afterGc = getSummaryContentsWithFormatValidation(reloadedBlobManager);
+		const afterGc = await getSummaryContentsWithFormatValidation(reloadedBlobManager);
 		assert.strictEqual(afterGc.redirectTable, undefined);
 		assert.strictEqual(afterGc.detachedBlobSummaryContents, undefined);
 	});
@@ -241,14 +236,10 @@ describe("Detached blob summaries", () => {
 			inlineDetachedBlobsAsSummaryBlobs: true,
 		});
 		await blobManager.createBlob(textToBlob("first"));
-		const materializedDetachedBlobSummaryContents =
-			await blobManager.loadDetachedBlobSummaryContents();
+		const summaryP = blobManager.summarize(true);
 		await blobManager.createBlob(textToBlob("second"));
 
-		const summary = getSummaryContentsWithFormatValidation(
-			blobManager,
-			materializedDetachedBlobSummaryContents,
-		);
+		const summary = getSummaryContentsFromSummaryWithFormatValidation(await summaryP);
 		assert.strictEqual(summary.detachedBlobSummaryContents?.size, 2);
 	});
 
@@ -264,12 +255,13 @@ describe("Detached blob summaries", () => {
 		mockRuntime.attachState = AttachState.Attached;
 
 		assert.strictEqual(blobManager.lookupTemporaryBlobStorageId(localId), undefined);
-		const attachedSummary = getSummaryContentsWithFormatValidation(blobManager);
+		const attachedSummary = await getSummaryContentsWithFormatValidation(blobManager);
 		assert.strictEqual(attachedSummary.detachedBlobSummaryContents?.size, 1);
 		assert.strictEqual(attachedSummary.detachedBlobSummaryHandles, undefined);
-		const materializedDetachedBlobSummaryContents =
-			await blobManager.loadDetachedBlobSummaryContents();
-		const materializedContent = materializedDetachedBlobSummaryContents.get(localId);
+		const fullTreeSummary = getSummaryContentsFromSummaryWithFormatValidation(
+			await blobManager.summarize(true),
+		);
+		const materializedContent = fullTreeSummary.detachedBlobSummaryContents?.get(localId);
 		assert(materializedContent !== undefined);
 		assert.strictEqual(blobToText(materializedContent), "hello");
 	});
@@ -281,7 +273,7 @@ describe("Detached blob summaries", () => {
 			inlineDetachedBlobsAsSummaryBlobs: true,
 		});
 		await blobManager.createBlob(textToBlob("inline"));
-		const inlineLoadInfo = getSummaryContentsWithFormatValidation(blobManager);
+		const inlineLoadInfo = await getSummaryContentsWithFormatValidation(blobManager);
 
 		const {
 			blobManager: reloadedBlobManager,
@@ -296,7 +288,7 @@ describe("Detached blob summaries", () => {
 		await reloadedBlobManager.createBlob(textToBlob("legacy"));
 		await simulateAttach(mockBlobStorage, mockRuntime, reloadedBlobManager);
 
-		const summary = getSummaryContentsWithFormatValidation(reloadedBlobManager);
+		const summary = await getSummaryContentsWithFormatValidation(reloadedBlobManager);
 		assert.strictEqual(summary.detachedBlobSummaryContents?.size, 1);
 		assert.strictEqual(summary.ids?.length, 1);
 	});
@@ -719,7 +711,8 @@ for (const createBlobPayloadPending of [false, true]) {
 						await assert.rejects(createBlobP, { message: "fake driver error" });
 					}
 
-					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+					const { ids, redirectTable } =
+						await getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids, undefined);
 					assert.strictEqual(redirectTable, undefined);
 				});
@@ -748,7 +741,8 @@ for (const createBlobPayloadPending of [false, true]) {
 						"Blob should have been reuploaded once",
 					);
 
-					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+					const { ids, redirectTable } =
+						await getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids?.length, 1);
 					assert.strictEqual(redirectTable?.length, 1);
 				});
@@ -796,7 +790,8 @@ for (const createBlobPayloadPending of [false, true]) {
 						await ensureBlobsShared([localHandle]);
 					}
 
-					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+					const { ids, redirectTable } =
+						await getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids?.length, 1);
 					assert.strictEqual(redirectTable?.length, 2);
 				});
@@ -839,7 +834,8 @@ for (const createBlobPayloadPending of [false, true]) {
 					mockOrderingService.unpause();
 					// Await the handle promises here for the legacy createBlob flow
 					await Promise.all([remoteHandleP, localHandleP]);
-					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+					const { ids, redirectTable } =
+						await getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids?.length, 1);
 					assert.strictEqual(redirectTable?.length, 2);
 				});
@@ -870,7 +866,8 @@ for (const createBlobPayloadPending of [false, true]) {
 					assert(isFluidHandlePayloadPending(handle));
 					assert.strictEqual(handle.payloadState, "shared", "Payload should be shared");
 
-					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+					const { ids, redirectTable } =
+						await getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids?.length, 1);
 					assert.strictEqual(redirectTable?.length, 1);
 				});
@@ -915,7 +912,8 @@ for (const createBlobPayloadPending of [false, true]) {
 					assert.strictEqual(handle1.payloadState, "shared", "Payload should be shared");
 					assert.strictEqual(handle2.payloadState, "shared", "Payload should be shared");
 
-					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+					const { ids, redirectTable } =
+						await getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids?.length, 2);
 					assert.strictEqual(redirectTable?.length, 2);
 				});
@@ -933,7 +931,8 @@ for (const createBlobPayloadPending of [false, true]) {
 							message: "uploadBlob aborted",
 						},
 					);
-					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+					const { ids, redirectTable } =
+						await getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids, undefined);
 					assert.strictEqual(redirectTable, undefined);
 				});
@@ -956,7 +955,8 @@ for (const createBlobPayloadPending of [false, true]) {
 							message: "uploadBlob aborted",
 						},
 					);
-					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+					const { ids, redirectTable } =
+						await getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids, undefined);
 					assert.strictEqual(redirectTable, undefined);
 				});
@@ -990,7 +990,8 @@ for (const createBlobPayloadPending of [false, true]) {
 							message: "fake driver error",
 						},
 					);
-					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+					const { ids, redirectTable } =
+						await getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids, undefined);
 					assert.strictEqual(redirectTable, undefined);
 				});
@@ -1034,7 +1035,8 @@ for (const createBlobPayloadPending of [false, true]) {
 						"Shouldn't have sent more messages",
 					);
 
-					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+					const { ids, redirectTable } =
+						await getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids, undefined);
 					assert.strictEqual(redirectTable, undefined);
 				});
@@ -1047,7 +1049,8 @@ for (const createBlobPayloadPending of [false, true]) {
 						await ensureBlobsShared([handle]);
 					}
 					ac.abort("abort test");
-					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+					const { ids, redirectTable } =
+						await getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids?.length, 1);
 					assert.strictEqual(redirectTable?.length, 1);
 				});
@@ -1059,10 +1062,11 @@ for (const createBlobPayloadPending of [false, true]) {
 		// #region Summaries
 		describe("Summaries", () => {
 			describe("Generating summaries", () => {
-				it("Empty summary", () => {
+				it("Empty summary", async () => {
 					const { blobManager } = createTestMaterial({ createBlobPayloadPending });
 
-					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+					const { ids, redirectTable } =
+						await getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids, undefined, "Shouldn't have ids for empty summary");
 					assert.strictEqual(
 						redirectTable,
@@ -1083,7 +1087,8 @@ for (const createBlobPayloadPending of [false, true]) {
 					// Note that this summary is not generated in normal usage, it's just a means to
 					// validate what is being put into the detached storage. In normal use we'd see
 					// a BlobManager.patchRedirectTable() call before being asked to produce a summary.
-					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+					const { ids, redirectTable } =
+						await getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids?.length, 3);
 					assert.strictEqual(redirectTable?.length, 3);
 				});
@@ -1100,7 +1105,8 @@ for (const createBlobPayloadPending of [false, true]) {
 					if (createBlobPayloadPending) {
 						await ensureBlobsShared([handle1, handle2, handle3]);
 					}
-					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+					const { ids, redirectTable } =
+						await getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids?.length, 2);
 					assert.strictEqual(redirectTable?.length, 3);
 				});
@@ -1116,7 +1122,7 @@ for (const createBlobPayloadPending of [false, true]) {
 					await blobManager.createBlob(textToBlob("world"));
 					await simulateAttach(mockBlobStorage, mockRuntime, blobManager);
 					const { ids: ids1, redirectTable: redirectTable1 } =
-						getSummaryContentsWithFormatValidation(blobManager);
+						await getSummaryContentsWithFormatValidation(blobManager);
 					// As attach uploads the non-deduped blobs to the deduping storage, the duplicate
 					// "world" will remain in the redirectTable (since it has a unique localId), but
 					// its attachment will be deduplicated.
@@ -1132,7 +1138,7 @@ for (const createBlobPayloadPending of [false, true]) {
 						await ensureBlobsShared([handle1, handle2, handle3, handle4]);
 					}
 					const { ids: ids2, redirectTable: redirectTable2 } =
-						getSummaryContentsWithFormatValidation(blobManager);
+						await getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids2?.length, 3);
 					assert.strictEqual(redirectTable2?.length, 7);
 				});
@@ -1151,7 +1157,7 @@ for (const createBlobPayloadPending of [false, true]) {
 						await ensureBlobsShared([handle1, handle2]);
 					}
 					const blobManagerLoadInfo: IBlobManagerLoadInfo =
-						getSummaryContentsWithFormatValidation(blobManager);
+						await getSummaryContentsWithFormatValidation(blobManager);
 					const { ids: ids1, redirectTable: redirectTable1 } = blobManagerLoadInfo;
 
 					const { blobManager: blobManager2 } = createTestMaterial({
@@ -1176,7 +1182,7 @@ for (const createBlobPayloadPending of [false, true]) {
 
 					// Verify that resummarizing gives the same results
 					const { ids: ids2, redirectTable: redirectTable2 } =
-						getSummaryContentsWithFormatValidation(blobManager2);
+						await getSummaryContentsWithFormatValidation(blobManager2);
 					assert.deepStrictEqual(ids2, ids1, "IDs mismatch");
 					assert.deepStrictEqual(redirectTable2, redirectTable1, "Redirect table mismatch");
 				});
@@ -1192,8 +1198,9 @@ for (const createBlobPayloadPending of [false, true]) {
 					// This is stripping out the redirectTable from the summary, to simulate an older
 					// BlobManager behavior that blobs created after attach would only be represented in the
 					// attachments and not in the redirectTable.
+					const { ids } = await getSummaryContentsWithFormatValidation(blobManager);
 					const blobManagerLoadInfo: IBlobManagerLoadInfo = {
-						ids: getSummaryContentsWithFormatValidation(blobManager).ids,
+						ids,
 					};
 					const remoteId = blobManagerLoadInfo.ids?.[0];
 					assert(remoteId !== undefined, "Should have one attachment");
@@ -1216,7 +1223,7 @@ for (const createBlobPayloadPending of [false, true]) {
 					// The identity redirectTable entry should be stripped out of the summary, but the
 					// attachment should remain.
 					const { ids: ids2, redirectTable: redirectTable2 } =
-						getSummaryContentsWithFormatValidation(blobManager2);
+						await getSummaryContentsWithFormatValidation(blobManager2);
 					assert.strictEqual(ids2?.length, 1);
 					assert.strictEqual(redirectTable2, undefined);
 				});
@@ -1252,13 +1259,13 @@ for (const createBlobPayloadPending of [false, true]) {
 				}
 
 				const { ids: ids1, redirectTable: redirectTable1 } =
-					getSummaryContentsWithFormatValidation(blobManager);
+					await getSummaryContentsWithFormatValidation(blobManager);
 				assert.strictEqual(ids1?.length, 1);
 				assert.strictEqual(redirectTable1?.length, 1);
 
 				blobManager.deleteSweepReadyNodes([getGCNodePathFromLocalId(localId1)]);
 				const { ids: ids2, redirectTable: redirectTable2 } =
-					getSummaryContentsWithFormatValidation(blobManager);
+					await getSummaryContentsWithFormatValidation(blobManager);
 				assert.strictEqual(ids2, undefined);
 				assert.strictEqual(redirectTable2, undefined);
 			});
@@ -1277,19 +1284,19 @@ for (const createBlobPayloadPending of [false, true]) {
 				}
 
 				const { ids: ids1, redirectTable: redirectTable1 } =
-					getSummaryContentsWithFormatValidation(blobManager);
+					await getSummaryContentsWithFormatValidation(blobManager);
 				assert.strictEqual(ids1?.length, 1);
 				assert.strictEqual(redirectTable1?.length, 2);
 
 				blobManager.deleteSweepReadyNodes([getGCNodePathFromLocalId(localId1)]);
 				const { ids: ids2, redirectTable: redirectTable2 } =
-					getSummaryContentsWithFormatValidation(blobManager);
+					await getSummaryContentsWithFormatValidation(blobManager);
 				assert.strictEqual(ids2?.length, 1);
 				assert.strictEqual(redirectTable2?.length, 1);
 
 				blobManager.deleteSweepReadyNodes([getGCNodePathFromLocalId(localId2)]);
 				const { ids: ids3, redirectTable: redirectTable3 } =
-					getSummaryContentsWithFormatValidation(blobManager);
+					await getSummaryContentsWithFormatValidation(blobManager);
 				assert.strictEqual(ids3, undefined);
 				assert.strictEqual(redirectTable3, undefined);
 			});
@@ -1304,7 +1311,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				const handle = await blobManager.createBlob(textToBlob("hello"));
 				await ensureBlobsShared([handle]);
 				const { localId } = unpackHandle(handle);
-				const { ids } = getSummaryContentsWithFormatValidation(blobManager);
+				const { ids } = await getSummaryContentsWithFormatValidation(blobManager);
 				const expectedStorageId = ids?.[0];
 				assert(expectedStorageId !== undefined, "Storage id not found in summary");
 				const foundStorageId = blobManager.lookupTemporaryBlobStorageId(localId);

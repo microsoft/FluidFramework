@@ -374,7 +374,7 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 				dataStore._root.set("my blob", blob);
 				await attachOpP;
 
-				const snapshot1 = (container1 as any).runtime.blobManager.summarize();
+				const snapshot1 = await (container1 as any).runtime.blobManager.summarize(false);
 
 				// wait for summarize, then summary ack so the next container will load from snapshot
 				await new Promise<void>((resolve, reject) => {
@@ -405,7 +405,7 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 				// Make sure the next container loads from the network so as to get latest snapshot.
 				testPersistedCache.clearCache();
 				const container2 = await provider.loadTestContainer(testContainerConfig);
-				const snapshot2 = (container2 as any).runtime.blobManager.summarize();
+				const snapshot2 = await (container2 as any).runtime.blobManager.summarize(false);
 				assert.strictEqual(snapshot2.stats.treeNodeCount, 1);
 				assert.deepStrictEqual(snapshot1.summary.tree, snapshot2.summary.tree);
 			});

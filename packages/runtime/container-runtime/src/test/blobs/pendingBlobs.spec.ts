@@ -62,7 +62,8 @@ for (const createBlobPayloadPending of [false, true]) {
 				}
 
 				// Since everything is still pending, shouldn't have anything in the summary
-				const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+				const { ids, redirectTable } =
+					await getSummaryContentsWithFormatValidation(blobManager);
 				assert.strictEqual(ids, undefined);
 				assert.strictEqual(redirectTable, undefined);
 			});
@@ -170,7 +171,8 @@ for (const createBlobPayloadPending of [false, true]) {
 				}
 
 				// Since everything is still pending, shouldn't have anything in the summary
-				const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+				const { ids, redirectTable } =
+					await getSummaryContentsWithFormatValidation(blobManager);
 				assert.strictEqual(ids, undefined);
 				assert.strictEqual(redirectTable, undefined);
 			});
@@ -182,7 +184,8 @@ for (const createBlobPayloadPending of [false, true]) {
 				const pendingState = blobManager.getPendingBlobs();
 				assert.strictEqual(pendingState, undefined);
 
-				const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+				const { ids, redirectTable } =
+					await getSummaryContentsWithFormatValidation(blobManager);
 				assert.strictEqual(ids?.length, 1);
 				assert.strictEqual(redirectTable?.length, 1);
 			});
@@ -248,7 +251,8 @@ for (const createBlobPayloadPending of [false, true]) {
 				}
 
 				// Only the first blob should be in the summary
-				const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+				const { ids, redirectTable } =
+					await getSummaryContentsWithFormatValidation(blobManager);
 				assert.strictEqual(ids?.length, 1);
 				assert.strictEqual(redirectTable?.length, 1);
 			});
@@ -287,7 +291,8 @@ for (const createBlobPayloadPending of [false, true]) {
 				assert.deepStrictEqual(roundTrippedPendingBlobs, pendingBlobs);
 
 				// Nothing should have made it into the summary
-				const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+				const { ids, redirectTable } =
+					await getSummaryContentsWithFormatValidation(blobManager);
 				assert.strictEqual(ids, undefined);
 				assert.strictEqual(redirectTable, undefined);
 			});
@@ -365,7 +370,7 @@ for (const createBlobPayloadPending of [false, true]) {
 
 				// Nothing should have made it into the summary
 				const { ids: ids1, redirectTable: redirectTable1 } =
-					getSummaryContentsWithFormatValidation(blobManager);
+					await getSummaryContentsWithFormatValidation(blobManager);
 				assert.strictEqual(ids1, undefined);
 				assert.strictEqual(redirectTable1, undefined);
 
@@ -399,7 +404,7 @@ for (const createBlobPayloadPending of [false, true]) {
 
 				// blob3 will now be in the summary
 				const { ids: ids2, redirectTable: redirectTable2 } =
-					getSummaryContentsWithFormatValidation(blobManager);
+					await getSummaryContentsWithFormatValidation(blobManager);
 				assert.strictEqual(ids2?.length, 1);
 				assert.strictEqual(redirectTable2?.length, 1);
 
@@ -411,7 +416,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				// Nothing should be pending any more, and everything should be in the summary.
 				assert.strictEqual(blobManager.getPendingBlobs(), undefined);
 				const { ids: ids3, redirectTable: redirectTable3 } =
-					getSummaryContentsWithFormatValidation(blobManager);
+					await getSummaryContentsWithFormatValidation(blobManager);
 				assert.strictEqual(ids3?.length, 3);
 				assert.strictEqual(redirectTable3?.length, 3);
 			});
@@ -447,7 +452,8 @@ for (const createBlobPayloadPending of [false, true]) {
 				assert.strictEqual(blobToText(blob2), "world");
 
 				// Nothing should have made it into the summary
-				const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+				const { ids, redirectTable } =
+					await getSummaryContentsWithFormatValidation(blobManager);
 				assert.strictEqual(ids, undefined);
 				assert.strictEqual(redirectTable, undefined);
 			});
@@ -476,7 +482,8 @@ for (const createBlobPayloadPending of [false, true]) {
 				assert.strictEqual(mockOrderingService.messagesSequenced, 1);
 
 				// Shared blob should be in the summary
-				const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+				const { ids, redirectTable } =
+					await getSummaryContentsWithFormatValidation(blobManager);
 				assert.strictEqual(ids?.length, 1);
 				assert.strictEqual(redirectTable?.length, 1);
 
@@ -511,7 +518,8 @@ for (const createBlobPayloadPending of [false, true]) {
 				assert.strictEqual(mockOrderingService.messagesSequenced, 1);
 
 				// Shared blob should be in the summary
-				const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+				const { ids, redirectTable } =
+					await getSummaryContentsWithFormatValidation(blobManager);
 				assert.strictEqual(ids?.length, 1);
 				assert.strictEqual(redirectTable?.length, 1);
 
@@ -546,7 +554,8 @@ for (const createBlobPayloadPending of [false, true]) {
 				assert.strictEqual(mockOrderingService.messagesSequenced, 1);
 
 				// Shared blob should be in the summary
-				const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+				const { ids, redirectTable } =
+					await getSummaryContentsWithFormatValidation(blobManager);
 				assert.strictEqual(ids?.length, 1);
 				assert.strictEqual(redirectTable?.length, 1);
 
@@ -598,7 +607,8 @@ for (const createBlobPayloadPending of [false, true]) {
 				assert.strictEqual(mockOrderingService.messagesSequenced, 3);
 
 				// Shared blobs should be in the summary
-				const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+				const { ids, redirectTable } =
+					await getSummaryContentsWithFormatValidation(blobManager);
 				assert.strictEqual(ids?.length, 3);
 				assert.strictEqual(redirectTable?.length, 3);
 
@@ -646,7 +656,8 @@ for (const createBlobPayloadPending of [false, true]) {
 					// be in the pending state
 					assert.strictEqual(blobManager.getPendingBlobs(), undefined);
 					// Shared blobs should be in the summary
-					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+					const { ids, redirectTable } =
+						await getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids?.length, 3);
 					assert.strictEqual(redirectTable?.length, 3);
 
@@ -712,7 +723,8 @@ for (const createBlobPayloadPending of [false, true]) {
 					// be in the pending state
 					assert.strictEqual(blobManager.getPendingBlobs(), undefined);
 					// Shared blobs should be in the summary
-					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+					const { ids, redirectTable } =
+						await getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids?.length, 2);
 					assert.strictEqual(redirectTable?.length, 2);
 
@@ -794,7 +806,8 @@ for (const createBlobPayloadPending of [false, true]) {
 					// be in the pending state
 					assert.strictEqual(blobManager.getPendingBlobs(), undefined);
 					// Shared blobs should be in the summary
-					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+					const { ids, redirectTable } =
+						await getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids?.length, 3);
 					assert.strictEqual(redirectTable?.length, 3);
 
@@ -878,7 +891,8 @@ for (const createBlobPayloadPending of [false, true]) {
 					// be in the pending state
 					assert.strictEqual(blobManager.getPendingBlobs(), undefined);
 					// Shared blobs should be in the summary
-					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+					const { ids, redirectTable } =
+						await getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids?.length, 3);
 					assert.strictEqual(redirectTable?.length, 3);
 

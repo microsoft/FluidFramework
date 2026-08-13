@@ -25,7 +25,10 @@ import type {
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces/internal";
 import { SummaryType } from "@fluidframework/driver-definitions/internal";
-import type { ISequencedMessageEnvelope } from "@fluidframework/runtime-definitions/internal";
+import type {
+	ISequencedMessageEnvelope,
+	ISummaryTreeWithStats,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	isFluidHandleInternalPayloadPending,
 	isLocalFluidHandle,
@@ -521,11 +524,14 @@ export const simulateAttach = async (
 	runtime.attachState = AttachState.Attached;
 };
 
-export const getSummaryContentsWithFormatValidation = (
+export const getSummaryContentsWithFormatValidation = async (
 	blobManager: BlobManager,
-	materializedDetachedBlobSummaryContents?: ReadonlyMap<string, ArrayBufferLike>,
+): Promise<IBlobManagerLoadInfo> =>
+	getSummaryContentsFromSummaryWithFormatValidation(await blobManager.summarize(false));
+
+export const getSummaryContentsFromSummaryWithFormatValidation = (
+	summary: ISummaryTreeWithStats,
 ): IBlobManagerLoadInfo => {
-	const summary = blobManager.summarize(undefined, materializedDetachedBlobSummaryContents);
 	let ids: string[] | undefined;
 	let redirectTable: [string, string][] | undefined;
 	let detachedBlobSummaryContents: Map<string, ArrayBufferLike> | undefined;
