@@ -22,7 +22,7 @@ import {
 	combineVisitors,
 	createAnnouncedVisitor,
 } from "../../core/index.js";
-import type { Breakable } from "../../util/index.js";
+import { breakingMethod, type Breakable } from "../../util/index.js";
 
 import { assertForestsEqual } from "../treeTextCursor.js";
 
@@ -57,6 +57,7 @@ export class ComparisonForest implements IEditableForest {
 		this.assertValid();
 	}
 
+	@breakingMethod
 	private assertValid(): void {
 		assertForestsEqual(this.main, this.reference);
 	}
