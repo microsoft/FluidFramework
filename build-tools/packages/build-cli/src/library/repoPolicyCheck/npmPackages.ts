@@ -1375,8 +1375,8 @@ export const handlers: Handler[] = [
 			const splitTestScriptNames = [
 				"test:mocha",
 				"test:jest",
-				"test:realsvc",
 				"test:playwright",
+				"test:realsvc",
 			];
 
 			if (testScript === undefined) {
