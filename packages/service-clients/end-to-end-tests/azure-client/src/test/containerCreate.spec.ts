@@ -695,13 +695,13 @@ describe("Container create in tree-only mode", () => {
 			undefined,
 			undefined,
 			undefined,
-			({ schema, minVersionForCollaboration }) => {
+			({ schema, minVersionForCollaboration: oldestSupportedClient }) => {
 				if (!isTreeContainerSchema(schema)) {
 					throw new UsageError(invalidSchemaErrorMessage);
 				}
 				return createTreeContainerRuntimeFactory({
 					schema,
-					minVersionForCollaboration,
+					oldestSupportedClient,
 				});
 			},
 		);
