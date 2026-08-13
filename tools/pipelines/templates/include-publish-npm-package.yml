@@ -105,7 +105,7 @@ stages:
     - publish_npm_public
     - publish_npm_internal_test
     - publish_npm_internal_build
-    # This must be declared as an explicit dependency because the manifest template uses the version variable it outputs.
+    # This must be declared as an explicit dependency because upload-server-manifest.yml reads SetVersion.version from the build stage outputs.
     - build
     condition: |
       and(
