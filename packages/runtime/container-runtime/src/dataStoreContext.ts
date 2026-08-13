@@ -861,10 +861,12 @@ export abstract class FluidDataStoreContext
 		}
 
 		const channel = await this.realize();
-		assert(
-			channel.summarize2 !== undefined,
-			"Data store does not implement summarize2 and cannot be summarized by the summarize2 flow",
-		);
+		if (channel.summarize2 === undefined) {
+			throw new UsageError(
+				"Data store does not implement summarize2 and cannot be summarized by the summarize2 flow",
+				tagCodeArtifacts({ dataStoreId: this.id, dataStorePackagePath: this.pkg?.join("/") }),
+			);
+		}
 		await channel.summarize2(
 			summaryBuilder.createBuilderForChild(channelsTreeName, fullTree),
 			latestSummarySequenceNumber,

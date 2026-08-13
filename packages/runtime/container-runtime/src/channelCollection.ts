@@ -1314,6 +1314,19 @@ export class ChannelCollection
 	}
 
 	/**
+	 * The number of data stores that have been realized (loaded).
+	 */
+	public get realizedCount(): number {
+		let count = 0;
+		for (const [, context] of this.contexts) {
+			if (context.isLoaded) {
+				count++;
+			}
+		}
+		return count;
+	}
+
+	/**
 	 * Create a summary. Used when attaching or serializing a detached container.
 	 */
 	public getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {

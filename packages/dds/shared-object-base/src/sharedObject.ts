@@ -851,10 +851,12 @@ export abstract class SharedObject<
 		fullTree,
 		telemetryContext,
 	): Promise<void> => {
-		assert(
-			this.summarizeCore2 !== undefined,
-			"Shared object does not implement summarizeCore2 and cannot be summarized by the summarize2 flow",
-		);
+		if (this.summarizeCore2 === undefined) {
+			throw new UsageError(
+				"Shared object does not implement summarizeCore2 and cannot be summarized by the summarize2 flow",
+				tagCodeArtifacts({ channelId: this.id, channelType: this.attributes.type }),
+			);
+		}
 		this.summarizeCore2(
 			summaryBuilder,
 			this.serializer,

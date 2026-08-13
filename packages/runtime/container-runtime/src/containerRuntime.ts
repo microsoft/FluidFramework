@@ -314,6 +314,7 @@ import {
 	type ISummaryConfiguration,
 	type ISummaryMetadataMessage,
 	metadataBlobName,
+	enableSummarizeV2Key,
 	OrderedClientCollection,
 	OrderedClientElection,
 	recentBatchInfoBlobName,
@@ -857,6 +858,39 @@ export async function loadContainerRuntimeAlpha(params: LoadContainerRuntimePara
 }
 
 const defaultMaxConsecutiveReconnects = 7;
+
+/**
+ * Counts the channels (DDSs) written into the data store subtrees of a summary, and how many of them were
+ * reused from the previous summary as a handle.
+ *
+ * @remarks
+ * Derived from the generated summary tree rather than from either summarization flow, so that both flows report
+ * the same measurement and can be compared directly.
+ */
+export function countChannelsInDataStoreTree(dataStoreTree: ISummaryTree): {
+	channelCount: number;
+	reusedChannelCount: number;
+} {
+	let channelCount = 0;
+	let reusedChannelCount = 0;
+	for (const dataStore of Object.values(dataStoreTree.tree)) {
+		// A data store reused as a handle has no subtree here, so its channels are not part of this summary.
+		if (dataStore.type !== SummaryType.Tree) {
+			continue;
+		}
+		const channelsTree: SummaryObject | undefined = dataStore.tree[channelsTreeName];
+		if (channelsTree?.type !== SummaryType.Tree) {
+			continue;
+		}
+		for (const channel of Object.values(channelsTree.tree)) {
+			channelCount++;
+			if (channel.type === SummaryType.Handle) {
+				reusedChannelCount++;
+			}
+		}
+	}
+	return { channelCount, reusedChannelCount };
+}
 
 /**
  * These are the ONLY message types that are allowed to be submitted while in staging mode
@@ -1987,8 +2021,7 @@ export class ContainerRuntime
 
 		// Opt-in to the summarizer-node-free summarization flow. Off by default while it is validated against
 		// the existing flow; see ContainerRuntime.summarize2.
-		this.summarizeV2Enabled =
-			this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableSummarizeV2") === true;
+		this.summarizeV2Enabled = this.mc.config.getBoolean(enableSummarizeV2Key) === true;
 
 		this.maxConsecutiveReconnects =
 			this.mc.config.getNumber(maxConsecutiveReconnectsKey) ?? defaultMaxConsecutiveReconnects;
@@ -5029,6 +5062,7 @@ export class ContainerRuntime
 			const handleCount = Object.values(dataStoreTree.tree).filter(
 				(value) => value.type === SummaryType.Handle,
 			).length;
+			const channelCounts = countChannelsInDataStoreTree(dataStoreTree);
 			const gcSummaryTreeStats =
 				summaryTree.tree[gcTreeKey] === undefined
 					? undefined
@@ -5041,6 +5075,9 @@ export class ContainerRuntime
 				gcBlobNodeCount: gcSummaryTreeStats?.blobNodeCount,
 				gcTotalBlobsSize: gcSummaryTreeStats?.totalBlobSize,
 				summaryNumber,
+				summarizeFlow: this.summarizeV2Enabled ? "v2" : "v1",
+				realizedDataStoreCount: this.channelCollection.realizedCount,
+				...channelCounts,
 				...partialStats,
 			};
 			const generateSummaryData: Omit<IGenerateSummaryTreeResult, "stage" | "error"> = {

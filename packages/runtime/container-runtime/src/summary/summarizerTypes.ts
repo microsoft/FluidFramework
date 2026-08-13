@@ -239,6 +239,34 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
 	 * The summary number for a container's summary. Incremented on summaries throughout its lifetime.
 	 */
 	readonly summaryNumber: number;
+	/**
+	 * Which summarization flow produced this summary.
+	 *
+	 * @remarks
+	 * Present so that summaries from the summarizer node flow ("v1") and the builder flow ("v2") can be compared
+	 * side by side while the latter is rolled out. Undefined for runtimes that predate the new flow.
+	 */
+	readonly summarizeFlow?: "v1" | "v2";
+	/**
+	 * The number of data stores that were realized (loaded) when this summary was generated.
+	 *
+	 * @remarks
+	 * Summarizing should not need to realize a data store that has not changed, so a lower number for the same
+	 * workload is better.
+	 */
+	readonly realizedDataStoreCount?: number;
+	/**
+	 * The number of channels (DDSs) written into this summary, across the data stores that were summarized.
+	 *
+	 * @remarks
+	 * Channels of a data store that was reused as a handle are not counted, because that data store's subtree is
+	 * not part of this summary.
+	 */
+	readonly channelCount?: number;
+	/**
+	 * The number of channels (DDSs) that were reused from the previous summary as a handle.
+	 */
+	readonly reusedChannelCount?: number;
 }
 
 /**

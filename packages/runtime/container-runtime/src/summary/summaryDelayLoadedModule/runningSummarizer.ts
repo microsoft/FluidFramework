@@ -21,6 +21,7 @@ import {
 	createChildLogger,
 	createChildMonitoringContext,
 	isFluidError,
+	loggerToMonitoringContext,
 	type MonitoringContext,
 	type TelemetryLoggerExt,
 	UsageError,
@@ -43,7 +44,12 @@ import type {
 	ISummaryConfiguration,
 	SubmitSummaryResult,
 } from "../summarizerTypes.js";
-import { raceTimer, RetriableSummaryError, type SummarizeReason } from "../summarizerUtils.js";
+import {
+	enableSummarizeV2Key,
+	raceTimer,
+	RetriableSummaryError,
+	type SummarizeReason,
+} from "../summarizerUtils.js";
 import type {
 	IAckedSummary,
 	IClientSummaryWatcher,
@@ -214,11 +220,18 @@ export class RunningSummarizer
 			summarizerSuccessfulAttempts: () => this.totalSuccessfulAttempts,
 		};
 
+		const summarizeFlow =
+			loggerToMonitoringContext(baseLogger).config.getBoolean(enableSummarizeV2Key) === true
+				? "v2"
+				: "v1";
+
 		this.mc = createChildMonitoringContext({
 			logger: baseLogger,
 			namespace: "Running",
 			properties: {
-				all: telemetryProps,
+				// summarizeFlow tags every summarizer event, including failures that never reach summary
+				// generation, so the two flows can be compared while summarize2 is rolled out.
+				all: { ...telemetryProps, summarizeFlow },
 			},
 		});
 

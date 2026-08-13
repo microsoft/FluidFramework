@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	IChannel,
 	IChannelAttributes,
@@ -28,6 +27,7 @@ import { addBlobToSummary } from "@fluidframework/runtime-utils/internal";
 import {
 	DataCorruptionError,
 	tagCodeArtifacts,
+	UsageError,
 	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -163,10 +163,12 @@ export async function summarizeChannelAsync2(
 	fullTree: boolean,
 	telemetryContext: ITelemetryContext,
 ): Promise<void> {
-	assert(
-		channel.summarize2 !== undefined,
-		"Channel does not implement summarize2 and cannot be summarized by the summarize2 flow",
-	);
+	if (channel.summarize2 === undefined) {
+		throw new UsageError(
+			"Channel does not implement summarize2 and cannot be summarized by the summarize2 flow",
+			tagCodeArtifacts({ channelId: channel.id, channelType: channel.attributes.type }),
+		);
+	}
 	await channel.summarize2(
 		summaryBuilder,
 		latestSummarySequenceNumber,

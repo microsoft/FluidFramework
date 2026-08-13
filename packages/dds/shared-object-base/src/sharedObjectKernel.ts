@@ -25,7 +25,11 @@ import type {
 	MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
-import { extractTelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import {
+	extractTelemetryLoggerExt,
+	tagCodeArtifacts,
+	UsageError,
+} from "@fluidframework/telemetry-utils/internal";
 
 import type { IFluidSerializer } from "./serializer.js";
 import {
@@ -196,10 +200,12 @@ class SharedObjectFromKernel<
 		telemetryContext: ITelemetryContext,
 	): void {
 		const kernel = this.#kernel;
-		assert(
-			kernel.summarizeCore2 !== undefined,
-			"Kernel does not implement summarizeCore2 and cannot be summarized by the summarize2 flow",
-		);
+		if (kernel.summarizeCore2 === undefined) {
+			throw new UsageError(
+				"Kernel does not implement summarizeCore2 and cannot be summarized by the summarize2 flow",
+				tagCodeArtifacts({ channelId: this.id, channelType: this.attributes.type }),
+			);
+		}
 		kernel.summarizeCore2(
 			summaryBuilder,
 			serializer,

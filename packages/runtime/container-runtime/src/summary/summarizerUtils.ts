@@ -10,6 +10,15 @@ import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
 import type { ISummaryCancellationToken, IRetriableFailureError } from "./summarizerTypes.js";
 
+/**
+ * Feature gate that selects the builder-based summarization flow (`ContainerRuntime.summarize2`).
+ *
+ * @remarks
+ * Read both by the container runtime, to pick the flow, and by the summarizer, to tag its telemetry with the
+ * flow that produced the summary. Those must agree, hence the shared constant.
+ */
+export const enableSummarizeV2Key = "Fluid.ContainerRuntime.EnableSummarizeV2";
+
 export type raceTimerResult<T> =
 	| { result: "done"; value: T }
 	| { result: IPromiseTimerResult["timerResult"] }
