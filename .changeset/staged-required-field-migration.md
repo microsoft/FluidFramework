@@ -20,11 +20,16 @@ The rollout is:
    describes every document this client can open.
    What this step changes is that a version N+1 client never *creates* an empty value: constructing a node without a
    value for the field, assigning or inserting `undefined`, and deleting the field all throw a `UsageError` at
-   runtime. These are runtime rather than compile-time errors because TypeScript mapped types cannot make the write
+   runtime. The same applies to content built from an existing tree or its serialized form (`TreeAlpha.create`,
+   `TreeAlpha.importVerbose`, `TreeAlpha.importCompressed`, `TreeBeta.clone` and `TreeView.initialize`): importing or
+   cloning content in which the field is empty throws rather than silently reintroducing an empty value.
+   These are runtime rather than compile-time errors because TypeScript mapped types cannot make the write
    type of a property required while its read type is optional — the same limitation `stagedOptional` works around.
-3. Once version N clients are extinct, the application explicitly enables the staged upgrade
-   (`StagedSchemaUpgradePolicy.includeStagedRequired`, also reachable via `extractPersistedSchema`), which
-   tightens the stored field kind from `Optional` to `Required`.
+3. Once version N clients are extinct, the application explicitly enables the staged upgrade by configuring the view
+   with a `StagedSchemaUpgradePolicy` whose `includeStagedRequired` returns `true` for the field's upgrade and calling
+   `TreeView.upgradeSchema`, which tightens the stored field kind from `Optional` to `Required`.
+   (`extractPersistedSchema` exposes the same opt-in, but only for dumping a schema snapshot: it does not upgrade a
+   document.)
    Without that opt-in, `TreeView.upgradeSchema` leaves this staged change as a no-op.
 4. Version N+2 uses `sf.required(T)` and drops the staged marker. Only at this point does the field become
    non-optional in the TypeScript types.

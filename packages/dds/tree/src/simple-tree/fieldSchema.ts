@@ -495,7 +495,7 @@ export function normalizeFieldSchema(
  * Returns the {@link SchemaUpgrade} for a {@link SchemaStaticsAlpha.stagedRequired | staged required} field,
  * or `false` if the field is not staged required.
  */
-export function getStagedRequiredUpgrade(schema: FieldSchema): false | SchemaUpgrade {
+export function getStagedRequiredUpgrade(schema: ImplicitFieldSchema): false | SchemaUpgrade {
 	return schema instanceof FieldSchemaAlpha ? schema.isStagedRequired : false;
 }
 

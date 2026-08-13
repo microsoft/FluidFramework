@@ -255,11 +255,17 @@ export interface SchemaStaticsAlpha {
 	 * reading the field can still yield `undefined`, and the field is therefore Optional in the view (and in the
 	 * TypeScript types) during this phase. What this step does change is that a client using this schema will not
 	 * *create* new empty values: constructing a node without a value for the field, assigning or inserting `undefined`,
-	 * and deleting the field are all rejected with a `UsageError`.
+	 * and deleting the field are all rejected with a `UsageError`. The same applies to content built from an existing
+	 * tree or its serialized form (`TreeAlpha.importVerbose`, `TreeAlpha.importCompressed`, `TreeAlpha.create`,
+	 * `TreeBeta.clone` and `TreeView.initialize`): importing or cloning content in which the field is empty throws a
+	 * `UsageError` rather than silently reintroducing an empty value.
 	 * 3. Once clients from step 1 are extinct, explicitly enable the returned staged upgrade so the stored field kind is
-	 * tightened from Optional to Required (see the `includeStaged` option of
-	 * {@link extractPersistedSchema}). Without that explicit opt-in, {@link TreeView.upgradeSchema} leaves this staged
-	 * change as a no-op.
+	 * tightened from Optional to Required. This is done by configuring the view with a
+	 * {@link StagedSchemaUpgradePolicy} whose {@link StagedSchemaUpgradePolicy.includeStagedRequired} returns `true`
+	 * for this field's upgrade (for example {@link StagedSchemaUpgradePolicy.enabledStagedUpgrades}) and then calling
+	 * {@link TreeView.upgradeSchema}. Without that explicit opt-in, {@link TreeView.upgradeSchema} leaves this staged
+	 * change as a no-op. ({@link extractPersistedSchema} exposes the same opt-in via its `includeStaged` parameter,
+	 * but that only dumps a schema snapshot for inspection: it does not upgrade a document.)
 	 * 4. Deploy `sf.required(T)` and drop the staged marker. Only at this point does the field become non-optional in
 	 * the TypeScript types.
 	 *

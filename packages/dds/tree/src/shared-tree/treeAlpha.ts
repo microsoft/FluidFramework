@@ -47,6 +47,7 @@ import {
 	createFromCursor,
 	FieldKind,
 	normalizeFieldSchema,
+	getStagedRequiredUpgrade,
 	type ImplicitFieldSchema,
 	type InsertableField,
 	type TreeFieldFromImplicitField,
@@ -907,6 +908,11 @@ export const TreeAlpha: TreeAlpha = {
 			const field = normalizeFieldSchema(schema);
 			if (field.kind !== FieldKind.Optional) {
 				throw new UsageError("undefined provided for non-optional field.");
+			}
+			if (getStagedRequiredUpgrade(field) !== false) {
+				throw new UsageError(
+					"Cannot create empty content for a staged required field. The field is optional in the view schema only because the stored schema has not been tightened yet (see SchemaStaticsAlpha.stagedRequired); a client using this schema must not create new content where it is empty.",
+				);
 			}
 			return undefined as Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 		}

@@ -33,6 +33,7 @@ import {
 	toInitialSchema,
 	toStoredSchema,
 	toUpgradeSchema,
+	TreeBeta,
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
 	type ImplicitFieldSchema,
@@ -887,5 +888,83 @@ describe("staged required upgrade", () => {
 		// Unhydrated construction requires the child to be provided.
 		const nested = new NodeB({ child: new NodeB({ child: 3 }) });
 		assert(nested instanceof NodeB);
+	});
+
+	it("rejects creating empty content for a staged required root", () => {
+		// TreeAlpha.create for a staged required root field.
+		assert.throws(
+			() => TreeAlpha.create(schemaB, undefined),
+			validateUsageError(/Got undefined for a staged required field/),
+		);
+
+		// TreeView.initialize for a staged required root field.
+		const view = independentView(new TreeViewConfiguration({ schema: schemaB }), {});
+		assert.throws(
+			() => view.initialize(undefined),
+			validateUsageError(/Got undefined for a staged required field/),
+		);
+
+		// The cursor-based import path for an empty root.
+		assert.throws(
+			() => TreeAlpha.importVerbose(schemaB, undefined),
+			validateUsageError(/Cannot create empty content for a staged required field/),
+		);
+
+		// Providing a value works.
+		assert.equal(TreeAlpha.create(schemaB, 5), 5);
+		assert.equal(TreeAlpha.importVerbose(schemaB, 5), 5);
+	});
+
+	it("rejects importing or cloning content where a staged required field is empty", () => {
+		const sf = new SchemaFactoryAlpha("stagedRequiredImportTest");
+
+		class BeforeObj extends sf.objectAlpha("Obj", {
+			other: sf.number,
+			value: sf.optional(sf.number),
+		}) {}
+		class StagedObj extends sf.objectAlpha("Obj", {
+			other: sf.number,
+			value: sf.stagedRequired(sf.number),
+		}) {}
+
+		// importVerbose must not silently reintroduce an empty value: the stored schema still has the field as
+		// Optional, so nothing else in the stack would catch this.
+		assert.throws(
+			() =>
+				TreeAlpha.importVerbose(StagedObj, {
+					type: "stagedRequiredImportTest.Obj",
+					fields: { other: 1 },
+				}),
+			validateUsageError(/Staged required field "value" of node/),
+		);
+
+		// Importing content which does provide the field works.
+		const imported = TreeAlpha.importVerbose(StagedObj, {
+			type: "stagedRequiredImportTest.Obj",
+			fields: { other: 1, value: 2 },
+		});
+		assert(imported instanceof StagedObj);
+		assert.equal(imported.value, 2);
+
+		// Cloning a legacy node (created by a version N client, with the field empty) is also rejected:
+		// the clone would be new content created by a staged client with an empty value.
+		const provider = new TestTreeProviderLite(2);
+		const [treeA, treeB] = provider.trees;
+		const viewA = treeA.viewWith(new TreeViewConfiguration({ schema: BeforeObj }));
+		viewA.initialize(new BeforeObj({ other: 1, value: undefined }));
+		provider.synchronizeMessages();
+
+		const viewB = treeB.viewWith(new TreeViewConfiguration({ schema: StagedObj }));
+		assert.equal(viewB.compatibility.canView, true);
+		assert.throws(
+			() => TreeBeta.clone(viewB.root),
+			validateUsageError(/Staged required field "value" of node/),
+		);
+
+		// Once the field is populated, cloning works.
+		viewB.root.value = 4;
+		const cloned = TreeBeta.clone(viewB.root);
+		assert(cloned instanceof StagedObj);
+		assert.equal(cloned.value, 4);
 	});
 });
