@@ -8,11 +8,6 @@
 packages:
   - .
 
-overrides:
-  # js-yaml CVE-2026-59869 (quadratic CPU DoS via merge-key chains). Fixed in 3.15.0 and 4.3.0.
-  js-yaml@>=3 <4: ^3.15.0
-  js-yaml@>=4 <5: ^4.3.0
-
 # Supply chain security settings. These are aligned with the root `pnpm-workspace.yaml`.
 # See /DEV.md for documentation.
 blockExoticSubdeps: true
