@@ -385,6 +385,7 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 		},
 		enableRuntimeIdCompressor: "on",
 		createBlobPayloadPending: true,
+		inlineDetachedBlobsAsSummaryBlobs: true,
 		explicitSchemaControl: true,
 	};
 
@@ -397,6 +398,7 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 				context,
 				existing,
 				runtimeOptions,
+				minVersionForCollab: "2.115.0",
 				registryEntries: [
 					[
 						defaultStressDataObjectFactory.type,

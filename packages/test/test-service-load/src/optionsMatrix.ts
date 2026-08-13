@@ -116,7 +116,7 @@ export function generateRuntimeOptions(
 		enableRuntimeIdCompressor: ["on", undefined, "delayed"],
 		enableGroupedBatching: [true, false],
 		createBlobPayloadPending: [true, undefined],
-		inlineDetachedBlobsAsSummaryBlobs: [undefined],
+		inlineDetachedBlobsAsSummaryBlobs: [true, undefined],
 		explicitSchemaControl: [true, false],
 		disableSchemaUpgrade: [false],
 		stagingModeAutoFlushThreshold: [undefined],
@@ -143,9 +143,9 @@ export function generateRuntimeOptions(
 		}
 	});
 
-	// Override explicitSchemaControl to enabled if createBlobPayloadPending is enabled
+	// Override explicitSchemaControl to enabled if a schema-affecting blob option is enabled.
 	pairwiseOptions.map((options) => {
-		if (options.createBlobPayloadPending) {
+		if (options.createBlobPayloadPending || options.inlineDetachedBlobsAsSummaryBlobs) {
 			(
 				options as {
 					// Remove readonly modifier to allow overriding
