@@ -223,7 +223,7 @@
 			"error"
 		],
 		"@eslint-react/rules-of-hooks": [
-			"off"
+			"error"
 		],
 		"@eslint-react/set-state-in-effect": [
 			"warn"

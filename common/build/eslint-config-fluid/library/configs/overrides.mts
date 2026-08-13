@@ -161,7 +161,6 @@ export const reactConfig = [
 			"@eslint-react/jsx-no-children-prop": "error",
 			"@eslint-react/jsx-no-comment-textnodes": "error",
 			"@eslint-react/jsx-no-useless-fragment": "error",
-			"@eslint-react/rules-of-hooks": "off",
 		},
 	},
 	// react-hooks/recommended rules with custom overrides
