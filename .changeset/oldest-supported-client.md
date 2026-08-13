@@ -18,21 +18,37 @@ Rename minVersionForCollab to oldestSupportedClient
 
 The cross-client compatibility parameter has new names:
 
--   The `MinimumVersionForCollab` type is now `OldestSupportedClientVersion`.
--   `LoadContainerRuntimeParams.minVersionForCollab` is now `oldestSupportedClient`.
--   `BaseContainerRuntimeFactoryProps.minVersionForCollab` is now `oldestSupportedClient`.
--   `createTreeContainerRuntimeFactory` now accepts `oldestSupportedClient`.
+-   The
+    [`MinimumVersionForCollab`](https://fluidframework.com/docs/api/runtime-definitions/minimumversionforcollab-typealias)
+    type is now
+    [`OldestSupportedClientVersion`](https://fluidframework.com/docs/api/runtime-definitions/oldestsupportedclientversion-typealias).
+-   [`LoadContainerRuntimeParams.minVersionForCollab`](https://fluidframework.com/docs/api/container-runtime/loadcontainerruntimeparams-interface#minversionforcollab-propertysignature)
+    is now
+    [`LoadContainerRuntimeParams.oldestSupportedClient`](https://fluidframework.com/docs/api/container-runtime/loadcontainerruntimeparams-interface#oldestsupportedclient-propertysignature).
+-   [`BaseContainerRuntimeFactoryProps.minVersionForCollab`](https://fluidframework.com/docs/api/aqueduct/basecontainerruntimefactoryprops-interface#minversionforcollab-propertysignature)
+    is now
+    [`BaseContainerRuntimeFactoryProps.oldestSupportedClient`](https://fluidframework.com/docs/api/aqueduct/basecontainerruntimefactoryprops-interface#oldestsupportedclient-propertysignature).
+-   [`createTreeContainerRuntimeFactory`](https://fluidframework.com/docs/api/fluid-static/#createtreecontainerruntimefactory-function)
+    now accepts `oldestSupportedClient`.
     `minVersionForCollaboration` remains available as a deprecated overload.
--   `driver-definitions` now exports its minor-only version type as
-    `OldestSupportedServiceClientVersion`, and `ServiceOptions` accepts
-    `oldestSupportedClient`.
--   Azure, ODSP, and Tinylicious client methods now use `oldestSupportedClient` and
-    `OldestSupportedClientVersion` in their signatures.
+-   `@fluidframework/driver-definitions` now exports its minor-only version type as
+    [`OldestSupportedServiceClientVersion`](https://fluidframework.com/docs/api/driver-definitions/oldestsupportedserviceclientversion-typealias),
+    and
+    [`ServiceOptions.oldestSupportedClient`](https://fluidframework.com/docs/api/driver-definitions/serviceoptions-interface#oldestsupportedclient-propertysignature)
+    is available.
+-   [`AzureClient`](https://fluidframework.com/docs/api/azure-client/azureclient-class),
+    [`OdspClient`](https://fluidframework.com/docs/api/odsp-client/odspclient-class),
+    and
+    [`TinyliciousClient`](https://fluidframework.com/docs/api/tinylicious-client/tinyliciousclient-class)
+    methods now use `oldestSupportedClient` and
+    [`OldestSupportedClientVersion`](https://fluidframework.com/docs/api/runtime-definitions/oldestsupportedclientversion-typealias)
+    in their signatures.
 
-The previous runtime, aqueduct, and fluid-static property and type names are
-deprecated and will be removed in future releases. Where both old and new property
-names remain available, specifying both is an error. The alpha
-`MinimumVersionForCollaboration` type and
+The previous property and type names in `@fluidframework/runtime-definitions`,
+`@fluidframework/container-runtime`, `@fluidframework/aqueduct`, and
+`@fluidframework/fluid-static` are deprecated and will be removed in future
+releases. Where both old and new property names remain available, specifying both
+is an error. The alpha `MinimumVersionForCollaboration` type and
 `ServiceOptions.minVersionForCollaboration` property are replaced directly rather
 than retained as aliases.
 
