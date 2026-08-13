@@ -104,7 +104,7 @@ import {
 	UnhydratedParent,
 	ParentObjectBase,
 } from "./parentObject.js";
-import type { ParentObject, TreeNodeParent } from "./parentObject.js";
+import type { ParentObject, ParentObjectEvents, TreeNodeParent } from "./parentObject.js";
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
 import { UnhydratedTreeContext } from "./unhydratedTreeContext.js";
 
@@ -270,32 +270,48 @@ export interface TreeAlpha {
 	): () => void;
 
 	/**
-	 * Register an event listener on the given node ({@link TreeNode} or {@link ParentObject}).
+	 * Register an event listener on the given {@link ParentObject}.
 	 *
-	 * @param node - The node to listen on.
-	 * @param eventName - The event to listen for (`"nodeChanged"` or `"treeChanged"`).
+	 * @param node - The {@link ParentObject} to listen on.
+	 * @param eventName - The event to listen for.
 	 * @param listener - The callback to invoke when the event fires.
 	 * @returns A function that, when called, removes the listener.
 	 *
 	 * @remarks
-	 * When the node is a {@link ParentObject}, the behavior depends on the kind of `ParentObject`:
+	 * The available events are {@link ParentObjectEvents}: the base content events
+	 * `nodeChanged`/`treeChanged`, plus the dedicated {@link ParentObjectEvents.childChanged}
+	 * occupancy event. Which events fire depends on the kind of `ParentObject`:
 	 *
-	 * - For root parents, the listener fires on content changes to the root node
-	 * and automatically re-subscribes when the root is replaced.
-	 * Root replacement itself only fires `treeChanged`, not `nodeChanged`.
+	 * - For document-root parents, the content events (`nodeChanged`/`treeChanged`) proxy to the
+	 * current root node and automatically re-subscribe when the root is replaced; `childChanged`
+	 * fires when the root is replaced (reporting the previous and current root).
 	 *
-	 * - For detached parents and unhydrated parents,
-	 * the listener fires on status transitions regardless of `eventName`.
-	 * This includes the node being re-inserted into the document or hydrated
-	 * (inserted for the first time).
-	 *
-	 * @privateRemarks
-	 * TODO: Consider separating content events and status events into distinct APIs
-	 * (e.g., a dedicated `onStatusChange(parent, listener)` method) so that the same event name
-	 * doesn't have different semantics depending on the parent type. This would also eliminate
-	 * the unsafe casts needed to invoke the listener with no arguments for status events.
+	 * - For detached (removed) and unhydrated parents, only `childChanged` fires — when the node is
+	 * re-inserted into the document or hydrated (inserted for the first time), leaving the location empty.
+	 * The content events do not fire for these parents.
 	 */
-	on<K extends keyof TreeChangeEvents>(
+	on<K extends keyof ParentObjectEvents>(
+		node: ParentObject,
+		eventName: K,
+		listener: ParentObjectEvents[K],
+	): () => void;
+
+	/**
+	 * Register an event listener on the given {@link TreeNodeParent} (a {@link TreeNode} or {@link ParentObject}).
+	 *
+	 * @param node - The parent to listen on. Typically the result of {@link (TreeAlpha:interface).parent2}.
+	 * @param eventName - The event to listen for. Only `"treeChanged"` is common to both a
+	 * {@link TreeNode} and a {@link ParentObject}, so it is the only event available on the un-narrowed union.
+	 * @param listener - The callback to invoke when the event fires.
+	 * @returns A function that, when called, removes the listener.
+	 *
+	 * @remarks
+	 * This overload accepts a value whose specific kind (node vs. parent object) is not statically
+	 * known, and exposes only the `treeChanged` event common to both. To subscribe to the
+	 * {@link ParentObjectEvents.childChanged} occupancy event, first narrow `node` to a
+	 * {@link ParentObject}; for `nodeChanged` or the richer array-node payloads, first narrow to a {@link TreeNode}.
+	 */
+	on<K extends "treeChanged">(
 		node: TreeNodeParent,
 		eventName: K,
 		listener: TreeChangeEvents[K],
@@ -1290,10 +1306,10 @@ export const TreeAlpha: TreeAlpha = {
 		}
 	},
 
-	on<K extends keyof TreeChangeEvents>(
+	on<K extends keyof ParentObjectEvents>(
 		node: TreeNodeParent,
 		eventName: K,
-		listener: TreeChangeEvents[K],
+		listener: ParentObjectEvents[K],
 	): () => void {
 		// Handle ParentObject cases via polymorphic dispatch
 		if (node instanceof ParentObjectBase) {
@@ -1301,7 +1317,13 @@ export const TreeAlpha: TreeAlpha = {
 		}
 
 		if (isTreeNode(node)) {
-			return treeNodeApi.on(node, eventName, listener);
+			// `childChanged` only applies to ParentObject parents; for a TreeNode the event name is
+			// always a base content event (`nodeChanged`/`treeChanged`).
+			return treeNodeApi.on(
+				node,
+				eventName as keyof TreeChangeEvents,
+				listener as TreeChangeEvents[keyof TreeChangeEvents],
+			);
 		}
 
 		unreachableCase(node as never);
