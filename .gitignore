@@ -4,10 +4,6 @@ dist
 lib
 !common/lib
 nyc
-
-# Playwright test artifacts: failure screenshots/traces and last-run state used by --last-failed
-test-results/
-
 *.log
 .DS_Store
 
