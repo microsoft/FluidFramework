@@ -19,9 +19,9 @@ import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 // eslint-disable-next-line import-x/no-internal-modules
 import { BlobHandle } from "../../blobManager/blobManager.js";
 import {
+	detachedBlobSummaryGroupId,
+	detachedBlobSummaryTreeName,
 	getGCNodePathFromLocalId,
-	inlinedAttachmentBlobContentName,
-	inlinedAttachmentBlobTreePrefix,
 	type IBlobManagerLoadInfo,
 	loadBlobManagerLoadInfo,
 } from "../../blobManager/index.js";
@@ -84,9 +84,10 @@ describe("Detached blob summaries", () => {
 				".blobs": {
 					blobs: {},
 					trees: {
-						[`${inlinedAttachmentBlobTreePrefix}${localId}`]: {
-							blobs: { [inlinedAttachmentBlobContentName]: actualBlobId },
+						[detachedBlobSummaryTreeName]: {
+							blobs: { [localId]: actualBlobId },
 							trees: {},
+							groupId: detachedBlobSummaryGroupId,
 						},
 					},
 				},

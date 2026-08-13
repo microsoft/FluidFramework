@@ -21,8 +21,8 @@ import {
 } from "@fluidframework/container-loader/internal";
 import {
 	blobsTreeName,
-	inlinedAttachmentBlobGroupIdPrefix,
-	inlinedAttachmentBlobTreePrefix,
+	detachedBlobSummaryGroupId,
+	detachedBlobSummaryTreeName,
 } from "@fluidframework/container-runtime/internal";
 import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import {
@@ -164,13 +164,10 @@ function assertInlinedSummary(
 	assert(appSummary?.type === SummaryType.Tree);
 	const blobsSummary: SummaryObject | undefined = appSummary.tree[blobsTreeName];
 	assert(blobsSummary?.type === SummaryType.Tree);
-	const inlinedBlobCount = Object.entries(blobsSummary.tree).filter(
-		([treeName, summaryObject]) =>
-			treeName.startsWith(inlinedAttachmentBlobTreePrefix) &&
-			summaryObject.type === SummaryType.Tree &&
-			summaryObject.groupId?.startsWith(inlinedAttachmentBlobGroupIdPrefix) === true,
-	).length;
-	assert.strictEqual(inlinedBlobCount, expectedBlobCount);
+	const detachedBlobSummary = blobsSummary.tree[detachedBlobSummaryTreeName];
+	assert(detachedBlobSummary?.type === SummaryType.Tree);
+	assert.strictEqual(detachedBlobSummary.groupId, detachedBlobSummaryGroupId);
+	assert.strictEqual(Object.keys(detachedBlobSummary.tree).length, expectedBlobCount);
 }
 
 function initialize(options?: {
@@ -226,7 +223,7 @@ function initialize(options?: {
 }
 
 describe("Detached blob single-request create", () => {
-	it("creates once with binary blobs in separate loading groups", async () => {
+	it("creates once with binary blobs in a shared loading group", async () => {
 		const { codeDetails, counts, loaderProps, urlResolver } = initialize({
 			countStorageCalls: true,
 		});
@@ -312,7 +309,7 @@ describe("Detached blob single-request create", () => {
 		assertBytes(await getBlob(loadedObject.root, "blob"), expected);
 	});
 
-	it("preserves inlined binary blobs in pending state for an offline frozen load", async () => {
+	it("preserves detached summary blobs in pending state for an offline frozen load", async () => {
 		const { codeDetails, codeLoader, loaderProps, urlResolver } = initialize({
 			offline: true,
 		});
@@ -331,7 +328,7 @@ describe("Detached blob single-request create", () => {
 		assertBytes(await getBlob(frozenObject.root, "blob"), expected);
 	});
 
-	it("fetches omitted inlined blobs when pending state is captured after a fresh load", async () => {
+	it("fetches omitted detached summary blobs when pending state is captured after a fresh load", async () => {
 		const { codeDetails, codeLoader, loaderProps, urlResolver } = initialize({
 			offline: true,
 		});
@@ -356,7 +353,7 @@ describe("Detached blob single-request create", () => {
 		assertBytes(await getBlob(frozenObject.root, "blob"), expected);
 	});
 
-	it("captures inlined blob groups for an offline frozen load", async () => {
+	it("captures the detached blob summary group for an offline frozen load", async () => {
 		const { codeDetails, codeLoader, documentServiceFactory, loaderProps, urlResolver } =
 			initialize();
 		const container = await createDetachedContainer({ codeDetails, ...loaderProps });

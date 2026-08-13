@@ -5,7 +5,6 @@
 
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IContainerContext } from "@fluidframework/container-definitions/internal";
-import { assert } from "@fluidframework/core-utils/internal";
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
@@ -43,23 +42,16 @@ export const redirectTableBlobName = ".redirectTable";
 export const blobsTreeName = ".blobs";
 
 /**
- * Name of the blob entry inside an inlined attachment blob's loading-group tree.
+ * Tree containing blobs created while the container was detached.
  * @internal
  */
-export const inlinedAttachmentBlobContentName = "content";
+export const detachedBlobSummaryTreeName = ".detached";
 
 /**
- * Prefix used to identify the internal loading group for an inlined attachment blob.
+ * Loading group for blobs created while the container was detached.
  * @internal
  */
-export const inlinedAttachmentBlobGroupIdPrefix = "fluid-internal:attachment-blob:";
-
-/**
- * Prefix for trees containing inlined attachment blobs. The suffix is the
- * BlobManager local ID.
- * @internal
- */
-export const inlinedAttachmentBlobTreePrefix = ".inline_";
+export const detachedBlobSummaryGroupId = "fluid-internal:detached-blobs";
 
 /**
  * Reads blobs needed to load BlobManager from storage.
@@ -90,16 +82,9 @@ const loadV1 = async (
 		.filter(([k, _]) => k !== redirectTableBlobName)
 		.map(([_, v]) => v);
 
-	const detachedBlobSummaryIds = new Map<string, string>();
-	for (const [treeName, childTree] of Object.entries(blobsTree.trees)) {
-		if (!treeName.startsWith(inlinedAttachmentBlobTreePrefix)) {
-			continue;
-		}
-		const localId = treeName.slice(inlinedAttachmentBlobTreePrefix.length);
-		const blobId: string | undefined = childTree.blobs[inlinedAttachmentBlobContentName];
-		assert(blobId !== undefined, "Inlined attachment blob tree must contain content");
-		detachedBlobSummaryIds.set(localId, blobId);
-	}
+	const detachedBlobSummaryIds = new Map(
+		Object.entries(blobsTree.trees[detachedBlobSummaryTreeName]?.blobs ?? {}),
+	);
 
 	if (context.attachState === AttachState.Detached) {
 		const detachedBlobSummaryContents = new Map<string, ArrayBufferLike>();
@@ -187,6 +172,9 @@ const summarizeV1 = (
 	const builder = new SummaryTreeBuilder();
 	const storageIds = getStorageIds(redirectTable);
 	const detachedBlobSummaryStorageIds = new Set<string>();
+	const detachedBlobSummaryBuilder = new SummaryTreeBuilder({
+		groupId: detachedBlobSummaryGroupId,
+	});
 	for (const localId of new Set([
 		...(detachedBlobSummaryContents?.keys() ?? []),
 		...(detachedBlobSummaryHandles ?? []),
@@ -195,26 +183,23 @@ const summarizeV1 = (
 		if (storageId !== undefined) {
 			detachedBlobSummaryStorageIds.add(storageId);
 		}
-		const blobBuilder = new SummaryTreeBuilder({
-			groupId: `${inlinedAttachmentBlobGroupIdPrefix}${localId}`,
-		});
 		const detachedBlobSummaryContent = detachedBlobSummaryContents?.get(localId);
 		if (detachedBlobSummaryContent === undefined) {
-			blobBuilder.addHandle(
-				inlinedAttachmentBlobContentName,
+			detachedBlobSummaryBuilder.addHandle(
+				localId,
 				SummaryType.Blob,
-				`/${blobsTreeName}/${inlinedAttachmentBlobTreePrefix}${localId}/${inlinedAttachmentBlobContentName}`,
+				`/${blobsTreeName}/${detachedBlobSummaryTreeName}/${localId}`,
 			);
 		} else {
-			blobBuilder.addBlob(
-				inlinedAttachmentBlobContentName,
+			detachedBlobSummaryBuilder.addBlob(
+				localId,
 				bufferToString(detachedBlobSummaryContent, "base64"),
 			);
 		}
-		builder.addWithStats(
-			`${inlinedAttachmentBlobTreePrefix}${localId}`,
-			blobBuilder.getSummaryTree(),
-		);
+	}
+	const detachedBlobSummary = detachedBlobSummaryBuilder.getSummaryTree();
+	if (Object.keys(detachedBlobSummary.summary.tree).length > 0) {
+		builder.addWithStats(detachedBlobSummaryTreeName, detachedBlobSummary);
 	}
 	for (const storageId of storageIds) {
 		if (!detachedBlobSummaryStorageIds.has(storageId)) {

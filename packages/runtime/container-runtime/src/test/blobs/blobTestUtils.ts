@@ -39,9 +39,8 @@ import { v4 as uuid } from "uuid";
 
 import {
 	BlobManager,
-	inlinedAttachmentBlobContentName,
-	inlinedAttachmentBlobGroupIdPrefix,
-	inlinedAttachmentBlobTreePrefix,
+	detachedBlobSummaryGroupId,
+	detachedBlobSummaryTreeName,
 	type IBlobManagerLoadInfo,
 	type IBlobManagerRuntime,
 	type ICreateBlobResponseWithTTL,
@@ -541,27 +540,25 @@ export const getSummaryContentsFromSummaryWithFormatValidation = (
 			ids ??= [];
 			ids.push(summaryObject.id);
 		} else if (summaryObject.type === SummaryType.Tree) {
-			assert(key.startsWith(inlinedAttachmentBlobTreePrefix));
-			const localId = key.slice(inlinedAttachmentBlobTreePrefix.length);
-			const { groupId } = summaryObject;
-			assert(groupId !== undefined);
-			assert(groupId.startsWith(inlinedAttachmentBlobGroupIdPrefix));
-			const content = summaryObject.tree[inlinedAttachmentBlobContentName];
-			redirectTable ??= [];
-			redirectTable.push([localId, localId]);
-			if (content?.type === SummaryType.Blob) {
-				detachedBlobSummaryContents ??= new Map();
-				detachedBlobSummaryContents.set(
-					localId,
-					typeof content.content === "string"
-						? stringToBuffer(content.content, "base64")
-						: Uint8ArrayToArrayBuffer(content.content),
-				);
-			} else {
-				assert(content?.type === SummaryType.Handle);
-				assert.strictEqual(content.handleType, SummaryType.Blob);
-				detachedBlobSummaryHandles ??= new Set();
-				detachedBlobSummaryHandles.add(localId);
+			assert.strictEqual(key, detachedBlobSummaryTreeName);
+			assert.strictEqual(summaryObject.groupId, detachedBlobSummaryGroupId);
+			for (const [localId, content] of Object.entries(summaryObject.tree)) {
+				redirectTable ??= [];
+				redirectTable.push([localId, localId]);
+				if (content.type === SummaryType.Blob) {
+					detachedBlobSummaryContents ??= new Map();
+					detachedBlobSummaryContents.set(
+						localId,
+						typeof content.content === "string"
+							? stringToBuffer(content.content, "base64")
+							: Uint8ArrayToArrayBuffer(content.content),
+					);
+				} else {
+					assert(content.type === SummaryType.Handle);
+					assert.strictEqual(content.handleType, SummaryType.Blob);
+					detachedBlobSummaryHandles ??= new Set();
+					detachedBlobSummaryHandles.add(localId);
+				}
 			}
 		} else {
 			assert.strictEqual(key, redirectTableBlobName);
