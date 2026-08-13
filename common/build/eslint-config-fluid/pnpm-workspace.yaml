@@ -47,18 +47,6 @@ overrides:
   #   As of 2026-08-05 eslint-plugin-tsdoc (v0.5.2), does not have a version using v8.58 or later.
   "eslint-plugin-tsdoc>@typescript-eslint/utils@<8.58.0": ~8.58.0
 
-  # Feed ingestion workaround for own package consumption
-  # @fluid-internal/eslint-plugin-fluid@^0.5.0 is the package intended to be consumed but
-  # it is not consumable by ADO pipelines until 2026-08-10. For example see:
-  # https://dev.azure.com/fluidframework/public/_artifacts/feed/publicPackages/Npm/@fluid-internal%2Feslint-plugin-fluid/upstreams/0.4.1
-  # Until then keep 0.5.0 in the package.json but override here. The only required element
-  # of 0.5.0 versus 0.4.1 for TypeScript 6 compatibility are the updates to
-  # @typescript-eslint/parser and @typescript-eslint/utils. So override those (to 8.58.0
-  # as in 0.5.0) as well.
-  "@fluid-internal/eslint-plugin-fluid@^0.5.0": ^0.4.1
-  "@fluid-internal/eslint-plugin-fluid@^0.4.1>@typescript-eslint/parser@<8.58.0": ~8.58.0
-  "@fluid-internal/eslint-plugin-fluid@^0.4.1>@typescript-eslint/utils@<8.58.0": ~8.58.0
-
   # Security overrides.
   # Resolve known security vulnerabilities in transitive dependencies.
   "@babel/core@>=7 <8": ^7.29.6
