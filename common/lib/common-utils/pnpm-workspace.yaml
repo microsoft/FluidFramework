@@ -91,7 +91,7 @@ overrides:
   simple-git: ^3.36.0
   sharp: ^0.33.2
   tar: ^7.5.11
-  # tar-fs uses these optional adapters only under the unsupported Bare runtime. Dropping them removes 6 dependency
+  # tar-fs uses these optional adapters only under the unsupported Bare runtime. Dropping them removes 9 dependency
   # snapshots while Node continues to use its built-in fs and path modules.
   tar-fs>bare-fs: '-'
   tar-fs>bare-path: '-'

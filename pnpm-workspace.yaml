@@ -164,7 +164,7 @@ overrides:
   node-forge: ^1.4.0
 
   # PM2's optional system-monitoring daemon is not used by our start/stop scripts, and PM2 handles its absence.
-  # Dropping it removes 6 dependency snapshots used only for host telemetry.
+  # Dropping it removes 4 dependency snapshots used only for host telemetry.
   pm2>pm2-sysmonit: "-"
 
   # Sass uses @parcel/watcher only to optimize its standalone CLI watch mode; our Sass builds run through webpack.
@@ -204,7 +204,7 @@ overrides:
   tar: ^7.5.11
 
   # tar-fs uses these optional adapters only under the Bare JavaScript runtime; Fluid supports Node.js.
-  # Dropping both removes 6 dependency snapshots while Node continues to use its built-in fs and path modules.
+  # Dropping both removes 9 dependency snapshots while Node continues to use its built-in fs and path modules.
   tar-fs>bare-fs: "-"
   tar-fs>bare-path: "-"
 

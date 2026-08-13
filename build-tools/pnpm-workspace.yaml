@@ -110,8 +110,8 @@ overrides:
   eslint: ~9.39.2
 
   # jssm-viz-cli eagerly loads sharp, but our build:diagrams task only emits SVG and never uses its raster output.
-  # Replace sharp with an empty module rather than dropping it so the eager import still succeeds. This removes 27
-  # dependency snapshots (net 26 after adding the shim), including sharp's native install and platform binaries.
+  # Replace sharp with an empty module rather than dropping it so the eager import still succeeds. This produces a net
+  # reduction of 26 dependency snapshots, including sharp's native install and platform binaries.
   jssm-viz-cli>sharp: npm:empty-npm-package@1.0.0
 
   json5@<1.0.2: ^1.0.2
