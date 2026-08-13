@@ -164,7 +164,8 @@ function assertInlinedSummary(
 	assert(appSummary?.type === SummaryType.Tree);
 	const blobsSummary: SummaryObject | undefined = appSummary.tree[blobsTreeName];
 	assert(blobsSummary?.type === SummaryType.Tree);
-	const detachedBlobSummary = blobsSummary.tree[detachedBlobSummaryTreeName];
+	const detachedBlobSummary: SummaryObject | undefined =
+		blobsSummary.tree[detachedBlobSummaryTreeName];
 	assert(detachedBlobSummary?.type === SummaryType.Tree);
 	assert.strictEqual(detachedBlobSummary.groupId, detachedBlobSummaryGroupId);
 	assert.strictEqual(Object.keys(detachedBlobSummary.tree).length, expectedBlobCount);
