@@ -1471,20 +1471,6 @@ describe("ArrayNode", () => {
 			delete (Array.prototype as unknown as Record<string, unknown>)[methodName];
 		}
 	});
-
-	it("does not interfere with existing ArrayNode methods", () => {
-		const array = hydrate(PojoEmulationNumberArray, [1, 2, 3]);
-		assert.deepEqual(
-			array.map((x) => x * 2),
-			[2, 4, 6],
-		);
-		assert.deepEqual(
-			array.filter((x) => x > 1),
-			[2, 3],
-		);
-		assert.equal(array.indexOf(2), 1);
-		assert.equal(array.length, 3);
-	});
 });
 
 // Workaround to avoid

@@ -261,8 +261,8 @@ describeHydration(
 					() => method.call(node),
 					(error: Error) =>
 						error instanceof TypeError &&
-					error.message ===
-						`MapNode does not support '${methodName}'. Use the MapNode API (e.g., set, get, delete, keys, values, entries).`,
+						error.message ===
+							`MapNode does not support '${methodName}'. Use the MapNode API (e.g., set, get, delete, keys, values, entries).`,
 				);
 			} finally {
 				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- Cleaning up test-only method added to Map.prototype
@@ -270,20 +270,36 @@ describeHydration(
 			}
 		});
 
-		it("does not interfere with existing MapNode methods", () => {
+		it("throws descriptive TypeError for a known unsupported Map.prototype method", () => {
 			const MapString = schemaFactory.map(schemaFactory.string);
-			const node = init(
-				MapString,
-				new Map([
-					["a", "hello"],
-					["b", "world"],
-				]),
-			);
+			const node = init(MapString, new Map([["a", "hello"]]));
 
-			assert.equal(node.get("a"), "hello");
-			assert.equal(node.has("b"), true);
-			assert.equal(node.size, 2);
-			assert.deepEqual([...node.keys()], ["a", "b"]);
+			// getOrInsert is a TC39 stage 4 method not yet available in all runtimes.
+			// Patch it onto Map.prototype if missing to simulate the upcoming API.
+			const hadMethod = "getOrInsert" in Map.prototype;
+			if (!hadMethod) {
+				(Map.prototype as unknown as Record<string, unknown>).getOrInsert = function () {
+					return undefined;
+				};
+			}
+			try {
+				const getOrInsert = (node as unknown as Record<string, unknown>).getOrInsert as (
+					...args: unknown[]
+				) => unknown;
+				assert.equal(typeof getOrInsert, "function");
+				assert.throws(
+					() => getOrInsert.call(node, "b", "world"),
+					(error: Error) =>
+						error instanceof TypeError &&
+						error.message ===
+							"MapNode does not support 'getOrInsert'. Use the MapNode API (e.g., set, get, delete, keys, values, entries).",
+				);
+			} finally {
+				if (!hadMethod) {
+					// eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- Cleaning up test-only method added to Map.prototype
+					delete (Map.prototype as unknown as Record<string, unknown>).getOrInsert;
+				}
+			}
 		});
 	},
 	() => {
@@ -321,6 +337,5 @@ describeHydration(
 				assert.deepEqual([...fromRecord.data], data);
 			});
 		});
-
 	},
 );
