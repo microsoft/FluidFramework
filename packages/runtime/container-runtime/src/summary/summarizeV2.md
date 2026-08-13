@@ -1,41 +1,35 @@
 # Summarization v2 (`summarize2`)
 
-This document describes the builder-based summarization flow that is being introduced alongside the existing
-summarizer-node flow, and the plan for rolling it out.
+The builder-based summarization flow being introduced alongside the existing summarizer-node flow, and how to
+roll it out safely.
 
-It is a companion to [README.md](./README.md) (how summarization works today) and
-[summaryFormats.md](./summaryFormats.md) (what the summary tree looks like).
+Companion to [README.md](./README.md) (how summarization works today) and
+[summaryFormats.md](./summaryFormats.md) (what a summary tree looks like).
 
 ## Why
 
-Summarization state today is spread across a tree of `SummarizerNode`s that mirrors the container's data store /
-DDS tree. Every node keeps its own copy of "what did I last summarize, and at what sequence number", and that
-state is advanced through a multi-stage protocol: `startSummary` → `summarize` → `validateSummary` →
-`completeSummary` → `refreshLatestSummary` / `clearSummary`.
+Summary state today lives in a tree of `SummarizerNode`s mirroring the data store / DDS tree. Each node keeps
+its own copy of "what did I last summarize, and when", advanced through a multi-stage protocol:
+`startSummary` → `summarize` → `validateSummary` → `completeSummary` → `refreshLatestSummary` / `clearSummary`.
 
 The stages are the problem:
 
-- The same fact (the reference sequence number of the last successful summary) is duplicated into every node,
-  so nodes can disagree with each other and with the runtime. `startSummary` returns `mismatchNumbers` purely to
-  detect this, and `LatestSummaryRefSeqNumMismatch` telemetry exists to report it.
-- A summary that fails, is nacked, or is superseded has to be rolled back through the whole tree.
-- Nodes have to be realized (loaded) just to participate in the protocol, even when nothing about them changed.
+- One fact - the reference sequence number of the last successful summary - is duplicated into every node, so
+  nodes can disagree with each other and with the runtime. `startSummary` returns `mismatchNumbers` and
+  `LatestSummaryRefSeqNumMismatch` telemetry exists purely to detect this.
+- A summary that fails or is nacked must be rolled back across the whole tree.
+- Nodes are realized (loaded) just to take part in the protocol, even when nothing changed.
 
-## The design
+## Design
 
-There is exactly one piece of summary state, and it lives on `ContainerRuntime`:
-
-```ts
-ContainerRuntime.latestSummarySequenceNumber; // reference seq num of the latest successful summary, or -1
-```
-
-Every node tracks only the sequence number at which its own content last changed:
+One piece of state, owned by the container runtime:
 
 ```ts
-lastChangedSequenceNumber; // data store context, channel context
+ContainerRuntime.latestSummarySequenceNumber; // ref seq num of the latest successful summary, or -1
 ```
 
-Summarizing is then a single pass with one comparison per node, and no per-node state machine:
+Each node tracks only when its own content last changed (`lastChangedSequenceNumber`). Summarizing is then one
+pass with one comparison per node and no per-node state machine:
 
 ```ts
 if (!fullTree && latestSummarySequenceNumber >= lastChangedSequenceNumber) {
@@ -44,105 +38,119 @@ if (!fullTree && latestSummarySequenceNumber >= lastChangedSequenceNumber) {
 }
 ```
 
-Because the decision input is owned by the runtime and only advances when a summary is acked, a failed or nacked
-summary needs no rollback: the next attempt simply reads the same `latestSummarySequenceNumber` and makes the
-same decisions.
+Because the decision input is owned by the runtime and only advances on ack, a failed or nacked summary needs no
+rollback - the next attempt reads the same value and makes the same decisions.
 
 ### Writing the summary
 
-Nodes no longer return a summary tree that the parent merges. They are handed an
-`ISummaryBuilder` (`@fluidframework/runtime-definitions`) and write into it:
+Nodes no longer return a tree for the parent to merge; they write into an `ISummaryBuilder`
+(`@fluidframework/runtime-definitions`):
 
-| Method                    | Purpose                                                            |
-| ------------------------- | ------------------------------------------------------------------ |
-| `createBuilderForChild`   | Create the builder for a child node; establishes the tree hierarchy |
-| `addBlob` / `addTree` / `addHandle` / `addAttachment` | Write this node's own content            |
-| `nodeDidNotChange`        | Reuse the previous summary for this whole subtree                   |
-| `markUnreferenced`        | Mark this node unreferenced (GC)                                    |
-| `setGroupId`              | Set the loading group id                                            |
+| Method                                                | Purpose                                     |
+| ----------------------------------------------------- | ------------------------------------------- |
+| `createBuilderForChild`                               | Builder for a child; establishes the tree   |
+| `addBlob` / `addTree` / `addHandle` / `addAttachment` | Write this node's own content               |
+| `nodeDidNotChange`                                    | Reuse the previous summary for this subtree |
+| `markUnreferenced`                                    | Mark this node unreferenced (GC)            |
+| `setGroupId`                                          | Set the loading group id                    |
 
-The concrete implementation is `SummaryBuilder` in `@fluidframework/runtime-utils`. Two properties matter:
+`SummaryBuilder` (`@fluidframework/runtime-utils`) implements it. Two properties matter:
 
-- A child attaches itself to its parent lazily, the first time it writes content or declares itself unchanged.
-  That is what lets a node emit a handle without its parent knowing anything about it up front.
-- The handle path is computed by the builder from the tree structure (`/.channels/dataStoreId/...`). Nodes do
-  not know, and do not need to be told, their own path. This removes the `summaryPath` leakage that
-  `IExperimentalIncrementalSummaryContext` has today.
+- A child attaches to its parent lazily, on its first content or on `nodeDidNotChange`. That is what lets a node
+  emit a handle without its parent knowing anything about it up front.
+- Handle paths are derived by the builder from tree structure (`/.channels/dataStoreId/...`), so nodes never
+  learn their own path. This removes the `summaryPath` leakage in `IExperimentalIncrementalSummaryContext`.
 
-### The call chain
+### Call chain
 
 ```
 ContainerRuntime.summarize2
-  └─ ChannelCollection.summarize2                     (.channels)
-       └─ FluidDataStoreContext.summarize2            per data store
-            └─ FluidDataStoreRuntime.summarize2       (.channels)
-                 └─ LocalChannelContext / RemoteChannelContext.summarize2
-                      └─ SharedObject.summarize2
-                           └─ SharedObject.summarizeCore2   per DDS
+  └─ ChannelCollection.summarize2                  (.channels)
+       └─ FluidDataStoreContext.summarize2         per data store
+            └─ FluidDataStoreRuntime.summarize2    (.channels)
+                 └─ Local/RemoteChannelContext.summarize2
+                      └─ SharedObject.summarize2 → summarizeCore2   per DDS
 ```
 
 `ISummarizable` declares `summarize2` once; `IChannel` and `IFluidDataStoreChannel` pick it up via
-`Partial<ISummarizable>` so that the method is optional for external implementers.
+`Partial<ISummarizable>`, so it stays optional for external implementers.
 
-## Compatibility
+## One flow per summary
 
-A summary is produced entirely by one flow or the other - `summarize` and `summarize2` are never both used
-within a single summary. Mixing them would mean part of the tree was built with different semantics (no
-incremental reuse, different realization and telemetry behavior), which would make comparing the two flows
-meaningless and hide which path produced what.
+`summarize` and `summarize2` are never both used within a single summary. Mixing them would build part of the
+tree with different semantics (no incremental reuse, different realization and telemetry behavior), which makes
+comparing the flows meaningless and hides which path produced what.
 
-So every participant in a summary must implement the new API. If one does not, summarization fails with an
-assert rather than silently falling back:
+Every participant must therefore implement the new API. If one does not, summarization asserts rather than
+silently falling back - for `IChannel.summarize2`, `IFluidDataStoreChannel.summarize2`,
+`SharedObject.summarizeCore2` and `SharedKernel.summarizeCore2`. Everything in this repo implements it, so these
+asserts only fire for external implementations; that is the signal not to enable the gate for that container.
 
-| Missing implementation            | Result                                                       |
-| --------------------------------- | ------------------------------------------------------------ |
-| `IChannel.summarize2`             | Assert: channel cannot be summarized by the summarize2 flow   |
-| `IFluidDataStoreChannel.summarize2` | Assert: data store cannot be summarized by the summarize2 flow |
-| `SharedObject.summarizeCore2`     | Assert: shared object cannot be summarized by the summarize2 flow |
-| `SharedKernel.summarizeCore2`     | Assert: kernel cannot be summarized by the summarize2 flow    |
+`SharedObject.summarize2` and `FluidDataStoreRuntime.summarize2` are optional properties rather than methods, so
+adding them changes no class shape and needs no type-test exceptions. Since a property cannot be overridden via
+`super`, each delegates to an overridable `summarizeCore2` - the extension point for subclasses such as
+`mixinSummaryHandler`.
 
-Every DDS and runtime type in this repo implements the new API, so these asserts only fire for external
-implementations. That is the signal not to enable the feature gate for such a container.
-
-`SharedObject.summarize2` and `FluidDataStoreRuntime.summarize2` are declared as optional properties rather than
-methods, so adding them does not change the shape of those classes for existing consumers and no type-test
-compatibility exceptions are required. Because a property cannot be overridden through `super`, each delegates
-to an overridable `summarizeCore2`; that is the extension point for subclasses such as `mixinSummaryHandler`.
-
-## What is not ported yet
+## Not ported yet
 
 - **SharedTree forest incremental summarization.** `SharedTreeCore.summarizeCore2` writes correct content, but
-  the forest's incremental chunk reuse (`ForestIncrementalSummaryBuilder`) still depends on
-  `IExperimentalIncrementalSummaryContext.summaryPath`. Under `summarize2` the tree is written in full. Porting
-  it means expressing chunk reuse as child builders + `nodeDidNotChange`.
-- **Container-level state.** Metadata, ID compressor, chunks, aliases, blobs and GC are regenerated on every
-  summary, exactly as they are in the old flow.
+  the forest's chunk reuse still depends on `IExperimentalIncrementalSummaryContext.summaryPath`, so trees are
+  written in full. Expect larger summaries for tree-heavy containers until this is ported to child builders plus
+  `nodeDidNotChange`.
+- **Container-level state** (metadata, ID compressor, chunks, aliases, blobs, GC) is regenerated every summary,
+  exactly as in the old flow.
 
 ## Rollout
 
-The new flow is behind a feature gate and is off by default:
+Gate, off by default:
 
 ```
 Fluid.ContainerRuntime.EnableSummarizeV2
 ```
 
-When it is enabled, `submitSummary` calls `ContainerRuntime.summarize2` and skips the summarizer-node
-bookkeeping (`startSummary`, `validateSummary`, `completeSummary`, `clearSummary`), because none of it applies.
-Exactly one of the two flows runs per summary attempt, which is what keeps side effects such as consuming the
-next summary number correct. `getMetadata` takes the summary number as a parameter so that a future comparison
-mode can run both flows over the same summary without the second one looking like a different summary.
+When enabled, `submitSummary` calls `summarize2` and skips the summarizer-node bookkeeping (`startSummary`,
+`validateSummary`, `completeSummary`, `clearSummary`), none of which applies. Exactly one flow runs per attempt,
+which keeps side effects such as consuming the summary number correct.
 
-Suggested stages:
+| Stage | What                                                                                             | Exit criteria                                                             |
+| ----- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| 1     | Off. Both flows exist; unit tests cover `SummaryBuilder`.                                         | Done.                                                                     |
+| 2     | Offline comparison: run both flows at the same ref seq num and diff the trees, ignoring handles.  | Trees match for containers with GC, loading groups, blobs and SharedTree. |
+| 3     | Enable in test/dev containers.                                                                   | No new summary failures; a later client loads from a v2 summary.          |
+| 4     | Staged production: no GC → GC → loading groups → SharedTree.                                     | Signals below hold at each step for a full ack cycle.                     |
+| 5     | Default on, then delete the old flow and rename `summarize2`.                                    | -                                                                         |
 
-1. **Off (current).** Both flows exist; only the old one runs. Unit tests cover `SummaryBuilder` directly.
-2. **Comparison in test.** Run both flows for the same reference sequence number and assert the trees match,
-   modulo handles. This is the highest-value validation and needs no production traffic.
-3. **On in test/dev containers.** Enable the gate and watch summary success rate, summary size,
-   `handleNodeCount` vs `treeNodeCount`, and summarization duration.
-4. **Staged production enablement**, ordered by risk: containers without GC → with GC → with loading groups →
-   with SharedTree.
-5. **Remove the old flow** and rename `summarize2`, once the new flow has been the default long enough that
-   rolling back is not a consideration.
+Do not skip stage 2. Compile success and `SummaryBuilder` unit tests do not prove the two flows produce the same
+summary for a real container. The failure mode that matters most - a node wrongly deciding it is unchanged and
+emitting a handle - produces a summary that uploads fine and only fails later, when a client loads it.
 
-Do not skip stage 2. Compile-time success and unit tests over `SummaryBuilder` do not prove that the two flows
-produce the same summary for a real container.
+### Signals to watch
+
+Existing telemetry, and what it means during rollout:
+
+| Signal                                                                 | Watch for                                                                                                                                |
+| ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `Summarize` (phases `generate`, `upload`, `submit`)                    | Success rate and `generate` duration should not regress.                                                                                 |
+| `SummarizeFailed`                                                      | Any increase. An assert from a node missing `summarize2` surfaces here.                                                                  |
+| `IncrementalSummaryViolation`                                          | Fires when `summarizedDataStoreCount` exceeds what the ops can explain - the direct signal that reuse is broken.                          |
+| `summaryStats.handleNodeCount` vs `treeNodeCount`                      | Handle count should be similar to or better than the old flow. A drop means reuse regressed; a jump means we may be reusing too much.     |
+| `summaryStats.summarizedDataStoreCount` / `dataStoreCount`             | Same ratio as the old flow for a comparable workload.                                                                                    |
+| `summaryStats.totalBlobSize`, `unreferencedBlobSize`                   | Size regressions, especially for SharedTree containers (see above).                                                                      |
+| `SummaryAckWaitTimeout`, `SummarizeTimeout`                            | Any increase.                                                                                                                            |
+| Container load failures, `MissingSummaryAckFoundByOps`, data corruption | The real correctness signal: a bad handle uploads fine and only fails when a client loads that summary.                                   |
+
+`LatestSummaryRefSeqNumMismatch` stops firing under v2 by design - there are no per-node reference numbers left
+to disagree. Do not read its absence as an improvement.
+
+### Telemetry we still need
+
+Not implemented yet; worth adding before stage 3:
+
+1. **Which flow produced the summary** - a property such as `summarizeFlow: "v1" | "v2"` on the `Summarize`
+   event and on `SummarizeTelemetry`. Without it none of the comparisons above can be sliced by flow.
+2. **Reuse breakdown per summary** - counts of nodes that were unchanged (handle), rewritten, and never
+   realized, at data store and DDS level. `handleNodeCount` only gives the aggregate.
+3. **A dedicated event when a node cannot participate**, carrying node type and id, instead of relying on assert
+   text inside `SummarizeFailed`.
+4. **Comparison-mode result** for stage 2 - an event carrying the first differing path when the flows disagree,
+   so a failure is actionable rather than "trees differ".
