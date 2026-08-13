@@ -55,13 +55,13 @@ Follow the tool's interactive prompts. The user will need to queue the ADO build
 
 **Autonomous mode:** After running `flub release`, report:
 
-> **Action required:** Queue the release build in ADO (choose the "release" option, and set `allowPublishingToNpmjs` to `true` if public npm publishing is desired). After the build completes, a downstream publishing pipeline will publish the packages. Verify the release appears in GitHub releases (and npm, if publishing was enabled), then re-invoke for the patch bump.
+> **Action required:** Queue the release build in ADO (choose the "release" option). After the build completes, a downstream publishing pipeline will publish the packages. Verify the release appears in GitHub releases and on npm, then re-invoke for the patch bump.
 
 ### Verify the release
 
 After the build completes, confirm:
 - Listed in [GitHub releases](https://github.com/microsoft/FluidFramework/releases)
-- Published on [npm](https://www.npmjs.com/search?q=%40fluidframework), if `allowPublishingToNpmjs` was set to `true` for this build
+- Published on [npm](https://www.npmjs.com/search?q=%40fluidframework)
 
 Once confirmed, remind the user to announce the release in the Fluid Framework "General" Teams channel with a link to the GitHub release. (Never auto-announce in either mode.)
 

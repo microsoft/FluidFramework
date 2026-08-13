@@ -95,14 +95,17 @@ stages:
 # Only upload release manifest files for runs in the internal project (i.e. CI runs, not PR runs), for the main, test, and release branches, and
 # for builds of release groups that currently publish manifests.
 # Enabling this template for every PR run risks overwriting existing manifest files uploaded to Azure blobs. Therefore, it's crucial to restrict this template to commits merged into the main and release branches.
-- ${{ if and(eq(variables['System.TeamProject'], 'internal'), in(parameters.tagName, 'client', 'server', 'historian', 'gitrest'), or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'), startsWith(variables['Build.SourceBranch'], 'refs/heads/test/'))) }}:
+# Note: the client manifest is no longer uploaded here; client publishing (and its manifest) is owned by the
+# dedicated publish pipeline. The server release groups still publish from this
+# repo, so their manifests are still uploaded here until they are migrated as well.
+- ${{ if and(eq(variables['System.TeamProject'], 'internal'), in(parameters.tagName, 'server', 'historian', 'gitrest'), or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'), startsWith(variables['Build.SourceBranch'], 'refs/heads/test/'))) }}:
   - stage: upload_manifests
     displayName: Upload release manifests
     dependsOn:
     - publish_npm_public
     - publish_npm_internal_test
     - publish_npm_internal_build
-    # This must be declared as an explicit dependency because upload-dev-manifest uses the version variable it outputs to generate the manifest.
+    # This must be declared as an explicit dependency because the manifest template uses the version variable it outputs.
     - build
     condition: |
       and(
@@ -119,12 +122,7 @@ stages:
     variables:
     - group: ado-feeds
     jobs:
-    - ${{ if in(parameters.tagName, 'server', 'historian', 'gitrest') }}:
-      - template: /tools/pipelines/templates/upload-server-manifest.yml@self
-        parameters:
-          buildDirectory: '${{ parameters.buildDirectory }}'
-          releaseGroup: ${{ parameters.tagName }}
-    - ${{ if eq(parameters.tagName, 'client') }}:
-      - template: /tools/pipelines/templates/upload-dev-manifest.yml@self
-        parameters:
-          buildDirectory: ${{ parameters.buildDirectory }}
+    - template: /tools/pipelines/templates/upload-server-manifest.yml@self
+      parameters:
+        buildDirectory: '${{ parameters.buildDirectory }}'
+        releaseGroup: ${{ parameters.tagName }}
