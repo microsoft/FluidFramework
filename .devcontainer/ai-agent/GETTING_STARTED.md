@@ -70,7 +70,7 @@ dev --mcp 'sharepoint'
 
 ## More Information
 
-- [AI-enabled Codespace wiki](https://github.com/microsoft/FluidFramework/wiki/AI%E2%80%90enabled-Codespace) — Full documentation for this codespace profile
+- [AI-enabled Codespace documentation](../../docs/content/Development-Environment/AI-enabled-Codespace.md) — Full documentation for this codespace profile
 - [DEV.md](../../DEV.md) — Development setup, build commands, and workflow guide
 - [CONTRIBUTING.md](../../CONTRIBUTING.md) — Contribution guidelines
 - [FluidFramework.com](https://fluidframework.com) — Documentation and API reference

@@ -120,7 +120,7 @@ attach to the running tests with VS Code or any other node debugger.
 ### Documentation
 
 If you want to build API documentation locally, see
-[Building Documentation](https://github.com/microsoft/FluidFramework/wiki/Building-documentation-locally).
+[Building Documentation](../../docs/content/Contributing/Working-with-the-Website/Building-Documentation-Locally.md).
 
 ## Design principals
 

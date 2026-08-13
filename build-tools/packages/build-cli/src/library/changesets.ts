@@ -188,7 +188,7 @@ export type ChangesetEntry = Omit<Changeset, "metadata" | "mainPackage" | "chang
  * then the custom metadata is interpreted as change metadata and the changeset tools fail.
  *
  * For more information about the custom metadata we use in our changesets, see
- * https://github.com/microsoft/FluidFramework/wiki/Changesets#custom-metadata
+ * {@link https://github.com/microsoft/FluidFramework/blob/main/docs/content/Contributing/Breaking-vs-Non-Breaking-Changes.md | Breaking vs Non-Breaking Changes}.
  *
  * **Note that this is a lossy action!** The metadata is completely removed. Changesets are typically in source
  * control so changes can usually be reverted.

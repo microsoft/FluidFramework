@@ -1,6 +1,6 @@
 # Fluid Framework API Conventions — Review Criteria
 
-> Source: https://github.com/microsoft/FluidFramework/wiki/Coding-Guidelines
+> Source: [Coding Guidelines](../../../docs/content/Guidelines/Coding-Guidelines.md)
 >
 > This is a distilled, review-focused version of the wiki page. If this file feels outdated, re-check the source.
 

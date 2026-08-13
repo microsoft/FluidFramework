@@ -76,7 +76,7 @@ A breaking change removes or modifies an existing API in a way that causes compi
 If this is a breaking change to `@public` or `@legacy @public`, tell the user this is likely a mistake — major releases happen very rarely. Breaking `@public` APIs must be coordinated with a major release; the old API must be deprecated at least 3 months prior in a minor release with a clear replacement.
 
 Share these links with the user for the required process:
-- API Deprecation wiki: https://github.com/microsoft/FluidFramework/wiki/API-Deprecation
+- API deprecation documentation: ../../../docs/content/Contributing/API-Deprecation.md
 - Client 3.0 Breaking Changes tracking issue: https://github.com/microsoft/FluidFramework/issues/23271
 
 ### @beta / @legacy+@alpha
@@ -88,7 +88,7 @@ If this is a breaking change to `@beta` or `@legacy @alpha`, tell the user:
 
 Share these links with the user:
 - Beta | Legacy Breaking Changes tracking issue: https://github.com/microsoft/FluidFramework/issues/25322
-- Full process: https://github.com/microsoft/FluidFramework/wiki/Beta-Break-Process
+- Full process: ../../../docs/content/Contributing/Breaking-vs-Non-Breaking-Changes/Beta-Break-Process.md
 
 ### @alpha only
 
@@ -118,7 +118,7 @@ If any API is being deprecated, check that the following are in place and flag a
 - [ ] In-codebase uses removed (test-only uses may remain with an explanatory comment)
 - [ ] Changeset present (see Step 6)
 
-Share this link with the user for full deprecation guidance: https://github.com/microsoft/FluidFramework/wiki/API-Deprecation
+Share this link with the user for full deprecation guidance: ../../../docs/content/Contributing/API-Deprecation.md
 
 ---
 
