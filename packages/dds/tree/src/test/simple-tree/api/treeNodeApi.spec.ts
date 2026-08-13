@@ -2844,7 +2844,7 @@ describe("treeNodeApi", () => {
 			it("rejects operations beyond the post-edit length", () => {
 				assert.throws(
 					() => deltaMarksToArrayOpsWithRetain([{ count: 2 }], 1, buildRetain),
-					/Array delta exceeds post-edit array length/,
+					validateAssertionError(/Array delta exceeds post-edit array length/),
 				);
 			});
 		});
