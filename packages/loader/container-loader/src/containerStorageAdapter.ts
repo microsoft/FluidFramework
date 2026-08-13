@@ -337,31 +337,10 @@ export async function getBlobContentsFromTree(
 ): Promise<ISerializableBlobContents> {
 	const blobs = {};
 	if (isInstanceOfISnapshot(snapshot)) {
-		const blobsTree = snapshot.snapshotTree.trees[blobsTreeName];
-		const directAttachmentIds = new Set(
-			Object.entries(blobsTree?.blobs ?? {})
-				.filter(([key]) => key !== redirectTableBlobName)
-				.map(([, id]) => id),
-		);
-		for (const [id, content] of snapshot.blobContents.entries()) {
-			if (directAttachmentIds.has(id)) {
-				continue;
-			}
+		const blobContents = snapshot.blobContents;
+		for (const [id, content] of blobContents.entries()) {
 			// ArrayBufferLike will not survive JSON.stringify()
 			blobs[id] = bufferToString(content, "utf8");
-		}
-		if (blobsTree !== undefined) {
-			await getBlobManagerTreeFromTree(blobsTree, blobs, {
-				readBlob: async (id) => {
-					const cached = snapshot.blobContents.get(id);
-					if (cached !== undefined) {
-						return cached;
-					}
-					const content = await storage.readBlob(id);
-					snapshot.blobContents.set(id, content);
-					return content;
-				},
-			});
 		}
 	} else {
 		await getBlobContentsFromTreeCore(snapshot, blobs, storage);

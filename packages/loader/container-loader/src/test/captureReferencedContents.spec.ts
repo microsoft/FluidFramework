@@ -25,7 +25,6 @@ import {
 	type IBlobAttachReference,
 	type IGcSnapshotData,
 } from "../captureReferencedContents.js";
-import { getBlobContentsFromTree } from "../containerStorageAdapter.js";
 
 /** Minimal storage shim whose readBlob is backed by an id → string map. */
 function mockStorage(
@@ -52,37 +51,6 @@ const toB64 = (content: string): string =>
 	bufferToString(stringToBuffer(content, "utf8"), "base64");
 
 describe("captureReferencedContents", () => {
-	describe("getBlobContentsFromTree", () => {
-		it("preserves nested structural blobs without serializing direct attachments", async () => {
-			const snapshot: ISnapshot = {
-				snapshotTree: tree({
-					trees: {
-						".blobs": tree({
-							blobs: { attachment: "attachment" },
-							trees: {
-								inline: tree({ blobs: { content: "inline" } }),
-							},
-						}),
-					},
-				}),
-				blobContents: new Map([["attachment", new Uint8Array([0xff]).buffer]]),
-				ops: [],
-				sequenceNumber: 0,
-				latestSequenceNumber: undefined,
-				snapshotFormatV: 1,
-			};
-
-			const first = await getBlobContentsFromTree(
-				snapshot,
-				mockStorage({ inline: "ENCODED" }),
-			);
-			assert.deepStrictEqual(first, { inline: "ENCODED" });
-
-			const second = await getBlobContentsFromTree(snapshot, mockStorage({}));
-			assert.deepStrictEqual(second, first);
-		});
-	});
-
 	describe("readReferencedSnapshotBlobs", () => {
 		it("inlines every blob in a fully-referenced tree", async () => {
 			const snapshot = tree({
