@@ -344,7 +344,12 @@ export class SharedTreeCore<
 			summarizablesTreeKey,
 			fullTree,
 		);
-		for (const s of this.summarizables) {
+		const summarizables: readonly Summarizable[] = this.summarizables;
+		for (const s of summarizables) {
+			if (!fullTree && s.canReuseSummary?.(latestSummarySequenceNumber) === true) {
+				summarizablesBuilder.createBuilderForChild(s.key, fullTree).nodeDidNotChange();
+				continue;
+			}
 			summarizablesBuilder.addTree(
 				s.key,
 				s.summarize({

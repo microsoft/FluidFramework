@@ -101,9 +101,19 @@ adding them changes no class shape and needs no type-test exceptions. Since a pr
 ## Not ported yet
 
 - **SharedTree forest incremental summarization.** `SharedTreeCore.summarizeCore2` writes correct content, but
-  the forest's chunk reuse still depends on `IExperimentalIncrementalSummaryContext.summaryPath`, so trees are
-  written in full. Expect larger summaries for tree-heavy containers until this is ported to child builders plus
-  `nodeDidNotChange`.
+  the forest summarizer's chunk reuse still depends on `IExperimentalIncrementalSummaryContext.summaryPath` to
+  build handles, so the forest is written in full on every summary. Expect larger summaries for tree-heavy
+  containers until this is fixed. The fix is the same shape as the schema summarizer below: give the forest
+  summarizer a per-chunk builder hierarchy and have each unchanged chunk call `nodeDidNotChange()` instead of
+  constructing a handle from a path, using the chunk's last-changed sequence number against
+  `latestSummarySequenceNumber` as the reuse test.
+
+  SharedTree's other summarizable, the **schema summarizer, is ported**. `Summarizable` gained an optional
+  `canReuseSummary(latestSummarySequenceNumber)`; the schema summarizer implements it by comparing against the
+  sequence number at which the stored schema last changed. `summarizeCore2` calls it and, when it returns true,
+  reuses the whole summarizable subtree via `createBuilderForChild(key).nodeDidNotChange()`. Reusing the entire
+  subtree (rather than just the schema blob) also preserves the version metadata blob, so a summary keeps the
+  format it was last written with until the schema actually changes.
 - **Container-level state** (metadata, ID compressor, chunks, aliases, blobs, GC) is regenerated every summary,
   exactly as in the old flow.
 

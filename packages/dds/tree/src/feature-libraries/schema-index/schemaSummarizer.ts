@@ -117,6 +117,18 @@ export class SchemaSummarizer
 		}
 	}
 
+	/**
+	 * {@inheritDoc Summarizable.canReuseSummary}
+	 */
+	// Reuses the whole summarizable, including its version metadata blob, so a summary keeps the format it was
+	// last written with until the schema actually changes.
+	public canReuseSummary(latestSummarySequenceNumber: number): boolean {
+		return (
+			this.schemaIndexLastChangedSeq !== undefined &&
+			latestSummarySequenceNumber >= this.schemaIndexLastChangedSeq
+		);
+	}
+
 	protected async loadInternal(
 		services: IChannelStorageService,
 		parse: SummaryElementParser,

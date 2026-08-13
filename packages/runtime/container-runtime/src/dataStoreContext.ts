@@ -32,6 +32,7 @@ import type {
 	ISnapshot,
 	IDocumentMessage,
 	ISnapshotTree,
+	ISummaryTree,
 	ITreeEntry,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
