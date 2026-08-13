@@ -94,7 +94,6 @@ export {
 export { type DeltaVisitor, visitDelta } from "./visitDelta.js";
 export {
 	type AnnouncedVisitor,
-	announceDelta,
 	applyDelta,
 	createAnnouncedVisitor,
 	combineVisitors,

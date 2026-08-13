@@ -431,8 +431,12 @@ export function testForest(config: ForestTestConfiguration): void {
 
 		function afterAssert(forest: IEditableForest, visitor: DeltaVisitor): void {
 			// Ensure the forest has been put into a broken state due to the edit which failed during application.
-			// This helps ensure that once a forest is in a invalid state, and likely out of sync with what is required/assumed,
+			// This helps ensure that once a forest is in an invalid state, and likely out of sync with what is required/assumed,
 			// it can't be read, preventing further corruption.
+			// This is part of a defense in depth approach:
+			// it only matters if there is a bug that resulted in a invalid delta,
+			// and the higher level logic applying the delta to the forest
+			// should also handle application failure and track its own broken state as needed.
 			assert.throws(
 				() => forest.isEmpty,
 				validateUsageError(/invalid state by another error/),

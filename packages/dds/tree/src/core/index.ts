@@ -51,7 +51,6 @@ export {
 	createAnnouncedVisitor,
 	combineVisitors,
 	makeBreakingVisitor,
-	announceDelta,
 	applyDelta,
 	makeDetachedFieldIndex,
 	setGenericTreeField,

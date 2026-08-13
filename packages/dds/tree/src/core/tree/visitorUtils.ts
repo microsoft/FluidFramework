@@ -29,17 +29,6 @@ export function applyDelta(
 	visitor.free();
 }
 
-export function announceDelta(
-	delta: Root,
-	latestRevision: RevisionTag | undefined,
-	deltaProcessor: { acquireVisitor: () => DeltaVisitor & AnnouncedVisitor },
-	detachedFieldIndex: DetachedFieldIndex,
-): void {
-	const visitor = deltaProcessor.acquireVisitor();
-	visitDelta(delta, combineVisitors([visitor]), detachedFieldIndex, latestRevision);
-	visitor.free();
-}
-
 export interface CombinedVisitor extends DeltaVisitor {
 	readonly type: "Combined";
 

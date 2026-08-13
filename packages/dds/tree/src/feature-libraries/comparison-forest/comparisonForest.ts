@@ -73,6 +73,10 @@ export class ComparisonForest implements IEditableForest {
 		return this.main.isEmpty;
 	}
 
+	public get breaker(): Breakable {
+		return this.main.breaker;
+	}
+
 	public clone(schema: TreeStoredSchemaSubscription, breaker?: Breakable): ComparisonForest {
 		this.assertValid();
 		return new ComparisonForest(
