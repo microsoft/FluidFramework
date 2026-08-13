@@ -14,7 +14,6 @@ allowBuilds:
   '@azure/msal-node-extensions': true
   '@azure/msal-node-runtime': true
   '@biomejs/biome': true
-  '@vvago/vale': true
   classic-level: true
   core-js: true
   esbuild: true
