@@ -7,11 +7,7 @@ import { strict as assert } from "node:assert";
 
 import type { OpSpaceCompressedId, SessionId } from "@fluidframework/id-compressor";
 import { createIdCompressor, createSessionId } from "@fluidframework/id-compressor/internal";
-import {
-	createChildLogger,
-	createMockLoggerExt,
-	MockLogger,
-} from "@fluidframework/telemetry-utils/internal";
+import { createMockLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
