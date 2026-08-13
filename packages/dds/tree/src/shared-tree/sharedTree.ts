@@ -7,13 +7,13 @@ import type { ErasedType, IFluidLoadable } from "@fluidframework/core-interfaces
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor, StableId } from "@fluidframework/id-compressor";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/internal";
 import type {
 	IChannelView,
 	IFluidSerializer,
 	SharedKernel,
 } from "@fluidframework/shared-object-base/internal";
-import { type TelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	type CodecTree,
@@ -206,7 +206,6 @@ export class SharedTreeKernel
 		submitLocalMessage: (content: unknown, localOpMetadata?: unknown) => void,
 		lastSequenceNumber: () => number | undefined,
 		initialSequenceNumber: number,
-		private readonly logger: TelemetryLoggerExt | undefined,
 		idCompressor: IIdCompressor,
 		optionsParam: SharedTreeOptionsInternal,
 	) {
@@ -252,7 +251,7 @@ export class SharedTreeKernel
 			idCompressor,
 			healing:
 				options.healUnresolvableIdentifiersOnDecode === true
-					? { sharedObjectId: sharedObject.id, logger }
+					? { sharedObjectId: sharedObject.id, logger: breaker.logger }
 					: undefined,
 		});
 		const forestSummarizer = new ForestSummarizer(
@@ -305,7 +304,6 @@ export class SharedTreeKernel
 			sharedObject,
 			serializer,
 			submitLocalMessage,
-			logger,
 			[schemaSummarizer, forestSummarizer, removedRootsSummarizer],
 			changeFamily,
 			options,
@@ -324,7 +322,6 @@ export class SharedTreeKernel
 			fieldBatchCodec,
 			removedRoots,
 			chunkCompressionStrategy: options.treeEncodeType,
-			logger,
 			breaker: this.breaker,
 		});
 
@@ -546,14 +543,16 @@ export const changeFormatVersionForMessage = DependentFormatVersion.fromPairs<
 	[MessageFormatVersion.v6, SharedTreeChangeFormatVersion.v5],
 ]);
 
-function getCodecTreeForEditManagerFormat(clientVersion: MinimumVersionForCollab): CodecTree {
+function getCodecTreeForEditManagerFormat(
+	clientVersion: OldestSupportedClientVersion,
+): CodecTree {
 	const editManagerVersion = makeEditManagerCodecBuilder().getCodecTree(clientVersion).version;
 	const change = changeFormatVersionForEditManager.lookup(editManagerVersion);
 	const changeCodecTree = getCodecTreeForChangeFormat(change, clientVersion);
 	return getCodecTreeForEditManagerFormatWithChange(clientVersion, changeCodecTree);
 }
 
-function getCodecTreeForMessageFormat(clientVersion: MinimumVersionForCollab): CodecTree {
+function getCodecTreeForMessageFormat(clientVersion: OldestSupportedClientVersion): CodecTree {
 	const messageVersion = makeMessageCodecBuilder().getCodecTree(clientVersion).version;
 	assert(
 		messageVersion !== undefined,
@@ -565,7 +564,7 @@ function getCodecTreeForMessageFormat(clientVersion: MinimumVersionForCollab): C
 }
 
 export function getCodecTreeForSharedTreeFormat(
-	clientVersion: MinimumVersionForCollab,
+	clientVersion: OldestSupportedClientVersion,
 ): CodecTree {
 	const children: CodecTree[] = [];
 	children.push(forestCodecBuilder.getCodecTree(clientVersion));
