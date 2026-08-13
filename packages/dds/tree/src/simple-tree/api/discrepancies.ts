@@ -365,9 +365,13 @@ function* getFieldDiscrepancies(
 	// This checks if the field kind in the view schema is not compatible with the stored schema.
 	// A staged optional field (optional in the view) is compatible with a required stored field
 	// during the rollout period — suppress the kind discrepancy in that case.
+	// Symmetrically, a staged required field (required in the view) is compatible with an optional stored field
+	// during the rollout period. Note that this tolerance is scoped to exactly these opted-in staged cases:
+	// schema narrowing is not generally permitted.
 	if (
 		viewKind.identifier !== stored.kind &&
-		!(view.isStagedOptional !== false && stored.kind === FieldKinds.required.identifier)
+		!(view.isStagedOptional !== false && stored.kind === FieldKinds.required.identifier) &&
+		!(view.isStagedRequired !== false && stored.kind === FieldKinds.optional.identifier)
 	) {
 		yield {
 			identifier,

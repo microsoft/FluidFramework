@@ -6,11 +6,16 @@
 import { strict as assert } from "node:assert";
 
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { FluidClientVersion } from "../../../codec/index.js";
-import { storedEmptyFieldSchema } from "../../../core/index.js";
+import {
+	ObjectNodeStoredSchema,
+	storedEmptyFieldSchema,
+	type TreeStoredSchema,
+} from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
-import { defaultSchemaPolicy } from "../../../feature-libraries/index.js";
+import { defaultSchemaPolicy, FieldKinds } from "../../../feature-libraries/index.js";
 import {
 	independentInitializedView,
 	independentView,
@@ -18,16 +23,22 @@ import {
 	type ViewContent,
 } from "../../../shared-tree/index.js";
 import {
+	asTreeViewAlpha,
 	checkSchemaCompatibility,
+	computeUpgradeSchema,
 	extractPersistedSchema,
 	SchemaFactoryAlpha,
 	schemaStatics,
 	StagedSchemaUpgradePolicy,
+	toInitialSchema,
+	toStoredSchema,
 	toUpgradeSchema,
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
+	type ImplicitFieldSchema,
 	type ValidateRecursiveSchema,
 } from "../../../simple-tree/index.js";
+import { brand } from "../../../util/index.js";
 import { TestSchemaRepository, TestTreeProviderLite } from "../../utils.js";
 
 // Some documentation links to this file on GitHub: renaming it may break those links.
@@ -617,5 +628,268 @@ describe("staged optional upgrade", () => {
 
 		const omittedChild = new NodeB({ value: 4 });
 		assert(omittedChild instanceof NodeB);
+	});
+});
+
+describe("staged required upgrade", () => {
+	// The optional-to-required migration, mirroring "staged optional upgrade" above.
+	//
+	// Schema A: optional number (the "before" state of the migration).
+	const schemaA = SchemaFactoryAlpha.optional(SchemaFactoryAlpha.number);
+
+	// Schema B: staged required number (deployed during the rollout period).
+	const schemaB = SchemaFactoryAlpha.stagedRequired(SchemaFactoryAlpha.number);
+
+	// Schema C: fully required number (the "after" state, once the stored schema has been tightened).
+	const schemaC = SchemaFactoryAlpha.required(SchemaFactoryAlpha.number);
+
+	/**
+	 * Produces the stored schema for `view` with the staged required upgrades explicitly enabled.
+	 * This is the operator-driven opt-in described by {@link SchemaStaticsAlpha.stagedRequired}.
+	 */
+	function tightenedStoredSchema(view: ImplicitFieldSchema): TreeStoredSchema {
+		return toStoredSchema(view, {
+			includeStaged: () => false,
+			includeStagedOptional: () => false,
+			includeStagedRequired: () => true,
+		});
+	}
+
+	it("projects to an Optional stored field before opt in and Required after", () => {
+		// Before opt in: the stored schema keeps the field Optional so clients from version N are unaffected.
+		assert.equal(
+			toUpgradeSchema(schemaB).rootFieldSchema.kind,
+			FieldKinds.optional.identifier,
+		);
+		assert.equal(
+			toInitialSchema(schemaB).rootFieldSchema.kind,
+			FieldKinds.optional.identifier,
+		);
+
+		// After explicit opt in: the stored schema tightens the field to Required.
+		assert.equal(
+			tightenedStoredSchema(schemaB).rootFieldSchema.kind,
+			FieldKinds.required.identifier,
+		);
+	});
+
+	it("reports the expected compatibility across all three rollout phases", () => {
+		// Phase N: stored schema is optional (created by a schema A client).
+		const stored = new TestSchemaRepository(defaultSchemaPolicy, toUpgradeSchema(schemaA));
+
+		// View A: fully compatible with itself.
+		const viewSchemaA = new TreeViewConfigurationAlpha({ schema: schemaA });
+		assert.deepEqual(checkSchemaCompatibility(viewSchemaA, stored), {
+			canView: true,
+			canUpgrade: true,
+			isEquivalent: true,
+		});
+
+		// Phase N+1. View B (staged required) can view the optional stored field, and upgrading is a no-op:
+		// the staged change is not applied without an explicit opt in.
+		const viewSchemaB = new TreeViewConfigurationAlpha({ schema: schemaB });
+		assert.deepEqual(checkSchemaCompatibility(viewSchemaB, stored), {
+			canView: true,
+			canUpgrade: true,
+			isEquivalent: true,
+		});
+		assert.equal(
+			computeUpgradeSchema(viewSchemaB, stored).rootFieldSchema.kind,
+			FieldKinds.optional.identifier,
+		);
+
+		// Phase N+2 attempted too early: a fully required view cannot view an optional stored field,
+		// and cannot upgrade to it either (that would be schema narrowing, which is not generally permitted).
+		const viewSchemaC = new TreeViewConfigurationAlpha({ schema: schemaC });
+		assert.deepEqual(checkSchemaCompatibility(viewSchemaC, stored), {
+			canView: false,
+			canUpgrade: false,
+			isEquivalent: false,
+		});
+
+		// The application explicitly opts into the staged upgrade, tightening the stored field to Required.
+		// This is deliberately not a superset change, so it does not go through `tryUpdateRootFieldSchema`.
+		stored.apply(tightenedStoredSchema(schemaB));
+
+		// Phase N+2 now works.
+		assert.deepEqual(checkSchemaCompatibility(viewSchemaC, stored), {
+			canView: true,
+			canUpgrade: true,
+			isEquivalent: true,
+		});
+
+		// View B still views the document, and crucially would NOT revert the tightening:
+		// its computed upgrade schema keeps the field Required.
+		assert.deepEqual(checkSchemaCompatibility(viewSchemaB, stored), {
+			canView: true,
+			canUpgrade: true,
+			isEquivalent: true,
+		});
+		assert.equal(
+			computeUpgradeSchema(viewSchemaB, stored).rootFieldSchema.kind,
+			FieldKinds.required.identifier,
+		);
+
+		// Clients from version N can no longer view the document. This is the documented operational
+		// precondition for enabling the tightening: they must already be extinct.
+		assert.equal(checkSchemaCompatibility(viewSchemaA, stored).canView, false);
+	});
+
+	it("reads a present value and fails lazily on an absent root", () => {
+		const provider = new TestTreeProviderLite(3);
+		const [treeA, treeB1, treeB2] = provider.trees;
+		const synchronizeTrees = () => provider.synchronizeMessages();
+
+		const configA = new TreeViewConfiguration({ schema: schemaA });
+		const viewA = treeA.viewWith(configA);
+		viewA.initialize(5);
+		synchronizeTrees();
+
+		const configB = new TreeViewConfiguration({ schema: schemaB });
+		const viewB1 = treeB1.viewWith(configB);
+
+		// The value is present, so it reads normally.
+		assert.equal(viewB1.compatibility.canView, true);
+		assert.equal(viewB1.root, 5);
+		assert.equal(asTreeViewAlpha(viewB1).isRootPresent(), true);
+
+		// A client from version N clears the value (it is Optional in the stored schema).
+		viewA.root = undefined;
+		synchronizeTrees();
+
+		const viewB2 = asTreeViewAlpha(treeB2.viewWith(configB));
+
+		// Opening the document still works: nothing is scanned or materialized at view creation time.
+		assert.equal(viewB2.compatibility.canView, true);
+
+		// The non-throwing presence check reports the absence without needing try/catch.
+		assert.equal(viewB2.isRootPresent(), false);
+
+		// Reading the field itself reports the missing value explicitly.
+		assert.throws(
+			() => viewB2.root,
+			validateUsageError(/Staged required field root has no value/),
+		);
+
+		// Clearing a staged required field is blocked by the staged required client itself.
+		assert.throws(
+			() => {
+				viewB2.root = undefined as unknown as number;
+			},
+			validateUsageError(/Cannot clear a staged required field/),
+		);
+
+		// Writing an actual value repairs the document.
+		viewB2.root = 7;
+		assert.equal(viewB2.isRootPresent(), true);
+		assert.equal(viewB2.root, 7);
+	});
+
+	it("fails lazily on an absent object field while leaving the rest of the document usable", () => {
+		const sf = new SchemaFactoryAlpha("stagedRequiredObjectTest");
+
+		class BeforeObj extends sf.objectAlpha("Obj", {
+			other: sf.number,
+			value: sf.optional(sf.number),
+		}) {}
+		class StagedObj extends sf.objectAlpha("Obj", {
+			other: sf.number,
+			value: sf.stagedRequired(sf.number),
+		}) {}
+
+		const provider = new TestTreeProviderLite(2);
+		const [treeA, treeB] = provider.trees;
+
+		const viewA = treeA.viewWith(new TreeViewConfiguration({ schema: BeforeObj }));
+		// A version N client creates a document where the field is absent.
+		viewA.initialize(new BeforeObj({ other: 1, value: undefined }));
+		provider.synchronizeMessages();
+
+		const viewB = treeB.viewWith(new TreeViewConfiguration({ schema: StagedObj }));
+		assert.equal(viewB.compatibility.canView, true);
+
+		const root = viewB.root;
+		// Unrelated fields of the same node remain usable.
+		assert.equal(root.other, 1);
+
+		// The non-throwing presence check: `TreeAlpha.child` returns undefined rather than throwing.
+		assert.equal(TreeAlpha.child(root, "value"), undefined);
+
+		// Reading the staged required field reports the missing value.
+		assert.throws(
+			() => root.value,
+			validateUsageError(/Staged required field "value" of node/),
+		);
+
+		// Clearing the field is blocked.
+		assert.throws(
+			() => {
+				(root as { value: number | undefined }).value = undefined;
+			},
+			validateUsageError(/Cannot clear staged required field/),
+		);
+		assert.throws(
+			() => {
+				delete (root as unknown as { value?: number }).value;
+			},
+			validateUsageError(/Cannot clear staged required field/),
+		);
+
+		// Assigning a value repairs the field, after which it reads normally.
+		root.value = 3;
+		assert.equal(root.value, 3);
+		assert.equal(TreeAlpha.child(root, "value"), 3);
+	});
+
+	it("requires a value when constructing nodes", () => {
+		const sf = new SchemaFactoryAlpha("stagedRequiredConstructionTest");
+		class Obj extends sf.objectAlpha("Obj", { value: sf.stagedRequired(sf.number) }) {}
+
+		const withValue = new Obj({ value: 42 });
+		assert(withValue instanceof Obj);
+		assert.equal(withValue.value, 42);
+
+		// The field is Required in the view schema, so a value must be provided.
+		assert.throws(
+			() => new Obj({ value: undefined as unknown as number }),
+			(error: Error) => error instanceof Error,
+		);
+	});
+
+	it("works with stagedRequiredRecursive in a recursive schema", () => {
+		const sf = new SchemaFactoryAlpha("stagedRequiredRecursiveTest");
+
+		// A recursive node whose `child` field goes through the optional-to-required migration.
+		// The allowed types include a leaf so that a required recursive field can terminate.
+		class NodeB extends sf.objectRecursiveAlpha("TreeNode", {
+			child: sf.stagedRequiredRecursive([() => NodeB, SchemaFactoryAlpha.number]),
+		}) {}
+		{
+			type _check = ValidateRecursiveSchema<typeof NodeB>;
+		}
+
+		// The view field is Required, but the stored field stays Optional until the upgrade is enabled.
+		const storedB = toUpgradeSchema(NodeB);
+		const nodeStored = storedB.nodeSchema.get(brand("stagedRequiredRecursiveTest.TreeNode"));
+		assert(nodeStored instanceof ObjectNodeStoredSchema);
+		assert.equal(
+			nodeStored.getFieldSchema(brand("child")).kind,
+			FieldKinds.optional.identifier,
+		);
+
+		// After the explicit opt in, the stored field is Required.
+		const tightened = tightenedStoredSchema(NodeB);
+		const tightenedNode = tightened.nodeSchema.get(
+			brand("stagedRequiredRecursiveTest.TreeNode"),
+		);
+		assert(tightenedNode instanceof ObjectNodeStoredSchema);
+		assert.equal(
+			tightenedNode.getFieldSchema(brand("child")).kind,
+			FieldKinds.required.identifier,
+		);
+
+		// Unhydrated construction requires the child to be provided.
+		const nested = new NodeB({ child: new NodeB({ child: 3 }) });
+		assert(nested instanceof NodeB);
 	});
 });

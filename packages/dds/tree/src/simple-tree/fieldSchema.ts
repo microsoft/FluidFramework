@@ -188,6 +188,11 @@ export interface FieldPropsAlpha<TCustomMetadata = unknown>
 	 * If defined, indicates that this field is a {@link SchemaStaticsAlpha.stagedOptional | staged optional} field.
 	 */
 	readonly stagedOptionalUpgrade?: SchemaUpgrade;
+
+	/**
+	 * If defined, indicates that this field is a {@link SchemaStaticsAlpha.stagedRequired | staged required} field.
+	 */
+	readonly stagedRequiredUpgrade?: SchemaUpgrade;
 }
 
 /**
@@ -422,6 +427,10 @@ export class FieldSchemaAlpha<
 		return this.propsAlpha?.stagedOptionalUpgrade ?? false;
 	}
 
+	public get isStagedRequired(): false | SchemaUpgrade {
+		return this.propsAlpha?.stagedRequiredUpgrade ?? false;
+	}
+
 	static {
 		createFieldSchemaPrivate = <
 			Kind2 extends FieldKind,
@@ -480,6 +489,32 @@ export function normalizeFieldSchema(
 	return schema instanceof FieldSchema
 		? (schema as FieldSchemaAlpha)
 		: createFieldSchema(FieldKind.Required, schema);
+}
+
+/**
+ * Returns the {@link SchemaUpgrade} for a {@link SchemaStaticsAlpha.stagedRequired | staged required} field,
+ * or `false` if the field is not staged required.
+ */
+export function getStagedRequiredUpgrade(schema: FieldSchema): false | SchemaUpgrade {
+	return schema instanceof FieldSchemaAlpha ? schema.isStagedRequired : false;
+}
+
+/**
+ * Throws a `UsageError` describing that a {@link SchemaStaticsAlpha.stagedRequired | staged required} field
+ * has no value in the document.
+ * @remarks
+ * This is the lazy, read-time failure for the staged optional-to-required migration:
+ * the field is required in the view schema, but the stored schema still allows it to be empty because the
+ * staged upgrade has not been applied (or the value was cleared by a client from an earlier rollout generation).
+ *
+ * No value is synthesized and nothing is written during reads.
+ */
+export function throwStagedRequiredFieldMissing(fieldDescription: string): never {
+	throw new UsageError(
+		`Staged required field ${fieldDescription} has no value in this document. ` +
+			`This field is required by the view schema, but the stored schema still allows it to be empty because it was declared with "stagedRequired". ` +
+			`Check for presence before reading it (see SchemaStaticsAlpha.stagedRequired), or repair the document by assigning a value.`,
+	);
 }
 
 /**

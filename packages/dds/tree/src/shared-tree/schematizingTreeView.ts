@@ -34,6 +34,9 @@ import {
 	setField,
 	normalizeFieldSchema,
 	checkSchemaCompatibility,
+	computeUpgradeSchema,
+	getStagedRequiredUpgrade,
+	throwStagedRequiredFieldMissing,
 	type InsertableContent,
 	type StagedSchemaUpgradePolicy,
 	type TreeViewConfiguration,
@@ -57,7 +60,6 @@ import {
 	FieldSchemaAlpha,
 	TreeViewConfigurationAlpha,
 	toInitialSchema,
-	toUpgradeSchema,
 	type TreeBranchAlpha,
 	type TreeSchema,
 } from "../simple-tree/index.js";
@@ -265,7 +267,11 @@ export class SchematizingSimpleTreeView<
 	public upgradeSchema(): void {
 		this.ensureUndisposed();
 
-		const newSchema = toUpgradeSchema(this.viewSchema.root, this.stagedUpgradePolicy);
+		const newSchema = computeUpgradeSchema(
+			this.viewSchema,
+			this.checkout.storedSchema,
+			this.stagedUpgradePolicy,
+		);
 		const storedSchema = this.checkout.storedSchema.clone();
 		if (!allowsRepoSuperset(defaultSchemaPolicy, storedSchema, newSchema)) {
 			throw new UsageError(
@@ -521,7 +527,11 @@ export class SchematizingSimpleTreeView<
 	}
 
 	public get root(): ReadableField<TRootSchema> {
-		return tryGetTreeNodeForField(this.flexRoot) as ReadableField<TRootSchema>;
+		const value = tryGetTreeNodeForField(this.flexRoot);
+		if (value === undefined && getStagedRequiredUpgrade(this.rootFieldSchema) !== false) {
+			throwStagedRequiredFieldMissing("root");
+		}
+		return value as ReadableField<TRootSchema>;
 	}
 
 	public set root(newRoot: InsertableField<TRootSchema>) {
@@ -538,6 +548,10 @@ export class SchematizingSimpleTreeView<
 			newRoot as InsertableContent | undefined,
 			this.checkout.storedSchema.rootFieldSchema,
 		);
+	}
+
+	public isRootPresent(): boolean {
+		return tryGetTreeNodeForField(this.flexRoot) !== undefined;
 	}
 
 	// #region Branching

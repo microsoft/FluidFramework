@@ -241,6 +241,82 @@ export interface SchemaStaticsAlpha {
 	>;
 
 	/**
+	 * Creates a field schema that is Required in the view but remains Optional in the stored schema
+	 * during the rollout period of an optional-to-required field migration.
+	 *
+	 * @remarks
+	 * Use this to incrementally migrate an optional field to required without a coordinated deployment.
+	 * The migration path is:
+	 *
+	 * 1. Start with `sf.optional(T)` — the stored field is Optional and may be empty.
+	 * 2. Deploy `sf.stagedRequired(T)` — in the view (and in the TypeScript types) the field is Required: it must be
+	 * provided when constructing nodes, and it cannot be assigned or inserted as `undefined`, nor deleted.
+	 * The stored schema however stays Optional, so clients from step 1 are unaffected and documents they created remain viewable.
+	 * Because a document may still contain a node where the field is empty, reading such a field throws a `UsageError`.
+	 * The failure is lazy: it happens only when that specific field is read, so opening the document and using unrelated
+	 * parts of it continues to work. Use {@link (TreeAlpha:interface).child} (for object fields) or
+	 * {@link TreeViewAlpha.isRootPresent} (for the root field) to check for presence without throwing.
+	 * 3. Once clients from step 1 are extinct, explicitly enable the returned staged upgrade so the stored field kind is
+	 * tightened from Optional to Required (see the `includeStaged` option of
+	 * {@link extractPersistedSchema}). Without that explicit opt-in, {@link TreeView.upgradeSchema} leaves this staged
+	 * change as a no-op.
+	 * 4. Deploy `sf.required(T)` and drop the staged marker.
+	 *
+	 * Analogous in rollout shape (but not in runtime semantics) to {@link SchemaStaticsAlpha.stagedOptional} and to
+	 * {@link SchemaStaticsBeta.staged} for allowed types.
+	 *
+	 * @privateRemarks
+	 * Operational precondition: step 3 assumes clients from step 1 have been phased out.
+	 * A `stagedRequired` client itself refuses to clear the field, so the remaining risk is limited to concurrent
+	 * clients from two rollout generations behind (step 1 clients) which can still clear the field.
+	 * This is not a guarantee of safety against arbitrarily old concurrent clients.
+	 *
+	 * @param t - The types allowed under the field.
+	 * @param props - Optional properties to associate with the field.
+	 *
+	 * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
+	 * See {@link FieldSchemaMetadata.custom}.
+	 */
+	readonly stagedRequired: <
+		const T extends ImplicitAllowedTypes,
+		const TCustomMetadata = unknown,
+	>(
+		t: T,
+		props?: Omit<
+			FieldPropsAlpha<TCustomMetadata>,
+			"defaultProvider" | "stagedRequiredUpgrade"
+		>,
+	) => FieldSchemaAlpha<
+		FieldKind.Required,
+		T,
+		TCustomMetadata,
+		FieldPropsAlpha<TCustomMetadata>
+	>;
+
+	/**
+	 * {@link SchemaStaticsAlpha.stagedRequired} except tweaked to work better for recursive types.
+	 * Use with {@link ValidateRecursiveSchema} for improved type safety.
+	 * @remarks
+	 * This version of {@link SchemaStaticsAlpha.stagedRequired} has fewer type constraints to work around TypeScript limitations, see {@link Unenforced}.
+	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
+	 */
+	readonly stagedRequiredRecursive: <
+		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
+		const TCustomMetadata = unknown,
+	>(
+		t: T,
+		props?: Omit<
+			FieldPropsAlpha<TCustomMetadata>,
+			"defaultProvider" | "stagedRequiredUpgrade"
+		>,
+	) => FieldSchemaAlphaUnsafe<
+		FieldKind.Required,
+		T,
+		TCustomMetadata,
+		FieldPropsAlpha<TCustomMetadata>
+	>;
+
+	/**
 	 * {@link SchemaStaticsAlpha.withDefault} except tweaked to work better for recursive types.
 	 * Use with {@link ValidateRecursiveSchema} for improved type safety.
 	 * @remarks
@@ -341,11 +417,28 @@ const stagedOptional = <const T extends ImplicitAllowedTypes, const TCustomMetad
 	});
 };
 
+const stagedRequired = <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
+	t: T,
+	props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider" | "stagedRequiredUpgrade">,
+): FieldSchemaAlpha<
+	FieldKind.Required,
+	T,
+	TCustomMetadata,
+	FieldPropsAlpha<TCustomMetadata>
+> => {
+	return createFieldSchema(FieldKind.Required, t, {
+		...props,
+		stagedRequiredUpgrade: createSchemaUpgrade(),
+	});
+};
+
 const schemaStaticsAlpha: SchemaStaticsAlpha = {
 	withDefault,
 	withDefaultRecursive: withDefault as SchemaStaticsAlpha["withDefaultRecursive"],
 	stagedOptional,
 	stagedOptionalRecursive: stagedOptional as SchemaStaticsAlpha["stagedOptionalRecursive"],
+	stagedRequired,
+	stagedRequiredRecursive: stagedRequired as SchemaStaticsAlpha["stagedRequiredRecursive"],
 };
 
 /**
@@ -583,6 +676,26 @@ export class SchemaFactoryAlpha<
 	 * {@inheritdoc SchemaStaticsAlpha.stagedOptionalRecursive}
 	 */
 	public static readonly stagedOptionalRecursive = schemaStaticsAlpha.stagedOptionalRecursive;
+
+	/**
+	 * {@inheritdoc SchemaStaticsAlpha.stagedRequired}
+	 */
+	public readonly stagedRequired = schemaStaticsAlpha.stagedRequired;
+
+	/**
+	 * {@inheritdoc SchemaStaticsAlpha.stagedRequired}
+	 */
+	public static readonly stagedRequired = schemaStaticsAlpha.stagedRequired;
+
+	/**
+	 * {@inheritdoc SchemaStaticsAlpha.stagedRequiredRecursive}
+	 */
+	public readonly stagedRequiredRecursive = schemaStaticsAlpha.stagedRequiredRecursive;
+
+	/**
+	 * {@inheritdoc SchemaStaticsAlpha.stagedRequiredRecursive}
+	 */
+	public static readonly stagedRequiredRecursive = schemaStaticsAlpha.stagedRequiredRecursive;
 
 	/**
 	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNodeAlpha}.

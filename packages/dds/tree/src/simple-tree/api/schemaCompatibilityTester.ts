@@ -6,10 +6,10 @@
 import type { TreeStoredSchema } from "../../core/index.js";
 import type { SchemaUpgrade, StagedSchemaUpgradePolicy } from "../core/index.js";
 import { allowsRepoSuperset, defaultSchemaPolicy } from "../../feature-libraries/index.js";
-import { toUpgradeSchema } from "../toStoredSchema.js";
 import type { TreeSchema } from "../treeSchema.js";
 
 import { getDiscrepanciesInAllowedContent } from "./discrepancies.js";
+import { computeUpgradeSchema } from "./stagedRequiredUpgrades.js";
 import type { SchemaCompatibilityStatus } from "./tree.js";
 
 /**
@@ -44,7 +44,7 @@ export function checkSchemaCompatibility(
 		break;
 	}
 
-	const wouldUpgradeTo = toUpgradeSchema(viewSchema.root, stagedSchemaUpgrades);
+	const wouldUpgradeTo = computeUpgradeSchema(viewSchema, stored, stagedSchemaUpgrades);
 
 	const canUpgrade = allowsRepoSuperset(policy, stored, wouldUpgradeTo);
 

@@ -435,6 +435,10 @@ function filterFieldAllowedTypes(
 		preservesViewData(options) && f.isStagedOptional instanceof SchemaUpgrade
 			? f.isStagedOptional
 			: undefined;
+	const isStagedRequired =
+		preservesViewData(options) && f.isStagedRequired instanceof SchemaUpgrade
+			? f.isStagedRequired
+			: undefined;
 	return {
 		kind: getStoredFieldKind(f, options),
 		persistedMetadata: f.persistedMetadata,
@@ -446,6 +450,7 @@ function filterFieldAllowedTypes(
 			: {},
 		simpleAllowedTypes: filterAllowedTypes(f.simpleAllowedTypes, options),
 		...(isStagedOptional === undefined ? {} : { isStagedOptional }),
+		...(isStagedRequired === undefined ? {} : { isStagedRequired }),
 	};
 }
 
@@ -454,6 +459,9 @@ function filterFieldAllowedTypes(
  * @remarks
  * For {@link SchemaFactoryAlpha.stagedOptional | staged optional} fields, the stored field kind is Required
  * when the staged optional is not being included (i.e., restrictive options).
+ *
+ * For {@link SchemaStaticsAlpha.stagedRequired | staged required} fields, the stored field kind is Optional
+ * unless the corresponding upgrade has been explicitly enabled, in which case it is Required.
  */
 function getStoredFieldKind(
 	f: SimpleFieldSchema,
@@ -462,10 +470,18 @@ function getStoredFieldKind(
 	if (!isStoredFromView(options)) {
 		return f.kind;
 	}
-	const { isStagedOptional } = f;
-	if (isStagedOptional === undefined || isStagedOptional === false) return f.kind;
-	// isStagedOptional is a SchemaUpgrade — use includeStagedOptional to decide the stored kind.
-	return options.includeStagedOptional(isStagedOptional) ? f.kind : FieldKind.Required;
+	const { isStagedOptional, isStagedRequired } = f;
+	if (isStagedOptional instanceof SchemaUpgrade) {
+		// isStagedOptional is a SchemaUpgrade — use includeStagedOptional to decide the stored kind.
+		return options.includeStagedOptional(isStagedOptional) ? f.kind : FieldKind.Required;
+	}
+	if (isStagedRequired instanceof SchemaUpgrade) {
+		// isStagedRequired is a SchemaUpgrade — until the upgrade is enabled the stored field stays Optional.
+		return options.includeStagedRequired?.(isStagedRequired) === true
+			? f.kind
+			: FieldKind.Optional;
+	}
+	return f.kind;
 }
 
 /**

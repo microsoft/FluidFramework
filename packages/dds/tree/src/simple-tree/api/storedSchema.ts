@@ -21,7 +21,12 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  *
  * @param schema - The schema to dump.
  * @param minVersionForCollab - The oldest client version which can read the schema: impacts the format used.
- * @param includeStaged - filter for selecting which staged allowed types to include in the output.
+ * @param includeStaged - filter for selecting which staged schema changes to include in the output.
+ * This covers staged allowed types (see {@link SchemaStaticsBeta.staged}), staged optional fields
+ * (see {@link SchemaStaticsAlpha.stagedOptional}) and staged required fields
+ * (see {@link SchemaStaticsAlpha.stagedRequired}).
+ * Note that returning `true` for a staged required upgrade *narrows* the resulting schema (the field goes from
+ * Optional to Required), which is the opposite direction from the other two staged concepts.
  *
  * @remarks
  * This can be used to help inspect schema for debugging, and to save a snapshot of schema to help detect and review changes to an applications schema.
@@ -56,6 +61,7 @@ export function extractPersistedSchema(
 	const stored = toStoredSchema(schema, {
 		includeStaged,
 		includeStagedOptional: includeStaged,
+		includeStagedRequired: includeStaged,
 	});
 	const codec = schemaCodecBuilder.build({
 		minVersionForCollab,
