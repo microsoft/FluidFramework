@@ -848,6 +848,40 @@ extends:
                     workingDir: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                     customCommand: 'run test:copyresults'
 
+                - ${{ if contains(test.name, 'playwright') }}:
+                  - task: Bash@3
+                    displayName: Collect Playwright test results
+                    condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+                    inputs:
+                      targetType: inline
+                      script: |
+                        set -eu -o pipefail
+                        SOURCE_ROOT='$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
+                        ARTIFACT_ROOT='$(Build.ArtifactStagingDirectory)/playwright-test-results'
+                        FOUND=0
+
+                        while IFS= read -r -d '' RESULTS_DIR; do
+                          RELATIVE_PATH="${RESULTS_DIR#"$SOURCE_ROOT"/}"
+                          DESTINATION="$ARTIFACT_ROOT/$RELATIVE_PATH"
+                          mkdir -p "$(dirname "$DESTINATION")"
+                          cp -R "$RESULTS_DIR" "$DESTINATION"
+                          FOUND=1
+                        done < <(find "$SOURCE_ROOT" -path '*/node_modules' -prune -o -type d -name test-results -print0)
+
+                        if [[ "$FOUND" == 1 ]]; then
+                          echo '##vso[task.setvariable variable=playwrightTestResultsExist]true'
+                        else
+                          echo 'No Playwright test-results directories found.'
+                        fi
+
+                  - task: 1ES.PublishPipelineArtifact@1
+                    displayName: Publish Artifact - Playwright Test Results
+                    condition: and(succeededOrFailed(), eq(variables['playwrightTestResultsExist'], 'true'))
+                    inputs:
+                      targetPath: '$(Build.ArtifactStagingDirectory)/playwright-test-results'
+                      artifactName: 'playwright-test-results_attempt-$(System.JobAttempt)'
+                      publishLocation: pipeline
+
                 - ${{ if contains(test.name, 'tinylicious') }}:
                   # We upload the log file for the tinylicious server as a preventive troubleshooting mechanism.
                   # It's not really too relevant unless tests fail, but when they do it's helpful to have it available
