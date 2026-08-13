@@ -2,7 +2,7 @@
 
 This codespace is pre-configured for AI-agent-assisted development of the Fluid Framework. It includes [agency](https://aka.ms/agency), GitHub Copilot CLI, GitHub CLI, and SSH access.
 
-> For full documentation, see the [AI-enabled Codespace wiki page](../../docs/content/Development-Environment/AI-enabled-Codespace.md).
+> For full documentation, see [AI-enabled Codespace](../../docs/content/Development-Environment/AI-enabled-Codespace.md).
 
 ## First-time Setup
 

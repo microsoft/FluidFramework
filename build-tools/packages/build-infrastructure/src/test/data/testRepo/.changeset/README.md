@@ -7,4 +7,4 @@ This folder contains changesets, which are markdown files that hold two key bits
    [in the changeset documentation](../../../../../../../../docs/content/Contributing/Breaking-vs-Non-Breaking-Changes/Changesets.md) or in [the official changesets documentation.](https://github.com/changesets/changesets)
 
 There is also a list of [frequently asked questions](../../../../../../../../docs/content/Contributing/Breaking-vs-Non-Breaking-Changes/Changesets-FAQ.md) in
-the wiki.
+the documentation.
