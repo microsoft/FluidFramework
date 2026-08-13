@@ -86,20 +86,28 @@ ContainerRuntime.summarize2
 
 ## Compatibility
 
-The new flow is additive and every layer degrades gracefully:
+A summary is produced entirely by one flow or the other - `summarize` and `summarize2` are never both used
+within a single summary. Mixing them would mean part of the tree was built with different semantics (no
+incremental reuse, different realization and telemetry behavior), which would make comparing the two flows
+meaningless and hide which path produced what.
 
-| Situation                                     | Behavior                                                      |
-| --------------------------------------------- | ------------------------------------------------------------- |
-| A DDS does not implement `summarizeCore2`      | `SharedObject.summarize2` calls `summarizeCore` and copies the result into the builder |
-| A channel does not implement `summarize2`      | `summarizeChannelAsync2` falls back to `summarize`             |
-| A parent context predates `loadedFromSequenceNumber` | Children start at `neverSummarizedSequenceNumber`, so they always re-summarize |
+So every participant in a summary must implement the new API. If one does not, summarization fails with an
+assert rather than silently falling back:
 
-The fallbacks are correct but not incremental: they always write full content. They exist so the flow can be
-enabled before every node has been migrated.
+| Missing implementation            | Result                                                       |
+| --------------------------------- | ------------------------------------------------------------ |
+| `IChannel.summarize2`             | Assert: channel cannot be summarized by the summarize2 flow   |
+| `IFluidDataStoreChannel.summarize2` | Assert: data store cannot be summarized by the summarize2 flow |
+| `SharedObject.summarizeCore2`     | Assert: shared object cannot be summarized by the summarize2 flow |
+| `SharedKernel.summarizeCore2`     | Assert: kernel cannot be summarized by the summarize2 flow    |
+
+Every DDS and runtime type in this repo implements the new API, so these asserts only fire for external
+implementations. That is the signal not to enable the feature gate for such a container.
 
 `SharedObject.summarize2` and `FluidDataStoreRuntime.summarize2` are declared as optional properties rather than
 methods, so adding them does not change the shape of those classes for existing consumers and no type-test
-compatibility exceptions are required.
+compatibility exceptions are required. Because a property cannot be overridden through `super`, each delegates
+to an overridable `summarizeCore2`; that is the extension point for subclasses such as `mixinSummaryHandler`.
 
 ## What is not ported yet
 

@@ -21,7 +21,6 @@ import {
 	SummaryBuilder,
 	SummaryTreeBuilder,
 	TelemetryContext,
-	addSummaryTreeToBuilder,
 	convertSnapshotTreeToSummaryTree,
 	convertSummaryTreeToITree,
 	convertToSummaryTree,
@@ -91,14 +90,9 @@ describe("Summary Utils", () => {
 			});
 		});
 
-		it("preserves attachment keys when copying an existing summary", () => {
+		it("stores attachments under the given key", () => {
 			const root = SummaryBuilder.createRootBuilder(false);
-			addSummaryTreeToBuilder(root, {
-				type: SummaryType.Tree,
-				tree: {
-					"custom-key": { type: SummaryType.Attachment, id: "storage-id" },
-				},
-			});
+			root.addAttachment("custom-key", "storage-id");
 
 			assert.deepEqual(root.getSummaryTreeWithStats().summary.tree["custom-key"], {
 				type: SummaryType.Attachment,

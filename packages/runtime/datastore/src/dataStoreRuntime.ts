@@ -47,6 +47,7 @@ import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	type ISummaryTreeWithStats,
 	type ISummarizable,
+	type ISummaryBuilder,
 	type ITelemetryContext,
 	type IGarbageCollectionData,
 	type CreateChildSummarizerNodeParam,
@@ -1142,13 +1143,34 @@ export class FluidDataStoreRuntime
 	 * {@inheritDoc @fluidframework/runtime-definitions#ISummarizable.summarize2}
 	 */
 	// An optional property rather than a method, so adding it does not change this class's shape for existing
-	// consumers. It is always assigned.
+	// consumers. It is always assigned. It delegates to summarizeCore2 so that subclasses can still override
+	// summarization, which a property cannot support.
 	public readonly summarize2?: ISummarizable["summarize2"] = async (
 		summaryBuilder,
 		latestSummarySequenceNumber,
 		fullTree,
 		telemetryContext,
-	): Promise<void> => {
+	): Promise<void> =>
+		this.summarizeCore2(
+			summaryBuilder,
+			latestSummarySequenceNumber,
+			fullTree,
+			telemetryContext,
+		);
+
+	/**
+	 * Writes this data store's channels into `summaryBuilder`.
+	 *
+	 * @remarks
+	 * The counterpart to {@link FluidDataStoreRuntime.summarize} for the summarize2 flow. Override this to add
+	 * content to this data store's summary.
+	 */
+	protected async summarizeCore2(
+		summaryBuilder: ISummaryBuilder,
+		latestSummarySequenceNumber: number,
+		fullTree: boolean,
+		telemetryContext: ITelemetryContext,
+	): Promise<void> {
 		await this.visitContextsDuringSummary(
 			async (contextId: string, context: IChannelContext) => {
 				await context.summarize2(
@@ -1159,7 +1181,7 @@ export class FluidDataStoreRuntime
 				);
 			},
 		);
-	};
+	}
 
 	/**
 	 * Generates data used for garbage collection. This includes a list of GC nodes that represent this channel
@@ -1761,5 +1783,44 @@ export const mixinSummaryHandler = (
 			}
 
 			return summary;
+		}
+
+		protected override async summarizeCore2(
+			summaryBuilder: ISummaryBuilder,
+			latestSummarySequenceNumber: number,
+			fullTree: boolean,
+			telemetryContext: ITelemetryContext,
+		): Promise<void> {
+			await super.summarizeCore2(
+				summaryBuilder,
+				latestSummarySequenceNumber,
+				fullTree,
+				telemetryContext,
+			);
+
+			try {
+				const content = await handler(this, (currentStep: string) =>
+					telemetryContext.set(
+						currentSummarizeStepPrefix,
+						currentSummarizeStepPropertyName,
+						`mixinSummaryHandler:${currentStep}`,
+					),
+				);
+				if (content !== undefined) {
+					const path = [...content.path];
+					const blobKey = path.pop();
+					if (blobKey === undefined) {
+						throw new LoggingError("Path can't be empty");
+					}
+					let builder = summaryBuilder;
+					for (const name of path) {
+						builder = builder.createBuilderForChild(name, fullTree);
+					}
+					builder.addBlob(blobKey, content.content);
+				}
+			} catch (error) {
+				// Any error coming from app-provided handler should be marked as DataProcessingError
+				throw DataProcessingError.wrapIfUnrecognized(error, "mixinSummaryHandler");
+			}
 		}
 	} as typeof FluidDataStoreRuntime;

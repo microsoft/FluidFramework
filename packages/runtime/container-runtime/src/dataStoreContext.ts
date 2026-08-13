@@ -27,11 +27,7 @@ import type {
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces/internal";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
-import type {
-	IClientDetails,
-	IQuorumClients,
-	ISummaryTree,
-} from "@fluidframework/driver-definitions";
+import type { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
 import type {
 	ISnapshot,
 	IDocumentMessage,
@@ -865,27 +861,16 @@ export abstract class FluidDataStoreContext
 		}
 
 		const channel = await this.realize();
-		if (channel.summarize2 === undefined) {
-			// Data store runtimes that predate this API fall back to the old flow. The resulting tree is added
-			// wholesale, so nothing below this data store is incremental.
-			const summarizeResult = await channel.summarize(
-				fullTree,
-				false /* trackState */,
-				telemetryContext,
-			);
-			wrapSummaryInChannelsTree(summarizeResult);
-			summaryBuilder.addTree(channelsTreeName, {
-				summary: summarizeResult.summary.tree[channelsTreeName] as ISummaryTree,
-				stats: summarizeResult.stats,
-			});
-		} else {
-			await channel.summarize2(
-				summaryBuilder.createBuilderForChild(channelsTreeName, fullTree),
-				latestSummarySequenceNumber,
-				fullTree,
-				telemetryContext,
-			);
-		}
+		assert(
+			channel.summarize2 !== undefined,
+			"Data store does not implement summarize2 and cannot be summarized by the summarize2 flow",
+		);
+		await channel.summarize2(
+			summaryBuilder.createBuilderForChild(channelsTreeName, fullTree),
+			latestSummarySequenceNumber,
+			fullTree,
+			telemetryContext,
+		);
 
 		// Add data store's attributes to the summary.
 		const { pkg } = await this.getInitialSnapshotDetails();

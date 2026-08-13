@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	IChannel,
 	IChannelAttributes,
@@ -23,10 +24,7 @@ import type {
 	IRuntimeMessageCollection,
 	IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
-import {
-	addBlobToSummary,
-	addSummaryTreeToBuilder,
-} from "@fluidframework/runtime-utils/internal";
+import { addBlobToSummary } from "@fluidframework/runtime-utils/internal";
 import {
 	DataCorruptionError,
 	tagCodeArtifacts,
@@ -155,8 +153,8 @@ export async function summarizeChannelAsync(
  * Writes a channel's summary into `summaryBuilder` using the channel's summarize2 implementation.
  *
  * @remarks
- * Channels that have not implemented `summarize2` fall back to `summarize` so that the new flow produces a
- * correct (if not incremental) summary for every DDS during rollout.
+ * A summary is produced entirely by one flow or the other, so a channel that does not implement `summarize2`
+ * cannot take part in this one.
  */
 export async function summarizeChannelAsync2(
 	channel: IChannel,
@@ -165,22 +163,16 @@ export async function summarizeChannelAsync2(
 	fullTree: boolean,
 	telemetryContext: ITelemetryContext,
 ): Promise<void> {
-	if (channel.summarize2 === undefined) {
-		// Fall back to the old API and copy the resulting tree into the builder.
-		const summarizeResult = await channel.summarize(
-			fullTree,
-			false /* trackState */,
-			telemetryContext,
-		);
-		addSummaryTreeToBuilder(summaryBuilder, summarizeResult.summary);
-	} else {
-		await channel.summarize2(
-			summaryBuilder,
-			latestSummarySequenceNumber,
-			fullTree,
-			telemetryContext,
-		);
-	}
+	assert(
+		channel.summarize2 !== undefined,
+		"Channel does not implement summarize2 and cannot be summarized by the summarize2 flow",
+	);
+	await channel.summarize2(
+		summaryBuilder,
+		latestSummarySequenceNumber,
+		fullTree,
+		telemetryContext,
+	);
 
 	// Add the channel attributes to the summary.
 	summaryBuilder.addBlob(attributesBlobKey, JSON.stringify(channel.attributes));
