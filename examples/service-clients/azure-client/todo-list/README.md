@@ -41,17 +41,13 @@ After launching the application, press `F12` to launch the browser's devtools pa
 ## Testing
 
 ```bash
-    npm run test:jest
+npm run test:playwright
 ```
 
-For in browser testing update `./jest-puppeteer.config.js` to:
+To run the tests in a visible browser with the Playwright inspector:
 
-```javascript
-  launch: {
-    dumpio: true, // output browser console to cmd line
-    slowMo: 500,
-    headless: false,
-  },
+```bash
+npm run test:playwright -- --headed --debug
 ```
 
 ## Backed Locally and running with live Azure Fluid Relay service instance

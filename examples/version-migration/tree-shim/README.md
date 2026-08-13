@@ -31,17 +31,13 @@ You can run this example using the following steps:
 ## Testing
 
 ```bash
-    npm run test:jest
+npm run test:playwright
 ```
 
-For in browser testing update `./jest-puppeteer.config.js` to:
+To run the tests in a visible browser with the Playwright inspector:
 
-```javascript
-  launch: {
-    dumpio: true, // output browser console to cmd line
-    slowMo: 500,
-    headless: false,
-  },
+```bash
+npm run test:playwright -- --headed --debug
 ```
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->

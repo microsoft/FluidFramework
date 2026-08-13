@@ -36,7 +36,7 @@ module.exports = {
 				directory: ".",
 				releaseGroups: {
 					client: {
-						include: [...fluidScopes, "fluid-framework", "@types/jest-environment-puppeteer"],
+						include: [...fluidScopes, "fluid-framework"],
 						rootPackageName: "client-release-group-root",
 						defaultInterdependencyRange: "workspace:~",
 					},

@@ -5,6 +5,7 @@
 
 import type { Server } from "node:http";
 
+import { expect, test } from "@playwright/test";
 import cors from "cors";
 import express from "express";
 
@@ -109,7 +110,7 @@ const initializeMockFluidService = (localServiceApp: express.Express): express.E
  * These tests spin up their own Express server instances so we can directly test against it
  * (using supertest), rather than leaning on network calls.
  */
-describe("mock-customer-service", () => {
+test.describe("mock-customer-service", () => {
 	/**
 	 * Express server instance backing our mock external data service.
 	 */
@@ -127,7 +128,7 @@ describe("mock-customer-service", () => {
 	 */
 	let webhookCollection: Map<string, MockWebhook<ITaskData>>;
 
-	beforeEach(async () => {
+	test.beforeEach(async () => {
 		webhookCollection = new Map<string, MockWebhook<ITaskData>>();
 		externalDataService = await initializeExternalDataService({
 			port: externalDataServicePort,
@@ -143,7 +144,7 @@ describe("mock-customer-service", () => {
 
 	/* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-	afterEach(async () => {
+	test.afterEach(async () => {
 		const _externalDataService = externalDataService!;
 		const _customerService = customerService!;
 
@@ -164,7 +165,7 @@ describe("mock-customer-service", () => {
 
 	// We have omitted `@types/supertest` due to cross-package build issue.
 	// So for these tests we have to live with `any`.
-	it("register-for-webhook: Complete data flow", async () => {
+	test("register-for-webhook: Complete data flow", async () => {
 		// Set up mock local service, which will be registered as webhook listener
 		const localServiceApp = initializeMockFluidService(express());
 		const tenantId = "tinylicious";
@@ -226,7 +227,7 @@ describe("mock-customer-service", () => {
 	});
 	/* eslint-enable @typescript-eslint/no-non-null-assertion */
 
-	it("register-session-url: Complete data flow", async () => {
+	test("register-session-url: Complete data flow", async () => {
 		// Set up mock local Fluid service, which will be registered as webhook listener
 		const localServiceApp = initializeMockFluidService(express());
 		const tenantId = "tinylicious";
@@ -284,7 +285,7 @@ describe("mock-customer-service", () => {
 
 	// Skipping to close off the broadcast-signal loop. Tested manually and it works well.
 	// Unclear why localServiceApp is failing to post right for this test.
-	it("events-listener: Complete data flow for session-end event", async () => {
+	test("events-listener: Complete data flow for session-end event", async () => {
 		// Set up mock local Fluid service, which will be registered as webhook listener
 		const localServiceApp = initializeMockFluidService(express());
 		const tenantId = "tinylicious";
