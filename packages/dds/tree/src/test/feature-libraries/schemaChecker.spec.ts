@@ -712,7 +712,7 @@ describe("schema validation", () => {
 			[
 				SchemaValidationError.Field_ChildInForbiddenField,
 				{ fieldKind: "Forbidden", childCount: 1 },
-				/A forbidden field of kind "Forbidden" must be empty, but found 1 children/,
+				/A forbidden field of kind "Forbidden" must be empty, but found 1 child/,
 			],
 			[
 				SchemaValidationError.LeafNode_InvalidValue,

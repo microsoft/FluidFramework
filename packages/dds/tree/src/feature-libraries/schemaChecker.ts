@@ -109,9 +109,10 @@ function formatSchemaValidationError(
 			);
 		}
 		case SchemaValidationError.Field_ChildInForbiddenField: {
+			const childNoun = context?.childCount === 1 ? "child" : "children";
 			return (
 				`Tree does not conform to schema. ` +
-				`A forbidden field of kind ${fieldKindDesc} must be empty, but found ${childCountDesc} children.`
+				`A forbidden field of kind ${fieldKindDesc} must be empty, but found ${childCountDesc} ${childNoun}.`
 			);
 		}
 		case SchemaValidationError.Field_NodeTypeNotAllowed: {
