@@ -46,7 +46,7 @@ import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	type ISummaryTreeWithStats,
-	type ISummaryBuilder,
+	type ISummarizable,
 	type ITelemetryContext,
 	type IGarbageCollectionData,
 	type CreateChildSummarizerNodeParam,
@@ -1139,19 +1139,16 @@ export class FluidDataStoreRuntime
 	}
 
 	/**
-	 * Writes this data store's channels into the given builder.
-	 *
-	 * @remarks
-	 * Summarizer-node-free counterpart to {@link FluidDataStoreRuntime.summarize}. Each channel decides for itself
-	 * whether its content changed since `latestSummarySequenceNumber`; there is no state to start, complete or
-	 * refresh here.
+	 * {@inheritDoc @fluidframework/runtime-definitions#ISummarizable.summarize2}
 	 */
-	public async summarize2(
-		summaryBuilder: ISummaryBuilder,
-		latestSummarySequenceNumber: number,
-		fullTree: boolean,
-		telemetryContext: ITelemetryContext,
-	): Promise<void> {
+	// An optional property rather than a method, so adding it does not change this class's shape for existing
+	// consumers. It is always assigned.
+	public readonly summarize2?: ISummarizable["summarize2"] = async (
+		summaryBuilder,
+		latestSummarySequenceNumber,
+		fullTree,
+		telemetryContext,
+	): Promise<void> => {
 		await this.visitContextsDuringSummary(
 			async (contextId: string, context: IChannelContext) => {
 				await context.summarize2(
@@ -1162,7 +1159,7 @@ export class FluidDataStoreRuntime
 				);
 			},
 		);
-	}
+	};
 
 	/**
 	 * Generates data used for garbage collection. This includes a list of GC nodes that represent this channel

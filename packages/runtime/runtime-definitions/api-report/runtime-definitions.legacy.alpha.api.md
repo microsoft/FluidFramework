@@ -133,7 +133,7 @@ export interface IExperimentalIncrementalSummaryContext {
 }
 
 // @beta @legacy
-export interface IFluidDataStoreChannel extends IDisposable {
+export interface IFluidDataStoreChannel extends IDisposable, Partial<ISummarizable> {
     // (undocumented)
     applyStashedOp(content: any): Promise<unknown>;
     readonly entryPoint: IFluidHandleInternal<FluidObject>;
@@ -153,7 +153,6 @@ export interface IFluidDataStoreChannel extends IDisposable {
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
     setConnectionState(connected: boolean, clientId?: string): void;
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
-    summarize2?(summaryBuilder: ISummaryBuilder, latestSummarySequenceNumber: number, fullTree: boolean, telemetryContext: ITelemetryContext): Promise<void>;
     updateUsedRoutes(usedRoutes: string[]): void;
 }
 
@@ -308,6 +307,11 @@ export interface IRuntimeStorageService {
 
 // @beta @legacy
 export type ISequencedMessageEnvelope = Omit<ISequencedDocumentMessage, "contents" | "clientSequenceNumber">;
+
+// @beta @legacy
+export interface ISummarizable {
+    summarize2(summaryBuilder: ISummaryBuilder, latestSummarySequenceNumber: number, fullTree: boolean, telemetryContext: ITelemetryContext): Promise<void>;
+}
 
 // @beta @legacy
 export interface ISummarizeInternalResult extends ISummarizeResult {

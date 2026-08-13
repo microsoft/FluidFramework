@@ -668,8 +668,8 @@ export function addSummaryTreeToBuilder(
  * Adds `source` into `target` in place.
  *
  * @remarks
- * Unlike {@link mergeStats}, this mutates `target` rather than returning a new object. {@link SummaryBuilder}
- * shares a single stats object across the whole builder tree, so it must never replace that object.
+ * Unlike {@link mergeStats}, this mutates `target` rather than returning a new object, which lets a
+ * {@link SummaryBuilder} node accumulate into its own stats object.
  */
 function addStatsInPlace(target: ISummaryStats, source: ISummaryStats): void {
 	target.treeNodeCount += source.treeNodeCount;
@@ -687,8 +687,10 @@ function addStatsInPlace(target: ISummaryStats, source: ISummaryStats): void {
  * first time it produces content (or declares itself unchanged), which is what lets a node emit a handle without
  * its parent having to know anything about it up front.
  *
- * Stats are accumulated into a single object owned by the root builder and shared by every descendant, so
- * `getSummaryTreeWithStats` on any node returns the stats for the entire summary.
+ * Stats are computed per node when they are asked for, by walking that node's own content and its children. This
+ * means `getSummaryTreeWithStats` describes the subtree of the node it is called on, so a node can report its own
+ * contribution (for example a shared object reporting its blob count) while the root still reports the totals for
+ * the whole summary.
  *
  * @legacy @beta
  */
@@ -708,9 +710,12 @@ export class SummaryBuilder implements ISummaryBuilder {
 		| undefined;
 
 	/**
-	 * Stats for the entire summary, shared with every other builder in this tree. Never reassigned.
+	 * Stats for the content added directly to this node. Content added through a child builder is accounted for
+	 * by that child.
 	 */
-	private readonly summaryStats: ISummaryStats;
+	private readonly ownStats: ISummaryStats;
+
+	private readonly children: SummaryBuilder[] = [];
 
 	/**
 	 * The tree object handed to the parent. Kept stable so that later mutations (e.g. {@link markUnreferenced})
@@ -738,46 +743,35 @@ export class SummaryBuilder implements ISummaryBuilder {
 		childParams:
 			| {
 					parentPath: string;
-					summaryStats: ISummaryStats;
 					notifyParent: (changed: boolean, summaryObject: SummaryObject) => void;
 			  }
 			| undefined,
 	) {
 		this.fullPath = childParams === undefined ? "" : `${childParams.parentPath}/${id}`;
 		this.notifyParent = childParams?.notifyParent;
-		if (childParams === undefined) {
-			this.summaryStats = mergeStats();
-			this.summaryStats.treeNodeCount++;
-		} else {
-			this.summaryStats = childParams.summaryStats;
-		}
+		this.ownStats = mergeStats();
+		this.ownStats.treeNodeCount++;
 	}
 
 	/** {@inheritDoc @fluidframework/runtime-definitions#ISummaryBuilder.getSummaryTreeWithStats} */
 	public getSummaryTreeWithStats(): ISummaryTreeWithStats {
-		return { summary: this.summaryTree, stats: this.summaryStats };
+		return { summary: this.summaryTree, stats: this.getStats() };
 	}
 
 	/** {@inheritDoc @fluidframework/runtime-definitions#ISummaryBuilder.createBuilderForChild} */
 	public createBuilderForChild(childId: string, fullTree: boolean): ISummaryBuilder {
-		this.markChanged();
-		return new SummaryBuilder(childId, fullTree, {
+		const child = new SummaryBuilder(childId, fullTree, {
 			parentPath: this.fullPath,
-			summaryStats: this.summaryStats,
 			notifyParent: (changed: boolean, summaryObject: SummaryObject) => {
-				// The child only attaches itself once - on its first content or on nodeDidNotChange.
-				if (this.summaryTree.tree[childId] !== undefined) {
-					return;
-				}
+				assert(changed || !fullTree, "Summary cannot reuse a handle when fullTree is enabled");
+				// A child attaches itself once - on its first content or on nodeDidNotChange. Its content makes
+				// this node a tree, so this node has to attach itself too.
+				this.markChanged();
 				this.summaryTree.tree[childId] = summaryObject;
-				if (changed) {
-					this.summaryStats.treeNodeCount++;
-				} else {
-					assert(!fullTree, "Summary cannot reuse a handle when fullTree is enabled");
-					this.summaryStats.handleNodeCount++;
-				}
 			},
 		});
+		this.children.push(child);
+		return child;
 	}
 
 	/** {@inheritDoc @fluidframework/runtime-definitions#ISummaryBuilder.nodeDidNotChange} */
@@ -800,7 +794,7 @@ export class SummaryBuilder implements ISummaryBuilder {
 	public addTree(key: string, summarizeResult: ISummarizeResult): void {
 		this.markChanged();
 		this.summaryTree.tree[key] = summarizeResult.summary;
-		addStatsInPlace(this.summaryStats, summarizeResult.stats);
+		addStatsInPlace(this.ownStats, summarizeResult.stats);
 	}
 
 	/** {@inheritDoc @fluidframework/runtime-definitions#ISummaryBuilder.addHandle} */
@@ -816,7 +810,7 @@ export class SummaryBuilder implements ISummaryBuilder {
 			handleType,
 			handle,
 		};
-		this.summaryStats.handleNodeCount++;
+		this.ownStats.handleNodeCount++;
 	}
 
 	/** {@inheritDoc @fluidframework/runtime-definitions#ISummaryBuilder.addAttachment} */
@@ -829,24 +823,48 @@ export class SummaryBuilder implements ISummaryBuilder {
 	public addBlob(key: string, content: string | Uint8Array): void {
 		this.markChanged();
 		// Pass the live tree and stats so nothing is cloned.
-		addBlobToSummary(
-			{ summary: this.summaryTree, stats: this.summaryStats },
-			key,
-			content,
-		);
+		addBlobToSummary({ summary: this.summaryTree, stats: this.ownStats }, key, content);
 	}
 
 	/** {@inheritDoc @fluidframework/runtime-definitions#ISummaryBuilder.markUnreferenced} */
 	public markUnreferenced(): void {
+		this.markChanged();
 		this.summaryTree.unreferenced = true;
-		// Blobs written under an unreferenced node also count towards the unreferenced blob size. Only this
-		// node's own contribution is known here, so callers mark the node once its content is complete.
-		this.summaryStats.unreferencedBlobSize += calculateStats(this.summaryTree).totalBlobSize;
 	}
 
 	/** {@inheritDoc @fluidframework/runtime-definitions#ISummaryBuilder.setGroupId} */
 	public setGroupId(groupId: string): void {
+		this.markChanged();
 		this.summaryTree.groupId = groupId;
+	}
+
+	/**
+	 * Stats for this node's subtree.
+	 *
+	 * @remarks
+	 * Computed on demand rather than accumulated, so that it does not matter in which order a node adds its
+	 * content, marks itself unreferenced or summarizes its children.
+	 */
+	private getStats(): ISummaryStats {
+		if (this.state === "unchanged") {
+			const handleStats = mergeStats();
+			handleStats.handleNodeCount++;
+			return handleStats;
+		}
+
+		const stats = mergeStats(
+			this.ownStats,
+			// A child that never produced content is not part of the summary.
+			...this.children
+				.filter((child) => child.state !== "empty")
+				.map((child) => child.getStats()),
+		);
+		if (this.summaryTree.unreferenced === true) {
+			// Everything under an unreferenced node is unreferenced, including content of nested unreferenced
+			// nodes, so this is an assignment rather than an addition.
+			stats.unreferencedBlobSize = stats.totalBlobSize;
+		}
+		return stats;
 	}
 
 	/**

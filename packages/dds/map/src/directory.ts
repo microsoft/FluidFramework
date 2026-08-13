@@ -666,11 +666,8 @@ export class SharedDirectory
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore2}
-	 *
-	 * @remarks
-	 * This writes the whole directory on every summary - it is not incremental yet. It exists so that the
-	 * summarize2 flow is exercised end to end by a real DDS.
 	 */
+	// Writes the whole directory on every summary; not incremental yet.
 	protected override summarizeCore2(
 		summaryBuilder: ISummaryBuilder,
 		serializer: IFluidSerializer,

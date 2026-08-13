@@ -5,7 +5,7 @@
 ```ts
 
 // @beta @legacy
-export interface IChannel extends IFluidLoadable {
+export interface IChannel extends IFluidLoadable, Partial<ISummarizable> {
     // (undocumented)
     readonly attributes: IChannelAttributes;
     connect(services: IChannelServices): void;
@@ -14,7 +14,6 @@ export interface IChannel extends IFluidLoadable {
     readonly id: string;
     isAttached(): boolean;
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext): Promise<ISummaryTreeWithStats>;
-    summarize2?(summaryBuilder: ISummaryBuilder, latestSummarySequenceNumber: number, fullTree: boolean, telemetryContext: ITelemetryContext): Promise<void>;
 }
 
 // @beta @legacy

@@ -1571,6 +1571,11 @@ export class ContainerRuntime
 
 	private readonly summariesDisabled: boolean;
 
+	/**
+	 * True to summarize via {@link ContainerRuntime.summarize2} instead of the summarizer node flow.
+	 */
+	private readonly summarizeV2Enabled: boolean;
+
 	private readonly createContainerMetadata: ICreateContainerMetadata;
 	/**
 	 * The summary number of the next summary that will be generated for this container. This is incremented every time
@@ -1979,6 +1984,11 @@ export class ContainerRuntime
 		this.summariesDisabled =
 			isSummariesDisabled(this.summaryConfiguration) ||
 			this.mc.config.getBoolean("Fluid.ContainerRuntime.Test.DisableSummaries") === true;
+
+		// Opt-in to the summarizer-node-free summarization flow. Off by default while it is validated against
+		// the existing flow; see ContainerRuntime.summarize2.
+		this.summarizeV2Enabled =
+			this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableSummarizeV2") === true;
 
 		this.maxConsecutiveReconnects =
 			this.mc.config.getNumber(maxConsecutiveReconnectsKey) ?? defaultMaxConsecutiveReconnects;
@@ -2804,8 +2814,13 @@ export class ContainerRuntime
 
 	/**
 	 * Builds the container's metadata blob contents.
+	 *
+	 * @param summaryNumber - Number identifying the summary being generated. Passed in rather than read from
+	 * {@link ContainerRuntime.nextSummaryNumber} so that generating metadata has no side effects, and so that two
+	 * summarization flows can be run over the same summary (to compare their output) without the second one
+	 * appearing as a different summary.
 	 */
-	private getMetadata(): IContainerRuntimeMetadata {
+	private getMetadata(summaryNumber: number): IContainerRuntimeMetadata {
 		// The last message processed at the time of summary. If there are no new messages, use the message from the
 		// last summary.
 		const message =
@@ -2821,8 +2836,7 @@ export class ContainerRuntime
 
 		const metadata: IContainerRuntimeMetadata = {
 			...this.createContainerMetadata,
-			// Increment the summary number for the next summary that will be generated.
-			summaryNumber: this.nextSummaryNumber++,
+			summaryNumber,
 			summaryFormatVersion: 1,
 			...this.garbageCollector.getMetadata(),
 			telemetryDocumentId: this.telemetryDocumentId,
@@ -2847,7 +2861,12 @@ export class ContainerRuntime
 		trackState: boolean,
 		telemetryContext?: ITelemetryContext,
 	): void {
-		addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(this.getMetadata()));
+		addBlobToSummary(
+			summaryTree,
+			metadataBlobName,
+			// Consume the summary number, so the next summary gets a new one.
+			JSON.stringify(this.getMetadata(this.nextSummaryNumber++)),
+		);
 
 		if (this._idCompressor) {
 			const idCompressorState = JSON.stringify(this._idCompressor.serialize(false));
@@ -2902,7 +2921,11 @@ export class ContainerRuntime
 		fullTree: boolean,
 		telemetryContext?: ITelemetryContext,
 	): void {
-		summaryBuilder.addBlob(metadataBlobName, JSON.stringify(this.getMetadata()));
+		summaryBuilder.addBlob(
+			metadataBlobName,
+			// Consume the summary number, so the next summary gets a new one.
+			JSON.stringify(this.getMetadata(this.nextSummaryNumber++)),
+		);
 
 		if (this._idCompressor) {
 			summaryBuilder.addBlob(
@@ -4442,7 +4465,9 @@ export class ContainerRuntime
 		}
 		// Nothing has been acked in this session. If this runtime was loaded from a summary, that summary's
 		// sequence number is the reference point. Otherwise there is no summary to reuse anything from.
-		return this.loadedFromVersionId === undefined ? -1 : this.deltaManager.initialSequenceNumber;
+		return this.loadedFromVersionId === undefined
+			? -1
+			: this.deltaManager.initialSequenceNumber;
 	}
 
 	/**
@@ -4840,11 +4865,15 @@ export class ContainerRuntime
 			const message = `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
 			const lastAckedContext = this.lastAckedSummaryContext;
 
-			const startSummaryResult = this.summarizerNode.startSummary(
-				summaryRefSeqNum,
-				summaryNumberLogger,
-				latestSummaryRefSeqNum,
-			);
+			// The summarize2 flow keeps all of its reuse state in the container runtime, so none of the summarizer
+			// node bookkeeping (start/validate/complete/clear) applies to it.
+			const startSummaryResult = this.summarizeV2Enabled
+				? undefined
+				: this.summarizerNode.startSummary(
+						summaryRefSeqNum,
+						summaryNumberLogger,
+						latestSummaryRefSeqNum,
+					);
 
 			/**
 			 * This was added to validate that the summarizer node tree has the same reference sequence number from the
@@ -4854,7 +4883,10 @@ export class ContainerRuntime
 			 * Generally the validate sequence number comes from the running summarizer and the node sequence number comes from the
 			 * summarizer nodes.
 			 */
-			if (startSummaryResult.invalidNodes > 0 || startSummaryResult.mismatchNumbers.size > 0) {
+			if (
+				startSummaryResult !== undefined &&
+				(startSummaryResult.invalidNodes > 0 || startSummaryResult.mismatchNumbers.size > 0)
+			) {
 				summaryLogger.sendTelemetryEvent({
 					eventName: "LatestSummaryRefSeqNumMismatch",
 					details: {
@@ -4928,13 +4960,20 @@ export class ContainerRuntime
 			const trace = Trace.start();
 			let summarizeResult: ISummaryTreeWithStats;
 			try {
-				summarizeResult = await this.summarize({
-					fullTree,
-					trackState: true,
-					summaryLogger: summaryNumberLogger,
-					runGC: this.garbageCollector.shouldRunGC,
-					telemetryContext,
-				});
+				summarizeResult = this.summarizeV2Enabled
+					? await this.summarize2({
+							fullTree,
+							summaryLogger: summaryNumberLogger,
+							runGC: this.garbageCollector.shouldRunGC,
+							telemetryContext,
+						})
+					: await this.summarize({
+							fullTree,
+							trackState: true,
+							summaryLogger: summaryNumberLogger,
+							runGC: this.garbageCollector.shouldRunGC,
+							telemetryContext,
+						});
 			} catch (error) {
 				return {
 					stage: "base",
@@ -4945,7 +4984,9 @@ export class ContainerRuntime
 			}
 
 			// Validate that the summary generated by summarizer nodes is correct before uploading.
-			const validateResult = this.summarizerNode.validateSummary();
+			const validateResult = this.summarizeV2Enabled
+				? ({ success: true } as const)
+				: this.summarizerNode.validateSummary();
 			if (!validateResult.success) {
 				const { success, ...loggingProps } = validateResult;
 				const error = new RetriableSummaryError(
@@ -5078,7 +5119,9 @@ export class ContainerRuntime
 			} as const;
 
 			try {
-				this.summarizerNode.completeSummary(handle);
+				if (!this.summarizeV2Enabled) {
+					this.summarizerNode.completeSummary(handle);
+				}
 			} catch (error) {
 				return {
 					stage: "upload",
@@ -5089,7 +5132,9 @@ export class ContainerRuntime
 			return submitData;
 		} finally {
 			// Cleanup wip summary in case of failure
-			this.summarizerNode.clearSummary();
+			if (!this.summarizeV2Enabled) {
+				this.summarizerNode.clearSummary();
+			}
 
 			// ! This needs to happen before we resume inbound queues to ensure heuristics are tracked correctly
 			this._summarizer?.recordSummaryAttempt?.(summaryRefSeqNum);

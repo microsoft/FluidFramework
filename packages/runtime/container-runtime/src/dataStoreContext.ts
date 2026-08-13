@@ -850,13 +850,9 @@ export abstract class FluidDataStoreContext
 	}
 
 	/**
-	 * Writes this data store's summary into the given builder, or declares it unchanged since the latest
-	 * successful summary.
-	 *
-	 * @remarks
-	 * Summarizer-node-free counterpart to {@link FluidDataStoreContext.summarize}. Note that a data store which
-	 * declares itself unchanged is not realized, which is the main win over the old flow.
+	 * {@inheritDoc @fluidframework/runtime-definitions#ISummarizable.summarize2}
 	 */
+	// A data store which declares itself unchanged is not realized, which is the main win over the old flow.
 	public async summarize2(
 		summaryBuilder: ISummaryBuilder,
 		latestSummarySequenceNumber: number,

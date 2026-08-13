@@ -11,17 +11,23 @@ import type {
 	IChannelFactory,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import type { ITree } from "@fluidframework/driver-definitions/internal";
-import { FileMode, MessageType, TreeEntry } from "@fluidframework/driver-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import type {
+	ISummaryBuilder,
 	ISummaryTreeWithStats,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
 	ISequencedMessageEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
-import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils/internal";
-import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
-import { SharedObject } from "@fluidframework/shared-object-base/internal";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import type {
+	IFluidSerializer,
+	ISummaryContentSink,
+} from "@fluidframework/shared-object-base/internal";
+import {
+	SharedObject,
+	summaryTreeBuilderSink,
+} from "@fluidframework/shared-object-base/internal";
 import { v4 as uuid } from "uuid";
 
 import type {
@@ -127,6 +133,22 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	}
 
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
+		const builder = new SummaryTreeBuilder();
+		this.summarizeInto(summaryTreeBuilderSink(builder), serializer);
+		return builder.getSummaryTree();
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore2}
+	 */
+	protected override summarizeCore2(
+		summaryBuilder: ISummaryBuilder,
+		serializer: IFluidSerializer,
+	): void {
+		this.summarizeInto(summaryBuilder, serializer);
+	}
+
+	private summarizeInto(sink: ISummaryContentSink, serializer: IFluidSerializer): void {
 		// Deep copy and unset the local flags. Needed when snapshotting is happening for runtime not attached
 		const dataArrayCopy: SharedArrayEntryCore<T>[] = [];
 		for (const entry of this.sharedArray) {
@@ -149,23 +171,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 		const contents: SnapshotFormat<SharedArrayEntryCore<T>> = {
 			dataArray: dataArrayCopy,
 		};
-		const tree: ITree = {
-			entries: [
-				{
-					mode: FileMode.File,
-					path: snapshotFileName,
-					type: TreeEntry[TreeEntry.Blob],
-					value: {
-						contents: serializer.stringify(contents, this.handle),
-						// eslint-disable-next-line unicorn/text-encoding-identifier-case
-						encoding: "utf-8",
-					},
-				},
-			],
-		};
-		const summaryTreeWithStats = convertToSummaryTreeWithStats(tree);
-
-		return summaryTreeWithStats;
+		sink.addBlob(snapshotFileName, serializer.stringify(contents, this.handle));
 	}
 
 	public insertBulkAfter<TWrite>(

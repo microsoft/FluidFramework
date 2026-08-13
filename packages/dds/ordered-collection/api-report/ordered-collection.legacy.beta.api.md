@@ -33,6 +33,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject<IConsensus
     protected rollback(content: unknown, localOpMetadata: unknown): void;
     // (undocumented)
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
+    protected summarizeCore2(summaryBuilder: ISummaryBuilder, serializer: IFluidSerializer): void;
     waitAndAcquire(callback: ConsensusCallback<T>): Promise<void>;
 }
 

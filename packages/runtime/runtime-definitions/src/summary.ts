@@ -461,6 +461,45 @@ export interface ISummaryBuilder {
 }
 
 /**
+ * A node in the summary tree that can write its own summary content into an {@link ISummaryBuilder}.
+ *
+ * @remarks
+ * This is the summarizer-node-free counterpart to the various `summarize` methods. Instead of returning a
+ * summary tree, the node writes into the builder it is handed, and all the state needed to decide what may be
+ * reused lives in the container runtime and is passed down via `latestSummarySequenceNumber`.
+ *
+ * The interface is implemented at every level of the summary tree - the data store runtime, its channels and
+ * the shared objects underneath them - so the contract is described once here rather than repeated on each of
+ * those interfaces.
+ *
+ * @privateRemarks
+ * `summarize2` is a deliberately temporary name. It exists so that this flow can be rolled out and validated
+ * alongside the existing `summarize` API, and it replaces `summarize` once that rollout completes.
+ *
+ * @legacy @beta
+ */
+export interface ISummarizable {
+	/**
+	 * Writes this node's summary into `summaryBuilder`, or declares the node unchanged so that its previous
+	 * summary is reused.
+	 *
+	 * @param summaryBuilder - Builder for this node's subtree of the summary. A node either writes its content
+	 * into it, or calls {@link ISummaryBuilder.nodeDidNotChange} to reuse its previous summary via a handle.
+	 * @param latestSummarySequenceNumber - Reference sequence number of the latest successful summary, or -1 if
+	 * there has not been one. Content that has not changed since this sequence number is already captured in
+	 * that summary, so it can be reused.
+	 * @param fullTree - True to generate the full tree with no handle reuse.
+	 * @param telemetryContext - See {@link ITelemetryContext}.
+	 */
+	summarize2(
+		summaryBuilder: ISummaryBuilder,
+		latestSummarySequenceNumber: number,
+		fullTree: boolean,
+		telemetryContext: ITelemetryContext,
+	): Promise<void>;
+}
+
+/**
  * @internal
  */
 export const blobCountPropertyName = "BlobCount";

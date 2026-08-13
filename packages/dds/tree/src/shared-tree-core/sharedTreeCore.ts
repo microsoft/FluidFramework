@@ -16,6 +16,7 @@ import type {
 import type {
 	IExperimentalIncrementalSummaryContext,
 	IRuntimeMessageCollection,
+	ISummaryBuilder,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
@@ -319,6 +320,41 @@ export class SharedTreeCore<
 			telemetryContext,
 			incrementalSummaryContext,
 		});
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore2}
+	 *
+	 * @remarks
+	 * Each summarizable still builds its own subtree, so the content here is identical to what
+	 * {@link SharedTreeCore.summarizeCore} produces without an incremental summary context. Teaching the forest's
+	 * incremental chunk reuse to emit handles through the builder is tracked separately.
+	 */
+	@throwIfBroken
+	public summarizeCore2(
+		summaryBuilder: ISummaryBuilder,
+		serializer: IFluidSerializer,
+		latestSummarySequenceNumber: number,
+		fullTree: boolean,
+		telemetryContext: ITelemetryContext,
+	): void {
+		const stringify = (contents: unknown): string =>
+			serializer.stringify(contents, this.sharedObject.handle);
+		const summarizablesBuilder = summaryBuilder.createBuilderForChild(
+			summarizablesTreeKey,
+			fullTree,
+		);
+		for (const s of this.summarizables) {
+			summarizablesBuilder.addTree(
+				s.key,
+				s.summarize({
+					stringify,
+					fullTree,
+					telemetryContext,
+					incrementalSummaryContext: undefined,
+				}),
+			);
+		}
 	}
 
 	public async loadCore(services: IChannelStorageService): Promise<void> {

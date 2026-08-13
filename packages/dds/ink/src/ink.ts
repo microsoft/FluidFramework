@@ -11,6 +11,7 @@ import type {
 import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type {
+	ISummaryBuilder,
 	ISummaryTreeWithStats,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
@@ -197,8 +198,18 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore}
 	 */
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
-		const blobContent = JSON.stringify(this.inkData.getSerializable());
-		return createSingleBlobSummary(snapshotFileName, blobContent);
+		return createSingleBlobSummary(snapshotFileName, this.serializeContent());
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore2}
+	 */
+	protected override summarizeCore2(summaryBuilder: ISummaryBuilder): void {
+		summaryBuilder.addBlob(snapshotFileName, this.serializeContent());
+	}
+
+	private serializeContent(): string {
+		return JSON.stringify(this.inkData.getSerializable());
 	}
 
 	/**

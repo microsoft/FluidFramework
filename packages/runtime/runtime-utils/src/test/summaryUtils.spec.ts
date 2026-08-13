@@ -15,6 +15,7 @@ import type {
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type { ISnapshotTree, ITree } from "@fluidframework/driver-definitions/internal";
 import { BlobTreeEntry, TreeTreeEntry } from "@fluidframework/driver-utils/internal";
+import type { ISummaryStats } from "@fluidframework/runtime-definitions/internal";
 
 import {
 	SummaryBuilder,
@@ -103,6 +104,72 @@ describe("Summary Utils", () => {
 				type: SummaryType.Attachment,
 				id: "storage-id",
 			});
+		});
+
+		it("reports stats for the node they are asked of, not the whole summary", () => {
+			const root = SummaryBuilder.createRootBuilder(false);
+			root.addBlob("rootBlob", "root");
+			const child = root.createBuilderForChild("child", false);
+			child.addBlob("childBlob", "child-content");
+
+			assert.deepEqual(child.getSummaryTreeWithStats().stats, {
+				treeNodeCount: 1,
+				blobNodeCount: 1,
+				handleNodeCount: 0,
+				totalBlobSize: 13,
+				unreferencedBlobSize: 0,
+			});
+			assert.deepEqual(root.getSummaryTreeWithStats().stats, {
+				treeNodeCount: 2,
+				blobNodeCount: 2,
+				handleNodeCount: 0,
+				totalBlobSize: 17,
+				unreferencedBlobSize: 0,
+			});
+		});
+
+		it("counts an unchanged node as a single handle", () => {
+			const root = SummaryBuilder.createRootBuilder(false);
+			const child = root.createBuilderForChild("child", false);
+			child.nodeDidNotChange();
+
+			assert.deepEqual(root.getSummaryTreeWithStats().stats, {
+				treeNodeCount: 1,
+				blobNodeCount: 0,
+				handleNodeCount: 1,
+				totalBlobSize: 0,
+				unreferencedBlobSize: 0,
+			});
+		});
+
+		it("attributes unreferenced blob size regardless of when the node is marked", () => {
+			const statsForOrder = (markFirst: boolean): ISummaryStats => {
+				const root = SummaryBuilder.createRootBuilder(false);
+				const child = root.createBuilderForChild("child", false);
+				if (markFirst) {
+					child.markUnreferenced();
+				}
+				child.addBlob("blob", "unreferenced");
+				child.createBuilderForChild("grandChild", false).addBlob("blob", "nested");
+				if (!markFirst) {
+					child.markUnreferenced();
+				}
+				return root.getSummaryTreeWithStats().stats;
+			};
+
+			const markedFirst = statsForOrder(true);
+			assert.equal(markedFirst.totalBlobSize, 18);
+			assert.equal(markedFirst.unreferencedBlobSize, 18);
+			assert.deepEqual(statsForOrder(false), markedFirst);
+		});
+
+		it("omits child builders that never produced content", () => {
+			const root = SummaryBuilder.createRootBuilder(false);
+			root.createBuilderForChild("unused", false);
+
+			const { summary, stats } = root.getSummaryTreeWithStats();
+			assert.deepEqual(summary.tree, {});
+			assert.equal(stats.treeNodeCount, 1);
 		});
 
 		it("rejects invalid node state transitions", () => {

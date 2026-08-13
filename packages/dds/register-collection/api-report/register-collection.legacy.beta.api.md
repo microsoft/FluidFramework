@@ -29,6 +29,7 @@ export class ConsensusRegisterCollectionClass<T> extends SharedObject<IConsensus
     protected rollback(content: unknown, localOpMetadata: unknown): void;
     // (undocumented)
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
+    protected summarizeCore2(summaryBuilder: ISummaryBuilder, serializer: IFluidSerializer): void;
     write(key: string, value: T): Promise<boolean>;
 }
 

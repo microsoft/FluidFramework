@@ -5,7 +5,10 @@
 
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { DataStoreKind } from "@fluidframework/driver-definitions/internal";
-import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import type {
+	ISummaryBuilder,
+	ISummaryTreeWithStats,
+} from "@fluidframework/runtime-definitions/internal";
 
 import { defineDataStore, sharedObjectRegistryFromIterable } from "./dataStoreKind.js";
 import {
@@ -18,6 +21,9 @@ import { createSingleBlobSummary } from "./utils.js";
 class StatelessKernel implements SharedKernel {
 	summarizeCore(): ISummaryTreeWithStats {
 		return createSingleBlobSummary("header", "{}");
+	}
+	summarizeCore2(summaryBuilder: ISummaryBuilder): void {
+		summaryBuilder.addBlob("header", "{}");
 	}
 	onDisconnect(): void {}
 	reSubmitCore(): void {}

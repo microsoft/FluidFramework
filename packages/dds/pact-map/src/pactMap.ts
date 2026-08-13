@@ -13,6 +13,7 @@ import type {
 import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type {
+	ISummaryBuilder,
 	ISummaryTreeWithStats,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
@@ -343,8 +344,19 @@ export class PactMapClass<T = unknown>
 	 * @returns the summary of the current state of the PactMap
 	 */
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
+		return createSingleBlobSummary(snapshotFileName, this.serializeContent());
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore2}
+	 */
+	protected override summarizeCore2(summaryBuilder: ISummaryBuilder): void {
+		summaryBuilder.addBlob(snapshotFileName, this.serializeContent());
+	}
+
+	private serializeContent(): string {
 		const allEntries = [...this.values.entries()];
-		return createSingleBlobSummary(snapshotFileName, JSON.stringify(allEntries));
+		return JSON.stringify(allEntries);
 	}
 
 	/**

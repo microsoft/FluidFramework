@@ -74,6 +74,7 @@ export {
 export type {
 	CreateChildSummarizerNodeParam,
 	IExperimentalIncrementalSummaryContext,
+	ISummarizable,
 	ISummarizeInternalResult,
 	ISummarizeResult,
 	ISummarizerNode,

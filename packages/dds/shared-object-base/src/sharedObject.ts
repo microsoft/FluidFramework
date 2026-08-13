@@ -29,6 +29,7 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import {
 	type IExperimentalIncrementalSummaryContext,
+	type ISummarizable,
 	type ISummaryTreeWithStats,
 	type ITelemetryContext,
 	type IGarbageCollectionData,
@@ -841,14 +842,16 @@ export abstract class SharedObject<
 	}
 
 	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).summarize2}
+	 * {@inheritDoc @fluidframework/runtime-definitions#ISummarizable.summarize2}
 	 */
-	public async summarize2(
-		summaryBuilder: ISummaryBuilder,
-		latestSummarySequenceNumber: number,
-		fullTree: boolean,
-		telemetryContext: ITelemetryContext,
-	): Promise<void> {
+	// An optional property rather than a method, so adding it does not change the shape of every shared object
+	// type deriving from this class. It is always assigned.
+	public readonly summarize2?: ISummarizable["summarize2"] = async (
+		summaryBuilder,
+		latestSummarySequenceNumber,
+		fullTree,
+		telemetryContext,
+	): Promise<void> => {
 		if (this.summarizeCore2 === undefined) {
 			// This shared object has not implemented the incremental path yet. Produce the same content the old
 			// API would have, just written through the builder.
@@ -882,7 +885,7 @@ export abstract class SharedObject<
 			stats.totalBlobSize,
 			telemetryContext,
 		);
-	}
+	};
 
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).getGCData}

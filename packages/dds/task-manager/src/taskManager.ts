@@ -17,6 +17,7 @@ import type {
 import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type {
+	ISummaryBuilder,
 	ISummaryTreeWithStats,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
@@ -622,6 +623,17 @@ export class TaskManagerClass
 	 * @returns the summary of the current state of the task manager
 	 */
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
+		return createSingleBlobSummary(snapshotFileName, this.serializeContent());
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore2}
+	 */
+	protected override summarizeCore2(summaryBuilder: ISummaryBuilder): void {
+		summaryBuilder.addBlob(snapshotFileName, this.serializeContent());
+	}
+
+	private serializeContent(): string {
 		if (this.clientId === placeholderClientId) {
 			// If the runtime has still not been assigned a clientId, we should not summarize with the placeholder
 			// clientIds and instead remove them from the queues and require the client to re-volunteer when assigned
@@ -641,7 +653,7 @@ export class TaskManagerClass
 			}
 		}
 		const content = [...filteredMap.entries()];
-		return createSingleBlobSummary(snapshotFileName, JSON.stringify(content));
+		return JSON.stringify(content);
 	}
 
 	/**

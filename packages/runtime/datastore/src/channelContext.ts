@@ -17,6 +17,7 @@ import type {
 	ITelemetryContext,
 	IGarbageCollectionData,
 	IFluidDataStoreContext,
+	ISummarizable,
 	ISummarizeResult,
 	ISummaryBuilder,
 	IRuntimeMessageCollection,
@@ -47,7 +48,7 @@ export const attributesBlobKey = ".attributes";
  */
 export const neverSummarizedSequenceNumber = Number.MAX_SAFE_INTEGER;
 
-export interface IChannelContext {
+export interface IChannelContext extends ISummarizable {
 	getChannel(): Promise<IChannel>;
 
 	setConnectionState(connected: boolean, clientId?: string);
@@ -63,17 +64,6 @@ export interface IChannelContext {
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummarizeResult>;
-
-	/**
-	 * Writes this context's summary into `summaryBuilder`, or declares it unchanged since
-	 * `latestSummarySequenceNumber`.
-	 */
-	summarize2(
-		summaryBuilder: ISummaryBuilder,
-		latestSummarySequenceNumber: number,
-		fullTree: boolean,
-		telemetryContext: ITelemetryContext,
-	): Promise<void>;
 
 	reSubmit(content: unknown, localOpMetadata: unknown, squash: boolean): void;
 

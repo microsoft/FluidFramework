@@ -45,8 +45,8 @@ import type {
 } from "./protocol.js";
 import type {
 	CreateChildSummarizerNodeParam,
+	ISummarizable,
 	ISummarizerNodeWithGC,
-	ISummaryBuilder,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	SummarizeInternalFn,
@@ -406,7 +406,7 @@ export interface IFluidDataStorePolicies {
  * and connection state notifications
  * @legacy @beta
  */
-export interface IFluidDataStoreChannel extends IDisposable {
+export interface IFluidDataStoreChannel extends IDisposable, Partial<ISummarizable> {
 	/**
 	 * Optional policies that the data store channel may adhere to that the data store context should know about.
 	 * These policies influence the behavior of the data store, such as its readonly state in specific modes.
@@ -452,26 +452,6 @@ export interface IFluidDataStoreChannel extends IDisposable {
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummaryTreeWithStats>;
-
-	/**
-	 * Writes this channel's summary into the given builder.
-	 *
-	 * @remarks
-	 * Summarizer-node-free counterpart to {@link IFluidDataStoreChannel.summarize}. Optional so that older data
-	 * store runtimes keep working; the container runtime falls back to `summarize` when it is not implemented.
-	 *
-	 * @param summaryBuilder - Builder for this channel's node in the summary tree.
-	 * @param latestSummarySequenceNumber - Reference sequence number of the latest successful summary, or -1 if
-	 * there has not been one.
-	 * @param fullTree - true to bypass optimizations and force a full summary tree.
-	 * @param telemetryContext - summary data passed through the layers for telemetry purposes.
-	 */
-	summarize2?(
-		summaryBuilder: ISummaryBuilder,
-		latestSummarySequenceNumber: number,
-		fullTree: boolean,
-		telemetryContext: ITelemetryContext,
-	): Promise<void>;
 
 	/**
 	 * Returns the data used for garbage collection. This includes a list of GC nodes that represent this context

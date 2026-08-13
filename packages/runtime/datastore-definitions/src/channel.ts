@@ -9,7 +9,7 @@ import type {
 	IExperimentalIncrementalSummaryContext,
 	IGarbageCollectionData,
 	IRuntimeMessageCollection,
-	ISummaryBuilder,
+	ISummarizable,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
@@ -35,7 +35,7 @@ import type { IChannelAttributes } from "./storage.js";
  *
  * @legacy @beta
  */
-export interface IChannel extends IFluidLoadable {
+export interface IChannel extends IFluidLoadable, Partial<ISummarizable> {
 	/**
 	 * A readonly identifier for the channel
 	 */
@@ -113,30 +113,6 @@ export interface IChannel extends IFluidLoadable {
 		telemetryContext?: ITelemetryContext,
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 	): Promise<ISummaryTreeWithStats>;
-
-	/**
-	 * Writes the channel's summary into the given builder.
-	 *
-	 * @remarks
-	 * This is the summarizer-node-free counterpart to {@link IChannel.summarize}. Rather than returning a tree,
-	 * the channel writes into `summaryBuilder`, and all state needed to decide what can be reused lives in the
-	 * container runtime and is passed in via `latestSummarySequenceNumber`.
-	 *
-	 * Optional so that channels which have not implemented it yet keep working - the runtime falls back to
-	 * {@link IChannel.summarize} for those.
-	 *
-	 * @param summaryBuilder - Builder for this channel's node in the summary tree.
-	 * @param latestSummarySequenceNumber - Reference sequence number of the latest successful summary, or -1 if
-	 * there has not been one. Content that has not changed since this sequence number can be reused.
-	 * @param fullTree - True to generate a full tree with no handle reuse.
-	 * @param telemetryContext - See {@link @fluidframework/runtime-definitions#ITelemetryContext}.
-	 */
-	summarize2?(
-		summaryBuilder: ISummaryBuilder,
-		latestSummarySequenceNumber: number,
-		fullTree: boolean,
-		telemetryContext: ITelemetryContext,
-	): Promise<void>;
 
 	/**
 	 * Checks if the channel is attached to storage.
