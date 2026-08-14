@@ -14,7 +14,6 @@
 "__section": breaking
 "__highlight": true
 ---
-
 Require oldest supported clients to use Fluid Framework 2.0 or later
 
 Client 3.0 narrows
