@@ -129,6 +129,19 @@
 		"webpack-cli": "^5.1.4",
 		"webpack-dev-server": "~5.2.6"
 	},
+	"fluidBuild": {
+		"tasks": {
+			"build:test:jest": [
+				"build:esnext",
+				"^build:esnext"
+			],
+			"build:test:mocha": [
+				"build:esnext",
+				"^build:esnext"
+			]
+		},
+		"version": 1
+	},
 	"typeValidation": {
 		"disabled": true
 	}
