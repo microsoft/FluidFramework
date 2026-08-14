@@ -68,5 +68,6 @@ export function AnyUint8ArrayToArrayBuffer(array: Uint8Array): ArrayBuffer {
 	) {
 		return array.buffer;
 	}
-	return array.slice(array.byteOffset, array.byteOffset + array.byteLength).buffer;
+	// eslint-disable-next-line unicorn/prefer-spread -- spread is not the same as slice for Uint8Array
+	return ArrayBufferLikeToArrayBuffer(Uint8ArrayToArrayBufferLike(array.slice()));
 }
