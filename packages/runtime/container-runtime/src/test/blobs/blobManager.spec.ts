@@ -198,6 +198,9 @@ describe("Detached blob summaries", () => {
 		assert.strictEqual(loadInfo.redirectTable?.length, 0);
 		assert.deepStrictEqual(getDetachedBlobSummaryIds(loadInfo), [localId]);
 		assert.notStrictEqual(getDetachedBlobSummaryContent(loadInfo, localId), undefined);
+		assert.deepStrictEqual(blobManager.getGCData(), {
+			gcNodes: { [getGCNodePathFromLocalId(localId)]: [] },
+		});
 
 		const { blobManager: reloadedBlobManager } = createTestMaterial({
 			attached: false,
