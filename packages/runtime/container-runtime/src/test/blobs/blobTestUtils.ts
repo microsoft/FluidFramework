@@ -561,9 +561,10 @@ export const getSummaryContentsFromSummaryWithFormatValidation = (
 			assert.strictEqual(key, redirectTableBlobName);
 			assert(summaryObject.type === SummaryType.Blob);
 			assert(typeof summaryObject.content === "string");
+			const summarizedRedirectTable = JSON.parse(summaryObject.content) as [string, string][];
 			redirectTable = [
 				...new Map<string, string>(
-					JSON.parse(summaryObject.content) as [string, string][],
+					[...(redirectTable ?? []), ...summarizedRedirectTable],
 				).entries(),
 			];
 		}

@@ -193,7 +193,8 @@ const summarizeV1 = (
 		}
 	}
 	const detachedBlobSummary = detachedBlobSummaryBuilder.getSummaryTree();
-	if (Object.keys(detachedBlobSummary.summary.tree).length > 0) {
+	const hasDetachedBlobSummary = Object.keys(detachedBlobSummary.summary.tree).length > 0;
+	if (hasDetachedBlobSummary) {
 		builder.addWithStats(detachedBlobSummaryTreeName, detachedBlobSummary);
 	}
 	for (const storageId of storageIds) {
@@ -215,7 +216,8 @@ const summarizeV1 = (
 			detachedBlobSummaryContents?.has(localId) !== true &&
 			detachedBlobSummaryHandles?.has(localId) !== true,
 	);
-	if (nonIdentityRedirectTableEntries.length > 0) {
+	// Preserve the loader's existing `.blobs` invariant when all mappings are encoded by `.detached`.
+	if (nonIdentityRedirectTableEntries.length > 0 || hasDetachedBlobSummary) {
 		builder.addBlob(redirectTableBlobName, JSON.stringify(nonIdentityRedirectTableEntries));
 	}
 

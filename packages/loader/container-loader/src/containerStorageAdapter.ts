@@ -370,21 +370,17 @@ async function getBlobContentsFromTreeCore(
 	return Promise.all(treePs);
 }
 
-// Save structural blobs from the BlobManager tree, but not direct attachment entries.
+// save redirect table from .blobs tree but nothing else
 async function getBlobManagerTreeFromTree(
 	tree: ISnapshotTree,
 	blobs: ISerializableBlobContents,
 	storage: Pick<IDocumentStorageService, "readBlob">,
 ): Promise<void> {
 	const id = tree.blobs[redirectTableBlobName];
-	if (id !== undefined) {
-		const blob = await storage.readBlob(id);
-		// ArrayBufferLike will not survive JSON.stringify()
-		blobs[id] = bufferToString(blob, "utf8");
-	}
-	for (const childTree of Object.values(tree.trees)) {
-		await getBlobContentsFromTreeCore(childTree, blobs, storage, false);
-	}
+	assert(id !== undefined, 0x9ce /* id is undefined in getBlobManagerTreeFromTree */);
+	const blob = await storage.readBlob(id);
+	// ArrayBufferLike will not survive JSON.stringify()
+	blobs[id] = bufferToString(blob, "utf8");
 }
 
 /**

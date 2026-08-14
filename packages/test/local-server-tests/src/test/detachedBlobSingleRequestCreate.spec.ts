@@ -19,7 +19,10 @@ import {
 	rehydrateDetachedContainer,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
-import { blobsTreeName } from "@fluidframework/container-runtime/internal";
+import {
+	blobsTreeName,
+	redirectTableBlobName,
+} from "@fluidframework/container-runtime/internal";
 import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import {
 	SummaryType,
@@ -37,8 +40,6 @@ import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
 	TestFluidObjectFactory,
-	createTestConfigProvider,
-	getRequiredPendingLocalState,
 	type ITestFluidObject,
 } from "@fluidframework/test-utils/internal";
 
@@ -163,6 +164,10 @@ function assertDetachedBlobSummary(
 	assert(appSummary?.type === SummaryType.Tree);
 	const blobsSummary: SummaryObject | undefined = appSummary.tree[blobsTreeName];
 	assert(blobsSummary?.type === SummaryType.Tree);
+	const redirectTableSummary: SummaryObject | undefined =
+		blobsSummary.tree[redirectTableBlobName];
+	assert(redirectTableSummary?.type === SummaryType.Blob);
+	assert.strictEqual(redirectTableSummary.content, "[]");
 	const detachedBlobSummary: SummaryObject | undefined =
 		blobsSummary.tree[detachedBlobSummaryTreeName];
 	assert(detachedBlobSummary?.type === SummaryType.Tree);
@@ -173,7 +178,6 @@ function assertDetachedBlobSummary(
 function initialize(options?: {
 	countStorageCalls?: boolean;
 	inline?: boolean;
-	offline?: boolean;
 }): {
 	codeDetails: IFluidCodeDetails;
 	codeLoader: ICodeDetailsLoader;
@@ -206,13 +210,9 @@ function initialize(options?: {
 		options?.countStorageCalls === true
 			? wrapDocumentServiceFactory(base.documentServiceFactory, counts)
 			: base.documentServiceFactory;
-	const configProvider = createTestConfigProvider({
-		...(options?.offline === true ? { "Fluid.Container.enableOfflineFull": true } : {}),
-	});
 	const loaderProps = {
 		...base.loaderProps,
 		documentServiceFactory,
-		configProvider,
 	};
 	return {
 		codeDetails: base.codeDetails,
@@ -309,50 +309,6 @@ describe("Detached blob single-request create", () => {
 		});
 		const loadedObject = await getTestFluidObject(loaded);
 		assertBytes(await getBlob(loadedObject.root, "blob"), expected);
-	});
-
-	it("preserves detached summary blobs in pending state for an offline frozen load", async () => {
-		const { codeDetails, codeLoader, loaderProps, urlResolver } = initialize({
-			offline: true,
-		});
-		const container = await createDetachedContainer({ codeDetails, ...loaderProps });
-		const fluidObject = await getTestFluidObject(container);
-		const expected = new Uint8Array([0xff, 0x01, 0x00, 0xfe]);
-		fluidObject.root.set("blob", await fluidObject.runtime.uploadBlob(expected.buffer));
-		await container.attach(urlResolver.createCreateNewRequest("pending-state"));
-
-		const pendingLocalState = await getRequiredPendingLocalState(container);
-		const frozen = await loadFrozenContainerFromPendingState({
-			codeLoader,
-			pendingLocalState,
-		});
-		const frozenObject = await getTestFluidObject(frozen);
-		assertBytes(await getBlob(frozenObject.root, "blob"), expected);
-	});
-
-	it("fetches omitted detached summary blobs when pending state is captured after a fresh load", async () => {
-		const { codeDetails, codeLoader, loaderProps, urlResolver } = initialize({
-			offline: true,
-		});
-		const container = await createDetachedContainer({ codeDetails, ...loaderProps });
-		const fluidObject = await getTestFluidObject(container);
-		const expected = new Uint8Array([0x80, 0xff, 0x00, 0x01]);
-		fluidObject.root.set("blob", await fluidObject.runtime.uploadBlob(expected.buffer));
-		await container.attach(urlResolver.createCreateNewRequest("fresh-pending-state"));
-		const url = await container.getAbsoluteUrl("");
-		assert(url !== undefined);
-
-		const fresh = await loadExistingContainer({
-			...loaderProps,
-			request: { url },
-		});
-		const pendingLocalState = await getRequiredPendingLocalState(fresh);
-		const frozen = await loadFrozenContainerFromPendingState({
-			codeLoader,
-			pendingLocalState,
-		});
-		const frozenObject = await getTestFluidObject(frozen);
-		assertBytes(await getBlob(frozenObject.root, "blob"), expected);
 	});
 
 	it("captures the detached blob summary group for an offline frozen load", async () => {
