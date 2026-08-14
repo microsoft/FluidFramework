@@ -261,8 +261,9 @@ export interface SchemaStaticsAlpha {
 	 * `UsageError` rather than silently reintroducing an empty value.
 	 * 3. Once clients from step 1 are extinct, explicitly enable the returned staged upgrade so the stored field kind is
 	 * tightened from Optional to Required. This is done by configuring the view with a
-	 * {@link StagedSchemaUpgradePolicy} whose {@link StagedSchemaUpgradePolicy.includeStagedRequired} returns `true`
-	 * for this field's upgrade (for example {@link StagedSchemaUpgradePolicy.enabledStagedUpgrades}) and then calling
+	 * {@link (StagedSchemaUpgradePolicy:interface)} whose
+	 * {@link (StagedSchemaUpgradePolicy:interface).includeStagedRequired} returns `true`
+	 * for this field's upgrade (for example {@link StagedSchemaUpgradePolicyFactory.enabledStagedUpgrades}) and then calling
 	 * {@link TreeView.upgradeSchema}. Without that explicit opt-in, {@link TreeView.upgradeSchema} leaves this staged
 	 * change as a no-op. ({@link extractPersistedSchema} exposes the same opt-in via its `includeStaged` parameter,
 	 * but that only dumps a schema snapshot for inspection: it does not upgrade a document.)

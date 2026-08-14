@@ -75,7 +75,7 @@ export function getAppliedStagedRequiredUpgrades(
  *
  * Note that this never *applies* a staged required upgrade on its own: tightening a stored field from `Optional` to
  * `Required` is a narrowing change and must always be opted into explicitly by the application
- * (see {@link StagedSchemaUpgradePolicy.includeStagedRequired}).
+ * (see {@link (StagedSchemaUpgradePolicy:interface).includeStagedRequired}).
  *
  * @param viewSchema - The view schema to project into a stored schema.
  * @param stored - The stored schema of the document being upgraded.
