@@ -32,21 +32,17 @@ export function ArrayBufferLikeToArrayBuffer(buffer: ArrayBufferLike): ArrayBuff
  * Callers should not mutate the returned buffer unless they own the input array and its backing
  * storage, and should not rely on mutations being reflected in the input array.
  *
+ * @privateRemarks
+ * Upon update to TypeScript 5.9 or higher, this should become a generic function
+ * over ArrayBufferLike that parameterizes Uint8Array.
+ *
  * @internal
  */
-export function Uint8ArrayToArrayBufferLike<TArrayBuffer extends ArrayBufferLike>(
-	array: Uint8Array<TArrayBuffer>,
-): TArrayBuffer {
+export function Uint8ArrayToArrayBufferLike(array: Uint8Array): ArrayBufferLike {
 	if (array.byteOffset === 0 && array.byteLength === array.buffer.byteLength) {
 		return array.buffer;
 	}
-	// Both ArrayBuffer and SharedArrayBuffer have a slice method and will return
-	// their same type, but TypeScript does not correctly determine that will
-	// satisfy TArrayBuffer. Cast to TArrayBuffer to indicate that.
-	return array.buffer.slice(
-		array.byteOffset,
-		array.byteOffset + array.byteLength,
-	) as TArrayBuffer;
+	return array.buffer.slice(array.byteOffset, array.byteOffset + array.byteLength);
 }
 
 /**
