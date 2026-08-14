@@ -263,7 +263,11 @@
 		"releasePkgVersion": "2.115.0"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Function_Uint8ArrayToArrayBuffer": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "public"
 	}
 }
