@@ -617,10 +617,10 @@ pipelines:
     retail:
       source:
         eslint:
-          lastModifiedDate: 2026-07-23
+          lastModifiedDate: 2026-08-14
         bandit:
-          lastModifiedDate: 2026-07-23
+          lastModifiedDate: 2026-08-14
         psscriptanalyzer:
-          lastModifiedDate: 2026-07-23
+          lastModifiedDate: 2026-08-14
         armory:
-          lastModifiedDate: 2026-07-23
+          lastModifiedDate: 2026-08-14
