@@ -69,17 +69,16 @@ export type ContainerRuntimeFactoryWithDefaultDataStoreConstructor =
 			props: ContainerRuntimeFactoryWithDefaultDataStoreProps,
 	  ) => IRuntimeFactory)
 	| (new (
-			props: ContainerRuntimeFactoryWithDefaultDataStoreProps &
-				(
-					| {
-							readonly oldestSupportedClient: OldestSupportedClientVersion;
-							readonly minVersionForCollab?: never;
-					  }
-					| {
-							readonly oldestSupportedClient?: never;
-							readonly minVersionForCollab: OldestSupportedClientVersion;
-					  }
-				),
+			props: ContainerRuntimeFactoryWithDefaultDataStoreProps & {
+				readonly oldestSupportedClient: OldestSupportedClientVersion;
+				readonly minVersionForCollab?: never;
+			},
+	  ) => IRuntimeFactory)
+	| (new (
+			props: ContainerRuntimeFactoryWithDefaultDataStoreProps & {
+				readonly oldestSupportedClient?: never;
+				readonly minVersionForCollab: OldestSupportedClientVersion;
+			},
 	  ) => IRuntimeFactory);
 
 /**
