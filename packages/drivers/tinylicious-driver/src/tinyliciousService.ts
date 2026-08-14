@@ -136,13 +136,12 @@ export class TinyliciousServiceContainer<TData>
 		root: DataStoreKind<T>,
 	): Promise<TinyliciousServiceContainer<T>> {
 		const loaderOptions = makeContainerLoaderOptions(options);
-		const minVersionForCollaboration = options.minVersionForCollaboration;
 
 		const container: IContainer = await createDetachedContainer({
 			codeDetails: { package: "no-dynamic-package", config: {} },
 			codeLoader: makeCodeLoader(
 				registry,
-				minVersionForCollaboration,
+				options.oldestSupportedClient,
 				containerRuntimeLoader,
 				root,
 			),
@@ -164,11 +163,14 @@ export class TinyliciousServiceContainer<TData>
 		id: string,
 	): Promise<TinyliciousServiceContainer<T> & FluidContainerAttached<T>> {
 		const loaderOptions = makeContainerLoaderOptions(options);
-		const minVersionForCollaboration = options.minVersionForCollaboration;
 
 		const containerInner = await loadExistingContainer({
 			request: { url: id },
-			codeLoader: makeCodeLoader(registry, minVersionForCollaboration, containerRuntimeLoader),
+			codeLoader: makeCodeLoader(
+				registry,
+				options.oldestSupportedClient,
+				containerRuntimeLoader,
+			),
 			...loaderOptions,
 		});
 

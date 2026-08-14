@@ -21,7 +21,7 @@ export type {
 } from "./ephemeralService.js";
 export {
 	startEphemeralService,
-	startSessionService,
+	getSessionService,
 	cleanupEphemeralService,
 	getDefaultEphemeralService,
 } from "./ephemeralService.js";

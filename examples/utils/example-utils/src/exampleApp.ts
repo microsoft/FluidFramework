@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	startEphemeralService,
-	startSessionService,
-} from "@fluidframework/local-driver/alpha";
+import { startEphemeralService, getSessionService } from "@fluidframework/local-driver/alpha";
 import { createTinyliciousServiceClient } from "@fluidframework/tinylicious-driver/alpha";
 /* eslint-disable import-x/no-internal-modules -- Unified ServiceClient types are not yet available from the public entry point. */
 import type {
@@ -24,11 +21,17 @@ import { createRoot } from "react-dom/client";
  */
 
 /**
+ * Service options selected by an example application.
+ * @internal
+ */
+export interface ExampleServiceOptions extends ServiceOptions {}
+
+/**
  * Default service options used by example applications.
  * @internal
  */
-export const defaultServiceOptions: ServiceOptions = {
-	minVersionForCollaboration: "2.100.0",
+export const defaultServiceOptions: ExampleServiceOptions = {
+	oldestSupportedClient: "2.100.0",
 };
 
 /**
@@ -40,37 +43,45 @@ export const defaultServiceOptions: ServiceOptions = {
  * compatibility required by the local-driver services.
  * Reads the `fluidClient` URL query parameter.
  * Accepts `ephemeral`, `session`, or `tinylicious`:
- * missing and unknown values default to the ephemeral service.
+ * missing and unknown values default to the session service when session storage is available,
+ * or the ephemeral service otherwise.
  *
  * This is intended to be invoked once on startup:
  * it may start a local service as a side-effect.
  *
- * When used in testing, and cleanup is required, use the default ephemeral service,
+ * When used in testing, and cleanup is required, use the ephemeral service,
  * which can be cleaned up using `cleanupEphemeralService()`.
  *
  * @param options - Options used to configure the service client. Defaults to {@link defaultServiceOptions}.
- * @returns A client for the selected service, or the ephemeral service by default.
+ * @returns A client for the selected service.
  * @internal
  */
 export function getExampleServiceClient(
-	options: ServiceOptions = defaultServiceOptions,
+	options: ExampleServiceOptions = defaultServiceOptions,
 ): ServiceClient {
 	const fluidClient =
-		new URLSearchParams(globalThis.location?.search ?? "").get("fluidClient") ?? "ephemeral";
+		new URLSearchParams(globalThis.location?.search ?? "").get("fluidClient") ?? "";
 	switch (fluidClient) {
 		case "session": {
-			return startSessionService().newClient(options);
+			return getSessionService().newClient(options);
 		}
 		case "tinylicious": {
 			return createTinyliciousServiceClient(options);
 		}
-		default: {
-			console.warn(
-				`Unknown fluidClient value: ${JSON.stringify(fluidClient)}, falling back to ephemeral service.`,
-			);
-		}
 		case "ephemeral": {
 			return startEphemeralService().newClient(options);
+		}
+		default: {
+			console.warn(
+				`Unknown fluidClient value: ${JSON.stringify(fluidClient)}, falling back default service.`,
+			);
+		}
+		case "": {
+			const service =
+				globalThis.sessionStorage === undefined
+					? startEphemeralService()
+					: getSessionService();
+			return service.newClient(options);
 		}
 	}
 }

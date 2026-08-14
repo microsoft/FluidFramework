@@ -24,7 +24,6 @@ import {
 	type DataStoreRegistry,
 	type FluidContainerAttached,
 	type FluidContainerWithService,
-	type OldestSupportedServiceClientVersion,
 	type Registry,
 	type ServiceClient,
 	type ServiceOptions,
@@ -41,6 +40,7 @@ import {
 	LocalDeltaConnectionServer,
 	type ILocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
+import type { ITestDbFactory } from "@fluidframework/server-test-utils";
 import { UsageError } from "@fluidframework/driver-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -73,22 +73,23 @@ export function startEphemeralService(isDefault = true): EphemeralService {
 }
 
 /**
- * Starts a local Fluid service whose documents are persisted in the browser's session storage.
+ * Gets the session-storage-backed local Fluid service for the current JavaScript realm, creating it on first use.
  *
  * @remarks
- * The returned service has the same client and lifecycle API as {@link EphemeralService}, but attached
- * documents remain available after a page reload within the same browser tab. Closing the service releases
- * its active resources without clearing those persisted documents.
+ * Attached documents remain available after a page reload within the same browser tab. Repeated calls return
+ * the same service instance within the current JavaScript realm.
  *
  * This service is only available in browser environments that provide `sessionStorage`.
  * @returns A local service backed by browser session storage.
  * @alpha
  */
-export function startSessionService(): SessionService {
+export function getSessionService(): SessionService {
 	if (typeof sessionStorage === "undefined") {
 		throw new UsageError("SessionService requires browser session storage");
 	}
-	return new LocalServiceImplementation(new LocalSessionStorageDbFactory());
+	return (sessionService ??= new LocalServiceImplementation(
+		new LocalSessionStorageDbFactory(),
+	));
 }
 
 /**
@@ -131,10 +132,6 @@ export function getDefaultEphemeralService(): EphemeralService {
 export interface LocalServiceOptions<TService extends LocalService = LocalService>
 	extends ServiceOptions {
 	/**
-	 * {@inheritdoc @fluidframework/driver-definitions#ServiceOptions.oldestSupportedClient}
-	 */
-	readonly oldestSupportedClient: OldestSupportedServiceClientVersion;
-	/**
 	 * The service instance to connect to.
 	 */
 	readonly service: TService;
@@ -159,10 +156,30 @@ export interface EphemeralServiceOptions extends LocalServiceOptions<EphemeralSe
 export interface LocalService<out TClient extends ServiceClient = LocalServiceClient>
 	extends ErasedBaseType<readonly ["LocalService", TClient]> {
 	/**
-	 * Closes all containers connected to this service and releases its active resources.
-	 * Closing is idempotent.
+	 * Lists the IDs of documents currently stored by this service.
 	 */
-	close(): Promise<void>;
+	listDocumentIds(): Promise<readonly string[]>;
+
+	/**
+	 * Deletes a stored document.
+	 *
+	 * @remarks
+	 * Deletion is only allowed when this service has no open containers because resetting the local
+	 * server invalidates all of its active connections. Content-addressed summary data shared with other
+	 * documents may be retained until {@link LocalService.deleteAllDocuments} is called.
+	 *
+	 * @param id - The ID of the document to delete.
+	 */
+	deleteDocument(id: string): Promise<void>;
+
+	/**
+	 * Deletes all documents stored by this service.
+	 *
+	 * @remarks
+	 * Deletion is only allowed when this service has no open containers because resetting the local
+	 * server invalidates all of its active connections.
+	 */
+	deleteAllDocuments(): Promise<void>;
 
 	/**
 	 * Drives all containers connected to this service toward convergence, processing pending operations and
@@ -233,11 +250,11 @@ export interface LocalService<out TClient extends ServiceClient = LocalServiceCl
  */
 export interface EphemeralService extends LocalService<LocalServiceClient<EphemeralService>> {
 	/**
-	 * Specializes {@link LocalService.close} with ephemeral document-lifetime behavior.
+	 * Closes all containers connected to this service and releases its active resources.
 	 *
 	 * @remarks
-	 * Unlike local services backed by persistent storage, closing an ephemeral service permanently discards all
-	 * documents it holds, so their IDs can no longer be loaded.
+	 * Closing is idempotent. Closing an ephemeral service permanently discards all documents it holds,
+	 * so their IDs can no longer be loaded.
 	 */
 	close(): Promise<void>;
 }
@@ -246,10 +263,16 @@ export interface EphemeralService extends LocalService<LocalServiceClient<Epheme
  * A browser-local Fluid service that persists documents in session storage.
  *
  * @remarks
- * This service uses the {@link LocalService} lifecycle, and its attached documents remain available after a
- * page reload within the same browser tab.
+ * Its attached documents remain available after a page reload within the same browser tab. The service is
+ * shared within the current JavaScript realm and intentionally has no close operation: its active resources
+ * live until the realm is unloaded.
  *
- * Create one with {@link startSessionService}.
+ * Session storage is shared more broadly than JavaScript module state. Separate same-origin realms, such as
+ * same-origin frames, or applications that load separate copies of this package can access the same stored
+ * documents while running independent local servers. Concurrently editing the same document from such realms
+ * is unsupported and may produce inconsistent stored state.
+ *
+ * Create one with {@link getSessionService}.
  * @alpha @sealed
  */
 export interface SessionService extends LocalService<LocalServiceClient<SessionService>> {}
@@ -258,6 +281,11 @@ export interface SessionService extends LocalService<LocalServiceClient<SessionS
  * The {@link defaultEphemeralService} if one has been {@link startEphemeralService|started}.
  */
 let defaultEphemeralService: LocalServiceImplementation | undefined;
+
+/**
+ * The lazily created session service for this JavaScript realm.
+ */
+let sessionService: LocalServiceImplementation | undefined;
 
 /**
  * The concrete implementation of local services.
@@ -272,14 +300,17 @@ class LocalServiceImplementation
 	implements LocalService<LocalServiceClientImplementation<LocalServiceImplementation>>
 {
 	// A single server is shared by all containers connected to this service so they can communicate with each other.
-	private readonly server: ILocalDeltaConnectionServer;
-	private readonly documentServiceFactory: LocalDocumentServiceFactory;
+	private server: ILocalDeltaConnectionServer;
+	private documentServiceFactory: LocalDocumentServiceFactory;
+	private readonly databaseFactory: ITestDbFactory;
 	private readonly containers = new Set<EphemeralServiceContainer<unknown>>();
 	private closed = false;
+	private maintenanceInProgress = false;
 
-	public constructor(databaseFactory?: LocalSessionStorageDbFactory) {
+	public constructor(databaseFactory?: ITestDbFactory) {
 		super();
 		this.server = LocalDeltaConnectionServer.create(databaseFactory);
+		this.databaseFactory = this.server.testDbFactory;
 		this.documentServiceFactory = new LocalDocumentServiceFactory(this.server);
 		this.defaultClient = this.newClient();
 	}
@@ -293,6 +324,21 @@ class LocalServiceImplementation
 		return new LocalServiceClientImplementation(finalOptions);
 	}
 	public readonly defaultClient: LocalServiceClientImplementation<LocalServiceImplementation>;
+
+	public async listDocumentIds(): Promise<readonly string[]> {
+		this.ensureAvailable();
+		const documentCollection = await this.server.databaseManager.getDocumentCollection();
+		const documents = await documentCollection.findAll();
+		return documents.map((document) => document.documentId);
+	}
+
+	public async deleteDocument(id: string): Promise<void> {
+		await this.deleteDocuments(id);
+	}
+
+	public async deleteAllDocuments(): Promise<void> {
+		await this.deleteDocuments();
+	}
 
 	public async close(): Promise<void> {
 		if (this.closed) {
@@ -311,6 +357,64 @@ class LocalServiceImplementation
 		// Shut down the in-memory server. Its timers (e.g. the Deli read-client idle `setInterval`) belong to the
 		// server rather than any container, so closing containers alone would leave them running.
 		await this.server.close();
+	}
+
+	private ensureAvailable(): void {
+		if (this.closed) {
+			throw new UsageError("Local service is closed");
+		}
+		if (this.maintenanceInProgress) {
+			throw new UsageError("Local service document maintenance is already in progress");
+		}
+	}
+
+	private async deleteDocuments(id?: string): Promise<void> {
+		this.ensureAvailable();
+		if (this.containers.size > 0) {
+			throw new UsageError("Close all containers before deleting local service documents");
+		}
+
+		this.maintenanceInProgress = true;
+		let serverClosed = false;
+		try {
+			await this.server.close();
+			serverClosed = true;
+			const databaseManager = this.server.databaseManager;
+			const filter = id === undefined ? {} : { documentId: id };
+			const historianDatabase = this.databaseFactory.testDatabase;
+			const documentCollection = await databaseManager.getDocumentCollection();
+			const checkpointCollection = await databaseManager.getCheckpointCollection();
+			const deltaCollection = await databaseManager.getDeltaCollection(undefined, id);
+			const scribeDeltaCollection = await databaseManager.getScribeDeltaCollection(
+				undefined,
+				id,
+			);
+			const deletions = [
+				documentCollection.deleteMany(filter),
+				checkpointCollection.deleteMany(filter),
+				deltaCollection.deleteMany(filter),
+				scribeDeltaCollection.deleteMany(filter),
+				historianDatabase
+					.collection("refs")
+					.deleteMany(id === undefined ? {} : { _id: `heads/${id}` }),
+			];
+			if (id === undefined) {
+				const nodeCollection = await databaseManager.getNodeCollection();
+				deletions.push(
+					nodeCollection.deleteMany({}),
+					historianDatabase.collection("blobs").deleteMany({}),
+					historianDatabase.collection("commits").deleteMany({}),
+					historianDatabase.collection("trees").deleteMany({}),
+				);
+			}
+			await Promise.all(deletions);
+		} finally {
+			if (serverClosed) {
+				this.server = LocalDeltaConnectionServer.create(this.databaseFactory);
+				this.documentServiceFactory = new LocalDocumentServiceFactory(this.server);
+			}
+			this.maintenanceInProgress = false;
+		}
 	}
 
 	public async synchronize(timeoutMilliseconds = 30_000): Promise<void> {
@@ -400,6 +504,7 @@ class LocalServiceImplementation
 	 * @remarks Internal helper for {@link EphemeralServiceContainer}; not part of the public {@link EphemeralService} API.
 	 */
 	public getDocumentServiceFactory(): LocalDocumentServiceFactory {
+		this.ensureAvailable();
 		assert(
 			!this.closed,
 			0xd11 /* Cannot create or load containers on a closed EphemeralService */,

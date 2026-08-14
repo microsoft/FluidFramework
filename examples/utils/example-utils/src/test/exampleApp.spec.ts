@@ -9,7 +9,9 @@ import {
 	cleanupEphemeralService,
 	type EphemeralService,
 	getDefaultEphemeralService,
+	getSessionService,
 	type LocalServiceClient,
+	type SessionService,
 } from "@fluidframework/local-driver/alpha";
 
 import { getExampleServiceClient } from "../exampleApp.js";
@@ -19,10 +21,39 @@ describe("getExampleServiceClient", () => {
 		await cleanupEphemeralService();
 	});
 
-	it("selects default service by default", () => {
+	it("defaults to the ephemeral service when browser storage is unavailable", () => {
 		const exampleClient = getExampleServiceClient() as LocalServiceClient<EphemeralService>;
 		const defaultService = getDefaultEphemeralService();
 		assert.equal(exampleClient.service, defaultService);
+	});
+
+	it("defaults to the session service when browser storage is available", () => {
+		const originalSessionStorage = Object.getOwnPropertyDescriptor(
+			globalThis,
+			"sessionStorage",
+		);
+		Object.defineProperty(globalThis, "sessionStorage", {
+			configurable: true,
+			value: {
+				clear: () => {},
+				getItem: () => undefined,
+				key: () => undefined,
+				length: 0,
+				removeItem: () => {},
+				setItem: () => {},
+			} as unknown as Storage,
+		});
+
+		try {
+			const exampleClient = getExampleServiceClient() as LocalServiceClient<SessionService>;
+			assert.equal(exampleClient.service, getSessionService());
+		} finally {
+			if (originalSessionStorage === undefined) {
+				Reflect.deleteProperty(globalThis, "sessionStorage");
+			} else {
+				Object.defineProperty(globalThis, "sessionStorage", originalSessionStorage);
+			}
+		}
 	});
 
 	it("location query parameter can select a different service", () => {
@@ -51,8 +82,6 @@ describe("getExampleServiceClient", () => {
 			// We don't have a robust way to narrow or downcast the returned client, but this at least ensures they are different.
 			assert.equal("service" in ephemeralClient, true);
 			assert.equal("service" in tinyliciousClient, false);
-
-			// Note we do not test the session service here, as doing so would start it as a side-effect and we don't have a way to clean it up.
 		} finally {
 			if (originalLocation === undefined) {
 				Reflect.deleteProperty(globalThis, "location");

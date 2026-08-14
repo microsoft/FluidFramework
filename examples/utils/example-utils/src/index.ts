@@ -22,6 +22,7 @@ export {
 } from "./containerViewRuntimeFactory.js";
 export {
 	defaultServiceOptions,
+	type ExampleServiceOptions,
 	getExampleServiceClient,
 	loadExampleContainer,
 	loadExampleDataStore,

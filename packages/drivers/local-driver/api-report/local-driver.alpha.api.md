@@ -15,10 +15,15 @@ export interface EphemeralService extends LocalService<LocalServiceClient<Epheme
 // @alpha
 export function getDefaultEphemeralService(): EphemeralService;
 
+// @alpha
+export function getSessionService(): SessionService;
+
 // @alpha @sealed
 export interface LocalService<out TClient extends ServiceClient = LocalServiceClient> extends ErasedBaseType<readonly ["LocalService", TClient]> {
-    close(): Promise<void>;
     readonly defaultClient: TClient;
+    deleteAllDocuments(): Promise<void>;
+    deleteDocument(id: string): Promise<void>;
+    listDocumentIds(): Promise<readonly string[]>;
     newClient(options: ServiceOptions): TClient;
     synchronize(timeoutMilliseconds?: number): Promise<void>;
 }
@@ -34,9 +39,6 @@ export interface SessionService extends LocalService<LocalServiceClient<SessionS
 
 // @alpha
 export function startEphemeralService(isDefault?: boolean): EphemeralService;
-
-// @alpha
-export function startSessionService(): SessionService;
 
 // (No @packageDocumentation comment for this package)
 
