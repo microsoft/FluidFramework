@@ -1288,6 +1288,17 @@ describe("ModularChangeFamily", () => {
 			return tryGetFromNestedMap(nodeMap, major, minor);
 		};
 
+		it("preserves no-change constraints", () => {
+			const input: ModularChangeset = {
+				...Change.empty(),
+				noChangeConstraint: { violated: false },
+				noChangeConstraintOnRevert: { violated: false },
+			};
+
+			const updated = updateRefreshers(input, getDetachedNode, []);
+			assert.deepEqual(updated, input);
+		});
+
 		it("preserves relevant refreshers that are present in the input", () => {
 			const input: ModularChangeset = {
 				...Change.empty(),

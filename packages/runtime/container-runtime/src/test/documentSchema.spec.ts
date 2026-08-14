@@ -283,7 +283,7 @@ describe("Runtime", () => {
 			0, // snapshotSequenceNumber
 			undefined, // old schema,
 			featuresModified,
-			() => assert(false, "no schema changes!"), // onSchemaChange
+			() => assert.fail("no schema changes!"), // onSchemaChange
 			{ minVersionForCollab: defaultMinVersionForCollab }, // info,
 			logger,
 			false,
@@ -596,7 +596,7 @@ describe("Runtime", () => {
 			undefined, // old schema,
 			{ ...features, idCompressorMode: undefined, compressionLz4: false },
 			() => {
-				assert(false, "no changes!");
+				assert.fail("no changes!");
 			}, // onSchemaChange
 			{ minVersionForCollab: defaultMinVersionForCollab }, // info
 			logger,
@@ -615,7 +615,7 @@ describe("Runtime", () => {
 			newSchema, // old schema,
 			{ ...features, idCompressorMode: undefined, compressionLz4: false },
 			() => {
-				assert(false, "no changes!");
+				assert.fail("no changes!");
 			}, // onSchemaChange
 			{ minVersionForCollab: defaultMinVersionForCollab }, // info
 			logger,

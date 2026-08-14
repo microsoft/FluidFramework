@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/internal";
 import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 
 import {
@@ -132,7 +132,7 @@ export function makeEditManagerCodecBuilder<TChangeset>(): VersionDispatchingCod
  * with the provided change codec tree as a child.
  */
 export function getCodecTreeForEditManagerFormatWithChange(
-	clientVersion: MinimumVersionForCollab,
+	clientVersion: OldestSupportedClientVersion,
 	changeFormat: CodecTree,
 ): CodecTree {
 	const builder = makeEditManagerCodecBuilder();
