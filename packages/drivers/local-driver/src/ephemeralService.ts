@@ -18,16 +18,17 @@ import {
 	type ErasedBaseType,
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import type {
-	DataStoreKind,
-	DataStoreRegistry,
-	FluidContainerAttached,
-	FluidContainerWithService,
-	Registry,
-	ServiceClient,
-	ServiceOptions,
+import {
+	featureVersion,
+	type DataStoreKind,
+	type DataStoreRegistry,
+	type FluidContainerAttached,
+	type FluidContainerWithService,
+	type OldestSupportedServiceClientVersion,
+	type Registry,
+	type ServiceClient,
+	type ServiceOptions,
 } from "@fluidframework/driver-definitions/internal";
-import { featureVersion } from "@fluidframework/driver-definitions/internal";
 import {
 	type ContainerRuntimeLoader,
 	type ContainerRuntimeLoaderParams,
@@ -130,6 +131,10 @@ export function getDefaultEphemeralService(): EphemeralService {
 export interface LocalServiceOptions<TService extends LocalService = LocalService>
 	extends ServiceOptions {
 	/**
+	 * {@inheritdoc @fluidframework/driver-definitions#ServiceOptions.oldestSupportedClient}
+	 */
+	readonly oldestSupportedClient: OldestSupportedServiceClientVersion;
+	/**
 	 * The service instance to connect to.
 	 */
 	readonly service: TService;
@@ -201,7 +206,7 @@ export interface LocalService<out TClient extends ServiceClient = LocalServiceCl
  * This is separated out from the actual {@link @fluidframework/driver-definitions#ServiceClient} object so that it's possible to create multiple service clients
  * connected to the same service.
  * Doing so is rarely necessary, but would be needed to test multiple clients collaborating on the same
- * document with different minVersionForCollaboration values.
+ * document with different `oldestSupportedClient` values.
  * This also exposes a place to put APIs for preloading and exporting document contents in the future.
  *
  * This is an erased type: its only implementation is the module-private `LocalServiceImplementation`, which holds
@@ -282,8 +287,7 @@ class LocalServiceImplementation
 		options?: Partial<ServiceOptions>,
 	): LocalServiceClientImplementation<LocalServiceImplementation> {
 		const finalOptions: LocalServiceOptions<LocalServiceImplementation> = {
-			minVersionForCollaboration:
-				options?.minVersionForCollaboration ?? featureVersion(pkgVersion),
+			oldestSupportedClient: options?.oldestSupportedClient ?? featureVersion(pkgVersion),
 			service: this,
 		};
 		return new LocalServiceClientImplementation(finalOptions);
@@ -514,7 +518,7 @@ export class EphemeralServiceContainer<TData>
 			documentServiceFactory: options.service.getDocumentServiceFactory(),
 			codeLoader: makeCodeLoader(
 				registry,
-				options.minVersionForCollaboration,
+				options.oldestSupportedClient,
 				containerRuntimeLoader,
 				root,
 			),
@@ -541,7 +545,7 @@ export class EphemeralServiceContainer<TData>
 			documentServiceFactory: options.service.getDocumentServiceFactory(),
 			codeLoader: makeCodeLoader(
 				registry,
-				options.minVersionForCollaboration,
+				options.oldestSupportedClient,
 				containerRuntimeLoader,
 			),
 		});

@@ -13,6 +13,7 @@ import { validateUsageError } from "@fluidframework/test-runtime-utils/internal"
 
 import { asAlpha } from "../../api.js";
 import {
+	createAnnouncedVisitor,
 	type Revertible,
 	rootFieldKey,
 	RevertibleStatus,
@@ -55,7 +56,7 @@ import {
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { stringSchema } from "../../simple-tree/leafNodeSchema.js";
-import { brand } from "../../util/index.js";
+import { brand, Breakable } from "../../util/index.js";
 import {
 	TestTreeProviderLite,
 	buildTestForest,
@@ -2131,6 +2132,20 @@ describe("sharedTreeView", () => {
 		});
 	});
 
+	itView("breaks the checkout when an announced visitor throws", ({ view, tree }) => {
+		const error = new Error("Announced visitor failure");
+		tree.forest.registerAnnouncedVisitor(() =>
+			createAnnouncedVisitor({
+				afterCreate: () => {
+					throw error;
+				},
+			}),
+		);
+
+		assert.throws(() => view.root.insertAtEnd("x"), error);
+		assert.throws(() => view.root, validateUsageError(/invalid state/));
+	});
+
 	describe("fork breaker isolation", () => {
 		const sf = new SchemaFactory("fork isolation test schema");
 		const config = new TreeViewConfiguration({ schema: sf.number });
@@ -2307,6 +2322,7 @@ function itView<
 		logger: IMockLoggerExt;
 	} {
 		const logger = createMockLoggerExt();
+		const breaker = new Breakable("createTreeCheckout", logger);
 
 		const schema = new TreeStoredSchemaRepository();
 		const checkout = createTreeCheckout(
@@ -2314,9 +2330,8 @@ function itView<
 			mintRevisionTag,
 			testRevisionTagCodec,
 			{
-				forest: buildTestForest({ additionalAsserts: true, schema }),
+				forest: buildTestForest({ additionalAsserts: true, schema, breaker }),
 				schema,
-				logger,
 			},
 		);
 		const view = new SchematizingSimpleTreeView<TRootSchema>(

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidLoadable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
@@ -152,7 +152,6 @@ export class SharedTreeCore<
 		public readonly sharedObject: IChannelView & IFluidLoadable,
 		public readonly serializer: IFluidSerializer,
 		public readonly submitLocalMessage: (content: unknown, localOpMetadata?: unknown) => void,
-		logger: ITelemetryBaseLogger | undefined,
 		summarizables: readonly Summarizable[],
 		protected readonly changeFamily: ChangeFamily<TEditor, TChange, TChangeProcessingContext>,
 		options: SharedTreeCoreOptionsInternal,
@@ -175,6 +174,8 @@ export class SharedTreeCore<
 			schema,
 			policy: schemaPolicy,
 		};
+
+		const logger = breaker.logger;
 
 		const rebaseLogger = createChildLogger({
 			logger,

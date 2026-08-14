@@ -179,7 +179,7 @@
 		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.18.2",
+		"@arethetypeswrong/cli": "^0.18.5",
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
@@ -196,7 +196,7 @@
 		"@fluidframework/local-driver": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
-		"@fluidframework/tree-previous": "npm:@fluidframework/tree@2.112.0",
+		"@fluidframework/tree-previous": "npm:@fluidframework/tree@2.114.0",
 		"@microsoft/api-extractor": "7.58.1",
 		"@types/diff": "^3.5.1",
 		"@types/easy-table": "^0.0.32",

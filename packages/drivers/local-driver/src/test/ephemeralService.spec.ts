@@ -17,7 +17,7 @@ import {
 	type LocalService,
 } from "../ephemeralService.js";
 
-const options = { minVersionForCollaboration: "2.20.0" } as const;
+const options = { oldestSupportedClient: "2.20.0" } as const;
 const stubFactory = makeStubDataStoreKind("ephemeral-test-stub");
 
 describe("EphemeralService", () => {
