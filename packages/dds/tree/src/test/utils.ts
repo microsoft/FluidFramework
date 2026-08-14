@@ -897,7 +897,6 @@ function createCheckoutWithContent(
 			...args,
 			forest,
 			schema,
-			breaker,
 		},
 	);
 	return { checkout, logger };
@@ -936,9 +935,10 @@ export function buildTestForest(options: {
 	schema?: TreeStoredSchemaRepository;
 	additionalAsserts: boolean;
 	roots?: MapTree;
+	breaker?: Breakable;
 }): IEditableForest {
 	return new ObjectForest(
-		new Breakable("buildTestForest"),
+		options.breaker ?? new Breakable("buildTestForest"),
 		options.schema,
 		undefined,
 		options.additionalAsserts,

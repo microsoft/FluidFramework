@@ -322,7 +322,6 @@ export class SharedTreeKernel
 			fieldBatchCodec,
 			removedRoots,
 			chunkCompressionStrategy: options.treeEncodeType,
-			breaker: this.breaker,
 		});
 
 		this.registerSharedBranchForEditing("main", this.checkout);
@@ -740,6 +739,7 @@ export const ForestTypeOptimized = toForestType(
 			makeTreeChunker(schema, defaultSchemaPolicy, shouldEncodeIncrementally),
 			undefined,
 			idCompressor,
+			breaker,
 		),
 );
 
@@ -766,6 +766,7 @@ export const ForestTypeExpensiveDebug = toForestType(
 				makeTreeChunker(schema, defaultSchemaPolicy, shouldEncodeIncrementally),
 				undefined,
 				idCompressor,
+				breaker,
 			),
 			buildForest(breaker, schema, undefined, true),
 		),
