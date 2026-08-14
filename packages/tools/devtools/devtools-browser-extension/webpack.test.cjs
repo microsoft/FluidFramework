@@ -14,7 +14,7 @@ const componentName = pkg.name.slice(1);
 module.exports = (env) => {
 	return {
 		entry: {
-			app: "./e2e-tests/app/app.tsx",
+			app: "./test/app/app.tsx",
 		},
 		resolve: {
 			extensionAlias: {
@@ -38,14 +38,14 @@ module.exports = (env) => {
 		},
 		output: {
 			filename: "[name].bundle.js",
-			path: path.resolve("./e2e-tests/app", "dist"),
+			path: path.resolve("./test/app", "dist"),
 			library: "[name]",
 			devtoolNamespace: componentName,
 			libraryTarget: "umd",
 		},
 		devServer: {
 			static: {
-				directory: path.join("./e2e-tests/app"),
+				directory: path.join("./test/app"),
 			},
 		},
 		plugins: [
@@ -59,7 +59,7 @@ module.exports = (env) => {
 				silent: Boolean(process.env.CI || process.env.TF_BUILD),
 			}),
 			new HtmlWebpackPlugin({
-				template: "./e2e-tests/app/index.html",
+				template: "./test/app/index.html",
 			}),
 		],
 		mode: "development",
