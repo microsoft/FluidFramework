@@ -140,6 +140,13 @@ export function getConfigForMinVersionForCollabIterable<T>(
 	minVersionForCollab: OldestSupportedClientVersion,
 	entries: Iterable<readonly [MinimumMinorSemanticVersion | OldestSupportedClientVersion, T]>, // [[typeof lowestMinVersionForCollab, T], ...[OldestSupportedClientVersion, T][]],
 ): T {
+	// Runtimes predating Client 3.0 can still provide this internal sentinel to newer
+	// datastore/DDS layers. It is no longer accepted as a public input, but it represents
+	// the lowest supported 2.x behavior for format selection.
+	const normalizedMinVersionForCollab =
+		String(minVersionForCollab) === "2.0.0-defaults"
+			? lowestMinVersionForCollab
+			: minVersionForCollab;
 	// Validate and strongly type the versions from the configMap.
 	const versions: [OldestSupportedClientVersion, T][] = Array.from(
 		entries,
@@ -148,7 +155,7 @@ export function getConfigForMinVersionForCollabIterable<T>(
 			return [version, value];
 		},
 	);
-	return (selectVersionRoundedDown(minVersionForCollab, versions) ??
+	return (selectVersionRoundedDown(normalizedMinVersionForCollab, versions) ??
 		fail(0xcb8 /* No config map entry for version */))[1];
 }
 
