@@ -38,6 +38,7 @@ import {
 	aboveRootPlaceholder,
 	combineVisitors,
 	deepCopyMapTree,
+	makeBreakingVisitor,
 	rootFieldKey,
 } from "../../core/index.js";
 import {
@@ -90,6 +91,7 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 
 	readonly #roots: MutableMapTree;
 	public get roots(): MapTree {
+		this.breaker.use();
 		return this.#roots;
 	}
 
@@ -117,10 +119,12 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 	}
 
 	public get isEmpty(): boolean {
+		this.breaker.use();
 		return this.roots.fields.size === 0;
 	}
 
 	public clone(schema: TreeStoredSchemaSubscription, breaker?: Breakable): ObjectForest {
+		this.breaker.use();
 		return new ObjectForest(
 			breaker ?? this.breaker,
 			schema,
@@ -131,6 +135,7 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 	}
 
 	public chunkField(cursor: ITreeCursorSynchronous): TreeChunk[] {
+		this.breaker.use();
 		return chunkField(cursor, { idCompressor: undefined, policy: defaultChunkPolicy });
 	}
 
@@ -174,6 +179,7 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 	}
 
 	public acquireVisitor(): DeltaVisitor {
+		this.breaker.use();
 		assert(
 			this.activeVisitor === undefined,
 			0x76c /* Must release existing visitor before acquiring another */,
@@ -331,9 +337,12 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 		for (const getVisitor of this.deltaVisitors) {
 			announcedVisitors.push(getVisitor());
 		}
-		const combinedVisitor = combineVisitors([forestVisitor, ...announcedVisitors]);
-		this.activeVisitor = combinedVisitor;
-		return combinedVisitor;
+		const visitor = combineVisitors([
+			makeBreakingVisitor(forestVisitor, this.breaker),
+			...announcedVisitors,
+		]);
+		this.activeVisitor = visitor;
+		return visitor;
 	}
 
 	public registerAnnouncedVisitor(visitor: () => AnnouncedVisitor): void {
@@ -368,6 +377,7 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 	}
 
 	public allocateCursor(source?: string): Cursor {
+		this.breaker.use();
 		return new Cursor(this, source);
 	}
 
@@ -375,6 +385,7 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 		destination: Anchor,
 		cursorToMove: ITreeSubscriptionCursor,
 	): TreeNavigationResult {
+		this.breaker.use();
 		const path = this.anchors.locate(destination);
 		if (path === undefined) {
 			return TreeNavigationResult.NotFound;
@@ -387,6 +398,7 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 		destination: FieldAnchor,
 		cursorToMove: ITreeSubscriptionCursor,
 	): TreeNavigationResult {
+		this.breaker.use();
 		if (destination.parent === undefined) {
 			this.moveCursorToPath(undefined, cursorToMove);
 		} else {
@@ -403,6 +415,7 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 		destination: UpPath | undefined,
 		cursorToMove: ITreeSubscriptionCursor,
 	): void {
+		this.breaker.use();
 		assert(
 			cursorToMove instanceof Cursor,
 			0x337 /* ObjectForest must only be given its own Cursor type */,
@@ -433,6 +446,7 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 	}
 
 	public getCursorAboveDetachedFields(): ITreeCursorSynchronous {
+		this.breaker.use();
 		return cursorForMapTreeNode(this.roots);
 	}
 }

@@ -554,12 +554,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 			// Case which doesn't update due to root being required
 			assert.throws(() => view.upgradeSchema(), validateUsageError(/cannot be upgraded/));
-
-			const reference = checkoutWithContent({
-				schema: emptySchema,
-				initialTree: fieldJsonCursor([]),
-			});
-			validateViewConsistency(reference, view.checkout);
+			assert.throws(() => view.root, validateUsageError(/invalid state by another error/));
 		});
 
 		it("update non-empty", () => {
