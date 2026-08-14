@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { testCompose } from "./compose.test.js";
-import { testFilterEdits } from "./filterEdits.test.js";
-import { testInvert } from "./invert.test.js";
-import { testMarkListFactory } from "./markListFactory.test.js";
-import { testRebase } from "./rebase.test.js";
-import { testRelevantRemovedRoots } from "./relevantRemovedRoots.test.js";
-import { testReplaceRevisions } from "./replaceRevisions.test.js";
+import { testCompose } from "./compose.spec.js";
+import { testFilterEdits } from "./filterEdits.spec.js";
+import { testInvert } from "./invert.spec.js";
+import { testMarkListFactory } from "./markListFactory.spec.js";
+import { testRebase } from "./rebase.spec.js";
+import { testRelevantRemovedRoots } from "./relevantRemovedRoots.spec.js";
+import { testReplaceRevisions } from "./replaceRevisions.spec.js";
 import {
 	testComposedSandwichRebasing,
 	testExamples,
@@ -17,13 +17,13 @@ import {
 	testSandwichComposing,
 	testSandwichRebasing,
 	testStateBasedRebaserAxioms,
-} from "./sequenceChangeRebaser.test.js";
-import { testCodecs } from "./sequenceFieldCodecs.test.js";
-import { testEditor } from "./sequenceFieldEditor.test.js";
-import { testSnapshots } from "./sequenceFieldSnapshots.test.js";
-import { testToDelta } from "./sequenceFieldToDelta.test.js";
-import { testUtils } from "./sequenceFieldUtils.test.js";
-import { testGetNestedChanges } from "./sequenceGetNestedChanges.test.js";
+} from "./sequenceChangeRebaser.spec.js";
+import { testCodecs } from "./sequenceFieldCodecs.spec.js";
+import { testEditor } from "./sequenceFieldEditor.spec.js";
+import { testSnapshots } from "./sequenceFieldSnapshots.spec.js";
+import { testToDelta } from "./sequenceFieldToDelta.spec.js";
+import { testUtils } from "./sequenceFieldUtils.spec.js";
+import { testGetNestedChanges } from "./sequenceGetNestedChanges.spec.js";
 
 describe("SequenceField", () => {
 	testEditor();
