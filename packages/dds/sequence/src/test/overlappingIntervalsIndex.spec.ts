@@ -160,6 +160,18 @@ describe("OverlappingIntervalsIndex", () => {
 			);
 		});
 
+		it("ignores adding the same interval twice", () => {
+			const interval = createTestInterval(10, 20);
+			index.add(interval);
+			index.add(interval);
+
+			assertIntervals(
+				index.findOverlappingIntervals(10, 20),
+				[interval],
+				"expected the interval to be stored only once",
+			);
+		});
+
 		it("ignores removal of an interval which was never added", () => {
 			const added = createTestInterval(10, 20);
 			index.add(added);

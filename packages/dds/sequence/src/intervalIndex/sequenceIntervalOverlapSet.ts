@@ -136,6 +136,9 @@ export class SequenceIntervalOverlapSet {
 	}
 
 	public add(interval: BaseSequenceInterval): void {
+		if (this.indexOf(interval) !== undefined) {
+			return;
+		}
 		this.ordered.splice(this.upperBound(interval, compareIntervals), 0, interval);
 		this.maxEndsStale = true;
 	}
