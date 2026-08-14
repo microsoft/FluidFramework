@@ -31,6 +31,8 @@ The rollout is:
    (`extractPersistedSchema` exposes the same opt-in, but only for dumping a schema snapshot: it does not upgrade a
    document.)
    Without that opt-in, `TreeView.upgradeSchema` leaves this staged change as a no-op.
+   This is the one schema upgrade which *narrows* the stored schema, so `TreeView.upgradeSchema` does not scan the
+   document: the application must ensure no document still has the field empty before enabling it.
 4. Version N+2 uses `sf.required(T)` and drops the staged marker. Only at this point does the field become
    non-optional in the TypeScript types.
 

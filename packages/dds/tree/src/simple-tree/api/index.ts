@@ -103,8 +103,10 @@ export { getSimpleSchema } from "./getSimpleSchema.js";
 export { checkSchemaCompatibility } from "./schemaCompatibilityTester.js";
 export {
 	computeUpgradeSchema,
+	computeUpgradeSchemas,
 	getAppliedStagedRequiredUpgrades,
 } from "./stagedRequiredUpgrades.js";
+export type { UpgradeSchemaProjection } from "./stagedRequiredUpgrades.js";
 export type {
 	Unenforced,
 	FieldSchemaAlphaUnsafe,

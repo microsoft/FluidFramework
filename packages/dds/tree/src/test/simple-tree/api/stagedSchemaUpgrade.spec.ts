@@ -644,6 +644,9 @@ describe("staged required upgrade", () => {
 	// Schema C: fully required number (the "after" state, once the stored schema has been tightened).
 	const schemaC = SchemaFactoryAlpha.required(SchemaFactoryAlpha.number);
 
+	const requiredUpgrade = schemaB.isStagedRequired;
+	assert(requiredUpgrade !== false);
+
 	/**
 	 * Produces the stored schema for `view` with the staged required upgrades explicitly enabled.
 	 * This is the operator-driven opt-in described by {@link SchemaStaticsAlpha.stagedRequired}.
@@ -709,7 +712,9 @@ describe("staged required upgrade", () => {
 		});
 
 		// The application explicitly opts into the staged upgrade, tightening the stored field to Required.
-		// This is deliberately not a superset change, so it does not go through `tryUpdateRootFieldSchema`.
+		// This test drives the projection directly against a `TestSchemaRepository`; the end-to-end path through
+		// `TreeView.upgradeSchema` is covered by
+		// "applies the tightening through TreeView.upgradeSchema once explicitly opted in".
 		stored.apply(tightenedStoredSchema(schemaB));
 
 		// Phase N+2 now works.
@@ -734,6 +739,98 @@ describe("staged required upgrade", () => {
 		// Clients from version N can no longer view the document. This is the documented operational
 		// precondition for enabling the tightening: they must already be extinct.
 		assert.equal(checkSchemaCompatibility(viewSchemaA, stored).canView, false);
+	});
+
+	it("applies the tightening through TreeView.upgradeSchema once explicitly opted in", () => {
+		const provider = new TestTreeProviderLite(4);
+		const [treeA, treeB1, treeB2, treeC] = provider.trees;
+		const synchronizeTrees = () => provider.synchronizeMessages();
+
+		// Phase N: a version N client creates the document, so the stored field is Optional.
+		const viewA = treeA.viewWith(new TreeViewConfiguration({ schema: schemaA }));
+		viewA.initialize(5);
+		synchronizeTrees();
+
+		// Phase N+1 without the opt in: `upgradeSchema` is a no-op and version N clients keep working.
+		const viewB1 = treeB1.viewWith(new TreeViewConfiguration({ schema: schemaB }));
+		assert.equal(viewB1.compatibility.canUpgrade, true);
+		assert.equal(viewB1.compatibility.isEquivalent, true);
+		viewB1.upgradeSchema();
+		synchronizeTrees();
+		assert.equal(
+			treeB1.kernel.checkout.storedSchema.rootFieldSchema.kind,
+			FieldKinds.optional.identifier,
+		);
+		assert.equal(viewA.compatibility.canView, true);
+		assert.equal(viewB1.root, 5);
+
+		// Step 3 of the documented migration: the application explicitly enables the staged upgrade and calls
+		// `upgradeSchema`, which tightens the stored field from Optional to Required.
+		const viewB2 = treeB2.viewWith(
+			new TreeViewConfigurationAlpha({
+				schema: schemaB,
+				stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(requiredUpgrade),
+			}),
+		);
+		assert.equal(viewB2.compatibility.canUpgrade, true);
+		// The tightening is a real change, so this is not reported as equivalent.
+		assert.equal(viewB2.compatibility.isEquivalent, false);
+		viewB2.upgradeSchema();
+		synchronizeTrees();
+
+		assert.equal(
+			treeB2.kernel.checkout.storedSchema.rootFieldSchema.kind,
+			FieldKinds.required.identifier,
+		);
+		assert.equal(viewB2.root, 5);
+
+		// Version N clients can no longer view the document: this is the documented operational precondition
+		// for performing step 3.
+		assert.equal(viewA.compatibility.canView, false);
+
+		// Step 4: a fully required view now matches the document exactly.
+		const viewC = treeC.viewWith(new TreeViewConfiguration({ schema: schemaC }));
+		assert.equal(viewC.compatibility.isEquivalent, true);
+		assert.equal(viewC.root, 5);
+
+		// A staged client which never opted in must not revert the tightening.
+		viewB1.upgradeSchema();
+		synchronizeTrees();
+		assert.equal(
+			treeB1.kernel.checkout.storedSchema.rootFieldSchema.kind,
+			FieldKinds.required.identifier,
+		);
+	});
+
+	it("still rejects an upgrade which narrows for reasons other than a staged required opt in", () => {
+		const provider = new TestTreeProviderLite(2);
+		const [treeA, treeB] = provider.trees;
+
+		// The document allows `number | string` at the root.
+		const viewWide = treeA.viewWith(
+			new TreeViewConfiguration({
+				schema: SchemaFactoryAlpha.optional([
+					SchemaFactoryAlpha.number,
+					SchemaFactoryAlpha.string,
+				]),
+			}),
+		);
+		viewWide.initialize(5);
+		provider.synchronizeMessages();
+
+		// A staged required view over just `number` narrows the allowed types, which is not something the
+		// staged required opt in permits.
+		const viewNarrow = treeB.viewWith(
+			new TreeViewConfigurationAlpha({
+				schema: schemaB,
+				stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(requiredUpgrade),
+			}),
+		);
+		assert.equal(viewNarrow.compatibility.canUpgrade, false);
+		assert.throws(
+			() => viewNarrow.upgradeSchema(),
+			/cannot be upgraded to the requested schema/,
+		);
 	});
 
 	it("reads a present value and reads undefined for an absent root", () => {

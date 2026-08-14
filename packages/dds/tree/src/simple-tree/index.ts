@@ -144,6 +144,8 @@ export {
 	type ConciseTree,
 	checkSchemaCompatibility,
 	computeUpgradeSchema,
+	computeUpgradeSchemas,
+	type UpgradeSchemaProjection,
 	getAppliedStagedRequiredUpgrades,
 	type Unenforced,
 	type System_Unsafe,

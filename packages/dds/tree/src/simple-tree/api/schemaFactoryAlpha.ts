@@ -209,7 +209,7 @@ export interface SchemaStaticsAlpha {
 		t: T,
 		props?: Omit<
 			FieldPropsAlpha<TCustomMetadata>,
-			"defaultProvider" | "stagedOptionalUpgrade"
+			"defaultProvider" | "stagedOptionalUpgrade" | "stagedRequiredUpgrade"
 		>,
 	) => FieldSchemaAlpha<
 		FieldKind.Optional,
@@ -231,7 +231,7 @@ export interface SchemaStaticsAlpha {
 		t: T,
 		props?: Omit<
 			FieldPropsAlpha<TCustomMetadata>,
-			"defaultProvider" | "stagedOptionalUpgrade"
+			"defaultProvider" | "stagedOptionalUpgrade" | "stagedRequiredUpgrade"
 		>,
 	) => FieldSchemaAlphaUnsafe<
 		FieldKind.Optional,
@@ -267,6 +267,9 @@ export interface SchemaStaticsAlpha {
 	 * {@link TreeView.upgradeSchema}. Without that explicit opt-in, {@link TreeView.upgradeSchema} leaves this staged
 	 * change as a no-op. ({@link extractPersistedSchema} exposes the same opt-in via its `includeStaged` parameter,
 	 * but that only dumps a schema snapshot for inspection: it does not upgrade a document.)
+	 * Unlike every other schema upgrade, this one *narrows* the stored schema, so the application must ensure the
+	 * precondition holds: {@link TreeView.upgradeSchema} does not scan the document, and tightening a document which
+	 * still has the field empty will leave that document out of schema.
 	 * 4. Deploy `sf.required(T)` and drop the staged marker. Only at this point does the field become non-optional in
 	 * the TypeScript types.
 	 *
@@ -294,7 +297,7 @@ export interface SchemaStaticsAlpha {
 		t: T,
 		props?: Omit<
 			FieldPropsAlpha<TCustomMetadata>,
-			"defaultProvider" | "stagedRequiredUpgrade"
+			"defaultProvider" | "stagedOptionalUpgrade" | "stagedRequiredUpgrade"
 		>,
 	) => FieldSchemaAlpha<
 		FieldKind.Optional,
@@ -317,7 +320,7 @@ export interface SchemaStaticsAlpha {
 		t: T,
 		props?: Omit<
 			FieldPropsAlpha<TCustomMetadata>,
-			"defaultProvider" | "stagedRequiredUpgrade"
+			"defaultProvider" | "stagedOptionalUpgrade" | "stagedRequiredUpgrade"
 		>,
 	) => FieldSchemaAlphaUnsafe<
 		FieldKind.Optional,
@@ -413,7 +416,10 @@ const withDefault = <
 
 const stagedOptional = <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 	t: T,
-	props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider" | "stagedOptionalUpgrade">,
+	props?: Omit<
+		FieldPropsAlpha<TCustomMetadata>,
+		"defaultProvider" | "stagedOptionalUpgrade" | "stagedRequiredUpgrade"
+	>,
 ): FieldSchemaAlpha<
 	FieldKind.Optional,
 	T,
@@ -423,13 +429,17 @@ const stagedOptional = <const T extends ImplicitAllowedTypes, const TCustomMetad
 	return createFieldSchema(FieldKind.Optional, t, {
 		defaultProvider: getDefaultProvider(() => []),
 		...props,
+		stagedRequiredUpgrade: undefined,
 		stagedOptionalUpgrade: createSchemaUpgrade(),
 	});
 };
 
 const stagedRequired = <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 	t: T,
-	props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider" | "stagedRequiredUpgrade">,
+	props?: Omit<
+		FieldPropsAlpha<TCustomMetadata>,
+		"defaultProvider" | "stagedOptionalUpgrade" | "stagedRequiredUpgrade"
+	>,
 ): FieldSchemaAlpha<
 	FieldKind.Optional,
 	T,
@@ -439,6 +449,7 @@ const stagedRequired = <const T extends ImplicitAllowedTypes, const TCustomMetad
 	return createFieldSchema(FieldKind.Optional, t, {
 		defaultProvider: getDefaultProvider(() => []),
 		...props,
+		stagedOptionalUpgrade: undefined,
 		stagedRequiredUpgrade: createSchemaUpgrade(),
 	});
 };

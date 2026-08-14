@@ -471,6 +471,10 @@ function getStoredFieldKind(
 		return f.kind;
 	}
 	const { isStagedOptional, isStagedRequired } = f;
+	assert(
+		!(isStagedOptional instanceof SchemaUpgrade && isStagedRequired instanceof SchemaUpgrade),
+		"A field cannot be both staged optional and staged required",
+	);
 	if (isStagedOptional instanceof SchemaUpgrade) {
 		// isStagedOptional is a SchemaUpgrade — use includeStagedOptional to decide the stored kind.
 		return options.includeStagedOptional(isStagedOptional) ? f.kind : FieldKind.Required;
