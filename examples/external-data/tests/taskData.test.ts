@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
 import { type ITaskData, assertValidTaskData } from "../src/model-interface/index.js";
 
 /**
@@ -17,12 +19,12 @@ describe("ITaskData", () => {
 					priority: 2,
 				},
 			};
-			expect(() => assertValidTaskData(input)).not.toThrow();
+			assert.doesNotThrow(() => assertValidTaskData(input));
 		});
 
 		it("Throws on invalid task data", () => {
 			const input = "42:Determine meaning of life:37";
-			expect(() => assertValidTaskData(input)).toThrow();
+			assert.throws(() => assertValidTaskData(input));
 		});
 	});
 });

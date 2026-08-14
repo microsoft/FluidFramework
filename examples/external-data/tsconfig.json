@@ -6,6 +6,6 @@
 		"noUncheckedIndexedAccess": false,
 		"exactOptionalPropertyTypes": false,
 	},
-	"include": ["src/**/*", "tests/**/*"],
+	"include": ["src/**/*", "tests/index.tsx", "tests/taskList.test.ts"],
 	"lib": ["dom"],
 }
