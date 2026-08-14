@@ -334,13 +334,11 @@ export function createTreeCheckout(
 		fieldBatchCodec?: FieldBatchCodec;
 		removedRoots?: DetachedFieldIndex;
 		chunkCompressionStrategy?: TreeCompressionStrategy;
-		breaker?: Breakable;
 		codecOptions?: Partial<CodecWriteOptions>;
 	},
 ): TreeCheckout {
-	const breaker = args?.breaker ?? new Breakable("TreeCheckout");
 	const schema = args?.schema ?? new TreeStoredSchemaRepository();
-	const forest = args?.forest ?? buildForest(breaker, schema);
+	const forest = args?.forest ?? buildForest(new Breakable("TreeCheckout"), schema);
 	const defaultCodecOptions: CodecWriteOptions = {
 		jsonValidator: FormatValidatorNoOp,
 		minVersionForCollab: FluidClientVersion.v2_0,

@@ -2322,6 +2322,7 @@ function itView<
 		logger: IMockLoggerExt;
 	} {
 		const logger = createMockLoggerExt();
+		const breaker = new Breakable("createTreeCheckout", logger);
 
 		const schema = new TreeStoredSchemaRepository();
 		const checkout = createTreeCheckout(
@@ -2329,9 +2330,8 @@ function itView<
 			mintRevisionTag,
 			testRevisionTagCodec,
 			{
-				forest: buildTestForest({ additionalAsserts: true, schema }),
+				forest: buildTestForest({ additionalAsserts: true, schema, breaker }),
 				schema,
-				breaker: new Breakable("createTreeCheckout", logger),
 			},
 		);
 		const view = new SchematizingSimpleTreeView<TRootSchema>(
