@@ -11,7 +11,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { TypedEventEmitter, Uint8ArrayToArrayBufferLike } from "@fluid-internal/client-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
 	IClient,
@@ -137,7 +137,7 @@ class InternalTestStorage implements IDocumentStorageService {
 	}
 	async readBlob(id: string): Promise<ArrayBufferLike> {
 		return id === misotestid
-			? new TextEncoder().encode(abcContent)
+			? Uint8ArrayToArrayBufferLike(new TextEncoder().encode(abcContent))
 			: getHeaderContent(this._uploadedSummary!);
 	}
 	async uploadSummaryWithContext(
@@ -581,9 +581,8 @@ async function testEncDecBinaryLoop(
 	}
 }
 
-function compareTwoBlobs(blob1: ArrayBufferLike, blob2: ArrayBufferLike): boolean {
+function compareTwoBlobs(blob1: ArrayBufferLike, blob2View: Uint8Array): boolean {
 	const blob1View = new Uint8Array(blob1);
-	const blob2View = new Uint8Array(blob2);
 	if (blob1View.length !== blob2View.length) {
 		return false;
 	}
@@ -609,7 +608,7 @@ async function checkEncDecConfigurable(
 		ackHandle: "test",
 	});
 	await storage.getSnapshotTree({ id: "test", treeId: "test" }, "test");
-	const blob: ArrayBufferLike = await storage.readBlob("abcd");
+	const blob = await storage.readBlob("abcd");
 	if (typeof originBlob === "string") {
 		const blobStr = new TextDecoder().decode(blob);
 		assert(
