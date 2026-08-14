@@ -16,21 +16,6 @@ export {
 	createPropertyTrackingAndInsertionAttributionPolicyFactory,
 } from "./attributionPolicy.js";
 export { Client, type IClientEvents } from "./client.js";
-export {
-	type ConflictAction,
-	type Dictionary,
-	type IRBAugmentation,
-	type IRBMatcher,
-	type KeyComparer,
-	type Property,
-	type PropertyAction,
-	type QProperty,
-	RBColor,
-	type RBNode,
-	type RBNodeActions,
-	RedBlackTree,
-	type SortedDictionary,
-} from "./collections/index.js";
 export { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants.js";
 export {
 	createDetachedLocalReferencePosition,
