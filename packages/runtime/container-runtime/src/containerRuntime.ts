@@ -765,10 +765,10 @@ export interface UnknownIncomingTypedMessage extends TypedMessage {
 type UnsequencedSignalEnvelope = Omit<ISignalEnvelope, "clientBroadcastSignalSequenceNumber">;
 
 /**
- * This object holds the parameters necessary for the {@link loadContainerRuntime} function.
+ * This object holds the parameters necessary for the `loadContainerRuntime` function.
  * @legacy @beta
  */
-export type LoadContainerRuntimeParams = {
+export interface LoadContainerRuntimeParams {
 	/**
 	 * Context of the container.
 	 */
@@ -802,54 +802,54 @@ export type LoadContainerRuntimeParams = {
 	 * @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 * */
 	requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
-} & (
-	| {
-			/**
-			 * Oldest version of Fluid Framework client that must be able to open and process
-			 * documents written by this container runtime.
-			 * @remarks
-			 * Choosing an older version may limit the features and write formats the application can
-			 * use to those supported by that version. The value must be valid SemVer.
-			 *
-			 * The inputted version will be used to determine the default configuration for
-			 * {@link IContainerRuntimeOptionsInternal} to ensure compatibility with the specified
-			 * version.
-			 *
-			 * Exactly one of `oldestSupportedClient` or the deprecated `minVersionForCollab` must
-			 * be provided.
-			 *
-			 * @example
-			 * oldestSupportedClient: "2.0.0"
-			 *
-			 * @privateRemarks
-			 * Used to determine the default configuration for {@link IContainerRuntimeOptionsInternal} that affect the document schema.
-			 * For example, let's say that feature `foo` was added in 2.0 which introduces a new op type. Additionally, option `bar`
-			 * was added to `IContainerRuntimeOptionsInternal` in 2.0 to enable/disable `foo` since clients prior to 2.0 would not
-			 * understand the new op type. If a customer were to set oldestSupportedClient to 2.0.0, then `bar` would be set to
-			 * enable `foo` by default. If a customer were to set oldestSupportedClient to 1.0.0, then `bar` would be set to
-			 * disable `foo` by default.
-			 */
-			oldestSupportedClient: OldestSupportedClientVersion;
-			minVersionForCollab?: never;
-	  }
-	| {
-			oldestSupportedClient?: never;
-			/**
-			 * Oldest version of Fluid Framework client that must be able to open and process
-			 * documents written by this container runtime.
-			 *
-			 * @remarks
-			 * See `oldestSupportedClient` for compatibility implications.
-			 *
-			 * Exactly one of `oldestSupportedClient` or `minVersionForCollab` must be provided.
-			 *
-			 * @deprecated 2.116.0. To be removed in 3.10.0. Use
-			 * `oldestSupportedClient` instead.
-			 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
-			 */
-			minVersionForCollab: OldestSupportedClientVersion;
-	  }
-);
+
+	/**
+	 * Oldest version of Fluid Framework client that must be able to open and process
+	 * documents written by this container runtime.
+	 * @remarks
+	 * Choosing an older version may limit the features and write formats the application can
+	 * use to those supported by that version. The value must be valid SemVer.
+	 *
+	 * The inputted version will be used to determine the default configuration for
+	 * {@link IContainerRuntimeOptionsInternal} to ensure compatibility with the specified
+	 * version.
+	 *
+	 * @example
+	 * oldestSupportedClient: "2.0.0"
+	 *
+	 * @privateRemarks
+	 * Used to determine the default configuration for {@link IContainerRuntimeOptionsInternal} that affect the document schema.
+	 */
+	oldestSupportedClient: OldestSupportedClientVersion;
+
+	/**
+	 * This property must not be provided. Use `oldestSupportedClient` instead.
+	 *
+	 * @deprecated 2.116.0. To be removed in 3.10.0. Use `oldestSupportedClient` instead.
+	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
+	 */
+	minVersionForCollab?: never;
+}
+
+/**
+ * Parameters using the deprecated compatibility property.
+ * @internal
+ */
+export type DeprecatedLoadContainerRuntimeParams = Omit<
+	LoadContainerRuntimeParams,
+	"oldestSupportedClient" | "minVersionForCollab"
+> & {
+	readonly oldestSupportedClient?: never;
+	readonly minVersionForCollab: OldestSupportedClientVersion;
+};
+
+/**
+ * Parameters accepted internally while the deprecated property remains supported.
+ * @internal
+ */
+export type LoadContainerRuntimeParamsInternal =
+	| LoadContainerRuntimeParams
+	| DeprecatedLoadContainerRuntimeParams;
 
 /**
  * Internal container runtime load parameters.
@@ -857,7 +857,7 @@ export type LoadContainerRuntimeParams = {
  * @internal
  */
 export type LoadContainerRuntime2Params<
-	T extends LoadContainerRuntimeParams = LoadContainerRuntimeParams,
+	T extends LoadContainerRuntimeParamsInternal = LoadContainerRuntimeParamsInternal,
 > = T extends unknown
 	? Omit<T, "registryEntries" | "runtimeOptions"> & {
 			/**
@@ -883,8 +883,26 @@ export type LoadContainerRuntime2Params<
  * @returns A runtime which provides all the functionality necessary to bind with the loader layer via the {@link @fluidframework/container-definitions#IRuntime} interface and provide a runtime environment via the {@link @fluidframework/container-runtime-definitions#IContainerRuntime} interface.
  * @legacy @beta
  */
-export async function loadContainerRuntime(
+export function loadContainerRuntime(
 	params: LoadContainerRuntimeParams,
+): Promise<IContainerRuntime & IRuntime>;
+
+/**
+ * Overload accepting the deprecated `minVersionForCollab` property.
+ * @legacy @beta
+ */
+export function loadContainerRuntime(
+	params: Omit<LoadContainerRuntimeParams, "oldestSupportedClient" | "minVersionForCollab"> & {
+		readonly oldestSupportedClient?: never;
+		/**
+		 * @deprecated 2.116.0. To be removed in 3.10.0. Pass `oldestSupportedClient` instead.
+		 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
+		 */
+		readonly minVersionForCollab: OldestSupportedClientVersion;
+	},
+): Promise<IContainerRuntime & IRuntime>;
+export async function loadContainerRuntime(
+	params: LoadContainerRuntimeParamsInternal,
 ): Promise<IContainerRuntime & IRuntime> {
 	return ContainerRuntime.loadRuntime({
 		...params,
@@ -893,7 +911,7 @@ export async function loadContainerRuntime(
 }
 
 /**
- * Alpha variant of {@link loadContainerRuntime} that returns the runtime in an
+ * Alpha variant of `loadContainerRuntime` that returns the runtime in an
  * extendable object, allowing additional properties to be added in the future.
  *
  * @param params - An object which specifies all required and optional params necessary to instantiate a runtime.
@@ -905,7 +923,29 @@ export async function loadContainerRuntime(
  *
  * @legacy @alpha
  */
-export async function loadContainerRuntimeAlpha(params: LoadContainerRuntimeParams): Promise<{
+export function loadContainerRuntimeAlpha(params: LoadContainerRuntimeParams): Promise<{
+	runtime: IContainerRuntime & IRuntime;
+}>;
+
+/**
+ * Overload accepting the deprecated `minVersionForCollab` property.
+ * @legacy @alpha
+ */
+export function loadContainerRuntimeAlpha(
+	params: Omit<LoadContainerRuntimeParams, "oldestSupportedClient" | "minVersionForCollab"> & {
+		readonly oldestSupportedClient?: never;
+		/**
+		 * @deprecated 2.116.0. To be removed in 3.10.0. Pass `oldestSupportedClient` instead.
+		 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
+		 */
+		readonly minVersionForCollab: OldestSupportedClientVersion;
+	},
+): Promise<{
+	runtime: IContainerRuntime & IRuntime;
+}>;
+export async function loadContainerRuntimeAlpha(
+	params: LoadContainerRuntimeParamsInternal,
+): Promise<{
 	runtime: IContainerRuntime & IRuntime;
 }> {
 	return ContainerRuntime.loadRuntime2({
@@ -979,11 +1019,7 @@ export class ContainerRuntime
 	 * `loadRuntime` could be removed (replaced by `loadRuntime2` which could be renamed back to `loadRuntime`).
 	 */
 	public static async loadRuntime(
-		params: Omit<LoadContainerRuntimeParams, "registryEntries" | "runtimeOptions"> & {
-			registry: IFluidDataStoreRegistry;
-			containerRuntimeCtor?: typeof ContainerRuntime;
-			runtimeOptions?: IContainerRuntimeOptionsInternal;
-		},
+		params: LoadContainerRuntime2Params,
 	): Promise<ContainerRuntime> {
 		return ContainerRuntime.loadRuntime2(params).then((r) => r.runtime);
 	}

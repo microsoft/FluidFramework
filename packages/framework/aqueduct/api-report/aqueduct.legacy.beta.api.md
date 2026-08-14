@@ -7,6 +7,11 @@
 // @beta @legacy
 export class BaseContainerRuntimeFactory extends RuntimeFactoryHelper implements IProvideFluidDataStoreRegistry {
     constructor(props: BaseContainerRuntimeFactoryProps);
+    // @deprecated
+    constructor(props: Omit<BaseContainerRuntimeFactoryProps, "oldestSupportedClient" | "minVersionForCollab"> & {
+        readonly oldestSupportedClient?: never;
+        readonly minVersionForCollab: OldestSupportedClientVersion;
+    });
     protected containerHasInitialized(runtime: IContainerRuntime): Promise<void>;
     protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry;
@@ -16,23 +21,27 @@ export class BaseContainerRuntimeFactory extends RuntimeFactoryHelper implements
 }
 
 // @beta @legacy @input
-export type BaseContainerRuntimeFactoryProps = {
-    registryEntries: NamedFluidDataStoreRegistryEntries;
+export interface BaseContainerRuntimeFactoryProps {
+    // @deprecated (undocumented)
     dependencyContainer?: IFluidDependencySynthesizer;
+    // @deprecated
+    minVersionForCollab?: never;
+    oldestSupportedClient: OldestSupportedClientVersion;
+    provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+    registryEntries: NamedFluidDataStoreRegistryEntries;
+    // @deprecated
     requestHandlers?: RuntimeRequestHandler[];
     runtimeOptions?: IContainerRuntimeOptions;
-    provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
-} & ({
-    oldestSupportedClient: OldestSupportedClientVersion;
-    minVersionForCollab?: never;
-} | {
-    oldestSupportedClient?: never;
-    minVersionForCollab: OldestSupportedClientVersion;
-});
+}
 
 // @beta @legacy
 export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRuntimeFactory {
     constructor(props: ContainerRuntimeFactoryWithDefaultDataStoreProps);
+    // @deprecated
+    constructor(props: Omit<ContainerRuntimeFactoryWithDefaultDataStoreProps, "oldestSupportedClient" | "minVersionForCollab"> & {
+        readonly oldestSupportedClient?: never;
+        readonly minVersionForCollab: OldestSupportedClientVersion;
+    });
     protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
     // (undocumented)
     static readonly defaultDataStoreId = "default";
@@ -41,16 +50,11 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 }
 
 // @beta @legacy
-export type ContainerRuntimeFactoryWithDefaultDataStoreProps = Omit<BaseContainerRuntimeFactoryProps, "minVersionForCollab" | "oldestSupportedClient" | "provideEntryPoint"> & {
+export interface ContainerRuntimeFactoryWithDefaultDataStoreProps extends Omit<BaseContainerRuntimeFactoryProps, "provideEntryPoint"> {
+    // (undocumented)
     defaultFactory: IFluidDataStoreFactory;
     provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
-} & ({
-    oldestSupportedClient: OldestSupportedClientVersion;
-    minVersionForCollab?: never;
-} | {
-    oldestSupportedClient?: never;
-    minVersionForCollab: OldestSupportedClientVersion;
-});
+}
 
 // @beta @legacy
 export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> extends PureDataObject<I> {

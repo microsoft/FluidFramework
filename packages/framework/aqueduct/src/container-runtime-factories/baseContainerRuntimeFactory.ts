@@ -40,7 +40,7 @@ import {
  * @legacy
  * @beta
  */
-export type BaseContainerRuntimeFactoryProps = {
+export interface BaseContainerRuntimeFactoryProps {
 	/**
 	 * The data store registry for containers produced.
 	 */
@@ -64,41 +64,38 @@ export type BaseContainerRuntimeFactoryProps = {
 	 * created with this factory
 	 */
 	provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
-} & (
-	| {
-			/**
-			 * Oldest version of Fluid Framework client that must be able to open and process
-			 * documents written by this container runtime.
-			 * @remarks
-			 * Choosing an older version may limit the features and write formats the application can
-			 * use to those supported by that version.
-			 *
-			 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.oldestSupportedClient} for more details on this property.
-			 *
-			 * Exactly one of `oldestSupportedClient` or the deprecated `minVersionForCollab` must
-			 * be provided.
-			 */
-			oldestSupportedClient: OldestSupportedClientVersion;
-			minVersionForCollab?: never;
-	  }
-	| {
-			oldestSupportedClient?: never;
-			/**
-			 * Oldest version of Fluid Framework client that must be able to open and process
-			 * documents written by this container runtime.
-			 *
-			 * @remarks
-			 * See `oldestSupportedClient` for compatibility implications.
-			 *
-			 * Exactly one of `oldestSupportedClient` or `minVersionForCollab` must be provided.
-			 *
-			 * @deprecated 2.116.0. To be removed in 3.10.0. Use
-			 * `oldestSupportedClient` instead.
-			 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
-			 */
-			minVersionForCollab: OldestSupportedClientVersion;
-	  }
-);
+
+	/**
+	 * Oldest version of Fluid Framework client that must be able to open and process
+	 * documents written by this container runtime.
+	 * @remarks
+	 * Choosing an older version may limit the features and write formats the application can
+	 * use to those supported by that version.
+	 *
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.oldestSupportedClient} for more details on this property.
+	 */
+	oldestSupportedClient: OldestSupportedClientVersion;
+
+	/**
+	 * This property must not be provided. Use `oldestSupportedClient` instead.
+	 *
+	 * @deprecated 2.116.0. To be removed in 3.10.0. Use `oldestSupportedClient` instead.
+	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
+	 */
+	minVersionForCollab?: never;
+}
+
+type DeprecatedBaseContainerRuntimeFactoryProps = Omit<
+	BaseContainerRuntimeFactoryProps,
+	"oldestSupportedClient" | "minVersionForCollab"
+> & {
+	readonly oldestSupportedClient?: never;
+	readonly minVersionForCollab: OldestSupportedClientVersion;
+};
+
+type BaseContainerRuntimeFactoryPropsInternal =
+	| BaseContainerRuntimeFactoryProps
+	| DeprecatedBaseContainerRuntimeFactoryProps;
 
 /**
  * BaseContainerRuntimeFactory produces container runtimes with the specified data store and service registries,
@@ -127,7 +124,21 @@ export class BaseContainerRuntimeFactory
 	private readonly provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
 	private readonly oldestSupportedClient: OldestSupportedClientVersion;
 
-	public constructor(props: BaseContainerRuntimeFactoryProps) {
+	public constructor(props: BaseContainerRuntimeFactoryProps);
+	/**
+	 * @deprecated 2.116.0. To be removed in 3.10.0. Pass `oldestSupportedClient` instead.
+	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
+	 */
+	public constructor(
+		props: Omit<
+			BaseContainerRuntimeFactoryProps,
+			"oldestSupportedClient" | "minVersionForCollab"
+		> & {
+			readonly oldestSupportedClient?: never;
+			readonly minVersionForCollab: OldestSupportedClientVersion;
+		},
+	);
+	public constructor(props: BaseContainerRuntimeFactoryPropsInternal) {
 		super();
 
 		this.registryEntries = props.registryEntries;

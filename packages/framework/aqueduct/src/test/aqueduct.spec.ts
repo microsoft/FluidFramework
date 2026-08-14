@@ -20,12 +20,24 @@ const commonProps = {
 describe("BaseContainerRuntimeFactory", () => {
 	const verifyVersionPropertiesAtCompileTime = (): void => {
 		const acceptVersionProperties = (_props: BaseContainerRuntimeFactoryProps): void => {};
+		interface ExtendedProps extends BaseContainerRuntimeFactoryProps {
+			readonly customProperty: boolean;
+		}
 		acceptVersionProperties({
 			...commonProps,
 			oldestSupportedClient: "2.0.0",
 		});
+		const extendedProps: ExtendedProps = {
+			...commonProps,
+			oldestSupportedClient: "2.0.0",
+			customProperty: true,
+		};
+		acceptVersionProperties(extendedProps);
+		// The canonical interface remains extendable, while deprecated old-only calls use the
+		// constructor overload below.
 		acceptVersionProperties({
 			...commonProps,
+			// @ts-expect-error -- the canonical interface requires oldestSupportedClient.
 			minVersionForCollab: "2.0.0",
 		});
 		// @ts-expect-error -- exactly one compatibility version property is required.
