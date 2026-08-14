@@ -7,8 +7,6 @@ import { Heap, type IComparer } from "@fluidframework/core-utils/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
-import { RedBlackTree } from "../collections/index.js";
-import { compareNumbers } from "../mergeTreeNodes.js";
 import { PriorPerspective } from "../perspective.js";
 import type { PropertySet } from "../properties.js";
 
@@ -32,7 +30,7 @@ export class TestServer extends TestClient {
 	seq = 1;
 	clients: TestClient[] = [];
 	clientSeqNumbers: Heap<ClientSeq> = new Heap<ClientSeq>(clientSeqComparer);
-	upstreamMap: RedBlackTree<number, number> = new RedBlackTree<number, number>(compareNumbers);
+	upstreamMap: Map<number, number> = new Map<number, number>();
 	constructor(options?: PropertySet) {
 		super(options);
 	}
@@ -63,15 +61,14 @@ export class TestServer extends TestClient {
 	// in upstream message
 	transformUpstreamMessage(msg: ISequencedDocumentMessage): void {
 		if (msg.referenceSequenceNumber > 0) {
-			msg.referenceSequenceNumber =
-				this.upstreamMap.get(msg.referenceSequenceNumber)?.data ?? 0;
+			msg.referenceSequenceNumber = this.upstreamMap.get(msg.referenceSequenceNumber) ?? 0;
 		}
 		msg.origin = {
 			id: "A",
 			sequenceNumber: msg.sequenceNumber,
 			minimumSequenceNumber: msg.minimumSequenceNumber,
 		};
-		this.upstreamMap.put(msg.sequenceNumber, this.seq);
+		this.upstreamMap.set(msg.sequenceNumber, this.seq);
 		msg.sequenceNumber = -1;
 	}
 
