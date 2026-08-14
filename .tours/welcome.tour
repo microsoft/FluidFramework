@@ -8,7 +8,7 @@
       "file": ".devcontainer/ai-agent/GETTING_STARTED.md",
       "line": 1,
       "title": "Welcome",
-      "description": "This is your AI-enabled codespace. It comes pre-configured with AI CLI tooling on top of the standard Fluid Framework development environment.\n\nThis tour will walk you through the AI-specific features. For full documentation, see the [AI-enabled Codespace wiki](https://github.com/microsoft/FluidFramework/wiki/AI%E2%80%90enabled-Codespace)."
+      "description": "This is your AI-enabled codespace. It comes pre-configured with AI CLI tooling on top of the standard Fluid Framework development environment.\n\nThis tour will walk you through the AI-specific features. For full documentation, see the [AI-enabled Codespace documentation](../docs/content/Development-Environment/AI-enabled-Codespace.md)."
     },
     {
       "file": ".devcontainer/ai-agent/GETTING_STARTED.md",
@@ -44,7 +44,7 @@
       "file": ".devcontainer/ai-agent/GETTING_STARTED.md",
       "line": 1,
       "title": "Next Steps",
-      "description": "You're all set! Here's what to do:\n\n1. Run `pnpm install:agency` and open a new terminal\n2. Try `dev`, `claude`, or `copilot` to start an AI-assisted session\n3. Check [DEV.md](./DEV.md) for the full development workflow\n\nFor more info, see the [AI-enabled Codespace wiki](https://github.com/microsoft/FluidFramework/wiki/AI%E2%80%90enabled-Codespace)."
+      "description": "You're all set! Here's what to do:\n\n1. Run `pnpm install:agency` and open a new terminal\n2. Try `dev`, `claude`, or `copilot` to start an AI-assisted session\n3. Check [DEV.md](./DEV.md) for the full development workflow\n\nFor more info, see the [AI-enabled Codespace documentation](../docs/content/Development-Environment/AI-enabled-Codespace.md)."
     }
   ]
 }

@@ -2,7 +2,7 @@
 
 This codespace is pre-configured for AI-agent-assisted development of the Fluid Framework. It includes [agency](https://aka.ms/agency), GitHub Copilot CLI, GitHub CLI, and SSH access.
 
-> For full documentation, see the [AI-enabled Codespace wiki page](https://github.com/microsoft/FluidFramework/wiki/AI%E2%80%90enabled-Codespace).
+> For full documentation, see [AI-enabled Codespace](../../docs/content/Development-Environment/AI-enabled-Codespace.md).
 
 ## First-time Setup
 
@@ -70,7 +70,7 @@ dev --mcp 'sharepoint'
 
 ## More Information
 
-- [AI-enabled Codespace wiki](https://github.com/microsoft/FluidFramework/wiki/AI%E2%80%90enabled-Codespace) — Full documentation for this codespace profile
+- [AI-enabled Codespace documentation](../../docs/content/Development-Environment/AI-enabled-Codespace.md) — Full documentation for this codespace profile
 - [DEV.md](../../DEV.md) — Development setup, build commands, and workflow guide
 - [CONTRIBUTING.md](../../CONTRIBUTING.md) — Contribution guidelines
 - [FluidFramework.com](https://fluidframework.com) — Documentation and API reference
