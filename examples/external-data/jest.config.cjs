@@ -18,7 +18,7 @@ module.exports = {
 	testMatch: ["<rootDir>/test/**/*.test.ts"],
 	testPathIgnorePatterns: ["/node_modules/", "dist"],
 	transform: {
-		"^.+\\.ts?$": "ts-jest",
+		"^.+\\.ts?$": ["ts-jest", { tsconfig: "<rootDir>/test/tsconfig.json" }],
 	},
 	moduleNameMapper: {
 		// Remove explicit .js from local paths to allow jest to find the .ts* files

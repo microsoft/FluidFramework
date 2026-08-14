@@ -7,4 +7,6 @@
 
 const getFluidTestMochaConfig = require("@fluid-internal/mocha-test-setup/mocharc-common");
 
-module.exports = getFluidTestMochaConfig(__dirname);
+const config = getFluidTestMochaConfig(__dirname);
+config.reporter = require.resolve("mocha-multi-reporters");
+module.exports = config;
