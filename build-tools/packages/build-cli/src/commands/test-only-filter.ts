@@ -20,7 +20,7 @@ interface FilterCommandResult {
  * is parsed in tests.
  *
  * It may not be obvious why these command-level tests are needed in addition to testing the functions that do most of
- * the filtering (see ../filter.test.ts). The reason is that the code to translate oclif's flags into selection/filter
+ * the filtering (see ../filter.spec.ts). The reason is that the code to translate oclif's flags into selection/filter
  * objects lives in the PackageCommand command. There's no way (that I know of) to mock an oclif command's flags.
  *
  * Instead, this test command is a real command, and the tests call it using the oclif command test infrastructure. This

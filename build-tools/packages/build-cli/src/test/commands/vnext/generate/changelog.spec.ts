@@ -16,8 +16,8 @@ describe("vnext generate changelog command", () => {
 	 * - Mocking the changeset CLI tool
 	 *
 	 * The core functionality is tested in the library unit tests:
-	 * - changelogs.test.ts tests updateChangelogs()
-	 * - canonicalizeChangesets.test.ts tests canonicalizeChangesets()
+	 * - changelogs.spec.ts tests updateChangelogs()
+	 * - canonicalizeChangesets.spec.ts tests canonicalizeChangesets()
 	 *
 	 * These integration tests should be expanded when the command is ready for production use.
 	 */
