@@ -1150,7 +1150,7 @@ export class TreeCheckout implements ITreeCheckout {
 			if (usageError !== undefined) {
 				throw new UsageError(usageError);
 			}
-			assert(false, 0x911 /* Invalid operation on a disposed TreeCheckout */);
+			fail(0x911 /* Invalid operation on a disposed TreeCheckout */);
 		}
 	}
 
