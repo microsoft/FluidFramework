@@ -20,7 +20,7 @@ import {
 import {
 	getOdspPointInTimeDocumentServiceFactory,
 	type IPointInTimeDocumentServiceFactory,
-} from "@fluidframework/odsp-driver/internal";
+} from "@fluidframework/odsp-driver/legacy/beta/pointInTime";
 import type {
 	HostStoragePolicy,
 	OdspResourceTokenFetchOptions,

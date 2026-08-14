@@ -25,7 +25,7 @@ import type {
 	IFluidCodeDetails,
 	IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
-import { loadContainerToSequenceNumber } from "@fluidframework/container-loader/internal";
+import { loadContainerToSequenceNumber } from "@fluidframework/container-loader/legacy/beta/pointInTime";
 import type { ISummarizer } from "@fluidframework/container-runtime/internal";
 import type { IFluidHandle, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import type { ISharedCounter } from "@fluidframework/counter/internal";
