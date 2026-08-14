@@ -9,7 +9,7 @@ import type { ISharedSegmentSequence } from "../sequence.js";
 import type { ISharedString } from "../sharedString.js";
 
 import type { SequenceIntervalIndex } from "./intervalIndex.js";
-import { SequenceIntervalEndpointSet } from "./intervalIndexUtils.js";
+import { SequenceIntervalEndSet } from "./sequenceIntervalEndpointSet.js";
 
 /**
  * @internal
@@ -26,12 +26,6 @@ export interface IEndpointIndex extends SequenceIntervalIndex {
 	 * If no such interval exists in this index, returns `undefined`
 	 */
 	nextInterval(pos: number): SequenceInterval | undefined;
-}
-
-class SequenceIntervalEndSet extends SequenceIntervalEndpointSet {
-	protected compareEndpoints(a: SequenceInterval, b: SequenceInterval): number {
-		return a.compareEnd(b);
-	}
 }
 
 export class EndpointIndex implements IEndpointIndex {

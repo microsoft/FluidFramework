@@ -9,7 +9,7 @@ import type { ISharedSegmentSequence } from "../sequence.js";
 import type { ISharedString } from "../sharedString.js";
 
 import type { SequenceIntervalIndex } from "./intervalIndex.js";
-import { SequenceIntervalEndpointSet } from "./intervalIndexUtils.js";
+import { SequenceIntervalStartSet } from "./sequenceIntervalEndpointSet.js";
 
 /**
  * Collection of intervals.
@@ -24,14 +24,8 @@ export interface IStartpointInRangeIndex extends SequenceIntervalIndex {
 	findIntervalsWithStartpointInRange(start: number, end: number): SequenceInterval[];
 }
 
-class StartInRangeSet extends SequenceIntervalEndpointSet {
-	protected compareEndpoints(a: SequenceInterval, b: SequenceInterval): number {
-		return a.compareStart(b);
-	}
-}
-
 export class StartpointInRangeIndex implements IStartpointInRangeIndex {
-	private readonly intervals = new StartInRangeSet();
+	private readonly intervals = new SequenceIntervalStartSet();
 
 	constructor(private readonly sequence: ISharedSegmentSequence<any>) {}
 

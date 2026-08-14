@@ -21,7 +21,7 @@ import type { SequenceInterval } from "../intervals/index.js";
  * with a transient interval whose id is arbitrary, which matters because
  * `createTransientIntervalFromSequence` assigns transients a freshly generated id.
  */
-export abstract class SequenceIntervalEndpointSet extends SortedSet<SequenceInterval> {
+abstract class SequenceIntervalEndpointSet extends SortedSet<SequenceInterval> {
 	/**
 	 * Orders two intervals by whichever endpoint this set is keyed on, ignoring their ids.
 	 */
@@ -76,20 +76,25 @@ export abstract class SequenceIntervalEndpointSet extends SortedSet<SequenceInte
 		return { exists: false, index };
 	}
 
+	// #region Binary search
+
 	/**
-	 * Binary searches on the keyed endpoint alone, ignoring ids.
+	 * Binary searches for the point where `matches` starts holding. It must be false for some
+	 * (possibly empty) run of intervals at the front of the set and true for all the rest, which
+	 * holds for any predicate keyed on the endpoint this set is ordered by.
 	 *
-	 * @returns the index of the first interval whose endpoint is not before `probe`'s.
+	 * @returns the index of the first interval `matches` accepts, or this set's size if it
+	 * accepts none.
 	 */
-	private lowerBound(probe: SequenceInterval): number {
+	private firstIndexWhere(matches: (interval: SequenceInterval) => boolean): number {
 		let low = 0;
 		let high = this.sortedItems.length;
 		while (low < high) {
 			const mid = low + Math.floor((high - low) / 2);
-			if (this.compareEndpoints(this.sortedItems[mid], probe) < 0) {
-				low = mid + 1;
-			} else {
+			if (matches(this.sortedItems[mid])) {
 				high = mid;
+			} else {
+				low = mid + 1;
 			}
 		}
 		return low;
@@ -98,21 +103,24 @@ export abstract class SequenceIntervalEndpointSet extends SortedSet<SequenceInte
 	/**
 	 * Binary searches on the keyed endpoint alone, ignoring ids.
 	 *
+	 * @returns the index of the first interval whose endpoint is not before `probe`'s.
+	 */
+	private lowerBound(probe: SequenceInterval): number {
+		return this.firstIndexWhere((interval) => this.compareEndpoints(interval, probe) >= 0);
+	}
+
+	/**
+	 * Binary searches on the keyed endpoint alone, ignoring ids.
+	 *
 	 * @returns the index of the first interval whose endpoint is after `probe`'s.
 	 */
 	private upperBound(probe: SequenceInterval): number {
-		let low = 0;
-		let high = this.sortedItems.length;
-		while (low < high) {
-			const mid = low + Math.floor((high - low) / 2);
-			if (this.compareEndpoints(this.sortedItems[mid], probe) <= 0) {
-				low = mid + 1;
-			} else {
-				high = mid;
-			}
-		}
-		return low;
+		return this.firstIndexWhere((interval) => this.compareEndpoints(interval, probe) > 0);
 	}
+
+	// #endregion Binary search
+
+	// #region Endpoint queries
 
 	/**
 	 * Finds the floor of `probe` by keyed endpoint.
@@ -142,5 +150,26 @@ export abstract class SequenceIntervalEndpointSet extends SortedSet<SequenceInte
 	 */
 	public range(low: SequenceInterval, high: SequenceInterval): SequenceInterval[] {
 		return this.sortedItems.slice(this.lowerBound(low), this.upperBound(high));
+	}
+
+	// #endregion Endpoint queries
+}
+
+/**
+ * Intervals ordered by their end position. Backs both `EndpointIndex` and
+ * `EndpointInRangeIndex`.
+ */
+export class SequenceIntervalEndSet extends SequenceIntervalEndpointSet {
+	protected compareEndpoints(a: SequenceInterval, b: SequenceInterval): number {
+		return a.compareEnd(b);
+	}
+}
+
+/**
+ * Intervals ordered by their start position. Backs `StartpointInRangeIndex`.
+ */
+export class SequenceIntervalStartSet extends SequenceIntervalEndpointSet {
+	protected compareEndpoints(a: SequenceInterval, b: SequenceInterval): number {
+		return a.compareStart(b);
 	}
 }
