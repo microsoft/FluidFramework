@@ -535,7 +535,7 @@ export const getSummaryContentsFromSummaryWithFormatValidation = (
 	let ids: string[] | undefined;
 	let redirectTable: [string, string][] | undefined;
 	let detachedBlobSummaryContents: Map<string, ArrayBufferLike> | undefined;
-	let detachedBlobSummaryHandles: Set<string> | undefined;
+	let detachedBlobSummaryIds: Set<string> | undefined;
 	for (const [key, summaryObject] of Object.entries(summary.summary.tree)) {
 		if (summaryObject.type === SummaryType.Attachment) {
 			ids ??= [];
@@ -544,6 +544,8 @@ export const getSummaryContentsFromSummaryWithFormatValidation = (
 			assert.strictEqual(key, detachedBlobSummaryTreeName);
 			assert.strictEqual(summaryObject.groupId, detachedBlobSummaryGroupId);
 			for (const [localId, content] of Object.entries(summaryObject.tree)) {
+				detachedBlobSummaryIds ??= new Set();
+				detachedBlobSummaryIds.add(localId);
 				redirectTable ??= [];
 				redirectTable.push([localId, localId]);
 				if (content.type === SummaryType.Blob) {
@@ -553,8 +555,6 @@ export const getSummaryContentsFromSummaryWithFormatValidation = (
 				} else {
 					assert(content.type === SummaryType.Handle);
 					assert.strictEqual(content.handleType, SummaryType.Blob);
-					detachedBlobSummaryHandles ??= new Set();
-					detachedBlobSummaryHandles.add(localId);
 				}
 			}
 		} else {
@@ -573,7 +573,7 @@ export const getSummaryContentsFromSummaryWithFormatValidation = (
 		ids,
 		redirectTable,
 		detachedBlobSummaryContents,
-		detachedBlobSummaryHandles,
+		detachedBlobSummaryIds,
 	};
 };
 

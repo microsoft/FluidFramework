@@ -109,6 +109,7 @@ describe("Detached blob summaries", () => {
 		});
 		assert.deepStrictEqual(detached.redirectTable, [[localId, localId]]);
 		assert.deepStrictEqual(detached.ids, []);
+		assert.deepStrictEqual([...(detached.detachedBlobSummaryIds ?? [])], [localId]);
 		const detachedBlob = detached.detachedBlobSummaryContents?.get(localId);
 		assert(detachedBlob !== undefined);
 		assert.strictEqual(blobToText(detachedBlob), "blob-content");
@@ -121,7 +122,7 @@ describe("Detached blob summaries", () => {
 		assert.deepStrictEqual(attached.redirectTable, [[localId, actualBlobId]]);
 		assert.deepStrictEqual(attached.ids, []);
 		assert.strictEqual(attached.detachedBlobSummaryContents, undefined);
-		assert.deepStrictEqual([...(attached.detachedBlobSummaryHandles ?? [])], [localId]);
+		assert.deepStrictEqual([...(attached.detachedBlobSummaryIds ?? [])], [localId]);
 
 		const attachedStorage = new MockStorageAdapter(true);
 		attachedStorage.attachedStorage.blobs.set(actualBlobId, encodedBlob);
@@ -142,16 +143,16 @@ describe("Detached blob summaries", () => {
 		);
 		const lazilyLoadedSummary =
 			getSummaryContentsWithFormatValidation(lazilyLoadedBlobManager);
-		assert.strictEqual(lazilyLoadedSummary.detachedBlobSummaryHandles?.size, 1);
+		assert.strictEqual(lazilyLoadedSummary.detachedBlobSummaryIds?.size, 1);
 
 		const fullTreeSummary = getSummaryContentsFromSummaryWithFormatValidation(
 			await lazilyLoadedBlobManager.summarizeFullTree(),
 		);
 		assert.strictEqual(fullTreeSummary.detachedBlobSummaryContents?.size, 1);
-		assert.strictEqual(fullTreeSummary.detachedBlobSummaryHandles, undefined);
+		assert.strictEqual(fullTreeSummary.detachedBlobSummaryIds?.size, 1);
 		const incrementalSummary = getSummaryContentsWithFormatValidation(lazilyLoadedBlobManager);
 		assert.deepStrictEqual(
-			[...(incrementalSummary.detachedBlobSummaryHandles ?? [])],
+			[...(incrementalSummary.detachedBlobSummaryIds ?? [])],
 			[localId],
 		);
 	});
@@ -169,6 +170,7 @@ describe("Detached blob summaries", () => {
 		const loadInfo = getSummaryContentsWithFormatValidation(blobManager);
 		assert.strictEqual(loadInfo.ids, undefined);
 		assert.strictEqual(loadInfo.redirectTable?.length, 1);
+		assert.strictEqual(loadInfo.detachedBlobSummaryIds?.size, 1);
 		assert.strictEqual(loadInfo.detachedBlobSummaryContents?.size, 1);
 
 		const { blobManager: reloadedBlobManager } = createTestMaterial({
@@ -182,6 +184,7 @@ describe("Detached blob summaries", () => {
 		reloadedBlobManager.deleteSweepReadyNodes([getGCNodePathFromLocalId(localId)]);
 		const afterGc = getSummaryContentsWithFormatValidation(reloadedBlobManager);
 		assert.strictEqual(afterGc.redirectTable, undefined);
+		assert.strictEqual(afterGc.detachedBlobSummaryIds, undefined);
 		assert.strictEqual(afterGc.detachedBlobSummaryContents, undefined);
 	});
 
@@ -198,8 +201,8 @@ describe("Detached blob summaries", () => {
 
 		assert.strictEqual(blobManager.lookupTemporaryBlobStorageId(localId), undefined);
 		const attachedSummary = getSummaryContentsWithFormatValidation(blobManager);
+		assert.strictEqual(attachedSummary.detachedBlobSummaryIds?.size, 1);
 		assert.strictEqual(attachedSummary.detachedBlobSummaryContents?.size, 1);
-		assert.strictEqual(attachedSummary.detachedBlobSummaryHandles, undefined);
 		const fullTreeSummary = getSummaryContentsFromSummaryWithFormatValidation(
 			await blobManager.summarizeFullTree(),
 		);

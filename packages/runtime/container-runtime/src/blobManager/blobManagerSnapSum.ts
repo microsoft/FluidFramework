@@ -25,10 +25,9 @@ export interface IBlobManagerLoadInfo {
 	 */
 	detachedBlobSummaryContents?: Map<string, ArrayBufferLike>;
 	/**
-	 * Local IDs whose payload can be referenced by handle from an attached container's
-	 * previous summary.
+	 * Local IDs represented in the detached blob summary.
 	 */
-	detachedBlobSummaryHandles?: Set<string>;
+	detachedBlobSummaryIds?: Set<string>;
 }
 
 /**
@@ -82,14 +81,15 @@ const loadV1 = async (
 		.filter(([k, _]) => k !== redirectTableBlobName)
 		.map(([_, v]) => v);
 
-	const detachedBlobSummaryIds = new Map(
+	const detachedBlobSummaryEntries = new Map(
 		Object.entries(blobsTree.trees[detachedBlobSummaryTreeName]?.blobs ?? {}),
 	);
+	const detachedBlobSummaryIds = new Set(detachedBlobSummaryEntries.keys());
 
 	if (context.attachState === AttachState.Detached) {
 		const detachedBlobSummaryContents = new Map<string, ArrayBufferLike>();
 		await Promise.all(
-			[...detachedBlobSummaryIds].map(async ([localId, blobId]) => {
+			[...detachedBlobSummaryEntries].map(async ([localId, blobId]) => {
 				detachedBlobSummaryContents.set(
 					localId,
 					stringToBuffer(
@@ -100,28 +100,28 @@ const loadV1 = async (
 			}),
 		);
 		redirectTableEntries.push(
-			...[...detachedBlobSummaryIds.keys()].map(
+			...[...detachedBlobSummaryIds].map(
 				(localId) => [localId, localId] as [string, string],
 			),
 		);
 		return {
 			ids,
 			redirectTable: redirectTableEntries,
+			detachedBlobSummaryIds:
+				detachedBlobSummaryIds.size === 0 ? undefined : detachedBlobSummaryIds,
 			detachedBlobSummaryContents:
 				detachedBlobSummaryContents.size === 0 ? undefined : detachedBlobSummaryContents,
 		};
 	}
 
-	const detachedBlobSummaryHandles = new Set<string>();
-	for (const [localId, blobId] of detachedBlobSummaryIds) {
+	for (const [localId, blobId] of detachedBlobSummaryEntries) {
 		redirectTableEntries.push([localId, blobId]);
-		detachedBlobSummaryHandles.add(localId);
 	}
 	return {
 		ids,
 		redirectTable: redirectTableEntries,
-		detachedBlobSummaryHandles:
-			detachedBlobSummaryHandles.size === 0 ? undefined : detachedBlobSummaryHandles,
+		detachedBlobSummaryIds:
+			detachedBlobSummaryIds.size === 0 ? undefined : detachedBlobSummaryIds,
 	};
 };
 
@@ -155,14 +155,14 @@ export const toRedirectTable = (
 export const summarizeBlobManagerState = (
 	redirectTable: Map<string, string>,
 	detachedBlobSummaryContents?: ReadonlyMap<string, ArrayBufferLike>,
-	detachedBlobSummaryHandles?: ReadonlySet<string>,
+	detachedBlobSummaryIds?: ReadonlySet<string>,
 ): ISummaryTreeWithStats =>
-	summarizeV1(redirectTable, detachedBlobSummaryContents, detachedBlobSummaryHandles);
+	summarizeV1(redirectTable, detachedBlobSummaryContents, detachedBlobSummaryIds);
 
 const summarizeV1 = (
 	redirectTable: Map<string, string>,
 	detachedBlobSummaryContents?: ReadonlyMap<string, ArrayBufferLike>,
-	detachedBlobSummaryHandles?: ReadonlySet<string>,
+	detachedBlobSummaryIds?: ReadonlySet<string>,
 ): ISummaryTreeWithStats => {
 	const builder = new SummaryTreeBuilder();
 	const storageIds = getStorageIds(redirectTable);
@@ -172,7 +172,7 @@ const summarizeV1 = (
 	});
 	for (const localId of new Set([
 		...(detachedBlobSummaryContents?.keys() ?? []),
-		...(detachedBlobSummaryHandles ?? []),
+		...(detachedBlobSummaryIds ?? []),
 	])) {
 		const storageId = redirectTable.get(localId);
 		if (storageId !== undefined) {
@@ -214,7 +214,7 @@ const summarizeV1 = (
 		([localId, storageId]) =>
 			localId !== storageId &&
 			detachedBlobSummaryContents?.has(localId) !== true &&
-			detachedBlobSummaryHandles?.has(localId) !== true,
+			detachedBlobSummaryIds?.has(localId) !== true,
 	);
 	// Preserve the loader's existing `.blobs` invariant when all mappings are encoded by `.detached`.
 	if (nonIdentityRedirectTableEntries.length > 0 || hasDetachedBlobSummary) {
