@@ -907,7 +907,7 @@ describe("staged required upgrade", () => {
 		// The cursor-based import path for an empty root.
 		assert.throws(
 			() => TreeAlpha.importVerbose(schemaB, undefined),
-			validateUsageError(/Cannot create empty content for a staged required field/),
+			validateUsageError(/undefined provided for staged required field/),
 		);
 
 		// Providing a value works.
