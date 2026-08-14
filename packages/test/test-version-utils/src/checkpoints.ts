@@ -195,15 +195,23 @@ export function getCurrentCheckpoint(version: string): Checkpoint {
  * Returns the prior in-window checkpoints relative to `current` from newest
  * to oldest. May return fewer than `fullCompatibilityWindowSize` entries when `current`
  * is near the start of the checkpoint list (e.g., `current === CC#1` returns
- * `[]`).
+ * `[]`) or when `minimumSupportedVersion` excludes an older checkpoint.
  *
+ * @param minimumSupportedVersion - Optional inclusive lower bound for returned checkpoints.
  * @internal
  */
-export function getInWindowPriorCheckpoints(current: Checkpoint): Checkpoint[] {
+export function getInWindowPriorCheckpoints(
+	current: Checkpoint,
+	minimumSupportedVersion?: string,
+): Checkpoint[] {
 	const result: Checkpoint[] = [];
 	for (let i = 1; i <= fullCompatibilityWindowSize; i++) {
 		const target = checkpoints.find((c) => c.index === current.index - i);
-		if (target) {
+		if (
+			target !== undefined &&
+			(minimumSupportedVersion === undefined ||
+				semver.gte(target.lowerBoundVersion, minimumSupportedVersion))
+		) {
 			result.push(target);
 		}
 	}
