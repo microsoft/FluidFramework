@@ -112,6 +112,15 @@ describe("checkpoints", () => {
 			);
 		});
 
+		it("filters out checkpoints below a minimum supported version", () => {
+			const cc4 = checkpoints.find((c) => c.name === "CC#4");
+			assert(cc4 !== undefined, "CC#4 expected in checkpoints");
+			assert.deepStrictEqual(
+				getInWindowPriorCheckpoints(cc4, "2.0.0").map((c) => c.name),
+				["CC#3", "CC#2"],
+			);
+		});
+
 		it("returns fewer than fullCompatibilityWindowSize entries near the start of the list", () => {
 			const cc1 = checkpoints.find((c) => c.name === "CC#1");
 			const cc2 = checkpoints.find((c) => c.name === "CC#2");
