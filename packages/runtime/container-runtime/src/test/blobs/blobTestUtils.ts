@@ -16,6 +16,7 @@ import {
 import {
 	AttachState,
 	type IContainerStorageService,
+	type ISnapshotTreeWithBlobContents,
 } from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
 import type {
@@ -534,8 +535,7 @@ export const getSummaryContentsFromSummaryWithFormatValidation = (
 ): IBlobManagerLoadInfo => {
 	let ids: string[] | undefined;
 	let redirectTable: [string, string][] | undefined;
-	let detachedBlobSummaryContents: Map<string, ArrayBufferLike> | undefined;
-	let detachedBlobSummaryIds: Set<string> | undefined;
+	let detachedBlobSummary: ISnapshotTreeWithBlobContents | undefined;
 	for (const [key, summaryObject] of Object.entries(summary.summary.tree)) {
 		if (summaryObject.type === SummaryType.Attachment) {
 			ids ??= [];
@@ -543,20 +543,25 @@ export const getSummaryContentsFromSummaryWithFormatValidation = (
 		} else if (summaryObject.type === SummaryType.Tree) {
 			assert.strictEqual(key, detachedBlobSummaryTreeName);
 			assert.strictEqual(summaryObject.groupId, detachedBlobSummaryGroupId);
+			const blobs: Record<string, string> = {};
+			const blobsContents: Record<string, ArrayBufferLike> = {};
 			for (const [localId, content] of Object.entries(summaryObject.tree)) {
-				detachedBlobSummaryIds ??= new Set();
-				detachedBlobSummaryIds.add(localId);
-				redirectTable ??= [];
-				redirectTable.push([localId, localId]);
+				const blobId = localId;
+				blobs[localId] = blobId;
 				if (content.type === SummaryType.Blob) {
 					assert(typeof content.content === "string");
-					detachedBlobSummaryContents ??= new Map();
-					detachedBlobSummaryContents.set(localId, stringToBuffer(content.content, "base64"));
+					blobsContents[blobId] = stringToBuffer(content.content, "utf8");
 				} else {
 					assert(content.type === SummaryType.Handle);
 					assert.strictEqual(content.handleType, SummaryType.Blob);
 				}
 			}
+			detachedBlobSummary = {
+				blobs,
+				trees: {},
+				groupId: summaryObject.groupId,
+				...(Object.keys(blobsContents).length === 0 ? {} : { blobsContents }),
+			};
 		} else {
 			assert.strictEqual(key, redirectTableBlobName);
 			assert(summaryObject.type === SummaryType.Blob);
@@ -572,8 +577,7 @@ export const getSummaryContentsFromSummaryWithFormatValidation = (
 	return {
 		ids,
 		redirectTable,
-		detachedBlobSummaryContents,
-		detachedBlobSummaryIds,
+		detachedBlobSummary,
 	};
 };
 

@@ -345,13 +345,31 @@ export class BlobManager {
 		});
 
 		this.redirectTable = toRedirectTable(blobManagerLoadInfo, this.mc.logger);
-		this.detachedBlobSummaryIds = new Set(blobManagerLoadInfo.detachedBlobSummaryIds);
-		for (const [localId, blob] of blobManagerLoadInfo.detachedBlobSummaryContents ?? []) {
+		const detachedBlobSummary = blobManagerLoadInfo.detachedBlobSummary;
+		const detachedBlobSummaryEntries = Object.entries(detachedBlobSummary?.blobs ?? {});
+		this.detachedBlobSummaryIds = new Set(
+			detachedBlobSummaryEntries.map(([localId]) => localId),
+		);
+		if (this.runtime.attachState === AttachState.Detached) {
+			for (const [localId, blobId] of detachedBlobSummaryEntries) {
+				const encodedBlob: ArrayBufferLike | undefined =
+					detachedBlobSummary?.blobsContents?.[blobId];
+				assert(
+					encodedBlob !== undefined,
+					"Detached summary blob contents must be available while detached",
+				);
+				const blob = stringToBuffer(bufferToString(encodedBlob, "utf8"), "base64");
+				this.localBlobCache.set(localId, { state: "attached", blob });
+				this.redirectTable.set(localId, localId);
+			}
+		} else {
 			assert(
-				this.detachedBlobSummaryIds.has(localId),
-				"Detached summary contents must have a corresponding ID",
+				detachedBlobSummary?.blobsContents === undefined,
+				"Attached BlobManager cannot load detached summary blob contents",
 			);
-			this.localBlobCache.set(localId, { state: "attached", blob });
+			for (const [localId, blobId] of detachedBlobSummaryEntries) {
+				this.redirectTable.set(localId, blobId);
+			}
 		}
 
 		// We populate the localBlobCache with any pending blobs we are provided, which makes them available

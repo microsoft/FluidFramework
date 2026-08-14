@@ -4,8 +4,12 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions";
-import type { IContainerContext } from "@fluidframework/container-definitions/internal";
-import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
+import type {
+	IContainerContext,
+	ISnapshotTreeWithBlobContents,
+} from "@fluidframework/container-definitions/internal";
+import { bufferToString } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
@@ -20,14 +24,10 @@ export interface IBlobManagerLoadInfo {
 	ids?: string[];
 	redirectTable?: [string, string][];
 	/**
-	 * Detached attachment blobs represented as summary blobs, keyed by their
-	 * local IDs. Only populated when rehydrating a detached container.
+	 * The detached blob summary subtree. `blobs` maps local IDs to snapshot blob IDs.
+	 * `blobsContents` is populated only when rehydrating a detached container.
 	 */
-	detachedBlobSummaryContents?: Map<string, ArrayBufferLike>;
-	/**
-	 * Local IDs represented in the detached blob summary.
-	 */
-	detachedBlobSummaryIds?: Set<string>;
+	detachedBlobSummary?: ISnapshotTreeWithBlobContents;
 }
 
 /**
@@ -57,13 +57,19 @@ export const detachedBlobSummaryGroupId = "fluid-internal:detached-blobs";
  *
  */
 export const loadBlobManagerLoadInfo = async (
-	context: Pick<IContainerContext, "baseSnapshot" | "attachState"> & {
+	context: Pick<
+		IContainerContext,
+		"baseSnapshot" | "attachState" | "snapshotWithContents"
+	> & {
 		storage: Pick<IContainerContext["storage"], "readBlob">;
 	},
 ): Promise<IBlobManagerLoadInfo> => loadV1(context);
 
 const loadV1 = async (
-	context: Pick<IContainerContext, "baseSnapshot" | "attachState"> & {
+	context: Pick<
+		IContainerContext,
+		"baseSnapshot" | "attachState" | "snapshotWithContents"
+	> & {
 		storage: Pick<IContainerContext["storage"], "readBlob">;
 	},
 ): Promise<IBlobManagerLoadInfo> => {
@@ -81,47 +87,39 @@ const loadV1 = async (
 		.filter(([k, _]) => k !== redirectTableBlobName)
 		.map(([_, v]) => v);
 
-	const detachedBlobSummaryEntries = new Map(
-		Object.entries(blobsTree.trees[detachedBlobSummaryTreeName]?.blobs ?? {}),
-	);
-	const detachedBlobSummaryIds = new Set(detachedBlobSummaryEntries.keys());
-
-	if (context.attachState === AttachState.Detached) {
-		const detachedBlobSummaryContents = new Map<string, ArrayBufferLike>();
-		await Promise.all(
-			[...detachedBlobSummaryEntries].map(async ([localId, blobId]) => {
-				detachedBlobSummaryContents.set(
-					localId,
-					stringToBuffer(
-						bufferToString(await context.storage.readBlob(blobId), "utf8"),
-						"base64",
-					),
-				);
-			}),
+	const detachedBlobSummaryTree = blobsTree.trees[detachedBlobSummaryTreeName];
+	let detachedBlobSummary: ISnapshotTreeWithBlobContents | undefined;
+	if (detachedBlobSummaryTree !== undefined) {
+		const {
+			blobsContents: existingBlobContents,
+			...detachedBlobSummaryWithoutContents
+		} = detachedBlobSummaryTree as ISnapshotTreeWithBlobContents;
+		const blobsContents: Record<string, ArrayBufferLike> | undefined =
+			context.attachState === AttachState.Detached ? { ...existingBlobContents } : undefined;
+		assert(
+			Object.keys(detachedBlobSummaryTree.trees).length === 0,
+			"Detached blob summary cannot contain child trees",
 		);
-		redirectTableEntries.push(
-			...[...detachedBlobSummaryIds].map(
-				(localId) => [localId, localId] as [string, string],
-			),
-		);
-		return {
-			ids,
-			redirectTable: redirectTableEntries,
-			detachedBlobSummaryIds:
-				detachedBlobSummaryIds.size === 0 ? undefined : detachedBlobSummaryIds,
-			detachedBlobSummaryContents:
-				detachedBlobSummaryContents.size === 0 ? undefined : detachedBlobSummaryContents,
+		if (blobsContents !== undefined) {
+			await Promise.all(
+				Object.values(detachedBlobSummaryTree.blobs).map(async (blobId) => {
+					blobsContents[blobId] ??=
+						context.snapshotWithContents?.blobContents.get(blobId) ??
+						(await context.storage.readBlob(blobId));
+				}),
+			);
+		}
+		detachedBlobSummary = {
+			...detachedBlobSummaryWithoutContents,
+			trees: {},
+			...(blobsContents === undefined ? {} : { blobsContents }),
 		};
 	}
 
-	for (const [localId, blobId] of detachedBlobSummaryEntries) {
-		redirectTableEntries.push([localId, blobId]);
-	}
 	return {
 		ids,
 		redirectTable: redirectTableEntries,
-		detachedBlobSummaryIds:
-			detachedBlobSummaryIds.size === 0 ? undefined : detachedBlobSummaryIds,
+		detachedBlobSummary,
 	};
 };
 
