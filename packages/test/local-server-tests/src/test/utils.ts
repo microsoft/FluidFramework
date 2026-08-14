@@ -78,7 +78,7 @@ export function createLoader<T extends CreateLoaderParams>(
 		opts.runtimeFactory ??
 		new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: defaultDataStoreFactory,
-			oldestSupportedClient: "2.0.0-defaults",
+			oldestSupportedClient: "2.0.0",
 			registryEntries: [
 				[defaultDataStoreFactory.type, Promise.resolve(defaultDataStoreFactory)],
 			],

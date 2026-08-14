@@ -103,7 +103,7 @@ export const createContainerRuntimeFactoryWithDefaultDataStore = (
 		) => IRuntimeFactory;
 		return new currentCtor({
 			...ctorProps,
-			oldestSupportedClient: "2.0.0-defaults",
+			oldestSupportedClient: "2.0.0",
 		});
 	} catch (err) {
 		// IMPORTANT: The constructor argument structure changed, so this is needed for dynamically using older `ContainerRuntimeFactoryWithDefaultDataStore`s

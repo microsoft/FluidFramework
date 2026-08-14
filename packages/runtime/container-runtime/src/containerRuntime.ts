@@ -802,7 +802,6 @@ export interface LoadContainerRuntimeParams {
 	 * @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 * */
 	requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
-
 	/**
 	 * Oldest version of Fluid Framework client that must be able to open and process
 	 * documents written by this container runtime.
@@ -819,6 +818,9 @@ export interface LoadContainerRuntimeParams {
 	 *
 	 * @privateRemarks
 	 * Used to determine the default configuration for {@link IContainerRuntimeOptionsInternal} that affect the document schema.
+	 * For example, if feature `foo` adds a new op type in 2.50.0, its runtime
+	 * option can remain disabled for oldestSupportedClient 2.0.0 and become
+	 * enabled by default for oldestSupportedClient 2.50.0 or later.
 	 */
 	oldestSupportedClient: OldestSupportedClientVersion;
 
@@ -1094,8 +1096,8 @@ export class ContainerRuntime
 
 		// Some options require a minimum version of the FF runtime to operate, so the default configs will be generated
 		// based on the minVersionForCollab.
-		// For example, if minVersionForCollab is set to "1.0.0", the default configs will ensure compatibility with FF runtime
-		// 1.0.0 or later. If the minVersionForCollab is set to "2.10.0", the default values will be generated to ensure compatibility
+		// For example, if minVersionForCollab is set to "2.0.0", the default configs will ensure compatibility with FF runtime
+		// 2.0.0 or later. If the minVersionForCollab is set to "2.10.0", the default values will be generated to ensure compatibility
 		// with FF runtime 2.10.0 or later.
 		if (!isValidMinVersionForCollab(minVersionForCollab)) {
 			throw new UsageError(

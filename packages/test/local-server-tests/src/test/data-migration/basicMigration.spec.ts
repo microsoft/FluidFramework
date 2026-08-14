@@ -144,7 +144,7 @@ const rootDOFactory = new DataObjectFactory({
 });
 const exampleRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 	defaultFactory: rootDOFactory,
-	oldestSupportedClient: "2.0.0-defaults",
+	oldestSupportedClient: "2.0.0",
 	registryEntries: [rootDOFactory.registryEntry],
 	runtimeOptions,
 });

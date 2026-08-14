@@ -103,7 +103,7 @@ describeCompat("Storing handles detached", "NoCompat", (getTestObjectProvider, a
 	// The 2nd runtime factory, V2 of the code
 	const runtimeFactory2 = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: dataObjectFactory2,
-		oldestSupportedClient: "2.0.0-defaults",
+		oldestSupportedClient: "2.0.0",
 		registryEntries: [dataObjectFactory2.registryEntry, childObjectFactory.registryEntry],
 		runtimeOptions,
 	});

@@ -11,10 +11,8 @@ import { compare, gt, gte, lte, valid, parse } from "semver-ts";
 import { pkgVersion } from "./packageVersion.js";
 
 /**
- * We don't want allow a version before the major public release of the LTS version.
- * Today we use "1.0.0", because our policy supports N/N-1 & N/N-2, which includes
- * all minor versions of N. Though LTS starts at 1.4.0, we should stay consistent
- * with our policy and allow all 1.x versions to be compatible with 2.x.
+ * The oldest Fluid Framework client version supported for cross-client compatibility.
+ * Client 3.0 no longer supports collaborating with 1.x clients.
  *
  * @privateRemarks
  * Exported for use in tests.
@@ -22,7 +20,7 @@ import { pkgVersion } from "./packageVersion.js";
  * @internal
  */
 export const lowestMinVersionForCollab =
-	"1.0.0" as const satisfies OldestSupportedClientVersion;
+	"2.0.0" as const satisfies OldestSupportedClientVersion;
 
 /**
  * String in a valid semver format specifying bottom of a minor version
@@ -37,7 +35,7 @@ export type MinimumMinorSemanticVersion = `${bigint}.${bigint}.0` | `${bigint}.0
 /**
  * String in a valid semver format of a specific version at least specifying minor.
  * Unlike {@link @fluidframework/runtime-definitions#OldestSupportedClientVersion}, this type allows any bigint for the major version.
- * Used as a more generic type that allows major versions other than 1 or 2.
+ * Used as a more generic type that allows major versions other than 2 or 3.
  *
  * @internal
  */
