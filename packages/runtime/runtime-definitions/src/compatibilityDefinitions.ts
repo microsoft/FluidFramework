@@ -4,19 +4,24 @@
  */
 
 /**
- * Oldest version of Fluid Framework client packages to support collaborating with.
+ * Oldest Fluid Framework client version that must be able to open and process documents written
+ * by newer clients.
  * @remarks
  * A string in SemVer format indicating a specific version of the Fluid Framework client package, or the special case of {@link @fluidframework/runtime-utils#defaultMinVersionForCollab}.
  *
- * Collaboration with other clients is only supported when all Fluid Framework client packages used by the client have a version that is greater than or equal
- * to the specified `MinimumVersionForCollab`.
+ * The framework uses this value to select write formats and features. Clients using this version
+ * or newer must be able to open and process documents written by newer clients. Choosing an older
+ * version may limit the features and write formats the application can use to those supported by
+ * that version. Clients using older versions may still be able to access a document if no
+ * incompatible data has been written.
+ *
+ * Collaboration with other clients is supported when all Fluid Framework client packages used by the client have a version that is greater than or equal
+ * to the specified `OldestSupportedClientVersion`.
  *
  * Must be at least {@link @fluidframework/runtime-utils#lowestMinVersionForCollab} and cannot exceed the version of any Fluid Framework client package in use by the local client.
  *
- * The higher the version specified, the more features and optimizations will be enabled.
- *
  * {@link @fluidframework/runtime-utils#validateMinimumVersionForCollab} can be used to check these invariants at runtime.
- * Since TypeScript cannot enforce all of them for literals in code, it is useful for checking values sourced from constants typed as `MinimumVersionForCollab`.
+ * Since TypeScript cannot enforce all of them for literals in code, it is useful for checking values sourced from constants typed as `OldestSupportedClientVersion`.
  *
  * @privateRemarks
  * Since this uses the semver notion of "greater" (which might not actually mean a later release, or supporting more features), care must be taken with how this is used.
@@ -38,6 +43,17 @@
  * @input
  * @public
  */
-export type MinimumVersionForCollab =
+export type OldestSupportedClientVersion =
 	| `${1 | 2}.${bigint}.${bigint}`
 	| `${1 | 2}.${bigint}.${bigint}-${string}`;
+
+/**
+ * Oldest version of Fluid Framework client packages that must be able to open and process
+ * documents written by newer clients.
+ *
+ * @deprecated 2.116.0. To be removed in 4.0.0. Use {@link OldestSupportedClientVersion} instead.
+ * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
+ * @input
+ * @public
+ */
+export type MinimumVersionForCollab = OldestSupportedClientVersion;

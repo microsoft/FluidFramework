@@ -47,7 +47,7 @@ intended to test all layers of one version against all layers of another version
 The intention is to simulate scenarios where the client that created a document was using a different version than the client
 loading the document. The matrix pairs the current build against every in-window prior **Compatibility Checkpoint**
 (see [`CompatibilityCheckpoints.md`](../../../CompatibilityCheckpoints.md)) in both directions, with each prior
-checkpoint resolved to the **earliest minor** in its range (e.g. CC-3 → latest patch of `2.40.x`).
+checkpoint resolved to the **earliest minor** in its range (e.g. CC#3 → latest patch of `2.40.x`).
 
 The data driving the matrix lives in [`src/checkpoints.ts`](./src/checkpoints.ts).
 
@@ -211,7 +211,7 @@ There are many ways to [contribute](https://github.com/microsoft/FluidFramework/
 -   Review the [source code changes](https://github.com/microsoft/FluidFramework/pulls).
 -   [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
 
-Detailed instructions for working in the repo can be found in the [Wiki](https://github.com/microsoft/FluidFramework/wiki).
+Detailed instructions for working in the repo can be found in the [Wiki](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Home.md).
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
 For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
@@ -222,9 +222,11 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 
 ## Help
 
-Not finding what you're looking for in this README? Check out [fluidframework.com](https://fluidframework.com/docs/).
+Not finding what you're looking for in this README?
+Check out [fluidframework.com](https://fluidframework.com/docs/).
 
-Still not finding what you're looking for? Please [file an issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
+Still not finding what you're looking for?
+Please [file an issue](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Contributing/Submitting-Bugs-and-Feature-Requests.md).
 
 Thank you!
 

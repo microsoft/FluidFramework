@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert, fail } from "node:assert";
+import { strict as assert } from "node:assert";
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type { SessionId } from "@fluidframework/id-compressor";
@@ -11,7 +11,7 @@ import type { SessionId } from "@fluidframework/id-compressor";
 import type { ChangeFamilyEditor, ChangeRebaser } from "../../../core/index.js";
 import type { Commit, EditManager, SeqNumber } from "../../../shared-tree-core/index.js";
 import { brand } from "../../../util/index.js";
-import { TestChange, type TestChangeFamily, asDelta } from "../../testChange.js";
+import { TestChange, asDelta } from "../../testChange.js";
 import { mintRevisionTag } from "../../utils.js";
 
 import {
@@ -19,7 +19,7 @@ import {
 	checkChangeList,
 	testChangeEditManagerFactory,
 } from "./editManagerTestUtils.js";
-export type TestEditManager = EditManager<ChangeFamilyEditor, TestChange, TestChangeFamily>;
+export type TestEditManager = EditManager<ChangeFamilyEditor, TestChange>;
 
 /**
  * Represents the minting and sending of a new local change.
@@ -333,10 +333,10 @@ export function runUnitTestScenario(
 						const seq = step.seq;
 						const commit = localCommits.shift();
 						if (commit === undefined) {
-							fail("Invalid test scenario: no local commit to acknowledge");
+							assert.fail("Invalid test scenario: no local commit to acknowledge");
 						}
 						if (commit.seqNumber !== seq) {
-							fail(
+							assert.fail(
 								"Invalid test scenario: acknowledged commit does not mach oldest local change",
 							);
 						}
@@ -375,7 +375,8 @@ export function runUnitTestScenario(
 							...steps.filter(peerLocalChangesFilter),
 						].map(
 							(s) =>
-								s.intention ?? fail("Sequenced changes must all have an intention property"),
+								s.intention ??
+								assert.fail("Sequenced changes must all have an intention property"),
 						);
 						const commit: TestCommit = {
 							revision: mintRevisionTag(),
@@ -508,7 +509,7 @@ export function runUnitTestScenario(
 					);
 				}
 				default: {
-					assert(false, "Invalid step type");
+					assert.fail("Invalid step type");
 				}
 			}
 		};

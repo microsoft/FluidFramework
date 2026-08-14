@@ -20,6 +20,7 @@ import type {
 	IBatchMessage,
 	ICodeDetailsLoader,
 	IContainer,
+	IContainerContextInternal,
 	IContainerEvents,
 	IContainerLoadMode,
 	IDeltaManager,
@@ -534,6 +535,17 @@ export class Container
 
 	private readonly _deltaManager: DeltaManager<ConnectionManager>;
 	private service: IDocumentService | undefined;
+	private readonly fetchOps: NonNullable<IContainerContextInternal["fetchOps"]> = async (
+		from,
+		to,
+		abortSignal,
+	) => {
+		const deltaStorage = await this.service?.connectToDeltaStorage();
+		if (deltaStorage === undefined) {
+			throw new Error("Cannot fetch ops: delta storage is unavailable");
+		}
+		return deltaStorage.fetchMessages(from, to, abortSignal);
+	};
 
 	private _runtime: IRuntime | undefined;
 	private get runtime(): IRuntime {
@@ -963,9 +975,7 @@ export class Container
 
 		const offlineLoadEnabled =
 			this.isInteractiveClient &&
-			(this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ??
-				this.mc.config.getBoolean("Fluid.Container.enableOfflineFull") ??
-				options.enableOfflineLoad !== false);
+			(this.mc.config.getBoolean("Fluid.Container.enableOfflineFull") ?? true);
 		this.serializedStateManager = new SerializedStateManager(
 			this.subLogger,
 			this.storageAdapter,
@@ -2445,6 +2455,7 @@ export class Container
 					this.submitBatch(batch, referenceSequenceNumber),
 				submitSignalFn: (content, targetClientId) =>
 					this.submitSignal(content, targetClientId),
+				fetchOps: this.fetchOps,
 				disposeFn: (error?: ICriticalContainerError) => this.dispose(error),
 				closeFn: (error?: ICriticalContainerError) => this.close(error),
 				updateDirtyContainerState: this.updateDirtyContainerState,

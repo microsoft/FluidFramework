@@ -7,7 +7,7 @@
 // @public
 export class AzureClient {
     constructor(properties: AzureClientProps);
-    createContainer<const TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema, minVersionForCollab: MinimumVersionForCollab): Promise<{
+    createContainer<const TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema, oldestSupportedClient: OldestSupportedClientVersion): Promise<{
         container: IFluidContainer<TContainerSchema>;
         services: AzureContainerServices;
     }>;
@@ -16,7 +16,7 @@ export class AzureClient {
         container: IFluidContainer<TContainerSchema>;
         services: AzureContainerServices;
     }>;
-    getContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, minVersionForCollab: MinimumVersionForCollab): Promise<{
+    getContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, oldestSupportedClient: OldestSupportedClientVersion): Promise<{
         container: IFluidContainer<TContainerSchema>;
         services: AzureContainerServices;
     }>;
@@ -26,7 +26,7 @@ export class AzureClient {
         services: AzureContainerServices;
     }>;
     getContainerVersions(id: string, options?: AzureGetVersionsOptions): Promise<AzureContainerVersion[]>;
-    viewContainerVersion<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, version: AzureContainerVersion, minVersionForCollab: MinimumVersionForCollab): Promise<{
+    viewContainerVersion<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, version: AzureContainerVersion, oldestSupportedClient: OldestSupportedClientVersion): Promise<{
         container: IFluidContainer<TContainerSchema>;
     }>;
     // @deprecated
@@ -103,7 +103,7 @@ export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
 
 // @public
 export interface ITelemetryBaseLogger {
-    minLogLevel?: LogLevel;
+    minLogLevel?: LogLevel | undefined;
     send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
 }
 

@@ -17,8 +17,8 @@ import type {
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	type TelemetryLoggerExt,
 	LoggingError,
+	type TelemetryLoggerExt,
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 

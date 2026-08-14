@@ -392,16 +392,18 @@ export class DocumentPostCreateError extends Error {
 		/**
 		 * Inner error being wrapped.
 		 */
+		// @ts-expect-error - innerError member is retained for debuggablity, but otherwise unused.
 		private readonly innerError: Error,
 	) {
 		super(innerError.message);
+		if (innerError.stack) {
+			this.stack = innerError.stack;
+		}
 	}
 
 	public readonly name = "DocumentPostCreateError";
 
-	public get stack(): string | undefined {
-		return this.innerError.stack;
-	}
+	public readonly stack?: string;
 }
 
 /**

@@ -34,13 +34,36 @@ import type {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports, import-x/no-duplicates
 import type { NodeKind, TreeNodeSchema } from "../simple-tree/index.js";
 
+/**
+ * Enables expensive debug assertions for formatted text.
+ */
+let enableTextExpensiveDebugAsserts = false;
+
+/**
+ * Enables or disables expensive debug assertions for formatted text.
+ * @remarks
+ * These should remain disabled except when testing implementation details of this code.
+ */
+export function setEnableExpensiveDebugAsserts(value: boolean): void {
+	enableTextExpensiveDebugAsserts = value;
+}
+
+/**
+ * Runs `condition` as a {@link debugAssert} only when {@link enableTextExpensiveDebugAsserts} is enabled.
+ * @remarks
+ * Like all {@link debugAssert}s, this is compiled out of production builds, so `condition` is never evaluated there.
+ */
+export function expensiveInternalValidationAssert(condition: () => true | string): void {
+	debugAssert(() => !enableTextExpensiveDebugAsserts || condition());
+}
+
 const sf = new SchemaFactoryAlpha("com.fluidframework.text");
 
 class TextNode
 	extends sf.object("Text", {
 		content: SchemaFactory.required([() => StringArray], { key: EmptyKey }),
 	})
-	implements TextAsTree.Members, IExposedMethods
+	implements PlainText.Members, IExposedMethods
 {
 	public static [exposeMethodsSymbol](methods: ExposedMethods): void {
 		methods.exposeMethod(
@@ -120,9 +143,9 @@ class TextNode
 
 	public charactersCopy(): string[] {
 		const result = this.content.charactersCopy();
-		debugAssert(
+		expensiveInternalValidationAssert(
 			() =>
-				compareArrays(result, this.charactersCopy_reference()) ||
+				compareArrays(result, this.#charactersCopy_reference()) ||
 				"invalid charactersCopy optimizations",
 		);
 		return result;
@@ -130,8 +153,8 @@ class TextNode
 
 	public fullString(): string {
 		const result = this.content.fullString();
-		debugAssert(
-			() => result === this.fullString_reference() || "invalid fullString optimizations",
+		expensiveInternalValidationAssert(
+			() => result === this.#fullString_reference() || "invalid fullString optimizations",
 		);
 		return result;
 	}
@@ -139,19 +162,19 @@ class TextNode
 	/**
 	 * Unoptimized trivially correct implementation of fullString.
 	 */
-	public fullString_reference(): string {
+	#fullString_reference(): string {
 		return this.content.join("");
 	}
 
 	/**
 	 * Unoptimized trivially correct implementation of charactersCopy.
 	 */
-	public charactersCopy_reference(): string[] {
+	#charactersCopy_reference(): string[] {
 		return [...this.content];
 	}
 
 	public onCharactersChanged(
-		callback: (ops: readonly TextAsTree.TextOp[] | undefined) => void,
+		callback: (ops: readonly PlainText.TextOp[] | undefined) => void,
 	): () => void {
 		return TreeAlpha.on(this.content, "nodeChanged", ({ delta }) =>
 			processCharactersChangedDelta(delta, (i) => this.content[i], callback),
@@ -201,7 +224,7 @@ class StringArray extends sf.array("StringArray", SchemaFactory.string) {
 }
 
 /**
- * Processes an array-node delta into a {@link TextAsTree.TextOp}[] and calls `callback`.
+ * Processes an array-node delta into a {@link PlainText.TextOp}[] and calls `callback`.
  * @remarks
  * Shared by both the plain `onCharactersChanged` (from `nodeChanged`) and formatted `onContentChanged`
  * (from `treeChanged`) implementations.
@@ -217,14 +240,14 @@ class StringArray extends sf.array("StringArray", SchemaFactory.string) {
 export function processCharactersChangedDelta(
 	delta: readonly (ArrayNodeDeltaOp | ArrayNodeTreeChangedDeltaOp)[] | undefined,
 	getCharacter: (index: number) => string | undefined,
-	callback: (ops: readonly TextAsTree.TextOp[] | undefined) => void,
+	callback: (ops: readonly PlainText.TextOp[] | undefined) => void,
 ): void {
 	if (delta === undefined) {
 		callback(undefined);
 		return;
 	}
 	let readPosition = 0;
-	const ops: TextAsTree.TextOp[] = [];
+	const ops: PlainText.TextOp[] = [];
 	for (const op of delta) {
 		if (op.type === "retain") {
 			// `subtreeChanged` is only present on retain ops from `treeChanged` deltas.
@@ -319,7 +342,7 @@ export function processCharactersChangedDelta(
  * in addition to implementing them for text.
  * @alpha
  */
-export namespace TextAsTree {
+export namespace PlainText {
 	/**
 	 * A retain op in a character-level delta — a span of unchanged characters that the consumer should skip over.
 	 * @sealed
@@ -337,8 +360,8 @@ export namespace TextAsTree {
 		/**
 		 * Whether at least one character in the retained range had a deep change.
 		 * @remarks
-		 * Present only on retain ops delivered by {@link @fluidframework/tree#FormattedTextAsTree.Members.onContentChanged};
-		 * always absent on retain ops delivered by {@link TextAsTree.Members.onCharactersChanged}.
+		 * Present only on retain ops delivered by {@link @fluidframework/tree#FormattedText.Members.onContentChanged};
+		 * always absent on retain ops delivered by {@link PlainText.Members.onCharactersChanged}.
 		 * When present, `true` indicates the retained range contained a formatting property update
 		 * or an atom content edit; `false` indicates no deep change.
 		 */
@@ -391,7 +414,7 @@ export namespace TextAsTree {
 	 */
 	export interface Statics {
 		/**
-		 * Construct a {@link TextAsTree.(Tree:type)} from a string, where each character (as defined by iterating over the string) becomes a single character in the text node.
+		 * Construct a {@link PlainText.(Tree:type)} from a string, where each character (as defined by iterating over the string) becomes a single character in the text node.
 		 * This combines pairs of utf-16 surrogate code units into single characters as appropriate.
 		 */
 		fromString(value: string): Tree;
@@ -410,8 +433,8 @@ export namespace TextAsTree {
 	 * (which often operates on something in between unicode code points and grapheme clusters)
 	 * and navigation/selection (which typically uses grapheme clusters).
 	 *
-	 * @see {@link TextAsTree.Statics.fromString} for construction.
-	 * @see {@link TextAsTree.(Tree:type)} for schema.
+	 * @see {@link PlainText.Statics.fromString} for construction.
+	 * @see {@link PlainText.(Tree:type)} for schema.
 	 * @sealed
 	 * @alpha
 	 */
@@ -424,15 +447,15 @@ export namespace TextAsTree {
 		characters(): Iterable<string>;
 
 		/**
-		 * Optimized way to get a copy of the {@link TextAsTree.Members.characters} in an array.
+		 * Optimized way to get a copy of the {@link PlainText.Members.characters} in an array.
 		 */
 		charactersCopy(): string[];
 
 		/**
 		 * Gets the number of characters currently in the text.
 		 * @remarks
-		 * The length of {@link TextAsTree.Members.characters}.
-		 * This is not the length of the string returned by {@link TextAsTree.Members.fullString},
+		 * The length of {@link PlainText.Members.characters}.
+		 * This is not the length of the string returned by {@link PlainText.Members.fullString},
 		 * as that string may contain characters which are made up of multiple UTF-16 code units.
 		 */
 		characterCount(): number;
@@ -446,7 +469,7 @@ export namespace TextAsTree {
 		 * Insert a range of characters into the string based on character index.
 		 * @remarks
 		 * See {@link (TreeArrayNode:interface).insertAt} for more details on the behavior.
-		 * See {@link TextAsTree.Statics.fromString} for how the `additionalCharacters` string is broken into characters.
+		 * See {@link PlainText.Statics.fromString} for how the `additionalCharacters` string is broken into characters.
 		 * @privateRemarks
 		 * If we provide ways to customize character boundaries, that could be handled here by taking in an Iterable<string> instead of a string.
 		 * Doing this currently would enable insertion of text with different character boundaries than the existing text,
@@ -465,13 +488,13 @@ export namespace TextAsTree {
 
 		/**
 		 * Subscribe to shallow character-level changes on this text node — inserts and removes only.
-		 * @param callback - Called after each change with a sequence of {@link TextAsTree.TextOp}s describing what changed,
+		 * @param callback - Called after each change with a sequence of {@link PlainText.TextOp}s describing what changed,
 		 * or `undefined` when a delta could not be computed (e.g. during a schema upgrade).
 		 * @returns A cleanup function that unsubscribes the callback when called.
 		 * @remarks
 		 * Only fires on shallow changes — inserts and removes.
 		 * It does not fire on deep changes such as formatting property updates on existing characters.
-		 * For formatted text, use {@link @fluidframework/tree#FormattedTextAsTree.Members.onContentChanged} to also receive deep changes.
+		 * For formatted text, use {@link @fluidframework/tree#FormattedText.Members.onContentChanged} to also receive deep changes.
 		 *
 		 * All counts in the delivered ops are in Unicode code points, not UTF-16 code units.
 		 * For characters outside the Basic Multilingual Plane (e.g. emoji), one code point
@@ -481,17 +504,17 @@ export namespace TextAsTree {
 	}
 
 	/**
-	 * Schema for a {@link TextAsTree.(Tree:variable)} node.
+	 * Schema for a {@link PlainText.(Tree:variable)} node.
 	 * @remarks
-	 * See {@link TextAsTree.Statics} for static APIs on this schema, including construction.
+	 * See {@link PlainText.Statics} for static APIs on this schema, including construction.
 	 * @alpha
 	 */
 	export const Tree = eraseSchemaDetails<Members, Statics>()(TextNode);
 
 	/**
-	 * Node for the {@link TextAsTree.(Tree:type)} schema exposing the {@link TextAsTree.Members} API.
+	 * Node for the {@link PlainText.(Tree:type)} schema exposing the {@link PlainText.Members} API.
 	 * @remarks
-	 * Create using {@link TextAsTree.Statics.fromString}.
+	 * Create using {@link PlainText.Statics.fromString}.
 	 * @alpha
 	 */
 	export type Tree = Members & TreeNode & WithType<"com.fluidframework.text.Text">;

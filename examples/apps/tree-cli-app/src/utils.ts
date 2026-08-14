@@ -35,7 +35,8 @@ import {
 	type ConciseTree,
 	type JsonCompatible,
 } from "@fluidframework/tree/beta";
-import { type Static, Type } from "@sinclair/typebox";
+import * as Type from "@sinclair/typebox";
+import type { Static } from "@sinclair/typebox";
 
 import type { Item } from "./schema.js";
 import { config, List } from "./schema.js";

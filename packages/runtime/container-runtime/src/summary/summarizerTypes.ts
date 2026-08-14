@@ -24,8 +24,8 @@ import type {
 import type { ISummaryStats } from "@fluidframework/runtime-definitions/internal";
 import type { TelemetryContext } from "@fluidframework/runtime-utils/internal";
 import type {
-	TelemetryLoggerExt,
 	ITelemetryLoggerPropertyBag,
+	TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { SummarizeReason } from "./summarizerUtils.js";

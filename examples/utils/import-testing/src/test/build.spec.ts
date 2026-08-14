@@ -13,7 +13,23 @@ import { promisify } from "node:util";
 
 // When available (typescript 5.8+), update dynamic parsing to static import
 // import typescriptHostPackageJson from "@fluid-example/typescript-versions-host/package.json"; : with { type: "json" };
-import type { PackageJson } from "@fluidframework/build-tools";
+
+/**
+ * Minimal shape of the parts of package.json this test reads.
+ *
+ * @remarks
+ * Declared locally rather than imported from `@fluidframework/build-tools` because that package is
+ * ESM-only: its CommonJS `exports` condition resolves to a stub that does not include
+ * `PackageJson`, and this file is also compiled as CommonJS.
+ *
+ * TODO: AB#80348: once this test's CommonJS compilation is able to import ESM, remove this
+ * interface and restore `import type { PackageJson } from "@fluidframework/build-tools"`. That
+ * requires both a `module-sync` export condition in build-tools and a TypeScript upgrade:
+ * 5.4.5 fails under `node16` and `nodenext` alike, while 5.9 resolves it under `nodenext`.
+ */
+interface PackageJsonDevDependencies {
+	readonly devDependencies: Readonly<Record<string, string>>;
+}
 
 // Resolve the typescript-versions-host package which hosts the aliased TypeScript versions.
 // Use process.cwd() as the base for createRequire so this works in both ESM
@@ -28,7 +44,7 @@ const typescriptHostDir = path.dirname(
 
 const typescriptHostPackageJson = JSON.parse(
 	readFileSync(path.join(typescriptHostDir, "package.json"), "utf8"),
-) as Required<Pick<PackageJson, "devDependencies">>;
+) as PackageJsonDevDependencies;
 
 // All are expected to match, but be cautious.
 const typescriptVersions = Object.entries(typescriptHostPackageJson.devDependencies).filter(
@@ -48,16 +64,21 @@ async function compileTest(
 	args: string[],
 	project: string = "./tsconfig.test.json",
 ): Promise<void> {
-	const result = execFileAsync(
-		path.join(typescriptHostDir, "node_modules", tscName, "bin", "tsc"),
-		["--project", project, "--noEmit", ...args],
-		{},
-	);
+	const compilerPath = path.join(typescriptHostDir, "node_modules", tscName, "bin", "tsc");
+	const result = execFileAsync(compilerPath, ["--project", project, "--noEmit", ...args], {});
 
 	try {
 		await result;
 	} catch (error) {
-		throw new Error((error as Record<string, string>).stdout);
+		const compilerError = error as {
+			stdout?: string;
+			stderr?: string;
+			message?: string;
+		};
+		const details = [compilerError.stdout, compilerError.stderr, compilerError.message]
+			.filter((x): x is string => x !== undefined && x.length > 0)
+			.join("\n");
+		throw new Error(`Failed to compile with ${tscName}:\n${details}`);
 	}
 }
 

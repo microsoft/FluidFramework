@@ -45,12 +45,12 @@ import {
 	snapshotWithLoadingGroupIdKey,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
+	createChildLogger,
 	type IConfigProvider,
 	type IFluidErrorBase,
-	type TelemetryLoggerExt,
 	PerformanceEvent,
 	TelemetryDataTag,
-	createChildLogger,
+	type TelemetryLoggerExt,
 	wrapError,
 } from "@fluidframework/telemetry-utils/internal";
 

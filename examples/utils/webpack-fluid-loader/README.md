@@ -101,13 +101,9 @@ npm run start:r11s --env mode=r11s \
 
 To use a SharePoint server, run `npm run start:spo-df` if your OneDrive is on the DogFood server, and `npm run start:spo` if it is not.
 
-The following environment variables must be set:
+If you're a Microsoft developer, use the `@ff-internal/tenant-setup` package to populate this variable for `start:spo`:
 
--   local\_\_testing\_\_clientId
--   login\_\_odsp\_\_test\_\_tenants (when running against prod)
--   login\_\_odspdf\_\_test\_\_tenants (when running against dogfood)
-
-All of these variables can be populated by running the [getkeys](../../../tools/getkeys/README.md) tool. If you're a Microsoft developer, the recommended way to populate these variables for `start:spo` is to use the `@ff-internal/trips-setup` package.
+-   login\_\_odsp\_\_fic\_\_test\_\_users
 
 While running examples, documents will be created/loaded using the credentials found in these environment variables.
 
@@ -135,7 +131,7 @@ There are many ways to [contribute](https://github.com/microsoft/FluidFramework/
 -   Review the [source code changes](https://github.com/microsoft/FluidFramework/pulls).
 -   [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
 
-Detailed instructions for working in the repo can be found in the [Wiki](https://github.com/microsoft/FluidFramework/wiki).
+Detailed instructions for working in the repo can be found in the [Wiki](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Home.md).
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
 For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
@@ -146,9 +142,11 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 
 ## Help
 
-Not finding what you're looking for in this README? Check out [fluidframework.com](https://fluidframework.com/docs/).
+Not finding what you're looking for in this README?
+Check out [fluidframework.com](https://fluidframework.com/docs/).
 
-Still not finding what you're looking for? Please [file an issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
+Still not finding what you're looking for?
+Please [file an issue](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Contributing/Submitting-Bugs-and-Feature-Requests.md).
 
 Thank you!
 

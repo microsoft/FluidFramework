@@ -39,7 +39,7 @@ const buildRequestUrl = (requestConfig: RequestConfig): string =>
 
 const buildRequestInitConfig = (requestConfig: RequestConfig): RequestInit => {
 	const requestInit: RequestInit = {
-		method: requestConfig.method,
+		...(requestConfig.method === undefined ? {} : { method: requestConfig.method }),
 		// NOTE: Although the RequestHeaders type permits non-string values in the header, here we are
 		// guaranteed the requestConfig only has string values in its header.
 		headers: requestConfig.headers as Record<string, string>,

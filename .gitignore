@@ -7,15 +7,6 @@ nyc
 *.log
 .DS_Store
 
-.vale/*
-!.vale/config/
-
-.vale/config/*
-!.vale/config/vocabularies/
-
-.vale/config/vocabularies/*
-!.vale/config/vocabularies/fluid/
-
 # Generated Node10 module resolution compatibility files
 alpha.d.ts
 beta.d.ts
@@ -39,11 +30,12 @@ legacy.d.ts
 # Bundle analysis artifacts
 bundleAnalysis
 bundleAnalyzerJson
+compareBundlesOutput
 
 # Misc pipeline artifacts
 artifacts
 
-docs/resources/_gen/
+website/resources/_gen/
 
 # PNPM store (when mounting host file system in docker container)
 .pnpm-store/
@@ -72,6 +64,4 @@ CLAUDE.local.md
 **/benchmark*Output.json
 
 # npm configuration: Currently only used by CI to redirect to an alternative registry.
-# Once all workspaces are updated to pnpm ll and thus have moved the pnpm config out of these files,
-# this can be made global (remove the leading slash)
-/.npmrc
+.npmrc

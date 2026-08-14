@@ -5,7 +5,7 @@
 
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { assert } from '@fluidframework/core-utils/internal';
-import { TelemetryLoggerExt, createChildLogger } from '@fluidframework/telemetry-utils/internal';
+import { createChildLogger, TelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 import { BTree } from '@tylerbu/sorted-btree-es6';
 // eslint-disable-next-line import-x/no-internal-modules
 import { diffAgainst } from '@tylerbu/sorted-btree-es6/extended/diffAgainst';

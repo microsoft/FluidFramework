@@ -131,7 +131,7 @@ export function ContainerDevtoolsView(props: ContainerDevtoolsViewProps): ReactE
 	return supportedFeatures === undefined ? (
 		<Waiting />
 	) : (
-		<_ContainerDevtoolsView
+		<ContainerDevtoolsViewInternal
 			containerKey={containerKey}
 			supportedFeatures={supportedFeatures}
 		/>
@@ -139,9 +139,9 @@ export function ContainerDevtoolsView(props: ContainerDevtoolsViewProps): ReactE
 }
 
 /**
- * {@link _ContainerDevtoolsView} input props.
+ * {@link ContainerDevtoolsViewInternal} input props.
  */
-interface _ContainerDevtoolsViewProps extends HasContainerKey {
+interface ContainerDevtoolsViewInternalProps extends HasContainerKey {
 	/**
 	 * Set of features supported by the corresponding Container-level devtools instance.
 	 */
@@ -151,7 +151,9 @@ interface _ContainerDevtoolsViewProps extends HasContainerKey {
 /**
  * Internal {@link ContainerDevtoolsView}, displayed after supported feature set has been acquired from the webpage.
  */
-function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): ReactElement {
+function ContainerDevtoolsViewInternal(
+	props: ContainerDevtoolsViewInternalProps,
+): ReactElement {
 	const { containerKey, supportedFeatures } = props;
 
 	const styles = useStyles();

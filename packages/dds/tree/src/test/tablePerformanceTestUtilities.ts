@@ -116,7 +116,7 @@ export function createTableTree({ tableSize, initialCellValue }: TableTreeOption
 	const table = treeView.root;
 
 	const columns = Array.from({ length: tableSize }, () => new Column({}));
-	table.insertColumns({ index: 0, columns });
+	table.insertColumns(columns, 0);
 
 	// Pre populate each row's cells at construction time so the entire dense table is initialized
 	// by a single `insertRows` op.
@@ -130,7 +130,7 @@ export function createTableTree({ tableSize, initialCellValue }: TableTreeOption
 		}
 		return new Row({ cells });
 	});
-	table.insertRows({ index: 0, rows });
+	table.insertRows(rows, 0);
 
 	// Configure event listeners
 	const cleanUpEventHandler = Tree.on(table, "treeChanged", () => {});

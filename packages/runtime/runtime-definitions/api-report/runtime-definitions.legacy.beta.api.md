@@ -85,6 +85,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
         snapshotTree: ISnapshotTree;
         sequenceNumber: number;
     }>;
+    readonly hasStagedChanges: boolean;
     readonly inStagingMode: boolean;
     orderSequentially(callback: () => void): void;
     submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
@@ -102,6 +103,7 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
     // (undocumented)
     (event: "dispose", listener: () => void): any;
     (event: "stagingModeChanged", listener: (stagingModeInfo: StagingModeChangedEvent) => void): any;
+    (event: "hasStagedChangesChanged", listener: (hasStagedChanges: boolean) => void): any;
 }
 
 // @beta @legacy
@@ -227,7 +229,7 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     readonly isReadOnly?: () => boolean;
     readonly loadingGroupId?: string;
     makeLocallyVisible(): void;
-    readonly minVersionForCollab: MinimumVersionForCollab;
+    readonly minVersionForCollab: OldestSupportedClientVersion;
     // (undocumented)
     readonly options: Record<string | number, any>;
     readonly scope: FluidObject;
@@ -391,8 +393,8 @@ export interface LocalAttributionKey {
     type: "local";
 }
 
-// @public @input
-export type MinimumVersionForCollab = `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
+// @public @deprecated @input
+export type MinimumVersionForCollab = OldestSupportedClientVersion;
 
 // @beta @legacy
 export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreRegistryEntry2>;
@@ -405,6 +407,9 @@ export type NamedFluidDataStoreRegistryEntry2 = [
 string,
 Promise<FluidDataStoreRegistryEntry> | FluidDataStoreRegistryEntry
 ];
+
+// @public @input
+export type OldestSupportedClientVersion = `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
 
 // @beta @legacy
 export interface OpAttributionKey {

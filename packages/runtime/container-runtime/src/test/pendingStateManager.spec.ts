@@ -983,6 +983,29 @@ describe("Pending State Manager", () => {
 			) as unknown as PendingStateManager_WithPrivates;
 		}
 
+		describe("getMostRecentPendingBatchId", () => {
+			it("ignores stashed initial messages until they are applied", () => {
+				const pendingStateManager = createPendingStateManager(forInitialMessages);
+				assert.equal(pendingStateManager.getMostRecentPendingBatchId(), undefined);
+			});
+
+			it("returns the explicit id from the start of the most recently flushed multi-op batch", () => {
+				const pendingStateManager = createPendingStateManager(undefined);
+				pendingStateManager.onFlushBatch([forFlushedMessages[0]], 1, false);
+				assert.equal(pendingStateManager.getMostRecentPendingBatchId(), "CLIENT_ID_[1]");
+				pendingStateManager.onFlushBatch(
+					withBatchMetadata(
+						forFlushedMessages.map((message) => ({ ...message })),
+						"originalClient_[9]",
+					),
+					2,
+					false,
+				);
+
+				assert.equal(pendingStateManager.getMostRecentPendingBatchId(), "originalClient_[9]");
+			});
+		});
+
 		it("no pending or initial messages", () => {
 			const pendingStateManager = createPendingStateManager(undefined);
 			assert.strictEqual(
@@ -1277,6 +1300,146 @@ describe("Pending State Manager", () => {
 				psm.hasPendingUserChanges(),
 				true,
 				"Should be true with initial messages",
+			);
+		});
+	});
+
+	describe("hasStagedChanges", () => {
+		function createPendingStateManager(
+			pendingMessages: IPendingMessage[] = [],
+			initialMessages: IPendingMessage[] = [],
+		): PendingStateManager_WithPrivates {
+			const psm: PendingStateManager_WithPrivates = new PendingStateManager(
+				{
+					applyStashedOp: async () => undefined,
+					clientId: () => "CLIENT_ID",
+					connected: () => true,
+					reSubmitBatch: () => {},
+					isActiveConnection: () => false,
+					isAttached: () => true,
+				},
+				{ pendingStates: initialMessages },
+				logger,
+			) as unknown as PendingStateManager_WithPrivates;
+
+			psm.pendingMessages.push(...pendingMessages);
+			return psm;
+		}
+		const dirtyableOp = {
+			type: ContainerMessageType.Alias,
+		} satisfies Partial<LocalContainerRuntimeMessage> as LocalContainerRuntimeMessage;
+		const nonDirtyableOp = {
+			type: ContainerMessageType.GC,
+		} satisfies Partial<LocalContainerRuntimeMessage> as LocalContainerRuntimeMessage;
+		const stagedBatchInfo = {
+			clientId: "clientId",
+			batchStartCsn: -1,
+			length: 1,
+			staged: true,
+		};
+		const nonStagedBatchInfo = {
+			clientId: "clientId",
+			batchStartCsn: -1,
+			length: 1,
+			staged: false,
+		};
+
+		it("returns false when there are no pending or initial messages", () => {
+			const psm = createPendingStateManager();
+			assert.strictEqual(psm.hasStagedChanges(), false, "Should be false with no messages");
+		});
+
+		it("returns true if any pending message is staged and dirtyable", () => {
+			const pendingMessages: Partial<IPendingMessage>[] = [
+				{
+					runtimeOp: dirtyableOp,
+					batchInfo: stagedBatchInfo,
+				},
+			];
+			const psm = createPendingStateManager(pendingMessages as IPendingMessage[]);
+			assert.strictEqual(
+				psm.hasStagedChanges(),
+				true,
+				"Should be true with staged dirtyable op",
+			);
+		});
+
+		it("returns false if the pending message is dirtyable but not staged", () => {
+			const pendingMessages: Partial<IPendingMessage>[] = [
+				{
+					runtimeOp: dirtyableOp,
+					batchInfo: nonStagedBatchInfo,
+				},
+			];
+			const psm = createPendingStateManager(pendingMessages as IPendingMessage[]);
+			assert.strictEqual(
+				psm.hasStagedChanges(),
+				false,
+				"Should be false with dirtyable op that is not staged",
+			);
+		});
+
+		it("returns true if the pending message is staged, even if not dirtyable", () => {
+			const pendingMessages: Partial<IPendingMessage>[] = [
+				{
+					runtimeOp: nonDirtyableOp,
+					batchInfo: stagedBatchInfo,
+				},
+			];
+			const psm = createPendingStateManager(pendingMessages as IPendingMessage[]);
+			assert.strictEqual(
+				psm.hasStagedChanges(),
+				true,
+				"Should be true with staged non-dirtyable op: anything staged counts, regardless of dirtyability",
+			);
+		});
+
+		it("returns true if a staged message is an empty batch (runtimeOp undefined)", () => {
+			const psm = createPendingStateManager();
+			const { placeholderMessage } = opGroupingManager.createEmptyGroupedBatch("batchId", 0);
+			// Staged batches aren't actually sent, so clientSequenceNumber is undefined (matching real usage).
+			psm.onFlushEmptyBatch(placeholderMessage, undefined, true /* staged */);
+			assert.strictEqual(
+				psm.hasStagedChanges(),
+				true,
+				"Should be true for a staged empty batch: the user entered staging mode and submitted something (even if empty), so it must be committed or discarded",
+			);
+		});
+
+		it("returns false if there are initial messages but no staged pending messages", () => {
+			const initialMessages: Partial<IPendingMessage>[] = [
+				{
+					runtimeOp: dirtyableOp,
+				},
+			];
+			const psm = createPendingStateManager([], initialMessages as IPendingMessage[]);
+			assert.strictEqual(
+				psm.hasStagedChanges(),
+				false,
+				"Initial (stashed) messages should never count as staged changes",
+			);
+		});
+
+		it("returns true if at least one of multiple pending messages is staged and dirtyable", () => {
+			const pendingMessages: Partial<IPendingMessage>[] = [
+				{
+					runtimeOp: dirtyableOp,
+					batchInfo: nonStagedBatchInfo,
+				},
+				{
+					runtimeOp: nonDirtyableOp,
+					batchInfo: stagedBatchInfo,
+				},
+				{
+					runtimeOp: dirtyableOp,
+					batchInfo: stagedBatchInfo,
+				},
+			];
+			const psm = createPendingStateManager(pendingMessages as IPendingMessage[]);
+			assert.strictEqual(
+				psm.hasStagedChanges(),
+				true,
+				"Should be true since one message is staged and dirtyable",
 			);
 		});
 	});

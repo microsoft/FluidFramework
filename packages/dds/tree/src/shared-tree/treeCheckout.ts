@@ -4,11 +4,14 @@
  */
 
 import { createEmitter } from "@fluid-internal/client-utils";
-import type { IFluidHandle, Listenable } from "@fluidframework/core-interfaces/internal";
+import type {
+	IEmitter,
+	IFluidHandle,
+	Listenable,
+} from "@fluidframework/core-interfaces/internal";
 import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
-import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
-import { isStableId } from "@fluidframework/id-compressor/internal";
-import { UsageError, type TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import { type TelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	FluidClientVersion,
@@ -22,6 +25,7 @@ import {
 	type AnchorSetRootEvents,
 	type ChangeFamily,
 	CommitKind,
+	CommitOutcome,
 	type DeltaVisitor,
 	type DetachedFieldIndex,
 	type IEditableForest,
@@ -52,11 +56,13 @@ import {
 	type ChangeMetadata,
 	type LabelTree,
 	type TransactionLabels,
-	type ChangeEncodingContext,
 	type ReadOnlyDetachedFieldIndex,
 	makeAnonChange,
 	type TaggedChange,
 	deltaFieldMapHasVisibleChanges,
+	findCommonAncestor,
+	rebaseBranch,
+	type LocalCommitEvents,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -74,8 +80,8 @@ import {
 	SquashingTransactionStack,
 	SharedTreeBranch,
 	TransactionResult as InternalTransactionResult,
-	onForkTransitive,
 	type SharedTreeBranchChange,
+	type SquashingTransactionOptions,
 	type Transactor,
 } from "../shared-tree-core/index.js";
 import {
@@ -87,13 +93,12 @@ import {
 	type ViewableTree,
 	type TreeBranch,
 	type TreeBranchAlpha,
-	type TreeChangeEvents,
 	type VerboseTree,
-	type VoidTransactionCallbackStatus,
-	type TransactionCallbackStatus,
-	type TransactionResult,
-	type TransactionResultExt,
-	type RunTransactionParams,
+	type VoidTransactionCallbackStatusAlpha,
+	type TransactionCallbackStatusAlpha,
+	type TransactionVoidResult,
+	type TransactionValueResult,
+	type RunTransactionParamsAlpha,
 	type TransactionConstraintAlpha,
 	type TreeViewAlpha,
 	getInnerNode,
@@ -115,9 +120,17 @@ import {
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import { SharedTreeChangeEnricher } from "./sharedTreeChangeEnricher.js";
-import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
+import type { SharedTreeChangeProcessingContext } from "./sharedTreeChangeFamily.js";
+import {
+	ConstraintStatus,
+	SharedTreeChangeFamily,
+	getConstraintStatus,
+	hasSchemaChange,
+} from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
+import { extractTransactionChangeProcessor } from "./transactionPostProcessor.js";
+import { SerializedChange } from "./serializedChange.js";
 
 /**
  * Yields all defined (non-`undefined`) labels from a {@link LabelTree}, depth-first.
@@ -207,6 +220,13 @@ export interface CheckoutEvents {
 }
 
 /**
+ * A collection of functions for managing transactions on a {@link ITreeCheckout}.
+ */
+export type TreeTransactor = Transactor<
+	SquashingTransactionOptions<SharedTreeChange, SharedTreeChangeProcessingContext>
+>;
+
+/**
  * Provides a means for interacting with a SharedTree.
  * This includes reading data from the tree and running transactions to mutate the tree.
  * @remarks This interface should not have any implementations other than those provided by the SharedTree package libraries.
@@ -252,13 +272,13 @@ export interface ITreeCheckout
 	/**
 	 * A collection of functions for managing transactions.
 	 */
-	readonly transaction: Transactor;
+	readonly transaction: TreeTransactor;
 
 	fork(): ITreeCheckout;
 
 	/**
-	 * Replaces all schema with the provided schema.
-	 * Can over-write preexisting schema, and removes unmentioned schema.
+	 * Replaces all schemas with the provided schema.
+	 * Can overwrite preexisting schemas, and removes unmentioned schemas.
 	 *
 	 * @param newSchema - The new schema to replace the existing schema.
 	 * @param allowNonSupersetSchema - Whether to allow non-superset schemas.
@@ -299,22 +319,26 @@ export function createTreeCheckout(
 	mintRevisionTag: () => RevisionTag,
 	revisionTagCodec: RevisionTagCodec,
 	args?: {
-		branch?: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>;
-		changeFamily?: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>;
+		branch?: SharedTreeBranch<
+			SharedTreeEditBuilder,
+			SharedTreeChange,
+			SharedTreeChangeProcessingContext
+		>;
+		changeFamily?: ChangeFamily<
+			SharedTreeEditBuilder,
+			SharedTreeChange,
+			SharedTreeChangeProcessingContext
+		>;
 		schema?: TreeStoredSchemaRepository;
 		forest?: IEditableForest;
 		fieldBatchCodec?: FieldBatchCodec;
 		removedRoots?: DetachedFieldIndex;
 		chunkCompressionStrategy?: TreeCompressionStrategy;
-		logger?: TelemetryLoggerExt;
-		breaker?: Breakable;
-		disposeForksAfterTransaction?: boolean;
 		codecOptions?: Partial<CodecWriteOptions>;
 	},
 ): TreeCheckout {
-	const breaker = args?.breaker ?? new Breakable("TreeCheckout");
 	const schema = args?.schema ?? new TreeStoredSchemaRepository();
-	const forest = args?.forest ?? buildForest(breaker, schema);
+	const forest = args?.forest ?? buildForest(new Breakable("TreeCheckout"), schema);
 	const defaultCodecOptions: CodecWriteOptions = {
 		jsonValidator: FormatValidatorNoOp,
 		minVersionForCollab: FluidClientVersion.v2_0,
@@ -353,9 +377,6 @@ export function createTreeCheckout(
 		revisionTagCodec,
 		idCompressor,
 		args?.removedRoots,
-		args?.logger,
-		breaker,
-		args?.disposeForksAfterTransaction,
 	);
 }
 
@@ -393,7 +414,7 @@ function getCheckout(context: TreeBranch): TreeCheckout {
  * @param constraintsOnRevert - If true, use {@link ISharedTreeEditor.addNodeExistsConstraintOnRevert}.
  * @param constraints - The constraints to add to the transaction.
  *
- * @see {@link RunTransactionParams.preconditions}.
+ * @see {@link RunTransactionParamsAlpha.preconditions}.
  */
 export function addConstraintsToTransaction(
 	checkout: ITreeCheckout,
@@ -463,6 +484,31 @@ export function assertValidConstraint(
 export class TreeCheckout implements ITreeCheckout {
 	public disposed = false;
 
+	/**
+	 * Logger for telemetry events related to this checkout.
+	 * @remarks
+	 * This logger is provided by the {@link Breakable} passed to the constructor, and may be `undefined` if no logger was provided.
+	 * See the explanation on {@link Breakable.logger} for why this pattern makes sense.
+	 */
+	private get logger(): TelemetryLoggerExt | undefined {
+		return this.breaker.logger;
+	}
+
+	/**
+	 * The breaker for this checkout.
+	 * @remarks
+	 * As the forest is part of the mutable state of the checkout,
+	 * we want to be broken if it is broken, so we use the forest's breaker as our own.
+	 *
+	 * This does mean that if something goes wrong in the checkout, we break the forest,
+	 * which is not strictly necessary, but may be desirable as if something is wrong with the checkout,
+	 * while the forest might be internally consistent, it likely doesn't contain the correct content
+	 * (since the checkout is keeping it up to date properly anymore).
+	 */
+	public get breaker(): Breakable {
+		return this.forest.breaker;
+	}
+
 	private editLock: EditLock;
 
 	/**
@@ -486,9 +532,17 @@ export class TreeCheckout implements ITreeCheckout {
 	private readonly views = new Set<TreeView<ImplicitFieldSchema>>();
 
 	/**
-	 * Set of revertibles maintained for automatic disposal
+	 * Event emitters for local commits.
 	 */
-	private readonly revertibles = new Set<RevertibleAlpha>();
+	private readonly localCommitEventEmitters = new Map<
+		RevisionTag,
+		IEmitter<LocalCommitEvents>
+	>();
+
+	/**
+	 * Revertibles maintained for automatic disposal
+	 */
+	private readonly revertibles = new Map<RevisionTag, RevertibleAlpha>();
 
 	/**
 	 * Each branch's head commit corresponds to a revertible commit.
@@ -497,7 +551,11 @@ export class TreeCheckout implements ITreeCheckout {
 	 */
 	private readonly revertibleCommitBranches = new Map<
 		RevisionTag,
-		SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>
+		SharedTreeBranch<
+			SharedTreeEditBuilder,
+			SharedTreeChange,
+			SharedTreeChangeProcessingContext
+		>
 	>();
 
 	/**
@@ -510,23 +568,24 @@ export class TreeCheckout implements ITreeCheckout {
 	public events: Listenable<CheckoutEvents> = this.#events;
 
 	public constructor(
-		branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
+		branch: SharedTreeBranch<
+			SharedTreeEditBuilder,
+			SharedTreeChange,
+			SharedTreeChangeProcessingContext
+		>,
 		/** True if and only if this checkout is for a branch which is persisted and shared with other clients. */
 		public readonly isSharedBranch: boolean,
-		private readonly changeFamily: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>,
+		private readonly changeFamily: ChangeFamily<
+			SharedTreeEditBuilder,
+			SharedTreeChange,
+			SharedTreeChangeProcessingContext
+		>,
 		public readonly storedSchema: TreeStoredSchemaRepository,
 		public readonly forest: IEditableForest,
 		private readonly mintRevisionTag: () => RevisionTag,
 		private readonly revisionTagCodec: RevisionTagCodec,
 		private readonly idCompressor: IIdCompressor,
-		private readonly _removedRoots: DetachedFieldIndex = makeDetachedFieldIndex(
-			"repair",
-			revisionTagCodec,
-			idCompressor,
-		),
-		/** Optional logger for telemetry. */
-		private readonly logger?: TelemetryLoggerExt,
-		public readonly breaker: Breakable = new Breakable("TreeCheckout"),
+		private readonly _removedRoots: DetachedFieldIndex = makeDetachedFieldIndex("repair"),
 		public readonly disposeForksAfterTransaction = true,
 	) {
 		this.#transaction = this.createTransactionStack(branch);
@@ -645,23 +704,30 @@ export class TreeCheckout implements ITreeCheckout {
 
 	private registerForBranchEvents(): void {
 		this.#transaction.branch.events.on("afterChange", this.onAfterBranchChange);
+		this.#transaction.branch.events.on("commitSequenced", this.onCommitSequenced);
 		this.#transaction.activeBranchEvents.on("afterChange", this.onAfterChange);
 		this.#transaction.activeBranchEvents.on("ancestryTrimmed", this.onAncestryTrimmed);
 	}
 
 	private unregisterFromBranchEvents(): void {
 		this.#transaction.branch.events.off("afterChange", this.onAfterBranchChange);
+		this.#transaction.branch.events.off("commitSequenced", this.onCommitSequenced);
 		this.#transaction.activeBranchEvents.off("afterChange", this.onAfterChange);
 		this.#transaction.activeBranchEvents.off("ancestryTrimmed", this.onAncestryTrimmed);
 	}
 
 	private createTransactionStack(
-		branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
-	): SquashingTransactionStack<SharedTreeEditBuilder, SharedTreeChange> {
+		branch: SharedTreeBranch<
+			SharedTreeEditBuilder,
+			SharedTreeChange,
+			SharedTreeChangeProcessingContext
+		>,
+	): SquashingTransactionStack<
+		SharedTreeEditBuilder,
+		SharedTreeChange,
+		SharedTreeChangeProcessingContext
+	> {
 		return new SquashingTransactionStack(branch, this.mintRevisionTag, () => {
-			const disposeForks = this.disposeForksAfterTransaction
-				? trackForksForDisposal(this)
-				: undefined;
 			// When each transaction is started, make a restorable checkpoint of the current state of removed roots
 			const restoreRemovedRoots = this._removedRoots.createCheckpoint();
 			return (result, viewUpdate: SharedTreeChange | undefined) => {
@@ -688,7 +754,6 @@ export class TreeCheckout implements ITreeCheckout {
 						unreachableCase(result);
 					}
 				}
-				disposeForks?.();
 			};
 		});
 	}
@@ -711,6 +776,39 @@ export class TreeCheckout implements ITreeCheckout {
 			cursor.free();
 		}
 	}
+
+	private readonly onCommitSequenced = (commit: GraphCommit<SharedTreeChange>): void => {
+		const emitter = this.localCommitEventEmitters.get(commit.revision);
+		if (emitter === undefined) {
+			// If the commit predates the creation of this checkout, there will be no emitter associated with the commit.
+			// In that case, we don't need to emit any events.
+			return;
+		}
+		const constraintStatus = getConstraintStatus(commit.change);
+		let outcome: CommitOutcome;
+		switch (constraintStatus) {
+			case ConstraintStatus.Satisfied: {
+				outcome = CommitOutcome.FullyApplied;
+				break;
+			}
+			case ConstraintStatus.ImplicitViolation: {
+				outcome = CommitOutcome.FullyDropped;
+				break;
+			}
+			case ConstraintStatus.ExplicitViolation: {
+				outcome = CommitOutcome.NewContentOnly;
+				break;
+			}
+			default: {
+				unreachableCase(constraintStatus);
+			}
+		}
+		this.emitChangedLocked(() => {
+			emitter.emit("settled", outcome);
+		}, "a commit settled event callback");
+		// No more events will be emitted for this commit, so we can remove the emitter from the map.
+		this.localCommitEventEmitters.delete(commit.revision);
+	};
 
 	private readonly onAfterBranchChange = (
 		event: SharedTreeBranchChange<SharedTreeChange>,
@@ -754,55 +852,87 @@ export class TreeCheckout implements ITreeCheckout {
 								revision,
 								this.#transaction.activeBranch.fork(commit),
 							);
-							this.revertibles.add(revertible);
+							this.revertibles.set(revision, revertible);
 							return revertible;
 						};
 
 				let withinEventContext = true;
 
+				const events = createEmitter<LocalCommitEvents>();
+				this.localCommitEventEmitters.set(commit.revision, events);
 				const metadata: ChangeMetadata = {
 					kind,
 					isLocal: true,
 					getChange: () => {
-						const context: ChangeEncodingContext = {
-							idCompressor: this.idCompressor,
-							originatorId: this.idCompressor.localSessionId,
-							revision,
-							isSummary: false,
-						};
-						const encodedChange = this.changeFamily.codecs.resolve(4).encode(change, context);
-
 						assert(
 							commit.parent !== undefined,
 							0xca4 /* Expected applied commit to be parented */,
 						);
-						return {
-							version: 1,
+						return SerializedChange.V1.encode(
+							this.idCompressor,
+							this.changeFamily,
+							change,
 							revision,
-							originatorId: this.idCompressor.localSessionId,
-							change: encodedChange,
-						} satisfies SerializedChange;
+						);
 					},
 					getRevertible: (onDisposed) => getRevertible?.(onDisposed),
 					label: this.labelTreeNode?.label,
 					labels: buildLabelsSet(this.labelTreeNode),
+					events,
 				};
 
-				this.#events.emit("changed", metadata, getRevertible);
+				this.emitChangedLocked(() => {
+					this.#events.emit("changed", metadata, getRevertible);
+				});
 				withinEventContext = false;
+			}
+		} else if (event.type === "remove") {
+			// Commits that are rolled back should no longer be revertible
+			for (const commit of event.removedCommits) {
+				this.revertibles.get(commit.revision)?.dispose();
 			}
 		} else if (this.isRemoteChangeEvent(event)) {
 			// TODO: figure out how to plumb through commit kind info for remote changes
-			this.#events.emit("changed", {
-				isLocal: false,
-				kind: CommitKind.Default,
-				labels: new Set<unknown>(),
+			this.emitChangedLocked(() => {
+				this.#events.emit("changed", {
+					isLocal: false,
+					kind: CommitKind.Default,
+					labels: new Set<unknown>(),
+				});
 			});
 		}
 	};
 
+	/**
+	 * Hold the `editLock` for the duration of `emit`, so that re-entrant edits, transactions,
+	 * branch operations, etc. attempted from inside a `changed` listener throw the canonical
+	 * "forbidden during a change event" {@link UsageError} via {@link EditLock.checkUnlocked}.
+	 *
+	 * @remarks
+	 * Shared by both the local and remote `changed` emission paths in {@link TreeCheckout.onAfterBranchChange}.
+	 * The `try`/`finally` ensures the lock is released even if a listener throws.
+	 */
+	private emitChangedLocked(
+		emit: () => void,
+		reason: string = "a change event callback",
+	): void {
+		this.editLock.lock(reason);
+		try {
+			emit();
+		} finally {
+			// TODO: any event that throws potentially leaves the code which triggered that event,
+			// and thus this checkout (and likely more) in a broken state.
+			// Unlocking this editLock prevents future use of this broken state from giving a confusing error in this case,
+			// however, a better approach would probably be to put something (this checkout and/or the editLock)
+			// into a broken state (using a properly scoped `Breakable`),
+			// likely by moving emitChangedLocked into EditLock, and having EditLock get a Breakable,
+			// and having the new emitChangedLocked use `Breakable.use`.
+			this.editLock.unlock();
+		}
+	}
+
 	private readonly onAfterChange = (event: SharedTreeBranchChange<SharedTreeChange>): void => {
-		this.editLock.lock();
+		this.editLock.lock("a change event callback");
 		this.#events.emit("beforeBatch", event);
 		if (event.change !== undefined) {
 			const revision =
@@ -826,24 +956,13 @@ export class TreeCheckout implements ITreeCheckout {
 	 */
 	@throwIfBroken
 	public applySerializedChange(serializedChange: JsonCompatibleReadOnly): void {
-		if (!isSerializedChange(serializedChange)) {
-			throw new UsageError(`Cannot apply change. Invalid serialized change format.`);
-		}
-		const { revision, originatorId, change } = serializedChange;
-		if (originatorId !== this.idCompressor.localSessionId) {
-			throw new UsageError(
-				`Cannot apply change. A serialized changed must be applied to the same SharedTree as it was created from.`,
-			);
-		}
-		const context: ChangeEncodingContext = {
-			idCompressor: this.idCompressor,
-			originatorId: this.idCompressor.localSessionId,
-			revision,
-			isSummary: false,
-		};
-		const decodedChange = this.changeFamily.codecs.resolve(4).decode(change, context);
+		const change = SerializedChange.V1.decode(
+			this.idCompressor,
+			this.changeFamily,
+			serializedChange,
+		);
 		// Apply the change to the branch, but _not_ the `activeBranch` - we do not support squashing serialized commits in a transaction.
-		this.#transaction.branch.apply(tagChange(decodedChange, revision));
+		this.#transaction.branch.apply(change);
 	}
 
 	// #region TreeBranchAlpha
@@ -864,72 +983,86 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	public runTransaction<TSuccessValue, TFailureValue>(
-		transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>,
-		params?: RunTransactionParams,
-	): TransactionResultExt<TSuccessValue, TFailureValue>;
+		transaction: () => TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>,
+		params?: RunTransactionParamsAlpha,
+	): TransactionValueResult<TSuccessValue, TFailureValue>;
 	public runTransaction(
-		transaction: () => VoidTransactionCallbackStatus | void,
-		params?: RunTransactionParams,
-	): TransactionResult;
+		transaction: () => VoidTransactionCallbackStatusAlpha | void,
+		params?: RunTransactionParamsAlpha,
+	): TransactionVoidResult;
 	@breakingMethod
 	public runTransaction<TSuccessValue, TFailureValue>(
 		transaction: () =>
-			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
-			| VoidTransactionCallbackStatus
+			| TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>
+			| VoidTransactionCallbackStatusAlpha
 			| void,
-		params?: RunTransactionParams,
-	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
+		params?: RunTransactionParamsAlpha,
+	): TransactionValueResult<TSuccessValue, TFailureValue> | TransactionVoidResult {
 		this.mountTransaction(params, false);
 		const transactionCallbackStatus = transaction();
 		return this.unmountTransaction(transactionCallbackStatus, params);
 	}
 
 	public runTransactionAsync<TSuccessValue, TFailureValue>(
-		transaction: () => Promise<TransactionCallbackStatus<TSuccessValue, TFailureValue>>,
-		params?: RunTransactionParams,
-	): Promise<TransactionResultExt<TSuccessValue, TFailureValue>>;
+		transaction: () => Promise<TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>>,
+		params?: RunTransactionParamsAlpha,
+	): Promise<TransactionValueResult<TSuccessValue, TFailureValue>>;
 	public runTransactionAsync(
-		transaction: () => Promise<VoidTransactionCallbackStatus | void>,
-		params?: RunTransactionParams,
-	): Promise<TransactionResult>;
+		transaction: () => Promise<VoidTransactionCallbackStatusAlpha | void>,
+		params?: RunTransactionParamsAlpha,
+	): Promise<TransactionVoidResult>;
 	@breakingMethod
 	public async runTransactionAsync<TSuccessValue, TFailureValue>(
 		transaction: () => Promise<
-			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
-			| VoidTransactionCallbackStatus
+			| TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>
+			| VoidTransactionCallbackStatusAlpha
 			| void
 		>,
-		params: RunTransactionParams | undefined,
-	): Promise<TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult> {
+		params: RunTransactionParamsAlpha | undefined,
+	): Promise<TransactionValueResult<TSuccessValue, TFailureValue> | TransactionVoidResult> {
 		this.mountTransaction(params, true);
 		const transactionCallbackStatus = await transaction();
 		return this.unmountTransaction(transactionCallbackStatus, params);
 	}
 
-	private mountTransaction(params: RunTransactionParams | undefined, isAsync: boolean): void {
+	private mountTransaction(
+		params: RunTransactionParamsAlpha | undefined,
+		isAsync: boolean,
+	): void {
 		this.checkNotDisposed();
+		// Starting a transaction is an edit, so it is forbidden from within a change-event
+		// callback (where the edit lock is held), the same as direct edits. For the async
+		// entry point this throw is captured as a rejected promise by the `async` wrapper.
+		//
+		// Note: because runTransaction/runTransactionAsync are `@breakingMethod`, this throw also
+		// puts the checkout into a broken state (unlike a direct edit, which throws recoverably).
+		// That is the same pre-existing broken-state limitation tracked by the TODO in
+		// `emitChangedLocked`, not something specific to transactions.
+		this.editLock.checkUnlocked("Running a transaction");
 		if (isAsync && this.transaction.size > 0) {
 			throw new UsageError(
 				"An asynchronous transaction cannot be started while another transaction is already in progress.",
 			);
 		}
 		this.pushLabelFrame(params?.label);
-		this.transaction.start();
+		this.transaction.start({
+			postProcessor: extractTransactionChangeProcessor(params?.postProcessor),
+		});
 
 		addConstraintsToTransaction(this, false, params?.preconditions);
 	}
 
 	private unmountTransaction<TSuccessValue, TFailureValue>(
 		transactionCallbackStatus:
-			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
-			| VoidTransactionCallbackStatus
+			| TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>
+			| VoidTransactionCallbackStatusAlpha
 			| void,
-		params: RunTransactionParams | undefined,
-	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
+		params: RunTransactionParamsAlpha | undefined,
+	): TransactionValueResult<TSuccessValue, TFailureValue> | TransactionVoidResult {
 		this.checkNotDisposed();
 		const rollback = transactionCallbackStatus?.rollback;
 		const value = (
-			transactionCallbackStatus as TransactionCallbackStatus<TSuccessValue, TFailureValue>
+			transactionCallbackStatus as TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>
 		)?.value;
 
 		if (rollback === true) {
@@ -1003,6 +1136,7 @@ export class TreeCheckout implements ITreeCheckout {
 		});
 	};
 
+	@breakingMethod
 	private withCombinedVisitor(fn: (visitor: DeltaVisitor) => void): void {
 		const anchorVisitor = this.forest.anchors.acquireVisitor();
 		const combinedVisitor = combineVisitors([this.forest.acquireVisitor(), anchorVisitor]);
@@ -1016,7 +1150,7 @@ export class TreeCheckout implements ITreeCheckout {
 			if (usageError !== undefined) {
 				throw new UsageError(usageError);
 			}
-			assert(false, 0x911 /* Invalid operation on a disposed TreeCheckout */);
+			fail(0x911 /* Invalid operation on a disposed TreeCheckout */);
 		}
 	}
 
@@ -1097,7 +1231,7 @@ export class TreeCheckout implements ITreeCheckout {
 						"Unable to dispose a revertible that has already been disposed.",
 					);
 				}
-				checkout.disposeRevertible(revertible, revision);
+				checkout.disposeRevertible(revision);
 				onRevertibleDisposed?.(revertible);
 			},
 		};
@@ -1145,7 +1279,7 @@ export class TreeCheckout implements ITreeCheckout {
 		return this.forest.anchors.locate(anchor);
 	}
 
-	public get transaction(): Transactor {
+	public get transaction(): TreeTransactor {
 		return this.#transaction;
 	}
 	/**
@@ -1158,7 +1292,11 @@ export class TreeCheckout implements ITreeCheckout {
 	 * To avoid updating observers of the view state with intermediate results during a transaction,
 	 * use {@link ITreeCheckout#fork} and {@link ISharedTreeFork#merge}.
 	 */
-	#transaction: SquashingTransactionStack<SharedTreeEditBuilder, SharedTreeChange>;
+	#transaction: SquashingTransactionStack<
+		SharedTreeEditBuilder,
+		SharedTreeChange,
+		SharedTreeChangeProcessingContext
+	>;
 
 	@throwIfBroken
 	public fork(): TreeCheckout {
@@ -1170,10 +1308,9 @@ export class TreeCheckout implements ITreeCheckout {
 			throw new UsageError("A view cannot be forked while it has a pending transaction.");
 		}
 
-		this.editLock.checkUnlocked("Branching");
 		const branch = this.#transaction.activeBranch.fork();
 		const storedSchema = this.storedSchema.clone();
-		const forkBreaker = new Breakable("TreeCheckout");
+		const forkBreaker = new Breakable("TreeCheckout", this.logger);
 		const forest = this.forest.clone(storedSchema, forkBreaker);
 		const checkout = new TreeCheckout(
 			branch,
@@ -1185,16 +1322,17 @@ export class TreeCheckout implements ITreeCheckout {
 			this.revisionTagCodec,
 			this.idCompressor,
 			this._removedRoots.clone(),
-			this.logger,
-			forkBreaker,
-			this.disposeForksAfterTransaction,
 		);
 		this.#events.emit("fork", checkout);
 		return checkout;
 	}
 
 	public switchBranch(
-		branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
+		branch: SharedTreeBranch<
+			SharedTreeEditBuilder,
+			SharedTreeChange,
+			SharedTreeChangeProcessingContext
+		>,
 	): void {
 		// TODO: Dispose old branch, if necessary
 		assert(
@@ -1248,6 +1386,43 @@ export class TreeCheckout implements ITreeCheckout {
 
 	public rebaseOnto(branch: TreeBranch): void {
 		getCheckout(branch).rebase(this);
+	}
+
+	public isMissingEditsFrom(branch: TreeBranch): boolean {
+		const branchCheckout = getCheckout(branch);
+		const targetPath: GraphCommit<unknown>[] = [];
+		const ancestor = findCommonAncestor(this.mainBranch.getHead(), [
+			branchCheckout.mainBranch.getHead(),
+			targetPath,
+		]);
+		if (ancestor === undefined) {
+			throw new UsageError("Branches do not share a common ancestor.");
+		}
+		return targetPath.length > 0;
+	}
+
+	public computeNetChangeIfRebasedOnto(
+		branch: TreeBranch,
+	): JsonCompatibleReadOnly | undefined {
+		const branchCheckout = getCheckout(branch);
+		const rebased = rebaseBranch(
+			this.mintRevisionTag,
+			this.changeFamily.rebaser,
+			this.#transaction.branch.getHead(),
+			branchCheckout.#transaction.branch.getHead(),
+		);
+
+		if (rebased.sourceChange === undefined) {
+			return undefined;
+		}
+		const revision = this.mintRevisionTag();
+		return SerializedChange.V1.encode(
+			this.idCompressor,
+			this.changeFamily,
+			rebased.sourceChange,
+			revision,
+			undefined,
+		);
 	}
 
 	public merge(branch: TreeBranch): void;
@@ -1339,15 +1514,15 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	private purgeRevertibles(): void {
-		for (const revertible of this.revertibles) {
+		for (const revertible of this.revertibles.values()) {
 			revertible.dispose();
 		}
 	}
 
-	private disposeRevertible(revertible: RevertibleAlpha, revision: RevisionTag): void {
+	private disposeRevertible(revision: RevisionTag): void {
 		this.revertibleCommitBranches.get(revision)?.dispose();
 		this.revertibleCommitBranches.delete(revision);
-		this.revertibles.delete(revertible);
+		this.revertibles.delete(revision);
 	}
 
 	private revertRevertible(
@@ -1584,7 +1759,11 @@ export class TreeCheckout implements ITreeCheckout {
 		return enriched;
 	}
 
-	public get mainBranch(): SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange> {
+	public get mainBranch(): SharedTreeBranch<
+		SharedTreeEditBuilder,
+		SharedTreeChange,
+		SharedTreeChangeProcessingContext
+	> {
 		return this.#transaction.branch;
 	}
 
@@ -1600,7 +1779,13 @@ class EditLock {
 	 * @remarks Edits will throw an error if the lock is currently locked.
 	 */
 	public readonly editor: ISharedTreeEditor;
-	private locked = false;
+	/**
+	 * The current status of the lock.
+	 * The `reason` string will be included in the error message if an attempt is made to edit the tree while the lock is held.
+	 */
+	private status:
+		| { readonly isLocked: false }
+		| { readonly isLocked: true; readonly reason: string } = { isLocked: false };
 
 	/**
 	 * @param editor - an editor which will be used to create a new editor that is monitored to determine if any changes are happening to the tree.
@@ -1664,14 +1849,15 @@ class EditLock {
 
 	/**
 	 * Prevent further changes from being made to {@link EditLock.editor} until {@link EditLock.unlock} is called.
+	 * @param reason - A string describing why the lock is being acquired. This will be included in the error message if an attempt is made to edit while the lock is held.
 	 * @remarks May only be called when the lock is not already locked.
 	 */
-	public lock(): void {
-		if (this.locked) {
+	public lock(reason: string): void {
+		if (this.status.isLocked) {
 			debugger;
 		}
-		assert(!this.locked, 0xaa7 /* Checkout has already been locked */);
-		this.locked = true;
+		assert(!this.status.isLocked, 0xaa7 /* Checkout has already been locked */);
+		this.status = { isLocked: true, reason };
 	}
 
 	/**
@@ -1680,13 +1866,8 @@ class EditLock {
 	 * This must start with a capital letter, as it shows up as the first part of the error message and we want it to look nice.
 	 */
 	public checkUnlocked<T extends string>(action: T extends Capitalize<T> ? T : never): void {
-		if (this.locked) {
-			// These type assertions ensure that the event name strings used here match the actual event names
-			const nodeChanged: keyof TreeChangeEvents = "nodeChanged";
-			const treeChanged: keyof TreeChangeEvents = "treeChanged";
-			throw new UsageError(
-				`${action} is forbidden during a ${nodeChanged} or ${treeChanged} event`,
-			);
+		if (this.status.isLocked) {
+			throw new UsageError(`${action} is forbidden during ${this.status.reason}`);
 		}
 	}
 
@@ -1695,37 +1876,9 @@ class EditLock {
 	 * @remarks May only be called when the lock is currently locked.
 	 */
 	public unlock(): void {
-		assert(this.locked, 0xaa8 /* Checkout has not been locked */);
-		this.locked = false;
+		assert(this.status.isLocked, 0xaa8 /* Checkout has not been locked */);
+		this.status = { isLocked: false };
 	}
-}
-
-/**
- * Keeps track of all new forks created until the returned function is invoked, which will dispose all of those for.
- * The returned function may only be called once.
- *
- * @param checkout - The tree checkout for which you want to monitor forks for disposal.
- * @returns a function which can be called to dispose all of the tracked forks.
- */
-function trackForksForDisposal(checkout: TreeCheckout): () => void {
-	const forks = new Set<TreeCheckout>();
-	const onDisposeUnSubscribes: (() => void)[] = [];
-	const onForkUnSubscribe = onForkTransitive(checkout, (fork) => {
-		forks.add(fork);
-		onDisposeUnSubscribes.push(fork.events.on("dispose", () => forks.delete(fork)));
-	});
-	let disposed = false;
-	return () => {
-		assert(!disposed, 0xaa9 /* Forks may only be disposed once */);
-		for (const fork of forks) {
-			fork.dispose();
-		}
-		for (const unsubscribe of onDisposeUnSubscribes) {
-			unsubscribe();
-		}
-		onForkUnSubscribe();
-		disposed = true;
-	};
 }
 
 function verboseFromCursor(
@@ -1743,27 +1896,6 @@ function verboseFromCursor(
 		type: reader.type,
 		fields: fields as CustomTreeNode<IFluidHandle>,
 	};
-}
-
-interface SerializedChange {
-	version: 1;
-	revision: RevisionTag;
-	change: JsonCompatibleReadOnly;
-	originatorId: SessionId;
-}
-
-function isSerializedChange(value: unknown): value is SerializedChange {
-	if (typeof value !== "object" || value === null) {
-		return false;
-	}
-	const change = value as Partial<SerializedChange>;
-	return (
-		change.version === 1 &&
-		(change.revision === "root" || typeof change.revision === "number") &&
-		typeof change.originatorId === "string" &&
-		isStableId(change.originatorId) &&
-		change.change !== undefined
-	);
 }
 
 /**

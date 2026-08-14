@@ -865,20 +865,20 @@ export const handlers: Handler[] = [
 	},
 	{
 		/**
-		 * Checks that all tsc project files (tsconfig.json), are only used once as the main
-		 * configuration among scripts.
-		 * Multiple uses may indicate a collision during build.
+		 * Checks that tsc project files (tsconfig.json) used by multiple scripts do not collide
+		 * during build. A project file may be reused with different command line options, as long
+		 * as each use writes to a distinct incremental build info (`*.tsbuildinfo`) file. Sharing
+		 * the incremental build info file would cause the parallel builds to corrupt each other.
 		 */
 		name: "tsc-project-single-use",
 		match,
 		handler: async (file: string, root: string): Promise<string | undefined> => {
-			const projectMap = new Map<string, string>();
+			const tsBuildInfoMap = new Map<string, string>();
 			return buildDepsHandler(
 				file,
 				root,
 				({ packageDir, script, command }: BuildDepsCallbackContext) => {
 					const tscUtils = TscUtils.getTscUtils(packageDir);
-					// If the project has a referenced project, depend on that instead of the default
 					const parsedCommand = tscUtils.parseCommandLine(command);
 					if (!parsedCommand) {
 						throw new Error(`Error parsing tsc command for script '${script}': ${command}`);
@@ -889,11 +889,32 @@ export const handlers: Handler[] = [
 							`Could not find config file for script '${script}' in ${packageDir}`,
 						);
 					}
-					const previousUse = projectMap.get(configFile);
-					if (previousUse !== undefined) {
-						return `'${previousUse}' and '${script}' tasks share use of ${configFile}`;
+					const options = TscUtils.getResolvedTsConfig(
+						tscUtils,
+						packageDir,
+						parsedCommand,
+						configFile,
+					);
+					if (options === undefined) {
+						throw new Error(
+							`Failed to resolve tsc config for script '${script}' (project ${configFile})`,
+						);
 					}
-					projectMap.set(configFile, script);
+
+					// The incremental build info file must be unique, even when no output is
+					// emitted, since concurrent uses would otherwise corrupt each other's state.
+					const tsBuildInfoPath = TscUtils.getTsBuildInfoFullPath(
+						options,
+						packageDir,
+						configFile,
+					);
+					if (tsBuildInfoPath !== undefined) {
+						const previousUse = tsBuildInfoMap.get(tsBuildInfoPath);
+						if (previousUse !== undefined) {
+							return `'${previousUse}' and '${script}' tasks share use of incremental build info file ${tsBuildInfoPath}`;
+						}
+						tsBuildInfoMap.set(tsBuildInfoPath, script);
+					}
 				},
 			);
 		},

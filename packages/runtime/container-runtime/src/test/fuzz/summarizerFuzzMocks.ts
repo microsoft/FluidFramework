@@ -16,9 +16,9 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { mergeStats } from "@fluidframework/runtime-utils/internal";
 import {
-	type TelemetryLoggerExt,
 	createChildLogger,
 	raiseConnectedEvent,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import {
 	type IMockContainerRuntimeOptions,

@@ -74,6 +74,7 @@ module.exports = {
 		directory: "./src/sharedDirectory",
 		experimentalSharedTree: "./src/experimentalSharedTree",
 		fluidFramework: "./src/fluidFramework",
+		fluidFrameworkAllAlpha: "./src/fluidFrameworkAllAlpha",
 		loader: "./src/loader",
 		map: "./src/sharedMap",
 		matrix: "./src/sharedMatrix",

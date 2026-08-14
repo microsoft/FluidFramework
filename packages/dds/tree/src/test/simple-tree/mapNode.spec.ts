@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-
+import { asAlpha } from "../../api.js";
 import { Tree } from "../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { isTreeNode } from "../../simple-tree/core/index.js";
@@ -229,6 +229,111 @@ describeHydration(
 			// Delete non-present value
 			root.map.delete("baz");
 			assert.equal(root.map.size, 1);
+		});
+
+		it("clear", () => {
+			const root = init(schema, initialTree);
+			const map = asAlpha(root.map);
+			assert.equal(map.size, 2);
+			map.clear();
+			assert.equal(map.size, 0);
+
+			// Clear an already empty map
+			map.clear();
+			assert.equal(map.size, 0);
+		});
+
+		it("throws descriptive TypeError for future unsupported Map.prototype methods", () => {
+			const MapString = schemaFactory.map(schemaFactory.string);
+			const node = init(MapString, new Map([["a", "hello"]]));
+
+			const methodName = "__testUnsupportedMapMethod__";
+			(Map.prototype as unknown as Record<string, unknown>)[methodName] = function () {
+				return "should not reach here";
+			};
+			try {
+				const method = (node as unknown as Record<string, unknown>)[methodName] as (
+					...args: unknown[]
+				) => unknown;
+				assert.equal(typeof method, "function");
+				assert.throws(
+					() => method.call(node),
+					(error: Error) =>
+						error instanceof TypeError &&
+						error.message ===
+							`MapNode does not support '${methodName}'. Use the MapNode API (e.g., set, get, delete, keys, values, entries).`,
+				);
+			} finally {
+				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- Cleaning up test-only method added to Map.prototype
+				delete (Map.prototype as unknown as Record<string, unknown>)[methodName];
+			}
+		});
+
+		it("getOrInsert", () => {
+			const root = init(schema, initialTree);
+			const map = asAlpha<typeof schemaFactory.string>(root.map);
+			// Existing key: returns the existing value without overwriting.
+			assert.equal(map.getOrInsert("foo", "42"), "Hello");
+			assert.equal(map.get("foo"), "Hello");
+			// Absent key: inserts and returns the fallback.
+			assert.equal(map.getOrInsert("baz", "42"), "42");
+			assert.equal(map.get("baz"), "42");
+		});
+
+		it("getOrInsert object identity", () => {
+			const root = init(schema, initialTree);
+			const map = asAlpha<typeof object>(root.objectMap);
+			const o = new object({ content: 42 });
+			// The inserted node is the one returned and readable at the key, and is not replaced by a second call.
+			assert.equal(map.getOrInsert("foo", o), o);
+			assert.equal(map.getOrInsert("foo", new object({ content: 43 })), o);
+		});
+
+		it("getOrInsertComputed", () => {
+			const root = init(schema, initialTree);
+			const map = asAlpha<typeof schemaFactory.string>(root.map);
+			// Existing key: returns the existing value without invoking the callback.
+			assert.equal(
+				map.getOrInsertComputed("foo", () => assert.fail("callback should not be invoked")),
+				"Hello",
+			);
+			assert.equal(map.get("foo"), "Hello");
+			// Absent key: invokes the callback with the key, inserts and returns the produced value.
+			assert.equal(
+				map.getOrInsertComputed("baz", (key) => `${key}-42`),
+				"baz-42",
+			);
+			assert.equal(map.get("baz"), "baz-42");
+		});
+
+		it("getOrInsertComputed object identity", () => {
+			const root = init(schema, initialTree);
+			const map = asAlpha<typeof object>(root.objectMap);
+			const o = new object({ content: 67 });
+			// The inserted node is the one returned and readable at the key, and is not replaced by a second call.
+			assert.equal(
+				map.getOrInsertComputed("foo", () => o),
+				o,
+			);
+			assert.equal(
+				map.getOrInsertComputed("foo", () => new object({ content: 68 })),
+				o,
+			);
+		});
+
+		it("getOrInsertComputed callback throws", () => {
+			const root = init(schema, initialTree);
+			const map = asAlpha<typeof schemaFactory.string>(root.map);
+			const error = new Error("callback error");
+			assert.throws(
+				() =>
+					map.getOrInsertComputed("baz", () => {
+						throw error;
+					}),
+				error,
+			);
+			// No entry was inserted.
+			assert(!map.has("baz"));
 		});
 	},
 	() => {

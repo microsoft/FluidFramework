@@ -144,13 +144,10 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	): SummaryObject => {
 		if (input.type === SummaryType.Blob) {
 			const summaryBlob: ISummaryBlob = input;
-			const original: ArrayBufferLike = DocumentStorageServiceCompressionAdapter.toBinaryArray(
+			const original = DocumentStorageServiceCompressionAdapter.toBinaryArray(
 				summaryBlob.content,
 			);
-			const processed: ArrayBufferLike = DocumentStorageServiceCompressionAdapter.encodeBlob(
-				original,
-				config,
-			);
+			const processed = DocumentStorageServiceCompressionAdapter.encodeBlob(original, config);
 			const newSummaryBlob = {
 				type: SummaryType.Blob,
 				content: IsoBuffer.from(processed),
@@ -169,11 +166,10 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	private static readonly blobDecoder = (input: SummaryObject): SummaryObject => {
 		if (input.type === SummaryType.Blob) {
 			const summaryBlob: ISummaryBlob = input;
-			const original: Uint8Array = DocumentStorageServiceCompressionAdapter.toBinaryArray(
+			const original = DocumentStorageServiceCompressionAdapter.toBinaryArray(
 				summaryBlob.content,
 			);
-			const processed: ArrayBufferLike =
-				DocumentStorageServiceCompressionAdapter.decodeBlob(original);
+			const processed = DocumentStorageServiceCompressionAdapter.decodeBlob(original);
 			const newSummaryBlob = {
 				type: SummaryType.Blob,
 				content: IsoBuffer.from(processed),
@@ -360,7 +356,10 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 			}
 		}
 		for (const key of Object.keys(snapshot.trees)) {
-			const value = snapshot[key] as ISnapshotTree;
+			// snapshot.trees[key], not snapshot[key]: ISnapshotTree subtrees live in the `trees`
+			// map, not as direct properties on the snapshot object. Using snapshot[key] always
+			// returns undefined, silently preventing any recursion into subtrees.
+			const value = snapshot.trees[key];
 			if (value !== undefined) {
 				const found = this.hasCompressionMarkup(value);
 				if (found) {

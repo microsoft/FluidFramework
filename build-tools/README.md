@@ -28,14 +28,17 @@ It is very useful to test changes in build-tools against the client release grou
 build-tools is limited, and manually testing locally with the client will expose obvious things like broken incremental
 builds, etc.
 
-The easiest way to test build-tools in client is to use pnpm overrides. Add the following entries under the `overrides:`
-key in the repo root's `pnpm-workspace.yaml`, then refresh the lockfile:
+The easiest way to test build-tools in client is to use pnpm overrides. Uncomment the entries under the `overrides:`
+key for "build-tools" in the repo root's `pnpm-workspace.yaml`, then refresh the lockfile:
 
 ```yaml
 overrides:
-  # ... existing entries ...
-  "@fluidframework/build-tools": "link:./build-tools/packages/build-tools"
+  # Uncomment all or some below and run `pnpm install --no-frozen-lockfile` to apply
+  # these overrides to use locally built build-tools packages.
   "@fluid-tools/build-cli": "link:./build-tools/packages/build-cli"
+  "@fluid-tools/build-infrastructure": "link:./build-tools/packages/build-infrastructure"
+  "@fluid-tools/version-tools": "link:./build-tools/packages/version-tools"
+  "@fluidframework/build-tools": "link:./build-tools/packages/build-tools"
 ```
 
 ```
@@ -65,7 +68,7 @@ There are many ways to [contribute](https://github.com/microsoft/FluidFramework/
 -   Review the [source code changes](https://github.com/microsoft/FluidFramework/pulls).
 -   [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
 
-Detailed instructions for working in the repo can be found in the [Wiki](https://github.com/microsoft/FluidFramework/wiki).
+Detailed instructions for working in the repo can be found in the [Wiki](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Home.md).
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
 For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
@@ -76,9 +79,11 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 
 ## Help
 
-Not finding what you're looking for in this README? Check out [fluidframework.com](https://fluidframework.com/docs/).
+Not finding what you're looking for in this README?
+Check out [fluidframework.com](https://fluidframework.com/docs/).
 
-Still not finding what you're looking for? Please [file an issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
+Still not finding what you're looking for?
+Please [file an issue](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Contributing/Submitting-Bugs-and-Feature-Requests.md).
 
 Thank you!
 

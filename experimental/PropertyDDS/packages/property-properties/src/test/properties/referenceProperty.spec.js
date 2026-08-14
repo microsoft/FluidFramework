@@ -13,14 +13,15 @@
  * - /src/properties/referenceMapProperty.js
  */
 
-const { ChangeSet } = require("@fluid-experimental/property-changeset");
-const { MSG } = require("@fluid-experimental/property-common").constants;
+import { ChangeSet } from "@fluid-experimental/property-changeset";
+import { constants } from "@fluid-experimental/property-common";
+const { MSG } = constants;
 
-const { BaseProperty } = require("../..");
-const { PropertyFactory } = require("../..");
-const { ReferenceArrayProperty } = require("../../properties/referenceArrayProperty");
-const { ReferenceMapProperty } = require("../../properties/referenceMapProperty");
-const { ReferenceProperty } = require("../../properties/referenceProperty");
+import { BaseProperty } from "../../index.js";
+import { PropertyFactory } from "../../index.js";
+import { ReferenceArrayProperty } from "../../properties/referenceArrayProperty.js";
+import { ReferenceMapProperty } from "../../properties/referenceMapProperty.js";
+import { ReferenceProperty } from "../../properties/referenceProperty.js";
 
 describe("Reference Properties", function () {
 	var dereferenceToken;

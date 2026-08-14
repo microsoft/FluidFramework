@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { Collection } from "./collection";
+export { Collection } from "./collection.js";
 export {
 	BaseDataArray,
 	BoolDataArray,
@@ -17,6 +17,6 @@ export {
 	Uint32DataArray,
 	Uint8DataArray,
 	UniversalDataArray,
-} from "./dataArray";
-export { Int64, Integer64, Uint64 } from "./integer64";
-export { SortedCollection } from "./sortedCollection";
+} from "./dataArray.js";
+export { Int64, Integer64, Uint64 } from "./integer64.js";
+export { SortedCollection } from "./sortedCollection.js";
