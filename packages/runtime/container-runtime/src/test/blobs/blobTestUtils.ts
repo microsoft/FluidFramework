@@ -12,7 +12,6 @@ import {
 	IsoBuffer,
 	stringToBuffer,
 	TypedEventEmitter,
-	Uint8ArrayToArrayBuffer,
 } from "@fluid-internal/client-utils";
 import {
 	AttachState,
@@ -39,14 +38,16 @@ import { v4 as uuid } from "uuid";
 
 import {
 	BlobManager,
-	detachedBlobSummaryGroupId,
-	detachedBlobSummaryTreeName,
 	type IBlobManagerLoadInfo,
 	type IBlobManagerRuntime,
 	type ICreateBlobResponseWithTTL,
 	type IPendingBlobs,
 	redirectTableBlobName,
 } from "../../blobManager/index.js";
+import {
+	detachedBlobSummaryGroupId,
+	detachedBlobSummaryTreeName,
+} from "../../blobManager/blobManagerSnapSum.js";
 import type { IBlobMetadata } from "../../metadata.js";
 
 export const MIN_TTL = 24 * 60 * 60; // same as ODSP
@@ -523,10 +524,10 @@ export const simulateAttach = async (
 	runtime.attachState = AttachState.Attached;
 };
 
-export const getSummaryContentsWithFormatValidation = async (
+export const getSummaryContentsWithFormatValidation = (
 	blobManager: BlobManager,
-): Promise<IBlobManagerLoadInfo> =>
-	getSummaryContentsFromSummaryWithFormatValidation(await blobManager.summarize(false));
+): IBlobManagerLoadInfo =>
+	getSummaryContentsFromSummaryWithFormatValidation(blobManager.summarize());
 
 export const getSummaryContentsFromSummaryWithFormatValidation = (
 	summary: ISummaryTreeWithStats,
@@ -546,12 +547,11 @@ export const getSummaryContentsFromSummaryWithFormatValidation = (
 				redirectTable ??= [];
 				redirectTable.push([localId, localId]);
 				if (content.type === SummaryType.Blob) {
+					assert(typeof content.content === "string");
 					detachedBlobSummaryContents ??= new Map();
 					detachedBlobSummaryContents.set(
 						localId,
-						typeof content.content === "string"
-							? stringToBuffer(content.content, "base64")
-							: Uint8ArrayToArrayBuffer(content.content),
+						stringToBuffer(content.content, "base64"),
 					);
 				} else {
 					assert(content.type === SummaryType.Handle);

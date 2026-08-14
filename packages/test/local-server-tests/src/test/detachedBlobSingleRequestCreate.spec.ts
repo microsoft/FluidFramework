@@ -19,11 +19,7 @@ import {
 	rehydrateDetachedContainer,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
-import {
-	blobsTreeName,
-	detachedBlobSummaryGroupId,
-	detachedBlobSummaryTreeName,
-} from "@fluidframework/container-runtime/internal";
+import { blobsTreeName } from "@fluidframework/container-runtime/internal";
 import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import {
 	SummaryType,
@@ -48,7 +44,8 @@ import {
 
 import { createLoader } from "./utils.js";
 
-const inlineDetachedBlobsConfig = "Fluid.Container.InlineDetachedBlobsAsSummaryBlobs";
+const detachedBlobSummaryTreeName = ".detached";
+const detachedBlobSummaryGroupId = "fluid-internal:detached-blobs";
 
 interface StorageCallCounts {
 	createContainer: number;
@@ -117,6 +114,7 @@ function wrapDocumentServiceFactory(
 
 function createRuntimeFactory(
 	defaultFactory: TestFluidObjectFactory,
+	inlineDetachedBlobsAsSummaryBlobs: true | undefined,
 ): ContainerRuntimeFactoryWithDefaultDataStore {
 	const props = {
 		defaultFactory,
@@ -128,6 +126,7 @@ function createRuntimeFactory(
 		],
 		runtimeOptions: {
 			explicitSchemaControl: true,
+			inlineDetachedBlobsAsSummaryBlobs,
 		},
 		// ContainerRuntimeFactoryWithDefaultDataStore forwards extra BaseContainerRuntimeFactory
 		// properties through its constructor.
@@ -155,7 +154,7 @@ function assertBytes(actual: Uint8Array, expected: Uint8Array): void {
 	assert.deepStrictEqual([...actual], [...expected]);
 }
 
-function assertInlinedSummary(
+function assertDetachedBlobSummary(
 	summary: ISummaryTree | undefined,
 	expectedBlobCount: number,
 ): void {
@@ -188,7 +187,10 @@ function initialize(options?: {
 		[["map", SharedMap.getFactory()]],
 		"default",
 	);
-	const runtimeFactory = createRuntimeFactory(defaultDataStoreFactory);
+	const runtimeFactory = createRuntimeFactory(
+		defaultDataStoreFactory,
+		options?.inline === false ? undefined : true,
+	);
 	const base = createLoader({
 		deltaConnectionServer,
 		defaultDataStoreFactory,
@@ -205,7 +207,6 @@ function initialize(options?: {
 			? wrapDocumentServiceFactory(base.documentServiceFactory, counts)
 			: base.documentServiceFactory;
 	const configProvider = createTestConfigProvider({
-		[inlineDetachedBlobsConfig]: options?.inline ?? true,
 		...(options?.offline === true ? { "Fluid.Container.enableOfflineFull": true } : {}),
 	});
 	const loaderProps = {
@@ -240,7 +241,7 @@ describe("Detached blob single-request create", () => {
 		assert.strictEqual(counts.createContainer, 1);
 		assert.strictEqual(counts.createBlob, 0);
 		assert.strictEqual(counts.uploadSummaryWithContext, 0);
-		assertInlinedSummary(counts.createSummary, 2);
+		assertDetachedBlobSummary(counts.createSummary, 2);
 
 		const url = await container.getAbsoluteUrl("");
 		assert(url !== undefined);
@@ -283,7 +284,7 @@ describe("Detached blob single-request create", () => {
 		assert.strictEqual(counts.createContainer, 1);
 		assert.strictEqual(counts.createBlob, 0);
 		assert.strictEqual(counts.uploadSummaryWithContext, 0);
-		assertInlinedSummary(counts.createSummary, 1);
+		assertDetachedBlobSummary(counts.createSummary, 1);
 	});
 
 	it("uses legacy attachment upload when the feature is disabled", async () => {

@@ -985,16 +985,6 @@ export class ContainerRuntime
 		});
 
 		const mc = loggerToMonitoringContext(logger);
-		const inlineDetachedBlobsAsSummaryBlobsGate =
-			mc.config.getBoolean("Fluid.Container.InlineDetachedBlobsAsSummaryBlobs") === true
-				? true
-				: undefined;
-		const effectiveRuntimeOptions: IContainerRuntimeOptionsInternal = {
-			...runtimeOptions,
-			inlineDetachedBlobsAsSummaryBlobs:
-				runtimeOptions.inlineDetachedBlobsAsSummaryBlobs ??
-				inlineDetachedBlobsAsSummaryBlobsGate,
-		};
 		// Some options require a minimum version of the FF runtime to operate, so the default configs will be generated
 		// based on the minVersionForCollab.
 		// For example, if minVersionForCollab is set to "1.0.0", the default configs will ensure compatibility with FF runtime
@@ -1007,7 +997,7 @@ export class ContainerRuntime
 		}
 		// We also validate that there is not a mismatch between `minVersionForCollab` and runtime options that
 		// were manually set.
-		validateRuntimeOptions(minVersionForCollab, effectiveRuntimeOptions);
+		validateRuntimeOptions(minVersionForCollab, runtimeOptions);
 
 		const defaultsAffectingDocSchema = getMinVersionForCollabDefaults(minVersionForCollab);
 
@@ -1050,15 +1040,15 @@ export class ContainerRuntime
 			inlineDetachedBlobsAsSummaryBlobs = defaultConfigs.inlineDetachedBlobsAsSummaryBlobs,
 			stagingModeAutoFlushThreshold = defaultConfigs.stagingModeAutoFlushThreshold,
 			disableSchemaUpgrade = defaultConfigs.disableSchemaUpgrade,
-		}: IContainerRuntimeOptionsInternal = effectiveRuntimeOptions;
+		}: IContainerRuntimeOptionsInternal = runtimeOptions;
 
 		// If explicitSchemaControl is off, ensure that options which require explicitSchemaControl are not enabled.
 		if (!explicitSchemaControl) {
-			const disallowedKeys = Object.keys(effectiveRuntimeOptions).filter(
+			const disallowedKeys = Object.keys(runtimeOptions).filter(
 				(key) =>
 					runtimeOptionKeysThatRequireExplicitSchemaControl.includes(
 						key as RuntimeOptionKeysThatRequireExplicitSchemaControl,
-					) && effectiveRuntimeOptions[key] !== undefined,
+					) && runtimeOptions[key] !== undefined,
 			);
 			if (disallowedKeys.length > 0) {
 				throw new UsageError(`explicitSchemaControl must be enabled to use ${disallowedKeys}`);
@@ -2796,7 +2786,7 @@ export class ContainerRuntime
 		fullTree: boolean,
 		trackState: boolean,
 		telemetryContext?: ITelemetryContext,
-		blobManagerSummary: ISummaryTreeWithStats = this.blobManager.getAttachSummary(),
+		blobManagerSummaryOverride?: ISummaryTreeWithStats,
 	): void {
 		this.addMetadataToSummary(summaryTree);
 
@@ -2828,6 +2818,8 @@ export class ContainerRuntime
 			addBlobToSummary(summaryTree, electedSummarizerBlobName, electedSummarizerContent);
 		}
 
+		const blobManagerSummary =
+			blobManagerSummaryOverride ?? this.blobManager.summarize();
 		// Some storage (like git) doesn't allow empty tree, so we can omit it.
 		// and the blob manager can handle the tree not existing when loading
 		if (Object.keys(blobManagerSummary.summary.tree).length > 0) {
@@ -4175,7 +4167,6 @@ export class ContainerRuntime
 			true /* fullTree */,
 			false /* trackState */,
 			telemetryContext,
-			this.blobManager.getAttachSummary(),
 		);
 		return summarizeResult.summary;
 	}
@@ -4204,7 +4195,9 @@ export class ContainerRuntime
 		const pathPartsForChildren = [channelsTreeName];
 
 		this.loadIdCompressor();
-		const blobManagerSummary = await this.blobManager.summarize(fullTree);
+		const blobManagerSummary = fullTree
+			? await this.blobManager.summarizeFullTree()
+			: undefined;
 
 		this.addContainerStateToSummary(
 			summarizeResult,

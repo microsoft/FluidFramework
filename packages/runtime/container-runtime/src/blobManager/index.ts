@@ -15,8 +15,6 @@ export {
 } from "./blobManager.js";
 export {
 	blobsTreeName,
-	detachedBlobSummaryGroupId,
-	detachedBlobSummaryTreeName,
 	type IBlobManagerLoadInfo,
 	loadBlobManagerLoadInfo,
 	redirectTableBlobName,

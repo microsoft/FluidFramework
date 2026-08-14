@@ -27,6 +27,7 @@ import type { ICreateBlobResponse } from "@fluidframework/driver-definitions/int
 import type {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
+	ITelemetryContext,
 	ISequencedMessageEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -385,6 +386,13 @@ export class BlobManager {
 		return this.redirectTable.has(localId) || this.localBlobCache.has(localId);
 	}
 
+	private isDetachedBlobSummary(localId: string): boolean {
+		return (
+			this.detachedBlobSummaryContents?.has(localId) === true ||
+			this.detachedBlobSummaryHandles.has(localId)
+		);
+	}
+
 	/**
 	 * Lookup the blob storage ID for a given local blob id.
 	 * @param localId - The local blob id. Likely coming from a handle.
@@ -401,9 +409,7 @@ export class BlobManager {
 		}
 		// Get the storage ID from the redirect table
 		const storageId = this.redirectTable.get(localId);
-		return storageId !== undefined &&
-			(this.detachedBlobSummaryContents?.has(localId) === true ||
-				this.detachedBlobSummaryHandles.has(localId))
+		return storageId !== undefined && this.isDetachedBlobSummary(localId)
 			? undefined
 			: storageId;
 	}
@@ -825,12 +831,12 @@ export class BlobManager {
 		this.internalEvents.emit("processedBlobAttach", localId, storageId);
 	}
 
-	public getAttachSummary(): ISummaryTreeWithStats {
+	public summarize(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
 		return this.summarizeInternal(undefined);
 	}
 
-	public async summarize(fullTree: boolean): Promise<ISummaryTreeWithStats> {
-		return this.summarizeInternal(fullTree ? await this.loadFullTreeContents() : undefined);
+	public async summarizeFullTree(): Promise<ISummaryTreeWithStats> {
+		return this.summarizeInternal(await this.loadFullTreeContents());
 	}
 
 	private summarizeInternal(
@@ -843,9 +849,7 @@ export class BlobManager {
 			);
 		}
 		const detachedBlobSummaryContents =
-			fullTreeContents === undefined
-				? this.detachedBlobSummaryContents
-				: new Map([...(this.detachedBlobSummaryContents ?? []), ...fullTreeContents]);
+			fullTreeContents ?? this.detachedBlobSummaryContents;
 		return summarizeBlobManagerState(
 			this.redirectTable,
 			detachedBlobSummaryContents,
@@ -871,7 +875,10 @@ export class BlobManager {
 					return;
 				}
 				const storageId = this.redirectTable.get(localId);
-				assert(storageId !== undefined, "Inlined attachment blob must have a storage ID");
+				assert(
+					storageId !== undefined,
+					"Detached blob summary handle must have a storage ID",
+				);
 				fullTreeContents.set(
 					localId,
 					stringToBuffer(
@@ -895,11 +902,7 @@ export class BlobManager {
 		for (const [localId, storageId] of this.redirectTable) {
 			// Don't report the identity mappings to GC - these exist to service old handles that referenced the storage
 			// IDs directly. We'll implicitly clean them up if all of their localId references get GC'd first.
-			if (
-				localId !== storageId ||
-				this.detachedBlobSummaryContents?.has(localId) === true ||
-				this.detachedBlobSummaryHandles.has(localId)
-			) {
+			if (localId !== storageId || this.isDetachedBlobSummary(localId)) {
 				// The outbound routes are empty because a blob node cannot reference other nodes. It can only be referenced
 				// by adding its handle to a referenced DDS.
 				gcData.gcNodes[getGCNodePathFromLocalId(localId)] = [];
@@ -1013,9 +1016,7 @@ export class BlobManager {
 		// detachedStorageTable. We expect to have a many:1 mapping from local IDs to pseudo
 		// storage IDs (many in the case that the storage dedupes the blob).
 		const redirectTableEntries = [...this.redirectTable.entries()].filter(
-			([localId]) =>
-				this.detachedBlobSummaryContents?.has(localId) !== true &&
-				!this.detachedBlobSummaryHandles.has(localId),
+			([localId]) => !this.isDetachedBlobSummary(localId),
 		);
 		assert(
 			new Set(redirectTableEntries.map(([_, storageId]) => storageId)).size ===

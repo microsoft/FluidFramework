@@ -58,13 +58,13 @@ export const detachedBlobSummaryGroupId = "fluid-internal:detached-blobs";
  *
  */
 export const loadBlobManagerLoadInfo = async (
-	context: Pick<IContainerContext, "baseSnapshot" | "attachState" | "snapshotWithContents"> & {
+	context: Pick<IContainerContext, "baseSnapshot" | "attachState"> & {
 		storage: Pick<IContainerContext["storage"], "readBlob">;
 	},
 ): Promise<IBlobManagerLoadInfo> => loadV1(context);
 
 const loadV1 = async (
-	context: Pick<IContainerContext, "baseSnapshot" | "attachState" | "snapshotWithContents"> & {
+	context: Pick<IContainerContext, "baseSnapshot" | "attachState"> & {
 		storage: Pick<IContainerContext["storage"], "readBlob">;
 	},
 ): Promise<IBlobManagerLoadInfo> => {
@@ -93,11 +93,7 @@ const loadV1 = async (
 				detachedBlobSummaryContents.set(
 					localId,
 					stringToBuffer(
-						bufferToString(
-							context.snapshotWithContents?.blobContents.get(blobId) ??
-								(await context.storage.readBlob(blobId)),
-							"utf8",
-						),
+						bufferToString(await context.storage.readBlob(blobId), "utf8"),
 						"base64",
 					),
 				);
@@ -119,7 +115,6 @@ const loadV1 = async (
 	const detachedBlobSummaryHandles = new Set<string>();
 	for (const [localId, blobId] of detachedBlobSummaryIds) {
 		redirectTableEntries.push([localId, blobId]);
-		ids.push(blobId);
 		detachedBlobSummaryHandles.add(localId);
 	}
 	return {

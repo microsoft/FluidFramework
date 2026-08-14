@@ -95,23 +95,6 @@ describe("Runtime", () => {
 		createController(validConfig);
 	});
 
-	it("persists support for inlined detached attachment blobs", () => {
-		const controller = new DocumentsSchemaController(
-			false,
-			0,
-			undefined,
-			{ ...features, inlineDetachedBlobsAsSummaryBlobs: true },
-			() => {},
-			{ minVersionForCollab: "2.115.0" },
-			logger,
-			false,
-		);
-		assert.strictEqual(
-			controller.sessionSchema.runtime.inlineDetachedBlobsAsSummaryBlobs,
-			true,
-		);
-	});
-
 	// It's hard to say if we will allow additional propeorty trees here like this sample shows.
 	// More likely that will require version bump, to ensure that old code does not run with such structure.
 	// If if such configs will be backward compatible (similar to runtime options we are listing that were in use for very long time),

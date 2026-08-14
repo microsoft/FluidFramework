@@ -141,10 +141,7 @@ export function generateRuntimeOptions(
 				}
 			).compressionOptions = disabledCompressionConfig;
 		}
-	});
-
-	// Override explicitSchemaControl to enabled if a schema-affecting blob option is enabled.
-	pairwiseOptions.map((options) => {
+		// Schema-affecting blob options require explicit schema control.
 		if (options.createBlobPayloadPending || options.inlineDetachedBlobsAsSummaryBlobs) {
 			(
 				options as {
