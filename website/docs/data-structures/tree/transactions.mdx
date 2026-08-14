@@ -60,15 +60,15 @@ Transactions are started via [runTransaction](../../api/fluid-framework/treebran
 ```typescript
 import { TreeAlpha } from "@fluidframework/tree/alpha";
 
-// Using a branch:
-const branch = TreeAlpha.branch(myNode);
-if (branch !== undefined) {
-    branch.runTransaction(/* ... */);
+// Looking up the context for a node:
+const context = TreeAlpha.context(myNode);
+if (context.isBranch()) {
+    context.runTransaction(/* ... */);
 }
 
-// Using a view directly:
-const view = tree.viewWith(config);
-view.runTransaction(/* ... */);
+// Using a typed view directly:
+const typedView = tree.viewWith(config);
+typedView.runTransaction(/* ... */);
 ```
 
 ### The `transaction` Callback Function

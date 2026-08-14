@@ -288,7 +288,7 @@ export interface TreeContextAlpha {
 /**
  * An untyped view of a {@link TreeBranch} with alpha-level APIs.
  * @remarks
- * The untyped view for a specific {@link TreeNode} may be acquired by calling `TreeAlpha.branch`.
+ * The untyped view for a specific {@link TreeNode} may be acquired by calling `TreeAlpha.context` and checking {@link TreeContextAlpha.isBranch | isBranch()}.
  *
  * An untyped view does not necessarily know the schema of its SharedTree. To convert it to a {@link TreeViewAlpha | view with a schema}, use {@link UntypedTreeViewAlpha.hasRootSchema | hasRootSchema()}.
  * @sealed @alpha

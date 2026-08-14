@@ -19,14 +19,15 @@ export function getNodeOnBranch<T extends TreeNode>(
 	node: T,
 	branch: TreeBranch,
 ): T | undefined {
-	const currentBranch = TreeAlpha.branch(node);
-	if (currentBranch === branch) {
+	const context = TreeAlpha.context(node);
+	const currentView = context.isBranch() ? context : undefined;
+	if (currentView === branch) {
 		return node;
 	}
 	// TODO: This cast is technically safe for now but relies on implementation details of TreeBranch.
 	// There is currently no way to (generically/untyped) get the schema or root of a TreeBranch.
 	const view = branch as TreeViewAlpha<ImplicitFieldSchema>;
-	if (currentBranch?.hasRootSchema(view.schema) !== true) {
+	if (currentView?.hasRootSchema(view.schema) !== true) {
 		return undefined;
 	}
 	if (view.root === undefined || !(view.root instanceof TreeNode)) {
