@@ -61,13 +61,16 @@ export function Uint8ArrayToArrayBufferLike(array: Uint8Array): ArrayBufferLike 
  * @internal
  */
 export function AnyUint8ArrayToArrayBuffer(array: Uint8Array): ArrayBuffer {
+	// Shortcut to provider underlying buffer as-is when possible.
 	if (
-		array.buffer instanceof ArrayBuffer &&
 		array.byteOffset === 0 &&
-		array.byteLength === array.buffer.byteLength
+		array.byteLength === array.buffer.byteLength &&
+		array.buffer instanceof ArrayBuffer
 	) {
 		return array.buffer;
 	}
+	// In TypeScript 5.9 or higher, ArrayBufferLikeToArrayBuffer can be removed.
+	// slice is used to ensure underlying buffer is ArrayBuffer.
 	// eslint-disable-next-line unicorn/prefer-spread -- spread is not the same as slice for Uint8Array
 	return ArrayBufferLikeToArrayBuffer(Uint8ArrayToArrayBufferLike(array.slice()));
 }
