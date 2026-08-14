@@ -2818,8 +2818,7 @@ export class ContainerRuntime
 			addBlobToSummary(summaryTree, electedSummarizerBlobName, electedSummarizerContent);
 		}
 
-		const blobManagerSummary =
-			blobManagerSummaryOverride ?? this.blobManager.summarize();
+		const blobManagerSummary = blobManagerSummaryOverride ?? this.blobManager.summarize();
 		// Some storage (like git) doesn't allow empty tree, so we can omit it.
 		// and the blob manager can handle the tree not existing when loading
 		if (Object.keys(blobManagerSummary.summary.tree).length > 0) {

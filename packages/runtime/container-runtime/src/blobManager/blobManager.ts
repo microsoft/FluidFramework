@@ -848,8 +848,7 @@ export class BlobManager {
 				"Detached BlobManager cannot summarize handles to a prior summary",
 			);
 		}
-		const detachedBlobSummaryContents =
-			fullTreeContents ?? this.detachedBlobSummaryContents;
+		const detachedBlobSummaryContents = fullTreeContents ?? this.detachedBlobSummaryContents;
 		return summarizeBlobManagerState(
 			this.redirectTable,
 			detachedBlobSummaryContents,
@@ -875,10 +874,7 @@ export class BlobManager {
 					return;
 				}
 				const storageId = this.redirectTable.get(localId);
-				assert(
-					storageId !== undefined,
-					"Detached blob summary handle must have a storage ID",
-				);
+				assert(storageId !== undefined, "Detached blob summary handle must have a storage ID");
 				fullTreeContents.set(
 					localId,
 					stringToBuffer(

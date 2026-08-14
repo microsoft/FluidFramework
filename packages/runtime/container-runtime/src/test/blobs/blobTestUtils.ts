@@ -47,7 +47,7 @@ import {
 import {
 	detachedBlobSummaryGroupId,
 	detachedBlobSummaryTreeName,
-} from "../../blobManager/blobManagerSnapSum.js";
+} from "../../blobManager/blobManagerSnapSum.js"; // eslint-disable-line import-x/no-internal-modules
 import type { IBlobMetadata } from "../../metadata.js";
 
 export const MIN_TTL = 24 * 60 * 60; // same as ODSP
@@ -549,10 +549,7 @@ export const getSummaryContentsFromSummaryWithFormatValidation = (
 				if (content.type === SummaryType.Blob) {
 					assert(typeof content.content === "string");
 					detachedBlobSummaryContents ??= new Map();
-					detachedBlobSummaryContents.set(
-						localId,
-						stringToBuffer(content.content, "base64"),
-					);
+					detachedBlobSummaryContents.set(localId, stringToBuffer(content.content, "base64"));
 				} else {
 					assert(content.type === SummaryType.Handle);
 					assert.strictEqual(content.handleType, SummaryType.Blob);
