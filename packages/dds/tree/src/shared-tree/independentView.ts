@@ -245,7 +245,6 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 	const checkout = createTreeCheckout(idCompressor, mintRevisionTag, revisionTagCodec, {
 		forest,
 		schema: schemaRepository,
-		breaker,
 		codecOptions: options,
 	});
 

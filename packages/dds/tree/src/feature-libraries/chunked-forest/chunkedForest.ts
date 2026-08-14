@@ -29,6 +29,7 @@ import {
 	aboveRootPlaceholder,
 	combineVisitors,
 	detachedFieldAsKey,
+	makeBreakingVisitor,
 	mapCursorField,
 	rootFieldKey,
 	type ChunkedCursor,
@@ -41,7 +42,8 @@ import {
 	getLast,
 	getOrAddEmptyToMap,
 	hasSome,
-	type Breakable,
+	Breakable,
+	type WithBreakable,
 } from "../../util/index.js";
 
 import { BasicChunk, BasicChunkCursor, type SiblingsOrKey } from "./basicChunk.js";
@@ -172,7 +174,7 @@ interface StackNode {
  *
  * This implementation focuses on performance.
  */
-export class ChunkedForest implements IEditableForest {
+export class ChunkedForest implements IEditableForest, WithBreakable {
 	private activeVisitor?: DeltaVisitor;
 
 	private readonly deltaVisitors: Set<() => AnnouncedVisitor> = new Set();
@@ -191,18 +193,29 @@ export class ChunkedForest implements IEditableForest {
 		public readonly chunker: IChunker,
 		public readonly anchors: AnchorSet = new AnchorSet(),
 		public readonly idCompressor?: IIdCompressor,
+		public readonly breaker: Breakable = new Breakable("ChunkedForest"),
 	) {}
 
 	public get isEmpty(): boolean {
+		this.breaker.use();
 		return this.roots.fields.size === 0;
 	}
 
-	public clone(schema: TreeStoredSchemaSubscription, _breaker?: Breakable): ChunkedForest {
+	public clone(schema: TreeStoredSchemaSubscription, breaker?: Breakable): ChunkedForest {
+		this.breaker.use();
 		this.roots.referenceAdded();
-		return new ChunkedForest(this.roots, schema, this.chunker.clone(schema));
+		return new ChunkedForest(
+			this.roots,
+			schema,
+			this.chunker.clone(schema),
+			undefined,
+			this.idCompressor,
+			breaker ?? this.breaker,
+		);
 	}
 
 	public chunkField(cursor: ITreeCursorSynchronous): TreeChunk[] {
+		this.breaker.use();
 		return chunkField(cursor, { idCompressor: this.idCompressor, policy: this.chunker });
 	}
 
@@ -219,6 +232,7 @@ export class ChunkedForest implements IEditableForest {
 	}
 
 	public acquireVisitor(): DeltaVisitor {
+		this.breaker.use();
 		assert(
 			this.activeVisitor === undefined,
 			0x76a /* Must release existing visitor before acquiring another */,
@@ -422,9 +436,12 @@ export class ChunkedForest implements IEditableForest {
 		for (const getVisitor of this.deltaVisitors) {
 			announcedVisitors.push(getVisitor());
 		}
-		const combinedVisitor = combineVisitors([forestVisitor, ...announcedVisitors]);
-		this.activeVisitor = combinedVisitor;
-		return combinedVisitor;
+		const visitor = combineVisitors([
+			makeBreakingVisitor(forestVisitor, this.breaker),
+			...announcedVisitors,
+		]);
+		this.activeVisitor = visitor;
+		return visitor;
 	}
 
 	private nextDetachedFieldIdentifier = 0;
@@ -439,6 +456,7 @@ export class ChunkedForest implements IEditableForest {
 	}
 
 	public allocateCursor(): Cursor {
+		this.breaker.use();
 		return new Cursor(
 			this,
 			ITreeSubscriptionCursorState.Cleared,
@@ -459,6 +477,7 @@ export class ChunkedForest implements IEditableForest {
 		destination: Anchor,
 		cursorToMove: ITreeSubscriptionCursor,
 	): TreeNavigationResult {
+		this.breaker.use();
 		const path = this.anchors.locate(destination);
 		if (path === undefined) {
 			return TreeNavigationResult.NotFound;
@@ -471,6 +490,7 @@ export class ChunkedForest implements IEditableForest {
 		destination: FieldAnchor,
 		cursorToMove: ITreeSubscriptionCursor,
 	): TreeNavigationResult {
+		this.breaker.use();
 		assert(
 			cursorToMove instanceof Cursor,
 			0x53b /* ChunkedForest must only be given its own Cursor type */,
@@ -489,6 +509,7 @@ export class ChunkedForest implements IEditableForest {
 	}
 
 	public moveCursorToPath(destination: UpPath, cursorToMove: ITreeSubscriptionCursor): void {
+		this.breaker.use();
 		assert(
 			cursorToMove instanceof Cursor,
 			0x53c /* ChunkedForest must only be given its own Cursor type */,
@@ -524,6 +545,7 @@ export class ChunkedForest implements IEditableForest {
 	}
 
 	public getCursorAboveDetachedFields(): ITreeCursorSynchronous {
+		this.breaker.use();
 		const rootCursor = this.roots.cursor();
 		rootCursor.enterNode(0);
 		return rootCursor;
@@ -619,6 +641,14 @@ export function buildChunkedForest(
 	chunker: IChunker,
 	anchors?: AnchorSet,
 	idCompressor?: IIdCompressor,
+	breaker?: Breakable,
 ): ChunkedForest {
-	return new ChunkedForest(makeRoot(), chunker.schema, chunker, anchors, idCompressor);
+	return new ChunkedForest(
+		makeRoot(),
+		chunker.schema,
+		chunker,
+		anchors,
+		idCompressor,
+		breaker,
+	);
 }
