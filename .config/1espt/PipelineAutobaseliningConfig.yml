@@ -207,11 +207,11 @@ pipelines:
         credscan:
           lastModifiedDate: 2024-09-17
         binskim:
-          lastModifiedDate: 2025-04-25
+          lastModifiedDate: 2026-08-14
         spotbugs:
-          lastModifiedDate: 2024-09-17
+          lastModifiedDate: 2026-08-14
         roslyn:
-          lastModifiedDate: 2024-09-17
+          lastModifiedDate: 2026-08-14
   25:
     retail:
       source:
@@ -328,22 +328,22 @@ pipelines:
         credscan:
           lastModifiedDate: 2024-09-26
         eslint:
-          lastModifiedDate: 2026-08-14
+          lastModifiedDate: 2024-09-26
         bandit:
-          lastModifiedDate: 2026-08-14
+          lastModifiedDate: 2024-09-26
         psscriptanalyzer:
-          lastModifiedDate: 2026-08-14
+          lastModifiedDate: 2024-09-26
         armory:
-          lastModifiedDate: 2026-08-14
+          lastModifiedDate: 2024-09-26
       binary:
         credscan:
           lastModifiedDate: 2024-09-26
         binskim:
-          lastModifiedDate: 2026-08-14
+          lastModifiedDate: 2025-04-25
         spotbugs:
-          lastModifiedDate: 2026-08-14
+          lastModifiedDate: 2024-09-26
         roslyn:
-          lastModifiedDate: 2026-08-14
+          lastModifiedDate: 2024-09-26
   48:
     retail:
       source:
@@ -510,14 +510,14 @@ pipelines:
         credscan:
           lastModifiedDate: 2024-11-16
         eslint:
-          lastModifiedDate: 2026-08-14
+          lastModifiedDate: 2024-11-16
         armory:
-          lastModifiedDate: 2026-08-14
+          lastModifiedDate: 2024-11-16
       binary:
         credscan:
           lastModifiedDate: 2024-11-16
         binskim:
-          lastModifiedDate: 2026-08-14
+          lastModifiedDate: 2025-04-25
   37:
     usedNonDefaultBranch: true
     retail:
