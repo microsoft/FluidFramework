@@ -36,6 +36,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockHandle,
 } from "@fluidframework/test-runtime-utils/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	currentVersion,
@@ -218,11 +219,10 @@ function createTreeInner(
 	const changeFamily = makeTestDefaultChangeFamily({ idCompressor, chunkCompressionStrategy });
 	return [
 		new SharedTreeCore(
-			new Breakable("createTreeInner"),
+			new Breakable("createTreeInner", createChildLogger({ logger })),
 			sharedObject,
 			serializer,
 			submitLocalMessage,
-			logger,
 			summarizables,
 			changeFamily,
 			codecOptions,

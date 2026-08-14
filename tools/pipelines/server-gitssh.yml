@@ -93,4 +93,4 @@ extends:
     installPackages: false
     enableDockerImagePull: false
     tagName: gitssh
-    publishAsPartOfBuild: true
+    publishAsPartOfBuild: false

@@ -9,7 +9,7 @@ import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
 	IExperimentalIncrementalSummaryContext,
 	ITelemetryContext,
-	MinimumVersionForCollab,
+	OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
 import type { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
@@ -65,7 +65,7 @@ const supportedVersions = new Set<DetachedFieldIndexSummaryFormatVersion>([
  * Returns the summary version to use as per the given minimum version for collab.
  */
 function minVersionToDetachedFieldIndexSummaryFormatVersion(
-	version: MinimumVersionForCollab,
+	version: OldestSupportedClientVersion,
 ): DetachedFieldIndexSummaryFormatVersion {
 	// Currently, version 2 is written which adds metadata blob to the summary.
 	return DetachedFieldIndexSummaryFormatVersion.v2;
