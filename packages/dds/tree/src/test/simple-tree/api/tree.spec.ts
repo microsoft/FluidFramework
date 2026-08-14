@@ -233,7 +233,10 @@ describe("simple-tree tree", () => {
 		const view = getView(config);
 		// Note: the tree's schema hasn't been initialized at this point, so even though the view schema
 		// allows an optional field, explicit initialization must occur.
-		assert.throws(() => view.root, /Document is out of schema./);
+		assert.throws(
+			() => view.root,
+			/TreeView\.root is unavailable because the view schema is not compatible with the document's stored schema.*The document is uninitialized; call TreeView\.initialize\(\)/,
+		);
 		view.initialize(undefined);
 		assert.equal(view.root, undefined);
 	});
