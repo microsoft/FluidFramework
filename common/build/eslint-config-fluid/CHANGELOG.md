@@ -32,13 +32,14 @@ Example override for pnpm:
 
 ##### Additional overrides
 
-`eslint-plugin-jest`, while not part of this config, is known to require `eslint-plugin` override.
+`eslint-plugin-jest`, while not part of this config, is known to require `eslint-plugin` update.
+If package manager does not select more recent update, then a temporary override may be needed to coerce
+a new resolution. After lockfile refresh, the override may be removed.
 Example override for pnpm:
 
 ```yaml
-# @typescript-eslint/eslint-plugin overrides
-#   As of 2026-08-05 eslint-plugin-jest (v29.6.2), does not have a version using v8.58 or later.
-"eslint-plugin-jest>@typescript-eslint/eslint-plugin@<8.58.0": ~8.58.0
+# @typescript-eslint/eslint-plugin override to force resolution update
+"eslint-plugin-jest>@typescript-eslint/eslint-plugin@<8.58.0": ^8.58.0
 ```
 
 ### Breaking: `@eslint-react/eslint-plugin` upgraded to v5
