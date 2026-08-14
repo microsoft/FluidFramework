@@ -480,14 +480,14 @@ pipelines:
         credscan:
           lastModifiedDate: 2024-11-16
         eslint:
-          lastModifiedDate: 2024-11-16
+          lastModifiedDate: 2026-08-14
         armory:
-          lastModifiedDate: 2024-11-16
+          lastModifiedDate: 2026-08-14
       binary:
         credscan:
           lastModifiedDate: 2024-11-16
         binskim:
-          lastModifiedDate: 2025-04-25
+          lastModifiedDate: 2026-08-14
   136:
     usedNonDefaultBranch: true
     retail:
@@ -617,10 +617,10 @@ pipelines:
     retail:
       source:
         eslint:
-          lastModifiedDate: 2026-08-14
+          lastModifiedDate: 2026-07-23
         bandit:
-          lastModifiedDate: 2026-08-14
+          lastModifiedDate: 2026-07-23
         psscriptanalyzer:
-          lastModifiedDate: 2026-08-14
+          lastModifiedDate: 2026-07-23
         armory:
-          lastModifiedDate: 2026-08-14
+          lastModifiedDate: 2026-07-23
