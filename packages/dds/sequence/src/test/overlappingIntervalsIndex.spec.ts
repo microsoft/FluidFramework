@@ -214,6 +214,49 @@ describe("OverlappingIntervalsIndex", () => {
 				);
 			}
 		});
+
+		it("agrees with a brute force scan as intervals are added and removed", () => {
+			const random = makeRandom(0x5ca1ab1e);
+			const live: SequenceInterval[] = [];
+			const positionOf = (interval: SequenceInterval): { start: number; end: number } => ({
+				start: sharedString.localReferencePositionToPosition(interval.start),
+				end: sharedString.localReferencePositionToPosition(interval.end),
+			});
+			const sorted = (intervals: readonly SequenceInterval[]): string[] =>
+				describeIntervals(intervals).sort();
+
+			// Each round grows the set and then shrinks it by a random amount, so the queries below
+			// run against many different array lengths - including the non power of two lengths
+			// which give the segment tree its most lopsided shapes.
+			for (let round = 0; round < 20; round++) {
+				for (let i = 0; i < random.integer(1, 15); i++) {
+					const start = random.integer(0, stringLength - 1);
+					const interval = createTestInterval(start, random.integer(start, stringLength - 1));
+					live.push(interval);
+					index.add(interval);
+				}
+
+				for (let i = random.integer(0, live.length); i > 0; i--) {
+					const [removed] = live.splice(random.integer(0, live.length - 1), 1);
+					index.remove(removed);
+				}
+
+				for (let query = 0; query < 25; query++) {
+					const start = random.integer(0, stringLength - 1);
+					const end = random.integer(start, stringLength - 1);
+					const expected = live.filter((interval) => {
+						const position = positionOf(interval);
+						return position.start <= end && position.end >= start;
+					});
+
+					assert.deepEqual(
+						sorted(index.findOverlappingIntervals(start, end)),
+						sorted(expected),
+						`mismatched overlaps for [${start}, ${end}] with ${live.length} intervals`,
+					);
+				}
+			}
+		});
 	});
 
 	describe("gatherIterationResults", () => {
