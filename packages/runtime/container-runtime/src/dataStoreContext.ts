@@ -64,6 +64,7 @@ import type {
 	IInboundSignalMessage,
 	IPendingMessagesState,
 	IRuntimeMessageCollection,
+	IRuntimeResubmitMessageCollection,
 	IFluidDataStoreFactory,
 	PackagePath,
 	IRuntimeStorageService,
@@ -1099,6 +1100,19 @@ export abstract class FluidDataStoreContext
 	): void {
 		assert(!!this.channel, 0x14b /* "Channel must exist when resubmitting ops" */);
 		this.channel.reSubmit(message.type, message.content, localOpMetadata, squash);
+	}
+
+	public reSubmitMessages(type: string, collection: IRuntimeResubmitMessageCollection): void {
+		assert(!!this.channel, "Channel must exist when resubmitting ops");
+		if (this.channel.reSubmitMessages !== undefined) {
+			this.channel.reSubmitMessages(type, collection);
+			return;
+		}
+
+		// Fallback for channels that haven't opted in to the bunched form.
+		for (const { contents, localOpMetadata } of collection.messages) {
+			this.channel.reSubmit(type, contents, localOpMetadata, collection.squash);
+		}
 	}
 
 	public rollback(message: FluidDataStoreMessage, localOpMetadata: unknown): void {

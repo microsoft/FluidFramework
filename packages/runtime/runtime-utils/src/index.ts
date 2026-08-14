@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export { forEachContiguousBunch } from "./bunching.js";
 export { generateHandleContextPath } from "./dataStoreHandleContextUtils.js";
 export {
 	create404Response,

@@ -88,6 +88,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     resolveHandle(request: IRequest): Promise<IResponse>;
     reSubmit(type: DataStoreMessageType, content: any, localOpMetadata: unknown, squash: boolean): void;
+    reSubmitMessages(type: DataStoreMessageType, collection: IRuntimeResubmitMessageCollection): void;
     rollback?(type: DataStoreMessageType, content: any, localOpMetadata: unknown): void;
     // (undocumented)
     get rootRoutingContext(): this;
