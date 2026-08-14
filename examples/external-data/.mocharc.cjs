@@ -7,6 +7,4 @@
 
 const getFluidTestMochaConfig = require("@fluid-internal/mocha-test-setup/mocharc-common");
 
-const config = getFluidTestMochaConfig(__dirname);
-config.timeout = 10_000;
-module.exports = config;
+module.exports = getFluidTestMochaConfig(__dirname);

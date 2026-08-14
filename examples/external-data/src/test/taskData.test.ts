@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { type ITaskData, assertValidTaskData } from "../src/model-interface/index.js";
+import { type ITaskData, assertValidTaskData } from "../model-interface/index.js";
 
 /**
  * {@link ITaskData} unit tests.

@@ -15,7 +15,7 @@ module.exports = {
 	globals: {
 		PATH: `http://localhost:${mappedPort}`,
 	},
-	testMatch: ["**/taskList.test.ts"],
+	testMatch: ["<rootDir>/test/**/*.test.ts"],
 	testPathIgnorePatterns: ["/node_modules/", "dist"],
 	transform: {
 		"^.+\\.ts?$": "ts-jest",

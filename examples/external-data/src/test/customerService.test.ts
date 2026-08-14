@@ -9,14 +9,14 @@ import type { Server } from "node:http";
 import cors from "cors";
 import express from "express";
 
-import { initializeCustomerService } from "../src/mock-customer-service/index.js";
-import { customerServicePort } from "../src/mock-customer-service-interface/index.js";
+import { initializeCustomerService } from "../mock-customer-service/index.js";
+import { customerServicePort } from "../mock-customer-service-interface/index.js";
 import {
 	type MockWebhook,
 	initializeExternalDataService,
-} from "../src/mock-external-data-service/index.js";
-import { externalDataServicePort } from "../src/mock-external-data-service-interface/index.js";
-import type { ITaskData } from "../src/model-interface/index.js";
+} from "../mock-external-data-service/index.js";
+import { externalDataServicePort } from "../mock-external-data-service-interface/index.js";
+import type { ITaskData } from "../model-interface/index.js";
 
 import { closeServer, delay } from "./utilities.js";
 
@@ -277,9 +277,9 @@ describe("mock-customer-service", () => {
 		}
 	});
 
-	// Skipping to close off the broadcast-signal loop. Tested manually and it works well.
-	// Unclear why localServiceApp is failing to post right for this test.
-	it("events-listener: Complete data flow for session-end event", async () => {
+	// This test intentionally waits twice for webhook delivery and non-delivery.
+	it("events-listener: Complete data flow for session-end event", async function () {
+		this.timeout(5000);
 		// Set up mock local Fluid service, which will be registered as webhook listener
 		const localServiceApp = initializeMockFluidService(express());
 		const tenantId = "tinylicious";

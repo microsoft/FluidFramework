@@ -4444,6 +4444,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      mocha-multi-reporters:
+        specifier: ^1.5.1
+        version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
       process:
         specifier: ^0.11.10
         version: 0.11.10
