@@ -168,6 +168,8 @@ jobs:
   steps:
   - checkout: self
     clean: true
+    fetchDepth: 1
+    fetchTags: false
   - template: /tools/pipelines/templates/include-git-tag-steps.yml@self
     parameters:
       tagName: ${{ parameters.tagName }}
