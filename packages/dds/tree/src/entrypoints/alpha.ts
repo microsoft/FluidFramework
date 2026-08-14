@@ -283,6 +283,7 @@ export {
 	TransactionPostProcessor,
 	TreeAlpha,
 	TreeArrayNodeAlpha,
+	TreeBranchAlpha,
 	TreeBranchEvents,
 	TreeChangeEventsAlpha,
 	TreeCompressionStrategy,

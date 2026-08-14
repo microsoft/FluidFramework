@@ -1912,6 +1912,9 @@ export interface TreeBranch extends IDisposable {
     rebaseOnto(branch: TreeBranch): void;
 }
 
+// @alpha @deprecated
+export type TreeBranchAlpha = UntypedTreeViewAlpha;
+
 // @alpha @sealed
 export interface TreeBranchEvents {
     changed(data: ChangeMetadata, getRevertible?: RevertibleAlphaFactory): void;

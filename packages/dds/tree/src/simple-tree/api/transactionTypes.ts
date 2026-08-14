@@ -181,7 +181,7 @@ export interface RunTransactionParamsBeta {
 	/**
 	 * A label for this transaction that allows it to be correlated with later edits (e.g. for controlling undo/redo grouping).
 	 * @remarks
-	 * If this transaction is applied to a {@link UntypedTreeViewAlpha | branch}, the label will be available in the {@link LocalChangeMetadata.label | metadata} of the {@link TreeBranchEvents.changed | `changed`} event.
+	 * If this transaction is applied to an {@link UntypedTreeViewAlpha | untyped view}, the label will be available in the {@link LocalChangeMetadata.label | metadata} of the {@link TreeBranchEvents.changed | `changed`} event.
 	 *
 	 * If there is a nested transaction, only the outermost transaction label will be used.
 	 */

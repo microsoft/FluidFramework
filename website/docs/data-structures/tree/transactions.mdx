@@ -44,18 +44,18 @@ There are example transactions here: [Shared Tree Demo](https://github.com/micro
 
 The APIs described in this section are currently `@alpha` and may change in future releases.
 
-Unlike [Tree.runTransaction](../../api/fluid-framework/tree-interface#runtransaction-propertysignature), the Alpha [runTransaction](../../api/fluid-framework/untypedtreeviewalpha-interface#runtransaction-methodsignature) does **not** automatically roll back the transaction if the callback throws an error.
+Unlike [Tree.runTransaction](../../api/fluid-framework/tree-interface#runtransaction-propertysignature), the Alpha [runTransaction](../../api/fluid-framework/treebranchalpha-interface#runtransaction-methodsignature) does **not** automatically roll back the transaction if the callback throws an error.
 If your callback may throw, you should handle errors explicitly and return `{ rollback: true }` when required.
 
 :::
 
-The alpha APIs introduce [UntypedTreeViewAlpha.runTransaction](../../api/fluid-framework/untypedtreeviewalpha-interface#runtransaction-methodsignature) as a replacement for `Tree.runTransaction`.
+The alpha APIs introduce [UntypedTreeViewAlpha.runTransaction](../../api/fluid-framework/treebranchalpha-interface#runtransaction-methodsignature) as a replacement for `Tree.runTransaction`.
 This new API exists to solve correctness issues where errors being thrown in runTransaction could result in an undefined state.
 This new API enables developers to customize how their application handles this error case.
 
 ### Running a Transaction
 
-Transactions are started via [runTransaction](../../api/fluid-framework/untypedtreeviewalpha-interface#runtransaction-methodsignature) on any [UntypedTreeViewAlpha](../../api/fluid-framework/untypedtreeviewalpha-interface)
+Transactions are started via [runTransaction](../../api/fluid-framework/treebranchalpha-interface#runtransaction-methodsignature) on any [UntypedTreeViewAlpha](../../api/fluid-framework/treebranchalpha-interface)
 
 ```typescript
 import { TreeAlpha } from "@fluidframework/tree/alpha";
@@ -108,7 +108,7 @@ if (result.success) {
 
 ### Asynchronous Transactions
 
-[runTransactionAsync](../../api/fluid-framework/untypedtreeviewalpha-interface#runtransactionasync-methodsignature) works like [runTransaction](../../api/fluid-framework/untypedtreeviewalpha-interface#runtransaction-methodsignature) but accepts an `async` callback.
+[runTransactionAsync](../../api/fluid-framework/treebranchalpha-interface#runtransactionasync-methodsignature) works like [runTransaction](../../api/fluid-framework/treebranchalpha-interface#runtransaction-methodsignature) but accepts an `async` callback.
 
 ```typescript
 const result = await view.runTransactionAsync(async () => {
@@ -141,7 +141,7 @@ If transactions are nested, only the outermost transaction's label is used.
 
 ### Nested Transactions
 
-[runTransaction](../../api/fluid-framework/untypedtreeviewalpha-interface#runtransaction-methodsignature) and [runTransactionAsync](../../api/fluid-framework/untypedtreeviewalpha-interface#runtransactionasync-methodsignature) can be called from within the callback of another transaction, with some limitations.
+[runTransaction](../../api/fluid-framework/treebranchalpha-interface#runtransaction-methodsignature) and [runTransactionAsync](../../api/fluid-framework/treebranchalpha-interface#runtransactionasync-methodsignature) can be called from within the callback of another transaction, with some limitations.
 Nested transactions have the following behavior:
 
 -   If the inner transaction rolls back, only the inner transaction's changes are discarded. The outer transaction continues.

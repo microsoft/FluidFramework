@@ -223,7 +223,7 @@ export interface TreeContextAlpha {
 	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
 	 *
 	 * `runTransaction` may be invoked on the context of a {@link TreeStatus.InDocument | hydrated } or {@link Unhydrated | unhydrated } node.
-	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether this context is associated with a branch and gain {@link UntypedTreeViewAlpha.(runTransaction:1) | access to more transaction capabilities} if so.
+	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether this context is associated with a view and gain {@link UntypedTreeViewAlpha.(runTransaction:1) | access to more transaction capabilities} if so.
 	 */
 	runTransaction<TValue>(
 		transaction: () => WithValue<TValue>,
@@ -271,13 +271,13 @@ export interface TreeContextAlpha {
 	): Promise<TransactionVoidResult>;
 
 	/**
-	 * True if this context is associated with a {@link UntypedTreeViewAlpha | branch} and false if it is associated with an {@link Unhydrated | unhydrated } node.
-	 * @remarks If this returns true, the context can be safely inferred or cast to {@link UntypedTreeViewAlpha} to access additional branch-specific APIs.
+	 * True if this context is associated with an {@link UntypedTreeViewAlpha | untyped view} and false if it is associated with an {@link Unhydrated | unhydrated } node.
+	 * @remarks If this returns true, the context can be safely inferred or cast to {@link UntypedTreeViewAlpha} to access additional view-specific APIs.
 	 * @example
 	 * ```typescript
 	 * const context = tree.context(someNode);
 	 * if (context.isBranch()) {
-	 *   assert(context.hasRootSchema(MySchema)) // `hasRootSchema` is a method on UntypedTreeViewAlpha, so this is only accessible if `context` is a branch context.
+	 *   assert(context.hasRootSchema(MySchema)) // `hasRootSchema` is a method on UntypedTreeViewAlpha, so this is only accessible if `context` is a view context.
 	 *   context.root.foo = "bar"; // Edit the root of the SharedTree that `someNode` belongs to.
 	 * }
 	 * ```
@@ -286,29 +286,29 @@ export interface TreeContextAlpha {
 }
 
 /**
- * {@link TreeBranch} with alpha-level APIs.
+ * An untyped view of a {@link TreeBranch} with alpha-level APIs.
  * @remarks
- * The `TreeBranch` for a specific {@link TreeNode} may be acquired by calling `TreeAlpha.branch`.
+ * The untyped view for a specific {@link TreeNode} may be acquired by calling `TreeAlpha.branch`.
  *
- * A branch does not necessarily know the schema of its SharedTree - to convert a branch to a {@link TreeViewAlpha | view with a schema}, use {@link UntypedTreeViewAlpha.hasRootSchema | hasRootSchema()}.
+ * An untyped view does not necessarily know the schema of its SharedTree. To convert it to a {@link TreeViewAlpha | view with a schema}, use {@link UntypedTreeViewAlpha.hasRootSchema | hasRootSchema()}.
  * @sealed @alpha
  */
 export interface UntypedTreeViewAlpha extends TreeBranch, TreeContextAlpha {
 	/**
-	 * Events for the branch
+	 * Events for the view's underlying branch.
 	 */
 	readonly events: Listenable<TreeBranchEvents>;
 
 	/**
-	 * Returns true if this branch has the given schema as its root schema.
-	 * @remarks This is a type guard which allows this branch to become strongly typed as a {@link TreeViewAlpha | view} of the given schema.
+	 * Returns true if this view has the given schema as its root schema.
+	 * @remarks This is a type guard which allows this view to become strongly typed as a {@link TreeViewAlpha | view} of the given schema.
 	 *
 	 * To succeed, the given schema must be invariant to the schema of the view - it must include exactly the same allowed types.
 	 * For example, a schema of `Foo | Bar` will not match a view schema of `Foo`, and likewise a schema of `Foo` will not match a view schema of `Foo | Bar`.
 	 * @example
 	 * ```typescript
-	 * if (branch.hasRootSchema(MySchema)) {
-	 *   const { root } = branch; // `branch` is now a TreeViewAlpha<MySchema>
+	 * if (view.hasRootSchema(MySchema)) {
+	 *   const { root } = view; // `view` is now a TreeViewAlpha<MySchema>
 	 *   // ...
 	 * }
 	 * ```
@@ -321,7 +321,7 @@ export interface UntypedTreeViewAlpha extends TreeBranch, TreeContextAlpha {
 	fork(): UntypedTreeViewAlpha;
 
 	/**
-	 * {@link TreeContextAlpha.(runTransaction:1) | Run a transaction} on a branch of the SharedTree.
+	 * {@link TreeContextAlpha.(runTransaction:1) | Run a transaction} on this view of the SharedTree.
 	 * @param transaction - The function to run as the body of the transaction, which may optionally return a {@link TransactionCallbackStatusAlpha | value or rollback signal}.
 	 * @remarks
 	 * If the transaction is rolled back, a corresponding {@link TreeBranchEvents.changed | `changed`} event will also be emitted for the rollback.
@@ -399,6 +399,14 @@ export interface UntypedTreeViewAlpha extends TreeBranch, TreeContextAlpha {
 	 */
 	computeNetChangeIfRebasedOnto(branch: TreeBranch): JsonCompatibleReadOnly | undefined;
 }
+
+/**
+ * Compatibility alias for {@link UntypedTreeViewAlpha}.
+ *
+ * @deprecated Use {@link UntypedTreeViewAlpha} instead.
+ * @alpha
+ */
+export type TreeBranchAlpha = UntypedTreeViewAlpha;
 
 /**
  * An editable view of a (version control style) branch of a shared tree based on some schema.

@@ -254,15 +254,15 @@ export interface TreeAlpha {
 	): () => void;
 
 	/**
-	 * Retrieve the {@link TreeBranch | branch}, if any, for the given node.
+	 * Retrieve an untyped view of the {@link TreeBranch | branch}, if any, for the given node.
 	 * @param node - The node to query
 	 * @remarks If the node has already been inserted into the tree, this will return the branch associated with that node's {@link TreeView | view}.
 	 * Otherwise, it will return `undefined` (because the node has not yet been inserted and is therefore not part of a branch or view).
 	 *
-	 * This does not fork a new branch, but rather retrieves the _existing_ branch for the node.
+	 * This does not fork a new branch, but rather retrieves a view of the _existing_ branch for the node.
 	 * To create a new branch, use e.g. {@link TreeBranch.fork | `myBranch.fork()`}.
 	 *
-	 * @deprecated To obtain a {@link UntypedTreeViewAlpha | branch }, use `TreeAlpha.context(node)` to obtain a {@link TreeContextAlpha | context} and then check {@link TreeContextAlpha.isBranch | isBranch()}.
+	 * @deprecated To obtain an {@link UntypedTreeViewAlpha | untyped view}, use `TreeAlpha.context(node)` to obtain a {@link TreeContextAlpha | context} and then check {@link TreeContextAlpha.isBranch | isBranch()}.
 	 */
 	branch(node: TreeNode): UntypedTreeViewAlpha | undefined;
 

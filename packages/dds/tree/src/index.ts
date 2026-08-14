@@ -270,6 +270,7 @@ export {
 	type InsertableTreeNodeFromAllowedTypes,
 	type Input,
 	type TreeBranch,
+	type TreeBranchAlpha,
 	type UntypedTreeViewAlpha,
 	type TreeBranchEvents,
 	asTreeViewAlpha,

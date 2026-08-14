@@ -3,9 +3,9 @@
 "fluid-framework": minor
 "__section": tree
 ---
-Rename TreeBranchAlpha to UntypedTreeViewAlpha
+Prefer UntypedTreeViewAlpha over TreeBranchAlpha
 
-The alpha `TreeBranchAlpha` interface is now named `UntypedTreeViewAlpha` to clarify that it represents a tree view without a known schema.
+`UntypedTreeViewAlpha` is now the preferred name for the alpha `TreeBranchAlpha` interface, clarifying that it represents a tree view without a known schema. `TreeBranchAlpha` remains available as a deprecated alias for compatibility and will be removed in a future release.
 
 Update alpha API imports and type annotations to use the new name:
 
