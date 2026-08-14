@@ -349,21 +349,25 @@ export interface IVersionMarkResolver {
 export function loadContainerRuntime(params: LoadContainerRuntimeParams): Promise<IContainerRuntime & IRuntime>;
 
 // @beta @legacy
-export type LoadContainerRuntimeParams = {
-    context: IContainerContext;
-    registryEntries: NamedFluidDataStoreRegistryEntries;
-    existing: boolean;
-    runtimeOptions?: IContainerRuntimeOptions;
+export function loadContainerRuntime(params: Omit<LoadContainerRuntimeParams, "oldestSupportedClient" | "minVersionForCollab"> & {
+    readonly oldestSupportedClient?: never;
+    readonly minVersionForCollab: OldestSupportedClientVersion;
+}): Promise<IContainerRuntime & IRuntime>;
+
+// @beta @legacy
+export interface LoadContainerRuntimeParams {
     containerScope?: FluidObject;
-    provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
-    requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
-} & ({
-    oldestSupportedClient: OldestSupportedClientVersion;
+    context: IContainerContext;
+    existing: boolean;
+    // @deprecated
     minVersionForCollab?: never;
-} | {
-    oldestSupportedClient?: never;
-    minVersionForCollab: OldestSupportedClientVersion;
-});
+    oldestSupportedClient: OldestSupportedClientVersion;
+    provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
+    registryEntries: NamedFluidDataStoreRegistryEntries;
+    // @deprecated
+    requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
+    runtimeOptions?: IContainerRuntimeOptions;
+}
 
 // @beta @deprecated @legacy (undocumented)
 export type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;
