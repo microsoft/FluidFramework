@@ -60,9 +60,8 @@ import {
 	toUpgradeSchema,
 	type TreeBranchAlpha,
 	type TreeSchema,
+	getSchemaCompatibilityError,
 } from "../simple-tree/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { getSchemaCompatibilityError } from "../simple-tree/api/schemaCompatibilityTester.js";
 import {
 	type Breakable,
 	breakingClass,
