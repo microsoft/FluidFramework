@@ -8,5 +8,4 @@
 	},
 	"include": ["src/**/*"],
 	"exclude": ["src/test/**"],
-	"lib": ["dom"],
 }
