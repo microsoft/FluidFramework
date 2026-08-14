@@ -153,7 +153,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore
 		this.provideEntryPoint = props.provideEntryPoint ?? getDefaultFluidObject;
 		this.requestHandlers = [getDefaultObject];
 		this.registry = new FluidDataStoreRegistry(this.registryEntries);
-		this.minVersionForCollab = props.minVersionForCollab ?? "2.0.0-defaults";
+		this.minVersionForCollab = props.minVersionForCollab ?? "2.0.0";
 	}
 
 	public async instantiateFirstTime(runtime: IContainerRuntime): Promise<void> {

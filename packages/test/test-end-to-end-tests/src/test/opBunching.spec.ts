@@ -45,7 +45,7 @@ describeCompat(
 		});
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: dataObjectFactory,
-			oldestSupportedClient: "2.0.0-defaults",
+			oldestSupportedClient: "2.0.0",
 			registryEntries: [["testDataObject", Promise.resolve(dataObjectFactory)]],
 		});
 

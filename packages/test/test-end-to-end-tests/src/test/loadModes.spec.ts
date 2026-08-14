@@ -117,7 +117,7 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis: CompatApis
 	async function createContainer(): Promise<IContainer> {
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: testDataObjectFactory,
-			oldestSupportedClient: "2.0.0-defaults",
+			oldestSupportedClient: "2.0.0",
 			registryEntries: [[testDataObjectFactory.type, Promise.resolve(testDataObjectFactory)]],
 		});
 		const loader = createLoader(
@@ -143,7 +143,7 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis: CompatApis
 	): Promise<IContainer> {
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory,
-			oldestSupportedClient: "2.0.0-defaults",
+			oldestSupportedClient: "2.0.0",
 			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
 		});
 		const loaderProps = createLoaderProps(

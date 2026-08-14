@@ -172,7 +172,7 @@ export class DocumentMatrixPlain implements IDocumentLoaderAndSummarizer {
 		});
 		this.runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: this.dataObjectFactory,
-			oldestSupportedClient: "2.0.0-defaults",
+			oldestSupportedClient: "2.0.0",
 			registryEntries: [
 				[this.dataObjectFactory.type, Promise.resolve(this.dataObjectFactory)],
 			],

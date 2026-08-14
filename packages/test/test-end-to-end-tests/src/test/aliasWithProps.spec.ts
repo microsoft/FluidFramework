@@ -65,7 +65,7 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
 		constructor(private readonly defaultFactory: TestDataObjectFactory) {
 			const props = {
 				registryEntries: [defaultFactory.registryEntry],
-				oldestSupportedClient: "2.0.0-defaults" as const,
+				oldestSupportedClient: "2.0.0" as const,
 				provideEntryPoint: async (runtime: IContainerRuntime) => {
 					const entrypoint = await runtime.getAliasedDataStoreEntryPoint(defaultDataStoreId);
 					assert(entrypoint !== undefined, "default dataStore must exist");

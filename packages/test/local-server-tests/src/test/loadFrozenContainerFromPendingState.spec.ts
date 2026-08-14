@@ -70,9 +70,7 @@ const initialize = async (options?: {
 					);
 					return new ContainerRuntimeFactoryWithDefaultDataStore({
 						defaultFactory: defaultDataStoreFactory,
-						oldestSupportedClient: options.createBlobPayloadPending
-							? "2.40.0"
-							: "2.0.0-defaults",
+						oldestSupportedClient: options.createBlobPayloadPending ? "2.40.0" : "2.0.0",
 						registryEntries: [
 							[defaultDataStoreFactory.type, Promise.resolve(defaultDataStoreFactory)],
 						],

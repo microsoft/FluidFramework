@@ -190,7 +190,7 @@ describe("createSharedObjectKind with minVersionForCollab", () => {
 	}
 
 	it("SharedObject can be constructed with a minVersionForCollab from the runtime", () => {
-		const minVersionForCollab = "1.2.3";
+		const minVersionForCollab = "2.2.3";
 		const type = "Foo";
 
 		const attributes: IChannelAttributes = {
@@ -217,6 +217,6 @@ describe("createSharedObjectKind with minVersionForCollab", () => {
 		});
 		const foo = SharedFoo.create(runtime, "test-id");
 
-		assert.strictEqual(foo.minVersionForCollab, "1.2.3");
+		assert.strictEqual(foo.minVersionForCollab, "2.2.3");
 	});
 });

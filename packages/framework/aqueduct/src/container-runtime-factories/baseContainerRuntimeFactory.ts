@@ -64,7 +64,6 @@ export interface BaseContainerRuntimeFactoryProps {
 	 * created with this factory
 	 */
 	provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
-
 	/**
 	 * Oldest version of Fluid Framework client that must be able to open and process
 	 * documents written by this container runtime.

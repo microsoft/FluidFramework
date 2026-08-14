@@ -160,7 +160,7 @@ describe("Container Runtime", () => {
 				context: getMockContext(deltaManager) as IContainerContext,
 				registryEntries: [],
 				existing: true,
-				oldestSupportedClient: "2.0.0-defaults",
+				oldestSupportedClient: "2.0.0",
 				runtimeOptions: {},
 				provideEntryPoint: mockProvideEntryPoint,
 			});

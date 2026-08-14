@@ -74,7 +74,7 @@ describeCompat(
 			const container = await provider.createContainer(
 				new apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore({
 					defaultFactory,
-					oldestSupportedClient: "2.0.0-defaults",
+					oldestSupportedClient: "2.0.0",
 					registryEntries: new Map([[defaultFactory.type, defaultFactory]]),
 				}),
 			);

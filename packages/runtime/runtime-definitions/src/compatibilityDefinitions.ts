@@ -18,6 +18,9 @@
  * Collaboration with other clients is supported when all Fluid Framework client packages used by the client have a version that is greater than or equal
  * to the specified `OldestSupportedClientVersion`.
  *
+ * Client 3.0 supports values from the 2.x and 3.x release lines. All active deployments
+ * that need to collaborate must use Fluid Framework 2.0.0 or later before upgrading.
+ *
  * Must be at least {@link @fluidframework/runtime-utils#lowestMinVersionForCollab} and cannot exceed the version of any Fluid Framework client package in use by the local client.
  *
  * {@link @fluidframework/runtime-utils#validateMinimumVersionForCollab} can be used to check these invariants at runtime.
@@ -37,15 +40,15 @@
  * TODO: before stabilizing this further, some restrictions should be considered (since once stabilized, this can be relaxed, but not more constrained).
  * For example it might make sense to constrain this to something like:
  * ```ts
- * "1.4.0" | "2.0.0-defaults" | `2.${bigint}.0`
+ * `2.${bigint}.0` | `3.${bigint}.0`
  * ```
  *
  * @input
  * @public
  */
 export type OldestSupportedClientVersion =
-	| `${1 | 2 | 3}.${bigint}.${bigint}`
-	| `${1 | 2 | 3}.${bigint}.${bigint}-${string}`;
+	| `${2 | 3}.${bigint}.${bigint}`
+	| `${2 | 3}.${bigint}.${bigint}-${string}`;
 
 /**
  * Oldest version of Fluid Framework client packages that must be able to open and process
