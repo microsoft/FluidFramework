@@ -20,6 +20,7 @@ import {
 import {
 	getOdspPointInTimeDocumentServiceFactory,
 	type IPointInTimeDocumentServiceFactory,
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/odsp-driver/legacy/beta/pointInTime";
 import type {
 	HostStoragePolicy,
