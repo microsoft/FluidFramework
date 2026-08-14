@@ -36,9 +36,9 @@ export interface ISequenceOverlappingIntervalsIndex extends SequenceIntervalInde
 }
 
 export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsIndex {
-	protected readonly intervalSet = new SequenceIntervalOverlapSet();
+	private readonly intervalSet = new SequenceIntervalOverlapSet();
 
-	constructor(protected readonly sequence: ISharedSegmentSequence<any>) {}
+	constructor(private readonly sequence: ISharedSegmentSequence<any>) {}
 
 	public gatherIterationResults(
 		results: SequenceInterval[],
