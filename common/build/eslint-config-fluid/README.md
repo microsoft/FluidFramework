@@ -139,7 +139,7 @@ a diff to review as part of a PR -- just like we do with API reports for code ch
 | `prettier:fix` | `prettier --write .` |
 | `print-configs` | `tsx scripts/print-configs.ts printed-configs` |
 | `test` | `echo TODO: add tests in @fluidframework/eslint-config-fluid` |
-| `test:mocha` | `mocha "src/test/**/*.test.mts"` |
+| `test:mocha` | `mocha "src/test/**/*.spec.mts"` |
 
 <!-- prettier-ignore-end -->
 
