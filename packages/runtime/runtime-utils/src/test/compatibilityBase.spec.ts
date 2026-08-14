@@ -36,6 +36,11 @@ describe("compatibilityBase", () => {
 			const config = getConfigForMinVersionForCollab("2.2.0", { "2.0.0": "X" });
 			assert.equal(config, "X");
 		});
+		it("normalizes the legacy internal defaults sentinel", () => {
+			// Simulates a pre-3.0 runtime providing its internal default to a newer DDS layer.
+			const legacyDefaults = "2.0.0-defaults" as unknown as OldestSupportedClientVersion;
+			assert.equal(getConfigForMinVersionForCollab(legacyDefaults, { "2.0.0": "X" }), "X");
+		});
 		it("sorting", () => {
 			// These checks are designed to fail if the items are not sorted according to semver, and are either left as ordered or sorted lexically.
 			const config = { "2.0.0": "A", "2.100.0": "D", "2.58.0": "B", "2.60.0": "C" };
