@@ -277,8 +277,8 @@ describe("mock-customer-service", () => {
 		}
 	});
 
-	// This test intentionally waits twice for webhook delivery and non-delivery.
 	it("events-listener: Complete data flow for session-end event", async function () {
+		// This test intentionally waits twice for webhook delivery and non-delivery.
 		this.timeout(5000);
 		// Set up mock local Fluid service, which will be registered as webhook listener
 		const localServiceApp = initializeMockFluidService(express());
