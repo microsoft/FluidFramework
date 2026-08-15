@@ -663,6 +663,24 @@ export interface SharedTreeOptions
 	 * lifetime of the client, which increases memory usage over time and should be used with care.
 	 */
 	readonly retainHistory?: boolean;
+
+	/**
+	 * @defaultValue `false`
+	 *
+	 * When `true`, validates that the commits being submitted can be applied to a view (assuming no concurrent changes).
+	 * In the event that a commit cannot be applied, SharedTree will throw an error and will enter a "broken" state, preventing the offending commit (and any further commits) from being submitted.
+	 * This can be enabled (at the cost of performance) to improve safety against document corruption in the event of a bug in the SharedTree code.
+	 */
+	readonly validateCommitsOnFirstSubmission?: boolean;
+
+	/**
+	 * @defaultValue `false`
+	 *
+	 * When `true`, validates that the commits being resubmitted can be applied to a view (assuming no concurrent changes).
+	 * In the event that a commit cannot be applied, SharedTree will throw an error and will enter a "broken" state, preventing the offending commit (and any further commits) from being submitted.
+	 * This can be enabled (at the cost of performance) to improve safety against document corruption in the event of a bug in the SharedTree code.
+	 */
+	readonly validateRebasedCommitsBeforeResubmission?: boolean;
 }
 
 export interface SharedTreeOptionsInternal
@@ -812,6 +830,8 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	writeVersionOverrides: new Map(),
 	allowPossiblyIncompatibleWriteVersionOverrides: false,
 	retainHistory: false,
+	validateCommitsOnFirstSubmission: false,
+	validateRebasedCommitsBeforeResubmission: false,
 };
 
 /**

@@ -28,12 +28,18 @@ export class BranchCommitEnricher<TChange> {
 	/**
 	 * Process the given commits for later {@link BranchCommitEnricher.retrieveChange | retrieval}.
 	 * @param commits - The commits to prepare.
+	 * @param forceValidation - Whether to force the application of the enriched commits to a side checkout.
+	 * This is useful to reduce the likelihood of an invalid commit being generated
+	 * (either due to the given `commits` being invalid or because of an error in the enrichment logic).
 	 */
-	public prepareChanges(commits: readonly GraphCommit<TChange>[]): void {
+	public prepareChanges(
+		commits: readonly GraphCommit<TChange>[],
+		forceValidation: boolean,
+	): void {
 		if (hasSome(commits)) {
 			const startingState = commits[0].parent;
 			assert(startingState !== undefined, 0xcc1 /* New commits must have a parent. */);
-			const enrichedCommits = this.enricher.enrich(startingState, commits);
+			const enrichedCommits = this.enricher.enrich(startingState, commits, forceValidation);
 			for (const [index, commit] of commits.entries()) {
 				const enrichedCommit = enrichedCommits[index];
 				assert(enrichedCommit !== undefined, 0xcc2 /* Missing enriched commit. */);
