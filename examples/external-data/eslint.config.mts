@@ -11,19 +11,6 @@ const config: Linter.Config[] = [
 	...recommended,
 	...sharedConfig,
 	{
-		// Override @typescript-eslint/parser to use an explicit project list instead of
-		// projectService. The default service only discovers tsconfig.json, but the
-		// `eslint` script here lints both src and tests, and tests live under their own
-		// noEmit project (tsconfig.test.json) so they don't pollute the package's emit.
-		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
-		languageOptions: {
-			parserOptions: {
-				projectService: false,
-				project: ["./tsconfig.json", "./tsconfig.test.json"],
-			},
-		},
-	},
-	{
 		rules: {
 			"import-x/no-nodejs-modules": [
 				"error",
@@ -51,7 +38,7 @@ const config: Linter.Config[] = [
 		},
 	},
 	{
-		files: ["tests/**"],
+		files: ["src/test/**", "test/**"],
 		rules: {
 			"import-x/no-extraneous-dependencies": [
 				"error",

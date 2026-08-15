@@ -46,7 +46,7 @@ import { OdspPointInTimeDocumentService } from "./odspPointInTimeDocumentService
  * The loader detects this capability structurally, so hosts can pass this factory directly to
  * `loadContainerToSequenceNumber`.
  *
- * @legacy @alpha
+ * @legacy @beta
  */
 export interface IPointInTimeDocumentServiceFactory extends IDocumentServiceFactory {
 	/**
@@ -243,7 +243,7 @@ class OdspPointInTimeDocumentServiceFactory
  * @param hostPolicy - Optional host storage policy.
  * @returns An ODSP document service factory with point-in-time loading capability.
  *
- * @legacy @alpha
+ * @legacy @beta
  */
 export function getOdspPointInTimeDocumentServiceFactory(
 	getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>,

@@ -3,25 +3,35 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
 import type { Server } from "node:http";
 
-import { expect, test } from "@playwright/test";
 import cors from "cors";
 import express from "express";
 
-import { initializeCustomerService } from "../src/mock-customer-service/index.js";
-import { customerServicePort } from "../src/mock-customer-service-interface/index.js";
+import { initializeCustomerService } from "../mock-customer-service/index.js";
+import { customerServicePort } from "../mock-customer-service-interface/index.js";
 import {
 	type MockWebhook,
 	initializeExternalDataService,
-} from "../src/mock-external-data-service/index.js";
-import { externalDataServicePort } from "../src/mock-external-data-service-interface/index.js";
-import type { ITaskData } from "../src/model-interface/index.js";
+} from "../mock-external-data-service/index.js";
+import { externalDataServicePort } from "../mock-external-data-service-interface/index.js";
+import type { ITaskData } from "../model-interface/index.js";
 
 import { closeServer, delay } from "./utilities.js";
 
 const localServicePort = 5002;
 const externalTaskListId = "task-list-1";
+
+const assertWebhookChangeNotification = (notification: unknown): void => {
+	const actual = notification as {
+		signalContent?: { contents?: { content?: { externalTaskListId?: unknown } } };
+	};
+	assert.equal(
+		actual.signalContent?.contents?.content?.externalTaskListId,
+		externalTaskListId,
+	);
+};
 
 /**
  * Helper function for registering with the external service for notifications.
@@ -110,7 +120,7 @@ const initializeMockFluidService = (localServiceApp: express.Express): express.E
  * These tests spin up their own Express server instances so we can directly test against it
  * (using supertest), rather than leaning on network calls.
  */
-test.describe("mock-customer-service", () => {
+describe("mock-customer-service", () => {
 	/**
 	 * Express server instance backing our mock external data service.
 	 */
@@ -128,7 +138,7 @@ test.describe("mock-customer-service", () => {
 	 */
 	let webhookCollection: Map<string, MockWebhook<ITaskData>>;
 
-	test.beforeEach(async () => {
+	beforeEach(async () => {
 		webhookCollection = new Map<string, MockWebhook<ITaskData>>();
 		externalDataService = await initializeExternalDataService({
 			port: externalDataServicePort,
@@ -144,7 +154,7 @@ test.describe("mock-customer-service", () => {
 
 	/* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-	test.afterEach(async () => {
+	afterEach(async () => {
 		const _externalDataService = externalDataService!;
 		const _customerService = customerService!;
 
@@ -165,7 +175,7 @@ test.describe("mock-customer-service", () => {
 
 	// We have omitted `@types/supertest` due to cross-package build issue.
 	// So for these tests we have to live with `any`.
-	test("register-for-webhook: Complete data flow", async () => {
+	it("register-for-webhook: Complete data flow", async () => {
 		// Set up mock local service, which will be registered as webhook listener
 		const localServiceApp = initializeMockFluidService(express());
 		const tenantId = "tinylicious";
@@ -190,12 +200,12 @@ test.describe("mock-customer-service", () => {
 				tenantId,
 				documentId,
 			);
-			expect(registerSessionUrl.status).toBe(200);
+			assert.equal(registerSessionUrl.status, 200);
 
 			// 2. Register with the external service for notifications
 			const webhookRegistrationResponse =
 				await registerExternalServiceWebhook(externalTaskListId);
-			expect(webhookRegistrationResponse.status).toBe(200);
+			assert.equal(webhookRegistrationResponse.status, 200);
 
 			// 3. Update external data
 			const taskDataUpdate = {
@@ -205,29 +215,21 @@ test.describe("mock-customer-service", () => {
 				},
 			};
 			const dataUpdateResponse = await updateExternalData(taskDataUpdate, externalTaskListId);
-			expect(dataUpdateResponse.status).toBe(200);
+			assert.equal(dataUpdateResponse.status, 200);
 
 			// Delay for a bit to ensure time enough for our webhook listener to have been called.
 			await delay(1000);
 
 			// 4. Verify our listener was notified of data change.
-			expect(wasFluidNotifiedForChange).toBe(true);
-			expect(webhookChangeNotification).toMatchObject({
-				signalContent: {
-					contents: {
-						content: {
-							externalTaskListId,
-						},
-					},
-				},
-			});
+			assert.equal(wasFluidNotifiedForChange, true);
+			assertWebhookChangeNotification(webhookChangeNotification);
 		} finally {
 			await closeServer(localService);
 		}
 	});
 	/* eslint-enable @typescript-eslint/no-non-null-assertion */
 
-	test("register-session-url: Complete data flow", async () => {
+	it("register-session-url: Complete data flow", async () => {
 		// Set up mock local Fluid service, which will be registered as webhook listener
 		const localServiceApp = initializeMockFluidService(express());
 		const tenantId = "tinylicious";
@@ -250,7 +252,7 @@ test.describe("mock-customer-service", () => {
 				tenantId,
 				documentId,
 			);
-			expect(registerSessionUrl.status).toBe(200);
+			assert.equal(registerSessionUrl.status, 200);
 
 			// 2. Update external data within the external data service,
 			// which should relay the changes to the customer notification service.
@@ -269,23 +271,15 @@ test.describe("mock-customer-service", () => {
 			await delay(1000);
 
 			// Verify our listener was notified of data change.
-			expect(webhookChangeNotification).toMatchObject({
-				signalContent: {
-					contents: {
-						content: {
-							externalTaskListId,
-						},
-					},
-				},
-			});
+			assertWebhookChangeNotification(webhookChangeNotification);
 		} finally {
 			await closeServer(localService);
 		}
 	});
 
-	// Skipping to close off the broadcast-signal loop. Tested manually and it works well.
-	// Unclear why localServiceApp is failing to post right for this test.
-	test("events-listener: Complete data flow for session-end event", async () => {
+	it("events-listener: Complete data flow for session-end event", async function () {
+		// This test intentionally waits twice for webhook delivery and non-delivery.
+		this.timeout(5000);
 		// Set up mock local Fluid service, which will be registered as webhook listener
 		const localServiceApp = initializeMockFluidService(express());
 		const tenantId = "tinylicious";
@@ -308,7 +302,7 @@ test.describe("mock-customer-service", () => {
 				tenantId,
 				documentId,
 			);
-			expect(registerSessionUrl.status).toBe(200);
+			assert.equal(registerSessionUrl.status, 200);
 
 			// 2. Update external data within the external data service,
 			// which should relay the changes to the customer notification service.
@@ -319,21 +313,13 @@ test.describe("mock-customer-service", () => {
 				},
 			};
 			const dataUpdateResponse = await updateExternalData(taskDataUpdate, externalTaskListId);
-			expect(dataUpdateResponse.status).toBe(200);
+			assert.equal(dataUpdateResponse.status, 200);
 
 			// Delay for a bit to ensure time enough for our webhook listener to have been called.
 			await delay(1000);
 
 			// Verify our listener was notified of data change.
-			expect(webhookChangeNotification).toMatchObject({
-				signalContent: {
-					contents: {
-						content: {
-							externalTaskListId,
-						},
-					},
-				},
-			});
+			assertWebhookChangeNotification(webhookChangeNotification);
 			// Set the webhookChangeNotification variable back to undefined.
 			webhookChangeNotification = undefined;
 
@@ -354,7 +340,7 @@ test.describe("mock-customer-service", () => {
 					}),
 				},
 			);
-			expect(sessionEndEventResponse.status).toBe(200);
+			assert.equal(sessionEndEventResponse.status, 200);
 
 			// 4. Update external data within the external data service,
 			// which should relay the changes to the customer notification service.
@@ -368,12 +354,12 @@ test.describe("mock-customer-service", () => {
 				taskDataUpdate2,
 				externalTaskListId,
 			);
-			expect(dataUpdateResponse2.status).toBe(200);
+			assert.equal(dataUpdateResponse2.status, 200);
 
 			// Delay for a bit to ensure time enough for our webhook listener to have been called.
 			await delay(1000);
 			// Verify that we did not recieve a new change notification
-			expect(webhookChangeNotification).toBeUndefined();
+			assert.equal(webhookChangeNotification, undefined);
 		} finally {
 			await closeServer(localService);
 		}

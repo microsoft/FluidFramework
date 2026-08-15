@@ -348,15 +348,22 @@ jobs:
         with:
           script: |
             const { owner, repo } = context.repo;
-            const sha = context.payload.check_run.head_sha;
+            const completedBaselineSha = context.payload.check_run.head_sha;
 
-            // Selects PRs waiting on this baseline: those whose current test-merge commit has the
-            // commit this baseline build ran on as its first parent, matching how the comparison
-            // derives its base. Candidates only — flub re-derives each PR's true base, so a false
-            // positive costs one redundant (idempotent) comparison.
+            // SHA terminology:
+            // - `completedBaselineSha`: target-branch commit whose baseline build just completed.
+            // - ADO `triggerInfo["pr.sourceSha"]`: PR HEAD commit that triggered the PR build.
+            // - ADO `sourceVersion`: ephemeral test-merge commit consumed by flub.
             //
-            // One paginated GraphQL query returns every open PR with the fields we need, versus two
-            // REST calls per PR (~250 for this repo) — that matters against the hourly rate limit.
+            // ADO is authoritative for which baseline a PR is waiting on: the test-merge commit's
+            // first parent is the target-branch commit used by the PR build. GitHub's
+            // `potentialMergeCommit` cannot be used here because GitHub recomputes it whenever the
+            // target branch advances, even though the existing ADO PR build remains based on the
+            // older target-branch commit.
+            //
+            // One paginated GraphQL query returns every open PR's head SHA, versus two REST calls
+            // per PR (~250 for this repo). We later resolve all retained ADO merge commits through
+            // one GraphQL query, avoiding another REST call per PR.
             const query = `
               query($owner: String!, $repo: String!, $cursor: String) {
                 repository(owner: $owner, name: $repo) {
@@ -365,39 +372,145 @@ jobs:
                     nodes {
                       number
                       headRefOid
-                      baseRefName
-                      potentialMergeCommit { parents(first: 1) { nodes { oid } } }
                     }
                   }
                 }
               }`;
 
-            const affected = [];
+            // Collect the complete open-PR set. `github.paginate.graphql` is unavailable in
+            // actions/github-script, so advance the GraphQL cursor manually.
+            const openPrs = [];
             let cursor = undefined;
-            let scanned = 0;
             do {
               const { repository } = await github.graphql(query, { owner, repo, cursor });
               const page = repository.pullRequests;
-              for (const pr of page.nodes) {
-                scanned++;
-                // A PR is missed here if `potentialMergeCommit` is null (GitHub hasn't computed
-                // mergeability, or the PR conflicts) or if it has since been recomputed against a
-                // newer target tip than the one its ADO build used. Either way the miss is
-                // self-correcting: the baseline build for that newer tip completes shortly after and
-                // matches the PR, and flub then re-derives its true (already built) base.
-                const mergeParent = pr.potentialMergeCommit?.parents?.nodes?.[0]?.oid;
-                if (mergeParent === sha) {
-                  core.info(`  matched #${pr.number} head=${pr.headRefOid} base=${pr.baseRefName}`);
-                  affected.push({
-                    number: pr.number,
-                    head: pr.headRefOid,
-                  });
-                }
-              }
+              openPrs.push(...page.nodes);
               cursor = page.pageInfo.hasNextPage ? page.pageInfo.endCursor : undefined;
             } while (cursor);
 
-            core.info(`Scanned ${scanned} open PRs; affected PRs (${affected.length})`);
+            if (openPrs.length === 0) {
+              core.info("Scanned 0 open PRs; affected PRs (0)");
+              core.setOutput("prs", "[]");
+              return;
+            }
+
+            // ADO has no query-by-PR-head-SHA API. Fetch the same bounded recent PR-build window
+            // flub searches, then match each PR HEAD against `triggerInfo["pr.sourceSha"]`.
+            // `sourceVersion` is the separate ephemeral `refs/pull/<n>/merge` commit SHA.
+            const prBuildsUrl = new URL("https://dev.azure.com/fluidframework/public/_apis/build/builds");
+            prBuildsUrl.searchParams.set("definitions", "11");
+            prBuildsUrl.searchParams.set("maxBuildsPerDefinition", "500");
+            prBuildsUrl.searchParams.set("queryOrder", "queueTimeDescending");
+            prBuildsUrl.searchParams.set("api-version", "7.1");
+
+            // Public ADO project reads are anonymous. Treat malformed or failed PR-build responses
+            // as job failures rather than silently reporting that no PRs are waiting.
+            const prBuildsResponse = await fetch(prBuildsUrl);
+            if (!prBuildsResponse.ok) {
+              throw new Error(
+                `ADO PR build lookup failed (${prBuildsResponse.status} ${prBuildsResponse.statusText})`,
+              );
+            }
+            const { value: adoPrBuilds } = await prBuildsResponse.json();
+            if (!Array.isArray(adoPrBuilds)) {
+              throw new Error("ADO PR build lookup returned no build list");
+            }
+
+            // The response is newest-first. Match flub's selection by retaining the first
+            // completed, successful PR build with an id for each PR HEAD.
+            const retainedPrBuildByHeadSha = new Map();
+            for (const prBuild of adoPrBuilds) {
+              const prHeadSha = prBuild.triggerInfo?.["pr.sourceSha"];
+              if (
+                prHeadSha &&
+                !retainedPrBuildByHeadSha.has(prHeadSha) &&
+                prBuild.id !== undefined &&
+                prBuild.status === "completed" &&
+                prBuild.result === "succeeded"
+              ) {
+                retainedPrBuildByHeadSha.set(prHeadSha, prBuild);
+              }
+            }
+
+            // Join open PRs to the retained PR build flub would use. Match both the HEAD SHA and
+            // ADO's PR number: multiple open PRs can share a HEAD SHA, but flub will select only
+            // this same newest successful PR build for that SHA. PRs with no exact retained match
+            // cannot be waiting on the baseline build that just completed.
+            const prBuildCandidates = [];
+            for (const pr of openPrs) {
+              const prBuild = retainedPrBuildByHeadSha.get(pr.headRefOid);
+              const prNumberFromBuild = prBuild?.triggerInfo?.["pr.number"];
+              const mergeCommitSha = prBuild?.sourceVersion;
+              if (prNumberFromBuild === String(pr.number) && mergeCommitSha) {
+                prBuildCandidates.push({ pr, prBuild, mergeCommitSha });
+              }
+            }
+
+            // Resolve all test-merge parents in one query. Each `mergeCommitSha` came from ADO's
+            // `sourceVersion`, so it is safe to pass as a GraphQL variable; only generated aliases
+            // appear in the query text.
+            const mergeCommitShas = [
+              ...new Set(prBuildCandidates.map(({ mergeCommitSha }) => mergeCommitSha)),
+            ];
+            const baselineByMergeCommit = new Map();
+            if (mergeCommitShas.length > 0) {
+              const declarations = [];
+              const fields = [];
+              const variables = { owner, repo };
+              for (const [index, mergeCommitSha] of mergeCommitShas.entries()) {
+                const alias = `commit${index}`;
+                declarations.push(`$${alias}: String!`);
+                fields.push(`
+                  ${alias}: object(expression: $${alias}) {
+                    ... on Commit {
+                      parents(first: 2) { nodes { oid } }
+                    }
+                  }`);
+                variables[alias] = mergeCommitSha;
+              }
+
+              // Each generated field resolves one ADO test-merge commit. A missing object is
+              // returned as null and handled below as an unavailable merge commit.
+              const commitQuery = `
+                query($owner: String!, $repo: String!, ${declarations.join(", ")}) {
+                  repository(owner: $owner, name: $repo) {
+                    ${fields.join("\n")}
+                  }
+                }`;
+              const { repository } = await github.graphql(commitQuery, variables);
+              for (const [index, mergeCommitSha] of mergeCommitShas.entries()) {
+                const parents = repository[`commit${index}`]?.parents?.nodes;
+                if (parents?.length >= 2) {
+                  baselineByMergeCommit.set(mergeCommitSha, parents[0].oid);
+                }
+              }
+            }
+
+            // Emit only PRs whose retained PR build actually merged into the completed baseline.
+            const affected = [];
+            for (const { pr, prBuild, mergeCommitSha } of prBuildCandidates) {
+              const prBuildBaseline = baselineByMergeCommit.get(mergeCommitSha);
+              if (prBuildBaseline !== completedBaselineSha) {
+                core.info(
+                  prBuildBaseline
+                    ? `  excluded #${pr.number}: ADO PR build ${prBuild.id} used baseline ${prBuildBaseline}`
+                    : `  excluded #${pr.number}: ADO test-merge commit ${mergeCommitSha} is unavailable or invalid`,
+                );
+                continue;
+              }
+
+              core.info(
+                `  matched #${pr.number}: ADO PR build ${prBuild.id} used baseline ${completedBaselineSha}`,
+              );
+              affected.push({
+                number: pr.number,
+                head: pr.headRefOid,
+              });
+            }
+
+            core.info(
+              `Scanned ${openPrs.length} open PRs with ${prBuildCandidates.length} retained PR builds; affected PRs (${affected.length})`,
+            );
             core.setOutput("prs", JSON.stringify(affected));
 
   compare:

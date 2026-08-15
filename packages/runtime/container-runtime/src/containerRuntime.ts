@@ -2400,11 +2400,11 @@ export class ContainerRuntime
 	// #region `IFluidParentContext` APIs that should not be called on Root
 
 	public makeLocallyVisible(): void {
-		assert(false, 0x8eb /* should not be called */);
+		fail(0x8eb /* should not be called */);
 	}
 
 	public setChannelDirty(address: string): void {
-		assert(false, 0x909 /* should not be called */);
+		fail(0x909 /* should not be called */);
 	}
 
 	// #endregion
@@ -3690,7 +3690,7 @@ export class ContainerRuntime
 			case ContainerMessageType.ChunkedOp: {
 				// From observability POV, we should not expose the rest of the system (including "op" events on object) to these messages.
 				// Also resetReconnectCount() would be wrong - see comment that was there before this change was made.
-				assert(false, 0x93d /* should not even get here */);
+				fail(0x93d /* should not even get here */);
 			}
 			case ContainerMessageType.Rejoin: {
 				break;
@@ -4504,7 +4504,7 @@ export class ContainerRuntime
 				return this.channelCollection.getDataStorePackagePath(nodePath);
 			}
 			default: {
-				assert(false, 0x2de /* "Package path requested for unsupported node type." */);
+				fail(0x2de /* "Package path requested for unsupported node type." */);
 			}
 		}
 	}

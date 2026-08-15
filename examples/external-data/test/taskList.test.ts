@@ -13,7 +13,7 @@ test.describe("taskList", () => {
 		);
 	});
 
-	test.skip("loads and there's an input", async ({ page }) => {
+	test("loads and there's an input", async ({ page }) => {
 		// Validate the input shows up
 		await page.waitForSelector("input");
 	});
