@@ -1766,11 +1766,7 @@ export class TreeCheckout implements ITreeCheckout {
 			// This is useful for catching bugs in the enrichment logic and in the rebasing logic that may have been involved in producing the changes.
 			// Note that we cannot guarantee that the enriched change will be applied successfully even in the absence of concurrent changes,
 			// because the checkout state we are applying this enriched change to was derived from the state of the checkout, which may be different from that of a peer.
-			try {
-				enricher.purgeChangeQueue();
-			} catch (error) {
-				throw new Error(`Error during enrichment validation: ${error}`);
-			}
+			enricher.purgeChangeQueue();
 		}
 		enricher[disposeSymbol]();
 		return enrichedChanges;
