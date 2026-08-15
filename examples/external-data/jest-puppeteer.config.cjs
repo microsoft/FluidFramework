@@ -5,7 +5,7 @@
 
 module.exports = {
 	server: {
-		command: `npm run start:client:test -- --port ${process.env["PORT"]}`,
+		command: `start-server-and-test start:services "5236|5237" "npm run start:client:test -- --port ${process.env["PORT"]}"`,
 		port: process.env["PORT"],
 		launchTimeout: 10000,
 		usedPortAction: "error",
