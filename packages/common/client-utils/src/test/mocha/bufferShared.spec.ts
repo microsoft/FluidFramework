@@ -21,7 +21,70 @@ function assertBufferContents(buffer: ArrayBufferLike, expected: readonly number
 	assert.deepEqual([...new Uint8Array(buffer)], expected);
 }
 
+function dataViewFromArrayBufferLike(value: ArrayBufferLike): DataView {
+	return new DataView(value);
+}
+
+function uint16ArrayFromArrayBufferLike(value: ArrayBufferLike): Uint16Array {
+	return new Uint16Array(value);
+}
+
+function bufferFromArrayBufferLike(value: ArrayBufferLike): Buffer {
+	return Buffer.from(value);
+}
+
 describe("bufferShared", () => {
+	// These tests can be removed when updating TypeScript and type checks begin to fail as expected.
+	describe("TS5.4 unsound typecheck: Uint8Array passed as ArrayBufferLike", () => {
+		for (const [name, view] of [
+			["full view", new Uint8Array([0, 1, 2, 3, 4, 5])],
+			["partial view", new Uint8Array(new Uint8Array([0, 1, 2, 3, 4, 5]).buffer, 2, 2)],
+		] as const) {
+			it(`new DataView rejects a ${name}`, () => {
+				// Self-check - DataView accepts ArrayBufferLike without throwing
+				dataViewFromArrayBufferLike(view.buffer);
+
+				// Act and Verify
+				assert.throws(
+					() => dataViewFromArrayBufferLike(view /* as unknown as ArrayBufferLike */),
+					TypeError,
+				);
+			});
+
+			it(`new Uint16Array interprets a ${name} as elements instead of bytes`, () => {
+				// "Expected" is an actual buffer - here it is the full buffer whether
+				// the view is partial or full.
+				const expected = uint16ArrayFromArrayBufferLike(view.buffer);
+
+				// Act
+				const result = uint16ArrayFromArrayBufferLike(
+					view /* as unknown as ArrayBufferLike */,
+				);
+
+				// Verify
+				assert.notEqual(result.length, expected.length);
+
+				// Self-test - the result looks like view
+				assert.deepEqual([...result], [...view]);
+			});
+		}
+
+		it(`Buffer.from copies instead of sharing its storage`, () => {
+			const view = new Uint8Array([0, 1, 2, 3, 4, 5]);
+			const expected = bufferFromArrayBufferLike(view.buffer);
+
+			// Act
+			const result = bufferFromArrayBufferLike(view /* as unknown as ArrayBufferLike */);
+
+			view[0] = 10;
+			// Self-test - the expected buffer is backed by the same storage as view (value at 0 changed)
+			assert.equal(expected[0], 10);
+
+			// Verify
+			assert.notEqual(result[0], 10);
+		});
+	});
+
 	describe("ArrayBufferLikeToArrayBuffer", () => {
 		it("returns an ArrayBuffer without copying it", () => {
 			const source = new ArrayBuffer(values.length);
