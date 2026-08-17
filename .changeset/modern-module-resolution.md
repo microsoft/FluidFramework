@@ -75,6 +75,6 @@ Applications upgrading to Fluid Framework 3.0 must use one of the following supp
 - `"module": "NodeNext"` with `"moduleResolution": "NodeNext"`
 - `"module": "ESNext"` with `"moduleResolution": "Bundler"`
 
-The package entrypoints exposed through `package.json` exports, including `/alpha`, `/beta`, `/legacy`, and `/internal`, remain available under supported module resolution modes.
+Existing public package entrypoints exposed through `package.json` exports, including `/alpha`, `/beta`, and `/legacy`, remain available under supported module resolution modes.
 
 See [Removal of Node10 resolutions in v3.0](https://github.com/microsoft/FluidFramework/issues/27457) for more information.
