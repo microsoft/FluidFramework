@@ -11,6 +11,7 @@ import type {
 	SessionSpaceCompressedId,
 } from "@fluidframework/id-compressor";
 import { isFinalId, isStableId } from "@fluidframework/id-compressor/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { v5 as uuidV5 } from "uuid";
 
 /**
@@ -166,6 +167,12 @@ export interface IdentifierHealingConfig {
 	 * same session offsets.
 	 */
 	readonly sharedObjectId: string;
+
+	/**
+	 * Optional logger used by {@link forceDecodeEncodedIdWithoutSession} to record telemetry
+	 * when the heal-on-decode recovery path is taken (a non-final identifier is healed).
+	 */
+	readonly logger?: TelemetryLoggerExt;
 }
 
 /**
@@ -177,6 +184,16 @@ export interface IdentifierHealingConfig {
  * deterministic v5 UUID string — *not* a `StableId`, since that brand requires
  * v4, but still a valid identifier value; the `string` arm of the return type
  * covers this case.
+ *
+ * The recovery (heal) path only occurs because of a prior bug where non-finalized identifiers were
+ * written into summaries. When {@link IdentifierHealingConfig.logger} is supplied, a telemetry event
+ * is recorded on that path so heals can be observed in the wild. The error/throw path is intentionally
+ * not instrumented here: the thrown exception is expected to surface via the application's own error
+ * telemetry, and should never be silently swallowed.
+ *
+ * @param id - The op-space compressed ID to decode.
+ * @param idCompressor - The ID compressor used to normalize the ID.
+ * @param healing - Heal-on-decode configuration. Presence enables healing of non-final IDs.
  */
 export function forceDecodeEncodedIdWithoutSession(
 	id: OpSpaceCompressedId,
@@ -189,7 +206,13 @@ export function forceDecodeEncodedIdWithoutSession(
 	}
 	// `id` is a non-final op-space compressed id.
 	if (healing !== undefined) {
-		return uuidV5(`${healing.sharedObjectId}|${id}`, healingNamespace);
+		const healed = uuidV5(`${healing.sharedObjectId}|${id}`, healingNamespace);
+		// This telemetry should be very low-volume (and possibly never happen at all),
+		// as should only occur when loading documents that were corrupted by a now fixed bug and have not been re-summarized since healing was added.
+		// It is useful for monitoring and diagnosing for this to be reported in the same cases in which the error case would be reported,
+		// which is the essential level.
+		healing.logger?.sendTelemetryEvent({ eventName: "HealUnresolvableIdentifierOnDecode" });
+		return healed;
 	}
 	throw new Error(
 		"Summary could not be loaded due to an incorrectly encoded identifier. See SharedTreeOptionsBeta.healUnresolvableIdentifiersOnDecode for mitigation.",
@@ -261,9 +284,13 @@ export interface IdDecoderOptionsWithOriginator {
  */
 export class IdDecodingContext {
 	/**
-	 * Used internally to prevent the use of this decoder in incremental chunks if it has a session id (which would be wrong in those chunks).
+	 * Whether this context resolves identifiers using an originator session ID.
+	 * @remarks
+	 * Consulted by {@link FieldBatchDecodingContext} to prevent using an originator-based
+	 * decoder in incremental chunks (which may come from other sessions, making such a
+	 * decoder wrong there).
 	 */
-	protected readonly hasOriginatorSessionId: boolean;
+	public readonly hasOriginatorSessionId: boolean;
 
 	/**
 	 * Compressor which can decompress session-space identifiers from {@link resolveEncodedId} as needed.

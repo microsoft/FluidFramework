@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/odsp-driver",
-	"version": "2.114.0",
+	"version": "2.116.0",
 	"description": "Socket storage implementation for SPO and ODC",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -33,6 +33,16 @@
 				"default": "./dist/index.js"
 			}
 		},
+		"./legacy/alpha": {
+			"import": {
+				"types": "./lib/legacyAlpha.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/legacyAlpha.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
 		"./internal": {
 			"import": {
 				"types": "./lib/index.d.ts",
@@ -47,9 +57,6 @@
 	"main": "lib/index.js",
 	"types": "lib/public.d.ts",
 	"scripts": {
-		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "flub generate entrypoints --resolutionConditions require --outFileLegacyBeta legacy --outDir ./dist",
-		"api-extractor:esnext": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib --node10TypeCompat",
 		"build": "fluid-build . --task build",
 		"build:api-reports": "concurrently \"npm:build:api-reports:*\"",
 		"build:api-reports:current": "api-extractor run --local --config api-extractor/api-extractor.current.json",
@@ -57,6 +64,9 @@
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
+		"build:entrypoints": "fluid-build . --task build:entrypoints",
+		"build:entrypoints:cjs": "flub generate entrypoints --resolutionConditions require --outFileLegacyBeta legacy --outFileLegacyAlpha legacyAlpha --outDir ./dist",
+		"build:entrypoints:esm": "flub generate entrypoints --outFileLegacyBeta legacy --outFileLegacyAlpha legacyAlpha --outDir ./lib --node10TypeCompat",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:genver": "gen-version",
 		"build:test": "concurrently npm:build:test:esm npm:build:test:cjs",
@@ -67,15 +77,17 @@
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
 		"check:exports:cjs:legacy": "api-extractor run --config api-extractor/api-extractor-lint-legacy.cjs.json",
+		"check:exports:cjs:legacyAlpha": "api-extractor run --config api-extractor/api-extractor-lint-legacyAlpha.cjs.json",
 		"check:exports:cjs:public": "api-extractor run --config api-extractor/api-extractor-lint-public.cjs.json",
 		"check:exports:esm:legacy": "api-extractor run --config api-extractor/api-extractor-lint-legacy.esm.json",
+		"check:exports:esm:legacyAlpha": "api-extractor run --config api-extractor/api-extractor-lint-legacyAlpha.esm.json",
 		"check:exports:esm:public": "api-extractor run --config api-extractor/api-extractor-lint-public.esm.json",
 		"check:format": "npm run check:biome",
 		"ci:build:api-reports": "concurrently \"npm:ci:build:api-reports:*\"",
 		"ci:build:api-reports:current": "api-extractor run --config api-extractor/api-extractor.current.json",
 		"ci:build:api-reports:legacy": "api-extractor run --config api-extractor/api-extractor.legacy.json",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf --glob dist lib {alpha,beta,internal,legacy}.d.ts \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
+		"clean": "rimraf --glob dist lib {alpha,beta,internal,legacy}.d.ts legacyAlpha.d.ts \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --quiet --format stylish src",
 		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
@@ -127,14 +139,14 @@
 		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.18.2",
+		"@arethetypeswrong/cli": "^0.18.5",
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
-		"@fluidframework/odsp-driver-previous": "npm:@fluidframework/odsp-driver@2.111.0",
+		"@fluidframework/odsp-driver-previous": "npm:@fluidframework/odsp-driver@2.114.0",
 		"@microsoft/api-extractor": "7.58.1",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "catalog:types",

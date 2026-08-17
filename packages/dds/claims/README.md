@@ -19,13 +19,13 @@ Both modes are optimistic: when attached, a local op is submitted and a `"Pendin
 const result = claims.trySetClaim("singleton-component", componentHandle);
 
 if (result.status === "AlreadyClaimed") {
-	// Another client already claimed it; use result.currentValue.
+	// Another client already claimed it; use claims.get(key) to read the winning value.
 } else if (result.status === "Pending") {
 	const confirmation = await result.promise;
 	if (confirmation.status === "Accepted") {
 		// This client successfully claimed the key.
 	} else if (confirmation.status === "AlreadyClaimed") {
-		// Lost the race; use confirmation.currentValue.
+		// Lost the race; use claims.get(key) to read the winning value.
 	}
 }
 ```
@@ -61,12 +61,12 @@ claims.events.on("claimed", (key: string) => {
 
 | Method                                                                        | Description                                                    |
 | ----------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| `trySetClaim(key: string, value: T): ClaimResult<T>`                          | Write-once claim. Fails if key already exists.                 |
-| `compareAndSetClaim(key: string, value: T): ClaimResult<T>` | CAS update. Uses per-key sequence numbers on the wire for conflict resolution. |
+| `trySetClaim(key: string, value: T): ClaimResult`                          | Write-once claim. Fails if key already exists.                 |
+| `compareAndSetClaim(key: string, value: T): ClaimResult` | CAS update. Uses per-key sequence numbers on the wire for conflict resolution. |
 | `get(key: string): T \| undefined`                                       | Get the current committed value for a key.                     |
 | `has(key: string): boolean`                                                   | Check whether a key has been claimed (distinguishes unset from `undefined` values). |
 
 ### Result types
 
--   **`ClaimResult<T>`**: `{ status: "Accepted", currentValue: T }` | `{ status: "AlreadyClaimed", currentValue: T }` | `{ status: "Pending", promise: Promise<ClaimConfirmation<T>> }`
--   **`ClaimConfirmation<T>`**: `{ status: "Accepted", currentValue: T }` | `{ status: "AlreadyClaimed", currentValue: T }` | `{ status: "Aborted" }`
+-   **`ClaimResult`**: `{ status: "Accepted" }` | `{ status: "AlreadyClaimed" }` | `{ status: "Pending", promise: Promise<ClaimConfirmation> }`
+-   **`ClaimConfirmation`**: `{ status: "Accepted" }` | `{ status: "AlreadyClaimed" }` | `{ status: "Aborted" }`

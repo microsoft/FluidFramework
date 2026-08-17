@@ -4,7 +4,7 @@
  */
 
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/internal";
 import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 
 import {
@@ -143,7 +143,7 @@ export function makeMessageCodecBuilder<TChangeset>(): VersionDispatchingCodecBu
 }
 
 export function getCodecTreeForMessageFormatWithChange(
-	clientVersion: MinimumVersionForCollab,
+	clientVersion: OldestSupportedClientVersion,
 	changeFormat: CodecTree,
 ): CodecTree {
 	const builder = makeMessageCodecBuilder();

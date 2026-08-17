@@ -237,6 +237,7 @@ Note: Some of the tests depend on test collateral that lives in a submodule here
 <https://github.com/microsoft/FluidFrameworkTestData>. You may choose to fetch that collateral into your local
 repository, which is required to run all the tests - otherwise some will be skipped.
 
+We use [Git LFS](https://git-lfs.com/) both for this test collateral and for documentation image assets under [docs](./docs), so installing it is recommended for all contributors.
 First, ensure you have installed [Git LFS](https://git-lfs.com/).
 Then, from the repo root:
 
@@ -380,7 +381,7 @@ There are many ways to [contribute](https://github.com/microsoft/FluidFramework/
 -   Review the [source code changes](https://github.com/microsoft/FluidFramework/pulls).
 -   [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
 
-Detailed instructions for working in the repo can be found in the [Wiki](https://github.com/microsoft/FluidFramework/wiki).
+Detailed instructions for working in the repo can be found in the [Wiki](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Home.md).
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
 For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.

@@ -1,7 +1,7 @@
 ---
 name: ff-oce-dashboard
 description: "Generate the OCE shift status dashboard. Triggers on: 'generate shift dashboard', 'show dashboard', 'shift status', 'status dashboard', 'what's going on', or any request for a NON-SPECIFIC overview of current OCE status (incidents, pipelines, errors)."
-version: 1.0.0
+version: 1.1.2
 ---
 
 # OCE Shift Status Dashboard
@@ -45,14 +45,31 @@ Call `ado-office-pipelines_get_builds` with `project: "OC"`, `definitions: [2916
 Do **not** load the ff-oce-kusto skill. Call `kusto-kusto_query` with `cluster_uri: "https://kusto.aria.microsoft.com"`, `database: "6a8929bcfc6d44e9b13fee392ada9cf0"`, and this query:
 
 ```kql
-Office_Fluid_FluidRuntime_Error
-| where Event_Time > ago(1h)
-| summarize ErrorCount = count() by AppName = tostring(App_Name)
-| order by ErrorCount desc
-| take 15
+let startTime = ago(1h);
+let activeSessions =
+    union Office_Fluid_FluidRuntime_Error,
+          Office_Fluid_FluidRuntime_Performance,
+          Office_Fluid_FluidRuntime_Generic
+    | where Event_Time > startTime
+    | where isnotempty(Session_Id) and isnotempty(App_Name)
+    | summarize ActiveSessions=dcount(Session_Id) by AppName=App_Name;
+let errors =
+    Office_Fluid_FluidRuntime_Error
+    | where Event_Time > startTime
+    | where isnotempty(Session_Id) and isnotempty(App_Name)
+    | summarize ErrorSessions=dcount(Session_Id)
+        by AppName=App_Name;
+activeSessions
+| join kind=leftouter errors on AppName
+| extend ErrorSessions=coalesce(ErrorSessions, 0)
+| extend SessionErrorRate=round(100.0 * ErrorSessions / ActiveSessions, 3)
+| project AppName, SessionErrorRate, ActiveSessions, ErrorSessions
+| order by SessionErrorRate desc
 ```
 
-If it fails, retry with a simple `summarize ErrorCount = count()` fallback (no `by` clause). Report as a table: Partner, Error Count.
+If it fails, retry with a simple `Office_Fluid_FluidRuntime_Error | where Event_Time > ago(1h) | summarize ErrorCount = count()` fallback.
+
+Report the first 10 partner rows ordered by Session Error Rate, with columns in this exact order: Partner, Session Error Rate, Active Sessions, Error Sessions, Notes. Combine every omitted row into one final row labeled **Remaining partners (N)**, where `N` is the number of omitted partners. For that row, sum Active Sessions and Error Sessions across the omitted rows, then calculate Session Error Rate from those summed values; do not average the individual rates. Flag displayed partners with fewer than 1,000 active sessions as low-volume because their rates may be volatile.
 
 #### Agent 5 — Teams Pipeline Alerts
 
@@ -86,9 +103,9 @@ Generated: <timestamp>
 | Build ID | Branch | Result | Finished | Build Number | Notes |
 | --- | --- | --- | --- | --- | --- |
 
-### 📊 Error Rates (last 1h)
-| Partner | Error Count | Notes |
-| --- | --- | --- |
+### 📊 Session-Normalized Error Health (last 1h)
+| Partner | Session Error Rate | Active Sessions | Error Sessions | Notes |
+| --- | --- | --- | --- | --- |
 
 ### 🔔 Integration Pipeline Alerts (FF Client OCE channel, last 2 weeks)
 | Date | Description | Status | Action Needed |

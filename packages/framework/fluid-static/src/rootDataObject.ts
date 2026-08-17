@@ -27,7 +27,7 @@ import type { IChannelFactory } from "@fluidframework/datastore-definitions/inte
 import type { IDirectory } from "@fluidframework/map/internal";
 import type {
 	IFluidDataStoreRegistry,
-	MinimumVersionForCollab,
+	OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
@@ -195,9 +195,9 @@ export function createDOProviderContainerRuntimeFactory(props: {
 	schema: ContainerSchema;
 	/**
 	 * Minimum Fluid Framework version required for collaboration as a
-	 * {@link @fluidframework/runtime-definitions#MinimumVersionForCollab} SemVer string.
+	 * {@link @fluidframework/runtime-definitions#OldestSupportedClientVersion} SemVer string.
 	 */
-	minVersionForCollaboration: MinimumVersionForCollab;
+	minVersionForCollaboration: OldestSupportedClientVersion;
 	/**
 	 * Optional registry of data stores to pass to the DataObject factory.
 	 * If not provided, one will be created based on the schema.
@@ -259,7 +259,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 			{ InitialState: RootDataObjectProps }
 		>,
 		config: {
-			minVersionForCollab: MinimumVersionForCollab;
+			minVersionForCollab: OldestSupportedClientVersion;
 			runtimeOptions?: Partial<IContainerRuntimeOptions>;
 		},
 	) {

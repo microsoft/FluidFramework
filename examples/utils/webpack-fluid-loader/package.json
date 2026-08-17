@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/webpack-fluid-loader",
-	"version": "2.114.0",
+	"version": "2.116.0",
 	"private": true,
 	"description": "Fluid object loader for webpack-dev-server",
 	"homepage": "https://fluidframework.com",
@@ -108,7 +108,7 @@
 		"webpack-dev-server": "~5.2.6"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.18.2",
+		"@arethetypeswrong/cli": "^0.18.5",
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "catalog:buildTools",
@@ -143,7 +143,7 @@
 				"webpack"
 			],
 			"webpack": [
-				"^api-extractor:esnext",
+				"^build:entrypoints:esm",
 				"^build:esnext"
 			]
 		}

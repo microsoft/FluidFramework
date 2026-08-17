@@ -7,6 +7,7 @@ import type {
 	ChangeFamily,
 	ChangeFamilyEditor,
 	ChangeRebaser,
+	ProcessChangeFn,
 	RevisionMetadataSource,
 	RevisionReplacer,
 	RevisionTag,
@@ -27,11 +28,15 @@ import type {
  * @param onError - A callback invoked for each error thrown.
  * @returns a mitigated change family.
  */
-export function makeMitigatedChangeFamily<TEditor extends ChangeFamilyEditor, TChange>(
-	unmitigatedChangeFamily: ChangeFamily<TEditor, TChange>,
+export function makeMitigatedChangeFamily<
+	TEditor extends ChangeFamilyEditor,
+	TChange,
+	TChangeProcessingContext,
+>(
+	unmitigatedChangeFamily: ChangeFamily<TEditor, TChange, TChangeProcessingContext>,
 	fallbackChange: TChange,
 	onError: (error: unknown) => void,
-): ChangeFamily<TEditor, TChange> {
+): ChangeFamily<TEditor, TChange, TChangeProcessingContext> {
 	return {
 		buildEditor: (
 			mintRevisionTag: () => RevisionTag,
@@ -41,6 +46,19 @@ export function makeMitigatedChangeFamily<TEditor extends ChangeFamilyEditor, TC
 		},
 		rebaser: makeMitigatedRebaser(unmitigatedChangeFamily.rebaser, fallbackChange, onError),
 		codecs: unmitigatedChangeFamily.codecs,
+		buildProcessor: (
+			processFn: ProcessChangeFn<TChange, TChangeProcessingContext>,
+		): ((change: TChange) => TChange) => {
+			const unmitigatedProcessor = unmitigatedChangeFamily.buildProcessor(processFn);
+			return (change: TChange): TChange => {
+				try {
+					return unmitigatedProcessor(change);
+				} catch (error: unknown) {
+					onError(error);
+					return fallbackChange;
+				}
+			};
+		},
 	};
 }
 

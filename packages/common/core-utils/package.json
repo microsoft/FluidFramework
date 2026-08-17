@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/core-utils",
-	"version": "2.114.0",
+	"version": "2.116.0",
 	"description": "Not intended for use outside the Fluid client repo.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -67,9 +67,6 @@
 	"main": "lib/index.js",
 	"types": "lib/public.d.ts",
 	"scripts": {
-		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "flub generate entrypoints --resolutionConditions require --outFileLegacyBeta legacy --outDir ./dist",
-		"api-extractor:esnext": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib --node10TypeCompat",
 		"bench": "cross-env FLUID_TEST_PERF_MODE=1 mocha --parentProcess",
 		"bench:profile": "cross-env FLUID_TEST_PERF_MODE=1 mocha --v8-prof --v8-logfile=profile.log --v8-no-logfile-per-isolate --fgrep @ExecutionTime && node --prof-process profile.log > profile.txt && rimraf profile.log && echo See results in profile.txt",
 		"build": "fluid-build . --task build",
@@ -79,6 +76,9 @@
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
+		"build:entrypoints": "fluid-build . --task build:entrypoints",
+		"build:entrypoints:cjs": "flub generate entrypoints --resolutionConditions require --outFileLegacyBeta legacy --outDir ./dist",
+		"build:entrypoints:esm": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib --node10TypeCompat",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:test": "concurrently npm:build:test:esm npm:build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
@@ -137,14 +137,14 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.18.2",
+		"@arethetypeswrong/cli": "^0.18.5",
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/benchmark": "^0.59.0",
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
-		"@fluidframework/core-utils-previous": "npm:@fluidframework/core-utils@2.111.0",
+		"@fluidframework/core-utils-previous": "npm:@fluidframework/core-utils@2.114.0",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@microsoft/api-extractor": "7.58.1",
 		"@types/mocha": "^10.0.10",

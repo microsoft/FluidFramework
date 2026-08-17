@@ -10,12 +10,12 @@ import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
 	IExperimentalIncrementalSummaryContext,
 	ITelemetryContext,
-	MinimumVersionForCollab,
+	OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
 import type { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
 import type { IJsonCodec } from "../codec/index.js";
-import type { ChangeFamily, ChangeFamilyEditor, SchemaAndPolicy } from "../core/index.js";
+import type { ChangeFamilyEditor, SchemaAndPolicy } from "../core/index.js";
 import type { IdentifierHealingConfig, JsonCompatibleReadOnly } from "../util/index.js";
 
 import type { EditManager, SummaryData } from "./editManager.js";
@@ -59,7 +59,7 @@ const supportedVersions = new Set<EditManagerSummaryFormatVersion>([
  * Returns the summary version to use as per the given minimum version for collab.
  */
 function minVersionToEditManagerSummaryFormatVersion(
-	version: MinimumVersionForCollab,
+	version: OldestSupportedClientVersion,
 ): EditManagerSummaryFormatVersion {
 	// Currently, version 2 is written which adds metadata blob to the summary.
 	return EditManagerSummaryFormatVersion.v2;
@@ -68,7 +68,7 @@ function minVersionToEditManagerSummaryFormatVersion(
 /**
  * Provides methods for summarizing and loading an `EditManager`
  */
-export class EditManagerSummarizer<TChangeset>
+export class EditManagerSummarizer<TChangeset, TChangeProcessingContext>
 	extends VersionedSummarizer<EditManagerSummaryFormatVersion>
 	implements Summarizable
 {
@@ -77,7 +77,7 @@ export class EditManagerSummarizer<TChangeset>
 		private readonly editManager: EditManager<
 			ChangeFamilyEditor,
 			TChangeset,
-			ChangeFamily<ChangeFamilyEditor, TChangeset>
+			TChangeProcessingContext
 		>,
 		private readonly codec: IJsonCodec<
 			SummaryData<TChangeset>,
@@ -87,7 +87,7 @@ export class EditManagerSummarizer<TChangeset>
 			EditManagerDecodingContext
 		>,
 		private readonly idCompressor: IIdCompressor,
-		minVersionForCollab: MinimumVersionForCollab,
+		minVersionForCollab: OldestSupportedClientVersion,
 		private readonly schemaAndPolicy?: SchemaAndPolicy,
 		/** See {@link IdentifierHealingConfig}. */
 		private readonly healing?: IdentifierHealingConfig,

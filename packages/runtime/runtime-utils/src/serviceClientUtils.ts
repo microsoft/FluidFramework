@@ -29,7 +29,7 @@ import type {
 	FluidDataStoreRegistryEntry,
 	IContainerRuntimeBase,
 	IFluidDataStoreRegistry,
-	MinimumVersionForCollab,
+	OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
 
 import { DataStoreKindImplementation } from "./serviceClientBase.js";
@@ -71,7 +71,7 @@ export function normalizeRegistry<T>(
 	if (DataStoreKindImplementation.guard(input)) {
 		return async () => input;
 	}
-	assert(typeof input === "function", "Registry must be a function");
+	assert(typeof input === "function", 0xd17 /* Registry must be a function */);
 	return input;
 }
 
@@ -84,7 +84,7 @@ export interface ContainerRuntimeLoaderParams {
 	registry: IFluidDataStoreRegistry;
 	provideEntryPoint: (runtime: IContainerRuntimeBase) => Promise<FluidObject>;
 	existing: boolean;
-	minVersionForCollab: MinimumVersionForCollab;
+	minVersionForCollab: OldestSupportedClientVersion;
 	/**
 	 * The type string of the root data store to create. Only set when `existing` is false.
 	 */
@@ -121,7 +121,7 @@ export type ContainerRuntimeLoader = (
  */
 export function makeCodeLoader<T>(
 	registry: DataStoreRegistry<T>,
-	minVersionForCollab: MinimumVersionForCollab,
+	minVersionForCollab: OldestSupportedClientVersion,
 	loadRuntime: ContainerRuntimeLoader,
 	root?: DataStoreKind<T>,
 ): ICodeDetailsLoader {
@@ -207,13 +207,8 @@ export class ServiceClientImplementation<TOptions> implements ServiceClient {
 		private readonly statics: ServiceContainerStatics<TOptions>,
 	) {}
 
-	public createContainer<T>(root: DataStoreKind<T>): Promise<FluidContainerWithService<T>>;
-
-	public createContainer<T>(
-		root: DataStoreKey<T>,
-		registry: Registry<Promise<DataStoreKind>>,
-	): Promise<FluidContainerWithService<T>>;
-
+	// This implements the ServiceClient interface's safer version of this with overloads.
+	// For use in the implementation however, this is simpler, and allows createAttachedContainer to forward to it more easily.
 	public async createContainer<T>(
 		root: DataStoreKey<T> | DataStoreKind<T>,
 		registry?: Registry<Promise<DataStoreKind<T>>>,
@@ -225,6 +220,14 @@ export class ServiceClientImplementation<TOptions> implements ServiceClient {
 			const result = await lookupInRegistry(registry, root);
 			return this.statics.createDetached(registry, this.options, result);
 		}
+	}
+
+	public async createAttachedContainer<T>(
+		root: DataStoreKey<T> | DataStoreKind<T>,
+		registry?: Registry<Promise<DataStoreKind<T>>>,
+	): Promise<FluidContainerAttached<T>> {
+		const container = await this.createContainer(root, registry);
+		return container.attach();
 	}
 
 	public async loadContainer<T>(

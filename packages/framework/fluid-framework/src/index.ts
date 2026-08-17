@@ -71,6 +71,7 @@ export type {
 	FluidIterable,
 	FluidIterableIterator,
 	FluidMap,
+	FluidReadonlyArray,
 	FluidReadonlyMap,
 } from "@fluidframework/core-interfaces/internal";
 export { onAssertionFailure } from "@fluidframework/core-utils/internal";
@@ -113,7 +114,7 @@ export type {
 	FluidContainer,
 	FluidContainerAttached,
 	FluidContainerWithService,
-	MinimumVersionForCollaboration,
+	OldestSupportedServiceClientVersion,
 	Registry,
 	RegistryKey,
 	ServiceClient,
