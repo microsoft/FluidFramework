@@ -4,9 +4,9 @@
  */
 
 /**
- * Distills an ArrayBuffer from an ArrayBufferLike or creates one from SharedArrayBuffer if needed.
+ * Distills an `ArrayBuffer` from an `ArrayBufferLike` or creates one from `SharedArrayBuffer` if needed.
  *
- * @param buffer - ArrayBuffer or any ArrayBufferLike to convert to ArrayBuffer.
+ * @param buffer - `ArrayBuffer` or any `ArrayBufferLike` to convert to `ArrayBuffer`.
  *
  * @remarks The returned buffer may be the input array's backing buffer or a copy of its bytes.
  * Callers should not mutate the returned buffer unless they own the input array and its backing
@@ -18,13 +18,13 @@ export function ArrayBufferLikeToArrayBuffer(buffer: ArrayBufferLike): ArrayBuff
 	if (buffer instanceof ArrayBuffer) {
 		return buffer;
 	}
-	// eslint-disable-next-line unicorn/prefer-spread -- spread is not the same as slice for Uint8Array
+	// eslint-disable-next-line unicorn/prefer-spread -- spread is not the same as slice for `Uint8Array`
 	return new Uint8Array(buffer).slice().buffer;
 }
 
 /**
- * Distills a Uint8Array array to an ArrayBuffer | SharedArrayBuffer copying
- * data as needed per the array's byteOffset and byteLength.
+ * Distills a `Uint8Array` array to an `ArrayBuffer | SharedArrayBuffer` copying
+ * data as needed per the array's `byteOffset` and `byteLength`.
  *
  * @param array - Array to extract buffer from.
  *
@@ -34,7 +34,7 @@ export function ArrayBufferLikeToArrayBuffer(buffer: ArrayBufferLike): ArrayBuff
  *
  * @privateRemarks
  * Upon update to TypeScript 5.9 or higher, this should become a generic function
- * over ArrayBufferLike that parameterizes Uint8Array.
+ * over `ArrayBufferLike` that parameterizes `Uint8Array`.
  *
  * @internal
  */
@@ -46,17 +46,17 @@ export function Uint8ArrayToArrayBufferLike(array: Uint8Array): ArrayBufferLike 
 }
 
 /**
- * Distills a Uint8Array array to an ArrayBuffer copying data as needed per the array's
- * byteOffset and byteLength or if underlying buffer is not ArrayBuffer.
+ * Distills a `Uint8Array` array to an `ArrayBuffer` copying data as needed per the array's
+ * `byteOffset` and `byteLength` or if underlying buffer is not `ArrayBuffer`.
  *
- * @param array - Array to convert to ArrayBuffer.
+ * @param array - Array to convert to `ArrayBuffer`.
  *
  * @remarks The returned buffer may be the input array's backing buffer or a copy of its bytes.
  * Callers should not mutate the returned buffer unless they own the input array and its backing
  * storage, and should not rely on mutations being reflected in the input array.
  *
- * Prefer to use Uint8ArrayToArrayBufferLike if callsite doesn't require
- * an explicit ArrayBuffer (can also handle SharedArrayBuffer).
+ * Prefer to use {@link Uint8ArrayToArrayBufferLike} if the call site doesn't require
+ * an explicit `ArrayBuffer` (can also handle `SharedArrayBuffer`).
  *
  * @internal
  */
@@ -69,8 +69,8 @@ export function AnyUint8ArrayToArrayBuffer(array: Uint8Array): ArrayBuffer {
 	) {
 		return array.buffer;
 	}
-	// In TypeScript 5.9 or higher, ArrayBufferLikeToArrayBuffer can be removed.
+	// In TypeScript 5.9 or higher, `ArrayBufferLikeToArrayBuffer` can be removed.
 	// slice is used to ensure underlying buffer is ArrayBuffer.
-	// eslint-disable-next-line unicorn/prefer-spread -- spread is not the same as slice for Uint8Array
+	// eslint-disable-next-line unicorn/prefer-spread -- spread is not the same as slice for `Uint8Array`
 	return ArrayBufferLikeToArrayBuffer(Uint8ArrayToArrayBufferLike(array.slice()));
 }
