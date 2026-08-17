@@ -243,6 +243,32 @@ describeHydration(
 			assert.equal(map.size, 0);
 		});
 
+		it("throws descriptive TypeError for future unsupported Map.prototype methods", () => {
+			const MapString = schemaFactory.map(schemaFactory.string);
+			const node = init(MapString, new Map([["a", "hello"]]));
+
+			const methodName = "__testUnsupportedMapMethod__";
+			(Map.prototype as unknown as Record<string, unknown>)[methodName] = function () {
+				return "should not reach here";
+			};
+			try {
+				const method = (node as unknown as Record<string, unknown>)[methodName] as (
+					...args: unknown[]
+				) => unknown;
+				assert.equal(typeof method, "function");
+				assert.throws(
+					() => method.call(node),
+					(error: Error) =>
+						error instanceof TypeError &&
+						error.message ===
+							`MapNode does not support '${methodName}'. Use the MapNode API (e.g., set, get, delete, keys, values, entries).`,
+				);
+			} finally {
+				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- Cleaning up test-only method added to Map.prototype
+				delete (Map.prototype as unknown as Record<string, unknown>)[methodName];
+			}
+		});
+
 		it("getOrInsert", () => {
 			const root = init(schema, initialTree);
 			const map = asAlpha<typeof schemaFactory.string>(root.map);
