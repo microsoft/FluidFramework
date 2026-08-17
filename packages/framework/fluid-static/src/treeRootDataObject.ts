@@ -339,7 +339,7 @@ export function createTreeContainerRuntimeFactory(props: {
 		minVersionForCollab = oldestSupportedClient;
 	} else if (minVersionForCollaboration === undefined) {
 		// The exactly-one check above guarantees this is defined.
-		assert(compatibilityMode !== undefined, "compatibilityMode must be defined");
+		assert(compatibilityMode !== undefined, 0xd33 /* compatibilityMode must be defined */);
 		minVersionForCollab = resolveCompatibilityModeToMinVersionForCollab(compatibilityMode);
 	} else {
 		minVersionForCollab = minVersionForCollaboration;
