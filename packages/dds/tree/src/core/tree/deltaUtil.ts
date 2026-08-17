@@ -105,7 +105,7 @@ export function deltaFieldMapHasChanges(fields: FieldMap | undefined): boolean {
 }
 
 /**
- * Returns true if a delta field map contains any changes.
+ * Returns true if the given field changes contain any changes.
  * Note that the changes may not be noticeable to the user (e.g., a change that replaces a node with another structurally identical node).
  * @param fieldChanges - Field changes to check for changes
  * @returns True if the field changes contain any changes, false otherwise
