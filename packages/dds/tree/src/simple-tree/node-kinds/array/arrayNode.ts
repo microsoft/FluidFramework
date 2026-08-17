@@ -741,7 +741,7 @@ const TreeNodeWithArrayFeatures = (() => {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 declare abstract class NodeWithArrayFeatures<Input, T>
 	extends TreeNodeValid<Input>
-	implements Pick<readonly T[], (typeof arrayPrototypeKeys)[number]>
+	implements Pick<FluidReadonlyArray<T>, (typeof arrayPrototypeKeys)[number]>
 {
 	concat(...items: ConcatArray<T>[]): T[];
 	concat(...items: (T | ConcatArray<T>)[]): T[];
@@ -749,7 +749,7 @@ declare abstract class NodeWithArrayFeatures<Input, T>
 	every<S extends T>(
 		predicate: (value: T, index: number, array: readonly T[]) => value is S,
 		thisArg?: any,
-	): this is readonly S[];
+	): this is FluidReadonlyArray<S>;
 	every(
 		predicate: (value: T, index: number, array: readonly T[]) => unknown,
 		thisArg?: any,
