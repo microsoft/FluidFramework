@@ -21,7 +21,7 @@ describe("taskList", () => {
 		await page.waitForFunction(() => window["fluidStarted"]);
 	});
 
-	it.skip("loads and there's an input", async () => {
+	it("loads and there's an input", async () => {
 		// Validate the input shows up
 		await page.waitForSelector("input");
 	});

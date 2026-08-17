@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/internal";
 import { isFluidError } from "@fluidframework/telemetry-utils/internal";
 import { compare } from "semver-ts";
 
@@ -100,7 +100,7 @@ describe("compatibilityBase", () => {
 		};
 
 		const testCases: {
-			minVersionForCollab: MinimumVersionForCollab;
+			minVersionForCollab: OldestSupportedClientVersion;
 			expectedConfig: ITestConfigMap;
 		}[] = [
 			{
@@ -275,7 +275,7 @@ describe("compatibilityBase", () => {
 
 		describe("configMap entries for versions beyond the current package version", () => {
 			// A version well beyond cleanedPackageVersion, used to model a future major release.
-			const futureVersion = "1000000.0.0" as MinimumVersionForCollab;
+			const futureVersion = "1000000.0.0" as OldestSupportedClientVersion;
 
 			// eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- type required for ConfigMap processing
 			type IFutureTestConfigMap = { featureA: string };
@@ -308,7 +308,7 @@ describe("compatibilityBase", () => {
 				// value supplied by a caller must remain bounded by the current package version.
 				assert.throws(() => {
 					getConfigsForMinVersionForCollab(futureVersion, futureConfigMap);
-				}, /is not a valid MinimumVersionForCollab/);
+				}, /is not a valid OldestSupportedClientVersion/);
 			});
 		});
 	});
@@ -472,7 +472,7 @@ describe("compatibilityBase", () => {
 
 	describe("minVersionForCollab validation", () => {
 		const testCases: {
-			version: MinimumVersionForCollab;
+			version: OldestSupportedClientVersion;
 			checks: {
 				isValidSemver: boolean;
 				isGteLowestMinVersion: boolean;
@@ -488,18 +488,18 @@ describe("compatibilityBase", () => {
 				checks: { isValidSemver: true, isGteLowestMinVersion: true, isLtePkgVersion: true },
 			},
 			{
-				// Cast since this is not a valid MinimumVersionForCollab, but is a valid semver.
-				version: "0.0.0" as MinimumVersionForCollab,
+				// Cast since this is not a valid OldestSupportedClientVersion, but is a valid semver.
+				version: "0.0.0" as OldestSupportedClientVersion,
 				checks: { isValidSemver: true, isGteLowestMinVersion: false, isLtePkgVersion: true },
 			},
 			{
-				// Cast since this is not a valid MinimumVersionForCollab, but is a valid semver.
-				version: "1000000.0.0" as MinimumVersionForCollab,
+				// Cast since this is not a valid OldestSupportedClientVersion, but is a valid semver.
+				version: "1000000.0.0" as OldestSupportedClientVersion,
 				checks: { isValidSemver: true, isGteLowestMinVersion: true, isLtePkgVersion: false },
 			},
 			{
-				// Cast since this is not a valid MinimumVersionForCollab and is not a valid semver.
-				version: "1.2" as MinimumVersionForCollab,
+				// Cast since this is not a valid OldestSupportedClientVersion and is not a valid semver.
+				version: "1.2" as OldestSupportedClientVersion,
 				checks: { isValidSemver: false, isGteLowestMinVersion: false, isLtePkgVersion: false },
 			},
 		];
@@ -526,7 +526,7 @@ describe("compatibilityBase", () => {
 					// though configMap keys are now permitted to describe such future versions.
 					assert.throws(
 						() => validateMinimumVersionForCollab(testCase.version),
-						/is not a valid MinimumVersionForCollab/,
+						/is not a valid OldestSupportedClientVersion/,
 					);
 				}
 			});

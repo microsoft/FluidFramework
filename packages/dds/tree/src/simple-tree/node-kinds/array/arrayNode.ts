@@ -910,6 +910,21 @@ function createArrayNodeProxy(
 					return proxyTarget.constructor;
 				}
 
+				// If the property is a function on Array.prototype but not on the dispatch target,
+				// return a function that throws a descriptive TypeError when called.
+				if (
+					typeof key === "string" &&
+					!(key in dispatchTarget) &&
+					key in Array.prototype &&
+					typeof (Array.prototype as unknown as Record<string, unknown>)[key] === "function"
+				) {
+					return () => {
+						throw new TypeError(
+							`ArrayNode does not support '${key}'. Use the ArrayNode API (e.g., insertAt, removeAt, moveToIndex, splice).`,
+						);
+					};
+				}
+
 				// Pass the proxy as the receiver here, so that any methods on
 				// the prototype receive `proxy` as `this`.
 				return Reflect.get(dispatchTarget, key, receiver) as unknown;
