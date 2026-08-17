@@ -1720,6 +1720,7 @@ export class TreeCheckout implements ITreeCheckout {
 	public enrich(
 		context: GraphCommit<SharedTreeChange>,
 		changes: readonly TaggedChange<SharedTreeChange>[],
+		forceValidation: boolean,
 	): SharedTreeChange[] {
 		if (!hasSome(changes)) {
 			return [];
@@ -1750,13 +1751,25 @@ export class TreeCheckout implements ITreeCheckout {
 				return makeAnonChange(diff);
 			});
 		}
-		const enriched: SharedTreeChange[] = [];
+		const enrichedChanges: SharedTreeChange[] = [];
 		for (const change of changes) {
-			enriched.push(enricher.enrich(change.change));
-			enricher.enqueueChange(change);
+			const enrichedChange = enricher.enrich(change.change);
+			enrichedChanges.push(enrichedChange);
+			// We could either apply the original or the enriched change: either should allow subsequent changes to be enriched correctly.
+			// We choose to apply the enriched change in order to more closely replicate what a peer will experience (assuming no concurrent changes).
+			// This makes it more likely that we'll detect a bug in the enrichment logic.
+			// Note that enqueueing the change does not guarantee that it will be applied unless `forceValidation` is enabled.
+			enricher.enqueueChange(tagChange(enrichedChange, change.revision));
+		}
+		if (forceValidation) {
+			// Ensure that all changes can be applied successfully.
+			// This is useful for catching bugs in the enrichment logic and in the rebasing logic that may have been involved in producing the changes.
+			// Note that we cannot guarantee that the enriched change will be applied successfully even in the absence of concurrent changes,
+			// because the checkout state we are applying this enriched change to was derived from the state of the checkout, which may be different from that of a peer.
+			enricher.purgeChangeQueue();
 		}
 		enricher[disposeSymbol]();
-		return enriched;
+		return enrichedChanges;
 	}
 
 	public get mainBranch(): SharedTreeBranch<
