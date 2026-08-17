@@ -29,6 +29,8 @@ import { suitesWithAndWithoutProduction } from "../utils.js";
 import { FormattedTextDefault } from "../../text/index.js";
 import { oneFromIterable } from "../../util/index.js";
 
+import { testInsertionAnchors } from "./textDomainTestUtils.js";
+
 // Custom formatted-text schemas used to exercise `formatRange` edge cases which the default schema cannot express.
 
 // A format with an optional field, used to test formatting of optional fields.
@@ -65,22 +67,7 @@ describe("textDomainFormatted", () => {
 		setEnableExpensiveDebugAsserts(false);
 	});
 
-	describeHydration("createInsertionAnchor", (_init, hydrated) => {
-		it("tracks a character insertion point across edits", () => {
-			const text = OptionalFormatText.fromString("hello");
-			if (hydrated) {
-				hydrateNode(text);
-			}
-			const anchor = text.createInsertionAnchor(4);
-
-			text.insertAt(0, "Oh ");
-			assert.equal(anchor.index, 7);
-
-			text.removeRange(3, 6);
-			assert.equal(anchor.index, 4);
-			anchor.dispose();
-		});
-	});
+	testInsertionAnchors((value) => OptionalFormatText.fromString(value));
 
 	it("compatibility-minimal", () => {
 		const scopingFactory = new SchemaFactoryBeta("minimal");
