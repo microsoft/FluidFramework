@@ -72,8 +72,17 @@
 			"Class_ThrottlingError": {
 				"forwardCompat": false
 			},
+			"Enum_EncryptionKeyVersion": {
+				"backCompat": false
+			},
 			"InterfaceDeclaration_IWebSocket": {
 				"forwardCompat": false
+			},
+			"Interface_IEncryptedPrivateTenantKeys": {
+				"backCompat": false
+			},
+			"Interface_IEncryptedTenantKeys": {
+				"backCompat": false
 			},
 			"Interface_IWebSocket": {
 				"forwardCompat": false

@@ -10,6 +10,7 @@ import type {
 	IStream,
 	IStreamResult,
 } from "@fluidframework/driver-definitions/internal";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import { generateBatchId, type InboundMessageResult } from "../../opLifecycle/index.js";
 import type { InboundSequencedContainerRuntimeMessage } from "../../messageTypes.js";
@@ -570,7 +571,7 @@ describe("VersionMarkResolver", () => {
 			const resolver = makeResolver({ reader, currentSequenceNumber: 20 });
 			await assert.rejects(
 				async () => resolver.resolve(generateBatchId("missing", 9), 10),
-				/before the requested range start/,
+				validateAssertionError(/before the requested range start/),
 			);
 		});
 	});
