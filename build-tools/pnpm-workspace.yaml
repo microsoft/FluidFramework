@@ -109,6 +109,11 @@ overrides:
   # jssm-viz-cli brings in ESLint 8.x transitively; force ESLint 9.x workspace-wide.
   eslint: ~9.39.2
 
+  # jssm-viz-cli eagerly loads sharp, but our build:diagrams task only emits SVG and never uses its raster output.
+  # Replace sharp with an empty module rather than dropping it so the eager import still succeeds. This produces a net
+  # reduction of 26 dependency snapshots, including sharp's native install and platform binaries.
+  jssm-viz-cli>sharp: npm:empty-npm-package@1.0.0
+
   json5@<1.0.2: ^1.0.2
   json5@>=2.0.0 <2.2.2: ^2.2.2
 
@@ -165,5 +170,4 @@ allowBuilds:
   '@biomejs/biome': true
   core-js: true
   es5-ext: true
-  sharp: true
   unrs-resolver: true
