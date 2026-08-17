@@ -130,7 +130,7 @@ overrides:
   diff@>=7 <8: ^8.0.3
   diff@>=8 <9: ^8.0.3
 
-  # @typescript-eslint/eslint-utils overrides
+  # @typescript-eslint/utils overrides
   #   As of 2026-08-14 @rushstack/eslint-plugin (v0.23.2), does not have a version using v8.58 or later.
   "@rushstack/eslint-plugin>@typescript-eslint/utils@<8.58.0": ^8.58.0
   #   As of 2026-08-14 eslint-plugin-tsdoc (v0.5.2), does not have a version using v8.58 or later.
