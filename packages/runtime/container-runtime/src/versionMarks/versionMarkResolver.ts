@@ -33,7 +33,7 @@ export interface IHistoricalOpReader {
 /**
  * Result of resolving a pending batchId.
  *
- * @legacy @alpha
+ * @legacy @beta
  */
 export type ResolveResult =
 	| { readonly kind: "resolved"; readonly sequenceNumber: number }
@@ -46,7 +46,7 @@ export type ResolveResult =
  * work, so the mark already points at a durable sequence number. The app packs its own stored record from
  * this — the runtime does not define the stored locator shape.
  *
- * @legacy @alpha
+ * @legacy @beta
  */
 export type VersionMarkCapture =
 	| {
@@ -59,7 +59,7 @@ export type VersionMarkCapture =
 /**
  * Runtime-owned resolver for app-stored version mark locators.
  *
- * @legacy @alpha
+ * @legacy @beta
  */
 export interface IVersionMarkResolver {
 	/**
