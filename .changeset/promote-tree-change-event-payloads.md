@@ -3,31 +3,16 @@
 "fluid-framework": minor
 "__section": tree
 ---
-Promote detailed Tree change event payloads to beta
+Promote array node change event deltas to beta
 
-[`TreeBeta.on`](https://fluidframework.com/docs/api/tree/treebeta-interface#on-methodsignature) now provides detailed change payloads for array nodes.
-The [`nodeChanged`](https://fluidframework.com/docs/api/tree/treechangeevents-interface#nodechanged-methodsignature) event reports retain, insert, and remove operations for direct array changes.
-The [`treeChanged`](https://fluidframework.com/docs/api/tree/treechangeevents-interface#treechanged-methodsignature) event also identifies retained elements whose subtrees changed.
-For object nodes, `nodeChanged` identifies directly changed fields through [`changedProperties`](https://fluidframework.com/docs/api/tree/nodechangeddata-interface#changedproperties-propertysignature).
+[`TreeBeta.on`](https://fluidframework.com/docs/api/fluid-framework/treebeta-interface#on-methodsignature) now provides detailed delta payloads for array nodes.
+The [`nodeChanged`](https://fluidframework.com/docs/api/fluid-framework/treechangeeventsbeta-interface#nodechanged-propertysignature) event reports retain, insert, and remove operations for direct array changes.
+The [`treeChanged`](https://fluidframework.com/docs/api/fluid-framework/treechangeeventsbeta-interface#treechanged-propertysignature) event also identifies retained elements whose subtrees changed.
 
-The corresponding payload and operation types are now exported from the beta entrypoint.
-Existing [`TreeAlpha.on`](https://fluidframework.com/docs/api/tree/treealpha-interface#on-methodsignature) usage remains, but is now deprecated in favor of the `TreeBeta` API.
+The array delta payload and operation types are now exported from the beta entrypoint.
+Existing [`TreeAlpha.on`](https://fluidframework.com/docs/api/fluid-framework/treealpha-interface#on-methodsignature) support remains, but is now deprecated in favor of the `TreeBeta` API.
 
 #### Examples
-
-The following example uses `changedProperties` to update only the displayed values whose fields changed on an object node.
-
-```typescript
-TreeBeta.on(personNode, "nodeChanged", ({ changedProperties }) => {
-	// Refresh each displayed value only when its corresponding field changed.
-	if (changedProperties.has("name")) {
-		updateDisplayedName(personNode.name);
-	}
-	if (changedProperties.has("age")) {
-		updateDisplayedAge(personNode.age);
-	}
-});
-```
 
 The following example applies an array node's direct changes to an external array without comparing full snapshots.
 
