@@ -1,5 +1,5 @@
 ---
-"@fluidframework/merge-tree": patch
+"@fluidframework/merge-tree": minor
 "__section": fix
 ---
 Fix LocalReferenceCollection.walkReferences skipping the starting reference
