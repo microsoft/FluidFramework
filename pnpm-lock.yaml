@@ -8,17 +8,17 @@ settings:
 catalogs:
   buildTools:
     '@fluid-tools/build-cli':
-      specifier: ^0.66.0
-      version: 0.66.0
+      specifier: ^0.67.0
+      version: 0.67.0
     '@fluid-tools/build-infrastructure':
-      specifier: ^0.66.0
-      version: 0.66.0
+      specifier: ^0.67.0
+      version: 0.67.0
     '@fluid-tools/version-tools':
-      specifier: ^0.66.0
-      version: 0.66.0
+      specifier: ^0.67.0
+      version: 0.67.0
     '@fluidframework/build-tools':
-      specifier: ^0.66.0
-      version: 0.66.0
+      specifier: ^0.67.0
+      version: 0.67.0
   eslint:
     '@fluidframework/eslint-config-fluid':
       specifier: ^14.0.0
@@ -113,7 +113,7 @@ importers:
         version: link:packages/tools/changelog-generator-wrapper
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@8.1.1)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@8.1.1)
       '@fluid-tools/markdown-magic':
         specifier: workspace:~
         version: link:tools/markdown-magic
@@ -122,7 +122,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@8.1.1)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@8.1.1)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@8.1.1)(typescript@5.4.5)
@@ -192,7 +192,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -232,7 +232,7 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/azure-service-utils-previous':
         specifier: npm:@fluidframework/azure-service-utils@2.114.0
         version: '@fluidframework/azure-service-utils@2.114.0'
@@ -241,7 +241,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -332,13 +332,13 @@ importers:
         version: link:../../utils/example-webpack-integration
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -459,13 +459,13 @@ importers:
         version: link:../../utils/example-webpack-integration
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -583,13 +583,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -713,13 +713,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -876,13 +876,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -1015,13 +1015,13 @@ importers:
         version: link:../../utils/example-webpack-integration
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -1160,13 +1160,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -1308,13 +1308,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -1444,13 +1444,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -1550,7 +1550,7 @@ importers:
         version: link:../../../packages/test/mocha-test-setup
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -1650,13 +1650,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -1780,7 +1780,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -1880,13 +1880,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -1950,7 +1950,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -2059,7 +2059,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -2159,7 +2159,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -2268,7 +2268,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -2371,7 +2371,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -2492,7 +2492,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -2607,7 +2607,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -2734,7 +2734,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -2813,7 +2813,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -2904,7 +2904,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -2992,7 +2992,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -3029,7 +3029,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -3111,7 +3111,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -3208,7 +3208,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -3236,13 +3236,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -3276,7 +3276,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -3316,7 +3316,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -3356,7 +3356,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -3468,7 +3468,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -3543,7 +3543,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../packages/common/container-definitions
@@ -3670,13 +3670,13 @@ importers:
         version: link:../../../packages/test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/container-loader':
         specifier: workspace:~
         version: link:../../../packages/loader/container-loader
@@ -3788,7 +3788,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -3912,7 +3912,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/devtools':
         specifier: workspace:~
         version: link:../../../packages/tools/devtools/devtools
@@ -4042,7 +4042,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -4175,7 +4175,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -4368,7 +4368,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -4531,7 +4531,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../../packages/common/container-definitions
@@ -4685,7 +4685,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../../packages/common/container-definitions
@@ -4833,13 +4833,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -4963,16 +4963,16 @@ importers:
         version: 2.3.0(webpack@5.109.0)
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluid-tools/version-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -5066,13 +5066,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -5184,13 +5184,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -5239,13 +5239,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -5300,7 +5300,7 @@ importers:
         version: link:../../../packages/test/mocha-test-setup
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -5391,13 +5391,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -5548,13 +5548,13 @@ importers:
         version: link:../../../packages/test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -5657,13 +5657,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -5811,13 +5811,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -5992,13 +5992,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -6155,13 +6155,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -6294,13 +6294,13 @@ importers:
         version: link:../../utils/example-webpack-integration
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -6430,13 +6430,13 @@ importers:
         version: link:../../utils/example-webpack-integration
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -6551,13 +6551,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -6675,7 +6675,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@types/lodash':
         specifier: ^4.14.118
         version: 4.17.13
@@ -6772,7 +6772,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@microsoft/api-extractor':
         specifier: 7.58.1
         version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
@@ -6905,13 +6905,13 @@ importers:
         version: link:../../../../packages/test/test-drivers
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/container-loader':
         specifier: workspace:~
         version: link:../../../../packages/loader/container-loader
@@ -7020,7 +7020,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@types/chai':
         specifier: ^4.0.0
         version: 4.3.20
@@ -7105,13 +7105,13 @@ importers:
         version: link:../../../../packages/dds/test-dds-utils
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -7199,13 +7199,13 @@ importers:
         version: link:../../../../../packages/dds/test-dds-utils
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -7290,13 +7290,13 @@ importers:
         version: link:../../../packages/dds/test-dds-utils
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -7426,7 +7426,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/container-loader':
         specifier: workspace:~
         version: link:../../../packages/loader/container-loader
@@ -7535,13 +7535,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -7605,13 +7605,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -7678,13 +7678,13 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -7793,13 +7793,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/container-definitions-previous':
         specifier: npm:@fluidframework/container-definitions@2.114.0
         version: '@fluidframework/container-definitions@2.114.0'
@@ -7838,13 +7838,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/core-interfaces-previous':
         specifier: npm:@fluidframework/core-interfaces@2.114.0
         version: '@fluidframework/core-interfaces@2.114.0'
@@ -7907,13 +7907,13 @@ importers:
         version: 0.59.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/core-utils-previous':
         specifier: npm:@fluidframework/core-utils@2.114.0
         version: '@fluidframework/core-utils@2.114.0'
@@ -7983,13 +7983,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/driver-definitions-previous':
         specifier: npm:@fluidframework/driver-definitions@2.114.0
         version: '@fluidframework/driver-definitions@2.114.0'
@@ -8056,13 +8056,13 @@ importers:
         version: link:../test-dds-utils
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/cell-previous':
         specifier: npm:@fluidframework/cell@2.114.0
         version: '@fluidframework/cell@2.114.0(supports-color@10.2.2)'
@@ -8159,13 +8159,13 @@ importers:
         version: link:../test-dds-utils
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -8253,13 +8253,13 @@ importers:
         version: link:../test-dds-utils
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
@@ -8347,13 +8347,13 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
@@ -8453,13 +8453,13 @@ importers:
         version: link:../test-dds-utils
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
@@ -8568,13 +8568,13 @@ importers:
         version: 0.59.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
@@ -8692,13 +8692,13 @@ importers:
         version: 0.59.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
@@ -8819,13 +8819,13 @@ importers:
         version: 0.59.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -8931,13 +8931,13 @@ importers:
         version: link:../test-dds-utils
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -9028,13 +9028,13 @@ importers:
         version: link:../test-dds-utils
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -9125,13 +9125,13 @@ importers:
         version: link:../test-dds-utils
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -9240,13 +9240,13 @@ importers:
         version: 0.59.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
@@ -9367,13 +9367,13 @@ importers:
         version: 0.59.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -9464,13 +9464,13 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
@@ -9573,13 +9573,13 @@ importers:
         version: link:../test-dds-utils
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -9685,13 +9685,13 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -9809,13 +9809,13 @@ importers:
         version: 0.59.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
@@ -9930,13 +9930,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/debugger-previous':
         specifier: npm:@fluidframework/debugger@2.114.0
         version: '@fluidframework/debugger@2.114.0(supports-color@10.2.2)'
@@ -10000,13 +10000,13 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/driver-base-previous':
         specifier: npm:@fluidframework/driver-base@2.114.0
         version: '@fluidframework/driver-base@2.114.0(supports-color@10.2.2)'
@@ -10088,13 +10088,13 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/driver-web-cache-previous':
         specifier: npm:@fluidframework/driver-web-cache@2.114.0
         version: '@fluidframework/driver-web-cache@2.114.0(supports-color@10.2.2)'
@@ -10173,13 +10173,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -10285,13 +10285,13 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -10394,13 +10394,13 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -10467,13 +10467,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -10537,13 +10537,13 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -10616,13 +10616,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -10704,13 +10704,13 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -10792,13 +10792,13 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -10880,13 +10880,13 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -10977,7 +10977,7 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/agent-scheduler-previous':
         specifier: npm:@fluidframework/agent-scheduler@2.114.0
         version: '@fluidframework/agent-scheduler@2.114.0(supports-color@10.2.2)'
@@ -10986,7 +10986,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -11077,7 +11077,7 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/aqueduct-previous':
         specifier: npm:@fluidframework/aqueduct@2.114.0
         version: '@fluidframework/aqueduct@2.114.0(supports-color@10.2.2)'
@@ -11086,7 +11086,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -11186,13 +11186,13 @@ importers:
         version: link:../../test/stochastic-test-utils
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -11265,7 +11265,7 @@ importers:
         version: link:../../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/app-insights-logger-previous':
         specifier: npm:@fluidframework/app-insights-logger@2.114.0
         version: '@fluidframework/app-insights-logger@2.114.0(tslib@2.8.1)'
@@ -11274,7 +11274,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@microsoft/api-extractor':
         specifier: 7.58.1
         version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
@@ -11362,10 +11362,10 @@ importers:
         version: link:../../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/test-utils':
         specifier: workspace:~
         version: link:../../../test/test-utils
@@ -11474,13 +11474,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -11538,13 +11538,13 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -11641,13 +11641,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -11750,13 +11750,13 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -11838,13 +11838,13 @@ importers:
         version: link:../../dds/test-dds-utils
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -11902,13 +11902,13 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -11957,13 +11957,13 @@ importers:
         version: '@fluid-internal/presence-definitions@2.114.0(supports-color@10.2.2)'
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -12033,13 +12033,13 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../common/driver-definitions
@@ -12130,13 +12130,13 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -12251,13 +12251,13 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -12354,13 +12354,13 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -12430,13 +12430,13 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../common/core-interfaces
@@ -12527,13 +12527,13 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -12630,13 +12630,13 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/core-utils':
         specifier: workspace:~
         version: link:../../common/core-utils
@@ -12721,13 +12721,13 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -12794,13 +12794,13 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -12876,13 +12876,13 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -12988,13 +12988,13 @@ importers:
         version: link:../test-loader-utils
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/container-loader-previous':
         specifier: npm:@fluidframework/container-loader@2.114.0
         version: '@fluidframework/container-loader@2.114.0(supports-color@10.2.2)'
@@ -13091,13 +13091,13 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/driver-utils-previous':
         specifier: npm:@fluidframework/driver-utils@2.114.0
         version: '@fluidframework/driver-utils@2.114.0(supports-color@10.2.2)'
@@ -13176,13 +13176,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -13282,13 +13282,13 @@ importers:
         version: 0.59.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/container-runtime-previous':
         specifier: npm:@fluidframework/container-runtime@2.114.0
         version: '@fluidframework/container-runtime@2.114.0(supports-color@10.2.2)'
@@ -13379,13 +13379,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/container-runtime-definitions-previous':
         specifier: npm:@fluidframework/container-runtime-definitions@2.114.0
         version: '@fluidframework/container-runtime-definitions@2.114.0(supports-color@10.2.2)'
@@ -13464,13 +13464,13 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/datastore-previous':
         specifier: npm:@fluidframework/datastore@2.114.0
         version: '@fluidframework/datastore@2.114.0(supports-color@10.2.2)'
@@ -13555,13 +13555,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/datastore-definitions-previous':
         specifier: npm:@fluidframework/datastore-definitions@2.114.0
         version: '@fluidframework/datastore-definitions@2.114.0(supports-color@10.2.2)'
@@ -13628,13 +13628,13 @@ importers:
         version: 0.59.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -13710,13 +13710,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -13792,13 +13792,13 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -13913,13 +13913,13 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -14010,7 +14010,7 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/azure-client-previous':
         specifier: npm:@fluidframework/azure-client@2.114.0
         version: '@fluidframework/azure-client@2.114.0(supports-color@10.2.2)'
@@ -14022,7 +14022,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/container-runtime':
         specifier: workspace:~
         version: link:../../runtime/container-runtime
@@ -14182,7 +14182,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../../common/driver-definitions
@@ -14291,7 +14291,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -14385,13 +14385,13 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -14488,7 +14488,7 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/aqueduct':
         specifier: workspace:~
         version: link:../../framework/aqueduct
@@ -14497,7 +14497,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/container-runtime':
         specifier: workspace:~
         version: link:../../runtime/container-runtime
@@ -14572,13 +14572,13 @@ importers:
         version: link:../../loader/test-loader-utils
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/cell':
         specifier: workspace:~
         version: link:../../dds/cell
@@ -14716,7 +14716,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
@@ -14867,7 +14867,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
@@ -14994,13 +14994,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -15109,13 +15109,13 @@ importers:
         version: link:../mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -15179,13 +15179,13 @@ importers:
         version: 0.59.0
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -15252,13 +15252,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -15352,13 +15352,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -15557,13 +15557,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -15621,13 +15621,13 @@ importers:
         version: link:../mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -15757,13 +15757,13 @@ importers:
         version: link:../mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -15884,13 +15884,13 @@ importers:
         version: link:../mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -15965,7 +15965,7 @@ importers:
         version: 0.59.0
       '@fluid-tools/version-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/agent-scheduler':
         specifier: workspace:~
         version: link:../../framework/agent-scheduler
@@ -16059,16 +16059,16 @@ importers:
         version: link:../mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluid-tools/build-infrastructure':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -16140,7 +16140,7 @@ importers:
         version: 2.4.5
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       jest-environment-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(debug@4.4.3)(supports-color@10.2.2)(typescript@5.4.5)
@@ -16223,13 +16223,13 @@ importers:
         version: link:../../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/devtools-previous':
         specifier: npm:@fluidframework/devtools@2.114.0
         version: '@fluidframework/devtools@2.114.0(supports-color@10.2.2)'
@@ -16329,7 +16329,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../common/container-definitions
@@ -16549,13 +16549,13 @@ importers:
         version: link:../../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/devtools-core-previous':
         specifier: npm:@fluidframework/devtools-core@2.114.0
         version: '@fluidframework/devtools-core@2.114.0(supports-color@10.2.2)'
@@ -16715,7 +16715,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -16881,13 +16881,13 @@ importers:
         version: link:../../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -17053,13 +17053,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -17126,13 +17126,13 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -17277,13 +17277,13 @@ importers:
         version: 2.4.5
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -17344,13 +17344,13 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -17429,13 +17429,13 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -17526,13 +17526,13 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
@@ -18791,17 +18791,17 @@ packages:
   '@fluid-tools/benchmark@0.59.0':
     resolution: {integrity: sha512-5lJOp06fK2KqxMens05fn0nqnMmpzFDtfjmhEVV+WUxfYEFF8mvmBqf2JG2vEdF/Zj4/JGr/7EODyGaDjy75mw==}
 
-  '@fluid-tools/build-cli@0.66.0':
-    resolution: {integrity: sha512-42tVmFBxpHk2z/PWJbpw9HoeaIEu4ybyO4t6rPpry5CGUYh/sopnSFSDTCjklIbDbopahOAoc92u5iDHk3uIhg==}
+  '@fluid-tools/build-cli@0.67.0':
+    resolution: {integrity: sha512-OPT9UnnX1hX2jaVq00q/5r+K//4oscAj4cc7eWoI9rDVn1vJpZjhA90KIhfKwJwJyyARuXGJC0eLOHNYu9NLyw==}
     engines: {node: '>=22.22.2'}
     hasBin: true
 
-  '@fluid-tools/build-infrastructure@0.66.0':
-    resolution: {integrity: sha512-B0sN5xVVNs9A9HtR3HiY/U62Qi3byf2vwZYDQxxOd8MasABnFQKVgVfNcMJBtl4s2G9p0HaLTLJdDbbEgJ2QFw==}
+  '@fluid-tools/build-infrastructure@0.67.0':
+    resolution: {integrity: sha512-UQKzwAXsc8nawp72C8mJwrv7aziunRLmbC0rGVx+tgBYQJIGxPN75xG8W/ZcUcIQu7JYtrwsq2k1Tt55JyJsYA==}
     hasBin: true
 
-  '@fluid-tools/version-tools@0.66.0':
-    resolution: {integrity: sha512-EDse/pDRX205GQiziIDuIkYrdL5By3kPxJ62+/cRjJL7dSnbD1sNowo82kB5duT0FlbXORZrzVrLzTzn4llS/w==}
+  '@fluid-tools/version-tools@0.67.0':
+    resolution: {integrity: sha512-mi/L9UV6rs8lCPSw0rnlcO8OOt+khHtuRZxQbqLyYugRNnyxT40YWMuUfY4oDM2xKZpaedG1xISamogb7dpcLg==}
     engines: {node: '>=22.22.2'}
     hasBin: true
 
@@ -18830,8 +18830,8 @@ packages:
     resolution: {integrity: sha512-1LU/2uyCeMxf63z5rhFOFEBvFyBogZ7ZXwzXLxyBhSgq/fGiq8PLjBW7uX++r0LcVCdaWyopf7w060eJpANYdg==}
     hasBin: true
 
-  '@fluidframework/build-tools@0.66.0':
-    resolution: {integrity: sha512-YHsXoCHruMO5BmWFdA2NQlkzZqRKt3PoVhRTLjhJmph8r68sIt3WYpniqfVdQNxrb1lRCDo7VNPbVeRcftC0Yg==}
+  '@fluidframework/build-tools@0.67.0':
+    resolution: {integrity: sha512-kHpRUlybNp56nmj/iXiXUTFf2f9M+0xhuP6dQEx4NoRfzOVmGMh8C2/A0CP68lFraLiUpyKEhcLFIIqyHc7pSg==}
     engines: {node: '>=22.22.2'}
     hasBin: true
 
@@ -30475,12 +30475,12 @@ snapshots:
       easy-table: 1.2.0
       mocha: 11.7.5
 
-  '@fluid-tools/build-cli@0.66.0(@types/node@22.19.17)(supports-color@10.2.2)':
+  '@fluid-tools/build-cli@0.67.0(@types/node@22.19.17)(supports-color@10.2.2)':
     dependencies:
       '@andrewbranch/untar.js': 1.0.3
-      '@fluid-tools/build-infrastructure': 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
-      '@fluid-tools/version-tools': 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
-      '@fluidframework/build-tools': 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+      '@fluid-tools/build-infrastructure': 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
+      '@fluid-tools/version-tools': 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
+      '@fluidframework/build-tools': 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@github/copilot-sdk': 0.2.2
       '@inquirer/prompts': 8.0.2(@types/node@22.19.17)
       '@microsoft/api-extractor': 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
@@ -30546,12 +30546,12 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluid-tools/build-cli@0.66.0(@types/node@22.19.17)(supports-color@8.1.1)':
+  '@fluid-tools/build-cli@0.67.0(@types/node@22.19.17)(supports-color@8.1.1)':
     dependencies:
       '@andrewbranch/untar.js': 1.0.3
-      '@fluid-tools/build-infrastructure': 0.66.0(@types/node@22.19.17)(supports-color@8.1.1)
-      '@fluid-tools/version-tools': 0.66.0(@types/node@22.19.17)(supports-color@8.1.1)
-      '@fluidframework/build-tools': 0.66.0(@types/node@22.19.17)(supports-color@8.1.1)
+      '@fluid-tools/build-infrastructure': 0.67.0(@types/node@22.19.17)(supports-color@8.1.1)
+      '@fluid-tools/version-tools': 0.67.0(@types/node@22.19.17)(supports-color@8.1.1)
+      '@fluidframework/build-tools': 0.67.0(@types/node@22.19.17)(supports-color@8.1.1)
       '@github/copilot-sdk': 0.2.2
       '@inquirer/prompts': 8.0.2(@types/node@22.19.17)
       '@microsoft/api-extractor': 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
@@ -30617,9 +30617,9 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluid-tools/build-infrastructure@0.66.0(@types/node@22.19.17)(supports-color@10.2.2)':
+  '@fluid-tools/build-infrastructure@0.67.0(@types/node@22.19.17)(supports-color@10.2.2)':
     dependencies:
-      '@fluid-tools/version-tools': 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+      '@fluid-tools/version-tools': 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@manypkg/get-packages': 2.2.2
       '@oclif/core': 4.10.5
       detect-indent: 6.1.0
@@ -30643,9 +30643,9 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluid-tools/build-infrastructure@0.66.0(@types/node@22.19.17)(supports-color@8.1.1)':
+  '@fluid-tools/build-infrastructure@0.67.0(@types/node@22.19.17)(supports-color@8.1.1)':
     dependencies:
-      '@fluid-tools/version-tools': 0.66.0(@types/node@22.19.17)(supports-color@8.1.1)
+      '@fluid-tools/version-tools': 0.67.0(@types/node@22.19.17)(supports-color@8.1.1)
       '@manypkg/get-packages': 2.2.2
       '@oclif/core': 4.10.5
       detect-indent: 6.1.0
@@ -30669,7 +30669,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluid-tools/version-tools@0.66.0(@types/node@22.19.17)(supports-color@10.2.2)':
+  '@fluid-tools/version-tools@0.67.0(@types/node@22.19.17)(supports-color@10.2.2)':
     dependencies:
       '@oclif/core': 4.10.5
       '@oclif/plugin-autocomplete': 3.2.45(supports-color@10.2.2)
@@ -30685,7 +30685,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluid-tools/version-tools@0.66.0(@types/node@22.19.17)(supports-color@8.1.1)':
+  '@fluid-tools/version-tools@0.67.0(@types/node@22.19.17)(supports-color@8.1.1)':
     dependencies:
       '@oclif/core': 4.10.5
       '@oclif/plugin-autocomplete': 3.2.45(supports-color@8.1.1)
@@ -30816,9 +30816,9 @@ snapshots:
 
   '@fluidframework/build-common@2.0.3': {}
 
-  '@fluidframework/build-tools@0.66.0(@types/node@22.19.17)(supports-color@10.2.2)':
+  '@fluidframework/build-tools@0.67.0(@types/node@22.19.17)(supports-color@10.2.2)':
     dependencies:
-      '@fluid-tools/version-tools': 0.66.0(@types/node@22.19.17)(supports-color@10.2.2)
+      '@fluid-tools/version-tools': 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
       '@manypkg/get-packages': 2.2.2
       async: 3.2.6
       date-fns: 3.6.0
@@ -30852,9 +30852,9 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/build-tools@0.66.0(@types/node@22.19.17)(supports-color@8.1.1)':
+  '@fluidframework/build-tools@0.67.0(@types/node@22.19.17)(supports-color@8.1.1)':
     dependencies:
-      '@fluid-tools/version-tools': 0.66.0(@types/node@22.19.17)(supports-color@8.1.1)
+      '@fluid-tools/version-tools': 0.67.0(@types/node@22.19.17)(supports-color@8.1.1)
       '@manypkg/get-packages': 2.2.2
       async: 3.2.6
       date-fns: 3.6.0

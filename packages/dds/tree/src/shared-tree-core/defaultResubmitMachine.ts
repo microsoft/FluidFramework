@@ -37,6 +37,12 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 		 * commits are applied and automatically rebased).
 		 */
 		private readonly enricher: ChangeEnricher<TChange>,
+		/**
+		 * Whether to force the application of commits that have been rebased and enriched to a side checkout.
+		 * This is useful to reduce the likelihood of an invalid commit being generated
+		 * (either due to the original commits being invalid or because of an error in the rebase or enrichment logic).
+		 */
+		private readonly forceValidation: boolean,
 	) {}
 
 	public onCommitSubmitted(commit: GraphCommit<TChange>): void {
@@ -95,6 +101,7 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 		const enriched = this.enricher.enrich(
 			startingState,
 			newCommits.slice(0, staleChanges.length),
+			this.forceValidation,
 		);
 		for (const [index, { pending, newCommit }] of staleChanges.entries()) {
 			const enrichedChange = enriched[index];

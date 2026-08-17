@@ -36,10 +36,10 @@ dedupePeers: true
 catalogs:
   # Build-tools packages
   buildTools:
-    "@fluid-tools/build-cli": ^0.66.0
-    "@fluid-tools/build-infrastructure": ^0.66.0
-    "@fluid-tools/version-tools": ^0.66.0
-    "@fluidframework/build-tools": ^0.66.0
+    "@fluid-tools/build-cli": ^0.67.0
+    "@fluid-tools/build-infrastructure": ^0.67.0
+    "@fluid-tools/version-tools": ^0.67.0
+    "@fluidframework/build-tools": ^0.67.0
   # eslint and related packages
   eslint:
     "@fluidframework/eslint-config-fluid": "^14.0.0"
@@ -130,7 +130,7 @@ overrides:
   diff@>=7 <8: ^8.0.3
   diff@>=8 <9: ^8.0.3
 
-  # @typescript-eslint/eslint-utils overrides
+  # @typescript-eslint/utils overrides
   #   As of 2026-08-14 @rushstack/eslint-plugin (v0.23.2), does not have a version using v8.58 or later.
   "@rushstack/eslint-plugin>@typescript-eslint/utils@<8.58.0": ^8.58.0
   #   As of 2026-08-14 eslint-plugin-tsdoc (v0.5.2), does not have a version using v8.58 or later.
