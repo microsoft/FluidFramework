@@ -1992,6 +1992,8 @@ export interface SharedTreeOptions extends SharedTreeOptionsBeta, Partial<CodecW
     readonly enableSharedBranches?: boolean;
     readonly retainHistory?: boolean;
     shouldEncodeIncrementally?: IncrementalEncodingPolicy;
+    readonly validateCommitsOnFirstSubmission?: boolean;
+    readonly validateRebasedCommitsBeforeResubmission?: boolean;
 }
 
 // @beta @input
