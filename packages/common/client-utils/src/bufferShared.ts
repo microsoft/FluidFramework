@@ -18,13 +18,17 @@ export function ArrayBufferLikeToArrayBuffer(buffer: ArrayBufferLike): ArrayBuff
 	if (buffer instanceof ArrayBuffer) {
 		return buffer;
 	}
+	// Use .slice to get `ArrayBuffer` backing that `Blob` requires.
+	// Note that `buffer.slice` preserves the underlying buffer type, so we
+	// need to use .slice on a `Uint8Array` to ensure we get an `ArrayBuffer`.
 	// eslint-disable-next-line unicorn/prefer-spread -- spread is not the same as slice for `Uint8Array`
 	return new Uint8Array(buffer).slice().buffer;
 }
 
 /**
  * Distills a `Uint8Array` array to an `ArrayBuffer | SharedArrayBuffer` copying
- * data as needed per the array's `byteOffset` and `byteLength`.
+ * data as needed per the array's `byteOffset` and `byteLength` to have a full
+ * buffer (no offset and entire length).
  *
  * @param array - Array to extract buffer from.
  *
@@ -71,6 +75,10 @@ export function AnyUint8ArrayToArrayBuffer(array: Uint8Array): ArrayBuffer {
 	}
 	// In TypeScript 5.9 or higher, `ArrayBufferLikeToArrayBuffer` can be removed.
 	// slice is used to ensure underlying buffer is ArrayBuffer.
+	// Uint8ArrayToArrayBufferLike is used to ensure that if underlying buffer was
+	// already ArrayBuffer, then slice isn't a shallow clone preserving shorter length.
+	// This is effectively `array.slice().buffer` but with the added protection
+	// if underlying implementation is changed (optimized) to not duplicate.
 	// eslint-disable-next-line unicorn/prefer-spread -- spread is not the same as slice for `Uint8Array`
 	return ArrayBufferLikeToArrayBuffer(Uint8ArrayToArrayBufferLike(array.slice()));
 }
