@@ -32,14 +32,13 @@ import {
 const defaultTinyliciousPort = 7070;
 
 export class TinyliciousResourcesFactory implements IResourcesFactory<TinyliciousResources> {
-
 	public constructor(
-        /**
-         * Optional port for Tinylicious to listen on.
-         * @remarks Takes precedence over the `PORT` environment variable and the default port.
-         */
-        private readonly port?: number
-    ) {}
+		/**
+		 * Optional port for Tinylicious to listen on.
+		 * @remarks Takes precedence over the `PORT` environment variable and the default port.
+		 */
+		private readonly port?: number,
+	) {}
 
 	public async create(
 		config: Provider,

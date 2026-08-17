@@ -74,7 +74,9 @@ function validatePort(rawPort: string | undefined): number {
 	const port = rawPort !== undefined && /^\d+$/u.test(rawPort) ? Number(rawPort) : Number.NaN;
 	if (!Number.isInteger(port) || port < 0 || port > maxPort) {
 		throw new Error(
-			`Invalid --port value "${rawPort ?? ""}"; expected an integer between 0 and ${maxPort}.`,
+			`Invalid --port value "${
+				rawPort ?? ""
+			}"; expected an integer between 0 and ${maxPort}.`,
 		);
 	}
 	return port;
