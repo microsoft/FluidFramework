@@ -5,8 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import {
+	validateAssertionError,
+	validateUsageError,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	type FieldKey,
@@ -71,8 +73,6 @@ describe("object-forest", () => {
 				`Found unexpected cursors when editing with the following annotations: ["named","fork: named","namedFork",null,"fork: undefined"]`,
 			),
 		);
-		visitor.exitField(rootFieldKey);
-		visitor.free();
 	});
 
 	it("additional asserts validates schema of initial content", () => {

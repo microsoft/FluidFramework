@@ -288,7 +288,7 @@ As a general rule, links between documents on the site should:
 
 ##### Images
 
-When adding image assets for use in the website, please follow the instructions outlined [here](https://github.com/microsoft/FluidFramework/wiki/Uploading-images-for-the-website-to-Azure-blob-storage).
+When adding image assets for use in the website, please follow the [image upload instructions](../docs/content/Contributing/Working-with-the-Website/Uploading-Images-for-the-Website.md).
 Namely, avoid adding binary files like images to the GitHub repo.
 Instead, upload them to our Azure blob storage, and reference by URL.
 E.g., <https://storage.fluidframework.com/static/images/website/brainstorm-example.png>

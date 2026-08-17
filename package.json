@@ -27,7 +27,7 @@
 		"build:compile:esm:packages": "fluid-build --task compile:esm:packages --worker",
 		"build:docs": "fluid-build --task build:docs",
 		"build:eslint": "fluid-build --task eslint",
-		"build:fast": "fluid-build --task build --worker",
+		"build:fast": "fluid-build --task build",
 		"build:full": "fluid-build --task full",
 		"build:full:compile": "fluid-build --task compile --task webpack",
 		"build:gendocs": "concurrently npm:build:gendocs:client npm:build:gendocs:server && cd website && npm run build",
