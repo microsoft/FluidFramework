@@ -160,7 +160,14 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Interface_LogLevelConst": {
+				"backCompat": false
+			},
+			"Variable_LogLevel": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }
