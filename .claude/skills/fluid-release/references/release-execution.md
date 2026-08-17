@@ -55,7 +55,7 @@ Follow the tool's interactive prompts. The user will need to queue the ADO build
 
 **Autonomous mode:** After running `flub release`, report:
 
-> **Action required:** Queue the release build in ADO (choose the "release" option). After the build completes, verify the release appears in GitHub releases and npm, then re-invoke for the patch bump.
+> **Action required:** Queue the release build in ADO (choose the "release" option). After the build completes, a downstream publishing pipeline will publish the packages. Verify the release appears in GitHub releases and on npm, then re-invoke for the patch bump.
 
 ### Verify the release
 

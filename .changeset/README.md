@@ -70,7 +70,7 @@ The sections are configured in [fluidBuild.config.cjs](https://github.com/micros
 > Client releases with breaking _legacy_ changes should use the `legacy` section, not `breaking`. The `breaking` section is reserved for major releases, which practically means server.
 
 > [!NOTE]
-> For deprecations, follow the [deprecation process](https://github.com/microsoft/FluidFramework/wiki/API-Deprecation).
+> For deprecations, follow the [deprecation process](../docs/content/Contributing/API-Deprecation.md).
 > Ensure that both the deprecation changeset and the removal changeset include a link to the GitHub tracking issue, when one exists.
 
 
@@ -113,6 +113,8 @@ This mostly applies to `fluid-framework` which re-exports most of the customer-f
 So **most changesets for `@fluidframework/tree` should list both `"@fluidframework/tree"` and `"fluid-framework"`**.
 
 ## Formatting
+
+Changesets are Markdown documents, and unless otherwise stated below they should adhere to our [Markdown Best Practices](../docs/content/Guidelines/Documentation-Guidelines/Markdown-Best-Practices.md).
 
 - Each changeset needs at least two parts: a summary line (the heading) and a body paragraph.
   The summary can stand alone for simple changes, but a body is recommended.
@@ -219,7 +221,7 @@ Any change that should be communicated to customers or partners should have a ch
 ## More information
 
 - [Official changesets documentation](https://github.com/changesets/changesets)
-- [Changesets FAQ](https://github.com/microsoft/FluidFramework/wiki/Changesets-FAQ)
+- [Changesets FAQ](../docs/content/Contributing/Breaking-vs-Non-Breaking-Changes/Changesets-FAQ.md)
 - For questions, contact @tylerbutler
 
 ## Updating changelogs from changesets

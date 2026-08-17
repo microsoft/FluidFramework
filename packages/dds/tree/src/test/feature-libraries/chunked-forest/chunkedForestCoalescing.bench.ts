@@ -43,7 +43,7 @@ import {
 	numberSchema,
 	stringSchema,
 } from "../../../simple-tree/index.js";
-import { TextAsTree } from "../../../text/index.js";
+import { PlainText } from "../../../text/index.js";
 import { brand } from "../../../util/index.js";
 import { configureBenchmarkHooks } from "../../utils.js";
 
@@ -266,9 +266,9 @@ function forestFromView(view: object): IForestSubscription {
 /** Types `size` characters one at a time into the middle of an empty chunked-forest document. */
 function typeIntoChunkedDocument(size: number): IForestSubscription {
 	const view = createIndependentTreeAlpha({ forest: ForestTypeOptimized }).viewWith(
-		new TreeViewConfiguration({ schema: TextAsTree.Tree }),
+		new TreeViewConfiguration({ schema: PlainText.Tree }),
 	);
-	view.initialize(TextAsTree.Tree.fromString(""));
+	view.initialize(PlainText.Tree.fromString(""));
 	const root = view.root;
 	for (let i = 0; i < size; i++) {
 		root.insertAt(Math.floor(root.characterCount() / 2), i % 2 === 0 ? "a" : "b");

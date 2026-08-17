@@ -7,6 +7,7 @@ import type { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { NetworkError } from "@fluidframework/server-services-client";
 import {
 	runWithRetry,
+	shouldRetryNetworkError,
 	type IStorageNameRetriever,
 	type IRevokedTokenChecker,
 	type IDocument,
@@ -344,7 +345,7 @@ function validateAlfredDocumentResponse(
 			typeof document.scheduledDeletionTime !== "string") ||
 		(document.isEphemeralContainer !== undefined &&
 			typeof document.isEphemeralContainer !== "boolean") ||
-		(document.storageName !== undefined && typeof document.storageName !== "string")
+		(document.storageName != null && typeof document.storageName !== "string")
 	) {
 		const error = new NetworkError(502, "Invalid document response from Alfred.");
 		logOwnershipOutcome(tenantId, documentId, operation, routeType, "dependencyError", error);
@@ -366,6 +367,8 @@ export async function validateInitialSummaryUpload({
 			3,
 			1000,
 			getLumberBaseProperties(documentId, tenantId),
+			undefined,
+			shouldRetryNetworkError,
 		);
 	} catch (error) {
 		if (error instanceof NetworkError && error.code === 404) {
@@ -410,6 +413,8 @@ export async function validateSummaryDocument({
 			3,
 			1000,
 			getLumberBaseProperties(documentId, tenantId),
+			undefined,
+			shouldRetryNetworkError,
 		);
 	} catch (error) {
 		if (error instanceof NetworkError && error.code === 404) {

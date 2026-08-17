@@ -6,14 +6,11 @@
  (   )      __| |___) )  ) \__/ (    _| |__  / /__/ /       \:.\ \  \ \/__\::\__/\
   \_/       \________/   \______/   /_____( (______/         \__\/\__\/\________\/
 
-GET STARTED: Run one of the commands below:
-  start                  Not sure? An AI assistant picks the right agent for you
-  dev                    Launch an agent for feature work/testing/debugging
-  claude                 Launch an agent for general purpose work
-
-Other agent aliases:
-  copilot                Launch GitHub Copilot via agency
-  oce                    Launch Copilot for on-call engineer workflows
+COPILOT COMMANDS:
+  start                  Let an assistant choose the right workflow
+  dev                    Launch Copilot CLI configured for FF development
+  copilot                Launch Copilot CLI without an FF-specific profile
+  oce                    Launch Copilot CLI for on-call engineer workflows
 
 Custom MCP servers:
   See GETTING_STARTED.md for how to launch agents with your own MCP servers.
@@ -24,4 +21,4 @@ Other commands:
   pnpm test              Run tests
   pnpm fluid-build .     Build only the current package and its dependencies
 
-More information on this codespace: https://github.com/microsoft/FluidFramework/wiki/AI%E2%80%90enabled-Codespace
+More information on this codespace: https://github.com/microsoft/FluidFramework/blob/main/docs/content/Development-Environment/AI-enabled-Codespace.md

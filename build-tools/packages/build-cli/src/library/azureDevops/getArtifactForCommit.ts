@@ -46,7 +46,7 @@ function buildMatches(b: Build, match: BuildMatch): boolean {
 }
 
 /**
- * Failure variants shared by {@link FindBuildIdResult} and {@link GetArtifactForCommitResult}.
+ * Failure variants shared by {@link FindBuildResult} and {@link GetArtifactForCommitResult}.
  *
  * - `no-build`: no candidate builds matched the SHA — too stale, or never queued.
  * - `in-progress`: at least one candidate is actively running (NotStarted / InProgress / Postponed) and none have succeeded yet. Retrying later may help.
@@ -60,10 +60,12 @@ export type ArtifactLookupFailure =
 	| { kind: "no-id" };
 
 /**
- * Outcome of looking up a build for a {@link BuildMatch}. `completed` carries
- * the usable build's id; the failure variants are {@link ArtifactLookupFailure}.
+ * Outcome of looking up a build for a {@link BuildMatch}. `completed` carries the id of the usable
+ * build and the commit it checked out; the failure variants are {@link ArtifactLookupFailure}.
  */
-export type FindBuildIdResult = { kind: "completed"; buildId: number } | ArtifactLookupFailure;
+type FindBuildResult =
+	| { kind: "completed"; buildId: number; sourceVersion: string | undefined }
+	| ArtifactLookupFailure;
 
 /**
  * Find a usable build matching `match` — one with an id, status Completed,
@@ -71,7 +73,7 @@ export type FindBuildIdResult = { kind: "completed"; buildId: number } | Artifac
  * via re-runs/retries), not just the first. Prioritizes "still running" over
  * "all failed" in the failure cases since retrying later may help.
  */
-function findBuildId(builds: Build[], match: BuildMatch): FindBuildIdResult {
+function findBuild(builds: Build[], match: BuildMatch): FindBuildResult {
 	const candidates = builds.filter((b) => buildMatches(b, match));
 
 	if (candidates.length === 0) {
@@ -85,7 +87,7 @@ function findBuildId(builds: Build[], match: BuildMatch): FindBuildIdResult {
 			b.result === BuildResult.Succeeded,
 	);
 	if (usable !== undefined) {
-		return { kind: "completed", buildId: usable.id };
+		return { kind: "completed", buildId: usable.id, sourceVersion: usable.sourceVersion };
 	}
 
 	// Report the most actionable failure state. Actively-running gets priority
@@ -126,7 +128,16 @@ export interface GetArtifactForCommitArgs {
  * etc.) still propagate as thrown exceptions.
  */
 export type GetArtifactForCommitResult =
-	| { kind: "completed"; contents: ArtifactContents }
+	| {
+			kind: "completed";
+			contents: ArtifactContents;
+			/**
+			 * The `sourceVersion` of the build the artifact came from — the commit the build
+			 * actually checked out. For PR builds this is the ephemeral test-merge commit
+			 * (`refs/pull/<n>/merge`), *not* the PR HEAD.
+			 */
+			sourceVersion: string | undefined;
+	  }
 	| ArtifactLookupFailure;
 
 /**
@@ -147,13 +158,13 @@ export async function getArtifactForCommit(
 		definitions: [definitionId],
 		maxBuildsPerDefinition: recentBuildsToFetch,
 	});
-	const lookup = findBuildId(builds, match);
+	const lookup = findBuild(builds, match);
 	if (lookup.kind !== "completed") {
 		return lookup;
 	}
 
 	const contents = await downloadArtifact(adoApi, project, lookup.buildId, artifactName);
-	return { kind: "completed", contents };
+	return { kind: "completed", contents, sourceVersion: lookup.sourceVersion };
 }
 
 /**

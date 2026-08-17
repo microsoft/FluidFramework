@@ -35,7 +35,7 @@ import {
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import {
 	FlushMode,
-	MinimumVersionForCollab,
+	OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type {
@@ -878,8 +878,10 @@ function createCheckoutWithContent(
 	const fieldCursor = normalizeNewFieldContent(content.initialTree);
 	const schema = new TreeStoredSchemaRepository(content.schema);
 
+	const logger = createMockLoggerExt();
+	const breaker = new Breakable("createCheckoutWithContent", logger);
 	const forest = buildConfiguredForest(
-		new Breakable("buildTestForest"),
+		breaker,
 		args?.forestType ?? ForestTypeReference,
 		schema,
 		testIdCompressor,
@@ -887,7 +889,6 @@ function createCheckoutWithContent(
 	);
 	initializeForest(forest, fieldCursor);
 
-	const logger = createMockLoggerExt();
 	const checkout = createTreeCheckout(
 		testIdCompressor,
 		mintRevisionTag,
@@ -896,7 +897,6 @@ function createCheckoutWithContent(
 			...args,
 			forest,
 			schema,
-			logger,
 		},
 	);
 	return { checkout, logger };
@@ -935,9 +935,10 @@ export function buildTestForest(options: {
 	schema?: TreeStoredSchemaRepository;
 	additionalAsserts: boolean;
 	roots?: MapTree;
+	breaker?: Breakable;
 }): IEditableForest {
 	return new ObjectForest(
-		new Breakable("buildTestForest"),
+		options.breaker ?? new Breakable("buildTestForest"),
 		options.schema,
 		undefined,
 		options.additionalAsserts,
@@ -961,6 +962,8 @@ const sf = new SchemaFactory("com.fluidframework.json");
 
 export const NumberArray = sf.array("array", sf.number);
 export const StringArray = sf.array("array", sf.string);
+export const StringAndNumberArray = sf.array("array", [sf.string, sf.number]);
+export const StringAndBoolArray = sf.array("array", [sf.string, sf.boolean]);
 
 export const IdentifierSchema = sf.object("identifier-object", {
 	identifier: sf.identifier,
@@ -1470,7 +1473,7 @@ export function getView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
 	options: ForestOptions & {
 		idCompressor?: IIdCompressor | undefined;
-		minVersionForCollab?: MinimumVersionForCollab;
+		minVersionForCollab?: OldestSupportedClientVersion;
 	} = {},
 ): SchematizingSimpleTreeView<TSchema> {
 	// Default to v2_80 to support noChange constraints in table operations

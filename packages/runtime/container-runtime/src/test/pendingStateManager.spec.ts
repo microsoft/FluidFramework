@@ -983,6 +983,29 @@ describe("Pending State Manager", () => {
 			) as unknown as PendingStateManager_WithPrivates;
 		}
 
+		describe("getMostRecentPendingBatchId", () => {
+			it("ignores stashed initial messages until they are applied", () => {
+				const pendingStateManager = createPendingStateManager(forInitialMessages);
+				assert.equal(pendingStateManager.getMostRecentPendingBatchId(), undefined);
+			});
+
+			it("returns the explicit id from the start of the most recently flushed multi-op batch", () => {
+				const pendingStateManager = createPendingStateManager(undefined);
+				pendingStateManager.onFlushBatch([forFlushedMessages[0]], 1, false);
+				assert.equal(pendingStateManager.getMostRecentPendingBatchId(), "CLIENT_ID_[1]");
+				pendingStateManager.onFlushBatch(
+					withBatchMetadata(
+						forFlushedMessages.map((message) => ({ ...message })),
+						"originalClient_[9]",
+					),
+					2,
+					false,
+				);
+
+				assert.equal(pendingStateManager.getMostRecentPendingBatchId(), "originalClient_[9]");
+			});
+		});
+
 		it("no pending or initial messages", () => {
 			const pendingStateManager = createPendingStateManager(undefined);
 			assert.strictEqual(

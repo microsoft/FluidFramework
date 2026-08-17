@@ -6,10 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
-import {
-	cleanupEphemeralService,
-	startEphemeralService,
-} from "@fluidframework/local-driver/internal";
+import { startEphemeralService } from "@fluidframework/local-driver/internal";
 import { defineDataStore } from "@fluidframework/shared-object-base/internal";
 
 import { SchematizingSimpleTreeView, Tree } from "../shared-tree/index.js";
@@ -23,10 +20,6 @@ import { instantiateTreeFirstTime, defineTreeDataStore } from "../treeDataStore.
 import { SharedTree, SharedTreeAlpha } from "../treeFactory.js";
 
 describe("treeDataStore", () => {
-	afterEach(async () => {
-		await cleanupEphemeralService();
-	});
-
 	// See also examples/utils/import-testing/src/test/apiExamples.spec.ts for examples which are more public facing and have imports not allowed in this package.
 
 	it("detached example", async () => {
@@ -65,13 +58,12 @@ describe("treeDataStore", () => {
 			initializer: () => 1,
 		});
 
-		const client = startEphemeralService().newClient({ minVersionForCollaboration: "2.20.0" });
+		const client = startEphemeralService().newClient({ oldestSupportedClient: "2.20.0" });
 
 		// Someday it would be nice to support this pattern, but that is longer term.
 		// const container1 = await service.attachContainer(createContainer(myFactory));
 
-		const detachedContainer1 = await client.createContainer(myFactory);
-		const container1 = await detachedContainer1.attach();
+		const container1 = await client.createAttachedContainer(myFactory);
 
 		assert.equal(container1.data.root, 1);
 
@@ -101,8 +93,7 @@ describe("treeDataStore", () => {
 				initializer: () => 1,
 			});
 
-			const detachedContainer = await client.createContainer(myFactory);
-			const container = await detachedContainer.attach();
+			const container = await client.createAttachedContainer(myFactory);
 			id = container.id;
 		}
 
@@ -193,8 +184,7 @@ describe("treeDataStore", () => {
 		const client = startEphemeralService().defaultClient;
 
 		// Create a container with a MyTree as the data
-		const detachedContainer = await client.createContainer(MyTree);
-		const container1 = await detachedContainer.attach();
+		const container1 = await client.createAttachedContainer(MyTree);
 
 		// Create a second MyTree in the container, and put a handle to it in the root data.
 		{
