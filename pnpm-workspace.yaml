@@ -42,7 +42,7 @@ catalogs:
     "@fluidframework/build-tools": ^0.66.0
   # eslint and related packages
   eslint:
-    "@fluidframework/eslint-config-fluid": "^13.0.0"
+    "@fluidframework/eslint-config-fluid": "^14.0.0"
     "eslint": "~9.39.1"
     "eslint-config-prettier": "~10.1.8"
   # Type definitions
@@ -104,6 +104,9 @@ overrides:
   # "@fluid-tools/version-tools": "link:./build-tools/packages/version-tools"
   # "@fluidframework/build-tools": "link:./build-tools/packages/build-tools"
 
+  # Uncomment line below to use locally built eslint-config-fluid package while updating the packages together.
+  # "@fluidframework/eslint-config-fluid": "link:./common/build/eslint-config-fluid"
+
   # node types are forced to a consistent version to avoid conflicts between globals.
   "@types/node": catalog:types
 
@@ -126,6 +129,12 @@ overrides:
   diff@>=5 <6: ^5.2.2
   diff@>=7 <8: ^8.0.3
   diff@>=8 <9: ^8.0.3
+
+  # @typescript-eslint/eslint-utils overrides
+  #   As of 2026-08-14 @rushstack/eslint-plugin (v0.23.2), does not have a version using v8.58 or later.
+  "@rushstack/eslint-plugin>@typescript-eslint/utils@<8.58.0": ^8.58.0
+  #   As of 2026-08-14 eslint-plugin-tsdoc (v0.5.2), does not have a version using v8.58 or later.
+  "eslint-plugin-tsdoc>@typescript-eslint/utils@<8.58.0": ^8.58.0
 
   # express is overridden to ^4.22.1 to resolve a known vulnerability in express 4.21.2.
   express@>=4 <5: ^4.22.1
