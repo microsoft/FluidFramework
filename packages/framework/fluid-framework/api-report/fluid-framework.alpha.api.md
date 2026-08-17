@@ -1947,7 +1947,7 @@ export interface ServiceClient {
 
 // @alpha @input
 export interface ServiceOptions {
-    readonly oldestSupportedClient?: OldestSupportedServiceClientVersion;
+    readonly oldestSupportedClient: OldestSupportedServiceClientVersion;
 }
 
 // @alpha @sealed
