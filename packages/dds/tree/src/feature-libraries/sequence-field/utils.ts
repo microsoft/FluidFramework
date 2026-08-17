@@ -278,7 +278,7 @@ export function compareCellPositionsUsingTombstones(
 			//
 			// The same scenario can arise in the context of compose (just consider composing `old'` and `new'` from
 			// the examples above) with the same resolution.
-			assert(false, 0x8a2 /* Invalid cell ordering scenario */);
+			fail(0x8a2 /* Invalid cell ordering scenario */);
 		}
 
 		// The absence of metadata for a cell with a defined revision means that the cell is from a revision that

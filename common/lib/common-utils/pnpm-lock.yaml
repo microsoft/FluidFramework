@@ -29,6 +29,8 @@ overrides:
   simple-git: ^3.36.0
   sharp: ^0.33.2
   tar: ^7.5.11
+  tar-fs>bare-fs: '-'
+  tar-fs>bare-path: '-'
   minimatch@>=3 <4: ^3.1.5
   minimatch@>=5 <6: ^5.1.9
   minimatch@>=6 <7: ^6.2.3
@@ -2037,33 +2039,6 @@ packages:
 
   bare-events@2.5.4:
     resolution: {integrity: sha512-+gFfDkR8pj4/TrWCGUGWmJIkBwuxPS5F+a5yWjOHQt2hHvNZd5YLzadjmDUtFmMM4y429bnKLa8bYBMHcYdnQA==}
-
-  bare-fs@4.1.4:
-    resolution: {integrity: sha512-r8+26Voz8dGX3AYpJdFb1ZPaUSM8XOLCZvy+YGpRTmwPHIxA7Z3Jov/oMPtV7hfRQbOnH8qGlLTzQAbgtdNN0Q==}
-    engines: {bare: '>=1.16.0'}
-    peerDependencies:
-      bare-buffer: '*'
-    peerDependenciesMeta:
-      bare-buffer:
-        optional: true
-
-  bare-os@3.6.1:
-    resolution: {integrity: sha512-uaIjxokhFidJP+bmmvKSgiMzj2sV5GPHaZVAIktcxcpCyBFFWO+YlikVAdhmUo2vYFvFhOXIAlldqV29L8126g==}
-    engines: {bare: '>=1.14.0'}
-
-  bare-path@3.0.0:
-    resolution: {integrity: sha512-tyfW2cQcB5NN8Saijrhqn0Zh7AnFNsnczRcuWODH0eYAXBsJ5gVxAUuNr7tsHSC6IZ77cA0SitzT+s47kot8Mw==}
-
-  bare-stream@2.6.5:
-    resolution: {integrity: sha512-jSmxKJNJmHySi6hC42zlZnq00rga4jjxcgNZjY9N5WlOe/iOoGRtdwGsHzQv2RlH2KOYMwGUXhf2zXd32BA9RA==}
-    peerDependencies:
-      bare-buffer: '*'
-      bare-events: '*'
-    peerDependenciesMeta:
-      bare-buffer:
-        optional: true
-      bare-events:
-        optional: true
 
   base64-js@1.5.1:
     resolution: {integrity: sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==}
@@ -7333,7 +7308,6 @@ snapshots:
       unbzip2-stream: 1.4.3
       yargs: 17.7.3
     transitivePeerDependencies:
-      - bare-buffer
       - supports-color
 
   '@rtsao/scc@1.1.0':
@@ -7529,7 +7503,6 @@ snapshots:
     dependencies:
       '@types/puppeteer': 7.0.4(supports-color@8.1.1)(typescript@5.4.5)
     transitivePeerDependencies:
-      - bare-buffer
       - bufferutil
       - supports-color
       - typescript
@@ -7573,7 +7546,6 @@ snapshots:
     dependencies:
       puppeteer: 23.6.0(supports-color@8.1.1)(typescript@5.4.5)
     transitivePeerDependencies:
-      - bare-buffer
       - bufferutil
       - supports-color
       - typescript
@@ -8289,28 +8261,6 @@ snapshots:
   balanced-match@4.0.3: {}
 
   bare-events@2.5.4:
-    optional: true
-
-  bare-fs@4.1.4:
-    dependencies:
-      bare-events: 2.5.4
-      bare-path: 3.0.0
-      bare-stream: 2.6.5(bare-events@2.5.4)
-    optional: true
-
-  bare-os@3.6.1:
-    optional: true
-
-  bare-path@3.0.0:
-    dependencies:
-      bare-os: 3.6.1
-    optional: true
-
-  bare-stream@2.6.5(bare-events@2.5.4):
-    dependencies:
-      streamx: 2.22.0
-    optionalDependencies:
-      bare-events: 2.5.4
     optional: true
 
   base64-js@1.5.1: {}
@@ -11636,7 +11586,6 @@ snapshots:
       typed-query-selector: 2.12.0
       ws: 8.21.0
     transitivePeerDependencies:
-      - bare-buffer
       - bufferutil
       - supports-color
       - utf-8-validate
@@ -11650,7 +11599,6 @@ snapshots:
       puppeteer-core: 23.6.0(supports-color@8.1.1)
       typed-query-selector: 2.12.0
     transitivePeerDependencies:
-      - bare-buffer
       - bufferutil
       - supports-color
       - typescript
@@ -12309,11 +12257,6 @@ snapshots:
     dependencies:
       pump: 3.0.1
       tar-stream: 3.1.7
-    optionalDependencies:
-      bare-fs: 4.1.4
-      bare-path: 3.0.0
-    transitivePeerDependencies:
-      - bare-buffer
 
   tar-stream@3.1.7:
     dependencies:

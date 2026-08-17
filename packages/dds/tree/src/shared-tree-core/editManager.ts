@@ -351,8 +351,7 @@ export class EditManager<
 		// Only the last trimmed commit, which is the new trunk base, should remain accessible.
 		for (const commit of trimmedCommits.slice(0, -1)) {
 			Reflect.defineProperty(commit, "change", {
-				get: () =>
-					assert(false, 0xa5e /* Should not access 'change' property of an evicted commit */),
+				get: () => fail(0xa5e /* Should not access 'change' property of an evicted commit */),
 			});
 			Reflect.defineProperty(commit, "revision", {
 				get: () =>
@@ -362,8 +361,7 @@ export class EditManager<
 					),
 			});
 			Reflect.defineProperty(commit, "parent", {
-				get: () =>
-					assert(false, 0xa60 /* Should not access 'parent' property of an evicted commit */),
+				get: () => fail(0xa60 /* Should not access 'parent' property of an evicted commit */),
 			});
 		}
 

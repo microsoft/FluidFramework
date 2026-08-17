@@ -34,7 +34,7 @@ import {
 	isOdspResolvedUrl,
 } from "@fluidframework/odsp-driver/internal";
 import type { OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver-definitions/internal";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions";
+import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -115,15 +115,16 @@ export class OdspClient {
 	/**
 	 * Creates a new detached container instance backed by ODSP.
 	 * @param containerSchema - Container schema for the new container.
-	 * @param minVersionForCollab - Minimum Fluid Framework version required for collaboration, as a
-	 * `MinimumVersionForCollab` SemVer string (e.g. `"2.100.0"`). Prefer the current Fluid Framework
-	 * version so the container opts into the latest defaults.
+	 * @param oldestSupportedClient - Oldest Fluid Framework client version that must be able to
+	 * open and process documents written by this client. Choosing an older version may limit
+	 * available features and write formats. Prefer the current Fluid Framework version so the
+	 * container opts into the latest defaults.
 	 * @returns New detached container instance along with associated services.
 	 */
 	public async createContainer<T extends ContainerSchema>(
 		containerSchema: T,
-		// OdspClient does not support 1.x clients, so we exclude it from the accepted `minVersionForCollab` values.
-		minVersionForCollab: Exclude<MinimumVersionForCollab, `1.${string}`>,
+		// OdspClient does not support 1.x clients, so we exclude them from `oldestSupportedClient`.
+		oldestSupportedClient: Exclude<OldestSupportedClientVersion, `1.${string}`>,
 	): Promise<{
 		container: IOdspFluidContainer<T>;
 		services: IOdspContainerServices;
@@ -132,7 +133,7 @@ export class OdspClient {
 	 * Creates a new detached container instance backed by ODSP.
 	 * @param containerSchema - Container schema for the new container.
 	 * @returns New detached container instance along with associated services.
-	 * @deprecated Pass a `MinimumVersionForCollab` SemVer string (e.g. `"2.0.0"`) as a second argument.
+	 * @deprecated Pass an `OldestSupportedClientVersion` SemVer string (e.g. `"2.0.0"`) as a second argument.
 	 * The previous behavior was equivalent to passing `"2.0.0"`.
 	 */
 	public async createContainer<T extends ContainerSchema>(
@@ -143,12 +144,12 @@ export class OdspClient {
 	}>;
 	public async createContainer<T extends ContainerSchema>(
 		containerSchema: T,
-		minVersionForCollab: Exclude<MinimumVersionForCollab, `1.${string}`> = "2.0.0",
+		oldestSupportedClient: Exclude<OldestSupportedClientVersion, `1.${string}`> = "2.0.0",
 	): Promise<{
 		container: IOdspFluidContainer<T>;
 		services: IOdspContainerServices;
 	}> {
-		const loaderProps = this.getLoaderProps(containerSchema, minVersionForCollab);
+		const loaderProps = this.getLoaderProps(containerSchema, oldestSupportedClient);
 
 		const container = await createDetachedContainer({
 			...loaderProps,
@@ -172,15 +173,16 @@ export class OdspClient {
 	 * Accesses an existing container by its unique ID in ODSP.
 	 * @param id - Unique ID of the container in ODSP.
 	 * @param containerSchema - Container schema used to access data objects in the container.
-	 * @param minVersionForCollab - Minimum Fluid Framework version required for collaboration, as a
-	 * `MinimumVersionForCollab` SemVer string (e.g. `"2.100.0"`). Prefer the current Fluid Framework
-	 * version so the container opts into the latest defaults.
+	 * @param oldestSupportedClient - Oldest Fluid Framework client version that must be able to
+	 * open and process documents written by this client. Choosing an older version may limit
+	 * available features and write formats. Prefer the current Fluid Framework version so the
+	 * container opts into the latest defaults.
 	 * @returns Existing container instance along with associated services.
 	 */
 	public async getContainer<T extends ContainerSchema>(
 		id: string,
 		containerSchema: T,
-		minVersionForCollab: Exclude<MinimumVersionForCollab, `1.${string}`>,
+		oldestSupportedClient: Exclude<OldestSupportedClientVersion, `1.${string}`>,
 	): Promise<{
 		container: IOdspFluidContainer<T>;
 		services: IOdspContainerServices;
@@ -190,7 +192,7 @@ export class OdspClient {
 	 * @param id - Unique ID of the container in ODSP.
 	 * @param containerSchema - Container schema used to access data objects in the container.
 	 * @returns Existing container instance along with associated services.
-	 * @deprecated Pass a `MinimumVersionForCollab` SemVer string (e.g. `"2.0.0"`) as a third argument.
+	 * @deprecated Pass an `OldestSupportedClientVersion` SemVer string (e.g. `"2.0.0"`) as a third argument.
 	 * The previous behavior was equivalent to passing `"2.0.0"`.
 	 */
 	public async getContainer<T extends ContainerSchema>(
@@ -203,12 +205,12 @@ export class OdspClient {
 	public async getContainer<T extends ContainerSchema>(
 		id: string,
 		containerSchema: T,
-		minVersionForCollab: Exclude<MinimumVersionForCollab, `1.${string}`> = "2.0.0",
+		oldestSupportedClient: Exclude<OldestSupportedClientVersion, `1.${string}`> = "2.0.0",
 	): Promise<{
 		container: IOdspFluidContainer<T>;
 		services: IOdspContainerServices;
 	}> {
-		const loaderProps = this.getLoaderProps(containerSchema, minVersionForCollab);
+		const loaderProps = this.getLoaderProps(containerSchema, oldestSupportedClient);
 		const url = createOdspUrl({
 			siteUrl: this.connectionConfig.siteUrl,
 			driveId: this.connectionConfig.driveId,
@@ -229,7 +231,7 @@ export class OdspClient {
 
 	private getLoaderProps(
 		schema: ContainerSchema,
-		minVersionForCollaboration: Exclude<MinimumVersionForCollab, `1.${string}`>,
+		minVersionForCollaboration: Exclude<OldestSupportedClientVersion, `1.${string}`>,
 	): ILoaderProps {
 		const runtimeFactory = createDOProviderContainerRuntimeFactory({
 			schema,
