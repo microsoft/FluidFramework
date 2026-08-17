@@ -22,7 +22,7 @@ class StatelessKernel implements SharedKernel {
 	summarizeCore(): ISummaryTreeWithStats {
 		return createSingleBlobSummary("header", "{}");
 	}
-	summarizeCore2(summaryBuilder: ISummaryBuilder): void {
+	generateSummaryCore(summaryBuilder: ISummaryBuilder): void {
 		summaryBuilder.addBlob("header", "{}");
 	}
 	onDisconnect(): void {}

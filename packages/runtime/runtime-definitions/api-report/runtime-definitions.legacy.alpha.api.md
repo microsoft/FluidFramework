@@ -310,7 +310,7 @@ export type ISequencedMessageEnvelope = Omit<ISequencedDocumentMessage, "content
 
 // @beta @legacy
 export interface ISummarizable {
-    summarize2(summaryBuilder: ISummaryBuilder, latestSummarySequenceNumber: number, fullTree: boolean, telemetryContext: ITelemetryContext): Promise<void>;
+    generateSummary(summaryBuilder: ISummaryBuilder, latestSummarySequenceNumber: number, fullTree: boolean, telemetryContext: ITelemetryContext): Promise<void>;
 }
 
 // @beta @legacy

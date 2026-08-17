@@ -490,7 +490,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	 *
 	 * @remarks
 	 * The reference used routes this compares against are initialized from the base snapshot, so this is also
-	 * usable by the summarize2 flow to tell whether the reference state changed since the summary it loaded from.
+	 * usable by the generateSummary flow to tell whether the reference state changed since the summary it loaded from.
 	 */
 	public hasUsedStateChanged(): boolean {
 		// If GC is disabled, it should not affect summary state, return false.

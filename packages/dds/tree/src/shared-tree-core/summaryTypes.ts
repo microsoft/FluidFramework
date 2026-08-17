@@ -57,7 +57,7 @@ export interface Summarizable {
 	 * Whether this element's summary can be reused from the latest successful summary.
 	 *
 	 * @remarks
-	 * Used by the summarize2 flow, where reuse is expressed by not writing the element at all rather than by
+	 * Used by the generateSummary flow, where reuse is expressed by not writing the element at all rather than by
 	 * building a handle from a path. An element that does not implement this is always written in full.
 	 *
 	 * @param latestSummarySequenceNumber - Reference sequence number of the latest successful summary.

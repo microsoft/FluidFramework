@@ -95,7 +95,7 @@ export function createSingleBlobSummary(
  * @remarks
  * A shared object writes its content once, against this interface, and that single routine backs both
  * {@link SharedObject.summarizeCore} (via {@link summaryTreeBuilderSink}) and
- * {@link SharedObject.summarizeCore2}. That keeps the two summarization flows from drifting apart while both
+ * {@link SharedObject.generateSummaryCore}. That keeps the two summarization flows from drifting apart while both
  * exist.
  *
  * @internal

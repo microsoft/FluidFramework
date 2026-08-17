@@ -109,9 +109,9 @@ export class SharedSignalClass<T extends SerializableTypeForSharedSignal = any>
 	}
 
 	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore2}
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.generateSummaryCore}
 	 */
-	protected override summarizeCore2(summaryBuilder: ISummaryBuilder): void {
+	protected override generateSummaryCore(summaryBuilder: ISummaryBuilder): void {
 		this.summarizeInto(summaryBuilder);
 	}
 

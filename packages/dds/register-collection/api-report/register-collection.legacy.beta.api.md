@@ -15,6 +15,7 @@ export class ConsensusRegisterCollectionClass<T> extends SharedObject<IConsensus
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // (undocumented)
     protected applyStashedOp(content: unknown): void;
+    protected generateSummaryCore(summaryBuilder: ISummaryBuilder, serializer: IFluidSerializer): void;
     // (undocumented)
     keys(): string[];
     protected loadCore(storage: IChannelStorageService): Promise<void>;
@@ -29,7 +30,6 @@ export class ConsensusRegisterCollectionClass<T> extends SharedObject<IConsensus
     protected rollback(content: unknown, localOpMetadata: unknown): void;
     // (undocumented)
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
-    protected summarizeCore2(summaryBuilder: ISummaryBuilder, serializer: IFluidSerializer): void;
     write(key: string, value: T): Promise<boolean>;
 }
 

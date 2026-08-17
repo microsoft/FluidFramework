@@ -63,7 +63,7 @@ export class RemoteChannelContext implements IChannelContext {
 	private static readonly pendingOpsCountThreshold = 1000;
 
 	/**
-	 * Sequence number at which this context's content last changed, used by the summarize2 flow.
+	 * Sequence number at which this context's content last changed, used by the generateSummary flow.
 	 */
 	private lastChangedSequenceNumber: number;
 
@@ -256,7 +256,7 @@ export class RemoteChannelContext implements IChannelContext {
 		this.services.deltaConnection.rollback(content, localOpMetadata);
 	}
 
-	public async summarize2(
+	public async generateSummary(
 		summaryBuilder: ISummaryBuilder,
 		latestSummarySequenceNumber: number,
 		fullTree: boolean,

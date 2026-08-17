@@ -73,7 +73,10 @@ import type {
 	ContainerExtensionId,
 	ContainerExtensionExpectations,
 } from "@fluidframework/runtime-definitions/internal";
-import { channelsTreeName, summarize2 } from "@fluidframework/runtime-definitions/internal";
+import {
+	channelsTreeName,
+	generateSummary,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
 	isSnapshotFetchRequiredForLoadingGroupId,
@@ -125,7 +128,7 @@ function createAttributes(
  * The used-state comparison implemented by the concrete summarizer node.
  *
  * @remarks
- * Structural rather than an import so that the summarize2 flow can use it without widening
+ * Structural rather than an import so that the generateSummary flow can use it without widening
  * {@link @fluidframework/runtime-definitions#ISummarizerNodeWithGC}.
  */
 interface IUsedStateComparer {
@@ -133,7 +136,7 @@ interface IUsedStateComparer {
 }
 
 /**
- * Whether this data store runtime can be summarized by the summarize2 flow.
+ * Whether this data store runtime can be summarized by the generateSummary flow.
  *
  * @remarks
  * Determined by the layer compatibility details rather than by probing for the method, so that a data store
@@ -141,11 +144,12 @@ interface IUsedStateComparer {
  */
 function channelSummarizesWithBuilder(
 	channel: IFluidDataStoreChannel,
-): channel is IFluidDataStoreChannel & Required<Pick<IFluidDataStoreChannel, "summarize2">> {
+): channel is IFluidDataStoreChannel &
+	Required<Pick<IFluidDataStoreChannel, "generateSummary">> {
 	const { ILayerCompatDetails } = channel as FluidObject<ILayerCompatDetails>;
 	return (
-		(ILayerCompatDetails?.supportedFeatures.has(summarize2) ?? false) &&
-		channel.summarize2 !== undefined
+		(ILayerCompatDetails?.supportedFeatures.has(generateSummary) ?? false) &&
+		channel.generateSummary !== undefined
 	);
 }
 export function createAttributesBlob(
@@ -193,7 +197,7 @@ export interface IFluidDataStoreContextProps {
 	 * See {@link @fluidframework/runtime-definitions#IFluidParentContext.loadedFromSequenceNumber}.
 	 *
 	 * @remarks
-	 * Defaults to a value no summary can reach, which makes the summarize2 flow treat this data store as always
+	 * Defaults to a value no summary can reach, which makes the generateSummary flow treat this data store as always
 	 * changed. Callers that know when this content first became summarizable should pass it.
 	 */
 	readonly loadedFromSequenceNumber?: number;
@@ -501,7 +505,7 @@ export abstract class FluidDataStoreContext
 	public readonly loadedFromSequenceNumber: number;
 
 	/**
-	 * Sequence number at which this data store's content last changed, used by the summarize2 flow.
+	 * Sequence number at which this data store's content last changed, used by the generateSummary flow.
 	 *
 	 * @remarks
 	 * This is the only per-node summarization state in the new flow. Everything else - what the latest successful
@@ -880,10 +884,10 @@ export abstract class FluidDataStoreContext
 	}
 
 	/**
-	 * {@inheritDoc @fluidframework/runtime-definitions#ISummarizable.summarize2}
+	 * {@inheritDoc @fluidframework/runtime-definitions#ISummarizable.generateSummary}
 	 */
 	// A data store which declares itself unchanged is not realized, which is the main win over the old flow.
-	public async summarize2(
+	public async generateSummary(
 		summaryBuilder: ISummaryBuilder,
 		latestSummarySequenceNumber: number,
 		fullTree: boolean,
@@ -896,14 +900,14 @@ export abstract class FluidDataStoreContext
 
 		const channel = await this.realize();
 		if (channelSummarizesWithBuilder(channel)) {
-			await channel.summarize2(
+			await channel.generateSummary(
 				summaryBuilder.createBuilderForChild(channelsTreeName, fullTree),
 				latestSummarySequenceNumber,
 				fullTree,
 				telemetryContext,
 			);
 		} else {
-			// A data store runtime from a version that predates summarize2 is summarized by the old API. Its
+			// A data store runtime from a version that predates generateSummary is summarized by the old API. Its
 			// channels cannot be reused either: their summarizer nodes are only usable when the summary was
 			// started through the summarizer node tree, which this flow does not do.
 			const summarizeResult = await channel.summarize(
@@ -1021,7 +1025,7 @@ export abstract class FluidDataStoreContext
 		this.summarizerNode.updateUsedRoutes(usedRoutes);
 
 		// A change in reference state changes this data store's summary (its `unreferenced` flag) even though its
-		// content did not change, so it counts as a change for the summarize2 flow. The first time around there is
+		// content did not change, so it counts as a change for the generateSummary flow. The first time around there is
 		// no local baseline, so use the summarizer node's - its reference used routes come from the base snapshot,
 		// which catches a reference state that changed before this client loaded.
 		const serializedUsedRoutes = JSON.stringify([...usedRoutes].sort());

@@ -11,7 +11,7 @@ import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 import type { ISummaryCancellationToken, IRetriableFailureError } from "./summarizerTypes.js";
 
 /**
- * Feature gate that selects the builder-based summarization flow (`ContainerRuntime.summarize2`).
+ * Feature gate that selects the builder-based summarization flow (`ContainerRuntime.generateSummary`).
  *
  * @remarks
  * Read both by the container runtime, to pick the flow, and by the summarizer, to tag its telemetry with the

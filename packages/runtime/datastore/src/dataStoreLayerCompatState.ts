@@ -9,7 +9,7 @@ import {
 	type ILayerCompatDetails,
 	type ILayerCompatSupportRequirements,
 } from "@fluid-internal/client-utils";
-import { summarize2 } from "@fluidframework/runtime-definitions/internal";
+import { generateSummary } from "@fluidframework/runtime-definitions/internal";
 import {
 	validateLayerCompatibility,
 	type MonitoringContext,
@@ -41,7 +41,7 @@ export const dataStoreCompatDetailsForRuntime: ILayerCompatDetails = {
 	/**
 	 * The features supported by the DataStore layer across the DataStore / Runtime boundary.
 	 */
-	supportedFeatures: new Set<string>([summarize2]),
+	supportedFeatures: new Set<string>([generateSummary]),
 };
 
 /**

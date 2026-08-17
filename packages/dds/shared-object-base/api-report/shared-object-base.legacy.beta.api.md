@@ -41,15 +41,15 @@ export function parseHandles(value: unknown, serializer: IFluidSerializer): unkn
 export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends SharedObjectCore<TEvent> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes,
     telemetryContextPrefix: string);
+    readonly generateSummary?: ISummarizable["generateSummary"];
+    protected generateSummaryCore?(summaryBuilder: ISummaryBuilder, serializer: IFluidSerializer, latestSummarySequenceNumber: number, fullTree: boolean, telemetryContext: ITelemetryContext): void;
     getAttachSummary(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): IGarbageCollectionData;
     protected processGCDataCore(serializer: IFluidSerializer): void;
     // (undocumented)
     protected get serializer(): IFluidSerializer;
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext): Promise<ISummaryTreeWithStats>;
-    readonly summarize2?: ISummarizable["summarize2"];
     protected abstract summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext, fullTree?: boolean): ISummaryTreeWithStats;
-    protected summarizeCore2?(summaryBuilder: ISummaryBuilder, serializer: IFluidSerializer, latestSummarySequenceNumber: number, fullTree: boolean, telemetryContext: ITelemetryContext): void;
 }
 
 // @beta @legacy

@@ -230,7 +230,7 @@ export class RunningSummarizer
 			namespace: "Running",
 			properties: {
 				// summarizeFlow tags every summarizer event, including failures that never reach summary
-				// generation, so the two flows can be compared while summarize2 is rolled out.
+				// generation, so the two flows can be compared while generateSummary is rolled out.
 				all: { ...telemetryProps, summarizeFlow },
 			},
 		});

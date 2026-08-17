@@ -627,7 +627,7 @@ export interface IFluidParentContext
 	 * of its content is already captured in a previously uploaded summary.
 	 *
 	 * @remarks
-	 * Used by the summarize2 flow as the starting value for a child's "last changed at" sequence number. For a
+	 * Used by the generateSummary flow as the starting value for a child's "last changed at" sequence number. For a
 	 * context loaded from a snapshot this is the snapshot's sequence number; for one created from an attach op it
 	 * is that op's sequence number.
 	 *

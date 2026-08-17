@@ -1,4 +1,4 @@
-# Summarization v2 (`summarize2`)
+# Summarization v2 (`generateSummary`)
 
 The builder-based summarization flow being introduced alongside the existing summarizer-node flow, and how to
 roll it out safely.
@@ -64,43 +64,43 @@ Nodes no longer return a tree for the parent to merge; they write into an `ISumm
 ### Call chain
 
 ```
-ContainerRuntime.summarize2
-  └─ ChannelCollection.summarize2                  (.channels)
-       └─ FluidDataStoreContext.summarize2         per data store
-            └─ FluidDataStoreRuntime.summarize2    (.channels)
-                 └─ Local/RemoteChannelContext.summarize2
-                      └─ SharedObject.summarize2 → summarizeCore2   per DDS
+ContainerRuntime.generateSummary
+  └─ ChannelCollection.generateSummary                  (.channels)
+       └─ FluidDataStoreContext.generateSummary         per data store
+            └─ FluidDataStoreRuntime.generateSummary    (.channels)
+                 └─ Local/RemoteChannelContext.generateSummary
+                      └─ SharedObject.generateSummary → generateSummaryCore   per DDS
 ```
 
-`ISummarizable` declares `summarize2` once; `IChannel` and `IFluidDataStoreChannel` pick it up via
+`ISummarizable` declares `generateSummary` once; `IChannel` and `IFluidDataStoreChannel` pick it up via
 `Partial<ISummarizable>`, so it stays optional for external implementers.
 
 ## One flow per node, decided at the version boundary
 
-Within a single version of the code, a summary is produced by `summarize2` alone - the two flows are not
+Within a single version of the code, a summary is produced by `generateSummary` alone - the two flows are not
 interleaved for nodes that support the new one. Mixing would build part of the tree with different semantics (no
 incremental reuse, different realization and telemetry behavior), which makes comparing the flows harder and
 hides which path produced what.
 
 The exception is a version boundary, which is unavoidable: a container can contain a data store runtime from a
 release that predates this API. That case is detected up front rather than by probing for a method. The
-DataStore layer advertises the `summarize2` layer-compat feature
-(`@fluidframework/runtime-definitions/internal`), and `FluidDataStoreContext.summarize2` uses `summarize` for
+DataStore layer advertises the `generateSummary` layer-compat feature
+(`@fluidframework/runtime-definitions/internal`), and `FluidDataStoreContext.generateSummary` uses `summarize` for
 any data store whose runtime does not advertise it. Channels and shared objects fall back the same way when
-they predate `summarize2` / `summarizeCore2`.
+they predate `generateSummary` / `generateSummaryCore`.
 
 A legacy data store is written in full: its subtree cannot be incremental, and neither can its channels. Their
 summarizer nodes are only usable when the summary was started through the summarizer node tree, which this flow
 does not do - calling `summarize` with `trackState: true` from here asserts `0x5df`.
 
-`SharedObject.summarize2` and `FluidDataStoreRuntime.summarize2` are optional properties rather than methods, so
+`SharedObject.generateSummary` and `FluidDataStoreRuntime.generateSummary` are optional properties rather than methods, so
 adding them changes no class shape and needs no type-test exceptions. Since a property cannot be overridden via
-`super`, each delegates to an overridable `summarizeCore2` - the extension point for subclasses such as
+`super`, each delegates to an overridable `generateSummaryCore` - the extension point for subclasses such as
 `mixinSummaryHandler`.
 
 ## Not ported yet
 
-- **SharedTree forest incremental summarization.** `SharedTreeCore.summarizeCore2` writes correct content, but
+- **SharedTree forest incremental summarization.** `SharedTreeCore.generateSummaryCore` writes correct content, but
   the forest summarizer's chunk reuse still depends on `IExperimentalIncrementalSummaryContext.summaryPath` to
   build handles, so the forest is written in full on every summary. Expect larger summaries for tree-heavy
   containers until this is fixed. The fix is the same shape as the schema summarizer below: give the forest
@@ -110,7 +110,7 @@ adding them changes no class shape and needs no type-test exceptions. Since a pr
 
   SharedTree's other summarizable, the **schema summarizer, is ported**. `Summarizable` gained an optional
   `canReuseSummary(latestSummarySequenceNumber)`; the schema summarizer implements it by comparing against the
-  sequence number at which the stored schema last changed. `summarizeCore2` calls it and, when it returns true,
+  sequence number at which the stored schema last changed. `generateSummaryCore` calls it and, when it returns true,
   reuses the whole summarizable subtree via `createBuilderForChild(key).nodeDidNotChange()`. Reusing the entire
   subtree (rather than just the schema blob) also preserves the version metadata blob, so a summary keeps the
   format it was last written with until the schema actually changes.
@@ -192,7 +192,7 @@ Gate, off by default:
 Fluid.ContainerRuntime.EnableSummarizeV2
 ```
 
-When enabled, `submitSummary` calls `summarize2` and skips the summarizer-node bookkeeping (`startSummary`,
+When enabled, `submitSummary` calls `generateSummary` and skips the summarizer-node bookkeeping (`startSummary`,
 `validateSummary`, `completeSummary`, `clearSummary`), none of which applies. Exactly one flow runs per attempt,
 which keeps side effects such as consuming the summary number correct.
 
@@ -202,7 +202,7 @@ which keeps side effects such as consuming the summary number correct.
 | 2     | Offline comparison: run both flows at the same ref seq num and diff the trees, ignoring handles.  | Trees match for containers with GC, loading groups, blobs and SharedTree. |
 | 3     | Enable in test/dev containers.                                                                   | No new summary failures; a later client loads from a v2 summary.          |
 | 4     | A/B in production: enable v2 for a small share of clients, keep the rest on v1, and compare the two cohorts on a dashboard. Widen the share by risk: no GC → GC → loading groups → SharedTree. | Signals below hold for the v2 cohort, relative to v1, over a full ack cycle. |
-| 5     | Default on, then delete the old flow and rename `summarize2`.                                    | -                                                                         |
+| 5     | Default on, then delete the old flow and rename `generateSummary`.                                    | -                                                                         |
 
 Do not skip stage 2. Compile success and `SummaryBuilder` unit tests do not prove the two flows produce the same
 summary for a real container. The failure mode that matters most - a node wrongly deciding it is unchanged and
@@ -256,7 +256,7 @@ Two cautions:
 - `summarizeFlow` on every summarizer event and on `IGeneratedSummaryStats`.
 - `realizedDataStoreCount`, `channelCount` and `reusedChannelCount` on `IGeneratedSummaryStats`, all derived
   from the generated summary tree or from context state common to both flows.
-- A `summarize2` layer-compat feature on the DataStore layer, so a data store runtime that predates the API is
+- A `generateSummary` layer-compat feature on the DataStore layer, so a data store runtime that predates the API is
   detected at the version boundary rather than by probing for the method.
 
 Still worth adding when stage 2 is built: an event carrying the first differing path when the offline

@@ -252,9 +252,9 @@ export class ConsensusRegisterCollection<T>
 	}
 
 	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore2}
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.generateSummaryCore}
 	 */
-	protected override summarizeCore2(
+	protected override generateSummaryCore(
 		summaryBuilder: ISummaryBuilder,
 		serializer: IFluidSerializer,
 	): void {

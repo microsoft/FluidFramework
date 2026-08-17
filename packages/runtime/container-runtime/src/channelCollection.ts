@@ -322,7 +322,7 @@ export function getLocalDataStoreType(localDataStore: LocalFluidDataStoreContext
  * "Last changed at" sequence number for content that is known not to be present in any uploaded summary yet.
  *
  * @remarks
- * The summarize2 flow reuses a node's previous summary when
+ * The generateSummary flow reuses a node's previous summary when
  * `latestSummarySequenceNumber >= lastChangedSequenceNumber`. Using a value no summary can ever reach forces the
  * node to be summarized in full.
  */
@@ -1473,7 +1473,7 @@ export class ChannelCollection
 	 * Summarizer-node-free counterpart to {@link ChannelCollection.summarize}. Data stores that have not changed
 	 * since `latestSummarySequenceNumber` are not realized at all.
 	 */
-	public async summarize2(
+	public async generateSummary(
 		summaryBuilder: ISummaryBuilder,
 		latestSummarySequenceNumber: number,
 		fullTree: boolean,
@@ -1481,14 +1481,14 @@ export class ChannelCollection
 	): Promise<void> {
 		await this.visitContextsDuringSummary(
 			async (contextId: string, context: FluidDataStoreContext) => {
-				await context.summarize2(
+				await context.generateSummary(
 					summaryBuilder.createBuilderForChild(contextId, fullTree),
 					latestSummarySequenceNumber,
 					fullTree,
 					telemetryContext,
 				);
 			},
-			{ fullTree, realizedDuring: "summarize2" },
+			{ fullTree, realizedDuring: "generateSummary" },
 		);
 	}
 

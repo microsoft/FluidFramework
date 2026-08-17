@@ -473,8 +473,9 @@ export interface ISummaryBuilder {
  * those interfaces.
  *
  * @privateRemarks
- * `summarize2` is a deliberately temporary name. It exists so that this flow can be rolled out and validated
- * alongside the existing `summarize` API, and it replaces `summarize` once that rollout completes.
+ * `generateSummary` is named for what it does rather than being a suffixed variant of `summarize`, so it does not
+ * need renaming when it replaces `summarize` at the end of the rollout - the old method is simply removed. The
+ * `generate` verb matches the name the summarize pipeline already uses for this step in its telemetry.
  *
  * @legacy @beta
  */
@@ -491,7 +492,7 @@ export interface ISummarizable {
 	 * @param fullTree - True to generate the full tree with no handle reuse.
 	 * @param telemetryContext - See {@link ITelemetryContext}.
 	 */
-	summarize2(
+	generateSummary(
 		summaryBuilder: ISummaryBuilder,
 		latestSummarySequenceNumber: number,
 		fullTree: boolean,

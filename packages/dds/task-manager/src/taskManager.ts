@@ -627,9 +627,9 @@ export class TaskManagerClass
 	}
 
 	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore2}
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.generateSummaryCore}
 	 */
-	protected override summarizeCore2(summaryBuilder: ISummaryBuilder): void {
+	protected override generateSummaryCore(summaryBuilder: ISummaryBuilder): void {
 		summaryBuilder.addBlob(snapshotFileName, this.serializeContent());
 	}
 

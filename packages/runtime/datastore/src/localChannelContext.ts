@@ -64,7 +64,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 	}
 
 	/**
-	 * Sequence number at which this context's content last changed, used by the summarize2 flow.
+	 * Sequence number at which this context's content last changed, used by the generateSummary flow.
 	 *
 	 * @remarks
 	 * A locally created channel starts out not present in any summary, so it stays fully summarized until it has
@@ -159,7 +159,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 		return summarizeChannelAsync(channel, fullTree, trackState, telemetryContext);
 	}
 
-	public async summarize2(
+	public async generateSummary(
 		summaryBuilder: ISummaryBuilder,
 		latestSummarySequenceNumber: number,
 		fullTree: boolean,

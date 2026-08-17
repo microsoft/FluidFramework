@@ -1606,7 +1606,7 @@ export class ContainerRuntime
 	private readonly summariesDisabled: boolean;
 
 	/**
-	 * True to summarize via {@link ContainerRuntime.summarize2} instead of the summarizer node flow.
+	 * True to summarize via {@link ContainerRuntime.generateSummary} instead of the summarizer node flow.
 	 */
 	private readonly summarizeV2Enabled: boolean;
 
@@ -1657,7 +1657,7 @@ export class ContainerRuntime
 	 * Handle of the most recent summary this client uploaded.
 	 *
 	 * @remarks
-	 * The summarize2 flow has no summarizer nodes to ask whether an ack belongs to a summary this client
+	 * The generateSummary flow has no summarizer nodes to ask whether an ack belongs to a summary this client
 	 * submitted, so the runtime remembers it here.
 	 */
 	private lastSubmittedSummaryHandle: string | undefined;
@@ -2029,7 +2029,7 @@ export class ContainerRuntime
 			this.mc.config.getBoolean("Fluid.ContainerRuntime.Test.DisableSummaries") === true;
 
 		// Opt-in to the summarizer-node-free summarization flow. Off by default while it is validated against
-		// the existing flow; see ContainerRuntime.summarize2.
+		// the existing flow; see ContainerRuntime.generateSummary.
 		this.summarizeV2Enabled = this.mc.config.getBoolean(enableSummarizeV2Key) === true;
 
 		this.maxConsecutiveReconnects =
@@ -2955,7 +2955,7 @@ export class ContainerRuntime
 	 * Writes the container-level state (metadata, id compressor, chunks, aliases, blobs, GC) into the builder.
 	 *
 	 * @remarks
-	 * Counterpart to {@link ContainerRuntime.addContainerStateToSummary} for the summarize2 flow. None of this
+	 * Counterpart to {@link ContainerRuntime.addContainerStateToSummary} for the generateSummary flow. None of this
 	 * state is incremental today - it is regenerated on every summary, exactly as it is in the old flow.
 	 */
 	private addContainerStateToSummary2(
@@ -4497,7 +4497,7 @@ export class ContainerRuntime
 	 * Reference sequence number of the latest successful summary, or -1 if there has not been one.
 	 *
 	 * @remarks
-	 * This is the single piece of state the summarize2 flow needs in order to decide what every node in the tree
+	 * This is the single piece of state the generateSummary flow needs in order to decide what every node in the tree
 	 * may reuse. It only advances when a summary is acked, so a failed or nacked summary automatically leaves
 	 * every node's decision unchanged - which is the class of bug the summarizer node state machine kept hitting.
 	 */
@@ -4531,7 +4531,7 @@ export class ContainerRuntime
 	 * This is intentionally a separate API from {@link ContainerRuntime.summarize} so that it can be rolled out
 	 * and validated against the existing flow before replacing it.
 	 */
-	public async summarize2(options: {
+	public async generateSummary(options: {
 		/**
 		 * True to generate the full tree with no handle reuse optimizations; defaults to false
 		 */
@@ -4586,7 +4586,7 @@ export class ContainerRuntime
 			this.loadIdCompressor();
 
 			const summaryBuilder = SummaryBuilder.createRootBuilder(fullTree);
-			await this.channelCollection.summarize2(
+			await this.channelCollection.generateSummary(
 				summaryBuilder.createBuilderForChild(channelsTreeName, fullTree),
 				this.latestSummarySequenceNumber,
 				fullTree,
@@ -4907,7 +4907,7 @@ export class ContainerRuntime
 			const message = `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
 			const lastAckedContext = this.lastAckedSummaryContext;
 
-			// The summarize2 flow keeps all of its reuse state in the container runtime, so none of the summarizer
+			// The generateSummary flow keeps all of its reuse state in the container runtime, so none of the summarizer
 			// node bookkeeping (start/validate/complete/clear) applies to it.
 			const startSummaryResult = this.summarizeV2Enabled
 				? undefined
@@ -5003,7 +5003,7 @@ export class ContainerRuntime
 			let summarizeResult: ISummaryTreeWithStats;
 			try {
 				summarizeResult = this.summarizeV2Enabled
-					? await this.summarize2({
+					? await this.generateSummary({
 							fullTree,
 							summaryLogger: summaryNumberLogger,
 							runGC: this.garbageCollector.shouldRunGC,

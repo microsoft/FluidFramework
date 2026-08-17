@@ -812,7 +812,7 @@ describeCompat("GC data store sweep tests", "NoCompat", function (getTestObjectP
 			}
 
 			// Fail every attempt but the last. Both summarization flows are wrapped, since which one runs
-			// depends on the summarize2 feature gate.
+			// depends on the generateSummary feature gate.
 			const failUntilLastAttempt = async <T>(summarizeFn: () => Promise<T>): Promise<T> => {
 				const results = await summarizeFn();
 				if (
@@ -832,9 +832,9 @@ describeCompat("GC data store sweep tests", "NoCompat", function (getTestObjectP
 			containerRuntime.summarize = async (options: any) =>
 				failUntilLastAttempt(async () => originalSummarize(options));
 
-			const originalSummarize2 = containerRuntime.summarize2?.bind(containerRuntime);
+			const originalSummarize2 = containerRuntime.generateSummary?.bind(containerRuntime);
 			if (originalSummarize2 !== undefined) {
-				containerRuntime.summarize2 = async (options: any) =>
+				containerRuntime.generateSummary = async (options: any) =>
 					failUntilLastAttempt(async () => originalSummarize2(options));
 			}
 			return { originalSummarize, originalSummarize2, summarizePromiseP };
@@ -993,7 +993,7 @@ describeCompat("GC data store sweep tests", "NoCompat", function (getTestObjectP
 
 					// Revert summarize to not fail anymore.
 					containerRuntime.summarize = originalSummarize;
-					containerRuntime.summarize2 = originalSummarize2;
+					containerRuntime.generateSummary = originalSummarize2;
 
 					// Summarize again.
 					summary = await summarizeNow(summarizer);

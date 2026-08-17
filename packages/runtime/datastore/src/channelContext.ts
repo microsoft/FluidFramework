@@ -30,7 +30,6 @@ import {
 import {
 	DataCorruptionError,
 	tagCodeArtifacts,
-	UsageError,
 	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -44,7 +43,7 @@ export const attributesBlobKey = ".attributes";
  * "Last changed at" sequence number for content that is known not to be present in any uploaded summary yet.
  *
  * @remarks
- * The summarize2 flow reuses a node's previous summary when `latestSummarySequenceNumber >= lastChangedSequenceNumber`.
+ * The generateSummary flow reuses a node's previous summary when `latestSummarySequenceNumber >= lastChangedSequenceNumber`.
  * Using a value no summary can ever reach forces the node to be summarized in full.
  */
 export const neverSummarizedSequenceNumber = Number.MAX_SAFE_INTEGER;
@@ -153,10 +152,10 @@ export async function summarizeChannelAsync(
 }
 
 /**
- * Writes a channel's summary into `summaryBuilder` using the channel's summarize2 implementation.
+ * Writes a channel's summary into `summaryBuilder` using the channel's generateSummary implementation.
  *
  * @remarks
- * A channel from a version that predates `summarize2` cannot participate in this flow, so its content is
+ * A channel from a version that predates `generateSummary` cannot participate in this flow, so its content is
  * produced by the old API and copied in. Nothing in that channel is incremental.
  */
 export async function summarizeChannelAsync2(
@@ -166,13 +165,13 @@ export async function summarizeChannelAsync2(
 	fullTree: boolean,
 	telemetryContext: ITelemetryContext,
 ): Promise<void> {
-	if (channel.summarize2 === undefined) {
+	if (channel.generateSummary === undefined) {
 		addSummaryTreeToBuilder(
 			summaryBuilder,
 			(await channel.summarize(fullTree, false /* trackState */, telemetryContext)).summary,
 		);
 	} else {
-		await channel.summarize2(
+		await channel.generateSummary(
 			summaryBuilder,
 			latestSummarySequenceNumber,
 			fullTree,

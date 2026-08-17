@@ -473,7 +473,7 @@ export class FluidDataStoreRuntime
 		this.quorum = dataStoreContext.getQuorum();
 		this.audience = dataStoreContext.getAudience();
 		// Older container runtimes do not report this. Treat the content as never summarized in that case so that
-		// the summarize2 flow stays correct (at the cost of not reusing anything).
+		// the generateSummary flow stays correct (at the cost of not reusing anything).
 		this.loadedFromSequenceNumber =
 			dataStoreContext.loadedFromSequenceNumber ?? neverSummarizedSequenceNumber;
 
@@ -1140,18 +1140,18 @@ export class FluidDataStoreRuntime
 	}
 
 	/**
-	 * {@inheritDoc @fluidframework/runtime-definitions#ISummarizable.summarize2}
+	 * {@inheritDoc @fluidframework/runtime-definitions#ISummarizable.generateSummary}
 	 */
 	// An optional property rather than a method, so adding it does not change this class's shape for existing
-	// consumers. It is always assigned. It delegates to summarizeCore2 so that subclasses can still override
+	// consumers. It is always assigned. It delegates to generateSummaryCore so that subclasses can still override
 	// summarization, which a property cannot support.
-	public readonly summarize2?: ISummarizable["summarize2"] = async (
+	public readonly generateSummary?: ISummarizable["generateSummary"] = async (
 		summaryBuilder,
 		latestSummarySequenceNumber,
 		fullTree,
 		telemetryContext,
 	): Promise<void> =>
-		this.summarizeCore2(
+		this.generateSummaryCore(
 			summaryBuilder,
 			latestSummarySequenceNumber,
 			fullTree,
@@ -1162,10 +1162,10 @@ export class FluidDataStoreRuntime
 	 * Writes this data store's channels into `summaryBuilder`.
 	 *
 	 * @remarks
-	 * The counterpart to {@link FluidDataStoreRuntime.summarize} for the summarize2 flow. Override this to add
+	 * The counterpart to {@link FluidDataStoreRuntime.summarize} for the generateSummary flow. Override this to add
 	 * content to this data store's summary.
 	 */
-	protected async summarizeCore2(
+	protected async generateSummaryCore(
 		summaryBuilder: ISummaryBuilder,
 		latestSummarySequenceNumber: number,
 		fullTree: boolean,
@@ -1173,7 +1173,7 @@ export class FluidDataStoreRuntime
 	): Promise<void> {
 		await this.visitContextsDuringSummary(
 			async (contextId: string, context: IChannelContext) => {
-				await context.summarize2(
+				await context.generateSummary(
 					summaryBuilder.createBuilderForChild(contextId, fullTree),
 					latestSummarySequenceNumber,
 					fullTree,
@@ -1785,13 +1785,13 @@ export const mixinSummaryHandler = (
 			return summary;
 		}
 
-		protected override async summarizeCore2(
+		protected override async generateSummaryCore(
 			summaryBuilder: ISummaryBuilder,
 			latestSummarySequenceNumber: number,
 			fullTree: boolean,
 			telemetryContext: ITelemetryContext,
 		): Promise<void> {
-			await super.summarizeCore2(
+			await super.generateSummaryCore(
 				summaryBuilder,
 				latestSummarySequenceNumber,
 				fullTree,

@@ -638,7 +638,7 @@ export class GCDataBuilder implements IGarbageCollectionData {
  * Copies the top level entries of `summary` into `summaryBuilder`.
  *
  * @remarks
- * Bridges a node that only implements the old tree-returning summarize API into the summarize2 flow. Used at
+ * Bridges a node that only implements the old tree-returning summarize API into the generateSummary flow. Used at
  * version boundaries, where the node comes from a release that predates the new API. The copied content is
  * never incremental - it is whatever the old API produced.
  *

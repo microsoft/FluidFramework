@@ -842,17 +842,17 @@ export abstract class SharedObject<
 	}
 
 	/**
-	 * {@inheritDoc @fluidframework/runtime-definitions#ISummarizable.summarize2}
+	 * {@inheritDoc @fluidframework/runtime-definitions#ISummarizable.generateSummary}
 	 */
 	// An optional property rather than a method, so adding it does not change the shape of every shared object
 	// type deriving from this class. It is always assigned.
-	public readonly summarize2?: ISummarizable["summarize2"] = async (
+	public readonly generateSummary?: ISummarizable["generateSummary"] = async (
 		summaryBuilder,
 		latestSummarySequenceNumber,
 		fullTree,
 		telemetryContext,
 	): Promise<void> => {
-		if (this.summarizeCore2 === undefined) {
+		if (this.generateSummaryCore === undefined) {
 			// A shared object that has not implemented the incremental path still produces the same content,
 			// just written through the builder.
 			addSummaryTreeToBuilder(
@@ -865,7 +865,7 @@ export abstract class SharedObject<
 				).summary,
 			);
 		} else {
-			this.summarizeCore2(
+			this.generateSummaryCore(
 				summaryBuilder,
 				this.serializer,
 				latestSummarySequenceNumber,
@@ -954,7 +954,7 @@ export abstract class SharedObject<
 	 * @param latestSummarySequenceNumber - Reference sequence number of the latest successful summary, or -1 if
 	 * there has not been one. Content that has not changed since then can be emitted as a handle.
 	 */
-	protected summarizeCore2?(
+	protected generateSummaryCore?(
 		summaryBuilder: ISummaryBuilder,
 		serializer: IFluidSerializer,
 		latestSummarySequenceNumber: number,

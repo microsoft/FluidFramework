@@ -26,11 +26,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import { addSummaryTreeToBuilder } from "@fluidframework/runtime-utils/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
-import {
-	extractTelemetryLoggerExt,
-	tagCodeArtifacts,
-	UsageError,
-} from "@fluidframework/telemetry-utils/internal";
+import { extractTelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type { IFluidSerializer } from "./serializer.js";
 import {
@@ -75,9 +71,9 @@ export interface SharedKernel {
 	): ISummaryTreeWithStats;
 
 	/**
-	 * {@inheritDoc SharedObject.summarizeCore2}
+	 * {@inheritDoc SharedObject.generateSummaryCore}
 	 */
-	summarizeCore2?(
+	generateSummaryCore?(
 		summaryBuilder: ISummaryBuilder,
 		serializer: IFluidSerializer,
 		latestSummarySequenceNumber: number,
@@ -191,9 +187,9 @@ class SharedObjectFromKernel<
 	}
 
 	/**
-	 * {@inheritDoc SharedObject.summarizeCore2}
+	 * {@inheritDoc SharedObject.generateSummaryCore}
 	 */
-	protected override summarizeCore2(
+	protected override generateSummaryCore(
 		summaryBuilder: ISummaryBuilder,
 		serializer: IFluidSerializer,
 		latestSummarySequenceNumber: number,
@@ -201,7 +197,7 @@ class SharedObjectFromKernel<
 		telemetryContext: ITelemetryContext,
 	): void {
 		const kernel = this.#kernel;
-		if (kernel.summarizeCore2 === undefined) {
+		if (kernel.generateSummaryCore === undefined) {
 			// A kernel that has not implemented the incremental path still produces the same content, just
 			// written through the builder.
 			addSummaryTreeToBuilder(
@@ -214,7 +210,7 @@ class SharedObjectFromKernel<
 				).summary,
 			);
 		} else {
-			kernel.summarizeCore2(
+			kernel.generateSummaryCore(
 				summaryBuilder,
 				serializer,
 				latestSummarySequenceNumber,

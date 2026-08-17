@@ -1142,7 +1142,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 			blockInboundGCOp: boolean = false,
 		): Promise<{
 			originalSummarize: typeof containerRuntime.summarize;
-			originalSummarize2: typeof containerRuntime.summarize2;
+			originalSummarize2: typeof containerRuntime.generateSummary;
 			summarizePromiseP: Promise<ISummarizeEventProps>;
 		}> {
 			let latestAttemptProps: ISummarizeEventProps | undefined;
@@ -1172,7 +1172,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 			}
 
 			// Fail every attempt but the last. Both summarization flows are wrapped, since which one runs
-			// depends on the summarize2 feature gate.
+			// depends on the generateSummary feature gate.
 			const failUntilLastAttempt = async <T>(summarizeFn: () => Promise<T>): Promise<T> => {
 				const results = await summarizeFn();
 				if (
@@ -1192,9 +1192,9 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 			containerRuntime.summarize = async (options: any): Promise<any> =>
 				failUntilLastAttempt(async () => originalSummarize(options));
 
-			const originalSummarize2 = containerRuntime.summarize2?.bind(containerRuntime);
+			const originalSummarize2 = containerRuntime.generateSummary?.bind(containerRuntime);
 			if (originalSummarize2 !== undefined) {
-				containerRuntime.summarize2 = async (options: any): Promise<any> =>
+				containerRuntime.generateSummary = async (options: any): Promise<any> =>
 					failUntilLastAttempt(async () => originalSummarize2(options));
 			}
 			return { originalSummarize, originalSummarize2, summarizePromiseP };
@@ -1370,7 +1370,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 
 					// Revert summarize to not fail anymore.
 					containerRuntime.summarize = originalSummarize;
-					containerRuntime.summarize2 = originalSummarize2;
+					containerRuntime.generateSummary = originalSummarize2;
 
 					// Summarize again.
 					summary = await summarizeNow(summarizer);

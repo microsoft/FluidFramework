@@ -19,12 +19,12 @@ export const encodeHandlesInContainerRuntime = "encodeHandlesInContainerRuntime"
 export const notifiesReadOnlyState = "notifiesReadOnlyState";
 
 /**
- * This feature indicates that the DataStore layer implements {@link ISummarizable.summarize2}.
+ * This feature indicates that the DataStore layer implements {@link ISummarizable.generateSummary}.
  *
  * @remarks
- * The summarize2 flow is only used for a data store whose runtime advertises this. A data store from a
+ * The generateSummary flow is only used for a data store whose runtime advertises this. A data store from a
  * version that predates the API is summarized with `summarize` instead, since it cannot participate.
  *
  * @internal
  */
-export const summarize2 = "summarize2";
+export const generateSummary = "generateSummary";

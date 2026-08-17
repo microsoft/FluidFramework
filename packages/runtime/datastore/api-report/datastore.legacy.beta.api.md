@@ -47,6 +47,8 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     get disposed(): boolean;
     readonly entryPoint: IFluidHandleInternal<FluidObject>;
+    readonly generateSummary?: ISummarizable["generateSummary"];
+    protected generateSummaryCore(summaryBuilder: ISummaryBuilder, latestSummarySequenceNumber: number, fullTree: boolean, telemetryContext: ITelemetryContext): Promise<void>;
     getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
     // (undocumented)
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
@@ -99,8 +101,6 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     setConnectionState(connected: boolean, clientId?: string): void;
     submitSignal(type: string, content: unknown, targetClientId?: string): void;
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
-    readonly summarize2?: ISummarizable["summarize2"];
-    protected summarizeCore2(summaryBuilder: ISummaryBuilder, latestSummarySequenceNumber: number, fullTree: boolean, telemetryContext: ITelemetryContext): Promise<void>;
     updateUsedRoutes(usedRoutes: string[]): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;

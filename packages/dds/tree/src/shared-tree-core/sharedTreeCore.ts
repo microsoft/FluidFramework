@@ -323,7 +323,7 @@ export class SharedTreeCore<
 	}
 
 	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore2}
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.generateSummaryCore}
 	 *
 	 * @remarks
 	 * Each summarizable still builds its own subtree, so the content here is identical to what
@@ -331,7 +331,7 @@ export class SharedTreeCore<
 	 * incremental chunk reuse to emit handles through the builder is tracked separately.
 	 */
 	@throwIfBroken
-	public summarizeCore2(
+	public generateSummaryCore(
 		summaryBuilder: ISummaryBuilder,
 		serializer: IFluidSerializer,
 		latestSummarySequenceNumber: number,

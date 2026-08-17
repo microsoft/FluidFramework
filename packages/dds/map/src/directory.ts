@@ -665,10 +665,10 @@ export class SharedDirectory
 	}
 
 	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore2}
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.generateSummaryCore}
 	 */
 	// Writes the whole directory on every summary; not incremental yet.
-	protected override summarizeCore2(
+	protected override generateSummaryCore(
 		summaryBuilder: ISummaryBuilder,
 		serializer: IFluidSerializer,
 		latestSummarySequenceNumber: number,
@@ -1047,7 +1047,7 @@ export class SharedDirectory
 	 *
 	 * @remarks
 	 * The blob sink is abstracted so the same serialization drives both {@link SharedDirectory.summarizeCore} and
-	 * {@link SharedDirectory.summarizeCore2}.
+	 * {@link SharedDirectory.generateSummaryCore}.
 	 */
 	private serializeDirectoryInto(
 		root: SubDirectory,

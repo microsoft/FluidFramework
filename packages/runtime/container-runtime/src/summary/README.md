@@ -80,7 +80,7 @@ The summarization process is designed to be resilient - A document will eventual
 
 The format of summaries (and snapshots) is described in [summary and snapshot formats](./summaryFormats.md).
 
-## What is `summarize2`?
+## What is `generateSummary`?
 
 A second summarization flow, which replaces the summarizer node state machine with a single piece of state on
 the container runtime, is described in [summarization v2](./summarizeV2.md). It is off by default.
