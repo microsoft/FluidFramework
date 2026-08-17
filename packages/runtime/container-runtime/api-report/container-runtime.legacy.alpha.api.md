@@ -207,6 +207,9 @@ export interface IRetriableFailureError extends Error {
 }
 
 // @beta @legacy
+export function isPendingLocalStateReusable(pendingLocalState: string): boolean;
+
+// @beta @legacy
 export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stage" | "error"> {
     readonly clientSequenceNumber: number;
     // (undocumented)

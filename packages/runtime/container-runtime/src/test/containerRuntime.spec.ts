@@ -2409,8 +2409,8 @@ describe("Runtime", () => {
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 				(containerRuntime as any).pendingStateManager = mockPendingStateManager;
 
-				const state = containerRuntime.getPendingLocalState() as Partial<IPendingRuntimeState>;
-				assert.ok(state.sessionExpiryTimerStarted !== undefined);
+				const state = containerRuntime.getPendingLocalState();
+				assert.strictEqual(state, undefined);
 			});
 			it("No Props. Some pending state", async () => {
 				const logger = new MockLogger();
@@ -2478,12 +2478,11 @@ describe("Runtime", () => {
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 
-				const state = (await containerRuntime.getPendingLocalState({
+				const state = containerRuntime.getPendingLocalState({
 					notifyImminentClosure: false,
 					sessionExpiryTimerStarted: 100,
-				})) as Partial<IPendingRuntimeState>;
-				assert.strictEqual(typeof state, "object");
-				assert.strictEqual(state.sessionExpiryTimerStarted, 100);
+				});
+				assert.strictEqual(state, undefined);
 			});
 
 			it("sessionExpiryTimerStarted. Some pending state", async () => {
