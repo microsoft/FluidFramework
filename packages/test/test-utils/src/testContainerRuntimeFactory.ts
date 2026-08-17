@@ -65,7 +65,9 @@ interface backCompat_ContainerRuntime {
 	): Promise<ContainerRuntime>;
 }
 
-// loadRuntime API before commit 3ee4253aa98: took registryEntries instead of registry.
+/**
+ * loadRuntime API before https://github.com/microsoft/FluidFramework/pull/27685 took registryEntries instead of registry.
+ */
 interface backCompat_ContainerRuntime_loadRuntime {
 	loadRuntime(params: {
 		context: IContainerContext;
@@ -75,9 +77,11 @@ interface backCompat_ContainerRuntime_loadRuntime {
 		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
 		runtimeOptions?: IContainerRuntimeOptionsInternal;
 		containerScope?: FluidObject;
-		// Some versions of this API exist which expect this to be provided under the name `minVersionForCollab`, so this fails to actually set minVersionForCollab.
-		// That predates the versioning of this API and is thus hard to mitigate.
-		oldestSupportedClient?: OldestSupportedClientVersion;
+		// Some versions of this API exist which expect this to be provided under the name `minVersionForCollab` (before https://github.com/microsoft/FluidFramework/pull/27806),
+		// so this fails to actually set minVersionForCollab in some old cases, but it was optional then so does not error.
+		// That predates the versioning of this API, so we mitigate by setting both.
+		oldestSupportedClient: OldestSupportedClientVersion | undefined;
+		minVersionForCollab: OldestSupportedClientVersion | undefined;
 	}): Promise<ContainerRuntime>;
 }
 
@@ -214,9 +218,8 @@ export const createTestContainerRuntimeFactory = (
 						runtimeOptions: this.runtimeOptions,
 						containerScope: context.scope,
 						existing,
-						// Some versions of this API exist which expect this to be provided under the name minVersionForCollab, so this fails to actually set minVersionForCollab.
-						// That predates the versioning of this API and is thus hard to mitigate.
 						oldestSupportedClient: this.minVersionForCollab,
+						minVersionForCollab: this.minVersionForCollab,
 					});
 				case 2:
 					return containerRuntimeCtor.loadRuntime({
