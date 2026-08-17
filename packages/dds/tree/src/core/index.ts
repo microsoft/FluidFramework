@@ -50,7 +50,7 @@ export {
 	visitDelta,
 	createAnnouncedVisitor,
 	combineVisitors,
-	announceDelta,
+	makeBreakingVisitor,
 	applyDelta,
 	makeDetachedFieldIndex,
 	setGenericTreeField,

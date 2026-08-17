@@ -850,7 +850,10 @@ export interface LoadContainerRuntimeParams {
 export async function loadContainerRuntime(
 	params: LoadContainerRuntimeParams,
 ): Promise<IContainerRuntime & IRuntime> {
-	return ContainerRuntime.loadRuntime(params);
+	return ContainerRuntime.loadRuntime({
+		...params,
+		registry: new FluidDataStoreRegistry(params.registryEntries),
+	});
 }
 
 /**
@@ -859,6 +862,10 @@ export async function loadContainerRuntime(
  *
  * @param params - An object which specifies all required and optional params necessary to instantiate a runtime.
  * @returns An object containing the runtime.
+ *
+ * @privateRemarks
+ * By using loadRuntime2 instead of loadRuntime, this prevents mixinAttributor's overriding of loadRuntime from affecting this new API:
+ * this might cause unexpected issues.
  *
  * @legacy @alpha
  */
@@ -926,6 +933,8 @@ export class ContainerRuntime
 	 * {@link LoadContainerRuntimeParams} except internal, while still having layer compat obligations.
 	 * @privateRemarks
 	 * Despite this being `@internal`, `@fluidframework/test-utils` uses it in `createTestContainerRuntimeFactory` and assumes multiple versions of the package expose the same API.
+	 * To enable this code to know what version of this API it should use, loadRuntimeAPIVersion has been added.
+	 * This is a workaround for the relevant code in test-utils not tracking the package version, so it can't special case it off of that.
 	 *
 	 * Also note that `mixinAttributor` from `@fluid-experimental/attributor` overrides this function:
 	 * that will have to be updated if changing the signature of this function as well.
@@ -934,20 +943,20 @@ export class ContainerRuntime
 	 * `loadRuntime` could be removed (replaced by `loadRuntime2` which could be renamed back to `loadRuntime`).
 	 */
 	public static async loadRuntime(
-		params: LoadContainerRuntimeParams & {
-			/**
-			 * Constructor to use to create the ContainerRuntime instance.
-			 * @remarks
-			 * Defaults to {@link ContainerRuntime}.
-			 */
+		params: Omit<LoadContainerRuntimeParams, "registryEntries" | "runtimeOptions"> & {
+			registry: IFluidDataStoreRegistry;
 			containerRuntimeCtor?: typeof ContainerRuntime;
+			runtimeOptions?: IContainerRuntimeOptionsInternal;
 		},
 	): Promise<ContainerRuntime> {
-		return ContainerRuntime.loadRuntime2({
-			...params,
-			registry: new FluidDataStoreRegistry(params.registryEntries),
-		}).then((r) => r.runtime);
+		return ContainerRuntime.loadRuntime2(params).then((r) => r.runtime);
 	}
+
+	/**
+	 * Hack to allow test-utils to detect which version of loadRuntime API to expect.
+	 * See note in loadRuntime's private remarks.
+	 */
+	public static readonly loadRuntimeAPIVersion: number | undefined = 2;
 
 	/**
 	 * Load the stores from a snapshot and returns an object containing the runtime.
@@ -2400,11 +2409,11 @@ export class ContainerRuntime
 	// #region `IFluidParentContext` APIs that should not be called on Root
 
 	public makeLocallyVisible(): void {
-		assert(false, 0x8eb /* should not be called */);
+		fail(0x8eb /* should not be called */);
 	}
 
 	public setChannelDirty(address: string): void {
-		assert(false, 0x909 /* should not be called */);
+		fail(0x909 /* should not be called */);
 	}
 
 	// #endregion
@@ -3690,7 +3699,7 @@ export class ContainerRuntime
 			case ContainerMessageType.ChunkedOp: {
 				// From observability POV, we should not expose the rest of the system (including "op" events on object) to these messages.
 				// Also resetReconnectCount() would be wrong - see comment that was there before this change was made.
-				assert(false, 0x93d /* should not even get here */);
+				fail(0x93d /* should not even get here */);
 			}
 			case ContainerMessageType.Rejoin: {
 				break;
@@ -4504,7 +4513,7 @@ export class ContainerRuntime
 				return this.channelCollection.getDataStorePackagePath(nodePath);
 			}
 			default: {
-				assert(false, 0x2de /* "Package path requested for unsupported node type." */);
+				fail(0x2de /* "Package path requested for unsupported node type." */);
 			}
 		}
 	}

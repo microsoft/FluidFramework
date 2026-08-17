@@ -2777,7 +2777,9 @@ describe("SharedTree", () => {
 					forest: ForestTypeOptimized,
 				}).getFactory(),
 			);
-			assert.equal(trees[0].kernel.checkout.forest instanceof ChunkedForest, true);
+			const { checkout } = trees[0].kernel;
+			assert(checkout.forest instanceof ChunkedForest);
+			assert.equal(checkout.forest.breaker, checkout.breaker);
 		});
 
 		it("ForestTypeExpensive uses a ComparisonForest of ChunkedForest and ObjectForest with additionalAsserts set to true", () => {
@@ -2792,6 +2794,8 @@ describe("SharedTree", () => {
 			assert(forest instanceof ComparisonForest);
 			assert(forest.main instanceof ChunkedForest);
 			assert(forest.reference instanceof ObjectForest);
+			assert.equal(forest.main.breaker, trees[0].kernel.checkout.breaker);
+			assert.equal(forest.reference.breaker, trees[0].kernel.checkout.breaker);
 			assert.equal(forest.reference.additionalAsserts, true);
 		});
 	});

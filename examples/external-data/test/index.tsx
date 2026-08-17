@@ -33,7 +33,7 @@ export async function createContainerAndRenderInElement(
 
 		id = await createResponse.attach();
 		model.baseDocument.addTaskList({
-			externalTaskListId: "task-list-test",
+			externalTaskListId: "task-list-1",
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			containerUrl: model.getContainerResolvedUrl()!,
 		});

@@ -75,7 +75,7 @@
 		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.18.2",
+		"@arethetypeswrong/cli": "^0.18.5",
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-experimental/property-common": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
