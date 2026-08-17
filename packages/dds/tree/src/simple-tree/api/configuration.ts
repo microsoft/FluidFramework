@@ -169,7 +169,7 @@ export interface ITreeViewConfigurationAlpha<
 	 *
 	 * @remarks
 	 * If provided, this policy is used when generating stored schema to include in documents via
-	 * {@link TreeViewAlpha.initialize} / {@link TreeViewAlpha.upgradeSchema} as well as in {@link snapshotSchemaCompatibility} to validate
+	 * `initialize` / `upgradeSchema` as well as in {@link snapshotSchemaCompatibility} to validate
 	 * the compatibility of such documents.
 	 *
 	 * @defaultValue {@link StagedSchemaUpgradePolicyFactory.restrictive}
