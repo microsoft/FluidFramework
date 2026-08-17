@@ -131,7 +131,7 @@ import type {
 	ISummarizerNodeWithGC,
 	StageControlsInternal,
 	IContainerRuntimeBaseInternal,
-	MinimumVersionForCollab,
+	OldestSupportedClientVersion,
 	ContainerExtensionExpectations,
 } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -804,25 +804,42 @@ export interface LoadContainerRuntimeParams {
 	requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
 
 	/**
-	 * Minimum version of the FF runtime that is required to collaborate on new documents.
-	 * The input should be a string that represents the minimum version of the FF runtime that should be
-	 * supported for collaboration. The format of the string must be in valid semver format.
+	 * Oldest version of Fluid Framework client that must be able to open and process documents
+	 * written by this container runtime.
+	 * @remarks
+	 * Choosing an older version may limit the features and write formats the application can use to
+	 * those supported by that version. The value must be valid SemVer.
 	 *
 	 * The inputted version will be used to determine the default configuration for
 	 * {@link IContainerRuntimeOptionsInternal} to ensure compatibility with the specified version.
 	 *
 	 * @example
-	 * minVersionForCollab: "2.0.0"
+	 * oldestSupportedClient: "2.0.0"
 	 *
 	 * @privateRemarks
 	 * Used to determine the default configuration for {@link IContainerRuntimeOptionsInternal} that affect the document schema.
 	 * For example, let's say that feature `foo` was added in 2.0 which introduces a new op type. Additionally, option `bar`
 	 * was added to `IContainerRuntimeOptionsInternal` in 2.0 to enable/disable `foo` since clients prior to 2.0 would not
-	 * understand the new op type. If a customer were to set minVersionForCollab to 2.0.0, then `bar` would be set to
-	 * enable `foo` by default. If a customer were to set minVersionForCollab to 1.0.0, then `bar` would be set to
+	 * understand the new op type. If a customer were to set oldestSupportedClient to 2.0.0, then `bar` would be set to
+	 * enable `foo` by default. If a customer were to set oldestSupportedClient to 1.0.0, then `bar` would be set to
 	 * disable `foo` by default.
 	 */
-	minVersionForCollab?: MinimumVersionForCollab;
+	oldestSupportedClient?: OldestSupportedClientVersion;
+
+	/**
+	 * Oldest version of Fluid Framework client that must be able to open and process documents
+	 * written by this container runtime.
+	 *
+	 * @remarks
+	 * See {@link LoadContainerRuntimeParams.oldestSupportedClient} for compatibility implications.
+	 *
+	 * Specifying both `oldestSupportedClient` and `minVersionForCollab` is an error.
+	 *
+	 * @deprecated 2.116.0. To be removed in 3.10.0. Use
+	 * {@link LoadContainerRuntimeParams.oldestSupportedClient} instead.
+	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
+	 */
+	minVersionForCollab?: OldestSupportedClientVersion;
 }
 /**
  * This is meant to be used by a {@link @fluidframework/container-definitions#IRuntimeFactory} to instantiate a container runtime.
@@ -966,8 +983,26 @@ export class ContainerRuntime
 			runtimeOptions = {} satisfies IContainerRuntimeOptionsInternal,
 			containerScope = {},
 			containerRuntimeCtor = ContainerRuntime,
-			minVersionForCollab = defaultMinVersionForCollab,
+			oldestSupportedClient: oldestSupportedClientParam,
+			// eslint-disable-next-line import-x/no-deprecated -- accepted for compatibility. See #27851
+			minVersionForCollab: deprecatedMinVersionForCollab,
 		} = params;
+
+		if (
+			oldestSupportedClientParam !== undefined &&
+			deprecatedMinVersionForCollab !== undefined
+		) {
+			throw new UsageError(
+				"Specify only one of oldestSupportedClient or minVersionForCollab (deprecated), not both.",
+			);
+		}
+		// Internally this value is still threaded through as `minVersionForCollab`. Renaming the
+		// Runtime/DataStore/DDS propagation path crosses API layers and requires a staged migration
+		// where both names coexist for old and new consumers. See #27851.
+		const minVersionForCollab =
+			oldestSupportedClientParam ??
+			deprecatedMinVersionForCollab ??
+			defaultMinVersionForCollab;
 
 		// If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
 		// back-compat: Remove the TaggedLoggerAdapter fallback once all the host are using loader > 0.45
@@ -1655,7 +1690,7 @@ export class ContainerRuntime
 		private readonly documentsSchemaController: DocumentsSchemaController,
 		featureGatesForTelemetry: Record<string, boolean | number | undefined>,
 		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
-		public readonly minVersionForCollab: MinimumVersionForCollab,
+		public readonly minVersionForCollab: OldestSupportedClientVersion,
 		private readonly requestHandler?: (
 			request: IRequest,
 			runtime: IContainerRuntime,
@@ -2365,11 +2400,11 @@ export class ContainerRuntime
 	// #region `IFluidParentContext` APIs that should not be called on Root
 
 	public makeLocallyVisible(): void {
-		assert(false, 0x8eb /* should not be called */);
+		fail(0x8eb /* should not be called */);
 	}
 
 	public setChannelDirty(address: string): void {
-		assert(false, 0x909 /* should not be called */);
+		fail(0x909 /* should not be called */);
 	}
 
 	// #endregion
@@ -3655,7 +3690,7 @@ export class ContainerRuntime
 			case ContainerMessageType.ChunkedOp: {
 				// From observability POV, we should not expose the rest of the system (including "op" events on object) to these messages.
 				// Also resetReconnectCount() would be wrong - see comment that was there before this change was made.
-				assert(false, 0x93d /* should not even get here */);
+				fail(0x93d /* should not even get here */);
 			}
 			case ContainerMessageType.Rejoin: {
 				break;
@@ -4469,7 +4504,7 @@ export class ContainerRuntime
 				return this.channelCollection.getDataStorePackagePath(nodePath);
 			}
 			default: {
-				assert(false, 0x2de /* "Package path requested for unsupported node type." */);
+				fail(0x2de /* "Package path requested for unsupported node type." */);
 			}
 		}
 	}

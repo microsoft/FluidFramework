@@ -279,6 +279,27 @@ const handler: ProxyHandler<TreeMapNodeAlpha<any>> = {
 	getPrototypeOf: () => {
 		return Map.prototype;
 	},
+	get: (target, key, receiver) => {
+		const value = Reflect.get(target, key, receiver) as unknown;
+		if (value !== undefined) {
+			return value;
+		}
+		// If the property is a function on Map.prototype but not on the target,
+		// return a function that throws a descriptive TypeError when called.
+		if (
+			typeof key === "string" &&
+			!(key in target) &&
+			key in Map.prototype &&
+			typeof (Map.prototype as unknown as Record<string, unknown>)[key] === "function"
+		) {
+			return () => {
+				throw new TypeError(
+					`MapNode does not support '${key}'. Use the MapNode API (e.g., set, get, delete, keys, values, entries).`,
+				);
+			};
+		}
+		return value;
+	},
 };
 
 abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends TreeNodeValid<
@@ -326,9 +347,11 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 	public has(key: string): boolean {
 		return this.innerNode.tryGetField(brand(key)) !== undefined;
 	}
-	public keys(): FluidIterableIterator<string> {
+	public *keys(): FluidIterableIterator<string> {
 		const node = this.innerNode;
-		return node.keys();
+		for (const key of node.keys()) {
+			yield key;
+		}
 	}
 	public set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T>): this {
 		const kernel = getKernel(this);

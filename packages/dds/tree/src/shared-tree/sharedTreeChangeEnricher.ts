@@ -110,7 +110,10 @@ export class SharedTreeChangeEnricher {
 		this.changeQueue.push(typeof change === "function" ? change : () => change);
 	}
 
-	private purgeChangeQueue(): void {
+	/**
+	 * Applies all queued changes.
+	 */
+	public purgeChangeQueue(): void {
 		if (this.changeQueue.length === 0) {
 			return;
 		}

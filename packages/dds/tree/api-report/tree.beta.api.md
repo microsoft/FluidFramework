@@ -91,7 +91,7 @@ export function asBeta<TSchema extends ImplicitFieldSchema>(view: TreeView<TSche
 
 // @beta @input
 export interface CodecWriteOptionsBeta {
-    readonly minVersionForCollab: MinimumVersionForCollab;
+    readonly minVersionForCollab: OldestSupportedClientVersion;
 }
 
 // @public
