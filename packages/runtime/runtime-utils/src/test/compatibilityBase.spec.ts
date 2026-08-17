@@ -272,6 +272,45 @@ describe("compatibilityBase", () => {
 				);
 			});
 		}
+
+		describe("configMap entries for versions beyond the current package version", () => {
+			// A version well beyond cleanedPackageVersion, used to model a future major release.
+			const futureVersion = "1000000.0.0" as MinimumVersionForCollab;
+
+			// eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- type required for ConfigMap processing
+			type IFutureTestConfigMap = { featureA: string };
+			const futureConfigMap: ConfigMap<IFutureTestConfigMap> = {
+				featureA: {
+					"1.0.0": "old",
+					[futureVersion]: "future",
+				},
+			};
+
+			it("does not throw when a configMap contains an entry beyond the current package version", () => {
+				assert.doesNotThrow(() => {
+					getConfigsForMinVersionForCollab(cleanedPackageVersion, futureConfigMap);
+				});
+			});
+
+			it("never selects a configMap entry beyond the current package version", () => {
+				// Every valid minVersionForCollab is <= cleanedPackageVersion, so the future entry must never
+				// be selected: doing so would mean the "upper bound" check that gates real minVersionForCollab
+				// values (validateMinimumVersionForCollab) was bypassed for this path too.
+				const config = getConfigsForMinVersionForCollab(
+					cleanedPackageVersion,
+					futureConfigMap,
+				);
+				assert.equal(config.featureA, "old");
+			});
+
+			it("still throws if the minVersionForCollab argument itself exceeds the current package version", () => {
+				// This is the check that must NOT be bypassed: unlike configMap keys, the minVersionForCollab
+				// value supplied by a caller must remain bounded by the current package version.
+				assert.throws(() => {
+					getConfigsForMinVersionForCollab(futureVersion, futureConfigMap);
+				}, /is not a valid MinimumVersionForCollab/);
+			});
+		});
 	});
 
 	// The getConfigForMinVersionForCollab and getConfigsForMinVersionForCollab also provide good coverage for this.
@@ -472,6 +511,24 @@ describe("compatibilityBase", () => {
 				assert.deepEqual(isValidSemver, testCase.checks.isValidSemver);
 				assert.deepEqual(isGteLowestMinVersion, testCase.checks.isGteLowestMinVersion);
 				assert.deepEqual(isLtePkgVersion, testCase.checks.isLtePkgVersion);
+			});
+
+			it(`validateMinimumVersionForCollab for ${testCase.version} throws iff any check fails`, () => {
+				const isFullyValid =
+					testCase.checks.isValidSemver &&
+					testCase.checks.isGteLowestMinVersion &&
+					testCase.checks.isLtePkgVersion;
+				if (isFullyValid) {
+					assert.doesNotThrow(() => validateMinimumVersionForCollab(testCase.version));
+				} else {
+					// In particular, this locks in that a version beyond the current package version
+					// (isLtePkgVersion: false) is still rejected for real minVersionForCollab values, even
+					// though configMap keys are now permitted to describe such future versions.
+					assert.throws(
+						() => validateMinimumVersionForCollab(testCase.version),
+						/is not a valid MinimumVersionForCollab/,
+					);
+				}
 			});
 		}
 	});
