@@ -15,6 +15,8 @@ import {
 	DocumentRootParent,
 	RemovedRootParent,
 	UnhydratedParent,
+	type ParentObjectChildChangedData,
+	type ParentObjectEvents,
 } from "../../shared-tree/parentObject.js";
 import { runTransaction, Tree } from "../../shared-tree/tree.js";
 import { TreeAlpha } from "../../shared-tree/treeAlpha.js";
@@ -31,6 +33,10 @@ import {
 	type TreeViewAlpha,
 	type TransactionConstraint,
 	type rollback,
+	withBufferedTreeEvents,
+	type TreeChangeEvents,
+	type TreeChangeEventsBeta,
+	allowUnused,
 } from "../../simple-tree/index.js";
 import type { requireAssignableTo } from "../../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -705,6 +711,61 @@ describe("treeApi", () => {
 			assert.deepEqual(log, ["treeChanged"]);
 		});
 
+		it("coalesces childChanged across a withBufferedTreeEvents window (net change)", () => {
+			const view = getView(new TreeViewConfigurationAlpha({ schema: sf.optional(ChildNode) }));
+			view.initialize({ value: 1 });
+
+			const root = view.root;
+			assert(root !== undefined);
+			const rootParent = TreeAlpha.parent2(root);
+			assert(rootParent instanceof DocumentRootParent);
+
+			const childChanges: ParentObjectChildChangedData[] = [];
+			let treeChangedCount = 0;
+			TreeAlpha.on(rootParent, "treeChanged", () => {
+				treeChangedCount++;
+			});
+			TreeAlpha.on(rootParent, "childChanged", (data) => childChanges.push(data));
+
+			const node3 = new ChildNode({ value: 3 });
+			withBufferedTreeEvents(() => {
+				// Two root replacements within the same buffering window.
+				view.root = new ChildNode({ value: 2 });
+				view.root = node3;
+			});
+
+			// childChanged is delivered once with the net change: the original root → the final node.
+			assert.equal(childChanges.length, 1);
+			assert.equal(childChanges[0].previous, root);
+			assert.equal(childChanges[0].current, node3);
+			// treeChanged (fired for the replacement) is also coalesced to a single delivery.
+			assert.equal(treeChangedCount, 1);
+		});
+
+		it("does not coalesce childChanged when not inside a buffering window", () => {
+			const view = getView(new TreeViewConfigurationAlpha({ schema: sf.optional(ChildNode) }));
+			view.initialize({ value: 1 });
+
+			const root = view.root;
+			assert(root !== undefined);
+			const rootParent = TreeAlpha.parent2(root);
+			assert(rootParent instanceof DocumentRootParent);
+
+			const childChanges: ParentObjectChildChangedData[] = [];
+			TreeAlpha.on(rootParent, "childChanged", (data) => childChanges.push(data));
+
+			// Two separate (unbuffered) replacements each deliver their own childChanged.
+			const node2 = new ChildNode({ value: 2 });
+			view.root = node2;
+			const node3 = new ChildNode({ value: 3 });
+			view.root = node3;
+
+			assert.equal(childChanges.length, 2);
+			assert.equal(childChanges[0].current, node2);
+			assert.equal(childChanges[1].previous, node2);
+			assert.equal(childChanges[1].current, node3);
+		});
+
 		it("cleans up DocumentRootParent listener when view is disposed", () => {
 			const view = getView(new TreeViewConfiguration({ schema: ChildNode }));
 			view.initialize({ value: 1 });
@@ -825,7 +886,36 @@ describe("treeApi", () => {
 				// @ts-expect-error `nodeChanged` is not available on a ParentObject.
 				TreeAlpha.on(parent, "nodeChanged", () => {});
 			}
-			void _typeChecks;
+			allowUnused(_typeChecks);
+		});
+
+		// Type-only checks: a `ParentObject` `treeChanged` listener must be substitutable up the
+		// `alpha -> beta -> public` event stack (per PR review). `ParentObjectEvents.treeChanged` uses
+		// the beta signature, and the beta/public `treeChanged` share the same no-argument signature, so
+		// a listener written for the alpha `ParentObject` event is usable wherever the beta or public
+		// `treeChanged` is expected (and vice versa).
+		it("ParentObject treeChanged listener substitutes up the alpha -> beta -> public stack (type-level)", () => {
+			// An alpha `ParentObject` listener is usable in the beta and public events APIs.
+			allowUnused<
+				requireAssignableTo<
+					ParentObjectEvents["treeChanged"],
+					TreeChangeEventsBeta["treeChanged"]
+				>
+			>();
+			allowUnused<
+				requireAssignableTo<ParentObjectEvents["treeChanged"], TreeChangeEvents["treeChanged"]>
+			>();
+			// ...and the reverse also holds (the signatures are equivalent), so a public/beta listener
+			// works as a `ParentObject` listener too.
+			allowUnused<
+				requireAssignableTo<
+					TreeChangeEventsBeta["treeChanged"],
+					ParentObjectEvents["treeChanged"]
+				>
+			>();
+			allowUnused<
+				requireAssignableTo<TreeChangeEvents["treeChanged"], ParentObjectEvents["treeChanged"]>
+			>();
 		});
 	});
 
@@ -839,8 +929,8 @@ describe("treeApi", () => {
 			assert(rootParent instanceof DocumentRootParent);
 
 			assert.equal(TreeAlpha.child(rootParent, undefined), root);
-			// A ParentObject's only child is keyed by `undefined`; any other key is an error.
-			assert.throws(() => TreeAlpha.child(rootParent, "foo"));
+			// A ParentObject's only child is keyed by `undefined`; any other key returns undefined.
+			assert.equal(TreeAlpha.child(rootParent, "foo"), undefined);
 
 			const childrenResult = [...TreeAlpha.children(rootParent)];
 			assert.equal(childrenResult.length, 1);

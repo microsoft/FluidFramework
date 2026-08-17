@@ -54,6 +54,8 @@ export {
 	type SchemaVisitor,
 	type SimpleNodeSchemaBase,
 	withBufferedTreeEvents,
+	isBufferingTreeEvents,
+	onTreeEventsFlush,
 	type AnnotateAllowedTypesList,
 	type AllowedTypesFull,
 	type AllowedTypesFullFromMixed,

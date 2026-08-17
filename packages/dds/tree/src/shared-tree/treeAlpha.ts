@@ -93,7 +93,6 @@ import {
 	type TreeBranchAlpha,
 	type TreeChangeEvents,
 	UnhydratedFlexTreeNode,
-	SimpleContextSlot,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 
@@ -278,17 +277,17 @@ export interface TreeAlpha {
 	 * @returns A function that, when called, removes the listener.
 	 *
 	 * @remarks
-	 * The available events are {@link ParentObjectEvents}: the base content events
-	 * `nodeChanged`/`treeChanged`, plus the dedicated {@link ParentObjectEvents.childChanged}
-	 * occupancy event. Which events fire depends on the kind of `ParentObject`:
+	 * The available events are {@link ParentObjectEvents}: the `treeChanged` content event, plus the
+	 * dedicated {@link ParentObjectEvents.childChanged} occupancy event. Which events fire depends on the
+	 * kind of `ParentObject`:
 	 *
-	 * - For document-root parents, the content events (`nodeChanged`/`treeChanged`) proxy to the
-	 * current root node and automatically re-subscribe when the root is replaced; `childChanged`
-	 * fires when the root is replaced (reporting the previous and current root).
+	 * - For document-root parents, `treeChanged` proxies to the current root node (and automatically
+	 * re-subscribes when the root is replaced) and also fires on root replacement; `childChanged` fires
+	 * when the root is replaced (reporting the previous and current root).
 	 *
 	 * - For detached (removed) and unhydrated parents, only `childChanged` fires — when the node is
 	 * re-inserted into the document or hydrated (inserted for the first time), leaving the location empty.
-	 * The content events do not fire for these parents.
+	 * `treeChanged` does not fire for these parents.
 	 */
 	on<K extends keyof ParentObjectEvents>(
 		node: ParentObject,
@@ -505,7 +504,10 @@ export interface TreeAlpha {
 	 */
 	child(node: TreeNode, key: string | number): TreeNode | TreeLeafValue | undefined;
 	child(node: ParentObject, key: undefined): TreeNode | TreeLeafValue | undefined;
-	child(node: TreeNodeParent, key: string | number | undefined): TreeNode | TreeLeafValue | undefined;
+	child(
+		node: TreeNodeParent,
+		key: string | number | undefined,
+	): TreeNode | TreeLeafValue | undefined;
 
 	/**
 	 * Gets the children of the provided node, paired with their property keys under the node.
@@ -538,9 +540,15 @@ export interface TreeAlpha {
 	 * @see {@link (TreeNodeApi:interface).parent}
 	 * @see {@link (TreeAlpha:interface).parent2}
 	 */
-	children(node: TreeNode): Iterable<[propertyKey: string | number, child: TreeNode | TreeLeafValue]>;
-	children(node: ParentObject): Iterable<[propertyKey: undefined, child: TreeNode | TreeLeafValue]>;
-	children(node: TreeNodeParent): Iterable<[propertyKey: string | number | undefined, child: TreeNode | TreeLeafValue]>;
+	children(
+		node: TreeNode,
+	): Iterable<[propertyKey: string | number, child: TreeNode | TreeLeafValue]>;
+	children(
+		node: ParentObject,
+	): Iterable<[propertyKey: undefined, child: TreeNode | TreeLeafValue]>;
+	children(
+		node: TreeNodeParent,
+	): Iterable<[propertyKey: string | number | undefined, child: TreeNode | TreeLeafValue]>;
 
 	/**
 	 * Track observations of any TreeNode content.
@@ -900,8 +908,12 @@ function trackObservations<TResult>(
 	};
 }
 
-function treeAlphaChildren(node: TreeNode): Iterable<[propertyKey: string | number, child: TreeNode | TreeLeafValue]>;
-function treeAlphaChildren(node: ParentObject): Iterable<[propertyKey: undefined, child: TreeNode | TreeLeafValue]>;
+function treeAlphaChildren(
+	node: TreeNode,
+): Iterable<[propertyKey: string | number, child: TreeNode | TreeLeafValue]>;
+function treeAlphaChildren(
+	node: ParentObject,
+): Iterable<[propertyKey: undefined, child: TreeNode | TreeLeafValue]>;
 function treeAlphaChildren(
 	node: TreeNodeParent,
 ): Iterable<[propertyKey: string | number | undefined, child: TreeNode | TreeLeafValue]> {
@@ -955,10 +967,7 @@ function treeAlphaChildren(
 				const flexField = flexNode.tryGetField(brand(String(storedKey)));
 				if (flexField !== undefined) {
 					const childTreeNode = tryGetTreeNodeForField(flexField);
-					assert(
-						childTreeNode !== undefined,
-						0xbc6 /* Expected child tree node for field. */,
-					);
+					assert(childTreeNode !== undefined, 0xbc6 /* Expected child tree node for field. */);
 					result.push([propertyKey, childTreeNode]);
 				}
 			}
@@ -1297,12 +1306,7 @@ export const TreeAlpha: TreeAlpha = {
 		} else {
 			// Node is detached (removed from tree but not deleted)
 			const detachedField = keyAsDetachedField(parentField);
-			const hydratedContext = anchorNode.anchorSet.slots.get(SimpleContextSlot);
-			assert(
-				hydratedContext !== undefined,
-				"Expected context to be present in SimpleContextSlot",
-			);
-			return RemovedRootParent.getOrCreate(hydratedContext.flexContext, detachedField, node);
+			return RemovedRootParent.getOrCreate(detachedField, node);
 		}
 	},
 

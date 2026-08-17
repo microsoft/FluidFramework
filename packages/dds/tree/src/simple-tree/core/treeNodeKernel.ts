@@ -123,7 +123,7 @@ export class TreeNodeKernel {
 	 * Handler for events listeners registered with the kernel.
 	 *
 	 * @remarks
-	 * Supports event buffering via {@link withBufferedEvents}.
+	 * Supports event buffering via {@link withBufferedTreeEvents}.
 	 *
 	 * Allocated lazily on first access to {@link TreeNodeKernel.events}.
 	 * We expect the majority of nodes to never have event listeners registered, so
@@ -132,21 +132,24 @@ export class TreeNodeKernel {
 	#eventBuffer: KernelEventBuffer | undefined;
 
 	/**
-	 * Emitter for status change events.
+	 * Emitter backing {@link TreeNodeKernel.statusEvents}.
 	 *
 	 * @remarks
-	 * Unlike content events, status events are not buffered (see {@link withBufferedTreeEvents}) — they fire
-	 * synchronously when the kernel detects a status transition in {@link TreeNodeKernel.hydrate} or
-	 * {@link TreeNodeKernel.dispose}.
+	 * Emits two flavors of status change (see {@link KernelStatusEvents}):
 	 *
-	 * Currently these events are only consumed by ParentObject's `on()` implementation
-	 * (for RemovedRootParent and UnhydratedParent), which buffers them into the view's
-	 * afterBatch cycle before exposing to users. This means users never observe tree
-	 * state during an in-progress batch.
+	 * `statusChanged` fires synchronously when the kernel detects a transition in
+	 * {@link TreeNodeKernel.hydrate} or {@link TreeNodeKernel.dispose}. It is not batch-aligned, so a
+	 * listener may observe intermediate tree state during an in-progress batch.
 	 *
-	 * If new consumers are added, care must be taken to ensure they do not expose
-	 * unbuffered status to users, as that could cause invalidation ordering issues
-	 * with the buffered content events and allow observation of intermediate states.
+	 * `statusChangedAfterBatch` is the batch-aligned analog: the kernel itself defers delivery until the
+	 * current batch settles (via the checkout's `afterBatch` watcher managed in
+	 * {@link TreeNodeKernel.statusEvents}), so listeners always observe a consistent tree. This is the
+	 * flavor consumers should use to surface status to users; it removes the need for each consumer to
+	 * implement its own `afterBatch` deferral.
+	 *
+	 * Neither flavor is coalesced across a {@link withBufferedTreeEvents} window at the kernel level;
+	 * consumers that want that should coalesce their own user-facing notifications (see
+	 * {@link isBufferingTreeEvents} / {@link onTreeEventsFlush}).
 	 */
 	readonly #statusEvents = createEmitter<KernelStatusEvents>();
 
@@ -155,6 +158,36 @@ export class TreeNodeKernel {
 	 * @remarks Compared against the current status to detect transitions.
 	 */
 	#lastKnownStatus: TreeStatus;
+
+	/**
+	 * The last status for which a {@link KernelStatusEvents.statusChangedAfterBatch} event was fired.
+	 * @remarks
+	 * Tracked separately from {@link TreeNodeKernel.#lastKnownStatus} because the batch-aligned event is
+	 * baselined when its first listener subscribes and only advances at batch boundaries (see
+	 * {@link TreeNodeKernel.statusEvents}).
+	 */
+	#statusAfterBatchLastKnown: TreeStatus;
+
+	/**
+	 * Subscription to the checkout's `afterBatch` event used to detect status transitions at batch
+	 * boundaries. Present only while there is at least one
+	 * {@link KernelStatusEvents.statusChangedAfterBatch} listener and the node is hydrated.
+	 */
+	#afterBatchWatcherOff: Off | undefined;
+
+	/**
+	 * True once a {@link KernelStatusEvents.statusChangedAfterBatch} listener has been registered.
+	 * @remarks
+	 * If the node is not yet hydrated when the listener subscribes, the actual `afterBatch` subscription
+	 * is deferred until {@link TreeNodeKernel.hydrate}.
+	 */
+	#afterBatchWatcherRequested: boolean = false;
+
+	/**
+	 * Cached facade returned by {@link TreeNodeKernel.statusEvents} which lazily manages the `afterBatch`
+	 * watcher as {@link KernelStatusEvents.statusChangedAfterBatch} listeners come and go.
+	 */
+	#statusEventsFacade: Listenable<KernelStatusEvents> | undefined;
 
 	/**
 	 * Create a TreeNodeKernel which can be looked up with {@link getKernel}.
@@ -192,6 +225,7 @@ export class TreeNodeKernel {
 			// For hydrated nodes created directly, compute initial status
 			this.#lastKnownStatus = this.getStatus();
 		}
+		this.#statusAfterBatchLastKnown = this.#lastKnownStatus;
 	}
 
 	public get context(): Context {
@@ -228,6 +262,22 @@ export class TreeNodeKernel {
 		// We avoid calling getStatus() here because it accesses `treeStatusFromAnchorCache`, which
 		// can modify the anchor node's cache during hydration, causing issues with the tree state.
 		this.emitStatusChange(TreeStatus.InDocument);
+
+		// If a batch-aligned status watcher was requested while this node was still unhydrated, start it
+		// now that a checkout is available.
+		if (this.#afterBatchWatcherRequested && this.#afterBatchWatcherOff === undefined) {
+			this.#startAfterBatchWatcher();
+			// Surface the New -> InDocument transition to batch-aligned listeners. If hydration happens
+			// mid-batch (e.g. `insertAtEnd`), the watcher's `afterBatch` will deliver it once the tree is
+			// consistent. If the tree is already settled (e.g. hydration via `view.initialize()`), no
+			// trailing `afterBatch` follows, so deliver synchronously here — using the known `InDocument`
+			// status rather than `getStatus()`, which would pollute `treeStatusFromAnchorCache` mid-hydration.
+			const flexContext = this.context.flexContext;
+			assert(flexContext.isHydrated(), "hydrated node must have a hydrated context");
+			if (!flexContext.checkout.isBatchInProgress) {
+				this.#emitStatusChangedAfterBatch(TreeStatus.InDocument);
+			}
+		}
 	}
 
 	/**
@@ -240,6 +290,68 @@ export class TreeNodeKernel {
 			this.#lastKnownStatus = newStatus;
 			this.#statusEvents.emit("statusChanged", { oldStatus, newStatus });
 		}
+	}
+
+	/**
+	 * Emits {@link KernelStatusEvents.statusChangedAfterBatch} if `newStatus` differs from the last status
+	 * reported to batch-aligned listeners.
+	 */
+	#emitStatusChangedAfterBatch(newStatus: TreeStatus): void {
+		const oldStatus = this.#statusAfterBatchLastKnown;
+		if (oldStatus !== newStatus) {
+			this.#statusAfterBatchLastKnown = newStatus;
+			this.#statusEvents.emit("statusChangedAfterBatch", { oldStatus, newStatus });
+		}
+	}
+
+	/**
+	 * Records that a {@link KernelStatusEvents.statusChangedAfterBatch} listener is now present and, if the
+	 * node is hydrated, begins watching for status transitions at batch boundaries.
+	 * @remarks
+	 * Baselines the last reported status so that only transitions occurring after this point are surfaced.
+	 * When the node is not yet hydrated, the actual `afterBatch` subscription is deferred to
+	 * {@link TreeNodeKernel.hydrate}. Because the baseline is captured here, a subscribe on an
+	 * already-hydrated node needs no synchronous catch-up (the baseline already equals the current status).
+	 */
+	#requestAfterBatchWatcher(): void {
+		if (this.#afterBatchWatcherRequested) {
+			return;
+		}
+		this.#afterBatchWatcherRequested = true;
+		this.#statusAfterBatchLastKnown = this.getStatus();
+		if (this.isHydrated()) {
+			this.#startAfterBatchWatcher();
+		}
+	}
+
+	/**
+	 * Subscribes to the checkout's `afterBatch` event so status transitions are surfaced via
+	 * {@link KernelStatusEvents.statusChangedAfterBatch} once the tree (and thus `getStatus()`) is
+	 * consistent.
+	 * @remarks
+	 * Must only be called when hydrated. This only wires up the (deferred) `afterBatch` subscription; it
+	 * intentionally performs no synchronous `getStatus()` read, so it is safe to call from
+	 * {@link TreeNodeKernel.hydrate} (where reading status would pollute `treeStatusFromAnchorCache`). Any
+	 * synchronous catch-up for a transition that has no trailing `afterBatch` is the caller's
+	 * responsibility (see {@link TreeNodeKernel.hydrate}).
+	 */
+	#startAfterBatchWatcher(): void {
+		const flexContext = this.context.flexContext;
+		assert(flexContext.isHydrated(), "afterBatch status watcher requires a hydrated context");
+		const checkout = flexContext.checkout;
+		this.#afterBatchWatcherOff = checkout.events.on("afterBatch", () =>
+			this.#emitStatusChangedAfterBatch(this.getStatus()),
+		);
+	}
+
+	/**
+	 * Tears down the `afterBatch` status watcher once the last
+	 * {@link KernelStatusEvents.statusChangedAfterBatch} listener has been removed.
+	 */
+	#releaseAfterBatchWatcher(): void {
+		this.#afterBatchWatcherRequested = false;
+		this.#afterBatchWatcherOff?.();
+		this.#afterBatchWatcherOff = undefined;
 	}
 
 	private createHydratedState(innerNode: HydratedFlexTreeNode): HydratedState {
@@ -295,20 +407,61 @@ export class TreeNodeKernel {
 	/**
 	 * Returns a listenable for status change events.
 	 * @remarks
-	 * Status events are separate from content events and are not buffered (see {@link withBufferedTreeEvents}).
+	 * Two flavors are exposed (see {@link KernelStatusEvents}).
+	 *
+	 * `statusChanged` fires synchronously the moment the kernel detects a transition (in
+	 * {@link TreeNodeKernel.hydrate} / {@link TreeNodeKernel.dispose}). It is not batch-aligned, so a
+	 * listener may observe intermediate tree state during an in-progress batch.
+	 *
+	 * `statusChangedAfterBatch` is the batch-aligned analog of the anchor `*AfterBatch` content events:
+	 * the kernel defers delivery until the current batch settles (via the checkout's `afterBatch`), so
+	 * listeners always observe a consistent tree (a correct `Tree.status()`). This removes the need for
+	 * each consumer to implement its own `afterBatch` deferral. While at least one such listener is
+	 * registered and the node is hydrated, the kernel maintains an `afterBatch` watcher that detects
+	 * transitions (including detach to `Removed`, which has no dedicated signal); it is torn down when the
+	 * last listener is removed.
+	 *
+	 * Consumers that additionally want coalescing across a {@link withBufferedTreeEvents} window should
+	 * coalesce their own user-facing notifications (see {@link isBufferingTreeEvents},
+	 * {@link onTreeEventsFlush}); batch-aligned status events are per-batch, matching the anchor events.
 	 */
 	public get statusEvents(): Listenable<KernelStatusEvents> {
-		return this.#statusEvents;
-	}
-
-	/**
-	 * Checks the current status and emits a status changed event if it differs from the last known status.
-	 * @remarks
-	 * This should be called after operations that might change the node's status,
-	 * but not during hydration (see {@link TreeNodeKernel.hydrate} for details).
-	 */
-	public checkAndEmitStatusChange(): void {
-		this.emitStatusChange(this.getStatus());
+		if (this.#statusEventsFacade === undefined) {
+			const emitter = this.#statusEvents;
+			this.#statusEventsFacade = {
+				on: <K extends keyof KernelStatusEvents>(
+					eventName: K,
+					listener: KernelStatusEvents[K],
+				): Off => {
+					const off = emitter.on(eventName, listener);
+					if (eventName === "statusChangedAfterBatch") {
+						this.#requestAfterBatchWatcher();
+					}
+					return () => {
+						off();
+						if (
+							eventName === "statusChangedAfterBatch" &&
+							!emitter.hasListeners("statusChangedAfterBatch")
+						) {
+							this.#releaseAfterBatchWatcher();
+						}
+					};
+				},
+				off: <K extends keyof KernelStatusEvents>(
+					eventName: K,
+					listener: KernelStatusEvents[K],
+				): void => {
+					emitter.off(eventName, listener);
+					if (
+						eventName === "statusChangedAfterBatch" &&
+						!emitter.hasListeners("statusChangedAfterBatch")
+					) {
+						this.#releaseAfterBatchWatcher();
+					}
+				},
+			};
+		}
+		return this.#statusEventsFacade;
 	}
 
 	public dispose(): void {
@@ -320,6 +473,10 @@ export class TreeNodeKernel {
 		// once `disposed` is true. Emitting first ensures listeners can still inspect
 		// the node during their callback.
 		this.emitStatusChange(TreeStatus.Deleted);
+		// Surface the terminal transition to batch-aligned listeners as well, then stop watching.
+		// Deletion is terminal, so it is delivered immediately rather than deferred to a later batch.
+		this.#emitStatusChangedAfterBatch(TreeStatus.Deleted);
+		this.#releaseAfterBatchWatcher();
 
 		this.disposed = true;
 		if (isHydrated(this.#hydrationState)) {
@@ -399,13 +556,26 @@ export interface StatusChangedEventData {
 
 /**
  * Events emitted by the kernel for status changes.
- * These are separate from content events and are not buffered.
+ * @remarks
+ * `statusChanged` is synchronous (fires the instant a transition is detected). `statusChangedAfterBatch`
+ * is the batch-aligned analog of the anchor `*AfterBatch` content events — see
+ * {@link TreeNodeKernel.statusEvents} for the delivery contract and how the watcher is managed.
  */
 export interface KernelStatusEvents {
 	/**
-	 * Emitted when the node's {@link TreeStatus} changes.
+	 * Emitted synchronously when the node's {@link TreeStatus} changes.
+	 * @remarks
+	 * Not batch-aligned: a listener may observe intermediate tree state during an in-progress batch.
 	 */
 	statusChanged(data: StatusChangedEventData): void;
+
+	/**
+	 * Emitted after the batch in which the node's {@link TreeStatus} changed has settled.
+	 * @remarks
+	 * The batch-aligned counterpart to {@link KernelStatusEvents.statusChanged}: listeners always observe
+	 * a consistent tree (a correct `Tree.status()`). Delivered once per batch that produced a transition.
+	 */
+	statusChangedAfterBatch(data: StatusChangedEventData): void;
 }
 
 // #region TreeNodeEventBuffer
@@ -431,26 +601,57 @@ export function withBufferedTreeEvents(callback: () => void): void {
 		callback();
 	} else {
 		bufferTreeEvents = true;
-		const toFlush: KernelEventBuffer[] = [];
+		const buffersToFlush: KernelEventBuffer[] = [];
+		const flushCallbacks: (() => void)[] = [];
 		try {
 			callback();
 		} finally {
 			bufferTreeEvents = false;
 			// Snapshot-and-clear before flushing to safely handle reentrant `withBufferedTreeEvents`
-			// calls made by listeners that fire during `buffer.flush()` below:
+			// calls made by listeners that fire during the flush below:
 			// - Iterating an array means a reentrant call's `clear()` cannot truncate our loop
-			//   and cause buffers later in `activeBuffers` to be skipped (and their events dropped).
+			//   and cause entries later in the set to be skipped (and their events dropped).
 			// - Clearing up front means the reentrant call starts from an empty set, so its own
-			//   finally block only flushes what it buffered - not a re-flush of our remaining buffers.
-			toFlush.push(...activeBuffers);
+			//   finally block only flushes what it buffered - not a re-flush of our remaining entries.
+			buffersToFlush.push(...activeBuffers);
 			activeBuffers.clear();
+			flushCallbacks.push(...pendingFlushCallbacks);
+			pendingFlushCallbacks.clear();
 		}
 
-		// Don't flush/emit events in the case of an error
-		for (const buffer of toFlush) {
+		// Don't flush/emit events in the case of an error.
+		// Content-event buffers are flushed first so that content notifications are delivered before
+		// the status-driven callbacks registered via {@link onTreeEventsFlush} (matching the
+		// content-before-status ordering that occurs within a single batch).
+		for (const buffer of buffersToFlush) {
 			buffer.flush();
 		}
+		for (const flush of flushCallbacks) {
+			flush();
+		}
 	}
+}
+
+/**
+ * Whether a {@link withBufferedTreeEvents} buffering window is currently active.
+ * @remarks
+ * Consumers that produce their own user-facing notifications from lower-level signals (e.g. status
+ * changes) can use this to coalesce/defer those notifications to the end of the window, matching how
+ * content events are coalesced. Pair with {@link onTreeEventsFlush} to register the deferred work.
+ */
+export function isBufferingTreeEvents(): boolean {
+	return bufferTreeEvents;
+}
+
+/**
+ * Registers a callback to run when the current {@link withBufferedTreeEvents} window flushes.
+ * @remarks
+ * Must only be called while {@link isBufferingTreeEvents} returns `true`. The callback runs once,
+ * after the content-event buffers have been flushed. Register at most one callback per unit of
+ * deferred work per window (callers should track whether they have already registered).
+ */
+export function onTreeEventsFlush(callback: () => void): void {
+	pendingFlushCallbacks.add(callback);
 }
 
 /**
@@ -461,6 +662,16 @@ export function withBufferedTreeEvents(callback: () => void): void {
  * The set should be empty whenever no buffering window is in progress.
  */
 const activeBuffers: Set<KernelEventBuffer> = new Set();
+
+/**
+ * One-shot callbacks registered via {@link onTreeEventsFlush} to run when the current
+ * {@link withBufferedTreeEvents} window flushes.
+ *
+ * @remarks
+ * Used by consumers that coalesce their own user-facing notifications (e.g. status-driven events)
+ * to the end of a buffering window. The set should be empty whenever no buffering window is in progress.
+ */
+const pendingFlushCallbacks: Set<() => void> = new Set();
 
 /**
  * Test-only accessor for the current size of {@link activeBuffers}.

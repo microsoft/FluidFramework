@@ -162,8 +162,8 @@ export interface TreeNodeApi {
 	 *
 	 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if the node has been {@link TreeStatus.Deleted | deleted}.
 	 *
-	 * @see {@link (TreeAlpha:interface).child}
-	 * @see {@link (TreeAlpha:interface).children}
+	 * @see {@link (TreeAlpha:interface).(child:1)}
+	 * @see {@link (TreeAlpha:interface).(children:1)}
 	 */
 	parent(node: TreeNode): TreeNode | undefined;
 

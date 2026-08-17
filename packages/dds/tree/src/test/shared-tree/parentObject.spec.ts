@@ -76,14 +76,15 @@ describe("parentObject", () => {
 			assert.equal(parent.getChild(undefined), undefined);
 		});
 
-		it("getChild with a non-undefined key asserts", () => {
+		it("getChild with a non-undefined key returns undefined", () => {
 			const view = getView(new TreeViewConfiguration({ schema: ChildNode }));
 			view.initialize({ value: 1 });
 
 			const parent = TreeAlpha.parent2(view.root);
 			assert(parent instanceof DocumentRootParent);
-			assert.throws(() => parent.getChild("foo"));
-			assert.throws(() => parent.getChild(0));
+			// A ParentObject has no child under any key other than `undefined`.
+			assert.equal(parent.getChild("foo"), undefined);
+			assert.equal(parent.getChild(0), undefined);
 		});
 
 		it("getChildren yields a single [undefined, root] pair", () => {
@@ -140,7 +141,7 @@ describe("parentObject", () => {
 			assert.equal(parent.getChild(undefined), item);
 		});
 
-		it("getChild with a non-undefined key asserts", () => {
+		it("getChild with a non-undefined key returns undefined", () => {
 			const view = getView(new TreeViewConfiguration({ schema: Container }));
 			view.initialize({ items: [{ value: 1 }] });
 			const item = view.root.items[0];
@@ -148,8 +149,9 @@ describe("parentObject", () => {
 
 			const parent = TreeAlpha.parent2(item);
 			assert(parent instanceof RemovedRootParent);
-			assert.throws(() => parent.getChild("foo"));
-			assert.throws(() => parent.getChild(0));
+			// A ParentObject has no child under any key other than `undefined`.
+			assert.equal(parent.getChild("foo"), undefined);
+			assert.equal(parent.getChild(0), undefined);
 		});
 
 		it("getChildren yields a single [undefined, removedNode] pair", () => {
@@ -207,12 +209,13 @@ describe("parentObject", () => {
 			assert.equal(parent.getChild(undefined), item);
 		});
 
-		it("getChild with a non-undefined key asserts", () => {
+		it("getChild with a non-undefined key returns undefined", () => {
 			const item = new ChildNode({ value: 1 });
 			const parent = TreeAlpha.parent2(item);
 			assert(parent instanceof UnhydratedParent);
-			assert.throws(() => parent.getChild("foo"));
-			assert.throws(() => parent.getChild(0));
+			// A ParentObject has no child under any key other than `undefined`.
+			assert.equal(parent.getChild("foo"), undefined);
+			assert.equal(parent.getChild(0), undefined);
 		});
 
 		it("getChildren yields a single [undefined, node] pair", () => {

@@ -242,6 +242,8 @@ export {
 	ObjectSchemaOptionsAlpha, 
 	ObservationResults, 
 	ParentObject, 
+	ParentObjectChildChangedData, 
+	ParentObjectEvents, 
 	ReadSchema, 
 	ReadableField, 
 	RecordNodeCustomizableSchema, 

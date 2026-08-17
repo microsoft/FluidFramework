@@ -9,17 +9,18 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { DetachedField } from "../core/index.js";
-import type { FlexTreeHydratedContext } from "../feature-libraries/index.js";
 import {
 	type TreeNode,
 	type TreeBranch,
 	type UnhydratedFlexTreeNode,
 	type TreeLeafValue,
-	type TreeChangeEvents,
+	type TreeChangeEventsBeta,
 	type ImplicitFieldSchema,
 	getKernel,
 	treeNodeApi,
 	isTreeNode,
+	isBufferingTreeEvents,
+	onTreeEventsFlush,
 } from "../simple-tree/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
@@ -35,8 +36,8 @@ import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
  * (e.g., from the document root to a removed tree, or from unhydrated into the document),
  * it will have a different parent, and subscriptions on the old parent will be invalidated.
  *
- * This object can be passed to {@link (TreeAlpha:interface).child},
- * {@link (TreeAlpha:interface).children}, and `TreeAlpha.on`.
+ * This object can be passed to {@link (TreeAlpha:interface).(child:1)},
+ * {@link (TreeAlpha:interface).(children:1)}, and `TreeAlpha.on`.
  *
  * @sealed
  * @alpha
@@ -116,13 +117,123 @@ export interface ParentObjectChildChangedData {
  * @sealed
  * @alpha
  */
-export interface ParentObjectEvents extends Pick<TreeChangeEvents, "treeChanged"> {
+export interface ParentObjectEvents extends Pick<TreeChangeEventsBeta, "treeChanged"> {
 	/**
 	 * Emitted when the child occupying this location changes (the occupant is replaced, attached, or detached).
 	 * @remarks
 	 * Fires after the batch completes, ensuring the tree is in a consistent state when the listener runs.
 	 */
 	childChanged: (data: ParentObjectChildChangedData) => void;
+}
+
+/**
+ * Coalesces {@link ParentObjectEvents.childChanged} notifications produced by a {@link ParentObject}
+ * so that, inside a {@link withBufferedTreeEvents} window, they are merged and delivered once at the
+ * end of the window with the net change — matching how content events are coalesced.
+ *
+ * @remarks
+ * When no buffering window is active, {@link ChildChangedCoalescer.fire} delivers immediately. When a
+ * window is active, the notification is deferred to the window's flush, keeping the first `previous`
+ * and the latest `current`. If the net change is a no-op (`previous === current`), nothing is delivered.
+ */
+class ChildChangedCoalescer {
+	#pending: ParentObjectChildChangedData | undefined;
+	#hasPending = false;
+	#flushScheduled = false;
+	#active = true;
+
+	public constructor(
+		private readonly listener: (data: ParentObjectChildChangedData) => void,
+	) {}
+
+	/**
+	 * Deliver (or, while buffering, coalesce) a change from `previous` to `current`.
+	 */
+	public fire(
+		previous: TreeNode | TreeLeafValue | undefined,
+		current: TreeNode | TreeLeafValue | undefined,
+	): void {
+		if (!this.#active) {
+			return;
+		}
+		if (!isBufferingTreeEvents()) {
+			this.listener({ previous, current });
+			return;
+		}
+		// Keep the first observed `previous` (so the net change spans the whole window) and the latest `current`.
+		const previousToKeep = this.#hasPending
+			? (this.#pending as ParentObjectChildChangedData).previous
+			: previous;
+		this.#pending = { previous: previousToKeep, current };
+		this.#hasPending = true;
+		if (!this.#flushScheduled) {
+			this.#flushScheduled = true;
+			onTreeEventsFlush(() => this.#flush());
+		}
+	}
+
+	#flush(): void {
+		this.#flushScheduled = false;
+		if (!this.#active || !this.#hasPending) {
+			return;
+		}
+		const pending = this.#pending as ParentObjectChildChangedData;
+		this.#hasPending = false;
+		this.#pending = undefined;
+		if (pending.previous !== pending.current) {
+			this.listener(pending);
+		}
+	}
+
+	/**
+	 * Stop delivering; any pending coalesced notification is discarded.
+	 */
+	public dispose(): void {
+		this.#active = false;
+		this.#hasPending = false;
+		this.#pending = undefined;
+	}
+}
+
+/**
+ * Coalesces a no-argument notification (e.g. {@link ParentObjectEvents.treeChanged} fired for a root
+ * replacement) so that, inside a {@link withBufferedTreeEvents} window, it fires at most once at the
+ * end of the window. Delivers immediately when no window is active.
+ */
+class NotifyCoalescer {
+	#pending = false;
+	#flushScheduled = false;
+	#active = true;
+
+	public constructor(private readonly listener: () => void) {}
+
+	public fire(): void {
+		if (!this.#active) {
+			return;
+		}
+		if (!isBufferingTreeEvents()) {
+			this.listener();
+			return;
+		}
+		this.#pending = true;
+		if (!this.#flushScheduled) {
+			this.#flushScheduled = true;
+			onTreeEventsFlush(() => this.#flush());
+		}
+	}
+
+	#flush(): void {
+		this.#flushScheduled = false;
+		if (this.#active && this.#pending) {
+			this.#pending = false;
+			this.listener();
+		}
+	}
+
+	public dispose(): void {
+		this.#active = false;
+		this.#pending = false;
+	}
 }
 
 /**
@@ -142,8 +253,10 @@ export abstract class ParentObjectBase
 	 * Gets the child at the given key under this parent.
 	 * @param propertyKey - The property key under this parent for which the child is being requested.
 	 * A {@link ParentObject} holds at most a single child (the root/detached/unhydrated node), which is
-	 * keyed by `undefined`. Must be `undefined`: passing any other key is an error.
-	 * @returns The child node or leaf value, or `undefined` if no child currently exists at that location.
+	 * keyed by `undefined`.
+	 * @returns The child node or leaf value keyed by `undefined`, or `undefined` if no child currently
+	 * exists at that location. Any `propertyKey` other than `undefined` also returns `undefined`, since a
+	 * `ParentObject` has no children under any other key.
 	 */
 	public abstract getChild(
 		propertyKey: string | number | undefined,
@@ -236,7 +349,10 @@ export class DocumentRootParent extends ParentObjectBase {
 	public override getChild(
 		propertyKey: string | number | undefined,
 	): TreeNode | TreeLeafValue | undefined {
-		assert(propertyKey === undefined, "Children of a ParentObject are keyed by undefined");
+		// A ParentObject's only child is keyed by `undefined`; any other key has no child.
+		if (propertyKey !== undefined) {
+			return undefined;
+		}
 		const root = this.getViewableBranch().root;
 		if (root === undefined || isTreeNode(root)) {
 			return root;
@@ -276,6 +392,17 @@ export class DocumentRootParent extends ParentObjectBase {
 		// The root value we last observed, used to detect actual root replacements.
 		let lastRoot: TreeNode | TreeLeafValue | undefined;
 
+		// Coalescers so that root-replacement notifications fired below participate in
+		// `withBufferedTreeEvents` windows (matching how content events are coalesced).
+		const childChangedCoalescer =
+			eventName === "childChanged"
+				? new ChildChangedCoalescer(listener as ParentObjectEvents["childChanged"])
+				: undefined;
+		const treeChangedCoalescer =
+			eventName === "treeChanged"
+				? new NotifyCoalescer(listener as ParentObjectEvents["treeChanged"])
+				: undefined;
+
 		const subscribeToRoot = (): void => {
 			// Skip (re-)subscribing if the caller has already unsubscribed (this is also invoked from the
 			// "rootChanged" handler below), or if the branch's schema is not currently viewable.
@@ -288,15 +415,14 @@ export class DocumentRootParent extends ParentObjectBase {
 			// Only `treeChanged` proxies to the current root node (for its deep content changes).
 			// `childChanged` reports occupancy changes of the location itself, and root replacement for
 			// `treeChanged` is both handled in the "rootChanged" listener below.
-			if (eventName === "treeChanged" && isTreeNode(rootNode)) {
-				currentNodeUnsubscribe = treeNodeApi.on(
-					rootNode,
-					"treeChanged",
-					listener as ParentObjectEvents["treeChanged"],
-				);
-			} else {
-				currentNodeUnsubscribe = undefined;
-			}
+			currentNodeUnsubscribe =
+				eventName === "treeChanged" && isTreeNode(rootNode)
+					? treeNodeApi.on(
+							rootNode,
+							"treeChanged",
+							listener as ParentObjectEvents["treeChanged"],
+						)
+					: undefined;
 		};
 
 		subscribeToRoot();
@@ -319,17 +445,17 @@ export class DocumentRootParent extends ParentObjectBase {
 			// Root replacement is a change within this location's subtree AND an occupancy change:
 			// - `treeChanged` fires because something in the tree changed (the root was replaced).
 			// - `childChanged` fires because the child occupying this location changed.
-			if (eventName === "treeChanged") {
-				(listener as ParentObjectEvents["treeChanged"])();
-			} else if (eventName === "childChanged") {
-				(listener as ParentObjectEvents["childChanged"])({ previous, current: newRoot });
-			}
+			// Both are routed through coalescers so they merge within a `withBufferedTreeEvents` window.
+			treeChangedCoalescer?.fire();
+			childChangedCoalescer?.fire(previous, newRoot);
 
 			subscribeToRoot();
 		});
 
 		return () => {
 			isSubscribed = false;
+			treeChangedCoalescer?.dispose();
+			childChangedCoalescer?.dispose();
 			if (currentNodeUnsubscribe !== undefined) {
 				currentNodeUnsubscribe();
 				currentNodeUnsubscribe = undefined;
@@ -365,12 +491,6 @@ export class RemovedRootParent extends ParentObjectBase {
 
 	private constructor(
 		/**
-		 * The hydrated context (checkout) that the detached field belongs to.
-		 * @remarks
-		 * Used to subscribe to `afterBatch` so status transitions are observed only after the tree is consistent.
-		 */
-		private readonly context: FlexTreeHydratedContext,
-		/**
 		 * The detached field this node was in when this parent object was created.
 		 * @remarks
 		 * Used to detect stale cache entries: if the node is later re-inserted and removed again it gets a
@@ -389,12 +509,10 @@ export class RemovedRootParent extends ParentObjectBase {
 
 	/**
 	 * Gets or creates a cached {@link RemovedRootParent} for the given detached node.
-	 * @param context - The hydrated context (checkout) the detached field belongs to.
 	 * @param detachedField - The detached field the node currently resides in.
 	 * @param detachedNode - The removed node this parent object represents the location of.
 	 */
 	public static getOrCreate(
-		context: FlexTreeHydratedContext,
 		detachedField: DetachedField,
 		detachedNode: TreeNode,
 	): RemovedRootParent {
@@ -404,7 +522,7 @@ export class RemovedRootParent extends ParentObjectBase {
 		if (cached?.detachedField === detachedField) {
 			return cached;
 		}
-		const parent = new RemovedRootParent(context, detachedField, detachedNode);
+		const parent = new RemovedRootParent(detachedField, detachedNode);
 		RemovedRootParent.cache.set(detachedNode, parent);
 		return parent;
 	}
@@ -412,7 +530,10 @@ export class RemovedRootParent extends ParentObjectBase {
 	public override getChild(
 		propertyKey: string | number | undefined,
 	): TreeNode | TreeLeafValue | undefined {
-		assert(propertyKey === undefined, "Children of a ParentObject are keyed by undefined");
+		// A ParentObject's only child is keyed by `undefined`; any other key has no child.
+		if (propertyKey !== undefined) {
+			return undefined;
+		}
 		return this.detachedNode;
 	}
 
@@ -433,34 +554,21 @@ export class RemovedRootParent extends ParentObjectBase {
 		}
 		const childChangedListener = listener as ParentObjectEvents["childChanged"];
 		const kernel = getKernel(this.detachedNode);
+		const coalescer = new ChildChangedCoalescer(childChangedListener);
 
-		// Sync the kernel's last known status to the current state before subscribing.
-		kernel.checkAndEmitStatusChange();
-
-		// Subscribe to afterBatch to check for status changes after any tree modification.
-		let unsubscribeAfterBatch: (() => void) | undefined = this.context.checkout.events.on(
-			"afterBatch",
-			() => {
-				kernel.checkAndEmitStatusChange();
-			},
-		);
-
-		const unsubscribeStatus = kernel.statusEvents.on("statusChanged", () => {
-			// Once a status transition is detected, stop polling afterBatch.
-			if (unsubscribeAfterBatch !== undefined) {
-				unsubscribeAfterBatch();
-				unsubscribeAfterBatch = undefined;
-			}
+		// The kernel's batch-aligned `statusChangedAfterBatch` fires after the batch settles, so the tree
+		// is consistent when the listener runs. It also owns the `afterBatch` polling needed to detect the
+		// detach → re-attach transition, so no per-consumer afterBatch subscription is required here.
+		const unsubscribeStatus = kernel.statusEvents.on("statusChangedAfterBatch", () => {
+			// The transition is one-shot for this location: once the node leaves, stop listening.
+			unsubscribeStatus();
 			// The node left this location (e.g., re-attached into the document), leaving it empty.
-			childChangedListener({ previous: this.detachedNode, current: undefined });
+			coalescer.fire(this.detachedNode, undefined);
 		});
 
 		return () => {
+			coalescer.dispose();
 			unsubscribeStatus();
-			if (unsubscribeAfterBatch !== undefined) {
-				unsubscribeAfterBatch();
-				unsubscribeAfterBatch = undefined;
-			}
 		};
 	}
 }
@@ -511,7 +619,10 @@ export class UnhydratedParent extends ParentObjectBase {
 	public override getChild(
 		propertyKey: string | number | undefined,
 	): TreeNode | TreeLeafValue | undefined {
-		assert(propertyKey === undefined, "Children of a ParentObject are keyed by undefined");
+		// A ParentObject's only child is keyed by `undefined`; any other key has no child.
+		if (propertyKey !== undefined) {
+			return undefined;
+		}
 		return this.getTreeNode();
 	}
 
@@ -533,40 +644,20 @@ export class UnhydratedParent extends ParentObjectBase {
 		const childChangedListener = listener as ParentObjectEvents["childChanged"];
 		const node = this.getTreeNode();
 		const kernel = getKernel(node);
+		const coalescer = new ChildChangedCoalescer(childChangedListener);
 
-		// Cleared once fired (or on unsubscribe).
-		let unsubscribeStatus: (() => void) | undefined;
-		let unsubscribeAfterBatch: (() => void) | undefined;
-
-		// One-shot subscription: reacts to the first status change (hydration).
-		unsubscribeStatus = kernel.statusEvents.on("statusChanged", () => {
-			unsubscribeStatus?.();
-			unsubscribeStatus = undefined;
-
-			// The node is now hydrated, so it has a checkout.
-			const flexContext = kernel.context.flexContext;
-			if (flexContext.isHydrated() && flexContext.checkout.isBatchInProgress) {
-				// The transition is being observed mid-batch (e.g. during `insertAtEnd`), when the tree
-				// is not yet consistent. Defer to the next `afterBatch` so the listener observes a
-				// consistent tree (a correct `Tree.status()`), matching how DocumentRootParent and
-				// RemovedRootParent buffer their notifications.
-				unsubscribeAfterBatch = flexContext.checkout.events.on("afterBatch", () => {
-					unsubscribeAfterBatch?.();
-					unsubscribeAfterBatch = undefined;
-					// The node was hydrated into the document, leaving this unhydrated location empty.
-					childChangedListener({ previous: node, current: undefined });
-				});
-			} else {
-				// Already consistent (e.g. hydration via `view.initialize()`, which runs after the
-				// batch has settled and is not followed by another `afterBatch`): fire synchronously.
-				childChangedListener({ previous: node, current: undefined });
-			}
+		// The kernel's batch-aligned `statusChangedAfterBatch` handles deferral to `afterBatch` internally
+		// (whether hydration occurs mid-batch, e.g. `insertAtEnd`, or after the tree has already settled,
+		// e.g. `view.initialize()`), so the listener always observes a consistent `Tree.status()`.
+		const unsubscribeStatus = kernel.statusEvents.on("statusChangedAfterBatch", () => {
+			// One-shot: hydration is a single New -> InDocument transition for this location.
+			unsubscribeStatus();
+			// The node was hydrated into the document, leaving this unhydrated location empty.
+			coalescer.fire(node, undefined);
 		});
 		return () => {
-			unsubscribeStatus?.();
-			unsubscribeStatus = undefined;
-			unsubscribeAfterBatch?.();
-			unsubscribeAfterBatch = undefined;
+			coalescer.dispose();
+			unsubscribeStatus();
 		};
 	}
 }
