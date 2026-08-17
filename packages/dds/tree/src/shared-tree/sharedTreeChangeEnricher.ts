@@ -127,9 +127,9 @@ export class SharedTreeChangeEnricher {
 	}
 
 	/**
-	 * Flushes all {@link enqueueChange|queued} changes by applying them to a forked forest and detached field index.
+	 * Flushes all {@link enqueueChange|queued} changes by applying the data changes to a forked forest and detached field index.
 	 * @remarks
-	 * This validates that the changes are valid.
+	 * This validates that the data changes are valid.
 	 */
 	public purgeChangeQueue(): void {
 		if (this.changeQueue.length === 0) {

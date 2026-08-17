@@ -13,7 +13,7 @@ export interface ChangeEnricher<TChange> {
 	 * Runs a batch of change enrichments.
 	 * @param context - The branch head after which the `changes` would apply.
 	 * @param changes - The changes to be enriched.
-	 * @param forceValidation - Attempt to validate commits before sending them to prefer crashing locally over corrupting persisted data.
+	 * @param forceValidation - Attempt to validate enriched changes before submission in order to fail (throw) locally rather than risk corrupting persisted data.
 	 * See {@link SharedTreeOptions.validateCommitsOnFirstSubmission} and {@link SharedTreeOptions.validateRebasedCommitsBeforeResubmission}.
 	 */
 	enrich(

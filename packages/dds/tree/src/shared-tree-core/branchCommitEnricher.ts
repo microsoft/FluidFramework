@@ -28,7 +28,7 @@ export class BranchCommitEnricher<TChange> {
 	/**
 	 * Process the given commits for later {@link BranchCommitEnricher.retrieveChange | retrieval}.
 	 * @param commits - The commits to prepare.
-	 * @param forceValidation - Attempt to {@link SharedTreeOptions.validateCommitsOnFirstSubmission|validate} commits before sending them to prefer crashing locally over corrupting persisted data.
+	 * @param forceValidation - Attempt to {@link SharedTreeOptions.validateCommitsOnFirstSubmission|validate} commits before submission in order to fail (throw) locally rather than risk corrupting persisted data.
 	 */
 	public prepareChanges(
 		commits: readonly GraphCommit<TChange>[],

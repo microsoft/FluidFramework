@@ -38,7 +38,7 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 		 */
 		private readonly enricher: ChangeEnricher<TChange>,
 		/**
-		 * Attempt to {@link SharedTreeOptions.validateRebasedCommitsBeforeResubmission|validate} commits before sending them to prefer crashing locally over corrupting persisted data.
+		 * Attempt to {@link SharedTreeOptions.validateRebasedCommitsBeforeResubmission|validate} commits before resubmission in order to fail (throw) locally rather than risk corrupting persisted data.
 		 */
 		private readonly forceValidation: boolean,
 	) {}
