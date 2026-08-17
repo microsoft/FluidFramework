@@ -31,8 +31,12 @@ export const defaultTinyliciousEndpoint = "http://localhost";
  */
 export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 	private readonly tinyliciousEndpoint: string;
-	public constructor(port = defaultTinyliciousPort, endpoint = defaultTinyliciousEndpoint) {
-		this.tinyliciousEndpoint = `${endpoint}:${port}`;
+	public constructor(port?: number, endpoint?: string) {
+		const endpointUrl = new URL(endpoint ?? defaultTinyliciousEndpoint);
+		if (port !== undefined || endpointUrl.port === "") {
+			endpointUrl.port = `${port ?? defaultTinyliciousPort}`;
+		}
+		this.tinyliciousEndpoint = endpointUrl.origin;
 	}
 
 	public async resolve(request: IRequest): Promise<IResolvedUrl> {
@@ -101,11 +105,11 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 function getTinyliciousEndpoint(): { endpoint: string; port: number } {
 	if (typeof window !== "undefined") {
 		// Detect GitHub Codespaces and use the forwarded port URL
-		// <codespace-name>-<fowarded-port>.<domain>
+		// <codespace-name>-<forwarded-port>.<domain>
 		// e.g. my-codespace-7070.githubpreview.dev
 		// Capture Group 1: <codespace-name>
 		// Capture Group 2: <domain>
-		// reconstruct a hostname that fowards tinlicious's port via HTTPS.
+		// reconstruct a hostname that forwards tinylicious's port via HTTPS.
 		const match = /^(.+)-\d+\.(.+)$/.exec(window.location.hostname);
 		if (match) {
 			// In Codespaces, the port is embedded in the hostname, use HTTPS port 443

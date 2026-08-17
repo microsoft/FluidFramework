@@ -4,6 +4,15 @@
 
 ```ts
 
+// @alpha
+export function createTinyliciousServiceClient(options: TinyliciousServiceOptions): ServiceClient;
+
+// @alpha
+export interface TinyliciousServiceOptions extends ServiceOptions {
+    readonly endpoint?: string;
+    readonly port?: number;
+}
+
 // (No @packageDocumentation comment for this package)
 
 ```

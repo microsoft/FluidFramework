@@ -16,6 +16,7 @@ const {
  *
  * @param {string} packageJsonPath - The path to the package's `package.json` file.
  * @param {boolean} includeTinyliciousStep - Whether or not to include the `Tinylicious` step in the instructions.
+ * @param {boolean} usesServiceClient - Whether or not the example uses the unified ServiceClient workflow.
  * @param {object} headingOptions - Heading generation options.
  * @param {boolean} headingOptions.includeHeading - Whether or not to include a top-level heading in the generated section.
  * @param {number} headingOptions.headingLevel - Root heading level for the generated section.
@@ -24,6 +25,7 @@ const {
 const generateExampleGettingStartedSection = (
 	packageJsonPath,
 	includeTinyliciousStep,
+	usesServiceClient,
 	headingOptions,
 ) => {
 	const packageJsonMetadata = getPackageMetadata(packageJsonPath);
@@ -38,7 +40,17 @@ const generateExampleGettingStartedSection = (
     - For an even faster build, you can add the package name to the build command, like this:
       \`pnpm run build:fast --nolint ${packageName}\``);
 
-	if (includeTinyliciousStep) {
+	if (usesServiceClient) {
+		sectionBody.push(
+			`1. Run \`pnpm start\` from this directory and open <http://localhost:8080> in a web browser. The app uses an ephemeral in-browser service by default and stores the container ID in the URL hash.`,
+		);
+		sectionBody.push(
+			`1. To retain data across reloads in the current browser tab, run \`pnpm start:session\` and open <http://localhost:8080/?fluidClient=session>.`,
+		);
+		sectionBody.push(
+			`1. To share data between browser sessions, start Tinylicious in a separate terminal by running \`pnpm tinylicious\` in this directory, then run \`pnpm start:tinylicious\` and open <http://localhost:8080/?fluidClient=tinylicious>. In GitHub Codespaces, set the forwarded Tinylicious port 7070 visibility to **Public** before opening the app.`,
+		);
+	} else if (includeTinyliciousStep) {
 		sectionBody.push(
 			`1. In a separate terminal, start a Tinylicious server by running \`pnpm tinylicious\` in this directory.`,
 		);
@@ -48,13 +60,15 @@ const generateExampleGettingStartedSection = (
 		);
 	}
 
-	sectionBody.push(
-		`1. Run \`pnpm start\` from this directory and open <http://localhost:8080> in a web browser to see the app running.`,
-	);
+	if (!usesServiceClient) {
+		sectionBody.push(
+			`1. Run \`pnpm start\` from this directory and open <http://localhost:8080> in a web browser to see the app running.`,
+		);
 
-	sectionBody.push(
-		`1. If you want to run the app against SharePoint, follow the instructions in [webpack-fluid-loader](https://github.com/microsoft/FluidFramework/blob/main/examples/utils/webpack-fluid-loader/README.md#sharepoint) to get auth credentials. Then run \`pnpm start:spo\` or \`pnpm start:spo-df\` and open <http://localhost:8080> like above.`,
-	);
+		sectionBody.push(
+			`1. If you want to run the app against SharePoint, follow the instructions in [webpack-fluid-loader](https://github.com/microsoft/FluidFramework/blob/main/examples/utils/webpack-fluid-loader/README.md#sharepoint) to get auth credentials. Then run \`pnpm start:spo\` or \`pnpm start:spo-df\` and open <http://localhost:8080> like above.`,
+		);
+	}
 
 	return formattedSectionText(sectionBody.join("\n"), {
 		...headingOptions,
@@ -71,6 +85,8 @@ const generateExampleGettingStartedSection = (
  * Default: "./package.json".
  * @param {"TRUE" | "FALSE" | undefined} options.usesTinylicious - (optional) Whether or not the example app workflow uses {@link https://github.com/microsoft/FluidFramework/tree/main/server/routerlicious/packages/tinylicious | Tinylicious}.
  * Default: `TRUE`.
+ * @param {"TRUE" | "FALSE" | undefined} options.serviceClient - (optional) Whether or not to generate instructions for the unified ServiceClient example workflow.
+ * Default: `FALSE`.
  * @param {"TRUE" | "FALSE" | undefined} includeHeading - (optional) Whether or not to include a top-level heading in the generated section.
  * default: `TRUE`.
  * @param {number | undefined} options.headingLevel - (optional) Heading level for the section.
@@ -81,6 +97,7 @@ const generateExampleGettingStartedSection = (
  */
 function exampleGettingStartedTransform(content, options, config) {
 	const usesTinylicious = options.usesTinylicious !== "FALSE";
+	const usesServiceClient = options.serviceClient === "TRUE";
 	const headingOptions = parseHeadingOptions(options);
 
 	const packageJsonPath = resolveRelativePackageJsonPath(
@@ -88,7 +105,12 @@ function exampleGettingStartedTransform(content, options, config) {
 		options.packageJsonPath,
 	);
 	return formattedGeneratedContentBody(
-		generateExampleGettingStartedSection(packageJsonPath, usesTinylicious, headingOptions),
+		generateExampleGettingStartedSection(
+			packageJsonPath,
+			usesTinylicious,
+			usesServiceClient,
+			headingOptions,
+		),
 	);
 }
 

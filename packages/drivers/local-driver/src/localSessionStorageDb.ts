@@ -194,14 +194,22 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 	 * {@inheritDoc @fluidframework/server-services-core#ICollection.deleteOne}
 	 */
 	public async deleteOne(query: any): Promise<any> {
-		throw new Error("Method not implemented.");
+		const value = this.findOneInternal(query);
+		if (value !== null) {
+			sessionStorage.removeItem(`${this.collectionName}-${value._id}`);
+		}
+		return value;
 	}
 
 	/**
 	 * {@inheritDoc @fluidframework/server-services-core#ICollection.deleteMany}
 	 */
 	public async deleteMany(query: any): Promise<any> {
-		throw new Error("Method not implemented.");
+		const values = await this.find(query, undefined);
+		for (const value of values) {
+			sessionStorage.removeItem(`${this.collectionName}-${value._id}`);
+		}
+		return values;
 	}
 
 	/**

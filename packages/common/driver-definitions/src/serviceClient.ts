@@ -185,9 +185,8 @@ export interface ServiceOptions {
 	 * Choosing an older version may limit the features and write formats the application can use to
 	 * those supported by that version.
 	 *
-	 * A service may provide a default when this option is omitted.
 	 */
-	readonly oldestSupportedClient?: OldestSupportedServiceClientVersion;
+	readonly oldestSupportedClient: OldestSupportedServiceClientVersion;
 }
 
 /**

@@ -11,6 +11,7 @@ import {
 	cleanupEphemeralService,
 	getDefaultEphemeralService,
 	startEphemeralService,
+	getSessionService,
 	type EphemeralService,
 	EphemeralServiceContainer,
 } from "../ephemeralService.js";
@@ -48,7 +49,7 @@ describe("EphemeralService", () => {
 		assert.strictEqual(container.container.closed, true);
 	});
 
-	describe("EphemeralServiceClient", () => {
+	describe("LocalServiceClient", () => {
 		it("createContainer returns a detached container without an id", async () => {
 			const client = newService().newClient(options);
 			const detached = await client.createContainer(stubFactory);
@@ -116,6 +117,43 @@ describe("EphemeralService", () => {
 	});
 
 	describe("EphemeralService", () => {
+		it("lists and deletes stored documents", async () => {
+			const service = newService();
+			const client = service.newClient(options);
+			const firstContainer = await client.createAttachedContainer(stubFactory);
+			const secondContainer = await client.createAttachedContainer(stubFactory);
+			const firstId = firstContainer.id;
+			const secondId = secondContainer.id;
+			await service.synchronize();
+			firstContainer.close();
+			secondContainer.close();
+
+			assert.deepStrictEqual(
+				new Set(await service.listDocumentIds()),
+				new Set([firstId, secondId]),
+			);
+
+			await service.deleteDocument(firstId);
+			assert.deepStrictEqual(await service.listDocumentIds(), [secondId]);
+			await assert.rejects(async () => client.loadContainer(firstId, stubFactory));
+
+			const loaded = await client.loadContainer(secondId, stubFactory);
+			loaded.close();
+			await service.deleteAllDocuments();
+			assert.deepStrictEqual(await service.listDocumentIds(), []);
+		});
+
+		it("rejects document deletion while a container is open", async () => {
+			const service = newService();
+			const container = await service.defaultClient.createAttachedContainer(stubFactory);
+
+			await assert.rejects(
+				async () => service.deleteDocument(container.id),
+				(err: Error) =>
+					err.message === "Close all containers before deleting local service documents",
+			);
+		});
+
 		it("close is idempotent", async () => {
 			const service = newService();
 			const client = service.newClient(options);
@@ -190,6 +228,60 @@ describe("EphemeralService", () => {
 			await cleanupEphemeralService();
 			// Calling it again should also not throw.
 			await cleanupEphemeralService();
+		});
+	});
+
+	describe("SessionService", () => {
+		const storedValues = new Map<string, string>();
+		const sessionStorageDescriptor = Object.getOwnPropertyDescriptor(
+			globalThis,
+			"sessionStorage",
+		);
+
+		before(() => {
+			Object.defineProperty(globalThis, "sessionStorage", {
+				configurable: true,
+				value: {
+					clear: () => storedValues.clear(),
+					getItem: (key: string) => storedValues.get(key) ?? null,
+					key: (index: number) => [...storedValues.keys()][index] ?? null,
+					get length() {
+						return storedValues.size;
+					},
+					removeItem: (key: string) => storedValues.delete(key),
+					setItem: (key: string, value: string) => storedValues.set(key, value),
+				} satisfies Storage,
+			});
+		});
+
+		after(() => {
+			if (sessionStorageDescriptor === undefined) {
+				Reflect.deleteProperty(globalThis, "sessionStorage");
+			} else {
+				Object.defineProperty(globalThis, "sessionStorage", sessionStorageDescriptor);
+			}
+		});
+
+		it("shares one service and manages persisted documents", async () => {
+			const firstService = getSessionService();
+			const firstClient = firstService.newClient(options);
+			assert.strictEqual(firstClient.service, firstService);
+			const firstContainer = await firstClient.createAttachedContainer(stubFactory);
+			const { id } = firstContainer;
+			await firstService.synchronize();
+			firstContainer.close();
+			assert.deepStrictEqual(await firstService.listDocumentIds(), [id]);
+
+			const secondService = getSessionService();
+			assert.strictEqual(secondService, firstService);
+			const secondClient = secondService.newClient(options);
+			assert.strictEqual(secondClient.service, secondService);
+			const secondContainer = await secondClient.loadContainer(id, stubFactory);
+
+			assert.strictEqual(secondContainer.id, id);
+			secondContainer.close();
+			await secondService.deleteDocument(id);
+			assert.deepStrictEqual(await secondService.listDocumentIds(), []);
 		});
 	});
 });

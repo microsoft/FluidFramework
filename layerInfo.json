@@ -141,6 +141,7 @@
 				]
 			},
 			"ServiceClients": {
+				"packages": ["@fluidframework/tinylicious-driver"],
 				"dirs": ["packages/service-clients/"],
 				"deps": [
 					"Container-Definitions",
@@ -225,8 +226,7 @@
 			"Routerlicious-Driver": {
 				"packages": [
 					"@fluidframework/routerlicious-driver",
-					"@fluidframework/routerlicious-urlresolver",
-					"@fluidframework/tinylicious-driver"
+					"@fluidframework/routerlicious-urlresolver"
 				],
 				"deps": ["Driver", "Server-Shared-Utils"]
 			},
