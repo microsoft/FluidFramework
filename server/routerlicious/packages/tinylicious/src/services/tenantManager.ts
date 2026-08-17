@@ -4,6 +4,7 @@
  */
 
 import type { ScopeType, IUser } from "@fluidframework/protocol-definitions";
+import type { ICreateBlobResponse } from "@fluidframework/gitresources";
 import {
 	BasicRestWrapper,
 	GitManager,
@@ -19,6 +20,60 @@ import type {
 	ITenantStorage,
 } from "@fluidframework/server-services-core";
 import { default as Axios } from "axios";
+
+/**
+ * Tinylicious hosts Alfred and Historian in one process but communicates between them over
+ * localhost HTTP. Concurrent summaries can otherwise create thousands of blob requests and
+ * sockets at once, delaying all requests handled by the process.
+ *
+ * This limit is shared across Tinylicious tenants so concurrent documents use one request budget.
+ */
+const maxConcurrentBlobUploads = 50;
+
+/**
+ * Runs asynchronous operations with a fixed concurrency limit.
+ */
+class PromiseLimiter {
+	private activeCount = 0;
+	private readonly waiters: (() => void)[] = [];
+
+	public constructor(private readonly limit: number) {}
+
+	public async run<T>(operation: () => Promise<T>): Promise<T> {
+		if (this.activeCount >= this.limit) {
+			await new Promise<void>((resolve) => {
+				this.waiters.push(resolve);
+			});
+		} else {
+			this.activeCount++;
+		}
+
+		try {
+			return await operation();
+		} finally {
+			const next = this.waiters.shift();
+			if (next === undefined) {
+				this.activeCount--;
+			} else {
+				next();
+			}
+		}
+	}
+}
+
+const blobUploadLimiter = new PromiseLimiter(maxConcurrentBlobUploads);
+
+/**
+ * Tinylicious Git manager that bounds blob uploads before their Historian requests are created.
+ */
+export class TinyliciousGitManager extends GitManager {
+	public override async createBlob(
+		content: string,
+		encoding: "utf-8" | "base64",
+	): Promise<ICreateBlobResponse> {
+		return blobUploadLimiter.run(async () => super.createBlob(content, encoding));
+	}
+}
 
 export class TinyliciousTenant implements ITenant {
 	private readonly owner = "tinylicious";
@@ -42,7 +97,7 @@ export class TinyliciousTenant implements ITenant {
 		);
 		const historian = new Historian(historianUrl, false, false, restWrapper);
 
-		this.manager = new GitManager(historian);
+		this.manager = new TinyliciousGitManager(historian);
 	}
 
 	public get gitManager(): GitManager {
