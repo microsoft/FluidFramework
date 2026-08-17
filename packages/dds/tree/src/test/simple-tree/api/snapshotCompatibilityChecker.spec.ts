@@ -33,10 +33,8 @@ import {
 	numberSchema,
 	allowUnused,
 } from "../../../simple-tree/index.js";
-import type {
-	JsonCompatibleReadOnly,
-	JsonCompatibleReadOnlyObject,
-} from "../../../util/index.js";
+import type { JsonCompatibleReadOnly } from "../../../util/index.js";
+import { isJsonObject } from "../../../util/index.js";
 import { testSrcPath } from "../../testSrcPath.cjs";
 import { inMemorySnapshotFileSystem } from "../../utils.js";
 
@@ -45,12 +43,6 @@ const nodeFileSystem = {
 	...path,
 };
 
-function isJsonObject(
-	value: JsonCompatibleReadOnly | undefined,
-): value is JsonCompatibleReadOnlyObject {
-	return value !== null && typeof value === "object" && !Array.isArray(value);
-}
-
 function convertObjectSnapshotToV1(
 	snapshot: JsonCompatibleReadOnly,
 	schemaIdentifier: string,
@@ -58,17 +50,17 @@ function convertObjectSnapshotToV1(
 ): JsonCompatibleReadOnly {
 	assert(isJsonObject(snapshot));
 	const definitions = snapshot.definitions;
-	assert(isJsonObject(definitions));
+	assert(definitions !== undefined && isJsonObject(definitions));
 	const definition = definitions[schemaIdentifier];
-	assert(isJsonObject(definition));
+	assert(definition !== undefined && isJsonObject(definition));
 	const objectSchema = definition.object;
-	assert(isJsonObject(objectSchema));
+	assert(objectSchema !== undefined && isJsonObject(objectSchema));
 	const fields = objectSchema.fields;
-	assert(isJsonObject(fields));
+	assert(fields !== undefined && isJsonObject(fields));
 	const fieldEntries = Object.entries(fields);
 	assert.equal(fieldEntries.length, 1);
 	const [storedKey, fieldSchema] = fieldEntries[0] ?? assert.fail("expected one object field");
-	assert(isJsonObject(fieldSchema));
+	assert(fieldSchema !== undefined && isJsonObject(fieldSchema));
 	const keys = typeof propertyKeys === "string" ? [propertyKeys] : propertyKeys;
 
 	return {
@@ -383,13 +375,13 @@ Snapshots exist for versions: [
 			const prototypeSnapshot = exportCompatibilitySchemaSnapshot(prototypeStoredKey);
 			assert(isJsonObject(prototypeSnapshot));
 			const definitions = prototypeSnapshot.definitions;
-			assert(isJsonObject(definitions));
+			assert(definitions !== undefined && isJsonObject(definitions));
 			const definition = definitions["test.PrototypeStoredKey"];
-			assert(isJsonObject(definition));
+			assert(definition !== undefined && isJsonObject(definition));
 			const objectSchema = definition.object;
-			assert(isJsonObject(objectSchema));
+			assert(objectSchema !== undefined && isJsonObject(objectSchema));
 			const fields = objectSchema.fields;
-			assert(isJsonObject(fields));
+			assert(fields !== undefined && isJsonObject(fields));
 			assert.equal(Object.hasOwn(fields, "__proto__"), true);
 			assert.equal(
 				getCompatibility(

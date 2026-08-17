@@ -536,9 +536,17 @@ export function snapshotSchemaCompatibility(
 
 	const currentEncodedForSnapshotting = exportCompatibilitySchemaSnapshot(currentViewSchema);
 	const snapshots = checker.readAllSchemaSnapshots(versionComparer);
-	const rawSnapshots = transformMapValues(snapshots, (_snapshot, version) =>
-		checker.readSchemaSnapshotRaw(version),
-	);
+	const rawSnapshots = new Map<string, JsonCompatibleReadOnly>();
+
+	function getRawSnapshot(version: string): JsonCompatibleReadOnly {
+		const cached = rawSnapshots.get(version);
+		if (cached !== undefined) {
+			return cached;
+		}
+		const snapshot = checker.readSchemaSnapshotRaw(version);
+		rawSnapshots.set(version, snapshot);
+		return snapshot;
+	}
 
 	const compatibilityErrors: string[] = [];
 
@@ -586,7 +594,7 @@ export function snapshotSchemaCompatibility(
 					: false;
 				if (
 					!schemaChange &&
-					JSON.stringify(rawSnapshots.get(latestSnapshot[0])) !==
+					JSON.stringify(getRawSnapshot(latestSnapshot[0])) !==
 						JSON.stringify(currentEncodedForSnapshotting)
 				) {
 					snapshotToNormalize = latestSnapshot[0];
@@ -630,8 +638,7 @@ export function snapshotSchemaCompatibility(
 		snapshotVersion: string,
 		snapshot: TreeViewConfiguration,
 	): boolean {
-		const rawSnapshot =
-			rawSnapshots.get(snapshotVersion) ?? fail("missing raw schema snapshot");
+		const rawSnapshot = getRawSnapshot(snapshotVersion);
 		if (getSnapshotFormatVersion(rawSnapshot) < SimpleSchemaFormatVersion.v2) {
 			return getCompatibility(currentViewSchema, snapshot).identicalCompatibility;
 		}
@@ -821,6 +828,9 @@ export class SnapshotCompatibilityChecker {
 	}
 }
 
+/**
+ * Gets the snapshot format version, or -1 if the snapshot has no numeric version.
+ */
 function getSnapshotFormatVersion(snapshot: JsonCompatibleReadOnly): number {
 	if (
 		snapshot !== null &&

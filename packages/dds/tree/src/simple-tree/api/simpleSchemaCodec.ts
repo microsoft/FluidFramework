@@ -105,6 +105,9 @@ export function decodeSchemaCompatibilitySnapshot(
 	);
 }
 
+/**
+ * Gets the format version from an encoded schema, if present.
+ */
 function getFormatVersion(encodedSchema: JsonCompatibleReadOnly): number | undefined {
 	if (
 		encodedSchema !== null &&
@@ -118,6 +121,9 @@ function getFormatVersion(encodedSchema: JsonCompatibleReadOnly): number | undef
 	return undefined;
 }
 
+/**
+ * Decodes a schema that uses the current persisted format.
+ */
 function decodeCurrentFormat(encodedSchema: Format.SimpleTreeSchemaFormat): SimpleTreeSchema {
 	return {
 		root: decodeSimpleFieldSchema(encodedSchema.root),
@@ -129,6 +135,9 @@ function decodeCurrentFormat(encodedSchema: Format.SimpleTreeSchemaFormat): Simp
 	};
 }
 
+/**
+ * Upgrades a version 1 schema to the current persisted format.
+ */
 function upgradeFormat(
 	encodedSchema: FormatV1.SimpleTreeSchemaFormat,
 ): Format.SimpleTreeSchemaFormat {
