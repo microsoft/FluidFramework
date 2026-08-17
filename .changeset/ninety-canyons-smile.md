@@ -16,3 +16,5 @@ when the additional validation is enabled, a client will error instead of potent
 These flags are experimental.
 We recommend turning them on (first `validateRebasedCommitsBeforeResubmission` and, if needed, `validateCommitsOnFirstSubmission`)
 when trying to mitigate bugs in SharedTree or performing root cause analysis.
+
+We recommend [configuring SharedTree](https://fluidframework.com/docs/api/fluid-framework/forestoptions-interface#forest-propertysignature) with the [optimized forest implementation](https://fluidframework.com/docs/api/tree#foresttypeoptimized-variable) to reduce the performance impact of this validation.
