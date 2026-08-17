@@ -1,6 +1,6 @@
 ---
 name: api-changes
-description: Use when customer-facing API changes were made — i.e., API report .md files differ from main. Guides through release tag assignment, API Council review requirements, breaking change classification, deprecation process, and changeset guidance. Triggered automatically by ci-readiness-check when api-report diffs are detected.
+description: Use when customer-facing API changes were made — i.e., API report .md files differ from the branch's resolved comparison base. Guides through release tag assignment, API Council review requirements, breaking change classification, deprecation process, and changeset guidance. Triggered automatically by ci-readiness-check when api-report diffs are detected.
 ---
 
 <required>
@@ -11,9 +11,16 @@ Before doing any work, create one task/todo item per applicable step using your 
 
 ## Step 1: Identify what changed
 
+Read `.claude/skills/comparison-base/SKILL.md` and execute it with `HEAD` as `$REVIEW_REF`. This is required; use the target and comparison commit it resolves.
+
+Compare the selected base with the working tree, not just `HEAD`, because this skill is often called immediately after API reports have been regenerated and those edits may be uncommitted:
+
 ```bash
-git diff $(git merge-base HEAD origin/main)...HEAD -- '**/api-report/**/*.md'
+git diff "$BASE_COMMIT" -- ':(glob)**/api-report/*.md'
+git ls-files --others --exclude-standard -- ':(glob)**/api-report/*.md'
 ```
+
+Treat the union of both command outputs as the changed API reports. For each untracked report, read the full file as a new API surface because it has no Git diff until staged.
 
 Build a summary table and present it to the user:
 
@@ -69,7 +76,7 @@ A breaking change removes or modifies an existing API in a way that causes compi
 If this is a breaking change to `@public` or `@legacy @public`, tell the user this is likely a mistake — major releases happen very rarely. Breaking `@public` APIs must be coordinated with a major release; the old API must be deprecated at least 3 months prior in a minor release with a clear replacement.
 
 Share these links with the user for the required process:
-- API Deprecation wiki: https://github.com/microsoft/FluidFramework/wiki/API-Deprecation
+- [API deprecation documentation](../../../docs/content/Contributing/API-Deprecation.md)
 - Client 3.0 Breaking Changes tracking issue: https://github.com/microsoft/FluidFramework/issues/23271
 
 ### @beta / @legacy+@alpha
@@ -81,7 +88,7 @@ If this is a breaking change to `@beta` or `@legacy @alpha`, tell the user:
 
 Share these links with the user:
 - Beta | Legacy Breaking Changes tracking issue: https://github.com/microsoft/FluidFramework/issues/25322
-- Full process: https://github.com/microsoft/FluidFramework/wiki/Beta-Break-Process
+- Full process: ../../../docs/content/Contributing/Breaking-vs-Non-Breaking-Changes/Beta-Break-Process.md
 
 ### @alpha only
 
@@ -111,7 +118,7 @@ If any API is being deprecated, check that the following are in place and flag a
 - [ ] In-codebase uses removed (test-only uses may remain with an explanatory comment)
 - [ ] Changeset present (see Step 6)
 
-Share this link with the user for full deprecation guidance: https://github.com/microsoft/FluidFramework/wiki/API-Deprecation
+Share this link with the user for full deprecation guidance: ../../../docs/content/Contributing/API-Deprecation.md
 
 ---
 
