@@ -29,6 +29,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 
 import type { ContainerExtensionStore } from "./containerExtension.js";
+import type { IVersionMarkResolver } from "./versionMarks.js";
 
 /**
  * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
@@ -185,6 +186,11 @@ export interface IContainerRuntime
 	readonly storage: IContainerStorageService;
 	readonly flushMode: FlushMode;
 	readonly scope: FluidObject;
+	/**
+	 * Host-facing resolver for app-stored version mark locators.
+	 */
+	readonly versionMarkResolver: IVersionMarkResolver;
+
 	/**
 	 * Indicates the attachment state of the container to a host service.
 	 */
