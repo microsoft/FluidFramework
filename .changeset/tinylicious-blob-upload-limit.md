@@ -1,5 +1,5 @@
 ---
-"tinylicious": patch
+"tinylicious": minor
 "__section": fix
 ---
 
