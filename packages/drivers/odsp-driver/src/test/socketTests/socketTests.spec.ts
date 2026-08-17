@@ -46,7 +46,7 @@ describe("OdspDocumentDeltaConnection tests", () => {
 	const driveId = "driveId";
 	const itemId = "itemId";
 	let epochTracker: EpochTracker;
-	let localCache: LocalPersistentCache;
+	const localCache = undefined as unknown as LocalPersistentCache;
 	let hashedDocumentId: string;
 	const resolvedUrl = {
 		siteUrl,

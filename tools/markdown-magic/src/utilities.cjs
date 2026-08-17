@@ -112,7 +112,7 @@ function getPackageMetadata(packageJsonFilePath) {
 /**
  * Gets the appropriate special scope kind for the provided package name, if applicable.
  *
- * @remarks for an overview of the Fluid Framework's package scopes, see {@link https://github.com/microsoft/FluidFramework/wiki/npm-package-scopes}.
+ * @remarks for an overview of the Fluid Framework's package scopes, see {@link https://github.com/microsoft/FluidFramework/blob/main/docs/content/Contributing/npm-Package-Scopes.md | npm Package Scopes}.
  *
  * @param {string} packageName
  * @returns {"" | "FRAMEWORK" | "EXAMPLE" | "EXPERIMENTAL" | "INTERNAL" | "PRIVATE" | "TOOLS" | undefined}

@@ -33,7 +33,7 @@ import {
 	type InnerNode,
 	NodeKind,
 	type TreeNodeSchema,
-	// eslint-disable-next-line import-x/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated -- Required to implement the deprecated typeNameSymbol API.
 	typeNameSymbol,
 	type TreeNode,
 	typeSchemaSymbol,
@@ -277,6 +277,27 @@ const handler: ProxyHandler<TreeMapNodeAlpha<any>> = {
 	getPrototypeOf: () => {
 		return Map.prototype;
 	},
+	get: (target, key, receiver) => {
+		const value = Reflect.get(target, key, receiver) as unknown;
+		if (value !== undefined) {
+			return value;
+		}
+		// If the property is a function on Map.prototype but not on the target,
+		// return a function that throws a descriptive TypeError when called.
+		if (
+			typeof key === "string" &&
+			!(key in target) &&
+			key in Map.prototype &&
+			typeof (Map.prototype as unknown as Record<string, unknown>)[key] === "function"
+		) {
+			return () => {
+				throw new TypeError(
+					`MapNode does not support '${key}'. Use the MapNode API (e.g., set, get, delete, keys, values, entries).`,
+				);
+			};
+		}
+		return value;
+	},
 };
 
 abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends TreeNodeValid<
@@ -322,9 +343,9 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 	public has(key: string): boolean {
 		return this.innerNode.tryGetField(brand(key)) !== undefined;
 	}
-	public keys(): IterableIterator<string> {
+	public *keys(): IterableIterator<string> {
 		const node = this.innerNode;
-		return node.keys();
+		yield* node.keys();
 	}
 	public set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T>): this {
 		const kernel = getKernel(this);
@@ -485,7 +506,7 @@ export function mapSchema<
 		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
 			persistedMetadata;
 
-		// eslint-disable-next-line import-x/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated -- Required to implement the deprecated typeNameSymbol API.
 		public get [typeNameSymbol](): TName {
 			return identifier;
 		}

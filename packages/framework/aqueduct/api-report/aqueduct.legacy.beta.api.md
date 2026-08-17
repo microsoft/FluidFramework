@@ -19,7 +19,9 @@ export class BaseContainerRuntimeFactory extends RuntimeFactoryHelper implements
 export interface BaseContainerRuntimeFactoryProps {
     // @deprecated (undocumented)
     dependencyContainer?: IFluidDependencySynthesizer;
-    minVersionForCollab?: MinimumVersionForCollab | undefined;
+    // @deprecated
+    minVersionForCollab?: OldestSupportedClientVersion | undefined;
+    oldestSupportedClient?: OldestSupportedClientVersion | undefined;
     provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
     registryEntries: NamedFluidDataStoreRegistryEntries;
     // @deprecated

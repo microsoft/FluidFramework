@@ -10,12 +10,12 @@ TypeScript 6 is now the supported version of TypeScript. The TypeScript ESLint d
 **Requirements:**
 
 - TypeScript 6
-- override transitive TypeScript ESLint dependencies before 5.58
+- override transitive TypeScript ESLint dependencies before 8.58
 
 #### overrides for transitive TypeScript ESLint dependencies
 
-`@typescript-eslint/eslint-*` packages need to be 5.58 or later for TypeScript 6 support.
-But latest version of packages known at 2026-08-05 use versions prior to 5.58 and should be overridden.
+`@typescript-eslint/*` packages need to be 8.58 or later for TypeScript 6 support.
+But latest version of packages known at 2026-08-05 use versions prior to 8.58 and should be overridden.
 
 ##### Minimal overrides
 
@@ -23,7 +23,7 @@ But latest version of packages known at 2026-08-05 use versions prior to 5.58 an
 Example override for pnpm:
 
 ```yaml
-# @typescript-eslint/eslint-utils overrides
+# @typescript-eslint/utils overrides
 #   As of 2026-08-05 @rushstack/eslint-plugin (v0.23.2), does not have a version using v8.58 or later.
 "@rushstack/eslint-plugin>@typescript-eslint/utils@<8.58.0": ~8.58.0
 #   As of 2026-08-05 eslint-plugin-tsdoc (v0.5.2), does not have a version using v8.58 or later.
@@ -32,13 +32,14 @@ Example override for pnpm:
 
 ##### Additional overrides
 
-`eslint-plugin-jest`, while not part of this config, is known to require `eslint-plugin` override.
+`eslint-plugin-jest`, while not part of this config, is known to require `eslint-plugin` update.
+If package manager does not select more recent update, then a temporary override may be needed to coerce
+a new resolution. After lockfile refresh, the override may be removed.
 Example override for pnpm:
 
 ```yaml
-# @typescript-eslint/eslint-plugin overrides
-#   As of 2026-08-05 eslint-plugin-jest (v29.6.2), does not have a version using v8.58 or later.
-"eslint-plugin-jest>@typescript-eslint/eslint-plugin@<8.58.0": ~8.58.0
+# @typescript-eslint/eslint-plugin override to force resolution update
+"eslint-plugin-jest>@typescript-eslint/eslint-plugin@<8.58.0": ^8.58.0
 ```
 
 ### Breaking: `@eslint-react/eslint-plugin` upgraded to v5

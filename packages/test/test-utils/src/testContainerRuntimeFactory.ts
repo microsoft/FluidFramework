@@ -29,7 +29,7 @@ import {
 import {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
-	type MinimumVersionForCollab,
+	type OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
 import { RequestParser, RuntimeFactoryHelper } from "@fluidframework/runtime-utils/internal";
 
@@ -75,7 +75,9 @@ interface backCompat_ContainerRuntime_loadRuntime {
 		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
 		runtimeOptions?: IContainerRuntimeOptionsInternal;
 		containerScope?: FluidObject;
-		minVersionForCollab?: MinimumVersionForCollab;
+		// Some versions of this API exist which expect this to be provided under the name `minVersionForCollab`, so this fails to actually set minVersionForCollab.
+		// That predates the versioning of this API and is thus hard to mitigate.
+		oldestSupportedClient?: OldestSupportedClientVersion;
 	}): Promise<ContainerRuntime>;
 }
 
@@ -101,7 +103,7 @@ export const createTestContainerRuntimeFactory = (
 					},
 				},
 			},
-			public minVersionForCollab: MinimumVersionForCollab | undefined = undefined,
+			public minVersionForCollab: OldestSupportedClientVersion | undefined = undefined,
 			// eslint-disable-next-line import-x/no-deprecated
 			public requestHandlers: RuntimeRequestHandler[] = [],
 		) {
@@ -212,7 +214,9 @@ export const createTestContainerRuntimeFactory = (
 						runtimeOptions: this.runtimeOptions,
 						containerScope: context.scope,
 						existing,
-						minVersionForCollab: this.minVersionForCollab,
+						// Some versions of this API exist which expect this to be provided under the name minVersionForCollab, so this fails to actually set minVersionForCollab.
+						// That predates the versioning of this API and is thus hard to mitigate.
+						oldestSupportedClient: this.minVersionForCollab,
 					});
 				case 2:
 					return containerRuntimeCtor.loadRuntime({
@@ -223,7 +227,7 @@ export const createTestContainerRuntimeFactory = (
 						runtimeOptions: this.runtimeOptions,
 						containerScope: context.scope,
 						existing,
-						minVersionForCollab: this.minVersionForCollab,
+						oldestSupportedClient: this.minVersionForCollab,
 					});
 				default:
 					fail();
