@@ -51,6 +51,11 @@ export const waitForCondition = async (
 	const startTime = Date.now();
 	while (!condition()) {
 		if (Date.now() - startTime >= timeoutMs) {
+			// Final check in case `condition` flipped to true between the loop check above and
+			// this timeout check, to avoid spuriously throwing right at the timeout boundary.
+			if (condition()) {
+				return;
+			}
 			throw new Error(`Condition was not satisfied within ${timeoutMs}ms timeout.`);
 		}
 		await delay(pollIntervalMs);
