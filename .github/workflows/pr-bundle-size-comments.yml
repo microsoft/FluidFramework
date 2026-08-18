@@ -416,17 +416,21 @@ jobs:
               throw new Error("ADO PR build lookup returned no build list");
             }
 
-            // The response is newest-first. Match flub's selection by retaining the first
-            // completed, successful PR build with an id for each PR HEAD.
+            // Match flub's selection by retaining the newest completed PR build with an id for
+            // each PR HEAD. Prefer fully successful builds, then fall back to partially successful
+            // builds whose bundle artifact flub will validate before using.
             const retainedPrBuildByHeadSha = new Map();
             for (const prBuild of adoPrBuilds) {
               const prHeadSha = prBuild.triggerInfo?.["pr.sourceSha"];
+              const currentlyRetainedBuild = retainedPrBuildByHeadSha.get(prHeadSha);
               if (
                 prHeadSha &&
-                !retainedPrBuildByHeadSha.has(prHeadSha) &&
                 prBuild.id !== undefined &&
                 prBuild.status === "completed" &&
-                prBuild.result === "succeeded"
+                ["succeeded", "partiallySucceeded"].includes(prBuild.result) &&
+                (currentlyRetainedBuild === undefined ||
+                  (currentlyRetainedBuild.result === "partiallySucceeded" &&
+                    prBuild.result === "succeeded"))
               ) {
                 retainedPrBuildByHeadSha.set(prHeadSha, prBuild);
               }
