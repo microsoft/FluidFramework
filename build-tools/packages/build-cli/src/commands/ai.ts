@@ -252,7 +252,7 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 
 		this.error(
 			"Could not find agent-aliases.sh. This command is designed for the AI-enabled Codespace.\n" +
-				"See: https://github.com/microsoft/FluidFramework/wiki/AI%E2%80%90enabled-Codespace",
+				"See: https://github.com/microsoft/FluidFramework/blob/main/docs/content/Development-Environment/AI-enabled-Codespace.md",
 			{ exit: 1 },
 		);
 	}

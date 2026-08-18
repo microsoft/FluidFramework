@@ -3,10 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { fail } from "node:assert";
+
 import { IContainerContext, IRuntime } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
 	DefaultSummaryConfiguration,
+	FluidDataStoreRegistry,
 	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
 import {
@@ -26,7 +29,7 @@ import {
 import {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
-	type MinimumVersionForCollab,
+	type OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
 import { RequestParser, RuntimeFactoryHelper } from "@fluidframework/runtime-utils/internal";
 
@@ -63,6 +66,26 @@ interface backCompat_ContainerRuntime {
 }
 
 /**
+ * loadRuntime API before https://github.com/microsoft/FluidFramework/pull/27685 took registryEntries instead of registry.
+ */
+interface backCompat_ContainerRuntime_loadRuntime {
+	loadRuntime(params: {
+		context: IContainerContext;
+		registryEntries: NamedFluidDataStoreRegistryEntries;
+		existing: boolean;
+		requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
+		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
+		runtimeOptions?: IContainerRuntimeOptionsInternal;
+		containerScope?: FluidObject;
+		// Some versions of this API exist which expect this to be provided under the name `minVersionForCollab` (before https://github.com/microsoft/FluidFramework/pull/27806),
+		// so this fails to actually set minVersionForCollab in some old cases, but it was optional then so does not error.
+		// That predates the versioning of this API, so we mitigate by setting both.
+		oldestSupportedClient: OldestSupportedClientVersion | undefined;
+		minVersionForCollab: OldestSupportedClientVersion | undefined;
+	}): Promise<ContainerRuntime>;
+}
+
+/**
  * Create a container runtime factory class that allows you to set runtime options
  * @internal
  */
@@ -84,7 +107,7 @@ export const createTestContainerRuntimeFactory = (
 					},
 				},
 			},
-			public minVersionForCollab: MinimumVersionForCollab | undefined = undefined,
+			public minVersionForCollab: OldestSupportedClientVersion | undefined = undefined,
 			// eslint-disable-next-line import-x/no-deprecated
 			public requestHandlers: RuntimeRequestHandler[] = [],
 		) {
@@ -171,20 +194,47 @@ export const createTestContainerRuntimeFactory = (
 			// This usage of `containerRuntimeCtor.loadRuntime`, an `@internal` API, called on past versions of this package,
 			// adds an extra constraint that makes changing that API more difficult than it otherwise would be.
 			// Actual customers / apps should not be dependent on stability of this API, but this code is, at least for now.
-			return containerRuntimeCtor.loadRuntime({
-				context,
-				registryEntries: [
-					["default", Promise.resolve(this.dataStoreFactory)],
-					[this.type, Promise.resolve(this.dataStoreFactory)],
-				],
-				// eslint-disable-next-line import-x/no-deprecated
-				requestHandler: buildRuntimeRequestHandler(getDefaultObject, ...this.requestHandlers),
-				provideEntryPoint,
-				runtimeOptions: this.runtimeOptions,
-				containerScope: context.scope,
-				existing,
-				minVersionForCollab: this.minVersionForCollab,
-			});
+			const registryEntries: NamedFluidDataStoreRegistryEntries = [
+				["default", Promise.resolve(this.dataStoreFactory)],
+				[this.type, Promise.resolve(this.dataStoreFactory)],
+			];
+			// eslint-disable-next-line import-x/no-deprecated
+			const requestHandler = buildRuntimeRequestHandler(
+				getDefaultObject,
+				...this.requestHandlers,
+			);
+
+			const loadRuntimeVersion = containerRuntimeCtor.loadRuntimeAPIVersion ?? 1;
+			switch (loadRuntimeVersion) {
+				case 1:
+					// Old loadRuntime: took registryEntries instead of registry.
+					return (
+						containerRuntimeCtor as unknown as backCompat_ContainerRuntime_loadRuntime
+					).loadRuntime({
+						context,
+						registryEntries,
+						requestHandler,
+						provideEntryPoint,
+						runtimeOptions: this.runtimeOptions,
+						containerScope: context.scope,
+						existing,
+						oldestSupportedClient: this.minVersionForCollab,
+						minVersionForCollab: this.minVersionForCollab,
+					});
+				case 2:
+					return containerRuntimeCtor.loadRuntime({
+						context,
+						registry: new FluidDataStoreRegistry(registryEntries),
+						requestHandler,
+						provideEntryPoint,
+						runtimeOptions: this.runtimeOptions,
+						containerScope: context.scope,
+						existing,
+						oldestSupportedClient: this.minVersionForCollab,
+					});
+				default:
+					fail();
+			}
 		}
 	};
 };

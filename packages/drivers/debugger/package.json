@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/debugger",
-	"version": "2.116.0",
+	"version": "2.117.0",
 	"description": "Fluid Debugger - a tool to play through history of a file",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -91,7 +91,7 @@
 		"jsonschema": "^1.2.6"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.18.2",
+		"@arethetypeswrong/cli": "^0.18.5",
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",

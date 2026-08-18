@@ -32,7 +32,7 @@ import {
 	resolveCompatibilityModeToMinVersionForCollab,
 } from "@fluidframework/fluid-static/internal";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions";
+import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 import {
 	InsecureTinyliciousTokenProvider,
@@ -75,13 +75,14 @@ export class TinyliciousClient {
 	/**
 	 * Creates a new detached container instance in Tinylicious server.
 	 * @param containerSchema - Container schema for the new container.
-	 * @param minVersionForCollab - Minimum framework version required for collaboration, as a
-	 * `MinimumVersionForCollab` SemVer string (e.g. `"1.0.0"`, `"2.0.0"`).
+	 * @param oldestSupportedClient - Oldest Fluid Framework client version that must be able to
+	 * open and process documents written by this client. Choosing an older version may limit
+	 * available features and write formats.
 	 * @returns New detached container instance along with associated services.
 	 */
 	public async createContainer<TContainerSchema extends ContainerSchema>(
 		containerSchema: TContainerSchema,
-		minVersionForCollab: MinimumVersionForCollab,
+		oldestSupportedClient: OldestSupportedClientVersion,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 		services: TinyliciousContainerServices;
@@ -91,7 +92,7 @@ export class TinyliciousClient {
 	 * @param containerSchema - Container schema for the new container.
 	 * @param compatibilityMode - Legacy {@link @fluidframework/fluid-static#CompatibilityMode} value.
 	 * @returns New detached container instance along with associated services.
-	 * @deprecated Pass a `MinimumVersionForCollab` SemVer string (e.g. `"2.0.0"`) instead. The legacy
+	 * @deprecated Pass an `OldestSupportedClientVersion` SemVer string (e.g. `"2.0.0"`) instead. The legacy
 	 * values `"1"` and `"2"` correspond to `"1.0.0"` and `"2.0.0"` respectively.
 	 */
 	public async createContainer<TContainerSchema extends ContainerSchema>(
@@ -105,7 +106,7 @@ export class TinyliciousClient {
 	public async createContainer<TContainerSchema extends ContainerSchema>(
 		containerSchema: TContainerSchema,
 		// eslint-disable-next-line import-x/no-deprecated
-		compatibilityMode: MinimumVersionForCollab | CompatibilityMode,
+		compatibilityMode: OldestSupportedClientVersion | CompatibilityMode,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 		services: TinyliciousContainerServices;
@@ -154,14 +155,15 @@ export class TinyliciousClient {
 	 * Accesses the existing container given its unique ID in the tinylicious server.
 	 * @param id - Unique ID of the container.
 	 * @param containerSchema - Container schema used to access data objects in the container.
-	 * @param minVersionForCollab - Minimum Fluid Framework version required for collaboration, as a
-	 * `MinimumVersionForCollab` SemVer string (e.g. `"1.0.0"`, `"2.0.0"`).
+	 * @param oldestSupportedClient - Oldest Fluid Framework client version that must be able to
+	 * open and process documents written by this client. Choosing an older version may limit
+	 * available features and write formats.
 	 * @returns Existing container instance along with associated services.
 	 */
 	public async getContainer<TContainerSchema extends ContainerSchema>(
 		id: string,
 		containerSchema: TContainerSchema,
-		minVersionForCollab: MinimumVersionForCollab,
+		oldestSupportedClient: OldestSupportedClientVersion,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 		services: TinyliciousContainerServices;
@@ -172,7 +174,7 @@ export class TinyliciousClient {
 	 * @param containerSchema - Container schema used to access data objects in the container.
 	 * @param compatibilityMode - Legacy {@link @fluidframework/fluid-static#CompatibilityMode} value.
 	 * @returns Existing container instance along with associated services.
-	 * @deprecated Pass a `MinimumVersionForCollab` SemVer string (e.g. `"2.0.0"`) instead. The legacy
+	 * @deprecated Pass an `OldestSupportedClientVersion` SemVer string (e.g. `"2.0.0"`) instead. The legacy
 	 * values `"1"` and `"2"` correspond to `"1.0.0"` and `"2.0.0"` respectively.
 	 */
 	public async getContainer<TContainerSchema extends ContainerSchema>(
@@ -188,7 +190,7 @@ export class TinyliciousClient {
 		id: string,
 		containerSchema: TContainerSchema,
 		// eslint-disable-next-line import-x/no-deprecated
-		compatibilityMode: MinimumVersionForCollab | CompatibilityMode,
+		compatibilityMode: OldestSupportedClientVersion | CompatibilityMode,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 		services: TinyliciousContainerServices;
@@ -217,7 +219,7 @@ export class TinyliciousClient {
 
 	private getLoaderProps(
 		schema: ContainerSchema,
-		minVersionForCollaboration: MinimumVersionForCollab,
+		minVersionForCollaboration: OldestSupportedClientVersion,
 	): ILoaderProps {
 		const containerRuntimeFactory = createDOProviderContainerRuntimeFactory({
 			schema,
