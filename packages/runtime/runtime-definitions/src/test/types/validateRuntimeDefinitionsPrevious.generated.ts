@@ -811,6 +811,7 @@ declare type current_as_old_for_TypeAlias_NamedFluidDataStoreRegistryEntry2 = re
  * typeValidation.broken:
  * "TypeAlias_OldestSupportedClientVersion": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_TypeAlias_OldestSupportedClientVersion = requireAssignableTo<TypeOnly<old.OldestSupportedClientVersion>, TypeOnly<current.OldestSupportedClientVersion>>
 
 /*
