@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/migration-tools",
-	"version": "2.113.0",
+	"version": "2.117.0",
 	"private": true,
 	"description": "Tools for migrating data",
 	"homepage": "https://fluidframework.com",
@@ -36,11 +36,11 @@
 		}
 	},
 	"scripts": {
-		"api-extractor:commonjs": "flub generate entrypoints --resolutionConditions require --outDir ./dist",
-		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
+		"build:entrypoints:cjs": "flub generate entrypoints --resolutionConditions require --outDir ./dist",
+		"build:entrypoints:esm": "flub generate entrypoints --outDir ./lib",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"check:are-the-types-wrong": "echo skip attw --pack .",
 		"check:biome": "biome check .",
@@ -76,7 +76,7 @@
 		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.18.2",
+		"@arethetypeswrong/cli": "^0.18.5",
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",

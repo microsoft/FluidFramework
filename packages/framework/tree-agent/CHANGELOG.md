@@ -1,5 +1,35 @@
 # @fluidframework/tree-agent
 
+## 2.116.0
+
+Dependency updates only.
+
+## 2.115.0
+
+### Minor Changes
+
+- Removes legacy tree-agent APIs ([#27868](https://github.com/microsoft/FluidFramework/pull/27868)) [d889463b3a](https://github.com/microsoft/FluidFramework/commit/d889463b3a45d1f5cd713f2ef91471fbf9b15177)
+
+  The legacy stateful `SharedTreeSemanticAgent` API and its associated `SharedTreeChatModel.query`,
+  `SharedTreeChatModel.appendContext`, `SharedTreeChatQuery`, and `SemanticAgentOptions` APIs have
+  been removed. Use [`createTreeAgent`](https://fluidframework.com/docs/api/tree-agent/#createtreeagent-function)
+  for stateful conversations or
+  [`executeSemanticEditing`](https://fluidframework.com/docs/api/tree-agent/#executesemanticediting-function)
+  for one-shot edits. `SharedTreeChatModel.invoke` is now required, and the legacy-only
+  `disabledError` and `expiredError` variants have been removed from `EditResult`.
+
+  The deprecated `createLegacyLangchainChatModel` adapter has also been removed. Use
+  [`createLangchainChatModel`](https://fluidframework.com/docs/api/tree-agent-langchain/#createlangchainchatmodel-function)
+  with `createTreeAgent` or `executeSemanticEditing` instead.
+
+## 2.114.0
+
+Dependency updates only.
+
+## 2.113.0
+
+Dependency updates only.
+
 ## 2.112.0
 
 Dependency updates only.

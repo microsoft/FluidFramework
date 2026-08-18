@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/local-server-stress-tests",
-	"version": "2.113.0",
+	"version": "2.117.0",
 	"private": true,
 	"description": "Stress tests that can only run against the local server",
 	"homepage": "https://fluidframework.com",
@@ -108,22 +108,34 @@
 		"ts-loader": "^9.5.1",
 		"typescript": "~5.4.5"
 	},
+	"comments": [
+		"build:test-dependencies:esm groups test builds required by both the test build and eslint. These are required because stress tests import those packages internal test exports, which resolve to generated test output."
+	],
 	"fluidBuild": {
 		"tasks": {
+			"build:test-dependencies:esm": {
+				"script": false,
+				"dependsOn": [
+					"@fluid-internal/claims#build:test:esm",
+					"@fluidframework/counter#build:test:esm",
+					"@fluidframework/id-compressor#build:test:esm",
+					"@fluidframework/legacy-dds#build:test:esm",
+					"@fluidframework/map#build:test:esm",
+					"@fluidframework/matrix#build:test:esm",
+					"@fluidframework/ordered-collection#build:test:esm",
+					"@fluidframework/register-collection#build:test:esm",
+					"@fluidframework/sequence#build:test:esm",
+					"@fluidframework/task-manager#build:test:esm",
+					"@fluidframework/tree#build:test:esm"
+				]
+			},
 			"build:test:esm": [
-				"^build:esnext",
-				"^api-extractor:esnext",
-				"@fluidframework/id-compressor#build:test:esm",
-				"@fluidframework/sequence#build:test:esm",
-				"@fluidframework/map#build:test:esm",
-				"@fluidframework/matrix#build:test:esm",
-				"@fluidframework/tree#build:test:esm",
-				"@fluidframework/task-manager#build:test:esm",
-				"@fluidframework/legacy-dds#build:test:esm",
-				"@fluidframework/ordered-collection#build:test:esm",
-				"@fluidframework/counter#build:test:esm",
-				"@fluidframework/register-collection#build:test:esm",
-				"@fluid-internal/claims#build:test:esm"
+				"...",
+				"build:test-dependencies:esm"
+			],
+			"eslint": [
+				"...",
+				"build:test-dependencies:esm"
 			]
 		}
 	},

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/data-object-grid",
-	"version": "2.113.0",
+	"version": "2.117.0",
 	"private": true,
 	"description": "Data object grid creates child data objects from a registry and lays them out in a grid.",
 	"homepage": "https://fluidframework.com",
@@ -99,7 +99,7 @@
 		"url-loader": "^4.1.1",
 		"webpack": "^5.94.0",
 		"webpack-cli": "^5.1.4",
-		"webpack-dev-server": "~4.15.2"
+		"webpack-dev-server": "~5.2.6"
 	},
 	"typeValidation": {
 		"disabled": true

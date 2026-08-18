@@ -8,15 +8,15 @@
  * described in /src/properties/baseProperty.js
  */
 
-var PropertyFactory,
-	BaseProperty,
-	OurTestTemplate,
-	OurArrayTestTemplate2,
-	error,
-	DeterministicRandomGenerator,
-	_,
-	ChangeSet,
-	deepCopy;
+import { ChangeSet } from "@fluid-experimental/property-changeset";
+import { DeterministicRandomGenerator } from "@fluid-experimental/property-common";
+import _ from "lodash";
+
+// Ideally this would import from "@fluid-experimental/property-properties", but these
+// tests use internal APIs that are not part of the typed API that comes with the package.
+import { BaseProperty, PropertyFactory } from "../../index.js";
+
+var OurTestTemplate, OurArrayTestTemplate2, error, deepCopy;
 
 var possibleChanges = {
 	0: "insert",
@@ -42,12 +42,6 @@ describe("CustomArrayProperty", function () {
 	 * Get all the objects we need in this test here.
 	 */
 	before(function () {
-		PropertyFactory = require("../..").PropertyFactory;
-		BaseProperty = require("../..").BaseProperty;
-		DeterministicRandomGenerator =
-			require("@fluid-experimental/property-common").DeterministicRandomGenerator;
-		ChangeSet = require("@fluid-experimental/property-changeset").ChangeSet;
-		_ = require("lodash");
 		deepCopy = _.cloneDeep;
 
 		OurTestTemplate = {

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/example-webpack-integration",
-	"version": "2.113.0",
+	"version": "2.117.0",
 	"private": true,
 	"description": "Webpack configuration used by examples in the FluidFramework repo.",
 	"homepage": "https://fluidframework.com",
@@ -46,10 +46,10 @@
 	"dependencies": {
 		"@fluidframework/tool-utils": "workspace:~",
 		"webpack": "^5.94.0",
-		"webpack-dev-server": "~4.15.2"
+		"webpack-dev-server": "~5.2.6"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.18.2",
+		"@arethetypeswrong/cli": "^0.18.5",
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",

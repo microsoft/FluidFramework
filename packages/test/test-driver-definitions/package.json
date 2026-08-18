@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/test-driver-definitions",
-	"version": "2.113.0",
+	"version": "2.117.0",
 	"description": "A driver abstraction and implementations for testing against server",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -53,7 +53,7 @@
 		"@fluidframework/driver-definitions": "workspace:~"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.18.2",
+		"@arethetypeswrong/cli": "^0.18.5",
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",

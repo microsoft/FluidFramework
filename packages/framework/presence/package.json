@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/presence",
-	"version": "2.113.0",
+	"version": "2.117.0",
 	"description": "A component for lightweight data sharing within a single session",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -61,9 +61,6 @@
 		"!**/test/**"
 	],
 	"scripts": {
-		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "flub generate entrypoints --resolutionConditions require --outFileLegacyAlpha legacy.alpha --outDir ./dist",
-		"api-extractor:esnext": "flub generate entrypoints --outFileLegacyAlpha legacy.alpha --outDir ./lib",
 		"build": "fluid-build . --task build",
 		"build:api-reports": "concurrently \"npm:build:api-reports:*\"",
 		"build:api-reports:current": "api-extractor run --local --config api-extractor/api-extractor.current.json",
@@ -71,6 +68,9 @@
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
+		"build:entrypoints": "fluid-build . --task build:entrypoints",
+		"build:entrypoints:cjs": "flub generate entrypoints --resolutionConditions require --outFileLegacyAlpha legacy.alpha --outDir ./dist",
+		"build:entrypoints:esm": "flub generate entrypoints --outFileLegacyAlpha legacy.alpha --outDir ./lib",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack . --profile node16",
 		"check:biome": "biome check .",
@@ -105,7 +105,7 @@
 		"@fluidframework/runtime-definitions": "workspace:~"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.18.2",
+		"@arethetypeswrong/cli": "^0.18.5",
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "catalog:buildTools",
@@ -125,7 +125,7 @@
 		"tasks": {
 			"eslint": [
 				"^build:esnext",
-				"^api-extractor:esnext"
+				"^build:entrypoints:esm"
 			]
 		}
 	},

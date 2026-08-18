@@ -1,5 +1,32 @@
 # @fluidframework/merge-tree
 
+## 2.116.0
+
+### Minor Changes
+
+- Fix LocalReferenceCollection.walkReferences skipping the starting reference ([#27947](https://github.com/microsoft/FluidFramework/pull/27947)) [20b64494c7](https://github.com/microsoft/FluidFramework/commit/20b64494c7699c46ca53e3fb7bbd791ccfe9d05a)
+
+  `LocalReferenceCollection.walkReferences` compared the wrong objects when locating the
+  before/at/after bucket containing the supplied `start` reference. It compared list nodes of the
+  outer bucket list against the list node of `start` itself, which never match, so the walk discarded
+  every bucket at `start`'s offset and began at the next offset instead. As a result, a walk with an
+  explicit `start` never visited `start` or any other reference at its offset.
+
+  The walk now stops at the bucket containing `start` and resumes from `start` within that bucket, so
+  `start` is visited first in both the forward and backward directions.
+
+## 2.115.0
+
+Dependency updates only.
+
+## 2.114.0
+
+Dependency updates only.
+
+## 2.113.0
+
+Dependency updates only.
+
 ## 2.112.0
 
 Dependency updates only.

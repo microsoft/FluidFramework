@@ -1,20 +1,21 @@
 {
-	"extends": "../../../../../../common/build/build-common/ts-common-config.json",
+	"extends": "../../../../../../common/build/build-common/tsconfig.test.node16.json",
+	"include": ["./**/*"],
 	"compilerOptions": {
 		"strict": false,
 		"allowJs": true,
 		"checkJs": true,
 
 		"rootDir": "./",
-		"outDir": "../../dist/test",
+		"outDir": "invalid use tsconfig.esm.json or tsconfig.cjs.json to build",
 		"types": ["node", "mocha", "chai", "sinon"],
-		"declaration": false,
-		"declarationMap": false,
+		// must be disabled per "strict": false.
+		"exactOptionalPropertyTypes": false,
 	},
-	"include": ["./**/*"],
+	// Default reference for IntelliSense
 	"references": [
 		{
-			"path": "../..",
+			"path": "../../tsconfig.json",
 		},
 	],
 }

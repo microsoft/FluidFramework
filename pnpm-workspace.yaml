@@ -14,8 +14,6 @@ allowBuilds:
   '@azure/msal-node-extensions': true
   '@azure/msal-node-runtime': true
   '@biomejs/biome': true
-  '@parcel/watcher': true
-  '@vvago/vale': true
   classic-level: true
   core-js: true
   esbuild: true
@@ -26,16 +24,25 @@ allowBuilds:
 
 blockExoticSubdeps: true
 
+# Shortens peer-dependency identifiers in the lockfile from fully-nested paths to flat name@version keys.
+# Example:
+#   before: eslint-config-prettier 10.1.8(eslint@9.39.1(jiti@2.6.1)(supports-color@10.2.2))
+#   after:  eslint-config-prettier 10.1.8(eslint@9.39.1)
+# The nested peers of `eslint@9.39.1` still live on eslint's own lockfile entry; they're just not
+# re-encoded into every consumer's identifier. Smaller lockfile, same resolved graph.
+# See https://pnpm.io/settings#dedupepeers
+dedupePeers: true
+
 catalogs:
   # Build-tools packages
   buildTools:
-    "@fluid-tools/build-cli": ^0.65.0
-    "@fluid-tools/build-infrastructure": ^0.65.0
-    "@fluid-tools/version-tools": ^0.65.0
-    "@fluidframework/build-tools": ^0.65.0
+    "@fluid-tools/build-cli": ^0.67.0
+    "@fluid-tools/build-infrastructure": ^0.67.0
+    "@fluid-tools/version-tools": ^0.67.0
+    "@fluidframework/build-tools": ^0.67.0
   # eslint and related packages
   eslint:
-    "@fluidframework/eslint-config-fluid": "^13.0.0"
+    "@fluidframework/eslint-config-fluid": "^14.0.0"
     "eslint": "~9.39.1"
     "eslint-config-prettier": "~10.1.8"
   # Type definitions
@@ -50,7 +57,7 @@ linkWorkspacePackages: true
 
 # Minimum age, in minutes, of dependencies before they can be installed.
 # See /DEV.md and https://pnpm.io/settings#minimumreleaseage more information.
-minimumReleaseAge: 1440
+minimumReleaseAge: 0
 minimumReleaseAgeExclude: [
   # Temporary exceptions go here as needed.
 ]
@@ -58,15 +65,27 @@ minimumReleaseAgeExclude: [
 overrides:
   # Resolve known security vulnerabilities in transitive dependencies.
   "@babel/core@>=7 <8": ^7.29.6
-  brace-expansion@>=5 <6: ^5.0.6
+  # brace-expansion CVE-2026-13149 (algorithmic complexity DoS) and CVE-2026-14257
+  # (memory-exhaustion DoS via unbounded expansion length). 14257 is fixed in 1.1.17, 2.1.3, 5.0.8.
+  brace-expansion@>=1 <2: ^1.1.17
+  brace-expansion@>=2 <3: ^2.1.3
+  brace-expansion@>=5 <6: ^5.0.8
   http-proxy-middleware@>=2 <3: ^2.0.10
   ip-address@>=9 <10: ^10.1.1
+  # js-yaml CVE-2026-59869 (quadratic CPU DoS via merge-key chains). Fixed in 3.15.0 and 4.3.0.
+  # Exact pins: newer .1 patches are not yet mirrored in the internal artifact feed used by CI.
+  js-yaml@>=3 <4: 3.15.0
+  js-yaml@>=4 <5: 4.3.0
   keyv@>=4 <5: ^5.5.3
   launch-editor@>=2 <3: ^2.14.1
   on-headers@>=1 <2: ^1.1.0
   postcss@>=8 <9: ^8.5.10
   ts-deepmerge@>=7 <8: ^8.0.0
   uuid@>=7 <12: ^11.1.1
+  # webpack CVE-2025-68157 and CVE-2025-68458 (HttpUriPlugin allowedUris bypass, SSRF). Fixed in 5.104.1.
+  webpack@>=5 <6: ^5.104.1
+  # websocket-driver CVE-2026-54466 (critical, message corruption) and CVE-2026-54490. Fixed in 0.7.5.
+  websocket-driver@>=0 <1: ^0.7.5
 
   # @fluentui/react-positioning's dependency on @floating-ui/dom causes a peer dependency violation,
   # so overriding it forces a version that meets peer dependency requirements to be installed.
@@ -85,15 +104,24 @@ overrides:
   # "@fluid-tools/version-tools": "link:./build-tools/packages/version-tools"
   # "@fluidframework/build-tools": "link:./build-tools/packages/build-tools"
 
+  # Uncomment line below to use locally built eslint-config-fluid package while updating the packages together.
+  # "@fluidframework/eslint-config-fluid": "link:./common/build/eslint-config-fluid"
+
   # node types are forced to a consistent version to avoid conflicts between globals.
   "@types/node": catalog:types
 
   # axios pre-1.0 is forced to a patched release to resolve known vulnerabilities.
   # Caret dependencies aren't enough on a pre-1.0 package.
-  axios@<1: ^0.32.0
+  # 0.33.0 patches GHSA-gcfj-64vw-6mp9 and related SSRF/proxy CVEs (CVE-2026-44486/44487/44490/44492).
+  axios@<1: ^0.33.0
 
-  # Force vulnerable axios ^1.15.0 requests to the patched 1.16.0.
-  axios@^1.15.0: 1.16.0
+  # Force vulnerable axios ^1.15.0 requests to a patched release.
+  # 1.18.1 fixes GHSA-gcfj-64vw-6mp9, GHSA-jqh4-m9w3-8hp9, GHSA-mmx7-hfxf-jppx,
+  # GHSA-7q8q-rj6j-mhjq, GHSA-mwf2-3pr3-8698, GHSA-f4gw-2p7v-4548, GHSA-xj6q-8x83-jv6g.
+  # Kept as an exact pin (not caret) so we don't automatically pick up any future
+  # axios release before it has been vetted — see the axios supply-chain compromise
+  # note further down (neverBuiltDependencies).
+  axios@^1.15.0: 1.18.1
 
   # diff is overridden to patched versions to resolve a known ReDoS vulnerability. diff@3.x and diff@7.x
   # have no fix in their major range so they are bumped to the nearest patched major.
@@ -102,11 +130,18 @@ overrides:
   diff@>=7 <8: ^8.0.3
   diff@>=8 <9: ^8.0.3
 
+  # @typescript-eslint/utils overrides
+  #   As of 2026-08-14 @rushstack/eslint-plugin (v0.23.2), does not have a version using v8.58 or later.
+  "@rushstack/eslint-plugin>@typescript-eslint/utils@<8.58.0": ^8.58.0
+  #   As of 2026-08-14 eslint-plugin-tsdoc (v0.5.2), does not have a version using v8.58 or later.
+  "eslint-plugin-tsdoc>@typescript-eslint/utils@<8.58.0": ^8.58.0
+
   # express is overridden to ^4.22.1 to resolve a known vulnerability in express 4.21.2.
   express@>=4 <5: ^4.22.1
 
   # Resolve a known security vulnerability.
-  fast-uri: ^3.1.2
+  # CVE-2026-16221 fixed in fast-uri 4.1.1 and CVE-2026-18446 fixed in 4.1.2.
+  fast-uri: ^4.1.2
 
   # Resolve multiple CVEs in 4.5.3 (entity encoding bypass, DoS via entity expansion, stack overflow).
   # Stays within @langchain/anthropic's declared ^4.4.1 range.
@@ -136,6 +171,15 @@ overrides:
 
   # Resolve known security vulnerabilities.
   node-forge: ^1.4.0
+
+  # PM2's optional system-monitoring daemon is not used by our start/stop scripts, and PM2 handles its absence.
+  # Dropping it removes 4 dependency snapshots used only for host telemetry.
+  pm2>pm2-sysmonit: "-"
+
+  # Sass uses @parcel/watcher only to optimize its standalone CLI watch mode; our Sass builds run through webpack.
+  # Sass falls back when the watcher is absent. Dropping it removes 14 dependency snapshots, including 13
+  # platform-specific native packages with build scripts, and makes the existing @parcel/watcher build allowlist moot.
+  sass>@parcel/watcher: "-"
 
   # oclif includes some AWS-related features, but we don't use them, so we drop those dependencies.
   # This helps reduce lockfile churn since the deps release very frequently.
@@ -168,9 +212,17 @@ overrides:
   # GHSA-34x7-hfp2-rc4v).
   tar: ^7.5.11
 
+  # tar-fs uses these optional adapters only under the Bare JavaScript runtime; Fluid supports Node.js.
+  # Dropping both removes 9 dependency snapshots while Node continues to use its built-in fs and path modules.
+  tar-fs>bare-fs: "-"
+  tar-fs>bare-path: "-"
+
   # Resolve a known security vulnerability. No patched release exists in the 0.0.x/0.1.x lines,
   # so affected consumers are moved forward to the patched 0.2.x line.
   tmp: ^0.2.6
+
+  # Resolve a known security vulnerability (CVE-2026-54466).
+  websocket-driver: ^0.7.5
 
   # Resolve a known security vulnerability. The 8.x and 7.x lines are both forced
   # forward to their nearest patched releases.
@@ -227,7 +279,14 @@ peerDependencyRules:
 publicHoistPattern:
   - '@arethetypeswrong/cli'
 
-registry: https://packagefeedproxy.microsoft.io/npm/
+# No `registry` is set here on purpose. pnpm resolves the built-in default (registry.npmjs.org),
+# which keeps external/OSS contributions working out of the box, and also keeps lockfile updates
+# pointed at the public registry.
+# NOTE: a `registry` value in pnpm-workspace.yaml takes precedence over a project-level `.npmrc`,
+# so setting it here (even to registry.npmjs.org) would silently defeat the per-developer override
+# below. Leave it unset instead.
+# Developers who must use an npmjs mirror or team-managed feed can make use of
+# `node ./scripts/set-dev-registry.cjs <registry-url>`.
 
 resolutionMode: highest
 
@@ -235,7 +294,8 @@ strictDepBuilds: true
 
 strictPeerDependencies: true
 
-# The registry.npmjs mirror does not preserve all the npm package metadata necessary for this pnpm feature to function
+# The artifact feeds used by CI and by internal developers (see the registry note above)
+# do not preserve all the npm package metadata necessary for this pnpm feature to function
 # correctly as of 7/16/2026. If this is turned back on...
 # See: https://github.com/orgs/pnpm/discussions/11084 for some discussion.
 # Enabling no-downgrade requires every transitive trust-policy violation to either be remediated

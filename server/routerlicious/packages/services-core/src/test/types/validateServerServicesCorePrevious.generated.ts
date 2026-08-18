@@ -430,6 +430,7 @@ declare type old_as_current_for_Enum_EncryptionKeyVersion = requireAssignableTo<
  * typeValidation.broken:
  * "Enum_EncryptionKeyVersion": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Enum_EncryptionKeyVersion = requireAssignableTo<TypeOnly<current.EncryptionKeyVersion>, TypeOnly<old.EncryptionKeyVersion>>
 
 /*
@@ -1312,6 +1313,7 @@ declare type old_as_current_for_Interface_IEncryptedPrivateTenantKeys = requireA
  * typeValidation.broken:
  * "Interface_IEncryptedPrivateTenantKeys": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IEncryptedPrivateTenantKeys = requireAssignableTo<TypeOnly<current.IEncryptedPrivateTenantKeys>, TypeOnly<old.IEncryptedPrivateTenantKeys>>
 
 /*
@@ -1330,6 +1332,7 @@ declare type old_as_current_for_Interface_IEncryptedTenantKeys = requireAssignab
  * typeValidation.broken:
  * "Interface_IEncryptedTenantKeys": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IEncryptedTenantKeys = requireAssignableTo<TypeOnly<current.IEncryptedTenantKeys>, TypeOnly<old.IEncryptedTenantKeys>>
 
 /*

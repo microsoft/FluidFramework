@@ -1,5 +1,25 @@
 # @fluidframework/quill-react
 
+## 2.116.0
+
+Dependency updates only.
+
+## 2.115.0
+
+### Minor Changes
+
+- Fix extra blank lines in collaborating Quill editors ([#27809](https://github.com/microsoft/FluidFramework/pull/27809)) [6af2aba044](https://github.com/microsoft/FluidFramework/commit/6af2aba044e050b20386ae9e67111693117da5bd)
+
+  Quill React bindings now distinguish Quill's required terminal newline from user-authored content. Remote editors no longer render an extra blank paragraph after text or line-formatting changes, while intentional trailing line breaks remain synchronized.
+
+## 2.114.0
+
+Dependency updates only.
+
+## 2.113.0
+
+Dependency updates only.
+
 ## 2.112.0
 
 Dependency updates only.

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/quill-react",
-	"version": "2.113.0",
+	"version": "2.117.0",
 	"description": "Utilities for integrating content powered by the Fluid Framework into React applications that utilize the Quill rich text editor",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -41,11 +41,11 @@
 	"main": "lib/index.js",
 	"types": "./lib/public.d.ts",
 	"scripts": {
-		"api": "fluid-build . --task api",
-		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
+		"build:entrypoints": "fluid-build . --task build:entrypoints",
+		"build:entrypoints:esm": "flub generate entrypoints --outDir ./lib",
 		"build:esnext": "tsc --project ./tsconfig.json && copyfiles -f ../../../common/build/build-common/src/esm/package.json ./lib",
 		"build:test": "npm run build:test:esm",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
@@ -103,7 +103,7 @@
 		"react-dom": "^18.3.1"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.18.2",
+		"@arethetypeswrong/cli": "^0.18.5",
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "catalog:buildTools",

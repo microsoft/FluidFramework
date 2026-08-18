@@ -1,8 +1,8 @@
 // Codespaces profile optimized for AI-agent workflows with extra CLI tooling.
 {
 	"name": "AI-enabled",
-	// Bump this version to force a codespace prebuild rebuild. See .devcontainer/README.md.
-	// prebuild-version: 1.0.6
+	// Prebuilds run weekly. After JIT elevation, investigate or manually trigger them at
+	// https://github.com/microsoft/FluidFramework/settings/codespaces.
 	"build": {
 		"dockerfile": "../Dockerfile",
 		"args": {
