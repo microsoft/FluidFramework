@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { TreeBranch } from "../simple-tree/index.js";
+import type { UntypedTreeView } from "../simple-tree/index.js";
 
 /**
  * Allows reversion of a change made to SharedTree.
@@ -52,7 +52,7 @@ export interface RevertibleAlpha extends Revertible {
 	 * @returns A cloned revertible is independent of the original, meaning disposing of one will not affect the other,
 	 * provided they do not belong to the same branch. Both revertibles can be reverted independently.
 	 */
-	clone: (branch: TreeBranch) => RevertibleAlpha;
+	clone: (view: UntypedTreeView) => RevertibleAlpha;
 }
 
 /**

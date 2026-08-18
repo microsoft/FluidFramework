@@ -20,6 +20,7 @@ export type {
 	SchemaCompatibilityStatus,
 	TreeViewAlpha,
 	TreeViewBeta,
+	UntypedTreeView,
 	TreeBranch,
 	TreeBranchAlpha,
 	UntypedTreeViewAlpha,

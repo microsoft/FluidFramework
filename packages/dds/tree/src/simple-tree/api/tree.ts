@@ -144,57 +144,65 @@ export interface ITreeAlpha extends ITree {
 }
 
 /**
- * A collection of functionality associated with a (version-control-style) branch of a SharedTree.
- * @remarks A `TreeBranch` allows for the {@link TreeBranch.fork | creation of branches} and for those branches to later be {@link TreeBranch.merge | merged}.
+ * An untyped view of a (version-control-style) branch of a SharedTree.
+ * @remarks An `UntypedTreeView` allows for the {@link UntypedTreeView.fork | creation of branches} and for those branches to later be {@link UntypedTreeView.merge | merged}.
  *
  * The branch associated directly with the {@link ITree | SharedTree} is the "main" branch, and all other branches fork (directly or transitively) from that main branch.
  *
  * See {@link UntypedTreeViewAlpha} for additional APIs that are in an earlier stage of development.
  * @sealed @beta
  */
-export interface TreeBranch extends IDisposable {
+export interface UntypedTreeView extends IDisposable {
 	/**
 	 * Fork a new branch off of this branch which is based off of this branch's current state.
-	 * @remarks Any changes to the tree on the new branch will not apply to this branch until the new branch is e.g. {@link TreeBranch.merge | merged} back into this branch.
-	 * The branch should be disposed when no longer needed, either {@link TreeBranch.dispose | explicitly} or {@link TreeBranch.merge | implicitly when merging} into another branch.
+	 * @remarks Any changes to the tree on the new view will not apply to this view until the new view is e.g. {@link UntypedTreeView.merge | merged} back into this view.
+	 * The view should be disposed when no longer needed, either {@link UntypedTreeView.dispose | explicitly} or {@link UntypedTreeView.merge | implicitly when merging} into another view.
 	 */
-	fork(): TreeBranch;
+	fork(): UntypedTreeView;
 
 	/**
-	 * Apply all the new changes on the given branch to this branch.
-	 * @param branch - a branch which was created by a call to `branch()`.
-	 * @param disposeMerged - whether or not to dispose `branch` after the merge completes.
+	 * Apply all the new changes on the given view to this view.
+	 * @param view - A view created by {@link UntypedTreeView.fork}.
+	 * @param disposeMerged - Whether or not to dispose `view` after the merge completes.
 	 * Defaults to true.
-	 * The {@link TreeBranch | main branch} cannot be disposed - attempting to do so will have no effect.
-	 * @remarks All ongoing transactions (if any) in `branch` will be committed before the merge.
+	 * The {@link UntypedTreeView | main view} cannot be disposed - attempting to do so will have no effect.
+	 * @remarks All ongoing transactions (if any) in `view` will be committed before the merge.
 	 */
-	merge(branch: TreeBranch, disposeMerged?: boolean): void;
+	merge(view: UntypedTreeView, disposeMerged?: boolean): void;
 
 	/**
-	 * Advance this branch forward such that all new changes on the target branch become part of this branch.
-	 * @param branch - The branch to rebase onto.
-	 * @remarks After rebasing, this branch will be "ahead" of the target branch, that is, its unique changes will have been recreated as if they happened after all changes on the target branch.
-	 * This method may only be called on branches produced via {@link TreeBranch.fork | branch} - attempting to rebase the main branch will throw.
+	 * Advance this view forward such that all new changes on the target view become part of this view.
+	 * @param view - The view to rebase onto.
+	 * @remarks After rebasing, this view will be "ahead" of the target view, that is, its unique changes will have been recreated as if they happened after all changes on the target view.
+	 * This method may only be called on views produced via {@link UntypedTreeView.fork | fork} - attempting to rebase the main view will throw.
 	 *
 	 * Rebasing long-lived branches is important to avoid consuming memory unnecessarily.
 	 * In particular, the SharedTree retains all sequenced changes made to the tree since the "most-behind" branch was created or last rebased.
 	 *
-	 * The {@link TreeBranch | main branch} cannot be rebased onto another branch - attempting to do so will throw an error.
+	 * The {@link UntypedTreeView | main view} cannot be rebased onto another view - attempting to do so will throw an error.
 	 */
-	rebaseOnto(branch: TreeBranch): void;
+	rebaseOnto(view: UntypedTreeView): void;
 
 	/**
-	 * Dispose of this branch, cleaning up any resources associated with it.
+	 * Dispose of this view, cleaning up any resources associated with it.
 	 * @param error - Optional error indicating the reason for the disposal, if the object was disposed as the result of an error.
-	 * @remarks Branches can also be automatically disposed when {@link TreeBranch.merge | they are merged} into another branch.
+	 * @remarks Views can also be automatically disposed when {@link UntypedTreeView.merge | they are merged} into another view.
 	 *
 	 * Disposing branches is important to avoid consuming memory unnecessarily.
-	 * In particular, the SharedTree retains all sequenced changes made to the tree since the "most-behind" branch was created or last {@link TreeBranch.rebaseOnto | rebased}.
+	 * In particular, the SharedTree retains all sequenced changes made to the tree since the "most-behind" view was created or last {@link UntypedTreeView.rebaseOnto | rebased}.
 	 *
-	 * The {@link TreeBranch | main branch} cannot be disposed - attempting to do so will have no effect.
+	 * The {@link UntypedTreeView | main view} cannot be disposed - attempting to do so will have no effect.
 	 */
 	dispose(error?: Error): void;
 }
+
+/**
+ * Compatibility alias for {@link UntypedTreeView}.
+ *
+ * @deprecated Use {@link UntypedTreeView} instead.
+ * @beta
+ */
+export type TreeBranch = UntypedTreeView;
 
 /**
  * Provides additional APIs that may be used to interact with a tree node or a tree node's SharedTree.
@@ -293,14 +301,14 @@ export interface TreeContextAlpha {
 }
 
 /**
- * An untyped view of a {@link TreeBranch} with alpha-level APIs.
+ * An untyped view of a {@link UntypedTreeView} with alpha-level APIs.
  * @remarks
  * The untyped view for a specific {@link TreeNode} may be acquired by calling `TreeAlpha.context` and checking {@link TreeContextAlpha.isView | isView()}.
  *
  * An untyped view does not necessarily know the schema of its SharedTree. To convert it to a {@link TreeViewAlpha | view with a schema}, use {@link UntypedTreeViewAlpha.hasRootSchema | hasRootSchema()}.
  * @sealed @alpha
  */
-export interface UntypedTreeViewAlpha extends TreeBranch, TreeContextAlpha {
+export interface UntypedTreeViewAlpha extends UntypedTreeView, TreeContextAlpha {
 	/**
 	 * Events for the view's underlying branch.
 	 */
@@ -386,25 +394,25 @@ export interface UntypedTreeViewAlpha extends TreeBranch, TreeContextAlpha {
 	applyChange(change: JsonCompatibleReadOnly): void;
 
 	/**
-	 * Determines if there are changes on the given branch that are not present on this branch.
-	 * @param branch - The branch to compare to.
+	 * Determines if there are changes on the given view that are not present on this view.
+	 * @param view - The view to compare to.
 	 *
-	 * The new edits, if any, can be applied to this branch by {@link TreeBranch.rebaseOnto | rebasing this branch onto the given branch}
-	 * or by {@link TreeBranch.merge | merging the given branch into this branch}.
+	 * The new edits, if any, can be applied to this view by {@link UntypedTreeView.rebaseOnto | rebasing this view onto the given view}
+	 * or by {@link UntypedTreeView.merge | merging the given view into this view}.
 	 *
 	 * @throws UsageError if the branches are unrelated.
 	 */
-	isMissingEditsFrom(branch: TreeBranch): boolean;
+	isMissingEditsFrom(view: UntypedTreeView): boolean;
 
 	/**
-	 * Computes the net change that would result if this branch were {@link TreeBranch.rebaseOnto | rebased onto} the given branch.
-	 * Note that this method does not actually perform the rebase and therefore has no effect on this branch.
+	 * Computes the net change that would result if this view were {@link UntypedTreeView.rebaseOnto | rebased onto} the given view.
+	 * Note that this method does not actually perform the rebase and therefore has no effect on this view.
 	 *
-	 * @param branch - The branch that would be rebased onto.
-	 * @returns The net change that would result if this branch were rebased onto the given branch,
+	 * @param view - The view that would be rebased onto.
+	 * @returns The net change that would result if this view were rebased onto the given view,
 	 * or `undefined` if rebasing would have no impact.
 	 */
-	computeNetChangeIfRebasedOnto(branch: TreeBranch): JsonCompatibleReadOnly | undefined;
+	computeNetChangeIfRebasedOnto(view: UntypedTreeView): JsonCompatibleReadOnly | undefined;
 }
 
 /**
@@ -425,7 +433,7 @@ export type TreeBranchAlpha = UntypedTreeViewAlpha;
  * Application authors are encouraged to read {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/docs/user-facing/schema-evolution.md | schema-evolution.md}
  * and choose a schema compatibility policy that aligns with their application's needs.
  *
- * See also {@link TreeViewAlpha}, {@link TreeViewBeta} and {@link TreeBranch} for additional APIs that are in earlier stages of development.
+ * See also {@link TreeViewAlpha}, {@link TreeViewBeta} and {@link UntypedTreeView} for additional APIs that are in earlier stages of development.
  *
  * @privateRemarks
  * From an API design perspective, `upgradeSchema` could be merged into `viewWith` and/or `viewWith` could return errors explicitly on incompatible documents.
@@ -557,9 +565,9 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
  */
 export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema>
 	extends TreeView<TSchema>,
-		TreeBranch {
+		UntypedTreeView {
 	// Override the base branch method to return a typed view rather than merely a branch.
-	fork(): ReturnType<TreeBranch["fork"]> & TreeViewBeta<TSchema>;
+	fork(): ReturnType<UntypedTreeView["fork"]> & TreeViewBeta<TSchema>;
 
 	/**
 	 * Run a synchronous transaction which groups sequential edits to the tree into a single atomic edit if possible.
@@ -662,7 +670,7 @@ export interface TreeViewAlpha<
 	readonly events: Listenable<TreeViewEvents & TreeBranchEvents>;
 
 	// Override the base fork method to return a TreeViewAlpha.
-	fork(): ReturnType<TreeBranch["fork"]> & TreeViewAlpha<TSchema>;
+	fork(): ReturnType<UntypedTreeView["fork"]> & TreeViewAlpha<TSchema>;
 }
 
 /**
@@ -759,7 +767,7 @@ export interface SchemaCompatibilityStatus {
 }
 
 /**
- * Events for {@link TreeBranch}.
+ * Events for {@link UntypedTreeView}.
  * @sealed @alpha
  */
 export interface TreeBranchEvents {

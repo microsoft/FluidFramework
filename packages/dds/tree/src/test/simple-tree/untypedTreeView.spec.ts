@@ -17,7 +17,7 @@ import {
 import type { requireAssignableTo } from "../../util/index.js";
 import { getView } from "../utils.js";
 
-describe("TreeBranch", () => {
+describe("UntypedTreeView", () => {
 	const schemaFactory = new SchemaFactory(undefined);
 	class Array extends schemaFactory.array("array", schemaFactory.string) {}
 
@@ -31,8 +31,8 @@ describe("TreeBranch", () => {
 
 	it("Test that branching from a TreeView returns a typed view (as opposed to an untyped context)", () => {
 		const view = init([]);
-		const branch = view.fork();
-		type _check = requireAssignableTo<typeof branch, typeof view>;
+		const forkedView = view.fork();
+		type _check = requireAssignableTo<typeof forkedView, typeof view>;
 	});
 
 	it("can downcast to a view", () => {
@@ -45,125 +45,125 @@ describe("TreeBranch", () => {
 		assert.deepEqual([...array], ["a", "b", "c"]);
 	});
 
-	describe("branches", () => {
-		function newBranch(view: TreeView<typeof Array>) {
+	describe("forked views", () => {
+		function newView(view: TreeView<typeof Array>) {
 			const context = TreeAlpha.context(view.root);
 			assert(context.isView());
-			const branch = context.fork();
-			assert(branch.hasRootSchema(Array));
-			return branch;
+			const forkedView = context.fork();
+			assert(forkedView.hasRootSchema(Array));
+			return forkedView;
 		}
 
 		it("can downcast to a view", () => {
 			const view = init(["a", "b", "c"]);
-			const branch = newBranch(view);
-			assert(branch.hasRootSchema(Array));
-			assert.deepEqual([...branch.root], ["a", "b", "c"]);
+			const forkedView = newView(view);
+			assert(forkedView.hasRootSchema(Array));
+			assert.deepEqual([...forkedView.root], ["a", "b", "c"]);
 		});
 
 		it("can be edited", () => {
 			const view = init(["a", "b", "c"]);
-			const branch = newBranch(view);
-			branch.root.removeAt(0);
-			branch.root.insertAtEnd("d");
-			assert.deepEqual([...branch.root], ["b", "c", "d"]);
+			const forkedView = newView(view);
+			forkedView.root.removeAt(0);
+			forkedView.root.insertAtEnd("d");
+			assert.deepEqual([...forkedView.root], ["b", "c", "d"]);
 		});
 
 		it("are isolated from their parent's changes", () => {
 			const view = init(["x"]);
-			const branch = newBranch(view);
+			const forkedView = newView(view);
 			view.root.removeAt(0);
 			view.root.insertAtStart("y");
 			assert.deepEqual([...view.root], ["y"]);
-			assert.deepEqual([...branch.root], ["x"]);
+			assert.deepEqual([...forkedView.root], ["x"]);
 		});
 
 		it("are isolated from their children's changes", () => {
 			const view = init(["x"]);
-			const branch = newBranch(view);
-			branch.root.removeAt(0);
-			branch.root.insertAtStart("y");
+			const forkedView = newView(view);
+			forkedView.root.removeAt(0);
+			forkedView.root.insertAtStart("y");
 			assert.deepEqual([...view.root], ["x"]);
-			assert.deepEqual([...branch.root], ["y"]);
-			const branchBranch = newBranch(branch);
-			branchBranch.root.removeAt(0);
-			branchBranch.root.insertAtStart("z");
+			assert.deepEqual([...forkedView.root], ["y"]);
+			const nestedView = newView(forkedView);
+			nestedView.root.removeAt(0);
+			nestedView.root.insertAtStart("z");
 			assert.deepEqual([...view.root], ["x"]);
-			assert.deepEqual([...branch.root], ["y"]);
-			assert.deepEqual([...branchBranch.root], ["z"]);
+			assert.deepEqual([...forkedView.root], ["y"]);
+			assert.deepEqual([...nestedView.root], ["z"]);
 		});
 
 		it("can rebase a child over a parent", () => {
 			const view = init(["x"]);
-			const branch = newBranch(view);
+			const forkedView = newView(view);
 			view.root.removeAt(0);
 			view.root.insertAtStart("y");
-			branch.rebaseOnto(view);
+			forkedView.rebaseOnto(view);
 			assert.deepEqual([...view.root], ["y"]);
-			assert.deepEqual([...branch.root], ["y"]);
+			assert.deepEqual([...forkedView.root], ["y"]);
 		});
 
 		it("can rebase a parent over a child", () => {
 			const view = init(["x"]);
-			const branch = newBranch(view);
-			const branchBranch = newBranch(branch);
-			branchBranch.root.removeAt(0);
-			branchBranch.root.insertAtStart("y");
-			branch.rebaseOnto(branchBranch);
+			const forkedView = newView(view);
+			const nestedView = newView(forkedView);
+			nestedView.root.removeAt(0);
+			nestedView.root.insertAtStart("y");
+			forkedView.rebaseOnto(nestedView);
 			assert.deepEqual([...view.root], ["x"]);
-			assert.deepEqual([...branch.root], ["y"]);
-			assert.deepEqual([...branchBranch.root], ["y"]);
+			assert.deepEqual([...forkedView.root], ["y"]);
+			assert.deepEqual([...nestedView.root], ["y"]);
 			assert.throws(
-				() => view.rebaseOnto(branch),
+				() => view.rebaseOnto(forkedView),
 				validateAssertionError(/cannot be rebased onto another branch./),
 			);
 		});
 
 		it("can merge a child into a parent", () => {
 			const view = init(["x"]);
-			const branch = newBranch(view);
-			branch.root.removeAt(0);
-			branch.root.insertAtStart("y");
-			view.merge(branch, false);
+			const forkedView = newView(view);
+			forkedView.root.removeAt(0);
+			forkedView.root.insertAtStart("y");
+			view.merge(forkedView, false);
 			assert.deepEqual([...view.root], ["y"]);
-			assert.deepEqual([...branch.root], ["y"]);
+			assert.deepEqual([...forkedView.root], ["y"]);
 		});
 
 		it("can merge a parent into a child", () => {
 			const view = init(["x"]);
-			const branch = newBranch(view);
-			const branchBranch = newBranch(branch);
-			branch.root.removeAt(0);
-			branch.root.insertAtStart("y");
-			branchBranch.merge(branch, false);
+			const forkedView = newView(view);
+			const nestedView = newView(forkedView);
+			forkedView.root.removeAt(0);
+			forkedView.root.insertAtStart("y");
+			nestedView.merge(forkedView, false);
 			assert.deepEqual([...view.root], ["x"]);
-			assert.deepEqual([...branch.root], ["y"]);
-			assert.deepEqual([...branchBranch.root], ["y"]);
+			assert.deepEqual([...forkedView.root], ["y"]);
+			assert.deepEqual([...nestedView.root], ["y"]);
 			view.root.removeAt(0);
 			view.root.insertAtStart("z");
-			branch.merge(view); // No need to pass `false` here, because it's the main branch
-			assert.deepEqual([...branch.root], ["z", "y"]);
+			forkedView.merge(view); // No need to pass `false` here, because it's the main view
+			assert.deepEqual([...forkedView.root], ["z", "y"]);
 		});
 
 		it("can be manually disposed", () => {
 			const view = init(["x"]);
-			const branch = newBranch(view);
-			branch.dispose();
+			const forkedView = newView(view);
+			forkedView.dispose();
 			assert.throws(() => {
-				branch.root.removeAt(0);
+				forkedView.root.removeAt(0);
 			}, /disposed/);
 		});
 
 		it("are properly disposed after merging", () => {
 			const view = init(["x"]);
-			const branch = newBranch(view);
-			branch.merge(view, true); // Should not dispose, because it's the main branch
-			branch.merge(view); // Should not dispose, because it's the main branch
-			view.merge(branch, false); // Should not dispose, because we passed 'false'
-			branch.root.removeAt(0);
-			view.merge(branch); // Should dispose, because default is 'true'
+			const forkedView = newView(view);
+			forkedView.merge(view, true); // Should not dispose, because it's the main view
+			forkedView.merge(view); // Should not dispose, because it's the main view
+			view.merge(forkedView, false); // Should not dispose, because we passed 'false'
+			forkedView.root.removeAt(0);
+			view.merge(forkedView); // Should dispose, because default is 'true'
 			assert.throws(() => {
-				branch.root.insertAtStart("y");
+				forkedView.root.insertAtStart("y");
 			}, /disposed/);
 		});
 	});

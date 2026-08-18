@@ -121,9 +121,9 @@ export class Subtree<TRoot extends ImplicitFieldSchema> {
 	public fork(): Subtree<TRoot> {
 		if (this.viewOrTree instanceof TreeNode) {
 			const context = TreeAlpha.context(this.viewOrTree);
-			const branch = context.isView() ? context : fail(0xcb5 /* Node cannot be raw. */);
+			const view = context.isView() ? context : fail(0xcb5 /* Node cannot be raw. */);
 			const node =
-				getNodeOnBranch(this.viewOrTree, branch.fork()) ??
+				getNodeOnBranch(this.viewOrTree, view.fork()) ??
 				fail(0xcb6 /* Expected node to be on new fork. */);
 
 			return new Subtree<TRoot>(node);

@@ -269,6 +269,7 @@ export {
 	type ReadonlyArrayNode,
 	type InsertableTreeNodeFromAllowedTypes,
 	type Input,
+	type UntypedTreeView,
 	type TreeBranch,
 	type TreeBranchAlpha,
 	type UntypedTreeViewAlpha,

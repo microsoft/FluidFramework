@@ -52,7 +52,7 @@ import {
 	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
 	type TransactionVoidResult,
-	type TreeBranch,
+	type UntypedTreeView,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { stringSchema } from "../../simple-tree/leafNodeSchema.js";
@@ -1671,10 +1671,10 @@ describe("sharedTreeView", () => {
 		});
 
 		it("dispose", () => {
-			let branch: TreeBranch | undefined;
+			let view: UntypedTreeView | undefined;
 			expectErrorDuringEdit({
-				setup: (view) => (branch = view.fork()), // Create a fork of the view because the main view can't be disposed
-				duringEdit: (view) => view.dispose(),
+				setup: (mainView) => (view = mainView.fork()), // Create a fork of the view because the main view can't be disposed
+				duringEdit: (forkedView) => forkedView.dispose(),
 				error: "Disposing a view is forbidden during a change event callback",
 			});
 		});
