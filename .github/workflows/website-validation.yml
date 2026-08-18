@@ -46,7 +46,7 @@ jobs:
           npm run build
         env:
           # Building the website with 3x versions currently eats up a lot of memory, so we need to increase the max heap size for Node.js.
-          NODE_OPTIONS: --max-old-space-size=4096
+          NODE_OPTIONS: --max-old-space-size=6144
       - name: Validate CSP hashes
         run: |
           ./validateHashes.sh
