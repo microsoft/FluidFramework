@@ -328,22 +328,22 @@ pipelines:
         credscan:
           lastModifiedDate: 2024-09-26
         eslint:
-          lastModifiedDate: 2024-09-26
+          lastModifiedDate: 2026-08-18
         bandit:
-          lastModifiedDate: 2024-09-26
+          lastModifiedDate: 2026-08-18
         psscriptanalyzer:
-          lastModifiedDate: 2024-09-26
+          lastModifiedDate: 2026-08-18
         armory:
-          lastModifiedDate: 2024-09-26
+          lastModifiedDate: 2026-08-18
       binary:
         credscan:
           lastModifiedDate: 2024-09-26
         binskim:
-          lastModifiedDate: 2025-04-25
+          lastModifiedDate: 2026-08-18
         spotbugs:
-          lastModifiedDate: 2024-09-26
+          lastModifiedDate: 2026-08-18
         roslyn:
-          lastModifiedDate: 2024-09-26
+          lastModifiedDate: 2026-08-18
   48:
     retail:
       source:
