@@ -63,6 +63,7 @@ import {
 	toInstrumentedOdspStorageTokenFetcher,
 	toInstrumentedOdspTokenFetcher,
 } from "./odspUtils.js";
+// eslint-disable-next-line import-x/no-internal-modules
 import { OdspPointInTimeDocumentService } from "./pointInTimeDriver/odspPointInTimeDocumentService.js";
 import {
 	createOdspVersionManager,
@@ -74,7 +75,7 @@ import {
  *
  * @remarks
  * The loader detects this capability structurally, so hosts can pass this factory directly to
- * `loadContainerToSequenceNumber`.
+ * {@link @fluidframework/container-loader#loadContainerToSequenceNumber}.
  *
  * @legacy @beta
  */
@@ -85,7 +86,8 @@ export interface IPointInTimeDocumentServiceFactory extends IDocumentServiceFact
 	 * @param resolvedUrl - The resolved ODSP document URL.
 	 * @param targetSequenceNumber - The sequence number at which to materialize the document.
 	 * @param logger - Optional telemetry logger.
-	 * @param clientIsSummarizer - Whether the requesting client is a summarizer.
+	 * @param clientIsSummarizer - Whether to apply summarizer policies and telemetry to the
+	 * underlying document services. Defaults to `false`.
 	 * @returns A read-only document service materialized at the requested sequence number.
 	 */
 	createPointInTimeDocumentService(
@@ -320,7 +322,8 @@ export class OdspDocumentServiceFactoryCore
 	 * @param resolvedUrl - The resolved ODSP document URL.
 	 * @param targetSequenceNumber - The sequence number at which to materialize the document.
 	 * @param logger - Optional telemetry logger.
-	 * @param clientIsSummarizer - Whether the requesting client is a summarizer.
+	 * @param clientIsSummarizer - Whether to apply summarizer policies and telemetry to the
+	 * underlying document services. Defaults to `false`.
 	 * @returns A read-only document service materialized at the requested sequence number.
 	 */
 	public readonly createPointInTimeDocumentService?: IPointInTimeDocumentServiceFactory["createPointInTimeDocumentService"] =

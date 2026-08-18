@@ -4,7 +4,7 @@
 ---
 Enable point-in-time loading on the standard ODSP document service factory
 
-`OdspDocumentServiceFactoryCore` now exposes the optional
+[`OdspDocumentServiceFactoryCore`](https://fluidframework.com/docs/api/odsp-driver/odspdocumentservicefactorycore-class) now exposes the optional now exposes the optional
 `createPointInTimeDocumentService` capability. `OdspDocumentServiceFactory` inherits this
 capability, so hosts can use the standard factory for both normal and sequence-number-based
 document loading. Factories that do not support point-in-time loading leave the capability

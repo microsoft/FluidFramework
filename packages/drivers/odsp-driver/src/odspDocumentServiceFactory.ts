@@ -50,8 +50,8 @@ function isPointInTimeDocumentServiceFactory(
  *
  * @param getStorageToken - Fetches storage access tokens.
  * @param getWebsocketToken - Fetches websocket access tokens, or `undefined` when unavailable.
- * @param persistedCache - Optional persisted ODSP cache.
- * @param hostPolicy - Optional host storage policy.
+ * @param persistedCache - Persisted ODSP cache. When omitted, a local in-memory cache is used.
+ * @param hostPolicy - Host storage policy. When omitted, the default driver policies are used.
  * @returns An ODSP document service factory with point-in-time loading capability.
  *
  * @legacy @beta
