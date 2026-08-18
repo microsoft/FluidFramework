@@ -1,5 +1,10 @@
 # @fluidframework/eslint-config-fluid Changelog
 
+## [14.1.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v14.1.0)
+
+The custom Fluid ESLint rules are now maintained and published as part of this package. Rule names remain unchanged
+under the `@fluid-internal/fluid` namespace.
+
 ## [14.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v14.0.0)
 
 ### TypeScript 6 support
@@ -10,12 +15,12 @@ TypeScript 6 is now the supported version of TypeScript. The TypeScript ESLint d
 **Requirements:**
 
 - TypeScript 6
-- override transitive TypeScript ESLint dependencies before 5.58
+- override transitive TypeScript ESLint dependencies before 8.58
 
 #### overrides for transitive TypeScript ESLint dependencies
 
-`@typescript-eslint/eslint-*` packages need to be 5.58 or later for TypeScript 6 support.
-But latest version of packages known at 2026-08-05 use versions prior to 5.58 and should be overridden.
+`@typescript-eslint/*` packages need to be 8.58 or later for TypeScript 6 support.
+But latest version of packages known at 2026-08-05 use versions prior to 8.58 and should be overridden.
 
 ##### Minimal overrides
 
@@ -23,7 +28,7 @@ But latest version of packages known at 2026-08-05 use versions prior to 5.58 an
 Example override for pnpm:
 
 ```yaml
-# @typescript-eslint/eslint-utils overrides
+# @typescript-eslint/utils overrides
 #   As of 2026-08-05 @rushstack/eslint-plugin (v0.23.2), does not have a version using v8.58 or later.
 "@rushstack/eslint-plugin>@typescript-eslint/utils@<8.58.0": ~8.58.0
 #   As of 2026-08-05 eslint-plugin-tsdoc (v0.5.2), does not have a version using v8.58 or later.

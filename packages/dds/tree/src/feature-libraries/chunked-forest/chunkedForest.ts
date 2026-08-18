@@ -277,8 +277,11 @@ export class ChunkedForest implements IEditableForest, WithBreakable {
 			destroy(detachedField: FieldKey, count: number): void {
 				this.forest.#events.emit("beforeChange");
 				const field = this.forest.roots.fields.get(detachedField);
-				assert(field !== undefined, "Destroyed field must exist");
-				assert(getFieldLength(field) === count, "Destroy count must match field length");
+				assert(field !== undefined, 0xd1d /* Destroyed field must exist */);
+				assert(
+					getFieldLength(field) === count,
+					0xd1e /* Destroy count must match field length */,
+				);
 				this.forest.roots.fields.delete(detachedField);
 				for (const chunk of field) {
 					chunk.referenceRemoved();
@@ -288,7 +291,7 @@ export class ChunkedForest implements IEditableForest, WithBreakable {
 				this.forest.#events.emit("beforeChange");
 				assert(
 					!this.forest.roots.fields.has(destination),
-					"Create destination must be a new empty field",
+					0xd1f /* Create destination must be a new empty field */,
 				);
 				const chunks: TreeChunk[] = content.map((c) =>
 					chunkTree(c, {
@@ -316,18 +319,18 @@ export class ChunkedForest implements IEditableForest, WithBreakable {
 				const parent = this.getParent();
 				assert(
 					parent.mutableChunk !== this.forest.roots || parent.key !== source,
-					"Attach source field must be different from current field",
+					0xd20 /* Attach source field must be different from current field */,
 				);
 				const sourceField = this.forest.roots.fields.get(source);
-				assert(sourceField !== undefined, "Attach source field must exist");
+				assert(sourceField !== undefined, 0xd21 /* Attach source field must exist */);
 				assert(
 					getFieldLength(sourceField) === count,
-					"Attach must consume all nodes in source field",
+					0xd22 /* Attach must consume all nodes in source field */,
 				);
 				const destinationField = getOrAddEmptyToMap(parent.mutableChunk.fields, parent.key);
 				assert(
 					destination <= getFieldLength(destinationField),
-					"Attach destination must not exceed field length",
+					0xd23 /* Attach destination must not exceed field length */,
 				);
 				const destinationChunkIndex = splitFieldAtIndex(destinationField, destination, {
 					policy: this.forest.chunker,
@@ -354,19 +357,19 @@ export class ChunkedForest implements IEditableForest, WithBreakable {
 				this.forest.#events.emit("beforeChange");
 				const parent = this.getParent();
 				const sourceField = parent.mutableChunk.fields.get(parent.key) ?? [];
-				assert(source.start <= source.end, "Detach range start must not exceed end");
+				assert(source.start <= source.end, 0xd24 /* Detach range start must not exceed end */);
 				assert(
 					source.end <= getFieldLength(sourceField),
-					"Detach range must not exceed field length",
+					0xd25 /* Detach range must not exceed field length */,
 				);
 				if (destination !== undefined) {
 					assert(
 						parent.mutableChunk !== this.forest.roots || parent.key !== destination,
-						"Detach destination field must be different from current field",
+						0xd26 /* Detach destination field must be different from current field */,
 					);
 					assert(
 						!this.forest.roots.fields.has(destination),
-						"Detach destination must be a new empty field",
+						0xd27 /* Detach destination must be a new empty field */,
 					);
 				}
 

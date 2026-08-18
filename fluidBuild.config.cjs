@@ -417,7 +417,6 @@ module.exports = {
 		// Independent packages
 		"build-common": "common/build/build-common",
 		"eslint-config-fluid": "common/build/eslint-config-fluid",
-		"eslint-plugin-fluid": "common/build/eslint-plugin-fluid",
 		"common-utils": "common/lib/common-utils",
 		"protocol-def": "common/lib/protocol-definitions",
 
@@ -508,9 +507,8 @@ module.exports = {
 				// Could be renamed, but there is tooling that uses this name and it's not worth it.
 				"common/build/build-common/gen_version.js",
 
-				// ESLint shared config and plugin
+				// ESLint shared config
 				"common/build/eslint-config-fluid/.*",
-				"common/build/eslint-plugin-fluid/.*",
 
 				"common/lib/common-utils/jest-puppeteer.config.js",
 				"common/lib/common-utils/jest.config.js",
@@ -707,7 +705,6 @@ module.exports = {
 			"@fluidframework/build-common",
 			"@fluidframework/common-utils",
 			"@fluidframework/eslint-config-fluid",
-			"@fluid-internal/eslint-plugin-fluid",
 			"@fluidframework/protocol-definitions",
 			"@fluidframework/test-tools",
 			"fluidframework-docs",
