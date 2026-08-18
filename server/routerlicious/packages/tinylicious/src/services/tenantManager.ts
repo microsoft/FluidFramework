@@ -19,6 +19,7 @@ import type {
 	ITenantOrderer,
 	ITenantStorage,
 } from "@fluidframework/server-services-core";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { queue } from "async";
 import { default as Axios } from "axios";
 
@@ -30,11 +31,49 @@ import { default as Axios } from "axios";
  * This limit is shared across Tinylicious tenants so concurrent documents use one request budget.
  */
 const maxConcurrentBlobUploads = 50;
+const blobUploadQueueLengthTelemetryThresholds = [100, 200] as const;
 
 const blobUploadQueue = queue(
 	async (upload: () => Promise<ICreateBlobResponse>) => upload(),
 	maxConcurrentBlobUploads,
 );
+
+const reachedBlobUploadQueueLengthThresholds = new Set<number>();
+let maxObservedBlobUploadQueueLength = 0;
+
+function recordBlobUploadQueueLength(): void {
+	const queueLength = blobUploadQueue.length();
+	maxObservedBlobUploadQueueLength = Math.max(maxObservedBlobUploadQueueLength, queueLength);
+
+	for (const threshold of blobUploadQueueLengthTelemetryThresholds) {
+		if (queueLength >= threshold && !reachedBlobUploadQueueLengthThresholds.has(threshold)) {
+			reachedBlobUploadQueueLengthThresholds.add(threshold);
+			Lumberjack.warning("Tinylicious blob upload queue length threshold reached", {
+				queueLength,
+				queueLengthThreshold: threshold,
+				maxConcurrentBlobUploads,
+			});
+		}
+	}
+}
+
+blobUploadQueue.saturated(recordBlobUploadQueueLength);
+blobUploadQueue.unsaturated(() => {
+	if (reachedBlobUploadQueueLengthThresholds.size === 0) {
+		return;
+	}
+
+	Lumberjack.info("Tinylicious blob upload queue is unsaturated", {
+		queueLength: blobUploadQueue.length(),
+		runningBlobUploads: blobUploadQueue.running(),
+		maxObservedQueueLength: maxObservedBlobUploadQueueLength,
+		queueLengthThresholdsReached: [...reachedBlobUploadQueueLengthThresholds].join(","),
+		maxConcurrentBlobUploads,
+	});
+
+	reachedBlobUploadQueueLengthThresholds.clear();
+	maxObservedBlobUploadQueueLength = 0;
+});
 
 /**
  * Tinylicious Git manager that bounds blob uploads before their Historian requests are created.
@@ -44,9 +83,13 @@ export class TinyliciousGitManager extends GitManager {
 		content: string,
 		encoding: "utf-8" | "base64",
 	): Promise<ICreateBlobResponse> {
-		return blobUploadQueue.pushAsync<ICreateBlobResponse>(async () =>
+		const upload = blobUploadQueue.pushAsync<ICreateBlobResponse>(async () =>
 			super.createBlob(content, encoding),
 		);
+		if (blobUploadQueue.running() === maxConcurrentBlobUploads) {
+			recordBlobUploadQueueLength();
+		}
+		return upload;
 	}
 }
 
