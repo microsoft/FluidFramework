@@ -1944,7 +1944,9 @@ export enum TreeCompressionStrategy {
 
 // @alpha
 export interface TreeContextAlpha {
+    // @deprecated
     isBranch(): this is UntypedTreeViewAlpha;
+    isView(): this is UntypedTreeViewAlpha;
     runTransaction<TValue>(transaction: () => WithValue<TValue>, params?: RunTransactionParamsAlpha): TransactionValueResult<TValue, TValue>;
     runTransaction(transaction: () => void, params?: RunTransactionParamsAlpha): TransactionVoidResult;
     runTransactionAsync<TValue>(transaction: () => Promise<WithValue<TValue>>, params?: RunTransactionParamsAlpha): Promise<TransactionValueResult<TValue, TValue>>;

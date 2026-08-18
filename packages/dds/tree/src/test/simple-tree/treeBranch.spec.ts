@@ -39,7 +39,7 @@ describe("TreeBranch", () => {
 		const view = init(["a", "b", "c"]);
 		const array = view.root;
 		const context = TreeAlpha.context(array);
-		assert(context.isBranch());
+		assert(context.isView());
 		assert.equal(context.hasRootSchema(Array), true);
 		assert.equal(context.hasRootSchema(schemaFactory.number), false);
 		assert.deepEqual([...array], ["a", "b", "c"]);
@@ -48,7 +48,7 @@ describe("TreeBranch", () => {
 	describe("branches", () => {
 		function newBranch(view: TreeView<typeof Array>) {
 			const context = TreeAlpha.context(view.root);
-			assert(context.isBranch());
+			assert(context.isView());
 			const branch = context.fork();
 			assert(branch.hasRootSchema(Array));
 			return branch;

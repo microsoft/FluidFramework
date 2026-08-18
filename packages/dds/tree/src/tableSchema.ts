@@ -1129,7 +1129,7 @@ export namespace System_TableSchema {
 				// This ensures that the user sees the corresponding table-level edit as atomic,
 				// and ensures they are not spammed with intermediate events.
 				withBufferedTreeEvents(() => {
-					if (context.isBranch()) {
+					if (context.isView()) {
 						context.runTransaction(
 							() => {
 								applyEdits();
@@ -1168,7 +1168,7 @@ export namespace System_TableSchema {
 			#buildColumnInDocumentConstraintsForRows(
 				rows: Iterable<RowValueType>,
 			): TransactionConstraintAlpha[] | undefined {
-				if (!TreeAlpha.context(this).isBranch()) {
+				if (!TreeAlpha.context(this).isView()) {
 					return undefined;
 				}
 

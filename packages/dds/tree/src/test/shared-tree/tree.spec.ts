@@ -407,9 +407,11 @@ describe("treeApi", () => {
 		// Hydrated
 		const array = view.root;
 		const context = TreeAlpha.context(array);
-		assert(context.isBranch());
+		assert(context.isView());
+		assert(context.isBranch()); // Test the deprecated compatibility alias.
 
 		// Unhydrated
+		assert.equal(TreeAlpha.context(new ArrayNode([1, 2, 3])).isView(), false);
 		assert.equal(TreeAlpha.context(new ArrayNode([1, 2, 3])).isBranch(), false);
 	});
 

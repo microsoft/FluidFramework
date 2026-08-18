@@ -181,6 +181,10 @@ export class SchematizingSimpleTreeView<
 	}
 
 	public isBranch(): this is UntypedTreeViewAlpha {
+		return this.isView();
+	}
+
+	public isView(): this is UntypedTreeViewAlpha {
 		return true;
 	}
 

@@ -62,7 +62,7 @@ import { TreeAlpha } from "@fluidframework/tree/alpha";
 
 // Looking up the context for a node:
 const context = TreeAlpha.context(myNode);
-if (context.isBranch()) {
+if (context.isView()) {
     context.runTransaction(/* ... */);
 }
 

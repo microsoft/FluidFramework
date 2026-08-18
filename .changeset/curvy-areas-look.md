@@ -11,10 +11,10 @@ Update alpha API imports and type annotations to use the new name:
 
 ```typescript
 // Before
-import type { TreeBranchAlpha } from "@fluidframework/tree/alpha";
+import type { TreeBranchAlpha } from "fluid-framework/alpha";
 const branch: TreeBranchAlpha = view.fork();
 
 // After
-import type { UntypedTreeViewAlpha } from "@fluidframework/tree/alpha";
+import type { UntypedTreeViewAlpha } from "fluid-framework/alpha";
 const forkedView: UntypedTreeViewAlpha = view.fork();
 ```

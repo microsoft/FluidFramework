@@ -973,6 +973,10 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	public isBranch(): this is UntypedTreeViewAlpha {
+		return this.isView();
+	}
+
+	public isView(): this is UntypedTreeViewAlpha {
 		return true;
 	}
 

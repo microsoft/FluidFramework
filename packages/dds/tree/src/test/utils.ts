@@ -1561,6 +1561,9 @@ export class MockTreeCheckout implements ITreeCheckout {
 	public isBranch(): this is UntypedTreeViewAlpha {
 		throw new Error("Method 'isBranch' not implemented in MockTreeCheckout.");
 	}
+	public isView(): this is UntypedTreeViewAlpha {
+		throw new Error("Method 'isView' not implemented in MockTreeCheckout.");
+	}
 	public hasRootSchema<TSchema extends ImplicitFieldSchema>(): this is TreeViewAlpha<TSchema> {
 		throw new Error("Method 'hasRootSchema' not implemented in MockTreeCheckout.");
 	}

@@ -27,7 +27,7 @@ import { getNodeOnBranch } from "./getNodeOnBranch.js";
  */
 export class Subtree<TRoot extends ImplicitFieldSchema> {
 	public constructor(public readonly viewOrTree: ViewOrTree<TRoot>) {
-		if (viewOrTree instanceof TreeNode && !TreeAlpha.context(viewOrTree).isBranch()) {
+		if (viewOrTree instanceof TreeNode && !TreeAlpha.context(viewOrTree).isView()) {
 			throw new UsageError("The provided node must belong to a branch.");
 		}
 	}
@@ -37,7 +37,7 @@ export class Subtree<TRoot extends ImplicitFieldSchema> {
 			return this.viewOrTree;
 		}
 		const context = TreeAlpha.context(this.viewOrTree);
-		return context.isBranch() ? context : fail(0xcb3 /* Node cannot be raw. */);
+		return context.isView() ? context : fail(0xcb3 /* Node cannot be raw. */);
 	}
 
 	public get field(): ReadableField<TRoot> {
@@ -121,7 +121,7 @@ export class Subtree<TRoot extends ImplicitFieldSchema> {
 	public fork(): Subtree<TRoot> {
 		if (this.viewOrTree instanceof TreeNode) {
 			const context = TreeAlpha.context(this.viewOrTree);
-			const branch = context.isBranch() ? context : fail(0xcb5 /* Node cannot be raw. */);
+			const branch = context.isView() ? context : fail(0xcb5 /* Node cannot be raw. */);
 			const node =
 				getNodeOnBranch(this.viewOrTree, branch.fork()) ??
 				fail(0xcb6 /* Expected node to be on new fork. */);

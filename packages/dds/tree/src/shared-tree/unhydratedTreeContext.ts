@@ -25,6 +25,10 @@ export class UnhydratedTreeContext implements TreeContextAlpha {
 	private constructor() {}
 
 	public isBranch(): this is UntypedTreeViewAlpha {
+		return this.isView();
+	}
+
+	public isView(): this is UntypedTreeViewAlpha {
 		return false;
 	}
 

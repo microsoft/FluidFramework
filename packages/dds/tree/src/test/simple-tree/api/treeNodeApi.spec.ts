@@ -4425,15 +4425,15 @@ describe("treeNodeApi", () => {
 		it("for hydrated nodes is the view", () => {
 			const obj = hydrate(Obj, { n: 3 });
 			const context = TreeAlpha.context(obj);
-			assert(context.isBranch());
-			// Compile check: `isBranch()` should downcast the context to a view
+			assert(context.isView());
+			// Compile check: `isView()` should downcast the context to a view
 			context.hasRootSchema(Obj); // This is a method on views but not on context
 		});
 
 		it("for unhydrated nodes is not a view", () => {
 			const obj = new Obj({ n: 3 });
 			const context = TreeAlpha.context(obj);
-			assert.ok(!context.isBranch());
+			assert.ok(!context.isView());
 		});
 
 		it("has synchronous transaction APIs for both hydrated and unhydrated nodes", () => {

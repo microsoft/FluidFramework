@@ -223,7 +223,7 @@ export interface TreeContextAlpha {
 	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
 	 *
 	 * `runTransaction` may be invoked on the context of a {@link TreeStatus.InDocument | hydrated } or {@link Unhydrated | unhydrated } node.
-	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether this context is associated with a view and gain {@link UntypedTreeViewAlpha.(runTransaction:1) | access to more transaction capabilities} if so.
+	 * Use {@link TreeContextAlpha.isView | isView() } to check whether this context is associated with a view and gain {@link UntypedTreeViewAlpha.(runTransaction:1) | access to more transaction capabilities} if so.
 	 */
 	runTransaction<TValue>(
 		transaction: () => WithValue<TValue>,
@@ -276,11 +276,18 @@ export interface TreeContextAlpha {
 	 * @example
 	 * ```typescript
 	 * const context = tree.context(someNode);
-	 * if (context.isBranch()) {
+	 * if (context.isView()) {
 	 *   assert(context.hasRootSchema(MySchema)) // `hasRootSchema` is a method on UntypedTreeViewAlpha, so this is only accessible if `context` is a view context.
 	 *   context.root.foo = "bar"; // Edit the root of the SharedTree that `someNode` belongs to.
 	 * }
 	 * ```
+	 * @returns Whether this context is associated with an untyped view.
+	 */
+	isView(): this is UntypedTreeViewAlpha;
+
+	/**
+	 * {@inheritDoc TreeContextAlpha.isView}
+	 * @deprecated Use {@link TreeContextAlpha.isView | isView()} instead.
 	 */
 	isBranch(): this is UntypedTreeViewAlpha;
 }
@@ -288,7 +295,7 @@ export interface TreeContextAlpha {
 /**
  * An untyped view of a {@link TreeBranch} with alpha-level APIs.
  * @remarks
- * The untyped view for a specific {@link TreeNode} may be acquired by calling `TreeAlpha.context` and checking {@link TreeContextAlpha.isBranch | isBranch()}.
+ * The untyped view for a specific {@link TreeNode} may be acquired by calling `TreeAlpha.context` and checking {@link TreeContextAlpha.isView | isView()}.
  *
  * An untyped view does not necessarily know the schema of its SharedTree. To convert it to a {@link TreeViewAlpha | view with a schema}, use {@link UntypedTreeViewAlpha.hasRootSchema | hasRootSchema()}.
  * @sealed @alpha

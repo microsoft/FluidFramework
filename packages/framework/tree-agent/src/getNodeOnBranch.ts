@@ -20,7 +20,7 @@ export function getNodeOnBranch<T extends TreeNode>(
 	branch: TreeBranch,
 ): T | undefined {
 	const context = TreeAlpha.context(node);
-	const currentView = context.isBranch() ? context : undefined;
+	const currentView = context.isView() ? context : undefined;
 	if (currentView === branch) {
 		return node;
 	}
