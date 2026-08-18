@@ -203,6 +203,9 @@ export interface CodecWriteOptionsBeta {
     readonly minVersionForCollab: OldestSupportedClientVersion;
 }
 
+// @alpha
+export function codePointCount(value: string): number;
+
 // @public
 export enum CommitKind {
     Default = 0,
@@ -2214,6 +2217,9 @@ export const UnsafeUnknownSchema: unique symbol;
 
 // @alpha
 export type UnsafeUnknownSchema = typeof UnsafeUnknownSchema;
+
+// @alpha
+export function utf16LengthForCodePoints(value: string, start: number, count: number): number;
 
 // @public
 export type ValidateRecursiveSchema<T extends ValidateRecursiveSchemaTemplate<T>> = true;
