@@ -46,7 +46,7 @@
 		"rebuild": "npm run clean && npm run build",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test:mocha",
-		"test:mocha": "mocha \"lib/**/test/**/*.test.js\" --reporter-option maxDiffSize=100000",
+		"test:mocha": "mocha \"lib/**/test/**/*.spec.js\" --reporter-option maxDiffSize=100000",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:verbose": "npm run test:mocha:verbose",
 		"tsc": "tsc"

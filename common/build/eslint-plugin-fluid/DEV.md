@@ -28,9 +28,9 @@ This guide outlines the steps required to add new ESLint rules, update dependenc
     │   │       ├── mockFileOne.js
     │   │       └── mockFileTwo.js
     │   ├── rule-one/				<!-- Test suite for rule-one -->
-    │   │   └── rule-one.test.js
+    │   │   └── rule-one.spec.js
     │   └── rule-two/				<!-- Test suite for rule-two -->
-    │       └── rule-two.test.js
+    │       └── rule-two.spec.js
     ```
 
 3. **Update Changelog**: Record the new rule in the `CHANGELOG.md` file of the `@fluid-internal/eslint-plugin-fluid` package. This provides visibility into what was added for future reference.

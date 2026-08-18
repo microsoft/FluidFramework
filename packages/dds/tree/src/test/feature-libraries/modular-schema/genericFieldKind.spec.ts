@@ -31,7 +31,7 @@ import {
 	testRevisionTagCodec,
 } from "../../utils.js";
 
-import { testSnapshots } from "./genericFieldSnapshots.test.js";
+import { testSnapshots } from "./genericFieldSnapshots.spec.js";
 
 const nodeId1: NodeId = { localId: brand(1) };
 const nodeId2: NodeId = { localId: brand(2) };

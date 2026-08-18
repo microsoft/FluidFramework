@@ -15,13 +15,13 @@ module.exports = {
 	globals: {
 		PATH: `http://localhost:${mappedPort}`,
 	},
-	testMatch: ["**/e2e-tests/?(*.)+(spec|test).[t]s"],
+	testMatch: ["<rootDir>/test/**/*.spec.ts"],
 	testPathIgnorePatterns: ["/node_modules/", "dist", "lib"],
 	transform: {
-		"^.+\\.test.ts?$": [
+		"^.+\\.spec.ts$": [
 			"ts-jest",
 			{
-				tsconfig: "e2e-tests/tsconfig.json",
+				tsconfig: "test/tsconfig.json",
 			},
 		],
 	},

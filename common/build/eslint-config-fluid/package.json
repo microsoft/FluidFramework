@@ -26,7 +26,7 @@
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"print-configs": "jiti scripts/print-configs.ts printed-configs",
 		"test": "npm run test:mocha",
-		"test:mocha": "mocha \"src/test/**/*.test.mts\""
+		"test:mocha": "mocha \"src/test/**/*.spec.mts\""
 	},
 	"dependencies": {
 		"@eslint-community/eslint-plugin-eslint-comments": "~4.5.0",

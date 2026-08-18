@@ -12,6 +12,6 @@ export default defineConfig({
 		},
 	},
 	test: {
-		include: ["test/unit/**/*.test.{ts,tsx}"],
+		include: ["test/unit/**/*.spec.{ts,tsx}"],
 	},
 });

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { testCodec } from "./editManagerCodecs.test.js";
-import { testCorrectness } from "./editManagerCorrectness.test.js";
-import { testPerf } from "./editManagerPerf.test.js";
+import { testCodec } from "./editManagerCodecs.spec.js";
+import { testCorrectness } from "./editManagerCorrectness.spec.js";
+import { testPerf } from "./editManagerPerf.spec.js";
 
 describe("EditManager", () => {
 	testCodec();

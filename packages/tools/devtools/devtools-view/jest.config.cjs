@@ -47,7 +47,7 @@ module.exports = {
 	},
 	// This regex will match source (TypeScript) or transpiled (JavaScript) files.
 	// Change `roots` to select between those.
-	testRegex: "test/.*\\.test\\.[jt]sx?$",
+	testRegex: "test/.*\\.spec\\.[jt]sx?$",
 	testPathIgnorePatterns: ["/node_modules/"],
 	// Uncomment when attempting run against TypeScript source:
 	// moduleNameMapper: {

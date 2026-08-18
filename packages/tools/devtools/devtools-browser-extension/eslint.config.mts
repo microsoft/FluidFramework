@@ -22,7 +22,7 @@ const config: Linter.Config[] = [
 		},
 	},
 	{
-		files: ["*.test.ts", "src/test/**"],
+		files: ["test/**/*.spec.ts", "src/test/**"],
 		rules: {
 			"import-x/no-nodejs-modules": "off",
 			"@typescript-eslint/no-unused-expressions": "off",

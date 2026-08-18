@@ -28,7 +28,7 @@ const config: Linter.Config[] = [
 		},
 	},
 	{
-		files: ["src/**/*.spec.ts", "src/**/*.test.ts", "src/**/test/**"],
+		files: ["src/**/*.spec.ts", "src/**/test/**"],
 		rules: {
 			"import-x/no-nodejs-modules": "off",
 			"unicorn/prefer-module": "off",

@@ -54,11 +54,11 @@ import {
 	mintRevisionTag,
 } from "../../utils.js";
 
-import { testRebaserAxioms } from "./optionalChangeRebaser.test.js";
-import { testCodecs } from "./optionalFieldChangeCodecs.test.js";
-import { testSnapshots } from "./optionalFieldSnapshots.test.js";
+import { testRebaserAxioms } from "./optionalChangeRebaser.spec.js";
+import { testCodecs } from "./optionalFieldChangeCodecs.spec.js";
+import { testSnapshots } from "./optionalFieldSnapshots.spec.js";
 import { Change, assertEqual, inlineRevision, tagChangeInline } from "./optionalFieldUtils.js";
-import { testReplaceRevisions } from "./replaceRevisions.test.js";
+import { testReplaceRevisions } from "./replaceRevisions.spec.js";
 
 /**
  * A change to a child encoding as a simple placeholder string.
