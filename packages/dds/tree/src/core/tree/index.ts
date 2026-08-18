@@ -107,10 +107,12 @@ export {
 	deltaForRootInitialization,
 	makeDetachedNodeId,
 	offsetDetachId,
+	offsetDetachIdOpt,
 	emptyDelta,
 	areDetachedNodeIdsEqual,
 	deltaFieldMapHasVisibleChanges,
 	deltaFieldChangesHaveVisibleChanges,
+	subtractDetachedNodeId,
 } from "./deltaUtil.js";
 
 export {
