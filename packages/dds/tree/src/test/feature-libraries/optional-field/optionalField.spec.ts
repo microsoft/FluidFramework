@@ -23,6 +23,7 @@ import type {
 	ChildChangeInfo,
 	FieldChangeDelta,
 	FilterAttachResult,
+	FilterDetachResult,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/fieldChangeHandler.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -1029,8 +1030,8 @@ describe("optionalField", () => {
 			id: ChangeAtomId,
 			count: number,
 			endpoint?: ChangeAtomId,
-		): RangeQueryResult<EditFilterStatus> {
-			return { length: count, value: EditFilterStatus.Preserve };
+		): RangeQueryResult<FilterDetachResult> {
+			return { length: count, value: { action: EditFilterStatus.Preserve } };
 		}
 
 		function preserveAllAttaches(
@@ -1045,8 +1046,11 @@ describe("optionalField", () => {
 			id: ChangeAtomId,
 			count: number,
 			endpoint?: ChangeAtomId,
-		): RangeQueryResult<EditFilterStatus> {
-			return { length: count, value: EditFilterStatus.Remove };
+		): RangeQueryResult<FilterDetachResult> {
+			return {
+				length: count,
+				value: { action: EditFilterStatus.Remove, shouldRemoveChild: false },
+			};
 		}
 
 		function removeAllAttaches(

@@ -2757,7 +2757,7 @@ describe("transaction minimize post-processor", () => {
 		// - starting with a prior attached node and starting with a newly built node
 		// - nested under a prior attached node and nested under a newly built node
 		// - nested in an order that is consistent with detach depth and nested in an order that is the reverse of detach depth
-		it("minimizes deeply nested detached and attaches", () => {
+		it("minimizes deeply nested detaches and attaches", () => {
 			class Node extends sf.objectRecursive("Node", {
 				nested: sf.requiredRecursive([() => NodeArray]),
 				destinationSubtree: sf.optional(sf.string),

@@ -29,7 +29,11 @@ import {
 	type CrossFieldManager,
 	type CrossFieldMap,
 } from "./crossFieldQueries.js";
-import type { FieldChangeHandler, FilterAttachResult } from "./fieldChangeHandler.js";
+import type {
+	FieldChangeHandler,
+	FilterAttachResult,
+	FilterDetachResult,
+} from "./fieldChangeHandler.js";
 import { EditFilterStatus, NodeAttachState } from "./fieldChangeHandler.js";
 import type { FlexFieldKind } from "./fieldKind.js";
 import { genericFieldKind } from "./genericFieldKind.js";
@@ -346,8 +350,11 @@ export function removeAllDetachesFilter(
 	count: number,
 	_rootId: ChangeAtomId | undefined,
 	_endpointId?: ChangeAtomId,
-): RangeQueryResult<EditFilterStatus> {
-	return { value: EditFilterStatus.Remove, length: count };
+): RangeQueryResult<FilterDetachResult> {
+	return {
+		value: { action: EditFilterStatus.Remove, shouldRemoveChild: false },
+		length: count,
+	};
 }
 
 export function removeAllAttachesFilter(

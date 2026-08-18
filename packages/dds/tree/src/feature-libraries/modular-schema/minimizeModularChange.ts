@@ -37,6 +37,7 @@ import {
 	EditFilterStatus,
 	NodeAttachState,
 	type FilterAttachResult,
+	type FilterDetachResult,
 } from "./fieldChangeHandler.js";
 
 import type { FlexFieldKind } from "./fieldKind.js";
@@ -271,9 +272,12 @@ class ModularChangeMinimizer {
 		count: number,
 		inputRootId: ChangeAtomId | undefined,
 		endpoint?: ChangeAtomId,
-	): RangeQueryResult<EditFilterStatus> {
+	): RangeQueryResult<FilterDetachResult> {
 		if (!this.shouldSquashDetach(fieldId, inputRootId)) {
-			return { value: EditFilterStatus.Remove, length: count };
+			return {
+				value: { action: EditFilterStatus.Remove, shouldRemoveChild: false },
+				length: count,
+			};
 		}
 
 		let countProcessed = count;
@@ -296,10 +300,10 @@ class ModularChangeMinimizer {
 				? EditFilterStatus.Preserve
 				: EditFilterStatus.PreserveWithoutMove;
 
-			return { value: action, length: countProcessed };
+			return { value: { action }, length: countProcessed };
 		}
 
-		return { value: EditFilterStatus.Preserve, length: countProcessed };
+		return { value: { action: EditFilterStatus.Preserve }, length: countProcessed };
 	}
 
 	private filterAttachForBuildChange(
@@ -380,10 +384,11 @@ class ModularChangeMinimizer {
 		count: number,
 		inputRootId: ChangeAtomId | undefined,
 		endpoint?: ChangeAtomId,
-	): RangeQueryResult<EditFilterStatus> {
+	): RangeQueryResult<FilterDetachResult> {
 		let countProcessed = count;
+		const moveId = endpoint ?? detachId;
 		const moveEndpointEntry = this.change.crossFieldKeys.getFirst(
-			{ ...(endpoint ?? detachId), target: CrossFieldTarget.Destination },
+			{ ...moveId, target: CrossFieldTarget.Destination },
 			count,
 		);
 		countProcessed = moveEndpointEntry.length;
@@ -398,8 +403,17 @@ class ModularChangeMinimizer {
 		countProcessed = shouldDropEntry.length;
 
 		if (shouldDropEntry.value) {
+			const isBuiltRootEntry = this.builtRootIds.getFirst(
+				inputRootId ?? detachId,
+				countProcessed,
+			);
+			countProcessed = isBuiltRootEntry.length;
+
+			const isDetachOfBuiltNode =
+				isBuiltRootEntry.value ?? this.isNodeIdInBuiltTree(fieldId.nodeId);
+
 			return {
-				value: EditFilterStatus.Remove,
+				value: { action: EditFilterStatus.Remove, shouldRemoveChild: isDetachOfBuiltNode },
 				length: countProcessed,
 			};
 		}
@@ -415,16 +429,19 @@ class ModularChangeMinimizer {
 				isTransientAttachOfBuild,
 			);
 			countProcessed = willDropAttachEntry.length;
+
 			if (willDropAttachEntry.value) {
 				return {
-					value: EditFilterStatus.PreserveWithoutMove,
+					value: { action: EditFilterStatus.PreserveWithoutMove },
 					length: countProcessed,
 				};
 			}
 		}
 
 		return {
-			value: EditFilterStatus.Preserve,
+			value: {
+				action: EditFilterStatus.Preserve,
+			},
 			length: countProcessed,
 		};
 	}

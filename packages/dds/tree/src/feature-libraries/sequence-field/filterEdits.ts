@@ -112,7 +112,7 @@ function filterMark(
 			const result = filterDetach(detachId, mark.count, mark.cellId, endpoint);
 
 			let filtered: Mark;
-			switch (result.value) {
+			switch (result.value.action) {
 				case EditFilterStatus.Preserve: {
 					filtered = mark;
 					break;
@@ -134,10 +134,14 @@ function filterMark(
 				}
 				case EditFilterStatus.Remove: {
 					filtered = omitMarkEffect(mark);
+					if (result.value.shouldRemoveChild === true) {
+						delete filtered.changes;
+					}
+
 					break;
 				}
 				default: {
-					unreachableCase(result.value);
+					unreachableCase(result.value.action);
 				}
 			}
 			return { ...filtered, count: result.length };

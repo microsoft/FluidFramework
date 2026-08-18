@@ -214,7 +214,7 @@ export type FilterDetachFunc = (
 	 * The ID of the associated attach, if this is part of a move with a different attach ID.
 	 */
 	endpoint?: ChangeAtomId,
-) => RangeQueryResult<EditFilterStatus>;
+) => RangeQueryResult<FilterDetachResult>;
 
 export type FilterAttachFunc = (
 	/**
@@ -233,6 +233,16 @@ export type FilterAttachFunc = (
 	 */
 	endpoint?: ChangeAtomId,
 ) => RangeQueryResult<FilterAttachResult>;
+
+export interface FilterDetachResult {
+	readonly action: EditFilterStatus;
+
+	/**
+	 * If true, the filtered change should also remove any child changes for the detached nodes.
+	 * This will only be set when `action` is `EditFilterStatus.Remove`.
+	 */
+	readonly shouldRemoveChild?: boolean;
+}
 
 export interface FilterAttachResult {
 	readonly action: EditFilterStatus;
