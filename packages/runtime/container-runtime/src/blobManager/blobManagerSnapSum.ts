@@ -8,6 +8,7 @@ import type {
 	IContainerContext,
 	ISnapshotTreeWithBlobContents,
 } from "@fluidframework/container-definitions/internal";
+import { bufferToString } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
@@ -183,9 +184,11 @@ const summarizeV1 = (
 				`/${blobsTreeName}/${detachedBlobSummaryTreeName}/${localId}`,
 			);
 		} else {
+			// Detached and pending container state serializes summary blobs as UTF-8 text.
+			// Base64 keeps arbitrary blob bytes lossless across that boundary.
 			detachedBlobSummaryBuilder.addBlob(
 				localId,
-				new Uint8Array(detachedBlobSummaryContent),
+				bufferToString(detachedBlobSummaryContent, "base64"),
 			);
 		}
 	}

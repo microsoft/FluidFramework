@@ -5,8 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
+import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import { SummaryType } from "@fluidframework/driver-definitions";
 import type { ISequencedMessageEnvelope } from "@fluidframework/runtime-definitions/internal";
 import {
 	isFluidHandlePayloadPending,
@@ -87,13 +89,16 @@ describe("Detached blob summaries", () => {
 			blobId === undefined
 				? undefined
 				: loadInfo.detachedBlobSummary?.blobsContents?.[blobId];
-		return encodedBlob;
+		return encodedBlob === undefined
+			? undefined
+			: stringToBuffer(blobToText(encodedBlob), "base64");
 	}
 
 	it("loads detached and attached forms of the summary", async () => {
 		const actualBlobId = "actual-blob";
 		const localId = "local-blob";
 		const blob = new Uint8Array([0, 255, 128, 42]).buffer;
+		const encodedBlob = textToBlob(bufferToString(blob, "base64"));
 		const baseSnapshot = {
 			blobs: {},
 			trees: {
@@ -102,7 +107,7 @@ describe("Detached blob summaries", () => {
 					trees: {
 						[detachedBlobSummaryTreeName]: {
 							blobs: { [localId]: actualBlobId },
-							blobsContents: { [actualBlobId]: blob },
+							blobsContents: { [actualBlobId]: encodedBlob },
 							trees: {},
 							groupId: detachedBlobSummaryGroupId,
 						},
@@ -149,7 +154,7 @@ describe("Detached blob summaries", () => {
 		assert.deepStrictEqual(getDetachedBlobSummaryIds(attached), [localId]);
 
 		const attachedStorage = new MockStorageAdapter(true);
-		attachedStorage.attachedStorage.blobs.set(actualBlobId, blob);
+		attachedStorage.attachedStorage.blobs.set(actualBlobId, encodedBlob);
 		const { blobManager: lazilyLoadedBlobManager } = createTestMaterial({
 			attached: true,
 			blobManagerLoadInfo: attached,
@@ -187,11 +192,19 @@ describe("Detached blob summaries", () => {
 			createBlobPayloadPending: false,
 			inlineDetachedBlobsAsSummaryBlobs: true,
 		});
-		const handle = await blobManager.createBlob(textToBlob("hello"));
+		const blob = new Uint8Array([0, 255, 128, 42]);
+		const handle = await blobManager.createBlob(blob.buffer);
 		const { localId } = unpackHandle(handle);
 		assert.strictEqual(mockBlobStorage.detachedStorage.blobsCreated, 0);
 
-		const loadInfo = getSummaryContentsWithFormatValidation(blobManager);
+		const summary = blobManager.summarize();
+		const detachedSummary = summary.summary.tree[detachedBlobSummaryTreeName];
+		assert(detachedSummary?.type === SummaryType.Tree);
+		const summarizedBlob = detachedSummary.tree[localId];
+		assert(summarizedBlob?.type === SummaryType.Blob);
+		assert.strictEqual(summarizedBlob.content, bufferToString(blob.buffer, "base64"));
+
+		const loadInfo = getSummaryContentsFromSummaryWithFormatValidation(summary);
 		assert.strictEqual(loadInfo.ids, undefined);
 		assert.strictEqual(loadInfo.redirectTable?.length, 0);
 		assert.deepStrictEqual(getDetachedBlobSummaryIds(loadInfo), [localId]);
@@ -206,7 +219,10 @@ describe("Detached blob summaries", () => {
 			createBlobPayloadPending: false,
 			inlineDetachedBlobsAsSummaryBlobs: true,
 		});
-		assert.strictEqual(blobToText(await reloadedBlobManager.getBlob(localId, false)), "hello");
+		assert.deepStrictEqual(
+			new Uint8Array(await reloadedBlobManager.getBlob(localId, false)),
+			blob,
+		);
 
 		reloadedBlobManager.deleteSweepReadyNodes([getGCNodePathFromLocalId(localId)]);
 		const afterGc = getSummaryContentsWithFormatValidation(reloadedBlobManager);

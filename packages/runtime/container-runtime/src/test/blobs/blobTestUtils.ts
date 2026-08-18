@@ -10,8 +10,8 @@ import {
 	createEmitter,
 	gitHashFile,
 	IsoBuffer,
+	stringToBuffer,
 	TypedEventEmitter,
-	Uint8ArrayToArrayBuffer,
 } from "@fluid-internal/client-utils";
 import {
 	AttachState,
@@ -549,8 +549,8 @@ export const getSummaryContentsFromSummaryWithFormatValidation = (
 				const blobId = localId;
 				blobs[localId] = blobId;
 				if (content.type === SummaryType.Blob) {
-					assert(content.content instanceof Uint8Array);
-					blobsContents[blobId] = Uint8ArrayToArrayBuffer(content.content);
+					assert(typeof content.content === "string");
+					blobsContents[blobId] = stringToBuffer(content.content, "utf8");
 				} else {
 					assert(content.type === SummaryType.Handle);
 					assert.strictEqual(content.handleType, SummaryType.Blob);

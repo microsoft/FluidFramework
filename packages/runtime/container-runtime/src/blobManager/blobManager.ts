@@ -52,6 +52,9 @@ import {
 	type IBlobManagerLoadInfo,
 } from "./blobManagerSnapSum.js";
 
+const decodeDetachedSummaryBlob = (encodedBlob: ArrayBufferLike): ArrayBufferLike =>
+	stringToBuffer(bufferToString(encodedBlob, "utf8"), "base64");
+
 /**
  * This class represents blob (long string)
  * This object is used only when creating (writing) new blob and serialization purposes.
@@ -363,7 +366,10 @@ export class BlobManager {
 					encodedBlob !== undefined,
 					"Detached summary blob contents must be available while detached",
 				);
-				this.localBlobCache.set(localId, { state: "attached", blob: encodedBlob });
+				this.localBlobCache.set(localId, {
+					state: "attached",
+					blob: decodeDetachedSummaryBlob(encodedBlob),
+				});
 				this.redirectTable.set(localId, localId);
 			}
 		} else {
@@ -479,7 +485,9 @@ export class BlobManager {
 				return this.storage
 					.readBlob(storageId)
 					.then((blob) => {
-						return blob;
+						return this.detachedBlobSummaryIds.has(localId)
+							? decodeDetachedSummaryBlob(blob)
+							: blob;
 					})
 					.catch((error) => {
 						if (this.runtime.disposed) {
@@ -900,7 +908,7 @@ export class BlobManager {
 				assert(storageId !== undefined, "Detached blob summary ID must have a storage ID");
 				fullTreeContents.set(
 					localId,
-					await this.storage.readBlob(storageId),
+					decodeDetachedSummaryBlob(await this.storage.readBlob(storageId)),
 				);
 			}),
 		);
