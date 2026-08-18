@@ -106,7 +106,7 @@ describe("TinyliciousGitManager", () => {
 		assert.equal(subsequentBlob.sha, "subsequent");
 	});
 
-	it("logs queue length thresholds once per saturation episode", async () => {
+	it("logs queue length thresholds once per pressure episode", async () => {
 		const warning = mock.method(Lumberjack, "warning", () => undefined);
 		const info = mock.method(Lumberjack, "info", () => undefined);
 
@@ -155,7 +155,7 @@ describe("TinyliciousGitManager", () => {
 					[
 						"Tinylicious blob upload queue length threshold reached",
 						{
-							queueLength: 200,
+							queueLength: 100,
 							queueLengthThreshold: 100,
 							maxConcurrentBlobUploads,
 						},
@@ -193,12 +193,16 @@ describe("TinyliciousGitManager", () => {
 			blobUploads = new Promise<void>((resolve) => {
 				resolveBlobUploads = resolve;
 			});
-			const secondEpisodeUploads = Array.from({ length: 150 }, async (_, index) =>
+			const secondEpisodeUploads = Array.from({ length: 149 }, async (_, index) =>
 				manager.createBlob(`second-${index}`, "utf-8"),
 			);
 			await new Promise<void>((resolve) => {
 				setImmediate(resolve);
 			});
+
+			assert.equal(warning.mock.callCount(), 2);
+
+			secondEpisodeUploads.push(manager.createBlob("second-149", "utf-8"));
 
 			assert.deepEqual(
 				warning.mock.calls.map((call) => call.arguments),
@@ -206,7 +210,7 @@ describe("TinyliciousGitManager", () => {
 					[
 						"Tinylicious blob upload queue length threshold reached",
 						{
-							queueLength: 200,
+							queueLength: 100,
 							queueLengthThreshold: 100,
 							maxConcurrentBlobUploads,
 						},

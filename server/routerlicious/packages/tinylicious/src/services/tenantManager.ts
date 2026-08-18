@@ -42,7 +42,8 @@ const reachedBlobUploadQueueLengthThresholds = new Set<number>();
 let maxObservedBlobUploadQueueLength = 0;
 
 function recordBlobUploadQueueLength(): void {
-	const queueLength = blobUploadQueue.length();
+	const availableWorkers = maxConcurrentBlobUploads - blobUploadQueue.running();
+	const queueLength = Math.max(0, blobUploadQueue.length() - availableWorkers);
 	maxObservedBlobUploadQueueLength = Math.max(maxObservedBlobUploadQueueLength, queueLength);
 
 	for (const threshold of blobUploadQueueLengthTelemetryThresholds) {
@@ -57,7 +58,6 @@ function recordBlobUploadQueueLength(): void {
 	}
 }
 
-blobUploadQueue.saturated(recordBlobUploadQueueLength);
 blobUploadQueue.unsaturated(() => {
 	if (reachedBlobUploadQueueLengthThresholds.size === 0) {
 		return;
@@ -86,9 +86,7 @@ export class TinyliciousGitManager extends GitManager {
 		const upload = blobUploadQueue.pushAsync<ICreateBlobResponse>(async () =>
 			super.createBlob(content, encoding),
 		);
-		if (blobUploadQueue.running() === maxConcurrentBlobUploads) {
-			recordBlobUploadQueueLength();
-		}
+		recordBlobUploadQueueLength();
 		return upload;
 	}
 }
