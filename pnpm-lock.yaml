@@ -7004,6 +7004,12 @@ importers:
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
+      webpack:
+        specifier: ^5.104.1
+        version: 5.109.0(clean-css@5.3.3)(html-minifier-terser@7.2.0)(postcss@8.5.16)(uglify-js@3.19.3)(webpack-cli@5.1.4)
+      webpack-cli:
+        specifier: ^5.1.4
+        version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
 
   packages/common/container-definitions:
     dependencies:

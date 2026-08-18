@@ -12,10 +12,12 @@ import { fileURLToPath } from "node:url";
 import { expect, test, type Page } from "@playwright/test";
 
 import { gitHashFile, hashFile } from "../../indexNode.js";
+import type { BrowserHashApi } from "./browserHash.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 // Tests run from lib/test/playwright/ after build; assets live at the source location.
 const assetsDir = path.resolve(here, "../../../src/test/playwright/assets");
+const browserHashBundlePath = path.join(here, "browserHash.bundle.js");
 
 let xmlFile: Buffer;
 let svgFile: Buffer;
@@ -60,61 +62,36 @@ test.afterAll(async () => {
 
 test.beforeEach(async ({ page }) => {
 	await page.goto(serverUrl, { waitUntil: "load" });
+	await page.addScriptTag({ path: browserHashBundlePath });
 });
 
-/**
- * Hashes `file` in the browser via `crypto.subtle.digest` — the same call
- * the production `hashFileBrowser.ts` makes in real browser contexts.
- */
 async function browserHash(
 	page: Page,
 	file: Buffer,
 	algorithm: "SHA-1" | "SHA-256",
 	encoding: "hex" | "base64",
 ): Promise<string> {
-	const fileB64 = file.toString("base64");
-	const hashBytes: number[] = await page.evaluate(
-		async ({ b64, alg }) => {
-			const binary = atob(b64);
-			const bytes = new Uint8Array(binary.length);
-			for (let i = 0; i < binary.length; i++) {
-				// charCodeAt is correct here: each char in the atob output represents a single byte.
-				// eslint-disable-next-line unicorn/prefer-code-point
-				bytes[i] = binary.charCodeAt(i);
-			}
-			const digest = await crypto.subtle.digest(alg, bytes.buffer);
-			return [...new Uint8Array(digest)];
+	return page.evaluate(
+		async ({ fileBase64, hashAlgorithm, hashEncoding }) =>
+			(
+				globalThis as typeof globalThis & { browserHashApi: BrowserHashApi }
+			).browserHashApi.hashFile(fileBase64, hashAlgorithm, hashEncoding),
+		{
+			fileBase64: file.toString("base64"),
+			hashAlgorithm: algorithm,
+			hashEncoding: encoding,
 		},
-		{ b64: fileB64, alg: algorithm },
 	);
-	return encodeDigest(new Uint8Array(hashBytes), encoding);
 }
 
-/** Mirrors the hex/base64 encoding done by `encodeDigest` in `hashFileBrowser.ts`. */
-function encodeDigest(hash: Uint8Array, encoding: "hex" | "base64"): string {
-	switch (encoding) {
-		case "hex": {
-			return Array.prototype.map
-				.call(hash, (byte: number) => byte.toString(16).padStart(2, "0"))
-				.join("");
-		}
-		case "base64": {
-			return Buffer.from(hash).toString("base64");
-		}
-		default: {
-			throw new Error(`unsupported encoding '${encoding as string}'`);
-		}
-	}
-}
-
-/** Same as {@link browserHash} but prepends the `blob <size>\0` prefix git uses. */
 async function browserGitHash(page: Page, file: Buffer): Promise<string> {
-	const size = file.byteLength;
-	// eslint-disable-next-line unicorn/prefer-code-point
-	const filePrefix = `blob ${size.toString()}${String.fromCharCode(0)}`;
-	const prefixBuffer = Buffer.from(filePrefix, "utf8");
-	const hashBuffer = Buffer.concat([prefixBuffer, file]);
-	return browserHash(page, hashBuffer, "SHA-1", "hex");
+	return page.evaluate(
+		async (fileBase64) =>
+			(
+				globalThis as typeof globalThis & { browserHashApi: BrowserHashApi }
+			).browserHashApi.gitHashFile(fileBase64),
+		file.toString("base64"),
+	);
 }
 
 test.describe("Client-Utils", () => {

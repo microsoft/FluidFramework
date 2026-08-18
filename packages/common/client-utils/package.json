@@ -71,7 +71,7 @@
 		"build:test:mocha": "concurrently npm:build:test:mocha:esm npm:build:test:mocha:cjs",
 		"build:test:mocha:cjs": "fluid-tsc commonjs --project ./src/test/mocha/tsconfig.cjs.json",
 		"build:test:mocha:esm": "tsc --project ./src/test/mocha/tsconfig.json",
-		"build:test:playwright": "tsc --project ./src/test/playwright/tsconfig.json",
+		"build:test:playwright": "tsc --project ./src/test/playwright/tsconfig.json && webpack --config webpack.playwright.cjs",
 		"build:test:types": "tsc --project ./src/test/types/tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack . --exclude-entrypoints ./internal-api-report/current ./internal-api-report/legacy",
 		"check:biome": "biome check .",
@@ -168,7 +168,9 @@
 		"rimraf": "^6.1.3",
 		"sinon": "^18.0.1",
 		"ts-node": "^10.9.2",
-		"typescript": "~5.4.5"
+		"typescript": "~5.4.5",
+		"webpack": "^5.94.0",
+		"webpack-cli": "^5.1.4"
 	},
 	"fluidBuild": {
 		"tasks": {
@@ -233,16 +235,7 @@
 			"check:exports:esm:node:legacy": [
 				"build:exports:node"
 			],
-			"build:test:mocha:cjs": [
-				"tsc"
-			],
-			"build:test:mocha:esm": [
-				"build:esnext"
-			],
 			"build:test:playwright": [
-				"build:esnext"
-			],
-			"build:test:types": [
 				"build:esnext"
 			],
 			"ci:build:api-reports:browser:current": [
