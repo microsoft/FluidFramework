@@ -28,6 +28,9 @@ export type {
 export type { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
 export type { IUser } from "@fluidframework/driver-definitions";
 
+// Re-export so developers can use parameter types without pulling in runtime-definitions.
+export type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions";
+
 // Re-export so developers can build loggers without pulling in core-interfaces
 export type {
 	ITelemetryBaseEvent,

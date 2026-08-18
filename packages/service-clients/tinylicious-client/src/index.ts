@@ -23,3 +23,6 @@ export {
 	type TinyliciousUser,
 } from "./interfaces.js";
 export { TinyliciousClient } from "./TinyliciousClient.js";
+
+// Re-export so developers can use parameter types without pulling in runtime-definitions.
+export type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions";
