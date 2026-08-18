@@ -45,12 +45,12 @@ export interface Revertible {
  */
 export interface RevertibleAlpha extends Revertible {
 	/**
-	 * Clones the {@link Revertible} to a target branch.
+	 * Clones the {@link Revertible} to a target view.
 	 *
-	 * @param branch - A target branch to apply the revertible to.
-	 * The target branch must contain the same commit that this revertible is meant to revert, otherwise will throw an error.
+	 * @param view - A target view to apply the revertible to.
+	 * The target view must contain the same commit that this revertible is meant to revert, otherwise will throw an error.
 	 * @returns A cloned revertible is independent of the original, meaning disposing of one will not affect the other,
-	 * provided they do not belong to the same branch. Both revertibles can be reverted independently.
+	 * provided they do not belong to the same view. Both revertibles can be reverted independently.
 	 */
 	clone: (view: UntypedTreeView) => RevertibleAlpha;
 }
