@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import {
 	type IMockLoggerExt,
 	createMockLoggerExt,
+	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
@@ -20,7 +21,10 @@ import {
 	CommitKind,
 	EmptyKey,
 	type NormalizedFieldUpPath,
+	LeafNodeStoredSchema,
+	type TreeNodeSchemaIdentifier,
 	TreeStoredSchemaRepository,
+	ValueSchema,
 } from "../../core/index.js";
 import { FieldKinds, MockNodeIdentifierManager } from "../../feature-libraries/index.js";
 import {
@@ -77,6 +81,7 @@ const rootField: NormalizedFieldUpPath = {
 };
 
 const enableSchemaValidation = true;
+const schemaChangeTelemetryEventName = "SchemaChangeApplied";
 
 describe("sharedTreeView", () => {
 	describe("Events", () => {
@@ -1593,6 +1598,78 @@ describe("sharedTreeView", () => {
 				unsubscribe();
 			});
 		}
+
+		itView("logs privacy-safe schema change telemetry", ({ view, logger }) => {
+			const initialEvents = logger
+				.events()
+				.filter((event) => event.eventName.endsWith(schemaChangeTelemetryEventName));
+			assert.deepEqual(
+				initialEvents.map((event) => event.changeKind),
+				[
+					tagCodeArtifacts({ changeKind: "initialize" }).changeKind,
+					tagCodeArtifacts({ changeKind: "restriction" }).changeKind,
+				],
+			);
+			const initializationEvent = initialEvents[0];
+			assert.deepEqual(
+				{
+					isInverse: initializationEvent.isInverse,
+					oldNodeSchemaCount: initializationEvent.oldNodeSchemaCount,
+					newNodeSchemaCount: initializationEvent.newNodeSchemaCount,
+					addedNodeSchemaCount: initializationEvent.addedNodeSchemaCount,
+					removedNodeSchemaCount: initializationEvent.removedNodeSchemaCount,
+				},
+				tagCodeArtifacts({
+					isInverse: false,
+					oldNodeSchemaCount: 0,
+					newNodeSchemaCount: view.checkout.storedSchema.nodeSchema.size,
+					addedNodeSchemaCount: view.checkout.storedSchema.nodeSchema.size,
+					removedNodeSchemaCount: 0,
+				}),
+			);
+
+			const oldSchema = view.checkout.storedSchema.clone();
+			const addedIdentifier = brand<TreeNodeSchemaIdentifier>("schema-change-telemetry-test");
+			view.checkout.updateSchema({
+				rootFieldSchema: oldSchema.rootFieldSchema,
+				nodeSchema: new Map([
+					...oldSchema.nodeSchema,
+					[addedIdentifier, new LeafNodeStoredSchema(ValueSchema.Boolean)],
+				]),
+			});
+
+			const schemaChangeEvents = logger
+				.events()
+				.filter((event) => event.eventName.endsWith(schemaChangeTelemetryEventName));
+			const upgradeEvent = schemaChangeEvents.at(-1);
+			assert(upgradeEvent !== undefined, "Expected schema change telemetry.");
+			assert.deepEqual(
+				{
+					changeKind: upgradeEvent.changeKind,
+					isInverse: upgradeEvent.isInverse,
+					isSharedBranch: upgradeEvent.isSharedBranch,
+					oldNodeSchemaCount: upgradeEvent.oldNodeSchemaCount,
+					newNodeSchemaCount: upgradeEvent.newNodeSchemaCount,
+					addedNodeSchemaCount: upgradeEvent.addedNodeSchemaCount,
+					removedNodeSchemaCount: upgradeEvent.removedNodeSchemaCount,
+					rootFieldKindChanged: upgradeEvent.rootFieldKindChanged,
+					oldRootAllowedTypeCount: upgradeEvent.oldRootAllowedTypeCount,
+					newRootAllowedTypeCount: upgradeEvent.newRootAllowedTypeCount,
+				},
+				tagCodeArtifacts({
+					changeKind: "upgrade",
+					isInverse: false,
+					isSharedBranch: view.checkout.isSharedBranch,
+					oldNodeSchemaCount: oldSchema.nodeSchema.size,
+					newNodeSchemaCount: oldSchema.nodeSchema.size + 1,
+					addedNodeSchemaCount: 1,
+					removedNodeSchemaCount: 0,
+					rootFieldKindChanged: false,
+					oldRootAllowedTypeCount: oldSchema.rootFieldSchema.types.size,
+					newRootAllowedTypeCount: oldSchema.rootFieldSchema.types.size,
+				}),
+			);
+		});
 	});
 
 	describe("throws an error if it is in the middle of an edit when a user attempts to", () => {
