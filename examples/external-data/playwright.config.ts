@@ -22,6 +22,6 @@ export default defineConfig(baseConfig, {
 	webServer: {
 		command: `start-server-and-test start:services "5236|5237" "npm run start:client:test -- --port ${testPort}"`,
 		url: baseURL,
-		reuseExistingServer: !process.env.CI,
+		reuseExistingServer: false,
 	},
 });

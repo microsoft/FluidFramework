@@ -18,12 +18,12 @@ export default defineConfig(baseConfig, {
 		{
 			command: "cross-env logger__level=crit npm run start:tinylicious",
 			port: 7070,
-			reuseExistingServer: !process.env.CI,
+			reuseExistingServer: false,
 		},
 		{
 			command: `npm run start:client -- --no-hot --no-live-reload --port ${testPort}`,
 			url: baseURL,
-			reuseExistingServer: !process.env.CI,
+			reuseExistingServer: false,
 		},
 	],
 });
