@@ -850,7 +850,7 @@ export class TreeCheckout implements ITreeCheckout {
 							);
 							this.revertibleCommitBranches.set(
 								revision,
-								this.#transaction.activeBranch.fork(commit),
+								this.#transaction.branch.fork(commit),
 							);
 							this.revertibles.set(revision, revertible);
 							return revertible;
@@ -1207,9 +1207,9 @@ export class TreeCheckout implements ITreeCheckout {
 				}
 
 				const commitToRevert = revertibleBranch.getHead();
-				const activeBranchHead = targetCheckout.#transaction.activeBranch.getHead();
+				const branchHead = targetCheckout.#transaction.branch.getHead();
 
-				if (isAncestor(commitToRevert, activeBranchHead, true) === false) {
+				if (isAncestor(commitToRevert, branchHead, true) === false) {
 					throw new UsageError(
 						"Cannot clone revertible for a commit that is not present on the given branch.",
 					);
@@ -1308,7 +1308,7 @@ export class TreeCheckout implements ITreeCheckout {
 			throw new UsageError("A view cannot be forked while it has a pending transaction.");
 		}
 
-		const branch = this.#transaction.activeBranch.fork();
+		const branch = this.#transaction.branch.fork();
 		const storedSchema = this.storedSchema.clone();
 		const forkBreaker = new Breakable("TreeCheckout", this.logger);
 		const forest = this.forest.clone(storedSchema, forkBreaker);
@@ -1381,7 +1381,7 @@ export class TreeCheckout implements ITreeCheckout {
 			0xa5d /* Shared branches cannot be rebased onto another branch. */,
 		);
 
-		checkout.#transaction.activeBranch.rebaseOnto(this.#transaction.activeBranch);
+		checkout.#transaction.branch.rebaseOnto(this.#transaction.branch);
 	}
 
 	public rebaseOnto(branch: TreeBranch): void {
@@ -1446,7 +1446,7 @@ export class TreeCheckout implements ITreeCheckout {
 				"Views with an open transaction cannot be merged into another view.",
 			);
 		}
-		this.#transaction.activeBranch.merge(checkout.#transaction.activeBranch);
+		this.#transaction.branch.merge(checkout.#transaction.branch);
 		if (disposeMerged && !checkout.isSharedBranch) {
 			// Dispose the merged checkout unless it is a shared branch.
 			checkout[disposeSymbol]();
@@ -1545,7 +1545,7 @@ export class TreeCheckout implements ITreeCheckout {
 			revisionForInvert,
 		);
 
-		const headCommit = this.#transaction.activeBranch.getHead();
+		const headCommit = this.#transaction.branch.getHead();
 		// Rebase the inverted change onto any commits that occurred after the undoable commits.
 		if (commitToRevert !== headCommit) {
 			// The inverse may be rebased over newer commits which (despite being present in the history)
@@ -1578,7 +1578,7 @@ export class TreeCheckout implements ITreeCheckout {
 		const previousLabelTreeNode = this.labelTreeNode;
 		this.labelTreeNode = labelTree;
 		try {
-			this.#transaction.activeBranch.apply(
+			this.#transaction.branch.apply(
 				change,
 				kind === CommitKind.Default || kind === CommitKind.Redo
 					? CommitKind.Undo
