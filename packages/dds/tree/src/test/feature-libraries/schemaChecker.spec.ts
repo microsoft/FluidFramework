@@ -32,7 +32,7 @@ import {
 } from "../../feature-libraries/index.js";
 import {
 	SchemaValidationError,
-	type SchemaValidationErrorContext,
+	type SchemaValidationErrorDetails,
 	compliesWithMultiplicity,
 	isFieldInSchema,
 	isNodeInSchema,
@@ -58,6 +58,10 @@ function createSchemaAndPolicy(
 			fieldKinds,
 		},
 	};
+}
+
+function getError(details: SchemaValidationErrorDetails): SchemaValidationError {
+	return details.error;
 }
 
 /**
@@ -139,7 +143,7 @@ describe("schema validation", () => {
 				isNodeInSchema(
 					createLeafNode("myNumberNode", 1, ValueSchema.Number).node,
 					createSchemaAndPolicy(), // Note this passes an empty stored schema
-					(x) => x,
+					getError,
 				),
 				SchemaValidationError.Node_MissingSchema,
 			);
@@ -157,7 +161,7 @@ describe("schema validation", () => {
 					// Note, this cannot use an empty stored schema because that would skip validation,
 					// So just putting a schema for a node that is not the one we pass in for validation.
 					createSchemaAndPolicy(new Map([[stringNode.type, stringSchema]])),
-					(x) => x,
+					getError,
 				),
 				SchemaValidationError.Node_MissingSchema,
 			);
@@ -167,17 +171,14 @@ describe("schema validation", () => {
 			it("in schema", () => {
 				const { node, schema } = createLeafNode("myNode", 1, ValueSchema.Number);
 				const schemaAndPolicy = createSchemaAndPolicy(new Map([[node.type, schema]]));
-				assert.equal(
-					isNodeInSchema(node, schemaAndPolicy, (x) => x),
-					undefined,
-				);
+				assert.equal(isNodeInSchema(node, schemaAndPolicy, getError), undefined);
 			});
 
 			it("not in schema due to invalid value", () => {
 				const { node, schema } = createLeafNode("myNode", "string", ValueSchema.Number); // "string" is not a number
 				const schemaAndPolicy = createSchemaAndPolicy(new Map([[node.type, schema]]));
 				assert.equal(
-					isNodeInSchema(node, schemaAndPolicy, (x) => x),
+					isNodeInSchema(node, schemaAndPolicy, getError),
 					SchemaValidationError.LeafNode_InvalidValue,
 				);
 			});
@@ -186,7 +187,7 @@ describe("schema validation", () => {
 				const { node, schema } = createLeafNode("myNode", undefined, ValueSchema.Number);
 				const schemaAndPolicy = createSchemaAndPolicy(new Map([[node.type, schema]]));
 				assert.equal(
-					isNodeInSchema(node, schemaAndPolicy, (x) => x),
+					isNodeInSchema(node, schemaAndPolicy, getError),
 					SchemaValidationError.LeafNode_InvalidValue,
 				);
 			});
@@ -202,7 +203,7 @@ describe("schema validation", () => {
 				};
 
 				assert.equal(
-					isNodeInSchema(outOfSchemaNode, schemaAndPolicy, (x) => x),
+					isNodeInSchema(outOfSchemaNode, schemaAndPolicy, getError),
 					SchemaValidationError.LeafNode_FieldsNotAllowed,
 				);
 			});
@@ -234,10 +235,7 @@ describe("schema validation", () => {
 					new Map([[fieldSchema.kind, FieldKinds.required]]),
 				);
 
-				assert.equal(
-					isNodeInSchema(mapNode.node, schemaAndPolicy, (x) => x),
-					undefined,
-				);
+				assert.equal(isNodeInSchema(mapNode.node, schemaAndPolicy, getError), undefined);
 			});
 
 			it("in schema while empty", () => {
@@ -255,10 +253,7 @@ describe("schema validation", () => {
 					new Map([[fieldSchema.kind, FieldKinds.required]]),
 				);
 
-				assert.equal(
-					isNodeInSchema(mapNode.node, schemaAndPolicy, (x) => x),
-					undefined,
-				);
+				assert.equal(isNodeInSchema(mapNode.node, schemaAndPolicy, getError), undefined);
 			});
 
 			it("not in schema due to having a value", () => {
@@ -284,7 +279,7 @@ describe("schema validation", () => {
 				};
 
 				assert.equal(
-					isNodeInSchema(outOfSchemaNode, schemaAndPolicy, (x) => x),
+					isNodeInSchema(outOfSchemaNode, schemaAndPolicy, getError),
 					SchemaValidationError.NonLeafNode_ValueNotAllowed,
 				);
 			});
@@ -307,10 +302,7 @@ describe("schema validation", () => {
 					new Map([[fieldSchema.kind, FieldKinds.required]]),
 				);
 
-				assert.equal(
-					isNodeInSchema(objectNode.node, schemaAndPolicy, (x) => x),
-					undefined,
-				);
+				assert.equal(isNodeInSchema(objectNode.node, schemaAndPolicy, getError), undefined);
 			});
 
 			it(`in schema with empty optional field`, () => {
@@ -329,10 +321,7 @@ describe("schema validation", () => {
 					new Map([[fieldSchema.kind, FieldKinds.optional]]),
 				);
 
-				assert.equal(
-					isNodeInSchema(objectNode.node, schemaAndPolicy, (x) => x),
-					undefined,
-				);
+				assert.equal(isNodeInSchema(objectNode.node, schemaAndPolicy, getError), undefined);
 			});
 
 			it(`not in schema due to having a field not present in its defined schema`, () => {
@@ -355,7 +344,7 @@ describe("schema validation", () => {
 				);
 
 				assert.equal(
-					isNodeInSchema(objectNode.node, schemaAndPolicy, (x) => x),
+					isNodeInSchema(objectNode.node, schemaAndPolicy, getError),
 					SchemaValidationError.ObjectNode_FieldNotInSchema,
 				);
 			});
@@ -379,7 +368,7 @@ describe("schema validation", () => {
 				);
 
 				assert.equal(
-					isNodeInSchema(objectNode.node, schemaAndPolicy, (x) => x),
+					isNodeInSchema(objectNode.node, schemaAndPolicy, getError),
 					SchemaValidationError.Field_MissingRequiredChild,
 				);
 			});
@@ -408,7 +397,7 @@ describe("schema validation", () => {
 				};
 
 				assert.equal(
-					isNodeInSchema(outOfSchemaNode, schemaAndPolicy, (x) => x),
+					isNodeInSchema(outOfSchemaNode, schemaAndPolicy, getError),
 					SchemaValidationError.NonLeafNode_ValueNotAllowed,
 				);
 			});
@@ -431,7 +420,7 @@ describe("schema validation", () => {
 				);
 
 				assert.equal(
-					isNodeInSchema(objectNode.node, schemaAndPolicy, (x) => x),
+					isNodeInSchema(objectNode.node, schemaAndPolicy, getError),
 					SchemaValidationError.Field_KindNotInSchemaPolicy,
 				);
 			});
@@ -449,10 +438,7 @@ describe("schema validation", () => {
 
 			const field: MapTree[] = [numberNode.node];
 
-			assert.equal(
-				isFieldInSchema(field, fieldSchema, schemaAndPolicy, (x) => x),
-				undefined,
-			);
+			assert.equal(isFieldInSchema(field, fieldSchema, schemaAndPolicy, getError), undefined);
 		});
 
 		it(`not in schema if field kind not supported by schema policy`, () => {
@@ -464,7 +450,7 @@ describe("schema validation", () => {
 
 			// FieldKinds.required is used above but missing in the schema policy
 			assert.equal(
-				isFieldInSchema([numberNode.node], fieldSchema, schemaAndPolicy, (x) => x),
+				isFieldInSchema([numberNode.node], fieldSchema, schemaAndPolicy, getError),
 				SchemaValidationError.Field_KindNotInSchemaPolicy,
 			);
 		});
@@ -483,7 +469,7 @@ describe("schema validation", () => {
 					[createLeafNode("myStringNode", "myStringValue", ValueSchema.String).node],
 					fieldSchema,
 					schemaAndPolicy,
-					(x) => x,
+					getError,
 				),
 				SchemaValidationError.Field_NodeTypeNotAllowed,
 			);
@@ -500,7 +486,7 @@ describe("schema validation", () => {
 			const emptyField: MapTree[] = [];
 
 			assert.equal(
-				isFieldInSchema(emptyField, fieldSchema, schemaAndPolicy, (x) => x),
+				isFieldInSchema(emptyField, fieldSchema, schemaAndPolicy, getError),
 				SchemaValidationError.Field_MissingRequiredChild,
 			);
 		});
@@ -529,236 +515,73 @@ describe("schema validation", () => {
 		}
 	});
 
-	describe("SchemaValidationErrorContext", () => {
-		/**
-		 * Captures both the error and context from the onError callback.
-		 */
-		function captureError(
-			error: SchemaValidationError,
-			context?: SchemaValidationErrorContext,
-		): { error: SchemaValidationError; context: SchemaValidationErrorContext | undefined } {
-			return { error, context };
-		}
-
-		it("Field_NodeTypeNotAllowed includes node type and allowed types", () => {
+	describe("SchemaValidationErrorDetails", () => {
+		it("includes a complete description at the validation site", () => {
 			const numberNode = createLeafNode("myNumberNode", 1, ValueSchema.Number);
+			const stringNode = createLeafNode('my"StringNode', "hello", ValueSchema.String);
 			const fieldSchema = getFieldSchema(FieldKinds.sequence, [numberNode.node.type]);
-			const schemaAndPolicy = createSchemaAndPolicy(
-				new Map([[numberNode.node.type, numberNode.schema]]),
-				new Map([[fieldSchema.kind, FieldKinds.sequence]]),
-			);
-
-			const stringNode = createLeafNode("myStringNode", "hello", ValueSchema.String);
-			const result = isFieldInSchema(
-				[stringNode.node],
-				fieldSchema,
-				schemaAndPolicy,
-				captureError,
-			);
-
-			assert(result !== undefined);
-			assert.equal(result.error, SchemaValidationError.Field_NodeTypeNotAllowed);
-			assert(result.context !== undefined);
-			assert.equal(result.context.nodeType, "myStringNode");
-			assert(result.context.allowedTypes !== undefined);
-			assert(result.context.allowedTypes.has("myNumberNode"));
-			assert.equal(result.context.allowedTypes.size, 1);
-		});
-
-		it("Node_MissingSchema includes the missing node type", () => {
-			const result = isNodeInSchema(
-				createLeafNode("unknownNode", 1, ValueSchema.Number).node,
-				createSchemaAndPolicy(),
-				captureError,
-			);
-
-			assert(result !== undefined);
-			assert.equal(result.error, SchemaValidationError.Node_MissingSchema);
-			assert(result.context !== undefined);
-			assert.equal(result.context.nodeType, "unknownNode");
-		});
-
-		it("ObjectNode_FieldNotInSchema includes node type and unexpected field names", () => {
-			const numberNode = createLeafNode("myNumberNode", 1, ValueSchema.Number);
-			const fieldSchema = getFieldSchema(FieldKinds.optional, [numberNode.node.type]);
-
-			// Object node has "extraField" which is not in the schema (schema only defines "knownField")
-			const objectNode = createNonLeafNode(
-				"myObjectNode",
-				new Map([[brand("extraField"), []]]),
-				new ObjectNodeStoredSchema(new Map([[brand("knownField"), fieldSchema]])),
-			);
-
-			const schemaAndPolicy = createSchemaAndPolicy(
-				new Map([
-					[numberNode.node.type, numberNode.schema],
-					[objectNode.node.type, objectNode.schema],
-				]),
-				new Map([[fieldSchema.kind, FieldKinds.optional]]),
-			);
-
-			const result = isNodeInSchema(objectNode.node, schemaAndPolicy, captureError);
-
-			assert(result !== undefined);
-			assert.equal(result.error, SchemaValidationError.ObjectNode_FieldNotInSchema);
-			assert(result.context !== undefined);
-			assert.equal(result.context.nodeType, "myObjectNode");
-			assert(result.context.unexpectedFields !== undefined);
-			assert(result.context.unexpectedFields.has("extraField"));
-			assert.equal(result.context.unexpectedFields.size, 1);
-		});
-
-		it("ObjectNode_FieldNotInSchema includes multiple unexpected fields", () => {
-			const numberNode = createLeafNode("myNumberNode", 1, ValueSchema.Number);
-			const fieldSchema = getFieldSchema(FieldKinds.optional, [numberNode.node.type]);
-
-			const objectNode = createNonLeafNode(
-				"myObjectNode",
-				new Map([
-					[brand("unknownA"), []],
-					[brand("unknownB"), []],
-				]),
-				new ObjectNodeStoredSchema(new Map([[brand("knownField"), fieldSchema]])),
-			);
-
-			const schemaAndPolicy = createSchemaAndPolicy(
-				new Map([
-					[numberNode.node.type, numberNode.schema],
-					[objectNode.node.type, objectNode.schema],
-				]),
-				new Map([[fieldSchema.kind, FieldKinds.optional]]),
-			);
-
-			const result = isNodeInSchema(objectNode.node, schemaAndPolicy, captureError);
-
-			assert(result !== undefined);
-			assert.equal(result.error, SchemaValidationError.ObjectNode_FieldNotInSchema);
-			assert(result.context !== undefined);
-			assert(result.context.unexpectedFields !== undefined);
-			assert(result.context.unexpectedFields.has("unknownA"));
-			assert(result.context.unexpectedFields.has("unknownB"));
-			assert.equal(result.context.unexpectedFields.size, 2);
-		});
-
-		it("LeafNode_InvalidValue includes the node and value types", () => {
-			const { node, schema } = createLeafNode("myNode", "string", ValueSchema.Number);
-			const schemaAndPolicy = createSchemaAndPolicy(new Map([[node.type, schema]]));
-
-			const result = isNodeInSchema(node, schemaAndPolicy, captureError);
-
-			assert(result !== undefined);
-			assert.equal(result.error, SchemaValidationError.LeafNode_InvalidValue);
-			assert.deepEqual(result.context, {
-				nodeType: "myNode",
-				expectedValueSchema: ValueSchema.Number,
-				actualValueType: "string",
-			});
-		});
-
-		it("Field_NodeTypeNotAllowed context reflects all allowed types in a union field", () => {
-			const numberNode = createLeafNode("myNumberNode", 1, ValueSchema.Number);
-			const stringNode = createLeafNode("myStringNode", "hello", ValueSchema.String);
-			const boolNode = createLeafNode("myBoolNode", true, ValueSchema.Boolean);
-
-			// Field allows number and string, but we insert a bool
-			const fieldSchema = getFieldSchema(FieldKinds.sequence, [
-				numberNode.node.type,
-				stringNode.node.type,
-			]);
 			const schemaAndPolicy = createSchemaAndPolicy(
 				new Map([
 					[numberNode.node.type, numberNode.schema],
 					[stringNode.node.type, stringNode.schema],
-					[boolNode.node.type, boolNode.schema],
 				]),
 				new Map([[fieldSchema.kind, FieldKinds.sequence]]),
 			);
 
 			const result = isFieldInSchema(
-				[boolNode.node],
+				[stringNode.node],
 				fieldSchema,
 				schemaAndPolicy,
-				captureError,
+				(details) => details,
 			);
 
-			assert(result !== undefined);
-			assert.equal(result.error, SchemaValidationError.Field_NodeTypeNotAllowed);
-			assert(result.context !== undefined);
-			assert.equal(result.context.nodeType, "myBoolNode");
-			assert(result.context.allowedTypes !== undefined);
-			assert(result.context.allowedTypes.has("myNumberNode"));
-			assert(result.context.allowedTypes.has("myStringNode"));
-			assert.equal(result.context.allowedTypes.size, 2);
+			assert.deepEqual(result, {
+				error: SchemaValidationError.Field_NodeTypeNotAllowed,
+				description:
+					'A node of type "my\\"StringNode" is not allowed in this field. Allowed types: ["myNumberNode"]. If using a staged allowed type, the stored schema has not been upgraded to include this type yet. Either upgrade the schema to enable the staged type or avoid inserting content of this type until the schema is upgraded.',
+				path: [0],
+			});
+		});
+
+		it("includes the path to nested invalid content", () => {
+			const invalidLeaf = createLeafNode("number", "not a number", ValueSchema.Number);
+			const fieldSchema = getFieldSchema(FieldKinds.required, [invalidLeaf.node.type]);
+			const objectNode = createNonLeafNode(
+				"object",
+				new Map([[brand("child"), [invalidLeaf.node]]]),
+				new ObjectNodeStoredSchema(new Map([[brand("child"), fieldSchema]])),
+			);
+			const schemaAndPolicy = createSchemaAndPolicy(
+				new Map([
+					[invalidLeaf.node.type, invalidLeaf.schema],
+					[objectNode.node.type, objectNode.schema],
+				]),
+				new Map([[fieldSchema.kind, FieldKinds.required]]),
+			);
+
+			const result = isNodeInSchema(objectNode.node, schemaAndPolicy, (details) => details);
+
+			assert.deepEqual(result, {
+				error: SchemaValidationError.LeafNode_InvalidValue,
+				description:
+					'Leaf node "number" requires a value matching "Number", but found "string".',
+				path: ["child", 0],
+			});
 		});
 	});
 
-	describe("throwOutOfSchema", () => {
-		const cases: readonly [SchemaValidationError, SchemaValidationErrorContext, RegExp][] = [
-			[
-				SchemaValidationError.Field_KindNotInSchemaPolicy,
-				{ fieldKind: "Unsupported" },
-				/Field kind "Unsupported" is not supported by the schema policy/,
-			],
-			[
-				SchemaValidationError.Field_MissingRequiredChild,
-				{ fieldKind: "Value", childCount: 0 },
-				/A required field of kind "Value" must contain exactly one child, but found 0/,
-			],
-			[
-				SchemaValidationError.Field_MultipleChildrenNotAllowed,
-				{ fieldKind: "Optional", childCount: 2 },
-				/A field of kind "Optional" allows at most one child, but found 2/,
-			],
-			[
-				SchemaValidationError.Field_ChildInForbiddenField,
-				{ fieldKind: "Forbidden", childCount: 1 },
-				/A forbidden field of kind "Forbidden" must be empty, but found 1 child/,
-			],
-			[
-				SchemaValidationError.LeafNode_InvalidValue,
-				{
-					nodeType: "com.example.Number",
-					expectedValueSchema: ValueSchema.Number,
-					actualValueType: "string",
-				},
-				/Leaf node "com.example.Number" requires a value matching "Number", but found "string"/,
-			],
-			[
-				SchemaValidationError.LeafNode_FieldsNotAllowed,
-				{
-					nodeType: "com.example.Number",
-					unexpectedFields: new Set(["extra"]),
-				},
-				/Leaf node "com.example.Number" must not contain fields. Unexpected fields: \["extra"\]/,
-			],
-			[
-				SchemaValidationError.NonLeafNode_ValueNotAllowed,
-				{ nodeType: "com.example.Object", actualValueType: "number" },
-				/Non-leaf node "com.example.Object" must not have a value, but found "number"/,
-			],
-		];
-
-		for (const [error, context, expected] of cases) {
-			it(`describes ${SchemaValidationError[error]}`, () => {
-				assert.throws(() => throwOutOfSchema(error, context), validateUsageError(expected));
-			});
-		}
-
-		it("escapes schema identifiers", () => {
-			assert.throws(
-				() =>
-					throwOutOfSchema(SchemaValidationError.Field_NodeTypeNotAllowed, {
-						nodeType: 'node"type',
-						allowedTypes: new Set(["allowed\ntype"]),
-					}),
-				(error: Error) => {
-					assert.equal(
-						error.message,
-						'Tree does not conform to schema. A node of type "node\\"type" is not allowed in this field. Allowed types: ["allowed\\ntype"]. If using a staged allowed type, the stored schema has not been upgraded to include this type yet. Either upgrade the schema to enable the staged type or avoid inserting content of this type until the schema is upgraded.',
-					);
-					return true;
-				},
-			);
-		});
+	it("throwOutOfSchema includes the validation path", () => {
+		assert.throws(
+			() =>
+				throwOutOfSchema({
+					error: SchemaValidationError.LeafNode_InvalidValue,
+					description:
+						'Leaf node "number" requires a value matching "Number", but found "string".',
+					path: ["child", 0],
+				}),
+			validateUsageError(
+				/Tree does not conform to schema at path \["child",0\]. Leaf node "number" requires a value matching "Number", but found "string"./,
+			),
+		);
 	});
 });

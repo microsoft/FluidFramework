@@ -34,163 +34,34 @@ export enum SchemaValidationError {
 }
 
 /**
- * Additional context about a schema validation error.
- * @remarks
- * Not all fields are populated for every error type — only those relevant to the specific error.
+ * Information about a schema validation error.
  */
-export interface SchemaValidationErrorContext {
-	/**
-	 * The type identifier of the node that failed validation.
-	 */
-	readonly nodeType?: string;
-	/**
-	 * The set of type identifiers allowed in the field, if applicable.
-	 */
-	readonly allowedTypes?: ReadonlySet<string>;
-	/**
-	 * Field keys on the node that were not recognized by its schema.
-	 */
-	readonly unexpectedFields?: ReadonlySet<string>;
-	/**
-	 * The field kind identifier, if the error applies to a field.
-	 */
-	readonly fieldKind?: string;
-	/**
-	 * The number of children found in the field, if its multiplicity is invalid.
-	 */
-	readonly childCount?: number;
-	/**
-	 * The value schema required by a leaf node.
-	 */
-	readonly expectedValueSchema?: ValueSchema;
-	/**
-	 * A description of the runtime type of an invalid node value.
-	 */
-	readonly actualValueType?: string;
+export interface SchemaValidationErrorDetails {
+	readonly error: SchemaValidationError;
+	readonly description: string;
+	readonly path: readonly (string | number)[];
 }
 
 /**
  * Throws a UsageError indicating a tree is out of schema.
  */
-export function throwOutOfSchema(
-	maybeError: SchemaValidationError,
-	context?: SchemaValidationErrorContext,
-): never {
-	throw new UsageError(formatSchemaValidationError(maybeError, context));
+export function throwOutOfSchema(details: SchemaValidationErrorDetails): never {
+	const path = details.path.length === 0 ? "" : ` at path ${JSON.stringify(details.path)}`;
+	throw new UsageError(`Tree does not conform to schema${path}. ${details.description}`);
 }
 
-// Not exported: internal helper used by throwOutOfSchema.
-function formatSchemaValidationError(
+function schemaValidationError(
 	error: SchemaValidationError,
-	context: SchemaValidationErrorContext | undefined,
-): string {
-	const nodeDesc =
-		context?.nodeType === undefined ? "unknown" : JSON.stringify(context.nodeType);
-	const fieldKindDesc =
-		context?.fieldKind === undefined ? "unknown" : JSON.stringify(context.fieldKind);
-	const childCountDesc = context?.childCount ?? "unknown";
-	switch (error) {
-		case SchemaValidationError.Field_KindNotInSchemaPolicy: {
-			return (
-				`Tree does not conform to schema. ` +
-				`Field kind ${fieldKindDesc} is not supported by the schema policy.`
-			);
-		}
-		case SchemaValidationError.Field_MissingRequiredChild: {
-			return (
-				`Tree does not conform to schema. ` +
-				`A required field of kind ${fieldKindDesc} must contain exactly one child, but found ${childCountDesc}.`
-			);
-		}
-		case SchemaValidationError.Field_MultipleChildrenNotAllowed: {
-			return (
-				`Tree does not conform to schema. ` +
-				`A field of kind ${fieldKindDesc} allows at most one child, but found ${childCountDesc}.`
-			);
-		}
-		case SchemaValidationError.Field_ChildInForbiddenField: {
-			const childNoun = context?.childCount === 1 ? "child" : "children";
-			return (
-				`Tree does not conform to schema. ` +
-				`A forbidden field of kind ${fieldKindDesc} must be empty, but found ${childCountDesc} ${childNoun}.`
-			);
-		}
-		case SchemaValidationError.Field_NodeTypeNotAllowed: {
-			const allowedDesc =
-				context?.allowedTypes === undefined
-					? "unknown"
-					: `[${[...context.allowedTypes]
-							.sort()
-							.map((type) => JSON.stringify(type))
-							.join(", ")}]`;
-			return (
-				`Tree does not conform to schema. ` +
-				`A node of type ${nodeDesc} is not allowed in this field. Allowed types: ${allowedDesc}. ` +
-				`If using a staged allowed type, the stored schema has not been upgraded to include this type yet. ` +
-				`Either upgrade the schema to enable the staged type or avoid inserting content of this type until the schema is upgraded.`
-			);
-		}
-		case SchemaValidationError.LeafNode_InvalidValue: {
-			const expectedValueDesc =
-				context?.expectedValueSchema === undefined
-					? "unknown"
-					: `"${ValueSchema[context.expectedValueSchema]}"`;
-			const actualValueDesc =
-				context?.actualValueType === undefined ? "unknown" : `"${context.actualValueType}"`;
-			return (
-				`Tree does not conform to schema. ` +
-				`Leaf node ${nodeDesc} requires a value matching ${expectedValueDesc}, but found ${actualValueDesc}.`
-			);
-		}
-		case SchemaValidationError.LeafNode_FieldsNotAllowed: {
-			const fieldsDesc =
-				context?.unexpectedFields === undefined
-					? "unknown"
-					: `[${[...context.unexpectedFields]
-							.sort()
-							.map((field) => JSON.stringify(field))
-							.join(", ")}]`;
-			return (
-				`Tree does not conform to schema. ` +
-				`Leaf node ${nodeDesc} must not contain fields. Unexpected fields: ${fieldsDesc}.`
-			);
-		}
-		case SchemaValidationError.Node_MissingSchema: {
-			return (
-				`Tree does not conform to schema. ` +
-				`No schema definition was found for node type ${nodeDesc}. ` +
-				`Ensure the node's type is included in the schema and that the stored schema has been upgraded if needed.`
-			);
-		}
-		case SchemaValidationError.NonLeafNode_ValueNotAllowed: {
-			const actualValueDesc =
-				context?.actualValueType === undefined ? "unknown" : `"${context.actualValueType}"`;
-			return (
-				`Tree does not conform to schema. ` +
-				`Non-leaf node ${nodeDesc} must not have a value, but found ${actualValueDesc}.`
-			);
-		}
-		case SchemaValidationError.ObjectNode_FieldNotInSchema: {
-			const fieldsDesc =
-				context?.unexpectedFields === undefined || context.unexpectedFields.size === 0
-					? undefined
-					: `[${[...context.unexpectedFields]
-							.sort()
-							.map((field) => JSON.stringify(field))
-							.join(", ")}]`;
-			const fieldsPart =
-				fieldsDesc === undefined
-					? "The node has fields that are not defined in its schema."
-					: `Unexpected fields: ${fieldsDesc}.`;
-			return (
-				`Tree does not conform to schema. ` +
-				`A node of type ${nodeDesc} has fields not defined in its schema. ${fieldsPart}`
-			);
-		}
-		default: {
-			return unreachableCase(error);
-		}
-	}
+	description: string,
+): SchemaValidationErrorDetails {
+	return { error, description, path: [] };
+}
+
+function prependPath<T extends NotUndefined>(
+	onError: (details: SchemaValidationErrorDetails) => T,
+	segment: string | number,
+): (details: SchemaValidationErrorDetails) => T {
+	return (details) => onError({ ...details, path: [segment, ...details.path] });
 }
 
 function getValueType(value: unknown): string {
@@ -209,38 +80,47 @@ type NotUndefined = number | string | boolean | bigint | symbol | object;
 export function isNodeInSchema<T extends NotUndefined>(
 	node: MinimalMapTreeNodeView,
 	schemaAndPolicy: SchemaAndPolicy,
-	onError: (error: SchemaValidationError, context?: SchemaValidationErrorContext) => T,
+	onError: (details: SchemaValidationErrorDetails) => T,
 ): T | undefined {
 	// Validate the schema declared by the node exists
 	const schema = schemaAndPolicy.schema.nodeSchema.get(node.type);
 	if (schema === undefined) {
-		return onError(SchemaValidationError.Node_MissingSchema, {
-			nodeType: node.type,
-		});
+		return onError(
+			schemaValidationError(
+				SchemaValidationError.Node_MissingSchema,
+				`No schema definition was found for node type ${JSON.stringify(node.type)}. Ensure the node's type is included in the schema and that the stored schema has been upgraded if needed.`,
+			),
+		);
 	}
 
 	// Validate the node is well formed according to its schema
 
 	if (schema instanceof LeafNodeStoredSchema) {
 		if (iterableHasSome(node.fields)) {
-			return onError(SchemaValidationError.LeafNode_FieldsNotAllowed, {
-				nodeType: node.type,
-				unexpectedFields: new Set(mapIterable(node.fields, ([key]) => key)),
-			});
+			const unexpectedFields = [...mapIterable(node.fields, ([key]) => key)].sort();
+			return onError(
+				schemaValidationError(
+					SchemaValidationError.LeafNode_FieldsNotAllowed,
+					`Leaf node ${JSON.stringify(node.type)} must not contain fields. Unexpected fields: ${JSON.stringify(unexpectedFields)}.`,
+				),
+			);
 		}
 		if (!allowsValue(schema.leafValue, node.value)) {
-			return onError(SchemaValidationError.LeafNode_InvalidValue, {
-				nodeType: node.type,
-				expectedValueSchema: schema.leafValue,
-				actualValueType: getValueType(node.value),
-			});
+			return onError(
+				schemaValidationError(
+					SchemaValidationError.LeafNode_InvalidValue,
+					`Leaf node ${JSON.stringify(node.type)} requires a value matching ${JSON.stringify(ValueSchema[schema.leafValue])}, but found ${JSON.stringify(getValueType(node.value))}.`,
+				),
+			);
 		}
 	} else {
 		if (node.value !== undefined) {
-			return onError(SchemaValidationError.NonLeafNode_ValueNotAllowed, {
-				nodeType: node.type,
-				actualValueType: getValueType(node.value),
-			});
+			return onError(
+				schemaValidationError(
+					SchemaValidationError.NonLeafNode_ValueNotAllowed,
+					`Non-leaf node ${JSON.stringify(node.type)} must not have a value, but found ${JSON.stringify(getValueType(node.value))}.`,
+				),
+			);
 		}
 
 		if (schema instanceof ObjectNodeStoredSchema) {
@@ -251,7 +131,7 @@ export function isNodeInSchema<T extends NotUndefined>(
 					nodeField,
 					fieldSchema,
 					schemaAndPolicy,
-					onError,
+					prependPath(onError, fieldKey),
 				);
 				if (fieldInSchemaResult !== undefined) {
 					return fieldInSchemaResult;
@@ -263,18 +143,20 @@ export function isNodeInSchema<T extends NotUndefined>(
 			// Code using this with a stored schema derived from a view schema rather than the document can be problematic because it may be missing unknown fields that the actual document has.
 			// Other schema evolution features like "staged" allowed types will likely cause similar issues elsewhere in this checker.
 			if (uncheckedFieldsFromNode.size > 0) {
-				return onError(SchemaValidationError.ObjectNode_FieldNotInSchema, {
-					nodeType: node.type,
-					unexpectedFields: uncheckedFieldsFromNode,
-				});
+				return onError(
+					schemaValidationError(
+						SchemaValidationError.ObjectNode_FieldNotInSchema,
+						`A node of type ${JSON.stringify(node.type)} has fields not defined in its schema. Unexpected fields: ${JSON.stringify([...uncheckedFieldsFromNode].sort())}.`,
+					),
+				);
 			}
 		} else if (schema instanceof MapNodeStoredSchema) {
-			for (const [_key, field] of node.fields) {
+			for (const [key, field] of node.fields) {
 				const fieldInSchemaResult = isFieldInSchema(
 					field,
 					schema.mapFields,
 					schemaAndPolicy,
-					onError,
+					prependPath(onError, key),
 				);
 				if (fieldInSchemaResult !== undefined) {
 					return fieldInSchemaResult;
@@ -299,41 +181,59 @@ export function isFieldInSchema<T extends NotUndefined>(
 	childNodes: MapTreeFieldViewGeneric<MinimalMapTreeNodeView>,
 	schema: TreeFieldStoredSchema,
 	schemaAndPolicy: SchemaAndPolicy,
-	onError: (error: SchemaValidationError, context?: SchemaValidationErrorContext) => T,
+	onError: (details: SchemaValidationErrorDetails) => T,
 ): T | undefined {
 	// Validate that the field kind is handled by the schema policy
 	const kind = schemaAndPolicy.policy.fieldKinds.get(schema.kind);
 	if (kind === undefined) {
-		return onError(SchemaValidationError.Field_KindNotInSchemaPolicy, {
-			fieldKind: schema.kind,
-		});
+		return onError(
+			schemaValidationError(
+				SchemaValidationError.Field_KindNotInSchemaPolicy,
+				`Field kind ${JSON.stringify(schema.kind)} is not supported by the schema policy.`,
+			),
+		);
 	}
 
 	// Validate that the field doesn't contain more nodes than its type supports
 	{
 		const multiplicityCheck = compliesWithMultiplicity(childNodes.length, kind.multiplicity);
 		if (multiplicityCheck !== undefined) {
-			return onError(multiplicityCheck, {
-				fieldKind: schema.kind,
-				childCount: childNodes.length,
-			});
+			const description =
+				multiplicityCheck === SchemaValidationError.Field_MissingRequiredChild
+					? `A required field of kind ${JSON.stringify(schema.kind)} must contain exactly one child, but found ${childNodes.length}.`
+					: multiplicityCheck === SchemaValidationError.Field_MultipleChildrenNotAllowed
+						? `A field of kind ${JSON.stringify(schema.kind)} allows at most one child, but found ${childNodes.length}.`
+						: `A forbidden field of kind ${JSON.stringify(schema.kind)} must be empty, but found ${childNodes.length} ${childNodes.length === 1 ? "child" : "children"}.`;
+			return onError(schemaValidationError(multiplicityCheck, description));
 		}
 	}
 
+	let index = 0;
 	for (const node of childNodes) {
 		// Validate the type declared by the node is allowed in this field
 		if (schema.types !== undefined && !schema.types.has(node.type)) {
-			return onError(SchemaValidationError.Field_NodeTypeNotAllowed, {
-				nodeType: node.type,
-				allowedTypes: schema.types,
-			});
+			const allowedTypes = [...schema.types].sort();
+			return prependPath(
+				onError,
+				index,
+			)(
+				schemaValidationError(
+					SchemaValidationError.Field_NodeTypeNotAllowed,
+					`A node of type ${JSON.stringify(node.type)} is not allowed in this field. Allowed types: ${JSON.stringify(allowedTypes)}. If using a staged allowed type, the stored schema has not been upgraded to include this type yet. Either upgrade the schema to enable the staged type or avoid inserting content of this type until the schema is upgraded.`,
+				),
+			);
 		}
 
 		// Validate the node complies with the type it declares to be.
-		const nodeInSchemaResult = isNodeInSchema(node, schemaAndPolicy, onError);
+		const nodeInSchemaResult = isNodeInSchema(
+			node,
+			schemaAndPolicy,
+			prependPath(onError, index),
+		);
 		if (nodeInSchemaResult !== undefined) {
 			return nodeInSchemaResult;
 		}
+		index += 1;
 	}
 
 	return undefined;
