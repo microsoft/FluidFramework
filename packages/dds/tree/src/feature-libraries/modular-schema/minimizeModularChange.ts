@@ -97,8 +97,8 @@ class ModularChangeMinimizer {
 		this.rootIdToNodeId = nodeInfo.rootIdToNodeId;
 
 		const delta = intoDelta(makeAnonChange(change), fieldKinds);
-		this.attachedRootIds = collectAttachedRootIds(delta);
 		this.outputToInputRootId = outputToInputRootIdFromDelta(delta);
+		this.attachedRootIds = collectAttachedRootIds(delta, this.outputToInputRootId);
 	}
 
 	public minimize(forestFactory: () => IEditableForest): ModularChangeset {
@@ -721,26 +721,37 @@ interface ChangeAtomIdRange {
 type ChangeAtomIdRangeSet = ChangeAtomIdRangeMap<true>;
 
 /**
- * Collects the set of IDs whose content ends up attached within the live document tree
+ * Collects the set of root IDs whose content ends up attached within the live document tree
  * once the given change is applied.
+ * There are entries both for nodes which are detached in the input context,
+ * and also for nodes which are detached by this delta.
+ * The keys are pre-rename IDs.
  *
  * @remarks
  * These are the "used" nodes: any build whose nodes are not in this set has no observable
  * effect on the resulting document and can be dropped.
  */
-function collectAttachedRootIds(delta: DeltaRoot): ChangeAtomIdRangeSet {
+function collectAttachedRootIds(
+	delta: DeltaRoot,
+	outputToInputRootId: ChangeAtomIdRangeMap<ChangeAtomId>,
+): ChangeAtomIdRangeSet {
 	const detachIdToNodeChanges = getDeltaNodeChangesByDetachId(delta);
 	const attached: ChangeAtomIdRangeSet = newChangeAtomIdRangeMap<true>();
+
 	// Worklist of detached node ID ranges newly discovered to be live, whose own nested content must be visited.
 	const worklist: ChangeAtomIdRange[] = [];
-	const markLive = (id: ChangeAtomId, count: number): void => {
-		// Only the sub-ranges of `[id, id + count)` that are not already live are newly discovered.
-		// Mark each such run live in a single range operation and enqueue it for processing.
-		for (const fragment of attached.getAll(id, count)) {
-			if (fragment.value === undefined) {
-				const runStart = offsetChangeAtomId(id, fragment.offset);
-				attached.set(runStart, fragment.length, true);
-				worklist.push({ id: runStart, count: fragment.length });
+	const markLive = (attachId: ChangeAtomId, count: number): void => {
+		for (const inputIdEntry of outputToInputRootId.getAll(attachId, count)) {
+			const inputId = inputIdEntry.value ?? offsetChangeAtomId(attachId, inputIdEntry.offset);
+
+			// Only the sub-ranges of `[id, id + count)` that are not already live are newly discovered.
+			// Mark each such run live in a single range operation and enqueue it for processing.
+			for (const fragment of attached.getAll(inputId, inputIdEntry.length)) {
+				if (fragment.value === undefined) {
+					const runStart = offsetChangeAtomId(inputId, fragment.offset);
+					attached.set(runStart, fragment.length, true);
+					worklist.push({ id: runStart, count: fragment.length });
+				}
 			}
 		}
 	};
@@ -781,26 +792,6 @@ function collectAttachedRootIds(delta: DeltaRoot): ChangeAtomIdRangeSet {
 		for (let offset = 0; offset < count; offset += 1) {
 			visitLiveFields(detachIdToNodeChanges.get(id.revision)?.get(brand(id.localId + offset)));
 		}
-		if (delta.rename !== undefined) {
-			for (const { oldId, newId, count: renameCount } of delta.rename) {
-				if (newId.major !== id.revision) {
-					continue;
-				}
-				// Overlap of the live range `[id.localId, id.localId + count)` with this rename's
-				// post-rename range `[newId.minor, newId.minor + renameCount)`.
-				const overlapStart = Math.max(id.localId, newId.minor);
-				const overlapEnd = Math.min(id.localId + count, newId.minor + renameCount);
-				if (overlapStart < overlapEnd) {
-					markLive(
-						{
-							revision: oldId.major,
-							localId: brand(oldId.minor + (overlapStart - newId.minor)),
-						},
-						overlapEnd - overlapStart,
-					);
-				}
-			}
-		}
 	}
 
 	return attached;
@@ -810,6 +801,7 @@ function collectAttachedRootIds(delta: DeltaRoot): ChangeAtomIdRangeSet {
  * Returns a mapping from root ID to the field changes for that node.
  * There are entries both for nodes which are detached in the input context,
  * and also for nodes which are detached by this delta.
+ * The keys are pre-rename IDs.
  */
 function getDeltaNodeChangesByDetachId(delta: DeltaRoot): ChangeAtomIdMap<DeltaFieldMap> {
 	const detachIdToChanges: ChangeAtomIdMap<DeltaFieldMap> = new Map();
