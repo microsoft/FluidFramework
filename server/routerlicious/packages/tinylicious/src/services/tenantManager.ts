@@ -33,10 +33,10 @@ import { default as Axios } from "axios";
 const maxConcurrentBlobUploads = 50;
 const blobUploadQueueLengthTelemetryThresholds = [100, 200] as const;
 
-const blobUploadQueue = queue(
-	async (upload: () => Promise<ICreateBlobResponse>) => upload(),
-	maxConcurrentBlobUploads,
-);
+type BlobUpload = () => Promise<ICreateBlobResponse>;
+
+// Invoke each deferred upload when queue capacity is available.
+const blobUploadQueue = queue<BlobUpload>(async (upload) => upload(), maxConcurrentBlobUploads);
 
 const reachedBlobUploadQueueLengthThresholds = new Set<number>();
 let maxObservedBlobUploadQueueLength = 0;
