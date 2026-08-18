@@ -3,7 +3,7 @@
 "fluid-framework": minor
 "__section": tree
 ---
-Fixed bug in `no-change` constraint revert precondition
+Fixed bug in no-change constraint revert precondition
 
 The [`no-change` constraint](https://fluidframework.com/docs/api/fluid-framework/nochangeconstraint-interface),
 when evaluated as a [precondition to revert](https://fluidframework.com/docs/api/fluid-framework/transactioncallbackstatusalpha-typealias),

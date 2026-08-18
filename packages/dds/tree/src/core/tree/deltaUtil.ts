@@ -59,11 +59,19 @@ export function areDetachedNodeIdsEqual(a: DetachedNodeId, b: DetachedNodeId): b
 	return a.major === b.major && a.minor === b.minor;
 }
 
+/**
+ * Describes the types of changes present in a delta.
+ */
 export interface DeltaChangeProfile {
+	/** Whether the delta includes any build operations. */
 	hasBuilds: boolean;
+	/** Whether the delta includes any destroy operations. */
 	hasDestroys: boolean;
+	/** Whether the delta includes any rename operations. */
 	hasRenames: boolean;
+	/** Whether the delta includes any changes in the document tree. */
 	hasChangesInDocumentTree: boolean;
+	/** Whether the delta includes any changes in detached trees. */
 	hasChangesInDetachedTrees: boolean;
 }
 
