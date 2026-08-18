@@ -1673,30 +1673,9 @@ export function updateRefreshers(
 		}
 	}
 
-	const {
-		fieldChanges,
-		nodeChanges,
-		nodeToParent,
-		nodeAliases,
-		crossFieldKeys,
-		maxId,
-		revisions,
-		constraintViolationCount,
-		builds,
-		destroys,
-	} = change;
-
 	return makeModularChangeset({
-		fieldChanges,
-		nodeChanges,
-		nodeToParent,
-		nodeAliases,
-		crossFieldKeys,
-		maxId: maxId as number,
-		revisions,
-		constraintViolationCount,
-		builds,
-		destroys,
+		...change,
+		maxId: change.maxId,
 		refreshers,
 	});
 }

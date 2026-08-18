@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/tree-agent-ses",
-	"version": "2.115.0",
+	"version": "2.117.0",
 	"description": "SES integration helpers for @fluidframework/tree-agent",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -112,7 +112,7 @@
 		"ses": "^1.14.0"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.18.2",
+		"@arethetypeswrong/cli": "^0.18.5",
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "catalog:buildTools",

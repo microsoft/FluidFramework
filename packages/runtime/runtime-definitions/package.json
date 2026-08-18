@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/runtime-definitions",
-	"version": "2.115.0",
+	"version": "2.117.0",
 	"description": "Fluid Runtime definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -116,13 +116,13 @@
 		"@fluidframework/telemetry-utils": "workspace:~"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.18.2",
+		"@arethetypeswrong/cli": "^0.18.5",
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
-		"@fluidframework/runtime-definitions-previous": "npm:@fluidframework/runtime-definitions@2.112.0",
+		"@fluidframework/runtime-definitions-previous": "npm:@fluidframework/runtime-definitions@2.116.0",
 		"@microsoft/api-extractor": "7.58.1",
 		"concurrently": "^10.0.3",
 		"copyfiles": "^2.4.1",

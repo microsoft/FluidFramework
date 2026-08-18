@@ -13,6 +13,7 @@ import {
 import {
 	ContainerErrorTypes,
 	type IContainerContext,
+	type IContainerContextInternal,
 	type IBatchMessage,
 	type IContainerStorageService,
 } from "@fluidframework/container-definitions/internal";
@@ -567,7 +568,7 @@ describe("Runtime", () => {
 						return 999; // CSN not used in test asserts below
 					};
 
-				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
+				const containerRuntime = await ContainerRuntime.loadRuntime({
 					context: mockContext as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
@@ -1828,21 +1829,18 @@ describe("Runtime", () => {
 			// A legacy partner team overrides the summarizeInternal method to add custom data to the Summary.
 			// Let's make sure we don't break them inadvertently, while we work to move them to a better pattern.
 			it("Ensure private member is stable to support legacy usage", async () => {
-				const { runtime: containerRuntime_withSummarizeInternal_untyped } =
-					await ContainerRuntime.loadRuntime2({
-						context: getMockContext() as IContainerContext,
-						registry: new FluidDataStoreRegistry([]),
-						existing: false,
-						provideEntryPoint: mockProvideEntryPoint,
-					});
-				const containerRuntime_withSummarizeInternal =
-					containerRuntime_withSummarizeInternal_untyped as unknown as {
-						summarizeInternal(
-							fullTree: boolean,
-							trackState: boolean,
-							telemetryContext?: ITelemetryContext,
-						): Promise<ISummarizeInternalResult>;
-					};
+				const containerRuntime_withSummarizeInternal = (await ContainerRuntime.loadRuntime({
+					context: getMockContext() as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					provideEntryPoint: mockProvideEntryPoint,
+				})) as unknown as {
+					summarizeInternal(
+						fullTree: boolean,
+						trackState: boolean,
+						telemetryContext?: ITelemetryContext,
+					): Promise<ISummarizeInternalResult>;
+				};
 
 				assert(
 					typeof containerRuntime_withSummarizeInternal.summarizeInternal === "function",
@@ -2886,6 +2884,114 @@ describe("Runtime", () => {
 				logger.assertMatchAny(
 					[{ eventName: "ContainerRuntime:DuplicateBatch" }],
 					"Expected DuplicateBatch telemetry to still be logged",
+				);
+			});
+		});
+
+		describe("Version mark inbound update", () => {
+			it("resolves through context fetchOps and the historical unpack pipeline", async () => {
+				let capturedSignal: AbortSignal | undefined;
+				let readCount = 0;
+				const context = {
+					...getMockContext(),
+					fetchOps: async (from, to, abortSignal) => {
+						assert.equal(from, 11, "the history read starts after the exclusive lower bound");
+						assert.equal(to, undefined, "the history read has no fixed upper bound");
+						capturedSignal = abortSignal;
+						return {
+							read: async () => {
+								readCount++;
+								if (readCount === 1) {
+									return {
+										done: false as const,
+										value: [
+											{
+												type: MessageType.ClientJoin,
+												sequenceNumber: 11,
+												clientId: "system",
+											} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+											{
+												type: MessageType.Operation,
+												sequenceNumber: 12,
+												// eslint-disable-next-line unicorn/no-null -- server-generated ops have a null clientId
+												clientId: null,
+											} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+											{
+												type: MessageType.Operation,
+												sequenceNumber: 13,
+												clientId: "targetClient",
+												clientSequenceNumber: 7,
+												contents: {
+													type: ContainerMessageType.Rejoin,
+													contents: undefined,
+												},
+												metadata: { batchId: "targetBatch" },
+											} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+										],
+									};
+								}
+								return { done: true as const };
+							},
+						};
+					},
+				} satisfies Partial<IContainerContextInternal>;
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
+					context: context as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				assert.deepEqual(
+					await containerRuntime.versionMarkResolver.resolve("targetBatch", 10),
+					{ kind: "resolved", sequenceNumber: 13 },
+				);
+				assert.equal(readCount, 1, "the stream stops reading after the target batch");
+				assert.equal(capturedSignal?.aborted, true, "the fetch is aborted after the match");
+			});
+
+			it("does not notify version-mark listeners when inbound validation throws", async () => {
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
+					context: getMockContext() as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				// Record every version-mark notification.
+				const notifications: [string, number][] = [];
+				containerRuntime.versionMarkResolver.onBatchSequenced((batchId, sequenceNumber) =>
+					notifications.push([batchId, sequenceNumber]),
+				);
+
+				// Simulate a validation failure (fork detection / pending-content mismatch):
+				// processInboundMessages throws for a batch that must be rejected.
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- patch a private field
+				(containerRuntime as any).pendingStateManager.processInboundMessages = (): never => {
+					throw new Error("inbound validation failed");
+				};
+
+				assert.throws(
+					() =>
+						containerRuntime.process(
+							{
+								sequenceNumber: 123,
+								type: MessageType.Operation,
+								contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+								metadata: { batchId: "batchId1" },
+							} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+							false,
+						),
+					/inbound validation failed/,
+					"the inbound batch should be rejected by validation",
+				);
+
+				// The version-mark update + notification run only after processInboundMessages validates,
+				// so a rejected batch must not have promoted a mark in an external store.
+				assert.deepEqual(
+					notifications,
+					[],
+					"no version-mark notification should fire for a batch validation rejected",
 				);
 			});
 		});
@@ -4235,7 +4341,7 @@ describe("Runtime", () => {
 							existing: false,
 							runtimeOptions: {},
 							provideEntryPoint: mockProvideEntryPoint,
-							// @ts-expect-error - Invalid version strings are not castable to MinimumVersionForCollab
+							// @ts-expect-error - Invalid version strings are not castable to OldestSupportedClientVersion
 							minVersionForCollab: version,
 						});
 					});

@@ -16,14 +16,7 @@ import { type AliasProposal, runAiSession } from "../library/ai/copilotSession.j
 import { BaseCommand } from "../library/commands/base.js";
 
 const FALLBACK_MODEL = "claude-haiku-4.5";
-export const SUPPORTED_ALIASES = [
-	"claude",
-	"dev",
-	"dev-copilot",
-	"copilot",
-	"oce",
-	"ai-reset",
-] as const;
+export const SUPPORTED_ALIASES = ["dev", "copilot", "oce"] as const;
 
 export default class AiCommand extends BaseCommand<typeof AiCommand> {
 	static readonly description =
@@ -259,7 +252,7 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 
 		this.error(
 			"Could not find agent-aliases.sh. This command is designed for the AI-enabled Codespace.\n" +
-				"See: https://github.com/microsoft/FluidFramework/wiki/AI%E2%80%90enabled-Codespace",
+				"See: https://github.com/microsoft/FluidFramework/blob/main/docs/content/Development-Environment/AI-enabled-Codespace.md",
 			{ exit: 1 },
 		);
 	}
