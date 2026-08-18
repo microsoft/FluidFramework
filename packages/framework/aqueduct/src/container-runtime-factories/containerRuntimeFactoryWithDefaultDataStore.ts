@@ -117,7 +117,6 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 			super({
 				...props,
 				oldestSupportedClient: props.oldestSupportedClient,
-				minVersionForCollab: undefined,
 				requestHandlers: [getDefaultObject, ...requestHandlers],
 				provideEntryPoint,
 			});

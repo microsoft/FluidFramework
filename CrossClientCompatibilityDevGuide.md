@@ -44,7 +44,7 @@ However, there are many other types of changes that could impact cross-client co
 
 If a change affects the data format (see above), it should be gated by a **container runtime option**. Runtime options are enforced via the `oldestSupportedClient` property to ensure customers do not accidentally break older clients by enabling cross-client compatibility breaking features prematurely.
 
-`oldestSupportedClient` defines the oldest Fluid client version that must be able to access documents written by the runtime. Customers are encouraged to set `oldestSupportedClient` to the highest version their users are saturated on. If the customer does not set `oldestSupportedClient`, a default value is assigned. `oldestSupportedClient` controls the "default configurations" and "unsafe configuration prevention" mechanisms explained below.
+`oldestSupportedClient` defines the oldest Fluid client version that must be able to access documents written by the runtime. Callers must specify exactly one of `oldestSupportedClient` or the deprecated `minVersionForCollab`; omitting both is an error. Customers are encouraged to set `oldestSupportedClient` to the highest version their users are saturated on. `oldestSupportedClient` controls the "default configurations" and "unsafe configuration prevention" mechanisms explained below.
 
 ### Default Configurations
 

@@ -5,16 +5,30 @@
 
 import { strict as assert } from "node:assert";
 
-import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/internal";
+import type {
+	IFluidDataStoreFactory,
+	OldestSupportedClientVersion,
+} from "@fluidframework/runtime-definitions/internal";
 
 import {
 	BaseContainerRuntimeFactory,
 	type BaseContainerRuntimeFactoryProps,
+	ContainerRuntimeFactoryWithDefaultDataStore,
+	type ContainerRuntimeFactoryWithDefaultDataStoreProps,
 } from "../container-runtime-factories/index.js";
 
 const commonProps = {
 	registryEntries: [],
 	provideEntryPoint: async () => ({}),
+};
+const defaultFactory: IFluidDataStoreFactory = {
+	type: "default",
+	get IFluidDataStoreFactory() {
+		return this;
+	},
+	instantiateDataStore: async () => {
+		throw new Error("Not used by this test.");
+	},
 };
 
 describe("BaseContainerRuntimeFactory", () => {
@@ -83,6 +97,29 @@ describe("BaseContainerRuntimeFactory", () => {
 	it("rejects neither version property", () => {
 		assert.throws(() => createWithVersionOptions({}), /Specify exactly one/);
 	});
+
+	it("rejects both version properties", () => {
+		assert.throws(
+			() =>
+				createWithVersionOptions({
+					oldestSupportedClient: "2.0.0",
+					minVersionForCollab: "2.0.0",
+				}),
+			/Specify exactly one/,
+		);
+	});
+});
+
+describe("ContainerRuntimeFactoryWithDefaultDataStore", () => {
+	const createWithVersionOptions = (props: {
+		readonly oldestSupportedClient?: OldestSupportedClientVersion;
+		readonly minVersionForCollab?: OldestSupportedClientVersion;
+	}): ContainerRuntimeFactoryWithDefaultDataStore =>
+		new ContainerRuntimeFactoryWithDefaultDataStore({
+			...commonProps,
+			defaultFactory,
+			...props,
+		} as unknown as ContainerRuntimeFactoryWithDefaultDataStoreProps);
 
 	it("rejects both version properties", () => {
 		assert.throws(

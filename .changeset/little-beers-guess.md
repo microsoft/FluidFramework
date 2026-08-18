@@ -1,7 +1,7 @@
 ---
 "@fluidframework/container-runtime": minor
 "@fluidframework/aqueduct": minor
-"__section": breaking
+"__section": legacy
 ---
 Require an explicit oldest supported client when creating container runtimes
 
