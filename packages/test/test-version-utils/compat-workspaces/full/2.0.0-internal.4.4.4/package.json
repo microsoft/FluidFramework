@@ -1,0 +1,32 @@
+{
+  "name": "compat-2.0.0-internal.4.4.4",
+  "version": "1.0.0",
+  "private": true,
+  "homepage": "https://fluidframework.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microsoft/FluidFramework.git",
+    "directory": "packages/test/test-version-utils/compat-workspaces/full/2.0.0-internal.4.4.4"
+  },
+  "license": "MIT",
+  "author": "Microsoft and contributors",
+  "dependencies": {
+    "@fluid-experimental/sequence-deprecated": "2.0.0-internal.4.4.4",
+    "@fluidframework/agent-scheduler": "2.0.0-internal.4.4.4",
+    "@fluidframework/aqueduct": "2.0.0-internal.4.4.4",
+    "@fluidframework/cell": "2.0.0-internal.4.4.4",
+    "@fluidframework/container-loader": "2.0.0-internal.4.4.4",
+    "@fluidframework/container-runtime": "2.0.0-internal.4.4.4",
+    "@fluidframework/counter": "2.0.0-internal.4.4.4",
+    "@fluidframework/datastore": "2.0.0-internal.4.4.4",
+    "@fluidframework/local-driver": "2.0.0-internal.4.4.4",
+    "@fluidframework/map": "2.0.0-internal.4.4.4",
+    "@fluidframework/matrix": "2.0.0-internal.4.4.4",
+    "@fluidframework/odsp-driver": "2.0.0-internal.4.4.4",
+    "@fluidframework/ordered-collection": "2.0.0-internal.4.4.4",
+    "@fluidframework/register-collection": "2.0.0-internal.4.4.4",
+    "@fluidframework/routerlicious-driver": "2.0.0-internal.4.4.4",
+    "@fluidframework/sequence": "2.0.0-internal.4.4.4",
+    "@fluidframework/test-utils": "2.0.0-internal.4.4.4"
+  }
+}
