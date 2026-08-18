@@ -20,7 +20,9 @@ describe("custom Fluid rules", function () {
 		const eslint = createESLintForConfig(recommended);
 		const fixture = path.join(
 			__dirname,
+			"..",
 			"rules",
+			"test",
 			"test-cases",
 			"no-hyphen-after-jsdoc-tag",
 			"test.ts",

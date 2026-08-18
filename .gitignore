@@ -7,15 +7,6 @@ nyc
 *.log
 .DS_Store
 
-.vale/*
-!.vale/config/
-
-.vale/config/*
-!.vale/config/vocabularies/
-
-.vale/config/vocabularies/*
-!.vale/config/vocabularies/fluid/
-
 # Generated Node10 module resolution compatibility files
 alpha.d.ts
 beta.d.ts

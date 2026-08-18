@@ -65,7 +65,7 @@ export function getHashedDocumentId(driveId: string, itemId: string): Promise<st
 // @beta @legacy
 export function getLocatorFromOdspUrl(url: URL, requireFluidSignature?: boolean): OdspFluidDataStoreLocator | undefined;
 
-// @alpha @legacy
+// @beta @legacy
 export function getOdspPointInTimeDocumentServiceFactory(getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined, persistedCache?: IPersistedCache, hostPolicy?: HostStoragePolicy): IPointInTimeDocumentServiceFactory;
 
 // @beta @legacy (undocumented)
@@ -113,7 +113,7 @@ export interface IPersistedFileCache {
     removeEntries(): Promise<void>;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IPointInTimeDocumentServiceFactory extends IDocumentServiceFactory {
     createPointInTimeDocumentService(resolvedUrl: IResolvedUrl, targetSequenceNumber: number, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
 }

@@ -16,16 +16,16 @@ This guide outlines the steps required to add custom ESLint rules, update depend
     ```plaintext
     eslint-config-fluid/
     └── src/
-        ├── rules/
-        │   ├── index.cjs
-        │   ├── rule-one.js
-        │   └── rule-two.js
-        └── test/rules/
-            ├── rule-one.test.js
-            ├── rule-two.test.js
-            └── test-cases/
-                ├── rule-one/
-                └── rule-two/
+        └── rules/
+            ├── index.cjs
+            ├── rule-one.js
+            ├── rule-two.js
+            └── test/
+                ├── rule-one.test.js
+                ├── rule-two.test.js
+                └── test-cases/
+                    ├── rule-one/
+                    └── rule-two/
     ```
 
 3. **Register the rule**: Add the rule to `src/rules/index.cjs`, then enable it in the appropriate shared config.

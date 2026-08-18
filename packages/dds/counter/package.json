@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/counter",
-	"version": "2.116.0",
+	"version": "2.117.0",
 	"description": "Counter DDS",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -135,7 +135,7 @@
 		"@fluidframework/shared-object-base": "workspace:~"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.18.2",
+		"@arethetypeswrong/cli": "^0.18.5",
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",

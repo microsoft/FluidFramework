@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/client-utils",
-	"version": "2.116.0",
+	"version": "2.117.0",
 	"description": "Not intended for use outside the Fluid Framework.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -141,7 +141,7 @@
 		"sha.js": "^2.4.12"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.18.2",
+		"@arethetypeswrong/cli": "^0.18.5",
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-internal/client-utils-previous": "npm:@fluid-internal/client-utils@2.114.0",
 		"@fluid-internal/mocha-test-setup": "workspace:~",

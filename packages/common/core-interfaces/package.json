@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/core-interfaces",
-	"version": "2.116.0",
+	"version": "2.117.0",
 	"description": "Fluid object interfaces",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -131,7 +131,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.18.2",
+		"@arethetypeswrong/cli": "^0.18.5",
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",

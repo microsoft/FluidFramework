@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/tool-utils",
-	"version": "2.116.0",
+	"version": "2.117.0",
 	"description": "Common utilities for Fluid tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -105,7 +105,7 @@
 		"proper-lockfile": "^4.1.2"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.18.2",
+		"@arethetypeswrong/cli": "^0.18.5",
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "catalog:buildTools",

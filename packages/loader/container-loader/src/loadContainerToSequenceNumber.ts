@@ -27,7 +27,7 @@ import {
  * point-in-time capability the loader detects. For ODSP, pass an
  * `IPointInTimeDocumentServiceFactory` created by `getOdspPointInTimeDocumentServiceFactory`.
  *
- * @legacy @alpha
+ * @legacy @beta
  */
 export interface ILoadContainerToSequenceNumberProps
 	extends IContainerHostProps,
@@ -66,7 +66,7 @@ export interface ILoadContainerToSequenceNumberProps
  * optional cancellation signal.
  * @returns A disconnected, read-only container materialized at the requested sequence number.
  *
- * @legacy @alpha
+ * @legacy @beta
  */
 export async function loadContainerToSequenceNumber(
 	props: ILoadContainerToSequenceNumberProps,

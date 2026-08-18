@@ -41,13 +41,17 @@ Heavy setup work runs in `onCreateCommand` so it is captured by Codespace prebui
 
 ## Prebuild configuration
 
-Prebuilds use the **"on configuration change"** trigger, which only fires when `devcontainer.json` or the referenced `Dockerfile` changes. It does **not** detect changes to files those configs depend on, such as scripts in `scripts/codespace-setup/`.
+The Standard profile uses the **"on configuration change"** trigger. GitHub detects changes to the root `.devcontainer/devcontainer.json` and its referenced `Dockerfile`, but not to files those configs depend on, such as scripts in `scripts/codespace-setup/`.
 
-### The `prebuild-version` comment
+The Lightweight and AI-enabled profiles run prebuilds **once a week**. [GitHub does not support configuration-change triggers for `devcontainer.json` files in subdirectories of `.devcontainer`](https://docs.github.com/en/codespaces/prebuilding-your-codespaces/configuring-prebuilds#configuring-prebuilds), so changes to these profiles are picked up by their next scheduled run.
 
-Each `devcontainer.json` contains a `// prebuild-version: N` comment. **Bump this value whenever you change files in `scripts/codespace-setup/`** and your PR doesn't already modify a `devcontainer.json` or the `Dockerfile` — this ensures a prebuild-triggering file is modified, which forces a rebuild.
+To investigate the triggers or update a nested profile immediately, use JIT elevation to obtain repository administrator access, then open [Settings > Codespaces](https://github.com/microsoft/FluidFramework/settings/codespaces). A prebuild can be manually triggered from its configuration menu.
 
-A CI check (`devcontainer-prebuild-check.yml`) enforces this: PRs that modify `scripts/codespace-setup/**` without also modifying a `devcontainer.json` or the `Dockerfile` will fail.
+### The Standard profile's `prebuild-version` comment
+
+The root `.devcontainer/devcontainer.json` contains a `// prebuild-version: N` comment. **Bump this value whenever you change files in `scripts/codespace-setup/`** and your PR doesn't already modify the root `devcontainer.json` or its `Dockerfile`. This forces the Standard prebuild to regenerate.
+
+A CI check (`devcontainer-prebuild-check.yml`) enforces this requirement for the Standard profile. The scheduled nested profiles do not use version-bump comments.
 
 ## AI-enabled vs. AI-enabled (Insiders)
 

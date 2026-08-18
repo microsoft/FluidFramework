@@ -20,7 +20,7 @@ import type {
 	IRuntimeMessageCollection,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-	MinimumVersionForCollab,
+	OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
@@ -37,7 +37,7 @@ import {
 
 interface IFoo {
 	foo: string;
-	minVersionForCollab: MinimumVersionForCollab | undefined;
+	minVersionForCollab: OldestSupportedClientVersion | undefined;
 }
 class SharedFooFactory implements IChannelFactory<IFoo> {
 	public static readonly Type: string = "SharedFoo";
@@ -107,7 +107,7 @@ describe("createSharedObjectKind's return type", () => {
  * The options used to construct a `FooKernelFactory`.
  */
 interface FooOptionsInternal {
-	readonly minVersionForCollab: MinimumVersionForCollab;
+	readonly minVersionForCollab: OldestSupportedClientVersion;
 }
 
 /**
@@ -115,7 +115,7 @@ interface FooOptionsInternal {
  */
 interface FooKernelView extends IFoo {
 	readonly kernel: FooKernel;
-	readonly minVersionForCollab: MinimumVersionForCollab | undefined;
+	readonly minVersionForCollab: OldestSupportedClientVersion | undefined;
 	readonly foo: string;
 }
 
@@ -126,7 +126,7 @@ interface FooKernelView extends IFoo {
 class FooKernel implements SharedKernel {
 	public readonly view: FooKernelView;
 
-	constructor(minVersionForCollab: MinimumVersionForCollab | undefined) {
+	constructor(minVersionForCollab: OldestSupportedClientVersion | undefined) {
 		this.view = {
 			kernel: this,
 			minVersionForCollab,

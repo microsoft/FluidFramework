@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/devtools-core",
-	"version": "2.116.0",
+	"version": "2.117.0",
 	"description": "Fluid Framework developer tools core functionality",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -144,7 +144,7 @@
 		"@fluidframework/tree": "workspace:~"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.18.2",
+		"@arethetypeswrong/cli": "^0.18.5",
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "catalog:buildTools",
