@@ -84,6 +84,15 @@ export interface SharedTreeCoreOptionsInternal extends CodecWriteOptions {
 	 * {@inheritDoc SharedTreeOptions.retainHistory}
 	 */
 	readonly retainHistory?: boolean;
+
+	/**
+	 * {@inheritDoc SharedTreeOptions.validateCommitsOnFirstSubmission}
+	 */
+	readonly validateCommitsOnFirstSubmission?: boolean;
+	/**
+	 * {@inheritDoc SharedTreeOptions.validateRebasedCommitsBeforeResubmission}
+	 */
+	readonly validateRebasedCommitsBeforeResubmission?: boolean;
 }
 
 export interface EnrichmentConfig<TChange> {
@@ -154,7 +163,7 @@ export class SharedTreeCore<
 		public readonly submitLocalMessage: (content: unknown, localOpMetadata?: unknown) => void,
 		summarizables: readonly Summarizable[],
 		protected readonly changeFamily: ChangeFamily<TEditor, TChange, TChangeProcessingContext>,
-		options: SharedTreeCoreOptionsInternal,
+		private readonly coreOptions: SharedTreeCoreOptionsInternal,
 		changeFormatVersionForEditManager: DependentFormatVersion<EditManagerFormatVersion>,
 		changeFormatVersionForMessage: DependentFormatVersion<MessageFormatVersion>,
 		protected readonly idCompressor: IIdCompressor,
@@ -165,7 +174,7 @@ export class SharedTreeCore<
 	) {
 		super(
 			summarizablesTreeKey,
-			minVersionToSharedTreeSummaryFormatVersion(options.minVersionForCollab),
+			minVersionToSharedTreeSummaryFormatVersion(coreOptions.minVersionForCollab),
 			supportedSharedTreeSummaryFormatVersions,
 			true /* supportPreVersioningFormat */,
 		);
@@ -195,14 +204,14 @@ export class SharedTreeCore<
 			this.mintRevisionTag,
 			(branchId) => this.registerSharedBranch(branchId),
 			rebaseLogger,
-			options.retainHistory ?? false,
+			coreOptions.retainHistory ?? false,
 		);
 
 		this.registerSharedBranch("main");
 
 		const revisionTagCodec = new RevisionTagCodec(idCompressor);
 		const editManagerCodec = makeEditManagerCodecBuilder<TChange>().build({
-			...options,
+			...coreOptions,
 			changeCodecs: this.editManager.changeFamily.codecs,
 			dependentChangeFormatVersion: changeFormatVersionForEditManager,
 			revisionTagCodec,
@@ -212,9 +221,9 @@ export class SharedTreeCore<
 				this.editManager,
 				editManagerCodec,
 				this.idCompressor,
-				options.minVersionForCollab,
+				coreOptions.minVersionForCollab,
 				this.schemaAndPolicy,
-				options.healUnresolvableIdentifiersOnDecode === true
+				coreOptions.healUnresolvableIdentifiersOnDecode === true
 					? { sharedObjectId: sharedObject.id, logger }
 					: undefined,
 			),
@@ -226,7 +235,7 @@ export class SharedTreeCore<
 		);
 
 		this.messageCodec = makeMessageCodecBuilder<TChange>().build({
-			...options,
+			...coreOptions,
 			changeCodecs: changeFamily.codecs,
 			dependentChangeFormatVersion: changeFormatVersionForMessage,
 			revisionTagCodec: new RevisionTagCodec(idCompressor),
@@ -336,7 +345,10 @@ export class SharedTreeCore<
 			if (change.type === "append") {
 				if (this.detachedRevision === undefined) {
 					// Commit enrichment is only necessary for changes that will be submitted as ops, and changes issued while detached are not submitted.
-					this.getCommitEnricher(branchId).prepareChanges(change.newCommits);
+					this.getCommitEnricher(branchId).prepareChanges(
+						change.newCommits,
+						this.coreOptions.validateCommitsOnFirstSubmission ?? false,
+					);
 				}
 
 				for (const commit of change.newCommits) {
@@ -682,7 +694,12 @@ export class SharedTreeCore<
 		assert(!this.enrichers.has(branchId), 0xc6d /* Branch already registered */);
 		this.enrichers.set(branchId, {
 			enricher: commitEnricher,
-			resubmitMachine: resubmitMachine ?? new DefaultResubmitMachine(enricher),
+			resubmitMachine:
+				resubmitMachine ??
+				new DefaultResubmitMachine(
+					enricher,
+					this.coreOptions.validateRebasedCommitsBeforeResubmission ?? false,
+				),
 		});
 	}
 
