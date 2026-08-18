@@ -114,6 +114,10 @@ export class BlobHandle
 		this._events?.emit("payloadShared");
 	};
 
+	public readonly notifyUploaded = (): void => {
+		this._events?.emit("payloadUploaded");
+	};
+
 	public readonly notifyFailed = (error: unknown): void => {
 		this._payloadShareError = error;
 		this._events?.emit("payloadShareFailed", error);
@@ -234,6 +238,7 @@ const isTTLTooCloseToExpiry = (blobRecord: UploadedBlob | AttachingBlob): boolea
 
 interface IBlobManagerInternalEvents {
 	blobExpired: (localId: string) => void;
+	blobUploaded: (localId: string) => void;
 	handleAttached: (pending: LocalBlobRecord) => void;
 	processedBlobAttach: (localId: string, storageId: string) => void;
 }
@@ -526,12 +531,22 @@ export class BlobManager {
 			async () => blob,
 			true, // payloadPending
 			() => {
+				const onBlobUploaded = (uploadedLocalId: string): void => {
+					if (uploadedLocalId === localId) {
+						this.internalEvents.off("blobUploaded", onBlobUploaded);
+						blobHandle.notifyUploaded();
+					}
+				};
+				this.internalEvents.on("blobUploaded", onBlobUploaded);
 				const uploadAndAttachP = this.uploadAndAttach(localId, signal);
 				uploadAndAttachP.then(blobHandle.notifyShared).catch((error) => {
 					// TODO: notifyShared won't fail directly, but it emits an event to the customer.
 					// Consider what to do if the customer's code throws. reportError is nice.
 				});
-				uploadAndAttachP.catch(blobHandle.notifyFailed);
+				uploadAndAttachP.catch((error) => {
+					this.internalEvents.off("blobUploaded", onBlobUploaded);
+					blobHandle.notifyFailed(error);
+				});
 			},
 			() => {
 				const localBlobRecord = this.localBlobCache.get(localId);
@@ -719,6 +734,12 @@ export class BlobManager {
 					this.internalEvents.on("blobExpired", onBlobExpired);
 					signal?.addEventListener("abort", onSignalAbort);
 					this.sendBlobAttachMessage(localId, localBlobRecord.storageId);
+					// The blob is now uploaded and its BlobAttach op has been enqueued into the outbox.
+					// We raise the "uploaded" milestone here (rather than when the upload to storage completed)
+					// so that if a listener responds by submitting an op (e.g. storing this handle in a DDS),
+					// that op is enqueued after the BlobAttach op. Note the BlobAttach op is additionally
+					// guaranteed to be flushed ahead of any main-batch op regardless of enqueue order.
+					this.internalEvents.emit("blobUploaded", localId);
 				});
 			}
 		};
