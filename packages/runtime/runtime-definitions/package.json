@@ -142,6 +142,9 @@
 			"Interface_IFluidParentContext": {
 				"backCompat": false
 			},
+			"TypeAlias_OldestSupportedClientVersion": {
+				"forwardCompat": false
+			},
 			"TypeAlias_MinimumVersionForCollab": {
 				"forwardCompat": false
 			}
