@@ -4,6 +4,7 @@
  */
 
 import {
+	deltaFieldMapHasVisibleChanges,
 	makeAnonChange,
 	makeChangeAtomId,
 	makeDetachedFieldIndex,
@@ -460,15 +461,18 @@ class ModularChangeMinimizer {
 		const isBuiltRootEntry = this.builtRootIds.getFirst(rootInputId, countProcessed);
 		countProcessed = isBuiltRootEntry.length;
 
-		const isTransientAttachOfRoot =
-			outputRootId !== undefined && isBuiltRootEntry.value === true;
+		const isAttachOfBuild =
+			isBuiltRootEntry?.value ??
+			(moveEndpointEntry.value !== undefined &&
+				this.isNodeIdInBuiltTree(moveEndpointEntry.value.nodeId));
 
+		const isTransientAttachOfBuild = outputRootId !== undefined && isAttachOfBuild;
 		const shouldDropEntry = this.shouldDropAttach(
 			fieldId,
 			rootInputId,
 			countProcessed,
 			moveEndpointEntry.value,
-			isTransientAttachOfRoot,
+			isTransientAttachOfBuild,
 		);
 		countProcessed = shouldDropEntry.length;
 
@@ -515,6 +519,11 @@ class ModularChangeMinimizer {
 		);
 
 		const deltaForBuilds = intoDelta(makeAnonChange(changeForBuilds), this.fieldKinds);
+		assert(
+			!deltaFieldMapHasVisibleChanges(deltaForBuilds.fields),
+			"Expected all changes to attached tree to be filtered out",
+		);
+
 		const forest = forestFactory();
 		const detachedFieldIndex = makeDetachedFieldIndex();
 
