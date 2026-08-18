@@ -23,7 +23,7 @@ import type { NodeSchemaOptionsAlpha, System_Unsafe } from "../../api/index.js";
 import {
 	CompatibilityLevel,
 	type WithType,
-	// eslint-disable-next-line import-x/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated -- Required to implement the deprecated typeNameSymbol API.
 	typeNameSymbol,
 	NodeKind,
 	type TreeNode,
@@ -1534,7 +1534,7 @@ export function arraySchema<
 		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
 			persistedMetadata;
 
-		// eslint-disable-next-line import-x/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated -- Required to implement the deprecated typeNameSymbol API.
 		public get [typeNameSymbol](): TName {
 			return identifier;
 		}
