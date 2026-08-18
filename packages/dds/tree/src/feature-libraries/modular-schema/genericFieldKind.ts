@@ -16,9 +16,9 @@ import {
 import { brandConst } from "../../util/index.js";
 
 import type {
+	ChildChangeInfo,
 	FieldChangeDelta,
 	FieldChangeHandler,
-	NestedChangesIndices,
 	NodeChangeComposer,
 	NodeChangePruner,
 	NodeChangeRebaser,
@@ -52,12 +52,17 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 		let nodeIndex = 0;
 		const markList: DeltaMark[] = [];
 		for (const [index, nodeChange] of change.entries()) {
+			const childDelta = deltaFromChild(nodeChange);
+			if (childDelta.size === 0) {
+				continue;
+			}
+
 			if (nodeIndex < index) {
 				const offset = index - nodeIndex;
 				markList.push({ count: offset });
 				nodeIndex = index;
 			}
-			markList.push({ count: 1, fields: deltaFromChild(nodeChange) });
+			markList.push({ count: 1, fields: childDelta });
 			nodeIndex += 1;
 		}
 		return { local: { marks: markList } };
@@ -84,9 +89,12 @@ function compose(
 	return composed;
 }
 
-function getNestedChanges(change: GenericChangeset): NestedChangesIndices {
-	// For generic changeset, the indices in the input and output contexts are the same.
-	return change.toArray().map(([index, nodeChange]) => [nodeChange, index, index]);
+function getNestedChanges(change: GenericChangeset): ChildChangeInfo[] {
+	return change.toArray().map(([_index, nodeChange]) => ({
+		nodeId: nodeChange,
+		inputRootId: undefined,
+		detachId: undefined,
+	}));
 }
 
 function rebaseGenericChange(
