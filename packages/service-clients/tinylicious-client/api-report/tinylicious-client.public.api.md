@@ -7,6 +7,8 @@
 // @public @sealed
 export type ITinyliciousAudience = IServiceAudience<TinyliciousMember>;
 
+export { OldestSupportedClientVersion }
+
 // @public @sealed
 export class TinyliciousClient {
     constructor(properties?: TinyliciousClientProps);
