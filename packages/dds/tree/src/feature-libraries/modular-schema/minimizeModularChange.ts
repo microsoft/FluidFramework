@@ -69,10 +69,6 @@ import { pruneFieldMap } from "./prune.js";
  * transaction, or changes whose effects cancel out to nothing. Minimizing reduces the size of an edit without altering
  * its observable effect.
  *
- * This is the eventual home of the minimization algorithm, colocated with {@link ModularChangeFamily} so it can use its
- * internals. It is currently a no-op that returns the change unchanged; a real implementation will be provided in a
- * future change.
- *
  * @param change - The change to minimize.
  * @param fieldKinds - The field kinds used in the changeset.
  * @param forestFactory - A function that returns a new forest instance.
@@ -150,9 +146,11 @@ class ModularChangeMinimizer {
 
 	private shouldSquashDetach(
 		fieldId: FieldId,
-		rootInputId: ChangeAtomId | undefined,
+		inputRootId: ChangeAtomId | undefined,
 	): boolean {
-		return this.isNodeIdInBuiltTree(fieldId.nodeId) && rootInputId === undefined;
+		// `inputRootId === undefined` indicates that this is a move of a transiently attached built root.
+		// In that case, we convert the move to an insert at the final location, discarding the detach portion.
+		return this.isNodeIdInBuiltTree(fieldId.nodeId) && inputRootId === undefined;
 	}
 
 	private shouldSquashAttach(
@@ -349,16 +347,19 @@ class ModularChangeMinimizer {
 			};
 		}
 
-		const action = shouldSquashEntry.value
-			? EditFilterStatus.Preserve
-			: EditFilterStatus.Remove;
-
 		return {
-			value: { action },
+			value: { action: EditFilterStatus.Preserve },
 			length: countProcessed,
 		};
 	}
 
+	/**
+	 * Returns a version of `fieldChange` to be used in the final minimized change.
+	 * The filtered change will have dropped:
+	 * - Edits which were squashed into the built trees.
+	 * - Detaches of built roots. If part of a move, these are instead represented as an attach at the final location.
+	 * - Edits to nodes which are detached in the output, except for detaches of content which does end attached.
+	 */
 	private filterEditsForResidualChange(
 		fieldChange: FieldChange,
 		fieldId: FieldId,
@@ -764,7 +765,7 @@ function collectAttachedRootIds(delta: DeltaRoot): ChangeAtomIdRangeSet {
 
 	visitLiveFields(delta.fields);
 
-	// Process node ranges discovered to be live: pull in their nested content (from `global`) and propagate
+	// Process node ranges discovered to be live: pull in their nested content and propagate
 	// liveness backwards across renames (a node attached under its post-rename ID was built under its
 	// pre-rename ID). Iterate to a fixed point.
 	while (worklist.length > 0) {
@@ -773,7 +774,7 @@ function collectAttachedRootIds(delta: DeltaRoot): ChangeAtomIdRangeSet {
 			break;
 		}
 		const { id, count } = next;
-		// Nested content in `global` is keyed per node, so it must be visited one ID at a time.
+		// Nested content is keyed per node, so it must be visited one ID at a time.
 		for (let offset = 0; offset < count; offset += 1) {
 			visitLiveFields(detachIdToNodeChanges.get(id.revision)?.get(brand(id.localId + offset)));
 		}
@@ -803,13 +804,9 @@ function collectAttachedRootIds(delta: DeltaRoot): ChangeAtomIdRangeSet {
 }
 
 /**
- * Indexes a delta's {@link DeltaRoot.global | global} detached-node changes by their node ID.
- *
- * @remarks
- * `DeltaRoot.global` describes modifications to nodes that are built or preexist the change as
- * detached roots, keyed by node ID. This builds a `revision -> localId -> fields` lookup so
- * those per-node {@link DeltaFieldMap | field changes} can be resolved quickly (for example,
- * when trimming transient content out of a surviving node's build tree).
+ * Returns a mapping from root ID to the field changes for that node.
+ * There are entries both for nodes which are detached in the input context,
+ * and also for nodes which are detached by this delta.
  */
 function getDeltaNodeChangesByDetachId(delta: DeltaRoot): ChangeAtomIdMap<DeltaFieldMap> {
 	const detachIdToChanges: ChangeAtomIdMap<DeltaFieldMap> = new Map();
