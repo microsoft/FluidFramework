@@ -119,7 +119,7 @@ adding them changes no class shape and needs no type-test exceptions. Since a pr
 
 ## Known end-to-end failures
 
-State of `test-end-to-end-tests` against the local driver with the gate forced on: **583 passing, 9 failing**
+State of `test-end-to-end-tests` against the local driver with the gate forced on: **582 passing, 10 failing**
 (the old flow passes all of them). Each is understood; none is unexplained. Nothing here blocks development,
 but each needs a decision before the gate is enabled anywhere.
 
@@ -175,14 +175,21 @@ The first observation in a session has no local baseline. It uses the summarizer
 a reference state which changed before this client loaded, and it is why a freshly elected summarizer does not
 wrongly reuse a stale `unreferenced` flag.
 
-### Summary handle resolution - 1 test
+### Summary handle resolution - 2 tests
 
-| Test                                                                                      | File                                                                                                                                                             |
-| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `realizes an attached data store between summarize and refresh via the app's data store loader (prod-like)` | [summarizeWithOutOfOrderDataStoreRealization.spec.ts](../../../../test/test-end-to-end-tests/src/test/summarization/summarizeWithOutOfOrderDataStoreRealization.spec.ts) |
+Both are in the `SharedTree with identifier in a data store created detached and attached via op` suite, and
+both fail the same way: the summary contains a handle whose path is not present in the previous summary, so the
+upload throws `Cannot read properties of undefined (reading 'trees')` in
+`SummaryTreeUploadManager.getIdFromPathCore`.
 
-**Resolution:** the test can go away, or its assertion can be reverted. It expects the summary upload to fail
-with an unresolvable summary handle; under this flow the summary should simply succeed.
+| Test                                                                        | File                                                                        |
+| ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `Summarizer loads data store from the attach op summary and can summarize`  | [tree.spec.ts](../../../../test/test-end-to-end-tests/src/test/tree.spec.ts) |
+| `Summarizer creates the data store from the attach op summary and can summarize` | [tree.spec.ts](../../../../test/test-end-to-end-tests/src/test/tree.spec.ts) |
+
+**Resolution:** open. A data store attached via op has no previous summary for its subtree, so nothing under it
+may be reused on the summary that follows. Worth confirming this is a missing `neverSummarizedSequenceNumber`
+on the attach path rather than something the tests should be relaxed about.
 
 ## Rollout
 
