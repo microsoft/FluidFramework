@@ -136,8 +136,6 @@ import type { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditB
 import { extractTransactionChangeProcessor } from "./transactionPostProcessor.js";
 import { SerializedChange } from "./serializedChange.js";
 
-const schemaChangeTelemetryEventName = "SchemaChangeApplied";
-
 /**
  * Yields all defined (non-`undefined`) labels from a {@link LabelTree}, depth-first.
  */
@@ -569,6 +567,11 @@ export class TreeCheckout implements ITreeCheckout {
 	 * @privateRemarks Exposed for testing purposes.
 	 */
 	public static readonly revertTelemetryEventName = "RevertRevertible";
+	/**
+	 * The name of the telemetry event logged when a schema change is applied.
+	 * @privateRemarks Exposed for testing purposes.
+	 */
+	public static readonly schemaChangeTelemetryEventName = "SchemaChangeApplied";
 
 	readonly #events = createEmitter<CheckoutEvents>();
 	public events: Listenable<CheckoutEvents> = this.#events;
@@ -1125,7 +1128,7 @@ export class TreeCheckout implements ITreeCheckout {
 				);
 				this.storedSchema.apply(newSchema);
 				this.logger?.sendTelemetryEvent({
-					eventName: schemaChangeTelemetryEventName,
+					eventName: TreeCheckout.schemaChangeTelemetryEventName,
 					...tagCodeArtifacts({
 						...telemetryMetrics,
 						isSharedBranch: this.isSharedBranch,

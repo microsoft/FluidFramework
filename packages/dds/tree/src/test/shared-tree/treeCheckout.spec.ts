@@ -81,7 +81,6 @@ const rootField: NormalizedFieldUpPath = {
 };
 
 const enableSchemaValidation = true;
-const schemaChangeTelemetryEventName = "SchemaChangeApplied";
 
 describe("sharedTreeView", () => {
 	describe("Events", () => {
@@ -1602,7 +1601,9 @@ describe("sharedTreeView", () => {
 		itView("logs privacy-safe schema change telemetry", ({ view, logger }) => {
 			const initialEvents = logger
 				.events()
-				.filter((event) => event.eventName.endsWith(schemaChangeTelemetryEventName));
+				.filter((event) =>
+					event.eventName.endsWith(TreeCheckout.schemaChangeTelemetryEventName),
+				);
 			assert.deepEqual(
 				initialEvents.map((event) => event.changeKind),
 				[
@@ -1640,7 +1641,9 @@ describe("sharedTreeView", () => {
 
 			const schemaChangeEvents = logger
 				.events()
-				.filter((event) => event.eventName.endsWith(schemaChangeTelemetryEventName));
+				.filter((event) =>
+					event.eventName.endsWith(TreeCheckout.schemaChangeTelemetryEventName),
+				);
 			const upgradeEvent = schemaChangeEvents.at(-1);
 			assert(upgradeEvent !== undefined, "Expected schema change telemetry.");
 			assert.deepEqual(
