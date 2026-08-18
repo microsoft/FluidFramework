@@ -55,7 +55,7 @@ Follow the tool's interactive prompts. The user will need to queue the ADO build
 
 **Autonomous mode:** After running `flub release`, report:
 
-> **Action required:** Queue [Build - client packages](https://dev.azure.com/fluidframework/internal/_build?definitionId=12) for the release branch and choose the "release" option. After it succeeds, queue the publish pipeline as described below.
+> **Action required:** Queue [Build - client packages](https://dev.azure.com/fluidframework/internal/_build?definitionId=12) for the release branch and choose the "release" option for the "Release Build" parameter. After it succeeds, queue the publish pipeline as described below.
 
 ### Publish the successful candidate build
 
