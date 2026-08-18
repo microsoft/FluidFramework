@@ -59,10 +59,10 @@ import {
 	type ReadOnlyDetachedFieldIndex,
 	makeAnonChange,
 	type TaggedChange,
-	deltaFieldMapHasVisibleChanges,
 	findCommonAncestor,
 	rebaseBranch,
 	type LocalCommitEvents,
+	getDeltaChangeProfile,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -1557,7 +1557,7 @@ export class TreeCheckout implements ITreeCheckout {
 				headCommit,
 				this.mintRevisionTag,
 			);
-			const ignoreNoChangeViolation = !sharedTreeChangeHasVisibleChanges(diff);
+			const ignoreNoChangeViolation = !sharedTreeChangeHasApplicationFacingChanges(diff);
 
 			change = tagChange(
 				rebaseChange(
@@ -1912,19 +1912,19 @@ function verboseFromCursor(
 }
 
 /**
- * Enumerates through a shared tree change, looking for schema change and field changes that result in visible changes to the tree (e.g. an insert, move, delete).
- * This function also considers changes to detached roots to be visible changes, but not renames of roots or builds of new roots.
+ * Whether the change contains any application-facing changes.
  *
  * @param change - The change to analyze.
- * @returns True if the change contains any schema changes or any field changes that result in visible changes to the tree, false otherwise.
+ * @returns True if the change contains any schema changes or any field changes (either in the document tree or in detached trees), false otherwise.
  */
-function sharedTreeChangeHasVisibleChanges(change: SharedTreeChange): boolean {
+function sharedTreeChangeHasApplicationFacingChanges(change: SharedTreeChange): boolean {
 	for (const inner of change.changes) {
 		if (inner.type === "schema") {
 			return true;
 		}
 		const delta = intoDelta(tagChange(inner.innerChange, undefined));
-		if (deltaFieldMapHasVisibleChanges(delta.fields)) {
+		const profile = getDeltaChangeProfile(delta);
+		if (profile.hasChangesInDocumentTree || profile.hasChangesInDetachedTrees) {
 			return true;
 		}
 	}
