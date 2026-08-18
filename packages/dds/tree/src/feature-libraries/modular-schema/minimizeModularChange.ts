@@ -22,6 +22,7 @@ import {
 } from "../../core/index.js";
 import {
 	brand,
+	hasSingle,
 	setInNestedMap,
 	type Mutable,
 	type RangeQueryResult,
@@ -41,6 +42,7 @@ import {
 } from "./fieldChangeHandler.js";
 
 import type { FlexFieldKind } from "./fieldKind.js";
+import { filterEdits } from "./filterEdits.js";
 import { invertModularChange } from "./invert.js";
 import { intoDelta } from "./modularChangeFamily.js";
 import type {
@@ -51,14 +53,8 @@ import type {
 	NodeChangeset,
 	NodeId,
 } from "./modularChangeTypes.js";
-import {
-	filterEdits,
-	getChangeHandler,
-	nodeChangeFromId,
-	normalizeNodeId,
-} from "./modularChangeUtils.js";
+import { getChangeHandler, nodeChangeFromId, normalizeNodeId } from "./modularChangeUtils.js";
 import { assert, fail } from "@fluidframework/core-utils/internal";
-import { pruneFieldMap } from "./prune.js";
 
 /**
  * "Minimizes" a {@link ModularChangeset} so that it contains no extraneous
@@ -108,16 +104,10 @@ class ModularChangeMinimizer {
 		const residualChange = filterEdits(
 			this.change,
 			this.filterEditsForResidualChange.bind(this),
+			this.fieldKinds,
 		);
 
 		(residualChange as Mutable<ModularChangeset>).builds = this.squashBuilds(forestFactory);
-
-		const prunedFields = pruneFieldMap(
-			residualChange.fieldChanges,
-			residualChange.nodeChanges,
-			this.fieldKinds,
-		);
-		(residualChange as Mutable<ModularChangeset>).fieldChanges = prunedFields ?? new Map();
 		return residualChange;
 	}
 
@@ -521,6 +511,7 @@ class ModularChangeMinimizer {
 		const changeForBuilds = filterEdits(
 			this.change,
 			this.filterEditsForBuildChange.bind(this),
+			this.fieldKinds,
 		);
 
 		const deltaForBuilds = intoDelta(makeAnonChange(changeForBuilds), this.fieldKinds);
@@ -533,8 +524,11 @@ class ModularChangeMinimizer {
 		for (const entry of detachedFieldIndex.entries()) {
 			cursor.enterField(detachedFieldIndex.toFieldKey(entry.root));
 			const chunks = forest.chunkField(cursor);
-			assert(chunks.length === 1, "TODO: Handle multiple chunks");
-			const chunk = chunks[0] ?? fail("Expected at least one chunk");
+
+			// Delta visiting currently splits ranges of nodes into individual elements,
+			// so for now we will not have more than one node in a detached field.
+			assert(hasSingle(chunks), "TODO: Handle multiple chunks");
+			const chunk = chunks[0];
 			assert(chunk.topLevelLength === 1, "TODO: Handle chunk with range of nodes");
 
 			const rootId: ChangeAtomId = {

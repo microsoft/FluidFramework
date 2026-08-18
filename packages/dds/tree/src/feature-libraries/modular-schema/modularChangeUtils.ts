@@ -5,9 +5,7 @@
 
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import {
-	makeChangeAtomId,
 	newChangeAtomIdRangeMap,
-	type ChangeAtomId,
 	type ChangesetLocalId,
 	type FieldKey,
 	type FieldKindIdentifier,
@@ -29,12 +27,8 @@ import {
 	type CrossFieldManager,
 	type CrossFieldMap,
 } from "./crossFieldQueries.js";
-import type {
-	FieldChangeHandler,
-	FilterAttachResult,
-	FilterDetachResult,
-} from "./fieldChangeHandler.js";
-import { EditFilterStatus, NodeAttachState } from "./fieldChangeHandler.js";
+import type { FieldChangeHandler } from "./fieldChangeHandler.js";
+import { NodeAttachState } from "./fieldChangeHandler.js";
 import type { FlexFieldKind } from "./fieldKind.js";
 import { genericFieldKind } from "./genericFieldKind.js";
 import {
@@ -343,69 +337,6 @@ export function nodeChangeFromId(
 	const node = getFromChangeAtomIdMap(nodes, id);
 	assert(node !== undefined, 0x9ca /* Unknown node ID */);
 	return node;
-}
-
-export function removeAllDetachesFilter(
-	_id: ChangeAtomId,
-	count: number,
-	_rootId: ChangeAtomId | undefined,
-	_endpointId?: ChangeAtomId,
-): RangeQueryResult<FilterDetachResult> {
-	return {
-		value: { action: EditFilterStatus.Remove, shouldRemoveChild: false },
-		length: count,
-	};
-}
-
-export function removeAllAttachesFilter(
-	_id: ChangeAtomId,
-	count: number,
-	_rootId: ChangeAtomId | undefined,
-	_endpointId?: ChangeAtomId,
-): RangeQueryResult<FilterAttachResult> {
-	return { value: { action: EditFilterStatus.Remove }, length: count };
-}
-
-export function filterEdits(
-	change: ModularChangeset,
-	filterFieldEdits: (fieldChange: FieldChange, fieldId: FieldId) => FieldChange,
-): ModularChangeset {
-	const fieldChanges = filterFieldMapEdits(change.fieldChanges, undefined, filterFieldEdits);
-
-	const nodeChanges: ChangeAtomIdBTree<NodeChangeset> = brand(
-		change.nodeChanges.mapValues((v, k) =>
-			filterNodeEdits(makeChangeAtomId(k[1], k[0]), v, filterFieldEdits),
-		),
-	);
-
-	return { ...change, fieldChanges, nodeChanges };
-}
-
-function filterFieldMapEdits(
-	change: FieldChangeMap,
-	nodeId: NodeId | undefined,
-	filterFieldEdits: (fieldChange: FieldChange, fieldId: FieldId) => FieldChange,
-): FieldChangeMap {
-	return new Map(
-		Array.from(change.entries(), ([field, fieldChange]) => [
-			field,
-			filterFieldEdits(fieldChange, { nodeId, field }),
-		]),
-	);
-}
-
-function filterNodeEdits(
-	nodeId: NodeId,
-	change: NodeChangeset,
-	filterFieldEdits: (fieldChange: FieldChange, fieldId: FieldId) => FieldChange,
-): NodeChangeset {
-	if (change.fieldChanges === undefined) {
-		return change;
-	}
-	return {
-		...change,
-		fieldChanges: filterFieldMapEdits(change.fieldChanges, nodeId, filterFieldEdits),
-	};
 }
 
 /**

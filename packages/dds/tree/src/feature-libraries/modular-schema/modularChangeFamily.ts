@@ -105,14 +105,13 @@ import {
 	newCrossFieldTable,
 	nodeChangeFromId,
 	normalizeNodeId,
-	removeAllAttachesFilter,
-	removeAllDetachesFilter,
 	revisionInfoFromTaggedChange,
 	updateConstraintsForFields,
 	type CrossFieldTable,
 } from "./modularChangeUtils.js";
 import { invertModularChange } from "./invert.js";
 import { pruneFieldMap } from "./prune.js";
+import { removeAllAttachesFilter, removeAllDetachesFilter } from "./filterEdits.js";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
