@@ -19,6 +19,7 @@ import type {
 	ITenantOrderer,
 	ITenantStorage,
 } from "@fluidframework/server-services-core";
+import { queue } from "async";
 import { default as Axios } from "axios";
 
 /**
@@ -30,38 +31,10 @@ import { default as Axios } from "axios";
  */
 const maxConcurrentBlobUploads = 50;
 
-/**
- * Runs asynchronous operations with a fixed concurrency limit.
- */
-class PromiseLimiter {
-	private activeCount = 0;
-	private readonly waiters: (() => void)[] = [];
-
-	public constructor(private readonly limit: number) {}
-
-	public async run<T>(operation: () => Promise<T>): Promise<T> {
-		if (this.activeCount >= this.limit) {
-			await new Promise<void>((resolve) => {
-				this.waiters.push(resolve);
-			});
-		} else {
-			this.activeCount++;
-		}
-
-		try {
-			return await operation();
-		} finally {
-			const next = this.waiters.shift();
-			if (next === undefined) {
-				this.activeCount--;
-			} else {
-				next();
-			}
-		}
-	}
-}
-
-const blobUploadLimiter = new PromiseLimiter(maxConcurrentBlobUploads);
+const blobUploadQueue = queue(
+	async (upload: () => Promise<ICreateBlobResponse>) => upload(),
+	maxConcurrentBlobUploads,
+);
 
 /**
  * Tinylicious Git manager that bounds blob uploads before their Historian requests are created.
@@ -71,7 +44,9 @@ export class TinyliciousGitManager extends GitManager {
 		content: string,
 		encoding: "utf-8" | "base64",
 	): Promise<ICreateBlobResponse> {
-		return blobUploadLimiter.run(async () => super.createBlob(content, encoding));
+		return blobUploadQueue.pushAsync<ICreateBlobResponse>(async () =>
+			super.createBlob(content, encoding),
+		);
 	}
 }
 
