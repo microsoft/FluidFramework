@@ -8,7 +8,6 @@ import type {
 	IContainerContext,
 	ISnapshotTreeWithBlobContents,
 } from "@fluidframework/container-definitions/internal";
-import { bufferToString } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
@@ -153,17 +152,18 @@ export const toRedirectTable = (
 export const summarizeBlobManagerState = (
 	redirectTable: Map<string, string>,
 	detachedBlobSummaryContents?: ReadonlyMap<string, ArrayBufferLike>,
-	detachedBlobSummaryIds?: Iterable<string>,
+	detachedBlobSummaryIds?: ReadonlySet<string>,
 ): ISummaryTreeWithStats =>
 	summarizeV1(redirectTable, detachedBlobSummaryContents, detachedBlobSummaryIds);
 
 const summarizeV1 = (
 	redirectTable: Map<string, string>,
 	detachedBlobSummaryContents?: ReadonlyMap<string, ArrayBufferLike>,
-	detachedBlobSummaryIds?: Iterable<string>,
+	detachedBlobSummaryIds?: ReadonlySet<string>,
 ): ISummaryTreeWithStats => {
 	const builder = new SummaryTreeBuilder();
 	const storageIds = getStorageIds(redirectTable);
+	const detachedBlobSummaryStorageIds = new Set<string>();
 	const detachedBlobSummaryBuilder = new SummaryTreeBuilder({
 		groupId: detachedBlobSummaryGroupId,
 	});
@@ -171,6 +171,10 @@ const summarizeV1 = (
 		...(detachedBlobSummaryContents?.keys() ?? []),
 		...(detachedBlobSummaryIds ?? []),
 	])) {
+		const storageId = redirectTable.get(localId);
+		if (storageId !== undefined) {
+			detachedBlobSummaryStorageIds.add(storageId);
+		}
 		const detachedBlobSummaryContent = detachedBlobSummaryContents?.get(localId);
 		if (detachedBlobSummaryContent === undefined) {
 			detachedBlobSummaryBuilder.addHandle(
@@ -181,7 +185,7 @@ const summarizeV1 = (
 		} else {
 			detachedBlobSummaryBuilder.addBlob(
 				localId,
-				bufferToString(detachedBlobSummaryContent, "base64"),
+				new Uint8Array(detachedBlobSummaryContent),
 			);
 		}
 	}
@@ -191,9 +195,11 @@ const summarizeV1 = (
 		builder.addWithStats(detachedBlobSummaryTreeName, detachedBlobSummary);
 	}
 	for (const storageId of storageIds) {
-		// The Attachment is inspectable by storage, which lets it detect that the blob is referenced
-		// and therefore should not be GC'd.
-		builder.addAttachment(storageId);
+		if (!detachedBlobSummaryStorageIds.has(storageId)) {
+			// The Attachment is inspectable by storage, which lets it detect that the blob is referenced
+			// and therefore should not be GC'd.
+			builder.addAttachment(storageId);
+		}
 	}
 
 	// Exclude identity mappings from the redirectTable summary. Note that
@@ -202,7 +208,8 @@ const summarizeV1 = (
 	// time in toRedirectTable even if there is no non-identity mapping in
 	// the redirectTable.
 	const nonIdentityRedirectTableEntries = [...redirectTable.entries()].filter(
-		([localId, storageId]) => localId !== storageId,
+		([localId, storageId]) =>
+			localId !== storageId && detachedBlobSummaryIds?.has(localId) !== true,
 	);
 	// Preserve the loader's existing `.blobs` invariant when all mappings are encoded by `.detached`.
 	if (nonIdentityRedirectTableEntries.length > 0 || hasDetachedBlobSummary) {
