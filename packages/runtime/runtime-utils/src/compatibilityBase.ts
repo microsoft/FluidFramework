@@ -168,6 +168,7 @@ export function getConfigForMinVersionForCollabIterable<T>(
 	// Validate and strongly type the versions from the configMap. configMap keys may describe defaults for
 	// versions later than the current package version (e.g. to prepare ahead of a future major release), so we
 	// don't enforce the upper-bound check here.
+	validateMinimumVersionForCollab(minVersionForCollab);
 	const versions: [OldestSupportedClientVersion, T][] = Array.from(
 		entries,
 		([version, value]) => {
