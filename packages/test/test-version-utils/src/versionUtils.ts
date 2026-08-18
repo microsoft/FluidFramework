@@ -298,9 +298,12 @@ export function calculateRequestedRange(
 
 	// If the base version is a public version and `adjustPublicMajor` is false, then we need to ensure that we
 	// calculate N-1 as the previous major release, regardless if it is public or internal.
-	// Currently, this case only applies to calculating N-X for 2.x.y.
+	// This special-cased legacy scheme (minor-decade/RC ranges) only applies while computing N-X *from* a 2.x.y
+	// base version, since 2.x spanned many minors/RC releases without a major version bump. For major versions
+	// other than 2 (e.g. 3.x and beyond), fall through to the normal major-decrement logic below, which correctly
+	// resolves N-1 of 3.0.0 to the latest published 2.x release.
 	// TODO: This is a temporary solution and we need to entirely rewrite this function to handle the changes the version schemas. See ADO:8198.
-	if (adjustPublicMajor === false && version.major > 1) {
+	if (adjustPublicMajor === false && version.major === 2) {
 		if (version.minor < 10) {
 			// If 2.0 <= N < 2.10, then we can pretend that N is RC6 (*which doesn't exist*) and calculate the range as if it were an internal version.
 			const internalSchemeRange = internalSchema("2.0.0", "6.0.0", "rc", requested);
