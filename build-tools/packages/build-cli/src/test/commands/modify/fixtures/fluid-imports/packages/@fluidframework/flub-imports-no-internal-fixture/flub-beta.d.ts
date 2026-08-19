@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-/** @public */
-export declare function NoInternalPublic(): void;
+/** @beta */
+export declare function NoInternalBeta(): void;

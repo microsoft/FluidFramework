@@ -29,7 +29,7 @@ const testResourceFiles = [
 	"packages/@fluidframework/flub-imports-fixture/flub-legacy-beta.d.ts",
 	"packages/@fluidframework/flub-imports-no-internal-fixture/package.json",
 	"packages/@fluidframework/flub-imports-no-internal-fixture/index.d.ts",
-	"packages/@fluidframework/flub-imports-no-internal-fixture/beta.d.ts",
+	"packages/@fluidframework/flub-imports-no-internal-fixture/flub-beta.d.ts",
 ] as const;
 
 let testDirectory: string | undefined;

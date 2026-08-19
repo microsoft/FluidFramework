@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 /** @legacy @beta */
 export interface LegacyChildLogger {
 	readonly entryPoint: "legacy";

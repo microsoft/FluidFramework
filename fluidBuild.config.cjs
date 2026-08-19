@@ -617,6 +617,7 @@ module.exports = {
 			],
 			"npm-private-packages": [
 				// test packages
+				"^build-tools/packages/build-cli/src/test/commands/modify/fixtures/fluid-imports/packages/",
 				"^build-tools/packages/build-infrastructure/src/test/data/testRepo/",
 			],
 			"pnpm-npm-package-json-preinstall": [

@@ -1,13 +1,23 @@
 {
 	"name": "@fluidframework/flub-imports-no-internal-fixture",
 	"version": "1.0.0",
+	"private": true,
+	"description": "Test package without an internal entry point.",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "build-tools/packages/build-cli/src/test/commands/modify/fixtures/fluid-imports/packages/@fluidframework/flub-imports-no-internal-fixture"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
 	"type": "module",
 	"exports": {
 		".": {
 			"types": "./index.d.ts"
 		},
 		"./beta": {
-			"types": "./beta.d.ts"
+			"types": "./flub-beta.d.ts"
 		}
 	}
 }
