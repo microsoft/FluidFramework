@@ -148,7 +148,7 @@ export interface IDocumentSchemaFeatures {
 	compressionLz4: boolean;
 	idCompressorMode: IdCompressorMode;
 	opGroupingEnabled: boolean;
-	createBlobPayloadPending: true | undefined;
+	createBlobPayloadPending: boolean | undefined;
 
 	/**
 	 * List of disallowed versions of the runtime.
@@ -189,7 +189,9 @@ export interface IDocumentSchemaCurrent extends Required<IDocumentSchema> {
 	version: typeof currentDocumentVersionSchema;
 	// This narrows the runtime property to only include the properties in IDocumentSchemaFeatures (all as optional)
 	runtime: {
-		[P in keyof IDocumentSchemaFeatures]?: IDocumentSchemaFeatures[P] extends boolean
+		[P in keyof IDocumentSchemaFeatures]?: IDocumentSchemaFeatures[P] extends
+			| boolean
+			| undefined
 			? true
 			: IDocumentSchemaFeatures[P];
 	};
@@ -675,7 +677,8 @@ export class DocumentsSchemaController {
 				compressionLz4: boolToProp(features.compressionLz4),
 				idCompressorMode: features.idCompressorMode,
 				opGroupingEnabled: boolToProp(features.opGroupingEnabled),
-				createBlobPayloadPending: features.createBlobPayloadPending,
+				createBlobPayloadPending:
+					features.createBlobPayloadPending === true ? true : undefined,
 				disallowedVersions: arrayToProp(features.disallowedVersions),
 				...retiredFeatureValues(),
 			},

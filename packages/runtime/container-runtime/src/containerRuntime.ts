@@ -482,10 +482,12 @@ export interface ContainerRuntimeOptions {
 	readonly explicitSchemaControl: boolean;
 
 	/**
-	 * Create blob handles with pending payloads when calling createBlob (default is `undefined` (disabled)).
+	 * Create blob handles with pending payloads when calling createBlob.
+	 * Default is `undefined` (disabled) when `oldestClientSupported` is `<2.40.0`, but enabled when `oldestClientSupported` is `>=2.40.0`).
 	 * When enabled (`true`), createBlob will return a handle before the blob upload completes.
+	 * Use explicit `false` to disable this feature when `oldestClientSupported` is `>=2.40.0`.
 	 */
-	readonly createBlobPayloadPending: true | undefined;
+	readonly createBlobPayloadPending: boolean | undefined;
 
 	/**
 	 * Controls automatic batch flushing during staging mode.
