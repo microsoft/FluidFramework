@@ -56,7 +56,7 @@ flub-ai() {
 		echo "Failed to create a temporary launch file." >&2
 		return 1
 	}
-	pnpm exec flub ai --launchFile "$launch_file" "$@"
+	flub ai --launchFile "$launch_file" "$@"
 	local rc=$?
 	if [ "$rc" -eq 0 ] && [ -s "$launch_file" ]; then
 		local cmd

@@ -871,8 +871,7 @@ describe("textEditor", () => {
 						const rendered = render(content, { reactStrictMode });
 
 						// Two operations in one transaction
-						const context = TreeAlpha.context(text);
-						context.runTransaction(() => {
+						TreeAlpha.context(text).runTransaction(() => {
 							text.insertAt(0, "A");
 							text.insertAt(1, "B");
 						});
