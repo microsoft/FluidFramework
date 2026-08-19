@@ -864,14 +864,23 @@ describe("sharedTreeView", () => {
 
 			view.runTransaction(() => {
 				view.root.insertAtEnd("A");
+				view.root.insertAtEnd("B");
 			});
 
+			// Verify that the fork was created
 			assert.equal(forks.length, 1);
+			const fork = forks[0];
+			assert.deepEqual(fork.disposed, false);
+			assert.deepEqual(fork.root, ["A", "B"]);
 
-			assert.deepEqual(forks[0].disposed, false);
-			assert.deepEqual(forks[0].root, ["A"]);
+			// Verify that the fork can be modified independently of the parent view
+			fork.root.insertAtEnd("C");
+			assert.deepEqual(fork.root, ["A", "B", "C"]);
+			assert.deepEqual(view.root, ["A", "B"]);
 
-			assert.deepEqual(view.root, ["A"]);
+			// Verify that the fork can be merged back into the parent view
+			view.merge(fork);
+			assert.deepEqual(view.root, ["A", "B", "C"]);
 		});
 
 		/**
