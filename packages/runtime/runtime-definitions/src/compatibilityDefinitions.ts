@@ -44,8 +44,8 @@
  * @public
  */
 export type OldestSupportedClientVersion =
-	| `${1 | 2}.${bigint}.${bigint}`
-	| `${1 | 2}.${bigint}.${bigint}-${string}`;
+	| `${1 | 2 | 3}.${bigint}.${bigint}`
+	| `${1 | 2 | 3}.${bigint}.${bigint}-${string}`;
 
 /**
  * Oldest version of Fluid Framework client packages that must be able to open and process

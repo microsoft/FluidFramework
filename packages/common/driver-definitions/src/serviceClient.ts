@@ -141,7 +141,7 @@ export function createBasicRegistryKey<T>(type: string): RegistryKey<T, T> {
  * @input
  * @alpha
  */
-export type OldestSupportedServiceClientVersion = `2.${bigint}.0`;
+export type OldestSupportedServiceClientVersion = `${2 | 3}.${bigint}.0`;
 
 /**
  * Strips patch and prerelease from a SemVer string, returning only the major and minor version.

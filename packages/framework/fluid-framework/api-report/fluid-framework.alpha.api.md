@@ -1608,7 +1608,7 @@ export interface ObservationResults<TResult> {
 export type Off = () => void;
 
 // @alpha @input
-export type OldestSupportedServiceClientVersion = `2.${bigint}.0`;
+export type OldestSupportedServiceClientVersion = `${2 | 3}.${bigint}.0`;
 
 // @beta
 export function onAssertionFailure(handler: (error: Error) => void): () => void;
