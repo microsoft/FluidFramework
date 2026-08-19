@@ -1,5 +1,10 @@
 # @fluidframework/eslint-config-fluid Changelog
 
+## [14.1.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v14.1.0)
+
+The custom Fluid ESLint rules are now maintained and published as part of this package. Rule names remain unchanged
+under the `@fluid-internal/fluid` namespace.
+
 ## [14.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v14.0.0)
 
 ### TypeScript 6 support

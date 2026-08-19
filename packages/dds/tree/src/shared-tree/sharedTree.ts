@@ -675,6 +675,7 @@ export interface SharedTreeOptions
 	 *
 	 * @remarks
 	 * This validation is more expensive than {@link SharedTreeOptions.validateRebasedCommitsBeforeResubmission} because it is likely to be performed more often.
+	 * We recommend {@link ForestOptions.forest|configuring SharedTree} with the {@link ForestTypeOptimized|optimized forest implementation} to reduce its performance impact.
 	 */
 	readonly validateCommitsOnFirstSubmission?: boolean;
 
@@ -686,6 +687,9 @@ export interface SharedTreeOptions
 	 * when the additional validation is enabled, a client will error instead of potentially corrupting the document.
 	 *
 	 * @defaultValue `false`
+	 *
+	 * @remarks
+	 * We recommend {@link ForestOptions.forest|configuring SharedTree} with the {@link ForestTypeOptimized|optimized forest implementation} to reduce the performance impact of this validation.
 	 */
 	readonly validateRebasedCommitsBeforeResubmission?: boolean;
 }
