@@ -18,8 +18,8 @@ USAGE
 FLAGS
   --data=<value>          Optional path to a data file containing raw API level data. Overrides API levels extracted
                           from package data.
-  --onlyInternal          Move non-public APIs to /internal only for packages that expose an /internal entry point.
-                          Packages without /internal are skipped and left unchanged for compatibility.
+  --onlyInternal          Use /internal for non-public APIs only when the package exposes that entry point; packages
+                          without it are unchanged.
   --packageRegex=<value>  Regular expression filtering import packages to adjust
   --tsconfigs=<value>...  [default: ./tsconfig.json] Tsconfig file paths that will be used to load project files. When
                           multiple are given all must depend on the same version of packages; otherwise results are
