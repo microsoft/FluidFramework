@@ -65,31 +65,36 @@ export interface BaseContainerRuntimeFactoryProps {
 	 */
 	provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
 	/**
-	 * Oldest version of Fluid Framework client that must be able to open and process documents
-	 * written by this container runtime.
+	 * Oldest version of Fluid Framework client that must be able to open and process
+	 * documents written by this container runtime.
 	 * @remarks
-	 * Choosing an older version may limit the features and write formats the application can use to
-	 * those supported by that version.
+	 * Choosing an older version may limit the features and write formats the application can
+	 * use to those supported by that version.
 	 *
 	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.oldestSupportedClient} for more details on this property.
 	 */
-	oldestSupportedClient?: OldestSupportedClientVersion | undefined;
+	oldestSupportedClient: OldestSupportedClientVersion;
 
 	/**
-	 * Oldest version of Fluid Framework client that must be able to open and process documents
-	 * written by this container runtime.
+	 * This property must not be provided. Use `oldestSupportedClient` instead.
 	 *
-	 * @remarks
-	 * See {@link BaseContainerRuntimeFactoryProps.oldestSupportedClient} for compatibility implications.
-	 *
-	 * Specifying both `oldestSupportedClient` and `minVersionForCollab` is an error.
-	 *
-	 * @deprecated 2.116.0. To be removed in 3.10.0. Use
-	 * {@link BaseContainerRuntimeFactoryProps.oldestSupportedClient} instead.
+	 * @deprecated 2.116.0. To be removed in 3.10.0. Use `oldestSupportedClient` instead.
 	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
 	 */
-	minVersionForCollab?: OldestSupportedClientVersion | undefined;
+	minVersionForCollab?: never;
 }
+
+type DeprecatedBaseContainerRuntimeFactoryProps = Omit<
+	BaseContainerRuntimeFactoryProps,
+	"oldestSupportedClient" | "minVersionForCollab"
+> & {
+	readonly oldestSupportedClient?: never;
+	readonly minVersionForCollab: OldestSupportedClientVersion;
+};
+
+type BaseContainerRuntimeFactoryPropsInternal =
+	| BaseContainerRuntimeFactoryProps
+	| DeprecatedBaseContainerRuntimeFactoryProps;
 
 /**
  * BaseContainerRuntimeFactory produces container runtimes with the specified data store and service registries,
@@ -116,9 +121,23 @@ export class BaseContainerRuntimeFactory
 	// eslint-disable-next-line import-x/no-deprecated
 	private readonly requestHandlers: RuntimeRequestHandler[];
 	private readonly provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
-	private readonly oldestSupportedClient: OldestSupportedClientVersion | undefined;
+	private readonly oldestSupportedClient: OldestSupportedClientVersion;
 
-	public constructor(props: BaseContainerRuntimeFactoryProps) {
+	public constructor(props: BaseContainerRuntimeFactoryProps);
+	/**
+	 * @deprecated 2.116.0. To be removed in 3.10.0. Pass `oldestSupportedClient` instead.
+	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
+	 */
+	public constructor(
+		props: Omit<
+			BaseContainerRuntimeFactoryProps,
+			"oldestSupportedClient" | "minVersionForCollab"
+		> & {
+			readonly oldestSupportedClient?: never;
+			readonly minVersionForCollab: OldestSupportedClientVersion;
+		},
+	);
+	public constructor(props: BaseContainerRuntimeFactoryPropsInternal) {
 		super();
 
 		this.registryEntries = props.registryEntries;
@@ -129,15 +148,21 @@ export class BaseContainerRuntimeFactory
 		this.registry = new FluidDataStoreRegistry(this.registryEntries);
 		// eslint-disable-next-line import-x/no-deprecated -- accepted for compatibility. See #27851
 		const deprecatedMinVersionForCollab = props.minVersionForCollab;
-		if (
-			props.oldestSupportedClient !== undefined &&
-			deprecatedMinVersionForCollab !== undefined
-		) {
-			throw new UsageError(
-				"Specify only one of oldestSupportedClient or minVersionForCollab (deprecated), not both.",
-			);
+		if (props.oldestSupportedClient === undefined) {
+			if (deprecatedMinVersionForCollab === undefined) {
+				throw new UsageError(
+					"Specify exactly one of oldestSupportedClient or minVersionForCollab (deprecated).",
+				);
+			}
+			this.oldestSupportedClient = deprecatedMinVersionForCollab;
+		} else {
+			if (deprecatedMinVersionForCollab !== undefined) {
+				throw new UsageError(
+					"Specify exactly one of oldestSupportedClient or minVersionForCollab (deprecated).",
+				);
+			}
+			this.oldestSupportedClient = props.oldestSupportedClient;
 		}
-		this.oldestSupportedClient = props.oldestSupportedClient ?? deprecatedMinVersionForCollab;
 	}
 
 	/**

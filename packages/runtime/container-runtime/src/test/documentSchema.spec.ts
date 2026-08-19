@@ -5,10 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	defaultMinVersionForCollab,
-	type SemanticVersion,
-} from "@fluidframework/runtime-utils/internal";
+import type { SemanticVersion } from "@fluidframework/runtime-utils/internal";
 import {
 	createMockLoggerExt,
 	type IMockLoggerExt,
@@ -41,7 +38,7 @@ describe("Runtime", () => {
 	const validConfig = {
 		version: 1,
 		refSeq: 0,
-		info: { minVersionForCollab: defaultMinVersionForCollab },
+		info: { minVersionForCollab: "2.0.0-defaults" },
 		runtime: {
 			// explicitSchemaControl: undefined,
 			compressionLz4: true,
@@ -67,7 +64,7 @@ describe("Runtime", () => {
 			config, // old schema,
 			features,
 			() => {}, // onSchemaChange
-			{ minVersionForCollab: defaultMinVersionForCollab }, // info,
+			{ minVersionForCollab: "2.0.0-defaults" }, // info,
 			logger,
 			false,
 		);
@@ -141,7 +138,7 @@ describe("Runtime", () => {
 			validConfig, // old schema,
 			{ ...features, disallowedVersions: [] },
 			() => {}, // onSchemaChange
-			{ minVersionForCollab: defaultMinVersionForCollab }, // info,
+			{ minVersionForCollab: "2.0.0-defaults" }, // info,
 			logger,
 			false,
 		);
@@ -179,7 +176,7 @@ describe("Runtime", () => {
 			},
 			// onSchemaChange
 			() => {},
-			{ minVersionForCollab: defaultMinVersionForCollab }, // info,
+			{ minVersionForCollab: "2.0.0-defaults" }, // info,
 			logger,
 			false,
 		);
@@ -206,7 +203,7 @@ describe("Runtime", () => {
 			},
 			// onSchemaChange
 			() => {},
-			{ minVersionForCollab: defaultMinVersionForCollab }, // info,
+			{ minVersionForCollab: "2.0.0-defaults" }, // info,
 			logger,
 
 			false,
@@ -238,7 +235,7 @@ describe("Runtime", () => {
 			features,
 			// onSchemaChange
 			() => {},
-			{ minVersionForCollab: defaultMinVersionForCollab }, // info,
+			{ minVersionForCollab: "2.0.0-defaults" }, // info,
 			logger,
 			false,
 		);
@@ -284,7 +281,7 @@ describe("Runtime", () => {
 			undefined, // old schema,
 			featuresModified,
 			() => assert.fail("no schema changes!"), // onSchemaChange
-			{ minVersionForCollab: defaultMinVersionForCollab }, // info,
+			{ minVersionForCollab: "2.0.0-defaults" }, // info,
 			logger,
 			false,
 		);
@@ -333,7 +330,7 @@ describe("Runtime", () => {
 			const expected = {
 				version: 1,
 				refSeq: 0,
-				info: { minVersionForCollab: defaultMinVersionForCollab },
+				info: { minVersionForCollab: "2.0.0-defaults" },
 				runtime: {
 					// Existing files without any schema are considered to be in legacy mode.
 					explicitSchemaControl: undefined,
@@ -348,7 +345,7 @@ describe("Runtime", () => {
 			const expected = {
 				version: 1,
 				refSeq: 0,
-				info: { minVersionForCollab: defaultMinVersionForCollab },
+				info: { minVersionForCollab: "2.0.0-defaults" },
 				runtime: {
 					explicitSchemaControl: boolToProp(featuresModified.explicitSchemaControl),
 					compressionLz4: boolToProp(featuresModified.compressionLz4),
@@ -404,7 +401,7 @@ describe("Runtime", () => {
 			schema, // old schema,
 			features,
 			() => {}, // onSchemaChange
-			schema.info ?? { minVersionForCollab: defaultMinVersionForCollab }, // info,
+			schema.info ?? { minVersionForCollab: "2.0.0-defaults" }, // info,
 			logger,
 			false,
 		);
@@ -502,7 +499,7 @@ describe("Runtime", () => {
 			validConfig, // old schema,
 			{ ...features, opGroupingEnabled: true },
 			() => {}, // onSchemaChange
-			{ minVersionForCollab: defaultMinVersionForCollab }, // info
+			{ minVersionForCollab: "2.0.0-defaults" }, // info
 			logger,
 			false,
 		);
@@ -538,7 +535,7 @@ describe("Runtime", () => {
 			schema, // old schema,
 			{ ...features, idCompressorMode: undefined, compressionLz4: false },
 			() => {}, // onSchemaChange
-			{ minVersionForCollab: defaultMinVersionForCollab }, // info
+			{ minVersionForCollab: "2.0.0-defaults" }, // info
 			logger,
 			false,
 		);
@@ -598,7 +595,7 @@ describe("Runtime", () => {
 			() => {
 				assert.fail("no changes!");
 			}, // onSchemaChange
-			{ minVersionForCollab: defaultMinVersionForCollab }, // info
+			{ minVersionForCollab: "2.0.0-defaults" }, // info
 			logger,
 			false,
 		);
@@ -617,7 +614,7 @@ describe("Runtime", () => {
 			() => {
 				assert.fail("no changes!");
 			}, // onSchemaChange
-			{ minVersionForCollab: defaultMinVersionForCollab }, // info
+			{ minVersionForCollab: "2.0.0-defaults" }, // info
 			logger,
 			false,
 		);
@@ -642,7 +639,7 @@ describe("Runtime", () => {
 			() => {
 				schemaChanged = true;
 			}, // onSchemaChange
-			{ minVersionForCollab: defaultMinVersionForCollab }, // info
+			{ minVersionForCollab: "2.0.0-defaults" }, // info
 			logger,
 			false,
 		);
@@ -683,7 +680,7 @@ describe("Runtime", () => {
 				opGroupingEnabled: true,
 			},
 			() => (schemaChanged = true), // onSchemaChange
-			{ minVersionForCollab: defaultMinVersionForCollab }, // info
+			{ minVersionForCollab: "2.0.0-defaults" }, // info
 			logger,
 			false,
 		);
@@ -713,7 +710,7 @@ describe("Runtime", () => {
 			{ ...validConfig, info: { minVersionForCollab: documentMinVersionForCollab } }, // old schema,
 			features, // features
 			() => {}, // onSchemaChange
-			{ minVersionForCollab: defaultMinVersionForCollab }, // info
+			{ minVersionForCollab: "2.0.0-defaults" }, // info
 			logger,
 			false,
 		);
@@ -727,7 +724,7 @@ describe("Runtime", () => {
 			{ ...validConfig, info: { minVersionForCollab: pkgVersion } }, // old schema,
 			features, // features
 			() => {}, // onSchemaChange
-			{ minVersionForCollab: defaultMinVersionForCollab }, // info
+			{ minVersionForCollab: "2.0.0-defaults" }, // info
 			logger,
 			false,
 		);
@@ -768,7 +765,7 @@ describe("Runtime", () => {
 				{ ...validConfig, runtime: { ...validConfig.runtime, explicitSchemaControl: true } },
 				{ ...features, opGroupingEnabled: true },
 				() => {}, // onSchemaChange
-				{ minVersionForCollab: defaultMinVersionForCollab },
+				{ minVersionForCollab: "2.0.0-defaults" },
 				logger,
 				true, // disableSchemaUpgrade
 			);
@@ -794,7 +791,7 @@ describe("Runtime", () => {
 				},
 				features,
 				() => {}, // onSchemaChange
-				{ minVersionForCollab: defaultMinVersionForCollab },
+				{ minVersionForCollab: "2.0.0-defaults" },
 				logger,
 				true, // disableSchemaUpgrade
 			);

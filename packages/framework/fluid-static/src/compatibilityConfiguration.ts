@@ -5,7 +5,6 @@
 
 import type { IContainerRuntimeOptionsInternal } from "@fluidframework/container-runtime/internal";
 import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/internal";
-import { gte } from "semver-ts";
 
 /**
  * Fluid-static-specific runtime option overrides keyed by `minVersionForCollab`.
@@ -16,17 +15,11 @@ import { gte } from "semver-ts";
  * fluid-static needs to set differently from those defaults belong here
  * (e.g. enableRuntimeIdCompressor to support SharedTree).
  */
-const minVersionForCollabToDefaultRuntimeOptions: Record<
-	"1" | "2",
-	IContainerRuntimeOptionsInternal
-> = {
-	"1": {},
-	"2": {
-		// The runtime ID compressor is a prerequisite to use SharedTree but is off by default and must be explicitly enabled.
-		// In general, we don't want to enable this by default since it increases the bundle size. However, since SharedTree
-		// is bundled with the fluid-framework package, we need to enable it here to support SharedTree.
-		enableRuntimeIdCompressor: "on",
-	},
+const defaultRuntimeOptions: IContainerRuntimeOptionsInternal = {
+	// The runtime ID compressor is a prerequisite to use SharedTree but is off by default and must be explicitly enabled.
+	// In general, we don't want to enable this by default since it increases the bundle size. However, since SharedTree
+	// is bundled with the fluid-framework package, we need to enable it here to support SharedTree.
+	enableRuntimeIdCompressor: "on",
 };
 
 /**
@@ -39,9 +32,7 @@ const minVersionForCollabToDefaultRuntimeOptions: Record<
  * @internal
  */
 export function defaultRuntimeOptionsForMinVersion(
-	minVersionForCollab: OldestSupportedClientVersion,
+	_minVersionForCollab: OldestSupportedClientVersion,
 ): IContainerRuntimeOptionsInternal {
-	return minVersionForCollabToDefaultRuntimeOptions[
-		gte(minVersionForCollab, "2.0.0") ? "2" : "1"
-	];
+	return defaultRuntimeOptions;
 }

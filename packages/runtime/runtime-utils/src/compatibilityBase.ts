@@ -11,33 +11,8 @@ import { compare, gt, gte, lte, valid, parse } from "semver-ts";
 import { pkgVersion } from "./packageVersion.js";
 
 /**
- * Our policy is to support major versions N and N-1, where N is most
- * recent public major release of the Fluid Framework Client.
- * Therefore, if the customer does not provide a minVersionForCollab, we will
- * default to use N-1.
- *
- * However, this is not consistent with today's behavior. Some options (i.e.
- * batching, compression) are enabled by default despite not being compatible
- * with 1.x clients. Since the policy was introduced during 2.x's lifespan,
- * N/N-1 compatibility by **default** will be in effect starting with 3.0.
- * Importantly though, N/N-2 compatibility is still guaranteed with the proper
- * configurations set.
- *
- * Further to distinguish unspecified `minVersionForCollab` from a specified
- * version and allow `enableExplicitSchemaControl` to default to `true` for
- * any 2.0.0+ version, we will use a special value of `2.0.0-defaults`, which
- * is semantically less than 2.0.0.
- *
- * @internal
- */
-export const defaultMinVersionForCollab =
-	"2.0.0-defaults" as const satisfies OldestSupportedClientVersion;
-
-/**
- * We don't want allow a version before the major public release of the LTS version.
- * Today we use "1.0.0", because our policy supports N/N-1 & N/N-2, which includes
- * all minor versions of N. Though LTS starts at 1.4.0, we should stay consistent
- * with our policy and allow all 1.x versions to be compatible with 2.x.
+ * The oldest Fluid Framework client version supported for cross-client compatibility.
+ * Client 3.0 no longer supports collaborating with 1.x clients.
  *
  * @privateRemarks
  * Exported for use in tests.
@@ -45,7 +20,7 @@ export const defaultMinVersionForCollab =
  * @internal
  */
 export const lowestMinVersionForCollab =
-	"1.0.0" as const satisfies OldestSupportedClientVersion;
+	"2.0.0" as const satisfies OldestSupportedClientVersion;
 
 /**
  * String in a valid semver format specifying bottom of a minor version
@@ -60,7 +35,7 @@ export type MinimumMinorSemanticVersion = `${bigint}.${bigint}.0` | `${bigint}.0
 /**
  * String in a valid semver format of a specific version at least specifying minor.
  * Unlike {@link @fluidframework/runtime-definitions#OldestSupportedClientVersion}, this type allows any bigint for the major version.
- * Used as a more generic type that allows major versions other than 1 or 2.
+ * Used as a more generic type that allows major versions other than 2 or 3.
  *
  * @internal
  */
@@ -94,7 +69,7 @@ export interface ConfigMapEntry<T> {
 	// This index signature (See https://www.typescriptlang.org/docs/handbook/2/objects.html#index-signatures) requires all properties on this type to to have keys that are a MinimumMinorSemanticVersion and values of type T.
 	// Note that the "version" part of this syntax is really just documentation and has no impact on the type checking (other than some identifier being required to the syntax here to differentiate it from the computed property syntax).
 	[version: MinimumMinorSemanticVersion]: T;
-	// Require an entry for the defaultMinVersionForCollab:
+	// Require an entry for the lowestMinVersionForCollab:
 	// this ensures that all versions of lowestMinVersionForCollab or later have a specified value in the ConfigMap.
 	// Note that this is NOT an index signature.
 	// This is a regular property with a computed name (See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Object_initializer#computed_property_names).
@@ -165,6 +140,13 @@ export function getConfigForMinVersionForCollabIterable<T>(
 	minVersionForCollab: OldestSupportedClientVersion,
 	entries: Iterable<readonly [MinimumMinorSemanticVersion | OldestSupportedClientVersion, T]>, // [[typeof lowestMinVersionForCollab, T], ...[OldestSupportedClientVersion, T][]],
 ): T {
+	// Runtimes predating Client 3.0 can still provide this internal sentinel to newer
+	// datastore/DDS layers. It is no longer accepted as a public input, but it represents
+	// the lowest supported 2.x behavior for format selection.
+	const normalizedMinVersionForCollab =
+		String(minVersionForCollab) === "2.0.0-defaults"
+			? lowestMinVersionForCollab
+			: minVersionForCollab;
 	// Validate and strongly type the versions from the configMap.
 	const versions: [OldestSupportedClientVersion, T][] = Array.from(
 		entries,
@@ -173,7 +155,7 @@ export function getConfigForMinVersionForCollabIterable<T>(
 			return [version, value];
 		},
 	);
-	return (selectVersionRoundedDown(minVersionForCollab, versions) ??
+	return (selectVersionRoundedDown(normalizedMinVersionForCollab, versions) ??
 		fail(0xcb8 /* No config map entry for version */))[1];
 }
 
@@ -304,14 +286,11 @@ export function validateMinimumVersionForCollab(
 /**
  * Validates the given `overrides`.
  *
- * No-op when minVersionForCollab is set to defaultMinVersionForCollab.
- *
- * Otherwise this checks that for keys which are in both the `validationMap` and the `overrides`,
+ * Checks that for keys which are in both the `validationMap` and the `overrides`,
  * that the `validationMap` function for that key either returns undefined or a version less than or equal to `minVersionForCollab`.
  * @privateRemarks
  * This design seems odd, and might want to be revisited.
  * Currently it only permits opting out of features, not into them (unless validationMap returns undefined),
- * and the handling of defaultMinVersionForCollab and undefined versions seems questionable.
  * Also ignoring of extra keys in overrides might be bad since it seems like overrides is supposed to be validated.
  * @internal
  */
@@ -320,12 +299,6 @@ export function validateConfigMapOverrides<T extends Record<string, unknown>>(
 	overrides: Partial<T>,
 	validationMap: ConfigValidationMap<T>,
 ): void {
-	if (minVersionForCollab === defaultMinVersionForCollab) {
-		// If the minVersionForCollab is set to the default value, then we will not validate the runtime options
-		// This is to avoid disruption to users who have not yet set the minVersionForCollab value explicitly.
-		// TODO: This also skips validation for users which explicitly request defaultMinVersionForCollab which seems like a bug.
-		return;
-	}
 	// Iterate through each runtime option passed in by the user
 	// Type assertion is safe as entries come from runtimeOptions object
 	for (const [passedRuntimeOption, passedRuntimeOptionValue] of Object.entries(overrides) as [

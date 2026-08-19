@@ -48,6 +48,7 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
 		// and add our default view request handler.
 		super({
 			registryEntries,
+			oldestSupportedClient: "2.0.0",
 			provideEntryPoint: async (
 				containerRuntime: IContainerRuntime,
 			): Promise<IFluidMountableViewEntryPoint> => {

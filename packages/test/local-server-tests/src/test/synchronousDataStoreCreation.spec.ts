@@ -167,6 +167,7 @@ const runtimeFactory: IRuntimeFactory = {
 		return loadContainerRuntime({
 			context,
 			existing,
+			oldestSupportedClient: "2.0.0",
 			registryEntries: [
 				[
 					parentDataObjectFactory.type,

@@ -314,6 +314,7 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 			]);
 			const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 				defaultFactory: dataStoreFactory1,
+				oldestSupportedClient: "2.0.0",
 				registryEntries: registryStoreEntries,
 			});
 

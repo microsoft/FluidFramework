@@ -588,8 +588,8 @@ export interface IFluidParentContext
 	 * Oldest Fluid Framework client version that must be able to process documents written by the
 	 * runtime.
 	 * Consumed by {@link @fluidframework/container-runtime#FluidDataStoreContext}.
-	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.oldestSupportedClient}
-	 * for more details.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams} for more details
+	 * about `oldestSupportedClient`.
 	 *
 	 * @remarks
 	 * The property name is retained while the cross-layer dual-property migration in

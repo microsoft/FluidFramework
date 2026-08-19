@@ -103,6 +103,7 @@ describe("Document Staged Changes", () => {
 
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory,
+			oldestSupportedClient: "2.0.0",
 			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
 			// Use a low threshold so staged ops are auto-flushed out of the Outbox right away instead of
 			// waiting for the default (1000 ops) batch size.
@@ -133,6 +134,7 @@ describe("Document Staged Changes", () => {
 
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory,
+			oldestSupportedClient: "2.0.0",
 			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
 			runtimeOptions: { stagingModeAutoFlushThreshold: 1 },
 		});

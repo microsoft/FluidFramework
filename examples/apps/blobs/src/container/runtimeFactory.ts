@@ -45,6 +45,7 @@ export class BlobCollectionContainerRuntimeFactory implements IRuntimeFactory {
 			]),
 			provideEntryPoint,
 			existing,
+			oldestSupportedClient: "2.0.0",
 		});
 
 		if (!existing) {

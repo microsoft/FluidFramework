@@ -7,7 +7,7 @@
  * Oldest Fluid Framework client version that must be able to open and process documents written
  * by newer clients.
  * @remarks
- * A string in SemVer format indicating a specific version of the Fluid Framework client package, or the special case of {@link @fluidframework/runtime-utils#defaultMinVersionForCollab}.
+ * A string in SemVer format indicating a specific version of the Fluid Framework client package.
  *
  * The framework uses this value to select write formats and features. Clients using this version
  * or newer must be able to open and process documents written by newer clients. Choosing an older
@@ -17,6 +17,9 @@
  *
  * Collaboration with other clients is supported when all Fluid Framework client packages used by the client have a version that is greater than or equal
  * to the specified `OldestSupportedClientVersion`.
+ *
+ * Client 3.0 supports values from the 2.x and 3.x release lines. All active deployments
+ * that need to collaborate must use Fluid Framework 2.0.0 or later before upgrading.
  *
  * Must be at least {@link @fluidframework/runtime-utils#lowestMinVersionForCollab} and cannot exceed the version of any Fluid Framework client package in use by the local client.
  *
@@ -37,15 +40,15 @@
  * TODO: before stabilizing this further, some restrictions should be considered (since once stabilized, this can be relaxed, but not more constrained).
  * For example it might make sense to constrain this to something like:
  * ```ts
- * "1.4.0" | typeof defaultMinVersionForCollab | `2.${bigint}.0`
+ * `2.${bigint}.0` | `3.${bigint}.0`
  * ```
  *
  * @input
  * @public
  */
 export type OldestSupportedClientVersion =
-	| `${1 | 2 | 3}.${bigint}.${bigint}`
-	| `${1 | 2 | 3}.${bigint}.${bigint}-${string}`;
+	| `${2 | 3}.${bigint}.${bigint}`
+	| `${2 | 3}.${bigint}.${bigint}-${string}`;
 
 /**
  * Oldest version of Fluid Framework client packages that must be able to open and process

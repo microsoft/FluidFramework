@@ -43,6 +43,7 @@ export class DiceRollerContainerRuntimeFactory implements IRuntimeFactory {
 			registryEntries: new Map([[diceRollerRegistryKey, Promise.resolve(diceRollerFactory)]]),
 			provideEntryPoint,
 			existing,
+			oldestSupportedClient: "2.0.0",
 		});
 
 		if (!existing) {

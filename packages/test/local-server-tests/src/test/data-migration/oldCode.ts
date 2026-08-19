@@ -222,6 +222,7 @@ export const RootDOFactory = new DataObjectFactory({
 
 export const oldRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 	defaultFactory: RootDOFactory,
+	oldestSupportedClient: "2.0.0",
 	registryEntries: [RootDOFactory.registryEntry],
 	runtimeOptions,
 });

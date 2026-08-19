@@ -935,6 +935,7 @@ export const createFluidExport = (
 ): ContainerRuntimeFactoryWithDefaultDataStore =>
 	new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: LoadTestDataStoreInstantiationFactory,
+		oldestSupportedClient: "2.40.0",
 		registryEntries: [
 			LoadTestDataStoreInstantiationFactory.registryEntry,
 			VirtualDataStoreFactory.registryEntry,

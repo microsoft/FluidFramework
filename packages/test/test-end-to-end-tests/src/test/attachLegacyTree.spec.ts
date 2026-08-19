@@ -41,6 +41,7 @@ describeCompat("Can attach Legacy Shared Tree", "NoCompat", (getTestObjectProvid
 	});
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: dataObjectFactory,
+		oldestSupportedClient: "2.0.0",
 		registryEntries: [["test", Promise.resolve(dataObjectFactory)]],
 	});
 

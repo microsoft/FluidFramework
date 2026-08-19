@@ -108,6 +108,7 @@ export function createPointInTimeRuntimeFactory(
 	const dataObjectFactory = buildFactory(apis);
 	return new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: dataObjectFactory,
+		oldestSupportedClient: "2.0.0",
 		registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
 	}) as unknown as IRuntimeFactory;
 }

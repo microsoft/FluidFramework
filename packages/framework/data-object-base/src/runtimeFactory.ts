@@ -65,6 +65,7 @@ export class RuntimeFactory extends RuntimeFactoryHelper {
 			registryEntries: this.registry,
 			existing,
 			provideEntryPoint: this.provideEntryPoint,
+			oldestSupportedClient: "2.0.0",
 		});
 
 		return runtime;

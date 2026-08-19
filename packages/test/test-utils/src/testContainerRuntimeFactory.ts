@@ -107,7 +107,7 @@ export const createTestContainerRuntimeFactory = (
 					},
 				},
 			},
-			public minVersionForCollab: OldestSupportedClientVersion | undefined = undefined,
+			public minVersionForCollab: OldestSupportedClientVersion = "2.0.0",
 			// eslint-disable-next-line import-x/no-deprecated
 			public requestHandlers: RuntimeRequestHandler[] = [],
 		) {

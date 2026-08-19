@@ -50,6 +50,7 @@ describe("SharedTree transaction constraints", () => {
 			defaultFactory: dataStoreFactory,
 			registryEntries: [[dataStoreFactory.type, dataStoreFactory]],
 			runtimeOptions: { enableRuntimeIdCompressor: "on" },
+			oldestSupportedClient: FluidClientVersion.v2_80,
 		});
 		const { codeDetails, loaderProps, urlResolver } = createLoader({
 			deltaConnectionServer,

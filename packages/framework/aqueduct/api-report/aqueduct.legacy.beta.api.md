@@ -7,6 +7,11 @@
 // @beta @legacy
 export class BaseContainerRuntimeFactory extends RuntimeFactoryHelper implements IProvideFluidDataStoreRegistry {
     constructor(props: BaseContainerRuntimeFactoryProps);
+    // @deprecated
+    constructor(props: Omit<BaseContainerRuntimeFactoryProps, "oldestSupportedClient" | "minVersionForCollab"> & {
+        readonly oldestSupportedClient?: never;
+        readonly minVersionForCollab: OldestSupportedClientVersion;
+    });
     protected containerHasInitialized(runtime: IContainerRuntime): Promise<void>;
     protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry;
@@ -20,8 +25,8 @@ export interface BaseContainerRuntimeFactoryProps {
     // @deprecated (undocumented)
     dependencyContainer?: IFluidDependencySynthesizer;
     // @deprecated
-    minVersionForCollab?: OldestSupportedClientVersion | undefined;
-    oldestSupportedClient?: OldestSupportedClientVersion | undefined;
+    minVersionForCollab?: never;
+    oldestSupportedClient: OldestSupportedClientVersion;
     provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
     registryEntries: NamedFluidDataStoreRegistryEntries;
     // @deprecated
@@ -32,6 +37,11 @@ export interface BaseContainerRuntimeFactoryProps {
 // @beta @legacy
 export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRuntimeFactory {
     constructor(props: ContainerRuntimeFactoryWithDefaultDataStoreProps);
+    // @deprecated
+    constructor(props: Omit<ContainerRuntimeFactoryWithDefaultDataStoreProps, "oldestSupportedClient" | "minVersionForCollab"> & {
+        readonly oldestSupportedClient?: never;
+        readonly minVersionForCollab: OldestSupportedClientVersion;
+    });
     protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
     // (undocumented)
     static readonly defaultDataStoreId = "default";
@@ -40,16 +50,10 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 }
 
 // @beta @legacy
-export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
+export interface ContainerRuntimeFactoryWithDefaultDataStoreProps extends Omit<BaseContainerRuntimeFactoryProps, "provideEntryPoint"> {
     // (undocumented)
     defaultFactory: IFluidDataStoreFactory;
-    // @deprecated (undocumented)
-    dependencyContainer?: IFluidDependencySynthesizer;
     provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
-    registryEntries: NamedFluidDataStoreRegistryEntries;
-    // @deprecated
-    requestHandlers?: RuntimeRequestHandler[];
-    runtimeOptions?: IContainerRuntimeOptions;
 }
 
 // @beta @legacy

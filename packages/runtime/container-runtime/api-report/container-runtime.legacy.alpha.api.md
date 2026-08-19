@@ -348,8 +348,22 @@ export interface IVersionMarkResolver {
 // @beta @legacy
 export function loadContainerRuntime(params: LoadContainerRuntimeParams): Promise<IContainerRuntime & IRuntime>;
 
+// @beta @legacy
+export function loadContainerRuntime(params: Omit<LoadContainerRuntimeParams, "oldestSupportedClient" | "minVersionForCollab"> & {
+    readonly oldestSupportedClient?: never;
+    readonly minVersionForCollab: OldestSupportedClientVersion;
+}): Promise<IContainerRuntime & IRuntime>;
+
 // @alpha @legacy
 export function loadContainerRuntimeAlpha(params: LoadContainerRuntimeParams): Promise<{
+    runtime: IContainerRuntime & IRuntime;
+}>;
+
+// @alpha @legacy
+export function loadContainerRuntimeAlpha(params: Omit<LoadContainerRuntimeParams, "oldestSupportedClient" | "minVersionForCollab"> & {
+    readonly oldestSupportedClient?: never;
+    readonly minVersionForCollab: OldestSupportedClientVersion;
+}): Promise<{
     runtime: IContainerRuntime & IRuntime;
 }>;
 
@@ -359,8 +373,8 @@ export interface LoadContainerRuntimeParams {
     context: IContainerContext;
     existing: boolean;
     // @deprecated
-    minVersionForCollab?: OldestSupportedClientVersion;
-    oldestSupportedClient?: OldestSupportedClientVersion;
+    minVersionForCollab?: never;
+    oldestSupportedClient: OldestSupportedClientVersion;
     provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
     registryEntries: NamedFluidDataStoreRegistryEntries;
     // @deprecated

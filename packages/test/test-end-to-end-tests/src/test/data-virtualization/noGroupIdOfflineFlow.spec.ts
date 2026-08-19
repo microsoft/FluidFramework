@@ -63,6 +63,7 @@ describeCompat("Offline Attach Ops", "NoCompat", (getTestObjectProvider, apis) =
 
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: dataObjectFactory,
+		oldestSupportedClient: "2.0.0",
 		registryEntries: [dataObjectFactory.registryEntry],
 		runtimeOptions,
 	});

@@ -314,128 +314,47 @@ for (const testOpts of testMatrix) {
 		 * Expected behavior: an error should not be thrown nor should a rejected promise
 		 * be returned.
 		 */
-		for (const compatibilityMode of ["1.0.0", "2.0.0"] as const) {
-			it(`Current AzureClient (mode: "${compatibilityMode}") can get container made by legacy AzureClient`, async () => {
-				const { container: containerLegacy } =
-					await clientLegacy.createContainer(schemaLegacy);
-				const containerId = await containerLegacy.attach();
+		it(`Current AzureClient (oldestSupportedClient: "2.0.0") can get a container made by legacy AzureClient`, async () => {
+			const { container: containerLegacy } = await clientLegacy.createContainer(schemaLegacy);
+			const containerId = await containerLegacy.attach();
 
-				if (containerLegacy.connectionState !== ConnectionState.Connected) {
-					await timeoutPromise(
-						(resolve) => containerLegacy.once("connected", () => resolve()),
-						{
-							durationMs: connectTimeoutMs,
-							errorMsg: "containerLegacy connect() timeout",
-						},
-					);
-				}
-
-				const valueSetP = timeoutPromise(
-					(resolve) => {
-						const confirmValueSet = (): void => {
-							if (
-								(containerLegacy.initialObjects.map1 as SharedMapLegacy).get("key") === "value"
-							) {
-								containerLegacy.off("saved", confirmValueSet);
-								resolve();
-							}
-						};
-						containerLegacy.on("saved", confirmValueSet);
-					},
-					{
-						durationMs: valueSetTimoutMs,
-						errorMsg: "valueSet timeout",
-					},
-				);
-				(containerLegacy.initialObjects.map1 as SharedMapLegacy).set("key", "value");
-
-				// Await the value being saved, especially important if we dispose the legacy container.
-				await valueSetP;
-
-				if (compatibilityMode === "2.0.0") {
-					// We don't support interop between legacy containers and "2" mode, dispose the legacy
-					// container to avoid this case.
-					containerLegacy.dispose();
-				}
-
-				const resources = clientCurrent.getContainer(
-					containerId,
-					schemaCurrent,
-					compatibilityMode,
-				);
-				await assert.doesNotReject(resources, () => true, "container could not be loaded");
-
-				const { container: containerCurrent } = await resources;
-
-				if (containerCurrent.connectionState !== ConnectionState.Connected) {
-					await timeoutPromise(
-						(resolve) => containerCurrent.once("connected", () => resolve()),
-						{
-							durationMs: connectTimeoutMs,
-							errorMsg: "containerCurrent connect() timeout",
-						},
-					);
-				}
-
-				const result = containerCurrent.initialObjects.map1.get<string>("key");
-				assert.strictEqual(result, "value", "Value not found in copied container");
-			});
-		}
-	});
-
-	/**
-	 * Testing creating/loading containers between the compatibility modes.
-	 */
-	describe(`Container create with current version (${testOpts.variant})`, () => {
-		const connectTimeoutMs = 10_000;
-		const isEphemeral: boolean = testOpts.options.isEphemeral;
-		let clientCurrent1: AzureClient;
-		let clientCurrent2: AzureClient;
-		let clientLegacy: AzureClientLegacy;
-		let sandbox: SinonSandbox;
-
-		const schemaCurrent = {
-			initialObjects: {
-				map1: SharedMap,
-			},
-		} satisfies ContainerSchema;
-
-		const schemaLegacy = {
-			initialObjects: {
-				map1: SharedMapLegacy,
-			},
-		};
-
-		before(function () {
-			sandbox = createSandbox();
-		});
-
-		beforeEach("createAzureClients", function () {
-			clientCurrent1 = createAzureClient();
-			clientCurrent2 = createAzureClient();
-			clientLegacy = createAzureClientLegacy();
-			if (isEphemeral) {
-				this.skip();
+			if (containerLegacy.connectionState !== ConnectionState.Connected) {
+				await timeoutPromise((resolve) => containerLegacy.once("connected", () => resolve()), {
+					durationMs: connectTimeoutMs,
+					errorMsg: "containerLegacy connect() timeout",
+				});
 			}
-		});
 
-		afterEach(function () {
-			sandbox.restore();
-		});
-
-		/**
-		 * Scenario: test if a legacy AzureClient can get a container made by the current AzureClient.
-		 *
-		 * Expected behavior: an error should not be thrown nor should a rejected promise
-		 * be returned.
-		 */
-		it(`Legacy AzureClient can get container made by current AzureClient (mode: "1")`, async () => {
-			const { container: containerCurrent } = await clientCurrent1.createContainer(
-				schemaCurrent,
-				// Note: Only containers created in compatibility mode "1" may be loaded by legacy client.
-				"1.0.0",
+			const valueSetP = timeoutPromise(
+				(resolve) => {
+					const confirmValueSet = (): void => {
+						if (
+							(containerLegacy.initialObjects.map1 as SharedMapLegacy).get("key") === "value"
+						) {
+							containerLegacy.off("saved", confirmValueSet);
+							resolve();
+						}
+					};
+					containerLegacy.on("saved", confirmValueSet);
+				},
+				{
+					durationMs: valueSetTimoutMs,
+					errorMsg: "valueSet timeout",
+				},
 			);
-			const containerId = await containerCurrent.attach();
+			(containerLegacy.initialObjects.map1 as SharedMapLegacy).set("key", "value");
+
+			// Await the value being saved, especially important if we dispose the legacy container.
+			await valueSetP;
+
+			// Client 3.0 does not support active collaboration with 1.x clients. Dispose the
+			// legacy client before loading to verify data-at-rest compatibility only.
+			containerLegacy.dispose();
+
+			const resources = clientCurrent.getContainer(containerId, schemaCurrent, "2.0.0");
+			await assert.doesNotReject(resources, () => true, "container could not be loaded");
+
+			const { container: containerCurrent } = await resources;
 
 			if (containerCurrent.connectionState !== ConnectionState.Connected) {
 				await timeoutPromise(
@@ -447,173 +366,46 @@ for (const testOpts of testMatrix) {
 				);
 			}
 
-			containerCurrent.initialObjects.map1.set("key", "value");
-
-			const resources = clientLegacy.getContainer(containerId, schemaLegacy);
-			await assert.doesNotReject(resources, () => true, "container could not be loaded");
-
-			const { container: containerLegacy } = await resources;
-			if (containerLegacy.connectionState !== ConnectionState.Connected) {
-				await timeoutPromise((resolve) => containerLegacy.once("connected", () => resolve()), {
-					durationMs: connectTimeoutMs,
-					errorMsg: "containerLegacy connect() timeout",
-				});
-			}
-
-			const result = (containerLegacy.initialObjects.map1 as SharedMapLegacy).get<string>(
-				"key",
-			);
+			const result = containerCurrent.initialObjects.map1.get<string>("key");
 			assert.strictEqual(result, "value", "Value not found in copied container");
 		});
+	});
 
-		/**
-		 * Scenario: test if a current AzureClient in compatibility mode "2" can get a container made by the current AzureClient in mode "1".
-		 *
-		 * Expected behavior: an error should not be thrown nor should a rejected promise be returned.
-		 */
-		it(`Current AzureClient (mode: "2") can get container made by current AzureClient (mode: "1")`, async () => {
-			const { container: containerCurrent1 } = await clientCurrent1.createContainer(
-				schemaCurrent,
-				"1.0.0",
-			);
-			const containerId = await containerCurrent1.attach();
+	/**
+	 * Testing creating/loading containers across oldest supported client versions.
+	 */
+	describe(`Container create with current version (${testOpts.variant})`, () => {
+		const connectTimeoutMs = 10_000;
+		const isEphemeral: boolean = testOpts.options.isEphemeral;
+		let clientCurrent1: AzureClient;
+		let sandbox: SinonSandbox;
 
-			if (containerCurrent1.connectionState !== ConnectionState.Connected) {
-				await timeoutPromise(
-					(resolve) => containerCurrent1.once("connected", () => resolve()),
-					{
-						durationMs: connectTimeoutMs,
-						errorMsg: "containerCurrent1 connect() timeout",
-					},
-				);
-			}
+		const schemaCurrent = {
+			initialObjects: {
+				map1: SharedMap,
+			},
+		} satisfies ContainerSchema;
 
-			containerCurrent1.initialObjects.map1.set("key", "value");
-
-			const resources = clientCurrent2.getContainer(containerId, schemaCurrent, "2.0.0");
-			await assert.doesNotReject(resources, () => true, "container could not be loaded");
-
-			const { container: containerCurrent2 } = await resources;
-			if (containerCurrent2.connectionState !== ConnectionState.Connected) {
-				await timeoutPromise(
-					(resolve) => containerCurrent2.once("connected", () => resolve()),
-					{
-						durationMs: connectTimeoutMs,
-						errorMsg: "containerCurrent2 connect() timeout",
-					},
-				);
-			}
-
-			const result = containerCurrent2.initialObjects.map1.get<string>("key");
-			assert.strictEqual(result, "value", "Value not found in copied container");
+		before(function () {
+			sandbox = createSandbox();
 		});
 
-		/**
-		 * Scenario: test if a current AzureClient in compatibility mode "1" can get a container made by the current AzureClient in mode "2".
-		 *
-		 * Expected behavior: an error should not be thrown nor should a rejected promise be returned.
-		 */
-		it(`Current AzureClient (mode: "1") can get container made by current AzureClient (mode: "2")`, async () => {
-			const { container: containerCurrent2 } = await clientCurrent2.createContainer(
-				schemaCurrent,
-				"2.0.0",
-			);
-			const containerId = await containerCurrent2.attach();
-
-			if (containerCurrent2.connectionState !== ConnectionState.Connected) {
-				await timeoutPromise(
-					(resolve) => containerCurrent2.once("connected", () => resolve()),
-					{
-						durationMs: connectTimeoutMs,
-						errorMsg: "containerCurrent2 connect() timeout",
-					},
-				);
-			}
-
-			containerCurrent2.initialObjects.map1.set("key", "value");
-
-			const resources = clientCurrent1.getContainer(containerId, schemaCurrent, "1.0.0");
-			await assert.doesNotReject(resources, () => true, "container could not be loaded");
-
-			const { container: containerCurrent1 } = await resources;
-			if (containerCurrent1.connectionState !== ConnectionState.Connected) {
-				await timeoutPromise(
-					(resolve) => containerCurrent1.once("connected", () => resolve()),
-					{
-						durationMs: connectTimeoutMs,
-						errorMsg: "containerCurrent1 connect() timeout",
-					},
-				);
-			}
-
-			const result = containerCurrent1.initialObjects.map1.get<string>("key");
-			assert.strictEqual(result, "value", "Value not found in copied container");
-		});
-
-		it("op grouping disabled as expected for 1.x clients", async () => {
-			const { container: container1 } = await clientCurrent1.createContainer(
-				schemaCurrent,
-				"1.0.0",
-			);
-			const containerId = await container1.attach();
-
-			if (container1.connectionState !== ConnectionState.Connected) {
-				await timeoutPromise((resolve) => container1.once("connected", () => resolve()), {
-					durationMs: connectTimeoutMs,
-					errorMsg: "container connect() timeout",
-				});
-			}
-
-			const containerProcessSpy = sandbox.spy(
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-				(container1 as any).container,
-				"processRemoteMessage",
-			);
-
-			// Explicitly force ops sent to be in the same batch
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-			(container1 as any).container._runtime.orderSequentially(() => {
-				const map1 = container1.initialObjects.map1;
-				map1.set("1", 1);
-				map1.set("2", 2);
-				map1.set("3", 3);
-			});
-
-			const { container: containerLegacy } = await clientLegacy.getContainer(
-				containerId,
-				schemaLegacy,
-			);
-			if (containerLegacy.connectionState !== ConnectionState.Connected) {
-				await timeoutPromise((resolve) => containerLegacy.once("connected", () => resolve()), {
-					durationMs: connectTimeoutMs,
-					errorMsg: "containerLegacy connect() timeout",
-				});
-			}
-
-			const legacyMap = containerLegacy.initialObjects.map1 as SharedMapLegacy;
-
-			// Verify ops are processed by legacy AzureClient
-			assert.strictEqual(legacyMap.get("1"), 1);
-			assert.strictEqual(legacyMap.get("2"), 2);
-			assert.strictEqual(legacyMap.get("3"), 3);
-
-			// Inspect the incoming ops
-			for (const call of containerProcessSpy.getCalls()) {
-				const message = call.firstArg as ISequencedDocumentMessage;
-				if (
-					message.type === MessageType.Operation &&
-					(message.contents as { type: string }).type === "groupedBatch"
-				) {
-					assert.fail("unexpected groupedBatch found");
-				}
+		beforeEach("createAzureClients", function () {
+			clientCurrent1 = createAzureClient();
+			if (isEphemeral) {
+				this.skip();
 			}
 		});
 
-		for (const compatibilityMode of ["1.0.0", "2.0.0"] as const) {
-			it(`op grouping works as expected (compatibilityMode: ${compatibilityMode})`, async () => {
+		afterEach(function () {
+			sandbox.restore();
+		});
+
+		for (const oldestSupportedClient of ["2.0.0"] as const) {
+			it(`op grouping works as expected (oldestSupportedClient: ${oldestSupportedClient})`, async () => {
 				const { container: container1 } = await clientCurrent1.createContainer(
 					schemaCurrent,
-					compatibilityMode,
+					oldestSupportedClient,
 				);
 				const containerId = await container1.attach();
 
@@ -642,7 +434,7 @@ for (const testOpts of testMatrix) {
 				const { container: container2 } = await clientCurrent1.getContainer(
 					containerId,
 					schemaCurrent,
-					compatibilityMode,
+					oldestSupportedClient,
 				);
 				const map2 = container2.initialObjects.map1;
 
@@ -664,19 +456,11 @@ for (const testOpts of testMatrix) {
 					}
 				}
 
-				if (compatibilityMode === "1.0.0") {
-					assert.strictEqual(
-						groupedBatchCount,
-						0,
-						"expect no op grouping in compatibilityMode 1",
-					);
-				} else {
-					assert.strictEqual(
-						groupedBatchCount,
-						1,
-						"expect op grouping in compatibilityMode 2",
-					);
-				}
+				assert.strictEqual(
+					groupedBatchCount,
+					1,
+					"expect op grouping with oldestSupportedClient 2.0.0",
+				);
 			});
 		}
 	});

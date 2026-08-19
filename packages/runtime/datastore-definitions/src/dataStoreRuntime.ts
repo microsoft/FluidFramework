@@ -228,8 +228,8 @@ export interface IFluidDataStoreRuntimeInternalConfig {
 	 * choosing an older version may limit available features and write formats.
 	 * This property is consumed by `SharedObjectFactory` (which are implementations of
 	 * {@link @fluidframework/datastore-definitions#IChannelFactory}).
-	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.oldestSupportedClient}
-	 * for more details.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams} for more details
+	 * about `oldestSupportedClient`.
 	 *
 	 * The property name is retained while the cross-layer dual-property migration in
 	 * {@link https://github.com/microsoft/FluidFramework/issues/27851} is completed.
