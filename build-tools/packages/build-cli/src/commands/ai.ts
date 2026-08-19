@@ -18,22 +18,30 @@ import { BaseCommand } from "../library/commands/base.js";
 const FALLBACK_MODEL = "claude-haiku-4.5";
 export const SUPPORTED_ALIASES = ["dev", "copilot", "oce"] as const;
 
-export function getDevcontainerFileCandidates(
-	cwd: string,
+export async function readAssetFile(
+	assetDirectory: string | undefined,
 	repoRoot: string | undefined,
 	filename: string,
-): string[] {
-	const candidates: string[] = [];
-	const seen = new Set<string>();
-	for (const base of [cwd, repoRoot]) {
-		if (base === undefined) continue;
-		const candidate = resolve(base, ".devcontainer", filename);
-		if (!seen.has(candidate)) {
-			seen.add(candidate);
-			candidates.push(candidate);
+): Promise<string | undefined> {
+	const directories =
+		assetDirectory !== undefined
+			? [assetDirectory]
+			: repoRoot === undefined
+				? []
+				: [
+						resolve(repoRoot, ".devcontainer"),
+						// TODO: AB#80968 Remove legacy paths after compatible flub versions are widely available.
+						resolve(repoRoot, ".devcontainer/ai-agent-insiders"),
+						resolve(repoRoot, ".devcontainer/ai-agent"),
+					];
+
+	for (const directory of directories) {
+		const content = await tryReadFile(resolve(directory, filename));
+		if (content !== undefined) {
+			return content;
 		}
 	}
-	return candidates;
+	return undefined;
 }
 
 export default class AiCommand extends BaseCommand<typeof AiCommand> {
@@ -58,6 +66,12 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 			exists: true,
 			env: "FLUB_AI_ALIAS_FILE",
 		}),
+		assetDirectory: Flags.directory({
+			description:
+				"Directory containing launcher-prompt.md and GETTING_STARTED.md. " +
+				"When unset, searches supported locations under the resolved repository root.",
+			env: "FLUB_AI_ASSET_DIRECTORY",
+		}),
 		githubToken: Flags.string({
 			description:
 				"GitHub token for the launcher assistant. Defaults to COPILOT_GITHUB_TOKEN, GH_TOKEN, or GITHUB_TOKEN.",
@@ -81,11 +95,12 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 
 		const repoRoot = await this.tryResolveRepoRoot();
 		this.verbose(`Repo root: ${repoRoot ?? "(not in a Fluid repo)"}`);
+		this.verbose(`Asset directory: ${flags.assetDirectory ?? "(not configured)"}`);
 
 		const [aliasFile, gettingStartedContent, promptFile] = await Promise.all([
 			this.resolveAliasFile(repoRoot, flags.aliasFile),
-			this.readDevcontainerFile(repoRoot, "GETTING_STARTED.md"),
-			this.loadPromptFile(repoRoot),
+			readAssetFile(flags.assetDirectory, repoRoot, "GETTING_STARTED.md"),
+			this.loadPromptFile(flags.assetDirectory, repoRoot),
 		]);
 		this.verbose(`Alias file: ${aliasFile.path}`);
 
@@ -276,34 +291,14 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 	}
 
 	/**
-	 * Reads a file from the default devcontainer directory in both cwd and repoRoot.
-	 */
-	private async readDevcontainerFile(
-		repoRoot: string | undefined,
-		filename: string,
-	): Promise<string | undefined> {
-		const candidates = getDevcontainerFileCandidates(process.cwd(), repoRoot, filename);
-
-		for (const candidate of candidates) {
-			this.verbose(`Looking for ${filename}: ${candidate}`);
-			const content = await tryReadFile(candidate);
-			if (content !== undefined) {
-				this.verbose(`Found ${filename}: ${candidate}`);
-				return content;
-			}
-		}
-		this.verbose(`${filename} not found in any candidate location.`);
-		return undefined;
-	}
-
-	/**
 	 * Loads the launcher prompt template and its frontmatter config.
 	 * Falls back to a minimal default if the file is not found.
 	 */
 	private async loadPromptFile(
+		assetDirectory: string | undefined,
 		repoRoot: string | undefined,
 	): Promise<{ template: string; model?: string }> {
-		const raw = await this.readDevcontainerFile(repoRoot, "launcher-prompt.md");
+		const raw = await readAssetFile(assetDirectory, repoRoot, "launcher-prompt.md");
 		if (raw !== undefined) {
 			try {
 				const { data, content } = matter(raw);

@@ -24,6 +24,11 @@ You can create a new Codespace with the other profile when switching workflows.
 Both profiles display a profile-specific welcome message in the first terminal.
 The AI-enabled profile also opens `GETTING_STARTED.md` in the editor and installs the agent launchers.
 
+### Launcher compatibility files
+
+The files under `.devcontainer/ai-agent/` are compatibility copies for older `flub` versions.
+Keep them synchronized with the root launcher assets until AB#80968 is resolved.
+
 ## Lifecycle hooks
 
 The devcontainer lifecycle hooks are structured for prebuild optimization:

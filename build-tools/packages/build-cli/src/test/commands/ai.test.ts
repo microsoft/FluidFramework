@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { chmod, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { expect } from "chai";
@@ -13,8 +13,8 @@ import { describe, it } from "mocha";
 import {
 	assertSafeAliasSelection,
 	buildLauncherPrompt,
-	getDevcontainerFileCandidates,
 	normalizePromptAnswer,
+	readAssetFile,
 	SUPPORTED_ALIASES,
 } from "../../commands/ai.js";
 
@@ -30,19 +30,99 @@ describe("ai command", () => {
 		expect(SUPPORTED_ALIASES).to.deep.equal(["dev", "copilot", "oce"]);
 	});
 
-	it("resolves launcher assets from the default devcontainer", () => {
-		expect(
-			getDevcontainerFileCandidates("/workspace/package", "/workspace", "launcher-prompt.md"),
-		).to.deep.equal([
-			resolve("/workspace/package/.devcontainer/launcher-prompt.md"),
-			resolve("/workspace/.devcontainer/launcher-prompt.md"),
-		]);
+	it("reads launcher assets from the configured directory", async () => {
+		const tempDirectory = await mkdtemp(join(tmpdir(), "flub-ai-assets-test-"));
+		try {
+			await writeFile(join(tempDirectory, "launcher-prompt.md"), "configured prompt");
+			expect(await readAssetFile(tempDirectory, undefined, "launcher-prompt.md")).to.equal(
+				"configured prompt",
+			);
+		} finally {
+			await rm(tempDirectory, { recursive: true, force: true });
+		}
 	});
 
-	it("deduplicates launcher asset paths at the repository root", () => {
-		expect(
-			getDevcontainerFileCandidates("/workspace", "/workspace", "GETTING_STARTED.md"),
-		).to.deep.equal([resolve("/workspace/.devcontainer/GETTING_STARTED.md")]);
+	it("prefers the configured directory over repository fallbacks", async () => {
+		const tempDirectory = await mkdtemp(join(tmpdir(), "flub-ai-assets-test-"));
+		const configuredDirectory = join(tempDirectory, "configured");
+		const repositoryDirectory = join(tempDirectory, "repo");
+		try {
+			await mkdir(configuredDirectory);
+			await mkdir(join(repositoryDirectory, ".devcontainer"), { recursive: true });
+			await writeFile(join(configuredDirectory, "launcher-prompt.md"), "configured prompt");
+			await writeFile(
+				join(repositoryDirectory, ".devcontainer", "launcher-prompt.md"),
+				"repository prompt",
+			);
+
+			expect(
+				await readAssetFile(configuredDirectory, repositoryDirectory, "launcher-prompt.md"),
+			).to.equal("configured prompt");
+		} finally {
+			await rm(tempDirectory, { recursive: true, force: true });
+		}
+	});
+
+	for (const relativeDirectory of [
+		".devcontainer",
+		".devcontainer/ai-agent-insiders",
+		".devcontainer/ai-agent",
+	]) {
+		it(`reads launcher assets from the ${relativeDirectory} repository fallback`, async () => {
+			const repositoryDirectory = await mkdtemp(join(tmpdir(), "flub-ai-assets-test-"));
+			try {
+				const fallbackDirectory = join(repositoryDirectory, relativeDirectory);
+				await mkdir(fallbackDirectory, { recursive: true });
+				await writeFile(join(fallbackDirectory, "launcher-prompt.md"), relativeDirectory);
+
+				expect(
+					await readAssetFile(undefined, repositoryDirectory, "launcher-prompt.md"),
+				).to.equal(relativeDirectory);
+			} finally {
+				await rm(repositoryDirectory, { recursive: true, force: true });
+			}
+		});
+	}
+
+	it("prefers the root repository fallback over legacy locations", async () => {
+		const repositoryDirectory = await mkdtemp(join(tmpdir(), "flub-ai-assets-test-"));
+		try {
+			for (const relativeDirectory of [
+				".devcontainer",
+				".devcontainer/ai-agent-insiders",
+				".devcontainer/ai-agent",
+			]) {
+				const fallbackDirectory = join(repositoryDirectory, relativeDirectory);
+				await mkdir(fallbackDirectory, { recursive: true });
+				await writeFile(join(fallbackDirectory, "launcher-prompt.md"), relativeDirectory);
+			}
+
+			expect(
+				await readAssetFile(undefined, repositoryDirectory, "launcher-prompt.md"),
+			).to.equal(".devcontainer");
+		} finally {
+			await rm(repositoryDirectory, { recursive: true, force: true });
+		}
+	});
+
+	it("does not use repository fallbacks when a directory is configured", async () => {
+		const tempDirectory = await mkdtemp(join(tmpdir(), "flub-ai-assets-test-"));
+		const configuredDirectory = join(tempDirectory, "configured");
+		const repositoryDirectory = join(tempDirectory, "repo");
+		try {
+			await mkdir(configuredDirectory);
+			await mkdir(join(repositoryDirectory, ".devcontainer"), { recursive: true });
+			await writeFile(
+				join(repositoryDirectory, ".devcontainer", "launcher-prompt.md"),
+				"repository prompt",
+			);
+
+			expect(
+				await readAssetFile(configuredDirectory, repositoryDirectory, "launcher-prompt.md"),
+			).to.equal(undefined);
+		} finally {
+			await rm(tempDirectory, { recursive: true, force: true });
+		}
 	});
 
 	it("uses the flub executable on PATH for the shell launcher", async () => {
