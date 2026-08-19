@@ -4,6 +4,8 @@
  */
 
 import type {
+	ITree,
+	ITreeAlpha,
 	TreeView,
 	TreeViewAlpha,
 	TreeViewBeta,
@@ -22,6 +24,12 @@ import type {
  * For each API (usually a class) that has an alpha/beta version, add overloads to the function(s) below.
  * These functions should only be used by external consumers, not referenced internally within the tree package, to avoid circular import dependencies.
  */
+
+/**
+ * Retrieve the {@link ITreeAlpha | alpha API} for an {@link ITree}.
+ * @alpha
+ */
+export function asAlpha(tree: ITree): ITreeAlpha;
 
 /**
  * Retrieve the {@link TreeViewAlpha | alpha API} for a {@link TreeView}.

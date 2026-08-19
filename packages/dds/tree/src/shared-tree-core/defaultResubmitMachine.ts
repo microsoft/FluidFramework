@@ -38,9 +38,7 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 		 */
 		private readonly enricher: ChangeEnricher<TChange>,
 		/**
-		 * Whether to force the application of commits that have been rebased and enriched to a side checkout.
-		 * This is useful to reduce the likelihood of an invalid commit being generated
-		 * (either due to the original commits being invalid or because of an error in the rebase or enrichment logic).
+		 * Attempt to {@link SharedTreeOptions.validateRebasedCommitsBeforeResubmission|validate} commits before resubmission in order to fail (throw) locally rather than risk corrupting persisted data.
 		 */
 		private readonly forceValidation: boolean,
 	) {}

@@ -28,9 +28,7 @@ export class BranchCommitEnricher<TChange> {
 	/**
 	 * Process the given commits for later {@link BranchCommitEnricher.retrieveChange | retrieval}.
 	 * @param commits - The commits to prepare.
-	 * @param forceValidation - Whether to force the application of the enriched commits to a side checkout.
-	 * This is useful to reduce the likelihood of an invalid commit being generated
-	 * (either due to the given `commits` being invalid or because of an error in the enrichment logic).
+	 * @param forceValidation - Attempt to {@link SharedTreeOptions.validateCommitsOnFirstSubmission|validate} commits before submission in order to fail (throw) locally rather than risk corrupting persisted data.
 	 */
 	public prepareChanges(
 		commits: readonly GraphCommit<TChange>[],
