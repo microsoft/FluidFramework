@@ -357,3 +357,43 @@ export function normalizeNodeId(
 		currentId = dealiased;
 	}
 }
+
+export function makeCrossFieldKeyTable(
+	fields: FieldChangeMap,
+	nodes: ChangeAtomIdBTree<NodeChangeset>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+): CrossFieldKeyTable {
+	const keys: CrossFieldKeyTable = newCrossFieldKeyTable();
+	populateCrossFieldKeyTableForFieldMap(keys, fields, undefined, fieldKinds);
+	nodes.forEachPair(([revision, localId], node) => {
+		if (node.fieldChanges !== undefined) {
+			populateCrossFieldKeyTableForFieldMap(
+				keys,
+				node.fieldChanges,
+				{
+					revision,
+					localId,
+				},
+				fieldKinds,
+			);
+		}
+	});
+
+	return keys;
+}
+
+function populateCrossFieldKeyTableForFieldMap(
+	table: CrossFieldKeyTable,
+	fields: FieldChangeMap,
+	parent: NodeId | undefined,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+): void {
+	for (const [fieldKey, fieldChange] of fields) {
+		const keys = getChangeHandler(fieldKinds, fieldChange.fieldKind).getCrossFieldKeys(
+			fieldChange.change,
+		);
+		for (const { key, count } of keys) {
+			table.set(key, count, { nodeId: parent, field: fieldKey });
+		}
+	}
+}
