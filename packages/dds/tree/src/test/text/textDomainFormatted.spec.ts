@@ -469,6 +469,21 @@ describe("textDomainFormatted", () => {
 		assert.throws(() => text.getUniformRun(6), UsageError);
 	});
 
+	it("getUniformRun compares optional format fields correctly", () => {
+		const run = (first: { color?: string }, second: { color?: string }): number => {
+			const text = OptionalFormatText.fromString("ab");
+			text.formatRange(0, 1, first);
+			text.formatRange(1, 2, second);
+			return text.getUniformRun(0);
+		};
+
+		assert.equal(run({}, { color: "red" }), 1);
+		assert.equal(run({ color: "red" }, {}), 1);
+		assert.equal(run({}, {}), 2);
+		assert.equal(run({ color: "red" }, { color: "red" }), 2);
+		assert.equal(run({ color: "red" }, { color: "blue" }), 1);
+	});
+
 	it("getString with getUniformRun", () => {
 		const text = FormattedTextDefault.Tree.fromString("abc");
 		text.insertAt(3, "de", {
