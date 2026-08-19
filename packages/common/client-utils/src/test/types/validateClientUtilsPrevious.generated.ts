@@ -177,6 +177,7 @@ declare type current_as_old_for_Function_stringToBuffer = requireAssignableTo<Ty
  * typeValidation.broken:
  * "Function_Uint8ArrayToArrayBuffer": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Function_Uint8ArrayToArrayBuffer = requireAssignableTo<TypeOnly<typeof current.Uint8ArrayToArrayBuffer>, TypeOnly<typeof old.Uint8ArrayToArrayBuffer>>
 
 /*
