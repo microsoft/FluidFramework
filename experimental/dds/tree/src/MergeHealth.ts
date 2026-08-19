@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger, LogLevel } from '@fluidframework/core-interfaces';
+import { LogLevel } from '@fluidframework/core-interfaces';
+import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 
 import { assertNotUndefined, fail } from './Common.js';
 import { PlaceValidationResult, RangeValidationResultKind } from './EditUtilities.js';

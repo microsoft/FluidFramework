@@ -4,7 +4,8 @@
  */
 
 import type { ITelemetryBufferedLogger } from "@fluid-internal/test-driver-definitions";
-import { type ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import * as mochaModule from "mocha";
 
 import { pkgName } from "./packageVersion.js";

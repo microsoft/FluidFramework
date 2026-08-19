@@ -5,7 +5,8 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { type IFluidHandle, LogLevel } from "@fluidframework/core-interfaces";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 

@@ -11,11 +11,11 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	type ITelemetryBaseEvent,
-	type ITelemetryBaseProperties,
-	LogLevel,
+import type {
+	ITelemetryBaseEvent,
+	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import sinon from "sinon";
 import { v4 as uuid } from "uuid";
 
