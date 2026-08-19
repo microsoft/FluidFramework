@@ -53,7 +53,7 @@
 		"build:docs": "api-extractor run --local --config api-extractor/api-extractor-model.json",
 		"build:entrypoints": "fluid-build . --task build:entrypoints",
 		"build:entrypoints:cjs": "flub generate entrypoints --resolutionConditions require --outFileLegacyBeta legacy --outDir ./dist",
-		"build:entrypoints:esm": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib --node10TypeCompat",
+		"build:entrypoints:esm": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:test": "concurrently npm:build:test:esm npm:build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
