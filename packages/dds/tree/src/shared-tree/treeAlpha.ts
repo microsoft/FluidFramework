@@ -47,6 +47,7 @@ import {
 	createFromCursor,
 	FieldKind,
 	normalizeFieldSchema,
+	getStagedRequiredUpgrade,
 	type ImplicitFieldSchema,
 	type InsertableField,
 	type TreeFieldFromImplicitField,
@@ -907,6 +908,9 @@ export const TreeAlpha: TreeAlpha = {
 			const field = normalizeFieldSchema(schema);
 			if (field.kind !== FieldKind.Optional) {
 				throw new UsageError("undefined provided for non-optional field.");
+			}
+			if (getStagedRequiredUpgrade(field) !== false) {
+				throw new UsageError("undefined provided for staged required field.");
 			}
 			return undefined as Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 		}

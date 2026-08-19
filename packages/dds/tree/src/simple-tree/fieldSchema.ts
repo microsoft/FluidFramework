@@ -188,6 +188,11 @@ export interface FieldPropsAlpha<TCustomMetadata = unknown>
 	 * If defined, indicates that this field is a {@link SchemaStaticsAlpha.stagedOptional | staged optional} field.
 	 */
 	readonly stagedOptionalUpgrade?: SchemaUpgrade;
+
+	/**
+	 * If defined, indicates that this field is a {@link SchemaStaticsAlpha.stagedRequired | staged required} field.
+	 */
+	readonly stagedRequiredUpgrade?: SchemaUpgrade;
 }
 
 /**
@@ -422,6 +427,10 @@ export class FieldSchemaAlpha<
 		return this.propsAlpha?.stagedOptionalUpgrade ?? false;
 	}
 
+	public get isStagedRequired(): false | SchemaUpgrade {
+		return this.propsAlpha?.stagedRequiredUpgrade ?? false;
+	}
+
 	static {
 		createFieldSchemaPrivate = <
 			Kind2 extends FieldKind,
@@ -480,6 +489,14 @@ export function normalizeFieldSchema(
 	return schema instanceof FieldSchema
 		? (schema as FieldSchemaAlpha)
 		: createFieldSchema(FieldKind.Required, schema);
+}
+
+/**
+ * Returns the {@link SchemaUpgrade} for a {@link SchemaStaticsAlpha.stagedRequired | staged required} field,
+ * or `false` if the field is not staged required.
+ */
+export function getStagedRequiredUpgrade(schema: ImplicitFieldSchema): false | SchemaUpgrade {
+	return schema instanceof FieldSchemaAlpha ? schema.isStagedRequired : false;
 }
 
 /**

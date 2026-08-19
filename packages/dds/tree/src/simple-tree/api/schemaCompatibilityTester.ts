@@ -6,10 +6,10 @@
 import type { TreeStoredSchema } from "../../core/index.js";
 import type { SchemaUpgrade, StagedSchemaUpgradePolicy } from "../core/index.js";
 import { allowsRepoSuperset, defaultSchemaPolicy } from "../../feature-libraries/index.js";
-import { toUpgradeSchema } from "../toStoredSchema.js";
 import type { TreeSchema } from "../treeSchema.js";
 
 import { getDiscrepanciesInAllowedContent } from "./discrepancies.js";
+import { computeUpgradeSchemas } from "./stagedRequiredUpgrades.js";
 import type { SchemaCompatibilityStatus } from "./tree.js";
 
 /**
@@ -44,14 +44,25 @@ export function checkSchemaCompatibility(
 		break;
 	}
 
-	const wouldUpgradeTo = toUpgradeSchema(viewSchema.root, stagedSchemaUpgrades);
+	const { target, wideningOnly } = computeUpgradeSchemas(
+		viewSchema,
+		stored,
+		stagedSchemaUpgrades,
+	);
 
-	const canUpgrade = allowsRepoSuperset(policy, stored, wouldUpgradeTo);
+	// Upgrading is permitted when everything except an explicitly opted-into
+	// {@link SchemaStaticsAlpha.stagedRequired | staged required} tightening is a superset of the stored schema.
+	// Such a tightening is a deliberate narrowing, so comparing against `target` would report `canUpgrade: false`
+	// exactly when the application opted in, making the documented migration step unreachable.
+	const canUpgrade = allowsRepoSuperset(policy, stored, wideningOnly);
 
 	// If true, then upgrading has no effect on what can be stored in the document.
 	// TODO: This should likely be changed to indicate up a schema upgrade would be a no-op, including stored schema metadata.
 	const isEquivalent =
-		canView && canUpgrade && allowsRepoSuperset(policy, wouldUpgradeTo, stored);
+		canView &&
+		canUpgrade &&
+		allowsRepoSuperset(policy, stored, target) &&
+		allowsRepoSuperset(policy, target, stored);
 
 	return {
 		canView,

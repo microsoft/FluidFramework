@@ -34,6 +34,7 @@ import {
 	setField,
 	normalizeFieldSchema,
 	checkSchemaCompatibility,
+	computeUpgradeSchemas,
 	type InsertableContent,
 	type StagedSchemaUpgradePolicy,
 	type TreeViewConfiguration,
@@ -57,7 +58,6 @@ import {
 	FieldSchemaAlpha,
 	TreeViewConfigurationAlpha,
 	toInitialSchema,
-	toUpgradeSchema,
 	type TreeBranchAlpha,
 	type TreeSchema,
 } from "../simple-tree/index.js";
@@ -265,19 +265,32 @@ export class SchematizingSimpleTreeView<
 	public upgradeSchema(): void {
 		this.ensureUndisposed();
 
-		const newSchema = toUpgradeSchema(this.viewSchema.root, this.stagedUpgradePolicy);
+		const { target, wideningOnly } = computeUpgradeSchemas(
+			this.viewSchema,
+			this.checkout.storedSchema,
+			this.stagedUpgradePolicy,
+		);
 		const storedSchema = this.checkout.storedSchema.clone();
-		if (!allowsRepoSuperset(defaultSchemaPolicy, storedSchema, newSchema)) {
+		// `target` may narrow `storedSchema`, but only by applying
+		// {@link SchemaStaticsAlpha.stagedRequired | staged required} upgrades the application explicitly opted into.
+		// `wideningOnly` is the same projection without those tightenings, so requiring it to be a superset preserves
+		// the "an upgrade never narrows the stored schema" guarantee for every other kind of change.
+		if (!allowsRepoSuperset(defaultSchemaPolicy, storedSchema, wideningOnly)) {
 			throw new UsageError(
 				"Existing stored schema cannot be upgraded to the requested schema (see TreeView.compatibility.canUpgrade).",
 			);
 		}
-		if (allowsRepoSuperset(defaultSchemaPolicy, newSchema, storedSchema)) {
+		const isSuperset = allowsRepoSuperset(defaultSchemaPolicy, storedSchema, target);
+		if (isSuperset && allowsRepoSuperset(defaultSchemaPolicy, target, storedSchema)) {
 			// No-op
 			return;
 		}
 
-		this.runSchemaEdit(() => this.checkout.updateSchema(newSchema));
+		this.runSchemaEdit(() =>
+			// The narrowing case is exactly the opted-into staged required tightening validated above, so the
+			// checkout's superset assert must be bypassed for it.
+			this.checkout.updateSchema(target, isSuperset ? undefined : true),
+		);
 	}
 
 	/**

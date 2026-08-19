@@ -306,6 +306,28 @@ export interface SimpleFieldSchema<Type extends SchemaType = SchemaType> {
 	readonly isStagedOptional?: Type extends SchemaType.Stored
 		? undefined
 		: false | SchemaUpgrade;
+
+	/**
+	 * Indicates that this field is a {@link SchemaStaticsAlpha.stagedRequired | staged required} field,
+	 * allowing the view schema (where the field is Optional during the staged phase) to be compatible with a stored
+	 * schema where the field is optional (pre-upgrade) or required (post-upgrade).
+	 * New documents and schema upgrades will keep the field as optional in the stored schema unless the corresponding
+	 * {@link SchemaUpgrade} is explicitly enabled.
+	 *
+	 * `false` if this is a view schema field that is not staged required.
+	 * Absent (`undefined`) if derived from a stored schema (where staged required has no meaning).
+	 *
+	 * `false` and `undefined` are both "not staged required," but distinct: `false` means "view schema field, not staged
+	 * required" while `undefined` means "stored schema field." Consumers that need to check for staged required should
+	 * compare against `false` (e.g., `!== false`) rather than checking truthiness.
+	 *
+	 * @privateRemarks
+	 * Analogous to {@link SimpleFieldSchema.isStagedOptional}, but for the opposite migration direction.
+	 * Optional (`?`) so that existing code constructing `SimpleFieldSchema` object literals does not need to be updated.
+	 */
+	readonly isStagedRequired?: Type extends SchemaType.Stored
+		? undefined
+		: false | SchemaUpgrade;
 }
 
 /**

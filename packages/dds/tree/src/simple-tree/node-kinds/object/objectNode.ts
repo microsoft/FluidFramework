@@ -71,6 +71,7 @@ import {
 	extractFieldProvider,
 	isConstant,
 	type DefaultProvider,
+	getStagedRequiredUpgrade,
 } from "../../fieldSchema.js";
 import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
 import { prepareForInsertion } from "../../prepareForInsertion.js";
@@ -413,6 +414,12 @@ export function setField(
 	value: InsertableContent | undefined,
 	destinationSchema: TreeFieldStoredSchema,
 ): void {
+	if (value === undefined && getStagedRequiredUpgrade(simpleFieldSchema) !== false) {
+		throw new UsageError(
+			"Cannot clear a staged required field: it is optional in the view schema only because the stored schema has not been tightened yet (see SchemaStaticsAlpha.stagedRequired).",
+		);
+	}
+
 	const mapTree = prepareForInsertion(
 		value,
 		simpleFieldSchema,
@@ -721,6 +728,14 @@ function objectToFlexContent(
 	for (const [key, fieldInfo] of schema.flexKeyMap) {
 		const value = getFieldProperty(data, key);
 
+		if (value === undefined && getStagedRequiredUpgrade(fieldInfo.schema) !== false) {
+			throw new UsageError(
+				`Staged required field "${String(key)}" of node "${schema.identifier}" must be provided with a value. ` +
+					`The field is optional in the view schema only because the stored schema has not been tightened yet (see SchemaStaticsAlpha.stagedRequired); ` +
+					`a client using this schema must not create new nodes where it is empty.`,
+			);
+		}
+
 		let children: UnhydratedFlexTreeNode[] | ContextualFieldProvider;
 		if (value === undefined) {
 			const defaultProvider =
@@ -808,6 +823,13 @@ function applyFieldChange(
 	fieldInfo: { storedKey: FieldKey; schema: FieldSchema },
 	value: InsertableContent | undefined,
 ): void {
+	if (value === undefined && getStagedRequiredUpgrade(fieldInfo.schema) !== false) {
+		throw new UsageError(
+			`Cannot clear staged required field "${fieldInfo.storedKey}" of node "${schema.identifier}". ` +
+				`The field is optional in the view schema only because the stored schema has not been tightened yet (see SchemaStaticsAlpha.stagedRequired); a client using this schema must not clear it.`,
+		);
+	}
+
 	const proxy =
 		from.kind === "proxy"
 			? from.node

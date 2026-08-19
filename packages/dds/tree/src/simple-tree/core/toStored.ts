@@ -25,6 +25,18 @@ export interface StagedSchemaUpgradePolicy {
 	 * Due to caching, the behavior of this function must be pure.
 	 */
 	includeStagedOptional(upgrade: SchemaUpgrade): boolean;
+
+	/**
+	 * Determines whether to treat a {@link SchemaStaticsAlpha.stagedRequired | staged required} field as required
+	 * (rather than optional) in the resulting stored schema.
+	 * @remarks
+	 * Defaults to never including staged required upgrades when omitted.
+	 * Note that, unlike the other members of this interface, returning `true` *narrows* the stored schema
+	 * (the field goes from Optional to Required), so it must always be opted into explicitly.
+	 *
+	 * Due to caching, the behavior of this function must be pure.
+	 */
+	includeStagedRequired?(upgrade: SchemaUpgrade): boolean;
 }
 
 /**
@@ -95,11 +107,15 @@ export const StagedSchemaUpgradePolicy: StagedSchemaUpgradePolicyFactory = {
 	restrictive: {
 		includeStaged: () => false,
 		includeStagedOptional: () => false,
+		includeStagedRequired: () => false,
 	},
 
 	permissive: {
 		includeStaged: () => true,
 		includeStagedOptional: () => true,
+		// Applying a staged required upgrade tightens the stored field from Optional to Required, which is a narrowing.
+		// It is therefore never part of a maximally permissive stored schema, and must always be opted into explicitly.
+		includeStagedRequired: () => false,
 	},
 
 	enabledStagedUpgrades(...upgrades: SchemaUpgrade[]): StagedSchemaUpgradePolicy {
@@ -110,6 +126,7 @@ export const StagedSchemaUpgradePolicy: StagedSchemaUpgradePolicyFactory = {
 		return {
 			includeStaged: (upgrade) => enabledUpgradeSet.has(upgrade),
 			includeStagedOptional: (upgrade) => enabledUpgradeSet.has(upgrade),
+			includeStagedRequired: (upgrade) => enabledUpgradeSet.has(upgrade),
 		};
 	},
 };

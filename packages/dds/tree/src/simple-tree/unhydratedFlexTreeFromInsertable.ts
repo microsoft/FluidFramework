@@ -21,7 +21,12 @@ import {
 	UnhydratedFlexTreeNode,
 } from "./core/index.js";
 import { getUnhydratedContext } from "./createContext.js";
-import { normalizeFieldSchema, FieldKind, type ImplicitFieldSchema } from "./fieldSchema.js";
+import {
+	normalizeFieldSchema,
+	FieldKind,
+	getStagedRequiredUpgrade,
+	type ImplicitFieldSchema,
+} from "./fieldSchema.js";
 
 /**
  * Transforms an input {@link TypedNode} tree to an {@link UnhydratedFlexTreeNode}.
@@ -60,6 +65,11 @@ export function unhydratedFlexTreeFromInsertable<TIn extends InsertableContent |
 		if (normalizedFieldSchema.kind !== FieldKind.Optional) {
 			throw new UsageError(
 				`Got undefined for non-optional field expecting one of ${quotedAllowedTypesWithNames(normalizedFieldSchema.allowedTypeSet)}`,
+			);
+		}
+		if (getStagedRequiredUpgrade(normalizedFieldSchema) !== false) {
+			throw new UsageError(
+				`Got undefined for a staged required field expecting one of ${quotedAllowedTypesWithNames(normalizedFieldSchema.allowedTypeSet)}. The field is optional in the view schema only because the stored schema has not been tightened yet (see SchemaStaticsAlpha.stagedRequired); a client using this schema must not create new content where it is empty.`,
 			);
 		}
 		return undefined as TIn extends undefined ? undefined : UnhydratedFlexTreeNode;
