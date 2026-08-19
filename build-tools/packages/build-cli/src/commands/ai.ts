@@ -29,8 +29,8 @@ export async function readAssetFile(
 			: repoRoot === undefined
 				? []
 				: [
+						// Support assets from the current and previous Codespace layouts.
 						resolve(repoRoot, ".devcontainer"),
-						// TODO: AB#80968 Remove legacy paths after compatible flub versions are widely available.
 						resolve(repoRoot, ".devcontainer/ai-agent-insiders"),
 						resolve(repoRoot, ".devcontainer/ai-agent"),
 					];
