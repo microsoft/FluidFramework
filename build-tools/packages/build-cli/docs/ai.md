@@ -17,8 +17,9 @@ USAGE
 FLAGS
   --aliasFile=<value>       [env: FLUB_AI_ALIAS_FILE] Path to the agent-aliases.sh file. Defaults to the AI-enabled
                             Codespace locations.
-  --assetDirectory=<value>  [env: FLUB_AI_ASSET_DIRECTORY] Directory containing assets used by the AI launcher. When
-                            unset, searches supported locations under the resolved repository root.
+  --assetDirectory=<value>  [env: FLUB_AI_ASSET_DIRECTORY] Directory containing assets used by the AI launcher. The
+                            configured directory must exist. When unset, searches supported locations under the resolved
+                            repository root.
   --githubToken=<value>     [env: COPILOT_GITHUB_TOKEN] GitHub token for the launcher assistant. Defaults to
                             COPILOT_GITHUB_TOKEN, GH_TOKEN, or GITHUB_TOKEN.
   --launchFile=<value>      Write the launch command to this file instead of executing it. Used by shell wrappers to run

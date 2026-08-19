@@ -6,11 +6,12 @@
 import { chmod, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import { Config } from "@oclif/core";
 import { expect } from "chai";
 import execa from "execa";
 import { describe, it } from "mocha";
 
-import {
+import AiCommand, {
 	assertSafeAliasSelection,
 	buildLauncherPrompt,
 	normalizePromptAnswer,
@@ -28,6 +29,26 @@ describe("ai command", () => {
 
 	it("supports the configured Copilot launchers", () => {
 		expect(SUPPORTED_ALIASES).to.deep.equal(["dev", "copilot", "oce"]);
+	});
+
+	it("rejects a configured asset directory that does not exist", async () => {
+		const tempDirectory = await mkdtemp(join(tmpdir(), "flub-ai-assets-test-"));
+		const missingDirectory = join(tempDirectory, "missing");
+		try {
+			const config = await Config.load({ root: import.meta.url });
+			const command = new AiCommand(["--assetDirectory", missingDirectory], config);
+			let error: unknown;
+			try {
+				await command.init();
+			} catch (caught) {
+				error = caught;
+			}
+
+			expect(error).to.be.instanceOf(Error);
+			expect((error as Error).message).to.include(missingDirectory);
+		} finally {
+			await rm(tempDirectory, { recursive: true, force: true });
+		}
 	});
 
 	it("reads launcher assets from the configured directory", async () => {

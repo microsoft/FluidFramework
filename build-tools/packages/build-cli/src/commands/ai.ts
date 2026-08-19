@@ -69,7 +69,8 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 		assetDirectory: Flags.directory({
 			description:
 				"Directory containing assets used by the AI launcher. " +
-				"When unset, searches supported locations under the resolved repository root.",
+				"The configured directory must exist. When unset, searches supported locations under the resolved repository root.",
+			exists: true,
 			env: "FLUB_AI_ASSET_DIRECTORY",
 		}),
 		githubToken: Flags.string({
