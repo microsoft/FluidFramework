@@ -73,12 +73,11 @@ export function AnyUint8ArrayToArrayBuffer(array: Uint8Array): ArrayBuffer {
 	) {
 		return array.buffer;
 	}
-	// In TypeScript 5.9 or higher, `ArrayBufferLikeToArrayBuffer` can be removed.
-	// slice is used to ensure underlying buffer is ArrayBuffer.
-	// Uint8ArrayToArrayBufferLike is used to ensure that if underlying buffer was
-	// already ArrayBuffer, then slice isn't a shallow clone preserving shorter length.
-	// This is effectively `array.slice().buffer` but with the added protection
-	// if underlying implementation is changed (optimized) to not duplicate.
+	// .slice is used to ensure underlying buffer is:
+	//  1. ArrayBuffer
+	//  2. the complete data (no offset, full length)
+	// Cloning specified per https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray/slice
+	// and ECMAScript https://tc39.es/ecma262/multipage/indexed-collections.html#sec-%typedarray%.prototype.slice.
 	// eslint-disable-next-line unicorn/prefer-spread -- spread is not the same as slice for `Uint8Array`
-	return ArrayBufferLikeToArrayBuffer(Uint8ArrayToArrayBufferLike(array.slice()));
+	return array.slice().buffer;
 }
