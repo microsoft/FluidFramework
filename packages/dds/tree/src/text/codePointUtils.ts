@@ -21,12 +21,12 @@ import { validateIndex } from "../util/index.js";
  * ```
  * @privateRemarks
  * Users of this are assuming the segmentation of their string exactly matches what our text utils do.
- * If they are using this to evaluate what they will do, it might be better to just use the text APis directly, and measure the resulting length.
+ * If they are using this to evaluate what they will do, it might be better to just use the text APIs directly, and measure the resulting length.
  * If measuring what they did, then measuring the length of the resulting character array would likely be better.
  * In short: using this typically means making an assumption about how data in one of our string arrays is or will be segmented,
  * which can't always be robust since it's possible to violate our default segmentation policy via round tripping the data and injecting irregular segments.
  * Additionally, using this likely means you will have problems if/when handling embedded objects.
- * Therefore we might want to reevaluate the code using this, instead of promoting it a more stable API surface and encouraging use of it.
+ * Therefore we might want to reevaluate the code using this, instead of promoting it to a more stable API surface and encouraging use of it.
  *
  * @alpha
  */

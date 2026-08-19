@@ -14,8 +14,8 @@ import { codePointCount, utf16LengthForCodePoints } from "../../text/codePointUt
 import { validateIndex } from "../../util/index.js";
 
 /**
- * Simpler but slightly slower implementation of utf16LengthForCodePoints using the string iterator.
- * Used as a reference implementation.
+ * Simpler but slightly slower implementation of {@link utf16LengthForCodePoints} using the string iterator.
+ * @remarks Used as a reference implementation.
  */
 function utf16LengthForCodePointsUsingIterator(
 	value: string,
@@ -43,9 +43,13 @@ function utf16LengthForCodePointsUsingIterator(
 	return utf16;
 }
 
+/**
+ * Multiple implementations, so we can ensure our production one behaves the same as a simpler reference implementation.
+ * @remarks The reference implementation is slower, but simpler and easier to reason about.
+ */
 const implementations = [
 	["codePointAt", utf16LengthForCodePoints],
-	["string iterator", utf16LengthForCodePointsUsingIterator],
+	["reference using string iterator", utf16LengthForCodePointsUsingIterator],
 ] as const;
 
 describe("codePointUtils", () => {
