@@ -3,12 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { debugAssert } from "@fluidframework/core-utils/internal";
 import {
 	mapCursorField,
 	mapCursorFields,
 	inCursorField,
 	type ITreeCursorSynchronous,
 	type Value,
+	type FieldKey,
 } from "../core/index.js";
 /**
  * Tests whether a cursor's current node matches a previously captured subtree.
@@ -51,25 +53,72 @@ function buildFieldComparator(nodeComparators: NodeComparator[]): FieldComparato
  *
  * The cursor must be in Nodes mode. After this call, the cursor is restored to its original position.
  *
+ * This code is on a hot path for walking formatted text, so it is optimized for performance.
+ *
+ * As an optimization, this makes some assumptions about the cursors,
+ * which we know are true for any actual node which can exist in our public API surface,
+ * but which are not guaranteed by the cursor interface itself.
+ * Specifically this assumes that:
+ * 1. Nodes either have fields or a value, never both.
+ * 2. The type of a leaf value is possible to determine from its value.
  */
 export function buildNodeComparator(cursor: ITreeCursorSynchronous): NodeComparator {
 	const expectedValue: Value = cursor.value;
+	const expectedType = cursor.type;
+
+	// Fast-path for leaves:
+	// This leverages the fact that nodes either have fields of values, never both, so we can skip checking fields.
 	if (expectedValue !== undefined) {
-		return (other: ITreeCursorSynchronous): boolean => Object.is(other.value, expectedValue);
+		return (other: ITreeCursorSynchronous): boolean => {
+			// This assumes that the type of a leaf value is possible to determine from its value,
+			// so we don't need to compare the type as well.
+			// This assumption is validated by the debugAssert below.
+			debugAssert(
+				() =>
+					!Object.is(other.value, expectedValue) ||
+					other.type === expectedType ||
+					"Equal values must have equal types",
+			);
+			return Object.is(other.value, expectedValue);
+		};
 	}
-	const fieldComparators = mapCursorFields(cursor, (fieldCursor) => ({
-		key: fieldCursor.getFieldKey(),
-		compare: buildFieldComparator(mapCursorField(fieldCursor, buildNodeComparator)),
-	}));
+
+	const fieldComparators: Map<FieldKey, (cursor: ITreeCursorSynchronous) => boolean> = new Map(
+		mapCursorFields(cursor, (fieldCursor) => [
+			fieldCursor.getFieldKey(),
+			buildFieldComparator(mapCursorField(fieldCursor, buildNodeComparator)),
+		]),
+	);
+	const fieldCount = fieldComparators.size;
 
 	return (other: ITreeCursorSynchronous): boolean => {
-		if (!Object.is(other.value, expectedValue)) {
+		if (other.type !== expectedType) {
 			return false;
 		}
-		for (const { key, compare } of fieldComparators) {
-			if (!inCursorField(other, key, () => compare(other))) {
+		// We assume that the type sorts nodes into leaf or not, so in this non leaf case,
+		// any node with a value should have returned false above.
+		// This assumption is validated by the debugAssert below.
+		debugAssert(
+			() => other.value === undefined || "Expected other cursor to be in Nodes mode",
+		);
+
+		let otherFieldCount = 0;
+		for (let inField = other.firstField(); inField; inField = other.nextField()) {
+			const fieldValidator = fieldComparators.get(other.getFieldKey());
+			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- Suggested fix fails a different lint, and needs an extra compare.
+			if (fieldValidator === undefined || !fieldValidator(other)) {
+				other.exitField();
 				return false;
 			}
+			otherFieldCount++;
+		}
+
+		debugAssert(
+			() => otherFieldCount <= fieldCount || "Extra fields should have been rejected above",
+		);
+
+		if (otherFieldCount !== fieldCount) {
+			return false;
 		}
 
 		return true;
