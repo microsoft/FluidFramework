@@ -545,6 +545,7 @@ export interface ICaptureFullContainerStateProps {
  * is a known consumer and end-to-end coverage, the capture refuses rather
  * than silently producing pending state that omits group data.
  *
+ * @privateRemarks
  * Note: if a new snapshot lands between the snapshot fetch and delta catch-up,
  * the returned state may not reflect the very latest snapshot, but remains
  * internally consistent: ops are anchored to the snapshot that was captured.
