@@ -16,6 +16,7 @@ import {
 	type ITelemetryBaseProperties,
 	LogLevel,
 } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import sinon from "sinon";
 import { v4 as uuid } from "uuid";
 
