@@ -10,6 +10,7 @@ The event's runtime behavior has not changed, but the declaration reserves that 
 
 Most listeners require no changes.
 Listeners that declare their own optional first parameter should remove it or use a wrapper so they do not interpret event data as application data.
+Such listeners were already unlikely to function correctly - these changes just make the contract for use more explicit.
 For example, use a zero-argument inline callback when subscribing to the stable event:
 
 ```typescript
