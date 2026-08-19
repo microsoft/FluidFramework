@@ -155,7 +155,7 @@ export interface TreeAgentUserMessage {
 }
 
 // @alpha
-export type TreeView<TRoot extends ImplicitFieldSchema> = Pick<TreeViewAlpha<TRoot>, "root" | "fork" | "merge" | "rebaseOnto" | "schema" | "events"> & TreeBranchAlpha;
+export type TreeView<TRoot extends ImplicitFieldSchema> = Pick<TreeViewAlpha<TRoot>, "root" | "fork" | "merge" | "rebaseOnto" | "schema" | "events"> & UntypedTreeViewAlpha;
 
 // @alpha
 export const typeFactory: {

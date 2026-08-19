@@ -91,8 +91,8 @@ import {
 	type TreeViewConfiguration,
 	type UnsafeUnknownSchema,
 	type ViewableTree,
-	type TreeBranch,
-	type TreeBranchAlpha,
+	type UntypedTreeView,
+	type UntypedTreeViewAlpha,
 	type VerboseTree,
 	type VoidTransactionCallbackStatusAlpha,
 	type TransactionCallbackStatusAlpha,
@@ -235,7 +235,7 @@ export type TreeTransactor = Transactor<
  * Implementations of this interface must implement the {@link branchKey} property.
  */
 export interface ITreeCheckout
-	extends TreeBranchAlpha,
+	extends UntypedTreeViewAlpha,
 		AnchorLocator,
 		ViewableTree,
 		WithBreakable {
@@ -395,9 +395,9 @@ export interface RevertMetrics {
 }
 
 /**
- * Get the {@link TreeCheckout} associated with a given {@link TreeBranch}.
+ * Get the {@link TreeCheckout} associated with a given {@link UntypedTreeView}.
  */
-function getCheckout(context: TreeBranch): TreeCheckout {
+function getCheckout(context: UntypedTreeView): TreeCheckout {
 	if (context instanceof TreeCheckout) {
 		return context;
 	}
@@ -965,14 +965,18 @@ export class TreeCheckout implements ITreeCheckout {
 		this.#transaction.branch.apply(change);
 	}
 
-	// #region TreeBranchAlpha
+	// #region UntypedTreeViewAlpha
 
 	@throwIfBroken
 	public applyChange(change: JsonCompatibleReadOnly): void {
 		this.applySerializedChange(change);
 	}
 
-	public isBranch(): this is TreeBranchAlpha {
+	public isBranch(): this is UntypedTreeViewAlpha {
+		return this.isView();
+	}
+
+	public isView(): this is UntypedTreeViewAlpha {
 		return true;
 	}
 
@@ -1084,7 +1088,7 @@ export class TreeCheckout implements ITreeCheckout {
 			: { success: true, value: value as TSuccessValue };
 	}
 
-	// #endregion TreeBranchAlpha
+	// #endregion UntypedTreeViewAlpha
 
 	// Revision is the revision of the commit, if any, which caused this change.
 	private applyInternalChange(change: SharedTreeChange, revision?: RevisionTag): void {
@@ -1197,9 +1201,9 @@ export class TreeCheckout implements ITreeCheckout {
 					revertible.dispose();
 				}
 			},
-			clone: (targetBranch: TreeBranch) => {
+			clone: (targetView: UntypedTreeView) => {
 				// TODO:#23442: When a revertible is cloned for a forked branch, optimize to create a fork of a revertible branch once per revision NOT once per revision per checkout.
-				const targetCheckout = getCheckout(targetBranch);
+				const targetCheckout = getCheckout(targetView);
 
 				const revertibleBranch = this.revertibleCommitBranches.get(revision);
 				if (revertibleBranch === undefined) {
@@ -1357,8 +1361,8 @@ export class TreeCheckout implements ITreeCheckout {
 		this.#events.emit("afterBatch");
 	}
 
-	private rebase(branch: TreeBranch): void {
-		const checkout = getCheckout(branch);
+	private rebase(view: UntypedTreeView): void {
+		const checkout = getCheckout(view);
 		this.checkNotDisposed(
 			"The target branch of the rebase has been disposed and cannot be rebased.",
 		);
@@ -1384,15 +1388,15 @@ export class TreeCheckout implements ITreeCheckout {
 		checkout.#transaction.branch.rebaseOnto(this.#transaction.branch);
 	}
 
-	public rebaseOnto(branch: TreeBranch): void {
-		getCheckout(branch).rebase(this);
+	public rebaseOnto(view: UntypedTreeView): void {
+		getCheckout(view).rebase(this);
 	}
 
-	public isMissingEditsFrom(branch: TreeBranch): boolean {
-		const branchCheckout = getCheckout(branch);
+	public isMissingEditsFrom(view: UntypedTreeView): boolean {
+		const viewCheckout = getCheckout(view);
 		const targetPath: GraphCommit<unknown>[] = [];
 		const ancestor = findCommonAncestor(this.mainBranch.getHead(), [
-			branchCheckout.mainBranch.getHead(),
+			viewCheckout.mainBranch.getHead(),
 			targetPath,
 		]);
 		if (ancestor === undefined) {
@@ -1402,14 +1406,14 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	public computeNetChangeIfRebasedOnto(
-		branch: TreeBranch,
+		view: UntypedTreeView,
 	): JsonCompatibleReadOnly | undefined {
-		const branchCheckout = getCheckout(branch);
+		const viewCheckout = getCheckout(view);
 		const rebased = rebaseBranch(
 			this.mintRevisionTag,
 			this.changeFamily.rebaser,
 			this.#transaction.branch.getHead(),
-			branchCheckout.#transaction.branch.getHead(),
+			viewCheckout.#transaction.branch.getHead(),
 		);
 
 		if (rebased.sourceChange === undefined) {
@@ -1425,10 +1429,10 @@ export class TreeCheckout implements ITreeCheckout {
 		);
 	}
 
-	public merge(branch: TreeBranch): void;
-	public merge(branch: TreeBranch, disposeMerged: boolean): void;
-	public merge(branch: TreeBranch, disposeMerged = true): void {
-		const checkout = getCheckout(branch);
+	public merge(view: UntypedTreeView): void;
+	public merge(view: UntypedTreeView, disposeMerged: boolean): void;
+	public merge(view: UntypedTreeView, disposeMerged = true): void {
+		const checkout = getCheckout(view);
 		this.checkNotDisposed(
 			"The target branch of the merge has been disposed and cannot be merged.",
 		);

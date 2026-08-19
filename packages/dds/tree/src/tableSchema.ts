@@ -1123,19 +1123,14 @@ export namespace System_TableSchema {
 				preconditionsOnRevert?: readonly TransactionConstraintAlpha[];
 			}): void {
 				const { applyEdits, preconditions, preconditionsOnRevert } = options;
-				const branch = TreeAlpha.branch(this);
+				const context = TreeAlpha.context(this);
 
 				// Ensure events are paused until all of the edits are applied.
 				// This ensures that the user sees the corresponding table-level edit as atomic,
 				// and ensures they are not spammed with intermediate events.
 				withBufferedTreeEvents(() => {
-					if (branch === undefined) {
-						// If this node does not have a corresponding branch, then it is unhydrated.
-						// I.e., it is not part of a collaborative session yet.
-						// Therefore, we don't need to run the edits as a transaction.
-						applyEdits();
-					} else {
-						branch.runTransaction(
+					if (context.isView()) {
+						context.runTransaction(
 							() => {
 								applyEdits();
 								if (preconditionsOnRevert !== undefined) {
@@ -1144,6 +1139,11 @@ export namespace System_TableSchema {
 							},
 							preconditions === undefined ? undefined : { preconditions },
 						);
+					} else {
+						// If this node does not have a corresponding view, then it is unhydrated.
+						// I.e., it is not part of a collaborative session yet.
+						// Therefore, we don't need to run the edits as a transaction.
+						applyEdits();
 					}
 				});
 			}
@@ -1168,7 +1168,7 @@ export namespace System_TableSchema {
 			#buildColumnInDocumentConstraintsForRows(
 				rows: Iterable<RowValueType>,
 			): TransactionConstraintAlpha[] | undefined {
-				if (!TreeAlpha.context(this).isBranch()) {
+				if (!TreeAlpha.context(this).isView()) {
 					return undefined;
 				}
 
