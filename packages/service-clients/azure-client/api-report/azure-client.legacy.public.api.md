@@ -109,6 +109,6 @@ export interface IUser {
 }
 
 // @public @input
-export type OldestSupportedClientVersion = `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
+export type OldestSupportedClientVersion = `${1 | 2 | 3}.${bigint}.${bigint}` | `${1 | 2 | 3}.${bigint}.${bigint}-${string}`;
 
 ```
