@@ -875,6 +875,7 @@ describe("textEditor", () => {
 							text.insertAt(0, "A");
 							text.insertAt(1, "B");
 						});
+
 						rendered.rerender(content);
 						assert.match(rendered.baseElement.textContent ?? "", /AB/);
 

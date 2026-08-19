@@ -4,7 +4,7 @@
  */
 
 export {
-	typeNameSymbol,
+	schemaIdentifierBrand,
 	typeSchemaSymbol,
 	contentSchemaSymbol,
 	type WithType,
