@@ -6,7 +6,7 @@
 import {
 	bufferToString,
 	stringToBuffer,
-	Uint8ArrayToArrayBuffer,
+	AnyUint8ArrayToArrayBuffer,
 } from "@fluid-internal/client-utils";
 import { assert, compareArrays, unreachableCase } from "@fluidframework/core-utils/internal";
 import { type ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
@@ -172,7 +172,7 @@ function convertSummaryToISnapshot(
 				blobContents.set(
 					blobId,
 					summaryObject.content instanceof Uint8Array
-						? Uint8ArrayToArrayBuffer(summaryObject.content)
+						? AnyUint8ArrayToArrayBuffer(summaryObject.content)
 						: stringToBuffer(summaryObject.content, "utf8"),
 				);
 
