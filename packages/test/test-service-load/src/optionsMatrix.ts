@@ -115,7 +115,7 @@ export function generateRuntimeOptions(
 		chunkSizeInBytes: [204800],
 		enableRuntimeIdCompressor: ["on", undefined, "delayed"],
 		enableGroupedBatching: [true, false],
-		createBlobPayloadPending: [true, undefined],
+		createBlobPayloadPending: [true, false, undefined],
 		explicitSchemaControl: [true, false],
 		disableSchemaUpgrade: [false],
 		stagingModeAutoFlushThreshold: [undefined],
@@ -144,7 +144,7 @@ export function generateRuntimeOptions(
 
 	// Override explicitSchemaControl to enabled if createBlobPayloadPending is enabled
 	pairwiseOptions.map((options) => {
-		if (options.createBlobPayloadPending) {
+		if (options.createBlobPayloadPending === true) {
 			(
 				options as {
 					// Remove readonly modifier to allow overriding
