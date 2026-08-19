@@ -1,0 +1,13 @@
+{
+	"name": "@fluidframework/flub-imports-no-internal-fixture",
+	"version": "1.0.0",
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./index.d.ts"
+		},
+		"./beta": {
+			"types": "./beta.d.ts"
+		}
+	}
+}

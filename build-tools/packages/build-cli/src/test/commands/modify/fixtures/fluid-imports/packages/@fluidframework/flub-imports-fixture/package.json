@@ -1,0 +1,28 @@
+{
+	"name": "@fluidframework/flub-imports-fixture",
+	"version": "1.0.0",
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./index.d.ts"
+		},
+		"./beta": {
+			"types": "./flub-beta.d.ts"
+		},
+		"./alpha": {
+			"types": "./flub-alpha.d.ts"
+		},
+		"./legacy": {
+			"types": "./flub-legacy.d.ts"
+		},
+		"./legacy/beta": {
+			"types": "./flub-legacy-beta.d.ts"
+		},
+		"./legacy/alpha": {
+			"types": "./flub-legacy-alpha.d.ts"
+		},
+		"./internal": {
+			"types": "./flub-internal.d.ts"
+		}
+	}
+}
