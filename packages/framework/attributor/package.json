@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/attributor",
-	"version": "2.115.0",
+	"version": "3.0.0",
 	"description": "Operation attributor",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -96,7 +96,7 @@
 		"lz4js": "^0.2.0"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.18.2",
+		"@arethetypeswrong/cli": "^0.18.5",
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",

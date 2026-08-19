@@ -5,6 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+
 import {
 	CursorLocationType,
 	EmptyKey,
@@ -258,6 +260,29 @@ describe("chunkTree", () => {
 	});
 
 	describe("chunkRange", () => {
+		it("inlines a reused SequenceChunk without duplicating its nodes", () => {
+			// A chunk-backed cursor enables chunkRange's reuse path rather than rebuilding the nodes.
+			const sequence = new SequenceChunk([
+				new BasicChunk(brand(numberSchema.identifier), new Map(), 0),
+				new BasicChunk(brand(numberSchema.identifier), new Map(), 1),
+			]);
+			const cursor = sequence.cursor();
+			assert(cursor.firstNode());
+
+			const chunks = chunkRange(
+				cursor,
+				{ policy: defaultChunkPolicy, idCompressor: undefined },
+				sequence.topLevelLength,
+				false,
+			);
+
+			assert.equal(
+				chunks.reduce((length, chunk) => length + chunk.topLevelLength, 0),
+				sequence.topLevelLength,
+			);
+			assertChunkCursorEquals(new SequenceChunk(chunks), numberSequenceField(2));
+		});
+
 		it("single basic chunk", () => {
 			const cursor = cursorForJsonableTreeNode({ type: brand(nullSchema.identifier) });
 			const chunks = chunkRange(
@@ -1028,6 +1053,37 @@ describe("chunkTree", () => {
 
 			assert.equal(boundaryIndex, 0);
 			assert.equal(chunks.length, 0);
+		});
+
+		it("rejects an index beyond the field", () => {
+			const chunks: TreeChunk[] = [
+				new BasicChunk(numberType, new Map(), 0),
+				new UniformChunk(numberShape.withTopLevelLength(3), [1, 2, 3]),
+			];
+			assert.throws(
+				() => splitFieldAtIndex(chunks, 5, compressor),
+				validateAssertionError("nodeIndex exceeds total node count in field"),
+			);
+		});
+
+		it("splits a SequenceChunk at an interior node boundary", () => {
+			// The requested boundary is inside the single outer chunk, not between array entries.
+			const chunks: TreeChunk[] = [
+				new SequenceChunk([
+					new BasicChunk(numberType, new Map(), 0),
+					new BasicChunk(numberType, new Map(), 1),
+					new BasicChunk(numberType, new Map(), 2),
+				]),
+			];
+
+			const boundaryIndex = splitFieldAtIndex(chunks, 2, compressor);
+
+			assert.equal(boundaryIndex, 2);
+			assert.deepEqual(
+				chunks.map((chunk) => chunk.topLevelLength),
+				[1, 1, 1],
+			);
+			assertChunkCursorEquals(new SequenceChunk(chunks), numberSequenceField(3));
 		});
 	});
 });

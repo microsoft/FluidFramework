@@ -6,6 +6,7 @@
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import type {
 	IDocumentService,
+	IDocumentServiceFactory,
 	IPersistedCache,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
@@ -39,19 +40,36 @@ import {
 import { OdspPointInTimeDocumentService } from "./odspPointInTimeDocumentService.js";
 
 /**
- * ODSP document service factory that additionally supports point-in-time (sequence-number-based)
- * loading.
+ * An ODSP document service factory that supports point-in-time (sequence-number-based) loading.
  *
  * @remarks
- * This extends {@link OdspDocumentServiceFactoryCore} with the ability to materialize a read-only
- * document service at a requested Fluid sequence number. The loader detects this capability via the
- * presence of {@link OdspPointInTimeDocumentServiceFactory.createPointInTimeDocumentService}, so
- * hosts that want to load a container to a target sequence number must construct this factory
- * (rather than the legacy `OdspDocumentServiceFactory`) and pass it to the loader.
+ * The loader detects this capability structurally, so hosts can pass this factory directly to
+ * `loadContainerToSequenceNumber`.
  *
- * @legacy @alpha
+ * @legacy @beta
  */
-export class OdspPointInTimeDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
+export interface IPointInTimeDocumentServiceFactory extends IDocumentServiceFactory {
+	/**
+	 * Creates a document service that materializes the document at the requested sequence number.
+	 *
+	 * @param resolvedUrl - The resolved ODSP document URL.
+	 * @param targetSequenceNumber - The sequence number at which to materialize the document.
+	 * @param logger - Optional telemetry logger.
+	 * @param clientIsSummarizer - Whether the requesting client is a summarizer.
+	 * @returns A read-only document service materialized at the requested sequence number.
+	 */
+	createPointInTimeDocumentService(
+		resolvedUrl: IResolvedUrl,
+		targetSequenceNumber: number,
+		logger?: ITelemetryBaseLogger,
+		clientIsSummarizer?: boolean,
+	): Promise<IDocumentService>;
+}
+
+class OdspPointInTimeDocumentServiceFactory
+	extends OdspDocumentServiceFactoryCore
+	implements IPointInTimeDocumentServiceFactory
+{
 	/**
 	 * The storage token fetcher, captured here because the base class keeps it private.
 	 */
@@ -167,7 +185,7 @@ export class OdspPointInTimeDocumentServiceFactory extends OdspDocumentServiceFa
 	 * @remarks
 	 * The caller passes in the shared {@link EpochTracker} so the version-history reads validate
 	 * against the same epoch as the recoverable and live document services - this is the lineage
-	 * guard described in {@link OdspPointInTimeDocumentServiceFactory.createPointInTimeDocumentService}.
+	 * guard used by `createPointInTimeDocumentService`.
 	 * The manager itself only needs the URL parts and an instrumented storage-token/auth-header
 	 * fetcher wired to that tracker.
 	 */
@@ -214,4 +232,29 @@ export class OdspPointInTimeDocumentServiceFactory extends OdspDocumentServiceFa
 			url: `${odspResolvedUrl.siteUrl}?${query.toString()}`,
 		});
 	}
+}
+
+/**
+ * Creates an ODSP document service factory that supports point-in-time loading.
+ *
+ * @param getStorageToken - Fetches storage access tokens.
+ * @param getWebsocketToken - Fetches websocket access tokens, or `undefined` when unavailable.
+ * @param persistedCache - Optional persisted ODSP cache.
+ * @param hostPolicy - Optional host storage policy.
+ * @returns An ODSP document service factory with point-in-time loading capability.
+ *
+ * @legacy @beta
+ */
+export function getOdspPointInTimeDocumentServiceFactory(
+	getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>,
+	getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined,
+	persistedCache?: IPersistedCache,
+	hostPolicy?: HostStoragePolicy,
+): IPointInTimeDocumentServiceFactory {
+	return new OdspPointInTimeDocumentServiceFactory(
+		getStorageToken,
+		getWebsocketToken,
+		persistedCache,
+		hostPolicy,
+	);
 }

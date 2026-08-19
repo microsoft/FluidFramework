@@ -148,6 +148,7 @@ export {
 	UnannotateAllowedTypesList, 
 	UnannotateAllowedTypesListUnsafe, 
 	UnionToTuple, 
+	UntypedTreeView, 
 	VoidTransactionCallbackStatusBeta, 
 	WithValue, 
 	adaptEnum, 
@@ -297,6 +298,7 @@ export {
 	TreeViewAlpha, 
 	TreeViewConfigurationAlpha, 
 	UnsafeUnknownSchema, 
+	UntypedTreeViewAlpha, 
 	ValueSchema, 
 	VerboseTree, 
 	VerboseTreeNode, 
@@ -307,6 +309,7 @@ export {
 	asTreeViewAlpha, 
 	checkCompatibility, 
 	cloneWithReplacements, 
+	codePointCount, 
 	comparePersistedSchema, 
 	configuredSharedTreeAlpha, 
 	contentSchemaSymbol, 
@@ -335,6 +338,7 @@ export {
 	replaceConciseTreeHandles, 
 	replaceHandles, 
 	replaceVerboseTreeHandles, 
-	trackDirtyNodes
+	trackDirtyNodes, 
+	utf16LengthForCodePoints
 	// #endregion
 } from "../index.js";

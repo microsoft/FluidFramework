@@ -186,6 +186,9 @@ describe("schematizeTree", () => {
 			isBranch(): boolean {
 				return true;
 			},
+			isView(): boolean {
+				return true;
+			},
 			hasRootSchema(): boolean {
 				return false;
 			},

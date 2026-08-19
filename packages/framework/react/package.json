@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/react",
-	"version": "2.115.0",
+	"version": "3.0.0",
 	"description": "Utilities for integrating content powered by the Fluid Framework into React applications",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -108,7 +108,7 @@
 		"react-dom": "^18.3.1"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.18.2",
+		"@arethetypeswrong/cli": "^0.18.5",
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "catalog:buildTools",

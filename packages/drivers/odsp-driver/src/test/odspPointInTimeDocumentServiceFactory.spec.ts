@@ -24,7 +24,7 @@ import { getHashedDocumentId } from "../odspPublicUtils.js";
 // eslint-disable-next-line import-x/no-internal-modules -- test targets the point-in-time driver directly
 import { OdspPointInTimeDocumentService } from "../pointInTimeDriver/odspPointInTimeDocumentService.js";
 // eslint-disable-next-line import-x/no-internal-modules -- test targets the point-in-time driver directly
-import { OdspPointInTimeDocumentServiceFactory } from "../pointInTimeDriver/odspPointInTimeDocumentServiceFactory.js";
+import { getOdspPointInTimeDocumentServiceFactory } from "../pointInTimeDriver/odspPointInTimeDocumentServiceFactory.js";
 import type { BaseForSeq, IOdspVersionManager } from "../odspVersionManager/index.js";
 import {
 	OdspVersionManager,
@@ -119,7 +119,7 @@ describe("OdspPointInTimeDocumentServiceFactory lineage guard", () => {
 	}
 
 	it("shares one epoch tracker across the version manager and both document services", async () => {
-		const factory = new OdspPointInTimeDocumentServiceFactory(getStorageToken, undefined);
+		const factory = getOdspPointInTimeDocumentServiceFactory(getStorageToken, undefined);
 		const resolvedUrl = await makeResolvedUrl();
 		const recoverableResolvedUrl = await makeResolvedUrl("42.0");
 
@@ -220,7 +220,7 @@ describe("OdspPointInTimeDocumentServiceFactory lineage guard", () => {
 	});
 
 	it("fails the load (before creating any service) when the recoverable version's epoch differs from the live document's", async () => {
-		const factory = new OdspPointInTimeDocumentServiceFactory(getStorageToken, undefined);
+		const factory = getOdspPointInTimeDocumentServiceFactory(getStorageToken, undefined);
 		const resolvedUrl = await makeResolvedUrl();
 		const internals = factory as unknown as FactoryInternals;
 
@@ -260,7 +260,7 @@ describe("OdspPointInTimeDocumentServiceFactory lineage guard", () => {
 	});
 
 	it("materializes the document (creating both services) when the recoverable version shares the live document's epoch", async () => {
-		const factory = new OdspPointInTimeDocumentServiceFactory(getStorageToken, undefined);
+		const factory = getOdspPointInTimeDocumentServiceFactory(getStorageToken, undefined);
 		const resolvedUrl = await makeResolvedUrl();
 		const recoverableResolvedUrl = await makeResolvedUrl("42.0");
 		const internals = factory as unknown as FactoryInternals;
@@ -286,5 +286,68 @@ describe("OdspPointInTimeDocumentServiceFactory lineage guard", () => {
 			2,
 			"a recoverable and a live document service are created once validation passes",
 		);
+	});
+
+	for (const oldestResolvedSeq of [undefined, 5]) {
+		it(`reports when no recoverable base exists${
+			oldestResolvedSeq === undefined
+				? ""
+				: " and includes the oldest available sequence number"
+		}`, async () => {
+			const factory = getOdspPointInTimeDocumentServiceFactory(getStorageToken, undefined);
+			const resolvedUrl = await makeResolvedUrl();
+			const internals = factory as unknown as FactoryInternals;
+			stub(internals, "createVersionManager").returns({
+				findBaseForSeq: async (): Promise<BaseForSeq> =>
+					oldestResolvedSeq === undefined
+						? { kind: "noBaseVersion" }
+						: { kind: "noBaseVersion", oldestResolvedSeq },
+			});
+			const resolveFileVersion = stub(internals, "resolveFileVersion");
+			const createDocumentServiceCore = stub(internals, "createDocumentServiceCore");
+
+			await assert.rejects(
+				async () => factory.createPointInTimeDocumentService(resolvedUrl, 4),
+				(error: Error) => {
+					assert.match(error.message, /No ODSP file version is available at or before/);
+					if (oldestResolvedSeq === undefined) {
+						assert.doesNotMatch(error.message, /oldest resolved file version/);
+					} else {
+						assert.match(error.message, /oldest resolved file version.*5/);
+					}
+					return true;
+				},
+			);
+			assert.ok(resolveFileVersion.notCalled);
+			assert.ok(createDocumentServiceCore.notCalled);
+		});
+	}
+
+	it("builds the concrete version manager and preserves URL metadata when resolving a base version", async () => {
+		const factory = getOdspPointInTimeDocumentServiceFactory(getStorageToken, undefined);
+		const resolvedUrl: IOdspResolvedUrl = {
+			...(await makeResolvedUrl()),
+			dataStorePath: "/data/store",
+			codeHint: { containerPackageName: "test-package" },
+		};
+		const internals = factory as unknown as FactoryInternals;
+		const tracker = new EpochTracker(
+			new LocalPersistentCache(),
+			{ docId: resolvedUrl.hashedDocumentId, resolvedUrl },
+			createChildLogger(),
+		);
+
+		const manager = internals.createVersionManager(resolvedUrl, createChildLogger(), tracker);
+		assert.equal(typeof manager.findBaseForSeq, "function");
+
+		const versionedUrl = (await internals.resolveFileVersion(
+			resolvedUrl,
+			"42.0",
+		)) as IOdspResolvedUrl;
+		assert.equal(versionedUrl.fileVersion, "42.0");
+		assert.equal(versionedUrl.dataStorePath, "/data/store");
+		assert.equal(versionedUrl.codeHint?.containerPackageName, "test-package");
+
+		await tracker.removeEntries().catch(() => {});
 	});
 });

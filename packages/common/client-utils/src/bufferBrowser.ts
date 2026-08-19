@@ -163,7 +163,7 @@ export class IsoBuffer extends Uint8Array {
 			case "base64": {
 				const sanitizedString = this.sanitizeBase64(str);
 				const encoded = base64js.toByteArray(sanitizedString);
-				return new IsoBuffer(encoded.buffer);
+				return new IsoBuffer(encoded.buffer, encoded.byteOffset, encoded.byteLength);
 			}
 			case "utf8":
 			// eslint-disable-next-line unicorn/text-encoding-identifier-case -- this value is supported, just discouraged

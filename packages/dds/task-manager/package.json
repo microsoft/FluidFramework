@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/task-manager",
-	"version": "2.115.0",
+	"version": "3.0.0",
 	"description": "Distributed data structure for queueing exclusive tasks",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -138,7 +138,7 @@
 		"@fluidframework/shared-object-base": "workspace:~"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.18.2",
+		"@arethetypeswrong/cli": "^0.18.5",
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
@@ -147,7 +147,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
-		"@fluidframework/task-manager-previous": "npm:@fluidframework/task-manager@2.112.0",
+		"@fluidframework/task-manager-previous": "npm:@fluidframework/task-manager@2.116.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.58.1",

@@ -15,7 +15,7 @@ export type TreeIndexNodes<TNode> = readonly [first: TNode, ...rest: TNode[]];
 /**
  * An index allows lookup content from a tree using keys.
  * @remarks
- * The index will be kept up to date with the {@link TreeBranchAlpha} it is associated with.
+ * The index will be kept up to date with the {@link UntypedTreeViewAlpha} it is associated with.
  * Keeping an index up to date incurs overhead.
  * Therefore, indexes should only be created when needed and disposed when no longer needed.
  * @privateRemarks

@@ -114,7 +114,7 @@ export type {
 	FluidContainer,
 	FluidContainerAttached,
 	FluidContainerWithService,
-	MinimumVersionForCollaboration,
+	OldestSupportedServiceClientVersion,
 	Registry,
 	RegistryKey,
 	ServiceClient,

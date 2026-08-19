@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/synthesize",
-	"version": "2.115.0",
+	"version": "3.0.0",
 	"description": "A library for synthesizing scope objects.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -116,7 +116,7 @@
 		"@fluidframework/core-utils": "workspace:~"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.18.2",
+		"@arethetypeswrong/cli": "^0.18.5",
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "catalog:buildTools",
@@ -126,7 +126,7 @@
 		"@fluidframework/datastore": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/synthesize-previous": "npm:@fluidframework/synthesize@2.112.0",
+		"@fluidframework/synthesize-previous": "npm:@fluidframework/synthesize@2.116.0",
 		"@microsoft/api-extractor": "7.58.1",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "catalog:types",

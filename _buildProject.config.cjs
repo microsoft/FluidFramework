@@ -156,18 +156,6 @@ module.exports = {
 					},
 				},
 			},
-			"@fluid-internal/eslint-plugin-fluid": {
-				directory: "common/build/eslint-plugin-fluid",
-				releaseGroups: {
-					"eslint-plugin-fluid": {
-						include: ["@fluid-internal/eslint-plugin-fluid"],
-						rootPackageName: "@fluid-internal/eslint-plugin-fluid",
-						defaultInterdependencyRange: "workspace:~",
-						adoPipelineUrl:
-							"https://dev.azure.com/fluidframework/internal/_build?definitionId=135",
-					},
-				},
-			},
 			"@fluid-internal/getkeys": {
 				directory: "tools/getkeys",
 				releaseGroups: {

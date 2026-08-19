@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/ot",
-	"version": "2.115.0",
+	"version": "3.0.0",
 	"description": "Distributed data structure for hosting ottypes",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -91,7 +91,7 @@
 		"@fluidframework/shared-object-base": "workspace:~"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.18.2",
+		"@arethetypeswrong/cli": "^0.18.5",
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/test-dds-utils": "workspace:~",
