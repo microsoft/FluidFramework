@@ -28,6 +28,14 @@ describe("buildNodeComparator", () => {
 		const cursor2 = cursorForJsonableTreeNode(tree2);
 		assert.equal(comparator(cursor2), false);
 	});
+	it("rejects nodes with different types", () => {
+		const tree1: JsonableTree = { type: brand("FirstLeaf") };
+		const tree2: JsonableTree = { type: brand("SecondLeaf") };
+		const cursor1 = cursorForJsonableTreeNode(tree1);
+		const comparator = buildNodeComparator(cursor1);
+		const cursor2 = cursorForJsonableTreeNode(tree2);
+		assert.equal(comparator(cursor2), false);
+	});
 	it("matches nodes with identical fields", () => {
 		const tree: JsonableTree = {
 			type: brand("Parent"),
@@ -79,6 +87,25 @@ describe("buildNodeComparator", () => {
 		const comparator = buildNodeComparator(cursor1);
 		const cursor2 = cursorForJsonableTreeNode(tree2);
 		assert.equal(comparator(cursor2), false);
+	});
+	it("rejects nodes with additional fields", () => {
+		const tree1: JsonableTree = { type: brand("Parent") };
+		const tree2: JsonableTree = {
+			type: brand("Parent"),
+			fields: {
+				name: [{ type: brand("Str"), value: "Bill" }],
+			},
+		};
+		const cursor1 = cursorForJsonableTreeNode(tree1);
+		const cursor2 = cursorForJsonableTreeNode(tree2);
+		{
+			const comparator = buildNodeComparator(cursor1);
+			assert.equal(comparator(cursor2), false);
+		}
+		{
+			const comparator = buildNodeComparator(cursor2);
+			assert.equal(comparator(cursor1), false);
+		}
 	});
 	it("matches deeply nested identical structures", () => {
 		const tree: JsonableTree = {
