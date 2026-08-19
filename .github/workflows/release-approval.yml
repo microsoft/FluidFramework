@@ -38,7 +38,7 @@ jobs:
       - name: Download metadata
         if: github.event_name == 'workflow_run'
         # release notes: https://github.com/dawidd6/action-download-artifact/releases/tag/v11
-        uses: dawidd6/action-download-artifact@8305c0f1062bb0d184d09ef4493ecb9288447732 # v20
+        uses: dawidd6/action-download-artifact@b6e2e70617bc3265edd6dab6c906732b2f1ae151 # v21
         with:
           workflow: release-branches.yml
           run_id: ${{ github.event.workflow_run.id }}
@@ -115,7 +115,7 @@ jobs:
           context: Check PR approval
 
       # release notes: https://github.com/actions/checkout/releases/tag/v6.0.2
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # The default ref when triggered by the workflow_run event is the default branch -- main
           # This means the build-tools from the main branch will always be used.
@@ -124,10 +124,10 @@ jobs:
 
       # install and configure node, pnpm and the changeset tools
       # release notes: https://github.com/pnpm/action-setup/releases/tag/v5.0.0
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
 
       # release notes: https://github.com/actions/setup-node/releases/tag/v6.3.0
-      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .nvmrc
           cache: "pnpm"
