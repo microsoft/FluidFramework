@@ -38,9 +38,6 @@ strictPeerDependencies: true
 updateNotifier: false
 
 overrides:
-  # Uncomment to use the local fluid eslint-plugin while developing the packages together.
-  #"@fluid-internal/eslint-plugin-fluid": "link:../eslint-plugin-fluid"
-
   # @typescript-eslint/eslint-utils need to be 5.58 or later for TypeScript 6 support.
   #   As of 2026-08-05 @rushstack/eslint-plugin (v0.23.2), does not have a version using v8.58 or later.
   "@rushstack/eslint-plugin>@typescript-eslint/utils@<8.58.0": ~8.58.0

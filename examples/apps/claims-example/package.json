@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/claims-example",
-	"version": "2.116.0",
+	"version": "3.0.0",
 	"private": true,
 	"description": "Example app demonstrating exclusive resource ownership with the Claims DDS",
 	"homepage": "https://fluidframework.com",
