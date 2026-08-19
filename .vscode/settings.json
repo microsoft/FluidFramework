@@ -6,6 +6,7 @@
 	],
 	"js/ts.tsdk.path": "node_modules/typescript/lib",
 	"typescript.tsdk": "node_modules/typescript/lib",
+
 	// We prefer to use type-only imports, so we want the autoimporter to do that by default.
 	"js/ts.preferences.preferTypeOnlyAutoImports": true,
 	"js/ts.preferences.autoImportFileExcludePatterns": [
@@ -19,23 +20,28 @@
 		"**/node_modules/**/@fluid*/*-previous",
 		"**/node_modules/**/@fluid*/*-previous/*",
 	],
+
 	// Autodetecting tasks on a repo this size makes 'Tasks: Run Build Task' unusably slow.
 	// (See https://github.com/Microsoft/vscode/issues/34387)
 	"js/ts.tsc.autoDetect": "off",
 	"typescript.tsc.autoDetect": "off",
 	"npm.autoDetect": "off",
+
 	"files.associations": {
 		"**/tools/pipelines/**/*.yml": "azure-pipelines",
 		// good-fences' fence files support comments, so detect them as "jsonc" instead of "json":
 		"fence.json": "jsonc",
 		".git-blame-ignore-revs": "ignore",
 	},
+
 	// Leverage the 1ES Pipeline templates schema for syntax check in YAML files if possible.
 	// Only works if signed in to the Azure Pipelines extension with a @microsoft.com account.
 	"azure-pipelines.1ESPipelineTemplatesSchemaFile": true,
+
 	"deno.enable": false,
 	"deno.lint": false,
 	"deno.unstable": false,
+
 	// Custom dictionary for 'streetsidesoftware.code-spell-checker' extension.
 	"cSpell.words": [
 		"boop",
@@ -74,6 +80,7 @@
 		"unsequenced",
 		"validatable",
 	],
+
 	// Enable biome as default formatter, and disable rules that disagree with it
 	"editor.defaultFormatter": "biomejs.biome",
 	"editor.insertSpaces": false,
@@ -95,8 +102,10 @@
 	"files.insertFinalNewline": true,
 	"files.trimFinalNewlines": true,
 	"files.trimTrailingWhitespace": true,
+
 	// Don't search for the biome executable in the path, as it's not a globally installed tool.
 	"biome.searchInPath": false,
+
 	// Customizations for VSCode search results.
 	// These entries should probably be kept more or less in sync with the .gitignore file.
 	// They are added here because when doing a search in VSCode and using the "files to include" feature, the underlying
