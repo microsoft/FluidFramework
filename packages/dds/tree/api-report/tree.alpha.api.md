@@ -160,6 +160,9 @@ export interface ArrayPlaceAnchor {
 }
 
 // @alpha
+export function asAlpha(tree: ITree): ITreeAlpha;
+
+// @alpha
 export function asAlpha<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): TreeViewAlpha<TSchema>;
 
 // @alpha
@@ -199,6 +202,9 @@ export interface CodecWriteOptions extends ICodecOptions, CodecWriteOptionsBeta 
 export interface CodecWriteOptionsBeta {
     readonly minVersionForCollab: OldestSupportedClientVersion;
 }
+
+// @alpha
+export function codePointCount(value: string): number;
 
 // @public
 export enum CommitKind {
@@ -2173,6 +2179,9 @@ export const UnsafeUnknownSchema: unique symbol;
 
 // @alpha
 export type UnsafeUnknownSchema = typeof UnsafeUnknownSchema;
+
+// @alpha
+export function utf16LengthForCodePoints(value: string, start: number, count: number): number;
 
 // @public
 export type ValidateRecursiveSchema<T extends ValidateRecursiveSchemaTemplate<T>> = true;

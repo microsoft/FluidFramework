@@ -4,6 +4,8 @@
  */
 
 import type {
+	ITree,
+	ITreeAlpha,
 	TreeView,
 	TreeViewAlpha,
 	TreeViewBeta,
@@ -25,6 +27,12 @@ import type {
  * These are only valid if all implementations are guaranteed to implement the alpha API:
  * cases like SchemaFactory which allow users to construct non-alpha versions must not be added here.
  */
+
+/**
+ * Retrieve the {@link ITreeAlpha | alpha API} for an {@link ITree}.
+ * @alpha
+ */
+export function asAlpha(tree: ITree): ITreeAlpha;
 
 /**
  * Retrieve the {@link TreeViewAlpha | alpha API} for a {@link TreeView}.
