@@ -28,10 +28,12 @@ export { prefetchLatestSnapshot } from "./prefetchLatestSnapshot.js";
 export {
 	createLocalOdspDocumentServiceFactory,
 	getOdspPointInTimeDocumentServiceFactory,
-	type IPointInTimeDocumentServiceFactory,
 	OdspDocumentServiceFactory,
 } from "./odspDocumentServiceFactory.js";
-export { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore.js";
+export {
+	type IPointInTimeDocumentServiceFactory,
+	OdspDocumentServiceFactoryCore,
+} from "./odspDocumentServiceFactoryCore.js";
 
 // File creation
 export { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest.js";

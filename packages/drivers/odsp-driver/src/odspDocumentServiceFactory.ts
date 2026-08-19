@@ -20,8 +20,6 @@ import {
 	OdspDocumentServiceFactoryCore,
 } from "./odspDocumentServiceFactoryCore.js";
 
-export type { IPointInTimeDocumentServiceFactory } from "./odspDocumentServiceFactoryCore.js";
-
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
  * use the sharepoint implementation.

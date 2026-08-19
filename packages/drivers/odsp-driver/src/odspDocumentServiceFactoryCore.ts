@@ -83,12 +83,14 @@ export interface IPointInTimeDocumentServiceFactory extends IDocumentServiceFact
 	/**
 	 * Creates a document service that materializes the document at the requested sequence number.
 	 *
-	 * @param resolvedUrl - The resolved ODSP document URL.
-	 * @param targetSequenceNumber - The sequence number at which to materialize the document.
-	 * @param logger - Optional telemetry logger.
+	 * @param resolvedUrl - The resolved ODSP {@link @fluidframework/driver-definitions#IResolvedUrl}.
+	 * @param targetSequenceNumber - The sequence number at which to materialize the document. See
+	 * {@link @fluidframework/container-loader#ILoadContainerToSequenceNumberProps.loadToSequenceNumber}.
+	 * @param logger - Optional {@link @fluidframework/core-interfaces#ITelemetryBaseLogger}.
 	 * @param clientIsSummarizer - Whether to apply summarizer policies and telemetry to the
 	 * underlying document services. Defaults to `false`.
-	 * @returns A read-only document service materialized at the requested sequence number.
+	 * @returns A read-only {@link @fluidframework/driver-definitions#IDocumentService} materialized
+	 * at the requested sequence number.
 	 */
 	createPointInTimeDocumentService(
 		resolvedUrl: IResolvedUrl,
@@ -319,12 +321,14 @@ export class OdspDocumentServiceFactoryCore
 	 * the target and its deltas from the live document, materializing a requested sequence number
 	 * through replay.
 	 *
-	 * @param resolvedUrl - The resolved ODSP document URL.
-	 * @param targetSequenceNumber - The sequence number at which to materialize the document.
-	 * @param logger - Optional telemetry logger.
+	 * @param resolvedUrl - The resolved ODSP {@link @fluidframework/driver-definitions#IResolvedUrl}.
+	 * @param targetSequenceNumber - The sequence number at which to materialize the document. See
+	 * {@link @fluidframework/container-loader#ILoadContainerToSequenceNumberProps.loadToSequenceNumber}.
+	 * @param logger - Optional {@link @fluidframework/core-interfaces#ITelemetryBaseLogger}.
 	 * @param clientIsSummarizer - Whether to apply summarizer policies and telemetry to the
 	 * underlying document services. Defaults to `false`.
-	 * @returns A read-only document service materialized at the requested sequence number.
+	 * @returns A read-only {@link @fluidframework/driver-definitions#IDocumentService} materialized
+	 * at the requested sequence number.
 	 */
 	public readonly createPointInTimeDocumentService?: IPointInTimeDocumentServiceFactory["createPointInTimeDocumentService"] =
 		async (
