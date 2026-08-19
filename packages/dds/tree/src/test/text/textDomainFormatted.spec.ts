@@ -13,6 +13,7 @@ import {
 	SchemaFactory,
 	SchemaFactoryBeta,
 	TreeViewConfiguration,
+	type ValidateRecursiveSchema,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules -- Importing code being tested
 import { setEnableExpensiveDebugAsserts } from "../../text/textDomain.js";
@@ -85,6 +86,38 @@ describe("textDomainFormatted", () => {
 			}),
 		});
 		testSchemaCompatibilitySnapshots(currentViewSchema, "2.114.0", "formattedText-simple");
+	});
+
+	it("supports recursive additional atom schemas", () => {
+		const scopingFactory = new SchemaFactoryBeta("test.formatted.recursive");
+		class Format extends scopingFactory.object("Format", { bold: SchemaFactory.boolean }) {}
+		class RecursiveAtom
+			extends scopingFactory.objectRecursive("RecursiveAtom", {
+				text: scopingFactory.optionalRecursive([() => RecursiveText]),
+			})
+			implements FormattedText.TextAtom
+		{
+			public get content(): string {
+				return `{${this.text?.fullString() ?? ""}}`;
+			}
+		}
+		type _checkRecursiveAtom = ValidateRecursiveSchema<typeof RecursiveAtom>;
+
+		class RecursiveText extends FormattedText.createSchema(
+			scopingFactory,
+			Format,
+			[RecursiveAtom],
+			{ bold: false },
+		) {}
+
+		const nestedText = RecursiveText.fromString("inside");
+		const text = RecursiveText.fromString("outside");
+		text.insertAt(7, [new RecursiveAtom({ text: nestedText })]);
+
+		assert.equal(text.fullString(), "outside{inside}");
+		const insertedAtom = text.charactersWithFormatting()[7]?.content;
+		assert(insertedAtom instanceof RecursiveAtom);
+		assert.equal(insertedAtom.text?.fullString(), "inside");
 	});
 
 	it("compatibility-default", () => {
