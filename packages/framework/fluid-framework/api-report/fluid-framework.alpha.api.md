@@ -160,6 +160,9 @@ export interface ArrayPlaceAnchor {
 }
 
 // @alpha
+export function asAlpha(tree: ITree): ITreeAlpha;
+
+// @alpha
 export function asAlpha<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): TreeViewAlpha<TSchema>;
 
 // @alpha
