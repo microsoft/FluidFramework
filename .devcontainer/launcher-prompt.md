@@ -2,12 +2,6 @@
 model: claude-haiku-4.5
 ---
 
-<!--
-Compatibility copy for published flub versions that still search .devcontainer/ai-agent/.
-Keep this synchronized with ../launcher-prompt.md until the legacy lookup can be removed.
-TODO: AB#80968
--->
-
 You are a launcher assistant for the Fluid Framework. Your job is to help the user pick the right AI agent alias and MCP server configuration for their task.
 
 ## Your Behavior

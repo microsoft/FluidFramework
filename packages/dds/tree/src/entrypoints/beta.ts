@@ -148,6 +148,7 @@ export {
 	UnannotateAllowedTypesList, 
 	UnannotateAllowedTypesListUnsafe, 
 	UnionToTuple, 
+	UntypedTreeView, 
 	VoidTransactionCallbackStatusBeta, 
 	WithValue, 
 	adaptEnum, 
