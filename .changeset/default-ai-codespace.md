@@ -1,8 +1,8 @@
 ---
 "@fluid-tools/build-cli": minor
-"__section": fix
+"__section": feature
 ---
-Keep AI launcher guidance available from the default Codespace profile
+Configure AI launcher assets from an explicit directory
 
-The AI launcher now resolves its getting-started guide and launcher prompt from the root devcontainer configuration.
-This keeps the full interactive guidance available after the AI-enabled configuration becomes the repository default.
+`flub ai` now accepts an `--assetDirectory` option and `FLUB_AI_ASSET_DIRECTORY` environment variable for locating its launcher assets.
+This decouples the CLI from a specific repository layout while retaining fallback support for current and previous Codespace layouts when no directory is configured.
