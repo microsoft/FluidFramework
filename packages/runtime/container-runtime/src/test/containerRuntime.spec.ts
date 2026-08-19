@@ -4644,6 +4644,7 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: true,
 					explicitSchemaControl: true,
+					createBlobPayloadPending: true,
 					stagingModeAutoFlushThreshold: 1000,
 					disableSchemaUpgrade: false,
 				};
