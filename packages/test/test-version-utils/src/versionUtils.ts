@@ -303,21 +303,31 @@ export function calculateRequestedRange(
 	// other than 2 (e.g. 3.x and beyond), fall through to the normal major-decrement logic below, which correctly
 	// resolves N-1 of 3.0.0 to the latest published 2.x release.
 	// TODO: This is a temporary solution and we need to entirely rewrite this function to handle the changes the version schemas. See ADO:8198.
-	if (adjustPublicMajor === false && version.major === 2) {
-		if (version.minor < 10) {
+	assert(version.major <= 3, "This legacy logic only known to work for 2.x and 3.x versions.");
+	if (adjustPublicMajor === false && version.major >= 2) {
+		// For 3.x, treat it as if it were a newer 2.x set that begins at beta break point beyond the last 2.x release.
+		// 2.116 was last 2.x release, so we treat >=3.0 <3.10 as if it were 2.120.0 for the purposes of calculating N-1.
+		const minor =
+			version.major === 3
+				? version.minor < 10
+					? 120
+					: (() => {
+							throw new Error("Unsupported 3.10+ version");
+						})()
+				: version.minor;
+		if (minor < 10) {
 			// If 2.0 <= N < 2.10, then we can pretend that N is RC6 (*which doesn't exist*) and calculate the range as if it were an internal version.
 			const internalSchemeRange = internalSchema("2.0.0", "6.0.0", "rc", requested);
 			return internalSchemeRange;
 		} else {
 			// For each requested version to go back, we go back 10 minor versions. If requested is -2, then we need to go back 20 minor versions.
 			const legacyMinorsToSkip = Math.abs(requested * 10);
-			if (legacyMinorsToSkip > version.minor) {
+			if (legacyMinorsToSkip > minor) {
 				// If the number of minors we need to go back is greater than the minor version, then that means we will be going back to RC releases.
 				// Here we calculate how many more releases we need to go back **after** we take into account going from the current minor version to 2.0.
 				// For example, if N is 2.20, then the range we need to return for N-1 starts at 2.10, for N-2 it starts at 2.0, N-3 is RC5, N-4 is RC4, etc.
 				// So if N is 2.20 and requested is 4, then we still need to go back 2 more releases from 2.0 (treated as RC6).
-				const remainingRequested =
-					(legacyMinorsToSkip - Math.floor(version.minor / 10) * 10) / 10;
+				const remainingRequested = (legacyMinorsToSkip - Math.floor(minor / 10) * 10) / 10;
 				const internalSchemeRange = internalSchema(
 					"2.0.0",
 					"6.0.0",
@@ -328,10 +338,10 @@ export function calculateRequestedRange(
 			}
 			// Here we know that the requested version will be >=2.0, so we can avoid all the RC releases.
 			// If N >= 2.10, then the range we need to return for N-1 starts at legacy breaking minor before the one N belongs to.
-			const lowerMinorRange = Math.floor((version.minor - legacyMinorsToSkip) / 10) * 10;
+			const lowerMinorRange = Math.floor((minor - legacyMinorsToSkip) / 10) * 10;
 			const upperMinorRange = lowerMinorRange + 10;
 			// Here we do a range that, when resolved, will result in the latest minor version that satisfies the request.
-			return `>=${version.major}.${lowerMinorRange}.0-0 <${version.major}.${upperMinorRange}.0-0`;
+			return `>=2.${lowerMinorRange}.0-0 <2.${upperMinorRange}.0-0`;
 		}
 	} else {
 		// calculate requested major version number
