@@ -2054,6 +2054,9 @@ importers:
       agentkeepalive:
         specifier: ^4.2.1
         version: 4.3.0(supports-color@8.1.1)
+      async:
+        specifier: ^3.2.6
+        version: 3.2.6
       axios:
         specifier: ^1.15.1
         version: 1.18.0(debug@4.3.4(supports-color@10.2.2))(supports-color@10.2.2)
@@ -2124,6 +2127,9 @@ importers:
       '@microsoft/api-extractor':
         specifier: ^7.58.1
         version: 7.58.1(patch_hash=22afac8d849140413bab21c8bca49a9e20e928ab61666feccf3b088cb5d45832)(@types/node@22.19.17)
+      '@types/async':
+        specifier: ^3.2.20
+        version: 3.2.20
       '@types/compression':
         specifier: ^1.7.2
         version: 1.7.3
