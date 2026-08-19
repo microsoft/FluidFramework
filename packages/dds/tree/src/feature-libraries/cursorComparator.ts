@@ -7,7 +7,6 @@ import { debugAssert } from "@fluidframework/core-utils/internal";
 import {
 	mapCursorField,
 	mapCursorFields,
-	inCursorField,
 	type ITreeCursorSynchronous,
 	type Value,
 	type FieldKey,
