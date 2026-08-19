@@ -617,6 +617,10 @@ export async function captureFullContainerState({
 	deltaManager.connect({
 		reason: { text: "captureFullContainerState" },
 		mode: "read",
+		// Ops will be fetched from storage using the later "attachOpHandler" call. Attempting to fetch here is a no-op anyway as
+		// no op handler is yet attached.
+		// Fetching the snapshot first such that an op handler could be attached using its sequence number information may simplify
+		// the code, but doing it this way allows parallelization of snapshot fetch and establishing a connection.
 		fetchOpsFromStorage: false,
 	});
 	try {
