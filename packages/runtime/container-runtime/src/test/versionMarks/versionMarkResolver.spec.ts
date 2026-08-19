@@ -17,7 +17,7 @@ import type { InboundSequencedContainerRuntimeMessage } from "../../messageTypes
 import { ContainerMessageType } from "../../messageTypes.js";
 import {
 	generateBatchId,
-	ensureContentsDeserialized,
+	tryGetDeserializedRuntimeOpCopy,
 	OpDecompressor,
 	OpGroupingManager,
 	OpSplitter,
@@ -196,12 +196,12 @@ function makeRealUnpackerFactory(): () => (
 			new OpGroupingManager({ groupedBatchingEnabled: false }, logger),
 		);
 		return (op) => {
-			// Mirror the live path: only modern runtime-envelope ops carry batches; skip system/server ops.
-			if (op.type !== MessageType.Operation || typeof op.clientId !== "string") {
+			// Mirror the live path by construction: reuse the same helper `createHistoricalOpUnpacker`
+			// does, so this "faithful mirror" can't silently desync if the runtime-op invariant changes.
+			const messageCopy = tryGetDeserializedRuntimeOpCopy(op);
+			if (messageCopy === undefined) {
 				return undefined;
 			}
-			const messageCopy = { ...op };
-			ensureContentsDeserialized(messageCopy);
 			return processor.process(messageCopy, () => {});
 		};
 	};
