@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/runtime-definitions",
-	"version": "2.117.0",
+	"version": "3.0.0",
 	"description": "Fluid Runtime definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -132,7 +132,17 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Interface_IFluidDataStoreContext": {
+				"backCompat": false
+			},
+			"Interface_IFluidDataStoreContextDetached": {
+				"backCompat": false
+			},
+			"Interface_IFluidParentContext": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }
