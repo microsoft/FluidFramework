@@ -309,6 +309,7 @@ export {
 	asTreeViewAlpha, 
 	checkCompatibility, 
 	cloneWithReplacements, 
+	codePointCount, 
 	comparePersistedSchema, 
 	configuredSharedTreeAlpha, 
 	contentSchemaSymbol, 
@@ -337,6 +338,7 @@ export {
 	replaceConciseTreeHandles, 
 	replaceHandles, 
 	replaceVerboseTreeHandles, 
-	trackDirtyNodes
+	trackDirtyNodes, 
+	utf16LengthForCodePoints
 	// #endregion
 } from "../index.js";

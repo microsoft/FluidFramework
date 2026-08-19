@@ -21,6 +21,8 @@ import {
 	type InsertableTypedNode,
 	type TreeNodeSchema,
 	type NodeFromSchema,
+	type ITree,
+	type ITreeAlpha,
 	type TreeViewAlpha,
 	type TransactionConstraint,
 	type rollback,
@@ -417,10 +419,13 @@ describe("treeApi", () => {
 
 	it("can cast to alpha", () => {
 		const schemaFactory = new SchemaFactory(undefined);
+		const provider = new TestTreeProviderLite();
+		const tree: ITree = provider.trees[0];
 		const view = getView(
 			new TreeViewConfiguration({ schema: schemaFactory.null, enableSchemaValidation: true }),
 		);
 		view.initialize(null);
+		assert.equal(asAlpha(tree) satisfies ITreeAlpha, tree);
 		assert.equal(asAlpha(view) satisfies TreeViewAlpha<typeof schemaFactory.null>, view);
 	});
 });
