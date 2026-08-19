@@ -40,10 +40,14 @@ export interface TreeChangeEvents {
 	 *
 	 * - Map nodes define a change as when an entry is added, updated, or removed.
 	 *
-	 * @param unstable - Future versions of this API (such as the one in beta on TreeBeta) may use this argument to provide additional data to the event.
-	 * users of this event should ensure that they do not provide a listener callback which has an optional parameter in this position, since unexpected data might get provided to it.
+	 * @param unstable - Future versions of this API (such as the one in beta on {@link TreeChangeEventsBeta.nodeChanged})
+	 * may use this argument to provide additional data to the event.
+	 * Users of this event should ensure that they do not provide a listener callback which has an optional parameter
+	 * in this position, since unexpected data might get provided to it.
 	 * This parameter exists to capture this fact in the type system.
-	 * Using an inline lambda expression as the listener callback is a good pattern to avoid cases like this were arguments are added from breaking due to optional arguments.
+	 *
+	 * Using an inline lambda expression as the listener callback is a good pattern to avoid cases like this where
+	 * arguments are added from breaking due to optional arguments.
 	 *
 	 * @remarks
 	 * This event is not emitted when:
@@ -91,6 +95,14 @@ export interface TreeChangeEvents {
 	 * the client that made the original edit.
 	 *
 	 * When it is emitted, the tree is guaranteed to be in-schema.
+	 *
+	 * @param unstable - Future versions of this API may use this argument to provide additional data to the event.
+	 * Users of this event should ensure that they do not provide a listener callback which has an optional parameter
+	 * in this position, since unexpected data might get provided to it.
+	 * This parameter exists to capture this fact in the type system.
+	 *
+	 * Using an inline lambda expression as the listener callback is a good pattern to avoid cases like this where
+	 * arguments are added from breaking due to optional arguments.
 	 */
-	treeChanged(): void;
+	treeChanged(unstable?: unknown): void;
 }
