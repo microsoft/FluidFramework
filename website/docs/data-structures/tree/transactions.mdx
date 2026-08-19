@@ -49,7 +49,7 @@ If your callback may throw, you should handle errors explicitly and return `{ ro
 
 :::
 
-The alpha APIs introduce [TreeBranchAlpha.runTransaction](../../api/fluid-framework/treebranchalpha-interface#runtransaction-methodsignature) as a replacement for `Tree.runTransaction`.
+The alpha APIs introduce [UntypedTreeViewAlpha.runTransaction](../../api/fluid-framework/treebranchalpha-interface#runtransaction-methodsignature) as a replacement for `Tree.runTransaction`.
 This new API exists to solve correctness issues where errors being thrown in runTransaction could result in an undefined state.
 This new API enables developers to customize how their application handles this error case.
 
@@ -64,9 +64,9 @@ import { TreeAlpha } from "@fluidframework/tree/alpha";
 const context = TreeAlpha.context(myNode);
 context.runTransaction(/* ... */);
 
-// Using a view directly:
-const view = tree.viewWith(config);
-view.runTransaction(/* ... */);
+// Using a typed view directly:
+const typedView = tree.viewWith(config);
+typedView.runTransaction(/* ... */);
 ```
 
 ### The `transaction` Callback Function

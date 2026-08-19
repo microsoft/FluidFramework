@@ -1052,7 +1052,7 @@ export namespace System_TableSchema {
 				// This ensures that the user sees the corresponding table-level edit as atomic,
 				// and ensures they are not spammed with intermediate events.
 				withBufferedTreeEvents(() => {
-					if (context.isBranch()) {
+					if (context.isView()) {
 						context.runTransaction(
 							() => {
 								applyEdits();
@@ -1063,7 +1063,9 @@ export namespace System_TableSchema {
 							preconditions === undefined ? undefined : { preconditions },
 						);
 					} else {
-						// Unhydrated nodes are not part of a collaborative session, so edits do not need a transaction.
+						// If this node does not have a corresponding view, then it is unhydrated.
+						// I.e., it is not part of a collaborative session yet.
+						// Therefore, we don't need to run the edits as a transaction.
 						applyEdits();
 					}
 				});
@@ -1089,7 +1091,7 @@ export namespace System_TableSchema {
 			#buildColumnInDocumentConstraintsForRows(
 				rows: Iterable<RowValueType>,
 			): TransactionConstraintAlpha[] | undefined {
-				if (!TreeAlpha.context(this).isBranch()) {
+				if (!TreeAlpha.context(this).isView()) {
 					return undefined;
 				}
 

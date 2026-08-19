@@ -1439,18 +1439,13 @@ export interface TreeBeta {
 // @beta
 export const TreeBeta: TreeBeta;
 
-// @beta @sealed
-export interface TreeBranch extends IDisposable {
-    dispose(error?: Error): void;
-    fork(): TreeBranch;
-    merge(branch: TreeBranch, disposeMerged?: boolean): void;
-    rebaseOnto(branch: TreeBranch): void;
-}
+// @beta @deprecated
+export type TreeBranch = UntypedTreeView;
 
 // @public @sealed
 export interface TreeChangeEvents {
     nodeChanged(unstable?: unknown): void;
-    treeChanged(): void;
+    treeChanged(unstable?: unknown): void;
 }
 
 // @beta @sealed
@@ -1581,9 +1576,9 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 }
 
 // @beta @sealed
-export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema> extends TreeView<TSchema>, TreeBranch {
+export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema> extends TreeView<TSchema>, UntypedTreeView {
     // (undocumented)
-    fork(): ReturnType<TreeBranch["fork"]> & TreeViewBeta<TSchema>;
+    fork(): ReturnType<UntypedTreeView["fork"]> & TreeViewBeta<TSchema>;
     runTransaction<TOut extends TransactionCallbackStatusBeta<unknown, unknown> | VoidTransactionCallbackStatusBeta | void>(transaction: () => TOut, params?: RunTransactionParamsBeta): TOut extends TransactionCallbackStatusBeta<infer TSuccessValue, infer TFailureValue> ? TransactionValueResult<TSuccessValue, TFailureValue> : TransactionVoidResult;
     runTransactionAsync<TOut extends TransactionCallbackStatusBeta<unknown, unknown> | VoidTransactionCallbackStatusBeta | void>(transaction: () => Promise<TOut>, params?: RunTransactionParamsBeta): Promise<TOut extends TransactionCallbackStatusBeta<infer TSuccessValue, infer TFailureValue> ? TransactionValueResult<TSuccessValue, TFailureValue> : TransactionVoidResult>;
 }
@@ -1634,6 +1629,14 @@ export type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) e
 
 // @beta @system
 export type UnionToTuple<Union, A extends unknown[] = [], First = PopUnion<Union>> = IsUnion<Union> extends true ? UnionToTuple<Exclude<Union, First>, [First, ...A]> : [Union, ...A];
+
+// @beta @sealed
+export interface UntypedTreeView extends IDisposable {
+    dispose(error?: Error): void;
+    fork(): UntypedTreeView;
+    merge(view: UntypedTreeView, disposeMerged?: boolean): void;
+    rebaseOnto(view: UntypedTreeView): void;
+}
 
 // @public
 export type ValidateRecursiveSchema<T extends ValidateRecursiveSchemaTemplate<T>> = true;

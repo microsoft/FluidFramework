@@ -16,7 +16,7 @@ import { TreeAlpha } from "@fluidframework/tree/alpha";
 import type {
 	ReadableField,
 	TreeRecordNode,
-	TreeBranchAlpha,
+	UntypedTreeViewAlpha,
 } from "@fluidframework/tree/alpha";
 
 import type { TreeView, ViewOrTree } from "./api.js";
@@ -27,17 +27,17 @@ import { getNodeOnBranch } from "./getNodeOnBranch.js";
  */
 export class Subtree<TRoot extends ImplicitFieldSchema> {
 	public constructor(public readonly viewOrTree: ViewOrTree<TRoot>) {
-		if (viewOrTree instanceof TreeNode && !TreeAlpha.context(viewOrTree).isBranch()) {
+		if (viewOrTree instanceof TreeNode && !TreeAlpha.context(viewOrTree).isView()) {
 			throw new UsageError("The provided node must belong to a branch.");
 		}
 	}
 
-	public get branch(): TreeBranchAlpha {
+	public get branch(): UntypedTreeViewAlpha {
 		if (!(this.viewOrTree instanceof TreeNode)) {
 			return this.viewOrTree;
 		}
 		const context = TreeAlpha.context(this.viewOrTree);
-		return context.isBranch() ? context : fail(0xcb3 /* Node cannot be raw. */);
+		return context.isView() ? context : fail(0xcb3 /* Node cannot be raw. */);
 	}
 
 	public get field(): ReadableField<TRoot> {
@@ -120,9 +120,10 @@ export class Subtree<TRoot extends ImplicitFieldSchema> {
 
 	public fork(): Subtree<TRoot> {
 		if (this.viewOrTree instanceof TreeNode) {
-			const branch = this.branch;
+			const context = TreeAlpha.context(this.viewOrTree);
+			const view = context.isView() ? context : fail(0xcb5 /* Node cannot be raw. */);
 			const node =
-				getNodeOnBranch(this.viewOrTree, branch.fork()) ??
+				getNodeOnBranch(this.viewOrTree, view.fork()) ??
 				fail(0xcb6 /* Expected node to be on new fork. */);
 
 			return new Subtree<TRoot>(node);
