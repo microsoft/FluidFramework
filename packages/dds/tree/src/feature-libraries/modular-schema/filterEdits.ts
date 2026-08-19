@@ -24,8 +24,8 @@ import type {
 	NodeChangeset,
 	NodeId,
 } from "./modularChangeTypes.js";
-import { makeCrossFieldKeyTable } from "./modularChangeUtils.js";
-import { pruneFieldMap } from "./prune.js";
+import { makeChangesetInversions } from "./modularChangeUtils.js";
+import { pruneChangeset } from "./prune.js";
 
 export function removeAllDetachesFilter(
 	_id: ChangeAtomId,
@@ -65,21 +65,19 @@ export function filterEdits(
 		),
 	);
 
-	const prunedFields =
-		pruneFieldMap(filteredFieldChanges, filteredNodeChanges, fieldKinds) ?? new Map();
+	const { crossFieldKeys: filteredCrossFieldKeys, nodeToParent: filteredNodeToParent } =
+		makeChangesetInversions(filteredFieldChanges, filteredNodeChanges, fieldKinds);
 
-	const filteredCrossFieldKeys = makeCrossFieldKeyTable(
-		prunedFields,
-		filteredNodeChanges,
+	return pruneChangeset(
+		{
+			...change,
+			fieldChanges: filteredFieldChanges,
+			nodeChanges: filteredNodeChanges,
+			crossFieldKeys: filteredCrossFieldKeys,
+			nodeToParent: filteredNodeToParent,
+		},
 		fieldKinds,
 	);
-
-	return {
-		...change,
-		fieldChanges: prunedFields,
-		nodeChanges: filteredNodeChanges,
-		crossFieldKeys: filteredCrossFieldKeys,
-	};
 }
 
 function filterFieldMapEdits(

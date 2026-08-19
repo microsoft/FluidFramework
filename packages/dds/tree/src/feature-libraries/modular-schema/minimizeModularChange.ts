@@ -54,7 +54,12 @@ import type {
 	NodeChangeset,
 	NodeId,
 } from "./modularChangeTypes.js";
-import { getChangeHandler, nodeChangeFromId, normalizeNodeId } from "./modularChangeUtils.js";
+import {
+	getChangeHandler,
+	nodeChangeFromId,
+	normalizeNodeId,
+	validateChangeset,
+} from "./modularChangeUtils.js";
 import { assert, fail } from "@fluidframework/core-utils/internal";
 
 /**
@@ -109,6 +114,7 @@ class ModularChangeMinimizer {
 		);
 
 		(residualChange as Mutable<ModularChangeset>).builds = this.squashBuilds(forestFactory);
+		validateChangeset(residualChange, this.fieldKinds);
 		return residualChange;
 	}
 
@@ -171,7 +177,6 @@ class ModularChangeMinimizer {
 		rootInputId: ChangeAtomId,
 		count: number,
 		endpoint: FieldId | undefined,
-		isTransientAttachOfBuild: boolean,
 	): RangeQueryResult<boolean> {
 		const isInDetachedTree = this.isFieldDetachedInOutput(fieldId);
 
@@ -183,6 +188,18 @@ class ModularChangeMinimizer {
 			endpoint,
 		);
 		countProcessed = shouldSquashAttachEntry.length;
+
+		const isBuiltRootEntry = this.builtRootIds.getFirst(rootInputId, countProcessed);
+		countProcessed = isBuiltRootEntry.length;
+
+		const isAttachOfBuild =
+			isBuiltRootEntry.value ??
+			(endpoint !== undefined && this.isNodeIdInBuiltTree(endpoint.nodeId));
+
+		const isAttachedRootEntry = this.attachedRootIds.getFirst(rootInputId, countProcessed);
+		countProcessed = isAttachedRootEntry.length;
+
+		const isTransientAttachOfBuild = isAttachOfBuild && !isAttachedRootEntry.value;
 		return {
 			value: isInDetachedTree || shouldSquashAttachEntry.value || isTransientAttachOfBuild,
 			length: countProcessed,
@@ -217,14 +234,11 @@ class ModularChangeMinimizer {
 		}
 
 		if (endpoint !== undefined) {
-			// We would have returned above if the detached nodes were newly built.
-			const isTransientAttachOfBuild = false;
 			const shouldDropAttachEntry = this.shouldDropAttach(
 				endpoint,
 				rootInputId ?? detachId,
 				countProcessed,
 				fieldId,
-				isTransientAttachOfBuild,
 			);
 			countProcessed = shouldDropAttachEntry.length;
 
@@ -394,45 +408,34 @@ class ModularChangeMinimizer {
 		);
 		countProcessed = shouldDropEntry.length;
 
-		if (shouldDropEntry.value) {
-			const isBuiltRootEntry = this.builtRootIds.getFirst(
-				inputRootId ?? detachId,
-				countProcessed,
-			);
-			countProcessed = isBuiltRootEntry.length;
-
-			const isDetachOfBuiltNode =
-				isBuiltRootEntry.value ?? this.isNodeIdInBuiltTree(fieldId.nodeId);
-
-			return {
-				value: { action: EditFilterStatus.Remove, shouldRemoveChild: isDetachOfBuiltNode },
-				length: countProcessed,
-			};
-		}
-
+		let hasPreservedAttach = false;
+		let hasDroppedAttach = false;
 		if (moveEndpointEntry.value !== undefined) {
-			// `shouldDropDetach` would be true and we would have returned already if the moved nodes were newly built.
-			const isTransientAttachOfBuild = false;
 			const willDropAttachEntry = this.shouldDropAttach(
 				moveEndpointEntry.value,
 				inputRootId ?? detachId,
 				countProcessed,
 				fieldId,
-				isTransientAttachOfBuild,
 			);
 			countProcessed = willDropAttachEntry.length;
+			hasDroppedAttach = willDropAttachEntry.value;
+			hasPreservedAttach = !willDropAttachEntry.value;
+		}
 
-			if (willDropAttachEntry.value) {
-				return {
-					value: { action: EditFilterStatus.PreserveWithoutMove },
-					length: countProcessed,
-				};
-			}
+		if (shouldDropEntry.value) {
+			// If there is a preserved attach, we will represent any child change at that location,
+			// so we must remove them from here.
+			return {
+				value: { action: EditFilterStatus.Remove, shouldRemoveChild: hasPreservedAttach },
+				length: countProcessed,
+			};
 		}
 
 		return {
 			value: {
-				action: EditFilterStatus.Preserve,
+				action: hasDroppedAttach
+					? EditFilterStatus.PreserveWithoutMove
+					: EditFilterStatus.Preserve,
 			},
 			length: countProcessed,
 		};
@@ -457,22 +460,11 @@ class ModularChangeMinimizer {
 		countProcessed = inputIdEntry.length;
 
 		const rootInputId = inputIdEntry.value ?? moveId;
-
-		const isBuiltRootEntry = this.builtRootIds.getFirst(rootInputId, countProcessed);
-		countProcessed = isBuiltRootEntry.length;
-
-		const isAttachOfBuild =
-			isBuiltRootEntry?.value ??
-			(moveEndpointEntry.value !== undefined &&
-				this.isNodeIdInBuiltTree(moveEndpointEntry.value.nodeId));
-
-		const isTransientAttachOfBuild = outputRootId !== undefined && isAttachOfBuild;
 		const shouldDropEntry = this.shouldDropAttach(
 			fieldId,
 			rootInputId,
 			countProcessed,
 			moveEndpointEntry.value,
-			isTransientAttachOfBuild,
 		);
 		countProcessed = shouldDropEntry.length;
 

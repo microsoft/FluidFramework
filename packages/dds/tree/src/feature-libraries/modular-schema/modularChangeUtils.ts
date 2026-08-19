@@ -5,6 +5,7 @@
 
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import {
+	areEqualChangeAtomIdOpts,
 	newChangeAtomIdRangeMap,
 	type ChangesetLocalId,
 	type FieldKey,
@@ -33,6 +34,7 @@ import type { FlexFieldKind } from "./fieldKind.js";
 import { genericFieldKind } from "./genericFieldKind.js";
 import {
 	newCrossFieldKeyTable,
+	type CrossFieldKey,
 	type CrossFieldKeyTable,
 	type FieldChange,
 	type FieldChangeMap,
@@ -358,42 +360,141 @@ export function normalizeNodeId(
 	}
 }
 
-export function makeCrossFieldKeyTable(
+export function makeChangesetInversions(
 	fields: FieldChangeMap,
 	nodes: ChangeAtomIdBTree<NodeChangeset>,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
-): CrossFieldKeyTable {
-	const keys: CrossFieldKeyTable = newCrossFieldKeyTable();
-	populateCrossFieldKeyTableForFieldMap(keys, fields, undefined, fieldKinds);
+): { crossFieldKeys: CrossFieldKeyTable; nodeToParent: ChangeAtomIdBTree<FieldId> } {
+	const crossFieldKeys: CrossFieldKeyTable = newCrossFieldKeyTable();
+	const nodeToParent: ChangeAtomIdBTree<FieldId> = newChangeAtomIdBTree();
+	populateInversionsFromFieldMap(fields, undefined, fieldKinds, crossFieldKeys, nodeToParent);
+
 	nodes.forEachPair(([revision, localId], node) => {
 		if (node.fieldChanges !== undefined) {
-			populateCrossFieldKeyTableForFieldMap(
-				keys,
+			populateInversionsFromFieldMap(
 				node.fieldChanges,
 				{
 					revision,
 					localId,
 				},
 				fieldKinds,
+				crossFieldKeys,
+				nodeToParent,
 			);
 		}
 	});
 
-	return keys;
+	return { crossFieldKeys, nodeToParent };
 }
 
-function populateCrossFieldKeyTableForFieldMap(
-	table: CrossFieldKeyTable,
+function populateInversionsFromFieldMap(
 	fields: FieldChangeMap,
 	parent: NodeId | undefined,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+	crossFieldKeys: CrossFieldKeyTable,
+	nodeToParent: ChangeAtomIdBTree<FieldId>,
 ): void {
 	for (const [fieldKey, fieldChange] of fields) {
-		const keys = getChangeHandler(fieldKinds, fieldChange.fieldKind).getCrossFieldKeys(
-			fieldChange.change,
-		);
-		for (const { key, count } of keys) {
-			table.set(key, count, { nodeId: parent, field: fieldKey });
+		const handler = getChangeHandler(fieldKinds, fieldChange.fieldKind);
+		for (const { key, count } of handler.getCrossFieldKeys(fieldChange.change)) {
+			crossFieldKeys.set(key, count, { nodeId: parent, field: fieldKey });
+		}
+
+		for (const { nodeId } of handler.getNestedChanges(fieldChange.change)) {
+			nodeToParent.set([nodeId.revision, nodeId.localId], { nodeId: parent, field: fieldKey });
 		}
 	}
+}
+
+export function validateChangeset(
+	change: ModularChangeset,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+): void {
+	let numNodes = validateFieldChanges(change, change.fieldChanges, undefined, fieldKinds);
+
+	for (const [[revision, localId], node] of change.nodeChanges.entries()) {
+		if (node.fieldChanges === undefined) {
+			continue;
+		}
+
+		const nodeId: NodeId = { revision, localId };
+		const numChildren = validateFieldChanges(change, node.fieldChanges, nodeId, fieldKinds);
+
+		numNodes += numChildren;
+	}
+
+	assert(
+		numNodes === change.nodeChanges.size,
+		0xa4d /* Node table contains unparented nodes */,
+	);
+}
+
+/**
+ * Asserts that each child and cross field key in each field has a correct entry in
+ * `nodeToParent` or `crossFieldKeyTable`.
+ * @returns the number of children found.
+ */
+function validateFieldChanges(
+	change: ModularChangeset,
+	fieldChanges: FieldChangeMap,
+	nodeParent: NodeId | undefined,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+): number {
+	let numChildren = 0;
+	for (const [field, fieldChange] of fieldChanges.entries()) {
+		const fieldId = { nodeId: nodeParent, field };
+		const handler = getChangeHandler(fieldKinds, fieldChange.fieldKind);
+		for (const { nodeId } of handler.getNestedChanges(fieldChange.change)) {
+			const parentFieldId = getParentFieldId(change, nodeId);
+			assert(
+				areEqualFieldIds(parentFieldId, fieldId),
+				0xa4e /* Inconsistent node parentage */,
+			);
+			numChildren += 1;
+		}
+
+		for (const keyRange of handler.getCrossFieldKeys(fieldChange.change)) {
+			const fields = getFieldsForCrossFieldKey(change, keyRange.key, keyRange.count);
+			assert(
+				fields.length === 1 && fields[0] !== undefined && areEqualFieldIds(fields[0], fieldId),
+				0xa4f /* Inconsistent cross field keys */,
+			);
+		}
+	}
+
+	return numChildren;
+}
+
+export function getParentFieldId(changeset: ModularChangeset, nodeId: NodeId): FieldId {
+	const parentId = getFromChangeAtomIdMap(changeset.nodeToParent, nodeId);
+	assert(parentId !== undefined, 0x9cb /* Parent field should be defined */);
+	return normalizeFieldId(parentId, changeset.nodeAliases);
+}
+
+export function normalizeFieldId(
+	fieldId: FieldId,
+	nodeAliases: ChangeAtomIdBTree<NodeId>,
+): FieldId {
+	return fieldId.nodeId === undefined
+		? fieldId
+		: { ...fieldId, nodeId: normalizeNodeId(fieldId.nodeId, nodeAliases) };
+}
+
+export function getFieldsForCrossFieldKey(
+	changeset: ModularChangeset,
+	key: CrossFieldKey,
+	count: number,
+): FieldId[] {
+	const fieldIds: FieldId[] = [];
+	for (const { value: fieldId } of changeset.crossFieldKeys.getAll(key, count)) {
+		if (fieldId !== undefined) {
+			fieldIds.push(normalizeFieldId(fieldId, changeset.nodeAliases));
+		}
+	}
+
+	return fieldIds;
+}
+
+function areEqualFieldIds(a: FieldId, b: FieldId): boolean {
+	return areEqualChangeAtomIdOpts(a.nodeId, b.nodeId) && a.field === b.field;
 }
