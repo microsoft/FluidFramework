@@ -29,7 +29,7 @@ export async function readAssetFile(
 			: repoRoot === undefined
 				? []
 				: [
-						// Support assets from the current and previous Codespace layouts.
+						// Support Codespaces that don't set the asset directory explicitly, including previous layouts.
 						resolve(repoRoot, ".devcontainer"),
 						resolve(repoRoot, ".devcontainer/ai-agent-insiders"),
 						resolve(repoRoot, ".devcontainer/ai-agent"),
