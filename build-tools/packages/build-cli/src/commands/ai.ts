@@ -18,6 +18,24 @@ import { BaseCommand } from "../library/commands/base.js";
 const FALLBACK_MODEL = "claude-haiku-4.5";
 export const SUPPORTED_ALIASES = ["dev", "copilot", "oce"] as const;
 
+export function getDevcontainerFileCandidates(
+	cwd: string,
+	repoRoot: string | undefined,
+	filename: string,
+): string[] {
+	const candidates: string[] = [];
+	const seen = new Set<string>();
+	for (const base of [cwd, repoRoot]) {
+		if (base === undefined) continue;
+		const candidate = resolve(base, ".devcontainer", filename);
+		if (!seen.has(candidate)) {
+			seen.add(candidate);
+			candidates.push(candidate);
+		}
+	}
+	return candidates;
+}
+
 export default class AiCommand extends BaseCommand<typeof AiCommand> {
 	static readonly description =
 		"AI-powered assistant that helps you launch the right AI agent.";
@@ -258,26 +276,13 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 	}
 
 	/**
-	 * Reads a file from the devcontainer ai-agent directories, checking
-	 * ai-agent-insiders/ first then ai-agent/ in both cwd and repoRoot.
+	 * Reads a file from the default devcontainer directory in both cwd and repoRoot.
 	 */
 	private async readDevcontainerFile(
 		repoRoot: string | undefined,
 		filename: string,
 	): Promise<string | undefined> {
-		const dirs = [".devcontainer/ai-agent-insiders", ".devcontainer/ai-agent"];
-		const candidates: string[] = [];
-		const seen = new Set<string>();
-		for (const base of [process.cwd(), repoRoot]) {
-			if (base === undefined) continue;
-			for (const dir of dirs) {
-				const candidate = resolve(base, dir, filename);
-				if (!seen.has(candidate)) {
-					seen.add(candidate);
-					candidates.push(candidate);
-				}
-			}
-		}
+		const candidates = getDevcontainerFileCandidates(process.cwd(), repoRoot, filename);
 
 		for (const candidate of candidates) {
 			this.verbose(`Looking for ${filename}: ${candidate}`);

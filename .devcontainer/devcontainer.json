@@ -1,18 +1,23 @@
-// For format details, see https://aka.ms/vscode-remote/devcontainer.json
+// Default Codespaces profile optimized for AI-agent workflows with extra CLI tooling.
 {
-	"name": "Standard",
-	// Bump this version to force a codespace prebuild rebuild. See .devcontainer/README.md.
-	// prebuild-version: 1
+	"name": "AI-enabled",
+	// Bump this version to force a Codespace prebuild rebuild. See .devcontainer/README.md.
+	// prebuild-version: 1.0.0
 	"build": {
 		"dockerfile": "Dockerfile",
-		// Update 'NODE_VERSION' to pick the desired Node.js version (default: 24)
 		"args": {
 			"NODE_VERSION": "24"
+			// "INSTALL_AGENCY": "true",
+			// TODO: Figure out the playwright strategy
+			// "INSTALL_PLAYWRIGHT_CLI": "true"
 		}
 	},
-	"runArgs": ["--init"],
-
-	// Add the IDs of extensions you want installed when the container is created.
+	"runArgs": [
+		"--init",
+		"--security-opt=seccomp=unconfined",
+		"--security-opt=apparmor=unconfined",
+		"--cap-add=SYS_ADMIN"
+	],
 	"customizations": {
 		"vscode": {
 			"extensions": [
@@ -22,37 +27,49 @@
 				"MAI-EngineeringSystems.mai-ai-telemetry",
 				"ms-azure-devops.azure-pipelines",
 				"ms-azuretools.vscode-docker",
-				"mutantdino.resourcemonitor"
-			]
+				"mutantdino.resourcemonitor",
+				"vsls-contrib.codetour"
+			],
+			"settings": {
+				"workbench.startupEditor": "none"
+			}
+		},
+		"codespaces": {
+			"openFiles": [".devcontainer/GETTING_STARTED.md"]
 		}
 	},
-	"onCreateCommand": {
-		"node-setup": "bash scripts/codespace-setup/on-create.sh"
+	"containerEnv": {
+		"NODE_VERSION_OVERRIDE": "24",
+		"COREPACK_ENABLE_DOWNLOAD_PROMPT": "0"
 	},
-	"postCreateCommand": {
-		"welcome-notice": "sudo cp .devcontainer/first-run-notice.txt /usr/local/etc/vscode-dev-containers/first-run-notice.txt"
+	"onCreateCommand": "bash scripts/codespace-setup/on-create.sh && bash scripts/codespace-setup/install-build-cli.sh",
+	"postCreateCommand": "bash scripts/codespace-setup/ai-setup.sh",
+	"postStartCommand": {
+		"bwrap-setup": "sudo mount --make-rshared /",
+		"sandbox-tmpdir": "mkdir -p /tmp/claude"
 	},
+	"postAttachCommand": {},
 	// Forward port for Tinylicious
 	"forwardPorts": [7070],
-
-	// Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
 	"remoteUser": "node",
 	"features": {
+		// Enables docker CLI inside the container
 		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
 			"moby": false
 		},
-		"ghcr.io/devcontainers/features/git-lfs:1": {}
-		// We do not install Azure CLI and Github CLI because of security considerations
-		// when creating Github Codespaces instances. It's ok to install them manually if
-		// using this file to develop in a local container.
-		// "ghcr.io/devcontainers/features/azure-cli:1": {},  // DO NOT UNCOMMENT
-		// "ghcr.io/devcontainers/features/github-cli:1": {},  // DO NOT UNCOMMENT
+		// Install the github CLI
+		"ghcr.io/devcontainers/features/github-cli:1": {},
+		// Install git lfs
+		"ghcr.io/devcontainers/features/git-lfs:1": {},
+		// Enables SSH connections into the container using `gh codespace ssh`
+		"ghcr.io/devcontainers/features/sshd:1": {
+			"version": "latest"
+		}
 	},
-
 	// Setting this so Codespaces default settings use it. It's not really *required*, but a clean build
 	// can be lengthy enough that it's convenient.
 	"hostRequirements": {
-		"cpus": 16,
+		"cpus": 32,
 		"memory": "64gb"
 	}
 }
