@@ -4,6 +4,7 @@
  */
 
 import type { ScopeType, IUser } from "@fluidframework/protocol-definitions";
+import type { ICreateBlobResponse } from "@fluidframework/gitresources";
 import {
 	BasicRestWrapper,
 	GitManager,
@@ -18,7 +19,77 @@ import type {
 	ITenantOrderer,
 	ITenantStorage,
 } from "@fluidframework/server-services-core";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { queue } from "async";
 import { default as Axios } from "axios";
+
+/**
+ * Tinylicious hosts Alfred and Historian in one process but communicates between them over
+ * localhost HTTP. Concurrent summaries can otherwise create thousands of blob requests and
+ * sockets at once, delaying all requests handled by the process.
+ *
+ * This limit is shared across Tinylicious tenants so concurrent documents use one request budget.
+ */
+const maxConcurrentBlobUploads = 50;
+const blobUploadQueueLengthTelemetryThresholds = [100, 200] as const;
+
+type BlobUpload = () => Promise<ICreateBlobResponse>;
+
+// Invoke each deferred upload when queue capacity is available.
+const blobUploadQueue = queue<BlobUpload>(async (upload) => upload(), maxConcurrentBlobUploads);
+
+const reachedBlobUploadQueueLengthThresholds = new Set<number>();
+let maxObservedBlobUploadQueueLength = 0;
+
+function recordBlobUploadQueueLength(): void {
+	const availableWorkers = maxConcurrentBlobUploads - blobUploadQueue.running();
+	const queueLength = Math.max(0, blobUploadQueue.length() - availableWorkers);
+	maxObservedBlobUploadQueueLength = Math.max(maxObservedBlobUploadQueueLength, queueLength);
+
+	for (const threshold of blobUploadQueueLengthTelemetryThresholds) {
+		if (queueLength >= threshold && !reachedBlobUploadQueueLengthThresholds.has(threshold)) {
+			reachedBlobUploadQueueLengthThresholds.add(threshold);
+			Lumberjack.warning("Tinylicious blob upload queue length threshold reached", {
+				queueLength,
+				queueLengthThreshold: threshold,
+				maxConcurrentBlobUploads,
+			});
+		}
+	}
+}
+
+blobUploadQueue.unsaturated(() => {
+	if (reachedBlobUploadQueueLengthThresholds.size === 0) {
+		return;
+	}
+
+	Lumberjack.info("Tinylicious blob upload queue is unsaturated", {
+		queueLength: blobUploadQueue.length(),
+		runningBlobUploads: blobUploadQueue.running(),
+		maxObservedQueueLength: maxObservedBlobUploadQueueLength,
+		queueLengthThresholdsReached: [...reachedBlobUploadQueueLengthThresholds].join(","),
+		maxConcurrentBlobUploads,
+	});
+
+	reachedBlobUploadQueueLengthThresholds.clear();
+	maxObservedBlobUploadQueueLength = 0;
+});
+
+/**
+ * Tinylicious Git manager that bounds blob uploads before their Historian requests are created.
+ */
+export class TinyliciousGitManager extends GitManager {
+	public override async createBlob(
+		content: string,
+		encoding: "utf-8" | "base64",
+	): Promise<ICreateBlobResponse> {
+		const upload = blobUploadQueue.pushAsync<ICreateBlobResponse>(async () =>
+			super.createBlob(content, encoding),
+		);
+		recordBlobUploadQueueLength();
+		return upload;
+	}
+}
 
 export class TinyliciousTenant implements ITenant {
 	private readonly owner = "tinylicious";
@@ -42,7 +113,7 @@ export class TinyliciousTenant implements ITenant {
 		);
 		const historian = new Historian(historianUrl, false, false, restWrapper);
 
-		this.manager = new GitManager(historian);
+		this.manager = new TinyliciousGitManager(historian);
 	}
 
 	public get gitManager(): GitManager {

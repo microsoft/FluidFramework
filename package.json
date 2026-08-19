@@ -1,6 +1,6 @@
 {
 	"name": "client-release-group-root",
-	"version": "2.116.0",
+	"version": "3.0.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -81,6 +81,7 @@
 		"generate:packageList:public": "flub list client --no-private --feed public --outFile feeds/public.txt",
 		"generate:packagesMd": "flub check layers --info layerInfo.json --md .",
 		"preinstall": "node scripts/only-pnpm.cjs",
+		"install-no-frozen": "pnpm --config.minimum-release-age=10080 i --no-frozen-lockfile",
 		"install:agency": "curl -sSfL https://aka.ms/InstallTool.sh | sh -s agency",
 		"layer-check": "flub check layers --info layerInfo.json",
 		"lint": "fluid-build --task lint",
