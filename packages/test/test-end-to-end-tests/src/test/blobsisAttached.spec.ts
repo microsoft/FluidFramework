@@ -36,7 +36,9 @@ import { driverSupportsBlobs } from "./mockDetachedBlobStorage.js";
 const mapId = "map";
 const directoryId = "directoryKey";
 
-for (const createBlobPayloadPending of [undefined, true] as const) {
+// Note: we use `false` (rather than `undefined`) to represent the disabled case, since `undefined` no longer
+// guarantees the feature is disabled now that it defaults to enabled for sufficiently new minVersionForCollab.
+for (const createBlobPayloadPending of [false, true] as const) {
 	describeCompat(
 		`blob handle isAttached (createBlobPayloadPending: ${createBlobPayloadPending})`,
 		"NoCompat",
