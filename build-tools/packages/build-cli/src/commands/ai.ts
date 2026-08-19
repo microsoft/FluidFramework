@@ -68,7 +68,7 @@ export default class AiCommand extends BaseCommand<typeof AiCommand> {
 		}),
 		assetDirectory: Flags.directory({
 			description:
-				"Directory containing launcher-prompt.md and GETTING_STARTED.md. " +
+				"Directory containing assets used by the AI launcher. " +
 				"When unset, searches supported locations under the resolved repository root.",
 			env: "FLUB_AI_ASSET_DIRECTORY",
 		}),
