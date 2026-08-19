@@ -26,7 +26,7 @@ export class LocalOrdererManager implements IOrdererManager {
 	/**
 	 * Map of "tenantId/documentId" to the orderer for that document.
 	 */
-	private readonly ordererMap = new Map<string, Promise<IOrderer>>();
+	private readonly ordererMap = new Map<string, Promise<LocalOrderer>>();
 
 	constructor(
 		private readonly storage: IDocumentStorage,
@@ -55,8 +55,7 @@ export class LocalOrdererManager implements IOrdererManager {
 	public async hasPendingWork(): Promise<boolean> {
 		return Promise.all(this.ordererMap.values()).then((orderers) => {
 			for (const orderer of orderers) {
-				// We know that it ia LocalOrderer, break the abstraction
-				if ((orderer as LocalOrderer).hasPendingWork()) {
+				if (orderer.hasPendingWork()) {
 					return true;
 				}
 			}
@@ -65,6 +64,10 @@ export class LocalOrdererManager implements IOrdererManager {
 	}
 
 	public async getOrderer(tenantId: string, documentId: string): Promise<IOrderer> {
+		return this.getLocalOrderer(tenantId, documentId);
+	}
+
+	private getLocalOrderer(tenantId: string, documentId: string): Promise<LocalOrderer> {
 		const key = this.getOrdererMapKey(tenantId, documentId);
 
 		let orderer = this.ordererMap.get(key);
@@ -80,21 +83,16 @@ export class LocalOrdererManager implements IOrdererManager {
 	 * Implements
 	 * {@link @fluidframework/server-services-core#IOrdererManager.getCheckpointSequenceNumber}.
 	 *
-	 * @remarks This method is optional in the class type to preserve compatibility with previous
-	 * versions of the exported class. Every instance created by this version defines it.
 	 */
-	public async getCheckpointSequenceNumber?(
+	public async getCheckpointSequenceNumber(
 		tenantId: string,
 		documentId: string,
 	): Promise<number> {
-		const orderer = (await this.getOrderer(tenantId, documentId)) as LocalOrderer;
-		if (orderer.getCheckpointSequenceNumber === undefined) {
-			throw new Error("LocalOrderer does not support checkpoint sequence numbers");
-		}
+		const orderer = await this.getLocalOrderer(tenantId, documentId);
 		return orderer.getCheckpointSequenceNumber();
 	}
 
-	private async createLocalOrderer(tenantId: string, documentId: string): Promise<IOrderer> {
+	private async createLocalOrderer(tenantId: string, documentId: string): Promise<LocalOrderer> {
 		const historian = await this.createHistorian(tenantId);
 		const gitManager = new GitManager(historian);
 		const documentRepository =

@@ -152,22 +152,13 @@ export class Collection<T> implements ICollection<T> {
 			const upperBound: unknown = query[key].$lt;
 			const hasLowerBound = typeof lowerBound === "number";
 			const hasUpperBound = typeof upperBound === "number";
-			if (hasLowerBound || hasUpperBound) {
-				if (hasLowerBound) {
-					filteredCollection = filteredCollection.filter(
-						(value) => getValueByKey(value, key) > lowerBound,
-					);
-				}
-				if (hasUpperBound) {
-					filteredCollection = filteredCollection.filter(
-						(value) => getValueByKey(value, key) < upperBound,
-					);
-				}
-			} else {
-				filteredCollection = filteredCollection.filter(
-					(value) => getValueByKey(value, key) === query[key],
-				);
-			}
+			filteredCollection = filteredCollection.filter((value) => {
+				const propertyValue = getValueByKey(value, key);
+				return hasLowerBound || hasUpperBound
+					? (!hasLowerBound || propertyValue > lowerBound) &&
+							(!hasUpperBound || propertyValue < upperBound)
+					: propertyValue === query[key];
+			});
 		}
 
 		if (sort && Object.keys(sort).length === 1) {

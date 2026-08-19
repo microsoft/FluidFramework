@@ -262,7 +262,7 @@ async function connectOrderer(
 		claims,
 		version,
 		clients,
-		await ordererManager.getCheckpointSequenceNumber?.(tenantId, documentId),
+		await ordererManager.getCheckpointSequenceNumber(tenantId, documentId),
 	);
 
 	return {
@@ -708,7 +708,7 @@ export async function connectDocument(
 						claims,
 						version,
 						clients,
-						await lambdaDependencies.ordererManager.getCheckpointSequenceNumber?.(
+						await lambdaDependencies.ordererManager.getCheckpointSequenceNumber(
 							tenantId,
 							documentId,
 						),

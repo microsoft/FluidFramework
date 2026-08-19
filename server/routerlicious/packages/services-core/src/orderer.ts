@@ -86,15 +86,12 @@ export interface IOrdererManager {
 	 * Gets the latest sequence number known to the orderer so a connecting client can determine
 	 * whether it has processed all operations known to the service.
 	 *
-	 * This method is optional because not all orderer backends can report a latest sequence number.
-	 * When it is absent, the connected message omits the checkpoint sequence number and the client
-	 * cannot confirm that it has fully caught up.
-	 *
 	 * @param tenantId - The tenant that owns the document.
 	 * @param documentId - The document whose latest sequence number should be returned.
-	 * @returns The latest sequence number known to the orderer.
+	 * @returns The latest sequence number known to the orderer, or `undefined` when the orderer
+	 * cannot report one.
 	 */
-	getCheckpointSequenceNumber?(tenantId: string, documentId: string): Promise<number>;
+	getCheckpointSequenceNumber(tenantId: string, documentId: string): Promise<number | undefined>;
 
 	removeOrderer(tenantId: string, documentId: string): void;
 }
