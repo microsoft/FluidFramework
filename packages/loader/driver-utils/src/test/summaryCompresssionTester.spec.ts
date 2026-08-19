@@ -11,7 +11,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { TypedEventEmitter, Uint8ArrayToArrayBufferLike } from "@fluid-internal/client-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
 	IClient,
@@ -109,7 +109,6 @@ function generateSummaryWithBinaryContent(
 
 const misotestid: string = "misotest-id";
 
-const abcContent = "ABC";
 class InternalTestStorage implements IDocumentStorageService {
 	constructor() {}
 	private _uploadedSummary: ISummaryTree | undefined;
@@ -136,9 +135,8 @@ class InternalTestStorage implements IDocumentStorageService {
 		throw new Error("Method not implemented.");
 	}
 	async readBlob(id: string): Promise<ArrayBufferLike> {
-		return id === misotestid
-			? Uint8ArrayToArrayBufferLike(new TextEncoder().encode(abcContent))
-			: getHeaderContent(this._uploadedSummary!);
+		assert(id !== misotestid);
+		return getHeaderContent(this._uploadedSummary!);
 	}
 	async uploadSummaryWithContext(
 		summary: ISummaryTree,
