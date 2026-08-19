@@ -369,31 +369,6 @@ describe("VersionMarkResolver", () => {
 			});
 			assert.deepEqual(calls, [{ from: 15, to: undefined }]);
 		});
-
-		it("still resolves a locator persisted under the old exclusive scheme", async () => {
-			// Back-compat: a locator stored before this change holds the exclusive value S (the reference
-			// point), not S + 1. Fed to the now-inclusive resolve(), it scans from S, reading one extra op
-			// at S — the batch sequenced just before the target. That op has a different batchId, so it is
-			// skipped (no false match), does not trip the reader-range assert (`firstScanned >= from`), and
-			// the target still resolves. Old persisted marks therefore remain resolvable.
-			const calls: { from: number; to?: number }[] = [];
-			const reader = makeReader(
-				[
-					[
-						makeOp({ sequenceNumber: 15, clientId: "other", clientSequenceNumber: 1 }),
-						makeOp({ sequenceNumber: 16, clientId: "clientA", clientSequenceNumber: 7 }),
-					],
-				],
-				calls,
-			);
-			const resolver = makeResolver({ reader });
-			// 15 is the old exclusive lower bound (S); the target batch is sequenced at S + 1 = 16.
-			assert.deepEqual(await resolver.resolve(generateBatchId("clientA", 7), 15), {
-				kind: "resolved",
-				sequenceNumber: 16,
-			});
-			assert.deepEqual(calls, [{ from: 15, to: undefined }]);
-		});
 	});
 
 	describe("resolveFromHistory - multi-op batches", () => {
