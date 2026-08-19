@@ -45,7 +45,7 @@ import {
 
 function makeTestContainerConfig(
 	registry: ChannelFactoryRegistry,
-	createBlobPayloadPending: true | undefined,
+	createBlobPayloadPending: boolean,
 ): ITestContainerConfig {
 	return {
 		runtimeOptions: {
@@ -63,7 +63,9 @@ function makeTestContainerConfig(
 					},
 				},
 			},
-			explicitSchemaControl: createBlobPayloadPending,
+			// explicitSchemaControl is required whenever createBlobPayloadPending is explicitly set (true or
+			// false); it also matches the default for minVersionForCollab 2.40.0 below.
+			explicitSchemaControl: true,
 			createBlobPayloadPending,
 		},
 		registry,
@@ -97,7 +99,9 @@ const ContainerStateEventsOrErrors: ExpectedEvents = {
 	],
 };
 
-for (const createBlobPayloadPending of [undefined, true] as const) {
+// Use false/true (not undefined) since minVersionForCollab is pinned to 2.40.0 below, where
+// createBlobPayloadPending defaults to true; undefined would no longer exercise the disabled path.
+for (const createBlobPayloadPending of [false, true] as const) {
 	describeCompat(
 		`blobs (createBlobPayloadPending: ${createBlobPayloadPending})`,
 		"FullCompat",
