@@ -1130,8 +1130,10 @@ export class TreeCheckout implements ITreeCheckout {
 				this.logger?.sendTelemetryEvent({
 					eventName: TreeCheckout.schemaChangeTelemetryEventName,
 					...tagCodeArtifacts({
-						...telemetryMetrics,
-						isSharedBranch: this.isSharedBranch,
+						details: JSON.stringify({
+							...telemetryMetrics,
+							isSharedBranch: this.isSharedBranch,
+						}),
 					}),
 				});
 			} else {

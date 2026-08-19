@@ -7,8 +7,8 @@ import { strict as assert } from "node:assert";
 
 import {
 	type IMockLoggerExt,
+	TelemetryDataTag,
 	createMockLoggerExt,
-	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
@@ -81,6 +81,24 @@ const rootField: NormalizedFieldUpPath = {
 };
 
 const enableSchemaValidation = true;
+
+function parseCodeArtifactDetails(details: unknown): Record<string, unknown> {
+	assert(typeof details === "object" && details !== null, "Expected telemetry details.");
+	assert(
+		"tag" in details && details.tag === TelemetryDataTag.CodeArtifact,
+		"Expected details to be tagged as a code artifact.",
+	);
+	assert(
+		"value" in details && typeof details.value === "string",
+		"Expected details to contain a JSON string.",
+	);
+	const parsed: unknown = JSON.parse(details.value);
+	assert(
+		typeof parsed === "object" && parsed !== null && !Array.isArray(parsed),
+		"Expected details to contain a JSON object.",
+	);
+	return parsed as Record<string, unknown>;
+}
 
 describe("sharedTreeView", () => {
 	describe("Events", () => {
@@ -1604,29 +1622,29 @@ describe("sharedTreeView", () => {
 				.filter((event) =>
 					event.eventName.endsWith(TreeCheckout.schemaChangeTelemetryEventName),
 				);
-			assert.deepEqual(
-				initialEvents.map((event) => event.changeKind),
-				[
-					tagCodeArtifacts({ changeKind: "initialize" }).changeKind,
-					tagCodeArtifacts({ changeKind: "restriction" }).changeKind,
-				],
+			const initialDetails = initialEvents.map((event) =>
+				parseCodeArtifactDetails(event.details),
 			);
-			const initializationEvent = initialEvents[0];
+			assert.deepEqual(
+				initialDetails.map((details) => details.changeKind),
+				["initialize", "restriction"],
+			);
+			const initializationDetails = initialDetails[0];
 			assert.deepEqual(
 				{
-					isInverse: initializationEvent.isInverse,
-					oldNodeSchemaCount: initializationEvent.oldNodeSchemaCount,
-					newNodeSchemaCount: initializationEvent.newNodeSchemaCount,
-					addedNodeSchemaCount: initializationEvent.addedNodeSchemaCount,
-					removedNodeSchemaCount: initializationEvent.removedNodeSchemaCount,
+					isInverse: initializationDetails.isInverse,
+					oldNodeSchemaCount: initializationDetails.oldNodeSchemaCount,
+					newNodeSchemaCount: initializationDetails.newNodeSchemaCount,
+					addedNodeSchemaCount: initializationDetails.addedNodeSchemaCount,
+					removedNodeSchemaCount: initializationDetails.removedNodeSchemaCount,
 				},
-				tagCodeArtifacts({
+				{
 					isInverse: false,
 					oldNodeSchemaCount: 0,
 					newNodeSchemaCount: view.checkout.storedSchema.nodeSchema.size,
 					addedNodeSchemaCount: view.checkout.storedSchema.nodeSchema.size,
 					removedNodeSchemaCount: 0,
-				}),
+				},
 			);
 
 			const oldSchema = view.checkout.storedSchema.clone();
@@ -1646,32 +1664,18 @@ describe("sharedTreeView", () => {
 				);
 			const upgradeEvent = schemaChangeEvents.at(-1);
 			assert(upgradeEvent !== undefined, "Expected schema change telemetry.");
-			assert.deepEqual(
-				{
-					changeKind: upgradeEvent.changeKind,
-					isInverse: upgradeEvent.isInverse,
-					isSharedBranch: upgradeEvent.isSharedBranch,
-					oldNodeSchemaCount: upgradeEvent.oldNodeSchemaCount,
-					newNodeSchemaCount: upgradeEvent.newNodeSchemaCount,
-					addedNodeSchemaCount: upgradeEvent.addedNodeSchemaCount,
-					removedNodeSchemaCount: upgradeEvent.removedNodeSchemaCount,
-					rootFieldKindChanged: upgradeEvent.rootFieldKindChanged,
-					oldRootAllowedTypeCount: upgradeEvent.oldRootAllowedTypeCount,
-					newRootAllowedTypeCount: upgradeEvent.newRootAllowedTypeCount,
-				},
-				tagCodeArtifacts({
-					changeKind: "upgrade",
-					isInverse: false,
-					isSharedBranch: view.checkout.isSharedBranch,
-					oldNodeSchemaCount: oldSchema.nodeSchema.size,
-					newNodeSchemaCount: oldSchema.nodeSchema.size + 1,
-					addedNodeSchemaCount: 1,
-					removedNodeSchemaCount: 0,
-					rootFieldKindChanged: false,
-					oldRootAllowedTypeCount: oldSchema.rootFieldSchema.types.size,
-					newRootAllowedTypeCount: oldSchema.rootFieldSchema.types.size,
-				}),
-			);
+			assert.deepEqual(parseCodeArtifactDetails(upgradeEvent.details), {
+				changeKind: "upgrade",
+				isInverse: false,
+				isSharedBranch: view.checkout.isSharedBranch,
+				oldNodeSchemaCount: oldSchema.nodeSchema.size,
+				newNodeSchemaCount: oldSchema.nodeSchema.size + 1,
+				addedNodeSchemaCount: 1,
+				removedNodeSchemaCount: 0,
+				rootFieldKindChanged: false,
+				oldRootAllowedTypeCount: oldSchema.rootFieldSchema.types.size,
+				newRootAllowedTypeCount: oldSchema.rootFieldSchema.types.size,
+			});
 		});
 	});
 
