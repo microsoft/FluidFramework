@@ -34,18 +34,17 @@
  *
  * Since this type is marked with `@input`, it is only consumed by the framework and never returned, so widening the accepted set is a non-breaking change.
  *
- * TODO: before stabilizing this further, some restrictions should be considered (since once stabilized, this can be relaxed, but not more constrained).
- * For example it might make sense to constrain this to something like:
- * ```ts
- * "1.4.0" | typeof defaultMinVersionForCollab | `2.${bigint}.0`
- * ```
+ * Historically, this type allowed arbitrary patch versions, but as noted above that is problematic for ordering, so only the major and minor versions are supported going forward:
+ * support for patch versions can be aged out as support for version 1 and 2 are dropped (or simple deprecated and removed in a later major version).
+ * Once gone that simplification is done, this type will align with {@link @fluidframework/driver-definitions#OldestSupportedServiceClientVersion} and the two types can be deduplicated.
  *
  * @input
  * @public
  */
 export type OldestSupportedClientVersion =
-	| `${1 | 2 | 3}.${bigint}.${bigint}`
-	| `${1 | 2 | 3}.${bigint}.${bigint}-${string}`;
+	| `3.${bigint}.0`
+	| `${1 | 2}.${bigint}.${bigint}`
+	| `${1 | 2}.${bigint}.${bigint}-${string}`;
 
 /**
  * Oldest version of Fluid Framework client packages that must be able to open and process
