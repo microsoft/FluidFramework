@@ -40,6 +40,7 @@ import {
 	type ImplicitFieldSchema,
 	type TreeView,
 	type TreeViewConfiguration,
+	type TreeBranchHistory,
 } from "../../simple-tree/index.js";
 import { toInitialSchema } from "../../simple-tree/index.js";
 import { Breakable } from "../../util/index.js";
@@ -189,6 +190,9 @@ describe("schematizeTree", () => {
 			hasRootSchema(): boolean {
 				return false;
 			},
+			rewindTo(): void {
+				throw new Error("Function not implemented.");
+			},
 			runTransaction(): never {
 				throw new Error("Function not implemented.");
 			},
@@ -210,6 +214,7 @@ describe("schematizeTree", () => {
 			isMissingEditsFrom(branch: unknown): never {
 				throw new Error("Function not implemented.");
 			},
+			history: undefined as unknown as TreeBranchHistory,
 			dispose(): void {
 				throw new Error("Function not implemented.");
 			},

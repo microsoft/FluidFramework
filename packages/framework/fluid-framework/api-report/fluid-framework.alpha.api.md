@@ -2530,7 +2530,9 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
     // (undocumented)
     fork(): TreeBranchAlpha;
     hasRootSchema<TSchema extends ImplicitFieldSchema>(schema: TSchema): this is TreeViewAlpha<TSchema>;
+    readonly history: TreeBranchHistory;
     isMissingEditsFrom(branch: TreeBranch): boolean;
+    rewindTo(revision: string): void;
     runTransaction<TSuccessValue, TFailureValue>(transaction: () => TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>, params?: RunTransactionParamsAlpha): TransactionValueResult<TSuccessValue, TFailureValue>;
     runTransaction(transaction: () => VoidTransactionCallbackStatusAlpha | void, params?: RunTransactionParamsAlpha): TransactionVoidResult;
     runTransactionAsync<TSuccessValue, TFailureValue>(transaction: () => Promise<TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>>, params?: RunTransactionParamsAlpha): Promise<TransactionValueResult<TSuccessValue, TFailureValue>>;
@@ -2538,8 +2540,20 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 }
 
 // @alpha @sealed
+export interface TreeBranchCommitMetadata {
+    readonly parent: TreeBranchCommitMetadata | undefined;
+    readonly revision: string;
+}
+
+// @alpha @sealed
 export interface TreeBranchEvents {
     changed(data: ChangeMetadata, getRevertible?: RevertibleAlphaFactory): void;
+}
+
+// @alpha @sealed
+export interface TreeBranchHistory {
+    readonly commitCount: number;
+    getHeadCommit(): TreeBranchCommitMetadata | undefined;
 }
 
 // @public @sealed

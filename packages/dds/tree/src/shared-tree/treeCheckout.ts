@@ -10,7 +10,7 @@ import type {
 	Listenable,
 } from "@fluidframework/core-interfaces/internal";
 import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IIdCompressor, StableId } from "@fluidframework/id-compressor";
 import { type TelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -119,6 +119,7 @@ import {
 } from "../util/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
+import { TreeBranchHistoryImpl } from "./history.js";
 import { SharedTreeChangeEnricher } from "./sharedTreeChangeEnricher.js";
 import type { SharedTreeChangeProcessingContext } from "./sharedTreeChangeFamily.js";
 import {
@@ -566,9 +567,10 @@ export class TreeCheckout implements ITreeCheckout {
 
 	readonly #events = createEmitter<CheckoutEvents>();
 	public events: Listenable<CheckoutEvents> = this.#events;
+	private branchHistory?: TreeBranchHistoryImpl;
 
 	public constructor(
-		branch: SharedTreeBranch<
+		private branch: SharedTreeBranch<
 			SharedTreeEditBuilder,
 			SharedTreeChange,
 			SharedTreeChangeProcessingContext
@@ -591,6 +593,11 @@ export class TreeCheckout implements ITreeCheckout {
 		this.#transaction = this.createTransactionStack(branch);
 		this.editLock = new EditLock(this.#transaction.activeBranchEditor);
 		this.registerForBranchEvents();
+	}
+
+	public get history(): TreeBranchHistoryImpl {
+		this.branchHistory ??= new TreeBranchHistoryImpl(this.branch, this.idCompressor);
+		return this.branchHistory;
 	}
 
 	/**
@@ -1334,7 +1341,6 @@ export class TreeCheckout implements ITreeCheckout {
 			SharedTreeChangeProcessingContext
 		>,
 	): void {
-		// TODO: Dispose old branch, if necessary
 		assert(
 			this.#transaction.size === 0,
 			0xc55 /* Cannot switch branches during a transaction */,
@@ -1349,12 +1355,36 @@ export class TreeCheckout implements ITreeCheckout {
 		this.unregisterFromBranchEvents();
 
 		this.#transaction = this.createTransactionStack(branch);
+		if (!this.isSharedBranch) {
+			this.branch.dispose();
+		}
+		this.branch = branch;
+		this.branchHistory?.dispose();
+		this.branchHistory = undefined;
 		this.editLock = new EditLock(this.#transaction.activeBranchEditor);
 		this.registerForBranchEvents();
 
 		// TODO: Rework eventing
 		this.applyInternalChange(diff);
 		this.#events.emit("afterBatch");
+	}
+
+	public rewindTo(revisionString: string): void {
+		this.checkNotDisposed("The branch has already been disposed and cannot be rewound.");
+		assert(this.#transaction.size === 0, "Cannot rewind during a transaction");
+		const revision = this.idCompressor.tryRecompress(revisionString as StableId);
+		if (revision === undefined) {
+			throw new UsageError(`Unrecognized revision id: ${revisionString}`);
+		}
+		const head = this.#transaction.branch.getHead();
+		let targetCommit = head;
+		while (targetCommit.parent !== undefined && targetCommit.revision !== revision) {
+			targetCommit = targetCommit.parent;
+		}
+		if (targetCommit.revision !== revision) {
+			throw new UsageError(`No commit found with revision: ${revisionString}`);
+		}
+		this.switchBranch(this.#transaction.branch.fork(targetCommit));
 	}
 
 	private rebase(branch: TreeBranch): void {

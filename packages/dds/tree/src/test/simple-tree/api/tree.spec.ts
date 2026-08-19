@@ -513,4 +513,83 @@ describe("simple-tree tree", () => {
 			assert.equal(viewB.isMissingEditsFrom(viewA), true);
 		});
 	});
+
+	describe("rewindTo", () => {
+		it("it rewinds the view", () => {
+			// Setup
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const view = getView(config);
+			view.initialize(1);
+
+			const revision1 = view.history.getHeadCommit()?.revision;
+			assert(revision1 !== undefined, "revision should be defined");
+			view.root = 2;
+			const revision2 = view.history.getHeadCommit()?.revision;
+			assert(revision2 !== undefined, "revision should be defined");
+			view.root = 3;
+			view.root = 4;
+
+			// Consistency check
+			assert.equal(view.history.commitCount, 4);
+
+			// Act
+			view.rewindTo(revision2);
+
+			// Verify
+			assert.equal(view.history.commitCount, 2);
+			assert.equal(view.root, 2);
+
+			// Act
+			view.rewindTo(revision1);
+
+			// Verify
+			assert.equal(view.history.commitCount, 1);
+			assert.equal(view.root, 1);
+		});
+
+		it("new edits can be made after rewinding", () => {
+			// Setup
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const view = getView(config);
+			view.initialize(1);
+
+			const revision1 = view.history.getHeadCommit()?.revision;
+			assert(revision1 !== undefined, "revision should be defined");
+			view.root = 2;
+
+			view.rewindTo(revision1);
+			assert.equal(view.history.commitCount, 1);
+
+			// Act
+			view.root = 42;
+
+			// Verify
+			assert.equal(view.history.commitCount, 2);
+			assert.equal(view.root, 42);
+		});
+
+		it("new edits made after rewinding do not affect the original branch", () => {
+			// Setup
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const view = getView(config);
+			view.initialize(1);
+			const revision1 = view.history.getHeadCommit()?.revision;
+			assert(revision1 !== undefined, "revision should be defined");
+			view.root = 2;
+
+			const branchBeforeRewind = view.checkout.mainBranch;
+
+			view.rewindTo(revision1);
+
+			// Act
+			view.root = 42;
+			view.root = 43;
+			view.root = 44;
+
+			// Verify
+			view.checkout.switchBranch(branchBeforeRewind);
+			assert.equal(view.history.commitCount, 2);
+			assert.equal(view.root, 2);
+		});
+	});
 });
