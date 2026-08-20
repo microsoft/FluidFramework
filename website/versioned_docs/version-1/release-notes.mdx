@@ -37,14 +37,10 @@ We are now surfacing errors on FluidContainer "disposed" event, so the applicati
 
 We've added two new methods to AzureClient that will enable developers to recover data from corrupted containers. The Fluid Framework automatically generates and saves snapshots of the operation stream that we use to load the latest container. `getContainerVersions` will allow developers to access previous versions of the container. `copyContainer` allows developers to generate a new detached container from another container.
 
--   <ApiLink
-    	packageName="azure-client"
-    	apiName="AzureClient"
-    	headingId="getcontainerversions-method"
-    >
+-   <ApiLink packageName="azure-client" apiName="AzureClient.getContainerVersions">
     	`getContainerVersions(id, options)`
     </ApiLink>
--   <ApiLink packageName="azure-client" apiName="AzureClient" headingId="copycontainer-method">
+-   <ApiLink packageName="azure-client" apiName="AzureClient.copyContainer">
     	`copyContainer(id, containerSchema)`
     </ApiLink>
 

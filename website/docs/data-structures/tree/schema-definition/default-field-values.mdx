@@ -7,12 +7,12 @@ import { ApiLink } from "@site/src/components/shortLinks";
 
 # Default Field Values
 
-The <ApiLink packageName="fluid-framework" apiName="SchemaStaticsAlpha" headingId="withdefault-propertysignature">`withDefault`</ApiLink> API is available on <ApiLink packageName="fluid-framework" apiName="SchemaFactoryAlpha" />. It allows you to specify default values for fields,
-making them optional in constructors even when the field is marked as <ApiLink packageName="fluid-framework" apiName="SchemaStatics" headingId="required-propertysignature">`required`</ApiLink> in the schema.
+The <ApiLink packageName="fluid-framework" apiName="SchemaStaticsAlpha.withDefault">`withDefault`</ApiLink> API is available on <ApiLink packageName="fluid-framework" apiName="SchemaFactoryAlpha" />.
+It allows you to specify default values for fields, making them optional in constructors even when the field is marked as <ApiLink packageName="fluid-framework" apiName="SchemaStatics.required">`required`</ApiLink> in the schema.
 This provides a better developer experience by reducing boilerplate when creating objects.
 
-<ApiLink packageName="fluid-framework" apiName="SchemaStaticsAlpha" headingId="withdefault-propertysignature">`withDefault`</ApiLink> wraps a field schema and defines a default value to use when the field is not provided during
-construction. The default value must be of an allowed type of the field. You can provide defaults in two ways
+<ApiLink packageName="fluid-framework" apiName="SchemaStaticsAlpha.withDefault">`withDefault`</ApiLink> wraps a field schema and defines a default value to use when the field is not provided during construction.
+The default value must be of an allowed type of the field. You can provide defaults in two ways
 (see <ApiLink packageName="fluid-framework" apiName="NodeProvider" />):
 
 - **A value**: When a value is provided directly, the data is copied for each use to ensure independence between instances.
@@ -47,7 +47,7 @@ const admin = new Person({ name: "Bob", age: 30, role: "admin" });
 
 ## Optional Fields with Custom Defaults
 
-[Optional fields](./index.mdx#setting-properties-as-optional) (<ApiLink packageName="fluid-framework" apiName="SchemaStatics" headingId="optional-propertysignature">`sf.optional`</ApiLink>) already default to `undefined`, but `withDefault` allows you to specify a different
+[Optional fields](./index.mdx#setting-properties-as-optional) (<ApiLink packageName="fluid-framework" apiName="SchemaStatics.optional">`sf.optional`</ApiLink>) already default to `undefined`, but `withDefault` allows you to specify a different
 default value:
 
 ```typescript
@@ -167,7 +167,7 @@ class GameState extends sf.objectAlpha("GameState", {
 
 ## Recursive Types
 
-<ApiLink packageName="fluid-framework" apiName="SchemaStaticsAlpha" headingId="withdefaultrecursive-propertysignature">`withDefaultRecursive`</ApiLink> is available for use inside [recursive schemas](./index.mdx#recursive-schema). Use `objectRecursiveAlpha` (rather than
+<ApiLink packageName="fluid-framework" apiName="SchemaStaticsAlpha.withDefaultRecursive">`withDefaultRecursive`</ApiLink> is available for use inside [recursive schemas](./index.mdx#recursive-schema). Use `objectRecursiveAlpha` (rather than
 `objectRecursive`) when defining recursive schemas with defaults, as it correctly makes defaulted fields optional in
 the constructor for all field kinds including `requiredRecursive`. It works the same as `withDefault` but is
 necessary to avoid TypeScript's circular reference limitations.
@@ -258,8 +258,8 @@ sf.withDefault(sf.optional(sf.string), () => 8080);
 - [Schema Definition](./index.mdx) — Overview of defining schemas with `SchemaFactory`
 - [Setting Properties as Optional](./index.mdx#setting-properties-as-optional) — Using `sf.optional()` for optional fields
 - [Recursive Schema](./index.mdx#recursive-schema) — Defining recursive types with `objectRecursive()`
-- <ApiLink packageName="fluid-framework" apiName="SchemaStaticsAlpha" headingId="withdefault-propertysignature">`withDefault` API reference</ApiLink> — Type signatures and parameter details
-- <ApiLink packageName="fluid-framework" apiName="SchemaStaticsAlpha" headingId="withdefaultrecursive-propertysignature">`withDefaultRecursive` API reference</ApiLink> — Recursive variant
+- <ApiLink packageName="fluid-framework" apiName="SchemaStaticsAlpha.withDefault">`withDefault` API reference</ApiLink> — Type signatures and parameter details
+- <ApiLink packageName="fluid-framework" apiName="SchemaStaticsAlpha.withDefaultRecursive">`withDefaultRecursive` API reference</ApiLink> — Recursive variant
 - <ApiLink packageName="fluid-framework" apiName="NodeProvider">`NodeProvider` API reference</ApiLink> — The type used for default values
 - <ApiLink packageName="fluid-framework" apiName="SchemaFactoryAlpha">`SchemaFactoryAlpha` API</ApiLink> — Full API reference for `SchemaFactoryAlpha`
 - [Schema Evolution](../schema-evolution/index.mdx) — Safely updating schemas over time

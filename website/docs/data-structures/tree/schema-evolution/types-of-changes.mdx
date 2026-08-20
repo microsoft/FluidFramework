@@ -8,7 +8,7 @@ import { ApiLink, PackageLink } from "@site/src/components/shortLinks";
 # Types of Schema Changes
 
 Understanding which types of schema changes are safe versus breaking is crucial for evolving your [SharedTree](../index.mdx) schemas without disrupting existing applications.
-Writing a test using <PackageLink packageName="fluid-framework" headingId="snapshotschemacompatibility-function">`snapshotSchemaCompatibility`</PackageLink> is highly recommended to ensure any schema changes maintain your compatibility requirements.
+Writing a test using <ApiLink packageName="fluid-framework" apiName="snapshotSchemaCompatibility">`snapshotSchemaCompatibility`</ApiLink> is highly recommended to ensure any schema changes maintain your compatibility requirements.
 Knowledge of the details below will still be needed to design schemas such that the required future changes can be compatible, and to understand any errors detected by the test.
 
 All the examples below are modifying this schema:
@@ -40,7 +40,7 @@ class Note extends factory.object("Note", {
 }) {}
 ```
 
-To ensure [forwards compatibility](./index.mdx#understanding-compatibility), use <ApiLink packageName="fluid-framework" apiName="ObjectSchemaOptions" headingId="allowunknownoptionalfields-propertysignature">`allowUnknownOptionalFields`</ApiLink> to handle new optional fields added by newer clients.
+To ensure [forwards compatibility](./index.mdx#understanding-compatibility), use <ApiLink packageName="fluid-framework" apiName="ObjectSchemaOptions.allowUnknownOptionalFields">`allowUnknownOptionalFields`</ApiLink> to handle new optional fields added by newer clients.
 Note that this needs to already be set on the old clients before the field is added.
 If it's not already set, then adding a new optional field at the same time as enabling `allowUnknownOptionalFields` is not forwards compatible, since old clients without `allowUnknownOptionalFields` will reject the unknown field.
 In that case, a [staged rollout](./index.mdx#staged-rollouts) is needed: first release a version that enables `allowUnknownOptionalFields`, then add the new field in a subsequent release.

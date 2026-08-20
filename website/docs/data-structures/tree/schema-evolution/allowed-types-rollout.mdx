@@ -10,7 +10,7 @@ This guide shows how to safely add a new <ApiLink packageName="fluid-framework" 
 Adding a new allowed type directly would break old clients as they cannot read documents containing it.
 The staged process below avoids this.
 
-A <PackageLink packageName="fluid-framework" headingId="snapshotschemacompatibility-function">`snapshotSchemaCompatibility`</PackageLink> test is recommended to verify that all relevant client versions can collaborate correctly through the rollout.
+A <ApiLink packageName="fluid-framework" apiName="snapshotSchemaCompatibility">`snapshotSchemaCompatibility`</ApiLink> test is recommended to verify that all relevant client versions can collaborate correctly through the rollout.
 
 ## Step-by-Step Guide
 
@@ -24,7 +24,7 @@ const mySchema = SchemaFactoryBeta.optional([SchemaFactoryBeta.number]);
 
 ### Step 1: Define and Stage the New Allowed Type
 
-Use <ApiLink packageName="fluid-framework" apiName="SchemaFactoryBeta" headingId="staged-property">`staged`</ApiLink> to add support for future documents containing the new type.
+Use <ApiLink packageName="fluid-framework" apiName="SchemaFactoryBeta.staged">`staged`</ApiLink> to add support for future documents containing the new type.
 This version still creates documents that only allow the old types, but can work with documents created in Step 3 that contain the new type.
 Any code using this schema must correctly handle the presence of the new type, even though it cannot be added to documents yet.
 
@@ -35,7 +35,7 @@ const mySchema = SchemaFactoryBeta.optional(SchemaFactoryBeta.types([
 ]));
 ```
 
-No schema upgrade is performed at this step: <ApiLink packageName="fluid-framework" apiName="SchemaFactoryBeta" headingId="staged-property">`staged`</ApiLink> types are excluded from stored schemas, so `upgradeSchema()` is a no-op and the new type cannot be added to documents yet:
+No schema upgrade is performed at this step: <ApiLink packageName="fluid-framework" apiName="SchemaFactoryBeta.staged">`staged`</ApiLink> types are excluded from stored schemas, so `upgradeSchema()` is a no-op and the new type cannot be added to documents yet:
 
 ```typescript
 // Assuming `view` is a TreeView configured with `mySchema`:
@@ -54,7 +54,7 @@ See [staged rollouts](./index.mdx#staged-rollouts) for more detail.
 
 ### Step 3: Enable Inserting the New Type
 
-Remove the <ApiLink packageName="fluid-framework" apiName="SchemaFactoryBeta" headingId="staged-property">`staged()`</ApiLink> wrapper and call <ApiLink packageName="fluid-framework" apiName="TreeView" headingId="upgradeschema-methodsignature">`upgradeSchema()`</ApiLink> to update the stored schema:
+Remove the <ApiLink packageName="fluid-framework" apiName="SchemaFactoryBeta.staged">`staged()`</ApiLink> wrapper and call <ApiLink packageName="fluid-framework" apiName="TreeView.upgradeSchema">`upgradeSchema()`</ApiLink> to update the stored schema:
 
 ```typescript
 // number or string, both fully allowed
@@ -79,11 +79,11 @@ view.root = "test";
 Code that writes the new allowed type can be deployed in this step.
 
 This step changes the stored schema, which is why the wait in Step 2 is necessary: once a document is upgraded, clients on the original schema can no longer open it.
-If you have a <PackageLink packageName="fluid-framework" headingId="snapshotschemacompatibility-function">`snapshotSchemaCompatibility`</PackageLink> test (strongly recommended for any schema change), update the <ApiLink packageName="fluid-framework" apiName="SnapshotSchemaCompatibilityOptions" headingId="minversionforcollaboration-propertysignature">minVersionForCollaboration</ApiLink> to the version released in Step 1 and take a new snapshot.
+If you have a <ApiLink packageName="fluid-framework" apiName="snapshotSchemaCompatibility">`snapshotSchemaCompatibility`</ApiLink> test (strongly recommended for any schema change), update the <ApiLink packageName="fluid-framework" apiName="SnapshotSchemaCompatibilityOptions.minVersionForCollaboration">minVersionForCollaboration</ApiLink> to the version released in Step 1 and take a new snapshot.
 
 ## See Also
 
-- <ApiLink packageName="fluid-framework" apiName="SchemaFactoryBeta" headingId="staged-property">`SchemaFactoryBeta.staged()` API</ApiLink> - API documentation
+- <ApiLink packageName="fluid-framework" apiName="SchemaFactoryBeta.staged">`SchemaFactoryBeta.staged()` API</ApiLink> - API documentation
 - [Enabling Schema Upgrades with Feature Flags](./feature-flag-schema-upgrades.mdx) - Using runtime upgrades in production
 - [Testing Schema Upgrades](./testing-schema-upgrades.mdx) - Create test documents that simulate future schema states
 - [Schema Definition](../schema-definition/index.mdx) - How to define schemas
