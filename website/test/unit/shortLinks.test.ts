@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import type { GlobalDoc, GlobalVersion } from "@docusaurus/plugin-content-docs/client";
-import type { ApiItemKind } from "@fluid-tools/api-markdown-documenter";
+import type { GlobalVersion } from "@docusaurus/plugin-content-docs/client";
+import { ApiItemKind } from "@fluid-tools/api-markdown-documenter";
 import type { ReactElement, ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const { useActivePluginAndVersion } = vi.hoisted(() => ({
+const { useActivePluginAndVersion, usePluginData } = vi.hoisted(() => ({
 	useActivePluginAndVersion: vi.fn(),
+	usePluginData: vi.fn(),
 }));
 
 vi.mock("@docusaurus/plugin-content-docs/client", () => ({
@@ -17,25 +18,63 @@ vi.mock("@docusaurus/plugin-content-docs/client", () => ({
 	useDoc: vi.fn(),
 }));
 
-// Tests intentionally reach into the website's component implementation.
-// eslint-disable-next-line import/no-internal-modules
+vi.mock("@docusaurus/useGlobalData", () => ({ usePluginData }));
+
+// Tests intentionally reach into the website's component implementation and data contract.
+/* eslint-disable import/no-internal-modules */
+import type { ApiLinkManifests } from "../../src/apiLinkManifest.js";
 import { ApiLink, type ApiLinkProps } from "../../src/components/shortLinks.js";
+/* eslint-enable import/no-internal-modules */
 
-function createDocument(id: string, path: string): GlobalDoc {
-	return { id, path };
-}
-
-function useDocuments(documents: GlobalDoc[]): void {
+function useVersion(name: string, path: string): void {
 	const activeVersion: GlobalVersion = {
-		name: "current",
-		label: "Current",
+		name,
+		label: name,
 		isLast: true,
-		path: "/docs",
+		path,
 		mainDocId: "introduction",
-		docs: documents,
+		docs: [],
 		draftIds: [],
 	};
 	useActivePluginAndVersion.mockReturnValue({ activeVersion });
+}
+
+function createMockApiLinkManifests(): ApiLinkManifests {
+	return {
+		"current": {
+			example: {
+				"Widget": [
+					{ apiType: ApiItemKind.Class, documentPath: "example/widget-class" },
+					{ apiType: ApiItemKind.Interface, documentPath: "example/widget-interface" },
+				],
+				"Widget.run": [
+					{
+						apiType: ApiItemKind.Method,
+						overloadIndex: 1,
+						documentPath: "example/widget-class",
+						headingId: "run-method",
+					},
+					{
+						apiType: ApiItemKind.Method,
+						overloadIndex: 2,
+						documentPath: "example/widget-class",
+						headingId: "run_1-method",
+					},
+				],
+			},
+		},
+		"1": {
+			example: {
+				Widget: [
+					{ apiType: ApiItemKind.Interface, documentPath: "example/widget-interface" },
+				],
+			},
+		},
+	};
+}
+
+function useMockApiLinkManifests(): void {
+	usePluginData.mockReturnValue(createMockApiLinkManifests());
 }
 
 function renderApiLink(props: ApiLinkProps): { href: string; children: ReactNode } {
@@ -46,109 +85,133 @@ function renderApiLink(props: ApiLinkProps): { href: string; children: ReactNode
 describe("ApiLink", () => {
 	afterEach(() => {
 		useActivePluginAndVersion.mockReset();
+		usePluginData.mockReset();
 	});
 
-	it("infers the API type when exactly one document matches", () => {
-		useDocuments([
-			createDocument(
-				"api/fluid-framework/ifluidcontainer-interface",
-				"/docs/api/fluid-framework/ifluidcontainer-interface",
-			),
-		]);
-
-		expect(
-			renderApiLink({
-				packageName: "fluid-framework",
-				apiName: "IFluidContainer",
-			}),
-		).toEqual({
-			href: "/docs/api/fluid-framework/ifluidcontainer-interface",
-			children: "IFluidContainer",
-		});
-	});
-
-	it("uses the versioned document path and appends a heading", () => {
-		useDocuments([
-			createDocument(
-				"api/container-loader/iloaderprops-interface",
-				"/docs/v1/api/container-loader/iloaderprops-interface",
-			),
-		]);
-
-		expect(
-			renderApiLink({
-				packageName: "container-loader",
-				apiName: "ILoaderProps",
-				headingId: "logger-propertysignature",
-				children: "logger",
-			}),
-		).toEqual({
-			href: "/docs/v1/api/container-loader/iloaderprops-interface#logger-propertysignature",
-			children: "logger",
-		});
-	});
-
-	it("uses apiType to disambiguate documents with the same API name", () => {
-		useDocuments([
-			createDocument("api/example/widget-class", "/docs/api/example/widget-class"),
-			createDocument("api/example/widget-interface", "/docs/api/example/widget-interface"),
-		]);
+	it("uses the active version manifest and versioned path", () => {
+		useVersion("1", "/docs/v1");
+		useMockApiLinkManifests();
 
 		expect(
 			renderApiLink({
 				packageName: "example",
 				apiName: "Widget",
-				apiType: "Class" as ApiItemKind,
 			}),
 		).toEqual({
-			href: "/docs/api/example/widget-class",
+			href: "/docs/v1/api/example/widget-interface",
 			children: "Widget",
+		});
+	});
+
+	it("resolves qualified members and defaults to overload one", () => {
+		useVersion("current", "/docs");
+		useMockApiLinkManifests();
+
+		expect(
+			renderApiLink({
+				packageName: "example",
+				apiName: "Widget.run",
+			}),
+		).toEqual({
+			href: "/docs/api/example/widget-class#run-method",
+			children: "Widget.run",
+		});
+	});
+
+	it("selects an explicit API kind and overload", () => {
+		useVersion("current", "/docs");
+		useMockApiLinkManifests();
+
+		expect(
+			renderApiLink({
+				packageName: "example",
+				apiName: "Widget.run",
+				apiType: ApiItemKind.Method,
+				overloadIndex: 2,
+			}),
+		).toEqual({
+			href: "/docs/api/example/widget-class#run_1-method",
+			children: "Widget.run",
+		});
+	});
+
+	it("allows a compatibility heading to override the manifest heading", () => {
+		useVersion("current", "/docs");
+		useMockApiLinkManifests();
+
+		expect(
+			renderApiLink({
+				packageName: "example",
+				apiName: "Widget.run",
+				headingId: "legacy-heading",
+			}),
+		).toEqual({
+			href: "/docs/api/example/widget-class#legacy-heading",
+			children: "Widget.run",
 		});
 	});
 
 	it("throws when rendered outside a versioned Docusaurus document", () => {
 		useActivePluginAndVersion.mockReturnValue(undefined);
+		useMockApiLinkManifests();
 
 		expect(() => renderApiLink({ packageName: "example", apiName: "Widget" })).toThrowError(
 			"ApiLink must be rendered within a versioned Docusaurus document.",
 		);
 	});
 
-	it("throws when no API document matches", () => {
-		useDocuments([
-			createDocument(
-				"api/example/widget-namespace/member-class",
-				"/docs/api/example/widget-namespace/member-class",
-			),
-		]);
+	it("throws when the active version manifest is missing", () => {
+		useVersion("local", "/docs/local");
+		useMockApiLinkManifests();
 
 		expect(() => renderApiLink({ packageName: "example", apiName: "Widget" })).toThrowError(
-			'No API documentation found for "example/Widget".',
+			'No API link manifest found for documentation version "local".',
+		);
+	});
+
+	it("throws when no API target matches", () => {
+		useVersion("current", "/docs");
+		useMockApiLinkManifests();
+
+		expect(() => renderApiLink({ packageName: "example", apiName: "Missing" })).toThrowError(
+			'No API documentation found for "example/Missing".',
 		);
 	});
 
 	it("throws when the specified API type does not match", () => {
-		useDocuments([
-			createDocument("api/example/widget-interface", "/docs/api/example/widget-interface"),
-		]);
+		useVersion("current", "/docs");
+		useMockApiLinkManifests();
 
 		expect(() =>
 			renderApiLink({
 				packageName: "example",
 				apiName: "Widget",
-				apiType: "Class" as ApiItemKind,
+				apiType: ApiItemKind.Namespace,
 			}),
-		).toThrowError('No API documentation found for "example/Widget" with type "Class".');
+		).toThrowError('No API documentation found for "example/Widget" with type "Namespace".');
 	});
 
 	it("throws with candidate types when API name inference is ambiguous", () => {
-		useDocuments([
-			createDocument("api/example/widget-class", "/docs/api/example/widget-class"),
-			createDocument("api/example/widget-interface", "/docs/api/example/widget-interface"),
-		]);
+		useVersion("current", "/docs");
+		useMockApiLinkManifests();
 
 		expect(() => renderApiLink({ packageName: "example", apiName: "Widget" })).toThrowError(
-			'Multiple API documents found for "example/Widget" (class, interface). Specify `apiType` to disambiguate the link.',
+			'API "Widget" in package "example" is ambiguous. Specify `apiType`. Available kinds: Class, Interface.',
+		);
+	});
+
+	it("throws when an explicit overload does not match", () => {
+		useVersion("current", "/docs");
+		useMockApiLinkManifests();
+
+		expect(() =>
+			renderApiLink({
+				packageName: "example",
+				apiName: "Widget.run",
+				overloadIndex: 3,
+			}),
+		).toThrowError(
+			'No API documentation found for "example/Widget.run" with overload index 3.',
 		);
 	});
 });
