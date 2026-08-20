@@ -9,6 +9,7 @@ import type {
 	IRuntime,
 	IRuntimeFactory,
 } from "@fluidframework/container-definitions/legacy";
+// eslint-disable-next-line import-x/no-deprecated -- only the minVersionForCollab overload is deprecated.
 import {
 	type IContainerRuntimeOptions,
 	loadContainerRuntime,
@@ -48,6 +49,7 @@ export abstract class ModelContainerRuntimeFactory<ModelType> implements IRuntim
 		context: IContainerContext,
 		existing: boolean,
 	): Promise<IRuntime> {
+		// eslint-disable-next-line import-x/no-deprecated -- using the canonical overload.
 		const runtime = await loadContainerRuntime({
 			context,
 			registryEntries: this.registryEntries,

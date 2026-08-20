@@ -7,6 +7,7 @@ import type {
 	IContainerContext,
 	IRuntime,
 } from "@fluidframework/container-definitions/internal";
+// eslint-disable-next-line import-x/no-deprecated -- only the minVersionForCollab overload is deprecated.
 import {
 	FluidDataStoreRegistry,
 	loadContainerRuntime,
@@ -181,6 +182,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore
 		context: IContainerContext,
 		existing: boolean,
 	): Promise<IContainerRuntime & IRuntime> {
+		// eslint-disable-next-line import-x/no-deprecated -- using the canonical overload.
 		return loadContainerRuntime({
 			context,
 			existing,

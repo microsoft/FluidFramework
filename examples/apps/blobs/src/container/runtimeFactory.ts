@@ -8,6 +8,7 @@ import type {
 	IRuntime,
 	IRuntimeFactory,
 } from "@fluidframework/container-definitions/legacy";
+// eslint-disable-next-line import-x/no-deprecated -- only the minVersionForCollab overload is deprecated.
 import { loadContainerRuntime } from "@fluidframework/container-runtime/legacy";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
 import type { FluidObject } from "@fluidframework/core-interfaces";
@@ -38,6 +39,7 @@ export class BlobCollectionContainerRuntimeFactory implements IRuntimeFactory {
 			return blobCollectionHandle.get();
 		};
 
+		// eslint-disable-next-line import-x/no-deprecated -- using the canonical overload.
 		const runtime = await loadContainerRuntime({
 			context,
 			registryEntries: new Map([
