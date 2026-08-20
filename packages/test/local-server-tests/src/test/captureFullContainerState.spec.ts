@@ -144,6 +144,7 @@ describe("captureFullContainerState", () => {
 			savedOps: unknown[];
 			baseSnapshot: unknown;
 			snapshotBlobs: Record<string, string>;
+			blobContentsMode?: "reference";
 		};
 		assert.strictEqual(parsed.attached, true, "captured state should be marked attached");
 		assert.strictEqual(
@@ -159,6 +160,11 @@ describe("captureFullContainerState", () => {
 		assert(
 			Object.keys(parsed.snapshotBlobs).length > 0,
 			"captured state should inline snapshot blobs",
+		);
+		assert.strictEqual(
+			parsed.blobContentsMode,
+			undefined,
+			"default capture should remain self-contained without a live-storage marker",
 		);
 
 		const frozenContainer = await loadFrozenContainerFromPendingState({
@@ -543,12 +549,18 @@ describe("captureFullContainerState", () => {
 		});
 		const parsedReferenceState = JSON.parse(referenceState) as {
 			snapshotBlobs: Record<string, string>;
+			blobContentsMode?: "reference";
 			attachmentBlobContents?: Record<string, string>;
 		};
 		assert.deepStrictEqual(
 			parsedReferenceState.snapshotBlobs,
 			{},
-			"Reference-only state should preserve the snapshot tree without structural payloads",
+			"Reference-only state should omit structural blob payloads",
+		);
+		assert.strictEqual(
+			parsedReferenceState.blobContentsMode,
+			"reference",
+			"Reference-only state should identify its live-storage dependency",
 		);
 		assert.strictEqual(
 			parsedReferenceState.attachmentBlobContents,
@@ -568,6 +580,20 @@ describe("captureFullContainerState", () => {
 				}),
 			/Reference-only state.*requires online driver wiring/,
 			"Fully offline loading should clearly reject reference-only state",
+		);
+
+		const unmarkedEmptyState = JSON.stringify({
+			...JSON.parse(referenceState),
+			blobContentsMode: undefined,
+		});
+		await assert.rejects(
+			async () =>
+				loadFrozenContainerFromPendingState({
+					codeLoader,
+					pendingLocalState: unmarkedEmptyState,
+				}),
+			/Attempted to read a blob from a frozen-loaded container/,
+			"An unmarked empty blob map should not be misclassified as reference-only state",
 		);
 
 		const loadFromBaseline = async (): Promise<{

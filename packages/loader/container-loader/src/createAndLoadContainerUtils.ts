@@ -419,7 +419,7 @@ export async function loadFrozenContainerFromPendingState(
 		// returns a resolved URL whose `url` equals `pendingLocalState.url`, so the
 		// identity guard in `Loader.resolveCore` is trivially satisfied.
 		const pending = getAttachedContainerStateFromSerializedContainer(pendingLocalState);
-		if (Object.keys(pending.snapshotBlobs).length === 0) {
+		if (pending.blobContentsMode === "reference") {
 			throw new UsageError(
 				`${fnName}: pending state does not contain inlined snapshot blob contents. Reference-only state captured by ${captureFullContainerState.name} requires online driver wiring.`,
 			);
@@ -693,6 +693,7 @@ export async function captureFullContainerState({
 			attached: true,
 			baseSnapshot,
 			snapshotBlobs,
+			blobContentsMode: blobCaptureMode === "reference" ? "reference" : undefined,
 			attachmentBlobContents:
 				Object.keys(attachmentBlobContents).length === 0 ? undefined : attachmentBlobContents,
 			loadedGroupIdSnapshots: undefined,
