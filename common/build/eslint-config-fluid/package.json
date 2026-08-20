@@ -36,7 +36,7 @@
 		"@eslint-react/eslint-plugin": "~5.9.0",
 		"@eslint/js": "~9.39.2",
 		"@microsoft/tsdoc": "^0.15.1",
-		"@rushstack/eslint-plugin": "~0.23.2",
+		"@rushstack/eslint-plugin": "~0.23.3",
 		"@typescript-eslint/eslint-plugin": "~8.58.0",
 		"@typescript-eslint/parser": "~8.58.0",
 		"@typescript-eslint/utils": "~8.58.0",
