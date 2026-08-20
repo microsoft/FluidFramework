@@ -355,10 +355,7 @@ export interface IVersionMarkResolver {
 export function loadContainerRuntime(params: LoadContainerRuntimeParams): Promise<IContainerRuntime & IRuntime>;
 
 // @beta @legacy
-export function loadContainerRuntime(params: Omit<LoadContainerRuntimeParams, "oldestSupportedClient" | "minVersionForCollab"> & {
-    readonly oldestSupportedClient?: never;
-    readonly minVersionForCollab: OldestSupportedClientVersion;
-}): Promise<IContainerRuntime & IRuntime>;
+export function loadContainerRuntime(params: DeprecatedLoadContainerRuntimeParams): Promise<IContainerRuntime & IRuntime>;
 
 // @beta @legacy
 export interface LoadContainerRuntimeParams {

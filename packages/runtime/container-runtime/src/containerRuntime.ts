@@ -852,6 +852,10 @@ export type DeprecatedLoadContainerRuntimeParams = Omit<
 	"oldestSupportedClient" | "minVersionForCollab"
 > & {
 	readonly oldestSupportedClient?: never;
+	/**
+	 * @deprecated 2.116.0. To be removed in 3.10.0. Pass `oldestSupportedClient` instead.
+	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
+	 */
 	readonly minVersionForCollab: OldestSupportedClientVersion;
 };
 
@@ -939,14 +943,7 @@ export function loadContainerRuntime(
  * @beta
  */
 export function loadContainerRuntime(
-	params: Omit<LoadContainerRuntimeParams, "oldestSupportedClient" | "minVersionForCollab"> & {
-		readonly oldestSupportedClient?: never;
-		/**
-		 * @deprecated 2.116.0. To be removed in 3.10.0. Pass `oldestSupportedClient` instead.
-		 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
-		 */
-		readonly minVersionForCollab: OldestSupportedClientVersion;
-	},
+	params: DeprecatedLoadContainerRuntimeParams,
 ): Promise<IContainerRuntime & IRuntime>;
 export async function loadContainerRuntime(
 	params: LoadContainerRuntimeParams | DeprecatedLoadContainerRuntimeParams,
