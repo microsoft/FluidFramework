@@ -514,9 +514,8 @@ export interface ICaptureFullContainerStateProps {
 	/**
 	 * Controls whether blob payloads are included in the captured state.
 	 *
-	 * `"inline"` (the default) includes referenced structural and attachment
-	 * blob contents, producing self-contained state that supports fully offline
-	 * loading with {@link loadFrozenContainerFromPendingState}.
+	 * `"inline"` (the default) includes blob contents, producing self-contained
+	 * state that supports fully offline loading with {@link loadFrozenContainerFromPendingState}.
 	 *
 	 * `"reference"` preserves blob IDs in the snapshot tree but omits their
 	 * payloads. This reduces the captured state size, but loading requires live
