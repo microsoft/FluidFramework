@@ -590,10 +590,10 @@ describe("checkSchemaCompatibility", () => {
 });
 
 describe("checkSchemaCompatibility enabledUpgrades", () => {
-	const sf = new SchemaFactoryAlpha("findEnabledUpgradesTest");
+	const schemaFactory = new SchemaFactoryAlpha("findEnabledUpgradesTest");
 
 	it("returns empty map when no upgrades are enabled", () => {
-		const baseSchema = sf.optional([sf.number]);
+		const baseSchema = schemaFactory.optional([schemaFactory.number]);
 
 		const stored = new TestSchemaRepository(defaultSchemaPolicy);
 		assert(stored.tryUpdateRootFieldSchema(toUpgradeSchema(baseSchema).rootFieldSchema));
@@ -605,11 +605,13 @@ describe("checkSchemaCompatibility enabledUpgrades", () => {
 	});
 
 	it("detects enabled staged allowed type upgrade", () => {
-		const stagedStr = sf.staged(sf.string);
-		const upgrade = stagedStr.metadata.stagedSchemaUpgrade;
+		const stagedString = schemaFactory.staged(schemaFactory.string);
+		const upgrade = stagedString.metadata.stagedSchemaUpgrade;
 		assert(upgrade !== undefined);
 
-		const schemaWithStaged = sf.optional(sf.types([sf.number, stagedStr]));
+		const schemaWithStaged = schemaFactory.optional(
+			schemaFactory.types([schemaFactory.number, stagedString]),
+		);
 
 		const stored = new TestSchemaRepository(defaultSchemaPolicy);
 		assert(
@@ -630,11 +632,13 @@ describe("checkSchemaCompatibility enabledUpgrades", () => {
 	});
 
 	it("does not include upgrades that have not been applied", () => {
-		const stagedStr = sf.staged(sf.string);
-		const upgrade = stagedStr.metadata.stagedSchemaUpgrade;
+		const stagedString = schemaFactory.staged(schemaFactory.string);
+		const upgrade = stagedString.metadata.stagedSchemaUpgrade;
 		assert(upgrade !== undefined);
 
-		const schemaWithStaged = sf.optional(sf.types([sf.number, stagedStr]));
+		const schemaWithStaged = schemaFactory.optional(
+			schemaFactory.types([schemaFactory.number, stagedString]),
+		);
 
 		const stored = new TestSchemaRepository(defaultSchemaPolicy);
 		assert(stored.tryUpdateRootFieldSchema(toUpgradeSchema(schemaWithStaged).rootFieldSchema));
@@ -646,15 +650,15 @@ describe("checkSchemaCompatibility enabledUpgrades", () => {
 	});
 
 	it("detects enabled staged optional upgrade", () => {
-		const stagedField = sf.stagedOptional(sf.number);
+		const stagedField = schemaFactory.stagedOptional(schemaFactory.number);
 		const optionalUpgrade = stagedField.isStagedOptional;
 		assert(optionalUpgrade !== false && optionalUpgrade !== undefined);
 
-		class ObjStaged extends sf.objectAlpha("Obj", {
+		class ObjStaged extends schemaFactory.objectAlpha("Obj", {
 			value: stagedField,
 		}) {}
 
-		const schemaStaged = sf.required(ObjStaged);
+		const schemaStaged = schemaFactory.required(ObjStaged);
 
 		const stored = new TestSchemaRepository(
 			defaultSchemaPolicy,
@@ -671,15 +675,15 @@ describe("checkSchemaCompatibility enabledUpgrades", () => {
 	});
 
 	it("does not detect staged optional when stored field is still required", () => {
-		const stagedField = sf.stagedOptional(sf.number);
+		const stagedField = schemaFactory.stagedOptional(schemaFactory.number);
 		const optionalUpgrade = stagedField.isStagedOptional;
 		assert(optionalUpgrade !== false && optionalUpgrade !== undefined);
 
-		class ObjStaged extends sf.objectAlpha("Obj2", {
+		class ObjStaged extends schemaFactory.objectAlpha("Obj2", {
 			value: stagedField,
 		}) {}
 
-		const schemaStaged = sf.required(ObjStaged);
+		const schemaStaged = schemaFactory.required(ObjStaged);
 
 		const stored = new TestSchemaRepository(
 			defaultSchemaPolicy,
@@ -692,14 +696,16 @@ describe("checkSchemaCompatibility enabledUpgrades", () => {
 	});
 
 	it("returns multiple upgrades when several are enabled", () => {
-		const stagedStr = sf.staged(sf.string);
-		const stagedBool = sf.staged(sf.boolean);
-		const upgradeStr = stagedStr.metadata.stagedSchemaUpgrade;
+		const stagedString = schemaFactory.staged(schemaFactory.string);
+		const stagedBool = schemaFactory.staged(schemaFactory.boolean);
+		const upgradeStr = stagedString.metadata.stagedSchemaUpgrade;
 		const upgradeBool = stagedBool.metadata.stagedSchemaUpgrade;
 		assert(upgradeStr !== undefined);
 		assert(upgradeBool !== undefined);
 
-		const schema = sf.optional(sf.types([sf.number, stagedStr, stagedBool]));
+		const schema = schemaFactory.optional(
+			schemaFactory.types([schemaFactory.number, stagedString, stagedBool]),
+		);
 
 		const stored = new TestSchemaRepository(defaultSchemaPolicy);
 		assert(
@@ -723,12 +729,12 @@ describe("checkSchemaCompatibility enabledUpgrades", () => {
 
 	it("counts an upgrade as partial if it's enabled in only some locations", () => {
 		const sfLocal = new SchemaFactoryAlpha("enabledInOneLocation");
-		const stagedStr = sfLocal.staged(sfLocal.string);
-		const upgrade = stagedStr.metadata.stagedSchemaUpgrade;
+		const stagedString = sfLocal.staged(sfLocal.string);
+		const upgrade = stagedString.metadata.stagedSchemaUpgrade;
 		assert(upgrade !== undefined);
 
 		class ObjV1 extends sfLocal.objectAlpha("Obj", {
-			fieldA: sfLocal.optional(sfLocal.types([sfLocal.number, stagedStr])),
+			fieldA: sfLocal.optional(sfLocal.types([sfLocal.number, stagedString])),
 			fieldB: sfLocal.optional([sfLocal.number]),
 		}) {}
 
@@ -741,8 +747,8 @@ describe("checkSchemaCompatibility enabledUpgrades", () => {
 		);
 
 		class ObjV2 extends sfLocal.objectAlpha("Obj", {
-			fieldA: sfLocal.optional(sfLocal.types([sfLocal.number, stagedStr])),
-			fieldB: sfLocal.optional(sfLocal.types([sfLocal.number, stagedStr])),
+			fieldA: sfLocal.optional(sfLocal.types([sfLocal.number, stagedString])),
+			fieldB: sfLocal.optional(sfLocal.types([sfLocal.number, stagedString])),
 		}) {}
 
 		const config = new TreeViewConfigurationAlpha({ schema: sfLocal.required(ObjV2) });

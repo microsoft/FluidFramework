@@ -650,10 +650,7 @@ export interface TreeViewAlpha<
 	 *
 	 * @param upgrade - The upgrade token to check.
 	 *
-	 * @returns The enablement status of the upgrade:
-	 * - `"disabled"` — no locations guarded by the upgrade are enabled.
-	 * - `"partial"` — at least one location is enabled but not all of them.
-	 * - `"enabled"` — all locations guarded by the upgrade are enabled.
+	 * @returns The {@link StagedUpgradeStatus} of the upgrade.
 	 *
 	 * @remarks
 	 * Use this to determine whether a document has already been upgraded, for example when deciding
