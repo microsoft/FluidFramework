@@ -41,6 +41,25 @@ export interface ApiItemWithHierarchy<
 }
 
 /**
+ * The location of an API item within a generated documentation suite.
+ *
+ * @public
+ * @sealed
+ */
+export interface ApiItemLinkTarget {
+	/**
+	 * The extensionless path to the document containing the API item, relative to the documentation root.
+	 */
+	readonly documentPath: string;
+
+	/**
+	 * The API item's heading ID when it is rendered as a section within the document.
+	 * Undefined when the API item is rendered as its own document.
+	 */
+	readonly headingId?: string;
+}
+
+/**
  * Creates a link for the provided API item.
  *
  * @remarks
@@ -87,7 +106,8 @@ export function getLinkUrlForApiItem(
 	config: ApiItemTransformationConfiguration,
 ): string {
 	const uriBase = config.getUriBaseOverrideForItem(apiItem) ?? config.uriRoot;
-	let documentPath = getDocumentPathForApiItem(apiItem, config.hierarchy);
+	const target = getLinkTargetForApiItem(apiItem, config);
+	let { documentPath } = target;
 
 	// Omit "index" file name from path generated in links.
 	// This can be considered an optimization in most cases, but some documentation systems also special-case
@@ -96,10 +116,31 @@ export function getLinkUrlForApiItem(
 		documentPath = documentPath.slice(0, documentPath.length - "index".length);
 	}
 
-	const headingId = getHeadingIdForApiItem(apiItem, config);
-	const headingPostfix = headingId === undefined ? "" : `#${headingId}`;
+	const headingPostfix = target.headingId === undefined ? "" : `#${target.headingId}`;
 
 	return `${uriBase}/${documentPath}${headingPostfix}`;
+}
+
+/**
+ * Gets the location of the specified API item within the generated documentation suite.
+ *
+ * @remarks
+ * If the item is rendered as a section within an ancestor's document, the target includes the heading identifier
+ * needed to link directly to the item.
+ *
+ * @param apiItem - The API item whose documentation target is being queried.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
+ *
+ * @public
+ */
+export function getLinkTargetForApiItem(
+	apiItem: ApiItem,
+	config: ApiItemTransformationConfiguration,
+): ApiItemLinkTarget {
+	return {
+		documentPath: getDocumentPathForApiItem(apiItem, config.hierarchy),
+		headingId: getHeadingIdForApiItem(apiItem, config),
+	};
 }
 
 /**
