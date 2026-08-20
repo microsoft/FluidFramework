@@ -61,6 +61,34 @@ export interface SnapshotWithBlobs {
 }
 
 /**
+ * Encoding used for detached summary blobs in serialized container state.
+ * @internal
+ */
+export const detachedSnapshotBlobsEncoding = "base64";
+
+/**
+ * Snapshot data serialized for a detached container.
+ *
+ * Unlike {@link SnapshotWithBlobs}, blob contents are base64-encoded so arbitrary
+ * binary summary blobs survive JSON serialization.
+ * @internal
+ */
+export interface DetachedSnapshotWithBlobs {
+	/**
+	 * Snapshot created from the detached container's summary.
+	 */
+	baseSnapshot: ISnapshotTree;
+	/**
+	 * Base64-encoded blobs from the detached container's summary.
+	 */
+	snapshotBlobs: IBase64BlobContents;
+	/**
+	 * Encoding used by `snapshotBlobs`.
+	 */
+	snapshotBlobsEncoding: typeof detachedSnapshotBlobsEncoding;
+}
+
+/**
  * State saved by a container at close time, to be used to load a new instance
  * of the container to the same state
  *
@@ -120,7 +148,7 @@ export interface IPendingContainerState extends SnapshotWithBlobs {
  * of the container to the same state (rehydrate)
  * @internal
  */
-export interface IPendingDetachedContainerState extends SnapshotWithBlobs {
+export interface IPendingDetachedContainerState extends DetachedSnapshotWithBlobs {
 	/**
 	 * This container was not attached (as opposed to IPendingContainerState.attached which is true)
 	 */

@@ -19,6 +19,7 @@ import {
 	type IDocumentService,
 	type IDocumentStorageService,
 	type IResolvedUrl,
+	type ISnapshot,
 } from "@fluidframework/driver-definitions/internal";
 import { v4 as uuid } from "uuid";
 
@@ -45,7 +46,9 @@ export function createTestDocumentServiceFactoryProxy(
 export function createTestCodeLoaderProxy(props?: {
 	createDetachedBlob?: boolean;
 	layerCompatDetails?: ILayerCompatDetails;
+	onExistingSnapshot?: (snapshot: ISnapshot) => void;
 	runtimeWithout_setConnectionStatus?: true;
+	summaryBlobContent?: Uint8Array;
 }): ICodeDetailsLoader {
 	return {
 		load: async () => {
@@ -63,10 +66,25 @@ export function createTestCodeLoaderProxy(props?: {
 								if (existing === false && props?.createDetachedBlob === true) {
 									await context.storage.createBlob(stringToBuffer("whatever", "utf8"));
 								}
+								if (existing && props?.onExistingSnapshot !== undefined) {
+									const snapshot = context.snapshotWithContents;
+									if (snapshot === undefined) {
+										throw new Error("Existing runtime is missing its snapshot");
+									}
+									props.onExistingSnapshot(snapshot);
+								}
 
 								return failSometimeProxy<IRuntime & IProvideLayerCompatDetails>({
 									createSummary: () => ({
-										tree: {},
+										tree:
+											props?.summaryBlobContent === undefined
+												? {}
+												: {
+														binary: {
+															content: props.summaryBlobContent,
+															type: SummaryType.Blob,
+														},
+													},
 										type: SummaryType.Tree,
 									}),
 									setAttachState: () => {},

@@ -162,8 +162,8 @@ import {
 	getProtocolSnapshotTree,
 	getISnapshotFromSerializedContainer,
 	runSingle,
-	convertISnapshotToSnapshotWithBlobs,
-	convertSnapshotInfoToSnapshot,
+	convertDetachedSnapshotToISnapshot,
+	convertISnapshotToDetachedSnapshotWithBlobs,
 } from "./utils.js";
 
 const detachedContainerRefSeqNumber = 0;
@@ -1215,7 +1215,7 @@ export class Container
 
 		const detachedContainerState: IPendingDetachedContainerState = {
 			attached: false,
-			...convertISnapshotToSnapshotWithBlobs(snapshot),
+			...convertISnapshotToDetachedSnapshotWithBlobs(snapshot),
 			pendingRuntimeState,
 			hasAttachmentBlobs:
 				this.detachedBlobStorage !== undefined && this.detachedBlobStorage.size > 0,
@@ -1803,13 +1803,11 @@ export class Container
 		this.setLoaded();
 	}
 
-	private async rehydrateDetachedFromSnapshot({
-		baseSnapshot,
-		snapshotBlobs,
-		hasAttachmentBlobs,
-		attachmentBlobs,
-		pendingRuntimeState,
-	}: IPendingDetachedContainerState): Promise<void> {
+	private async rehydrateDetachedFromSnapshot(
+		detachedContainerState: IPendingDetachedContainerState,
+	): Promise<void> {
+		const { hasAttachmentBlobs, attachmentBlobs, pendingRuntimeState } =
+			detachedContainerState;
 		if (hasAttachmentBlobs) {
 			if (attachmentBlobs !== undefined) {
 				assert(
@@ -1824,11 +1822,7 @@ export class Container
 			);
 		}
 
-		const snapshot = convertSnapshotInfoToSnapshot({
-			baseSnapshot,
-			snapshotBlobs,
-			snapshotSequenceNumber: 0,
-		});
+		const snapshot = convertDetachedSnapshotToISnapshot(detachedContainerState);
 
 		this.storageAdapter.cacheSnapshotBlobs(snapshot.blobContents);
 		const attributes = await getDocumentAttributes(this.storageAdapter, snapshot.snapshotTree);
