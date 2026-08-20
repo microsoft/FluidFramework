@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { exampleOldestSupportedClient } from "@fluid-example/example-utils";
 import type {
 	IContainerContext,
 	IRuntime,
@@ -45,7 +46,7 @@ export class BlobCollectionContainerRuntimeFactory implements IRuntimeFactory {
 			]),
 			provideEntryPoint,
 			existing,
-			oldestSupportedClient: "3.0.0",
+			oldestSupportedClient: exampleOldestSupportedClient,
 		});
 
 		if (!existing) {

@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 
+import { exampleOldestSupportedClient } from "@fluid-example/example-utils";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/legacy";
 import { Loader } from "@fluidframework/container-loader/legacy";
 import {
@@ -36,7 +37,7 @@ export async function createLocalTableDocument(): Promise<LocalTableDocumentTest
 	const tableDocumentFactory = TableDocument.getFactory();
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: tableDocumentFactory,
-		oldestSupportedClient: "3.0.0",
+		oldestSupportedClient: exampleOldestSupportedClient,
 		registryEntries: [tableDocumentFactory.registryEntry],
 	});
 	const loader = new Loader({

@@ -43,6 +43,7 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
+		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-example/example-driver": "workspace:~",
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",

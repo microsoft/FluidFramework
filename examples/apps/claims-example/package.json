@@ -40,6 +40,7 @@
 	},
 	"dependencies": {
 		"@fluid-example/example-driver": "workspace:~",
+		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-internal/claims": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",

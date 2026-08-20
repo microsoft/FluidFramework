@@ -75,6 +75,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
+		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-experimental/sequence-deprecated": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
