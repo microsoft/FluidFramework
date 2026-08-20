@@ -18,7 +18,7 @@ export {
 } from "./treeNodeKernel.js";
 export {
 	type WithType,
-	typeNameSymbol,
+	schemaIdentifierBrand,
 	typeSchemaSymbol,
 	contentSchemaSymbol,
 } from "./withType.js";

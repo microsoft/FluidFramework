@@ -18,7 +18,7 @@ import {
 import { externalDataServicePort } from "../mock-external-data-service-interface/index.js";
 import { type ITaskData, assertValidTaskData } from "../model-interface/index.js";
 
-import { closeServer, delay } from "./utilities.js";
+import { closeServer, waitForCondition } from "./utilities.js";
 
 const externalTaskListId = "task-list-1";
 
@@ -246,7 +246,10 @@ describe("mock-external-data-service: webhook", () => {
 		await closeServer(_externalDataService);
 	});
 
-	it("register-for-webhook", async () => {
+	it("register-for-webhook", async function () {
+		// waitForCondition's internal timeout can exceed mocha's default per-test timeout;
+		// give this test enough headroom to let waitForCondition fail on its own terms.
+		this.timeout(10000);
 		// Set up mock local service, which will be registered as webhook listener
 		const localServicePort = 5002;
 		const localServiceApp = express();
@@ -311,8 +314,9 @@ describe("mock-external-data-service: webhook", () => {
 				`Data update failed. Code: ${dataUpdateResponse.status}.`,
 			);
 
-			// Delay for a bit to ensure time enough for our webhook listener to have been called.
-			await delay(1000);
+			// Notification is relayed asynchronously (fire-and-forget), so a fixed delay is not
+			// reliable under load; poll for the flag instead.
+			await waitForCondition(() => wasHookNotifiedForChange);
 
 			// Verify our listener was notified of data change.
 			assert.equal(wasHookNotifiedForChange, true);

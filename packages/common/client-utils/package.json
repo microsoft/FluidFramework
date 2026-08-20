@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/client-utils",
-	"version": "2.117.0",
+	"version": "3.0.0",
 	"description": "Not intended for use outside the Fluid Framework.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -73,7 +73,7 @@
 		"build:test:mocha:esm": "tsc --project ./src/test/mocha/tsconfig.json",
 		"build:test:playwright": "tsc --project ./src/test/playwright/tsconfig.json && webpack --config webpack.playwright.cjs",
 		"build:test:types": "tsc --project ./src/test/types/tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack . --exclude-entrypoints ./internal-api-report/current ./internal-api-report/legacy",
+		"check:are-the-types-wrong": "attw --pack . --profile node16 --exclude-entrypoints ./internal-api-report/current ./internal-api-report/legacy",
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
@@ -151,7 +151,6 @@
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@microsoft/api-extractor": "7.58.1",
 		"@playwright/test": "^1.59.1",
-		"@types/base64-js": "^1.3.2",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "catalog:types",
 		"@types/sha.js": "^2.4.4",
@@ -264,7 +263,11 @@
 		"releasePkgVersion": "2.115.0"
 	},
 	"typeValidation": {
-		"broken": {},
-		"entrypoint": "public"
+		"broken": {
+			"Function_Uint8ArrayToArrayBuffer": {
+				"backCompat": false
+			}
+		},
+		"entrypoint": ""
 	}
 }
