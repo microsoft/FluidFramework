@@ -5,7 +5,6 @@
 "__section": breaking
 "__highlight": true
 ---
-
 Remove deprecated compatibility mode APIs
 
 Deprecated `CompatibilityMode` exports and overloads have been removed from `@fluidframework/fluid-static`, `@fluidframework/azure-client`, and `@fluidframework/tinylicious-client`.
