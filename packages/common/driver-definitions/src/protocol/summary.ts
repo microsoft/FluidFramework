@@ -103,10 +103,10 @@ export type SummaryTypeNoHandle = SummaryType.Tree | SummaryType.Blob | SummaryT
  * @example
  * To illustrate, if a DataStore did not change since last summary, the framework runtime will use a handle for the
  * entire DataStore instead of re-sending the entire subtree. The same concept applies for a DDS.
-	 * An example of a handle string generated when the DDS did not change would be: `/.channels/{dataStoreId}/.channels/{ddsId}`.
-	 * An example of a handle string generated when the DataStore did not change would be: `/.channels/{dataStoreId}`.
-	 * An example of a handle string generated when the DDS blob did not change would be: `/.channels/{dataStoreId}/.channels/{ddsId}/{blobId}`.
-	 * An example of a handle string generated when the DataStore .attributes blob did not change would be: `/.channels/{dataStoreId}/.attributes`.
+ * An example of a handle string generated when the DDS did not change would be: `/.channels/{dataStoreId}/.channels/{ddsId}`.
+ * An example of a handle string generated when the DataStore did not change would be: `/.channels/{dataStoreId}`.
+ * An example of a handle string generated when the DDS blob did not change would be: `/.channels/{dataStoreId}/.channels/{ddsId}/{blobId}`.
+ * An example of a handle string generated when the DataStore .attributes blob did not change would be: `/.channels/{dataStoreId}/.attributes`.
  * @public
  */
 export interface ISummaryHandle {
