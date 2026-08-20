@@ -1,6 +1,12 @@
+<!--
+Compatibility copy for published flub versions that still search .devcontainer/ai-agent/.
+Keep this synchronized with ../GETTING_STARTED.md until the legacy lookup can be removed.
+TODO: AB#80968
+-->
+
 # Getting Started with AI-Enabled Codespace
 
-This codespace is pre-configured for AI-agent-assisted development of the Fluid Framework. It includes [agency](https://aka.ms/agency), GitHub Copilot CLI, GitHub CLI, and SSH access.
+This codespace is pre-configured for AI-agent-assisted development of the Fluid Framework. It includes launchers that install [agency](https://aka.ms/agency) and GitHub Copilot CLI on first use, plus GitHub CLI and SSH access.
 
 > For full documentation, see [AI-enabled Codespace](../../docs/content/Development-Environment/AI-enabled-Codespace.md).
 

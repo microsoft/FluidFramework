@@ -49,26 +49,24 @@ If your callback may throw, you should handle errors explicitly and return `{ ro
 
 :::
 
-The alpha APIs introduce [TreeBranchAlpha.runTransaction](../../api/fluid-framework/treebranchalpha-interface#runtransaction-methodsignature) as a replacement for `Tree.runTransaction`.
+The alpha APIs introduce [UntypedTreeViewAlpha.runTransaction](../../api/fluid-framework/treebranchalpha-interface#runtransaction-methodsignature) as a replacement for `Tree.runTransaction`.
 This new API exists to solve correctness issues where errors being thrown in runTransaction could result in an undefined state.
 This new API enables developers to customize how their application handles this error case.
 
 ### Running a Transaction
 
-Transactions are started via [runTransaction](../../api/fluid-framework/treebranchalpha-interface#runtransaction-methodsignature) on any [TreeBranchAlpha](../../api/fluid-framework/treebranchalpha-interface)
+For a node in a tree, use [TreeAlpha.context](../../api/fluid-framework/treealpha-interface#context-methodsignature) to get its [TreeContextAlpha](../../api/fluid-framework/treecontextalpha-interface), then call [runTransaction](../../api/fluid-framework/treecontextalpha-interface#runtransaction-methodsignature) on that context.
 
 ```typescript
 import { TreeAlpha } from "@fluidframework/tree/alpha";
 
-// Using a branch:
-const branch = TreeAlpha.branch(myNode);
-if (branch !== undefined) {
-    branch.runTransaction(/* ... */);
-}
+// Using a context:
+const context = TreeAlpha.context(myNode);
+context.runTransaction(/* ... */);
 
-// Using a view directly:
-const view = tree.viewWith(config);
-view.runTransaction(/* ... */);
+// Using a typed view directly:
+const typedView = tree.viewWith(config);
+typedView.runTransaction(/* ... */);
 ```
 
 ### The `transaction` Callback Function

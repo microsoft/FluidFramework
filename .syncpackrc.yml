@@ -228,7 +228,6 @@ versionGroups:
 
   - label: "Versions of common Fluid packages should all match"
     dependencies:
-      - "@fluid-internal/eslint-plugin-fluid"
       - "@fluid-tools/benchmark"
       - "@fluid-tools/build-cli"
       - "@fluidframework/build-common"
