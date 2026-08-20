@@ -13,8 +13,8 @@ import {
 	type ApiLinkManifestEntry,
 	type ApiLinkManifests,
 	apiLinkManifestPluginName,
-} from "../apiLinkManifest.js";
-import type { SiteVersion } from "../utilityTypes.js";
+} from "../apiLinkManifest";
+import type { SiteVersion } from "../utilityTypes";
 
 // TODO: how will versioning interact with these?
 
