@@ -218,10 +218,6 @@ const runtimeOptionsAffectingDocSchemaConfigValidationMap: ConfigValidationMap<R
 		]),
 	};
 
-const runtimeOptionsToValidateWithDefault = new Set<keyof RuntimeOptionsAffectingDocSchema>([
-	"inlineDetachedBlobsAsSummaryBlobs",
-]);
-
 /**
  * Returns the default RuntimeOptionsAffectingDocSchema configuration for a given minVersionForCollab.
  */
@@ -247,6 +243,5 @@ export function validateRuntimeOptions(
 		minVersionForCollab,
 		runtimeOptions,
 		runtimeOptionsAffectingDocSchemaConfigValidationMap,
-		runtimeOptionsToValidateWithDefault,
 	);
 }

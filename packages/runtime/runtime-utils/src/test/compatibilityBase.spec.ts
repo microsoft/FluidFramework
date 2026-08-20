@@ -19,7 +19,6 @@ import {
 	lowestMinVersionForCollab,
 	checkValidMinVersionForCollabVerbose,
 	cleanedPackageVersion,
-	defaultMinVersionForCollab,
 	validateMinimumVersionForCollab,
 	getConfigForMinVersionForCollab,
 	selectVersionRoundedDown,
@@ -430,40 +429,6 @@ describe("compatibilityBase", () => {
 				);
 			});
 		}
-
-		it("preserves legacy validation skipping for the default version", () => {
-			assert.doesNotThrow(() => {
-				validateConfigMapOverrides(
-					defaultMinVersionForCollab,
-					{ featureA: "a4", featureB: true },
-					testConfigValidationMap,
-				);
-			});
-		});
-
-		it("validates only opted-in keys for the default version", () => {
-			assert.doesNotThrow(() => {
-				validateConfigMapOverrides<TestConfigFeatures>(
-					defaultMinVersionForCollab,
-					{ featureA: "a1", featureB: true },
-					testConfigValidationMap,
-					new Set<keyof TestConfigFeatures>(["featureA"]),
-				);
-			});
-			assert.throws(
-				() =>
-					validateConfigMapOverrides<TestConfigFeatures>(
-						defaultMinVersionForCollab,
-						{ featureA: "a2", featureB: true },
-						testConfigValidationMap,
-						new Set<keyof TestConfigFeatures>(["featureA"]),
-					),
-				(error: Error) => {
-					assert(isFluidError(error));
-					return error.message.includes("requires runtime version 2.0.0");
-				},
-			);
-		});
 	});
 
 	describe("minVersionForCollab validation", () => {
