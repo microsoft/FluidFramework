@@ -83,6 +83,62 @@ describe("MemoryBlobStorage", () => {
 		);
 	});
 
+	it("Serializes binary blobs as versioned base64 and preserves their IDs and order", async () => {
+		const blobContents = [
+			new Uint8Array([0x00, 0x01, 0x02, 0x03, 0xfe, 0xff]),
+			new Uint8Array([]),
+			new Uint8Array([0x80, 0x00, 0x7f]),
+		];
+		const storage = createMemoryDetachedBlobStorage();
+		const blobResponses = await Promise.all(
+			blobContents.map(async (blobContent) => storage.createBlob(blobContent.buffer)),
+		);
+
+		assert.deepStrictEqual(
+			blobResponses.map(({ id }) => id),
+			["0", "1", "2"],
+		);
+		const serializedStorage = storage.serialize();
+		assert(serializedStorage !== undefined, "Serialized storage is undefined");
+		const parsedSerializedStorage: unknown = JSON.parse(serializedStorage);
+		assert.deepStrictEqual(parsedSerializedStorage, {
+			version: 1,
+			blobs: ["AAECA/7/", "", "gAB/"],
+		});
+
+		const newStorage = createMemoryDetachedBlobStorage();
+		tryInitializeMemoryDetachedBlobStorage(newStorage, serializedStorage);
+
+		assert.deepStrictEqual(newStorage.getBlobIds(), ["0", "1", "2"]);
+		const rehydratedBlobContents = await Promise.all(
+			newStorage
+				.getBlobIds()
+				.map(async (id) => [...new Uint8Array(await newStorage.readBlob(id))]),
+		);
+		assert.deepStrictEqual(
+			rehydratedBlobContents,
+			blobContents.map((blobContent) => [...blobContent]),
+		);
+	});
+
+	it("Can initialize blob storage serialized in the legacy UTF-8 format", async () => {
+		const legacyBlobContents = ["legacy content", "legacy\u0000content"];
+		const storage = createMemoryDetachedBlobStorage();
+
+		tryInitializeMemoryDetachedBlobStorage(storage, JSON.stringify(legacyBlobContents));
+
+		assert.deepStrictEqual(storage.getBlobIds(), ["0", "1"]);
+		const rehydratedBlobContents = await Promise.all(
+			storage.getBlobIds().map(async (id) => [...new Uint8Array(await storage.readBlob(id))]),
+		);
+		assert.deepStrictEqual(
+			rehydratedBlobContents,
+			legacyBlobContents.map((blobContent) => [
+				...new Uint8Array(stringToBuffer(blobContent, "utf8")),
+			]),
+		);
+	});
+
 	it("Throws error when initializing from invalid serialized storage", async () => {
 		const newStorage = createMemoryDetachedBlobStorage();
 		const invalidSerializedStorage = "invalid serialized storage";
@@ -90,6 +146,19 @@ describe("MemoryBlobStorage", () => {
 		assert.throws(() => {
 			tryInitializeMemoryDetachedBlobStorage(newStorage, invalidSerializedStorage);
 		}, "Expected an error when initializing from invalid serialized storage");
+	});
+
+	it("Throws error when initializing from an unsupported serialized storage version", () => {
+		const newStorage = createMemoryDetachedBlobStorage();
+
+		assert.throws(
+			() =>
+				tryInitializeMemoryDetachedBlobStorage(
+					newStorage,
+					JSON.stringify({ version: 2, blobs: [] }),
+				),
+			/Invalid attachmentBlobs/,
+		);
 	});
 
 	it("Throws error when tryInitializeMemoryDetachedBlobStorage is called on storage with existing blobs", async () => {

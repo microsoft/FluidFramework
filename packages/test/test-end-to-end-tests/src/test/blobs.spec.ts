@@ -573,6 +573,81 @@ function serializationTests({
 				);
 			});
 
+			itExpects(
+				"serialize/rehydrate preserves binary blobs through attach",
+				ContainerStateEventsOrErrors,
+				async function () {
+					if (provider.type === "TestObjectProviderWithVersionedLoad") {
+						this.skip();
+					}
+
+					const loader = provider.makeTestLoader({
+						...testContainerConfig,
+						loaderProps: {
+							configProvider: createTestConfigProvider({}),
+						},
+					});
+					const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+					const dataStore = (await container.getEntryPoint()) as ITestDataObject;
+					const blobContents = [
+						new Uint8Array([0x00, 0x01, 0x02, 0x03, 0xfe, 0xff]),
+						new Uint8Array([0x80, 0x00, 0x7f]),
+					];
+					const blobHandles = await Promise.all(
+						blobContents.map(async (blobContent) =>
+							dataStore._runtime.uploadBlob(blobContent.buffer),
+						),
+					);
+					blobHandles.forEach((blobHandle, index) => {
+						dataStore._root.set(`binary blob ${index}`, blobHandle);
+					});
+
+					const assertBlobContents = async (dataObject: ITestDataObject): Promise<void> => {
+						const rehydratedBlobContents = await Promise.all(
+							blobContents.map(async (_, index) => {
+								const blobHandle: IFluidHandle<ArrayBufferLike> | undefined =
+									dataObject._root.get(`binary blob ${index}`);
+								assert(blobHandle !== undefined, `binary blob ${index} must exist`);
+								return Array.from(new Uint8Array(await blobHandle.get()));
+							}),
+						);
+						assert.deepStrictEqual(
+							rehydratedBlobContents,
+							blobContents.map((blobContent) => Array.from(blobContent)),
+						);
+					};
+
+					const snapshot = container.serialize();
+					container.close();
+					const rehydratedContainer =
+						await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
+					const rehydratedDataStore =
+						(await rehydratedContainer.getEntryPoint()) as ITestDataObject;
+					await assertBlobContents(rehydratedDataStore);
+
+					const attachP = rehydratedContainer.attach(
+						provider.driver.createCreateNewRequest(provider.documentId),
+					);
+					if (!driverSupportsBlobs(provider.driver)) {
+						return assert.rejects(
+							attachP,
+							(err: IErrorBase) => err.message === usageErrorMessage,
+						);
+					}
+					await attachP;
+					await assertBlobContents(rehydratedDataStore);
+
+					const url = await getUrlFromDetachedBlobStorage(rehydratedContainer, provider);
+					const attachedContainer = await provider
+						.makeTestLoader(testContainerConfig)
+						.resolve({ url });
+					const attachedDataStore =
+						(await attachedContainer.getEntryPoint()) as ITestDataObject;
+					await provider.ensureSynchronized();
+					await assertBlobContents(attachedDataStore);
+				},
+			);
+
 			it("serialize while attaching and rehydrate container with blobs", async function () {
 				// build a fault injected driver to fail attach on the  summary upload
 				// after create that happens in the blob flow

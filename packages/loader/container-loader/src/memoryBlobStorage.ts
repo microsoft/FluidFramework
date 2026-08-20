@@ -30,8 +30,32 @@ export interface MemoryDetachedBlobStorage
 	 * After the container is attached, the detached blob storage is no longer needed and will be disposed.
 	 */
 	dispose?(): void;
-	initialize(attachmentBlobs: string[]): void;
+	initialize(attachmentBlobs: readonly ArrayBufferLike[]): void;
 	serialize(): string | undefined;
+}
+
+const serializedMemoryDetachedBlobStorageVersion = 1;
+
+interface SerializedMemoryDetachedBlobStorage {
+	readonly version: typeof serializedMemoryDetachedBlobStorageVersion;
+	readonly blobs: readonly string[];
+}
+
+function isStringArray(value: unknown): value is string[] {
+	return Array.isArray(value) && value.every((item) => typeof item === "string");
+}
+
+function isSerializedMemoryDetachedBlobStorage(
+	value: unknown,
+): value is SerializedMemoryDetachedBlobStorage {
+	return (
+		typeof value === "object" &&
+		value !== null &&
+		"version" in value &&
+		value.version === serializedMemoryDetachedBlobStorageVersion &&
+		"blobs" in value &&
+		isStringArray(value.blobs)
+	);
 }
 
 export function tryInitializeMemoryDetachedBlobStorage(
@@ -39,12 +63,23 @@ export function tryInitializeMemoryDetachedBlobStorage(
 	attachmentBlobs: string,
 ): void {
 	assert(detachedStorage.size === 0, 0x99e /* Blob storage already initialized */);
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-	const maybeAttachmentBlobs = JSON.parse(attachmentBlobs);
-	assert(Array.isArray(maybeAttachmentBlobs), 0x99f /* Invalid attachmentBlobs */);
+	const maybeAttachmentBlobs: unknown = JSON.parse(attachmentBlobs);
 
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-	detachedStorage.initialize(maybeAttachmentBlobs);
+	// Legacy snapshots stored blob contents as UTF-8 strings.
+	if (isStringArray(maybeAttachmentBlobs)) {
+		detachedStorage.initialize(
+			maybeAttachmentBlobs.map((maybeBlob) => stringToBuffer(maybeBlob, "utf8")),
+		);
+		return;
+	}
+
+	assert(
+		isSerializedMemoryDetachedBlobStorage(maybeAttachmentBlobs),
+		"Invalid attachmentBlobs",
+	);
+	detachedStorage.initialize(
+		maybeAttachmentBlobs.blobs.map((maybeBlob) => stringToBuffer(maybeBlob, "base64")),
+	);
 }
 
 /**
@@ -66,12 +101,18 @@ export function createMemoryDetachedBlobStorage(): MemoryDetachedBlobStorage {
 		},
 		getBlobIds: (): string[] => blobs.map((_, i) => `${i}`),
 		dispose: () => blobs.splice(0),
-		serialize: () =>
-			blobs.length > 0
-				? JSON.stringify(blobs.map((b) => bufferToString(b, "utf8")))
-				: undefined,
-		initialize: (attachmentBlobs: string[]) =>
-			blobs.push(...attachmentBlobs.map((maybeBlob) => stringToBuffer(maybeBlob, "utf8"))),
+		serialize: () => {
+			if (blobs.length === 0) {
+				return undefined;
+			}
+			const serializedStorage: SerializedMemoryDetachedBlobStorage = {
+				version: serializedMemoryDetachedBlobStorageVersion,
+				blobs: blobs.map((blob) => bufferToString(blob, "base64")),
+			};
+			return JSON.stringify(serializedStorage);
+		},
+		initialize: (attachmentBlobs: readonly ArrayBufferLike[]) =>
+			blobs.push(...attachmentBlobs),
 	};
 	return storage;
 }
