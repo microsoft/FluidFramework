@@ -683,9 +683,7 @@ export function optionalFieldIntoDelta(
 		const globals: DeltaDetachedNodeChanges[] = [];
 		for (const [id, childChange] of change.childChanges) {
 			const childDelta = deltaFromChild(childChange);
-			if (childDelta.size === 0) {
-				// The delta is empty for this child.
-			} else if (id === "self") {
+			if (id === "self") {
 				mark.fields = childDelta;
 				markIsANoop = false;
 			} else {

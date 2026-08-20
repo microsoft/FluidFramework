@@ -516,6 +516,10 @@ class ModularChangeMinimizer {
 			"Expected all changes to attached tree to be filtered out",
 		);
 
+		// There may still be paths to existing nodes in the delta, which must be removed before being applied to an empty forest.
+		// It is safe to remove these, because there are no edits to them, as asserted above.
+		(deltaForBuilds as Mutable<DeltaRoot<unknown>>).fields = new Map();
+
 		const forest = forestFactory();
 		const detachedFieldIndex = makeDetachedFieldIndex();
 

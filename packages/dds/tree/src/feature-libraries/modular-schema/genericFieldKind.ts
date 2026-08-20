@@ -52,17 +52,12 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 		let nodeIndex = 0;
 		const markList: DeltaMark[] = [];
 		for (const [index, nodeChange] of change.entries()) {
-			const childDelta = deltaFromChild(nodeChange);
-			if (childDelta.size === 0) {
-				continue;
-			}
-
 			if (nodeIndex < index) {
 				const offset = index - nodeIndex;
 				markList.push({ count: offset });
 				nodeIndex = index;
 			}
-			markList.push({ count: 1, fields: childDelta });
+			markList.push({ count: 1, fields: deltaFromChild(nodeChange) });
 			nodeIndex += 1;
 		}
 		return { local: { marks: markList } };
