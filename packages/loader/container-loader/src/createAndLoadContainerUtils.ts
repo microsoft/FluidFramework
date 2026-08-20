@@ -508,6 +508,10 @@ export interface ICaptureFullContainerStateProps {
 	 * Optional logger for driver-side telemetry.
 	 */
 	readonly logger?: ITelemetryBaseLogger | undefined;
+	/**
+	 * Cancels capture while waiting for the delta stream to connect and catch up.
+	 */
+	readonly abortSignal?: AbortSignal | undefined;
 }
 
 /**
@@ -563,7 +567,9 @@ export async function captureFullContainerState({
 	documentServiceFactory,
 	request,
 	logger,
+	abortSignal,
 }: ICaptureFullContainerStateProps): Promise<string> {
+	throwIfCaptureAborted(abortSignal);
 	const resolvedUrl = await urlResolver.resolve(request);
 	if (resolvedUrl === undefined) {
 		throw new UsageError("Failed to resolve request to a Fluid URL");
@@ -614,16 +620,17 @@ export async function captureFullContainerState({
 			);
 		});
 	});
-	deltaManager.connect({
-		reason: { text: "captureFullContainerState" },
-		mode: "read",
-		// Ops will be fetched from storage using the later "attachOpHandler" call. Attempting to fetch here is a no-op anyway as
-		// no op handler is yet attached.
-		// Fetching the snapshot first such that an op handler could be attached using its sequence number information may simplify
-		// the code, but doing it this way allows parallelization of snapshot fetch and establishing a connection.
-		fetchOpsFromStorage: false,
-	});
+	let removeAbortListener = (): void => {};
 	try {
+		deltaManager.connect({
+			reason: { text: "captureFullContainerState" },
+			mode: "read",
+			// Ops will be fetched from storage using the later "attachOpHandler" call. Attempting to fetch here is a no-op anyway as
+			// no op handler is yet attached.
+			// Fetching the snapshot first such that an op handler could be attached using its sequence number information may simplify
+			// the code, but doing it this way allows parallelization of snapshot fetch and establishing a connection.
+			fetchOpsFromStorage: false,
+		});
 		const storage = await documentService.connectToStorage();
 
 		const versions = await storage.getVersions(
@@ -675,8 +682,19 @@ export async function captureFullContainerState({
 			},
 			"all",
 		);
-		await Promise.race([Promise.all([connectedP, attachP]), closedP]);
-		await Promise.race([waitForCatchUp(deltaManager), closedP]);
+		throwIfCaptureAborted(abortSignal);
+		const abortP = new Promise<never>((_resolve, reject) => {
+			if (abortSignal === undefined) {
+				return;
+			}
+			const onAbort = (): void => {
+				reject(new GenericError("Container state capture canceled by an abort signal"));
+			};
+			abortSignal.addEventListener("abort", onAbort, { once: true });
+			removeAbortListener = (): void => abortSignal.removeEventListener("abort", onAbort);
+		});
+		await Promise.race([Promise.all([connectedP, attachP]), closedP, abortP]);
+		await Promise.race([waitForCatchUp(deltaManager), closedP, abortP]);
 		deltaManager.dispose();
 
 		const postSnapshotBlobReferences: IBlobAttachReference[] = [];
@@ -712,8 +730,15 @@ export async function captureFullContainerState({
 		};
 		return JSON.stringify(pendingState);
 	} finally {
+		removeAbortListener();
 		deltaManager.dispose();
 		documentService.dispose();
+	}
+}
+
+function throwIfCaptureAborted(abortSignal: AbortSignal | undefined): void {
+	if (abortSignal?.aborted === true) {
+		throw new GenericError("Container state capture canceled by an abort signal");
 	}
 }
 

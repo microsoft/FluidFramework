@@ -149,6 +149,30 @@ function makeFactoryWithSocketOnlyOps(
 	};
 }
 
+function makeFactoryWithStalledDeltaStream(
+	inner: IDocumentServiceFactory,
+	onConnect: () => void,
+): IDocumentServiceFactory {
+	const wrapService = (svc: IDocumentService): IDocumentService =>
+		new Proxy(svc, {
+			get: (target, prop, receiver) => {
+				if (prop === "connectToDeltaStream") {
+					return async (): Promise<never> => {
+						onConnect();
+						return new Promise<never>(() => {});
+					};
+				}
+				return Reflect.get(target, prop, receiver) as unknown;
+			},
+		});
+
+	return {
+		createContainer: async (...args) => wrapService(await inner.createContainer(...args)),
+		createDocumentService: async (...args) =>
+			wrapService(await inner.createDocumentService(...args)),
+	};
+}
+
 async function readAllOps(
 	deltaStorage: Awaited<ReturnType<IDocumentService["connectToDeltaStorage"]>>,
 ): Promise<ISequencedDocumentMessage[]> {
@@ -365,6 +389,37 @@ describe("captureFullContainerState", () => {
 		assert.strictEqual(
 			frozenEntryPoint.ITestFluidObject.root.get("websocket-only"),
 			"captured",
+		);
+	});
+
+	it("can abort while waiting for a delta stream connection", async () => {
+		const { container, urlResolver, documentServiceFactory } = await initialize();
+
+		await container.attach(urlResolver.createCreateNewRequest("test"));
+		const url = await container.getAbsoluteUrl("");
+		assert(url !== undefined, "Expected container to provide a valid absolute URL");
+
+		let notifyConnectStarted: () => void;
+		const connectStarted = new Promise<void>((resolve) => {
+			notifyConnectStarted = resolve;
+		});
+		const abortController = new AbortController();
+		const captureP = captureFullContainerState({
+			urlResolver,
+			documentServiceFactory: makeFactoryWithStalledDeltaStream(documentServiceFactory, () =>
+				notifyConnectStarted(),
+			),
+			request: { url },
+			abortSignal: abortController.signal,
+		});
+
+		await connectStarted;
+		abortController.abort();
+
+		await assert.rejects(
+			captureP,
+			/Container state capture canceled by an abort signal/,
+			"capture should reject after cancellation",
 		);
 	});
 
