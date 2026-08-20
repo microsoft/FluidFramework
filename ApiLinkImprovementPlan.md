@@ -5,13 +5,12 @@
 Improve the website's `ApiLink` component so documentation authors can link to generated API documentation by specifying:
 
 - A package name.
-- A qualified API name.
-- An optional API item kind when the name is ambiguous.
+- A TSDoc-style API declaration reference.
 
 For example:
 
 ```mdx
-<ApiLink packageName="fluid-framework" apiName="TreeView.upgradeSchema" />
+<ApiLink packageName="fluid-framework" api="TreeView.upgradeSchema" />
 ```
 
 `ApiLink` should not require authors to know how `api-markdown-documenter` organizes files or generates heading IDs. The generated API documentation and the links to it must use the same normalized documenter configuration as their source of truth.
@@ -52,9 +51,7 @@ The intended API is:
 ```ts
 interface ApiLinkProps {
 	packageName: string;
-	apiName: string;
-	apiType?: ApiItemKind;
-	overloadIndex?: number;
+  api: string;
 	children?: React.ReactNode;
 }
 ```
@@ -62,34 +59,38 @@ interface ApiLinkProps {
 Top-level declarations continue to use their ordinary names:
 
 ```mdx
-<ApiLink packageName="fluid-framework" apiName="TreeView" />
+<ApiLink packageName="fluid-framework" api="TreeView" />
 ```
 
 Descendants use names qualified by their documented containment hierarchy:
 
 ```mdx
-<ApiLink packageName="fluid-framework" apiName="TreeView.upgradeSchema" />
-<ApiLink packageName="fluid-framework" apiName="SchemaStatics.optional" />
-<ApiLink packageName="fluid-framework" apiName="NodeKind.Leaf" />
+<ApiLink packageName="fluid-framework" api="TreeView.upgradeSchema" />
+<ApiLink packageName="fluid-framework" api="SchemaStatics.optional" />
+<ApiLink packageName="fluid-framework" api="NodeKind.Leaf" />
 ```
 
-The optional `apiType` remains available when a package contains multiple API items with the same qualified name. For example, `fluid-framework` exposes `Tree` as more than one API item kind:
+TSDoc-style selectors disambiguate any segment in the hierarchy. For example, `fluid-framework` exposes `Tree` as more than one API item kind:
 
 ```mdx
-<ApiLink packageName="fluid-framework" apiName="Tree" apiType="Interface" />
+<ApiLink packageName="fluid-framework" api="(Tree:interface)" />
 ```
 
-Function and method overloads use API Extractor's one-based overload index:
+The selector belongs to the segment it disambiguates, so a parent kind can be selected independently of its member:
 
 ```mdx
-<ApiLink
-  packageName="fluid-framework"
-  apiName="TreeBranchAlpha.runTransaction"
-  overloadIndex={2}
-/>
+<ApiLink packageName="example" api="(Foo:interface).bar" />
 ```
 
-Lookup without `apiType` succeeds when the qualified name identifies exactly one API item kind. When that kind has multiple overloads, omitting `overloadIndex` selects overload 1. Supplying `overloadIndex` selects that specific overload and produces an error when it does not exist.
+Function and method overloads use TSDoc's numeric index-selector syntax with API Extractor's one-based overload index:
+
+```mdx
+<ApiLink packageName="fluid-framework" api="TreeBranchAlpha.(runTransaction:2)" />
+```
+
+Selectors may be combined at different levels, such as `(Foo:interface).(bar:2)`. Lookup without a kind selector succeeds when a name identifies exactly one API item kind at that hierarchy level. When the terminal item has multiple overloads, omitting its index selector selects overload 1. Supplying an index selector selects that overload and produces an error when it does not exist.
+
+The `api` property intentionally accepts the declaration-reference portion only. `packageName` remains separate because the website applies version-specific package policy, and `ApiLink` does not accept TSDoc link text or a package source inside `api`.
 
 ## Implementation Plan
 
@@ -148,31 +149,37 @@ Keep `generate-api-documentation` as the single build entry point for both outpu
 After loading the API model and normalizing the transformation configuration, traverse the included API items. For every supported item:
 
 1. Determine its unscoped package name.
-2. Build its qualified author-facing name from model containment.
+2. Build its author-facing declaration-reference path from model containment, retaining each segment's API item kind.
 3. Obtain its target from the documenter's public link API.
-4. Record the target with the item's `ApiItemKind` and one-based overload index, when applicable.
+4. Record the target with the full path of API item kinds and the terminal item's one-based overload index, when applicable.
 
-Use a manifest shape that preserves kind and overload candidates without encoding either into the author-facing name:
+Use a manifest shape that preserves each candidate's full containment path, including the kind of every segment and the terminal overload index:
 
 ```json
 {
   "fluid-framework": {
     "TreeView": [
       {
-        "apiType": "Interface",
+        "path": [
+          { "name": "TreeView", "apiType": "Interface" }
+        ],
         "documentPath": "fluid-framework/treeview-interface"
       }
     ],
     "TreeBranchAlpha.runTransaction": [
       {
-        "apiType": "MethodSignature",
-        "overloadIndex": 1,
+        "path": [
+          { "name": "TreeBranchAlpha", "apiType": "Interface" },
+          { "name": "runTransaction", "apiType": "MethodSignature", "overloadIndex": 1 }
+        ],
         "documentPath": "fluid-framework/treebranchalpha-interface",
         "headingId": "runtransaction-methodsignature"
       },
       {
-        "apiType": "MethodSignature",
-        "overloadIndex": 2,
+        "path": [
+          { "name": "TreeBranchAlpha", "apiType": "Interface" },
+          { "name": "runTransaction", "apiType": "MethodSignature", "overloadIndex": 2 }
+        ],
         "documentPath": "fluid-framework/treebranchalpha-interface",
         "headingId": "runtransaction_1-methodsignature"
       }
@@ -189,7 +196,7 @@ Manifest generation must use the same inclusion checks as Markdown generation. I
 
 ### 4. Define Name and Collision Semantics
 
-Qualified names should follow documented model containment, skipping model and entry-point nodes. Examples include `TreeView.upgradeSchema` and `SomeNamespace.SomeType`.
+Declaration-reference paths should follow documented model containment, skipping model and entry-point nodes. Examples include `TreeView.upgradeSchema` and `SomeNamespace.SomeType`. Every recorded candidate must retain the display name and API item kind for each path segment so selectors can disambiguate parents as well as terminal items.
 
 The generator must detect and report collisions rather than silently select a target. Relevant cases include:
 
@@ -198,9 +205,9 @@ The generator must detect and report collisions rather than silently select a ta
 - Identically named exports from multiple package entry points.
 - Two scoped packages with the same unscoped package name.
 
-Different kinds are preserved as candidates and resolved with `apiType`. Each overload of a function, method, call signature, construct signature, or other parameter-list item is preserved as a separate candidate with its API Extractor `overloadIndex`.
+Different kinds at any hierarchy level are preserved as candidates and resolved by selectors in `api`. Each overload of a function, method, call signature, construct signature, or other parameter-list item is preserved as a separate candidate with its API Extractor `overloadIndex`.
 
-Within a qualified name, the combination of `apiType` and `overloadIndex` must uniquely identify a target. Items that do not support overloads omit `overloadIndex`. API Extractor models may contain canonical-reference aliases for the same logical item; candidates with the same kind, overload index, document path, and heading are coalesced. Duplicate candidates that resolve to different targets must fail manifest generation with a diagnostic containing the package, qualified name, kind, overload index, and canonical references involved.
+Within a declaration-reference path, the combination of segment kinds and terminal overload index must uniquely identify a target. Items that do not support overloads omit `overloadIndex`. API Extractor models may contain canonical-reference aliases for the same logical item; candidates with the same path segment names and kinds, overload index, document path, and heading are coalesced. Duplicate candidates that resolve to different targets must fail manifest generation with a diagnostic containing the package, declaration-reference path, segment kinds, overload index, and canonical references involved.
 
 Call signatures, construct signatures, and other items without useful author-facing names may be omitted initially, but manifest generation must not collapse distinct overloads for any included item.
 
@@ -225,29 +232,34 @@ Replace `resolveApiDocument` in `website/src/components/shortLinks.tsx` with man
 Resolution should:
 
 1. Find the active version's manifest.
-2. Find the package and qualified API name.
-3. Apply `apiType` when provided.
-4. Apply `overloadIndex` when provided, or select overload 1 when the resolved kind has multiple overloads.
-5. Return the only remaining candidate.
-6. Throw an actionable error for missing or ambiguous references.
+2. Parse `api` as the supported TSDoc declaration-reference subset.
+3. Find candidates whose hierarchy segment names match the reference.
+4. Apply kind selectors to the segment on which each selector appears.
+5. Apply a terminal numeric index selector when provided, or select overload 1 when the resolved terminal item has multiple overloads.
+6. Return the only remaining candidate.
+7. Throw an actionable error for missing or ambiguous references.
+
+Use the stable `TSDocParser` API from `@microsoft/tsdoc` rather than implementing declaration-reference tokenization in the website. The stable parser accepts complete TSDoc comments rather than bare declaration references, so parse a minimal wrapper such as `/** {@link ${api} } */`, require a diagnostic-free parse containing exactly one `DocLinkTag`, and extract its `DocDeclarationReference` member path and selectors. Add `@microsoft/tsdoc` as a direct website dependency; do not rely on the transitive dependency provided by `api-markdown-documenter`.
+
+After parsing, validate that the AST uses only the supported subset: identifier member segments separated by dots, approved system kind selectors, and an optional numeric index selector on the terminal segment. Reject package sources, import paths, link text, labels, symbols, other navigation forms, and selectors outside that subset. This AST validation both limits the public contract and prevents wrapper-breaking input from being interpreted as additional TSDoc content. Do not use the beta `DeclarationReference.parse()` API or private parser internals.
 
 For example, an ambiguity error should identify the available kinds:
 
 ```text
-API "Tree" in package "fluid-framework" is ambiguous.
-Specify apiType. Available kinds: Interface, Variable.
+API segment "Tree" in package "fluid-framework" is ambiguous.
+Specify a selector. Available references: (Tree:interface), (Tree:variable).
 ```
 
-Retain `headingId` temporarily as a compatibility escape hatch while existing MDX is migrated. When present, it may override the generated fragment. Mark it as deprecated after all ordinary call sites can be expressed with qualified API names.
+Retain `headingId` temporarily as a compatibility escape hatch while existing MDX is migrated. When present, it may override the generated fragment. Mark it as deprecated after all ordinary call sites can be expressed with declaration references.
 
 ### 7. Migrate Existing Documentation
 
-Convert existing `ApiLink` calls with manual `headingId` values to qualified API names. For example:
+Convert existing `ApiLink` calls with manual `headingId` values to declaration references. For example:
 
 ```mdx
 <ApiLink
     packageName="fluid-framework"
-    apiName="TreeView"
+  api="TreeView"
     headingId="upgradeschema-methodsignature"
 />
 ```
@@ -255,7 +267,7 @@ Convert existing `ApiLink` calls with manual `headingId` values to qualified API
 becomes:
 
 ```mdx
-<ApiLink packageName="fluid-framework" apiName="TreeView.upgradeSchema" />
+<ApiLink packageName="fluid-framework" api="TreeView.upgradeSchema" />
 ```
 
 Replace package-level links to API members with `ApiLink` where the manifest can identify the declaration directly. Preserve the established version policy: v2 links for APIs re-exported by `fluid-framework` should target `fluid-framework`, while v1 links retain their original package targets.
@@ -278,7 +290,7 @@ Test the public target API against multiple hierarchy configurations:
 
 Test:
 
-- Qualified-name generation.
+- Declaration-reference path generation.
 - Package-name normalization.
 - Kind-based ambiguity preservation.
 - Preservation of every overload's one-based index and distinct target.
@@ -296,8 +308,11 @@ Update `website/test/unit/shortLinks.test.ts` to cover:
 - Qualified member lookup.
 - Namespace descendants.
 - v1, v2, and local manifest selection.
-- An ambiguous name with and without `apiType`.
-- An overloaded API with an omitted, valid, and invalid `overloadIndex`.
+- An ambiguous terminal name with and without a kind selector.
+- An ambiguous parent name with and without a kind selector.
+- An overloaded API with an omitted, valid, and invalid numeric index selector.
+- A reference combining parent kind and terminal overload selectors.
+- Malformed and unsupported declaration-reference syntax.
 - Missing package, API, kind, and version diagnostics.
 - Temporary `headingId` compatibility.
 - Default link text and explicit children.
@@ -313,6 +328,7 @@ The final validation sequence should include:
 3. API documentation and manifest generation for all configured versions.
 4. A strict Docusaurus production build.
 5. A review of generated manifest size and duplicate diagnostics.
+6. A comparison of the production client bundle before and after adding `@microsoft/tsdoc`.
 
 ## Rollout Order
 
@@ -345,22 +361,23 @@ The final validation sequence should include:
 
 # Edge cases we need to consider
 
-## Parent discriminators
+## Parent and overload discriminators
 
-Our `ApiLink` API allows users to specify the `apiType` when as a discriminator when the same `apiName` appears multiple times in the package's API surface with different types.
-This allows users to, for example, differentiate between interface `Foo` and constant `Foo` exported by a package.
+The earlier `ApiLink` proposal allowed users to specify `apiType` as a discriminator when the same `apiName` appeared multiple times in a package's API surface with different types.
+This allowed users to, for example, differentiate between an interface `Foo` and constant `Foo` exported by a package.
 
 But our API also allows users to link to member items of parent types.
 E.g. `Foo.bar`.
 In this case, say our package exports both an interface and a constant named `Foo`.
-The `ApiLink` API does not provide a way for users to specify a discriminator for the *parent* element of the specifier.
+Separate `apiName` and `apiType` properties did not provide a way to specify a discriminator for the *parent* element of the reference.
 
 To my knowledge, our website doesn't currently have any use cases for this.
 But I'm sure it's only a matter of time before we need it, so I think we should address this now.
 
 `TSDoc` handles this by supporting optional discriminators at each level in the hierarchy.
-E.g. the above case could be handles by specifying `(Foo:interface).bar` to link to the `Foo` *interface*'s `bar` property.
+E.g. the above case can be handled by specifying `(Foo:interface).bar` to link to the `Foo` *interface*'s `bar` property.
 - See here for more details on TSDoc's link syntax: https://tsdoc.org/pages/tags/link/
 
-I suggest we adopt the same pattern.
-Rather than having separate `apiName` and `apiType` arguments to `ApiLink`, we can have a single `api` argument that uses a similar syntax that supports optional discriminators at each level in the hierarchy.
+Use a single `api` argument that follows the relevant subset of TSDoc declaration-reference syntax. A selector is attached to the segment it disambiguates, allowing `(Foo:interface).bar` to select a parent kind. Numeric index selectors identify API Extractor overloads in the same string, allowing `Foo.(bar:2)` or the combined `(Foo:interface).(bar:2)`.
+
+The implementation should use `@microsoft/tsdoc`'s stable `TSDocParser` to parse this syntax into structured path segments rather than manipulating the string ad hoc. Initially support identifier segments, kind selectors, and terminal numeric index selectors. Reject package sources, import paths, navigation other than the documented containment separator, labels, symbols, and index selectors on non-terminal segments with an actionable error. This keeps the authoring contract aligned with TSDoc without claiming support for its entire declaration-reference grammar.
