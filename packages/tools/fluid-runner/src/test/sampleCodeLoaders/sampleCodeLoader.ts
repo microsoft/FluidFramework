@@ -29,7 +29,8 @@ export class SampleCodeLoader implements ICodeDetailsLoader {
 			module: {
 				fluidExport: new BaseContainerRuntimeFactory({
 					registryEntries: new Map(),
-					oldestSupportedClient: "2.0.0",
+					// Preserve the historical runtime defaults for this generic test collateral.
+					oldestSupportedClient: "2.0.0-defaults",
 					provideEntryPoint: async () => ({
 						myProp: "myValue",
 					}),

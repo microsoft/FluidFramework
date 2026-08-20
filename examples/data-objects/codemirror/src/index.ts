@@ -11,7 +11,6 @@ import {
 	getDataStoreEntryPoint,
 } from "@fluid-example/example-utils";
 import { IContainerContext, IRuntime } from "@fluidframework/container-definitions/legacy";
-// eslint-disable-next-line import-x/no-deprecated -- only the minVersionForCollab overload is deprecated.
 import { loadContainerRuntime } from "@fluidframework/container-runtime/legacy";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
 import { FluidObject } from "@fluidframework/core-interfaces";
@@ -43,7 +42,6 @@ class CodeMirrorFactory extends RuntimeFactoryHelper {
 			[smde.type, Promise.resolve(smde)],
 		]);
 
-		// eslint-disable-next-line import-x/no-deprecated -- using the canonical overload.
 		const runtime = await loadContainerRuntime({
 			context,
 			registryEntries,
