@@ -4,9 +4,6 @@
 
 ```ts
 
-// @public @deprecated
-export type CompatibilityMode = "1" | "2";
-
 // @public
 export type ContainerAttachProps<T = unknown> = T;
 

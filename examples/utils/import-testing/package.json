@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/import-testing",
-	"version": "2.117.0",
+	"version": "3.0.0",
 	"private": true,
 	"description": "import-testing",
 	"homepage": "https://fluidframework.com",
@@ -19,6 +19,9 @@
 		},
 		"./crossPackageSchema/bundler": {
 			"import": "./lib/crossPackage/bundler/schemaDefinitions.js"
+		},
+		"./crossPackageSchema/nodenext": {
+			"import": "./lib/crossPackage/nodenext/schemaDefinitions.js"
 		}
 	},
 	"scripts": {
@@ -28,6 +31,7 @@
 		"build:esnext": "concurrently \"npm:build:esnext:*\"",
 		"build:esnext:crossPackage:bundler": "tsc --project ./tsconfig.crossPackage.bundler.json",
 		"build:esnext:crossPackage:node16": "tsc --project ./tsconfig.crossPackage.node16.json",
+		"build:esnext:crossPackage:nodenext": "tsc --project ./tsconfig.crossPackage.nodenext.json",
 		"build:esnext:main": "tsc --project ./tsconfig.json",
 		"build:test": "concurrently npm:build:test:esm npm:build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
@@ -87,6 +91,10 @@
 				"^build:entrypoints:esm",
 				"^build:esnext"
 			],
+			"build:esnext:crossPackage:nodenext": [
+				"^build:entrypoints:esm",
+				"^build:esnext"
+			],
 			"build:esnext:main": [
 				"^build:entrypoints:esm",
 				"^build:esnext"
@@ -98,6 +106,7 @@
 			"build:test:esm": [
 				"build:esnext:crossPackage:bundler",
 				"build:esnext:crossPackage:node16",
+				"build:esnext:crossPackage:nodenext",
 				"build:esnext:main"
 			],
 			"tsc:crossPackage:node16": [

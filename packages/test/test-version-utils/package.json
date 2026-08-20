@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/test-version-utils",
-	"version": "2.117.0",
+	"version": "3.0.0",
 	"description": "End to end compatibility test infrastructure",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -22,8 +22,9 @@
 	},
 	"scripts": {
 		"build": "fluid-build . --task build",
+		"build:api-reports": "api-extractor run --local --config api-extractor/api-extractor-report.json",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "api-extractor run --local",
+		"build:docs": "api-extractor run --local --config api-extractor/api-extractor-model.json",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:genver": "gen-version",
 		"build:test": "npm run build:test:esm",
@@ -34,7 +35,8 @@
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
 		"check:exports:index": "api-extractor run --config api-extractor/api-extractor-lint-index.json",
 		"check:format": "npm run check:biome",
-		"ci:build:docs": "api-extractor run",
+		"ci:build:api-reports": "api-extractor run --config api-extractor/api-extractor-report.json",
+		"ci:build:docs": "api-extractor run --config api-extractor/api-extractor-model.json",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --quiet --format stylish src",
 		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",

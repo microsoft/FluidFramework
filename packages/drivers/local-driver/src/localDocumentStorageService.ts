@@ -4,6 +4,7 @@
  */
 
 import {
+	ArrayBufferLikeToArrayBuffer,
 	IsoBuffer,
 	Uint8ArrayToString,
 	bufferToString,
@@ -150,7 +151,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		const groupId = await this.readGroupId(tree);
 		if (groupId === undefined || loadingGroupIds.has(groupId)) {
 			for (const id of Object.values(tree.blobs)) {
-				blobContents.set(id, await this.readBlob(id));
+				blobContents.set(id, ArrayBufferLikeToArrayBuffer(await this.readBlob(id)));
 			}
 			await Promise.all(
 				Object.values(tree.trees).map(async (childTree) => {
@@ -204,7 +205,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		// Collect blobsIds so that we can return blob contents only for these blobs.
 		if (groupIdInLoadingGroupIds || isChildOfAncestorWithGroupId) {
 			for (const id of Object.values(tree.blobs)) {
-				blobContents.set(id, await this.readBlob(id));
+				blobContents.set(id, ArrayBufferLikeToArrayBuffer(await this.readBlob(id)));
 			}
 		}
 		// Keep tree if it has a child that has a groupId that is in loadingGroupIds
