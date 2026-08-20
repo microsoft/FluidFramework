@@ -34,7 +34,11 @@ import {
 	createChildLogger,
 	mixinMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
-import { MockAudience, MockQuorumClients } from "@fluidframework/test-runtime-utils/internal";
+import {
+	defaultTestOldestSupportedClient,
+	MockAudience,
+	MockQuorumClients,
+} from "@fluidframework/test-runtime-utils/internal";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 
 describe("Container Runtime", () => {
@@ -160,6 +164,7 @@ describe("Container Runtime", () => {
 				context: getMockContext(deltaManager) as IContainerContext,
 				registryEntries: [],
 				existing: true,
+				oldestSupportedClient: defaultTestOldestSupportedClient,
 				runtimeOptions: {},
 				provideEntryPoint: mockProvideEntryPoint,
 			});

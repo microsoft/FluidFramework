@@ -36,6 +36,7 @@ export async function createLocalTableDocument(): Promise<LocalTableDocumentTest
 	const tableDocumentFactory = TableDocument.getFactory();
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: tableDocumentFactory,
+		oldestSupportedClient: "3.0.0",
 		registryEntries: [tableDocumentFactory.registryEntry],
 	});
 	const loader = new Loader({

@@ -35,6 +35,7 @@ import {
 	createSharedObjectKind,
 } from "@fluidframework/shared-object-base/internal";
 import {
+	defaultTestOldestSupportedClient,
 	ITestFluidObject,
 	ITestObjectProvider,
 	TestFluidObjectFactory,
@@ -489,6 +490,7 @@ describeCompat(
 		};
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory,
+			oldestSupportedClient: defaultTestOldestSupportedClient,
 			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
 			runtimeOptions,
 		});
