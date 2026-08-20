@@ -23,8 +23,7 @@ import type { NodeSchemaOptionsAlpha, System_Unsafe } from "../../api/index.js";
 import {
 	CompatibilityLevel,
 	type WithType,
-	// eslint-disable-next-line import-x/no-deprecated -- Required to implement the deprecated typeNameSymbol API.
-	typeNameSymbol,
+	schemaIdentifierBrand,
 	NodeKind,
 	type TreeNode,
 	type InternalTreeNode,
@@ -910,6 +909,21 @@ function createArrayNodeProxy(
 					return proxyTarget.constructor;
 				}
 
+				// If the property is a function on Array.prototype but not on the dispatch target,
+				// return a function that throws a descriptive TypeError when called.
+				if (
+					typeof key === "string" &&
+					!(key in dispatchTarget) &&
+					key in Array.prototype &&
+					typeof (Array.prototype as unknown as Record<string, unknown>)[key] === "function"
+				) {
+					return () => {
+						throw new TypeError(
+							`ArrayNode does not support '${key}'. Use the ArrayNode API (e.g., insertAt, removeAt, moveToIndex, splice).`,
+						);
+					};
+				}
+
 				// Pass the proxy as the receiver here, so that any methods on
 				// the prototype receive `proxy` as `this`.
 				return Reflect.get(dispatchTarget, key, receiver) as unknown;
@@ -1534,8 +1548,7 @@ export function arraySchema<
 		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
 			persistedMetadata;
 
-		// eslint-disable-next-line import-x/no-deprecated -- Required to implement the deprecated typeNameSymbol API.
-		public get [typeNameSymbol](): TName {
+		public get [schemaIdentifierBrand](): TName {
 			return identifier;
 		}
 		public get [typeSchemaSymbol](): Output {

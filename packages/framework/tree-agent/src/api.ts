@@ -8,7 +8,7 @@ import type { ImplicitFieldSchema, TreeNode } from "@fluidframework/tree";
 import type {
 	FactoryContentObject,
 	ReadableField,
-	TreeBranchAlpha,
+	UntypedTreeViewAlpha,
 	TreeViewAlpha,
 } from "@fluidframework/tree/alpha";
 
@@ -32,7 +32,7 @@ export type TreeView<TRoot extends ImplicitFieldSchema> = Pick<
 	TreeViewAlpha<TRoot>,
 	"root" | "fork" | "merge" | "rebaseOnto" | "schema" | "events"
 > &
-	TreeBranchAlpha;
+	UntypedTreeViewAlpha;
 
 /**
  * A value that is either a {@link TreeView} or a subtree within a {@link TreeView}.

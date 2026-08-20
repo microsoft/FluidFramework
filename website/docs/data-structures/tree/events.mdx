@@ -3,6 +3,8 @@ title: Events
 sidebar_position: 5
 ---
 
+import { ApiLink, PackageLink } from "@site/src/components/shortLinks";
+
 SharedTree's events are subscribed to via "on" methods which return an unsubscribe function.
 The returned unsubscribe function should be called when the event subscription is no longer needed.
 
@@ -15,12 +17,12 @@ unsubscribe();
 
 ## Whole-Tree Events
 
-[`TreeView`](../../api/fluid-framework/treeview-interface) exposes [events for the whole tree](../../api/fluid-framework/treeviewevents-interface).
+<ApiLink packageName="fluid-framework" apiName="TreeView">`TreeView`</ApiLink> exposes <ApiLink packageName="fluid-framework" apiName="TreeViewEvents">events for the whole tree</ApiLink>.
 
 ## Node-Level Events
 
-The [`Tree`](../../api/fluid-framework/#tree-variable) singleton provides [APIs for working with nodes](../../api/fluid-framework/treenodeapi-interface)
-including [events](../../api/fluid-framework/treechangeevents-interface).
+The <PackageLink packageName="fluid-framework" headingId="tree-variable">`Tree`</PackageLink> singleton provides <ApiLink packageName="fluid-framework" apiName="TreeNodeApi">APIs for working with nodes</ApiLink>
+including <ApiLink packageName="fluid-framework" apiName="TreeChangeEvents">events</ApiLink>.
 
 `Tree` supports two node-level events, subscribed to via `Tree.on`:
 

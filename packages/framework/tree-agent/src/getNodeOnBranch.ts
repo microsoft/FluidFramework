@@ -4,32 +4,37 @@
  */
 
 import { Tree, TreeNode, type ImplicitFieldSchema } from "@fluidframework/tree";
-import { TreeAlpha, type TreeBranch, type TreeViewAlpha } from "@fluidframework/tree/alpha";
+import {
+	TreeAlpha,
+	type TreeViewAlpha,
+	type UntypedTreeView,
+} from "@fluidframework/tree/alpha";
 
 /**
  * Given a {@link TreeNode} _n_ and a target {@link TreeView} _B_, return the node corresponding to _n_ in _B_.
  * @param node - The node to find the corresponding node for.
- * @param branch - The target branch to find the corresponding node on.
- * @returns The corresponding node on the target branch, or `undefined` if it could not be found.
+ * @param view - The target view in which to find the corresponding node.
+ * @returns The corresponding node in the target view, or `undefined` if it could not be found.
  * @remarks A corresponding node is one that can be reached by following the same exact property path from the root in both views.
  * @alpha
  * @privateRemarks This is a candidate for lifting into `@fluidframework/tree/alpha`.
  */
 export function getNodeOnBranch<T extends TreeNode>(
 	node: T,
-	branch: TreeBranch,
+	view: UntypedTreeView,
 ): T | undefined {
-	const currentBranch = TreeAlpha.branch(node);
-	if (currentBranch === branch) {
+	const context = TreeAlpha.context(node);
+	const currentView = context.isView() ? context : undefined;
+	if (currentView === view) {
 		return node;
 	}
-	// TODO: This cast is technically safe for now but relies on implementation details of TreeBranch.
-	// There is currently no way to (generically/untyped) get the schema or root of a TreeBranch.
-	const view = branch as TreeViewAlpha<ImplicitFieldSchema>;
-	if (currentBranch?.hasRootSchema(view.schema) !== true) {
+	// TODO: This cast is technically safe for now but relies on implementation details of UntypedTreeView.
+	// There is currently no way to (generically/untyped) get the schema or root of an UntypedTreeView.
+	const typedView = view as TreeViewAlpha<ImplicitFieldSchema>;
+	if (currentView?.hasRootSchema(typedView.schema) !== true) {
 		return undefined;
 	}
-	if (view.root === undefined || !(view.root instanceof TreeNode)) {
+	if (typedView.root === undefined || !(typedView.root instanceof TreeNode)) {
 		return undefined;
 	}
 
@@ -44,7 +49,7 @@ export function getNodeOnBranch<T extends TreeNode>(
 	}
 	path.reverse();
 
-	let target = view.root;
+	let target = typedView.root;
 	for (const key of path) {
 		const next = TreeAlpha.child(target, key);
 		if (next === undefined || !(next instanceof TreeNode)) {

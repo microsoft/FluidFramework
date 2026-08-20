@@ -58,7 +58,7 @@ import {
 	TreeViewConfigurationAlpha,
 	toInitialSchema,
 	toUpgradeSchema,
-	type TreeBranchAlpha,
+	type UntypedTreeViewAlpha,
 	type TreeSchema,
 	type SchemaUpgrade,
 	type StagedUpgradeStatus,
@@ -186,7 +186,11 @@ export class SchematizingSimpleTreeView<
 		);
 	}
 
-	public isBranch(): this is TreeBranchAlpha {
+	public isBranch(): this is UntypedTreeViewAlpha {
+		return this.isView();
+	}
+
+	public isView(): this is UntypedTreeViewAlpha {
 		return true;
 	}
 
@@ -560,25 +564,25 @@ export class SchematizingSimpleTreeView<
 
 	// #region Branching
 
-	public fork(): ReturnType<TreeBranchAlpha["fork"]> &
+	public fork(): ReturnType<UntypedTreeViewAlpha["fork"]> &
 		SchematizingSimpleTreeView<TRootSchema> {
 		return this.checkout.fork().viewWith(this.config);
 	}
 
-	public merge(context: TreeBranchAlpha, disposeMerged = true): void {
+	public merge(context: UntypedTreeViewAlpha, disposeMerged = true): void {
 		this.checkout.merge(context, disposeMerged);
 	}
 
-	public rebaseOnto(context: TreeBranchAlpha): void {
+	public rebaseOnto(context: UntypedTreeViewAlpha): void {
 		this.checkout.rebaseOnto(context);
 	}
 
-	public isMissingEditsFrom(context: TreeBranchAlpha): boolean {
+	public isMissingEditsFrom(context: UntypedTreeViewAlpha): boolean {
 		return this.checkout.isMissingEditsFrom(context);
 	}
 
 	public computeNetChangeIfRebasedOnto(
-		context: TreeBranchAlpha,
+		context: UntypedTreeViewAlpha,
 	): JsonCompatibleReadOnly | undefined {
 		return this.checkout.computeNetChangeIfRebasedOnto(context);
 	}

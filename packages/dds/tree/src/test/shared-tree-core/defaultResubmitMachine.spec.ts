@@ -96,7 +96,7 @@ describe("DefaultResubmitMachine", () => {
 	describe("omits already sequenced commits from resubmit phase", () => {
 		it("omits sequenced commits that were not rebased", () => {
 			const enricher = new MockChangeEnricher();
-			const machine = new DefaultResubmitMachine(enricher);
+			const machine = new DefaultResubmitMachine(enricher, true);
 			machine.onCommitSubmitted(commit1);
 			machine.onCommitSubmitted(commit2);
 			// Simulate the sequencing of commit 1
@@ -114,7 +114,7 @@ describe("DefaultResubmitMachine", () => {
 
 		it("omits sequenced commits that were rebased", () => {
 			const enricher = new MockChangeEnricher();
-			const machine = new DefaultResubmitMachine(enricher);
+			const machine = new DefaultResubmitMachine(enricher, true);
 			machine.onCommitSubmitted(commit1);
 			machine.onCommitSubmitted(commit2);
 			// Simulate the sequencing of a peer commit. This would lead to the rebasing of commits 1 and 2.
@@ -140,7 +140,7 @@ describe("DefaultResubmitMachine", () => {
 
 	it("can resubmit a subset of commits (skipping the first)", () => {
 		const enricher = new MockChangeEnricher();
-		const machine = new DefaultResubmitMachine(enricher);
+		const machine = new DefaultResubmitMachine(enricher, true);
 
 		// Submit three commits in order
 		machine.onCommitSubmitted(commit1);
@@ -174,7 +174,7 @@ describe("DefaultResubmitMachine", () => {
 	describe("enriches commits for resubmit", () => {
 		it("when the commits do not undergo rebasing", () => {
 			const enricher = new MockChangeEnricher();
-			const machine = new DefaultResubmitMachine(enricher);
+			const machine = new DefaultResubmitMachine(enricher, true);
 			machine.onCommitSubmitted(commit1);
 			machine.onCommitSubmitted(commit2);
 
@@ -199,7 +199,7 @@ describe("DefaultResubmitMachine", () => {
 		for (const scenario of ["only", "and before"]) {
 			it(`when the commits undergo rebasing at resubmit time ${scenario}`, () => {
 				const enricher = new MockChangeEnricher();
-				const machine = new DefaultResubmitMachine(enricher);
+				const machine = new DefaultResubmitMachine(enricher, true);
 				machine.onCommitSubmitted(commit1);
 
 				if (scenario === "and before") {
@@ -277,7 +277,7 @@ describe("DefaultResubmitMachine", () => {
 
 		it("when the commits undergo rebasing before resubmit time", () => {
 			const enricher = new MockChangeEnricher();
-			const machine = new DefaultResubmitMachine(enricher);
+			const machine = new DefaultResubmitMachine(enricher, true);
 			machine.onCommitSubmitted(commit1);
 			machine.onCommitSubmitted(commit2);
 
@@ -366,7 +366,7 @@ describe("DefaultResubmitMachine", () => {
 
 		it("enriches only rebased commits when resubmitting a subset", () => {
 			const enricher = new MockChangeEnricher();
-			const machine = new DefaultResubmitMachine(enricher);
+			const machine = new DefaultResubmitMachine(enricher, true);
 
 			// Submit three commits in order
 			machine.onCommitSubmitted(commit1);

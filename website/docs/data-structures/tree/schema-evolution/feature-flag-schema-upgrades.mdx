@@ -3,7 +3,7 @@ title: How to Enable Staged Schema Upgrades with Feature Flags
 sidebar\_position: 6
 ---
 
-import { ApiLink } from "@site/src/components/shortLinks";
+import { ApiLink, PackageLink } from "@site/src/components/shortLinks";
 
 # How to Enable Staged Schema Upgrades with Feature Flags
 
@@ -21,7 +21,7 @@ Import them from `@fluidframework/tree/alpha`.
 
 ## How It Works
 
-When you define a [staged schema upgrade](./index.mdx#staged-schema-upgrades) (using [`staged()`](../../../api/fluid-framework/schemafactorybeta-class#staged-property) for allowed types or [`stagedOptional()`](../../../api/tree/schemafactoryalpha-class#stagedoptional-property) for field optionality), the staged parts are excluded from stored schema by default.
+When you define a [staged schema upgrade](./index.mdx#staged-schema-upgrades) (using <ApiLink packageName="fluid-framework" apiName="SchemaFactoryBeta" headingId="staged-property">`staged()`</ApiLink> for allowed types or <ApiLink packageName="fluid-framework" apiName="SchemaFactoryAlpha" headingId="stagedoptional-property">`stagedOptional()`</ApiLink> for field optionality), the staged parts are excluded from stored schema by default.
 
 With `TreeViewConfigurationAlpha`, you can selectively enable specific staged upgrades at view construction time:
 
@@ -189,7 +189,7 @@ Plan your rollout with this in mind: ensure that all active clients have the sta
   Use [testing schema upgrades](./testing-schema-upgrades.mdx) to verify your code handles the upgraded schema correctly before turning on the flag in production.
 
 - **Use `snapshotSchemaCompatibility` tests.**
-  Write [`snapshotSchemaCompatibility`](../../../api/fluid-framework/#snapshotschemacompatibility-function) tests to verify compatibility across all schema states in your rollout. Only use schema configurations in production that are covered by these tests.
+    Write <PackageLink packageName="fluid-framework" headingId="snapshotschemacompatibility-function">`snapshotSchemaCompatibility`</PackageLink> tests to verify compatibility across all schema states in your rollout. Only use schema configurations in production that are covered by these tests.
 
 - **Avoid diverging upgrade paths.**
   `snapshotSchemaCompatibility` assumes a linear version history and cannot model branching upgrade paths. If different documents enable different combinations of staged upgrades (e.g., one enables A+C while another enables B+C), the resulting schema states diverge and cannot be validated in a single snapshot test. Keep your rollout linear — enable staged upgrades in the same order for all documents — so that every schema state you encounter in production is covered by your compatibility tests.

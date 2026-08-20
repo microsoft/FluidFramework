@@ -148,11 +148,7 @@ module.exports = {
 			"build:genver",
 		],
 		"build:entrypoints": {
-			dependsOn: [
-				"build:entrypoints:esm",
-				"build:entrypoints:cjs",
-				"build:entrypoints:node10",
-			],
+			dependsOn: ["build:entrypoints:esm", "build:entrypoints:cjs"],
 			script: false,
 		},
 		"build:entrypoints:esm": ["build:esnext"],
@@ -206,12 +202,11 @@ module.exports = {
 			dependsOn: ["build:esnext"],
 			script: true,
 		},
-		// build:api-reports may be handled in one step with build:docs when a
-		// package only uses api-extractor supported exports, which is a single
-		// export/entrypoint. For packages with /legacy exports, we need to
-		// generate reports from legacy entrypoint as well as the "current" one.
+		// Packages with a single API report may handle build:api-reports directly.
+		// Packages with /legacy exports generate reports from legacy and "current" entrypoints using child tasks.
 		// The "current" entrypoint should be the broadest of "public.d.ts",
 		// "beta.d.ts", and "alpha.d.ts".
+		"build:api-reports": ["build:entrypoints:esm", "api-extractor:esnext", "build:esnext"],
 		"build:api-reports:current": [
 			"build:entrypoints:esm",
 			"api-extractor:esnext",
@@ -222,6 +217,7 @@ module.exports = {
 			"api-extractor:esnext",
 			"build:esnext",
 		],
+		"ci:build:api-reports": ["build:entrypoints:esm", "api-extractor:esnext", "build:esnext"],
 		"ci:build:api-reports:current": [
 			"build:entrypoints:esm",
 			"api-extractor:esnext",
@@ -416,7 +412,6 @@ module.exports = {
 		// Independent packages
 		"build-common": "common/build/build-common",
 		"eslint-config-fluid": "common/build/eslint-config-fluid",
-		"eslint-plugin-fluid": "common/build/eslint-plugin-fluid",
 		"common-utils": "common/lib/common-utils",
 		"protocol-def": "common/lib/protocol-definitions",
 
@@ -507,9 +502,8 @@ module.exports = {
 				// Could be renamed, but there is tooling that uses this name and it's not worth it.
 				"common/build/build-common/gen_version.js",
 
-				// ESLint shared config and plugin
+				// ESLint shared config
 				"common/build/eslint-config-fluid/.*",
-				"common/build/eslint-plugin-fluid/.*",
 
 				"common/lib/common-utils/jest-puppeteer.config.js",
 				"common/lib/common-utils/jest.config.js",
@@ -706,7 +700,6 @@ module.exports = {
 			"@fluidframework/build-common",
 			"@fluidframework/common-utils",
 			"@fluidframework/eslint-config-fluid",
-			"@fluid-internal/eslint-plugin-fluid",
 			"@fluidframework/protocol-definitions",
 			"@fluidframework/test-tools",
 			"fluidframework-docs",
