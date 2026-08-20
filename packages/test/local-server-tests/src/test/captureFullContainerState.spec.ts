@@ -85,6 +85,13 @@ function makeFactoryWithFailingReadBlob(
 	};
 }
 
+/**
+ * Simulates a document service factory that hasn't flushed any ops to storage.
+ *
+ * This implementation works by intercepting storage fetches and delta stream connection attempts,
+ * where the storage fetch is stubbed to return an empty stream, and the delta stream connection is wrapped
+ * to begin with the ops fetched from the inner storage factory.
+ */
 function makeFactoryWithSocketOnlyOps(
 	inner: IDocumentServiceFactory,
 ): IDocumentServiceFactory {
