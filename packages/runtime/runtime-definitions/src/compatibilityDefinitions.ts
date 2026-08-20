@@ -34,8 +34,8 @@
  *
  * Since this type is marked with `@input`, it is only consumed by the framework and never returned, so widening the accepted set is a non-breaking change.
  *
- * Historically, this type allowed arbitrary patch versions, but as noted above that is problematic for ordering, so only the major and minor versions are supported going forward:
- * support for patch versions can be aged out as support for version 1 and 2 are dropped (or simple deprecated and removed in a later major version).
+ * Historically, this type allowed arbitrary patch versions, but as noted above that is problematic for ordering, so only the major and minor versions are supported for new majors:
+ * support for patch versions can be aged out as support for versions 1 and 2 are dropped (or simply deprecated and removed in a later major version).
  * Once gone that simplification is done, this type will align with {@link @fluidframework/driver-definitions#OldestSupportedServiceClientVersion} and the two types can be deduplicated.
  *
  * @input
