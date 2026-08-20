@@ -342,3 +342,25 @@ The final validation sequence should include:
 - Excluded APIs cannot be linked accidentally through the manifest.
 - API models and documenter implementation code do not enter the browser bundle.
 - Existing links can migrate incrementally without breaking v1, v2, or local documentation builds.
+
+# Edge cases we need to consider
+
+## Parent discriminators
+
+Our `ApiLink` API allows users to specify the `apiType` when as a discriminator when the same `apiName` appears multiple times in the package's API surface with different types.
+This allows users to, for example, differentiate between interface `Foo` and constant `Foo` exported by a package.
+
+But our API also allows users to link to member items of parent types.
+E.g. `Foo.bar`.
+In this case, say our package exports both an interface and a constant named `Foo`.
+The `ApiLink` API does not provide a way for users to specify a discriminator for the *parent* element of the specifier.
+
+To my knowledge, our website doesn't currently have any use cases for this.
+But I'm sure it's only a matter of time before we need it, so I think we should address this now.
+
+`TSDoc` handles this by supporting optional discriminators at each level in the hierarchy.
+E.g. the above case could be handles by specifying `(Foo:interface).bar` to link to the `Foo` *interface*'s `bar` property.
+- See here for more details on TSDoc's link syntax: https://tsdoc.org/pages/tags/link/
+
+I suggest we adopt the same pattern.
+Rather than having separate `apiName` and `apiType` arguments to `ApiLink`, we can have a single `api` argument that uses a similar syntax that supports optional discriminators at each level in the hierarchy.
