@@ -9,9 +9,9 @@ import type {
 	IRuntime,
 	IRuntimeFactory,
 } from "@fluidframework/container-definitions/legacy";
-// eslint-disable-next-line import-x/no-deprecated -- only the minVersionForCollab overload is deprecated.
 import {
 	type IContainerRuntimeOptions,
+	// eslint-disable-next-line import-x/no-deprecated -- only the minVersionForCollab overload is deprecated.
 	loadContainerRuntime,
 } from "@fluidframework/container-runtime/legacy";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
