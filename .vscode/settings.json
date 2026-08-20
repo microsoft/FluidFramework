@@ -57,6 +57,7 @@
 		"injective",
 		"insertable",
 		"losslessly",
+		"misalign",
 		"mitigations",
 		"mocharc",
 		"multinomial",
