@@ -35,6 +35,7 @@ import {
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import {
+	defaultTestOldestSupportedClient,
 	createDataStoreFactory,
 	createAndAttachContainerUsingProps,
 	ITestFluidObject,
@@ -81,6 +82,7 @@ describe("Ops on Reconnect", () => {
 		const dataObject2Factory = createDataStoreFactory("dataObject2", factory);
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory,
+			oldestSupportedClient: defaultTestOldestSupportedClient,
 			registryEntries: [
 				[defaultFactory.type, Promise.resolve(defaultFactory)],
 				[dataObject2Factory.type, Promise.resolve(dataObject2Factory)],

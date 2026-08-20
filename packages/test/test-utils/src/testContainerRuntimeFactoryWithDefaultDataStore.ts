@@ -12,7 +12,10 @@ import { RuntimeRequestHandler } from "@fluidframework/request-handler/internal"
 import {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
+	OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
+
+import { defaultTestOldestSupportedClient } from "./containerRuntimeFactories.js";
 
 const getDefaultFluidObject = async (runtime: IContainerRuntime): Promise<FluidObject> => {
 	const entryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
@@ -63,9 +66,23 @@ export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
  *
  * @internal
  */
-export type ContainerRuntimeFactoryWithDefaultDataStoreConstructor = new (
-	props: ContainerRuntimeFactoryWithDefaultDataStoreProps,
-) => IRuntimeFactory;
+export type ContainerRuntimeFactoryWithDefaultDataStoreConstructor =
+	| (new (
+			props: ContainerRuntimeFactoryWithDefaultDataStoreProps,
+	  ) => IRuntimeFactory)
+	| (new (
+			props: ContainerRuntimeFactoryWithDefaultDataStoreProps &
+				(
+					| {
+							readonly oldestSupportedClient: OldestSupportedClientVersion;
+							readonly minVersionForCollab?: never;
+					  }
+					| {
+							readonly oldestSupportedClient?: never;
+							readonly minVersionForCollab: OldestSupportedClientVersion;
+					  }
+				),
+	  ) => IRuntimeFactory);
 
 /**
  * Creates a container runtime factory with default data store for backward compatibility.
@@ -81,7 +98,16 @@ export const createContainerRuntimeFactoryWithDefaultDataStore = (
 	ctorProps: ContainerRuntimeFactoryWithDefaultDataStoreProps,
 ): IRuntimeFactory => {
 	try {
-		return new ctor(ctorProps);
+		const currentCtor = ctor as new (
+			props: ContainerRuntimeFactoryWithDefaultDataStoreProps & {
+				readonly oldestSupportedClient: OldestSupportedClientVersion;
+				readonly minVersionForCollab?: never;
+			},
+		) => IRuntimeFactory;
+		return new currentCtor({
+			...ctorProps,
+			oldestSupportedClient: defaultTestOldestSupportedClient,
+		});
 	} catch (err) {
 		// IMPORTANT: The constructor argument structure changed, so this is needed for dynamically using older `ContainerRuntimeFactoryWithDefaultDataStore`s
 		const {

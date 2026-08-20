@@ -31,9 +31,21 @@ import type {
 	OldestSupportedClientVersion,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
-import { RequestParser, RuntimeFactoryHelper } from "@fluidframework/runtime-utils/internal";
+import {
+	defaultMinVersionForCollab,
+	RequestParser,
+	RuntimeFactoryHelper,
+} from "@fluidframework/runtime-utils/internal";
 
 const defaultDataStoreId = "default";
+
+/**
+ * Compatibility setting used by generic test runtimes that need to preserve the historical
+ * runtime defaults.
+ *
+ * @internal
+ */
+export const defaultTestOldestSupportedClient = defaultMinVersionForCollab;
 
 async function getDefaultFluidObject(runtime: IContainerRuntime): Promise<FluidObject> {
 	const entryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
@@ -126,7 +138,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore
 	/**
 	 * {@inheritDoc ContainerRuntimeFactoryWithDefaultDataStoreProps.minVersionForCollab}
 	 */
-	private readonly minVersionForCollab: OldestSupportedClientVersion | undefined;
+	private readonly minVersionForCollab: OldestSupportedClientVersion;
 
 	public constructor(props: ContainerRuntimeFactoryWithDefaultDataStoreProps) {
 		super();
@@ -153,7 +165,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore
 		this.provideEntryPoint = props.provideEntryPoint ?? getDefaultFluidObject;
 		this.requestHandlers = [getDefaultObject];
 		this.registry = new FluidDataStoreRegistry(this.registryEntries);
-		this.minVersionForCollab = props.minVersionForCollab;
+		this.minVersionForCollab = props.minVersionForCollab ?? defaultTestOldestSupportedClient;
 	}
 
 	public async instantiateFirstTime(runtime: IContainerRuntime): Promise<void> {

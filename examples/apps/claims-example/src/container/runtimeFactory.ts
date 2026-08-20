@@ -19,6 +19,7 @@ export class ClaimsExampleContainerRuntimeFactory extends ContainerRuntimeFactor
 			registryEntries: [
 				[ClaimsDataObjectFactory.type, Promise.resolve(ClaimsDataObjectFactory)],
 			],
+			oldestSupportedClient: "3.0.0",
 		});
 	}
 }

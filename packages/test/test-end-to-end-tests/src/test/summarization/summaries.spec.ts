@@ -28,6 +28,7 @@ import {
 import type { SharedString } from "@fluidframework/sequence/internal";
 import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
+	defaultTestOldestSupportedClient,
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
 	ITestContainerConfig,
@@ -314,6 +315,7 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 			]);
 			const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 				defaultFactory: dataStoreFactory1,
+				oldestSupportedClient: defaultTestOldestSupportedClient,
 				registryEntries: registryStoreEntries,
 			});
 

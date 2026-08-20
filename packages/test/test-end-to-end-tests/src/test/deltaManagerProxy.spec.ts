@@ -10,6 +10,7 @@ import type { ILoaderProps } from "@fluidframework/container-loader/internal";
 import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
 import {
+	defaultTestOldestSupportedClient,
 	TestFluidObjectFactory,
 	createTestConfigProvider,
 	type ITestFluidObject,
@@ -35,6 +36,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider, apis) => {
 	};
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory,
+		oldestSupportedClient: defaultTestOldestSupportedClient,
 		registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
 		runtimeOptions,
 	});
