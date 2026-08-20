@@ -44,7 +44,7 @@ However, there are many other types of changes that could impact cross-client co
 
 If a change affects the data format (see above), it should be gated by a **container runtime option**. Runtime options are enforced via the `oldestSupportedClient` property to ensure customers do not accidentally break older clients by enabling cross-client compatibility breaking features prematurely.
 
-`oldestSupportedClient` defines the oldest Fluid client version that must be able to access documents written by the runtime. Customers are encouraged to set `oldestSupportedClient` to the highest version their users are saturated on. If the customer does not set `oldestSupportedClient`, a default value is assigned. `oldestSupportedClient` controls the "default configurations" and "unsafe configuration prevention" mechanisms explained below.
+`oldestSupportedClient` defines the oldest Fluid client version that must be able to access documents written by the runtime. Callers must specify exactly one of `oldestSupportedClient` or the deprecated `minVersionForCollab`; omitting both is an error. Customers are encouraged to set `oldestSupportedClient` to the highest version their users are saturated on. `oldestSupportedClient` controls the "default configurations" and "unsafe configuration prevention" mechanisms explained below.
 
 ### Default Configurations
 
@@ -67,7 +67,7 @@ const runtimeOptionsAffectingDocSchemaConfigMap: ConfigMap<RuntimeOptionsAffecti
 };
 ```
 
-> **Note on `"2.0.0-defaults"`:** This is a special version string (considered less than `"2.0.0"` by `semver`) used as the default when a customer does not explicitly set `oldestSupportedClient`. It exists to distinguish the unspecified case from an explicit `"2.0.0"` setting. Some options (e.g., `explicitSchemaControl`) use a threshold of `"2.0.0"` rather than `"2.0.0-defaults"`, meaning they only activate when the customer _explicitly_ sets `oldestSupportedClient` to `"2.0.0"` or higher. See `defaultMinVersionForCollab` in [compatibilityBase.ts](./packages/runtime/runtime-utils/src/compatibilityBase.ts) for more information.
+> **Note on `"2.0.0-defaults"`:** This special historical version string (considered less than `"2.0.0"` by `semver`) preserves the runtime option defaults that applied before compatibility versions were explicitly configured. It may be selected explicitly by internal and test callers that need those semantics. Some options (e.g., `explicitSchemaControl`) use a threshold of `"2.0.0"` rather than `"2.0.0-defaults"`, so they activate only when `oldestSupportedClient` is `"2.0.0"` or higher.
 
 ### Unsafe Configuration Prevention
 
@@ -209,10 +209,7 @@ Once a checkpoint has aged out of the supported window, the runtime's compatibil
 
 To tighten runtime enforcement:
 
-1. **Advance `defaultMinVersionForCollab`:** Update the default in
-   [compatibilityBase.ts](./packages/runtime/runtime-utils/src/compatibilityBase.ts)
-   to the oldest checkpoint still in the supported window.
-2. **Advance `lowestMinVersionForCollab`:** Update the floor in
+1. **Advance `lowestMinVersionForCollab`:** Update the floor in
    [compatibilityBase.ts](./packages/runtime/runtime-utils/src/compatibilityBase.ts)
    to match the oldest checkpoint still in the supported window.
    `lowestMinVersionForCollab` is the absolute minimum value a customer can

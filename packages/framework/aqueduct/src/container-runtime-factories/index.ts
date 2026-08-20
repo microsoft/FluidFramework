@@ -6,8 +6,10 @@
 export {
 	BaseContainerRuntimeFactory,
 	type BaseContainerRuntimeFactoryProps,
+	type DeprecatedBaseContainerRuntimeFactoryProps,
 } from "./baseContainerRuntimeFactory.js";
 export {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	type ContainerRuntimeFactoryWithDefaultDataStoreProps,
+	type DeprecatedContainerRuntimeFactoryWithDefaultDataStoreProps,
 } from "./containerRuntimeFactoryWithDefaultDataStore.js";

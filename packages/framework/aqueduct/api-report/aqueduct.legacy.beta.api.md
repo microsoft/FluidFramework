@@ -7,6 +7,8 @@
 // @beta @legacy
 export class BaseContainerRuntimeFactory extends RuntimeFactoryHelper implements IProvideFluidDataStoreRegistry {
     constructor(props: BaseContainerRuntimeFactoryProps);
+    // @deprecated
+    constructor(props: DeprecatedBaseContainerRuntimeFactoryProps);
     protected containerHasInitialized(runtime: IContainerRuntime): Promise<void>;
     protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry;
@@ -20,8 +22,8 @@ export interface BaseContainerRuntimeFactoryProps {
     // @deprecated (undocumented)
     dependencyContainer?: IFluidDependencySynthesizer;
     // @deprecated
-    minVersionForCollab?: OldestSupportedClientVersion | undefined;
-    oldestSupportedClient?: OldestSupportedClientVersion | undefined;
+    minVersionForCollab?: never;
+    oldestSupportedClient: OldestSupportedClientVersion;
     provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
     registryEntries: NamedFluidDataStoreRegistryEntries;
     // @deprecated
@@ -32,6 +34,8 @@ export interface BaseContainerRuntimeFactoryProps {
 // @beta @legacy
 export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRuntimeFactory {
     constructor(props: ContainerRuntimeFactoryWithDefaultDataStoreProps);
+    // @deprecated
+    constructor(props: DeprecatedContainerRuntimeFactoryWithDefaultDataStoreProps);
     protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
     // (undocumented)
     static readonly defaultDataStoreId = "default";
@@ -76,6 +80,18 @@ export interface DataObjectTypes {
     InitialState?: any;
     OptionalProviders?: FluidObject;
 }
+
+// @beta @deprecated @legacy @input
+export type DeprecatedBaseContainerRuntimeFactoryProps = Omit<BaseContainerRuntimeFactoryProps, "oldestSupportedClient" | "minVersionForCollab"> & {
+    readonly oldestSupportedClient?: never;
+    readonly minVersionForCollab: OldestSupportedClientVersion;
+};
+
+// @beta @deprecated @legacy @input
+export type DeprecatedContainerRuntimeFactoryWithDefaultDataStoreProps = Omit<ContainerRuntimeFactoryWithDefaultDataStoreProps, "oldestSupportedClient" | "minVersionForCollab"> & {
+    readonly oldestSupportedClient?: never;
+    readonly minVersionForCollab: OldestSupportedClientVersion;
+};
 
 // @beta @legacy (undocumented)
 export interface IDataObjectProps<I extends DataObjectTypes = DataObjectTypes> {

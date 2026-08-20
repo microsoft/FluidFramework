@@ -766,7 +766,8 @@ export interface UnknownIncomingTypedMessage extends TypedMessage {
 type UnsequencedSignalEnvelope = Omit<ISignalEnvelope, "clientBroadcastSignalSequenceNumber">;
 
 /**
- * This object holds the parameters necessary for the {@link loadContainerRuntime} function.
+ * This object holds the parameters necessary for the
+ * {@link @fluidframework/container-runtime#(loadContainerRuntime:1)} function.
  * @legacy @beta
  */
 export interface LoadContainerRuntimeParams {
@@ -825,41 +826,134 @@ export interface LoadContainerRuntimeParams {
 	 * enable `foo` by default. If a customer were to set oldestSupportedClient to 1.0.0, then `bar` would be set to
 	 * disable `foo` by default.
 	 */
-	oldestSupportedClient?: OldestSupportedClientVersion;
+	oldestSupportedClient: OldestSupportedClientVersion;
 
 	/**
-	 * Oldest version of Fluid Framework client that must be able to open and process documents
-	 * written by this container runtime.
+	 * This property must not be provided. Use `oldestSupportedClient` instead.
 	 *
-	 * @remarks
-	 * See {@link LoadContainerRuntimeParams.oldestSupportedClient} for compatibility implications.
-	 *
-	 * Specifying both `oldestSupportedClient` and `minVersionForCollab` is an error.
-	 *
-	 * @deprecated 2.116.0. To be removed in 3.10.0. Use
-	 * {@link LoadContainerRuntimeParams.oldestSupportedClient} instead.
+	 * @deprecated 2.116.0. To be removed in 3.10.0. Use `oldestSupportedClient` instead.
 	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
 	 */
-	minVersionForCollab?: OldestSupportedClientVersion;
+	minVersionForCollab?: never;
 }
+
+/**
+ * Container runtime load parameters using the deprecated compatibility property.
+ *
+ * @deprecated 2.116.0. To be removed in 3.10.0. Use {@link LoadContainerRuntimeParams} with
+ * `oldestSupportedClient` instead.
+ * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
+ * @input
+ * @legacy
+ * @beta
+ */
+export type DeprecatedLoadContainerRuntimeParams = Omit<
+	LoadContainerRuntimeParams,
+	"oldestSupportedClient" | "minVersionForCollab"
+> & {
+	readonly oldestSupportedClient?: never;
+	readonly minVersionForCollab: OldestSupportedClientVersion;
+};
+
+/**
+ * Parameters accepted by internal runtime loaders that retain their historical compatibility
+ * fallback for cross-version test infrastructure.
+ *
+ * @internal
+ */
+export type LoadContainerRuntimeParamsInternal = Omit<
+	LoadContainerRuntimeParams,
+	"oldestSupportedClient" | "minVersionForCollab"
+> & {
+	readonly oldestSupportedClient?: OldestSupportedClientVersion;
+	readonly minVersionForCollab?: OldestSupportedClientVersion;
+};
+
+/**
+ * Internal container runtime load parameters.
+ *
+ * @internal
+ */
+export type LoadContainerRuntime2Params = Omit<
+	LoadContainerRuntimeParamsInternal,
+	"registryEntries" | "runtimeOptions"
+> & {
+	/**
+	 * Mapping from data store types to their corresponding factories.
+	 */
+	registry: IFluidDataStoreRegistry;
+	/**
+	 * Constructor to use to create the ContainerRuntime instance.
+	 * @remarks
+	 * Defaults to {@link ContainerRuntime}.
+	 */
+	containerRuntimeCtor?: typeof ContainerRuntime;
+	/**
+	 * {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.runtimeOptions}, except
+	 * with additional internal-only options.
+	 */
+	runtimeOptions?: IContainerRuntimeOptionsInternal;
+};
+
+function getExplicitOldestSupportedClient(
+	params: Readonly<{
+		oldestSupportedClient?: OldestSupportedClientVersion;
+		minVersionForCollab?: OldestSupportedClientVersion;
+	}>,
+): OldestSupportedClientVersion {
+	const { oldestSupportedClient, minVersionForCollab } = params;
+	if (oldestSupportedClient === undefined) {
+		if (minVersionForCollab !== undefined) {
+			return minVersionForCollab;
+		}
+		throw new UsageError(
+			"Specify exactly one of oldestSupportedClient or minVersionForCollab (deprecated).",
+		);
+	}
+	if (minVersionForCollab !== undefined) {
+		throw new UsageError(
+			"Specify exactly one of oldestSupportedClient or minVersionForCollab (deprecated).",
+		);
+	}
+	return oldestSupportedClient;
+}
+
 /**
  * This is meant to be used by a {@link @fluidframework/container-definitions#IRuntimeFactory} to instantiate a container runtime.
  * @param params - An object which specifies all required and optional params necessary to instantiate a runtime.
  * @returns A runtime which provides all the functionality necessary to bind with the loader layer via the {@link @fluidframework/container-definitions#IRuntime} interface and provide a runtime environment via the {@link @fluidframework/container-runtime-definitions#IContainerRuntime} interface.
  * @legacy @beta
  */
-export async function loadContainerRuntime(
+export function loadContainerRuntime(
 	params: LoadContainerRuntimeParams,
+): Promise<IContainerRuntime & IRuntime>;
+
+/**
+ * Load a container runtime using the deprecated `minVersionForCollab` property.
+ *
+ * @deprecated 2.116.0. To be removed in 3.10.0. Pass `oldestSupportedClient` instead.
+ * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
+ * @legacy
+ * @beta
+ */
+export function loadContainerRuntime(
+	params: DeprecatedLoadContainerRuntimeParams,
+): Promise<IContainerRuntime & IRuntime>;
+export async function loadContainerRuntime(
+	params: LoadContainerRuntimeParams | DeprecatedLoadContainerRuntimeParams,
 ): Promise<IContainerRuntime & IRuntime> {
+	const oldestSupportedClient = getExplicitOldestSupportedClient(params);
 	return ContainerRuntime.loadRuntime({
 		...params,
+		oldestSupportedClient,
+		minVersionForCollab: undefined,
 		registry: new FluidDataStoreRegistry(params.registryEntries),
 	});
 }
 
 /**
- * Alpha variant of {@link loadContainerRuntime} that returns the runtime in an
- * extendable object, allowing additional properties to be added in the future.
+ * Alpha variant of {@link @fluidframework/container-runtime#(loadContainerRuntime:1)} that returns
+ * the runtime in an extendable object, allowing additional properties to be added in the future.
  *
  * @param params - An object which specifies all required and optional params necessary to instantiate a runtime.
  * @returns An object containing the runtime.
@@ -873,8 +967,11 @@ export async function loadContainerRuntime(
 export async function loadContainerRuntimeAlpha(params: LoadContainerRuntimeParams): Promise<{
 	runtime: IContainerRuntime & IRuntime;
 }> {
+	const oldestSupportedClient = getExplicitOldestSupportedClient(params);
 	return ContainerRuntime.loadRuntime2({
 		...params,
+		oldestSupportedClient,
+		minVersionForCollab: undefined,
 		registry: new FluidDataStoreRegistry(params.registryEntries),
 	});
 }
@@ -944,11 +1041,7 @@ export class ContainerRuntime
 	 * `loadRuntime` could be removed (replaced by `loadRuntime2` which could be renamed back to `loadRuntime`).
 	 */
 	public static async loadRuntime(
-		params: Omit<LoadContainerRuntimeParams, "registryEntries" | "runtimeOptions"> & {
-			registry: IFluidDataStoreRegistry;
-			containerRuntimeCtor?: typeof ContainerRuntime;
-			runtimeOptions?: IContainerRuntimeOptionsInternal;
-		},
+		params: LoadContainerRuntime2Params,
 	): Promise<ContainerRuntime> {
 		return ContainerRuntime.loadRuntime2(params).then((r) => r.runtime);
 	}
@@ -967,22 +1060,7 @@ export class ContainerRuntime
 	 * Returns `{ runtime }` to allow future extensions (e.g. staging mode controls).
 	 */
 	public static async loadRuntime2(
-		params: Omit<LoadContainerRuntimeParams, "registryEntries" | "runtimeOptions"> & {
-			/**
-			 * Mapping from data store types to their corresponding factories.
-			 */
-			registry: IFluidDataStoreRegistry;
-			/**
-			 * Constructor to use to create the ContainerRuntime instance.
-			 * @remarks
-			 * Defaults to {@link ContainerRuntime}.
-			 */
-			containerRuntimeCtor?: typeof ContainerRuntime;
-			/**
-			 * {@link LoadContainerRuntimeParams.runtimeOptions}, except with additional internal only options.
-			 */
-			runtimeOptions?: IContainerRuntimeOptionsInternal;
-		},
+		params: LoadContainerRuntime2Params,
 	): Promise<{ runtime: ContainerRuntime }> {
 		const {
 			context,

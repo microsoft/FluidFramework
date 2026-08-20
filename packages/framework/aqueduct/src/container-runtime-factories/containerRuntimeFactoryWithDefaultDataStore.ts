@@ -9,12 +9,16 @@ import type {
 	IContainerRuntimeWithResolveHandle_Deprecated,
 } from "@fluidframework/container-runtime-definitions/internal";
 import type { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
-import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
+import type {
+	IFluidDataStoreFactory,
+	OldestSupportedClientVersion,
+} from "@fluidframework/runtime-definitions/internal";
 import { RequestParser } from "@fluidframework/runtime-utils/internal";
 
 import {
 	BaseContainerRuntimeFactory,
 	type BaseContainerRuntimeFactoryProps,
+	getExplicitOldestSupportedClient,
 } from "./baseContainerRuntimeFactory.js";
 
 const defaultDataStoreId = "default";
@@ -43,6 +47,29 @@ export interface ContainerRuntimeFactoryWithDefaultDataStoreProps
 }
 
 /**
+ * {@link ContainerRuntimeFactoryWithDefaultDataStore} construction properties using the deprecated
+ * compatibility property.
+ *
+ * @deprecated 2.116.0. To be removed in 3.10.0. Use
+ * {@link ContainerRuntimeFactoryWithDefaultDataStoreProps} with `oldestSupportedClient` instead.
+ * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
+ * @input
+ * @legacy
+ * @beta
+ */
+export type DeprecatedContainerRuntimeFactoryWithDefaultDataStoreProps = Omit<
+	ContainerRuntimeFactoryWithDefaultDataStoreProps,
+	"oldestSupportedClient" | "minVersionForCollab"
+> & {
+	readonly oldestSupportedClient?: never;
+	readonly minVersionForCollab: OldestSupportedClientVersion;
+};
+
+type ContainerRuntimeFactoryWithDefaultDataStorePropsInternal =
+	| ContainerRuntimeFactoryWithDefaultDataStoreProps
+	| DeprecatedContainerRuntimeFactoryWithDefaultDataStoreProps;
+
+/**
  * A ContainerRuntimeFactory that initializes Containers with a single default data store, which can be requested from
  * the container with an empty URL.
  *
@@ -55,7 +82,13 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 
 	protected readonly defaultFactory: IFluidDataStoreFactory;
 
-	public constructor(props: ContainerRuntimeFactoryWithDefaultDataStoreProps) {
+	public constructor(props: ContainerRuntimeFactoryWithDefaultDataStoreProps);
+	/**
+	 * @deprecated 2.116.0. To be removed in 3.10.0. Pass `oldestSupportedClient` instead.
+	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
+	 */
+	public constructor(props: DeprecatedContainerRuntimeFactoryWithDefaultDataStoreProps);
+	public constructor(props: ContainerRuntimeFactoryWithDefaultDataStorePropsInternal) {
 		const requestHandlers = props.requestHandlers ?? [];
 		const provideEntryPoint = props.provideEntryPoint ?? getDefaultFluidObject;
 
@@ -76,8 +109,11 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 			return undefined; // continue search
 		};
 
+		const oldestSupportedClient = getExplicitOldestSupportedClient(props);
 		super({
 			...props,
+			oldestSupportedClient,
+			minVersionForCollab: undefined,
 			requestHandlers: [getDefaultObject, ...requestHandlers],
 			provideEntryPoint,
 		});
