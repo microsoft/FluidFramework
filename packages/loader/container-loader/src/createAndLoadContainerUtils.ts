@@ -18,7 +18,7 @@ import type {
 } from "@fluidframework/core-interfaces";
 import type { AllOrNone } from "@fluidframework/core-interfaces/internal";
 import { validateAllOrNone } from "@fluidframework/core-utils/internal";
-import type { IClientDetails } from "@fluidframework/driver-definitions";
+import type { IClient, IClientDetails } from "@fluidframework/driver-definitions";
 import type {
 	IDocumentServiceFactory,
 	IResolvedUrl,
@@ -32,6 +32,7 @@ import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
 import {
 	GenericError,
 	UsageError,
+	createChildLogger,
 	normalizeError,
 	createChildMonitoringContext,
 	mixinMonitoringContext,
@@ -51,7 +52,9 @@ import {
 	unreferencedAttachmentBlobLocalIds,
 	type IBlobAttachReference,
 } from "./captureReferencedContents.js";
+import { CatchUpMonitor } from "./catchUpMonitor.js";
 import { DebugLogger } from "./debugLogger.js";
+import { createDeltaManager } from "./deltaManagerFactory.js";
 import { createFrozenDocumentServiceFactory } from "./frozenServices.js";
 import { Loader } from "./loader.js";
 import { pkgVersion } from "./packageVersion.js";
@@ -518,7 +521,10 @@ export interface ICaptureFullContainerStateProps {
  * the latest snapshot, inlined contents of every blob reachable through
  * referenced subtrees, inlined contents of every referenced attachment blob
  * keyed by storage id, and all ops with sequence numbers after the base
- * snapshot's sequence number (as read from its attributes blob).
+ * snapshot's sequence number through the point observed when the delta stream
+ * connects. The same DeltaManager catch-up path used by container loading
+ * combines delta-storage and delta-stream ops, so recently sequenced ops do
+ * not need to have reached durable delta storage before capture.
  *
  * Reachability respects GC. Snapshot subtrees flagged `unreferenced: true`
  * are skipped (their contents are not inlined). Attachment blobs that GC has
@@ -539,7 +545,8 @@ export interface ICaptureFullContainerStateProps {
  * is a known consumer and end-to-end coverage, the capture refuses rather
  * than silently producing pending state that omits group data.
  *
- * Note: if a new snapshot lands between the snapshot fetch and the ops fetch,
+ * @privateRemarks
+ * Note: if a new snapshot lands between the snapshot fetch and delta catch-up,
  * the returned state may not reflect the very latest snapshot, but remains
  * internally consistent: ops are anchored to the snapshot that was captured.
  *
@@ -579,6 +586,43 @@ export async function captureFullContainerState({
 		resolvedUrl,
 		logger,
 	);
+	const captureLogger = createChildLogger({ logger, namespace: "captureFullContainerState" });
+	const client: IClient = {
+		details: { capabilities: { interactive: true } },
+		mode: "read",
+		permission: [],
+		scopes: [],
+		user: { id: "" },
+	};
+	const deltaManager = createDeltaManager({
+		serviceProvider: () => documentService,
+		logger: captureLogger,
+		active: () => false,
+		containerDirty: () => false,
+		client,
+		reconnectAllowed: true,
+	});
+	const connectedP = new Promise<void>((resolve) => {
+		deltaManager.once("connect", () => resolve());
+	});
+	const closedP = new Promise<never>((_resolve, reject) => {
+		deltaManager.once("closed", (error) => {
+			reject(
+				error === undefined
+					? new GenericError("DeltaManager closed while capturing container state")
+					: normalizeError(error),
+			);
+		});
+	});
+	deltaManager.connect({
+		reason: { text: "captureFullContainerState" },
+		mode: "read",
+		// Ops will be fetched from storage using the later "attachOpHandler" call. Attempting to fetch here is a no-op anyway as
+		// no op handler is yet attached.
+		// Fetching the snapshot first such that an op handler could be attached using its sequence number information may simplify
+		// the code, but doing it this way allows parallelization of snapshot fetch and establishing a connection.
+		fetchOpsFromStorage: false,
+	});
 	try {
 		const storage = await documentService.connectToStorage();
 
@@ -621,31 +665,28 @@ export async function captureFullContainerState({
 			captureReferencedAttachmentBlobs(baseSnapshot, storage, gcData), // base64 encoded
 		]);
 
-		const deltaStorage = await documentService.connectToDeltaStorage();
-		const opsStream = deltaStorage.fetchMessages(
-			attributes.sequenceNumber + 1,
-			undefined,
-			undefined,
-			false,
-			"captureFullContainerState",
-		);
 		const savedOps: ISequencedDocumentMessage[] = [];
+		const attachP = deltaManager.attachOpHandler(
+			attributes.minimumSequenceNumber,
+			attributes.sequenceNumber,
+			{
+				process: (message) => savedOps.push(message),
+				processSignal: () => {},
+			},
+			"all",
+		);
+		await Promise.race([Promise.all([connectedP, attachP]), closedP]);
+		await Promise.race([waitForCatchUp(deltaManager), closedP]);
+		deltaManager.dispose();
+
 		const postSnapshotBlobReferences: IBlobAttachReference[] = [];
-		let opsResult = await opsStream.read();
-		while (!opsResult.done) {
-			for (const op of opsResult.value) {
-				savedOps.push(op);
-				// Blobs uploaded after the base snapshot are not in its
-				// `.blobs` redirect table, so `captureReferencedAttachmentBlobs`
-				// did not see them. The wire-format BlobAttach op carries
-				// `(localId, storageId)` in its metadata; collect those here so
-				// we can backfill the bytes before sealing the artifact.
-				const refs = extractBlobAttachReferences(op);
-				if (refs.length > 0) {
-					postSnapshotBlobReferences.push(...refs);
-				}
-			}
-			opsResult = await opsStream.read();
+		for (const op of savedOps) {
+			// Blobs uploaded after the base snapshot are not in its
+			// `.blobs` redirect table, so `captureReferencedAttachmentBlobs`
+			// did not see them. The wire-format BlobAttach op carries
+			// `(localId, storageId)` in its metadata; collect those here so
+			// we can backfill the bytes before sealing the artifact.
+			postSnapshotBlobReferences.push(...extractBlobAttachReferences(op));
 		}
 
 		if (postSnapshotBlobReferences.length > 0) {
@@ -671,8 +712,21 @@ export async function captureFullContainerState({
 		};
 		return JSON.stringify(pendingState);
 	} finally {
+		deltaManager.dispose();
 		documentService.dispose();
 	}
+}
+
+async function waitForCatchUp(
+	deltaManager: ReturnType<typeof createDeltaManager>,
+): Promise<void> {
+	await new Promise<void>((resolve) => {
+		const monitor = new CatchUpMonitor(deltaManager, () => {
+			monitor.dispose();
+			resolve();
+		});
+		monitor.start();
+	});
 }
 
 /**
