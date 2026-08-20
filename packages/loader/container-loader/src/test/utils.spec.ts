@@ -137,7 +137,6 @@ describe("container-loader utils", () => {
 	});
 
 	describe("SnapshotInfo and Snapshot", () => {
-		const utf8Text = "ASCII\u0000\u00E9\uD83D\uDE00\uFFFD";
 		const snapshotTree: ISnapshotTree = {
 			trees: {
 				".protocol": {
@@ -147,19 +146,15 @@ describe("container-loader utils", () => {
 					trees: {},
 				},
 			},
-			blobs: {
-				utf8: "utf8Key",
-			},
+			blobs: {},
 		};
 
 		const snapshotBlobs: ISerializableBlobContents = {
 			someKey: JSON.stringify({ some: 10, data: 20 }),
-			utf8Key: utf8Text,
 		};
 
 		const blobContents: Map<string, ArrayBuffer> = new Map([
 			["someKey", stringToBuffer(JSON.stringify({ some: 10, data: 20 }), "utf8")],
-			["utf8Key", stringToBuffer(utf8Text, "utf8")],
 		]);
 
 		const snapshot: ISnapshot = {
@@ -189,13 +184,6 @@ describe("container-loader utils", () => {
 				snapshotSequenceNumber: snapshot.sequenceNumber ?? 0,
 				snapshotBlobs,
 			});
-		});
-
-		it("Preserves UTF-8 snapshot text through JSON serialization", () => {
-			const serializedSnapshotInfo = JSON.stringify(convertSnapshotToSnapshotInfo(snapshot));
-			const parsedSnapshotInfo = JSON.parse(serializedSnapshotInfo) as SerializedSnapshotInfo;
-
-			assert.deepEqual(convertSnapshotInfoToSnapshot(parsedSnapshotInfo), snapshot);
 		});
 	});
 });

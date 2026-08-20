@@ -549,10 +549,8 @@ export const getSummaryContentsFromSummaryWithFormatValidation = (
 				const blobId = localId;
 				blobs[localId] = blobId;
 				if (content.type === SummaryType.Blob) {
-					blobsContents[blobId] =
-						typeof content.content === "string"
-							? stringToBuffer(content.content, "utf8")
-							: Uint8Array.from(content.content).buffer;
+					assert(typeof content.content === "string");
+					blobsContents[blobId] = stringToBuffer(content.content, "utf8");
 				} else {
 					assert(content.type === SummaryType.Handle);
 					assert.strictEqual(content.handleType, SummaryType.Blob);

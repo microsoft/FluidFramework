@@ -26,10 +26,7 @@ import { v4 as uuid } from "uuid";
 
 import { Container } from "../container.js";
 import { Loader } from "../loader.js";
-import {
-	detachedSnapshotBlobsEncoding,
-	type IPendingDetachedContainerState,
-} from "../serializedStateManager.js";
+import type { IPendingDetachedContainerState } from "../serializedStateManager.js";
 
 import { AbsentProperty, failProxy, failSometimeProxy } from "./failProxy.js";
 import {
@@ -75,42 +72,9 @@ describe("loader unit test", () => {
 		const parsedState = JSON.parse(detachedContainerState) as IPendingDetachedContainerState;
 		assert.strictEqual(parsedState.attached, false);
 		assert.strictEqual(parsedState.hasAttachmentBlobs, false);
-		assert.strictEqual(parsedState.snapshotBlobsEncoding, detachedSnapshotBlobsEncoding);
 		assert.strictEqual(Object.keys(parsedState.snapshotBlobs).length, 4);
 		assert(parsedState.baseSnapshot !== undefined);
 		await loader.rehydrateDetachedContainerFromSnapshot(detachedContainerState);
-	});
-
-	it("preserves binary summary blobs through detached serialize and rehydrate", async () => {
-		const binaryBlobContents = [0x00, 0x7f, 0x80, 0xc3, 0x28, 0xff];
-		let rehydratedBinaryBlob: ArrayBufferLike | undefined;
-		const loader = new Loader({
-			codeLoader: createTestCodeLoaderProxy({
-				summaryBlobContent: Uint8Array.from(binaryBlobContents),
-				onExistingSnapshot: (snapshot) => {
-					const rehydratedBlobId = snapshot.snapshotTree.blobs.binary;
-					assert(rehydratedBlobId !== undefined, "Binary summary blob ID is missing");
-					rehydratedBinaryBlob = snapshot.blobContents.get(rehydratedBlobId);
-				},
-			}),
-			documentServiceFactory: documentServiceFactoryFailProxy,
-			urlResolver: failProxy(),
-		});
-		const detached = await loader.createDetachedContainer({ package: "none" });
-
-		const detachedContainerState = detached.serialize();
-		const parsedState = JSON.parse(detachedContainerState) as IPendingDetachedContainerState;
-		const binaryBlobId = parsedState.baseSnapshot.blobs.binary;
-		assert(binaryBlobId !== undefined, "Serialized binary summary blob ID is missing");
-		assert.strictEqual(parsedState.snapshotBlobsEncoding, detachedSnapshotBlobsEncoding);
-		assert.strictEqual(parsedState.snapshotBlobs[binaryBlobId], "AH+Awyj/");
-
-		const rehydrated =
-			await loader.rehydrateDetachedContainerFromSnapshot(detachedContainerState);
-		assert(rehydratedBinaryBlob !== undefined, "Rehydrated binary summary blob is missing");
-		assert.deepStrictEqual([...new Uint8Array(rehydratedBinaryBlob)], binaryBlobContents);
-		detached.close();
-		rehydrated.close();
 	});
 
 	it("rehydrateDetachedContainerFromSnapshot with valid format and attachment blobs", async () => {
@@ -124,7 +88,6 @@ describe("loader unit test", () => {
 		const parsedState = JSON.parse(detachedContainerState) as IPendingDetachedContainerState;
 		assert.strictEqual(parsedState.attached, false);
 		assert.strictEqual(parsedState.hasAttachmentBlobs, true);
-		assert.strictEqual(parsedState.snapshotBlobsEncoding, detachedSnapshotBlobsEncoding);
 		assert.strictEqual(Object.keys(parsedState.snapshotBlobs).length, 4);
 		assert(parsedState.baseSnapshot !== undefined);
 		await loader.rehydrateDetachedContainerFromSnapshot(detachedContainerState);
@@ -153,7 +116,6 @@ describe("loader unit test", () => {
 		const parsedState = JSON.parse(detachedContainerState) as IPendingDetachedContainerState;
 		assert.strictEqual(parsedState.attached, false);
 		assert.strictEqual(parsedState.hasAttachmentBlobs, false);
-		assert.strictEqual(parsedState.snapshotBlobsEncoding, detachedSnapshotBlobsEncoding);
 		assert.strictEqual(Object.keys(parsedState.snapshotBlobs).length, 4);
 		assert.deepStrictEqual(parsedState.pendingRuntimeState, { pending: [] });
 		assert(parsedState.baseSnapshot !== undefined);
@@ -193,7 +155,6 @@ describe("loader unit test", () => {
 		const parsedState = JSON.parse(detachedContainerState) as IPendingDetachedContainerState;
 		assert.strictEqual(parsedState.attached, false);
 		assert.strictEqual(parsedState.hasAttachmentBlobs, true);
-		assert.strictEqual(parsedState.snapshotBlobsEncoding, detachedSnapshotBlobsEncoding);
 		assert.strictEqual(Object.keys(parsedState.snapshotBlobs).length, 4);
 		assert(parsedState.baseSnapshot !== undefined);
 		await loader.rehydrateDetachedContainerFromSnapshot(detachedContainerState);

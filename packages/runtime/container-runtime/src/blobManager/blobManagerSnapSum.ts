@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { bufferToString } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import type {
 	IContainerContext,
@@ -186,7 +187,12 @@ const summarizeV1 = (
 				`/${blobsTreeName}/${detachedBlobSummaryTreeName}/${localId}`,
 			);
 		} else {
-			detachedBlobSummaryBuilder.addBlob(localId, new Uint8Array(detachedBlobSummaryContent));
+			// Detached and pending container state serializes summary blobs as UTF-8 text.
+			// Base64 keeps arbitrary blob bytes lossless across that boundary.
+			detachedBlobSummaryBuilder.addBlob(
+				localId,
+				bufferToString(detachedBlobSummaryContent, "base64"),
+			);
 		}
 	}
 	const detachedBlobSummary = detachedBlobSummaryBuilder.getSummaryTree();

@@ -30,17 +30,12 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
+import type { ISerializableBlobContents } from "./containerStorageAdapter.js";
 import type {
-	IBase64BlobContents,
-	ISerializableBlobContents,
-} from "./containerStorageAdapter.js";
-import {
-	detachedSnapshotBlobsEncoding,
-	type DetachedSnapshotWithBlobs,
-	type IPendingContainerState,
-	type IPendingDetachedContainerState,
-	type SerializedSnapshotInfo,
-	type SnapshotWithBlobs,
+	IPendingContainerState,
+	IPendingDetachedContainerState,
+	SerializedSnapshotInfo,
+	SnapshotWithBlobs,
 } from "./serializedStateManager.js";
 
 // This is used when we rehydrate a container from the snapshot. Here we put the blob contents
@@ -241,36 +236,11 @@ export function convertSnapshotInfoToSnapshot(
 	for (const [blobId, serializedContent] of Object.entries(snapshotInfo.snapshotBlobs)) {
 		blobContents.set(blobId, stringToBuffer(serializedContent, "utf8"));
 	}
-	return createISnapshot(
-		snapshotInfo.baseSnapshot,
-		blobContents,
-		snapshotInfo.snapshotSequenceNumber,
-	);
-}
-
-/**
- * Converts a detached container's serialized snapshot back to an ISnapshot.
- */
-export function convertDetachedSnapshotToISnapshot(
-	snapshot: DetachedSnapshotWithBlobs,
-): ISnapshot {
-	const blobContents = new Map<string, ArrayBuffer>();
-	for (const [blobId, serializedContent] of Object.entries(snapshot.snapshotBlobs)) {
-		blobContents.set(blobId, stringToBuffer(serializedContent, detachedSnapshotBlobsEncoding));
-	}
-	return createISnapshot(snapshot.baseSnapshot, blobContents, 0);
-}
-
-function createISnapshot(
-	snapshotTree: ISnapshotTree,
-	blobContents: Map<string, ArrayBuffer>,
-	sequenceNumber: number,
-): ISnapshot {
 	return {
-		snapshotTree,
+		snapshotTree: snapshotInfo.baseSnapshot,
 		blobContents,
 		ops: [],
-		sequenceNumber,
+		sequenceNumber: snapshotInfo.snapshotSequenceNumber,
 		latestSequenceNumber: undefined,
 		snapshotFormatV: 1,
 	};
@@ -357,87 +327,22 @@ export function isDeltaStreamConnectionForbiddenError(
 }
 
 /**
- * The detached container format before binary-safe snapshot serialization.
- */
-type LegacyPendingDetachedContainerState = Omit<
-	IPendingDetachedContainerState,
-	"snapshotBlobs" | "snapshotBlobsEncoding"
-> & {
-	snapshotBlobs: ISerializableBlobContents;
-	snapshotBlobsEncoding?: undefined;
-};
-
-type SerializedPendingDetachedContainerState =
-	| IPendingDetachedContainerState
-	| LegacyPendingDetachedContainerState;
-
-function isStringRecord(value: unknown): value is Record<string, string> {
-	return (
-		typeof value === "object" &&
-		value !== null &&
-		!Array.isArray(value) &&
-		Object.values(value).every((entry) => typeof entry === "string")
-	);
-}
-
-function isSnapshotTree(value: unknown): value is ISnapshotTree {
-	if (typeof value !== "object" || value === null || Array.isArray(value)) {
-		return false;
-	}
-	const candidate = value as Partial<Record<keyof ISnapshotTree, unknown>>;
-	return (
-		isStringRecord(candidate.blobs) &&
-		typeof candidate.trees === "object" &&
-		candidate.trees !== null &&
-		!Array.isArray(candidate.trees) &&
-		Object.values(candidate.trees).every(isSnapshotTree)
-	);
-}
-
-/**
  * Validates format in parsed string get from detached container
  * serialization using IPendingDetachedContainerState format.
  */
 function isPendingDetachedContainerState(
-	detachedContainerState: unknown,
-): detachedContainerState is SerializedPendingDetachedContainerState {
-	if (typeof detachedContainerState !== "object" || detachedContainerState === null) {
+	detachedContainerState: IPendingDetachedContainerState,
+): detachedContainerState is IPendingDetachedContainerState {
+	if (
+		detachedContainerState?.attached === undefined ||
+		detachedContainerState?.baseSnapshot === undefined ||
+		detachedContainerState?.snapshotBlobs === undefined ||
+		detachedContainerState?.hasAttachmentBlobs === undefined
+	) {
 		return false;
 	}
-	const candidate = detachedContainerState as Partial<
-		Record<keyof IPendingDetachedContainerState, unknown>
-	>;
-	return (
-		candidate.attached === false &&
-		isSnapshotTree(candidate.baseSnapshot) &&
-		isStringRecord(candidate.snapshotBlobs) &&
-		typeof candidate.hasAttachmentBlobs === "boolean" &&
-		(candidate.snapshotBlobsEncoding === undefined ||
-			candidate.snapshotBlobsEncoding === detachedSnapshotBlobsEncoding)
-	);
+	return true;
 }
-
-function normalizePendingDetachedContainerState(
-	detachedContainerState: SerializedPendingDetachedContainerState,
-): IPendingDetachedContainerState {
-	if (detachedContainerState.snapshotBlobsEncoding === detachedSnapshotBlobsEncoding) {
-		return detachedContainerState;
-	}
-
-	const snapshotBlobs: IBase64BlobContents = {};
-	for (const [id, blob] of Object.entries(detachedContainerState.snapshotBlobs)) {
-		snapshotBlobs[id] = bufferToString(
-			stringToBuffer(blob, "utf8"),
-			detachedSnapshotBlobsEncoding,
-		);
-	}
-	return {
-		...detachedContainerState,
-		snapshotBlobs,
-		snapshotBlobsEncoding: detachedSnapshotBlobsEncoding,
-	};
-}
-
 /**
  * Converts an ISnapshot to a SnapshotWithBlobs, extracting and serializing its blob contents.
  * @param snapshot - The ISnapshot to convert.
@@ -455,24 +360,6 @@ export function convertISnapshotToSnapshotWithBlobs(snapshot: ISnapshot): Snapsh
 }
 
 /**
- * Converts an ISnapshot to the binary-safe detached container serialization format.
- * @param snapshot - The ISnapshot to convert.
- */
-export function convertISnapshotToDetachedSnapshotWithBlobs(
-	snapshot: ISnapshot,
-): DetachedSnapshotWithBlobs {
-	const snapshotBlobs: IBase64BlobContents = {};
-	for (const [id, blob] of snapshot.blobContents.entries()) {
-		snapshotBlobs[id] = bufferToString(blob, detachedSnapshotBlobsEncoding);
-	}
-	return {
-		baseSnapshot: snapshot.snapshotTree,
-		snapshotBlobs,
-		snapshotBlobsEncoding: detachedSnapshotBlobsEncoding,
-	};
-}
-
-/**
  * Parses the given string into {@link IPendingDetachedContainerState} format,
  * with validation (if invalid, throws a UsageError).
  * This is the inverse of the JSON.stringify call in {@link Container.serialize}
@@ -481,24 +368,18 @@ export function getDetachedContainerStateFromSerializedContainer(
 	serializedContainer: string,
 ): IPendingDetachedContainerState {
 	const hasBlobsSummaryTree = ".hasAttachmentBlobs";
-	const parsedContainerState: unknown = JSON.parse(serializedContainer);
-	const parsedSummary =
-		typeof parsedContainerState === "object" && parsedContainerState !== null
-			? (parsedContainerState as ISummaryTree)
-			: undefined;
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+	const parsedContainerState = JSON.parse(serializedContainer);
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 	if (isPendingDetachedContainerState(parsedContainerState)) {
-		return normalizePendingDetachedContainerState(parsedContainerState);
-	} else if (isCombinedAppAndProtocolSummary(parsedSummary, hasBlobsSummaryTree)) {
-		const parsedSummaryTree: ISummaryTree["tree"] = parsedSummary.tree;
-		const { [hasBlobsSummaryTree]: attachmentBlobsMarker, ...summaryTree } = parsedSummaryTree;
-		const snapshot = getISnapshotFromSerializedContainer({
-			...parsedSummary,
-			tree: summaryTree,
-		});
+		return parsedContainerState;
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+	} else if (isCombinedAppAndProtocolSummary(parsedContainerState)) {
+		const snapshot = getISnapshotFromSerializedContainer(parsedContainerState);
 		const detachedContainerState: IPendingDetachedContainerState = {
 			attached: false,
-			...convertISnapshotToDetachedSnapshotWithBlobs(snapshot),
-			hasAttachmentBlobs: attachmentBlobsMarker !== undefined,
+			...convertISnapshotToSnapshotWithBlobs(snapshot),
+			hasAttachmentBlobs: parsedContainerState.tree[hasBlobsSummaryTree] !== undefined,
 		};
 		return detachedContainerState;
 	} else {

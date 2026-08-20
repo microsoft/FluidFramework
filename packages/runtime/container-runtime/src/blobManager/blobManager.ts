@@ -52,6 +52,11 @@ import {
 	type IBlobManagerLoadInfo,
 } from "./blobManagerSnapSum.js";
 
+const decodeDetachedSummaryBlob = (encodedBlob: ArrayBufferLike): ArrayBufferLike =>
+	stringToBuffer(bufferToString(encodedBlob, "utf8"), "base64");
+
+const maxConcurrentDetachedBlobReads = 32;
+
 /**
  * This class represents blob (long string)
  * This object is used only when creating (writing) new blob and serialization purposes.
@@ -346,19 +351,16 @@ export class BlobManager {
 		this.redirectTable = toRedirectTable(blobManagerLoadInfo, this.mc.logger);
 		const detachedBlobSummary = blobManagerLoadInfo.detachedBlobSummary;
 		const detachedBlobSummaryEntries = Object.entries(detachedBlobSummary?.blobs ?? {});
-		const isDetached = this.runtime.attachState === AttachState.Detached;
-		// Attached snapshots provide service blob IDs, so they can converge to ordinary attachments.
-		// Only detached runtimes must retain the inline summary representation and its local bytes.
 		this.detachedBlobSummaryIds = new Set(
-			isDetached ? detachedBlobSummaryEntries.map(([localId]) => localId) : [],
+			detachedBlobSummaryEntries.map(([localId]) => localId),
 		);
-		for (const [localId] of detachedBlobSummaryEntries) {
+		for (const localId of this.detachedBlobSummaryIds.keys()) {
 			assert(
 				!this.redirectTable.has(localId),
 				"Detached summary IDs cannot also be attachment redirects",
 			);
 		}
-		if (isDetached) {
+		if (this.runtime.attachState === AttachState.Detached) {
 			for (const [localId, blobId] of detachedBlobSummaryEntries) {
 				const encodedBlob: ArrayBufferLike | undefined =
 					detachedBlobSummary?.blobsContents?.[blobId];
@@ -368,7 +370,7 @@ export class BlobManager {
 				);
 				this.localBlobCache.set(localId, {
 					state: "attached",
-					blob: encodedBlob,
+					blob: decodeDetachedSummaryBlob(encodedBlob),
 				});
 				this.redirectTable.set(localId, localId);
 			}
@@ -482,14 +484,19 @@ export class BlobManager {
 			this.mc.logger,
 			{ eventName: "AttachmentReadBlob", id: storageId },
 			async (event) => {
-				return this.storage.readBlob(storageId).catch((error) => {
-					if (this.runtime.disposed) {
-						// If the runtime is disposed, this is not an error we care to track, it's expected behavior.
-						event.cancel({ category: "generic" });
-					}
+				return this.storage
+					.readBlob(storageId)
+					.then((blob) =>
+						this.detachedBlobSummaryIds.has(localId) ? decodeDetachedSummaryBlob(blob) : blob,
+					)
+					.catch((error) => {
+						if (this.runtime.disposed) {
+							// If the runtime is disposed, this is not an error we care to track, it's expected behavior.
+							event.cancel({ category: "generic" });
+						}
 
-					throw error;
-				});
+						throw error;
+					});
 			},
 			{ end: true, cancel: "error" },
 		);
@@ -845,17 +852,21 @@ export class BlobManager {
 	}
 
 	public summarize(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
-		return this.summarizeInternal();
+		return this.summarizeInternal(undefined);
 	}
 
 	public async summarizeFullTree(): Promise<ISummaryTreeWithStats> {
-		return this.summarizeInternal();
+		return this.summarizeInternal(await this.loadFullTreeContents());
 	}
 
-	private summarizeInternal(): ISummaryTreeWithStats {
+	private summarizeInternal(
+		fullTreeContents: ReadonlyMap<string, ArrayBufferLike> | undefined,
+	): ISummaryTreeWithStats {
+		const detachedBlobSummaryContents =
+			fullTreeContents ?? this.getDetachedBlobSummaryContentsFromLocalCache();
 		return summarizeBlobManagerState(
 			this.redirectTable,
-			this.getDetachedBlobSummaryContentsFromLocalCache(),
+			detachedBlobSummaryContents,
 			this.detachedBlobSummaryIds,
 		);
 	}
@@ -866,7 +877,13 @@ export class BlobManager {
 		const contents = new Map<string, ArrayBufferLike>();
 		for (const localId of this.detachedBlobSummaryIds) {
 			const localBlobRecord = this.localBlobCache.get(localId);
-			assert(localBlobRecord !== undefined, "Detached summary blob must be cached");
+			if (localBlobRecord === undefined) {
+				assert(
+					this.runtime.attachState !== AttachState.Detached,
+					"Detached summary blob must be cached",
+				);
+				continue;
+			}
 			assert(
 				localBlobRecord.state === "attached",
 				"Detached summary blob cache entry must be attached",
@@ -874,6 +891,36 @@ export class BlobManager {
 			contents.set(localId, localBlobRecord.blob);
 		}
 		return contents.size === 0 ? undefined : contents;
+	}
+
+	/**
+	 * Materializes payloads that would otherwise be summarized by handle.
+	 * Used only when producing a full-tree summary.
+	 */
+	private async loadFullTreeContents(): Promise<Map<string, ArrayBufferLike>> {
+		const fullTreeContents = new Map(this.getDetachedBlobSummaryContentsFromLocalCache());
+		const localIdsToLoad = [...this.detachedBlobSummaryIds].filter(
+			(localId) => !fullTreeContents.has(localId),
+		);
+		for (
+			let firstIndex = 0;
+			firstIndex < localIdsToLoad.length;
+			firstIndex += maxConcurrentDetachedBlobReads
+		) {
+			await Promise.all(
+				localIdsToLoad
+					.slice(firstIndex, firstIndex + maxConcurrentDetachedBlobReads)
+					.map(async (localId) => {
+						const storageId = this.redirectTable.get(localId);
+						assert(storageId !== undefined, "Detached blob summary ID must have a storage ID");
+						fullTreeContents.set(
+							localId,
+							decodeDetachedSummaryBlob(await this.storage.readBlob(storageId)),
+						);
+					}),
+			);
+		}
+		return fullTreeContents;
 	}
 
 	/**

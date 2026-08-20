@@ -50,11 +50,12 @@ export interface ISerializableBlobContents {
 
 /**
  * Stringified blobs inlined in a summary/snapshot tree, keyed by blob id.
- * Values are **base64-encoded** raw bytes. Used for arbitrary binary data,
- * including detached summary blobs and attachment-blob payloads. Mirrors the
- * encoding used by the runtime's own pending-blob serializer in `BlobManager`.
- * Structurally identical to {@link ISerializableBlobContents}; the two types
- * exist to keep the encoding contract visible at every call site.
+ * Values are **base64-encoded** raw bytes. Used for attachment-blob
+ * payloads, which may carry arbitrary binary data (images, encrypted
+ * blobs, etc.). Mirrors the encoding used by the runtime's own
+ * pending-blob serializer in `BlobManager`. Structurally identical to
+ * {@link ISerializableBlobContents}; the two types exist to keep the
+ * encoding contract visible at every call site.
  * @internal
  */
 export interface IBase64BlobContents {
