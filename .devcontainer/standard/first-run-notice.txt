@@ -1,0 +1,23 @@
+Welcome to Fluid Framework's Standard codespace!
+
+This codespace is configured for full-repo development with 16 CPUs and 64 GB RAM.
+
+Getting started:
+  pnpm install          Install all dependencies
+  pnpm build            Build all packages
+  pnpm test             Run tests
+  fluid-build .         Build only the current package and its dependencies
+
+Key documentation:
+  DEV.md                Development setup and workflow guide
+  CONTRIBUTING.md       Contribution guidelines
+  PACKAGES.md           Package overview and organization
+
+Monorepo structure:
+  packages/             Core Fluid Framework packages (DDS, runtime, loader, etc.)
+  server/               Routerlicious server components
+  build-tools/          Internal build tooling and release infrastructure
+  examples/             Example applications and benchmarks
+  experimental/         Experimental packages (not yet stable)
+
+For more info, see https://fluidframework.com

@@ -12,7 +12,6 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type { InboundMessageResult } from "../opLifecycle/index.js";
-import { asBatchMetadata } from "../metadata.js";
 
 import { inboundVersionMarkUpdate } from "./inboundBatch.js";
 
@@ -171,30 +170,62 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 		batchId: string,
 		sequenceNumberLowerBound: number,
 	): Promise<ResolveResult> {
-		// Fast path: batch sequenced live this session.
-		const sequenceNumber = this.sessionSequenceFor(batchId);
-		if (sequenceNumber !== undefined) {
+		const startTime = Date.now();
+		// Defaults cover the throw path (only the history scan can throw — e.g. an unpacker
+		// DataCorruptionError or the 0xd1c reader-contract assert): the Resolve event still fires via
+		// `finally`, with outcome "error".
+		let path: "session" | "history" | "noReader" = "history";
+		let outcome: ResolveResult["kind"] | "error" = "error";
+		let resolvedSequenceNumber: number | undefined;
+		try {
+			// Fast path: batch sequenced live this session.
+			const sequenceNumber = this.sessionSequenceFor(batchId);
+			if (sequenceNumber === undefined) {
+				const reader = this.hooks.getHistoricalOpReader?.();
+				if (reader === undefined) {
+					// No reader: the batch may still sequence live, so report pending.
+					path = "noReader";
+					outcome = "pending";
+					return { kind: "pending" };
+				}
+				// Otherwise scan history from the mark's reference point.
+				path = "history";
+				const result = await this.resolveFromHistory(
+					reader,
+					batchId,
+					sequenceNumberLowerBound,
+				);
+				outcome = result.kind;
+				if (result.kind === "resolved") {
+					resolvedSequenceNumber = result.sequenceNumber;
+				}
+				return result;
+			}
+			path = "session";
+			outcome = "resolved";
+			resolvedSequenceNumber = sequenceNumber;
 			return { kind: "resolved", sequenceNumber };
+		} finally {
+			this.hooks.logger.sendTelemetryEvent({
+				eventName: "Resolve",
+				outcome,
+				path,
+				durationMs: Date.now() - startTime,
+				...(resolvedSequenceNumber === undefined
+					? {}
+					: { sequenceNumber: resolvedSequenceNumber }),
+			});
 		}
-
-		// Otherwise scan history from the mark's reference point.
-		const reader = this.hooks.getHistoricalOpReader?.();
-		if (reader === undefined) {
-			// No reader: the batch may still sequence live, so report pending.
-			return { kind: "pending" };
-		}
-		return this.resolveFromHistory(reader, batchId, sequenceNumberLowerBound);
 	}
 
 	/**
 	 * Scans sequenced ops after `sequenceNumberLowerBound` for `batchId`, returning its last op's
 	 * sequence number when found and aborting the fetch once found or exhausted. Each op is routed through
 	 * the same unpack pipeline the live inbound path uses (chunk reassembly, ungroup, decompress) and
-	 * {@link inboundVersionMarkUpdate} derives its batch identity, so chunked batches resolve here too. The
-	 * scan anchor is not guaranteed to be a batch boundary, so a leading batch clipped by the anchor is
-	 * tolerated (its orphan end marker is dropped rather than fed to the processor). On a miss,
-	 * {@link classifyMiss} distinguishes `pending` (not sequenced yet) from `unresolvable` (ops trimmed).
-	 * See DEV.md.
+	 * {@link inboundVersionMarkUpdate} derives its batch identity, so virtualized batches resolve here too.
+	 * The injected historical unpacker owns virtualization details, including tolerating a requested range
+	 * that begins within an incomplete chunk stream. On a miss, {@link classifyMiss} distinguishes
+	 * `pending` (not sequenced yet) from `unresolvable` (ops trimmed).
 	 */
 	private async resolveFromHistory(
 		reader: IHistoricalOpReader,
@@ -208,8 +239,6 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 			const stream = await reader.fetchMessages(from, undefined, abortController.signal);
 			let firstScannedSequenceNumber: number | undefined;
 			let carriedBatchId: string | undefined;
-			// Mirrors the processor's batch-in-progress state so we can drop an orphan end marker (below).
-			let inBatch = false;
 			while (true) {
 				const result = await stream.read();
 				if (result.done) {
@@ -217,25 +246,10 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 				}
 				for (const op of result.value) {
 					firstScannedSequenceNumber ??= op.sequenceNumber;
-					if (!inBatch && asBatchMetadata(op.metadata)?.batch === false) {
-						// The anchor (`sequenceNumberLowerBound + 1`) may land inside a batch whose start
-						// precedes the window; its orphan end marker would trip the processor's 0x9d5 assert.
-						// Drop the clipped tail. The target batch is fully in-window, so this can't skip it.
-						continue;
-					}
-					// undefined = a system op, or an incomplete chunk awaiting later fragments.
+					// undefined = a system op or virtualized input that has not produced a complete result.
 					const inboundResult = unpack?.(op);
 					if (inboundResult === undefined) {
 						continue;
-					}
-					// Track batch progress with the processor so the guard above skips only orphan ends.
-					if (inboundResult.type === "batchStartingMessage") {
-						inBatch = true;
-					} else if (
-						inboundResult.type === "nextBatchMessage" &&
-						inboundResult.batchEnd === true
-					) {
-						inBatch = false;
 					}
 					// Derive batch identity exactly as the live inbound path does, carrying the id across a
 					// piecemeal batch's messages.
@@ -308,6 +322,12 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 		if (existingSequenceNumber === sequenceNumber) {
 			return;
 		}
+		// The protocol guarantees a `batchId` maps to one sequence number; a conflicting remap would also
+		// break the insertion-order invariant MSN eviction relies on, so fail loudly instead of overwriting.
+		assert(
+			existingSequenceNumber === undefined,
+			0xd34 /* version mark batchId remapped to a different sequence number */,
+		);
 
 		this.sequenceNumberByBatchId.set(batchId, sequenceNumber);
 		this.evictBelowMinimumSequenceNumber();

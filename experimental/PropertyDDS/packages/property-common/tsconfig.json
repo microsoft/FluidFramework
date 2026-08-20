@@ -3,6 +3,9 @@
 	"include": ["src/**/*"],
 	"exclude": ["src/test/**/*"],
 	"compilerOptions": {
+		// PropertyDDS relies on legacy class field semantics, which TypeScript enables by
+		// default at target ES2022+. Keep them by disabling useDefineForClassFields.
+		"useDefineForClassFields": false,
 		"composite": true,
 		"rootDir": "./src",
 		"outDir": "./lib",

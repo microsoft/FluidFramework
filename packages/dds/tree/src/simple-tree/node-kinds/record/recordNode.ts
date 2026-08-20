@@ -18,8 +18,7 @@ import type { NodeSchemaOptionsAlpha } from "../../api/index.js";
 import {
 	type TreeNodeSchema,
 	NodeKind,
-	// eslint-disable-next-line import-x/no-deprecated -- Required to handle the deprecated typeNameSymbol API.
-	typeNameSymbol,
+	schemaIdentifierBrand,
 	typeSchemaSymbol,
 	type UnhydratedFlexTreeNode,
 	getInnerNode,
@@ -79,8 +78,7 @@ function createRecordNodeProxy(
 					case typeSchemaSymbol: {
 						return schema;
 					}
-					// eslint-disable-next-line import-x/no-deprecated -- Required to handle the deprecated typeNameSymbol API.
-					case typeNameSymbol: {
+					case schemaIdentifierBrand: {
 						return schema.identifier;
 					}
 					case Symbol.iterator: {
@@ -371,8 +369,7 @@ export function recordSchema<
 		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
 			persistedMetadata;
 
-		// eslint-disable-next-line import-x/no-deprecated -- Required to implement the deprecated typeNameSymbol API.
-		public get [typeNameSymbol](): TName {
+		public get [schemaIdentifierBrand](): TName {
 			return identifier;
 		}
 		public get [typeSchemaSymbol](): Output {

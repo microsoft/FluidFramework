@@ -8,7 +8,7 @@
  * https://microsoft.sharepoint-df.com/:w:/t/ODSPFileStore/ER06b64K_XdDjEyAKl-UT60BJiId39SCVkYSyo_2pvH9gQ?e=KYQ0c5
  */
 
-import { Uint8ArrayToArrayBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
+import { Uint8ArrayToArrayBufferLike, Uint8ArrayToString } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import { NonRetryableError } from "@fluidframework/driver-utils/internal";
 import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
@@ -186,7 +186,7 @@ class BlobDeepCopy extends BlobCore {
 	}
 
 	public get arrayBuffer(): ArrayBufferLike {
-		return Uint8ArrayToArrayBuffer(this.buffer);
+		return Uint8ArrayToArrayBufferLike(this.buffer);
 	}
 
 	public static read(buffer: ReadBuffer, lengthLen: number): BlobCore {
@@ -222,7 +222,7 @@ export class BlobShallowCopy extends BlobCore {
 		return this.data.subarray(this.start, this.end);
 	}
 
-	// Equivalent to Uint8ArrayToArrayBuffer(this.buffer)
+	// Equivalent to Uint8ArrayToArrayBufferLike(this.buffer)
 	public get arrayBuffer(): ArrayBufferLike {
 		const offset = this.data.byteOffset;
 		return this.data.buffer.slice(this.start + offset, this.end + offset);
