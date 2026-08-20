@@ -32,7 +32,7 @@
 		"test:mocha": "mocha \"src/{rules/test,test}/**/*.test.{js,mts}\""
 	},
 	"dependencies": {
-		"@eslint-community/eslint-plugin-eslint-comments": "~4.5.0",
+		"@eslint-community/eslint-plugin-eslint-comments": "~4.7.2",
 		"@eslint-react/eslint-plugin": "~5.9.0",
 		"@eslint/js": "~9.39.2",
 		"@microsoft/tsdoc": "^0.15.1",
