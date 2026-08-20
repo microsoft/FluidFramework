@@ -12,7 +12,6 @@ import type {
 	IRuntime,
 	IRuntimeFactory,
 } from "@fluidframework/container-definitions/legacy";
-// eslint-disable-next-line import-x/no-deprecated -- only the minVersionForCollab overload is deprecated.
 import { loadContainerRuntime } from "@fluidframework/container-runtime/legacy";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
 
@@ -44,7 +43,6 @@ export class GroceryListContainerRuntimeFactory implements IRuntimeFactory {
 			return new SuggestionGroceryList(groceryList);
 		};
 
-		// eslint-disable-next-line import-x/no-deprecated -- using the canonical overload.
 		const runtime = await loadContainerRuntime({
 			context,
 			registryEntries: new Map([
