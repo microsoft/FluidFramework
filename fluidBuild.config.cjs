@@ -186,12 +186,7 @@ module.exports = {
 			"^build:entrypoints:esm",
 			"^api-extractor:esnext",
 		],
-		"build:test:playwright": [
-			"tsc",
-			"build:esnext",
-			"^tsc",
-			"^build:esnext",
-		],
+		"build:test:playwright": ["tsc", "build:esnext", "^tsc", "^build:esnext"],
 		"api": {
 			dependsOn: [
 				"api-extractor:commonjs",
