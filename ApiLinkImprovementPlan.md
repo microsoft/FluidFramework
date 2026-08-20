@@ -54,6 +54,7 @@ interface ApiLinkProps {
 	packageName: string;
 	apiName: string;
 	apiType?: ApiItemKind;
+	overloadIndex?: number;
 	children?: React.ReactNode;
 }
 ```
@@ -78,7 +79,17 @@ The optional `apiType` remains available when a package contains multiple API it
 <ApiLink packageName="fluid-framework" apiName="Tree" apiType="Interface" />
 ```
 
-Lookup without `apiType` succeeds only when the qualified name identifies exactly one target.
+Function and method overloads use API Extractor's one-based overload index:
+
+```mdx
+<ApiLink
+  packageName="fluid-framework"
+  apiName="TreeBranchAlpha.runTransaction"
+  overloadIndex={2}
+/>
+```
+
+Lookup without `apiType` succeeds when the qualified name identifies exactly one API item kind. When that kind has multiple overloads, omitting `overloadIndex` selects overload 1. Supplying `overloadIndex` selects that specific overload and produces an error when it does not exist.
 
 ## Implementation Plan
 
@@ -139,19 +150,33 @@ After loading the API model and normalizing the transformation configuration, tr
 1. Determine its unscoped package name.
 2. Build its qualified author-facing name from model containment.
 3. Obtain its target from the documenter's public link API.
-4. Record the target under the item's `ApiItemKind`.
+4. Record the target with the item's `ApiItemKind` and one-based overload index, when applicable.
 
-Use a manifest shape that preserves ambiguous candidates:
+Use a manifest shape that preserves kind and overload candidates without encoding either into the author-facing name:
 
 ```json
 {
   "fluid-framework": {
-    "TreeView": {
-      "Interface": "/docs/api/fluid-framework/treeview-interface"
-    },
-    "TreeView.upgradeSchema": {
-      "MethodSignature": "/docs/api/fluid-framework/treeview-interface#upgradeschema-methodsignature"
-    }
+    "TreeView": [
+      {
+        "apiType": "Interface",
+        "documentPath": "fluid-framework/treeview-interface"
+      }
+    ],
+    "TreeBranchAlpha.runTransaction": [
+      {
+        "apiType": "MethodSignature",
+        "overloadIndex": 1,
+        "documentPath": "fluid-framework/treebranchalpha-interface",
+        "headingId": "runtransaction-methodsignature"
+      },
+      {
+        "apiType": "MethodSignature",
+        "overloadIndex": 2,
+        "documentPath": "fluid-framework/treebranchalpha-interface",
+        "headingId": "runtransaction_1-methodsignature"
+      }
+    ]
   }
 }
 ```
@@ -173,9 +198,11 @@ The generator must detect and report collisions rather than silently select a ta
 - Identically named exports from multiple package entry points.
 - Two scoped packages with the same unscoped package name.
 
-Different kinds are preserved as candidates and resolved with `apiType`. Other unresolved collisions should fail manifest generation with a diagnostic containing the package, qualified name, kinds, and canonical references involved.
+Different kinds are preserved as candidates and resolved with `apiType`. Each overload of a function, method, call signature, construct signature, or other parameter-list item is preserved as a separate candidate with its API Extractor `overloadIndex`.
 
-For the initial implementation, an unsuffixed overloaded function or method name should link to its first documented overload. Selecting an individual overload can be added later if a concrete authoring requirement emerges. Call signatures, construct signatures, and other items without useful author-facing names may be omitted initially.
+Within a qualified name, the combination of `apiType` and `overloadIndex` must uniquely identify a candidate. Items that do not support overloads omit `overloadIndex`. Duplicate candidates with the same kind and overload index should fail manifest generation with a diagnostic containing the package, qualified name, kind, overload index, and canonical references involved.
+
+Call signatures, construct signatures, and other items without useful author-facing names may be omitted initially, but manifest generation must not collapse distinct overloads for any included item.
 
 ### 5. Publish Manifests Through Docusaurus
 
@@ -200,8 +227,9 @@ Resolution should:
 1. Find the active version's manifest.
 2. Find the package and qualified API name.
 3. Apply `apiType` when provided.
-4. Return the only candidate when `apiType` is omitted.
-5. Throw an actionable error for missing or ambiguous references.
+4. Apply `overloadIndex` when provided, or select overload 1 when the resolved kind has multiple overloads.
+5. Return the only remaining candidate.
+6. Throw an actionable error for missing or ambiguous references.
 
 For example, an ambiguity error should identify the available kinds:
 
@@ -253,7 +281,7 @@ Test:
 - Qualified-name generation.
 - Package-name normalization.
 - Kind-based ambiguity preservation.
-- Overload handling.
+- Preservation of every overload's one-based index and distinct target.
 - Namespace and enum descendants.
 - Package and release-level exclusions.
 - Custom underscore filename handling.
@@ -269,6 +297,7 @@ Update `website/test/unit/shortLinks.test.ts` to cover:
 - Namespace descendants.
 - v1, v2, and local manifest selection.
 - An ambiguous name with and without `apiType`.
+- An overloaded API with an omitted, valid, and invalid `overloadIndex`.
 - Missing package, API, kind, and version diagnostics.
 - Temporary `headingId` compatibility.
 - Default link text and explicit children.
@@ -300,13 +329,14 @@ The final validation sequence should include:
 - Loading API Extractor models in the browser.
 - Reimplementing documenter hierarchy or heading rules in React.
 - Supporting arbitrary TSDoc declaration-reference syntax in `ApiLink` initially.
-- Providing individual overload selection without a demonstrated documentation need.
+- Selecting overloads by parameter types or signature text instead of API Extractor's overload index.
 - Changing generated API Markdown by hand.
 - Reformatting unrelated documentation during link migration.
 
 ## Success Criteria
 
 - Documentation authors can link to top-level APIs and members without knowing generated paths or heading IDs.
+- Documentation authors can link to a specific function or method overload.
 - Link targets always reflect the configuration used to generate that documentation version.
 - Ambiguous names require an explicit and actionable discriminator.
 - Excluded APIs cannot be linked accidentally through the manifest.
