@@ -4,6 +4,7 @@
  */
 
 export { deepFreeze } from "./deepFreeze.js";
+export { defaultMinVersionForCollab as defaultTestOldestSupportedClient } from "@fluidframework/runtime-utils/internal";
 export { IInsecureUser } from "./insecureUsers.js";
 export { InsecureTokenProvider } from "./insecureTokenProvider.js";
 export { MockFluidDataStoreContext } from "./mocksDataStoreContext.js";

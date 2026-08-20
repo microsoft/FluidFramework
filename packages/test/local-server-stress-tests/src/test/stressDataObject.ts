@@ -396,6 +396,7 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 			const runtime = await loadContainerRuntime({
 				context,
 				existing,
+				oldestSupportedClient: "2.40.0",
 				runtimeOptions,
 				registryEntries: [
 					[

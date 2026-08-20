@@ -98,6 +98,7 @@ export const loadCompositeRuntime = async (
 		provideEntryPoint: compositeEntryPoint.provideEntryPoint,
 		runtimeOptions,
 		existing,
+		oldestSupportedClient: "3.0.0",
 	});
 
 	if (!existing) {
