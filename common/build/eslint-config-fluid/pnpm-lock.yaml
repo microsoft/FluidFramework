@@ -66,8 +66,8 @@ importers:
         specifier: ~4.4.5
         version: 4.4.5(eslint-plugin-import-x@4.16.1(@typescript-eslint/utils@8.58.2(eslint@9.39.2(jiti@2.6.1)(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3))(eslint-import-resolver-node@0.3.9(supports-color@8.1.1))(eslint@9.39.2(jiti@2.6.1)(supports-color@8.1.1))(supports-color@8.1.1))(eslint@9.39.2(jiti@2.6.1)(supports-color@8.1.1))(supports-color@8.1.1)
       eslint-plugin-depend:
-        specifier: ~1.4.0
-        version: 1.4.0
+        specifier: ~1.5.0
+        version: 1.5.0(eslint@9.39.2(jiti@2.6.1)(supports-color@8.1.1))
       eslint-plugin-import-x:
         specifier: ~4.16.1
         version: 4.16.1(@typescript-eslint/utils@8.58.2(eslint@9.39.2(jiti@2.6.1)(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3))(eslint-import-resolver-node@0.3.9(supports-color@8.1.1))(eslint@9.39.2(jiti@2.6.1)(supports-color@8.1.1))(supports-color@8.1.1)
@@ -1372,8 +1372,10 @@ packages:
       eslint-plugin-import-x:
         optional: true
 
-  eslint-plugin-depend@1.4.0:
-    resolution: {integrity: sha512-MQs+m4nHSfgAO9bJDsBzqw0ofK/AOA0vfeY/6ahofqcUMLeM6/D1sTYs21fOhc17kNU/gn58YCtj20XaAssh2A==}
+  eslint-plugin-depend@1.5.0:
+    resolution: {integrity: sha512-i3UeLYmclf1Icp35+6W7CR4Bp2PIpDgBuf/mpmXK5UeLkZlvYJ21VuQKKHHAIBKRTPivPGX/gZl5JGno1o9Y0A==}
+    peerDependencies:
+      eslint: '>=8.40.0'
 
   eslint-plugin-import-x@4.16.1:
     resolution: {integrity: sha512-vPZZsiOKaBAIATpFE2uMI4w5IRwdv/FpQ+qZZMR4E+PeOcM4OeoEbqxRMnywdxP19TyB/3h6QBB0EWon7letSQ==}
@@ -4257,9 +4259,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-depend@1.4.0:
+  eslint-plugin-depend@1.5.0(eslint@9.39.2(jiti@2.6.1)(supports-color@8.1.1)):
     dependencies:
       empathic: 2.0.0
+      eslint: 9.39.2(jiti@2.6.1)(supports-color@8.1.1)
       module-replacements: 2.10.1
       semver: 7.7.3
 

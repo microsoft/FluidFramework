@@ -24,7 +24,7 @@
 		"tsdoc",
 		"unicorn:eslint-plugin-unicorn@54.0.0",
 		"unused-imports:unused-imports",
-		"depend:eslint-plugin-depend@1.4.0"
+		"depend:eslint-plugin-depend@1.5.0"
 	],
 	"rules": {
 		"@babel/object-curly-spacing": [
