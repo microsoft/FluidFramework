@@ -1,10 +1,11 @@
-Welcome to Fluid Framework's Lightweight codespace!
+Welcome to Fluid Framework's Standard codespace!
 
-This codespace is configured for docs, API review, and focused package edits
-with 4 CPUs and 16 GB RAM. It is not intended for full builds.
+This codespace is configured for full-repo development with 16 CPUs and 64 GB RAM.
 
 Getting started:
   pnpm install          Install all dependencies
+  pnpm build            Build all packages
+  pnpm test             Run tests
   fluid-build .         Build only the current package and its dependencies
 
 Key documentation:
