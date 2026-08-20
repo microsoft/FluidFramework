@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { exampleOldestSupportedClient } from "@fluid-example/example-utils";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/legacy";
 
 import { ClaimsDataObjectFactory } from "./claimsDataObject/index.js";
@@ -19,7 +20,7 @@ export class ClaimsExampleContainerRuntimeFactory extends ContainerRuntimeFactor
 			registryEntries: [
 				[ClaimsDataObjectFactory.type, Promise.resolve(ClaimsDataObjectFactory)],
 			],
-			oldestSupportedClient: "3.0.0",
+			oldestSupportedClient: exampleOldestSupportedClient,
 		});
 	}
 }

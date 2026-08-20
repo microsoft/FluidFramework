@@ -97,6 +97,9 @@ export const createContainerRuntimeFactoryWithDefaultDataStore = (
 	ctorProps: ContainerRuntimeFactoryWithDefaultDataStoreProps,
 ): IRuntimeFactory => {
 	try {
+		// Constructors loaded from versioned packages have different signatures. Try the current
+		// object shape first; the catch block retains the existing positional fallback for older
+		// constructors that TypeScript cannot distinguish from this union at runtime.
 		const currentCtor = ctor as new (
 			props: ContainerRuntimeFactoryWithDefaultDataStoreProps & {
 				readonly oldestSupportedClient: OldestSupportedClientVersion;

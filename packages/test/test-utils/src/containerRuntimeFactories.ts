@@ -40,8 +40,9 @@ import {
 const defaultDataStoreId = "default";
 
 /**
- * Compatibility setting used by generic test runtimes that need to preserve the historical
- * runtime defaults.
+ * Compatibility setting used by generic test runtimes once callers must provide an explicit
+ * value. It aliases the historical implicit default so tests retain their previous behavior and
+ * provides one update point for any future default-sentinel migration.
  *
  * @internal
  */

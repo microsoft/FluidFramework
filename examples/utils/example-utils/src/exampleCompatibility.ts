@@ -6,9 +6,14 @@
 import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/legacy";
 
 /**
- * Compatibility setting shared by examples that are built and deployed with the current Client
- * release rather than supporting an older deployed application.
+ * Compatibility setting shared by non-deployed examples that are built with the current Client
+ * major release.
+ *
+ * @remarks
+ * Advance this value when the examples intentionally adopt a newer Client feature level. Examples
+ * that need an older compatibility floor should use an explicit value with a comment explaining
+ * the requirement.
  *
  * @internal
  */
-export const exampleOldestSupportedClient: OldestSupportedClientVersion = "3.0.0";
+export const exampleOldestSupportedClient = "3.0.0" satisfies OldestSupportedClientVersion;

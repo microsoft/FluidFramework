@@ -936,6 +936,8 @@ export const createFluidExport = (
 ): ContainerRuntimeFactoryWithDefaultDataStore =>
 	new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: LoadTestDataStoreInstantiationFactory,
+		// createBlobPayloadPending requires runtime 2.40 or later; other option combinations
+		// preserve the historical implicit runtime defaults.
 		oldestSupportedClient:
 			runtimeOptions?.createBlobPayloadPending === true
 				? "2.40.0"
