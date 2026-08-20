@@ -113,7 +113,7 @@
 		"test:jest:report": "assign-test-ports && pnpm -r --no-sort --stream --no-bail --workspace-concurrency=4 test:jest",
 		"test:mocha": "pnpm run -r --no-sort --stream --no-bail test:mocha --color",
 		"test:mocha:bail": "pnpm run -r --no-sort --stream test:mocha",
-		"test:playwright": "assign-test-ports && pnpm playwright install chromium && pnpm -r --no-sort --stream --no-bail test:playwright",
+		"test:playwright": "assign-test-ports && pnpm playwright install chromium && fluid-build --task test:playwright:packages --worker",
 		"test:playwright:bail": "assign-test-ports && pnpm playwright install chromium && pnpm -r --no-sort --stream test:playwright",
 		"test:playwright:report": "assign-test-ports && pnpm playwright install --with-deps chromium && pnpm -r --no-sort --stream --no-bail --workspace-concurrency=4 test:playwright",
 		"test:realsvc": "pnpm run -r --no-sort --stream --no-bail test:realsvc",
@@ -350,6 +350,13 @@
 			"lint:fix": {
 				"dependsOn": [
 					"checks:fix"
+				],
+				"script": false
+			},
+			"test:playwright:packages": {
+				"dependsOn": [
+					"^compile",
+					"^test:playwright"
 				],
 				"script": false
 			}

@@ -126,10 +126,6 @@
 			"build:test:mocha": [
 				"build:esnext",
 				"^build:esnext"
-			],
-			"build:test:playwright": [
-				"build:esnext",
-				"^build:esnext"
 			]
 		},
 		"version": 1

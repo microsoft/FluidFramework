@@ -234,9 +234,6 @@
 			"check:exports:esm:node:legacy": [
 				"build:exports:node"
 			],
-			"build:test:playwright": [
-				"build:esnext"
-			],
 			"ci:build:api-reports:browser:current": [
 				"build:exports:browser"
 			],
