@@ -713,7 +713,7 @@ declare namespace InternalTypes {
         FieldHasDefault,
         ScopedSchemaName,
         DefaultProvider,
-        typeNameSymbol,
+        schemaIdentifierBrand,
         InsertableObjectFromSchemaRecord,
         FlexList,
         FlexListToUnion,
@@ -1040,6 +1040,9 @@ export class SchemaFactoryBeta<out TScope extends string | undefined = string | 
     typesRecursive: <const T extends readonly unknown[]>(t: T, metadata?: AllowedTypesMetadata | undefined) => AllowedTypesFullFromMixedUnsafe<T>;
 }
 
+// @public @system
+const schemaIdentifierBrand: unique symbol;
+
 // @public @sealed @system
 export interface SchemaStatics {
     readonly boolean: LeafSchema<"boolean", boolean>;
@@ -1294,16 +1297,6 @@ export namespace TableSchema {
     export function column<const TUserScope extends string, const TCell extends ImplicitAllowedTypes, const TProps extends ImplicitFieldSchema>(params: System_TableSchema.CreateColumnOptionsBase<TUserScope, SchemaFactoryBeta<TUserScope>, TCell> & {
         readonly props: TProps;
     }): System_TableSchema.ColumnSchemaBase<TUserScope, TCell, TProps>;
-    // @deprecated @input
-    export interface InsertColumnsParameters<TColumn extends ImplicitAllowedTypes> {
-        readonly columns: InsertableTreeNodeFromImplicitAllowedTypes<TColumn>[];
-        readonly index?: number | undefined;
-    }
-    // @deprecated @input
-    export interface InsertRowsParameters<TRow extends ImplicitAllowedTypes> {
-        readonly index?: number | undefined;
-        readonly rows: InsertableTreeNodeFromImplicitAllowedTypes<TRow>[];
-    }
     // @sealed
     export interface Row<TCell extends ImplicitAllowedTypes, TProps extends ImplicitFieldSchema = ImplicitFieldSchema> {
         readonly id: string;
@@ -1314,11 +1307,6 @@ export namespace TableSchema {
     export function row<const TUserScope extends string, const TCell extends ImplicitAllowedTypes, const TProps extends ImplicitFieldSchema>(params: System_TableSchema.CreateRowOptionsBase<TUserScope, SchemaFactoryBeta<TUserScope>, TCell> & {
         readonly props: TProps;
     }): System_TableSchema.RowSchemaBase<TUserScope, TCell, TProps>;
-    // @deprecated @input
-    export interface SetCellParameters<TCell extends ImplicitAllowedTypes, TColumn extends ImplicitAllowedTypes, TRow extends ImplicitAllowedTypes> {
-        readonly cell: InsertableTreeNodeFromImplicitAllowedTypes<TCell>;
-        readonly key: CellKey<TColumn, TRow>;
-    }
     // @sealed
     export interface Table<TUserScope extends string, TCell extends ImplicitAllowedTypes, TColumn extends System_TableSchema.ColumnSchemaBase<TUserScope, TCell>, TRow extends System_TableSchema.RowSchemaBase<TUserScope, TCell>> {
         readonly columns: System_TableSchema.RearrangeableList<TColumn>;
@@ -1328,14 +1316,8 @@ export namespace TableSchema {
         getRow(id: string): TreeNodeFromImplicitAllowedTypes<TRow> | undefined;
         getRow(index: number): TreeNodeFromImplicitAllowedTypes<TRow> | undefined;
         insertColumns(columns: readonly InsertableTreeNodeFromImplicitAllowedTypes<TColumn>[], index?: number): TreeNodeFromImplicitAllowedTypes<TColumn>[];
-        // @deprecated
-        insertColumns(params: InsertColumnsParameters<TColumn>): TreeNodeFromImplicitAllowedTypes<TColumn>[];
         insertRows(rows: readonly InsertableTreeNodeFromImplicitAllowedTypes<TRow>[], index?: number): TreeNodeFromImplicitAllowedTypes<TRow>[];
-        // @deprecated
-        insertRows(params: InsertRowsParameters<TRow>): TreeNodeFromImplicitAllowedTypes<TRow>[];
         removeCell(row: string | number | TreeNodeFromImplicitAllowedTypes<TRow>, column: string | number | TreeNodeFromImplicitAllowedTypes<TColumn>): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
-        // @deprecated
-        removeCell(key: CellKey<TColumn, TRow>): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
         removeColumns(index?: number | undefined, count?: number | undefined): TreeNodeFromImplicitAllowedTypes<TColumn>[];
         removeColumns(columns: readonly TreeNodeFromImplicitAllowedTypes<TColumn>[]): TreeNodeFromImplicitAllowedTypes<TColumn>[];
         removeColumns(columns: readonly string[]): TreeNodeFromImplicitAllowedTypes<TColumn>[];
@@ -1344,8 +1326,6 @@ export namespace TableSchema {
         removeRows(rows: readonly string[]): TreeNodeFromImplicitAllowedTypes<TRow>[];
         readonly rows: System_TableSchema.RearrangeableList<TRow>;
         setCell(row: string | number | TreeNodeFromImplicitAllowedTypes<TRow>, column: string | number | TreeNodeFromImplicitAllowedTypes<TColumn>, cell: InsertableTreeNodeFromImplicitAllowedTypes<TCell>): void;
-        // @deprecated
-        setCell(params: SetCellParameters<TCell, TColumn, TRow>): void;
     }
     export function table<const TUserScope extends string, const TCell extends ImplicitAllowedTypes>(params: System_TableSchema.TableFactoryOptionsBase<TUserScope, SchemaFactoryBeta<TUserScope>, TCell>): System_TableSchema.TableSchemaBase<TUserScope, TCell, System_TableSchema.ColumnSchemaBase<TUserScope, TCell, System_TableSchema.DefaultPropsType>, System_TableSchema.RowSchemaBase<TUserScope, TCell, System_TableSchema.DefaultPropsType>>;
     export function table<const TUserScope extends string, const TCell extends ImplicitAllowedTypes, const TColumn extends System_TableSchema.ColumnSchemaBase<TUserScope, TCell>>(params: System_TableSchema.TableFactoryOptionsBase<TUserScope, SchemaFactoryBeta<TUserScope>, TCell> & {
@@ -1455,18 +1435,13 @@ export interface TreeBeta {
 // @beta
 export const TreeBeta: TreeBeta;
 
-// @beta @sealed
-export interface TreeBranch extends IDisposable {
-    dispose(error?: Error): void;
-    fork(): TreeBranch;
-    merge(branch: TreeBranch, disposeMerged?: boolean): void;
-    rebaseOnto(branch: TreeBranch): void;
-}
+// @beta @deprecated
+export type TreeBranch = UntypedTreeView;
 
 // @public @sealed
 export interface TreeChangeEvents {
     nodeChanged(unstable?: unknown): void;
-    treeChanged(): void;
+    treeChanged(unstable?: unknown): void;
 }
 
 // @beta @sealed
@@ -1508,10 +1483,9 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTyp
 
 // @public @sealed
 export abstract class TreeNode implements WithType {
+    abstract get [schemaIdentifierBrand](): string;
     static [Symbol.hasInstance](value: unknown): value is TreeNode;
     static [Symbol.hasInstance]<TSchema extends abstract new (...args: any[]) => TreeNode>(this: TSchema, value: unknown): value is InstanceType<TSchema>;
-    // @deprecated
-    abstract get [typeNameSymbol](): string;
     abstract get [typeSchemaSymbol](): TreeNodeSchemaClass;
     protected constructor(token: unknown);
 }
@@ -1598,9 +1572,9 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 }
 
 // @beta @sealed
-export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema> extends TreeView<TSchema>, TreeBranch {
+export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema> extends TreeView<TSchema>, UntypedTreeView {
     // (undocumented)
-    fork(): ReturnType<TreeBranch["fork"]> & TreeViewBeta<TSchema>;
+    fork(): ReturnType<UntypedTreeView["fork"]> & TreeViewBeta<TSchema>;
     runTransaction<TOut extends TransactionCallbackStatusBeta<unknown, unknown> | VoidTransactionCallbackStatusBeta | void>(transaction: () => TOut, params?: RunTransactionParamsBeta): TOut extends TransactionCallbackStatusBeta<infer TSuccessValue, infer TFailureValue> ? TransactionValueResult<TSuccessValue, TFailureValue> : TransactionVoidResult;
     runTransactionAsync<TOut extends TransactionCallbackStatusBeta<unknown, unknown> | VoidTransactionCallbackStatusBeta | void>(transaction: () => Promise<TOut>, params?: RunTransactionParamsBeta): Promise<TOut extends TransactionCallbackStatusBeta<infer TSuccessValue, infer TFailureValue> ? TransactionValueResult<TSuccessValue, TFailureValue> : TransactionVoidResult>;
 }
@@ -1621,9 +1595,6 @@ export interface TreeViewEvents {
     rootChanged(): void;
     schemaChanged(): void;
 }
-
-// @public @deprecated @system
-const typeNameSymbol: unique symbol;
 
 // @public @system
 export const typeSchemaSymbol: unique symbol;
@@ -1655,6 +1626,14 @@ export type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) e
 // @beta @system
 export type UnionToTuple<Union, A extends unknown[] = [], First = PopUnion<Union>> = IsUnion<Union> extends true ? UnionToTuple<Exclude<Union, First>, [First, ...A]> : [Union, ...A];
 
+// @beta @sealed
+export interface UntypedTreeView extends IDisposable {
+    dispose(error?: Error): void;
+    fork(): UntypedTreeView;
+    merge(view: UntypedTreeView, disposeMerged?: boolean): void;
+    rebaseOnto(view: UntypedTreeView): void;
+}
+
 // @public
 export type ValidateRecursiveSchema<T extends ValidateRecursiveSchemaTemplate<T>> = true;
 
@@ -1685,8 +1664,7 @@ export type VoidTransactionCallbackStatusBeta = Omit<TransactionCallbackStatusBe
 
 // @public @sealed
 export interface WithType<out TName extends string = string, out TKind extends NodeKind = NodeKind, out TInfo = unknown> {
-    // @deprecated
-    get [typeNameSymbol](): TName;
+    get [schemaIdentifierBrand](): TName;
     get [typeSchemaSymbol](): TreeNodeSchemaClass<TName, TKind, TreeNode, never, boolean, TInfo>;
 }
 

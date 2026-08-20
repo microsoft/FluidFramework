@@ -535,7 +535,7 @@ declare namespace InternalTypes {
         FieldHasDefault,
         ScopedSchemaName,
         DefaultProvider,
-        typeNameSymbol,
+        schemaIdentifierBrand,
         InsertableObjectFromSchemaRecord,
         FlexList,
         FlexListToUnion,
@@ -802,6 +802,9 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
 // @public @system
 export const SchemaFactory_base: SchemaStatics & (new () => SchemaStatics);
 
+// @public @system
+const schemaIdentifierBrand: unique symbol;
+
 // @public @sealed @system
 export interface SchemaStatics {
     readonly boolean: LeafSchema<"boolean", boolean>;
@@ -979,7 +982,7 @@ export const TreeArrayNode: {
 // @public @sealed
 export interface TreeChangeEvents {
     nodeChanged(unstable?: unknown): void;
-    treeChanged(): void;
+    treeChanged(unstable?: unknown): void;
 }
 
 // @public
@@ -1000,10 +1003,9 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTyp
 
 // @public @sealed
 export abstract class TreeNode implements WithType {
+    abstract get [schemaIdentifierBrand](): string;
     static [Symbol.hasInstance](value: unknown): value is TreeNode;
     static [Symbol.hasInstance]<TSchema extends abstract new (...args: any[]) => TreeNode>(this: TSchema, value: unknown): value is InstanceType<TSchema>;
-    // @deprecated
-    abstract get [typeNameSymbol](): string;
     abstract get [typeSchemaSymbol](): TreeNodeSchemaClass;
     protected constructor(token: unknown);
 }
@@ -1089,9 +1091,6 @@ export interface TreeViewEvents {
     schemaChanged(): void;
 }
 
-// @public @deprecated @system
-const typeNameSymbol: unique symbol;
-
 // @public @system
 export const typeSchemaSymbol: unique symbol;
 
@@ -1131,8 +1130,7 @@ export interface ViewableTree {
 
 // @public @sealed
 export interface WithType<out TName extends string = string, out TKind extends NodeKind = NodeKind, out TInfo = unknown> {
-    // @deprecated
-    get [typeNameSymbol](): TName;
+    get [schemaIdentifierBrand](): TName;
     get [typeSchemaSymbol](): TreeNodeSchemaClass<TName, TKind, TreeNode, never, boolean, TInfo>;
 }
 

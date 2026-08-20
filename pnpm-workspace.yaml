@@ -57,10 +57,20 @@ linkWorkspacePackages: true
 
 # Minimum age, in minutes, of dependencies before they can be installed.
 # See /DEV.md and https://pnpm.io/settings#minimumreleaseage more information.
+# Use minimumReleaseAge at 10080 when updating dependencies to ensure that
+# each package has been published for at least 7 days (10080 minutes) before
+# it is consumed. Do that to match repository policies regarding npmjs registry.
+# `pnpm install-no-frozen` can be used to use policy correctly.
 minimumReleaseAge: 0
-minimumReleaseAgeExclude: [
+minimumReleaseAgeExclude:
+  # Exclude our own FF scopes so we can install versions we just shipped
+  - "@fluidframework/*"
+  - "@fluid-experimental/*"
+  - "@fluid-internal/*"
+  - "@fluid-private/*"
+  - "@fluid-tools/*"
+  - "fluid-framework"
   # Temporary exceptions go here as needed.
-]
 
 overrides:
   # Resolve known security vulnerabilities in transitive dependencies.

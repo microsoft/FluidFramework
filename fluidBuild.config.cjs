@@ -148,11 +148,7 @@ module.exports = {
 			"build:genver",
 		],
 		"build:entrypoints": {
-			dependsOn: [
-				"build:entrypoints:esm",
-				"build:entrypoints:cjs",
-				"build:entrypoints:node10",
-			],
+			dependsOn: ["build:entrypoints:esm", "build:entrypoints:cjs"],
 			script: false,
 		},
 		"build:entrypoints:esm": ["build:esnext"],
