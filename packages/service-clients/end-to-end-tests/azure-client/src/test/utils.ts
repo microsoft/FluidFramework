@@ -10,8 +10,8 @@ import { featureVersion } from "@fluidframework/driver-definitions/internal";
 import type { IMember } from "@fluidframework/fluid-static";
 import type { ISharedMap, IValueChanged } from "@fluidframework/map/legacy";
 
-// `pkgVersion` is this package's own version, which tracks the Fluid Framework release group; we use it as
-// `minVersionForCollab` in tests so they exercise the latest defaults rather than a hardcoded version.
+// `pkgVersion` is this package's own version, which tracks the Fluid Framework release group; we use its
+// feature version as `oldestSupportedClient` in tests so they exercise the latest defaults rather than a hardcoded version.
 import { pkgVersion } from "../packageVersion.js";
 
 export const currentVersion = featureVersion(pkgVersion);

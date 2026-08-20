@@ -40,7 +40,7 @@ describe("reactSharedTreeView", () => {
 		// TODO: Ideally we would use a local-server service-client, but one does not appear to exist.
 		const tinyliciousClient = new TinyliciousClient();
 
-		const { container } = await tinyliciousClient.createContainer(containerSchema, "2");
+		const { container } = await tinyliciousClient.createContainer(containerSchema, "2.0.0");
 		const dataObject = container.initialObjects.tree;
 		assert.equal(dataObject.treeView.root.nuts, 5);
 		dataObject.treeView.root.nuts += 1;
