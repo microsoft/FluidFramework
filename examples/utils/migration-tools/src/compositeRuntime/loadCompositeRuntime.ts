@@ -7,6 +7,7 @@ import type {
 	IContainerContext,
 	IRuntime,
 } from "@fluidframework/container-definitions/legacy";
+// eslint-disable-next-line import-x/no-deprecated -- only the minVersionForCollab overload is deprecated.
 import {
 	type IContainerRuntimeOptions,
 	loadContainerRuntime,
@@ -92,6 +93,7 @@ export const loadCompositeRuntime = async (
 	compositeEntryPoint: CompositeEntryPoint,
 	runtimeOptions?: IContainerRuntimeOptions,
 ): Promise<IContainerRuntime & IRuntime> => {
+	// eslint-disable-next-line import-x/no-deprecated -- using the canonical overload.
 	const runtime = await loadContainerRuntime({
 		context,
 		registryEntries: compositeEntryPoint.registryEntries,
