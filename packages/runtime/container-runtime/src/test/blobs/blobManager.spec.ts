@@ -5,10 +5,9 @@
 
 import { strict as assert } from "node:assert";
 
-import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
-import { SummaryType } from "@fluidframework/driver-definitions";
+import { SummaryType, type SummaryObject } from "@fluidframework/driver-definitions";
 import type { ISequencedMessageEnvelope } from "@fluidframework/runtime-definitions/internal";
 import {
 	isFluidHandlePayloadPending,
@@ -86,19 +85,14 @@ describe("Detached blob summaries", () => {
 	): ArrayBufferLike | undefined {
 		const blobId: string | undefined = loadInfo.detachedBlobSummary?.blobs[localId];
 		const encodedBlob: ArrayBufferLike | undefined =
-			blobId === undefined
-				? undefined
-				: loadInfo.detachedBlobSummary?.blobsContents?.[blobId];
-		return encodedBlob === undefined
-			? undefined
-			: stringToBuffer(blobToText(encodedBlob), "base64");
+			blobId === undefined ? undefined : loadInfo.detachedBlobSummary?.blobsContents?.[blobId];
+		return encodedBlob;
 	}
 
 	it("loads detached and attached forms of the summary", async () => {
 		const actualBlobId = "actual-blob";
 		const localId = "local-blob";
 		const blob = new Uint8Array([0, 255, 128, 42]).buffer;
-		const encodedBlob = textToBlob(bufferToString(blob, "base64"));
 		const baseSnapshot = {
 			blobs: {},
 			trees: {
@@ -107,7 +101,7 @@ describe("Detached blob summaries", () => {
 					trees: {
 						[detachedBlobSummaryTreeName]: {
 							blobs: { [localId]: actualBlobId },
-							blobsContents: { [actualBlobId]: encodedBlob },
+							blobsContents: { [actualBlobId]: blob },
 							trees: {},
 							groupId: detachedBlobSummaryGroupId,
 						},
@@ -154,7 +148,7 @@ describe("Detached blob summaries", () => {
 		assert.deepStrictEqual(getDetachedBlobSummaryIds(attached), [localId]);
 
 		const attachedStorage = new MockStorageAdapter(true);
-		attachedStorage.attachedStorage.blobs.set(actualBlobId, encodedBlob);
+		attachedStorage.attachedStorage.blobs.set(actualBlobId, blob);
 		const { blobManager: lazilyLoadedBlobManager } = createTestMaterial({
 			attached: true,
 			blobManagerLoadInfo: attached,
@@ -198,11 +192,13 @@ describe("Detached blob summaries", () => {
 		assert.strictEqual(mockBlobStorage.detachedStorage.blobsCreated, 0);
 
 		const summary = blobManager.summarize();
-		const detachedSummary = summary.summary.tree[detachedBlobSummaryTreeName];
+		const detachedSummary: SummaryObject | undefined =
+			summary.summary.tree[detachedBlobSummaryTreeName];
 		assert(detachedSummary?.type === SummaryType.Tree);
-		const summarizedBlob = detachedSummary.tree[localId];
+		const summarizedBlob: SummaryObject | undefined = detachedSummary.tree[localId];
 		assert(summarizedBlob?.type === SummaryType.Blob);
-		assert.strictEqual(summarizedBlob.content, bufferToString(blob.buffer, "base64"));
+		assert(summarizedBlob.content instanceof Uint8Array);
+		assert.deepStrictEqual(summarizedBlob.content, blob);
 
 		const loadInfo = getSummaryContentsFromSummaryWithFormatValidation(summary);
 		assert.strictEqual(loadInfo.ids, undefined);
@@ -251,6 +247,46 @@ describe("Detached blob summaries", () => {
 		const materializedContent = getDetachedBlobSummaryContent(fullTreeSummary, localId);
 		assert(materializedContent !== undefined);
 		assert.strictEqual(blobToText(materializedContent), "hello");
+	});
+
+	it("bounds concurrent reads when materializing a full-tree summary", async () => {
+		const blobCount = 65;
+		const blobs: Record<string, string> = {};
+		for (let index = 0; index < blobCount; index++) {
+			const localId = `local-${index}`;
+			const storageId = `storage-${index}`;
+			blobs[localId] = storageId;
+		}
+		const mockBlobStorage = new MockStorageAdapter(true);
+		let reads = 0;
+		let concurrentReads = 0;
+		let peakConcurrentReads = 0;
+		mockBlobStorage.readBlob = async (storageId: string) => {
+			reads++;
+			concurrentReads++;
+			peakConcurrentReads = Math.max(peakConcurrentReads, concurrentReads);
+			await Promise.resolve();
+			concurrentReads--;
+			return textToBlob(storageId);
+		};
+		const { blobManager } = createTestMaterial({
+			attached: true,
+			blobManagerLoadInfo: {
+				detachedBlobSummary: {
+					blobs,
+					trees: {},
+					groupId: detachedBlobSummaryGroupId,
+				},
+			},
+			createBlobPayloadPending: false,
+			inlineDetachedBlobsAsSummaryBlobs: false,
+			mockBlobStorage,
+		});
+
+		await blobManager.summarizeFullTree();
+
+		assert.strictEqual(reads, blobCount);
+		assert.strictEqual(peakConcurrentReads, 32);
 	});
 
 	it("attaches mixed inline and legacy detached blobs", async () => {

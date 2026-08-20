@@ -52,8 +52,7 @@ import {
 	type IBlobManagerLoadInfo,
 } from "./blobManagerSnapSum.js";
 
-const decodeDetachedSummaryBlob = (encodedBlob: ArrayBufferLike): ArrayBufferLike =>
-	stringToBuffer(bufferToString(encodedBlob, "utf8"), "base64");
+const maxConcurrentDetachedBlobReads = 32;
 
 /**
  * This class represents blob (long string)
@@ -368,7 +367,7 @@ export class BlobManager {
 				);
 				this.localBlobCache.set(localId, {
 					state: "attached",
-					blob: decodeDetachedSummaryBlob(encodedBlob),
+					blob: encodedBlob,
 				});
 				this.redirectTable.set(localId, localId);
 			}
@@ -482,21 +481,14 @@ export class BlobManager {
 			this.mc.logger,
 			{ eventName: "AttachmentReadBlob", id: storageId },
 			async (event) => {
-				return this.storage
-					.readBlob(storageId)
-					.then((blob) => {
-						return this.detachedBlobSummaryIds.has(localId)
-							? decodeDetachedSummaryBlob(blob)
-							: blob;
-					})
-					.catch((error) => {
-						if (this.runtime.disposed) {
-							// If the runtime is disposed, this is not an error we care to track, it's expected behavior.
-							event.cancel({ category: "generic" });
-						}
+				return this.storage.readBlob(storageId).catch((error) => {
+					if (this.runtime.disposed) {
+						// If the runtime is disposed, this is not an error we care to track, it's expected behavior.
+						event.cancel({ category: "generic" });
+					}
 
-						throw error;
-					});
+					throw error;
+				});
 			},
 			{ end: true, cancel: "error" },
 		);
@@ -899,19 +891,24 @@ export class BlobManager {
 	 */
 	private async loadFullTreeContents(): Promise<Map<string, ArrayBufferLike>> {
 		const fullTreeContents = new Map(this.getDetachedBlobSummaryContentsFromLocalCache());
-		await Promise.all(
-			[...this.detachedBlobSummaryIds].map(async (localId) => {
-				if (fullTreeContents.has(localId)) {
-					return;
-				}
-				const storageId = this.redirectTable.get(localId);
-				assert(storageId !== undefined, "Detached blob summary ID must have a storage ID");
-				fullTreeContents.set(
-					localId,
-					decodeDetachedSummaryBlob(await this.storage.readBlob(storageId)),
-				);
-			}),
+		const localIdsToLoad = [...this.detachedBlobSummaryIds].filter(
+			(localId) => !fullTreeContents.has(localId),
 		);
+		for (
+			let firstIndex = 0;
+			firstIndex < localIdsToLoad.length;
+			firstIndex += maxConcurrentDetachedBlobReads
+		) {
+			await Promise.all(
+				localIdsToLoad
+					.slice(firstIndex, firstIndex + maxConcurrentDetachedBlobReads)
+					.map(async (localId) => {
+						const storageId = this.redirectTable.get(localId);
+						assert(storageId !== undefined, "Detached blob summary ID must have a storage ID");
+						fullTreeContents.set(localId, await this.storage.readBlob(storageId));
+					}),
+			);
+		}
 		return fullTreeContents;
 	}
 

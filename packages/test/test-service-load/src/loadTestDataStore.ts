@@ -14,7 +14,7 @@ import {
 import { ILoaderOptions } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
-	IContainerRuntimeOptions,
+	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils/internal";
@@ -27,7 +27,10 @@ import {
 	ISharedMap,
 	SharedMap,
 } from "@fluidframework/map/internal";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
+import {
+	IContainerRuntimeBase,
+	type MinimumVersionForCollab,
+} from "@fluidframework/runtime-definitions/internal";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import { ITaskManager, TaskManager } from "@fluidframework/task-manager/internal";
 import { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
@@ -930,13 +933,20 @@ const LoadTestDataStoreInstantiationFactory = new DataObjectFactory({
 });
 
 export const createFluidExport = (
-	runtimeOptions?: IContainerRuntimeOptions | undefined,
-): ContainerRuntimeFactoryWithDefaultDataStore =>
-	new ContainerRuntimeFactoryWithDefaultDataStore({
+	runtimeOptions?: IContainerRuntimeOptionsInternal | undefined,
+): ContainerRuntimeFactoryWithDefaultDataStore => {
+	const factoryProps = {
 		defaultFactory: LoadTestDataStoreInstantiationFactory,
 		registryEntries: [
 			LoadTestDataStoreInstantiationFactory.registryEntry,
 			VirtualDataStoreFactory.registryEntry,
 		],
 		runtimeOptions,
-	});
+		...(runtimeOptions?.inlineDetachedBlobsAsSummaryBlobs === true
+			? {
+					minVersionForCollab: "2.115.0" as const satisfies MinimumVersionForCollab,
+				}
+			: {}),
+	};
+	return new ContainerRuntimeFactoryWithDefaultDataStore(factoryProps);
+};

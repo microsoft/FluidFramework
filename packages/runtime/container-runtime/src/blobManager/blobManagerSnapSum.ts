@@ -8,9 +8,9 @@ import type {
 	IContainerContext,
 	ISnapshotTreeWithBlobContents,
 } from "@fluidframework/container-definitions/internal";
-import { bufferToString } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
+import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
@@ -57,19 +57,13 @@ export const detachedBlobSummaryGroupId = "fluid-internal:detached-blobs";
  *
  */
 export const loadBlobManagerLoadInfo = async (
-	context: Pick<
-		IContainerContext,
-		"baseSnapshot" | "attachState" | "snapshotWithContents"
-	> & {
+	context: Pick<IContainerContext, "baseSnapshot" | "attachState" | "snapshotWithContents"> & {
 		storage: Pick<IContainerContext["storage"], "readBlob">;
 	},
 ): Promise<IBlobManagerLoadInfo> => loadV1(context);
 
 const loadV1 = async (
-	context: Pick<
-		IContainerContext,
-		"baseSnapshot" | "attachState" | "snapshotWithContents"
-	> & {
+	context: Pick<IContainerContext, "baseSnapshot" | "attachState" | "snapshotWithContents"> & {
 		storage: Pick<IContainerContext["storage"], "readBlob">;
 	},
 ): Promise<IBlobManagerLoadInfo> => {
@@ -87,13 +81,12 @@ const loadV1 = async (
 		.filter(([k, _]) => k !== redirectTableBlobName)
 		.map(([_, v]) => v);
 
-	const detachedBlobSummaryTree = blobsTree.trees[detachedBlobSummaryTreeName];
+	const detachedBlobSummaryTree: ISnapshotTree | undefined =
+		blobsTree.trees[detachedBlobSummaryTreeName];
 	let detachedBlobSummary: ISnapshotTreeWithBlobContents | undefined;
 	if (detachedBlobSummaryTree !== undefined) {
-		const {
-			blobsContents: existingBlobContents,
-			...detachedBlobSummaryWithoutContents
-		} = detachedBlobSummaryTree as ISnapshotTreeWithBlobContents;
+		const { blobsContents: existingBlobContents, ...detachedBlobSummaryWithoutContents } =
+			detachedBlobSummaryTree as ISnapshotTreeWithBlobContents;
 		const blobsContents: Record<string, ArrayBufferLike> | undefined =
 			context.attachState === AttachState.Detached ? { ...existingBlobContents } : undefined;
 		assert(
@@ -101,13 +94,22 @@ const loadV1 = async (
 			"Detached blob summary cannot contain child trees",
 		);
 		if (blobsContents !== undefined) {
-			await Promise.all(
+			const loadedBlobContents = await Promise.all(
 				Object.values(detachedBlobSummaryTree.blobs).map(async (blobId) => {
-					blobsContents[blobId] ??=
+					if (blobsContents[blobId] !== undefined) {
+						return undefined;
+					}
+					const content =
 						context.snapshotWithContents?.blobContents.get(blobId) ??
 						(await context.storage.readBlob(blobId));
+					return [blobId, content] as const;
 				}),
 			);
+			for (const loadedBlobContent of loadedBlobContents) {
+				if (loadedBlobContent !== undefined) {
+					blobsContents[loadedBlobContent[0]] = loadedBlobContent[1];
+				}
+			}
 		}
 		detachedBlobSummary = {
 			...detachedBlobSummaryWithoutContents,
@@ -184,12 +186,7 @@ const summarizeV1 = (
 				`/${blobsTreeName}/${detachedBlobSummaryTreeName}/${localId}`,
 			);
 		} else {
-			// Detached and pending container state serializes summary blobs as UTF-8 text.
-			// Base64 keeps arbitrary blob bytes lossless across that boundary.
-			detachedBlobSummaryBuilder.addBlob(
-				localId,
-				bufferToString(detachedBlobSummaryContent, "base64"),
-			);
+			detachedBlobSummaryBuilder.addBlob(localId, new Uint8Array(detachedBlobSummaryContent));
 		}
 	}
 	const detachedBlobSummary = detachedBlobSummaryBuilder.getSummaryTree();

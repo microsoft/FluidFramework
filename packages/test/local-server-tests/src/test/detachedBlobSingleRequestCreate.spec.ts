@@ -175,10 +175,7 @@ function assertDetachedBlobSummary(
 	assert.strictEqual(Object.keys(detachedBlobSummary.tree).length, expectedBlobCount);
 }
 
-function initialize(options?: {
-	countStorageCalls?: boolean;
-	inline?: boolean;
-}): {
+function initialize(options?: { countStorageCalls?: boolean; inline?: boolean }): {
 	codeDetails: IFluidCodeDetails;
 	codeLoader: ICodeDetailsLoader;
 	counts: StorageCallCounts;

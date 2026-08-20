@@ -4707,6 +4707,40 @@ describe("Runtime", () => {
 					});
 				});
 			});
+
+			for (const minVersionForCollab of [undefined, "2.114.0"] as const) {
+				it(`rejects inline detached summary blobs with minVersionForCollab ${minVersionForCollab ?? "default"}`, async () => {
+					await assert.rejects(
+						ContainerRuntime.loadRuntime2({
+							context: getMockContext({}) as IContainerContext,
+							registry: new FluidDataStoreRegistry([]),
+							existing: false,
+							runtimeOptions: {
+								explicitSchemaControl: true,
+								inlineDetachedBlobsAsSummaryBlobs: true,
+							},
+							provideEntryPoint: mockProvideEntryPoint,
+							minVersionForCollab,
+						}),
+					);
+				});
+			}
+
+			it("allows inline detached summary blobs with minVersionForCollab 2.115.0", async () => {
+				await assert.doesNotReject(
+					ContainerRuntime.loadRuntime2({
+						context: getMockContext({}) as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: {
+							explicitSchemaControl: true,
+							inlineDetachedBlobsAsSummaryBlobs: true,
+						},
+						provideEntryPoint: mockProvideEntryPoint,
+						minVersionForCollab: "2.115.0",
+					}),
+				);
+			});
 		});
 
 		describe("Staging Mode", () => {
