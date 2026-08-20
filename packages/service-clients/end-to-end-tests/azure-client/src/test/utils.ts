@@ -5,6 +5,7 @@
 
 import type { AzureMember, IAzureAudience } from "@fluidframework/azure-client";
 import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+// eslint-disable-next-line import-x/no-internal-modules -- featureVersion is alpha and has no alpha subpath export
 import { featureVersion } from "@fluidframework/driver-definitions/internal";
 import type { IMember } from "@fluidframework/fluid-static";
 import type { ISharedMap, IValueChanged } from "@fluidframework/map/legacy";
