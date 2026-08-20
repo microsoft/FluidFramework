@@ -300,7 +300,9 @@ export function validateMinimumVersionForCollab(
 /**
  * Validates the given `overrides`.
  *
- * No-op when minVersionForCollab is set to defaultMinVersionForCollab.
+ * By default, validation is skipped when minVersionForCollab is set to
+ * defaultMinVersionForCollab to preserve legacy behavior. Callers may opt
+ * specific keys into validation for the default value.
  *
  * Otherwise this checks that for keys which are in both the `validationMap` and the `overrides`,
  * that the `validationMap` function for that key either returns undefined or a version less than or equal to `minVersionForCollab`.
@@ -315,11 +317,12 @@ export function validateConfigMapOverrides<T extends Record<string, unknown>>(
 	minVersionForCollab: SemanticVersion,
 	overrides: Partial<T>,
 	validationMap: ConfigValidationMap<T>,
+	validateOnDefault?: ReadonlySet<keyof T>,
 ): void {
-	if (minVersionForCollab === defaultMinVersionForCollab) {
-		// If the minVersionForCollab is set to the default value, then we will not validate the runtime options
-		// This is to avoid disruption to users who have not yet set the minVersionForCollab value explicitly.
-		// TODO: This also skips validation for users which explicitly request defaultMinVersionForCollab which seems like a bug.
+	if (
+		minVersionForCollab === defaultMinVersionForCollab &&
+		(validateOnDefault === undefined || validateOnDefault.size === 0)
+	) {
 		return;
 	}
 	// Iterate through each runtime option passed in by the user
@@ -330,6 +333,12 @@ export function validateConfigMapOverrides<T extends Record<string, unknown>>(
 	][]) {
 		// Skip if passedRuntimeOption is not in validation map
 		if (!(passedRuntimeOption in validationMap)) {
+			continue;
+		}
+		if (
+			minVersionForCollab === defaultMinVersionForCollab &&
+			validateOnDefault?.has(passedRuntimeOption) !== true
+		) {
 			continue;
 		}
 

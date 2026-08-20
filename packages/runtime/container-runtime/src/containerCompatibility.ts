@@ -9,13 +9,11 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	configValueToMinVersionForCollab,
-	defaultMinVersionForCollab,
 	getConfigsForMinVersionForCollab,
 	validateConfigMapOverrides,
 	type ConfigMap,
 	type ConfigValidationMap,
 } from "@fluidframework/runtime-utils/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	disabledCompressionConfig,
@@ -220,6 +218,10 @@ const runtimeOptionsAffectingDocSchemaConfigValidationMap: ConfigValidationMap<R
 		]),
 	};
 
+const runtimeOptionsToValidateWithDefault = new Set<keyof RuntimeOptionsAffectingDocSchema>([
+	"inlineDetachedBlobsAsSummaryBlobs",
+]);
+
 /**
  * Returns the default RuntimeOptionsAffectingDocSchema configuration for a given minVersionForCollab.
  */
@@ -241,17 +243,10 @@ export function validateRuntimeOptions(
 	minVersionForCollab: MinimumVersionForCollab,
 	runtimeOptions: Partial<ContainerRuntimeOptionsInternal>,
 ): void {
-	if (
-		runtimeOptions.inlineDetachedBlobsAsSummaryBlobs === true &&
-		minVersionForCollab === defaultMinVersionForCollab
-	) {
-		throw new UsageError(
-			"inlineDetachedBlobsAsSummaryBlobs requires minVersionForCollab to be at least 2.115.0",
-		);
-	}
 	validateConfigMapOverrides<RuntimeOptionsAffectingDocSchema>(
 		minVersionForCollab,
 		runtimeOptions,
 		runtimeOptionsAffectingDocSchemaConfigValidationMap,
+		runtimeOptionsToValidateWithDefault,
 	);
 }
