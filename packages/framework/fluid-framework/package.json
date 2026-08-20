@@ -130,6 +130,13 @@
 	},
 	"typeValidation": {
 		"entrypoint": "public",
-		"broken": {}
+		"broken": {
+			"Interface_LogLevelConst": {
+				"backCompat": false
+			},
+			"Variable_LogLevel": {
+				"backCompat": false
+			}
+		}
 	}
 }
