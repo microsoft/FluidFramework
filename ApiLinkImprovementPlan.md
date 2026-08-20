@@ -50,9 +50,9 @@ The intended API is:
 
 ```ts
 interface ApiLinkProps {
-	packageName: string;
+  packageName: string;
   api: string;
-	children?: React.ReactNode;
+  children?: React.ReactNode;
 }
 ```
 
@@ -85,12 +85,17 @@ The selector belongs to the segment it disambiguates, so a parent kind can be se
 Function and method overloads use TSDoc's numeric index-selector syntax with API Extractor's one-based overload index:
 
 ```mdx
-<ApiLink packageName="fluid-framework" api="TreeBranchAlpha.(runTransaction:2)" />
+<ApiLink
+  packageName="fluid-framework"
+  api="TreeBranchAlpha.(runTransaction:2)"
+/>
 ```
 
 Selectors may be combined at different levels, such as `(Foo:interface).(bar:2)`. Lookup without a kind selector succeeds when a name identifies exactly one API item kind at that hierarchy level. When the terminal item has multiple overloads, omitting its index selector selects overload 1. Supplying an index selector selects that overload and produces an error when it does not exist.
 
 The `api` property intentionally accepts the declaration-reference portion only. `packageName` remains separate because the website applies version-specific package policy, and `ApiLink` does not accept TSDoc link text or a package source inside `api`.
+
+When `children` is omitted, `ApiLink` uses the parsed identifier path as its link text and removes selectors. For example, both `(Foo:interface).bar` and `(Foo:interface).(bar:2)` display `Foo.bar` by default.
 
 ## Implementation Plan
 
@@ -102,13 +107,13 @@ Add a focused public API for callers that only need the target:
 
 ```ts
 interface ApiItemLinkTarget {
-	documentPath: string;
-	headingId?: string;
+  documentPath: string;
+  headingId?: string;
 }
 
 function getLinkTargetForApiItem(
-	apiItem: ApiItem,
-	config: ApiItemTransformationConfiguration,
+  apiItem: ApiItem,
+  config: ApiItemTransformationConfiguration,
 ): ApiItemLinkTarget;
 ```
 
@@ -160,9 +165,7 @@ Use a manifest shape that preserves each candidate's full containment path, incl
   "fluid-framework": {
     "TreeView": [
       {
-        "path": [
-          { "name": "TreeView", "apiType": "Interface" }
-        ],
+        "path": [{ "name": "TreeView", "apiType": "Interface" }],
         "documentPath": "fluid-framework/treeview-interface"
       }
     ],
@@ -170,7 +173,11 @@ Use a manifest shape that preserves each candidate's full containment path, incl
       {
         "path": [
           { "name": "TreeBranchAlpha", "apiType": "Interface" },
-          { "name": "runTransaction", "apiType": "MethodSignature", "overloadIndex": 1 }
+          {
+            "name": "runTransaction",
+            "apiType": "MethodSignature",
+            "overloadIndex": 1
+          }
         ],
         "documentPath": "fluid-framework/treebranchalpha-interface",
         "headingId": "runtransaction-methodsignature"
@@ -178,7 +185,11 @@ Use a manifest shape that preserves each candidate's full containment path, incl
       {
         "path": [
           { "name": "TreeBranchAlpha", "apiType": "Interface" },
-          { "name": "runTransaction", "apiType": "MethodSignature", "overloadIndex": 2 }
+          {
+            "name": "runTransaction",
+            "apiType": "MethodSignature",
+            "overloadIndex": 2
+          }
         ],
         "documentPath": "fluid-framework/treebranchalpha-interface",
         "headingId": "runtransaction_1-methodsignature"
@@ -258,9 +269,9 @@ Convert existing `ApiLink` calls with manual `headingId` values to declaration r
 
 ```mdx
 <ApiLink
-    packageName="fluid-framework"
+  packageName="fluid-framework"
   api="TreeView"
-    headingId="upgradeschema-methodsignature"
+  headingId="upgradeschema-methodsignature"
 />
 ```
 
@@ -369,13 +380,14 @@ This allowed users to, for example, differentiate between an interface `Foo` and
 But our API also allows users to link to member items of parent types.
 E.g. `Foo.bar`.
 In this case, say our package exports both an interface and a constant named `Foo`.
-Separate `apiName` and `apiType` properties did not provide a way to specify a discriminator for the *parent* element of the reference.
+Separate `apiName` and `apiType` properties did not provide a way to specify a discriminator for the _parent_ element of the reference.
 
 To my knowledge, our website doesn't currently have any use cases for this.
 But I'm sure it's only a matter of time before we need it, so I think we should address this now.
 
 `TSDoc` handles this by supporting optional discriminators at each level in the hierarchy.
-E.g. the above case can be handled by specifying `(Foo:interface).bar` to link to the `Foo` *interface*'s `bar` property.
+E.g. the above case can be handled by specifying `(Foo:interface).bar` to link to the `Foo` _interface_'s `bar` property.
+
 - See here for more details on TSDoc's link syntax: https://tsdoc.org/pages/tags/link/
 
 Use a single `api` argument that follows the relevant subset of TSDoc declaration-reference syntax. A selector is attached to the segment it disambiguates, allowing `(Foo:interface).bar` to select a parent kind. Numeric index selectors identify API Extractor overloads in the same string, allowing `Foo.(bar:2)` or the combined `(Foo:interface).(bar:2)`.
