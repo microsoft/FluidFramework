@@ -437,25 +437,26 @@ export async function inlineAttachmentBlobsByReference(
  * rather than silently producing a pending state that omits group data.
  */
 export function snapshotHasLoadingGroups(baseSnapshot: ISnapshotTree): boolean {
-	return snapshotHasLoadingGroupsCore(baseSnapshot, true);
-}
-
-function snapshotHasLoadingGroupsCore(baseSnapshot: ISnapshotTree, isRoot: boolean): boolean {
 	if (baseSnapshot.unreferenced === true) {
 		return false;
 	}
 	if (baseSnapshot.groupId !== undefined) {
 		return true;
 	}
-	for (const [key, child] of Object.entries(baseSnapshot.trees)) {
-		// BlobManager's internal groups are self-contained summary blobs whose
-		// IDs can be read directly. They do not require a group snapshot fetch.
-		if (isRoot && key === blobsTreeName) {
-			continue;
-		}
-		if (snapshotHasLoadingGroupsCore(child, false)) {
-			return true;
-		}
+	return Object.entries(baseSnapshot.trees).some(
+		([key, child]) =>
+			// BlobManager's internal groups are self-contained summary blobs whose
+			// IDs can be read directly. They do not require a group snapshot fetch.
+			key !== blobsTreeName && subtreeHasLoadingGroups(child),
+	);
+}
+
+function subtreeHasLoadingGroups(subtree: ISnapshotTree): boolean {
+	if (subtree.unreferenced === true) {
+		return false;
 	}
-	return false;
+	if (subtree.groupId !== undefined) {
+		return true;
+	}
+	return Object.values(subtree.trees).some(subtreeHasLoadingGroups);
 }

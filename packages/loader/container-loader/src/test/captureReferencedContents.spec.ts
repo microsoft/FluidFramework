@@ -480,6 +480,23 @@ describe("captureReferencedContents", () => {
 			});
 			assert.strictEqual(snapshotHasLoadingGroups(snapshot), false);
 		});
+
+		it("detects loading groups under a nested subtree named .blobs", () => {
+			const snapshot = tree({
+				trees: {
+					app: tree({
+						trees: {
+							[wireFormatConstants.blobsTreeName]: tree({
+								trees: {
+									grouped: tree({ groupId: "app-group" }),
+								},
+							}),
+						},
+					}),
+				},
+			});
+			assert.strictEqual(snapshotHasLoadingGroups(snapshot), true);
+		});
 	});
 
 	describe("extractBlobAttachReferences", () => {
