@@ -4,6 +4,8 @@
 
 ```ts
 
+/// <reference types="mocha" />
+
 // (No @packageDocumentation comment for this package)
 
 ```
