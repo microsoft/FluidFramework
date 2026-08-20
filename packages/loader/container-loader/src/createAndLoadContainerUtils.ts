@@ -333,7 +333,7 @@ export async function loadExistingContainer(
  * `pendingLocalState.url` is the only URL available; it is parsed in place of
  * a real `IUrlResolver.resolve()` call, so it must satisfy
  * {@link tryParseCompatibleResolvedUrl}'s contract — a resolved URL of shape
- * `protocol://<string>/.../..?<querystring>`. This is the format that
+ * `protocol://{host}/.../..?{queryString}`. This is the format that
  * Fluid-shipped drivers emit; drivers that emit a non-standard resolved-URL
  * shape will surface as a `UsageError` at load time. The online form has no
  * such constraint because the supplied resolver controls URL parsing.
