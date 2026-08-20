@@ -171,7 +171,12 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"TypeAlias_CompatibilityMode": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		},
 		"entrypoint": "public"
 	}
 }
