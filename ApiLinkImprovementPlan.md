@@ -200,7 +200,7 @@ The generator must detect and report collisions rather than silently select a ta
 
 Different kinds are preserved as candidates and resolved with `apiType`. Each overload of a function, method, call signature, construct signature, or other parameter-list item is preserved as a separate candidate with its API Extractor `overloadIndex`.
 
-Within a qualified name, the combination of `apiType` and `overloadIndex` must uniquely identify a candidate. Items that do not support overloads omit `overloadIndex`. Duplicate candidates with the same kind and overload index should fail manifest generation with a diagnostic containing the package, qualified name, kind, overload index, and canonical references involved.
+Within a qualified name, the combination of `apiType` and `overloadIndex` must uniquely identify a target. Items that do not support overloads omit `overloadIndex`. API Extractor models may contain canonical-reference aliases for the same logical item; candidates with the same kind, overload index, document path, and heading are coalesced. Duplicate candidates that resolve to different targets must fail manifest generation with a diagnostic containing the package, qualified name, kind, overload index, and canonical references involved.
 
 Call signatures, construct signatures, and other items without useful author-facing names may be omitted initially, but manifest generation must not collapse distinct overloads for any included item.
 
