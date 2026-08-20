@@ -6,8 +6,8 @@
 import { takeAsync, type AsyncGenerator } from "@fluid-private/stochastic-test-utils";
 import type { DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+import { cleanedPackageVersion } from "@fluidframework/runtime-utils/internal";
 
-import { pkgVersion } from "../../../packageVersion.js";
 import { ForestTypeExpensiveDebug, ForestTypeReference } from "../../../shared-tree/index.js";
 import type { ISharedTree } from "../../../treeFactory.js";
 import { validateFuzzTreeConsistency } from "../../utils.js";
@@ -48,7 +48,7 @@ export const baseTreeModel: DDSFuzzModel<
 > = {
 	workloadName: "SharedTree (Reference Forest)",
 	factory: new SharedTreeFuzzTestFactory(createOnCreate(undefined), undefined, {
-		minVersionForCollab: pkgVersion,
+		minVersionForCollab: cleanedPackageVersion,
 		forest: ForestTypeReference,
 	}),
 	generatorFactory,
@@ -69,7 +69,7 @@ export const comparisonForestTreeModel: DDSFuzzModel<
 > = {
 	workloadName: "SharedTree (Comparison Forest)",
 	factory: new SharedTreeFuzzTestFactory(createOnCreate(undefined), undefined, {
-		minVersionForCollab: pkgVersion,
+		minVersionForCollab: cleanedPackageVersion,
 		forest: ForestTypeExpensiveDebug,
 	}),
 	generatorFactory,

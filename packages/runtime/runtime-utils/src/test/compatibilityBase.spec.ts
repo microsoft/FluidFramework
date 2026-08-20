@@ -23,7 +23,6 @@ import {
 	getConfigForMinVersionForCollab,
 	selectVersionRoundedDown,
 } from "../compatibilityBase.js";
-import { pkgVersion } from "../packageVersion.js";
 
 describe("compatibilityBase", () => {
 	it("cleanedPackageVersion", () => {
@@ -441,7 +440,7 @@ describe("compatibilityBase", () => {
 			};
 		}[] = [
 			{
-				version: pkgVersion,
+				version: cleanedPackageVersion,
 				checks: { isValidSemver: true, isGteLowestMinVersion: true, isLtePkgVersion: true },
 			},
 			{

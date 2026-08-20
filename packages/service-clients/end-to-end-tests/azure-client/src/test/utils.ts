@@ -5,12 +5,15 @@
 
 import type { AzureMember, IAzureAudience } from "@fluidframework/azure-client";
 import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { featureVersion } from "@fluidframework/driver-definitions/internal";
 import type { IMember } from "@fluidframework/fluid-static";
 import type { ISharedMap, IValueChanged } from "@fluidframework/map/legacy";
 
 // `pkgVersion` is this package's own version, which tracks the Fluid Framework release group; we use it as
 // `minVersionForCollab` in tests so they exercise the latest defaults rather than a hardcoded version.
-export { pkgVersion as currentVersion } from "../packageVersion.js";
+import { pkgVersion } from "../packageVersion.js";
+
+export const currentVersion = featureVersion(pkgVersion);
 
 export const waitForMember = async (
 	audience: IAzureAudience,
