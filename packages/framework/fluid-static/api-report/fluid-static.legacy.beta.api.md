@@ -4,9 +4,6 @@
 
 ```ts
 
-// @public @deprecated
-export type CompatibilityMode = "1" | "2";
-
 // @public
 export type ContainerAttachProps<T = unknown> = T;
 
@@ -28,14 +25,6 @@ export function createTreeContainerRuntimeFactory(props: {
 export function createTreeContainerRuntimeFactory(props: {
     readonly schema: TreeContainerSchema;
     readonly minVersionForCollaboration: OldestSupportedClientVersion;
-    readonly rootDataStoreRegistry?: IFluidDataStoreRegistry;
-    readonly runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
-}): IRuntimeFactory;
-
-// @beta @deprecated @legacy
-export function createTreeContainerRuntimeFactory(props: {
-    readonly schema: TreeContainerSchema;
-    readonly compatibilityMode: CompatibilityMode;
     readonly rootDataStoreRegistry?: IFluidDataStoreRegistry;
     readonly runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
 }): IRuntimeFactory;
