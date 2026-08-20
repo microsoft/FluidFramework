@@ -1,13 +1,15 @@
 ---
 "@fluidframework/container-runtime": minor
 "@fluidframework/aqueduct": minor
+"@fluidframework/runtime-utils": minor
 "__section": legacy
 ---
 Require an explicit oldest supported client when creating container runtimes
 
-Container runtime entry points and Aqueduct runtime factories no longer choose a compatibility
-version when one is omitted. Callers must specify exactly one of `oldestSupportedClient` or the
-deprecated `minVersionForCollab` property.
+The beta `loadContainerRuntime` entry point and Aqueduct runtime factories no longer choose a
+compatibility version when one is omitted. Callers must specify exactly one of
+`oldestSupportedClient` or the deprecated `minVersionForCollab` property. The alpha
+`loadContainerRuntimeAlpha` entry point requires `oldestSupportedClient`.
 
 Migrate callers to the canonical property:
 

@@ -27,6 +27,11 @@ describe("loadContainerRuntime compatibility parameter", () => {
 		const acceptCanonical = (_params: LoadContainerRuntimeParams): void => {};
 		const acceptDeprecated = (_params: DeprecatedLoadContainerRuntimeParams): void => {};
 		const acceptAlpha = (_params: Parameters<typeof loadContainerRuntimeAlpha>[0]): void => {};
+		const callDeprecatedOverload = async (): ReturnType<typeof loadContainerRuntime> =>
+			loadContainerRuntime({
+				...commonParams,
+				minVersionForCollab: "2.0.0",
+			});
 
 		acceptCanonical({
 			...commonParams,
@@ -36,6 +41,7 @@ describe("loadContainerRuntime compatibility parameter", () => {
 			...commonParams,
 			minVersionForCollab: "2.0.0",
 		});
+		assert.equal(typeof callDeprecatedOverload, "function");
 		acceptAlpha({
 			...commonParams,
 			oldestSupportedClient: "2.0.0",

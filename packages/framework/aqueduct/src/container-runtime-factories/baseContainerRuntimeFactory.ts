@@ -9,7 +9,6 @@ import type {
 } from "@fluidframework/container-definitions/internal";
 import {
 	FluidDataStoreRegistry,
-	// eslint-disable-next-line import-x/no-deprecated -- only the minVersionForCollab overload is deprecated.
 	loadContainerRuntime,
 	type IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
@@ -219,7 +218,6 @@ export class BaseContainerRuntimeFactory
 			scope.IFluidDependencySynthesizer = dc;
 		}
 
-		// eslint-disable-next-line import-x/no-deprecated -- using the canonical overload.
 		return loadContainerRuntime({
 			context,
 			existing,

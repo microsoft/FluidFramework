@@ -931,13 +931,22 @@ export function loadContainerRuntime(
 /**
  * Load a container runtime using the deprecated `minVersionForCollab` property.
  *
- * @deprecated 2.116.0. To be removed in 3.10.0. Pass `oldestSupportedClient` instead.
- * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
+ * @remarks
+ * The deprecated property in the parameter object carries the migration guidance. The overload
+ * itself is not tagged `@deprecated`, because doing so causes tooling to incorrectly mark the
+ * canonical overload as deprecated too.
  * @legacy
  * @beta
  */
 export function loadContainerRuntime(
-	params: DeprecatedLoadContainerRuntimeParams,
+	params: Omit<LoadContainerRuntimeParams, "oldestSupportedClient" | "minVersionForCollab"> & {
+		readonly oldestSupportedClient?: never;
+		/**
+		 * @deprecated 2.116.0. To be removed in 3.10.0. Pass `oldestSupportedClient` instead.
+		 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
+		 */
+		readonly minVersionForCollab: OldestSupportedClientVersion;
+	},
 ): Promise<IContainerRuntime & IRuntime>;
 export async function loadContainerRuntime(
 	params: LoadContainerRuntimeParams | DeprecatedLoadContainerRuntimeParams,
@@ -1117,7 +1126,8 @@ export class ContainerRuntime
 		// with FF runtime 2.10.0 or later.
 		if (!isValidMinVersionForCollab(minVersionForCollab)) {
 			throw new UsageError(
-				`Invalid minVersionForCollab: ${minVersionForCollab}. It must be an existing FF version (i.e. 2.22.1).`,
+				`Invalid compatibility version: ${minVersionForCollab}. ` +
+					"`oldestSupportedClient` (or deprecated `minVersionForCollab`) must be an existing FF version (i.e. 2.22.1).",
 			);
 		}
 		// We also validate that there is not a mismatch between `minVersionForCollab` and runtime options that
