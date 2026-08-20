@@ -15,7 +15,7 @@
 	"plugins": [
 		"@",
 		"@typescript-eslint:@typescript-eslint/eslint-plugin@8.58.2",
-		"import-x:eslint-plugin-import-x@4.16.1",
+		"import-x:eslint-plugin-import-x@4.17.1",
 		"@eslint-community/eslint-comments",
 		"@fluid-internal/fluid",
 		"@rushstack",
