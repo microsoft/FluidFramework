@@ -752,7 +752,6 @@ export namespace FormattedText {
 	> extends PlainText.Members {
 		/**
 		 * {@inheritDoc PlainText.Members.createInsertionAnchor}
-		 * @override
 		 */
 		createInsertionAnchor(index: number): ArrayPlaceAnchor;
 
