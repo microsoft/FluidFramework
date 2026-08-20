@@ -4,7 +4,7 @@ A set of session-focused utilities for lightweight data sharing and messaging.
 
 A session is a period of time when one or more clients are connected to a Fluid service. Session data and messages may be exchanged among clients, but will disappear once the no clients remain. (More specifically once no clients remain that have acquired the session `IPresence` interface.) Once fully implemented, no client will require container write permissions to use Presence features.
 
-For more details and examples of how to use the library, please refer to the documentation on our [website](https://fluidframework.com/docs/build/presence).
+For more details and examples of how to use the library, please refer to the documentation on the Fluid Framework [website](https://fluidframework.com/docs/build/presence).
 
 <!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
