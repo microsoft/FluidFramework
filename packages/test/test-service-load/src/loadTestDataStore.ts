@@ -29,7 +29,6 @@ import {
 } from "@fluidframework/map/internal";
 import {
 	IContainerRuntimeBase,
-	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import { ITaskManager, TaskManager } from "@fluidframework/task-manager/internal";
@@ -944,7 +943,7 @@ export const createFluidExport = (
 		runtimeOptions,
 		...(runtimeOptions?.inlineDetachedBlobsAsSummaryBlobs === true
 			? {
-					minVersionForCollab: "2.115.0" as const satisfies MinimumVersionForCollab,
+					minVersionForCollab: "2.115.0" as const,
 				}
 			: {}),
 	};
