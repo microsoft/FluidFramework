@@ -181,7 +181,7 @@ Use a manifest shape that preserves kind and overload candidates without encodin
 }
 ```
 
-Generate one manifest for each configured docs version, including local API documentation when local generation is enabled. Store the files in a dedicated generated-content directory such as `website/generated/api-link-manifests/`.
+Generate one manifest for each configured docs version, including local API documentation when local generation is enabled. Store the files in a dedicated generated-content directory such as `website/.generated/api-link-manifests/`.
 
 Do not store them under `website/.docusaurus`, because Docusaurus owns and may clean that directory. The generated manifests should be disposable build output rather than manually maintained or checked-in API documentation.
 
