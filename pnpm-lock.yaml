@@ -4791,6 +4791,9 @@ importers:
 
   examples/utils/migration-tools:
     dependencies:
+      '@fluid-example/example-utils':
+        specifier: workspace:~
+        version: link:../example-utils
       '@fluid-experimental/pact-map':
         specifier: workspace:~
         version: link:../../../packages/dds/pact-map
@@ -5698,6 +5701,9 @@ importers:
       '@fluid-example/example-driver':
         specifier: workspace:~
         version: link:../../utils/example-driver
+      '@fluid-example/example-utils':
+        specifier: workspace:~
+        version: link:../../utils/example-utils
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../../packages/common/client-utils

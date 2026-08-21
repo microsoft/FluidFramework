@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { exampleOldestSupportedClient } from "@fluid-example/example-utils";
 import type {
 	IContainerContext,
 	IRuntime,
@@ -43,8 +44,7 @@ export class DiceRollerContainerRuntimeFactory implements IRuntimeFactory {
 			registryEntries: new Map([[diceRollerRegistryKey, Promise.resolve(diceRollerFactory)]]),
 			provideEntryPoint,
 			existing,
-			// This non-deployed example targets the current Client major; advance with the example.
-			oldestSupportedClient: "3.0.0",
+			oldestSupportedClient: exampleOldestSupportedClient,
 		});
 
 		if (!existing) {
