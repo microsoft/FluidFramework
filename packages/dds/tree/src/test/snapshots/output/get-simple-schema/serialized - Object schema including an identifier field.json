@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "root": {
     "kind": 1,
     "simpleAllowedTypes": {
@@ -25,8 +25,7 @@
               "com.fluidframework.leaf.string": {
                 "isStaged": false
               }
-            },
-            "storedKey": "id"
+            }
           }
         },
         "allowUnknownOptionalFields": false

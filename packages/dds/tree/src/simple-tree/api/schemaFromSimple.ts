@@ -120,10 +120,12 @@ function generateNode(
 ): TreeNodeSchema & SimpleNodeSchema<SchemaType.View> {
 	switch (schema.kind) {
 		case NodeKind.Object: {
-			const fields: Record<string, FieldSchema> = {};
-			for (const [key, field] of schema.fields) {
-				fields[key] = generateFieldSchema(field, context, field.storedKey);
-			}
+			const fields: Record<string, FieldSchema> = Object.fromEntries(
+				Array.from(schema.fields, ([key, field]) => [
+					key,
+					generateFieldSchema(field, context, field.storedKey),
+				]),
+			);
 			// Here allowUnknownOptionalFields is implicitly defaulting in the case where the input schema does not explicitly specify the value.
 			// This is a subjective policy choice: users of this code are expected to handle what ever choice this code makes for cases like this.
 			return factory.objectAlpha(id, fields, {
