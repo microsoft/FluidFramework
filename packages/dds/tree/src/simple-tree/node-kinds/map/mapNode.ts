@@ -346,11 +346,8 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 	public has(key: string): boolean {
 		return this.innerNode.tryGetField(brand(key)) !== undefined;
 	}
-	public *keys(): FluidIterableIterator<string> {
-		const node = this.innerNode;
-		for (const key of node.keys()) {
-			yield key;
-		}
+	public keys(): FluidIterableIterator<string> {
+		return this.innerNode.keys();
 	}
 	public set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T>): this {
 		const kernel = getKernel(this);

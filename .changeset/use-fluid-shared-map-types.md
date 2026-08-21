@@ -12,11 +12,19 @@ Shared maps use Fluid-owned map types
 Consumers using `IDirectoryBeta` should use `IDirectory` instead.
 Methods available only on newer built-in map types are not available on shared maps.
 
-```typescript
-// Before
-// import type { IDirectoryBeta as Directory } from "@fluidframework/map/legacy";
+Before:
 
-// After
+```typescript
+import type { IDirectoryBeta as Directory } from "@fluidframework/map/legacy";
+
+function visitDirectory(directory: Directory): void {
+	// ...
+}
+```
+
+After:
+
+```typescript
 import type { IDirectory as Directory } from "@fluidframework/map/legacy";
 
 function visitDirectory(directory: Directory): void {
