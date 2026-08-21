@@ -92,6 +92,8 @@ from `getOdspPointInTimeDocumentServiceFactory` and passes that factory directly
 `loadContainerToSequenceNumber`. Keeping detection in Fluid also gives non-ODSP drivers one generic
 loader boundary to satisfy without exposing their implementation details to hosts.
 
+The standard factory exposes the capability directly, so hosts do not need a separate factory.
+
 If the host-facing orchestration moves to the proposed feature package, the private generic
 capability interface, `asPointInTimeCapableFactory`, and
 `PointInTimeDocumentServiceFactory` move with it. The ODSP public interface, construction helper,

@@ -556,9 +556,9 @@ is what ships today.
 
 ### Component B — how does the recomposed driver materialize the target?
 
-The factory returned by `getOdspPointInTimeDocumentServiceFactory` (in `../pointInTimeDriver/`)
-extends `OdspDocumentServiceFactoryCore` internally and adds
-`createPointInTimeDocumentService(resolvedUrl, targetSequenceNumber)`:
+`OdspDocumentServiceFactoryCore` exposes
+`createPointInTimeDocumentService(resolvedUrl, targetSequenceNumber)`. Its implementation lives in
+`../pointInTimeDriver/createPointInTimeDocumentService.ts`:
 
 1. Build a version manager (Component A), sharing the single `EpochTracker` described below, and call
    `findBaseForSeq(target)`. It picks the closest version *and* proves that base shares the live
