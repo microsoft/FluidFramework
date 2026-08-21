@@ -4285,6 +4285,34 @@ describe("Runtime", () => {
 						"Container should throw when createBlobPayloadPending is on and explicitSchemaControl is not enabled",
 					);
 				});
+
+				it("Throws when createBlobPayloadPending defaults to enabled (via minVersionForCollab) while explicitSchemaControl is explicitly disabled", async () => {
+					// createBlobPayloadPending is intentionally left unset here: with minVersionForCollab
+					// >= 2.40.0, it resolves to `true` purely via defaults. explicitSchemaControl is
+					// explicitly set to `false`, so this should still be rejected even though
+					// createBlobPayloadPending never appears in runtimeOptions.
+					await assert.rejects(
+						async () =>
+							ContainerRuntime.loadRuntime2({
+								context: getMockContext() as IContainerContext,
+								registry: new FluidDataStoreRegistry([]),
+								existing: false,
+								runtimeOptions: {
+									explicitSchemaControl: false,
+								},
+								minVersionForCollab: "2.40.0",
+								provideEntryPoint: mockProvideEntryPoint,
+							}),
+						(error: IErrorBase) => {
+							return (
+								error.errorType === ContainerErrorTypes.usageError &&
+								error.message ===
+									"explicitSchemaControl must be enabled to use createBlobPayloadPending"
+							);
+						},
+						"Container should throw when createBlobPayloadPending defaults to enabled while explicitSchemaControl is explicitly disabled",
+					);
+				});
 			});
 		});
 
@@ -4644,6 +4672,7 @@ describe("Runtime", () => {
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: true,
 					explicitSchemaControl: true,
+					createBlobPayloadPending: true,
 					stagingModeAutoFlushThreshold: 1000,
 					disableSchemaUpgrade: false,
 				};

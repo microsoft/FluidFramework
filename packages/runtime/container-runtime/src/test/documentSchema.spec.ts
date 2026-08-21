@@ -397,6 +397,49 @@ describe("Runtime", () => {
 		);
 	});
 
+	it("createBlobPayloadPending: explicit false is not persisted as false in the schema", () => {
+		// `createBlobPayloadPending` is a tri-state-ish option: `true` means enabled, and both `false`
+		// (explicitly disabled) and `undefined` (default/disabled) should be summarized as `undefined`,
+		// since the document schema only ever needs to record the "enabled" case.
+		const featuresModified = { ...features, createBlobPayloadPending: false };
+		const controller = new DocumentsSchemaController(
+			false, // existing,
+			0, // snapshotSequenceNumber
+			undefined, // old schema,
+			featuresModified,
+			() => {}, // onSchemaChange
+			{ minVersionForCollab: defaultMinVersionForCollab }, // info,
+			logger,
+			false,
+		);
+
+		assert.strictEqual(
+			controller.sessionSchema.runtime.createBlobPayloadPending,
+			undefined,
+			"explicit false should be normalized to undefined in the schema",
+		);
+	});
+
+	it("createBlobPayloadPending: true is persisted as true in the schema", () => {
+		const featuresModified = { ...features, createBlobPayloadPending: true };
+		const controller = new DocumentsSchemaController(
+			false, // existing,
+			0, // snapshotSequenceNumber
+			undefined, // old schema,
+			featuresModified,
+			() => {}, // onSchemaChange
+			{ minVersionForCollab: defaultMinVersionForCollab }, // info,
+			logger,
+			false,
+		);
+
+		assert.strictEqual(
+			controller.sessionSchema.runtime.createBlobPayloadPending,
+			true,
+			"true should be persisted as true in the schema",
+		);
+	});
+
 	function testExistingDocNoChangesInSchema(schema: IDocumentSchema) {
 		const controller = new DocumentsSchemaController(
 			true, // existing,

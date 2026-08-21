@@ -115,7 +115,7 @@ export function generateRuntimeOptions(
 		chunkSizeInBytes: [204800],
 		enableRuntimeIdCompressor: ["on", undefined, "delayed"],
 		enableGroupedBatching: [true, false],
-		createBlobPayloadPending: [true, undefined],
+		createBlobPayloadPending: [true, false, undefined],
 		explicitSchemaControl: [true, false],
 		disableSchemaUpgrade: [false],
 		stagingModeAutoFlushThreshold: [undefined],
@@ -142,9 +142,11 @@ export function generateRuntimeOptions(
 		}
 	});
 
-	// Override explicitSchemaControl to enabled if createBlobPayloadPending is enabled
+	// Override explicitSchemaControl to enabled if createBlobPayloadPending is explicitly set (true or false),
+	// since explicitSchemaControl is required whenever createBlobPayloadPending is explicitly configured (not just
+	// when enabling it) - see the `runtimeOptionKeysThatRequireExplicitSchemaControl` check in containerRuntime.ts.
 	pairwiseOptions.map((options) => {
-		if (options.createBlobPayloadPending) {
+		if (options.createBlobPayloadPending !== undefined) {
 			(
 				options as {
 					// Remove readonly modifier to allow overriding

@@ -482,10 +482,12 @@ export interface ContainerRuntimeOptions {
 	readonly explicitSchemaControl: boolean;
 
 	/**
-	 * Create blob handles with pending payloads when calling createBlob (default is `undefined` (disabled)).
+	 * Create blob handles with pending payloads when calling createBlob.
+	 * Default is `undefined` (disabled) when `minVersionForCollab` is `<2.40.0`, but enabled when `minVersionForCollab` is `>=2.40.0`.
 	 * When enabled (`true`), createBlob will return a handle before the blob upload completes.
+	 * Use explicit `false` to disable this feature when `minVersionForCollab` is `>=2.40.0`.
 	 */
-	readonly createBlobPayloadPending: true | undefined;
+	readonly createBlobPayloadPending: boolean | undefined;
 
 	/**
 	 * Controls automatic batch flushing during staging mode.
@@ -1098,6 +1100,15 @@ export class ContainerRuntime
 			);
 			if (disallowedKeys.length > 0) {
 				throw new UsageError(`explicitSchemaControl must be enabled to use ${disallowedKeys}`);
+			}
+			// createBlobPayloadPending is a special case: unlike the other options above, it can resolve to
+			// enabled purely via defaults (it defaults to `true` once minVersionForCollab >= 2.40.0), without
+			// ever being set explicitly in runtimeOptions. The check above only catches values explicitly
+			// present in runtimeOptions, so it would miss this case; check the resolved value directly instead.
+			if (createBlobPayloadPending !== undefined) {
+				throw new UsageError(
+					"explicitSchemaControl must be enabled to use createBlobPayloadPending",
+				);
 			}
 		}
 

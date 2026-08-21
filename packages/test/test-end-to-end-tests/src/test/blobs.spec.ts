@@ -33,6 +33,7 @@ import {
 	waitForContainerConnection,
 	timeoutPromise,
 } from "@fluidframework/test-utils/internal";
+import * as semver from "semver";
 import { v4 as uuid } from "uuid";
 
 import { wrapObjectAndOverride } from "../mocking.js";
@@ -43,9 +44,16 @@ import {
 	getUrlFromDetachedBlobStorage,
 } from "./mockDetachedBlobStorage.js";
 
+// The oldest container runtime version whose document schema validator understands an explicit `false` for
+// createBlobPayloadPending (older runtimes only accepted `true` / `undefined` and will throw
+// "Document can't be opened with current version of the code" if they see `false`). This is pinned to the
+// current package version at the time this support was added, rather than referencing pkgVersion directly, so it
+// keeps meaning "the version this shipped in" even after future releases bump pkgVersion further.
+const minCreateBlobPayloadPendingFalseVersion = "3.0.0";
+
 function makeTestContainerConfig(
 	registry: ChannelFactoryRegistry,
-	createBlobPayloadPending: true | undefined,
+	createBlobPayloadPending: boolean | undefined,
 ): ITestContainerConfig {
 	return {
 		runtimeOptions: {
@@ -63,7 +71,9 @@ function makeTestContainerConfig(
 					},
 				},
 			},
-			explicitSchemaControl: createBlobPayloadPending,
+			// explicitSchemaControl is required whenever createBlobPayloadPending is explicitly set (true or
+			// false); it also matches the default for minVersionForCollab 2.40.0 below.
+			explicitSchemaControl: true,
 			createBlobPayloadPending,
 		},
 		registry,
@@ -97,7 +107,12 @@ const ContainerStateEventsOrErrors: ExpectedEvents = {
 	],
 };
 
-for (const createBlobPayloadPending of [undefined, true] as const) {
+// createBlobPayloadPending defaults to `true` because minVersionForCollab is pinned to 2.40.0 below (this
+// default-on-2.40.0 behavior predates this file's explicit-`false` support and is already understood by all
+// container runtime versions used in these compat tests). Including `undefined` alongside explicit `false`/`true`
+// verifies that relying on the default (as most consumers will) produces the same enabled behavior as explicitly
+// requesting `true`.
+for (const createBlobPayloadPending of [false, true, undefined] as const) {
 	describeCompat(
 		`blobs (createBlobPayloadPending: ${createBlobPayloadPending})`,
 		"FullCompat",
@@ -123,6 +138,21 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 				if (
 					provider.driver.type === "routerlicious" &&
 					provider.driver.endpointName === "frs"
+				) {
+					this.skip();
+				}
+				// Explicitly disabling createBlobPayloadPending (via `false`) is a new capability; older
+				// container runtimes only understood `true` / `undefined` for this option and will fail to
+				// open a document whose schema records an explicit `false`. minCreateBlobPayloadPendingFalseVersion
+				// is the oldest runtime version that understands `false`, i.e. the version this support ships in.
+				// Skip cross-version compat runs where either the creating or loading container runtime predates it.
+				if (
+					createBlobPayloadPending === false &&
+					(semver.lt(apis.containerRuntime.version, minCreateBlobPayloadPendingFalseVersion) ||
+						semver.lt(
+							apis.containerRuntimeForLoading.version,
+							minCreateBlobPayloadPendingFalseVersion,
+						))
 				) {
 					this.skip();
 				}

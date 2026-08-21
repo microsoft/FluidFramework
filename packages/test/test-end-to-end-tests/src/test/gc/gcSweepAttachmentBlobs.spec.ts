@@ -307,6 +307,11 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 				const blobHandle2 = toFluidHandleInternal(
 					await mainDataStore._runtime.uploadBlob(stringToBuffer(blobContents, "utf-8")),
 				);
+				// blobHandle2 is never referenced in a DDS in this test, so it wouldn't otherwise have its
+				// graph attached. When createBlobPayloadPending is enabled, the blob's upload doesn't begin
+				// until the handle's graph is attached, so we do so explicitly here to ensure it becomes a
+				// tracked (and immediately unreferenced) GC node like it would under the legacy blob flow.
+				blobHandle2.attachGraph();
 
 				// Reference and then unreference the blob via one of the handles so that it's unreferenced in next summary.
 				mainDataStore._root.set("blob1", blobHandle1);

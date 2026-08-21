@@ -157,10 +157,12 @@ const runtimeOptionsAffectingDocSchemaConfigMap: ConfigMap<RuntimeOptionsAffecti
 			// "3.0.0": { enableGCSweep: true },
 		},
 		createBlobPayloadPending: {
-			// This feature is new and disabled by default. In the future we will enable it by default, but we have not
-			// closed on the version where that will happen yet.  Probably a .10 release since blob functionality is not
-			// exposed on the `@public` API surface.
+			// Disabled by default for versions predating 2.40.0, since older clients don't understand the
+			// document format changes associated with pending blob payloads.
 			"1.0.0": undefined,
+			// Enabled by default starting at 2.40.0, since blob functionality is not exposed on the `@public`
+			// API surface, making this a reasonably safe version to flip the default at.
+			"2.40.0": true,
 		},
 	};
 

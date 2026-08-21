@@ -233,7 +233,13 @@
 	},
 	"typeValidation": {
 		"broken": {
+			"Interface_ContainerRuntimeOptions": {
+				"backCompat": false
+			},
 			"Interface_LoadContainerRuntimeParams": {
+				"backCompat": false
+			},
+			"TypeAlias_IContainerRuntimeOptions": {
 				"backCompat": false
 			}
 		},
