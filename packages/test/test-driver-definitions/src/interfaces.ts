@@ -28,7 +28,12 @@ export type TestDriverTypes =
  * These values are replicated in {@link @fluid-private/test-version-utils#compatOptions.d.ts}. Ensure that any revisions here are also reflected in test-version-utils.
  * @internal
  */
-export type RouterliciousEndpoint = "frs" | "frsCanary" | "r11s" | "docker";
+export type RouterliciousEndpoint =
+	| "frs"
+	| "frsCanary"
+	| "r11s"
+	| "docker"
+	| "custom";
 
 /**
  * Types of Odsp endpoints.

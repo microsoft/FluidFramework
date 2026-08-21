@@ -60,6 +60,27 @@ E.g.
 npm run test:realsvc:run -- --driver=r11s --r11sEndpointName=docker
 ```
 
+### Custom server endpoints
+
+Set `fluid__test__driver__<r11sEndpointName>` to a JSON configuration when running against a
+deployment with custom server endpoints. Existing configurations can continue to use `host`, which derives
+the Alfred, Historian, and Nexus URLs by replacing `www` in the host name.
+
+For deployments with unique service URLs, specify all three service URLs:
+
+```bash
+export fluid__test__driver__custom='{
+	"host": "https://app.example.com",
+	"tenantId": "fluid",
+	"tenantSecret": "<tenant-secret>",
+	"ordererUrl": "https://alfred.example.com",
+	"deltaStorageUrl": "https://historian.example.com",
+	"deltaStreamUrl": "https://nexus.example.com"
+}'
+
+npm run test:realsvc:run -- --driver=r11s --r11sEndpointName=custom
+```
+
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
