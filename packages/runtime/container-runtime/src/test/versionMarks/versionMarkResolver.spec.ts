@@ -677,7 +677,7 @@ describe("VersionMarkResolver", () => {
 	describe("onBatchSequenced / processInboundBatch", () => {
 		it("notifies subscribers as batches are processed", () => {
 			const resolver = makeResolver();
-			const events: [string, number, number][] = [];
+			const events: [string, number, number | undefined][] = [];
 			resolver.onBatchSequenced((batchId, sequenceNumber, timestamp) =>
 				events.push([batchId, sequenceNumber, timestamp]),
 			);
@@ -691,7 +691,7 @@ describe("VersionMarkResolver", () => {
 
 		it("stops notifying after unsubscribe", () => {
 			const resolver = makeResolver();
-			const events: [string, number, number][] = [];
+			const events: [string, number, number | undefined][] = [];
 			const unsubscribe = resolver.onBatchSequenced((batchId, sequenceNumber, timestamp) =>
 				events.push([batchId, sequenceNumber, timestamp]),
 			);
@@ -703,7 +703,7 @@ describe("VersionMarkResolver", () => {
 
 		it("does not re-notify when the same batchId maps to the same sequence number", () => {
 			const resolver = makeResolver();
-			const events: [string, number, number][] = [];
+			const events: [string, number, number | undefined][] = [];
 			resolver.onBatchSequenced((batchId, sequenceNumber, timestamp) =>
 				events.push([batchId, sequenceNumber, timestamp]),
 			);

@@ -31,7 +31,7 @@ export interface IHistoricalOpReader {
 
 /**
  * Result of resolving a pending batchId. A resolved result includes the matched batch's last op server
- * timestamp.
+ * timestamp when available. The property is optional for compatibility with previously stored results.
  *
  * @legacy @beta
  */
@@ -39,7 +39,7 @@ export type ResolveResult =
 	| {
 			readonly kind: "resolved";
 			readonly sequenceNumber: number;
-			readonly timestamp: number;
+			readonly timestamp?: number;
 	  }
 	| { readonly kind: "pending" }
 	| { readonly kind: "unresolvable" };
@@ -61,7 +61,7 @@ export type VersionMarkCapture =
 	| {
 			readonly kind: "resolved";
 			readonly sequenceNumber: number;
-			readonly timestamp: number | undefined;
+			readonly timestamp?: number;
 	  };
 
 /**
@@ -75,7 +75,8 @@ export interface IVersionMarkResolver {
 	 * local edit has a stable `batchId`, which is only assigned when a batch is flushed), then returns the
 	 * mark data atomically: a `pending` capture (`batchId` + `sequenceNumberLowerBound`) when there is an
 	 * unacked local batch, or a `resolved` capture (`sequenceNumber` + the last processed op's server
-	 * `timestamp`) when there is no in-flight local work.
+	 * `timestamp`) when there is no in-flight local work. The timestamp property is optional for
+	 * compatibility with previously stored captures.
 	 *
 	 * @remarks Sealing the batch is a side effect (it submits the current batch), so capture at savepoint
 	 * boundaries, not per keystroke.
@@ -104,7 +105,7 @@ export interface IVersionMarkResolver {
 	 * @returns A function that unsubscribes the listener.
 	 */
 	onBatchSequenced(
-		listener: (batchId: string, sequenceNumber: number, timestamp: number) => void,
+		listener: (batchId: string, sequenceNumber: number, timestamp?: number) => void,
 	): () => void;
 }
 
@@ -326,7 +327,7 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 	}
 
 	public onBatchSequenced(
-		listener: (batchId: string, sequenceNumber: number, timestamp: number) => void,
+		listener: (batchId: string, sequenceNumber: number, timestamp?: number) => void,
 	): () => void {
 		// A subscriber wants live promotions, so start tracking inbound batches from here on.
 		this.tracking = true;
