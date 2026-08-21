@@ -328,6 +328,7 @@ import {
 	validateSummaryHeuristicConfiguration,
 	wrapSummaryInChannelsTree,
 } from "./summary/index.js";
+import { fetchSnapshotForSummary, materializeSummary } from "./summary/materializeSummary.js";
 import { Throttler, formExponentialFn } from "./throttler.js";
 
 /**
@@ -628,6 +629,7 @@ export interface IPendingRuntimeState {
 }
 
 const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconnects";
+const snapshotBasedFullTreeSummaryKey = "Fluid.ContainerRuntime.SnapshotBasedFullTreeSummary";
 
 // The actual limit is 1Mb (socket.io and Kafka limits)
 // We can't estimate it fully, as we
@@ -1651,6 +1653,7 @@ export class ContainerRuntime
 	private readonly loadedFromVersionId: string | undefined;
 
 	private readonly isSnapshotInstanceOfISnapshot: boolean;
+	private readonly snapshotBasedFullTreeSummary: boolean;
 
 	/**
 	 * The summary context of the last acked summary. The properties from this as used when uploading a summary.
@@ -1757,6 +1760,11 @@ export class ContainerRuntime
 			logger: this.baseLogger,
 			namespace: "ContainerRuntime",
 		});
+		const snapshotBasedFullTreeSummary = this.mc.config.getBoolean(
+			snapshotBasedFullTreeSummaryKey,
+		);
+		this.snapshotBasedFullTreeSummary = snapshotBasedFullTreeSummary === true;
+		featureGatesForTelemetry.snapshotBasedFullTreeSummary = snapshotBasedFullTreeSummary;
 
 		// Validate that the Loader is compatible with this Runtime.
 		const maybeLoaderCompatDetailsForRuntime = context as FluidObject<ILayerCompatDetails>;
@@ -4705,6 +4713,10 @@ export class ContainerRuntime
 			const minimumSequenceNumber = this.deltaManager.minimumSequenceNumber;
 			const message = `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
 			const lastAckedContext = this.lastAckedSummaryContext;
+			const parentSummaryHandle = lastAckedContext?.ackHandle ?? this.loadedFromVersionId;
+			// Preserve fullTree's handle-free result without forcing unchanged children to regenerate.
+			const shouldMaterializeFullTree =
+				fullTree && this.snapshotBasedFullTreeSummary && parentSummaryHandle !== undefined;
 
 			const startSummaryResult = this.summarizerNode.startSummary(
 				summaryRefSeqNum,
@@ -4795,7 +4807,7 @@ export class ContainerRuntime
 			let summarizeResult: ISummaryTreeWithStats;
 			try {
 				summarizeResult = await this.summarize({
-					fullTree,
+					fullTree: fullTree && !shouldMaterializeFullTree,
 					trackState: true,
 					summaryLogger: summaryNumberLogger,
 					runGC: this.garbageCollector.shouldRunGC,
@@ -4827,6 +4839,27 @@ export class ContainerRuntime
 				};
 			}
 
+			let { summary: summaryTree, stats: partialStats } = summarizeResult;
+			if (shouldMaterializeFullTree) {
+				try {
+					const parentSnapshot = await fetchSnapshotForSummary(
+						this.storage,
+						parentSummaryHandle,
+					);
+					summaryTree = await materializeSummary(summaryTree, parentSnapshot, async (id) =>
+						this.storage.readBlob(id),
+					);
+					partialStats = calculateStats(summaryTree);
+				} catch (error) {
+					return {
+						stage: "base",
+						referenceSequenceNumber: summaryRefSeqNum,
+						minimumSequenceNumber,
+						error: wrapError(error, (msg) => new RetriableSummaryError(msg)),
+					};
+				}
+			}
+
 			// If there are pending unacked ops, this summary attempt may fail as the uploaded
 			// summary would be eventually inconsistent.
 			const pendingMessagesFailResult = await this.shouldFailSummaryOnPendingOps(
@@ -4839,8 +4872,6 @@ export class ContainerRuntime
 			if (pendingMessagesFailResult !== undefined) {
 				return pendingMessagesFailResult;
 			}
-
-			const { summary: summaryTree, stats: partialStats } = summarizeResult;
 
 			// Now that we have generated the summary, update the message at last summary to the last message processed.
 			this.messageAtLastSummary = this.deltaManager.lastMessage;

@@ -2092,6 +2092,75 @@ describe("Runtime", () => {
 				assert(summarizeResult.stage === "submit", "Summary did not succeed");
 			});
 
+			it("uses full regeneration for full tree summaries by default", async () => {
+				const summarize = containerRuntime.summarize.bind(containerRuntime);
+				let generatedFullTree: boolean | undefined;
+				containerRuntime.summarize = async (options) => {
+					generatedFullTree = options.fullTree;
+					return summarize(options);
+				};
+
+				const summarizeResult = await containerRuntime.submitSummary({
+					fullTree: true,
+					summaryLogger: createChildLogger(),
+					cancellationToken: neverCancelledSummaryToken,
+					latestSummaryRefSeqNum: 0,
+				});
+
+				assert(summarizeResult.stage === "submit", "Summary did not succeed");
+				assert.equal(generatedFullTree, true);
+			});
+
+			it("materializes full tree summaries from the parent snapshot when configured", async () => {
+				const parentVersion = { id: "parent-version", treeId: "parent-tree" };
+				let fetchedParentSnapshot = false;
+				const mockStorage: Partial<IContainerStorageService> = {
+					uploadSummaryWithContext: async () => "fakeHandle",
+					getVersions: async (versionId) => {
+						assert.equal(versionId, parentVersion.id);
+						return [parentVersion];
+					},
+					getSnapshotTree: async (version) => {
+						assert.deepEqual(version, parentVersion);
+						fetchedParentSnapshot = true;
+						return { blobs: {}, trees: {} };
+					},
+					readBlob: async (id) => {
+						throw new Error(`Unexpected blob read: ${id}`);
+					},
+				};
+				const { runtime } = await ContainerRuntime.loadRuntime2({
+					context: getMockContext({
+						settings: {
+							"Fluid.ContainerRuntime.SnapshotBasedFullTreeSummary": true,
+						},
+						loadedFromVersion: parentVersion,
+						mockStorage,
+					}) as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+				const summarize = runtime.summarize.bind(runtime);
+				let generatedFullTree: boolean | undefined;
+				runtime.summarize = async (options) => {
+					generatedFullTree = options.fullTree;
+					return summarize(options);
+				};
+
+				const summarizeResult = await runtime.submitSummary({
+					fullTree: true,
+					summaryLogger: createChildLogger(),
+					cancellationToken: neverCancelledSummaryToken,
+					latestSummaryRefSeqNum: 0,
+				});
+
+				assert(summarizeResult.stage === "submit", "Summary did not succeed");
+				assert.equal(generatedFullTree, false);
+				assert.equal(fetchedParentSnapshot, true);
+				assert.equal(summarizeResult.summaryStats.handleNodeCount, 0);
+			});
+
 			it("summary fails if summary token is canceled", async () => {
 				const cancelledSummaryToken: ISummaryCancellationToken = {
 					cancelled: true,
