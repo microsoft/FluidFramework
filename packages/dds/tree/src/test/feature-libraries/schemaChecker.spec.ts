@@ -5,7 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
-import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
+import { emulateProductionBuild } from "@fluidframework/core-utils/internal";
+import { TelemetryDataTag, UsageError } from "@fluidframework/telemetry-utils/internal";
 
 // Reaching into internal module just to test it
 import {
@@ -516,7 +517,7 @@ describe("schema validation", () => {
 	});
 
 	describe("SchemaValidationErrorDetails", () => {
-		it("includes a complete description at the validation site", () => {
+		it("includes tagged diagnostic properties at the validation site", () => {
 			const numberNode = createLeafNode("myNumberNode", 1, ValueSchema.Number);
 			const stringNode = createLeafNode('my"StringNode', "hello", ValueSchema.String);
 			const fieldSchema = getFieldSchema(FieldKinds.sequence, [numberNode.node.type]);
@@ -537,9 +538,17 @@ describe("schema validation", () => {
 
 			assert.deepEqual(result, {
 				error: SchemaValidationError.Field_NodeTypeNotAllowed,
-				description:
-					'A node of type "my\\"StringNode" is not allowed in this field. Allowed types: ["myNumberNode"]. If using a staged allowed type, the stored schema has not been upgraded to include this type yet. Either upgrade the schema to enable the staged type or avoid inserting content of this type until the schema is upgraded.',
 				path: [0],
+				telemetryProperties: {
+					allowedTypes: {
+						tag: TelemetryDataTag.CodeArtifact,
+						value: '["myNumberNode"]',
+					},
+					nodeType: {
+						tag: TelemetryDataTag.CodeArtifact,
+						value: 'my"StringNode',
+					},
+				},
 			});
 		});
 
@@ -563,25 +572,83 @@ describe("schema validation", () => {
 
 			assert.deepEqual(result, {
 				error: SchemaValidationError.LeafNode_InvalidValue,
-				description:
-					'Leaf node "number" requires a value matching "Number", but found "string".',
 				path: ["child", 0],
+				telemetryProperties: {
+					actualValueType: "string",
+					expectedValueType: {
+						tag: TelemetryDataTag.CodeArtifact,
+						value: "Number",
+					},
+					nodeType: {
+						tag: TelemetryDataTag.CodeArtifact,
+						value: "number",
+					},
+				},
 			});
 		});
 	});
 
-	it("throwOutOfSchema includes the validation path", () => {
+	it("throwOutOfSchema tags schema details without including them in the message", () => {
+		const details: SchemaValidationErrorDetails = {
+			error: SchemaValidationError.LeafNode_InvalidValue,
+			path: ["child", 0],
+			telemetryProperties: {
+				actualValueType: "string",
+				expectedValueType: {
+					tag: TelemetryDataTag.CodeArtifact,
+					value: "Number",
+				},
+				nodeType: {
+					tag: TelemetryDataTag.CodeArtifact,
+					value: "number",
+				},
+			},
+		};
 		assert.throws(
-			() =>
-				throwOutOfSchema({
-					error: SchemaValidationError.LeafNode_InvalidValue,
-					description:
-						'Leaf node "number" requires a value matching "Number", but found "string".',
-					path: ["child", 0],
-				}),
-			validateUsageError(
-				/Tree does not conform to schema at path \["child",0\]. Leaf node "number" requires a value matching "Number", but found "string"./,
-			),
+			() => throwOutOfSchema(details),
+			(error: unknown) => {
+				assert(error instanceof UsageError);
+				assert.equal(
+					error.message,
+					'Tree does not conform to schema. A leaf node value does not match its schema. Leaf node "number" requires a value matching "Number", but found "string" at path ["child",0].',
+				);
+				const telemetryProperties = error.getTelemetryProperties();
+				assert.deepEqual(telemetryProperties.schemaValidationError, {
+					tag: TelemetryDataTag.CodeArtifact,
+					value: "LeafNode_InvalidValue",
+				});
+				assert.deepEqual(telemetryProperties.schemaValidationPath, {
+					tag: TelemetryDataTag.UserData,
+					value: '["child",0]',
+				});
+				assert.deepEqual(telemetryProperties.nodeType, {
+					tag: TelemetryDataTag.CodeArtifact,
+					value: "number",
+				});
+				assert.deepEqual(telemetryProperties.expectedValueType, {
+					tag: TelemetryDataTag.CodeArtifact,
+					value: "Number",
+				});
+				assert.equal(telemetryProperties.actualValueType, "string");
+				return true;
+			},
 		);
+
+		emulateProductionBuild(true);
+		try {
+			assert.throws(
+				() => throwOutOfSchema(details),
+				(error: unknown) => {
+					assert(error instanceof UsageError);
+					assert.equal(
+						error.message,
+						"Tree does not conform to schema. A leaf node value does not match its schema.",
+					);
+					return true;
+				},
+			);
+		} finally {
+			emulateProductionBuild(false);
+		}
 	});
 });

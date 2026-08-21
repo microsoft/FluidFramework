@@ -1510,7 +1510,7 @@ describe("schemaFactory", () => {
 						view.root = testObject;
 					},
 					validateUsageError(
-						/Tree does not conform to schema at path \[0,"foo",0\]\. A node of type .* is not allowed in this field./,
+						/Tree does not conform to schema\. A node type is not allowed in its field\./,
 					),
 				);
 			});
@@ -1529,7 +1529,7 @@ describe("schemaFactory", () => {
 						view.root.foo = "test";
 					},
 					validateUsageError(
-						/Tree does not conform to schema at path \[0\]\. A node of type .* is not allowed in this field./,
+						/Tree does not conform to schema\. A node type is not allowed in its field\./,
 					),
 				);
 			});
@@ -1637,7 +1637,7 @@ describe("schemaFactory", () => {
 						view.root = testMap;
 					},
 					validateUsageError(
-						/Tree does not conform to schema at path \[0,"foo",0\]\. A node of type .* is not allowed in this field./,
+						/Tree does not conform to schema\. A node type is not allowed in its field\./,
 					),
 				);
 			});
@@ -1656,7 +1656,7 @@ describe("schemaFactory", () => {
 						view.root.set("foo", "test");
 					},
 					validateUsageError(
-						/Tree does not conform to schema at path \[0\]\. A node of type .* is not allowed in this field./,
+						/Tree does not conform to schema\. A node type is not allowed in its field\./,
 					),
 				);
 			});
@@ -1694,7 +1694,7 @@ describe("schemaFactory", () => {
 						view.root = testRecord;
 					},
 					validateUsageError(
-						/Tree does not conform to schema at path \[0,"foo",0\]\. A node of type .* is not allowed in this field./,
+						/Tree does not conform to schema\. A node type is not allowed in its field\./,
 					),
 				);
 			});
@@ -1713,7 +1713,7 @@ describe("schemaFactory", () => {
 						view.root.foo = "test";
 					},
 					validateUsageError(
-						/Tree does not conform to schema at path \[0\]\. A node of type .* is not allowed in this field./,
+						/Tree does not conform to schema\. A node type is not allowed in its field\./,
 					),
 				);
 			});

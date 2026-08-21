@@ -3,8 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase, fail } from "@fluidframework/core-utils/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import {
+	appendDebugMessage,
+	unreachableCase,
+	fail,
+} from "@fluidframework/core-utils/internal";
+import type {
+	ITelemetryBaseProperties,
+	TelemetryBaseEventPropertyType,
+} from "@fluidframework/core-interfaces";
+import {
+	tagCodeArtifacts,
+	tagData,
+	TelemetryDataTag,
+	UsageError,
+} from "@fluidframework/telemetry-utils/internal";
 
 import {
 	type TreeFieldStoredSchema,
@@ -38,23 +51,122 @@ export enum SchemaValidationError {
  */
 export interface SchemaValidationErrorDetails {
 	readonly error: SchemaValidationError;
-	readonly description: string;
 	readonly path: readonly (string | number)[];
+	readonly telemetryProperties?: ITelemetryBaseProperties;
 }
 
 /**
  * Throws a UsageError indicating a tree is out of schema.
  */
 export function throwOutOfSchema(details: SchemaValidationErrorDetails): never {
+	const message = `Tree does not conform to schema. ${getSchemaValidationErrorMessage(details.error)}`;
+	throw new UsageError(
+		appendDebugMessage(message, () => getSchemaValidationDebugMessage(details)),
+		{
+			...tagCodeArtifacts({
+				schemaValidationError: SchemaValidationError[details.error],
+			}),
+			...tagData(TelemetryDataTag.UserData, {
+				schemaValidationPath: JSON.stringify(details.path),
+			}),
+			...details.telemetryProperties,
+		},
+	);
+}
+
+function getTelemetryProperty(
+	details: SchemaValidationErrorDetails,
+	key: string,
+): TelemetryBaseEventPropertyType {
+	const property = details.telemetryProperties?.[key];
+	return typeof property === "object" ? property.value : property;
+}
+
+function getSchemaValidationDebugMessage(details: SchemaValidationErrorDetails): string {
 	const path = details.path.length === 0 ? "" : ` at path ${JSON.stringify(details.path)}`;
-	throw new UsageError(`Tree does not conform to schema${path}. ${details.description}`);
+	const nodeType = getTelemetryProperty(details, "nodeType");
+	const fieldKind = getTelemetryProperty(details, "fieldKind");
+	const childCount = getTelemetryProperty(details, "childCount");
+	switch (details.error) {
+		case SchemaValidationError.Field_KindNotInSchemaPolicy: {
+			return `Field kind ${JSON.stringify(fieldKind)} is not supported by the schema policy${path}.`;
+		}
+		case SchemaValidationError.Field_MissingRequiredChild: {
+			return `A required field of kind ${JSON.stringify(fieldKind)} must contain exactly one child, but found ${childCount}${path}.`;
+		}
+		case SchemaValidationError.Field_MultipleChildrenNotAllowed: {
+			return `A field of kind ${JSON.stringify(fieldKind)} allows at most one child, but found ${childCount}${path}.`;
+		}
+		case SchemaValidationError.Field_ChildInForbiddenField: {
+			return `A forbidden field of kind ${JSON.stringify(fieldKind)} must be empty, but found ${childCount} ${childCount === 1 ? "child" : "children"}${path}.`;
+		}
+		case SchemaValidationError.Field_NodeTypeNotAllowed: {
+			return `A node of type ${JSON.stringify(nodeType)} is not allowed in this field${path}. Allowed types: ${getTelemetryProperty(details, "allowedTypes")}. If using a staged allowed type, upgrade the stored schema before inserting this content.`;
+		}
+		case SchemaValidationError.LeafNode_InvalidValue: {
+			return `Leaf node ${JSON.stringify(nodeType)} requires a value matching ${JSON.stringify(getTelemetryProperty(details, "expectedValueType"))}, but found ${JSON.stringify(getTelemetryProperty(details, "actualValueType"))}${path}.`;
+		}
+		case SchemaValidationError.LeafNode_FieldsNotAllowed: {
+			return `Leaf node ${JSON.stringify(nodeType)} must not contain fields${path}. Unexpected fields: ${getTelemetryProperty(details, "unexpectedFields")}.`;
+		}
+		case SchemaValidationError.ObjectNode_FieldNotInSchema: {
+			return `A node of type ${JSON.stringify(nodeType)} has fields not defined in its schema${path}. Unexpected fields: ${getTelemetryProperty(details, "unexpectedFields")}.`;
+		}
+		case SchemaValidationError.NonLeafNode_ValueNotAllowed: {
+			return `Non-leaf node ${JSON.stringify(nodeType)} must not have a value, but found ${JSON.stringify(getTelemetryProperty(details, "actualValueType"))}${path}.`;
+		}
+		case SchemaValidationError.Node_MissingSchema: {
+			return `No schema definition was found for node type ${JSON.stringify(nodeType)}${path}. Ensure the node's type is included in the schema and that the stored schema has been upgraded if needed.`;
+		}
+		default: {
+			return unreachableCase(details.error);
+		}
+	}
+}
+
+function getSchemaValidationErrorMessage(error: SchemaValidationError): string {
+	switch (error) {
+		case SchemaValidationError.Field_KindNotInSchemaPolicy: {
+			return "The field kind is not supported by the schema policy.";
+		}
+		case SchemaValidationError.Field_MissingRequiredChild: {
+			return "A required field is missing its child.";
+		}
+		case SchemaValidationError.Field_MultipleChildrenNotAllowed: {
+			return "A field contains more children than its kind allows.";
+		}
+		case SchemaValidationError.Field_ChildInForbiddenField: {
+			return "A forbidden field contains children.";
+		}
+		case SchemaValidationError.Field_NodeTypeNotAllowed: {
+			return "A node type is not allowed in its field.";
+		}
+		case SchemaValidationError.LeafNode_InvalidValue: {
+			return "A leaf node value does not match its schema.";
+		}
+		case SchemaValidationError.LeafNode_FieldsNotAllowed: {
+			return "A leaf node contains fields.";
+		}
+		case SchemaValidationError.ObjectNode_FieldNotInSchema: {
+			return "An object node contains fields not defined in its schema.";
+		}
+		case SchemaValidationError.NonLeafNode_ValueNotAllowed: {
+			return "A non-leaf node contains a value.";
+		}
+		case SchemaValidationError.Node_MissingSchema: {
+			return "The node type has no schema definition.";
+		}
+		default: {
+			return unreachableCase(error);
+		}
+	}
 }
 
 function schemaValidationError(
 	error: SchemaValidationError,
-	description: string,
+	telemetryProperties?: ITelemetryBaseProperties,
 ): SchemaValidationErrorDetails {
-	return { error, description, path: [] };
+	return { error, path: [], telemetryProperties };
 }
 
 function prependPath<T extends NotUndefined>(
@@ -88,7 +200,7 @@ export function isNodeInSchema<T extends NotUndefined>(
 		return onError(
 			schemaValidationError(
 				SchemaValidationError.Node_MissingSchema,
-				`No schema definition was found for node type ${JSON.stringify(node.type)}. Ensure the node's type is included in the schema and that the stored schema has been upgraded if needed.`,
+				tagCodeArtifacts({ nodeType: node.type }),
 			),
 		);
 	}
@@ -99,27 +211,32 @@ export function isNodeInSchema<T extends NotUndefined>(
 		if (iterableHasSome(node.fields)) {
 			const unexpectedFields = [...mapIterable(node.fields, ([key]) => key)].sort();
 			return onError(
-				schemaValidationError(
-					SchemaValidationError.LeafNode_FieldsNotAllowed,
-					`Leaf node ${JSON.stringify(node.type)} must not contain fields. Unexpected fields: ${JSON.stringify(unexpectedFields)}.`,
-				),
+				schemaValidationError(SchemaValidationError.LeafNode_FieldsNotAllowed, {
+					...tagCodeArtifacts({ nodeType: node.type }),
+					...tagData(TelemetryDataTag.UserData, {
+						unexpectedFields: JSON.stringify(unexpectedFields),
+					}),
+				}),
 			);
 		}
 		if (!allowsValue(schema.leafValue, node.value)) {
 			return onError(
-				schemaValidationError(
-					SchemaValidationError.LeafNode_InvalidValue,
-					`Leaf node ${JSON.stringify(node.type)} requires a value matching ${JSON.stringify(ValueSchema[schema.leafValue])}, but found ${JSON.stringify(getValueType(node.value))}.`,
-				),
+				schemaValidationError(SchemaValidationError.LeafNode_InvalidValue, {
+					...tagCodeArtifacts({
+						nodeType: node.type,
+						expectedValueType: ValueSchema[schema.leafValue],
+					}),
+					actualValueType: getValueType(node.value),
+				}),
 			);
 		}
 	} else {
 		if (node.value !== undefined) {
 			return onError(
-				schemaValidationError(
-					SchemaValidationError.NonLeafNode_ValueNotAllowed,
-					`Non-leaf node ${JSON.stringify(node.type)} must not have a value, but found ${JSON.stringify(getValueType(node.value))}.`,
-				),
+				schemaValidationError(SchemaValidationError.NonLeafNode_ValueNotAllowed, {
+					...tagCodeArtifacts({ nodeType: node.type }),
+					actualValueType: getValueType(node.value),
+				}),
 			);
 		}
 
@@ -144,10 +261,12 @@ export function isNodeInSchema<T extends NotUndefined>(
 			// Other schema evolution features like "staged" allowed types will likely cause similar issues elsewhere in this checker.
 			if (uncheckedFieldsFromNode.size > 0) {
 				return onError(
-					schemaValidationError(
-						SchemaValidationError.ObjectNode_FieldNotInSchema,
-						`A node of type ${JSON.stringify(node.type)} has fields not defined in its schema. Unexpected fields: ${JSON.stringify([...uncheckedFieldsFromNode].sort())}.`,
-					),
+					schemaValidationError(SchemaValidationError.ObjectNode_FieldNotInSchema, {
+						...tagCodeArtifacts({ nodeType: node.type }),
+						...tagData(TelemetryDataTag.UserData, {
+							unexpectedFields: JSON.stringify([...uncheckedFieldsFromNode].sort()),
+						}),
+					}),
 				);
 			}
 		} else if (schema instanceof MapNodeStoredSchema) {
@@ -189,7 +308,7 @@ export function isFieldInSchema<T extends NotUndefined>(
 		return onError(
 			schemaValidationError(
 				SchemaValidationError.Field_KindNotInSchemaPolicy,
-				`Field kind ${JSON.stringify(schema.kind)} is not supported by the schema policy.`,
+				tagCodeArtifacts({ fieldKind: schema.kind }),
 			),
 		);
 	}
@@ -198,13 +317,12 @@ export function isFieldInSchema<T extends NotUndefined>(
 	{
 		const multiplicityCheck = compliesWithMultiplicity(childNodes.length, kind.multiplicity);
 		if (multiplicityCheck !== undefined) {
-			const description =
-				multiplicityCheck === SchemaValidationError.Field_MissingRequiredChild
-					? `A required field of kind ${JSON.stringify(schema.kind)} must contain exactly one child, but found ${childNodes.length}.`
-					: multiplicityCheck === SchemaValidationError.Field_MultipleChildrenNotAllowed
-						? `A field of kind ${JSON.stringify(schema.kind)} allows at most one child, but found ${childNodes.length}.`
-						: `A forbidden field of kind ${JSON.stringify(schema.kind)} must be empty, but found ${childNodes.length} ${childNodes.length === 1 ? "child" : "children"}.`;
-			return onError(schemaValidationError(multiplicityCheck, description));
+			return onError(
+				schemaValidationError(multiplicityCheck, {
+					...tagCodeArtifacts({ fieldKind: schema.kind }),
+					childCount: childNodes.length,
+				}),
+			);
 		}
 	}
 
@@ -219,7 +337,10 @@ export function isFieldInSchema<T extends NotUndefined>(
 			)(
 				schemaValidationError(
 					SchemaValidationError.Field_NodeTypeNotAllowed,
-					`A node of type ${JSON.stringify(node.type)} is not allowed in this field. Allowed types: ${JSON.stringify(allowedTypes)}. If using a staged allowed type, the stored schema has not been upgraded to include this type yet. Either upgrade the schema to enable the staged type or avoid inserting content of this type until the schema is upgraded.`,
+					tagCodeArtifacts({
+						nodeType: node.type,
+						allowedTypes: JSON.stringify(allowedTypes),
+					}),
 				),
 			);
 		}

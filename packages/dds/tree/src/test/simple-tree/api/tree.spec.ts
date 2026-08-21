@@ -121,7 +121,7 @@ describe("simple-tree tree", () => {
 			const view = getView(config);
 			assert.throws(
 				() => view.initialize({}),
-				validateUsageError(/is not allowed in this field/),
+				validateUsageError(/A node type is not allowed in its field/),
 			);
 		});
 
@@ -135,7 +135,7 @@ describe("simple-tree tree", () => {
 				() => {
 					view.root = newNode;
 				},
-				validateUsageError(/is not allowed in this field/),
+				validateUsageError(/A node type is not allowed in its field/),
 			);
 		});
 	});

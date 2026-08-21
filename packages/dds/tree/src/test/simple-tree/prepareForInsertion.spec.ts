@@ -193,7 +193,7 @@ describe("prepareForInsertion", () => {
 								createFieldSchema(FieldKinds.required, [brand(stringSchema.identifier)]),
 							),
 						validateUsageError(
-							/Leaf node "com\.fluidframework\.leaf\.string" requires a value matching "Number", but found "string"/,
+							/Tree does not conform to schema\. A leaf node value does not match its schema\./,
 						),
 					);
 				});
