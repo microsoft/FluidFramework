@@ -98,6 +98,7 @@ export const loadCompositeRuntime = async (
 		provideEntryPoint: compositeEntryPoint.provideEntryPoint,
 		runtimeOptions,
 		existing,
+		// This non-deployed example targets the current Client major; advance with the example.
 		oldestSupportedClient: "3.0.0",
 	});
 

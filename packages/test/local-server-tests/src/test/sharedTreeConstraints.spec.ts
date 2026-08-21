@@ -37,8 +37,11 @@ describe("SharedTree transaction constraints", () => {
 		const schemaFactory = new SchemaFactory("sharedTreeConstraintTest");
 		class StringArray extends schemaFactory.array("StringArray", schemaFactory.string) {}
 		const viewConfiguration = new TreeViewConfiguration({ schema: StringArray });
+		// No-change constraints require SharedTree 2.80 or later. Keep the DDS and runtime
+		// compatibility floors aligned.
+		const noChangeConstraintsMinVersion = FluidClientVersion.v2_80;
 		const sharedTree = configuredSharedTree({
-			minVersionForCollab: FluidClientVersion.v2_80,
+			minVersionForCollab: noChangeConstraintsMinVersion,
 		});
 
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
@@ -50,7 +53,7 @@ describe("SharedTree transaction constraints", () => {
 			defaultFactory: dataStoreFactory,
 			registryEntries: [[dataStoreFactory.type, dataStoreFactory]],
 			runtimeOptions: { enableRuntimeIdCompressor: "on" },
-			oldestSupportedClient: FluidClientVersion.v2_80,
+			oldestSupportedClient: noChangeConstraintsMinVersion,
 		});
 		const { codeDetails, loaderProps, urlResolver } = createLoader({
 			deltaConnectionServer,

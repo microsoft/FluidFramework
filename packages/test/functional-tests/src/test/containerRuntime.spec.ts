@@ -30,15 +30,12 @@ import {
 	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
+import { defaultMinVersionForCollab as defaultTestOldestSupportedClient } from "@fluidframework/runtime-utils/internal";
 import {
 	createChildLogger,
 	mixinMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
-import {
-	defaultTestOldestSupportedClient,
-	MockAudience,
-	MockQuorumClients,
-} from "@fluidframework/test-runtime-utils/internal";
+import { MockAudience, MockQuorumClients } from "@fluidframework/test-runtime-utils/internal";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 
 describe("Container Runtime", () => {

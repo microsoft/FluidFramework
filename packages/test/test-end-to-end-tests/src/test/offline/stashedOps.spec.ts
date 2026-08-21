@@ -181,6 +181,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				"Fluid.Sequence.intervalStickinessEnabled": true,
 			}),
 		},
+		// createBlobPayloadPending requires runtime 2.40 or later.
 		minVersionForCollab: "2.40.0",
 	};
 
