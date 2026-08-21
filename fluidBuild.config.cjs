@@ -210,7 +210,12 @@ module.exports = {
 		// Packages with /legacy exports generate reports from legacy and "current" entrypoints using child tasks.
 		// The "current" entrypoint should be the broadest of "public.d.ts",
 		// "beta.d.ts", and "alpha.d.ts".
-		"build:api-reports": ["build:entrypoints:esm", "api-extractor:esnext", "build:esnext"],
+		"build:api-reports": [
+			"build:entrypoints:esm",
+			"build:esm",
+			"api-extractor:esnext",
+			"build:esnext",
+		],
 		"build:api-reports:current": [
 			"build:entrypoints:esm",
 			"build:esm",
