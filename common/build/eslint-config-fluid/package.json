@@ -39,7 +39,7 @@
 		"@rushstack/eslint-plugin": "~0.23.3",
 		"@typescript-eslint/eslint-plugin": "~8.67.0",
 		"@typescript-eslint/parser": "~8.67.0",
-		"@typescript-eslint/utils": "~8.58.0",
+		"@typescript-eslint/utils": "~8.67.0",
 		"eslint-config-biome": "~2.1.3",
 		"eslint-config-prettier": "~10.1.8",
 		"eslint-import-resolver-typescript": "~4.4.5",
