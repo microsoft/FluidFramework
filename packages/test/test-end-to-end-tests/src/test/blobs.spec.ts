@@ -53,7 +53,7 @@ const minCreateBlobPayloadPendingFalseVersion = "3.0.0";
 
 function makeTestContainerConfig(
 	registry: ChannelFactoryRegistry,
-	createBlobPayloadPending: boolean,
+	createBlobPayloadPending: boolean | undefined,
 ): ITestContainerConfig {
 	return {
 		runtimeOptions: {
@@ -107,9 +107,12 @@ const ContainerStateEventsOrErrors: ExpectedEvents = {
 	],
 };
 
-// Use false/true (not undefined) since minVersionForCollab is pinned to 2.40.0 below, where
-// createBlobPayloadPending defaults to true; undefined would no longer exercise the disabled path.
-for (const createBlobPayloadPending of [false, true] as const) {
+// createBlobPayloadPending defaults to `true` because minVersionForCollab is pinned to 2.40.0 below (this
+// default-on-2.40.0 behavior predates this file's explicit-`false` support and is already understood by all
+// container runtime versions used in these compat tests). Including `undefined` alongside explicit `false`/`true`
+// verifies that relying on the default (as most consumers will) produces the same enabled behavior as explicitly
+// requesting `true`.
+for (const createBlobPayloadPending of [false, true, undefined] as const) {
 	describeCompat(
 		`blobs (createBlobPayloadPending: ${createBlobPayloadPending})`,
 		"FullCompat",
