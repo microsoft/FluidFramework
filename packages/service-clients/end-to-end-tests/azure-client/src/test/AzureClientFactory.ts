@@ -18,7 +18,7 @@ import {
 	type ITelemetryBaseLogger as ITelemetryBaseLoggerLegacy,
 } from "@fluidframework/azure-client-legacy";
 import type { IRuntimeFactory } from "@fluidframework/container-definitions/legacy";
-import type { IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { type IConfigProviderBase, LogLevel } from "@fluidframework/core-interfaces";
 import { ScopeType } from "@fluidframework/driver-definitions/legacy";
 import type { ContainerSchema } from "@fluidframework/fluid-static";
 import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions";
@@ -132,6 +132,32 @@ export function createAzureClient(
 }
 
 /**
+ * Adapts a current logger so it satisfies the legacy (LTS) `ITelemetryBaseLogger`.
+ *
+ * @remarks
+ * The legacy package still declares `send`'s `logLevel` parameter as optional, while the current
+ * one requires it, so a current logger is not directly assignable to the legacy interface. This
+ * bridge accepts the optional level the legacy layer may pass and defaults it to
+ * `LogLevel.essential` — the same thing implementations are expected to do for as long as callers
+ * compiled against the old signature are still supported.
+ */
+function toLegacyLogger(
+	currentLogger: ITelemetryBaseLogger | undefined,
+): ITelemetryBaseLoggerLegacy | undefined {
+	if (currentLogger === undefined) {
+		return undefined;
+	}
+	return {
+		send: (event, logLevel?): void => {
+			currentLogger.send(
+				event as Parameters<typeof currentLogger.send>[0],
+				(logLevel as LogLevel | undefined) ?? LogLevel.essential,
+			);
+		},
+	};
+}
+
+/**
  * Copy of {@link createAzureClient} with legacy (LTS) AzureClient APIs.
  */
 export function createAzureClientLegacy(
@@ -174,9 +200,9 @@ export function createAzureClientLegacy(
 			return undefined;
 		}
 		if (logger && testLogger) {
-			return createMultiSinkLogger({ loggers: [logger, testLogger] });
+			return toLegacyLogger(createMultiSinkLogger({ loggers: [logger, testLogger] }));
 		}
-		return logger ?? testLogger;
+		return toLegacyLogger(logger ?? testLogger);
 	};
 	return new AzureClientLegacy({
 		connection: connectionProps,

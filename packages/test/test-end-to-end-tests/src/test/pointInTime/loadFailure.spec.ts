@@ -35,8 +35,8 @@ import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import type {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
-	LogLevel,
 } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 
 import { listFileVersions, restoreFileVersion } from "./odspVersionTestApi.js";
 import {
@@ -311,7 +311,7 @@ describeCompat(
 								event.category = "generic";
 							}
 						}
-						suite.provider().logger.send(event, logLevel);
+						suite.provider().logger.send(event, logLevel ?? LogLevel.essential);
 					},
 				};
 

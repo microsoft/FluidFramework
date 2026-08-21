@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ITelemetryBaseEvent,
-	ITelemetryBaseLogger,
+import {
+	type ITelemetryBaseEvent,
+	type ITelemetryBaseLogger,
 	LogLevel,
 } from "@fluidframework/core-interfaces";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
@@ -55,7 +55,7 @@ export class ConsoleVerboseLogger implements ITelemetryBaseLogger {
 		// Deliberately using console.debug() instead of console.log() so the events are only shown when the console's
 		// verbosity level is set to "Verbose".
 		console.debug(`USAGE_TELEMETRY: ${JSON.stringify(event)}`);
-		this.baseLogger?.send(event, logLevel);
+		this.baseLogger?.send(event, logLevel ?? LogLevel.essential);
 	}
 }
 
@@ -108,7 +108,7 @@ export class TelemetryOptInLogger implements ITelemetryBaseLogger {
 	public send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
 		const optIn = getStorageValue(telemetryOptInKey);
 		if (optIn === true) {
-			this.baseLogger?.send(event, logLevel);
+			this.baseLogger?.send(event, logLevel ?? LogLevel.essential);
 		}
 	}
 }

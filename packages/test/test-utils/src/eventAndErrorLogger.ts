@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ITelemetryBaseEvent,
-	ITelemetryBaseLogger,
+import {
+	type ITelemetryBaseEvent,
+	type ITelemetryBaseLogger,
 	LogLevel,
 } from "@fluidframework/core-interfaces";
 import type { ITelemetryGenericEventExt } from "@fluidframework/telemetry-utils/internal";
@@ -101,7 +101,7 @@ export class EventAndErrorTrackingLogger
 			}
 		}
 
-		this.baseLogger?.send(event, logLevel);
+		this.baseLogger?.send(event, logLevel ?? LogLevel.essential);
 	}
 
 	public reportAndClearTrackedEvents(): {
