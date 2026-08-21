@@ -11,3 +11,9 @@ This prevents changes to TypeScript's standard iterator interfaces from affectin
 
 The returned iterators continue to support `next()`, spreading, and `for...of`.
 Methods available only on newer built-in iterator types are not available.
+
+```typescript
+for (const [key, pendingState] of pendingLocalStateStore.entries()) {
+	// ...
+}
+```
