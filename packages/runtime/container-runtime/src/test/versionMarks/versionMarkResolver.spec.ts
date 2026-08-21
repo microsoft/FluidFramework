@@ -38,6 +38,7 @@ import {
  */
 function makeOp(fields: {
 	sequenceNumber: number;
+	timestamp?: number;
 	// eslint-disable-next-line @rushstack/no-new-null -- mirrors ISequencedDocumentMessage.clientId (string | null) for server-generated ops
 	clientId?: string | null;
 	clientSequenceNumber?: number;
@@ -49,6 +50,7 @@ function makeOp(fields: {
 		// eslint-disable-next-line unicorn/no-null -- default clientId mirrors the legacy string | null shape the resolver guards against
 		clientId: null,
 		clientSequenceNumber: 0,
+		timestamp: fields.sequenceNumber * 1000,
 		...fields,
 	} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage;
 }
@@ -113,6 +115,7 @@ function makeReader(
 function makeResolver(options?: {
 	reader?: IHistoricalOpReader;
 	currentSequenceNumber?: number;
+	currentTimestamp?: number;
 	currentMinimumSequenceNumber?: () => number;
 	currentPendingBatchId?: string;
 	onFlush?: () => void;
@@ -121,6 +124,7 @@ function makeResolver(options?: {
 }): VersionMarkResolver {
 	return new VersionMarkResolver({
 		getCurrentSequenceNumber: () => options?.currentSequenceNumber ?? 0,
+		getCurrentTimestamp: () => options?.currentTimestamp,
 		getCurrentMinimumSequenceNumber: () => options?.currentMinimumSequenceNumber?.() ?? 0,
 		getCurrentPendingBatchId: () => options?.currentPendingBatchId,
 		flushPendingBatch: () => options?.onFlush?.(),
@@ -222,10 +226,11 @@ describe("VersionMarkResolver", () => {
 		});
 
 		it("returns a resolved capture at the current sequence number when nothing is pending", () => {
-			const resolver = makeResolver({ currentSequenceNumber: 42 });
+			const resolver = makeResolver({ currentSequenceNumber: 42, currentTimestamp: 42000 });
 			assert.deepEqual(resolver.sealAndCaptureVersionMark(), {
 				kind: "resolved",
 				sequenceNumber: 42,
+				timestamp: 42000,
 			});
 		});
 
@@ -235,6 +240,7 @@ describe("VersionMarkResolver", () => {
 			let pendingBatchId: string | undefined;
 			const resolver = new VersionMarkResolver({
 				getCurrentSequenceNumber: () => 100,
+				getCurrentTimestamp: () => undefined,
 				getCurrentMinimumSequenceNumber: () => 0,
 				getCurrentPendingBatchId: () => pendingBatchId,
 				flushPendingBatch: () => {
@@ -279,10 +285,11 @@ describe("VersionMarkResolver", () => {
 	describe("resolve - in-session fast path", () => {
 		it("resolves a batch seen live this session from the ephemeral map", async () => {
 			const resolver = makeResolver();
-			resolver.processInboundBatch("client_[5]", 12);
+			resolver.processInboundBatch("client_[5]", 12, 12000);
 			assert.deepEqual(await resolver.resolve("client_[5]", 0), {
 				kind: "resolved",
 				sequenceNumber: 12,
+				timestamp: 12000,
 			});
 		});
 
@@ -290,11 +297,12 @@ describe("VersionMarkResolver", () => {
 			const calls: { from: number; to?: number }[] = [];
 			const reader = makeReader([], calls);
 			const resolver = makeResolver({ reader });
-			resolver.processInboundBatch("client_[5]", 12);
+			resolver.processInboundBatch("client_[5]", 12, 12000);
 
 			assert.deepEqual(await resolver.resolve("client_[5]", 999), {
 				kind: "resolved",
 				sequenceNumber: 12,
+				timestamp: 12000,
 			});
 			assert.equal(calls.length, 0, "history reader should not be called on a live-map hit");
 		});
@@ -317,6 +325,7 @@ describe("VersionMarkResolver", () => {
 			assert.deepEqual(await resolver.resolve(batchId, 0), {
 				kind: "resolved",
 				sequenceNumber: 12,
+				timestamp: 12000,
 			});
 		});
 
@@ -335,6 +344,7 @@ describe("VersionMarkResolver", () => {
 			assert.deepEqual(await resolver.resolve("original_[3]", 0), {
 				kind: "resolved",
 				sequenceNumber: 20,
+				timestamp: 20000,
 			});
 		});
 
@@ -349,6 +359,7 @@ describe("VersionMarkResolver", () => {
 			assert.deepEqual(await resolver.resolve(generateBatchId("clientA", 7), 0), {
 				kind: "resolved",
 				sequenceNumber: 11,
+				timestamp: 11000,
 			});
 		});
 	});
@@ -376,6 +387,7 @@ describe("VersionMarkResolver", () => {
 			assert.deepEqual(await resolver.resolve(generateBatchId("clientB", 4), 0), {
 				kind: "resolved",
 				sequenceNumber: 32,
+				timestamp: 32000,
 			});
 		});
 
@@ -400,6 +412,7 @@ describe("VersionMarkResolver", () => {
 			assert.deepEqual(await resolver.resolve("original_[2]", 0), {
 				kind: "resolved",
 				sequenceNumber: 41,
+				timestamp: 41000,
 			});
 		});
 
@@ -426,6 +439,7 @@ describe("VersionMarkResolver", () => {
 			assert.deepEqual(await resolver.resolve(generateBatchId("clientC", 8), 0), {
 				kind: "resolved",
 				sequenceNumber: 51,
+				timestamp: 51000,
 			});
 		});
 	});
@@ -473,6 +487,7 @@ describe("VersionMarkResolver", () => {
 			assert.deepEqual(await resolver.resolve("chunked_[4]", 0), {
 				kind: "resolved",
 				sequenceNumber: 62,
+				timestamp: 62000,
 			});
 		});
 	});
@@ -522,6 +537,7 @@ describe("VersionMarkResolver", () => {
 			assert.deepEqual(await resolver.resolve("target_[1]", 5), {
 				kind: "resolved",
 				sequenceNumber: 14,
+				timestamp: 14000,
 			});
 		});
 
@@ -661,58 +677,59 @@ describe("VersionMarkResolver", () => {
 	describe("onBatchSequenced / processInboundBatch", () => {
 		it("notifies subscribers as batches are processed", () => {
 			const resolver = makeResolver();
-			const events: [string, number][] = [];
-			resolver.onBatchSequenced((batchId, sequenceNumber) =>
-				events.push([batchId, sequenceNumber]),
+			const events: [string, number, number | undefined][] = [];
+			resolver.onBatchSequenced((batchId, sequenceNumber, timestamp) =>
+				events.push([batchId, sequenceNumber, timestamp]),
 			);
-			resolver.processInboundBatch("client_[1]", 5);
-			resolver.processInboundBatch("client_[2]", 6);
+			resolver.processInboundBatch("client_[1]", 5, 5000);
+			resolver.processInboundBatch("client_[2]", 6, 6000);
 			assert.deepEqual(events, [
-				["client_[1]", 5],
-				["client_[2]", 6],
+				["client_[1]", 5, 5000],
+				["client_[2]", 6, 6000],
 			]);
 		});
 
 		it("stops notifying after unsubscribe", () => {
 			const resolver = makeResolver();
-			const events: [string, number][] = [];
-			const unsubscribe = resolver.onBatchSequenced((batchId, sequenceNumber) =>
-				events.push([batchId, sequenceNumber]),
+			const events: [string, number, number | undefined][] = [];
+			const unsubscribe = resolver.onBatchSequenced((batchId, sequenceNumber, timestamp) =>
+				events.push([batchId, sequenceNumber, timestamp]),
 			);
-			resolver.processInboundBatch("client_[1]", 5);
+			resolver.processInboundBatch("client_[1]", 5, 5000);
 			unsubscribe();
-			resolver.processInboundBatch("client_[2]", 6);
-			assert.deepEqual(events, [["client_[1]", 5]]);
+			resolver.processInboundBatch("client_[2]", 6, 6000);
+			assert.deepEqual(events, [["client_[1]", 5, 5000]]);
 		});
 
 		it("does not re-notify when the same batchId maps to the same sequence number", () => {
 			const resolver = makeResolver();
-			const events: [string, number][] = [];
-			resolver.onBatchSequenced((batchId, sequenceNumber) =>
-				events.push([batchId, sequenceNumber]),
+			const events: [string, number, number | undefined][] = [];
+			resolver.onBatchSequenced((batchId, sequenceNumber, timestamp) =>
+				events.push([batchId, sequenceNumber, timestamp]),
 			);
-			resolver.processInboundBatch("client_[1]", 5);
-			resolver.processInboundBatch("client_[1]", 5);
-			assert.deepEqual(events, [["client_[1]", 5]]);
+			resolver.processInboundBatch("client_[1]", 5, 5000);
+			resolver.processInboundBatch("client_[1]", 5, 5000);
+			assert.deepEqual(events, [["client_[1]", 5, 5000]]);
 		});
 
 		it("asserts on a conflicting remap (same batchId, different sequence number)", () => {
 			const resolver = makeResolver();
-			resolver.processInboundBatch("client_[1]", 5);
+			resolver.processInboundBatch("client_[1]", 5, 5000);
 			// The protocol forbids a batchId remapping to a different sequence number; the resolver fails
 			// loudly rather than silently overwrite (which would also break the MSN-eviction ordering).
 			assert.throws(
-				() => resolver.processInboundBatch("client_[1]", 6),
+				() => resolver.processInboundBatch("client_[1]", 6, 6000),
 				validateAssertionError(/remapped to a different sequence number/),
 			);
 		});
 
 		it("makes a processed batch resolvable via the live fast path", async () => {
 			const resolver = makeResolver();
-			resolver.processInboundBatch("client_[7]", 21);
+			resolver.processInboundBatch("client_[7]", 21, 21000);
 			assert.deepEqual(await resolver.resolve("client_[7]", 0), {
 				kind: "resolved",
 				sequenceNumber: 21,
+				timestamp: 21000,
 			});
 		});
 
@@ -732,7 +749,7 @@ describe("VersionMarkResolver", () => {
 			);
 
 			// A throwing listener must not propagate out of processInboundBatch (which runs on the inbound op path).
-			assert.doesNotThrow(() => resolver.processInboundBatch("client_[1]", 5));
+			assert.doesNotThrow(() => resolver.processInboundBatch("client_[1]", 5, 5000));
 			// Listeners registered both before and after the throwing one still fire.
 			assert.deepEqual(before, [["client_[1]", 5]]);
 			assert.deepEqual(after, [["client_[1]", 5]]);
@@ -742,6 +759,7 @@ describe("VersionMarkResolver", () => {
 			assert.deepEqual(await resolver.resolve("client_[1]", 0), {
 				kind: "resolved",
 				sequenceNumber: 5,
+				timestamp: 5000,
 			});
 		});
 	});
@@ -753,34 +771,38 @@ describe("VersionMarkResolver", () => {
 				currentMinimumSequenceNumber: () => minimumSequenceNumber,
 				// No reader, so an evicted (fast-path miss) batch reports pending rather than scanning.
 			});
-			resolver.processInboundBatch("a_[1]", 5);
-			resolver.processInboundBatch("b_[2]", 10);
+			resolver.processInboundBatch("a_[1]", 5, 5000);
+			resolver.processInboundBatch("b_[2]", 10, 10000);
 			assert.deepEqual(await resolver.resolve("a_[1]", 0), {
 				kind: "resolved",
 				sequenceNumber: 5,
+				timestamp: 5000,
 			});
 
 			// Advancing the MSN past seq 5 evicts a_[1] on the next inbound batch; b_[2] (seq 10) is retained.
 			minimumSequenceNumber = 8;
-			resolver.processInboundBatch("c_[3]", 12);
+			resolver.processInboundBatch("c_[3]", 12, 12000);
 
 			assert.deepEqual(await resolver.resolve("a_[1]", 0), { kind: "pending" });
 			assert.deepEqual(await resolver.resolve("b_[2]", 0), {
 				kind: "resolved",
 				sequenceNumber: 10,
+				timestamp: 10000,
 			});
 			assert.deepEqual(await resolver.resolve("c_[3]", 0), {
 				kind: "resolved",
 				sequenceNumber: 12,
+				timestamp: 12000,
 			});
 		});
 
 		it("never evicts the just-recorded batch (its seq is at or above the MSN)", async () => {
 			const resolver = makeResolver({ currentMinimumSequenceNumber: () => 100 });
-			resolver.processInboundBatch("recent_[1]", 100);
+			resolver.processInboundBatch("recent_[1]", 100, 100000);
 			assert.deepEqual(await resolver.resolve("recent_[1]", 0), {
 				kind: "resolved",
 				sequenceNumber: 100,
+				timestamp: 100000,
 			});
 		});
 	});
@@ -808,6 +830,7 @@ describe("VersionMarkResolver", () => {
 			assert.deepEqual(await resolver.resolve(generateBatchId("target", 1), 5), {
 				kind: "resolved",
 				sequenceNumber: 21,
+				timestamp: 21000,
 			});
 			logger.assertMatch([
 				{
@@ -837,10 +860,11 @@ describe("VersionMarkResolver", () => {
 		it("emits path 'session' on a live fast-path hit", async () => {
 			const logger = new MockLogger();
 			const resolver = makeResolver({ logger });
-			resolver.processInboundBatch("live_[1]", 7);
+			resolver.processInboundBatch("live_[1]", 7, 7000);
 			assert.deepEqual(await resolver.resolve("live_[1]", 5), {
 				kind: "resolved",
 				sequenceNumber: 7,
+				timestamp: 7000,
 			});
 			logger.assertMatch([
 				{
