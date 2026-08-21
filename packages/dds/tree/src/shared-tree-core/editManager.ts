@@ -388,11 +388,13 @@ export class EditManager<
 		// Trimming the trunk before serializing ensures that the trunk data in the summary is as minimal as possible.
 		this.trimHistory();
 
+		const mainBranch = this.getSharedBranch("main");
 		const minSeqNumberToSummarize: SequenceId = {
 			sequenceNumber: brand(this.minimumSequenceNumber + 1),
 		};
-		let minBaseSeqId: SequenceId = minSeqNumberToSummarize;
-		const mainBranch = this.getSharedBranch("main");
+		let minBaseSeqId: SequenceId = this.retainHistory
+			? (mainBranch.sequenceIdToCommit.minKey() ?? minimumPossibleSequenceId)
+			: minSeqNumberToSummarize;
 		const branches = new Map<BranchId, SharedBranchSummaryData<TChangeset>>();
 		for (const [branchId, branch] of this.sharedBranches) {
 			if (branchId !== "main") {
