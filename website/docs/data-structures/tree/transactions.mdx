@@ -13,7 +13,7 @@ However, using a transaction has the following additional implications:
 -   It is also more efficient for SharedTree to process and transmit a large number of changes as a transaction rather than as changes submitted separately.
 -   It is possible to specify constraints on a transaction so that the transaction will be ignored if one or more of these constraints are not met.
 
-To create a transaction use <ApiLink package="fluid-framework" api="Tree.runTransaction">Tree.runTransaction</ApiLink>.
+To create a transaction use <ApiLink package="fluid-framework" api="Tree.runTransaction" />.
 You can cancel a transaction from within the callback function by returning the special "rollback object", available via `Tree.runTransaction.rollback`.
 If an error occurs within the callback, the transaction will be canceled automatically before propagating the error.
 
@@ -46,7 +46,7 @@ There are example transactions here: [Shared Tree Demo](https://github.com/micro
 
 The APIs described in this section are currently `@alpha` and may change in future releases.
 
-Unlike <ApiLink package="fluid-framework" api="Tree.runTransaction">Tree.runTransaction</ApiLink>, the Alpha <ApiLink package="fluid-framework" api="TreeBranchAlpha.runTransaction">runTransaction</ApiLink> does **not** automatically roll back the transaction if the callback throws an error.
+Unlike <ApiLink package="fluid-framework" api="Tree.runTransaction" />, the Alpha <ApiLink package="fluid-framework" api="TreeBranchAlpha.runTransaction">runTransaction</ApiLink> does **not** automatically roll back the transaction if the callback throws an error.
 If your callback may throw, you should handle errors explicitly and return `{ rollback: true }` when required.
 
 :::
@@ -57,7 +57,7 @@ This new API enables developers to customize how their application handles this 
 
 ### Running a Transaction
 
-For a node in a tree, use <ApiLink package="fluid-framework" api="TreeAlpha.context">TreeAlpha.context</ApiLink> to get its <ApiLink package="fluid-framework" api="TreeContextAlpha" />, then call <ApiLink package="fluid-framework" api="TreeContextAlpha.runTransaction">runTransaction</ApiLink> on that context.
+For a node in a tree, use <ApiLink package="fluid-framework" api="TreeAlpha.context" /> to get its <ApiLink package="fluid-framework" api="TreeContextAlpha" />, then call <ApiLink package="fluid-framework" api="TreeContextAlpha.runTransaction">runTransaction</ApiLink> on that context.
 
 ```typescript
 import { TreeAlpha } from "@fluidframework/tree/alpha";
