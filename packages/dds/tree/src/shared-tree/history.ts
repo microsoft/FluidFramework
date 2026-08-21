@@ -15,8 +15,10 @@ import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 
 class LazyTreeBranchCommitMetadata implements TreeBranchCommitMetadata {
 	public readonly revision: string;
-	private priorParent?: GraphCommit<SharedTreeChange>;
-	private cachedParent?: TreeBranchCommitMetadata;
+	private parentCache?: {
+		readonly prior: GraphCommit<SharedTreeChange>;
+		readonly cached: TreeBranchCommitMetadata;
+	};
 
 	public constructor(
 		private readonly commit: GraphCommit<SharedTreeChange>,
@@ -28,15 +30,17 @@ class LazyTreeBranchCommitMetadata implements TreeBranchCommitMetadata {
 
 	public get parent(): TreeBranchCommitMetadata | undefined {
 		// The parent of the commit may change over time due to trunk trimming.
-		if (this.commit.parent !== this.priorParent) {
+		if (this.commit.parent !== this.parentCache?.prior) {
 			const { parent } = this.commit;
-			this.cachedParent =
+			this.parentCache =
 				parent === undefined || parent.revision === "root"
 					? undefined
-					: new LazyTreeBranchCommitMetadata(parent, this.idCompressor);
-			this.priorParent = parent;
+					: {
+							prior: parent,
+							cached: new LazyTreeBranchCommitMetadata(parent, this.idCompressor),
+						};
 		}
-		return this.cachedParent;
+		return this.parentCache?.cached;
 	}
 }
 
