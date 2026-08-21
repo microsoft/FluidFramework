@@ -550,7 +550,8 @@ export class IdCompressorTestNetwork {
 				}
 			}
 
-			const retakenRange = compressor.takeUnfinalizedCreationRange();
+			compressor.resetUnfinalizedCreationRange();
+			const retakenRange = compressor.takeNextCreationRange();
 			if (retakenRange.ids === undefined) {
 				assert.strictEqual(totalCount, 0);
 				assert.strictEqual(unionedLocalRanges.idRanges.size, 0);
