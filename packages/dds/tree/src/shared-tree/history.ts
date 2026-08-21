@@ -60,10 +60,7 @@ export class TreeBranchHistoryImpl implements TreeBranchHistory {
 	) {}
 
 	public dispose(): void {
-		this.unsubscribeAfterChange?.();
-		this.unsubscribeAfterChange = undefined;
-		this.unsubscribeAncestryTrimmed?.();
-		this.unsubscribeAncestryTrimmed = undefined;
+		this.unsubscribeFromBranch();
 	}
 
 	public get commitCount(): number {
@@ -76,6 +73,7 @@ export class TreeBranchHistoryImpl implements TreeBranchHistory {
 	}
 
 	private subscribeToBranch(): void {
+		this.unsubscribeFromBranch();
 		this.unsubscribeAfterChange = this.branch.events.on(
 			"afterChange",
 			this.onAfterBranchChange,
@@ -84,6 +82,13 @@ export class TreeBranchHistoryImpl implements TreeBranchHistory {
 			"ancestryTrimmed",
 			this.onAncestryTrimmed,
 		);
+	}
+
+	private unsubscribeFromBranch(): void {
+		this.unsubscribeAfterChange?.();
+		this.unsubscribeAfterChange = undefined;
+		this.unsubscribeAncestryTrimmed?.();
+		this.unsubscribeAncestryTrimmed = undefined;
 	}
 
 	private countCommits(): number {
