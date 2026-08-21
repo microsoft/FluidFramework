@@ -187,7 +187,7 @@ module.exports = {
 			"^build:entrypoints:esm",
 			"^api-extractor:esnext",
 		],
-		// At least as of 2026-08-21, now tests code uses package entrypoints; so just the ESM build is sufficient.
+		// At least as of 2026-08-21, no test's code uses package entrypoints; so just the ESM build is sufficient.
 		"build:test:playwright": ["build:esnext"],
 		"check:types:test:playwright": ["build:esnext"],
 		"api": {
