@@ -96,7 +96,7 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
-		"@playwright/test": "^1.59.1",
+		"@playwright/test": "^1.62.1",
 		"@types/chai": "^4.0.0",
 		"@types/chrome": "0.0.232",
 		"@types/jsdom": "^21.1.1",

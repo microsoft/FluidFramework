@@ -65,7 +65,7 @@
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@fluidframework/test-tools": "^2.0.0",
 		"@fluidframework/test-utils": "workspace:~",
-		"@playwright/test": "^1.59.1",
+		"@playwright/test": "^1.62.1",
 		"@types/node": "catalog:types",
 		"@types/react": "^18.3.11",
 		"cross-env": "^10.1.0",

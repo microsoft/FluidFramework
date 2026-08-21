@@ -150,7 +150,7 @@
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@microsoft/api-extractor": "7.58.1",
-		"@playwright/test": "^1.59.1",
+		"@playwright/test": "^1.62.1",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "catalog:types",
 		"@types/sha.js": "^2.4.4",
