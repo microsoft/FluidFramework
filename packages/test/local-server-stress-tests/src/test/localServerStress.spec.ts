@@ -43,8 +43,10 @@ describe("Local Server Stress", () => {
 		// Old seed 54's ordered-collection fuzz check and old Matrix seed 92 are fixed by
 		// https://github.com/microsoft/FluidFramework/pull/27579. Seed 92 no longer appears
 		// here only because detached blob ops changed the random distribution.
-		// Current ConsensusOrderedCollection failures are tracked by
-		// https://github.com/microsoft/FluidFramework/issues/28040.
+		// Current seed 0's snapshot/catch-up job reconciliation failure is tracked by
+		// https://github.com/microsoft/FluidFramework/issues/28040. Seed 180's
+		// remove-member/requeue ordering failure is tracked by
+		// https://github.com/microsoft/FluidFramework/issues/28041.
 		skip: [0, 180],
 		// Use skip, replay, and only properties to control which seeds run.
 	});
