@@ -2045,9 +2045,6 @@
 			"error",
 			"always"
 		],
-		"react-hooks/component-hook-factories": [
-			"error"
-		],
 		"react-hooks/config": [
 			"error"
 		],

@@ -1,5 +1,15 @@
 # @fluidframework/eslint-config-fluid Changelog
 
+## [14.1.1](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v14.1.1)
+
+### `react-hooks/component-hook-factories` is no longer enabled
+
+`eslint-plugin-react-hooks` has been upgraded to 7.1.1. The `component-hook-factories` rule is no longer enabled by
+the plugin's recommended config because the rule is deprecated and now does nothing. Version 7.1.1 retains the rule
+only for backward compatibility with configs that reference it. See the
+[`eslint-plugin-react-hooks` 7.1.1 release notes](https://github.com/facebook/react/releases/tag/eslint-plugin-react-hooks%407.1.1)
+for details.
+
 ## [14.1.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v14.1.0)
 
 The custom Fluid ESLint rules are now maintained and published as part of this package. Rule names remain unchanged
