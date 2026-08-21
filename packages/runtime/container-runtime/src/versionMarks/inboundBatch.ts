@@ -15,7 +15,11 @@ export interface InboundVersionMarkUpdate {
 	 * A completed batch to record via `processInboundBatch`: its id and its last op's sequence number.
 	 * Undefined when no batch completed on this message (a piecemeal batch still in progress).
 	 */
-	readonly sequenced?: { readonly batchId: string; readonly sequenceNumber: number };
+	readonly sequenced?: {
+		readonly batchId: string;
+		readonly sequenceNumber: number;
+		readonly timestamp: number;
+	};
 	/**
 	 * The batch id to carry for a piecemeal batch still in progress, or undefined when none is pending.
 	 * The caller stores this and passes it back on the next inbound result.
@@ -45,7 +49,11 @@ export function inboundVersionMarkUpdate(
 				inboundResult.messages[inboundResult.messages.length - 1] ??
 				inboundResult.batchStart.keyMessage;
 			return {
-				sequenced: { batchId, sequenceNumber: lastMessage.sequenceNumber },
+				sequenced: {
+					batchId,
+					sequenceNumber: lastMessage.sequenceNumber,
+					timestamp: lastMessage.timestamp,
+				},
 				carriedBatchId: undefined,
 			};
 		}
@@ -61,6 +69,7 @@ export function inboundVersionMarkUpdate(
 			sequenced: {
 				batchId: carriedBatchId,
 				sequenceNumber: inboundResult.nextMessage.sequenceNumber,
+				timestamp: inboundResult.nextMessage.timestamp,
 			},
 			carriedBatchId: undefined,
 		};

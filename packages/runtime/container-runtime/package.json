@@ -235,6 +235,12 @@
 		"broken": {
 			"Interface_LoadContainerRuntimeParams": {
 				"backCompat": false
+			},
+			"TypeAlias_ResolveResult": {
+				"forwardCompat": false
+			},
+			"TypeAlias_VersionMarkCapture": {
+				"forwardCompat": false
 			}
 		},
 		"entrypoint": "legacy"

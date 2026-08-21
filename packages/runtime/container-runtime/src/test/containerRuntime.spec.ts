@@ -2919,6 +2919,7 @@ describe("Runtime", () => {
 											{
 												type: MessageType.Operation,
 												sequenceNumber: 13,
+												timestamp: 13000,
 												clientId: "targetClient",
 												clientSequenceNumber: 7,
 												contents: {
@@ -2944,7 +2945,7 @@ describe("Runtime", () => {
 
 				assert.deepEqual(
 					await containerRuntime.versionMarkResolver.resolve("targetBatch", 10),
-					{ kind: "resolved", sequenceNumber: 13 },
+					{ kind: "resolved", sequenceNumber: 13, timestamp: 13000 },
 				);
 				assert.equal(readCount, 1, "the stream stops reading after the target batch");
 				assert.equal(capturedSignal?.aborted, true, "the fetch is aborted after the match");

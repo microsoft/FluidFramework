@@ -889,6 +889,7 @@ declare type current_as_old_for_TypeAlias_ReadFluidDataStoreAttributes = require
  * typeValidation.broken:
  * "TypeAlias_ResolveResult": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_TypeAlias_ResolveResult = requireAssignableTo<TypeOnly<old.ResolveResult>, TypeOnly<current.ResolveResult>>
 
 /*
@@ -961,6 +962,7 @@ declare type current_as_old_for_TypeAlias_SummaryStage = requireAssignableTo<Typ
  * typeValidation.broken:
  * "TypeAlias_VersionMarkCapture": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_TypeAlias_VersionMarkCapture = requireAssignableTo<TypeOnly<old.VersionMarkCapture>, TypeOnly<current.VersionMarkCapture>>
 
 /*
