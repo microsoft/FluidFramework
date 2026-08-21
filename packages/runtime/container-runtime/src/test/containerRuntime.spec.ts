@@ -2013,7 +2013,6 @@ describe("Runtime", () => {
 				enableGroupedBatching: true, // Redundant, but makes the JSON.stringify yield the same result as the logs
 				explicitSchemaControl: false,
 				createBlobPayloadPending: undefined,
-				inlineDetachedBlobsAsSummaryBlobs: undefined,
 				stagingModeAutoFlushThreshold: 1000,
 				disableSchemaUpgrade: false,
 			} as const satisfies ContainerRuntimeOptionsInternal;

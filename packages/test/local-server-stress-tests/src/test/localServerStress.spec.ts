@@ -40,7 +40,11 @@ describe("Local Server Stress", () => {
 		},
 		// Minimization is slow with many seeds; use only to minimize specific failing seeds.
 		skipMinimization: true,
-		// Pre-existing ConsensusOrderedCollection bug under the current operation distribution.
+		// Old seed 54's ordered-collection fuzz check and old Matrix seed 92 are fixed by
+		// https://github.com/microsoft/FluidFramework/pull/27579. Seed 92 no longer appears
+		// here only because detached blob ops changed the random distribution.
+		// Current ConsensusOrderedCollection failures are tracked by
+		// https://github.com/microsoft/FluidFramework/issues/28040.
 		skip: [0, 180],
 		// Use skip, replay, and only properties to control which seeds run.
 	});

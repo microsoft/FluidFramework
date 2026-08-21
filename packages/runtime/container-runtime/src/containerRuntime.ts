@@ -545,7 +545,7 @@ export interface ContainerRuntimeOptionsInternal extends ContainerRuntimeOptions
 	/**
 	 * Stores detached attachment blobs as summary blobs in internal loading groups.
 	 */
-	readonly inlineDetachedBlobsAsSummaryBlobs: true | undefined;
+	readonly inlineDetachedBlobsAsSummaryBlobs?: true;
 }
 
 /**
@@ -1279,7 +1279,9 @@ export class ContainerRuntime
 			enableGroupedBatching,
 			explicitSchemaControl,
 			createBlobPayloadPending,
-			inlineDetachedBlobsAsSummaryBlobs,
+			...(inlineDetachedBlobsAsSummaryBlobs === true
+				? { inlineDetachedBlobsAsSummaryBlobs }
+				: {}),
 			stagingModeAutoFlushThreshold,
 			disableSchemaUpgrade,
 		};

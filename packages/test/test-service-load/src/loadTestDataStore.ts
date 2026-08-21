@@ -27,9 +27,7 @@ import {
 	ISharedMap,
 	SharedMap,
 } from "@fluidframework/map/internal";
-import {
-	IContainerRuntimeBase,
-} from "@fluidframework/runtime-definitions/internal";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import { ITaskManager, TaskManager } from "@fluidframework/task-manager/internal";
 import { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";

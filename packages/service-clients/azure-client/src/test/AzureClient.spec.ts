@@ -417,7 +417,6 @@ for (const compatibilityMode of ["1.0.0", "2.0.0"] as const) {
 					enableGroupedBatching: false,
 					explicitSchemaControl: false,
 					createBlobPayloadPending: undefined,
-					inlineDetachedBlobsAsSummaryBlobs: undefined,
 					disableSchemaUpgrade: false,
 					stagingModeAutoFlushThreshold: 1000,
 				} as const satisfies ContainerRuntimeOptionsInternal;
@@ -436,7 +435,6 @@ for (const compatibilityMode of ["1.0.0", "2.0.0"] as const) {
 					enableGroupedBatching: true,
 					explicitSchemaControl: true,
 					createBlobPayloadPending: undefined,
-					inlineDetachedBlobsAsSummaryBlobs: undefined,
 					disableSchemaUpgrade: false,
 					stagingModeAutoFlushThreshold: 1000,
 				} as const satisfies ContainerRuntimeOptionsInternal;
