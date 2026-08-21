@@ -117,7 +117,8 @@ module.exports = {
 		},
 		"lint": {
 			dependsOn: [
-				"check:inexactOptionalPropertyTypes",
+				"check:types:inexactOptionalPropertyTypes",
+				"check:types:test:playwright",
 				"eslint",
 				"good-fences",
 				"depcruise",
@@ -186,7 +187,9 @@ module.exports = {
 			"^build:entrypoints:esm",
 			"^api-extractor:esnext",
 		],
-		"build:test:playwright": ["tsc", "build:esnext", "^tsc", "^build:esnext"],
+		// At least as of 2026-08-21, now tests code uses package entrypoints; so just the ESM build is sufficient.
+		"build:test:playwright": ["build:esnext"],
+		"check:types:test:playwright": ["build:esnext"],
 		"api": {
 			dependsOn: [
 				"api-extractor:commonjs",
@@ -250,7 +253,7 @@ module.exports = {
 		// therefore we need to require both before running api-extractor.
 		"check:release-tags": ["tsc", "build:esnext"],
 		"check:are-the-types-wrong": ["tsc", "build:esnext", "build:entrypoints", "api"],
-		"check:inexactOptionalPropertyTypes": [
+		"check:types:inexactOptionalPropertyTypes": [
 			"^build:esnext",
 			"^build:entrypoints:esm",
 			"^api-extractor:esnext",
@@ -283,13 +286,22 @@ module.exports = {
 		"test:cjs": { dependsOn: ["test:unit:cjs"], script: false },
 		"test:esm": { dependsOn: ["test:unit:esm"], script: false },
 		"test:jest": ["build:compile"],
-		"test:playwright": ["build:compile", "build:test:playwright"],
+		"test:playwright": [
+			"build:test:playwright",
+			// In common case there is no playwright build as it generates as it runs.
+			// In those cases, depend on the implementation. Since all playwright tests
+			// are ESM focused, just depend on the ESM build.
+			"build:esnext",
+			// This is not strictly a dependency as these only typecheck and don't emit,
+			// but it is best to have passing typechecks and these are fast.
+			"check:types:test:playwright",
+		],
 		"test:mocha": ["build:test"],
 		"test:mocha:cjs": ["build:test:cjs"],
 		"test:mocha:esm": ["build:test:esm"],
 		"test:unit": { dependsOn: ["test:mocha", "test:jest", "test:playwright"], script: false },
 		"test:unit:cjs": { dependsOn: ["test:mocha:cjs"], script: false },
-		"test:unit:esm": { dependsOn: ["test:mocha:esm"], script: false },
+		"test:unit:esm": { dependsOn: ["test:mocha:esm", "test:playwright"], script: false },
 
 		// alias for back compat
 		"build:full": {
