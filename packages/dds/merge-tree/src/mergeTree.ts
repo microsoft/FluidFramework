@@ -1426,7 +1426,7 @@ export class MergeTree {
 				refSeq: this.collabWindow.currentSeq,
 			};
 			if (previousProps) {
-				_segmentGroup.previousProps = [];
+				_segmentGroup.previousProps = new WeakMap();
 			}
 			this.pendingSegments.push(_segmentGroup);
 		}
@@ -1438,7 +1438,7 @@ export class MergeTree {
 			throw new Error("All segments in group should have previousProps or none");
 		}
 		if (previousProps) {
-			_segmentGroup.previousProps!.push(previousProps);
+			_segmentGroup.previousProps!.set(segment, previousProps);
 		}
 
 		const segmentGroups = (segment.segmentGroups ??= new SegmentGroupCollection(segment));
@@ -2449,7 +2449,6 @@ export class MergeTree {
 			) {
 				throw new Error("Rollback op doesn't match last edit");
 			}
-			let i = 0;
 			for (const segment of pendingSegmentGroup.segments) {
 				const segmentSegmentGroup = segment?.segmentGroups?.pop();
 				assert(
@@ -2476,7 +2475,11 @@ export class MergeTree {
 						{ op: removeOp, rollback: true },
 					);
 				} /* op.type === MergeTreeDeltaType.ANNOTATE */ else {
-					const props = pendingSegmentGroup.previousProps![i];
+					const props = pendingSegmentGroup.previousProps!.get(segment);
+					assert(
+						props !== undefined,
+						"Segment missing previousProps entry on annotate rollback",
+					);
 
 					// If the segment has been removed by a concurrent operation, we can't use
 					// position-based annotateRange because findRollbackPosition returns a position
@@ -2505,7 +2508,6 @@ export class MergeTree {
 							{ op: annotateOp, rollback: true },
 						);
 					}
-					i++;
 				}
 			}
 		} else {

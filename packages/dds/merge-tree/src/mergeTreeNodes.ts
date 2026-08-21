@@ -233,7 +233,7 @@ export interface ObliterateInfo {
 
 export interface SegmentGroup {
 	segments: ISegmentLeaf[];
-	previousProps?: PropertySet[];
+	previousProps?: WeakMap<ISegmentLeaf, PropertySet>;
 	localSeq?: number;
 	refSeq: number;
 	obliterateInfo?: ObliterateInfo;
