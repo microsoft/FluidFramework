@@ -3205,9 +3205,6 @@ importers:
 
   examples/data-objects/table-document:
     dependencies:
-      '@fluid-example/example-utils':
-        specifier: workspace:~
-        version: link:../../utils/example-utils
       '@fluid-experimental/sequence-deprecated':
         specifier: workspace:~
         version: link:../../../experimental/dds/sequence-deprecated
@@ -13783,6 +13780,9 @@ importers:
       '@fluidframework/register-collection':
         specifier: workspace:~
         version: link:../../dds/register-collection
+      '@fluidframework/runtime-utils':
+        specifier: workspace:~
+        version: link:../../runtime/runtime-utils
       '@fluidframework/sequence':
         specifier: workspace:~
         version: link:../../dds/sequence

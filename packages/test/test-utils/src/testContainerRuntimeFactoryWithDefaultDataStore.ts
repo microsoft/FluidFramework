@@ -73,13 +73,6 @@ export type ContainerRuntimeFactoryWithDefaultDataStoreConstructor =
 	| (new (
 			props: ContainerRuntimeFactoryWithDefaultDataStoreProps & {
 				readonly oldestSupportedClient: OldestSupportedClientVersion;
-				readonly minVersionForCollab?: never;
-			},
-	  ) => IRuntimeFactory)
-	| (new (
-			props: ContainerRuntimeFactoryWithDefaultDataStoreProps & {
-				readonly oldestSupportedClient?: never;
-				readonly minVersionForCollab: OldestSupportedClientVersion;
 			},
 	  ) => IRuntimeFactory);
 
@@ -97,19 +90,13 @@ export const createContainerRuntimeFactoryWithDefaultDataStore = (
 	ctorProps: ContainerRuntimeFactoryWithDefaultDataStoreProps,
 ): IRuntimeFactory => {
 	try {
-		// Constructors loaded from versioned packages have different signatures. Try the current
-		// object shape first; the catch block retains the existing positional fallback for older
-		// constructors that TypeScript cannot distinguish from this union at runtime.
-		const currentCtor = ctor as new (
-			props: ContainerRuntimeFactoryWithDefaultDataStoreProps & {
-				readonly oldestSupportedClient: OldestSupportedClientVersion;
-				readonly minVersionForCollab?: never;
-			},
-		) => IRuntimeFactory;
-		return new currentCtor({
+		// Object-shaped constructors accept the canonical compatibility property when supported
+		// and ignore it on older versions. The catch block retains the positional fallback.
+		const currentProps = {
 			...ctorProps,
 			oldestSupportedClient: defaultTestOldestSupportedClient,
-		});
+		};
+		return new ctor(currentProps);
 	} catch (err) {
 		// IMPORTANT: The constructor argument structure changed, so this is needed for dynamically using older `ContainerRuntimeFactoryWithDefaultDataStore`s
 		const {
