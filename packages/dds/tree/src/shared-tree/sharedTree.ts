@@ -664,6 +664,7 @@ export interface SharedTreeOptions
 	 * local branches), to bound memory usage and document size.
 	 * As long as this flag is enabled, trunk commits are retained - this increases memory usage and document size
 	 * over time and should be used with care.
+	 */
 	readonly retainHistory?: boolean;
 }
 
