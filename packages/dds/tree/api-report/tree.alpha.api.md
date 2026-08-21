@@ -548,6 +548,8 @@ export namespace FormattedText {
     // @sealed
     export interface Members<FormatSchema extends ImplicitAllowedTypes, ExtraAtomsSchema extends readonly LazyItem<TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>>[]> extends PlainText.Members {
         charactersWithFormatting(): readonly FormattedAtom<TreeNodeFromImplicitAllowedTypes<FormatSchema>, TreeNodeFromImplicitAllowedTypes<TextAtomSchemas<ExtraAtomsSchema>>>[];
+        // @override
+        createInsertionAnchor(index: number): ArrayPlaceAnchor;
         formatRange(startIndex: number | undefined, endIndex: number | undefined, format: Partial<TreeNodeFromImplicitAllowedTypes<FormatSchema>>): void;
         getString(startIndex: number, endIndex?: number): string;
         getUniformRun(startIndex: number, endIndex?: number): number;
@@ -1071,6 +1073,7 @@ export namespace PlainText {
         characterCount(): number;
         characters(): Iterable<string>;
         charactersCopy(): string[];
+        createInsertionAnchor(index: number): ArrayPlaceAnchor;
         fullString(): string;
         insertAt(index: number, additionalCharacters: string): void;
         onCharactersChanged(callback: (ops: readonly TextOp[] | undefined) => void): () => void;

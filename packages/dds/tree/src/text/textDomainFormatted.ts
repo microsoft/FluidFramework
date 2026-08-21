@@ -16,6 +16,7 @@ import {
 import { currentObserver, buildNodeComparator } from "../feature-libraries/index.js";
 import { TreeAlpha, Tree as TreeStatic } from "../shared-tree/index.js";
 import {
+	createArrayInsertionAnchor,
 	getInnerNode,
 	SchemaFactory,
 	SchemaFactoryAlpha,
@@ -27,6 +28,7 @@ import {
 	eraseSchemaDetailsSubclassable,
 } from "../simple-tree/index.js";
 import type {
+	ArrayPlaceAnchor,
 	TreeNodeSchema,
 	LazyItem,
 	ImplicitAllowedTypes,
@@ -220,6 +222,10 @@ export namespace FormattedText {
 
 			public removeRange(index: number | undefined, end: number | undefined): void {
 				this.content.removeRange(index, end);
+			}
+
+			public createInsertionAnchor(index: number): ArrayPlaceAnchor {
+				return createArrayInsertionAnchor(this.content, index);
 			}
 
 			public characters(): Iterable<string> {
@@ -744,6 +750,11 @@ export namespace FormattedText {
 			TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>
 		>[],
 	> extends PlainText.Members {
+		/**
+		 * {@inheritDoc PlainText.Members.createInsertionAnchor}
+		 */
+		createInsertionAnchor(index: number): ArrayPlaceAnchor;
+
 		/**
 		 * {@link PlainText.Members.insertAt} with optional formatting to apply to all additional characters,
 		 * and allowing an array of atoms instead of a string.
