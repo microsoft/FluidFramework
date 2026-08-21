@@ -78,9 +78,9 @@ function getConfig(
 	const hasCustomServiceEndpoints =
 		ordererUrl !== undefined || deltaStorageUrl !== undefined || deltaStreamUrl !== undefined;
 	if (hasCustomServiceEndpoints) {
-		assert(ordererUrl !== undefined, "Missing orderer URL");
-		assert(deltaStorageUrl !== undefined, "Missing delta storage URL");
-		assert(deltaStreamUrl !== undefined, "Missing delta stream URL");
+		assert(typeof ordererUrl === "string" && ordererUrl !== "", "Missing orderer URL");
+		assert(typeof deltaStorageUrl === "string" && deltaStorageUrl !== "", "Missing delta storage URL");
+		assert(typeof deltaStreamUrl === "string" && deltaStreamUrl !== "", "Missing delta stream URL");
 		return {
 			serviceEndpoint: {
 				hostUrl: fluidHost,
