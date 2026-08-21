@@ -288,7 +288,8 @@ export function encodeDetachedNodes(
 	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
 		typeof RevisionTagSchema,
-		ChangeEncodingContext
+		ChangeEncodingContext,
+		ChangeDecodingContext
 	>,
 	fieldsCodec: FieldBatchCodec,
 	chunkCompressionStrategy: TreeCompressionStrategy,
@@ -344,7 +345,8 @@ export function decodeDetachedNodes(
 	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
 		typeof RevisionTagSchema,
-		ChangeEncodingContext
+		ChangeEncodingContext,
+		ChangeDecodingContext
 	>,
 	fieldsCodec: FieldBatchCodec,
 	chunkCompressionStrategy: TreeCompressionStrategy,
@@ -355,15 +357,7 @@ export function decodeDetachedNodes(
 
 	const chunks = fieldsCodec.decode(
 		encoded.trees,
-		context.isSummary
-			? FieldBatchDecodingContext.forSummary({
-					idCompressor: context.idCompressor,
-					healing: context.healing,
-				})
-			: FieldBatchDecodingContext.forOp({
-					idCompressor: context.idCompressor,
-					originatorId: context.originatorId,
-				}),
+		FieldBatchDecodingContext.fromIdDecodingContext(context.forestIdDecodingContext),
 	);
 	const getChunk = (index: number): TreeChunk => {
 		assert(index < chunks.length, 0x898 /* out of bounds index for build chunk */);
@@ -399,7 +393,8 @@ export function encodeRevisionInfos(
 	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
 		typeof RevisionTagSchema,
-		ChangeEncodingContext
+		ChangeEncodingContext,
+		ChangeDecodingContext
 	>,
 ): EncodedRevisionInfo[] | undefined {
 	if (context.revision !== undefined) {
@@ -437,7 +432,8 @@ export function decodeRevisionInfos(
 	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
 		typeof RevisionTagSchema,
-		ChangeEncodingContext
+		ChangeEncodingContext,
+		ChangeDecodingContext
 	>,
 ): RevisionInfo[] | undefined {
 	if (revisions === undefined) {
@@ -473,7 +469,8 @@ export function encodeChange(
 	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
 		typeof RevisionTagSchema,
-		ChangeEncodingContext
+		ChangeEncodingContext,
+		ChangeDecodingContext
 	>,
 	fieldsCodec: FieldBatchCodec,
 	chunkCompressionStrategy: TreeCompressionStrategy,
@@ -524,7 +521,8 @@ export function decodeChange(
 	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
 		typeof RevisionTagSchema,
-		ChangeEncodingContext
+		ChangeEncodingContext,
+		ChangeDecodingContext
 	>,
 	fieldsCodec: FieldBatchCodec,
 	chunkCompressionStrategy: TreeCompressionStrategy,
@@ -589,7 +587,8 @@ export function getFieldChangesetCodecs(
 	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
 		typeof RevisionTagSchema,
-		ChangeEncodingContext
+		ChangeEncodingContext,
+		ChangeDecodingContext
 	>,
 	codecOptions: ICodecOptions,
 ): Map<
@@ -637,7 +636,8 @@ export function makeModularChangeCodecV1(
 	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
 		typeof RevisionTagSchema,
-		ChangeEncodingContext
+		ChangeEncodingContext,
+		ChangeDecodingContext
 	>,
 	fieldsCodec: FieldBatchCodec,
 	codecOptions: ICodecOptions,
@@ -696,7 +696,8 @@ function encodeRevisionOpt(
 		RevisionTag,
 		EncodedRevisionTag,
 		EncodedRevisionTag,
-		ChangeEncodingContext
+		ChangeEncodingContext,
+		ChangeDecodingContext
 	>,
 	revision: RevisionTag | undefined,
 	context: ChangeEncodingContext,

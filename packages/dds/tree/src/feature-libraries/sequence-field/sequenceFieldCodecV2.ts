@@ -13,6 +13,7 @@ import {
 	type JsonCodecPart,
 } from "../../codec/index.js";
 import type {
+	ChangeDecodingContext,
 	ChangeEncodingContext,
 	ChangesetLocalId,
 	EncodedRevisionTag,
@@ -49,7 +50,8 @@ export function makeV2CodecHelpers(
 	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
 		typeof RevisionTagSchema,
-		ChangeEncodingContext
+		ChangeEncodingContext,
+		ChangeDecodingContext
 	>,
 ): SequenceCodecHelpers<MarkEffect, Encoded.MarkEffect> {
 	const changeAtomIdCodec = makeChangeAtomIdCodec(revisionTagCodec);
@@ -57,7 +59,8 @@ export function makeV2CodecHelpers(
 		MarkEffect,
 		Encoded.MarkEffect,
 		Encoded.MarkEffect,
-		ChangeEncodingContext
+		ChangeEncodingContext,
+		ChangeDecodingContext
 	> = {
 		encode(effect: MarkEffect, context: ChangeEncodingContext): Encoded.MarkEffect {
 			function encodeRevision(
@@ -149,14 +152,14 @@ export function makeV2CodecHelpers(
 				}
 			}
 		},
-		decode(encoded: Encoded.MarkEffect, context: ChangeEncodingContext): MarkEffect {
+		decode(encoded: Encoded.MarkEffect, context: ChangeDecodingContext): MarkEffect {
 			return decoderDispatcher.dispatch(encoded, context);
 		},
 	};
 
 	function decodeRevision(
 		encodedRevision: EncodedRevisionTag | undefined,
-		context: ChangeEncodingContext,
+		context: ChangeDecodingContext,
 	): RevisionTag {
 		if (encodedRevision === undefined) {
 			assert(context.revision !== undefined, 0x996 /* Implicit revision should be provided */);
@@ -168,10 +171,10 @@ export function makeV2CodecHelpers(
 
 	const decoderLibrary: DiscriminatedUnionLibrary<
 		Encoded.MarkEffect,
-		/* args */ [context: ChangeEncodingContext],
+		/* args */ [context: ChangeDecodingContext],
 		MarkEffect
 	> = {
-		moveIn(encoded: Encoded.MoveIn, context: ChangeEncodingContext): MoveIn {
+		moveIn(encoded: Encoded.MoveIn, context: ChangeDecodingContext): MoveIn {
 			const { id, finalEndpoint, revision } = encoded;
 			const mark: MoveIn = {
 				type: "MoveIn",
@@ -184,7 +187,7 @@ export function makeV2CodecHelpers(
 			}
 			return mark;
 		},
-		insert(encoded: Encoded.Insert, context: ChangeEncodingContext): Insert {
+		insert(encoded: Encoded.Insert, context: ChangeDecodingContext): Insert {
 			const { id, revision } = encoded;
 			const mark: Insert = {
 				type: "Insert",
@@ -194,7 +197,7 @@ export function makeV2CodecHelpers(
 			mark.revision = decodeRevision(revision, context);
 			return mark;
 		},
-		remove(encoded: Encoded.Remove, context: ChangeEncodingContext): Remove {
+		remove(encoded: Encoded.Remove, context: ChangeDecodingContext): Remove {
 			const { id, revision, idOverride } = encoded;
 			const mark: Mutable<Remove> = {
 				type: "Remove",
@@ -207,7 +210,7 @@ export function makeV2CodecHelpers(
 			}
 			return mark;
 		},
-		moveOut(encoded: Encoded.MoveOut, context: ChangeEncodingContext): MoveOut {
+		moveOut(encoded: Encoded.MoveOut, context: ChangeDecodingContext): MoveOut {
 			const { id, finalEndpoint, idOverride, revision } = encoded;
 			const mark: Mutable<MoveOut> = {
 				type: "MoveOut",
@@ -226,7 +229,7 @@ export function makeV2CodecHelpers(
 		},
 		attachAndDetach(
 			encoded: Encoded.AttachAndDetach,
-			context: ChangeEncodingContext,
+			context: ChangeDecodingContext,
 		): AttachAndDetach | Rename {
 			const attach = decoderDispatcher.dispatch(encoded.attach, context) as Attach;
 			const detach = decoderDispatcher.dispatch(encoded.detach, context) as Detach;
@@ -250,7 +253,7 @@ export function makeV2CodecHelpers(
 
 	const decoderDispatcher = new DiscriminatedUnionDispatcher<
 		Encoded.MarkEffect,
-		/* args */ [context: ChangeEncodingContext],
+		/* args */ [context: ChangeDecodingContext],
 		MarkEffect
 	>(decoderLibrary);
 
@@ -266,7 +269,8 @@ export function makeV2Codec(
 	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
 		typeof RevisionTagSchema,
-		ChangeEncodingContext
+		ChangeEncodingContext,
+		ChangeDecodingContext
 	>,
 ): IJsonCodec<
 	Changeset,

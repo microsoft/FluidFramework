@@ -5,6 +5,7 @@
 
 import { type ICodecFamily, type JsonCodecPart, makeCodecFamily } from "../../codec/index.js";
 import type {
+	ChangeDecodingContext,
 	ChangeEncodingContext,
 	RevisionTag,
 	RevisionTagSchema,
@@ -21,7 +22,8 @@ export const makeOptionalFieldCodecFamily = (
 	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
 		typeof RevisionTagSchema,
-		ChangeEncodingContext
+		ChangeEncodingContext,
+		ChangeDecodingContext
 	>,
 ): ICodecFamily<OptionalChangeset, FieldChangeEncodingContext, FieldChangeDecodingContext> =>
 	makeCodecFamily([[2, makeV2Codec(revisionTagCodec)]]);

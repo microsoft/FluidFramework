@@ -10,6 +10,7 @@ import type {
 	ChangeFamily,
 	ChangeFamilyEditor,
 	TaggedChange,
+	ChangeDecodingContext,
 	ChangeEncodingContext,
 	RevisionTag,
 	RevisionReplacer,
@@ -60,7 +61,7 @@ const throwingFamily: ChangeFamily<ChangeFamilyEditor, string, unknown> = {
 			throw new Error("changeRevision");
 		},
 	},
-	codecs: {} as unknown as ICodecFamily<string, ChangeEncodingContext>,
+	codecs: {} as unknown as ICodecFamily<string, ChangeEncodingContext, ChangeDecodingContext>,
 	buildProcessor: (context: unknown): ((change: string) => string) => {
 		assert.equal(context, arg1);
 		return (change: string) => {
@@ -103,7 +104,7 @@ const returningFamily: ChangeFamily<ChangeFamilyEditor, string, unknown> = {
 			return "changeRevision";
 		},
 	},
-	codecs: {} as unknown as ICodecFamily<string, ChangeEncodingContext>,
+	codecs: {} as unknown as ICodecFamily<string, ChangeEncodingContext, ChangeDecodingContext>,
 	buildProcessor: (context: unknown): ((change: string) => string) => {
 		assert.equal(context, arg1);
 		return (change: string) => {
