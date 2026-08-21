@@ -142,9 +142,11 @@ export function generateRuntimeOptions(
 		}
 	});
 
-	// Override explicitSchemaControl to enabled if createBlobPayloadPending is enabled
+	// Override explicitSchemaControl to enabled if createBlobPayloadPending is explicitly set (true or false),
+	// since explicitSchemaControl is required whenever createBlobPayloadPending is explicitly configured (not just
+	// when enabling it) - see the `runtimeOptionKeysThatRequireExplicitSchemaControl` check in containerRuntime.ts.
 	pairwiseOptions.map((options) => {
-		if (options.createBlobPayloadPending === true) {
+		if (options.createBlobPayloadPending !== undefined) {
 			(
 				options as {
 					// Remove readonly modifier to allow overriding

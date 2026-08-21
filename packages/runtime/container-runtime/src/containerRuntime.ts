@@ -483,9 +483,9 @@ export interface ContainerRuntimeOptions {
 
 	/**
 	 * Create blob handles with pending payloads when calling createBlob.
-	 * Default is `undefined` (disabled) when `oldestClientSupported` is `<2.40.0`, but enabled when `oldestClientSupported` is `>=2.40.0`).
+	 * Default is `undefined` (disabled) when `minVersionForCollab` is `<2.40.0`, but enabled when `minVersionForCollab` is `>=2.40.0`.
 	 * When enabled (`true`), createBlob will return a handle before the blob upload completes.
-	 * Use explicit `false` to disable this feature when `oldestClientSupported` is `>=2.40.0`.
+	 * Use explicit `false` to disable this feature when `minVersionForCollab` is `>=2.40.0`.
 	 */
 	readonly createBlobPayloadPending: boolean | undefined;
 
