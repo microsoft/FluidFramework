@@ -3,7 +3,6 @@
 "__section": breaking
 "__highlight": true
 ---
-
 Remove the now-unused experimental data object package
 
 `@fluid-experimental/data-object-base` is no longer published. The package exported no APIs.
