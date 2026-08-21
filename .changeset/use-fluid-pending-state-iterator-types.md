@@ -4,7 +4,7 @@
 ---
 Pending local state uses Fluid-owned iterator types
 
-`PendingLocalStateStore` iteration methods now return `FluidIterableIterator` instead of TypeScript's built-in iterator types.
+[`PendingLocalStateStore`](https://fluidframework.com/docs/api/container-loader/pendinglocalstatestore-class) iteration methods now return [`FluidIterableIterator`](https://fluidframework.com/docs/api/core-interfaces/fluiditerableiterator-interface) instead of TypeScript's built-in iterator types.
 This prevents changes to TypeScript's standard iterator interfaces from affecting the container loader API.
 
 #### Migration
