@@ -145,16 +145,25 @@ module.exports = {
 		"ts2esm": [],
 		"tsc": ["^tsc", "^api", "build:genver", "ts2esm"],
 		"place:cjs:package-stub": [], // no cross-package deps needed (without definition default is [^*])
-		"build:cjs": ["^build:cjs", "^build:entrypoints:cjs", "build:genver"],
-		"build:esm": ["^build:esm", "^build:entrypoints:esm", "build:genver"],
+		"build:cjs": ["^build:entrypoints:cjs", "build:genver"],
+		"build:esm": ["^build:entrypoints:esm", "build:genver"],
 		"build:esnext": ["^build:esnext", "^api-extractor:esnext", "build:genver"],
 		"build:entrypoints": {
 			dependsOn: ["build:entrypoints:esm", "build:entrypoints:cjs"],
 			script: false,
 		},
-		"build:entrypoints:esm": ["build:esm"],
-		"build:entrypoints:cjs": ["build:cjs"],
-		"build:entrypoints:node10": [],
+		"build:entrypoints:esm": {
+			dependsOn: ["build:esm"],
+			// False so that build:entrypoints:esm can be used as generally production build dependency.
+			// Even for packages that don't have a build:entrypoints:esm task.
+			script: false,
+		},
+		"build:entrypoints:cjs": {
+			dependsOn: ["build:cjs"],
+			// False so that build:entrypoints:cjs can be used as generally production build dependency.
+			// Even for packages that don't have a build:entrypoints:cjs task.
+			script: false,
+		},
 		// Generic build:test script should be replaced by :esm or :cjs specific versions.
 		// "tsc" would be nice to eliminate from here, but plenty of packages still focus
 		// on CommonJS.
@@ -169,24 +178,20 @@ module.exports = {
 		],
 		"build:test:cjs": [
 			"typetests:gen",
-			"build:cjs",
 			"build:entrypoints:cjs",
 			"tsc",
 			"api-extractor:commonjs",
 			// depend on ancestor packages in case current package doesn't have production build (e.g. test-only packages)
-			"^build:cjs",
 			"^build:entrypoints:cjs",
 			"^tsc",
 			"^api-extractor:commonjs",
 		],
 		"build:test:esm": [
 			"typetests:gen",
-			"build:esm",
 			"build:entrypoints:esm",
 			"build:esnext",
 			"api-extractor:esnext",
 			// depend on ancestor packages in case current package doesn't have production build (e.g. test-only packages)
-			"^build:esm",
 			"^build:entrypoints:esm",
 			"^build:esnext",
 			"^api-extractor:esnext",
@@ -198,7 +203,6 @@ module.exports = {
 			dependsOn: [
 				"api-extractor:commonjs",
 				"api-extractor:esnext",
-				"build:entrypoints:node10",
 				// Depend on "tsc" and "build:esnext" in case there is no matching "api-extractor:*".
 				"tsc",
 				"build:esnext",
@@ -214,39 +218,25 @@ module.exports = {
 		// Packages with /legacy exports generate reports from legacy and "current" entrypoints using child tasks.
 		// The "current" entrypoint should be the broadest of "public.d.ts",
 		// "beta.d.ts", and "alpha.d.ts".
-		"build:api-reports": [
-			"build:entrypoints:esm",
-			"build:esm",
-			"api-extractor:esnext",
-			"build:esnext",
-		],
+		"build:api-reports": ["build:entrypoints:esm", "api-extractor:esnext", "build:esnext"],
 		"build:api-reports:current": [
 			"build:entrypoints:esm",
-			"build:esm",
 			"api-extractor:esnext",
 			"build:esnext",
 		],
 		"build:api-reports:legacy": [
 			"build:entrypoints:esm",
-			"build:esm",
 			"api-extractor:esnext",
 			"build:esnext",
 		],
-		"ci:build:api-reports": [
-			"build:entrypoints:esm",
-			"build:esm",
-			"api-extractor:esnext",
-			"build:esnext",
-		],
+		"ci:build:api-reports": ["build:entrypoints:esm", "api-extractor:esnext", "build:esnext"],
 		"ci:build:api-reports:current": [
 			"build:entrypoints:esm",
-			"build:esm",
 			"api-extractor:esnext",
 			"build:esnext",
 		],
 		"ci:build:api-reports:legacy": [
 			"build:entrypoints:esm",
-			"build:esm",
 			"api-extractor:esnext",
 			"build:esnext",
 		],
@@ -254,20 +244,8 @@ module.exports = {
 		// The package's local 'api-extractor.json' may use the entrypoint from either CJS or ESM,
 		// therefore we need to require both before running api-extractor until other packages are
 		// updated to use ESM entrypoints or customize their build configs.
-		"build:docs": [
-			"build:esm",
-			"build:entrypoints:esm",
-			"tsc",
-			"build:esnext",
-			"api-extractor:esnext",
-		],
-		"ci:build:docs": [
-			"build:esm",
-			"build:entrypoints:esm",
-			"tsc",
-			"build:esnext",
-			"api-extractor:esnext",
-		],
+		"build:docs": ["build:entrypoints:esm", "tsc", "build:esnext", "api-extractor:esnext"],
+		"ci:build:docs": ["build:entrypoints:esm", "tsc", "build:esnext", "api-extractor:esnext"],
 		"build:readme": {
 			dependsOn: ["compile"],
 			script: true,
@@ -277,21 +255,19 @@ module.exports = {
 			script: true,
 		},
 		"depcruise": [],
+		// check:exports provides protection for all of the subtasks so long as
+		// they are not the specifically requested task by requiring all
+		// entrypoints to be built before any of the child tasks are run.
+		// This is done because the "check:exports:*" tasks have variable
+		// names depending on the package configuration and fluid-build does
+		// not support wildcards in task dependencies.
 		"check:exports": ["build:entrypoints", "api"],
 		"check:exports:bundle-release-tags": ["build:esm", "build:esnext"],
 		// The package's local 'api-extractor-lint.json' may use the entrypoint from either CJS or ESM,
 		// therefore we need to require both before running api-extractor.
 		"check:release-tags": ["tsc", "build:esnext"],
-		"check:are-the-types-wrong": [
-			"build:entrypoints",
-			"build:esm",
-			"build:cjs",
-			"tsc",
-			"build:esnext",
-			"api",
-		],
+		"check:are-the-types-wrong": ["build:entrypoints", "tsc", "build:esnext", "api"],
 		"check:types:inexactOptionalPropertyTypes": [
-			"^build:esm",
 			"^build:entrypoints:esm",
 			"^build:esnext",
 			"^api-extractor:esnext",
@@ -313,18 +289,8 @@ module.exports = {
 		"format:prettier": [],
 		"prettier": [],
 		"prettier:fix": [],
-		"webpack": [
-			"^build:entrypoints:esm",
-			"^build:esm",
-			"^api-extractor:esnext",
-			"^build:esnext",
-		],
-		"webpack:profile": [
-			"^build:entrypoints:esm",
-			"^build:esm",
-			"^api-extractor:esnext",
-			"^build:esnext",
-		],
+		"webpack": ["^build:entrypoints:esm", "^api-extractor:esnext", "^build:esnext"],
+		"webpack:profile": ["^build:entrypoints:esm", "^api-extractor:esnext", "^build:esnext"],
 		"clean": {
 			before: ["*"],
 		},
