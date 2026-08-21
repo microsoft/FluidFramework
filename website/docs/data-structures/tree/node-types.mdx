@@ -9,26 +9,26 @@ Data on a [SharedTree](./index.mdx) is stored as a [node](./nodes.mdx) of one of
 
 ## Leaf Nodes
 
-A <ApiLink packageName="fluid-framework" apiName="NodeKind.Leaf">leaf</ApiLink> holds an atomic value. The available leaf types are:
+A <ApiLink package="fluid-framework" api="NodeKind.Leaf">leaf</ApiLink> holds an atomic value. The available leaf types are:
 
--   <ApiLink packageName="fluid-framework" apiName="SchemaStatics.boolean">**boolean**</ApiLink>: a JavaScript boolean.
--   <ApiLink packageName="fluid-framework" apiName="SchemaStatics.number">**number**</ApiLink>: a JavaScript number, but does not support `-0` (normalized to 0), `NaN`, or `Infinity` (normalized to `null` where allowed).
--   <ApiLink packageName="fluid-framework" apiName="SchemaStatics.string">**string**</ApiLink>: a JavaScript string, but does not support unpaired UTF-16 surrogate pairs.
--   <ApiLink packageName="fluid-framework" apiName="SchemaStatics.null">**null**</ApiLink>: JavaScript `null`.
--   <ApiLink packageName="fluid-framework" apiName="SchemaStatics.handle">**FluidHandle**</ApiLink>: a handle to a Fluid DDS or Data Object. See [Handles](../../concepts/handles.mdx).
+-   <ApiLink package="fluid-framework" api="SchemaStatics.boolean">**boolean**</ApiLink>: a JavaScript boolean.
+-   <ApiLink package="fluid-framework" api="SchemaStatics.number">**number**</ApiLink>: a JavaScript number, but does not support `-0` (normalized to 0), `NaN`, or `Infinity` (normalized to `null` where allowed).
+-   <ApiLink package="fluid-framework" api="SchemaStatics.string">**string**</ApiLink>: a JavaScript string, but does not support unpaired UTF-16 surrogate pairs.
+-   <ApiLink package="fluid-framework" api="SchemaStatics.null">**null**</ApiLink>: JavaScript `null`.
+-   <ApiLink package="fluid-framework" api="SchemaStatics.handle">**FluidHandle**</ApiLink>: a handle to a Fluid DDS or Data Object. See [Handles](../../concepts/handles.mdx).
 
 ## TreeNodes
 
-There are multiple <ApiLink packageName="fluid-framework" apiName="NodeKind">kinds</ApiLink> of <ApiLink packageName="fluid-framework" apiName="TreeNode" />, each of which manage and expose their children differently.
+There are multiple <ApiLink package="fluid-framework" api="NodeKind">kinds</ApiLink> of <ApiLink package="fluid-framework" api="TreeNode" />, each of which manage and expose their children differently.
 
 ### Object Nodes
 
-An <ApiLink packageName="fluid-framework" apiName="TreeObjectNode">object node</ApiLink> has zero or more named child <ApiLink packageName="fluid-framework" apiName="FieldSchema">fields</ApiLink> exposed as properties.
+An <ApiLink package="fluid-framework" api="TreeObjectNode">object node</ApiLink> has zero or more named child <ApiLink package="fluid-framework" api="FieldSchema">fields</ApiLink> exposed as properties.
 Different object nodes in the same tree can have different schemas.
 The schema specifies whether each property is
-<ApiLink packageName="fluid-framework" apiName="SchemaStatics.required">required</ApiLink>,
-<ApiLink packageName="fluid-framework" apiName="SchemaStatics.optional">optional</ApiLink>,
-or an <ApiLink packageName="fluid-framework" apiName="SchemaFactory.identifier">identifier</ApiLink>,
+<ApiLink package="fluid-framework" api="SchemaStatics.required">required</ApiLink>,
+<ApiLink package="fluid-framework" api="SchemaStatics.optional">optional</ApiLink>,
+or an <ApiLink package="fluid-framework" api="SchemaFactory.identifier">identifier</ApiLink>,
 and which node types are allowed (e.g., a property could allow `number` or `string`).
 
 ### Map Nodes

@@ -13,19 +13,34 @@ import type { SiteVersion } from "./utilityTypes.js";
 export const apiLinkManifestPluginName = "api-link-manifests";
 
 /**
- * A possible documentation target for an API name in a generated API link manifest.
+ * One segment in an API item's documented containment path.
  */
-export interface ApiLinkManifestEntry {
+export interface ApiLinkManifestPathSegment {
 	/**
-	 * The API Extractor item kind used to distinguish declarations that share a name.
+	 * The segment's author-facing API name.
+	 */
+	readonly name: string;
+
+	/**
+	 * The API Extractor item kind used to distinguish declarations that share this name.
 	 */
 	readonly apiType: ApiItemKind;
 
 	/**
-	 * The one-based API Extractor overload index used to distinguish overloads of the same kind.
+	 * The one-based API Extractor overload index used to distinguish overloads of this item.
 	 * Omitted for API items that do not support overloads.
 	 */
 	readonly overloadIndex?: number;
+}
+
+/**
+ * A possible documentation target for an API declaration reference.
+ */
+export interface ApiLinkManifestEntry {
+	/**
+	 * The API item's containment path, including the kind of every addressable segment.
+	 */
+	readonly path: readonly ApiLinkManifestPathSegment[];
 
 	/**
 	 * The extension-less path of the generated document, relative to the API documentation URI root.
@@ -42,15 +57,13 @@ export interface ApiLinkManifestEntry {
  * Link targets for one version of the generated API documentation.
  *
  * The outer record is keyed by unscoped package name. Each package record is keyed by the
- * qualified, author-facing API name, such as `TreeView.upgradeSchema`. A name maps to an array
- * because different API item kinds or overloads can share that name.
+ * unselected, dotted API path, such as `TreeView.upgradeSchema`. A path maps to an array because
+ * kinds or overloads at any containment level can share the same names.
  */
-export type ApiLinkManifest = Readonly<
-	Record<string, Readonly<Record<string, readonly ApiLinkManifestEntry[]>>>
->;
+export type ApiLinkManifest = Record<string, Record<string, ApiLinkManifestEntry[]>>;
 
 /**
  * API link manifests keyed by Docusaurus documentation version name, such as `current`, `1`, or
  * `local`.
  */
-export type ApiLinkManifests = Readonly<Partial<Record<SiteVersion, ApiLinkManifest>>>;
+export type ApiLinkManifests = Readonly<Partial<Record<SiteVersion, Readonly<ApiLinkManifest>>>>;

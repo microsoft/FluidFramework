@@ -5,15 +5,10 @@
 
 import { useActivePluginAndVersion, useDoc } from "@docusaurus/plugin-content-docs/client";
 import { usePluginData } from "@docusaurus/useGlobalData";
-import type { ApiItemKind } from "@fluid-tools/api-markdown-documenter";
 import type { ReactNode } from "react";
 
-import {
-	type ApiLinkManifest,
-	type ApiLinkManifestEntry,
-	type ApiLinkManifests,
-	apiLinkManifestPluginName,
-} from "../apiLinkManifest";
+import { type ApiLinkManifests, apiLinkManifestPluginName } from "../apiLinkManifest";
+import { type ApiDeclarationReference, resolveApiLinkTarget } from "../apiLinkReference";
 import type { SiteVersion } from "../utilityTypes";
 
 // TODO: how will versioning interact with these?
@@ -24,17 +19,26 @@ import type { SiteVersion } from "../utilityTypes";
 export interface PackageLinkProps {
 	/**
 	 * Contents to display within the link.
-	 * @defaultValue {@link PackageLinkProps.packageName}
+	 * @defaultValue {@link PackageLinkProps.package}
 	 */
 	children?: ReactNode;
-	packageName: string;
+
+	/**
+	 * The unscoped name of the package whose API documentation is linked.
+	 */
+	package: string;
+
 	headingId?: string;
 }
 
 /**
  * A convenient mechanism for linking to a package's API documentation.
  */
-export function PackageLink({ headingId, packageName, children }: PackageLinkProps): JSX.Element {
+export function PackageLink({
+	headingId,
+	package: packageName,
+	children,
+}: PackageLinkProps): JSX.Element {
 	const root = useLinkPathBase();
 	const headingPostfix = headingId === undefined ? "" : `#${headingId}`;
 	return <a href={`${root}${packageName}${headingPostfix}`}>{children ?? packageName}</a>;
@@ -43,33 +47,29 @@ export function PackageLink({ headingId, packageName, children }: PackageLinkPro
 /**
  * {@link ApiLink} input props.
  */
-export interface ApiLinkProps {
+export interface ApiLinkProps<TApiSelector extends string = string> {
 	/**
 	 * Contents to display within the link.
-	 * @defaultValue {@link ApiLinkProps.apiName}
+	 * When omitted, the API declaration reference is displayed without selectors.
+	 *
+	 * @defaultValue {@link ApiLinkProps.api}
 	 */
 	children?: ReactNode;
-	packageName: string;
-	apiName: string;
-	/**
-	 * The kind of API item to link to.
-	 *
-	 * @remarks
-	 * May be omitted when the package exports only one API item with the specified name.
-	 *
-	 * {@link ApiLink} will throw an error if this is omitted and multiple API item kinds with the specified name are exported by the package.
-	 */
-	apiType?: ApiItemKind;
 
 	/**
-	 * The one-based overload index of the API item to link to.
+	 * The unscoped name of the package containing the API item.
 	 */
-	overloadIndex?: number;
+	package: string;
+
+	/**
+	 * A TSDoc-style declaration reference identifying the API item within the package.
+	 */
+	api: ApiDeclarationReference<TApiSelector>;
 
 	/**
 	 * Overrides the generated heading ID for the target API item.
 	 *
-	 * @deprecated Use a qualified {@link ApiLinkProps.apiName} to link directly to a member.
+	 * @deprecated Use a qualified {@link ApiLinkProps.api} reference to link directly to a member.
 	 */
 	headingId?: string;
 }
@@ -79,14 +79,12 @@ export interface ApiLinkProps {
  *
  * @throws If the requested API cannot be uniquely resolved in the active documentation version.
  */
-export function ApiLink({
-	apiName,
-	apiType,
-	overloadIndex,
-	packageName,
+export function ApiLink<const TApiSelector extends string>({
+	api,
+	package: packageName,
 	headingId,
 	children,
-}: ApiLinkProps): JSX.Element {
+}: ApiLinkProps<TApiSelector>): JSX.Element {
 	const activePluginAndVersion = useActivePluginAndVersion();
 	const manifests = usePluginData(apiLinkManifestPluginName, undefined, {
 		failfast: true,
@@ -103,73 +101,14 @@ export function ApiLink({
 		);
 	}
 
-	const target = resolveApiLinkTarget(manifest, packageName, apiName, apiType, overloadIndex);
+	const { target, defaultText } = resolveApiLinkTarget(manifest, packageName, api);
 	const targetHeadingId = headingId ?? target.headingId;
 	const headingPostfix = targetHeadingId === undefined ? "" : `#${targetHeadingId}`;
 	return (
 		<a href={`${activeVersion.path}/api/${target.documentPath}${headingPostfix}`}>
-			{children ?? apiName}
+			{children ?? defaultText}
 		</a>
 	);
-}
-
-/**
- * Resolves an API item target from one version's API link manifest.
- *
- * @param manifest - The active documentation version's API link manifest.
- * @param packageName - The unscoped package name containing the API item.
- * @param apiName - The qualified, author-facing API item name.
- * @param apiType - The API item kind used to disambiguate declarations with the same name.
- * @param overloadIndex - The one-based overload index to select.
- * @returns The uniquely resolved manifest entry.
- */
-function resolveApiLinkTarget(
-	manifest: ApiLinkManifest,
-	packageName: string,
-	apiName: string,
-	apiType: ApiItemKind | undefined,
-	overloadIndex: number | undefined,
-): ApiLinkManifestEntry {
-	const candidates = manifest[packageName]?.[apiName];
-	if (candidates === undefined) {
-		throw new Error(`No API documentation found for "${packageName}/${apiName}".`);
-	}
-
-	const kindCandidates =
-		apiType === undefined
-			? candidates
-			: candidates.filter((candidate) => candidate.apiType === apiType);
-	if (kindCandidates.length === 0) {
-		throw new Error(
-			`No API documentation found for "${packageName}/${apiName}" with type "${apiType}".`,
-		);
-	}
-
-	const availableKinds = [...new Set(kindCandidates.map((candidate) => candidate.apiType))];
-	if (availableKinds.length > 1) {
-		throw new Error(
-			`API "${apiName}" in package "${packageName}" is ambiguous. Specify \`apiType\`. Available kinds: ${availableKinds.join(", ")}.`,
-		);
-	}
-
-	if (overloadIndex !== undefined) {
-		const overload = kindCandidates.find(
-			(candidate) => candidate.overloadIndex === overloadIndex,
-		);
-		if (overload === undefined) {
-			throw new Error(
-				`No API documentation found for "${packageName}/${apiName}" with overload index ${overloadIndex}.`,
-			);
-		}
-		return overload;
-	}
-
-	const target =
-		kindCandidates.find((candidate) => candidate.overloadIndex === 1) ?? kindCandidates[0];
-	if (target === undefined) {
-		throw new Error(`No API documentation found for "${packageName}/${apiName}".`);
-	}
-	return target;
 }
 
 /**

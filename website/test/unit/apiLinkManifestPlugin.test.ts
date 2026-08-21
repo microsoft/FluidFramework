@@ -23,13 +23,23 @@ import {
 
 const v1Manifest: ApiLinkManifest = {
 	example: {
-		Widget: [{ apiType: ApiItemKind.Interface, documentPath: "example/widget-interface" }],
+		Widget: [
+			{
+				path: [{ name: "Widget", apiType: ApiItemKind.Interface }],
+				documentPath: "example/widget-interface",
+			},
+		],
 	},
 };
 
 const v2Manifest: ApiLinkManifest = {
 	example: {
-		Widget: [{ apiType: ApiItemKind.Class, documentPath: "example/widget-class" }],
+		Widget: [
+			{
+				path: [{ name: "Widget", apiType: ApiItemKind.Class }],
+				documentPath: "example/widget-class",
+			},
+		],
 	},
 };
 

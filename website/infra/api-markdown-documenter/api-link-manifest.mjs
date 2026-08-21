@@ -5,21 +5,13 @@
 
 //@ts-check
 /** @typedef {import("@fluid-tools/api-markdown-documenter").ApiItem} ApiItem */
-/** @typedef {import("@fluid-tools/api-markdown-documenter").ApiItemKind} ApiItemKind */
 /** @typedef {import("@fluid-tools/api-markdown-documenter").ApiModel} ApiModel */
 /** @typedef {import("@fluid-tools/api-markdown-documenter").ApiItemTransformationConfiguration} ApiItemTransformationConfiguration */
+/** @typedef {import("../../src/apiLinkManifest.js").ApiLinkManifest} ApiLinkManifest */
+/** @typedef {import("../../src/apiLinkManifest.js").ApiLinkManifestEntry} ApiLinkManifestEntry */
+/** @typedef {import("../../src/apiLinkManifest.js").ApiLinkManifestPathSegment} ApiLinkManifestPathSegment */
 
 import { ApiItemKind, ApiItemUtilities } from "@fluid-tools/api-markdown-documenter";
-
-/**
- * @typedef ApiLinkManifestEntry
- * @property {ApiItemKind} apiType - The kind of API item represented by the entry.
- * @property {number | undefined} [overloadIndex] - The one-based overload index for parameter-list items.
- * @property {string} documentPath - The extensionless path to the document containing the API item.
- * @property {string | undefined} [headingId] - The API item's heading ID when it is rendered as a section.
- */
-
-/** @typedef {Record<string, Record<string, ApiLinkManifestEntry[]>>} ApiLinkManifest */
 
 const unsupportedApiItemKinds = new Set([
 	ApiItemKind.CallSignature,
@@ -54,6 +46,7 @@ export function createApiLinkManifest(apiModel, config) {
 			throw new Error(`Multiple API packages have the unscoped name "${packageName}".`);
 		}
 
+		/** @type {Record<string, ApiLinkManifestEntry[]>} */
 		const packageManifest = {};
 		manifest[packageName] = packageManifest;
 
@@ -68,22 +61,29 @@ export function createApiLinkManifest(apiModel, config) {
 	 * @param {ApiItem} apiItem - The item being visited.
 	 * @param {string} packageName - The unscoped name of the containing package.
 	 * @param {Record<string, ApiLinkManifestEntry[]>} packageManifest - The package manifest being populated.
-	 * @param {string[]} parentNameSegments - The qualified name segments of the item's documented ancestors.
+	 * @param {ApiLinkManifestPathSegment[]} parentPath - The typed path segments of the item's documented ancestors.
 	 */
-	function visitApiItem(apiItem, packageName, packageManifest, parentNameSegments) {
+	function visitApiItem(apiItem, packageName, packageManifest, parentPath) {
 		if (!ApiItemUtilities.shouldItemBeIncluded(apiItem, config)) {
 			return;
 		}
 
 		const shouldRecord = !unsupportedApiItemKinds.has(apiItem.kind);
-		const nameSegments = shouldRecord
-			? [...parentNameSegments, apiItem.displayName]
-			: parentNameSegments;
+		const overloadIndex = getOverloadIndex(apiItem);
+		const path = shouldRecord
+			? [
+					...parentPath,
+					{
+						name: apiItem.displayName,
+						apiType: apiItem.kind,
+						...(overloadIndex === undefined ? {} : { overloadIndex }),
+					},
+				]
+			: parentPath;
 
 		if (shouldRecord) {
-			const apiName = nameSegments.join(".");
-			const overloadIndex = getOverloadIndex(apiItem);
-			const candidateKey = `${packageName}\0${apiName}\0${apiItem.kind}\0${overloadIndex ?? ""}`;
+			const apiName = path.map((segment) => segment.name).join(".");
+			const candidateKey = `${packageName}\0${JSON.stringify(path)}`;
 			const canonicalReference = getCanonicalReference(apiItem);
 			const target = ApiItemUtilities.getLinkTargetForApiItem(apiItem, config);
 			const existingCandidate = existingCandidates.get(candidateKey);
@@ -93,9 +93,7 @@ export function createApiLinkManifest(apiModel, config) {
 					existingCandidate.target.headingId !== target.headingId)
 			) {
 				throw new Error(
-					`Duplicate API link candidate for "${packageName}/${apiName}" with kind "${apiItem.kind}"${
-						overloadIndex === undefined ? "" : ` and overload index ${overloadIndex}`
-					}. Canonical references: "${existingCandidate.canonicalReference}" and "${canonicalReference}".`,
+					`Duplicate API link candidate for "${packageName}/${apiName}" with path ${JSON.stringify(path)}. Canonical references: "${existingCandidate.canonicalReference}" and "${canonicalReference}".`,
 				);
 			}
 
@@ -103,8 +101,7 @@ export function createApiLinkManifest(apiModel, config) {
 				existingCandidates.set(candidateKey, { canonicalReference, target });
 				const candidates = (packageManifest[apiName] ??= []);
 				candidates.push({
-					apiType: apiItem.kind,
-					...(overloadIndex === undefined ? {} : { overloadIndex }),
+					path,
 					documentPath: target.documentPath,
 					...(target.headingId === undefined ? {} : { headingId: target.headingId }),
 				});
@@ -112,7 +109,7 @@ export function createApiLinkManifest(apiModel, config) {
 		}
 
 		for (const member of getMembers(apiItem)) {
-			visitApiItem(member, packageName, packageManifest, nameSegments);
+			visitApiItem(member, packageName, packageManifest, path);
 		}
 	}
 }
@@ -160,10 +157,8 @@ function sortManifest(manifest) {
 						.sort(([left], [right]) => left.localeCompare(right))
 						.map(([apiName, candidates]) => [
 							apiName,
-							candidates.toSorted(
-								(left, right) =>
-									left.apiType.localeCompare(right.apiType) ||
-									(left.overloadIndex ?? 0) - (right.overloadIndex ?? 0),
+							candidates.toSorted((left, right) =>
+								JSON.stringify(left.path).localeCompare(JSON.stringify(right.path)),
 							),
 						]),
 				),

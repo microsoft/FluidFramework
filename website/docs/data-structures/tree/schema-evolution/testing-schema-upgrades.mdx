@@ -7,7 +7,7 @@ import { ApiLink, PackageLink } from "@site/src/components/shortLinks";
 
 # Testing Schema Upgrades
 
-When you define a [staged schema upgrade](./index.mdx#staged-schema-upgrades) (using <ApiLink packageName="fluid-framework" apiName="SchemaFactoryBeta.staged">`staged()`</ApiLink> or <ApiLink packageName="fluid-framework" apiName="SchemaFactoryAlpha.stagedOptional">`stagedOptional()`</ApiLink>), you need to verify that your current code works correctly with documents that a *future* version will produce.
+When you define a [staged schema upgrade](./index.mdx#staged-schema-upgrades) (using <ApiLink package="fluid-framework" api="SchemaFactoryBeta.staged">`staged()`</ApiLink> or <ApiLink package="fluid-framework" api="SchemaFactoryAlpha.stagedOptional">`stagedOptional()`</ApiLink>), you need to verify that your current code works correctly with documents that a *future* version will produce.
 
 Runtime schema upgrades let you create test documents whose stored schema matches a future state.
 
@@ -171,7 +171,7 @@ This is useful for verifying that each phase of your rollout maintains the expec
 - **Use `independentView`** for isolated tests that don't require a Fluid service connection.
 - **Use `StagedSchemaUpgradePolicy.permissive`** to enable *all* staged upgrades at once — useful for broad integration tests that exercise the fully-upgraded schema without listing individual tokens.
 - **Test all schema states**: original → staged → upgraded → cleanup (staged wrappers removed). Each transition should maintain compatibility.
-- **Combine with** <ApiLink packageName="fluid-framework" apiName="snapshotSchemaCompatibility">**`snapshotSchemaCompatibility`**</ApiLink> tests to catch regressions when your schema changes across releases.
+- **Combine with** <ApiLink package="fluid-framework" api="snapshotSchemaCompatibility">**`snapshotSchemaCompatibility`**</ApiLink> tests to catch regressions when your schema changes across releases.
 - **Test edge cases**: What happens when a staged field is absent? When a staged type appears in a sequence? Ensure your application logic handles these gracefully.
 
 ## See Also

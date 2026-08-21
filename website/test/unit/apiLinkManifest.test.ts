@@ -7,6 +7,7 @@ import {
 	type ApiItem,
 	ApiItemKind,
 	ApiItemUtilities,
+	type ApiItemTransformationConfiguration,
 	type ApiModel,
 	getApiItemTransformationConfigurationWithDefaults,
 	HierarchyKind,
@@ -84,7 +85,7 @@ function addMember(
 function createConfig(
 	apiModel: MockApiModel,
 	options: { readonly exclude?: (apiItem: ApiItem) => boolean } = {},
-) {
+): ApiItemTransformationConfiguration {
 	return getApiItemTransformationConfigurationWithDefaults({
 		apiModel: apiModel as unknown as ApiModel,
 		...(options.exclude === undefined ? {} : { exclude: options.exclude }),
@@ -123,7 +124,7 @@ function getEntryPoint(apiModel: MockApiModel): MockApiItem {
 	return entryPoint;
 }
 
-function createManifest(apiModel: MockApiModel) {
+function createManifest(apiModel: MockApiModel): ReturnType<typeof createApiLinkManifest> {
 	return createApiLinkManifest(apiModel as unknown as ApiModel, createConfig(apiModel));
 }
 
@@ -142,31 +143,32 @@ describe("createApiLinkManifest", () => {
 
 		expect(manifest["test-package"].Tree).toEqual([
 			{
-				apiType: ApiItemKind.Interface,
+				path: [{ name: "Tree", apiType: ApiItemKind.Interface }],
 				documentPath: "test-package/tree-interface",
 			},
 			{
-				apiType: ApiItemKind.Variable,
+				path: [{ name: "Tree", apiType: ApiItemKind.Variable }],
 				documentPath: "test-package/index",
 				headingId: "tree-variable",
 			},
 		]);
 		expect(manifest["test-package"]["TreeView.upgradeSchema"]).toEqual([
 			{
-				apiType: ApiItemKind.MethodSignature,
+				path: [
+					{ name: "TreeView", apiType: ApiItemKind.Interface },
+					{ name: "upgradeSchema", apiType: ApiItemKind.MethodSignature },
+				],
 				documentPath: "test-package/treeview-interface",
 				headingId: "upgradeschema-methodsignature",
 			},
 		]);
 		expect(manifest["test-package"].overloaded).toEqual([
 			{
-				apiType: ApiItemKind.Function,
-				overloadIndex: 1,
+				path: [{ name: "overloaded", apiType: ApiItemKind.Function, overloadIndex: 1 }],
 				documentPath: "test-package/overloaded-1-function",
 			},
 			{
-				apiType: ApiItemKind.Function,
-				overloadIndex: 2,
+				path: [{ name: "overloaded", apiType: ApiItemKind.Function, overloadIndex: 2 }],
 				documentPath: "test-package/overloaded-2-function",
 			},
 		]);
@@ -186,7 +188,7 @@ describe("createApiLinkManifest", () => {
 			"test-package": {
 				Included: [
 					{
-						apiType: ApiItemKind.Interface,
+						path: [{ name: "Included", apiType: ApiItemKind.Interface }],
 						documentPath: "test-package/included-interface",
 					},
 				],
@@ -208,14 +210,13 @@ describe("createApiLinkManifest", () => {
 
 		expect(createManifest(apiModel)["test-package"].duplicate).toEqual([
 			{
-				apiType: ApiItemKind.Function,
-				overloadIndex: 1,
+				path: [{ name: "duplicate", apiType: ApiItemKind.Function, overloadIndex: 1 }],
 				documentPath: "test-package/duplicate-1-function",
 			},
 		]);
 	});
 
-	it("rejects duplicate candidates with different targets", () => {
+	it("preserves member candidates beneath parents with different kinds", () => {
 		const apiModel = createMockModel();
 		const entryPoint = getEntryPoint(apiModel);
 		const firstParent = addMember(entryPoint, ApiItemKind.Class, "Container");
@@ -229,9 +230,24 @@ describe("createApiLinkManifest", () => {
 			overloadIndex: 1,
 		});
 
-		expect(() => createManifest(apiModel)).toThrow(
-			/Duplicate API link candidate.*Container#duplicate:member\(1\).*Container\.duplicate:member\(1\)/,
-		);
+		expect(createManifest(apiModel)["test-package"]["Container.duplicate"]).toEqual([
+			{
+				path: [
+					{ name: "Container", apiType: ApiItemKind.Class },
+					{ name: "duplicate", apiType: ApiItemKind.Method, overloadIndex: 1 },
+				],
+				documentPath: "test-package/container-class",
+				headingId: "duplicate-method",
+			},
+			{
+				path: [
+					{ name: "Container", apiType: ApiItemKind.Interface },
+					{ name: "duplicate", apiType: ApiItemKind.Method, overloadIndex: 1 },
+				],
+				documentPath: "test-package/container-interface",
+				headingId: "duplicate-method",
+			},
+		]);
 	});
 
 	it("rejects packages with duplicate unscoped names", () => {

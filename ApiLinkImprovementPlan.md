@@ -51,10 +51,12 @@ The intended API is:
 ```ts
 interface ApiLinkProps {
   packageName: string;
-  api: string;
+  api: ApiDeclarationReference;
   children?: React.ReactNode;
 }
 ```
+
+`ApiDeclarationReference<T>` uses conditional template-literal types to validate literal values segment by segment. It accepts unselected identifiers, supported kind selectors, and a positive numeric overload selector on the terminal segment. Dynamic strings remain supported because TypeScript cannot validate their runtime contents; the TSDoc parser validates those values when the component renders.
 
 Top-level declarations continue to use their ordinary names:
 

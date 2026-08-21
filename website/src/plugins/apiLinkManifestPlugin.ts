@@ -42,7 +42,7 @@ export function apiLinkManifestPlugin(manifestPaths: ApiLinkManifestPaths): Plug
 					}
 					const manifest = JSON.parse(
 						await readFile(manifestPath, "utf8"),
-					) as ApiLinkManifest;
+					) as Readonly<ApiLinkManifest>;
 					return [versionName as SiteVersion, manifest] as const;
 				}),
 			);

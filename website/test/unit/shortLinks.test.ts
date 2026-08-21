@@ -6,7 +6,7 @@
 import type { GlobalVersion } from "@docusaurus/plugin-content-docs/client";
 import { ApiItemKind } from "@fluid-tools/api-markdown-documenter";
 import type { ReactElement, ReactNode } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest";
 
 const { useActivePluginAndVersion, usePluginData } = vi.hoisted(() => ({
 	useActivePluginAndVersion: vi.fn(),
@@ -23,6 +23,7 @@ vi.mock("@docusaurus/useGlobalData", () => ({ usePluginData }));
 // Tests intentionally reach into the website's component implementation and data contract.
 /* eslint-disable import/no-internal-modules */
 import type { ApiLinkManifests } from "../../src/apiLinkManifest.js";
+import type { ApiDeclarationReference } from "../../src/apiLinkReference.js";
 import { ApiLink, type ApiLinkProps } from "../../src/components/shortLinks.js";
 /* eslint-enable import/no-internal-modules */
 
@@ -44,21 +45,39 @@ function createMockApiLinkManifests(): ApiLinkManifests {
 		"current": {
 			example: {
 				"Widget": [
-					{ apiType: ApiItemKind.Class, documentPath: "example/widget-class" },
-					{ apiType: ApiItemKind.Interface, documentPath: "example/widget-interface" },
+					{
+						path: [{ name: "Widget", apiType: ApiItemKind.Class }],
+						documentPath: "example/widget-class",
+					},
+					{
+						path: [{ name: "Widget", apiType: ApiItemKind.Interface }],
+						documentPath: "example/widget-interface",
+					},
 				],
 				"Widget.run": [
 					{
-						apiType: ApiItemKind.Method,
-						overloadIndex: 1,
+						path: [
+							{ name: "Widget", apiType: ApiItemKind.Class },
+							{ name: "run", apiType: ApiItemKind.Method, overloadIndex: 1 },
+						],
 						documentPath: "example/widget-class",
 						headingId: "run-method",
 					},
 					{
-						apiType: ApiItemKind.Method,
-						overloadIndex: 2,
+						path: [
+							{ name: "Widget", apiType: ApiItemKind.Class },
+							{ name: "run", apiType: ApiItemKind.Method, overloadIndex: 2 },
+						],
 						documentPath: "example/widget-class",
 						headingId: "run_1-method",
+					},
+					{
+						path: [
+							{ name: "Widget", apiType: ApiItemKind.Interface },
+							{ name: "run", apiType: ApiItemKind.MethodSignature, overloadIndex: 1 },
+						],
+						documentPath: "example/widget-interface",
+						headingId: "run-methodsignature",
 					},
 				],
 			},
@@ -66,7 +85,10 @@ function createMockApiLinkManifests(): ApiLinkManifests {
 		"1": {
 			example: {
 				Widget: [
-					{ apiType: ApiItemKind.Interface, documentPath: "example/widget-interface" },
+					{
+						path: [{ name: "Widget", apiType: ApiItemKind.Interface }],
+						documentPath: "example/widget-interface",
+					},
 				],
 			},
 		},
@@ -94,8 +116,8 @@ describe("ApiLink", () => {
 
 		expect(
 			renderApiLink({
-				packageName: "example",
-				apiName: "Widget",
+				package: "example",
+				api: "Widget",
 			}),
 		).toEqual({
 			href: "/docs/v1/api/example/widget-interface",
@@ -103,14 +125,14 @@ describe("ApiLink", () => {
 		});
 	});
 
-	it("resolves qualified members and defaults to overload one", () => {
+	it("resolves a selected parent and defaults to overload one", () => {
 		useVersion("current", "/docs");
 		useMockApiLinkManifests();
 
 		expect(
 			renderApiLink({
-				packageName: "example",
-				apiName: "Widget.run",
+				package: "example",
+				api: "(Widget:class).run",
 			}),
 		).toEqual({
 			href: "/docs/api/example/widget-class#run-method",
@@ -118,16 +140,14 @@ describe("ApiLink", () => {
 		});
 	});
 
-	it("selects an explicit API kind and overload", () => {
+	it("selects parent kind and overload in the declaration reference", () => {
 		useVersion("current", "/docs");
 		useMockApiLinkManifests();
 
 		expect(
 			renderApiLink({
-				packageName: "example",
-				apiName: "Widget.run",
-				apiType: ApiItemKind.Method,
-				overloadIndex: 2,
+				package: "example",
+				api: "(Widget:class).(run:2)",
 			}),
 		).toEqual({
 			href: "/docs/api/example/widget-class#run_1-method",
@@ -141,8 +161,8 @@ describe("ApiLink", () => {
 
 		expect(
 			renderApiLink({
-				packageName: "example",
-				apiName: "Widget.run",
+				package: "example",
+				api: "(Widget:class).run",
 				headingId: "legacy-heading",
 			}),
 		).toEqual({
@@ -155,7 +175,7 @@ describe("ApiLink", () => {
 		useActivePluginAndVersion.mockReturnValue(undefined);
 		useMockApiLinkManifests();
 
-		expect(() => renderApiLink({ packageName: "example", apiName: "Widget" })).toThrowError(
+		expect(() => renderApiLink({ package: "example", api: "Widget" })).toThrowError(
 			"ApiLink must be rendered within a versioned Docusaurus document.",
 		);
 	});
@@ -164,7 +184,7 @@ describe("ApiLink", () => {
 		useVersion("local", "/docs/local");
 		useMockApiLinkManifests();
 
-		expect(() => renderApiLink({ packageName: "example", apiName: "Widget" })).toThrowError(
+		expect(() => renderApiLink({ package: "example", api: "Widget" })).toThrowError(
 			'No API link manifest found for documentation version "local".',
 		);
 	});
@@ -173,45 +193,71 @@ describe("ApiLink", () => {
 		useVersion("current", "/docs");
 		useMockApiLinkManifests();
 
-		expect(() => renderApiLink({ packageName: "example", apiName: "Missing" })).toThrowError(
+		expect(() => renderApiLink({ package: "example", api: "Missing" })).toThrowError(
 			'No API documentation found for "example/Missing".',
 		);
 	});
 
-	it("throws when the specified API type does not match", () => {
+	it("throws when a kind selector does not match", () => {
 		useVersion("current", "/docs");
 		useMockApiLinkManifests();
 
 		expect(() =>
 			renderApiLink({
-				packageName: "example",
-				apiName: "Widget",
-				apiType: ApiItemKind.Namespace,
+				package: "example",
+				api: "(Widget:namespace)",
 			}),
-		).toThrowError('No API documentation found for "example/Widget" with type "Namespace".');
+		).toThrowError('No API documentation found for "example/(Widget:namespace)".');
 	});
 
-	it("throws with candidate types when API name inference is ambiguous", () => {
+	it("throws with available selectors when a parent segment is ambiguous", () => {
 		useVersion("current", "/docs");
 		useMockApiLinkManifests();
 
-		expect(() => renderApiLink({ packageName: "example", apiName: "Widget" })).toThrowError(
-			'API "Widget" in package "example" is ambiguous. Specify `apiType`. Available kinds: Class, Interface.',
+		expect(() => renderApiLink({ package: "example", api: "Widget.run" })).toThrowError(
+			'API segment "Widget" in "example/Widget.run" is ambiguous. Specify a selector. Available segments: (Widget:class), (Widget:interface).',
 		);
 	});
 
-	it("throws when an explicit overload does not match", () => {
+	it("throws when a numeric overload selector does not match", () => {
 		useVersion("current", "/docs");
 		useMockApiLinkManifests();
 
 		expect(() =>
 			renderApiLink({
-				packageName: "example",
-				apiName: "Widget.run",
-				overloadIndex: 3,
+				package: "example",
+				api: "(Widget:class).(run:3)",
 			}),
-		).toThrowError(
-			'No API documentation found for "example/Widget.run" with overload index 3.',
+		).toThrowError('No API documentation found for "example/(Widget:class).(run:3)".');
+	});
+
+	it("throws for malformed declaration-reference syntax", () => {
+		useVersion("current", "/docs");
+		useMockApiLinkManifests();
+
+		expect(() => renderApiLink({ package: "example", api: "(Widget:interface" })).toThrowError(
+			/Invalid API declaration reference/,
 		);
+	});
+
+	it("throws for unsupported TSDoc selectors", () => {
+		useVersion("current", "/docs");
+		useMockApiLinkManifests();
+
+		expect(() => renderApiLink({ package: "example", api: "(Widget:static)" })).toThrowError(
+			'Unsupported selector "static" in API declaration reference "(Widget:static)".',
+		);
+	});
+});
+
+describe("ApiDeclarationReference", () => {
+	it("accepts supported references and rejects malformed literal types", () => {
+		expectTypeOf<ApiDeclarationReference<"Widget.run">>().toEqualTypeOf<"Widget.run">();
+		expectTypeOf<
+			ApiDeclarationReference<"(Widget:interface).(run:2)">
+		>().toEqualTypeOf<"(Widget:interface).(run:2)">();
+		expectTypeOf<ApiDeclarationReference<"Widget.(run:0)">>().toEqualTypeOf<never>();
+		expectTypeOf<ApiDeclarationReference<"(Widget:static).run">>().toEqualTypeOf<never>();
+		expectTypeOf<ApiDeclarationReference<"Widget.(run:2).result">>().toEqualTypeOf<never>();
 	});
 });
