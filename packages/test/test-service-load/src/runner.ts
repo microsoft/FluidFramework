@@ -113,7 +113,12 @@ async function main(): Promise<void> {
 		);
 		setupLogger.sendErrorEvent({ eventName: "runnerFailed" }, error);
 		// Flush before rethrowing: the top-level handler exits the process immediately.
-		await flushSetup();
+		// A failure to flush must not replace the driver creation error being reported.
+		try {
+			await flushSetup();
+		} catch (flushError) {
+			console.error("Failed to flush setup telemetry", flushError);
+		}
 		throw error;
 	}
 
