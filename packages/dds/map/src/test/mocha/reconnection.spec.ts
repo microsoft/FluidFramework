@@ -530,5 +530,49 @@ describe("Reconnection", () => {
 			containerRuntimeFactory.processAllMessages();
 			await assertEquivalentDirectories(directory1, directory2);
 		});
+
+		// Regression test for the subdirectory pending-op resubmit fix that switched from
+		// findLast(name+type) lookup to reference-identity tracking. Prior to the fix, a
+		// delete -> create -> delete lifecycle for the same subdirectory name pending across
+		// reconnect could resubmit the wrong pending entry and cause subsequent local delete
+		// acks to fire 0xc31 ("Got a local deleteSubDirectory message we weren't expecting").
+		it("delete/create/delete same subdir name across reconnect (regression for 0xc31)", async () => {
+			const subDirName = "a";
+
+			// Seed: both clients agree that subdir "a" exists.
+			directory1.createSubDirectory(subDirName);
+			containerRuntimeFactory.processAllMessages();
+			assert(
+				directory1.getSubDirectory(subDirName) !== undefined,
+				"/a should exist after seed",
+			);
+
+			// Disconnect client 1 and queue a delete -> create -> delete lifecycle for the
+			// same subdir name. Without the reference-identity fix, resubmit would resolve
+			// both deletes to whichever pending entry findLast returned, and one of the
+			// ack handlers would later fail the 0xc31 assert.
+			containerRuntime1.connected = false;
+			directory1.deleteSubDirectory(subDirName);
+			directory1.createSubDirectory(subDirName);
+			directory1.deleteSubDirectory(subDirName);
+
+			// Reconnect and let everything drain. This must not trigger any assert.
+			containerRuntime1.connected = true;
+			containerRuntimeFactory.processAllMessages();
+
+			// The second delete is the active op, so the subdir must end up gone on both
+			// clients and the peer states must agree.
+			assert.strictEqual(
+				directory1.getSubDirectory(subDirName),
+				undefined,
+				"/a should be deleted on the local client",
+			);
+			assert.strictEqual(
+				directory2.getSubDirectory(subDirName),
+				undefined,
+				"/a should be deleted on the remote client",
+			);
+			await assertEquivalentDirectories(directory1, directory2);
+		});
 	});
 });
