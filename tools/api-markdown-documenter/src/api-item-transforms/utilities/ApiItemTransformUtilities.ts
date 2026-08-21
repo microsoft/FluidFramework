@@ -48,8 +48,9 @@ export interface ApiItemWithHierarchy<
  */
 export interface ApiItemLinkTarget {
 	/**
-	 * The raw extensionless path to the document containing the API item (may end with `/index`), relative to the documentation root.
+	 * The raw extension-less path to the document containing the API item (may end with `/index`), relative to the documentation root.
 	 */
+	readonly documentPath: string;
 
 	/**
 	 * The API item's heading ID when it is rendered as a section within the document.
