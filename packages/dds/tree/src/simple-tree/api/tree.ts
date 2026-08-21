@@ -8,6 +8,8 @@ import type { IFluidLoadable, IDisposable, Listenable } from "@fluidframework/co
 import type {
 	ChangeMetadata,
 	CommitMetadata,
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
+	Revertible,
 	RevertibleAlphaFactory,
 	RevertibleFactory,
 } from "../../core/index.js";
@@ -376,8 +378,25 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	 * @remarks
 	 * The original branch will be disposed unless it is the main branch or a {@link (ITreeAlpha:interface).createSharedBranch | shared branch}.
 	 * In order to retain the local branch, consider {@link TreeBranchAlpha.fork | forking} before rewinding.
+	 *
+	 * Unlike {@link TreeBranchAlpha.revertTo | revertTo}, this does not apply a change to any branch.
 	 */
 	rewindTo(revision: string): void;
+
+	/**
+	 * Applies a new change to this branch which reverts all changes made since the given `revision`.
+	 * This is a no-op if the given revision is the head commit of this branch.
+	 *
+	 * @param revision - The {@link TreeBranchCommitMetadata.revision | revision} to restore the state of.
+	 * Can be obtained by navigating the commits on the branch {@link TreeBranchAlpha.history | history}.
+	 *
+	 * @remarks
+	 * The generated change is subject to the same merge semantics as the {@link Revertible.(revert:1) | reverts of individual commits}:
+	 * Concurrent changes that are sequenced before the revert will not be overwritten by the revert if they affect different parts of the document.
+	 *
+	 * Unlike {@link TreeBranchAlpha.rewindTo | rewindTo}, this does not switch to a new branch.
+	 */
+	revertTo(revision: string): void;
 
 	/**
 	 * {@link TreeContextAlpha.(runTransaction:1) | Run a transaction} on a branch of the SharedTree.

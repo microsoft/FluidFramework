@@ -1372,7 +1372,9 @@ export class TreeCheckout implements ITreeCheckout {
 
 	public rewindTo(revisionString: string): void {
 		this.checkNotDisposed("The branch has already been disposed and cannot be rewound.");
-		assert(this.#transaction.size === 0, "Cannot rewind during a transaction");
+		if (this.#transaction.size > 0) {
+			throw new UsageError("Rewinding is not supported during transactions.");
+		}
 		const revision = this.idCompressor.tryRecompress(revisionString as StableId);
 		if (revision === undefined) {
 			throw new UsageError(`Unrecognized revision id: ${revisionString}`);
@@ -1385,6 +1387,41 @@ export class TreeCheckout implements ITreeCheckout {
 			throw new UsageError(`No commit found with revision: ${revisionString}`);
 		}
 		this.switchBranch(this.#transaction.branch.fork(targetCommit));
+	}
+
+	public revertTo(revisionString: string): void {
+		this.checkNotDisposed(
+			"The branch has already been disposed and prior revisions cannot be reverted to.",
+		);
+		this.editLock.checkUnlocked("Reverting to a revision");
+		if (this.#transaction.size > 0) {
+			throw new UsageError("Reverting to a revision is not supported during transactions.");
+		}
+		const revision = this.idCompressor.tryRecompress(revisionString as StableId);
+		if (revision === undefined) {
+			throw new UsageError(`Unrecognized revision id: ${revisionString}`);
+		}
+		// Populated with the commits that came after the target commit, from oldest to newest.
+		const commitsToUndo: GraphCommit<SharedTreeChange>[] = [];
+		const targetCommit = findAncestor(
+			[this.#transaction.activeBranch.getHead(), commitsToUndo],
+			(commit) => commit.revision === revision,
+		);
+		if (targetCommit === undefined) {
+			throw new UsageError(`No commit found with revision: ${revisionString}`);
+		}
+		if (!hasSome(commitsToUndo)) {
+			// The target commit is already the head of the branch, so there is nothing to revert.
+			return;
+		}
+		const revisionForInvert = this.mintRevisionTag();
+		const toUndo = this.changeFamily.rebaser.compose(commitsToUndo);
+		const inverse = this.changeFamily.rebaser.invert(
+			makeAnonChange(toUndo),
+			false,
+			revisionForInvert,
+		);
+		this.#transaction.branch.apply(tagChange(inverse, revisionForInvert));
 	}
 
 	private rebase(branch: TreeBranch): void {

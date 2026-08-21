@@ -193,6 +193,9 @@ describe("schematizeTree", () => {
 			rewindTo(): void {
 				throw new Error("Function not implemented.");
 			},
+			revertTo(): void {
+				throw new Error("Function not implemented.");
+			},
 			runTransaction(): never {
 				throw new Error("Function not implemented.");
 			},
