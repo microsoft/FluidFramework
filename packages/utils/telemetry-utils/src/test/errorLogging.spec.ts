@@ -11,10 +11,12 @@
 
 import { strict as assert } from "node:assert";
 
-import type {
-	ITelemetryBaseEvent,
-	ITelemetryBaseProperties,
+import {
+	type ITelemetryBaseEvent,
+	type ITelemetryBaseProperties,
+	LogLevel,
 } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import sinon from "sinon";
 import { v4 as uuid } from "uuid";
 
@@ -140,7 +142,7 @@ describe("Error Logging", () => {
 		const events: ITelemetryBaseEvent[] = [];
 		class TestTelemetryLogger extends TelemetryLogger {
 			public events: ITelemetryBaseEvent[] = [];
-			public send(event: ITelemetryBaseEvent): void {
+			public send(event: ITelemetryBaseEvent, _logLevel: LogLevel): void {
 				events.push(this.prepareEvent(event));
 			}
 		}
@@ -155,7 +157,7 @@ describe("Error Logging", () => {
 					value: "someUserData",
 				},
 			};
-			adaptedLogger.send(event);
+			adaptedLogger.send(event, LogLevel.essential);
 			assert.strictEqual(
 				events[0].userDataObject,
 				"REDACTED (UserData)",
@@ -172,7 +174,7 @@ describe("Error Logging", () => {
 					value: "somePackageData",
 				},
 			};
-			adaptedLogger.send(event);
+			adaptedLogger.send(event, LogLevel.essential);
 			assert.strictEqual(
 				events[0].packageDataObject,
 				"somePackageData",
@@ -189,7 +191,7 @@ describe("Error Logging", () => {
 					value: "someEvilData",
 				},
 			};
-			adaptedLogger.send(event);
+			adaptedLogger.send(event, LogLevel.essential);
 			assert.strictEqual(
 				events[0].unknownTaggedObject,
 				"REDACTED (unknown tag)",

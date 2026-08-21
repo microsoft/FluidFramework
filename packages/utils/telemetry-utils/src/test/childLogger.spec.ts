@@ -18,7 +18,7 @@ describe("ChildLogger", () => {
 	it("Properties & Getters Propagate", () => {
 		let sent = false;
 		const logger: ITelemetryBaseLogger = {
-			send(event: ITelemetryBaseEvent): void {
+			send(event: ITelemetryBaseEvent, _logLevel: LogLevel): void {
 				if (event.testProperty !== true || event.testGetter !== true) {
 					throw new Error("expected testProperty and testGetter on event");
 				}
@@ -32,20 +32,20 @@ describe("ChildLogger", () => {
 			},
 		});
 
-		childLogger1.send({ category: "generic", eventName: "test1" });
+		childLogger1.send({ category: "generic", eventName: "test1" }, LogLevel.essential);
 		assert(sent, "event should be sent");
 
 		sent = false;
 		const childLogger2 = createChildLogger({ logger: childLogger1, namespace: "test2" });
 
-		childLogger2.send({ category: "generic", eventName: "test2" });
+		childLogger2.send({ category: "generic", eventName: "test2" }, LogLevel.essential);
 		assert(sent, "event should be sent");
 	});
 
 	it("Undefined initial Properties and Getter", () => {
 		let sent = false;
 		const logger: ITelemetryBaseLogger = {
-			send(event: ITelemetryBaseEvent): void {
+			send(event: ITelemetryBaseEvent, _logLevel: LogLevel): void {
 				if (event.testProperty !== true || event.testGetter !== true) {
 					throw new Error("expected testProperty and testGetter on event");
 				}
@@ -65,14 +65,14 @@ describe("ChildLogger", () => {
 			},
 		});
 
-		childLogger2.send({ category: "generic", eventName: "testEvent" });
+		childLogger2.send({ category: "generic", eventName: "testEvent" }, LogLevel.essential);
 		assert(sent, "event should be sent");
 	});
 
 	it("Properties Are Combined", () => {
 		let sent = false;
 		const logger: ITelemetryBaseLogger = {
-			send(event: ITelemetryBaseEvent): void {
+			send(event: ITelemetryBaseEvent, _logLevel: LogLevel): void {
 				if (event.testProperty1 !== true || event.testProperty2 !== true) {
 					throw new Error("expected testProperty1 and testProperty2 on event");
 				}
@@ -94,14 +94,14 @@ describe("ChildLogger", () => {
 			},
 		});
 
-		childLogger2.send({ category: "generic", eventName: "testEvent" });
+		childLogger2.send({ category: "generic", eventName: "testEvent" }, LogLevel.essential);
 		assert(sent, "event should be sent");
 	});
 
 	it("Getters Are Combined", () => {
 		let sent = false;
 		const logger: ITelemetryBaseLogger = {
-			send(event: ITelemetryBaseEvent): void {
+			send(event: ITelemetryBaseEvent, _logLevel: LogLevel): void {
 				if (event.testGetter1 !== true || event.testGetter2 !== true) {
 					throw new Error("expected testGetter1 and testGetter2 on event");
 				}
@@ -123,14 +123,14 @@ describe("ChildLogger", () => {
 			},
 		});
 
-		childLogger2.send({ category: "generic", eventName: "testEvent" });
+		childLogger2.send({ category: "generic", eventName: "testEvent" }, LogLevel.essential);
 		assert(sent, "event should be sent");
 	});
 
 	it("Undefined initial namespace", () => {
 		let sent = false;
 		const logger: ITelemetryBaseLogger = {
-			send(event: ITelemetryBaseEvent): void {
+			send(event: ITelemetryBaseEvent, _logLevel: LogLevel): void {
 				if (event.eventName !== "test2:testEvent") {
 					throw new Error("expected combined namespace");
 				}
@@ -142,14 +142,14 @@ describe("ChildLogger", () => {
 		sent = false;
 		const childLogger2 = createChildLogger({ logger: childLogger1, namespace: "test2" });
 
-		childLogger2.send({ category: "generic", eventName: "testEvent" });
+		childLogger2.send({ category: "generic", eventName: "testEvent" }, LogLevel.essential);
 		assert(sent, "event should be sent");
 	});
 
 	it("Undefined second child namespace", () => {
 		let sent = false;
 		const logger: ITelemetryBaseLogger = {
-			send(event: ITelemetryBaseEvent): void {
+			send(event: ITelemetryBaseEvent, _logLevel: LogLevel): void {
 				if (event.eventName !== "test1:testEvent") {
 					throw new Error("expected combined namespace");
 				}
@@ -161,14 +161,14 @@ describe("ChildLogger", () => {
 		sent = false;
 		const childLogger2 = createChildLogger({ logger: childLogger1 });
 
-		childLogger2.send({ category: "generic", eventName: "testEvent" });
+		childLogger2.send({ category: "generic", eventName: "testEvent" }, LogLevel.essential);
 		assert(sent, "event should be sent");
 	});
 
 	it("Undefined namespace", () => {
 		let sent = false;
 		const logger: ITelemetryBaseLogger = {
-			send(event: ITelemetryBaseEvent): void {
+			send(event: ITelemetryBaseEvent, _logLevel: LogLevel): void {
 				if (event.eventName !== "testEvent") {
 					throw new Error("expected combined namespace");
 				}
@@ -180,14 +180,14 @@ describe("ChildLogger", () => {
 		sent = false;
 		const childLogger2 = createChildLogger({ logger: childLogger1 });
 
-		childLogger2.send({ category: "generic", eventName: "testEvent" });
+		childLogger2.send({ category: "generic", eventName: "testEvent" }, LogLevel.essential);
 		assert(sent, "event should be sent");
 	});
 
 	it("should not send events with log level less than minloglevel", () => {
 		let sent = false;
 		const logger: ITelemetryBaseLogger = {
-			send(event: ITelemetryBaseEvent): void {
+			send(event: ITelemetryBaseEvent, _logLevel: LogLevel): void {
 				if (event.eventName !== "testEvent") {
 					throw new Error("unexpected event");
 				}
@@ -206,14 +206,14 @@ describe("ChildLogger", () => {
 		assert(!sent, "info event should not be sent");
 
 		sent = false;
-		childLogger1.send({ category: "generic", eventName: "testEvent" });
-		assert(sent, "event with undefined logLevel should be sent");
+		childLogger1.send({ category: "generic", eventName: "testEvent" }, LogLevel.essential);
+		assert(sent, "essential event should be sent");
 	});
 
 	it("should receive verbose events with min loglevel set as verbose", () => {
 		let sent = false;
 		const logger: ITelemetryBaseLogger = {
-			send(event: ITelemetryBaseEvent): void {
+			send(event: ITelemetryBaseEvent, _logLevel: LogLevel): void {
 				if (event.eventName !== "testEvent") {
 					throw new Error("unexpected event");
 				}
@@ -228,14 +228,14 @@ describe("ChildLogger", () => {
 		assert(sent, "verbose event should be sent");
 
 		sent = false;
-		childLogger1.send({ category: "error", eventName: "testEvent" });
-		assert(sent, "event with undefined logLevel should be sent");
+		childLogger1.send({ category: "error", eventName: "testEvent" }, LogLevel.essential);
+		assert(sent, "essential event should be sent");
 	});
 
 	it("should not receive verbose events with no min loglevel", () => {
 		let sent = false;
 		const logger: ITelemetryBaseLogger = {
-			send(event: ITelemetryBaseEvent): void {
+			send(event: ITelemetryBaseEvent, _logLevel: LogLevel): void {
 				if (event.eventName !== "testEvent") {
 					throw new Error("unexpected event");
 				}
@@ -244,8 +244,8 @@ describe("ChildLogger", () => {
 		};
 		const childLogger1 = createChildLogger({ logger });
 
-		childLogger1.send({ category: "error", eventName: "testEvent" });
-		assert(sent, "event with undefined logLevel should be sent");
+		childLogger1.send({ category: "error", eventName: "testEvent" }, LogLevel.essential);
+		assert(sent, "essential event should be sent");
 
 		sent = false;
 		childLogger1.send({ category: "generic", eventName: "testEvent" }, LogLevel.verbose);
@@ -255,7 +255,7 @@ describe("ChildLogger", () => {
 	it("should be able to send events correctly according to loglevel if multisink logger is used inside childlogger", () => {
 		let sent = false;
 		const logger1: ITelemetryBaseLogger = {
-			send(event: ITelemetryBaseEvent): void {
+			send(event: ITelemetryBaseEvent, _logLevel: LogLevel): void {
 				if (event.eventName !== "testEvent") {
 					throw new Error("unexpected event");
 				}
