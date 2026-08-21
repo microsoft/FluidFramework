@@ -164,6 +164,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory, 
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
     protected createDocumentServiceCore(resolvedUrl: IResolvedUrl, odspLogger: ITelemetryBaseLogger, cacheAndTrackerArg?: ICacheAndTracker, clientIsSummarizer?: boolean): Promise<IDocumentService>;
+    readonly createPointInTimeDocumentService?: IPointInTimeDocumentServiceFactory["createPointInTimeDocumentService"];
     getRelayServiceSessionInfo(resolvedUrl: IResolvedUrl): Promise<ISocketStorageDiscovery | undefined>;
     readonly ILayerCompatDetails?: unknown;
     // (undocumented)
