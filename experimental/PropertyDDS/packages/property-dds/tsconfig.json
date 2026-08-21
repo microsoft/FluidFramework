@@ -5,7 +5,6 @@
 		// PropertyDDS relies on legacy class field semantics, which TypeScript enables by
 		// default at target ES2022+. Keep them by disabling useDefineForClassFields.
 		"useDefineForClassFields": false,
-		"downlevelIteration": true,
 		"noUnusedLocals": false,
 		"outDir": "./lib",
 		"rootDir": "./src",
