@@ -139,7 +139,7 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 				runtimeOptions: runtimeOptions(testConfig.idCompressorEnabled),
 				loaderProps: {
 					logger: wrapObjectAndOverride<ITelemetryBaseLogger>(provider.logger, {
-						send: (tb) => (event, logLevel: LogLevel) => {
+						send: (tb) => (event, logLevel?: LogLevel) => {
 							tb.send(event, logLevel);
 							if (
 								event.eventName ===

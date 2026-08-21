@@ -141,7 +141,7 @@ describe("Error Logging", () => {
 		const events: ITelemetryBaseEvent[] = [];
 		class TestTelemetryLogger extends TelemetryLogger {
 			public events: ITelemetryBaseEvent[] = [];
-			public send(event: ITelemetryBaseEvent, _logLevel: LogLevel): void {
+			public send(event: ITelemetryBaseEvent): void {
 				events.push(this.prepareEvent(event));
 			}
 		}

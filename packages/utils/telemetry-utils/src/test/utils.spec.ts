@@ -65,7 +65,7 @@ describe("Sampling", () => {
 		configDictionary?: Record<string, ConfigTypes>,
 	): TelemetryLoggerExt {
 		const logger: TelemetryLoggerExt = {
-			send(event: ITelemetryBaseEvent, _logLevel: LogLevel): void {
+			send(event: ITelemetryBaseEvent): void {
 				events.push(event);
 			},
 			sendTelemetryEvent: (event) => {

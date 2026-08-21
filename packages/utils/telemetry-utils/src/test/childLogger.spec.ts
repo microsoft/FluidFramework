@@ -18,7 +18,7 @@ describe("ChildLogger", () => {
 	it("Properties & Getters Propagate", () => {
 		let sent = false;
 		const logger: ITelemetryBaseLogger = {
-			send(event: ITelemetryBaseEvent, _logLevel: LogLevel): void {
+			send(event: ITelemetryBaseEvent): void {
 				if (event.testProperty !== true || event.testGetter !== true) {
 					throw new Error("expected testProperty and testGetter on event");
 				}
@@ -45,7 +45,7 @@ describe("ChildLogger", () => {
 	it("Undefined initial Properties and Getter", () => {
 		let sent = false;
 		const logger: ITelemetryBaseLogger = {
-			send(event: ITelemetryBaseEvent, _logLevel: LogLevel): void {
+			send(event: ITelemetryBaseEvent): void {
 				if (event.testProperty !== true || event.testGetter !== true) {
 					throw new Error("expected testProperty and testGetter on event");
 				}
@@ -72,7 +72,7 @@ describe("ChildLogger", () => {
 	it("Properties Are Combined", () => {
 		let sent = false;
 		const logger: ITelemetryBaseLogger = {
-			send(event: ITelemetryBaseEvent, _logLevel: LogLevel): void {
+			send(event: ITelemetryBaseEvent): void {
 				if (event.testProperty1 !== true || event.testProperty2 !== true) {
 					throw new Error("expected testProperty1 and testProperty2 on event");
 				}
@@ -101,7 +101,7 @@ describe("ChildLogger", () => {
 	it("Getters Are Combined", () => {
 		let sent = false;
 		const logger: ITelemetryBaseLogger = {
-			send(event: ITelemetryBaseEvent, _logLevel: LogLevel): void {
+			send(event: ITelemetryBaseEvent): void {
 				if (event.testGetter1 !== true || event.testGetter2 !== true) {
 					throw new Error("expected testGetter1 and testGetter2 on event");
 				}
@@ -130,7 +130,7 @@ describe("ChildLogger", () => {
 	it("Undefined initial namespace", () => {
 		let sent = false;
 		const logger: ITelemetryBaseLogger = {
-			send(event: ITelemetryBaseEvent, _logLevel: LogLevel): void {
+			send(event: ITelemetryBaseEvent): void {
 				if (event.eventName !== "test2:testEvent") {
 					throw new Error("expected combined namespace");
 				}
@@ -149,7 +149,7 @@ describe("ChildLogger", () => {
 	it("Undefined second child namespace", () => {
 		let sent = false;
 		const logger: ITelemetryBaseLogger = {
-			send(event: ITelemetryBaseEvent, _logLevel: LogLevel): void {
+			send(event: ITelemetryBaseEvent): void {
 				if (event.eventName !== "test1:testEvent") {
 					throw new Error("expected combined namespace");
 				}
@@ -168,7 +168,7 @@ describe("ChildLogger", () => {
 	it("Undefined namespace", () => {
 		let sent = false;
 		const logger: ITelemetryBaseLogger = {
-			send(event: ITelemetryBaseEvent, _logLevel: LogLevel): void {
+			send(event: ITelemetryBaseEvent): void {
 				if (event.eventName !== "testEvent") {
 					throw new Error("expected combined namespace");
 				}
@@ -187,7 +187,7 @@ describe("ChildLogger", () => {
 	it("should not send events with log level less than minloglevel", () => {
 		let sent = false;
 		const logger: ITelemetryBaseLogger = {
-			send(event: ITelemetryBaseEvent, _logLevel: LogLevel): void {
+			send(event: ITelemetryBaseEvent): void {
 				if (event.eventName !== "testEvent") {
 					throw new Error("unexpected event");
 				}
@@ -213,7 +213,7 @@ describe("ChildLogger", () => {
 	it("should receive verbose events with min loglevel set as verbose", () => {
 		let sent = false;
 		const logger: ITelemetryBaseLogger = {
-			send(event: ITelemetryBaseEvent, _logLevel: LogLevel): void {
+			send(event: ITelemetryBaseEvent): void {
 				if (event.eventName !== "testEvent") {
 					throw new Error("unexpected event");
 				}
@@ -235,7 +235,7 @@ describe("ChildLogger", () => {
 	it("should not receive verbose events with no min loglevel", () => {
 		let sent = false;
 		const logger: ITelemetryBaseLogger = {
-			send(event: ITelemetryBaseEvent, _logLevel: LogLevel): void {
+			send(event: ITelemetryBaseEvent): void {
 				if (event.eventName !== "testEvent") {
 					throw new Error("unexpected event");
 				}
@@ -255,7 +255,7 @@ describe("ChildLogger", () => {
 	it("should be able to send events correctly according to loglevel if multisink logger is used inside childlogger", () => {
 		let sent = false;
 		const logger1: ITelemetryBaseLogger = {
-			send(event: ITelemetryBaseEvent, _logLevel: LogLevel): void {
+			send(event: ITelemetryBaseEvent): void {
 				if (event.eventName !== "testEvent") {
 					throw new Error("unexpected event");
 				}

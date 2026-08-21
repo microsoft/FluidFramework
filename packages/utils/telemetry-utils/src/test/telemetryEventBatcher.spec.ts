@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import type { ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import sinon from "sinon";
 
 import { TelemetryEventBatcher } from "../telemetryEventBatcher.js";
@@ -45,7 +45,7 @@ class TestLogger implements TelemetryLoggerExt {
 		this.events.push(event);
 	}
 
-	public send(event: ITelemetryBaseEvent, _logLevel: LogLevel): void {
+	public send(event: ITelemetryBaseEvent): void {
 		throw new Error("Method not implemented.");
 	}
 	public sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: unknown): void {

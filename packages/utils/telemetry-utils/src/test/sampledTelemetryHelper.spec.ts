@@ -8,7 +8,6 @@ import { strict as assert } from "node:assert";
 import type {
 	ITelemetryBaseEvent,
 	ITelemetryBaseProperties,
-	LogLevel,
 } from "@fluidframework/core-interfaces";
 import sinon from "sinon";
 
@@ -41,7 +40,7 @@ class TestLogger implements TelemetryLoggerExt {
 		this.events.push(event);
 	}
 
-	public send(event: ITelemetryBaseEvent, _logLevel: LogLevel): void {
+	public send(event: ITelemetryBaseEvent): void {
 		throw new Error("Method not implemented.");
 	}
 	public sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: unknown): void {
