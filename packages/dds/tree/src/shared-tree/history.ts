@@ -67,8 +67,7 @@ export class TreeBranchHistoryImpl implements TreeBranchHistory {
 	}
 
 	public get commitCount(): number {
-		// The commit count is the number of commits in the branch, excluding the root commit.
-		return this.commitCounter.count - 1;
+		return this.commitCounter.count;
 	}
 
 	public getHeadCommit(): TreeBranchCommitMetadata | undefined {

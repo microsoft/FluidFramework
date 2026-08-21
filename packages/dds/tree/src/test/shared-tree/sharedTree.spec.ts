@@ -978,8 +978,8 @@ describe("SharedTree", () => {
 
 		provider.synchronizeMessages();
 
-		assert(provider.trees[0].kernel.checkout.history.commitCount > 10);
-		assert(provider.trees[1].kernel.checkout.history.commitCount > 10);
+		assert.equal(provider.trees[0].kernel.checkout.history.commitCount, 10);
+		assert.equal(provider.trees[1].kernel.checkout.history.commitCount, 10);
 
 		// These two edit will have ref numbers that correspond to the last of the above edits
 		view1.root.insertAtStart("");
@@ -988,8 +988,8 @@ describe("SharedTree", () => {
 		// This synchronization point should ensure that both trees see the edits with the higher ref numbers.
 		provider.synchronizeMessages();
 
-		assert(provider.trees[0].kernel.checkout.history.commitCount < 10);
-		assert(provider.trees[1].kernel.checkout.history.commitCount < 10);
+		assert.equal(provider.trees[0].kernel.checkout.history.commitCount, 2);
+		assert.equal(provider.trees[1].kernel.checkout.history.commitCount, 2);
 	});
 
 	it("does not evict trunk commits when retainHistory is enabled", () => {

@@ -5,7 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
-import type { ChangeFamilyEditor, GraphCommit, RevisionTag } from "../core/index.js";
+import type { ChangeFamilyEditor, RevisionTag } from "../core/index.js";
 import type { SharedTreeBranch, SharedTreeBranchChange } from "./branch.js";
 
 /**
@@ -38,7 +38,7 @@ export class BranchCommitCounter<
 	 */
 	public get count(): number {
 		if (!this.commitCountInitialized) {
-			this.cachedCommitCount = this.countCommits();
+			this.cachedCommitCount = this.branch.getCommitCount();
 			this.subscribeToBranch();
 			this.commitCountInitialized = true;
 		}
@@ -62,19 +62,6 @@ export class BranchCommitCounter<
 		this.unsubscribeAfterChange = undefined;
 		this.unsubscribeAncestryTrimmed?.();
 		this.unsubscribeAncestryTrimmed = undefined;
-	}
-
-	private countCommits(): number {
-		const newHead = this.branch.getHead();
-		let fullCommitCount = 0;
-		for (
-			let commit: GraphCommit<TChange> | undefined = newHead;
-			commit !== undefined;
-			commit = commit.parent
-		) {
-			fullCommitCount++;
-		}
-		return fullCommitCount;
 	}
 
 	private readonly onAfterBranchChange = (event: SharedTreeBranchChange<TChange>): void => {

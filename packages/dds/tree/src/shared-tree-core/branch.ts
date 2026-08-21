@@ -218,6 +218,26 @@ export class SharedTreeBranch<
 	}
 
 	/**
+	 * Gets the number of commits in this branch.
+	 * This includes commits on ancestor branches but excludes the sentinel commit at the root of all branches.
+	 * @remarks
+	 * This method has linear complexity in the number of commits in the branch.
+	 * See {@link BranchCommitCounter} for a cached version.
+	 */
+	public getCommitCount(): number {
+		let count = 0;
+		for (
+			let commit: GraphCommit<TChange> | undefined = this.head;
+			commit !== undefined;
+			commit = commit.parent
+		) {
+			count++;
+		}
+		// Exclude the sentinel commit that serves as the base to all branches.
+		return count - 1;
+	}
+
+	/**
 	 * Spawn a new branch that is based off of the current state of this branch.
 	 * @param commit - The commit to base the new branch off of. Defaults to the head of this branch.
 	 * @param mintRevisionTag - used to generate a `RevisionTag` for each change.
