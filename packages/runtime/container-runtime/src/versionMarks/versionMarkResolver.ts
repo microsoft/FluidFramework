@@ -361,7 +361,7 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 		// break the insertion-order invariant MSN eviction relies on, so fail loudly instead of overwriting.
 		assert(
 			existingResolution === undefined,
-			"Version mark batchId remapped to a different resolved point",
+			0xd34 /* version mark batchId remapped to a different sequence number */,
 		);
 
 		this.resolvedBatchById.set(batchId, { sequenceNumber, timestamp });

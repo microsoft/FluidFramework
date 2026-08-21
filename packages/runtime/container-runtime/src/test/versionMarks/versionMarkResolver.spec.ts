@@ -719,7 +719,7 @@ describe("VersionMarkResolver", () => {
 			// loudly rather than silently overwrite (which would also break the MSN-eviction ordering).
 			assert.throws(
 				() => resolver.processInboundBatch("client_[1]", 6, 6000),
-				validateAssertionError(/remapped to a different resolved point/),
+				validateAssertionError(/remapped to a different sequence number/),
 			);
 		});
 
