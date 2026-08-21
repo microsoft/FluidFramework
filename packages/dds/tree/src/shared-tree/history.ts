@@ -27,7 +27,7 @@ class LazyTreeBranchCommitMetadata implements TreeBranchCommitMetadata {
 	}
 
 	public get parent(): TreeBranchCommitMetadata | undefined {
-		// We cannot merely cache the computation once because the parent of the commit may change over time due to rebases and trunk trimming.
+		// The parent of the commit may change over time due to trunk trimming.
 		if (this.commit.parent !== this.priorParent) {
 			const { parent } = this.commit;
 			this.cachedParent =
