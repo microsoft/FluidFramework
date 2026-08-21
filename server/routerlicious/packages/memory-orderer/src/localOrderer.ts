@@ -10,6 +10,7 @@ import {
 	CheckpointManager,
 	createDeliCheckpointManagerFromCollection,
 	DeliLambda,
+	type IDeliCheckpointManager,
 	MoiraLambda,
 	ScribeLambda,
 	ScriptoriumLambda,
@@ -80,10 +81,7 @@ const DefaultDeli: IDeliState = {
 };
 
 class LocalSocketPublisher implements IPublisher {
-	constructor(
-		private readonly publisher: IPubSub,
-		private readonly onEmit: (event: string, args: unknown[]) => void,
-	) {}
+	constructor(private readonly publisher: IPubSub) {}
 
 	public on(event: string, listener: (...args: any[]) => void) {
 		return;
@@ -92,7 +90,6 @@ class LocalSocketPublisher implements IPublisher {
 	public to(topic: string): ITopic {
 		return {
 			emit: (event: string, ...args: any[]) => {
-				this.onEmit(event, args);
 				this.publisher.publish(topic, event, ...args);
 			},
 		};
@@ -170,10 +167,11 @@ export class LocalOrderer implements IOrderer {
 	private existing: boolean;
 
 	/**
-	 * Tracks the highest sequence number broadcast by the local orderer. Read-mode clients do not
-	 * submit a join op, so they need this value to know how far they must catch up.
+	 * Tracks the sequence number of the latest Deli checkpoint successfully persisted by the local
+	 * orderer. Read-mode clients do not submit a join op, so they need this value to know how far
+	 * they must catch up.
 	 */
-	private latestSequenceNumber: number;
+	private checkpointSequenceNumber: number | undefined;
 
 	constructor(
 		private readonly setup: ILocalOrdererSetup,
@@ -192,29 +190,8 @@ export class LocalOrderer implements IOrderer {
 		this.existing = details.existing;
 		this.dbObject = this.getDeliState();
 		const deliState: IDeliState = JSON.parse(this.dbObject.deli);
-		this.latestSequenceNumber = deliState.sequenceNumber;
-		this.socketPublisher = new LocalSocketPublisher(this.pubSub, (event, args) => {
-			if (event !== "op") {
-				return;
-			}
-			const messages = args[1];
-			if (!Array.isArray(messages)) {
-				return;
-			}
-			for (const message of messages) {
-				if (
-					typeof message === "object" &&
-					message !== null &&
-					"sequenceNumber" in message &&
-					typeof message.sequenceNumber === "number"
-				) {
-					this.latestSequenceNumber = Math.max(
-						this.latestSequenceNumber,
-						message.sequenceNumber,
-					);
-				}
-			}
-		});
+		this.checkpointSequenceNumber = deliState.sequenceNumber;
+		this.socketPublisher = new LocalSocketPublisher(this.pubSub);
 
 		this.setupKafkas();
 
@@ -234,12 +211,19 @@ export class LocalOrderer implements IOrderer {
 	}
 
 	/**
-	 * Gets the latest sequence number broadcast by this orderer.
+	 * Gets the sequence number of the latest successfully persisted Deli checkpoint.
+	 *
+	 * @remarks
+	 *
+	 * Because the local orderer observes every sequenced operation, it could instead report the
+	 * latest sequence number. This method deliberately reports the latest persisted checkpoint so
+	 * local servers behave more like production services, which may only be able to provide a
+	 * checkpoint that lags behind the current sequence number.
 	 *
 	 * @returns The sequence number a connecting client must process through to be caught up.
 	 */
-	public getCheckpointSequenceNumber(): number {
-		return this.latestSequenceNumber;
+	public getCheckpointSequenceNumber(): number | undefined {
+		return this.checkpointSequenceNumber;
 	}
 
 	public connectInternal(
@@ -333,12 +317,22 @@ export class LocalOrderer implements IOrderer {
 					this.documentId,
 					checkpointService,
 				);
+				const trackingCheckpointManager: IDeliCheckpointManager = {
+					writeCheckpoint: async (checkpoint, isLocal, reason) => {
+						await checkpointManager.writeCheckpoint(checkpoint, isLocal, reason);
+						this.checkpointSequenceNumber = checkpoint.sequenceNumber;
+					},
+					deleteCheckpoint: async (checkpoint, isLocal) => {
+						await checkpointManager.deleteCheckpoint(checkpoint, isLocal);
+						this.checkpointSequenceNumber = undefined;
+					},
+				};
 				return new DeliLambda(
 					context,
 					this.tenantId,
 					this.documentId,
 					lastCheckpoint,
-					checkpointManager,
+					trackingCheckpointManager,
 					undefined,
 					this.deltasKafka,
 					undefined,

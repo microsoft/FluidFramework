@@ -242,7 +242,39 @@ describe("LocalDeltaConnectionServer", () => {
 		socket2.disconnect();
 	});
 
-	it("reports the latest sequence number to read clients", async () => {
+	it("reports the latest persisted Deli checkpoint to read clients", async () => {
+		const initialDeltaConnectionServer = deltaConnectionServer;
+		const allowCheckpointWrites = new Deferred<void>();
+		const sequenceNumberTwoPersisted = new Deferred<void>();
+		const testDocumentRepository = new TestNotImplementedDocumentRepository();
+		Sinon.replace(
+			testDocumentRepository,
+			"updateOne",
+			Sinon.fake(
+				async (
+					...args: Parameters<typeof testDocumentRepository.updateOne>
+				): Promise<void> => {
+					await allowCheckpointWrites.promise;
+					const update = args[1] as { deli?: unknown };
+					const deli = update.deli;
+					assert(typeof deli === "string", "Expected a stringified Deli checkpoint");
+					const checkpoint = JSON.parse(deli) as { sequenceNumber: number };
+					if (
+						checkpoint.sequenceNumber === 2 &&
+						!sequenceNumberTwoPersisted.isCompleted
+					) {
+						sequenceNumberTwoPersisted.resolve();
+					}
+				},
+			),
+		);
+		deltaConnectionServer = LocalDeltaConnectionServer.create(
+			undefined,
+			undefined,
+			testDocumentRepository,
+		);
+		await initialDeltaConnectionServer.close();
+
 		const [writeSocket, writeConnectedP] = connectNewClient("write", "writer");
 		const joinP = addJoinHandler(writeSocket);
 		const writeConnected = await writeConnectedP;
@@ -261,12 +293,21 @@ describe("LocalDeltaConnectionServer", () => {
 		]);
 		await messageP;
 
-		const [readSocket, readConnectedP] = connectNewClient("read", "reader");
-		const readConnected = await readConnectedP;
-		assert.equal(readConnected.checkpointSequenceNumber, 2);
+		const [firstReadSocket, firstReadConnectedP] = connectNewClient("read", "firstReader");
+		const firstReadConnected = await firstReadConnectedP;
+		assert.equal(firstReadConnected.checkpointSequenceNumber, 0);
+
+		allowCheckpointWrites.resolve();
+		await sequenceNumberTwoPersisted.promise;
+		await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+		const [secondReadSocket, secondReadConnectedP] = connectNewClient("read", "secondReader");
+		const secondReadConnected = await secondReadConnectedP;
+		assert.equal(secondReadConnected.checkpointSequenceNumber, 2);
 
 		writeSocket.disconnect();
-		readSocket.disconnect();
+		firstReadSocket.disconnect();
+		secondReadSocket.disconnect();
 	});
 
 	it("can receive ops on client in read mode", async () => {

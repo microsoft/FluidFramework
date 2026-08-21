@@ -87,7 +87,7 @@ export class LocalOrdererManager implements IOrdererManager {
 	public async getCheckpointSequenceNumber(
 		tenantId: string,
 		documentId: string,
-	): Promise<number> {
+	): Promise<number | undefined> {
 		const orderer = await this.getLocalOrderer(tenantId, documentId);
 		return orderer.getCheckpointSequenceNumber();
 	}
