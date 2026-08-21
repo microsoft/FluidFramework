@@ -14,13 +14,13 @@ import {
 import { typeFactory as tf } from "@fluidframework/type-factory/internal";
 
 import { EmptyKey, mapCursorField, type ITreeCursorSynchronous } from "../core/index.js";
-import { TreeAlpha } from "../shared-tree/index.js";
 import {
 	eraseSchemaDetails,
 	getInnerNode,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TreeArrayNode,
+	TreeBeta,
 } from "../simple-tree/index.js";
 import type {
 	ArrayNodeDeltaOp,
@@ -176,7 +176,7 @@ class TextNode
 	public onCharactersChanged(
 		callback: (ops: readonly PlainText.TextOp[] | undefined) => void,
 	): () => void {
-		return TreeAlpha.on(this.content, "nodeChanged", ({ delta }) =>
+		return TreeBeta.on(this.content, "nodeChanged", ({ delta }) =>
 			processCharactersChangedDelta(delta, (i) => this.content[i], callback),
 		);
 	}
