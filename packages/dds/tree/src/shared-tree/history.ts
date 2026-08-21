@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
-import type { GraphCommit, RevisionTag } from "../core/index.js";
-import type { SharedTreeBranch, SharedTreeBranchChange } from "../shared-tree-core/index.js";
+import type { GraphCommit } from "../core/index.js";
+import { BranchCommitCounter, type SharedTreeBranch } from "../shared-tree-core/index.js";
 import type { TreeBranchCommitMetadata, TreeBranchHistory } from "../simple-tree/index.js";
 
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
@@ -45,10 +45,11 @@ class LazyTreeBranchCommitMetadata implements TreeBranchCommitMetadata {
 }
 
 export class TreeBranchHistoryImpl implements TreeBranchHistory {
-	private unsubscribeAfterChange?: () => void;
-	private unsubscribeAncestryTrimmed?: () => void;
-	private commitCountInitialized: boolean = false;
-	private cachedCommitCount: number = 0;
+	private readonly commitCounter: BranchCommitCounter<
+		SharedTreeEditBuilder,
+		SharedTreeChange,
+		unknown
+	>;
 
 	public constructor(
 		private readonly branch: SharedTreeBranch<
@@ -57,91 +58,18 @@ export class TreeBranchHistoryImpl implements TreeBranchHistory {
 			unknown
 		>,
 		private readonly idCompressor: IIdCompressor,
-	) {}
+	) {
+		this.commitCounter = new BranchCommitCounter(branch);
+	}
 
 	public dispose(): void {
-		this.unsubscribeFromBranch();
+		this.commitCounter.dispose();
 	}
 
 	public get commitCount(): number {
-		if (!this.commitCountInitialized) {
-			this.cachedCommitCount = this.countCommits();
-			this.subscribeToBranch();
-			this.commitCountInitialized = true;
-		}
-		return this.cachedCommitCount;
+		// The commit count is the number of commits in the branch, excluding the root commit.
+		return this.commitCounter.count - 1;
 	}
-
-	private subscribeToBranch(): void {
-		this.unsubscribeFromBranch();
-		this.unsubscribeAfterChange = this.branch.events.on(
-			"afterChange",
-			this.onAfterBranchChange,
-		);
-		this.unsubscribeAncestryTrimmed = this.branch.events.on(
-			"ancestryTrimmed",
-			this.onAncestryTrimmed,
-		);
-	}
-
-	private unsubscribeFromBranch(): void {
-		this.unsubscribeAfterChange?.();
-		this.unsubscribeAfterChange = undefined;
-		this.unsubscribeAncestryTrimmed?.();
-		this.unsubscribeAncestryTrimmed = undefined;
-	}
-
-	private countCommits(): number {
-		const newHead = this.branch.getHead();
-		let fullCommitCount = 0;
-		for (
-			let commit: GraphCommit<SharedTreeChange> | undefined = newHead;
-			commit !== undefined && commit.revision !== "root";
-			commit = commit.parent
-		) {
-			fullCommitCount++;
-		}
-		return fullCommitCount;
-	}
-
-	private readonly onAfterBranchChange = (
-		event: SharedTreeBranchChange<SharedTreeChange>,
-	): void => {
-		if (!this.commitCountInitialized) {
-			return;
-		}
-
-		switch (event.type) {
-			case "append": {
-				this.cachedCommitCount += event.newCommits.length;
-				return;
-			}
-			case "remove": {
-				this.cachedCommitCount -= event.removedCommits.length;
-				return;
-			}
-			case "rebase": {
-				this.cachedCommitCount += event.newCommits.length;
-				this.cachedCommitCount -= event.removedCommits.length;
-				return;
-			}
-			default: {
-				unreachableCase(event);
-			}
-		}
-	};
-
-	private readonly onAncestryTrimmed = (trimmedRevisions: RevisionTag[]): void => {
-		if (!this.commitCountInitialized) {
-			return;
-		}
-
-		assert(
-			this.cachedCommitCount >= trimmedRevisions.length,
-			"Trimmed more commits than exist in the branch",
-		);
-		this.cachedCommitCount = this.cachedCommitCount - trimmedRevisions.length;
-	};
 
 	public getHeadCommit(): TreeBranchCommitMetadata | undefined {
 		const head = this.branch.getHead();

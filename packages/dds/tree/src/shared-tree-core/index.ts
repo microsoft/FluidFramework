@@ -11,6 +11,8 @@ export {
 	type BranchId,
 } from "./branch.js";
 
+export { BranchCommitCounter } from "./branchCommitCounter.js";
+
 export {
 	type ChangeProcessor,
 	type OnPop,
