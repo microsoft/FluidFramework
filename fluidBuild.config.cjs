@@ -228,7 +228,12 @@ module.exports = {
 			"api-extractor:esnext",
 			"build:esnext",
 		],
-		"ci:build:api-reports": ["build:entrypoints:esm", "api-extractor:esnext", "build:esnext"],
+		"ci:build:api-reports": [
+			"build:entrypoints:esm",
+			"build:esm",
+			"api-extractor:esnext",
+			"build:esnext",
+		],
 		"ci:build:api-reports:current": [
 			"build:entrypoints:esm",
 			"build:esm",
