@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/client-utils",
-	"version": "2.116.0",
+	"version": "3.0.0",
 	"description": "Not intended for use outside the Fluid Framework.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -67,13 +67,13 @@
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:exports:browser": "flub generate entrypoints --outFileLegacyBeta legacy --outFilePrefix {@unscopedPackageName}.browser. --mainEntrypoint ./src/indexBrowser.ts --outDir ./lib",
 		"build:exports:node": "flub generate entrypoints --outFileLegacyBeta legacy --outFilePrefix {@unscopedPackageName}.node. --mainEntrypoint ./src/indexNode.ts --outDir ./lib",
-		"build:test": "concurrently npm:build:test:mocha npm:build:test:jest npm:build:test:types",
-		"build:test:jest": "fluid-tsc commonjs --project ./src/test/jest/tsconfig.cjs.json",
+		"build:test": "concurrently npm:build:test:mocha npm:build:test:playwright npm:build:test:types",
 		"build:test:mocha": "concurrently npm:build:test:mocha:esm npm:build:test:mocha:cjs",
 		"build:test:mocha:cjs": "fluid-tsc commonjs --project ./src/test/mocha/tsconfig.cjs.json",
 		"build:test:mocha:esm": "tsc --project ./src/test/mocha/tsconfig.json",
+		"build:test:playwright": "tsc --project ./src/test/playwright/tsconfig.json && webpack --config webpack.playwright.cjs",
 		"build:test:types": "tsc --project ./src/test/types/tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack . --exclude-entrypoints ./internal-api-report/current ./internal-api-report/legacy",
+		"check:are-the-types-wrong": "attw --pack . --profile node16 --exclude-entrypoints ./internal-api-report/current ./internal-api-report/legacy",
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
@@ -100,12 +100,12 @@
 		"layerGeneration:gen": "flub generate compatLayerGeneration --dir . -v",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"test": "npm run test:mocha && npm run test:jest",
+		"test": "npm run test:mocha && npm run test:playwright",
 		"test:coverage": "c8 npm test",
-		"test:jest": "jest --ci",
 		"test:mocha": "npm run test:mocha:esm && npm run test:mocha:cjs",
 		"test:mocha:cjs": "cross-env FLUID_TEST_MODULE_SYSTEM=CJS \"MOCHA_SPEC=dist/test/mocha/**/*.spec.*js\" mocha",
 		"test:mocha:esm": "cross-env \"MOCHA_SPEC=lib/test/mocha/**/*.spec.*js\" mocha",
+		"test:playwright": "playwright test",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"typetests:gen": "flub generate typetests --dir . -v"
 	},
@@ -141,21 +141,18 @@
 		"sha.js": "^2.4.12"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.18.2",
+		"@arethetypeswrong/cli": "^0.18.5",
 		"@biomejs/biome": "~2.4.5",
-		"@fluid-internal/client-utils-previous": "npm:@fluid-internal/client-utils@2.112.0",
+		"@fluid-internal/client-utils-previous": "npm:@fluid-internal/client-utils@2.116.0",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@microsoft/api-extractor": "7.58.1",
-		"@types/base64-js": "^1.3.2",
-		"@types/jest": "29.5.3",
-		"@types/jest-environment-puppeteer": "workspace:~",
+		"@playwright/test": "^1.62.1",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "catalog:types",
-		"@types/rewire": "^2.5.30",
 		"@types/sha.js": "^2.4.4",
 		"@types/sinon": "^17.0.3",
 		"c8": "^10.1.3",
@@ -164,23 +161,25 @@
 		"cross-env": "^10.1.0",
 		"eslint": "catalog:eslint",
 		"eslint-config-prettier": "catalog:eslint",
-		"jest": "^29.6.2",
-		"jest-environment-puppeteer": "^10.1.3",
-		"jest-junit": "^16.0.0",
-		"jest-puppeteer": "^10.1.3",
 		"jiti": "^2.6.1",
 		"mocha": "^11.7.5",
 		"mocha-multi-reporters": "^1.5.1",
-		"puppeteer": "^23.6.0",
-		"rewire": "^9.0.1",
 		"rimraf": "^6.1.3",
 		"sinon": "^18.0.1",
-		"ts-jest": "^29.1.1",
 		"ts-node": "^10.9.2",
-		"typescript": "~5.4.5"
+		"typescript": "~5.4.5",
+		"webpack": "^5.94.0",
+		"webpack-cli": "^5.1.4"
 	},
 	"fluidBuild": {
 		"tasks": {
+			"eslint": [
+				"tsc",
+				"build:esnext",
+				"build:test:mocha:esm",
+				"build:test:playwright",
+				"build:test:types"
+			],
 			"build:api-reports:browser:current": [
 				"build:exports:browser"
 			],
@@ -198,9 +197,6 @@
 			],
 			"build:exports:node": [
 				"build:esnext"
-			],
-			"build:test:jest": [
-				"tsc"
 			],
 			"build:test:mocha:cjs": [
 				"tsc"
@@ -264,7 +260,11 @@
 		"releasePkgVersion": "2.115.0"
 	},
 	"typeValidation": {
-		"broken": {},
-		"entrypoint": "public"
+		"broken": {
+			"Function_Uint8ArrayToArrayBuffer": {
+				"backCompat": false
+			}
+		},
+		"entrypoint": ""
 	}
 }

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/test-loader-utils",
-	"version": "2.116.0",
+	"version": "3.0.0",
 	"description": "Mocks and other test utilities for the Fluid Framework Loader",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -28,17 +28,19 @@
 	"types": "lib/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
+		"build:api-reports": "api-extractor run --local --config api-extractor/api-extractor-report.json",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "api-extractor run --local",
+		"build:docs": "api-extractor run --local --config api-extractor/api-extractor-model.json",
 		"build:esnext": "tsc --project ./tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack .",
+		"check:are-the-types-wrong": "attw --pack . --profile node16",
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
 		"check:exports:cjs:index": "api-extractor run --config api-extractor/api-extractor-lint-index.cjs.json",
 		"check:exports:esm:index": "api-extractor run --config api-extractor/api-extractor-lint-index.esm.json",
 		"check:format": "npm run check:biome",
-		"ci:build:docs": "api-extractor run",
+		"ci:build:api-reports": "api-extractor run --config api-extractor/api-extractor-report.json",
+		"ci:build:docs": "api-extractor run --config api-extractor/api-extractor-model.json",
 		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp lib",
 		"eslint": "eslint --quiet --format stylish src",
 		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -55,7 +57,7 @@
 		"@fluidframework/driver-utils": "workspace:~"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.18.2",
+		"@arethetypeswrong/cli": "^0.18.5",
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",

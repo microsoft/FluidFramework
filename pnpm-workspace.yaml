@@ -14,8 +14,6 @@ allowBuilds:
   '@azure/msal-node-extensions': true
   '@azure/msal-node-runtime': true
   '@biomejs/biome': true
-  '@parcel/watcher': true
-  '@vvago/vale': true
   classic-level: true
   core-js: true
   esbuild: true
@@ -38,13 +36,13 @@ dedupePeers: true
 catalogs:
   # Build-tools packages
   buildTools:
-    "@fluid-tools/build-cli": ^0.65.0
-    "@fluid-tools/build-infrastructure": ^0.65.0
-    "@fluid-tools/version-tools": ^0.65.0
-    "@fluidframework/build-tools": ^0.65.0
+    "@fluid-tools/build-cli": ^0.67.0
+    "@fluid-tools/build-infrastructure": ^0.67.0
+    "@fluid-tools/version-tools": ^0.67.0
+    "@fluidframework/build-tools": ^0.67.0
   # eslint and related packages
   eslint:
-    "@fluidframework/eslint-config-fluid": "^13.0.0"
+    "@fluidframework/eslint-config-fluid": "^14.0.0"
     "eslint": "~9.39.1"
     "eslint-config-prettier": "~10.1.8"
   # Type definitions
@@ -59,10 +57,20 @@ linkWorkspacePackages: true
 
 # Minimum age, in minutes, of dependencies before they can be installed.
 # See /DEV.md and https://pnpm.io/settings#minimumreleaseage more information.
+# Use minimumReleaseAge at 10080 when updating dependencies to ensure that
+# each package has been published for at least 7 days (10080 minutes) before
+# it is consumed. Do that to match repository policies regarding npmjs registry.
+# `pnpm install-no-frozen` can be used to use policy correctly.
 minimumReleaseAge: 0
-minimumReleaseAgeExclude: [
+minimumReleaseAgeExclude:
+  # Exclude our own FF scopes so we can install versions we just shipped
+  - "@fluidframework/*"
+  - "@fluid-experimental/*"
+  - "@fluid-internal/*"
+  - "@fluid-private/*"
+  - "@fluid-tools/*"
+  - "fluid-framework"
   # Temporary exceptions go here as needed.
-]
 
 overrides:
   # Resolve known security vulnerabilities in transitive dependencies.
@@ -106,6 +114,9 @@ overrides:
   # "@fluid-tools/version-tools": "link:./build-tools/packages/version-tools"
   # "@fluidframework/build-tools": "link:./build-tools/packages/build-tools"
 
+  # Uncomment line below to use locally built eslint-config-fluid package while updating the packages together.
+  # "@fluidframework/eslint-config-fluid": "link:./common/build/eslint-config-fluid"
+
   # node types are forced to a consistent version to avoid conflicts between globals.
   "@types/node": catalog:types
 
@@ -128,6 +139,12 @@ overrides:
   diff@>=5 <6: ^5.2.2
   diff@>=7 <8: ^8.0.3
   diff@>=8 <9: ^8.0.3
+
+  # @typescript-eslint/utils overrides
+  #   As of 2026-08-14 @rushstack/eslint-plugin (v0.23.2), does not have a version using v8.58 or later.
+  "@rushstack/eslint-plugin>@typescript-eslint/utils@<8.58.0": ^8.58.0
+  #   As of 2026-08-14 eslint-plugin-tsdoc (v0.5.2), does not have a version using v8.58 or later.
+  "eslint-plugin-tsdoc>@typescript-eslint/utils@<8.58.0": ^8.58.0
 
   # express is overridden to ^4.22.1 to resolve a known vulnerability in express 4.21.2.
   express@>=4 <5: ^4.22.1
@@ -165,6 +182,15 @@ overrides:
   # Resolve known security vulnerabilities.
   node-forge: ^1.4.0
 
+  # PM2's optional system-monitoring daemon is not used by our start/stop scripts, and PM2 handles its absence.
+  # Dropping it removes 4 dependency snapshots used only for host telemetry.
+  pm2>pm2-sysmonit: "-"
+
+  # Sass uses @parcel/watcher only to optimize its standalone CLI watch mode; our Sass builds run through webpack.
+  # Sass falls back when the watcher is absent. Dropping it removes 14 dependency snapshots, including 13
+  # platform-specific native packages with build scripts, and makes the existing @parcel/watcher build allowlist moot.
+  sass>@parcel/watcher: "-"
+
   # oclif includes some AWS-related features, but we don't use them, so we drop those dependencies.
   # This helps reduce lockfile churn since the deps release very frequently.
   oclif>@aws-sdk/client-cloudfront: "-"
@@ -195,6 +221,11 @@ overrides:
   # Security overrides to address path traversal CVEs (GHSA-8qq5-rm4j-mr97, GHSA-r6q2-hw4h-h46w,
   # GHSA-34x7-hfp2-rc4v).
   tar: ^7.5.11
+
+  # tar-fs uses these optional adapters only under the Bare JavaScript runtime; Fluid supports Node.js.
+  # Dropping both removes 9 dependency snapshots while Node continues to use its built-in fs and path modules.
+  tar-fs>bare-fs: "-"
+  tar-fs>bare-path: "-"
 
   # Resolve a known security vulnerability. No patched release exists in the 0.0.x/0.1.x lines,
   # so affected consumers are moved forward to the patched 0.2.x line.

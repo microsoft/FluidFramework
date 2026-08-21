@@ -6,6 +6,7 @@
 		"outDir": "./lib",
 		"noImplicitAny": true,
 		"noImplicitOverride": true,
+		"types": ["mocha", "node"],
 		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["src/**/*"],

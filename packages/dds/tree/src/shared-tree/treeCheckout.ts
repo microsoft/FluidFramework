@@ -59,10 +59,10 @@ import {
 	type ReadOnlyDetachedFieldIndex,
 	makeAnonChange,
 	type TaggedChange,
-	deltaFieldMapHasVisibleChanges,
 	findCommonAncestor,
 	rebaseBranch,
 	type LocalCommitEvents,
+	getDeltaChangeProfile,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -91,8 +91,8 @@ import {
 	type TreeViewConfiguration,
 	type UnsafeUnknownSchema,
 	type ViewableTree,
-	type TreeBranch,
-	type TreeBranchAlpha,
+	type UntypedTreeView,
+	type UntypedTreeViewAlpha,
 	type VerboseTree,
 	type VoidTransactionCallbackStatusAlpha,
 	type TransactionCallbackStatusAlpha,
@@ -235,7 +235,7 @@ export type TreeTransactor = Transactor<
  * Implementations of this interface must implement the {@link branchKey} property.
  */
 export interface ITreeCheckout
-	extends TreeBranchAlpha,
+	extends UntypedTreeViewAlpha,
 		AnchorLocator,
 		ViewableTree,
 		WithBreakable {
@@ -334,14 +334,11 @@ export function createTreeCheckout(
 		fieldBatchCodec?: FieldBatchCodec;
 		removedRoots?: DetachedFieldIndex;
 		chunkCompressionStrategy?: TreeCompressionStrategy;
-		logger?: TelemetryLoggerExt;
-		breaker?: Breakable;
 		codecOptions?: Partial<CodecWriteOptions>;
 	},
 ): TreeCheckout {
-	const breaker = args?.breaker ?? new Breakable("TreeCheckout", args?.logger);
 	const schema = args?.schema ?? new TreeStoredSchemaRepository();
-	const forest = args?.forest ?? buildForest(breaker, schema);
+	const forest = args?.forest ?? buildForest(new Breakable("TreeCheckout"), schema);
 	const defaultCodecOptions: CodecWriteOptions = {
 		jsonValidator: FormatValidatorNoOp,
 		minVersionForCollab: FluidClientVersion.v2_0,
@@ -380,8 +377,6 @@ export function createTreeCheckout(
 		revisionTagCodec,
 		idCompressor,
 		args?.removedRoots,
-		args?.logger,
-		breaker,
 	);
 }
 
@@ -400,9 +395,9 @@ export interface RevertMetrics {
 }
 
 /**
- * Get the {@link TreeCheckout} associated with a given {@link TreeBranch}.
+ * Get the {@link TreeCheckout} associated with a given {@link UntypedTreeView}.
  */
-function getCheckout(context: TreeBranch): TreeCheckout {
+function getCheckout(context: UntypedTreeView): TreeCheckout {
 	if (context instanceof TreeCheckout) {
 		return context;
 	}
@@ -489,6 +484,31 @@ export function assertValidConstraint(
 export class TreeCheckout implements ITreeCheckout {
 	public disposed = false;
 
+	/**
+	 * Logger for telemetry events related to this checkout.
+	 * @remarks
+	 * This logger is provided by the {@link Breakable} passed to the constructor, and may be `undefined` if no logger was provided.
+	 * See the explanation on {@link Breakable.logger} for why this pattern makes sense.
+	 */
+	private get logger(): TelemetryLoggerExt | undefined {
+		return this.breaker.logger;
+	}
+
+	/**
+	 * The breaker for this checkout.
+	 * @remarks
+	 * As the forest is part of the mutable state of the checkout,
+	 * we want to be broken if it is broken, so we use the forest's breaker as our own.
+	 *
+	 * This does mean that if something goes wrong in the checkout, we break the forest,
+	 * which is not strictly necessary, but may be desirable as if something is wrong with the checkout,
+	 * while the forest might be internally consistent, it likely doesn't contain the correct content
+	 * (since the checkout is keeping it up to date properly anymore).
+	 */
+	public get breaker(): Breakable {
+		return this.forest.breaker;
+	}
+
 	private editLock: EditLock;
 
 	/**
@@ -566,9 +586,6 @@ export class TreeCheckout implements ITreeCheckout {
 		private readonly revisionTagCodec: RevisionTagCodec,
 		private readonly idCompressor: IIdCompressor,
 		private readonly _removedRoots: DetachedFieldIndex = makeDetachedFieldIndex("repair"),
-		/** Optional logger for telemetry. */
-		private readonly logger?: TelemetryLoggerExt,
-		public readonly breaker: Breakable = new Breakable("TreeCheckout", logger),
 		public readonly disposeForksAfterTransaction = true,
 	) {
 		this.#transaction = this.createTransactionStack(branch);
@@ -833,7 +850,7 @@ export class TreeCheckout implements ITreeCheckout {
 							);
 							this.revertibleCommitBranches.set(
 								revision,
-								this.#transaction.activeBranch.fork(commit),
+								this.#transaction.branch.fork(commit),
 							);
 							this.revertibles.set(revision, revertible);
 							return revertible;
@@ -948,14 +965,18 @@ export class TreeCheckout implements ITreeCheckout {
 		this.#transaction.branch.apply(change);
 	}
 
-	// #region TreeBranchAlpha
+	// #region UntypedTreeViewAlpha
 
 	@throwIfBroken
 	public applyChange(change: JsonCompatibleReadOnly): void {
 		this.applySerializedChange(change);
 	}
 
-	public isBranch(): this is TreeBranchAlpha {
+	public isBranch(): this is UntypedTreeViewAlpha {
+		return this.isView();
+	}
+
+	public isView(): this is UntypedTreeViewAlpha {
 		return true;
 	}
 
@@ -1067,7 +1088,7 @@ export class TreeCheckout implements ITreeCheckout {
 			: { success: true, value: value as TSuccessValue };
 	}
 
-	// #endregion TreeBranchAlpha
+	// #endregion UntypedTreeViewAlpha
 
 	// Revision is the revision of the commit, if any, which caused this change.
 	private applyInternalChange(change: SharedTreeChange, revision?: RevisionTag): void {
@@ -1119,6 +1140,7 @@ export class TreeCheckout implements ITreeCheckout {
 		});
 	};
 
+	@breakingMethod
 	private withCombinedVisitor(fn: (visitor: DeltaVisitor) => void): void {
 		const anchorVisitor = this.forest.anchors.acquireVisitor();
 		const combinedVisitor = combineVisitors([this.forest.acquireVisitor(), anchorVisitor]);
@@ -1132,7 +1154,7 @@ export class TreeCheckout implements ITreeCheckout {
 			if (usageError !== undefined) {
 				throw new UsageError(usageError);
 			}
-			assert(false, 0x911 /* Invalid operation on a disposed TreeCheckout */);
+			fail(0x911 /* Invalid operation on a disposed TreeCheckout */);
 		}
 	}
 
@@ -1179,9 +1201,9 @@ export class TreeCheckout implements ITreeCheckout {
 					revertible.dispose();
 				}
 			},
-			clone: (targetBranch: TreeBranch) => {
+			clone: (targetView: UntypedTreeView) => {
 				// TODO:#23442: When a revertible is cloned for a forked branch, optimize to create a fork of a revertible branch once per revision NOT once per revision per checkout.
-				const targetCheckout = getCheckout(targetBranch);
+				const targetCheckout = getCheckout(targetView);
 
 				const revertibleBranch = this.revertibleCommitBranches.get(revision);
 				if (revertibleBranch === undefined) {
@@ -1189,9 +1211,9 @@ export class TreeCheckout implements ITreeCheckout {
 				}
 
 				const commitToRevert = revertibleBranch.getHead();
-				const activeBranchHead = targetCheckout.#transaction.activeBranch.getHead();
+				const branchHead = targetCheckout.#transaction.branch.getHead();
 
-				if (isAncestor(commitToRevert, activeBranchHead, true) === false) {
+				if (isAncestor(commitToRevert, branchHead, true) === false) {
 					throw new UsageError(
 						"Cannot clone revertible for a commit that is not present on the given branch.",
 					);
@@ -1290,7 +1312,7 @@ export class TreeCheckout implements ITreeCheckout {
 			throw new UsageError("A view cannot be forked while it has a pending transaction.");
 		}
 
-		const branch = this.#transaction.activeBranch.fork();
+		const branch = this.#transaction.branch.fork();
 		const storedSchema = this.storedSchema.clone();
 		const forkBreaker = new Breakable("TreeCheckout", this.logger);
 		const forest = this.forest.clone(storedSchema, forkBreaker);
@@ -1304,8 +1326,6 @@ export class TreeCheckout implements ITreeCheckout {
 			this.revisionTagCodec,
 			this.idCompressor,
 			this._removedRoots.clone(),
-			this.logger,
-			forkBreaker,
 		);
 		this.#events.emit("fork", checkout);
 		return checkout;
@@ -1341,8 +1361,8 @@ export class TreeCheckout implements ITreeCheckout {
 		this.#events.emit("afterBatch");
 	}
 
-	private rebase(branch: TreeBranch): void {
-		const checkout = getCheckout(branch);
+	private rebase(view: UntypedTreeView): void {
+		const checkout = getCheckout(view);
 		this.checkNotDisposed(
 			"The target branch of the rebase has been disposed and cannot be rebased.",
 		);
@@ -1365,18 +1385,18 @@ export class TreeCheckout implements ITreeCheckout {
 			0xa5d /* Shared branches cannot be rebased onto another branch. */,
 		);
 
-		checkout.#transaction.activeBranch.rebaseOnto(this.#transaction.activeBranch);
+		checkout.#transaction.branch.rebaseOnto(this.#transaction.branch);
 	}
 
-	public rebaseOnto(branch: TreeBranch): void {
-		getCheckout(branch).rebase(this);
+	public rebaseOnto(view: UntypedTreeView): void {
+		getCheckout(view).rebase(this);
 	}
 
-	public isMissingEditsFrom(branch: TreeBranch): boolean {
-		const branchCheckout = getCheckout(branch);
+	public isMissingEditsFrom(view: UntypedTreeView): boolean {
+		const viewCheckout = getCheckout(view);
 		const targetPath: GraphCommit<unknown>[] = [];
 		const ancestor = findCommonAncestor(this.mainBranch.getHead(), [
-			branchCheckout.mainBranch.getHead(),
+			viewCheckout.mainBranch.getHead(),
 			targetPath,
 		]);
 		if (ancestor === undefined) {
@@ -1386,14 +1406,14 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	public computeNetChangeIfRebasedOnto(
-		branch: TreeBranch,
+		view: UntypedTreeView,
 	): JsonCompatibleReadOnly | undefined {
-		const branchCheckout = getCheckout(branch);
+		const viewCheckout = getCheckout(view);
 		const rebased = rebaseBranch(
 			this.mintRevisionTag,
 			this.changeFamily.rebaser,
 			this.#transaction.branch.getHead(),
-			branchCheckout.#transaction.branch.getHead(),
+			viewCheckout.#transaction.branch.getHead(),
 		);
 
 		if (rebased.sourceChange === undefined) {
@@ -1409,10 +1429,10 @@ export class TreeCheckout implements ITreeCheckout {
 		);
 	}
 
-	public merge(branch: TreeBranch): void;
-	public merge(branch: TreeBranch, disposeMerged: boolean): void;
-	public merge(branch: TreeBranch, disposeMerged = true): void {
-		const checkout = getCheckout(branch);
+	public merge(view: UntypedTreeView): void;
+	public merge(view: UntypedTreeView, disposeMerged: boolean): void;
+	public merge(view: UntypedTreeView, disposeMerged = true): void {
+		const checkout = getCheckout(view);
 		this.checkNotDisposed(
 			"The target branch of the merge has been disposed and cannot be merged.",
 		);
@@ -1430,7 +1450,7 @@ export class TreeCheckout implements ITreeCheckout {
 				"Views with an open transaction cannot be merged into another view.",
 			);
 		}
-		this.#transaction.activeBranch.merge(checkout.#transaction.activeBranch);
+		this.#transaction.branch.merge(checkout.#transaction.branch);
 		if (disposeMerged && !checkout.isSharedBranch) {
 			// Dispose the merged checkout unless it is a shared branch.
 			checkout[disposeSymbol]();
@@ -1529,7 +1549,7 @@ export class TreeCheckout implements ITreeCheckout {
 			revisionForInvert,
 		);
 
-		const headCommit = this.#transaction.activeBranch.getHead();
+		const headCommit = this.#transaction.branch.getHead();
 		// Rebase the inverted change onto any commits that occurred after the undoable commits.
 		if (commitToRevert !== headCommit) {
 			// The inverse may be rebased over newer commits which (despite being present in the history)
@@ -1541,7 +1561,7 @@ export class TreeCheckout implements ITreeCheckout {
 				headCommit,
 				this.mintRevisionTag,
 			);
-			const ignoreNoChangeViolation = !sharedTreeChangeHasVisibleChanges(diff);
+			const ignoreNoChangeViolation = !sharedTreeChangeHasApplicationFacingChanges(diff);
 
 			change = tagChange(
 				rebaseChange(
@@ -1562,7 +1582,7 @@ export class TreeCheckout implements ITreeCheckout {
 		const previousLabelTreeNode = this.labelTreeNode;
 		this.labelTreeNode = labelTree;
 		try {
-			this.#transaction.activeBranch.apply(
+			this.#transaction.branch.apply(
 				change,
 				kind === CommitKind.Default || kind === CommitKind.Redo
 					? CommitKind.Undo
@@ -1704,6 +1724,7 @@ export class TreeCheckout implements ITreeCheckout {
 	public enrich(
 		context: GraphCommit<SharedTreeChange>,
 		changes: readonly TaggedChange<SharedTreeChange>[],
+		forceValidation: boolean,
 	): SharedTreeChange[] {
 		if (!hasSome(changes)) {
 			return [];
@@ -1734,13 +1755,25 @@ export class TreeCheckout implements ITreeCheckout {
 				return makeAnonChange(diff);
 			});
 		}
-		const enriched: SharedTreeChange[] = [];
+		const enrichedChanges: SharedTreeChange[] = [];
 		for (const change of changes) {
-			enriched.push(enricher.enrich(change.change));
-			enricher.enqueueChange(change);
+			const enrichedChange = enricher.enrich(change.change);
+			enrichedChanges.push(enrichedChange);
+			// We could either apply the original or the enriched change: either should allow subsequent changes to be enriched correctly.
+			// We choose to apply the enriched change in order to more closely replicate what a peer will experience (assuming no concurrent changes).
+			// This makes it more likely that we'll detect a bug in the enrichment logic.
+			// Note that enqueueing the change does not guarantee that it will be applied unless `forceValidation` is enabled.
+			enricher.enqueueChange(tagChange(enrichedChange, change.revision));
+		}
+		if (forceValidation) {
+			// Ensure that all changes can be applied successfully.
+			// This is useful for catching bugs in the enrichment logic and in the rebasing logic that may have been involved in producing the changes.
+			// Note that we cannot guarantee that the enriched change will be applied successfully even in the absence of concurrent changes,
+			// because the checkout state we are applying this enriched change to was derived from the state of the checkout, which may be different from that of a peer.
+			enricher.purgeChangeQueue();
 		}
 		enricher[disposeSymbol]();
-		return enriched;
+		return enrichedChanges;
 	}
 
 	public get mainBranch(): SharedTreeBranch<
@@ -1883,19 +1916,19 @@ function verboseFromCursor(
 }
 
 /**
- * Enumerates through a shared tree change, looking for schema change and field changes that result in visible changes to the tree (e.g. an insert, move, delete).
- * This function also considers changes to detached roots to be visible changes, but not renames of roots or builds of new roots.
+ * Whether the change contains any application-facing changes.
  *
  * @param change - The change to analyze.
- * @returns True if the change contains any schema changes or any field changes that result in visible changes to the tree, false otherwise.
+ * @returns True if the change contains any schema changes or any field changes (either in the document tree or in detached trees), false otherwise.
  */
-function sharedTreeChangeHasVisibleChanges(change: SharedTreeChange): boolean {
+function sharedTreeChangeHasApplicationFacingChanges(change: SharedTreeChange): boolean {
 	for (const inner of change.changes) {
 		if (inner.type === "schema") {
 			return true;
 		}
 		const delta = intoDelta(tagChange(inner.innerChange, undefined));
-		if (deltaFieldMapHasVisibleChanges(delta.fields)) {
+		const profile = getDeltaChangeProfile(delta);
+		if (profile.hasChangesInDocumentTree || profile.hasChangesInDetachedTrees) {
 			return true;
 		}
 	}

@@ -83,7 +83,7 @@ const schema = {
 	],
 };
 const tinyliciousClient = new TinyliciousClient();
-const { container, services } = await tinyliciousClient.createContainer(schema, "2.100.0" /* minVersionForCollab */);
+const { container, services } = await tinyliciousClient.createContainer(schema, "2.100.0" /* oldestSupportedClient */);
 
 // Set any default data on the container's `initialObjects` before attaching
 // Returned ID can be used to fetch the container via `getContainer` below
@@ -98,7 +98,7 @@ Using the default `TinyliciousClient` object the developer can create and get Fl
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 
 const tinyliciousClient = new TinyliciousClient(props);
-const { container, services } = await tinyliciousClient.getContainer("_unique-id_", schema, "2.100.0" /* minVersionForCollab */);
+const { container, services } = await tinyliciousClient.getContainer("_unique-id_", schema, "2.100.0" /* oldestSupportedClient */);
 ```
 
 ## Using initial objects
@@ -117,7 +117,7 @@ const schema = {
 	},
 };
 const tinyliciousClient = new TinyliciousClient();
-const { container, services } = await tinyliciousClient.getContainer("_unique-id_", schema, "2.100.0" /* minVersionForCollab */);
+const { container, services } = await tinyliciousClient.getContainer("_unique-id_", schema, "2.100.0" /* oldestSupportedClient */);
 
 const initialObjects = container.initialObjects;
 const map1 = initialObjects.map1;
@@ -140,7 +140,7 @@ const schema = {
 	dynamicObjectTypes: [SharedString],
 };
 const tinyliciousClient = new TinyliciousClient();
-const { container, services } = await tinyliciousClient.getContainer("_unique-id_", schema, "2.100.0" /* minVersionForCollab */);
+const { container, services } = await tinyliciousClient.getContainer("_unique-id_", schema, "2.100.0" /* oldestSupportedClient */);
 const map1 = container.initialObjects.map1;
 
 const newText = await container.create(SharedString);
@@ -215,7 +215,7 @@ There are many ways to [contribute](https://github.com/microsoft/FluidFramework/
 -   Review the [source code changes](https://github.com/microsoft/FluidFramework/pulls).
 -   [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
 
-Detailed instructions for working in the repo can be found in the [Wiki](https://github.com/microsoft/FluidFramework/wiki).
+Detailed instructions for working in the repo can be found in the [Wiki](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Home.md).
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
 For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
@@ -226,9 +226,11 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 
 ## Help
 
-Not finding what you're looking for in this README? Check out [fluidframework.com](https://fluidframework.com/docs/).
+Not finding what you're looking for in this README?
+Check out [fluidframework.com](https://fluidframework.com/docs/).
 
-Still not finding what you're looking for? Please [file an issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
+Still not finding what you're looking for?
+Please [file an issue](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Contributing/Submitting-Bugs-and-Feature-Requests.md).
 
 Thank you!
 

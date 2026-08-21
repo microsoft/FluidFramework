@@ -65,6 +65,9 @@ export function getHashedDocumentId(driveId: string, itemId: string): Promise<st
 // @beta @legacy
 export function getLocatorFromOdspUrl(url: URL, requireFluidSignature?: boolean): OdspFluidDataStoreLocator | undefined;
 
+// @beta @legacy
+export function getOdspPointInTimeDocumentServiceFactory(getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined, persistedCache?: IPersistedCache, hostPolicy?: HostStoragePolicy): IPointInTimeDocumentServiceFactory;
+
 // @beta @legacy (undocumented)
 export interface ICacheAndTracker {
     // (undocumented)
@@ -108,6 +111,11 @@ export interface IPersistedFileCache {
     put(entry: IEntry, value: any): Promise<void>;
     // (undocumented)
     removeEntries(): Promise<void>;
+}
+
+// @beta @legacy
+export interface IPointInTimeDocumentServiceFactory extends IDocumentServiceFactory {
+    createPointInTimeDocumentService(resolvedUrl: IResolvedUrl, targetSequenceNumber: number, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
 }
 
 // @beta @legacy (undocumented)
@@ -156,6 +164,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory, 
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
     protected createDocumentServiceCore(resolvedUrl: IResolvedUrl, odspLogger: ITelemetryBaseLogger, cacheAndTrackerArg?: ICacheAndTracker, clientIsSummarizer?: boolean): Promise<IDocumentService>;
+    readonly createPointInTimeDocumentService?: IPointInTimeDocumentServiceFactory["createPointInTimeDocumentService"];
     getRelayServiceSessionInfo(resolvedUrl: IResolvedUrl): Promise<ISocketStorageDiscovery | undefined>;
     readonly ILayerCompatDetails?: unknown;
     // (undocumented)

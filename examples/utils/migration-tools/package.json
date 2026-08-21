@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/migration-tools",
-	"version": "2.116.0",
+	"version": "3.0.0",
 	"private": true,
 	"description": "Tools for migrating data",
 	"homepage": "https://fluidframework.com",
@@ -37,8 +37,9 @@
 	},
 	"scripts": {
 		"build": "fluid-build . --task build",
+		"build:api-reports": "api-extractor run --local --config api-extractor/api-extractor-report.json",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "api-extractor run --local",
+		"build:docs": "api-extractor run --local --config api-extractor/api-extractor-model.json",
 		"build:entrypoints:cjs": "flub generate entrypoints --resolutionConditions require --outDir ./dist",
 		"build:entrypoints:esm": "flub generate entrypoints --outDir ./lib",
 		"build:esnext": "tsc --project ./tsconfig.json",
@@ -49,7 +50,8 @@
 		"check:exports:cjs:alpha": "api-extractor run --config api-extractor/api-extractor-lint-alpha.cjs.json",
 		"check:exports:esm:alpha": "api-extractor run --config api-extractor/api-extractor-lint-alpha.esm.json",
 		"check:format": "npm run check:biome",
-		"ci:build:docs": "api-extractor run",
+		"ci:build:api-reports": "api-extractor run --config api-extractor/api-extractor-report.json",
+		"ci:build:docs": "api-extractor run --config api-extractor/api-extractor-model.json",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
 		"eslint": "eslint --quiet --format stylish src",
 		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -76,7 +78,7 @@
 		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.18.2",
+		"@arethetypeswrong/cli": "^0.18.5",
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
