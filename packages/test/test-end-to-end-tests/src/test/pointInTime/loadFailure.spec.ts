@@ -35,6 +35,7 @@ import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import type {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
+	LogLevel,
 } from "@fluidframework/core-interfaces";
 
 import { listFileVersions, restoreFileVersion } from "./odspVersionTestApi.js";
@@ -283,7 +284,7 @@ describeCompat(
 				const abortController = new AbortController();
 				let aborted = false;
 				const abortingLogger: ITelemetryBaseLogger = {
-					send: (event: ITelemetryBaseEvent): void => {
+					send: (event: ITelemetryBaseEvent, logLevel?: LogLevel): void => {
 						if (!aborted && event.eventName.includes("GetDeltas")) {
 							aborted = true;
 							abortController.abort();
@@ -310,7 +311,7 @@ describeCompat(
 								event.category = "generic";
 							}
 						}
-						suite.provider().logger.send(event);
+						suite.provider().logger.send(event, logLevel);
 					},
 				};
 
