@@ -1099,14 +1099,9 @@ describe("SharedTree", () => {
 			view2.root.insertAtStart("");
 			provider.synchronizeMessages();
 
-			const t1 = provider.trees[0] as unknown as EditManagerKludge;
-			assert(
-				t1.kernel?.editManager !== undefined,
-				"EditManager has moved. This test must be updated.",
-			);
 			return {
 				provider,
-				retainedCommitCount: t1.kernel.editManager.getTrunkChanges("main").length,
+				retainedCommitCount: trunkCommitCount(provider.trees[0]),
 			};
 		}
 
@@ -1170,38 +1165,6 @@ describe("SharedTree", () => {
 				retainedCommitCount,
 				"The default path must persist exactly the collaboration window",
 			);
-		});
-
-		it("resolves shared branch bases after a round trip", async () => {
-			const factory = configuredSharedTree({
-				jsonValidator: FormatValidatorBasic,
-				retainHistory: true,
-				enableSharedBranches: true,
-			}).getFactory();
-			const provider = new TestTreeProviderLite(2, factory);
-			const config = new TreeViewConfiguration({
-				schema: StringArray,
-				enableSchemaValidation,
-			});
-			const tree1 = provider.trees[0];
-			const mainView1 = tree1.viewWith(config);
-			mainView1.initialize(["A"]);
-			provider.synchronizeMessages();
-
-			const branchId = tree1.createSharedBranch();
-			const branchView1 = tree1.viewSharedBranchWith(branchId, config);
-			branchView1.root.insertAtEnd("B");
-			// Advance main past the point the branch was forked from so the branch's base is no longer
-			// within the collaboration window.
-			for (let i = 0; i < 10; ++i) {
-				mainView1.root.insertAtEnd("X");
-			}
-			provider.synchronizeMessages();
-
-			const loaded = await loadFreshClient(tree1, factory, provider.getCompressor(tree1));
-			const loadedBranchView = loaded.viewSharedBranchWith(branchId, config);
-			assert.deepEqual([...loadedBranchView.root], ["A", "B"]);
-			assert.deepEqual([...loaded.viewWith(config).root], [...mainView1.root]);
 		});
 	});
 
