@@ -75,8 +75,8 @@ importers:
         specifier: ~61.4.1
         version: 61.4.1(eslint@9.39.2(jiti@2.6.1)(supports-color@8.1.1))(supports-color@8.1.1)
       eslint-plugin-no-only-tests:
-        specifier: ~3.3.0
-        version: 3.3.0
+        specifier: ~3.4.0
+        version: 3.4.0
       eslint-plugin-promise:
         specifier: ~7.2.1
         version: 7.2.1(eslint@9.39.2(jiti@2.6.1)(supports-color@8.1.1))
@@ -1396,8 +1396,8 @@ packages:
     peerDependencies:
       eslint: ^7.0.0 || ^8.0.0 || ^9.0.0
 
-  eslint-plugin-no-only-tests@3.3.0:
-    resolution: {integrity: sha512-brcKcxGnISN2CcVhXJ/kEQlNa0MEfGRtwKtWA16SkqXHKitaKIMrfemJKLKX1YqDU5C/5JY3PvZXd5jEW04e0Q==}
+  eslint-plugin-no-only-tests@3.4.0:
+    resolution: {integrity: sha512-4S3/9Nb7A2tiMcpzEQE9bQSlpeOz6WJkgryBuou/SA8W2x2c8Zf4j0NvTKBjv6qNhF9T79tmkecm/0CHqV0UGg==}
     engines: {node: '>=5.0.0'}
 
   eslint-plugin-promise@7.2.1:
@@ -4304,7 +4304,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-no-only-tests@3.3.0: {}
+  eslint-plugin-no-only-tests@3.4.0: {}
 
   eslint-plugin-promise@7.2.1(eslint@9.39.2(jiti@2.6.1)(supports-color@8.1.1)):
     dependencies:

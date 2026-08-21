@@ -25,7 +25,7 @@
 		"unicorn:eslint-plugin-unicorn@54.0.0",
 		"unused-imports:unused-imports",
 		"depend:eslint-plugin-depend@1.5.0",
-		"no-only-tests"
+		"no-only-tests:no-only-tests"
 	],
 	"rules": {
 		"@babel/object-curly-spacing": [
