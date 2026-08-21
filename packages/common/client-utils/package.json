@@ -257,7 +257,16 @@
 	},
 	"typeValidation": {
 		"broken": {
+			"Class_Buffer": {
+				"backCompat": false
+			},
 			"Function_Uint8ArrayToArrayBuffer": {
+				"backCompat": false
+			},
+			"TypeAlias_IsoBuffer": {
+				"backCompat": false
+			},
+			"Variable_IsoBuffer": {
 				"backCompat": false
 			}
 		},

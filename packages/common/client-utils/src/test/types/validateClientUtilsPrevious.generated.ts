@@ -33,6 +33,7 @@ declare type old_as_current_for_Class_Buffer = requireAssignableTo<TypeOnly<old.
  * typeValidation.broken:
  * "Class_Buffer": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_Buffer = requireAssignableTo<TypeOnly<current.Buffer>, TypeOnly<old.Buffer>>
 
 /*
@@ -313,6 +314,7 @@ declare type old_as_current_for_TypeAlias_IsoBuffer = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "TypeAlias_IsoBuffer": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_IsoBuffer = requireAssignableTo<TypeOnly<current.IsoBuffer>, TypeOnly<old.IsoBuffer>>
 
 /*
@@ -403,6 +405,7 @@ declare type current_as_old_for_Variable_ILayerCompatDetails = requireAssignable
  * typeValidation.broken:
  * "Variable_IsoBuffer": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Variable_IsoBuffer = requireAssignableTo<TypeOnly<typeof current.IsoBuffer>, TypeOnly<typeof old.IsoBuffer>>
 
 /*

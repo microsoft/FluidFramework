@@ -98,7 +98,11 @@ export interface ICommitDetails {
  */
 export interface IBlob {
 	content: string;
-	encoding: string;
+	encoding:
+		| "utf8"
+		// eslint-disable-next-line unicorn/text-encoding-identifier-case -- "utf-8" value is supported, just discouraged
+		| "utf-8"
+		| "base64";
 	url: string;
 	sha: string;
 	size: number;
