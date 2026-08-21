@@ -106,6 +106,24 @@ describe("textDomain", () => {
 	});
 
 	describeHydration("onCharactersChanged", (_init, hydrated) => {
+		it("creates an insertion anchor that tracks edits", () => {
+			const text = PlainText.Tree.fromString("abc");
+			if (hydrated) {
+				hydrateNode(text);
+			}
+			const anchor = text.createInsertionAnchor(1);
+			try {
+				text.insertAt(0, "x");
+				assert.equal(anchor.index, 2);
+				text.insertAt(3, "y");
+				assert.equal(anchor.index, 2);
+				text.removeRange(0, 1);
+				assert.equal(anchor.index, 1);
+			} finally {
+				anchor.dispose();
+			}
+		});
+
 		it("fires with insert ops when characters are added", () => {
 			const text = PlainText.Tree.fromString("ab");
 			if (hydrated) {
