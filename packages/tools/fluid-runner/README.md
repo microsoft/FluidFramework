@@ -57,21 +57,95 @@ For more details on what exports are needed, see [codeLoaderBundle.ts](./src/cod
 
 You may notice the command line argument `codeLoader` is optional. If you choose not to provide a value for `codeLoader`, you must extend this library
 and provide a [`IFluidFileConverter`](./src/codeLoaderBundle.ts) implementation to the [`fluidRunner(...)`](./src/fluidRunner.ts) method.
+`IFluidFileConverter` retains its string output contract. Trusted converters can instead implement the internal
+`IFluidFileConverterWithBinaryOutput` or `IFluidFileConverterWithDirectoryOutput` contracts. `exportFile(...)` writes returned
+`Uint8Array` bytes directly without text encoding. Directory output is materialized beneath the requested output path.
 
 ```typescript
-import { fluidRunner } from "@fluidframework/fluid-runner";
+import {
+	fluidRunner,
+	type IFluidFileConverterWithBinaryOutput,
+} from "@fluidframework/fluid-runner/internal";
 
-await fluidRunner({
-	/* IFluidFileConverter implementation here */
-});
+const converter: IFluidFileConverterWithBinaryOutput = {
+	getCodeLoader: async () => codeLoader,
+	execute: async () => Uint8Array.from([0x00, 0xff]),
+};
+
+await fluidRunner(converter);
 ```
+
+Directory converters return plain data with forward-slash-separated relative paths:
+
+```typescript
+import {
+	fluidRunner,
+	type IFluidFileConverterWithDirectoryOutput,
+} from "@fluidframework/fluid-runner/internal";
+
+const converter: IFluidFileConverterWithDirectoryOutput = {
+	getCodeLoader: async () => codeLoader,
+	execute: async () => ({
+		directories: ["empty"],
+		files: [
+			{ path: "content/readme.txt", content: "Exported from Fluid" },
+			{ path: "content/data.bin", content: Uint8Array.from([0x00, 0xff]) },
+		],
+	}),
+};
+
+await fluidRunner(converter);
+```
+
+The output path must not already exist. Directory paths must be portable, non-empty, forward-slash-separated relative
+paths without `.` or `..` segments; duplicate and conflicting paths are rejected. All paths are validated before the
+output root is created, files are created exclusively, and a partially materialized root is removed if writing fails.
+Directory output materializes the returned folder and file structure at the requested output path.
 
 > **Note**: Only one of `codeLoader` or `fluidRunner(...)` argument is allowed. If both or none are provided, an error will be thrown at the start of execution.
 
 ### Input file format
 
-The input file is expected to be an ODSP snapshot.
+The input file is the unmodified response body of an ODSP whole-file request. It is not the Code Loader bundle.
+Both JSON snapshots and compact `application/ms-fluid` snapshots are supported.
 For some examples, see the files in the [localOdspSnapshots folder](./src/test/localOdspSnapshots).
+
+#### Producing an input file from ODSP
+
+Trusted ODSP integrations can download the whole-file payload from:
+
+```text
+https://{host}/_api/v2.1/drives/{driveId}/items/{itemId}/opStream/content?attachments=1
+```
+
+This read uses ODSP's auth-in-body request format: send an HTTP `POST` with these headers:
+
+```text
+Accept: application/json, application/ms-fluid; v=1.0
+Content-Type: multipart/form-data;boundary={boundary}
+```
+
+Construct the body using CRLF line endings and a blank line before the closing boundary:
+
+```text
+--{boundary}
+Authorization: {authorization-header}
+X-HTTP-Method-Override: GET
+prefer: manualredirect
+_post: 1
+
+--{boundary}--
+```
+
+Include other lines required by the resolved ODSP URL, such as `X-CLP-Compliant-App` or share-link redemption
+information. This is the same request convention used by the ODSP driver's
+[snapshot fetcher](../../drivers/odsp-driver/src/fetchSnapshot.ts). Obtain the authorization header from the
+host's ODSP storage-token provider; do not place bearer tokens in source, command lines, telemetry, or logs.
+
+After checking the HTTP response status, write `response.arrayBuffer()` to `--inputFile` unchanged. Do not decode
+and re-encode a compact response as text.
+
+Keep `attachments=1` in the URL so the downloaded input also contains attachment bytes needed during conversion.
 
 ### Telemetry format
 
@@ -111,11 +185,11 @@ The code around `exportFile` can be consumed in multiple different layers. It is
 -   [`createLogger(...)`](./src/logger/loggerUtils.ts)
     -   Creates and wraps an `IFileLogger` and adds some useful telemetry data to every entry
 -   [`createContainerAndExecute(...)`](./src/exportFile.ts)
-    -   This is the core logic for running some action based on a local ODSP snapshot
+    -   This internal helper preserves the converter's output type: text converters return `Promise<string>`, binary converters return `Promise<Uint8Array>`, and directory converters return `Promise<IFluidFileConverterDirectoryOutput>`
 -   [`getSnapshotFileContent(...)`](./src/utils.ts)
     -   Reads a local ODSP snapshot from both JSON and binary formats for usage in `createContainerAndExecute(...)`
 
-For an example of a consumption path that differs slightly to [`exportFile(...)`](./src/exportFile.ts), see [`parseBundleAndExportFile(...)`](./src/parseBundleAndExportFile.ts). In addition to running the same logic as [`exportFile`](./src/exportFile.ts) method, it implements the logic around parsing a dynamically provided bundle path into an `IFluidFileConverter` object.
+For an example of a consumption path that differs slightly to [`exportFile(...)`](./src/exportFile.ts), see [`parseBundleAndExportFile(...)`](./src/parseBundleAndExportFile.ts). In addition to running the same logic as [`exportFile`](./src/exportFile.ts) method, it implements the logic around parsing a dynamically provided bundle path into a `FluidFileConverter` object.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER:clientRequirements=FALSE) -->
 
