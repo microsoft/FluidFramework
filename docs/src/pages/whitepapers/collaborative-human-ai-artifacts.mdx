@@ -1,0 +1,303 @@
+# Fluid Framework as a Foundation for Collaborative Human-AI Artifacts
+
+## A technical position paper on structured state, reviewable AI edits, and durable collaboration
+
+**Status:** Public discussion draft
+**Last updated:** August 2026
+
+## Abstract
+
+AI-assisted applications are moving beyond transient chat responses. They increasingly produce durable artifacts: documents, plans, canvases, task boards, briefs, diagrams, and other structured objects that people and AI agents continue to revise together.
+
+This shift creates a collaboration problem, not merely a generation problem. A useful foundation must synchronize concurrent work, preserve meaningful structure, support reviewable AI changes, and provide a credible path from a prototype to an operated product.
+
+This paper argues that Fluid Framework, with SharedTree as its primary structured data model, is a strong default for applications that need real-time, structured human-AI collaboration. Fluid is not the best fit for every collaborative application. Yjs has an especially mature collaborative-text ecosystem; Automerge offers a compelling local-first model; Loro explores sophisticated structured-data conflict semantics; and Liveblocks provides polished collaboration services and developer tooling. Those strengths should influence both product selection and the Fluid roadmap.
+
+The central conclusion is nevertheless clear: when the artifact is more than text, AI changes must be reviewable, and the application benefits from service-ordered collaboration over typed hierarchical state, Fluid Framework provides an unusually coherent foundation.
+
+## 1. From AI responses to shared artifacts
+
+A chat response is usually consumed once. A durable artifact has a lifecycle.
+
+It may be created by an AI agent, refined by several people, reorganized by another agent, embedded in multiple experiences, and revisited weeks or months later. During that lifecycle, collaborators need to understand what changed, preserve their own in-progress work, and maintain confidence that the artifact remains internally consistent.
+
+Examples include:
+
+- a project plan containing milestones, owners, dependencies, and narrative context;
+- a research brief assembled from human notes and AI-generated synthesis;
+- a canvas combining text, shapes, links, comments, and tasks;
+- a product specification whose sections can be proposed, reviewed, and accepted independently; and
+- an operational workspace in which agents update structured status while people retain final control.
+
+These are not simply strings that happen to be edited by multiple users. They are structured systems of meaning.
+
+The collaboration layer therefore influences:
+
+- what an agent can address and change;
+- how concurrent edits are reconciled;
+- whether a proposal can be reviewed before it becomes shared state;
+- how application invariants are maintained; and
+- how the artifact can evolve without being flattened into an opaque payload.
+
+The choice of collaboration technology becomes part of the product architecture for AI.
+
+## 2. Requirements for human-AI collaboration
+
+A foundation for durable human-AI artifacts should be evaluated against at least six requirements.
+
+| Requirement | Why it matters |
+| --- | --- |
+| Structured, addressable state | Agents need to target sections, tasks, nodes, and fields rather than rewrite an entire serialized document. |
+| Predictable concurrent editing | Human and agent changes must converge without forcing application developers to invent conflict behavior for every feature. |
+| Reviewable AI workflows | Products need a way to preview, accept, reject, revise, or partially apply agent-authored changes. |
+| Local responsiveness | A collaborator should see their own edit immediately, even while synchronization is in progress. |
+| Durable evolution | The data model must accommodate application growth, schema changes, recovery, and long-lived documents. |
+| Operable deployment | Authentication, storage, networking, observability, and service ownership must be considered alongside the client library. |
+
+No framework satisfies all of these requirements by itself. Authentication, authorization, audit, retention, search, and regulatory controls remain responsibilities of the surrounding product and service architecture.
+
+The useful question is therefore not, "Which library has every feature?" It is:
+
+> Which foundation provides the strongest collaboration model for the artifact while leaving the smallest and clearest set of product responsibilities around it?
+
+## 3. Why SharedTree changes the Fluid value proposition
+
+Fluid Framework provides distributed data structures for building low-latency collaborative applications. SharedTree extends that model to hierarchical, schema-defined application data.
+
+That distinction is important for AI-assisted products.
+
+### 3.1 Typed structure gives agents meaningful targets
+
+An application can model an artifact in terms that match its domain: sections, paragraphs, tasks, cards, citations, shapes, relationships, or review decisions. SharedTree schemas define the allowed shape of that state and provide a typed programming model for reading and editing it.
+
+An agent can consequently express an operation such as:
+
+- update the status of task `T`;
+- insert a finding after section `S`;
+- move card `C` into group `G`; or
+- replace the summary only if its source material still exists.
+
+This is safer and more intelligible than asking an agent to regenerate a large text or JSON blob. It also gives the application a natural boundary at which to validate intent.
+
+Schema does not make an AI-generated edit correct. It does, however, constrain the edit to a model the application understands.
+
+### 3.2 Optimistic local editing preserves responsiveness
+
+Fluid clients apply local operations optimistically and synchronize them through a Fluid service. Collaborators can interact with the application without waiting for a network round trip for each edit.
+
+This client experience is essential for direct manipulation, typing, dragging, and other high-frequency interactions. It also matters for AI workflows: a product can construct and inspect a proposed branch locally before deciding whether to merge it into shared state.
+
+### 3.3 Service ordering provides a shared sequence
+
+Fluid services establish an order for submitted operations. Clients use that ordered stream and the data structure's merge semantics to arrive at consistent state.
+
+For many product scenarios, this is a practical advantage. A shared operation sequence provides a clear basis for synchronization, summarization, recovery, and service diagnostics. It avoids requiring the application to treat every replica's history as equally authoritative at all times.
+
+This is not proof that centralized ordering is universally superior. Applications with deep offline, peer-to-peer, or device-sovereign requirements may prefer a more decentralized model. For connected collaborative products, however, service ordering is often a useful and understandable tradeoff.
+
+### 3.4 Transactions and revertible changes support coherent edits
+
+AI changes frequently span several fields or nodes. Applying only part of such a change may leave the artifact in an invalid or confusing state.
+
+SharedTree transactions allow related edits to be grouped. Its undo and redo facilities provide a basis for reverting changes even as other collaboration continues. These primitives can support product-level concepts such as atomic agent actions, accepted proposals, and recoverable editing sessions.
+
+They should not be mistaken for a complete review system. Attribution, approval state, policy, explanations, and user experience still belong to the application. Fluid supplies useful mechanisms on which that system can be built.
+
+## 4. The recommended AI editing pattern
+
+AI agents should not receive unrestricted authority to mutate a shared artifact merely because the collaboration layer makes mutation easy.
+
+A safer default is:
+
+> **Propose -> inspect -> validate -> accept -> merge**
+
+### 4.1 Propose
+
+The agent produces a structured change against a known version or branch of the artifact. The proposal records its intended targets and, where useful, the evidence or instruction behind the change.
+
+### 4.2 Inspect
+
+The product presents a semantic preview. A useful review experience explains changes in domain terms rather than exposing raw operations alone:
+
+- "Moved two tasks to the next milestone";
+- "Rewrote the executive summary using three new findings"; or
+- "Merged duplicate risks while preserving both source links."
+
+### 4.3 Validate
+
+Before acceptance, the application checks that referenced nodes still exist, required invariants hold, permissions permit the action, and the proposal remains meaningful after intervening edits.
+
+Some proposals can be safely rebased. Others should be returned to the agent for revision. The product, not the language model, should enforce this distinction.
+
+### 4.4 Accept
+
+The reviewer accepts the entire proposal or explicitly selected parts. High-impact actions may require additional confirmation or approval.
+
+### 4.5 Merge
+
+The accepted edits are committed to shared state as a coherent operation. Attribution and review metadata can be retained in an application-defined model or external audit system.
+
+Fluid does not prescribe this complete workflow today. That is an opportunity: a canonical implementation pattern, reusable helpers, and end-to-end samples would make SharedTree substantially easier to adopt for agentic applications.
+
+## 5. Alternatives and what they teach us
+
+The collaboration ecosystem contains strong alternatives. A credible recommendation for Fluid must acknowledge the scenarios in which those alternatives may be a better choice.
+
+This comparison is architectural rather than a performance benchmark. Actual results depend on document shape, edit patterns, network topology, persistence design, and workload scale.
+
+| Technology | Distinctive strength | When it may be the better fit | Lesson for Fluid |
+| --- | --- | --- | --- |
+| [Yjs](https://docs.yjs.dev/) | Mature ecosystem for collaborative text, editor bindings, and network-provider flexibility. | Text-centric products, especially when a supported editor integration is the dominant requirement. | Collaborative text must be excellent, easy to integrate, and demonstrated with production-oriented examples. |
+| [Automerge](https://automerge.org/docs/) | Clear local-first model with offline editing, mergeable history, and JSON-like data. | Applications in which extended offline work, replica autonomy, or local ownership is central. | History, offline behavior, and the local developer experience should be easier to understand and use. |
+| [Loro](https://loro.dev/docs) | Structured CRDTs, including rich text and movable tree-oriented data. | Products that prioritize decentralized structured-data merging or need its specific conflict semantics. | Structural conflicts such as concurrent moves and deletes deserve explicit documentation and testable guarantees. |
+| [Liveblocks](https://liveblocks.io/docs) | Managed collaboration features, polished APIs, comments, notifications, presence, and editor integrations. | Teams optimizing for fast delivery through a hosted collaboration platform. | Developers judge a platform by time to first successful feature, not only by the power of its primitives. |
+
+### 5.1 Yjs
+
+Yjs is a particularly strong option for collaborative rich text. Its ecosystem includes bindings for many popular editors and a flexible provider model for networking and persistence.
+
+If an application's primary requirement is coauthoring text in an existing editor, Yjs may offer the shortest path. A SharedTree-based architecture should not be selected merely to standardize on one data model if doing so materially weakens the core editing experience.
+
+Fluid's stronger case emerges when text is one part of a broader typed artifact and the application benefits from a unified model across text, tasks, metadata, canvas objects, and workflow state.
+
+### 5.2 Automerge
+
+Automerge starts from a local-first premise: data remains useful on a device, work can continue offline, and replicas merge when they reconnect.
+
+That model is compelling for applications whose users cannot assume continuous service connectivity or whose architecture prioritizes replica autonomy. Automerge also offers an approachable document model for experimentation.
+
+Fluid is a stronger default when connected real-time collaboration and a service-ordered operation stream are desired properties rather than compromises. If deep offline support becomes a primary requirement, the decision deserves to be revisited.
+
+### 5.3 Loro
+
+Loro is relevant because structured artifacts create conflict cases that text-focused comparisons can miss. Concurrent moves, deletes, references, and hierarchy changes can determine whether an agent proposal remains meaningful.
+
+Its work on movable trees and rich structured data is useful design pressure for Fluid. SharedTree should make its behavior in equivalent cases easy to discover, test, and explain.
+
+### 5.4 Liveblocks
+
+Liveblocks competes at a different layer as well as the synchronization layer. Its value includes productized infrastructure and packaged collaboration features such as presence, comments, notifications, and editor integrations.
+
+That packaging can outweigh lower-level architectural differences for teams trying to ship quickly. Fluid should respond by making complete application paths easier, not by treating powerful primitives as sufficient developer experience.
+
+## 6. Where Fluid is the strongest default
+
+Fluid Framework and SharedTree are especially well suited when most of the following are true:
+
+- the artifact contains several related kinds of structured state;
+- collaborators are usually connected during active editing;
+- the product wants a service-ordered collaboration model;
+- TypeScript schemas and typed application APIs are valuable;
+- human and AI changes should use the same underlying data model;
+- agent changes need proposal, validation, and atomic acceptance;
+- the team wants an open-source client framework with a choice of compatible service deployment paths; and
+- the application is prepared to own its domain-specific permissions, review policy, attribution, and durable business records.
+
+This combination is increasingly common in canvases, workspaces, planning tools, and composable productivity experiences.
+
+## 7. Where Fluid may not be the right choice
+
+Fluid should not be presented as a universal replacement for every collaboration technology.
+
+Another foundation may be preferable when:
+
+- offline operation for long periods is a defining product requirement;
+- peer-to-peer synchronization without an ordering service is required;
+- the product is almost entirely rich text and an existing Yjs editor binding solves the central problem;
+- a fully managed collaboration product is more important than infrastructure control;
+- the artifact is simple enough that a conventional database plus optimistic concurrency is sufficient; or
+- the application requires conflict semantics that have not been validated for its SharedTree data model.
+
+Choosing Fluid should follow a workload-specific prototype. Teams should test representative document size, edit frequency, reconnection, summarization, migration, and failure recovery rather than relying on generic framework claims.
+
+## 8. Product and service responsibilities
+
+Shared state synchronization is only one part of a production system.
+
+A complete application must still define:
+
+- user and service identity;
+- authorization at the document and operation level;
+- storage and retention policy;
+- audit and attribution;
+- discovery, indexing, and export;
+- data-loss recovery and incident response;
+- regional and regulatory requirements;
+- model access to artifact context;
+- protection against malicious or low-quality agent output; and
+- observability for both collaboration and AI actions.
+
+Fluid Framework should be evaluated together with a Fluid service and the surrounding application architecture. [Azure Fluid Relay](https://learn.microsoft.com/en-us/azure/azure-fluid-relay/) is one managed service option. The Fluid Framework repository also contains service components and development tooling for other deployment models.
+
+No collaboration library automatically confers the compliance or governance properties of the system in which it is deployed. Public architecture guidance should keep this boundary explicit.
+
+## 9. Roadmap priorities
+
+Fluid can become a more obvious foundation for human-AI artifacts by concentrating on five areas.
+
+### 9.1 Make collaborative text a first-class SharedTree scenario
+
+Text remains the most visible point of comparison with Yjs and editor-specific platforms. Fluid needs documented, scalable patterns for combining rich collaborative text with the rest of a SharedTree model.
+
+### 9.2 Publish a canonical agent-editing architecture
+
+The ecosystem needs an end-to-end example of an agent proposing structured edits on a branch, presenting a semantic diff, validating preconditions, accepting all or part of the proposal, and merging the result.
+
+The example should distinguish Fluid primitives from application responsibilities so that teams understand what is reusable and what must be designed for their domain.
+
+### 9.3 Document conflict semantics through real scenarios
+
+Developers need more than a statement that data converges. They need to know what users will observe when collaborators concurrently move, delete, replace, or reference structured nodes.
+
+Scenario-based documentation and executable tests would make those guarantees concrete.
+
+### 9.4 Shorten the path to a complete feature
+
+Getting started should lead quickly to a realistic application with authentication, connection management, presence, persistence, error handling, and deployment guidance.
+
+The best collaboration primitive will lose adoption if teams cannot confidently assemble the surrounding product.
+
+### 9.5 Publish representative evidence
+
+Performance and reliability claims should be accompanied by reproducible workloads that reflect structured documents, text-heavy artifacts, reconnection, long-running sessions, and multi-user editing.
+
+Public evidence helps teams make appropriate decisions and identifies the boundaries within which Fluid is a strong choice.
+
+## 10. Decision framework
+
+Teams evaluating Fluid can use the following sequence:
+
+1. **Model the artifact.** Identify its durable entities, relationships, invariants, and high-frequency edits.
+2. **Classify connectivity.** Decide whether the product is connected-first, intermittently connected, or deeply offline.
+3. **Define AI authority.** Specify which changes agents may propose, which require review, and which must never be automated.
+4. **Prototype representative conflicts.** Test concurrent human edits, agent proposals against stale state, moves, deletes, reconnects, and partial acceptance.
+5. **Measure the real workload.** Use realistic document sizes, session lengths, operation rates, and network conditions.
+6. **Design the service boundary.** Account for identity, authorization, storage, operations, and recovery.
+7. **Compare complete paths.** Evaluate the client mechanism and everything required to ship and operate it, not the synchronization library in isolation.
+
+Under this framework, Fluid should be the leading candidate for connected, structured collaborative applications. It should win through demonstrated fit, not through blanket standardization.
+
+## 11. Conclusion
+
+Durable AI artifacts require a collaboration foundation that understands more than text and does more than broadcast updates.
+
+Fluid Framework, centered on SharedTree, combines typed hierarchical state, optimistic local interaction, deterministic collaboration through service ordering, transactions, and mergeable branches. Those capabilities align well with a future in which people and agents work on the same structured artifacts while people retain meaningful review and control.
+
+Alternatives remain important. Yjs sets a high bar for collaborative text and integrations. Automerge demonstrates the appeal of local-first history and offline work. Loro brings valuable attention to structural conflict semantics. Liveblocks shows how much complete packaging and developer experience matter.
+
+The appropriate response is not to dismiss those strengths. It is to incorporate their lessons while building on Fluid's distinctive architecture.
+
+For connected applications that need structured state and reviewable human-AI workflows, **Fluid Framework with SharedTree should be the default starting point**. The recommendation should be revisited when deep offline operation, text-editor specialization, managed-platform convenience, or workload evidence points decisively elsewhere.
+
+## References
+
+- [Fluid Framework documentation](https://fluidframework.com/docs/)
+- [SharedTree documentation](https://fluidframework.com/docs/data-structures/tree)
+- [Fluid Framework GitHub repository](https://github.com/microsoft/FluidFramework)
+- [How SharedTree merges changes](https://devblogs.microsoft.com/microsoft365dev/fluid-framework-how-sharedtree-merges-changes/)
+- [Undo, redo, and transactions in SharedTree](https://devblogs.microsoft.com/microsoft365dev/fluid-framework-undo-redo-and-transactions-in-sharedtree/)
+- [Azure Fluid Relay documentation](https://learn.microsoft.com/en-us/azure/azure-fluid-relay/)
+- [Yjs documentation](https://docs.yjs.dev/)
+- [Automerge documentation](https://automerge.org/docs/)
+- [Loro documentation](https://loro.dev/docs)
+- [Liveblocks documentation](https://liveblocks.io/docs)
