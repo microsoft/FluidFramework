@@ -26,6 +26,13 @@ module.exports = (env) => {
 				{
 					test: /\.tsx?$/,
 					loader: "ts-loader",
+					options: {
+						// Test entries live outside the production rootDir and must be emitted for webpack.
+						compilerOptions: {
+							noEmit: false,
+							rootDir: ".",
+						},
+					},
 				},
 				{
 					test: /\.css$/i,
