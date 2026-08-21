@@ -169,9 +169,9 @@ describe("OdspPointInTimeDocumentServiceFactory lineage guard", () => {
 				},
 			}),
 		};
-		stub(internals, "createVersionManager").callsFake((_url, _logger, epochTracker) => {
+		stub(internals, "createVersionManager").callsFake(async (_url, _logger, epochTracker) => {
 			versionManagerEpochTracker = epochTracker;
-			return Promise.resolve(fakeManager);
+			return fakeManager;
 		});
 		stub(internals, "resolveFileVersion").resolves(recoverableResolvedUrl);
 

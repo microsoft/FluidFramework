@@ -78,7 +78,7 @@ export async function createPointInTimeDocumentService({
 	clientIsSummarizer,
 	persistedCache,
 	createVersionManager,
-	resolveFileVersion,
+	resolveFileVersion: resolveFileVersionForService,
 	createDocumentService,
 }: ICreatePointInTimeDocumentServiceProps): Promise<IDocumentService> {
 	const odspLogger = createOdspLogger(logger);
@@ -115,7 +115,7 @@ export async function createPointInTimeDocumentService({
 		);
 	}
 
-	const recoverableResolvedUrl = await resolveFileVersion(
+	const recoverableResolvedUrl = await resolveFileVersionForService(
 		resolvedUrl,
 		baseResult.base.versionId,
 	);

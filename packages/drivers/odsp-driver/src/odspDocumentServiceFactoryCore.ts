@@ -61,11 +61,10 @@ import {
 	toInstrumentedOdspStorageTokenFetcher,
 	toInstrumentedOdspTokenFetcher,
 } from "./odspUtils.js";
-// eslint-disable-next-line import-x/no-internal-modules
 import {
 	createPointInTimeDocumentService,
 	resolveFileVersion as resolvePointInTimeFileVersion,
-} from "./pointInTimeDriver/createPointInTimeDocumentService.js";
+} from "./pointInTimeDriver/index.js";
 import {
 	createOdspVersionManager,
 	type IOdspVersionManager,
