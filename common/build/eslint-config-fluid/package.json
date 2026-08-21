@@ -54,7 +54,7 @@
 		"eslint-plugin-unused-imports": "~4.4.1",
 		"globals": "^14.0.0",
 		"ts-morph": "^22.0.0",
-		"typescript-eslint": "~8.58.0"
+		"typescript-eslint": "~8.67.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/markdown-magic": "file:../../../tools/markdown-magic",
