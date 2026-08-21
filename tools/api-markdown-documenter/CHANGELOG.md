@@ -25,7 +25,13 @@ function createDocumentationLink(
   const target = ApiItemUtilities.getLinkTargetForApiItem(apiItem, config);
   const heading = target.headingId === undefined ? "" : `#${target.headingId}`;
 
-  return `${docsBase}/${target.documentPath}${heading}`;
+  // Omit "index" file name from path generated in links.
+  const documentPath =
+    target.documentPath === "index" || target.documentPath.endsWith("/index")
+      ? target.documentPath.slice(0, target.documentPath.length - "index".length)
+      : target.documentPath;
+
+  return `${docsBase}/${documentPath}${heading}`;
 }
 ```
 

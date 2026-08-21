@@ -4,10 +4,9 @@
  */
 
 import { retryWithEventualValue } from "@fluidframework/test-utils/internal";
+import { expect, test, type Page } from "@playwright/test";
 
-import { globals } from "../../jest.config.cjs";
-
-describe("End to end tests", () => {
+test.describe("End to end tests", () => {
 	/**
 	 * Gets the value of the text form backed by our CollaborativeTextArea.
 	 *
@@ -15,7 +14,7 @@ describe("End to end tests", () => {
 	 *
 	 * @param expectedValue - The value we expect the value of the text area to be.
 	 */
-	async function getTextFormValue(expectedValue: string): Promise<string> {
+	async function getTextFormValue(page: Page, expectedValue: string): Promise<string> {
 		return retryWithEventualValue(
 			/* callback: */ async () =>
 				page.evaluate(() => {
@@ -29,26 +28,17 @@ describe("End to end tests", () => {
 		);
 	}
 
-	beforeAll(async () => {
-		// Wait for the page to load first before running any tests
-		// so this time isn't attributed to the first test
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
-		await page.goto(globals.PATH, { waitUntil: "load", timeout: 0 });
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		await page.waitForFunction(() => globalThis.fluidStarted);
-	}, 45_000);
-
-	beforeEach(async () => {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
-		await page.goto(globals.PATH, { waitUntil: "load" });
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		await page.waitForFunction(() => globalThis.fluidStarted);
+	test.beforeEach(async ({ page }) => {
+		await page.goto("/", { waitUntil: "load" });
+		await page.waitForFunction(
+			() => (window as unknown as { fluidStarted: unknown }).fluidStarted,
+		);
 		await page.waitForSelector("textarea");
 	});
 
-	it("Smoke: verify test app can be launched", async () => {
+	test("Smoke: verify test app can be launched", async ({ page }) => {
 		// Verify by checking for text area associated with the SharedString.
-		const textArea = await getTextFormValue("");
+		const textArea = await getTextFormValue(page, "");
 		expect(textArea).toEqual("");
 	});
 });
