@@ -45,7 +45,7 @@
 		"eslint-import-resolver-typescript": "~4.4.5",
 		"eslint-plugin-depend": "~1.5.0",
 		"eslint-plugin-import-x": "~4.17.1",
-		"eslint-plugin-jsdoc": "~61.4.1",
+		"eslint-plugin-jsdoc": "~64.2.1",
 		"eslint-plugin-no-only-tests": "~3.4.0",
 		"eslint-plugin-promise": "~7.3.0",
 		"eslint-plugin-react-hooks": "~7.1.1",

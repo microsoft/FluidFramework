@@ -1336,6 +1336,7 @@
 				],
 				"skipInterveningOverloadedDeclarations": false,
 				"exemptOverloadedImplementations": true,
+				"checkAllFunctionExpressions": false,
 				"checkConstructors": true,
 				"checkGetters": true,
 				"checkSetters": true,
