@@ -16,5 +16,8 @@
 		{
 			"path": "../../tsconfig.crossPackage.node16.cjs.json",
 		},
+		{
+			"path": "../../tsconfig.crossPackage.node20.cjs.json",
+		},
 	],
 }
