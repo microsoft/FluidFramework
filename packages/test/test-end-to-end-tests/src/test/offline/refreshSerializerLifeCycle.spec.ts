@@ -15,6 +15,7 @@ import type {
 	IConfigProviderBase,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces/internal";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import {
@@ -138,8 +139,8 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 				runtimeOptions: runtimeOptions(testConfig.idCompressorEnabled),
 				loaderProps: {
 					logger: wrapObjectAndOverride<ITelemetryBaseLogger>(provider.logger, {
-						send: (tb) => (event) => {
-							tb.send(event);
+						send: (tb) => (event, logLevel?: LogLevel) => {
+							tb.send(event, logLevel ?? LogLevel.essential);
 							if (
 								event.eventName ===
 									"fluid:telemetry:serializedStateManager:SnapshotRefreshed" ||

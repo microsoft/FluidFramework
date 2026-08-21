@@ -216,6 +216,7 @@ export abstract class TelemetryLogger implements TelemetryLoggerExt {
 	 * Send an event with the logger
 	 *
 	 * @param event - the event to send
+	 * @param logLevel - the level of the log to filter out logs based on.
 	 */
 	public abstract send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
 
@@ -363,7 +364,10 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 	/**
 	 * {@inheritDoc @fluidframework/core-interfaces#ITelemetryBaseLogger.send}
 	 */
-	public send(eventWithTagsMaybe: ITelemetryBaseEvent): void {
+	// `logLevel` stays optional on purpose, even though ITelemetryBaseLogger.send now declares it
+	// required: older layers may still call `send` without one, so implementations must keep
+	// handling `undefined`. See the remarks on ITelemetryBaseLogger.send.
+	public send(eventWithTagsMaybe: ITelemetryBaseEvent, logLevel?: LogLevel): void {
 		const newEvent: ITelemetryBaseEvent = {
 			category: eventWithTagsMaybe.category,
 			eventName: eventWithTagsMaybe.eventName,
@@ -400,7 +404,7 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 				}
 			}
 		}
-		this.logger.send(newEvent);
+		this.logger.send(newEvent, logLevel ?? LogLevel.essential);
 	}
 }
 
@@ -528,6 +532,7 @@ export class ChildLogger extends TelemetryLogger {
 	 * Send an event with the logger
 	 *
 	 * @param event - the event to send
+	 * @param logLevel - the level of the log
 	 */
 	public send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
 		if (this.shouldFilterOutEvent(event, logLevel)) {
@@ -652,6 +657,7 @@ export class MultiSinkLogger extends TelemetryLogger {
 	 * Send an event to the loggers
 	 *
 	 * @param event - the event to send to all the registered logger
+	 * @param logLevel - the level of the log
 	 */
 	public send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
 		const newEvent = this.prepareEvent(event);

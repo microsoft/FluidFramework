@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ITelemetryBaseEvent,
-	ITelemetryBaseLogger,
+import {
+	type ITelemetryBaseEvent,
+	type ITelemetryBaseLogger,
+	LogLevel,
 } from "@fluidframework/core-interfaces";
 
 import type { ITimestampedTelemetryEvent } from "./TelemetryMetadata.js";
@@ -131,9 +132,9 @@ class DevtoolsLogger implements IDevtoolsLogger {
 	 *
 	 * @param event - The telemetry event to send.
 	 */
-	public send(event: ITelemetryBaseEvent): void {
+	public send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
 		// Forward event to base logger
-		this.baseLogger?.send(event);
+		this.baseLogger?.send(event, logLevel ?? LogLevel.essential);
 
 		try {
 			const newEvent: ITimestampedTelemetryEvent = {

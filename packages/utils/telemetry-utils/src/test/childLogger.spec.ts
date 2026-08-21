@@ -32,13 +32,13 @@ describe("ChildLogger", () => {
 			},
 		});
 
-		childLogger1.send({ category: "generic", eventName: "test1" });
+		childLogger1.send({ category: "generic", eventName: "test1" }, LogLevel.essential);
 		assert(sent, "event should be sent");
 
 		sent = false;
 		const childLogger2 = createChildLogger({ logger: childLogger1, namespace: "test2" });
 
-		childLogger2.send({ category: "generic", eventName: "test2" });
+		childLogger2.send({ category: "generic", eventName: "test2" }, LogLevel.essential);
 		assert(sent, "event should be sent");
 	});
 
@@ -65,7 +65,7 @@ describe("ChildLogger", () => {
 			},
 		});
 
-		childLogger2.send({ category: "generic", eventName: "testEvent" });
+		childLogger2.send({ category: "generic", eventName: "testEvent" }, LogLevel.essential);
 		assert(sent, "event should be sent");
 	});
 
@@ -94,7 +94,7 @@ describe("ChildLogger", () => {
 			},
 		});
 
-		childLogger2.send({ category: "generic", eventName: "testEvent" });
+		childLogger2.send({ category: "generic", eventName: "testEvent" }, LogLevel.essential);
 		assert(sent, "event should be sent");
 	});
 
@@ -123,7 +123,7 @@ describe("ChildLogger", () => {
 			},
 		});
 
-		childLogger2.send({ category: "generic", eventName: "testEvent" });
+		childLogger2.send({ category: "generic", eventName: "testEvent" }, LogLevel.essential);
 		assert(sent, "event should be sent");
 	});
 
@@ -142,7 +142,7 @@ describe("ChildLogger", () => {
 		sent = false;
 		const childLogger2 = createChildLogger({ logger: childLogger1, namespace: "test2" });
 
-		childLogger2.send({ category: "generic", eventName: "testEvent" });
+		childLogger2.send({ category: "generic", eventName: "testEvent" }, LogLevel.essential);
 		assert(sent, "event should be sent");
 	});
 
@@ -161,7 +161,7 @@ describe("ChildLogger", () => {
 		sent = false;
 		const childLogger2 = createChildLogger({ logger: childLogger1 });
 
-		childLogger2.send({ category: "generic", eventName: "testEvent" });
+		childLogger2.send({ category: "generic", eventName: "testEvent" }, LogLevel.essential);
 		assert(sent, "event should be sent");
 	});
 
@@ -180,7 +180,7 @@ describe("ChildLogger", () => {
 		sent = false;
 		const childLogger2 = createChildLogger({ logger: childLogger1 });
 
-		childLogger2.send({ category: "generic", eventName: "testEvent" });
+		childLogger2.send({ category: "generic", eventName: "testEvent" }, LogLevel.essential);
 		assert(sent, "event should be sent");
 	});
 
@@ -206,8 +206,8 @@ describe("ChildLogger", () => {
 		assert(!sent, "info event should not be sent");
 
 		sent = false;
-		childLogger1.send({ category: "generic", eventName: "testEvent" });
-		assert(sent, "event with undefined logLevel should be sent");
+		childLogger1.send({ category: "generic", eventName: "testEvent" }, LogLevel.essential);
+		assert(sent, "essential event should be sent");
 	});
 
 	it("should receive verbose events with min loglevel set as verbose", () => {
@@ -228,8 +228,8 @@ describe("ChildLogger", () => {
 		assert(sent, "verbose event should be sent");
 
 		sent = false;
-		childLogger1.send({ category: "error", eventName: "testEvent" });
-		assert(sent, "event with undefined logLevel should be sent");
+		childLogger1.send({ category: "error", eventName: "testEvent" }, LogLevel.essential);
+		assert(sent, "essential event should be sent");
 	});
 
 	it("should not receive verbose events with no min loglevel", () => {
@@ -244,8 +244,8 @@ describe("ChildLogger", () => {
 		};
 		const childLogger1 = createChildLogger({ logger });
 
-		childLogger1.send({ category: "error", eventName: "testEvent" });
-		assert(sent, "event with undefined logLevel should be sent");
+		childLogger1.send({ category: "error", eventName: "testEvent" }, LogLevel.essential);
+		assert(sent, "essential event should be sent");
 
 		sent = false;
 		childLogger1.send({ category: "generic", eventName: "testEvent" }, LogLevel.verbose);

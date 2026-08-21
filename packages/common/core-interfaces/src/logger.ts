@@ -105,10 +105,25 @@ export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 export interface ITelemetryBaseLogger {
 	/**
 	 * Log a telemetry event, if it meets the appropriate log-level threshold (see {@link ITelemetryBaseLogger.minLogLevel}).
+	 *
 	 * @param event - The event to log.
-	 * @param logLevel - The log level of the event. If undefined, the logLevel should be treated as {@link LogLevelConst.essential | LogLevel.essential}.
+	 * @param logLevel - The log level of the event.
+	 *
+	 * @remarks
+	 * Callers must always pass a `logLevel`. Use
+	 * {@link LogLevelConst.essential | LogLevel.essential} to get the behavior that previously
+	 * applied when the argument was omitted.
+	 *
+	 * Implementors, however, must continue to tolerate a missing `logLevel` for the time being.
+	 * This signature is only enforced at compile time, and Fluid supports running against a mix of
+	 * package versions: code compiled before this parameter became required still calls `send(event)`
+	 * with a single argument, and will keep doing so for as long as those versions are supported.
+	 * An implementation that assumes `logLevel` is defined would therefore silently drop those
+	 * events at runtime. Declare the parameter as optional in implementations and default it to
+	 * `LogLevel.essential`. This allowance can be removed once the layer-compatibility window for
+	 * pre-3.0 packages has closed.
 	 */
-	send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
+	send(event: ITelemetryBaseEvent, logLevel: LogLevel): void;
 
 	/**
 	 * Minimum log level to be logged.

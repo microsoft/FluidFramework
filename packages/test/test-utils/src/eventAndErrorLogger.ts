@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ITelemetryBaseEvent,
-	ITelemetryBaseLogger,
+import {
+	type ITelemetryBaseEvent,
+	type ITelemetryBaseLogger,
+	LogLevel,
 } from "@fluidframework/core-interfaces";
 import type { ITelemetryGenericEventExt } from "@fluidframework/telemetry-utils/internal";
 
@@ -63,7 +64,7 @@ export class EventAndErrorTrackingLogger
 		);
 	}
 
-	send(event: ITelemetryBaseEvent): void {
+	send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
 		if (isNonEmptyArray(this.expectedEvents)) {
 			const ee = this.expectedEvents[0].event;
 			if (ee.eventName === event.eventName) {
@@ -100,7 +101,7 @@ export class EventAndErrorTrackingLogger
 			}
 		}
 
-		this.baseLogger?.send(event);
+		this.baseLogger?.send(event, logLevel ?? LogLevel.essential);
 	}
 
 	public reportAndClearTrackedEvents(): {

@@ -15,6 +15,7 @@ import type {
 	ITelemetryBaseEvent,
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import sinon from "sinon";
 import { v4 as uuid } from "uuid";
 
@@ -155,7 +156,7 @@ describe("Error Logging", () => {
 					value: "someUserData",
 				},
 			};
-			adaptedLogger.send(event);
+			adaptedLogger.send(event, LogLevel.essential);
 			assert.strictEqual(
 				events[0].userDataObject,
 				"REDACTED (UserData)",
@@ -172,7 +173,7 @@ describe("Error Logging", () => {
 					value: "somePackageData",
 				},
 			};
-			adaptedLogger.send(event);
+			adaptedLogger.send(event, LogLevel.essential);
 			assert.strictEqual(
 				events[0].packageDataObject,
 				"somePackageData",
@@ -189,7 +190,7 @@ describe("Error Logging", () => {
 					value: "someEvilData",
 				},
 			};
-			adaptedLogger.send(event);
+			adaptedLogger.send(event, LogLevel.essential);
 			assert.strictEqual(
 				events[0].unknownTaggedObject,
 				"REDACTED (unknown tag)",
