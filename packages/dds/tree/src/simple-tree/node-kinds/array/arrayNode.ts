@@ -6,7 +6,7 @@
 import type {
 	FluidIterableIterator,
 	FluidReadonlyArray,
-} from "@fluidframework/core-interfaces/internal";
+} from "@fluidframework/core-interfaces";
 import { Lazy, oob, fail, assert, clamp } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 

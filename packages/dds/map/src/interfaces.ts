@@ -4,15 +4,13 @@
  */
 
 import type {
+	FluidIterableIterator,
+	FluidMap,
 	IDisposable,
 	IEvent,
 	IEventProvider,
 	IEventThisPlaceHolder,
 } from "@fluidframework/core-interfaces";
-import type {
-	FluidIterableIterator,
-	FluidMap,
-} from "@fluidframework/core-interfaces/internal";
 import type {
 	ISharedObject,
 	ISharedObjectEvents,

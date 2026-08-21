@@ -141,10 +141,21 @@ export class PendingLocalStateStore<TKey> {
 	/**
 	 * Returns an iterator over [key, serializedState] pairs.
 	 */
-	*entries(): FluidIterableIterator<[TKey, string]> {
-		for (const [key, value] of this.#pendingStates) {
-			yield [key, JSON.stringify(value)];
-		}
+	entries(): FluidIterableIterator<[TKey, string]> {
+		const iterator = this.#pendingStates.entries();
+		return {
+			next: (): IteratorResult<[TKey, string]> => {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+				const { done, value } = iterator.next();
+				if (done === true) {
+					return { done, value: undefined };
+				}
+				return { done, value: [value[0], JSON.stringify(value[1])] };
+			},
+			[Symbol.iterator](): FluidIterableIterator<[TKey, string]> {
+				return this;
+			},
+		};
 	}
 
 	/**

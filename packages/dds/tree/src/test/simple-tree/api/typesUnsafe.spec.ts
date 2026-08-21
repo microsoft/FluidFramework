@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	FluidIterableIterator,
-	FluidReadonlyMap,
-} from "@fluidframework/core-interfaces/internal";
+import type { FluidIterableIterator, FluidReadonlyMap } from "@fluidframework/core-interfaces";
 import type {
 	AnnotatedAllowedTypeUnsafe,
 	System_Unsafe,

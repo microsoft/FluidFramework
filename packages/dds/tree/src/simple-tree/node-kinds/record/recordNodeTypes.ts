@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { FluidIterableIterator } from "@fluidframework/core-interfaces/internal";
+import type { FluidIterableIterator } from "@fluidframework/core-interfaces";
 import type { RestrictiveStringRecord } from "../../../util/index.js";
 import { NodeKind } from "../../core/index.js";
 import type {
