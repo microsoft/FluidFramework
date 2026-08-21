@@ -127,7 +127,11 @@ export class TreeBranchHistoryImpl implements TreeBranchHistory {
 			return;
 		}
 
-		this.cachedCommitCount = Math.max(0, this.cachedCommitCount - trimmedRevisions.length);
+		assert(
+			this.cachedCommitCount >= trimmedRevisions.length,
+			"Trimmed more commits than exist in the branch",
+		);
+		this.cachedCommitCount = this.cachedCommitCount - trimmedRevisions.length;
 	};
 
 	public getHeadCommit(): TreeBranchCommitMetadata | undefined {
