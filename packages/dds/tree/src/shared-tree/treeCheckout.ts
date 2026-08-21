@@ -63,6 +63,7 @@ import {
 	rebaseBranch,
 	type LocalCommitEvents,
 	getDeltaChangeProfile,
+	findAncestor,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -1376,12 +1377,11 @@ export class TreeCheckout implements ITreeCheckout {
 		if (revision === undefined) {
 			throw new UsageError(`Unrecognized revision id: ${revisionString}`);
 		}
-		const head = this.#transaction.branch.getHead();
-		let targetCommit = head;
-		while (targetCommit.parent !== undefined && targetCommit.revision !== revision) {
-			targetCommit = targetCommit.parent;
-		}
-		if (targetCommit.revision !== revision) {
+		const targetCommit = findAncestor(
+			this.#transaction.branch.getHead(),
+			(commit) => commit.revision === revision,
+		);
+		if (targetCommit === undefined) {
 			throw new UsageError(`No commit found with revision: ${revisionString}`);
 		}
 		this.switchBranch(this.#transaction.branch.fork(targetCommit));
