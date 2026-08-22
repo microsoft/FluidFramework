@@ -6,6 +6,8 @@
 import { strict as assert } from "node:assert";
 
 import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import type { SummaryObject } from "@fluidframework/driver-definitions/internal";
+import { SummaryType } from "@fluidframework/driver-definitions/internal";
 import type { ISequencedMessageEnvelope } from "@fluidframework/runtime-definitions/internal";
 import {
 	isFluidHandlePayloadPending,
@@ -20,6 +22,11 @@ import {
 	getGCNodePathFromLocalId,
 	type IBlobManagerLoadInfo,
 } from "../../blobManager/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import {
+	embeddedBlobContentBlobName,
+	embeddedBlobsTreeName,
+} from "../../blobManager/blobManagerSnapSum.js";
 
 import {
 	attachHandle,
@@ -101,6 +108,61 @@ for (const createBlobPayloadPending of [false, true]) {
 					0,
 					"Should not try to send messages in detached state",
 				);
+			});
+
+			describe("enableSingleRoundTripAttachWithBlobs", () => {
+				it("Does not upload to detached storage, and embeds the blob bytes directly in the summary", async () => {
+					const { mockBlobStorage, blobManager } = createTestMaterial({
+						attached: false,
+						createBlobPayloadPending,
+						enableSingleRoundTripAttachWithBlobs: true,
+					});
+					const handle = await blobManager.createBlob(textToBlob("hello"));
+					const { localId } = unpackHandle(handle);
+
+					// No network/storage round trip should have happened while detached.
+					assert.strictEqual(
+						mockBlobStorage.blobsCreated,
+						0,
+						"Should not upload to detached storage when enableSingleRoundTripAttachWithBlobs is enabled",
+					);
+
+					assert(blobManager.hasBlob(localId));
+					const blobFromManager = await blobManager.getBlob(localId, false);
+					assert.strictEqual(blobToText(blobFromManager), "hello", "Blob content mismatch");
+
+					const summary = blobManager.summarize();
+					const embeddedTree: SummaryObject | undefined =
+						summary.summary.tree[embeddedBlobsTreeName];
+					assert(embeddedTree !== undefined, "Expected embedded blobs subtree in summary");
+					assert(
+						embeddedTree.type === SummaryType.Tree,
+						"Expected embedded blobs to be a tree",
+					);
+					const perBlobSubtree: SummaryObject | undefined = embeddedTree.tree[localId];
+					assert(perBlobSubtree !== undefined, "Expected a subtree keyed by localId");
+					assert(perBlobSubtree.type === SummaryType.Tree, "Expected per-blob subtree");
+					assert.strictEqual(
+						perBlobSubtree.groupId,
+						localId,
+						"Per-blob subtree should have a groupId equal to its localId, so it's excluded from " +
+							"the initial snapshot fetch",
+					);
+					const embeddedBlob: SummaryObject | undefined =
+						perBlobSubtree.tree[embeddedBlobContentBlobName];
+					assert(embeddedBlob !== undefined, "Expected blob content in per-blob subtree");
+					assert(embeddedBlob.type === SummaryType.Blob, "Expected a raw blob node");
+					assert.strictEqual(
+						blobToText(embeddedBlob.content as Uint8Array),
+						"hello",
+						"Embedded blob content mismatch",
+					);
+
+					// No Attachment node should exist for this blob, since it has no storage ID yet.
+					for (const summaryObject of Object.values(summary.summary.tree)) {
+						assert.notStrictEqual(summaryObject.type, SummaryType.Attachment);
+					}
+				});
 			});
 		});
 

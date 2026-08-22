@@ -83,17 +83,51 @@ export const toRedirectTable = (
 	return redirectTable;
 };
 
+/**
+ * @internal
+ */
+export const embeddedBlobsTreeName = ".embeddedDetachedBlobs";
+
+/**
+ * Name of the blob within each embedded blob's own subtree that holds its raw content.
+ * @internal
+ */
+export const embeddedBlobContentBlobName = "content";
+
 export const summarizeBlobManagerState = (
 	redirectTable: Map<string, string>,
-): ISummaryTreeWithStats => summarizeV1(redirectTable);
+	embeddedDetachedBlobs?: Map<string, ArrayBufferLike>,
+): ISummaryTreeWithStats => summarizeV1(redirectTable, embeddedDetachedBlobs);
 
-const summarizeV1 = (redirectTable: Map<string, string>): ISummaryTreeWithStats => {
+const summarizeV1 = (
+	redirectTable: Map<string, string>,
+	embeddedDetachedBlobs?: Map<string, ArrayBufferLike>,
+): ISummaryTreeWithStats => {
 	const builder = new SummaryTreeBuilder();
 	const storageIds = getStorageIds(redirectTable);
 	for (const storageId of storageIds) {
 		// The Attachment is inspectable by storage, which lets it detect that the blob is referenced
 		// and therefore should not be GC'd.
 		builder.addAttachment(storageId);
+	}
+
+	if (embeddedDetachedBlobs !== undefined && embeddedDetachedBlobs.size > 0) {
+		// Blobs created while detached with enableSingleRoundTripAttachWithBlobs enabled: no storage ID
+		// (pseudo or real) exists for these yet, so their raw bytes are embedded directly rather than as an
+		// Attachment node. Each blob gets its own subtree (keyed by localId) so it can carry its own
+		// groupId - this excludes the blob's content from the initial snapshot fetch (it's still fetchable
+		// on demand via the loadingGroupId snapshot API, and via the regular blob read API once attached).
+		// The service assigns each blob a real storage ID when it persists this summary.
+		// See DEV.md ("Phase 1").
+		const embeddedBuilder = new SummaryTreeBuilder();
+		for (const [localId, blob] of embeddedDetachedBlobs) {
+			const perBlobBuilder = new SummaryTreeBuilder();
+			perBlobBuilder.addBlob(embeddedBlobContentBlobName, new Uint8Array(blob));
+			const perBlobSummary = perBlobBuilder.getSummaryTree();
+			perBlobSummary.summary.groupId = localId;
+			embeddedBuilder.addWithStats(localId, perBlobSummary);
+		}
+		builder.addWithStats(embeddedBlobsTreeName, embeddedBuilder.getSummaryTree());
 	}
 
 	// Exclude identity mappings from the redirectTable summary. Note that
