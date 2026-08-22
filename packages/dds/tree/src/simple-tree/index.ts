@@ -164,6 +164,8 @@ export {
 	type TreeBranchAlpha,
 	type UntypedTreeViewAlpha,
 	type TreeBranchEvents,
+	type TreeBranchCommitMetadata,
+	type TreeBranchHistory,
 	getPropertyKeyFromStoredKey,
 	getStoredKey,
 	tryGetSchema,

@@ -25,6 +25,8 @@ export type {
 	TreeBranchAlpha,
 	UntypedTreeViewAlpha,
 	TreeBranchEvents,
+	TreeBranchCommitMetadata,
+	TreeBranchHistory,
 	TreeContextAlpha,
 	ITreeAlpha,
 } from "./tree.js";

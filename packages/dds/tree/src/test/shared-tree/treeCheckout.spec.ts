@@ -58,6 +58,7 @@ import {
 import { stringSchema } from "../../simple-tree/leafNodeSchema.js";
 import { brand, Breakable } from "../../util/index.js";
 import {
+	StringArray,
 	TestTreeProviderLite,
 	buildTestForest,
 	chunkFromJsonableTrees,
@@ -1138,6 +1139,36 @@ describe("sharedTreeView", () => {
 				assert.deepEqual(otherView.root, ["A", "B"]);
 				validateViewConsistency(view.checkout, otherView.checkout);
 			});
+		});
+	});
+
+	describe("history", () => {
+		it("exposes historical information for the current branch", () => {
+			const provider = new TestTreeProviderLite(1);
+			const tree = provider.trees[0];
+			const checkout = tree.kernel.checkout;
+			const view1 = tree.kernel.viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
+			view1.initialize([]);
+
+			const commitBeforeFork = checkout.branchHistory.getHeadCommit();
+			assert.notEqual(commitBeforeFork, undefined);
+
+			const fork = checkout.fork();
+
+			view1.root.insertAtEnd("A");
+			view1.root.insertAtEnd("B");
+
+			const commitAfterEdits = checkout.branchHistory.getHeadCommit();
+			assert.notEqual(commitAfterEdits, undefined);
+			assert.notEqual(commitAfterEdits?.revision, commitBeforeFork?.revision);
+
+			checkout.switchBranch(fork.mainBranch);
+
+			const headCommitAfterSwitch = checkout.branchHistory.getHeadCommit();
+			assert.notEqual(headCommitAfterSwitch, undefined);
+			assert.equal(headCommitAfterSwitch?.revision, commitBeforeFork?.revision);
 		});
 	});
 
