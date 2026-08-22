@@ -2,6 +2,11 @@
 
 > Status: **Phase 1 implemented.** See [Implementation status](#implementation-status) for what
 > actually shipped and how it maps to this design.
+>
+> See also [comparisonWithPr27880.md](./comparisonWithPr27880.md) for a comparison against
+> [PR #27880](https://github.com/microsoft/FluidFramework/pull/27880), which solves the same
+> problem via a different mechanism, and for gaps in this design (rehydrate, incremental reuse,
+> old-client compatibility) surfaced by that comparison.
 
 ## Goal
 
