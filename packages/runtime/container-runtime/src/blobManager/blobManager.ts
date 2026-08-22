@@ -52,6 +52,11 @@ import {
 	type IBlobManagerLoadInfo,
 } from "./blobManagerSnapSum.js";
 
+const decodeDetachedSummaryBlob = (encodedBlob: ArrayBufferLike): ArrayBufferLike =>
+	stringToBuffer(bufferToString(encodedBlob, "utf8"), "base64");
+
+const maxConcurrentDetachedBlobReads = 32;
+
 /**
  * This class represents blob (long string)
  * This object is used only when creating (writing) new blob and serialization purposes.
@@ -286,6 +291,9 @@ export class BlobManager {
 	private readonly runtime: IBlobManagerRuntime;
 
 	private readonly createBlobPayloadPending: boolean;
+	private readonly inlineDetachedBlobsAsSummaryBlobs: boolean;
+	// Local IDs whose redirect-table targets are summary blobs rather than attachment blobs.
+	private readonly detachedBlobSummaryIds: Set<string>;
 
 	public constructor(props: {
 		readonly routeContext: IFluidHandleContext;
@@ -312,6 +320,7 @@ export class BlobManager {
 		readonly runtime: IBlobManagerRuntime;
 		pendingBlobs: IPendingBlobs | undefined;
 		readonly createBlobPayloadPending: boolean;
+		readonly inlineDetachedBlobsAsSummaryBlobs: boolean;
 	}) {
 		const {
 			routeContext,
@@ -323,6 +332,7 @@ export class BlobManager {
 			runtime,
 			pendingBlobs,
 			createBlobPayloadPending,
+			inlineDetachedBlobsAsSummaryBlobs,
 		} = props;
 		this.routeContext = routeContext;
 		this.storage = storage;
@@ -331,6 +341,7 @@ export class BlobManager {
 		this.isBlobDeleted = isBlobDeleted;
 		this.runtime = runtime;
 		this.createBlobPayloadPending = createBlobPayloadPending;
+		this.inlineDetachedBlobsAsSummaryBlobs = inlineDetachedBlobsAsSummaryBlobs;
 
 		this.mc = createChildMonitoringContext({
 			logger: this.runtime.baseLogger,
@@ -338,6 +349,40 @@ export class BlobManager {
 		});
 
 		this.redirectTable = toRedirectTable(blobManagerLoadInfo, this.mc.logger);
+		const detachedBlobSummary = blobManagerLoadInfo.detachedBlobSummary;
+		const detachedBlobSummaryEntries = Object.entries(detachedBlobSummary?.blobs ?? {});
+		this.detachedBlobSummaryIds = new Set(
+			detachedBlobSummaryEntries.map(([localId]) => localId),
+		);
+		for (const localId of this.detachedBlobSummaryIds.keys()) {
+			assert(
+				!this.redirectTable.has(localId),
+				"Detached summary IDs cannot also be attachment redirects",
+			);
+		}
+		if (this.runtime.attachState === AttachState.Detached) {
+			for (const [localId, blobId] of detachedBlobSummaryEntries) {
+				const encodedBlob: ArrayBufferLike | undefined =
+					detachedBlobSummary?.blobsContents?.[blobId];
+				assert(
+					encodedBlob !== undefined,
+					"Detached summary blob contents must be available while detached",
+				);
+				this.localBlobCache.set(localId, {
+					state: "attached",
+					blob: decodeDetachedSummaryBlob(encodedBlob),
+				});
+				this.redirectTable.set(localId, localId);
+			}
+		} else {
+			assert(
+				detachedBlobSummary?.blobsContents === undefined,
+				"Attached BlobManager cannot load detached summary blob contents",
+			);
+			for (const [localId, blobId] of detachedBlobSummaryEntries) {
+				this.redirectTable.set(localId, blobId);
+			}
+		}
 
 		// We populate the localBlobCache with any pending blobs we are provided, which makes them available
 		// to access even though they are not shared yet. However, we don't start the share flow until it is
@@ -384,7 +429,11 @@ export class BlobManager {
 			return undefined;
 		}
 		// Get the storage ID from the redirect table
-		return this.redirectTable.get(localId);
+		const storageId = this.redirectTable.get(localId);
+		// Summary blob IDs cannot be used as temporary attachment URLs.
+		return storageId !== undefined && this.detachedBlobSummaryIds.has(localId)
+			? undefined
+			: storageId;
 	}
 
 	/**
@@ -435,14 +484,19 @@ export class BlobManager {
 			this.mc.logger,
 			{ eventName: "AttachmentReadBlob", id: storageId },
 			async (event) => {
-				return this.storage.readBlob(storageId).catch((error) => {
-					if (this.runtime.disposed) {
-						// If the runtime is disposed, this is not an error we care to track, it's expected behavior.
-						event.cancel({ category: "generic" });
-					}
+				return this.storage
+					.readBlob(storageId)
+					.then((blob) =>
+						this.detachedBlobSummaryIds.has(localId) ? decodeDetachedSummaryBlob(blob) : blob,
+					)
+					.catch((error) => {
+						if (this.runtime.disposed) {
+							// If the runtime is disposed, this is not an error we care to track, it's expected behavior.
+							event.cancel({ category: "generic" });
+						}
 
-					throw error;
-				});
+						throw error;
+					});
 			},
 			{ end: true, cancel: "error" },
 		);
@@ -491,6 +545,12 @@ export class BlobManager {
 			throw createAbortError();
 		}
 		const localId = uuid();
+		if (this.inlineDetachedBlobsAsSummaryBlobs) {
+			this.localBlobCache.set(localId, { state: "attached", blob });
+			this.redirectTable.set(localId, localId);
+			this.detachedBlobSummaryIds.add(localId);
+			return this.getNonPayloadPendingBlobHandle(localId);
+		}
 		this.localBlobCache.set(localId, { state: "uploading", blob });
 		// Blobs created while the container is detached are stored in IDetachedBlobStorage.
 		// The 'IContainerStorageService.createBlob()' call below will respond with a pseudo storage ID.
@@ -792,7 +852,75 @@ export class BlobManager {
 	}
 
 	public summarize(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
-		return summarizeBlobManagerState(this.redirectTable);
+		return this.summarizeInternal(undefined);
+	}
+
+	public async summarizeFullTree(): Promise<ISummaryTreeWithStats> {
+		return this.summarizeInternal(await this.loadFullTreeContents());
+	}
+
+	private summarizeInternal(
+		fullTreeContents: ReadonlyMap<string, ArrayBufferLike> | undefined,
+	): ISummaryTreeWithStats {
+		const detachedBlobSummaryContents =
+			fullTreeContents ?? this.getDetachedBlobSummaryContentsFromLocalCache();
+		return summarizeBlobManagerState(
+			this.redirectTable,
+			detachedBlobSummaryContents,
+			this.detachedBlobSummaryIds,
+		);
+	}
+
+	private getDetachedBlobSummaryContentsFromLocalCache():
+		| ReadonlyMap<string, ArrayBufferLike>
+		| undefined {
+		const contents = new Map<string, ArrayBufferLike>();
+		for (const localId of this.detachedBlobSummaryIds) {
+			const localBlobRecord = this.localBlobCache.get(localId);
+			if (localBlobRecord === undefined) {
+				assert(
+					this.runtime.attachState !== AttachState.Detached,
+					"Detached summary blob must be cached",
+				);
+				continue;
+			}
+			assert(
+				localBlobRecord.state === "attached",
+				"Detached summary blob cache entry must be attached",
+			);
+			contents.set(localId, localBlobRecord.blob);
+		}
+		return contents.size === 0 ? undefined : contents;
+	}
+
+	/**
+	 * Materializes payloads that would otherwise be summarized by handle.
+	 * Used only when producing a full-tree summary.
+	 */
+	private async loadFullTreeContents(): Promise<Map<string, ArrayBufferLike>> {
+		const fullTreeContents = new Map(this.getDetachedBlobSummaryContentsFromLocalCache());
+		const localIdsToLoad = [...this.detachedBlobSummaryIds].filter(
+			(localId) => !fullTreeContents.has(localId),
+		);
+		for (
+			let firstIndex = 0;
+			firstIndex < localIdsToLoad.length;
+			firstIndex += maxConcurrentDetachedBlobReads
+		) {
+			await Promise.all(
+				localIdsToLoad
+					.slice(firstIndex, firstIndex + maxConcurrentDetachedBlobReads)
+					.map(async (localId) => {
+						const storageId = this.redirectTable.get(localId);
+						assert(storageId !== undefined, "Detached blob summary ID must have a storage ID");
+						fullTreeContents.set(
+							localId,
+							decodeDetachedSummaryBlob(await this.storage.readBlob(storageId)),
+						);
+					}),
+			);
+		}
+		return fullTreeContents;
 	}
 
 	/**
@@ -806,7 +934,7 @@ export class BlobManager {
 		for (const [localId, storageId] of this.redirectTable) {
 			// Don't report the identity mappings to GC - these exist to service old handles that referenced the storage
 			// IDs directly. We'll implicitly clean them up if all of their localId references get GC'd first.
-			if (localId !== storageId) {
+			if (localId !== storageId || this.detachedBlobSummaryIds.has(localId)) {
 				// The outbound routes are empty because a blob node cannot reference other nodes. It can only be referenced
 				// by adding its handle to a referenced DDS.
 				gcData.gcNodes[getGCNodePathFromLocalId(localId)] = [];
@@ -816,14 +944,14 @@ export class BlobManager {
 	}
 
 	/**
-	 * Delete blobs with the given routes from the redirect table.
+	 * Delete blobs with the given routes from BlobManager state.
 	 * @returns The routes of blobs that were deleted.
 	 *
 	 * @remarks
 	 * The routes are GC nodes paths of format -`/<blobManagerBasePath>/<localId>`.
 	 * Deleting the blobs involves 2 steps:
 	 *
-	 * 1. The redirect table entry for the local ids are deleted.
+	 * 1. The detached summary or redirect-table entry for the local ID is deleted.
 	 *
 	 * 2. If the storage ids corresponding to the deleted local ids are not referenced by any further local ids, the
 	 * identity mappings in the redirect table are deleted as well.
@@ -854,6 +982,7 @@ export class BlobManager {
 			}
 			maybeUnusedStorageIds.add(storageId);
 			this.redirectTable.delete(localId);
+			this.detachedBlobSummaryIds.delete(localId);
 		}
 
 		// Remove any storage IDs that still have local IDs referring to them (excluding the identity mapping).
@@ -914,14 +1043,17 @@ export class BlobManager {
 		// The values of the redirect table are the pseudo storage IDs, which are the keys of the
 		// detachedStorageTable. We expect to have a many:1 mapping from local IDs to pseudo
 		// storage IDs (many in the case that the storage dedupes the blob).
+		const redirectTableEntries = [...this.redirectTable.entries()].filter(
+			([localId]) => !this.detachedBlobSummaryIds.has(localId),
+		);
 		assert(
-			new Set(this.redirectTable.values()).size === detachedStorageTable.size,
+			new Set(redirectTableEntries.map(([_, storageId]) => storageId)).size ===
+				detachedStorageTable.size,
 			0x391 /* Redirect table size must match BlobManager's local ID count */,
 		);
 		// Taking a snapshot of the redirect table entries before iterating, because
 		// we will be adding identity mappings to the the redirect table as we iterate
 		// and we don't want to include those in the iteration.
-		const redirectTableEntries = [...this.redirectTable.entries()];
 		for (const [localId, detachedStorageId] of redirectTableEntries) {
 			const newStorageId = detachedStorageTable.get(detachedStorageId);
 			assert(newStorageId !== undefined, 0xc53 /* Couldn't find a matching storage ID */);

@@ -21,6 +21,7 @@ import {
 	readReferencedSnapshotBlobs,
 	snapshotHasLoadingGroups,
 	unreferencedAttachmentBlobLocalIds,
+	wireFormatConstants,
 	type IBlobAttachReference,
 	type IGcSnapshotData,
 } from "../captureReferencedContents.js";
@@ -89,7 +90,7 @@ describe("captureReferencedContents", () => {
 			assert.deepStrictEqual(result, { kept: "KEPT" });
 		});
 
-		it("special-cases root .blobs: reads only the redirect table", async () => {
+		it("special-cases root .blobs: reads structural child trees but not direct attachments", async () => {
 			const snapshot = tree({
 				trees: {
 					".blobs": tree({
@@ -97,14 +98,17 @@ describe("captureReferencedContents", () => {
 							".redirectTable": "rt",
 							"attachment-storage-id": "attachment-storage-id",
 						},
+						trees: {
+							runtimePayload: tree({ blobs: { content: "inline" } }),
+						},
 					}),
 				},
 			});
-			const storage = mockStorage({ rt: "RT" });
+			const storage = mockStorage({ rt: "RT", inline: "ENCODED" });
 			const result = await readReferencedSnapshotBlobs(snapshot, storage);
 			assert.deepStrictEqual(
 				result,
-				{ rt: "RT" },
+				{ rt: "RT", inline: "ENCODED" },
 				"attachment blob contents must not be read via the general walker",
 			);
 		});
@@ -460,6 +464,38 @@ describe("captureReferencedContents", () => {
 		it("returns false when the entire snapshot is unreferenced", () => {
 			const snapshot = tree({ unreferenced: true, groupId: "g1" });
 			assert.strictEqual(snapshotHasLoadingGroups(snapshot), false);
+		});
+
+		it("ignores loading groups under the reserved .blobs tree", () => {
+			const snapshot = tree({
+				trees: {
+					[wireFormatConstants.blobsTreeName]: tree({
+						trees: {
+							runtimePayload: tree({
+								groupId: "runtime-group",
+							}),
+						},
+					}),
+				},
+			});
+			assert.strictEqual(snapshotHasLoadingGroups(snapshot), false);
+		});
+
+		it("detects loading groups under a nested subtree named .blobs", () => {
+			const snapshot = tree({
+				trees: {
+					app: tree({
+						trees: {
+							[wireFormatConstants.blobsTreeName]: tree({
+								trees: {
+									grouped: tree({ groupId: "app-group" }),
+								},
+							}),
+						},
+					}),
+				},
+			});
+			assert.strictEqual(snapshotHasLoadingGroups(snapshot), true);
 		});
 	});
 

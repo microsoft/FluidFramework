@@ -162,6 +162,9 @@ const runtimeOptionsAffectingDocSchemaConfigMap: ConfigMap<RuntimeOptionsAffecti
 			// exposed on the `@public` API surface.
 			"1.0.0": undefined,
 		},
+		inlineDetachedBlobsAsSummaryBlobs: {
+			"1.0.0": undefined,
+		},
 	};
 
 /**
@@ -208,6 +211,10 @@ const runtimeOptionsAffectingDocSchemaConfigValidationMap: ConfigValidationMap<R
 		createBlobPayloadPending: configValueToMinVersionForCollab([
 			[undefined, "1.0.0"],
 			[true, "2.40.0"],
+		]),
+		inlineDetachedBlobsAsSummaryBlobs: configValueToMinVersionForCollab([
+			[undefined, "1.0.0"],
+			[true, "2.115.0"],
 		]),
 	};
 

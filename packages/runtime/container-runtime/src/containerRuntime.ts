@@ -542,6 +542,11 @@ export interface ContainerRuntimeOptionsInternal extends ContainerRuntimeOptions
 	 * In that case, batched messages will be sent individually (but still all at the same time).
 	 */
 	readonly enableGroupedBatching: boolean;
+
+	/**
+	 * Stores detached attachment blobs as summary blobs in internal loading groups.
+	 */
+	readonly inlineDetachedBlobsAsSummaryBlobs?: true;
 }
 
 /**
@@ -1031,7 +1036,6 @@ export class ContainerRuntime
 		});
 
 		const mc = loggerToMonitoringContext(logger);
-
 		// Some options require a minimum version of the FF runtime to operate, so the default configs will be generated
 		// based on the minVersionForCollab.
 		// For example, if minVersionForCollab is set to "1.0.0", the default configs will ensure compatibility with FF runtime
@@ -1084,6 +1088,7 @@ export class ContainerRuntime
 				? disabledCompressionConfig
 				: defaultConfigs.compressionOptions,
 			createBlobPayloadPending = defaultConfigs.createBlobPayloadPending,
+			inlineDetachedBlobsAsSummaryBlobs = defaultConfigs.inlineDetachedBlobsAsSummaryBlobs,
 			stagingModeAutoFlushThreshold = defaultConfigs.stagingModeAutoFlushThreshold,
 			disableSchemaUpgrade = defaultConfigs.disableSchemaUpgrade,
 		}: IContainerRuntimeOptionsInternal = runtimeOptions;
@@ -1140,7 +1145,6 @@ export class ContainerRuntime
 			tryFetchBlob<[string, string][]>(aliasBlobName),
 			tryFetchBlob<SerializedIdCompressorWithNoSession>(idCompressorBlobName),
 		]);
-
 		// read snapshot blobs needed for BlobManager to load
 		const blobManagerLoadInfo = await loadBlobManagerLoadInfo(context);
 
@@ -1281,6 +1285,7 @@ export class ContainerRuntime
 				idCompressorMode,
 				opGroupingEnabled: enableGroupedBatching,
 				createBlobPayloadPending,
+				inlineDetachedBlobsAsSummaryBlobs,
 				disallowedVersions: [],
 			},
 			(schema) => {
@@ -1319,6 +1324,9 @@ export class ContainerRuntime
 			enableGroupedBatching,
 			explicitSchemaControl,
 			createBlobPayloadPending,
+			...(inlineDetachedBlobsAsSummaryBlobs === true
+				? { inlineDetachedBlobsAsSummaryBlobs }
+				: {}),
 			stagingModeAutoFlushThreshold,
 			disableSchemaUpgrade,
 		};
@@ -2207,6 +2215,8 @@ export class ContainerRuntime
 			runtime: this,
 			pendingBlobs: pendingRuntimeState?.pendingAttachmentBlobs,
 			createBlobPayloadPending: this.sessionSchema.createBlobPayloadPending === true,
+			inlineDetachedBlobsAsSummaryBlobs:
+				this.sessionSchema.inlineDetachedBlobsAsSummaryBlobs === true,
 		});
 
 		this.deltaScheduler = new DeltaScheduler(
@@ -2888,6 +2898,7 @@ export class ContainerRuntime
 		fullTree: boolean,
 		trackState: boolean,
 		telemetryContext?: ITelemetryContext,
+		blobManagerSummaryOverride?: ISummaryTreeWithStats,
 	): void {
 		this.addMetadataToSummary(summaryTree);
 
@@ -2919,7 +2930,7 @@ export class ContainerRuntime
 			addBlobToSummary(summaryTree, electedSummarizerBlobName, electedSummarizerContent);
 		}
 
-		const blobManagerSummary = this.blobManager.summarize();
+		const blobManagerSummary = blobManagerSummaryOverride ?? this.blobManager.summarize();
 		// Some storage (like git) doesn't allow empty tree, so we can omit it.
 		// and the blob manager can handle the tree not existing when loading
 		if (Object.keys(blobManagerSummary.summary.tree).length > 0) {
@@ -4316,8 +4327,17 @@ export class ContainerRuntime
 		const pathPartsForChildren = [channelsTreeName];
 
 		this.loadIdCompressor();
+		const blobManagerSummary = fullTree
+			? await this.blobManager.summarizeFullTree()
+			: undefined;
 
-		this.addContainerStateToSummary(summarizeResult, fullTree, trackState, telemetryContext);
+		this.addContainerStateToSummary(
+			summarizeResult,
+			fullTree,
+			trackState,
+			telemetryContext,
+			blobManagerSummary,
+		);
 		return {
 			...summarizeResult,
 			id: "",

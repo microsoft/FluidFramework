@@ -3,7 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import type { IContainerContext } from "@fluidframework/container-definitions/internal";
+import { bufferToString } from "@fluid-internal/client-utils";
+import { AttachState } from "@fluidframework/container-definitions";
+import type {
+	IContainerContext,
+	ISnapshotTreeWithBlobContents,
+} from "@fluidframework/container-definitions/internal";
+import { assert } from "@fluidframework/core-utils/internal";
+import { SummaryType } from "@fluidframework/driver-definitions";
+import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
@@ -16,6 +24,11 @@ import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/interna
 export interface IBlobManagerLoadInfo {
 	ids?: string[];
 	redirectTable?: [string, string][];
+	/**
+	 * The detached blob summary subtree. `blobs` maps local IDs to snapshot blob IDs.
+	 * `blobsContents` is populated only when rehydrating a detached container.
+	 */
+	detachedBlobSummary?: ISnapshotTreeWithBlobContents;
 }
 
 /**
@@ -29,15 +42,31 @@ export const redirectTableBlobName = ".redirectTable";
 export const blobsTreeName = ".blobs";
 
 /**
+ * Tree containing blobs created while the container was detached.
+ * @internal
+ */
+export const detachedBlobSummaryTreeName = ".detached";
+
+/**
+ * Loading group for blobs created while the container was detached.
+ * @internal
+ */
+export const detachedBlobSummaryGroupId = "fluid-internal:detached-blobs";
+
+/**
  * Reads blobs needed to load BlobManager from storage.
  *
  */
 export const loadBlobManagerLoadInfo = async (
-	context: Pick<IContainerContext, "baseSnapshot" | "storage" | "attachState">,
+	context: Pick<IContainerContext, "baseSnapshot" | "attachState" | "snapshotWithContents"> & {
+		storage: Pick<IContainerContext["storage"], "readBlob">;
+	},
 ): Promise<IBlobManagerLoadInfo> => loadV1(context);
 
 const loadV1 = async (
-	context: Pick<IContainerContext, "baseSnapshot" | "storage" | "attachState">,
+	context: Pick<IContainerContext, "baseSnapshot" | "attachState" | "snapshotWithContents"> & {
+		storage: Pick<IContainerContext["storage"], "readBlob">;
+	},
 ): Promise<IBlobManagerLoadInfo> => {
 	const blobsTree = context.baseSnapshot?.trees[blobsTreeName];
 
@@ -53,7 +82,48 @@ const loadV1 = async (
 		.filter(([k, _]) => k !== redirectTableBlobName)
 		.map(([_, v]) => v);
 
-	return { ids, redirectTable: redirectTableEntries };
+	const detachedBlobSummaryTree: ISnapshotTree | undefined =
+		blobsTree.trees[detachedBlobSummaryTreeName];
+	let detachedBlobSummary: ISnapshotTreeWithBlobContents | undefined;
+	if (detachedBlobSummaryTree !== undefined) {
+		const { blobsContents: existingBlobContents, ...detachedBlobSummaryWithoutContents } =
+			detachedBlobSummaryTree as ISnapshotTreeWithBlobContents;
+		const blobsContents: Record<string, ArrayBufferLike> | undefined =
+			context.attachState === AttachState.Detached ? { ...existingBlobContents } : undefined;
+		assert(
+			Object.keys(detachedBlobSummaryTree.trees).length === 0,
+			"Detached blob summary cannot contain child trees",
+		);
+		if (blobsContents !== undefined) {
+			const loadedBlobContents = await Promise.all(
+				Object.values(detachedBlobSummaryTree.blobs).map(async (blobId) => {
+					if (blobsContents[blobId] !== undefined) {
+						return undefined;
+					}
+					const content =
+						context.snapshotWithContents?.blobContents.get(blobId) ??
+						(await context.storage.readBlob(blobId));
+					return [blobId, content] as const;
+				}),
+			);
+			for (const loadedBlobContent of loadedBlobContents) {
+				if (loadedBlobContent !== undefined) {
+					blobsContents[loadedBlobContent[0]] = loadedBlobContent[1];
+				}
+			}
+		}
+		detachedBlobSummary = {
+			...detachedBlobSummaryWithoutContents,
+			trees: {},
+			...(blobsContents === undefined ? {} : { blobsContents }),
+		};
+	}
+
+	return {
+		ids,
+		redirectTable: redirectTableEntries,
+		detachedBlobSummary,
+	};
 };
 
 export const toRedirectTable = (
@@ -85,15 +155,57 @@ export const toRedirectTable = (
 
 export const summarizeBlobManagerState = (
 	redirectTable: Map<string, string>,
-): ISummaryTreeWithStats => summarizeV1(redirectTable);
+	detachedBlobSummaryContents?: ReadonlyMap<string, ArrayBufferLike>,
+	detachedBlobSummaryIds?: ReadonlySet<string>,
+): ISummaryTreeWithStats =>
+	summarizeV1(redirectTable, detachedBlobSummaryContents, detachedBlobSummaryIds);
 
-const summarizeV1 = (redirectTable: Map<string, string>): ISummaryTreeWithStats => {
+const summarizeV1 = (
+	redirectTable: Map<string, string>,
+	detachedBlobSummaryContents?: ReadonlyMap<string, ArrayBufferLike>,
+	detachedBlobSummaryIds?: ReadonlySet<string>,
+): ISummaryTreeWithStats => {
 	const builder = new SummaryTreeBuilder();
 	const storageIds = getStorageIds(redirectTable);
+	const detachedBlobSummaryStorageIds = new Set<string>();
+	const detachedBlobSummaryBuilder = new SummaryTreeBuilder({
+		groupId: detachedBlobSummaryGroupId,
+	});
+	for (const localId of new Set([
+		...(detachedBlobSummaryContents?.keys() ?? []),
+		...(detachedBlobSummaryIds ?? []),
+	])) {
+		const storageId = redirectTable.get(localId);
+		if (storageId !== undefined) {
+			detachedBlobSummaryStorageIds.add(storageId);
+		}
+		const detachedBlobSummaryContent = detachedBlobSummaryContents?.get(localId);
+		if (detachedBlobSummaryContent === undefined) {
+			detachedBlobSummaryBuilder.addHandle(
+				localId,
+				SummaryType.Blob,
+				`/${blobsTreeName}/${detachedBlobSummaryTreeName}/${localId}`,
+			);
+		} else {
+			// Detached and pending container state serializes summary blobs as UTF-8 text.
+			// Base64 keeps arbitrary blob bytes lossless across that boundary.
+			detachedBlobSummaryBuilder.addBlob(
+				localId,
+				bufferToString(detachedBlobSummaryContent, "base64"),
+			);
+		}
+	}
+	const detachedBlobSummary = detachedBlobSummaryBuilder.getSummaryTree();
+	const hasDetachedBlobSummary = Object.keys(detachedBlobSummary.summary.tree).length > 0;
+	if (hasDetachedBlobSummary) {
+		builder.addWithStats(detachedBlobSummaryTreeName, detachedBlobSummary);
+	}
 	for (const storageId of storageIds) {
-		// The Attachment is inspectable by storage, which lets it detect that the blob is referenced
-		// and therefore should not be GC'd.
-		builder.addAttachment(storageId);
+		if (!detachedBlobSummaryStorageIds.has(storageId)) {
+			// The Attachment is inspectable by storage, which lets it detect that the blob is referenced
+			// and therefore should not be GC'd.
+			builder.addAttachment(storageId);
+		}
 	}
 
 	// Exclude identity mappings from the redirectTable summary. Note that
@@ -102,9 +214,11 @@ const summarizeV1 = (redirectTable: Map<string, string>): ISummaryTreeWithStats 
 	// time in toRedirectTable even if there is no non-identity mapping in
 	// the redirectTable.
 	const nonIdentityRedirectTableEntries = [...redirectTable.entries()].filter(
-		([localId, storageId]) => localId !== storageId,
+		([localId, storageId]) =>
+			localId !== storageId && detachedBlobSummaryIds?.has(localId) !== true,
 	);
-	if (nonIdentityRedirectTableEntries.length > 0) {
+	// Preserve the loader's existing `.blobs` invariant when all mappings are encoded by `.detached`.
+	if (nonIdentityRedirectTableEntries.length > 0 || hasDetachedBlobSummary) {
 		builder.addBlob(redirectTableBlobName, JSON.stringify(nonIdentityRedirectTableEntries));
 	}
 

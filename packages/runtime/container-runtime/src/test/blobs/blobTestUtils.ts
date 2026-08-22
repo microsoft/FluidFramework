@@ -10,11 +10,13 @@ import {
 	createEmitter,
 	gitHashFile,
 	IsoBuffer,
+	stringToBuffer,
 	TypedEventEmitter,
 } from "@fluid-internal/client-utils";
 import {
 	AttachState,
 	type IContainerStorageService,
+	type ISnapshotTreeWithBlobContents,
 } from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
 import type {
@@ -23,7 +25,10 @@ import type {
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces/internal";
 import { SummaryType } from "@fluidframework/driver-definitions/internal";
-import type { ISequencedMessageEnvelope } from "@fluidframework/runtime-definitions/internal";
+import type {
+	ISequencedMessageEnvelope,
+	ISummaryTreeWithStats,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	isFluidHandleInternalPayloadPending,
 	isLocalFluidHandle,
@@ -40,6 +45,10 @@ import {
 	type IPendingBlobs,
 	redirectTableBlobName,
 } from "../../blobManager/index.js";
+import {
+	detachedBlobSummaryGroupId,
+	detachedBlobSummaryTreeName,
+} from "../../blobManager/blobManagerSnapSum.js"; // eslint-disable-line import-x/no-internal-modules
 import type { IBlobMetadata } from "../../metadata.js";
 
 export const MIN_TTL = 24 * 60 * 60; // same as ODSP
@@ -438,6 +447,7 @@ interface TestMaterial {
 	blobManagerLoadInfo: IBlobManagerLoadInfo;
 	pendingBlobs: IPendingBlobs | undefined;
 	createBlobPayloadPending: boolean;
+	inlineDetachedBlobsAsSummaryBlobs: boolean;
 	blobManager: BlobManager;
 }
 
@@ -456,6 +466,8 @@ export const createTestMaterial = (
 	const blobManagerLoadInfo = overrides?.blobManagerLoadInfo ?? {};
 	const pendingBlobs = overrides?.pendingBlobs ?? undefined;
 	const createBlobPayloadPending = overrides?.createBlobPayloadPending ?? false;
+	const inlineDetachedBlobsAsSummaryBlobs =
+		overrides?.inlineDetachedBlobsAsSummaryBlobs ?? false;
 
 	const blobManager = new BlobManager({
 		// The routeContext is only needed by the BlobHandles to determine isAttached, so this
@@ -470,6 +482,7 @@ export const createTestMaterial = (
 		runtime: mockRuntime,
 		pendingBlobs,
 		createBlobPayloadPending,
+		inlineDetachedBlobsAsSummaryBlobs,
 	});
 
 	mockOrderingService.events.on("messageSequenced", (message: ISequencedMessageEnvelope) => {
@@ -493,6 +506,7 @@ export const createTestMaterial = (
 		blobManagerLoadInfo,
 		pendingBlobs,
 		createBlobPayloadPending,
+		inlineDetachedBlobsAsSummaryBlobs,
 		blobManager,
 	};
 };
@@ -513,26 +527,59 @@ export const simulateAttach = async (
 
 export const getSummaryContentsWithFormatValidation = (
 	blobManager: BlobManager,
+): IBlobManagerLoadInfo =>
+	getSummaryContentsFromSummaryWithFormatValidation(blobManager.summarize());
+
+export const getSummaryContentsFromSummaryWithFormatValidation = (
+	summary: ISummaryTreeWithStats,
 ): IBlobManagerLoadInfo => {
-	const summary = blobManager.summarize();
 	let ids: string[] | undefined;
 	let redirectTable: [string, string][] | undefined;
+	let detachedBlobSummary: ISnapshotTreeWithBlobContents | undefined;
 	for (const [key, summaryObject] of Object.entries(summary.summary.tree)) {
 		if (summaryObject.type === SummaryType.Attachment) {
 			ids ??= [];
 			ids.push(summaryObject.id);
+		} else if (summaryObject.type === SummaryType.Tree) {
+			assert.strictEqual(key, detachedBlobSummaryTreeName);
+			assert.strictEqual(summaryObject.groupId, detachedBlobSummaryGroupId);
+			const blobs: Record<string, string> = {};
+			const blobsContents: Record<string, ArrayBufferLike> = {};
+			for (const [localId, content] of Object.entries(summaryObject.tree)) {
+				const blobId = localId;
+				blobs[localId] = blobId;
+				if (content.type === SummaryType.Blob) {
+					assert(typeof content.content === "string");
+					blobsContents[blobId] = stringToBuffer(content.content, "utf8");
+				} else {
+					assert(content.type === SummaryType.Handle);
+					assert.strictEqual(content.handleType, SummaryType.Blob);
+				}
+			}
+			detachedBlobSummary = {
+				blobs,
+				trees: {},
+				groupId: summaryObject.groupId,
+				...(Object.keys(blobsContents).length === 0 ? {} : { blobsContents }),
+			};
 		} else {
 			assert.strictEqual(key, redirectTableBlobName);
 			assert(summaryObject.type === SummaryType.Blob);
 			assert(typeof summaryObject.content === "string");
+			const summarizedRedirectTable = JSON.parse(summaryObject.content) as [string, string][];
 			redirectTable = [
-				...new Map<string, string>(
-					JSON.parse(summaryObject.content) as [string, string][],
-				).entries(),
+				...new Map<string, string>([
+					...(redirectTable ?? []),
+					...summarizedRedirectTable,
+				]).entries(),
 			];
 		}
 	}
-	return { ids, redirectTable };
+	return {
+		ids,
+		redirectTable,
+		detachedBlobSummary,
+	};
 };
 
 export const textToBlob = (text: string): ArrayBufferLike => {

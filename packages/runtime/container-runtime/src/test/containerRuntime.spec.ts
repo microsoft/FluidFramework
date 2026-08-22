@@ -4668,6 +4668,7 @@ describe("Runtime", () => {
 				{ enableRuntimeIdCompressor: "on" },
 				{ enableRuntimeIdCompressor: "delayed" },
 				{ createBlobPayloadPending: true },
+				{ inlineDetachedBlobsAsSummaryBlobs: true },
 				{ flushMode: FlushMode.TurnBased },
 			]) {
 				it(`throws if minVersionForCollab is incompatible with runtimeOptions: ${JSON.stringify(runtimeOption)}`, async () => {
@@ -4701,6 +4702,38 @@ describe("Runtime", () => {
 						provideEntryPoint: mockProvideEntryPoint,
 					});
 				});
+			});
+
+			it("rejects inline detached summary blobs with minVersionForCollab 2.114.0", async () => {
+				await assert.rejects(
+					ContainerRuntime.loadRuntime2({
+						context: getMockContext({}) as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: {
+							explicitSchemaControl: true,
+							inlineDetachedBlobsAsSummaryBlobs: true,
+						},
+						provideEntryPoint: mockProvideEntryPoint,
+						minVersionForCollab: "2.114.0",
+					}),
+				);
+			});
+
+			it("allows inline detached summary blobs with minVersionForCollab 2.115.0", async () => {
+				await assert.doesNotReject(
+					ContainerRuntime.loadRuntime2({
+						context: getMockContext({}) as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: {
+							explicitSchemaControl: true,
+							inlineDetachedBlobsAsSummaryBlobs: true,
+						},
+						provideEntryPoint: mockProvideEntryPoint,
+						minVersionForCollab: "2.115.0",
+					}),
+				);
 			});
 		});
 
