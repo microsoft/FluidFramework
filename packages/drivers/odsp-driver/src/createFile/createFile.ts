@@ -348,8 +348,13 @@ export async function createNewFluidFileFromSummary(
 	// Build share link parameter based on the createLinkType provided so that the
 	// snapshot api can create and return the share link along with creation of file in the response.
 	const createShareLinkParam = buildOdspShareLinkReqParams(newFileInfo.createLinkType);
+	const progIdParam =
+		newFileInfo.progId === undefined
+			? undefined
+			: `progId=${encodeURIComponent(newFileInfo.progId)}`;
+	const queryParams = [createShareLinkParam, progIdParam].filter(Boolean).join("&");
 	const initialUrl = `${baseUrl}:/opStream/snapshots/snapshot${
-		createShareLinkParam ? `?${createShareLinkParam}` : ""
+		queryParams ? `?${queryParams}` : ""
 	}`;
 
 	return createNewFluidContainerCore<ICreateFileResponse>({
