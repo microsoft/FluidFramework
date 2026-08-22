@@ -4,9 +4,12 @@
  */
 
 import type {
+	IDocumentService,
 	IDocumentServiceFactory,
 	IPersistedCache,
+	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import type {
 	HostStoragePolicy,
 	OdspResourceTokenFetchOptions,
@@ -15,10 +18,37 @@ import type {
 
 // eslint-disable-next-line import-x/no-internal-modules
 import { LocalOdspDocumentServiceFactory } from "./localOdspDriver/localOdspDocumentServiceFactory.js";
-import {
-	type IPointInTimeDocumentServiceFactory,
-	OdspDocumentServiceFactoryCore,
-} from "./odspDocumentServiceFactoryCore.js";
+import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore.js";
+
+/**
+ * An ODSP document service factory that supports point-in-time (sequence-number-based) loading.
+ *
+ * @remarks
+ * The loader detects this capability structurally, so hosts can pass this factory directly to
+ * {@link @fluidframework/container-loader#loadContainerToSequenceNumber}.
+ *
+ * @legacy @beta
+ */
+export interface IPointInTimeDocumentServiceFactory extends IDocumentServiceFactory {
+	/**
+	 * Creates a document service that materializes the document at the requested sequence number.
+	 *
+	 * @param resolvedUrl - The resolved ODSP {@link @fluidframework/driver-definitions#IResolvedUrl}.
+	 * @param targetSequenceNumber - The sequence number at which to materialize the document. See
+	 * {@link @fluidframework/container-loader#ILoadContainerToSequenceNumberProps.loadToSequenceNumber}.
+	 * @param logger - Optional {@link @fluidframework/core-interfaces#ITelemetryBaseLogger}.
+	 * @param clientIsSummarizer - Whether to apply summarizer policies and telemetry to the
+	 * underlying document services. Defaults to `false`.
+	 * @returns A read-only {@link @fluidframework/driver-definitions#IDocumentService} materialized
+	 * at the requested sequence number.
+	 */
+	createPointInTimeDocumentService(
+		resolvedUrl: IResolvedUrl,
+		targetSequenceNumber: number,
+		logger?: ITelemetryBaseLogger,
+		clientIsSummarizer?: boolean,
+	): Promise<IDocumentService>;
+}
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
@@ -26,7 +56,12 @@ import {
  * @legacy
  * @beta
  */
-export class OdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
+export class OdspDocumentServiceFactory
+	extends OdspDocumentServiceFactoryCore
+	implements IPointInTimeDocumentServiceFactory
+{
+	private readonly pointInTimeStorageTokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>;
+
 	constructor(
 		getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>,
 		getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined,
@@ -34,13 +69,42 @@ export class OdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
 		hostPolicy?: HostStoragePolicy,
 	) {
 		super(getStorageToken, getWebsocketToken, persistedCache, hostPolicy);
+		this.pointInTimeStorageTokenFetcher = getStorageToken;
 	}
-}
 
-function isPointInTimeDocumentServiceFactory(
-	factory: OdspDocumentServiceFactory,
-): factory is OdspDocumentServiceFactory & IPointInTimeDocumentServiceFactory {
-	return typeof factory.createPointInTimeDocumentService === "function";
+	/**
+	 * Creates a document service that materializes the document at the requested sequence number.
+	 *
+	 * @param resolvedUrl - The resolved ODSP {@link @fluidframework/driver-definitions#IResolvedUrl}.
+	 * @param targetSequenceNumber - The sequence number at which to materialize the document. See
+	 * {@link @fluidframework/container-loader#ILoadContainerToSequenceNumberProps.loadToSequenceNumber}.
+	 * @param logger - Optional {@link @fluidframework/core-interfaces#ITelemetryBaseLogger}.
+	 * @param clientIsSummarizer - Whether to apply summarizer policies and telemetry to the
+	 * underlying document services. Defaults to `false`.
+	 * @returns A read-only {@link @fluidframework/driver-definitions#IDocumentService} materialized
+	 * at the requested sequence number.
+	 */
+	public async createPointInTimeDocumentService(
+		resolvedUrl: IResolvedUrl,
+		targetSequenceNumber: number,
+		logger?: ITelemetryBaseLogger,
+		clientIsSummarizer?: boolean,
+	): Promise<IDocumentService> {
+		const { createPointInTimeDocumentService } = await import(
+			// eslint-disable-next-line import-x/no-internal-modules -- direct import keeps all PIT implementation behind one lazy boundary
+			/* webpackChunkName: "odspPointInTime" */ "./pointInTimeDriver/createPointInTimeDocumentService.js"
+		);
+		return createPointInTimeDocumentService({
+			resolvedUrl,
+			targetSequenceNumber,
+			logger,
+			clientIsSummarizer,
+			persistedCache: this.persistedCache,
+			getStorageToken: this.pointInTimeStorageTokenFetcher,
+			createDocumentService: async (url, odspLogger, cacheAndTracker, isSummarizer) =>
+				this.createDocumentServiceCore(url, odspLogger, cacheAndTracker, isSummarizer),
+		});
+	}
 }
 
 /**
@@ -52,6 +116,9 @@ function isPointInTimeDocumentServiceFactory(
  * @param hostPolicy - Host storage policy. When omitted, the default driver policies are used.
  * @returns An ODSP document service factory with point-in-time loading capability.
  *
+ * @deprecated Use {@link OdspDocumentServiceFactory} directly. This compatibility alias will be
+ * removed in a future major release.
+ *
  * @legacy @beta
  */
 export function getOdspPointInTimeDocumentServiceFactory(
@@ -60,18 +127,12 @@ export function getOdspPointInTimeDocumentServiceFactory(
 	persistedCache?: IPersistedCache,
 	hostPolicy?: HostStoragePolicy,
 ): IPointInTimeDocumentServiceFactory {
-	const factory = new OdspDocumentServiceFactory(
+	return new OdspDocumentServiceFactory(
 		getStorageToken,
 		getWebsocketToken,
 		persistedCache,
 		hostPolicy,
 	);
-	if (!isPointInTimeDocumentServiceFactory(factory)) {
-		throw new Error(
-			"The ODSP document service factory does not support point-in-time loading.",
-		);
-	}
-	return factory;
 }
 
 /**

@@ -65,7 +65,7 @@ export function getHashedDocumentId(driveId: string, itemId: string): Promise<st
 // @beta @legacy
 export function getLocatorFromOdspUrl(url: URL, requireFluidSignature?: boolean): OdspFluidDataStoreLocator | undefined;
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export function getOdspPointInTimeDocumentServiceFactory(getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined, persistedCache?: IPersistedCache, hostPolicy?: HostStoragePolicy): IPointInTimeDocumentServiceFactory;
 
 // @beta @legacy (undocumented)
@@ -151,8 +151,9 @@ export const OdcApiSiteOrigin = "https://my.microsoftpersonalcontent.com";
 export const OdcFileSiteOrigin = "https://1drv.ms";
 
 // @beta @legacy
-export class OdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
+export class OdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore implements IPointInTimeDocumentServiceFactory {
     constructor(getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined, persistedCache?: IPersistedCache, hostPolicy?: HostStoragePolicy);
+    createPointInTimeDocumentService(resolvedUrl: IResolvedUrl, targetSequenceNumber: number, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
 }
 
 // @beta @legacy
@@ -164,7 +165,6 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory, 
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
     protected createDocumentServiceCore(resolvedUrl: IResolvedUrl, odspLogger: ITelemetryBaseLogger, cacheAndTrackerArg?: ICacheAndTracker, clientIsSummarizer?: boolean): Promise<IDocumentService>;
-    readonly createPointInTimeDocumentService?: IPointInTimeDocumentServiceFactory["createPointInTimeDocumentService"];
     getRelayServiceSessionInfo(resolvedUrl: IResolvedUrl): Promise<ISocketStorageDiscovery | undefined>;
     readonly ILayerCompatDetails?: unknown;
     // (undocumented)
