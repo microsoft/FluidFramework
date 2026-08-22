@@ -73,6 +73,7 @@
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/counter": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
+		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/fluid-static": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/map-legacy": "npm:@fluidframework/map@^1.4.0",
