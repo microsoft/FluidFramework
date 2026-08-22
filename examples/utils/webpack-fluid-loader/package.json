@@ -143,8 +143,7 @@
 				"webpack"
 			],
 			"webpack": [
-				"^build:entrypoints:esm",
-				"^build:esm"
+				"^build:package:esm"
 			]
 		}
 	},

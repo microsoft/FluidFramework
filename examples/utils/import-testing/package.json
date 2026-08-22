@@ -84,28 +84,22 @@
 	"fluidBuild": {
 		"tasks": {
 			"build:cjs:crossPackage:node16": [
-				"^build:entrypoints:cjs",
-				"^build:cjs"
+				"^build:package:cjs"
 			],
 			"build:cjs:main": [
-				"^build:entrypoints:cjs",
-				"^build:cjs"
+				"^build:package:cjs"
 			],
 			"build:esm:crossPackage:bundler": [
-				"^build:entrypoints:esm",
-				"^build:esm"
+				"^build:package:esm"
 			],
 			"build:esm:crossPackage:node16": [
-				"^build:entrypoints:esm",
-				"^build:esm"
+				"^build:package:esm"
 			],
 			"build:esm:crossPackage:nodenext": [
-				"^build:entrypoints:esm",
-				"^build:esm"
+				"^build:package:esm"
 			],
 			"build:esm:main": [
-				"^build:entrypoints:esm",
-				"^build:esm"
+				"^build:package:esm"
 			],
 			"build:test:cjs": [
 				"build:cjs:crossPackage:node16",

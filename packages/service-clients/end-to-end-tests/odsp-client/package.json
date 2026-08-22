@@ -95,8 +95,7 @@
 	"fluidBuild": {
 		"tasks": {
 			"build:test:esm": [
-				"^build:entrypoints:esm",
-				"^build:esm",
+				"^build:package:esm",
 				"build:genver"
 			]
 		}

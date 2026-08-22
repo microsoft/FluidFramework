@@ -124,8 +124,7 @@
 	"fluidBuild": {
 		"tasks": {
 			"eslint": [
-				"^build:esm",
-				"^build:entrypoints:esm"
+				"^build:package:esm"
 			]
 		}
 	},
