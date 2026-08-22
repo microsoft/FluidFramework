@@ -187,6 +187,9 @@ describe("schematizeTree", () => {
 			isBranch(): boolean {
 				return true;
 			},
+			isView(): boolean {
+				return true;
+			},
 			hasRootSchema(): boolean {
 				return false;
 			},
@@ -217,7 +220,7 @@ describe("schematizeTree", () => {
 			isMissingEditsFrom(branch: unknown): never {
 				throw new Error("Function not implemented.");
 			},
-			history: undefined as unknown as TreeBranchHistory,
+			branchHistory: undefined as unknown as TreeBranchHistory,
 			dispose(): void {
 				throw new Error("Function not implemented.");
 			},

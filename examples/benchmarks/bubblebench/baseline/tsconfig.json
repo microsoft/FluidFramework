@@ -4,8 +4,11 @@
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "./lib",
-		"types": ["react", "jest", "puppeteer", "jest-environment-puppeteer", "expect-puppeteer"],
+		"types": ["react", "node"],
 		"exactOptionalPropertyTypes": false,
 	},
+	// Keep src-only here so the emitted layout (./lib/...) matches the package's
+	// expected output paths. Playwright transpiles tests and playwright.config.ts
+	// via its own TypeScript runner and doesn't need them in tsc's emit.
 	"include": ["src/**/*"],
 }

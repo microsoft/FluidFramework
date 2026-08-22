@@ -1,9 +1,9 @@
 name: "Devcontainer prebuild check"
 
-# The Standard Codespace prebuild uses "on configuration change" mode, which
+# The default AI-enabled Codespace prebuild uses "on configuration change" mode, which
 # only watches the root devcontainer.json and its Dockerfile. Nested profiles
 # run on schedules and do not require version bumps. This job prevents setup
-# script changes from leaving the Standard prebuild stale.
+# script changes from leaving the default prebuild stale.
 
 on:
   pull_request:
@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   check-prebuild-version:
-    name: Check Standard prebuild version bump
+    name: Check default prebuild version bump
     runs-on: ubuntu-latest
     steps:
       # release notes: https://github.com/actions/checkout/releases/tag/v6.0.0
@@ -25,7 +25,7 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
-      - name: Check if a Standard prebuild trigger was also modified
+      - name: Check if a default prebuild trigger was also modified
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
@@ -33,12 +33,12 @@ jobs:
           CHANGED_FILES=$(git diff --name-only "$BASE_SHA"..."$HEAD_SHA")
 
           if echo "$CHANGED_FILES" | grep -qE '^\.devcontainer/(devcontainer\.json|Dockerfile)$'; then
-            echo "The root devcontainer.json or Dockerfile was modified — the Standard prebuild will be triggered."
+            echo "The root devcontainer.json or Dockerfile was modified — the default AI-enabled prebuild will be triggered."
           else
             echo "::error::Setup scripts in scripts/codespace-setup/ were modified but the root devcontainer.json or Dockerfile was not updated."
             echo ""
             echo "Bump the // prebuild-version: N comment in .devcontainer/devcontainer.json"
-            echo "to ensure the Standard prebuild is regenerated."
+            echo "to ensure the default AI-enabled prebuild is regenerated."
             echo "Nested Codespace profiles run on schedules and do not use version-bump comments."
             exit 1
           fi

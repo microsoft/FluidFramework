@@ -118,7 +118,7 @@ async function generateReleaseReport(
 	releaseGroup: ReleaseGroup | undefined,
 	log: Logger,
 ): Promise<void> {
-	const ignorePackageList = new Set(["@types/jest-environment-puppeteer"]);
+	const ignorePackageList = new Set<string>();
 
 	await updateReportVersions(releaseReport, ignorePackageList, version, releaseGroup, log);
 

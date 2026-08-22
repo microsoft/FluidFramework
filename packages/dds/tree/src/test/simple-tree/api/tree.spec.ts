@@ -521,29 +521,29 @@ describe("simple-tree tree", () => {
 			const view = getView(config);
 			view.initialize(1);
 
-			const revision1 = view.history.getHeadCommit()?.revision;
+			const revision1 = view.branchHistory.getHeadCommit()?.revision;
 			assert(revision1 !== undefined, "revision should be defined");
 			view.root = 2;
-			const revision2 = view.history.getHeadCommit()?.revision;
+			const revision2 = view.branchHistory.getHeadCommit()?.revision;
 			assert(revision2 !== undefined, "revision should be defined");
 			view.root = 3;
 			view.root = 4;
 
 			// Consistency check
-			assert.equal(view.history.commitCount, 4);
+			assert.equal(view.branchHistory.commitCount, 4);
 
 			// Act
 			view.rewindTo(revision2);
 
 			// Verify
-			assert.equal(view.history.commitCount, 2);
+			assert.equal(view.branchHistory.commitCount, 2);
 			assert.equal(view.root, 2);
 
 			// Act
 			view.rewindTo(revision1);
 
 			// Verify
-			assert.equal(view.history.commitCount, 1);
+			assert.equal(view.branchHistory.commitCount, 1);
 			assert.equal(view.root, 1);
 		});
 
@@ -553,18 +553,18 @@ describe("simple-tree tree", () => {
 			const view = getView(config);
 			view.initialize(1);
 
-			const revision1 = view.history.getHeadCommit()?.revision;
+			const revision1 = view.branchHistory.getHeadCommit()?.revision;
 			assert(revision1 !== undefined, "revision should be defined");
 			view.root = 2;
 
 			view.rewindTo(revision1);
-			assert.equal(view.history.commitCount, 1);
+			assert.equal(view.branchHistory.commitCount, 1);
 
 			// Act
 			view.root = 42;
 
 			// Verify
-			assert.equal(view.history.commitCount, 2);
+			assert.equal(view.branchHistory.commitCount, 2);
 			assert.equal(view.root, 42);
 		});
 
@@ -573,7 +573,7 @@ describe("simple-tree tree", () => {
 			const config = new TreeViewConfiguration({ schema: schema.number });
 			const view = getView(config);
 			view.initialize(1);
-			const revision1 = view.history.getHeadCommit()?.revision;
+			const revision1 = view.branchHistory.getHeadCommit()?.revision;
 			assert(revision1 !== undefined, "revision should be defined");
 			view.root = 2;
 
@@ -588,7 +588,7 @@ describe("simple-tree tree", () => {
 
 			// Verify
 			view.checkout.switchBranch(branchBeforeRewind);
-			assert.equal(view.history.commitCount, 2);
+			assert.equal(view.branchHistory.commitCount, 2);
 			assert.equal(view.root, 2);
 		});
 	});
@@ -600,40 +600,40 @@ describe("simple-tree tree", () => {
 			const view = getView(config);
 			view.initialize(1);
 
-			const revision1 = view.history.getHeadCommit()?.revision;
+			const revision1 = view.branchHistory.getHeadCommit()?.revision;
 			assert(revision1 !== undefined, "revision should be defined");
 			view.root = 2;
-			const revision2 = view.history.getHeadCommit()?.revision;
+			const revision2 = view.branchHistory.getHeadCommit()?.revision;
 			assert(revision2 !== undefined, "revision should be defined");
 			view.root = 3;
 			view.root = 4;
 
 			// Consistency check
-			assert.equal(view.history.commitCount, 4);
+			assert.equal(view.branchHistory.commitCount, 4);
 
 			// Act
 			view.revertTo(revision2);
 
-			const revision5 = view.history.getHeadCommit()?.revision;
+			const revision5 = view.branchHistory.getHeadCommit()?.revision;
 			assert(revision5 !== undefined, "revision should be defined");
 
 			// Verify
 			assert.equal(view.root, 2);
-			assert.equal(view.history.commitCount, 5);
+			assert.equal(view.branchHistory.commitCount, 5);
 
 			// Act
 			view.revertTo(revision1);
 
 			// Verify
 			assert.equal(view.root, 1);
-			assert.equal(view.history.commitCount, 6);
+			assert.equal(view.branchHistory.commitCount, 6);
 
 			// Act
 			view.revertTo(revision5);
 
 			// Verify
 			assert.equal(view.root, 2);
-			assert.equal(view.history.commitCount, 7);
+			assert.equal(view.branchHistory.commitCount, 7);
 		});
 
 		it("is a no-op when given the revision of the head commit", () => {
@@ -642,7 +642,7 @@ describe("simple-tree tree", () => {
 			const view = getView(config);
 			view.initialize(1);
 			view.root = 2;
-			const revision = view.history.getHeadCommit()?.revision;
+			const revision = view.branchHistory.getHeadCommit()?.revision;
 			assert(revision !== undefined, "revision should be defined");
 
 			// Act
@@ -650,7 +650,7 @@ describe("simple-tree tree", () => {
 
 			// Verify
 			assert.equal(view.root, 2);
-			assert.equal(view.history.commitCount, 2);
+			assert.equal(view.branchHistory.commitCount, 2);
 		});
 
 		it("produces a commit which can be reverted", () => {
@@ -658,7 +658,7 @@ describe("simple-tree tree", () => {
 			const config = new TreeViewConfiguration({ schema: schema.number });
 			const view = getView(config);
 			view.initialize(1);
-			const revision1 = view.history.getHeadCommit()?.revision;
+			const revision1 = view.branchHistory.getHeadCommit()?.revision;
 			assert(revision1 !== undefined, "revision should be defined");
 			view.root = 2;
 			view.root = 3;
@@ -675,25 +675,25 @@ describe("simple-tree tree", () => {
 
 			assert.equal(view.root, 1);
 			assert.equal(revertibles.length, 1);
-			assert.equal(view.history.commitCount, 4);
+			assert.equal(view.branchHistory.commitCount, 4);
 
 			// Act
 			revertibles[0]?.revert();
 
 			// Verify
 			assert.equal(view.root, 3);
-			assert.equal(view.history.commitCount, 5);
+			assert.equal(view.branchHistory.commitCount, 5);
 		});
 
 		it("throws when the revision is not on the branch", () => {
 			const config = new TreeViewConfiguration({ schema: schema.number });
 			const view = getView(config);
 			view.initialize(1);
-			const revision = view.history.getHeadCommit()?.revision;
+			const revision = view.branchHistory.getHeadCommit()?.revision;
 			assert(revision !== undefined, "revision should be defined");
 			const fork = view.fork();
 			fork.root = 2;
-			const forkRevision = fork.history.getHeadCommit()?.revision;
+			const forkRevision = fork.branchHistory.getHeadCommit()?.revision;
 			assert(forkRevision !== undefined, "revision should be defined");
 
 			assert.throws(
@@ -712,7 +712,7 @@ describe("simple-tree tree", () => {
 			viewA.initialize(1);
 			provider.synchronizeMessages();
 
-			const revision1 = viewA.history.getHeadCommit()?.revision;
+			const revision1 = viewA.branchHistory.getHeadCommit()?.revision;
 			assert(revision1 !== undefined, "revision should be defined");
 			viewA.root = 2;
 			provider.synchronizeMessages();
@@ -756,7 +756,7 @@ describe("simple-tree tree", () => {
 			viewA.initialize({ foo: 1, bar: 1 });
 			provider.synchronizeMessages();
 
-			const revision1 = viewA.history.getHeadCommit()?.revision;
+			const revision1 = viewA.branchHistory.getHeadCommit()?.revision;
 			assert(revision1 !== undefined, "revision should be defined");
 			viewA.root.foo = 2;
 			provider.synchronizeMessages();

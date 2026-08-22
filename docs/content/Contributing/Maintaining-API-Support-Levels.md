@@ -27,7 +27,10 @@ Packages using standard build tooling require two manual configurations:
      	},
     ```
 
-2. For packages with "./legacy" APIs, "api-extractor/api-extractor.current.json"'s "mainEntryPointFilePath" value should be set to the least stable .d.ts types path in use. E.g. this preference order: `"<projectFolder>/lib/alpha.d.ts"`, `"<projectFolder>/lib/beta.d.ts"`, and finally `"<projectFolder>/lib/public.d.ts"`. Eventually, this configuration could be automated via policy checker. (Packages without "./legacy" will reference `"<projectFolder>/lib/index.d.ts"` in "api-extractor.json".)
+2. For packages with "./legacy" APIs, "api-extractor/api-extractor-report.current.json"'s "mainEntryPointFilePath" value should be set to the least stable .d.ts types path in use.
+   E.g. this preference order: `"<projectFolder>/lib/alpha.d.ts"`, `"<projectFolder>/lib/beta.d.ts"`, and finally `"<projectFolder>/lib/public.d.ts"`.
+   Eventually, this configuration could be automated via policy checker.
+   All packages use "api-extractor/api-extractor-model.json" to generate the complete API model.
 
 ## Automation
 

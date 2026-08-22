@@ -4,7 +4,7 @@
  */
 
 export {
-	typeNameSymbol,
+	schemaIdentifierBrand,
 	typeSchemaSymbol,
 	contentSchemaSymbol,
 	type WithType,
@@ -159,8 +159,10 @@ export {
 	type InsertableObjectFromSchemaRecordAlphaUnsafe,
 	type TreeViewAlpha,
 	type TreeViewBeta,
+	type UntypedTreeView,
 	type TreeBranch,
 	type TreeBranchAlpha,
+	type UntypedTreeViewAlpha,
 	type TreeBranchEvents,
 	type TreeBranchCommitMetadata,
 	type TreeBranchHistory,

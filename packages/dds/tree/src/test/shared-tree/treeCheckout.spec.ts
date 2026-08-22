@@ -52,7 +52,7 @@ import {
 	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
 	type TransactionVoidResult,
-	type TreeBranch,
+	type UntypedTreeView,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { stringSchema } from "../../simple-tree/leafNodeSchema.js";
@@ -865,14 +865,23 @@ describe("sharedTreeView", () => {
 
 			view.runTransaction(() => {
 				view.root.insertAtEnd("A");
+				view.root.insertAtEnd("B");
 			});
 
+			// Verify that the fork was created
 			assert.equal(forks.length, 1);
+			const fork = forks[0];
+			assert.deepEqual(fork.disposed, false);
+			assert.deepEqual(fork.root, ["A", "B"]);
 
-			assert.deepEqual(forks[0].disposed, false);
-			assert.deepEqual(forks[0].root, ["A"]);
+			// Verify that the fork can be modified independently of the parent view
+			fork.root.insertAtEnd("C");
+			assert.deepEqual(fork.root, ["A", "B", "C"]);
+			assert.deepEqual(view.root, ["A", "B"]);
 
-			assert.deepEqual(view.root, ["A"]);
+			// Verify that the fork can be merged back into the parent view
+			view.merge(fork);
+			assert.deepEqual(view.root, ["A", "B", "C"]);
 		});
 
 		/**
@@ -1143,7 +1152,7 @@ describe("sharedTreeView", () => {
 			);
 			view1.initialize([]);
 
-			const commitBeforeFork = checkout.history.getHeadCommit();
+			const commitBeforeFork = checkout.branchHistory.getHeadCommit();
 			assert.notEqual(commitBeforeFork, undefined);
 
 			const fork = checkout.fork();
@@ -1151,13 +1160,13 @@ describe("sharedTreeView", () => {
 			view1.root.insertAtEnd("A");
 			view1.root.insertAtEnd("B");
 
-			const commitAfterEdits = checkout.history.getHeadCommit();
+			const commitAfterEdits = checkout.branchHistory.getHeadCommit();
 			assert.notEqual(commitAfterEdits, undefined);
 			assert.notEqual(commitAfterEdits?.revision, commitBeforeFork?.revision);
 
 			checkout.switchBranch(fork.mainBranch);
 
-			const headCommitAfterSwitch = checkout.history.getHeadCommit();
+			const headCommitAfterSwitch = checkout.branchHistory.getHeadCommit();
 			assert.notEqual(headCommitAfterSwitch, undefined);
 			assert.equal(headCommitAfterSwitch?.revision, commitBeforeFork?.revision);
 		});
@@ -1702,10 +1711,10 @@ describe("sharedTreeView", () => {
 		});
 
 		it("dispose", () => {
-			let branch: TreeBranch | undefined;
+			let view: UntypedTreeView | undefined;
 			expectErrorDuringEdit({
-				setup: (view) => (branch = view.fork()), // Create a fork of the view because the main view can't be disposed
-				duringEdit: (view) => view.dispose(),
+				setup: (mainView) => (view = mainView.fork()), // Create a fork of the view because the main view can't be disposed
+				duringEdit: (forkedView) => forkedView.dispose(),
 				error: "Disposing a view is forbidden during a change event callback",
 			});
 		});
