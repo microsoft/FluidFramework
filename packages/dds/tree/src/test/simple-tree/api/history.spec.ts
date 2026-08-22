@@ -11,7 +11,7 @@ import { FluidClientVersion, FormatValidatorNoOp } from "../../../codec/index.js
 import { rootFieldKey } from "../../../core/index.js";
 import { fieldBatchCodecBuilder } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { TreeBranchHistoryImpl } from "../../../shared-tree/history.js";
+import { DefaultTreeBranchHistory } from "../../../shared-tree/history.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { SharedTreeChangeFamily } from "../../../shared-tree/sharedTreeChangeFamily.js";
 import { SharedTreeBranch } from "../../../shared-tree-core/index.js";
@@ -67,7 +67,7 @@ describe("TreeBranchHistoryImpl", () => {
 	describe("commitCount", () => {
 		it("size reflects the number of commits in the branch", () => {
 			const branch = createBranch();
-			const history = new TreeBranchHistoryImpl(branch, testIdCompressor);
+			const history = new DefaultTreeBranchHistory(branch, testIdCompressor);
 			setRootValue(branch, 3);
 			const sizeAfterInit = history.commitCount;
 			assert(sizeAfterInit > 0);
@@ -85,8 +85,8 @@ describe("TreeBranchHistoryImpl", () => {
 			setRootValue(branchA, 3);
 			const branchB = branchA.fork();
 
-			const historyA = new TreeBranchHistoryImpl(branchA, testIdCompressor);
-			const historyB = new TreeBranchHistoryImpl(branchB, testIdCompressor);
+			const historyA = new DefaultTreeBranchHistory(branchA, testIdCompressor);
+			const historyB = new DefaultTreeBranchHistory(branchB, testIdCompressor);
 
 			const initialSize = historyA.commitCount;
 			assert.equal(historyB.commitCount, initialSize);
@@ -105,7 +105,7 @@ describe("TreeBranchHistoryImpl", () => {
 		it("updates when branch ancestry is trimmed", () => {
 			const branchTrimmer = createEmitter<BranchTrimmingEvents>();
 			const branch = createBranch(branchTrimmer);
-			const history = new TreeBranchHistoryImpl(branch, testIdCompressor);
+			const history = new DefaultTreeBranchHistory(branch, testIdCompressor);
 
 			setRootValue(branch, 3);
 			const commit1 = branch.getHead().revision;
@@ -126,7 +126,7 @@ describe("TreeBranchHistoryImpl", () => {
 			setRootValue(trackedBranch, 1);
 			const sourceBranch = trackedBranch.fork();
 
-			const history = new TreeBranchHistoryImpl(trackedBranch, testIdCompressor);
+			const history = new DefaultTreeBranchHistory(trackedBranch, testIdCompressor);
 			assert.equal(history.commitCount, 1);
 
 			setRootValue(sourceBranch, 2);
@@ -144,7 +144,7 @@ describe("TreeBranchHistoryImpl", () => {
 
 			const trackedBranch = baseBranch.fork();
 			const sourceBranch = baseBranch.fork();
-			const history = new TreeBranchHistoryImpl(trackedBranch, testIdCompressor);
+			const history = new DefaultTreeBranchHistory(trackedBranch, testIdCompressor);
 
 			setRootValue(trackedBranch, 2);
 			setRootValue(sourceBranch, 3);
@@ -162,7 +162,7 @@ describe("TreeBranchHistoryImpl", () => {
 	describe("getHeadCommit", () => {
 		it("returns metadata for the current head commit", () => {
 			const branch = createBranch();
-			const history = new TreeBranchHistoryImpl(branch, testIdCompressor);
+			const history = new DefaultTreeBranchHistory(branch, testIdCompressor);
 
 			const beforeInit = history.getHeadCommit();
 			assert.equal(beforeInit, undefined);
@@ -185,8 +185,8 @@ describe("TreeBranchHistoryImpl", () => {
 			setRootValue(branchA, 3);
 			const branchB = branchA.fork();
 
-			const historyA = new TreeBranchHistoryImpl(branchA, testIdCompressor);
-			const historyB = new TreeBranchHistoryImpl(branchB, testIdCompressor);
+			const historyA = new DefaultTreeBranchHistory(branchA, testIdCompressor);
+			const historyB = new DefaultTreeBranchHistory(branchB, testIdCompressor);
 
 			const headA = historyA.getHeadCommit();
 			const headB = historyB.getHeadCommit();
@@ -206,7 +206,7 @@ describe("TreeBranchHistoryImpl", () => {
 
 		it("exposes ancestor commits via the parent field", () => {
 			const branch = createBranch();
-			const history = new TreeBranchHistoryImpl(branch, testIdCompressor);
+			const history = new DefaultTreeBranchHistory(branch, testIdCompressor);
 			setRootValue(branch, 3);
 			const afterInit = history.getHeadCommit();
 			assert(afterInit !== undefined);

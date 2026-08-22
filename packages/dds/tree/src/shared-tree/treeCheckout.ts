@@ -120,7 +120,7 @@ import {
 } from "../util/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
-import { TreeBranchHistoryImpl } from "./history.js";
+import { DefaultTreeBranchHistory } from "./history.js";
 import { SharedTreeChangeEnricher } from "./sharedTreeChangeEnricher.js";
 import type { SharedTreeChangeProcessingContext } from "./sharedTreeChangeFamily.js";
 import {
@@ -568,7 +568,7 @@ export class TreeCheckout implements ITreeCheckout {
 
 	readonly #events = createEmitter<CheckoutEvents>();
 	public events: Listenable<CheckoutEvents> = this.#events;
-	private _branchHistory?: TreeBranchHistoryImpl;
+	private _branchHistory?: DefaultTreeBranchHistory;
 
 	public constructor(
 		private branch: SharedTreeBranch<
@@ -596,8 +596,8 @@ export class TreeCheckout implements ITreeCheckout {
 		this.registerForBranchEvents();
 	}
 
-	public get branchHistory(): TreeBranchHistoryImpl {
-		this._branchHistory ??= new TreeBranchHistoryImpl(this.branch, this.idCompressor);
+	public get branchHistory(): DefaultTreeBranchHistory {
+		this._branchHistory ??= new DefaultTreeBranchHistory(this.branch, this.idCompressor);
 		return this._branchHistory;
 	}
 

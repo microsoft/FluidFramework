@@ -44,7 +44,7 @@ class LazyTreeBranchCommitMetadata implements TreeBranchCommitMetadata {
 	}
 }
 
-export class TreeBranchHistoryImpl implements TreeBranchHistory {
+export class DefaultTreeBranchHistory implements TreeBranchHistory {
 	private readonly commitCounter: BranchCommitCounter<
 		SharedTreeEditBuilder,
 		SharedTreeChange,
