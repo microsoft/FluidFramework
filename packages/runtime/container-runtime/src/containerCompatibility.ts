@@ -45,7 +45,7 @@ export type RuntimeOptionsAffectingDocSchema = Omit<
 	| "summaryOptions"
 	| "stagingModeAutoFlushThreshold"
 	| "disableSchemaUpgrade"
-	| "enableSingleFileCreateRoundTrip"
+	| "enableSingleRoundTripFileCreate"
 >;
 
 /**

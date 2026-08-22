@@ -143,30 +143,73 @@ there's no contradiction between them:
    fetchable on demand via the loading-group snapshot API, or (before attach, or for the client
    that created it) served directly from the bytes already resident in memory.
 
-### Known gap: no incremental reuse yet
+### Known gap: no incremental reuse yet (while the original client stays live)
 
 Because Phase 1 is scoped to "create-and-exit" (see [Implementation status](#implementation-status)),
 `BlobManager.summarize()` regenerates every embedded blob's subtree from scratch on every call —
 there is no child summarizer-node tracking a "this blob was already captured in an acked summary,
 reuse it as a handle" state. This is fine for Phase 1: the client that creates the file calls
 `createSummary()` (via `container.attach()`) exactly once and then the session ends. It only
-becomes a real gap once a client keeps running past attach and produces further tracked summaries
-of its own — that's Phase 2 territory (see the discussion in the implementation history/PR); giving
-each embedded blob its own child summarizer node (mirroring how data stores get one via
-`getCreateChildSummarizerNodeFn`/`createChild`) is the natural fix, but doing so would force
-`BlobManager.summarize()` to become `async`, which cascades into `ContainerRuntime.createSummary()`
-— a public, synchronous API called directly and synchronously by `container-loader`
-(`container.ts`) specifically *because* it must observe a single consistent point-in-time snapshot
-of runtime state (an `async` `createSummary()` could observe a torn/partial state across an `await`
-point). Any fix for this gap has to preserve that synchronicity, e.g. by tracking a lightweight
-"already captured, reuse a handle" flag per blob directly inside `BlobManager` (blobs are immutable
-once created, so this doesn't need anywhere near the full generality `SummarizerNode` provides for
-mutable DDS content) rather than reusing `SummarizerNode` machinery wholesale.
+becomes a real gap once the *same, still-live* client keeps running past attach and produces
+further tracked summaries of its own — that's Phase 2 territory (see the discussion in the
+implementation history/PR); giving each embedded blob its own child summarizer node (mirroring how
+data stores get one via `getCreateChildSummarizerNodeFn`/`createChild`) is the natural fix, but
+doing so would force `BlobManager.summarize()` to become `async`, which cascades into
+`ContainerRuntime.createSummary()` — a public, synchronous API called directly and synchronously by
+`container-loader` (`container.ts`) specifically *because* it must observe a single consistent
+point-in-time snapshot of runtime state (an `async` `createSummary()` could observe a torn/partial
+state across an `await` point). Any fix for this gap has to preserve that synchronicity, e.g. by
+tracking a lightweight "already captured, reuse a handle" flag per blob directly inside
+`BlobManager` (blobs are immutable once created, so this doesn't need anywhere near the full
+generality `SummarizerNode` provides for mutable DDS content) rather than reusing `SummarizerNode`
+machinery wholesale.
+
+Note this gap is strictly about the *original* client re-summarizing its own in-memory state
+across repeated calls without ever reloading. It is unrelated to (and much less severe than) the
+reload-correctness bug described next, which is already fixed.
+
+### Fixed bug: any freshly-loaded client used to lose embedded blobs entirely
+
+Earlier revisions of this design tracked embedded blobs purely in an in-memory
+`embeddedDetachedBlobLocalIds: Set<string>`, populated only inside `createBlobDetached`. Nothing
+ever restored that set (or the blobs' bytes) when a `BlobManager` was constructed fresh from a
+snapshot — which happens on every ordinary reload, and for every summarizer client. The very next
+summary produced by such a freshly-loaded client would therefore omit the
+`.embeddedDetachedBlobs` subtree entirely, silently and permanently dropping those blobs from every
+future summary. This was a real data-loss bug, not just an efficiency gap, and would have made the
+feature unsafe even for the narrow "create and immediately exit" scenario, since that scenario
+still typically involves at least one reload (by the same or a different client) to keep working
+with the container afterward.
+
+**The fix**: by the time any snapshot exists that contains the `.embeddedDetachedBlobs` subtree,
+attach has already completed and the service has assigned a real storage id to each embedded
+blob's `content` node (the `groupId` on that subtree only defers *fetching the bytes*, not the
+service's assignment of an id to the blob — the subtree/blob-id shape is present in the initial
+snapshot fetch regardless of `groupId`). So on load, `loadV1()`
+(`blobManagerSnapSum.ts`) now reads each embedded blob's `content` blob id directly from the
+snapshot tree and folds it into the ordinary redirect table as a normal (non-identity)
+`localId -> storageId` entry — exactly as if it had been an ordinary attachment blob all along.
+This "graduates" the blob into standard attachment-blob accounting with **no new state and no new
+schema**: `getBlob()`/`hasBlob()` already handle redirect-table entries, `summarize()` already
+emits ordinary `Attachment` nodes for them (which are naturally deduplicated/incremental, since
+they're addressed by storage id and unchanged `Attachment` nodes collapse to handles across
+summaries), `getGCData()` already accounts for them, and `deleteSweepReadyNodes()` already knows how
+to remove them once unreferenced. `embeddedDetachedBlobLocalIds` now only ever holds ids for blobs
+created *this session*, before their first attach round trip completes.
+
+> **Open validation item**: this fix relies on the assumption that the service (ODSP) actually
+> assigns a durable, retrievable storage id to blob content living inside a `groupId`-tagged
+> subtree of the attach summary, and that this id remains valid/readable via the ordinary blob-read
+> path after the initial (grouped, deferred) fetch. This has not yet been validated against a real
+> ODSP endpoint — only against the mock storage used in unit tests. This needs to be verified
+> end-to-end against ODSP before this feature can be considered safe to ship, since if that
+> assumption doesn't hold, the redirect-table-based fix above would need to be revisited (e.g.
+> falling back to re-embedding on every summary, or some other service-specific accommodation).
 
 ## Implementation status
 
 Phase 1 (as described above) is implemented, gated behind a new, `@experimental`-tagged
-`ContainerRuntimeOptions` flag: **`enableSingleFileCreateRoundTrip`**.
+`ContainerRuntimeOptions` flag: **`enableSingleRoundTripFileCreate`**.
 
 * `BlobManager.createBlobDetached` (`blobManager.ts`), when the flag is on, never calls
   `storage.createBlob()` (so `IDetachedBlobStorage` never gets populated, and
@@ -186,14 +229,21 @@ Phase 1 (as described above) is implemented, gated behind a new, `@experimental`
 * `hasBlob()` and `getGCData()` were updated to also account for
   `embeddedDetachedBlobLocalIds`, so reachability/GC treats these exactly like any other blob
   `BlobManager` knows about.
+* `loadV1()` (`blobManagerSnapSum.ts`) reads the `.embeddedDetachedBlobs` subtree (if present) out
+  of the base snapshot and folds each blob's `content` storage id into the ordinary redirect table
+  on load, graduating it into standard attachment-blob accounting from then on — see
+  [Fixed bug: any freshly-loaded client used to lose embedded blobs entirely](#fixed-bug-any-freshly-loaded-client-used-to-lose-embedded-blobs-entirely).
 * The new option is excluded from `RuntimeOptionsAffectingDocSchema`
   (`containerCompatibility.ts`) — it changes only local, detached-only upload behavior and has no
   effect on the shape of documents produced, so it doesn't participate in doc-schema compat
   negotiation.
-* Test coverage: `src/test/blobs/blobManager.spec.ts`, `describe("enableSingleFileCreateRoundTrip")` —
+* Test coverage: `src/test/blobs/blobManager.spec.ts`, `describe("enableSingleRoundTripFileCreate")` —
   verifies no detached-storage upload occurs, the blob is still readable via `getBlob()`, the
-  summary contains the new subtree keyed by local id with `SummaryType.Blob` content, and no
-  `SummaryType.Attachment` node is produced for it.
+  summary contains the new subtree keyed by local id with `SummaryType.Blob` content, no
+  `SummaryType.Attachment` node is produced for it, and (new) that a freshly-loaded `BlobManager`
+  continues to see the blob as an ordinary attachment blob across further summaries, and correctly
+  drops it once unreferenced/swept.
+
 
 This required **zero changes** to `container-loader` or any driver package, confirming the design
 conclusion above.
