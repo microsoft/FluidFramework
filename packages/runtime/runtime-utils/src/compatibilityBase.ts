@@ -165,11 +165,14 @@ export function getConfigForMinVersionForCollabIterable<T>(
 	minVersionForCollab: OldestSupportedClientVersion,
 	entries: Iterable<readonly [MinimumMinorSemanticVersion | OldestSupportedClientVersion, T]>, // [[typeof lowestMinVersionForCollab, T], ...[OldestSupportedClientVersion, T][]],
 ): T {
-	// Validate and strongly type the versions from the configMap.
+	// Validate and strongly type the versions from the configMap. configMap keys may describe defaults for
+	// versions later than the current package version (e.g. to prepare ahead of a future major release), so we
+	// don't enforce the upper-bound check here.
+	validateMinimumVersionForCollab(minVersionForCollab);
 	const versions: [OldestSupportedClientVersion, T][] = Array.from(
 		entries,
 		([version, value]) => {
-			validateMinimumVersionForCollab(version);
+			validateConfigMapKeyVersion(version);
 			return [version, value];
 		},
 	);
@@ -297,6 +300,27 @@ export function validateMinimumVersionForCollab(
 				`It must be in a valid semver format, at least ${lowestMinVersionForCollab}, ` +
 				`and less than or equal to the current package version ${cleanedPackageVersion}. ` +
 				`Details: { isValidSemver: ${isValidSemver}, isGteLowestMinVersion: ${isGteLowestMinVersion}, isLtePkgVersion: ${isLtePkgVersion} }`,
+		);
+	}
+}
+
+/**
+ * Like {@link validateMinimumVersionForCollab}, but without the upper-bound check against the current package
+ * version. Used for configMap keys, which are allowed to describe defaults for future versions (e.g. an upcoming
+ * major release) ahead of that version being released, since the `minVersionForCollab` used to look them up is
+ * separately bounded to the current package version and so can never select a future entry prematurely.
+ */
+function validateConfigMapKeyVersion(
+	semanticVersion: string,
+): asserts semanticVersion is OldestSupportedClientVersion {
+	const minVersionForCollab = semanticVersion as OldestSupportedClientVersion;
+	const { isValidSemver, isGteLowestMinVersion } =
+		checkValidMinVersionForCollabVerbose(minVersionForCollab);
+	if (!(isValidSemver && isGteLowestMinVersion)) {
+		throw new UsageError(
+			`Version ${minVersionForCollab} is not a valid configMap key version. ` +
+				`It must be in a valid semver format and at least ${lowestMinVersionForCollab}. ` +
+				`Details: { isValidSemver: ${isValidSemver}, isGteLowestMinVersion: ${isGteLowestMinVersion} }`,
 		);
 	}
 }
