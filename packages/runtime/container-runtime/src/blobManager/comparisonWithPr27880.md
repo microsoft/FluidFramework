@@ -108,28 +108,38 @@ will:
 ## The "single shared tree" vs "one subtree per blob" trade-off
 
 PR #27880 puts every detached blob under one shared subtree (`.blobs/.detached`) with a single
-shared `groupId`. This PR instead gives each blob its own subtree with its own `groupId`. Both are
-viable designs for the *first* summary; the difference shows up in two places:
+shared `groupId`. This PR instead gives each blob its own subtree with its own `groupId`.
 
-1. **Deferred-fetch granularity.** Because PR #27880's blobs share one `groupId`, the first time
-   *any* of them is needed (or during a detached-container rehydrate, which pulls the whole
-   `.detached` tree by design), the loading-group fetch for that shared group returns *all*
-   detached blobs' content together — there's no way to fetch just one without also pulling its
-   siblings' bytes. This PR's per-blob `groupId` avoids that coupling: each blob is independently
-   fetchable. This matters more for the *deferred/on-demand* fetch path (before any graduation has
-   happened) than for the steady state after attach, where reads go through the ordinary
-   single-blob `readBlob(storageId)` call regardless of design.
-2. **Post-attach representation.** PR #27880's blobs never leave the shared tree/base64
-   representation, so this coupling is permanent. This PR's blobs graduate into ordinary,
-   independently-addressed attachment blobs after the first load, so the per-blob-subtree structure
-   (and its independent fetch granularity) only matters transiently, before that graduation happens.
+**Correction after tracing the actual read paths**: an earlier draft of this document claimed the
+shared `groupId` causes all detached blobs' content to be fetched together over the network the
+first time any one of them is needed. That claim was checked against the code and does not hold in
+the cases that matter most:
 
-This is a real, legitimate trade-off (fewer subtrees / less structural overhead vs. finer fetch
-granularity), not a correctness difference — and importantly, it's a trade-off this PR's design
-could adopt later without a wire-format rewrite: switching to a single shared subtree/groupId would
-only require changing what `summarize()`/`loadV1()` do with that subtree, not redesigning the
-overall approach. This is worth prioritizing only if the additional per-blob-subtree overhead turns
-out to matter in practice.
+* **Attached, steady-state reads** (the case relevant to a live, already-attached document): PR
+  #27880's `getBlob()` calls `storage.readBlob(storageId)` for exactly one blob at a time — the
+  shared `groupId` is not consulted at all in this path, and there is no "fetch the whole group"
+  network call here. This is identical in granularity to this PR's per-blob `readBlob()` calls
+  after graduation.
+* The **only** place all of a client's detached blobs' content is actually loaded together is the
+  `BlobManager` constructor's `attachState === AttachState.Detached` branch: when *rehydrating* a
+  still-detached container (`rehydrateDetachedContainerFromSnapshot`), it eagerly reads every entry
+  in `.detached` via a batched `Promise.all` at construction time, rather than lazily on first
+  access. But while detached, `storage.readBlob()` here resolves against the rehydrate payload's
+  own local blob map (or an in-memory equivalent) — not a real network round trip to a service — so
+  this is an **eager-vs-lazy local hydration choice**, not a network-cost penalty caused by sharing
+  one `groupId`. A lazier implementation of the same shared-tree design (decode-on-first-access)
+  could avoid this eagerness without needing per-blob subtrees/groupIds at all.
+
+So the two designs are not distinguished by network-fetch granularity in the cases examined so far.
+The genuine, verifiable difference is structural: fewer subtrees/less summary-tree overhead (shared
+tree) vs. independently addressable subtrees (per-blob groupId) — which matters mainly for how
+cheaply an individual blob's entry can be added/removed from the tree across summaries, not for how
+its bytes are fetched. PR #27880's plain-blob-entries-in-one-shared-tree structure demonstrates that
+per-blob subtrees are not required for cheap incremental add/remove either — a flat, shared tree
+with directly-keyed entries supports the same. This PR's per-blob-subtree structure could be
+switched to a shared-tree structure later without a wire-format rewrite, if the reduced tree
+overhead turns out to matter; this is a lower-priority follow-up than the correctness gaps
+identified elsewhere in this document.
 
 ## Rehydrate gap in this PR's design
 
