@@ -22,10 +22,10 @@ import {
 	getGCNodePathFromLocalId,
 	type IBlobManagerLoadInfo,
 } from "../../blobManager/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
 import {
 	embeddedBlobContentBlobName,
 	embeddedBlobsTreeName,
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../blobManager/blobManagerSnapSum.js";
 
 import {
@@ -110,12 +110,12 @@ for (const createBlobPayloadPending of [false, true]) {
 				);
 			});
 
-			describe("enableSingleRoundTripAttachWithBlobs", () => {
+			describe("enableSingleFileCreateRoundTrip", () => {
 				it("Does not upload to detached storage, and embeds the blob bytes directly in the summary", async () => {
 					const { mockBlobStorage, blobManager } = createTestMaterial({
 						attached: false,
 						createBlobPayloadPending,
-						enableSingleRoundTripAttachWithBlobs: true,
+						enableSingleFileCreateRoundTrip: true,
 					});
 					const handle = await blobManager.createBlob(textToBlob("hello"));
 					const { localId } = unpackHandle(handle);
@@ -124,7 +124,7 @@ for (const createBlobPayloadPending of [false, true]) {
 					assert.strictEqual(
 						mockBlobStorage.blobsCreated,
 						0,
-						"Should not upload to detached storage when enableSingleRoundTripAttachWithBlobs is enabled",
+						"Should not upload to detached storage when enableSingleFileCreateRoundTrip is enabled",
 					);
 
 					assert(blobManager.hasBlob(localId));

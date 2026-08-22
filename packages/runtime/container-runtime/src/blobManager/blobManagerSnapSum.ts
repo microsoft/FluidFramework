@@ -112,7 +112,7 @@ const summarizeV1 = (
 	}
 
 	if (embeddedDetachedBlobs !== undefined && embeddedDetachedBlobs.size > 0) {
-		// Blobs created while detached with enableSingleRoundTripAttachWithBlobs enabled: no storage ID
+		// Blobs created while detached with enableSingleFileCreateRoundTrip enabled: no storage ID
 		// (pseudo or real) exists for these yet, so their raw bytes are embedded directly rather than as an
 		// Attachment node. Each blob gets its own subtree (keyed by localId) so it can carry its own
 		// groupId - this excludes the blob's content from the initial snapshot fetch (it's still fetchable

@@ -276,7 +276,7 @@ export class BlobManager {
 	/**
 	 * Local IDs of blobs created while detached whose bytes have not been uploaded to (detached) storage at
 	 * all - instead, they'll be embedded directly into the summary generated for attach. Only used when
-	 * enableSingleRoundTripAttachWithBlobs is enabled. These local IDs are never added to redirectTable since
+	 * enableSingleFileCreateRoundTrip is enabled. These local IDs are never added to redirectTable since
 	 * there is no (pseudo or real) storage ID for them until the service assigns one at attach time.
 	 */
 	private readonly embeddedDetachedBlobLocalIds: Set<string> = new Set();
@@ -300,7 +300,7 @@ export class BlobManager {
 	 * produced for attach, instead of being uploaded ahead of time to (detached) storage. This lets attach
 	 * complete in a single network round trip. See DEV.md ("Phase 1") for details and current limitations.
 	 */
-	private readonly enableSingleRoundTripAttachWithBlobs: boolean;
+	private readonly enableSingleFileCreateRoundTrip: boolean;
 
 	public constructor(props: {
 		readonly routeContext: IFluidHandleContext;
@@ -327,7 +327,7 @@ export class BlobManager {
 		readonly runtime: IBlobManagerRuntime;
 		pendingBlobs: IPendingBlobs | undefined;
 		readonly createBlobPayloadPending: boolean;
-		readonly enableSingleRoundTripAttachWithBlobs: boolean;
+		readonly enableSingleFileCreateRoundTrip: boolean;
 	}) {
 		const {
 			routeContext,
@@ -339,7 +339,7 @@ export class BlobManager {
 			runtime,
 			pendingBlobs,
 			createBlobPayloadPending,
-			enableSingleRoundTripAttachWithBlobs,
+			enableSingleFileCreateRoundTrip,
 		} = props;
 		this.routeContext = routeContext;
 		this.storage = storage;
@@ -348,7 +348,7 @@ export class BlobManager {
 		this.isBlobDeleted = isBlobDeleted;
 		this.runtime = runtime;
 		this.createBlobPayloadPending = createBlobPayloadPending;
-		this.enableSingleRoundTripAttachWithBlobs = enableSingleRoundTripAttachWithBlobs;
+		this.enableSingleFileCreateRoundTrip = enableSingleFileCreateRoundTrip;
 
 		this.mc = createChildMonitoringContext({
 			logger: this.runtime.baseLogger,
@@ -515,7 +515,7 @@ export class BlobManager {
 		const localId = uuid();
 		this.localBlobCache.set(localId, { state: "uploading", blob });
 
-		if (this.enableSingleRoundTripAttachWithBlobs) {
+		if (this.enableSingleFileCreateRoundTrip) {
 			// Don't upload to (detached) storage at all - the bytes will be embedded directly into the
 			// summary generated for attach, so there's no pseudo/real storage ID to track here. See
 			// summarize() and DEV.md ("Phase 1") for details.
@@ -828,7 +828,7 @@ export class BlobManager {
 	}
 
 	/**
-	 * Blobs created while detached with enableSingleRoundTripAttachWithBlobs enabled - these have no
+	 * Blobs created while detached with enableSingleFileCreateRoundTrip enabled - these have no
 	 * (pseudo or real) storage ID yet, so they're summarized as raw content rather than as Attachment nodes.
 	 * See summarizeBlobManagerState in blobManagerSnapSum.ts.
 	 */

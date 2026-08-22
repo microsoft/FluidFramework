@@ -166,7 +166,7 @@ mutable DDS content) rather than reusing `SummarizerNode` machinery wholesale.
 ## Implementation status
 
 Phase 1 (as described above) is implemented, gated behind a new, `@experimental`-tagged
-`ContainerRuntimeOptions` flag: **`enableSingleRoundTripAttachWithBlobs`**.
+`ContainerRuntimeOptions` flag: **`enableSingleFileCreateRoundTrip`**.
 
 * `BlobManager.createBlobDetached` (`blobManager.ts`), when the flag is on, never calls
   `storage.createBlob()` (so `IDetachedBlobStorage` never gets populated, and
@@ -190,7 +190,7 @@ Phase 1 (as described above) is implemented, gated behind a new, `@experimental`
   (`containerCompatibility.ts`) — it changes only local, detached-only upload behavior and has no
   effect on the shape of documents produced, so it doesn't participate in doc-schema compat
   negotiation.
-* Test coverage: `src/test/blobs/blobManager.spec.ts`, `describe("enableSingleRoundTripAttachWithBlobs")` —
+* Test coverage: `src/test/blobs/blobManager.spec.ts`, `describe("enableSingleFileCreateRoundTrip")` —
   verifies no detached-storage upload occurs, the blob is still readable via `getBlob()`, the
   summary contains the new subtree keyed by local id with `SummaryType.Blob` content, and no
   `SummaryType.Attachment` node is produced for it.

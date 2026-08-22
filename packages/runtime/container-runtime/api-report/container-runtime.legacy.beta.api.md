@@ -41,7 +41,7 @@ export interface ContainerRuntimeOptions {
     // @deprecated
     readonly enableGroupedBatching: boolean;
     readonly enableRuntimeIdCompressor: IdCompressorMode;
-    readonly enableSingleRoundTripAttachWithBlobs: true | undefined;
+    readonly enableSingleFileCreateRoundTrip: true | undefined;
     readonly explicitSchemaControl: boolean;
     // (undocumented)
     readonly gcOptions: IGCRuntimeOptions;

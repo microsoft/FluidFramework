@@ -438,7 +438,7 @@ interface TestMaterial {
 	blobManagerLoadInfo: IBlobManagerLoadInfo;
 	pendingBlobs: IPendingBlobs | undefined;
 	createBlobPayloadPending: boolean;
-	enableSingleRoundTripAttachWithBlobs: boolean;
+	enableSingleFileCreateRoundTrip: boolean;
 	blobManager: BlobManager;
 }
 
@@ -457,8 +457,8 @@ export const createTestMaterial = (
 	const blobManagerLoadInfo = overrides?.blobManagerLoadInfo ?? {};
 	const pendingBlobs = overrides?.pendingBlobs ?? undefined;
 	const createBlobPayloadPending = overrides?.createBlobPayloadPending ?? false;
-	const enableSingleRoundTripAttachWithBlobs =
-		overrides?.enableSingleRoundTripAttachWithBlobs ?? false;
+	const enableSingleFileCreateRoundTrip =
+		overrides?.enableSingleFileCreateRoundTrip ?? false;
 
 	const blobManager = new BlobManager({
 		// The routeContext is only needed by the BlobHandles to determine isAttached, so this
@@ -473,7 +473,7 @@ export const createTestMaterial = (
 		runtime: mockRuntime,
 		pendingBlobs,
 		createBlobPayloadPending,
-		enableSingleRoundTripAttachWithBlobs,
+		enableSingleFileCreateRoundTrip,
 	});
 
 	mockOrderingService.events.on("messageSequenced", (message: ISequencedMessageEnvelope) => {
@@ -497,7 +497,7 @@ export const createTestMaterial = (
 		blobManagerLoadInfo,
 		pendingBlobs,
 		createBlobPayloadPending,
-		enableSingleRoundTripAttachWithBlobs,
+		enableSingleFileCreateRoundTrip,
 		blobManager,
 	};
 };

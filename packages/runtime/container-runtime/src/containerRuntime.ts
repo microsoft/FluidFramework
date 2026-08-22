@@ -502,7 +502,7 @@ export interface ContainerRuntimeOptions {
 	 * that keeps running past `attach()` and later needs to resolve one of these blobs' real storage ID itself
 	 * (e.g. because it becomes the summarizer, or its in-memory blob cache gets evicted) is not yet supported.
 	 */
-	readonly enableSingleRoundTripAttachWithBlobs: true | undefined;
+	readonly enableSingleFileCreateRoundTrip: true | undefined;
 
 	/**
 	 * Controls automatic batch flushing during staging mode.
@@ -1076,7 +1076,7 @@ export class ContainerRuntime
 			chunkSizeInBytes: defaultChunkSizeInBytes,
 			stagingModeAutoFlushThreshold: defaultStagingModeAutoFlushThreshold,
 			disableSchemaUpgrade: false,
-			enableSingleRoundTripAttachWithBlobs: undefined,
+			enableSingleFileCreateRoundTrip: undefined,
 		};
 
 		const defaultConfigs = {
@@ -1104,7 +1104,7 @@ export class ContainerRuntime
 			createBlobPayloadPending = defaultConfigs.createBlobPayloadPending,
 			stagingModeAutoFlushThreshold = defaultConfigs.stagingModeAutoFlushThreshold,
 			disableSchemaUpgrade = defaultConfigs.disableSchemaUpgrade,
-			enableSingleRoundTripAttachWithBlobs = defaultConfigs.enableSingleRoundTripAttachWithBlobs,
+			enableSingleFileCreateRoundTrip = defaultConfigs.enableSingleFileCreateRoundTrip,
 		}: IContainerRuntimeOptionsInternal = runtimeOptions;
 
 		// If explicitSchemaControl is off, ensure that options which require explicitSchemaControl are not enabled.
@@ -1340,7 +1340,7 @@ export class ContainerRuntime
 			createBlobPayloadPending,
 			stagingModeAutoFlushThreshold,
 			disableSchemaUpgrade,
-			enableSingleRoundTripAttachWithBlobs,
+			enableSingleFileCreateRoundTrip,
 		};
 
 		validateMinimumVersionForCollab(updatedMinVersionForCollab);
@@ -2227,8 +2227,8 @@ export class ContainerRuntime
 			runtime: this,
 			pendingBlobs: pendingRuntimeState?.pendingAttachmentBlobs,
 			createBlobPayloadPending: this.sessionSchema.createBlobPayloadPending === true,
-			enableSingleRoundTripAttachWithBlobs:
-				this.runtimeOptions.enableSingleRoundTripAttachWithBlobs === true,
+			enableSingleFileCreateRoundTrip:
+				this.runtimeOptions.enableSingleFileCreateRoundTrip === true,
 		});
 
 		this.deltaScheduler = new DeltaScheduler(

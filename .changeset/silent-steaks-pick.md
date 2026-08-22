@@ -5,7 +5,7 @@
 
 Add experimental option to skip separate blob uploads when attaching a detached container
 
-A new `@alpha` `ContainerRuntimeOptions` flag, `enableSingleRoundTripAttachWithBlobs`, lets a
+A new `@alpha` `ContainerRuntimeOptions` flag, `enableSingleFileCreateRoundTrip`, lets a
 detached container with `uploadBlob()`-created blobs attach in a single network round trip instead
 of `N + 2`. When enabled, blobs created while detached are embedded directly in the attach summary
 (each in its own subtree, with a `groupId` equal to its local id, so a client that doesn't need the
