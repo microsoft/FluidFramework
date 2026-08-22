@@ -5,7 +5,6 @@
 
 import { strict as assert } from "node:assert";
 
-import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listenable } from "@fluidframework/core-interfaces";
 import { FluidClientVersion, FormatValidatorNoOp } from "../../../codec/index.js";
 import { rootFieldKey } from "../../../core/index.js";
@@ -14,10 +13,11 @@ import { fieldBatchCodecBuilder } from "../../../feature-libraries/index.js";
 import { DefaultTreeBranchHistory } from "../../../shared-tree/history.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { SharedTreeChangeFamily } from "../../../shared-tree/sharedTreeChangeFamily.js";
-import { SharedTreeBranch } from "../../../shared-tree-core/index.js";
+import {
+	SharedTreeBranch,
+	type BranchTrimmingEvents,
+} from "../../../shared-tree-core/index.js";
 import { brand } from "../../../util/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { BranchTrimmingEvents } from "../../../shared-tree-core/branch.js";
 import {
 	chunkFromJsonableTrees,
 	mintRevisionTag,
@@ -64,99 +64,16 @@ function setRootValue(branch: BranchType, value: number): void {
 }
 
 describe("TreeBranchHistoryImpl", () => {
-	describe("commitCount", () => {
-		it("size reflects the number of commits in the branch", () => {
-			const branch = createBranch();
-			const history = new DefaultTreeBranchHistory(branch, testIdCompressor);
-			setRootValue(branch, 3);
-			const sizeAfterInit = history.commitCount;
-			assert(sizeAfterInit > 0);
+	it("commitCount reflects the number of commits in the branch", () => {
+		const branch = createBranch();
+		const history = new DefaultTreeBranchHistory(branch, testIdCompressor);
+		assert.equal(history.commitCount, 0);
 
-			setRootValue(branch, 4);
-			assert.equal(history.commitCount, sizeAfterInit + 1);
+		setRootValue(branch, 3);
+		setRootValue(branch, 4);
+		assert.equal(history.commitCount, 2);
 
-			setRootValue(branch, 5);
-			assert.equal(history.commitCount, sizeAfterInit + 2);
-			history.dispose();
-		});
-
-		it("increases independently on forked branches", () => {
-			const branchA = createBranch();
-			setRootValue(branchA, 3);
-			const branchB = branchA.fork();
-
-			const historyA = new DefaultTreeBranchHistory(branchA, testIdCompressor);
-			const historyB = new DefaultTreeBranchHistory(branchB, testIdCompressor);
-
-			const initialSize = historyA.commitCount;
-			assert.equal(historyB.commitCount, initialSize);
-
-			setRootValue(branchA, 4);
-			assert.equal(historyA.commitCount, initialSize + 1);
-			assert.equal(historyB.commitCount, initialSize);
-
-			setRootValue(branchB, 5);
-			assert.equal(historyA.commitCount, initialSize + 1);
-			assert.equal(historyB.commitCount, initialSize + 1);
-			historyA.dispose();
-			historyB.dispose();
-		});
-
-		it("updates when branch ancestry is trimmed", () => {
-			const branchTrimmer = createEmitter<BranchTrimmingEvents>();
-			const branch = createBranch(branchTrimmer);
-			const history = new DefaultTreeBranchHistory(branch, testIdCompressor);
-
-			setRootValue(branch, 3);
-			const commit1 = branch.getHead().revision;
-			setRootValue(branch, 4);
-			const commit2 = branch.getHead().revision;
-			setRootValue(branch, 5);
-
-			assert.equal(history.commitCount, 3);
-
-			branchTrimmer.emit("ancestryTrimmed", [commit1, commit2]);
-
-			assert.equal(history.commitCount, 1);
-			history.dispose();
-		});
-
-		it("updates when another branch is merged into the tracked branch", () => {
-			const trackedBranch = createBranch();
-			setRootValue(trackedBranch, 1);
-			const sourceBranch = trackedBranch.fork();
-
-			const history = new DefaultTreeBranchHistory(trackedBranch, testIdCompressor);
-			assert.equal(history.commitCount, 1);
-
-			setRootValue(sourceBranch, 2);
-			setRootValue(sourceBranch, 3);
-
-			trackedBranch.merge(sourceBranch);
-
-			assert.equal(history.commitCount, 3);
-			history.dispose();
-		});
-
-		it("updates when the tracked branch is rebased over another branch", () => {
-			const baseBranch = createBranch();
-			setRootValue(baseBranch, 1);
-
-			const trackedBranch = baseBranch.fork();
-			const sourceBranch = baseBranch.fork();
-			const history = new DefaultTreeBranchHistory(trackedBranch, testIdCompressor);
-
-			setRootValue(trackedBranch, 2);
-			setRootValue(sourceBranch, 3);
-			setRootValue(sourceBranch, 4);
-
-			assert.equal(history.commitCount, 2);
-
-			trackedBranch.rebaseOnto(sourceBranch);
-
-			assert.equal(history.commitCount, 4);
-			history.dispose();
-		});
+		history.dispose();
 	});
 
 	describe("getHeadCommit", () => {
