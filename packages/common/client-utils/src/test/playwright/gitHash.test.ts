@@ -19,10 +19,10 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const assetsDir = path.resolve(here, "../../../src/test/playwright/assets");
 const browserHashBundlePath = path.join(here, "browserHash.bundle.js");
 
-let xmlFile: Buffer;
-let svgFile: Buffer;
-let pdfFile: Buffer;
-let gifFile: Buffer;
+let xmlFile: Buffer<ArrayBuffer>;
+let svgFile: Buffer<ArrayBuffer>;
+let pdfFile: Buffer<ArrayBuffer>;
+let gifFile: Buffer<ArrayBuffer>;
 let server: http.Server;
 let serverUrl: string;
 
