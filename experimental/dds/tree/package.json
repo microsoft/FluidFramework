@@ -30,9 +30,10 @@
 		"bench": "cross-env FLUID_TEST_PERF_MODE=1 mocha",
 		"build": "fluid-build . --task build",
 		"build:api-reports": "api-extractor run --local --config api-extractor/api-extractor-report.json",
+		"build:cjs": "fluid-tsc commonjs --project ./tsconfig.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local --config api-extractor/api-extractor-model.json",
-		"build:esnext": "tsc --project ./tsconfig.esnext.json",
+		"build:esm": "tsc --project ./tsconfig.esnext.json",
 		"check:are-the-types-wrong": "attw --pack . --profile node16",
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
@@ -56,8 +57,7 @@
 		"test:coverage": "c8 npm test",
 		"test:mocha": "mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"test:stress": "cross-env FUZZ_TEST_COUNT=10 FUZZ_STRESS_RUN=normal \"MOCHA_SPEC=dist/test/**/*.fuzz.tests.js\" mocha",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
+		"test:stress": "cross-env FUZZ_TEST_COUNT=10 FUZZ_STRESS_RUN=normal \"MOCHA_SPEC=dist/test/**/*.fuzz.tests.js\" mocha"
 	},
 	"dependencies": {
 		"@fluid-internal/client-utils": "workspace:~",
