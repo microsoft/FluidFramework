@@ -183,7 +183,7 @@
 		"mocha-multi-reporters": "^1.5.1",
 		"random-js": "^2.1.0",
 		"rimraf": "^6.1.3",
-		"typescript": "~5.4.5"
+		"typescript": "~6.0.3"
 	},
 	"comments": [
 		"Sequence test builds and eslint depend on the corresponding Merge Tree test builds because Sequence tests import @fluidframework/merge-tree/internal/test, which resolves to generated test output."
