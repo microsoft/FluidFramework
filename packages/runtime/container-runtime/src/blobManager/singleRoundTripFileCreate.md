@@ -272,6 +272,77 @@ already uses for attachment blobs today.
   `readBlob(id)` whenever the app actually needs the bytes. Nothing about this design changes when
   or how that happens.
 
+## Key assumptions and evidence
+
+This design rests on three assumptions. The first is load-bearing — if it's false, the whole
+design is wrong. The other two are lower-stakes.
+
+### 1. A `groupId`-tagged subtree's *structure* (blob-id map, child trees) is still returned in the
+initial snapshot fetch — only the *bytes* are deferred
+
+This is confirmed by the driver/protocol code, not just inferred:
+
+* `ISnapshotTree.groupId` (`packages/common/driver-definitions/src/protocol/storage.ts`) is a field
+  *on* a tree that is otherwise structurally ordinary — nothing in its type or any parsing code
+  conditions the presence of `blobs`/`trees` on `groupId` being absent.
+* ODSP's compact-snapshot parser (`odsp-driver/src/compactSnapshotParser.ts`,
+  `readTreeSection`/`readBlobSection`) always builds the full `blobs`/`trees` structure for every
+  tree node in the response and separately tags `trees[path].groupId` when the wire format marks a
+  tree that way — there is no code path that returns a placeholder/empty tree in place of a
+  `groupId`-tagged subtree's structure during the *default* (ungrouped) `getSnapshotTree` fetch.
+  `odsp-driver/src/test/jsonSnapshotFormatTests.spec.ts` asserts this directly: it decodes a
+  snapshot and checks a specific known subtree equals `{ blobs: {}, trees: {}, unreferenced:
+  undefined, groupId: undefined }` — i.e., grouped trees round-trip through the parser with their
+  full (if here, empty) shape intact.
+* The `loadingGroupIds` fetch parameter (`odspDocumentStorageManager.ts`,
+  `fetchSnapshot.ts`) is only used to control which trees' **blob contents** get returned in
+  `snapshot.blobContents` (a separate `Map<string, ArrayBuffer>` keyed by blob id) — the initial,
+  ungrouped fetch (`loadingGroupIds: []`) still returns every tree's shape, with only default-group
+  blob content populated. This is exactly the mechanism `dataStoreContext.ts` already depends on for
+  ordinary (non-blob) data stores marked with `loadingGroupId` — same code path, same guarantee.
+
+Net: this assumption is well-supported by existing, already-shipped ODSP driver behavior used for
+data-store loading groups today. It is not a new, unvalidated behavior specific to this feature —
+it's the same guarantee `loadingGroupId` has always provided for any subtree, blob-shaped or not.
+
+### 2. A summary blob's content, once part of an acked summary inside a `groupId`-tagged subtree,
+can be read back via the ordinary blob-read path and treated identically to an ordinary attachment
+blob's storage id from then on
+
+This is the one flagged as an **open validation item** in
+[the bug-fix section above](#fixed-bug-any-freshly-loaded-client-used-to-lose-embedded-blobs-entirely) —
+it has *not* been directly proven against a real ODSP endpoint, only against the mock storage used
+in unit tests. Unlike assumption 1, this isn't about snapshot-fetch mechanics (which are
+well-documented, generic `groupId` behavior); it's specifically about whether ODSP's blob-id
+assignment and read-back semantics for a blob inside a summary tree are indistinguishable from
+those of a blob uploaded via the dedicated attachment-blob endpoint. Since it is less critical (a
+fallback exists — re-embed on every summary, i.e. never "graduate" — if this assumption turns out
+false), this is the one item still requiring explicit end-to-end validation against ODSP before
+shipping.
+
+### 3. A client that creates the file and does *not* exit right after `attach()` behaves correctly
+(no data loss, no crash) — even though Phase 2 (incremental reuse) isn't implemented
+
+Confirmed correct, at the cost of efficiency, not correctness:
+
+* Blob creation while detached (`createBlobDetached`) never produces an op — there is nothing to
+  resubmit or reconnect around; `embeddedDetachedBlobLocalIds` is populated purely from local,
+  synchronous, pre-attach state, so there's no reconnect/resubmit interaction to worry about here at
+  all.
+* If the same client keeps running and calls `summarize()` again after attach (without ever
+  reloading), `getEmbeddedDetachedBlobs()` re-embeds every such blob's full bytes from
+  `localBlobCache` again, every time — this is wasteful (no incremental reuse yet, see
+  [Known gap](#known-gap-no-incremental-reuse-yet)) but not lossy or incorrect: the blob is still
+  present, still readable, and still summarized correctly on every call.
+* Once *any* client reloads (or a summarizer client loads fresh), `loadV1()`'s fix applies and the
+  blob graduates into the ordinary redirect table — from that point on it behaves exactly like a
+  normal attachment blob, with normal incremental reuse, for every client including the original one
+  if it reloads.
+
+So no second phase is required for correctness — only for efficiency (avoiding repeated
+re-embedding by a single long-lived client that never reloads). This matches Phase 1's explicitly
+narrow scope.
+
 ## Non-goals / open questions
 
 * Version skew / rollout: an old loader is unaffected either way, since this design never touches
