@@ -28,6 +28,7 @@ import {
 	type ILocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import {
+	defaultTestOldestSupportedClient,
 	TestFluidObjectFactory,
 	getRequiredPendingLocalState,
 	timeoutPromise,
@@ -70,6 +71,9 @@ const initialize = async (options?: {
 					);
 					return new ContainerRuntimeFactoryWithDefaultDataStore({
 						defaultFactory: defaultDataStoreFactory,
+						oldestSupportedClient: options.createBlobPayloadPending
+							? "2.40.0"
+							: defaultTestOldestSupportedClient,
 						registryEntries: [
 							[defaultDataStoreFactory.type, Promise.resolve(defaultDataStoreFactory)],
 						],

@@ -12,7 +12,10 @@ import { RuntimeRequestHandler } from "@fluidframework/request-handler/internal"
 import {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
+	OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
+
+import { defaultTestOldestSupportedClient } from "./containerRuntimeFactories.js";
 
 const getDefaultFluidObject = async (runtime: IContainerRuntime): Promise<FluidObject> => {
 	const entryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
@@ -58,14 +61,50 @@ export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
 	readonly provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
 }
 
+type ObjectContainerRuntimeFactoryWithDefaultDataStoreConstructor =
+	| (new (
+			props: ContainerRuntimeFactoryWithDefaultDataStoreProps,
+	  ) => IRuntimeFactory)
+	| (new (
+			props: ContainerRuntimeFactoryWithDefaultDataStoreProps & {
+				readonly oldestSupportedClient: OldestSupportedClientVersion;
+			},
+	  ) => IRuntimeFactory);
+
+type PositionalContainerRuntimeFactoryWithDefaultDataStoreConstructor = new (
+	defaultFactory: IFluidDataStoreFactory,
+	registryEntries: NamedFluidDataStoreRegistryEntries,
+	dependencyContainer?: never,
+	// eslint-disable-next-line import-x/no-deprecated
+	requestHandlers?: RuntimeRequestHandler[],
+	runtimeOptions?: IContainerRuntimeOptions,
+	provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>,
+) => IRuntimeFactory;
+
 /**
  * {@link @fluidframework/container-definitions#IRuntimeFactory} construct signature.
  *
  * @internal
  */
-export type ContainerRuntimeFactoryWithDefaultDataStoreConstructor = new (
-	props: ContainerRuntimeFactoryWithDefaultDataStoreProps,
-) => IRuntimeFactory;
+export type ContainerRuntimeFactoryWithDefaultDataStoreConstructor = (
+	| (new (
+			props: ContainerRuntimeFactoryWithDefaultDataStoreProps,
+	  ) => IRuntimeFactory)
+	| (new (
+			props: ContainerRuntimeFactoryWithDefaultDataStoreProps & {
+				readonly oldestSupportedClient: OldestSupportedClientVersion;
+			},
+	  ) => IRuntimeFactory)
+	| (new (
+			defaultFactory: IFluidDataStoreFactory,
+			registryEntries: NamedFluidDataStoreRegistryEntries,
+			dependencyContainer?: never,
+			// eslint-disable-next-line import-x/no-deprecated
+			requestHandlers?: RuntimeRequestHandler[],
+			runtimeOptions?: IContainerRuntimeOptions,
+			provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>,
+	  ) => IRuntimeFactory)
+) & { readonly length: number };
 
 /**
  * Creates a container runtime factory with default data store for backward compatibility.
@@ -80,10 +119,19 @@ export const createContainerRuntimeFactoryWithDefaultDataStore = (
 	ctor: ContainerRuntimeFactoryWithDefaultDataStoreConstructor,
 	ctorProps: ContainerRuntimeFactoryWithDefaultDataStoreProps,
 ): IRuntimeFactory => {
-	try {
-		return new ctor(ctorProps);
-	} catch (err) {
-		// IMPORTANT: The constructor argument structure changed, so this is needed for dynamically using older `ContainerRuntimeFactoryWithDefaultDataStore`s
+	// Supported positional constructors have arity 3, while object-shaped constructors have
+	// arity 1. Select before invoking so errors from an object-shaped constructor propagate.
+	if (ctor.length === 1) {
+		const currentProps = {
+			...ctorProps,
+			oldestSupportedClient: defaultTestOldestSupportedClient,
+		};
+		return new (ctor as ObjectContainerRuntimeFactoryWithDefaultDataStoreConstructor)(
+			currentProps,
+		);
+	}
+
+	if (ctor.length === 3) {
 		const {
 			defaultFactory,
 			registryEntries,
@@ -92,8 +140,7 @@ export const createContainerRuntimeFactoryWithDefaultDataStore = (
 			runtimeOptions,
 			provideEntryPoint,
 		} = ctorProps;
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		return new (ctor as any)(
+		return new (ctor as PositionalContainerRuntimeFactoryWithDefaultDataStoreConstructor)(
 			defaultFactory,
 			registryEntries,
 			dependencyContainer,
@@ -102,4 +149,8 @@ export const createContainerRuntimeFactoryWithDefaultDataStore = (
 			provideEntryPoint ?? getDefaultFluidObject,
 		);
 	}
+
+	throw new Error(
+		`Unsupported ContainerRuntimeFactoryWithDefaultDataStore constructor arity: ${ctor.length}`,
+	);
 };
