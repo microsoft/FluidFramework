@@ -1,0 +1,209 @@
+# ============================================================================
+# Self-host Fluid — FULL Routerlicious + REDPANDA, NATIVE arm64 (build from source).
+#
+# On arm64 hosts (Apple Silicon, Windows-on-ARM), this variant builds the Fluid images
+# from source with the upstream Dockerfiles PATCHED for arm64 (drop the amd64 digest pin
+# + use tini-arm64). The amd64 stack (docker-compose.redpanda.yml) builds from the same
+# source with the stock upstream Dockerfiles.
+#
+# Needs the FluidFramework source (build context). The helper ./scripts/run-local-arm64.*
+# fetches it from GitHub (a shallow clone into ./.fluidframework) and GENERATES the arm64
+# Dockerfiles by patching the current upstream files on every helper run (drop the amd64
+# digest pin + use tini-arm64), so stale generated files do not survive a source update.
+# To reuse an existing checkout set FLUID_REPO_DIR to its repo root.
+#
+# Run via the helper (recommended, handles clone + Dockerfile generation):
+#     ./scripts/run-local-arm64.ps1     (Windows)   /   ./scripts/run-local-arm64.sh
+# Direct `docker compose ... up --build` only works after the helper has generated the
+# arm64 Dockerfiles under the source tree.
+# or use the helper:
+#     ./scripts/run-local-arm64.ps1   /   ./scripts/run-local-arm64.sh
+#
+# NOTE: the first build compiles node-rdkafka natively for arm64 and can take a
+# while. The broker swap (kafka+zookeeper -> redpanda) is identical to the amd64
+# variant; only the image source (build vs pull) and platform pins differ.
+# ============================================================================
+name: selfhost-fluid-redpanda-arm64
+
+# Shared build config for the routerlicious-based microservices: they all build the
+# same arm64 image from the FluidFramework checkout and differ only by run command.
+x-r11s-build: &r11s-build
+  context: ${FLUID_REPO_DIR:-.fluidframework}/server/routerlicious
+  dockerfile: Dockerfile.arm64
+  target: runner
+  additional_contexts:
+    root: ${FLUID_REPO_DIR:-.fluidframework}
+
+x-fluid-env: &fluid-env
+  - DEBUG=fluid:*
+  - NODE_ENV=development
+  - IS_FLUID_SERVER=true
+  # Blank the optional ZooKeeper endpoint so the rdkafka path skips ZK entirely.
+  - zookeeper__endpoint=
+
+services:
+  proxy:
+    platform: linux/arm64/v8
+    image: nginx:latest
+    depends_on:
+      alfred:
+        condition: service_healthy
+      historian:
+        condition: service_healthy
+      nexus:
+        condition: service_healthy
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - "3003:3003"
+      - "3002:3002"
+      - "3001:3001"
+
+  alfred:
+    platform: linux/arm64
+    build: *r11s-build
+    expose:
+      - "3000"
+    command: node packages/routerlicious/dist/alfred/www.js
+    environment: *fluid-env
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/healthz/startup", "--max-time", "3"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
+
+  nexus:
+    platform: linux/arm64
+    build: *r11s-build
+    expose:
+      - "3000"
+    command: node packages/routerlicious/dist/nexus/www.js
+    environment: *fluid-env
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/healthz/ping", "--max-time", "3"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
+
+  deli:
+    platform: linux/arm64
+    build: *r11s-build
+    command: node packages/routerlicious/dist/kafka-service/index.js deli /usr/src/server/packages/routerlicious/dist/deli/index.js
+    environment: *fluid-env
+    restart: always
+
+  scriptorium:
+    platform: linux/arm64
+    build: *r11s-build
+    command: node packages/routerlicious/dist/kafka-service/index.js scriptorium /usr/src/server/packages/routerlicious/dist/scriptorium/index.js
+    environment: *fluid-env
+    restart: always
+
+  copier:
+    platform: linux/arm64
+    build: *r11s-build
+    command: node packages/routerlicious/dist/kafka-service/index.js copier /usr/src/server/packages/routerlicious/dist/copier/index.js
+    environment: *fluid-env
+    restart: always
+
+  scribe:
+    platform: linux/arm64
+    build: *r11s-build
+    command: node packages/routerlicious/dist/kafka-service/index.js scribe /usr/src/server/packages/routerlicious/dist/scribe/index.js
+    environment: *fluid-env
+    restart: always
+
+  riddler:
+    platform: linux/arm64
+    build: *r11s-build
+    ports:
+      - "5000:5000"
+    command: node packages/routerlicious/dist/riddler/www.js
+    environment: *fluid-env
+    restart: always
+
+  historian:
+    platform: linux/arm64
+    build:
+      context: ${FLUID_REPO_DIR:-.fluidframework}/server/historian
+      dockerfile: Dockerfile.arm64
+      target: runner
+      additional_contexts:
+        root: ${FLUID_REPO_DIR:-.fluidframework}
+    expose:
+      - "3000"
+    environment: *fluid-env
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/healthz/startup", "--max-time", "3"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
+
+  gitrest:
+    platform: linux/arm64
+    build:
+      context: ${FLUID_REPO_DIR:-.fluidframework}/server/gitrest
+      dockerfile: Dockerfile.arm64
+      target: runner
+      additional_contexts:
+        root: ${FLUID_REPO_DIR:-.fluidframework}
+    environment: *fluid-env
+    volumes:
+      - git:/home/node/documents
+    restart: always
+
+  git:
+    platform: linux/arm64
+    # The stock ./gitssh/Dockerfile builds for arm64 (alpine base is multi-arch).
+    build:
+      context: ${FLUID_REPO_DIR:-.fluidframework}/server/gitssh
+    ports:
+      - "3022:22"
+    volumes:
+      - git:/home/git
+    restart: always
+
+  # Redpanda replaces BOTH kafka and zookeeper. Aliased "kafka" so the baked
+  # `kafka:9092` config resolves here; dev-container mode auto-creates topics.
+  redpanda:
+    platform: linux/arm64
+    image: docker.redpanda.com/redpandadata/redpanda:v24.2.7
+    command:
+      - redpanda
+      - start
+      - --kafka-addr=PLAINTEXT://0.0.0.0:9092
+      - --advertise-kafka-addr=PLAINTEXT://kafka:9092
+      - --smp=1
+      - --memory=1G
+      - --mode=dev-container
+    ports:
+      - "9092:9092"
+      - "9644:9644"
+    networks:
+      default:
+        aliases:
+          - kafka
+    restart: always
+
+  redis:
+    platform: linux/arm64/v8
+    image: "redis:alpine"
+
+  mongodb:
+    platform: linux/arm64/v8
+    # Historical validation pin only; select and retest a supported version for production.
+    image: "mongo:4"
+    volumes:
+      - mongodata:/data/db
+
+volumes:
+  git:
+    driver: local
+  mongodata:
+    driver: local
