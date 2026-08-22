@@ -67,9 +67,12 @@ An app (e.g. the Loop/office-bohemia host) consumes a small `@legacy @beta` surf
 - Get the resolver: `ContainerRuntime.versionMarkResolver` -> `IVersionMarkResolver`.
 - `IVersionMarkResolver` methods: `sealAndCaptureVersionMark()` -> `VersionMarkCapture` (seals the batch and returns the locator data atomically), `onBatchSequenced(listener)` (live promotion), `resolve(batchId, sequenceNumberLowerBound)` -> `ResolveResult` (load-time sweep / restore).
 - Types `IVersionMarkResolver`, `ResolveResult`, and `VersionMarkCapture` are exported from `@fluidframework/container-runtime/legacy`.
-- Restore side: `loadContainerToSequenceNumber` and `ILoadContainerToSequenceNumberProps` are exported from `@fluidframework/container-loader/legacy/alpha`, fed the `resolved` sequence number.
-- ODSP point-in-time support: `createOdspDocumentServiceFactory` accepts the implementation exported
-  from `@fluidframework/odsp-driver/legacy/point-in-time` through its options.
+- Restore side: `loadContainerToSequenceNumber` and `ILoadContainerToSequenceNumberProps` (`@legacy @beta`) are exported from `@fluidframework/container-loader/legacy`, fed the `resolved` sequence number.
+- ODSP point-in-time support: `createOdspDocumentServiceFactory` accepts the implementation
+  (`getOdspPointInTimeDocumentServiceFactory` / `IPointInTimeDocumentServiceFactory`) currently exported
+  from the `@fluidframework/odsp-driver/legacy/point-in-time` subpath. AB#81443 tracks moving it to the
+  normal `@fluidframework/odsp-driver/legacy` entrypoint without retaining the unused implementation graph
+  in consumer bundles.
 
 ### Capturing a mark (app side)
 
@@ -206,8 +209,8 @@ Version-mark telemetry is greenfield; this section is the **contract** every eve
 
 | Event | When | Dimensions | Answers |
 | --- | --- | --- | --- |
-| `Resolve` **(implemented)** | end of `resolve()` (via `finally`, so a thrown scan is still reported) | `outcome` (`resolved`\|`pending`\|`unresolvable`\|`error`), `path` (`session`\|`history`\|`noReader`), `durationMs`, `sequenceNumber` (when resolved) | success rate; how often history is needed; latency; `unresolvable` = data-loss KPI; `error` = the scan threw |
-| `Capture` *(planned — AB#80270)* | `sealAndCaptureVersionMark()` | `kind` (`pending`\|`resolved`) | capture volume; pending ratio |
+| `Resolve` **(implemented)** | end of `resolve()` (via `finally`, so a thrown scan is still reported) | `outcome` (`resolved`\|`pending`\|`unresolvable`\|`error`), `path` (`session`\|`history`\|`noReader`), `durationMs`, `sequenceNumber` (when resolved) | success rate; how often history is needed; latency; `unresolvable` = data-loss KPI; `error` = the scan threw. `session` means the final result came from the live map, including a live resolution found by the post-history recheck. |
+| `Capture` **(implemented — AB#80270)** | `sealAndCaptureVersionMark()` | `kind` (`pending`\|`resolved`) | capture volume; pending ratio |
 
 ### Correlation and the app funnel (planned)
 
@@ -233,6 +236,11 @@ The load primitive stays **mark-agnostic** — it takes a raw `sequenceNumber` a
 Its current container-loader placement is prototype-era ownership; the planned extraction of the
 host-facing load orchestration into a dedicated feature package is documented in the
 [point-in-time loading guide](../../../../loader/container-loader/src/pointInTime/DEV.md#package-ownership-and-planned-extraction).
+
+The ODSP point-in-time implementation creates the recoverable (historical snapshot) document service
+before the live document service used for bounded forward replay. If live-service creation fails, it
+disposes the already-created recoverable service and rethrows the original live-service error (AB#77964).
+If cleanup itself throws, that secondary failure is logged without replacing the creation error.
 
 ### Why the load takes a sequence number, not a locator
 
@@ -312,7 +320,7 @@ The existing real-service ODSP suites under `packages/test/test-end-to-end-tests
 
 ### Resolver correctness and robustness gaps
 
-1. **Live/history resolution races:** A batch can be recorded by `processInboundBatch` while a history scan for the same `batchId` is in progress. Recheck the live map before returning a miss so `resolve()` does not return stale `pending` or `unresolvable` after the batch has resolved in-session. Also decide whether concurrent calls for the same locator should share one scan rather than issuing duplicate delta-storage reads.
+1. **Concurrent history scans:** AB#82260 fixes the stale-miss race by rechecking the live map after a non-resolved history result and preferring a batch that sequenced during the scan. Still decide whether concurrent calls for the same locator should share one scan rather than issuing duplicate delta-storage reads.
 1. **Finite and cancelable history reads:** The current scan requests `[lowerBound, undefined)`, has no caller-supplied cancellation signal, and can inherit long driver retry behavior. Consider snapshotting an upper bound from the observed tip, accepting an `AbortSignal`, and canceling outstanding scans when the runtime is disposed. Cover cancellation before fetch, during `fetchMessages`, during `stream.read()`, and after a match races cancellation.
 1. **Stored-locator validation:** `batchId` and `sequenceNumberLowerBound` may come from app-owned persisted data. Define whether `resolve()` trusts that data or rejects an empty batch ID and negative/fractional/non-safe sequence numbers. Invalid persisted coordinates must not silently scan the wrong range or be classified as a legitimate mark state. The safe-integer `+ 1` consideration now applies at **capture** rather than read: `sealAndCaptureVersionMark` stores `referenceSequenceNumber + 1`, so that addition (not a read-time `lowerBound + 1`) is the arithmetic subject to safe-integer precision.
 1. **Persisted-locator format compatibility:** The app persists the `pending` locator (`batchId` + `sequenceNumberLowerBound`) and may resolve it much later, so the meaning of those fields is a compatibility contract. The risk is that `sequenceNumberLowerBound` is a bare number with no format/version marker, so a semantic change is invisible to a reader: e.g. the exclusive→inclusive change would make old code reading a new-format locator compute `stored + 1` and silently scan past the target. This is not a concern today because the exclusive format was **never shipped** (see [Resolve control flow](#resolve-control-flow)) — the current inclusive format is the implicit v1 baseline and there are no other persisted formats. **Decision (deferred):** add nothing now; treat today's format as v1 and only do compatibility work *if/when* the locator's meaning or shape actually changes. If it never changes, there is nothing to do. Marks are resolved cross-client (whichever client picks one up first) across a mixed-version fleet, so a future change must be introduced compat-safely — following FF precedent, either (a) gate the new format's **write** behind `minVersionForCollab`/`OldestSupportedClientVersion` so older readers in the compat window never encounter it (as versioned codecs pick their write version), or (b) add an explicit `formatVersion` field and detect it on read, defaulting a missing marker to v1 and failing closed on an unrecognized one (as `summaryFormat.getAttributesFormatVersion` maps a missing version to legacy v0). A tiny two-field locator suits the lightweight `summaryFormat`-style field inspection over the full versioned-codec subsystem in `dds/tree/src/codec/versioned`. Because the app owns the stored record (`VersionMarkCapture` is transient), decide at that point whether FF stamps the version into the capture result (preferred, since FF owns the semantics) or documents that the app must version its own record.
@@ -320,12 +328,71 @@ The existing real-service ODSP suites under `packages/test/test-end-to-end-tests
 
 ### API and design follow-ups
 
-- Review the `IContainerContextInternal extends IContainerContext` cross-layer integration with Navin to establish the preferred pattern for features that span loader and runtime layers. In particular, determine whether explicit layer-compat support would make this interface evolution safer or more maintainable.
+- **Loader/runtime compatibility pattern (resolved with Navin).** `fetchOps` is a new loader-provided API
+  consumed by runtime logic. Making the member optional and using its presence as the capability signal is
+  the correct cross-layer pattern; a separate `supportedFeatures` negotiation is unnecessary for a new
+  API. Fluid supports a 12-month Runtime -> Loader compatibility window, so a newer runtime must continue
+  to work with an older loader that predates `fetchOps`. The capability first shipped in client 2.115.0 at
+  layer generation 9. Keep the optional branch through generation 20; at generation 21 every supported
+  loader is guaranteed to provide it, and AB#81034 tracks making the member required and removing the
+  branch.
 - Consider merging `getCurrentPendingBatchId` into `flushPendingBatch` so sealing the batch returns its resulting `batchId`. This would keep the ordered flush-then-read operation inside one runtime hook instead of requiring the resolver to call two hooks in sequence.
-- Reevaluate whether distinguishing `pending` from `unresolvable` is valuable enough to justify the driver-dependent heuristics in `classifyMiss`. The current implementation makes educated guesses from empty reads and sequence gaps, so its confidence depends on how each driver's delta storage reports trimmed ranges. Consider returning the conservative `pending` result for ambiguous misses, collapsing the states, or deferring a definitive `unresolvable` result until delta storage exposes an explicit retention boundary.
+- Reevaluate whether distinguishing `pending` from `unresolvable` is valuable enough to justify the driver-dependent heuristics in `classifyMiss`. The current implementation makes educated guesses from empty reads and sequence gaps, so its confidence depends on how each driver's delta storage reports trimmed ranges. Consider returning the conservative `pending` result for ambiguous misses, collapsing the states, or deferring a definitive `unresolvable` result until delta storage exposes an explicit retention boundary. This is separate from a missing historical reader, described below.
 - In a future beta-breaking release, make `timestamp` required on the resolved variants of `VersionMarkCapture` and `ResolveResult`, and make the third `onBatchSequenced` listener argument required. It is optional today only so existing callers, callbacks, mocks, and stored resolved records remain source-compatible. Before taking the break, verify all supported resolution paths always produce a server timestamp, migrate known consumers, and follow the beta-breaking release process.
-- Before promoting this API beyond `@beta`, try extending the existing `batchEnd` event to expose the effective stable batch ID and reuse that event for mark promotion. Avoid finalizing `onBatchSequenced` as a parallel batch-sequenced notification API unless the existing event cannot support this use case.
+- **`batchEnd` vs `onBatchSequenced` (deferred).** The version-mark APIs are already `@legacy @beta`, so this is no longer a pre-beta prerequisite. `onBatchSequenced` broadcasts `(batchId, sequenceNumber)` for live mark promotion; the open question is whether to instead extend the existing `batchEnd` event (on `IContainerRuntimeBaseEvents`) to expose the effective stable batch ID and reuse it, retiring `onBatchSequenced`.
+
+  **Case for consolidating (Mark's original point):** the new event is largely a subset of `batchEnd` plus one generally-applicable field (the stable batch id). If API changes were free we would not add a second parallel notification API; every extra public API is long-term surface we are then responsible for maintaining, documenting, and evolving. Avoiding that cruft is the benefit.
+
+  **Case for keeping `onBatchSequenced` separate:** it is **not** a strict subset of `batchEnd` — its firing contract is correctness-load-bearing and differs in three ways: (1) it fires **only after pending-state validation**, so a rejected/forked batch never triggers promotion, whereas `batchEnd` fires even on error; (2) it is **gated on `isTracking`**, firing only for containers actually using version marks, whereas `batchEnd` fires on all clients; (3) the stable-batch-id derivation is itself tracking-gated. A consumer migrated onto `batchEnd` would have to re-derive that validated-only + tracking-gated filtering itself, and getting it wrong would promote a mark on a batch that was never durably sequenced. There is also cost on the emit side (deriving/exposing the id for every `batchEnd`, including on untracked clients).
+
+  **If we do decide to consolidate, the phased (non-breaking-until-last-step) path is:**
+  1. **Add the stable batch id to `batchEnd`** — additive event-payload change, non-breaking, lands in any minor (optional/nullable field, since `batchEnd` fires when no stable id exists).
+  1. **Deprecate `onBatchSequenced`** (`@deprecated` TSDoc pointing at `batchEnd`, with removal version + tracking issue) — non-breaking, signals the migration and starts the partner lead-time clock.
+  1. **Remove `onBatchSequenced`** — the only beta-breaking step; requires **both** an x.x0 (or major) break window *and* the ~12-week partner lead time (office-bohemia consumes this API), staged on a `test/breaks/client/#.#0/` branch.
+
+  **Gate on step 3:** removal is only safe if a `batchEnd` consumer can faithfully reproduce `onBatchSequenced`'s validated-only + tracking-gated semantics. If it cannot, keep `onBatchSequenced` and do not finalize the consolidation. **Decision: deferred** — none of this is required for the current beta, it does not block office-bohemia testing (the feature works today via `sealAndCaptureVersionMark`/`resolve` plus `onBatchSequenced`, and a missed live promotion is recoverable via the history scan), and the only breaking step is gated to a future x.x0 regardless.
 - Define the teardown contract for listeners and in-flight `resolve()` calls. Subscriptions should not retain app objects after runtime disposal, and a resolver obtained from a closed runtime should fail predictably rather than starting new storage work.
+
+### Missing `fetchOps` and resolve-result semantics
+
+When a newer runtime is paired with an older loader, `fetchOps` is absent. The runtime already handles
+that pairing safely: it does not construct the historical reader/unpacker, and a live-map miss returns
+`{ kind: "pending" }` with telemetry path `noReader`. The process does not crash, and a batch observed
+later in the same live session can still resolve through `processInboundBatch`.
+
+The open production-design question is semantic clarity. `pending` currently covers both:
+
+1. the batch has not sequenced yet and a normal retry may resolve it; and
+1. this loader cannot inspect retained history, so the runtime cannot determine whether the batch
+   sequenced in another session.
+
+This union is consumed by the host/service layer, not displayed directly to an end user. It can still
+affect end-user behavior indirectly if the host leaves a version unresolved or retries forever.
+`unresolvable` is not an exact substitute: its current contract means retained history was available
+but the target ops were trimmed or otherwise proven gone. A later container load with a newer loader
+could resolve a mark that the old-loader pairing could not inspect.
+
+Before production, choose and document one policy:
+
+- **Non-breaking clarification (preferred if sufficient):** add an optional reason to the existing
+  `pending` member, such as `reason?: "awaitingSequence" | "historicalOpsUnavailable"`. Existing consumers
+  and older runtime results remain valid, while an updated host can choose a different retry policy.
+- **Clean distinct outcome:** add an `unavailable`/`indeterminate` result, or make a reason required. This
+  is a breaking change to the exported `@legacy @beta` union because exhaustive consumers must handle the
+  new shape. It requires a changeset, regenerated API reports, API Council approval, an allowed beta-break
+  window, and office-bohemia partner lead time/integration testing.
+- **Reuse `unresolvable` (not recommended without redefining it):** this avoids a new union member, but
+  would blur a terminal retained-history result with a capability-limited result that may become resolvable
+  after loading with a newer loader. If selected, its contract and host retry behavior must be deliberately
+  changed and documented.
+- **Keep current behavior:** explicitly define no-reader `pending` as a conservative compatibility result
+  and require the host to bound retries or rely on live promotion. This avoids an API change but preserves
+  the ambiguity.
+
+Whichever policy is selected, test both a current loader and an old-loader-shaped context with no
+`fetchOps`, and document whether a host should retain and retry the mark after a later deployment/reload.
+Do not remove the optional branch as part of this decision; that cleanup remains independently gated by
+AB#81034 and generation 21.
 
 ### Flush side effect and corner cases
 
