@@ -51,8 +51,8 @@ import {
 	NonPersistentCache,
 } from "./odspCache.js";
 import { OdspDocumentService } from "./odspDocumentService.js";
-import { OdspDriverUrlResolver } from "./odspDriverUrlResolver.js";
 import { odspDriverCompatDetailsForLoader } from "./odspLayerCompatState.js";
+import { getApiRoot } from "./odspUrlHelper.js";
 import {
 	type IExistingFileInfo,
 	type INewFileInfo,
@@ -431,22 +431,21 @@ export class OdspDocumentServiceFactoryCore
 	private async resolveFileVersion(
 		resolvedUrl: IResolvedUrl,
 		fileVersion: string,
-	): Promise<IResolvedUrl> {
+	): Promise<IOdspResolvedUrl> {
 		const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
-		const query = new URLSearchParams({
-			driveId: odspResolvedUrl.driveId,
-			itemId: odspResolvedUrl.itemId,
+		const urlBase = `${getApiRoot(new URL(odspResolvedUrl.siteUrl))}/drives/${
+			odspResolvedUrl.driveId
+		}/items/${odspResolvedUrl.itemId}/versions/${fileVersion}/`;
+		return {
+			...odspResolvedUrl,
+			endpoints: {
+				snapshotStorageUrl: `${urlBase}opStream/snapshots`,
+				attachmentPOSTStorageUrl: `${urlBase}opStream/attachment`,
+				attachmentGETStorageUrl: `${urlBase}opStream/attachments`,
+				deltaStorageUrl: `${urlBase}opStream`,
+			},
 			fileVersion,
-		});
-		if (odspResolvedUrl.dataStorePath !== undefined) {
-			query.set("path", odspResolvedUrl.dataStorePath);
-		}
-		if (odspResolvedUrl.codeHint?.containerPackageName !== undefined) {
-			query.set("containerPackageName", odspResolvedUrl.codeHint.containerPackageName);
-		}
-		return new OdspDriverUrlResolver().resolve({
-			url: `${odspResolvedUrl.siteUrl}?${query.toString()}`,
-		});
+		};
 	}
 
 	protected async createDocumentServiceCore(
