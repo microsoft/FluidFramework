@@ -298,7 +298,7 @@ export class BlobManager {
 	/**
 	 * When enabled, blobs created while detached have their bytes embedded directly into the summary tree
 	 * produced for attach, instead of being uploaded ahead of time to (detached) storage. This lets attach
-	 * complete in a single network round trip. See DEV.md ("Phase 1") for details and current limitations.
+	 * complete in a single network round trip. See singleFileCreateRoundtrip.md ("Phase 1") for details and current limitations.
 	 */
 	private readonly enableSingleFileCreateRoundTrip: boolean;
 
@@ -518,7 +518,7 @@ export class BlobManager {
 		if (this.enableSingleFileCreateRoundTrip) {
 			// Don't upload to (detached) storage at all - the bytes will be embedded directly into the
 			// summary generated for attach, so there's no pseudo/real storage ID to track here. See
-			// summarize() and DEV.md ("Phase 1") for details.
+			// summarize() and singleFileCreateRoundtrip.md ("Phase 1") for details.
 			this.embeddedDetachedBlobLocalIds.add(localId);
 			this.localBlobCache.set(localId, { state: "attached", blob });
 			return this.getNonPayloadPendingBlobHandle(localId);

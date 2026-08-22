@@ -118,7 +118,7 @@ const summarizeV1 = (
 		// groupId - this excludes the blob's content from the initial snapshot fetch (it's still fetchable
 		// on demand via the loadingGroupId snapshot API, and via the regular blob read API once attached).
 		// The service assigns each blob a real storage ID when it persists this summary.
-		// See DEV.md ("Phase 1").
+		// See singleFileCreateRoundtrip.md ("Phase 1").
 		const embeddedBuilder = new SummaryTreeBuilder();
 		for (const [localId, blob] of embeddedDetachedBlobs) {
 			const perBlobBuilder = new SummaryTreeBuilder();

@@ -11,5 +11,5 @@ of `N + 2`. When enabled, blobs created while detached are embedded directly in 
 (each in its own subtree, with a `groupId` equal to its local id, so a client that doesn't need the
 bytes yet can defer fetching them) instead of being uploaded to detached storage ahead of time. This
 only changes detached-container attach behavior; documents, GC, and post-attach summarization are
-unaffected. See `packages/runtime/container-runtime/src/blobManager/DEV.md` for the design and
-current limitations.
+unaffected. See `packages/runtime/container-runtime/src/blobManager/singleFileCreateRoundtrip.md`
+for the design and current limitations.
