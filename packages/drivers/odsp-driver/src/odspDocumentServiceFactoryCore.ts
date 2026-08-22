@@ -32,6 +32,7 @@ import {
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	PerformanceEvent,
+	UsageError,
 	createChildLogger,
 	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
@@ -51,6 +52,7 @@ import {
 } from "./odspCache.js";
 import { OdspDocumentService } from "./odspDocumentService.js";
 import { odspDriverCompatDetailsForLoader } from "./odspLayerCompatState.js";
+import { getApiRoot } from "./odspUrlHelper.js";
 import {
 	type IExistingFileInfo,
 	type INewFileInfo,
@@ -61,10 +63,8 @@ import {
 	toInstrumentedOdspStorageTokenFetcher,
 	toInstrumentedOdspTokenFetcher,
 } from "./odspUtils.js";
-import {
-	createPointInTimeDocumentService,
-	resolveFileVersion as resolvePointInTimeFileVersion,
-} from "./pointInTimeDriver/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { OdspPointInTimeDocumentService } from "./pointInTimeDriver/odspPointInTimeDocumentService.js";
 import {
 	createOdspVersionManager,
 	type IOdspVersionManager,
@@ -337,29 +337,74 @@ export class OdspDocumentServiceFactoryCore
 			logger?: ITelemetryBaseLogger,
 			clientIsSummarizer?: boolean,
 		): Promise<IDocumentService> => {
-			return createPointInTimeDocumentService({
-				resolvedUrl,
-				targetSequenceNumber,
-				logger,
+			const odspLogger = createOdspLogger(logger);
+			const extLogger = createChildLogger({ logger: odspLogger });
+			const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
+
+			// Use one epoch tracker for version selection, the base snapshot, and live ops so a
+			// point-in-time load cannot combine data from different file lineages.
+			const cacheAndTracker = createOdspCacheAndTracker(
+				this.persistedCache,
+				new NonPersistentCache(),
+				{
+					resolvedUrl: odspResolvedUrl,
+					docId: odspResolvedUrl.hashedDocumentId,
+					fileVersion: odspResolvedUrl.fileVersion,
+				},
+				extLogger,
 				clientIsSummarizer,
-				persistedCache: this.persistedCache,
-				createVersionManager: async (odspResolvedUrl, extLogger, epochTracker) =>
-					this.createVersionManager(odspResolvedUrl, extLogger, epochTracker),
-				resolveFileVersion: async (url, fileVersion) =>
-					this.resolveFileVersion(url, fileVersion),
-				createDocumentService: async (url, odspLogger, cacheAndTracker, isSummarizer) =>
-					this.createDocumentServiceCore(url, odspLogger, cacheAndTracker, isSummarizer),
-			});
+			);
+
+			const versionManager = this.createVersionManager(
+				odspResolvedUrl,
+				extLogger,
+				cacheAndTracker.epochTracker,
+			);
+			const baseResult = await versionManager.findBaseForSeq(targetSequenceNumber);
+			if (baseResult.kind === "noBaseVersion") {
+				const oldestResolvedSequenceDetail =
+					baseResult.oldestResolvedSeq === undefined
+						? ""
+						: ` The oldest resolved file version is at sequence number ${baseResult.oldestResolvedSeq}.`;
+				throw new UsageError(
+					`No ODSP file version is available at or before sequence number ${targetSequenceNumber}.${oldestResolvedSequenceDetail}`,
+				);
+			}
+
+			const recoverableResolvedUrl = await this.resolveFileVersion(
+				resolvedUrl,
+				baseResult.base.versionId,
+			);
+			// Keep historical snapshots isolated from the normal factory cache while validating both
+			// services against the shared tracker.
+			const recoverableDocumentService = await this.createDocumentServiceCore(
+				recoverableResolvedUrl,
+				odspLogger,
+				cacheAndTracker,
+				clientIsSummarizer,
+			);
+			const liveDocumentService = await this.createDocumentServiceCore(
+				resolvedUrl,
+				odspLogger,
+				cacheAndTracker,
+				clientIsSummarizer,
+			);
+			return new OdspPointInTimeDocumentService(
+				recoverableResolvedUrl,
+				recoverableDocumentService,
+				liveDocumentService,
+				targetSequenceNumber,
+			);
 		};
 
 	/**
 	 * Creates the version manager used to select the closest file version at or before the target.
 	 */
-	private async createVersionManager(
+	private createVersionManager(
 		odspResolvedUrl: IOdspResolvedUrl,
 		logger: TelemetryLoggerExt,
 		epochTracker: EpochTracker,
-	): Promise<IOdspVersionManager> {
+	): IOdspVersionManager {
 		const urlParts: IOdspUrlParts = {
 			siteUrl: odspResolvedUrl.siteUrl,
 			driveId: odspResolvedUrl.driveId,
@@ -381,8 +426,21 @@ export class OdspDocumentServiceFactoryCore
 	private async resolveFileVersion(
 		resolvedUrl: IResolvedUrl,
 		fileVersion: string,
-	): Promise<IResolvedUrl> {
-		return resolvePointInTimeFileVersion(resolvedUrl, fileVersion);
+	): Promise<IOdspResolvedUrl> {
+		const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
+		const urlBase = `${getApiRoot(new URL(odspResolvedUrl.siteUrl))}/drives/${
+			odspResolvedUrl.driveId
+		}/items/${odspResolvedUrl.itemId}/versions/${fileVersion}/`;
+		return {
+			...odspResolvedUrl,
+			endpoints: {
+				snapshotStorageUrl: `${urlBase}opStream/snapshots`,
+				attachmentPOSTStorageUrl: `${urlBase}opStream/attachment`,
+				attachmentGETStorageUrl: `${urlBase}opStream/attachments`,
+				deltaStorageUrl: `${urlBase}opStream`,
+			},
+			fileVersion,
+		};
 	}
 
 	protected async createDocumentServiceCore(

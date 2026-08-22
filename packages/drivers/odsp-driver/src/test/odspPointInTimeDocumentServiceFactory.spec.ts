@@ -123,7 +123,7 @@ describe("OdspPointInTimeDocumentServiceFactory lineage guard", () => {
 			odspResolvedUrl: IOdspResolvedUrl,
 			logger: unknown,
 			epochTracker: EpochTracker,
-		) => Promise<IOdspVersionManager>;
+		) => IOdspVersionManager;
 		resolveFileVersion: (
 			resolvedUrl: IResolvedUrl,
 			fileVersion: string,
@@ -146,7 +146,7 @@ describe("OdspPointInTimeDocumentServiceFactory lineage guard", () => {
 				odspResolvedUrl: IOdspResolvedUrl,
 				logger: unknown,
 				epochTracker: EpochTracker,
-			) => Promise<IOdspVersionManager>;
+			) => IOdspVersionManager;
 			resolveFileVersion: (
 				resolvedUrl: IResolvedUrl,
 				fileVersion: string,
@@ -169,7 +169,7 @@ describe("OdspPointInTimeDocumentServiceFactory lineage guard", () => {
 				},
 			}),
 		};
-		stub(internals, "createVersionManager").callsFake(async (_url, _logger, epochTracker) => {
+		stub(internals, "createVersionManager").callsFake((_url, _logger, epochTracker) => {
 			versionManagerEpochTracker = epochTracker;
 			return fakeManager;
 		});
@@ -247,7 +247,7 @@ describe("OdspPointInTimeDocumentServiceFactory lineage guard", () => {
 		const realManager = new OdspVersionManager(
 			fakeFetcher({ liveEpoch: "epoch-live", versionEpoch: "epoch-old" }),
 		);
-		stub(internals, "createVersionManager").resolves(realManager);
+		stub(internals, "createVersionManager").returns(realManager);
 		const resolveFileVersion = stub(internals, "resolveFileVersion");
 		const createDocumentServiceCore = stub(internals, "createDocumentServiceCore");
 
@@ -287,7 +287,7 @@ describe("OdspPointInTimeDocumentServiceFactory lineage guard", () => {
 		const realManager = new OdspVersionManager(
 			fakeFetcher({ liveEpoch: "epoch-A", versionEpoch: "epoch-A" }),
 		);
-		stub(internals, "createVersionManager").resolves(realManager);
+		stub(internals, "createVersionManager").returns(realManager);
 		stub(internals, "resolveFileVersion").resolves(recoverableResolvedUrl);
 		const createDocumentServiceCore = stub(internals, "createDocumentServiceCore").callsFake(
 			async () => fakeDocumentService(),
@@ -314,7 +314,7 @@ describe("OdspPointInTimeDocumentServiceFactory lineage guard", () => {
 			const factory = getOdspPointInTimeDocumentServiceFactory(getStorageToken, undefined);
 			const resolvedUrl = await makeResolvedUrl();
 			const internals = factory as unknown as FactoryInternals;
-			stub(internals, "createVersionManager").resolves({
+			stub(internals, "createVersionManager").returns({
 				findBaseForSeq: async (): Promise<BaseForSeq> =>
 					oldestResolvedSeq === undefined
 						? { kind: "noBaseVersion" }
@@ -354,11 +354,7 @@ describe("OdspPointInTimeDocumentServiceFactory lineage guard", () => {
 			createChildLogger(),
 		);
 
-		const manager = await internals.createVersionManager(
-			resolvedUrl,
-			createChildLogger(),
-			tracker,
-		);
+		const manager = internals.createVersionManager(resolvedUrl, createChildLogger(), tracker);
 		assert.equal(typeof manager.findBaseForSeq, "function");
 
 		const versionedUrl = (await internals.resolveFileVersion(
