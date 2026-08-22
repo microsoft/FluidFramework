@@ -488,6 +488,23 @@ export interface ContainerRuntimeOptions {
 	readonly createBlobPayloadPending: true | undefined;
 
 	/**
+	 * When enabled (`true`), blobs uploaded via `uploadBlob()` while the container is **detached** are embedded
+	 * directly (as raw bytes, in their own subtree) in the summary tree generated for `attach()`, instead of being
+	 * uploaded individually to storage ahead of time. This lets a detached container with blobs attach in a single
+	 * network round trip, the same as a detached container with no blobs, rather than needing one round trip per
+	 * blob plus an extra round trip to patch in real storage IDs.
+	 *
+	 * This only affects the detached-to-attaching transition; blob upload behavior after attach is unchanged.
+	 *
+	 * Default is `undefined` (disabled).
+	 *
+	 * @experimental Not ready for use. Only the "create and immediately exit" case is supported so far; a client
+	 * that keeps running past `attach()` and later needs to resolve one of these blobs' real storage ID itself
+	 * (e.g. because it becomes the summarizer, or its in-memory blob cache gets evicted) is not yet supported.
+	 */
+	readonly enableSingleRoundTripFileCreate: true | undefined;
+
+	/**
 	 * Controls automatic batch flushing during staging mode.
 	 * Normal turn-based/async flush scheduling is suppressed while in staging mode
 	 * until the accumulated batch reaches this many ops, at which point the batch
@@ -1059,6 +1076,7 @@ export class ContainerRuntime
 			chunkSizeInBytes: defaultChunkSizeInBytes,
 			stagingModeAutoFlushThreshold: defaultStagingModeAutoFlushThreshold,
 			disableSchemaUpgrade: false,
+			enableSingleRoundTripFileCreate: undefined,
 		};
 
 		const defaultConfigs = {
@@ -1086,6 +1104,7 @@ export class ContainerRuntime
 			createBlobPayloadPending = defaultConfigs.createBlobPayloadPending,
 			stagingModeAutoFlushThreshold = defaultConfigs.stagingModeAutoFlushThreshold,
 			disableSchemaUpgrade = defaultConfigs.disableSchemaUpgrade,
+			enableSingleRoundTripFileCreate = defaultConfigs.enableSingleRoundTripFileCreate,
 		}: IContainerRuntimeOptionsInternal = runtimeOptions;
 
 		// If explicitSchemaControl is off, ensure that options which require explicitSchemaControl are not enabled.
@@ -1321,6 +1340,7 @@ export class ContainerRuntime
 			createBlobPayloadPending,
 			stagingModeAutoFlushThreshold,
 			disableSchemaUpgrade,
+			enableSingleRoundTripFileCreate,
 		};
 
 		validateMinimumVersionForCollab(updatedMinVersionForCollab);
@@ -2207,6 +2227,8 @@ export class ContainerRuntime
 			runtime: this,
 			pendingBlobs: pendingRuntimeState?.pendingAttachmentBlobs,
 			createBlobPayloadPending: this.sessionSchema.createBlobPayloadPending === true,
+			enableSingleRoundTripFileCreate:
+				this.runtimeOptions.enableSingleRoundTripFileCreate === true,
 		});
 
 		this.deltaScheduler = new DeltaScheduler(

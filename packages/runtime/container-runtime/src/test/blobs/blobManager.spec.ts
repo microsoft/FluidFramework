@@ -6,6 +6,8 @@
 import { strict as assert } from "node:assert";
 
 import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import type { SummaryObject } from "@fluidframework/driver-definitions/internal";
+import { SummaryType } from "@fluidframework/driver-definitions/internal";
 import type { ISequencedMessageEnvelope } from "@fluidframework/runtime-definitions/internal";
 import {
 	isFluidHandlePayloadPending,
@@ -20,6 +22,11 @@ import {
 	getGCNodePathFromLocalId,
 	type IBlobManagerLoadInfo,
 } from "../../blobManager/index.js";
+import {
+	embeddedBlobContentBlobName,
+	embeddedBlobsTreeName,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../blobManager/blobManagerSnapSum.js";
 
 import {
 	attachHandle,
@@ -28,6 +35,7 @@ import {
 	ensureBlobsShared,
 	getSummaryContentsWithFormatValidation,
 	MockStorageAdapter,
+	reloadBlobManager,
 	simulateAttach,
 	textToBlob,
 	unpackHandle,
@@ -101,6 +109,155 @@ for (const createBlobPayloadPending of [false, true]) {
 					0,
 					"Should not try to send messages in detached state",
 				);
+			});
+
+			describe("enableSingleRoundTripFileCreate", () => {
+				it("Does not upload to detached storage, and embeds the blob bytes directly in the summary", async () => {
+					const { mockBlobStorage, blobManager } = createTestMaterial({
+						attached: false,
+						createBlobPayloadPending,
+						enableSingleRoundTripFileCreate: true,
+					});
+					const handle = await blobManager.createBlob(textToBlob("hello"));
+					const { localId } = unpackHandle(handle);
+
+					// No network/storage round trip should have happened while detached.
+					assert.strictEqual(
+						mockBlobStorage.blobsCreated,
+						0,
+						"Should not upload to detached storage when enableSingleRoundTripFileCreate is enabled",
+					);
+
+					assert(blobManager.hasBlob(localId));
+					const blobFromManager = await blobManager.getBlob(localId, false);
+					assert.strictEqual(blobToText(blobFromManager), "hello", "Blob content mismatch");
+
+					const summary = blobManager.summarize();
+					const embeddedTree: SummaryObject | undefined =
+						summary.summary.tree[embeddedBlobsTreeName];
+					assert(embeddedTree !== undefined, "Expected embedded blobs subtree in summary");
+					assert(
+						embeddedTree.type === SummaryType.Tree,
+						"Expected embedded blobs to be a tree",
+					);
+					const perBlobSubtree: SummaryObject | undefined = embeddedTree.tree[localId];
+					assert(perBlobSubtree !== undefined, "Expected a subtree keyed by localId");
+					assert(perBlobSubtree.type === SummaryType.Tree, "Expected per-blob subtree");
+					assert.strictEqual(
+						perBlobSubtree.groupId,
+						localId,
+						"Per-blob subtree should have a groupId equal to its localId, so it's excluded from " +
+							"the initial snapshot fetch",
+					);
+					const embeddedBlob: SummaryObject | undefined =
+						perBlobSubtree.tree[embeddedBlobContentBlobName];
+					assert(embeddedBlob !== undefined, "Expected blob content in per-blob subtree");
+					assert(embeddedBlob.type === SummaryType.Blob, "Expected a raw blob node");
+					assert.strictEqual(
+						blobToText(embeddedBlob.content as Uint8Array),
+						"hello",
+						"Embedded blob content mismatch",
+					);
+
+					// No Attachment node should exist for this blob, since it has no storage ID yet.
+					for (const summaryObject of Object.values(summary.summary.tree)) {
+						assert.notStrictEqual(summaryObject.type, SummaryType.Attachment);
+					}
+				});
+
+				it("Keeps an embedded blob loadable and present in further summaries after a reload", async () => {
+					const original = createTestMaterial({
+						attached: false,
+						createBlobPayloadPending,
+						enableSingleRoundTripFileCreate: true,
+					});
+					const handle = await original.blobManager.createBlob(textToBlob("hello"));
+					const { localId } = unpackHandle(handle);
+
+					await simulateAttach(
+						original.mockBlobStorage,
+						original.mockRuntime,
+						original.blobManager,
+					);
+
+					// Simulate a completely fresh client (reload, or a summarizer) loading BlobManager from
+					// the summary the original client just produced - not the same in-memory BlobManager.
+					const reloaded = await reloadBlobManager(original);
+
+					assert(
+						reloaded.blobManager.hasBlob(localId),
+						"Blob should still be known after reload",
+					);
+					const blobFromReloaded = await reloaded.blobManager.getBlob(localId, false);
+					assert.strictEqual(
+						blobToText(blobFromReloaded),
+						"hello",
+						"Blob content mismatch after reload",
+					);
+
+					// The critical assertion: the *next* summary produced by the reloaded client must still
+					// contain this blob. Prior to the fix, embeddedDetachedBlobLocalIds was never restored on
+					// load, so this blob would have silently vanished from every future summary.
+					const nextSummary = reloaded.blobManager.summarize();
+					let found = false;
+					for (const summaryObject of Object.values(nextSummary.summary.tree)) {
+						if (summaryObject.type === SummaryType.Attachment) {
+							found = true;
+						}
+					}
+					assert(
+						found,
+						"Blob should still be represented (as an ordinary attachment blob) in the next " +
+							"summary produced after a reload",
+					);
+
+					// And it should keep round-tripping across further reloads too.
+					const reloadedAgain = await reloadBlobManager(reloaded);
+					assert(
+						reloadedAgain.blobManager.hasBlob(localId),
+						"Blob should still be known after a second reload",
+					);
+					const blobFromReloadedAgain = await reloadedAgain.blobManager.getBlob(
+						localId,
+						false,
+					);
+					assert.strictEqual(
+						blobToText(blobFromReloadedAgain),
+						"hello",
+						"Blob content mismatch after second reload",
+					);
+				});
+
+				it("Eventually removes an embedded blob from summaries once it is unreferenced (GC'd)", async () => {
+					const original = createTestMaterial({
+						attached: false,
+						createBlobPayloadPending,
+						enableSingleRoundTripFileCreate: true,
+					});
+					const handle = await original.blobManager.createBlob(textToBlob("hello"));
+					const { localId } = unpackHandle(handle);
+
+					await simulateAttach(
+						original.mockBlobStorage,
+						original.mockRuntime,
+						original.blobManager,
+					);
+
+					const reloaded = await reloadBlobManager(original);
+					assert(reloaded.blobManager.hasBlob(localId));
+
+					// Simulate GC deciding this blob is no longer referenced and is sweep-ready.
+					const route = getGCNodePathFromLocalId(localId);
+					reloaded.blobManager.deleteSweepReadyNodes([route]);
+
+					// The blob should now be gone from the next summary.
+					const summaryAfterSweep = reloaded.blobManager.summarize();
+					assert.strictEqual(
+						Object.keys(summaryAfterSweep.summary.tree).length,
+						0,
+						"Blob should no longer appear in summary after being swept",
+					);
+				});
 			});
 		});
 

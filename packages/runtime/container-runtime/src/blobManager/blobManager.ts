@@ -273,6 +273,14 @@ export class BlobManager {
 	 */
 	private readonly pendingOnlyLocalIds: Set<string> = new Set();
 
+	/**
+	 * Local IDs of blobs created while detached whose bytes have not been uploaded to (detached) storage at
+	 * all - instead, they'll be embedded directly into the summary generated for attach. Only used when
+	 * enableSingleRoundTripFileCreate is enabled. These local IDs are never added to redirectTable since
+	 * there is no (pseudo or real) storage ID for them until the service assigns one at attach time.
+	 */
+	private readonly embeddedDetachedBlobLocalIds: Set<string> = new Set();
+
 	private readonly sendBlobAttachMessage: (localId: string, storageId: string) => void;
 
 	private readonly routeContext: IFluidHandleContext;
@@ -286,6 +294,13 @@ export class BlobManager {
 	private readonly runtime: IBlobManagerRuntime;
 
 	private readonly createBlobPayloadPending: boolean;
+
+	/**
+	 * When enabled, blobs created while detached have their bytes embedded directly into the summary tree
+	 * produced for attach, instead of being uploaded ahead of time to (detached) storage. This lets attach
+	 * complete in a single network round trip. See singleRoundTripFileCreate.md ("Phase 1") for details and current limitations.
+	 */
+	private readonly enableSingleRoundTripFileCreate: boolean;
 
 	public constructor(props: {
 		readonly routeContext: IFluidHandleContext;
@@ -312,6 +327,7 @@ export class BlobManager {
 		readonly runtime: IBlobManagerRuntime;
 		pendingBlobs: IPendingBlobs | undefined;
 		readonly createBlobPayloadPending: boolean;
+		readonly enableSingleRoundTripFileCreate: boolean;
 	}) {
 		const {
 			routeContext,
@@ -323,6 +339,7 @@ export class BlobManager {
 			runtime,
 			pendingBlobs,
 			createBlobPayloadPending,
+			enableSingleRoundTripFileCreate,
 		} = props;
 		this.routeContext = routeContext;
 		this.storage = storage;
@@ -331,6 +348,7 @@ export class BlobManager {
 		this.isBlobDeleted = isBlobDeleted;
 		this.runtime = runtime;
 		this.createBlobPayloadPending = createBlobPayloadPending;
+		this.enableSingleRoundTripFileCreate = enableSingleRoundTripFileCreate;
 
 		this.mc = createChildMonitoringContext({
 			logger: this.runtime.baseLogger,
@@ -366,7 +384,11 @@ export class BlobManager {
 	 * Returns whether a blob with the given localId can be retrieved by the BlobManager via getBlob().
 	 */
 	public hasBlob(localId: string): boolean {
-		return this.redirectTable.has(localId) || this.localBlobCache.has(localId);
+		return (
+			this.redirectTable.has(localId) ||
+			this.localBlobCache.has(localId) ||
+			this.embeddedDetachedBlobLocalIds.has(localId)
+		);
 	}
 
 	/**
@@ -492,6 +514,16 @@ export class BlobManager {
 		}
 		const localId = uuid();
 		this.localBlobCache.set(localId, { state: "uploading", blob });
+
+		if (this.enableSingleRoundTripFileCreate) {
+			// Don't upload to (detached) storage at all - the bytes will be embedded directly into the
+			// summary generated for attach, so there's no pseudo/real storage ID to track here. See
+			// summarize() and singleRoundTripFileCreate.md ("Phase 1") for details.
+			this.embeddedDetachedBlobLocalIds.add(localId);
+			this.localBlobCache.set(localId, { state: "attached", blob });
+			return this.getNonPayloadPendingBlobHandle(localId);
+		}
+
 		// Blobs created while the container is detached are stored in IDetachedBlobStorage.
 		// The 'IContainerStorageService.createBlob()' call below will respond with a pseudo storage ID.
 		// That pseudo storage ID will be replaced with the real storage ID at attach time.
@@ -792,7 +824,25 @@ export class BlobManager {
 	}
 
 	public summarize(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
-		return summarizeBlobManagerState(this.redirectTable);
+		return summarizeBlobManagerState(this.redirectTable, this.getEmbeddedDetachedBlobs());
+	}
+
+	/**
+	 * Blobs created while detached with enableSingleRoundTripFileCreate enabled - these have no
+	 * (pseudo or real) storage ID yet, so they're summarized as raw content rather than as Attachment nodes.
+	 * See summarizeBlobManagerState in blobManagerSnapSum.ts.
+	 */
+	private getEmbeddedDetachedBlobs(): Map<string, ArrayBufferLike> {
+		const embeddedDetachedBlobs = new Map<string, ArrayBufferLike>();
+		for (const localId of this.embeddedDetachedBlobLocalIds) {
+			const localBlobRecord = this.localBlobCache.get(localId);
+			assert(
+				localBlobRecord !== undefined,
+				0xc85 /* Embedded detached blob must be in local cache */,
+			);
+			embeddedDetachedBlobs.set(localId, localBlobRecord.blob);
+		}
+		return embeddedDetachedBlobs;
 	}
 
 	/**
@@ -811,6 +861,9 @@ export class BlobManager {
 				// by adding its handle to a referenced DDS.
 				gcData.gcNodes[getGCNodePathFromLocalId(localId)] = [];
 			}
+		}
+		for (const localId of this.embeddedDetachedBlobLocalIds) {
+			gcData.gcNodes[getGCNodePathFromLocalId(localId)] = [];
 		}
 		return gcData;
 	}
