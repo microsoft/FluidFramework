@@ -41,7 +41,7 @@ const strictCheckBypassLoggedForPair: Set<string> = new Set<string>();
  * @param validatingLayer - The layer whose support requirements define compatibility. The `targetLayer` must meet
  * these requirements to be considered compatible.
  * - `layer`: The name of this layer.
- * - `compatDetails`: The compatibility details (version / generation) of this layer, used for telemetry attribution.
+ * - `packageInfo`: The package version / generation of this layer, used for telemetry attribution.
  * - `compatSupportRequirements`: The requirements the `targetLayer` must satisfy to be compatible with this layer.
  * @param targetLayer - The layer being validated against the `validatingLayer`'s requirements.
  * - `layer`: The name of this layer.
@@ -56,7 +56,7 @@ const strictCheckBypassLoggedForPair: Set<string> = new Set<string>();
 export function validateLayerCompatibility(
 	validatingLayer: {
 		layer: FluidLayer;
-		compatDetails: Pick<ILayerCompatDetails, "pkgVersion" | "generation">;
+		packageInfo: Pick<ILayerCompatDetails, "pkgVersion" | "generation">;
 		compatSupportRequirements: ILayerCompatSupportRequirements;
 	},
 	targetLayer: {
@@ -71,7 +71,7 @@ export function validateLayerCompatibility(
 ): void {
 	const {
 		layer: validatingLayerName,
-		compatDetails: validatingLayerCompatDetails,
+		packageInfo: validatingLayerPackageInfo,
 		compatSupportRequirements: validatingLayerSupportRequirements,
 	} = validatingLayer;
 	const {
@@ -89,17 +89,17 @@ export function validateLayerCompatibility(
 		const coreProperties = {
 			layer: validatingLayerName,
 			incompatibleLayer: targetLayerName,
-			layerVersion: validatingLayerCompatDetails.pkgVersion,
+			layerVersion: validatingLayerPackageInfo.pkgVersion,
 			incompatibleLayerVersion: maybeTargetLayerCompatDetails?.pkgVersion ?? "unknown",
 			compatibilityRequirementsInMonths:
-				validatingLayerCompatDetails.generation -
+				validatingLayerPackageInfo.generation -
 				validatingLayerSupportRequirements.minSupportedGeneration,
 			actualDifferenceInMonths:
-				validatingLayerCompatDetails.generation -
+				validatingLayerPackageInfo.generation -
 				(maybeTargetLayerCompatDetails?.generation ?? 0),
 		};
 		const detailedProperties = {
-			layerGeneration: validatingLayerCompatDetails.generation,
+			layerGeneration: validatingLayerPackageInfo.generation,
 			incompatibleLayerGeneration: maybeTargetLayerCompatDetails?.generation,
 			minSupportedGeneration: validatingLayerSupportRequirements.minSupportedGeneration,
 			isGenerationCompatible: layerCheckResult.isGenerationCompatible,

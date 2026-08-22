@@ -77,7 +77,7 @@ export function validateRuntimeCompatibility(
 	validateLayerCompatibility(
 		/* validatingLayer */ {
 			layer: "dataStore",
-			compatDetails: dataStoreCompatDetailsForRuntime,
+			packageInfo: dataStoreCoreCompatDetails,
 			compatSupportRequirements: runtimeSupportRequirementsForDataStore,
 		},
 		/* targetLayer */ {

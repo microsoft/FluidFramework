@@ -129,7 +129,7 @@ export function validateLoaderCompatibility(
 	validateLayerCompatibility(
 		/* validatingLayer */ {
 			layer: "runtime",
-			compatDetails: runtimeCompatDetailsForLoader,
+			packageInfo: runtimeCoreCompatDetails,
 			compatSupportRequirements: loaderSupportRequirementsForRuntime,
 		},
 		/* targetLayer */ {
@@ -153,7 +153,7 @@ export function validateDatastoreCompatibility(
 	validateLayerCompatibility(
 		/* validatingLayer */ {
 			layer: "runtime",
-			compatDetails: runtimeCompatDetailsForDataStore,
+			packageInfo: runtimeCoreCompatDetails,
 			compatSupportRequirements: dataStoreSupportRequirementsForRuntime,
 		},
 		/* targetLayer */ {

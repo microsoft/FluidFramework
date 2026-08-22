@@ -110,7 +110,7 @@ export function validateRuntimeCompatibility(
 	validateLayerCompatibility(
 		/* validatingLayer */ {
 			layer: "loader",
-			compatDetails: loaderCompatDetailsForRuntime,
+			packageInfo: loaderCoreCompatDetails,
 			compatSupportRequirements: runtimeSupportRequirementsForLoader,
 		},
 		/* targetLayer */ {
@@ -136,7 +136,7 @@ export function validateDriverCompatibility(
 	validateLayerCompatibility(
 		/* validatingLayer */ {
 			layer: "loader",
-			compatDetails: loaderCompatDetailsForDriver,
+			packageInfo: loaderCoreCompatDetails,
 			compatSupportRequirements: driverSupportRequirementsForLoader,
 		},
 		/* targetLayer */ {
@@ -177,7 +177,7 @@ export function validateLoaderCompatibilityWithDriver(
 	validateLayerCompatibility(
 		/* validatingLayer */ {
 			layer: "driver",
-			compatDetails: maybeDriverCompatDetails ?? defaultLayerCompatDetails,
+			packageInfo: maybeDriverCompatDetails ?? defaultLayerCompatDetails,
 			compatSupportRequirements: maybeDriverCompatRequirements,
 		},
 		/* targetLayer */ {
