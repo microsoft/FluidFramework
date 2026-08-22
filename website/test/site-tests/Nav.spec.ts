@@ -47,7 +47,8 @@ test.describe("Nav", () => {
 
 		const writtenDocsResult = page
 			.getByRole("dialog")
-			.getByRole("link", { name: "SharedTree Quick Start", exact: true });
+			.locator('a[href="/docs/start/tree-start/"]');
+		await expect(writtenDocsResult).toHaveAccessibleName("SharedTree Quick Start");
 		await expect(writtenDocsResult).toHaveAttribute("href", "/docs/start/tree-start/");
 		await expect(writtenDocsResult).toBeVisible();
 	});
@@ -99,14 +100,17 @@ test.describe("Nav", () => {
 		}
 	});
 
-	test("Search labels documentation versions and prioritizes v2", async ({ page }) => {
+	test("Search labels documentation versions and prioritizes v3", async ({ page }) => {
 		await page.getByRole("button", { name: "Search" }).click();
 
 		const searchInput = page.getByRole("searchbox");
 		await searchInput.fill("Fluid Framework Documentation");
 
 		const results = page.getByRole("dialog").locator(".pf-result");
-		await expect(results.first().locator(".api-result-version")).toHaveText("v2");
+		await expect(results.first().locator(".api-result-version")).toHaveText("v3");
+		await expect(
+			results.locator(".api-result-version", { hasText: "v2" }).first(),
+		).toBeVisible();
 		await expect(
 			results.locator(".api-result-version", { hasText: "v1" }).first(),
 		).toBeVisible();
