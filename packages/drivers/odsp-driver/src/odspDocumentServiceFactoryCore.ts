@@ -63,12 +63,7 @@ import {
 	toInstrumentedOdspStorageTokenFetcher,
 	toInstrumentedOdspTokenFetcher,
 } from "./odspUtils.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { OdspPointInTimeDocumentService } from "./pointInTimeDriver/odspPointInTimeDocumentService.js";
-import {
-	createOdspVersionManager,
-	type IOdspVersionManager,
-} from "./odspVersionManager/index.js";
+import type { IOdspVersionManager } from "./odspVersionManager/index.js";
 
 /**
  * An ODSP document service factory that supports point-in-time (sequence-number-based) loading.
@@ -355,7 +350,7 @@ export class OdspDocumentServiceFactoryCore
 				clientIsSummarizer,
 			);
 
-			const versionManager = this.createVersionManager(
+			const versionManager = await this.createVersionManager(
 				odspResolvedUrl,
 				extLogger,
 				cacheAndTracker.epochTracker,
@@ -389,6 +384,13 @@ export class OdspDocumentServiceFactoryCore
 				cacheAndTracker,
 				clientIsSummarizer,
 			);
+			// Delay-load the point-in-time service into its own chunk, fetched only when a
+			// consumer actually performs a point-in-time load.
+			const { OdspPointInTimeDocumentService } = await import(
+				/* webpackChunkName: "odspPointInTime" */
+				// eslint-disable-next-line import-x/no-internal-modules -- deep import needed to split point-in-time code into its own lazy chunk
+				"./pointInTimeDriver/odspPointInTimeDocumentService.js"
+			);
 			return new OdspPointInTimeDocumentService(
 				recoverableResolvedUrl,
 				recoverableDocumentService,
@@ -400,11 +402,11 @@ export class OdspDocumentServiceFactoryCore
 	/**
 	 * Creates the version manager used to select the closest file version at or before the target.
 	 */
-	private createVersionManager(
+	private async createVersionManager(
 		odspResolvedUrl: IOdspResolvedUrl,
 		logger: TelemetryLoggerExt,
 		epochTracker: EpochTracker,
-	): IOdspVersionManager {
+	): Promise<IOdspVersionManager> {
 		const urlParts: IOdspUrlParts = {
 			siteUrl: odspResolvedUrl.siteUrl,
 			driveId: odspResolvedUrl.driveId,
@@ -414,6 +416,9 @@ export class OdspDocumentServiceFactoryCore
 			logger,
 			urlParts,
 			this.getStorageToken,
+		);
+		const { createOdspVersionManager } = await import(
+			/* webpackChunkName: "odspPointInTime" */ "./odspVersionManager/index.js"
 		);
 		return createOdspVersionManager({
 			urlParts,
