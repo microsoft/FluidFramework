@@ -4867,9 +4867,6 @@ importers:
 
   examples/utils/typescript-versions-host:
     devDependencies:
-      typescript-5.6:
-        specifier: npm:typescript@~5.6.3
-        version: typescript@5.6.3
       typescript-5.7:
         specifier: npm:typescript@~5.7.3
         version: typescript@5.7.3
@@ -26490,11 +26487,6 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
-  typescript@5.6.3:
-    resolution: {integrity: sha512-hjcS1mhfuyi4WW8IWtjP7brDrG2cuDZukyrYrSauoXGNgx0S7zceP07adYkJycEr56BOUTNPzbInooiN3fn1qw==}
-    engines: {node: '>=14.17'}
-    hasBin: true
-
   typescript@5.7.3:
     resolution: {integrity: sha512-84MVSjMEHP+FQRPy3pX9sTVV/INIex71s9TL2Gm5FG/WG1SqXeKyZ0k7/blY/4FdOzI12CBy1vGc4og/eus0fw==}
     engines: {node: '>=14.17'}
@@ -42053,8 +42045,6 @@ snapshots:
   typescript@5.4.5: {}
 
   typescript@5.6.1-rc: {}
-
-  typescript@5.6.3: {}
 
   typescript@5.7.3: {}
 
