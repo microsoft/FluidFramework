@@ -45,6 +45,7 @@ import type {
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
 	ISummarizeResult,
+	ISummaryBuilder,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	OldestSupportedClientVersion,
@@ -235,6 +236,7 @@ export function formParentContext<
 		scope: context.scope,
 		gcThrowOnTombstoneUsage: context.gcThrowOnTombstoneUsage,
 		gcTombstoneEnforcementAllowed: context.gcTombstoneEnforcementAllowed,
+		loadedFromSequenceNumber: context.loadedFromSequenceNumber,
 		getAbsoluteUrl: async (...args) => {
 			return context.getAbsoluteUrl(...args);
 		},
@@ -316,6 +318,16 @@ export function getLocalDataStoreType(localDataStore: LocalFluidDataStoreContext
  * but eventually could be hosted on any channel once we formalize the channel api boundary.
  * @internal
  */
+/**
+ * "Last changed at" sequence number for content that is known not to be present in any uploaded summary yet.
+ *
+ * @remarks
+ * The generateSummary flow reuses a node's previous summary when
+ * `latestSummarySequenceNumber >= lastChangedSequenceNumber`. Using a value no summary can ever reach forces the
+ * node to be summarized in full.
+ */
+export const neverSummarizedSequenceNumber = Number.MAX_SAFE_INTEGER;
+
 export class ChannelCollection
 	implements Omit<IFluidDataStoreChannel, "entryPoint" | "reSubmit" | "rollback">, IDisposable
 {
@@ -343,6 +355,13 @@ export class ChannelCollection
 
 	protected readonly contexts: DataStoreContexts;
 	private readonly aliasedDataStores: Set<string>;
+
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#IFluidParentContext.loadedFromSequenceNumber}
+	 */
+	public get loadedFromSequenceNumber(): number {
+		return this.parentContext.loadedFromSequenceNumber ?? neverSummarizedSequenceNumber;
+	}
 
 	constructor(
 		protected readonly baseSnapshot: ISnapshotTree | ISnapshot | undefined,
@@ -391,6 +410,7 @@ export class ChannelCollection
 					}),
 					makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(key),
 					snapshotTree,
+					loadedFromSequenceNumber: this.loadedFromSequenceNumber,
 				});
 			} else {
 				let snapshotForRemoteFluidDatastoreContext: ISnapshot | ISnapshotTree = value;
@@ -410,6 +430,7 @@ export class ChannelCollection
 						type: CreateSummarizerNodeSource.FromSummary,
 					}),
 					loadingGroupId: value.groupId,
+					loadedFromSequenceNumber: this.loadedFromSequenceNumber,
 				});
 			}
 			this.contexts.addBoundOrRemoted(dataStoreContext);
@@ -563,6 +584,9 @@ export class ChannelCollection
 					},
 				),
 				pkg,
+				// The attach op is where this data store's content first appears, so that is the earliest
+				// summary that can contain it.
+				loadedFromSequenceNumber: envelope.sequenceNumber,
 			});
 
 			this.contexts.addBoundOrRemoted(remoteFluidDataStoreContext);
@@ -767,6 +791,8 @@ export class ChannelCollection
 			makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(id),
 			snapshotTree: undefined,
 			loadingGroupId,
+			// A locally created data store is not in any summary yet.
+			loadedFromSequenceNumber: neverSummarizedSequenceNumber,
 			channelToDataStoreFn: (channel: IFluidDataStoreChannel) =>
 				channelToDataStore(
 					channel,
@@ -905,6 +931,8 @@ export class ChannelCollection
 			}),
 			makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(id),
 			snapshotTree,
+			// This client is playing the role of the creating client, so this content is not in any summary yet.
+			loadedFromSequenceNumber: neverSummarizedSequenceNumber,
 		});
 		// add to the list of bound or remoted, as this context must be bound
 		// to had an attach message sent, and is the non-detached case is remoted.
@@ -1286,6 +1314,19 @@ export class ChannelCollection
 	}
 
 	/**
+	 * The number of data stores that have been realized (loaded).
+	 */
+	public get realizedCount(): number {
+		let count = 0;
+		for (const [, context] of this.contexts) {
+			if (context.isLoaded) {
+				count++;
+			}
+		}
+		return count;
+	}
+
+	/**
 	 * Create a summary. Used when attaching or serializing a detached container.
 	 */
 	public getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
@@ -1423,6 +1464,32 @@ export class ChannelCollection
 			{ fullTree, realizedDuring: "summarize" },
 		);
 		return summaryBuilder.getSummaryTree();
+	}
+
+	/**
+	 * Writes each data store's summary into the given builder.
+	 *
+	 * @remarks
+	 * Summarizer-node-free counterpart to {@link ChannelCollection.summarize}. Data stores that have not changed
+	 * since `latestSummarySequenceNumber` are not realized at all.
+	 */
+	public async generateSummary(
+		summaryBuilder: ISummaryBuilder,
+		latestSummarySequenceNumber: number,
+		fullTree: boolean,
+		telemetryContext: ITelemetryContext,
+	): Promise<void> {
+		await this.visitContextsDuringSummary(
+			async (contextId: string, context: FluidDataStoreContext) => {
+				await context.generateSummary(
+					summaryBuilder.createBuilderForChild(contextId, fullTree),
+					latestSummarySequenceNumber,
+					fullTree,
+					telemetryContext,
+				);
+			},
+			{ fullTree, realizedDuring: "generateSummary" },
+		);
 	}
 
 	/**

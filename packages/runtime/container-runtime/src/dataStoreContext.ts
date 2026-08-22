@@ -32,6 +32,7 @@ import type {
 	ISnapshot,
 	IDocumentMessage,
 	ISnapshotTree,
+	ISummaryTree,
 	ITreeEntry,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
@@ -60,6 +61,7 @@ import type {
 	ISummarizeInternalResult,
 	ISummarizeResult,
 	ISummarizerNodeWithGC,
+	ISummaryBuilder,
 	SummarizeInternalFn,
 	IInboundSignalMessage,
 	IPendingMessagesState,
@@ -71,7 +73,10 @@ import type {
 	ContainerExtensionId,
 	ContainerExtensionExpectations,
 } from "@fluidframework/runtime-definitions/internal";
-import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
+import {
+	channelsTreeName,
+	generateSummary,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
 	isSnapshotFetchRequiredForLoadingGroupId,
@@ -90,6 +95,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { IFluidParentContextPrivate } from "./channelCollection.js";
+import { neverSummarizedSequenceNumber } from "./channelCollection.js";
 import { BaseDeltaManagerProxy } from "./deltaManagerProxies.js";
 import {
 	runtimeCompatDetailsForDataStore,
@@ -116,6 +122,35 @@ function createAttributes(
 		summaryFormatVersion: 2,
 		isRootDataStore,
 	};
+}
+
+/**
+ * The used-state comparison implemented by the concrete summarizer node.
+ *
+ * @remarks
+ * Structural rather than an import so that the generateSummary flow can use it without widening
+ * {@link @fluidframework/runtime-definitions#ISummarizerNodeWithGC}.
+ */
+interface IUsedStateComparer {
+	hasUsedStateChanged(): boolean;
+}
+
+/**
+ * Whether this data store runtime can be summarized by the generateSummary flow.
+ *
+ * @remarks
+ * Determined by the layer compatibility details rather than by probing for the method, so that a data store
+ * runtime from a version that predates the API is handled at the version boundary rather than failing.
+ */
+function channelSummarizesWithBuilder(
+	channel: IFluidDataStoreChannel,
+): channel is IFluidDataStoreChannel &
+	Required<Pick<IFluidDataStoreChannel, "generateSummary">> {
+	const { ILayerCompatDetails } = channel as FluidObject<ILayerCompatDetails>;
+	return (
+		(ILayerCompatDetails?.supportedFeatures.has(generateSummary) ?? false) &&
+		channel.generateSummary !== undefined
+	);
 }
 export function createAttributesBlob(
 	pkg: readonly string[],
@@ -158,6 +193,14 @@ export interface IFluidDataStoreContextProps {
 	readonly storage: IRuntimeStorageService;
 	readonly scope: FluidObject;
 	readonly createSummarizerNodeFn: CreateChildSummarizerNodeFn;
+	/**
+	 * See {@link @fluidframework/runtime-definitions#IFluidParentContext.loadedFromSequenceNumber}.
+	 *
+	 * @remarks
+	 * Defaults to a value no summary can reach, which makes the generateSummary flow treat this data store as always
+	 * changed. Callers that know when this content first became summarizable should pass it.
+	 */
+	readonly loadedFromSequenceNumber?: number;
 	/**
 	 * See {@link FluidDataStoreContext.pkg}.
 	 */
@@ -456,6 +499,25 @@ export abstract class FluidDataStoreContext
 	 */
 	protected pkg?: PackagePath;
 
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#IFluidParentContext.loadedFromSequenceNumber}
+	 */
+	public readonly loadedFromSequenceNumber: number;
+
+	/**
+	 * Sequence number at which this data store's content last changed, used by the generateSummary flow.
+	 *
+	 * @remarks
+	 * This is the only per-node summarization state in the new flow. Everything else - what the latest successful
+	 * summary was, and therefore what may be reused - lives in the container runtime.
+	 */
+	private lastChangedSequenceNumber: number;
+
+	/**
+	 * Used routes as of the last time they were seen, to detect a reference state change.
+	 */
+	private lastSummarizedUsedRoutes: string | undefined;
+
 	public constructor(
 		props: IFluidDataStoreContextProps,
 		private readonly existing: boolean,
@@ -472,6 +534,9 @@ export abstract class FluidDataStoreContext
 		this.scope = props.scope;
 		this.pkg = props.pkg;
 		this.loadingGroupId = props.loadingGroupId;
+		this.loadedFromSequenceNumber =
+			props.loadedFromSequenceNumber ?? neverSummarizedSequenceNumber;
+		this.lastChangedSequenceNumber = this.loadedFromSequenceNumber;
 
 		// URIs use slashes as delimiters. Handles use URIs.
 		// Thus having slashes in types almost guarantees trouble down the road!
@@ -762,6 +827,7 @@ export abstract class FluidDataStoreContext
 		this.verifyNotClosed("process", false /* checkTombstone */, safeTelemetryProps);
 
 		this.summarizerNode.recordChange(envelope as ISequencedDocumentMessage);
+		this.lastChangedSequenceNumber = envelope.sequenceNumber;
 
 		if (this.loaded) {
 			assert(this.channel !== undefined, 0xa68 /* Channel is not loaded */);
@@ -815,6 +881,64 @@ export abstract class FluidDataStoreContext
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummarizeResult> {
 		return this.summarizerNode.summarize(fullTree, trackState, telemetryContext);
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#ISummarizable.generateSummary}
+	 */
+	// A data store which declares itself unchanged is not realized, which is the main win over the old flow.
+	public async generateSummary(
+		summaryBuilder: ISummaryBuilder,
+		latestSummarySequenceNumber: number,
+		fullTree: boolean,
+		telemetryContext: ITelemetryContext,
+	): Promise<void> {
+		if (!fullTree && latestSummarySequenceNumber >= this.lastChangedSequenceNumber) {
+			summaryBuilder.nodeDidNotChange();
+			return;
+		}
+
+		const channel = await this.realize();
+		if (channelSummarizesWithBuilder(channel)) {
+			await channel.generateSummary(
+				summaryBuilder.createBuilderForChild(channelsTreeName, fullTree),
+				latestSummarySequenceNumber,
+				fullTree,
+				telemetryContext,
+			);
+		} else {
+			// A data store runtime from a version that predates generateSummary is summarized by the old API. Its
+			// channels cannot be reused either: their summarizer nodes are only usable when the summary was
+			// started through the summarizer node tree, which this flow does not do.
+			const summarizeResult = await channel.summarize(
+				fullTree,
+				false /* trackState */,
+				telemetryContext,
+			);
+			wrapSummaryInChannelsTree(summarizeResult);
+			summaryBuilder.addTree(channelsTreeName, {
+				summary: summarizeResult.summary.tree[channelsTreeName] as ISummaryTree,
+				stats: summarizeResult.stats,
+			});
+		}
+
+		// Add data store's attributes to the summary.
+		const { pkg } = await this.getInitialSnapshotDetails();
+		const isRoot = await this.isRoot();
+		summaryBuilder.addBlob(
+			dataStoreAttributesBlobName,
+			JSON.stringify(createAttributes(pkg, isRoot)),
+		);
+
+		// If we are not referenced, mark the summary tree as unreferenced. Also, update unreferenced blob
+		// size in the summary stats with the blobs size of this data store.
+		if (!this.summarizerNode.isReferenced()) {
+			summaryBuilder.markUnreferenced();
+		}
+
+		if (this.loadingGroupId !== undefined) {
+			summaryBuilder.setGroupId(this.loadingGroupId);
+		}
 	}
 
 	private async summarizeInternal(
@@ -900,6 +1024,20 @@ export abstract class FluidDataStoreContext
 		// Update the used routes in this data store's summarizer node.
 		this.summarizerNode.updateUsedRoutes(usedRoutes);
 
+		// A change in reference state changes this data store's summary (its `unreferenced` flag) even though its
+		// content did not change, so it counts as a change for the generateSummary flow. The first time around there is
+		// no local baseline, so use the summarizer node's - its reference used routes come from the base snapshot,
+		// which catches a reference state that changed before this client loaded.
+		const serializedUsedRoutes = JSON.stringify([...usedRoutes].sort());
+		const usedStateChanged =
+			this.lastSummarizedUsedRoutes === undefined
+				? (this.summarizerNode as Partial<IUsedStateComparer>).hasUsedStateChanged?.() === true
+				: serializedUsedRoutes !== this.lastSummarizedUsedRoutes;
+		if (usedStateChanged) {
+			this.lastChangedSequenceNumber = this.deltaManager.lastSequenceNumber;
+		}
+		this.lastSummarizedUsedRoutes = serializedUsedRoutes;
+
 		// If the channel doesn't exist yet (data store is not realized), the summarizer node will update it
 		// when it creates child nodes.
 		if (!this.channel) {
@@ -950,8 +1088,10 @@ export abstract class FluidDataStoreContext
 	public setChannelDirty(address: string): void {
 		this.verifyNotClosed("setChannelDirty");
 
-		// Get the latest sequence number.
 		const latestSequenceNumber = this.deltaManager.lastSequenceNumber;
+
+		// The local change is not represented by a sequence number until its op is processed.
+		this.lastChangedSequenceNumber = neverSummarizedSequenceNumber;
 
 		this.summarizerNode.invalidate(latestSequenceNumber);
 

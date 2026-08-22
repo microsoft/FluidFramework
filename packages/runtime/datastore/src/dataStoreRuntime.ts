@@ -46,6 +46,8 @@ import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	type ISummaryTreeWithStats,
+	type ISummarizable,
+	type ISummaryBuilder,
 	type ITelemetryContext,
 	type IGarbageCollectionData,
 	type CreateChildSummarizerNodeParam,
@@ -100,7 +102,11 @@ import {
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/legacy";
 import { v4 as uuid } from "uuid";
 
-import { type IChannelContext, summarizeChannel } from "./channelContext.js";
+import {
+	type IChannelContext,
+	neverSummarizedSequenceNumber,
+	summarizeChannel,
+} from "./channelContext.js";
 import {
 	dataStoreCompatDetailsForRuntime,
 	validateRuntimeCompatibility,
@@ -354,6 +360,12 @@ export class FluidDataStoreRuntime
 	private readonly sharedObjectRegistry: ISharedObjectRegistry;
 	private readonly quorum: IQuorumClients;
 	private readonly audience: IAudience;
+
+	/**
+	 * Sequence number this data store's content was loaded at. Used as the starting "last changed at" sequence
+	 * number for channels created from the base snapshot.
+	 */
+	private readonly loadedFromSequenceNumber: number;
 	private readonly mc: MonitoringContext;
 	public get logger(): ITelemetryLoggerExt {
 		return toITelemetryLoggerExt(this.mc.logger);
@@ -460,6 +472,10 @@ export class FluidDataStoreRuntime
 		this.deltaManagerInternal = dataStoreContext.deltaManager;
 		this.quorum = dataStoreContext.getQuorum();
 		this.audience = dataStoreContext.getAudience();
+		// Older container runtimes do not report this. Treat the content as never summarized in that case so that
+		// the generateSummary flow stays correct (at the cost of not reusing anything).
+		this.loadedFromSequenceNumber =
+			dataStoreContext.loadedFromSequenceNumber ?? neverSummarizedSequenceNumber;
 
 		const tree = dataStoreContext.baseSnapshot;
 
@@ -500,6 +516,7 @@ export class FluidDataStoreRuntime
 						this.dataStoreContext.getCreateChildSummarizerNodeFn(path, {
 							type: CreateSummarizerNodeSource.FromSummary,
 						}),
+						this.loadedFromSequenceNumber,
 					);
 				}
 
@@ -898,6 +915,7 @@ export class FluidDataStoreRuntime
 	private createRemoteChannelContext(
 		attachMessage: IAttachMessage,
 		summarizerNodeParams: CreateChildSummarizerNodeParam,
+		messageSequenceNumber: number,
 	): RemoteChannelContext {
 		const flatBlobs = new Map<string, ArrayBufferLike>();
 		const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
@@ -917,6 +935,7 @@ export class FluidDataStoreRuntime
 				attachMessage.id,
 				summarizerNodeParams,
 			),
+			messageSequenceNumber,
 			attachMessage.type,
 		);
 	}
@@ -1008,6 +1027,7 @@ export class FluidDataStoreRuntime
 				const remoteChannelContext = this.createRemoteChannelContext(
 					attachMessage,
 					summarizerNodeParams,
+					envelope.sequenceNumber,
 				);
 				this.contexts.set(id, remoteChannelContext);
 			}
@@ -1117,6 +1137,50 @@ export class FluidDataStoreRuntime
 			},
 		);
 		return summaryBuilder.getSummaryTree();
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#ISummarizable.generateSummary}
+	 */
+	// An optional property rather than a method, so adding it does not change this class's shape for existing
+	// consumers. It is always assigned. It delegates to generateSummaryCore so that subclasses can still override
+	// summarization, which a property cannot support.
+	public readonly generateSummary?: ISummarizable["generateSummary"] = async (
+		summaryBuilder,
+		latestSummarySequenceNumber,
+		fullTree,
+		telemetryContext,
+	): Promise<void> =>
+		this.generateSummaryCore(
+			summaryBuilder,
+			latestSummarySequenceNumber,
+			fullTree,
+			telemetryContext,
+		);
+
+	/**
+	 * Writes this data store's channels into `summaryBuilder`.
+	 *
+	 * @remarks
+	 * The counterpart to {@link FluidDataStoreRuntime.summarize} for the generateSummary flow. Override this to add
+	 * content to this data store's summary.
+	 */
+	protected async generateSummaryCore(
+		summaryBuilder: ISummaryBuilder,
+		latestSummarySequenceNumber: number,
+		fullTree: boolean,
+		telemetryContext: ITelemetryContext,
+	): Promise<void> {
+		await this.visitContextsDuringSummary(
+			async (contextId: string, context: IChannelContext) => {
+				await context.generateSummary(
+					summaryBuilder.createBuilderForChild(contextId, fullTree),
+					latestSummarySequenceNumber,
+					fullTree,
+					telemetryContext,
+				);
+			},
+		);
 	}
 
 	/**
@@ -1719,5 +1783,44 @@ export const mixinSummaryHandler = (
 			}
 
 			return summary;
+		}
+
+		protected override async generateSummaryCore(
+			summaryBuilder: ISummaryBuilder,
+			latestSummarySequenceNumber: number,
+			fullTree: boolean,
+			telemetryContext: ITelemetryContext,
+		): Promise<void> {
+			await super.generateSummaryCore(
+				summaryBuilder,
+				latestSummarySequenceNumber,
+				fullTree,
+				telemetryContext,
+			);
+
+			try {
+				const content = await handler(this, (currentStep: string) =>
+					telemetryContext.set(
+						currentSummarizeStepPrefix,
+						currentSummarizeStepPropertyName,
+						`mixinSummaryHandler:${currentStep}`,
+					),
+				);
+				if (content !== undefined) {
+					const path = [...content.path];
+					const blobKey = path.pop();
+					if (blobKey === undefined) {
+						throw new LoggingError("Path can't be empty");
+					}
+					let builder = summaryBuilder;
+					for (const name of path) {
+						builder = builder.createBuilderForChild(name, fullTree);
+					}
+					builder.addBlob(blobKey, content.content);
+				}
+			} catch (error) {
+				// Any error coming from app-provided handler should be marked as DataProcessingError
+				throw DataProcessingError.wrapIfUnrecognized(error, "mixinSummaryHandler");
+			}
 		}
 	} as typeof FluidDataStoreRuntime;

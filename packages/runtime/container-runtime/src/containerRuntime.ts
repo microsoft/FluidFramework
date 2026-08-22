@@ -123,6 +123,7 @@ import type {
 	IFluidDataStoreRegistry,
 	IFluidParentContext,
 	ISummarizeInternalResult,
+	ISummaryBuilder,
 	InboundAttachMessage,
 	NamedFluidDataStoreRegistryEntries,
 	SummarizeInternalFn,
@@ -147,6 +148,7 @@ import {
 	RuntimeHeaders,
 	validateMinimumVersionForCollab,
 	seqFromTree,
+	SummaryBuilder,
 	TelemetryContext,
 } from "@fluidframework/runtime-utils/internal";
 import type {
@@ -313,6 +315,7 @@ import {
 	type ISummaryConfiguration,
 	type ISummaryMetadataMessage,
 	metadataBlobName,
+	enableSummarizeV2Key,
 	OrderedClientCollection,
 	OrderedClientElection,
 	recentBatchInfoBlobName,
@@ -880,6 +883,39 @@ export async function loadContainerRuntimeAlpha(params: LoadContainerRuntimePara
 }
 
 const defaultMaxConsecutiveReconnects = 7;
+
+/**
+ * Counts the channels (DDSs) written into the data store subtrees of a summary, and how many of them were
+ * reused from the previous summary as a handle.
+ *
+ * @remarks
+ * Derived from the generated summary tree rather than from either summarization flow, so that both flows report
+ * the same measurement and can be compared directly.
+ */
+export function countChannelsInDataStoreTree(dataStoreTree: ISummaryTree): {
+	channelCount: number;
+	reusedChannelCount: number;
+} {
+	let channelCount = 0;
+	let reusedChannelCount = 0;
+	for (const dataStore of Object.values(dataStoreTree.tree)) {
+		// A data store reused as a handle has no subtree here, so its channels are not part of this summary.
+		if (dataStore.type !== SummaryType.Tree) {
+			continue;
+		}
+		const channelsTree: SummaryObject | undefined = dataStore.tree[channelsTreeName];
+		if (channelsTree?.type !== SummaryType.Tree) {
+			continue;
+		}
+		for (const channel of Object.values(channelsTree.tree)) {
+			channelCount++;
+			if (channel.type === SummaryType.Handle) {
+				reusedChannelCount++;
+			}
+		}
+	}
+	return { channelCount, reusedChannelCount };
+}
 
 /**
  * These are the ONLY message types that are allowed to be submitted while in staging mode
@@ -1614,6 +1650,11 @@ export class ContainerRuntime
 
 	private readonly summariesDisabled: boolean;
 
+	/**
+	 * True to summarize via {@link ContainerRuntime.generateSummary} instead of the summarizer node flow.
+	 */
+	private readonly summarizeV2Enabled: boolean;
+
 	private readonly createContainerMetadata: ICreateContainerMetadata;
 	/**
 	 * The summary number of the next summary that will be generated for this container. This is incremented every time
@@ -1656,6 +1697,15 @@ export class ContainerRuntime
 	 * The summary context of the last acked summary. The properties from this as used when uploading a summary.
 	 */
 	private lastAckedSummaryContext: ISummaryContext | undefined;
+
+	/**
+	 * Handle of the most recent summary this client uploaded.
+	 *
+	 * @remarks
+	 * The generateSummary flow has no summarizer nodes to ask whether an ack belongs to a summary this client
+	 * submitted, so the runtime remembers it here.
+	 */
+	private lastSubmittedSummaryHandle: string | undefined;
 
 	/**
 	 * It a cache for holding mapping for loading groupIds with its snapshot from the service. Add expiry policy of 1 minute.
@@ -2021,6 +2071,10 @@ export class ContainerRuntime
 		this.summariesDisabled =
 			isSummariesDisabled(this.summaryConfiguration) ||
 			this.mc.config.getBoolean("Fluid.ContainerRuntime.Test.DisableSummaries") === true;
+
+		// Opt-in to the summarizer-node-free summarization flow. Off by default while it is validated against
+		// the existing flow; see ContainerRuntime.generateSummary.
+		this.summarizeV2Enabled = this.mc.config.getBoolean(enableSummarizeV2Key) === true;
 
 		this.maxConsecutiveReconnects =
 			this.mc.config.getNumber(maxConsecutiveReconnectsKey) ?? defaultMaxConsecutiveReconnects;
@@ -2845,9 +2899,14 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Adds the container's metadata to the given summary tree.
+	 * Builds the container's metadata blob contents.
+	 *
+	 * @param summaryNumber - Number identifying the summary being generated. Passed in rather than read from
+	 * {@link ContainerRuntime.nextSummaryNumber} so that generating metadata has no side effects, and so that two
+	 * summarization flows can be run over the same summary (to compare their output) without the second one
+	 * appearing as a different summary.
 	 */
-	private addMetadataToSummary(summaryTree: ISummaryTreeWithStats): void {
+	private getMetadata(summaryNumber: number): IContainerRuntimeMetadata {
 		// The last message processed at the time of summary. If there are no new messages, use the message from the
 		// last summary.
 		const message =
@@ -2863,8 +2922,7 @@ export class ContainerRuntime
 
 		const metadata: IContainerRuntimeMetadata = {
 			...this.createContainerMetadata,
-			// Increment the summary number for the next summary that will be generated.
-			summaryNumber: this.nextSummaryNumber++,
+			summaryNumber,
 			summaryFormatVersion: 1,
 			...this.garbageCollector.getMetadata(),
 			telemetryDocumentId: this.telemetryDocumentId,
@@ -2880,7 +2938,7 @@ export class ContainerRuntime
 			documentSchema,
 		};
 
-		addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(metadata));
+		return metadata;
 	}
 
 	protected addContainerStateToSummary(
@@ -2889,7 +2947,12 @@ export class ContainerRuntime
 		trackState: boolean,
 		telemetryContext?: ITelemetryContext,
 	): void {
-		this.addMetadataToSummary(summaryTree);
+		addBlobToSummary(
+			summaryTree,
+			metadataBlobName,
+			// Consume the summary number, so the next summary gets a new one.
+			JSON.stringify(this.getMetadata(this.nextSummaryNumber++)),
+		);
 
 		if (this._idCompressor) {
 			const idCompressorState = JSON.stringify(this._idCompressor.serialize(false));
@@ -2929,6 +2992,73 @@ export class ContainerRuntime
 		const gcSummary = this.garbageCollector.summarize(fullTree, trackState, telemetryContext);
 		if (gcSummary !== undefined) {
 			addSummarizeResultToSummary(summaryTree, gcTreeKey, gcSummary);
+		}
+	}
+
+	/**
+	 * Writes the container-level state (metadata, id compressor, chunks, aliases, blobs, GC) into the builder.
+	 *
+	 * @remarks
+	 * Counterpart to {@link ContainerRuntime.addContainerStateToSummary} for the generateSummary flow. None of this
+	 * state is incremental today - it is regenerated on every summary, exactly as it is in the old flow.
+	 */
+	private addContainerStateToSummary2(
+		summaryBuilder: ISummaryBuilder,
+		fullTree: boolean,
+		telemetryContext?: ITelemetryContext,
+	): void {
+		summaryBuilder.addBlob(
+			metadataBlobName,
+			// Consume the summary number, so the next summary gets a new one.
+			JSON.stringify(this.getMetadata(this.nextSummaryNumber++)),
+		);
+
+		if (this._idCompressor) {
+			summaryBuilder.addBlob(
+				idCompressorBlobName,
+				JSON.stringify(this._idCompressor.serialize(false)),
+			);
+		}
+
+		if (this.remoteMessageProcessor.partialMessages.size > 0) {
+			summaryBuilder.addBlob(
+				chunksBlobName,
+				JSON.stringify([...this.remoteMessageProcessor.partialMessages]),
+			);
+		}
+
+		const recentBatchInfo =
+			this.duplicateBatchDetector?.getRecentBatchInfoForSummary(telemetryContext);
+		if (recentBatchInfo !== undefined) {
+			summaryBuilder.addBlob(recentBatchInfoBlobName, JSON.stringify(recentBatchInfo));
+		}
+
+		const dataStoreAliases = this.channelCollection.aliases;
+		if (dataStoreAliases.size > 0) {
+			summaryBuilder.addBlob(aliasBlobName, JSON.stringify([...dataStoreAliases]));
+		}
+
+		if (this.summarizerClientElection) {
+			summaryBuilder.addBlob(
+				electedSummarizerBlobName,
+				JSON.stringify(this.summarizerClientElection.serialize()),
+			);
+		}
+
+		const blobManagerSummary = this.blobManager.summarize();
+		// Some storage (like git) doesn't allow empty tree, so we can omit it.
+		// and the blob manager can handle the tree not existing when loading
+		if (Object.keys(blobManagerSummary.summary.tree).length > 0) {
+			summaryBuilder.addTree(blobsTreeName, blobManagerSummary);
+		}
+
+		const gcSummary = this.garbageCollector.summarize(
+			fullTree,
+			true /* trackState */,
+			telemetryContext,
+		);
+		if (gcSummary !== undefined) {
+			summaryBuilder.addTree(gcTreeKey, gcSummary);
 		}
 	}
 
@@ -4407,6 +4537,121 @@ export class ContainerRuntime
 		}
 	}
 
+	/**
+	 * Reference sequence number of the latest successful summary, or -1 if there has not been one.
+	 *
+	 * @remarks
+	 * This is the single piece of state the generateSummary flow needs in order to decide what every node in the tree
+	 * may reuse. It only advances when a summary is acked, so a failed or nacked summary automatically leaves
+	 * every node's decision unchanged - which is the class of bug the summarizer node state machine kept hitting.
+	 */
+	private get latestSummarySequenceNumber(): number {
+		if (this.lastAckedSummaryContext !== undefined) {
+			return this.lastAckedSummaryContext.referenceSequenceNumber;
+		}
+		// Nothing has been acked in this session. If this runtime was loaded from a summary, that summary's
+		// sequence number is the reference point. Otherwise there is no summary to reuse anything from.
+		return this.loadedFromVersionId === undefined
+			? -1
+			: this.deltaManager.initialSequenceNumber;
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#IFluidParentContext.loadedFromSequenceNumber}
+	 */
+	public get loadedFromSequenceNumber(): number {
+		return this.deltaManager.initialSequenceNumber;
+	}
+
+	/**
+	 * Returns a summary of the runtime at the current sequence number, built without summarizer nodes.
+	 *
+	 * @remarks
+	 * This is the summarizer-node-free summarization flow. All the state that decides what can be reused lives
+	 * here in the container runtime ({@link ContainerRuntime.latestSummarySequenceNumber}); data stores and DDSs
+	 * only track the sequence number at which they last changed. There are no start/complete/refresh stages to
+	 * get out of sync, and a failed summary needs no rollback.
+	 *
+	 * This is intentionally a separate API from {@link ContainerRuntime.summarize} so that it can be rolled out
+	 * and validated against the existing flow before replacing it.
+	 */
+	public async generateSummary(options: {
+		/**
+		 * True to generate the full tree with no handle reuse optimizations; defaults to false
+		 */
+		fullTree?: boolean;
+		/**
+		 * Logger to use for correlated summary events
+		 */
+		summaryLogger?: TelemetryLoggerExt;
+		/**
+		 * True to run garbage collection before summarizing; defaults to true
+		 */
+		runGC?: boolean;
+		/**
+		 * True to generate full GC data
+		 */
+		fullGC?: boolean;
+		/**
+		 * True to run GC sweep phase after the mark phase
+		 */
+		runSweep?: boolean;
+		/**
+		 * Telemetry context to populate during summarization.
+		 */
+		telemetryContext?: TelemetryContext;
+	}): Promise<ISummaryTreeWithStats> {
+		this.verifyNotClosed();
+
+		const {
+			fullTree = false,
+			summaryLogger = this.mc.logger,
+			runGC = this.garbageCollector.shouldRunGC,
+			runSweep,
+			fullGC,
+			telemetryContext = new TelemetryContext(),
+		} = options;
+
+		telemetryContext.setMultiple("fluid_Summarize", "Options", {
+			fullTree,
+			runGC,
+			fullGC,
+			runSweep,
+		});
+
+		try {
+			if (runGC) {
+				await this.collectGarbage(
+					{ logger: summaryLogger, runSweep, fullGC },
+					telemetryContext,
+				);
+			}
+
+			this.loadIdCompressor();
+
+			const summaryBuilder = SummaryBuilder.createRootBuilder(fullTree);
+			await this.channelCollection.generateSummary(
+				summaryBuilder.createBuilderForChild(channelsTreeName, fullTree),
+				this.latestSummarySequenceNumber,
+				fullTree,
+				telemetryContext,
+			);
+			this.addContainerStateToSummary2(summaryBuilder, fullTree, telemetryContext);
+
+			const { summary, stats } = summaryBuilder.getSummaryTreeWithStats();
+			assert(
+				summary.type === SummaryType.Tree,
+				0x12f /* "Container Runtime's summarize should always return a tree" */,
+			);
+			return { summary, stats };
+		} finally {
+			summaryLogger.sendTelemetryEvent({
+				eventName: "SummarizeTelemetry",
+				details: telemetryContext.serialize(),
+			});
+		}
+	}
+
 	private async getGCDataInternal(fullGC?: boolean): Promise<IGarbageCollectionData> {
 		return this.channelCollection.getGCData(fullGC);
 	}
@@ -4706,11 +4951,15 @@ export class ContainerRuntime
 			const message = `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
 			const lastAckedContext = this.lastAckedSummaryContext;
 
-			const startSummaryResult = this.summarizerNode.startSummary(
-				summaryRefSeqNum,
-				summaryNumberLogger,
-				latestSummaryRefSeqNum,
-			);
+			// The generateSummary flow keeps all of its reuse state in the container runtime, so none of the summarizer
+			// node bookkeeping (start/validate/complete/clear) applies to it.
+			const startSummaryResult = this.summarizeV2Enabled
+				? undefined
+				: this.summarizerNode.startSummary(
+						summaryRefSeqNum,
+						summaryNumberLogger,
+						latestSummaryRefSeqNum,
+					);
 
 			/**
 			 * This was added to validate that the summarizer node tree has the same reference sequence number from the
@@ -4720,7 +4969,10 @@ export class ContainerRuntime
 			 * Generally the validate sequence number comes from the running summarizer and the node sequence number comes from the
 			 * summarizer nodes.
 			 */
-			if (startSummaryResult.invalidNodes > 0 || startSummaryResult.mismatchNumbers.size > 0) {
+			if (
+				startSummaryResult !== undefined &&
+				(startSummaryResult.invalidNodes > 0 || startSummaryResult.mismatchNumbers.size > 0)
+			) {
 				summaryLogger.sendTelemetryEvent({
 					eventName: "LatestSummaryRefSeqNumMismatch",
 					details: {
@@ -4794,13 +5046,20 @@ export class ContainerRuntime
 			const trace = Trace.start();
 			let summarizeResult: ISummaryTreeWithStats;
 			try {
-				summarizeResult = await this.summarize({
-					fullTree,
-					trackState: true,
-					summaryLogger: summaryNumberLogger,
-					runGC: this.garbageCollector.shouldRunGC,
-					telemetryContext,
-				});
+				summarizeResult = this.summarizeV2Enabled
+					? await this.generateSummary({
+							fullTree,
+							summaryLogger: summaryNumberLogger,
+							runGC: this.garbageCollector.shouldRunGC,
+							telemetryContext,
+						})
+					: await this.summarize({
+							fullTree,
+							trackState: true,
+							summaryLogger: summaryNumberLogger,
+							runGC: this.garbageCollector.shouldRunGC,
+							telemetryContext,
+						});
 			} catch (error) {
 				return {
 					stage: "base",
@@ -4811,7 +5070,9 @@ export class ContainerRuntime
 			}
 
 			// Validate that the summary generated by summarizer nodes is correct before uploading.
-			const validateResult = this.summarizerNode.validateSummary();
+			const validateResult = this.summarizeV2Enabled
+				? ({ success: true } as const)
+				: this.summarizerNode.validateSummary();
 			if (!validateResult.success) {
 				const { success, ...loggingProps } = validateResult;
 				const error = new RetriableSummaryError(
@@ -4854,6 +5115,7 @@ export class ContainerRuntime
 			const handleCount = Object.values(dataStoreTree.tree).filter(
 				(value) => value.type === SummaryType.Handle,
 			).length;
+			const channelCounts = countChannelsInDataStoreTree(dataStoreTree);
 			const gcSummaryTreeStats =
 				summaryTree.tree[gcTreeKey] === undefined
 					? undefined
@@ -4866,6 +5128,9 @@ export class ContainerRuntime
 				gcBlobNodeCount: gcSummaryTreeStats?.blobNodeCount,
 				gcTotalBlobsSize: gcSummaryTreeStats?.totalBlobSize,
 				summaryNumber,
+				summarizeFlow: this.summarizeV2Enabled ? "v2" : "v1",
+				realizedDataStoreCount: this.channelCollection.realizedCount,
+				...channelCounts,
 				...partialStats,
 			};
 			const generateSummaryData: Omit<IGenerateSummaryTreeResult, "stage" | "error"> = {
@@ -4901,6 +5166,7 @@ export class ContainerRuntime
 					error: wrapError(error, (msg) => new RetriableSummaryError(msg)),
 				};
 			}
+			this.lastSubmittedSummaryHandle = handle;
 
 			const parent = summaryContext.ackHandle;
 			const summaryMessage: ISummaryContent = {
@@ -4944,7 +5210,9 @@ export class ContainerRuntime
 			} as const;
 
 			try {
-				this.summarizerNode.completeSummary(handle);
+				if (!this.summarizeV2Enabled) {
+					this.summarizerNode.completeSummary(handle);
+				}
 			} catch (error) {
 				return {
 					stage: "upload",
@@ -4955,7 +5223,9 @@ export class ContainerRuntime
 			return submitData;
 		} finally {
 			// Cleanup wip summary in case of failure
-			this.summarizerNode.clearSummary();
+			if (!this.summarizeV2Enabled) {
+				this.summarizerNode.clearSummary();
+			}
 
 			// ! This needs to happen before we resume inbound queues to ensure heuristics are tracked correctly
 			this._summarizer?.recordSummaryAttempt?.(summaryRefSeqNum);
@@ -5500,10 +5770,19 @@ export class ContainerRuntime
 		const { proposalHandle, ackHandle, summaryRefSeq, summaryLogger } = options;
 		// proposalHandle is always passed from RunningSummarizer.
 		assert(proposalHandle !== undefined, 0x766 /* proposalHandle should be available */);
-		const result = await this.summarizerNode.refreshLatestSummary(
-			proposalHandle,
-			summaryRefSeq,
-		);
+		const result = this.summarizeV2Enabled
+			? {
+					// Without summarizer nodes, the only thing that makes an acked summary "ours" is having
+					// uploaded it. There is no per-node state to refresh either way.
+					isSummaryTracked: proposalHandle === this.lastSubmittedSummaryHandle,
+					isSummaryNewer: summaryRefSeq > this.latestSummarySequenceNumber,
+				}
+			: await this.summarizerNode.refreshLatestSummary(proposalHandle, summaryRefSeq);
+		// An ack can be delivered more than once. Consume the handle so only the first delivery counts as
+		// tracked - downstream refresh (GC) moves pending state to latest and is not idempotent.
+		if (result.isSummaryTracked) {
+			this.lastSubmittedSummaryHandle = undefined;
+		}
 
 		/* eslint-disable jsdoc/check-indentation */
 		/**

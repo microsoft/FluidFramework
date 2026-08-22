@@ -15,8 +15,10 @@ import type {
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type { ISnapshotTree, ITree } from "@fluidframework/driver-definitions/internal";
 import { BlobTreeEntry, TreeTreeEntry } from "@fluidframework/driver-utils/internal";
+import type { ISummaryStats } from "@fluidframework/runtime-definitions/internal";
 
 import {
+	SummaryBuilder,
 	SummaryTreeBuilder,
 	TelemetryContext,
 	convertSnapshotTreeToSummaryTree,
@@ -51,6 +53,151 @@ describe("Summary Utils", () => {
 			assert.fail("Object should be summary handle");
 		}
 	}
+
+	describe("SummaryBuilder", () => {
+		it("builds nested trees and accumulates stats at the root", () => {
+			const root = SummaryBuilder.createRootBuilder(false);
+			const dataStore = root.createBuilderForChild(".channels", false);
+			const dds = dataStore.createBuilderForChild("dds", false);
+			dds.addBlob("header", "content");
+
+			const { summary, stats } = root.getSummaryTreeWithStats();
+			const channelsTree = assertSummaryTree(summary.tree[".channels"]);
+			const ddsTree = assertSummaryTree(channelsTree.tree.dds);
+			assert.equal(assertSummaryBlob(ddsTree.tree.header).content, "content");
+			assert.deepEqual(stats, {
+				treeNodeCount: 3,
+				blobNodeCount: 1,
+				handleNodeCount: 0,
+				totalBlobSize: 7,
+				unreferencedBlobSize: 0,
+			});
+		});
+
+		it("uses the summary-tree path when a child did not change", () => {
+			const root = SummaryBuilder.createRootBuilder(false);
+			const channels = root.createBuilderForChild(".channels", false);
+			const dataStore = channels.createBuilderForChild("dataStore", false);
+			dataStore.nodeDidNotChange();
+
+			const channelsTree = assertSummaryTree(
+				root.getSummaryTreeWithStats().summary.tree[".channels"],
+			);
+			assert.deepEqual(assertSummaryHandle(channelsTree.tree.dataStore), {
+				type: SummaryType.Handle,
+				handleType: SummaryType.Tree,
+				handle: "/.channels/dataStore",
+			});
+		});
+
+		it("stores attachments under the given key", () => {
+			const root = SummaryBuilder.createRootBuilder(false);
+			root.addAttachment("custom-key", "storage-id");
+
+			assert.deepEqual(root.getSummaryTreeWithStats().summary.tree["custom-key"], {
+				type: SummaryType.Attachment,
+				id: "storage-id",
+			});
+		});
+
+		it("reports stats for the node they are asked of, not the whole summary", () => {
+			const root = SummaryBuilder.createRootBuilder(false);
+			root.addBlob("rootBlob", "root");
+			const child = root.createBuilderForChild("child", false);
+			child.addBlob("childBlob", "child-content");
+
+			assert.deepEqual(child.getSummaryTreeWithStats().stats, {
+				treeNodeCount: 1,
+				blobNodeCount: 1,
+				handleNodeCount: 0,
+				totalBlobSize: 13,
+				unreferencedBlobSize: 0,
+			});
+			assert.deepEqual(root.getSummaryTreeWithStats().stats, {
+				treeNodeCount: 2,
+				blobNodeCount: 2,
+				handleNodeCount: 0,
+				totalBlobSize: 17,
+				unreferencedBlobSize: 0,
+			});
+		});
+
+		it("counts an unchanged node as a single handle", () => {
+			const root = SummaryBuilder.createRootBuilder(false);
+			const child = root.createBuilderForChild("child", false);
+			child.nodeDidNotChange();
+
+			assert.deepEqual(root.getSummaryTreeWithStats().stats, {
+				treeNodeCount: 1,
+				blobNodeCount: 0,
+				handleNodeCount: 1,
+				totalBlobSize: 0,
+				unreferencedBlobSize: 0,
+			});
+		});
+
+		it("attributes unreferenced blob size regardless of when the node is marked", () => {
+			const statsForOrder = (markFirst: boolean): ISummaryStats => {
+				const root = SummaryBuilder.createRootBuilder(false);
+				const child = root.createBuilderForChild("child", false);
+				if (markFirst) {
+					child.markUnreferenced();
+				}
+				child.addBlob("blob", "unreferenced");
+				child.createBuilderForChild("grandChild", false).addBlob("blob", "nested");
+				if (!markFirst) {
+					child.markUnreferenced();
+				}
+				return root.getSummaryTreeWithStats().stats;
+			};
+
+			const markedFirst = statsForOrder(true);
+			assert.equal(markedFirst.totalBlobSize, 18);
+			assert.equal(markedFirst.unreferencedBlobSize, 18);
+			assert.deepEqual(statsForOrder(false), markedFirst);
+		});
+
+		it("omits child builders that never produced content", () => {
+			const root = SummaryBuilder.createRootBuilder(false);
+			root.createBuilderForChild("unused", false);
+
+			const { summary, stats } = root.getSummaryTreeWithStats();
+			assert.deepEqual(summary.tree, {});
+			assert.equal(stats.treeNodeCount, 1);
+		});
+
+		it("rejects invalid node state transitions", () => {
+			const root = SummaryBuilder.createRootBuilder(false);
+			assert.throws(() => root.nodeDidNotChange(), /Root node cannot be a handle/);
+
+			const unchanged = root.createBuilderForChild("unchanged", false);
+			unchanged.nodeDidNotChange();
+			assert.throws(
+				() => unchanged.addBlob("blob", "content"),
+				/Content cannot be added to a node that declared itself unchanged/,
+			);
+
+			const changed = root.createBuilderForChild("changed", false);
+			changed.addBlob("blob", "content");
+			assert.throws(
+				() => changed.nodeDidNotChange(),
+				/Node cannot be a handle after content has been added to it/,
+			);
+		});
+
+		it("rejects handles in a full-tree summary", () => {
+			const root = SummaryBuilder.createRootBuilder(true);
+			const child = root.createBuilderForChild("child", true);
+			assert.throws(
+				() => child.nodeDidNotChange(),
+				/Node cannot be a handle when fullTree is enabled/,
+			);
+			assert.throws(
+				() => child.addHandle("handle", SummaryType.Blob, "/blob"),
+				/Cannot add a handle when fullTree is enabled/,
+			);
+		});
+	});
 
 	describe("ITree <-> ISummaryTree", () => {
 		let tree: ITree;

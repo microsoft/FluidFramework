@@ -56,7 +56,7 @@ import type {
 	ISummarizeInternalResult,
 	StagingModeChangedEvent,
 } from "@fluidframework/runtime-definitions/internal";
-import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+import { channelsTreeName, FlushMode } from "@fluidframework/runtime-definitions/internal";
 import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import {
 	type IFluidErrorBase,
@@ -82,6 +82,7 @@ import {
 	type IContainerRuntimeOptions,
 	type IPendingRuntimeState,
 	agentSchedulerId,
+	countChannelsInDataStoreTree,
 	defaultPendingOpsWaitTimeoutMs,
 	getSingleUseLegacyLogCallback,
 	type ContainerRuntimeOptionsInternal,
@@ -3458,6 +3459,45 @@ describe("Runtime", () => {
 			);
 			legacyLogger("codePath2");
 			assert.equal(mockLogger.events.length, 0, "Expected no more events logged");
+		});
+
+		describe("countChannelsInDataStoreTree", () => {
+			const tree = (children: Record<string, SummaryObject>): ISummaryTree => ({
+				type: SummaryType.Tree,
+				tree: children,
+			});
+			const handle = (path: string): SummaryObject => ({
+				type: SummaryType.Handle,
+				handleType: SummaryType.Tree,
+				handle: path,
+			});
+
+			it("counts channels and the ones reused as handles", () => {
+				const dataStoreTree = tree({
+					ds1: tree({
+						[channelsTreeName]: tree({ dds1: tree({}), dds2: handle("/dds2") }),
+					}),
+					ds2: tree({ [channelsTreeName]: tree({ dds3: handle("/dds3") }) }),
+				});
+
+				assert.deepEqual(countChannelsInDataStoreTree(dataStoreTree), {
+					channelCount: 3,
+					reusedChannelCount: 2,
+				});
+			});
+
+			it("ignores data stores that were themselves reused, and ones without a channels tree", () => {
+				const dataStoreTree = tree({
+					reusedDataStore: handle("/reusedDataStore"),
+					noChannels: tree({}),
+					ds1: tree({ [channelsTreeName]: tree({ dds1: tree({}) }) }),
+				});
+
+				assert.deepEqual(countChannelsInDataStoreTree(dataStoreTree), {
+					channelCount: 1,
+					reusedChannelCount: 0,
+				});
+			});
 		});
 
 		describe("Signal Telemetry", () => {

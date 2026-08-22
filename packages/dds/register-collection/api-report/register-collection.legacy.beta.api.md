@@ -15,6 +15,7 @@ export class ConsensusRegisterCollectionClass<T> extends SharedObject<IConsensus
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // (undocumented)
     protected applyStashedOp(content: unknown): void;
+    protected generateSummaryCore(summaryBuilder: ISummaryBuilder, serializer: IFluidSerializer): void;
     // (undocumented)
     keys(): string[];
     protected loadCore(storage: IChannelStorageService): Promise<void>;

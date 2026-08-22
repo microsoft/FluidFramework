@@ -6,7 +6,10 @@
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, isObject } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
-import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import type {
+	ISummaryBuilder,
+	ISummaryTreeWithStats,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	isFluidHandle,
 	SummaryTreeBuilder,
@@ -83,6 +86,37 @@ export function createSingleBlobSummary(
 	const builder = new SummaryTreeBuilder();
 	builder.addBlob(key, content);
 	return builder.getSummaryTree();
+}
+
+/**
+ * The subset of {@link @fluidframework/runtime-definitions#ISummaryBuilder} needed to write a shared object's own
+ * content into a summary.
+ *
+ * @remarks
+ * A shared object writes its content once, against this interface, and that single routine backs both
+ * {@link SharedObject.summarizeCore} (via {@link summaryTreeBuilderSink}) and
+ * {@link SharedObject.generateSummaryCore}. That keeps the two summarization flows from drifting apart while both
+ * exist.
+ *
+ * @internal
+ */
+export type ISummaryContentSink = Pick<
+	ISummaryBuilder,
+	"addBlob" | "addTree" | "addHandle" | "addAttachment"
+>;
+
+/**
+ * Adapts a {@link @fluidframework/runtime-utils#SummaryTreeBuilder} to {@link ISummaryContentSink}.
+ * @internal
+ */
+export function summaryTreeBuilderSink(builder: SummaryTreeBuilder): ISummaryContentSink {
+	return {
+		addBlob: (key, content) => builder.addBlob(key, content),
+		addTree: (key, summarizeResult) => builder.addWithStats(key, summarizeResult),
+		addHandle: (key, handleType, handle) => builder.addHandle(key, handleType, handle),
+		// SummaryTreeBuilder names attachments by position rather than by key.
+		addAttachment: (_key, id) => builder.addAttachment(id),
+	};
 }
 
 /**

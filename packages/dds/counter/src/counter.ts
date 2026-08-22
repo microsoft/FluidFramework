@@ -12,6 +12,7 @@ import type {
 import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type {
+	ISummaryBuilder,
 	ISummaryTreeWithStats,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
@@ -125,13 +126,23 @@ export class SharedCounter
 	 * @returns The summary of the current state of the counter.
 	 */
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
+		return createSingleBlobSummary(snapshotFileName, this.serializeContent());
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.generateSummaryCore}
+	 */
+	protected override generateSummaryCore(summaryBuilder: ISummaryBuilder): void {
+		summaryBuilder.addBlob(snapshotFileName, this.serializeContent());
+	}
+
+	private serializeContent(): string {
 		// Get a serializable form of data
 		const content: ICounterSnapshotFormat = {
 			value: this.value,
 		};
 
-		// And then construct the summary for it
-		return createSingleBlobSummary(snapshotFileName, JSON.stringify(content));
+		return JSON.stringify(content);
 	}
 
 	/**

@@ -22,7 +22,9 @@ export {
 	parseHandles,
 	serializeHandles,
 	bindHandles,
+	summaryTreeBuilderSink,
 	type IChannelView,
+	type ISummaryContentSink,
 } from "./utils.js";
 export { ValueType } from "./valueType.js";
 export {

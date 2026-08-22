@@ -13,6 +13,7 @@ import type {
 } from "@fluidframework/datastore-definitions/internal";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
 import type {
+	ISummaryBuilder,
 	ISummaryTreeWithStats,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
@@ -169,15 +170,26 @@ export class Claims<T = unknown> extends SharedObject implements IClaims<T> {
 	// #region SharedObject overrides
 
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
+		return createSingleBlobSummary(snapshotFileName, this.serializeContent(serializer));
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.generateSummaryCore}
+	 */
+	protected override generateSummaryCore(
+		summaryBuilder: ISummaryBuilder,
+		serializer: IFluidSerializer,
+	): void {
+		summaryBuilder.addBlob(snapshotFileName, this.serializeContent(serializer));
+	}
+
+	private serializeContent(serializer: IFluidSerializer): string {
 		const entries = [...this.claims.entries()].map(([key, entry]) => ({
 			k: key,
 			v: entry.value,
 			s: entry.sequenceNumber,
 		}));
-		return createSingleBlobSummary(
-			snapshotFileName,
-			serializer.stringify(entries, this.handle),
-		);
+		return serializer.stringify(entries, this.handle);
 	}
 
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {

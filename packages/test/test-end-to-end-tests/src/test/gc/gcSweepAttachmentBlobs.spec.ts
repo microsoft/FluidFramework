@@ -1142,6 +1142,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 			blockInboundGCOp: boolean = false,
 		): Promise<{
 			originalSummarize: typeof containerRuntime.summarize;
+			originalSummarize2: typeof containerRuntime.generateSummary;
 			summarizePromiseP: Promise<ISummarizeEventProps>;
 		}> {
 			let latestAttemptProps: ISummarizeEventProps | undefined;
@@ -1170,11 +1171,10 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 				await toIDeltaManagerFull(containerRuntime.deltaManager).inbound.pause();
 			}
 
-			let summarizeFunc = containerRuntime.summarize;
-			const summarizeOverride = async (options: any): Promise<any> => {
-				summarizeFunc = summarizeFunc.bind(containerRuntime);
-				const results = await summarizeFunc(options);
-				// If this is not the last attempt, throw an error so that summarize fails.
+			// Fail every attempt but the last. Both summarization flows are wrapped, since which one runs
+			// depends on the generateSummary feature gate.
+			const failUntilLastAttempt = async <T>(summarizeFn: () => Promise<T>): Promise<T> => {
+				const results = await summarizeFn();
 				if (
 					latestAttemptProps === undefined ||
 					latestAttemptProps.maxAttempts - latestAttemptProps.currentAttempt > 1
@@ -1187,8 +1187,17 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 				}
 				return results;
 			};
-			containerRuntime.summarize = summarizeOverride;
-			return { originalSummarize: summarizeFunc, summarizePromiseP };
+
+			const originalSummarize = containerRuntime.summarize.bind(containerRuntime);
+			containerRuntime.summarize = async (options: any): Promise<any> =>
+				failUntilLastAttempt(async () => originalSummarize(options));
+
+			const originalSummarize2 = containerRuntime.generateSummary?.bind(containerRuntime);
+			if (originalSummarize2 !== undefined) {
+				containerRuntime.generateSummary = async (options: any): Promise<any> =>
+					failUntilLastAttempt(async () => originalSummarize2(options));
+			}
+			return { originalSummarize, originalSummarize2, summarizePromiseP };
 		}
 
 		/**
@@ -1277,7 +1286,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 					// Set up summarize to fail until the final attempt.
 					// If there should be multiple GC ops, pause the Inbound queue so that GC ops are not processed
 					// between summarize attempts and they are sent on every GC run.
-					const { originalSummarize, summarizePromiseP } =
+					const { originalSummarize, originalSummarize2, summarizePromiseP } =
 						await overrideSummarizeAndGetCompletionPromise(
 							summarizer,
 							containerRuntime,
@@ -1361,6 +1370,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 
 					// Revert summarize to not fail anymore.
 					containerRuntime.summarize = originalSummarize;
+					containerRuntime.generateSummary = originalSummarize2;
 
 					// Summarize again.
 					summary = await summarizeNow(summarizer);

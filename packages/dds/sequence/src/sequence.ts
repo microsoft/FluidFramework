@@ -47,6 +47,7 @@ import {
 	type MapLike,
 } from "@fluidframework/merge-tree/internal";
 import type {
+	ISummaryBuilder,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	IRuntimeMessageCollection,
@@ -61,8 +62,12 @@ import type {
 	IFluidSerializer,
 	ISharedObject,
 	ISharedObjectEvents,
+	ISummaryContentSink,
 } from "@fluidframework/shared-object-base/internal";
-import { SharedObject } from "@fluidframework/shared-object-base/internal";
+import {
+	SharedObject,
+	summaryTreeBuilderSink,
+} from "@fluidframework/shared-object-base/internal";
 import {
 	LoggingError,
 	createChildLogger,
@@ -715,16 +720,28 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTreeWithStats {
 		const builder = new SummaryTreeBuilder();
+		this.summarizeInto(summaryTreeBuilderSink(builder), serializer);
+		return builder.getSummaryTree();
+	}
 
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.generateSummaryCore}
+	 */
+	protected override generateSummaryCore(
+		summaryBuilder: ISummaryBuilder,
+		serializer: IFluidSerializer,
+	): void {
+		this.summarizeInto(summaryBuilder, serializer);
+	}
+
+	private summarizeInto(sink: ISummaryContentSink, serializer: IFluidSerializer): void {
 		// conditionally write the interval collection blob
 		// only if it has entries
 		if (this.intervalCollections.size > 0) {
-			builder.addBlob(snapshotFileName, this.intervalCollections.serialize(serializer));
+			sink.addBlob(snapshotFileName, this.intervalCollections.serialize(serializer));
 		}
 
-		builder.addWithStats(contentPath, this.summarizeMergeTree(serializer));
-
-		return builder.getSummaryTree();
+		sink.addTree(contentPath, this.summarizeMergeTree(serializer));
 	}
 
 	/**

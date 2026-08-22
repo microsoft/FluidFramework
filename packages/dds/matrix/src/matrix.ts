@@ -27,6 +27,7 @@ import {
 	segmentIsRemoved,
 } from "@fluidframework/merge-tree/internal";
 import type {
+	ISummaryBuilder,
 	ISummaryTreeWithStats,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
@@ -39,7 +40,9 @@ import {
 import {
 	type IFluidSerializer,
 	type ISharedObjectEvents,
+	type ISummaryContentSink,
 	SharedObject,
+	summaryTreeBuilderSink,
 } from "@fluidframework/shared-object-base/internal";
 import {
 	UsageError,
@@ -691,11 +694,26 @@ export class SharedMatrix<T = any>
 
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
 		const builder = new SummaryTreeBuilder();
-		builder.addWithStats(
+		this.summarizeInto(summaryTreeBuilderSink(builder), serializer);
+		return builder.getSummaryTree();
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.generateSummaryCore}
+	 */
+	protected override generateSummaryCore(
+		summaryBuilder: ISummaryBuilder,
+		serializer: IFluidSerializer,
+	): void {
+		this.summarizeInto(summaryBuilder, serializer);
+	}
+
+	private summarizeInto(sink: ISummaryContentSink, serializer: IFluidSerializer): void {
+		sink.addTree(
 			SnapshotPath.rows,
 			this.rows.summarize(this.runtime, this.handle, serializer),
 		);
-		builder.addWithStats(
+		sink.addTree(
 			SnapshotPath.cols,
 			this.cols.summarize(this.runtime, this.handle, serializer),
 		);
@@ -732,11 +750,7 @@ export class SharedMatrix<T = any>
 				// undefined
 			);
 		}
-		builder.addBlob(
-			SnapshotPath.cells,
-			serializer.stringify(artifactsToSummarize, this.handle),
-		);
-		return builder.getSummaryTree();
+		sink.addBlob(SnapshotPath.cells, serializer.stringify(artifactsToSummarize, this.handle));
 	}
 
 	/**

@@ -166,11 +166,15 @@ export interface IGCRuntimeOptions {
 
 // @beta @legacy
 export interface IGeneratedSummaryStats extends ISummaryStats {
+    readonly channelCount?: number;
     readonly dataStoreCount: number;
     readonly gcBlobNodeCount?: number;
     readonly gcStateUpdatedDataStoreCount?: number;
     readonly gcTotalBlobsSize?: number;
+    readonly realizedDataStoreCount?: number;
+    readonly reusedChannelCount?: number;
     readonly summarizedDataStoreCount: number;
+    readonly summarizeFlow?: "v1" | "v2";
     readonly summaryNumber: number;
 }
 

@@ -41,6 +41,8 @@ export function parseHandles(value: unknown, serializer: IFluidSerializer): unkn
 export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends SharedObjectCore<TEvent> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes,
     telemetryContextPrefix: string);
+    readonly generateSummary?: ISummarizable["generateSummary"];
+    protected generateSummaryCore?(summaryBuilder: ISummaryBuilder, serializer: IFluidSerializer, latestSummarySequenceNumber: number, fullTree: boolean, telemetryContext: ITelemetryContext): void;
     getAttachSummary(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): IGarbageCollectionData;
     protected processGCDataCore(serializer: IFluidSerializer): void;

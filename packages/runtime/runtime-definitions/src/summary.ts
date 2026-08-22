@@ -10,6 +10,7 @@ import type {
 	ITree,
 	SummaryTree,
 	ISequencedDocumentMessage,
+	SummaryType,
 } from "@fluidframework/driver-definitions/internal";
 import type { TelemetryEventPropertyTypeExt } from "@fluidframework/telemetry-utils/internal";
 
@@ -376,6 +377,127 @@ export interface ITelemetryContext {
 		property: string,
 		values: Record<string, TelemetryBaseEventPropertyType>,
 	): void;
+}
+
+/**
+ * Builder handed to a node during summarization that the node writes its summary content into.
+ *
+ * @remarks
+ * This is the core of the "single source of truth" summarization flow: instead of every node keeping its own
+ * multi-stage summarization state (as {@link ISummarizerNode} does), the container runtime owns the state and
+ * hands each node a builder plus the sequence number of the latest successful summary. A node either writes its
+ * content, or calls {@link ISummaryBuilder.nodeDidNotChange} to reuse the previous summary via a handle.
+ *
+ * A builder instance belongs to exactly one node. Children are created with
+ * {@link ISummaryBuilder.createBuilderForChild}, which is what establishes the summary tree hierarchy and the
+ * handle paths used when a subtree is unchanged.
+ *
+ * @legacy @beta
+ */
+export interface ISummaryBuilder {
+	/**
+	 * Creates a builder for a child node of this node. The child's content is added to this node's summary tree
+	 * under `childId`.
+	 * @param childId - The key this child's tree is stored under. Should not contain any "/" characters.
+	 * @param fullTree - True if the child must generate a full tree with no handle reuse.
+	 */
+	createBuilderForChild(childId: string, fullTree: boolean): ISummaryBuilder;
+
+	/**
+	 * Adds a pre-built summary tree (and its stats) at `key`.
+	 */
+	addTree(key: string, summarizeResult: ISummarizeResult): void;
+
+	/**
+	 * Adds a handle to a tree, blob or attachment in the previous summary at `key`.
+	 */
+	addHandle(
+		key: string,
+		handleType: SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment,
+		handle: string,
+	): void;
+
+	/**
+	 * Adds an attachment that has already been uploaded to storage.
+	 * @param key - The key the attachment is stored under in the current summary tree.
+	 * @param id - The storage id of the attachment.
+	 */
+	addAttachment(key: string, id: string): void;
+
+	/**
+	 * Adds a blob at `key`. Should not contain any "/" characters.
+	 */
+	addBlob(key: string, content: string | Uint8Array): void;
+
+	/**
+	 * Declares that this node's content has not changed since the latest successful summary, so the previous
+	 * summary's subtree should be reused via a handle.
+	 *
+	 * @remarks
+	 * Must not be called on the root builder, must not be called when `fullTree` is true, and must not be called
+	 * after any content has been added to this builder.
+	 */
+	nodeDidNotChange(): void;
+
+	/**
+	 * Marks this node's summary tree as unreferenced, and attributes its blob size to the unreferenced blob size
+	 * stat.
+	 */
+	markUnreferenced(): void;
+
+	/**
+	 * Sets the loading group id on this node's summary tree.
+	 */
+	setGroupId(groupId: string): void;
+
+	/**
+	 * The summary tree and stats built so far.
+	 *
+	 * @remarks
+	 * The returned stats are the aggregate stats for the whole summary being built, not just this node - stats are
+	 * accumulated into a single object shared by the entire builder tree.
+	 */
+	getSummaryTreeWithStats(): ISummaryTreeWithStats;
+}
+
+/**
+ * A node in the summary tree that can write its own summary content into an {@link ISummaryBuilder}.
+ *
+ * @remarks
+ * This is the summarizer-node-free counterpart to the various `summarize` methods. Instead of returning a
+ * summary tree, the node writes into the builder it is handed, and all the state needed to decide what may be
+ * reused lives in the container runtime and is passed down via `latestSummarySequenceNumber`.
+ *
+ * The interface is implemented at every level of the summary tree - the data store runtime, its channels and
+ * the shared objects underneath them - so the contract is described once here rather than repeated on each of
+ * those interfaces.
+ *
+ * @privateRemarks
+ * `generateSummary` is named for what it does rather than being a suffixed variant of `summarize`, so it does not
+ * need renaming when it replaces `summarize` at the end of the rollout - the old method is simply removed. The
+ * `generate` verb matches the name the summarize pipeline already uses for this step in its telemetry.
+ *
+ * @legacy @beta
+ */
+export interface ISummarizable {
+	/**
+	 * Writes this node's summary into `summaryBuilder`, or declares the node unchanged so that its previous
+	 * summary is reused.
+	 *
+	 * @param summaryBuilder - Builder for this node's subtree of the summary. A node either writes its content
+	 * into it, or calls {@link ISummaryBuilder.nodeDidNotChange} to reuse its previous summary via a handle.
+	 * @param latestSummarySequenceNumber - Reference sequence number of the latest successful summary, or -1 if
+	 * there has not been one. Content that has not changed since this sequence number is already captured in
+	 * that summary, so it can be reused.
+	 * @param fullTree - True to generate the full tree with no handle reuse.
+	 * @param telemetryContext - See {@link ITelemetryContext}.
+	 */
+	generateSummary(
+		summaryBuilder: ISummaryBuilder,
+		latestSummarySequenceNumber: number,
+		fullTree: boolean,
+		telemetryContext: ITelemetryContext,
+	): Promise<void>;
 }
 
 /**

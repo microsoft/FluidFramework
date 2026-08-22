@@ -17,12 +17,14 @@ import type {
 } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor/internal";
 import type {
+	ISummaryBuilder,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	IExperimentalIncrementalSummaryContext,
 	IRuntimeMessageCollection,
 	OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
+import { addSummaryTreeToBuilder } from "@fluidframework/runtime-utils/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { extractTelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
@@ -67,6 +69,17 @@ export interface SharedKernel {
 		incrementalSummaryContext: IExperimentalIncrementalSummaryContext | undefined,
 		fullTree?: boolean,
 	): ISummaryTreeWithStats;
+
+	/**
+	 * {@inheritDoc SharedObject.generateSummaryCore}
+	 */
+	generateSummaryCore?(
+		summaryBuilder: ISummaryBuilder,
+		serializer: IFluidSerializer,
+		latestSummarySequenceNumber: number,
+		fullTree: boolean,
+		telemetryContext: ITelemetryContext,
+	): void;
 
 	/**
 	 * {@inheritDoc SharedObjectCore.onDisconnect}
@@ -171,6 +184,40 @@ class SharedObjectFromKernel<
 			incrementalSummaryContext,
 			fullTree,
 		);
+	}
+
+	/**
+	 * {@inheritDoc SharedObject.generateSummaryCore}
+	 */
+	protected override generateSummaryCore(
+		summaryBuilder: ISummaryBuilder,
+		serializer: IFluidSerializer,
+		latestSummarySequenceNumber: number,
+		fullTree: boolean,
+		telemetryContext: ITelemetryContext,
+	): void {
+		const kernel = this.#kernel;
+		if (kernel.generateSummaryCore === undefined) {
+			// A kernel that has not implemented the incremental path still produces the same content, just
+			// written through the builder.
+			addSummaryTreeToBuilder(
+				summaryBuilder,
+				kernel.summarizeCore(
+					serializer,
+					telemetryContext,
+					undefined /* incrementalSummaryContext */,
+					fullTree,
+				).summary,
+			);
+		} else {
+			kernel.generateSummaryCore(
+				summaryBuilder,
+				serializer,
+				latestSummarySequenceNumber,
+				fullTree,
+				telemetryContext,
+			);
+		}
 	}
 
 	protected override initializeLocalCore(): void {

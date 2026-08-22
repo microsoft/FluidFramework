@@ -9,6 +9,7 @@ import type {
 	IExperimentalIncrementalSummaryContext,
 	IGarbageCollectionData,
 	IRuntimeMessageCollection,
+	ISummarizable,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
@@ -34,7 +35,7 @@ import type { IChannelAttributes } from "./storage.js";
  *
  * @legacy @beta
  */
-export interface IChannel extends IFluidLoadable {
+export interface IChannel extends IFluidLoadable, Partial<ISummarizable> {
 	/**
 	 * A readonly identifier for the channel
 	 */

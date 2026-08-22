@@ -12,6 +12,7 @@ import type {
 } from "@fluidframework/datastore-definitions/internal";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
 import type {
+	ISummaryBuilder,
 	ISummaryTreeWithStats,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
@@ -247,12 +248,26 @@ export class ConsensusRegisterCollection<T>
 	}
 
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
+		return createSingleBlobSummary(snapshotFileName, this.serializeContent(serializer));
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.generateSummaryCore}
+	 */
+	protected override generateSummaryCore(
+		summaryBuilder: ISummaryBuilder,
+		serializer: IFluidSerializer,
+	): void {
+		summaryBuilder.addBlob(snapshotFileName, this.serializeContent(serializer));
+	}
+
+	private serializeContent(serializer: IFluidSerializer): string {
 		const dataObj: { [key: string]: ILocalData<T> } = {};
 		for (const [k, v] of this.data.entries()) {
 			dataObj[k] = v;
 		}
 
-		return createSingleBlobSummary(snapshotFileName, this.stringify(dataObj, serializer));
+		return this.stringify(dataObj, serializer);
 	}
 
 	/**

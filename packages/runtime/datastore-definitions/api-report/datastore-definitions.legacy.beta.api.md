@@ -5,7 +5,7 @@
 ```ts
 
 // @beta @legacy
-export interface IChannel extends IFluidLoadable {
+export interface IChannel extends IFluidLoadable, Partial<ISummarizable> {
     // (undocumented)
     readonly attributes: IChannelAttributes;
     connect(services: IChannelServices): void;

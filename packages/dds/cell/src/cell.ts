@@ -13,6 +13,7 @@ import type {
 import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type {
+	ISummaryBuilder,
 	ISummaryTreeWithStats,
 	AttributionKey,
 	IRuntimeMessageCollection,
@@ -189,14 +190,25 @@ export class SharedCell<T = any>
 	 * @returns The summary of the current state of the Cell.
 	 */
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
+		return createSingleBlobSummary(snapshotFileName, this.serializeContent(serializer));
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.generateSummaryCore}
+	 */
+	protected override generateSummaryCore(
+		summaryBuilder: ISummaryBuilder,
+		serializer: IFluidSerializer,
+	): void {
+		summaryBuilder.addBlob(snapshotFileName, this.serializeContent(serializer));
+	}
+
+	private serializeContent(serializer: IFluidSerializer): string {
 		const content: ICellValue =
 			this.attribution?.type === "local"
 				? { value: this.data, attribution: undefined }
 				: { value: this.data, attribution: this.attribution };
-		return createSingleBlobSummary(
-			snapshotFileName,
-			serializer.stringify(content, this.handle),
-		);
+		return serializer.stringify(content, this.handle);
 	}
 
 	/**
