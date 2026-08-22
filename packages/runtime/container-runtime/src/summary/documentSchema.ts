@@ -151,6 +151,15 @@ export interface IDocumentSchemaFeatures {
 	createBlobPayloadPending: true | undefined;
 
 	/**
+	 * Tells if this document uses `enableSingleRoundTripFileCreate` (blobs uploaded while detached are embedded
+	 * directly in the attach summary, instead of being uploaded individually to storage ahead of time).
+	 * This changes the on-disk shape of the first summary produced after attach (adds a `.embeddedDetachedBlobs`
+	 * subtree under `.blobs`), so old runtimes that do not understand this subtree must fail predictably rather
+	 * than silently dropping the blobs it contains from their own redirect table / summaries.
+	 */
+	enableSingleRoundTripFileCreate: true | undefined;
+
+	/**
 	 * List of disallowed versions of the runtime.
 	 * This option is sticky. Once a version of runtime is added to this list (when supplied to DocumentsSchemaController's constructor)
 	 * it will be added to the list of disallowed versions and stored in document metadata.
@@ -300,6 +309,7 @@ const documentSchemaSupportedConfigs = {
 	opGroupingEnabled: new TrueOrUndefined(),
 	compressionLz4: new TrueOrUndefined(),
 	createBlobPayloadPending: new TrueOrUndefined(),
+	enableSingleRoundTripFileCreate: new TrueOrUndefined(),
 	disallowedVersions: new CheckVersions(),
 };
 
@@ -676,6 +686,7 @@ export class DocumentsSchemaController {
 				idCompressorMode: features.idCompressorMode,
 				opGroupingEnabled: boolToProp(features.opGroupingEnabled),
 				createBlobPayloadPending: features.createBlobPayloadPending,
+				enableSingleRoundTripFileCreate: features.enableSingleRoundTripFileCreate,
 				disallowedVersions: arrayToProp(features.disallowedVersions),
 				...retiredFeatureValues(),
 			},

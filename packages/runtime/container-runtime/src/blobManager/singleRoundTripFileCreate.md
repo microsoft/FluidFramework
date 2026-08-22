@@ -225,33 +225,56 @@ Phase 1 (as described above) is implemented, gated behind a new, `@experimental`
   `localBlobCache` (its bytes simply stay resident in memory).
 * `BlobManager.summarize()` (`blobManager.ts`) builds a new subtree, name
   `embeddedBlobsTreeName = ".embeddedDetachedBlobs"` (`blobManagerSnapSum.ts`), alongside the
-  existing `.blobs` attachment-blob tree. It contains one child subtree per embedded blob, **keyed
-  by local id** (there is no storage id, by design — see above); each child subtree carries
-  `groupId = <localId>` and holds the blob's raw bytes as a `SummaryType.Blob` node named
-  `"content"` (`embeddedBlobContentBlobName`). The `groupId` is what excludes the blob's bytes from
-  the initial snapshot fetch — see
+  existing `.blobs` attachment-blob tree. All embedded blobs are flat entries directly under this
+  one shared subtree, **keyed by local id** (there is no storage id, by design — see above), each
+  holding the blob's raw bytes as a `SummaryType.Blob` node. The whole subtree carries a single
+  shared `groupId = embeddedBlobsGroupId` ("embeddedDetachedBlobs"). The `groupId` is what excludes
+  the blobs' bytes from the initial snapshot fetch — see
   [Excluding embedded blobs from the initial snapshot fetch](#excluding-embedded-blobs-from-the-initial-snapshot-fetch-groupid).
+  (An earlier iteration of this design gave each blob its own subtree/`groupId`; this was
+  simplified to one shared subtree/`groupId`, matching PR #27880's structure, since per-blob
+  groupIds provided no benefit and one bulk group-id fetch is no more expensive over the wire than
+  fetching several individually — see `comparisonWithPr27880.md`.)
 * `hasBlob()` and `getGCData()` were updated to also account for
   `embeddedDetachedBlobLocalIds`, so reachability/GC treats these exactly like any other blob
   `BlobManager` knows about.
 * `loadV1()` (`blobManagerSnapSum.ts`) reads the `.embeddedDetachedBlobs` subtree (if present) out
-  of the base snapshot and folds each blob's `content` storage id into the ordinary redirect table
-  on load, graduating it into standard attachment-blob accounting from then on — see
+  of the base snapshot and folds each blob's storage id into the ordinary redirect table on load,
+  graduating it into standard attachment-blob accounting from then on — see
   [Fixed bug: any freshly-loaded client used to lose embedded blobs entirely](#fixed-bug-any-freshly-loaded-client-used-to-lose-embedded-blobs-entirely).
-* The new option is excluded from `RuntimeOptionsAffectingDocSchema`
-  (`containerCompatibility.ts`) — it changes only local, detached-only upload behavior and has no
-  effect on the shape of documents produced, so it doesn't participate in doc-schema compat
-  negotiation.
+* **Document-schema gating**: `enableSingleRoundTripFileCreate` is now a
+  `IDocumentSchemaFeatures`/`RuntimeOptionsAffectingDocSchema` property (`documentSchema.ts`,
+  `containerCompatibility.ts`), exactly like `createBlobPayloadPending`. This means:
+  * It requires `explicitSchemaControl` to be enabled (enforced in `containerRuntime.ts`).
+  * Once a document's persisted schema records this feature as on, an **old runtime** that
+    predates this feature entirely (and therefore doesn't recognize the schema property) will fail
+    to load the document outright, via `checkRuntimeCompatibility()`'s existing "unknown runtime
+    schema property" check, rather than silently failing to understand
+    `.embeddedDetachedBlobs` and dropping the blob from its own redirect table/summaries (the
+    old/analyzed risk — see `comparisonWithPr27880.md`'s "Old-runtime compatibility" section).
+    This mirrors PR #27880's use of `explicitSchemaControl`/`minVersionForCollab` for the same
+    purpose.
+  * The actual `BlobManager` construction now reads the *negotiated session value*
+    (`this.sessionSchema.enableSingleRoundTripFileCreate`), not the raw requested runtime option,
+    consistent with how `createBlobPayloadPending` is threaded through.
+  * This closes the "old-runtime compatibility" open question previously tracked in
+    `comparisonWithPr27880.md` — see that document for why a purely structural fix (making old
+    runtimes tolerate/carry-forward the subtree without understanding it) cannot work here: even if
+    an old runtime could safely re-summarize the subtree, its own `serialize()`/
+    `getPendingLocalState()` pipeline would still mishandle the raw bytes inside it (a *separate*,
+    still-open bug — see [Known gaps](#known-gaps-not-yet-fixed) below).
 * Test coverage: `src/test/blobs/blobManager.spec.ts`, `describe("enableSingleRoundTripFileCreate")` —
   verifies no detached-storage upload occurs, the blob is still readable via `getBlob()`, the
-  summary contains the new subtree keyed by local id with `SummaryType.Blob` content, no
-  `SummaryType.Attachment` node is produced for it, and (new) that a freshly-loaded `BlobManager`
+  summary contains the new subtree with a shared `groupId` and flat per-blob entries, no
+  `SummaryType.Attachment` node is produced for it, and that a freshly-loaded `BlobManager`
   continues to see the blob as an ordinary attachment blob across further summaries, and correctly
-  drops it once unreferenced/swept.
+  drops it once unreferenced/swept. `src/test/documentSchema.spec.ts` covers the new schema
+  property generically (merge/validate/old-client-rejection semantics, shared with all other
+  schema-participating features).
 
 
-This required **zero changes** to `container-loader` or any driver package, confirming the design
-conclusion above.
+This required **zero changes** to `container-loader` or any driver package for the core Phase 1
+behavior; the schema-gating addition only touches `container-runtime`.
 
 ## Garbage collection
 
@@ -347,6 +370,64 @@ Confirmed correct, at the cost of efficiency, not correctness:
 So no second phase is required for correctness — only for efficiency (avoiding repeated
 re-embedding by a single long-lived client that never reloads). This matches Phase 1's explicitly
 narrow scope.
+
+## Known gaps (not yet fixed)
+
+### Serialized/pending container state corrupts embedded blob bytes
+
+**Confirmed via a reproducing unit test** (`snapshotConversionTest.spec.ts`, "Raw (non-UTF8) blob
+content is corrupted by the snapshot <-> SnapshotInfo round-trip"), **not yet fixed**.
+
+`container-loader`'s classic pending/serialized-state pipeline
+(`convertSnapshotToSnapshotInfo`/`convertSnapshotInfoToSnapshot`/`convertISnapshotToSnapshotWithBlobs`
+in `utils.ts`) unconditionally does `bufferToString(blob, "utf8")` on every blob's bytes with no
+matching safe decode, in order to make the pending state JSON-serializable. This is lossy for bytes
+that aren't valid UTF-8 — exactly the kind of arbitrary binary content `.embeddedDetachedBlobs`
+stores. (Note: `getISnapshotFromSerializedContainer`/`convertSummaryToISnapshot` itself does **not**
+corrupt bytes — it preserves raw `Uint8Array` content untouched; the corruption is specifically in
+the snapshot ⇄ `SnapshotInfo` round-trip used for `Container.serialize()` and
+`SerializedStateManager.getPendingLocalState()`/offline-load.)
+
+This bug is **not new to this feature** — the same code path would corrupt any raw binary blob
+content, including ordinary attachment blobs, if fed through it (a newer, separate pipeline,
+`captureFullContainerState`/`captureReferencedContents.ts`, already solves this correctly for
+attachment blobs by classifying blobs by path and base64-encoding binary ones via
+`IBase64BlobContents`/`attachmentBlobContents` — the classic pipeline was simply never updated to
+match). This feature is affected because it's the first thing that routinely puts large amounts of
+raw binary content through the *classic*, un-updated pipeline while still un-graduated (i.e. before
+any real summary has replaced `.embeddedDetachedBlobs` with ordinary attachment-blob entries).
+
+**Exact exposure window**: only while a client's serialized-state baseline (`serializedStateManager`'s
+`snapshotInfo.snapshot`) is *the create snapshot itself* (the one still containing raw,
+un-graduated `.embeddedDetachedBlobs` bytes) — i.e.:
+1. `Container.serialize()` called on a still-detached container.
+2. `Container.serialize()`/`getPendingLocalState()` called by the creating client, before it ever
+   reloads (its `serializedStateManager` was seeded from the create summary at `attach()` time and
+   is never refreshed to a later summary while that client stays alive).
+3. Any client (old or new) loading fresh from the very first snapshot on the service (before any
+   client has produced a second summary that graduates the blobs).
+
+Once *any* client produces a real second summary, `.embeddedDetachedBlobs` is structurally replaced
+with ordinary redirect-table entries, and any client whose baseline is that summary or later is
+unaffected, regardless of which client produced it.
+
+**Candidate fixes** (not yet chosen): (a) generalize the existing base64-split pattern from
+`captureFullContainerState` to the classic `serialize()`/`getPendingLocalState()` pipeline as well
+(most correct, fixes the latent bug for ordinary attachment blobs too, moderate size); (b) scope the
+same base64 split narrowly to just `.embeddedDetachedBlobs`; (c) have `BlobManager` itself
+base64-encode embedded blob content before ever embedding it in the summary (matching PR #27880),
+so it's already plain-ASCII by the time it reaches any conversion pipeline — simplest, but ~33%
+larger embedded-blob payloads and a bigger design change; (d) add a guard/assert in
+`serialize()`/`getPendingLocalState()` that fails loudly instead of corrupting silently, deferring
+the real fix.
+
+Document-schema gating (see [Implementation status](#implementation-status) above) does **not**
+fix this for old clients: even a structurally "safe" old runtime would still run its own
+`serialize()`/`getPendingLocalState()` through the same lossy code, since that code doesn't
+distinguish based on whether the runtime "understands" the subtree it's serializing. Schema gating
+only prevents old runtimes from loading/joining a document using this feature at all — it doesn't
+retroactively make their generic serialization code byte-safe. The corruption bug for *new* clients
+still needs one of the candidate fixes above, independent of schema gating.
 
 ## Non-goals / open questions
 

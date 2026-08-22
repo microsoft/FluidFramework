@@ -22,14 +22,14 @@ representation after that first summary, and what compatibility guarantees they 
 | | This PR | PR #27880 |
 |---|---|---|
 | Flag name | `enableSingleRoundTripFileCreate` | `inlineDetachedBlobsAsSummaryBlobs` |
-| Tree shape | One subtree *per blob*, each with its own `groupId = localId` | One shared subtree (`.blobs/.detached`) for *all* detached blobs, one shared `groupId` |
+| Tree shape | One shared subtree (`.blobs/.embeddedDetachedBlobs`) for all embedded blobs, one shared `groupId` | One shared subtree (`.blobs/.detached`) for *all* detached blobs, one shared `groupId` |
 | Blob encoding | Raw bytes (`SummaryType.Blob` with `Uint8Array`) | Base64-encoded text |
 | After first attach-summary ack | "Graduates": folded into the ordinary redirect table, becomes indistinguishable from a normal attachment blob forever after | Stays "special" forever: tracked in a permanent `detachedBlobSummaryIds` set, decoded on every read, encoded on every full-tree re-summarize |
 | Incremental reuse across summaries (same live client, no reload) | Not yet — every embedded blob is re-embedded on every `summarize()` call until the client reloads (documented gap) | Yes — unchanged blobs are emitted as `SummaryType.Handle` from the very first non-full-tree summary after creation, no reload needed |
-| Document schema | Not gated — a flag with only local, in-process effect on detached-only behavior | Gated behind `explicitSchemaControl` + `minVersionForCollab: "2.115.0"`, a real document-schema-participating flag |
+| Document schema | Gated behind `explicitSchemaControl`, a real document-schema-participating flag (as of this session's fix) | Gated behind `explicitSchemaControl` + `minVersionForCollab: "2.115.0"`, a real document-schema-participating flag |
 | Loader changes | None | `captureReferencedContents.ts`/`captureFullContainerState` updated to recurse into `.blobs` child trees |
 | Full-tree summarization | Not separately handled — after graduation, ordinary attachment-blob full-tree summarization already applies | Explicit `summarizeFullTree()`/`loadFullTreeContents()` path, since a full-tree summary can't reuse handles and must re-materialize/re-encode content from storage |
-| Detached-container serialize/rehydrate | Not implemented/tested — likely broken today (see [Rehydrate gap](#rehydrate-gap-in-this-prs-design)) | Explicitly designed for — base64 encoding exists specifically because the loader's `serialize()`/rehydrate path re-encodes all blob content as UTF-8 text |
+| Detached-container serialize/rehydrate | Confirmed broken (see [singleRoundTripFileCreate.md's "Known gaps"](singleRoundTripFileCreate.md#known-gaps-not-yet-fixed)) — not yet fixed | Explicitly designed for — base64 encoding exists specifically because the loader's `serialize()`/rehydrate path re-encodes all blob content as UTF-8 text |
 
 ## Why PR #27880 needs base64 encoding, and why that's not really about storage
 
@@ -81,29 +81,40 @@ lightweight per-blob "already captured" flag, since these blobs are immutable on
 don't need full `SummarizerNode` generality). PR #27880 is useful evidence that this is a tractable,
 already-precedented fix — worth prioritizing given the theoretical data pressure it removes.
 
-## Old-runtime compatibility of the redirect-table-graduation fix
+## Old-runtime compatibility of the redirect-table-graduation fix — RESOLVED via schema gating
 
-For this PR's design, `loadV1()` reads an optional `.embeddedDetachedBlobs` subtree if present, and
-does nothing special if it's absent. An **old runtime** (one that predates this feature, and has no
-knowledge of `.embeddedDetachedBlobs` at all) loading a summary that *does* contain this subtree
-will:
+**Update**: this is now fixed. `enableSingleRoundTripFileCreate` is a
+`IDocumentSchemaFeatures`/`RuntimeOptionsAffectingDocSchema` property (mirroring PR #27880's
+`explicitSchemaControl`/`minVersionForCollab` approach exactly), requires `explicitSchemaControl`,
+and participates in normal doc-schema merge/negotiation. See
+[Implementation status](singleRoundTripFileCreate.md#implementation-status) for details. The
+analysis below is preserved for context on *why* this was needed.
+
+For this PR's design (prior to the schema-gating fix), `loadV1()` reads an optional
+`.embeddedDetachedBlobs` subtree if present, and does nothing special if it's absent. An **old
+runtime** (one that predates this feature, and has no knowledge of `.embeddedDetachedBlobs` at all)
+loading a summary that *does* contain this subtree would:
 
 * Correctly skip over it in `loadV1()`, since that function only ever reads `blobsTree.trees` for
   the single sibling key it explicitly knows about (`embeddedBlobsTreeName`) — an old build not
   containing that check simply never looks at `blobsTree.trees` for this purpose and won't be
   affected by whatever else lives there.
-* However, this means the old runtime's `redirectTable`/`ids` will **not** include the blob at all
+* However, this means the old runtime's `redirectTable`/`ids` would **not** include the blob at all
   — the blob is invisible to it. It won't crash, but it also won't be able to `getBlob()`/GC-track
   that blob correctly: an old client wouldn't reference-count it via the normal redirect-table path,
   so if that old client itself produces a summary, it would silently omit the still-referenced
   blob's subtree (mirroring the exact "any freshly-loaded client loses embedded blobs" bug this PR's
   own fix addresses for *this* codebase — but for an *old*, pre-fix codebase, this can't be patched
-  after the fact). This is a real version-skew risk for old runtimes reading documents produced by
-  this feature, and is exactly the kind of thing document-schema gating (`explicitSchemaControl`)
-  exists to prevent. It needs further thought — either the flag should also participate in
-  doc-schema negotiation (mirroring PR #27880's choice) or the design needs an explicit compatibility
-  story for old readers (e.g. some other structural fallback), rather than assuming "no schema
-  impact" by construction. See [Open question: do we need a schema flag too?](#open-question-do-we-need-a-schema-flag-too).
+  after the fact). This was a real version-skew risk for old runtimes reading documents produced by
+  this feature — now closed off by document-schema gating: an old runtime will fail to load such a
+  document outright (via `checkRuntimeCompatibility()`'s existing "unknown runtime schema property"
+  check), rather than silently mishandling it.
+
+Note that schema gating protects old *runtimes* from silently mishandling the document structurally
+(dropping blobs from redirect tables/summaries), but it does **not** by itself fix the separate
+serialized/pending-state byte-corruption bug discovered in this session (see
+[singleRoundTripFileCreate.md's "Known gaps"](singleRoundTripFileCreate.md#known-gaps-not-yet-fixed))
+— that bug affects *new* clients too and needs its own fix, independent of schema gating.
 
 ## The "single shared tree" vs "one subtree per blob" trade-off
 
@@ -141,37 +152,38 @@ switched to a shared-tree structure later without a wire-format rewrite, if the 
 overhead turns out to matter; this is a lower-priority follow-up than the correctness gaps
 identified elsewhere in this document.
 
-## Rehydrate gap in this PR's design
+## Rehydrate gap in this PR's design — CONFIRMED via reproducing test
 
-This PR's design has not been evaluated against `Container.serialize()`/
-`rehydrateDetachedContainerFromSnapshot`. Tracing the code: `serialize()` always calls
-`runtime.createSummary()` → `BlobManager.summarize()`, which (with this feature's flag on) emits
-raw bytes inside `.embeddedDetachedBlobs/<localId>/content` as an ordinary `SummaryType.Blob` node.
-`convertSummaryToISnapshot` (`container-loader/src/utils.ts`) then unconditionally does
-`bufferToString(content, "utf8")` on every blob's content so the whole tree can be JSON-serialized
-— exactly the corruption risk PR #27880's base64 encoding was built to avoid. This means
-**serializing a detached container that has embedded blobs, under this PR's current
-implementation, is untested and likely produces corrupted blob bytes on rehydrate.** This is a real
-gap that needs to be either fixed (most likely by adopting some form of lossless text encoding for
-embedded blob content, mirroring PR #27880) or explicitly scoped out for Phase 1 (e.g. documented
-as unsupported, with a guard/assert against calling `serialize()` while outstanding embedded blobs
-exist).
+This PR's design has now been evaluated against `Container.serialize()`/`getPendingLocalState()`
+(offline-load/stash), and the bug is **confirmed** via a reproducing unit test
+(`container-loader/src/test/snapshotConversionTest.spec.ts`). The exact corruption point is not
+`convertSummaryToISnapshot` (which preserves raw `Uint8Array` bytes untouched) but the *later*
+`convertSnapshotToSnapshotInfo`/`convertSnapshotInfoToSnapshot` round-trip in
+`container-loader/src/utils.ts`, used by the classic `serialize()`/pending-state pipeline — it
+unconditionally does `bufferToString(bytes, "utf8")` with no matching safe decode, which is lossy
+for any non-UTF8 binary content. This is not unique to this feature (the same code would corrupt
+raw attachment-blob bytes too, if fed through it), but this feature is the first thing that
+routinely exercises that path with un-graduated binary content. See
+[singleRoundTripFileCreate.md's "Known gaps"](singleRoundTripFileCreate.md#known-gaps-not-yet-fixed)
+for the precise exposure window and candidate fixes — this has **not yet been fixed**, and is the
+next planned work after schema gating.
 
-## Open question: do we need a schema flag too?
+## Open question: do we need a schema flag too? — RESOLVED
 
-Not yet resolved, and intentionally not implemented as part of this PR without further discussion.
-PR #27880 gates its flag behind `explicitSchemaControl`/`minVersionForCollab` because its on-disk
-shape is permanently different from what an old, schema-unaware client understands (blobs
-permanently live as base64 text under a differently-named subtree it wouldn't decode correctly).
-This PR's current claim of "no doc-schema impact" rests on the assumption that after graduation, an
-old client sees only things it already understands (ordinary `Attachment` nodes + redirect table).
-That's true for the *steady state*, but as noted above, an old client reading the very *first*
-summary (containing `.embeddedDetachedBlobs`, before any graduation has happened) does not
-understand that subtree, silently drops the blob from its own redirect table, and would propagate
-that loss into any summary it produces. Whether this is acceptable (e.g. if old-client-reads-new-doc
-is out of scope for Phase 1, or if there's some other mitigation) or requires schema
-participation after all is an open question that should be settled before removing the
-"@experimental" tag from this feature.
+**Update**: yes, and it's now implemented. `enableSingleRoundTripFileCreate` participates in
+document-schema negotiation exactly like PR #27880's flag does (gated behind
+`explicitSchemaControl`, merged/validated via the same generic `IDocumentSchemaFeatures` machinery
+in `documentSchema.ts`). See [Implementation status](singleRoundTripFileCreate.md#implementation-status).
+
+The reasoning that settled this: a purely structural fix (making old runtimes tolerate/carry the
+subtree forward without understanding it) would not have been sufficient even if it had been
+pursued instead — an old runtime's own `serialize()`/`getPendingLocalState()` pipeline would still
+mishandle the raw bytes generically, regardless of whether the runtime "understands" the subtree
+structurally. Since both the GC/redirect-table-loss risk (this section) and the byte-corruption
+risk (see `singleRoundTripFileCreate.md`'s "Known gaps") are genuine format incompatibilities for
+old runtimes — not just missing optimizations — schema gating (which converts "silent data loss on
+old clients" into "loud, safe refusal to load") was the correct tool, matching PR #27880's choice
+exactly.
 
 ## Net assessment
 

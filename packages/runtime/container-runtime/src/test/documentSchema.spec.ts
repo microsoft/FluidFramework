@@ -57,6 +57,7 @@ describe("Runtime", () => {
 		opGroupingEnabled: false,
 		idCompressorMode: "delayed",
 		createBlobPayloadPending: undefined,
+		enableSingleRoundTripFileCreate: undefined,
 		disallowedVersions: [],
 	} as const satisfies IDocumentSchemaFeatures;
 

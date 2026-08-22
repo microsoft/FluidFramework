@@ -1076,7 +1076,6 @@ export class ContainerRuntime
 			chunkSizeInBytes: defaultChunkSizeInBytes,
 			stagingModeAutoFlushThreshold: defaultStagingModeAutoFlushThreshold,
 			disableSchemaUpgrade: false,
-			enableSingleRoundTripFileCreate: undefined,
 		};
 
 		const defaultConfigs = {
@@ -1300,6 +1299,7 @@ export class ContainerRuntime
 				idCompressorMode,
 				opGroupingEnabled: enableGroupedBatching,
 				createBlobPayloadPending,
+				enableSingleRoundTripFileCreate,
 				disallowedVersions: [],
 			},
 			(schema) => {
@@ -2228,7 +2228,7 @@ export class ContainerRuntime
 			pendingBlobs: pendingRuntimeState?.pendingAttachmentBlobs,
 			createBlobPayloadPending: this.sessionSchema.createBlobPayloadPending === true,
 			enableSingleRoundTripFileCreate:
-				this.runtimeOptions.enableSingleRoundTripFileCreate === true,
+				this.sessionSchema.enableSingleRoundTripFileCreate === true,
 		});
 
 		this.deltaScheduler = new DeltaScheduler(

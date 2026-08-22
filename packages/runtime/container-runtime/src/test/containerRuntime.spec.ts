@@ -2012,6 +2012,7 @@ describe("Runtime", () => {
 				createBlobPayloadPending: undefined,
 				stagingModeAutoFlushThreshold: 1000,
 				disableSchemaUpgrade: false,
+				enableSingleRoundTripFileCreate: undefined,
 			} as const satisfies ContainerRuntimeOptionsInternal;
 			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions } as const;
 

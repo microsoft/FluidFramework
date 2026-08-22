@@ -23,7 +23,7 @@ import {
 	type IBlobManagerLoadInfo,
 } from "../../blobManager/index.js";
 import {
-	embeddedBlobContentBlobName,
+	embeddedBlobsGroupId,
 	embeddedBlobsTreeName,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../blobManager/blobManagerSnapSum.js";
@@ -140,18 +140,14 @@ for (const createBlobPayloadPending of [false, true]) {
 						embeddedTree.type === SummaryType.Tree,
 						"Expected embedded blobs to be a tree",
 					);
-					const perBlobSubtree: SummaryObject | undefined = embeddedTree.tree[localId];
-					assert(perBlobSubtree !== undefined, "Expected a subtree keyed by localId");
-					assert(perBlobSubtree.type === SummaryType.Tree, "Expected per-blob subtree");
 					assert.strictEqual(
-						perBlobSubtree.groupId,
-						localId,
-						"Per-blob subtree should have a groupId equal to its localId, so it's excluded from " +
+						embeddedTree.groupId,
+						embeddedBlobsGroupId,
+						"Embedded blobs subtree should have a shared groupId, so it's excluded from " +
 							"the initial snapshot fetch",
 					);
-					const embeddedBlob: SummaryObject | undefined =
-						perBlobSubtree.tree[embeddedBlobContentBlobName];
-					assert(embeddedBlob !== undefined, "Expected blob content in per-blob subtree");
+					const embeddedBlob: SummaryObject | undefined = embeddedTree.tree[localId];
+					assert(embeddedBlob !== undefined, "Expected a blob entry keyed by localId");
 					assert(embeddedBlob.type === SummaryType.Blob, "Expected a raw blob node");
 					assert.strictEqual(
 						blobToText(embeddedBlob.content as Uint8Array),
