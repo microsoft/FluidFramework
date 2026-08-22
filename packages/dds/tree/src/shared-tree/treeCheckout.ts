@@ -1552,6 +1552,8 @@ export class TreeCheckout implements ITreeCheckout {
 			view.dispose();
 		}
 		this.#events.emit("dispose");
+		this._branchHistory?.dispose();
+		this._branchHistory = undefined;
 	}
 
 	public getRemovedRoots(): [string | number | undefined, number, JsonableTree][] {
