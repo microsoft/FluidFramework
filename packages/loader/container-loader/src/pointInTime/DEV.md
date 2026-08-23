@@ -9,12 +9,17 @@ This flow consumes a sequence number. It does not create or resolve version mark
 The host calls:
 
 ```ts
+import { createPointInTimeDocumentService } from "@fluidframework/odsp-driver/legacy/point-in-time";
+
 const historicalContainer = await loadContainerToSequenceNumber({
 	request,
 	loadToSequenceNumber,
 	codeLoader,
 	urlResolver,
-	documentServiceFactory: getOdspPointInTimeDocumentServiceFactory(/* credentials */),
+  documentServiceFactory: getOdspPointInTimeDocumentServiceFactory(
+    /* credentials */,
+    createPointInTimeDocumentService,
+  ),
 	logger,
 	signal,
 });
@@ -81,9 +86,9 @@ The loader detects this capability structurally so callers pass the driver's fac
 The point-in-time capability is not part of the general `IDocumentServiceFactory` contract. Fluid
 therefore owns both runtime checks needed to bridge the optional capability:
 
-- `getOdspPointInTimeDocumentServiceFactory` constructs an `OdspDocumentServiceFactory`, verifies
-  that its optional `createPointInTimeDocumentService` member is present, and returns the public
-  `IPointInTimeDocumentServiceFactory` type.
+- The host imports `createPointInTimeDocumentService` from the dedicated ODSP point-in-time entrypoint
+  and passes it to `getOdspPointInTimeDocumentServiceFactory`. The helper injects the implementation,
+  verifies that the optional capability is present, and returns `IPointInTimeDocumentServiceFactory`.
 - `asPointInTimeCapableFactory` performs the cross-driver structural check at the loader boundary.
   `loadContainerToSequenceNumber` uses this check before constructing its internal adapter.
 
@@ -173,11 +178,11 @@ must not make container-loader depend on ODSP or merge mark resolution into cont
 
 ## ODSP implementation
 
-`OdspDocumentServiceFactoryCore` implements the optional
-`createPointInTimeDocumentService` capability alongside its normal document-service creation path.
-`getOdspPointInTimeDocumentServiceFactory` constructs the public factory and narrows it to
-`IPointInTimeDocumentServiceFactory`, allowing hosts to pass it directly to the loader without an
-ODSP-specific adapter.
+`OdspDocumentServiceFactoryCore` exposes the optional `createPointInTimeDocumentService` capability
+only when the consumer supplies an implementation. ODSP owns that implementation in the dedicated
+`@fluidframework/odsp-driver/legacy/point-in-time` entrypoint, while the consumer controls whether the
+feature enters its dependency graph. `getOdspPointInTimeDocumentServiceFactory` injects the supplied
+implementation and returns `IPointInTimeDocumentServiceFactory`.
 
 For each point-in-time request, ODSP resolves the closest recoverable driveItem version at or before
 the target. It then composes:
@@ -209,8 +214,10 @@ Like normal storage catch-up, retriable network failures may retry for an extend
 | `loadContainerToSequenceNumber.ts` | Validates the target and driver capability, installs the adapter, and starts the paused load. |
 | `pointInTimeServices.ts` | Defines the structural driver capability and adapts it to `IDocumentServiceFactory`. |
 | `loadPaused.ts` | Loads read-only, replays to the exact target, pauses processing, disconnects, and handles cancellation. |
-| `packages/drivers/odsp-driver/src/odspDocumentServiceFactory.ts` | Exports `IPointInTimeDocumentServiceFactory` and constructs a typed point-in-time-capable ODSP factory for hosts. |
-| `packages/drivers/odsp-driver/src/odspDocumentServiceFactoryCore.ts` | Implements the optional point-in-time capability, selects the ODSP base version, and creates the historical service with shared epoch tracking. |
+| `packages/drivers/odsp-driver/src/odspDocumentServiceFactory.ts` | Accepts and installs a consumer-supplied PIT implementation and constructs a typed capable factory. |
+| `packages/drivers/odsp-driver/src/odspDocumentServiceFactoryCore.ts` | Defines the injection contract and delegates to the implementation only when supplied. |
+| `packages/drivers/odsp-driver/src/pointInTime.ts` | Dedicated consumer-imported feature entrypoint. |
+| `packages/drivers/odsp-driver/src/pointInTimeDriver/createPointInTimeDocumentService.ts` | Owns ODSP base selection, shared epoch tracking, and historical/live service composition. |
 | `packages/drivers/odsp-driver/src/pointInTimeDriver/odspPointInTimeDocumentService.ts` | Recombines historical storage with bounded live delta storage and enforces storage-only behavior. |
 
 ## Test map

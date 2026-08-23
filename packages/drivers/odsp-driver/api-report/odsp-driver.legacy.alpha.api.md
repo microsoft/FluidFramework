@@ -66,7 +66,7 @@ export function getHashedDocumentId(driveId: string, itemId: string): Promise<st
 export function getLocatorFromOdspUrl(url: URL, requireFluidSignature?: boolean): OdspFluidDataStoreLocator | undefined;
 
 // @beta @legacy
-export function getOdspPointInTimeDocumentServiceFactory(getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined, persistedCache?: IPersistedCache, hostPolicy?: HostStoragePolicy): IPointInTimeDocumentServiceFactory;
+export function getOdspPointInTimeDocumentServiceFactory(getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined, pointInTimeDocumentServiceImplementation: OdspPointInTimeDocumentServiceImplementation, persistedCache?: IPersistedCache, hostPolicy?: HostStoragePolicy): IPointInTimeDocumentServiceFactory;
 
 // @beta @legacy (undocumented)
 export interface ICacheAndTracker {
@@ -89,6 +89,29 @@ export interface INonPersistentCache {
 // @beta @legacy
 export interface IOdspCache extends INonPersistentCache {
     readonly persistedCache: IPersistedFileCache;
+}
+
+// @beta @legacy
+export interface IOdspDocumentServiceFactoryOptions {
+    readonly pointInTimeDocumentServiceImplementation?: OdspPointInTimeDocumentServiceImplementation;
+}
+
+// @beta @legacy
+export interface IOdspPointInTimeDocumentServiceImplementationProps {
+    // (undocumented)
+    readonly clientIsSummarizer?: boolean;
+    // (undocumented)
+    readonly createDocumentService: (resolvedUrl: IResolvedUrl, logger: ITelemetryBaseLogger, cacheAndTracker: ICacheAndTracker, clientIsSummarizer?: boolean) => Promise<IDocumentService>;
+    // (undocumented)
+    readonly getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>;
+    // (undocumented)
+    readonly logger?: ITelemetryBaseLogger;
+    // (undocumented)
+    readonly persistedCache: IPersistedCache;
+    // (undocumented)
+    readonly resolvedUrl: IResolvedUrl;
+    // (undocumented)
+    readonly targetSequenceNumber: number;
 }
 
 // @beta @legacy (undocumented)
@@ -152,12 +175,12 @@ export const OdcFileSiteOrigin = "https://1drv.ms";
 
 // @beta @legacy
 export class OdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
-    constructor(getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined, persistedCache?: IPersistedCache, hostPolicy?: HostStoragePolicy);
+    constructor(getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined, persistedCache?: IPersistedCache, hostPolicy?: HostStoragePolicy, options?: IOdspDocumentServiceFactoryOptions);
 }
 
 // @beta @legacy
 export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory, IRelaySessionAwareDriverFactory {
-    constructor(getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined, persistedCache?: IPersistedCache, hostPolicy?: HostStoragePolicy);
+    constructor(getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined, persistedCache?: IPersistedCache, hostPolicy?: HostStoragePolicy, options?: IOdspDocumentServiceFactoryOptions);
     // (undocumented)
     createContainer(createNewSummary: ISummaryTree | undefined, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
@@ -205,6 +228,9 @@ export interface OdspFluidDataStoreLocator extends IOdspUrlParts {
     // (undocumented)
     fileVersion?: string | undefined;
 }
+
+// @beta @legacy
+export type OdspPointInTimeDocumentServiceImplementation = (props: IOdspPointInTimeDocumentServiceImplementationProps) => Promise<IDocumentService>;
 
 // @beta @legacy
 export function prefetchLatestSnapshot(resolvedUrl: IResolvedUrl, getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, persistedCache: IPersistedCache, _forceAccessTokenViaAuthorizationHeader: boolean, logger: ITelemetryBaseLogger, hostSnapshotFetchOptions: ISnapshotOptions | undefined, enableRedeemFallback?: boolean, _fetchBinarySnapshotFormat?: boolean, _snapshotFormatFetchType?: SnapshotFormatSupportType, odspDocumentServiceFactory?: OdspDocumentServiceFactory): Promise<boolean>;

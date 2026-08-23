@@ -21,6 +21,8 @@ import {
 	getOdspPointInTimeDocumentServiceFactory,
 	type IPointInTimeDocumentServiceFactory,
 } from "@fluidframework/odsp-driver/internal";
+// eslint-disable-next-line import-x/no-internal-modules -- Explicitly opts this test host into point-in-time loading.
+import { createPointInTimeDocumentService } from "@fluidframework/odsp-driver/legacy/point-in-time";
 import type {
 	HostStoragePolicy,
 	OdspResourceTokenFetchOptions,
@@ -434,6 +436,7 @@ export class OdspTestDriver implements ITestDriver {
 		const documentServiceFactory = getOdspPointInTimeDocumentServiceFactory(
 			this.getStorageToken.bind(this),
 			this.getPushToken.bind(this),
+			createPointInTimeDocumentService,
 			this.cache,
 			this.config.options,
 		);

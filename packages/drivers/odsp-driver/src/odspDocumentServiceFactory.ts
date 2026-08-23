@@ -16,7 +16,9 @@ import type {
 // eslint-disable-next-line import-x/no-internal-modules
 import { LocalOdspDocumentServiceFactory } from "./localOdspDriver/localOdspDocumentServiceFactory.js";
 import {
+	type IOdspDocumentServiceFactoryOptions,
 	type IPointInTimeDocumentServiceFactory,
+	type OdspPointInTimeDocumentServiceImplementation,
 	OdspDocumentServiceFactoryCore,
 } from "./odspDocumentServiceFactoryCore.js";
 
@@ -32,8 +34,9 @@ export class OdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
 		getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined,
 		persistedCache?: IPersistedCache,
 		hostPolicy?: HostStoragePolicy,
+		options?: IOdspDocumentServiceFactoryOptions,
 	) {
-		super(getStorageToken, getWebsocketToken, persistedCache, hostPolicy);
+		super(getStorageToken, getWebsocketToken, persistedCache, hostPolicy, options);
 	}
 }
 
@@ -48,6 +51,7 @@ function isPointInTimeDocumentServiceFactory(
  *
  * @param getStorageToken - Fetches storage access tokens.
  * @param getWebsocketToken - Fetches websocket access tokens, or `undefined` when unavailable.
+ * @param pointInTimeDocumentServiceImplementation - Consumer-imported point-in-time implementation.
  * @param persistedCache - Persisted ODSP cache. When omitted, a local in-memory cache is used.
  * @param hostPolicy - Host storage policy. When omitted, the default driver policies are used.
  * @returns An ODSP document service factory with point-in-time loading capability.
@@ -57,6 +61,7 @@ function isPointInTimeDocumentServiceFactory(
 export function getOdspPointInTimeDocumentServiceFactory(
 	getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>,
 	getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined,
+	pointInTimeDocumentServiceImplementation: OdspPointInTimeDocumentServiceImplementation,
 	persistedCache?: IPersistedCache,
 	hostPolicy?: HostStoragePolicy,
 ): IPointInTimeDocumentServiceFactory {
@@ -65,6 +70,7 @@ export function getOdspPointInTimeDocumentServiceFactory(
 		getWebsocketToken,
 		persistedCache,
 		hostPolicy,
+		{ pointInTimeDocumentServiceImplementation },
 	);
 	if (!isPointInTimeDocumentServiceFactory(factory)) {
 		throw new Error(
