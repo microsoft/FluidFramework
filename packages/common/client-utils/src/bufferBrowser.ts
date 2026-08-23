@@ -90,10 +90,16 @@ export const bufferToString = (
  * new TypedArray(buffer, byteOffset, length), but passing TypedArray will result in fist path (and
  * ignoring byteOffice, length).
  *
- * @param obj - The object to determine if it is an ArrayBuffer.
+ * @param obj - The object to determine if it is `ArrayBufferLike`.
+ *
+ * @privateRemarks
+ * This function preserves runtime functionality as it has been in the past.
+ * Typing has been adjusted to reflect the only use that remains and (assuming
+ * is called as expected) will always return true as the input is already
+ * expected to be `ArrayBufferLike`.
  */
-function isArrayBuffer(obj: unknown): obj is ArrayBuffer {
-	const maybe = obj as (Partial<ArrayBuffer> & Partial<Uint8Array>) | undefined;
+function isArrayBufferLike(obj: ArrayBufferLike): obj is ArrayBufferLike {
+	const maybe = obj as (Partial<ArrayBufferLike> & Partial<Uint8Array>) | undefined;
 	return (
 		obj instanceof ArrayBuffer ||
 		(typeof maybe === "object" &&
@@ -139,13 +145,16 @@ export const IsoBuffer: IsoBufferConstructor = class IsoBuffer<
 		byteOffset?: number,
 		length?: number,
 	): IsoBufferInterface<TFArrayBuffer>;
-	public static from(
-		value: string | Uint8Array | ArrayBufferLike,
+	public static from<TFArrayBuffer extends ArrayBufferLike>(
+		value: string | Uint8Array | TFArrayBuffer,
 		encodingOrOffset?: IsoBufferEncoding | number,
 		length?: number,
-	): IsoBufferInterface<ArrayBuffer> {
+	): IsoBufferInterface<ArrayBufferLike> {
 		if (typeof value === "string") {
-			return IsoBuffer.fromString(value, encodingOrOffset as IsoBufferEncoding | undefined);
+			return IsoBuffer.fromString(
+				value,
+				encodingOrOffset as IsoBufferEncoding | undefined,
+			) satisfies IsoBufferInterface<ArrayBuffer>;
 			// Capture any typed arrays, including Uint8Array (and thus - IsoBuffer!)
 		} else if (value instanceof Uint8Array) {
 			// The version of the from function for the node buffer, which takes a buffer or typed array
@@ -153,12 +162,12 @@ export const IsoBuffer: IsoBufferConstructor = class IsoBuffer<
 			// ignored and not taken into account
 			const copy = new Uint8Array(value.byteLength);
 			copy.set(value);
-			return new IsoBuffer<ArrayBuffer>(copy.buffer);
-		} else if (isArrayBuffer(value)) {
+			return new IsoBuffer<ArrayBuffer>(copy.buffer) satisfies IsoBufferInterface<ArrayBuffer>;
+		} else if (isArrayBufferLike(value)) {
 			return IsoBuffer.fromArrayBuffer(value, encodingOrOffset as number | undefined, length);
 		} else {
 			throw new TypeError(
-				"Input value was neither a string, an Uint8Array, nor an ArrayBuffer.",
+				"Input value was neither a string, a Uint8Array, nor an ArrayBuffer.",
 			);
 		}
 	}

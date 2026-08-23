@@ -82,7 +82,6 @@ export declare class Buffer<TArrayBuffer extends ArrayBufferLike = ArrayBufferLi
 
 	public static isBuffer(obj: unknown): obj is Buffer;
 }
-Buffer satisfies IsoBufferConstructor;
 
 /**
  * The native Node.js Buffer implementation.
