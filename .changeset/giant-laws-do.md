@@ -25,6 +25,6 @@ const factory = new OdspDocumentServiceFactory(
 );
 ```
 
-`getOdspPointInTimeDocumentServiceFactory` now requires the point-in-time implementation as its
-third argument. Import `createPointInTimeDocumentService` from the dedicated entrypoint and pass it
-to the helper when eager loading is appropriate.
+`getOdspPointInTimeDocumentServiceFactory` has been removed. Construct
+`OdspDocumentServiceFactory` directly and supply the point-in-time implementation through its
+options as shown above.

@@ -176,7 +176,11 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Function_getOdspPointInTimeDocumentServiceFactory": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }

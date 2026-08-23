@@ -65,9 +65,6 @@ export function getHashedDocumentId(driveId: string, itemId: string): Promise<st
 // @beta @legacy
 export function getLocatorFromOdspUrl(url: URL, requireFluidSignature?: boolean): OdspFluidDataStoreLocator | undefined;
 
-// @beta @legacy
-export function getOdspPointInTimeDocumentServiceFactory(getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined, pointInTimeDocumentServiceImplementation: OdspPointInTimeDocumentServiceImplementation, persistedCache?: IPersistedCache, hostPolicy?: HostStoragePolicy): IPointInTimeDocumentServiceFactory;
-
 // @beta @legacy (undocumented)
 export interface ICacheAndTracker {
     // (undocumented)

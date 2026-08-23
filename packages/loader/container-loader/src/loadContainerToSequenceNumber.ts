@@ -24,9 +24,8 @@ import {
  * This is distinct from normal container loading. The supplied
  * {@link IContainerDriverServices.documentServiceFactory} must be able to materialize the document
  * at {@link ILoadContainerToSequenceNumberProps.loadToSequenceNumber} - i.e. it must implement the
- * point-in-time capability the loader detects. For ODSP, pass an
- * `IPointInTimeDocumentServiceFactory` created by `getOdspPointInTimeDocumentServiceFactory` with
- * the implementation imported from `@fluidframework/odsp-driver/legacy/point-in-time`.
+ * point-in-time capability the loader detects. For ODSP, construct `OdspDocumentServiceFactory`
+ * with the implementation imported from `@fluidframework/odsp-driver/legacy/point-in-time`.
  *
  * @legacy @beta
  */
@@ -59,10 +58,9 @@ export interface ILoadContainerToSequenceNumberProps
  * The supplied {@link IContainerDriverServices.documentServiceFactory} must support point-in-time
  * loading: it must be able to serve a snapshot at or before
  * {@link ILoadContainerToSequenceNumberProps.loadToSequenceNumber} and replay the document forward
- * through that sequence number. For ODSP, pass the result of
- * `getOdspPointInTimeDocumentServiceFactory` (from `@fluidframework/odsp-driver`) after injecting
- * `createPointInTimeDocumentService` from the dedicated point-in-time entrypoint. The loader
- * materializes the point-in-time view itself, so no wrapping or decoration is required.
+ * through that sequence number. For ODSP, inject `createPointInTimeDocumentService` from the
+ * dedicated point-in-time entrypoint into `OdspDocumentServiceFactory`. The loader materializes the
+ * point-in-time view itself, so no wrapping or decoration is required.
  *
  * @param props - The load options, point-in-time-capable driver services, target sequence number, and
  * optional cancellation signal.
@@ -83,7 +81,7 @@ export async function loadContainerToSequenceNumber(
 	const capableFactory = asPointInTimeCapableFactory(documentServiceFactory);
 	if (capableFactory === undefined) {
 		throw new UsageError(
-			"The provided documentServiceFactory does not support point-in-time loading. For ODSP, pass the result of getOdspPointInTimeDocumentServiceFactory.",
+			"The provided documentServiceFactory does not support point-in-time loading. For ODSP, construct OdspDocumentServiceFactory with a point-in-time implementation.",
 		);
 	}
 

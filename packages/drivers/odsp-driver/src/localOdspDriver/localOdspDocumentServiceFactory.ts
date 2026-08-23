@@ -25,8 +25,6 @@ import { LocalOdspDocumentService } from "./localOdspDocumentService.js";
 export class LocalOdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
 	private readonly logger: TelemetryLoggerExt = createOdspLogger();
 
-	public override readonly createPointInTimeDocumentService = undefined;
-
 	constructor(private readonly localSnapshot: Uint8Array | string) {
 		super(
 			(_options) => this.throwUnsupportedUsageError("Getting storage token"),

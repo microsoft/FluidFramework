@@ -17,13 +17,11 @@ import { EpochTracker, type ICacheAndTracker } from "../epochTracker.js";
 import { LocalPersistentCache } from "../odspCache.js";
 import {
 	createLocalOdspDocumentServiceFactory,
-	getOdspPointInTimeDocumentServiceFactory,
 	OdspDocumentServiceFactory,
 } from "../odspDocumentServiceFactory.js";
 import type { IOdspPointInTimeDocumentServiceImplementationProps } from "../odspDocumentServiceFactoryCore.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
 import {
-	createPointInTimeDocumentService,
 	createPointInTimeDocumentServiceCore,
 	// eslint-disable-next-line import-x/no-internal-modules -- tests target the feature implementation directly
 } from "../pointInTimeDriver/createPointInTimeDocumentService.js";
@@ -91,15 +89,6 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 		assert.equal(capturedProps?.targetSequenceNumber, 42);
 		assert.equal(capturedProps?.getStorageToken, getStorageToken);
 		assert.equal(typeof capturedProps?.createDocumentService, "function");
-	});
-
-	it("the convenience helper requires and installs the feature implementation", () => {
-		const factory = getOdspPointInTimeDocumentServiceFactory(
-			getStorageToken,
-			undefined,
-			createPointInTimeDocumentService,
-		);
-		assert.equal(typeof factory.createPointInTimeDocumentService, "function");
 	});
 
 	it("does not expose point-in-time loading on the local factory", () => {
