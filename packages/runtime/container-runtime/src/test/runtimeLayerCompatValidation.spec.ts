@@ -36,6 +36,7 @@ import { ContainerRuntime } from "../containerRuntime.js";
 import { FluidDataStoreRegistry } from "../dataStoreRegistry.js";
 import { pkgVersion } from "../packageVersion.js";
 import {
+	binarySnapshotBlobSerialization,
 	loaderSupportRequirementsForRuntime,
 	validateLoaderCompatibility,
 	validateDatastoreCompatibility,
@@ -354,6 +355,43 @@ describe("Runtime Layer compatibility", () => {
 				});
 			});
 		}
+	});
+
+	describe("Binary snapshot serialization compatibility", () => {
+		it("requires the loader capability only when requested", () => {
+			const logger = new MockLogger();
+			const mc = mixinMonitoringContext(
+				logger.toTelemetryLogger(),
+				createTestConfigProvider(),
+			);
+			const disposeFn = Sinon.fake();
+			const loaderCompatDetails: ILayerCompatDetails = {
+				pkgVersion,
+				generation: loaderSupportRequirementsForRuntime.minSupportedGeneration,
+				supportedFeatures: new Set(),
+			};
+
+			assert.throws(
+				() =>
+					validateLoaderCompatibility(loaderCompatDetails, disposeFn, mc, [
+						binarySnapshotBlobSerialization,
+					]),
+				(error: Error) => isLayerIncompatibilityError(error),
+			);
+			assert(disposeFn.calledOnce);
+
+			assert.doesNotThrow(() =>
+				validateLoaderCompatibility(
+					{
+						...loaderCompatDetails,
+						supportedFeatures: new Set([binarySnapshotBlobSerialization]),
+					},
+					Sinon.fake(),
+					mc,
+					[binarySnapshotBlobSerialization],
+				),
+			);
+		});
 	});
 
 	describe("DisableStrictLoaderLayerCompatibilityCheck config for missing loader compat details", () => {

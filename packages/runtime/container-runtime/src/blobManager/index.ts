@@ -15,6 +15,8 @@ export {
 } from "./blobManager.js";
 export {
 	blobsTreeName,
+	embeddedBlobsGroupId,
+	embeddedBlobsTreeName,
 	type IBlobManagerLoadInfo,
 	loadBlobManagerLoadInfo,
 	redirectTableBlobName,

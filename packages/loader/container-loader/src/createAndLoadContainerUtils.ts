@@ -46,12 +46,9 @@ import {
 	captureReferencedAttachmentBlobs,
 	extractBlobAttachReferences,
 	inlineAttachmentBlobsByReference,
-	parseGcSnapshotData,
 	readReferencedSnapshotBlobs,
 	snapshotHasLoadingGroups,
-	unreferencedAttachmentBlobLocalIds,
 	type IBlobAttachReference,
-	type IGcSnapshotData,
 } from "./captureReferencedContents.js";
 import { CatchUpMonitor } from "./catchUpMonitor.js";
 import { DebugLogger } from "./debugLogger.js";
@@ -60,6 +57,7 @@ import { createFrozenDocumentServiceFactory } from "./frozenServices.js";
 import { Loader } from "./loader.js";
 import { pkgVersion } from "./packageVersion.js";
 import type { ProtocolHandlerBuilder } from "./protocol.js";
+import type { IBase64BlobContents } from "./containerStorageAdapter.js";
 import type { IPendingContainerState } from "./serializedStateManager.js";
 import type {
 	LoadSummarizerSummaryResult,
@@ -69,6 +67,7 @@ import type {
 import {
 	getAttachedContainerStateFromSerializedContainer,
 	getDocumentAttributes,
+	serializeSnapshotBlobContents,
 	tryParseCompatibleResolvedUrl,
 } from "./utils.js";
 
@@ -535,10 +534,10 @@ export interface ICaptureFullContainerStateProps {
  * format produced by a live container's pending-state serialization, and can
  * be handed to {@link loadExistingContainer} as `pendingLocalState`.
  *
- * By default, the output is a self-contained view of the container's referenced
- * graph: the latest snapshot, inlined contents of every blob reachable through
- * referenced subtrees, inlined contents of every referenced attachment blob
- * keyed by storage id, and all ops with sequence numbers after the base
+ * By default, the output is a self-contained view of the container's durable
+ * snapshot state: the latest snapshot, every snapshot-resident structural blob,
+ * every attachment blob present in the snapshot redirect table, and all ops
+ * with sequence numbers after the base
  * snapshot's sequence number through the point observed when the delta stream
  * connects. The same DeltaManager catch-up path used by container loading
  * combines delta-storage and delta-stream ops, so recently sequenced ops do
@@ -549,24 +548,29 @@ export interface ICaptureFullContainerStateProps {
  * omitted. Reference-only state requires live storage during load and cannot be
  * used with the fully offline form of {@link loadFrozenContainerFromPendingState}.
  *
- * Reachability respects GC. Snapshot subtrees flagged `unreferenced: true`
- * are skipped (their contents are not inlined). Attachment blobs that GC has
- * marked unreferenced, tombstoned, or deleted are skipped. When the snapshot
- * has no GC tree (GC disabled or pre-GC document), no filtering is applied.
+ * Every snapshot-resident payload is retained, including
+ * unreferenced-but-unswept content. Saved ops after the snapshot may revive
+ * that content, so filtering from snapshot-time GC state would make the
+ * captured artifact incomplete.
  *
  * Blob reads on load hit the `ContainerStorageAdapter` cache populated from
- * the captured `snapshotBlobs` map, so a frozen loader can serve the full
- * referenced graph without a live storage service.
+ * the captured UTF-8 `snapshotBlobs`, base64 `snapshotBlobContents`, and
+ * `attachmentBlobContents` maps. Structural snapshot bytes use the first two
+ * fields; attachment payloads use the third. All decode back to binary before
+ * the runtime reads them.
  *
  * `pendingRuntimeState` is `undefined` — no runtime is instantiated — so the
  * output cannot carry DDS-level in-flight changes. It is intended for state
  * relay, inspection, and durable-state snapshot use cases.
  *
- * Containers that declare loading groups are not yet supported: the function
- * throws `UsageError` if any referenced subtree carries a `groupId`. Group
- * snapshots would need a separate prefetch + serialization path; until there
- * is a known consumer and end-to-end coverage, the capture refuses rather
- * than silently producing pending state that omits group data.
+ * General loading groups are not yet supported: the function throws
+ * `UsageError` if the root or any subtree outside the reserved root `.blobs`
+ * tree carries a `groupId`, including unreferenced-but-unswept subtrees that
+ * saved ops may revive. The `.blobs` child group is supported because its
+ * structural blob IDs are available in the base snapshot and can be read
+ * directly. Other group snapshots would need a separate prefetch +
+ * serialization path; until there is a known consumer and end-to-end coverage,
+ * the capture refuses rather than silently producing incomplete pending state.
  *
  * @privateRemarks
  * Note: if a new snapshot lands between the snapshot fetch and delta catch-up,
@@ -677,20 +681,15 @@ export async function captureFullContainerState({
 			);
 		}
 		const attributes = await getDocumentAttributes(storage, baseSnapshot);
-		let gcData: IGcSnapshotData | undefined;
-		let snapshotBlobs = {};
-		let attachmentBlobContents = {};
-		// Structural snapshot blobs (JSON/text the runtime authored) are
-		// UTF-8-encoded; attachment blobs may carry arbitrary binary bytes
-		// and are base64-encoded. Keep them on separate fields of the
-		// pending state so the load side can apply the matching decoder
-		// without ambiguity. See IPendingContainerState.attachmentBlobContents.
+		let snapshotBlobContents = new Map<string, ArrayBufferLike>();
+		let attachmentBlobContents: IBase64BlobContents = {};
+		// Structural bytes stay raw until the serializer partitions UTF-8 and
+		// binary content. Attachment payloads use a separate base64 map.
 		if (blobCaptureMode === "inline") {
-			gcData = await parseGcSnapshotData(baseSnapshot, storage);
-			[snapshotBlobs, attachmentBlobContents] = await Promise.all([
-				readReferencedSnapshotBlobs(snapshot, storage), // utf8 encoded
-				captureReferencedAttachmentBlobs(baseSnapshot, storage, gcData), // base64 encoded
-			]);
+			// Each capture helper limits itself to 32 reads. Run them serially so
+			// their independent pools cannot issue 64 concurrent storage requests.
+			snapshotBlobContents = await readReferencedSnapshotBlobs(snapshot, storage);
+			attachmentBlobContents = await captureReferencedAttachmentBlobs(baseSnapshot, storage);
 		}
 
 		const savedOps: ISequencedDocumentMessage[] = [];
@@ -723,16 +722,16 @@ export async function captureFullContainerState({
 			const added = await inlineAttachmentBlobsByReference(
 				postSnapshotBlobReferences,
 				storage,
-				unreferencedAttachmentBlobLocalIds(gcData),
 				attachmentBlobContents,
 			);
 			Object.assign(attachmentBlobContents, added);
 		}
 
+		const serializedSnapshotBlobContents = serializeSnapshotBlobContents(snapshotBlobContents);
 		const pendingState: IPendingContainerState = {
 			attached: true,
 			baseSnapshot,
-			snapshotBlobs,
+			...serializedSnapshotBlobContents,
 			blobContentsMode: blobCaptureMode === "reference" ? "reference" : undefined,
 			attachmentBlobContents:
 				Object.keys(attachmentBlobContents).length === 0 ? undefined : attachmentBlobContents,

@@ -14,6 +14,7 @@ import {
 } from "@fluid-internal/client-utils";
 import {
 	AttachState,
+	type ISnapshotTreeWithBlobContents,
 	type IContainerStorageService,
 } from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
@@ -23,8 +24,10 @@ import type {
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces/internal";
 import { SummaryType } from "@fluidframework/driver-definitions/internal";
-import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
-import type { ISequencedMessageEnvelope } from "@fluidframework/runtime-definitions/internal";
+import type {
+	ISequencedMessageEnvelope,
+	ISummaryTreeWithStats,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	isFluidHandleInternalPayloadPending,
 	isLocalFluidHandle,
@@ -36,11 +39,12 @@ import { v4 as uuid } from "uuid";
 import {
 	BlobManager,
 	blobsTreeName,
+	embeddedBlobsGroupId,
+	embeddedBlobsTreeName,
 	type IBlobManagerLoadInfo,
 	type IBlobManagerRuntime,
 	type ICreateBlobResponseWithTTL,
 	type IPendingBlobs,
-	loadBlobManagerLoadInfo,
 	redirectTableBlobName,
 } from "../../blobManager/index.js";
 import type { IBlobMetadata } from "../../metadata.js";
@@ -520,115 +524,59 @@ export const simulateAttach = async (
 
 export const getSummaryContentsWithFormatValidation = (
 	blobManager: BlobManager,
+): IBlobManagerLoadInfo =>
+	getSummaryContentsFromSummaryWithFormatValidation(blobManager.summarize());
+
+export const getSummaryContentsFromSummaryWithFormatValidation = (
+	summary: ISummaryTreeWithStats,
 ): IBlobManagerLoadInfo => {
-	const summary = blobManager.summarize();
 	let ids: string[] | undefined;
 	let redirectTable: [string, string][] | undefined;
+	let embeddedDetachedBlobs: ISnapshotTreeWithBlobContents | undefined;
 	for (const [key, summaryObject] of Object.entries(summary.summary.tree)) {
 		if (summaryObject.type === SummaryType.Attachment) {
 			ids ??= [];
 			ids.push(summaryObject.id);
+		} else if (summaryObject.type === SummaryType.Tree) {
+			assert.strictEqual(key, embeddedBlobsTreeName);
+			assert.strictEqual(summaryObject.groupId, embeddedBlobsGroupId);
+			const blobs: Record<string, string> = {};
+			const blobsContents: Record<string, ArrayBufferLike> = {};
+			for (const [localId, content] of Object.entries(summaryObject.tree)) {
+				const blobId = localId;
+				blobs[localId] = blobId;
+				if (content.type === SummaryType.Blob) {
+					assert(content.content instanceof Uint8Array);
+					blobsContents[blobId] = new Uint8Array(content.content).buffer;
+				} else {
+					assert(content.type === SummaryType.Handle);
+					assert.strictEqual(content.handleType, SummaryType.Blob);
+					assert.strictEqual(
+						content.handle,
+						`/${blobsTreeName}/${embeddedBlobsTreeName}/${localId}`,
+					);
+				}
+			}
+			embeddedDetachedBlobs = {
+				blobs,
+				trees: {},
+				groupId: summaryObject.groupId,
+				...(Object.keys(blobsContents).length === 0 ? {} : { blobsContents }),
+			};
 		} else {
 			assert.strictEqual(key, redirectTableBlobName);
 			assert(summaryObject.type === SummaryType.Blob);
 			assert(typeof summaryObject.content === "string");
+			const summarizedRedirectTable = JSON.parse(summaryObject.content) as [string, string][];
 			redirectTable = [
-				...new Map<string, string>(
-					JSON.parse(summaryObject.content) as [string, string][],
-				).entries(),
+				...new Map<string, string>([
+					...(redirectTable ?? []),
+					...summarizedRedirectTable,
+				]).entries(),
 			];
 		}
 	}
-	return { ids, redirectTable };
-};
-
-/**
- * Simulates a full reload: converts the given BlobManager's current summary into the same shape a
- * real snapshot/storage would present it (i.e. an ISnapshotTree, with any raw blob content addressable via
- * readBlob), feeds that through the real loadBlobManagerLoadInfo(), and constructs a brand new BlobManager
- * from the resulting load info. This is used to verify that a freshly-loaded client (e.g. after a reload,
- * or a summarizer) continues to see the same blobs as the original client and continues to include them in
- * its own future summaries.
- */
-export const reloadBlobManager = async (
-	original: TestMaterial,
-	overrides?: TestMaterialOverrides,
-): Promise<TestMaterial> => {
-	const summary = original.blobManager.summarize();
-	const snapshotBlobs = new Map<string, ArrayBufferLike>();
-	const syntheticIdPrefix = `synthetic-${uuid()}-`;
-	let nextSyntheticId = 0;
-	const toSnapshotTree = (summaryTree: {
-		type: SummaryType.Tree;
-		tree: Record<string, unknown>;
-	}): ISnapshotTree => {
-		const trees: Record<string, ISnapshotTree> = {};
-		const blobs: Record<string, string> = {};
-		for (const [key, value] of Object.entries(summaryTree.tree)) {
-			const summaryObject = value as {
-				type: SummaryType;
-				content?: unknown;
-				id?: string;
-				tree?: unknown;
-			};
-			if (summaryObject.type === SummaryType.Tree) {
-				trees[key] = toSnapshotTree(
-					summaryObject as { type: SummaryType.Tree; tree: Record<string, unknown> },
-				);
-			} else if (summaryObject.type === SummaryType.Blob) {
-				const syntheticId = `${syntheticIdPrefix}${nextSyntheticId++}`;
-				const content = summaryObject.content;
-				const blobBuffer =
-					typeof content === "string" ? textToBlob(content) : (content as ArrayBufferLike);
-				snapshotBlobs.set(syntheticId, blobBuffer);
-				blobs[key] = syntheticId;
-			} else {
-				assert(summaryObject.type === SummaryType.Attachment);
-				assert(typeof summaryObject.id === "string");
-				blobs[key] = summaryObject.id;
-			}
-		}
-		return { trees, blobs };
-	};
-
-	const blobsSnapshotTree = toSnapshotTree(
-		summary.summary as { type: SummaryType.Tree; tree: Record<string, unknown> },
-	);
-
-	const readBlob = async (id: string): Promise<ArrayBufferLike> => {
-		const synthetic = snapshotBlobs.get(id);
-		if (synthetic !== undefined) {
-			return synthetic;
-		}
-		return original.mockBlobStorage.readBlob(id);
-	};
-
-	// Register the synthetic ids directly into the shared mock storage too, so that the blob
-	// remains readable via the ordinary storage.readBlob() path from here on - this mirrors how, in
-	// reality, the service assigns a durable, retrievable storage id to the embedded blob's content
-	// once the attach summary is persisted.
-	const currentStorage =
-		original.mockRuntime.attachState === AttachState.Attached
-			? original.mockBlobStorage.attachedStorage
-			: original.mockBlobStorage.detachedStorage;
-	for (const [syntheticId, blob] of snapshotBlobs) {
-		currentStorage.blobs.set(syntheticId, blob);
-	}
-
-	const readBlobStorage: Pick<IContainerStorageService, "readBlob"> = { readBlob };
-	const blobManagerLoadInfo = await loadBlobManagerLoadInfo({
-		baseSnapshot: { id: "root", blobs: {}, trees: { [blobsTreeName]: blobsSnapshotTree } },
-		storage: readBlobStorage as IContainerStorageService,
-		attachState: original.mockRuntime.attachState,
-	});
-
-	return createTestMaterial({
-		attached: original.mockRuntime.attachState === AttachState.Attached,
-		mockBlobStorage: original.mockBlobStorage,
-		blobManagerLoadInfo,
-		enableSingleRoundTripFileCreate: original.enableSingleRoundTripFileCreate,
-		...overrides,
-	});
+	return { ids, redirectTable, embeddedDetachedBlobs };
 };
 
 export const textToBlob = (text: string): ArrayBufferLike => {

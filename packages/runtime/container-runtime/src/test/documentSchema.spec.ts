@@ -255,6 +255,66 @@ describe("Runtime", () => {
 		]);
 	});
 
+	it("does not propose the writer feature for existing documents and preserves persisted use", () => {
+		const existingSchema = {
+			...validConfig,
+			runtime: { ...validConfig.runtime, explicitSchemaControl: true },
+		} as const satisfies IDocumentSchema;
+		const controller = new DocumentsSchemaController(
+			true,
+			0,
+			existingSchema,
+			features,
+			() => {},
+			{ minVersionForCollab: defaultMinVersionForCollab },
+			logger,
+			false,
+		);
+		assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
+
+		const persistedFeatureController = new DocumentsSchemaController(
+			true,
+			0,
+			{
+				...existingSchema,
+				runtime: {
+					...existingSchema.runtime,
+					enableSingleRoundTripFileCreate: true,
+				},
+			},
+			features,
+			() => {},
+			{ minVersionForCollab: defaultMinVersionForCollab },
+			logger,
+			false,
+		);
+		assert.equal(persistedFeatureController.maybeGenerateSchemaMessage(), undefined);
+		assert.equal(
+			persistedFeatureController.sessionSchema.runtime.enableSingleRoundTripFileCreate,
+			undefined,
+		);
+
+		const summarizedSchema = persistedFeatureController.summarizeDocumentSchema(200);
+		assert(summarizedSchema !== undefined);
+		assert.equal(summarizedSchema.runtime.enableSingleRoundTripFileCreate, true);
+
+		const reloadedController = new DocumentsSchemaController(
+			true,
+			200,
+			JSON.parse(JSON.stringify(summarizedSchema)) as IDocumentSchema,
+			features,
+			() => {},
+			{ minVersionForCollab: defaultMinVersionForCollab },
+			logger,
+			false,
+		);
+		assert.equal(reloadedController.maybeGenerateSchemaMessage(), undefined);
+		assert.equal(
+			reloadedController.summarizeDocumentSchema(300)?.runtime.enableSingleRoundTripFileCreate,
+			true,
+		);
+	});
+
 	it("wrong values for known properties", () => {
 		testWrongConfig({
 			...validConfig,

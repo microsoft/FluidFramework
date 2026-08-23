@@ -22,6 +22,15 @@ import {
 import { pkgVersion } from "./packageVersion.js";
 
 /**
+ * Indicates that the Loader preserves arbitrary binary structural snapshot
+ * blobs when serializing detached and pending container state.
+ *
+ * Keep this value aligned with the Loader layer's advertised capability in
+ * `loaderLayerCompatState.ts`.
+ */
+export const binarySnapshotBlobSerialization = "binarySnapshotBlobSerialization";
+
+/**
  * The config key to disable strict loader layer compatibility check.
  */
 export const disableStrictLoaderLayerCompatibilityCheckKey =
@@ -117,6 +126,7 @@ export function validateLoaderCompatibility(
 	maybeLoaderCompatDetailsForRuntime: ILayerCompatDetails | undefined,
 	disposeFn: (error?: ICriticalContainerError) => void,
 	mc: MonitoringContext,
+	requiredFeatures: readonly string[] = loaderSupportRequirementsForRuntime.requiredFeatures,
 ): void {
 	// By default, use strictCompatibilityCheck here - If the Loader doesn't provide compatibility details,
 	// assume it's a very old version and should be considered incompatible,
@@ -130,7 +140,7 @@ export function validateLoaderCompatibility(
 		"runtime",
 		"loader",
 		runtimeCompatDetailsForLoader,
-		loaderSupportRequirementsForRuntime,
+		{ ...loaderSupportRequirementsForRuntime, requiredFeatures },
 		maybeLoaderCompatDetailsForRuntime,
 		disposeFn,
 		mc,

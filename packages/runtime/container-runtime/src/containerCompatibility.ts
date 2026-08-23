@@ -163,8 +163,8 @@ const runtimeOptionsAffectingDocSchemaConfigMap: ConfigMap<RuntimeOptionsAffecti
 			"1.0.0": undefined,
 		},
 		enableSingleRoundTripFileCreate: {
-			// This feature is new and experimental; disabled by default. It changes the on-disk shape of the first
-			// summary produced after attach (adds a `.embeddedDetachedBlobs` subtree), so it must never be enabled
+			// This feature is new and experimental; disabled by default. It adds a permanent
+			// `.embeddedDetachedBlobs` summary subtree, so it must never be enabled
 			// for a minVersionForCollab that predates this feature's introduction.
 			"1.0.0": undefined,
 		},
@@ -217,6 +217,7 @@ const runtimeOptionsAffectingDocSchemaConfigValidationMap: ConfigValidationMap<R
 		]),
 		enableSingleRoundTripFileCreate: configValueToMinVersionForCollab([
 			[undefined, "1.0.0"],
+			[true, "3.0.0"],
 		]),
 	};
 

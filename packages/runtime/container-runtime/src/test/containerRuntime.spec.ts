@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { stringToBuffer } from "@fluid-internal/client-utils";
+import { generation, stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	AttachState,
 	type ICriticalContainerError,
@@ -102,6 +102,7 @@ import type {
 } from "../opLifecycle/index.js";
 import { pkgVersion } from "../packageVersion.js";
 import type { IPendingMessage, PendingStateManager } from "../pendingStateManager.js";
+import { binarySnapshotBlobSerialization } from "../runtimeLayerCompatState.js";
 import {
 	type ISummaryCancellationToken,
 	neverCancelledSummaryToken,
@@ -316,6 +317,13 @@ describe("Runtime", () => {
 			storage: mockStorage as IContainerStorageService,
 			baseSnapshot,
 		} satisfies Partial<IContainerContext>;
+		Object.assign(mockContext, {
+			ILayerCompatDetails: {
+				pkgVersion: "mock-loader",
+				generation,
+				supportedFeatures: new Set([binarySnapshotBlobSerialization]),
+			},
+		});
 
 		// Update the delta manager's last message which is used for validation during summarization.
 		mockContext.deltaManager.lastMessage = {
@@ -4689,6 +4697,134 @@ describe("Runtime", () => {
 					});
 				});
 			}
+			it("rejects enableSingleRoundTripFileCreate below version 3.0.0", async () => {
+				await assert.rejects(
+					ContainerRuntime.loadRuntime2({
+						context: getMockContext({}) as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: {
+							explicitSchemaControl: true,
+							enableSingleRoundTripFileCreate: true,
+						},
+						provideEntryPoint: mockProvideEntryPoint,
+						minVersionForCollab: "2.116.0",
+					}),
+				);
+			});
+
+			it("rejects enableSingleRoundTripFileCreate with the default-version sentinel", async () => {
+				await assert.rejects(
+					ContainerRuntime.loadRuntime2({
+						context: getMockContext({
+							attachState: AttachState.Detached,
+						}) as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: {
+							explicitSchemaControl: true,
+							enableSingleRoundTripFileCreate: true,
+						},
+						provideEntryPoint: mockProvideEntryPoint,
+						oldestSupportedClient: "2.0.0-defaults",
+					}),
+					/enableSingleRoundTripFileCreate requires oldestSupportedClient/,
+				);
+			});
+
+			it("allows enableSingleRoundTripFileCreate at version 3.0.0", async () => {
+				await assert.doesNotReject(
+					ContainerRuntime.loadRuntime2({
+						context: getMockContext({}) as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: {
+							explicitSchemaControl: true,
+							enableSingleRoundTripFileCreate: true,
+						},
+						provideEntryPoint: mockProvideEntryPoint,
+						minVersionForCollab: "3.0.0",
+					}),
+				);
+			});
+
+			it("requires an explicit oldestSupportedClient for enableSingleRoundTripFileCreate", async () => {
+				await assert.rejects(
+					ContainerRuntime.loadRuntime2({
+						context: getMockContext({}) as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: {
+							explicitSchemaControl: true,
+							enableSingleRoundTripFileCreate: true,
+						},
+						provideEntryPoint: mockProvideEntryPoint,
+					}),
+					/enableSingleRoundTripFileCreate requires oldestSupportedClient/,
+				);
+			});
+
+			it("requests enableSingleRoundTripFileCreate only for new documents", async () => {
+				const runtimeOptions = {
+					explicitSchemaControl: true,
+					enableSingleRoundTripFileCreate: true,
+				} as const;
+				const existingRuntime = (
+					await ContainerRuntime.loadRuntime2({
+						context: getMockContext({}) as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: true,
+						runtimeOptions,
+						provideEntryPoint: mockProvideEntryPoint,
+						minVersionForCollab: "3.0.0",
+					})
+				).runtime;
+				const existingDesiredSchema = (
+					existingRuntime as unknown as {
+						documentsSchemaController: {
+							desiredSchema: {
+								runtime: { enableSingleRoundTripFileCreate?: true };
+							};
+						};
+					}
+				).documentsSchemaController.desiredSchema;
+				assert.equal(existingDesiredSchema.runtime.enableSingleRoundTripFileCreate, undefined);
+				existingRuntime.dispose();
+
+				const newRuntime = (
+					await ContainerRuntime.loadRuntime2({
+						context: getMockContext({
+							attachState: AttachState.Detached,
+						}) as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions,
+						provideEntryPoint: mockProvideEntryPoint,
+						minVersionForCollab: "3.0.0",
+					})
+				).runtime;
+				assert.equal(newRuntime.sessionSchema.enableSingleRoundTripFileCreate, true);
+				newRuntime.dispose();
+
+				const rehydratedDetachedRuntime = (
+					await ContainerRuntime.loadRuntime2({
+						context: getMockContext({
+							attachState: AttachState.Detached,
+						}) as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: true,
+						runtimeOptions,
+						provideEntryPoint: mockProvideEntryPoint,
+						minVersionForCollab: "3.0.0",
+					})
+				).runtime;
+				assert.equal(
+					rehydratedDetachedRuntime.sessionSchema.enableSingleRoundTripFileCreate,
+					true,
+				);
+				rehydratedDetachedRuntime.dispose();
+			});
+
 			it("does not throw if minVersionForCollab is not set and the default is incompatible with runtimeOptions", async () => {
 				const logger = new MockLogger();
 				await assert.doesNotReject(async () => {

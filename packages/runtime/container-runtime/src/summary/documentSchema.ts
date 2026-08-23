@@ -153,9 +153,8 @@ export interface IDocumentSchemaFeatures {
 	/**
 	 * Tells if this document uses `enableSingleRoundTripFileCreate` (blobs uploaded while detached are embedded
 	 * directly in the attach summary, instead of being uploaded individually to storage ahead of time).
-	 * This changes the on-disk shape of the first summary produced after attach (adds a `.embeddedDetachedBlobs`
-	 * subtree under `.blobs`), so old runtimes that do not understand this subtree must fail predictably rather
-	 * than silently dropping the blobs it contains from their own redirect table / summaries.
+	 * This adds a permanent `.embeddedDetachedBlobs` subtree under `.blobs`, so old runtimes that do not
+	 * understand this subtree must fail predictably rather than silently dropping it from later summaries.
 	 */
 	enableSingleRoundTripFileCreate: true | undefined;
 

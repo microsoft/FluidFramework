@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { bufferToString } from "@fluid-internal/client-utils";
 import type {
 	ISnapshotTreeWithBlobContents,
 	IContainerStorageService,
@@ -36,12 +35,10 @@ import type {
 import { convertSnapshotInfoToSnapshot } from "./utils.js";
 
 /**
- * Stringified blobs from a summary/snapshot tree, keyed by blob id.
- * Values are **UTF-8-encoded** — this is the right encoding for JSON or
- * other text the runtime authors and consumes through this map. For
- * arbitrary binary payloads (e.g. attachment blob contents), use
- * {@link IBase64BlobContents} instead; a UTF-8 round-trip silently
- * corrupts non-UTF-8 byte sequences with replacement characters.
+ * Legacy stringified blobs from a summary/snapshot tree, keyed by blob id.
+ * Values are interpreted as UTF-8 when loading old pending or detached
+ * container state. New serialization paths use {@link IBase64BlobContents}
+ * so arbitrary snapshot bytes round-trip losslessly.
  * @internal
  */
 export interface ISerializableBlobContents {
@@ -49,13 +46,13 @@ export interface ISerializableBlobContents {
 }
 
 /**
- * Stringified blobs inlined in a summary/snapshot tree, keyed by blob id.
- * Values are **base64-encoded** raw bytes. Used for attachment-blob
- * payloads, which may carry arbitrary binary data (images, encrypted
- * blobs, etc.). Mirrors the encoding used by the runtime's own
- * pending-blob serializer in `BlobManager`. Structurally identical to
- * {@link ISerializableBlobContents}; the two types exist to keep the
- * encoding contract visible at every call site.
+ * Raw blob bytes encoded as base64 for transport inside JSON state artifacts,
+ * keyed by blob id. This type is used by both structural snapshot capture and
+ * attachment capture; callers keep those maps separate because they represent
+ * distinct capture responsibilities.
+ *
+ * Structurally identical to {@link ISerializableBlobContents}; the two types
+ * exist to keep the decoding contract visible at every call site.
  * @internal
  */
 export interface IBase64BlobContents {
@@ -329,18 +326,24 @@ const blobsTreeName = ".blobs";
 const redirectTableBlobName = ".redirectTable";
 
 /**
- * Get blob contents of a snapshot tree from storage (or, ideally, cache)
+ * Gets raw structural snapshot blob contents from storage (or, ideally,
+ * cache). Direct attachment entries in the root `.blobs` tree are excluded;
+ * structural child trees are included.
  */
 export async function getBlobContentsFromTree(
 	snapshot: ISnapshot | ISnapshotTree,
 	storage: Pick<IDocumentStorageService, "readBlob">,
-): Promise<ISerializableBlobContents> {
-	const blobs = {};
+): Promise<Map<string, ArrayBufferLike>> {
+	const blobs = new Map<string, ArrayBufferLike>();
 	if (isInstanceOfISnapshot(snapshot)) {
-		const blobContents = snapshot.blobContents;
-		for (const [id, content] of blobContents.entries()) {
-			// ArrayBufferLike will not survive JSON.stringify()
-			blobs[id] = bufferToString(content, "utf8");
+		for (const [id, content] of snapshot.blobContents) {
+			blobs.set(id, content);
+		}
+		const blobManagerTree = snapshot.snapshotTree.trees[blobsTreeName];
+		if (blobManagerTree !== undefined) {
+			await getBlobManagerTreeFromTree(blobManagerTree, blobs, {
+				readBlob: async (id) => snapshot.blobContents.get(id) ?? storage.readBlob(id),
+			});
 		}
 	} else {
 		await getBlobContentsFromTreeCore(snapshot, blobs, storage);
@@ -350,7 +353,7 @@ export async function getBlobContentsFromTree(
 
 async function getBlobContentsFromTreeCore(
 	tree: ISnapshotTree,
-	blobs: ISerializableBlobContents,
+	blobs: Map<string, ArrayBufferLike>,
 	storage: Pick<IDocumentStorageService, "readBlob">,
 	root = true,
 ): Promise<unknown[]> {
@@ -364,39 +367,44 @@ async function getBlobContentsFromTreeCore(
 	}
 	for (const id of Object.values(tree.blobs)) {
 		const blob = await storage.readBlob(id);
-		// ArrayBufferLike will not survive JSON.stringify()
-		blobs[id] = bufferToString(blob, "utf8");
+		blobs.set(id, blob);
 	}
 	return Promise.all(treePs);
 }
 
-// save redirect table from .blobs tree but nothing else
+// Save the redirect table and structural child trees from .blobs, but skip direct attachment entries.
 async function getBlobManagerTreeFromTree(
 	tree: ISnapshotTree,
-	blobs: ISerializableBlobContents,
+	blobs: Map<string, ArrayBufferLike>,
 	storage: Pick<IDocumentStorageService, "readBlob">,
 ): Promise<void> {
 	const id = tree.blobs[redirectTableBlobName];
-	assert(id !== undefined, 0x9ce /* id is undefined in getBlobManagerTreeFromTree */);
-	const blob = await storage.readBlob(id);
-	// ArrayBufferLike will not survive JSON.stringify()
-	blobs[id] = bufferToString(blob, "utf8");
+	if (id !== undefined) {
+		const blob = await storage.readBlob(id);
+		blobs.set(id, blob);
+	}
+	await Promise.all(
+		Object.values(tree.trees).map(async (subTree) =>
+			getBlobContentsFromTreeCore(subTree, blobs, storage, false),
+		),
+	);
 }
 
 /**
- * Extract blob contents from a snapshot tree with blob contents
+ * Extracts raw structural blob contents from a snapshot tree with in-memory
+ * blob contents.
  */
 export function getBlobContentsFromTreeWithBlobContents(
 	snapshot: ISnapshotTreeWithBlobContents,
-): ISerializableBlobContents {
-	const blobs = {};
+): Map<string, ArrayBufferLike> {
+	const blobs = new Map<string, ArrayBufferLike>();
 	getBlobContentsFromTreeWithBlobContentsCore(snapshot, blobs);
 	return blobs;
 }
 
 function getBlobContentsFromTreeWithBlobContentsCore(
 	tree: ISnapshotTreeWithBlobContents,
-	blobs: ISerializableBlobContents,
+	blobs: Map<string, ArrayBufferLike>,
 	root = true,
 ): void {
 	for (const [key, subTree] of Object.entries(tree.trees)) {
@@ -409,23 +417,22 @@ function getBlobContentsFromTreeWithBlobContentsCore(
 	for (const id of Object.values(tree.blobs)) {
 		const blob = tree.blobsContents?.[id];
 		assert(blob !== undefined, 0x2ec /* "Blob must be present in blobsContents" */);
-		// ArrayBufferLike will not survive JSON.stringify()
-		blobs[id] = bufferToString(blob, "utf8");
+		blobs.set(id, blob);
 	}
 }
 
-// save redirect table from .blobs tree but nothing else
+// Save the redirect table and structural child trees from .blobs, but skip direct attachment entries.
 function getBlobManagerTreeFromTreeWithBlobContents(
 	tree: ISnapshotTreeWithBlobContents,
-	blobs: ISerializableBlobContents,
+	blobs: Map<string, ArrayBufferLike>,
 ): void {
 	const id = tree.blobs[redirectTableBlobName];
-	assert(
-		id !== undefined,
-		0x9cf /* id is undefined in getBlobManagerTreeFromTreeWithBlobContents */,
-	);
-	const blob = tree.blobsContents?.[id];
-	assert(blob !== undefined, 0x70f /* Blob must be present in blobsContents */);
-	// ArrayBufferLike will not survive JSON.stringify()
-	blobs[id] = bufferToString(blob, "utf8");
+	if (id !== undefined) {
+		const blob = tree.blobsContents?.[id];
+		assert(blob !== undefined, 0x70f /* Blob must be present in blobsContents */);
+		blobs.set(id, blob);
+	}
+	for (const subTree of Object.values(tree.trees)) {
+		getBlobContentsFromTreeWithBlobContentsCore(subTree, blobs, false);
+	}
 }

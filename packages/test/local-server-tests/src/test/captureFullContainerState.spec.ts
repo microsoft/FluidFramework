@@ -222,6 +222,7 @@ describe("captureFullContainerState", () => {
 			savedOps: unknown[];
 			baseSnapshot: unknown;
 			snapshotBlobs: Record<string, string>;
+			snapshotBlobContents?: Record<string, string>;
 			blobContentsMode?: "reference";
 		};
 		assert.strictEqual(parsed.attached, true, "captured state should be marked attached");
@@ -237,7 +238,12 @@ describe("captureFullContainerState", () => {
 		assert(parsed.baseSnapshot !== undefined, "captured state should include a base snapshot");
 		assert(
 			Object.keys(parsed.snapshotBlobs).length > 0,
-			"captured state should inline snapshot blobs",
+			"captured state should retain lossless UTF-8 snapshot bytes in snapshotBlobs",
+		);
+		assert.strictEqual(
+			parsed.snapshotBlobContents,
+			undefined,
+			"text-only fixtures should not require the binary-safe snapshot map",
 		);
 		assert.strictEqual(
 			parsed.blobContentsMode,
@@ -519,7 +525,7 @@ describe("captureFullContainerState", () => {
 		};
 		assert(
 			parsed.attachmentBlobContents !== undefined,
-			"attachment blobs must be captured into attachmentBlobContents (not snapshotBlobs)",
+			"attachment blobs must be captured in attachmentBlobContents, separately from structural snapshotBlobContents",
 		);
 		const capturedDecoded = Object.values(parsed.attachmentBlobContents).map(
 			(v) => new Uint8Array(stringToBuffer(v, "base64")),
@@ -676,6 +682,7 @@ describe("captureFullContainerState", () => {
 		});
 		const parsedReferenceState = JSON.parse(referenceState) as {
 			snapshotBlobs: Record<string, string>;
+			snapshotBlobContents?: Record<string, string>;
 			blobContentsMode?: "reference";
 			attachmentBlobContents?: Record<string, string>;
 		};
@@ -683,6 +690,11 @@ describe("captureFullContainerState", () => {
 			parsedReferenceState.snapshotBlobs,
 			{},
 			"Reference-only state should omit structural blob payloads",
+		);
+		assert.strictEqual(
+			parsedReferenceState.snapshotBlobContents,
+			undefined,
+			"Reference-only state should omit the binary-safe structural map",
 		);
 		assert.strictEqual(
 			parsedReferenceState.blobContentsMode,

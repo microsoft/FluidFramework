@@ -52,6 +52,8 @@ import {
 	type IBlobManagerLoadInfo,
 } from "./blobManagerSnapSum.js";
 
+const maxConcurrentEmbeddedDetachedBlobReads = 32;
+
 /**
  * This class represents blob (long string)
  * This object is used only when creating (writing) new blob and serialization purposes.
@@ -274,10 +276,9 @@ export class BlobManager {
 	private readonly pendingOnlyLocalIds: Set<string> = new Set();
 
 	/**
-	 * Local IDs of blobs created while detached whose bytes have not been uploaded to (detached) storage at
-	 * all - instead, they'll be embedded directly into the summary generated for attach. Only used when
-	 * enableSingleRoundTripFileCreate is enabled. These local IDs are never added to redirectTable since
-	 * there is no (pseudo or real) storage ID for them until the service assigns one at attach time.
+	 * Local IDs whose payloads are permanently represented as summary blobs in the
+	 * `.embeddedDetachedBlobs` subtree. The stable local ID remains the application/GC identity while the
+	 * redirect table maps it to the current snapshot summary blob ID on attached loads.
 	 */
 	private readonly embeddedDetachedBlobLocalIds: Set<string> = new Set();
 
@@ -296,9 +297,9 @@ export class BlobManager {
 	private readonly createBlobPayloadPending: boolean;
 
 	/**
-	 * When enabled, blobs created while detached have their bytes embedded directly into the summary tree
-	 * produced for attach, instead of being uploaded ahead of time to (detached) storage. This lets attach
-	 * complete in a single network round trip. See singleRoundTripFileCreate.md ("Phase 1") for details and current limitations.
+	 * When enabled, blobs created while detached are embedded as binary-safe summary blobs instead of
+	 * being uploaded ahead of time to detached storage. This lets the successful create complete in one
+	 * logical service request. See singleRoundTripFileCreate.md.
 	 */
 	private readonly enableSingleRoundTripFileCreate: boolean;
 
@@ -356,6 +357,37 @@ export class BlobManager {
 		});
 
 		this.redirectTable = toRedirectTable(blobManagerLoadInfo, this.mc.logger);
+		const embeddedDetachedBlobs = blobManagerLoadInfo.embeddedDetachedBlobs;
+		const embeddedDetachedBlobEntries = Object.entries(embeddedDetachedBlobs?.blobs ?? {});
+		for (const [localId] of embeddedDetachedBlobEntries) {
+			assert(
+				!this.redirectTable.has(localId),
+				"Embedded detached blob IDs cannot also be attachment redirects",
+			);
+			this.embeddedDetachedBlobLocalIds.add(localId);
+		}
+		if (this.runtime.attachState === AttachState.Detached) {
+			for (const [localId, blobId] of embeddedDetachedBlobEntries) {
+				const blob = embeddedDetachedBlobs?.blobsContents?.[blobId];
+				assert(
+					blob !== undefined,
+					"Embedded detached blob contents must be available while detached",
+				);
+				this.localBlobCache.set(localId, {
+					state: "attached",
+					blob,
+				});
+				this.redirectTable.set(localId, localId);
+			}
+		} else {
+			assert(
+				embeddedDetachedBlobs?.blobsContents === undefined,
+				"Attached BlobManager cannot load embedded detached blob contents",
+			);
+			for (const [localId, blobId] of embeddedDetachedBlobEntries) {
+				this.redirectTable.set(localId, blobId);
+			}
+		}
 
 		// We populate the localBlobCache with any pending blobs we are provided, which makes them available
 		// to access even though they are not shared yet. However, we don't start the share flow until it is
@@ -405,8 +437,11 @@ export class BlobManager {
 		if (this.runtime.attachState === AttachState.Detached) {
 			return undefined;
 		}
-		// Get the storage ID from the redirect table
-		return this.redirectTable.get(localId);
+		const storageId = this.redirectTable.get(localId);
+		// Summary blob IDs cannot be used as temporary attachment URLs.
+		return storageId !== undefined && this.embeddedDetachedBlobLocalIds.has(localId)
+			? undefined
+			: storageId;
 	}
 
 	/**
@@ -516,11 +551,10 @@ export class BlobManager {
 		this.localBlobCache.set(localId, { state: "uploading", blob });
 
 		if (this.enableSingleRoundTripFileCreate) {
-			// Don't upload to (detached) storage at all - the bytes will be embedded directly into the
-			// summary generated for attach, so there's no pseudo/real storage ID to track here. See
-			// summarize() and singleRoundTripFileCreate.md ("Phase 1") for details.
+			// Keep the payload summary-backed for its lifetime. No detached-storage ID is created.
 			this.embeddedDetachedBlobLocalIds.add(localId);
 			this.localBlobCache.set(localId, { state: "attached", blob });
+			this.redirectTable.set(localId, localId);
 			return this.getNonPayloadPendingBlobHandle(localId);
 		}
 
@@ -824,25 +858,75 @@ export class BlobManager {
 	}
 
 	public summarize(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
-		return summarizeBlobManagerState(this.redirectTable, this.getEmbeddedDetachedBlobs());
+		return this.summarizeInternal(undefined);
 	}
 
-	/**
-	 * Blobs created while detached with enableSingleRoundTripFileCreate enabled - these have no
-	 * (pseudo or real) storage ID yet, so they're summarized as raw content rather than as Attachment nodes.
-	 * See summarizeBlobManagerState in blobManagerSnapSum.ts.
-	 */
-	private getEmbeddedDetachedBlobs(): Map<string, ArrayBufferLike> {
+	public async summarizeFullTree(): Promise<ISummaryTreeWithStats> {
+		return this.summarizeInternal(await this.loadFullTreeContents());
+	}
+
+	private summarizeInternal(
+		fullTreeContents: ReadonlyMap<string, ArrayBufferLike> | undefined,
+	): ISummaryTreeWithStats {
+		const embeddedDetachedBlobContents =
+			fullTreeContents ?? this.getEmbeddedDetachedBlobContentsFromLocalCache();
+		return summarizeBlobManagerState(
+			this.redirectTable,
+			embeddedDetachedBlobContents,
+			this.embeddedDetachedBlobLocalIds,
+		);
+	}
+
+	private getEmbeddedDetachedBlobContentsFromLocalCache():
+		| ReadonlyMap<string, ArrayBufferLike>
+		| undefined {
 		const embeddedDetachedBlobs = new Map<string, ArrayBufferLike>();
 		for (const localId of this.embeddedDetachedBlobLocalIds) {
 			const localBlobRecord = this.localBlobCache.get(localId);
+			if (localBlobRecord === undefined) {
+				assert(
+					this.runtime.attachState !== AttachState.Detached,
+					"Embedded detached blob must be in local cache while detached",
+				);
+				continue;
+			}
 			assert(
-				localBlobRecord !== undefined,
-				0xc85 /* Embedded detached blob must be in local cache */,
+				localBlobRecord.state === "attached",
+				"Embedded detached blob cache entry must be attached",
 			);
 			embeddedDetachedBlobs.set(localId, localBlobRecord.blob);
 		}
-		return embeddedDetachedBlobs;
+		return embeddedDetachedBlobs.size === 0 ? undefined : embeddedDetachedBlobs;
+	}
+
+	/**
+	 * Materializes payloads that would otherwise be summarized by handle.
+	 * Used only when producing a full-tree summary.
+	 */
+	private async loadFullTreeContents(): Promise<Map<string, ArrayBufferLike>> {
+		const fullTreeContents = new Map(this.getEmbeddedDetachedBlobContentsFromLocalCache());
+		const localIdsToLoad = [...this.embeddedDetachedBlobLocalIds].filter(
+			(localId) => !fullTreeContents.has(localId),
+		);
+		for (
+			let firstIndex = 0;
+			firstIndex < localIdsToLoad.length;
+			firstIndex += maxConcurrentEmbeddedDetachedBlobReads
+		) {
+			await Promise.all(
+				localIdsToLoad
+					.slice(firstIndex, firstIndex + maxConcurrentEmbeddedDetachedBlobReads)
+					.map(async (localId) => {
+						const storageId = this.redirectTable.get(localId);
+						assert(
+							storageId !== undefined,
+							"Embedded detached blob must have a snapshot blob ID",
+						);
+						fullTreeContents.set(localId, await this.storage.readBlob(storageId));
+					}),
+			);
+		}
+		return fullTreeContents;
 	}
 
 	/**
@@ -856,34 +940,30 @@ export class BlobManager {
 		for (const [localId, storageId] of this.redirectTable) {
 			// Don't report the identity mappings to GC - these exist to service old handles that referenced the storage
 			// IDs directly. We'll implicitly clean them up if all of their localId references get GC'd first.
-			if (localId !== storageId) {
+			if (localId !== storageId || this.embeddedDetachedBlobLocalIds.has(localId)) {
 				// The outbound routes are empty because a blob node cannot reference other nodes. It can only be referenced
 				// by adding its handle to a referenced DDS.
 				gcData.gcNodes[getGCNodePathFromLocalId(localId)] = [];
 			}
 		}
-		for (const localId of this.embeddedDetachedBlobLocalIds) {
-			gcData.gcNodes[getGCNodePathFromLocalId(localId)] = [];
-		}
 		return gcData;
 	}
 
 	/**
-	 * Delete blobs with the given routes from the redirect table.
+	 * Delete blobs with the given routes from BlobManager state.
 	 * @returns The routes of blobs that were deleted.
 	 *
 	 * @remarks
 	 * The routes are GC nodes paths of format -`/<blobManagerBasePath>/<localId>`.
 	 * Deleting the blobs involves 2 steps:
 	 *
-	 * 1. The redirect table entry for the local ids are deleted.
+	 * 1. The summary-backed classification/cache or redirect-table entry for each local ID is deleted.
 	 *
 	 * 2. If the storage ids corresponding to the deleted local ids are not referenced by any further local ids, the
 	 * identity mappings in the redirect table are deleted as well.
 	 *
-	 * Note that this does not delete the blobs from storage service immediately. Deleting the blobs from redirect table
-	 * will ensure we don't create an attachment blob for them at the next summary. The service would then delete them
-	 * some time in the future.
+	 * Note that this does not delete blobs from storage immediately. Omitting them from the next summary
+	 * lets the service reclaim them later.
 	 */
 	public deleteSweepReadyNodes(sweepReadyBlobRoutes: readonly string[]): readonly string[] {
 		// maybeUnusedStorageIds is used to compute the set of storage IDs that *used to have a local ID*, but that
@@ -895,6 +975,9 @@ export class BlobManager {
 			// If the blob has already been deleted, log a telemetry event. This can happen because multiple GC
 			// sweep messages can contain the same data store. It would be interesting to track how often this happens.
 			const alreadyDeleted = this.isBlobDeleted(route);
+			if (this.embeddedDetachedBlobLocalIds.delete(localId)) {
+				this.localBlobCache.delete(localId);
+			}
 			const storageId = this.redirectTable.get(localId);
 			if (storageId === undefined) {
 				this.mc.logger.sendTelemetryEvent({
@@ -967,14 +1050,17 @@ export class BlobManager {
 		// The values of the redirect table are the pseudo storage IDs, which are the keys of the
 		// detachedStorageTable. We expect to have a many:1 mapping from local IDs to pseudo
 		// storage IDs (many in the case that the storage dedupes the blob).
+		const redirectTableEntries = [...this.redirectTable.entries()].filter(
+			([localId]) => !this.embeddedDetachedBlobLocalIds.has(localId),
+		);
 		assert(
-			new Set(this.redirectTable.values()).size === detachedStorageTable.size,
+			new Set(redirectTableEntries.map(([_, storageId]) => storageId)).size ===
+				detachedStorageTable.size,
 			0x391 /* Redirect table size must match BlobManager's local ID count */,
 		);
 		// Taking a snapshot of the redirect table entries before iterating, because
 		// we will be adding identity mappings to the the redirect table as we iterate
 		// and we don't want to include those in the iteration.
-		const redirectTableEntries = [...this.redirectTable.entries()];
 		for (const [localId, detachedStorageId] of redirectTableEntries) {
 			const newStorageId = detachedStorageTable.get(detachedStorageId);
 			assert(newStorageId !== undefined, 0xc53 /* Couldn't find a matching storage ID */);

@@ -5,9 +5,20 @@
 
 import { strict as assert } from "node:assert";
 
-import { bufferToString } from "@fluid-internal/client-utils";
+import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
+import type { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
 import { type ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
+import type {
+	IDocumentStorageService,
+	ISnapshot,
+	ISnapshotTree,
+} from "@fluidframework/driver-definitions/internal";
 
+import {
+	getBlobContentsFromTree,
+	getBlobContentsFromTreeWithBlobContents,
+} from "../containerStorageAdapter.js";
+import type { SerializedSnapshotInfo } from "../serializedStateManager.js";
 import {
 	combineAppAndProtocolSummary,
 	convertSnapshotInfoToSnapshot,
@@ -122,32 +133,7 @@ describe("Dehydrate Container", () => {
 		);
 	});
 
-	/**
-	 * This test demonstrates a real bug affecting any feature that embeds raw (non-UTF8) blob bytes
-	 * directly into a SummaryType.Blob node of the attach summary - e.g.
-	 * enableSingleRoundTripFileCreate's ".embeddedDetachedBlobs" subtree in
-	 * @fluidframework/container-runtime's BlobManager.
-	 *
-	 * getISnapshotFromSerializedContainer / convertSummaryToISnapshot itself preserves raw Uint8Array
-	 * blob content untouched (it stores the bytes directly in the ISnapshot's blobContents map, with
-	 * no UTF8 round-trip). However, the *next* step in the pending-state pipeline -
-	 * convertSnapshotToSnapshotInfo (used to build the JSON-serializable SerializedSnapshotInfo for
-	 * Container.serialize()/getPendingLocalState, and its inverse convertSnapshotInfoToSnapshot used on
-	 * rehydrate) - unconditionally does `bufferToString(content, "utf8")` on every blob's bytes so they
-	 * can be embedded as a JSON string. This is lossy for bytes that aren't valid UTF-8, and there is no
-	 * corresponding decode step recovering the original bytes: convertSnapshotInfoToSnapshot converts
-	 * the (already-corrupted) string back to bytes via `stringToBuffer(content, "utf8")`, which does not
-	 * restore the original raw bytes once the UTF8 replacement characters have been substituted in.
-	 *
-	 * This round-trip (ISnapshot -> SerializedSnapshotInfo -> ISnapshot) is exactly what happens for
-	 * Container.serialize() and for the offline-load / getPendingLocalState snapshot cached by
-	 * serializedStateManager on every attach (see runRetriableAttachProcess in attachment.ts) - not only
-	 * when the user explicitly calls Container.serialize(). So any feature relying on embedding raw
-	 * bytes directly (e.g. BlobManager's enableSingleRoundTripFileCreate) is affected by this whenever
-	 * that pending/serialized state is later used to rehydrate/reload a container.
-	 */
-	it("Raw (non-UTF8) blob content is corrupted by the snapshot <-> SnapshotInfo round-trip", () => {
-		// A byte sequence that is not valid UTF-8 (an isolated/invalid continuation byte).
+	it("round-trips arbitrary snapshot bytes losslessly through SnapshotInfo", () => {
 		const originalBytes = new Uint8Array([0xc3, 0x28, 0x00, 0xff, 0xfe]);
 
 		const summaryWithRawBlob: ISummaryTree = combineAppAndProtocolSummary(
@@ -163,8 +149,6 @@ describe("Dehydrate Container", () => {
 			protocolSummary,
 		);
 
-		// Step 1: getISnapshotFromSerializedContainer / convertSummaryToISnapshot preserves raw bytes
-		// as-is (no corruption at this stage).
 		const snapshot = getISnapshotFromSerializedContainer(summaryWithRawBlob);
 		const blobId = snapshot.snapshotTree.blobs.embeddedBlob;
 		const preRoundTripBytes = snapshot.blobContents.get(blobId);
@@ -175,24 +159,168 @@ describe("Dehydrate Container", () => {
 			"getISnapshotFromSerializedContainer should not itself corrupt raw blob bytes",
 		);
 
-		// Step 2: convertSnapshotToSnapshotInfo (used for Container.serialize()/getPendingLocalState)
-		// followed by convertSnapshotInfoToSnapshot (used on rehydrate) - this is the round-trip that
-		// actually happens for serialized/pending container state.
 		const snapshotInfo = convertSnapshotToSnapshotInfo(snapshot);
+		assert.strictEqual(
+			snapshotInfo.snapshotBlobs[blobId],
+			undefined,
+			"Non-UTF8 bytes must not be exposed through the legacy UTF-8 map",
+		);
+		assert.strictEqual(
+			snapshotInfo.snapshotBlobContents?.[blobId],
+			bufferToString(originalBytes, "base64"),
+		);
 		const rehydratedSnapshot = convertSnapshotInfoToSnapshot(snapshotInfo);
 		const roundTrippedBytes = rehydratedSnapshot.blobContents.get(blobId);
-		assert(roundTrippedBytes !== undefined, "Expected blob content to be present after round-trip");
+		assert(
+			roundTrippedBytes !== undefined,
+			"Expected blob content to be present after round-trip",
+		);
 
-		// This assertion demonstrates the corruption: the round-tripped bytes no longer match the
-		// original raw bytes, because they were silently mangled by a UTF-8 decode/re-encode cycle.
-		assert.notDeepStrictEqual(
+		assert.deepStrictEqual(
 			new Uint8Array(roundTrippedBytes),
 			originalBytes,
-			"BUG: raw non-UTF8 blob bytes should not survive the SnapshotInfo round-trip, but any " +
-				"feature relying on embedding raw bytes directly (e.g. BlobManager's " +
-				"enableSingleRoundTripFileCreate) is affected by this since this round-trip happens on " +
-				"every attach (via serializedStateManager), not just on explicit Container.serialize() " +
-				"calls.",
+			"Raw non-UTF8 blob bytes should survive the base64 JSON transport",
+		);
+	});
+
+	it("loads legacy UTF-8 SnapshotInfo and lets the binary-safe map win collisions", () => {
+		const binaryBytes = new Uint8Array([0xff, 0x00, 0x80]);
+		const snapshotInfo: SerializedSnapshotInfo = {
+			baseSnapshot: {
+				blobs: { legacy: "legacy-id", collision: "collision-id" },
+				trees: {},
+			},
+			snapshotBlobs: {
+				"legacy-id": "legacy text",
+				"collision-id": "legacy collision",
+			},
+			snapshotBlobContents: {
+				"collision-id": bufferToString(binaryBytes, "base64"),
+			},
+			snapshotSequenceNumber: 1,
+		};
+
+		const snapshot = convertSnapshotInfoToSnapshot(snapshotInfo);
+		assert.strictEqual(
+			bufferToString(snapshot.blobContents.get("legacy-id") ?? new ArrayBuffer(0), "utf8"),
+			"legacy text",
+		);
+		assert.deepStrictEqual(
+			new Uint8Array(snapshot.blobContents.get("collision-id") ?? new ArrayBuffer(0)),
+			binaryBytes,
+		);
+	});
+
+	it("extracts snapshot-tree bytes as base64 while skipping direct attachments", async () => {
+		const binaryBytes = new Uint8Array([0xff, 0x00, 0x80]);
+		const redirectBytes = stringToBuffer("[]", "utf8");
+		const baseSnapshot: ISnapshotTree = {
+			blobs: {},
+			trees: {
+				".blobs": {
+					blobs: {
+						".redirectTable": "redirect-id",
+						"attachment-id": "attachment-id",
+					},
+					trees: {
+						embedded: {
+							blobs: { binary: "binary-id" },
+							trees: {},
+						},
+					},
+				},
+			},
+		};
+		const storage: Pick<IDocumentStorageService, "readBlob"> = {
+			readBlob: async (id) => {
+				if (id === "redirect-id") {
+					return redirectBytes;
+				}
+				if (id === "binary-id") {
+					return binaryBytes;
+				}
+				throw new Error(`Unexpected blob read: ${id}`);
+			},
+		};
+
+		assert.deepStrictEqual(
+			await getBlobContentsFromTree(baseSnapshot, storage),
+			new Map<string, ArrayBufferLike>([
+				["redirect-id", redirectBytes],
+				["binary-id", binaryBytes],
+			]),
+		);
+
+		const snapshotWithOmittedGroupContents: ISnapshot = {
+			snapshotTree: {
+				...baseSnapshot,
+				trees: {
+					...baseSnapshot.trees,
+					unrelatedGroup: {
+						blobs: { unloaded: "unloaded-id" },
+						trees: {},
+						groupId: "unrelated",
+					},
+				},
+			},
+			blobContents: new Map([["redirect-id", redirectBytes]]),
+			ops: [],
+			sequenceNumber: 0,
+			latestSequenceNumber: undefined,
+			snapshotFormatV: 1,
+		};
+		assert.deepStrictEqual(
+			await getBlobContentsFromTree(snapshotWithOmittedGroupContents, storage),
+			new Map<string, ArrayBufferLike>([
+				["redirect-id", redirectBytes],
+				["binary-id", binaryBytes],
+			]),
+		);
+
+		const snapshotWithLegacyAttachmentsOnly: ISnapshot = {
+			...snapshotWithOmittedGroupContents,
+			snapshotTree: {
+				blobs: {},
+				trees: {
+					".blobs": {
+						blobs: { attachment: "attachment-id" },
+						trees: {},
+					},
+				},
+			},
+			blobContents: new Map(),
+		};
+		assert.deepStrictEqual(
+			await getBlobContentsFromTree(snapshotWithLegacyAttachmentsOnly, storage),
+			new Map(),
+		);
+
+		const snapshotWithContents: ISnapshotTreeWithBlobContents = {
+			...baseSnapshot,
+			blobsContents: {},
+			trees: {
+				".blobs": {
+					...baseSnapshot.trees[".blobs"],
+					blobsContents: {
+						"redirect-id": redirectBytes,
+						"attachment-id": new Uint8Array([1, 2, 3]),
+					},
+					trees: {
+						embedded: {
+							...baseSnapshot.trees[".blobs"].trees.embedded,
+							blobsContents: { "binary-id": binaryBytes },
+							trees: {},
+						},
+					},
+				},
+			},
+		};
+		assert.deepStrictEqual(
+			getBlobContentsFromTreeWithBlobContents(snapshotWithContents),
+			new Map<string, ArrayBufferLike>([
+				["redirect-id", redirectBytes],
+				["binary-id", binaryBytes],
+			]),
 		);
 	});
 });

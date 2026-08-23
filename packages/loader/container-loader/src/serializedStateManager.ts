@@ -38,9 +38,10 @@ import {
 } from "./containerStorageAdapter.js";
 import { SnapshotRefresher } from "./snapshotRefresher.js";
 import {
-	convertISnapshotToSnapshotWithBlobs,
+	convertSnapshotInfoToSnapshot,
 	convertSnapshotToSnapshotInfo,
 	getDocumentAttributes,
+	serializeSnapshotBlobContents,
 } from "./utils.js";
 
 /**
@@ -54,10 +55,22 @@ export interface SnapshotWithBlobs {
 	 */
 	baseSnapshot: ISnapshotTree;
 	/**
-	 * Serializable blobs from the base snapshot. Used to load offline since
-	 * storage is not available.
+	 * Legacy UTF-8 snapshot blob contents.
+	 *
+	 * Kept as a required field for compatibility with existing serialized
+	 * pending and detached states. New serializers keep blobs here when their
+	 * bytes survive the legacy UTF-8 round trip unchanged.
 	 */
 	snapshotBlobs: ISerializableBlobContents;
+	/**
+	 * Snapshot blob bytes encoded as base64 for JSON transport.
+	 *
+	 * New serializers use this map for included snapshot blobs that cannot be
+	 * represented losslessly by {@link SnapshotWithBlobs.snapshotBlobs}. On
+	 * load, this map is decoded after the legacy map, so it wins ID collisions
+	 * in states that contain both representations for the same ID.
+	 */
+	snapshotBlobContents?: IBase64BlobContents;
 }
 
 /**
@@ -93,16 +106,16 @@ export interface IPendingContainerState extends SnapshotWithBlobs {
 	/**
 	 * Attachment blob contents inlined by storage id, encoded as base64.
 	 *
-	 * Carried separately from {@link SnapshotWithBlobs.snapshotBlobs} because
-	 * attachment blobs may contain arbitrary binary payloads, and the
-	 * UTF-8 encoding used for `snapshotBlobs` (which holds JSON/text the
-	 * runtime authors) would corrupt non-UTF-8 byte sequences with
-	 * replacement characters. Populated by `captureFullContainerState`; the
-	 * live container's pending-state path leaves this `undefined` because
-	 * it does not inline attachment blob contents.
+	 * Like {@link SnapshotWithBlobs.snapshotBlobContents}, values are base64
+	 * only because pending/full-state artifacts are JSON. The maps remain
+	 * separate because this field captures attachment payloads by storage ID,
+	 * while `snapshotBlobContents` captures bytes structurally included by the
+	 * snapshot. Populated by `captureFullContainerState`; the live container's
+	 * pending-state path leaves this `undefined` because it does not inline
+	 * attachment blob contents.
 	 *
 	 * On load, entries are decoded from base64 and merged into the same
-	 * blob cache that `snapshotBlobs` populates.
+	 * blob cache that the structural snapshot maps populate.
 	 */
 	attachmentBlobContents?: IBase64BlobContents;
 	/**
@@ -287,17 +300,22 @@ export class SerializedStateManager implements IDisposable {
 			}
 			return { snapshot, version, attributes };
 		} else {
-			const { baseSnapshot, snapshotBlobs, attachmentBlobContents, savedOps } =
-				pendingLocalState;
-			const blobContents = new Map<string, ArrayBuffer>();
-			// Structural snapshot blobs (snapshot trees, `.attributes`, `.redirectTable`)
-			// are JSON/text the runtime authored, so UTF-8 round-trip is lossless.
-			for (const [id, value] of Object.entries(snapshotBlobs)) {
-				blobContents.set(id, stringToBuffer(value, "utf8"));
-			}
-			// Attachment blobs are base64-encoded — see IPendingContainerState
-			// docs. Decoded after structural blobs because storage-id collisions
-			// between the two namespaces should resolve to the binary form.
+			const {
+				baseSnapshot,
+				snapshotBlobs,
+				snapshotBlobContents,
+				attachmentBlobContents,
+				savedOps,
+			} = pendingLocalState;
+			const { blobContents } = convertSnapshotInfoToSnapshot({
+				baseSnapshot,
+				snapshotBlobs,
+				snapshotBlobContents,
+				snapshotSequenceNumber: 0,
+			});
+			// Attachment blobs are decoded after structural snapshot blobs because
+			// storage-id collisions between the two namespaces should continue to
+			// resolve to the explicitly captured attachment payload.
 			if (attachmentBlobContents !== undefined) {
 				for (const [id, value] of Object.entries(attachmentBlobContents)) {
 					blobContents.set(id, stringToBuffer(value, "base64"));
@@ -459,14 +477,10 @@ export class SerializedStateManager implements IDisposable {
 					}
 				}
 
-				const snapshotWithBlobs: SnapshotWithBlobs = isInstanceOfISnapshot(
+				const snapshotWithBlobs = await convertSnapshotTreeToSnapshotWithBlobs(
 					this.snapshotInfo.snapshot,
-				)
-					? convertISnapshotToSnapshotWithBlobs(this.snapshotInfo.snapshot)
-					: await convertSnapshotTreeToSnapshotWithBlobs(
-							this.snapshotInfo.snapshot,
-							this.storageAdapter,
-						);
+					this.storageAdapter,
+				);
 
 				const pendingState: IPendingContainerState = {
 					attached: true,
@@ -485,13 +499,13 @@ export class SerializedStateManager implements IDisposable {
 }
 
 async function convertSnapshotTreeToSnapshotWithBlobs(
-	snapshot: ISnapshotTree,
+	snapshot: ISnapshot | ISnapshotTree,
 	storageAdapter: ISerializedStateManagerDocumentStorageService,
 ): Promise<SnapshotWithBlobs> {
-	const snapshotBlobs = await getBlobContentsFromTree(snapshot, storageAdapter);
+	const snapshotBlobContents = await getBlobContentsFromTree(snapshot, storageAdapter);
 	return {
-		baseSnapshot: snapshot,
-		snapshotBlobs,
+		baseSnapshot: isInstanceOfISnapshot(snapshot) ? snapshot.snapshotTree : snapshot,
+		...serializeSnapshotBlobContents(snapshotBlobContents),
 	};
 }
 
