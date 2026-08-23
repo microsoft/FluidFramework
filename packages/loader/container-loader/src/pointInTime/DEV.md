@@ -212,7 +212,8 @@ Like normal storage catch-up, retriable network failures may retry for an extend
 | `pointInTimeServices.ts` | Defines the structural driver capability and adapts it to `IDocumentServiceFactory`. |
 | `loadPaused.ts` | Loads read-only, replays to the exact target, pauses processing, disconnects, and handles cancellation. |
 | `packages/drivers/odsp-driver/src/odspDocumentServiceFactory.ts` | Exports `IPointInTimeDocumentServiceFactory` and constructs a typed point-in-time-capable ODSP factory for hosts. |
-| `packages/drivers/odsp-driver/src/odspDocumentServiceFactoryCore.ts` | Implements the optional point-in-time capability, selects the ODSP base version, and creates the historical service with shared epoch tracking. |
+| `packages/drivers/odsp-driver/src/odspDocumentServiceFactoryCore.ts` | Implements the optional point-in-time capability as a thin lazy-loading delegate. |
+| `packages/drivers/odsp-driver/src/pointInTimeDriver/createPointInTimeDocumentService.ts` | Owns PIT orchestration, ODSP base-version selection and URL construction, and shared epoch tracking behind one dynamic-import boundary. |
 | `packages/drivers/odsp-driver/src/pointInTimeDriver/odspPointInTimeDocumentService.ts` | Recombines historical storage with bounded live delta storage and enforces storage-only behavior. |
 
 ## Test map

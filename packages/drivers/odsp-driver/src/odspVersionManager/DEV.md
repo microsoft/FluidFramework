@@ -36,8 +36,9 @@ Part 1 is built in three components:
 - **Component A — the version manager**: choose which file version to load or replay from. **This
   folder is Component A**, and this document is mostly about it.
 - **Component B — the recomposed driver**: load the chosen version and replay ops forward to the exact
-  target. **Built** in `../pointInTimeDriver/` (`getOdspPointInTimeDocumentServiceFactory` /
-  `OdspPointInTimeDocumentService`) — see [Part V](#part-v--components-b--c-as-built).
+  target. **Built** in `../pointInTimeDriver/` (`createPointInTimeDocumentService` /
+  `OdspPointInTimeDocumentService`) and exposed by the factory helper — see
+  [Part V](#part-v--components-b--c-as-built).
 - **Component C — the loader hookup**: expose Component B through the container loader. **Built** in
   `@fluidframework/container-loader` (`loadContainerToSequenceNumber`) — see
   [Part V](#part-v--components-b--c-as-built). This is the current prototype-era package
@@ -557,8 +558,9 @@ is what ships today.
 ### Component B — how does the recomposed driver materialize the target?
 
 `OdspDocumentServiceFactoryCore` exposes
-`createPointInTimeDocumentService(resolvedUrl, targetSequenceNumber)` and implements the orchestration
-inline:
+`createPointInTimeDocumentService(resolvedUrl, targetSequenceNumber)` as a thin delegate that
+dynamically imports `../pointInTimeDriver/createPointInTimeDocumentService.ts`. The lazy module owns
+the orchestration and PIT-specific REST setup:
 
 1. Build a version manager (Component A), sharing the single `EpochTracker` described below, and call
    `findBaseForSeq(target)`. It picks the closest version *and* proves that base shares the live
