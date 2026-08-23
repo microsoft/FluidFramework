@@ -11,12 +11,6 @@
  * how versions are enumerated and resolved (real ODSP, a test double, or an alternative backend).
  */
 
-import { PromiseCache } from "@fluidframework/core-utils/internal";
-import { NonRetryableError } from "@fluidframework/driver-utils/internal";
-import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
-
-import { pkgVersion as driverVersion } from "../packageVersion.js";
-
 import {
 	createOdspFileVersionFetcher,
 	type OdspFileVersionFetcherProps,
@@ -72,32 +66,17 @@ export interface IOdspVersionManager {
 	/**
 	 * Given a target sequence number, return the closest version at or before it (`found`), or
 	 * `noBaseVersion` if the target predates the oldest retained version.
-	 *
-	 * @remarks
-	 * A `found` base is guaranteed to share the live document's ODSP epoch (lineage): before returning
-	 * it, the chosen base's epoch is compared with the live document's, and a mismatch throws a non-retryable error
-	 * rather than returning a base that cannot be replayed. Op availability is enforced separately and
-	 * lazily as the loader reads the bridging ops.
 	 */
 	findBaseForSeq(target: number): Promise<BaseForSeq>;
 }
 
 /**
- * Default {@link IOdspVersionManager}. Caches resolved sequence numbers (which never change); the version
- * list is re-enumerated on each query rather than cached, since new versions are cut over time. The
- * resolution strategy (eager, newest-to-oldest, stopping at the first usable base) is hidden behind
- * {@link findBaseForSeq} and can change without affecting callers.
+ * Default {@link IOdspVersionManager}. Resolves versions newest-to-oldest and stops at the first
+ * usable base.
  */
 // Exported only so the same-package tests can construct it with a fake IOdspFileVersionFetcher.
 // Deliberately kept out of the folder barrel and the package public index, so it is not public API.
 export class OdspVersionManager implements IOdspVersionManager {
-	// Sealed versions' sequence numbers, memoized so each is resolved at most once per manager instance
-	// (a sealed version's number is fixed once the version exists).
-	private readonly seqCache = new PromiseCache<string, number>();
-	// Sealed versions' ODSP epochs, memoized like their sequence numbers. The live document's epoch is NOT
-	// cached — it can change (restore/reupload), so validateLineageEpoch always reads it fresh.
-	private readonly epochCache = new PromiseCache<string, string | undefined>();
-
 	public constructor(private readonly fetcher: IOdspFileVersionFetcher) {}
 
 	public async findBaseForSeq(target: number): Promise<BaseForSeq> {
@@ -112,89 +91,16 @@ export class OdspVersionManager implements IOdspVersionManager {
 
 		let oldestResolvedSeq: number | undefined;
 		for (const version of candidates) {
-			const sequenceNumber = await this.resolveSeq(version.versionId);
+			const sequenceNumber = await this.fetcher.resolveSequenceNumber(version.versionId);
 			oldestResolvedSeq =
 				oldestResolvedSeq === undefined
 					? sequenceNumber
 					: Math.min(oldestResolvedSeq, sequenceNumber);
 			if (sequenceNumber <= target) {
-				const base = { ...version, sequenceNumber };
-				// Confirm the chosen base shares the live document's lineage before handing it back
-				await this.validateLineageEpoch(base);
-				return { kind: "found", base };
+				return { kind: "found", base: { ...version, sequenceNumber } };
 			}
 		}
 		return { kind: "noBaseVersion", oldestResolvedSeq };
-	}
-
-	private async validateLineageEpoch(base: ResolvedVersion): Promise<void> {
-		// The live document's epoch can change (a restore or download-and-reupload bumps it), so it is
-		// always read fresh. A numbered version's snapshot is immutable, so its epoch never changes and
-		// is cached per versionId (see resolveVersionEpoch).
-		const [liveEpoch, baseEpoch] = await Promise.all([
-			this.fetcher.getLiveDocumentEpoch(),
-			this.resolveVersionEpoch(base.versionId),
-		]);
-		if (liveEpoch === undefined || baseEpoch === undefined) {
-			throw new NonRetryableError(
-				`Cannot verify that ODSP file version ${base.versionId} shares the live document's ` +
-					`lineage: the storage response is missing an epoch (base epoch: ${baseEpoch ?? "unknown"}, ` +
-					`live epoch: ${liveEpoch ?? "unknown"}).`,
-				OdspErrorTypes.incorrectServerResponse,
-				{
-					driverVersion,
-					serverEpoch: liveEpoch,
-					clientEpoch: baseEpoch,
-				},
-			);
-		}
-		if (liveEpoch !== baseEpoch) {
-			throw new NonRetryableError(
-				`ODSP file version ${base.versionId} is on epoch "${baseEpoch}" but the live document is ` +
-					`on epoch "${liveEpoch}". A binary file change (e.g. a version restore or ` +
-					`download-and-reupload) renumbered the op stream, so ops cannot be replayed from this ` +
-					`base onto the live document.`,
-				OdspErrorTypes.fileOverwrittenInStorage,
-				{
-					driverVersion,
-					serverEpoch: liveEpoch,
-					clientEpoch: baseEpoch,
-				},
-			);
-		}
-	}
-
-	public async listVersions(): Promise<ResolvedVersion[]> {
-		const versions = await this.fetcher.listFileVersions();
-		// Resolution order does not matter, so resolve concurrently; the newest-first array order is
-		// preserved by Promise.all regardless of completion order.
-		return Promise.all(
-			versions.map(async (version, index) => ({
-				...version,
-				// Resolve the tip (index 0) fresh each call, since its sequence number can still change;
-				// sealed versions come from the cache.
-				sequenceNumber:
-					index === 0
-						? await this.fetcher.resolveSequenceNumber(version.versionId)
-						: await this.resolveSeq(version.versionId),
-			})),
-		);
-	}
-
-	private async resolveSeq(versionId: string): Promise<number> {
-		// Cached indefinitely (a sealed version's number is fixed); concurrent calls coalesce and a failed
-		// resolution is evicted so a later call retries.
-		return this.seqCache.addOrGet(versionId, async () =>
-			this.fetcher.resolveSequenceNumber(versionId),
-		);
-	}
-
-	private async resolveVersionEpoch(versionId: string): Promise<string | undefined> {
-		// Cached like resolveSeq (a sealed version's epoch is fixed). The live document's epoch is read
-		// fresh instead (see validateLineageEpoch).
-		return this.epochCache.addOrGet(versionId, async () =>
-			this.fetcher.getRecoverableVersionEpoch(versionId),
-		);
 	}
 }
 

@@ -6,11 +6,10 @@
 import { strict as assert } from "node:assert";
 
 import type { IDocumentService } from "@fluidframework/driver-definitions/internal";
-import {
-	OdspErrorTypes,
-	type IOdspResolvedUrl,
-	type OdspResourceTokenFetchOptions,
-	type TokenFetcher,
+import type {
+	IOdspResolvedUrl,
+	OdspResourceTokenFetchOptions,
+	TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
@@ -32,11 +31,6 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules -- test targets the point-in-time driver directly
 import { OdspPointInTimeDocumentService } from "../pointInTimeDriver/odspPointInTimeDocumentService.js";
 import type { BaseForSeq, IOdspVersionManager } from "../odspVersionManager/index.js";
-import {
-	OdspVersionManager,
-	type IOdspFileVersionFetcher,
-	// eslint-disable-next-line import-x/no-internal-modules -- test drives a real OdspVersionManager through the factory
-} from "../odspVersionManager/odspVersionManager.js";
 
 /**
  * Tests for the point-in-time factory's **lineage guard**: it materializes a document by replaying
@@ -101,27 +95,6 @@ describe("OdspPointInTimeDocumentServiceFactory lineage guard", () => {
 			dispose() {},
 		};
 		return service as unknown as IDocumentService;
-	}
-
-	/**
-	 * A fake {@link IOdspFileVersionFetcher} for driving a *real* {@link OdspVersionManager} through the
-	 * factory, so `findBaseForSeq`'s lineage check - the recoverable-version-epoch vs
-	 * live-document-epoch comparison - runs for real instead of being stubbed out. The timeline is
-	 * tip=seq 10, recoverable version "42.0"=seq 5, so a target of 8 selects "42.0" as the base.
-	 */
-	function fakeFetcher(config: {
-		liveEpoch?: string;
-		versionEpoch?: string;
-	}): IOdspFileVersionFetcher {
-		return {
-			listFileVersions: async () => [
-				{ versionId: "tip", lastModifiedDateTime: "2026-01-01T00:00:00Z" },
-				{ versionId: "42.0", lastModifiedDateTime: "2026-01-01T00:00:00Z" },
-			],
-			resolveSequenceNumber: async (versionId: string) => (versionId === "tip" ? 10 : 5),
-			getLiveDocumentEpoch: async () => config.liveEpoch,
-			getRecoverableVersionEpoch: async () => config.versionEpoch,
-		};
 	}
 
 	function makeProps(
@@ -220,93 +193,6 @@ describe("OdspPointInTimeDocumentServiceFactory lineage guard", () => {
 		await tracker.validateEpoch("epoch-A", "ops");
 
 		await tracker.removeEntries().catch(() => {});
-	});
-
-	it("fails the load (before creating any service) when the recoverable version's epoch differs from the live document's", async () => {
-		const resolvedUrl = await makeResolvedUrl();
-
-		// A REAL version manager backed by a fake fetcher whose recoverable-version epoch ("epoch-old")
-		// differs from the live document's ("epoch-live"). This is what makes findBaseForSeq run the
-		// actual recoverable-vs-live lineage comparison, rather than a stubbed no-op.
-		const realManager = new OdspVersionManager(
-			fakeFetcher({ liveEpoch: "epoch-live", versionEpoch: "epoch-old" }),
-		);
-		let resolveFileVersionCallCount = 0;
-		let createDocumentServiceCallCount = 0;
-
-		await assert.rejects(
-			async () =>
-				createPointInTimeDocumentService(
-					makeProps(resolvedUrl, {
-						dependencies: {
-							createVersionManager: () => realManager,
-							resolveFileVersion: () => {
-								resolveFileVersionCallCount++;
-								return resolvedUrl;
-							},
-						},
-						createDocumentService: async () => {
-							createDocumentServiceCallCount++;
-							return fakeDocumentService();
-						},
-					}),
-				),
-			(error: Error) => {
-				assert.match(error.message, /epoch "epoch-old".*epoch "epoch-live"/);
-				assert.equal(
-					(error as Partial<{ errorType: string }>).errorType,
-					OdspErrorTypes.fileOverwrittenInStorage,
-					"a cross-lineage base surfaces the driver's fileOverwrittenInStorage error",
-				);
-				return true;
-			},
-			"a cross-lineage base must fail the load with the epoch-mismatch error",
-		);
-		// The lineage check runs BEFORE any base resolution or service creation, so a mismatch must
-		// short-circuit the whole load.
-		assert.equal(
-			resolveFileVersionCallCount,
-			0,
-			"the base version must not be resolved once the lineage check fails",
-		);
-		assert.equal(
-			createDocumentServiceCallCount,
-			0,
-			"no document service should be created once the lineage check fails",
-		);
-	});
-
-	it("materializes the document (creating both services) when the recoverable version shares the live document's epoch", async () => {
-		const resolvedUrl = await makeResolvedUrl();
-		const recoverableResolvedUrl = await makeResolvedUrl("42.0");
-
-		// Same epoch on both sides, so findBaseForSeq's lineage check passes and the
-		// factory proceeds to build the two services.
-		const realManager = new OdspVersionManager(
-			fakeFetcher({ liveEpoch: "epoch-A", versionEpoch: "epoch-A" }),
-		);
-		let createDocumentServiceCallCount = 0;
-		const result = await createPointInTimeDocumentService(
-			makeProps(resolvedUrl, {
-				dependencies: {
-					createVersionManager: () => realManager,
-					resolveFileVersion: () => recoverableResolvedUrl,
-				},
-				createDocumentService: async () => {
-					createDocumentServiceCallCount++;
-					return fakeDocumentService();
-				},
-			}),
-		);
-		assert.ok(
-			result instanceof OdspPointInTimeDocumentService,
-			"a point-in-time document service is returned once the lineage check passes",
-		);
-		assert.equal(
-			createDocumentServiceCallCount,
-			2,
-			"a recoverable and a live document service are created once validation passes",
-		);
 	});
 
 	for (const oldestResolvedSeq of [undefined, 5]) {

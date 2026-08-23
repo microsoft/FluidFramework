@@ -5,7 +5,6 @@
 
 import { strict as assert } from "node:assert";
 
-import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import type {
 	IOdspResolvedUrl,
 	IOdspUrlParts,
@@ -14,7 +13,6 @@ import type {
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { stub } from "sinon";
 
-import { convertToCompactSnapshot } from "../compactSnapshotWriter.js";
 import type { IOdspSnapshot } from "../contracts.js";
 import { EpochTracker } from "../epochTracker.js";
 import { LocalPersistentCache } from "../odspCache.js";
@@ -26,8 +24,8 @@ import { createResponse, type MockResponse, notFound } from "./mockFetch.js";
 
 /**
  * Integration tests for `createOdspFileVersionFetcher`. These exercise the real code path — URL
- * construction, `getAuthHeader`, `EpochTracker.fetch`, content-type branching, and the driver's
- * snapshot parser — against a stubbed `globalThis.fetch` (no live ODSP server).
+ * construction, `getAuthHeader`, `EpochTracker.fetch`, the JSON response contract, and sequence-number
+ * validation — against a stubbed `globalThis.fetch` (no live ODSP server).
  */
 describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 	const siteUrl = "https://microsoft.sharepoint.com";
@@ -37,8 +35,6 @@ describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 
 	// getAuthHeader is stubbed to a fixed token; getHeadersWithAuth turns it into the Authorization header.
 	const getAuthHeader: InstrumentedStorageTokenFetcher = async () => "Bearer token";
-	const logger = createChildLogger();
-
 	let epochTracker: EpochTracker;
 	let fetcher: ReturnType<typeof createOdspFileVersionFetcher>;
 
@@ -55,7 +51,7 @@ describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 			{ docId: hashedDocumentId, resolvedUrl },
 			createChildLogger(),
 		);
-		fetcher = createOdspFileVersionFetcher({ urlParts, getAuthHeader, epochTracker, logger });
+		fetcher = createOdspFileVersionFetcher({ urlParts, getAuthHeader, epochTracker });
 	});
 
 	afterEach(async () => {
@@ -69,11 +65,13 @@ describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 	async function withFetch<T>(
 		responses: MockResponse[],
 		fn: () => Promise<T>,
-	): Promise<{ result: T; urls: string[] }> {
+	): Promise<{ result: T; urls: string[]; accepts: (string | undefined)[] }> {
 		const urls: string[] = [];
+		const accepts: (string | undefined)[] = [];
 		const fetchStub = stub(globalThis, "fetch");
-		fetchStub.callsFake(async (url) => {
+		fetchStub.callsFake(async (url, options) => {
 			urls.push(typeof url === "string" ? url : url instanceof URL ? url.href : url.url);
+			accepts.push((options?.headers as Record<string, string> | undefined)?.accept);
 			const next = responses.shift();
 			assert(next !== undefined, "unexpected extra fetch call");
 			return next as unknown as Response;
@@ -81,7 +79,7 @@ describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 		try {
 			const result = await fn();
 			assert.equal(responses.length, 0, "all stubbed responses should be consumed");
-			return { result, urls };
+			return { result, urls, accepts };
 		} finally {
 			fetchStub.restore();
 		}
@@ -89,7 +87,7 @@ describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 
 	const jsonHeaders = { "content-type": "application/json" };
 
-	/** A minimal but parser-valid ODSP JSON snapshot carrying the given sequence number. */
+	/** A minimal ODSP JSON snapshot carrying the given sequence number. */
 	function snapshotWithSeq(sequenceNumber: number): IOdspSnapshot {
 		return {
 			id: "id",
@@ -104,22 +102,6 @@ describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 		trees: [{ entries: [{ path: "path", type: "tree" }], id: "id" }],
 		blobs: [],
 	} as unknown as IOdspSnapshot;
-
-	const msFluidHeaders = { "content-type": "application/ms-fluid" };
-
-	/** Serialize a minimal snapshot carrying `sequenceNumber` into the compact (ms-fluid) binary form. */
-	function compactSnapshotBytesWithSeq(sequenceNumber: number): Uint8Array {
-		const snapshotTree: ISnapshotTree = { id: "id", blobs: {}, trees: {} };
-		const snapshot: ISnapshot = {
-			snapshotTree,
-			blobContents: new Map(),
-			ops: [],
-			sequenceNumber,
-			latestSequenceNumber: sequenceNumber,
-			snapshotFormatV: 1,
-		};
-		return convertToCompactSnapshot(snapshot);
-	}
 
 	it("listFileVersions parses the /versions response and calls the versions URL", async () => {
 		// @q F-LIST-01
@@ -194,12 +176,13 @@ describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 
 	it("resolveSequenceNumber reads trees[0].sequenceNumber and calls the versioned snapshot URL", async () => {
 		// @q F-RESOLVE-01
-		const { result, urls } = await withFetch(
+		const { result, urls, accepts } = await withFetch(
 			[await createResponse(jsonHeaders, snapshotWithSeq(448), 200)],
 			async () => fetcher.resolveSequenceNumber("42.0"),
 		);
 
 		assert.equal(result, 448);
+		assert.deepEqual(accepts, ["application/json"]);
 		assert.ok(
 			urls[0]?.includes(`/versions/42.0/opStream/snapshots/trees/latest?blobs=2`),
 			`expected the fileVersion snapshot URL, got ${urls[0]}`,
@@ -226,8 +209,7 @@ describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 	it("resolveSequenceNumber throws when the snapshot's sequence number is not a valid integer", async () => {
 		// @q F-RESOLVE-06
 		// A present-but-malformed sequence number must be rejected, not coerced into base selection. A
-		// non-integer number reaches the validation (the parser passes numbers through); incorrectServerResponse
-		// is retried once, so two responses are stubbed.
+		// incorrectServerResponse is retried once, so two responses are stubbed.
 		const snapshotBadSeq = {
 			id: "id",
 			trees: [{ entries: [{ path: "path", type: "tree" }], id: "id", sequenceNumber: 3.5 }],
@@ -246,16 +228,7 @@ describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 		);
 	});
 
-	it("resolveSequenceNumber parses an application/ms-fluid (binary) snapshot", async () => {
-		// @q F-RESOLVE-03
-		const { result } = await withFetch(
-			[await createResponse(msFluidHeaders, compactSnapshotBytesWithSeq(448), 200)],
-			async () => fetcher.resolveSequenceNumber("42.0"),
-		);
-		assert.equal(result, 448);
-	});
-
-	it("resolveSequenceNumber rejects on an unexpected content-type instead of mis-parsing", async () => {
+	it("resolveSequenceNumber rejects when the server does not honor the JSON accept header", async () => {
 		// @q F-RESOLVE-04
 		// The typed incorrectServerResponse error is retried once by getWithRetryForTokenRefresh, so two
 		// responses are stubbed; the retry hits the same content-type and the error propagates.
@@ -268,7 +241,7 @@ describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 					],
 					async () => fetcher.resolveSequenceNumber("42.0"),
 				),
-			/unexpected content-type/,
+			/did not honor the JSON accept header/,
 		);
 	});
 
@@ -302,7 +275,6 @@ describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 			urlParts,
 			getAuthHeader: trackingAuth,
 			epochTracker,
-			logger,
 		});
 		const { result } = await withFetch(
 			[
@@ -326,50 +298,6 @@ describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 		);
 	});
 
-	const epochHeaders = (epoch: string): { [key: string]: string } => ({
-		...jsonHeaders,
-		"x-fluid-epoch": epoch,
-	});
-
-	it("getLiveDocumentEpoch reads x-fluid-epoch from the live snapshot endpoint", async () => {
-		// @q F-EPOCH-01
-		const { result, urls } = await withFetch(
-			[await createResponse(epochHeaders("epoch-live"), new Uint8Array(0), 200)],
-			async () => fetcher.getLiveDocumentEpoch(),
-		);
-		assert.equal(result, "epoch-live");
-		assert.ok(
-			urls[0]?.includes(`/drives/${driveId}/items/${itemId}/opStream/snapshots/trees/latest`),
-			`expected the live snapshot URL, got ${urls[0]}`,
-		);
-		assert.ok(
-			!urls[0]?.includes("/versions/"),
-			"the live epoch must not be read from a versioned URL",
-		);
-	});
-
-	it("getRecoverableVersionEpoch reads x-fluid-epoch from the versioned snapshot endpoint", async () => {
-		// @q F-EPOCH-02
-		const { result, urls } = await withFetch(
-			[await createResponse(epochHeaders("epoch-old"), new Uint8Array(0), 200)],
-			async () => fetcher.getRecoverableVersionEpoch("40.0"),
-		);
-		assert.equal(result, "epoch-old");
-		assert.ok(
-			urls[0]?.includes(`/versions/40.0/opStream/snapshots/trees/latest`),
-			`expected the versioned snapshot URL, got ${urls[0]}`,
-		);
-	});
-
-	it("getRecoverableVersionEpoch returns undefined when the server sends no epoch header", async () => {
-		// @q F-EPOCH-03
-		const { result } = await withFetch(
-			[await createResponse(jsonHeaders, new Uint8Array(0), 200)],
-			async () => fetcher.getRecoverableVersionEpoch("40.0"),
-		);
-		assert.equal(result, undefined);
-	});
-
 	it("listFileVersions refreshes the token and retries after an auth failure", async () => {
 		// @q F-ERROR-04
 		const refreshFlags: boolean[] = [];
@@ -381,7 +309,6 @@ describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 			urlParts,
 			getAuthHeader: trackingAuth,
 			epochTracker,
-			logger,
 		});
 		const { result } = await withFetch(
 			[

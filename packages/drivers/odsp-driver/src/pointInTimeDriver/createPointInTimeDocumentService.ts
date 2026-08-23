@@ -109,7 +109,6 @@ export function createVersionManager(
 		urlParts,
 		getAuthHeader,
 		epochTracker,
-		logger,
 	});
 }
 
