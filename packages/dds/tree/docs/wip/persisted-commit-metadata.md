@@ -65,6 +65,22 @@ There is no spread, so any additional property on a `GraphCommit` is dropped the
 The revision tag survives rebase; the object identity does not.
 Keeping the index keyed by `RevisionTag` and joining the two only at encode and decode time keeps this correct.
 
+### One index per tree, shared by every branch
+
+The index belongs to the `SharedTreeCore` instance, not to an individual `TreeCheckout`.
+
+A transaction can run on any branch. An application that renders from a fork and publishes by merging
+that fork into the main branch will annotate its transactions on the fork, and those commits reach the
+wire only when the merge submits them. `submitCommit` must therefore find metadata that a *different*
+checkout recorded.
+
+Keying by `RevisionTag` is what makes this work: merging and rebasing preserve each commit's revision,
+so a lookup by revision remains valid after the commit moves between branches. A checkout records into
+the shared index; every other stage of the pipeline reads from that same index by revision.
+
+Delete an entry only on rollback or eviction, not on branch disposal.
+A commit whose fork has been disposed may already have been merged into another branch.
+
 ## Public API
 
 Add an optional field to `RunTransactionParamsAlpha` in `simple-tree/api/transactionTypes.ts`:
@@ -189,7 +205,20 @@ which runs before the `finally` block in `runWithTransactionLabel` that clears t
 
 `submitCommit` looks up the metadata by revision and includes it on the outgoing message.
 
-Write the entry into the index at submit time so that it is present for local reads before sequencing.
+Write the entry into the index at record time so that it is present for local reads before sequencing,
+and so that it is already there when a commit made on a fork is later submitted by a merge.
+
+### Commits made on a branch
+
+A transaction that runs on a fork produces a commit that is not submitted until the fork is merged
+into a branch that submits.
+
+No extra bookkeeping is required, provided the index is shared across the tree as described in the
+data model. The recording checkout writes the entry keyed by revision; the merge preserves that
+revision; `submitCommit` finds the entry when the commit finally goes to the wire.
+
+This path is worth testing directly, because an application that renders from a fork exercises it on
+every edit.
 
 ### Remote commit
 
@@ -276,6 +305,11 @@ Metadata for a commit retained under `retainHistory` survives a summary round tr
 Metadata survives rebase,
 verified by annotating a local commit and then sequencing a concurrent remote commit ahead of it.
 
+Metadata attached to a transaction on a fork is readable after that fork is merged into the main
+branch, and reaches a peer once the merge is sequenced.
+
+Metadata attached on a fork is still readable after the fork itself is disposed.
+
 Metadata survives a disconnect and reconnect, exercising `reSubmitCore`.
 
 Metadata survives the stashed op path via `getRequiredPendingLocalState`.
@@ -296,6 +330,7 @@ Nested transactions resolve to the outermost transaction's metadata.
 5. Add the optional field to `CommitBase` and to the `Commit` and `EncodedCommit` interfaces,
    and carry it through `encodeCommit` and `decodeCommit`.
 6. Populate and read the index across `submitCommit`, `processMessagesCore`, `reSubmitCore`, `applyStashedOp`, and `rollback`.
+   Hold the index on `SharedTreeCore` so every checkout of the tree shares it.
 7. Prune the in-memory index on `ancestryTrimmed`.
 8. Expose `getPersistedCommitMetadata` on the alpha surface.
 9. Add tests per the section above.
