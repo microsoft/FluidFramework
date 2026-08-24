@@ -77,7 +77,9 @@ export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
  * @internal
  */
 export type ContainerRuntimeFactoryWithDefaultDataStoreConstructor = (
-	| (new (props: ContainerRuntimeFactoryWithDefaultDataStoreProps) => IRuntimeFactory)
+	| (new (
+			props: ContainerRuntimeFactoryWithDefaultDataStoreProps,
+	  ) => IRuntimeFactory)
 	| (new (
 			defaultFactory: IFluidDataStoreFactory,
 			registryEntries: NamedFluidDataStoreRegistryEntries,
@@ -91,7 +93,9 @@ export type ContainerRuntimeFactoryWithDefaultDataStoreConstructor = (
 
 type ObjectContainerRuntimeFactoryWithDefaultDataStoreConstructor = Extract<
 	ContainerRuntimeFactoryWithDefaultDataStoreConstructor,
-	new (props: ContainerRuntimeFactoryWithDefaultDataStoreProps) => IRuntimeFactory
+	new (
+		props: ContainerRuntimeFactoryWithDefaultDataStoreProps,
+	) => IRuntimeFactory
 >;
 
 type PositionalContainerRuntimeFactoryWithDefaultDataStoreConstructor = Exclude<
