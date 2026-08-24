@@ -14,6 +14,26 @@ Existing [`TreeAlpha.on`](https://fluidframework.com/docs/api/fluid-framework/tr
 
 #### Examples
 
+For example, inserting `99` at index 1 in an array containing `[1, 2, 3]` produces the following delta.
+
+```typescript
+[
+	{ type: "retain", count: 1 },
+	{ type: "insert", count: 1 },
+	{ type: "retain", count: 2 },
+];
+```
+
+Removing the value at index 1 from an array containing `[1, 2, 3]` produces the following delta.
+
+```typescript
+[
+	{ type: "retain", count: 1 },
+	{ type: "remove", count: 1 },
+	{ type: "retain", count: 1 },
+];
+```
+
 The following example applies an array node's direct changes to an external array without comparing full snapshots.
 
 ```typescript
