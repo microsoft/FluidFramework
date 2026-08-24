@@ -4286,31 +4286,36 @@ describe("Runtime", () => {
 					);
 				});
 
-				it("Throws when createBlobPayloadPending defaults to enabled (via minVersionForCollab) while explicitSchemaControl is explicitly disabled", async () => {
+				it("createBlobPayloadPending stays disabled when it would otherwise default to enabled (via minVersionForCollab) while explicitSchemaControl is explicitly disabled", async () => {
 					// createBlobPayloadPending is intentionally left unset here: with minVersionForCollab
-					// >= 2.40.0, it resolves to `true` purely via defaults. explicitSchemaControl is
-					// explicitly set to `false`, so this should still be rejected even though
-					// createBlobPayloadPending never appears in runtimeOptions.
-					await assert.rejects(
-						async () =>
-							ContainerRuntime.loadRuntime2({
-								context: getMockContext() as IContainerContext,
-								registry: new FluidDataStoreRegistry([]),
-								existing: false,
-								runtimeOptions: {
-									explicitSchemaControl: false,
-								},
-								minVersionForCollab: "2.40.0",
-								provideEntryPoint: mockProvideEntryPoint,
-							}),
-						(error: IErrorBase) => {
-							return (
-								error.errorType === ContainerErrorTypes.usageError &&
-								error.message ===
-									"explicitSchemaControl must be enabled to use createBlobPayloadPending"
-							);
+					// >= 2.40.0, it would normally resolve to `true` purely via defaults. However,
+					// explicitSchemaControl is explicitly set to `false`, so createBlobPayloadPending should
+					// silently stay disabled rather than throwing, since callers who never asked for this
+					// feature (and don't otherwise set explicitSchemaControl for blob-related reasons)
+					// shouldn't be broken by it turning on behind their back.
+					const mockLogger = new MockLogger();
+					await ContainerRuntime.loadRuntime2({
+						context: getMockContext({ logger: mockLogger }) as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: {
+							explicitSchemaControl: false,
 						},
-						"Container should throw when createBlobPayloadPending defaults to enabled while explicitSchemaControl is explicitly disabled",
+						minVersionForCollab: "2.40.0",
+						provideEntryPoint: mockProvideEntryPoint,
+					});
+
+					const loadStatsEvent = mockLogger.events.find(
+						(event) => event.eventName === "ContainerRuntime:ContainerLoadStats",
+					);
+					assert(loadStatsEvent !== undefined, "Expected a ContainerLoadStats event");
+					const loggedOptions = JSON.parse(
+						loadStatsEvent.options as string,
+					) as IContainerRuntimeOptionsInternal;
+					assert.strictEqual(
+						loggedOptions.createBlobPayloadPending,
+						undefined,
+						"createBlobPayloadPending should remain disabled when explicitSchemaControl is disabled",
 					);
 				});
 			});

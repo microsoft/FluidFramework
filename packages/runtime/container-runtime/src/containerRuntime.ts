@@ -1085,10 +1085,12 @@ export class ContainerRuntime
 			compressionOptions = enableGroupedBatching === false
 				? disabledCompressionConfig
 				: defaultConfigs.compressionOptions,
-			createBlobPayloadPending = defaultConfigs.createBlobPayloadPending,
+			createBlobPayloadPending:
+				createBlobPayloadPendingResolved = defaultConfigs.createBlobPayloadPending,
 			stagingModeAutoFlushThreshold = defaultConfigs.stagingModeAutoFlushThreshold,
 			disableSchemaUpgrade = defaultConfigs.disableSchemaUpgrade,
 		}: IContainerRuntimeOptionsInternal = runtimeOptions;
+		let createBlobPayloadPending = createBlobPayloadPendingResolved;
 
 		// If explicitSchemaControl is off, ensure that options which require explicitSchemaControl are not enabled.
 		if (!explicitSchemaControl) {
@@ -1104,12 +1106,10 @@ export class ContainerRuntime
 			// createBlobPayloadPending is a special case: unlike the other options above, it can resolve to
 			// enabled purely via defaults (it defaults to `true` once minVersionForCollab >= 2.40.0), without
 			// ever being set explicitly in runtimeOptions. The check above only catches values explicitly
-			// present in runtimeOptions, so it would miss this case; check the resolved value directly instead.
-			if (createBlobPayloadPending !== undefined) {
-				throw new UsageError(
-					"explicitSchemaControl must be enabled to use createBlobPayloadPending",
-				);
-			}
+			// present in runtimeOptions (and already throws above if the caller did so), so it would miss
+			// this purely-default-driven case. Rather than erroring on callers who never asked for this
+			// feature, just silently keep it disabled here to stay consistent with explicitSchemaControl.
+			createBlobPayloadPending = undefined;
 		}
 
 		// The logic for enableRuntimeIdCompressor is a bit different. Since `undefined` represents a logical state (off)
