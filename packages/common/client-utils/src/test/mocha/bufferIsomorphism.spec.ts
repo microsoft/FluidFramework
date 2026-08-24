@@ -8,9 +8,14 @@ import { strict as assert } from "node:assert";
 import * as BufferBrowser from "../../bufferBrowser.js";
 import * as BufferNode from "../../bufferNode.js";
 
+function oob(): never {
+	throw new Error("Out of bounds");
+}
+
 describe("Buffer isomorphism", () => {
 	it("returns the expected implementation", () => {
 		// BufferNode should create a native Node.js Buffer instance
+		assert.strictEqual(BufferNode.IsoBuffer, globalThis.Buffer);
 		const nodeBuffer = BufferNode.IsoBuffer.from("", "utf8");
 		assert.equal(nodeBuffer.constructor.name, "Buffer");
 
@@ -38,8 +43,8 @@ describe("Buffer isomorphism", () => {
 		}
 
 		{
-			const nodeBuffer = BufferNode.IsoBuffer.from(testArray[1]);
-			const browserBuffer = BufferBrowser.IsoBuffer.from(testArray[1]);
+			const nodeBuffer = BufferNode.IsoBuffer.from(testArray[1] ?? oob());
+			const browserBuffer = BufferBrowser.IsoBuffer.from(testArray[1] ?? oob());
 			assert.equal(nodeBuffer.toString("utf8"), browserBuffer.toString("utf8"));
 			// eslint-disable-next-line unicorn/text-encoding-identifier-case
 			assert.equal(nodeBuffer.toString("utf-8"), browserBuffer.toString("utf-8"));
@@ -100,13 +105,13 @@ describe("Buffer isomorphism", () => {
 		];
 
 		for (let i = 0; i < testArrayUtf8.length; i++) {
-			const nodeBuffer1 = BufferNode.IsoBuffer.from(testArrayUtf8[i]);
+			const nodeBuffer1 = BufferNode.IsoBuffer.from(testArrayUtf8[i] ?? oob());
 			assert.equal(nodeBuffer1.toString("base64"), testArrayBase64[i]);
 
 			const nodeBuffer2 = BufferNode.IsoBuffer.from(nodeBuffer1.toString("base64"), "base64");
 			assert.equal(nodeBuffer2.toString(), testArrayUtf8[i]);
 
-			const browserBuffer1 = BufferBrowser.IsoBuffer.from(testArrayUtf8[i]);
+			const browserBuffer1 = BufferBrowser.IsoBuffer.from(testArrayUtf8[i] ?? oob());
 			assert.equal(browserBuffer1.toString("base64"), testArrayBase64[i]);
 
 			const browserBuffer2 = BufferBrowser.IsoBuffer.from(
@@ -194,12 +199,16 @@ describe("Buffer isomorphism", () => {
 
 			const fullBuffer = BufferNode.IsoBuffer.from(uint8View);
 
+			// @ts-expect-error - Verifies that extra arguments are ignored at runtime.
 			const subsetUInt8ViewNode = BufferNode.IsoBuffer.from(uint8View, 2, 4);
+			// @ts-expect-error - Verifies that extra arguments are ignored at runtime.
 			const subsetFullBufferNode = BufferNode.IsoBuffer.from(fullBuffer, 2, 4);
 			assert.equal(fullBuffer.toString(), subsetUInt8ViewNode.toString());
 			assert.equal(fullBuffer.toString(), subsetFullBufferNode.toString());
 
+			// @ts-expect-error - Verifies that extra arguments are ignored at runtime.
 			const subsetUInt8ViewBrowser = BufferBrowser.IsoBuffer.from(uint8View, 2, 4);
+			// @ts-expect-error - Verifies that extra arguments are ignored at runtime.
 			const subsetFullBufferBrowser = BufferBrowser.IsoBuffer.from(fullBuffer, 2, 4);
 			assert.equal(fullBuffer.toString(), subsetUInt8ViewBrowser.toString());
 			assert.equal(fullBuffer.toString(), subsetFullBufferBrowser.toString());
