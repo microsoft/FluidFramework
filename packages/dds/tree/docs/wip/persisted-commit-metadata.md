@@ -8,8 +8,9 @@ The metadata shares the lifetime of the commit it is attached to:
 once the commit is trimmed from the trunk, the metadata goes with it.
 This keeps growth bounded without requiring any additional garbage collection policy.
 
-The metadata is persisted inline on the commits in the `EditManager` summary.
-Storing it on the commit itself is what makes the shared lifetime automatic,
+The metadata lives directly on the commit — on `GraphCommit` in memory and inline on the commits in the
+`EditManager` summary. There is no separate index to populate, reconcile, or prune.
+Storing it on the commit is what makes the shared lifetime automatic,
 keeps the persisted metadata consistent with the trunk by construction,
 and allows the metadata to be paged alongside its commits if summary history is virtualized later.
 
@@ -38,20 +39,28 @@ Use `PersistedCommitMetadata` for the value type.
 
 ## Data model
 
-The metadata is keyed by `RevisionTag` in memory, in a map from `RevisionTag` to `JsonCompatibleReadOnlyObject`.
+Add the metadata to `GraphCommit` in `core/rebase/types.ts` as a **required** property:
 
-`RevisionTag` is the correct key for three reasons.
-A revision tag is stable across rebase, as documented on `GraphCommit.revision`.
-All commits within a single transaction share one revision tag, which `transaction.ts` enforces with assert `0xcaf`.
-A revision tag is available at every point in the pipeline where the metadata must be read or written.
+```typescript
+readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined;
+```
 
-### Keep the metadata off `GraphCommit`
+Required, not optional. The value may be `undefined`, but the property must always be written.
+`GraphCommit` does not appear in any API report, so this is an internal change.
 
-Attach the metadata to the in-memory index, not to the `GraphCommit` object.
+### Why required
 
-This is worth stating explicitly because putting it on the commit object is the intuitive move,
-and it silently loses data.
-`rebaseBranch` in `core/rebase/utils.ts` constructs rebased commits as fresh object literals:
+Two places rebuild a commit from its parts rather than spreading it, and both would silently drop an
+optional property.
+
+`mintCommit` in `core/rebase/types.ts`:
+
+```typescript
+const { revision, change } = commit;
+return { revision, change, parent };
+```
+
+and `rebaseBranch` in `core/rebase/utils.ts`:
 
 ```typescript
 newHead = {
@@ -61,25 +70,29 @@ newHead = {
 };
 ```
 
-There is no spread, so any additional property on a `GraphCommit` is dropped the first time the commit is rebased.
-The revision tag survives rebase; the object identity does not.
-Keeping the index keyed by `RevisionTag` and joining the two only at encode and decode time keeps this correct.
+Declaring the property required turns both into compile errors, so the type system enumerates every
+site that has to make a decision instead of leaving the loss silent.
 
-### One index per tree, shared by every branch
+### Propagate at the rebuild sites — do not write `undefined` to satisfy the compiler
 
-The index belongs to the `SharedTreeCore` instance, not to an individual `TreeCheckout`.
+This is the one way to get this wrong.
 
-A transaction can run on any branch. An application that renders from a fork and publishes by merging
-that fork into the main branch will annotate its transactions on the fork, and those commits reach the
-wire only when the merge submits them. `submitCommit` must therefore find metadata that a *different*
-checkout recorded.
+A rebased or re-parented commit is the **same logical commit** as its source: same revision, same
+change, same metadata. Both sites above must copy `persistedMetadata` from the commit they are
+rebuilding. Writing `persistedMetadata: undefined` there compiles cleanly and reintroduces exactly
+the data loss the required property exists to prevent.
 
-Keying by `RevisionTag` is what makes this work: merging and rebasing preserve each commit's revision,
-so a lookup by revision remains valid after the commit moves between branches. A checkout records into
-the shared index; every other stage of the pipeline reads from that same index by revision.
+`undefined` is correct only where a genuinely new commit is minted that no caller annotated — the
+inverse commit produced by reverting, and rollback commits.
 
-Delete an entry only on rollback or eviction, not on branch disposal.
-A commit whose fork has been disposed may already have been merged into another branch.
+### Why the commit and not a side index
+
+The metadata is reachable wherever a commit is, which is every point in the pipeline that needs it.
+It is garbage collected with its commit, so trimming needs no participation. It cannot drift out of
+sync with the commit graph, because there is no second structure to keep in sync. And it survives
+moving between branches for free: an application that renders from a fork and publishes by merging
+that fork into the main branch carries its metadata along with the commits it merges, with no
+cross-branch bookkeeping.
 
 ## Public API
 
@@ -131,17 +144,34 @@ Callers that need to detect the case can compare `branchHistory.getHeadCommit()`
 
 ### Reading
 
-Expose a lookup on the alpha tree surface:
+Expose the metadata on `TreeBranchCommitMetadata` in `simple-tree/api/tree.ts`, the per-commit object
+introduced alongside `TreeBranchHistory`:
 
 ```typescript
-getPersistedCommitMetadata(revision: RevisionTag): JsonCompatibleReadOnlyObject | undefined;
+readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined;
 ```
 
-Return `undefined` for revisions that were never annotated,
-for commits that predate this feature,
-and for commits whose metadata has been evicted.
+`LazyTreeBranchCommitMetadata` in `shared-tree/history.ts` wraps the `GraphCommit` it describes, so
+this reads straight through to the commit.
 
-Callers correlate a commit to its revision through the existing change events.
+Reading is therefore a property of history navigation rather than a separate lookup. A caller reaches
+a commit through `branchHistory.getHeadCommit()` and the `parent` chain, and the metadata is already
+there:
+
+```typescript
+for (
+	let commit = view.branchHistory.getHeadCommit();
+	commit !== undefined;
+	commit = commit.parent
+) {
+	const metadata = commit.persistedMetadata;
+}
+```
+
+The value is `undefined` for commits that were never annotated and for commits created before the
+feature was enabled. There is deliberately no lookup by revision: a caller holding only a revision
+walks the chain to find its commit. Adding a revision-keyed accessor would require a side index, which
+is the structure this design removes.
 
 ## Format versions
 
@@ -201,9 +231,8 @@ This covers the trunk via `SequencedCommit`, peer local branches via `SummarySes
 and shared branches via `EncodedSharedBranch`.
 
 `encodeCommit` in `editManagerCodecsCommons.ts` already has everything it needs.
-It holds the commit's `revision` and `sessionId`, so it looks the metadata up in the index by revision
-and writes it onto the encoded commit with no additional key encoding.
-`decodeCommit` reverses this, writing any decoded metadata into the index keyed by the decoded revision.
+It holds the commit, so it reads `persistedMetadata` directly and writes it onto the encoded commit.
+`decodeCommit` reverses this, setting `persistedMetadata` on the `GraphCommit` it reconstructs.
 
 Emit the field only when encoding at `EditManagerFormatVersion.v7` or later.
 
@@ -212,72 +241,74 @@ and the persisted metadata is exactly the set of commits present in the summary.
 
 ## Lifecycle
 
+Because the metadata is a property of the commit, most stages need no bookkeeping at all: anything that
+already carries a commit carries its metadata. What follows is limited to the places that construct a
+commit and must therefore supply the property.
+
 ### Local commit
 
-`TreeCheckout` records the metadata for the commit the active transaction is about to produce.
+`TreeCheckout` holds the metadata supplied to the active transaction and attaches it to the commit that
+transaction produces, so the commit carries it from the moment it exists.
 
 Ordering is safe.
 `SharedTreeCore.registerSharedBranch` submits from the branch's `beforeChange` event during the apply,
 which runs before the `finally` block in `runWithTransactionLabel` that clears the transaction's label state.
 
-`submitCommit` looks up the metadata by revision and includes it on the outgoing message.
+`submitCommit` reads `persistedMetadata` off the commit and includes it on the outgoing message.
 
-Write the entry into the index at record time so that it is present for local reads before sequencing,
-and so that it is already there when a commit made on a fork is later submitted by a merge.
+Because the metadata is present on the commit before sequencing, local reads through the branch history
+see it immediately.
 
 ### Commits made on a branch
 
-A transaction that runs on a fork produces a commit that is not submitted until the fork is merged
-into a branch that submits.
+A transaction that runs on a fork produces a commit that is not submitted until the fork is merged into
+a branch that submits.
 
-No extra bookkeeping is required, provided the index is shared across the tree as described in the
-data model. The recording checkout writes the entry keyed by revision; the merge preserves that
-revision; `submitCommit` finds the entry when the commit finally goes to the wire.
+This requires no special handling. The metadata is on the commit, and merging carries the commit
+across, so the metadata arrives with it — provided the rebuild sites propagate rather than reset the
+property, per the data model.
 
 This path is worth testing directly, because an application that renders from a fork exercises it on
 every edit.
 
 ### Remote commit
 
-`processMessagesCore` decodes each message and writes any metadata into the index,
-keyed by the decoded revision.
-
-Do this for both local and remote messages so that the index is populated identically on every client.
+`processMessagesCore` decodes each message and sets the decoded metadata on the commit it constructs.
 
 ### Resubmit
 
 `reSubmitCore` decodes the stored op only to recover the revision,
 then re-submits the in-memory enriched commit through `submitCommit`.
 
-`submitCommit` must therefore read the metadata from the index by revision.
-Reading it back off the decoded op will not work, because the decoded message is discarded.
+That in-memory commit already carries its metadata, so `submitCommit` re-reads it from the commit and
+nothing has to be recovered from the decoded message.
 
 ### Stashed ops
 
 `applyStashedOp` reconstructs the commit from `{ revision, change }` alone.
 
-Extend it to write the decoded metadata into the index,
+Extend it to set `persistedMetadata` from the decoded op,
 so that metadata attached before a disconnect survives the pending-state round trip.
 
 ### Rollback
 
-`rollback` removes the commit from the local branch.
-Delete the corresponding index entry.
+`rollback` removes the commit from the local branch, and the metadata goes with it.
+Nothing else to do.
 
 ### Eviction
 
-The persisted side needs no work.
-A trimmed commit is not serialized, so its metadata leaves the document with it.
+Nothing to do, on either side.
 
-Subscribe to the `ancestryTrimmed` event, which `EditManager` emits with the exact `RevisionTag[]` being trimmed,
-and delete those revisions from the in-memory index so that memory tracks the trunk.
+A trimmed commit is not serialized, so its metadata leaves the document with it. In memory, the
+metadata is a property of the commit object and is collected with it, so no `ancestryTrimmed`
+subscription is required.
 
 ### Load
 
-Two sources compose to reconstruct the index on a loading client.
+Two sources compose on a loading client, and both attach the metadata as the commit is built.
 
 Commits at or before the summary's reference sequence number carry their metadata inline,
-and `decodeCommit` writes it into the index as the summary is decoded.
+and `decodeCommit` sets it on each `GraphCommit` as the summary is decoded.
 
 Trailing ops, meaning those sequenced after the last summary, carry their metadata inline and are replayed through `processMessagesCore` during load.
 
@@ -321,6 +352,7 @@ Metadata for a commit retained under `retainHistory` survives a summary round tr
 
 Metadata survives rebase,
 verified by annotating a local commit and then sequencing a concurrent remote commit ahead of it.
+This is the regression test for the rebuild sites described in the data model.
 
 Metadata attached to a transaction on a fork is readable after that fork is merged into the main
 branch, and reaches a peer once the merge is sequenced.
@@ -342,16 +374,18 @@ Nested transactions resolve to the outermost transaction's metadata.
 ## Work items
 
 1. Add `persistedMetadata` to `RunTransactionParamsAlpha` and thread it through the transaction entry points.
-2. Record pending metadata in `TreeCheckout` for the commit under construction.
-3. Add `v7` to `MessageFormatVersion` and `EditManagerFormatVersion`, register it as supported,
+2. Add the required `persistedMetadata` property to `GraphCommit`, then work through the resulting
+   compile errors. Propagate at `mintCommit` and `rebaseBranch`; set `undefined` only where a genuinely
+   new commit is minted.
+3. Carry the transaction's metadata onto the commit it produces in `TreeCheckout`.
+4. Add `v7` to `MessageFormatVersion` and `EditManagerFormatVersion`, register it as supported,
    and add the `changeFormatVersionFor*` entries.
-4. Add the optional field to both message formats, `CommitMessage`, and both message codecs.
-5. Add the optional field to `CommitBase` and to the `Commit` and `EncodedCommit` interfaces,
+5. Add the optional field to both message formats, `CommitMessage`, and both message codecs.
+6. Add the optional field to `CommitBase` and to the `Commit` and `EncodedCommit` interfaces,
    and carry it through `encodeCommit` and `decodeCommit`.
-6. Populate and read the index across `submitCommit`, `processMessagesCore`, `reSubmitCore`, `applyStashedOp`, and `rollback`.
-   Hold the index on `SharedTreeCore` so every checkout of the tree shares it.
-7. Prune the in-memory index on `ancestryTrimmed`.
-8. Expose `getPersistedCommitMetadata` on the alpha surface.
+7. Set the property on the commits built by `processMessagesCore` and `applyStashedOp`, and read it
+   from the commit in `submitCommit`.
+8. Expose `persistedMetadata` on `TreeBranchCommitMetadata`, reading through from the wrapped commit.
 9. Add tests per the section above.
 10. Regenerate API reports, add a changeset, and update op and summary snapshots.
 
