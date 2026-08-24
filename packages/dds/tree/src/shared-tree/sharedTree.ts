@@ -316,6 +316,7 @@ export class SharedTreeKernel
 
 		this.checkout = createTreeCheckout(idCompressor, this.mintRevisionTag, revisionTagCodec, {
 			branch: this.getLocalBranch(),
+			branchManager: this.branchManager,
 			changeFamily,
 			schema,
 			forest,

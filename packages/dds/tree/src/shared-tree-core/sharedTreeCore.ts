@@ -69,6 +69,7 @@ import {
 	type SummaryElementStringifier,
 } from "./summaryTypes.js";
 import { VersionedSummarizer } from "./versionedSummarizer.js";
+import type { BranchManager } from "./branchManager.js";
 
 export interface ClonableSchemaAndPolicy extends SchemaAndPolicy {
 	schema: TreeStoredSchemaRepository;
@@ -144,6 +145,8 @@ export class SharedTreeCore<
 
 	public readonly mintRevisionTag: () => RevisionTag;
 
+	public readonly branchManager: BranchManager<TEditor, TChange, TChangeProcessingContext>;
+
 	private readonly schemaAndPolicy: ClonableSchemaAndPolicy;
 
 	private static readonly maxBranchNameLength = 1024;
@@ -206,6 +209,7 @@ export class SharedTreeCore<
 			rebaseLogger,
 			coreOptions.retainHistory ?? false,
 		);
+		this.branchManager = this.editManager;
 
 		this.registerSharedBranch("main");
 
