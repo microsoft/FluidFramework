@@ -15,8 +15,9 @@
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build-and-test": "npm run build && npm run test",
+		"build:cjs": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist",
 		"build:compile": "fluid-build . --task compile",
-		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:esm": "tsc --project ./tsconfig.json",
 		"build:webpack": "fluid-build . --task webpack",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
@@ -44,7 +45,6 @@
 		"test:playwright:verbose": "cross-env FLUID_TEST_VERBOSE=1 playwright test",
 		"test:unit": "npm run test:mocha",
 		"test:verbose": "concurrently npm:test:mocha:verbose npm:test:playwright:verbose",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist",
 		"webpack": "webpack",
 		"webpack:dev": "webpack --env development"
 	},
@@ -127,7 +127,7 @@
 		"sinon": "^18.0.1",
 		"sinon-chrome": "^3.0.1",
 		"ts-loader": "^9.5.1",
-		"typescript": "~5.4.5",
+		"typescript": "~6.0.3",
 		"webpack": "^5.94.0",
 		"webpack-cli": "^5.1.4"
 	},
