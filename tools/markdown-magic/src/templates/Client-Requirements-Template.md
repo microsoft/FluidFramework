@@ -1,5 +1,6 @@
 The following are the platform requirements for using Fluid Framework client libraries.
-These requirements err on the side of being conservative, policies may be relaxed within a major version series, but not made stricter.
+These requirements err on the side of being conservative.
+Policies may be relaxed within a major version series, but not made stricter.
 For Long Term Support (LTS) versions, this can require supporting these platforms for several years.
 
 It is likely that other configurations will work, but they are not supported.
@@ -12,7 +13,7 @@ When making such a request, please include whether the configuration already wor
 -   Node.js versions 22 and 24 for as long as they are receiving [upstream support](https://nodejs.org/en/about/previous-releases).
     -   Support for version 22 will be dropped [when it loses upstream support on 2027-04-30](https://github.com/nodejs/release#release-schedule).
     -   Running Fluid in a Node.js environment with the `--no-experimental-fetch` flag is not supported.
--   Modern browsers supporting the es2022 standard library.
+-   Modern browsers supporting the ES2022 standard library.
 
 # Supported Tools
 
