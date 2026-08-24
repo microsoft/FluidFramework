@@ -377,6 +377,7 @@ describe("VersionMarkResolver", () => {
 			assert.deepEqual(await resolver.resolve(generateBatchId("clientA", 7), 15), {
 				kind: "resolved",
 				sequenceNumber: 15,
+				timestamp: 15000,
 			});
 			assert.deepEqual(calls, [{ from: 15, to: undefined }]);
 		});
