@@ -26,7 +26,7 @@ import type {
 	JsonCompatibleReadOnlyObject,
 } from "../../util/index.js";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
-import type { Unhydrated } from "../core/index.js";
+import type { SchemaUpgrade, Unhydrated } from "../core/index.js";
 import type {
 	ImplicitFieldSchema,
 	InsertableField,
@@ -39,6 +39,7 @@ import type { SimpleTreeSchema } from "../simpleSchema.js";
 import type { UnsafeUnknownSchema } from "../unsafeUnknownSchema.js";
 
 import type { TreeViewConfiguration } from "./configuration.js";
+import type { StagedUpgradeStatus } from "./schemaCompatibilityTester.js";
 import type {
 	RunTransactionParamsAlpha,
 	RunTransactionParamsBeta,
@@ -782,6 +783,23 @@ export interface TreeViewAlpha<
 	 * @param content - The content to initialize the tree with.
 	 */
 	initialize(content: InsertableField<TSchema>): void;
+
+	/**
+	 * Checks whether a staged schema upgrade has been applied to the document's stored schema.
+	 *
+	 * @param upgrade - The upgrade token to check.
+	 *
+	 * @returns The {@link StagedUpgradeStatus} of the upgrade.
+	 *
+	 * @remarks
+	 * Use this to determine whether a document has already been upgraded, for example when deciding
+	 * whether to include an upgrade token in the view configuration after a feature flag rollback.
+	 *
+	 * Results are derived from this view's schema and the current stored schema.
+	 * When the view is not compatible with the stored schema (i.e. `compatibility.canView` is
+	 * false), the result may be incomplete because the schema walk is interrupted early.
+	 */
+	isStagedUpgradeEnabled(upgrade: SchemaUpgrade): StagedUpgradeStatus;
 
 	readonly events: Listenable<TreeViewEvents & TreeBranchEvents>;
 

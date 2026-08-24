@@ -9,8 +9,23 @@ import { allowsRepoSuperset, defaultSchemaPolicy } from "../../feature-libraries
 import { toUpgradeSchema } from "../toStoredSchema.js";
 import type { TreeSchema } from "../treeSchema.js";
 
-import { getDiscrepanciesInAllowedContent } from "./discrepancies.js";
+import {
+	getDiscrepanciesInAllowedContent,
+	type UpgradeLocationCollector,
+} from "./discrepancies.js";
 import type { SchemaCompatibilityStatus } from "./tree.js";
+
+/**
+ * The enablement status of a staged schema upgrade in a document's stored schema.
+ *
+ * @remarks
+ * - `"disabled"` — no locations guarded by the upgrade are enabled in stored schema.
+ * - `"partial"` — at least one location is enabled but not all of them.
+ * - `"enabled"` — all locations guarded by the upgrade are enabled in stored schema.
+ *
+ * @alpha
+ */
+export type StagedUpgradeStatus = "disabled" | "partial" | "enabled";
 
 /**
  * Determines the compatibility of a stored document (based on its stored schema) with a viewer (based on its view schema).
@@ -24,14 +39,38 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  * @param viewSchema - Schema for the view
  * @param stored - The stored schema to check compatibility against
  * @param stagedSchemaUpgrades - Staged schema upgrades enabled for this view, or explicit stored-schema generation options
+ *
+ * @remarks
+ * When `canView` is false, `enabledUpgrades` may be incomplete because the schema walk is
+ * interrupted at the first discrepancy rather than exhausting all locations.
  */
 export function checkSchemaCompatibility(
 	viewSchema: TreeSchema,
 	stored: TreeStoredSchema,
 	stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
-): Omit<SchemaCompatibilityStatus, "canInitialize"> {
+): Omit<SchemaCompatibilityStatus, "canInitialize"> & {
+	enabledUpgrades: ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus>;
+} {
 	// The public API surface assumes defaultSchemaPolicy
 	const policy = defaultSchemaPolicy;
+
+	// Collect upgrade locations during the discrepancy walk (single pass).
+	const totalLocations = new Map<SchemaUpgrade, number>();
+	const enabledLocations = new Map<SchemaUpgrade, number>();
+	const upgradeCollector: UpgradeLocationCollector = {
+		allowedType(upgrade, isEnabled) {
+			totalLocations.set(upgrade, (totalLocations.get(upgrade) ?? 0) + 1);
+			if (isEnabled) {
+				enabledLocations.set(upgrade, (enabledLocations.get(upgrade) ?? 0) + 1);
+			}
+		},
+		optionalField(upgrade, isEnabled) {
+			totalLocations.set(upgrade, (totalLocations.get(upgrade) ?? 0) + 1);
+			if (isEnabled) {
+				enabledLocations.set(upgrade, (enabledLocations.get(upgrade) ?? 0) + 1);
+			}
+		},
+	};
 
 	// View schema allows a subset of documents that stored schema does, and the discrepancies are allowed by policy
 	// determined by the view schema (i.e. objects with extra optional fields in the stored schema have opted into allowing this.
@@ -39,8 +78,14 @@ export function checkSchemaCompatibility(
 	// - fields with more allowed types in the stored schema than in the view schema have out-of-schema "unknown content" adapters
 	let canView = true;
 
-	for (const _discrepancy of getDiscrepanciesInAllowedContent(viewSchema, stored)) {
+	for (const _discrepancy of getDiscrepanciesInAllowedContent(
+		viewSchema,
+		stored,
+		upgradeCollector,
+	)) {
 		canView = false;
+		// Break early — when canView is false the enabledUpgrades map may be incomplete since
+		// the generator walk is interrupted before visiting all schema locations.
 		break;
 	}
 
@@ -53,9 +98,32 @@ export function checkSchemaCompatibility(
 	const isEquivalent =
 		canView && canUpgrade && allowsRepoSuperset(policy, wouldUpgradeTo, stored);
 
+	const enabledUpgrades = computeUpgradeStatuses(totalLocations, enabledLocations);
+
 	return {
 		canView,
 		canUpgrade,
 		isEquivalent,
+		enabledUpgrades,
 	};
+}
+
+/**
+ * Computes the {@link StagedUpgradeStatus} for each upgrade token from total and enabled location counts.
+ * Only tokens with at least one enabled location are included in the returned map.
+ */
+function computeUpgradeStatuses(
+	totalLocations: ReadonlyMap<SchemaUpgrade, number>,
+	enabledLocations: ReadonlyMap<SchemaUpgrade, number>,
+): ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus> {
+	const result = new Map<SchemaUpgrade, StagedUpgradeStatus>();
+	for (const [upgrade, total] of totalLocations) {
+		const enabled = enabledLocations.get(upgrade) ?? 0;
+		if (enabled > 0 && enabled < total) {
+			result.set(upgrade, "partial");
+		} else if (enabled >= total && enabled > 0) {
+			result.set(upgrade, "enabled");
+		}
+	}
+	return result;
 }
