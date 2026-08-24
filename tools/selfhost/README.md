@@ -26,7 +26,7 @@ Work through these in order. Each folder has its own README with the detail.
 
 | # | Step | Where |
 | - | ---- | ----- |
-| 1 | **Configure** — copy `azure/deploy.parameters.example.json` to `azure/deploy.parameters.json` and fill it in. Both the release and the deployment read this same file, so it comes first | [azure/](./azure/README.md#step-1--create-your-configuration-filDirecte) |
+| 1 | **Configure** — copy `azure/deploy.parameters.example.json` to `azure/deploy.parameters.json` and fill it in. Both the release and the deployment read this same file, so it comes first | [azure/](./azure/README.md#step-1--create-your-configuration-file) |
 | 2 | **Build a release bundle** — pins the exact source revision and image digests to deploy | [release/](./release/README.md) |
 | 3 | **Deploy to Azure** — one script creates every resource and installs the service | [azure/](./azure/README.md) |
 | 4 | **Verify it works** — two real Fluid clients collaborating end to end | [deploy-validate/](./deploy-validate/README.md) |
@@ -79,7 +79,7 @@ many teams will front Fluid with a backend they already run instead.
 | Document | What it covers |
 | -------- | -------------- |
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | The design: resource-group topology, component choices and why, identity model, capacity sizing, open decisions |
-| [LICENSE](./LICENSE) | MIT |
+| [LICENSE](../../LICENSE) | MIT |
 
 ## Before production
 
@@ -90,9 +90,8 @@ validation under real load, and a supported Fluid client-version matrix.
 
 ## License
 
-[MIT](./LICENSE).
+[MIT](../../LICENSE).
 
 Third-party components carry their own terms. The ordering backend is Azure Event Hubs, a managed
 Azure service under your own subscription's terms; see
 [ARCHITECTURE.md §7.3](./ARCHITECTURE.md).
-
