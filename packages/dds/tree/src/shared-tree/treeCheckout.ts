@@ -10,7 +10,7 @@ import type {
 	Listenable,
 } from "@fluidframework/core-interfaces/internal";
 import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IIdCompressor, StableId } from "@fluidframework/id-compressor";
 import { type TelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -63,6 +63,7 @@ import {
 	findCommonAncestor,
 	rebaseBranch,
 	type LocalCommitEvents,
+	findAncestor,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -119,6 +120,7 @@ import {
 } from "../util/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
+import { DefaultTreeBranchHistory } from "./history.js";
 import { SharedTreeChangeEnricher } from "./sharedTreeChangeEnricher.js";
 import type { SharedTreeChangeProcessingContext } from "./sharedTreeChangeFamily.js";
 import {
@@ -566,9 +568,10 @@ export class TreeCheckout implements ITreeCheckout {
 
 	readonly #events = createEmitter<CheckoutEvents>();
 	public events: Listenable<CheckoutEvents> = this.#events;
+	private _branchHistory?: DefaultTreeBranchHistory;
 
 	public constructor(
-		branch: SharedTreeBranch<
+		private branch: SharedTreeBranch<
 			SharedTreeEditBuilder,
 			SharedTreeChange,
 			SharedTreeChangeProcessingContext
@@ -591,6 +594,11 @@ export class TreeCheckout implements ITreeCheckout {
 		this.#transaction = this.createTransactionStack(branch);
 		this.editLock = new EditLock(this.#transaction.activeBranchEditor);
 		this.registerForBranchEvents();
+	}
+
+	public get branchHistory(): DefaultTreeBranchHistory {
+		this._branchHistory ??= new DefaultTreeBranchHistory(this.branch, this.idCompressor);
+		return this._branchHistory;
 	}
 
 	/**
@@ -1338,11 +1346,15 @@ export class TreeCheckout implements ITreeCheckout {
 			SharedTreeChangeProcessingContext
 		>,
 	): void {
-		// TODO: Dispose old branch, if necessary
 		assert(
 			this.#transaction.size === 0,
 			0xc55 /* Cannot switch branches during a transaction */,
 		);
+		if (this.isSharedBranch) {
+			throw new UsageError(
+				"Cannot switch a view away from a shared branch. Consider forking first.",
+			);
+		}
 		const diff = diffHistories(
 			this.changeFamily.rebaser,
 			this.#transaction.branch.getHead(),
@@ -1353,12 +1365,69 @@ export class TreeCheckout implements ITreeCheckout {
 		this.unregisterFromBranchEvents();
 
 		this.#transaction = this.createTransactionStack(branch);
+		this.branch = branch;
+		this._branchHistory?.dispose();
+		this._branchHistory = undefined;
 		this.editLock = new EditLock(this.#transaction.activeBranchEditor);
 		this.registerForBranchEvents();
 
 		// TODO: Rework eventing
 		this.applyInternalChange(diff);
 		this.#events.emit("afterBatch");
+	}
+
+	public rewindTo(revisionString: string): void {
+		this.checkNotDisposed("The branch has already been disposed and cannot be rewound.");
+		if (this.#transaction.size > 0) {
+			throw new UsageError("Rewinding is not supported during transactions.");
+		}
+		const revision = this.idCompressor.tryRecompress(revisionString as StableId);
+		if (revision === undefined) {
+			throw new UsageError(`Unrecognized revision id: ${revisionString}`);
+		}
+		const targetCommit = findAncestor(
+			this.#transaction.branch.getHead(),
+			(commit) => commit.revision === revision,
+		);
+		if (targetCommit === undefined) {
+			throw new UsageError(`No commit found with revision: ${revisionString}`);
+		}
+		this.switchBranch(this.#transaction.branch.fork(targetCommit));
+	}
+
+	public revertTo(revisionString: string): void {
+		this.checkNotDisposed(
+			"The branch has already been disposed and prior revisions cannot be reverted to.",
+		);
+		this.editLock.checkUnlocked("Reverting to a revision");
+		if (this.#transaction.size > 0) {
+			throw new UsageError("Reverting to a revision is not supported during transactions.");
+		}
+		const revision = this.idCompressor.tryRecompress(revisionString as StableId);
+		if (revision === undefined) {
+			throw new UsageError(`Unrecognized revision id: ${revisionString}`);
+		}
+		// Populated with the commits that came after the target commit, from oldest to newest.
+		const commitsToUndo: GraphCommit<SharedTreeChange>[] = [];
+		const targetCommit = findAncestor(
+			[this.#transaction.activeBranch.getHead(), commitsToUndo],
+			(commit) => commit.revision === revision,
+		);
+		if (targetCommit === undefined) {
+			throw new UsageError(`No commit found with revision: ${revisionString}`);
+		}
+		if (!hasSome(commitsToUndo)) {
+			// The target commit is already the head of the branch, so there is nothing to revert.
+			return;
+		}
+		const revisionForInvert = this.mintRevisionTag();
+		const toUndo = this.changeFamily.rebaser.compose(commitsToUndo);
+		const inverse = this.changeFamily.rebaser.invert(
+			makeAnonChange(toUndo),
+			false,
+			revisionForInvert,
+		);
+		this.#transaction.branch.apply(tagChange(inverse, revisionForInvert));
 	}
 
 	private rebase(view: UntypedTreeView): void {
@@ -1485,6 +1554,8 @@ export class TreeCheckout implements ITreeCheckout {
 			view.dispose();
 		}
 		this.#events.emit("dispose");
+		this._branchHistory?.dispose();
+		this._branchHistory = undefined;
 	}
 
 	public getRemovedRoots(): [string | number | undefined, number, JsonableTree][] {

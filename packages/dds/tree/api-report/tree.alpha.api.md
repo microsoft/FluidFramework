@@ -230,6 +230,9 @@ export enum CommitOutcome {
 }
 
 // @alpha
+export type CommitRevision = string;
+
+// @alpha
 export function comparePersistedSchema(persisted: JsonCompatible, view: ImplicitFieldSchema, options: ICodecOptions): Omit<SchemaCompatibilityStatus, "canInitialize">;
 
 // @alpha
@@ -1917,8 +1920,20 @@ export type TreeBranch = UntypedTreeView;
 export type TreeBranchAlpha = UntypedTreeViewAlpha;
 
 // @alpha @sealed
+export interface TreeBranchCommitMetadata {
+    getParent(): TreeBranchCommitMetadata | undefined;
+    readonly revision: CommitRevision;
+}
+
+// @alpha @sealed
 export interface TreeBranchEvents {
     changed(data: ChangeMetadata, getRevertible?: RevertibleAlphaFactory): void;
+}
+
+// @alpha @sealed
+export interface TreeBranchHistory {
+    getHead(): TreeBranchCommitMetadata | undefined;
+    readonly length: number;
 }
 
 // @public @sealed
@@ -2215,12 +2230,15 @@ export interface UntypedTreeView extends IDisposable {
 // @alpha @sealed
 export interface UntypedTreeViewAlpha extends UntypedTreeView, TreeContextAlpha {
     applyChange(change: JsonCompatibleReadOnly): void;
+    readonly branchHistory: TreeBranchHistory;
     computeNetChangeIfRebasedOnto(view: UntypedTreeView): JsonCompatibleReadOnly | undefined;
     readonly events: Listenable_2<TreeBranchEvents>;
     // (undocumented)
     fork(): UntypedTreeViewAlpha;
     hasRootSchema<TSchema extends ImplicitFieldSchema>(schema: TSchema): this is TreeViewAlpha<TSchema>;
     isMissingEditsFrom(view: UntypedTreeView): boolean;
+    revertTo(revision: CommitRevision): void;
+    rewindTo(revision: CommitRevision): void;
     runTransaction<TSuccessValue, TFailureValue>(transaction: () => TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>, params?: RunTransactionParamsAlpha): TransactionValueResult<TSuccessValue, TFailureValue>;
     runTransaction(transaction: () => VoidTransactionCallbackStatusAlpha | void, params?: RunTransactionParamsAlpha): TransactionVoidResult;
     runTransactionAsync<TSuccessValue, TFailureValue>(transaction: () => Promise<TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>>, params?: RunTransactionParamsAlpha): Promise<TransactionValueResult<TSuccessValue, TFailureValue>>;

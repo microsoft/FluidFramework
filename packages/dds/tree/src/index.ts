@@ -91,6 +91,7 @@ export {
 } from "./shared-tree/index.js";
 
 export {
+	type CommitRevision,
 	TreeArrayNode,
 	type TreeArrayNodeAlpha,
 	type Unhydrated,
@@ -275,6 +276,8 @@ export {
 	type UntypedTreeViewAlpha,
 	type TreeBranchEvents,
 	asTreeViewAlpha,
+	type TreeBranchCommitMetadata,
+	type TreeBranchHistory,
 	type NodeSchemaOptions,
 	type NodeSchemaOptionsAlpha,
 	type NodeSchemaMetadata,
