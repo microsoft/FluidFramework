@@ -1,8 +1,8 @@
 {
-  "dependencyImages": [
-    { "source": "nginx:latest", "pinned": "nginx:1.31.3" },
-    { "source": "redis:alpine", "pinned": "redis:8.8.1-alpine" },
-    { "source": "mongo:4", "pinned": "mongo:4.4.29-focal" },
-    { "source": "busybox", "pinned": "busybox:1.38.0-glibc" }
-  ]
+	"dependencyImages": [
+		{ "source": "nginx:latest", "pinned": "nginx:1.31.3" },
+		{ "source": "redis:alpine", "pinned": "redis:8.8.1-alpine" },
+		{ "source": "mongo:4", "pinned": "mongo:4.4.29-focal" },
+		{ "source": "busybox", "pinned": "busybox:1.38.0-glibc" }
+	]
 }

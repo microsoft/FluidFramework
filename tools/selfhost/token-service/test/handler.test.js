@@ -288,8 +288,14 @@ test("the configured policy is applied without being passed in", async () => {
 test("denials and errors never leak a token", async () => {
 	const cases = [
 		[makeRequest(), makeConfig()],
-		[makeRequest({ principalHeader: defaultPrincipalHeader(), body: { tenantId: "nope" } }), makeConfig()],
-		[makeRequest({ principalHeader: defaultPrincipalHeader(), body: { documentId: "b ad" } }), makeConfig()],
+		[
+			makeRequest({ principalHeader: defaultPrincipalHeader(), body: { tenantId: "nope" } }),
+			makeConfig(),
+		],
+		[
+			makeRequest({ principalHeader: defaultPrincipalHeader(), body: { documentId: "b ad" } }),
+			makeConfig(),
+		],
 	];
 
 	for (const [request, config] of cases) {

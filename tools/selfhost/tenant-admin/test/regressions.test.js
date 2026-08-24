@@ -22,10 +22,7 @@ const { startStubServices } = require("./stubServices");
 
 const execFileAsync = promisify(execFile);
 const CLI = path.join(__dirname, "..", "bin", "tenant-admin.js");
-const WRAPPER = fs.readFileSync(
-	path.join(__dirname, "..", "tenant-admin.sh"),
-	"utf8",
-);
+const WRAPPER = fs.readFileSync(path.join(__dirname, "..", "tenant-admin.sh"), "utf8");
 
 function managerFor(stub) {
 	return new TenantManager({
@@ -122,9 +119,7 @@ test("the wrapper never writes tenant keys to Key Vault", () => {
 	// That is a read of a secret the token-service deploy already created, not a second copy of
 	// anything. Writing remains prohibited, so the assertion below ignores the suggested command
 	// the wrapper prints for the operator to run themselves.
-	const executedLines = WRAPPER.split("\n").filter(
-		(line) => !/^\s*(#|echo )/.test(line),
-	);
+	const executedLines = WRAPPER.split("\n").filter((line) => !/^\s*(#|echo )/.test(line));
 	assert.ok(
 		!executedLines.some((line) => /az keyvault secret set/.test(line)),
 		"tenant-admin.sh must not write secrets to Key Vault",
@@ -141,9 +136,7 @@ test("the rotate check reads Key Vault from inside the cluster", () => {
 	// vault to the internet; the Pod is already in the VNet, so the read belongs there.
 	// (Filtered to executed lines: the wrapper still prints an `az keyvault secret set` command
 	// for the operator to run themselves after a rotation.)
-	const executedLines = WRAPPER.split("\n").filter(
-		(line) => !/^\s*(#|echo )/.test(line),
-	);
+	const executedLines = WRAPPER.split("\n").filter((line) => !/^\s*(#|echo )/.test(line));
 	assert.ok(
 		!executedLines.some((line) => /az keyvault/.test(line)),
 		"tenant-admin.sh must not call Key Vault directly -- the Pod does the read",
@@ -398,11 +391,7 @@ test("rotate refuses a bootstrap-managed tenant by default", async (t) => {
 		() => manager.rotateTenantKey("fluid", "key1"),
 		/not created by tenant-admin|silently reverted/i,
 	);
-	assert.equal(
-		stub.tenants.get("fluid").key,
-		before,
-		"the key must not have been rotated",
-	);
+	assert.equal(stub.tenants.get("fluid").key, before, "the key must not have been rotated");
 });
 
 test("delete refuses a bootstrap-managed tenant by default", async (t) => {
@@ -410,10 +399,7 @@ test("delete refuses a bootstrap-managed tenant by default", async (t) => {
 	t.after(() => stub.close());
 	seedBootstrapTenant(stub);
 
-	await assert.rejects(
-		() => managerFor(stub).deleteTenant("fluid"),
-		/Refusing to delete/i,
-	);
+	await assert.rejects(() => managerFor(stub).deleteTenant("fluid"), /Refusing to delete/i);
 	assert.equal(
 		stub.tenants.get("fluid").disabled,
 		false,

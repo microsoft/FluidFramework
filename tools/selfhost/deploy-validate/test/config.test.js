@@ -41,10 +41,7 @@ test("readConfig throws ConfigError when a required endpoint is missing", () => 
 });
 
 test("readConfig accepts token-service mode", () => {
-	const file = path.join(
-		os.tmpdir(),
-		`deploy-validate-test-token-service-${Date.now()}.json`,
-	);
+	const file = path.join(os.tmpdir(), `deploy-validate-test-token-service-${Date.now()}.json`);
 	const input = {
 		tenantId: "fluid",
 		endpoints: {

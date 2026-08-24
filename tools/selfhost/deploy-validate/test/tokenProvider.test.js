@@ -162,9 +162,7 @@ for (const [name, payload] of [
 
 		await assert.rejects(
 			provider.fetchOrdererToken("fluid", "doc-1"),
-			(error) =>
-				error instanceof TokenServiceError &&
-				/invalid response/.test(error.message),
+			(error) => error instanceof TokenServiceError && /invalid response/.test(error.message),
 		);
 	});
 }

@@ -8,9 +8,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 
-const {
-	formatTokenServicePreflightError,
-} = require("../src/tokenServiceDiagnostics");
+const { formatTokenServicePreflightError } = require("../src/tokenServiceDiagnostics");
 const { TokenServiceError } = require("../src/tokenProvider");
 
 const context = {
@@ -57,14 +55,10 @@ test("missing service-principal ID falls back to enterprise applications", () =>
 test("missing service-wide role names FluidCollaborator", () => {
 	const error = new TokenServiceError("denied", {
 		status: 403,
-		serviceMessage:
-			"Account has not been granted access to this application.",
+		serviceMessage: "Account has not been granted access to this application.",
 	});
 
-	assert.match(
-		formatTokenServicePreflightError(error, context),
-		/FluidCollaborator/,
-	);
+	assert.match(formatTokenServicePreflightError(error, context), /FluidCollaborator/);
 });
 
 test("401 points to App Registration and Easy Auth setup", () => {
@@ -89,10 +83,7 @@ test("missing POST route reports an outdated or wrong Function App", () => {
 });
 
 test("network and discovery failures give generic setup guidance", () => {
-	const output = formatTokenServicePreflightError(
-		new Error("fetch failed"),
-		context,
-	);
+	const output = formatTokenServicePreflightError(new Error("fetch failed"), context);
 	assert.match(output, /Function App and App Registration exist/);
 	assert.match(output, /Original error: fetch failed/);
 });

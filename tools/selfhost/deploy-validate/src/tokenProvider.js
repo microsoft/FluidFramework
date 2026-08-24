@@ -42,7 +42,10 @@ function generateToken(tenantId, key, scopes, documentId, user) {
 function buildTokenProvider(tenantId, key) {
 	const scopes = ["doc:read", "doc:write", "summary:write"];
 	const issue = async (docId) => ({
-		jwt: generateToken(tenantId, key, scopes, docId ?? "", { id: "deploy-validate", name: "deploy-validate" }),
+		jwt: generateToken(tenantId, key, scopes, docId ?? "", {
+			id: "deploy-validate",
+			name: "deploy-validate",
+		}),
 	});
 	return {
 		fetchOrdererToken: (_tenantId, documentId) => issue(documentId),
@@ -106,8 +109,7 @@ function buildTokenServiceProvider(
 			let serviceMessage = "";
 			try {
 				const parsed = JSON.parse(detail);
-				serviceMessage =
-					typeof parsed.error === "string" ? parsed.error : "";
+				serviceMessage = typeof parsed.error === "string" ? parsed.error : "";
 			} catch {
 				// Preserve non-JSON response text in detail for diagnostics.
 			}
@@ -129,10 +131,10 @@ function buildTokenServiceProvider(
 			typeof payload.token !== "string" ||
 			!Number.isFinite(payload.expiresAt)
 		) {
-			throw new TokenServiceError(
-				"Token service returned an invalid response.",
-				{ status: response.status, statusText: response.statusText },
-			);
+			throw new TokenServiceError("Token service returned an invalid response.", {
+				status: response.status,
+				statusText: response.statusText,
+			});
 		}
 		const result = { jwt: payload.token, fromCache: false };
 		if (cacheable) {
@@ -145,10 +147,8 @@ function buildTokenServiceProvider(
 	};
 
 	return {
-		fetchOrdererToken: (tenantId, documentId, refresh) =>
-			issue(tenantId, documentId, refresh),
-		fetchStorageToken: (tenantId, documentId, refresh) =>
-			issue(tenantId, documentId, refresh),
+		fetchOrdererToken: (tenantId, documentId, refresh) => issue(tenantId, documentId, refresh),
+		fetchStorageToken: (tenantId, documentId, refresh) => issue(tenantId, documentId, refresh),
 	};
 }
 

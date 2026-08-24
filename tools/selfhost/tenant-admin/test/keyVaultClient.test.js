@@ -26,10 +26,7 @@ const {
 } = require("../src/keyVaultClient");
 
 function tokenFile(contents = "federated-token-value") {
-	const file = path.join(
-		fs.mkdtempSync(path.join(os.tmpdir(), "tenant-admin-wi-")),
-		"token",
-	);
+	const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "tenant-admin-wi-")), "token");
 	fs.writeFileSync(file, contents);
 	return file;
 }
@@ -44,7 +41,11 @@ function envWith(file) {
 }
 
 /** Minimal fetch double: token endpoint first, then the vault. */
-function fakeFetch({ vaultStatus = 200, vaultBody = { value: "the-secret" }, tokenStatus = 200 }) {
+function fakeFetch({
+	vaultStatus = 200,
+	vaultBody = { value: "the-secret" },
+	tokenStatus = 200,
+}) {
 	const calls = [];
 	const impl = async (url, init) => {
 		calls.push({ url: String(url), init });
@@ -158,7 +159,10 @@ test("the token exchange presents the projected token as a client assertion", as
 	});
 
 	const tokenCall = fetchImpl.calls.find((c) => c.url.includes("/oauth2/v2.0/token"));
-	assert.equal(tokenCall.url, "https://login.microsoftonline.com/tenant-id-guid/oauth2/v2.0/token");
+	assert.equal(
+		tokenCall.url,
+		"https://login.microsoftonline.com/tenant-id-guid/oauth2/v2.0/token",
+	);
 	const body = tokenCall.init.body;
 	assert.equal(body.get("client_assertion"), "projected-sa-token");
 	assert.equal(body.get("client_id"), "client-id-guid");
@@ -173,11 +177,14 @@ test("a Pod without workload identity is reported, not silently skipped", async 
 	// The webhook injects these only for a Pod that sets serviceAccountName AND the
 	// azure.workload.identity/use label. Missing env is a deployment mistake, and treating it as
 	// "nothing to check" would disable the guard exactly when it is misconfigured.
-	assert.throws(() => readWorkloadIdentityEnv({}), (error) => {
-		assert.ok(error instanceof KeyVaultAccessError);
-		assert.match(error.message, /azure\.workload\.identity\/use/);
-		return true;
-	});
+	assert.throws(
+		() => readWorkloadIdentityEnv({}),
+		(error) => {
+			assert.ok(error instanceof KeyVaultAccessError);
+			assert.match(error.message, /azure\.workload\.identity\/use/);
+			return true;
+		},
+	);
 
 	await assert.rejects(
 		() => getSecret("my-kv", "s", { env: {}, fetchImpl: fakeFetch({}) }),
@@ -188,9 +195,15 @@ test("a Pod without workload identity is reported, not silently skipped", async 
 test("the authority host is normalised whether or not it ends in a slash", async () => {
 	const fetchImpl = fakeFetch({});
 	await getSecret("my-kv", "s", {
-		env: { ...envWith(tokenFile()), AZURE_AUTHORITY_HOST: "https://login.microsoftonline.com" },
+		env: {
+			...envWith(tokenFile()),
+			AZURE_AUTHORITY_HOST: "https://login.microsoftonline.com",
+		},
 		fetchImpl,
 	});
 	const tokenCall = fetchImpl.calls.find((c) => c.url.includes("/oauth2/"));
-	assert.equal(tokenCall.url, "https://login.microsoftonline.com/tenant-id-guid/oauth2/v2.0/token");
+	assert.equal(
+		tokenCall.url,
+		"https://login.microsoftonline.com/tenant-id-guid/oauth2/v2.0/token",
+	);
 });

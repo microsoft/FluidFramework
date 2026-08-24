@@ -48,7 +48,10 @@ test("default policy refuses a tenant this service holds no key for", () => {
 
 test("default policy honours a multi-tenant allow-list", () => {
 	const config = makeConfig({ allowedTenants: ["fluid", "marketing"] });
-	assert.equal(authorize({ principal, tenantId: "marketing", documentId: "", config }).allowed, true);
+	assert.equal(
+		authorize({ principal, tenantId: "marketing", documentId: "", config }).allowed,
+		true,
+	);
 });
 
 test("role-based policy maps FluidCollaborator to read/write", () => {
@@ -164,7 +167,12 @@ test("tenant-scoped policy denies a user with no role for the tenant", () => {
 test("tenant-scoped denial does not reveal whether the tenant exists", () => {
 	// Same wording either way, so the endpoint cannot be used to enumerate served tenants.
 	const config = makeConfig({ allowedTenants: ["fluid"] });
-	const served = tenantScopedAuthorize({ principal, tenantId: "fluid", documentId: "", config });
+	const served = tenantScopedAuthorize({
+		principal,
+		tenantId: "fluid",
+		documentId: "",
+		config,
+	});
 	const unserved = tenantScopedAuthorize({
 		principal,
 		tenantId: "nonexistent",

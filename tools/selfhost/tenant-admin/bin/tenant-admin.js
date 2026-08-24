@@ -154,12 +154,7 @@ function buildManager(flags) {
 		"fluid",
 	);
 	// What gets written into the tenant document, which may differ from how we reach gitrest.
-	const storageUrl = flagOrEnv(
-		flags,
-		"storage-url",
-		"TENANT_ADMIN_STORAGE_URL",
-		gitrestUrl,
-	);
+	const storageUrl = flagOrEnv(flags, "storage-url", "TENANT_ADMIN_STORAGE_URL", gitrestUrl);
 
 	return new TenantManager({
 		riddler: new RiddlerClient({
@@ -326,8 +321,7 @@ async function main() {
 		}
 		case "list": {
 			const includeDisabled =
-				flags["include-disabled"] === true ||
-				flags["include-disabled"] === "true";
+				flags["include-disabled"] === true || flags["include-disabled"] === "true";
 			const tenants = await manager.listTenants({ includeDisabled });
 			note(`${tenants.length} tenant(s).`);
 			emit(tenants);
@@ -379,8 +373,7 @@ async function main() {
 		}
 		case "delete": {
 			const tenantId = requirePositional(positionals, "tenantId");
-			const purgeNow =
-				flags["purge-now"] === true || flags["purge-now"] === "true";
+			const purgeNow = flags["purge-now"] === true || flags["purge-now"] === "true";
 			const purgeInDays = numericFlag(flags, "purge-in-days");
 			const result = await manager.deleteTenant(tenantId, {
 				purgeInDays,

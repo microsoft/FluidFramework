@@ -44,9 +44,7 @@ function formatTokenServicePreflightError(
 	error,
 	{ tenantId, appId, servicePrincipalObjectId },
 ) {
-	const header = [
-		"Token-service preflight failed before the Fluid scenario started.",
-	];
+	const header = ["Token-service preflight failed before the Fluid scenario started."];
 	const message = error.serviceMessage || "";
 
 	if (
@@ -56,13 +54,9 @@ function formatTokenServicePreflightError(
 		return [
 			...header,
 			`Your account is missing write access to Fluid tenant "${tenantId}".`,
-			...roleGuidance(
-				`Fluid.${tenantId}.Writer`,
-				appId,
-				servicePrincipalObjectId,
-			),
+			...roleGuidance(`Fluid.${tenantId}.Writer`, appId, servicePrincipalObjectId),
 			"Use Users and groups > Add user/group on the enterprise application.",
-		"",
+			"",
 			`Service response: ${message}`,
 		].join("\n");
 	}
@@ -74,11 +68,7 @@ function formatTokenServicePreflightError(
 		return [
 			...header,
 			"Your account is missing the service-wide collaborator role.",
-			...roleGuidance(
-				"FluidCollaborator",
-				appId,
-				servicePrincipalObjectId,
-			),
+			...roleGuidance("FluidCollaborator", appId, servicePrincipalObjectId),
 			"",
 			`Service response: ${message}`,
 		].join("\n");

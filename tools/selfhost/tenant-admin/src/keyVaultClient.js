@@ -70,7 +70,10 @@ function readWorkloadIdentityEnv(env = process.env) {
  * Trade the projected ServiceAccount token for an Entra access token for the Key Vault
  * data plane (OAuth2 client credentials with a client assertion).
  */
-async function getVaultAccessToken({ clientId, tenantId, tokenFile, authorityHost }, fetchImpl) {
+async function getVaultAccessToken(
+	{ clientId, tenantId, tokenFile, authorityHost },
+	fetchImpl,
+) {
 	let assertion;
 	try {
 		assertion = fs.readFileSync(tokenFile, "utf8").trim();

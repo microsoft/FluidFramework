@@ -40,10 +40,7 @@ async function runCli(stub, args, { expectFailure = false } = {}) {
 		assert.ok(!expectFailure, "expected the CLI to fail but it succeeded");
 		return { stdout, stderr, code: 0 };
 	} catch (error) {
-		assert.ok(
-			expectFailure,
-			`CLI failed unexpectedly: ${error.stderr || error.message}`,
-		);
+		assert.ok(expectFailure, `CLI failed unexpectedly: ${error.stderr || error.message}`);
 		return { stdout: error.stdout, stderr: error.stderr, code: error.code };
 	}
 }
@@ -67,12 +64,7 @@ test("CLI create -> get -> list -> delete round trip", async (t) => {
 	const stub = await startStubServices();
 	t.after(() => stub.close());
 
-	const created = await runCli(stub, [
-		"create",
-		"contoso",
-		"--contact",
-		"owner@contoso.com",
-	]);
+	const created = await runCli(stub, ["create", "contoso", "--contact", "owner@contoso.com"]);
 	const createdJson = JSON.parse(created.stdout);
 	assert.equal(createdJson.tenantId, "contoso");
 	assert.match(createdJson.key, /^[0-9a-f]{32}$/);
@@ -129,11 +121,9 @@ test("CLI rejects an unsafe tenant id before touching the services", async (t) =
 	const stub = await startStubServices();
 	t.after(() => stub.close());
 
-	const res = await runCli(
-		stub,
-		["create", "../escape", "--contact", "owner@contoso.com"],
-		{ expectFailure: true },
-	);
+	const res = await runCli(stub, ["create", "../escape", "--contact", "owner@contoso.com"], {
+		expectFailure: true,
+	});
 	assert.match(res.stderr, /Invalid tenant id/);
 	assert.equal(stub.calls.length, 0, "no request should have been made");
 });
@@ -142,11 +132,7 @@ test("CLI supports --flag=value form", async (t) => {
 	const stub = await startStubServices();
 	t.after(() => stub.close());
 
-	const res = await runCli(stub, [
-		"create",
-		"contoso",
-		"--contact=owner@contoso.com",
-	]);
+	const res = await runCli(stub, ["create", "contoso", "--contact=owner@contoso.com"]);
 	assert.equal(JSON.parse(res.stdout).customData.tenantAdminContact, "owner@contoso.com");
 });
 
@@ -175,9 +161,13 @@ test("CLI rotate fails closed when it cannot reach Key Vault", async (t) => {
 	// check cannot run. Rotating anyway is the outcome the check exists to prevent, so it must
 	// refuse rather than quietly proceed. (No network is touched: the missing env is detected
 	// before any request.)
-	const res = await runCli(stub, ["rotate", "contoso", "--key", "key1", "--keyvault-name", "my-kv"], {
-		expectFailure: true,
-	});
+	const res = await runCli(
+		stub,
+		["rotate", "contoso", "--key", "key1", "--keyvault-name", "my-kv"],
+		{
+			expectFailure: true,
+		},
+	);
 	assert.match(res.stderr, /workload identity/i);
 	assert.match(res.stderr, /--force/);
 

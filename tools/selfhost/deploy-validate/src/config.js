@@ -46,9 +46,7 @@ function readConfig(filePath) {
 			typeof parsed.tokenService.appId !== "string" ||
 			parsed.tokenService.appId.length === 0)
 	) {
-		throw new ConfigError(
-			`Config file ${filePath} has invalid tokenService configuration`,
-		);
+		throw new ConfigError(`Config file ${filePath} has invalid tokenService configuration`);
 	}
 	return parsed;
 }

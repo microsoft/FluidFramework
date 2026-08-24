@@ -43,9 +43,9 @@ function readMountedFilesFromWrapper() {
 		(m) => m[1],
 	);
 	// items[] entries: { key: "foo.js", path: "src/foo.js" }
-	const items = [
-		...wrapper.matchAll(/\{\s*key:\s*"([^"]+)",\s*path:\s*"([^"]+)"\s*\}/g),
-	].map((m) => ({ key: m[1], mounted: m[2] }));
+	const items = [...wrapper.matchAll(/\{\s*key:\s*"([^"]+)",\s*path:\s*"([^"]+)"\s*\}/g)].map(
+		(m) => ({ key: m[1], mounted: m[2] }),
+	);
 
 	assert.ok(fromFiles.length > 0, "no --from-file entries found in the wrapper");
 	assert.equal(

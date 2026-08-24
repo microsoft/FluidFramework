@@ -8,13 +8,8 @@
 
 const { readConfig } = require("../src/config");
 const { runScenario } = require("../src/scenario");
-const {
-	buildTokenProvider,
-	buildTokenServiceProvider,
-} = require("../src/tokenProvider");
-const {
-	formatTokenServicePreflightError,
-} = require("../src/tokenServiceDiagnostics");
+const { buildTokenProvider, buildTokenServiceProvider } = require("../src/tokenProvider");
+const { formatTokenServicePreflightError } = require("../src/tokenServiceDiagnostics");
 
 async function main() {
 	const configPath = process.argv[2];
@@ -45,8 +40,7 @@ async function main() {
 				formatTokenServicePreflightError(error, {
 					tenantId,
 					appId: tokenService.appId,
-					servicePrincipalObjectId:
-						tokenService.servicePrincipalObjectId,
+					servicePrincipalObjectId: tokenService.servicePrincipalObjectId,
 				}),
 			);
 			process.exit(1);

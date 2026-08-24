@@ -97,7 +97,7 @@ class TenantManager {
 			throw new Error(
 				existing.disabled
 					? `Tenant "${tenantId}" already exists but is soft-deleted. ` +
-						`Purge it with "delete ${tenantId} --purge-now" before reusing the id.`
+							`Purge it with "delete ${tenantId} --purge-now" before reusing the id.`
 					: `Tenant "${tenantId}" already exists. Choose a different tenant id.`,
 			);
 		}
@@ -125,9 +125,7 @@ class TenantManager {
 			// gitrest has no delete-repository route, so the repository cannot be rolled back
 			// automatically. Surface it so the operator can remove it by hand if they choose --
 			// leaving it is safe, and a retry with the same id reuses it.
-			error.orphanedRepository = repo.created
-				? `${repo.owner}/${repo.repository}`
-				: undefined;
+			error.orphanedRepository = repo.created ? `${repo.owner}/${repo.repository}` : undefined;
 			throw error;
 		}
 
@@ -178,9 +176,7 @@ class TenantManager {
 		if (keyName !== undefined && keyName !== "key1" && keyName !== "key2") {
 			throw new Error(`Invalid key name "${keyName}". Use key1 or key2.`);
 		}
-		const keys = await this.riddler.getTenantKeys(
-			normalizeTenantId(rawTenantId),
-		);
+		const keys = await this.riddler.getTenantKeys(normalizeTenantId(rawTenantId));
 		if (!keyName) {
 			return keys;
 		}
@@ -285,9 +281,7 @@ class TenantManager {
 			if (!Number.isFinite(purgeInDays) || purgeInDays <= 0) {
 				throw new Error("--purge-in-days must be a positive number.");
 			}
-			scheduledDeletionTime = new Date(
-				Date.now() + purgeInDays * 24 * 60 * 60 * 1000,
-			);
+			scheduledDeletionTime = new Date(Date.now() + purgeInDays * 24 * 60 * 60 * 1000);
 		}
 
 		// A soft-deleted tenant is hidden from riddler's default reads but its document -- and its
@@ -302,9 +296,7 @@ class TenantManager {
 		return {
 			tenantId,
 			mode: purgeNow ? "hard" : "soft",
-			scheduledDeletionTime: purgeNow
-				? undefined
-				: scheduledDeletionTime?.toISOString(),
+			scheduledDeletionTime: purgeNow ? undefined : scheduledDeletionTime?.toISOString(),
 			orphanedRepository: `${this.gitrest.owner}/${tenantId}`,
 		};
 	}

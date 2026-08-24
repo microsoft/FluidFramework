@@ -113,8 +113,7 @@ async function startStubServices(options = {}) {
 			// tenant", not a 404.
 			if (m && req.method === "GET") {
 				const id = decodeURIComponent(m[1]);
-				const includeDisabled =
-					url.searchParams.get("includeDisabledTenant") === "true";
+				const includeDisabled = url.searchParams.get("includeDisabledTenant") === "true";
 				const tenant = tenants.get(id);
 				const visible = tenant && (includeDisabled || !tenant.disabled);
 				return visible

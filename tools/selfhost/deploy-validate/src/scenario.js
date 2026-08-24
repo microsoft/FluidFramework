@@ -20,9 +20,18 @@
 // are reused so this still gets the friendly ContainerSchema/SharedMap/IFluidContainer surface
 // -- they're the same building blocks AzureClient itself is implemented with.
 
-const { createDetachedContainer, loadExistingContainer } = require("@fluidframework/container-loader");
-const { createDOProviderContainerRuntimeFactory, createFluidContainer, createServiceAudience } = require("@fluidframework/fluid-static");
-const { RouterliciousDocumentServiceFactory } = require("@fluidframework/routerlicious-driver");
+const {
+	createDetachedContainer,
+	loadExistingContainer,
+} = require("@fluidframework/container-loader");
+const {
+	createDOProviderContainerRuntimeFactory,
+	createFluidContainer,
+	createServiceAudience,
+} = require("@fluidframework/fluid-static");
+const {
+	RouterliciousDocumentServiceFactory,
+} = require("@fluidframework/routerlicious-driver");
 const { InsecureUrlResolver } = require("@fluidframework/driver-utils");
 const { SharedMap } = require("fluid-framework");
 const SCHEMA = { initialObjects: { map: SharedMap } };
@@ -61,7 +70,10 @@ function withTimeout(promise, ms, message) {
  */
 function buildLoaderProps(tenantId, endpoints, tokenProviderFactory) {
 	const tokenProvider = tokenProviderFactory();
-	const documentServiceFactory = new RouterliciousDocumentServiceFactory(tokenProvider, DRIVER_POLICIES);
+	const documentServiceFactory = new RouterliciousDocumentServiceFactory(
+		tokenProvider,
+		DRIVER_POLICIES,
+	);
 	// Argument order per InsecureUrlResolver's constructor: hostUrl, ordererUrl, storageUrl,
 	// deltaStreamUrl, tenantId, bearer, isForNodeTest. "ordererUrl" here means alfred (the REST
 	// surface that handles ordering-related HTTP calls) -- NOT nexus. isForNodeTest=true is
@@ -129,22 +141,23 @@ async function runScenario({ tenantId, endpoints, tokenProviderFactory }) {
 			// hanging the whole tool forever with zero feedback. Confirmed live: without this,
 			// a hung createDetachedContainer()/attach() call left the tool sitting silently
 			// forever.
-			const detail = await withTimeout(fn(), STEP_TIMEOUT_MS, `timed out after ${STEP_TIMEOUT_MS / 1000}s`);
+			const detail = await withTimeout(
+				fn(),
+				STEP_TIMEOUT_MS,
+				`timed out after ${STEP_TIMEOUT_MS / 1000}s`,
+			);
 			results.push({ name, pass: true, detail });
 		} catch (err) {
 			results.push({ name, pass: false, detail: err.message });
 		}
 	};
-	const skip = (name, reason) => results.push({ name, pass: false, detail: `skipped: ${reason}` });
+	const skip = (name, reason) =>
+		results.push({ name, pass: false, detail: `skipped: ${reason}` });
 
 	let containerId;
 	let fluidContainerA;
 	await record("connect and create/attach container (client A)", async () => {
-		const loaderProps = buildLoaderProps(
-			tenantId,
-			endpoints,
-			tokenProviderFactory,
-		);
+		const loaderProps = buildLoaderProps(tenantId, endpoints, tokenProviderFactory);
 		const container = await createDetachedContainer({
 			...loaderProps,
 			codeDetails: { package: "no-dynamic-package", config: {} },
@@ -161,20 +174,22 @@ async function runScenario({ tenantId, endpoints, tokenProviderFactory }) {
 
 	if (!containerId) {
 		skip("cold-load convergence (client B)", "no container from the create step");
-		skip("real-time sync (client B observes client A write)", "no container from the create step");
+		skip(
+			"real-time sync (client B observes client A write)",
+			"no container from the create step",
+		);
 		skip("audience contains both clients", "no container from the create step");
 		return results;
 	}
 
 	let fluidContainerB;
 	await record("cold-load convergence (client B)", async () => {
-		const loaderProps = buildLoaderProps(
-			tenantId,
-			endpoints,
-			tokenProviderFactory,
-		);
+		const loaderProps = buildLoaderProps(tenantId, endpoints, tokenProviderFactory);
 		const requestUrl = `${endpoints.alfred}/${encodeURIComponent(tenantId)}/${encodeURIComponent(containerId)}`;
-		const container = await loadExistingContainer({ ...loaderProps, request: { url: requestUrl } });
+		const container = await loadExistingContainer({
+			...loaderProps,
+			request: { url: requestUrl },
+		});
 		fluidContainerB = await createFluidContainer({ container });
 		fluidContainerB.audience = attachAudience(container);
 		const value = fluidContainerB.initialObjects.map.get("testKey");

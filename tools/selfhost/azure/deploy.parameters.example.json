@@ -1,127 +1,127 @@
 {
-  "_comment": "Copy this file to deploy.parameters.json (gitignored) and fill in your own values. Only names/SKUs/sizes/locations belong here -- never secrets, connection strings, or keys.",
+	"_comment": "Copy this file to deploy.parameters.json (gitignored) and fill in your own values. Only names/SKUs/sizes/locations belong here -- never secrets, connection strings, or keys.",
 
-  "subscriptionId": "00000000-0000-0000-0000-000000000000",
-  "resourceGroup": "my-fluid-rg",
-  "location": "eastus2",
+	"subscriptionId": "00000000-0000-0000-0000-000000000000",
+	"resourceGroup": "my-fluid-rg",
+	"location": "eastus2",
 
-  "_fluidRepoDirComment": "REQUIRED. Path to a dedicated FluidFramework checkout -- deploy.sh no longer clones one for you. It fetches and checks out the release bundle's pinned commit in this directory, so point it at a checkout you are happy to have moved to an arbitrary commit. The old 'fluidRef' parameter is gone: the revision now comes from the release bundle's source.json.",
-  "fluidRepoDir": "",
+	"_fluidRepoDirComment": "REQUIRED. Path to a dedicated FluidFramework checkout -- deploy.sh no longer clones one for you. It fetches and checks out the release bundle's pinned commit in this directory, so point it at a checkout you are happy to have moved to an arbitrary commit. The old 'fluidRef' parameter is gone: the revision now comes from the release bundle's source.json.",
+	"fluidRepoDir": "",
 
-  "buildAcr": {
-    "name": "myfluidbuildacr"
-  },
-  "deployAcr": {
-    "name": "myfluidacr"
-  },
+	"buildAcr": {
+		"name": "myfluidbuildacr"
+	},
+	"deployAcr": {
+		"name": "myfluidacr"
+	},
 
-  "aks": {
-    "name": "my-fluid-aks",
-    "location": "",
-    "kubernetesVersion": "1.35",
-    "tier": "standard",
-    "nodeOsUpgradeChannel": "None",
-    "osSku": "AzureLinux",
-    "availabilityZones": [1, 2, 3],
-    "systemNodeVmSize": "Standard_D8as_v5",
-    "systemNodeCount": 3,
-    "systemNodeMinCount": 3,
-    "systemNodeMaxCount": 10
-  },
+	"aks": {
+		"name": "my-fluid-aks",
+		"location": "",
+		"kubernetesVersion": "1.35",
+		"tier": "standard",
+		"nodeOsUpgradeChannel": "None",
+		"osSku": "AzureLinux",
+		"availabilityZones": [1, 2, 3],
+		"systemNodeVmSize": "Standard_D8as_v5",
+		"systemNodeCount": 3,
+		"systemNodeMinCount": 3,
+		"systemNodeMaxCount": 10
+	},
 
-  "keyVault": {
-    "name": "my-fluid-kv"
-  },
+	"keyVault": {
+		"name": "my-fluid-kv"
+	},
 
-  "cosmos": {
-    "clusterName": "my-fluid-cosmos",
-    "serverVersion": "5.0",
-    "zoneRedundant": "True",
-    "throughput": {
-      "deltas": 80000,
-      "documents": 80000,
-      "checkpoints": 10000,
-      "scribeDeltas": 4000,
-      "tenants": 4000,
-      "nodes": 4000,
-      "reservations": 4000
-    }
-  },
+	"cosmos": {
+		"clusterName": "my-fluid-cosmos",
+		"serverVersion": "5.0",
+		"zoneRedundant": "True",
+		"throughput": {
+			"deltas": 80000,
+			"documents": 80000,
+			"checkpoints": 10000,
+			"scribeDeltas": 4000,
+			"tenants": 4000,
+			"nodes": 4000,
+			"reservations": 4000
+		}
+	},
 
-  "redis": {
-    "clusterName": "my-fluid-redis",
-    "location": "",
-    "sku": "Premium",
-    "vmSize": "p1",
-    "version": "6.0",
-    "replicasPerMaster": 3,
-    "zones": [1, 2, 3]
-  },
+	"redis": {
+		"clusterName": "my-fluid-redis",
+		"location": "",
+		"sku": "Premium",
+		"vmSize": "p1",
+		"version": "6.0",
+		"replicasPerMaster": 3,
+		"zones": [1, 2, 3]
+	},
 
-  "storage": {
-    "accountName": "myfluidgitrest001",
-    "sku": "Standard_ZRS",
-    "gitrestQuota": "20Ti"
-  },
+	"storage": {
+		"accountName": "myfluidgitrest001",
+		"sku": "Standard_ZRS",
+		"gitrestQuota": "20Ti"
+	},
 
-  "_kafkaComment": "Ordering backend: Azure Event Hubs over the Kafka protocol. sku/capacity/zoneRedundant match the reference production baseline -- Standard at 1 throughput unit, auto-inflate off, zone-redundant. capacity is a HARD ceiling because auto-inflate is disabled (1 TU = 1 MB/s or 1000 events/s ingress, 2 MB/s egress, namespace-wide); Standard allows 1-20 and capacity IS changeable on a live namespace, so raise it if the namespace throttles before the app tier does. Standard also caps a hub at 32 partitions and 7 days retention; 32 partitions gives each of the 8 deli/scribe/scriptorium replicas four. zoneRedundant is CREATE-TIME ONLY -- set it to false in regions without Availability Zone support, because it cannot be changed on a re-run. This leaves local auth enabled and authenticates with a connection string, because the managed-identity path needs a tokenProvider function that cannot come from config without a custom image.",
-  "kafka": {
-    "eventHubs": {
-      "namespaceName": "my-fluid-eventhubs",
-      "sku": "Standard",
-      "capacity": 4,
-      "autoInflate": true,
-      "maxThroughputUnits": 10,
-      "partitionCount": 32,
-      "retentionHours": 72,
-      "zoneRedundant": true
-    }
-  },
+	"_kafkaComment": "Ordering backend: Azure Event Hubs over the Kafka protocol. sku/capacity/zoneRedundant match the reference production baseline -- Standard at 1 throughput unit, auto-inflate off, zone-redundant. capacity is a HARD ceiling because auto-inflate is disabled (1 TU = 1 MB/s or 1000 events/s ingress, 2 MB/s egress, namespace-wide); Standard allows 1-20 and capacity IS changeable on a live namespace, so raise it if the namespace throttles before the app tier does. Standard also caps a hub at 32 partitions and 7 days retention; 32 partitions gives each of the 8 deli/scribe/scriptorium replicas four. zoneRedundant is CREATE-TIME ONLY -- set it to false in regions without Availability Zone support, because it cannot be changed on a re-run. This leaves local auth enabled and authenticates with a connection string, because the managed-identity path needs a tokenProvider function that cannot come from config without a custom image.",
+	"kafka": {
+		"eventHubs": {
+			"namespaceName": "my-fluid-eventhubs",
+			"sku": "Standard",
+			"capacity": 4,
+			"autoInflate": true,
+			"maxThroughputUnits": 10,
+			"partitionCount": 32,
+			"retentionHours": 72,
+			"zoneRedundant": true
+		}
+	},
 
-  "frontDoor": {
-    "profileName": "my-fluid-afd",
-    "responseTimeoutSeconds": 240
-  },
+	"frontDoor": {
+		"profileName": "my-fluid-afd",
+		"responseTimeoutSeconds": 240
+	},
 
-  "_networkComment": "All optional -- sensible defaults are computed in deploy.sh if omitted. The VNet holds a dedicated AKS-node subnet and a dedicated private-endpoint subnet; Key Vault, Cosmos, Redis, Storage and the Event Hubs namespace all get private endpoints into it and have public network access disabled.",
-  "network": {
-    "vnetName": "",
-    "addressSpace": "10.20.0.0/16",
-    "aksSubnetPrefix": "10.20.1.0/24",
-    "peSubnetPrefix": "10.20.2.0/24"
-  },
+	"_networkComment": "All optional -- sensible defaults are computed in deploy.sh if omitted. The VNet holds a dedicated AKS-node subnet and a dedicated private-endpoint subnet; Key Vault, Cosmos, Redis, Storage and the Event Hubs namespace all get private endpoints into it and have public network access disabled.",
+	"network": {
+		"vnetName": "",
+		"addressSpace": "10.20.0.0/16",
+		"aksSubnetPrefix": "10.20.1.0/24",
+		"peSubnetPrefix": "10.20.2.0/24"
+	},
 
-  "_workloadIdentityComment": "Optional -- defaults to '<aks-name>-workload-identity'. The one user-assigned managed identity every app pod (alfred/nexus/riddler/deli/scribe/scriptorium/gitrest/historian) federates to, for Key Vault access.",
-  "workloadIdentity": {
-    "name": ""
-  },
-  "_tokenServiceComment": "Optional -- only read by token-service/deploy-token-service.sh, which is a separate opt-in step and is not run by deploy.sh. Omit this block entirely if you are supplying your own token backend. resourceGroup defaults to the main resourceGroup; set it to a separate group if that one already contains any App Service plan, since Azure will not create a Linux Consumption function app alongside one (the symptom is 'Cannot acquire exclusive lock' or a GatewayTimeout). appRegistrationId lets you point at a registration you created in the portal: set it when your directory blocks Microsoft Graph for the Azure CLI (conditional access token protection, error AADSTS530084), and the script skips every Graph call. Leave it empty to have the script create and configure the registration itself. nodeVersion overrides the Function App's Node runtime (default 24); Azure refuses to create a Function App on an end-of-life version, so raise this when 24 ages out -- 'az functionapp list-runtimes --os linux' lists what is accepted. storageAccountName must be globally unique, 3-24 lowercase alphanumeric characters. spaRedirectUris and allowedOrigins are only needed for browser clients -- leave both empty for server-side callers or curl testing. A browser needs its origin in BOTH: missing from allowedOrigins the browser blocks the call, missing from spaRedirectUris the MSAL sign-in fails. For a local parcel dev server that is http://localhost:1234 in each. allowedOrigins lists the browser origins permitted to call the token endpoint -- a browser client is blocked without its origin here; server-side callers do not need it. additionalTenants provisions a signing key per extra tenant; note the default authorization policy lets any authenticated user reach every configured tenant, so see token-service/README.md before using it for tenants belonging to different groups of people.",
-  "tokenService": {
-    "functionAppName": "my-fluid-token-fn",
-    "resourceGroup": "",
-    "storageAccountName": "myfluidtokenfn001",
-    "appRegistrationName": "my-fluid-token-service",
-    "appRegistrationId": "",
-    "appIdUri": "",
-    "servicePrincipalObjectId": "",
-    "tenantId": "fluid",
-    "additionalTenants": [],
-    "hostingPlan": "flex",
-    "authorizationPolicy": "",
-    "tokenIssuerVersion": "",
-    "tokenLifetimeSec": 3600,
-    "nodeVersion": "",
-    "spaRedirectUris": [],
-    "allowedOrigins": []
-  },
-  "_microservicesComment": "Per-service replica counts and (where applicable) HPA minReplicas/maxReplicas. Defaults below match this repo's own validated starting points -- override individually as needed, or omit any field/service entirely to keep its default. alfred/nexus/riddler/historian have HPA (scale out under load, minReplicas/maxReplicas control that range); deli/scribe/scriptorium deliberately have no minReplicas/maxReplicas (fixed replicas only -- autoscaling a Kafka consumer-group deployment forces a full partition-assignment rebalance on every scale event, see azure/routerlicious-values.yaml). gitrest has no entry here at all: it is permanently fixed at 1 replica (ARCHITECTURE.md Section 7.9) and is not configurable.",
-  "microservices": {
-    "alfred": { "replicas": 4, "minReplicas": 4, "maxReplicas": 500 },
-    "nexus": { "replicas": 4, "minReplicas": 4, "maxReplicas": 300 },
-    "riddler": { "replicas": 4, "minReplicas": 4, "maxReplicas": 500 },
-    "historian": { "replicas": 4, "minReplicas": 4, "maxReplicas": 500 },
-    "deli": { "replicas": 8 },
-    "scribe": { "replicas": 8 },
-    "scriptorium": { "replicas": 8 }
-  }
+	"_workloadIdentityComment": "Optional -- defaults to '<aks-name>-workload-identity'. The one user-assigned managed identity every app pod (alfred/nexus/riddler/deli/scribe/scriptorium/gitrest/historian) federates to, for Key Vault access.",
+	"workloadIdentity": {
+		"name": ""
+	},
+	"_tokenServiceComment": "Optional -- only read by token-service/deploy-token-service.sh, which is a separate opt-in step and is not run by deploy.sh. Omit this block entirely if you are supplying your own token backend. resourceGroup defaults to the main resourceGroup; set it to a separate group if that one already contains any App Service plan, since Azure will not create a Linux Consumption function app alongside one (the symptom is 'Cannot acquire exclusive lock' or a GatewayTimeout). appRegistrationId lets you point at a registration you created in the portal: set it when your directory blocks Microsoft Graph for the Azure CLI (conditional access token protection, error AADSTS530084), and the script skips every Graph call. Leave it empty to have the script create and configure the registration itself. nodeVersion overrides the Function App's Node runtime (default 24); Azure refuses to create a Function App on an end-of-life version, so raise this when 24 ages out -- 'az functionapp list-runtimes --os linux' lists what is accepted. storageAccountName must be globally unique, 3-24 lowercase alphanumeric characters. spaRedirectUris and allowedOrigins are only needed for browser clients -- leave both empty for server-side callers or curl testing. A browser needs its origin in BOTH: missing from allowedOrigins the browser blocks the call, missing from spaRedirectUris the MSAL sign-in fails. For a local parcel dev server that is http://localhost:1234 in each. allowedOrigins lists the browser origins permitted to call the token endpoint -- a browser client is blocked without its origin here; server-side callers do not need it. additionalTenants provisions a signing key per extra tenant; note the default authorization policy lets any authenticated user reach every configured tenant, so see token-service/README.md before using it for tenants belonging to different groups of people.",
+	"tokenService": {
+		"functionAppName": "my-fluid-token-fn",
+		"resourceGroup": "",
+		"storageAccountName": "myfluidtokenfn001",
+		"appRegistrationName": "my-fluid-token-service",
+		"appRegistrationId": "",
+		"appIdUri": "",
+		"servicePrincipalObjectId": "",
+		"tenantId": "fluid",
+		"additionalTenants": [],
+		"hostingPlan": "flex",
+		"authorizationPolicy": "",
+		"tokenIssuerVersion": "",
+		"tokenLifetimeSec": 3600,
+		"nodeVersion": "",
+		"spaRedirectUris": [],
+		"allowedOrigins": []
+	},
+	"_microservicesComment": "Per-service replica counts and (where applicable) HPA minReplicas/maxReplicas. Defaults below match this repo's own validated starting points -- override individually as needed, or omit any field/service entirely to keep its default. alfred/nexus/riddler/historian have HPA (scale out under load, minReplicas/maxReplicas control that range); deli/scribe/scriptorium deliberately have no minReplicas/maxReplicas (fixed replicas only -- autoscaling a Kafka consumer-group deployment forces a full partition-assignment rebalance on every scale event, see azure/routerlicious-values.yaml). gitrest has no entry here at all: it is permanently fixed at 1 replica (ARCHITECTURE.md Section 7.9) and is not configurable.",
+	"microservices": {
+		"alfred": { "replicas": 4, "minReplicas": 4, "maxReplicas": 500 },
+		"nexus": { "replicas": 4, "minReplicas": 4, "maxReplicas": 300 },
+		"riddler": { "replicas": 4, "minReplicas": 4, "maxReplicas": 500 },
+		"historian": { "replicas": 4, "minReplicas": 4, "maxReplicas": 500 },
+		"deli": { "replicas": 8 },
+		"scribe": { "replicas": 8 },
+		"scriptorium": { "replicas": 8 }
+	}
 }

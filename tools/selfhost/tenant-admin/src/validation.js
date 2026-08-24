@@ -90,9 +90,7 @@ function normalizeTenantId(rawTenantId) {
  */
 function normalizeContact(rawContact) {
 	if (typeof rawContact !== "string" || rawContact.trim() === "") {
-		throw new ValidationError(
-			"Tenant admin contact is required (use --contact).",
-		);
+		throw new ValidationError("Tenant admin contact is required (use --contact).");
 	}
 	const normalized = rawContact.trim().toLowerCase();
 	if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) {

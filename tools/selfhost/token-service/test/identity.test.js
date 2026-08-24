@@ -34,7 +34,9 @@ test("extractPrincipal returns the verified identity", () => {
 
 test("extractPrincipal prefers the object id over mutable identifiers", () => {
 	// Email and UPN can be reassigned to a different person; oid cannot.
-	const principal = extractPrincipal(headersWith(defaultPrincipalHeader({ oid: "stable-oid" })));
+	const principal = extractPrincipal(
+		headersWith(defaultPrincipalHeader({ oid: "stable-oid" })),
+	);
 	assert.equal(principal.id, "stable-oid");
 });
 
@@ -123,7 +125,12 @@ test("extractPrincipal matches header names case-insensitively", () => {
 
 test("extractPrincipal reads the tenant id claim", () => {
 	const principal = extractPrincipal(
-		headersWith(encodePrincipal([{ typ: CLAIM_OID, val: "x" }, { typ: CLAIM_TID, val: "t1" }])),
+		headersWith(
+			encodePrincipal([
+				{ typ: CLAIM_OID, val: "x" },
+				{ typ: CLAIM_TID, val: "t1" },
+			]),
+		),
 	);
 	assert.equal(principal.tenantId, "t1");
 });

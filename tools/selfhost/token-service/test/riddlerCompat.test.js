@@ -124,7 +124,10 @@ test("minted token survives the expiration check at riddler's exact ceiling", as
 	// `exp - iat > maxTokenLifetimeSec` is a strict comparison, so an exactly-equal lifetime
 	// is valid. Config permits this, and this test pins that the boundary agrees.
 	const claims = decodeClaims(
-		await mintFor({ documentId: "doc-1" }, { tokenLifetimeSec: 3600, maxTokenLifetimeSec: 3600 }),
+		await mintFor(
+			{ documentId: "doc-1" },
+			{ tokenLifetimeSec: 3600, maxTokenLifetimeSec: 3600 },
+		),
 	);
 	assert.equal(claims.exp - claims.iat, 3600);
 	assert.doesNotThrow(() => validateTokenClaimsExpiration(claims, 3600));
@@ -134,7 +137,10 @@ test("a lifetime above riddler's ceiling is what the config guard prevents", asy
 	// Demonstrates the failure the config check exists to stop: if a longer lifetime ever
 	// reached the signer, riddler would reject every token with 403.
 	const claims = decodeClaims(
-		await mintFor({ documentId: "doc-1" }, { tokenLifetimeSec: 7200, maxTokenLifetimeSec: 7200 }),
+		await mintFor(
+			{ documentId: "doc-1" },
+			{ tokenLifetimeSec: 7200, maxTokenLifetimeSec: 7200 },
+		),
 	);
 	assert.throws(
 		() => validateTokenClaimsExpiration(claims, 3600),

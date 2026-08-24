@@ -8,11 +8,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 
-const {
-	normalizeTenantId,
-	normalizeContact,
-	ValidationError,
-} = require("../src/validation");
+const { normalizeTenantId, normalizeContact, ValidationError } = require("../src/validation");
 
 test("normalizeTenantId lowercases and accepts valid ids", () => {
 	assert.equal(normalizeTenantId("Contoso"), "contoso");
@@ -24,7 +20,11 @@ test("normalizeTenantId lowercases and accepts valid ids", () => {
 test("normalizeTenantId rejects ids that would escape the gitrest volume", () => {
 	// The tenant id becomes a repository directory name, so separators and dots must not survive.
 	for (const bad of ["../etc", "a/b", "a.b", "a\\b", "a b", "a%2fb"]) {
-		assert.throws(() => normalizeTenantId(bad), ValidationError, `expected ${bad} to be rejected`);
+		assert.throws(
+			() => normalizeTenantId(bad),
+			ValidationError,
+			`expected ${bad} to be rejected`,
+		);
 	}
 });
 

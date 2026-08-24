@@ -68,9 +68,7 @@ function redactSecrets(value) {
 	if (typeof value === "object") {
 		const out = {};
 		for (const [k, v] of Object.entries(value)) {
-			out[k] = SECRET_KEYS.includes(k.toLowerCase())
-				? "[REDACTED]"
-				: redactSecrets(v);
+			out[k] = SECRET_KEYS.includes(k.toLowerCase()) ? "[REDACTED]" : redactSecrets(v);
 		}
 		return out;
 	}
@@ -149,10 +147,10 @@ async function request({
 		});
 		req.setTimeout(timeoutMs, () => {
 			req.destroy(
-				new RequestError(
-					`${method} ${url.pathname} timed out after ${timeoutMs}ms`,
-					{ url: `${url.origin}${url.pathname}`, method },
-				),
+				new RequestError(`${method} ${url.pathname} timed out after ${timeoutMs}ms`, {
+					url: `${url.origin}${url.pathname}`,
+					method,
+				}),
 			);
 		});
 
@@ -177,8 +175,7 @@ async function requestOk(options) {
 		const friendly = describeError?.(res.status, res.json, res.body);
 		const redacted = redactSecrets(res.body);
 		throw new RequestError(
-			friendly ??
-				`${rest.method} ${rest.path} returned HTTP ${res.status}: ${redacted}`,
+			friendly ?? `${rest.method} ${rest.path} returned HTTP ${res.status}: ${redacted}`,
 			{
 				status: res.status,
 				url: `${rest.baseUrl}${rest.path}`,

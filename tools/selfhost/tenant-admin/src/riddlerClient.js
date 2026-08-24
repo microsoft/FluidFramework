@@ -97,9 +97,7 @@ class RiddlerClient {
 			if (/could not find tenant|tenant is disabled/i.test(res.body)) {
 				return undefined;
 			}
-			throw new Error(
-				`GET /api/tenants/${tenantId} returned HTTP ${res.status}: ${res.body}`,
-			);
+			throw new Error(`GET /api/tenants/${tenantId} returned HTTP ${res.status}: ${res.body}`);
 		}
 		return res.json;
 	}

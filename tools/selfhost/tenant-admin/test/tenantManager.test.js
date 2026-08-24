@@ -193,19 +193,13 @@ test("getTenant and listTenants read through riddler", async (t) => {
 	assert.equal(tenant.id, "contoso");
 
 	const tenants = await manager.listTenants();
-	assert.deepEqual(tenants.map((entry) => entry.id).sort(), [
-		"contoso",
-		"fabrikam",
-	]);
+	assert.deepEqual(tenants.map((entry) => entry.id).sort(), ["contoso", "fabrikam"]);
 });
 
 test("getTenant reports a missing tenant clearly", async (t) => {
 	const stub = await startStubServices();
 	t.after(() => stub.close());
-	await assert.rejects(
-		() => managerFor(stub).getTenant("nope-nope"),
-		/not found/i,
-	);
+	await assert.rejects(() => managerFor(stub).getTenant("nope-nope"), /not found/i);
 });
 
 test("rotate rotates only the named key and preserves creation metadata", async (t) => {
@@ -238,10 +232,7 @@ test("rotate rejects an unknown key name before calling riddler", async (t) => {
 	await manager.createTenant("contoso", { contact: "owner@contoso.com" });
 	const before = stub.calls.length;
 
-	await assert.rejects(
-		() => manager.rotateTenantKey("contoso", "key3"),
-		/Invalid key name/,
-	);
+	await assert.rejects(() => manager.rotateTenantKey("contoso", "key3"), /Invalid key name/);
 	assert.equal(stub.calls.length, before, "no request should be issued");
 });
 
@@ -317,10 +308,7 @@ test("delete --purge-in-days schedules a future purge and stays soft for now", a
 test("delete refuses an unknown tenant", async (t) => {
 	const stub = await startStubServices();
 	t.after(() => stub.close());
-	await assert.rejects(
-		() => managerFor(stub).deleteTenant("ghost-tenant"),
-		/not found/i,
-	);
+	await assert.rejects(() => managerFor(stub).deleteTenant("ghost-tenant"), /not found/i);
 });
 
 test("riddler transport errors never leak key material", async (t) => {
