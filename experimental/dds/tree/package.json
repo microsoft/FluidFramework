@@ -24,8 +24,6 @@
 			}
 		}
 	},
-	"main": "lib/index.js",
-	"types": "lib/index.d.ts",
 	"scripts": {
 		"bench": "cross-env FLUID_TEST_PERF_MODE=1 mocha",
 		"build": "fluid-build . --task build",

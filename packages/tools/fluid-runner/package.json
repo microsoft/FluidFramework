@@ -43,8 +43,6 @@
 			}
 		}
 	},
-	"main": "lib/index.js",
-	"types": "lib/index.d.ts",
 	"bin": {
 		"fluid-runner": "bin/fluid-runner.mjs"
 	},

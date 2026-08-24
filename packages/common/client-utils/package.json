@@ -52,8 +52,6 @@
 			}
 		}
 	},
-	"main": "lib/indexBrowser.js",
-	"types": "lib/indexBrowser.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:api-reports": "concurrently \"npm:build:api-reports:browser:*\" && concurrently \"npm:build:api-reports:node:*\"",
