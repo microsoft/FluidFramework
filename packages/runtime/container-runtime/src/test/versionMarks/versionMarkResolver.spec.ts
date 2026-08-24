@@ -10,10 +10,20 @@ import type {
 	IStream,
 	IStreamResult,
 } from "@fluidframework/driver-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
-import { generateBatchId, type InboundMessageResult } from "../../opLifecycle/index.js";
 import type { InboundSequencedContainerRuntimeMessage } from "../../messageTypes.js";
+import { ContainerMessageType } from "../../messageTypes.js";
+import {
+	generateBatchId,
+	tryGetDeserializedRuntimeOpCopy,
+	OpDecompressor,
+	OpGroupingManager,
+	OpSplitter,
+	type InboundMessageResult,
+	RemoteMessageProcessor,
+} from "../../opLifecycle/index.js";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	VersionMarkResolver,
@@ -32,6 +42,8 @@ function makeOp(fields: {
 	clientId?: string | null;
 	clientSequenceNumber?: number;
 	metadata?: { batchId?: string; batch?: boolean };
+	contents?: unknown;
+	type?: string;
 }): ISequencedDocumentMessage {
 	return {
 		// eslint-disable-next-line unicorn/no-null -- default clientId mirrors the legacy string | null shape the resolver guards against
@@ -39,6 +51,35 @@ function makeOp(fields: {
 		clientSequenceNumber: 0,
 		...fields,
 	} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage;
+}
+
+/**
+ * Builds a raw chunk op (`chunkId` of `totalChunks`) for a client's chunk stream.
+ */
+function makeChunkOp(fields: {
+	sequenceNumber: number;
+	clientId: string;
+	clientSequenceNumber?: number;
+	chunkId: number;
+	totalChunks: number;
+	chunkContents?: string;
+	originalMetadata?: { batchId?: string; batch?: boolean };
+}): ISequencedDocumentMessage {
+	return makeOp({
+		sequenceNumber: fields.sequenceNumber,
+		clientId: fields.clientId,
+		clientSequenceNumber: fields.clientSequenceNumber ?? 1,
+		type: MessageType.Operation,
+		contents: {
+			type: ContainerMessageType.ChunkedOp,
+			contents: {
+				chunkId: fields.chunkId,
+				totalChunks: fields.totalChunks,
+				contents: fields.chunkContents ?? "",
+				originalMetadata: fields.originalMetadata,
+			},
+		},
+	});
 }
 
 /** Turns an array of op chunks (one per `read()`) into an `IStream`. */
@@ -139,18 +180,29 @@ function makeUnpacker(): (op: ISequencedDocumentMessage) => InboundMessageResult
 }
 
 /**
- * Wraps {@link makeUnpacker}, recording the sequence number of every op actually fed to the unpacker.
- * Lets a test assert that the scan drops an orphan batch-end marker (never handing it to the unpacker,
- * which the real `RemoteMessageProcessor` would reject with an assert).
+ * Builds the REAL inbound unpack pipeline, matching the container's `createHistoricalOpUnpacker`: a
+ * fresh `RemoteMessageProcessor` over a real `OpSplitter`/`OpDecompressor`/`OpGroupingManager`.
  */
-function makeRecordingUnpackerFactory(
-	fed: number[],
-): () => (op: ISequencedDocumentMessage) => InboundMessageResult | undefined {
+function makeRealUnpackerFactory(): () => (
+	op: ISequencedDocumentMessage,
+) => InboundMessageResult | undefined {
+	const logger = new MockLogger();
 	return () => {
-		const inner = makeUnpacker();
+		const processor = new RemoteMessageProcessor(
+			new OpSplitter([], undefined, 0, Number.POSITIVE_INFINITY, logger, {
+				allowInitialPartialChunkStream: true,
+			}),
+			new OpDecompressor(logger),
+			new OpGroupingManager({ groupedBatchingEnabled: false }, logger),
+		);
 		return (op) => {
-			fed.push(op.sequenceNumber);
-			return inner(op);
+			// Mirror the live path by construction: reuse the same helper `createHistoricalOpUnpacker`
+			// does, so this "faithful mirror" can't silently desync if the runtime-op invariant changes.
+			const messageCopy = tryGetDeserializedRuntimeOpCopy(op);
+			if (messageCopy === undefined) {
+				return undefined;
+			}
+			return processor.process(messageCopy, () => {});
 		};
 	};
 }
@@ -165,7 +217,9 @@ describe("VersionMarkResolver", () => {
 			assert.deepEqual(resolver.sealAndCaptureVersionMark(), {
 				kind: "pending",
 				batchId: "client_[3]",
-				sequenceNumberLowerBound: 42,
+				// Inclusive lower bound: the pending batch is sequenced after the reference point (42),
+				// so its first possible sequence number is 43.
+				sequenceNumberLowerBound: 43,
 			});
 		});
 
@@ -193,7 +247,7 @@ describe("VersionMarkResolver", () => {
 			assert.deepEqual(resolver.sealAndCaptureVersionMark(), {
 				kind: "pending",
 				batchId: "client_[9]",
-				sequenceNumberLowerBound: 100,
+				sequenceNumberLowerBound: 101,
 			});
 		});
 	});
@@ -298,6 +352,22 @@ describe("VersionMarkResolver", () => {
 				kind: "resolved",
 				sequenceNumber: 11,
 			});
+		});
+
+		it("resolves a batch whose op sits exactly at the inclusive lower bound", async () => {
+			// The lower bound is inclusive, so an op sequenced at exactly `sequenceNumberLowerBound` is
+			// in range: it resolves and must not trip the reader-contract assert (`firstScanned >= from`).
+			const calls: { from: number; to?: number }[] = [];
+			const reader = makeReader(
+				[[makeOp({ sequenceNumber: 15, clientId: "clientA", clientSequenceNumber: 7 })]],
+				calls,
+			);
+			const resolver = makeResolver({ reader });
+			assert.deepEqual(await resolver.resolve(generateBatchId("clientA", 7), 15), {
+				kind: "resolved",
+				sequenceNumber: 15,
+			});
+			assert.deepEqual(calls, [{ from: 15, to: undefined }]);
 		});
 	});
 
@@ -425,88 +495,74 @@ describe("VersionMarkResolver", () => {
 		});
 	});
 
-	describe("resolveFromHistory - mid-batch scan anchor (clipped leading batch)", () => {
-		it("tolerates an anchor landing on the end op of a prior multi-op batch", async () => {
-			// First fetched op (seq 12) is the END marker of a batch clipped by the scan start. The real
-			// unpacker's processor would assert on it, so the scan must drop it (never feed it) and go on
-			// to find the target.
+	describe("resolveFromHistory - partial initial chunk stream", () => {
+		it("resolves a complete chunked target interleaved with another client's partial stream", async () => {
+			const targetContents = JSON.stringify({
+				type: ContainerMessageType.FluidDataStoreOp,
+				contents: {},
+			});
+			const splitAt = Math.ceil(targetContents.length / 2);
 			const reader = makeReader([
 				[
-					makeOp({
+					makeChunkOp({
+						sequenceNumber: 11,
+						clientId: "partialClient",
+						chunkId: 2,
+						totalChunks: 3,
+					}),
+					makeChunkOp({
 						sequenceNumber: 12,
-						clientId: "clipped",
-						clientSequenceNumber: 6,
-						metadata: { batch: false },
-					}),
-					makeOp({
-						sequenceNumber: 13,
-						clientId: "target",
+						clientId: "targetClient",
 						clientSequenceNumber: 1,
-						metadata: { batch: true },
+						chunkId: 1,
+						totalChunks: 2,
+						chunkContents: targetContents.slice(0, splitAt),
 					}),
-					makeOp({ sequenceNumber: 14, clientId: "target", clientSequenceNumber: 2 }),
-					makeOp({
-						sequenceNumber: 15,
-						clientId: "target",
-						clientSequenceNumber: 3,
-						metadata: { batch: false },
-					}),
-				],
-			]);
-			const fed: number[] = [];
-			const resolver = makeResolver({
-				reader,
-				unpackerFactory: makeRecordingUnpackerFactory(fed),
-			});
-			assert.deepEqual(await resolver.resolve(generateBatchId("target", 1), 0), {
-				kind: "resolved",
-				sequenceNumber: 15,
-			});
-			assert.ok(
-				!fed.includes(12),
-				"the clipped batch's orphan end marker must not reach the unpacker",
-			);
-		});
-
-		it("tolerates an anchor landing on a middle op of a prior multi-op batch", async () => {
-			// Scan starts on a MIDDLE op (seq 11) of the clipped batch, then its end marker (seq 12). The
-			// middle op reads as a lone batch (id can't match the target); the orphan end (seq 12) is dropped.
-			const reader = makeReader([
-				[
-					makeOp({ sequenceNumber: 11, clientId: "clipped", clientSequenceNumber: 5 }),
-					makeOp({
-						sequenceNumber: 12,
-						clientId: "clipped",
-						clientSequenceNumber: 6,
-						metadata: { batch: false },
-					}),
-					makeOp({
+					makeChunkOp({
 						sequenceNumber: 13,
-						clientId: "target",
-						clientSequenceNumber: 1,
-						metadata: { batch: true },
+						clientId: "partialClient",
+						chunkId: 3,
+						totalChunks: 3,
 					}),
-					makeOp({
+					makeChunkOp({
 						sequenceNumber: 14,
-						clientId: "target",
+						clientId: "targetClient",
 						clientSequenceNumber: 2,
-						metadata: { batch: false },
+						chunkId: 2,
+						totalChunks: 2,
+						chunkContents: targetContents.slice(splitAt),
+						originalMetadata: { batchId: "target_[1]" },
 					}),
 				],
 			]);
-			const fed: number[] = [];
-			const resolver = makeResolver({
-				reader,
-				unpackerFactory: makeRecordingUnpackerFactory(fed),
-			});
-			assert.deepEqual(await resolver.resolve(generateBatchId("target", 1), 0), {
+			const resolver = makeResolver({ reader, unpackerFactory: makeRealUnpackerFactory() });
+
+			assert.deepEqual(await resolver.resolve("target_[1]", 5), {
 				kind: "resolved",
 				sequenceNumber: 14,
 			});
-			assert.ok(
-				!fed.includes(12),
-				"the clipped batch's orphan end marker must not reach the unpacker",
-			);
+		});
+
+		it("does not deserialize a non-runtime op with non-JSON string contents", async () => {
+			const reader = makeReader([
+				[
+					makeOp({
+						sequenceNumber: 11,
+						clientId: "server",
+						type: "join",
+						contents: "not json {{{",
+					}),
+				],
+			]);
+			const resolver = makeResolver({
+				reader,
+				currentSequenceNumber: 0,
+				unpackerFactory: makeRealUnpackerFactory(),
+			});
+
+			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 1), 5), {
+				kind: "pending",
+			});
 		});
 	});
 
@@ -517,7 +573,7 @@ describe("VersionMarkResolver", () => {
 				[makeOp({ sequenceNumber: 10, clientId: "other", clientSequenceNumber: 1 })],
 			]);
 			const resolver = makeResolver({ reader, currentSequenceNumber: 12 });
-			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 9), 0), {
+			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 9), 1), {
 				kind: "unresolvable",
 			});
 		});
@@ -526,7 +582,17 @@ describe("VersionMarkResolver", () => {
 			// tip (20) is well past `from` (1), so ops should exist; an empty read means the range was trimmed.
 			const reader = makeReader([]);
 			const resolver = makeResolver({ reader, currentSequenceNumber: 20 });
-			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 9), 0), {
+			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 9), 1), {
+				kind: "unresolvable",
+			});
+		});
+
+		it("unresolvable on an empty read when `from` equals the tip (boundary)", async () => {
+			// tip (6) == `from` (6): the lower bound is at the tip, so an op could exist there. An empty
+			// read therefore means the range was trimmed, not that nothing is sequenced yet → unresolvable.
+			const reader = makeReader([]);
+			const resolver = makeResolver({ reader, currentSequenceNumber: 6 });
+			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 9), 6), {
 				kind: "unresolvable",
 			});
 		});
@@ -540,31 +606,31 @@ describe("VersionMarkResolver", () => {
 				],
 			]);
 			const resolver = makeResolver({ reader, currentSequenceNumber: 7 });
-			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 9), 5), {
+			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 9), 6), {
 				kind: "pending",
 			});
 		});
 
-		it("pending when nothing has sequenced past the reference point", async () => {
-			// tip (5) == sequenceNumberLowerBound, so `from` (6) is beyond the tip: the batch cannot have landed.
+		it("pending when nothing has sequenced past the lower bound", async () => {
+			// tip (5) < sequenceNumberLowerBound (6), so `from` (6) is beyond the tip: the batch cannot have landed.
 			const reader = makeReader([]);
 			const resolver = makeResolver({ reader, currentSequenceNumber: 5 });
-			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 9), 5), {
+			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 9), 6), {
 				kind: "pending",
 			});
 		});
 
-		it("reads from sequenceNumberLowerBound + 1 (the exclusive lower-bound anchor)", async () => {
+		it("reads from sequenceNumberLowerBound (the inclusive lower-bound anchor)", async () => {
 			const calls: { from: number; to?: number }[] = [];
 			const reader = makeReader([], calls);
 			const resolver = makeResolver({ reader });
 			await resolver.resolve(generateBatchId("missing", 9), 10);
-			assert.deepEqual(calls, [{ from: 11, to: undefined }]);
+			assert.deepEqual(calls, [{ from: 10, to: undefined }]);
 		});
 
 		it("asserts when the reader returns an op before the requested range start", async () => {
 			// The trim inference relies on the reader never returning an op earlier than `from`. A reader
-			// that violates this (returns seq 5 when from = 11) must fail loudly, not silently misclassify.
+			// that violates this (returns seq 5 when from = 10) must fail loudly, not silently misclassify.
 			const reader = makeReader([
 				[makeOp({ sequenceNumber: 5, clientId: "other", clientSequenceNumber: 1 })],
 			]);
@@ -658,6 +724,17 @@ describe("VersionMarkResolver", () => {
 			assert.deepEqual(events, [["client_[1]", 5]]);
 		});
 
+		it("asserts on a conflicting remap (same batchId, different sequence number)", () => {
+			const resolver = makeResolver();
+			resolver.processInboundBatch("client_[1]", 5);
+			// The protocol forbids a batchId remapping to a different sequence number; the resolver fails
+			// loudly rather than silently overwrite (which would also break the MSN-eviction ordering).
+			assert.throws(
+				() => resolver.processInboundBatch("client_[1]", 6),
+				validateAssertionError(/remapped to a different sequence number/),
+			);
+		});
+
 		it("makes a processed batch resolvable via the live fast path", async () => {
 			const resolver = makeResolver();
 			resolver.processInboundBatch("client_[7]", 21);
@@ -733,6 +810,88 @@ describe("VersionMarkResolver", () => {
 				kind: "resolved",
 				sequenceNumber: 100,
 			});
+		});
+	});
+
+	describe("resolve telemetry (Resolve event)", () => {
+		it("emits a Resolve event for a history-resolved mark", async () => {
+			const logger = new MockLogger();
+			const reader = makeReader([
+				[
+					makeOp({
+						sequenceNumber: 20,
+						clientId: "target",
+						clientSequenceNumber: 1,
+						metadata: { batch: true },
+					}),
+					makeOp({
+						sequenceNumber: 21,
+						clientId: "target",
+						clientSequenceNumber: 2,
+						metadata: { batch: false },
+					}),
+				],
+			]);
+			const resolver = makeResolver({ reader, logger });
+			assert.deepEqual(await resolver.resolve(generateBatchId("target", 1), 5), {
+				kind: "resolved",
+				sequenceNumber: 21,
+			});
+			logger.assertMatch([
+				{
+					eventName: "Resolve",
+					outcome: "resolved",
+					path: "history",
+					sequenceNumber: 21,
+				},
+			]);
+		});
+
+		it("emits path 'noReader' when no historical reader is wired", async () => {
+			const logger = new MockLogger();
+			const resolver = makeResolver({ logger });
+			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 1), 5), {
+				kind: "pending",
+			});
+			logger.assertMatch([
+				{
+					eventName: "Resolve",
+					outcome: "pending",
+					path: "noReader",
+				},
+			]);
+		});
+
+		it("emits path 'session' on a live fast-path hit", async () => {
+			const logger = new MockLogger();
+			const resolver = makeResolver({ logger });
+			resolver.processInboundBatch("live_[1]", 7);
+			assert.deepEqual(await resolver.resolve("live_[1]", 5), {
+				kind: "resolved",
+				sequenceNumber: 7,
+			});
+			logger.assertMatch([
+				{
+					eventName: "Resolve",
+					outcome: "resolved",
+					path: "session",
+					sequenceNumber: 7,
+				},
+			]);
+		});
+
+		it("emits outcome 'error' (via finally) when the history scan throws", async () => {
+			const logger = new MockLogger();
+			const reader: IHistoricalOpReader = {
+				async fetchMessages(): Promise<IStream<ISequencedDocumentMessage[]>> {
+					throw new Error("delta storage boom");
+				},
+			};
+			const resolver = makeResolver({ reader, logger });
+			// The throw propagates (resolve does not swallow it)...
+			await assert.rejects(resolver.resolve(generateBatchId("missing", 1), 5), /boom/);
+			// ...but the Resolve event still fires with outcome "error".
+			logger.assertMatch([{ eventName: "Resolve", outcome: "error", path: "history" }]);
 		});
 	});
 });

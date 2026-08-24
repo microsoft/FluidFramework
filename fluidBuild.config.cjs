@@ -117,7 +117,8 @@ module.exports = {
 		},
 		"lint": {
 			dependsOn: [
-				"check:inexactOptionalPropertyTypes",
+				"check:types:inexactOptionalPropertyTypes",
+				"check:types:test:playwright",
 				"eslint",
 				"good-fences",
 				"depcruise",
@@ -148,11 +149,7 @@ module.exports = {
 			"build:genver",
 		],
 		"build:entrypoints": {
-			dependsOn: [
-				"build:entrypoints:esm",
-				"build:entrypoints:cjs",
-				"build:entrypoints:node10",
-			],
+			dependsOn: ["build:entrypoints:esm", "build:entrypoints:cjs"],
 			script: false,
 		},
 		"build:entrypoints:esm": ["build:esnext"],
@@ -190,6 +187,9 @@ module.exports = {
 			"^build:entrypoints:esm",
 			"^api-extractor:esnext",
 		],
+		// At least as of 2026-08-21, no test's code uses package entrypoints; so just the ESM build is sufficient.
+		"build:test:playwright": ["build:esnext"],
+		"check:types:test:playwright": ["build:esnext"],
 		"api": {
 			dependsOn: [
 				"api-extractor:commonjs",
@@ -206,12 +206,11 @@ module.exports = {
 			dependsOn: ["build:esnext"],
 			script: true,
 		},
-		// build:api-reports may be handled in one step with build:docs when a
-		// package only uses api-extractor supported exports, which is a single
-		// export/entrypoint. For packages with /legacy exports, we need to
-		// generate reports from legacy entrypoint as well as the "current" one.
+		// Packages with a single API report may handle build:api-reports directly.
+		// Packages with /legacy exports generate reports from legacy and "current" entrypoints using child tasks.
 		// The "current" entrypoint should be the broadest of "public.d.ts",
 		// "beta.d.ts", and "alpha.d.ts".
+		"build:api-reports": ["build:entrypoints:esm", "api-extractor:esnext", "build:esnext"],
 		"build:api-reports:current": [
 			"build:entrypoints:esm",
 			"api-extractor:esnext",
@@ -222,6 +221,7 @@ module.exports = {
 			"api-extractor:esnext",
 			"build:esnext",
 		],
+		"ci:build:api-reports": ["build:entrypoints:esm", "api-extractor:esnext", "build:esnext"],
 		"ci:build:api-reports:current": [
 			"build:entrypoints:esm",
 			"api-extractor:esnext",
@@ -253,7 +253,7 @@ module.exports = {
 		// therefore we need to require both before running api-extractor.
 		"check:release-tags": ["tsc", "build:esnext"],
 		"check:are-the-types-wrong": ["tsc", "build:esnext", "build:entrypoints", "api"],
-		"check:inexactOptionalPropertyTypes": [
+		"check:types:inexactOptionalPropertyTypes": [
 			"^build:esnext",
 			"^build:entrypoints:esm",
 			"^api-extractor:esnext",
@@ -286,12 +286,22 @@ module.exports = {
 		"test:cjs": { dependsOn: ["test:unit:cjs"], script: false },
 		"test:esm": { dependsOn: ["test:unit:esm"], script: false },
 		"test:jest": ["build:compile"],
+		"test:playwright": [
+			"build:test:playwright",
+			// In common case there is no playwright build as it generates as it runs.
+			// In those cases, depend on the implementation. Since all playwright tests
+			// are ESM focused, just depend on the ESM build.
+			"build:esnext",
+			// This is not strictly a dependency as these only typecheck and don't emit,
+			// but it is best to have passing typechecks and these are fast.
+			"check:types:test:playwright",
+		],
 		"test:mocha": ["build:test"],
 		"test:mocha:cjs": ["build:test:cjs"],
 		"test:mocha:esm": ["build:test:esm"],
-		"test:unit": { dependsOn: ["test:mocha", "test:jest"], script: false },
+		"test:unit": { dependsOn: ["test:mocha", "test:jest", "test:playwright"], script: false },
 		"test:unit:cjs": { dependsOn: ["test:mocha:cjs"], script: false },
-		"test:unit:esm": { dependsOn: ["test:mocha:esm"], script: false },
+		"test:unit:esm": { dependsOn: ["test:mocha:esm", "test:playwright"], script: false },
 
 		// alias for back compat
 		"build:full": {

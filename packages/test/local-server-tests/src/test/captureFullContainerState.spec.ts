@@ -11,7 +11,9 @@ import {
 	captureFullContainerState,
 	createDetachedContainer,
 	extractBlobAttachReferences,
+	loadExistingContainer,
 	loadFrozenContainerFromPendingState,
+	waitContainerToCatchUp,
 } from "@fluidframework/container-loader/internal";
 import type { FluidObject } from "@fluidframework/core-interfaces/internal";
 import type {
@@ -244,6 +246,7 @@ describe("captureFullContainerState", () => {
 			savedOps: unknown[];
 			baseSnapshot: unknown;
 			snapshotBlobs: Record<string, string>;
+			blobContentsMode?: "reference";
 		};
 		assert.strictEqual(parsed.attached, true, "captured state should be marked attached");
 		assert.strictEqual(
@@ -259,6 +262,11 @@ describe("captureFullContainerState", () => {
 		assert(
 			Object.keys(parsed.snapshotBlobs).length > 0,
 			"captured state should inline snapshot blobs",
+		);
+		assert.strictEqual(
+			parsed.blobContentsMode,
+			undefined,
+			"default capture should remain self-contained without a live-storage marker",
 		);
 
 		const frozenContainer = await loadFrozenContainerFromPendingState({
@@ -690,6 +698,137 @@ describe("captureFullContainerState", () => {
 			.get();
 		assert(retrievedBlob !== undefined, "Expected blob handle to resolve in frozen container");
 		assert.strictEqual(bufferToString(retrievedBlob, "utf8"), blobPayload);
+	});
+
+	it("captures references that can seed multiple independent online containers", async () => {
+		const { container, testFluidObject, urlResolver, codeLoader, documentServiceFactory } =
+			await initialize();
+
+		const blobPayload = "reference-only-attachment";
+		const blobHandle = await testFluidObject.runtime.uploadBlob(
+			stringToBuffer(blobPayload, "utf8"),
+		);
+		testFluidObject.root.set("blobHandle", blobHandle);
+		testFluidObject.root.set("baseline", "captured");
+		await container.attach(urlResolver.createCreateNewRequest("test"));
+		if (container.isDirty) {
+			await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+		}
+
+		const url = await container.getAbsoluteUrl("");
+		assert(url !== undefined, "Expected container to provide a valid absolute URL");
+
+		const inlineState = await captureFullContainerState({
+			urlResolver,
+			documentServiceFactory,
+			request: { url },
+		});
+		const referenceState = await captureFullContainerState({
+			urlResolver,
+			documentServiceFactory,
+			request: { url },
+			blobCaptureMode: "reference",
+		});
+		const parsedReferenceState = JSON.parse(referenceState) as {
+			snapshotBlobs: Record<string, string>;
+			blobContentsMode?: "reference";
+			attachmentBlobContents?: Record<string, string>;
+		};
+		assert.deepStrictEqual(
+			parsedReferenceState.snapshotBlobs,
+			{},
+			"Reference-only state should omit structural blob payloads",
+		);
+		assert.strictEqual(
+			parsedReferenceState.blobContentsMode,
+			"reference",
+			"Reference-only state should identify its live-storage dependency",
+		);
+		assert.strictEqual(
+			parsedReferenceState.attachmentBlobContents,
+			undefined,
+			"Reference-only state should omit attachment payloads",
+		);
+		assert(
+			referenceState.length < inlineState.length,
+			"Reference-only state should be smaller than the default inline state",
+		);
+
+		await assert.rejects(
+			async () =>
+				loadFrozenContainerFromPendingState({
+					codeLoader,
+					pendingLocalState: referenceState,
+				}),
+			/Reference-only state.*requires online driver wiring/,
+			"Fully offline loading should clearly reject reference-only state",
+		);
+
+		const unmarkedEmptyState = JSON.stringify({
+			...JSON.parse(referenceState),
+			blobContentsMode: undefined,
+		});
+		await assert.rejects(
+			async () =>
+				loadFrozenContainerFromPendingState({
+					codeLoader,
+					pendingLocalState: unmarkedEmptyState,
+				}),
+			/Attempted to read a blob from a frozen-loaded container/,
+			"An unmarked empty blob map should not be misclassified as reference-only state",
+		);
+
+		const loadFromBaseline = async (): Promise<{
+			container: IContainer;
+			root: ISharedMap;
+		}> => {
+			const loadedContainer = await loadExistingContainer({
+				codeLoader,
+				documentServiceFactory,
+				urlResolver,
+				request: { url },
+				pendingLocalState: referenceState,
+			});
+			await waitContainerToCatchUp(loadedContainer);
+			const entryPoint: FluidObject<TestFluidObject> = await loadedContainer.getEntryPoint();
+			assert(
+				entryPoint.ITestFluidObject !== undefined,
+				"Expected loaded container entrypoint to be a valid TestFluidObject",
+			);
+			return { container: loadedContainer, root: entryPoint.ITestFluidObject.root };
+		};
+
+		const [first, second] = await Promise.all([loadFromBaseline(), loadFromBaseline()]);
+		assert.strictEqual(first.root.get("baseline"), "captured");
+		assert.strictEqual(second.root.get("baseline"), "captured");
+		const retrievedBlob = await first.root.get("blobHandle").get();
+		assert.strictEqual(
+			bufferToString(retrievedBlob, "utf8"),
+			blobPayload,
+			"Reference-only loads should fetch omitted attachment contents from live storage",
+		);
+
+		first.root.set("firstEdit", "first");
+		second.root.set("secondEdit", "second");
+		await Promise.all(
+			[first.container, second.container].map(async (loadedContainer) => {
+				if (loadedContainer.isDirty) {
+					await timeoutPromise((resolve) => loadedContainer.once("saved", () => resolve()));
+				}
+			}),
+		);
+
+		const finalContainer = await loadExistingContainer({
+			codeLoader,
+			documentServiceFactory,
+			urlResolver,
+			request: { url },
+		});
+		await waitContainerToCatchUp(finalContainer);
+		const finalEntryPoint: FluidObject<TestFluidObject> = await finalContainer.getEntryPoint();
+		assert(finalEntryPoint.ITestFluidObject !== undefined);
+		assert.strictEqual(finalEntryPoint.ITestFluidObject.root.get("firstEdit"), "first");
+		assert.strictEqual(finalEntryPoint.ITestFluidObject.root.get("secondEdit"), "second");
 	});
 
 	it("rejects at capture time when the resolver emits a non-conforming URL shape", async () => {

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/bundle-size-tests",
-	"version": "2.117.0",
+	"version": "3.0.0",
 	"private": true,
 	"description": "A package for understanding the bundle size of Fluid Framework",
 	"homepage": "https://fluidframework.com",
@@ -73,7 +73,6 @@
 		"eslint": "catalog:eslint",
 		"jiti": "^2.6.1",
 		"mocha": "^11.7.5",
-		"puppeteer": "^23.6.0",
 		"rimraf": "^6.1.3",
 		"source-map-explorer": "^2.5.3",
 		"source-map-loader": "^5.0.0",

@@ -143,7 +143,7 @@ declare namespace InternalTypes {
         FieldHasDefault,
         ScopedSchemaName,
         DefaultProvider,
-        typeNameSymbol,
+        schemaIdentifierBrand,
         InsertableObjectFromSchemaRecord,
         FlexList,
         FlexListToUnion,
@@ -151,9 +151,6 @@ declare namespace InternalTypes {
     }
 }
 export { InternalTypes }
-
-// @public @deprecated
-export type IsListener<T> = IsListener_2<T>;
 
 // @public @system
 export type IsUnion<T, T2 = T> = T extends unknown ? [T2] extends [T] ? false : true : "error";
@@ -184,12 +181,6 @@ export type LazyItem<Item = unknown> = Item | (() => Item);
 // @public @sealed @system
 export interface LeafSchema<Name extends string, T extends TreeLeafValue> extends TreeNodeSchemaNonClass<`com.fluidframework.leaf.${Name}`, NodeKind.Leaf, T, T, true> {
 }
-
-// @public @deprecated
-export type Listenable<T extends object> = Listenable_2<T>;
-
-// @public @deprecated
-export type Listeners<T extends object> = Listeners_2<T>;
 
 // @public @sealed
 export interface MakeNominal {
@@ -242,11 +233,8 @@ export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFie
     -readonly [Property in keyof T]: Property extends string ? TreeFieldFromImplicitField<T[Property]> : unknown;
 };
 
-// @public @deprecated
-export type Off = Off_2;
-
 // @public @sealed @system
-export interface ReadonlyArrayNode<out T = TreeNode | TreeLeafValue> extends ReadonlyArray<T>, Awaited<TreeNode & WithType<string, NodeKind.Array>> {
+export interface ReadonlyArrayNode<out T = TreeNode | TreeLeafValue> extends FluidReadonlyArray<T>, Awaited<TreeNode & WithType<string, NodeKind.Array>> {
 }
 
 // @public @deprecated
@@ -335,6 +323,9 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
 // @public @system
 export const SchemaFactory_base: SchemaStatics & (new () => SchemaStatics);
 
+// @public @system
+const schemaIdentifierBrand: unique symbol;
+
 // @public @sealed @system
 export interface SchemaStatics {
     readonly boolean: LeafSchema<"boolean", boolean>;
@@ -406,18 +397,20 @@ export namespace System_Unsafe {
     };
     // @sealed @system
     export interface ReadonlyMapInlined<K, T extends ImplicitAllowedTypesUnsafe> {
-        [Symbol.iterator](): IterableIterator<[K, TreeNodeFromImplicitAllowedTypesUnsafe<T>]>;
-        entries(): IterableIterator<[K, TreeNodeFromImplicitAllowedTypesUnsafe<T>]>;
+        [Symbol.iterator](): FluidIterableIterator<[K, TreeNodeFromImplicitAllowedTypesUnsafe<T>]>;
         // (undocumented)
-        forEach(callbackfn: (value: TreeNodeFromImplicitAllowedTypesUnsafe<T>, key: K, map: ReadonlyMap<K, TreeNodeFromImplicitAllowedTypesUnsafe<T>>) => void, thisArg?: any): void;
+        readonly [Symbol.toStringTag]: string;
+        entries(): FluidIterableIterator<[K, TreeNodeFromImplicitAllowedTypesUnsafe<T>]>;
+        // (undocumented)
+        forEach(callbackfn: (value: TreeNodeFromImplicitAllowedTypesUnsafe<T>, key: K, map: FluidReadonlyMap<K, TreeNodeFromImplicitAllowedTypesUnsafe<T>>) => void, thisArg?: any): void;
         // (undocumented)
         get(key: K): TreeNodeFromImplicitAllowedTypesUnsafe<T> | undefined;
         // (undocumented)
         has(key: K): boolean;
-        keys(): IterableIterator<K>;
+        keys(): FluidIterableIterator<K>;
         // (undocumented)
         readonly size: number;
-        values(): IterableIterator<TreeNodeFromImplicitAllowedTypesUnsafe<T>>;
+        values(): FluidIterableIterator<TreeNodeFromImplicitAllowedTypesUnsafe<T>>;
     }
     // @sealed @system
     export interface TreeArrayNodeUnsafe<TAllowedTypes extends ImplicitAllowedTypesUnsafe> extends TreeArrayNode<TAllowedTypes, TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>, InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>> {
@@ -479,7 +472,7 @@ export interface TreeArrayNode<TAllowedTypes extends System_Unsafe.ImplicitAllow
     push(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
     removeAt(index: number): void;
     removeRange(start?: number, end?: number): void;
-    values(): IterableIterator<T>;
+    values(): FluidIterableIterator<T>;
 }
 
 // @public
@@ -490,7 +483,7 @@ export const TreeArrayNode: {
 // @public @sealed
 export interface TreeChangeEvents {
     nodeChanged(unstable?: unknown): void;
-    treeChanged(): void;
+    treeChanged(unstable?: unknown): void;
 }
 
 // @public
@@ -500,21 +493,20 @@ export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = Fie
 export type TreeLeafValue = number | string | boolean | IFluidHandle | null;
 
 // @public @sealed
-export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>, TreeNode {
+export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends FluidReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>, TreeNode {
     delete(key: string): void;
-    entries(): IterableIterator<[string, TreeNodeFromImplicitAllowedTypes<T>]>;
-    forEach(callbackfn: (value: TreeNodeFromImplicitAllowedTypes<T>, key: string, map: ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>) => void, thisArg?: any): void;
-    keys(): IterableIterator<string>;
+    entries(): FluidIterableIterator<[string, TreeNodeFromImplicitAllowedTypes<T>]>;
+    forEach(callbackfn: (value: TreeNodeFromImplicitAllowedTypes<T>, key: string, map: FluidReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>) => void, thisArg?: any): void;
+    keys(): FluidIterableIterator<string>;
     set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T> | undefined): void;
-    values(): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>>;
+    values(): FluidIterableIterator<TreeNodeFromImplicitAllowedTypes<T>>;
 }
 
 // @public @sealed
 export abstract class TreeNode implements WithType {
+    abstract get [schemaIdentifierBrand](): string;
     static [Symbol.hasInstance](value: unknown): value is TreeNode;
     static [Symbol.hasInstance]<TSchema extends abstract new (...args: any[]) => TreeNode>(this: TSchema, value: unknown): value is InstanceType<TSchema>;
-    // @deprecated
-    abstract get [typeNameSymbol](): string;
     abstract get [typeSchemaSymbol](): TreeNodeSchemaClass;
     protected constructor(token: unknown);
 }
@@ -575,7 +567,7 @@ export enum TreeStatus {
 // @public @sealed
 export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends IDisposable {
     readonly compatibility: SchemaCompatibilityStatus;
-    readonly events: Listenable_2<TreeViewEvents>;
+    readonly events: Listenable<TreeViewEvents>;
     initialize(content: InsertableTreeFieldFromImplicitField<TSchema>): void;
     get root(): TreeFieldFromImplicitField<TSchema>;
     set root(newRoot: InsertableTreeFieldFromImplicitField<TSchema>);
@@ -599,9 +591,6 @@ export interface TreeViewEvents {
     rootChanged(): void;
     schemaChanged(): void;
 }
-
-// @public @deprecated @system
-const typeNameSymbol: unique symbol;
 
 // @public @system
 export const typeSchemaSymbol: unique symbol;
@@ -642,8 +631,7 @@ export interface ViewableTree {
 
 // @public @sealed
 export interface WithType<out TName extends string = string, out TKind extends NodeKind = NodeKind, out TInfo = unknown> {
-    // @deprecated
-    get [typeNameSymbol](): TName;
+    get [schemaIdentifierBrand](): TName;
     get [typeSchemaSymbol](): TreeNodeSchemaClass<TName, TKind, TreeNode, never, boolean, TInfo>;
 }
 

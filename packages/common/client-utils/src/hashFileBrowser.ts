@@ -82,7 +82,10 @@ export async function gitHashFile(file: IsoBuffer): Promise<string> {
 	const size = file.byteLength;
 	// eslint-disable-next-line unicorn/prefer-code-point
 	const filePrefix = `blob ${size.toString()}${String.fromCharCode(0)}`;
-	const hashBuffer = IsoBuffer.from(filePrefix + file.toString());
+	const prefixBuffer = IsoBuffer.from(filePrefix);
+	const hashBuffer = new IsoBuffer(prefixBuffer.byteLength + file.byteLength);
+	hashBuffer.set(prefixBuffer);
+	hashBuffer.set(file, prefixBuffer.byteLength);
 
 	// hashFile uses sha1; if that changes this will need to change too
 	return hashFile(hashBuffer);

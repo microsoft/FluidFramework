@@ -58,6 +58,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
 export class LocalOrdererManager implements IOrdererManager {
     constructor(storage: IDocumentStorage, databaseManager: IDatabaseManager, createHistorian: (tenant: string) => Promise<IHistorian>, logger: ILogger, serviceConfiguration?: Partial<IServiceConfiguration> | undefined, pubsub?: IPubSub | undefined, documentRepository?: IDocumentRepository | undefined, checkpointRepository?: ICheckpointRepository | undefined);
     close(): Promise<void>;
+    getCheckpointSequenceNumber(tenantId: string, documentId: string): Promise<number | undefined>;
     // (undocumented)
     getOrderer(tenantId: string, documentId: string): Promise<IOrderer>;
     hasPendingWork(): Promise<boolean>;
