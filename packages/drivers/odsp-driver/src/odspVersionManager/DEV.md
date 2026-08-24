@@ -557,7 +557,7 @@ is what ships today.
 ### Component B — how does the recomposed driver materialize the target?
 
 The host imports `createPointInTimeDocumentService` from the dedicated point-in-time entrypoint and
-injects it into `OdspDocumentServiceFactory`. Core then exposes the optional
+injects it through `createOdspDocumentServiceFactory`. The returned factory exposes the optional
 `createPointInTimeDocumentService(resolvedUrl, targetSequenceNumber)` capability as a thin delegate.
 The injected implementation:
 

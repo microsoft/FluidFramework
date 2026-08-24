@@ -150,6 +150,39 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 		assert.equal(versionManagerEpochTracker, capturedCacheAndTrackers[0]?.epochTracker);
 	});
 
+	it("preserves routing metadata when resolving a recoverable version", async () => {
+		const resolvedUrl: IOdspResolvedUrl = {
+			...(await makeResolvedUrl()),
+			dataStorePath: "/data/store",
+			codeHint: { containerPackageName: "test-package" },
+		};
+		const documentServiceUrls: IOdspResolvedUrl[] = [];
+		await createPointInTimeDocumentServiceCore(
+			makeImplementationProps(resolvedUrl, async (url) => {
+				documentServiceUrls.push(url as IOdspResolvedUrl);
+				return fakeDocumentService();
+			}),
+			{
+				createVersionManager: () => ({
+					findBaseForSeq: async (): Promise<BaseForSeq> => ({
+						kind: "found",
+						base: {
+							versionId: "42.0",
+							sequenceNumber: 5,
+							lastModifiedDateTime: "2026-01-01T00:00:00Z",
+						},
+					}),
+				}),
+			},
+		);
+
+		assert.equal(documentServiceUrls.length, 2);
+		assert.equal(documentServiceUrls[0]?.fileVersion, "42.0");
+		assert.equal(documentServiceUrls[0]?.dataStorePath, "/data/store");
+		assert.equal(documentServiceUrls[0]?.codeHint?.containerPackageName, "test-package");
+		assert.equal(documentServiceUrls[1], resolvedUrl);
+	});
+
 	for (const oldestResolvedSeq of [undefined, 5]) {
 		it(`reports when no recoverable base exists${
 			oldestResolvedSeq === undefined ? "" : " and includes the oldest sequence"

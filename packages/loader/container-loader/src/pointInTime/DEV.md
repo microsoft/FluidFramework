@@ -9,6 +9,7 @@ This flow consumes a sequence number. It does not create or resolve version mark
 The host calls:
 
 ```ts
+import { createOdspDocumentServiceFactory } from "@fluidframework/odsp-driver/legacy";
 import { createPointInTimeDocumentService } from "@fluidframework/odsp-driver/legacy/point-in-time";
 
 const documentServiceFactory = createOdspDocumentServiceFactory({
