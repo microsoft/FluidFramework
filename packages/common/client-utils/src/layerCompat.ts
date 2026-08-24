@@ -120,12 +120,15 @@ export const defaultLayerCompatDetails: ILayerCompatDetails = {
 };
 
 /**
+ * Key used to look up {@link (ILayerCompatSupportRequirements:interface)} on a `FluidObject`.
  * @internal
  */
 export const ILayerCompatSupportRequirements: keyof IProvideLayerCompatSupportRequirements =
 	"ILayerCompatSupportRequirements";
 
 /**
+ * Provides {@link (ILayerCompatSupportRequirements:interface)} so that a layer can publish, as a `FluidObject`, the
+ * requirements another layer must meet to be compatible with it.
  * @internal
  */
 export interface IProvideLayerCompatSupportRequirements {
