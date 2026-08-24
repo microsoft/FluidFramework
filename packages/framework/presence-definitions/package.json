@@ -48,10 +48,11 @@
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:api-reports": "api-extractor run --local --config api-extractor/api-extractor-report.json",
+		"build:cjs": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ./src/cjs/package.json ./dist",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local --config api-extractor/api-extractor-model.json",
-		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:esm": "tsc --project ./tsconfig.json",
 		"build:test": "concurrently npm:build:test:esm npm:build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
@@ -71,7 +72,6 @@
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ./src/cjs/package.json ./dist",
 		"typetests:gen": "flub generate typetests --dir . -v"
 	},
 	"dependencies": {
@@ -98,10 +98,10 @@
 	"fluidBuild": {
 		"tasks": {
 			"check:exports:cjs:index": [
-				"tsc"
+				"build:cjs"
 			],
 			"check:exports:esm:index": [
-				"build:esnext"
+				"build:esm"
 			]
 		}
 	},

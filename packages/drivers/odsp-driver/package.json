@@ -72,13 +72,14 @@
 		"build:api-reports:current": "api-extractor run --local --config api-extractor/api-extractor-report.current.json",
 		"build:api-reports:legacy": "api-extractor run --local --config api-extractor/api-extractor-report.legacy.json",
 		"build:api-reports:pointInTime": "api-extractor run --local --config api-extractor/api-extractor-report.pointInTime.json",
+		"build:cjs": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local --config api-extractor/api-extractor-model.json",
 		"build:entrypoints": "fluid-build . --task build:entrypoints",
 		"build:entrypoints:cjs": "flub generate entrypoints --resolutionConditions require --outFileLegacyBeta legacy --outFileLegacyAlpha legacyAlpha --outDir ./dist",
 		"build:entrypoints:esm": "flub generate entrypoints --outFileLegacyBeta legacy --outFileLegacyAlpha legacyAlpha --outDir ./lib",
-		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:esm": "tsc --project ./tsconfig.json",
 		"build:genver": "gen-version",
 		"build:test": "concurrently npm:build:test:esm npm:build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
@@ -114,7 +115,6 @@
 		"test:mocha:cjs": "cross-env FLUID_TEST_MODULE_SYSTEM=CJS mocha",
 		"test:mocha:esm": "mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"typetests:gen": "flub generate typetests --dir . -v"
 	},
 	"c8": {
