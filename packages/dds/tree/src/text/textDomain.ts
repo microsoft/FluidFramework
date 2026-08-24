@@ -511,7 +511,7 @@ export namespace PlainText {
 		/**
 		 * Creates an anchor that tracks an insertion point at `index` as the text is edited.
 		 * @param index - The character index of the insertion point to track.
-		 * @returns An anchor whose index updates as the text is edited.
+		 * @returns An anchor whose index updates as the text is edited. Call {@link ArrayPlaceAnchor.dispose} when it is no longer needed.
 		 */
 		createInsertionAnchor(index: number): ArrayPlaceAnchor;
 	}
