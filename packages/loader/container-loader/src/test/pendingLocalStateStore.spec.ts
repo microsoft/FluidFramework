@@ -23,6 +23,7 @@ describe("PendingLocalStateStore", () => {
 		savedOps: ISequencedDocumentMessage[] = [],
 		snapshotBlobs: Record<string, string> = {},
 		loadedGroupIdSnapshots?: Record<string, SerializedSnapshotInfo>,
+		snapshotBlobContents?: Record<string, string>,
 	): IPendingContainerState {
 		const state: IPendingContainerState = {
 			attached: true,
@@ -38,6 +39,9 @@ describe("PendingLocalStateStore", () => {
 		};
 		if (loadedGroupIdSnapshots !== undefined) {
 			state.loadedGroupIdSnapshots = loadedGroupIdSnapshots;
+		}
+		if (snapshotBlobContents !== undefined) {
+			state.snapshotBlobContents = snapshotBlobContents;
 		}
 		return state;
 	}
@@ -135,6 +139,54 @@ describe("PendingLocalStateStore", () => {
 			assert.strictEqual(store.size, 0);
 			assert.strictEqual(store.has("key1"), false);
 			assert.strictEqual(store.has("key2"), false);
+		});
+
+		it("should release shared state and URL restrictions after clear", () => {
+			const store = new PendingLocalStateStore<string>();
+			store.set(
+				"key1",
+				JSON.stringify(createMockContainerState("http://first.com", [], { blob: "first" })),
+			);
+
+			store.clear();
+			store.set(
+				"key2",
+				JSON.stringify(createMockContainerState("http://second.com", [], { blob: "second" })),
+			);
+
+			const stored = store.get("key2");
+			assert(stored !== undefined, "Expected replacement state");
+			assert.strictEqual(
+				(JSON.parse(stored) as IPendingContainerState).snapshotBlobs.blob,
+				"second",
+			);
+		});
+
+		it("should release deduplicated blobs after deleting their last state", () => {
+			const store = new PendingLocalStateStore<string>();
+			store.set(
+				"key1",
+				JSON.stringify(
+					createMockContainerState("http://test.com", [], { text: "first" }, undefined, {
+						binary: "AQID",
+					}),
+				),
+			);
+			assert.strictEqual(store.delete("key1"), true);
+
+			store.set(
+				"key2",
+				JSON.stringify(
+					createMockContainerState("http://test.com", [], { text: "second" }, undefined, {
+						binary: "BAUG",
+					}),
+				),
+			);
+			const stored = store.get("key2");
+			assert(stored !== undefined, "Expected replacement state");
+			const parsed = JSON.parse(stored) as IPendingContainerState;
+			assert.strictEqual(parsed.snapshotBlobs.text, "second");
+			assert.strictEqual(parsed.snapshotBlobContents?.binary, "BAUG");
 		});
 
 		it("should return undefined for non-existent keys", () => {
@@ -338,6 +390,27 @@ describe("PendingLocalStateStore", () => {
 			assert(retrievedState2String !== undefined, "Expected state to be found");
 			const retrievedState2 = JSON.parse(retrievedState2String) as IPendingContainerState;
 			assert.strictEqual(retrievedState2.snapshotBlobs.blob1, "content1");
+		});
+
+		it("should deduplicate binary-safe snapshot blob contents by ID", () => {
+			const store = new PendingLocalStateStore<string>();
+			const state1 = createMockContainerState("http://test.com", [], {}, undefined, {
+				blob1: "AQID",
+				blob2: "BAUG",
+			});
+			const state2 = createMockContainerState("http://test.com", [], {}, undefined, {
+				blob1: "different",
+				blob3: "BwgJ",
+			});
+
+			store.set("key1", JSON.stringify(state1));
+			store.set("key2", JSON.stringify(state2));
+
+			const retrievedState2String = store.get("key2");
+			assert(retrievedState2String !== undefined, "Expected state to be found");
+			const retrievedState2 = JSON.parse(retrievedState2String) as IPendingContainerState;
+			assert.strictEqual(retrievedState2.snapshotBlobContents?.blob1, "AQID");
+			assert.strictEqual(retrievedState2.snapshotBlobContents?.blob3, "BwgJ");
 		});
 	});
 

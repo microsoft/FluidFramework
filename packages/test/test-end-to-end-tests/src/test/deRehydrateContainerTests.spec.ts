@@ -286,11 +286,7 @@ describeCompat(
 
 		function getSnapshotInfoFromSerializedContainer(container: IContainer): SnapshotWithBlobs {
 			const snapshot = container.serialize();
-			const deserializedSummary = JSON.parse(snapshot);
-			return {
-				baseSnapshot: deserializedSummary.baseSnapshot,
-				snapshotBlobs: deserializedSummary.snapshotBlobs,
-			};
+			return JSON.parse(snapshot) as SnapshotWithBlobs;
 		}
 
 		beforeEach("createLoader", async function () {

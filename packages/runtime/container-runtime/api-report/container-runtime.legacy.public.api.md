@@ -4,6 +4,8 @@
 
 ```ts
 
+import { EventEmitter } from 'events_pkg';
+
 // (No @packageDocumentation comment for this package)
 
 ```

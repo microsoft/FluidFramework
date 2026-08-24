@@ -18,6 +18,15 @@ import {
 import { pkgVersion } from "./packageVersion.js";
 
 /**
+ * Indicates that the Loader preserves arbitrary binary structural snapshot
+ * blobs when serializing detached and pending container state.
+ *
+ * Keep this value aligned with the Runtime layer's requirement in
+ * `runtimeLayerCompatState.ts`.
+ */
+export const binarySnapshotBlobSerialization = "binarySnapshotBlobSerialization";
+
+/**
  * The core compatibility details of the Loader layer that is the same across all layer boundaries.
  * @internal
  */
@@ -41,7 +50,7 @@ export const loaderCompatDetailsForRuntime: ILayerCompatDetails = {
 	/**
 	 * The features supported by the Loader layer across the Loader / Runtime boundary.
 	 */
-	supportedFeatures: new Set<string>(),
+	supportedFeatures: new Set<string>([binarySnapshotBlobSerialization]),
 };
 
 /**

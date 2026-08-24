@@ -12,63 +12,26 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 
-import type {
-	IBase64BlobContents,
-	ISerializableBlobContents,
-} from "./containerStorageAdapter.js";
+import type { IBase64BlobContents } from "./containerStorageAdapter.js";
 
 /**
- * Wire-format constants this module needs to walk and filter snapshots.
- * Authoritative definitions live in `container-runtime` and
- * `runtime-definitions`; the values are duplicated here to avoid a
- * loader → runtime layering dependency. A contract test in
+ * Wire-format constants this module needs to walk snapshots. Authoritative
+ * definitions live in `container-runtime`; the values are duplicated here to
+ * avoid a loader → runtime layering dependency. A contract test in
  * `packages/test/local-server-tests` asserts these match the authoritative
  * values; do not change them in isolation.
  *
  * Authoritative sources:
  * - `blobsTreeName`, `redirectTableBlobName`: `packages/runtime/container-runtime/src/blobManager/blobManagerSnapSum.ts`
- * - `blobManagerBasePath`: `packages/runtime/container-runtime/src/blobManager/blobManager.ts`
- * - `gcTreeKey`, `gcBlobPrefix`, `gcTombstoneBlobKey`, `gcDeletedBlobKey`: `packages/runtime/runtime-definitions/src/garbageCollectionDefinitions.ts`
- *
  * @internal
  */
 export const wireFormatConstants = {
 	blobsTreeName: ".blobs",
 	redirectTableBlobName: ".redirectTable",
-	blobManagerBasePath: "_blobs",
-	gcTreeKey: "gc",
-	gcBlobPrefix: "__gc",
-	gcTombstoneBlobKey: "__tombstones",
-	gcDeletedBlobKey: "__deletedNodes",
 } as const;
 
-const {
-	blobsTreeName,
-	redirectTableBlobName,
-	blobManagerBasePath,
-	gcTreeKey,
-	gcBlobPrefix,
-	gcTombstoneBlobKey,
-	gcDeletedBlobKey,
-} = wireFormatConstants;
-
-interface IGcNodeData {
-	outboundRoutes: string[];
-	unreferencedTimestampMs?: number;
-}
-
-interface IGcState {
-	gcNodes: { [id: string]: IGcNodeData };
-}
-
-/**
- * The parsed subset of the `gc` subtree that drives reachability decisions.
- */
-export interface IGcSnapshotData {
-	gcState: IGcState | undefined;
-	tombstones: string[] | undefined;
-	deletedNodes: string[] | undefined;
-}
+const { blobsTreeName, redirectTableBlobName } = wireFormatConstants;
+const embeddedBlobsTreeName = ".embeddedDetachedBlobs";
 
 /** Reader that returns a blob's contents for a given storage id. */
 type BlobReader = (id: string) => Promise<ArrayBufferLike>;
@@ -79,7 +42,7 @@ type BlobReader = (id: string) => Promise<ArrayBufferLike>;
  * or spike memory. The value is a pragmatic middle ground — high enough to
  * keep a typical driver's request pipeline full, low enough to avoid storms.
  */
-const maxReadConcurrency = 32;
+export const maxReadConcurrency = 32;
 
 /**
  * Runs `fn` over `items` with at most `limit` promises in flight. Preserves
@@ -111,80 +74,43 @@ export async function mapWithConcurrency<T, R>(
 }
 
 /**
- * Parses the `gc` subtree of a base snapshot. Returns `undefined` if the
- * snapshot has no GC tree (GC disabled or pre-GC document).
- */
-export async function parseGcSnapshotData(
-	baseSnapshot: ISnapshotTree,
-	storage: Pick<IDocumentStorageService, "readBlob">,
-): Promise<IGcSnapshotData | undefined> {
-	const gcSnapshotTree: ISnapshotTree | undefined = baseSnapshot.trees[gcTreeKey];
-	if (gcSnapshotTree === undefined) {
-		return undefined;
-	}
-	let gcState: IGcState | undefined;
-	let tombstones: string[] | undefined;
-	let deletedNodes: string[] | undefined;
-	for (const [key, blobId] of Object.entries(gcSnapshotTree.blobs)) {
-		if (key === gcDeletedBlobKey) {
-			deletedNodes = await readAndParse<string[]>(storage, blobId);
-		} else if (key === gcTombstoneBlobKey) {
-			tombstones = await readAndParse<string[]>(storage, blobId);
-		} else if (key.startsWith(gcBlobPrefix)) {
-			const partial = await readAndParse<IGcState>(storage, blobId);
-			if (gcState === undefined) {
-				gcState = { gcNodes: { ...partial.gcNodes } };
-			} else {
-				for (const [nodeId, nodeData] of Object.entries(partial.gcNodes)) {
-					gcState.gcNodes[nodeId] ??= nodeData;
-				}
-			}
-		}
-	}
-	return { gcState, tombstones, deletedNodes };
-}
-
-/**
- * Walks a snapshot and inlines the contents of every blob reachable without
- * crossing an `unreferenced` subtree boundary. Subtrees flagged
- * `unreferenced: true` are skipped entirely — the summarizer sets that flag
- * from GC state, so honouring it filters out dead subtrees without a
- * separate GC-path traversal.
+ * Walks a snapshot and inlines every structural blob present in it.
+ * Unreferenced-but-unswept content is retained because saved ops after the
+ * snapshot may revive it.
  *
- * The root-level `.blobs` subtree is special-cased: only its `.redirectTable`
- * blob is read, because attachment blob contents are captured separately via
- * {@link captureReferencedAttachmentBlobs}.
+ * The root-level `.blobs` subtree is special-cased because its direct blob
+ * entries are attachment payloads captured separately via
+ * {@link captureReferencedAttachmentBlobs}. Its `.redirectTable` and blobs in
+ * child trees are ordinary structural summary data and are captured here.
+ *
+ * Returned values are the original bytes. The caller performs the single
+ * UTF-8/base64 serialization pass.
  */
 export async function readReferencedSnapshotBlobs(
 	snapshot: ISnapshot | ISnapshotTree,
 	storage: Pick<IDocumentStorageService, "readBlob">,
-): Promise<ISerializableBlobContents> {
+): Promise<Map<string, ArrayBufferLike>> {
 	const { tree, read } = toTreeAndReader(snapshot, storage);
 	const ids = new Set<string>();
 	collectReferencedBlobIds(tree, true, ids);
-	const blobs: ISerializableBlobContents = {};
+	const blobs = new Map<string, ArrayBufferLike>();
 	await mapWithConcurrency([...ids], maxReadConcurrency, async (id) => {
-		const data = await read(id);
-		blobs[id] = bufferToString(data, "utf8");
+		blobs.set(id, await read(id));
 	});
 	return blobs;
 }
 
 /**
- * Synchronously walks the snapshot tree and gathers the set of blob ids that
- * should be inlined. Subtrees flagged `unreferenced: true` are skipped
- * entirely. The root-level `.blobs` subtree is special-cased: only its
- * `.redirectTable` id is collected, because attachment blob contents are
- * captured separately via {@link captureReferencedAttachmentBlobs}.
+ * Synchronously walks the snapshot tree and gathers the structural blob ids
+ * that should be inlined. The root-level `.blobs` subtree is special-cased:
+ * direct attachment entries are skipped, while its `.redirectTable` and
+ * structural child-tree blobs are collected.
  */
 function collectReferencedBlobIds(
 	tree: ISnapshotTree,
 	isRoot: boolean,
 	ids: Set<string>,
 ): void {
-	if (tree.unreferenced === true) {
-		return;
-	}
 	for (const blobId of Object.values(tree.blobs)) {
 		ids.add(blobId);
 	}
@@ -193,6 +119,9 @@ function collectReferencedBlobIds(
 			const tableBlobId = subTree.blobs[redirectTableBlobName];
 			if (tableBlobId !== undefined) {
 				ids.add(tableBlobId);
+			}
+			for (const childTree of Object.values(subTree.trees)) {
+				collectReferencedBlobIds(childTree, false, ids);
 			}
 		} else {
 			collectReferencedBlobIds(subTree, false, ids);
@@ -215,27 +144,20 @@ function toTreeAndReader(
 }
 
 /**
- * Fetches attachment blob contents from a snapshot, filtered by GC
- * reachability. Blobs GC has explicitly marked unreferenced, tombstoned, or
- * deleted are skipped. Blobs absent from the GC graph are kept — GC state
- * lags behind recent attachments and dropping them would lose live data.
- * If `gcData` is `undefined`, every attachment blob is returned.
+ * Fetches every attachment blob present in the snapshot redirect table.
+ * Unreferenced-but-unswept content is retained because saved ops after the
+ * snapshot may revive it.
  *
  * The returned map is keyed by attachment blob storage id. Values are the
- * raw bytes encoded as **base64** strings — attachment blobs may carry
- * arbitrary binary payloads (images, encrypted data, etc.) and a
- * UTF-8 round-trip would silently corrupt non-UTF-8 byte sequences with
- * replacement characters. The runtime's own pending-blob serializer uses
- * base64 for the same reason. This diverges from the structural-blob path
- * in {@link readReferencedSnapshotBlobs}, which encodes UTF-8 because those
- * blobs are JSON or other text the runtime authored. Callers must keep the
- * two encodings on separate fields of the pending state so the load side
- * can decode each correctly.
+ * raw bytes encoded as **base64** strings for JSON transport. Structural
+ * snapshot blobs returned by {@link readReferencedSnapshotBlobs}
+ * remain raw until their caller serializes them. Callers keep the maps on
+ * separate pending-state fields because structural snapshot capture and
+ * attachment capture have distinct responsibilities and key spaces.
  */
 export async function captureReferencedAttachmentBlobs(
 	baseSnapshot: ISnapshotTree,
 	storage: Pick<IDocumentStorageService, "readBlob">,
-	gcData: IGcSnapshotData | undefined,
 ): Promise<IBase64BlobContents> {
 	const blobsTree: ISnapshotTree | undefined = baseSnapshot.trees[blobsTreeName];
 	if (blobsTree === undefined) {
@@ -246,14 +168,9 @@ export async function captureReferencedAttachmentBlobs(
 		return {};
 	}
 
-	const unreferencedLocalIds =
-		gcData === undefined ? undefined : collectUnreferencedBlobLocalIds(gcData);
-
 	const storageIdsToFetch = new Set<string>();
-	for (const [localId, storageId] of localIdToStorageId) {
-		if (unreferencedLocalIds?.has(localId) !== true) {
-			storageIdsToFetch.add(storageId);
-		}
+	for (const storageId of localIdToStorageId.values()) {
+		storageIdsToFetch.add(storageId);
 	}
 
 	const contents: IBase64BlobContents = {};
@@ -287,35 +204,6 @@ async function readRedirectTable(
 		}
 	}
 	return redirectTable;
-}
-
-/**
- * Collects the set of blob localIds that GC has explicitly marked as
- * unreferenced (via `unreferencedTimestampMs` on a gc node), tombstoned, or
- * deleted. Tombstones and deletedNodes are applied regardless of whether
- * `gcState` is present — they are authoritative on their own and must not
- * be silently dropped when gc state is absent but tombstone/deleted lists
- * exist.
- */
-function collectUnreferencedBlobLocalIds(gcData: IGcSnapshotData): Set<string> {
-	const blobPathPrefix = `/${blobManagerBasePath}/`;
-	const unreferenced = new Set<string>();
-	if (gcData.gcState !== undefined) {
-		for (const [nodePath, nodeData] of Object.entries(gcData.gcState.gcNodes)) {
-			if (
-				nodePath.startsWith(blobPathPrefix) &&
-				nodeData.unreferencedTimestampMs !== undefined
-			) {
-				unreferenced.add(nodePath.slice(blobPathPrefix.length));
-			}
-		}
-	}
-	for (const nodePath of [...(gcData.tombstones ?? []), ...(gcData.deletedNodes ?? [])]) {
-		if (nodePath.startsWith(blobPathPrefix)) {
-			unreferenced.add(nodePath.slice(blobPathPrefix.length));
-		}
-	}
-	return unreferenced;
 }
 
 /**
@@ -371,38 +259,20 @@ export function extractBlobAttachReferences(
 }
 
 /**
- * Set of attachment-blob localIds that GC has marked unreferenced,
- * tombstoned, or deleted in the base snapshot. `undefined` if `gcData`
- * is `undefined` (GC disabled / pre-GC document).
- *
- * @internal
- */
-export function unreferencedAttachmentBlobLocalIds(
-	gcData: IGcSnapshotData | undefined,
-): Set<string> | undefined {
-	return gcData === undefined ? undefined : collectUnreferencedBlobLocalIds(gcData);
-}
-
-/**
  * Inline attachment blob contents for the given `(localId, storageId)`
- * references. Skips entries already present in `existing` (de-dupe with
- * the snapshot path) and entries whose `localId` is in
- * `unreferencedLocalIds`. Returns only the freshly-read entries; the
- * caller merges them into the existing map.
+ * references. Skips entries already present in `existing` (de-dupe with the
+ * snapshot path). Returns only the freshly-read entries; the caller merges
+ * them into the existing map.
  *
  * @internal
  */
 export async function inlineAttachmentBlobsByReference(
 	references: readonly IBlobAttachReference[],
 	storage: Pick<IDocumentStorageService, "readBlob">,
-	unreferencedLocalIds: ReadonlySet<string> | undefined,
 	existing: Readonly<IBase64BlobContents>,
 ): Promise<IBase64BlobContents> {
 	const storageIdsToFetch = new Set<string>();
-	for (const { localId, storageId } of references) {
-		if (unreferencedLocalIds?.has(localId) === true) {
-			continue;
-		}
+	for (const { storageId } of references) {
 		if (existing[storageId] !== undefined) {
 			continue;
 		}
@@ -420,10 +290,8 @@ export async function inlineAttachmentBlobsByReference(
 }
 
 /**
- * Returns true if any referenced subtree of `baseSnapshot` declares a
- * `groupId` — the snapshot-tree wire field that carries the runtime's
- * loading-group identifier. Subtrees flagged `unreferenced` are skipped —
- * a dead subtree's `groupId` would not be loaded by the runtime either.
+ * Returns true if any subtree other than the reserved embedded-blob subtree
+ * declares a `groupId`.
  *
  * `captureFullContainerState` does not yet support loading groups: prefetching
  * per-group snapshots adds a code path that has no end-to-end coverage and no
@@ -431,16 +299,30 @@ export async function inlineAttachmentBlobsByReference(
  * rather than silently producing a pending state that omits group data.
  */
 export function snapshotHasLoadingGroups(baseSnapshot: ISnapshotTree): boolean {
-	if (baseSnapshot.unreferenced === true) {
-		return false;
-	}
 	if (baseSnapshot.groupId !== undefined) {
 		return true;
 	}
-	for (const child of Object.values(baseSnapshot.trees)) {
-		if (snapshotHasLoadingGroups(child)) {
-			return true;
-		}
+	return Object.entries(baseSnapshot.trees).some(([key, child]) =>
+		key === blobsTreeName
+			? blobManagerTreeHasUnsupportedLoadingGroups(child)
+			: subtreeHasLoadingGroups(child),
+	);
+}
+
+function blobManagerTreeHasUnsupportedLoadingGroups(blobManagerTree: ISnapshotTree): boolean {
+	if (blobManagerTree.groupId !== undefined) {
+		return true;
 	}
-	return false;
+	return Object.entries(blobManagerTree.trees).some(([key, child]) =>
+		key === embeddedBlobsTreeName
+			? Object.values(child.trees).some(subtreeHasLoadingGroups)
+			: subtreeHasLoadingGroups(child),
+	);
+}
+
+function subtreeHasLoadingGroups(subtree: ISnapshotTree): boolean {
+	if (subtree.groupId !== undefined) {
+		return true;
+	}
+	return Object.values(subtree.trees).some(subtreeHasLoadingGroups);
 }

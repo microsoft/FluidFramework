@@ -36,6 +36,7 @@ import { ContainerRuntime } from "../containerRuntime.js";
 import { FluidDataStoreRegistry } from "../dataStoreRegistry.js";
 import { pkgVersion } from "../packageVersion.js";
 import {
+	binarySnapshotBlobSerialization,
 	loaderSupportRequirementsForRuntime,
 	validateLoaderCompatibility,
 	validateDatastoreCompatibility,
@@ -354,6 +355,88 @@ describe("Runtime Layer compatibility", () => {
 				});
 			});
 		}
+	});
+
+	describe("Binary snapshot serialization compatibility", () => {
+		it("requires the loader capability only when requested", () => {
+			const logger = new MockLogger();
+			const mc = mixinMonitoringContext(
+				logger.toTelemetryLogger(),
+				createTestConfigProvider(),
+			);
+			const disposeFn = Sinon.fake();
+			const loaderCompatDetails: ILayerCompatDetails = {
+				pkgVersion,
+				generation: loaderSupportRequirementsForRuntime.minSupportedGeneration,
+				supportedFeatures: new Set(),
+			};
+
+			assert.throws(
+				() =>
+					validateLoaderCompatibility(loaderCompatDetails, disposeFn, mc, [
+						binarySnapshotBlobSerialization,
+					]),
+				(error: Error) => isLayerIncompatibilityError(error),
+			);
+			assert(disposeFn.calledOnce);
+
+			assert.doesNotThrow(() =>
+				validateLoaderCompatibility(
+					{
+						...loaderCompatDetails,
+						supportedFeatures: new Set([binarySnapshotBlobSerialization]),
+					},
+					Sinon.fake(),
+					mc,
+					[binarySnapshotBlobSerialization],
+				),
+			);
+		});
+
+		it("preserves baseline loader requirements when adding the binary capability", () => {
+			const logger = new MockLogger();
+			const mc = mixinMonitoringContext(
+				logger.toTelemetryLogger(),
+				createTestConfigProvider(),
+			);
+			const originalRequiredFeatures = loaderSupportRequirementsForRuntime.requiredFeatures;
+			(
+				loaderSupportRequirementsForRuntime as ILayerCompatSupportRequirementsOverride
+			).requiredFeatures = ["baselineFeature"];
+			try {
+				const loaderCompatDetails: ILayerCompatDetails = {
+					pkgVersion,
+					generation: loaderSupportRequirementsForRuntime.minSupportedGeneration,
+					supportedFeatures: new Set([binarySnapshotBlobSerialization]),
+				};
+				const disposeFn = Sinon.fake();
+
+				assert.throws(
+					() =>
+						validateLoaderCompatibility(loaderCompatDetails, disposeFn, mc, [
+							binarySnapshotBlobSerialization,
+						]),
+					(error: Error) => isLayerIncompatibilityError(error),
+				);
+				assert(disposeFn.calledOnce);
+
+				assert.doesNotThrow(() =>
+					validateLoaderCompatibility(
+						{
+							...loaderCompatDetails,
+							supportedFeatures: new Set(["baselineFeature", binarySnapshotBlobSerialization]),
+						},
+						Sinon.fake(),
+						mc,
+						[binarySnapshotBlobSerialization],
+					),
+				);
+			} finally {
+				(
+					loaderSupportRequirementsForRuntime as ILayerCompatSupportRequirementsOverride
+				).requiredFeatures = [...originalRequiredFeatures];
+			}
+		});
 	});
 
 	describe("DisableStrictLoaderLayerCompatibilityCheck config for missing loader compat details", () => {

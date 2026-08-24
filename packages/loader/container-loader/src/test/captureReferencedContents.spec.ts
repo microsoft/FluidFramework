@@ -17,23 +17,20 @@ import {
 	extractBlobAttachReferences,
 	inlineAttachmentBlobsByReference,
 	mapWithConcurrency,
-	parseGcSnapshotData,
 	readReferencedSnapshotBlobs,
 	snapshotHasLoadingGroups,
-	unreferencedAttachmentBlobLocalIds,
 	type IBlobAttachReference,
-	type IGcSnapshotData,
 } from "../captureReferencedContents.js";
 
-/** Minimal storage shim whose readBlob is backed by an id → string map. */
+/** Minimal storage shim whose readBlob is backed by an id → content map. */
 function mockStorage(
-	blobs: Record<string, string>,
+	blobs: Record<string, string | Uint8Array>,
 ): Pick<IDocumentStorageService, "readBlob"> {
 	return {
 		readBlob: async (id) => {
-			const content: string | undefined = blobs[id];
+			const content: string | Uint8Array | undefined = blobs[id];
 			assert(content !== undefined, `Test storage missing blob ${id}`);
-			return stringToBuffer(content, "utf8");
+			return typeof content === "string" ? stringToBuffer(content, "utf8") : content;
 		},
 	};
 }
@@ -48,6 +45,13 @@ function tree(partial: Partial<ISnapshotTree>): ISnapshotTree {
  */
 const toB64 = (content: string): string =>
 	bufferToString(stringToBuffer(content, "utf8"), "base64");
+
+const rawContentsToBase64 = (
+	contents: ReadonlyMap<string, ArrayBufferLike>,
+): Record<string, string> =>
+	Object.fromEntries(
+		[...contents].map(([id, content]) => [id, bufferToString(content, "base64")]),
+	);
 
 describe("captureReferencedContents", () => {
 	describe("readReferencedSnapshotBlobs", () => {
@@ -69,10 +73,14 @@ describe("captureReferencedContents", () => {
 			});
 			const storage = mockStorage({ a: "A", b: "B", c: "C" });
 			const result = await readReferencedSnapshotBlobs(snapshot, storage);
-			assert.deepStrictEqual(result, { a: "A", b: "B", c: "C" });
+			assert.deepStrictEqual(rawContentsToBase64(result), {
+				a: toB64("A"),
+				b: toB64("B"),
+				c: toB64("C"),
+			});
 		});
 
-		it("skips subtrees flagged unreferenced", async () => {
+		it("retains unreferenced subtrees that saved ops may revive", async () => {
 			const snapshot = tree({
 				trees: {
 					live: tree({ blobs: { live: "kept" } }),
@@ -83,13 +91,21 @@ describe("captureReferencedContents", () => {
 					}),
 				},
 			});
-			const storage = mockStorage({ kept: "KEPT" });
-			// Missing entries would throw in the storage shim, asserting we never read them.
+			const storage = mockStorage({
+				kept: "KEPT",
+				skipped: "DEAD",
+				"skipped-too": "NESTED",
+			});
 			const result = await readReferencedSnapshotBlobs(snapshot, storage);
-			assert.deepStrictEqual(result, { kept: "KEPT" });
+			assert.deepStrictEqual(rawContentsToBase64(result), {
+				kept: toB64("KEPT"),
+				skipped: toB64("DEAD"),
+				"skipped-too": toB64("NESTED"),
+			});
 		});
 
-		it("special-cases root .blobs: reads only the redirect table", async () => {
+		it("captures structural child blobs under root .blobs but skips direct attachments", async () => {
+			const embeddedBytes = new Uint8Array([0xff, 0x00, 0x80]);
 			const snapshot = tree({
 				trees: {
 					".blobs": tree({
@@ -97,16 +113,57 @@ describe("captureReferencedContents", () => {
 							".redirectTable": "rt",
 							"attachment-storage-id": "attachment-storage-id",
 						},
+						trees: {
+							".embeddedDetachedBlobs": tree({
+								blobs: { localId: "embedded-content-id" },
+								groupId: "fluid-internal:embedded-detached-blobs",
+							}),
+						},
 					}),
 				},
 			});
-			const storage = mockStorage({ rt: "RT" });
+			const storage = mockStorage({
+				rt: "RT",
+				"embedded-content-id": embeddedBytes,
+			});
 			const result = await readReferencedSnapshotBlobs(snapshot, storage);
 			assert.deepStrictEqual(
-				result,
-				{ rt: "RT" },
+				rawContentsToBase64(result),
+				{
+					rt: toB64("RT"),
+					"embedded-content-id": bufferToString(embeddedBytes, "base64"),
+				},
 				"attachment blob contents must not be read via the general walker",
 			);
+		});
+
+		it("retains unreferenced summary-backed blobs that saved ops may revive", async () => {
+			const snapshot = tree({
+				trees: {
+					".blobs": tree({
+						trees: {
+							embedded: tree({
+								blobs: {
+									liveLocalId: "live-content-id",
+									deadLocalId: "dead-content-id",
+								},
+								groupId: "fluid-internal:embedded-detached-blobs",
+							}),
+						},
+					}),
+				},
+			});
+			const result = await readReferencedSnapshotBlobs(
+				snapshot,
+				mockStorage({
+					"live-content-id": "LIVE",
+					"dead-content-id": "DEAD",
+				}),
+			);
+			assert.deepStrictEqual(rawContentsToBase64(result), {
+				"live-content-id": toB64("LIVE"),
+				"dead-content-id": toB64("DEAD"),
+			});
 		});
 
 		it("prefers ISnapshot.blobContents over storage when given an ISnapshot", async () => {
@@ -122,44 +179,9 @@ describe("captureReferencedContents", () => {
 			// storage has a different value — if it's consulted, the test fails.
 			const storage = mockStorage({ "content-id": "FROM-STORAGE" });
 			const result = await readReferencedSnapshotBlobs(snapshot, storage);
-			assert.deepStrictEqual(result, { "content-id": "IN-MEMORY" });
-		});
-	});
-
-	describe("parseGcSnapshotData", () => {
-		it("returns undefined when the snapshot has no gc tree", async () => {
-			const result = await parseGcSnapshotData(tree({}), mockStorage({}));
-			assert.strictEqual(result, undefined);
-		});
-
-		it("parses gc state, tombstones, and deleted nodes from their blob keys", async () => {
-			const snapshot = tree({
-				trees: {
-					gc: tree({
-						blobs: {
-							__gc_root: "gcblob",
-							__tombstones: "tsblob",
-							__deletedNodes: "delblob",
-						},
-					}),
-				},
+			assert.deepStrictEqual(rawContentsToBase64(result), {
+				"content-id": toB64("IN-MEMORY"),
 			});
-			const storage = mockStorage({
-				gcblob: JSON.stringify({
-					gcNodes: { "/a": { outboundRoutes: [], unreferencedTimestampMs: 1 } },
-				}),
-				tsblob: JSON.stringify(["/b"]),
-				delblob: JSON.stringify(["/c"]),
-			});
-			const result = await parseGcSnapshotData(snapshot, storage);
-			assert(result !== undefined);
-			assert.deepStrictEqual(result.tombstones, ["/b"]);
-			assert.deepStrictEqual(result.deletedNodes, ["/c"]);
-			assert.strictEqual(
-				result.gcState?.gcNodes["/a"]?.unreferencedTimestampMs,
-				1,
-				"gc state merged from __gc-prefixed blobs",
-			);
 		});
 	});
 
@@ -184,15 +206,11 @@ describe("captureReferencedContents", () => {
 		}
 
 		it("returns {} when there is no .blobs subtree", async () => {
-			const result = await captureReferencedAttachmentBlobs(
-				tree({}),
-				mockStorage({}),
-				undefined,
-			);
+			const result = await captureReferencedAttachmentBlobs(tree({}), mockStorage({}));
 			assert.deepStrictEqual(result, {});
 		});
 
-		it("includes every attachment blob when gc data is undefined", async () => {
+		it("includes every attachment blob", async () => {
 			const { snapshot, storage } = attachmentsOnly(
 				[
 					["l1", "s1"],
@@ -200,87 +218,8 @@ describe("captureReferencedContents", () => {
 				],
 				{ s1: "S1", s2: "S2" },
 			);
-			const result = await captureReferencedAttachmentBlobs(snapshot, storage, undefined);
+			const result = await captureReferencedAttachmentBlobs(snapshot, storage);
 			assert.deepStrictEqual(result, { s1: toB64("S1"), s2: toB64("S2") });
-		});
-
-		it("skips blobs marked unreferenced in gc state", async () => {
-			const { snapshot, storage } = attachmentsOnly(
-				[
-					["keep", "keep-storage"],
-					["drop", "drop-storage"],
-				],
-				{ "keep-storage": "K", "drop-storage": "must-not-read" },
-			);
-			const gcData: IGcSnapshotData = {
-				gcState: {
-					gcNodes: {
-						"/_blobs/drop": { outboundRoutes: [], unreferencedTimestampMs: 123 },
-						"/_blobs/keep": { outboundRoutes: [] },
-					},
-				},
-				tombstones: undefined,
-				deletedNodes: undefined,
-			};
-			const result = await captureReferencedAttachmentBlobs(snapshot, storage, gcData);
-			assert.deepStrictEqual(result, { "keep-storage": toB64("K") });
-		});
-
-		it("skips blobs listed in tombstones or deletedNodes", async () => {
-			const { snapshot, storage } = attachmentsOnly(
-				[
-					["tomb", "tomb-storage"],
-					["del", "del-storage"],
-					["ok", "ok-storage"],
-				],
-				{ "tomb-storage": "x", "del-storage": "y", "ok-storage": "OK" },
-			);
-			const gcData: IGcSnapshotData = {
-				gcState: { gcNodes: {} },
-				tombstones: ["/_blobs/tomb"],
-				deletedNodes: ["/_blobs/del"],
-			};
-			const result = await captureReferencedAttachmentBlobs(snapshot, storage, gcData);
-			assert.deepStrictEqual(result, { "ok-storage": toB64("OK") });
-		});
-
-		it("still applies tombstones and deletedNodes when gcState is undefined", async () => {
-			const { snapshot, storage } = attachmentsOnly(
-				[
-					["tomb", "tomb-storage"],
-					["del", "del-storage"],
-					["ok", "ok-storage"],
-				],
-				{ "tomb-storage": "x", "del-storage": "y", "ok-storage": "OK" },
-			);
-			const gcData: IGcSnapshotData = {
-				gcState: undefined,
-				tombstones: ["/_blobs/tomb"],
-				deletedNodes: ["/_blobs/del"],
-			};
-			const result = await captureReferencedAttachmentBlobs(snapshot, storage, gcData);
-			assert.deepStrictEqual(
-				result,
-				{ "ok-storage": toB64("OK") },
-				"tombstones and deletedNodes are authoritative even without gcState",
-			);
-		});
-
-		it("keeps blobs that are absent from the gc graph (gc lag tolerance)", async () => {
-			const { snapshot, storage } = attachmentsOnly([["recent", "recent-storage"]], {
-				"recent-storage": "R",
-			});
-			const gcData: IGcSnapshotData = {
-				gcState: { gcNodes: {} }, // empty graph: the blob isn't listed at all
-				tombstones: undefined,
-				deletedNodes: undefined,
-			};
-			const result = await captureReferencedAttachmentBlobs(snapshot, storage, gcData);
-			assert.deepStrictEqual(
-				result,
-				{ "recent-storage": toB64("R") },
-				"blobs absent from the GC graph must be kept",
-			);
 		});
 
 		it("returns legacy identity-mapped blobs from .blobs (no .redirectTable entry)", async () => {
@@ -297,7 +236,7 @@ describe("captureReferencedContents", () => {
 				},
 			});
 			const storage = mockStorage({ "legacy-storage-id": "LEGACY" });
-			const result = await captureReferencedAttachmentBlobs(snapshot, storage, undefined);
+			const result = await captureReferencedAttachmentBlobs(snapshot, storage);
 			assert.deepStrictEqual(result, { "legacy-storage-id": toB64("LEGACY") });
 		});
 
@@ -321,92 +260,11 @@ describe("captureReferencedContents", () => {
 				"modern-storage": "MODERN",
 				"legacy-storage-id": "LEGACY",
 			});
-			const result = await captureReferencedAttachmentBlobs(snapshot, storage, undefined);
+			const result = await captureReferencedAttachmentBlobs(snapshot, storage);
 			assert.deepStrictEqual(result, {
 				"modern-storage": toB64("MODERN"),
 				"legacy-storage-id": toB64("LEGACY"),
 			});
-		});
-
-		it("ignores gc nodes for non-attachment-blob paths", async () => {
-			// gcState may contain unreferenced/tombstoned nodes for data stores,
-			// channels, etc. Those paths must not be confused with blob localIds
-			// — the attachment filter only looks at /_blobs/ paths.
-			const { snapshot, storage } = attachmentsOnly([["live", "live-storage"]], {
-				"live-storage": "LIVE",
-			});
-			const gcData: IGcSnapshotData = {
-				gcState: {
-					gcNodes: {
-						"/dataStores/some-id": {
-							outboundRoutes: [],
-							unreferencedTimestampMs: 123,
-						},
-					},
-				},
-				tombstones: ["/dataStores/another"],
-				deletedNodes: ["/channels/x"],
-			};
-			const result = await captureReferencedAttachmentBlobs(snapshot, storage, gcData);
-			assert.deepStrictEqual(
-				result,
-				{ "live-storage": toB64("LIVE") },
-				"non-blob gc paths must not influence attachment filtering",
-			);
-		});
-
-		it("integrates with parseGcSnapshotData on a snapshot that carries a real gc subtree", async () => {
-			// End-to-end through both helpers: build a snapshot whose gc subtree
-			// blobs encode unreferenced + tombstoned + deleted simultaneously,
-			// run parseGcSnapshotData on it, then feed that into the attachment
-			// filter. Verifies the full GC-driven exclusion path that
-			// captureFullContainerState relies on, not just the helpers in
-			// isolation.
-			const snapshot = tree({
-				trees: {
-					".blobs": tree({ blobs: { ".redirectTable": "rt" } }),
-					gc: tree({
-						blobs: {
-							__gc_root: "gc-blob",
-							__tombstones: "ts-blob",
-							__deletedNodes: "del-blob",
-						},
-					}),
-				},
-			});
-			const storage = mockStorage({
-				rt: JSON.stringify([
-					["live", "live-storage"],
-					["unref", "unref-storage"],
-					["tomb", "tomb-storage"],
-					["del", "del-storage"],
-				]),
-				"gc-blob": JSON.stringify({
-					gcNodes: {
-						"/_blobs/live": { outboundRoutes: [] },
-						"/_blobs/unref": {
-							outboundRoutes: [],
-							unreferencedTimestampMs: 1700000000000,
-						},
-					},
-				}),
-				"ts-blob": JSON.stringify(["/_blobs/tomb"]),
-				"del-blob": JSON.stringify(["/_blobs/del"]),
-				"live-storage": "LIVE",
-				"unref-storage": "must-not-read",
-				"tomb-storage": "must-not-read",
-				"del-storage": "must-not-read",
-			});
-
-			const gcData = await parseGcSnapshotData(snapshot, storage);
-			assert(gcData !== undefined, "snapshot has a gc subtree, so gcData must parse");
-			const result = await captureReferencedAttachmentBlobs(snapshot, storage, gcData);
-
-			assert.deepStrictEqual(
-				result,
-				{ "live-storage": toB64("LIVE") },
-				"only the live blob survives all three GC mechanisms",
-			);
 		});
 	});
 
@@ -444,7 +302,7 @@ describe("captureReferencedContents", () => {
 			assert.strictEqual(snapshotHasLoadingGroups(snapshot), true);
 		});
 
-		it("ignores groupIds inside unreferenced subtrees", () => {
+		it("detects groupIds inside unreferenced subtrees that may be revived", () => {
 			const snapshot = tree({
 				trees: {
 					dead: tree({ unreferenced: true, groupId: "dead-group" }),
@@ -452,14 +310,42 @@ describe("captureReferencedContents", () => {
 			});
 			assert.strictEqual(
 				snapshotHasLoadingGroups(snapshot),
-				false,
-				"unreferenced subtrees would not be loaded by the runtime, so their groupIds don't count",
+				true,
+				"saved ops may revive the subtree, so full capture must reject the unsupported group",
 			);
 		});
 
-		it("returns false when the entire snapshot is unreferenced", () => {
+		it("detects a groupId when the entire snapshot is unreferenced", () => {
 			const snapshot = tree({ unreferenced: true, groupId: "g1" });
+			assert.strictEqual(snapshotHasLoadingGroups(snapshot), true);
+		});
+
+		it("ignores only the reserved embedded-blob loading group", () => {
+			const snapshot = tree({
+				trees: {
+					".blobs": tree({
+						trees: {
+							".embeddedDetachedBlobs": tree({
+								groupId: "fluid-internal:embedded-detached-blobs",
+							}),
+						},
+					}),
+				},
+			});
 			assert.strictEqual(snapshotHasLoadingGroups(snapshot), false);
+
+			snapshot.trees[".blobs"].groupId = "blob-manager-group";
+			assert.strictEqual(snapshotHasLoadingGroups(snapshot), true);
+
+			delete snapshot.trees[".blobs"].groupId;
+			snapshot.trees[".blobs"].trees.other = tree({ groupId: "ordinary-loading-group" });
+			assert.strictEqual(snapshotHasLoadingGroups(snapshot), true);
+
+			delete snapshot.trees[".blobs"].trees.other;
+			snapshot.trees[".blobs"].trees[".embeddedDetachedBlobs"].trees.nested = tree({
+				groupId: "nested-blob-group",
+			});
+			assert.strictEqual(snapshotHasLoadingGroups(snapshot), true);
 		});
 	});
 
@@ -516,60 +402,10 @@ describe("captureReferencedContents", () => {
 		});
 	});
 
-	describe("unreferencedAttachmentBlobLocalIds", () => {
-		it("returns undefined when gcData is undefined", () => {
-			assert.strictEqual(unreferencedAttachmentBlobLocalIds(undefined), undefined);
-		});
-
-		it("returns an empty set when gcData has no unreferenced/tombstoned/deleted blobs", () => {
-			const result = unreferencedAttachmentBlobLocalIds({
-				gcState: {
-					gcNodes: { "/_blobs/live": { outboundRoutes: [] } },
-				},
-				tombstones: undefined,
-				deletedNodes: undefined,
-			});
-			assert.deepStrictEqual([...(result ?? [])], []);
-		});
-
-		it("collects localIds from gcState, tombstones, and deletedNodes", () => {
-			const result = unreferencedAttachmentBlobLocalIds({
-				gcState: {
-					gcNodes: {
-						"/_blobs/unref": {
-							outboundRoutes: [],
-							unreferencedTimestampMs: 1,
-						},
-						"/_blobs/live": { outboundRoutes: [] },
-					},
-				},
-				tombstones: ["/_blobs/tomb"],
-				deletedNodes: ["/_blobs/del"],
-			});
-			assert.deepStrictEqual([...(result ?? [])].sort(), ["del", "tomb", "unref"]);
-		});
-
-		it("ignores non-/_blobs/ paths in all three sources", () => {
-			const result = unreferencedAttachmentBlobLocalIds({
-				gcState: {
-					gcNodes: {
-						"/dataStores/x": {
-							outboundRoutes: [],
-							unreferencedTimestampMs: 1,
-						},
-					},
-				},
-				tombstones: ["/dataStores/y"],
-				deletedNodes: ["/channels/z"],
-			});
-			assert.deepStrictEqual([...(result ?? [])], []);
-		});
-	});
-
 	describe("inlineAttachmentBlobsByReference", () => {
 		it("returns {} for empty references", async () => {
 			const storage = mockStorage({});
-			const result = await inlineAttachmentBlobsByReference([], storage, undefined, {});
+			const result = await inlineAttachmentBlobsByReference([], storage, {});
 			assert.deepStrictEqual(result, {});
 		});
 
@@ -579,7 +415,7 @@ describe("captureReferencedContents", () => {
 				{ localId: "l2", storageId: "s2" },
 			];
 			const storage = mockStorage({ s1: "S1", s2: "S2" });
-			const result = await inlineAttachmentBlobsByReference(refs, storage, undefined, {});
+			const result = await inlineAttachmentBlobsByReference(refs, storage, {});
 			assert.deepStrictEqual(result, { s1: toB64("S1"), s2: toB64("S2") });
 		});
 
@@ -596,25 +432,9 @@ describe("captureReferencedContents", () => {
 				{ localId: "b", storageId: "shared" },
 				{ localId: "c", storageId: "shared" },
 			];
-			const result = await inlineAttachmentBlobsByReference(refs, storage, undefined, {});
+			const result = await inlineAttachmentBlobsByReference(refs, storage, {});
 			assert.deepStrictEqual(result, { shared: toB64("bytes-shared") });
 			assert.strictEqual(reads, 1, "shared storageId must be read at most once");
-		});
-
-		it("skips references whose localId is in unreferencedLocalIds", async () => {
-			const refs: IBlobAttachReference[] = [
-				{ localId: "keep", storageId: "keep-s" },
-				{ localId: "drop", storageId: "drop-s" },
-			];
-			// drop-s is intentionally absent from storage — touching it would throw.
-			const storage = mockStorage({ "keep-s": "K" });
-			const result = await inlineAttachmentBlobsByReference(
-				refs,
-				storage,
-				new Set(["drop"]),
-				{},
-			);
-			assert.deepStrictEqual(result, { "keep-s": toB64("K") });
 		});
 
 		it("skips references whose storageId is already in existing", async () => {
@@ -625,12 +445,7 @@ describe("captureReferencedContents", () => {
 			// old-s is intentionally absent from storage — touching it would throw.
 			const storage = mockStorage({ "new-s": "N" });
 			const existing = { "old-s": toB64("PRE") };
-			const result = await inlineAttachmentBlobsByReference(
-				refs,
-				storage,
-				undefined,
-				existing,
-			);
+			const result = await inlineAttachmentBlobsByReference(refs, storage, existing);
 			assert.deepStrictEqual(
 				result,
 				{ "new-s": toB64("N") },
@@ -638,13 +453,10 @@ describe("captureReferencedContents", () => {
 			);
 		});
 
-		it("returns {} when every reference is filtered out", async () => {
-			const refs: IBlobAttachReference[] = [
-				{ localId: "drop", storageId: "drop-s" },
-				{ localId: "dup", storageId: "dup-s" },
-			];
+		it("returns {} when every reference already exists", async () => {
+			const refs: IBlobAttachReference[] = [{ localId: "dup", storageId: "dup-s" }];
 			const storage = mockStorage({});
-			const result = await inlineAttachmentBlobsByReference(refs, storage, new Set(["drop"]), {
+			const result = await inlineAttachmentBlobsByReference(refs, storage, {
 				"dup-s": toB64("X"),
 			});
 			assert.deepStrictEqual(result, {});

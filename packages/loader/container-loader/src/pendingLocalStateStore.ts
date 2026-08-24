@@ -13,6 +13,11 @@ import type {
 } from "./serializedStateManager.js";
 import { getAttachedContainerStateFromSerializedContainer } from "./utils.js";
 
+interface SharedResource<T> {
+	readonly value: T;
+	references: number;
+}
+
 /**
  * A Map-like store for managing pending local container states from attached containers.
  * Optimizes storage by deduplicating shared resources across stored states.
@@ -44,16 +49,19 @@ import { getAttachedContainerStateFromSerializedContainer } from "./utils.js";
 export class PendingLocalStateStore<TKey> {
 	#firstUrl: string | undefined;
 	readonly #pendingStates = new Map<TKey, IPendingContainerState>();
-	readonly #savedOps: Record<number, ISequencedDocumentMessage> = {};
-	readonly #blobs: Record<string, string> = {};
-	readonly #attachmentBlobs: Record<string, string> = {};
-	readonly #loadingGroups: Record<string, SerializedSnapshotInfo> = {};
+	readonly #savedOps = new Map<number, SharedResource<ISequencedDocumentMessage>>();
+	readonly #blobs = new Map<string, SharedResource<string>>();
+	readonly #snapshotBlobContents = new Map<string, SharedResource<string>>();
+	readonly #attachmentBlobs = new Map<string, SharedResource<string>>();
+	readonly #loadingGroups = new Map<string, SerializedSnapshotInfo>();
 
 	/**
 	 * Removes all stored pending states.
 	 */
 	clear(): void {
-		return this.#pendingStates.clear();
+		this.#pendingStates.clear();
+		this.#firstUrl = undefined;
+		this.#resetSharedResources();
 	}
 
 	/**
@@ -63,7 +71,17 @@ export class PendingLocalStateStore<TKey> {
 	 * @returns `true` if the state existed and was removed, `false` otherwise
 	 */
 	delete(key: TKey): boolean {
-		return this.#pendingStates.delete(key);
+		const state = this.#pendingStates.get(key);
+		if (state === undefined) {
+			return false;
+		}
+		this.#releaseState(state);
+		this.#pendingStates.delete(key);
+		this.#rebuildLoadingGroups();
+		if (this.#pendingStates.size === 0) {
+			this.#firstUrl = undefined;
+		}
+		return true;
 	}
 
 	/**
@@ -94,41 +112,143 @@ export class PendingLocalStateStore<TKey> {
 	 */
 	set(key: TKey, pendingLocalState: string): this {
 		const state = getAttachedContainerStateFromSerializedContainer(pendingLocalState);
-		const { savedOps, snapshotBlobs, attachmentBlobContents, loadedGroupIdSnapshots, url } =
-			state;
+		const { url } = state;
 
 		// Normalize URL by removing trailing slash for comparison
 		const normalizedUrl = url.replace(/\/$/, "");
 		const normalizedFirstUrl = this.#firstUrl?.replace(/\/$/, "");
-		this.#firstUrl ??= url;
 		if (normalizedFirstUrl !== undefined && normalizedFirstUrl !== normalizedUrl) {
 			throw new UsageError("PendingLocalStateStore can only be used with a single container.");
 		}
 
+		const existingState = this.#pendingStates.get(key);
+		if (existingState !== undefined) {
+			this.#releaseState(existingState);
+			this.#pendingStates.delete(key);
+			this.#rebuildLoadingGroups();
+		}
+		this.#firstUrl ??= url;
+		this.#deduplicateState(state);
+		this.#pendingStates.set(key, state);
+		return this;
+	}
+
+	#deduplicateState(state: IPendingContainerState): void {
+		const {
+			savedOps,
+			snapshotBlobs,
+			snapshotBlobContents,
+			attachmentBlobContents,
+			loadedGroupIdSnapshots,
+		} = state;
 		for (let i = 0; i < savedOps.length; i++) {
-			savedOps[i] = this.#savedOps[savedOps[i].sequenceNumber] ??= savedOps[i];
+			savedOps[i] = this.#retainSharedResource(
+				this.#savedOps,
+				savedOps[i].sequenceNumber,
+				savedOps[i],
+			);
 		}
 		for (const [id, blob] of Object.entries(snapshotBlobs)) {
-			snapshotBlobs[id] = this.#blobs[id] ??= blob;
+			snapshotBlobs[id] = this.#retainSharedResource(this.#blobs, id, blob);
+		}
+		if (snapshotBlobContents !== undefined) {
+			for (const [id, blob] of Object.entries(snapshotBlobContents)) {
+				snapshotBlobContents[id] = this.#retainSharedResource(
+					this.#snapshotBlobContents,
+					id,
+					blob,
+				);
+			}
 		}
 		if (attachmentBlobContents !== undefined) {
 			for (const [id, blob] of Object.entries(attachmentBlobContents)) {
-				attachmentBlobContents[id] = this.#attachmentBlobs[id] ??= blob;
+				attachmentBlobContents[id] = this.#retainSharedResource(
+					this.#attachmentBlobs,
+					id,
+					blob,
+				);
 			}
 		}
+		this.#deduplicateLoadingGroups(loadedGroupIdSnapshots);
+	}
+
+	#deduplicateLoadingGroups(
+		loadedGroupIdSnapshots: Record<string, SerializedSnapshotInfo> | undefined,
+	): void {
 		if (loadedGroupIdSnapshots !== undefined) {
 			for (const [id, lg] of Object.entries(loadedGroupIdSnapshots)) {
+				const existing = this.#loadingGroups.get(id);
 				if (
-					this.#loadingGroups[id] === undefined ||
-					lg.snapshotSequenceNumber < this.#loadingGroups[id].snapshotSequenceNumber
+					existing === undefined ||
+					lg.snapshotSequenceNumber < existing.snapshotSequenceNumber
 				) {
-					loadedGroupIdSnapshots[id] = this.#loadingGroups[id] = lg;
+					loadedGroupIdSnapshots[id] = lg;
+					this.#loadingGroups.set(id, lg);
 				}
 			}
 		}
+	}
 
-		this.#pendingStates.set(key, state);
-		return this;
+	#retainSharedResource<TKey2, TValue>(
+		resources: Map<TKey2, SharedResource<TValue>>,
+		key: TKey2,
+		value: TValue,
+	): TValue {
+		const shared = resources.get(key);
+		if (shared === undefined) {
+			resources.set(key, { value, references: 1 });
+			return value;
+		}
+		shared.references++;
+		return shared.value;
+	}
+
+	#releaseState(state: IPendingContainerState): void {
+		for (const op of state.savedOps) {
+			this.#releaseSharedResource(this.#savedOps, op.sequenceNumber);
+		}
+		for (const id of Object.keys(state.snapshotBlobs)) {
+			this.#releaseSharedResource(this.#blobs, id);
+		}
+		for (const id of Object.keys(state.snapshotBlobContents ?? {})) {
+			this.#releaseSharedResource(this.#snapshotBlobContents, id);
+		}
+		for (const id of Object.keys(state.attachmentBlobContents ?? {})) {
+			this.#releaseSharedResource(this.#attachmentBlobs, id);
+		}
+	}
+
+	#releaseSharedResource<TKey2, TValue>(
+		resources: Map<TKey2, SharedResource<TValue>>,
+		key: TKey2,
+	): void {
+		const shared = resources.get(key);
+		if (shared === undefined) {
+			return;
+		}
+		shared.references--;
+		if (shared.references === 0) {
+			resources.delete(key);
+		}
+	}
+
+	#rebuildLoadingGroups(): void {
+		this.#loadingGroups.clear();
+		for (const state of this.#pendingStates.values()) {
+			this.#deduplicateLoadingGroups(state.loadedGroupIdSnapshots);
+		}
+	}
+
+	#resetSharedResources(): void {
+		for (const resources of [
+			this.#savedOps,
+			this.#blobs,
+			this.#snapshotBlobContents,
+			this.#attachmentBlobs,
+			this.#loadingGroups,
+		]) {
+			resources.clear();
+		}
 	}
 
 	/**

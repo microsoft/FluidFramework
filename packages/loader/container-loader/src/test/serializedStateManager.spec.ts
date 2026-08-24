@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { EventEmitter, stringToBuffer } from "@fluid-internal/client-utils";
+import { bufferToString, EventEmitter, stringToBuffer } from "@fluid-internal/client-utils";
 import type {
 	IGetPendingLocalStateProps,
 	IRuntime,
@@ -92,6 +92,9 @@ class MockStorageAdapter implements ISerializedStateManagerDocumentStorageServic
 		for (const [id, blob] of Object.entries(pls.snapshotBlobs)) {
 			this.blobs.set(id, stringToBuffer(blob, "utf8"));
 		}
+		for (const [id, blob] of Object.entries(pls.snapshotBlobContents ?? {})) {
+			this.blobs.set(id, stringToBuffer(blob, "base64"));
+		}
 	}
 	public cacheSnapshotBlobs(snapshotBlobs: Map<string, ArrayBuffer>): void {
 		for (const [key, value] of snapshotBlobs.entries()) {
@@ -100,9 +103,7 @@ class MockStorageAdapter implements ISerializedStateManagerDocumentStorageServic
 	}
 
 	public async updateGroupIdSnapshots(): Promise<void> {}
-	public get loadedGroupIdSnapshots(): Record<string, ISnapshot> {
-		return {};
-	}
+	public readonly loadedGroupIdSnapshots: Record<string, ISnapshot> = {};
 
 	public async getSnapshot(
 		_snapshotFetchOptions?: ISnapshotFetchOptions | undefined,
@@ -179,7 +180,12 @@ const getAttributesFromPendingState = (
 		throw new Error("base snapshot should be valid");
 	}
 	const attributesId = pendingState.baseSnapshot.trees[".protocol"].blobs.attributes;
-	const attributes = pendingState.snapshotBlobs[attributesId];
+	const base64Attributes = pendingState.snapshotBlobContents?.[attributesId];
+	const attributes =
+		base64Attributes === undefined
+			? pendingState.snapshotBlobs[attributesId]
+			: bufferToString(stringToBuffer(base64Attributes, "base64"), "utf8");
+	assert(attributes !== undefined, "Attributes blob should be present in pending state");
 	return JSON.parse(attributes) as IDocumentAttributes;
 };
 
@@ -247,6 +253,155 @@ describe("serializedStateManager", () => {
 				"clientId",
 				new MockRuntime(),
 				resolvedUrl,
+			);
+		});
+
+		it("serializes and reloads arbitrary snapshot bytes through snapshotBlobContents", async () => {
+			const binaryId = "binary-id";
+			const binaryBytes = new Uint8Array([0xff, 0x00, 0x80, 0xc3, 0x28]);
+			const binarySnapshot: ISnapshot = {
+				...initialSnapshot,
+				snapshotTree: {
+					...snapshotTree,
+					blobs: { binary: binaryId },
+				},
+				blobContents: new Map([
+					...initialSnapshot.blobContents,
+					[binaryId, binaryBytes.buffer],
+				]),
+			};
+			const serializedStateManager = new SerializedStateManager(
+				enableOfflineSnapshotRefresh(logger),
+				new MockStorageAdapter(),
+				true,
+				eventEmitter,
+				() => false,
+				() => false,
+			);
+			serializedStateManager.setInitialSnapshot(binarySnapshot);
+			const serialized = await serializedStateManager.getPendingLocalState(
+				"clientId",
+				new MockRuntime(),
+				resolvedUrl,
+			);
+			const pending = JSON.parse(serialized) as IPendingContainerState;
+			assert.strictEqual(
+				pending.snapshotBlobs[binaryId],
+				undefined,
+				"Arbitrary binary must not be placed in the legacy UTF-8 map",
+			);
+			assert(
+				Object.keys(pending.snapshotBlobs).length > 0,
+				"Lossless UTF-8 blobs should remain available to legacy loaders",
+			);
+			assert.strictEqual(
+				pending.snapshotBlobContents?.[binaryId],
+				bufferToString(binaryBytes, "base64"),
+			);
+
+			const reloadingManager = new SerializedStateManager(
+				enableOfflineSnapshotRefresh(new MockLogger()),
+				new MockStorageAdapter(),
+				true,
+				eventEmitter,
+				() => false,
+				() => false,
+			);
+			const { snapshot } = await reloadingManager.fetchSnapshot(undefined, pending);
+			assert("blobContents" in snapshot, "Pending state should rehydrate as an ISnapshot");
+			assert.deepStrictEqual(
+				new Uint8Array(snapshot.blobContents.get(binaryId) ?? new ArrayBuffer(0)),
+				binaryBytes,
+			);
+		});
+
+		it("fetches omitted loading-group bytes when serializing pending state", async () => {
+			const redirectId = "redirect-id";
+			const binaryId = "binary-id";
+			const redirectBytes = stringToBuffer("[]", "utf8");
+			const binaryBytes = new Uint8Array([0xff, 0x00, 0x80]);
+			const partialSnapshot: ISnapshot = {
+				...initialSnapshot,
+				snapshotTree: {
+					...snapshotTree,
+					trees: {
+						...snapshotTree.trees,
+						".blobs": {
+							blobs: { ".redirectTable": redirectId },
+							trees: {
+								embedded: {
+									blobs: { binary: binaryId },
+									trees: {},
+									groupId: "embedded",
+								},
+							},
+						},
+					},
+				},
+				blobContents: new Map([...initialSnapshot.blobContents, [redirectId, redirectBytes]]),
+			};
+			const storageAdapter = new MockStorageAdapter();
+			storageAdapter.blobs.set(binaryId, binaryBytes);
+			const serializedStateManager = new SerializedStateManager(
+				enableOfflineSnapshotRefresh(logger),
+				storageAdapter,
+				true,
+				eventEmitter,
+				() => false,
+				() => false,
+			);
+			serializedStateManager.setInitialSnapshot(partialSnapshot);
+
+			const pending = JSON.parse(
+				await serializedStateManager.getPendingLocalState(
+					"clientId",
+					new MockRuntime(),
+					resolvedUrl,
+				),
+			) as IPendingContainerState;
+			assert.strictEqual(
+				pending.snapshotBlobContents?.[binaryId],
+				bufferToString(binaryBytes, "base64"),
+			);
+		});
+
+		it("serializes loaded group snapshot bytes through snapshotBlobContents", async () => {
+			const groupBlobId = "group-binary-id";
+			const groupBytes = new Uint8Array([0xfe, 0x80, 0x00]);
+			const storageAdapter = new MockStorageAdapter();
+			storageAdapter.loadedGroupIdSnapshots.group = {
+				snapshotTree: {
+					id: "group-snapshot",
+					blobs: { binary: groupBlobId },
+					trees: {},
+				},
+				blobContents: new Map([[groupBlobId, groupBytes.buffer]]),
+				ops: [],
+				sequenceNumber: 42,
+				latestSequenceNumber: undefined,
+				snapshotFormatV: 1,
+			};
+			const serializedStateManager = new SerializedStateManager(
+				enableOfflineSnapshotRefresh(logger),
+				storageAdapter,
+				true,
+				eventEmitter,
+				() => false,
+				() => false,
+			);
+			serializedStateManager.setInitialSnapshot(initialSnapshot);
+			const serialized = await serializedStateManager.getPendingLocalState(
+				"clientId",
+				new MockRuntime(),
+				resolvedUrl,
+			);
+			const pending = JSON.parse(serialized) as IPendingContainerState;
+			const groupSnapshot = pending.loadedGroupIdSnapshots?.group;
+			assert(groupSnapshot !== undefined, "Loaded group snapshot should be serialized");
+			assert.deepStrictEqual(groupSnapshot.snapshotBlobs, {});
+			assert.strictEqual(
+				groupSnapshot.snapshotBlobContents?.[groupBlobId],
+				bufferToString(groupBytes, "base64"),
 			);
 		});
 

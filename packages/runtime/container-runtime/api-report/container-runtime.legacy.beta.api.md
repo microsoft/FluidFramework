@@ -4,6 +4,8 @@
 
 ```ts
 
+import { EventEmitter } from 'events_pkg';
+
 // @beta @legacy
 export const AllowTombstoneRequestHeaderKey = "allowTombstone";
 
@@ -41,6 +43,7 @@ export interface ContainerRuntimeOptions {
     // @deprecated
     readonly enableGroupedBatching: boolean;
     readonly enableRuntimeIdCompressor: IdCompressorMode;
+    readonly enableSingleRoundTripFileCreate?: true | undefined;
     readonly explicitSchemaControl: boolean;
     // (undocumented)
     readonly gcOptions: IGCRuntimeOptions;

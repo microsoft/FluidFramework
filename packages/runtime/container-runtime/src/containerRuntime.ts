@@ -207,6 +207,7 @@ import {
 	validateRuntimeOptions,
 	runtimeOptionKeysThatRequireExplicitSchemaControl,
 	type RuntimeOptionKeysThatRequireExplicitSchemaControl,
+	singleRoundTripFileCreateMinVersion,
 } from "./containerCompatibility.js";
 import { ContainerFluidHandleContext } from "./containerHandleContext.js";
 import { channelToDataStore } from "./dataStore.js";
@@ -267,6 +268,7 @@ import {
 } from "./pendingStateManager.js";
 import { BatchRunCounter, RunCounter } from "./runCounter.js";
 import {
+	binarySnapshotBlobSerialization,
 	runtimeCompatDetailsForLoader,
 	runtimeCoreCompatDetails,
 	validateLoaderCompatibility,
@@ -488,6 +490,26 @@ export interface ContainerRuntimeOptions {
 	readonly createBlobPayloadPending: true | undefined;
 
 	/**
+	 * When enabled (`true`), blobs uploaded via `uploadBlob()` while the container is **detached**
+	 * are embedded as binary summary blobs in one shared loading-group subtree in the summary
+	 * generated for `attach()`, instead of being uploaded individually to detached storage. This allows the
+	 * successful logical create operation to include the complete initial state in one service
+	 * request rather than requiring one request per blob and a follow-up summary upload.
+	 * The blobs remain summary-backed after attach; ordinary summaries reuse stable path handles,
+	 * and attached reads load individual binary snapshot blobs on demand.
+	 *
+	 * Default is `undefined` (disabled).
+	 *
+	 * This option requires `explicitSchemaControl: true` and
+	 * `oldestSupportedClient: "3.0.0"` or later.
+	 *
+	 * @beta
+	 * @experimental Not ready for use. Real-service behavior, scale limits, and telemetry remain
+	 * under validation. See `singleRoundTripFileCreate.md`.
+	 */
+	readonly enableSingleRoundTripFileCreate?: true | undefined;
+
+	/**
 	 * Controls automatic batch flushing during staging mode.
 	 * Normal turn-based/async flush scheduling is suppressed while in staging mode
 	 * until the accumulated batch reaches this many ops, at which point the batch
@@ -529,6 +551,8 @@ export type IContainerRuntimeOptions = Partial<ContainerRuntimeOptions>;
  * @internal
  */
 export interface ContainerRuntimeOptionsInternal extends ContainerRuntimeOptions {
+	readonly enableSingleRoundTripFileCreate: true | undefined;
+
 	/**
 	 * Sets the flush mode for the runtime. In Immediate flush mode the runtime will immediately
 	 * send all operations to the driver layer, while in TurnBased the operations will be buffered
@@ -1042,6 +1066,24 @@ export class ContainerRuntime
 				`Invalid minVersionForCollab: ${minVersionForCollab}. It must be an existing FF version (i.e. 2.22.1).`,
 			);
 		}
+		if (
+			runtimeOptions.enableSingleRoundTripFileCreate === true &&
+			oldestSupportedClientParam === undefined &&
+			deprecatedMinVersionForCollab === undefined
+		) {
+			throw new UsageError(
+				"enableSingleRoundTripFileCreate requires oldestSupportedClient to be explicitly set to 3.0.0 or later.",
+			);
+		}
+		if (
+			runtimeOptions.enableSingleRoundTripFileCreate === true &&
+			minVersionForCollab !== singleRoundTripFileCreateMinVersion &&
+			!gt(minVersionForCollab, singleRoundTripFileCreateMinVersion)
+		) {
+			throw new UsageError(
+				`enableSingleRoundTripFileCreate requires oldestSupportedClient to be set to ${singleRoundTripFileCreateMinVersion} or later.`,
+			);
+		}
 		// We also validate that there is not a mismatch between `minVersionForCollab` and runtime options that
 		// were manually set.
 		validateRuntimeOptions(minVersionForCollab, runtimeOptions);
@@ -1086,6 +1128,7 @@ export class ContainerRuntime
 			createBlobPayloadPending = defaultConfigs.createBlobPayloadPending,
 			stagingModeAutoFlushThreshold = defaultConfigs.stagingModeAutoFlushThreshold,
 			disableSchemaUpgrade = defaultConfigs.disableSchemaUpgrade,
+			enableSingleRoundTripFileCreate = defaultConfigs.enableSingleRoundTripFileCreate,
 		}: IContainerRuntimeOptionsInternal = runtimeOptions;
 
 		// If explicitSchemaControl is off, ensure that options which require explicitSchemaControl are not enabled.
@@ -1271,16 +1314,44 @@ export class ContainerRuntime
 			compressionOptions.minimumBatchSizeInBytes !== Number.POSITIVE_INFINITY &&
 			compressionOptions.compressionAlgorithm === "lz4";
 
+		const detachedSingleRoundTripFileCreate =
+			context.attachState === AttachState.Detached &&
+			(enableSingleRoundTripFileCreate === true ||
+				metadata?.documentSchema?.runtime.enableSingleRoundTripFileCreate === true);
+		const persistedDocumentSchema = metadata?.documentSchema;
+		const documentSchema =
+			detachedSingleRoundTripFileCreate && persistedDocumentSchema !== undefined
+				? {
+						...persistedDocumentSchema,
+						info: {
+							...persistedDocumentSchema.info,
+							minVersionForCollab:
+								persistedDocumentSchema.info === undefined ||
+								gt(minVersionForCollab, persistedDocumentSchema.info.minVersionForCollab)
+									? minVersionForCollab
+									: persistedDocumentSchema.info.minVersionForCollab,
+						},
+						runtime: {
+							...persistedDocumentSchema.runtime,
+							enableSingleRoundTripFileCreate: true as const,
+						},
+					}
+				: persistedDocumentSchema;
 		const documentSchemaController = new DocumentsSchemaController(
-			existing,
+			existing && !(detachedSingleRoundTripFileCreate && documentSchema === undefined),
 			protocolSequenceNumber,
-			metadata?.documentSchema,
+			documentSchema,
 			{
 				explicitSchemaControl,
 				compressionLz4,
 				idCompressorMode,
 				opGroupingEnabled: enableGroupedBatching,
 				createBlobPayloadPending,
+				// This option selects the writer format only while detached. Rehydrated detached
+				// documents keep an already-persisted selection even if the host omits the option.
+				// Attached existing documents discover and preserve the format without proposing
+				// a schema upgrade solely because the host enables the option globally.
+				enableSingleRoundTripFileCreate: detachedSingleRoundTripFileCreate ? true : undefined,
 				disallowedVersions: [],
 			},
 			(schema) => {
@@ -1321,6 +1392,7 @@ export class ContainerRuntime
 			createBlobPayloadPending,
 			stagingModeAutoFlushThreshold,
 			disableSchemaUpgrade,
+			enableSingleRoundTripFileCreate,
 		};
 
 		validateMinimumVersionForCollab(updatedMinVersionForCollab);
@@ -1765,6 +1837,10 @@ export class ContainerRuntime
 			maybeLoaderCompatDetailsForRuntime.ILayerCompatDetails,
 			this.disposeFn,
 			this.mc,
+			this.sessionSchema.enableSingleRoundTripFileCreate === true ||
+				this.metadata?.documentSchema?.runtime.enableSingleRoundTripFileCreate === true
+				? [binarySnapshotBlobSerialization]
+				: undefined,
 		);
 
 		// If we support multiple algorithms in the future, then we would need to manage it here carefully.
@@ -2207,6 +2283,8 @@ export class ContainerRuntime
 			runtime: this,
 			pendingBlobs: pendingRuntimeState?.pendingAttachmentBlobs,
 			createBlobPayloadPending: this.sessionSchema.createBlobPayloadPending === true,
+			enableSingleRoundTripFileCreate:
+				this.sessionSchema.enableSingleRoundTripFileCreate === true,
 		});
 
 		this.deltaScheduler = new DeltaScheduler(
@@ -2888,6 +2966,7 @@ export class ContainerRuntime
 		fullTree: boolean,
 		trackState: boolean,
 		telemetryContext?: ITelemetryContext,
+		blobManagerSummary?: ISummaryTreeWithStats,
 	): void {
 		this.addMetadataToSummary(summaryTree);
 
@@ -2919,7 +2998,7 @@ export class ContainerRuntime
 			addBlobToSummary(summaryTree, electedSummarizerBlobName, electedSummarizerContent);
 		}
 
-		const blobManagerSummary = this.blobManager.summarize();
+		blobManagerSummary ??= this.blobManager.summarize();
 		// Some storage (like git) doesn't allow empty tree, so we can omit it.
 		// and the blob manager can handle the tree not existing when loading
 		if (Object.keys(blobManagerSummary.summary.tree).length > 0) {
@@ -4316,8 +4395,17 @@ export class ContainerRuntime
 		const pathPartsForChildren = [channelsTreeName];
 
 		this.loadIdCompressor();
+		const blobManagerSummary = fullTree
+			? await this.blobManager.summarizeFullTree()
+			: undefined;
 
-		this.addContainerStateToSummary(summarizeResult, fullTree, trackState, telemetryContext);
+		this.addContainerStateToSummary(
+			summarizeResult,
+			fullTree,
+			trackState,
+			telemetryContext,
+			blobManagerSummary,
+		);
 		return {
 			...summarizeResult,
 			id: "",

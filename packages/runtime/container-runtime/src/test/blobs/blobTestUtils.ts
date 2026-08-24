@@ -14,6 +14,7 @@ import {
 } from "@fluid-internal/client-utils";
 import {
 	AttachState,
+	type ISnapshotTreeWithBlobContents,
 	type IContainerStorageService,
 } from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
@@ -23,7 +24,10 @@ import type {
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces/internal";
 import { SummaryType } from "@fluidframework/driver-definitions/internal";
-import type { ISequencedMessageEnvelope } from "@fluidframework/runtime-definitions/internal";
+import type {
+	ISequencedMessageEnvelope,
+	ISummaryTreeWithStats,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	isFluidHandleInternalPayloadPending,
 	isLocalFluidHandle,
@@ -34,6 +38,9 @@ import { v4 as uuid } from "uuid";
 
 import {
 	BlobManager,
+	blobsTreeName,
+	embeddedBlobsGroupId,
+	embeddedBlobsTreeName,
 	type IBlobManagerLoadInfo,
 	type IBlobManagerRuntime,
 	type ICreateBlobResponseWithTTL,
@@ -438,6 +445,7 @@ interface TestMaterial {
 	blobManagerLoadInfo: IBlobManagerLoadInfo;
 	pendingBlobs: IPendingBlobs | undefined;
 	createBlobPayloadPending: boolean;
+	enableSingleRoundTripFileCreate: boolean;
 	blobManager: BlobManager;
 }
 
@@ -456,6 +464,7 @@ export const createTestMaterial = (
 	const blobManagerLoadInfo = overrides?.blobManagerLoadInfo ?? {};
 	const pendingBlobs = overrides?.pendingBlobs ?? undefined;
 	const createBlobPayloadPending = overrides?.createBlobPayloadPending ?? false;
+	const enableSingleRoundTripFileCreate = overrides?.enableSingleRoundTripFileCreate ?? false;
 
 	const blobManager = new BlobManager({
 		// The routeContext is only needed by the BlobHandles to determine isAttached, so this
@@ -470,6 +479,7 @@ export const createTestMaterial = (
 		runtime: mockRuntime,
 		pendingBlobs,
 		createBlobPayloadPending,
+		enableSingleRoundTripFileCreate,
 	});
 
 	mockOrderingService.events.on("messageSequenced", (message: ISequencedMessageEnvelope) => {
@@ -493,6 +503,7 @@ export const createTestMaterial = (
 		blobManagerLoadInfo,
 		pendingBlobs,
 		createBlobPayloadPending,
+		enableSingleRoundTripFileCreate,
 		blobManager,
 	};
 };
@@ -513,26 +524,59 @@ export const simulateAttach = async (
 
 export const getSummaryContentsWithFormatValidation = (
 	blobManager: BlobManager,
+): IBlobManagerLoadInfo =>
+	getSummaryContentsFromSummaryWithFormatValidation(blobManager.summarize());
+
+export const getSummaryContentsFromSummaryWithFormatValidation = (
+	summary: ISummaryTreeWithStats,
 ): IBlobManagerLoadInfo => {
-	const summary = blobManager.summarize();
 	let ids: string[] | undefined;
 	let redirectTable: [string, string][] | undefined;
+	let embeddedDetachedBlobs: ISnapshotTreeWithBlobContents | undefined;
 	for (const [key, summaryObject] of Object.entries(summary.summary.tree)) {
 		if (summaryObject.type === SummaryType.Attachment) {
 			ids ??= [];
 			ids.push(summaryObject.id);
+		} else if (summaryObject.type === SummaryType.Tree) {
+			assert.strictEqual(key, embeddedBlobsTreeName);
+			assert.strictEqual(summaryObject.groupId, embeddedBlobsGroupId);
+			const blobs: Record<string, string> = {};
+			const blobsContents: Record<string, ArrayBufferLike> = {};
+			for (const [localId, content] of Object.entries(summaryObject.tree)) {
+				const blobId = localId;
+				blobs[localId] = blobId;
+				if (content.type === SummaryType.Blob) {
+					assert(content.content instanceof Uint8Array);
+					blobsContents[blobId] = new Uint8Array(content.content).buffer;
+				} else {
+					assert(content.type === SummaryType.Handle);
+					assert.strictEqual(content.handleType, SummaryType.Blob);
+					assert.strictEqual(
+						content.handle,
+						`/${blobsTreeName}/${embeddedBlobsTreeName}/${localId}`,
+					);
+				}
+			}
+			embeddedDetachedBlobs = {
+				blobs,
+				trees: {},
+				groupId: summaryObject.groupId,
+				...(Object.keys(blobsContents).length === 0 ? {} : { blobsContents }),
+			};
 		} else {
 			assert.strictEqual(key, redirectTableBlobName);
 			assert(summaryObject.type === SummaryType.Blob);
 			assert(typeof summaryObject.content === "string");
+			const summarizedRedirectTable = JSON.parse(summaryObject.content) as [string, string][];
 			redirectTable = [
-				...new Map<string, string>(
-					JSON.parse(summaryObject.content) as [string, string][],
-				).entries(),
+				...new Map<string, string>([
+					...(redirectTable ?? []),
+					...summarizedRedirectTable,
+				]).entries(),
 			];
 		}
 	}
-	return { ids, redirectTable };
+	return { ids, redirectTable, embeddedDetachedBlobs };
 };
 
 export const textToBlob = (text: string): ArrayBufferLike => {

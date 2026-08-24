@@ -5,11 +5,25 @@
 
 import { strict as assert } from "node:assert";
 
-import { bufferToString } from "@fluid-internal/client-utils";
+import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
+import type { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
 import { type ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
+import type {
+	IDocumentStorageService,
+	ISnapshot,
+	ISnapshotTree,
+} from "@fluidframework/driver-definitions/internal";
 
 import {
+	getBlobContentsFromTree,
+	getBlobContentsFromTreeWithBlobContents,
+} from "../containerStorageAdapter.js";
+import { maxReadConcurrency } from "../captureReferencedContents.js";
+import type { SerializedSnapshotInfo } from "../serializedStateManager.js";
+import {
 	combineAppAndProtocolSummary,
+	convertSnapshotInfoToSnapshot,
+	convertSnapshotToSnapshotInfo,
 	getISnapshotFromSerializedContainer,
 } from "../utils.js";
 
@@ -118,5 +132,234 @@ describe("Dehydrate Container", () => {
 			"group",
 			"The groupId sub-tree should have a groupId",
 		);
+	});
+
+	it("round-trips arbitrary snapshot bytes losslessly through SnapshotInfo", () => {
+		const originalBytes = new Uint8Array([0xc3, 0x28, 0x00, 0xff, 0xfe]);
+
+		const summaryWithRawBlob: ISummaryTree = combineAppAndProtocolSummary(
+			{
+				type: SummaryType.Tree,
+				tree: {
+					embeddedBlob: {
+						type: SummaryType.Blob,
+						content: originalBytes,
+					},
+				},
+			},
+			protocolSummary,
+		);
+
+		const snapshot = getISnapshotFromSerializedContainer(summaryWithRawBlob);
+		const blobId = snapshot.snapshotTree.blobs.embeddedBlob;
+		const preRoundTripBytes = snapshot.blobContents.get(blobId);
+		assert(preRoundTripBytes !== undefined, "Expected blob content to be present");
+		assert.deepStrictEqual(
+			new Uint8Array(preRoundTripBytes),
+			originalBytes,
+			"getISnapshotFromSerializedContainer should not itself corrupt raw blob bytes",
+		);
+
+		const snapshotInfo = convertSnapshotToSnapshotInfo(snapshot);
+		assert.strictEqual(
+			snapshotInfo.snapshotBlobs[blobId],
+			undefined,
+			"Non-UTF8 bytes must not be exposed through the legacy UTF-8 map",
+		);
+		assert.strictEqual(
+			snapshotInfo.snapshotBlobContents?.[blobId],
+			bufferToString(originalBytes, "base64"),
+		);
+		const rehydratedSnapshot = convertSnapshotInfoToSnapshot(snapshotInfo);
+		const roundTrippedBytes = rehydratedSnapshot.blobContents.get(blobId);
+		assert(
+			roundTrippedBytes !== undefined,
+			"Expected blob content to be present after round-trip",
+		);
+
+		assert.deepStrictEqual(
+			new Uint8Array(roundTrippedBytes),
+			originalBytes,
+			"Raw non-UTF8 blob bytes should survive the base64 JSON transport",
+		);
+	});
+
+	it("loads legacy UTF-8 SnapshotInfo and lets the binary-safe map win collisions", () => {
+		const binaryBytes = new Uint8Array([0xff, 0x00, 0x80]);
+		const snapshotInfo: SerializedSnapshotInfo = {
+			baseSnapshot: {
+				blobs: { legacy: "legacy-id", collision: "collision-id" },
+				trees: {},
+			},
+			snapshotBlobs: {
+				"legacy-id": "legacy text",
+				"collision-id": "legacy collision",
+			},
+			snapshotBlobContents: {
+				"collision-id": bufferToString(binaryBytes, "base64"),
+			},
+			snapshotSequenceNumber: 1,
+		};
+
+		const snapshot = convertSnapshotInfoToSnapshot(snapshotInfo);
+		assert.strictEqual(
+			bufferToString(snapshot.blobContents.get("legacy-id") ?? new ArrayBuffer(0), "utf8"),
+			"legacy text",
+		);
+		assert.deepStrictEqual(
+			new Uint8Array(snapshot.blobContents.get("collision-id") ?? new ArrayBuffer(0)),
+			binaryBytes,
+		);
+	});
+
+	it("extracts snapshot-tree bytes as base64 while skipping direct attachments", async () => {
+		const binaryBytes = new Uint8Array([0xff, 0x00, 0x80]);
+		const redirectBytes = stringToBuffer("[]", "utf8");
+		const baseSnapshot: ISnapshotTree = {
+			blobs: {},
+			trees: {
+				".blobs": {
+					blobs: {
+						".redirectTable": "redirect-id",
+						"attachment-id": "attachment-id",
+					},
+					trees: {
+						embedded: {
+							blobs: { binary: "binary-id" },
+							trees: {},
+						},
+					},
+				},
+			},
+		};
+		const storage: Pick<IDocumentStorageService, "readBlob"> = {
+			readBlob: async (id) => {
+				if (id === "redirect-id") {
+					return redirectBytes;
+				}
+				if (id === "binary-id") {
+					return binaryBytes;
+				}
+				throw new Error(`Unexpected blob read: ${id}`);
+			},
+		};
+
+		assert.deepStrictEqual(
+			await getBlobContentsFromTree(baseSnapshot, storage),
+			new Map<string, ArrayBufferLike>([
+				["redirect-id", redirectBytes],
+				["binary-id", binaryBytes],
+			]),
+		);
+
+		const snapshotWithOmittedGroupContents: ISnapshot = {
+			snapshotTree: {
+				...baseSnapshot,
+				trees: {
+					...baseSnapshot.trees,
+					unrelatedGroup: {
+						blobs: { unloaded: "unloaded-id" },
+						trees: {},
+						groupId: "unrelated",
+					},
+				},
+			},
+			blobContents: new Map([["redirect-id", redirectBytes]]),
+			ops: [],
+			sequenceNumber: 0,
+			latestSequenceNumber: undefined,
+			snapshotFormatV: 1,
+		};
+		assert.deepStrictEqual(
+			await getBlobContentsFromTree(snapshotWithOmittedGroupContents, storage),
+			new Map<string, ArrayBufferLike>([
+				["redirect-id", redirectBytes],
+				["binary-id", binaryBytes],
+			]),
+		);
+
+		const snapshotWithLegacyAttachmentsOnly: ISnapshot = {
+			...snapshotWithOmittedGroupContents,
+			snapshotTree: {
+				blobs: {},
+				trees: {
+					".blobs": {
+						blobs: { attachment: "attachment-id" },
+						trees: {},
+					},
+				},
+			},
+			blobContents: new Map(),
+		};
+		assert.deepStrictEqual(
+			await getBlobContentsFromTree(snapshotWithLegacyAttachmentsOnly, storage),
+			new Map(),
+		);
+
+		const snapshotWithContents: ISnapshotTreeWithBlobContents = {
+			...baseSnapshot,
+			blobsContents: {},
+			trees: {
+				".blobs": {
+					...baseSnapshot.trees[".blobs"],
+					blobsContents: {
+						"redirect-id": redirectBytes,
+						"attachment-id": new Uint8Array([1, 2, 3]),
+					},
+					trees: {
+						embedded: {
+							...baseSnapshot.trees[".blobs"].trees.embedded,
+							blobsContents: { "binary-id": binaryBytes },
+							trees: {},
+						},
+					},
+				},
+			},
+		};
+		assert.deepStrictEqual(
+			getBlobContentsFromTreeWithBlobContents(snapshotWithContents),
+			new Map<string, ArrayBufferLike>([
+				["redirect-id", redirectBytes],
+				["binary-id", binaryBytes],
+			]),
+		);
+	});
+
+	it("bounds reads when capturing embedded blob contents", async () => {
+		const blobCount = maxReadConcurrency + 8;
+		const embeddedBlobs = Object.fromEntries(
+			Array.from({ length: blobCount }, (_, index) => [`local-${index}`, `blob-${index}`]),
+		);
+		const snapshot: ISnapshotTree = {
+			blobs: {},
+			trees: {
+				".blobs": {
+					blobs: {},
+					trees: {
+						".embeddedDetachedBlobs": {
+							blobs: embeddedBlobs,
+							trees: {},
+							groupId: "fluid-internal:embedded-detached-blobs",
+						},
+					},
+				},
+			},
+		};
+		let inFlight = 0;
+		let peak = 0;
+		const storage: Pick<IDocumentStorageService, "readBlob"> = {
+			readBlob: async () => {
+				inFlight++;
+				peak = Math.max(peak, inFlight);
+				await new Promise((resolve) => setTimeout(resolve, 5));
+				inFlight--;
+				return new Uint8Array([1]);
+			},
+		};
+
+		const contents = await getBlobContentsFromTree(snapshot, storage);
+
+		assert.strictEqual(contents.size, blobCount);
+		assert.strictEqual(peak, maxReadConcurrency);
 	});
 });

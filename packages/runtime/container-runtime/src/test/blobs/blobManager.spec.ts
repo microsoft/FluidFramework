@@ -5,7 +5,9 @@
 
 import { strict as assert } from "node:assert";
 
+import { AttachState } from "@fluidframework/container-definitions/internal";
 import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import { SummaryType } from "@fluidframework/driver-definitions/internal";
 import type { ISequencedMessageEnvelope } from "@fluidframework/runtime-definitions/internal";
 import {
 	isFluidHandlePayloadPending,
@@ -19,13 +21,20 @@ import { BlobHandle } from "../../blobManager/blobManager.js";
 import {
 	getGCNodePathFromLocalId,
 	type IBlobManagerLoadInfo,
+	loadBlobManagerLoadInfo,
 } from "../../blobManager/index.js";
+import {
+	embeddedBlobsGroupId,
+	embeddedBlobsTreeName,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../blobManager/blobManagerSnapSum.js";
 
 import {
 	attachHandle,
 	blobToText,
 	createTestMaterial,
 	ensureBlobsShared,
+	getSummaryContentsFromSummaryWithFormatValidation,
 	getSummaryContentsWithFormatValidation,
 	MockStorageAdapter,
 	simulateAttach,
@@ -63,6 +72,261 @@ describe("BlobHandle", () => {
 
 		assert.strictEqual(handle.payloadState, "shared");
 		assert.strictEqual(sharePayloadCallbackCalls, 0);
+	});
+});
+
+describe("Embedded detached blob summaries", () => {
+	function getEmbeddedBlobLocalIds(loadInfo: IBlobManagerLoadInfo): string[] {
+		return Object.keys(loadInfo.embeddedDetachedBlobs?.blobs ?? {});
+	}
+
+	function getEmbeddedBlobContent(
+		loadInfo: IBlobManagerLoadInfo,
+		localId: string,
+	): ArrayBufferLike | undefined {
+		const blobId = loadInfo.embeddedDetachedBlobs?.blobs[localId];
+		const blob =
+			blobId === undefined
+				? undefined
+				: loadInfo.embeddedDetachedBlobs?.blobsContents?.[blobId];
+		return blob;
+	}
+
+	it("loads detached and attached forms, reads lazily, and materializes full-tree summaries", async () => {
+		const snapshotBlobId = "snapshot-blob";
+		const localId = "local-blob";
+		const blob = new Uint8Array([0, 255, 128, 42]).buffer;
+		const baseSnapshot = {
+			blobs: {},
+			trees: {
+				".blobs": {
+					blobs: {},
+					trees: {
+						[embeddedBlobsTreeName]: {
+							blobs: { [localId]: snapshotBlobId },
+							blobsContents: { [snapshotBlobId]: blob },
+							trees: {},
+							groupId: embeddedBlobsGroupId,
+						},
+					},
+				},
+			},
+		};
+		const storage = {
+			readBlob: async (): Promise<ArrayBufferLike> => {
+				throw new Error("Detached load should use existing snapshot blob contents");
+			},
+		};
+
+		const detached = await loadBlobManagerLoadInfo({
+			attachState: AttachState.Detached,
+			baseSnapshot,
+			snapshotWithContents: undefined,
+			storage,
+		});
+		assert.deepStrictEqual(detached.redirectTable, []);
+		assert.deepStrictEqual(detached.ids, []);
+		assert.deepStrictEqual(getEmbeddedBlobLocalIds(detached), [localId]);
+		const detachedBlob = getEmbeddedBlobContent(detached, localId);
+		assert(detachedBlob !== undefined);
+		assert.deepStrictEqual(new Uint8Array(detachedBlob), new Uint8Array(blob));
+		const { blobManager: detachedBlobManager } = createTestMaterial({
+			attached: false,
+			blobManagerLoadInfo: detached,
+			createBlobPayloadPending: false,
+			enableSingleRoundTripFileCreate: true,
+		});
+		assert.deepStrictEqual(
+			new Uint8Array(await detachedBlobManager.getBlob(localId, false)),
+			new Uint8Array(blob),
+		);
+
+		const attached = await loadBlobManagerLoadInfo({
+			attachState: AttachState.Attached,
+			baseSnapshot,
+			snapshotWithContents: undefined,
+			storage,
+		});
+		assert.deepStrictEqual(attached.redirectTable, []);
+		assert.deepStrictEqual(attached.ids, []);
+		assert.strictEqual(attached.embeddedDetachedBlobs?.blobsContents, undefined);
+		assert.deepStrictEqual(getEmbeddedBlobLocalIds(attached), [localId]);
+
+		const attachedStorage = new MockStorageAdapter(true);
+		let lazyReads = 0;
+		attachedStorage.readBlob = async (id: string) => {
+			assert.strictEqual(id, snapshotBlobId);
+			lazyReads++;
+			return blob;
+		};
+		const { blobManager: lazilyLoadedBlobManager } = createTestMaterial({
+			attached: true,
+			blobManagerLoadInfo: attached,
+			createBlobPayloadPending: false,
+			enableSingleRoundTripFileCreate: false,
+			mockBlobStorage: attachedStorage,
+		});
+		assert.deepStrictEqual(
+			new Uint8Array(await lazilyLoadedBlobManager.getBlob(localId, false)),
+			new Uint8Array(blob),
+		);
+		await lazilyLoadedBlobManager.getBlob(localId, false);
+		assert.strictEqual(lazyReads, 2, "Summary blob bytes should not be cached");
+		assert.strictEqual(
+			lazilyLoadedBlobManager.lookupTemporaryBlobStorageId(localId),
+			undefined,
+		);
+
+		const incrementalSummary = getSummaryContentsWithFormatValidation(lazilyLoadedBlobManager);
+		assert.deepStrictEqual(getEmbeddedBlobLocalIds(incrementalSummary), [localId]);
+		assert.strictEqual(incrementalSummary.embeddedDetachedBlobs?.blobsContents, undefined);
+
+		const fullTreeSummary = getSummaryContentsFromSummaryWithFormatValidation(
+			await lazilyLoadedBlobManager.summarizeFullTree(),
+		);
+		assert.deepStrictEqual(getEmbeddedBlobLocalIds(fullTreeSummary), [localId]);
+		const fullTreeBlob = getEmbeddedBlobContent(fullTreeSummary, localId);
+		assert(fullTreeBlob !== undefined);
+		assert.deepStrictEqual(new Uint8Array(fullTreeBlob), new Uint8Array(blob));
+	});
+
+	it("summarizes arbitrary bytes as raw binary and sweeps creator-side state", async () => {
+		const { blobManager, mockBlobStorage } = createTestMaterial({
+			attached: false,
+			createBlobPayloadPending: false,
+			enableSingleRoundTripFileCreate: true,
+		});
+		const blob = new Uint8Array([0, 255, 128, 42]);
+		const handle = await blobManager.createBlob(blob.buffer);
+		const { localId } = unpackHandle(handle);
+		assert.strictEqual(mockBlobStorage.detachedStorage.blobsCreated, 0);
+
+		const summary = blobManager.summarize();
+		const embeddedSummary = summary.summary.tree[embeddedBlobsTreeName];
+		assert(embeddedSummary?.type === SummaryType.Tree);
+		const summarizedBlob = embeddedSummary.tree[localId];
+		assert(summarizedBlob?.type === SummaryType.Blob);
+		assert(summarizedBlob.content instanceof Uint8Array);
+		assert.deepStrictEqual(summarizedBlob.content, blob);
+		assert.deepStrictEqual(blobManager.getGCData(), {
+			gcNodes: { [getGCNodePathFromLocalId(localId)]: [] },
+		});
+
+		blobManager.deleteSweepReadyNodes([getGCNodePathFromLocalId(localId)]);
+		assert.strictEqual(blobManager.hasBlob(localId), false);
+		const afterSweep = getSummaryContentsWithFormatValidation(blobManager);
+		assert.strictEqual(afterSweep.redirectTable, undefined);
+		assert.strictEqual(afterSweep.embeddedDetachedBlobs, undefined);
+	});
+
+	it("sweeps attached summary-backed mappings without creating attachments", async () => {
+		const localId = "local";
+		const snapshotBlobId = "summary-storage";
+		const { blobManager } = createTestMaterial({
+			attached: true,
+			blobManagerLoadInfo: {
+				embeddedDetachedBlobs: {
+					blobs: { [localId]: snapshotBlobId },
+					trees: {},
+					groupId: embeddedBlobsGroupId,
+				},
+			},
+			createBlobPayloadPending: false,
+		});
+		assert.deepStrictEqual(blobManager.getGCData(), {
+			gcNodes: { [getGCNodePathFromLocalId(localId)]: [] },
+		});
+
+		blobManager.deleteSweepReadyNodes([getGCNodePathFromLocalId(localId)]);
+		assert.strictEqual(blobManager.hasBlob(localId), false);
+		assert.strictEqual(Object.keys(blobManager.summarize().summary.tree).length, 0);
+	});
+
+	it("does not expose a snapshot summary blob ID as a temporary attachment ID", async () => {
+		const localId = "local";
+		const { blobManager } = createTestMaterial({
+			attached: true,
+			blobManagerLoadInfo: {
+				embeddedDetachedBlobs: {
+					blobs: { [localId]: "snapshot-summary-id" },
+					trees: {},
+					groupId: embeddedBlobsGroupId,
+				},
+			},
+		});
+		assert.strictEqual(blobManager.lookupTemporaryBlobStorageId(localId), undefined);
+		const summary = blobManager.summarize();
+		const embeddedSummary = summary.summary.tree[embeddedBlobsTreeName];
+		assert(embeddedSummary?.type === SummaryType.Tree);
+		assert.strictEqual(embeddedSummary.tree[localId]?.type, SummaryType.Handle);
+		for (const summaryObject of Object.values(summary.summary.tree)) {
+			assert.notStrictEqual(summaryObject.type, SummaryType.Attachment);
+		}
+	});
+
+	it("bounds concurrent reads when materializing a full-tree summary", async () => {
+		const blobCount = 65;
+		const blobs: Record<string, string> = {};
+		for (let index = 0; index < blobCount; index++) {
+			blobs[`local-${index}`] = `storage-${index}`;
+		}
+		const mockBlobStorage = new MockStorageAdapter(true);
+		let reads = 0;
+		let concurrentReads = 0;
+		let peakConcurrentReads = 0;
+		mockBlobStorage.readBlob = async (storageId: string) => {
+			reads++;
+			concurrentReads++;
+			peakConcurrentReads = Math.max(peakConcurrentReads, concurrentReads);
+			await Promise.resolve();
+			concurrentReads--;
+			return textToBlob(storageId);
+		};
+		const { blobManager } = createTestMaterial({
+			attached: true,
+			blobManagerLoadInfo: {
+				embeddedDetachedBlobs: {
+					blobs,
+					trees: {},
+					groupId: embeddedBlobsGroupId,
+				},
+			},
+			createBlobPayloadPending: false,
+			mockBlobStorage,
+		});
+
+		await blobManager.summarizeFullTree();
+		assert.strictEqual(reads, blobCount);
+		assert.strictEqual(peakConcurrentReads, 32);
+	});
+
+	it("attaches mixed summary-backed and legacy detached blobs", async () => {
+		const { blobManager } = createTestMaterial({
+			attached: false,
+			createBlobPayloadPending: false,
+			enableSingleRoundTripFileCreate: true,
+		});
+		await blobManager.createBlob(textToBlob("summary-backed"));
+		const summaryBackedLoadInfo = getSummaryContentsWithFormatValidation(blobManager);
+
+		const {
+			blobManager: reloadedBlobManager,
+			mockBlobStorage,
+			mockRuntime,
+		} = createTestMaterial({
+			attached: false,
+			blobManagerLoadInfo: summaryBackedLoadInfo,
+			createBlobPayloadPending: false,
+			enableSingleRoundTripFileCreate: false,
+		});
+		await reloadedBlobManager.createBlob(textToBlob("legacy"));
+		await simulateAttach(mockBlobStorage, mockRuntime, reloadedBlobManager);
+
+		const summary = getSummaryContentsWithFormatValidation(reloadedBlobManager);
+		assert.deepStrictEqual(getEmbeddedBlobLocalIds(summary), [
+			...getEmbeddedBlobLocalIds(summaryBackedLoadInfo),
+		]);
+		assert.strictEqual(summary.ids?.length, 1);
 	});
 });
 

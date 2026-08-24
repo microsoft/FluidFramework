@@ -30,7 +30,10 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import type { ISerializableBlobContents } from "./containerStorageAdapter.js";
+import type {
+	IBase64BlobContents,
+	ISerializableBlobContents,
+} from "./containerStorageAdapter.js";
 import type {
 	IPendingContainerState,
 	IPendingDetachedContainerState,
@@ -200,8 +203,8 @@ function convertSummaryToISnapshot(
 }
 
 /**
- * Converts a snapshot to snapshotInfo with its blob contents
- * to align detached container format with IPendingContainerState
+ * Converts a snapshot to snapshotInfo using the legacy UTF-8 map when
+ * lossless and the base64 map for all other bytes.
  *
  * Note, this assumes the ISnapshot sequence number is defined. Otherwise an assert will be thrown
  * @param snapshot - ISnapshot
@@ -211,20 +214,46 @@ export function convertSnapshotToSnapshotInfo(snapshot: ISnapshot): SerializedSn
 		snapshot.sequenceNumber !== undefined,
 		0x93a /* Snapshot sequence number is missing */,
 	);
-	const snapshotBlobs: ISerializableBlobContents = {};
-	for (const [blobId, arrayBufferLike] of snapshot.blobContents.entries()) {
-		snapshotBlobs[blobId] = bufferToString(arrayBufferLike, "utf8");
-	}
 	return {
 		baseSnapshot: snapshot.snapshotTree,
-		snapshotBlobs,
+		...serializeSnapshotBlobContents(snapshot.blobContents),
 		snapshotSequenceNumber: snapshot.sequenceNumber,
 	};
 }
 
 /**
- * Converts a snapshot to snapshotInfo with its blob contents
- * to align detached container format with IPendingContainerState
+ * Encodes snapshot bytes losslessly for JSON transport. Blobs whose bytes
+ * survive the legacy UTF-8 encode/decode path unchanged remain in the legacy
+ * map; all other blobs are base64-encoded in the binary-safe map.
+ */
+export function serializeSnapshotBlobContents(
+	blobContents: Iterable<readonly [string, ArrayBufferLike]>,
+): Pick<SnapshotWithBlobs, "snapshotBlobs" | "snapshotBlobContents"> {
+	const snapshotBlobs: ISerializableBlobContents = {};
+	const snapshotBlobContents: IBase64BlobContents = {};
+	const utf8Decoder = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true });
+	for (const [blobId, content] of blobContents) {
+		try {
+			// Fatal decoding accepts only canonical UTF-8. Preserving the BOM in
+			// the decoded string guarantees stringToBuffer(..., "utf8") recreates
+			// the original bytes when older loaders read snapshotBlobs.
+			snapshotBlobs[blobId] = utf8Decoder.decode(content);
+		} catch (error) {
+			if (!(error instanceof TypeError)) {
+				throw error;
+			}
+			snapshotBlobContents[blobId] = bufferToString(content, "base64");
+		}
+	}
+	return Object.keys(snapshotBlobContents).length === 0
+		? { snapshotBlobs }
+		: { snapshotBlobs, snapshotBlobContents };
+}
+
+/**
+ * Converts serialized snapshot info back to binary snapshot contents.
+ * Legacy `snapshotBlobs` entries are decoded as UTF-8, then
+ * `snapshotBlobContents` entries are decoded as base64 and win collisions.
  *
  * Note, this assumes the ISnapshot sequence number is defined. Otherwise an assert will be thrown
  * @param snapshot - ISnapshot
@@ -235,6 +264,11 @@ export function convertSnapshotInfoToSnapshot(
 	const blobContents = new Map<string, ArrayBuffer>();
 	for (const [blobId, serializedContent] of Object.entries(snapshotInfo.snapshotBlobs)) {
 		blobContents.set(blobId, stringToBuffer(serializedContent, "utf8"));
+	}
+	for (const [blobId, serializedContent] of Object.entries(
+		snapshotInfo.snapshotBlobContents ?? {},
+	)) {
+		blobContents.set(blobId, stringToBuffer(serializedContent, "base64"));
 	}
 	return {
 		snapshotTree: snapshotInfo.baseSnapshot,
@@ -344,18 +378,15 @@ function isPendingDetachedContainerState(
 	return true;
 }
 /**
- * Converts an ISnapshot to a SnapshotWithBlobs, extracting and serializing its blob contents.
+ * Converts an ISnapshot to a SnapshotWithBlobs using the legacy UTF-8 map
+ * when lossless and the base64 map for all other bytes.
  * @param snapshot - The ISnapshot to convert.
  * @returns A SnapshotWithBlobs containing the base snapshot and serialized blob contents.
  */
 export function convertISnapshotToSnapshotWithBlobs(snapshot: ISnapshot): SnapshotWithBlobs {
-	const snapshotBlobs: ISerializableBlobContents = {};
-	for (const [id, blob] of snapshot.blobContents.entries()) {
-		snapshotBlobs[id] = bufferToString(blob, "utf8");
-	}
 	return {
 		baseSnapshot: snapshot.snapshotTree,
-		snapshotBlobs,
+		...serializeSnapshotBlobContents(snapshot.blobContents),
 	};
 }
 
