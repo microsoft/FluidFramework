@@ -5,12 +5,16 @@ persisting that metadata in the document,
 and querying it later.
 
 The metadata shares the lifetime of the commit it is attached to:
-once the commit is evicted from the trunk, the metadata is dropped.
+once the commit is trimmed from the trunk, the metadata goes with it.
 This keeps growth bounded without requiring any additional garbage collection policy.
 
-The design deliberately avoids introducing a new persisted format version.
-It achieves this by using two extension points that already tolerate additive change:
-optional properties on the op envelope, and a new sub-tree in the summary.
+The metadata is persisted inline on the commits in the `EditManager` summary.
+Storing it on the commit itself is what makes the shared lifetime automatic,
+keeps the persisted metadata consistent with the trunk by construction,
+and allows the metadata to be paged alongside its commits if summary history is virtualized later.
+
+Both the op format and the summary format carry the metadata under new format versions,
+so a document only ever contains metadata once every collaborating client understands it.
 
 ## Goals
 
@@ -20,9 +24,9 @@ Replicate that value to all collaborating clients.
 
 Persist that value in the document so that a client loading from a summary recovers it.
 
-Drop that value automatically when the associated commit leaves the collaboration window.
+Drop that value automatically when the associated commit is trimmed from the trunk.
 
-Ship without bumping `MessageFormatVersion`, `EditManagerFormatVersion`, or `minVersionForCollab`.
+Guarantee that metadata written to a document is understood by every client that can open the document.
 
 ## Terminology
 
@@ -34,26 +38,32 @@ Use `PersistedCommitMetadata` for the value type.
 
 ## Data model
 
-The metadata is keyed by `RevisionTag`.
+The metadata is keyed by `RevisionTag` in memory, in a map from `RevisionTag` to `JsonCompatibleReadOnlyObject`.
 
-This is the correct key for three reasons.
+`RevisionTag` is the correct key for three reasons.
 A revision tag is stable across rebase, as documented on `GraphCommit.revision`.
 All commits within a single transaction share one revision tag, which `transaction.ts` enforces with assert `0xcaf`.
 A revision tag is available at every point in the pipeline where the metadata must be read or written.
 
-The in-memory store is a map from `RevisionTag` to an entry containing both the metadata and the originating session ID:
+### Keep the metadata off `GraphCommit`
+
+Attach the metadata to the in-memory index, not to the `GraphCommit` object.
+
+This is worth stating explicitly because putting it on the commit object is the intuitive move,
+and it silently loses data.
+`rebaseBranch` in `core/rebase/utils.ts` constructs rebased commits as fresh object literals:
 
 ```typescript
-interface PersistedCommitMetadataEntry {
-	readonly sessionId: SessionId;
-	readonly metadata: JsonCompatibleReadOnlyObject;
-}
+newHead = {
+	revision: c.revision,
+	change,
+	parent: newHead,
+};
 ```
 
-The session ID must be stored alongside the metadata.
-Encoding a `RevisionTag` requires an `originatorId`, as seen in `encodeCommit` in `editManagerCodecsCommons.ts`,
-which passes `originatorId: commit.sessionId` into `revisionTagCodec.encode`.
-Without the session ID, the index cannot encode its own keys at summarization time.
+There is no spread, so any additional property on a `GraphCommit` is dropped the first time the commit is rebased.
+The revision tag survives rebase; the object identity does not.
+Keeping the index keyed by `RevisionTag` and joining the two only at encode and decode time keeps this correct.
 
 ## Public API
 
@@ -100,17 +110,32 @@ and for commits whose metadata has been evicted.
 
 Callers correlate a commit to its revision through the existing change events.
 
+## Format versions
+
+Both the op format and the summary format gain a new version for this feature.
+
+Add `v7: 7` to `MessageFormatVersion` in `shared-tree-core/messageFormatV1ToV4.ts`
+and to `EditManagerFormatVersion` in `shared-tree-core/editManagerFormatCommons.ts`,
+following the precedent set by `v6`, which was introduced and made available for writing in 2.80.0.
+Add `v7` to `supportedEditManagerFormatVersions` and to the message equivalent.
+
+Add the corresponding entries to `changeFormatVersionForEditManager` and `changeFormatVersionForMessage`
+in `shared-tree/sharedTree.ts`, mapping `v7` to the same `SharedTreeChangeFormatVersion` that `v6` maps to.
+
+The write version is selected from the configured oldest supported client,
+via `getCodecTreeForEditManagerFormat(clientVersion: OldestSupportedClientVersion)` and its message counterpart.
+A client therefore only begins writing metadata
+once `minVersionForCollab` is raised to a version that includes this feature.
+
+This is what makes the metadata dependable.
+A document containing metadata can only be opened by a client that understands and preserves it,
+so metadata written to a document stays there.
+Applications adopting this feature raise `minVersionForCollab` once their clients are saturated.
+
 ## Op format
 
-`Message` in `shared-tree-core/messageFormatV1ToV4.ts` is SharedTree's own op payload type.
-Its TypeBox schema is declared with a bare `Type.Object({...})` and no `ObjectOptions`,
-so additional properties are permitted by both the TypeBox compiler and the AJV validator used in tests.
-A client that does not know about the new field will validate the message successfully and ignore the field,
-because the codec's `decode` destructures only the properties it names.
-
-Add the field explicitly rather than relying on an undeclared property.
-
-Add to the `Message` interface and to the schema returned by the `Message` factory function:
+Add the field to the `Message` interface and to the schema returned by the `Message` factory function
+in `shared-tree-core/messageFormatV1ToV4.ts`:
 
 ```typescript
 readonly persistedMetadata?: JsonCompatibleReadOnlyObject;
@@ -122,37 +147,35 @@ persistedMetadata: Type.Optional(JsonCompatibleReadOnlyObjectSchema),
 
 Apply the same change to `messageFormatVSharedBranches.ts`.
 
-Add a comment on both schemas recording that additional properties are intentionally permitted,
-and that adding `additionalProperties: false` would break forward compatibility for this field.
-
 Add the field to `CommitMessage` in `shared-tree-core/messageTypes.ts`.
 
-Update `encode` and `decode` in `messageCodecV1ToV4.ts` and the shared-branches equivalent to carry the field through.
-
-Do not introduce a new `MessageFormatVersion`.
-Existing clients speaking the same version accept and ignore the new field.
+Update `encode` and `decode` in `messageCodecV1ToV4.ts` and the shared-branches equivalent to carry the field through,
+writing the field only when encoding at `v7` or later.
 
 ## Summary format
 
-Add a new `Summarizable` with the key `"CommitMetadata"`.
-Register it in the summarizables array constructed in `shared-tree/sharedTree.ts`,
-alongside `SchemaSummarizer`, `ForestSummarizer`, and `DetachedFieldIndexSummarizer`.
+The metadata is persisted inline on the commits in the `EditManager` summary.
 
-The summarizable persists the full map.
-Encode each `RevisionTag` key with `RevisionTagCodec`, supplying `originatorId` from the stored session ID and the runtime's `IIdCompressor`.
+`CommitBase` in `shared-tree-core/editManagerFormatCommons.ts` is composed with `noAdditionalProps`
+into both `Commit` and `SequencedCommit`, so the new field is declared on the schema itself:
 
-Build the summarizable on the `versionedSummarizer` pattern so that its blob carries its own format version from the outset.
+```typescript
+persistedMetadata: Type.Optional(JsonCompatibleReadOnlyObjectSchema),
+```
 
-`loadInternal` in `sharedTreeCore.ts` iterates the client's own summarizables and looks each key up under `indexes/`.
-It never enumerates the keys present in the snapshot.
-A client that does not know about this summarizable therefore ignores the sub-tree entirely.
+Add the matching optional property to the `Commit` and `EncodedCommit` interfaces in the same file.
+This covers the trunk via `SequencedCommit`, peer local branches via `SummarySessionBranch.commits`,
+and shared branches via `EncodedSharedBranch`.
 
-The `load` implementation must call `await services.contains(...)` and return early when the blob is absent.
-`scopeStorageService` asserts `0xc20` inside `getSnapshotTree()` when a scoped path is missing,
-so a summarizable that reaches for storage unconditionally will fail against every document created before this feature shipped.
+`encodeCommit` in `editManagerCodecsCommons.ts` already has everything it needs.
+It holds the commit's `revision` and `sessionId`, so it looks the metadata up in the index by revision
+and writes it onto the encoded commit with no additional key encoding.
+`decodeCommit` reverses this, writing any decoded metadata into the index keyed by the decoded revision.
 
-Do not introduce a new `EditManagerFormatVersion`.
-The existing `Commit` and `SequencedCommit` schemas are sealed with `additionalProperties: false` and are not modified.
+Emit the field only when encoding at `EditManagerFormatVersion.v7` or later.
+
+Because the metadata travels with the commit, no separate index is persisted,
+and the persisted metadata is exactly the set of commits present in the summary.
 
 ## Lifecycle
 
@@ -171,7 +194,7 @@ Write the entry into the index at submit time so that it is present for local re
 ### Remote commit
 
 `processMessagesCore` decodes each message and writes any metadata into the index,
-keyed by the decoded revision and the message's originator session ID.
+keyed by the decoded revision.
 
 Do this for both local and remote messages so that the index is populated identically on every client.
 
@@ -197,38 +220,36 @@ Delete the corresponding index entry.
 
 ### Eviction
 
-Subscribe to the `ancestryTrimmed` event, which `EditManager` emits with the exact `RevisionTag[]` being trimmed.
-Delete those revisions from the index.
+The persisted side needs no work.
+A trimmed commit is not serialized, so its metadata leaves the document with it.
 
-This is what bounds growth, and it is the only removal path in steady-state operation.
+Subscribe to the `ancestryTrimmed` event, which `EditManager` emits with the exact `RevisionTag[]` being trimmed,
+and delete those revisions from the in-memory index so that memory tracks the trunk.
 
 ### Load
 
 Two sources compose to reconstruct the index on a loading client.
 
-Commits at or before the summary's reference sequence number come from the summarizable.
+Commits at or before the summary's reference sequence number carry their metadata inline,
+and `decodeCommit` writes it into the index as the summary is decoded.
 
 Trailing ops, meaning those sequenced after the last summary, carry their metadata inline and are replayed through `processMessagesCore` during load.
 
 No special ordering work is required.
 `loadInternal` completes before the runtime delivers trailing ops.
 
-## Compatibility characteristics
+## Characteristics
 
-These are the consequences of the additive approach and should be understood before adopting the feature.
+These are the consequences of the design and should be understood before adopting the feature.
 
-A client that does not implement this feature will, when it produces a summary,
-write a summary containing no `"CommitMetadata"` sub-tree.
-All persisted metadata in the document is lost at that point, with no error.
-
-The same client ignores the metadata on incoming ops.
-Combined with the above, this means metadata is best-effort in a mixed-version collaboration session.
-Applications must not depend on it for correctness.
-
-Metadata is absent for all commits created before the feature ships.
+Metadata is absent for all commits created before the feature is enabled.
 Every read path must handle `undefined`.
 
-Metadata travels on every annotated op and is retained in the summary for the width of the collaboration window.
+Metadata is retained for exactly as long as its commit is retained.
+Under the default trunk eviction policy that is the width of the collaboration window;
+under `retainHistory` it is the lifetime of the document.
+
+Metadata travels on every annotated op and occupies space in the summary for as long as its commit survives.
 Treat it as a size-sensitive field and document a recommended budget.
 
 Expect op and summary snapshot tests to require regeneration.
@@ -245,9 +266,15 @@ Metadata survives a summary round trip to a freshly loaded client.
 
 Metadata on trailing ops is recovered by a client that loads from a summary predating those ops.
 
-A client loading a summary that contains no `"CommitMetadata"` sub-tree loads successfully.
+A client loading a summary written before this feature was enabled loads successfully,
+and reads back `undefined` for every commit in it.
 
 Metadata is dropped once the associated commit is trimmed, verified by advancing the collaboration window.
+
+Metadata for a commit retained under `retainHistory` survives a summary round trip.
+
+Metadata survives rebase,
+verified by annotating a local commit and then sequencing a concurrent remote commit ahead of it.
 
 Metadata survives a disconnect and reconnect, exercising `reSubmitCore`.
 
@@ -263,11 +290,14 @@ Nested transactions resolve to the outermost transaction's metadata.
 
 1. Add `persistedMetadata` to `RunTransactionParamsAlpha` and thread it through the transaction entry points.
 2. Record pending metadata in `TreeCheckout` for the commit under construction.
-3. Implement the `"CommitMetadata"` summarizable, including revision tag encoding and the `contains` guard on load.
-4. Register the summarizable in `sharedTree.ts`.
-5. Add the optional field to both message formats, `CommitMessage`, and both message codecs.
+3. Add `v7` to `MessageFormatVersion` and `EditManagerFormatVersion`, register it as supported,
+   and add the `changeFormatVersionFor*` entries.
+4. Add the optional field to both message formats, `CommitMessage`, and both message codecs.
+5. Add the optional field to `CommitBase` and to the `Commit` and `EncodedCommit` interfaces,
+   and carry it through `encodeCommit` and `decodeCommit`.
 6. Populate and read the index across `submitCommit`, `processMessagesCore`, `reSubmitCore`, `applyStashedOp`, and `rollback`.
-7. Prune the index on `ancestryTrimmed`.
+7. Prune the in-memory index on `ancestryTrimmed`.
 8. Expose `getPersistedCommitMetadata` on the alpha surface.
 9. Add tests per the section above.
 10. Regenerate API reports, add a changeset, and update op and summary snapshots.
+
