@@ -80,3 +80,7 @@ export {
 	MessageFormatVersion,
 	supportedMessageFormatVersions,
 } from "./messageFormat.js";
+export {
+	PersistedCommitMetadataIndex,
+	type PersistedCommitMetadata,
+} from "./persistedCommitMetadata.js";

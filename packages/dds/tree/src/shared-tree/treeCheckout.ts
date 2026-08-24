@@ -83,6 +83,7 @@ import {
 	type SharedTreeBranchChange,
 	type SquashingTransactionOptions,
 	type Transactor,
+	PersistedCommitMetadataIndex,
 } from "../shared-tree-core/index.js";
 import {
 	type ImplicitFieldSchema,
@@ -115,6 +116,7 @@ import {
 	hasSome,
 	throwIfBroken,
 	type JsonCompatibleReadOnly,
+	type JsonCompatibleReadOnlyObject,
 	type WithBreakable,
 } from "../util/index.js";
 
@@ -335,6 +337,7 @@ export function createTreeCheckout(
 		removedRoots?: DetachedFieldIndex;
 		chunkCompressionStrategy?: TreeCompressionStrategy;
 		codecOptions?: Partial<CodecWriteOptions>;
+		persistedCommitMetadata?: PersistedCommitMetadataIndex;
 	},
 ): TreeCheckout {
 	const schema = args?.schema ?? new TreeStoredSchemaRepository();
@@ -377,6 +380,7 @@ export function createTreeCheckout(
 		revisionTagCodec,
 		idCompressor,
 		args?.removedRoots,
+		args?.persistedCommitMetadata,
 	);
 }
 
@@ -567,6 +571,16 @@ export class TreeCheckout implements ITreeCheckout {
 	readonly #events = createEmitter<CheckoutEvents>();
 	public events: Listenable<CheckoutEvents> = this.#events;
 
+	/**
+	 * Metadata supplied to the currently running outermost transaction which has not yet been associated with a revision.
+	 */
+	#pendingPersistedMetadata: JsonCompatibleReadOnlyObject | undefined;
+
+	/**
+	 * The revision that {@link TreeCheckout.mintTransactionRevisionTag} associated the pending metadata with, if any.
+	 */
+	#pendingPersistedMetadataRevision: RevisionTag | undefined;
+
 	public constructor(
 		branch: SharedTreeBranch<
 			SharedTreeEditBuilder,
@@ -586,6 +600,13 @@ export class TreeCheckout implements ITreeCheckout {
 		private readonly revisionTagCodec: RevisionTagCodec,
 		private readonly idCompressor: IIdCompressor,
 		private readonly _removedRoots: DetachedFieldIndex = makeDetachedFieldIndex("repair"),
+		/**
+		 * The tree-wide index of persisted commit metadata.
+		 * @remarks
+		 * This is shared with every other checkout of the same tree (including forks), because a transaction run on
+		 * a fork produces a commit that is submitted by whichever branch it is later merged into.
+		 */
+		public readonly persistedCommitMetadata: PersistedCommitMetadataIndex = new PersistedCommitMetadataIndex(),
 		public readonly disposeForksAfterTransaction = true,
 	) {
 		this.#transaction = this.createTransactionStack(branch);
@@ -727,7 +748,7 @@ export class TreeCheckout implements ITreeCheckout {
 		SharedTreeChange,
 		SharedTreeChangeProcessingContext
 	> {
-		return new SquashingTransactionStack(branch, this.mintRevisionTag, () => {
+		return new SquashingTransactionStack(branch, this.mintTransactionRevisionTag, () => {
 			// When each transaction is started, make a restorable checkpoint of the current state of removed roots
 			const restoreRemovedRoots = this._removedRoots.createCheckpoint();
 			return (result, viewUpdate: SharedTreeChange | undefined) => {
@@ -738,6 +759,10 @@ export class TreeCheckout implements ITreeCheckout {
 						if (viewUpdate !== undefined) {
 							this.applyInternalChange(viewUpdate, newHead.revision);
 						}
+						if (this.transaction.size === 0) {
+							// A transaction that is rolled back produces no commit, so its metadata (if any) is discarded.
+							this.discardPendingPersistedMetadata(undefined);
+						}
 						break;
 					}
 					case InternalTransactionResult.Commit: {
@@ -747,6 +772,9 @@ export class TreeCheckout implements ITreeCheckout {
 						if (this.transaction.size === 0) {
 							// The changes in a transaction squash commit have already applied to the checkout and are known to be valid, so we can validate the squash commit automatically.
 							this.validateCommit(newHead);
+							// If the transaction body produced no commit then there is nothing for the metadata to
+							// describe, so it is discarded.
+							this.discardPendingPersistedMetadata(newHead.revision);
 						}
 						break;
 					}
@@ -756,6 +784,39 @@ export class TreeCheckout implements ITreeCheckout {
 				}
 			};
 		});
+	}
+
+	/**
+	 * Mints a revision tag for the transaction stack, associating any metadata supplied for the outermost
+	 * running transaction with the revision of the commit that transaction will produce.
+	 * @remarks
+	 * The transaction stack mints the squash commit's revision lazily, on the first edit made within the
+	 * outermost transaction. Recording the metadata here ensures that it is in the index before the squash
+	 * commit is applied to the branch (which is what triggers submission of the commit).
+	 */
+	private readonly mintTransactionRevisionTag = (): RevisionTag => {
+		const revision = this.mintRevisionTag();
+		if (this.#pendingPersistedMetadata !== undefined) {
+			this.persistedCommitMetadata.set(revision, this.#pendingPersistedMetadata);
+			this.#pendingPersistedMetadata = undefined;
+			this.#pendingPersistedMetadataRevision = revision;
+		}
+		return revision;
+	};
+
+	/**
+	 * Clears the pending metadata state for the outermost transaction that just ended, removing the index entry
+	 * unless it belongs to `committedRevision`.
+	 */
+	private discardPendingPersistedMetadata(committedRevision: RevisionTag | undefined): void {
+		if (
+			this.#pendingPersistedMetadataRevision !== undefined &&
+			this.#pendingPersistedMetadataRevision !== committedRevision
+		) {
+			this.persistedCommitMetadata.delete(this.#pendingPersistedMetadataRevision);
+		}
+		this.#pendingPersistedMetadata = undefined;
+		this.#pendingPersistedMetadataRevision = undefined;
 	}
 
 	@throwIfBroken
@@ -863,6 +924,7 @@ export class TreeCheckout implements ITreeCheckout {
 				const metadata: ChangeMetadata = {
 					kind,
 					isLocal: true,
+					revision,
 					getChange: () => {
 						assert(
 							commit.parent !== undefined,
@@ -976,6 +1038,12 @@ export class TreeCheckout implements ITreeCheckout {
 		return this.isView();
 	}
 
+	public getPersistedCommitMetadata(
+		revision: RevisionTag,
+	): JsonCompatibleReadOnlyObject | undefined {
+		return this.persistedCommitMetadata.get(revision);
+	}
+
 	public isView(): this is UntypedTreeViewAlpha {
 		return true;
 	}
@@ -1049,6 +1117,12 @@ export class TreeCheckout implements ITreeCheckout {
 			);
 		}
 		this.pushLabelFrame(params?.label);
+		if (this.transaction.size === 0) {
+			// Metadata supplied to a nested transaction is ignored: the outermost transaction is the one that
+			// produces the commit which the metadata describes.
+			this.#pendingPersistedMetadata = params?.persistedMetadata;
+			this.#pendingPersistedMetadataRevision = undefined;
+		}
 		this.transaction.start({
 			postProcessor: extractTransactionChangeProcessor(params?.postProcessor),
 		});
@@ -1326,6 +1400,9 @@ export class TreeCheckout implements ITreeCheckout {
 			this.revisionTagCodec,
 			this.idCompressor,
 			this._removedRoots.clone(),
+			// Forks share the tree's metadata index: a transaction run on a fork is submitted when that
+			// fork is merged into a branch that submits, and the lookup there is by revision.
+			this.persistedCommitMetadata,
 		);
 		this.#events.emit("fork", checkout);
 		return checkout;

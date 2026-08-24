@@ -1585,6 +1585,11 @@ export class MockTreeCheckout implements ITreeCheckout {
 	public computeNetChangeIfRebasedOnto(branch: unknown): never {
 		throw new Error("Method 'getRebaseChanges' not implemented in MockTreeCheckout.");
 	}
+	public getPersistedCommitMetadata(): never {
+		throw new Error(
+			"Method 'getPersistedCommitMetadata' not implemented in MockTreeCheckout.",
+		);
+	}
 	public isMissingEditsFrom(branch: unknown): never {
 		throw new Error("Method 'isMissingEditsFrom' not implemented in MockTreeCheckout.");
 	}

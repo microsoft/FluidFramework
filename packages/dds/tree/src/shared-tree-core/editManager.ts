@@ -78,6 +78,11 @@ export class EditManager<
 > {
 	private readonly _events = createEmitter<BranchTrimmingEvents>();
 
+	/**
+	 * Events emitted by this edit manager, notably {@link BranchTrimmingEvents.ancestryTrimmed}.
+	 */
+	public readonly events: Listenable<BranchTrimmingEvents> = this._events;
+
 	private readonly sharedBranches = new Map<
 		BranchId,
 		SharedBranch<TEditor, TChangeset, TChangeProcessingContext>

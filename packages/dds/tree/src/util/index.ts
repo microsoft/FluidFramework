@@ -78,6 +78,7 @@ export {
 	type JsonCompatibleReadOnly,
 	type JsonCompatibleReadOnlyObject,
 	JsonCompatibleReadOnlySchema,
+	JsonCompatibleReadOnlyObjectSchema,
 	makeArray,
 	mapIterable,
 	filterIterable,

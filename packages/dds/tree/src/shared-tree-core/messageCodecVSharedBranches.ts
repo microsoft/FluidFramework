@@ -14,13 +14,13 @@ import type {
 	EncodedRevisionTag,
 	RevisionTag,
 } from "../core/index.js";
-import type { JsonCompatibleReadOnlyObject } from "../util/index.js";
+import type { JsonCompatibleReadOnlyObject, Mutable } from "../util/index.js";
 
 import { decodeBranchId, encodeBranchId } from "./branchIdCodec.js";
 import type { MessageDecodingContext, MessageEncodingContext } from "./messageCodecs.js";
 import type { MessageFormatVersion } from "./messageFormat.js";
 import { Message } from "./messageFormatVSharedBranches.js";
-import type { DecodedMessage } from "./messageTypes.js";
+import type { CommitMessage, DecodedMessage } from "./messageTypes.js";
 
 export function makeSharedBranchesCodecWithVersion<TChangeset>(
 	changeCodec: ChangeFamilyCodec<TChangeset>,
@@ -51,7 +51,7 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 						isSummary: false,
 					};
 
-					return {
+					const encoded: Mutable<Message> = {
 						revision: revisionTagCodec.encode(message.commit.revision, {
 							originatorId: message.sessionId,
 							idCompressor: context.idCompressor,
@@ -63,6 +63,10 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 						branchId: encodeBranchId(context.idCompressor, message.branchId),
 						version,
 					};
+					if (message.persistedMetadata !== undefined) {
+						encoded.persistedMetadata = message.persistedMetadata;
+					}
+					return encoded as Message & JsonCompatibleReadOnlyObject & Versioned;
 				}
 				case "branch": {
 					return {
@@ -87,6 +91,7 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 				changeset,
 				branchId: encodedBranchId,
 				branchName: encodedBranchName,
+				persistedMetadata,
 			} = encoded;
 
 			const changeContext: ChangeEncodingContext = {
@@ -110,7 +115,7 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 			assert(encodedRevision !== undefined, 0xc6a /* Commit messages must have a revision */);
 			const revision = revisionTagCodec.decode(encodedRevision, changeContext);
 
-			return {
+			const decoded: CommitMessage<TChangeset> = {
 				type: "commit",
 				commit: {
 					revision,
@@ -124,6 +129,10 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 				branchId,
 				sessionId: originatorId,
 			};
+			if (persistedMetadata !== undefined) {
+				decoded.persistedMetadata = persistedMetadata;
+			}
+			return decoded;
 		},
 	};
 }

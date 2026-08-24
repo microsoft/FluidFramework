@@ -27,6 +27,7 @@ import type {
 import { makeV1toV4andV6CodecWithVersion } from "./editManagerCodecsV1toV4.js";
 import { makeSharedBranchesCodecWithVersion } from "./editManagerCodecsVSharedBranches.js";
 import { EditManagerFormatVersion } from "./editManagerFormatCommons.js";
+import type { PersistedCommitMetadataIndex } from "./persistedCommitMetadata.js";
 
 /**
  * Codec name used to identify the {@link EditManager} codec, see {@link makeEditManagerCodecBuilder}.
@@ -48,6 +49,11 @@ interface EditManagerCodecOptions<TChangeset> extends ICodecOptions {
 		EncodedRevisionTag,
 		ChangeEncodingContext
 	>;
+	/**
+	 * The tree-wide index of persisted commit metadata, read when encoding commits and populated when decoding them.
+	 * @remarks Omitted by callers (such as tests) that do not support persisted commit metadata.
+	 */
+	persistedCommitMetadata?: PersistedCommitMetadataIndex;
 }
 
 /**
@@ -81,6 +87,7 @@ export function makeEditManagerCodecBuilder<TChangeset>(): VersionDispatchingCod
 					),
 					options.revisionTagCodec,
 					EditManagerFormatVersion.v3,
+					options.persistedCommitMetadata,
 				),
 		},
 		{
@@ -93,6 +100,7 @@ export function makeEditManagerCodecBuilder<TChangeset>(): VersionDispatchingCod
 					),
 					options.revisionTagCodec,
 					EditManagerFormatVersion.v4,
+					options.persistedCommitMetadata,
 				),
 		},
 		makeDiscontinuedCodecAndSchema(EditManagerFormatVersion.v5, "2.74.0"),
@@ -106,6 +114,20 @@ export function makeEditManagerCodecBuilder<TChangeset>(): VersionDispatchingCod
 					),
 					options.revisionTagCodec,
 					EditManagerFormatVersion.v6,
+					options.persistedCommitMetadata,
+				),
+		},
+		{
+			minVersionForCollab: FluidClientVersion.v3_0,
+			formatVersion: EditManagerFormatVersion.v7,
+			codec: (options: EditManagerCodecOptions<TChangeset>) =>
+				makeV1toV4andV6CodecWithVersion(
+					options.changeCodecs.resolve(
+						options.dependentChangeFormatVersion.lookup(EditManagerFormatVersion.v7),
+					),
+					options.revisionTagCodec,
+					EditManagerFormatVersion.v7,
+					options.persistedCommitMetadata,
 				),
 		},
 		{
@@ -120,6 +142,7 @@ export function makeEditManagerCodecBuilder<TChangeset>(): VersionDispatchingCod
 					),
 					options.revisionTagCodec,
 					EditManagerFormatVersion.vSharedBranches,
+					options.persistedCommitMetadata,
 				),
 		},
 	];

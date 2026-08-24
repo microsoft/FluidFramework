@@ -15,12 +15,13 @@ import type {
 import {
 	type JsonCompatibleReadOnlyObject,
 	JsonCompatibleReadOnlySchema,
+	type Mutable,
 } from "../util/index.js";
 
 import type { MessageDecodingContext, MessageEncodingContext } from "./messageCodecs.js";
-import type { MessageFormatVersion } from "./messageFormat.js";
+import { MessageFormatVersion } from "./messageFormat.js";
 import { Message } from "./messageFormatV1ToV4.js";
-import type { DecodedMessage } from "./messageTypes.js";
+import type { CommitMessage, DecodedMessage } from "./messageTypes.js";
 
 export function makeV1ToV4CodecWithVersion<TChangeset>(
 	changeCodec: ChangeFamilyCodec<TChangeset>,
@@ -35,9 +36,12 @@ export function makeV1ToV4CodecWithVersion<TChangeset>(
 		| typeof MessageFormatVersion.v2
 		| typeof MessageFormatVersion.v3
 		| typeof MessageFormatVersion.v4
-		| typeof MessageFormatVersion.v6,
+		| typeof MessageFormatVersion.v6
+		| typeof MessageFormatVersion.v7,
 ): CodecAndSchema<DecodedMessage<TChangeset>, MessageEncodingContext, MessageDecodingContext> {
 	const schema = Message(changeCodec.encodedSchema ?? JsonCompatibleReadOnlySchema);
+	// Persisted commit metadata was introduced in v7 and must not be written by earlier formats.
+	const writePersistedMetadata = version >= MessageFormatVersion.v7;
 	return {
 		schema,
 		encode: (
@@ -50,7 +54,7 @@ export function makeV1ToV4CodecWithVersion<TChangeset>(
 				0xc69 /* Only commit messages to main are supported */,
 			);
 			const { commit, sessionId: originatorId } = decoded;
-			return {
+			const encoded: Mutable<Message> = {
 				revision: revisionTagCodec.encode(commit.revision, {
 					originatorId,
 					idCompressor: context.idCompressor,
@@ -67,12 +71,21 @@ export function makeV1ToV4CodecWithVersion<TChangeset>(
 				}),
 				version,
 			};
+			if (writePersistedMetadata && decoded.persistedMetadata !== undefined) {
+				encoded.persistedMetadata = decoded.persistedMetadata;
+			}
+			return encoded as Message & JsonCompatibleReadOnlyObject & Versioned;
 		},
 		decode: (
 			encoded: Message & JsonCompatibleReadOnlyObject & Versioned,
 			context: MessageDecodingContext,
 		): DecodedMessage<TChangeset> => {
-			const { revision: encodedRevision, originatorId, changeset } = encoded;
+			const {
+				revision: encodedRevision,
+				originatorId,
+				changeset,
+				persistedMetadata,
+			} = encoded;
 
 			const revision = revisionTagCodec.decode(encodedRevision, {
 				originatorId,
@@ -81,7 +94,7 @@ export function makeV1ToV4CodecWithVersion<TChangeset>(
 				isSummary: false,
 			});
 
-			return {
+			const decoded: CommitMessage<TChangeset> = {
 				branchId: "main",
 				type: "commit",
 				commit: {
@@ -95,6 +108,10 @@ export function makeV1ToV4CodecWithVersion<TChangeset>(
 				},
 				sessionId: originatorId,
 			};
+			if (persistedMetadata !== undefined) {
+				decoded.persistedMetadata = persistedMetadata;
+			}
+			return decoded;
 		},
 	};
 }

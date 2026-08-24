@@ -58,6 +58,7 @@ import { EditManagerSummarizer } from "./editManagerSummarizer.js";
 import { type MessageEncodingContext, makeMessageCodecBuilder } from "./messageCodecs.js";
 import type { MessageFormatVersion } from "./messageFormat.js";
 import type { DecodedMessage } from "./messageTypes.js";
+import { PersistedCommitMetadataIndex } from "./persistedCommitMetadata.js";
 import type { ResubmitMachine } from "./resubmitMachine.js";
 import {
 	minVersionToSharedTreeSummaryFormatVersion,
@@ -142,6 +143,14 @@ export class SharedTreeCore<
 
 	private readonly enrichers: Map<BranchId, EnricherState<TChange>> = new Map();
 
+	/**
+	 * The tree-wide index of persisted commit metadata, keyed by revision.
+	 * @remarks
+	 * This is shared by every checkout of this tree so that metadata recorded by a transaction on one
+	 * branch is found when a merge of that branch submits the commit.
+	 */
+	public readonly persistedCommitMetadata = new PersistedCommitMetadataIndex();
+
 	public readonly mintRevisionTag: () => RevisionTag;
 
 	private readonly schemaAndPolicy: ClonableSchemaAndPolicy;
@@ -209,12 +218,19 @@ export class SharedTreeCore<
 
 		this.registerSharedBranch("main");
 
+		// Metadata shares the lifetime of the commit it is attached to: once a commit is trimmed from the
+		// trunk, drop its metadata so that memory tracks the trunk.
+		this.editManager.events.on("ancestryTrimmed", (trimmedRevisions) => {
+			this.persistedCommitMetadata.deleteAll(trimmedRevisions);
+		});
+
 		const revisionTagCodec = new RevisionTagCodec(idCompressor);
 		const editManagerCodec = makeEditManagerCodecBuilder<TChange>().build({
 			...coreOptions,
 			changeCodecs: this.editManager.changeFamily.codecs,
 			dependentChangeFormatVersion: changeFormatVersionForEditManager,
 			revisionTagCodec,
+			persistedCommitMetadata: this.persistedCommitMetadata,
 		});
 		this.summarizables = [
 			new EditManagerSummarizer(
@@ -413,6 +429,9 @@ export class SharedTreeCore<
 				commit: enrichedCommit,
 				sessionId: this.editManager.localSessionId,
 				branchId,
+				// Read from the index (rather than off the commit) so that this works for resubmits,
+				// where the decoded op is discarded, and for commits made on a fork of another checkout.
+				persistedMetadata: this.persistedCommitMetadata.get(enrichedCommit.revision),
 			},
 			schemaAndPolicy,
 		);
@@ -490,6 +509,14 @@ export class SharedTreeCore<
 
 					branchId = message.branchId;
 					commits.push(message.commit);
+					// Record metadata for both local and remote messages so the index is populated
+					// identically on every client.
+					if (message.persistedMetadata !== undefined) {
+						this.persistedCommitMetadata.set(
+							message.commit.revision,
+							message.persistedMetadata,
+						);
+					}
 					break;
 				}
 				case "branch": {
@@ -646,6 +673,7 @@ export class SharedTreeCore<
 				assert(head.revision === revision, 0xc6b /* Can only rollback latest commit */);
 				const newHead = head.parent ?? fail(0xc6c /* must have parent */);
 				branch.removeAfter(newHead);
+				this.persistedCommitMetadata.delete(revision);
 				this.getResubmitMachine(branchId).onCommitRollback(head);
 				break;
 			}
@@ -671,7 +699,13 @@ export class SharedTreeCore<
 				const {
 					commit: { revision, change },
 					branchId,
+					persistedMetadata,
 				} = message;
+				// Restore the metadata attached before the disconnect so that it survives the
+				// pending-state round trip and is re-submitted with the commit.
+				if (persistedMetadata !== undefined) {
+					this.persistedCommitMetadata.set(revision, persistedMetadata);
+				}
 				this.editManager.getLocalBranch(branchId).apply({ change, revision });
 				break;
 			}

@@ -8,7 +8,11 @@ import * as Type from "@sinclair/typebox";
 import type { TSchema } from "@sinclair/typebox";
 
 import { type EncodedRevisionTag, RevisionTagSchema, SessionIdSchema } from "../core/index.js";
-import type { JsonCompatibleReadOnly } from "../util/index.js";
+import {
+	type JsonCompatibleReadOnly,
+	type JsonCompatibleReadOnlyObject,
+	JsonCompatibleReadOnlyObjectSchema,
+} from "../util/index.js";
 
 import { MessageFormatVersion } from "./messageFormat.js";
 
@@ -30,6 +34,12 @@ export interface Message {
 	readonly changeset: JsonCompatibleReadOnly;
 
 	/**
+	 * Application-defined metadata attached to the commit in this message.
+	 * @remarks Only written at {@link MessageFormatVersion.v7} or later.
+	 */
+	readonly persistedMetadata?: JsonCompatibleReadOnlyObject;
+
+	/**
 	 * The version of the message. This controls how the message is encoded.
 	 *
 	 * This was not set historically and was added before making any breaking changes to the format.
@@ -40,7 +50,8 @@ export interface Message {
 		| typeof MessageFormatVersion.v2
 		| typeof MessageFormatVersion.v3
 		| typeof MessageFormatVersion.v4
-		| typeof MessageFormatVersion.v6;
+		| typeof MessageFormatVersion.v6
+		| typeof MessageFormatVersion.v7;
 }
 
 // Return type is intentionally derived.
@@ -50,6 +61,7 @@ export const Message = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 		revision: RevisionTagSchema,
 		originatorId: SessionIdSchema,
 		changeset: tChange,
+		persistedMetadata: Type.Optional(JsonCompatibleReadOnlyObjectSchema),
 		version: Type.Optional(
 			Type.Union([
 				Type.Literal(MessageFormatVersion.v1),
@@ -57,6 +69,7 @@ export const Message = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 				Type.Literal(MessageFormatVersion.v3),
 				Type.Literal(MessageFormatVersion.v4),
 				Type.Literal(MessageFormatVersion.v6),
+				Type.Literal(MessageFormatVersion.v7),
 			]),
 		),
 	});

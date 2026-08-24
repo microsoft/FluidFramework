@@ -21,9 +21,11 @@ import {
 	encodeSharedBranch,
 	type EditManagerDecodingContext,
 	type EditManagerEncodingContext,
+	type PersistedCommitMetadataOptions,
 } from "./editManagerCodecsCommons.js";
 import type { EncodedSharedBranch } from "./editManagerFormatCommons.js";
 import { EncodedEditManager } from "./editManagerFormatVSharedBranches.js";
+import type { PersistedCommitMetadataIndex } from "./persistedCommitMetadata.js";
 
 export function makeSharedBranchesCodecWithVersion<TChangeset>(
 	changeCodec: IJsonCodec<
@@ -39,12 +41,18 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 		ChangeEncodingContext
 	>,
 	version: EncodedEditManager<TChangeset>["version"],
+	persistedMetadataIndex: PersistedCommitMetadataIndex | undefined,
 ): CodecAndSchema<
 	SummaryData<TChangeset>,
 	EditManagerEncodingContext,
 	EditManagerDecodingContext
 > {
 	const schema = EncodedEditManager(changeCodec.encodedSchema ?? JsonCompatibleReadOnlySchema);
+	// The shared-branches format is not yet stable, so it always carries metadata.
+	const persistedMetadata: PersistedCommitMetadataOptions | undefined =
+		persistedMetadataIndex === undefined
+			? undefined
+			: { index: persistedMetadataIndex, writeMetadata: true };
 
 	const codec: CodecAndSchema<
 		SummaryData<TChangeset>,
@@ -59,6 +67,7 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 				data.main,
 				context,
 				data.originator,
+				persistedMetadata,
 			);
 			assert(
 				data.originator !== undefined,
@@ -79,6 +88,7 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 							branch,
 							context,
 							data.originator,
+							persistedMetadata,
 						),
 					);
 				}
@@ -96,6 +106,7 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 				json.main,
 				context,
 				json.originator,
+				persistedMetadata,
 			);
 
 			const decoded: Mutable<SummaryData<TChangeset>> = {
@@ -112,6 +123,7 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 						branch,
 						context,
 						json.originator,
+						persistedMetadata,
 					);
 					assert(decodedBranch.id !== undefined, 0xc66 /* Shared branches must have an id */);
 					assert(!branches.has(decodedBranch.id), 0xc67 /* Duplicate shared branch id */);

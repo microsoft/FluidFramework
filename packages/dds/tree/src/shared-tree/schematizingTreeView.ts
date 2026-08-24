@@ -12,7 +12,7 @@ import type {
 import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { anchorSlot, rootFieldKey } from "../core/index.js";
+import { anchorSlot, rootFieldKey, type RevisionTag } from "../core/index.js";
 import {
 	type NodeIdentifierManager,
 	defaultSchemaPolicy,
@@ -66,6 +66,7 @@ import {
 	breakingClass,
 	disposeSymbol,
 	type JsonCompatibleReadOnly,
+	type JsonCompatibleReadOnlyObject,
 	type WithBreakable,
 } from "../util/index.js";
 
@@ -567,6 +568,12 @@ export class SchematizingSimpleTreeView<
 		context: UntypedTreeViewAlpha,
 	): JsonCompatibleReadOnly | undefined {
 		return this.checkout.computeNetChangeIfRebasedOnto(context);
+	}
+
+	public getPersistedCommitMetadata(
+		revision: RevisionTag,
+	): JsonCompatibleReadOnlyObject | undefined {
+		return this.checkout.getPersistedCommitMetadata(revision);
 	}
 
 	// #endregion Branching

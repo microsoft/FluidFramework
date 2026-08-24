@@ -22,6 +22,7 @@ export {
 	type RevertibleFactory,
 	type RevertibleAlphaFactory,
 	type RevertibleAlpha,
+	type RevisionTag,
 } from "./core/index.js";
 
 export {

@@ -5,6 +5,7 @@
 
 import type { ErasedType } from "@fluidframework/core-interfaces";
 
+import type { JsonCompatibleReadOnlyObject } from "../../util/index.js";
 import type { TreeNode } from "../core/index.js";
 
 /**
@@ -218,4 +219,27 @@ export interface RunTransactionParamsAlpha extends RunTransactionParamsBeta {
 	 * reserving the behavior; a real post-processor will be provided in a future change.
 	 */
 	readonly postProcessor?: TransactionPostProcessor;
+
+	/**
+	 * Optional application-defined metadata to attach to the commit produced by this transaction.
+	 * @remarks
+	 * The metadata is replicated to all collaborating clients and persisted in the document alongside the commit,
+	 * and can be read back via `UntypedTreeViewAlpha.getPersistedCommitMetadata`.
+	 *
+	 * It shares the lifetime of the commit it is attached to: once that commit is trimmed from the trunk, the
+	 * metadata goes with it. Under the default trunk eviction policy that is the width of the collaboration window.
+	 *
+	 * The value must be JSON-serializable, since it round-trips through the persisted format. It travels on every
+	 * annotated op and occupies space in the summary for as long as its commit survives, so it should be kept small.
+	 *
+	 * If there is a nested transaction, only the outermost transaction's metadata is used.
+	 *
+	 * A transaction that produces no commit (because its body made no changes, or because it was rolled back) has no
+	 * commit to annotate, and its metadata is discarded without error.
+	 *
+	 * Metadata is only written to the document once `minVersionForCollab` is at least 3.0.0; with an older
+	 * configured value the metadata is dropped rather than persisted, so that a document never contains metadata
+	 * that a collaborating client would fail to preserve.
+	 */
+	readonly persistedMetadata?: JsonCompatibleReadOnlyObject;
 }

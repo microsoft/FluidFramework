@@ -35,6 +35,8 @@ export const SessionIdSchema = brandedStringType<SessionId>();
  *
  * The constant 'root' is reserved for the trunk base: minting a SessionSpaceCompressedId is not
  * possible on readonly clients. These clients generally don't need ids, but  must be done at tree initialization time.
+ *
+ * @alpha
  */
 export type RevisionTag = SessionSpaceCompressedId | "root";
 export type EncodedRevisionTag = Brand<OpSpaceCompressedId, "EncodedRevisionTag"> | "root";
@@ -229,6 +231,14 @@ export interface LocalChangeMetadata extends CommitMetadata {
 	getRevertible(
 		onDisposed?: (revertible: RevertibleAlpha) => void,
 	): RevertibleAlpha | undefined;
+
+	/**
+	 * The revision of the commit that this change produced.
+	 * @remarks
+	 * Use this to correlate the change with data keyed by revision, such as
+	 * persisted commit metadata.
+	 */
+	readonly revision: RevisionTag;
 
 	/**
 	 * Optional label provided by the user when commit was created.

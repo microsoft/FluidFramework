@@ -17,8 +17,11 @@ import {
 	encodeSharedBranch,
 	type EditManagerDecodingContext,
 	type EditManagerEncodingContext,
+	type PersistedCommitMetadataOptions,
 } from "./editManagerCodecsCommons.js";
+import { EditManagerFormatVersion } from "./editManagerFormatCommons.js";
 import { EncodedEditManager } from "./editManagerFormatV1toV4.js";
+import type { PersistedCommitMetadataIndex } from "./persistedCommitMetadata.js";
 
 /**
  * Create the provided version of the {@link EditManager} codec (which encodes it's {@link SummaryData}).
@@ -42,12 +45,20 @@ export function makeV1toV4andV6CodecWithVersion<TChangeset>(
 		ChangeEncodingContext
 	>,
 	version: EncodedEditManager<TChangeset>["version"],
+	persistedMetadataIndex: PersistedCommitMetadataIndex | undefined,
 ): CodecAndSchema<
 	SummaryData<TChangeset>,
 	EditManagerEncodingContext,
 	EditManagerDecodingContext
 > {
 	const schema = EncodedEditManager(changeCodec.encodedSchema ?? JsonCompatibleReadOnlySchema);
+	const persistedMetadata: PersistedCommitMetadataOptions | undefined =
+		persistedMetadataIndex === undefined
+			? undefined
+			: {
+					index: persistedMetadataIndex,
+					writeMetadata: version >= EditManagerFormatVersion.v7,
+				};
 
 	const codec: CodecAndSchema<
 		SummaryData<TChangeset>,
@@ -65,6 +76,7 @@ export function makeV1toV4andV6CodecWithVersion<TChangeset>(
 				data.main,
 				context,
 				data.originator,
+				persistedMetadata,
 			);
 			const encoded: EncodedEditManager<TChangeset> = {
 				trunk: mainBranch.trunk,
@@ -89,6 +101,7 @@ export function makeV1toV4andV6CodecWithVersion<TChangeset>(
 					},
 					context,
 					undefined, // Non "vSharedBranches" versions do not encode the summary originatorId.
+					persistedMetadata,
 				),
 			};
 		},

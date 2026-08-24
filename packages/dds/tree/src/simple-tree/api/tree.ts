@@ -10,6 +10,7 @@ import type {
 	CommitMetadata,
 	RevertibleAlphaFactory,
 	RevertibleFactory,
+	RevisionTag,
 } from "../../core/index.js";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
 import type { TreeStatus } from "../../feature-libraries/index.js";
@@ -17,7 +18,10 @@ import type {
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports -- This is referenced by doc comments.
 	TreeAlpha,
 } from "../../shared-tree/index.js";
-import type { JsonCompatibleReadOnly } from "../../util/index.js";
+import type {
+	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnlyObject,
+} from "../../util/index.js";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
 import type { Unhydrated } from "../core/index.js";
 import type {
@@ -413,6 +417,21 @@ export interface UntypedTreeViewAlpha extends UntypedTreeView, TreeContextAlpha 
 	 * or `undefined` if rebasing would have no impact.
 	 */
 	computeNetChangeIfRebasedOnto(view: UntypedTreeView): JsonCompatibleReadOnly | undefined;
+
+	/**
+	 * Looks up the {@link RunTransactionParamsAlpha.persistedMetadata | persisted metadata} associated with a commit.
+	 *
+	 * @param revision - The revision of the commit to look up.
+	 * Revisions are provided to applications by the change events on this view.
+	 *
+	 * @returns The metadata that was supplied to the transaction which produced the commit, or `undefined` if the
+	 * commit was not annotated, predates this feature, or has been trimmed from the trunk.
+	 *
+	 * @remarks
+	 * Metadata shares the lifetime of the commit it is attached to: once the commit is trimmed from the trunk,
+	 * the metadata goes with it. Every read path must therefore handle `undefined`.
+	 */
+	getPersistedCommitMetadata(revision: RevisionTag): JsonCompatibleReadOnlyObject | undefined;
 }
 
 /**
