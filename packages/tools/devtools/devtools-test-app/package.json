@@ -16,7 +16,7 @@
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:esm": "tsc --project ./tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob _api-extractor-temp coverage dist lib nyc \"**/*.tsbuildinfo\" \"**/*.build.log\"",
@@ -36,7 +36,7 @@
 		"test:playwright:verbose": "cross-env FLUID_TEST_VERBOSE=1 playwright test",
 		"watch:devtools-core": "tsc --watch --project ../devtools-core/tsconfig.json --preserveWatchOutput",
 		"watch:devtools-view": "copyfiles -f ../../../../common/build/build-common/src/esm/package.json ../devtools-view/lib && fluid-tsc module --watch --project ../devtools-view/tsconfig.esm.json --preserveWatchOutput",
-		"watch:esnext": "tsc --watch --project ./tsconfig.json",
+		"watch:esm": "tsc --watch --project ./tsconfig.json",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
 	},

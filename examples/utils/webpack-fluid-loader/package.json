@@ -28,9 +28,10 @@
 	"types": "lib/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
+		"build:cjs": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:esm": "tsc --project ./tsconfig.json",
 		"build:test": "concurrently npm:build:test:esm npm:build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
@@ -52,7 +53,6 @@
 		"test:mocha:cjs": "cross-env FLUID_TEST_MODULE_SYSTEM=CJS mocha",
 		"test:mocha:esm": "mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"webpack": "webpack --color --config webpack.config.cjs"
 	},
 	"c8": {
@@ -135,16 +135,15 @@
 	},
 	"fluidBuild": {
 		"_tasksComment1": "webpack-fluid-loader injects a script tag pointing at its own bundle (/code/fluid-loader.bundle.js) into the page. This bundle must remain up to date for webpack-fluid-loader users.",
-		"_tasksComment2": "Using build:esnext over something like compile guarantees that this happens, since the build:esnext target depends on all transitive dependencies' build:esnext targets.",
-		"_tasksComment3": "The webpack task is then set to depend on ^build:esnext overriding default that also include ^tsc",
+		"_tasksComment2": "Using build:esm over something like compile guarantees that this happens, since the build:esm target depends on all transitive dependencies' build:esm targets.",
+		"_tasksComment3": "The webpack task is then set to depend on ^build:esm overriding default that also include ^build:cjs",
 		"tasks": {
-			"build:esnext": [
+			"build:esm": [
 				"...",
 				"webpack"
 			],
 			"webpack": [
-				"^build:entrypoints:esm",
-				"^build:esnext"
+				"^build:package:esm"
 			]
 		}
 	},
