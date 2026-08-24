@@ -303,7 +303,7 @@ export interface TreeContextAlpha {
 /**
  * An untyped view of a {@link UntypedTreeView} with alpha-level APIs.
  * @remarks
- * The untyped view for a specific {@link TreeNode} may be acquired by calling `TreeAlpha.context` and checking {@link TreeContextAlpha.isView | isView()}.
+ * The untyped view for a specific {@link TreeNode} may be acquired by calling {@link (TreeAlpha:interface).context} and checking {@link TreeContextAlpha.isView | isView()}.
  *
  * An untyped view does not necessarily know the schema of its SharedTree. To convert it to a {@link TreeViewAlpha | view with a schema}, use {@link UntypedTreeViewAlpha.hasRootSchema | hasRootSchema()}.
  * @sealed @alpha
@@ -443,7 +443,7 @@ export type TreeBranchAlpha = UntypedTreeViewAlpha;
  * Thus this design was chosen at the risk of apps blindly accessing `root` then breaking unexpectedly when the document is incompatible.
  *
  * @see {@link TreeViewAlpha}
- * @see {@link asTreeViewAlpha}
+ * @see {@link (asAlpha:1)}
  *
  * @sealed @public
  */
@@ -830,9 +830,8 @@ export interface TreeViewEvents {
 
 /**
  * Retrieve the {@link TreeViewAlpha | alpha API} for a {@link TreeView}.
- * @alpha
- * @deprecated Use {@link (asAlpha:1)} instead.
- * @privateRemarks Despite being deprecated, this function should be used within the tree package (outside of tests) rather than `asAlpha` in order to avoid circular import dependencies.
+ * @remarks
+ * This function can be used within the tree package (outside of tests) rather than {@link asAlpha} in order to avoid circular import dependencies.
  */
 export function asTreeViewAlpha<TSchema extends ImplicitFieldSchema>(
 	view: TreeView<TSchema>,

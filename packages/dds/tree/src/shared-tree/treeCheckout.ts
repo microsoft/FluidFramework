@@ -11,7 +11,11 @@ import type {
 } from "@fluidframework/core-interfaces/internal";
 import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import { type TelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils/internal";
+import {
+	type TelemetryLoggerExt,
+	UsageError,
+	tagCodeArtifacts,
+} from "@fluidframework/telemetry-utils/internal";
 
 import {
 	FluidClientVersion,
@@ -563,6 +567,11 @@ export class TreeCheckout implements ITreeCheckout {
 	 * @privateRemarks Exposed for testing purposes.
 	 */
 	public static readonly revertTelemetryEventName = "RevertRevertible";
+	/**
+	 * The name of the telemetry event logged when a schema change is applied.
+	 * @privateRemarks Exposed for testing purposes.
+	 */
+	public static readonly schemaChangeTelemetryEventName = "SchemaChangeApplied";
 
 	readonly #events = createEmitter<CheckoutEvents>();
 	public events: Listenable<CheckoutEvents> = this.#events;
@@ -1115,7 +1124,22 @@ export class TreeCheckout implements ITreeCheckout {
 				// They will however be rebased over the rollback of the schema change. This rebasing will
 				// ensure that these data changes are muted if they would render some trees invalid under the
 				// original (reinstated) schema.
-				this.storedSchema.apply(innerChange.innerChange.schema.new);
+				const newSchema = innerChange.innerChange.schema.new;
+				const telemetryMetrics = getSchemaChangeTelemetryMetrics(
+					this.storedSchema,
+					newSchema,
+					innerChange.innerChange.isInverse,
+				);
+				this.storedSchema.apply(newSchema);
+				this.logger?.sendTelemetryEvent({
+					eventName: TreeCheckout.schemaChangeTelemetryEventName,
+					...tagCodeArtifacts({
+						details: JSON.stringify({
+							...telemetryMetrics,
+							isSharedBranch: this.isSharedBranch,
+						}),
+					}),
+				});
 			} else {
 				fail(0xad1 /* Unknown Shared Tree change type. */);
 			}
@@ -1785,6 +1809,54 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	// #endregion Enrichment
+}
+
+function getSchemaChangeTelemetryMetrics(
+	oldSchema: TreeStoredSchema,
+	newSchema: TreeStoredSchema,
+	isInverse: boolean,
+): {
+	changeKind: "initialize" | "upgrade" | "restriction" | "rollback";
+	isInverse: boolean;
+	oldNodeSchemaCount: number;
+	newNodeSchemaCount: number;
+	addedNodeSchemaCount: number;
+	removedNodeSchemaCount: number;
+	rootFieldKindChanged: boolean;
+	oldRootAllowedTypeCount: number;
+	newRootAllowedTypeCount: number;
+} {
+	let addedNodeSchemaCount = 0;
+	for (const identifier of newSchema.nodeSchema.keys()) {
+		if (!oldSchema.nodeSchema.has(identifier)) {
+			addedNodeSchemaCount++;
+		}
+	}
+
+	let removedNodeSchemaCount = 0;
+	for (const identifier of oldSchema.nodeSchema.keys()) {
+		if (!newSchema.nodeSchema.has(identifier)) {
+			removedNodeSchemaCount++;
+		}
+	}
+
+	return {
+		changeKind: isInverse
+			? "rollback"
+			: oldSchema.nodeSchema.size === 0
+				? "initialize"
+				: allowsRepoSuperset(defaultSchemaPolicy, oldSchema, newSchema)
+					? "upgrade"
+					: "restriction",
+		isInverse,
+		oldNodeSchemaCount: oldSchema.nodeSchema.size,
+		newNodeSchemaCount: newSchema.nodeSchema.size,
+		addedNodeSchemaCount,
+		removedNodeSchemaCount,
+		rootFieldKindChanged: oldSchema.rootFieldSchema.kind !== newSchema.rootFieldSchema.kind,
+		oldRootAllowedTypeCount: oldSchema.rootFieldSchema.types.size,
+		newRootAllowedTypeCount: newSchema.rootFieldSchema.types.size,
+	};
 }
 
 /**

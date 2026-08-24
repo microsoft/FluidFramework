@@ -75,7 +75,7 @@ export interface IParsedUrl {
  * Utility api to parse the IResolvedUrl.url into specific parts like querystring, path to get
  * deep link info etc.
  * Warning - This function may not be compatible with any Url Resolver's resolved url. It works
- * with urls of type: protocol://<string>/.../..?<querystring>
+ * with urls of type: `protocol://{host}/.../..?{queryString}`
  * @param url - This is the IResolvedUrl.url part of the resolved url.
  * @returns The IParsedUrl representing the input URL, or undefined if the format was not supported
  * @legacy @beta

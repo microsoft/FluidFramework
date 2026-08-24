@@ -186,6 +186,10 @@ class TextNode
 		);
 	}
 
+	public createInsertionAnchor(index: number): ArrayPlaceAnchor {
+		return createArrayInsertionAnchor(this.content, index);
+	}
+
 	public static fromString(value: string): TextNode {
 		// Constructing an ArrayNode from an iterator is supported, so creating an array from the iterable of characters seems like its not necessary here,
 		// but to reduce the risk of incorrect data interpretation, we actually ban this in the special case where the iterable is a string directly, which is the case here.
@@ -519,6 +523,13 @@ export namespace PlainText {
 		 * corresponds to two UTF-16 code units — convert before using the counts as string indices.
 		 */
 		onCharactersChanged(callback: (ops: readonly TextOp[] | undefined) => void): () => void;
+
+		/**
+		 * Creates an anchor that tracks an insertion point at `index` as the text is edited.
+		 * @param index - The character index of the insertion point to track.
+		 * @returns An anchor whose index updates as the text is edited. Call {@link ArrayPlaceAnchor.dispose} when it is no longer needed.
+		 */
+		createInsertionAnchor(index: number): ArrayPlaceAnchor;
 	}
 
 	/**

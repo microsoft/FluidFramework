@@ -405,6 +405,10 @@ export namespace FormattedText {
 				);
 			}
 
+			public createInsertionAnchor(index: number): ArrayPlaceAnchor {
+				return createArrayInsertionAnchor(this.content, index);
+			}
+
 			public onContentChanged(
 				callback: (ops: readonly PlainText.TextOp[] | undefined) => void,
 			): () => void {
