@@ -23,11 +23,12 @@
 	},
 	"scripts": {
 		"build": "fluid-build . --task build",
+		"build:api-reports": "api-extractor run --local --config api-extractor/api-extractor-report.json",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:compile:min": "npm run build:compile",
-		"build:docs": "api-extractor run --local",
-		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:docs": "api-extractor run --local --config api-extractor/api-extractor-model.json",
+		"build:esm": "tsc --project ./tsconfig.json",
 		"build:genver": "gen-version",
 		"check:are-the-types-wrong": "attw --pack . --profile node16 --exclude-entrypoints ./mocharc-common",
 		"check:biome": "biome check .",
@@ -35,7 +36,8 @@
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
 		"check:exports:esm:index": "api-extractor run --config api-extractor/api-extractor-lint-index.esm.json",
 		"check:format": "npm run check:biome",
-		"ci:build:docs": "api-extractor run",
+		"ci:build:api-reports": "api-extractor run --config api-extractor/api-extractor-report.json",
+		"ci:build:docs": "api-extractor run --config api-extractor/api-extractor-model.json",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
 		"eslint": "eslint --quiet --format stylish src",
 		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -65,14 +67,14 @@
 		"eslint": "catalog:eslint",
 		"jiti": "^2.6.1",
 		"rimraf": "^6.1.3",
-		"typescript": "~5.4.5"
+		"typescript": "~6.0.3"
 	},
 	"fluidBuild": {
-		"_tasks_comment": "tsc is configured to depend on build:esnext task as all CommonJS consumers expect mocha support which is implemented in ESM. Building ESM when CommonJS is requested ensures the implementation expectation is satisfied.",
+		"_tasks_comment": "build:cjs is configured to depend on build:esm task as all CommonJS consumers expect mocha support which is implemented in ESM. Building ESM when CommonJS is requested ensures the implementation expectation is satisfied.",
 		"tasks": {
-			"tsc": {
+			"build:cjs": {
 				"dependsOn": [
-					"build:esnext"
+					"build:esm"
 				],
 				"script": false
 			}

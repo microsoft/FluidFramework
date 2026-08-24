@@ -48,13 +48,15 @@
 	"types": "lib/public.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
+		"build:api-reports": "api-extractor run --local --config api-extractor/api-extractor-report.json",
+		"build:cjs": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "api-extractor run --local",
+		"build:docs": "api-extractor run --local --config api-extractor/api-extractor-model.json",
 		"build:entrypoints": "fluid-build . --task build:entrypoints",
 		"build:entrypoints:cjs": "flub generate entrypoints --resolutionConditions require --outDir ./dist",
 		"build:entrypoints:esm": "flub generate entrypoints --outDir ./lib",
-		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:esm": "tsc --project ./tsconfig.json",
 		"build:test": "concurrently npm:build:test:esm npm:build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
@@ -67,7 +69,8 @@
 		"check:exports:esm:beta": "api-extractor run --config api-extractor/api-extractor-lint-beta.esm.json",
 		"check:exports:esm:public": "api-extractor run --config api-extractor/api-extractor-lint-public.esm.json",
 		"check:format": "npm run check:biome",
-		"ci:build:docs": "api-extractor run",
+		"ci:build:api-reports": "api-extractor run --config api-extractor/api-extractor-report.json",
+		"ci:build:docs": "api-extractor run --config api-extractor/api-extractor-model.json",
 		"clean": "rimraf --glob _api-extractor-temp coverage dist lib {alpha,beta,internal,legacy}.d.ts nyc \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"eslint": "eslint --quiet src",
 		"eslint:fix": "eslint --quiet src --fix",
@@ -82,7 +85,6 @@
 		"test:mocha:cjs": "cross-env FLUID_TEST_MODULE_SYSTEM=CJS mocha",
 		"test:mocha:esm": "mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist",
 		"typetests:gen": "flub generate typetests --dir . -v"
 	},
 	"dependencies": {
@@ -106,7 +108,7 @@
 		"cross-env": "^10.1.0",
 		"eslint": "catalog:eslint",
 		"eslint-config-prettier": "catalog:eslint",
-		"eslint-plugin-jest": "~29.5.0",
+		"eslint-plugin-jest": "~29.16.0",
 		"eslint-plugin-react": "~7.37.5",
 		"eslint-plugin-react-hooks": "~7.0.1",
 		"jiti": "^2.6.1",
@@ -114,7 +116,7 @@
 		"rimraf": "^6.1.3",
 		"sinon": "^18.0.1",
 		"tslib": "^2.8.1",
-		"typescript": "~5.4.5"
+		"typescript": "~6.0.3"
 	},
 	"fluid": {
 		"browser": {
