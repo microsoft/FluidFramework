@@ -24,6 +24,14 @@ FLUID_DIR=/path/to/FluidFramework \
 ./azure/end-to-end-tests/end-to-end-tests.sh
 ```
 
+For compatibility testing, provide the client version, such as `client_v2.1.1`:
+
+```bash
+FLUID_DIR=/path/to/FluidFramework \
+./azure/end-to-end-tests/end-to-end-tests.sh \
+	--compatibility-version client_v2.1.1
+```
+
 `end-to-end-tests.sh` authenticates with Azure, obtains AKS credentials, discovers the
 Alfred, Nexus, and Historian Azure Front Door endpoints, and retrieves tenant
 `key1` through `tenant-admin.sh`. It then exports `fluid__test__driver__custom` and
