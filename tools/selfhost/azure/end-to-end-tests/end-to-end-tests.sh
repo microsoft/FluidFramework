@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run FluidFramework's end-to-end test suite test:realsvc:r11s) from a local FluidFramework checkout 
+# Run FluidFramework's end-to-end test suite (test:realsvc:r11s) from a local FluidFramework checkout
 # against an AKS cluster.
 #
 # Prerequisites:
