@@ -109,6 +109,7 @@ export {
 	checkSchemaCompatibility,
 	getSchemaCompatibilityError,
 } from "./schemaCompatibilityTester.js";
+export { type StagedUpgradeStatus } from "./schemaCompatibilityTester.js";
 export type {
 	Unenforced,
 	FieldSchemaAlphaUnsafe,
