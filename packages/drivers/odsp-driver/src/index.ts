@@ -37,6 +37,8 @@ export {
 	type OdspPointInTimeDocumentServiceImplementation,
 	OdspDocumentServiceFactoryCore,
 } from "./odspDocumentServiceFactoryCore.js";
+// eslint-disable-next-line import-x/no-internal-modules -- Package export.
+export { createPointInTimeDocumentService } from "./pointInTimeDriver/createPointInTimeDocumentService.js";
 
 // File creation
 export { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest.js";

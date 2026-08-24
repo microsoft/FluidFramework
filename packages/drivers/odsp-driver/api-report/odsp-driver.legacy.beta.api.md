@@ -20,6 +20,9 @@ export function createOdspDocumentServiceFactory(options: IOdspDocumentServiceFa
 export function createOdspUrl(l: OdspFluidDataStoreLocator): string;
 
 // @beta @legacy
+export function createPointInTimeDocumentService(props: IOdspPointInTimeDocumentServiceImplementationProps): Promise<IDocumentService>;
+
+// @beta @legacy
 export function encodeOdspFluidDataStoreLocator(locator: OdspFluidDataStoreLocator): string;
 
 // @beta @legacy

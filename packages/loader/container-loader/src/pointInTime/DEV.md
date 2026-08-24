@@ -9,8 +9,10 @@ This flow consumes a sequence number. It does not create or resolve version mark
 The host calls:
 
 ```ts
-import { createOdspDocumentServiceFactory } from "@fluidframework/odsp-driver/legacy";
-import { createPointInTimeDocumentService } from "@fluidframework/odsp-driver/legacy/point-in-time";
+import {
+  createOdspDocumentServiceFactory,
+  createPointInTimeDocumentService,
+} from "@fluidframework/odsp-driver/legacy";
 
 const documentServiceFactory = createOdspDocumentServiceFactory({
   getStorageToken,
@@ -184,10 +186,9 @@ must not make container-loader depend on ODSP or merge mark resolution into cont
 ## ODSP implementation
 
 `OdspDocumentServiceFactoryCore` exposes the optional `createPointInTimeDocumentService` capability
-only when the consumer supplies an implementation. ODSP owns that implementation in the dedicated
-`@fluidframework/odsp-driver/legacy/point-in-time` entrypoint, while the consumer controls whether the
-feature enters its dependency graph. The consumer injects the implementation through
-`createOdspDocumentServiceFactory` options.
+only when the consumer supplies an implementation. ODSP exports that implementation from
+`@fluidframework/odsp-driver/legacy`, and consumers that do not inject it can tree-shake it from their
+bundles. The consumer injects the implementation through `createOdspDocumentServiceFactory` options.
 
 For each point-in-time request, ODSP resolves the closest recoverable driveItem version at or before
 the target. It then composes:
