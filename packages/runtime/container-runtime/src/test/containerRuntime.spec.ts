@@ -104,7 +104,9 @@ import { pkgVersion } from "../packageVersion.js";
 import type { IPendingMessage, PendingStateManager } from "../pendingStateManager.js";
 import {
 	type ISummaryCancellationToken,
+	type IContainerRuntimeMetadata,
 	neverCancelledSummaryToken,
+	metadataBlobName,
 	recentBatchInfoBlobName,
 	type IRefreshSummaryAckOptions,
 } from "../summary/index.js";
@@ -2889,6 +2891,53 @@ describe("Runtime", () => {
 		});
 
 		describe("Version mark inbound update", () => {
+			it("captures the summary timestamp after load before any new ops arrive", async () => {
+				const sequenceNumber = 42;
+				const timestamp = 123456;
+				const metadata: IContainerRuntimeMetadata = {
+					summaryFormatVersion: 1,
+					message: {
+						clientId: mockClientId,
+						clientSequenceNumber: 1,
+						minimumSequenceNumber: 0,
+						referenceSequenceNumber: 41,
+						sequenceNumber,
+						timestamp,
+						type: MessageType.Operation,
+					},
+				};
+				const context = getMockContext({
+					baseSnapshot: {
+						trees: { ".channels": { trees: {}, blobs: {} } },
+						blobs: { [metadataBlobName]: "metadata-id" },
+					},
+					mockStorage: {
+						...defaultMockStorage,
+						readBlob: async (id) => {
+							assert.equal(id, "metadata-id");
+							return stringToBuffer(JSON.stringify(metadata), "utf8");
+						},
+					},
+				});
+				const deltaManager = context.deltaManager as MockDeltaManager;
+				deltaManager.initialSequenceNumber = sequenceNumber;
+				deltaManager.lastSequenceNumber = sequenceNumber;
+				deltaManager.lastMessage = undefined;
+
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
+					context: context as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: true,
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				assert.deepEqual(containerRuntime.versionMarkResolver.sealAndCaptureVersionMark(), {
+					kind: "resolved",
+					sequenceNumber,
+					timestamp,
+				});
+			});
+
 			it("resolves through context fetchOps and the historical unpack pipeline", async () => {
 				let capturedSignal: AbortSignal | undefined;
 				let readCount = 0;
