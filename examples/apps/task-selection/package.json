@@ -12,6 +12,12 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"type": "module",
+	"exports": {
+		".": {
+			"require": null,
+			"import": "./lib/index.js"
+		}
+	},
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
