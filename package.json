@@ -22,6 +22,7 @@
 		"build-and-test:unit:cjs": "fluid-build --task test:unit:cjs --worker",
 		"build-and-test:unit:esm": "fluid-build --task test:unit:esm --worker",
 		"build:api": "fluid-build --task build:api",
+		"build:cjs": "fluid-build --task build:cjs",
 		"build:compile": "fluid-build --task compile",
 		"build:compile:esm": "fluid-build --task compile:esm --worker",
 		"build:compile:esm:packages": "fluid-build --task compile:esm:packages --worker",
@@ -118,13 +119,12 @@
 		"test:playwright:report": "assign-test-ports && pnpm playwright install --with-deps chromium && pnpm -r --no-sort --stream --no-bail --workspace-concurrency=4 test:playwright",
 		"test:realsvc": "pnpm run -r --no-sort --stream --no-bail test:realsvc",
 		"test:stress": "pnpm run -r --no-sort --stream --no-bail test:stress",
-		"tsc": "fluid-build --task tsc",
-		"tsc:fast": "fluid-build --task tsc --worker",
+		"tsc:fast": "fluid-build --task build:cjs --worker",
 		"typetests:gen": "fluid-build --task typetests:gen",
 		"typetests:prepare": "flub typetests -g client --reset --previous --normalize",
-		"watch": "concurrently \"npm run watch:tsc\" \"npm run watch:esnext\" \"npm run watch:webpack\"",
-		"watch:esnext": "pnpm run -r --parallel build:esnext --watch",
-		"watch:tsc": "pnpm run -r --parallel tsc --watch",
+		"watch": "concurrently \"npm run watch:cjs\" \"npm run watch:esm\" \"npm run watch:webpack\"",
+		"watch:cjs": "pnpm run -r --parallel build:cjs --watch",
+		"watch:esm": "pnpm run -r --parallel build:esm --watch",
 		"watch:webpack": "pnpm run -r --parallel webpack --watch",
 		"webpack": "fluid-build --task webpack",
 		"webpack:profile": "fluid-build --task webpack:profile"
@@ -193,7 +193,7 @@
 		"run-script-os": "^1.1.6",
 		"syncpack": "^15.1.2",
 		"type-fest": "^2.19.0",
-		"typescript": "~5.4.5"
+		"typescript": "~6.0.3"
 	},
 	"packageManager": "pnpm@11.15.1+sha512.81350b07e53c9538a02f1f2303b4290fa2d7be04e56e2a970c4cc4b417dc761de196edabd49d55c7dc9580db81007c44143e4e3d7e462b3000d23c255122d065",
 	"engines": {

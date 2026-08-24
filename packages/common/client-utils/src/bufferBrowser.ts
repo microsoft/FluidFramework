@@ -5,9 +5,30 @@
 
 import * as base64js from "base64-js";
 
+import type {
+	IsoBufferConstructor,
+	IsoBufferEncoding,
+	IsoBuffer as IsoBufferInterface,
+} from "./buffer.js";
+
+export type {
+	IsoBufferConstructor,
+	IsoBufferEncoding,
+} from "./buffer.js";
 /**
- * Converts a Uint8Array to a string of the provided encoding
- * Useful when the array might be an {@link IsoBuffer}.
+ * Minimal `Buffer` interface for our usages in the browser or Node.js environments.
+ *
+ * @internal
+ *
+ * @privateRemarks
+ * This type is exported specifically from here to respect combo type+value of same name rules.
+ */
+export type IsoBuffer<TArrayBuffer extends ArrayBufferLike = ArrayBufferLike> =
+	IsoBufferInterface<TArrayBuffer>;
+
+/**
+ * Converts a `Uint8Array` to a string of the provided encoding
+ * Useful when the array might be an {@link (IsoBuffer:type)}.
  *
  * @param arr - The array to convert.
  * @param encoding - Optional target encoding; only "utf8" and "base64" are
@@ -16,11 +37,7 @@ import * as base64js from "base64-js";
  *
  * @internal
  */
-export function Uint8ArrayToString(
-	arr: Uint8Array,
-	// eslint-disable-next-line unicorn/text-encoding-identifier-case -- this value is supported, just discouraged
-	encoding?: "utf8" | "utf-8" | "base64",
-): string {
+export function Uint8ArrayToString(arr: Uint8Array, encoding?: IsoBufferEncoding): string {
 	switch (encoding) {
 		case "base64": {
 			return base64js.fromByteArray(arr);
@@ -45,7 +62,7 @@ export function Uint8ArrayToString(
  *
  * @internal
  */
-export const stringToBuffer = (input: string, encoding: string): ArrayBuffer =>
+export const stringToBuffer = (input: string, encoding: IsoBufferEncoding): ArrayBuffer =>
 	IsoBuffer.from(input, encoding).buffer;
 
 /**
@@ -58,10 +75,10 @@ export const stringToBuffer = (input: string, encoding: string): ArrayBuffer =>
  * @internal
  */
 export const bufferToString = (
-	blob: ArrayBufferLike,
-	// eslint-disable-next-line unicorn/text-encoding-identifier-case -- this value is supported, just discouraged
-	encoding: "utf8" | "utf-8" | "base64",
-): string => IsoBuffer.from(blob).toString(encoding);
+	blob: ArrayBufferLike | Uint8Array,
+	encoding: IsoBufferEncoding,
+): string =>
+	Uint8ArrayToString(blob instanceof Uint8Array ? blob : IsoBuffer.from(blob), encoding);
 
 /**
  * Determines if an object is an array buffer.
@@ -73,12 +90,16 @@ export const bufferToString = (
  * new TypedArray(buffer, byteOffset, length), but passing TypedArray will result in fist path (and
  * ignoring byteOffice, length).
  *
- * @param obj - The object to determine if it is an ArrayBuffer.
+ * @param obj - The object to determine if it is `ArrayBufferLike`.
  *
- * @internal
+ * @privateRemarks
+ * This function preserves runtime functionality as it has been in the past.
+ * Typing has been adjusted to reflect the only use that remains and (assuming
+ * is called as expected) will always return true as the input is already
+ * expected to be `ArrayBufferLike`.
  */
-export function isArrayBuffer(obj: unknown): obj is ArrayBuffer {
-	const maybe = obj as (Partial<ArrayBuffer> & Partial<Uint8Array>) | undefined;
+function isArrayBufferLike(obj: ArrayBufferLike): obj is ArrayBufferLike {
+	const maybe = obj as (Partial<ArrayBufferLike> & Partial<Uint8Array>) | undefined;
 	return (
 		obj instanceof ArrayBuffer ||
 		(typeof maybe === "object" &&
@@ -91,59 +112,71 @@ export function isArrayBuffer(obj: unknown): obj is ArrayBuffer {
 }
 
 /**
- * Minimal implementation of Buffer for our usages in the browser environment.
+ * Minimal implementation of `Buffer` for our usages in the browser environment.
  *
  * @internal
  */
-export class IsoBuffer extends Uint8Array {
-	/**
-	 * Convert the buffer to a string.
-	 * Only supports encoding the whole string (unlike the Node Buffer equivalent)
-	 * and only utf8 and base64 encodings.
-	 *
-	 * @param encoding - The encoding to use.
-	 */
-	// eslint-disable-next-line unicorn/text-encoding-identifier-case -- this value is supported, just discouraged
-	public toString(encoding?: "utf8" | "utf-8" | "base64"): string {
+// eslint-disable-next-line @typescript-eslint/no-shadow -- Preserve the public constructor name at runtime.
+export const IsoBuffer: IsoBufferConstructor = class IsoBuffer<
+		TArrayBuffer extends ArrayBufferLike = ArrayBufferLike,
+	>
+	extends Uint8Array<TArrayBuffer>
+	implements IsoBufferInterface<TArrayBuffer>
+{
+	public constructor(
+		value: number | ArrayLike<number> | TArrayBuffer,
+		byteOffset?: number,
+		length?: number,
+	) {
+		super(value as TArrayBuffer, byteOffset, length);
+	}
+
+	public toString(encoding?: IsoBufferEncoding): string {
 		return Uint8ArrayToString(this, encoding);
 	}
 
-	/**
-	 * Static constructor
-	 * @param value - (string | ArrayBuffer)
-	 * @param encodingOrOffset - (string | number)
-	 * @param length - (number)
-	 *
-	 * @privateRemarks TODO: Use actual types
-	 */
-	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
-	public static from(value: any, encodingOrOffset?: any, length?: any): IsoBuffer {
+	public static from(
+		value: string,
+		encoding?: IsoBufferEncoding,
+	): IsoBufferInterface<ArrayBuffer>;
+	public static from(value: Uint8Array): IsoBufferInterface<ArrayBuffer>;
+	public static from<TFArrayBuffer extends ArrayBufferLike>(
+		value: TFArrayBuffer,
+		byteOffset?: number,
+		length?: number,
+	): IsoBufferInterface<TFArrayBuffer>;
+	public static from<TFArrayBuffer extends ArrayBufferLike>(
+		value: string | Uint8Array | TFArrayBuffer,
+		encodingOrOffset?: IsoBufferEncoding | number,
+		length?: number,
+	): IsoBufferInterface<ArrayBufferLike> {
 		if (typeof value === "string") {
-			return IsoBuffer.fromString(value, encodingOrOffset as string | undefined);
+			return IsoBuffer.fromString(
+				value,
+				encodingOrOffset as IsoBufferEncoding | undefined,
+			) satisfies IsoBufferInterface<ArrayBuffer>;
 			// Capture any typed arrays, including Uint8Array (and thus - IsoBuffer!)
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		} else if (value !== null && typeof value === "object" && isArrayBuffer(value.buffer)) {
+		} else if (value instanceof Uint8Array) {
 			// The version of the from function for the node buffer, which takes a buffer or typed array
 			// as first parameter, does not have any offset or length parameters. Those are just silently
 			// ignored and not taken into account
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
-			return IsoBuffer.fromArrayBuffer(value.buffer, value.byteOffset, value.byteLength);
-		} else if (isArrayBuffer(value)) {
-			return IsoBuffer.fromArrayBuffer(
-				value,
-				encodingOrOffset as number | undefined,
-				length as number,
-			);
+			const copy = new Uint8Array(value.byteLength);
+			copy.set(value);
+			return new IsoBuffer<ArrayBuffer>(copy.buffer) satisfies IsoBufferInterface<ArrayBuffer>;
+		} else if (isArrayBufferLike(value)) {
+			return IsoBuffer.fromArrayBuffer(value, encodingOrOffset as number | undefined, length);
 		} else {
-			throw new TypeError("Input value was neither a string nor an ArrayBuffer.");
+			throw new TypeError(
+				"Input value was neither a string, a Uint8Array, nor an ArrayBuffer.",
+			);
 		}
 	}
 
-	public static fromArrayBuffer(
-		arrayBuffer: ArrayBuffer,
+	public static fromArrayBuffer<TFArrayBuffer extends ArrayBufferLike>(
+		arrayBuffer: TFArrayBuffer,
 		byteOffset?: number,
 		byteLength?: number,
-	): IsoBuffer {
+	): IsoBufferInterface<TFArrayBuffer> {
 		const offset = byteOffset ?? 0;
 		const validLength = byteLength ?? arrayBuffer.byteLength - offset;
 		if (
@@ -155,14 +188,19 @@ export class IsoBuffer extends Uint8Array {
 			throw new RangeError("Invalid range specified.");
 		}
 
-		return new IsoBuffer(arrayBuffer, offset, validLength);
+		return new IsoBuffer<TFArrayBuffer>(arrayBuffer, offset, validLength);
 	}
 
-	public static fromString(str: string, encoding?: string): IsoBuffer {
+	public static fromString(
+		str: string,
+		encoding?: IsoBufferEncoding,
+	): IsoBufferInterface<ArrayBuffer> {
 		switch (encoding) {
 			case "base64": {
 				const sanitizedString = this.sanitizeBase64(str);
-				const encoded = base64js.toByteArray(sanitizedString);
+				// base64-js will always return a Uint8Array<ArrayBuffer>, but typing has not
+				// been updated to reflect that yet.  Cast to the correct type here.
+				const encoded = base64js.toByteArray(sanitizedString) as Uint8Array<ArrayBuffer>;
 				return new IsoBuffer(encoded.buffer, encoded.byteOffset, encoded.byteLength);
 			}
 			case "utf8":
@@ -170,7 +208,7 @@ export class IsoBuffer extends Uint8Array {
 			case "utf-8":
 			case undefined: {
 				const encoded = new TextEncoder().encode(str);
-				return new IsoBuffer(encoded.buffer);
+				return new IsoBuffer(encoded.buffer, encoded.byteOffset, encoded.byteLength);
 			}
 			default: {
 				throw new Error("invalid/unsupported encoding");
@@ -178,8 +216,8 @@ export class IsoBuffer extends Uint8Array {
 		}
 	}
 
-	public static isBuffer(obj: unknown): boolean {
-		throw new Error("unimplemented");
+	public static isBuffer(obj: unknown): obj is IsoBuffer {
+		return obj instanceof IsoBuffer;
 	}
 
 	/**
@@ -205,4 +243,4 @@ export class IsoBuffer extends Uint8Array {
 		}
 		return sanitizedStr;
 	}
-}
+} satisfies IsoBufferConstructor;

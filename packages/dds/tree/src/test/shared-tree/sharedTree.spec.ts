@@ -7,8 +7,12 @@ import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
-import type { IChannel } from "@fluidframework/datastore-definitions/internal";
+import type {
+	IChannelFactory,
+	IChannel,
+} from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { startEphemeralService } from "@fluidframework/local-driver/internal";
 import type {
@@ -1006,6 +1010,8 @@ describe("SharedTree", () => {
 		assert(t2.kernel.editManager.getTrunkChanges("main").length < 10);
 	});
 
+	// This covers in-memory retention only. See the "retainHistory persistence" suite below for the
+	// summary round-trip behavior.
 	it("does not evict trunk commits when retainHistory is enabled", () => {
 		const provider = new TestTreeProviderLite(
 			2,
@@ -1058,6 +1064,108 @@ describe("SharedTree", () => {
 		const expectedCount = priorEditCount + sequencedEditCount + 2;
 		assert.equal(t1.kernel.editManager.getTrunkChanges("main").length, expectedCount);
 		assert.equal(t2.kernel.editManager.getTrunkChanges("main").length, expectedCount);
+	});
+
+	describe("Persists retained history", () => {
+		/**
+		 * Creates two connected trees and sequences enough edits that the collaboration window advances
+		 * past most of them.
+		 * @returns the provider and the number of trunk commits the first tree still holds in memory.
+		 */
+		function generateHistory(factory: IChannelFactory<ITree>): {
+			provider: TestTreeProviderLite;
+			retainedCommitCount: number;
+		} {
+			const provider = new TestTreeProviderLite(2, factory);
+			const viewInit = provider.trees[0].viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
+			viewInit.initialize([]);
+			viewInit.dispose();
+			provider.synchronizeMessages();
+
+			const [view1, view2] = provider.trees.map((t) =>
+				t.viewWith(new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation })),
+			);
+
+			for (let i = 0; i < 10; ++i) {
+				view1.root.insertAtStart("");
+			}
+			provider.synchronizeMessages();
+
+			// These two edits have ref numbers corresponding to the last of the above edits, which advances
+			// the collaboration window past them.
+			view1.root.insertAtStart("");
+			view2.root.insertAtStart("");
+			provider.synchronizeMessages();
+
+			return {
+				provider,
+				retainedCommitCount: trunkCommitCount(provider.trees[0]),
+			};
+		}
+
+		/**
+		 * Summarizes `tree` and loads a fresh client from the resulting summary.
+		 * @param idCompressor - must be able to decode the revision tags in the summary, so this reuses the
+		 * summarizing client's compressor rather than creating an empty one.
+		 */
+		async function loadFreshClient(
+			tree: ITree,
+			factory: IChannelFactory<ITree>,
+			idCompressor: IIdCompressor,
+		): Promise<ISharedTree> {
+			const { summary } = await (tree as unknown as IChannel).summarize();
+			const runtime = new MockFluidDataStoreRuntime({ idCompressor });
+			return (await factory.load(
+				runtime,
+				"loaded",
+				{
+					deltaConnection: runtime.createDeltaConnection(),
+					objectStorage: MockStorage.createFromSummary(summary),
+				},
+				factory.attributes,
+			)) as ISharedTree;
+		}
+
+		function trunkCommitCount(tree: ITree): number {
+			const kludge = tree as unknown as EditManagerKludge;
+			assert(
+				kludge.kernel?.editManager !== undefined,
+				"EditManager has moved. This test must be updated.",
+			);
+			return kludge.kernel.editManager.getTrunkChanges("main").length;
+		}
+
+		it("persists the retained trunk when retainHistory is enabled", async () => {
+			const factory = configuredSharedTree({
+				jsonValidator: FormatValidatorBasic,
+				retainHistory: true,
+			}).getFactory();
+			const { provider, retainedCommitCount } = generateHistory(factory);
+			// Nothing was evicted, so the summarizing client holds every commit.
+			assert(retainedCommitCount > 10);
+			const tree = provider.trees[0];
+			assert.equal(
+				trunkCommitCount(await loadFreshClient(tree, factory, provider.getCompressor(tree))),
+				retainedCommitCount,
+				"A client loading from the summary should recover the full retained history",
+			);
+		});
+
+		it("persists only the collaboration window by default", async () => {
+			const factory = configuredSharedTree({
+				jsonValidator: FormatValidatorBasic,
+			}).getFactory();
+			const { provider, retainedCommitCount } = generateHistory(factory);
+			assert(retainedCommitCount < 10);
+			const tree = provider.trees[0];
+			assert.equal(
+				trunkCommitCount(await loadFreshClient(tree, factory, provider.getCompressor(tree))),
+				retainedCommitCount,
+				"The default path must persist exactly the collaboration window",
+			);
+		});
 	});
 
 	it("can process changes while detached", async () => {
