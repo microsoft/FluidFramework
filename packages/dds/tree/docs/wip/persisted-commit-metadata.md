@@ -106,11 +106,28 @@ Metadata supplied to a nested transaction is ignored, mirroring how `label` reso
 
 ### Transactions that produce no commit
 
-A transaction whose body makes no changes produces no commit.
-`transaction.ts` gates commit creation on `transactionSteps.length > 0`.
+Metadata describes the commit a transaction produces.
+A transaction that produces no commit has no commit to describe, and its metadata is discarded without error.
 
-When such a transaction supplies `persistedMetadata`, throw a `UsageError`.
-Silently discarding the metadata would present as data loss with no diagnostic.
+Two paths reach this.
+A transaction whose body makes no changes produces no commit, because `transaction.ts` gates commit
+creation on `transactionSteps.length > 0`.
+A transaction that is explicitly rolled back likewise produces nothing.
+
+This is defined behavior rather than an oversight, for three reasons.
+
+Rollback is a sanctioned outcome, not a fault.
+Applications roll a transaction back when they detect an invalid edit part way through, and that path
+returns an error to their own caller; raising from the tree would convert a handled result into an
+exception.
+
+Whether a body will produce a change is not knowable before running it, so any other rule forces every
+annotated transaction to be wrapped defensively.
+
+An application whose "no change means no checkpoint" rule is the point of annotating in the first place
+gets that behavior for free.
+
+Callers that need to detect the case can compare `branchHistory.getHeadCommit()` across the call.
 
 ### Reading
 
@@ -316,7 +333,9 @@ Metadata survives the stashed op path via `getRequiredPendingLocalState`.
 
 Metadata is removed on rollback.
 
-A transaction supplying metadata but making no changes throws a `UsageError`.
+A transaction supplying metadata but making no changes discards the metadata and does not throw.
+
+A transaction supplying metadata that is explicitly rolled back discards the metadata and does not throw.
 
 Nested transactions resolve to the outermost transaction's metadata.
 
