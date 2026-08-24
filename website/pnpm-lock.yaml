@@ -81,8 +81,8 @@ importers:
         specifier: ^3.10.2
         version: 3.10.2(acorn@8.15.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@8.1.1)
       '@fluid-tools/api-markdown-documenter':
-        specifier: link:../tools/api-markdown-documenter
-        version: link:../tools/api-markdown-documenter
+        specifier: ^0.24.0
+        version: 0.24.0(@types/node@22.19.17)(supports-color@8.1.1)
       '@fluid-tools/markdown-magic':
         specifier: file:../tools/markdown-magic
         version: file:../tools/markdown-magic(@types/node@22.19.17)(markdown-magic@2.6.1(supports-color@8.1.1))(supports-color@8.1.1)
@@ -1547,8 +1547,9 @@ packages:
   '@fluid-internal/eslint-plugin-fluid@0.2.0':
     resolution: {integrity: sha512-KAES3hOge6htTmYCTjBObjhi1oaVkT+XPyFV7tgOgIicaS9PZgD9ErFV2wiFdWtZiqoThKFlZewfwWNd+mqeXg==}
 
-  '@fluid-tools/api-markdown-documenter@0.23.2':
-    resolution: {integrity: sha512-TCAVqt3M9OdFZkL1JuhpAQAZRaF6Y6AB7XJuAKt94Ek9CBnDFZIwnpRS+ZRw74RkHB4cNaeXKtY0BP1W+Ha2RA==}
+  '@fluid-tools/api-markdown-documenter@0.24.0':
+    resolution: {integrity: sha512-C7eAzbXsphRPiFWiAyOoeSJCmftF8r+MfqlzwUlTPVuDB3Y5sbT7PCWztaQ1aOZs3PXYUgQBEZ7Aindjj3eBtg==}
+    engines: {node: '>=22.22.2'}
 
   '@fluid-tools/markdown-magic@file:../tools/markdown-magic':
     resolution: {directory: ../tools/markdown-magic, type: directory}
@@ -1610,9 +1611,6 @@ packages:
 
   '@jridgewell/source-map@0.3.6':
     resolution: {integrity: sha512-1ZJTZebgqllO79ue2bm3rIGud/bOe0pP5BjSRCRxxYkEZS8STV7zN84UBbiYu7jy+eCKSnVIUgoWWE/tt+shMQ==}
-
-  '@jridgewell/sourcemap-codec@1.5.0':
-    resolution: {integrity: sha512-gv3ZRaISU3fjPAgNsriBRqGWQL6quFx04YMPW/zD8XMLsU32mhCCbfbO6KZFLjvYpCZ8zyDEgqsgf+PwPaM7GQ==}
 
   '@jridgewell/sourcemap-codec@1.5.5':
     resolution: {integrity: sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og==}
@@ -7823,11 +7821,6 @@ packages:
   resolve-pkg-maps@1.0.0:
     resolution: {integrity: sha512-seS2Tj26TBVOC2NIc2rOe2y2ZO7efxITtLZcGSOnHHNOQ7CkiUBfw0Iw2ck6xkIhPwLhKNLS8BO+hEpngQlqzw==}
 
-  resolve@1.22.11:
-    resolution: {integrity: sha512-RfqAvLnMl313r7c9oclB1HhUEAezcpLjz95wFH4LVuhk9JF/r22qmVP9AMmOU4vMX7Q8pN8jwNg/CSpdFnMjTQ==}
-    engines: {node: '>= 0.4'}
-    hasBin: true
-
   resolve@1.22.12:
     resolution: {integrity: sha512-TyeJ1zif53BPfHootBGwPRYT1RUt6oGWsaQr8UyZW/eAm9bKoijtvruSDEmZHm92CwS9nj7/fWttqPCgzep8CA==}
     engines: {node: '>= 0.4'}
@@ -11578,12 +11571,11 @@ snapshots:
       - supports-color
       - typescript
 
-  '@fluid-tools/api-markdown-documenter@0.23.2(@types/node@22.19.17)(supports-color@8.1.1)':
+  '@fluid-tools/api-markdown-documenter@0.24.0(@types/node@22.19.17)(supports-color@8.1.1)':
     dependencies:
       '@microsoft/api-extractor-model': 7.30.7(@types/node@22.19.17)
       '@microsoft/tsdoc': 0.15.1
       '@rushstack/node-core-library': 5.14.0(@types/node@22.19.17)
-      chalk: 5.6.2
       hast-util-format: 1.1.0
       hast-util-from-html: 2.0.3
       hast-util-to-html: 9.0.5
@@ -11697,7 +11689,7 @@ snapshots:
 
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:
-      '@jridgewell/sourcemap-codec': 1.5.0
+      '@jridgewell/sourcemap-codec': 1.5.5
       '@jridgewell/trace-mapping': 0.3.31
 
   '@jridgewell/remapping@2.3.5':
@@ -11712,14 +11704,12 @@ snapshots:
       '@jridgewell/gen-mapping': 0.3.13
       '@jridgewell/trace-mapping': 0.3.31
 
-  '@jridgewell/sourcemap-codec@1.5.0': {}
-
   '@jridgewell/sourcemap-codec@1.5.5': {}
 
   '@jridgewell/trace-mapping@0.3.31':
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
-      '@jridgewell/sourcemap-codec': 1.5.0
+      '@jridgewell/sourcemap-codec': 1.5.5
 
   '@jsonjoy.com/base64@1.1.2(tslib@2.8.1)':
     dependencies:
@@ -12012,7 +12002,7 @@ snapshots:
       '@microsoft/tsdoc': 0.15.1
       ajv: 8.12.0
       jju: 1.4.0
-      resolve: 1.22.11
+      resolve: 1.22.12
 
   '@microsoft/tsdoc@0.15.1': {}
 
@@ -19407,12 +19397,6 @@ snapshots:
   resolve-pathname@3.0.0: {}
 
   resolve-pkg-maps@1.0.0: {}
-
-  resolve@1.22.11:
-    dependencies:
-      is-core-module: 2.16.2
-      path-parse: 1.0.7
-      supports-preserve-symlinks-flag: 1.0.0
 
   resolve@1.22.12:
     dependencies:

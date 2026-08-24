@@ -72,7 +72,7 @@
 		"@docusaurus/theme-mermaid": "^3.10.2",
 		"@docusaurus/tsconfig": "^3.10.2",
 		"@docusaurus/types": "^3.10.2",
-		"@fluid-tools/api-markdown-documenter": "link:../tools/api-markdown-documenter",
+		"@fluid-tools/api-markdown-documenter": "^0.24.0",
 		"@fluid-tools/markdown-magic": "file:../tools/markdown-magic",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/eslint-config-fluid": "^6.1.0",
