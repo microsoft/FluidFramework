@@ -251,6 +251,50 @@ describe("Tinylicious", () => {
 							[obj10, obj15],
 						);
 					});
+
+					// The routerlicious driver fetches ops with an exclusive lower bound, so asking for the ops
+					// of a document from the very beginning (sequence number 1) translates to `{ $gt: 0 }`.
+					// If that isn't treated as a range query the server returns no ops at all and clients can
+					// never catch up (e.g. waitContainerToCatchUp never resolves).
+					it("find - from the beginning of the document", async () => {
+						const deltas = [1, 2, 3].map((sequenceNumber) =>
+							createTestDelta(testTenantId, testDocumentId, sequenceNumber),
+						);
+						for (const delta of deltas) {
+							await c.insertOne(delta);
+						}
+
+						const query = {
+							"tenantId": testTenantId,
+							"documentId": testDocumentId,
+							"operation.sequenceNumber": { $gt: 0 },
+						};
+
+						assert.deepStrictEqual(
+							await c.find(query, { "operation.sequenceNumber": 1 }),
+							deltas,
+						);
+					});
+
+					it("find - from the beginning of the document with an upper bound", async () => {
+						const deltas = [1, 2, 3].map((sequenceNumber) =>
+							createTestDelta(testTenantId, testDocumentId, sequenceNumber),
+						);
+						for (const delta of deltas) {
+							await c.insertOne(delta);
+						}
+
+						const query = {
+							"tenantId": testTenantId,
+							"documentId": testDocumentId,
+							"operation.sequenceNumber": { $gt: 0, $lt: 3 },
+						};
+
+						assert.deepStrictEqual(
+							await c.find(query, { "operation.sequenceNumber": 1 }),
+							deltas.slice(0, 2),
+						);
+					});
 				});
 			});
 		}

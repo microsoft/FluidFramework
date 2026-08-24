@@ -4,7 +4,7 @@
  */
 
 export {
-	typeNameSymbol,
+	schemaIdentifierBrand,
 	typeSchemaSymbol,
 	contentSchemaSymbol,
 	type WithType,
@@ -143,6 +143,7 @@ export {
 	comparePersistedSchema,
 	type ConciseTree,
 	checkSchemaCompatibility,
+	getSchemaCompatibilityError,
 	type Unenforced,
 	type System_Unsafe,
 	type ArrayNodeCustomizableSchemaUnsafe,
