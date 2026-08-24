@@ -12,8 +12,9 @@ import { getEffectiveBatchId, type InboundMessageResult } from "../opLifecycle/i
  */
 export interface InboundVersionMarkUpdate {
 	/**
-	 * A completed batch to record via `processInboundBatch`: its id and its last op's sequence number.
-	 * Undefined when no batch completed on this message (a piecemeal batch still in progress).
+	 * A completed batch to record via `processInboundBatch`: its id and its last op's sequence
+	 * number and timestamp. Undefined when no batch completed on this message (a piecemeal batch
+	 * still in progress).
 	 */
 	readonly sequenced?: {
 		readonly batchId: string;
@@ -29,10 +30,10 @@ export interface InboundVersionMarkUpdate {
 
 /**
  * Maps an inbound batch result to the version-mark resolver update. A batch's resolved point is its last
- * op's sequence number, so this reports `(batchId, sequenceNumber)` only once a batch completes. It handles
- * both a batch delivered whole (`fullBatch`, incl. an empty grouped batch via the batch-start key message)
- * and one delivered piecemeal (`batchStartingMessage` then `nextBatchMessage` with `batchEnd`), carrying the
- * batch id across the piecemeal messages via `carriedBatchId`.
+ * op's sequence number and timestamp, so this reports `(batchId, sequenceNumber, timestamp)` only once a
+ * batch completes. It handles both a batch delivered whole (`fullBatch`, incl. an empty grouped batch via
+ * the batch-start key message) and one delivered piecemeal (`batchStartingMessage` then `nextBatchMessage`
+ * with `batchEnd`), carrying the batch id across the piecemeal messages via `carriedBatchId`.
  *
  * @internal
  */
