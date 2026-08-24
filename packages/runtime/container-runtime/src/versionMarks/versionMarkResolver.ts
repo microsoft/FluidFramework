@@ -75,14 +75,16 @@ export interface IVersionMarkResolver {
 	 * local edit has a stable `batchId`, which is only assigned when a batch is flushed), then returns the
 	 * mark data atomically: a `pending` capture (`batchId` + `sequenceNumberLowerBound`) when there is an
 	 * unacked local batch, or a `resolved` capture (`sequenceNumber` + the last processed op's server
-	 * `timestamp`) when there is no in-flight local work. The timestamp property is optional for
-	 * compatibility with previously stored captures.
+	 * `timestamp`) when there is no in-flight local work. The timestamp property is optional both for
+	 * compatibility with previously stored captures and because no op may have been processed yet (e.g.
+	 * on a freshly loaded container), in which case it is `undefined`.
 	 *
 	 * @remarks Sealing the batch is a side effect (it submits the current batch), so capture at savepoint
 	 * boundaries, not per keystroke.
 	 *
-	 * @returns The pending batch identity and exclusive sequence number lower bound, or the current sequence number
-	 * and last processed op timestamp when there is no pending local batch.
+	 * @returns The pending batch identity and exclusive sequence number lower bound, or the current sequence
+	 * number and last processed op timestamp (if any op has been processed) when there is no pending local
+	 * batch.
 	 */
 	sealAndCaptureVersionMark(): VersionMarkCapture;
 	/**
@@ -179,7 +181,7 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 			// No unacked local batch: the mark already points at a durable sequence number.
 			return {
 				kind: "resolved",
-				sequenceNumber: sequenceNumberLowerBound,
+				sequenceNumber: referenceSequenceNumber,
 				timestamp: this.hooks.getCurrentTimestamp(),
 			};
 		}
