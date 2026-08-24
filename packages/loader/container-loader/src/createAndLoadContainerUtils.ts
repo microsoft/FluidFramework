@@ -716,13 +716,15 @@ export async function captureFullContainerState({
 				return;
 			}
 			const onAbort = (): void => {
-				reject(new GenericError("Container state capture canceled by an abort signal"));
+				reject(createCaptureAbortError());
 			};
 			abortSignal.addEventListener("abort", onAbort, { once: true });
 			removeAbortListener = (): void => abortSignal.removeEventListener("abort", onAbort);
 		});
-		await Promise.race([Promise.all([connectedP, attachP]), closedP, abortP]);
-		await Promise.race([waitForCatchUp(deltaManager), closedP, abortP]);
+		const raceFailure = async <T>(promise: Promise<T>): Promise<T> =>
+			Promise.race([promise, closedP, abortP]);
+		await raceFailure(Promise.all([connectedP, attachP]));
+		await raceFailure(waitForCatchUp(deltaManager));
 		deltaManager.dispose();
 
 		const postSnapshotBlobReferences: IBlobAttachReference[] = [];
@@ -767,9 +769,13 @@ export async function captureFullContainerState({
 	}
 }
 
+function createCaptureAbortError(): GenericError {
+	return new GenericError("Container state capture canceled by an abort signal");
+}
+
 function throwIfCaptureAborted(abortSignal: AbortSignal | undefined): void {
 	if (abortSignal?.aborted === true) {
-		throw new GenericError("Container state capture canceled by an abort signal");
+		throw createCaptureAbortError();
 	}
 }
 
