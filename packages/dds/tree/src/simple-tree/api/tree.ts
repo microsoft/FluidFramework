@@ -8,6 +8,8 @@ import type { IFluidLoadable, IDisposable, Listenable } from "@fluidframework/co
 import type {
 	ChangeMetadata,
 	CommitMetadata,
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
+	Revertible,
 	RevertibleAlphaFactory,
 	RevertibleFactory,
 } from "../../core/index.js";
@@ -301,6 +303,57 @@ export interface TreeContextAlpha {
 }
 
 /**
+ * An identifier for a commit in a {@link UntypedTreeViewAlpha}'s {@link UntypedTreeViewAlpha.branchHistory | history}.
+ * @alpha
+ */
+export type CommitRevision = string;
+
+/**
+ * Metadata describing a single commit in a {@link UntypedTreeViewAlpha}'s history.
+ * @sealed @alpha
+ */
+export interface TreeBranchCommitMetadata {
+	/**
+	 * The revision UUID that uniquely identifies this commit within the branch's history.
+	 */
+	readonly revision: CommitRevision;
+
+	/**
+	 * The metadata for the commit that this commit was based on, or `undefined` if this commit has no parent
+	 * (i.e. it is the oldest commit in the branch's history).
+	 *
+	 * @remarks
+	 * This method may return a different value over time if the parent commit is trimmed from the branch's history.
+	 */
+	getParent(): TreeBranchCommitMetadata | undefined;
+}
+
+/**
+ * Provides APIs for querying information about the history of a {@link UntypedTreeViewAlpha}.
+ * @remarks
+ * The history of a branch is the sequence of commits leading up to its current state.
+ * @sealed @alpha
+ */
+export interface TreeBranchHistory {
+	/**
+	 * The number of commits in this branch's history.
+	 * @remarks
+	 * This number grows when any of the following occurs:
+	 * - A new edit is made on this branch (either through editing or by reverting an existing commit on this branch).
+	 * - A branch that contains commits not already on this branch is merged into this branch.
+	 * - The branch is rebased onto another branch that contains commits not already on this branch.
+	 * This number shrinks when past commits are trimmed from the history.
+	 */
+	readonly length: number;
+
+	/**
+	 * Returns metadata for the current head commit of this branch.
+	 * @returns The metadata for the head commit, or `undefined` if the branch has no commits.
+	 */
+	getHead(): TreeBranchCommitMetadata | undefined;
+}
+
+/**
  * An untyped view of a {@link UntypedTreeView} with alpha-level APIs.
  * @remarks
  * The untyped view for a specific {@link TreeNode} may be acquired by calling {@link (TreeAlpha:interface).context} and checking {@link TreeContextAlpha.isView | isView()}.
@@ -313,6 +366,11 @@ export interface UntypedTreeViewAlpha extends UntypedTreeView, TreeContextAlpha 
 	 * Events for the view's underlying branch.
 	 */
 	readonly events: Listenable<TreeBranchEvents>;
+
+	/**
+	 * APIs for querying the history of the branch being viewed.
+	 */
+	readonly branchHistory: TreeBranchHistory;
 
 	/**
 	 * Returns true if this view has the given schema as its root schema.
@@ -334,6 +392,35 @@ export interface UntypedTreeViewAlpha extends UntypedTreeView, TreeContextAlpha 
 
 	// Override the base fork method to return the alpha variant.
 	fork(): UntypedTreeViewAlpha;
+
+	/**
+	 * Switches this view to a new underlying branch with the given commit as the head, updating the view state accordingly.
+	 *
+	 * @param revision - The {@link TreeBranchCommitMetadata.revision | revision} to rewind to.
+	 * Can be obtained by navigating the commits on the {@link UntypedTreeViewAlpha.branchHistory | branch history}.
+	 *
+	 * @remarks
+	 * Unlike {@link UntypedTreeViewAlpha.revertTo | revertTo}, this does not apply a change to the underlying branch.
+	 * The original underlying branch will be disposed.
+	 * Consider {@link UntypedTreeViewAlpha.fork | forking} before rewinding.
+	 * Not valid to invoke on the main branch or a {@link (ITreeAlpha:interface).createSharedBranch | shared branch}.
+	 */
+	rewindTo(revision: CommitRevision): void;
+
+	/**
+	 * Applies a new change which reverts all changes made since the given `revision`.
+	 * This is a no-op if the given revision is the head commit of the underlying branch being viewed.
+	 *
+	 * @param revision - The {@link TreeBranchCommitMetadata.revision | revision} to restore the state of.
+	 * Can be obtained by navigating the commits on the {@link UntypedTreeViewAlpha.branchHistory | branch history}.
+	 *
+	 * @remarks
+	 * The generated change is subject to the same merge semantics as the {@link Revertible.(revert:1) | reverts of individual commits}:
+	 * Concurrent changes that are sequenced before the revert will not be overwritten by the revert if they affect different parts of the document.
+	 *
+	 * Unlike {@link UntypedTreeViewAlpha.rewindTo | rewindTo}, this does not switch to a new branch.
+	 */
+	revertTo(revision: CommitRevision): void;
 
 	/**
 	 * {@link TreeContextAlpha.(runTransaction:1) | Run a transaction} on this view of the SharedTree.
