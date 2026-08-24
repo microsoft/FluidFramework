@@ -20,6 +20,7 @@
 		"build:webpack": "fluid-build . --task webpack",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
+		"check:types:test:playwright": "tsc --project ./e2e-tests/tsconfig.json",
 		"clean": "rimraf --glob coverage dist lib nyc \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"eslint": "eslint --quiet src",
 		"eslint:fix": "eslint --quiet src --fix",
