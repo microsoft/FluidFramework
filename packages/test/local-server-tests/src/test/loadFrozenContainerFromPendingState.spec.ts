@@ -72,8 +72,8 @@ const initialize = async (options?: {
 					return new ContainerRuntimeFactoryWithDefaultDataStore({
 						defaultFactory: defaultDataStoreFactory,
 						// The runtime does not infer a compatibility floor from manually enabled
-						// options. Pending-payload blobs require 2.40; the legacy mode retains the
-						// canonical test sentinel so this test covers both document formats.
+						// options. Pending-payload blobs require 2.40. Legacy mode uses the historical
+						// test default so this test covers both document formats.
 						oldestSupportedClient: options.createBlobPayloadPending
 							? "2.40.0"
 							: defaultTestOldestSupportedClient,
