@@ -54,48 +54,56 @@ export interface IsoBufferConstructor {
 	): IsoBuffer<TArrayBuffer>;
 
 	/**
-	 * Static constructor
+	 * Creates a new `IsoBuffer` containing `string`. The `encoding` parameter identifies
+	 * the character encoding to be used when converting `string` into bytes.
 	 *
-	 * @param value - `string`.
-	 * @param encoding - `IsoBufferEncoding`.
+	 * @param string - A string to encode.
+	 * @param encoding - The encoding of `string`. **Default:** `'utf8'`.
 	 *
 	 * @privateRemarks
 	 * Node buffer.buffer.d.ts declaration:
 	 * `from(string: WithImplicitCoercion<string>, encoding?: IsoBufferEncoding): Buffer<ArrayBuffer>;`
 	 */
-	from(value: string, encoding?: IsoBufferEncoding): IsoBuffer<ArrayBuffer>;
+	from(string: string, encoding?: IsoBufferEncoding): IsoBuffer<ArrayBuffer>;
 	/**
-	 * Static constructor
+	 * Allocates a new `IsoBuffer` using an `array` of bytes in the range `0` – `255`.
+	 * Array entries outside that range will be truncated to fit into it.
 	 *
 	 * @param value - `Uint8Array`.
 	 *
 	 * @remarks
-	 * This is limited to `ArrayBuffer` input to match Node implementation that takes `ArrayLike<number>` and returns `IsoBuffer<ArrayBuffer>`.
+	 * This is limited to `Uint8Array` input to match Node implementation that
+	 * takes `ArrayLike<number>` and returns `IsoBuffer<ArrayBuffer>`.
 	 *
 	 * @privateRemarks
 	 * Node buffer.buffer.d.ts declaration:
 	 * `from(array: WithImplicitCoercion<ArrayLike<number>>): IsoBuffer<ArrayBuffer>;`
 	 */
-	from(value: Uint8Array): IsoBuffer<ArrayBuffer>;
+	from(array: Uint8Array): IsoBuffer<ArrayBuffer>;
 	/**
-	 * Static constructor
+	 * This creates a view of the `ArrayBuffer` without copying the underlying
+	 * memory. For example, when passed a reference to the `.buffer` property of a
+	 * `TypedArray` instance, the newly created `Buffer` will share the same
+	 * allocated memory as the `TypedArray`'s underlying `ArrayBuffer`.
 	 *
-	 * @param value - `ArrayBufferLike`.
-	 * @param byteOffset - `number`.
-	 * @param length - `number`.
+	 * @param arrayBuffer - An `ArrayBuffer`, `SharedArrayBuffer`, for example the
+	 * `.buffer` property of a `TypedArray`.
+	 * @param byteOffset - Index of first byte to expose. **Default:** `0`.
+	 * @param length - Number of bytes to expose. **Default:**
+	 * `arrayBuffer.byteLength - byteOffset`.
 	 *
 	 * @privateRemarks
 	 * Node buffer.buffer.d.ts declaration:
 	 * ```
-	 * public static from<TFArrayBuffer extends WithImplicitCoercion<ArrayBufferLike>>(
-	 * 		arrayBuffer: TFArrayBuffer,
+	 * public static from<TArrayBuffer extends WithImplicitCoercion<ArrayBufferLike>>(
+	 * 		arrayBuffer: TArrayBuffer,
 	 * 		byteOffset?: number,
 	 * 		length?: number,
-	 * ): Buffer<ImplicitArrayBuffer<TFArrayBuffer>>;
+	 * ): Buffer<ImplicitArrayBuffer<TArrayBuffer>>;
 	 * ```
 	 */
 	from<TArrayBuffer extends ArrayBufferLike>(
-		value: TArrayBuffer,
+		arrayBuffer: TArrayBuffer,
 		byteOffset?: number,
 		length?: number,
 	): IsoBuffer<TArrayBuffer>;
