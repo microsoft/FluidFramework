@@ -33,7 +33,7 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 import { RequestParser, RuntimeFactoryHelper } from "@fluidframework/runtime-utils/internal";
 
-import { defaultTestOldestSupportedClient } from "./containerRuntimeFactories.js";
+import { defaultTestOldestSupportedClient } from "./testCompatibility.js";
 
 interface backCompat_IFluidRouter {
 	IFluidRouter?: backCompat_IFluidRouter;

@@ -12,10 +12,9 @@ import { RuntimeRequestHandler } from "@fluidframework/request-handler/internal"
 import {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
-	OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
 
-import { defaultTestOldestSupportedClient } from "./containerRuntimeFactories.js";
+import { defaultTestOldestSupportedClient } from "./testCompatibility.js";
 
 const getDefaultFluidObject = async (runtime: IContainerRuntime): Promise<FluidObject> => {
 	const entryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
@@ -32,6 +31,17 @@ const getDefaultFluidObject = async (runtime: IContainerRuntime): Promise<FluidO
  */
 export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
 	readonly defaultFactory: IFluidDataStoreFactory;
+
+	/**
+	 * Compatibility setting used by all constructor shapes supported by this helper.
+	 *
+	 * @remarks
+	 * Positional constructors predate this property. Restricting the value to the canonical test
+	 * sentinel preserves their implicit behavior while allowing object-shaped constructors to
+	 * receive the now-explicit setting.
+	 */
+	readonly oldestSupportedClient: typeof defaultTestOldestSupportedClient;
+
 	/**
 	 * The data store registry for containers produced.
 	 */
@@ -61,40 +71,13 @@ export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
 	readonly provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
 }
 
-type ObjectContainerRuntimeFactoryWithDefaultDataStoreConstructor =
-	| (new (
-			props: ContainerRuntimeFactoryWithDefaultDataStoreProps,
-	  ) => IRuntimeFactory)
-	| (new (
-			props: ContainerRuntimeFactoryWithDefaultDataStoreProps & {
-				readonly oldestSupportedClient: OldestSupportedClientVersion;
-			},
-	  ) => IRuntimeFactory);
-
-type PositionalContainerRuntimeFactoryWithDefaultDataStoreConstructor = new (
-	defaultFactory: IFluidDataStoreFactory,
-	registryEntries: NamedFluidDataStoreRegistryEntries,
-	dependencyContainer?: never,
-	// eslint-disable-next-line import-x/no-deprecated
-	requestHandlers?: RuntimeRequestHandler[],
-	runtimeOptions?: IContainerRuntimeOptions,
-	provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>,
-) => IRuntimeFactory;
-
 /**
  * {@link @fluidframework/container-definitions#IRuntimeFactory} construct signature.
  *
  * @internal
  */
 export type ContainerRuntimeFactoryWithDefaultDataStoreConstructor = (
-	| (new (
-			props: ContainerRuntimeFactoryWithDefaultDataStoreProps,
-	  ) => IRuntimeFactory)
-	| (new (
-			props: ContainerRuntimeFactoryWithDefaultDataStoreProps & {
-				readonly oldestSupportedClient: OldestSupportedClientVersion;
-			},
-	  ) => IRuntimeFactory)
+	| (new (props: ContainerRuntimeFactoryWithDefaultDataStoreProps) => IRuntimeFactory)
 	| (new (
 			defaultFactory: IFluidDataStoreFactory,
 			registryEntries: NamedFluidDataStoreRegistryEntries,
@@ -106,12 +89,43 @@ export type ContainerRuntimeFactoryWithDefaultDataStoreConstructor = (
 	  ) => IRuntimeFactory)
 ) & { readonly length: number };
 
+type ObjectContainerRuntimeFactoryWithDefaultDataStoreConstructor = Extract<
+	ContainerRuntimeFactoryWithDefaultDataStoreConstructor,
+	new (props: ContainerRuntimeFactoryWithDefaultDataStoreProps) => IRuntimeFactory
+>;
+
+type PositionalContainerRuntimeFactoryWithDefaultDataStoreConstructor = Exclude<
+	ContainerRuntimeFactoryWithDefaultDataStoreConstructor,
+	ObjectContainerRuntimeFactoryWithDefaultDataStoreConstructor
+>;
+
+const objectConstructorArity = 1;
+const positionalConstructorArity = 3;
+
+function isObjectConstructor(
+	ctor: ContainerRuntimeFactoryWithDefaultDataStoreConstructor,
+): ctor is ObjectContainerRuntimeFactoryWithDefaultDataStoreConstructor & {
+	readonly length: typeof objectConstructorArity;
+} {
+	return ctor.length === objectConstructorArity;
+}
+
+function isPositionalConstructor(
+	ctor: ContainerRuntimeFactoryWithDefaultDataStoreConstructor,
+): ctor is PositionalContainerRuntimeFactoryWithDefaultDataStoreConstructor & {
+	readonly length: typeof positionalConstructorArity;
+} {
+	return ctor.length === positionalConstructorArity;
+}
+
 /**
  * Creates a container runtime factory with default data store for backward compatibility.
  *
  * @remarks
- * This function is purely needed for back-compat as the constructor argument structure of
- * `ContainerRuntimeFactoryWithDefaultDataStore` was changed.
+ * Exact constructors loaded by compatibility tests use the positional shape through
+ * `2.0.0-internal.5.4.2` and the object shape beginning with `2.0.0-internal.7.0.0`.
+ * JavaScript constructor length counts parameters before the first default-valued parameter, so
+ * these shapes have arity 3 and 1 respectively. Unknown arities are rejected rather than guessed.
  *
  * @internal
  */
@@ -119,19 +133,12 @@ export const createContainerRuntimeFactoryWithDefaultDataStore = (
 	ctor: ContainerRuntimeFactoryWithDefaultDataStoreConstructor,
 	ctorProps: ContainerRuntimeFactoryWithDefaultDataStoreProps,
 ): IRuntimeFactory => {
-	// Supported positional constructors have arity 3, while object-shaped constructors have
-	// arity 1. Select before invoking so errors from an object-shaped constructor propagate.
-	if (ctor.length === 1) {
-		const currentProps = {
-			...ctorProps,
-			oldestSupportedClient: defaultTestOldestSupportedClient,
-		};
-		return new (ctor as ObjectContainerRuntimeFactoryWithDefaultDataStoreConstructor)(
-			currentProps,
-		);
+	const constructorArity = ctor.length;
+	if (isObjectConstructor(ctor)) {
+		return new ctor(ctorProps);
 	}
 
-	if (ctor.length === 3) {
+	if (isPositionalConstructor(ctor)) {
 		const {
 			defaultFactory,
 			registryEntries,
@@ -140,7 +147,7 @@ export const createContainerRuntimeFactoryWithDefaultDataStore = (
 			runtimeOptions,
 			provideEntryPoint,
 		} = ctorProps;
-		return new (ctor as PositionalContainerRuntimeFactoryWithDefaultDataStoreConstructor)(
+		return new ctor(
 			defaultFactory,
 			registryEntries,
 			dependencyContainer,
@@ -151,6 +158,6 @@ export const createContainerRuntimeFactoryWithDefaultDataStore = (
 	}
 
 	throw new Error(
-		`Unsupported ContainerRuntimeFactoryWithDefaultDataStore constructor arity: ${ctor.length}`,
+		`Unsupported ContainerRuntimeFactoryWithDefaultDataStore constructor arity: ${constructorArity}`,
 	);
 };

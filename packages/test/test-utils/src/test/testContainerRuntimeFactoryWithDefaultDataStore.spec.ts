@@ -18,14 +18,13 @@ import type { RuntimeRequestHandler } from "@fluidframework/request-handler/inte
 import type {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
-	OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
 
-import { defaultTestOldestSupportedClient } from "../containerRuntimeFactories.js";
 import {
 	type ContainerRuntimeFactoryWithDefaultDataStoreProps,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 } from "../testContainerRuntimeFactoryWithDefaultDataStore.js";
+import { defaultTestOldestSupportedClient } from "../testCompatibility.js";
 
 class TestRuntimeFactory implements IRuntimeFactory {
 	public get IRuntimeFactory(): IRuntimeFactory {
@@ -55,14 +54,15 @@ describe("createContainerRuntimeFactoryWithDefaultDataStore", () => {
 	const provideEntryPoint = async (): Promise<FluidObject> => ({});
 	const ctorProps = {
 		defaultFactory,
+		oldestSupportedClient: defaultTestOldestSupportedClient,
 		registryEntries,
 		runtimeOptions,
 		provideEntryPoint,
 	} satisfies ContainerRuntimeFactoryWithDefaultDataStoreProps;
 
-	it("constructs historical object-shaped factories", () => {
+	it("constructs object-shaped factories with the explicit compatibility setting", () => {
 		let receivedProps: ContainerRuntimeFactoryWithDefaultDataStoreProps | undefined;
-		class HistoricalObjectFactory extends TestRuntimeFactory {
+		class ObjectFactory extends TestRuntimeFactory {
 			public constructor(props: ContainerRuntimeFactoryWithDefaultDataStoreProps) {
 				super();
 				receivedProps = props;
@@ -70,41 +70,12 @@ describe("createContainerRuntimeFactoryWithDefaultDataStore", () => {
 		}
 
 		const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
-			HistoricalObjectFactory,
+			ObjectFactory,
 			ctorProps,
 		);
 
-		assert(runtimeFactory instanceof HistoricalObjectFactory);
-		assert.deepEqual(receivedProps, {
-			...ctorProps,
-			oldestSupportedClient: defaultTestOldestSupportedClient,
-		});
-	});
-
-	it("constructs current object-shaped factories with the canonical compatibility value", () => {
-		let receivedProps:
-			| (ContainerRuntimeFactoryWithDefaultDataStoreProps & {
-					readonly oldestSupportedClient: OldestSupportedClientVersion;
-			  })
-			| undefined;
-		class CurrentObjectFactory extends TestRuntimeFactory {
-			public constructor(
-				props: ContainerRuntimeFactoryWithDefaultDataStoreProps & {
-					readonly oldestSupportedClient: OldestSupportedClientVersion;
-				},
-			) {
-				super();
-				receivedProps = props;
-			}
-		}
-
-		const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
-			CurrentObjectFactory,
-			ctorProps,
-		);
-
-		assert(runtimeFactory instanceof CurrentObjectFactory);
-		assert.equal(receivedProps?.oldestSupportedClient, defaultTestOldestSupportedClient);
+		assert(runtimeFactory instanceof ObjectFactory);
+		assert.deepEqual(receivedProps, ctorProps);
 	});
 
 	it("constructs legacy positional factories", () => {
@@ -160,6 +131,21 @@ describe("createContainerRuntimeFactoryWithDefaultDataStore", () => {
 			() =>
 				createContainerRuntimeFactoryWithDefaultDataStore(ThrowingObjectFactory, ctorProps),
 			expectedError,
+		);
+	});
+
+	it("rejects ambiguous zero-arity constructors", () => {
+		class ObjectFactory extends TestRuntimeFactory {
+			public constructor(_props: ContainerRuntimeFactoryWithDefaultDataStoreProps) {
+				super();
+			}
+		}
+		class ImplicitSubclass extends ObjectFactory {}
+
+		assert.equal(ImplicitSubclass.length, 0);
+		assert.throws(
+			() => createContainerRuntimeFactoryWithDefaultDataStore(ImplicitSubclass, ctorProps),
+			/Unsupported ContainerRuntimeFactoryWithDefaultDataStore constructor arity: 0/,
 		);
 	});
 });

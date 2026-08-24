@@ -15,6 +15,7 @@ import {
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 
 import { TableDocument } from "../document.js";
+import { pkgVersion } from "../packageVersion.js";
 
 interface LocalTableDocumentTestContext {
 	/** The table document connected to the local service. */
@@ -36,8 +37,7 @@ export async function createLocalTableDocument(): Promise<LocalTableDocumentTest
 	const tableDocumentFactory = TableDocument.getFactory();
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: tableDocumentFactory,
-		// This non-deployed example test targets the current Client major; advance with the example.
-		oldestSupportedClient: "3.0.0",
+		oldestSupportedClient: pkgVersion,
 		registryEntries: [tableDocumentFactory.registryEntry],
 	});
 	const loader = new Loader({
