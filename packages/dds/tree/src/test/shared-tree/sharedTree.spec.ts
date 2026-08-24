@@ -3271,37 +3271,6 @@ describe("SharedTree", () => {
 			assert.deepEqual([...mainView2.root], ["A", "X"]);
 		});
 
-		it("switching to a new branch updates the isSharedBranch flag", () => {
-			const provider = new TestTreeProviderLite(
-				1,
-				configuredSharedTree({
-					jsonValidator: FormatValidatorBasic,
-					enableSharedBranches: true,
-				}).getFactory(),
-			);
-			const tree = provider.trees[0];
-
-			const config = new TreeViewConfiguration({
-				schema: StringArray,
-				enableSchemaValidation,
-			});
-			const view = asAlpha(tree.viewWith(config));
-			const checkout = tree.kernel.checkout;
-			view.initialize([]);
-
-			const revision1 = view.branchHistory.getHead()?.revision;
-			assert(revision1 !== undefined, "revision should be defined");
-
-			// Consistency check
-			assert.equal(checkout.isSharedBranch, true);
-
-			// Act
-			view.rewindTo(revision1);
-
-			// Verify
-			assert.equal(checkout.isSharedBranch, false);
-		});
-
 		it("shared branches can be named on creation", () => {
 			const provider = new TestTreeProviderLite(
 				2,

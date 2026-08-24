@@ -83,8 +83,3 @@ export {
 	MessageFormatVersion,
 	supportedMessageFormatVersions,
 } from "./messageFormat.js";
-
-export {
-	type BranchManager,
-	IndependentBranchManager,
-} from "./branchManager.js";

@@ -401,8 +401,9 @@ export interface UntypedTreeViewAlpha extends UntypedTreeView, TreeContextAlpha 
 	 *
 	 * @remarks
 	 * Unlike {@link UntypedTreeViewAlpha.revertTo | revertTo}, this does not apply a change to the underlying branch.
-	 * The original underlying branch will be disposed unless it is the main branch or a {@link (ITreeAlpha:interface).createSharedBranch | shared branch}.
-	 * In order to retain the local branch, consider {@link UntypedTreeViewAlpha.fork | forking} before rewinding.
+	 * The original underlying branch will be disposed.
+	 * Consider {@link UntypedTreeViewAlpha.fork | forking} before rewinding.
+	 * Not valid to invoke on the main branch or a {@link (ITreeAlpha:interface).createSharedBranch | shared branch}.
 	 */
 	rewindTo(revision: CommitRevision): void;
 

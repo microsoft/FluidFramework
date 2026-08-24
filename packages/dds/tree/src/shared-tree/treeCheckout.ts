@@ -84,8 +84,6 @@ import {
 	type SharedTreeBranchChange,
 	type SquashingTransactionOptions,
 	type Transactor,
-	type BranchManager,
-	IndependentBranchManager,
 } from "../shared-tree-core/index.js";
 import {
 	type ImplicitFieldSchema,
@@ -328,11 +326,6 @@ export function createTreeCheckout(
 			SharedTreeChange,
 			SharedTreeChangeProcessingContext
 		>;
-		branchManager?: BranchManager<
-			SharedTreeEditBuilder,
-			SharedTreeChange,
-			SharedTreeChangeProcessingContext
-		>;
 		changeFamily?: ChangeFamily<
 			SharedTreeEditBuilder,
 			SharedTreeChange,
@@ -376,23 +369,15 @@ export function createTreeCheckout(
 			() => idCompressor.generateCompressedId(),
 		);
 
-	const branchManager =
-		args?.branchManager ??
-		new IndependentBranchManager<
-			SharedTreeEditBuilder,
-			SharedTreeChange,
-			SharedTreeChangeProcessingContext
-		>();
-
 	return new TreeCheckout(
 		branch,
+		true,
 		changeFamily,
 		schema,
 		forest,
 		mintRevisionTag,
 		revisionTagCodec,
 		idCompressor,
-		branchManager,
 		args?.removedRoots,
 	);
 }
@@ -591,6 +576,8 @@ export class TreeCheckout implements ITreeCheckout {
 			SharedTreeChange,
 			SharedTreeChangeProcessingContext
 		>,
+		/** True if and only if this checkout is for a branch which is persisted and shared with other clients. */
+		public readonly isSharedBranch: boolean,
 		private readonly changeFamily: ChangeFamily<
 			SharedTreeEditBuilder,
 			SharedTreeChange,
@@ -601,21 +588,12 @@ export class TreeCheckout implements ITreeCheckout {
 		private readonly mintRevisionTag: () => RevisionTag,
 		private readonly revisionTagCodec: RevisionTagCodec,
 		private readonly idCompressor: IIdCompressor,
-		private readonly branchManager: BranchManager<
-			SharedTreeEditBuilder,
-			SharedTreeChange,
-			SharedTreeChangeProcessingContext
-		>,
 		private readonly _removedRoots: DetachedFieldIndex = makeDetachedFieldIndex("repair"),
 		public readonly disposeForksAfterTransaction = true,
 	) {
 		this.#transaction = this.createTransactionStack(branch);
 		this.editLock = new EditLock(this.#transaction.activeBranchEditor);
 		this.registerForBranchEvents();
-	}
-
-	public get isSharedBranch(): boolean {
-		return this.branchManager.isBranchShared(this.branch);
 	}
 
 	public get branchHistory(): DefaultTreeBranchHistory {
@@ -1348,13 +1326,13 @@ export class TreeCheckout implements ITreeCheckout {
 		const forest = this.forest.clone(storedSchema, forkBreaker);
 		const checkout = new TreeCheckout(
 			branch,
+			false,
 			this.changeFamily,
 			storedSchema,
 			forest,
 			this.mintRevisionTag,
 			this.revisionTagCodec,
 			this.idCompressor,
-			this.branchManager,
 			this._removedRoots.clone(),
 		);
 		this.#events.emit("fork", checkout);
@@ -1372,6 +1350,11 @@ export class TreeCheckout implements ITreeCheckout {
 			this.#transaction.size === 0,
 			0xc55 /* Cannot switch branches during a transaction */,
 		);
+		if (this.isSharedBranch) {
+			throw new UsageError(
+				"Cannot switch a view away from a shared branch. Consider forking first.",
+			);
+		}
 		const diff = diffHistories(
 			this.changeFamily.rebaser,
 			this.#transaction.branch.getHead(),
@@ -1382,9 +1365,6 @@ export class TreeCheckout implements ITreeCheckout {
 		this.unregisterFromBranchEvents();
 
 		this.#transaction = this.createTransactionStack(branch);
-		if (!this.isSharedBranch) {
-			this.branch.dispose();
-		}
 		this.branch = branch;
 		this._branchHistory?.dispose();
 		this._branchHistory = undefined;

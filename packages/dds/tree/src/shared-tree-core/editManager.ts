@@ -47,7 +47,6 @@ import {
 	minSequenceId,
 	sequenceIdComparator,
 } from "./sequenceIdUtils.js";
-import type { BranchManager } from "./branchManager.js";
 
 export const minimumPossibleSequenceNumber: SeqNumber = brand(Number.MIN_SAFE_INTEGER);
 const minimumPossibleSequenceId: SequenceId = {
@@ -76,20 +75,12 @@ export class EditManager<
 	TEditor extends ChangeFamilyEditor,
 	TChangeset,
 	TChangeProcessingContext = never,
-> implements BranchManager<TEditor, TChangeset, TChangeProcessingContext>
-{
+> {
 	private readonly _events = createEmitter<BranchTrimmingEvents>();
 
 	private readonly sharedBranches = new Map<
 		BranchId,
 		SharedBranch<TEditor, TChangeset, TChangeProcessingContext>
-	>();
-
-	/**
-	 * The set of branches that are automatically rebased over peer commits and whose commits are automatically submitted to the sequencing service.
-	 */
-	private readonly synchronizedBranches = new Set<
-		SharedTreeBranch<TEditor, TChangeset, TChangeProcessingContext>
 	>();
 
 	/**
@@ -165,12 +156,6 @@ export class EditManager<
 		);
 
 		this.createAndAddSharedBranch("main", "main", undefined, undefined, mainTrunk);
-	}
-
-	public isBranchShared(
-		branch: SharedTreeBranch<TEditor, TChangeset, TChangeProcessingContext>,
-	): boolean {
-		return this.synchronizedBranches.has(branch);
 	}
 
 	public getLocalBranch(
@@ -549,7 +534,6 @@ export class EditManager<
 			0xc5d /* A branch with this ID already exists */,
 		);
 		this.sharedBranches.set(branchId, branch);
-		this.synchronizedBranches.add(branch.localBranch);
 
 		// Track all forks of the local branch for purposes of trunk eviction. Unlike the local branch, they have
 		// an unknown lifetime and rebase frequency, so we can not make any assumptions about which trunk commits

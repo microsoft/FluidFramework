@@ -515,7 +515,22 @@ describe("simple-tree tree", () => {
 	});
 
 	describe("rewindTo", () => {
-		it("it rewinds the view", () => {
+		it("is not allowed on a shared branch", () => {
+			// Setup
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const view = getView(config);
+			view.initialize(1);
+
+			const revision1 = view.branchHistory.getHead()?.revision;
+			assert(revision1 !== undefined, "revision should be defined");
+
+			assert.throws(
+				() => view.rewindTo(revision1),
+				/Cannot switch a view away from a shared branch/,
+			);
+		});
+
+		it("rewinds the view", () => {
 			// Setup
 			const config = new TreeViewConfiguration({ schema: schema.number });
 			const view = getView(config);
@@ -524,27 +539,31 @@ describe("simple-tree tree", () => {
 			const revision1 = view.branchHistory.getHead()?.revision;
 			assert(revision1 !== undefined, "revision should be defined");
 			view.root = 2;
-			const revision2 = view.branchHistory.getHead()?.revision;
+
+			// Fork to a branch that can be rewound
+			const fork = getViewForForkedBranch(view).forkView;
+
+			const revision2 = fork.branchHistory.getHead()?.revision;
 			assert(revision2 !== undefined, "revision should be defined");
-			view.root = 3;
-			view.root = 4;
+			fork.root = 3;
+			fork.root = 4;
 
 			// Consistency check
-			assert.equal(view.branchHistory.length, 4);
+			assert.equal(fork.branchHistory.length, 4);
 
 			// Act
-			view.rewindTo(revision2);
+			fork.rewindTo(revision2);
 
 			// Verify
-			assert.equal(view.branchHistory.length, 2);
-			assert.equal(view.root, 2);
+			assert.equal(fork.branchHistory.length, 2);
+			assert.equal(fork.root, 2);
 
 			// Act
-			view.rewindTo(revision1);
+			fork.rewindTo(revision1);
 
 			// Verify
-			assert.equal(view.branchHistory.length, 1);
-			assert.equal(view.root, 1);
+			assert.equal(fork.branchHistory.length, 1);
+			assert.equal(fork.root, 1);
 		});
 
 		it("new edits can be made after rewinding", () => {
@@ -553,19 +572,22 @@ describe("simple-tree tree", () => {
 			const view = getView(config);
 			view.initialize(1);
 
-			const revision1 = view.branchHistory.getHead()?.revision;
-			assert(revision1 !== undefined, "revision should be defined");
-			view.root = 2;
+			// Fork to a branch that can be rewound
+			const fork = getViewForForkedBranch(view).forkView;
 
-			view.rewindTo(revision1);
-			assert.equal(view.branchHistory.length, 1);
+			const revision1 = fork.branchHistory.getHead()?.revision;
+			assert(revision1 !== undefined, "revision should be defined");
+			fork.root = 2;
+
+			fork.rewindTo(revision1);
+			assert.equal(fork.branchHistory.length, 1);
 
 			// Act
-			view.root = 42;
+			fork.root = 42;
 
 			// Verify
-			assert.equal(view.branchHistory.length, 2);
-			assert.equal(view.root, 42);
+			assert.equal(fork.branchHistory.length, 2);
+			assert.equal(fork.root, 42);
 		});
 
 		it("new edits made after rewinding do not affect the original branch", () => {
@@ -573,23 +595,25 @@ describe("simple-tree tree", () => {
 			const config = new TreeViewConfiguration({ schema: schema.number });
 			const view = getView(config);
 			view.initialize(1);
-			const revision1 = view.branchHistory.getHead()?.revision;
+			// Fork to a branch that can be rewound
+			const fork = getViewForForkedBranch(view).forkView;
+			const revision1 = fork.branchHistory.getHead()?.revision;
 			assert(revision1 !== undefined, "revision should be defined");
-			view.root = 2;
+			fork.root = 2;
 
-			const branchBeforeRewind = view.checkout.mainBranch;
+			const branchBeforeRewind = fork.checkout.mainBranch;
 
-			view.rewindTo(revision1);
+			fork.rewindTo(revision1);
 
 			// Act
-			view.root = 42;
-			view.root = 43;
-			view.root = 44;
+			fork.root = 42;
+			fork.root = 43;
+			fork.root = 44;
 
 			// Verify
-			view.checkout.switchBranch(branchBeforeRewind);
-			assert.equal(view.branchHistory.length, 2);
-			assert.equal(view.root, 2);
+			fork.checkout.switchBranch(branchBeforeRewind);
+			assert.equal(fork.branchHistory.length, 2);
+			assert.equal(fork.root, 2);
 		});
 	});
 
