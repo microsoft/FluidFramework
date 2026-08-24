@@ -93,6 +93,9 @@ describe("build tests", () => {
 		}
 
 		describe("can build with esnext.disposable", () => {
+			// This test is skipped highlighting a case that is deficient. The
+			// following case documents the issue and assert current expectations
+			// as unfortunate as they are.
 			it.skip("typescript-6.0", async () => {
 				await compileTest("typescript-6.0", ["--lib", "ES2022,DOM,esnext.disposable"]);
 			});
