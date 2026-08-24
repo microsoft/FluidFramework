@@ -67,6 +67,7 @@ export {
 export { walkFieldSchema } from "./walkFieldSchema.js";
 export type { UnsafeUnknownSchema, Insertable } from "./unsafeUnknownSchema.js";
 export {
+	type CommitRevision,
 	type ITree,
 	type TreeView,
 	type ViewableTree,

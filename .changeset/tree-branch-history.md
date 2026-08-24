@@ -5,7 +5,7 @@
 ---
 New alpha APIs for inspecting history and restoring past states
 
-`UntypedTreeViewAlpha` now exposes a `branchHistory` property which returns a `TreeBranchHistory` object with:
+`UntypedTreeViewAlpha` (formerly [`TreeBranchAlpha`](https://fluidframework.com/docs/api/fluid-framework/treebranchalpha-interface)) now exposes a `branchHistory` property which returns a `TreeBranchHistory` object with:
 
 - `commitCount`: the number of commits currently in the branch's history.
   This number grows when a new edit is made on the branch, when a branch containing new commits is merged into it, or when it is rebased onto a branch containing new commits.

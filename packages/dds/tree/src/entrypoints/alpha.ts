@@ -176,6 +176,7 @@ export {
 	CodecName, 
 	CodecWriteOptions, 
 	CommitOutcome, 
+	CommitRevision, 
 	Component, 
 	CreateIndependentTreeAlphaOptions, 
 	DirtyTreeMap, 

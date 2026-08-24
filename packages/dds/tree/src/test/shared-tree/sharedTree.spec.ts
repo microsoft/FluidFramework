@@ -982,8 +982,8 @@ describe("SharedTree", () => {
 
 		provider.synchronizeMessages();
 
-		assert.equal(provider.trees[0].kernel.checkout.branchHistory.commitCount, 10);
-		assert.equal(provider.trees[1].kernel.checkout.branchHistory.commitCount, 10);
+		assert.equal(provider.trees[0].kernel.checkout.branchHistory.length, 10);
+		assert.equal(provider.trees[1].kernel.checkout.branchHistory.length, 10);
 
 		// These two edit will have ref numbers that correspond to the last of the above edits
 		view1.root.insertAtStart("");
@@ -992,8 +992,8 @@ describe("SharedTree", () => {
 		// This synchronization point should ensure that both trees see the edits with the higher ref numbers.
 		provider.synchronizeMessages();
 
-		assert.equal(provider.trees[0].kernel.checkout.branchHistory.commitCount, 2);
-		assert.equal(provider.trees[1].kernel.checkout.branchHistory.commitCount, 2);
+		assert.equal(provider.trees[0].kernel.checkout.branchHistory.length, 2);
+		assert.equal(provider.trees[1].kernel.checkout.branchHistory.length, 2);
 	});
 
 	// This covers in-memory retention only. See the "retainHistory persistence" suite below for the
@@ -1016,8 +1016,8 @@ describe("SharedTree", () => {
 		viewInit.dispose();
 		provider.synchronizeMessages();
 
-		const priorEditCount = provider.trees[0].kernel.checkout.branchHistory.commitCount;
-		assert.equal(provider.trees[1].kernel.checkout.branchHistory.commitCount, priorEditCount);
+		const priorEditCount = provider.trees[0].kernel.checkout.branchHistory.length;
+		assert.equal(provider.trees[1].kernel.checkout.branchHistory.length, priorEditCount);
 
 		const [view1, view2] = provider.trees.map((t) =>
 			t.viewWith(new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation })),
@@ -1041,8 +1041,8 @@ describe("SharedTree", () => {
 		// All of the edits (plus the two additional ones) should still be present on the trunk since
 		// retainHistory prevents trunk commits from ever being trimmed.
 		const expectedCount = priorEditCount + sequencedEditCount + 2;
-		assert.equal(provider.trees[0].kernel.checkout.branchHistory.commitCount, expectedCount);
-		assert.equal(provider.trees[1].kernel.checkout.branchHistory.commitCount, expectedCount);
+		assert.equal(provider.trees[0].kernel.checkout.branchHistory.length, expectedCount);
+		assert.equal(provider.trees[1].kernel.checkout.branchHistory.length, expectedCount);
 	});
 
 	describe("Persists retained history", () => {
@@ -1108,7 +1108,7 @@ describe("SharedTree", () => {
 		}
 
 		function trunkCommitCount(tree: ISharedTree): number {
-			return tree.kernel.checkout.branchHistory.commitCount;
+			return tree.kernel.checkout.branchHistory.length;
 		}
 
 		it("persists the retained trunk when retainHistory is enabled", async () => {
@@ -3289,7 +3289,7 @@ describe("SharedTree", () => {
 			const checkout = tree.kernel.checkout;
 			view.initialize([]);
 
-			const revision1 = view.branchHistory.getHeadCommit()?.revision;
+			const revision1 = view.branchHistory.getHead()?.revision;
 			assert(revision1 !== undefined, "revision should be defined");
 
 			// Consistency check

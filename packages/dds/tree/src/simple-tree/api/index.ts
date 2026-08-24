@@ -13,6 +13,7 @@ export {
 	TreeViewConfigurationAlpha,
 } from "./configuration.js";
 export type {
+	CommitRevision,
 	ITree,
 	TreeView,
 	ViewableTree,

@@ -303,24 +303,33 @@ export interface TreeContextAlpha {
 }
 
 /**
- * Metadata describing a single commit in a {@link TreeBranchAlpha}'s history.
+ * An identifier for a commit in a {@link UntypedTreeViewAlpha}'s {@link UntypedTreeViewAlpha.branchHistory | history}.
+ * @alpha
+ */
+export type CommitRevision = string;
+
+/**
+ * Metadata describing a single commit in a {@link UntypedTreeViewAlpha}'s history.
  * @sealed @alpha
  */
 export interface TreeBranchCommitMetadata {
 	/**
 	 * The revision UUID that uniquely identifies this commit within the branch's history.
 	 */
-	readonly revision: string;
+	readonly revision: CommitRevision;
 
 	/**
 	 * The metadata for the commit that this commit was based on, or `undefined` if this commit has no parent
 	 * (i.e. it is the oldest commit in the branch's history).
+	 *
+	 * @remarks
+	 * This method may return a different value over time if the parent commit is trimmed from the branch's history.
 	 */
-	readonly parent: TreeBranchCommitMetadata | undefined;
+	getParent(): TreeBranchCommitMetadata | undefined;
 }
 
 /**
- * Provides APIs for querying information about the history of a {@link TreeBranchAlpha}.
+ * Provides APIs for querying information about the history of a {@link UntypedTreeViewAlpha}.
  * @remarks
  * The history of a branch is the sequence of commits leading up to its current state.
  * @sealed @alpha
@@ -335,13 +344,13 @@ export interface TreeBranchHistory {
 	 * - The branch is rebased onto another branch that contains commits not already on this branch.
 	 * This number shrinks when past commits are trimmed from the history.
 	 */
-	readonly commitCount: number;
+	readonly length: number;
 
 	/**
 	 * Returns metadata for the current head commit of this branch.
 	 * @returns The metadata for the head commit, or `undefined` if the branch has no commits.
 	 */
-	getHeadCommit(): TreeBranchCommitMetadata | undefined;
+	getHead(): TreeBranchCommitMetadata | undefined;
 }
 
 /**
@@ -395,7 +404,7 @@ export interface UntypedTreeViewAlpha extends UntypedTreeView, TreeContextAlpha 
 	 * The original underlying branch will be disposed unless it is the main branch or a {@link (ITreeAlpha:interface).createSharedBranch | shared branch}.
 	 * In order to retain the local branch, consider {@link UntypedTreeViewAlpha.fork | forking} before rewinding.
 	 */
-	rewindTo(revision: string): void;
+	rewindTo(revision: CommitRevision): void;
 
 	/**
 	 * Applies a new change which reverts all changes made since the given `revision`.
@@ -410,7 +419,7 @@ export interface UntypedTreeViewAlpha extends UntypedTreeView, TreeContextAlpha 
 	 *
 	 * Unlike {@link UntypedTreeViewAlpha.rewindTo | rewindTo}, this does not switch to a new branch.
 	 */
-	revertTo(revision: string): void;
+	revertTo(revision: CommitRevision): void;
 
 	/**
 	 * {@link TreeContextAlpha.(runTransaction:1) | Run a transaction} on this view of the SharedTree.

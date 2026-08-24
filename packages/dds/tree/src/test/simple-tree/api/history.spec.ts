@@ -67,11 +67,11 @@ describe("TreeBranchHistoryImpl", () => {
 	it("commitCount reflects the number of commits in the branch", () => {
 		const branch = createBranch();
 		const history = new DefaultTreeBranchHistory(branch, testIdCompressor);
-		assert.equal(history.commitCount, 0);
+		assert.equal(history.length, 0);
 
 		setRootValue(branch, 3);
 		setRootValue(branch, 4);
-		assert.equal(history.commitCount, 2);
+		assert.equal(history.length, 2);
 
 		history.dispose();
 	});
@@ -81,17 +81,17 @@ describe("TreeBranchHistoryImpl", () => {
 			const branch = createBranch();
 			const history = new DefaultTreeBranchHistory(branch, testIdCompressor);
 
-			const beforeInit = history.getHeadCommit();
+			const beforeInit = history.getHead();
 			assert.equal(beforeInit, undefined);
 
 			setRootValue(branch, 3);
 
-			const afterInit = history.getHeadCommit();
+			const afterInit = history.getHead();
 			assert.notEqual(afterInit, undefined);
 
 			setRootValue(branch, 4);
 
-			const afterEdit = history.getHeadCommit();
+			const afterEdit = history.getHead();
 			assert.notEqual(afterEdit, undefined);
 			assert.notEqual(afterEdit?.revision, afterInit?.revision);
 			history.dispose();
@@ -105,15 +105,15 @@ describe("TreeBranchHistoryImpl", () => {
 			const historyA = new DefaultTreeBranchHistory(branchA, testIdCompressor);
 			const historyB = new DefaultTreeBranchHistory(branchB, testIdCompressor);
 
-			const headA = historyA.getHeadCommit();
-			const headB = historyB.getHeadCommit();
+			const headA = historyA.getHead();
+			const headB = historyB.getHead();
 			assert(headA !== undefined);
 			assert(headB !== undefined);
 			assert.equal(headA.revision, headB.revision);
 
 			setRootValue(branchA, 4);
-			const nextHeadA = historyA.getHeadCommit();
-			const nextHeadB = historyB.getHeadCommit();
+			const nextHeadA = historyA.getHead();
+			const nextHeadB = historyB.getHead();
 			assert(nextHeadA !== undefined);
 			assert(nextHeadB !== undefined);
 			assert.notEqual(nextHeadA.revision, nextHeadB.revision);
@@ -125,26 +125,26 @@ describe("TreeBranchHistoryImpl", () => {
 			const branch = createBranch();
 			const history = new DefaultTreeBranchHistory(branch, testIdCompressor);
 			setRootValue(branch, 3);
-			const afterInit = history.getHeadCommit();
+			const afterInit = history.getHead();
 			assert(afterInit !== undefined);
 
 			setRootValue(branch, 4);
 			setRootValue(branch, 5);
 
-			const head = history.getHeadCommit();
+			const head = history.getHead();
 			assert(head !== undefined);
 			assert.notEqual(head.revision, afterInit.revision);
 
-			const parent = head.parent;
+			const parent = head.getParent();
 			assert(parent !== undefined);
 			assert.notEqual(parent.revision, head.revision);
 
-			const grandparent = parent.parent;
+			const grandparent = parent.getParent();
 			assert(grandparent !== undefined);
 			assert.equal(grandparent.revision, afterInit.revision);
 
 			// The oldest commit's parent is the root commit, which has no metadata.
-			assert.equal(grandparent.parent, undefined);
+			assert.equal(grandparent.getParent(), undefined);
 			history.dispose();
 		});
 	});

@@ -59,6 +59,7 @@ export {
 } from "./shared-tree/index.js";
 
 export {
+	type CommitRevision,
 	TreeArrayNode,
 	type TreeArrayNodeAlpha,
 	type Unhydrated,

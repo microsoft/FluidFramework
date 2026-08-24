@@ -1152,7 +1152,7 @@ describe("sharedTreeView", () => {
 			);
 			view1.initialize([]);
 
-			const commitBeforeFork = checkout.branchHistory.getHeadCommit();
+			const commitBeforeFork = checkout.branchHistory.getHead();
 			assert.notEqual(commitBeforeFork, undefined);
 
 			const fork = checkout.fork();
@@ -1160,13 +1160,13 @@ describe("sharedTreeView", () => {
 			view1.root.insertAtEnd("A");
 			view1.root.insertAtEnd("B");
 
-			const commitAfterEdits = checkout.branchHistory.getHeadCommit();
+			const commitAfterEdits = checkout.branchHistory.getHead();
 			assert.notEqual(commitAfterEdits, undefined);
 			assert.notEqual(commitAfterEdits?.revision, commitBeforeFork?.revision);
 
 			checkout.switchBranch(fork.mainBranch);
 
-			const headCommitAfterSwitch = checkout.branchHistory.getHeadCommit();
+			const headCommitAfterSwitch = checkout.branchHistory.getHead();
 			assert.notEqual(headCommitAfterSwitch, undefined);
 			assert.equal(headCommitAfterSwitch?.revision, commitBeforeFork?.revision);
 		});

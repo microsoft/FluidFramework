@@ -13,6 +13,9 @@ import type { TreeBranchCommitMetadata, TreeBranchHistory } from "../simple-tree
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 
+/**
+ * A lazily constructed implementation of {@link TreeBranchCommitMetadata} that wraps a {@link GraphCommit}.
+ */
 class LazyTreeBranchCommitMetadata implements TreeBranchCommitMetadata {
 	public readonly revision: string;
 	private parentCache?: {
@@ -28,7 +31,7 @@ class LazyTreeBranchCommitMetadata implements TreeBranchCommitMetadata {
 		this.revision = idCompressor.decompress(commit.revision);
 	}
 
-	public get parent(): TreeBranchCommitMetadata | undefined {
+	public getParent(): TreeBranchCommitMetadata | undefined {
 		// The parent of the commit may change over time due to trunk trimming.
 		if (this.commit.parent !== this.parentCache?.prior) {
 			const { parent } = this.commit;
@@ -44,6 +47,9 @@ class LazyTreeBranchCommitMetadata implements TreeBranchCommitMetadata {
 	}
 }
 
+/**
+ * A default implementation of {@link TreeBranchHistory} that wraps a {@link SharedTreeBranch}.
+ */
 export class DefaultTreeBranchHistory implements TreeBranchHistory {
 	private readonly commitCounter: BranchCommitCounter<
 		SharedTreeEditBuilder,
@@ -66,11 +72,11 @@ export class DefaultTreeBranchHistory implements TreeBranchHistory {
 		this.commitCounter.dispose();
 	}
 
-	public get commitCount(): number {
+	public get length(): number {
 		return this.commitCounter.count;
 	}
 
-	public getHeadCommit(): TreeBranchCommitMetadata | undefined {
+	public getHead(): TreeBranchCommitMetadata | undefined {
 		const head = this.branch.getHead();
 		if (head.revision === "root") {
 			return undefined;

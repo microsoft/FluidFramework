@@ -227,6 +227,9 @@ export enum CommitOutcome {
 }
 
 // @alpha
+export type CommitRevision = string;
+
+// @alpha
 export function comparePersistedSchema(persisted: JsonCompatible, view: ImplicitFieldSchema, options: ICodecOptions): Omit<SchemaCompatibilityStatus, "canInitialize">;
 
 // @alpha
@@ -1883,8 +1886,8 @@ export type TreeBranchAlpha = UntypedTreeViewAlpha;
 
 // @alpha @sealed
 export interface TreeBranchCommitMetadata {
-    readonly parent: TreeBranchCommitMetadata | undefined;
-    readonly revision: string;
+    getParent(): TreeBranchCommitMetadata | undefined;
+    readonly revision: CommitRevision;
 }
 
 // @alpha @sealed
@@ -1894,8 +1897,8 @@ export interface TreeBranchEvents {
 
 // @alpha @sealed
 export interface TreeBranchHistory {
-    readonly commitCount: number;
-    getHeadCommit(): TreeBranchCommitMetadata | undefined;
+    getHead(): TreeBranchCommitMetadata | undefined;
+    readonly length: number;
 }
 
 // @public @sealed
@@ -2195,8 +2198,8 @@ export interface UntypedTreeViewAlpha extends UntypedTreeView, TreeContextAlpha 
     fork(): UntypedTreeViewAlpha;
     hasRootSchema<TSchema extends ImplicitFieldSchema>(schema: TSchema): this is TreeViewAlpha<TSchema>;
     isMissingEditsFrom(view: UntypedTreeView): boolean;
-    revertTo(revision: string): void;
-    rewindTo(revision: string): void;
+    revertTo(revision: CommitRevision): void;
+    rewindTo(revision: CommitRevision): void;
     runTransaction<TSuccessValue, TFailureValue>(transaction: () => TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>, params?: RunTransactionParamsAlpha): TransactionValueResult<TSuccessValue, TFailureValue>;
     runTransaction(transaction: () => VoidTransactionCallbackStatusAlpha | void, params?: RunTransactionParamsAlpha): TransactionVoidResult;
     runTransactionAsync<TSuccessValue, TFailureValue>(transaction: () => Promise<TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>>, params?: RunTransactionParamsAlpha): Promise<TransactionValueResult<TSuccessValue, TFailureValue>>;
