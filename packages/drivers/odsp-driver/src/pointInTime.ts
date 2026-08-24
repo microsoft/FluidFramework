@@ -3,6 +3,12 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * Optional ODSP point-in-time loading implementation for consumer injection.
+ *
+ * @packageDocumentation
+ */
+
 // eslint-disable-next-line import-x/no-internal-modules -- Dedicated entrypoint for the optional point-in-time implementation.
 export { createPointInTimeDocumentService } from "./pointInTimeDriver/createPointInTimeDocumentService.js";
 export type {

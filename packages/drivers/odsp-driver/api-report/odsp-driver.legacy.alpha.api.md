@@ -102,19 +102,12 @@ export interface IOdspDocumentServiceFactoryOptions {
 
 // @beta @legacy
 export interface IOdspPointInTimeDocumentServiceImplementationProps {
-    // (undocumented)
     readonly clientIsSummarizer?: boolean;
-    // (undocumented)
     readonly createDocumentService: (resolvedUrl: IResolvedUrl, logger: ITelemetryBaseLogger, cacheAndTracker: ICacheAndTracker, clientIsSummarizer?: boolean) => Promise<IDocumentService>;
-    // (undocumented)
     readonly getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>;
-    // (undocumented)
     readonly logger?: ITelemetryBaseLogger;
-    // (undocumented)
     readonly persistedCache: IPersistedCache;
-    // (undocumented)
     readonly resolvedUrl: IResolvedUrl;
-    // (undocumented)
     readonly targetSequenceNumber: number;
 }
 

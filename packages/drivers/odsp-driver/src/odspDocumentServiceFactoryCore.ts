@@ -89,12 +89,27 @@ export interface IPointInTimeDocumentServiceFactory extends IDocumentServiceFact
  * @legacy @beta
  */
 export interface IOdspPointInTimeDocumentServiceImplementationProps {
+	/** The resolved ODSP URL for the document to materialize. */
 	readonly resolvedUrl: IResolvedUrl;
+	/** The sequence number at which to materialize the document. */
 	readonly targetSequenceNumber: number;
+	/** Optional telemetry logger for the point-in-time load. */
 	readonly logger?: ITelemetryBaseLogger;
+	/** Whether to apply summarizer policies and telemetry. Defaults to `false`. */
 	readonly clientIsSummarizer?: boolean;
+	/** The persisted ODSP cache supplied to the document service factory. */
 	readonly persistedCache: IPersistedCache;
+	/** Fetches storage access tokens for ODSP requests. */
 	readonly getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>;
+	/**
+	 * Creates an ODSP document service for a resolved URL.
+	 *
+	 * @param resolvedUrl - The resolved URL for the document or file version to load.
+	 * @param logger - The telemetry logger for the document service.
+	 * @param cacheAndTracker - The cache and epoch tracker shared by the point-in-time load.
+	 * @param clientIsSummarizer - Whether to apply summarizer policies and telemetry.
+	 * @returns The document service for the resolved URL.
+	 */
 	readonly createDocumentService: (
 		resolvedUrl: IResolvedUrl,
 		logger: ITelemetryBaseLogger,

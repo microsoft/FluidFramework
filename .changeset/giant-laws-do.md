@@ -2,7 +2,7 @@
 "@fluidframework/odsp-driver": minor
 "__section": legacy
 ---
-Inject point-in-time support into ODSP document service factories
+Make point-in-time support optional and consumer-supplied
 
 Point-in-time loading is now an optional implementation supplied by the host. Consumers that do
 not enable the feature no longer include its implementation in their dependency graph. Hosts can
