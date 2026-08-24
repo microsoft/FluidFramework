@@ -1,0 +1,31 @@
+# Local environment / secrets — never commit
+.env
+*.local
+azure/deploy.parameters.json
+azure/deploy.parameters.[0-9]*.json
+azure/end-to-end-tests/end-to-end-tests.parameters.json
+deploy-validate/.deployment-config.json
+
+# Node
+node_modules/
+# These sub-projects intentionally don't pin an npm lockfile (see policy-check's
+# extraneous-lockfiles rule); regenerate locally with `npm install` as needed.
+package-lock.json
+
+# Fetched FluidFramework source
+.fluidframework/
+.fluidframework-release/
+
+# Logs
+*.log
+
+# Local data / build output
+data/
+dist/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Release artifacts
+release-artifacts/

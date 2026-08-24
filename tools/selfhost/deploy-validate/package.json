@@ -1,0 +1,36 @@
+{
+	"name": "fluid-selfhost-deploy-validate",
+	"version": "1.0.0",
+	"private": true,
+	"description": "Post-deployment validation for the self-hosted Fluid stack. Runs a real two-client Fluid session (create/attach, real-time sync, cold-load convergence, audience) against a live azure/deploy.sh deployment.",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "tools/selfhost/deploy-validate"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"main": "src/scenario.js",
+	"bin": {
+		"deploy-validate": "./bin/deploy-validate.js"
+	},
+	"scripts": {
+		"clean": "rimraf --glob nyc",
+		"test": "node --test \"test/*.test.js\""
+	},
+	"dependencies": {
+		"@fluidframework/container-loader": "^2.0.0",
+		"@fluidframework/driver-utils": "^2.0.0",
+		"@fluidframework/fluid-static": "^2.0.0",
+		"@fluidframework/routerlicious-driver": "^2.0.0",
+		"fluid-framework": "^2.0.0",
+		"jsonwebtoken": "^9.0.0"
+	},
+	"devDependencies": {
+		"rimraf": "^6.1.3"
+	},
+	"engines": {
+		"node": ">=18.0.0"
+	}
+}
