@@ -56,6 +56,7 @@
 			}
 		}
 	},
+	"tsdocMetadata": "./lib/tsdoc-metadata.json",
 	"scripts": {
 		"bench": "cross-env FLUID_TEST_PERF_MODE=1 mocha --parentProcess",
 		"build": "fluid-build . --task build",
