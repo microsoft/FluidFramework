@@ -98,6 +98,9 @@
 			"Class_LocalDeltaConnectionServer": {
 				"forwardCompat": false
 			},
+			"Class_LocalOrdererManager": {
+				"forwardCompat": false
+			},
 			"Class_LocalWebSocket": {
 				"forwardCompat": false
 			},

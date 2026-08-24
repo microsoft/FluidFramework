@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import type {
+	FluidIterableIterator,
+	FluidReadonlyArray,
+} from "@fluidframework/core-interfaces";
 import { Lazy, oob, fail, assert, clamp } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -83,7 +87,7 @@ import type {
  * @system @sealed @public
  */
 export interface ReadonlyArrayNode<out T = TreeNode | TreeLeafValue>
-	extends ReadonlyArray<T>,
+	extends FluidReadonlyArray<T>,
 		Awaited<TreeNode & WithType<string, NodeKind.Array>> {}
 
 /**
@@ -462,7 +466,7 @@ export interface TreeArrayNode<
 	/**
 	 * Returns a custom IterableIterator which throws usage errors if concurrent editing and iteration occurs.
 	 */
-	values(): IterableIterator<T>;
+	values(): FluidIterableIterator<T>;
 }
 
 /**
@@ -736,15 +740,15 @@ const TreeNodeWithArrayFeatures = (() => {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 declare abstract class NodeWithArrayFeatures<Input, T>
 	extends TreeNodeValid<Input>
-	implements Pick<readonly T[], (typeof arrayPrototypeKeys)[number]>
+	implements Pick<FluidReadonlyArray<T>, (typeof arrayPrototypeKeys)[number]>
 {
 	concat(...items: ConcatArray<T>[]): T[];
 	concat(...items: (T | ConcatArray<T>)[]): T[];
-	entries(): IterableIterator<[number, T]>;
+	entries(): FluidIterableIterator<[number, T]>;
 	every<S extends T>(
 		predicate: (value: T, index: number, array: readonly T[]) => value is S,
 		thisArg?: any,
-	): this is readonly S[];
+	): this is FluidReadonlyArray<S>;
 	every(
 		predicate: (value: T, index: number, array: readonly T[]) => unknown,
 		thisArg?: any,
@@ -781,7 +785,7 @@ declare abstract class NodeWithArrayFeatures<Input, T>
 	includes(searchElement: T, fromIndex?: number | undefined): boolean;
 	indexOf(searchElement: T, fromIndex?: number | undefined): number;
 	join(separator?: string | undefined): string;
-	keys(): IterableIterator<number>;
+	keys(): FluidIterableIterator<number>;
 	lastIndexOf(searchElement: T, fromIndex?: number | undefined): number;
 	map<U>(callbackfn: (value: T, index: number, array: readonly T[]) => U, thisArg?: any): U[];
 	reduce(
@@ -1099,7 +1103,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		return fail(0xadb /* Proxy should intercept length */);
 	}
 
-	public [Symbol.iterator](): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>> {
+	public [Symbol.iterator](): FluidIterableIterator<TreeNodeFromImplicitAllowedTypes<T>> {
 		return this.values();
 	}
 
@@ -1397,7 +1401,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		}
 	}
 
-	public values(): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>> {
+	public values(): FluidIterableIterator<TreeNodeFromImplicitAllowedTypes<T>> {
 		return this.generateValues(getKernel(this).generationNumber);
 	}
 	private *generateValues(
