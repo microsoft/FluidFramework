@@ -23,6 +23,7 @@ import {
 	type FlexTreeUnknownUnboxed,
 	FieldKinds,
 	type FlexTreeRequiredField,
+	allowsRepoSuperset,
 } from "../feature-libraries/index.js";
 import {
 	type ImplicitFieldSchema,
@@ -31,8 +32,9 @@ import {
 	tryGetTreeNodeForField,
 	setField,
 	normalizeFieldSchema,
-	SchemaCompatibilityTester,
+	checkSchemaCompatibility,
 	type InsertableContent,
+	type StagedSchemaUpgradePolicy,
 	type TreeViewConfiguration,
 	type TreeViewAlpha,
 	type InsertableField,
@@ -55,8 +57,10 @@ import {
 	TreeViewConfigurationAlpha,
 	toInitialSchema,
 	toUpgradeSchema,
-	type TreeBranch,
-	type TreeBranchAlpha,
+	type UntypedTreeView,
+	type UntypedTreeViewAlpha,
+	type TreeSchema,
+	getSchemaCompatibilityError,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -70,7 +74,7 @@ import { canInitialize, initialize, initializerFromChunk } from "./schematizeTre
 import type { TreeCheckout } from "./treeCheckout.js";
 
 /**
- * Stores the {@link TreeBranch} associated with a checkout's anchor set.
+ * Stores the {@link UntypedTreeView} associated with a checkout's anchor set.
  *
  * @remarks
  * This is used for two purposes:
@@ -81,13 +85,35 @@ import type { TreeCheckout } from "./treeCheckout.js";
  * 2. To retrieve the branch for a document-root node in {@link (TreeAlpha:interface).parent2}
  * (via `DocumentRootParent`).
  *
- * The stored type is {@link TreeBranch} rather than `TreeView<ImplicitFieldSchema>`. Detecting a prior view
+ * The stored type is {@link UntypedTreeView} rather than `TreeView<ImplicitFieldSchema>`. Detecting a prior view
  * (purpose 1) only needed presence, but retrieving a usable branch (purpose 2) needs a handle that works for
  * any branch. `TreeView` is invariant over its schema, so a `TreeView<ImplicitFieldSchema>` cannot actually be
  * used as a view for a branch with a more specific schema, and would not cover non-main branches at all.
- * {@link TreeBranch} is the correct general type for "any branch" here.
+ * {@link UntypedTreeView} is the correct general type for "any branch" here.
  */
-export const ViewSlot = anchorSlot<TreeBranch>();
+export const ViewSlot = anchorSlot<UntypedTreeView>();
+
+function throwIfSchemaIsIncompatible(
+	compatibility: SchemaCompatibilityStatus,
+	viewSchema: TreeSchema,
+	storedSchema: TreeCheckout["storedSchema"],
+): void {
+	if (compatibility.canView) {
+		return;
+	}
+
+	const discrepancy = getSchemaCompatibilityError(viewSchema, storedSchema);
+	const details =
+		discrepancy === undefined ? "" : ` The first schema mismatch is: ${discrepancy}.`;
+	const resolution = compatibility.canInitialize
+		? "The document is uninitialized; call TreeView.initialize() before reading or writing TreeView.root."
+		: compatibility.canUpgrade
+			? "The stored schema can be upgraded; call TreeView.upgradeSchema() before reading or writing TreeView.root."
+			: "The schemas cannot be upgraded automatically. Review the reported mismatch and use a compatible view schema or explicitly migrate the document schema and data.";
+	throw new UsageError(
+		`TreeView.root is unavailable because the view schema is not compatible with the document's stored schema.${details} ${resolution}`,
+	);
+}
 
 /**
  * Implementation of TreeView wrapping a FlexTreeView.
@@ -112,7 +138,14 @@ export class SchematizingSimpleTreeView<
 		IEmitter<TreeViewEvents & TreeBranchEvents> &
 		HasListeners<TreeViewEvents & TreeBranchEvents> = createEmitter();
 
-	private readonly viewSchema: SchemaCompatibilityTester;
+	/**
+	 * The schema for this view, captured at construction time for compatibility checking.
+	 */
+	private readonly viewSchema: TreeSchema;
+	/**
+	 * Stored-schema generation policy from the view configuration, frozen at construction time.
+	 */
+	private readonly stagedUpgradePolicy: StagedSchemaUpgradePolicy;
 
 	/**
 	 * Events to unregister upon flex-tree view disposal.
@@ -155,9 +188,18 @@ export class SchematizingSimpleTreeView<
 
 		this.rootFieldSchema = normalizeFieldSchema(config.schema);
 
-		const configAlpha = new TreeViewConfigurationAlpha({ schema: config.schema });
+		const stagedUpgradePolicy =
+			config instanceof TreeViewConfigurationAlpha ? config.stagedUpgradePolicy : undefined;
+		const configAlpha = new TreeViewConfigurationAlpha({
+			schema: config.schema,
+			enableSchemaValidation: config.enableSchemaValidation,
+			preventAmbiguity: config.preventAmbiguity,
+			stagedUpgradePolicy,
+		});
+		this.stagedUpgradePolicy = configAlpha.stagedUpgradePolicy;
 
-		this.viewSchema = new SchemaCompatibilityTester(configAlpha);
+		// Store viewSchema directly from the configuration (TreeViewConfigurationAlpha implements TreeSchema)
+		this.viewSchema = configAlpha;
 		// This must be initialized before `update` can be called.
 		this.currentCompatibility = {
 			canView: false,
@@ -175,7 +217,11 @@ export class SchematizingSimpleTreeView<
 		);
 	}
 
-	public isBranch(): this is TreeBranchAlpha {
+	public isBranch(): this is UntypedTreeViewAlpha {
+		return this.isView();
+	}
+
+	public isView(): this is UntypedTreeViewAlpha {
 		return true;
 	}
 
@@ -202,7 +248,7 @@ export class SchematizingSimpleTreeView<
 		}
 
 		this.runSchemaEdit(() => {
-			const schema = toInitialSchema(this.config.schema);
+			const schema = toInitialSchema(this.config.schema, this.stagedUpgradePolicy);
 			// This has to be the contextless version, since when "initialize" is called (right after this),
 			// it will do a schema change which would dispose of the current context (see inside `update`).
 			// Thus using the current context (if any) would hydrate nodes then
@@ -260,19 +306,18 @@ export class SchematizingSimpleTreeView<
 	public upgradeSchema(): void {
 		this.ensureUndisposed();
 
-		const compatibility = this.compatibility;
-		if (compatibility.isEquivalent) {
+		const newSchema = toUpgradeSchema(this.viewSchema.root, this.stagedUpgradePolicy);
+		const storedSchema = this.checkout.storedSchema.clone();
+		if (!allowsRepoSuperset(defaultSchemaPolicy, storedSchema, newSchema)) {
+			throw new UsageError(
+				"Existing stored schema cannot be upgraded to the requested schema (see TreeView.compatibility.canUpgrade).",
+			);
+		}
+		if (allowsRepoSuperset(defaultSchemaPolicy, newSchema, storedSchema)) {
 			// No-op
 			return;
 		}
 
-		if (!compatibility.canUpgrade) {
-			throw new UsageError(
-				"Existing stored schema cannot be upgraded (see TreeView.compatibility.canUpgrade).",
-			);
-		}
-
-		const newSchema = toUpgradeSchema(this.viewSchema.viewSchema.root);
 		this.runSchemaEdit(() => this.checkout.updateSchema(newSchema));
 	}
 
@@ -361,12 +406,8 @@ export class SchematizingSimpleTreeView<
 	private update(): void {
 		this.disposeFlexView();
 
-		const compatibility = this.viewSchema.checkCompatibility(this.checkout.storedSchema);
-
-		this.currentCompatibility = {
-			...compatibility,
-			canInitialize: canInitialize(this.checkout),
-		};
+		const compatibility = this.computeCompatibility();
+		this.currentCompatibility = compatibility;
 
 		const anchors = this.checkout.forest.anchors;
 		const slots = anchors.slots;
@@ -437,6 +478,18 @@ export class SchematizingSimpleTreeView<
 		}
 	}
 
+	private computeCompatibility(): SchemaCompatibilityStatus {
+		const compatibility = checkSchemaCompatibility(
+			this.viewSchema,
+			this.checkout.storedSchema,
+			this.stagedUpgradePolicy,
+		);
+		return {
+			...compatibility,
+			canInitialize: canInitialize(this.checkout),
+		};
+	}
+
 	private runSchemaEdit(edit: () => void): void {
 		this.midUpgrade = true;
 		try {
@@ -493,11 +546,11 @@ export class SchematizingSimpleTreeView<
 
 	private get flexRoot(): FlexTreeOptionalField | FlexTreeRequiredField {
 		this.breaker.use();
-		if (!this.compatibility.canView) {
-			throw new UsageError(
-				"Document is out of schema. Check TreeView.compatibility before accessing TreeView.root.",
-			);
-		}
+		throwIfSchemaIsIncompatible(
+			this.compatibility,
+			this.viewSchema,
+			this.checkout.storedSchema,
+		);
 		const view = this.getFlexTreeContext();
 		assert(
 			view.root.is(FieldKinds.optional) ||
@@ -514,11 +567,11 @@ export class SchematizingSimpleTreeView<
 
 	public set root(newRoot: InsertableField<TRootSchema>) {
 		this.breaker.use();
-		if (!this.compatibility.canView) {
-			throw new UsageError(
-				"Document is out of schema. Check TreeView.compatibility before accessing TreeView.root.",
-			);
-		}
+		throwIfSchemaIsIncompatible(
+			this.compatibility,
+			this.viewSchema,
+			this.checkout.storedSchema,
+		);
 		const view = this.getFlexTreeContext();
 		setField(
 			view.root,
@@ -530,21 +583,27 @@ export class SchematizingSimpleTreeView<
 
 	// #region Branching
 
-	public fork(): ReturnType<TreeBranchAlpha["fork"]> &
+	public fork(): ReturnType<UntypedTreeViewAlpha["fork"]> &
 		SchematizingSimpleTreeView<TRootSchema> {
 		return this.checkout.fork().viewWith(this.config);
 	}
 
-	public merge(context: TreeBranchAlpha, disposeMerged = true): void {
+	public merge(context: UntypedTreeViewAlpha, disposeMerged = true): void {
 		this.checkout.merge(context, disposeMerged);
 	}
 
-	public rebaseOnto(context: TreeBranchAlpha): void {
+	public rebaseOnto(context: UntypedTreeViewAlpha): void {
 		this.checkout.rebaseOnto(context);
 	}
 
-	public isMissingEditsFrom(context: TreeBranchAlpha): boolean {
+	public isMissingEditsFrom(context: UntypedTreeViewAlpha): boolean {
 		return this.checkout.isMissingEditsFrom(context);
+	}
+
+	public computeNetChangeIfRebasedOnto(
+		context: UntypedTreeViewAlpha,
+	): JsonCompatibleReadOnly | undefined {
+		return this.checkout.computeNetChangeIfRebasedOnto(context);
 	}
 
 	// #endregion Branching

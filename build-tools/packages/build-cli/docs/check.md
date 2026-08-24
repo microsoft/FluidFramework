@@ -75,6 +75,7 @@ Compare the two bundles previously collected by 'flub generate bundleAnalysisRep
 ```
 USAGE
   $ flub check bundleAnalysisReposComparison [-v | --quiet] [--base-label <value>] [--current-label <value>]
+  [--webpack-dir <value>]
 
 FLAGS
   --base-label=<value>     [default: main] Label subdirectory under compareBundlesOutput/analysis holding the base-side
@@ -83,6 +84,9 @@ FLAGS
   --current-label=<value>  [default: current] Label subdirectory under compareBundlesOutput/analysis holding the
                            current-side bundle stats. Matches the label 'flub generate bundleAnalysisRepo' saves in
                            local mode (a timestamped 'current_<epoch>').
+  --webpack-dir=<value>    [default: .] Directory whose compareBundlesOutput subdirectory holds the bundle stats to
+                           compare. Matches the --webpack-dir passed to 'flub generate bundleAnalysisRepo' (defaults to
+                           the current directory).
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.

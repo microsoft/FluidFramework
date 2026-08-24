@@ -13,7 +13,7 @@ import { toInitialSchema } from "../toStoredSchema.js";
 import { createTreeSchema } from "../treeSchema.js";
 
 import { TreeViewConfigurationAlpha, TreeViewConfiguration } from "./configuration.js";
-import { SchemaCompatibilityTester } from "./schemaCompatibilityTester.js";
+import { checkSchemaCompatibility } from "./schemaCompatibilityTester.js";
 import { generateSchemaFromSimpleSchema } from "./schemaFromSimple.js";
 import {
 	decodeSchemaCompatibilitySnapshot,
@@ -78,8 +78,7 @@ export function checkCompatibility(
 ): Omit<SchemaCompatibilityStatus, "canInitialize"> {
 	const viewAsAlpha = new TreeViewConfigurationAlpha({ schema: view.schema });
 	const stored = toInitialSchema(viewWhichCreatedStoredSchema.schema);
-	const tester = new SchemaCompatibilityTester(viewAsAlpha);
-	return tester.checkCompatibility(stored);
+	return checkSchemaCompatibility(viewAsAlpha, stored);
 }
 
 /**
@@ -314,7 +313,7 @@ export interface SnapshotSchemaCompatibilityOptions {
 	 * Such applications can set this to the oldest version currently deployed,
 	 * then rely on {@link snapshotSchemaCompatibility} to verify that no schema changes are made which would break collaboration with that (or newer) versions.
 	 *
-	 * This is the same approach used by {@link @fluidframework/runtime-definitions#MinimumVersionForCollab}
+	 * This is the same approach used by {@link @fluidframework/runtime-definitions#OldestSupportedClientVersion}
 	 * except that type is specifically for use with the version of the Fluid Framework client packages,
 	 * and this corresponds to whatever versioning scheme is used with {@link SnapshotSchemaCompatibilityOptions.version}.
 	 */

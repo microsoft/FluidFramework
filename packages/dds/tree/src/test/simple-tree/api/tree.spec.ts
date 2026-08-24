@@ -31,7 +31,8 @@ import {
 } from "../../../simple-tree/index.js";
 import { SharedTree } from "../../../treeFactory.js";
 import type { JsonCompatibleReadOnly, requireAssignableTo } from "../../../util/index.js";
-import { getView } from "../../utils.js";
+import { getView, StringArray } from "../../utils.js";
+import { getViewForForkedBranch } from "../utils.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -118,7 +119,10 @@ describe("simple-tree tree", () => {
 
 		it("invalid default - initialize", () => {
 			const view = getView(config);
-			assert.throws(() => view.initialize({}), validateUsageError(/Field_NodeTypeNotAllowed/));
+			assert.throws(
+				() => view.initialize({}),
+				validateUsageError(/A node type is not allowed in its field/),
+			);
 		});
 
 		it("invalid default - insert", () => {
@@ -131,7 +135,7 @@ describe("simple-tree tree", () => {
 				() => {
 					view.root = newNode;
 				},
-				validateUsageError(/Field_NodeTypeNotAllowed/),
+				validateUsageError(/A node type is not allowed in its field/),
 			);
 		});
 	});
@@ -229,7 +233,10 @@ describe("simple-tree tree", () => {
 		const view = getView(config);
 		// Note: the tree's schema hasn't been initialized at this point, so even though the view schema
 		// allows an optional field, explicit initialization must occur.
-		assert.throws(() => view.root, /Document is out of schema./);
+		assert.throws(
+			() => view.root,
+			/TreeView\.root is unavailable because the view schema is not compatible with the document's stored schema.*The document is uninitialized; call TreeView\.initialize\(\)/,
+		);
 		view.initialize(undefined);
 		assert.equal(view.root, undefined);
 	});
@@ -425,6 +432,45 @@ describe("simple-tree tree", () => {
 			});
 			assert.equal(viewA.root, 5);
 		});
+	});
+
+	describe("computeNetChangeIfRebasedOnto", () => {
+		const scenarios = [
+			{ editSource: false, editTarget: false },
+			{ editSource: true, editTarget: false },
+			{ editSource: false, editTarget: true },
+			{ editSource: true, editTarget: true },
+		];
+		for (const { editSource, editTarget } of scenarios) {
+			it(`when source branch is ${editSource ? "edited" : "not edited"} and target branch is ${
+				editTarget ? "edited" : "not edited"
+			}`, () => {
+				const config = new TreeViewConfiguration({ schema: StringArray });
+				const targetView = getView(config);
+				targetView.initialize([]);
+				const sourceView = targetView.fork();
+
+				if (editSource) {
+					sourceView.root.insertAtEnd("source edit");
+				}
+				if (editTarget) {
+					targetView.root.insertAtEnd("target edit");
+				}
+				const rebasedView = getViewForForkedBranch(sourceView).forkView;
+				const appliedView = getViewForForkedBranch(sourceView).forkView;
+
+				rebasedView.rebaseOnto(targetView);
+
+				// Validating the output of `computeNetChangeIfRebasedOnto` directly would make the test brittle since the internals of the format are implementation details.
+				// Instead, we apply the net change to the applied view and then compare the resulting state to the rebased view to ensure they are equivalent.
+				const netChange = appliedView.computeNetChangeIfRebasedOnto(targetView);
+				if (netChange !== undefined) {
+					appliedView.applyChange(netChange);
+				}
+
+				assert.deepEqual([...appliedView.root], [...rebasedView.root]);
+			});
+		}
 	});
 
 	describe("isMissingEditsFrom", () => {

@@ -1,10 +1,16 @@
 {
 	"extends": "../../../common/build/build-common/tsconfig.node16.json",
 	"compilerOptions": {
+		"rootDir": "./src",
 		"outDir": "./lib",
-		"types": ["jest", "puppeteer", "jest-environment-puppeteer", "expect-puppeteer", "react"],
+		"types": ["node", "react"],
 		"noUncheckedIndexedAccess": false,
 		"exactOptionalPropertyTypes": false,
 	},
+	// Tests under tests/ and playwright.config.ts are intentionally not in `include`:
+	// Playwright transpiles them at runtime, so tsc doesn't need to emit them. This
+	// only works because the package has no mocha tests (which would run from built
+	// JS). If mocha tests are ever added, give them their own emit-producing tsconfig
+	// rather than expanding this include.
 	"include": ["src/**/*"],
 }

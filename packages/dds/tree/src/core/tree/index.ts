@@ -94,10 +94,10 @@ export {
 export { type DeltaVisitor, visitDelta } from "./visitDelta.js";
 export {
 	type AnnouncedVisitor,
-	announceDelta,
 	applyDelta,
 	createAnnouncedVisitor,
 	combineVisitors,
+	makeBreakingVisitor,
 	makeDetachedFieldIndex,
 } from "./visitorUtils.js";
 
@@ -109,8 +109,9 @@ export {
 	offsetDetachId,
 	emptyDelta,
 	areDetachedNodeIdsEqual,
-	deltaFieldMapHasVisibleChanges,
-	deltaFieldChangesHaveVisibleChanges,
+	deltaFieldMapHasChanges,
+	deltaFieldChangesHaveChanges,
+	getDeltaChangeProfile,
 } from "./deltaUtil.js";
 
 export {
@@ -126,6 +127,8 @@ export {
 	type DetachedFieldIndexCheckpoint,
 	type ReadOnlyDetachedFieldIndex,
 } from "./detachedFieldIndex.js";
+
+export { type DetachedFieldSummaryData } from "./detachedFieldIndexTypes.js";
 
 export { detachedFieldIndexCodecBuilder } from "./detachedFieldIndexCodecs.js";
 export { DetachedFieldIndexFormatVersion } from "./detachedFieldIndexFormatCommon.js";

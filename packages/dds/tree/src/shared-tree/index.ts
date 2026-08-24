@@ -43,6 +43,8 @@ export type {
 	SharedTreeEditBuilder,
 } from "./sharedTreeEditBuilder.js";
 
+export { minimize } from "./transactionMinimize.js";
+
 export { Tree } from "./tree.js";
 export type { RunTransaction } from "./tree.js";
 
@@ -63,6 +65,7 @@ export {
 	type ViewContent,
 	independentView,
 	type IndependentViewOptions,
+	type IndependentViewTelemetryOptions,
 	createIndependentTreeBeta,
 	createIndependentTreeAlpha,
 	type CreateIndependentTreeAlphaOptions,

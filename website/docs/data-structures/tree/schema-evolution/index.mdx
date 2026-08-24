@@ -3,11 +3,13 @@ title: Schema Evolution
 sidebar_position: 8
 ---
 
+import { ApiLink, PackageLink } from "@site/src/components/shortLinks";
+
 # Schema Evolution
 
 As your application (or library) grows and evolves, you may need to modify the structure of your [SharedTree](../index.mdx) data.
 SharedTree makes it possible to update your [schemas](../schema-definition/index.mdx) in ways that allow an app to load or upgrade documents created or edited by earlier versions of the app (see [understanding compatibility](./index.mdx#understanding-compatibility)).
-To ensure such changes to maintain the ability to open existing documents and collaborate with other deployed application versions, write a test using [`snapshotSchemaCompatibility`](../../../api/fluid-framework/#snapshotschemacompatibility-function).
+To ensure such changes to maintain the ability to open existing documents and collaborate with other deployed application versions, write a test using <PackageLink packageName="fluid-framework" headingId="snapshotschemacompatibility-function">`snapshotSchemaCompatibility`</PackageLink>.
 
 :::note
 For detailed information about which types of changes are safe versus breaking, see [types of schema changes](./types-of-changes.mdx).
@@ -17,7 +19,7 @@ For detailed information about which types of changes are safe versus breaking, 
 
 When updating your schema, it's important to understand the difference between the two types of schemas:
 
-- **View Schema**: The schema defined in your application code using [`SchemaFactory`](../../../api/fluid-framework/schemafactory-class)
+- **View Schema**: The schema defined in your application code using <ApiLink packageName="fluid-framework" apiName="SchemaFactory" />
 - **Stored Schema**: The schema persisted with each document. It describes what type of tree can be stored in the document.
 
 When a document is first created, its stored schema is set using the given view schema.
@@ -50,7 +52,7 @@ Therefore, a Fluid application should be prepared to encounter any version of a 
 When you open a document, SharedTree compares your application's view schema with the document's stored schema to determine compatibility:
 
 - **Compatible**: Document can be opened and used normally
-- **Upgradeable**: Document can be upgraded to match your view schema using [`view.upgradeSchema()`](../../../api/fluid-framework/treeview-interface#upgradeschema-methodsignature)
+- **Upgradeable**: Document can be upgraded to match your view schema using <ApiLink packageName="fluid-framework" apiName="TreeView" headingId="upgradeschema-methodsignature">`view.upgradeSchema()`</ApiLink>
 - **Incompatible**: Document cannot be opened with or upgraded to match your current view schema
 
 They must be compatible or upgradeable in order for the application to work - otherwise, it cannot read or write data from/to the document.
@@ -108,9 +110,9 @@ To prevent this, the application can employ a [staged rollout](./index.mdx#stage
 
 ### Checking Compatibility
 
-Use [`TreeView.compatibility`](../../../api/fluid-framework/treeview-interface#compatibility-propertysignature) to check if your schema changes are compatible with existing documents.
+Use <ApiLink packageName="fluid-framework" apiName="TreeView" headingId="compatibility-propertysignature">`TreeView.compatibility`</ApiLink> to check if your schema changes are compatible with existing documents.
 
-Generally, the most important properties of the `compatibility` object to monitor are [`canView`](../../../api/fluid-framework/schemacompatibilitystatus-interface#canview-propertysignature) and [`canUpgrade`](../../../api/fluid-framework/schemacompatibilitystatus-interface#canupgrade-propertysignature).
+Generally, the most important properties of the `compatibility` object to monitor are <ApiLink packageName="fluid-framework" apiName="SchemaCompatibilityStatus" headingId="canview-propertysignature">`canView`</ApiLink> and <ApiLink packageName="fluid-framework" apiName="SchemaCompatibilityStatus" headingId="canupgrade-propertysignature">`canUpgrade`</ApiLink>.
 `canView` indicates that the view schema is [compatible](./index.mdx#schema-compatibility) with the stored schema while `canUpgrade` indicates that it is valid to [upgrade the schema](./index.mdx#schema-upgrade-process).
 
 ### Monitoring Remote Schema Changes
@@ -127,7 +129,7 @@ view.events.on("schemaChanged", () => {
 
 ## Schema Upgrade Process
 
-When you make [backwards compatible](./index.mdx#understanding-compatibility) changes to your schema, you can upgrade existing documents to use the new schema using [`view.upgradeSchema()`](../../../api/fluid-framework/treeview-interface#upgradeschema-methodsignature):
+When you make [backwards compatible](./index.mdx#understanding-compatibility) changes to your schema, you can upgrade existing documents to use the new schema using <ApiLink packageName="fluid-framework" apiName="TreeView" headingId="upgradeschema-methodsignature">`view.upgradeSchema()`</ApiLink>:
 
 ```typescript
 import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
@@ -162,6 +164,17 @@ view.root.color = "#FF0000";
 
 For detailed information about which types of changes are safe versus breaking, see [Types of Schema Changes](./types-of-changes.mdx).
 
+### Staged Schema Upgrades
+
+A **staged schema upgrade** is a schema change that is declared in the view schema but excluded from stored schema until explicitly enabled.
+This allows your application code to understand and handle the new schema shape (reading documents that contain it) before the upgrade is activated for writes.
+
+SharedTree provides two mechanisms for defining staged schema upgrades:
+- <ApiLink packageName="fluid-framework" apiName="SchemaFactoryBeta" headingId="staged-property">`staged()`</ApiLink> -- marks a new allowed type as staged
+- <ApiLink packageName="fluid-framework" apiName="SchemaFactoryAlpha" headingId="stagedoptional-property">`stagedOptional()`</ApiLink> -- marks a field as optionally present during migration from required to optional
+
+Staged schema upgrades are the building blocks of [staged rollouts](#staged-rollouts) and [feature-flag-driven upgrades](./feature-flag-schema-upgrades.mdx).
+
 ### Staged Rollouts
 
 When deploying schema changes in production, use staged rollouts to ensure compatibility between clients running different application versions.
@@ -182,6 +195,8 @@ If a client upgrades a document to a new schema that older clients cannot read, 
 - Deploy code that automatically upgrades documents to the new schema.
 - Monitor for any compatibility issues.
 
+Alternatively, you can use [feature flags](./feature-flag-schema-upgrades.mdx) to combine both phases into a single deployment and control when upgrades are enabled at runtime.
+
 Changes that are both [backwards compatible](./index.mdx#backwards-compatibility) and [forwards compatible](./index.mdx#forwards-compatibility) are capable of cross-version collaboration without requiring a staged rollout.
 In that case, new clients can read and write to the same document as old clients without either one being fundamentally incompatible.
 However, staged rollouts are not easily avoidable.
@@ -190,11 +205,13 @@ Even seemingly simple schema changes (for example, adding a new type of node to 
 **Best Practices:**
 - Allow appropriate amount of time between release cycles to ensure client version adoption
 - Monitor client version distribution before enabling upgrades
-- Test compatibility scenarios with mixed client versions
+- [Test compatibility scenarios](./testing-schema-upgrades.mdx) with mixed client versions
 
 ## See Also
 
 - [Types of Schema Changes](./types-of-changes.mdx) - Detailed guide on safe vs breaking changes
 - [Rolling Out New Allowed Types](./allowed-types-rollout.mdx) - Guide on using staged to safely add new allowed types
+- [Enabling Schema Upgrades with Feature Flags](./feature-flag-schema-upgrades.mdx) - Use feature flags to control when staged upgrades take effect in production
+- [Testing Schema Upgrades](./testing-schema-upgrades.mdx) - Create test documents that simulate future schema states
 - [Schema Definition](../schema-definition/index.mdx) - How to define schemas
 - [Node Types](../node-types.mdx) - Understanding different node types

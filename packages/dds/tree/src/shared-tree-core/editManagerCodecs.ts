@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IIdCompressor } from "@fluidframework/id-compressor";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/internal";
 import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 
 import {
@@ -18,29 +17,16 @@ import {
 	type IJsonCodec,
 	makeDiscontinuedCodecAndSchema,
 } from "../codec/index.js";
-import type {
-	ChangeEncodingContext,
-	EncodedRevisionTag,
-	RevisionTag,
-	SchemaAndPolicy,
-} from "../core/index.js";
-import type { IdentifierHealingConfig } from "../util/index.js";
+import type { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../core/index.js";
 
 import type { SummaryData } from "./editManager.js";
+import type {
+	EditManagerDecodingContext,
+	EditManagerEncodingContext,
+} from "./editManagerCodecsCommons.js";
 import { makeV1toV4andV6CodecWithVersion } from "./editManagerCodecsV1toV4.js";
 import { makeSharedBranchesCodecWithVersion } from "./editManagerCodecsVSharedBranches.js";
 import { EditManagerFormatVersion } from "./editManagerFormatCommons.js";
-
-/**
- * Context required for encoding/decoding the {@link EditManager}'s {@link SummaryData}.
- */
-export interface EditManagerEncodingContext {
-	idCompressor: IIdCompressor;
-	readonly schema?: SchemaAndPolicy;
-	readonly isSummary: boolean;
-	/** See {@link IdentifierHealingConfig}. */
-	readonly healing?: IdentifierHealingConfig;
-}
 
 /**
  * Codec name used to identify the {@link EditManager} codec, see {@link makeEditManagerCodecBuilder}.
@@ -72,14 +58,16 @@ export function makeEditManagerCodecBuilder<TChangeset>(): VersionDispatchingCod
 	SummaryData<TChangeset>,
 	EditManagerEncodingContext,
 	EditManagerFormatVersion,
-	typeof editManagerCodecName
+	typeof editManagerCodecName,
+	EditManagerDecodingContext
 > {
 	// See EditManagerFormatVersion and its members for documentation on what changed in each version.
 	const versions: CodecVersion<
 		SummaryData<TChangeset>,
 		EditManagerEncodingContext,
 		EditManagerFormatVersion,
-		EditManagerCodecOptions<TChangeset>
+		EditManagerCodecOptions<TChangeset>,
+		EditManagerDecodingContext
 	>[] = [
 		makeDiscontinuedCodecAndSchema(EditManagerFormatVersion.v1, "2.73.0"),
 		makeDiscontinuedCodecAndSchema(EditManagerFormatVersion.v2, "2.73.0"),
@@ -144,7 +132,7 @@ export function makeEditManagerCodecBuilder<TChangeset>(): VersionDispatchingCod
  * with the provided change codec tree as a child.
  */
 export function getCodecTreeForEditManagerFormatWithChange(
-	clientVersion: MinimumVersionForCollab,
+	clientVersion: OldestSupportedClientVersion,
 	changeFormat: CodecTree,
 ): CodecTree {
 	const builder = makeEditManagerCodecBuilder();

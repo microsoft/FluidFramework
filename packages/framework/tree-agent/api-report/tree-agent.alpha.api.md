@@ -4,9 +4,14 @@
 
 ```ts
 
-export { Arg }
+// @alpha
+export type Arg<T extends TypeFactoryType = TypeFactoryType> = readonly [
+name: string,
+type: T
+];
 
-export { ArgsTuple }
+// @alpha
+export type ArgsTuple<T extends readonly Arg[]> = T extends readonly [infer Single extends Arg] ? [Single[1]] : T extends readonly [infer Head extends Arg, ...infer Tail extends readonly Arg[]] ? [Head[1], ...ArgsTuple<Tail>] : never;
 
 // @alpha
 export type AsynchronousEditor<TSchema extends ImplicitFieldSchema> = (tree: ViewOrTree<TSchema>, code: string) => Promise<void>;
@@ -14,7 +19,12 @@ export type AsynchronousEditor<TSchema extends ImplicitFieldSchema> = (tree: Vie
 // @alpha
 export type BindableSchema = TreeNodeSchema<string, NodeKind.Object> | TreeNodeSchema<string, NodeKind.Record> | TreeNodeSchema<string, NodeKind.Array> | TreeNodeSchema<string, NodeKind.Map>;
 
-export { buildFunc }
+// @alpha
+export function buildFunc<const Return extends TypeFactoryType, const Args extends readonly Arg[], const Rest extends TypeFactoryType | null = null>(def: {
+    description?: string;
+    returns: Return;
+    rest?: Rest;
+}, ...args: Args): FunctionDef<Args, Return, Rest>;
 
 // @alpha
 export interface Context<TSchema extends ImplicitFieldSchema> {
@@ -33,12 +43,13 @@ export function createContext<TSchema extends ImplicitFieldSchema>(tree: ViewOrT
 // @alpha
 export function createTreeAgent<TSchema extends ImplicitFieldSchema>(model: SharedTreeChatModel, tree: ViewOrTree<TSchema>, options?: TreeAgentOptions<TSchema>): TreeAgent;
 
-export { Ctor }
+// @alpha
+export type Ctor<T = any> = new (...args: any[]) => T;
 
 // @alpha
 export interface EditResult {
     message: string;
-    type: "success" | "disabledError" | "editingError" | "tooManyEditsError" | "expiredError";
+    type: "success" | "editingError" | "tooManyEditsError";
 }
 
 // @alpha
@@ -52,21 +63,48 @@ export interface ExecuteSemanticEditingOptions<TSchema extends ImplicitFieldSche
     maximumSequentialEdits?: number;
 }
 
-export { ExposedMethods }
+// @alpha
+export interface ExposedMethods {
+    expose<const K extends string & keyof MethodKeys<InstanceType<S>>, S extends Ctor & IExposedMethods, Z extends FunctionDef<readonly Arg[], TypeFactoryType, TypeFactoryType | null>>(constructor: S, methodName: K, tfFunction: Z): void;
+    exposeMethod<const K extends string & keyof MethodKeys<InstanceType<S>>, S extends Ctor & IExposedMethods, Z extends FunctionDef<readonly Arg[], TypeFactoryType, TypeFactoryType | null>>(constructor: S, methodName: K, tfFunction: Z): void;
+}
 
-export { ExposedProperties }
+// @alpha
+export interface ExposedProperties {
+    exposeProperty<S extends Ctor, K extends string>(constructor: S, name: K, def: {
+        schema: TypeFactoryType;
+        description?: string;
+        readOnly?: boolean;
+    }): void;
+    exposeProperty<S extends Ctor, K extends string>(constructor: S, name: K, tfType: TypeFactoryType): void;
+}
 
-export { exposeMethodsSymbol }
+// @alpha
+export const exposeMethodsSymbol: unique symbol;
 
-export { exposePropertiesSymbol }
+// @alpha
+export const exposePropertiesSymbol: unique symbol;
 
-export { FunctionDef }
+// @alpha
+export interface FunctionDef<Args extends readonly Arg[], Return extends TypeFactoryType, Rest extends TypeFactoryType | null = null> {
+    args: Args;
+    description?: string;
+    rest?: Rest;
+    returns: Return;
+}
 
-export { IExposedMethods }
+// @alpha
+export interface IExposedMethods {
+    [exposeMethodsSymbol](methods: ExposedMethods): void;
+}
 
-export { IExposedProperties }
+// @alpha
+export interface IExposedProperties {
+    [exposePropertiesSymbol]?(properties: ExposedProperties): void;
+}
 
-export { isTypeFactoryType }
+// @alpha
+export function isTypeFactoryType(value: unknown): value is TypeFactoryType;
 
 // @alpha
 export const llmDefault: unique symbol;
@@ -76,50 +114,29 @@ export interface Logger {
     log(message: string): void;
 }
 
-export { MethodKeys }
+// @alpha
+export type MethodKeys<T> = {
+    [K in keyof T]: T[K] extends (...args: any[]) => any ? K : never;
+};
 
 // @alpha
 export class PropertyDef {
     constructor(
     name: string,
     description: string | undefined,
-    schema: TypeFactoryType_2,
+    schema: TypeFactoryType,
     readOnly: boolean);
     readonly description: string | undefined;
     readonly name: string;
     readonly readOnly: boolean;
-    readonly schema: TypeFactoryType_2;
-}
-
-// @alpha
-export interface SemanticAgentOptions<TSchema extends ImplicitFieldSchema> {
-    domainHints?: string;
-    editor?: SynchronousEditor<TSchema> | AsynchronousEditor<TSchema>;
-    logger?: Logger;
-    maximumSequentialEdits?: number;
+    readonly schema: TypeFactoryType;
 }
 
 // @alpha
 export interface SharedTreeChatModel {
-    // @deprecated
-    appendContext?(text: string): void;
     editToolName?: string;
-    invoke?(history: readonly TreeAgentChatMessage[]): Promise<TreeAgentChatResponse>;
+    invoke(history: readonly TreeAgentChatMessage[]): Promise<TreeAgentChatResponse>;
     name?: string;
-    // @deprecated
-    query?(message: SharedTreeChatQuery): Promise<string>;
-}
-
-// @alpha @deprecated
-export interface SharedTreeChatQuery {
-    edit(js: string): Promise<EditResult>;
-    text: string;
-}
-
-// @alpha @sealed
-export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
-    constructor(client: SharedTreeChatModel, tree: ViewOrTree<TSchema>, options?: Readonly<SemanticAgentOptions<TSchema>> | undefined);
-    query(userPrompt: string): Promise<string>;
 }
 
 // @alpha
@@ -179,80 +196,166 @@ export interface TreeAgentUserMessage {
 }
 
 // @alpha
-export type TreeView<TRoot extends ImplicitFieldSchema> = Pick<TreeViewAlpha<TRoot>, "root" | "fork" | "merge" | "rebaseOnto" | "schema" | "events"> & TreeBranchAlpha;
+export type TreeView<TRoot extends ImplicitFieldSchema> = Pick<TreeViewAlpha<TRoot>, "root" | "fork" | "merge" | "rebaseOnto" | "schema" | "events"> & UntypedTreeViewAlpha;
 
 // @alpha
 export const typeFactory: {
-    instanceOf<T extends TreeNodeSchemaClass>(schema: T): TypeFactoryInstanceOf_2;
-    string(): TypeFactoryString_2;
-    number(): TypeFactoryNumber_2;
-    boolean(): TypeFactoryBoolean_2;
-    date(): TypeFactoryDate_2;
-    void(): TypeFactoryVoid_2;
-    undefined(): TypeFactoryUndefined_2;
-    null(): TypeFactoryNull_2;
-    unknown(): TypeFactoryUnknown_2;
-    array(element: TypeFactoryType_2): TypeFactoryArray_2;
-    promise(innerType: TypeFactoryType_2): TypeFactoryPromise_2;
-    object(shape: Record<string, TypeFactoryType_2>): TypeFactoryObject_2;
-    record(keyType: TypeFactoryType_2, valueType: TypeFactoryType_2): TypeFactoryRecord_2;
-    map(keyType: TypeFactoryType_2, valueType: TypeFactoryType_2): TypeFactoryMap_2;
-    tuple(items: readonly TypeFactoryType_2[], rest?: TypeFactoryType_2 | undefined): TypeFactoryTuple_2;
-    union(options: readonly TypeFactoryType_2[]): TypeFactoryUnion_2;
-    intersection(types: readonly TypeFactoryType_2[]): TypeFactoryIntersection_2;
-    literal(value: string | number | boolean): TypeFactoryLiteral_2;
-    optional(innerType: TypeFactoryType_2): TypeFactoryOptional_2;
-    readonly(innerType: TypeFactoryType_2): TypeFactoryReadonly_2;
-    function(parameters: readonly TypeFactoryFunctionParameter_2[], returnType: TypeFactoryType_2, restParameter?: TypeFactoryFunctionParameter_2 | undefined): TypeFactoryFunction_2;
+    instanceOf<T extends TreeNodeSchemaClass>(schema: T): TypeFactoryInstanceOf;
+    string(): TypeFactoryString;
+    number(): TypeFactoryNumber;
+    boolean(): TypeFactoryBoolean;
+    date(): TypeFactoryDate;
+    void(): TypeFactoryVoid;
+    undefined(): TypeFactoryUndefined;
+    null(): TypeFactoryNull;
+    unknown(): TypeFactoryUnknown;
+    array(element: TypeFactoryType): TypeFactoryArray;
+    promise(innerType: TypeFactoryType): TypeFactoryPromise;
+    object(shape: Record<string, TypeFactoryType>): TypeFactoryObject;
+    record(keyType: TypeFactoryType, valueType: TypeFactoryType): TypeFactoryRecord;
+    map(keyType: TypeFactoryType, valueType: TypeFactoryType): TypeFactoryMap;
+    tuple(items: readonly TypeFactoryType[], rest?: TypeFactoryType | undefined): TypeFactoryTuple;
+    union(options: readonly TypeFactoryType[]): TypeFactoryUnion;
+    intersection(types: readonly TypeFactoryType[]): TypeFactoryIntersection;
+    literal(value: string | number | boolean): TypeFactoryLiteral;
+    optional(innerType: TypeFactoryType): TypeFactoryOptional;
+    readonly(innerType: TypeFactoryType): TypeFactoryReadonly;
+    function(parameters: readonly TypeFactoryFunctionParameter[], returnType: TypeFactoryType, restParameter?: TypeFactoryFunctionParameter | undefined): TypeFactoryFunction;
 };
 
-export { TypeFactoryArray }
+// @alpha
+export interface TypeFactoryArray extends TypeFactoryType {
+    readonly element: TypeFactoryType;
+    readonly _kind: "array";
+}
 
-export { TypeFactoryBoolean }
+// @alpha
+export interface TypeFactoryBoolean extends TypeFactoryType {
+    readonly _kind: "boolean";
+}
 
-export { TypeFactoryDate }
+// @alpha
+export interface TypeFactoryDate extends TypeFactoryType {
+    readonly _kind: "date";
+}
 
-export { TypeFactoryFunction }
+// @alpha
+export interface TypeFactoryFunction extends TypeFactoryType {
+    readonly _kind: "function";
+    readonly parameters: readonly TypeFactoryFunctionParameter[];
+    readonly restParameter?: TypeFactoryFunctionParameter;
+    readonly returnType: TypeFactoryType;
+}
 
-export { TypeFactoryFunctionParameter }
+// @alpha
+export type TypeFactoryFunctionParameter = readonly [name: string, type: TypeFactoryType];
 
-export { TypeFactoryInstanceOf }
+// @alpha
+export interface TypeFactoryInstanceOf extends TypeFactoryType {
+    readonly constructor: new (...args: any[]) => unknown;
+    readonly _kind: "instanceof";
+}
 
-export { TypeFactoryIntersection }
+// @alpha
+export interface TypeFactoryIntersection extends TypeFactoryType {
+    readonly _kind: "intersection";
+    readonly types: readonly TypeFactoryType[];
+}
 
-export { TypeFactoryLiteral }
+// @alpha
+export interface TypeFactoryLiteral extends TypeFactoryType {
+    readonly _kind: "literal";
+    readonly value: string | number | boolean;
+}
 
-export { TypeFactoryMap }
+// @alpha
+export interface TypeFactoryMap extends TypeFactoryType {
+    readonly keyType: TypeFactoryType;
+    readonly _kind: "map";
+    readonly valueType: TypeFactoryType;
+}
 
-export { TypeFactoryNull }
+// @alpha
+export interface TypeFactoryNull extends TypeFactoryType {
+    readonly _kind: "null";
+}
 
-export { TypeFactoryNumber }
+// @alpha
+export interface TypeFactoryNumber extends TypeFactoryType {
+    readonly _kind: "number";
+}
 
-export { TypeFactoryObject }
+// @alpha
+export interface TypeFactoryObject extends TypeFactoryType {
+    readonly _kind: "object";
+    readonly shape: Record<string, TypeFactoryType>;
+}
 
-export { TypeFactoryOptional }
+// @alpha
+export interface TypeFactoryOptional extends TypeFactoryType {
+    readonly innerType: TypeFactoryType;
+    readonly _kind: "optional";
+}
 
-export { TypeFactoryPromise }
+// @alpha
+export interface TypeFactoryPromise extends TypeFactoryType {
+    readonly innerType: TypeFactoryType;
+    readonly _kind: "promise";
+}
 
-export { TypeFactoryReadonly }
+// @alpha
+export interface TypeFactoryReadonly extends TypeFactoryType {
+    readonly innerType: TypeFactoryType;
+    readonly _kind: "readonly";
+}
 
-export { TypeFactoryRecord }
+// @alpha
+export interface TypeFactoryRecord extends TypeFactoryType {
+    readonly keyType: TypeFactoryType;
+    readonly _kind: "record";
+    readonly valueType: TypeFactoryType;
+}
 
-export { TypeFactoryString }
+// @alpha
+export interface TypeFactoryString extends TypeFactoryType {
+    readonly _kind: "string";
+}
 
-export { TypeFactoryTuple }
+// @alpha
+export interface TypeFactoryTuple extends TypeFactoryType {
+    readonly items: readonly TypeFactoryType[];
+    readonly _kind: "tuple";
+    readonly rest?: TypeFactoryType;
+}
 
-export { TypeFactoryType }
+// @alpha
+export interface TypeFactoryType {
+    readonly _kind: TypeFactoryTypeKind;
+}
 
-export { TypeFactoryTypeKind }
+// @alpha
+export type TypeFactoryTypeKind = "string" | "number" | "boolean" | "void" | "undefined" | "null" | "unknown" | "date" | "promise" | "array" | "object" | "record" | "map" | "tuple" | "union" | "intersection" | "literal" | "optional" | "readonly" | "function" | "instanceof";
 
-export { TypeFactoryUndefined }
+// @alpha
+export interface TypeFactoryUndefined extends TypeFactoryType {
+    readonly _kind: "undefined";
+}
 
-export { TypeFactoryUnion }
+// @alpha
+export interface TypeFactoryUnion extends TypeFactoryType {
+    readonly _kind: "union";
+    readonly options: readonly TypeFactoryType[];
+}
 
-export { TypeFactoryUnknown }
+// @alpha
+export interface TypeFactoryUnknown extends TypeFactoryType {
+    readonly _kind: "unknown";
+}
 
-export { TypeFactoryVoid }
+// @alpha
+export interface TypeFactoryVoid extends TypeFactoryType {
+    readonly _kind: "void";
+}
 
 // @alpha
 export type ViewOrTree<TSchema extends ImplicitFieldSchema> = TreeView<TSchema> | (ReadableField<TSchema> & TreeNode);

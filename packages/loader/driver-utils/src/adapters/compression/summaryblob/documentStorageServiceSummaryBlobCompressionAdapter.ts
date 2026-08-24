@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type Buffer, IsoBuffer } from "@fluid-internal/client-utils";
+import { IsoBuffer, Uint8ArrayToArrayBufferLike } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type ISummaryBlob,
@@ -89,7 +89,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	private static writeAlgorithmToBlob(
 		blob: ArrayBufferLike,
 		algorithm: number,
-	): ArrayBufferLike | Buffer {
+	): ArrayBufferLike {
 		if (algorithm === SummaryCompressionAlgorithm.None) {
 			const firstByte = IsoBuffer.from(blob)[0];
 			// eslint-disable-next-line no-bitwise
@@ -105,7 +105,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		const prefix = 0xb0 | algorithm;
 		newBlob[0] = prefix;
 		newBlob.set(blobView, 1);
-		return IsoBuffer.from(newBlob);
+		return Uint8ArrayToArrayBufferLike(newBlob);
 	}
 
 	/**
@@ -113,11 +113,9 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * @param blob - The blob to remove the prefix from.
 	 * @returns The blob without the prefix.
 	 */
-	private static removePrefixFromBlobIfPresent(
-		blob: ArrayBufferLike,
-	): ArrayBufferLike | Buffer {
+	private static removePrefixFromBlobIfPresent(blob: ArrayBufferLike): ArrayBufferLike {
 		const blobView = new Uint8Array(blob);
-		return this.hasPrefix(blob) ? IsoBuffer.from(blobView.subarray(1)) : blob;
+		return this.hasPrefix(blob) ? Uint8ArrayToArrayBufferLike(blobView.subarray(1)) : blob;
 	}
 
 	/**
@@ -144,11 +142,11 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	): SummaryObject => {
 		if (input.type === SummaryType.Blob) {
 			const summaryBlob: ISummaryBlob = input;
-			const original: ArrayBufferLike = DocumentStorageServiceCompressionAdapter.toBinaryArray(
+			const original = DocumentStorageServiceCompressionAdapter.toBinaryArray(
 				summaryBlob.content,
 			);
-			const processed: ArrayBufferLike = DocumentStorageServiceCompressionAdapter.encodeBlob(
-				original,
+			const processed = DocumentStorageServiceCompressionAdapter.encodeBlob(
+				Uint8ArrayToArrayBufferLike(original),
 				config,
 			);
 			const newSummaryBlob = {
@@ -169,11 +167,12 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	private static readonly blobDecoder = (input: SummaryObject): SummaryObject => {
 		if (input.type === SummaryType.Blob) {
 			const summaryBlob: ISummaryBlob = input;
-			const original: Uint8Array = DocumentStorageServiceCompressionAdapter.toBinaryArray(
+			const original = DocumentStorageServiceCompressionAdapter.toBinaryArray(
 				summaryBlob.content,
 			);
-			const processed: ArrayBufferLike =
-				DocumentStorageServiceCompressionAdapter.decodeBlob(original);
+			const processed = DocumentStorageServiceCompressionAdapter.decodeBlob(
+				Uint8ArrayToArrayBufferLike(original),
+			);
 			const newSummaryBlob = {
 				type: SummaryType.Blob,
 				content: IsoBuffer.from(processed),
@@ -202,8 +201,8 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		} else if (algorithm === SummaryCompressionAlgorithm.None) {
 			maybeCompressed = file;
 		} else if (algorithm === SummaryCompressionAlgorithm.LZ4) {
-			const compressed = compress(file as Uint8Array) as ArrayBufferLike;
-			maybeCompressed = compressed;
+			const compressed = compress(new Uint8Array(file));
+			maybeCompressed = Uint8ArrayToArrayBufferLike(compressed);
 		} else {
 			throw new Error(`Unknown Algorithm ${config.algorithm}`);
 		}
@@ -221,8 +220,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 */
 	private static decodeBlob(file: ArrayBufferLike): ArrayBufferLike {
 		let decompressed: ArrayBufferLike;
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: use a real type
-		let originalBlob: any;
+		let originalBlob: ArrayBufferLike;
 		let algorithm: SummaryCompressionAlgorithm;
 		if (this.hasPrefix(file)) {
 			algorithm = DocumentStorageServiceCompressionAdapter.readAlgorithmFromBlob(file);
@@ -232,11 +230,9 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 			originalBlob = file;
 		}
 		if (algorithm === SummaryCompressionAlgorithm.None) {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			decompressed = originalBlob;
 		} else if (algorithm === SummaryCompressionAlgorithm.LZ4) {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-			decompressed = decompress(originalBlob) as ArrayBufferLike;
+			decompressed = Uint8ArrayToArrayBufferLike(decompress(new Uint8Array(originalBlob)));
 		} else {
 			throw new Error(`Unknown Algorithm ${algorithm}`);
 		}

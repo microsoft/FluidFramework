@@ -4,7 +4,7 @@
  */
 
 export {
-	typeNameSymbol,
+	schemaIdentifierBrand,
 	typeSchemaSymbol,
 	contentSchemaSymbol,
 	type WithType,
@@ -61,6 +61,8 @@ export {
 	type AllowedTypesFullFromMixed,
 	AnnotatedAllowedTypesInternal,
 	type NumberKeys,
+	StagedSchemaUpgradePolicy,
+	type StagedSchemaUpgradePolicyFactory,
 	ExpectStored,
 	createSchemaUpgrade,
 	UnhydratedFlexTreeNode,
@@ -75,6 +77,7 @@ export {
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
 	type ITreeViewConfiguration,
+	type ITreeViewConfigurationAlpha,
 	type SchemaCompatibilityStatus,
 	type ITreeConfigurationOptions,
 	SchemaFactory,
@@ -100,7 +103,6 @@ export {
 	type ArrayNodeRetainOp,
 	type ArrayNodeTreeChangedDeltaOp,
 	type ArrayNodeTreeChangedRetainOp,
-	deltaMarksToArrayOps,
 	type NodeChangedData,
 	type NodeChangedDataAlpha,
 	type NodeChangedDataDelta,
@@ -143,7 +145,8 @@ export {
 	extractPersistedSchema,
 	comparePersistedSchema,
 	type ConciseTree,
-	SchemaCompatibilityTester,
+	checkSchemaCompatibility,
+	getSchemaCompatibilityError,
 	type Unenforced,
 	type System_Unsafe,
 	type ArrayNodeCustomizableSchemaUnsafe,
@@ -160,8 +163,10 @@ export {
 	type InsertableObjectFromSchemaRecordAlphaUnsafe,
 	type TreeViewAlpha,
 	type TreeViewBeta,
+	type UntypedTreeView,
 	type TreeBranch,
 	type TreeBranchAlpha,
+	type UntypedTreeViewAlpha,
 	type TreeBranchEvents,
 	getPropertyKeyFromStoredKey,
 	getStoredKey,
@@ -320,8 +325,6 @@ export {
 	toUpgradeSchema,
 	toInitialSchema,
 	toUnhydratedSchema,
-	restrictiveStoredSchemaGenerationOptions,
-	permissiveStoredSchemaGenerationOptions,
 } from "./toStoredSchema.js";
 export {
 	numberSchema,
@@ -330,6 +333,6 @@ export {
 	handleSchema,
 	nullSchema,
 } from "./leafNodeSchema.js";
-export type { LeafSchema } from "./leafNodeSchema.js";
+export type { LeafSchema, StringSchema } from "./leafNodeSchema.js";
 export { getUnhydratedContext } from "./createContext.js";
 export { type TreeSchema, createTreeSchema } from "./treeSchema.js";

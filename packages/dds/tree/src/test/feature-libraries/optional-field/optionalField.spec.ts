@@ -25,6 +25,8 @@ import type {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/fieldChangeHandler.js";
 // eslint-disable-next-line import-x/no-internal-modules
+import { EditFilterStatus } from "../../../feature-libraries/modular-schema/fieldChangeHandler.js";
+// eslint-disable-next-line import-x/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import {
 	optionalChangeHandler,
@@ -37,7 +39,12 @@ import type {
 	OptionalChangeset,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
-import { brand, fakeIdAllocator, idAllocatorFromMaxId } from "../../../util/index.js";
+import {
+	brand,
+	fakeIdAllocator,
+	idAllocatorFromMaxId,
+	type RangeQueryResult,
+} from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
 import {
@@ -59,8 +66,13 @@ import { testReplaceRevisions } from "./replaceRevisions.test.js";
  */
 const arbitraryChildChange: NodeId = { localId: brand(42) };
 
+const tag = mintRevisionTag();
 const nodeId1: NodeId = { localId: brand(1) };
 const nodeId2: NodeId = { localId: brand(2) };
+const register0: ChangeAtomId = { revision: tag, localId: brand(0) };
+const register1: ChangeAtomId = { revision: tag, localId: brand(1) };
+const register2: ChangeAtomId = { revision: tag, localId: brand(2) };
+const register3: ChangeAtomId = { revision: tag, localId: brand(3) };
 
 const nodeChange1 = TestNodeId.create(nodeId1, TestChange.mint([], 1));
 const nodeChange2 = TestNodeId.create(nodeId2, TestChange.mint([], 2));
@@ -74,7 +86,6 @@ const failCrossFieldManager: CrossFieldManager = {
 
 const failingDelegate = (): never => assert.fail("Should not be called");
 
-const tag = mintRevisionTag();
 const change1 = tagChangeInline(
 	Change.atOnce(
 		Change.reserve("self", brand(1)),
@@ -998,6 +1009,98 @@ describe("optionalField", () => {
 				[nodeId2, undefined, undefined],
 			];
 			assert.deepEqual(actual, expected);
+		});
+	});
+
+	describe("Filter edits", () => {
+		function preserveAll(
+			id: ChangeAtomId,
+			count: number,
+			endpoint?: ChangeAtomId,
+		): RangeQueryResult<EditFilterStatus> {
+			return { length: count, value: EditFilterStatus.Preserve };
+		}
+
+		function removeAll(
+			id: ChangeAtomId,
+			count: number,
+			endpoint?: ChangeAtomId,
+		): RangeQueryResult<EditFilterStatus> {
+			return { length: count, value: EditFilterStatus.Remove };
+		}
+
+		it("can preserve all", () => {
+			const change = Change.atOnce(
+				Change.childAt(register0, nodeId1),
+				Change.move(register0, register1),
+				Change.clear("self", register2),
+				Change.move(register3, "self"),
+			);
+
+			const filtered = optionalChangeRebaser.filterEdits(change, {
+				filterDetach: preserveAll,
+				filterAttach: preserveAll,
+				preserveOtherEdits: true,
+			});
+
+			assertEqual(filtered, change);
+		});
+
+		it("can remove renames", () => {
+			const changeWithoutRename = Change.atOnce(
+				Change.childAt(register0, nodeId1),
+				Change.clear("self", register2),
+				Change.move(register3, "self"),
+			);
+
+			const change = Change.atOnce(changeWithoutRename, Change.move(register0, register1));
+
+			const filtered = optionalChangeRebaser.filterEdits(change, {
+				filterDetach: preserveAll,
+				filterAttach: preserveAll,
+				preserveOtherEdits: false,
+			});
+
+			assertEqual(filtered, changeWithoutRename);
+		});
+
+		it("can remove attach", () => {
+			const changeWithoutSet = Change.atOnce(
+				Change.childAt(register0, nodeId1),
+				Change.move(register0, register1),
+				Change.clear("self", register2),
+			);
+
+			const change = Change.atOnce(changeWithoutSet, Change.move(register3, "self"));
+
+			const filtered = optionalChangeRebaser.filterEdits(change, {
+				filterDetach: preserveAll,
+				filterAttach: removeAll,
+				preserveOtherEdits: true,
+			});
+
+			assertEqual(filtered, changeWithoutSet);
+		});
+
+		it("can remove replace", () => {
+			const changeWithoutReplace = Change.atOnce(
+				Change.childAt(register0, nodeId1),
+				Change.move(register0, register1),
+			);
+
+			const change = Change.atOnce(
+				changeWithoutReplace,
+				Change.clear("self", register2),
+				Change.move(register3, "self"),
+			);
+
+			const filtered = optionalChangeRebaser.filterEdits(change, {
+				filterDetach: removeAll,
+				filterAttach: removeAll,
+				preserveOtherEdits: true,
+			});
+
+			assertEqual(filtered, changeWithoutReplace);
 		});
 	});
 });

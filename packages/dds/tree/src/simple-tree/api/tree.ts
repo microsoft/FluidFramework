@@ -112,8 +112,20 @@ export interface ITreeAlpha extends ITree {
 	/**
 	 * Creates a fork of the current state of the main branch.
 	 * This new branch will be shared with and editable by all clients.
+	 * @param name - Optional name for the new branch.
+	 * This name is not guaranteed to be unique.
+	 * (Maximum {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/length | length}: 1024)
+	 * @returns The ID of the new branch, which can be used to {@link ITreeAlpha.viewSharedBranchWith | view} the branch.
 	 */
-	createSharedBranch(): string;
+	createSharedBranch(name?: string): string;
+
+	/**
+	 * Retrieves the name, if any, of the shared branch with the given ID.
+	 * @param branchId - The ID of the shared branch to retrieve the name of.
+	 * @returns The name of the shared branch, or `undefined` if the branch has no assigned name.
+	 * @throws if the branch with the given ID does not exist.
+	 */
+	getSharedBranchName(branchId: string): string | undefined;
 
 	/**
 	 * Returns a list of all shared branches that currently exist on this tree.
@@ -132,57 +144,65 @@ export interface ITreeAlpha extends ITree {
 }
 
 /**
- * A collection of functionality associated with a (version-control-style) branch of a SharedTree.
- * @remarks A `TreeBranch` allows for the {@link TreeBranch.fork | creation of branches} and for those branches to later be {@link TreeBranch.merge | merged}.
+ * An untyped view of a (version-control-style) branch of a SharedTree.
+ * @remarks An `UntypedTreeView` allows for the {@link UntypedTreeView.fork | creation of branches} and for those branches to later be {@link UntypedTreeView.merge | merged}.
  *
  * The branch associated directly with the {@link ITree | SharedTree} is the "main" branch, and all other branches fork (directly or transitively) from that main branch.
  *
- * See {@link TreeBranchAlpha} for additional APIs that are in an earlier stage of development.
+ * See {@link UntypedTreeViewAlpha} for additional APIs that are in an earlier stage of development.
  * @sealed @beta
  */
-export interface TreeBranch extends IDisposable {
+export interface UntypedTreeView extends IDisposable {
 	/**
 	 * Fork a new branch off of this branch which is based off of this branch's current state.
-	 * @remarks Any changes to the tree on the new branch will not apply to this branch until the new branch is e.g. {@link TreeBranch.merge | merged} back into this branch.
-	 * The branch should be disposed when no longer needed, either {@link TreeBranch.dispose | explicitly} or {@link TreeBranch.merge | implicitly when merging} into another branch.
+	 * @remarks Any changes to the tree on the new view will not apply to this view until the new view is e.g. {@link UntypedTreeView.merge | merged} back into this view.
+	 * The view should be disposed when no longer needed, either {@link UntypedTreeView.dispose | explicitly} or {@link UntypedTreeView.merge | implicitly when merging} into another view.
 	 */
-	fork(): TreeBranch;
+	fork(): UntypedTreeView;
 
 	/**
-	 * Apply all the new changes on the given branch to this branch.
-	 * @param branch - a branch which was created by a call to `branch()`.
-	 * @param disposeMerged - whether or not to dispose `branch` after the merge completes.
+	 * Apply all the new changes on the given view to this view.
+	 * @param view - A view created by {@link UntypedTreeView.fork}.
+	 * @param disposeMerged - Whether or not to dispose `view` after the merge completes.
 	 * Defaults to true.
-	 * The {@link TreeBranch | main branch} cannot be disposed - attempting to do so will have no effect.
-	 * @remarks All ongoing transactions (if any) in `branch` will be committed before the merge.
+	 * The {@link UntypedTreeView | main view} cannot be disposed - attempting to do so will have no effect.
+	 * @remarks All ongoing transactions (if any) in `view` will be committed before the merge.
 	 */
-	merge(branch: TreeBranch, disposeMerged?: boolean): void;
+	merge(view: UntypedTreeView, disposeMerged?: boolean): void;
 
 	/**
-	 * Advance this branch forward such that all new changes on the target branch become part of this branch.
-	 * @param branch - The branch to rebase onto.
-	 * @remarks After rebasing, this branch will be "ahead" of the target branch, that is, its unique changes will have been recreated as if they happened after all changes on the target branch.
-	 * This method may only be called on branches produced via {@link TreeBranch.fork | branch} - attempting to rebase the main branch will throw.
+	 * Advance this view forward such that all new changes on the target view become part of this view.
+	 * @param view - The view to rebase onto.
+	 * @remarks After rebasing, this view will be "ahead" of the target view, that is, its unique changes will have been recreated as if they happened after all changes on the target view.
+	 * This method may only be called on views produced via {@link UntypedTreeView.fork | fork} - attempting to rebase the main view will throw.
 	 *
 	 * Rebasing long-lived branches is important to avoid consuming memory unnecessarily.
 	 * In particular, the SharedTree retains all sequenced changes made to the tree since the "most-behind" branch was created or last rebased.
 	 *
-	 * The {@link TreeBranch | main branch} cannot be rebased onto another branch - attempting to do so will throw an error.
+	 * The {@link UntypedTreeView | main view} cannot be rebased onto another view - attempting to do so will throw an error.
 	 */
-	rebaseOnto(branch: TreeBranch): void;
+	rebaseOnto(view: UntypedTreeView): void;
 
 	/**
-	 * Dispose of this branch, cleaning up any resources associated with it.
+	 * Dispose of this view, cleaning up any resources associated with it.
 	 * @param error - Optional error indicating the reason for the disposal, if the object was disposed as the result of an error.
-	 * @remarks Branches can also be automatically disposed when {@link TreeBranch.merge | they are merged} into another branch.
+	 * @remarks Views can also be automatically disposed when {@link UntypedTreeView.merge | they are merged} into another view.
 	 *
 	 * Disposing branches is important to avoid consuming memory unnecessarily.
-	 * In particular, the SharedTree retains all sequenced changes made to the tree since the "most-behind" branch was created or last {@link TreeBranch.rebaseOnto | rebased}.
+	 * In particular, the SharedTree retains all sequenced changes made to the tree since the "most-behind" view was created or last {@link UntypedTreeView.rebaseOnto | rebased}.
 	 *
-	 * The {@link TreeBranch | main branch} cannot be disposed - attempting to do so will have no effect.
+	 * The {@link UntypedTreeView | main view} cannot be disposed - attempting to do so will have no effect.
 	 */
 	dispose(error?: Error): void;
 }
+
+/**
+ * Compatibility alias for {@link UntypedTreeView}.
+ *
+ * @deprecated Use {@link UntypedTreeView} instead.
+ * @beta
+ */
+export type TreeBranch = UntypedTreeView;
 
 /**
  * Provides additional APIs that may be used to interact with a tree node or a tree node's SharedTree.
@@ -211,7 +231,7 @@ export interface TreeContextAlpha {
 	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
 	 *
 	 * `runTransaction` may be invoked on the context of a {@link TreeStatus.InDocument | hydrated } or {@link Unhydrated | unhydrated } node.
-	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether this context is associated with a branch and gain {@link TreeBranchAlpha.(runTransaction:1) | access to more transaction capabilities} if so.
+	 * Use {@link TreeContextAlpha.isView | isView() } to check whether this context is associated with a view and gain {@link UntypedTreeViewAlpha.(runTransaction:1) | access to more transaction capabilities} if so.
 	 */
 	runTransaction<TValue>(
 		transaction: () => WithValue<TValue>,
@@ -259,44 +279,51 @@ export interface TreeContextAlpha {
 	): Promise<TransactionVoidResult>;
 
 	/**
-	 * True if this context is associated with a {@link TreeBranchAlpha | branch} and false if it is associated with an {@link Unhydrated | unhydrated } node.
-	 * @remarks If this returns true, the context can be safely inferred or cast to {@link TreeBranchAlpha} to access additional branch-specific APIs.
+	 * True if this context is associated with an {@link UntypedTreeViewAlpha | untyped view} and false if it is associated with an {@link Unhydrated | unhydrated } node.
+	 * @remarks If this returns true, the context can be safely inferred or cast to {@link UntypedTreeViewAlpha} to access additional view-specific APIs.
 	 * @example
 	 * ```typescript
 	 * const context = tree.context(someNode);
-	 * if (context.isBranch()) {
-	 *   assert(context.hasRootSchema(MySchema)) // `hasRootSchema` is a method on TreeBranchAlpha, so this is only accessible if `context` is a branch context.
+	 * if (context.isView()) {
+	 *   assert(context.hasRootSchema(MySchema)) // `hasRootSchema` is a method on UntypedTreeViewAlpha, so this is only accessible if `context` is a view context.
 	 *   context.root.foo = "bar"; // Edit the root of the SharedTree that `someNode` belongs to.
 	 * }
 	 * ```
+	 * @returns Whether this context is associated with an untyped view.
 	 */
-	isBranch(): this is TreeBranchAlpha;
+	isView(): this is UntypedTreeViewAlpha;
+
+	/**
+	 * {@inheritDoc TreeContextAlpha.isView}
+	 * @deprecated Use {@link TreeContextAlpha.isView | isView()} instead.
+	 */
+	isBranch(): this is UntypedTreeViewAlpha;
 }
 
 /**
- * {@link TreeBranch} with alpha-level APIs.
+ * An untyped view of a {@link UntypedTreeView} with alpha-level APIs.
  * @remarks
- * The `TreeBranch` for a specific {@link TreeNode} may be acquired by calling `TreeAlpha.branch`.
+ * The untyped view for a specific {@link TreeNode} may be acquired by calling {@link (TreeAlpha:interface).context} and checking {@link TreeContextAlpha.isView | isView()}.
  *
- * A branch does not necessarily know the schema of its SharedTree - to convert a branch to a {@link TreeViewAlpha | view with a schema}, use {@link TreeBranchAlpha.hasRootSchema | hasRootSchema()}.
+ * An untyped view does not necessarily know the schema of its SharedTree. To convert it to a {@link TreeViewAlpha | view with a schema}, use {@link UntypedTreeViewAlpha.hasRootSchema | hasRootSchema()}.
  * @sealed @alpha
  */
-export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
+export interface UntypedTreeViewAlpha extends UntypedTreeView, TreeContextAlpha {
 	/**
-	 * Events for the branch
+	 * Events for the view's underlying branch.
 	 */
 	readonly events: Listenable<TreeBranchEvents>;
 
 	/**
-	 * Returns true if this branch has the given schema as its root schema.
-	 * @remarks This is a type guard which allows this branch to become strongly typed as a {@link TreeViewAlpha | view} of the given schema.
+	 * Returns true if this view has the given schema as its root schema.
+	 * @remarks This is a type guard which allows this view to become strongly typed as a {@link TreeViewAlpha | view} of the given schema.
 	 *
 	 * To succeed, the given schema must be invariant to the schema of the view - it must include exactly the same allowed types.
 	 * For example, a schema of `Foo | Bar` will not match a view schema of `Foo`, and likewise a schema of `Foo` will not match a view schema of `Foo | Bar`.
 	 * @example
 	 * ```typescript
-	 * if (branch.hasRootSchema(MySchema)) {
-	 *   const { root } = branch; // `branch` is now a TreeViewAlpha<MySchema>
+	 * if (view.hasRootSchema(MySchema)) {
+	 *   const { root } = view; // `view` is now a TreeViewAlpha<MySchema>
 	 *   // ...
 	 * }
 	 * ```
@@ -306,10 +333,10 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	): this is TreeViewAlpha<TSchema>;
 
 	// Override the base fork method to return the alpha variant.
-	fork(): TreeBranchAlpha;
+	fork(): UntypedTreeViewAlpha;
 
 	/**
-	 * {@link TreeContextAlpha.(runTransaction:1) | Run a transaction} on a branch of the SharedTree.
+	 * {@link TreeContextAlpha.(runTransaction:1) | Run a transaction} on this view of the SharedTree.
 	 * @param transaction - The function to run as the body of the transaction, which may optionally return a {@link TransactionCallbackStatusAlpha | value or rollback signal}.
 	 * @remarks
 	 * If the transaction is rolled back, a corresponding {@link TreeBranchEvents.changed | `changed`} event will also be emitted for the rollback.
@@ -320,7 +347,7 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	): TransactionValueResult<TSuccessValue, TFailureValue>;
 
 	/**
-	 * An overload of {@link TreeBranchAlpha.(runTransaction:1) | runTransaction } which does not return a value.
+	 * An overload of {@link UntypedTreeViewAlpha.(runTransaction:1) | runTransaction } which does not return a value.
 	 *
 	 * @privateRemarks
 	 * TODO: Consider updating these methods to avoid the need for overloads.
@@ -332,7 +359,7 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	): TransactionVoidResult;
 
 	/**
-	 * An asynchronous version of {@link TreeBranchAlpha.(runTransaction:1) | runTransaction}.
+	 * An asynchronous version of {@link UntypedTreeViewAlpha.(runTransaction:1) | runTransaction}.
 	 * @remarks See {@link TreeContextAlpha.(runTransactionAsync:1) | runTransactionAsync} for additional information about asynchronous transactions.
 	 */
 
@@ -342,7 +369,7 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	): Promise<TransactionValueResult<TSuccessValue, TFailureValue>>;
 
 	/**
-	 * An overload of {@link TreeBranchAlpha.(runTransactionAsync:1) | runTransactionAsync } which does not return a value.
+	 * An overload of {@link UntypedTreeViewAlpha.(runTransactionAsync:1) | runTransactionAsync } which does not return a value.
 	 *
 	 * @privateRemarks
 	 * TODO: Consider updating these methods to avoid the need for overloads.
@@ -367,16 +394,34 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	applyChange(change: JsonCompatibleReadOnly): void;
 
 	/**
-	 * Determines if there are changes on the given branch that are not present on this branch.
-	 * @param branch - The branch to compare to.
+	 * Determines if there are changes on the given view that are not present on this view.
+	 * @param view - The view to compare to.
 	 *
-	 * The new edits, if any, can be applied to this branch by {@link TreeBranch.rebaseOnto | rebasing this branch onto the given branch}
-	 * or by {@link TreeBranch.merge | merging the given branch into this branch}.
+	 * The new edits, if any, can be applied to this view by {@link UntypedTreeView.rebaseOnto | rebasing this view onto the given view}
+	 * or by {@link UntypedTreeView.merge | merging the given view into this view}.
 	 *
 	 * @throws UsageError if the branches are unrelated.
 	 */
-	isMissingEditsFrom(branch: TreeBranch): boolean;
+	isMissingEditsFrom(view: UntypedTreeView): boolean;
+
+	/**
+	 * Computes the net change that would result if this view were {@link UntypedTreeView.rebaseOnto | rebased onto} the given view.
+	 * Note that this method does not actually perform the rebase and therefore has no effect on this view.
+	 *
+	 * @param view - The view that would be rebased onto.
+	 * @returns The net change that would result if this view were rebased onto the given view,
+	 * or `undefined` if rebasing would have no impact.
+	 */
+	computeNetChangeIfRebasedOnto(view: UntypedTreeView): JsonCompatibleReadOnly | undefined;
 }
+
+/**
+ * Compatibility alias for {@link UntypedTreeViewAlpha}.
+ *
+ * @deprecated Use {@link UntypedTreeViewAlpha} instead.
+ * @alpha
+ */
+export type TreeBranchAlpha = UntypedTreeViewAlpha;
 
 /**
  * An editable view of a (version control style) branch of a shared tree based on some schema.
@@ -388,7 +433,7 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
  * Application authors are encouraged to read {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/docs/user-facing/schema-evolution.md | schema-evolution.md}
  * and choose a schema compatibility policy that aligns with their application's needs.
  *
- * See also {@link TreeViewAlpha}, {@link TreeViewBeta} and {@link TreeBranch} for additional APIs that are in earlier stages of development.
+ * See also {@link TreeViewAlpha}, {@link TreeViewBeta} and {@link UntypedTreeView} for additional APIs that are in earlier stages of development.
  *
  * @privateRemarks
  * From an API design perspective, `upgradeSchema` could be merged into `viewWith` and/or `viewWith` could return errors explicitly on incompatible documents.
@@ -398,7 +443,7 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
  * Thus this design was chosen at the risk of apps blindly accessing `root` then breaking unexpectedly when the document is incompatible.
  *
  * @see {@link TreeViewAlpha}
- * @see {@link asTreeViewAlpha}
+ * @see {@link (asAlpha:1)}
  *
  * @sealed @public
  */
@@ -422,7 +467,7 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	/**
 	 * Description of the current compatibility status between the view schema and stored schema.
 	 * @remarks
-	 * {@link TreeViewEvents.schemaChanged} is fired when the compatibility status changes.
+	 * {@link TreeViewEvents.schemaChanged} is fired when the compatibility status of the document's stored schema changes.
 	 * See {@link https://fluidframework.com/docs/data-structures/tree/schema-evolution/ | schema-evolution} for more guidance on how to change schema while maintaining compatibility.
 	 * Use {@link snapshotSchemaCompatibility} to write tests to validate that this compatibility behaves as desired across schema changes.
 	 */
@@ -437,6 +482,44 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	 *
 	 * It is an error to call this when {@link SchemaCompatibilityStatus.canUpgrade} is false.
 	 * {@link SchemaCompatibilityStatus.canUpgrade} being true does not mean that an upgrade is required, nor that an upgrade will have any effect.
+	 *
+	 * When using {@link TreeViewConfigurationAlpha} with a {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy},
+	 * staged schema upgrades matching the configured policy are included in the target stored schema.
+	 * Once a staged schema upgrade has been enabled in a document's stored schema, loading that document
+	 * with a view that does not include equivalent staged members in its construction-time policy will cause
+	 * `upgradeSchema` to throw a `UsageError` because the requested target would narrow the stored schema.
+	 *
+	 * @example Enabling a staged allowed type for documents, selected by a feature flag
+	 *
+	 * ```typescript
+	 * const sf = new SchemaFactoryBeta("my-app");
+	 *
+	 * class TaskItem extends sf.object("TaskItem", { title: sf.string }) {}
+	 * class ChecklistItem extends sf.object("ChecklistItem", { text: sf.string }) {}
+	 *
+	 * // `staged` wraps ChecklistItem so it can be enabled at runtime.
+	 * const stagedChecklist = SchemaFactoryBeta.staged(ChecklistItem);
+	 * const checklistUpgrade = stagedChecklist.metadata.stagedSchemaUpgrade;
+	 *
+	 * class AppSchema extends sf.object("AppSchema", {
+	 *   items: sf.array([TaskItem, stagedChecklist]),
+	 * }) {}
+	 *
+	 * // Feature flag controls whether the upgrade is enabled for this session.
+	 * const policy = featureFlags.enableChecklist
+	 *   ? StagedSchemaUpgradePolicy.enabledStagedUpgrades(checklistUpgrade)
+	 *   : undefined;
+	 *
+	 * const view = tree.viewWith(
+	 *   new TreeViewConfigurationAlpha({ schema: AppSchema, stagedUpgradePolicy: policy }),
+	 * );
+	 *
+	 * if (view.compatibility.canUpgrade) {
+	 *   // Writes the staged type into the document's stored schema.
+	 *   view.upgradeSchema();
+	 * }
+	 * ```
+	 *
 	 * @privateRemarks
 	 * In the future, more upgrade options could be provided here.
 	 * Some options that could be added:
@@ -454,7 +537,11 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	/**
 	 * Initialize the tree, setting the stored schema to match this view's schema and setting the tree content.
 	 *
+	 * @remarks
 	 * Only valid to call when this view's {@link SchemaCompatibilityStatus.canInitialize} is true.
+	 *
+	 * When using {@link TreeViewConfigurationAlpha} with a {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy},
+	 * staged schema upgrades matching the configured policy are included in the initial stored schema.
 	 *
 	 * Applications should typically call this function before attaching a `SharedTree`.
 	 * @param content - The content to initialize the tree with.
@@ -478,9 +565,9 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
  */
 export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema>
 	extends TreeView<TSchema>,
-		TreeBranch {
+		UntypedTreeView {
 	// Override the base branch method to return a typed view rather than merely a branch.
-	fork(): ReturnType<TreeBranch["fork"]> & TreeViewBeta<TSchema>;
+	fork(): ReturnType<UntypedTreeView["fork"]> & TreeViewBeta<TSchema>;
 
 	/**
 	 * Run a synchronous transaction which groups sequential edits to the tree into a single atomic edit if possible.
@@ -558,17 +645,32 @@ export interface TreeViewAlpha<
 			TreeViewBeta<ReadSchema<TSchema>>,
 			"root" | "initialize" | "fork" | "runTransaction" | "runTransactionAsync"
 		>,
-		TreeBranchAlpha {
+		UntypedTreeViewAlpha {
 	get root(): ReadableField<TSchema>;
 
 	set root(newRoot: InsertableField<TSchema>);
 
+	/**
+	 * Initialize the tree, setting the stored schema to match this view's schema and setting the tree content.
+	 *
+	 * @remarks
+	 * Only valid to call when this view's {@link SchemaCompatibilityStatus.canInitialize} is true.
+	 *
+	 * Enables staged schema upgrades declared by {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy} when generating the initial stored schema.
+	 * Once a staged schema upgrade has been enabled in a document's stored schema, loading that document
+	 * with a view that does not include equivalent staged members in its construction-time policy will cause
+	 * a subsequent `upgradeSchema` call to throw a `UsageError` because the stored schema already contains
+	 * the upgraded members and the new target would narrow it.
+	 *
+	 * Applications should typically call this function before attaching a `SharedTree`.
+	 * @param content - The content to initialize the tree with.
+	 */
 	initialize(content: InsertableField<TSchema>): void;
 
 	readonly events: Listenable<TreeViewEvents & TreeBranchEvents>;
 
 	// Override the base fork method to return a TreeViewAlpha.
-	fork(): ReturnType<TreeBranch["fork"]> & TreeViewAlpha<TSchema>;
+	fork(): ReturnType<UntypedTreeView["fork"]> & TreeViewAlpha<TSchema>;
 }
 
 /**
@@ -578,7 +680,7 @@ export interface TreeViewAlpha<
  * See SharedTree's README for more information about choosing a compatibility policy.
  *
  * @privateRemarks
- * See {@link SchemaCompatibilityTester} for the implementation of this compatibility checking.
+ * See {@link checkSchemaCompatibility} for the implementation of this compatibility checking.
  *
  * @sealed @public
  */
@@ -665,7 +767,7 @@ export interface SchemaCompatibilityStatus {
 }
 
 /**
- * Events for {@link TreeBranch}.
+ * Events for {@link UntypedTreeView}.
  * @sealed @alpha
  */
 export interface TreeBranchEvents {
@@ -728,9 +830,8 @@ export interface TreeViewEvents {
 
 /**
  * Retrieve the {@link TreeViewAlpha | alpha API} for a {@link TreeView}.
- * @alpha
- * @deprecated Use {@link (asAlpha:1)} instead.
- * @privateRemarks Despite being deprecated, this function should be used within the tree package (outside of tests) rather than `asAlpha` in order to avoid circular import dependencies.
+ * @remarks
+ * This function can be used within the tree package (outside of tests) rather than {@link asAlpha} in order to avoid circular import dependencies.
  */
 export function asTreeViewAlpha<TSchema extends ImplicitFieldSchema>(
 	view: TreeView<TSchema>,

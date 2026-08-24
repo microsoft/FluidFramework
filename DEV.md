@@ -151,12 +151,28 @@ All workspace `pnpm-workspace.yaml` files include security-hardening settings to
 
 | Setting | Value | Purpose |
 |---------|-------|---------|
-| `minimumReleaseAge` | 1440 | Block packages published less than 24 hours ago |
+| `minimumReleaseAge` | 0 | See "Why `minimumReleaseAge` 0" |
 | `resolutionMode` | highest | Use highest matching version (see explanation below) |
 | `blockExoticSubdeps` | true | Block transitive deps from using git/tarball sources |
 | `trustPolicy` | no-downgrade | Fail if package trust/verification level decreases |
 | `trustPolicyExclude` | [] | Packages excluded from `trustPolicy` enforcement (see note below) |
 | `strictDepBuilds` | true | Require explicit approval for dependency build scripts |
+
+### Why `minimumReleaseAge` 0
+
+The default value for this setting is 1440 (1 day).
+The azure artifact feeds that are used by internal developers and our PR/CI pipelines already have similar built-in protections against recently released packages.
+Specifically, these feeds quarantine recently released packages based on risk profile (on the order of 1 to 7 days, where packages with install-time scripts are quarantined for longer).
+
+Unfortunately, artifact feeds do not preserve package publish time when ingesting a package from npmjs upstream.
+Rather, they record when the package was first added to the downstream artifact feed.
+Therefore using a nonzero value here may arbitrarily block internal developers from installing a package until an additional delay period after they first try to install it.
+
+This does not solve the issue that users of the public registry can make changes which can get through CI and merge but include dependencies internal developers cannot install: such cases are expected to be uncommon and for now will require case by case handling to avoid or fix.
+
+#### Updating dependencies while respecting minimum release age
+
+Contributors should use `pnpm --config.minimum-release-age=10080 i --no-frozen-lockfile` when updating dependencies to mimic the repository policy for consuming packages from npmjs registry.
 
 ### Why `resolutionMode: highest` instead of `time-based`
 
@@ -171,7 +187,7 @@ However, with `resolutionMode: time-based`, the "anchor" time for a transitive d
 
 This behavior is desired. However, pnpm does NOT attempt downward resolution to find a version that works (e.g., 1.0.0). Instead, it throws an error with no automatic fallback.
 
-With `resolutionMode: highest`, we still get protection from `minimumReleaseAge: 1440`, which blocks any package published within the last 24 hours. This provides supply chain protection without the transitive dependency resolution issues.
+With `resolutionMode: highest`, Microsoft devs and infrastructure still get protection from installing packages via internal artifacts feeds.
 
 ### Trust Policy Exclusions (`trustPolicyExclude`)
 
@@ -193,7 +209,7 @@ To approve a new package's build scripts, add it to the appropriate `onlyBuiltDe
 The default configuration of the codespace Docker container is not compatible with [Claude sandboxing](https://code.claude.com/docs/en/sandboxing).
 There are multiple settings that need to be tweaked in both the container and Claude.
 
-### Container security flags ([`devcontainer.json`](.devcontainer/ai-agent/devcontainer.json) `runArgs`)
+### Container security flags ([`devcontainer.json`](.devcontainer/devcontainer.json) `runArgs`)
 
 Claude's sandbox uses [bubblewrap (bwrap)](https://github.com/containers/bubblewrap) to isolate processes in a user namespace with restricted mount/filesystem access. bwrap requires three capabilities that Docker containers don't grant by default:
 
@@ -203,7 +219,7 @@ Claude's sandbox uses [bubblewrap (bwrap)](https://github.com/containers/bubblew
 | `--cap-add SYS_ADMIN` | bwrap needs `CAP_SYS_ADMIN` to create new mount namespaces and perform bind mounts inside them. |
 | `--security-opt seccomp=unconfined` | Docker's default seccomp profile blocks `unshare`, `pivot_root`, and some `mount` calls. bwrap needs all three. |
 
-### Root mount propagation ([`postStartCommand`](.devcontainer/ai-agent/devcontainer.json))
+### Root mount propagation ([`postStartCommand`](.devcontainer/devcontainer.json))
 
 bwrap bind-mounts host paths into its sandbox namespace. For these mounts to propagate correctly, the root mount (`/`) must be marked as **shared**. Docker defaults to **private** propagation, which causes bwrap mounts to silently fail. The `postStartCommand` runs:
 
@@ -213,7 +229,7 @@ sudo mount --make-rshared /
 
 This recursively marks all mount points as shared, allowing bwrap's bind mounts to work.
 
-### Sandbox TMPDIR ([`postStartCommand`](.devcontainer/ai-agent/devcontainer.json))
+### Sandbox TMPDIR ([`postStartCommand`](.devcontainer/devcontainer.json))
 
 Claude Code sets `TMPDIR=/tmp/claude` inside the sandbox, but doesn't create the directory itself. The sandbox allowlist permits writes to `/tmp/claude`, and the weaker sandbox bind-mounts the real `/tmp` into the namespace, so the directory just needs to exist on the host. Without it, any tool that resolves `TMPDIR` on startup (pnpm, node, etc.) crashes with `ENOENT`. The `postStartCommand` runs `mkdir -p /tmp/claude` to pre-create it. This is a workaround for a Claude Code bug ([anthropics/claude-code#21654](https://github.com/anthropics/claude-code/issues/21654)).
 

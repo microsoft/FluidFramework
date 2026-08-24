@@ -11,7 +11,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { DetachedField } from "../core/index.js";
 import {
 	type TreeNode,
-	type TreeBranch,
+	type UntypedTreeView,
 	type UnhydratedFlexTreeNode,
 	type TreeLeafValue,
 	type TreeChangeEventsBeta,
@@ -218,13 +218,13 @@ export abstract class ParentObjectBase
  */
 export class DocumentRootParent extends ParentObjectBase {
 	/**
-	 * Cache of {@link DocumentRootParent}s keyed by the {@link TreeBranch} for which they are the document root parent.
+	 * Cache of {@link DocumentRootParent}s keyed by the {@link UntypedTreeView} for which they are the document root parent.
 	 * @remarks
 	 * Caching a single instance per branch ensures that {@link (TreeAlpha:interface).parent2} returns
 	 * that same instance whenever it is called for a root node of that branch.
 	 * Using a {@link WeakMap} ensures entries are cleaned up when the branch is garbage collected.
 	 */
-	private static readonly cache = new WeakMap<TreeBranch, DocumentRootParent>();
+	private static readonly cache = new WeakMap<UntypedTreeView, DocumentRootParent>();
 
 	private constructor(
 		private readonly branch: SchematizingSimpleTreeView<ImplicitFieldSchema>,
@@ -239,14 +239,14 @@ export class DocumentRootParent extends ParentObjectBase {
 	 * {@link (TreeAlpha:interface).parent2} returns that same instance whenever it is called for a
 	 * root node of that branch.
 	 * @param branch - The branch whose document root parent is being requested. Must be a
-	 * {@link SchematizingSimpleTreeView}, which is the only implementation of {@link TreeBranch}.
+	 * {@link SchematizingSimpleTreeView}, which is the only implementation of {@link UntypedTreeView}.
 	 */
-	public static getOrCreate(branch: TreeBranch): DocumentRootParent {
+	public static getOrCreate(branch: UntypedTreeView): DocumentRootParent {
 		// Validate (and narrow) the branch type up front so failures surface here, at creation,
 		// rather than on later access, and so subsequent access does not have to re-check.
 		assert(branch instanceof SchematizingSimpleTreeView, "Unexpected branch implementation");
 		// instanceof loses the generic parameter; the cast restores it. This is safe because
-		// TreeBranch is always created as SchematizingSimpleTreeView<ImplicitFieldSchema>.
+		// UntypedTreeView is always created as SchematizingSimpleTreeView<ImplicitFieldSchema>.
 		const viewableBranch = branch as SchematizingSimpleTreeView<ImplicitFieldSchema>;
 		let rootParent = DocumentRootParent.cache.get(branch);
 		if (rootParent === undefined) {

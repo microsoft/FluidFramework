@@ -12,6 +12,8 @@ export {
 	CommitKind,
 	RevertibleStatus,
 	type CommitMetadata,
+	CommitOutcome,
+	type LocalCommitEvents,
 	type LocalChangeMetadata,
 	type RemoteChangeMetadata,
 	type ChangeMetadata,
@@ -21,38 +23,6 @@ export {
 	type RevertibleAlphaFactory,
 	type RevertibleAlpha,
 } from "./core/index.js";
-
-import type {
-	Listeners as EventListeners,
-	IsListener as EventIsListener,
-	Listenable as EventListenable,
-	Off as EventOff,
-} from "@fluidframework/core-interfaces";
-
-/**
- * {@inheritdoc @fluidframework/core-interfaces#Listeners}
- * @public
- * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
- */
-export type Listeners<T extends object> = EventListeners<T>;
-/**
- * {@inheritdoc @fluidframework/core-interfaces#IsListener}
- * @public
- * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
- */
-export type IsListener<T> = EventIsListener<T>;
-/**
- * {@inheritdoc @fluidframework/core-interfaces#Listenable}
- * @public
- * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
- */
-export type Listenable<T extends object> = EventListenable<T>;
-/**
- * {@inheritdoc @fluidframework/core-interfaces#Off}
- * @public
- * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
- */
-export type Off = EventOff;
 
 export {
 	TreeStatus,
@@ -81,12 +51,14 @@ export {
 	type TreeNodeParent,
 	independentView,
 	type IndependentViewOptions,
+	type IndependentViewTelemetryOptions,
 	createIndependentTreeBeta,
 	createIndependentTreeAlpha,
 	type CreateIndependentTreeAlphaOptions,
 	ForestTypeOptimized,
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
+	minimize,
 } from "./shared-tree/index.js";
 
 export {
@@ -100,6 +72,7 @@ export {
 	type TreeNodeSchema,
 	TreeViewConfiguration,
 	type ITreeViewConfiguration,
+	type ITreeViewConfigurationAlpha,
 	type ITreeConfigurationOptions,
 	type TreeView,
 	type TreeViewEvents,
@@ -267,10 +240,11 @@ export {
 	type ReadonlyArrayNode,
 	type InsertableTreeNodeFromAllowedTypes,
 	type Input,
+	type UntypedTreeView,
 	type TreeBranch,
 	type TreeBranchAlpha,
+	type UntypedTreeViewAlpha,
 	type TreeBranchEvents,
-	asTreeViewAlpha,
 	type NodeSchemaOptions,
 	type NodeSchemaOptionsAlpha,
 	type NodeSchemaMetadata,
@@ -300,6 +274,7 @@ export {
 	type HandleConverter,
 	allowUnused,
 	type LeafSchema,
+	type StringSchema,
 	type ArrayNodeCustomizableSchema,
 	type ArrayNodeCustomizableSchemaAlpha,
 	type ArrayNodePojoEmulationSchema,
@@ -335,6 +310,8 @@ export {
 	type ErasedNode,
 	type ErasedSchemaSubclassable,
 	type SnapshotSchemaCompatibilityOptions,
+	StagedSchemaUpgradePolicy,
+	type StagedSchemaUpgradePolicyFactory,
 	type ArrayPlaceAnchor,
 	createArrayInsertionAnchor,
 	type WithValue,
@@ -342,6 +319,7 @@ export {
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
+	SharedTreeAlpha,
 	configuredSharedTree,
 	configuredSharedTreeAlpha,
 	configuredSharedTreeBeta,
@@ -386,7 +364,7 @@ export type {
 } from "./util/index.js";
 export { cloneWithReplacements } from "./util/index.js";
 
-import * as InternalTypes from "./internalTypes.js";
+import type * as InternalTypes from "./internalTypes.js";
 /**
  * Contains types used by the API, but which serve mechanical purposes and do not represent semantic concepts.
  * They are used internally to implement API aspects, but are not intended for use by external consumers.
@@ -398,10 +376,10 @@ import * as InternalTypes from "./internalTypes.js";
  * support level tag is recognized by flub entrypoint generation.
  */
 // eslint-disable-next-line unicorn/prefer-export-from -- fixing requires `export * as` (breaks API-Extractor)
-export { InternalTypes };
+export type { InternalTypes };
 
 // Internal/System types:
-// These would be put in `internalTypes` except doing so tents to cause errors like:
+// These would be put in `internalTypes` except doing so tends to cause errors like:
 // The inferred type of 'NodeMap' cannot be named without a reference to '../../node_modules/@fluidframework/tree/lib/internalTypes.js'. This is likely not portable. A type annotation is necessary.
 export type { MapNodeInsertableData } from "./simple-tree/index.js";
 
@@ -411,10 +389,14 @@ export { TableSchema, type System_TableSchema } from "./tableSchema.js";
 export { asAlpha, asBeta } from "./api.js";
 
 export {
-	TextAsTree,
-	FormattedTextAsTree,
-	FormattedTextAsTreeDefault,
+	PlainText,
+	FormattedText,
+	FormattedTextDefault,
 	codePointCount,
 	utf16LengthForCodePoints,
 } from "./text/index.js";
 export { ExtensibleUnionNode } from "./extensibleUnionNode.js";
+export { Component } from "./componentApi.js";
+
+export { defineTreeDataStore, instantiateTreeFirstTime } from "./treeDataStore.js";
+export type { TreeDataStoreOptions } from "./treeDataStore.js";

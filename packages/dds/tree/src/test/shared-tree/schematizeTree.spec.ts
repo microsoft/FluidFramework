@@ -187,6 +187,9 @@ describe("schematizeTree", () => {
 			isBranch(): boolean {
 				return true;
 			},
+			isView(): boolean {
+				return true;
+			},
 			hasRootSchema(): boolean {
 				return false;
 			},
@@ -203,6 +206,9 @@ describe("schematizeTree", () => {
 				throw new Error("Function not implemented.");
 			},
 			rebaseOnto(): void {
+				throw new Error("Function not implemented.");
+			},
+			computeNetChangeIfRebasedOnto(branch: unknown): never {
 				throw new Error("Function not implemented.");
 			},
 			isMissingEditsFrom(branch: unknown): never {

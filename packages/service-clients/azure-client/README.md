@@ -129,7 +129,7 @@ const schema = {
 	],
 };
 const azureClient = new AzureClient(props);
-const { container, services } = await azureClient.createContainer(schema, "2.100.0" /* minVersionForCollab */);
+const { container, services } = await azureClient.createContainer(schema, "2.100.0" /* oldestSupportedClient */);
 
 // Set any default data on the container's `initialObjects` before attaching
 // Returned ID can be used to fetch the container via `getContainer` below
@@ -144,7 +144,7 @@ Using the `AzureClient` object the developer can create and get Fluid containers
 import { AzureClient } from "@fluidframework/azure-client";
 
 const azureClient = new AzureClient(props);
-const { container, services } = await azureClient.getContainer("_unique-id_", schema, "2.100.0" /* minVersionForCollab */);
+const { container, services } = await azureClient.getContainer("_unique-id_", schema, "2.100.0" /* oldestSupportedClient */);
 ```
 
 **Note:** When using the `AzureClient` with `tenantId` set to `"local"`, all containers that have been created will be deleted when the instance of the local Azure Fluid Relay service (not client) that was run from the terminal window is closed. However, any containers created when running against a remote Azure Fluid Relay service will be persisted. Container IDs **cannot** be reused between local and remote Azure Fluid Relay services to fetch back the same container.
@@ -166,7 +166,7 @@ const schema = {
 };
 
 // Fetch back the container that had been created earlier with the same ID and schema
-const { container, services } = await azureClient.getContainer("_unique-id_", schema, "2.100.0" /* minVersionForCollab */);
+const { container, services } = await azureClient.getContainer("_unique-id_", schema, "2.100.0" /* oldestSupportedClient */);
 
 // Get our list of initial objects that we had defined in the schema. initialObjects here will have the same signature
 const initialObjects = container.initialObjects;
@@ -191,7 +191,7 @@ const schema = {
 	dynamicObjectTypes: [SharedString],
 };
 
-const { container, services } = await azureClient.getContainer("_unique-id_", schema, "2.100.0" /* minVersionForCollab */);
+const { container, services } = await azureClient.getContainer("_unique-id_", schema, "2.100.0" /* oldestSupportedClient */);
 const map1 = container.initialObjects.map1;
 
 const text1 = await container.create(SharedString);
@@ -266,7 +266,7 @@ There are many ways to [contribute](https://github.com/microsoft/FluidFramework/
 -   Review the [source code changes](https://github.com/microsoft/FluidFramework/pulls).
 -   [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
 
-Detailed instructions for working in the repo can be found in the [Wiki](https://github.com/microsoft/FluidFramework/wiki).
+Detailed instructions for working in the repo can be found in the [Wiki](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Home.md).
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
 For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
@@ -277,9 +277,11 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 
 ## Help
 
-Not finding what you're looking for in this README? Check out [fluidframework.com](https://fluidframework.com/docs/).
+Not finding what you're looking for in this README?
+Check out [fluidframework.com](https://fluidframework.com/docs/).
 
-Still not finding what you're looking for? Please [file an issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
+Still not finding what you're looking for?
+Please [file an issue](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Contributing/Submitting-Bugs-and-Feature-Requests.md).
 
 Thank you!
 
