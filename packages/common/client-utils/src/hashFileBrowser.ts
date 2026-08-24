@@ -9,7 +9,7 @@ import * as base64js from "base64-js";
 import { IsoBuffer } from "./bufferBrowser.js";
 
 async function digestBuffer(
-	file: IsoBuffer,
+	file: IsoBuffer<ArrayBuffer>,
 	algorithm: "SHA-1" | "SHA-256",
 ): Promise<Uint8Array> {
 	const hash = await crypto.subtle.digest(algorithm, file);
@@ -48,7 +48,7 @@ function encodeDigest(hashArray: Uint8Array, encoding: "hex" | "base64"): string
  * @internal
  */
 export async function hashFile(
-	file: IsoBuffer,
+	file: IsoBuffer<ArrayBuffer>,
 	algorithm: "SHA-1" | "SHA-256" = "SHA-1",
 	hashEncoding: "hex" | "base64" = "hex",
 ): Promise<string> {
