@@ -30,8 +30,6 @@ import { suitesWithAndWithoutProduction } from "../utils.js";
 import { FormattedTextDefault } from "../../text/index.js";
 import { oneFromIterable } from "../../util/index.js";
 
-import { testInsertionAnchors } from "./textDomainTestUtils.js";
-
 // Custom formatted-text schemas used to exercise `formatRange` edge cases which the default schema cannot express.
 
 // A format with an optional field, used to test formatting of optional fields.
@@ -67,8 +65,6 @@ describe("textDomainFormatted", () => {
 	afterEach(() => {
 		setEnableExpensiveDebugAsserts(false);
 	});
-
-	testInsertionAnchors((value) => OptionalFormatText.fromString(value));
 
 	it("compatibility-minimal", () => {
 		const scopingFactory = new SchemaFactoryBeta("minimal");

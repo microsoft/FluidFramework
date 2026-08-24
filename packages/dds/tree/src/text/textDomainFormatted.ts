@@ -224,10 +224,6 @@ export namespace FormattedText {
 				this.content.removeRange(index, end);
 			}
 
-			public createInsertionAnchor(index: number): ArrayPlaceAnchor {
-				return createArrayInsertionAnchor(this.content, index);
-			}
-
 			public characters(): Iterable<string> {
 				return mapIterable(this.content, (atom) => atom.content.content);
 			}
@@ -754,11 +750,6 @@ export namespace FormattedText {
 			TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>
 		>[],
 	> extends PlainText.Members {
-		/**
-		 * {@inheritDoc PlainText.Members.createInsertionAnchor}
-		 */
-		createInsertionAnchor(index: number): ArrayPlaceAnchor;
-
 		/**
 		 * {@link PlainText.Members.insertAt} with optional formatting to apply to all additional characters,
 		 * and allowing an array of atoms instead of a string.

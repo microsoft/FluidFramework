@@ -135,9 +135,6 @@ class TextNode
 	public removeRange(index: number | undefined, end: number | undefined): void {
 		this.content.removeRange(index, end);
 	}
-	public createInsertionAnchor(index: number): ArrayPlaceAnchor {
-		return createArrayInsertionAnchor(this.content, index);
-	}
 	public characters(): Iterable<string> {
 		return this.content[Symbol.iterator]();
 	}
@@ -494,19 +491,6 @@ export namespace PlainText {
 		 * See {@link (TreeArrayNode:interface).removeRange} for more details on the behavior.
 		 */
 		removeRange(startIndex: number | undefined, endIndex: number | undefined): void;
-
-		/**
-		 * Create an anchor that tracks an insertion point in this text.
-		 * @param index - The current character index of the insertion point, from 0 through
-		 * {@link PlainText.Members.characterCount} inclusive.
-		 * @remarks
-		 * The index is measured in Unicode code points, matching the other {@link PlainText.Members}
-		 * editing APIs.
-		 * @returns An anchor that must be disposed when it is no longer needed.
-		 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if `index` is not an integer
-		 * within the valid range.
-		 */
-		createInsertionAnchor(index: number): ArrayPlaceAnchor;
 
 		/**
 		 * Subscribe to shallow character-level changes on this text node — inserts and removes only.

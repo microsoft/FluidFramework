@@ -23,8 +23,6 @@ import { testSchemaCompatibilitySnapshots } from "../snapshots/index.js";
 import { suitesWithAndWithoutProduction } from "../utils.js";
 import { nonProductionConditionalsIncluded } from "@fluidframework/core-utils/internal";
 
-import { testInsertionAnchors } from "./textDomainTestUtils.js";
-
 describe("textDomain", () => {
 	beforeEach(() => {
 		setEnableExpensiveDebugAsserts(true);
@@ -67,8 +65,6 @@ describe("textDomain", () => {
 		// Disabled, so should not throw.
 		expensiveInternalValidationAssert(() => "error");
 	});
-
-	testInsertionAnchors((value) => PlainText.Tree.fromString(value));
 
 	// Hydrated and unhydrated trees implement cursors differently which impacts observation tracking, so test both.
 	// Specifically unhydrated tree cursors do observation tracking while hydrated ones do not.

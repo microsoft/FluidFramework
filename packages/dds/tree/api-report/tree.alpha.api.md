@@ -544,7 +544,6 @@ export namespace FormattedText {
     // @sealed
     export interface Members<FormatSchema extends ImplicitAllowedTypes, ExtraAtomsSchema extends readonly LazyItem<TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>>[]> extends PlainText.Members {
         charactersWithFormatting(): readonly FormattedAtom<TreeNodeFromImplicitAllowedTypes<FormatSchema>, TreeNodeFromImplicitAllowedTypes<TextAtomSchemas<ExtraAtomsSchema>>>[];
-        createInsertionAnchor(index: number): ArrayPlaceAnchor;
         formatRange(startIndex: number | undefined, endIndex: number | undefined, format: Partial<TreeNodeFromImplicitAllowedTypes<FormatSchema>>): void;
         getString(startIndex: number, endIndex?: number): string;
         getUniformRun(startIndex: number, endIndex?: number): number;
