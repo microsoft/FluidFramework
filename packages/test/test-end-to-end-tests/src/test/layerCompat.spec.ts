@@ -19,6 +19,7 @@ import {
 import type { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	driverSupportRequirementsForLoader,
+	loaderCompatDetailsForDriver,
 	loaderCompatDetailsForRuntime,
 	loaderCoreCompatDetails,
 	runtimeSupportRequirementsForLoader,
@@ -42,9 +43,18 @@ import {
 	dataStoreCoreCompatDetails,
 	runtimeSupportRequirementsForDataStore,
 } from "@fluidframework/datastore/internal";
-import { localDriverCompatDetailsForLoader } from "@fluidframework/local-driver/internal";
-import { odspDriverCompatDetailsForLoader } from "@fluidframework/odsp-driver/internal";
-import { r11sDriverCompatDetailsForLoader } from "@fluidframework/routerlicious-driver/internal";
+import {
+	localDriverCompatDetailsForLoader,
+	localDriverCompatRequirementsForLoader,
+} from "@fluidframework/local-driver/internal";
+import {
+	odspDriverCompatDetailsForLoader,
+	odspDriverCompatRequirementsForLoader,
+} from "@fluidframework/odsp-driver/internal";
+import {
+	r11sDriverCompatDetailsForLoader,
+	r11sDriverCompatRequirementsForLoader,
+} from "@fluidframework/routerlicious-driver/internal";
 import {
 	allowIncompatibleLayersKey,
 	isLayerIncompatibilityError,
@@ -155,6 +165,31 @@ function getDriverCompatDetailsForLoader(driverType: TestDriverTypes): ILayerCom
 }
 
 /**
+ * Returns the requirements the driver layer imposes on the loader based on the provided driver type. These are
+ * the requirements the driver publishes for the loader to validate itself against (the reverse direction of the
+ * Driver / Loader boundary).
+ * @param driverType - The type of driver for which the requirements are needed.
+ * @returns The support requirements for the loader from the specified driver type.
+ */
+function getDriverCompatRequirementsForLoader(
+	driverType: TestDriverTypes,
+): ILayerCompatSupportRequirements {
+	switch (driverType) {
+		case "tinylicious":
+		case "t9s":
+		case "routerlicious":
+		case "r11s":
+			return r11sDriverCompatRequirementsForLoader;
+		case "odsp":
+			return odspDriverCompatRequirementsForLoader;
+		case "local":
+			return localDriverCompatRequirementsForLoader;
+		default:
+			assert.fail(`Unexpected driver type: ${driverType}`);
+	}
+}
+
+/**
  * Returns the parameters required for testing that layer2 is compatible with layer1.
  * @param layer1 - The layer that is validating compatibility.
  * @param layer2 - The layer that is being validated for compatibility.
@@ -185,6 +220,23 @@ function getLayerTestParams(
 				layer1Generation: loaderCoreCompatDetails.generation,
 				layer2CompatDetails: getDriverCompatDetailsForLoader(driverType),
 			};
+		case "driver-loader": {
+			assert(
+				driverType !== undefined,
+				"Driver type must be provided for driver-loader combination",
+			);
+			// In this (reverse) direction the driver is layer1: it publishes the requirements the loader must
+			// meet, and the loader (layer2) validates itself against them on the driver's behalf.
+			const driverCompatDetails = getDriverCompatDetailsForLoader(driverType);
+			return {
+				layer1SupportRequirements: getDriverCompatRequirementsForLoader(
+					driverType,
+				) as ILayerCompatSupportRequirementsOverride,
+				layer1Version: driverCompatDetails.pkgVersion,
+				layer1Generation: driverCompatDetails.generation,
+				layer2CompatDetails: loaderCompatDetailsForDriver,
+			};
+		}
 		case "loader-runtime":
 			return {
 				layer1SupportRequirements:
@@ -240,9 +292,12 @@ function getExpectedErrorEvents(
 		},
 	];
 
-	// Loader layer validates Driver compatibility during container creation, so if it fails,
-	// there is no container to dispose of and we won't get the dispose event.
-	if (layer1 === "loader" && layer2 === "driver") {
+	// The Driver / Loader boundary is validated in the Container constructor (in both directions), so if it
+	// fails, there is no container to dispose of and we won't get the dispose event.
+	if (
+		(layer1 === "loader" && layer2 === "driver") ||
+		(layer1 === "driver" && layer2 === "loader")
+	) {
 		expectedErrorEvents.pop();
 	}
 
@@ -269,6 +324,11 @@ function getExpectedErrorEvents(
 	let telemetryNamespace: string = ":";
 	switch (layer1) {
 		case "loader":
+			telemetryNamespace = ":Container:";
+			break;
+		case "driver":
+			// The driver does not run the validation itself; the loader validates on its behalf and logs the
+			// error in the Container's telemetry namespace.
 			telemetryNamespace = ":Container:";
 			break;
 		case "runtime":
@@ -301,6 +361,10 @@ describeCompat("Layer compatibility validation", "NoCompat", (getTestObjectProvi
 		{
 			layer1: "loader",
 			layer2: "driver",
+		},
+		{
+			layer1: "driver",
+			layer2: "loader",
 		},
 		{
 			layer1: "loader",

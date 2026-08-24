@@ -65,13 +65,14 @@
 		"build:api-reports": "concurrently \"npm:build:api-reports:*\"",
 		"build:api-reports:current": "api-extractor run --local --config api-extractor/api-extractor-report.current.json",
 		"build:api-reports:legacy": "api-extractor run --local --config api-extractor/api-extractor-report.legacy.json",
+		"build:cjs": "fluid-tsc commonjs --project ./tsconfig.cjs.json && npm run place:cjs:package-stub",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local --config api-extractor/api-extractor-model.json",
 		"build:entrypoints": "fluid-build . --task build:entrypoints",
 		"build:entrypoints:cjs": "flub generate entrypoints --resolutionConditions require --outFileLegacyBeta legacy --outFileLegacyAlpha legacy.alpha --outDir ./dist",
 		"build:entrypoints:esm": "flub generate entrypoints --outFileLegacyBeta legacy --outFileLegacyAlpha legacy.alpha --outDir ./lib",
-		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:esm": "tsc --project ./tsconfig.json",
 		"build:test": "npm run build:test:esm && npm run build:test:cjs && npm run build:test:esm:no-exactOptionalPropertyTypes",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
@@ -106,9 +107,8 @@
 		"test:mocha:cjs": "cross-env FLUID_TEST_MODULE_SYSTEM=CJS mocha",
 		"test:mocha:esm": "mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && npm run place:cjs:package-stub",
-		"tsc:watch": "npm run place:cjs:package-stub && fluid-tsc commonjs --project ./tsconfig.cjs.json --watch",
-		"typetests:gen": "flub generate typetests --dir . -v"
+		"typetests:gen": "flub generate typetests --dir . -v",
+		"watch:cjs": "npm run place:cjs:package-stub && fluid-tsc commonjs --project ./tsconfig.cjs.json --watch"
 	},
 	"c8": {
 		"all": true,
@@ -155,7 +155,7 @@
 	"fluidBuild": {
 		"tasks": {
 			"build:test:esm:no-exactOptionalPropertyTypes": [
-				"build:esnext"
+				"build:esm"
 			]
 		}
 	},

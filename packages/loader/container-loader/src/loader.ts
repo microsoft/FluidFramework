@@ -38,7 +38,7 @@ import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/legacy
 import { v4 as uuid } from "uuid";
 
 import { Container } from "./container.js";
-import { DebugLogger } from "./debugLogger.js";
+import { mixinDebugLogger } from "./debugLogger.js";
 import { pkgVersion } from "./packageVersion.js";
 import type { ProtocolHandlerBuilder } from "./protocol.js";
 import type { IPendingContainerState } from "./serializedStateManager.js";
@@ -255,7 +255,7 @@ export class Loader implements IHostLoader {
 		};
 
 		const subMc = mixinMonitoringContext(
-			DebugLogger.mixinDebugLogger("fluid:telemetry", logger, {
+			mixinDebugLogger("fluid:telemetry", logger, {
 				all: telemetryProps,
 			}),
 			sessionStorageConfigProvider.value,
