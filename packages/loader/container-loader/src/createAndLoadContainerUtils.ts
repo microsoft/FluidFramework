@@ -54,7 +54,7 @@ import {
 	type IGcSnapshotData,
 } from "./captureReferencedContents.js";
 import { CatchUpMonitor } from "./catchUpMonitor.js";
-import { DebugLogger } from "./debugLogger.js";
+import { mixinDebugLogger } from "./debugLogger.js";
 import { createDeltaManager } from "./deltaManagerFactory.js";
 import { createFrozenDocumentServiceFactory } from "./frozenServices.js";
 import { Loader } from "./loader.js";
@@ -793,7 +793,7 @@ async function loadSummarizerContainerAndMakeSummaryInternal(
 	};
 
 	const subMc = mixinMonitoringContext(
-		DebugLogger.mixinDebugLogger("fluid:telemetry", logger, {
+		mixinDebugLogger("fluid:telemetry", logger, {
 			all: telemetryProps,
 		}),
 		sessionStorageConfigProvider.value,
