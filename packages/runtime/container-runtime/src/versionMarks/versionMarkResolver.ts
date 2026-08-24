@@ -356,18 +356,12 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 		timestamp: number,
 	): void {
 		const existingResolution = this.resolvedBatchById.get(batchId);
-		if (
-			existingResolution?.sequenceNumber === sequenceNumber &&
-			existingResolution.timestamp === timestamp
-		) {
+		if (existingResolution !== undefined) {
+			// NOTE: It's possible (but exceedingly rare) that this is a spurious duplicated batch,
+			// with a different sequence number/timestamp.
+			// Rather than asserting or overwriting, we let the earlier version mark stand, it is sufficient.
 			return;
 		}
-		// The protocol guarantees a `batchId` maps to one sequence number; a conflicting remap would also
-		// break the insertion-order invariant MSN eviction relies on, so fail loudly instead of overwriting.
-		assert(
-			existingResolution === undefined,
-			0xd34 /* version mark batchId remapped to a different sequence number */,
-		);
 
 		this.resolvedBatchById.set(batchId, { sequenceNumber, timestamp });
 		this.evictBelowMinimumSequenceNumber();

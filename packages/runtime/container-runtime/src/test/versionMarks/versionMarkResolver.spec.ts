@@ -741,15 +741,24 @@ describe("VersionMarkResolver", () => {
 			assert.deepEqual(events, [["client_[1]", 5, 5000]]);
 		});
 
-		it("asserts on a conflicting remap (same batchId, different sequence number)", () => {
+		it("keeps the earlier resolution on a conflicting remap (same batchId, different sequence number)", async () => {
 			const resolver = makeResolver();
-			resolver.processInboundBatch("client_[1]", 5, 5000);
-			// The protocol forbids a batchId remapping to a different sequence number; the resolver fails
-			// loudly rather than silently overwrite (which would also break the MSN-eviction ordering).
-			assert.throws(
-				() => resolver.processInboundBatch("client_[1]", 6, 6000),
-				validateAssertionError(/remapped to a different sequence number/),
+			const events: [string, number, number | undefined][] = [];
+			resolver.onBatchSequenced((batchId, sequenceNumber, timestamp) =>
+				events.push([batchId, sequenceNumber, timestamp]),
 			);
+			resolver.processInboundBatch("client_[1]", 5, 5000);
+			// The service can re-broadcast the same batch under a different sequence number/timestamp
+			// (tolerated by DuplicateBatchDetector for a batch with no explicit batchId). The first landing
+			// is the one peers actually applied and is a sufficient version mark on its own, so the resolver
+			// must not overwrite it or re-notify subscribers with the spurious remap.
+			resolver.processInboundBatch("client_[1]", 6, 6000);
+			assert.deepEqual(events, [["client_[1]", 5, 5000]]);
+			assert.deepEqual(await resolver.resolve("client_[1]", 0), {
+				kind: "resolved",
+				sequenceNumber: 5,
+				timestamp: 5000,
+			});
 		});
 
 		it("makes a processed batch resolvable via the live fast path", async () => {
