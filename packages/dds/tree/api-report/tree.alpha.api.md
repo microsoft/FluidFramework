@@ -1802,7 +1802,7 @@ export interface TreeAlpha {
     importVerbose<const TSchema extends ImplicitFieldSchema>(schema: TSchema, data: VerboseTree | undefined, options?: TreeParsingOptions): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
     key2(node: TreeNode): string | number | undefined;
     // @deprecated
-    on<K extends keyof TreeChangeEventsAlpha<TNode>, TNode extends TreeNode>(node: TNode, eventName: K, listener: NoInfer<TreeChangeEventsAlpha<TNode>[K]>): () => void;
+    on<K extends keyof TreeChangeEventsBeta<TNode>, TNode extends TreeNode>(node: TNode, eventName: K, listener: NoInfer<TreeChangeEventsBeta<TNode>[K]>): () => void;
     tagContentSchema<TSchema extends TreeNodeSchema, TContent extends InsertableField<TSchema>>(schema: TSchema, content: TContent): TContent;
     trackObservations<TResult>(onInvalidation: () => void, trackDuring: () => TResult): ObservationResults<TResult>;
     trackObservationsOnce<TResult>(onInvalidation: () => void, trackDuring: () => TResult): ObservationResults<TResult>;
@@ -1879,10 +1879,6 @@ export interface TreeBranchEvents {
 export interface TreeChangeEvents {
     nodeChanged(unstable?: unknown): void;
     treeChanged(unstable?: unknown): void;
-}
-
-// @alpha @sealed @deprecated
-export interface TreeChangeEventsAlpha<TNode extends TreeNode = TreeNode> extends TreeChangeEventsBeta<TNode> {
 }
 
 // @beta @sealed

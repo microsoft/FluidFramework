@@ -281,7 +281,6 @@ export {
 	TreeArrayNodeAlpha, 
 	TreeBranchAlpha, 
 	TreeBranchEvents, 
-	TreeChangeEventsAlpha, 
 	TreeCompressionStrategy, 
 	TreeContextAlpha, 
 	TreeDataStoreOptions, 

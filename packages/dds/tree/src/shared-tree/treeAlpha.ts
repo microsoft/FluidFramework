@@ -75,7 +75,7 @@ import {
 	toInitialSchema,
 	type TreeParsingOptions,
 	type NodeChangedData,
-	type TreeChangeEventsAlpha,
+	type TreeChangeEventsBeta,
 	type ConciseTree,
 	importConcise,
 	exportConcise,
@@ -235,10 +235,10 @@ export interface TreeAlpha {
 	 * {@inheritDoc (TreeBeta:interface).on}
 	 * @deprecated Use {@link (TreeBeta:interface).on} instead.
 	 */
-	on<K extends keyof TreeChangeEventsAlpha<TNode>, TNode extends TreeNode>(
+	on<K extends keyof TreeChangeEventsBeta<TNode>, TNode extends TreeNode>(
 		node: TNode,
 		eventName: K,
-		listener: NoInfer<TreeChangeEventsAlpha<TNode>[K]>,
+		listener: NoInfer<TreeChangeEventsBeta<TNode>[K]>,
 	): () => void;
 
 	/**
@@ -784,10 +784,10 @@ function trackObservations<TResult>(
  * @alpha
  */
 export const TreeAlpha: TreeAlpha = {
-	on<K extends keyof TreeChangeEventsAlpha<TNode>, TNode extends TreeNode>(
+	on<K extends keyof TreeChangeEventsBeta<TNode>, TNode extends TreeNode>(
 		node: TNode,
 		eventName: K,
-		listener: NoInfer<TreeChangeEventsAlpha<TNode>[K]>,
+		listener: NoInfer<TreeChangeEventsBeta<TNode>[K]>,
 	): () => void {
 		return TreeBeta.on(node, eventName, listener);
 	},

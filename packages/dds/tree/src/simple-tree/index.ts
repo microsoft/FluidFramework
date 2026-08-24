@@ -109,7 +109,6 @@ export {
 	importConcise,
 	TreeBeta,
 	type TreeChangeEventsBeta,
-	type TreeChangeEventsAlpha,
 	type IdentifierIndex,
 	createTreeIndex,
 	createIdentifierIndex,
