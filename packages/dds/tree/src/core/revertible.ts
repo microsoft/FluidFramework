@@ -21,6 +21,9 @@ export interface Revertible {
 
 	/**
 	 * Reverts the associated change and disposes it.
+	 *
+	 * @remarks
+	 * Concurrent changes that are sequenced before the revert will not be overwritten by the revert if they affect different parts of the document.
 	 */
 	revert(): void;
 	/**
@@ -29,6 +32,9 @@ export interface Revertible {
 	 * @param dispose - If true, the revertible will be disposed after being reverted.
 	 * If false, the revertible will remain valid. This can be useful for scenarios where the revert may be dropped
 	 * due to merge conflicts, and one wants to attempt reverting again.
+	 *
+	 * @remarks
+	 * Concurrent changes that are sequenced before the revert will not be overwritten by the revert if they affect different parts of the document.
 	 */
 	revert(dispose: boolean): void;
 
