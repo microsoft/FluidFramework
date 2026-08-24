@@ -5,21 +5,21 @@
 Make point-in-time support optional and consumer-supplied
 
 Point-in-time loading is now an optional implementation supplied by the host. Consumers that do
-not enable the feature can tree-shake its implementation from their bundles. Hosts enable the
-feature by importing the implementation from the normal legacy beta entrypoint and injecting it:
+not enable the feature no longer include its implementation in their dependency graph. Hosts can
+control when the feature is loaded by dynamically importing its dedicated entrypoint:
 
 ```typescript
-import {
-	createOdspDocumentServiceFactory,
-	createPointInTimeDocumentService,
-} from "@fluidframework/odsp-driver/legacy";
-
 const factory = createOdspDocumentServiceFactory({
 	getStorageToken,
 	getWebsocketToken,
 	persistedCache,
 	hostPolicy,
-	pointInTimeDocumentServiceImplementation: createPointInTimeDocumentService,
+	pointInTimeDocumentServiceImplementation: async (props) => {
+		const { createPointInTimeDocumentService } = await import(
+			"@fluidframework/odsp-driver/legacy/point-in-time"
+		);
+		return createPointInTimeDocumentService(props);
+	},
 });
 ```
 

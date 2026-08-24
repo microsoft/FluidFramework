@@ -94,7 +94,7 @@ async function resolveFileVersion(
 /**
  * ODSP's point-in-time document service implementation.
  *
- * @remarks Import this function from the legacy beta entrypoint and inject it through
+ * @remarks Import this function from the dedicated point-in-time entrypoint and inject it through
  * {@link IOdspDocumentServiceFactoryOptions.pointInTimeDocumentServiceImplementation}.
  *
  * @param props - ODSP service dependencies and point-in-time load parameters supplied by the factory.

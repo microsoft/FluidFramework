@@ -18,8 +18,8 @@ import {
 	getDriveItemByRootFileName,
 } from "@fluidframework/odsp-doclib-utils/internal";
 import { createOdspDocumentServiceFactory } from "@fluidframework/odsp-driver/internal";
-// eslint-disable-next-line import-x/no-internal-modules -- Beta package entrypoint.
-import { createPointInTimeDocumentService } from "@fluidframework/odsp-driver/legacy";
+// eslint-disable-next-line import-x/no-internal-modules -- Explicitly opts this test host into point-in-time loading.
+import { createPointInTimeDocumentService } from "@fluidframework/odsp-driver/legacy/point-in-time";
 import type {
 	HostStoragePolicy,
 	OdspResourceTokenFetchOptions,

@@ -26,7 +26,7 @@ import {
  * at {@link ILoadContainerToSequenceNumberProps.loadToSequenceNumber} - i.e. it must implement the
  * point-in-time capability the loader detects. For ODSP, call
  * `createOdspDocumentServiceFactory` with the implementation imported from
- * `@fluidframework/odsp-driver/legacy`.
+ * `@fluidframework/odsp-driver/legacy/point-in-time`.
  *
  * @legacy @beta
  */
