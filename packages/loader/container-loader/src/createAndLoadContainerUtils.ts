@@ -564,13 +564,14 @@ export interface ICaptureFullContainerStateProps {
  * relay, inspection, and durable-state snapshot use cases.
  *
  * General loading groups are not yet supported: the function throws
- * `UsageError` if the root or any subtree outside the reserved root `.blobs`
- * tree carries a `groupId`, including unreferenced-but-unswept subtrees that
- * saved ops may revive. The `.blobs` child group is supported because its
- * structural blob IDs are available in the base snapshot and can be read
- * directly. Other group snapshots would need a separate prefetch +
- * serialization path; until there is a known consumer and end-to-end coverage,
- * the capture refuses rather than silently producing incomplete pending state.
+ * `UsageError` if any tree other than the reserved
+ * `.blobs/.embeddedDetachedBlobs` node carries a `groupId`, including
+ * unreferenced-but-unswept subtrees that saved ops may revive. The embedded
+ * blob group is supported because its structural blob IDs are available in
+ * the base snapshot and can be read directly. Other group snapshots would
+ * need a separate prefetch + serialization path; until there is a known
+ * consumer and end-to-end coverage, the capture refuses rather than silently
+ * producing incomplete pending state.
  *
  * @privateRemarks
  * Note: if a new snapshot lands between the snapshot fetch and delta catch-up,

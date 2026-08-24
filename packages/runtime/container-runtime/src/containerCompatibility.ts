@@ -22,6 +22,12 @@ import {
 import type { ContainerRuntimeOptionsInternal } from "./containerRuntime.js";
 
 /**
+ * The first client release that understands the single-round-trip file-create document format.
+ * @internal
+ */
+export const singleRoundTripFileCreateMinVersion = "3.0.0";
+
+/**
  * Subset of the {@link ContainerRuntimeOptionsInternal} properties which
  * affect {@link IDocumentSchemaFeatures}.
  *
@@ -217,7 +223,7 @@ const runtimeOptionsAffectingDocSchemaConfigValidationMap: ConfigValidationMap<R
 		]),
 		enableSingleRoundTripFileCreate: configValueToMinVersionForCollab([
 			[undefined, "1.0.0"],
-			[true, "3.0.0"],
+			[true, singleRoundTripFileCreateMinVersion],
 		]),
 	};
 

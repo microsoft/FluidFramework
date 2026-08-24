@@ -126,7 +126,7 @@ export function validateLoaderCompatibility(
 	maybeLoaderCompatDetailsForRuntime: ILayerCompatDetails | undefined,
 	disposeFn: (error?: ICriticalContainerError) => void,
 	mc: MonitoringContext,
-	requiredFeatures: readonly string[] = loaderSupportRequirementsForRuntime.requiredFeatures,
+	additionalRequiredFeatures: readonly string[] = [],
 ): void {
 	// By default, use strictCompatibilityCheck here - If the Loader doesn't provide compatibility details,
 	// assume it's a very old version and should be considered incompatible,
@@ -140,7 +140,13 @@ export function validateLoaderCompatibility(
 		"runtime",
 		"loader",
 		runtimeCompatDetailsForLoader,
-		{ ...loaderSupportRequirementsForRuntime, requiredFeatures },
+		{
+			...loaderSupportRequirementsForRuntime,
+			requiredFeatures: [
+				...loaderSupportRequirementsForRuntime.requiredFeatures,
+				...additionalRequiredFeatures,
+			],
+		},
 		maybeLoaderCompatDetailsForRuntime,
 		disposeFn,
 		mc,

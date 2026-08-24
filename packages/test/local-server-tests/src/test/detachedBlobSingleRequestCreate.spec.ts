@@ -51,7 +51,7 @@ import {
 import { createLoader } from "./utils.js";
 
 const embeddedBlobsTreeName = ".embeddedDetachedBlobs";
-const embeddedBlobsGroupId = "embeddedDetachedBlobs";
+const embeddedBlobsGroupId = "fluid-internal:embedded-detached-blobs";
 
 interface StorageCallCounts {
 	createContainer: number;

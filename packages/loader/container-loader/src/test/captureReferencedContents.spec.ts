@@ -116,7 +116,7 @@ describe("captureReferencedContents", () => {
 						trees: {
 							".embeddedDetachedBlobs": tree({
 								blobs: { localId: "embedded-content-id" },
-								groupId: "embeddedDetachedBlobs",
+								groupId: "fluid-internal:embedded-detached-blobs",
 							}),
 						},
 					}),
@@ -147,7 +147,7 @@ describe("captureReferencedContents", () => {
 									liveLocalId: "live-content-id",
 									deadLocalId: "dead-content-id",
 								},
-								groupId: "embeddedDetachedBlobs",
+								groupId: "fluid-internal:embedded-detached-blobs",
 							}),
 						},
 					}),
@@ -320,14 +320,13 @@ describe("captureReferencedContents", () => {
 			assert.strictEqual(snapshotHasLoadingGroups(snapshot), true);
 		});
 
-		it("ignores groupIds only inside the reserved root .blobs subtree", () => {
+		it("ignores only the reserved embedded-blob loading group", () => {
 			const snapshot = tree({
 				trees: {
 					".blobs": tree({
 						trees: {
 							".embeddedDetachedBlobs": tree({
-								groupId: "embeddedDetachedBlobs",
-								trees: { nested: tree({ groupId: "nested-blob-group" }) },
+								groupId: "fluid-internal:embedded-detached-blobs",
 							}),
 						},
 					}),
@@ -335,7 +334,17 @@ describe("captureReferencedContents", () => {
 			});
 			assert.strictEqual(snapshotHasLoadingGroups(snapshot), false);
 
-			snapshot.trees.other = tree({ groupId: "ordinary-loading-group" });
+			snapshot.trees[".blobs"].groupId = "blob-manager-group";
+			assert.strictEqual(snapshotHasLoadingGroups(snapshot), true);
+
+			delete snapshot.trees[".blobs"].groupId;
+			snapshot.trees[".blobs"].trees.other = tree({ groupId: "ordinary-loading-group" });
+			assert.strictEqual(snapshotHasLoadingGroups(snapshot), true);
+
+			delete snapshot.trees[".blobs"].trees.other;
+			snapshot.trees[".blobs"].trees[".embeddedDetachedBlobs"].trees.nested = tree({
+				groupId: "nested-blob-group",
+			});
 			assert.strictEqual(snapshotHasLoadingGroups(snapshot), true);
 		});
 	});

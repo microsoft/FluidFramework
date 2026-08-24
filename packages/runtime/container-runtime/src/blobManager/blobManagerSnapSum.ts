@@ -145,7 +145,7 @@ export const embeddedBlobsTreeName = ".embeddedDetachedBlobs";
  * The shared groupId assigned to the embedded-blobs subtree.
  * @internal
  */
-export const embeddedBlobsGroupId = "embeddedDetachedBlobs";
+export const embeddedBlobsGroupId = "fluid-internal:embedded-detached-blobs";
 
 export const summarizeBlobManagerState = (
 	redirectTable: Map<string, string>,

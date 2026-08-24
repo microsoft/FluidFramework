@@ -22,9 +22,10 @@ import type {
 	ISnapshotTree,
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
-import { isInstanceOfISnapshot, UsageError } from "@fluidframework/driver-utils/internal";
+import { UsageError } from "@fluidframework/driver-utils/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
+import { mapWithConcurrency, maxReadConcurrency } from "./captureReferencedContents.js";
 import type { MemoryDetachedBlobStorage } from "./memoryBlobStorage.js";
 import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService.js";
 import { RetriableDocumentStorageService } from "./retriableDocumentStorageService.js";
@@ -335,7 +336,7 @@ export async function getBlobContentsFromTree(
 	storage: Pick<IDocumentStorageService, "readBlob">,
 ): Promise<Map<string, ArrayBufferLike>> {
 	const blobs = new Map<string, ArrayBufferLike>();
-	if (isInstanceOfISnapshot(snapshot)) {
+	if ("snapshotTree" in snapshot) {
 		for (const [id, content] of snapshot.blobContents) {
 			blobs.set(id, content);
 		}
@@ -365,10 +366,13 @@ async function getBlobContentsFromTreeCore(
 			treePs.push(getBlobContentsFromTreeCore(subTree, blobs, storage, false));
 		}
 	}
-	for (const id of Object.values(tree.blobs)) {
-		const blob = await storage.readBlob(id);
-		blobs.set(id, blob);
-	}
+	await mapWithConcurrency(
+		Object.values(tree.blobs),
+		maxReadConcurrency,
+		async (id): Promise<void> => {
+			blobs.set(id, await storage.readBlob(id));
+		},
+	);
 	return Promise.all(treePs);
 }
 

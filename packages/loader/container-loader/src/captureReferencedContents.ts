@@ -31,6 +31,7 @@ export const wireFormatConstants = {
 } as const;
 
 const { blobsTreeName, redirectTableBlobName } = wireFormatConstants;
+const embeddedBlobsTreeName = ".embeddedDetachedBlobs";
 
 /** Reader that returns a blob's contents for a given storage id. */
 type BlobReader = (id: string) => Promise<ArrayBufferLike>;
@@ -41,7 +42,7 @@ type BlobReader = (id: string) => Promise<ArrayBufferLike>;
  * or spike memory. The value is a pragmatic middle ground — high enough to
  * keep a typical driver's request pipeline full, low enough to avoid storms.
  */
-const maxReadConcurrency = 32;
+export const maxReadConcurrency = 32;
 
 /**
  * Runs `fn` over `items` with at most `limit` promises in flight. Preserves
@@ -289,11 +290,8 @@ export async function inlineAttachmentBlobsByReference(
 }
 
 /**
- * Returns true if any subtree outside the reserved root `.blobs` tree
+ * Returns true if any subtree other than the reserved embedded-blob subtree
  * declares a `groupId`.
- * Groups below `.blobs` contain self-contained structural summary blobs whose
- * IDs can be read directly from the base snapshot, so full-state capture can
- * inline them without fetching a loading-group snapshot.
  *
  * `captureFullContainerState` does not yet support loading groups: prefetching
  * per-group snapshots adds a code path that has no end-to-end coverage and no
@@ -304,8 +302,21 @@ export function snapshotHasLoadingGroups(baseSnapshot: ISnapshotTree): boolean {
 	if (baseSnapshot.groupId !== undefined) {
 		return true;
 	}
-	return Object.entries(baseSnapshot.trees).some(
-		([key, child]) => key !== blobsTreeName && subtreeHasLoadingGroups(child),
+	return Object.entries(baseSnapshot.trees).some(([key, child]) =>
+		key === blobsTreeName
+			? blobManagerTreeHasUnsupportedLoadingGroups(child)
+			: subtreeHasLoadingGroups(child),
+	);
+}
+
+function blobManagerTreeHasUnsupportedLoadingGroups(blobManagerTree: ISnapshotTree): boolean {
+	if (blobManagerTree.groupId !== undefined) {
+		return true;
+	}
+	return Object.entries(blobManagerTree.trees).some(([key, child]) =>
+		key === embeddedBlobsTreeName
+			? Object.values(child.trees).some(subtreeHasLoadingGroups)
+			: subtreeHasLoadingGroups(child),
 	);
 }
 

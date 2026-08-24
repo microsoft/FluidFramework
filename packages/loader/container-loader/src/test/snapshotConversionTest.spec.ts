@@ -18,6 +18,7 @@ import {
 	getBlobContentsFromTree,
 	getBlobContentsFromTreeWithBlobContents,
 } from "../containerStorageAdapter.js";
+import { maxReadConcurrency } from "../captureReferencedContents.js";
 import type { SerializedSnapshotInfo } from "../serializedStateManager.js";
 import {
 	combineAppAndProtocolSummary,
@@ -322,5 +323,43 @@ describe("Dehydrate Container", () => {
 				["binary-id", binaryBytes],
 			]),
 		);
+	});
+
+	it("bounds reads when capturing embedded blob contents", async () => {
+		const blobCount = maxReadConcurrency + 8;
+		const embeddedBlobs = Object.fromEntries(
+			Array.from({ length: blobCount }, (_, index) => [`local-${index}`, `blob-${index}`]),
+		);
+		const snapshot: ISnapshotTree = {
+			blobs: {},
+			trees: {
+				".blobs": {
+					blobs: {},
+					trees: {
+						".embeddedDetachedBlobs": {
+							blobs: embeddedBlobs,
+							trees: {},
+							groupId: "fluid-internal:embedded-detached-blobs",
+						},
+					},
+				},
+			},
+		};
+		let inFlight = 0;
+		let peak = 0;
+		const storage: Pick<IDocumentStorageService, "readBlob"> = {
+			readBlob: async () => {
+				inFlight++;
+				peak = Math.max(peak, inFlight);
+				await new Promise((resolve) => setTimeout(resolve, 5));
+				inFlight--;
+				return new Uint8Array([1]);
+			},
+		};
+
+		const contents = await getBlobContentsFromTree(snapshot, storage);
+
+		assert.strictEqual(contents.size, blobCount);
+		assert.strictEqual(peak, maxReadConcurrency);
 	});
 });

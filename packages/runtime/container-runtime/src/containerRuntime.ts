@@ -207,6 +207,7 @@ import {
 	validateRuntimeOptions,
 	runtimeOptionKeysThatRequireExplicitSchemaControl,
 	type RuntimeOptionKeysThatRequireExplicitSchemaControl,
+	singleRoundTripFileCreateMinVersion,
 } from "./containerCompatibility.js";
 import { ContainerFluidHandleContext } from "./containerHandleContext.js";
 import { channelToDataStore } from "./dataStore.js";
@@ -1076,11 +1077,11 @@ export class ContainerRuntime
 		}
 		if (
 			runtimeOptions.enableSingleRoundTripFileCreate === true &&
-			minVersionForCollab !== "3.0.0" &&
-			!gt(minVersionForCollab, "3.0.0")
+			minVersionForCollab !== singleRoundTripFileCreateMinVersion &&
+			!gt(minVersionForCollab, singleRoundTripFileCreateMinVersion)
 		) {
 			throw new UsageError(
-				"enableSingleRoundTripFileCreate requires oldestSupportedClient to be set to 3.0.0 or later.",
+				`enableSingleRoundTripFileCreate requires oldestSupportedClient to be set to ${singleRoundTripFileCreateMinVersion} or later.`,
 			);
 		}
 		// We also validate that there is not a mismatch between `minVersionForCollab` and runtime options that
@@ -1323,6 +1324,7 @@ export class ContainerRuntime
 				? {
 						...persistedDocumentSchema,
 						info: {
+							...persistedDocumentSchema.info,
 							minVersionForCollab:
 								persistedDocumentSchema.info === undefined ||
 								gt(minVersionForCollab, persistedDocumentSchema.info.minVersionForCollab)

@@ -432,6 +432,8 @@ export class BlobManager {
 	 * Consumers should use the observability APIs on the handle (handle.payloadState, payloadShared event)
 	 * to understand/wait for storage ID availability.
 	 * Similarly, when the runtime is detached, this will return undefined as no blobs have been uploaded to storage.
+	 * Blobs created through the single-round-trip file-create mode remain summary-backed permanently,
+	 * so this method also returns undefined for them after the container is attached.
 	 */
 	public lookupTemporaryBlobStorageId(localId: string): string | undefined {
 		if (this.runtime.attachState === AttachState.Detached) {

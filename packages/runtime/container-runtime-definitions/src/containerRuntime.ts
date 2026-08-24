@@ -220,6 +220,7 @@ export interface IContainerRuntimeInternal extends IContainerRuntime, ContainerE
 	 * Consumers should use the observability APIs on the handle (handle.payloadState, payloadShared event)
 	 * to understand/wait for storage ID availability.
 	 * Similarly, when the runtime is detached, this will return undefined as no blobs have been uploaded to storage.
+	 * Blobs that remain summary-backed permanently also return undefined after the container is attached.
 	 */
 	lookupTemporaryBlobStorageId(localId: string): string | undefined;
 }
