@@ -23,8 +23,7 @@ const factory = createOdspDocumentServiceFactory({
 });
 ```
 
-The legacy-beta `getOdspPointInTimeDocumentServiceFactory` helper is removed. Bohemia does not
-currently use point-in-time loading, so no Bohemia migration is required. Future point-in-time
+The legacy-beta `getOdspPointInTimeDocumentServiceFactory` helper is removed. Point-in-time
 consumers should use `createOdspDocumentServiceFactory`, which accepts tokens, cache, host policy,
 and optional feature implementations in one options object. Existing `OdspDocumentServiceFactory`
 and `OdspDocumentServiceFactoryCore` constructor signatures remain unchanged.
