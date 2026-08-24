@@ -12,7 +12,6 @@ import type { IContainer } from "@fluidframework/container-definitions/internal"
 import type {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
-	LogLevel,
 } from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
@@ -162,7 +161,7 @@ class Logger implements ITelemetryBaseLogger {
 	) {}
 
 	// ITelemetryBaseLogger implementation
-	public send(event: ITelemetryBaseEvent, _logLevel?: LogLevel): void {
+	public send(event: ITelemetryBaseEvent): void {
 		if (event.category === "error" && this.errorHandler(event)) {
 			// Stack is not output properly (with newlines), if done as part of event
 			const stack: string | undefined = event.stack as string | undefined;
