@@ -38,48 +38,54 @@ API documentation for **@fluidframework/tool-utils** is available at <https://fl
 
 ## Minimum Client Requirements
 
-The following are the platform requirements for using Fluid Framework client libraries.
-These requirements err on the side of being conservative.
-Policies may be relaxed within a major version series, but not made stricter.
-For Long Term Support (LTS) versions, this can require supporting these platforms for several years.
+Fluid Framework client libraries support the platforms in this document.
+These requirements are intentionally restrictive.
+Within a major version series, we can relax these requirements, but we cannot make them stricter.
+For a Long Term Support (LTS) version, we might need to support these platforms for several years.
 
-It is likely that other configurations will work, but they are not supported.
-We do not consider it a bug if such configurations stop working in the future.
-If you would benefit from support for something not listed here, file an issue and the product team will evaluate your request.
-When making such a request, please include whether the configuration already works (and thus the request is just that it becomes officially supported), or if changes are required to get it working.
+Other configurations can work, but Fluid Framework does not support them.
+If an unsupported configuration stops working, we do not classify this as a bug.
+To request support for a configuration that is not listed, file an issue.
+The product team will evaluate your request.
+In the issue, specify the current status of the configuration:
+
+-   The configuration works but needs official support.
+-   The configuration does not work and requires changes.
 
 ### Supported Runtimes
 
--   Node.js versions 22 and 24 for as long as they are receiving [upstream support](https://nodejs.org/en/about/previous-releases).
-    -   Support for version 22 will be dropped [when it loses upstream support on 2027-04-30](https://github.com/nodejs/release#release-schedule).
-    -   Running Fluid in a Node.js environment with the `--no-experimental-fetch` flag is not supported.
--   Modern browsers supporting the ES2022 standard library.
+-   Fluid Framework supports Node.js versions 22 and 24 while they receive [upstream support](https://nodejs.org/en/about/previous-releases).
+    -   Fluid Framework will stop support for version 22 [when upstream support ends on 2027-04-30](https://github.com/nodejs/release#release-schedule).
+    -   Fluid Framework does not support Node.js with the `--no-experimental-fetch` flag.
+-   Fluid Framework supports modern browsers that support the ES2022 standard library.
 
 ### Supported Tools
 
 -   [TypeScript 6.0](https://typescriptdocs.com/release-notes/TypeScript%206.0):
-    -   All [`strict`](https://www.typescriptlang.org/tsconfig) options are supported.
-    -   Build targets (`lib`, `target`) must specify `ES2022` or later.
-    -   [`strictNullChecks`](https://www.typescriptlang.org/tsconfig) is required.
-    -   [Configuration options deprecated in 6.0](https://typescriptdocs.com/release-notes/TypeScript%206.0#breaking-changes-and-deprecations-in-typescript-6-0) are not supported.
-    -   `exactOptionalPropertyTypes` is currently not fully supported.
-        If used, narrowing members of Fluid Framework types types using `in`, `Reflect.has`, `Object.hasOwn` or `Object.prototype.hasOwnProperty` should be avoided as they may incorrectly exclude `undefined` from the possible values in some cases.
+    -   Fluid Framework supports all [`strict`](https://www.typescriptlang.org/tsconfig) options.
+    -   Set the build targets (`lib`, `target`) to `ES2022` or later.
+    -   Enable [`strictNullChecks`](https://www.typescriptlang.org/tsconfig).
+    -   Fluid Framework does not support [configuration options deprecated in TypeScript 6.0](https://typescriptdocs.com/release-notes/TypeScript%206.0#breaking-changes-and-deprecations-in-typescript-6-0).
+    -   Fluid Framework does not fully support `exactOptionalPropertyTypes`.
+        If you enable this option, do not use `in`, `Reflect.has`, `Object.hasOwn`, or `Object.prototype.hasOwnProperty` to narrow members of Fluid Framework types.
+        These methods can incorrectly exclude `undefined` from the possible values.
 -   [webpack](https://webpack.js.org/) 5
-    -   We are not intending to be prescriptive about what bundler to use.
-        Other bundlers which can handle ES Modules should work, but webpack is the only one we actively test.
+    -   We do not require a specific bundler.
+        Other bundlers that handle ES Modules can work, but we actively test only webpack.
 
 ### Module Resolution
 
-[`Node16`, `Node20`, `NodeNext`, or `Bundler`](https://www.typescriptlang.org/tsconfig#moduleResolution) resolution should be used with TypeScript compilerOptions to follow the [Node.js v12+ ESM Resolution and Loading algorithm](https://nodejs.github.io/nodejs.dev/en/api/v20/esm/#resolution-and-loading-algorithm).
+In TypeScript `compilerOptions`, use [`Node16`, `Node20`, `NodeNext`, or `Bundler`](https://www.typescriptlang.org/tsconfig#moduleResolution) module resolution.
+These settings follow the [Node.js v12+ ESM Resolution and Loading algorithm](https://nodejs.github.io/nodejs.dev/en/api/v20/esm/#resolution-and-loading-algorithm).
 
-`Node10` resolution is not supported.
+Do not use `Node10` module resolution.
 
 ### Module Formats
 
 -   ES Modules:
-    ES Modules are the required way to consume our client packages (including in NodeJs).
--   CommonJs:
-    CommonJs is no longer officially supported as of version 3.0.
+    Use ES Modules to consume Fluid Framework client packages, including in Node.js.
+-   CommonJS:
+    Fluid Framework does not officially support CommonJS in version 3.0 or later.
 
 ## Contribution Guidelines
 
