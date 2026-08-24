@@ -1,9 +1,9 @@
 {
 	"extends": "../../../common/build/build-common/tsconfig.test.node16.json",
 	"compilerOptions": {
+		"noEmit": true,
 		"rootDir": "./",
-		"outDir": "../lib/test-app",
-		"types": ["jest", "puppeteer", "jest-environment-puppeteer", "expect-puppeteer", "react"],
+		"types": ["node", "react"],
 	},
 	"include": ["./**/*"],
 	"references": [
