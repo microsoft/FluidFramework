@@ -1494,9 +1494,6 @@ export interface NodeChangedData<TNode extends TreeNode = TreeNode> {
     readonly delta?: readonly ArrayNodeDeltaOp[] | undefined;
 }
 
-// @alpha
-export type NodeChangedDataAlpha<TNode extends TreeNode = TreeNode> = TNode extends WithType<string, NodeKind.Array> ? NodeChangedDataDelta : TNode extends WithType<string, NodeKind.Map | NodeKind.Object | NodeKind.Record> ? NodeChangedDataProperties<TNode> : NodeChangedData<TNode>;
-
 // @beta @sealed
 export interface NodeChangedDataDelta extends NodeChangedData {
     readonly delta: readonly ArrayNodeDeltaOp[] | undefined;
@@ -2500,7 +2497,7 @@ export interface TreeChangeEvents {
     treeChanged(unstable?: unknown): void;
 }
 
-// @alpha @sealed
+// @alpha @sealed @deprecated
 export interface TreeChangeEventsAlpha<TNode extends TreeNode = TreeNode> extends TreeChangeEventsBeta<TNode> {
 }
 

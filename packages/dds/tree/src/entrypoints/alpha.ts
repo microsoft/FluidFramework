@@ -237,7 +237,6 @@ export {
 	MapNodePojoEmulationSchema, 
 	MapNodeSchema, 
 	NoChangeConstraint, 
-	NodeChangedDataAlpha, 
 	NodeProvider, 
 	NodeSchemaOptionsAlpha, 
 	ObjectNodeSchema, 

@@ -101,7 +101,6 @@ export {
 	type ArrayNodeTreeChangedDeltaOp,
 	type ArrayNodeTreeChangedRetainOp,
 	type NodeChangedData,
-	type NodeChangedDataAlpha,
 	type NodeChangedDataDelta,
 	type NodeChangedDataProperties,
 	type NodeChangedDataTreeDelta,
