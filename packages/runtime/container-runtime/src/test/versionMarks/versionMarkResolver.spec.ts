@@ -221,7 +221,9 @@ describe("VersionMarkResolver", () => {
 			assert.deepEqual(resolver.sealAndCaptureVersionMark(), {
 				kind: "pending",
 				batchId: "client_[3]",
-				sequenceNumberLowerBound: 42,
+				// Inclusive lower bound: the pending batch is sequenced after the reference point (42),
+				// so its first possible sequence number is 43.
+				sequenceNumberLowerBound: 43,
 			});
 		});
 
@@ -251,7 +253,7 @@ describe("VersionMarkResolver", () => {
 			assert.deepEqual(resolver.sealAndCaptureVersionMark(), {
 				kind: "pending",
 				batchId: "client_[9]",
-				sequenceNumberLowerBound: 100,
+				sequenceNumberLowerBound: 101,
 			});
 		});
 	});
@@ -361,6 +363,22 @@ describe("VersionMarkResolver", () => {
 				sequenceNumber: 11,
 				timestamp: 11000,
 			});
+		});
+
+		it("resolves a batch whose op sits exactly at the inclusive lower bound", async () => {
+			// The lower bound is inclusive, so an op sequenced at exactly `sequenceNumberLowerBound` is
+			// in range: it resolves and must not trip the reader-contract assert (`firstScanned >= from`).
+			const calls: { from: number; to?: number }[] = [];
+			const reader = makeReader(
+				[[makeOp({ sequenceNumber: 15, clientId: "clientA", clientSequenceNumber: 7 })]],
+				calls,
+			);
+			const resolver = makeResolver({ reader });
+			assert.deepEqual(await resolver.resolve(generateBatchId("clientA", 7), 15), {
+				kind: "resolved",
+				sequenceNumber: 15,
+			});
+			assert.deepEqual(calls, [{ from: 15, to: undefined }]);
 		});
 	});
 
@@ -571,7 +589,7 @@ describe("VersionMarkResolver", () => {
 				[makeOp({ sequenceNumber: 10, clientId: "other", clientSequenceNumber: 1 })],
 			]);
 			const resolver = makeResolver({ reader, currentSequenceNumber: 12 });
-			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 9), 0), {
+			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 9), 1), {
 				kind: "unresolvable",
 			});
 		});
@@ -580,7 +598,17 @@ describe("VersionMarkResolver", () => {
 			// tip (20) is well past `from` (1), so ops should exist; an empty read means the range was trimmed.
 			const reader = makeReader([]);
 			const resolver = makeResolver({ reader, currentSequenceNumber: 20 });
-			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 9), 0), {
+			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 9), 1), {
+				kind: "unresolvable",
+			});
+		});
+
+		it("unresolvable on an empty read when `from` equals the tip (boundary)", async () => {
+			// tip (6) == `from` (6): the lower bound is at the tip, so an op could exist there. An empty
+			// read therefore means the range was trimmed, not that nothing is sequenced yet → unresolvable.
+			const reader = makeReader([]);
+			const resolver = makeResolver({ reader, currentSequenceNumber: 6 });
+			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 9), 6), {
 				kind: "unresolvable",
 			});
 		});
@@ -594,31 +622,31 @@ describe("VersionMarkResolver", () => {
 				],
 			]);
 			const resolver = makeResolver({ reader, currentSequenceNumber: 7 });
-			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 9), 5), {
+			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 9), 6), {
 				kind: "pending",
 			});
 		});
 
-		it("pending when nothing has sequenced past the reference point", async () => {
-			// tip (5) == sequenceNumberLowerBound, so `from` (6) is beyond the tip: the batch cannot have landed.
+		it("pending when nothing has sequenced past the lower bound", async () => {
+			// tip (5) < sequenceNumberLowerBound (6), so `from` (6) is beyond the tip: the batch cannot have landed.
 			const reader = makeReader([]);
 			const resolver = makeResolver({ reader, currentSequenceNumber: 5 });
-			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 9), 5), {
+			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 9), 6), {
 				kind: "pending",
 			});
 		});
 
-		it("reads from sequenceNumberLowerBound + 1 (the exclusive lower-bound anchor)", async () => {
+		it("reads from sequenceNumberLowerBound (the inclusive lower-bound anchor)", async () => {
 			const calls: { from: number; to?: number }[] = [];
 			const reader = makeReader([], calls);
 			const resolver = makeResolver({ reader });
 			await resolver.resolve(generateBatchId("missing", 9), 10);
-			assert.deepEqual(calls, [{ from: 11, to: undefined }]);
+			assert.deepEqual(calls, [{ from: 10, to: undefined }]);
 		});
 
 		it("asserts when the reader returns an op before the requested range start", async () => {
 			// The trim inference relies on the reader never returning an op earlier than `from`. A reader
-			// that violates this (returns seq 5 when from = 11) must fail loudly, not silently misclassify.
+			// that violates this (returns seq 5 when from = 10) must fail loudly, not silently misclassify.
 			const reader = makeReader([
 				[makeOp({ sequenceNumber: 5, clientId: "other", clientSequenceNumber: 1 })],
 			]);

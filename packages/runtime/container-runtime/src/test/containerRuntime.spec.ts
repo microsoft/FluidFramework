@@ -2895,7 +2895,7 @@ describe("Runtime", () => {
 				const context = {
 					...getMockContext(),
 					fetchOps: async (from, to, abortSignal) => {
-						assert.equal(from, 11, "the history read starts after the exclusive lower bound");
+						assert.equal(from, 11, "the history read starts at the inclusive lower bound");
 						assert.equal(to, undefined, "the history read has no fixed upper bound");
 						capturedSignal = abortSignal;
 						return {

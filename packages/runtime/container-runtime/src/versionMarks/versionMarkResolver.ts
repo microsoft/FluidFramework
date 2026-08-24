@@ -87,7 +87,7 @@ export interface IVersionMarkResolver {
 	sealAndCaptureVersionMark(): VersionMarkCapture;
 	/**
 	 * Resolves a pending mark's batchId to a global sequence number (`sequenceNumberLowerBound` is the
-	 * exclusive lower bound for a history read). A `resolved` sequence number feeds the loader's
+	 * inclusive lower bound for a history read). A `resolved` sequence number feeds the loader's
 	 * `loadContainerToSequenceNumber`.
 	 *
 	 * @param batchId - The stable identity of the pending batch.
@@ -173,7 +173,7 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 		// Seal the current batch so a just-submitted local edit is flushed into the pending state with a
 		// stable batchId (which is only assigned at flush) before we read it.
 		this.hooks.flushPendingBatch();
-		const sequenceNumberLowerBound = this.hooks.getCurrentSequenceNumber();
+		const referenceSequenceNumber = this.hooks.getCurrentSequenceNumber();
 		const batchId = this.hooks.getCurrentPendingBatchId();
 		if (batchId === undefined) {
 			// No unacked local batch: the mark already points at a durable sequence number.
@@ -185,7 +185,10 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 		}
 		// A pending mark needs its batch tracked so resolve() can promote it from the live map.
 		this.tracking = true;
-		return { kind: "pending", batchId, sequenceNumberLowerBound };
+		// The pending batch is sequenced after the reference point, so its first possible sequence
+		// number is `referenceSequenceNumber + 1`. Store that as an inclusive lower bound so resolve()
+		// scans directly from it.
+		return { kind: "pending", batchId, sequenceNumberLowerBound: referenceSequenceNumber + 1 };
 	}
 
 	public async resolve(
@@ -241,7 +244,7 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 	}
 
 	/**
-	 * Scans sequenced ops after `sequenceNumberLowerBound` for `batchId`, returning its last op's
+	 * Scans sequenced ops from `sequenceNumberLowerBound` (inclusive) for `batchId`, returning its last op's
 	 * sequence number when found and aborting the fetch once found or exhausted. Each op is routed through
 	 * the same unpack pipeline the live inbound path uses (chunk reassembly, ungroup, decompress) and
 	 * {@link inboundVersionMarkUpdate} derives its batch identity, so virtualized batches resolve here too.
@@ -254,7 +257,7 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 		batchId: string,
 		sequenceNumberLowerBound: number,
 	): Promise<ResolveResult> {
-		const from = sequenceNumberLowerBound + 1;
+		const from = sequenceNumberLowerBound;
 		const unpack = this.hooks.createHistoricalOpUnpacker?.();
 		const abortController = new AbortController();
 		try {
@@ -309,7 +312,7 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 		);
 		const tip = this.hooks.getCurrentSequenceNumber();
 		if (from > tip) {
-			// Nothing is sequenced at/after the mark's reference point yet, so the batch cannot have landed.
+			// Nothing is sequenced at/after the mark's lower bound yet, so the batch cannot have landed.
 			return { kind: "pending" };
 		}
 		if (firstScannedSequenceNumber === undefined) {
@@ -319,10 +322,10 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 			return { kind: "unresolvable" };
 		}
 		if (firstScannedSequenceNumber > from) {
-			// A trim gap at the anchor: the mark's ops (just after the reference point) are gone.
+			// A trim gap at the anchor: the mark's ops (at/after its lower bound) are gone.
 			return { kind: "unresolvable" };
 		}
-		// Ops are present from the reference point and the batch is not among them: not yet sequenced.
+		// Ops are present from the lower bound and the batch is not among them: not yet sequenced.
 		return { kind: "pending" };
 	}
 

@@ -16,6 +16,7 @@ import {
 import { currentObserver, buildNodeComparator } from "../feature-libraries/index.js";
 import { TreeAlpha, Tree as TreeStatic } from "../shared-tree/index.js";
 import {
+	createArrayInsertionAnchor,
 	getInnerNode,
 	SchemaFactory,
 	SchemaFactoryAlpha,
@@ -27,6 +28,7 @@ import {
 	eraseSchemaDetailsSubclassable,
 } from "../simple-tree/index.js";
 import type {
+	ArrayPlaceAnchor,
 	TreeNodeSchema,
 	LazyItem,
 	ImplicitAllowedTypes,
@@ -397,6 +399,10 @@ export namespace FormattedText {
 						callback,
 					),
 				);
+			}
+
+			public createInsertionAnchor(index: number): ArrayPlaceAnchor {
+				return createArrayInsertionAnchor(this.content, index);
 			}
 
 			public onContentChanged(
