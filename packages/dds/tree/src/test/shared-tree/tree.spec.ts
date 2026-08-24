@@ -15,7 +15,6 @@ import {
 	DocumentRootParent,
 	RemovedRootParent,
 	UnhydratedParent,
-	type ParentObjectChildChangedData,
 	type ParentObjectEvents,
 } from "../../shared-tree/parentObject.js";
 import { runTransaction, Tree } from "../../shared-tree/tree.js";
@@ -464,7 +463,7 @@ describe("treeApi", () => {
 	});
 
 	describe("on", () => {
-		it("fires treeChanged and childChanged through DocumentRootParent", () => {
+		it("fires treeChanged and nodeChanged through DocumentRootParent", () => {
 			const view = getView(new TreeViewConfiguration({ schema: ParentNode }));
 			view.initialize({ child: { value: 1 } });
 
@@ -477,24 +476,24 @@ describe("treeApi", () => {
 			const log: string[] = [];
 			TreeAlpha.on(child, "nodeChanged", () => log.push("child:nodeChanged"));
 			TreeAlpha.on(rootParent, "treeChanged", () => log.push("root:treeChanged"));
-			TreeAlpha.on(rootParent, "childChanged", () => log.push("root:childChanged"));
+			TreeAlpha.on(rootParent, "nodeChanged", () => log.push("root:nodeChanged"));
 
 			// Deep change within the current root's subtree: treeChanged fires; the document root
-			// itself is unchanged, so childChanged does not.
+			// itself is unchanged, so nodeChanged does not.
 			child.value = 2;
 			assert.deepEqual(log, ["child:nodeChanged", "root:treeChanged"]);
 
 			// Change a property of the current root node: still a change within the tree, so
-			// treeChanged fires; the document root is not replaced, so childChanged does not.
+			// treeChanged fires; the document root is not replaced, so nodeChanged does not.
 			log.length = 0;
 			root.child = new ChildNode({ value: 3 });
 			assert.deepEqual(log, ["root:treeChanged"]);
 
 			// Replace the document root entirely: treeChanged fires (something in the tree changed)
-			// and childChanged fires (the root occupant changed).
+			// and nodeChanged fires (this location's single child changed).
 			log.length = 0;
 			view.root = new ParentNode({ child: { value: 4 } });
-			assert.deepEqual(log, ["root:treeChanged", "root:childChanged"]);
+			assert.deepEqual(log, ["root:treeChanged", "root:nodeChanged"]);
 		});
 
 		it("fires treeChanged on forked branch and survives rebase", () => {
@@ -522,7 +521,7 @@ describe("treeApi", () => {
 			assert.deepEqual(log, ["fork:treeChanged", "fork:treeChanged"]);
 		});
 
-		it("childChanged fires when root is replaced during rebase", () => {
+		it("nodeChanged fires when root is replaced during rebase", () => {
 			const view = getView(new TreeViewConfiguration({ schema: ParentNode }));
 			view.initialize({ child: { value: 42 } });
 
@@ -532,7 +531,7 @@ describe("treeApi", () => {
 
 			const log: string[] = [];
 			TreeAlpha.on(forkDocumentRootParent, "treeChanged", () => log.push("treeChanged"));
-			TreeAlpha.on(forkDocumentRootParent, "childChanged", () => log.push("childChanged"));
+			TreeAlpha.on(forkDocumentRootParent, "nodeChanged", () => log.push("nodeChanged"));
 
 			forkedView.root.child.value = 50;
 			assert.deepEqual(log, ["treeChanged"]);
@@ -543,10 +542,10 @@ describe("treeApi", () => {
 			assert.deepEqual(log, []);
 
 			// Rebase replaces the fork's root: something in the tree changed (treeChanged) and the
-			// root occupant changed (childChanged).
+			// location's single child changed (nodeChanged).
 			log.length = 0;
 			forkedView.rebaseOnto(view);
-			assert.deepEqual(log, ["treeChanged", "childChanged"]);
+			assert.deepEqual(log, ["treeChanged", "nodeChanged"]);
 			assert.equal(forkedView.root.child.value, 100);
 
 			// Content listener still works after root replacement
@@ -556,7 +555,7 @@ describe("treeApi", () => {
 		});
 
 		describe("RemovedRootParent", () => {
-			it("fires childChanged on reattach and respects unsubscribe", () => {
+			it("fires nodeChanged on reattach and respects unsubscribe", () => {
 				const view = getView(new TreeViewConfiguration({ schema: Container }));
 				view.initialize({ items: [{ value: 42 }] });
 
@@ -570,14 +569,13 @@ describe("treeApi", () => {
 
 				const log: string[] = [];
 				// Subscribe twice — unsubscribe one to verify unsubscribe works
-				const unsubscribe = TreeAlpha.on(parent, "childChanged", () =>
+				const unsubscribe = TreeAlpha.on(parent, "nodeChanged", () =>
 					log.push("unsubscribed-listener"),
 				);
-				TreeAlpha.on(parent, "childChanged", (data) => {
+				TreeAlpha.on(parent, "nodeChanged", () => {
 					// The node left this removed location, so it is now empty.
-					assert.equal(data.previous, item);
-					assert.equal(data.current, undefined);
-					log.push("childChanged");
+					assert.equal(Tree.status(item), TreeStatus.InDocument);
+					log.push("nodeChanged");
 				});
 				unsubscribe();
 
@@ -585,7 +583,7 @@ describe("treeApi", () => {
 				undoRedoStacks.undoStack.pop()?.revert();
 
 				// Only the still-subscribed listener should have fired
-				assert.deepEqual(log, ["childChanged"]);
+				assert.deepEqual(log, ["nodeChanged"]);
 				assert.equal(TreeAlpha.parent2(item), view.root.items);
 
 				undoRedoStacks.unsubscribe();
@@ -593,7 +591,7 @@ describe("treeApi", () => {
 		});
 
 		describe("UnhydratedParent", () => {
-			it("fires childChanged on hydration and respects unsubscribe", () => {
+			it("fires nodeChanged on hydration and respects unsubscribe", () => {
 				const view = getView(new TreeViewConfiguration({ schema: Container }));
 				view.initialize({ items: [] });
 
@@ -602,18 +600,18 @@ describe("treeApi", () => {
 				assert(parent instanceof UnhydratedParent);
 
 				const log: string[] = [];
-				const unsubscribe = TreeAlpha.on(parent, "childChanged", () =>
+				const unsubscribe = TreeAlpha.on(parent, "nodeChanged", () =>
 					log.push("unsubscribed-listener"),
 				);
-				TreeAlpha.on(parent, "childChanged", () => log.push("childChanged"));
+				TreeAlpha.on(parent, "nodeChanged", () => log.push("nodeChanged"));
 				unsubscribe();
 
 				view.root.items.insertAtEnd(item);
 
-				assert.deepEqual(log, ["childChanged"]);
+				assert.deepEqual(log, ["nodeChanged"]);
 			});
 
-			it("childChanged callback observes a consistent InDocument status on insertion", () => {
+			it("nodeChanged callback observes a consistent InDocument status on insertion", () => {
 				const view = getView(new TreeViewConfiguration({ schema: Container }));
 				view.initialize({ items: [] });
 
@@ -622,7 +620,7 @@ describe("treeApi", () => {
 				assert(parent instanceof UnhydratedParent);
 
 				let statusInCallback: TreeStatus | undefined;
-				TreeAlpha.on(parent, "childChanged", () => {
+				TreeAlpha.on(parent, "nodeChanged", () => {
 					statusInCallback = Tree.status(item);
 				});
 
@@ -632,18 +630,18 @@ describe("treeApi", () => {
 				assert.equal(statusInCallback, TreeStatus.InDocument);
 			});
 
-			it("fires childChanged on hydration via view.initialize()", () => {
+			it("fires nodeChanged on hydration via view.initialize()", () => {
 				const item = new ChildNode({ value: 42 });
 				const parent = TreeAlpha.parent2(item);
 				assert(parent instanceof UnhydratedParent);
 
 				const log: string[] = [];
-				TreeAlpha.on(parent, "childChanged", () => log.push("childChanged"));
+				TreeAlpha.on(parent, "nodeChanged", () => log.push("nodeChanged"));
 
 				const view = getView(new TreeViewConfiguration({ schema: ChildNode }));
 				view.initialize(item);
 
-				assert.deepEqual(log, ["childChanged"]);
+				assert.deepEqual(log, ["nodeChanged"]);
 			});
 		});
 
@@ -684,24 +682,22 @@ describe("treeApi", () => {
 
 			const log: string[] = [];
 			TreeAlpha.on(rootParent, "treeChanged", () => log.push("treeChanged"));
-			TreeAlpha.on(rootParent, "childChanged", (data) =>
-				log.push(data.current === undefined ? "childChanged:empty" : "childChanged:occupied"),
-			);
+			TreeAlpha.on(rootParent, "nodeChanged", () => log.push("nodeChanged"));
 
-			// Content change of the current root → treeChanged (not childChanged).
+			// Content change of the current root → treeChanged (not nodeChanged).
 			root.value = 2;
 			assert.deepEqual(log, ["treeChanged"]);
 
-			// Set root to undefined — the tree changed (treeChanged) and the occupant changed
-			// (childChanged, location now empty).
+			// Set root to undefined — the tree changed (treeChanged) and this location's child changed
+			// (nodeChanged, location now empty).
 			log.length = 0;
 			view.root = undefined;
-			assert.deepEqual(log, ["treeChanged", "childChanged:empty"]);
+			assert.deepEqual(log, ["treeChanged", "nodeChanged"]);
 
-			// Set root back to a node — treeChanged and childChanged (now occupied); content re-subscribes.
+			// Set root back to a node — treeChanged and nodeChanged (now occupied); content re-subscribes.
 			log.length = 0;
 			view.root = new ChildNode({ value: 3 });
-			assert.deepEqual(log, ["treeChanged", "childChanged:occupied"]);
+			assert.deepEqual(log, ["treeChanged", "nodeChanged"]);
 
 			// Modify the new root — content listener should still work.
 			log.length = 0;
@@ -711,7 +707,7 @@ describe("treeApi", () => {
 			assert.deepEqual(log, ["treeChanged"]);
 		});
 
-		it("coalesces childChanged across a withBufferedTreeEvents window (net change)", () => {
+		it("coalesces nodeChanged across a withBufferedTreeEvents window", () => {
 			const view = getView(new TreeViewConfigurationAlpha({ schema: sf.optional(ChildNode) }));
 			view.initialize({ value: 1 });
 
@@ -720,29 +716,27 @@ describe("treeApi", () => {
 			const rootParent = TreeAlpha.parent2(root);
 			assert(rootParent instanceof DocumentRootParent);
 
-			const childChanges: ParentObjectChildChangedData[] = [];
+			let nodeChangedCount = 0;
 			let treeChangedCount = 0;
 			TreeAlpha.on(rootParent, "treeChanged", () => {
 				treeChangedCount++;
 			});
-			TreeAlpha.on(rootParent, "childChanged", (data) => childChanges.push(data));
+			TreeAlpha.on(rootParent, "nodeChanged", () => {
+				nodeChangedCount++;
+			});
 
-			const node3 = new ChildNode({ value: 3 });
 			withBufferedTreeEvents(() => {
 				// Two root replacements within the same buffering window.
 				view.root = new ChildNode({ value: 2 });
-				view.root = node3;
+				view.root = new ChildNode({ value: 3 });
 			});
 
-			// childChanged is delivered once with the net change: the original root → the final node.
-			assert.equal(childChanges.length, 1);
-			assert.equal(childChanges[0].previous, root);
-			assert.equal(childChanges[0].current, node3);
-			// treeChanged (fired for the replacement) is also coalesced to a single delivery.
+			// Both events are coalesced to a single delivery for the whole window.
+			assert.equal(nodeChangedCount, 1);
 			assert.equal(treeChangedCount, 1);
 		});
 
-		it("does not coalesce childChanged when not inside a buffering window", () => {
+		it("does not coalesce nodeChanged when not inside a buffering window", () => {
 			const view = getView(new TreeViewConfigurationAlpha({ schema: sf.optional(ChildNode) }));
 			view.initialize({ value: 1 });
 
@@ -751,19 +745,36 @@ describe("treeApi", () => {
 			const rootParent = TreeAlpha.parent2(root);
 			assert(rootParent instanceof DocumentRootParent);
 
-			const childChanges: ParentObjectChildChangedData[] = [];
-			TreeAlpha.on(rootParent, "childChanged", (data) => childChanges.push(data));
+			let nodeChangedCount = 0;
+			TreeAlpha.on(rootParent, "nodeChanged", () => {
+				nodeChangedCount++;
+			});
 
-			// Two separate (unbuffered) replacements each deliver their own childChanged.
-			const node2 = new ChildNode({ value: 2 });
-			view.root = node2;
-			const node3 = new ChildNode({ value: 3 });
-			view.root = node3;
+			// Two separate (unbuffered) replacements each deliver their own nodeChanged.
+			view.root = new ChildNode({ value: 2 });
+			view.root = new ChildNode({ value: 3 });
 
-			assert.equal(childChanges.length, 2);
-			assert.equal(childChanges[0].current, node2);
-			assert.equal(childChanges[1].previous, node2);
-			assert.equal(childChanges[1].current, node3);
+			assert.equal(nodeChangedCount, 2);
+		});
+
+		it("delivers a nodeChanged data payload (no changedProperties for a location)", () => {
+			const view = getView(new TreeViewConfigurationAlpha({ schema: sf.optional(ChildNode) }));
+			view.initialize({ value: 1 });
+
+			const root = view.root;
+			assert(root !== undefined);
+			const rootParent = TreeAlpha.parent2(root);
+			assert(rootParent instanceof DocumentRootParent);
+
+			// `nodeChanged` uses the beta signature, so the listener receives a data argument. A
+			// ParentObject is a location without schema, so it never reports `changedProperties`.
+			const payloads: { changedProperties?: ReadonlySet<string> }[] = [];
+			TreeAlpha.on(rootParent, "nodeChanged", (data) => payloads.push(data));
+
+			view.root = new ChildNode({ value: 2 });
+
+			assert.equal(payloads.length, 1);
+			assert.equal(payloads[0].changedProperties, undefined);
 		});
 
 		it("cleans up DocumentRootParent listener when view is disposed", () => {
@@ -807,7 +818,7 @@ describe("treeApi", () => {
 			assert(unhydratedParent instanceof UnhydratedParent);
 
 			const log: string[] = [];
-			TreeAlpha.on(unhydratedParent, "childChanged", () => log.push("hydrated"));
+			TreeAlpha.on(unhydratedParent, "nodeChanged", () => log.push("hydrated"));
 
 			view.root.items.insertAtEnd(item);
 			assert.deepEqual(log, ["hydrated"]);
@@ -817,7 +828,7 @@ describe("treeApi", () => {
 
 			const detachedParent = TreeAlpha.parent2(item);
 			assert(detachedParent instanceof RemovedRootParent);
-			TreeAlpha.on(detachedParent, "childChanged", () => log.push("reattached"));
+			TreeAlpha.on(detachedParent, "nodeChanged", () => log.push("reattached"));
 
 			// Removed → InDocument: undo the removal
 			undoRedoStacks.undoStack.pop()?.revert();
@@ -848,13 +859,13 @@ describe("treeApi", () => {
 			assert(parent1 instanceof RemovedRootParent);
 
 			const log: string[] = [];
-			TreeAlpha.on(parent0, "childChanged", () => {
+			TreeAlpha.on(parent0, "nodeChanged", () => {
 				// When item0's listener fires, both items should be reattached
 				assert.equal(Tree.status(item0), TreeStatus.InDocument);
 				assert.equal(Tree.status(item1), TreeStatus.InDocument);
 				log.push("item0:reattached");
 			});
-			TreeAlpha.on(parent1, "childChanged", () => {
+			TreeAlpha.on(parent1, "nodeChanged", () => {
 				assert.equal(Tree.status(item0), TreeStatus.InDocument);
 				assert.equal(Tree.status(item1), TreeStatus.InDocument);
 				log.push("item1:reattached");
@@ -868,33 +879,31 @@ describe("treeApi", () => {
 			undoRedoStacks.unsubscribe();
 		});
 
-		// Type-only checks: `childChanged` is a ParentObject-only event. A `TreeNode` is a
-		// `TreeNodeParent`, but the `TreeNodeParent` overload of `on` only exposes the base content
-		// events — so `childChanged` must not be usable on a plain `TreeNode`.
-		it("only allows childChanged on a ParentObject (type-level)", () => {
+		// Type-only checks: a `ParentObject` supports the same change events as a `TreeNode`
+		// (`nodeChanged`/`treeChanged`), so callers do not have to distinguish the two. There is no
+		// ParentObject-only event; the removed `childChanged` event must not be usable.
+		it("allows the same change events on a ParentObject as on a TreeNode (type-level)", () => {
 			function _typeChecks(node: ChildNode, parent: DocumentRootParent): void {
 				// Content events are valid on a TreeNode.
 				TreeAlpha.on(node, "nodeChanged", () => {});
 				TreeAlpha.on(node, "treeChanged", () => {});
-				// childChanged is NOT valid on a TreeNode.
-				// @ts-expect-error `childChanged` is only available on a ParentObject, not a TreeNode.
-				TreeAlpha.on(node, "childChanged", () => {});
-				// childChanged and treeChanged ARE valid on a ParentObject.
-				TreeAlpha.on(parent, "childChanged", () => {});
-				TreeAlpha.on(parent, "treeChanged", () => {});
-				// nodeChanged is NOT valid on a ParentObject (a location has no shallow content of its own).
-				// @ts-expect-error `nodeChanged` is not available on a ParentObject.
+				// The same content events are valid on a ParentObject.
 				TreeAlpha.on(parent, "nodeChanged", () => {});
+				TreeAlpha.on(parent, "treeChanged", () => {});
+				// `childChanged` no longer exists and must not be usable on either.
+				// @ts-expect-error `childChanged` is not a supported event.
+				TreeAlpha.on(node, "childChanged", () => {});
+				// @ts-expect-error `childChanged` is not a supported event.
+				TreeAlpha.on(parent, "childChanged", () => {});
 			}
 			allowUnused(_typeChecks);
 		});
 
-		// Type-only checks: a `ParentObject` `treeChanged` listener must be substitutable up the
-		// `alpha -> beta -> public` event stack (per PR review). `ParentObjectEvents.treeChanged` uses
-		// the beta signature, and the beta/public `treeChanged` share the same no-argument signature, so
-		// a listener written for the alpha `ParentObject` event is usable wherever the beta or public
-		// `treeChanged` is expected (and vice versa).
-		it("ParentObject treeChanged listener substitutes up the alpha -> beta -> public stack (type-level)", () => {
+		// Type-only checks: a `ParentObject`'s change-event listeners must be substitutable up the
+		// `alpha -> beta -> public` event stack (per PR review). `ParentObjectEvents` reuses the beta
+		// `TreeChangeEventsBeta` signatures, so a listener written for the alpha `ParentObject` events is
+		// usable wherever the beta or public `nodeChanged`/`treeChanged` are expected (and vice versa).
+		it("ParentObject event listeners substitute up the alpha -> beta -> public stack (type-level)", () => {
 			// An alpha `ParentObject` listener is usable in the beta and public events APIs.
 			allowUnused<
 				requireAssignableTo<
@@ -904,6 +913,9 @@ describe("treeApi", () => {
 			>();
 			allowUnused<
 				requireAssignableTo<ParentObjectEvents["treeChanged"], TreeChangeEvents["treeChanged"]>
+			>();
+			allowUnused<
+				requireAssignableTo<ParentObjectEvents["nodeChanged"], TreeChangeEvents["nodeChanged"]>
 			>();
 			// ...and the reverse also holds (the signatures are equivalent), so a public/beta listener
 			// works as a `ParentObject` listener too.
@@ -915,6 +927,9 @@ describe("treeApi", () => {
 			>();
 			allowUnused<
 				requireAssignableTo<TreeChangeEvents["treeChanged"], ParentObjectEvents["treeChanged"]>
+			>();
+			allowUnused<
+				requireAssignableTo<TreeChangeEvents["nodeChanged"], ParentObjectEvents["nodeChanged"]>
 			>();
 		});
 	});

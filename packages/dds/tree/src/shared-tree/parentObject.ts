@@ -62,143 +62,65 @@ export interface ParentObject extends ErasedBaseType<"@fluidframework/tree.Paren
 export type TreeNodeParent = TreeNode | ParentObject;
 
 /**
- * Data provided to the {@link ParentObjectEvents.childChanged} event.
- *
- * @remarks
- * A {@link ParentObject} is a location, not a node. `childChanged` reports a change to
- * which child occupies that location (the occupant was replaced, attached, or detached),
- * as opposed to a change to the content of the current occupant (which is reported by the
- * `nodeChanged`/`treeChanged` content events).
- *
- * @sealed
- * @alpha
- */
-export interface ParentObjectChildChangedData {
-	/**
-	 * The child that occupied this location before the change, or `undefined` if the location was empty.
-	 */
-	readonly previous: TreeNode | TreeLeafValue | undefined;
-
-	/**
-	 * The child that occupies this location after the change, or `undefined` if the location is now empty.
-	 */
-	readonly current: TreeNode | TreeLeafValue | undefined;
-}
-
-/**
  * Events that can be subscribed to on a {@link ParentObject} via `TreeAlpha.on`.
  *
  * @remarks
- * A {@link ParentObject} is a location, not a node. It is modeled like a node whose single child is
- * the root/detached/unhydrated node it is the parent of:
+ * A {@link ParentObject} exposes the same change events as a {@link TreeNode}, so callers do not have
+ * to reason about whether the value returned by {@link (TreeAlpha:interface).parent2} is a node or a
+ * parent object. It is modeled like a node whose single child is the root/detached/unhydrated node it
+ * is the parent of:
+ *
+ * - `nodeChanged` fires when the child occupying this location changes (the occupant is replaced,
+ * attached, or detached) — the shallow change to this location's single child, analogous to a change
+ * to a direct property of a node.
  *
  * - `treeChanged` fires whenever anything changes in the subtree at this location — both changes to
  * the content of the current child and replacement of the child itself.
  *
- * - `childChanged` is the shallow analog of a node's `nodeChanged`: it fires only when the child
- * occupying this location is replaced (or attached/detached), reporting the previous and current child.
- *
- * There is intentionally no `nodeChanged` on a `ParentObject`: the location's only shallow change is
- * which child occupies it, which is reported by `childChanged`. To observe the current child node's
- * own `nodeChanged`, subscribe on that node directly.
- *
  * Which events fire depends on the kind of {@link ParentObject}:
  *
- * - For document-root parents, `treeChanged` proxies to the current root node (and also fires when the
- * root is replaced), and `childChanged` fires when the root is replaced (including to/from a leaf or empty).
+ * - For document-root parents, `nodeChanged` fires when the root is replaced (including to/from a leaf
+ * or empty), and `treeChanged` proxies to the current root node (and also fires when the root is
+ * replaced).
  *
- * - For removed-root and unhydrated parents, only `childChanged` fires (when the node is re-attached
- * or hydrated, leaving the location empty); there is no in-place content to report.
+ * - For removed-root and unhydrated parents, both `nodeChanged` and `treeChanged` fire when the node is
+ * re-attached or hydrated, leaving the location empty; there is no in-place content to report.
  *
  * @privateRemarks
- * `childChanged` is defined as a property (function type) rather than a method to avoid function
- * bivariance issues with the callback's input data.
+ * The event signatures are reused from {@link TreeChangeEventsBeta} (rather than the plain
+ * {@link TreeChangeEvents}) so that a listener written against these alpha events can be substituted up
+ * the `alpha -> beta -> public` event stack. Because a `ParentObject` is a location without schema, its
+ * `nodeChanged` never reports {@link NodeChangedData.changedProperties}.
  *
  * @sealed
  * @alpha
  */
-export interface ParentObjectEvents extends Pick<TreeChangeEventsBeta, "treeChanged"> {
-	/**
-	 * Emitted when the child occupying this location changes (the occupant is replaced, attached, or detached).
-	 * @remarks
-	 * Fires after the batch completes, ensuring the tree is in a consistent state when the listener runs.
-	 */
-	childChanged: (data: ParentObjectChildChangedData) => void;
-}
+export interface ParentObjectEvents
+	extends Pick<TreeChangeEventsBeta, "nodeChanged" | "treeChanged"> {}
 
 /**
- * Coalesces {@link ParentObjectEvents.childChanged} notifications produced by a {@link ParentObject}
- * so that, inside a {@link withBufferedTreeEvents} window, they are merged and delivered once at the
- * end of the window with the net change — matching how content events are coalesced.
+ * Builds a no-argument callback that delivers a {@link ParentObject}'s occupancy change to the given
+ * `nodeChanged`/`treeChanged` listener.
  *
  * @remarks
- * When no buffering window is active, {@link ChildChangedCoalescer.fire} delivers immediately. When a
- * window is active, the notification is deferred to the window's flush, keeping the first `previous`
- * and the latest `current`. If the net change is a no-op (`previous === current`), nothing is delivered.
+ * `nodeChanged` carries a data payload; since a {@link ParentObject} is a location without schema, it is
+ * delivered with an empty payload (no {@link NodeChangedData.changedProperties}). `treeChanged` takes no
+ * argument. This lets both events flow through the no-argument {@link NotifyCoalescer}.
  */
-class ChildChangedCoalescer {
-	#pending: ParentObjectChildChangedData | undefined;
-	#hasPending = false;
-	#flushScheduled = false;
-	#active = true;
-
-	public constructor(
-		private readonly listener: (data: ParentObjectChildChangedData) => void,
-	) {}
-
-	/**
-	 * Deliver (or, while buffering, coalesce) a change from `previous` to `current`.
-	 */
-	public fire(
-		previous: TreeNode | TreeLeafValue | undefined,
-		current: TreeNode | TreeLeafValue | undefined,
-	): void {
-		if (!this.#active) {
-			return;
-		}
-		if (!isBufferingTreeEvents()) {
-			this.listener({ previous, current });
-			return;
-		}
-		// Keep the first observed `previous` (so the net change spans the whole window) and the latest `current`.
-		const previousToKeep = this.#hasPending
-			? (this.#pending as ParentObjectChildChangedData).previous
-			: previous;
-		this.#pending = { previous: previousToKeep, current };
-		this.#hasPending = true;
-		if (!this.#flushScheduled) {
-			this.#flushScheduled = true;
-			onTreeEventsFlush(() => this.#flush());
-		}
-	}
-
-	#flush(): void {
-		this.#flushScheduled = false;
-		if (!this.#active || !this.#hasPending) {
-			return;
-		}
-		const pending = this.#pending as ParentObjectChildChangedData;
-		this.#hasPending = false;
-		this.#pending = undefined;
-		if (pending.previous !== pending.current) {
-			this.listener(pending);
-		}
-	}
-
-	/**
-	 * Stop delivering; any pending coalesced notification is discarded.
-	 */
-	public dispose(): void {
-		this.#active = false;
-		this.#hasPending = false;
-		this.#pending = undefined;
-	}
+function makeOccupancyNotifier<K extends keyof ParentObjectEvents>(
+	eventName: K,
+	listener: ParentObjectEvents[K],
+): () => void {
+	return eventName === "nodeChanged"
+		? () => (listener as ParentObjectEvents["nodeChanged"])({})
+		: (listener as ParentObjectEvents["treeChanged"]);
 }
 
 /**
- * Coalesces a no-argument notification (e.g. {@link ParentObjectEvents.treeChanged} fired for a root
- * replacement) so that, inside a {@link withBufferedTreeEvents} window, it fires at most once at the
- * end of the window. Delivers immediately when no window is active.
+ * Coalesces a no-argument notification (e.g. {@link ParentObjectEvents.nodeChanged} or
+ * {@link ParentObjectEvents.treeChanged} fired for a root replacement) so that, inside a
+ * {@link withBufferedTreeEvents} window, it fires at most once at the end of the window. Delivers
+ * immediately when no window is active.
  */
 class NotifyCoalescer {
 	#pending = false;
@@ -291,8 +213,8 @@ export abstract class ParentObjectBase
  * current root node's `treeChanged` (deep content changes) and also fires when the root is replaced.
  * The subscription automatically re-subscribes to the new root when the root is replaced.
  *
- * Subscribing to {@link ParentObjectEvents.childChanged} fires only when the root is replaced
- * (including changes to/from a leaf value or an empty root), reporting the previous and current root.
+ * Subscribing to `nodeChanged` fires only when the root is replaced (including changes to/from a leaf
+ * value or an empty root) — the shallow change to this location's single child.
  */
 export class DocumentRootParent extends ParentObjectBase {
 	/**
@@ -394,9 +316,9 @@ export class DocumentRootParent extends ParentObjectBase {
 
 		// Coalescers so that root-replacement notifications fired below participate in
 		// `withBufferedTreeEvents` windows (matching how content events are coalesced).
-		const childChangedCoalescer =
-			eventName === "childChanged"
-				? new ChildChangedCoalescer(listener as ParentObjectEvents["childChanged"])
+		const nodeChangedCoalescer =
+			eventName === "nodeChanged"
+				? new NotifyCoalescer(makeOccupancyNotifier(eventName, listener))
 				: undefined;
 		const treeChangedCoalescer =
 			eventName === "treeChanged"
@@ -413,7 +335,7 @@ export class DocumentRootParent extends ParentObjectBase {
 			const rootNode = branch.root;
 			lastRoot = rootNode;
 			// Only `treeChanged` proxies to the current root node (for its deep content changes).
-			// `childChanged` reports occupancy changes of the location itself, and root replacement for
+			// `nodeChanged` reports occupancy changes of the location itself, and root replacement for
 			// `treeChanged` is both handled in the "rootChanged" listener below.
 			currentNodeUnsubscribe =
 				eventName === "treeChanged" && isTreeNode(rootNode)
@@ -435,19 +357,17 @@ export class DocumentRootParent extends ParentObjectBase {
 				return;
 			}
 
-			const previous = lastRoot;
-
 			if (currentNodeUnsubscribe !== undefined) {
 				currentNodeUnsubscribe();
 				currentNodeUnsubscribe = undefined;
 			}
 
-			// Root replacement is a change within this location's subtree AND an occupancy change:
+			// Root replacement is a change within this location's subtree AND a shallow (occupancy) change:
 			// - `treeChanged` fires because something in the tree changed (the root was replaced).
-			// - `childChanged` fires because the child occupying this location changed.
+			// - `nodeChanged` fires because this location's single child changed.
 			// Both are routed through coalescers so they merge within a `withBufferedTreeEvents` window.
 			treeChangedCoalescer?.fire();
-			childChangedCoalescer?.fire(previous, newRoot);
+			nodeChangedCoalescer?.fire();
 
 			subscribeToRoot();
 		});
@@ -455,7 +375,7 @@ export class DocumentRootParent extends ParentObjectBase {
 		return () => {
 			isSubscribed = false;
 			treeChangedCoalescer?.dispose();
-			childChangedCoalescer?.dispose();
+			nodeChangedCoalescer?.dispose();
 			if (currentNodeUnsubscribe !== undefined) {
 				currentNodeUnsubscribe();
 				currentNodeUnsubscribe = undefined;
@@ -472,10 +392,9 @@ export class DocumentRootParent extends ParentObjectBase {
  * Invalidated when the node that was in this location is moved elsewhere (e.g., re-inserted
  * into the document or moved to a different detached field).
  *
- * Subscribing to {@link ParentObjectEvents.childChanged} fires when the node's status transitions
+ * Subscribing to `nodeChanged` or `treeChanged` fires when the node's status transitions
  * (e.g., re-attached via undo), leaving this location empty. The listener fires after the batch
- * completes, ensuring the tree is in a consistent state. The content events (`nodeChanged`/`treeChanged`)
- * do not fire for a removed-root location.
+ * completes, ensuring the tree is in a consistent state.
  */
 export class RemovedRootParent extends ParentObjectBase {
 	/**
@@ -547,14 +466,14 @@ export class RemovedRootParent extends ParentObjectBase {
 		eventName: K,
 		listener: ParentObjectEvents[K],
 	): () => void {
-		// Only the `childChanged` (occupancy) event is meaningful for a removed-root location:
-		// there is no in-place content to report via `nodeChanged`/`treeChanged`.
-		if (eventName !== "childChanged") {
+		// A removed-root location reports the occupant leaving via both `nodeChanged` (the shallow
+		// change to its single child) and `treeChanged` (a change within its subtree). Both fire from
+		// the same transition; any other event name is a no-op.
+		if (eventName !== "nodeChanged" && eventName !== "treeChanged") {
 			return () => {};
 		}
-		const childChangedListener = listener as ParentObjectEvents["childChanged"];
 		const kernel = getKernel(this.detachedNode);
-		const coalescer = new ChildChangedCoalescer(childChangedListener);
+		const coalescer = new NotifyCoalescer(makeOccupancyNotifier(eventName, listener));
 
 		// The kernel's batch-aligned `statusChangedAfterBatch` fires after the batch settles, so the tree
 		// is consistent when the listener runs. It also owns the `afterBatch` polling needed to detect the
@@ -563,7 +482,7 @@ export class RemovedRootParent extends ParentObjectBase {
 			// The transition is one-shot for this location: once the node leaves, stop listening.
 			unsubscribeStatus();
 			// The node left this location (e.g., re-attached into the document), leaving it empty.
-			coalescer.fire(this.detachedNode, undefined);
+			coalescer.fire();
 		});
 
 		return () => {
@@ -577,10 +496,9 @@ export class RemovedRootParent extends ParentObjectBase {
  * Parent of an {@link Unhydrated} root node that has not yet been inserted into any document.
  *
  * @remarks
- * Subscribing to {@link ParentObjectEvents.childChanged} fires once when the node is hydrated
+ * Subscribing to `nodeChanged` or `treeChanged` fires once when the node is hydrated
  * (inserted into a document for the first time), leaving this location empty, then auto-unsubscribes.
  * Further transitions are reported by {@link RemovedRootParent} or {@link DocumentRootParent}.
- * The content events (`nodeChanged`/`treeChanged`) do not fire for an unhydrated-root location.
  */
 export class UnhydratedParent extends ParentObjectBase {
 	private static readonly cache = new WeakMap<UnhydratedFlexTreeNode, UnhydratedParent>();
@@ -636,15 +554,15 @@ export class UnhydratedParent extends ParentObjectBase {
 		eventName: K,
 		listener: ParentObjectEvents[K],
 	): () => void {
-		// Only the `childChanged` (occupancy) event is meaningful for an unhydrated-root location:
-		// there is no in-place content to report via `nodeChanged`/`treeChanged`.
-		if (eventName !== "childChanged") {
+		// An unhydrated-root location reports the occupant leaving (on hydration) via both `nodeChanged`
+		// (the shallow change to its single child) and `treeChanged` (a change within its subtree). Both
+		// fire from the same transition; any other event name is a no-op.
+		if (eventName !== "nodeChanged" && eventName !== "treeChanged") {
 			return () => {};
 		}
-		const childChangedListener = listener as ParentObjectEvents["childChanged"];
 		const node = this.getTreeNode();
 		const kernel = getKernel(node);
-		const coalescer = new ChildChangedCoalescer(childChangedListener);
+		const coalescer = new NotifyCoalescer(makeOccupancyNotifier(eventName, listener));
 
 		// The kernel's batch-aligned `statusChangedAfterBatch` handles deferral to `afterBatch` internally
 		// (whether hydration occurs mid-batch, e.g. `insertAtEnd`, or after the tree has already settled,
@@ -653,7 +571,7 @@ export class UnhydratedParent extends ParentObjectBase {
 			// One-shot: hydration is a single New -> InDocument transition for this location.
 			unsubscribeStatus();
 			// The node was hydrated into the document, leaving this unhydrated location empty.
-			coalescer.fire(node, undefined);
+			coalescer.fire();
 		});
 		return () => {
 			coalescer.dispose();
