@@ -192,7 +192,9 @@ describe("prepareForInsertion", () => {
 								...schemaValidationPolicy,
 								createFieldSchema(FieldKinds.required, [brand(stringSchema.identifier)]),
 							),
-						validateUsageError(/LeafNode_InvalidValue/),
+						validateUsageError(
+							/Tree does not conform to schema\. A leaf node value does not match its schema\./,
+						),
 					);
 				});
 			});

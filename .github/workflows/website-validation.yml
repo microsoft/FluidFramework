@@ -151,15 +151,23 @@ jobs:
         continue-on-error: true
         run: |
           set -o pipefail
-          pnpm run ci:check-links | tee ./results/linkcheck-output.txt
+          pnpm run ci:check-links 2>&1 | tee ./results/linkcheck-output.txt
 
       - name: Save PR number
         run: echo ${{ github.event.number }} > ./results/pr
       - name: Save linkcheck report
         run: |
+          output_size=$(wc -c < ./results/linkcheck-output.txt)
           cat "$GITHUB_WORKSPACE/.github/workflows/data/linkcheck-${{ steps.linkcheck.outcome }}.md" | tee ./results/linkcheck
-          echo -e "\n#### linkcheck output\n\n\`\`\`" | tee -a ./results/linkcheck
-          cat ./results/linkcheck-output.txt | tee -a ./results/linkcheck
+          echo -e "\n#### linkcheck output" | tee -a ./results/linkcheck
+          if (( output_size > 60000 )); then
+            echo -e "\nOutput truncated to the final 60,000 bytes. See the [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for the full output." | tee -a ./results/linkcheck
+            echo -e "\n\`\`\`" | tee -a ./results/linkcheck
+            tail -c 60000 ./results/linkcheck-output.txt | sed '1d' | tee -a ./results/linkcheck
+          else
+            echo -e "\n\`\`\`" | tee -a ./results/linkcheck
+            cat ./results/linkcheck-output.txt | tee -a ./results/linkcheck
+          fi
           echo -e "\n\`\`\`" | tee -a ./results/linkcheck
       - name: Upload results artifact
         # release notes: https://github.com/actions/upload-artifact/releases/tag/v5.0.0

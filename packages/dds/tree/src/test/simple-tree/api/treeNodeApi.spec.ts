@@ -3984,7 +3984,7 @@ describe("treeNodeApi", () => {
 				class A extends factory.object("A", { a: factory.identifier }) {}
 				assert.throws(
 					() => TreeAlpha.importVerbose(A, { type: A.identifier, fields: {} }),
-					validateUsageError(/Field_MissingRequiredChild/),
+					validateUsageError(/A required field is missing its child/),
 				);
 			});
 
@@ -4422,18 +4422,18 @@ describe("treeNodeApi", () => {
 		const sf = new SchemaFactory(undefined);
 		class Obj extends sf.object("Test", { n: sf.number }) {}
 
-		it("for hydrated nodes is the branch", () => {
+		it("for hydrated nodes is the view", () => {
 			const obj = hydrate(Obj, { n: 3 });
-			const branch = TreeAlpha.context(obj);
-			assert(branch.isBranch());
-			// Compile check: `isBranch()` should downcast the context to a branch
-			branch.hasRootSchema(Obj); // This is a method on branches but not on context
+			const context = TreeAlpha.context(obj);
+			assert(context.isView());
+			// Compile check: `isView()` should downcast the context to a view
+			context.hasRootSchema(Obj); // This is a method on views but not on context
 		});
 
-		it("for unhydrated nodes is not a branch", () => {
+		it("for unhydrated nodes is not a view", () => {
 			const obj = new Obj({ n: 3 });
 			const context = TreeAlpha.context(obj);
-			assert.ok(!context.isBranch());
+			assert.ok(!context.isView());
 		});
 
 		it("has synchronous transaction APIs for both hydrated and unhydrated nodes", () => {

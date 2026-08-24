@@ -1372,7 +1372,12 @@ export const handlers: Handler[] = [
 			}
 			const testScript = scripts.test;
 
-			const splitTestScriptNames = ["test:mocha", "test:jest", "test:realsvc"];
+			const splitTestScriptNames = [
+				"test:mocha",
+				"test:jest",
+				"test:playwright",
+				"test:realsvc",
+			];
 
 			if (testScript === undefined) {
 				if (splitTestScriptNames.some((name) => scripts[name] !== undefined)) {
@@ -1387,7 +1392,7 @@ export const handlers: Handler[] = [
 
 			if (actualSplitTestScriptNames.length === 0) {
 				if (!testScript.startsWith("echo ")) {
-					return "Missing split test scripts. The 'test' script must call one or more \"split\" scripts like 'test:mocha', 'test:jest', or 'test:realsvc'.";
+					return "Missing split test scripts. The 'test' script must call one or more \"split\" scripts like 'test:mocha', 'test:jest', 'test:playwright', or 'test:realsvc'.";
 				}
 				return undefined;
 			}
