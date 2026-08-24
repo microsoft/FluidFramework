@@ -17,7 +17,7 @@ import { EpochTracker, type ICacheAndTracker } from "../epochTracker.js";
 import { LocalPersistentCache } from "../odspCache.js";
 import {
 	createLocalOdspDocumentServiceFactory,
-	OdspDocumentServiceFactory,
+	createOdspDocumentServiceFactory,
 } from "../odspDocumentServiceFactory.js";
 import type { IOdspPointInTimeDocumentServiceImplementationProps } from "../odspDocumentServiceFactoryCore.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
@@ -62,32 +62,34 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 	}
 
 	it("does not expose point-in-time loading unless the consumer injects it", () => {
-		const factory = new OdspDocumentServiceFactory(getStorageToken, undefined);
+		const factory = createOdspDocumentServiceFactory({
+			getStorageToken,
+			getWebsocketToken: undefined,
+		});
 		assert.equal(factory.createPointInTimeDocumentService, undefined);
 	});
 
 	it("exposes and invokes the consumer-injected implementation", async () => {
 		const resolvedUrl = await makeResolvedUrl();
 		const expectedService = fakeDocumentService();
+		const persistedCache = new LocalPersistentCache();
 		let capturedProps: IOdspPointInTimeDocumentServiceImplementationProps | undefined;
-		const factory = new OdspDocumentServiceFactory(
+		const factory = createOdspDocumentServiceFactory({
 			getStorageToken,
-			undefined,
-			undefined,
-			undefined,
-			{
-				pointInTimeDocumentServiceImplementation: async (props) => {
-					capturedProps = props;
-					return expectedService;
-				},
+			getWebsocketToken: undefined,
+			persistedCache,
+			pointInTimeDocumentServiceImplementation: async (props) => {
+				capturedProps = props;
+				return expectedService;
 			},
-		);
+		});
 
 		const result = await factory.createPointInTimeDocumentService?.(resolvedUrl, 42);
 		assert.equal(result, expectedService);
 		assert.equal(capturedProps?.resolvedUrl, resolvedUrl);
 		assert.equal(capturedProps?.targetSequenceNumber, 42);
 		assert.equal(capturedProps?.getStorageToken, getStorageToken);
+		assert.equal(capturedProps?.persistedCache, persistedCache);
 		assert.equal(typeof capturedProps?.createDocumentService, "function");
 	});
 

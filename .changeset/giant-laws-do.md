@@ -9,22 +9,21 @@ not enable the feature no longer include its implementation in their dependency 
 control when the feature is loaded by dynamically importing its dedicated entrypoint:
 
 ```typescript
-const factory = new OdspDocumentServiceFactory(
+const factory = createOdspDocumentServiceFactory({
 	getStorageToken,
 	getWebsocketToken,
 	persistedCache,
 	hostPolicy,
-	{
-		pointInTimeDocumentServiceImplementation: async (props) => {
-			const { createPointInTimeDocumentService } = await import(
-				"@fluidframework/odsp-driver/legacy/point-in-time"
-			);
-			return createPointInTimeDocumentService(props);
-		},
+	pointInTimeDocumentServiceImplementation: async (props) => {
+		const { createPointInTimeDocumentService } = await import(
+			"@fluidframework/odsp-driver/legacy/point-in-time"
+		);
+		return createPointInTimeDocumentService(props);
 	},
-);
+});
 ```
 
-`getOdspPointInTimeDocumentServiceFactory` has been removed. Construct
-`OdspDocumentServiceFactory` directly and supply the point-in-time implementation through its
-options as shown above.
+`getOdspPointInTimeDocumentServiceFactory` has been replaced by
+`createOdspDocumentServiceFactory`, which accepts tokens, cache, host policy, and optional feature
+implementations in one options object. Existing `OdspDocumentServiceFactory` and
+`OdspDocumentServiceFactoryCore` constructor signatures remain unchanged.

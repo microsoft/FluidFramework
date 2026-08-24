@@ -663,8 +663,8 @@ and the `opStream` endpoint is queried for exactly `[from, target]`.
 1. Validates `loadToSequenceNumber` is a non-negative integer (`UsageError` otherwise).
 2. Detects the point-in-time capability with `asPointInTimeCapableFactory`, which checks the passed
   `documentServiceFactory` exposes `createPointInTimeDocumentService`. A plain factory is a
-  `UsageError` — the caller must inject the dedicated ODSP implementation through the
-  `OdspDocumentServiceFactory` constructor options and pass that factory directly with no wrapping.
+  `UsageError` — the caller must inject the dedicated ODSP implementation through
+  `createOdspDocumentServiceFactory` options and pass that factory directly with no wrapping.
 3. Wraps it in a `PointInTimeDocumentServiceFactory` adapter so the container's normal
    `createDocumentService(resolvedUrl)` routes to `createPointInTimeDocumentService(resolvedUrl, target)`.
    (`createContainer` throws — the adapter is load-only.)

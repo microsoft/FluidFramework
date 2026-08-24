@@ -113,24 +113,8 @@ export type OdspPointInTimeDocumentServiceImplementation = (
 ) => Promise<IDocumentService>;
 
 /**
- * Optional features supplied when constructing an ODSP document service factory.
- *
- * @legacy @beta
- */
-export interface IOdspDocumentServiceFactoryOptions {
-	/**
-	 * Enables point-in-time loading. Consumers that omit this implementation do not include the
-	 * feature code in their dependency graph.
-	 */
-	readonly pointInTimeDocumentServiceImplementation?: OdspPointInTimeDocumentServiceImplementation;
-}
-
-/**
  * Factory for creating the sharepoint document service. Use this if you want to
  * use the sharepoint implementation.
- *
- * Optional features such as point-in-time loading are enabled by consumer-provided implementations,
- * keeping omitted features out of the consumer's dependency graph.
  * @legacy
  * @beta
  */
@@ -298,7 +282,6 @@ export class OdspDocumentServiceFactoryCore
 	 * response payload.
 	 * @param persistedCache - PersistedCache provided by host for use in this session.
 	 * @param hostPolicy - Policy for storage provided by host.
-	 * @param options - Optional consumer-provided feature implementations.
 	 */
 	constructor(
 		private readonly getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>,
@@ -307,27 +290,7 @@ export class OdspDocumentServiceFactoryCore
 			| undefined,
 		protected persistedCache: IPersistedCache = new LocalPersistentCache(),
 		private readonly hostPolicy: HostStoragePolicy = {},
-		options: IOdspDocumentServiceFactoryOptions = {},
 	) {
-		const pointInTimeImplementation = options.pointInTimeDocumentServiceImplementation;
-		if (pointInTimeImplementation !== undefined) {
-			this.createPointInTimeDocumentService = async (
-				resolvedUrl,
-				targetSequenceNumber,
-				logger,
-				clientIsSummarizer,
-			) =>
-				pointInTimeImplementation({
-					resolvedUrl,
-					targetSequenceNumber,
-					logger,
-					clientIsSummarizer,
-					persistedCache: this.persistedCache,
-					getStorageToken: this.getStorageToken,
-					createDocumentService: async (url, odspLogger, cacheAndTracker, isSummarizer) =>
-						this.createDocumentServiceCore(url, odspLogger, cacheAndTracker, isSummarizer),
-				});
-		}
 		if (this.hostPolicy.isolateSocketCache === true) {
 			// create the key to separate the socket reuse cache
 			this.socketReferenceKeyPrefix = uuid();

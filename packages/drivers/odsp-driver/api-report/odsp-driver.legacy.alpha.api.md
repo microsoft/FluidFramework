@@ -14,6 +14,9 @@ export function createLocalOdspDocumentServiceFactory(localSnapshot: Uint8Array 
 export function createOdspCreateContainerRequest(siteUrl: string, driveId: string, filePath: string, fileName: string, createShareLinkType?: ISharingLinkKind, containerPackageInfo?: IContainerPackageInfo | undefined): IRequest;
 
 // @beta @legacy
+export function createOdspDocumentServiceFactory(options: IOdspDocumentServiceFactoryOptions): OdspDocumentServiceFactory;
+
+// @beta @legacy
 export function createOdspUrl(l: OdspFluidDataStoreLocator): string;
 
 // @beta @legacy
@@ -90,7 +93,11 @@ export interface IOdspCache extends INonPersistentCache {
 
 // @beta @legacy
 export interface IOdspDocumentServiceFactoryOptions {
-    readonly pointInTimeDocumentServiceImplementation?: OdspPointInTimeDocumentServiceImplementation;
+    readonly getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>;
+    readonly getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined;
+    readonly hostPolicy?: HostStoragePolicy | undefined;
+    readonly persistedCache?: IPersistedCache | undefined;
+    readonly pointInTimeDocumentServiceImplementation?: OdspPointInTimeDocumentServiceImplementation | undefined;
 }
 
 // @beta @legacy
@@ -172,12 +179,12 @@ export const OdcFileSiteOrigin = "https://1drv.ms";
 
 // @beta @legacy
 export class OdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
-    constructor(getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined, persistedCache?: IPersistedCache, hostPolicy?: HostStoragePolicy, options?: IOdspDocumentServiceFactoryOptions);
+    constructor(getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined, persistedCache?: IPersistedCache, hostPolicy?: HostStoragePolicy);
 }
 
 // @beta @legacy
 export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory, IRelaySessionAwareDriverFactory {
-    constructor(getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined, persistedCache?: IPersistedCache, hostPolicy?: HostStoragePolicy, options?: IOdspDocumentServiceFactoryOptions);
+    constructor(getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined, persistedCache?: IPersistedCache, hostPolicy?: HostStoragePolicy);
     // (undocumented)
     createContainer(createNewSummary: ISummaryTree | undefined, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)

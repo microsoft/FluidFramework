@@ -11,13 +11,13 @@ The host calls:
 ```ts
 import { createPointInTimeDocumentService } from "@fluidframework/odsp-driver/legacy/point-in-time";
 
-const documentServiceFactory = new OdspDocumentServiceFactory(
+const documentServiceFactory = createOdspDocumentServiceFactory({
   getStorageToken,
   getWebsocketToken,
   persistedCache,
   hostPolicy,
-  { pointInTimeDocumentServiceImplementation: createPointInTimeDocumentService },
-);
+  pointInTimeDocumentServiceImplementation: createPointInTimeDocumentService,
+});
 
 const historicalContainer = await loadContainerToSequenceNumber({
 	request,
@@ -92,7 +92,7 @@ The point-in-time capability is not part of the general `IDocumentServiceFactory
 therefore owns both runtime checks needed to bridge the optional capability:
 
 - The host imports `createPointInTimeDocumentService` from the dedicated ODSP point-in-time entrypoint
-  and injects it through the `OdspDocumentServiceFactory` constructor options.
+  and injects it through `createOdspDocumentServiceFactory` options.
 - `asPointInTimeCapableFactory` performs the cross-driver structural check at the loader boundary.
   `loadContainerToSequenceNumber` uses this check before constructing its internal adapter.
 
@@ -185,8 +185,8 @@ must not make container-loader depend on ODSP or merge mark resolution into cont
 `OdspDocumentServiceFactoryCore` exposes the optional `createPointInTimeDocumentService` capability
 only when the consumer supplies an implementation. ODSP owns that implementation in the dedicated
 `@fluidframework/odsp-driver/legacy/point-in-time` entrypoint, while the consumer controls whether the
-feature enters its dependency graph. The consumer injects the implementation through the
-`OdspDocumentServiceFactory` constructor options.
+feature enters its dependency graph. The consumer injects the implementation through
+`createOdspDocumentServiceFactory` options.
 
 For each point-in-time request, ODSP resolves the closest recoverable driveItem version at or before
 the target. It then composes:
