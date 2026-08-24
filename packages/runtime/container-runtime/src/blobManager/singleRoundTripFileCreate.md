@@ -37,7 +37,7 @@ The implementation is in:
 | Attach | `runRetriableAttachProcess()` in `packages/loader/container-loader/src/attachment.ts` sees no outstanding detached blobs and sends the complete runtime summary to `createContainer`. The successful logical create has no per-blob upload or follow-up summary upload. |
 | Detached serialize/rehydrate | Loader JSON serialization retains blobs that round-trip losslessly through UTF-8 in the legacy `snapshotBlobs` map and puts all other bytes in the generic base64 `snapshotBlobContents` map. Rehydrate combines both maps into binary `ISnapshot.blobContents`; `loadV1()` restores the permanent classification and BlobManager uses the original bytes. Legacy UTF-8-only states remain loadable. Blobs added after rehydrate use the same single-request mode. |
 | Creating client after attach | Retains its local bytes, can read them, and can round-trip them through attached pending state. A direct summary built on this actor may contain those bytes. |
-| Fresh attached load | Retains `localId -> currentSnapshotBlobId` and the summary-backed classification, but not the payload when the storage snapshot actually omits grouped contents. `BlobManager.getBlob()` reads and returns that one binary snapshot blob without caching it. If pending state is requested, the loader fetches omitted structural bytes below the root `.blobs` tree so the summary-backed payload survives offline rehydrate without eagerly fetching unrelated loading groups. Loading-group-aware snapshot acquisition is conditional, and ODSP create-cache snapshots currently include every payload under a synthetic ID; see "Snapshot acquisition limitation." |
+| Fresh attached load | Retains `localId -> currentSnapshotBlobId` and the summary-backed classification. A loading-group-aware network snapshot may omit the payload, in which case `BlobManager.getBlob()` reads and returns that one binary snapshot blob without caching it. If pending state is requested, the loader fetches omitted structural bytes below the root `.blobs` tree so the summary-backed payload survives offline rehydrate without eagerly fetching unrelated loading groups. A self-contained ODSP create-cache snapshot already contains the payload under a synthetic lookup ID; see "Snapshot acquisition behavior." |
 | Ordinary clean summary | Emits `SummaryType.Handle` to `/.blobs/.embeddedDetachedBlobs/<localId>` and uploads no unchanged image bytes. |
 | Full-tree summary | Prior-summary handles are forbidden, so `loadFullTreeContents()` reads and re-emits every surviving payload as raw binary with at most 32 reads in flight. |
 | Full-state/frozen capture | `readReferencedSnapshotBlobs()` in `packages/loader/container-loader/src/captureReferencedContents.ts` captures structural blobs in child trees below the reserved root `.blobs`; `snapshotHasLoadingGroups()` ignores groups only in that root subtree. Snapshot-resident unreferenced-but-unswept content is retained because saved ops may revive it. The JSON artifact partitions structural bytes between lossless UTF-8 `snapshotBlobs` and base64 `snapshotBlobContents`. Attachment capture remains a separate base64 `attachmentBlobContents` map because it has a distinct responsibility and key space. All maps decode into binary before runtime reads. |
@@ -112,7 +112,7 @@ separate from document collaboration compatibility.
 creator and attached loaded state. Schema boundary and detached-only request behavior are covered
 in `src/test/containerRuntime.spec.ts` and `src/test/documentSchema.spec.ts`.
 
-## Snapshot acquisition limitation
+## Snapshot acquisition behavior
 
 Ordinary summaries avoid reuploading unchanged payloads, but later load efficiency depends on how
 the driver acquires a snapshot.
@@ -122,50 +122,48 @@ The loader uses the loading-group-aware `getSnapshot()` path only when
 `supportGetSnapshotApi`. The fallback snapshot-tree path does not provide an equivalent code-level
 payload-exclusion guarantee.
 
-ODSP's create cache is a known limitation, not merely an unverified assumption.
+ODSP's create cache intentionally uses a self-contained representation.
 `convertCreateNewSummaryTreeToTreeAndBlobs()` recursively assigns synthetic UUIDs to all summary
 blobs and puts every payload in `ISnapshot.blobContents`; `createFile()` stores that complete
-snapshot in the create cache. A later cache-backed load therefore receives all embedded payloads.
-The bytes cannot simply be removed because the synthetic IDs are not service blob IDs and cannot be
-read lazily from storage.
+snapshot in the create cache. A later cache-backed load therefore receives all embedded payloads,
+but this is correct: the synthetic IDs are cache-local lookup details and their bytes are present.
+They are never exposed as attachment IDs. The bytes could not be removed without also replacing the
+synthetic IDs with service-resolvable IDs or another lazy-read mapping.
 
-The feature does not yet meet its future-session efficiency goal until the create-cache path is
-changed and the network path is verified to return grouped structure and service IDs without
-payload contents.
+The open requirement is to verify that the ODSP network path returns the grouped structure and
+service IDs without payload contents. Whether cache-backed loads must also be payload-lazy is a
+separate product decision, not a correctness issue.
 
 ## Remaining work
 
-### P0
-
-1. **ODSP create-cache behavior.** Bypass or refresh the create cache for this format, obtain
-   service-assigned IDs, or provide another lazy-read mapping that does not cache all payloads.
-2. **Loading-group-aware acquisition.** Make the required loader gate and driver policy an explicit
-   prerequisite or define an actionable fallback.
-3. **ODSP path tests.** Test create-cache and network loads separately and assert payload absence,
-   not only successful reads.
-4. **Acquisition telemetry.** Record cache/network source, snapshot API, returned grouped payload
-   count/bytes, and fallback mode.
-
 ### P1
 
-1. **Portable multi-generation validation.** The local-server chain now covers
+1. **ODSP network validation.** Verify that loading-group-aware network snapshots retain the tree
+   and service blob IDs while omitting payload contents. Make the required loader gate and driver
+   policy explicit.
+2. **Create-cache contract.** Decide whether a self-contained eager cache-backed load is acceptable.
+   If cache-backed loads must also be payload-lazy, redesign the cache to use service-resolvable IDs
+   or another lazy-read mapping.
+3. **Acquisition telemetry.** Record cache/network source, snapshot API, returned grouped payload
+   count/bytes, and fallback mode.
+4. **Portable multi-generation validation.** The local-server chain now covers
    `create -> clean ordinary summary -> reload -> future full-tree summary -> reload`. Add a
    portable E2E equivalent and adopt detached stress/service-load coverage.
-2. **Detached rehydrate without configuration.** Directly test that a persisted detached selection
+5. **Detached rehydrate without configuration.** Directly test that a persisted detached selection
    remains active when the rehydrating host omits the option and creates another blob.
-3. **Pending-state cost.** Fresh attached pending state is self-contained but eagerly materializes
+6. **Pending-state cost.** Fresh attached pending state is self-contained but eagerly materializes
    every summary-backed payload. Define limits or an explicit reference-only alternative.
-4. **API stability and reachability.** Resolve the public beta versus experimental/not-ready
+7. **API stability and reachability.** Resolve the public beta versus experimental/not-ready
    staging mismatch. If public, ensure common factories expose the required
    `oldestSupportedClient`; otherwise keep the option internal or alpha.
-5. **Compatibility enforcement.** Add real version-pair tests and decide whether generic
+8. **Compatibility enforcement.** Add real version-pair tests and decide whether generic
    layer-compatibility bypasses are unsupported or must not bypass this binary requirement.
-6. **Serialized-state rollout.** Decide and document whether pending/detached state is expected to
+9. **Serialized-state rollout.** Decide and document whether pending/detached state is expected to
    move only forward to newer loaders, or add an explicit version/failure contract for loaders that
    predate `snapshotBlobContents`.
-7. **Recovery workflows.** Add feature-specific `AttachState.Attaching`, create failure/retry, and
+10. **Recovery workflows.** Add feature-specific `AttachState.Attaching`, create failure/retry, and
    unreferenced-content revival coverage.
-8. **Internal naming.** Use a namespaced loading-group ID.
+11. **Internal naming.** Use a namespaced loading-group ID.
 
 ### P2
 

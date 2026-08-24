@@ -23,12 +23,15 @@ not a direct whole-tree diff between the two heads.
 #27880 has broader portable E2E, stress, and service-load coverage and keeps the option internal.
 Those are useful ideas to adopt.
 
-Neither PR yet satisfies the unconditional goal that future ODSP sessions exclude these payloads
-from snapshot acquisition. The network path uses loading-group-aware snapshots only when both the
-loader feature gate and driver policy are enabled. More importantly, ODSP's create-cache conversion
-currently stores every summary blob payload in `ISnapshot.blobContents` under a synthetic UUID.
-A cache-backed load therefore receives all embedded images. Removing those cached bytes alone would
-break reads because the synthetic IDs are not service blob IDs.
+Both PRs assign a loading-group ID to one shared summary subtree. Whether later ODSP network
+snapshots omit that group's payloads still needs end-to-end validation, and the loader uses the
+loading-group-aware snapshot API only when both its feature gate and driver policy are enabled.
+
+ODSP create-cache snapshots intentionally contain every submitted summary blob under a synthetic
+UUID. That is a valid self-contained cache representation: the synthetic IDs remain usable because
+their bytes are present, and neither implementation exposes them as attachment IDs. It is an
+efficiency tradeoff only if the product requirement says that cache-backed loads must also omit
+payloads.
 
 ## Shared summary architecture
 
@@ -71,7 +74,7 @@ are not shared and are compared below.
 | Broader validation | No feature-specific portable service E2E, randomized stress, or service-load matrix. | Adds portable E2E, detached stress, and service-load option-matrix plumbing. These improve breadth but do not prove ODSP payload exclusion. |
 | Mutual readability | The two formats use different schema properties, subtree names, group IDs, and payload encodings. No migration reader exists in either PR. | Same. |
 
-## Snapshot acquisition and the core efficiency goal
+## Snapshot acquisition behavior and open validation
 
 Summary handles prevent reuploading unchanged payloads in ordinary summaries. That is separate from
 whether a later loader downloads the payloads.
@@ -87,17 +90,18 @@ storage policies support getSnapshot()
 Otherwise it falls back to the legacy snapshot-tree path, which has no equivalent code-level
 payload-exclusion guarantee.
 
-ODSP also has a concrete create-cache limitation:
+ODSP create-cache behavior is different from the service snapshot path:
 
 1. `convertCreateNewSummaryTreeToTreeAndBlobs()` recursively converts every summary blob to a
    synthetic UUID and puts every payload in `ISnapshot.blobContents`.
 2. `createFile()` stores that complete snapshot in the create cache.
 3. `OdspDocumentStorageService` can return the cached snapshot unchanged to a later load.
 
-Consequently, the first cache-backed future load receives all embedded payloads. The payloads
-cannot simply be removed from that cache entry because reads using those synthetic IDs cannot be
-served by the service. A correct solution must bypass/refresh this cache for the format, obtain
-service-assigned IDs, or otherwise provide a lazy-read mapping.
+Consequently, a cache-backed load receives all embedded payloads. This is correct because the cache
+is self-contained, and the synthetic IDs are only local snapshot lookup details. If cache-backed
+loads must also be payload-lazy, the implementation would need to bypass/refresh this cache, obtain
+service-assigned IDs, or provide another lazy-read mapping. Removing the bytes alone would be
+incorrect because the service cannot resolve the synthetic IDs.
 
 The network path still needs an ODSP test that inspects the returned `ISnapshot.blobContents` and
 proves that the grouped subtree structure and service blob IDs are present while image bytes are
@@ -140,34 +144,30 @@ Do not adopt:
 
 ## Prioritized remaining work for #28054
 
-### P0: prove and enforce the core storage behavior
+### P1: storage contract, rollout, and workflow completeness
 
-1. Resolve the ODSP create-cache synthetic-ID/payload-retention problem.
-2. Make loading-group-aware snapshot acquisition an explicit prerequisite or define an actionable
-   fallback when the loader gate or driver policy is unavailable.
-3. Add separate ODSP create-cache and network tests that assert payload absence, not merely
-   successful reads.
-4. Add telemetry that identifies cache versus network source, snapshot API used, grouped payload
+1. Verify the ODSP network path returns the loading-group structure and service blob IDs without
+   payload bytes. Make the required loader gate and driver policy explicit.
+2. Decide whether cache-backed loads are allowed to remain self-contained and eager. Only if they
+   must also be payload-lazy is a create-cache redesign required.
+3. Add telemetry that identifies cache versus network source, snapshot API used, grouped payload
    count/bytes returned, and fallback behavior.
-
-### P1: rollout and workflow completeness
-
-1. Adopt #27880's portable E2E, stress, and service-load coverage while asserting #28054's raw
+4. Adopt #27880's portable E2E, stress, and service-load coverage while asserting #28054's raw
    binary format and clean-summary handles.
-2. Test detached rehydrate with the host option omitted, then create another blob and verify zero
+5. Test detached rehydrate with the host option omitted, then create another blob and verify zero
    detached-storage uploads.
-3. Add feature-specific `AttachState.Attaching`, create failure/retry/idempotency, and
+6. Add feature-specific `AttachState.Attaching`, create failure/retry/idempotency, and
    unreferenced-content revival tests.
-4. Define attached pending-state semantics and cost. Keep the self-contained behavior, add an
+7. Define attached pending-state semantics and cost. Keep the self-contained behavior, add an
    explicit reference-only mode, or provide bounded/shared materialization with documented limits.
-5. Add concrete old-runtime/new-runtime and old-loader/new-loader pairing tests. Decide whether
+8. Add concrete old-runtime/new-runtime and old-loader/new-loader pairing tests. Decide whether
    compatibility-bypass settings are unsupported or whether the binary capability requirement must
    be non-bypassable.
-6. Resolve the public API staging mismatch. If the option remains public, expose its mandatory
+9. Resolve the public API staging mismatch. If the option remains public, expose its mandatory
    `oldestSupportedClient` companion through common factory props such as
    `ContainerRuntimeFactoryWithDefaultDataStoreProps`; otherwise keep it internal or alpha.
-7. Use a namespaced loading-group ID.
-8. Ensure the `ISnapshot` structural-capture fast path excludes direct root `.blobs` attachment
+10. Use a namespaced loading-group ID.
+11. Ensure the `ISnapshot` structural-capture fast path excludes direct root `.blobs` attachment
    contents even when a driver supplies them in `blobContents`.
 
 ### P2: operationalization
@@ -185,7 +185,8 @@ Do not adopt:
 |---|---|---|
 | Single logical create request | Meets | Meets |
 | Ordinary summaries avoid payload reupload | Meets | Meets |
-| Future snapshots exclude payloads | Not yet: conditional network path and known ODSP create-cache failure | Same |
+| Future network snapshots exclude payloads | Unverified; depends on the loading-group-aware snapshot path | Same |
+| Cache-backed snapshot loads | Correct but eager because the self-contained create cache includes payloads under synthetic IDs | Same |
 | Raw-binary persistence without permanent base64 expansion | Meets | Does not: preserves bytes by persisting base64 text |
 | GC/sweep | Meets in covered creator and loaded states | Creator cache cleanup gap |
 | Full-state correctness | Stronger; retains revivable content and catches live ops | Gaps in op catch-up and revival |
@@ -199,5 +200,5 @@ Do not adopt:
 #28054 originally proposed graduating snapshot summary blob IDs into attachments after load. That
 approach was rejected because detached state and ODSP create-cache snapshots can contain
 client-synthetic IDs. Both current designs instead keep stable BlobManager local IDs and permanent
-summary backing. The ODSP create-cache finding reinforces why synthetic snapshot IDs cannot be
-treated as service attachment IDs.
+summary backing. Synthetic snapshot IDs are valid as cache-local lookup details while their bytes
+remain present; they must not be treated as service attachment IDs.
