@@ -8,7 +8,6 @@ import type {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
 	ITelemetryBaseProperties,
-	LogLevel,
 } from "@fluidframework/core-interfaces";
 import {
 	createMultiSinkLogger,
@@ -75,7 +74,7 @@ export class DebugLogger implements ITelemetryBaseLogger {
 	 *
 	 * @param event - the event to send
 	 */
-	public send(event: ITelemetryBaseEvent, _logLevel?: LogLevel): void {
+	public send(event: ITelemetryBaseEvent): void {
 		const newEvent: ITelemetryBaseProperties = { ...event };
 		const isError = newEvent.category === "error";
 		let logger = isError ? this.debugErr : this.debug;
