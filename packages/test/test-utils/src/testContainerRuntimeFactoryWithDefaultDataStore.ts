@@ -9,7 +9,7 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { FluidObject } from "@fluidframework/core-interfaces";
 // eslint-disable-next-line import-x/no-deprecated
 import { RuntimeRequestHandler } from "@fluidframework/request-handler/internal";
-import {
+import type {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
