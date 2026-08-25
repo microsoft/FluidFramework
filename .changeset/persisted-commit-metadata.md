@@ -32,8 +32,9 @@ for (
 
 Notes on behavior:
 
-- The metadata shares the lifetime of the commit it is attached to. Once that commit is trimmed from the trunk, the metadata goes with it. Under the default trunk eviction policy that is the width of the collaboration window; under the `retainHistory` option on `SharedTreeOptions` it is the lifetime of the document.
+- The metadata shares the lifetime of the commit it is attached to. Once that commit is trimmed from the trunk, the metadata goes with it — including through any `TreeBranchCommitMetadata` obtained earlier, which then reads `undefined`. Under the default trunk eviction policy that lifetime is the width of the collaboration window; under the `retainHistory` option on `SharedTreeOptions` it is the lifetime of the document.
 - The value is `undefined` for commits that were not annotated, and for commits created before an application began writing metadata, so every read path must handle `undefined`.
+- The value is snapshotted when the transaction starts: it is round-tripped through JSON, so the commit is unaffected by later mutation of the object passed in, and what you read back locally is exactly what peers and future summaries see. Values with no JSON representation are normalized accordingly (`NaN` becomes `null`, properties explicitly set to `undefined` are dropped), and a `UsageError` is thrown for a value that cannot be represented as a JSON object at all, such as one containing a cycle.
 - If a transaction produces no commit — because its body made no changes, or because it was rolled back — its metadata is discarded without error.
 - When transactions are nested, only the outermost transaction's metadata is used, mirroring how `label` behaves.
 - The metadata travels on every annotated op and occupies space in the summary for as long as its commit survives, so it should be kept small.

@@ -17,6 +17,7 @@ import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
+	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 import {
 	getRequiredPendingLocalState,
@@ -30,6 +31,7 @@ import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
 	TreeViewConfiguration,
 	type ITree,
+	type TreeBranchCommitMetadata,
 	type TreeBranchHistory,
 } from "../../simple-tree/index.js";
 import {
@@ -346,6 +348,22 @@ describe("persisted commit metadata", () => {
 
 			assert.equal(headMetadata(view.branchHistory), undefined);
 		});
+
+		it("is attached by runTransactionAsync as well", async () => {
+			const provider = new TestTreeProviderLite(1, makeFactory());
+			const view = asAlpha(provider.trees[0].viewWith(config));
+			view.initialize([]);
+
+			await view.runTransactionAsync(
+				// eslint-disable-next-line @typescript-eslint/require-await
+				async () => {
+					view.root.insertAtEnd("a");
+				},
+				{ persistedMetadata: { tag: "async" } },
+			);
+
+			assert.deepEqual(headMetadata(view.branchHistory), { tag: "async" });
+		});
 	});
 
 	describe("Persistence", () => {
@@ -402,6 +420,60 @@ describe("persisted commit metadata", () => {
 			// ...and it is not written to the summary either.
 			const loaded = await loadFreshClient(tree, factory, provider.getCompressor(tree));
 			assert.deepEqual(tags(loaded.kernel.checkout.branchHistory), []);
+		});
+
+		it("is dropped from commit metadata objects obtained before the commit was trimmed", () => {
+			// Trimming severs ancestry, but a `TreeBranchCommitMetadata` obtained beforehand still wraps
+			// its commit. It must not keep reporting metadata that has left the document, and this also
+			// covers the newest trimmed commit, which survives internally as the trunk base.
+			const provider = new TestTreeProviderLite(2, makeFactory({ retainHistory: false }));
+			const view1 = asAlpha(provider.trees[0].viewWith(config));
+			view1.initialize([]);
+			provider.synchronizeMessages();
+			const view2 = asAlpha(provider.trees[1].viewWith(config));
+
+			for (let i = 0; i < 4; ++i) {
+				view1.runTransaction(
+					() => {
+						view1.root.insertAtEnd(`annotated-${i}`);
+					},
+					{ persistedMetadata: { tag: `old-${i}` } },
+				);
+			}
+			provider.synchronizeMessages();
+
+			// Capture every commit metadata object while the commits are still in the trunk.
+			const captured: TreeBranchCommitMetadata[] = [];
+			for (
+				let commit = view1.branchHistory.getHead();
+				commit !== undefined;
+				commit = commit.getParent()
+			) {
+				captured.push(commit);
+			}
+			assert(
+				captured.some((c) => c.persistedMetadata !== undefined),
+				"Expected the captured commits to include annotated ones",
+			);
+
+			// Advance the collaboration window past all of the annotated commits.
+			for (let i = 0; i < 10; ++i) {
+				view1.root.insertAtStart("");
+			}
+			provider.synchronizeMessages();
+			view1.root.insertAtStart("");
+			view2.root.insertAtStart("");
+			provider.synchronizeMessages();
+
+			// Map to the metadata values before asserting: the wrapper objects hold references to
+			// evicted commits, whose other properties throw when touched (e.g. by a test reporter).
+			assert.deepEqual(
+				captured.map((c) => c.persistedMetadata).filter((m) => m !== undefined),
+				[],
+				"Metadata must not be readable through a previously obtained commit metadata object once its commit is trimmed",
+			);
+			// And nothing reachable in the current history carries it either.
+			assert.deepEqual(tags(view1.branchHistory), []);
 		});
 
 		it("loads a summary written before the feature was enabled and reads back undefined", async () => {
@@ -533,6 +605,100 @@ describe("persisted commit metadata", () => {
 
 			assert.deepEqual([...view.root], ["stashed"]);
 			assert.deepEqual(headMetadata(view.branchHistory), { tag: "stashed" });
+		});
+	});
+
+	describe("Value handling", () => {
+		it("snapshots the value so later mutation of the caller's object does not change the commit", () => {
+			const provider = new TestTreeProviderLite(1, makeFactory());
+			const view = asAlpha(provider.trees[0].viewWith(config));
+			view.initialize([]);
+
+			const supplied: { tag: string; nested: { count: number } } = {
+				tag: "original",
+				nested: { count: 1 },
+			};
+			view.runTransaction(
+				() => {
+					view.root.insertAtEnd("a");
+				},
+				{ persistedMetadata: supplied },
+			);
+
+			supplied.tag = "mutated";
+			supplied.nested.count = 99;
+
+			assert.deepEqual(headMetadata(view.branchHistory), {
+				tag: "original",
+				nested: { count: 1 },
+			});
+		});
+
+		it("normalizes values with no JSON representation so local and replicated values agree", () => {
+			const provider = new TestTreeProviderLite(2, makeFactory());
+			const view1 = asAlpha(provider.trees[0].viewWith(config));
+			view1.initialize([]);
+			provider.synchronizeMessages();
+			const view2 = asAlpha(provider.trees[1].viewWith(config));
+
+			view1.runTransaction(
+				() => {
+					view1.root.insertAtEnd("a");
+				},
+				{
+					persistedMetadata: {
+						notFinite: Number.NaN,
+						alsoNotFinite: Number.POSITIVE_INFINITY,
+						missing: undefined,
+						kept: "value",
+					},
+				},
+			);
+			provider.synchronizeMessages();
+
+			const expected = { notFinite: null, alsoNotFinite: null, kept: "value" };
+			// The local read must match exactly what the peer sees, rather than the pre-JSON value.
+			assert.deepEqual(headMetadata(view1.branchHistory), expected);
+			assert.deepEqual(headMetadata(view2.branchHistory), expected);
+		});
+
+		it("throws a UsageError for metadata that cannot be serialized", () => {
+			const provider = new TestTreeProviderLite(1, makeFactory());
+			const view = asAlpha(provider.trees[0].viewWith(config));
+			view.initialize([]);
+
+			const cyclic: Record<string, unknown> = {};
+			cyclic.self = cyclic;
+
+			assert.throws(
+				() =>
+					view.runTransaction(
+						() => {
+							view.root.insertAtEnd("a");
+						},
+						{ persistedMetadata: cyclic as JsonCompatibleReadOnlyObject },
+					),
+				validateUsageError(/must be JSON-serializable/),
+			);
+		});
+
+		it("throws a UsageError for metadata that is not a JSON object", () => {
+			const provider = new TestTreeProviderLite(1, makeFactory());
+			const view = asAlpha(provider.trees[0].viewWith(config));
+			view.initialize([]);
+
+			assert.throws(
+				() =>
+					view.runTransaction(
+						() => {
+							view.root.insertAtEnd("a");
+						},
+						{
+							persistedMetadata: ["not an object"] as unknown as JsonCompatibleReadOnlyObject,
+						},
+					),
+				validateUsageError(/must be a JSON object/),
+			);
 		});
 	});
 

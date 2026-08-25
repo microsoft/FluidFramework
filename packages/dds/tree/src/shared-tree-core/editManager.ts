@@ -351,6 +351,16 @@ export class EditManager<
 		// so rebase them accordingly. This is necessary to prevent peer branches from referencing any evicted commits.
 		mainBranch.trimHistory(latestEvicted, sequenceId);
 
+		// Persisted metadata shares the lifetime of its commit, so it must be dropped for every trimmed
+		// commit. This covers `newTrunkBase` too: that commit has been trimmed (it is not written to the
+		// summary) but stays reachable as the trunk base, so leaving its metadata in place would let a
+		// client keep reading metadata that a client loading from the summary would never see.
+		// Clearing rather than poisoning keeps reads from a previously obtained `TreeBranchCommitMetadata`
+		// returning `undefined` instead of throwing, and releases the metadata for garbage collection.
+		for (const commit of trimmedCommits) {
+			(commit as Mutable<typeof commit>).persistedMetadata = undefined;
+		}
+
 		// Only the last trimmed commit, which is the new trunk base, should remain accessible.
 		for (const commit of trimmedCommits.slice(0, -1)) {
 			Reflect.defineProperty(commit, "change", {

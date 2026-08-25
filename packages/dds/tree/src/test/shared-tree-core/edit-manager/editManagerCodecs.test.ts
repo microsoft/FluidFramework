@@ -237,6 +237,101 @@ export function testCodec(): void {
 		makeEncodingTestSuite(family, testCases, undefined, [
 			EditManagerFormatVersion.vSharedBranches,
 		]);
+
+		// These lock the permanent serialized representation of persisted commit metadata in the summary.
+		// The round-trip suites above only prove that the current encoder and decoder agree with each
+		// other, which would remain true if the field were renamed on both sides — orphaning the metadata
+		// in summaries already written at v7.
+		describe("persisted metadata summary format", () => {
+			const metadata = { kind: "edit", nested: { author: "alice", count: 3 } };
+
+			/** Encodes a summary whose trunk commit and peer branch commit both carry metadata. */
+			function encodeAt(version: EditManagerFormatVersion): Record<string, unknown> {
+				const codec = family.resolve(version);
+				const data: SummaryData<TestChange> = {
+					originator: dummyContext.originatorId,
+					main: {
+						trunk: [
+							{
+								revision: tags[0],
+								sessionId: "1" as SessionId,
+								change: TestChange.mint([0], 1),
+								sequenceNumber: brand(1),
+								persistedMetadata: metadata,
+							},
+						],
+						peerLocalBranches: new Map([
+							[
+								"4" as SessionId,
+								{
+									base: tags[0],
+									commits: [
+										{
+											sessionId: "4" as SessionId,
+											revision: tags[1],
+											change: TestChange.mint([0], 4),
+											persistedMetadata: metadata,
+										},
+									],
+								},
+							],
+						]),
+					},
+				};
+				return codec.encode(data, {
+					idCompressor: testIdCompressor,
+					isSummary: true,
+				}) as unknown as Record<string, unknown>;
+			}
+
+			it("writes the metadata on trunk and peer branch commits at v7", () => {
+				const encoded = encodeAt(EditManagerFormatVersion.v7);
+				const serialized = JSON.stringify(encoded);
+				assert.equal(encoded.version, EditManagerFormatVersion.v7);
+				const trunk = encoded.trunk as { persistedMetadata?: unknown }[];
+				assert.deepEqual(trunk[0].persistedMetadata, metadata);
+				// The peer branch commit must carry it too, not just the trunk.
+				assert.equal(
+					serialized.split(`"persistedMetadata":`).length - 1,
+					2,
+					"Both the trunk commit and the peer branch commit should carry the metadata",
+				);
+			});
+
+			it("omits the metadata entirely before v7", () => {
+				const encoded = encodeAt(EditManagerFormatVersion.v6);
+				assert.equal(encoded.version, EditManagerFormatVersion.v6);
+				const trunk = encoded.trunk as { persistedMetadata?: unknown }[];
+				assert.equal("persistedMetadata" in trunk[0], false);
+				assert.equal(JSON.stringify(encoded).includes("alice"), false);
+			});
+
+			it("round-trips metadata through the real JSON summary form at v7", () => {
+				const codec = family.resolve(EditManagerFormatVersion.v7);
+				const encoded = encodeAt(EditManagerFormatVersion.v7);
+				const decoded = codec.decode(JSON.parse(JSON.stringify(encoded)), {
+					idCompressor: testIdCompressor,
+					isSummary: true,
+				});
+				assert.deepEqual(decoded.main.trunk[0].persistedMetadata, metadata);
+				assert.deepEqual(
+					decoded.main.peerLocalBranches.get("4" as SessionId)?.commits[0].persistedMetadata,
+					metadata,
+				);
+			});
+
+			it("defines the property as undefined when decoding a summary that predates the field", () => {
+				const codec = family.resolve(EditManagerFormatVersion.v6);
+				const encoded = encodeAt(EditManagerFormatVersion.v6);
+				const decoded = codec.decode(JSON.parse(JSON.stringify(encoded)), {
+					idCompressor: testIdCompressor,
+					isSummary: true,
+				});
+				const commit = decoded.main.trunk[0];
+				assert.equal("persistedMetadata" in commit, true);
+				assert.equal(commit.persistedMetadata, undefined);
+			});
+		});
 		// TODO: testing EditManagerSummarizer class itself, specifically for attachment and normal summaries.
 		// TODO: format compatibility tests to detect breaking of existing documents.
 	});

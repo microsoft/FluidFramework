@@ -238,7 +238,15 @@ export interface RunTransactionParamsAlpha extends RunTransactionParamsBeta {
 	 * (mirroring {@link RunTransactionParamsBeta.label | label}).
 	 *
 	 * This value must be JSON-serializable. It travels on every annotated op and occupies space in the
-	 * summary for as long as its commit survives, so it should be kept small.
+	 * summary for as long as its commit survives, so it should be kept small — treat a few hundred bytes
+	 * as a guideline, and note that it is also bounded by the runtime's maximum op size.
+	 *
+	 * The value is snapshotted when the transaction starts: it is round-tripped through JSON, so the commit
+	 * holds a copy that is unaffected by later mutation of the object passed here, and reads of
+	 * {@link TreeBranchCommitMetadata.persistedMetadata} return exactly what peers and future summaries see.
+	 * Values with no JSON representation are normalized accordingly (for example `NaN` becomes `null` and
+	 * properties explicitly set to `undefined` are dropped). A `UsageError` is thrown if the value cannot be
+	 * represented as a JSON object at all, such as when it contains a cycle or a `bigint`.
 	 *
 	 * Metadata is only written to the document when `minVersionForCollab` is set to a version that supports
 	 * it. Otherwise it is retained in memory for the local session but not persisted or replicated.

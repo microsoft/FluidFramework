@@ -183,6 +183,20 @@ export class SharedTreeBranch<
 	 * @param kind - the kind of change to apply
 	 * @returns the change that was applied and the new head commit of the branch
 	 */
+	/**
+	 * Applies the given change to this branch, minting a new commit for it.
+	 * @param change - the change to apply.
+	 * @param kind - the {@link CommitKind} to report for the resulting commit.
+	 * @param persistedMetadata - {@link GraphCommit.persistedMetadata | metadata} to attach to the new commit.
+	 * @remarks
+	 * This mints a *new* commit, so `persistedMetadata` is correctly omitted for genuinely new edits
+	 * (editor edits, reverts, and intermediate transaction commits).
+	 *
+	 * Callers that are instead *reconstructing an existing commit* — for example replaying a remote
+	 * commit, rehydrating a stashed op, or applying the commit a transaction produced — must pass the
+	 * source commit's metadata, or it will be silently dropped. The parameter is optional because the
+	 * former case dominates; the latter cases are individually covered by tests.
+	 */
 	public apply(
 		change: TaggedChange<TChange>,
 		kind: CommitKind = CommitKind.Default,

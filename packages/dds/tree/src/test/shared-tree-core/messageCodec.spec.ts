@@ -9,7 +9,12 @@ import type { SessionId } from "@fluidframework/id-compressor";
 import { createSessionId } from "@fluidframework/id-compressor/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { currentVersion, DependentFormatVersion, makeCodecFamily } from "../../codec/index.js";
+import {
+	currentVersion,
+	DependentFormatVersion,
+	FluidClientVersion,
+	makeCodecFamily,
+} from "../../codec/index.js";
 import type {
 	EncodedRevisionTag,
 	GraphCommit,
@@ -221,6 +226,77 @@ describe("message codec", () => {
 				() => codec.decode(JSON.parse(encoded), { idCompressor: testIdCompressor }),
 				validateUsageError(/Unsupported version -1 encountered while decoding Message data./),
 			);
+		});
+	});
+
+	// These lock the permanent serialized representation of persisted commit metadata. The round-trip
+	// suites above only prove that the current encoder and decoder agree with each other, which would
+	// stay true if the field were renamed on both sides — but that would silently orphan the metadata in
+	// documents already written at v7.
+	describe("persisted metadata wire format", () => {
+		const sessionId: SessionId = "sessionId" as SessionId;
+		const metadata = { kind: "edit", nested: { author: "alice", count: 3 } };
+
+		function encodeAt(
+			minVersionForCollab: (typeof FluidClientVersion)[keyof typeof FluidClientVersion],
+		): Record<string, unknown> {
+			const codec = makeMessageCodecBuilder<TestChange>().build({
+				changeCodecs: TestChange.codecs,
+				dependentChangeFormatVersion: DependentFormatVersion.fromUnique(1),
+				revisionTagCodec: testRevisionTagCodec,
+				jsonValidator: FormatValidatorBasic,
+				minVersionForCollab,
+			});
+			const message: DecodedMessage<TestChange> = {
+				type: "commit",
+				sessionId,
+				commit: {
+					revision: testIdCompressor.generateCompressedId(),
+					change: TestChange.mint([], 1),
+					persistedMetadata: metadata,
+				},
+				branchId: "main",
+			};
+			return codec.encode(message, { idCompressor: testIdCompressor }) as unknown as Record<
+				string,
+				unknown
+			>;
+		}
+
+		it("writes the metadata under the 'persistedMetadata' key at v7", () => {
+			const encoded = encodeAt(FluidClientVersion.v3_0);
+			assert.equal(encoded.version, MessageFormatVersion.v7);
+			assert.deepEqual(encoded.persistedMetadata, metadata);
+			// Guard against the value being nested under some other key instead.
+			assert.equal(
+				JSON.stringify(encoded).includes(`"persistedMetadata":`),
+				true,
+				"The encoded op must carry the metadata under its documented key",
+			);
+		});
+
+		it("omits the metadata entirely before v7", () => {
+			const encoded = encodeAt(FluidClientVersion.v2_80);
+			assert.equal(encoded.version, MessageFormatVersion.v6);
+			assert.equal("persistedMetadata" in encoded, false);
+			assert.equal(JSON.stringify(encoded).includes("alice"), false);
+		});
+
+		it("round-trips a nested metadata object through the real JSON wire form at v7", () => {
+			const encoded = encodeAt(FluidClientVersion.v3_0);
+			const codec = makeMessageCodecBuilder<TestChange>().build({
+				changeCodecs: TestChange.codecs,
+				dependentChangeFormatVersion: DependentFormatVersion.fromUnique(1),
+				revisionTagCodec: testRevisionTagCodec,
+				jsonValidator: FormatValidatorBasic,
+				minVersionForCollab: FluidClientVersion.v3_0,
+			});
+			// Go through an actual JSON round trip rather than passing the in-memory object along.
+			const decoded = codec.decode(JSON.parse(JSON.stringify(encoded)), {
+				idCompressor: testIdCompressor,
+			});
+			assert(decoded.type === "commit");
+			assert.deepEqual(decoded.commit.persistedMetadata, metadata);
 		});
 	});
 });

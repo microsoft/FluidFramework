@@ -64,6 +64,14 @@ const CommitBase = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 /**
  * @privateRemarks Commits are generally encoded from `GraphCommit`s, which often contain extra data.
  * This `noAdditionalProps` is especially important in that light.
+ *
+ * Note that `persistedMetadata` is declared on {@link CommitBase} for every format version rather than
+ * only for {@link EditManagerFormatVersion.v7} and later. Writing is gated on the format version by
+ * `encodeCommit`, so this client never emits the field into an older format. The schema is shared
+ * because making it version-dependent would require threading the version through every schema builder.
+ * The consequence is that a summary claiming to be v6 which nonetheless contains the field would be
+ * accepted (and the value surfaced) rather than rejected as an additional property. That is a
+ * deliberate trade-off: no supported writer produces such a summary.
  */
 const Commit = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 	Type.Composite([CommitBase(tChange)], noAdditionalProps);
