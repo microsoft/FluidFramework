@@ -15,25 +15,13 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"import": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./lib/index.d.ts",
+			"default": "./lib/index.js"
 		},
 		"./internal/test": {
 			"allow-ff-test-exports": {
-				"import": {
-					"types": "./lib/test/index.d.ts",
-					"default": "./lib/test/index.js"
-				},
-				"require": {
-					"types": "./dist/test/index.d.ts",
-					"default": "./dist/test/index.js"
-				}
+				"types": "./lib/test/index.d.ts",
+				"default": "./lib/test/index.js"
 			}
 		}
 	},

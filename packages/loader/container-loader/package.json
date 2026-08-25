@@ -14,94 +14,40 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"import": {
-				"types": "./lib/public.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/public.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./lib/public.d.ts",
+			"default": "./lib/index.js"
 		},
 		"./internal/test/container": {
-			"import": {
-				"types": "./lib/container.d.ts",
-				"default": "./lib/container.js"
-			},
-			"require": {
-				"types": "./dist/container.d.ts",
-				"default": "./dist/container.js"
-			}
+			"types": "./lib/container.d.ts",
+			"default": "./lib/container.js"
 		},
 		"./internal/test/contracts": {
-			"import": {
-				"types": "./lib/contracts.d.ts",
-				"default": "./lib/contracts.js"
-			},
-			"require": {
-				"types": "./dist/contracts.d.ts",
-				"default": "./dist/contracts.js"
-			}
+			"types": "./lib/contracts.d.ts",
+			"default": "./lib/contracts.js"
 		},
 		"./internal/test/connectionManager": {
-			"import": {
-				"types": "./lib/connectionManager.d.ts",
-				"default": "./lib/connectionManager.js"
-			},
-			"require": {
-				"types": "./dist/connectionManager.d.ts",
-				"default": "./dist/connectionManager.js"
-			}
+			"types": "./lib/connectionManager.d.ts",
+			"default": "./lib/connectionManager.js"
 		},
 		"./internal/test/deltaManager": {
-			"import": {
-				"types": "./lib/deltaManager.d.ts",
-				"default": "./lib/deltaManager.js"
-			},
-			"require": {
-				"types": "./dist/deltaManager.d.ts",
-				"default": "./dist/deltaManager.js"
-			}
+			"types": "./lib/deltaManager.d.ts",
+			"default": "./lib/deltaManager.js"
 		},
 		"./internal/test/utils": {
-			"import": {
-				"types": "./lib/utils.d.ts",
-				"default": "./lib/utils.js"
-			},
-			"require": {
-				"types": "./dist/utils.d.ts",
-				"default": "./dist/utils.js"
-			}
+			"types": "./lib/utils.d.ts",
+			"default": "./lib/utils.js"
 		},
 		"./legacy": {
-			"import": {
-				"types": "./lib/legacy.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/legacy.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./lib/legacy.d.ts",
+			"default": "./lib/index.js"
 		},
 		"./legacy/alpha": {
-			"import": {
-				"types": "./lib/legacyAlpha.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/legacyAlpha.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./lib/legacyAlpha.d.ts",
+			"default": "./lib/index.js"
 		},
 		"./internal": {
-			"import": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./lib/index.d.ts",
+			"default": "./lib/index.js"
 		}
 	},
 	"scripts": {

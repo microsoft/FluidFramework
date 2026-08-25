@@ -14,24 +14,12 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"import": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./lib/index.d.ts",
+			"default": "./lib/index.js"
 		},
 		"./internal/test/utils": {
-			"import": {
-				"types": "./lib/test/utils.d.ts",
-				"default": "./lib/test/utils.js"
-			},
-			"require": {
-				"types": "./dist/test/utils.d.ts",
-				"default": "./dist/test/utils.js"
-			}
+			"types": "./lib/test/utils.d.ts",
+			"default": "./lib/test/utils.js"
 		}
 	},
 	"scripts": {

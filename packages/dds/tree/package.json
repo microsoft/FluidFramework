@@ -14,65 +14,29 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"import": {
-				"types": "./lib/entrypoints/public.d.ts",
-				"default": "./lib/entrypoints/public.js"
-			},
-			"require": {
-				"types": "./dist/entrypoints/public.d.ts",
-				"default": "./dist/entrypoints/public.js"
-			}
+			"types": "./lib/entrypoints/public.d.ts",
+			"default": "./lib/entrypoints/public.js"
 		},
 		"./alpha": {
-			"import": {
-				"types": "./lib/entrypoints/alpha.d.ts",
-				"default": "./lib/entrypoints/alpha.js"
-			},
-			"require": {
-				"types": "./dist/entrypoints/alpha.d.ts",
-				"default": "./dist/entrypoints/alpha.js"
-			}
+			"types": "./lib/entrypoints/alpha.d.ts",
+			"default": "./lib/entrypoints/alpha.js"
 		},
 		"./beta": {
-			"import": {
-				"types": "./lib/entrypoints/beta.d.ts",
-				"default": "./lib/entrypoints/beta.js"
-			},
-			"require": {
-				"types": "./dist/entrypoints/beta.d.ts",
-				"default": "./dist/entrypoints/beta.js"
-			}
+			"types": "./lib/entrypoints/beta.d.ts",
+			"default": "./lib/entrypoints/beta.js"
 		},
 		"./internal": {
-			"import": {
-				"types": "./lib/entrypoints/internal.d.ts",
-				"default": "./lib/entrypoints/internal.js"
-			},
-			"require": {
-				"types": "./dist/entrypoints/internal.d.ts",
-				"default": "./dist/entrypoints/internal.js"
-			}
+			"types": "./lib/entrypoints/internal.d.ts",
+			"default": "./lib/entrypoints/internal.js"
 		},
 		"./legacy": {
-			"import": {
-				"types": "./lib/entrypoints/legacy.d.ts",
-				"default": "./lib/entrypoints/legacy.js"
-			},
-			"require": {
-				"types": "./dist/entrypoints/legacy.d.ts",
-				"default": "./dist/entrypoints/legacy.js"
-			}
+			"types": "./lib/entrypoints/legacy.d.ts",
+			"default": "./lib/entrypoints/legacy.js"
 		},
 		"./internal/test": {
 			"allow-ff-test-exports": {
-				"import": {
-					"types": "./lib/test/testExports.d.ts",
-					"default": "./lib/test/testExports.js"
-				},
-				"require": {
-					"types": "./dist/test/testExports.d.ts",
-					"default": "./dist/test/testExports.js"
-				}
+				"types": "./lib/test/testExports.d.ts",
+				"default": "./lib/test/testExports.js"
 			}
 		}
 	},

@@ -14,54 +14,24 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"import": {
-				"types": "./lib/public.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/public.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./lib/public.d.ts",
+			"default": "./lib/index.js"
 		},
 		"./alpha": {
-			"import": {
-				"types": "./lib/alpha.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/alpha.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./lib/alpha.d.ts",
+			"default": "./lib/index.js"
 		},
 		"./beta": {
-			"import": {
-				"types": "./lib/beta.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/beta.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./lib/beta.d.ts",
+			"default": "./lib/index.js"
 		},
 		"./legacy": {
-			"import": {
-				"types": "./lib/legacy.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/legacy.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./lib/legacy.d.ts",
+			"default": "./lib/index.js"
 		},
 		"./internal": {
-			"import": {
-				"types": "./lib/internal.d.ts",
-				"default": "./lib/internal.js"
-			},
-			"require": {
-				"types": "./dist/internal.d.ts",
-				"default": "./dist/internal.js"
-			}
+			"types": "./lib/internal.d.ts",
+			"default": "./lib/internal.js"
 		}
 	},
 	"scripts": {

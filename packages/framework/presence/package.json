@@ -14,44 +14,20 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"import": {
-				"types": "./lib/public.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/public.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./lib/public.d.ts",
+			"default": "./lib/index.js"
 		},
 		"./beta": {
-			"import": {
-				"types": "./lib/beta.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/beta.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./lib/beta.d.ts",
+			"default": "./lib/index.js"
 		},
 		"./alpha": {
-			"import": {
-				"types": "./lib/alpha.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/alpha.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./lib/alpha.d.ts",
+			"default": "./lib/index.js"
 		},
 		"./legacy/alpha": {
-			"import": {
-				"types": "./lib/legacy.alpha.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/legacy.alpha.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./lib/legacy.alpha.d.ts",
+			"default": "./lib/index.js"
 		}
 	},
 	"files": [

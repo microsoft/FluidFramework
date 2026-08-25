@@ -13,34 +13,16 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"import": {
-				"types": "./lib/public.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/public.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./lib/public.d.ts",
+			"default": "./lib/index.js"
 		},
 		"./test-utils": {
-			"import": {
-				"types": "./lib/testUtils.d.ts",
-				"default": "./lib/testUtils.js"
-			},
-			"require": {
-				"types": "./dist/testUtils.d.ts",
-				"default": "./dist/testUtils.js"
-			}
+			"types": "./lib/testUtils.d.ts",
+			"default": "./lib/testUtils.js"
 		},
 		"./internal": {
-			"import": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./lib/index.d.ts",
+			"default": "./lib/index.js"
 		}
 	},
 	"scripts": {

@@ -14,12 +14,7 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"import": {
-				"types": "./lib/index.d.ts"
-			},
-			"require": {
-				"types": "./dist/index.d.ts"
-			}
+			"types": "./lib/index.d.ts"
 		}
 	},
 	"scripts": {

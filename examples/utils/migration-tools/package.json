@@ -15,24 +15,12 @@
 	"type": "module",
 	"exports": {
 		"./alpha": {
-			"import": {
-				"types": "./lib/alpha.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/alpha.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./lib/alpha.d.ts",
+			"default": "./lib/index.js"
 		},
 		"./internal": {
-			"import": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./lib/index.d.ts",
+			"default": "./lib/index.js"
 		}
 	},
 	"scripts": {

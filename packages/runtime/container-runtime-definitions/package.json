@@ -14,28 +14,13 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"import": {
-				"types": "./lib/public.d.ts"
-			},
-			"require": {
-				"types": "./dist/public.d.ts"
-			}
+			"types": "./lib/public.d.ts"
 		},
 		"./legacy": {
-			"import": {
-				"types": "./lib/legacy.d.ts"
-			},
-			"require": {
-				"types": "./dist/legacy.d.ts"
-			}
+			"types": "./lib/legacy.d.ts"
 		},
 		"./internal": {
-			"import": {
-				"types": "./lib/index.d.ts"
-			},
-			"require": {
-				"types": "./dist/index.d.ts"
-			}
+			"types": "./lib/index.d.ts"
 		}
 	},
 	"scripts": {

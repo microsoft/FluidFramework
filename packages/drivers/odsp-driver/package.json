@@ -14,54 +14,24 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"import": {
-				"types": "./lib/public.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/public.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./lib/public.d.ts",
+			"default": "./lib/index.js"
 		},
 		"./legacy": {
-			"import": {
-				"types": "./lib/legacy.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/legacy.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./lib/legacy.d.ts",
+			"default": "./lib/index.js"
 		},
 		"./legacy/alpha": {
-			"import": {
-				"types": "./lib/legacyAlpha.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/legacyAlpha.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./lib/legacyAlpha.d.ts",
+			"default": "./lib/index.js"
 		},
 		"./legacy/point-in-time": {
-			"import": {
-				"types": "./lib/pointInTime.d.ts",
-				"default": "./lib/pointInTime.js"
-			},
-			"require": {
-				"types": "./dist/pointInTime.d.ts",
-				"default": "./dist/pointInTime.js"
-			}
+			"types": "./lib/pointInTime.d.ts",
+			"default": "./lib/pointInTime.js"
 		},
 		"./internal": {
-			"import": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./lib/index.d.ts",
+			"default": "./lib/index.js"
 		}
 	},
 	"scripts": {
