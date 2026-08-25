@@ -234,9 +234,14 @@ export interface RunTransactionParamsAlpha extends RunTransactionParamsBeta {
 	 * If this transaction produces no commit — because its body made no changes, or because it was rolled
 	 * back — the metadata is discarded without error.
 	 *
-	 * Nested transactions all contribute to the single commit they produce, so their metadata is merged into
-	 * one object. Where two of them use the same property, the outermost transaction wins. Metadata supplied
-	 * by a nested transaction that is rolled back does not contribute.
+	 * Nested transactions all contribute to the single commit they produce. Their metadata is available
+	 * both flattened into one object via {@link TreeBranchCommitMetadata.custom} — where the outermost
+	 * transaction wins on conflicting properties — and structurally via
+	 * {@link TreeBranchCommitMetadata.customTree}. Metadata supplied by a nested transaction that is
+	 * rolled back does not contribute to either.
+	 *
+	 * To attach metadata to the commit produced by {@link Revertible.(revert:1) | reverting}, perform the
+	 * revert inside a transaction. The revert must be that transaction's only change.
 	 *
 	 * The value is snapshotted when the transaction starts, so it is unaffected by later mutation of the
 	 * object passed here, and it is normalized to a {@link JsonCompatibleReadOnlyObject} as `JSON.stringify`

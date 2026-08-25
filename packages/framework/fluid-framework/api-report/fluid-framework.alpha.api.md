@@ -347,6 +347,12 @@ export function createTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey e
 export function createTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue, TSchema extends TreeNodeSchema>(view: TreeView<TFieldSchema>, indexer: Map<TreeNodeSchema, string>, getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey, indexableSchema: readonly TSchema[]): TreeIndex<TKey, TValue>;
 
 // @alpha @sealed
+export interface CustomMetadataTree {
+    readonly children: readonly CustomMetadataTree[];
+    readonly metadata: JsonCompatibleReadOnlyObject | undefined;
+}
+
+// @alpha @sealed
 export interface DataStoreContext extends SharedObjectCreator {
 }
 
@@ -2495,6 +2501,7 @@ export type TreeBranchAlpha = UntypedTreeViewAlpha;
 // @alpha @sealed
 export interface TreeBranchCommitMetadata {
     readonly custom: JsonCompatibleReadOnlyObject | undefined;
+    readonly customTree: CustomMetadataTree | undefined;
     getParent(): TreeBranchCommitMetadata | undefined;
     readonly revision: CommitRevision;
 }

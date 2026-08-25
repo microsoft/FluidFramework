@@ -24,6 +24,10 @@ export interface Revertible {
 	 *
 	 * @remarks
 	 * Concurrent changes that are sequenced before the revert will not be overwritten by the revert if they affect different parts of the document.
+	 *
+	 * A revert may be performed inside a transaction, but only as that transaction's sole change: no other
+	 * change (including another revert) may be made in the transaction either before or after it. This
+	 * allows a revert to be given its own {@link RunTransactionParamsAlpha.customMetadata | metadata}.
 	 */
 	revert(): void;
 	/**

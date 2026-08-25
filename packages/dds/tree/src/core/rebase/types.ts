@@ -170,7 +170,9 @@ export interface GraphCommit<TChange> {
 	/**
 	 * Arbitrary, application-defined metadata that is persisted alongside this commit.
 	 * @remarks
-	 * Set via {@link RunTransactionParamsAlpha.customMetadata}.
+	 * Set via {@link RunTransactionParamsAlpha.customMetadata}. Because a commit may be produced by
+	 * nested transactions, this is a {@link CustomMetadataTree | tree} mirroring that nesting rather
+	 * than a single object.
 	 *
 	 * The metadata shares the lifetime of the commit it is attached to: once the commit is trimmed from
 	 * the trunk, the metadata goes with it.
@@ -178,7 +180,59 @@ export interface GraphCommit<TChange> {
 	 * @privateRemarks
 	 * Always copy this property when copying a commit.
 	 */
-	readonly customMetadata: JsonCompatibleReadOnlyObject | undefined;
+	readonly customMetadata: CustomMetadataTree | undefined;
+}
+
+/**
+ * A tree representing the nesting structure of {@link RunTransactionParamsAlpha.customMetadata | transaction metadata}.
+ *
+ * @remarks
+ * This mirrors {@link LabelTree}: each transaction that contributed to the commit provides a node, and
+ * the nodes of nested transactions become {@link CustomMetadataTree.children | children} of the nodes of
+ * the transactions containing them. Metadata from a transaction that was rolled back is not included.
+ *
+ * Unlike {@link LabelTree}, this is persisted with the commit, so it is available to every client that
+ * reads the commit's history rather than only to the client that authored it.
+ *
+ * @sealed @alpha
+ */
+export interface CustomMetadataTree {
+	/**
+	 * The metadata supplied by this transaction, or `undefined` if it supplied none.
+	 */
+	readonly metadata: JsonCompatibleReadOnlyObject | undefined;
+
+	/**
+	 * The metadata trees of any nested transactions within this one.
+	 */
+	readonly children: readonly CustomMetadataTree[];
+}
+
+/**
+ * Flattens a {@link CustomMetadataTree} into a single object.
+ * @remarks
+ * Where two transactions used the same property, the outermost one wins. Among siblings, the later one
+ * wins. Returns `undefined` if no transaction in the tree supplied any metadata.
+ */
+export function flattenCustomMetadata(
+	tree: CustomMetadataTree | undefined,
+): JsonCompatibleReadOnlyObject | undefined {
+	if (tree === undefined) {
+		return undefined;
+	}
+	let flattened: Record<string, JsonCompatibleReadOnly | undefined> | undefined;
+	const visit = (node: CustomMetadataTree): void => {
+		// Descendants are applied first so that the metadata of the transactions containing them
+		// overwrites theirs on conflict.
+		for (const child of node.children) {
+			visit(child);
+		}
+		if (node.metadata !== undefined) {
+			flattened = Object.assign(flattened ?? {}, node.metadata);
+		}
+	};
+	visit(tree);
+	return flattened;
 }
 
 /**

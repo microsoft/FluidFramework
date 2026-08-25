@@ -179,6 +179,7 @@ export {
 	CommitRevision, 
 	Component, 
 	CreateIndependentTreeAlphaOptions, 
+	CustomMetadataTree, 
 	DirtyTreeMap, 
 	DirtyTreeStatus, 
 	ErasedNode, 

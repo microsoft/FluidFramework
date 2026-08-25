@@ -22,6 +22,7 @@ import {
 } from "../util/index.js";
 
 import { decodeBranchId, encodeBranchId } from "./branchIdCodec.js";
+import { decodeCustomMetadataTree, encodeCustomMetadataTree } from "./customMetadataFormat.js";
 import type { SharedBranchSummaryData } from "./editManager.js";
 import type {
 	Commit,
@@ -83,13 +84,16 @@ function encodeCommit<TChangeset, T extends Commit<TChangeset>>(
 		}),
 		change: changeCodec.encode(commit.change, { ...context, revision: commit.revision }),
 	};
-	// `customMetadata` is deliberately excluded here rather than being spread in, so that a client
-	// writing an older format never emits a field that format does not define.
-	if (!includeCustomMetadata && encoded.customMetadata !== undefined) {
-		const { customMetadata: _excluded, ...rest } = encoded;
-		return rest;
+	// `customMetadata` is deliberately rebuilt here rather than being spread through, both to convert
+	// it to its persisted form and so that a client writing an older format never emits a field that
+	// format does not define.
+	if (encoded.customMetadata === undefined) {
+		return encoded;
 	}
-	return encoded;
+	const { customMetadata, ...rest } = encoded;
+	return includeCustomMetadata
+		? { ...rest, customMetadata: encodeCustomMetadataTree(customMetadata) }
+		: rest;
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -120,7 +124,10 @@ function decodeCommit<TChangeset, T extends EncodedCommit<JsonCompatibleReadOnly
 		...commit,
 		revision,
 		change: changeCodec.decode(commit.change, { ...context, revision }),
-		customMetadata: commit.customMetadata,
+		customMetadata:
+			commit.customMetadata === undefined
+				? undefined
+				: decodeCustomMetadataTree(commit.customMetadata),
 	};
 }
 

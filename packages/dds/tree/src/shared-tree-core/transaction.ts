@@ -17,16 +17,20 @@ import {
 	tagChange,
 	CommitKind,
 	type ChangeFamilyEditor,
+	type CustomMetadataTree,
 	type GraphCommit,
 	type ProcessChangeFn,
 	type RevisionTag,
 } from "../core/index.js";
-import {
-	getLast,
-	getOrCreate,
-	type JsonCompatibleReadOnly,
-	type JsonCompatibleReadOnlyObject,
-} from "../util/index.js";
+import { getLast, getOrCreate, type JsonCompatibleReadOnlyObject } from "../util/index.js";
+
+/**
+ * A {@link CustomMetadataTree} under construction.
+ */
+interface MutableCustomMetadataTree {
+	metadata: JsonCompatibleReadOnlyObject | undefined;
+	children: MutableCustomMetadataTree[];
+}
 
 import type { SharedTreeBranch, SharedTreeBranchEvents } from "./branch.js";
 
@@ -323,6 +327,44 @@ export class SquashingTransactionStack<
 	#transactionBranch?: SharedTreeBranch<TEditor, TChange, TChangeProcessingContext>;
 
 	/**
+	 * The revision shared by every commit made within the current transaction.
+	 * @remarks Minted lazily, and cleared when the outermost transaction ends.
+	 */
+	#transactionRevision: RevisionTag | undefined;
+
+	/**
+	 * The {@link CommitKind} to report for the commit that the current transaction produces, if it
+	 * should not be {@link CommitKind.Default}. Cleared when the outermost transaction ends.
+	 */
+	#pendingCommitKind: CommitKind | undefined;
+
+	readonly #mintRevisionTag!: () => RevisionTag;
+
+	/**
+	 * Returns the revision that the commit produced by the current transaction will have, minting it if necessary.
+	 * @remarks
+	 * Every commit made on the transaction branch must share this revision so that they can be squashed
+	 * into a single commit when the transaction ends. Callers that apply a pre-computed change to the
+	 * {@link SquashingTransactionStack.activeBranch | active branch} (rather than editing through its
+	 * editor, which tags changes automatically) must tag that change with this revision.
+	 */
+	public mintTransactionRevision(): RevisionTag {
+		assert(this.size > 0, "Expected an open transaction");
+		return (this.#transactionRevision ??= this.#mintRevisionTag());
+	}
+
+	/**
+	 * Sets the {@link CommitKind} to report for the commit that the current transaction produces.
+	 * @remarks
+	 * Used when the content of a transaction is a revert, so that the resulting commit is still reported
+	 * as an undo or a redo rather than as an ordinary edit.
+	 */
+	public setPendingCommitKind(kind: CommitKind): void {
+		assert(this.size > 0, "Expected an open transaction");
+		this.#pendingCommitKind = kind;
+	}
+
+	/**
 	 * An editor for whichever branch is currently the {@link SquashingTransactionStack.activeBranch | active branch}.
 	 * @remarks This editor can safely be held on to across transaction boundaries, as it will properly delegate to the correct branch.
 	 * In contrast, it is not safe to hold onto e.g. `activeBranch.editor` across transaction boundaries, since the active branch may change.
@@ -426,34 +468,27 @@ export class SquashingTransactionStack<
 				startOptions?: SquashingTransactionOptions<TChange, TChangeProcessingContext>,
 			): Callbacks<SquashingTransactionOptions<TChange, TChangeProcessingContext>> => {
 				postProcessorStack.push(resolvePostProcessor(startOptions?.postProcessor));
-				// Metadata from every transaction in the stack is merged into the single commit they
-				// produce. Metadata from a nested transaction that is aborted never contributes.
-				// Collected innermost-first, so that a later `Object.assign` from an enclosing
-				// transaction overwrites conflicting keys from the transactions it contains.
-				const committedNestedMetadata: JsonCompatibleReadOnlyObject[] = [];
-				const mergeCustomMetadata = (): JsonCompatibleReadOnlyObject | undefined => {
-					const outermost = startOptions?.customMetadata;
-					if (committedNestedMetadata.length === 0) {
-						return outermost;
-					}
-					const merged: Record<string, JsonCompatibleReadOnly | undefined> = {};
-					for (const metadata of committedNestedMetadata) {
-						Object.assign(merged, metadata);
-					}
-					// The outermost transaction is applied last so that it wins on conflict.
-					Object.assign(merged, outermost);
-					return merged;
+				// Every transaction in the stack contributes a node to a tree mirroring the transaction
+				// nesting, which is attached to the single commit they produce. `openMetadataNodes` is the
+				// path from the root to the transaction currently being run; a nested transaction that is
+				// aborted has its node removed again, so it never contributes.
+				const rootMetadataNode: MutableCustomMetadataTree = {
+					metadata: startOptions?.customMetadata,
+					children: [],
 				};
+				const openMetadataNodes: MutableCustomMetadataTree[] = [rootMetadataNode];
+				/** Whether any transaction in the stack supplied metadata. */
+				const hasCustomMetadata = (node: CustomMetadataTree): boolean =>
+					node.metadata !== undefined || node.children.some(hasCustomMetadata);
 				// Keep track of the commit that each transaction was on when it started
 				const startHead = this.activeBranch.getHead();
 				const changeFamily = this.branch.changeFamily;
 				const rebaser = changeFamily.rebaser;
 				const outerOnPop = onPush?.();
-				let transactionRevision: RevisionTag | undefined;
 				const transactionBranch = this.branch.fork(
 					startHead,
 					// Lazily mint the revision tag for the transaction when it is first needed
-					() => (transactionRevision ??= mintRevisionTag()),
+					() => (this.#transactionRevision ??= mintRevisionTag()),
 				);
 				this.setTransactionBranch(transactionBranch);
 				transactionBranch.editor.enterTransaction();
@@ -499,12 +534,12 @@ export class SquashingTransactionStack<
 						case TransactionResult.Commit: {
 							if (transactionSteps.length > 0) {
 								assert(
-									transactionRevision !== undefined,
+									this.#transactionRevision !== undefined,
 									0xccf /* Expected transaction revision in the presence of transaction steps */,
 								);
 								for (const commit of transactionSteps) {
 									assert(
-										commit.revision === transactionRevision,
+										commit.revision === this.#transactionRevision,
 										0xcaf /* Unexpected commit in transaction */,
 									);
 								}
@@ -525,16 +560,19 @@ export class SquashingTransactionStack<
 									// change in their place so that the view fully reflects the modified
 									// `change`.
 									transactionBranch.removeAfter(startHead);
-									transactionBranch.apply(tagChange(change, transactionRevision));
+									transactionBranch.apply(tagChange(change, this.#transactionRevision));
 								}
 
-								const customMetadata = mergeCustomMetadata();
+								const customMetadata = hasCustomMetadata(rootMetadataNode)
+									? rootMetadataNode
+									: undefined;
+								const commitKind = this.#pendingCommitKind ?? CommitKind.Default;
 								if (targetPath.length === 0) {
 									// No changes were made on the original branch since the transaction began
 									// The transaction commit can be applied directly
 									this.branch.apply(
-										tagChange(change, transactionRevision),
-										CommitKind.Default,
+										tagChange(change, this.#transactionRevision),
+										commitKind,
 										customMetadata,
 									);
 									// The view is already up-to-date so there's nothing more to do
@@ -542,7 +580,7 @@ export class SquashingTransactionStack<
 									// Some changes were made on `branch` since the transaction began
 									const unrebasedHead = mintCommit(startHead, {
 										change,
-										revision: transactionRevision,
+										revision: this.#transactionRevision,
 										customMetadata,
 									});
 									// We need to rebase the transaction commit on top of the new changes
@@ -553,10 +591,10 @@ export class SquashingTransactionStack<
 										branch.getHead(),
 									);
 									assert(
-										rebased.newSourceHead.revision === transactionRevision,
+										rebased.newSourceHead.revision === this.#transactionRevision,
 										0xcd0 /* The transaction commit should be rebased to the tip */,
 									);
-									this.branch.apply(rebased.newSourceHead, CommitKind.Default, customMetadata);
+									this.branch.apply(rebased.newSourceHead, commitKind, customMetadata);
 									viewUpdate = rebased.sourceChange;
 								}
 							} else {
@@ -580,6 +618,8 @@ export class SquashingTransactionStack<
 					}
 					transactionBranch.dispose();
 					this.setTransactionBranch(undefined);
+					this.#transactionRevision = undefined;
+					this.#pendingCommitKind = undefined;
 					outerOnPop?.(result, viewUpdate);
 				};
 				// Invoked when a nested transaction begins
@@ -587,7 +627,14 @@ export class SquashingTransactionStack<
 					SquashingTransactionOptions<TChange, TChangeProcessingContext>
 				> = (nestedStartOptions) => {
 					postProcessorStack.push(resolvePostProcessor(nestedStartOptions?.postProcessor));
-					const nestedCustomMetadata = nestedStartOptions?.customMetadata;
+					const nestedMetadataNode: MutableCustomMetadataTree = {
+						metadata: nestedStartOptions?.customMetadata,
+						children: [],
+					};
+					const metadataParent = openMetadataNodes[openMetadataNodes.length - 1];
+					assert(metadataParent !== undefined, "Expected an open transaction metadata node");
+					metadataParent.children.push(nestedMetadataNode);
+					openMetadataNodes.push(nestedMetadataNode);
 					const nestedStartHead = this.activeBranch.getHead();
 					const nestedOuterOnPop = onPush?.();
 					transactionBranch.editor.enterTransaction();
@@ -595,17 +642,18 @@ export class SquashingTransactionStack<
 						// Invoked when a nested transaction ends
 						onPop: (result) => {
 							const nestedPostProcessor = postProcessorStack.pop();
+							openMetadataNodes.pop();
 							transactionBranch.editor.exitTransaction();
 							switch (result) {
 								case TransactionResult.Abort: {
+									// The transaction contributed nothing, so remove its metadata node again.
+									// It is necessarily the last child, as it was open until now.
+									metadataParent.children.pop();
 									// When a transaction is aborted, roll back all the transaction's changes on the current branch
 									transactionBranch.removeAfter(nestedStartHead);
 									break;
 								}
 								case TransactionResult.Commit: {
-									if (nestedCustomMetadata !== undefined) {
-										committedNestedMetadata.push(nestedCustomMetadata);
-									}
 									// When this nested transaction supplied a post-processor that should be applied here, squash its
 									// edits into a single (post-processed) commit on the transaction branch rather than leaving them to
 									// be squashed only when the outermost transaction is committed.
@@ -617,7 +665,7 @@ export class SquashingTransactionStack<
 										);
 										if (nestedSteps.length > 0) {
 											assert(
-												transactionRevision !== undefined,
+												this.#transactionRevision !== undefined,
 												0xd07 /* Expected transaction revision in the presence of transaction steps */,
 											);
 											const squash = rebaser.compose(nestedSteps);
@@ -629,7 +677,7 @@ export class SquashingTransactionStack<
 											if (processedSquash !== squash) {
 												transactionBranch.removeAfter(nestedStartHead);
 												transactionBranch.apply(
-													tagChange(processedSquash, transactionRevision),
+													tagChange(processedSquash, this.#transactionRevision),
 												);
 											}
 										}
@@ -647,6 +695,7 @@ export class SquashingTransactionStack<
 				return { onPop: onOuterTransactionPop, onPush: onNestedTransactionPush };
 			},
 		);
+		this.#mintRevisionTag = mintRevisionTag;
 	}
 
 	/** Updates the transaction branch (and therefore the active branch) and rebinds the branch events. */

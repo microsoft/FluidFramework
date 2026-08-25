@@ -8,12 +8,9 @@ import * as Type from "@sinclair/typebox";
 import type { TSchema } from "@sinclair/typebox";
 
 import { type EncodedRevisionTag, RevisionTagSchema, SessionIdSchema } from "../core/index.js";
-import {
-	type JsonCompatibleReadOnly,
-	type JsonCompatibleReadOnlyObject,
-	JsonCompatibleReadOnlyObjectSchema,
-} from "../util/index.js";
+import type { JsonCompatibleReadOnly } from "../util/index.js";
 
+import { EncodedCustomMetadataTree } from "./customMetadataFormat.js";
 import { MessageFormatVersion } from "./messageFormat.js";
 
 /**
@@ -38,7 +35,7 @@ export interface Message {
 	 * @remarks
 	 * Only written when encoding at {@link MessageFormatVersion.v7} or later.
 	 */
-	readonly customMetadata?: JsonCompatibleReadOnlyObject;
+	readonly customMetadata?: EncodedCustomMetadataTree;
 
 	/**
 	 * The version of the message. This controls how the message is encoded.
@@ -62,7 +59,7 @@ export const Message = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 		revision: RevisionTagSchema,
 		originatorId: SessionIdSchema,
 		changeset: tChange,
-		customMetadata: Type.Optional(JsonCompatibleReadOnlyObjectSchema),
+		customMetadata: Type.Optional(EncodedCustomMetadataTree),
 		version: Type.Optional(
 			Type.Union([
 				Type.Literal(MessageFormatVersion.v1),

@@ -17,6 +17,7 @@ import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
 	CommitKind,
+	type CustomMetadataTree,
 	type GraphCommit,
 	type RevisionTag,
 	type TaggedChange,
@@ -27,11 +28,7 @@ import {
 	tagRollbackInverse,
 	type RebaseStatsWithDuration,
 } from "../core/index.js";
-import {
-	hasSome,
-	defineLazyCachedProperty,
-	type JsonCompatibleReadOnlyObject,
-} from "../util/index.js";
+import { hasSome, defineLazyCachedProperty } from "../util/index.js";
 
 export type BranchId = SessionSpaceCompressedId | "main";
 export type EncodedBranchId = OpSpaceCompressedId;
@@ -194,7 +191,7 @@ export class SharedTreeBranch<
 	public apply(
 		change: TaggedChange<TChange>,
 		kind: CommitKind = CommitKind.Default,
-		customMetadata?: JsonCompatibleReadOnlyObject,
+		customMetadata?: CustomMetadataTree,
 	): void {
 		this.assertNotDisposed();
 

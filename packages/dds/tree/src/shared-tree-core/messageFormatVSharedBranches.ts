@@ -8,13 +8,10 @@ import * as Type from "@sinclair/typebox";
 import type { TSchema } from "@sinclair/typebox";
 
 import { type EncodedRevisionTag, RevisionTagSchema, SessionIdSchema } from "../core/index.js";
-import {
-	type JsonCompatibleReadOnly,
-	type JsonCompatibleReadOnlyObject,
-	JsonCompatibleReadOnlyObjectSchema,
-} from "../util/index.js";
+import type { JsonCompatibleReadOnly } from "../util/index.js";
 
 import type { EncodedBranchId } from "./branch.js";
+import { EncodedCustomMetadataTree } from "./customMetadataFormat.js";
 import { MessageFormatVersion } from "./messageFormat.js";
 
 /**
@@ -50,7 +47,7 @@ export interface Message {
 	 * @remarks
 	 * See {@link GraphCommit.customMetadata}.
 	 */
-	readonly customMetadata?: JsonCompatibleReadOnlyObject;
+	readonly customMetadata?: EncodedCustomMetadataTree;
 
 	/**
 	 * The version of the message format.
@@ -67,6 +64,6 @@ export const Message = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 		changeset: Type.Optional(tChange),
 		branchId: Type.Optional(Type.Number()),
 		branchName: Type.Optional(Type.String()),
-		customMetadata: Type.Optional(JsonCompatibleReadOnlyObjectSchema),
+		customMetadata: Type.Optional(EncodedCustomMetadataTree),
 		version: Type.Literal(MessageFormatVersion.vSharedBranches),
 	});

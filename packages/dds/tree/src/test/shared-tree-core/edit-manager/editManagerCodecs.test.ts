@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import type { SessionId } from "@fluidframework/id-compressor";
 
 import { DependentFormatVersion, makeCodecFamily } from "../../../codec/index.js";
-import type { ChangeEncodingContext } from "../../../core/index.js";
+import type { ChangeEncodingContext, CustomMetadataTree } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { makeEditManagerCodecBuilder } from "../../../shared-tree-core/editManagerCodecs.js";
@@ -244,6 +244,7 @@ export function testCodec(): void {
 		// in summaries already written at v7.
 		describe("custom metadata summary format", () => {
 			const metadata = { kind: "edit", nested: { author: "alice", count: 3 } };
+			const tree: CustomMetadataTree = { metadata, children: [] };
 
 			/** Encodes a summary whose trunk commit and peer branch commit both carry metadata. */
 			function encodeAt(version: EditManagerFormatVersion): Record<string, unknown> {
@@ -257,7 +258,7 @@ export function testCodec(): void {
 								sessionId: "1" as SessionId,
 								change: TestChange.mint([0], 1),
 								sequenceNumber: brand(1),
-								customMetadata: metadata,
+								customMetadata: tree,
 							},
 						],
 						peerLocalBranches: new Map([
@@ -270,7 +271,7 @@ export function testCodec(): void {
 											sessionId: "4" as SessionId,
 											revision: tags[1],
 											change: TestChange.mint([0], 4),
-											customMetadata: metadata,
+											customMetadata: tree,
 										},
 									],
 								},
@@ -288,13 +289,13 @@ export function testCodec(): void {
 				const encoded = encodeAt(EditManagerFormatVersion.v7);
 				assert.equal(encoded.version, EditManagerFormatVersion.v7);
 				const trunk = encoded.trunk as { customMetadata?: unknown }[];
-				assert.deepEqual(trunk[0].customMetadata, metadata);
+				assert.deepEqual(trunk[0].customMetadata, { m: metadata });
 				// The peer branch commits must carry it too, not just the trunk.
 				const branches = encoded.branches as [
 					SessionId,
 					{ commits: { customMetadata?: unknown }[] },
 				][];
-				assert.deepEqual(branches[0][1].commits[0].customMetadata, metadata);
+				assert.deepEqual(branches[0][1].commits[0].customMetadata, { m: metadata });
 			});
 
 			it("omits the metadata entirely before v7", () => {
@@ -312,10 +313,10 @@ export function testCodec(): void {
 					idCompressor: testIdCompressor,
 					isSummary: true,
 				});
-				assert.deepEqual(decoded.main.trunk[0].customMetadata, metadata);
+				assert.deepEqual(decoded.main.trunk[0].customMetadata, tree);
 				assert.deepEqual(
 					decoded.main.peerLocalBranches.get("4" as SessionId)?.commits[0].customMetadata,
-					metadata,
+					tree,
 				);
 			});
 

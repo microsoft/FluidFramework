@@ -17,6 +17,7 @@ import type {
 import type { JsonCompatibleReadOnlyObject } from "../util/index.js";
 
 import { decodeBranchId, encodeBranchId } from "./branchIdCodec.js";
+import { decodeCustomMetadataTree, encodeCustomMetadataTree } from "./customMetadataFormat.js";
 import type { MessageDecodingContext, MessageEncodingContext } from "./messageCodecs.js";
 import type { MessageFormatVersion } from "./messageFormat.js";
 import { Message } from "./messageFormatVSharedBranches.js";
@@ -63,7 +64,9 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 						branchId: encodeBranchId(context.idCompressor, message.branchId),
 						...(message.commit.customMetadata === undefined
 							? {}
-							: { customMetadata: message.commit.customMetadata }),
+							: {
+									customMetadata: encodeCustomMetadataTree(message.commit.customMetadata),
+								}),
 						version,
 					};
 				}
@@ -124,7 +127,10 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 						idCompressor: context.idCompressor,
 						isSummary: false,
 					}),
-					customMetadata,
+					customMetadata:
+						customMetadata === undefined
+							? undefined
+							: decodeCustomMetadataTree(customMetadata),
 				},
 				branchId,
 				sessionId: originatorId,

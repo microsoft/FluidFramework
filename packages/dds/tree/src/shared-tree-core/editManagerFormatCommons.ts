@@ -8,18 +8,16 @@ import * as Type from "@sinclair/typebox";
 import type { ObjectOptions, Static, TSchema } from "@sinclair/typebox";
 
 import {
+	type CustomMetadataTree,
 	type EncodedRevisionTag,
 	type RevisionTag,
 	RevisionTagSchema,
 	SessionIdSchema,
 } from "../core/index.js";
 import { type Brand, brandedNumberType, strictEnum, type Values } from "../util/index.js";
-import {
-	type JsonCompatibleReadOnlyObject,
-	JsonCompatibleReadOnlyObjectSchema,
-} from "../util/index.js";
 
 import type { EncodedBranchId } from "./branch.js";
+import { EncodedCustomMetadataTree } from "./customMetadataFormat.js";
 
 /**
  * Contains a single change to the `SharedTree` and associated metadata.
@@ -33,12 +31,12 @@ export interface Commit<TChangeset> {
 	/** An identifier representing the session/user/client that made this commit */
 	readonly sessionId: SessionId;
 	/**
-	 * Arbitrary, application-defined metadata persisted alongside this commit.
+	 * Arbitrary, application-defined metadata stored alongside this commit.
 	 * @remarks
-	 * See {@link GraphCommit.customMetadata}. Only written when encoding at
-	 * {@link EditManagerFormatVersion.v7} or later.
+	 * This is the in-memory form; {@link EncodedCommit} holds the persisted form. Only written when
+	 * encoding at {@link EditManagerFormatVersion.v7} or later.
 	 */
-	readonly customMetadata?: JsonCompatibleReadOnlyObject;
+	readonly customMetadata?: CustomMetadataTree;
 }
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
@@ -46,7 +44,7 @@ export type EncodedCommit<TChangeset> = {
 	readonly revision: EncodedRevisionTag;
 	readonly change: TChangeset;
 	readonly sessionId: SessionId;
-	readonly customMetadata?: JsonCompatibleReadOnlyObject;
+	readonly customMetadata?: EncodedCustomMetadataTree;
 };
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
@@ -59,7 +57,7 @@ const CommitBase = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 		revision: RevisionTagSchema,
 		change: tChange,
 		sessionId: SessionIdSchema,
-		customMetadata: Type.Optional(JsonCompatibleReadOnlyObjectSchema),
+		customMetadata: Type.Optional(EncodedCustomMetadataTree),
 	});
 /**
  * @privateRemarks Commits are generally encoded from `GraphCommit`s, which often contain extra data.

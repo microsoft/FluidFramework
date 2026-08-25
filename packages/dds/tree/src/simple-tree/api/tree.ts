@@ -8,6 +8,7 @@ import type { IFluidLoadable, IDisposable, Listenable } from "@fluidframework/co
 import type {
 	ChangeMetadata,
 	CommitMetadata,
+	CustomMetadataTree,
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
 	Revertible,
 	RevertibleAlphaFactory,
@@ -323,16 +324,31 @@ export interface TreeBranchCommitMetadata {
 
 	/**
 	 * Arbitrary, application-defined metadata that was {@link RunTransactionParamsAlpha.customMetadata | attached}
-	 * to this commit when it was created.
+	 * to this commit when it was created, flattened into a single object.
 	 *
 	 * @remarks
 	 * This is `undefined` for commits that were not annotated, and for commits created before the application
 	 * began writing metadata.
 	 *
+	 * A commit may be produced by nested transactions, each of which may supply metadata. This property
+	 * combines them all: where two of them used the same property, the outermost transaction wins. Use
+	 * {@link TreeBranchCommitMetadata.customTree} to recover which transaction supplied what.
+	 *
 	 * The metadata shares the lifetime of the commit it describes: once the commit is trimmed from the branch's
 	 * history, the metadata goes with it.
 	 */
 	readonly custom: JsonCompatibleReadOnlyObject | undefined;
+
+	/**
+	 * The {@link CustomMetadataTree | tree} of metadata attached to this commit, reflecting the nesting of
+	 * the transactions that produced it.
+	 *
+	 * @remarks
+	 * This is `undefined` whenever {@link TreeBranchCommitMetadata.custom} is, and is the structural
+	 * counterpart to it — the same relationship {@link TransactionLabels.tree} has to its label set.
+	 * Prefer `custom` unless you need to know which transaction supplied a particular property.
+	 */
+	readonly customTree: CustomMetadataTree | undefined;
 
 	/**
 	 * The metadata for the commit that this commit was based on, or `undefined` if this commit has no parent

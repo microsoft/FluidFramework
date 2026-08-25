@@ -1670,21 +1670,41 @@ export class TreeCheckout implements ITreeCheckout {
 		labelTree: LabelTree | undefined,
 	): RevertMetrics {
 		this.editLock.checkUnlocked("Reverting a commit");
-		if (this.transaction.size > 0) {
-			throw new UsageError("Undo is not yet supported during transactions.");
+		// A revert is normally forbidden during a transaction because the inverse is computed against,
+		// and applied to, the branch the transaction forked from — so it would neither account for the
+		// transaction's own edits nor be part of the transaction.
+		//
+		// Neither problem arises when the transaction has produced no commits yet: the transaction branch
+		// and the branch it forked from are then at the same commit, so the inverse is computed against
+		// exactly the same state as it would be outside a transaction. Applying it to the transaction
+		// branch therefore makes the revert the transaction's content, which is what allows an application
+		// to attach {@link RunTransactionParamsAlpha.customMetadata | custom metadata} to a revert.
+		// Further changes are forbidden below so that the revert remains the transaction's only content.
+		const inTransaction = this.transaction.size > 0;
+		if (
+			inTransaction &&
+			this.#transaction.activeBranch.getHead() !== this.#transaction.branch.getHead()
+		) {
+			throw new UsageError(
+				"A revert applied during a transaction must be the only change in that transaction.",
+			);
 		}
 
 		const revertibleBranch = this.revertibleCommitBranches.get(revision);
 		assert(revertibleBranch !== undefined, 0x7cc /* expected to find a revertible commit */);
 		const commitToRevert = revertibleBranch.getHead();
-		const revisionForInvert = this.mintRevisionTag();
+		// Commits made within a transaction all share the transaction's revision so that they can be
+		// squashed into one commit when it ends.
+		const revisionForInvert = inTransaction
+			? this.#transaction.mintTransactionRevision()
+			: this.mintRevisionTag();
 
 		let change = tagChange(
 			this.changeFamily.rebaser.invert(commitToRevert, false, revisionForInvert),
 			revisionForInvert,
 		);
 
-		const headCommit = this.#transaction.branch.getHead();
+		const headCommit = this.#transaction.activeBranch.getHead();
 		// Rebase the inverted change onto any commits that occurred after the undoable commits.
 		if (commitToRevert !== headCommit) {
 			// The inverse may be rebased over newer commits which (despite being present in the history)
@@ -1716,15 +1736,26 @@ export class TreeCheckout implements ITreeCheckout {
 		// revert-of-revert does not introduce new nesting.
 		const previousLabelTreeNode = this.labelTreeNode;
 		this.labelTreeNode = labelTree;
+		const revertKind =
+			kind === CommitKind.Default || kind === CommitKind.Redo
+				? CommitKind.Undo
+				: CommitKind.Redo;
 		try {
-			this.#transaction.branch.apply(
-				change,
-				kind === CommitKind.Default || kind === CommitKind.Redo
-					? CommitKind.Undo
-					: CommitKind.Redo,
-			);
+			this.#transaction.activeBranch.apply(change, revertKind);
 		} finally {
 			this.labelTreeNode = previousLabelTreeNode;
+		}
+
+		if (inTransaction) {
+			// The transaction squashes its content into a single commit, which would otherwise be
+			// reported as an ordinary edit rather than as an undo or redo.
+			this.#transaction.setPendingCommitKind(revertKind);
+			// Keep the revert the only content of the transaction. This is self-clearing: the
+			// restriction stops applying as soon as the transaction ends.
+			this.editLock.restrict(
+				"a transaction whose only change is a revert",
+				() => this.transaction.size > 0,
+			);
 		}
 
 		// Derive some stats about the reversion to return to the caller.
@@ -1988,6 +2019,17 @@ class EditLock {
 		| { readonly isLocked: true; readonly reason: string } = { isLocked: false };
 
 	/**
+	 * An additional, longer-lived restriction on editing, independent of {@link EditLock.lock}.
+	 * @remarks
+	 * Unlike the lock — which is held only for the duration of a single event callback — a restriction
+	 * spans an operation such as a transaction. It carries a predicate rather than being cleared
+	 * explicitly, so that it cannot be leaked by a code path that fails to clear it.
+	 */
+	private restriction:
+		| { readonly reason: string; readonly isActive: () => boolean }
+		| undefined;
+
+	/**
 	 * @param editor - an editor which will be used to create a new editor that is monitored to determine if any changes are happening to the tree.
 	 * Use {@link EditLock.editor} in place of the original editor to ensure that changes are monitored.
 	 */
@@ -2069,6 +2111,22 @@ class EditLock {
 		if (this.status.isLocked) {
 			throw new UsageError(`${action} is forbidden during ${this.status.reason}`);
 		}
+		if (this.restriction !== undefined) {
+			if (this.restriction.isActive()) {
+				throw new UsageError(`${action} is forbidden during ${this.restriction.reason}`);
+			}
+			// The restriction no longer applies, so stop checking it.
+			this.restriction = undefined;
+		}
+	}
+
+	/**
+	 * Prevent further changes from being made to {@link EditLock.editor} for as long as `isActive` returns true.
+	 * @param reason - A string describing why editing is restricted. This will be included in the error
+	 * message if an attempt is made to edit while the restriction applies.
+	 */
+	public restrict(reason: string, isActive: () => boolean): void {
+		this.restriction = { reason, isActive };
 	}
 
 	/**

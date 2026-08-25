@@ -6,7 +6,8 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
-import type { GraphCommit } from "../core/index.js";
+import type { GraphCommit, CustomMetadataTree } from "../core/index.js";
+import { flattenCustomMetadata } from "../core/index.js";
 import { BranchCommitCounter, type SharedTreeBranch } from "../shared-tree-core/index.js";
 import type { TreeBranchCommitMetadata, TreeBranchHistory } from "../simple-tree/index.js";
 import type { JsonCompatibleReadOnlyObject } from "../util/index.js";
@@ -33,6 +34,10 @@ class LazyTreeBranchCommitMetadata implements TreeBranchCommitMetadata {
 	}
 
 	public get custom(): JsonCompatibleReadOnlyObject | undefined {
+		return flattenCustomMetadata(this.commit.customMetadata);
+	}
+
+	public get customTree(): CustomMetadataTree | undefined {
 		return this.commit.customMetadata;
 	}
 

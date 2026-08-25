@@ -20,6 +20,7 @@ import {
 
 import type { MessageDecodingContext, MessageEncodingContext } from "./messageCodecs.js";
 import { MessageFormatVersion } from "./messageFormat.js";
+import { decodeCustomMetadataTree, encodeCustomMetadataTree } from "./customMetadataFormat.js";
 import { Message } from "./messageFormatV1ToV4.js";
 import type { DecodedMessage } from "./messageTypes.js";
 
@@ -72,7 +73,7 @@ export function makeV1ToV4CodecWithVersion<TChangeset>(
 				version,
 			};
 			if (supportsCustomMetadata && commit.customMetadata !== undefined) {
-				encoded.customMetadata = commit.customMetadata;
+				encoded.customMetadata = encodeCustomMetadataTree(commit.customMetadata);
 			}
 			return encoded;
 		},
@@ -100,7 +101,10 @@ export function makeV1ToV4CodecWithVersion<TChangeset>(
 						idCompressor: context.idCompressor,
 						isSummary: false,
 					}),
-					customMetadata,
+					customMetadata:
+						customMetadata === undefined
+							? undefined
+							: decodeCustomMetadataTree(customMetadata),
 				},
 				sessionId: originatorId,
 			};
