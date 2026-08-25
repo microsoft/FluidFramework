@@ -76,15 +76,14 @@ export interface IVersionMarkResolver {
 	 * mark data atomically: a `pending` capture (`batchId` + `sequenceNumberLowerBound`) when there is an
 	 * unacked local batch, or a `resolved` capture (`sequenceNumber` + the last processed op's server
 	 * `timestamp`) when there is no in-flight local work. The timestamp property is optional both for
-	 * compatibility with previously stored captures and because no op may have been processed yet (e.g.
-	 * on a freshly loaded container), in which case it is `undefined`.
+	 * compatibility with previously stored captures and because it is `undefined` when neither a last
+	 * processed message nor a last-summary message is available.
 	 *
 	 * @remarks Sealing the batch is a side effect (it submits the current batch), so capture at savepoint
 	 * boundaries, not per keystroke.
 	 *
-	 * @returns The pending batch identity and exclusive sequence number lower bound, or the current sequence
-	 * number and last processed op timestamp (if any op has been processed) when there is no pending local
-	 * batch.
+	 * @returns The pending batch identity and inclusive sequence number lower bound, or the current sequence
+	 * number and corresponding op timestamp (when available) when there is no pending local batch.
 	 */
 	sealAndCaptureVersionMark(): VersionMarkCapture;
 	/**
@@ -93,7 +92,7 @@ export interface IVersionMarkResolver {
 	 * `loadContainerToSequenceNumber`.
 	 *
 	 * @param batchId - The stable identity of the pending batch.
-	 * @param sequenceNumberLowerBound - The exclusive lower bound for the historical op search.
+	 * @param sequenceNumberLowerBound - The inclusive lower bound for the historical op search.
 	 * @returns The resolved sequence number and server timestamp, or a result indicating that the batch
 	 * remains pending or can no longer be resolved.
 	 */
