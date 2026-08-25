@@ -66,9 +66,8 @@ An app (e.g. the Loop/office-bohemia host) consumes a small `@legacy @alpha` sur
 - `IVersionMarkResolver` methods: `sealAndCaptureVersionMark()` -> `VersionMarkCapture` (seals the batch and returns the locator data atomically), `onBatchSequenced(listener)` (live promotion), `resolve(batchId, sequenceNumberLowerBound)` -> `ResolveResult` (load-time sweep / restore).
 - Types `IVersionMarkResolver`, `ResolveResult`, and `VersionMarkCapture` are exported from `@fluidframework/container-runtime/legacy/alpha`.
 - Restore side: `loadContainerToSequenceNumber` and `ILoadContainerToSequenceNumberProps` are exported from `@fluidframework/container-loader/legacy/alpha`, fed the `resolved` sequence number.
-- ODSP point-in-time support: `getOdspPointInTimeDocumentServiceFactory` and
-  `IPointInTimeDocumentServiceFactory` are exported from
-  `@fluidframework/odsp-driver/legacy/alpha`.
+- ODSP point-in-time support: `createOdspDocumentServiceFactory` accepts the implementation exported
+  from `@fluidframework/odsp-driver/legacy/point-in-time` through its options.
 
 ### Capturing a mark (app side)
 
