@@ -27,6 +27,7 @@ import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definition
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
+	defaultTestOldestSupportedClient,
 	type ITestObjectProvider,
 	toIDeltaManagerFull,
 	createSummarizerFromFactory,
@@ -111,6 +112,7 @@ describeCompat(
 		// The 1st runtime factory, V1 of the code
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: dataObjectFactory,
+			oldestSupportedClient: defaultTestOldestSupportedClient,
 			registryEntries: [dataObjectFactory.registryEntry],
 			runtimeOptions,
 		});
