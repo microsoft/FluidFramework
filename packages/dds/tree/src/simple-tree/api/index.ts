@@ -13,6 +13,7 @@ export {
 	TreeViewConfigurationAlpha,
 } from "./configuration.js";
 export type {
+	CommitRevision,
 	ITree,
 	TreeView,
 	ViewableTree,
@@ -25,6 +26,8 @@ export type {
 	TreeBranchAlpha,
 	UntypedTreeViewAlpha,
 	TreeBranchEvents,
+	TreeBranchCommitMetadata,
+	TreeBranchHistory,
 	TreeContextAlpha,
 	ITreeAlpha,
 } from "./tree.js";
@@ -106,6 +109,7 @@ export {
 	checkSchemaCompatibility,
 	getSchemaCompatibilityError,
 } from "./schemaCompatibilityTester.js";
+export { type StagedUpgradeStatus } from "./schemaCompatibilityTester.js";
 export type {
 	Unenforced,
 	FieldSchemaAlphaUnsafe,
@@ -155,23 +159,21 @@ export {
 	borrowCursorFromTreeNodeOrValue,
 	exportConcise,
 	importConcise,
-	type NodeChangedData,
 	TreeBeta,
-	type TreeChangeEventsBeta,
 } from "./treeBeta.js";
-export {
-	type ArrayNodeDeltaOp,
-	type ArrayNodeInsertOp,
-	type ArrayNodeRemoveOp,
-	type ArrayNodeRetainOp,
-	type ArrayNodeTreeChangedDeltaOp,
-	type ArrayNodeTreeChangedRetainOp,
-	type NodeChangedDataAlpha,
-	type NodeChangedDataDelta,
-	type NodeChangedDataProperties,
-	type NodeChangedDataTreeDelta,
-	type TreeChangeEventsAlpha,
-} from "./treeAlpha.js";
+export type {
+	ArrayNodeDeltaOp,
+	ArrayNodeInsertOp,
+	ArrayNodeRemoveOp,
+	ArrayNodeRetainOp,
+	ArrayNodeTreeChangedDeltaOp,
+	ArrayNodeTreeChangedRetainOp,
+	NodeChangedData,
+	NodeChangedDataDelta,
+	NodeChangedDataProperties,
+	NodeChangedDataTreeDelta,
+	TreeChangeEventsBeta,
+} from "./treeChangeEventsBeta.js";
 export { createTreeIndex, type TreeIndexKey } from "./simpleTreeIndex.js";
 export {
 	createIdentifierIndex,
