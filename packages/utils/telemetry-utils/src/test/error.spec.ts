@@ -6,12 +6,57 @@
 import { strict as assert } from "node:assert";
 
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
+import { AssertionError } from "@fluidframework/core-utils/internal";
 
-import { DataCorruptionError, DataProcessingError, UsageError } from "../error.js";
+import {
+	DataCorruptionError,
+	DataProcessingError,
+	failWithTelemetry,
+	UsageError,
+} from "../error.js";
 import { LoggingError, isILoggingError, normalizeError } from "../errorLogging.js";
 import { isFluidError } from "../fluidErrorBase.js";
+import { MockLogger } from "../mockLogger.js";
 
 describe("Errors", () => {
+	describe("failWithTelemetry", () => {
+		it("throws an AssertionError with telemetry properties", () => {
+			let actual: unknown;
+			try {
+				failWithTelemetry(0xabc, undefined, { safeProperty: 1 });
+			} catch (error: unknown) {
+				actual = error;
+			}
+
+			assert(actual instanceof AssertionError);
+			assert.equal(actual.message, "0xabc");
+			assert.equal(actual.constantMessage, "0xabc");
+			assert(isILoggingError(actual));
+			assert.deepEqual(actual.getTelemetryProperties(), {
+				safeProperty: 1,
+				constantMessage: "0xabc",
+			});
+		});
+
+		it("logs the assertion when given a logger", () => {
+			const mockLogger = new MockLogger();
+			assert.throws(() =>
+				failWithTelemetry("constant message", mockLogger.toTelemetryLogger(), {
+					safeProperty: 1,
+				}),
+			);
+
+			mockLogger.assertMatch([
+				{
+					eventName: "AssertionError",
+					error: "constant message",
+					constantMessage: "constant message",
+					safeProperty: 1,
+				},
+			]);
+		});
+	});
+
 	describe("DataCorruptionError.create", () => {
 		it("Should yield a DataCorruptionError", () => {
 			const dce = DataCorruptionError.create("Some message", "someCodepath", undefined, {

@@ -10,5 +10,6 @@ export default {
 	assertionFunctions: {
 		"assert": 1,
 		"fail": 0,
+		"failWithTelemetry": 0,
 	},
 };

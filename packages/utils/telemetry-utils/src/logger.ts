@@ -180,7 +180,7 @@ export abstract class TelemetryLogger implements TelemetryLoggerExt {
 		error: unknown,
 		fetchStack: boolean,
 	): void {
-		const { message, errorType, stack } = extractLogSafeErrorProperties(
+		const { message, errorType, stack, constantMessage } = extractLogSafeErrorProperties(
 			error,
 			true /* sanitizeStack */,
 		);
@@ -188,6 +188,7 @@ export abstract class TelemetryLogger implements TelemetryLoggerExt {
 		event.stack = stack;
 		event.error = message; // Note that the error message goes on the 'error' field
 		event.errorType = errorType;
+		event.constantMessage = constantMessage;
 
 		if (isILoggingError(error)) {
 			// Add any other telemetry properties from the LoggingError

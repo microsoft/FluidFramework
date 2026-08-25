@@ -22,6 +22,7 @@ export {
 	DataCorruptionError,
 	DataProcessingError,
 	extractSafePropertiesFromMessage,
+	failWithTelemetry,
 	GenericError,
 	UsageError,
 	validatePrecondition,
