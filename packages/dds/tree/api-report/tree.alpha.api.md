@@ -104,10 +104,10 @@ export interface ArrayNodeCustomizableSchemaUnsafe<out TName extends string, in 
 }, false, T, undefined, TCustomMetadata>, SimpleArrayNodeSchema<SchemaType.View, TCustomMetadata> {
 }
 
-// @alpha @sealed
+// @beta @sealed
 export type ArrayNodeDeltaOp = ArrayNodeRetainOp | ArrayNodeInsertOp | ArrayNodeRemoveOp;
 
-// @alpha @sealed
+// @beta @sealed
 export interface ArrayNodeInsertOp {
     // (undocumented)
     readonly count: number;
@@ -119,7 +119,7 @@ export interface ArrayNodeInsertOp {
 export interface ArrayNodePojoEmulationSchema<out TName extends string = string, in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes, out ImplicitlyConstructable extends boolean = true, out TCustomMetadata = unknown> extends TreeNodeSchemaNonClass<TName, NodeKind.Array, TreeArrayNode<T> & WithType<TName, NodeKind.Array, T>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, ImplicitlyConstructable, T, undefined, TCustomMetadata>, SimpleArrayNodeSchema<SchemaType.View, TCustomMetadata> {
 }
 
-// @alpha @sealed
+// @beta @sealed
 export interface ArrayNodeRemoveOp {
     // (undocumented)
     readonly count: number;
@@ -127,7 +127,7 @@ export interface ArrayNodeRemoveOp {
     readonly type: "remove";
 }
 
-// @alpha @sealed
+// @beta @sealed
 export interface ArrayNodeRetainOp {
     // (undocumented)
     readonly count: number;
@@ -143,10 +143,10 @@ export const ArrayNodeSchema: {
     readonly [Symbol.hasInstance]: (value: TreeNodeSchema) => value is ArrayNodeSchema;
 };
 
-// @alpha
+// @beta
 export type ArrayNodeTreeChangedDeltaOp = ArrayNodeTreeChangedRetainOp | ArrayNodeInsertOp | ArrayNodeRemoveOp;
 
-// @alpha @sealed
+// @beta @sealed
 export interface ArrayNodeTreeChangedRetainOp extends ArrayNodeRetainOp {
     readonly subtreeChanged: boolean;
 }
@@ -223,6 +223,9 @@ export enum CommitOutcome {
     FullyDropped = 1,
     NewContentOnly = 2
 }
+
+// @alpha
+export type CommitRevision = string;
 
 // @alpha
 export function comparePersistedSchema(persisted: JsonCompatible, view: ImplicitFieldSchema, options: ICodecOptions): Omit<SchemaCompatibilityStatus, "canInitialize">;
@@ -757,7 +760,7 @@ export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = Im
     readonly schema: TSchema;
 }
 
-// @alpha
+// @alpha @input
 export interface ITreeViewConfigurationAlpha<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> extends ITreeViewConfiguration<TSchema> {
     readonly stagedUpgradePolicy?: StagedSchemaUpgradePolicy;
 }
@@ -955,22 +958,20 @@ type NodeBuilderData<T extends TreeNodeSchemaCore<string, NodeKind, boolean>> = 
 // @beta @sealed
 export interface NodeChangedData<TNode extends TreeNode = TreeNode> {
     readonly changedProperties?: ReadonlySet<TNode extends WithType<string, NodeKind.Object, infer TInfo> ? string & keyof TInfo : string>;
+    readonly delta?: readonly ArrayNodeDeltaOp[] | undefined;
 }
 
-// @alpha
-export type NodeChangedDataAlpha<TNode extends TreeNode = TreeNode> = TNode extends WithType<string, NodeKind.Array> ? NodeChangedDataDelta : TNode extends WithType<string, NodeKind.Map | NodeKind.Object | NodeKind.Record> ? NodeChangedDataProperties<TNode> : NodeChangedDataProperties<TNode> | NodeChangedDataDelta;
-
-// @alpha @sealed
-export interface NodeChangedDataDelta {
+// @beta @sealed
+export interface NodeChangedDataDelta extends NodeChangedData {
     readonly delta: readonly ArrayNodeDeltaOp[] | undefined;
 }
 
-// @alpha @sealed
-export interface NodeChangedDataProperties<TNode extends TreeNode = TreeNode> {
+// @beta @sealed
+export interface NodeChangedDataProperties<TNode extends TreeNode = TreeNode> extends NodeChangedData<TNode> {
     readonly changedProperties: ReadonlySet<TNode extends WithType<string, NodeKind.Object, infer TInfo> ? string & keyof TInfo : string>;
 }
 
-// @alpha @sealed
+// @beta @sealed
 export interface NodeChangedDataTreeDelta {
     readonly delta: readonly ArrayNodeTreeChangedDeltaOp[] | undefined;
 }
@@ -1513,6 +1514,9 @@ export interface StagedSchemaUpgradePolicyFactory {
     readonly restrictive: StagedSchemaUpgradePolicy;
 }
 
+// @alpha
+export type StagedUpgradeStatus = "disabled" | "partial" | "enabled";
+
 // @alpha @sealed @system
 export type StringSchema = LeafSchema<"string", string> & SimpleLeafNodeSchema;
 
@@ -1803,7 +1807,8 @@ export interface TreeAlpha {
     importConcise<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(schema: UnsafeUnknownSchema extends TSchema ? ImplicitFieldSchema : TSchema & ImplicitFieldSchema, data: ConciseTree | undefined): Unhydrated<TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeNode | TreeLeafValue | undefined>;
     importVerbose<const TSchema extends ImplicitFieldSchema>(schema: TSchema, data: VerboseTree | undefined, options?: TreeParsingOptions): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
     key2(node: TreeNode): string | number | undefined;
-    on<K extends keyof TreeChangeEventsAlpha<TNode>, TNode extends TreeNode>(node: TNode, eventName: K, listener: NoInfer<TreeChangeEventsAlpha<TNode>[K]>): () => void;
+    // @deprecated
+    on<K extends keyof TreeChangeEventsBeta<TNode>, TNode extends TreeNode>(node: TNode, eventName: K, listener: NoInfer<TreeChangeEventsBeta<TNode>[K]>): () => void;
     tagContentSchema<TSchema extends TreeNodeSchema, TContent extends InsertableField<TSchema>>(schema: TSchema, content: TContent): TContent;
     trackObservations<TResult>(onInvalidation: () => void, trackDuring: () => TResult): ObservationResults<TResult>;
     trackObservationsOnce<TResult>(onInvalidation: () => void, trackDuring: () => TResult): ObservationResults<TResult>;
@@ -1872,8 +1877,20 @@ export type TreeBranch = UntypedTreeView;
 export type TreeBranchAlpha = UntypedTreeViewAlpha;
 
 // @alpha @sealed
+export interface TreeBranchCommitMetadata {
+    getParent(): TreeBranchCommitMetadata | undefined;
+    readonly revision: CommitRevision;
+}
+
+// @alpha @sealed
 export interface TreeBranchEvents {
     changed(data: ChangeMetadata, getRevertible?: RevertibleAlphaFactory): void;
+}
+
+// @alpha @sealed
+export interface TreeBranchHistory {
+    getHead(): TreeBranchCommitMetadata | undefined;
+    readonly length: number;
 }
 
 // @public @sealed
@@ -1882,15 +1899,10 @@ export interface TreeChangeEvents {
     treeChanged(unstable?: unknown): void;
 }
 
-// @alpha @sealed
-export interface TreeChangeEventsAlpha<TNode extends TreeNode = TreeNode> extends TreeChangeEvents {
-    nodeChanged: (data: NodeChangedDataAlpha<TNode>) => void;
-    treeChanged: TNode extends WithType<string, NodeKind.Array> ? (data: NodeChangedDataTreeDelta) => void : TreeChangeEventsBeta<TNode>["treeChanged"];
-}
-
 // @beta @sealed
-export interface TreeChangeEventsBeta<TNode extends TreeNode = TreeNode> extends TreeChangeEvents {
-    nodeChanged: (data: NodeChangedData<TNode> & (TNode extends WithType<string, NodeKind.Map | NodeKind.Object | NodeKind.Record> ? Required<Pick<NodeChangedData<TNode>, "changedProperties">> : unknown)) => void;
+export interface TreeChangeEventsBeta<TNode extends TreeNode = TreeNode> extends Omit<TreeChangeEvents, "nodeChanged" | "treeChanged"> {
+    nodeChanged: (data: TNode extends WithType<string, NodeKind.Array> ? NodeChangedDataDelta : TNode extends WithType<string, NodeKind.Map | NodeKind.Object | NodeKind.Record> ? NodeChangedDataProperties<TNode> : NodeChangedData<TNode>) => void;
+    treeChanged: TNode extends WithType<string, NodeKind.Array> ? (data: NodeChangedDataTreeDelta) => void : TreeChangeEvents["treeChanged"];
 }
 
 // @alpha
@@ -2079,6 +2091,7 @@ export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | Unsa
     // (undocumented)
     fork(): ReturnType<UntypedTreeView["fork"]> & TreeViewAlpha<TSchema>;
     initialize(content: InsertableField<TSchema>): void;
+    isStagedUpgradeEnabled(upgrade: SchemaUpgrade): StagedUpgradeStatus;
     // (undocumented)
     get root(): ReadableField<TSchema>;
     set root(newRoot: InsertableField<TSchema>);
@@ -2166,12 +2179,15 @@ export interface UntypedTreeView extends IDisposable {
 // @alpha @sealed
 export interface UntypedTreeViewAlpha extends UntypedTreeView, TreeContextAlpha {
     applyChange(change: JsonCompatibleReadOnly): void;
+    readonly branchHistory: TreeBranchHistory;
     computeNetChangeIfRebasedOnto(view: UntypedTreeView): JsonCompatibleReadOnly | undefined;
     readonly events: Listenable<TreeBranchEvents>;
     // (undocumented)
     fork(): UntypedTreeViewAlpha;
     hasRootSchema<TSchema extends ImplicitFieldSchema>(schema: TSchema): this is TreeViewAlpha<TSchema>;
     isMissingEditsFrom(view: UntypedTreeView): boolean;
+    revertTo(revision: CommitRevision): void;
+    rewindTo(revision: CommitRevision): void;
     runTransaction<TSuccessValue, TFailureValue>(transaction: () => TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>, params?: RunTransactionParamsAlpha): TransactionValueResult<TSuccessValue, TFailureValue>;
     runTransaction(transaction: () => VoidTransactionCallbackStatusAlpha | void, params?: RunTransactionParamsAlpha): TransactionVoidResult;
     runTransactionAsync<TSuccessValue, TFailureValue>(transaction: () => Promise<TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>>, params?: RunTransactionParamsAlpha): Promise<TransactionValueResult<TSuccessValue, TFailureValue>>;

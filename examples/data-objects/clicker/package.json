@@ -20,8 +20,6 @@
 			}
 		}
 	},
-	"main": "lib/index.js",
-	"types": "lib/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",

@@ -24,8 +24,6 @@
 			}
 		}
 	},
-	"main": "lib/index.js",
-	"types": "lib/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:api-reports": "api-extractor run --local --config api-extractor/api-extractor-report.json",

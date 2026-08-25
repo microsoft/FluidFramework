@@ -210,19 +210,53 @@ module.exports = {
 		// Packages with /legacy exports generate reports from legacy and "current" entrypoints using child tasks.
 		// The "current" entrypoint should be the broadest of "public.d.ts",
 		// "beta.d.ts", and "alpha.d.ts".
-		"build:api-reports": ["build:package:esm", "api-extractor:esnext", "build:esnext"],
-		"build:api-reports:current": ["build:package:esm", "api-extractor:esnext", "build:esnext"],
-		"build:api-reports:legacy": ["build:package:esm", "api-extractor:esnext", "build:esnext"],
-		"ci:build:api-reports": ["build:package:esm", "api-extractor:esnext", "build:esnext"],
+		"build:api-reports": [
+			"build:package:esm",
+			"api-extractor:esnext",
+			"build:esnext",
+			// kludge: api-extractor requires tsdoc-metadata.json to be present in the package type folder
+			// to know that it can use the tsdocs in source package.
+			"^build:api-reports",
+		],
+		"build:api-reports:current": [
+			"build:package:esm",
+			"api-extractor:esnext",
+			"build:esnext",
+			// kludge: api-extractor requires tsdoc-metadata.json to be present in the package type folder
+			// to know that it can use the tsdocs in source package.
+			"^build:api-reports",
+		],
+		"build:api-reports:legacy": [
+			"build:package:esm",
+			"api-extractor:esnext",
+			"build:esnext",
+			// kludge: api-extractor requires tsdoc-metadata.json to be present in the package type folder
+			// to know that it can use the tsdocs in source package.
+			"^build:api-reports",
+		],
+		"ci:build:api-reports": [
+			"build:package:esm",
+			"api-extractor:esnext",
+			"build:esnext",
+			// kludge: api-extractor requires tsdoc-metadata.json to be present in the package type folder
+			// to know that it can use the tsdocs in source package. Under CI, these checks do the generation.
+			"^ci:build:api-reports",
+		],
 		"ci:build:api-reports:current": [
 			"build:package:esm",
 			"api-extractor:esnext",
 			"build:esnext",
+			// kludge: api-extractor requires tsdoc-metadata.json to be present in the package type folder
+			// to know that it can use the tsdocs in source package. Under CI, these checks do the generation.
+			"^ci:build:api-reports",
 		],
 		"ci:build:api-reports:legacy": [
 			"build:package:esm",
 			"api-extractor:esnext",
 			"build:esnext",
+			// kludge: api-extractor requires tsdoc-metadata.json to be present in the package type folder
+			// to know that it can use the tsdocs in source package. Under CI, these checks do the generation.
+			"^ci:build:api-reports",
 		],
 		// With most packages in client building ESM first, there is ideally just "build:esnext" and "build:package:esm" (or "api-extractor:esnext") dependencies.
 		// The package's local 'api-extractor.json' may use the entrypoint from either CJS or ESM,
@@ -245,6 +279,9 @@ module.exports = {
 		// This is done because the "check:exports:*" tasks have variable
 		// names depending on the package configuration and fluid-build does
 		// not support wildcards in task dependencies.
+		// note: these are technically missing dependency on a task that generates tsdoc-metadata.json.
+		// However different tasks are used to do that depending on run under CI or not. The metadata
+		// file is small and changes rarely so it can be checked-in in future to avoid complexity.
 		"check:exports": ["build:package", "api"],
 		"check:exports:bundle-release-tags": ["build:esm", "build:esnext"],
 		// The package's local 'api-extractor-lint.json' may use the entrypoint from either CJS or ESM,
@@ -504,6 +541,10 @@ module.exports = {
 				// PropertyDDS uses .js files which should be renamed eventually.
 				"experimental/PropertyDDS/.*",
 				"azure/packages/azure-local-service/index.js",
+
+				// selfhost's sub-projects are plain CommonJS npm packages (Azure Functions app,
+				// CLIs); their cross-file require() calls assume the .js extension.
+				"tools/selfhost/.*",
 
 				// These oclif packages are still CJS vs. build-infrastructure which is ESM so is not excluded here.
 				"build-tools/packages/build-cli/bin/dev.js",

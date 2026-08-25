@@ -44,8 +44,6 @@
 			}
 		}
 	},
-	"main": "lib/index.js",
-	"types": "lib/public.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:api-reports": "concurrently \"npm:build:api-reports:*\"",
