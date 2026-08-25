@@ -12,7 +12,6 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type { InboundMessageResult } from "../opLifecycle/index.js";
-import { asBatchMetadata } from "../metadata.js";
 
 import { inboundVersionMarkUpdate } from "./inboundBatch.js";
 
@@ -33,7 +32,7 @@ export interface IHistoricalOpReader {
 /**
  * Result of resolving a pending batchId.
  *
- * @legacy @alpha
+ * @legacy @beta
  */
 export type ResolveResult =
 	| { readonly kind: "resolved"; readonly sequenceNumber: number }
@@ -46,7 +45,7 @@ export type ResolveResult =
  * work, so the mark already points at a durable sequence number. The app packs its own stored record from
  * this — the runtime does not define the stored locator shape.
  *
- * @legacy @alpha
+ * @legacy @beta
  */
 export type VersionMarkCapture =
 	| {
@@ -59,7 +58,7 @@ export type VersionMarkCapture =
 /**
  * Runtime-owned resolver for app-stored version mark locators.
  *
- * @legacy @alpha
+ * @legacy @beta
  */
 export interface IVersionMarkResolver {
 	/**
@@ -71,17 +70,17 @@ export interface IVersionMarkResolver {
 	 * @remarks Sealing the batch is a side effect (it submits the current batch), so capture at savepoint
 	 * boundaries, not per keystroke.
 	 *
-	 * @returns The pending batch identity and exclusive sequence number lower bound, or the current sequence number
+	 * @returns The pending batch identity and inclusive sequence number lower bound, or the current sequence number
 	 * when there is no pending local batch.
 	 */
 	sealAndCaptureVersionMark(): VersionMarkCapture;
 	/**
 	 * Resolves a pending mark's batchId to a global sequence number (`sequenceNumberLowerBound` is the
-	 * exclusive lower bound for a history read). A `resolved` sequence number feeds the loader's
+	 * inclusive lower bound for a history read). A `resolved` sequence number feeds the loader's
 	 * `loadContainerToSequenceNumber`.
 	 *
 	 * @param batchId - The stable identity of the pending batch.
-	 * @param sequenceNumberLowerBound - The exclusive lower bound for the historical op search.
+	 * @param sequenceNumberLowerBound - The inclusive lower bound for the historical op search.
 	 * @returns The resolved sequence number, or a result indicating that the batch remains pending or can
 	 * no longer be resolved.
 	 */
@@ -156,60 +155,93 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 		// Seal the current batch so a just-submitted local edit is flushed into the pending state with a
 		// stable batchId (which is only assigned at flush) before we read it.
 		this.hooks.flushPendingBatch();
-		const sequenceNumberLowerBound = this.hooks.getCurrentSequenceNumber();
+		const referenceSequenceNumber = this.hooks.getCurrentSequenceNumber();
 		const batchId = this.hooks.getCurrentPendingBatchId();
 		if (batchId === undefined) {
 			// No unacked local batch: the mark already points at a durable sequence number.
-			return { kind: "resolved", sequenceNumber: sequenceNumberLowerBound };
+			return { kind: "resolved", sequenceNumber: referenceSequenceNumber };
 		}
 		// A pending mark needs its batch tracked so resolve() can promote it from the live map.
 		this.tracking = true;
-		return { kind: "pending", batchId, sequenceNumberLowerBound };
+		// The pending batch is sequenced after the reference point, so its first possible sequence
+		// number is `referenceSequenceNumber + 1`. Store that as an inclusive lower bound so resolve()
+		// scans directly from it.
+		return { kind: "pending", batchId, sequenceNumberLowerBound: referenceSequenceNumber + 1 };
 	}
 
 	public async resolve(
 		batchId: string,
 		sequenceNumberLowerBound: number,
 	): Promise<ResolveResult> {
-		// Fast path: batch sequenced live this session.
-		const sequenceNumber = this.sessionSequenceFor(batchId);
-		if (sequenceNumber !== undefined) {
+		const startTime = Date.now();
+		// Defaults cover the throw path (only the history scan can throw — e.g. an unpacker
+		// DataCorruptionError or the 0xd1c reader-contract assert): the Resolve event still fires via
+		// `finally`, with outcome "error".
+		let path: "session" | "history" | "noReader" = "history";
+		let outcome: ResolveResult["kind"] | "error" = "error";
+		let resolvedSequenceNumber: number | undefined;
+		try {
+			// Fast path: batch sequenced live this session.
+			const sequenceNumber = this.sessionSequenceFor(batchId);
+			if (sequenceNumber === undefined) {
+				const reader = this.hooks.getHistoricalOpReader?.();
+				if (reader === undefined) {
+					// No reader: the batch may still sequence live, so report pending.
+					path = "noReader";
+					outcome = "pending";
+					return { kind: "pending" };
+				}
+				// Otherwise scan history from the mark's reference point.
+				path = "history";
+				const result = await this.resolveFromHistory(
+					reader,
+					batchId,
+					sequenceNumberLowerBound,
+				);
+				outcome = result.kind;
+				if (result.kind === "resolved") {
+					resolvedSequenceNumber = result.sequenceNumber;
+				}
+				return result;
+			}
+			path = "session";
+			outcome = "resolved";
+			resolvedSequenceNumber = sequenceNumber;
 			return { kind: "resolved", sequenceNumber };
+		} finally {
+			this.hooks.logger.sendTelemetryEvent({
+				eventName: "Resolve",
+				outcome,
+				path,
+				durationMs: Date.now() - startTime,
+				...(resolvedSequenceNumber === undefined
+					? {}
+					: { sequenceNumber: resolvedSequenceNumber }),
+			});
 		}
-
-		// Otherwise scan history from the mark's reference point.
-		const reader = this.hooks.getHistoricalOpReader?.();
-		if (reader === undefined) {
-			// No reader: the batch may still sequence live, so report pending.
-			return { kind: "pending" };
-		}
-		return this.resolveFromHistory(reader, batchId, sequenceNumberLowerBound);
 	}
 
 	/**
-	 * Scans sequenced ops after `sequenceNumberLowerBound` for `batchId`, returning its last op's
+	 * Scans sequenced ops from `sequenceNumberLowerBound` (inclusive) for `batchId`, returning its last op's
 	 * sequence number when found and aborting the fetch once found or exhausted. Each op is routed through
 	 * the same unpack pipeline the live inbound path uses (chunk reassembly, ungroup, decompress) and
-	 * {@link inboundVersionMarkUpdate} derives its batch identity, so chunked batches resolve here too. The
-	 * scan anchor is not guaranteed to be a batch boundary, so a leading batch clipped by the anchor is
-	 * tolerated (its orphan end marker is dropped rather than fed to the processor). On a miss,
-	 * {@link classifyMiss} distinguishes `pending` (not sequenced yet) from `unresolvable` (ops trimmed).
-	 * See DEV.md.
+	 * {@link inboundVersionMarkUpdate} derives its batch identity, so virtualized batches resolve here too.
+	 * The injected historical unpacker owns virtualization details, including tolerating a requested range
+	 * that begins within an incomplete chunk stream. On a miss, {@link classifyMiss} distinguishes
+	 * `pending` (not sequenced yet) from `unresolvable` (ops trimmed).
 	 */
 	private async resolveFromHistory(
 		reader: IHistoricalOpReader,
 		batchId: string,
 		sequenceNumberLowerBound: number,
 	): Promise<ResolveResult> {
-		const from = sequenceNumberLowerBound + 1;
+		const from = sequenceNumberLowerBound;
 		const unpack = this.hooks.createHistoricalOpUnpacker?.();
 		const abortController = new AbortController();
 		try {
 			const stream = await reader.fetchMessages(from, undefined, abortController.signal);
 			let firstScannedSequenceNumber: number | undefined;
 			let carriedBatchId: string | undefined;
-			// Mirrors the processor's batch-in-progress state so we can drop an orphan end marker (below).
-			let inBatch = false;
 			while (true) {
 				const result = await stream.read();
 				if (result.done) {
@@ -217,25 +249,10 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 				}
 				for (const op of result.value) {
 					firstScannedSequenceNumber ??= op.sequenceNumber;
-					if (!inBatch && asBatchMetadata(op.metadata)?.batch === false) {
-						// The anchor (`sequenceNumberLowerBound + 1`) may land inside a batch whose start
-						// precedes the window; its orphan end marker would trip the processor's 0x9d5 assert.
-						// Drop the clipped tail. The target batch is fully in-window, so this can't skip it.
-						continue;
-					}
-					// undefined = a system op, or an incomplete chunk awaiting later fragments.
+					// undefined = a system op or virtualized input that has not produced a complete result.
 					const inboundResult = unpack?.(op);
 					if (inboundResult === undefined) {
 						continue;
-					}
-					// Track batch progress with the processor so the guard above skips only orphan ends.
-					if (inboundResult.type === "batchStartingMessage") {
-						inBatch = true;
-					} else if (
-						inboundResult.type === "nextBatchMessage" &&
-						inboundResult.batchEnd === true
-					) {
-						inBatch = false;
 					}
 					// Derive batch identity exactly as the live inbound path does, carrying the id across a
 					// piecemeal batch's messages.
@@ -269,7 +286,7 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 		);
 		const tip = this.hooks.getCurrentSequenceNumber();
 		if (from > tip) {
-			// Nothing is sequenced at/after the mark's reference point yet, so the batch cannot have landed.
+			// Nothing is sequenced at/after the mark's lower bound yet, so the batch cannot have landed.
 			return { kind: "pending" };
 		}
 		if (firstScannedSequenceNumber === undefined) {
@@ -279,10 +296,10 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 			return { kind: "unresolvable" };
 		}
 		if (firstScannedSequenceNumber > from) {
-			// A trim gap at the anchor: the mark's ops (just after the reference point) are gone.
+			// A trim gap at the anchor: the mark's ops (at/after its lower bound) are gone.
 			return { kind: "unresolvable" };
 		}
-		// Ops are present from the reference point and the batch is not among them: not yet sequenced.
+		// Ops are present from the lower bound and the batch is not among them: not yet sequenced.
 		return { kind: "pending" };
 	}
 
@@ -308,6 +325,12 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 		if (existingSequenceNumber === sequenceNumber) {
 			return;
 		}
+		// The protocol guarantees a `batchId` maps to one sequence number; a conflicting remap would also
+		// break the insertion-order invariant MSN eviction relies on, so fail loudly instead of overwriting.
+		assert(
+			existingSequenceNumber === undefined,
+			0xd34 /* version mark batchId remapped to a different sequence number */,
+		);
 
 		this.sequenceNumberByBatchId.set(batchId, sequenceNumber);
 		this.evictBelowMinimumSequenceNumber();

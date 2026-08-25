@@ -10,7 +10,7 @@ const webpack = require("webpack");
 module.exports = (env) => {
 	return {
 		entry: {
-			app: "./tests/index.tsx",
+			app: "./test/index.tsx",
 		},
 		resolve: {
 			extensionAlias: {
@@ -23,6 +23,13 @@ module.exports = (env) => {
 				{
 					test: /\.tsx?$/,
 					loader: "ts-loader",
+					options: {
+						// Test entries live outside the production rootDir and must be emitted for webpack.
+						compilerOptions: {
+							noEmit: false,
+							rootDir: ".",
+						},
+					},
 				},
 				{
 					test: /\.css$/i,
@@ -41,7 +48,7 @@ module.exports = (env) => {
 		},
 		devServer: {
 			static: {
-				directory: path.join(__dirname, "tests"),
+				directory: path.join(__dirname, "test"),
 			},
 		},
 		plugins: [
@@ -49,7 +56,7 @@ module.exports = (env) => {
 				process: "process/browser.js",
 			}),
 			new HtmlWebpackPlugin({
-				template: path.join(__dirname, "tests", "index.html"),
+				template: path.join(__dirname, "test", "index.html"),
 			}),
 		],
 		mode: "development",

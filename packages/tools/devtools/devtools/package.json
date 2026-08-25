@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/devtools",
-	"version": "2.116.0",
+	"version": "3.0.0",
 	"description": "Fluid Framework developer tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -58,17 +58,19 @@
 	"types": "lib/public.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
+		"build:api-reports": "api-extractor run --local --config api-extractor/api-extractor-report.json",
+		"build:cjs": "fluid-tsc commonjs --project ./tsconfig.cjs.json && npm run place:cjs:package-stub",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "api-extractor run --local",
+		"build:docs": "api-extractor run --local --config api-extractor/api-extractor-model.json",
 		"build:entrypoints": "fluid-build . --task build:entrypoints",
 		"build:entrypoints:cjs": "flub generate entrypoints --resolutionConditions require --outDir ./dist",
-		"build:entrypoints:esm": "flub generate entrypoints --outDir ./lib --node10TypeCompat",
-		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:entrypoints:esm": "flub generate entrypoints --outDir ./lib",
+		"build:esm": "tsc --project ./tsconfig.json",
 		"build:test": "concurrently npm:build:test:esm npm:build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack .",
+		"check:are-the-types-wrong": "attw --pack . --profile node16",
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
@@ -79,7 +81,8 @@
 		"check:exports:esm:beta": "api-extractor run --config api-extractor/api-extractor-lint-beta.esm.json",
 		"check:exports:esm:public": "api-extractor run --config api-extractor/api-extractor-lint-public.esm.json",
 		"check:format": "npm run check:biome",
-		"ci:build:docs": "api-extractor run",
+		"ci:build:api-reports": "api-extractor run --config api-extractor/api-extractor-report.json",
+		"ci:build:docs": "api-extractor run --config api-extractor/api-extractor-model.json",
 		"clean": "rimraf --glob _api-extractor-temp nyc dist lib {alpha,beta,internal,legacy}.d.ts \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"eslint": "eslint --quiet src",
 		"eslint:fix": "eslint --quiet src --fix",
@@ -92,9 +95,8 @@
 		"place:cjs:package-stub": "copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist",
 		"rebuild": "npm run clean && npm run build",
 		"test": "echo TODO: add tests",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && npm run place:cjs:package-stub",
-		"tsc:watch": "npm run place:cjs:package-stub && fluid-tsc commonjs --project ./tsconfig.cjs.json --watch",
-		"typetests:gen": "flub generate typetests --dir . -v"
+		"typetests:gen": "flub generate typetests --dir . -v",
+		"watch:cjs": "npm run place:cjs:package-stub && fluid-tsc commonjs --project ./tsconfig.cjs.json --watch"
 	},
 	"c8": {
 		"all": true,
@@ -123,13 +125,13 @@
 		"@fluidframework/fluid-static": "workspace:~"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.18.2",
+		"@arethetypeswrong/cli": "^0.18.5",
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
-		"@fluidframework/devtools-previous": "npm:@fluidframework/devtools@2.114.0",
+		"@fluidframework/devtools-previous": "npm:@fluidframework/devtools@2.116.0",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@microsoft/api-extractor": "7.58.1",
 		"@types/mocha": "^10.0.10",
@@ -143,7 +145,7 @@
 		"mocha": "^11.7.5",
 		"mocha-multi-reporters": "^1.5.1",
 		"rimraf": "^6.1.3",
-		"typescript": "~5.4.5"
+		"typescript": "~6.0.3"
 	},
 	"typeValidation": {
 		"broken": {},

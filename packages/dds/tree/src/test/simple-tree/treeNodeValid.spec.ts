@@ -14,7 +14,7 @@ import type { FlexTreeNode } from "../../feature-libraries/index.js";
 import {
 	inPrototypeChain,
 	NodeKind,
-	typeNameSymbol,
+	schemaIdentifierBrand,
 	typeSchemaSymbol,
 	type InternalTreeNode,
 	type TreeNodeSchema,
@@ -96,7 +96,7 @@ describe("TreeNodeValid", () => {
 
 			public static readonly childTypes: ReadonlySet<TreeNodeSchema> = new Set();
 
-			public override get [typeNameSymbol](): string {
+			public override get [schemaIdentifierBrand](): string {
 				throw new Error("Method not implemented.");
 			}
 			public override get [typeSchemaSymbol](): never {
@@ -141,7 +141,7 @@ describe("TreeNodeValid", () => {
 				super(1);
 			}
 
-			public override get [typeNameSymbol](): string {
+			public override get [schemaIdentifierBrand](): string {
 				throw new Error("Method not implemented.");
 			}
 			public override get [typeSchemaSymbol](): never {
@@ -175,7 +175,7 @@ describe("TreeNodeValid", () => {
 				return new MockFlexNode(this as unknown as TreeNodeSchema);
 			}
 
-			public override get [typeNameSymbol](): string {
+			public override get [schemaIdentifierBrand](): string {
 				throw new Error("Method not implemented.");
 			}
 			public override get [typeSchemaSymbol](): never {
@@ -237,7 +237,7 @@ describe("TreeNodeValid", () => {
 				return new MockFlexNode(this as unknown as TreeNodeSchema);
 			}
 
-			public override get [typeNameSymbol](): string {
+			public override get [schemaIdentifierBrand](): string {
 				throw new Error("Method not implemented.");
 			}
 			public override get [typeSchemaSymbol](): never {

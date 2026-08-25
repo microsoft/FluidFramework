@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/local-server-tests",
-	"version": "2.116.0",
+	"version": "3.0.0",
 	"private": true,
 	"description": "Tests that can only run against the local server",
 	"homepage": "https://fluidframework.com",
@@ -98,7 +98,7 @@
 		"rimraf": "^6.1.3",
 		"sinon": "^18.0.1",
 		"ts-loader": "^9.5.1",
-		"typescript": "~5.4.5"
+		"typescript": "~6.0.3"
 	},
 	"typeValidation": {
 		"disabled": true

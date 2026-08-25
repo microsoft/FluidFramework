@@ -338,7 +338,7 @@ export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "
     readonly uploadDuration: number;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IVersionMarkResolver {
     onBatchSequenced(listener: (batchId: string, sequenceNumber: number) => void): () => void;
     resolve(batchId: string, sequenceNumberLowerBound: number): Promise<ResolveResult>;
@@ -358,7 +358,9 @@ export interface LoadContainerRuntimeParams {
     containerScope?: FluidObject;
     context: IContainerContext;
     existing: boolean;
-    minVersionForCollab?: MinimumVersionForCollab;
+    // @deprecated
+    minVersionForCollab?: OldestSupportedClientVersion;
+    oldestSupportedClient?: OldestSupportedClientVersion;
     provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
     registryEntries: NamedFluidDataStoreRegistryEntries;
     // @deprecated
@@ -378,7 +380,7 @@ export type OpActionEventName = MessageType.Summarize | MessageType.SummaryAck |
 // @beta @deprecated @legacy
 export type ReadFluidDataStoreAttributes = IFluidDataStoreAttributes0 | IFluidDataStoreAttributes1 | IFluidDataStoreAttributes2;
 
-// @alpha @legacy
+// @beta @legacy
 export type ResolveResult = {
     readonly kind: "resolved";
     readonly sequenceNumber: number;
@@ -438,7 +440,7 @@ export type SummaryStage = SubmitSummaryResult["stage"] | "unknown";
 // @beta @legacy
 export const TombstoneResponseHeaderKey = "isTombstoned";
 
-// @alpha @legacy
+// @beta @legacy
 export type VersionMarkCapture = {
     readonly kind: "pending";
     readonly batchId: string;

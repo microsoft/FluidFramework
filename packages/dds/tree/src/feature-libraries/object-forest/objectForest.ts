@@ -38,6 +38,7 @@ import {
 	aboveRootPlaceholder,
 	combineVisitors,
 	deepCopyMapTree,
+	makeBreakingVisitor,
 	rootFieldKey,
 } from "../../core/index.js";
 import {
@@ -90,6 +91,7 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 
 	readonly #roots: MutableMapTree;
 	public get roots(): MapTree {
+		this.breaker.use();
 		return this.#roots;
 	}
 
@@ -117,10 +119,12 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 	}
 
 	public get isEmpty(): boolean {
+		this.breaker.use();
 		return this.roots.fields.size === 0;
 	}
 
 	public clone(schema: TreeStoredSchemaSubscription, breaker?: Breakable): ObjectForest {
+		this.breaker.use();
 		return new ObjectForest(
 			breaker ?? this.breaker,
 			schema,
@@ -131,6 +135,7 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 	}
 
 	public chunkField(cursor: ITreeCursorSynchronous): TreeChunk[] {
+		this.breaker.use();
 		return chunkField(cursor, { idCompressor: undefined, policy: defaultChunkPolicy });
 	}
 
@@ -174,6 +179,7 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 	}
 
 	public acquireVisitor(): DeltaVisitor {
+		this.breaker.use();
 		assert(
 			this.activeVisitor === undefined,
 			0x76c /* Must release existing visitor before acquiring another */,
@@ -229,15 +235,15 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 			public destroy(detachedField: FieldKey, count: number): void {
 				preEdit();
 				const field = this.forest.#roots.fields.get(detachedField);
-				assert(field !== undefined, "Destroyed field must exist");
-				assert(field.length === count, "Destroy count must match field length");
+				assert(field !== undefined, 0xd28 /* Destroyed field must exist */);
+				assert(field.length === count, 0xd29 /* Destroy count must match field length */);
 				this.forest.delete(detachedField);
 			}
 			public create(content: readonly ITreeCursorSynchronous[], destination: FieldKey): void {
 				preEdit();
 				assert(
 					!this.forest.#roots.fields.has(destination),
-					"Create destination must be a new empty field",
+					0xd2a /* Create destination must be a new empty field */,
 				);
 				this.forest.add(content, destination);
 				this.forest.#events.emit("afterRootFieldCreated", destination);
@@ -263,15 +269,18 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 				const [parent, key] = cursor.getParent();
 				assert(
 					parent !== this.forest.roots || key !== source,
-					"Attach source field must be different from current field",
+					0xd2b /* Attach source field must be different from current field */,
 				);
 				const sourceField = this.forest.#roots.fields.get(source);
-				assert(sourceField !== undefined, "Attach source field must exist");
-				assert(sourceField.length === count, "Attach must consume all nodes in source field");
+				assert(sourceField !== undefined, 0xd2c /* Attach source field must exist */);
+				assert(
+					sourceField.length === count,
+					0xd2d /* Attach must consume all nodes in source field */,
+				);
 				const existingDestinationField = parent.fields.get(key) ?? [];
 				assert(
 					destination <= existingDestinationField.length,
-					"Attach destination must not exceed field length",
+					0xd2e /* Attach destination must not exceed field length */,
 				);
 				assertValidIndex(destination, existingDestinationField, true);
 				const currentField = getOrCreateField(parent, key);
@@ -290,16 +299,19 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 				const [parent, key] = cursor.getParent();
 				assert(
 					destination === undefined || parent !== this.forest.roots || key !== destination,
-					"Detach destination field must be different from current field",
+					0xd2f /* Detach destination field must be different from current field */,
 				);
 				const currentField = parent.fields.get(key) ?? [];
-				assert(source.start <= source.end, "Detach range start must not exceed end");
-				assert(source.end <= currentField.length, "Detach range must not exceed field length");
+				assert(source.start <= source.end, 0xd30 /* Detach range start must not exceed end */);
+				assert(
+					source.end <= currentField.length,
+					0xd31 /* Detach range must not exceed field length */,
+				);
 				assertValidRange(source, currentField);
 				if (destination !== undefined) {
 					assert(
 						!this.forest.#roots.fields.has(destination),
-						"Detach destination must be a new empty field",
+						0xd32 /* Detach destination must be a new empty field */,
 					);
 				}
 				const content = currentField.splice(source.start, source.end - source.start);
@@ -331,9 +343,12 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 		for (const getVisitor of this.deltaVisitors) {
 			announcedVisitors.push(getVisitor());
 		}
-		const combinedVisitor = combineVisitors([forestVisitor, ...announcedVisitors]);
-		this.activeVisitor = combinedVisitor;
-		return combinedVisitor;
+		const visitor = combineVisitors([
+			makeBreakingVisitor(forestVisitor, this.breaker),
+			...announcedVisitors,
+		]);
+		this.activeVisitor = visitor;
+		return visitor;
 	}
 
 	public registerAnnouncedVisitor(visitor: () => AnnouncedVisitor): void {
@@ -368,6 +383,7 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 	}
 
 	public allocateCursor(source?: string): Cursor {
+		this.breaker.use();
 		return new Cursor(this, source);
 	}
 
@@ -375,6 +391,7 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 		destination: Anchor,
 		cursorToMove: ITreeSubscriptionCursor,
 	): TreeNavigationResult {
+		this.breaker.use();
 		const path = this.anchors.locate(destination);
 		if (path === undefined) {
 			return TreeNavigationResult.NotFound;
@@ -387,6 +404,7 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 		destination: FieldAnchor,
 		cursorToMove: ITreeSubscriptionCursor,
 	): TreeNavigationResult {
+		this.breaker.use();
 		if (destination.parent === undefined) {
 			this.moveCursorToPath(undefined, cursorToMove);
 		} else {
@@ -403,6 +421,7 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 		destination: UpPath | undefined,
 		cursorToMove: ITreeSubscriptionCursor,
 	): void {
+		this.breaker.use();
 		assert(
 			cursorToMove instanceof Cursor,
 			0x337 /* ObjectForest must only be given its own Cursor type */,
@@ -433,6 +452,7 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 	}
 
 	public getCursorAboveDetachedFields(): ITreeCursorSynchronous {
+		this.breaker.use();
 		return cursorForMapTreeNode(this.roots);
 	}
 }

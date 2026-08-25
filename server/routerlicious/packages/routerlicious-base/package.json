@@ -134,6 +134,9 @@
 			"Class_NexusResources": {
 				"forwardCompat": false
 			},
+			"Class_OrdererManager": {
+				"forwardCompat": false
+			},
 			"Class_AlfredResources": {
 				"forwardCompat": false,
 				"backCompat": false
