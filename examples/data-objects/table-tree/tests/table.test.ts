@@ -52,6 +52,7 @@ test.describe("table", () => {
 
 	test("renders the initial typed table data in both views", async ({ page }) => {
 		for (const table of [tableView(page, 0), tableView(page, 1)]) {
+			// The first header contains row and column controls, in addition to the three data columns.
 			await expect(table.getByRole("columnheader")).toHaveCount(4);
 			await expect(table.getByText("Task", { exact: true })).toBeVisible();
 			await expect(table.getByText("Date", { exact: true })).toBeVisible();
@@ -92,6 +93,7 @@ test.describe("table", () => {
 
 		await expect(dataRows(firstTable)).toHaveCount(1);
 		await expect(dataRows(secondTable)).toHaveCount(1);
+		// Check the remaining value to confirm that the selected row was deleted in both views.
 		await expect(firstTable.locator('input[type="text"]')).toHaveValue("Walk the dog");
 		await expect(secondTable.locator('input[type="text"]')).toHaveValue("Walk the dog");
 	});
@@ -113,6 +115,7 @@ test.describe("table", () => {
 
 		await expect(columnHeader(firstTable, "Owner")).toBeVisible();
 		await expect(columnHeader(secondTable, "Owner")).toBeVisible();
+		// Each of the two rows now has a Task input and an Owner input.
 		await expect(firstTable.locator('input[type="text"]')).toHaveCount(4);
 		await expect(secondTable.locator('input[type="text"]')).toHaveCount(4);
 
@@ -150,6 +153,7 @@ test.describe("table", () => {
 
 		for (const table of [firstTable, secondTable]) {
 			const headers = table.getByRole("columnheader");
+			// Index zero is the control column. Dragging Task to Completed? places Task after it.
 			await expect(headers.nth(1).getByText("Date", { exact: true })).toBeVisible();
 			await expect(headers.nth(2).getByText("Completed?", { exact: true })).toBeVisible();
 			await expect(headers.nth(3).getByText("Task", { exact: true })).toBeVisible();
