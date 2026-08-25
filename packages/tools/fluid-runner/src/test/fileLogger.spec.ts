@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 import * as fs from "fs";
 import path from "path";
+import { LogLevel } from "@fluidframework/core-interfaces";
 
 /* eslint-disable import-x/no-internal-modules */
 import { CSVFileLogger } from "../logger/csvFileLogger.js";
@@ -34,10 +35,22 @@ describe("fileLogger", () => {
 	}
 
 	function sendTelemetry(logger: IFileLogger): void {
-		logger.send({ eventName: "event1", category: "category1", prop1: "value1" });
-		logger.send({ eventName: "event2", category: "category1", prop2: "value2" });
-		logger.send({ eventName: "event3", category: "category2", prop1: "value3" });
-		logger.send({ eventName: "event4", category: "category2", prop2: "value4" });
+		logger.send(
+			{ eventName: "event1", category: "category1", prop1: "value1" },
+			LogLevel.essential,
+		);
+		logger.send(
+			{ eventName: "event2", category: "category1", prop2: "value2" },
+			LogLevel.essential,
+		);
+		logger.send(
+			{ eventName: "event3", category: "category2", prop1: "value3" },
+			LogLevel.essential,
+		);
+		logger.send(
+			{ eventName: "event4", category: "category2", prop2: "value4" },
+			LogLevel.essential,
+		);
 	}
 
 	afterEach(() => {

@@ -1,0 +1,10 @@
+{
+	"compilerOptions": {
+		"composite": false,
+		"customConditions": ["allow-ff-test-exports"],
+		"types": ["node"],
+		"declaration": false,
+		"declarationMap": false,
+		"skipLibCheck": true,
+	},
+}

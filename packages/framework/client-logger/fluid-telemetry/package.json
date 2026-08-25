@@ -44,8 +44,6 @@
 			}
 		}
 	},
-	"main": "lib/index.js",
-	"types": "lib/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:api-reports": "api-extractor run --local --config api-extractor/api-extractor-report.json",
@@ -131,7 +129,7 @@
 		"start-server-and-test": "^2.0.3",
 		"tinylicious": "^7.0.1",
 		"tslib": "^2.8.1",
-		"typescript": "~5.4.5"
+		"typescript": "~6.0.3"
 	},
 	"fluidBuild": {
 		"tasks": {

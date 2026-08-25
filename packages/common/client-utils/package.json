@@ -52,8 +52,6 @@
 			}
 		}
 	},
-	"main": "lib/indexBrowser.js",
-	"types": "lib/indexBrowser.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:api-reports": "concurrently \"npm:build:api-reports:browser:*\" && concurrently \"npm:build:api-reports:node:*\"",
@@ -167,7 +165,7 @@
 		"rimraf": "^6.1.3",
 		"sinon": "^18.0.1",
 		"ts-node": "^10.9.2",
-		"typescript": "~5.4.5",
+		"typescript": "~6.0.3",
 		"webpack": "^5.94.0",
 		"webpack-cli": "^5.1.4"
 	},
@@ -177,16 +175,20 @@
 				"build:esm"
 			],
 			"build:api-reports:browser:current": [
-				"build:exports:browser"
+				"build:exports:browser",
+				"^build:api-reports"
 			],
 			"build:api-reports:browser:legacy": [
-				"build:exports:browser"
+				"build:exports:browser",
+				"^build:api-reports"
 			],
 			"build:api-reports:node:current": [
-				"build:api-reports:browser:current"
+				"build:api-reports:browser:current",
+				"^build:api-reports"
 			],
 			"build:api-reports:node:legacy": [
-				"build:api-reports:browser:legacy"
+				"build:api-reports:browser:legacy",
+				"^build:api-reports"
 			],
 			"build:exports:browser": [
 				"build:esm"
@@ -231,16 +233,20 @@
 				"build:exports:node"
 			],
 			"ci:build:api-reports:browser:current": [
-				"build:exports:browser"
+				"build:exports:browser",
+				"^ci:build:api-reports"
 			],
 			"ci:build:api-reports:browser:legacy": [
-				"build:exports:browser"
+				"build:exports:browser",
+				"^ci:build:api-reports"
 			],
 			"ci:build:api-reports:node:current": [
-				"build:exports:node"
+				"build:exports:node",
+				"^ci:build:api-reports"
 			],
 			"ci:build:api-reports:node:legacy": [
-				"build:exports:node"
+				"build:exports:node",
+				"^ci:build:api-reports"
 			],
 			"test:mocha:cjs": [
 				"build:test:mocha:cjs"
@@ -257,7 +263,16 @@
 	},
 	"typeValidation": {
 		"broken": {
+			"Class_Buffer": {
+				"backCompat": false
+			},
 			"Function_Uint8ArrayToArrayBuffer": {
+				"backCompat": false
+			},
+			"TypeAlias_IsoBuffer": {
+				"backCompat": false
+			},
+			"Variable_IsoBuffer": {
 				"backCompat": false
 			}
 		},

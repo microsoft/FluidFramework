@@ -6,9 +6,14 @@
 // Entrypoint for browser-specific code in the package.
 // (See 'Isomorphic Code' section in the package README.md.)
 
+// This export is needed for api-extractor compliance.
+export type { IsoBuffer as IsoBufferInterface } from "./buffer.js";
+export type {
+	IsoBufferConstructor,
+	IsoBufferEncoding,
+} from "./bufferBrowser.js";
 export {
 	bufferToString,
-	isArrayBuffer,
 	IsoBuffer,
 	stringToBuffer,
 	Uint8ArrayToString,

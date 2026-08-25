@@ -13,6 +13,7 @@ export {
 	// eslint-disable-next-line unicorn/prefer-export-from
 	EventEmitter,
 };
+export { exampleOldestSupportedClient } from "./exampleCompatibility.js";
 
 export {
 	ContainerViewRuntimeFactory,

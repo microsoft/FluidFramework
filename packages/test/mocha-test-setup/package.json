@@ -67,7 +67,7 @@
 		"eslint": "catalog:eslint",
 		"jiti": "^2.6.1",
 		"rimraf": "^6.1.3",
-		"typescript": "~5.4.5"
+		"typescript": "~6.0.3"
 	},
 	"fluidBuild": {
 		"_tasks_comment": "build:cjs is configured to depend on build:esm task as all CommonJS consumers expect mocha support which is implemented in ESM. Building ESM when CommonJS is requested ensures the implementation expectation is satisfied.",

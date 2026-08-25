@@ -44,8 +44,6 @@
 			}
 		}
 	},
-	"main": "lib/index.js",
-	"types": "lib/public.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:api-reports": "concurrently \"npm:build:api-reports:*\"",
@@ -106,7 +104,7 @@
 		"eslint-config-prettier": "catalog:eslint",
 		"jiti": "^2.6.1",
 		"rimraf": "^6.1.3",
-		"typescript": "~5.4.5"
+		"typescript": "~6.0.3"
 	},
 	"typeValidation": {
 		"broken": {},

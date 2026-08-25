@@ -44,8 +44,6 @@
 			}
 		}
 	},
-	"main": "lib/index.js",
-	"types": "lib/public.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:api-reports": "concurrently \"npm:build:api-reports:*\"",
@@ -128,7 +126,7 @@
 		"mocha": "^11.7.5",
 		"rimraf": "^6.1.3",
 		"start-server-and-test": "^2.0.3",
-		"typescript": "~5.4.5",
+		"typescript": "~6.0.3",
 		"uuid": "^11.1.0"
 	},
 	"typeValidation": {
