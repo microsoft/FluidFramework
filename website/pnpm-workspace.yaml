@@ -68,6 +68,12 @@ overrides:
   brace-expansion@>=5 <6: ^5.0.8
   http-proxy-middleware@>=2 <3: ^2.0.10
   keyv@>=4 <5: ^5.5.3
+  # nanoid CVE-2026-67213 (infinite loop when size=0) and CVE-2026-67214 (infinite loop
+  # with negative size) in custom/non-secure generators. Both fixed in 3.3.18.
+  nanoid@>=3 <4: ^3.3.18
+  # postcss CVE-2026-73646 (path traversal in source map auto-loading via sourceMappingURL,
+  # leading to arbitrary .map file disclosure). Fixed in 8.5.18.
+  postcss@>=8 <9: ^8.5.18
   launch-editor@>=2 <3: ^2.14.1
   on-headers@>=1 <2: ^1.1.0
   uuid@>=7 <12: ^11.1.1
