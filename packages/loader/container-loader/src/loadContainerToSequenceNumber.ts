@@ -24,10 +24,11 @@ import {
  * This is distinct from normal container loading. The supplied
  * {@link IContainerDriverServices.documentServiceFactory} must be able to materialize the document
  * at {@link ILoadContainerToSequenceNumberProps.loadToSequenceNumber} - i.e. it must implement the
- * point-in-time capability the loader detects. For ODSP, pass an
- * `OdspPointInTimeDocumentServiceFactory` directly.
+ * point-in-time capability the loader detects. For ODSP, call
+ * `createOdspDocumentServiceFactory` with the implementation imported from
+ * `@fluidframework/odsp-driver/legacy/point-in-time`.
  *
- * @legacy @alpha
+ * @legacy @beta
  */
 export interface ILoadContainerToSequenceNumberProps
 	extends IContainerHostProps,
@@ -58,15 +59,15 @@ export interface ILoadContainerToSequenceNumberProps
  * The supplied {@link IContainerDriverServices.documentServiceFactory} must support point-in-time
  * loading: it must be able to serve a snapshot at or before
  * {@link ILoadContainerToSequenceNumberProps.loadToSequenceNumber} and replay the document forward
- * through that sequence number. For ODSP, pass an `OdspPointInTimeDocumentServiceFactory` (from
- * `@fluidframework/odsp-driver`) directly - the loader materializes the point-in-time view itself,
- * so no wrapping or decoration is required.
+ * through that sequence number. For ODSP, inject `createPointInTimeDocumentService` from the
+ * dedicated point-in-time entrypoint through `createOdspDocumentServiceFactory` options. The loader
+ * materializes the point-in-time view itself, so no wrapping or decoration is required.
  *
  * @param props - The load options, point-in-time-capable driver services, target sequence number, and
  * optional cancellation signal.
  * @returns A disconnected, read-only container materialized at the requested sequence number.
  *
- * @legacy @alpha
+ * @legacy @beta
  */
 export async function loadContainerToSequenceNumber(
 	props: ILoadContainerToSequenceNumberProps,
@@ -81,7 +82,7 @@ export async function loadContainerToSequenceNumber(
 	const capableFactory = asPointInTimeCapableFactory(documentServiceFactory);
 	if (capableFactory === undefined) {
 		throw new UsageError(
-			"The provided documentServiceFactory does not support point-in-time loading. For ODSP, pass an OdspPointInTimeDocumentServiceFactory.",
+			"The provided documentServiceFactory does not support point-in-time loading. For ODSP, call createOdspDocumentServiceFactory with a point-in-time implementation.",
 		);
 	}
 

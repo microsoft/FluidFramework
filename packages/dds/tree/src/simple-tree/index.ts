@@ -4,7 +4,7 @@
  */
 
 export {
-	typeNameSymbol,
+	schemaIdentifierBrand,
 	typeSchemaSymbol,
 	contentSchemaSymbol,
 	type WithType,
@@ -67,6 +67,7 @@ export {
 export { walkFieldSchema } from "./walkFieldSchema.js";
 export type { UnsafeUnknownSchema, Insertable } from "./unsafeUnknownSchema.js";
 export {
+	type CommitRevision,
 	type ITree,
 	type TreeView,
 	type ViewableTree,
@@ -101,7 +102,6 @@ export {
 	type ArrayNodeTreeChangedDeltaOp,
 	type ArrayNodeTreeChangedRetainOp,
 	type NodeChangedData,
-	type NodeChangedDataAlpha,
 	type NodeChangedDataDelta,
 	type NodeChangedDataProperties,
 	type NodeChangedDataTreeDelta,
@@ -110,7 +110,6 @@ export {
 	importConcise,
 	TreeBeta,
 	type TreeChangeEventsBeta,
-	type TreeChangeEventsAlpha,
 	type IdentifierIndex,
 	createTreeIndex,
 	createIdentifierIndex,
@@ -136,6 +135,7 @@ export {
 	type TreeSchemaEncodingOptions,
 	getJsonSchema,
 	getSimpleSchema,
+	type StagedUpgradeStatus,
 	type VerboseTreeNode,
 	type TreeEncodingOptions,
 	type VerboseTree,
@@ -143,6 +143,7 @@ export {
 	comparePersistedSchema,
 	type ConciseTree,
 	checkSchemaCompatibility,
+	getSchemaCompatibilityError,
 	type Unenforced,
 	type System_Unsafe,
 	type ArrayNodeCustomizableSchemaUnsafe,
@@ -159,9 +160,13 @@ export {
 	type InsertableObjectFromSchemaRecordAlphaUnsafe,
 	type TreeViewAlpha,
 	type TreeViewBeta,
+	type UntypedTreeView,
 	type TreeBranch,
 	type TreeBranchAlpha,
+	type UntypedTreeViewAlpha,
 	type TreeBranchEvents,
+	type TreeBranchCommitMetadata,
+	type TreeBranchHistory,
 	getPropertyKeyFromStoredKey,
 	getStoredKey,
 	tryGetSchema,

@@ -5,46 +5,46 @@
   "isPrimary": true,
   "steps": [
     {
-      "file": ".devcontainer/ai-agent/GETTING_STARTED.md",
+      "file": ".devcontainer/GETTING_STARTED.md",
       "line": 1,
       "title": "Welcome",
-      "description": "This is your AI-enabled codespace. It comes pre-configured with AI CLI tooling on top of the standard Fluid Framework development environment.\n\nThis tour will walk you through the AI-specific features. For full documentation, see the [AI-enabled Codespace wiki](https://github.com/microsoft/FluidFramework/wiki/AI%E2%80%90enabled-Codespace)."
+      "description": "This is your AI-enabled codespace. It comes pre-configured with AI CLI tooling on top of the standard Fluid Framework development environment.\n\nThis tour will walk you through the AI-specific features. For full documentation, see the [AI-enabled Codespace documentation](../docs/content/Development-Environment/AI-enabled-Codespace.md)."
     },
     {
-      "file": ".devcontainer/ai-agent/GETTING_STARTED.md",
+      "file": ".devcontainer/GETTING_STARTED.md",
       "line": 9,
       "title": "Install Agency",
-      "description": "**Before you can use any AI agents, you must install agency.**\n\nRun `pnpm install:agency` in the terminal. This requires Azure authentication — a browser window will open for you to sign in. Then open a **new terminal** for the aliases to take effect.\n\nAgency is the CLI tool that manages AI agent sessions. It wraps Claude Code, GitHub Copilot, and other agents with consistent configuration."
+      "description": "Agency is installed automatically the first time you run `start`, `dev`, `copilot`, or `oce`. This requires authentication, so watch for a browser window. If automatic installation fails, run `pnpm install:agency` manually.\n\nAgency manages AI agent sessions and supplies consistent profiles and configuration."
     },
     {
       "file": "scripts/codespace-setup/agent-aliases.sh",
       "line": 26,
-      "title": "Claude Aliases",
-      "description": "These aliases launch Claude Code via agency:\n\n- **`claude`** - Normal Claude Code\n- **`dev`** - Claude Code with the Nori profile\n\nBoth aliases use `agency claude` under the hood, which ensures consistent configuration and context."
+      "title": "Fluid Development Launcher",
+      "description": "**`dev`** launches Copilot CLI through agency with the Nori profile and the ADO, WorkIQ, and EngHub MCP servers. It is the recommended launcher for Fluid Framework feature work, testing, and debugging."
     },
     {
       "file": "scripts/codespace-setup/agent-aliases.sh",
-      "line": 41,
+      "line": 31,
       "title": "Copilot Aliases",
       "description": "These aliases launch GitHub Copilot:\n\n- **`copilot`** — Standard GitHub Copilot\n- **`oce`** — On-Call Engineer workflow (switches to ff-oce agent)"
     },
     {
       "file": "scripts/codespace-setup/agent-aliases.sh",
-      "line": 24,
+      "line": 41,
       "title": "Starting Agents",
-      "description": "Use `dev` for Nori-guided feature work, `claude` for general Claude Code sessions, `copilot` for standard GitHub Copilot, and `oce` for On-Call Engineer workflows."
+      "description": "Run `start` for an interactive assistant that selects a launcher based on your task. Use `dev` directly for Fluid Framework development, `copilot` for a general Copilot CLI session, or `oce` for on-call engineer workflows."
     },
     {
-      "file": ".devcontainer/ai-agent/devcontainer.json",
+      "file": ".devcontainer/devcontainer.json",
       "line": 1,
       "title": "Codespace Configuration",
-      "description": "This devcontainer profile includes several additions beyond the Standard profile:\n\n- **Agency CLI** for managed agent sessions\n- **GitHub CLI** (`gh`) for PR workflows and SSH access\n- **SSH daemon** enabling `gh codespace ssh` from your local terminal\n- **32 CPUs / 64 GB RAM** (vs 16 CPUs for Standard)\n\n**Tip:** You can connect to this codespace from your local terminal with `gh codespace ssh` to run AI agents locally while using the codespace's compute."
+      "description": "This is the repository's default devcontainer profile. Compared with the nested Standard profile, it provides AI launchers, GitHub CLI (`gh`), SSH access, and the container permissions used by agent sandboxing. It defaults to 32 CPUs / 64 GB RAM rather than Standard's 16 CPUs / 64 GB RAM.\n\n**Tip:** Connect from your local terminal with `gh codespace ssh` while using the Codespace's compute and repository context."
     },
     {
-      "file": ".devcontainer/ai-agent/GETTING_STARTED.md",
+      "file": ".devcontainer/GETTING_STARTED.md",
       "line": 1,
       "title": "Next Steps",
-      "description": "You're all set! Here's what to do:\n\n1. Run `pnpm install:agency` and open a new terminal\n2. Try `dev`, `claude`, or `copilot` to start an AI-assisted session\n3. Check [DEV.md](./DEV.md) for the full development workflow\n\nFor more info, see the [AI-enabled Codespace wiki](https://github.com/microsoft/FluidFramework/wiki/AI%E2%80%90enabled-Codespace)."
+      "description": "You're all set! Run `start` for launcher guidance, or use `dev`, `copilot`, or `oce` directly. Check [DEV.md](../DEV.md) for the full development workflow.\n\nFor more information, see the [AI-enabled Codespace documentation](../docs/content/Development-Environment/AI-enabled-Codespace.md)."
     }
   ]
 }

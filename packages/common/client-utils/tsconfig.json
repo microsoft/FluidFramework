@@ -3,7 +3,6 @@
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "./lib",
-		"baseUrl": ".",
 		"noUncheckedIndexedAccess": false,
 	},
 	"include": ["src/**/*"],
