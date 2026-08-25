@@ -14,8 +14,9 @@
 	"type": "module",
 	"scripts": {
 		"build": "fluid-build . --task build",
+		"build:cjs": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../common/build/build-common/src/cjs/package.json ./dist",
 		"build:compile": "fluid-build . --task compile",
-		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:esm": "tsc --project ./tsconfig.json",
 		"build:test": "npm run build:test:esm",
 		"build:test:esm": "npm run build:test:mocha",
 		"build:test:mocha": "tsc --project ./src/test/tsconfig.json",
@@ -49,7 +50,6 @@
 		"test:playwright": "playwright test",
 		"test:playwright:verbose": "cross-env FLUID_TEST_VERBOSE=1 playwright test",
 		"test:verbose": "npm run test:mocha && npm run test:playwright:verbose",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../common/build/build-common/src/cjs/package.json ./dist",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
 	},
@@ -116,7 +116,7 @@
 		"supertest": "^3.4.2",
 		"tinylicious": "^7.0.1",
 		"ts-loader": "^9.5.1",
-		"typescript": "~5.4.5",
+		"typescript": "~6.0.3",
 		"webpack": "^5.94.0",
 		"webpack-cli": "^5.1.4",
 		"webpack-dev-server": "~5.2.6"
@@ -124,8 +124,8 @@
 	"fluidBuild": {
 		"tasks": {
 			"build:test:mocha": [
-				"build:esnext",
-				"^build:esnext"
+				"build:esm",
+				"^build:esm"
 			]
 		},
 		"version": 1
