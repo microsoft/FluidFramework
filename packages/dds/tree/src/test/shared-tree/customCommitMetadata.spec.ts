@@ -26,8 +26,9 @@ import {
 } from "@fluidframework/test-utils/internal";
 
 import { asAlpha } from "../../api.js";
+import type { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
 import { FluidClientVersion } from "../../codec/index.js";
-import type { RevertibleAlpha } from "../../core/index.js";
+import { type RevertibleAlpha, RevertibleStatus } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
 	TreeViewConfiguration,
@@ -75,7 +76,7 @@ function makeFactory(options: MetadataOptions = {}): IChannelFactory<ITree> {
  * An initialized standalone view.
  * @remarks Sufficient for everything that does not involve replication or persistence.
  */
-function createView(): TreeViewAlpha<typeof StringArray> {
+function createView(): SchematizingSimpleTreeView<typeof StringArray> {
 	const view = getView(config, { minVersionForCollab: FluidClientVersion.v3_0 });
 	view.initialize([]);
 	return view;
@@ -531,6 +532,28 @@ describe("custom commit metadata", () => {
 			assert.deepEqual(headMetadata(view2.branchHistory), expected);
 		});
 
+		it("preserves a valid '__proto__' key as an own property rather than a prototype", () => {
+			const view = createView();
+
+			view.runTransaction(
+				() => {
+					view.root.insertAtEnd("a");
+				},
+				{
+					// `__proto__` is a legal JSON key, and a peer could send one.
+					customMetadata: JSON.parse(
+						'{"__proto__":{"polluted":true},"safe":1}',
+					) as JsonCompatibleReadOnlyObject,
+				},
+			);
+
+			const custom = headMetadata(view.branchHistory);
+			assert(custom !== undefined);
+			assert.equal(Object.hasOwn(custom, "__proto__"), true);
+			assert.equal((custom as Record<string, unknown>).polluted, undefined);
+			assert.equal(custom.safe, 1);
+		});
+
 		it("throws a UsageError for metadata that cannot be serialized", () => {
 			const view = createView();
 			const cyclic: Record<string, unknown> = {};
@@ -704,6 +727,113 @@ describe("custom commit metadata", () => {
 
 			assert.deepEqual([...view.root], ["a"]);
 			assert.equal(view.branchHistory.length, before);
+			// The undo must not be consumed by a revert that was rolled back.
+			assert.equal(revertible.status, RevertibleStatus.Valid);
+			unsubscribe();
+		});
+
+		it("release the revertible once the wrapping transaction commits", () => {
+			const { view, revertible, unsubscribe } = createViewWithRevertibleEdit();
+
+			view.runTransaction(
+				() => {
+					revertible.revert();
+				},
+				{ customMetadata: { tag: "the-revert" } },
+			);
+
+			assert.equal(revertible.status, RevertibleStatus.Disposed);
+			unsubscribe();
+		});
+
+		it("throw when a schema change is attempted after the revert", () => {
+			// Schema edits are applied through a different editor than data edits, so they need their
+			// own guard or they would slip into a transaction reserved for a revert.
+			const { view, revertible, unsubscribe } = createViewWithRevertibleEdit();
+
+			assert.throws(
+				() =>
+					view.runTransaction(() => {
+						revertible.revert();
+						view.checkout.updateSchema(view.checkout.storedSchema.clone(), true);
+					}),
+				validateUsageError(
+					/Editing the tree is forbidden during a transaction whose only change is a revert/,
+				),
+			);
+			unsubscribe();
+		});
+
+		it("are allowed when the transaction only added preconditions", () => {
+			// Constraints are represented as commits, but they are not changes to the document, so they
+			// must not count against the sole-change rule.
+			const { view, revertible, unsubscribe } = createViewWithRevertibleEdit();
+
+			view.runTransaction(
+				() => {
+					revertible.revert();
+				},
+				{
+					preconditions: [{ type: "noChange" }],
+					customMetadata: { tag: "with-precondition" },
+				},
+			);
+
+			assert.deepEqual([...view.root], []);
+			assert.deepEqual(headMetadata(view.branchHistory), { tag: "with-precondition" });
+			unsubscribe();
+		});
+
+		it("restore editing when a nested transaction rolls the revert back", () => {
+			const { view, revertible, unsubscribe } = createViewWithRevertibleEdit();
+
+			view.runTransaction(() => {
+				view.runTransaction(
+					() => {
+						revertible.revert(false);
+						return { rollback: true } as const;
+					},
+					{ customMetadata: { tag: "discarded" } },
+				);
+				// The revert was rolled back, so the enclosing transaction is free to edit again.
+				view.root.insertAtEnd("b");
+			});
+
+			assert.deepEqual([...view.root], ["a", "b"]);
+			// ...and the resulting commit is an ordinary edit, not an undo.
+			assert.equal(headMetadata(view.branchHistory), undefined);
+			unsubscribe();
+		});
+
+		it("inherit the reverted commit's labels", () => {
+			const view = createView();
+			const labels: unknown[] = [];
+			view.events.on("changed", (metadata) => {
+				if (metadata.isLocal) {
+					labels.push([...metadata.labels]);
+				}
+			});
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+
+			view.runTransaction(
+				() => {
+					view.root.insertAtEnd("a");
+				},
+				{ label: "original" },
+			);
+			const revertible = undoStack.pop();
+			assert(revertible !== undefined);
+
+			view.runTransaction(
+				() => {
+					revertible.revert();
+				},
+				{ customMetadata: { tag: "the-revert" } },
+			);
+
+			// A direct revert inherits the reverted commit's labels; wrapping it in a transaction
+			// purely to attach metadata must not change that.
+			assert.deepEqual(labels[labels.length - 1], ["original"]);
 			unsubscribe();
 		});
 	});

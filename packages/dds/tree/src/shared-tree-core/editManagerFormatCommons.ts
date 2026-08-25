@@ -89,6 +89,9 @@ export type SequenceId = Static<typeof SequenceId>;
  */
 export interface SequencedCommit<TChangeset> extends Commit<TChangeset>, SequenceId {}
 
+/** The persisted counterpart of {@link SequencedCommit}. */
+export type EncodedSequencedCommit<TChangeset> = EncodedCommit<TChangeset> & SequenceId;
+
 export const SequencedCommit = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 	Type.Composite([CommitBase(tChange), SequenceId], noAdditionalProps);
 
@@ -105,7 +108,7 @@ export interface SummarySessionBranch<TChangeset> {
 
 export interface EncodedSummarySessionBranch<TChangeset> {
 	readonly base: EncodedRevisionTag;
-	readonly commits: Commit<TChangeset>[];
+	readonly commits: EncodedCommit<TChangeset>[];
 }
 
 export const SummarySessionBranch = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
@@ -123,7 +126,7 @@ export interface EncodedSharedBranch<TChangeset> {
 	readonly author?: string;
 	readonly session?: SessionId;
 	readonly base?: EncodedRevisionTag;
-	readonly trunk: readonly Readonly<SequencedCommit<TChangeset>>[];
+	readonly trunk: readonly Readonly<EncodedSequencedCommit<TChangeset>>[];
 	readonly peers: readonly [SessionId, Readonly<EncodedSummarySessionBranch<TChangeset>>][];
 }
 

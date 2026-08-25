@@ -318,5 +318,43 @@ describe("message codec", () => {
 			assert(decoded.type === "commit");
 			assert.deepEqual(decoded.commit.customMetadata, tree);
 		});
+
+		it("round-trips a nested tree through the shared branches format", () => {
+			// Shared branches have a separate codec implementation, so it can drift from the one above.
+			const codec = makeCodecFamily(
+				makeMessageCodecBuilder<TestChange>()
+					.applyOptions({
+						changeCodecs: TestChange.codecs,
+						dependentChangeFormatVersion: DependentFormatVersion.fromUnique(1),
+						revisionTagCodec: testRevisionTagCodec,
+						jsonValidator: FormatValidatorBasic,
+					})
+					.map((c) => [c.formatVersion, c.codec] as const),
+			).resolve(MessageFormatVersion.vSharedBranches);
+			const tree: CustomMetadataTree = {
+				metadata,
+				children: [{ metadata: innerMetadata, children: [] }],
+			};
+			const message: DecodedMessage<TestChange> = {
+				type: "commit",
+				sessionId,
+				commit: {
+					revision: testIdCompressor.generateCompressedId(),
+					change: TestChange.mint([], 1),
+					customMetadata: tree,
+				},
+				branchId: "main",
+			};
+			const encoded = codec.encode(message, { idCompressor: testIdCompressor });
+			assert.deepEqual((encoded as unknown as Record<string, unknown>).customMetadata, {
+				m: metadata,
+				c: [{ m: innerMetadata }],
+			});
+			const decoded = codec.decode(JSON.parse(JSON.stringify(encoded)), {
+				idCompressor: testIdCompressor,
+			});
+			assert(decoded.type === "commit");
+			assert.deepEqual(decoded.commit.customMetadata, tree);
+		});
 	});
 });

@@ -228,7 +228,19 @@ export function flattenCustomMetadata(
 			visit(child);
 		}
 		if (node.metadata !== undefined) {
-			flattened = Object.assign(flattened ?? {}, node.metadata);
+			flattened ??= {};
+			// Copy with own-property semantics. `Object.assign` and spread both invoke inherited
+			// setters, which would turn the perfectly valid JSON key "__proto__" into the result's
+			// prototype rather than one of its properties. `defineProperty` creates an own property
+			// that shadows the inherited accessor, matching what `JSON.parse` produces.
+			for (const key of Object.keys(node.metadata)) {
+				Object.defineProperty(flattened, key, {
+					value: node.metadata[key],
+					writable: true,
+					enumerable: true,
+					configurable: true,
+				});
+			}
 		}
 	};
 	visit(tree);

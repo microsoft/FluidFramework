@@ -34,6 +34,13 @@ export interface Message {
 	 * Arbitrary, application-defined metadata to store alongside the commit in this message.
 	 * @remarks
 	 * Only written when encoding at {@link MessageFormatVersion.v7} or later.
+	 *
+	 * @privateRemarks
+	 * Like the equivalent field on the summary's `CommitBase`, this is declared for every format version
+	 * rather than only for v7, because making the schema version-dependent would require threading the
+	 * version through every schema builder. Writing is gated on the version by the codec, so this client
+	 * never emits the field into an older format; the consequence is only that a message claiming to be
+	 * pre-v7 which nonetheless carries the field would be accepted rather than rejected.
 	 */
 	readonly customMetadata?: EncodedCustomMetadataTree;
 

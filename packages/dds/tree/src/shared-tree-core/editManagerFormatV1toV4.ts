@@ -11,6 +11,7 @@ import { SessionIdSchema } from "../core/index.js";
 
 import {
 	EditManagerFormatVersion,
+	type EncodedSequencedCommit,
 	type EncodedSummarySessionBranch,
 	SequencedCommit,
 	SummarySessionBranch,
@@ -22,7 +23,7 @@ const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 
 export interface EncodedEditManager<TChangeset> {
-	readonly trunk: readonly Readonly<SequencedCommit<TChangeset>>[];
+	readonly trunk: readonly Readonly<EncodedSequencedCommit<TChangeset>>[];
 	readonly branches: readonly [SessionId, Readonly<EncodedSummarySessionBranch<TChangeset>>][];
 	readonly version:
 		| typeof EditManagerFormatVersion.v1

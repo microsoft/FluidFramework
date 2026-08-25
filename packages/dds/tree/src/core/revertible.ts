@@ -39,6 +39,10 @@ export interface Revertible {
 	 *
 	 * @remarks
 	 * Concurrent changes that are sequenced before the revert will not be overwritten by the revert if they affect different parts of the document.
+	 *
+	 * A revert may be performed inside a transaction, but only as that transaction''s sole change. When
+	 * `dispose` is true and the revert is performed inside a transaction, disposal is deferred until that
+	 * transaction commits, so that rolling it back does not consume the revertible.
 	 */
 	revert(dispose: boolean): void;
 

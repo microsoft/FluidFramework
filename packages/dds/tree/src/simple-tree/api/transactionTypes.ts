@@ -236,8 +236,8 @@ export interface RunTransactionParamsAlpha extends RunTransactionParamsBeta {
 	 *
 	 * Nested transactions all contribute to the single commit they produce. Their metadata is available
 	 * both flattened into one object via {@link TreeBranchCommitMetadata.custom} — where the outermost
-	 * transaction wins on conflicting properties — and structurally via
-	 * {@link TreeBranchCommitMetadata.customTree}. Metadata supplied by a nested transaction that is
+	 * transaction wins on conflicting properties, and the later of two siblings wins — and structurally
+	 * via {@link TreeBranchCommitMetadata.customTree}. Metadata supplied by a nested transaction that is
 	 * rolled back does not contribute to either.
 	 *
 	 * To attach metadata to the commit produced by {@link Revertible.(revert:1) | reverting}, perform the

@@ -135,7 +135,11 @@ import {
 	hasSchemaChange,
 } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
-import type { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
+import type {
+	ISchemaEditor,
+	ISharedTreeEditor,
+	SharedTreeEditBuilder,
+} from "./sharedTreeEditBuilder.js";
 import { extractTransactionChangeProcessor } from "./transactionPostProcessor.js";
 import { SerializedChange } from "./serializedChange.js";
 
@@ -1129,6 +1133,13 @@ export class TreeCheckout implements ITreeCheckout {
 		if (rollback === true) {
 			this.popLabelFrame(true);
 			this.transaction.abort();
+			if (this.transaction.size > 0 && !this.transactionHasApplicationFacingChanges()) {
+				// A nested transaction whose content was a revert has been rolled back, so the
+				// enclosing transaction no longer produces a revert commit.
+				this.#transaction.clearPendingCommitKind();
+				this.pendingRevertLabelTree = undefined;
+			}
+			this.releaseDeferredRevertibles(false);
 			return value === undefined
 				? { success: false }
 				: { success: false, value: value as TFailureValue };
@@ -1137,9 +1148,27 @@ export class TreeCheckout implements ITreeCheckout {
 		addConstraintsToTransaction(this, true, transactionCallbackStatus?.preconditionsOnRevert);
 
 		this.popLabelFrame(false);
-		this.runWithTransactionLabel(() => {
-			this.transaction.commit();
-		}, params?.label);
+		// A transaction-wrapped revert inherits the reverted commit's labels, unless this transaction
+		// supplied a label of its own (in which case the caller's label takes precedence).
+		const revertLabelTree = this.pendingRevertLabelTree;
+		const useRevertLabels = revertLabelTree !== undefined && params?.label === undefined;
+		const previousLabelTreeNode = this.labelTreeNode;
+		if (useRevertLabels) {
+			this.labelTreeNode = revertLabelTree;
+		}
+		try {
+			this.runWithTransactionLabel(() => {
+				this.transaction.commit();
+			}, params?.label);
+		} finally {
+			if (useRevertLabels) {
+				this.labelTreeNode = previousLabelTreeNode;
+			}
+			if (this.transaction.size === 0) {
+				this.pendingRevertLabelTree = undefined;
+			}
+			this.releaseDeferredRevertibles(true);
+		}
 		return value === undefined
 			? { success: true }
 			: { success: true, value: value as TSuccessValue };
@@ -1263,6 +1292,7 @@ export class TreeCheckout implements ITreeCheckout {
 					throw new UsageError("Unable to revert a revertible that has been disposed.");
 				}
 
+				const inTransaction = checkout.transaction.size > 0;
 				const revertMetrics = checkout.revertRevertible(revision, kind, labelTree);
 				checkout.logger?.sendTelemetryEvent({
 					eventName: TreeCheckout.revertTelemetryEventName,
@@ -1270,7 +1300,13 @@ export class TreeCheckout implements ITreeCheckout {
 				});
 
 				if (release) {
-					revertible.dispose();
+					if (inTransaction) {
+						// The revert is not durable until the transaction commits, so hold the revertible
+						// until then rather than consuming it up front.
+						checkout.deferRevertibleDisposal(revertible);
+					} else {
+						revertible.dispose();
+					}
 				}
 			},
 			clone: (targetView: UntypedTreeView) => {
@@ -1664,6 +1700,64 @@ export class TreeCheckout implements ITreeCheckout {
 		this.revertibles.delete(revision);
 	}
 
+	/**
+	 * Revertibles whose disposal has been deferred because they were reverted inside a transaction.
+	 * @remarks
+	 * A revert performed in a transaction is not durable until that transaction commits, so releasing the
+	 * revertible immediately would consume the application's undo even if the transaction is rolled back.
+	 */
+	private readonly deferredRevertibleDisposals: RevertibleAlpha[] = [];
+
+	/**
+	 * The {@link LabelTree} of the commit reverted inside the current transaction, if any.
+	 * @remarks
+	 * A direct revert inherits the reverted commit's labels so that a commit and its revert can be
+	 * associated. When the revert is wrapped in a transaction the resulting commit is applied later, so the
+	 * labels have to be carried across to that point.
+	 */
+	private pendingRevertLabelTree: LabelTree | undefined;
+
+	/** See {@link TreeCheckout.deferredRevertibleDisposals}. */
+	private deferRevertibleDisposal(revertible: RevertibleAlpha): void {
+		this.deferredRevertibleDisposals.push(revertible);
+	}
+
+	/**
+	 * Disposes (or retains) revertibles whose disposal was deferred by a transaction.
+	 * @param committed - Whether the transaction that deferred them committed.
+	 */
+	private releaseDeferredRevertibles(committed: boolean): void {
+		if (this.transaction.size > 0) {
+			// An inner transaction ended; the outermost one still decides the outcome.
+			return;
+		}
+		const deferred = this.deferredRevertibleDisposals.splice(0);
+		if (committed) {
+			for (const revertible of deferred) {
+				if (revertible.status !== RevertibleStatus.Disposed) {
+					revertible.dispose();
+				}
+			}
+		}
+	}
+
+	/**
+	 * Whether the current transaction has changed the document.
+	 * @remarks
+	 * This ignores commits that carry no application-facing change — notably the constraint commits added
+	 * by {@link RunTransactionParamsAlpha.preconditions} — and ignores commits made on the branch the
+	 * transaction forked from, such as concurrent remote commits.
+	 */
+	private transactionHasApplicationFacingChanges(): boolean {
+		const startHead = this.#transaction.getTransactionStartHead();
+		if (startHead === undefined) {
+			return false;
+		}
+		const steps: GraphCommit<SharedTreeChange>[] = [];
+		findAncestor([this.#transaction.activeBranch.getHead(), steps], (c) => c === startHead);
+		return steps.some((commit) => sharedTreeChangeHasApplicationFacingChanges(commit.change));
+	}
+
 	private revertRevertible(
 		revision: RevisionTag,
 		kind: CommitKind,
@@ -1674,17 +1768,17 @@ export class TreeCheckout implements ITreeCheckout {
 		// and applied to, the branch the transaction forked from — so it would neither account for the
 		// transaction's own edits nor be part of the transaction.
 		//
-		// Neither problem arises when the transaction has produced no commits yet: the transaction branch
-		// and the branch it forked from are then at the same commit, so the inverse is computed against
-		// exactly the same state as it would be outside a transaction. Applying it to the transaction
-		// branch therefore makes the revert the transaction's content, which is what allows an application
-		// to attach {@link RunTransactionParamsAlpha.customMetadata | custom metadata} to a revert.
-		// Further changes are forbidden below so that the revert remains the transaction's only content.
+		// Neither problem arises when the transaction has not yet changed the document: the inverse is
+		// then computed against exactly the state it would be outside a transaction. Applying it to the
+		// transaction branch makes the revert the transaction's content, which is what allows an
+		// application to attach {@link RunTransactionParamsAlpha.customMetadata | custom metadata} to a
+		// revert. Further changes are forbidden below so that the revert remains the only one.
+		//
+		// Note that this deliberately tests for *document* changes rather than for the transaction branch
+		// having advanced: constraints added by `preconditions` are commits too, and a concurrent remote
+		// commit advances the branch the transaction forked from without being part of the transaction.
 		const inTransaction = this.transaction.size > 0;
-		if (
-			inTransaction &&
-			this.#transaction.activeBranch.getHead() !== this.#transaction.branch.getHead()
-		) {
+		if (inTransaction && this.transactionHasApplicationFacingChanges()) {
 			throw new UsageError(
 				"A revert applied during a transaction must be the only change in that transaction.",
 			);
@@ -1750,11 +1844,16 @@ export class TreeCheckout implements ITreeCheckout {
 			// The transaction squashes its content into a single commit, which would otherwise be
 			// reported as an ordinary edit rather than as an undo or redo.
 			this.#transaction.setPendingCommitKind(revertKind);
-			// Keep the revert the only content of the transaction. This is self-clearing: the
-			// restriction stops applying as soon as the transaction ends.
+			// The `changed` event for a transaction's commit is emitted when it is applied to the outer
+			// branch, by which point the label state above has been restored. Carry the reverted commit's
+			// labels across so that a transaction-wrapped revert is still associated with what it reverts.
+			this.pendingRevertLabelTree = labelTree;
+			// Keep the revert the only change in the transaction. This is self-clearing: the restriction
+			// stops applying once the transaction ends, or if the revert is rolled back by a nested
+			// transaction (in which case the transaction once again has no changes of its own).
 			this.editLock.restrict(
 				"a transaction whose only change is a revert",
-				() => this.transaction.size > 0,
+				() => this.transaction.size > 0 && this.transactionHasApplicationFacingChanges(),
 			);
 		}
 
@@ -2037,7 +2136,16 @@ class EditLock {
 		const checkLock = (): void => this.checkUnlocked("Editing the tree");
 		this.editor = {
 			get schema() {
-				return editor.schema;
+				const schemaEditor = editor.schema;
+				return {
+					setStoredSchema(...schemaArgs: Parameters<ISchemaEditor["setStoredSchema"]>): void {
+						// Schema edits are edits too: without this, they bypass both the lock and any
+						// restriction, which would let them slip into a transaction that is required to
+						// contain only a revert.
+						checkLock();
+						schemaEditor.setStoredSchema(...schemaArgs);
+					},
+				};
 			},
 			valueField(...fieldArgs) {
 				const valueField = editor.valueField(...fieldArgs);

@@ -43,4 +43,16 @@ Notes on behavior:
 
 A commit produced by reverting a `Revertible` previously could not be annotated, because reverts were not permitted during a transaction at all. That restriction is now relaxed: a revert may be performed inside a transaction provided it is that transaction's only change, which lets the revert be given its own metadata rather than inheriting the reverted commit's. Attempting any other change in such a transaction — before or after the revert, including a second revert — throws a `UsageError`. The resulting commit is still reported as an undo or redo, so it remains redoable.
 
-Persisting the metadata requires new op and summary format versions (`MessageFormatVersion.v7` and `EditManagerFormatVersion.v7`), which are written only when `minVersionForCollab` is set to 3.0.0 or later. Until then, metadata supplied by the application is kept in memory for the local session but is neither replicated nor persisted. This ensures a document only ever contains metadata when every client that can open it understands and preserves it.
+Persisting the metadata requires new op and summary format versions (`MessageFormatVersion.v7` and `EditManagerFormatVersion.v7`), which are written only when `minVersionForCollab` is set to 3.0.0 or later. Until then, metadata supplied by the application is kept in memory for the local session but is neither replicated nor persisted.
+
+Adopting this therefore requires a staged rollout, and the compatibility floor is effectively a one-way change:
+
+1. **Deploy readers first.** Ship 3.0-capable code to every client, application, summarizer, and offline/reconnect path that can open the same documents, while leaving the compatibility floor below 3.0 so they keep writing the previous format.
+2. **Wait for saturation** using version telemetry rather than deployment status, and drain older sessions.
+3. **Raise the container runtime's `oldestSupportedClient` to `3.0.0`** consistently across every path that creates or loads the container. Note that raising only `configuredSharedTree`'s `minVersionForCollab` would let SharedTree write v7 without the container making the corresponding declaration.
+
+Points worth understanding before step 3:
+
+- Raising the floor makes **every** subsequent op and summary v7, whether or not any commit carries metadata. The compatibility transition begins immediately, not on first use of the feature.
+- A client older than v7 fails cleanly when it reaches v7 data, with an unsupported-version error rather than data corruption. This is a reactive failure: such a client may load an older summary successfully and only fail later.
+- Downgrading is lossy. A 3.0 client configured to write the older format can still read metadata but will strip it when encoding, so rolling the floor back erases custom metadata from re-encoded commits. Keep a v7-capable deployment available; rolling every binary back to 2.x after v7 data exists can strand documents.

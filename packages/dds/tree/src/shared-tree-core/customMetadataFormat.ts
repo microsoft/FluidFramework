@@ -21,6 +21,11 @@ import {
  *
  * - `m`: the metadata supplied by this transaction, omitted when it supplied none.
  * - `c`: the nodes of nested transactions, omitted when there were none.
+ *
+ * @privateRemarks
+ * Each node forbids additional properties. Extending the shape of a node is therefore a breaking format
+ * change and must be introduced under a new message/EditManager format version rather than by adding a
+ * key here: silently ignoring an unknown key would lose metadata when an older client re-summarizes.
  */
 // Declared as a type alias rather than an interface so that it satisfies the index signature of
 // `JsonCompatibleReadOnlyObject`, which the encoded message and summary types are constrained to.
@@ -53,9 +58,20 @@ export function encodeCustomMetadataTree(tree: CustomMetadataTree): EncodedCusto
 
 export function decodeCustomMetadataTree(
 	encoded: EncodedCustomMetadataTree,
-): CustomMetadataTree {
+): CustomMetadataTree | undefined {
+	const decoded = decodeNode(encoded);
+	// A tree in which no transaction supplied metadata carries no information, and would otherwise
+	// break the invariant that `customTree` is defined exactly when the flattened view is.
+	return hasMetadata(decoded) ? decoded : undefined;
+}
+
+function decodeNode(encoded: EncodedCustomMetadataTree): CustomMetadataTree {
 	return {
 		metadata: encoded.m,
-		children: encoded.c?.map(decodeCustomMetadataTree) ?? [],
+		children: encoded.c?.map(decodeNode) ?? [],
 	};
+}
+
+function hasMetadata(node: CustomMetadataTree): boolean {
+	return node.metadata !== undefined || node.children.some(hasMetadata);
 }

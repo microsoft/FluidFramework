@@ -331,8 +331,9 @@ export interface TreeBranchCommitMetadata {
 	 * began writing metadata.
 	 *
 	 * A commit may be produced by nested transactions, each of which may supply metadata. This property
-	 * combines them all: where two of them used the same property, the outermost transaction wins. Use
-	 * {@link TreeBranchCommitMetadata.customTree} to recover which transaction supplied what.
+	 * combines them all: where two of them used the same property, the outermost transaction wins, and
+	 * between siblings the later one wins. Use {@link TreeBranchCommitMetadata.customTree} to recover
+	 * which transaction supplied what.
 	 *
 	 * The metadata shares the lifetime of the commit it describes: once the commit is trimmed from the branch's
 	 * history, the metadata goes with it.

@@ -305,8 +305,9 @@ export interface SquashingTransactionOptions<TChange, TChangeProcessingContext> 
 	 * Arbitrary, application-defined metadata to attach to the commit that this transaction produces.
 	 *
 	 * @remarks
-	 * Only the metadata supplied to the outermost transaction is used; metadata supplied to a nested
-	 * transaction is ignored. If the transaction produces no commit, the metadata is discarded.
+	 * Every transaction in the stack contributes a node to the resulting {@link CustomMetadataTree}, so
+	 * nested transactions'' metadata is retained rather than discarded. If the transaction produces no
+	 * commit, the metadata is discarded.
 	 *
 	 * See {@link GraphCommit.customMetadata}.
 	 */
@@ -338,6 +339,11 @@ export class SquashingTransactionStack<
 	 */
 	#pendingCommitKind: CommitKind | undefined;
 
+	/**
+	 * The commit the outermost transaction forked from. Cleared when that transaction ends.
+	 */
+	#transactionStartHead: GraphCommit<TChange> | undefined;
+
 	readonly #mintRevisionTag!: () => RevisionTag;
 
 	/**
@@ -354,6 +360,14 @@ export class SquashingTransactionStack<
 	}
 
 	/**
+	 * The commit that the current transaction started from.
+	 * @remarks Undefined when no transaction is in progress.
+	 */
+	public getTransactionStartHead(): GraphCommit<TChange> | undefined {
+		return this.#transactionStartHead;
+	}
+
+	/**
 	 * Sets the {@link CommitKind} to report for the commit that the current transaction produces.
 	 * @remarks
 	 * Used when the content of a transaction is a revert, so that the resulting commit is still reported
@@ -362,6 +376,13 @@ export class SquashingTransactionStack<
 	public setPendingCommitKind(kind: CommitKind): void {
 		assert(this.size > 0, "Expected an open transaction");
 		this.#pendingCommitKind = kind;
+	}
+
+	/**
+	 * Clears any {@link SquashingTransactionStack.setPendingCommitKind | pending commit kind}.
+	 */
+	public clearPendingCommitKind(): void {
+		this.#pendingCommitKind = undefined;
 	}
 
 	/**
@@ -482,6 +503,7 @@ export class SquashingTransactionStack<
 					node.metadata !== undefined || node.children.some(hasCustomMetadata);
 				// Keep track of the commit that each transaction was on when it started
 				const startHead = this.activeBranch.getHead();
+				this.#transactionStartHead = startHead;
 				const changeFamily = this.branch.changeFamily;
 				const rebaser = changeFamily.rebaser;
 				const outerOnPop = onPush?.();
@@ -616,10 +638,13 @@ export class SquashingTransactionStack<
 							unreachableCase(result);
 						}
 					}
+					// Clear the per-transaction state before invoking any further callbacks, so that a
+					// throwing callback cannot leave the stack unusable for subsequent transactions.
 					transactionBranch.dispose();
 					this.setTransactionBranch(undefined);
 					this.#transactionRevision = undefined;
 					this.#pendingCommitKind = undefined;
+					this.#transactionStartHead = undefined;
 					outerOnPop?.(result, viewUpdate);
 				};
 				// Invoked when a nested transaction begins
