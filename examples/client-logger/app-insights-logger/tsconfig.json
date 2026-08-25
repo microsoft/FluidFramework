@@ -1,6 +1,7 @@
 {
 	"extends": "../../../common/build/build-common/tsconfig.node20.json",
 	"compilerOptions": {
+		"isolatedModules": true,
 		"rootDir": "src",
 		"outDir": "./lib",
 		"types": ["jest"],
