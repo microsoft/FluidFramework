@@ -346,7 +346,7 @@ export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "
 
 // @beta @legacy
 export interface IVersionMarkResolver {
-    onBatchSequenced(listener: (batchId: string, sequenceNumber: number) => void): () => void;
+    onBatchSequenced(listener: (batchId: string, sequenceNumber: number, timestamp?: number) => void): () => void;
     resolve(batchId: string, sequenceNumberLowerBound: number): Promise<ResolveResult>;
     sealAndCaptureVersionMark(): VersionMarkCapture;
 }
@@ -393,6 +393,7 @@ export type ReadFluidDataStoreAttributes = IFluidDataStoreAttributes0 | IFluidDa
 export type ResolveResult = {
     readonly kind: "resolved";
     readonly sequenceNumber: number;
+    readonly timestamp?: number;
 } | {
     readonly kind: "pending";
 } | {
@@ -457,6 +458,7 @@ export type VersionMarkCapture = {
 } | {
     readonly kind: "resolved";
     readonly sequenceNumber: number;
+    readonly timestamp?: number;
 };
 
 // (No @packageDocumentation comment for this package)

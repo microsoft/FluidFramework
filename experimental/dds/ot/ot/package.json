@@ -24,8 +24,6 @@
 			}
 		}
 	},
-	"main": "lib/index.js",
-	"types": "lib/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:api-reports": "api-extractor run --local --config api-extractor/api-extractor-report.json",
@@ -116,7 +114,7 @@
 		"mocha-multi-reporters": "^1.5.1",
 		"quill-delta": "^4.2.2",
 		"rimraf": "^6.1.3",
-		"typescript": "~5.4.5"
+		"typescript": "~6.0.3"
 	},
 	"devDependenciesComments": {
 		"quill-delta": "Version 5 does not support CommonJS"

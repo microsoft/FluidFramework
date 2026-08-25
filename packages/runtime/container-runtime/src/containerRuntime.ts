@@ -2044,6 +2044,7 @@ export class ContainerRuntime
 		const fetchOps = (context as IContainerContextInternal).fetchOps;
 		this.versionMarkResolverInternal = new VersionMarkResolver({
 			getCurrentSequenceNumber: () => this.deltaManager.lastSequenceNumber,
+			getCurrentTimestamp: () => this.getCurrentReferenceTimestampMs(),
 			getCurrentMinimumSequenceNumber: () => this.deltaManager.minimumSequenceNumber,
 			getCurrentPendingBatchId: () => this.pendingStateManager.getMostRecentPendingBatchId(),
 			logger: createChildLogger({
@@ -3523,6 +3524,7 @@ export class ContainerRuntime
 					this.versionMarkResolverInternal.processInboundBatch(
 						versionMarkUpdate.sequenced.batchId,
 						versionMarkUpdate.sequenced.sequenceNumber,
+						versionMarkUpdate.sequenced.timestamp,
 					);
 				}
 				this.versionMarkInboundBatchId = versionMarkUpdate.carriedBatchId;

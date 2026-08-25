@@ -6,6 +6,7 @@
 import type {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
+	LogLevel,
 } from "@fluidframework/core-interfaces";
 
 import type { ITimestampedTelemetryEvent } from "./TelemetryMetadata.js";
@@ -131,9 +132,9 @@ class DevtoolsLogger implements IDevtoolsLogger {
 	 *
 	 * @param event - The telemetry event to send.
 	 */
-	public send(event: ITelemetryBaseEvent): void {
+	public send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
 		// Forward event to base logger
-		this.baseLogger?.send(event);
+		this.baseLogger?.send(event, logLevel);
 
 		try {
 			const newEvent: ITimestampedTelemetryEvent = {

@@ -17,8 +17,33 @@ import type {
 import { LocalOdspDocumentServiceFactory } from "./localOdspDriver/localOdspDocumentServiceFactory.js";
 import {
 	type IPointInTimeDocumentServiceFactory,
+	type OdspPointInTimeDocumentServiceImplementation,
 	OdspDocumentServiceFactoryCore,
 } from "./odspDocumentServiceFactoryCore.js";
+import { LocalPersistentCache } from "./odspCache.js";
+
+/**
+ * Options for creating an ODSP document service factory.
+ *
+ * @legacy @beta
+ */
+export interface IOdspDocumentServiceFactoryOptions {
+	/** Fetches storage access tokens. */
+	readonly getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>;
+	/** Fetches websocket access tokens, or `undefined` when unavailable. */
+	readonly getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined;
+	/** Persisted ODSP cache. When omitted, a local in-memory cache is used. */
+	readonly persistedCache?: IPersistedCache | undefined;
+	/** Host storage policy. When omitted, the default driver policies are used. */
+	readonly hostPolicy?: HostStoragePolicy | undefined;
+	/**
+	 * Enables point-in-time loading. Consumers that omit this implementation do not include the
+	 * feature code in their dependency graph.
+	 */
+	readonly pointInTimeDocumentServiceImplementation?:
+		| OdspPointInTimeDocumentServiceImplementation
+		| undefined;
+}
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
@@ -37,43 +62,46 @@ export class OdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
 	}
 }
 
-function isPointInTimeDocumentServiceFactory(
-	factory: OdspDocumentServiceFactory,
-): factory is OdspDocumentServiceFactory & IPointInTimeDocumentServiceFactory {
-	return typeof factory.createPointInTimeDocumentService === "function";
-}
-
 /**
- * Creates an ODSP document service factory that supports point-in-time loading.
+ * Creates an ODSP document service factory with optional consumer-provided features.
  *
- * @param getStorageToken - Fetches storage access tokens.
- * @param getWebsocketToken - Fetches websocket access tokens, or `undefined` when unavailable.
- * @param persistedCache - Persisted ODSP cache. When omitted, a local in-memory cache is used.
- * @param hostPolicy - Host storage policy. When omitted, the default driver policies are used.
- * @returns An ODSP document service factory with point-in-time loading capability.
+ * @param options - Tokens, cache, host policy, and optional feature implementations.
+ * @returns The configured ODSP document service factory.
  *
  * @legacy @beta
  */
-export function getOdspPointInTimeDocumentServiceFactory(
-	getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>,
-	getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined,
-	persistedCache?: IPersistedCache,
-	hostPolicy?: HostStoragePolicy,
-): IPointInTimeDocumentServiceFactory {
-	const factory = new OdspDocumentServiceFactory(
-		getStorageToken,
-		getWebsocketToken,
-		persistedCache,
-		hostPolicy,
-	);
-	if (!isPointInTimeDocumentServiceFactory(factory)) {
-		throw new Error(
-			"The ODSP document service factory does not support point-in-time loading.",
-		);
-	}
-	return factory;
-}
+export function createOdspDocumentServiceFactory(
+	options: IOdspDocumentServiceFactoryOptions,
+): OdspDocumentServiceFactory {
+	const persistedCache = options.persistedCache ?? new LocalPersistentCache();
+	const pointInTimeImplementation = options.pointInTimeDocumentServiceImplementation;
 
+	class ConfiguredOdspDocumentServiceFactory extends OdspDocumentServiceFactory {
+		public override readonly createPointInTimeDocumentService:
+			| IPointInTimeDocumentServiceFactory["createPointInTimeDocumentService"]
+			| undefined =
+			pointInTimeImplementation === undefined
+				? undefined
+				: async (resolvedUrl, targetSequenceNumber, logger, clientIsSummarizer) =>
+						pointInTimeImplementation({
+							resolvedUrl,
+							targetSequenceNumber,
+							logger,
+							clientIsSummarizer,
+							persistedCache,
+							getStorageToken: options.getStorageToken,
+							createDocumentService: async (url, odspLogger, cacheAndTracker, isSummarizer) =>
+								this.createDocumentServiceCore(url, odspLogger, cacheAndTracker, isSummarizer),
+						});
+	}
+
+	return new ConfiguredOdspDocumentServiceFactory(
+		options.getStorageToken,
+		options.getWebsocketToken,
+		persistedCache,
+		options.hostPolicy,
+	);
+}
 /**
  * Creates a factory instance for creating a sharepoint document service from a provided snapshot.
  *

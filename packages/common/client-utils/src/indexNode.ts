@@ -6,7 +6,12 @@
 // Entrypoint for Node.js-specific code in the package.
 // (See 'Isomorphic Code' section in the package README.md.)
 
-export { type Buffer } from "./bufferNode.js";
+export type { IsoBuffer as IsoBufferInterface } from "./buffer.js";
+export type {
+	Buffer,
+	IsoBufferConstructor,
+	IsoBufferEncoding,
+} from "./bufferNode.js";
 export {
 	bufferToString,
 	IsoBuffer,

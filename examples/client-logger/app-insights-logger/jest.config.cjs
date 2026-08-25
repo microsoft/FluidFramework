@@ -4,10 +4,15 @@
  */
 
 module.exports = {
-	preset: "ts-jest",
+	preset: "ts-jest/presets/default-esm",
 	roots: ["<rootDir>/src"],
 	transform: {
-		"^.+\\.tsx?$": "ts-jest",
+		"^.+\\.tsx?$": [
+			"ts-jest",
+			{
+				useESM: true,
+			},
+		],
 	},
 	testRegex: "(/__tests__/.*|(\\.|/)(test|spec))\\.(ts|tsx)?$",
 	testPathIgnorePatterns: ["/node_modules/", "dist"],

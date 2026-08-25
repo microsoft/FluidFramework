@@ -15,7 +15,7 @@ import {
 	loadExistingContainer,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
-import { IRequestHeader } from "@fluidframework/core-interfaces";
+import { IRequestHeader, LogLevel } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils/internal";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
@@ -635,65 +635,83 @@ async function setupOpsMetrics(
 	let t: NodeJS.Timeout | undefined;
 	const sendMetrics = (): void => {
 		if (submittedOps > 0) {
-			logger.send({
-				category: "metric",
-				eventName: "Fluid Operations Sent",
-				testHarnessEvent: true,
-				value: submittedOps,
-				clientId: container.clientId,
-				userName: getUserName(container),
-			});
+			logger.send(
+				{
+					category: "metric",
+					eventName: "Fluid Operations Sent",
+					testHarnessEvent: true,
+					value: submittedOps,
+					clientId: container.clientId,
+					userName: getUserName(container),
+				},
+				LogLevel.essential,
+			);
 		}
 		if (receivedOps > 0) {
-			logger.send({
-				category: "metric",
-				eventName: "Fluid Operations Received",
-				testHarnessEvent: true,
-				value: receivedOps,
-				clientId: container.clientId,
-				userName: getUserName(container),
-			});
+			logger.send(
+				{
+					category: "metric",
+					eventName: "Fluid Operations Received",
+					testHarnessEvent: true,
+					value: receivedOps,
+					clientId: container.clientId,
+					userName: getUserName(container),
+				},
+				LogLevel.essential,
+			);
 		}
 
 		if (submittedSignals > 0) {
-			logger.send({
-				category: "metric",
-				eventName: "Fluid Signals Submitted",
-				testHarnessEvent: true,
-				value: submittedSignals,
-				clientId: container.clientId,
-				userName: getUserName(container),
-			});
+			logger.send(
+				{
+					category: "metric",
+					eventName: "Fluid Signals Submitted",
+					testHarnessEvent: true,
+					value: submittedSignals,
+					clientId: container.clientId,
+					userName: getUserName(container),
+				},
+				LogLevel.essential,
+			);
 		}
 		if (receivedSignals > 0) {
-			logger.send({
-				category: "metric",
-				eventName: "Fluid Signals Received",
-				testHarnessEvent: true,
-				value: receivedSignals,
-				clientId: container.clientId,
-				userName: getUserName(container),
-			});
+			logger.send(
+				{
+					category: "metric",
+					eventName: "Fluid Signals Received",
+					testHarnessEvent: true,
+					value: receivedSignals,
+					clientId: container.clientId,
+					userName: getUserName(container),
+				},
+				LogLevel.essential,
+			);
 		}
 		if (submittedOps > 0) {
-			logger.send({
-				category: "metric",
-				eventName: "Size of Fluid Operations Sent",
-				testHarnessEvent: true,
-				value: submittedOpsSize,
-				clientId: container.clientId,
-				userName: getUserName(container),
-			});
+			logger.send(
+				{
+					category: "metric",
+					eventName: "Size of Fluid Operations Sent",
+					testHarnessEvent: true,
+					value: submittedOpsSize,
+					clientId: container.clientId,
+					userName: getUserName(container),
+				},
+				LogLevel.essential,
+			);
 		}
 		if (receivedOps > 0) {
-			logger.send({
-				category: "metric",
-				eventName: "Size of Fluid Operations Received",
-				testHarnessEvent: true,
-				value: receivedOpsSize,
-				clientId: container.clientId,
-				userName: getUserName(container),
-			});
+			logger.send(
+				{
+					category: "metric",
+					eventName: "Size of Fluid Operations Received",
+					testHarnessEvent: true,
+					value: receivedOpsSize,
+					clientId: container.clientId,
+					userName: getUserName(container),
+				},
+				LogLevel.essential,
+			);
 		}
 
 		submittedOps = 0;

@@ -1,6 +1,6 @@
 # Version marks runtime resolver
 
-Version marks keep mark storage out of the Fluid runtime. The app owns mark records, labels, timestamps, retention, promotion, **and the stored locator shape**. Fluid owns only a runtime resolver that can turn a pending batchId into a durable global sequence number, either when the batch is observed live or by scanning retained historical ops.
+Version marks keep mark storage out of the Fluid runtime. The app owns mark records, labels, app-authored timestamps, retention, promotion, **and the stored locator shape**. Fluid owns only a runtime resolver that can turn a pending batchId into a durable global sequence number and the corresponding server-generated op timestamp, either when the batch is observed live or by scanning retained historical ops.
 
 ## Implementation map
 
@@ -17,14 +17,16 @@ Version marks keep mark storage out of the Fluid runtime. The app owns mark reco
 
 ## Locator format
 
-Fluid does not define or export a locator type — the resolver works in primitives (`batchId`, `sequenceNumberLowerBound`, `sequenceNumber`), and the app packs/unpacks its own stored records. A typical app-owned shape is:
+Fluid does not define or export a locator type — the resolver works in primitives (`batchId`, `sequenceNumberLowerBound`, `sequenceNumber`, `timestamp`), and the app packs/unpacks its own stored records. A typical app-owned shape is:
 
 ```ts
 // App-owned type (not provided by Fluid)
 type MarkLocator =
-  | { kind: "resolved"; sequenceNumber: number }
+  | { kind: "resolved"; sequenceNumber: number; timestamp?: number }
   | { kind: "pending"; batchId: string; sequenceNumberLowerBound: number };
 ```
+
+`timestamp` is the server-generated timestamp of the op at `sequenceNumber`. It is optional in the API for compatibility with records and callers using the earlier resolved shape, but current runtime-produced resolved values populate it whenever the corresponding op timestamp is available.
 
 There is no runtime `expired` locator kind. Expiration or user-visible failure states are app-side policy.
 
@@ -40,9 +42,9 @@ For capture, `PendingStateManager.getMostRecentPendingBatchId()` locates the sta
 
 `VersionMarkResolver` implements `IVersionMarkResolver`:
 
-- `sealAndCaptureVersionMark()` synchronously seals the current outbound batch (flushes the runtime) and captures a mark at the resulting point, returning a `VersionMarkCapture`: either `{ kind: "pending", batchId, sequenceNumberLowerBound }` (an unacked local edit, resolve it later) or `{ kind: "resolved", sequenceNumber }` (no in-flight local work). A batch's `batchId` is only assigned when it is flushed into `PendingStateManager` — see [Batch identity](#batch-identity). Combining sealing and capture prevents a caller from reading an older batch or `undefined` immediately after an edit and prevents the batch id and lower bound from being read at different points. The app packs its own stored record from the result — the runtime does not define the stored locator shape. Call it at savepoint boundaries, not per keystroke, because sealing submits the pending batch.
-- `resolve(batchId, sequenceNumberLowerBound)` resolves live-then-history: (1) the ephemeral in-session `batchId -> sequenceNumber` map (batch seen live this session); (2) on a miss, an **out-of-session scan** — reads ops starting at `sequenceNumberLowerBound` (an inclusive lower bound) via an injected `IHistoricalOpReader`, routes each op through the **same unpack pipeline the live inbound path uses** (chunk reassembly, ungroup, decompress) and derives batch identity with the shared `inboundVersionMarkUpdate` helper, returning the matched batch's **last** op sequence number, or (when not found) `pending` / `unresolvable` distinguished by a read-derived availability check (see Resolution behavior). The reader is generic (backed by any driver's `IDocumentDeltaStorageService.fetchMessages`); when it is not wired, an unknown batchId is reported `pending`.
-- `onBatchSequenced(listener)` broadcasts `(batchId, sequenceNumber)` as each batch is processed inbound, so any connected client can promote a matching pending mark in its own store (resolution is not tied to the capturing client). Returns an unsubscribe. Listeners run synchronously on the inbound op path, so each invocation is isolated: a throwing listener is caught, logged (`VersionMarkListenerException`), and skipped — it cannot abort op processing or starve later listeners (mirroring the container's `EventEmitterWithErrorHandling`). A missed live promotion is recoverable — the app can still resolve that mark later via `resolve()`'s history scan — so a listener fault logs and continues rather than faulting the container.
+- `sealAndCaptureVersionMark()` synchronously seals the current outbound batch (flushes the runtime) and captures a mark at the resulting point, returning a `VersionMarkCapture`: either `{ kind: "pending", batchId, sequenceNumberLowerBound }` (an unacked local edit, resolve it later) or `{ kind: "resolved", sequenceNumber, timestamp? }` (no in-flight local work). The resolved timestamp comes from `getCurrentReferenceTimestampMs()`, which uses the DeltaManager's last processed message and falls back to the last-summary message. A batch's `batchId` is only assigned when it is flushed into `PendingStateManager` — see [Batch identity](#batch-identity). Combining sealing and capture prevents a caller from reading an older batch or `undefined` immediately after an edit and prevents the batch id and lower bound from being read at different points. The app packs its own stored record from the result — the runtime does not define the stored locator shape. Call it at savepoint boundaries, not per keystroke, because sealing submits the pending batch.
+- `resolve(batchId, sequenceNumberLowerBound)` resolves live-then-history: (1) the ephemeral in-session `batchId -> { sequenceNumber, timestamp }` map (batch seen live this session); (2) on a miss, an **out-of-session scan** — reads ops starting at `sequenceNumberLowerBound` (an inclusive lower bound) via an injected `IHistoricalOpReader`, routes each op through the **same unpack pipeline the live inbound path uses** (chunk reassembly, ungroup, decompress) and derives batch identity with the shared `inboundVersionMarkUpdate` helper, returning the matched batch's **last** op sequence number and server timestamp, or (when not found) `pending` / `unresolvable` distinguished by a read-derived availability check (see Resolution behavior). The reader is generic (backed by any driver's `IDocumentDeltaStorageService.fetchMessages`); when it is not wired, an unknown batchId is reported `pending`.
+- `onBatchSequenced(listener)` broadcasts `(batchId, sequenceNumber, timestamp?)` as each batch is processed inbound, so any connected client can promote a matching pending mark in its own store (resolution is not tied to the capturing client). The timestamp is from the batch's final op and is optional in the callback type for source compatibility with existing listeners. Returns an unsubscribe. Listeners run synchronously on the inbound op path, so each invocation is isolated: a throwing listener is caught, logged (`VersionMarkListenerException`), and skipped — it cannot abort op processing or starve later listeners (mirroring the container's `EventEmitterWithErrorHandling`). A missed live promotion is recoverable — the app can still resolve that mark later via `resolve()`'s history scan — so a listener fault logs and continues rather than faulting the container.
 
 Host exposure: `ContainerRuntime` exposes an `@internal` `versionMarkResolver` getter backed by the concrete `versionMarkResolverInternal`. An app gets it from the runtime instance passed to `provideEntryPoint`, or exposes it from its own entryPoint. A future public API may move this onto container-runtime definitions rather than the concrete runtime class.
 
@@ -53,35 +55,35 @@ Host exposure: `ContainerRuntime` exposes an `@internal` `versionMarkResolver` g
 1. Call the `flushPendingBatch` hook (`ContainerRuntime.flush`) so the current outbox batch is moved into `PendingStateManager` and assigned stable batch information.
 1. Read `getCurrentSequenceNumber()` (`deltaManager.lastSequenceNumber`) as the reference sequence number — the last globally-sequenced point at capture.
 1. Read `getCurrentPendingBatchId()` (`PendingStateManager.getMostRecentPendingBatchId()`).
-1. If no pending batch exists, return `{ kind: "resolved", sequenceNumber }` (the reference sequence number). This path does not enable inbound tracking because there is no pending batch to promote.
+1. If no pending batch exists, return `{ kind: "resolved", sequenceNumber, timestamp }` using the reference sequence number and `getCurrentReferenceTimestampMs()` (`deltaManager.lastMessage?.timestamp ?? messageAtLastSummary?.timestamp`). This path does not enable inbound tracking because there is no pending batch to promote.
 1. If a pending batch exists, set the sticky `tracking` flag and return `{ kind: "pending", batchId, sequenceNumberLowerBound }`, where `sequenceNumberLowerBound = referenceSequenceNumber + 1` (the pending batch's first possible sequence number — an inclusive lower bound).
 
 Keeping sealing and capture in one synchronous operation prevents callers from observing or persisting intermediate state between flushing, reading the sequence number, and reading the batch id.
 
 ## Consumer surface & public-API graduation
 
-An app (e.g. the Loop/office-bohemia host) consumes a small `@legacy @alpha` surface:
+An app (e.g. the Loop/office-bohemia host) consumes a small `@legacy @beta` surface:
 
 - Get the resolver: `ContainerRuntime.versionMarkResolver` -> `IVersionMarkResolver`.
 - `IVersionMarkResolver` methods: `sealAndCaptureVersionMark()` -> `VersionMarkCapture` (seals the batch and returns the locator data atomically), `onBatchSequenced(listener)` (live promotion), `resolve(batchId, sequenceNumberLowerBound)` -> `ResolveResult` (load-time sweep / restore).
-- Types `IVersionMarkResolver`, `ResolveResult`, and `VersionMarkCapture` are exported from `@fluidframework/container-runtime/legacy/alpha`.
+- Types `IVersionMarkResolver`, `ResolveResult`, and `VersionMarkCapture` are exported from `@fluidframework/container-runtime/legacy`.
 - Restore side: `loadContainerToSequenceNumber` and `ILoadContainerToSequenceNumberProps` are exported from `@fluidframework/container-loader/legacy/alpha`, fed the `resolved` sequence number.
-- ODSP point-in-time support: `getOdspPointInTimeDocumentServiceFactory` and
-  `IPointInTimeDocumentServiceFactory` are exported from
-  `@fluidframework/odsp-driver/legacy/alpha`.
+- ODSP point-in-time support: `createOdspDocumentServiceFactory` accepts the implementation exported
+  from `@fluidframework/odsp-driver/legacy/point-in-time` through its options.
 
 ### Capturing a mark (app side)
 
-Capture is a single `resolver.sealAndCaptureVersionMark()` call returning a `VersionMarkCapture` — either `{ kind: "pending", batchId, sequenceNumberLowerBound }` (an unacked local edit, resolve it later) or `{ kind: "resolved", sequenceNumber }` (no in-flight local work). Notes for consumers:
+Capture is a single `resolver.sealAndCaptureVersionMark()` call returning a `VersionMarkCapture` — either `{ kind: "pending", batchId, sequenceNumberLowerBound }` (an unacked local edit, resolve it later) or `{ kind: "resolved", sequenceNumber, timestamp? }` (no in-flight local work). Notes for consumers:
 
 - **It seals the current outbound batch synchronously** (flushes the runtime) so the just-submitted edit has a stable `batchId` before it is read. Call it at savepoint boundaries (e.g. an explicit "snapshot this version"), not per keystroke — it submits the pending batch as a side effect.
 - **The runtime composes the pending-vs-resolved result atomically.** The app no longer reads a batchId and a sequence number lower bound separately or decides pending-vs-resolved itself; that removes the earlier race where a batchId still in the outbox came back stale/`undefined` and got paired with a mismatched lower bound, persisting a wrong coordinate.
 - **The app still owns storage.** `VersionMarkCapture` is a transient result, not a persisted locator type — the app maps it into its own stored record.
+- **Persist the timestamp with a resolved locator when present.** The runtime populates the server-generated timestamp, while the optional API property keeps existing stored records and callers compatible.
 - **Works while disconnected.** A disconnected flush stamps a stable placeholder `batchId` (carried across resubmit), so capture returns a usable `pending` mark offline; no connection is required to capture.
 
 Not consumed by the app (internal plumbing): `IContainerContextInternal.fetchOps`, the concrete `VersionMarkResolver`, `IHistoricalOpReader`, `VersionMarkResolverRuntimeHooks` (including `getHistoricalOpReader` and `createHistoricalOpUnpacker`), `inboundVersionMarkUpdate`, and `processInboundBatch`.
 
-Before promotion beyond `@legacy @alpha`, move the access point off the concrete `@internal` `ContainerRuntime` class onto a public runtime interface (container-runtime-definitions) or the entryPoint / `FluidObject` provider pattern, and resolve the API-shape questions in [Future work](#future-work). The interface is primitive-typed (no `MarkLocator` or driver types leak). The `fetchOps` plumbing remains loader→runtime internal wiring on `IContainerContextInternal`; the resolver, loader helper, and ODSP factory are the host-facing touchpoints.
+Before promotion beyond `@legacy @beta`, move the access point off the concrete `@internal` `ContainerRuntime` class onto a public runtime interface (container-runtime-definitions) or the entryPoint / `FluidObject` provider pattern, and resolve the API-shape questions in [Future work](#future-work). The interface is primitive-typed (no `MarkLocator` or driver types leak). The `fetchOps` plumbing remains loader→runtime internal wiring on `IContainerContextInternal`; the resolver, loader helper, and ODSP factory are the host-facing touchpoints.
 
 ## Loader-to-runtime wiring
 
@@ -104,12 +106,15 @@ During `ContainerRuntime` construction, the context is narrowed to `IContainerCo
 The runtime hooks are wired as follows:
 
 - `getCurrentSequenceNumber` -> `deltaManager.lastSequenceNumber`.
+- `getCurrentTimestamp` -> `getCurrentReferenceTimestampMs()` (`deltaManager.lastMessage?.timestamp ?? messageAtLastSummary?.timestamp`).
 - `getCurrentMinimumSequenceNumber` -> `deltaManager.minimumSequenceNumber`.
 - `getCurrentPendingBatchId` -> `pendingStateManager.getMostRecentPendingBatchId()`.
 - `flushPendingBatch` -> `ContainerRuntime.flush()`.
 - `logger` -> a child logger in the `VersionMarkResolver` namespace.
 - `getHistoricalOpReader` -> a lightweight `{ fetchMessages: fetchOps }` adapter when `fetchOps` exists.
 - `createHistoricalOpUnpacker` -> a factory for a fresh `RemoteMessageProcessor` when `fetchOps` exists.
+
+Reusing `getCurrentReferenceTimestampMs()` keeps the sequence number and timestamp paired at load: `messageAtLastSummary.sequenceNumber` equals `deltaManager.initialSequenceNumber`, so before any new ops arrive the fallback timestamp and reported sequence number come from the same op.
 
 Each historical scan gets its own `RemoteMessageProcessor` because `OpSplitter` keeps chunk-reassembly state. The processor is built with the runtime's chunk-size and max-batch-size options, an `OpDecompressor`, and an `OpGroupingManager` configured with the runtime's grouped-batching setting. The returned unpack function filters system/server messages, clones the op, deserializes string contents with `ensureContentsDeserialized`, and runs the clone through `RemoteMessageProcessor.process`.
 
@@ -125,14 +130,14 @@ The version-mark update runs **after** pending-state validation because that val
 
 `inboundVersionMarkUpdate` handles every `InboundMessageResult` shape:
 
-- `fullBatch`: derive the effective id from `batchStart`; resolve at the last message's sequence number. An empty grouped batch has no messages, so it uses the batch-start key message's sequence number.
+- `fullBatch`: derive the effective id from `batchStart`; resolve at the last message's sequence number and server timestamp. An empty grouped batch has no messages, so it uses the batch-start key message's sequence number and timestamp.
 - `batchStartingMessage`: derive and carry the batch id without recording a sequence number yet.
-- `nextBatchMessage` with `batchEnd: true`: if an id is being carried, resolve it at this final message's sequence number and clear the carry.
+- `nextBatchMessage` with `batchEnd: true`: if an id is being carried, resolve it at this final message's sequence number and server timestamp, then clear the carry.
 - Mid-batch messages, or an end message without a carried id: preserve the current carry and emit no completed batch.
 
-`VersionMarkResolver.processInboundBatch` suppresses an exact duplicate `(batchId, sequenceNumber)` update. Otherwise it inserts the mapping, evicts entries below the current MSN, and synchronously invokes every subscribed listener. Each listener has its own `try/catch`; a fault emits `VersionMarkListenerException` and iteration continues.
+`VersionMarkResolver.processInboundBatch` records and broadcasts only the first resolved point observed for each `batchId`. A later update for the same id is ignored, even if a spurious service redelivery assigns it a different sequence number or timestamp; retaining the first-landed point avoids turning a tolerated duplicate into a container fault or remapping an already-promoted mark. For a new id, the resolver inserts the resolved point, evicts entries below the current MSN, and synchronously invokes every subscribed listener. Each listener has its own `try/catch`; a fault emits `VersionMarkListenerException` and iteration continues.
 
-The runtime does not store or mutate app marks. The listener only lets the app replace its own pending locator with the supplied sequence number.
+The runtime does not store or mutate app marks. The listener only lets the app replace its own pending locator with the supplied sequence number and server timestamp.
 
 ### Resolve control flow
 
@@ -143,7 +148,7 @@ The runtime does not store or mutate app marks. The listener only lets the app r
 1. Set `from = sequenceNumberLowerBound`, create a fresh unpacker, and create an `AbortController`.
 1. Request `fetchMessages(from, undefined, abortSignal)`.
 1. Read every stream chunk until the target is found or the stream returns `done`.
-1. Return the matched completed batch's last sequence number, or classify the miss.
+1. Return the matched completed batch's last sequence number and server timestamp, or classify the miss.
 1. Abort the controller in `finally`, both on success and on exhaustion/error, so the underlying fetch can stop any remaining work.
 1. `resolve()` emits one `Resolve` telemetry event (`outcome`, `path`, `durationMs`) before returning — on every path, including a thrown scan (`outcome: "error"`, emitted via `finally`). See [Telemetry](#telemetry).
 
@@ -183,7 +188,7 @@ This is an **interim, read-derived** signal: it infers availability from how the
 - The `AbortController` is aborted in `finally`, including when a reader, stream, or unpacker throws.
 - Listener failures are isolated, logged, and skipped because a missed live promotion remains recoverable through history.
 - Inbound pending-state validation runs before notification. A rejected or forked batch cannot cause an app-side promotion.
-- `sequenceNumberByBatchId` is only a session cache. Correctness must not depend on an entry remaining present; a miss can fall back to retained history.
+- `resolvedBatchById` is only a session cache. Correctness must not depend on an entry remaining present; a miss can fall back to retained history.
 
 ## Telemetry
 
@@ -243,11 +248,11 @@ If one-call ergonomics are ever wanted, the right shape is a thin wrapper that *
 
 ## Removed runtime persistence
 
-The previous runtime-owned marks map and `.versionMarks` summary blob were removed. There is no runtime durable mark store and no summarized durable `batchId -> sequenceNumber` index. Once a batch resolves, the app must persist the sequence number in its own store.
+The previous runtime-owned marks map and `.versionMarks` summary blob were removed. There is no runtime durable mark store and no summarized durable `batchId -> resolved point` index. Once a batch resolves, the app must persist the sequence number and, when present, its server timestamp in its own store.
 
 ## Fast-path cache bounding (MSN eviction)
 
-`VersionMarkResolver.sequenceNumberByBatchId` (`Map<batchId, sequenceNumber>`) is a **live-session fast-path cache**, not a source of truth: `processInboundBatch` inserts one entry per inbound batch, and `resolve()` reads it only as the fast path before falling back to the historical-op scan (`resolveFromHistory`). The protocol invariant is that a `batchId` maps to one `sequenceNumber`; the implementation suppresses an identical repeated update and otherwise uses `Map.set`. A miss degrades to the history scan when a reader is available, so eviction affects speed rather than correctness while the ops remain retained.
+`VersionMarkResolver.resolvedBatchById` (`Map<batchId, { sequenceNumber, timestamp }>`) is a **live-session fast-path cache**, not a source of truth: `processInboundBatch` inserts the first entry observed for each batch id, and `resolve()` reads it only as the fast path before falling back to the historical-op scan (`resolveFromHistory`). Although a batch id normally maps to one resolved point, a spurious service redelivery can reuse an effective batch id at a different sequence number. The implementation keeps the first-landed resolution and ignores later updates for that id. A miss degrades to the history scan when a reader is available, so eviction affects speed rather than correctness while the ops remain retained.
 
 ### What MSN means here
 
@@ -255,11 +260,11 @@ The minimum sequence number (MSN) is the protocol's collaboration-window floor. 
 
 MSN is **not** part of a stored mark and is not used to create, resolve, expire, or validate marks. Marks come only from an app calling `sealAndCaptureVersionMark()` and storing the returned locator. MSN also is **not** the service's op-retention boundary: an op can be below MSN and still be available from delta storage, or can later be trimmed according to service policy. `unresolvable` is about delta-storage retention, not MSN.
 
-The resolver uses MSN only to answer a cache-lifetime question: how long should a live container retain every observed `batchId -> sequenceNumber` mapping? Without eviction, a long-running container would add one entry for every tracked inbound batch and the map would grow without bound. MSN provides a protocol-derived, workload-sensitive boundary instead of a fixed entry count or timeout.
+The resolver uses MSN only to answer a cache-lifetime question: how long should a live container retain every observed `batchId -> { sequenceNumber, timestamp }` mapping? Without eviction, a long-running container would add one entry for every tracked inbound batch and the map would grow without bound. MSN provides a protocol-derived, workload-sensitive boundary instead of a fixed entry count or timeout.
 
 ### Why eviction below MSN is useful
 
-For the normal live-promotion path, a batch below MSN has already passed every active client. If tracking was enabled, `processInboundBatch` has already fired `onBatchSequenced`, giving the app an opportunity to replace its stored pending locator with the durable sequence number. Keeping that batch in the resolver's session cache after it leaves the collaboration window is therefore only an optimization for repeated lookups.
+For the normal live-promotion path, a batch below MSN has already passed every active client. If tracking was enabled, `processInboundBatch` has already fired `onBatchSequenced`, giving the app an opportunity to replace its stored pending locator with the durable sequence number and server timestamp. Keeping that batch in the resolver's session cache after it leaves the collaboration window is therefore only an optimization for repeated lookups.
 
 Eviction does not delete an app-owned mark or its resolved sequence number. A later `resolve()` cache miss scans retained historical ops when `fetchOps` is available. If no historical reader is wired, an evicted id returns `pending`; in that configuration the consumer must rely on the live `onBatchSequenced` promotion having been persisted. Likewise, listener failure is recoverable only when historical reads remain available.
 
@@ -318,7 +323,8 @@ The existing real-service ODSP suites under `packages/test/test-end-to-end-tests
 - Review the `IContainerContextInternal extends IContainerContext` cross-layer integration with Navin to establish the preferred pattern for features that span loader and runtime layers. In particular, determine whether explicit layer-compat support would make this interface evolution safer or more maintainable.
 - Consider merging `getCurrentPendingBatchId` into `flushPendingBatch` so sealing the batch returns its resulting `batchId`. This would keep the ordered flush-then-read operation inside one runtime hook instead of requiring the resolver to call two hooks in sequence.
 - Reevaluate whether distinguishing `pending` from `unresolvable` is valuable enough to justify the driver-dependent heuristics in `classifyMiss`. The current implementation makes educated guesses from empty reads and sequence gaps, so its confidence depends on how each driver's delta storage reports trimmed ranges. Consider returning the conservative `pending` result for ambiguous misses, collapsing the states, or deferring a definitive `unresolvable` result until delta storage exposes an explicit retention boundary.
-- Before promoting this API to `@beta`, try extending the existing `batchEnd` event to expose the effective stable batch ID and reuse that event for mark promotion. Avoid finalizing `onBatchSequenced` as a parallel batch-sequenced notification API unless the existing event cannot support this use case.
+- In a future beta-breaking release, make `timestamp` required on the resolved variants of `VersionMarkCapture` and `ResolveResult`, and make the third `onBatchSequenced` listener argument required. It is optional today only so existing callers, callbacks, mocks, and stored resolved records remain source-compatible. Before taking the break, verify all supported resolution paths always produce a server timestamp, migrate known consumers, and follow the beta-breaking release process.
+- Before promoting this API beyond `@beta`, try extending the existing `batchEnd` event to expose the effective stable batch ID and reuse that event for mark promotion. Avoid finalizing `onBatchSequenced` as a parallel batch-sequenced notification API unless the existing event cannot support this use case.
 - Define the teardown contract for listeners and in-flight `resolve()` calls. Subscriptions should not retain app objects after runtime disposal, and a resolver obtained from a closed runtime should fail predictably rather than starting new storage work.
 
 ### Flush side effect and corner cases
@@ -356,4 +362,4 @@ Suggested test coverage:
 
 Cross-client or headless resolution of an old pending mark falls back to the historical-op scan. This covers the case where the capturing client dies before its own ack and no other live client promoted the mark: a fresh client can resolve the stored `batchId` from retained ops even though that op will not reappear on the live inbound stream.
 
-Resolution is still bounded by op retention. Once the target range has been trimmed, there is no runtime-owned durable `batchId -> sequenceNumber` index to recover it, so the resolver returns `unresolvable`. As described above, the current trim detection is read-derived and driver-dependent; a future explicit op-availability API would make that classification contractual.
+Resolution is still bounded by op retention. Once the target range has been trimmed, there is no runtime-owned durable `batchId -> { sequenceNumber, timestamp }` index to recover it, so the resolver returns `unresolvable`. As described above, the current trim detection is read-derived and driver-dependent; a future explicit op-availability API would make that classification contractual.
