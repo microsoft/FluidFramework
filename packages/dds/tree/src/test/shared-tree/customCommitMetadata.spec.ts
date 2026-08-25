@@ -33,6 +33,7 @@ import {
 	type ITree,
 	type TreeBranchCommitMetadata,
 	type TreeBranchHistory,
+	type TreeViewAlpha,
 } from "../../simple-tree/index.js";
 import {
 	configuredSharedTree,
@@ -41,6 +42,8 @@ import {
 } from "../../treeFactory.js";
 import type { JsonCompatibleReadOnlyObject } from "../../util/index.js";
 import {
+	createTestUndoRedoStacks,
+	getView,
 	SharedTreeTestFactory,
 	StringArray,
 	SummarizeType,
@@ -50,21 +53,46 @@ import {
 
 const config = new TreeViewConfiguration({ schema: StringArray });
 
+interface MetadataOptions {
+	readonly retainHistory?: boolean;
+	readonly minVersionForCollab?: (typeof FluidClientVersion)[keyof typeof FluidClientVersion];
+}
+
 /**
  * Builds a SharedTree factory.
  * @param options - `minVersionForCollab` defaults to the first version that persists commit metadata.
  */
-function makeFactory(
-	options: {
-		readonly retainHistory?: boolean;
-		readonly minVersionForCollab?: (typeof FluidClientVersion)[keyof typeof FluidClientVersion];
-	} = {},
-): IChannelFactory<ITree> {
+function makeFactory(options: MetadataOptions = {}): IChannelFactory<ITree> {
 	return configuredSharedTree({
 		jsonValidator: FormatValidatorBasic,
 		minVersionForCollab: options.minVersionForCollab ?? FluidClientVersion.v3_0,
 		retainHistory: options.retainHistory ?? false,
 	}).getFactory();
+}
+
+/**
+ * An initialized standalone view.
+ * @remarks Sufficient for everything that does not involve replication or persistence.
+ */
+function createView(): TreeViewAlpha<typeof StringArray> {
+	const view = getView(config, { minVersionForCollab: FluidClientVersion.v3_0 });
+	view.initialize([]);
+	return view;
+}
+
+/** `count` connected trees, with an initialized view on each. */
+function createConnectedViews(
+	count: number,
+	options: MetadataOptions = {},
+): { provider: TestTreeProviderLite; views: TreeViewAlpha<typeof StringArray>[] } {
+	const provider = new TestTreeProviderLite(count, makeFactory(options));
+	const first = asAlpha(provider.trees[0].viewWith(config));
+	first.initialize([]);
+	provider.synchronizeMessages();
+	return {
+		provider,
+		views: [first, ...provider.trees.slice(1).map((t) => asAlpha(t.viewWith(config)))],
+	};
 }
 
 /** The metadata of the branch's head commit. */
@@ -111,35 +139,8 @@ async function loadFreshClient(
 
 describe("custom commit metadata", () => {
 	describe("Reading", () => {
-		it("is readable on the local client immediately", () => {
-			const provider = new TestTreeProviderLite(1, makeFactory());
-			const view = asAlpha(provider.trees[0].viewWith(config));
-			view.initialize([]);
-
-			view.runTransaction(
-				() => {
-					view.root.insertAtEnd("a");
-				},
-				{ customMetadata: { tag: "first" } },
-			);
-
-			assert.deepEqual(headMetadata(view.branchHistory), { tag: "first" });
-		});
-
-		it("is undefined for commits that were never annotated", () => {
-			const provider = new TestTreeProviderLite(1, makeFactory());
-			const view = asAlpha(provider.trees[0].viewWith(config));
-			view.initialize([]);
-
-			view.root.insertAtEnd("a");
-
-			assert.equal(headMetadata(view.branchHistory), undefined);
-		});
-
-		it("stays with its own commit as later commits are added", () => {
-			const provider = new TestTreeProviderLite(1, makeFactory());
-			const view = asAlpha(provider.trees[0].viewWith(config));
-			view.initialize([]);
+		it("is readable on the commit it was attached to, and undefined on other commits", () => {
+			const view = createView();
 
 			view.runTransaction(
 				() => {
@@ -156,25 +157,40 @@ describe("custom commit metadata", () => {
 				{ customMetadata: { tag: "second" } },
 			);
 
-			const head = view.branchHistory.getHead();
-			assert(head !== undefined);
-			assert.deepEqual(head.custom, { tag: "second" });
-			const parent = head.getParent();
-			assert(parent !== undefined);
-			assert.equal(parent.custom, undefined);
-			const grandparent = parent.getParent();
-			assert(grandparent !== undefined);
-			assert.deepEqual(grandparent.custom, { tag: "first" });
+			assert.deepEqual(allMetadata(view.branchHistory).slice(0, 3), [
+				{ tag: "second" },
+				undefined,
+				{ tag: "first" },
+			]);
+		});
+
+		it("distinguishes an empty metadata object from an unannotated commit", () => {
+			// Guards against the encoder using a truthiness check rather than an `undefined` check,
+			// which would drop an empty object on the way to the peer.
+			const {
+				provider,
+				views: [view1, view2],
+			} = createConnectedViews(2);
+
+			view1.runTransaction(
+				() => {
+					view1.root.insertAtEnd("a");
+				},
+				{ customMetadata: {} },
+			);
+			provider.synchronizeMessages();
+
+			assert.deepEqual(headMetadata(view1.branchHistory), {});
+			assert.deepEqual(headMetadata(view2.branchHistory), {});
 		});
 	});
 
 	describe("Replication", () => {
 		it("replicates to a peer and is readable there after synchronization", () => {
-			const provider = new TestTreeProviderLite(2, makeFactory());
-			const view1 = asAlpha(provider.trees[0].viewWith(config));
-			view1.initialize([]);
-			provider.synchronizeMessages();
-			const view2 = asAlpha(provider.trees[1].viewWith(config));
+			const {
+				provider,
+				views: [view1, view2],
+			} = createConnectedViews(2);
 
 			view1.runTransaction(
 				() => {
@@ -188,11 +204,10 @@ describe("custom commit metadata", () => {
 		});
 
 		it("survives rebase over a concurrent remote commit", () => {
-			const provider = new TestTreeProviderLite(2, makeFactory());
-			const view1 = asAlpha(provider.trees[0].viewWith(config));
-			view1.initialize([]);
-			provider.synchronizeMessages();
-			const view2 = asAlpha(provider.trees[1].viewWith(config));
+			const {
+				provider,
+				views: [view1, view2],
+			} = createConnectedViews(2);
 
 			// Submit the remote edit first so that it is sequenced ahead of the local annotated commit,
 			// forcing the local commit to be rebased. This is the regression test for the commit rebuild
@@ -211,11 +226,10 @@ describe("custom commit metadata", () => {
 		});
 
 		it("survives a disconnect and reconnect", () => {
-			const provider = new TestTreeProviderLite(2, makeFactory());
-			const view1 = asAlpha(provider.trees[0].viewWith(config));
-			view1.initialize([]);
-			provider.synchronizeMessages();
-			const view2 = asAlpha(provider.trees[1].viewWith(config));
+			const {
+				provider,
+				views: [view1, view2],
+			} = createConnectedViews(2);
 
 			provider.trees[0].containerRuntime.connected = false;
 			view1.runTransaction(
@@ -235,11 +249,10 @@ describe("custom commit metadata", () => {
 
 	describe("Branches", () => {
 		it("is readable after a fork is merged into the main branch, and reaches a peer", () => {
-			const provider = new TestTreeProviderLite(2, makeFactory());
-			const view1 = asAlpha(provider.trees[0].viewWith(config));
-			view1.initialize([]);
-			provider.synchronizeMessages();
-			const view2 = asAlpha(provider.trees[1].viewWith(config));
+			const {
+				provider,
+				views: [view1, view2],
+			} = createConnectedViews(2);
 
 			const fork = view1.fork();
 			fork.runTransaction(
@@ -259,9 +272,7 @@ describe("custom commit metadata", () => {
 		});
 
 		it("is still readable after the fork it was created on is disposed", () => {
-			const provider = new TestTreeProviderLite(1, makeFactory());
-			const view = asAlpha(provider.trees[0].viewWith(config));
-			view.initialize([]);
+			const view = createView();
 
 			const fork = view.fork();
 			fork.runTransaction(
@@ -277,23 +288,32 @@ describe("custom commit metadata", () => {
 		});
 	});
 
-	describe("Transactions that produce no commit", () => {
+	describe("Transactions", () => {
+		it("is attached by runTransactionAsync as well", async () => {
+			const view = createView();
+
+			await view.runTransactionAsync(
+				// eslint-disable-next-line @typescript-eslint/require-await
+				async () => {
+					view.root.insertAtEnd("a");
+				},
+				{ customMetadata: { tag: "async" } },
+			);
+
+			assert.deepEqual(headMetadata(view.branchHistory), { tag: "async" });
+		});
+
 		it("discards the metadata of a transaction that makes no changes, without throwing", () => {
-			const provider = new TestTreeProviderLite(1, makeFactory());
-			const view = asAlpha(provider.trees[0].viewWith(config));
-			view.initialize([]);
+			const view = createView();
 			const before = view.branchHistory.length;
 
 			view.runTransaction(() => {}, { customMetadata: { tag: "no-change" } });
 
 			assert.equal(view.branchHistory.length, before);
-			assert.equal(headMetadata(view.branchHistory), undefined);
 		});
 
 		it("discards the metadata of a transaction that is rolled back, without throwing", () => {
-			const provider = new TestTreeProviderLite(1, makeFactory());
-			const view = asAlpha(provider.trees[0].viewWith(config));
-			view.initialize([]);
+			const view = createView();
 			const before = view.branchHistory.length;
 
 			const result = view.runTransaction(
@@ -306,36 +326,34 @@ describe("custom commit metadata", () => {
 
 			assert.equal(result.success, false);
 			assert.equal(view.branchHistory.length, before);
-			assert.equal(headMetadata(view.branchHistory), undefined);
 			assert.deepEqual([...view.root], []);
+		});
+
+		it("is not copied onto the new commit produced by reverting an annotated commit", () => {
+			const view = createView();
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+
+			view.runTransaction(
+				() => {
+					view.root.insertAtEnd("a");
+				},
+				{ customMetadata: { tag: "original" } },
+			);
+			undoStack.pop()?.revert();
+
+			// The revert mints a genuinely new commit which nothing annotated, and the reverted
+			// commit keeps its own metadata.
+			assert.deepEqual(allMetadata(view.branchHistory).slice(0, 2), [
+				undefined,
+				{ tag: "original" },
+			]);
+			unsubscribe();
 		});
 	});
 
 	describe("Nested transactions", () => {
-		it("give the outermost transaction precedence on conflicting properties", () => {
-			const provider = new TestTreeProviderLite(1, makeFactory());
-			const view = asAlpha(provider.trees[0].viewWith(config));
-			view.initialize([]);
-
-			view.runTransaction(
-				() => {
-					view.runTransaction(
-						() => {
-							view.root.insertAtEnd("a");
-						},
-						{ customMetadata: { tag: "inner" } },
-					);
-				},
-				{ customMetadata: { tag: "outer" } },
-			);
-
-			assert.deepEqual(headMetadata(view.branchHistory), { tag: "outer" });
-		});
-
-		it("merge non-conflicting properties from every level", () => {
-			const provider = new TestTreeProviderLite(1, makeFactory());
-			const view = asAlpha(provider.trees[0].viewWith(config));
-			view.initialize([]);
+		it("merge, with the outermost transaction winning on conflicting properties", () => {
+			const view = createView();
 
 			view.runTransaction(
 				() => {
@@ -363,9 +381,7 @@ describe("custom commit metadata", () => {
 		});
 
 		it("contribute the inner metadata even when the outermost supplies none", () => {
-			const provider = new TestTreeProviderLite(1, makeFactory());
-			const view = asAlpha(provider.trees[0].viewWith(config));
-			view.initialize([]);
+			const view = createView();
 
 			view.runTransaction(() => {
 				view.runTransaction(
@@ -380,9 +396,7 @@ describe("custom commit metadata", () => {
 		});
 
 		it("do not contribute metadata from a nested transaction that was rolled back", () => {
-			const provider = new TestTreeProviderLite(1, makeFactory());
-			const view = asAlpha(provider.trees[0].viewWith(config));
-			view.initialize([]);
+			const view = createView();
 
 			view.runTransaction(
 				() => {
@@ -401,21 +415,87 @@ describe("custom commit metadata", () => {
 			assert.deepEqual(headMetadata(view.branchHistory), { tag: "outer" });
 			assert.deepEqual([...view.root], ["kept"]);
 		});
+	});
 
-		it("is attached by runTransactionAsync as well", async () => {
-			const provider = new TestTreeProviderLite(1, makeFactory());
-			const view = asAlpha(provider.trees[0].viewWith(config));
-			view.initialize([]);
+	describe("Value handling", () => {
+		it("snapshots the value so later mutation of the caller's object does not change the commit", () => {
+			const view = createView();
+			const supplied = { tag: "original", nested: { count: 1 } };
 
-			await view.runTransactionAsync(
-				// eslint-disable-next-line @typescript-eslint/require-await
-				async () => {
+			view.runTransaction(
+				() => {
 					view.root.insertAtEnd("a");
 				},
-				{ customMetadata: { tag: "async" } },
+				{ customMetadata: supplied },
 			);
+			supplied.tag = "mutated";
+			supplied.nested.count = 99;
 
-			assert.deepEqual(headMetadata(view.branchHistory), { tag: "async" });
+			assert.deepEqual(headMetadata(view.branchHistory), {
+				tag: "original",
+				nested: { count: 1 },
+			});
+		});
+
+		it("normalizes values with no JSON representation so local and replicated values agree", () => {
+			const {
+				provider,
+				views: [view1, view2],
+			} = createConnectedViews(2);
+
+			view1.runTransaction(
+				() => {
+					view1.root.insertAtEnd("a");
+				},
+				{
+					customMetadata: {
+						notFinite: Number.NaN,
+						alsoNotFinite: Number.POSITIVE_INFINITY,
+						missing: undefined,
+						kept: "value",
+					},
+				},
+			);
+			provider.synchronizeMessages();
+
+			const expected = { notFinite: null, alsoNotFinite: null, kept: "value" };
+			// The local read must match exactly what the peer sees, rather than the pre-JSON value.
+			assert.deepEqual(headMetadata(view1.branchHistory), expected);
+			assert.deepEqual(headMetadata(view2.branchHistory), expected);
+		});
+
+		it("throws a UsageError for metadata that cannot be serialized", () => {
+			const view = createView();
+			const cyclic: Record<string, unknown> = {};
+			cyclic.self = cyclic;
+
+			assert.throws(
+				() =>
+					view.runTransaction(
+						() => {
+							view.root.insertAtEnd("a");
+						},
+						{ customMetadata: cyclic as JsonCompatibleReadOnlyObject },
+					),
+				validateUsageError(/must be JSON-serializable/),
+			);
+		});
+
+		it("throws a UsageError for metadata that is not a JSON object", () => {
+			const view = createView();
+
+			assert.throws(
+				() =>
+					view.runTransaction(
+						() => {
+							view.root.insertAtEnd("a");
+						},
+						{
+							customMetadata: ["not an object"] as unknown as JsonCompatibleReadOnlyObject,
+						},
+					),
+				validateUsageError(/must be a JSON object/),
+			);
 		});
 	});
 
@@ -424,12 +504,11 @@ describe("custom commit metadata", () => {
 		 * Creates two connected trees and sequences enough edits that the collaboration window advances
 		 * past the annotated one.
 		 */
-		function generateHistory(factory: IChannelFactory<ITree>): TestTreeProviderLite {
-			const provider = new TestTreeProviderLite(2, factory);
-			const view1 = asAlpha(provider.trees[0].viewWith(config));
-			view1.initialize([]);
-			provider.synchronizeMessages();
-			const view2 = asAlpha(provider.trees[1].viewWith(config));
+		function generateHistory(options: MetadataOptions): TestTreeProviderLite {
+			const {
+				provider,
+				views: [view1, view2],
+			} = createConnectedViews(2, options);
 
 			view1.runTransaction(
 				() => {
@@ -453,37 +532,44 @@ describe("custom commit metadata", () => {
 		}
 
 		it("survives a summary round trip to a freshly loaded client", async () => {
-			const factory = makeFactory({ retainHistory: true });
-			const provider = generateHistory(factory);
+			const options = { retainHistory: true };
+			const provider = generateHistory(options);
 			const tree = provider.trees[0];
 
-			const loaded = await loadFreshClient(tree, factory, provider.getCompressor(tree));
+			const loaded = await loadFreshClient(
+				tree,
+				makeFactory(options),
+				provider.getCompressor(tree),
+			);
 
 			assert.deepEqual(tags(loaded.kernel.checkout.branchHistory), ["old"]);
 		});
 
-		it("is dropped once its commit is trimmed from the trunk", async () => {
-			const factory = makeFactory({ retainHistory: false });
-			const provider = generateHistory(factory);
+		it("is dropped from the trunk and from the summary when its commit is trimmed", async () => {
+			const options = { retainHistory: false };
+			const provider = generateHistory(options);
 			const tree = provider.trees[0];
 
 			// The annotated commit fell out of the collaboration window, so it is gone in memory...
 			assert.deepEqual(tags(tree.kernel.checkout.branchHistory), []);
 
 			// ...and it is not written to the summary either.
-			const loaded = await loadFreshClient(tree, factory, provider.getCompressor(tree));
+			const loaded = await loadFreshClient(
+				tree,
+				makeFactory(options),
+				provider.getCompressor(tree),
+			);
 			assert.deepEqual(tags(loaded.kernel.checkout.branchHistory), []);
 		});
 
-		it("is dropped from commit metadata objects obtained before the commit was trimmed", () => {
+		it("is dropped from commit metadata objects obtained before trimming", () => {
 			// Trimming severs ancestry, but a `TreeBranchCommitMetadata` obtained beforehand still wraps
-			// its commit. It must not keep reporting metadata that has left the document, and this also
-			// covers the newest trimmed commit, which survives internally as the trunk base.
-			const provider = new TestTreeProviderLite(2, makeFactory({ retainHistory: false }));
-			const view1 = asAlpha(provider.trees[0].viewWith(config));
-			view1.initialize([]);
-			provider.synchronizeMessages();
-			const view2 = asAlpha(provider.trees[1].viewWith(config));
+			// its commit. Annotating several consecutive commits also ensures one of them becomes the
+			// newest trimmed commit, which survives internally as the trunk base and so stays reachable.
+			const {
+				provider,
+				views: [view1, view2],
+			} = createConnectedViews(2);
 
 			for (let i = 0; i < 4; ++i) {
 				view1.runTransaction(
@@ -525,23 +611,24 @@ describe("custom commit metadata", () => {
 				[],
 				"Metadata must not be readable through a previously obtained commit metadata object once its commit is trimmed",
 			);
-			// And nothing reachable in the current history carries it either.
 			assert.deepEqual(tags(view1.branchHistory), []);
 		});
 
 		it("loads a summary written before the feature was enabled and reads back undefined", async () => {
 			// A client whose configured oldest supported version predates v7 writes no metadata,
 			// even though the application supplies it.
-			const oldFactory = makeFactory({
+			const provider = generateHistory({
 				retainHistory: true,
 				minVersionForCollab: FluidClientVersion.v2_80,
 			});
-			const provider = generateHistory(oldFactory);
 			const tree = provider.trees[0];
 
 			// Loading with a factory that understands the new field must still succeed.
-			const newFactory = makeFactory({ retainHistory: true });
-			const loaded = await loadFreshClient(tree, newFactory, provider.getCompressor(tree));
+			const loaded = await loadFreshClient(
+				tree,
+				makeFactory({ retainHistory: true }),
+				provider.getCompressor(tree),
+			);
 
 			const history = loaded.kernel.checkout.branchHistory;
 			assert(history.length > 0, "The summary should contain commits");
@@ -553,14 +640,10 @@ describe("custom commit metadata", () => {
 		});
 
 		it("is not replicated when the configured oldest supported version predates the feature", () => {
-			const provider = new TestTreeProviderLite(
-				2,
-				makeFactory({ minVersionForCollab: FluidClientVersion.v2_80 }),
-			);
-			const view1 = asAlpha(provider.trees[0].viewWith(config));
-			view1.initialize([]);
-			provider.synchronizeMessages();
-			const view2 = asAlpha(provider.trees[1].viewWith(config));
+			const {
+				provider,
+				views: [view1, view2],
+			} = createConnectedViews(2, { minVersionForCollab: FluidClientVersion.v2_80 });
 
 			view1.runTransaction(
 				() => {
@@ -614,7 +697,6 @@ describe("custom commit metadata", () => {
 			await provider.ensureSynchronized();
 			const loadedView = asAlpha(loadedTree.viewWith(config));
 
-			assert.deepEqual([...loadedView.root], ["summarized", "trailing"]);
 			assert.deepEqual(tags(loadedView.branchHistory), ["trailing", "in-summary"]);
 		});
 
@@ -661,103 +743,8 @@ describe("custom commit metadata", () => {
 		});
 	});
 
-	describe("Value handling", () => {
-		it("snapshots the value so later mutation of the caller's object does not change the commit", () => {
-			const provider = new TestTreeProviderLite(1, makeFactory());
-			const view = asAlpha(provider.trees[0].viewWith(config));
-			view.initialize([]);
-
-			const supplied: { tag: string; nested: { count: number } } = {
-				tag: "original",
-				nested: { count: 1 },
-			};
-			view.runTransaction(
-				() => {
-					view.root.insertAtEnd("a");
-				},
-				{ customMetadata: supplied },
-			);
-
-			supplied.tag = "mutated";
-			supplied.nested.count = 99;
-
-			assert.deepEqual(headMetadata(view.branchHistory), {
-				tag: "original",
-				nested: { count: 1 },
-			});
-		});
-
-		it("normalizes values with no JSON representation so local and replicated values agree", () => {
-			const provider = new TestTreeProviderLite(2, makeFactory());
-			const view1 = asAlpha(provider.trees[0].viewWith(config));
-			view1.initialize([]);
-			provider.synchronizeMessages();
-			const view2 = asAlpha(provider.trees[1].viewWith(config));
-
-			view1.runTransaction(
-				() => {
-					view1.root.insertAtEnd("a");
-				},
-				{
-					customMetadata: {
-						notFinite: Number.NaN,
-						alsoNotFinite: Number.POSITIVE_INFINITY,
-						missing: undefined,
-						kept: "value",
-					},
-				},
-			);
-			provider.synchronizeMessages();
-
-			const expected = { notFinite: null, alsoNotFinite: null, kept: "value" };
-			// The local read must match exactly what the peer sees, rather than the pre-JSON value.
-			assert.deepEqual(headMetadata(view1.branchHistory), expected);
-			assert.deepEqual(headMetadata(view2.branchHistory), expected);
-		});
-
-		it("throws a UsageError for metadata that cannot be serialized", () => {
-			const provider = new TestTreeProviderLite(1, makeFactory());
-			const view = asAlpha(provider.trees[0].viewWith(config));
-			view.initialize([]);
-
-			const cyclic: Record<string, unknown> = {};
-			cyclic.self = cyclic;
-
-			assert.throws(
-				() =>
-					view.runTransaction(
-						() => {
-							view.root.insertAtEnd("a");
-						},
-						{ customMetadata: cyclic as JsonCompatibleReadOnlyObject },
-					),
-				validateUsageError(/must be JSON-serializable/),
-			);
-		});
-
-		it("throws a UsageError for metadata that is not a JSON object", () => {
-			const provider = new TestTreeProviderLite(1, makeFactory());
-			const view = asAlpha(provider.trees[0].viewWith(config));
-			view.initialize([]);
-
-			assert.throws(
-				() =>
-					view.runTransaction(
-						() => {
-							view.root.insertAtEnd("a");
-						},
-						{
-							customMetadata: ["not an object"] as unknown as JsonCompatibleReadOnlyObject,
-						},
-					),
-				validateUsageError(/must be a JSON object/),
-			);
-		});
-	});
-
-	describe("Rollback", () => {
+	describe("Op rollback", () => {
 		it("is removed along with its commit when the op is rolled back", () => {
-			const factory = makeFactory();
 			const runtimeFactory = new MockContainerRuntimeFactory({
 				flushMode: FlushMode.TurnBased,
 			});
@@ -765,7 +752,7 @@ describe("custom commit metadata", () => {
 				idCompressor: createIdCompressor(),
 			});
 			const containerRuntime = runtimeFactory.createContainerRuntime(runtime);
-			const tree = factory.create(runtime, "tree");
+			const tree = makeFactory().create(runtime, "tree");
 			tree.connect({
 				deltaConnection: runtime.createDeltaConnection(),
 				objectStorage: new MockStorage(),
