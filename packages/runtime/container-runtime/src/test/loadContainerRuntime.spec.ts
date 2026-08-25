@@ -87,4 +87,29 @@ describe("loadContainerRuntime compatibility parameter", () => {
 			/Specify exactly one of oldestSupportedClient or minVersionForCollab/,
 		);
 	});
+
+	const callAlphaWithCompatibilityProperties = async (properties: {
+		readonly oldestSupportedClient?: OldestSupportedClientVersion;
+		readonly minVersionForCollab?: OldestSupportedClientVersion;
+	}): Promise<unknown> =>
+		loadContainerRuntimeAlpha({
+			...commonParams,
+			...properties,
+		} as unknown as LoadContainerRuntimeParams);
+
+	it("requires the canonical compatibility parameter at runtime for alpha", async () => {
+		await assert.rejects(
+			callAlphaWithCompatibilityProperties({}),
+			/oldestSupportedClient must be specified/,
+		);
+	});
+
+	it("rejects the deprecated compatibility parameter at runtime for alpha", async () => {
+		await assert.rejects(
+			callAlphaWithCompatibilityProperties({
+				minVersionForCollab: "2.0.0",
+			}),
+			/minVersionForCollab is not supported by loadContainerRuntimeAlpha/,
+		);
+	});
 });

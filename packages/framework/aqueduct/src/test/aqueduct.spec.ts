@@ -16,6 +16,7 @@ import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	type ContainerRuntimeFactoryWithDefaultDataStoreProps,
 	type DeprecatedBaseContainerRuntimeFactoryProps,
+	type DeprecatedContainerRuntimeFactoryWithDefaultDataStoreProps,
 } from "../container-runtime-factories/index.js";
 
 const commonProps = {
@@ -81,6 +82,16 @@ describe("BaseContainerRuntimeFactory compatibility parameter", () => {
 });
 
 describe("ContainerRuntimeFactoryWithDefaultDataStore compatibility parameter", () => {
+	it("preserves the deprecated construction overload", () => {
+		const props: DeprecatedContainerRuntimeFactoryWithDefaultDataStoreProps = {
+			...commonProps,
+			defaultFactory,
+			minVersionForCollab: "2.0.0",
+		};
+
+		assert.doesNotThrow(() => new ContainerRuntimeFactoryWithDefaultDataStore(props));
+	});
+
 	const createWithCompatibilityProperties = (properties: {
 		readonly oldestSupportedClient?: OldestSupportedClientVersion;
 		readonly minVersionForCollab?: OldestSupportedClientVersion;
@@ -90,6 +101,10 @@ describe("ContainerRuntimeFactoryWithDefaultDataStore compatibility parameter", 
 			defaultFactory,
 			...properties,
 		} as unknown as ContainerRuntimeFactoryWithDefaultDataStoreProps);
+
+	it("rejects a missing compatibility parameter", () => {
+		assert.throws(() => createWithCompatibilityProperties({}), /Specify exactly one/);
+	});
 
 	it("rejects both compatibility parameters", () => {
 		assert.throws(

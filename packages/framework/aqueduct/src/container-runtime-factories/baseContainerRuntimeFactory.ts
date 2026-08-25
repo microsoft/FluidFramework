@@ -177,7 +177,6 @@ export class BaseContainerRuntimeFactory
 		this.provideEntryPoint = props.provideEntryPoint;
 		this.requestHandlers = props.requestHandlers ?? [];
 		this.registry = new FluidDataStoreRegistry(this.registryEntries);
-		// eslint-disable-next-line import-x/no-deprecated -- accepted for compatibility. See #27851
 		this.oldestSupportedClient = getExplicitOldestSupportedClient(props);
 	}
 

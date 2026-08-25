@@ -922,6 +922,23 @@ function getExplicitOldestSupportedClient(
 	return oldestSupportedClient;
 }
 
+function getAlphaOldestSupportedClient(
+	params: Readonly<{
+		oldestSupportedClient?: OldestSupportedClientVersion;
+		minVersionForCollab?: OldestSupportedClientVersion;
+	}>,
+): OldestSupportedClientVersion {
+	if (params.minVersionForCollab !== undefined) {
+		throw new UsageError(
+			"minVersionForCollab is not supported by loadContainerRuntimeAlpha. Use oldestSupportedClient instead.",
+		);
+	}
+	if (params.oldestSupportedClient === undefined) {
+		throw new UsageError("oldestSupportedClient must be specified.");
+	}
+	return params.oldestSupportedClient;
+}
+
 /**
  * This is meant to be used by a {@link @fluidframework/container-definitions#IRuntimeFactory} to instantiate a container runtime.
  * @param params - An object which specifies all required and optional params necessary to instantiate a runtime.
@@ -973,7 +990,7 @@ export async function loadContainerRuntime(
 export async function loadContainerRuntimeAlpha(params: LoadContainerRuntimeParams): Promise<{
 	runtime: IContainerRuntime & IRuntime;
 }> {
-	const oldestSupportedClient = getExplicitOldestSupportedClient(params);
+	const oldestSupportedClient = getAlphaOldestSupportedClient(params);
 	return ContainerRuntime.loadRuntime2({
 		...params,
 		oldestSupportedClient,
@@ -1078,7 +1095,6 @@ export class ContainerRuntime
 			containerScope = {},
 			containerRuntimeCtor = ContainerRuntime,
 			oldestSupportedClient: oldestSupportedClientParam,
-			// eslint-disable-next-line import-x/no-deprecated -- accepted for compatibility. See #27851
 			minVersionForCollab: deprecatedMinVersionForCollab,
 		} = params;
 
