@@ -331,6 +331,20 @@ export function testCodec(): void {
 				assert.equal("customMetadata" in commit, true);
 				assert.equal(commit.customMetadata, undefined);
 			});
+
+			it("rejects a pre-v7 summary carrying customMetadata", () => {
+				// Encode at v6, then manually inject a customMetadata field into the trunk commit.
+				const codec = family.resolve(EditManagerFormatVersion.v6);
+				const encoded = encodeAt(EditManagerFormatVersion.v6);
+				const trunk = encoded.trunk as Record<string, unknown>[];
+				trunk[0] = { ...trunk[0], customMetadata: { m: { intent: "test" } } };
+				assert.throws(() =>
+					codec.decode(JSON.parse(JSON.stringify(encoded)), {
+						idCompressor: testIdCompressor,
+						isSummary: true,
+					}),
+				);
+			});
 		});
 		// TODO: testing EditManagerSummarizer class itself, specifically for attachment and normal summaries.
 		// TODO: format compatibility tests to detect breaking of existing documents.

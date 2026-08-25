@@ -675,8 +675,6 @@ export class SharedTreeCore<
 				} = message;
 				this.editManager
 					.getLocalBranch(branchId)
-					// Restore the metadata from the stashed op so that metadata attached before a
-					// disconnect survives the pending-state round trip.
 					.apply({ change, revision }, CommitKind.Default, customMetadata);
 				break;
 			}

@@ -228,8 +228,7 @@ export interface RunTransactionParamsAlpha extends RunTransactionParamsBeta {
 	 * {@link UntypedTreeViewAlpha.branchHistory | history}.
 	 *
 	 * The metadata shares the lifetime of the commit it is attached to: once that commit is trimmed from the
-	 * trunk, the metadata goes with it. Under the default trunk eviction policy that is the width of the
-	 * collaboration window.
+	 * trunk, the metadata goes with it.
 	 *
 	 * If this transaction produces no commit — because its body made no changes, or because it was rolled
 	 * back — the metadata is discarded without error.
@@ -246,15 +245,14 @@ export interface RunTransactionParamsAlpha extends RunTransactionParamsBeta {
 	 * The value is snapshotted when the transaction starts, so it is unaffected by later mutation of the
 	 * object passed here, and it is normalized to a {@link JsonCompatibleReadOnlyObject} as `JSON.stringify`
 	 * would (notably `NaN` and the infinities become `null`, matching how SharedTree treats such values
-	 * elsewhere). A `UsageError` is thrown if the value cannot be represented as a JSON object at all, such
+	 * elsewhere). An error is thrown if the value cannot be represented as a JSON object at all, such
 	 * as when it contains a cycle or a `bigint`.
 	 *
-	 * It travels on every annotated op and occupies space in the summary for as long as its commit survives,
-	 * so it should be kept small — treat a few hundred bytes as a guideline, and note that it is also
-	 * bounded by the runtime's maximum op size.
+	 * The metadata is persisted alongside its commit, so it should be kept small — treat a few hundred
+	 * bytes as a guideline, and note that it is also bounded by the runtime's maximum op size.
 	 *
-	 * Metadata is only written to the document when `minVersionForCollab` is set to a version that supports
-	 * it. Otherwise it is retained in memory for the local session but not persisted or replicated.
+	 * Metadata is only written to the document when `minVersionForCollab` is set to `"3.0.0"` or later.
+	 * Otherwise it is retained in memory for the local session but not persisted or replicated.
 	 */
 	readonly customMetadata?: JsonCompatibleReadOnlyObject;
 }

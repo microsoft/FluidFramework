@@ -88,7 +88,8 @@ function encodeCommit<TChangeset, T extends Commit<TChangeset>>(
 	// it to its persisted form and so that a client writing an older format never emits a field that
 	// format does not define.
 	if (encoded.customMetadata === undefined) {
-		return encoded;
+		const { customMetadata: _, ...withoutMetadata } = encoded;
+		return withoutMetadata;
 	}
 	const { customMetadata, ...rest } = encoded;
 	return includeCustomMetadata

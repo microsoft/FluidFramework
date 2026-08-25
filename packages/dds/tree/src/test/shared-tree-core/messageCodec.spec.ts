@@ -300,8 +300,21 @@ describe("message codec", () => {
 			const encoded = encodeAt(FluidClientVersion.v2_80, { metadata, children: [] });
 			assert.equal(encoded.version, MessageFormatVersion.v6);
 			assert.equal("customMetadata" in encoded, false);
-			// Also check the value did not leak out under some other key.
+			// Also verify the metadata value itself did not end up anywhere in the encoded output.
 			assert.equal(JSON.stringify(encoded).includes("alice"), false);
+		});
+
+		it("rejects a pre-v7 message carrying customMetadata", () => {
+			// Encode at v6, then manually inject a customMetadata field into the wire payload.
+			const encoded = encodeAt(FluidClientVersion.v2_80, { metadata, children: [] });
+			assert.equal(encoded.version, MessageFormatVersion.v6);
+			const tampered = { ...encoded, customMetadata: { m: metadata } };
+			const codec = makeCodec(FluidClientVersion.v2_80);
+			assert.throws(() =>
+				codec.decode(JSON.parse(JSON.stringify(tampered)), {
+					idCompressor: testIdCompressor,
+				}),
+			);
 		});
 
 		it("round-trips a nested tree through the real JSON wire form at v7", () => {

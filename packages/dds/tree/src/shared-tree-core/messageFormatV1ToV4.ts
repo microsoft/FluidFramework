@@ -5,7 +5,7 @@
 
 import type { SessionId } from "@fluidframework/id-compressor";
 import * as Type from "@sinclair/typebox";
-import type { TSchema } from "@sinclair/typebox";
+import type { ObjectOptions, TSchema } from "@sinclair/typebox";
 
 import { type EncodedRevisionTag, RevisionTagSchema, SessionIdSchema } from "../core/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
@@ -34,13 +34,6 @@ export interface Message {
 	 * Arbitrary, application-defined metadata to store alongside the commit in this message.
 	 * @remarks
 	 * Only written when encoding at {@link MessageFormatVersion.v7} or later.
-	 *
-	 * @privateRemarks
-	 * Like the equivalent field on the summary's `CommitBase`, this is declared for every format version
-	 * rather than only for v7, because making the schema version-dependent would require threading the
-	 * version through every schema builder. Writing is gated on the version by the codec, so this client
-	 * never emits the field into an older format; the consequence is only that a message claiming to be
-	 * pre-v7 which nonetheless carries the field would be accepted rather than rejected.
 	 */
 	readonly customMetadata?: EncodedCustomMetadataTree;
 
@@ -59,22 +52,33 @@ export interface Message {
 		| typeof MessageFormatVersion.v7;
 }
 
+const noAdditionalProps: ObjectOptions = { additionalProperties: false };
+
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
 // Return type is intentionally derived.
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export const Message = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
-	Type.Object({
-		revision: RevisionTagSchema,
-		originatorId: SessionIdSchema,
-		changeset: tChange,
-		customMetadata: Type.Optional(EncodedCustomMetadataTree),
-		version: Type.Optional(
-			Type.Union([
-				Type.Literal(MessageFormatVersion.v1),
-				Type.Literal(MessageFormatVersion.v2),
-				Type.Literal(MessageFormatVersion.v3),
-				Type.Literal(MessageFormatVersion.v4),
-				Type.Literal(MessageFormatVersion.v6),
-				Type.Literal(MessageFormatVersion.v7),
-			]),
-		),
-	});
+export const Message = <ChangeSchema extends TSchema>(
+	tChange: ChangeSchema,
+	includeCustomMetadata: boolean,
+) =>
+	Type.Object(
+		{
+			revision: RevisionTagSchema,
+			originatorId: SessionIdSchema,
+			changeset: tChange,
+			...(includeCustomMetadata
+				? { customMetadata: Type.Optional(EncodedCustomMetadataTree) }
+				: {}),
+			version: Type.Optional(
+				Type.Union([
+					Type.Literal(MessageFormatVersion.v1),
+					Type.Literal(MessageFormatVersion.v2),
+					Type.Literal(MessageFormatVersion.v3),
+					Type.Literal(MessageFormatVersion.v4),
+					Type.Literal(MessageFormatVersion.v6),
+					Type.Literal(MessageFormatVersion.v7),
+				]),
+			),
+		},
+		noAdditionalProps,
+	);
+/* eslint-enable @typescript-eslint/explicit-function-return-type */

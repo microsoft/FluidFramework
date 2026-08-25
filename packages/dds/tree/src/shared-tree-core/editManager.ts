@@ -354,9 +354,9 @@ export class EditManager<
 		// commit. This covers `newTrunkBase` too: that commit has been trimmed (it is not written to the
 		// summary) but stays reachable as the trunk base, so leaving its metadata in place would let a
 		// client keep reading metadata that a client loading from the summary would never see.
-		for (const commit of trimmedCommits) {
-			(commit as Mutable<typeof commit>).customMetadata = undefined;
-		}
+		// The trunk base is still accessible (it is the sentinel for the reachable history), so its
+		// metadata is cleared to `undefined`. Fully evicted commits get a throwing trap instead.
+		(newTrunkBase as Mutable<typeof newTrunkBase>).customMetadata = undefined;
 
 		// Only the last trimmed commit, which is the new trunk base, should remain accessible.
 		for (const commit of trimmedCommits.slice(0, -1)) {
@@ -372,6 +372,9 @@ export class EditManager<
 			});
 			Reflect.defineProperty(commit, "parent", {
 				get: () => fail(0xa60 /* Should not access 'parent' property of an evicted commit */),
+			});
+			Reflect.defineProperty(commit, "customMetadata", {
+				get: () => fail("Should not access 'customMetadata' property of an evicted commit"),
 			});
 		}
 

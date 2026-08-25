@@ -34,7 +34,10 @@ export interface EncodedEditManager<TChangeset> {
 		| typeof EditManagerFormatVersion.v7;
 }
 
-export const EncodedEditManager = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
+export const EncodedEditManager = <ChangeSchema extends TSchema>(
+	tChange: ChangeSchema,
+	includeCustomMetadata: boolean,
+) =>
 	Type.Object(
 		{
 			version: Type.Union([
@@ -45,8 +48,10 @@ export const EncodedEditManager = <ChangeSchema extends TSchema>(tChange: Change
 				Type.Literal(EditManagerFormatVersion.v6),
 				Type.Literal(EditManagerFormatVersion.v7),
 			]),
-			trunk: Type.Array(SequencedCommit(tChange)),
-			branches: Type.Array(Type.Tuple([SessionIdSchema, SummarySessionBranch(tChange)])),
+			trunk: Type.Array(SequencedCommit(tChange, includeCustomMetadata)),
+			branches: Type.Array(
+				Type.Tuple([SessionIdSchema, SummarySessionBranch(tChange, includeCustomMetadata)]),
+			),
 		},
 		noAdditionalProps,
 	);

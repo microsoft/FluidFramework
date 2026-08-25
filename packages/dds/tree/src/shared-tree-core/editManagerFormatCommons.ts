@@ -52,27 +52,23 @@ const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 // Many of the return types in this module are intentionally derived, rather than explicitly specified.
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 
-const CommitBase = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
+const CommitBase = <ChangeSchema extends TSchema>(
+	tChange: ChangeSchema,
+	includeCustomMetadata: boolean,
+) =>
 	Type.Object({
 		revision: RevisionTagSchema,
 		change: tChange,
 		sessionId: SessionIdSchema,
-		customMetadata: Type.Optional(EncodedCustomMetadataTree),
+		...(includeCustomMetadata
+			? { customMetadata: Type.Optional(EncodedCustomMetadataTree) }
+			: {}),
 	});
-/**
- * @privateRemarks Commits are generally encoded from `GraphCommit`s, which often contain extra data.
- * This `noAdditionalProps` is especially important in that light.
- *
- * Note that `customMetadata` is declared on {@link CommitBase} for every format version rather than
- * only for {@link EditManagerFormatVersion.v7} and later. Writing is gated on the format version by
- * `encodeCommit`, so this client never emits the field into an older format. The schema is shared
- * because making it version-dependent would require threading the version through every schema builder.
- * The consequence is that a summary claiming to be v6 which nonetheless contains the field would be
- * accepted (and the value surfaced) rather than rejected as an additional property. That is a
- * deliberate trade-off: no supported writer produces such a summary.
- */
-const Commit = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
-	Type.Composite([CommitBase(tChange)], noAdditionalProps);
+
+const Commit = <ChangeSchema extends TSchema>(
+	tChange: ChangeSchema,
+	includeCustomMetadata: boolean,
+) => Type.Composite([CommitBase(tChange, includeCustomMetadata)], noAdditionalProps);
 
 export type SeqNumber = Brand<number, "edit-manager.SeqNumber">;
 const SeqNumber = brandedNumberType<SeqNumber>({ multipleOf: 1 });
@@ -92,8 +88,11 @@ export interface SequencedCommit<TChangeset> extends Commit<TChangeset>, Sequenc
 /** The persisted counterpart of {@link SequencedCommit}. */
 export type EncodedSequencedCommit<TChangeset> = EncodedCommit<TChangeset> & SequenceId;
 
-export const SequencedCommit = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
-	Type.Composite([CommitBase(tChange), SequenceId], noAdditionalProps);
+export const SequencedCommit = <ChangeSchema extends TSchema>(
+	tChange: ChangeSchema,
+	includeCustomMetadata: boolean,
+) =>
+	Type.Composite([CommitBase(tChange, includeCustomMetadata), SequenceId], noAdditionalProps);
 
 /**
  * A branch off of the trunk for use in summaries.
@@ -111,11 +110,14 @@ export interface EncodedSummarySessionBranch<TChangeset> {
 	readonly commits: EncodedCommit<TChangeset>[];
 }
 
-export const SummarySessionBranch = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
+export const SummarySessionBranch = <ChangeSchema extends TSchema>(
+	tChange: ChangeSchema,
+	includeCustomMetadata: boolean,
+) =>
 	Type.Object(
 		{
 			base: RevisionTagSchema,
-			commits: Type.Array(Commit(tChange)),
+			commits: Type.Array(Commit(tChange, includeCustomMetadata)),
 		},
 		noAdditionalProps,
 	);
@@ -130,7 +132,10 @@ export interface EncodedSharedBranch<TChangeset> {
 	readonly peers: readonly [SessionId, Readonly<EncodedSummarySessionBranch<TChangeset>>][];
 }
 
-export const EncodedSharedBranch = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
+export const EncodedSharedBranch = <ChangeSchema extends TSchema>(
+	tChange: ChangeSchema,
+	includeCustomMetadata: boolean,
+) =>
 	Type.Object(
 		{
 			id: Type.Optional(Type.Number()),
@@ -138,8 +143,10 @@ export const EncodedSharedBranch = <ChangeSchema extends TSchema>(tChange: Chang
 			session: Type.Optional(SessionIdSchema),
 			author: Type.Optional(Type.String()),
 			base: Type.Optional(RevisionTagSchema),
-			trunk: Type.Array(SequencedCommit(tChange)),
-			peers: Type.Array(Type.Tuple([SessionIdSchema, SummarySessionBranch(tChange)])),
+			trunk: Type.Array(SequencedCommit(tChange, includeCustomMetadata)),
+			peers: Type.Array(
+				Type.Tuple([SessionIdSchema, SummarySessionBranch(tChange, includeCustomMetadata)]),
+			),
 		},
 		noAdditionalProps,
 	);

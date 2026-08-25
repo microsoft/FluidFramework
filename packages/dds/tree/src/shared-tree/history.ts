@@ -34,11 +34,21 @@ class LazyTreeBranchCommitMetadata implements TreeBranchCommitMetadata {
 	}
 
 	public get custom(): JsonCompatibleReadOnlyObject | undefined {
-		return flattenCustomMetadata(this.commit.customMetadata);
+		try {
+			return flattenCustomMetadata(this.commit.customMetadata);
+		} catch {
+			// The commit has been evicted and its properties throw on access.
+			return undefined;
+		}
 	}
 
 	public get customTree(): CustomMetadataTree | undefined {
-		return this.commit.customMetadata;
+		try {
+			return this.commit.customMetadata;
+		} catch {
+			// The commit has been evicted and its properties throw on access.
+			return undefined;
+		}
 	}
 
 	public getParent(): TreeBranchCommitMetadata | undefined {
