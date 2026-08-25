@@ -32,16 +32,22 @@ describe("loadContainerRuntime compatibility parameter", () => {
 				...commonParams,
 				minVersionForCollab: "2.0.0",
 			});
+		const callEitherOverload = async (
+			params: LoadContainerRuntimeParams | DeprecatedLoadContainerRuntimeParams,
+		): ReturnType<typeof loadContainerRuntime> => loadContainerRuntime(params);
 
 		acceptCanonical({
 			...commonParams,
 			oldestSupportedClient: "2.0.0",
+			minVersionForCollab: undefined,
 		});
 		acceptDeprecated({
 			...commonParams,
+			oldestSupportedClient: undefined,
 			minVersionForCollab: "2.0.0",
 		});
 		assert.equal(typeof callDeprecatedOverload, "function");
+		assert.equal(typeof callEitherOverload, "function");
 		acceptAlpha({
 			...commonParams,
 			oldestSupportedClient: "2.0.0",
@@ -85,6 +91,21 @@ describe("loadContainerRuntime compatibility parameter", () => {
 				minVersionForCollab: "2.0.0",
 			}),
 			/Specify exactly one of oldestSupportedClient or minVersionForCollab/,
+		);
+	});
+
+	it("forwards the deprecated compatibility parameter", async () => {
+		const context = {
+			taggedLogger: { send: () => {} },
+		} as unknown as IContainerContext;
+
+		await assert.rejects(
+			loadContainerRuntime({
+				...commonParams,
+				context,
+				minVersionForCollab: "1.2.3.4" as OldestSupportedClientVersion,
+			}),
+			/Invalid compatibility version: 1\.2\.3\.4/,
 		);
 	});
 

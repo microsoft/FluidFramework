@@ -61,7 +61,14 @@ export type DeprecatedContainerRuntimeFactoryWithDefaultDataStoreProps = Omit<
 	ContainerRuntimeFactoryWithDefaultDataStoreProps,
 	"oldestSupportedClient" | "minVersionForCollab"
 > & {
-	readonly oldestSupportedClient?: never;
+	readonly oldestSupportedClient?: undefined;
+	/**
+	 * Oldest version of Fluid Framework client that must be able to open and process documents
+	 * written by this container runtime.
+	 *
+	 * @deprecated 2.116.0. To be removed in 3.10.0. Use `oldestSupportedClient` instead.
+	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
+	 */
 	readonly minVersionForCollab: OldestSupportedClientVersion;
 };
 
@@ -88,6 +95,14 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
 	 */
 	public constructor(props: DeprecatedContainerRuntimeFactoryWithDefaultDataStoreProps);
+	/**
+	 * Creates a factory when the compatibility property is selected dynamically.
+	 */
+	public constructor(
+		props:
+			| ContainerRuntimeFactoryWithDefaultDataStoreProps
+			| DeprecatedContainerRuntimeFactoryWithDefaultDataStoreProps,
+	);
 	public constructor(props: ContainerRuntimeFactoryWithDefaultDataStorePropsInternal) {
 		const requestHandlers = props.requestHandlers ?? [];
 		const provideEntryPoint = props.provideEntryPoint ?? getDefaultFluidObject;

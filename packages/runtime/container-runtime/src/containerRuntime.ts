@@ -834,7 +834,7 @@ export interface LoadContainerRuntimeParams {
 	 * @deprecated 2.116.0. To be removed in 3.10.0. Use `oldestSupportedClient` instead.
 	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
 	 */
-	minVersionForCollab?: never;
+	minVersionForCollab?: undefined;
 }
 
 /**
@@ -851,7 +851,7 @@ export type DeprecatedLoadContainerRuntimeParams = Omit<
 	LoadContainerRuntimeParams,
 	"oldestSupportedClient" | "minVersionForCollab"
 > & {
-	readonly oldestSupportedClient?: never;
+	readonly oldestSupportedClient?: undefined;
 	/**
 	 * @deprecated 2.116.0. To be removed in 3.10.0. Pass `oldestSupportedClient` instead.
 	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
@@ -961,6 +961,18 @@ export function loadContainerRuntime(
  */
 export function loadContainerRuntime(
 	params: DeprecatedLoadContainerRuntimeParams,
+): Promise<IContainerRuntime & IRuntime>;
+/**
+ * Load a container runtime when the compatibility property is selected dynamically.
+ *
+ * @param params - Container runtime parameters using either the canonical or deprecated
+ * compatibility property.
+ * @returns A runtime that provides the container runtime and loader runtime interfaces.
+ * @legacy
+ * @beta
+ */
+export function loadContainerRuntime(
+	params: LoadContainerRuntimeParams | DeprecatedLoadContainerRuntimeParams,
 ): Promise<IContainerRuntime & IRuntime>;
 export async function loadContainerRuntime(
 	params: LoadContainerRuntimeParams | DeprecatedLoadContainerRuntimeParams,

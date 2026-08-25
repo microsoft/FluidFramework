@@ -41,6 +41,7 @@ describe("BaseContainerRuntimeFactory compatibility parameter", () => {
 		const props: ExtendedProps = {
 			...commonProps,
 			oldestSupportedClient: "2.0.0",
+			minVersionForCollab: undefined,
 			customProperty: true,
 		};
 
@@ -50,10 +51,19 @@ describe("BaseContainerRuntimeFactory compatibility parameter", () => {
 	it("preserves the deprecated construction overload", () => {
 		const props: DeprecatedBaseContainerRuntimeFactoryProps = {
 			...commonProps,
+			oldestSupportedClient: undefined,
 			minVersionForCollab: "2.0.0",
 		};
 
 		assert.doesNotThrow(() => new BaseContainerRuntimeFactory(props));
+	});
+
+	it("accepts a dynamically selected compatibility property", () => {
+		const createFactory = (
+			props: BaseContainerRuntimeFactoryProps | DeprecatedBaseContainerRuntimeFactoryProps,
+		): BaseContainerRuntimeFactory => new BaseContainerRuntimeFactory(props);
+
+		assert.equal(typeof createFactory, "function");
 	});
 
 	const createWithCompatibilityProperties = (properties: {
@@ -86,10 +96,22 @@ describe("ContainerRuntimeFactoryWithDefaultDataStore compatibility parameter", 
 		const props: DeprecatedContainerRuntimeFactoryWithDefaultDataStoreProps = {
 			...commonProps,
 			defaultFactory,
+			oldestSupportedClient: undefined,
 			minVersionForCollab: "2.0.0",
 		};
 
 		assert.doesNotThrow(() => new ContainerRuntimeFactoryWithDefaultDataStore(props));
+	});
+
+	it("accepts a dynamically selected compatibility property", () => {
+		const createFactory = (
+			props:
+				| ContainerRuntimeFactoryWithDefaultDataStoreProps
+				| DeprecatedContainerRuntimeFactoryWithDefaultDataStoreProps,
+		): ContainerRuntimeFactoryWithDefaultDataStore =>
+			new ContainerRuntimeFactoryWithDefaultDataStore(props);
+
+		assert.equal(typeof createFactory, "function");
 	});
 
 	const createWithCompatibilityProperties = (properties: {

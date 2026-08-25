@@ -81,7 +81,7 @@ export interface BaseContainerRuntimeFactoryProps {
 	 * @deprecated 2.116.0. To be removed in 3.10.0. Use `oldestSupportedClient` instead.
 	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
 	 */
-	minVersionForCollab?: never;
+	minVersionForCollab?: undefined;
 }
 
 /**
@@ -99,7 +99,14 @@ export type DeprecatedBaseContainerRuntimeFactoryProps = Omit<
 	BaseContainerRuntimeFactoryProps,
 	"oldestSupportedClient" | "minVersionForCollab"
 > & {
-	readonly oldestSupportedClient?: never;
+	readonly oldestSupportedClient?: undefined;
+	/**
+	 * Oldest version of Fluid Framework client that must be able to open and process documents
+	 * written by this container runtime.
+	 *
+	 * @deprecated 2.116.0. To be removed in 3.10.0. Use `oldestSupportedClient` instead.
+	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
+	 */
 	readonly minVersionForCollab: OldestSupportedClientVersion;
 };
 
@@ -168,6 +175,12 @@ export class BaseContainerRuntimeFactory
 	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
 	 */
 	public constructor(props: DeprecatedBaseContainerRuntimeFactoryProps);
+	/**
+	 * Creates a factory when the compatibility property is selected dynamically.
+	 */
+	public constructor(
+		props: BaseContainerRuntimeFactoryProps | DeprecatedBaseContainerRuntimeFactoryProps,
+	);
 	public constructor(props: BaseContainerRuntimeFactoryPropsInternal) {
 		super();
 
