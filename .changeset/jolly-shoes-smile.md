@@ -2,7 +2,6 @@
 "@fluidframework/aqueduct": minor
 "__section": fix
 ---
-
 Allow default-data-store runtime factories to receive compatibility settings
 
 `ContainerRuntimeFactoryWithDefaultDataStoreProps` now exposes the optional
