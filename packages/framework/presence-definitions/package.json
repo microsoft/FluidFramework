@@ -14,31 +14,13 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"import": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./lib/index.d.ts",
+			"default": "./lib/index.js"
 		},
-		"./internal": {
-			"import": "./lib/internal.js",
-			"require": "./dist/internal.js"
-		},
-		"./internal/workspace": {
-			"import": "./lib/workspace/workspaceTypes.js",
-			"require": "./dist/workspace/workspaceTypes.js"
-		},
-		"./internal/workspace-runtime": {
-			"import": "./lib/workspace-runtime/presenceStatesTypes.js",
-			"require": "./dist/workspace-runtime/presenceStatesTypes.js"
-		},
-		"./internal/workspace-states": {
-			"import": "./lib/workspace-states/stateDatastoreTypes.js",
-			"require": "./dist/workspace-states/stateDatastoreTypes.js"
-		}
+		"./internal": "./lib/internal.js",
+		"./internal/workspace": "./lib/workspace/workspaceTypes.js",
+		"./internal/workspace-runtime": "./lib/workspace-runtime/presenceStatesTypes.js",
+		"./internal/workspace-states": "./lib/workspace-states/stateDatastoreTypes.js"
 	},
 	"files": [
 		"dist/**/*",
@@ -56,7 +38,7 @@
 		"build:test": "concurrently npm:build:test:esm npm:build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack . --profile node16",
+		"check:are-the-types-wrong": "attw --pack . --profile esm-only",
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
