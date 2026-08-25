@@ -4,7 +4,7 @@
 
 ```ts
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export function assert(condition: boolean, message: string | number, debugMessageBuilder?: () => string): asserts condition;
 
 // @beta @legacy
