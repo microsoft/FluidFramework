@@ -41,6 +41,7 @@ export {
 	loaderCoreCompatDetails,
 	runtimeSupportRequirementsForLoader,
 	loaderCompatDetailsForRuntime,
+	loaderCompatDetailsForDriver,
 } from "./loaderLayerCompatState.js";
 export { loadContainerPaused } from "./loadPaused.js";
 export {

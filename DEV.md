@@ -209,7 +209,7 @@ To approve a new package's build scripts, add it to the appropriate `onlyBuiltDe
 The default configuration of the codespace Docker container is not compatible with [Claude sandboxing](https://code.claude.com/docs/en/sandboxing).
 There are multiple settings that need to be tweaked in both the container and Claude.
 
-### Container security flags ([`devcontainer.json`](.devcontainer/ai-agent/devcontainer.json) `runArgs`)
+### Container security flags ([`devcontainer.json`](.devcontainer/devcontainer.json) `runArgs`)
 
 Claude's sandbox uses [bubblewrap (bwrap)](https://github.com/containers/bubblewrap) to isolate processes in a user namespace with restricted mount/filesystem access. bwrap requires three capabilities that Docker containers don't grant by default:
 
@@ -219,7 +219,7 @@ Claude's sandbox uses [bubblewrap (bwrap)](https://github.com/containers/bubblew
 | `--cap-add SYS_ADMIN` | bwrap needs `CAP_SYS_ADMIN` to create new mount namespaces and perform bind mounts inside them. |
 | `--security-opt seccomp=unconfined` | Docker's default seccomp profile blocks `unshare`, `pivot_root`, and some `mount` calls. bwrap needs all three. |
 
-### Root mount propagation ([`postStartCommand`](.devcontainer/ai-agent/devcontainer.json))
+### Root mount propagation ([`postStartCommand`](.devcontainer/devcontainer.json))
 
 bwrap bind-mounts host paths into its sandbox namespace. For these mounts to propagate correctly, the root mount (`/`) must be marked as **shared**. Docker defaults to **private** propagation, which causes bwrap mounts to silently fail. The `postStartCommand` runs:
 
@@ -229,7 +229,7 @@ sudo mount --make-rshared /
 
 This recursively marks all mount points as shared, allowing bwrap's bind mounts to work.
 
-### Sandbox TMPDIR ([`postStartCommand`](.devcontainer/ai-agent/devcontainer.json))
+### Sandbox TMPDIR ([`postStartCommand`](.devcontainer/devcontainer.json))
 
 Claude Code sets `TMPDIR=/tmp/claude` inside the sandbox, but doesn't create the directory itself. The sandbox allowlist permits writes to `/tmp/claude`, and the weaker sandbox bind-mounts the real `/tmp` into the namespace, so the directory just needs to exist on the host. Without it, any tool that resolves `TMPDIR` on startup (pnpm, node, etc.) crashes with `ENOENT`. The `postStartCommand` runs `mkdir -p /tmp/claude` to pre-create it. This is a workaround for a Claude Code bug ([anthropics/claude-code#21654](https://github.com/anthropics/claude-code/issues/21654)).
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import {
 	revisionMetadataSourceFromInfo,
 	type ChangeAtomId,
@@ -284,7 +284,7 @@ class InvertManager extends CrossFieldManagerI<FieldChange> {
 		id: ChangesetLocalId,
 		count: number,
 	): void {
-		assert(false, 0x9c5 /* Keys should not be moved manually during invert */);
+		fail(0x9c5 /* Keys should not be moved manually during invert */);
 	}
 
 	private get table(): InvertTable {

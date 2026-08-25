@@ -50,7 +50,7 @@ export {
 	visitDelta,
 	createAnnouncedVisitor,
 	combineVisitors,
-	announceDelta,
+	makeBreakingVisitor,
 	applyDelta,
 	makeDetachedFieldIndex,
 	setGenericTreeField,
@@ -110,8 +110,9 @@ export {
 	DetachedFieldIndexFormatVersion,
 	detachedFieldIndexCodecBuilder,
 	areDetachedNodeIdsEqual,
-	deltaFieldMapHasVisibleChanges,
-	deltaFieldChangesHaveVisibleChanges,
+	deltaFieldMapHasChanges,
+	deltaFieldChangesHaveChanges,
+	getDeltaChangeProfile,
 	forEachNodeSubsequence,
 } from "./tree/index.js";
 

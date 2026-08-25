@@ -8,14 +8,16 @@ You can run this example using the following steps:
 > 2.  Open your web browser and navigate to <http://localhost:8080> to view the running application. This setup enables two clients to run simultaneously on the webpage.
 > 3.  Alternatively, you can append /manualAttach to the URL/port, such as http://localhost:8080/manualAttach. This mode will run only one client, providing a comparison to other versions of Bubble Bench that run with a single client. It's useful for understanding the performance of the Simple Tree in contrast to other configurations.
 
-For in browser testing update `./jest-puppeteer.config.js` to:
+## Testing
 
-```javascript
-launch: {
-  dumpio: true, // output browser console to cmd line
-  slowMo: 500,
-  headless: false,
-},
+```bash
+npm run test:playwright
+```
+
+To run the tests in a visible browser with the Playwright inspector:
+
+```bash
+npm run test:playwright -- --headed --debug
 ```
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
@@ -32,7 +34,7 @@ There are many ways to [contribute](https://github.com/microsoft/FluidFramework/
 -   Review the [source code changes](https://github.com/microsoft/FluidFramework/pulls).
 -   [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
 
-Detailed instructions for working in the repo can be found in the [Wiki](https://github.com/microsoft/FluidFramework/wiki).
+Detailed instructions for working in the repo can be found in the [Wiki](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Home.md).
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
 For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
@@ -43,9 +45,11 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 
 ## Help
 
-Not finding what you're looking for in this README? Check out [fluidframework.com](https://fluidframework.com/docs/).
+Not finding what you're looking for in this README?
+Check out [fluidframework.com](https://fluidframework.com/docs/).
 
-Still not finding what you're looking for? Please [file an issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
+Still not finding what you're looking for?
+Please [file an issue](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Contributing/Submitting-Bugs-and-Feature-Requests.md).
 
 Thank you!
 

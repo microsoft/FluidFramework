@@ -11,6 +11,7 @@ const frontEndUrl = `http://localhost:${frontendPort}`;
 export default defineConfig({
 	// Look for test files in the "test" directory, relative to this configuration file.
 	testDir: "test",
+	testMatch: "site-tests/**/*.spec.ts",
 
 	// Fail the build on CI if you accidentally left test.only in the source code.
 	forbidOnly: !!process.env.CI,

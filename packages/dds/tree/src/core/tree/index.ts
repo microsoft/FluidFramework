@@ -94,10 +94,10 @@ export {
 export { type DeltaVisitor, visitDelta } from "./visitDelta.js";
 export {
 	type AnnouncedVisitor,
-	announceDelta,
 	applyDelta,
 	createAnnouncedVisitor,
 	combineVisitors,
+	makeBreakingVisitor,
 	makeDetachedFieldIndex,
 } from "./visitorUtils.js";
 
@@ -110,9 +110,10 @@ export {
 	offsetDetachIdOpt,
 	emptyDelta,
 	areDetachedNodeIdsEqual,
-	deltaFieldMapHasVisibleChanges,
-	deltaFieldChangesHaveVisibleChanges,
 	subtractDetachedNodeId,
+	deltaFieldMapHasChanges,
+	deltaFieldChangesHaveChanges,
+	getDeltaChangeProfile,
 } from "./deltaUtil.js";
 
 export {

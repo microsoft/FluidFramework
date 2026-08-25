@@ -60,6 +60,27 @@ E.g.
 npm run test:realsvc:run -- --driver=r11s --r11sEndpointName=docker
 ```
 
+### Custom server endpoints
+
+Set `fluid__test__driver__<r11sEndpointName>` to a JSON configuration when running against a
+deployment with custom server endpoints. Existing configurations can continue to use `host`, which derives
+the Alfred, Historian, and Nexus URLs by replacing `www` in the host name.
+
+For deployments with unique service URLs, specify all three service URLs:
+
+```bash
+export fluid__test__driver__custom='{
+	"host": "https://app.example.com",
+	"tenantId": "fluid",
+	"tenantSecret": "<tenant-secret>",
+	"ordererUrl": "https://alfred.example.com",
+	"deltaStorageUrl": "https://historian.example.com",
+	"deltaStreamUrl": "https://nexus.example.com"
+}'
+
+npm run test:realsvc:run -- --driver=r11s --r11sEndpointName=custom
+```
+
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
@@ -74,7 +95,7 @@ There are many ways to [contribute](https://github.com/microsoft/FluidFramework/
 -   Review the [source code changes](https://github.com/microsoft/FluidFramework/pulls).
 -   [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
 
-Detailed instructions for working in the repo can be found in the [Wiki](https://github.com/microsoft/FluidFramework/wiki).
+Detailed instructions for working in the repo can be found in the [Wiki](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Home.md).
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
 For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
@@ -85,9 +106,11 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 
 ## Help
 
-Not finding what you're looking for in this README? Check out [fluidframework.com](https://fluidframework.com/docs/).
+Not finding what you're looking for in this README?
+Check out [fluidframework.com](https://fluidframework.com/docs/).
 
-Still not finding what you're looking for? Please [file an issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
+Still not finding what you're looking for?
+Please [file an issue](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Contributing/Submitting-Bugs-and-Feature-Requests.md).
 
 Thank you!
 
