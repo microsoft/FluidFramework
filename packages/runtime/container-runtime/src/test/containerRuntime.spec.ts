@@ -2903,9 +2903,11 @@ describe("Runtime", () => {
 
 				// Subscribing activates version-mark tracking on the inbound batch path.
 				const promotions: { sequenceNumber: number; timestamp: number | undefined }[] = [];
-				containerRuntime.versionMarkResolver.onBatchSequenced((_batchId, sequenceNumber, timestamp) => {
-					promotions.push({ sequenceNumber, timestamp });
-				});
+				containerRuntime.versionMarkResolver.onBatchSequenced(
+					(_batchId, sequenceNumber, timestamp) => {
+						promotions.push({ sequenceNumber, timestamp });
+					},
+				);
 
 				const makeMessage = (
 					sequenceNumber: number,
