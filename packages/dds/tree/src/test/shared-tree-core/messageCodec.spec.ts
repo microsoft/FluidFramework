@@ -229,7 +229,7 @@ describe("message codec", () => {
 		});
 	});
 
-	// These lock the permanent serialized representation of persisted commit metadata. The round-trip
+	// These lock the permanent serialized representation of custom commit metadata. The round-trip
 	// suites above only prove that the current encoder and decoder agree with each other, which would
 	// stay true if the field were renamed on both sides — but that would silently orphan the metadata in
 	// documents already written at v7.
@@ -237,16 +237,21 @@ describe("message codec", () => {
 		const sessionId: SessionId = "sessionId" as SessionId;
 		const metadata = { kind: "edit", nested: { author: "alice", count: 3 } };
 
-		function encodeAt(
+		function makeCodec(
 			minVersionForCollab: (typeof FluidClientVersion)[keyof typeof FluidClientVersion],
-		): Record<string, unknown> {
-			const codec = makeMessageCodecBuilder<TestChange>().build({
+		) {
+			return makeMessageCodecBuilder<TestChange>().build({
 				changeCodecs: TestChange.codecs,
 				dependentChangeFormatVersion: DependentFormatVersion.fromUnique(1),
 				revisionTagCodec: testRevisionTagCodec,
 				jsonValidator: FormatValidatorBasic,
 				minVersionForCollab,
 			});
+		}
+
+		function encodeAt(
+			minVersionForCollab: (typeof FluidClientVersion)[keyof typeof FluidClientVersion],
+		): Record<string, unknown> {
 			const message: DecodedMessage<TestChange> = {
 				type: "commit",
 				sessionId,
@@ -257,44 +262,32 @@ describe("message codec", () => {
 				},
 				branchId: "main",
 			};
-			return codec.encode(message, { idCompressor: testIdCompressor }) as unknown as Record<
-				string,
-				unknown
-			>;
+			return makeCodec(minVersionForCollab).encode(message, {
+				idCompressor: testIdCompressor,
+			}) as unknown as Record<string, unknown>;
 		}
 
 		it("writes the metadata under the 'customMetadata' key at v7", () => {
 			const encoded = encodeAt(FluidClientVersion.v3_0);
 			assert.equal(encoded.version, MessageFormatVersion.v7);
 			assert.deepEqual(encoded.customMetadata, metadata);
-			// Guard against the value being nested under some other key instead.
-			assert.equal(
-				JSON.stringify(encoded).includes(`"customMetadata":`),
-				true,
-				"The encoded op must carry the metadata under its documented key",
-			);
 		});
 
 		it("omits the metadata entirely before v7", () => {
 			const encoded = encodeAt(FluidClientVersion.v2_80);
 			assert.equal(encoded.version, MessageFormatVersion.v6);
 			assert.equal("customMetadata" in encoded, false);
+			// Also check the value did not leak out under some other key.
 			assert.equal(JSON.stringify(encoded).includes("alice"), false);
 		});
 
 		it("round-trips a nested metadata object through the real JSON wire form at v7", () => {
 			const encoded = encodeAt(FluidClientVersion.v3_0);
-			const codec = makeMessageCodecBuilder<TestChange>().build({
-				changeCodecs: TestChange.codecs,
-				dependentChangeFormatVersion: DependentFormatVersion.fromUnique(1),
-				revisionTagCodec: testRevisionTagCodec,
-				jsonValidator: FormatValidatorBasic,
-				minVersionForCollab: FluidClientVersion.v3_0,
-			});
 			// Go through an actual JSON round trip rather than passing the in-memory object along.
-			const decoded = codec.decode(JSON.parse(JSON.stringify(encoded)), {
-				idCompressor: testIdCompressor,
-			});
+			const decoded = makeCodec(FluidClientVersion.v3_0).decode(
+				JSON.parse(JSON.stringify(encoded)),
+				{ idCompressor: testIdCompressor },
+			);
 			assert(decoded.type === "commit");
 			assert.deepEqual(decoded.commit.customMetadata, metadata);
 		});

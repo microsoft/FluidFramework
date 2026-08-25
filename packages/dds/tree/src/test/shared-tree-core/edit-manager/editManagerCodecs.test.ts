@@ -238,7 +238,7 @@ export function testCodec(): void {
 			EditManagerFormatVersion.vSharedBranches,
 		]);
 
-		// These lock the permanent serialized representation of persisted commit metadata in the summary.
+		// These lock the permanent serialized representation of custom commit metadata in the summary.
 		// The round-trip suites above only prove that the current encoder and decoder agree with each
 		// other, which would remain true if the field were renamed on both sides — orphaning the metadata
 		// in summaries already written at v7.
@@ -286,16 +286,15 @@ export function testCodec(): void {
 
 			it("writes the metadata on trunk and peer branch commits at v7", () => {
 				const encoded = encodeAt(EditManagerFormatVersion.v7);
-				const serialized = JSON.stringify(encoded);
 				assert.equal(encoded.version, EditManagerFormatVersion.v7);
 				const trunk = encoded.trunk as { customMetadata?: unknown }[];
 				assert.deepEqual(trunk[0].customMetadata, metadata);
-				// The peer branch commit must carry it too, not just the trunk.
-				assert.equal(
-					serialized.split(`"customMetadata":`).length - 1,
-					2,
-					"Both the trunk commit and the peer branch commit should carry the metadata",
-				);
+				// The peer branch commits must carry it too, not just the trunk.
+				const branches = encoded.branches as [
+					SessionId,
+					{ commits: { customMetadata?: unknown }[] },
+				][];
+				assert.deepEqual(branches[0][1].commits[0].customMetadata, metadata);
 			});
 
 			it("omits the metadata entirely before v7", () => {
