@@ -52,8 +52,6 @@
 			}
 		}
 	},
-	"main": "lib/indexBrowser.js",
-	"types": "lib/indexBrowser.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:api-reports": "concurrently \"npm:build:api-reports:browser:*\" && concurrently \"npm:build:api-reports:node:*\"",
@@ -177,16 +175,20 @@
 				"build:esm"
 			],
 			"build:api-reports:browser:current": [
-				"build:exports:browser"
+				"build:exports:browser",
+				"^build:api-reports"
 			],
 			"build:api-reports:browser:legacy": [
-				"build:exports:browser"
+				"build:exports:browser",
+				"^build:api-reports"
 			],
 			"build:api-reports:node:current": [
-				"build:api-reports:browser:current"
+				"build:api-reports:browser:current",
+				"^build:api-reports"
 			],
 			"build:api-reports:node:legacy": [
-				"build:api-reports:browser:legacy"
+				"build:api-reports:browser:legacy",
+				"^build:api-reports"
 			],
 			"build:exports:browser": [
 				"build:esm"
@@ -231,16 +233,20 @@
 				"build:exports:node"
 			],
 			"ci:build:api-reports:browser:current": [
-				"build:exports:browser"
+				"build:exports:browser",
+				"^ci:build:api-reports"
 			],
 			"ci:build:api-reports:browser:legacy": [
-				"build:exports:browser"
+				"build:exports:browser",
+				"^ci:build:api-reports"
 			],
 			"ci:build:api-reports:node:current": [
-				"build:exports:node"
+				"build:exports:node",
+				"^ci:build:api-reports"
 			],
 			"ci:build:api-reports:node:legacy": [
-				"build:exports:node"
+				"build:exports:node",
+				"^ci:build:api-reports"
 			],
 			"test:mocha:cjs": [
 				"build:test:mocha:cjs"

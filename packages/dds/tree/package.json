@@ -76,8 +76,6 @@
 			}
 		}
 	},
-	"main": "lib/index.js",
-	"types": "lib/entrypoints/public.d.ts",
 	"scripts": {
 		"bench": "cross-env FLUID_TEST_PERF_MODE=1 mocha --parallel --jobs 6",
 		"bench-comment": "echo \"This package has the longest running benchmark suite, and also has a lot of test enumeration overhead which makes --parentProcess slow. Also --parallel doesn't support --parentProcess. These are several reasons to not use parent process on this specific package.\"",
