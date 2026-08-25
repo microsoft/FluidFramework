@@ -47,7 +47,6 @@ export {
 	type ObservationResults,
 	type TreeIdentifierUtils,
 	type ParentObject,
-	type ParentObjectEvents,
 	type TreeNodeParent,
 	independentView,
 	type IndependentViewOptions,

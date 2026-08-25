@@ -245,7 +245,6 @@ export {
 	ObjectSchemaOptionsAlpha, 
 	ObservationResults, 
 	ParentObject, 
-	ParentObjectEvents, 
 	PlainText, 
 	ReadSchema, 
 	ReadableField, 

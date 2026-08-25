@@ -56,7 +56,6 @@ export {
 
 export type {
 	ParentObject,
-	ParentObjectEvents,
 	TreeNodeParent,
 } from "./parentObject.js";
 

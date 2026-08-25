@@ -90,7 +90,7 @@ import {
 	type TreeContextAlpha,
 	type TreeNodeSchema,
 	getUnhydratedContext,
-	type TreeChangeEvents,
+	type TreeChangeEventsBeta,
 	UnhydratedFlexTreeNode,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
@@ -102,7 +102,7 @@ import {
 	UnhydratedParent,
 	ParentObjectBase,
 } from "./parentObject.js";
-import type { ParentObject, ParentObjectEvents, TreeNodeParent } from "./parentObject.js";
+import type { ParentObject, TreeNodeParent } from "./parentObject.js";
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
 import { UnhydratedTreeContext } from "./unhydratedTreeContext.js";
 
@@ -276,9 +276,8 @@ export interface TreeAlpha {
 	 * @returns A function that, when called, removes the listener.
 	 *
 	 * @remarks
-	 * A {@link ParentObject} supports the same change events as a {@link TreeNode} (see
-	 * {@link ParentObjectEvents}), so callers do not have to distinguish the two. Which events fire
-	 * depends on the kind of `ParentObject`:
+	 * A {@link ParentObject} supports the same change events as a {@link TreeNode}, so callers do not
+	 * have to distinguish the two. Which events fire depends on the kind of `ParentObject`:
 	 *
 	 * - For document-root parents, `treeChanged` proxies to the current root node (and automatically
 	 * re-subscribes when the root is replaced) and also fires on root replacement; `nodeChanged` fires
@@ -287,10 +286,10 @@ export interface TreeAlpha {
 	 * - For detached (removed) and unhydrated parents, `nodeChanged` and `treeChanged` fire when the node
 	 * is re-inserted into the document or hydrated (inserted for the first time), leaving the location empty.
 	 */
-	on<K extends keyof ParentObjectEvents>(
+	on<K extends keyof TreeChangeEventsBeta>(
 		node: ParentObject,
 		eventName: K,
-		listener: ParentObjectEvents[K],
+		listener: TreeChangeEventsBeta[K],
 	): () => void;
 
 	/**
@@ -307,10 +306,10 @@ export interface TreeAlpha {
 	 * known, and exposes the `nodeChanged`/`treeChanged` events common to both. For the richer array-node
 	 * payloads, first narrow `node` to a {@link TreeNode}.
 	 */
-	on<K extends keyof ParentObjectEvents>(
+	on<K extends keyof TreeChangeEventsBeta>(
 		node: TreeNodeParent,
 		eventName: K,
-		listener: TreeChangeEvents[K],
+		listener: TreeChangeEventsBeta[K],
 	): () => void;
 
 	/**
@@ -1290,10 +1289,10 @@ export const TreeAlpha: TreeAlpha = {
 		}
 	},
 
-	on<K extends keyof ParentObjectEvents>(
+	on<K extends keyof TreeChangeEventsBeta>(
 		node: TreeNodeParent,
 		eventName: K,
-		listener: ParentObjectEvents[K],
+		listener: TreeChangeEventsBeta[K],
 	): () => void {
 		// Handle ParentObject cases via polymorphic dispatch
 		if (node instanceof ParentObjectBase) {

@@ -62,43 +62,6 @@ export interface ParentObject extends ErasedBaseType<"@fluidframework/tree.Paren
 export type TreeNodeParent = TreeNode | ParentObject;
 
 /**
- * Events that can be subscribed to on a {@link ParentObject} via `TreeAlpha.on`.
- *
- * @remarks
- * A {@link ParentObject} exposes the same change events as a {@link TreeNode}, so callers do not have
- * to reason about whether the value returned by {@link (TreeAlpha:interface).parent2} is a node or a
- * parent object. It is modeled like a node whose single child is the root/detached/unhydrated node it
- * is the parent of:
- *
- * - `nodeChanged` fires when the child occupying this location changes (the occupant is replaced,
- * attached, or detached) — the shallow change to this location's single child, analogous to a change
- * to a direct property of a node.
- *
- * - `treeChanged` fires whenever anything changes in the subtree at this location — both changes to
- * the content of the current child and replacement of the child itself.
- *
- * Which events fire depends on the kind of {@link ParentObject}:
- *
- * - For document-root parents, `nodeChanged` fires when the root is replaced (including to/from a leaf
- * or empty), and `treeChanged` proxies to the current root node (and also fires when the root is
- * replaced).
- *
- * - For removed-root and unhydrated parents, both `nodeChanged` and `treeChanged` fire when the node is
- * re-attached or hydrated, leaving the location empty; there is no in-place content to report.
- *
- * @privateRemarks
- * The event signatures are reused from {@link TreeChangeEventsBeta} (rather than the plain
- * {@link TreeChangeEvents}) so that a listener written against these alpha events can be substituted up
- * the `alpha -> beta -> public` event stack. Because a `ParentObject` is a location without schema, its
- * `nodeChanged` never reports {@link NodeChangedData.changedProperties}.
- *
- * @sealed
- * @alpha
- */
-export interface ParentObjectEvents
-	extends Pick<TreeChangeEventsBeta, "nodeChanged" | "treeChanged"> {}
-
-/**
  * Builds a no-argument callback that delivers a {@link ParentObject}'s occupancy change to the given
  * `nodeChanged`/`treeChanged` listener.
  *
@@ -107,18 +70,18 @@ export interface ParentObjectEvents
  * delivered with an empty payload (no {@link NodeChangedData.changedProperties}). `treeChanged` takes no
  * argument. This lets both events flow through the no-argument {@link NotifyCoalescer}.
  */
-function makeOccupancyNotifier<K extends keyof ParentObjectEvents>(
+function makeOccupancyNotifier<K extends keyof TreeChangeEventsBeta>(
 	eventName: K,
-	listener: ParentObjectEvents[K],
+	listener: TreeChangeEventsBeta[K],
 ): () => void {
 	return eventName === "nodeChanged"
-		? () => (listener as ParentObjectEvents["nodeChanged"])({})
-		: (listener as ParentObjectEvents["treeChanged"]);
+		? () => (listener as TreeChangeEventsBeta["nodeChanged"])({})
+		: (listener as TreeChangeEventsBeta["treeChanged"]);
 }
 
 /**
- * Coalesces a no-argument notification (e.g. {@link ParentObjectEvents.nodeChanged} or
- * {@link ParentObjectEvents.treeChanged} fired for a root replacement) so that, inside a
+ * Coalesces a no-argument notification (e.g. `nodeChanged` or `treeChanged` fired for a root
+ * replacement) so that, inside a
  * {@link withBufferedTreeEvents} window, it fires at most once at the end of the window. Delivers
  * immediately when no window is active.
  */
@@ -199,9 +162,9 @@ export abstract class ParentObjectBase
 	 * @param listener - The callback to invoke when the event fires.
 	 * @returns A function that removes the listener when called.
 	 */
-	public abstract subscribe<K extends keyof ParentObjectEvents>(
+	public abstract subscribe<K extends keyof TreeChangeEventsBeta>(
 		eventName: K,
-		listener: ParentObjectEvents[K],
+		listener: TreeChangeEventsBeta[K],
 	): () => void;
 }
 
@@ -296,9 +259,9 @@ export class DocumentRootParent extends ParentObjectBase {
 		return [[undefined, isTreeNode(root) ? root : (root as TreeLeafValue)]];
 	}
 
-	public override subscribe<K extends keyof ParentObjectEvents>(
+	public override subscribe<K extends keyof TreeChangeEventsBeta>(
 		eventName: K,
-		listener: ParentObjectEvents[K],
+		listener: TreeChangeEventsBeta[K],
 	): () => void {
 		const branch = this.getViewableBranch();
 
@@ -322,7 +285,7 @@ export class DocumentRootParent extends ParentObjectBase {
 				: undefined;
 		const treeChangedCoalescer =
 			eventName === "treeChanged"
-				? new NotifyCoalescer(listener as ParentObjectEvents["treeChanged"])
+				? new NotifyCoalescer(listener as TreeChangeEventsBeta["treeChanged"])
 				: undefined;
 
 		const subscribeToRoot = (): void => {
@@ -342,7 +305,7 @@ export class DocumentRootParent extends ParentObjectBase {
 					? treeNodeApi.on(
 							rootNode,
 							"treeChanged",
-							listener as ParentObjectEvents["treeChanged"],
+							listener as TreeChangeEventsBeta["treeChanged"],
 						)
 					: undefined;
 		};
@@ -462,9 +425,9 @@ export class RemovedRootParent extends ParentObjectBase {
 		return [[undefined, this.detachedNode]];
 	}
 
-	public override subscribe<K extends keyof ParentObjectEvents>(
+	public override subscribe<K extends keyof TreeChangeEventsBeta>(
 		eventName: K,
-		listener: ParentObjectEvents[K],
+		listener: TreeChangeEventsBeta[K],
 	): () => void {
 		// A removed-root location reports the occupant leaving via both `nodeChanged` (the shallow
 		// change to its single child) and `treeChanged` (a change within its subtree). Both fire from
@@ -550,9 +513,9 @@ export class UnhydratedParent extends ParentObjectBase {
 		return [[undefined, this.getTreeNode()]];
 	}
 
-	public override subscribe<K extends keyof ParentObjectEvents>(
+	public override subscribe<K extends keyof TreeChangeEventsBeta>(
 		eventName: K,
-		listener: ParentObjectEvents[K],
+		listener: TreeChangeEventsBeta[K],
 	): () => void {
 		// An unhydrated-root location reports the occupant leaving (on hydration) via both `nodeChanged`
 		// (the shallow change to its single child) and `treeChanged` (a change within its subtree). Both

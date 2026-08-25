@@ -15,7 +15,6 @@ import {
 	DocumentRootParent,
 	RemovedRootParent,
 	UnhydratedParent,
-	type ParentObjectEvents,
 } from "../../shared-tree/parentObject.js";
 import { runTransaction, Tree } from "../../shared-tree/tree.js";
 import { TreeAlpha } from "../../shared-tree/treeAlpha.js";
@@ -35,8 +34,6 @@ import {
 	type TransactionConstraint,
 	type rollback,
 	withBufferedTreeEvents,
-	type TreeChangeEvents,
-	type TreeChangeEventsBeta,
 	allowUnused,
 } from "../../simple-tree/index.js";
 import type { requireAssignableTo } from "../../util/index.js";
@@ -901,40 +898,6 @@ describe("treeApi", () => {
 				TreeAlpha.on(parent, "childChanged", () => {});
 			}
 			allowUnused(_typeChecks);
-		});
-
-		// Type-only checks: a `ParentObject`'s change-event listeners must be substitutable up the
-		// `alpha -> beta -> public` event stack (per PR review). `ParentObjectEvents` reuses the beta
-		// `TreeChangeEventsBeta` signatures, so a listener written for the alpha `ParentObject` events is
-		// usable wherever the beta or public `nodeChanged`/`treeChanged` are expected (and vice versa).
-		it("ParentObject event listeners substitute up the alpha -> beta -> public stack (type-level)", () => {
-			// An alpha `ParentObject` listener is usable in the beta and public events APIs.
-			allowUnused<
-				requireAssignableTo<
-					ParentObjectEvents["treeChanged"],
-					TreeChangeEventsBeta["treeChanged"]
-				>
-			>();
-			allowUnused<
-				requireAssignableTo<ParentObjectEvents["treeChanged"], TreeChangeEvents["treeChanged"]>
-			>();
-			allowUnused<
-				requireAssignableTo<ParentObjectEvents["nodeChanged"], TreeChangeEvents["nodeChanged"]>
-			>();
-			// ...and the reverse also holds (the signatures are equivalent), so a public/beta listener
-			// works as a `ParentObject` listener too.
-			allowUnused<
-				requireAssignableTo<
-					TreeChangeEventsBeta["treeChanged"],
-					ParentObjectEvents["treeChanged"]
-				>
-			>();
-			allowUnused<
-				requireAssignableTo<TreeChangeEvents["treeChanged"], ParentObjectEvents["treeChanged"]>
-			>();
-			allowUnused<
-				requireAssignableTo<TreeChangeEvents["nodeChanged"], ParentObjectEvents["nodeChanged"]>
-			>();
 		});
 	});
 
