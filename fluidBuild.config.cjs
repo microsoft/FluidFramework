@@ -542,6 +542,10 @@ module.exports = {
 				"experimental/PropertyDDS/.*",
 				"azure/packages/azure-local-service/index.js",
 
+				// selfhost's sub-projects are plain CommonJS npm packages (Azure Functions app,
+				// CLIs); their cross-file require() calls assume the .js extension.
+				"tools/selfhost/.*",
+
 				// These oclif packages are still CJS vs. build-infrastructure which is ESM so is not excluded here.
 				"build-tools/packages/build-cli/bin/dev.js",
 				"build-tools/packages/build-cli/bin/run.js",
