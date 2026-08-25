@@ -30,6 +30,7 @@ import type { ISummarizer } from "@fluidframework/container-runtime/internal";
 import type { IFluidHandle, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import type { ISharedCounter } from "@fluidframework/counter/internal";
 import {
+	defaultTestOldestSupportedClient,
 	type ITestObjectProvider,
 	LoaderContainerTracker,
 	LocalCodeLoader,
@@ -108,6 +109,7 @@ export function createPointInTimeRuntimeFactory(
 	const dataObjectFactory = buildFactory(apis);
 	return new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: dataObjectFactory,
+		oldestSupportedClient: defaultTestOldestSupportedClient,
 		registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
 	}) as unknown as IRuntimeFactory;
 }
