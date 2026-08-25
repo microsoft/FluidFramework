@@ -1,5 +1,13 @@
 # @fluid-private/test-drivers
 
+## 3.0.0
+
+### Minor Changes
+
+- Build with TypeScript 6 ([#28052](https://github.com/microsoft/FluidFramework/pull/28052)) [7ab015c49de](https://github.com/microsoft/FluidFramework/commit/7ab015c49deec84833cdfe1fb5e1606b901f6e81)
+
+  FluidFramework Client SDK is now built using TypeScript 6. Consumers should build with TypeScript v6 or v7 or compatible tooling.
+
 ## 2.116.0
 
 Dependency updates only.

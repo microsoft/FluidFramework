@@ -1,5 +1,9 @@
 # @fluid-private/changelog-generator-wrapper
 
+## 3.0.0
+
+Dependency updates only.
+
 ## 2.116.0
 
 Dependency updates only.

@@ -1,5 +1,51 @@
 # @fluidframework/fluid-static
 
+## 3.0.0
+
+### Minor Changes
+
+- Remove deprecated compatibility mode APIs ([#27909](https://github.com/microsoft/FluidFramework/pull/27909)) [103cc0b7cbf](https://github.com/microsoft/FluidFramework/commit/103cc0b7cbf778d7d52ae1abc6e768107448836a)
+
+  Deprecated `CompatibilityMode` exports and overloads have been removed from `@fluidframework/fluid-static`, `@fluidframework/azure-client`, and `@fluidframework/tinylicious-client`.
+
+  Use `OldestSupportedClientVersion` SemVer strings instead:
+  - Pass `oldestSupportedClient` to `createTreeContainerRuntimeFactory`.
+  - Pass an `OldestSupportedClientVersion` as the `oldestSupportedClient` argument to `AzureClient.createContainer`, `AzureClient.getContainer`, `AzureClient.viewContainerVersion`, `TinyliciousClient.createContainer`, and `TinyliciousClient.getContainer`.
+  - Replace legacy mode `"1"` with `oldestSupportedClient: "1.0.0"`.
+  - Replace legacy mode `"2"` with `oldestSupportedClient: "2.0.0"` or a later supported version.
+
+  A separate Client 3.0 change raises the minimum supported value to `"2.0.0"`. Upgrade all
+  collaborating 1.x clients before adopting that change.
+
+  See [Remove `CompatibilityMode`](https://github.com/microsoft/FluidFramework/issues/23289) and [advance the minimum collaboration version to 2.0.0](https://github.com/microsoft/FluidFramework/issues/27460) for more information.
+
+- Require modern TypeScript module resolution ([#27970](https://github.com/microsoft/FluidFramework/pull/27970)) [325e2016ca9](https://github.com/microsoft/FluidFramework/commit/325e2016ca9978d4a1f7552c97ba34feac9df41f)
+
+  Fluid Framework Client packages no longer include type declaration compatibility entrypoints for TypeScript's legacy Node10 resolution mode (`"moduleResolution": "node"` or `"node10"`).
+  Applications upgrading to Fluid Framework 3.0 must use one of the following supported configurations:
+  - `"module": "Node16"` with `"moduleResolution": "Node16"`
+  - `"module": "NodeNext"` with `"moduleResolution": "NodeNext"`
+  - `"module": "ESNext"` with `"moduleResolution": "Bundler"`
+
+  Existing public package entrypoints exposed through `package.json` exports, including `/alpha`, `/beta`, and `/legacy`, remain available under supported module resolution modes.
+
+  See [Removal of Node10 resolutions in v3.0](https://github.com/microsoft/FluidFramework/issues/27457) for more information.
+
+- Client packages now target ES2022 ([#27846](https://github.com/microsoft/FluidFramework/pull/27846)) [91c78541bdd](https://github.com/microsoft/FluidFramework/commit/91c78541bddcbca5d6c5f357b023eeaee617d885)
+
+  The TypeScript compilation `target` and `lib` for the Fluid Framework client packages have been raised from ES2021/ES2020 to **ES2022**.
+  The published JavaScript now uses ES2022 language features (with correspondingly less down-leveling), so consuming these packages requires a runtime that supports ES2022.
+  All actively supported Node.js versions and evergreen browsers already meet this requirement.
+
+  Note that Fluid Framework has not officially supported targets older than ES2022 since before 2.0: this is documented in [ClientRequirements.md](https://github.com/microsoft/FluidFramework/blob/main/ClientRequirements.md) as well as the README for every client package.
+
+  It is possible this change could impact users of less up to date JavaScript runtimes.
+  Impacted users can use a tool like [babel](https://babeljs.io/) to transpile out unsupported language features.
+
+- Build with TypeScript 6 ([#28052](https://github.com/microsoft/FluidFramework/pull/28052)) [7ab015c49de](https://github.com/microsoft/FluidFramework/commit/7ab015c49deec84833cdfe1fb5e1606b901f6e81)
+
+  FluidFramework Client SDK is now built using TypeScript 6. Consumers should build with TypeScript v6 or v7 or compatible tooling.
+
 ## 2.116.0
 
 ### Minor Changes
