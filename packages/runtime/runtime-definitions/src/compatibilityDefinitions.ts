@@ -38,6 +38,12 @@
  * support for patch versions can be aged out as support for versions 1 and 2 are dropped (or simply deprecated and removed in a later major version).
  * Once gone that simplification is done, this type will align with {@link @fluidframework/driver-definitions#OldestSupportedServiceClientVersion} and the two types can be deduplicated.
  *
+ * In the future, we may want to generalize this to mean
+ * "a value that compares less than or equal to the oldest Fluid Framework client version that must be able to open and process the container".
+ * As a non-breaking change, we could then allow values such as "3.1" without requiring the trailing ".0".
+ * However, omitting ".0" might make the value look less like a version and obscure semver ordering; for example, how "3.21" is greater than "3.3".
+ * We may therefore want to retain the ".0" for clarity.
+ *
  * @input
  * @public
  */
