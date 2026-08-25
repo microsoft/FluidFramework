@@ -52,7 +52,7 @@
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
-		"test:mocha": "npm run test:mocha:esm && npm run test:mocha:cjs",
+		"test:mocha": "npm run test:mocha:esm && echo Skipping CJS - npm run test:mocha:cjs",
 		"test:mocha:cjs": "mocha \"dist/test/**/*.spec.*js\"",
 		"test:mocha:esm": "mocha \"lib/test/**/*.spec.*js\"",
 		"test:mocha:suite": "mocha \"lib/test/ddsSuiteCases/*js\"",

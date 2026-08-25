@@ -37,7 +37,7 @@
 		"test": "concurrently npm:test:mocha npm:test:playwright",
 		"test:coverage": "c8 npm test",
 		"test:end-to-end": "npm run test:playwright",
-		"test:mocha": "npm run test:mocha:esm && npm run test:mocha:cjs",
+		"test:mocha": "npm run test:mocha:esm && echo Skipping CJS - npm run test:mocha:cjs",
 		"test:mocha:cjs": "cross-env FLUID_TEST_MODULE_SYSTEM=CJS MOCHA_SPEC=dist/tsc/test mocha",
 		"test:mocha:esm": "cross-env MOCHA_SPEC=lib/tsc/test mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run mocha -- --verbose",

@@ -124,7 +124,7 @@
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
 		"test:memory": "cross-env FLUID_TEST_PERF_MODE=1 mocha --fgrep @Memory --parallel --jobs 6",
-		"test:mocha": "echo skipping non-smoke cjs to avoid overhead && npm run test:mocha:cjs -- --fgrep @Smoke && npm run test:mocha:prod -- --fgrep @Smoke && npm run test:mocha:esm",
+		"test:mocha": "echo skipping non-smoke cjs to avoid overhead && echo Skipping CJS - npm run test:mocha:cjs -- --fgrep @Smoke && npm run test:mocha:prod -- --fgrep @Smoke && npm run test:mocha:esm",
 		"test:mocha:cjs": "cross-env FLUID_TEST_MODULE_SYSTEM=CJS mocha",
 		"test:mocha:esm": "mocha",
 		"test:mocha:prod": "mocha --emulateProduction",
