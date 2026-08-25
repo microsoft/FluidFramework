@@ -1,50 +1,75 @@
-# Entry point source structure for `@fluidframework/core-utils`
+# Entry point structure for `@fluidframework/core-utils`
 
-This package has separate external and internal entrypoints. The entrypoints can export the same runtime value with different API metadata.
-This structure lets the package deprecate an API for external consumers while retaining a non-deprecated version for Fluid Framework code.
+This package has separate external and internal entry points.
+An entry point controls the exports that are available from a package import path.
 
-## `src/main.ts`
+A barrel file re-exports application programming interfaces (APIs) from other modules.
+This package uses three barrel files to give external and internal APIs different support metadata.
+For example, an external API can have the `@deprecated` tag while the equivalent internal API does not have this tag.
 
-This barrel contains exports that have the same definition and API metadata in the external and internal entrypoints.
-Both `src/index.ts` and `src/internal.ts` re-export this barrel.
+## Shared exports: `src/main.ts`
 
-## `src/index.ts`
+This barrel file contains exports that are the same in the external and internal entry points.
+The `src/index.ts` and `src/internal.ts` files re-export these shared APIs.
 
-This barrel is the source for the external runtime entrypoints.
-It re-exports `src/main.ts` and adds external-specific definitions.
-The entrypoint generator processes this barrel to produce the `public`, `alpha`, `beta`, and `legacy` declaration files.
+The file does not export `assert`.
+The external and internal entry points require different `assert` symbols.
 
-External consumers import APIs from the applicable supported entrypoint, such as `@fluidframework/core-utils` or `@fluidframework/core-utils/legacy`.
+## External exports: `src/index.ts`
 
-## `src/internal.ts`
+This barrel file is the source for the external entry points.
+It re-exports the shared APIs from `src/main.ts`.
+It also exports the deprecated external `assert` function.
 
-This barrel is the source for `@fluidframework/core-utils/internal`.
-It re-exports `src/main.ts` and adds internal-specific definitions.
-Use separate external and internal definitions when an API requires different metadata or typing in each entrypoint.
+The entry point generator uses this file to generate the `public`, `alpha`, `beta`, and `legacy` declaration files.
+External consumers import APIs from a supported path such as `@fluidframework/core-utils` or `@fluidframework/core-utils/legacy`.
 
-For example, the external `assert` export is deprecated, but Fluid Framework code still requires a non-deprecated version.
-The assertion module defines a non-deprecated internal implementation and a deprecated external function that delegates to it.
-The internal barrel exports the implementation under the name `assert`:
+## Internal exports: `src/internal.ts`
 
-```typescript
-export { assertInternal as assert } from "./assert.js";
-```
+This barrel file is the source for `@fluidframework/core-utils/internal`.
+It re-exports the shared APIs from `src/main.ts`.
+It exports `assertInternal` with the name `assert`.
 
-This direct export gives the internal entrypoint an independent, non-deprecated TypeScript symbol.
-Do not type the internal export with `typeof` the deprecated external symbol.
-TypeScript follows that reference and reports internal uses as deprecated.
-
-Fluid Framework code must import this API from the internal entrypoint:
+Fluid Framework code must import `assert` from the internal entry point:
 
 ```typescript
 import { assert } from "@fluidframework/core-utils/internal";
 ```
 
-## Package exports
+## Separate `assert` symbols
 
-The package export map directs external imports to generated release-level declaration files and the `index.js` runtime file.
-It directs internal imports to `internal.d.ts` and `internal.js`.
-The package provides equivalent paths under `lib` for ECMAScript modules and `dist` for CommonJS.
+TypeScript stores the `@deprecated` tag on the external `assert` symbol.
+A type-only re-export does not remove this tag.
+An internal export that uses `typeof` on the external symbol also retains this tag.
+As a result, IntelliSense marks internal uses as deprecated.
 
-The bundled API Extractor check uses `internal.d.ts` because the internal entrypoint contains the complete package API surface.
-Run `npm run build:compile` after an entrypoint change, then run `npm run check:exports` to validate all generated entrypoints and release tags.
+The assertion module defines a separate `assertInternal` symbol without the `@deprecated` tag.
+The external `assert` function calls `assertInternal`.
+The internal barrel file exports `assertInternal` with the name `assert`:
+
+```typescript
+export { assertInternal as assert } from "./assert.js";
+```
+
+This export gives the internal entry point an independent TypeScript symbol.
+Do not define its type with `typeof` and the external `assert` symbol.
+
+## Package export map
+
+The `exports` field in `package.json` maps each import path to its declaration file and JavaScript file.
+External import paths use generated declaration files and the `index.js` file.
+The internal import path uses the `internal.d.ts` and `internal.js` files.
+
+The `lib` directory contains ECMAScript module (ESM) output.
+The `dist` directory contains CommonJS output.
+
+The bundled API Extractor check uses `internal.d.ts`.
+This declaration file contains the complete package API surface.
+
+## Validate a change
+
+Run these commands from the `packages/common/core-utils` directory:
+
+1. Run `npm run build:compile` to compile the package and generate the entry points.
+2. Run `npm run check:exports` to validate the generated entry points and API release tags.
+3. Run `npm run check:biome` to validate the file format.
