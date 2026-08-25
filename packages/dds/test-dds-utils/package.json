@@ -28,9 +28,11 @@
 	"types": "lib/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
+		"build:api-reports": "api-extractor run --local --config api-extractor/api-extractor-report.json",
+		"build:cjs": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "api-extractor run --local",
-		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:docs": "api-extractor run --local --config api-extractor/api-extractor-model.json",
+		"build:esm": "tsc --project ./tsconfig.json",
 		"build:test": "concurrently npm:build:test:esm npm:build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
@@ -41,7 +43,8 @@
 		"check:exports:cjs:index": "api-extractor run --config api-extractor/api-extractor-lint-index.cjs.json",
 		"check:exports:esm:index": "api-extractor run --config api-extractor/api-extractor-lint-index.esm.json",
 		"check:format": "npm run check:biome",
-		"ci:build:docs": "api-extractor run",
+		"ci:build:api-reports": "api-extractor run --config api-extractor/api-extractor-report.json",
+		"ci:build:docs": "api-extractor run --config api-extractor/api-extractor-model.json",
 		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc _api-extractor-temp lib",
 		"eslint": "eslint --quiet --format stylish src",
 		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -55,8 +58,7 @@
 		"test:mocha:cjs": "mocha \"dist/test/**/*.spec.*js\"",
 		"test:mocha:esm": "mocha \"lib/test/**/*.spec.*js\"",
 		"test:mocha:suite": "mocha \"lib/test/ddsSuiteCases/*js\"",
-		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
+		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha"
 	},
 	"c8": {
 		"all": true,

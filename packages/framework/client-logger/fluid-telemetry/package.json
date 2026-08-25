@@ -48,13 +48,15 @@
 	"types": "lib/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
+		"build:api-reports": "api-extractor run --local --config api-extractor/api-extractor-report.json",
+		"build:cjs": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "api-extractor run --local",
+		"build:docs": "api-extractor run --local --config api-extractor/api-extractor-model.json",
 		"build:entrypoints": "fluid-build . --task build:entrypoints",
 		"build:entrypoints:cjs": "flub generate entrypoints --resolutionConditions require --outFileLegacyBeta legacy --outDir ./dist",
 		"build:entrypoints:esm": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib",
-		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:esm": "tsc --project ./tsconfig.json",
 		"build:test": "concurrently npm:build:test:esm npm:build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
@@ -67,7 +69,8 @@
 		"check:exports:esm:beta": "api-extractor run --config api-extractor/api-extractor-lint-beta.esm.json",
 		"check:exports:esm:public": "api-extractor run --config api-extractor/api-extractor-lint-public.esm.json",
 		"check:format": "npm run check:biome",
-		"ci:build:docs": "api-extractor run",
+		"ci:build:api-reports": "api-extractor run --config api-extractor/api-extractor-report.json",
+		"ci:build:docs": "api-extractor run --config api-extractor/api-extractor-model.json",
 		"clean": "rimraf --glob _api-extractor-temp coverage dist lib {alpha,beta,internal,legacy}.d.ts nyc \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"eslint": "eslint --quiet --format stylish src",
 		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -93,8 +96,7 @@
 		"test:realsvc": "npm run test:realsvc:tinylicious",
 		"test:realsvc:tinylicious": "start-server-and-test start:tinylicious:test 7074 test:realsvc:tinylicious:run",
 		"test:realsvc:tinylicious:report": "npm run test:realsvc:tinylicious",
-		"test:realsvc:tinylicious:run": "npm run test:mocha:end-to-end",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist"
+		"test:realsvc:tinylicious:run": "npm run test:mocha:end-to-end"
 	},
 	"dependencies": {
 		"@fluidframework/container-definitions": "workspace:~",

@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 
-import { exampleOldestSupportedClient } from "@fluid-example/example-utils";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/legacy";
 import { Loader } from "@fluidframework/container-loader/legacy";
 import {
@@ -16,6 +15,7 @@ import {
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 
 import { TableDocument } from "../document.js";
+import { pkgVersion } from "../packageVersion.js";
 
 interface LocalTableDocumentTestContext {
 	/** The table document connected to the local service. */
@@ -37,7 +37,7 @@ export async function createLocalTableDocument(): Promise<LocalTableDocumentTest
 	const tableDocumentFactory = TableDocument.getFactory();
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: tableDocumentFactory,
-		oldestSupportedClient: exampleOldestSupportedClient,
+		oldestSupportedClient: pkgVersion,
 		registryEntries: [tableDocumentFactory.registryEntry],
 	});
 	const loader = new Loader({

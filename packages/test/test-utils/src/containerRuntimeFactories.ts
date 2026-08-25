@@ -31,21 +31,11 @@ import type {
 	OldestSupportedClientVersion,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
-import {
-	defaultMinVersionForCollab,
-	RequestParser,
-	RuntimeFactoryHelper,
-} from "@fluidframework/runtime-utils/internal";
+import { RequestParser, RuntimeFactoryHelper } from "@fluidframework/runtime-utils/internal";
+
+import { defaultTestOldestSupportedClient } from "./testCompatibility.js";
 
 const defaultDataStoreId = "default";
-
-/**
- * Compatibility value for generic tests that previously relied on the runtime's implicit default.
- * Keeping it centralized preserves existing test behavior and simplifies future replacement.
- *
- * @internal
- */
-export const defaultTestOldestSupportedClient = defaultMinVersionForCollab;
 
 async function getDefaultFluidObject(runtime: IContainerRuntime): Promise<FluidObject> {
 	const entryPoint = await runtime.getAliasedDataStoreEntryPoint("default");

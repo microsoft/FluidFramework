@@ -1,7 +1,6 @@
 ---
 "@fluid-example/table-document": minor
 "@fluid-experimental/attributor": minor
-"@fluid-experimental/data-object-base": minor
 "@fluid-experimental/data-objects": minor
 "@fluid-experimental/dds-interceptions": minor
 "@fluid-experimental/ink": minor

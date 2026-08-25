@@ -49,15 +49,16 @@
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:api-reports": "concurrently \"npm:build:api-reports:*\"",
-		"build:api-reports:current": "api-extractor run --local --config api-extractor/api-extractor.current.json",
-		"build:api-reports:legacy": "api-extractor run --local --config api-extractor/api-extractor.legacy.json",
+		"build:api-reports:current": "api-extractor run --local --config api-extractor/api-extractor-report.current.json",
+		"build:api-reports:legacy": "api-extractor run --local --config api-extractor/api-extractor-report.legacy.json",
+		"build:cjs": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "api-extractor run --local",
+		"build:docs": "api-extractor run --local --config api-extractor/api-extractor-model.json",
 		"build:entrypoints": "fluid-build . --task build:entrypoints",
 		"build:entrypoints:cjs": "flub generate entrypoints --resolutionConditions require --outFileLegacyBeta legacy --outDir ./dist",
 		"build:entrypoints:esm": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib",
-		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:esm": "tsc --project ./tsconfig.json",
 		"build:test": "concurrently npm:build:test:esm npm:build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
@@ -71,9 +72,9 @@
 		"check:exports:esm:public": "api-extractor run --config api-extractor/api-extractor-lint-public.esm.json",
 		"check:format": "npm run check:biome",
 		"ci:build:api-reports": "concurrently \"npm:ci:build:api-reports:*\"",
-		"ci:build:api-reports:current": "api-extractor run --config api-extractor/api-extractor.current.json",
-		"ci:build:api-reports:legacy": "api-extractor run --config api-extractor/api-extractor.legacy.json",
-		"ci:build:docs": "api-extractor run",
+		"ci:build:api-reports:current": "api-extractor run --config api-extractor/api-extractor-report.current.json",
+		"ci:build:api-reports:legacy": "api-extractor run --config api-extractor/api-extractor-report.legacy.json",
+		"ci:build:docs": "api-extractor run --config api-extractor/api-extractor-model.json",
 		"clean": "rimraf --glob dist lib {alpha,beta,internal,legacy}.d.ts \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --quiet --format stylish src",
 		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -88,7 +89,6 @@
 		"test:realsvc:local:run": "mocha --recursive lib/test --timeout 10000",
 		"test:realsvc:tinylicious": "start-server-and-test start:tinylicious:test 7073 test:realsvc:local:run",
 		"test:realsvc:tinylicious:report": "npm run test:realsvc:tinylicious",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"typetests:gen": "flub generate typetests --dir . -v"
 	},
 	"dependencies": {
@@ -132,7 +132,12 @@
 		"uuid": "^11.1.0"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"TypeAlias_CompatibilityMode": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }

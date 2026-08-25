@@ -9,13 +9,12 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { FluidObject } from "@fluidframework/core-interfaces";
 // eslint-disable-next-line import-x/no-deprecated
 import { RuntimeRequestHandler } from "@fluidframework/request-handler/internal";
-import {
+import type {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
-	OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
 
-import { defaultTestOldestSupportedClient } from "./containerRuntimeFactories.js";
+import type { defaultTestOldestSupportedClient } from "./testCompatibility.js";
 
 const getDefaultFluidObject = async (runtime: IContainerRuntime): Promise<FluidObject> => {
 	const entryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
@@ -32,6 +31,17 @@ const getDefaultFluidObject = async (runtime: IContainerRuntime): Promise<FluidO
  */
 export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
 	readonly defaultFactory: IFluidDataStoreFactory;
+
+	/**
+	 * Compatibility setting used by all constructor shapes supported by this helper.
+	 *
+	 * @remarks
+	 * Positional constructors predate this property. Restricting the value to the canonical test
+	 * sentinel preserves their implicit behavior while allowing object-shaped constructors to
+	 * receive the now-explicit setting.
+	 */
+	readonly oldestSupportedClient: typeof defaultTestOldestSupportedClient;
+
 	/**
 	 * The data store registry for containers produced.
 	 */
@@ -66,29 +76,60 @@ export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
  *
  * @internal
  */
-export type ContainerRuntimeFactoryWithDefaultDataStoreConstructor =
+export type ContainerRuntimeFactoryWithDefaultDataStoreConstructor = (
 	| (new (
 			props: ContainerRuntimeFactoryWithDefaultDataStoreProps,
 	  ) => IRuntimeFactory)
 	| (new (
-			props: ContainerRuntimeFactoryWithDefaultDataStoreProps & {
-				readonly oldestSupportedClient: OldestSupportedClientVersion;
-				readonly minVersionForCollab?: never;
-			},
+			defaultFactory: IFluidDataStoreFactory,
+			registryEntries: NamedFluidDataStoreRegistryEntries,
+			dependencyContainer?: never,
+			// eslint-disable-next-line import-x/no-deprecated
+			requestHandlers?: RuntimeRequestHandler[],
+			runtimeOptions?: IContainerRuntimeOptions,
+			provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>,
 	  ) => IRuntimeFactory)
-	| (new (
-			props: ContainerRuntimeFactoryWithDefaultDataStoreProps & {
-				readonly oldestSupportedClient?: never;
-				readonly minVersionForCollab: OldestSupportedClientVersion;
-			},
-	  ) => IRuntimeFactory);
+) & { readonly length: number };
+
+type ObjectContainerRuntimeFactoryWithDefaultDataStoreConstructor = Extract<
+	ContainerRuntimeFactoryWithDefaultDataStoreConstructor,
+	new (
+		props: ContainerRuntimeFactoryWithDefaultDataStoreProps,
+	) => IRuntimeFactory
+>;
+
+type PositionalContainerRuntimeFactoryWithDefaultDataStoreConstructor = Exclude<
+	ContainerRuntimeFactoryWithDefaultDataStoreConstructor,
+	ObjectContainerRuntimeFactoryWithDefaultDataStoreConstructor
+>;
+
+const objectConstructorArity = 1;
+const positionalConstructorArity = 3;
+
+function isObjectConstructor(
+	ctor: ContainerRuntimeFactoryWithDefaultDataStoreConstructor,
+): ctor is ObjectContainerRuntimeFactoryWithDefaultDataStoreConstructor & {
+	readonly length: typeof objectConstructorArity;
+} {
+	return ctor.length === objectConstructorArity;
+}
+
+function isPositionalConstructor(
+	ctor: ContainerRuntimeFactoryWithDefaultDataStoreConstructor,
+): ctor is PositionalContainerRuntimeFactoryWithDefaultDataStoreConstructor & {
+	readonly length: typeof positionalConstructorArity;
+} {
+	return ctor.length === positionalConstructorArity;
+}
 
 /**
  * Creates a container runtime factory with default data store for backward compatibility.
  *
  * @remarks
- * This function is purely needed for back-compat as the constructor argument structure of
- * `ContainerRuntimeFactoryWithDefaultDataStore` was changed.
+ * Exact constructors loaded by compatibility tests use the positional shape through
+ * `2.0.0-internal.5.4.2` and the object shape beginning with `2.0.0-internal.7.0.0`.
+ * JavaScript constructor length counts parameters before the first default-valued parameter, so
+ * these shapes have arity 3 and 1 respectively. Unknown arities are rejected rather than guessed.
  *
  * @internal
  */
@@ -96,22 +137,12 @@ export const createContainerRuntimeFactoryWithDefaultDataStore = (
 	ctor: ContainerRuntimeFactoryWithDefaultDataStoreConstructor,
 	ctorProps: ContainerRuntimeFactoryWithDefaultDataStoreProps,
 ): IRuntimeFactory => {
-	try {
-		// Constructors loaded from versioned packages have different signatures. Try the current
-		// object shape first; the catch block retains the existing positional fallback for older
-		// constructors that TypeScript cannot distinguish from this union at runtime.
-		const currentCtor = ctor as new (
-			props: ContainerRuntimeFactoryWithDefaultDataStoreProps & {
-				readonly oldestSupportedClient: OldestSupportedClientVersion;
-				readonly minVersionForCollab?: never;
-			},
-		) => IRuntimeFactory;
-		return new currentCtor({
-			...ctorProps,
-			oldestSupportedClient: defaultTestOldestSupportedClient,
-		});
-	} catch (err) {
-		// IMPORTANT: The constructor argument structure changed, so this is needed for dynamically using older `ContainerRuntimeFactoryWithDefaultDataStore`s
+	const constructorArity = ctor.length;
+	if (isObjectConstructor(ctor)) {
+		return new ctor(ctorProps);
+	}
+
+	if (isPositionalConstructor(ctor)) {
 		const {
 			defaultFactory,
 			registryEntries,
@@ -120,8 +151,7 @@ export const createContainerRuntimeFactoryWithDefaultDataStore = (
 			runtimeOptions,
 			provideEntryPoint,
 		} = ctorProps;
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		return new (ctor as any)(
+		return new ctor(
 			defaultFactory,
 			registryEntries,
 			dependencyContainer,
@@ -130,4 +160,8 @@ export const createContainerRuntimeFactoryWithDefaultDataStore = (
 			provideEntryPoint ?? getDefaultFluidObject,
 		);
 	}
+
+	throw new Error(
+		`Unsupported ContainerRuntimeFactoryWithDefaultDataStore constructor arity: ${constructorArity}`,
+	);
 };

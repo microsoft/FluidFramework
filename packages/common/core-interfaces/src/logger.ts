@@ -78,20 +78,6 @@ export interface LogLevelConst {
 	 * @remarks It is recommended that these should always be collected, even in production, for diagnostic purposes.
 	 */
 	readonly essential: 30;
-
-	/**
-	 * Default LogLevel
-	 * @deprecated Prefer {@link LogLevelConst.info | LogLevel.info} when selecting a level explicitly to preserve prior treatment. Planned to be removed in 3.0.0.
-	 * @see {@link https://github.com/microsoft/FluidFramework/issues/26969 | Issue #26969} for removal tracking.
-	 */
-	readonly default: 20;
-
-	/**
-	 * To log errors.
-	 * @deprecated Prefer {@link LogLevelConst.essential | LogLevel.essential} when selecting a level. Planned to be removed in 3.0.0.
-	 * @see {@link https://github.com/microsoft/FluidFramework/issues/26969 | Issue #26969} for removal tracking.
-	 */
-	readonly error: 30;
 }
 
 /**
@@ -103,8 +89,6 @@ export const LogLevel: LogLevelConst = {
 	verbose: 10,
 	info: 20,
 	essential: 30,
-	default: 20,
-	error: 30,
 };
 
 /**

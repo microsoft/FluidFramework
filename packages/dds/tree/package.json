@@ -84,12 +84,13 @@
 		"bench:profile": "cross-env FLUID_TEST_PERF_MODE=1 mocha --v8-prof --v8-logfile=profile.log --v8-no-logfile-per-isolate --timeout 999999 --fgrep @ExecutionTime --reporter @fluid-tools/benchmark/dist/mocha/Reporter.js && node --prof-process profile.log > profile.txt && rimraf profile.log && echo See results in profile.txt",
 		"build": "fluid-build . --task build",
 		"build:api-reports": "concurrently \"npm:build:api-reports:*\"",
-		"build:api-reports:current": "api-extractor run --local --config api-extractor/api-extractor.current.json",
-		"build:api-reports:legacy": "api-extractor run --local --config api-extractor/api-extractor.legacy.json",
+		"build:api-reports:current": "api-extractor run --local --config api-extractor/api-extractor-report.current.json",
+		"build:api-reports:legacy": "api-extractor run --local --config api-extractor/api-extractor-report.legacy.json",
+		"build:cjs": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "api-extractor run --local",
-		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:docs": "api-extractor run --local --config api-extractor/api-extractor-model.json",
+		"build:esm": "tsc --project ./tsconfig.json",
 		"build:genver": "gen-version",
 		"build:test": "concurrently npm:build:test:esm npm:build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
@@ -108,9 +109,9 @@
 		"check:exports:esm:public": "api-extractor run --config api-extractor/api-extractor-lint-public.esm.json",
 		"check:format": "npm run check:biome",
 		"ci:build:api-reports": "concurrently \"npm:ci:build:api-reports:*\"",
-		"ci:build:api-reports:current": "api-extractor run --config api-extractor/api-extractor.current.json",
-		"ci:build:api-reports:legacy": "api-extractor run --config api-extractor/api-extractor.legacy.json",
-		"ci:build:docs": "api-extractor run",
+		"ci:build:api-reports:current": "api-extractor run --config api-extractor/api-extractor-report.current.json",
+		"ci:build:api-reports:legacy": "api-extractor run --config api-extractor/api-extractor-report.legacy.json",
+		"ci:build:docs": "api-extractor run --config api-extractor/api-extractor-model.json",
 		"clean": "rimraf --glob dist lib {alpha,beta,internal,legacy}.d.ts \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"depcruise": "depcruise src/ --ignore-known",
 		"depcruise:regen-known-issues": "depcruise-baseline src",
@@ -133,7 +134,6 @@
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:snapshots:regen": "pnpm test:mocha:esm --snapshot",
 		"test:stress": "cross-env FUZZ_TEST_COUNT=20 FUZZ_STRESS_RUN=normal mocha --ignore \"lib/test/memory/**/*\" --recursive \"lib/test/**/*.spec.js\"",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"typetests:gen": "flub generate typetests --dir . -v"
 	},
 	"c8": {
@@ -231,7 +231,7 @@
 				"@fluidframework/id-compressor#build:test:esm"
 			],
 			"ci:build:docs": [
-				"build:esnext"
+				"build:esm"
 			],
 			"eslint": [
 				"...",
