@@ -291,7 +291,10 @@ export function createTreeContainerRuntimeFactory(props: {
 	}
 
 	const minVersionForCollab = oldestSupportedClient ?? minVersionForCollaboration;
-	assert(minVersionForCollab !== undefined, "A supported client version must be defined");
+	assert(
+		minVersionForCollab !== undefined,
+		0xd37 /* A supported client version must be defined */,
+	);
 
 	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
 	const registry = rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);

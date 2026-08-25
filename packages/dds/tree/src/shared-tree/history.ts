@@ -27,7 +27,10 @@ class LazyTreeBranchCommitMetadata implements TreeBranchCommitMetadata {
 		private readonly commit: GraphCommit<SharedTreeChange>,
 		private readonly idCompressor: IIdCompressor,
 	) {
-		assert(commit.revision !== "root", "Cannot construct metadata for the root commit");
+		assert(
+			commit.revision !== "root",
+			0xd35 /* Cannot construct metadata for the root commit */,
+		);
 		this.revision = idCompressor.decompress(commit.revision);
 	}
 

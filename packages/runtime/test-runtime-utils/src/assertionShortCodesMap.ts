@@ -1978,6 +1978,8 @@ export const shortCodeMap = {
 	"0xd30": "Detach range start must not exceed end",
 	"0xd31": "Detach range must not exceed field length",
 	"0xd32": "Detach destination must be a new empty field",
-	"0xd33": "compatibilityMode must be defined",
-	"0xd34": "version mark batchId remapped to a different sequence number"
+	"0xd34": "version mark batchId remapped to a different sequence number",
+	"0xd35": "Cannot construct metadata for the root commit",
+	"0xd36": "Trimmed more commits than exist in the branch",
+	"0xd37": "A supported client version must be defined"
 };
