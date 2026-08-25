@@ -2897,7 +2897,7 @@ describe("Runtime", () => {
 				const context = {
 					...getMockContext(),
 					fetchOps: async (from, to, abortSignal) => {
-						assert.equal(from, 11, "the history read starts after the exclusive lower bound");
+						assert.equal(from, 11, "the history read starts at the inclusive lower bound");
 						assert.equal(to, undefined, "the history read has no fixed upper bound");
 						capturedSignal = abortSignal;
 						return {
@@ -2945,7 +2945,7 @@ describe("Runtime", () => {
 				});
 
 				assert.deepEqual(
-					await containerRuntime.versionMarkResolver.resolve("targetBatch", 10),
+					await containerRuntime.versionMarkResolver.resolve("targetBatch", 11),
 					{ kind: "resolved", sequenceNumber: 13 },
 				);
 				assert.equal(readCount, 1, "the stream stops reading after the target batch");

@@ -3,6 +3,8 @@ title: Transactions
 sidebar_position: 6
 ---
 
+import { ApiLink } from "@site/src/components/shortLinks";
+
 If you want the `SharedTree` to treat a set of changes atomically, then you can wrap these changes in a transaction.
 Using a transaction guarantees that (if applied) all of the changes will be applied together synchronously and no other changes (either from this client or from a remote client) can be interleaved with those changes.
 Note that the Fluid Framework guarantees this already for any sequence of changes that are submitted synchronously.
@@ -11,7 +13,7 @@ However, using a transaction has the following additional implications:
 -   It is also more efficient for SharedTree to process and transmit a large number of changes as a transaction rather than as changes submitted separately.
 -   It is possible to specify constraints on a transaction so that the transaction will be ignored if one or more of these constraints are not met.
 
-To create a transaction use [Tree.runTransaction](../../api/fluid-framework/tree-interface#runtransaction-propertysignature).
+To create a transaction use <ApiLink packageName="fluid-framework" apiName="Tree" apiType="Interface" headingId="runtransaction-propertysignature">Tree.runTransaction</ApiLink>.
 You can cancel a transaction from within the callback function by returning the special "rollback object", available via `Tree.runTransaction.rollback`.
 If an error occurs within the callback, the transaction will be canceled automatically before propagating the error.
 
@@ -44,18 +46,18 @@ There are example transactions here: [Shared Tree Demo](https://github.com/micro
 
 The APIs described in this section are currently `@alpha` and may change in future releases.
 
-Unlike [Tree.runTransaction](../../api/fluid-framework/tree-interface#runtransaction-propertysignature), the Alpha [runTransaction](../../api/fluid-framework/treebranchalpha-interface#runtransaction-methodsignature) does **not** automatically roll back the transaction if the callback throws an error.
+Unlike <ApiLink packageName="fluid-framework" apiName="Tree" apiType="Interface" headingId="runtransaction-propertysignature">Tree.runTransaction</ApiLink>, the Alpha <ApiLink packageName="fluid-framework" apiName="TreeBranchAlpha" headingId="runtransaction-methodsignature">runTransaction</ApiLink> does **not** automatically roll back the transaction if the callback throws an error.
 If your callback may throw, you should handle errors explicitly and return `{ rollback: true }` when required.
 
 :::
 
-The alpha APIs introduce [UntypedTreeViewAlpha.runTransaction](../../api/fluid-framework/treebranchalpha-interface#runtransaction-methodsignature) as a replacement for `Tree.runTransaction`.
+The alpha APIs introduce <ApiLink packageName="fluid-framework" apiName="TreeBranchAlpha" headingId="runtransaction-methodsignature">UntypedTreeViewAlpha.runTransaction</ApiLink> as a replacement for `Tree.runTransaction`.
 This new API exists to solve correctness issues where errors being thrown in runTransaction could result in an undefined state.
 This new API enables developers to customize how their application handles this error case.
 
 ### Running a Transaction
 
-For a node in a tree, use [TreeAlpha.context](../../api/fluid-framework/treealpha-interface#context-methodsignature) to get its [TreeContextAlpha](../../api/fluid-framework/treecontextalpha-interface), then call [runTransaction](../../api/fluid-framework/treecontextalpha-interface#runtransaction-methodsignature) on that context.
+For a node in a tree, use <ApiLink packageName="fluid-framework" apiName="TreeAlpha" headingId="context-methodsignature">TreeAlpha.context</ApiLink> to get its <ApiLink packageName="fluid-framework" apiName="TreeContextAlpha" />, then call <ApiLink packageName="fluid-framework" apiName="TreeContextAlpha" headingId="runtransaction-methodsignature">runTransaction</ApiLink> on that context.
 
 ```typescript
 import { TreeAlpha } from "@fluidframework/tree/alpha";
@@ -106,7 +108,7 @@ if (result.success) {
 
 ### Asynchronous Transactions
 
-[runTransactionAsync](../../api/fluid-framework/treebranchalpha-interface#runtransactionasync-methodsignature) works like [runTransaction](../../api/fluid-framework/treebranchalpha-interface#runtransaction-methodsignature) but accepts an `async` callback.
+<ApiLink packageName="fluid-framework" apiName="TreeBranchAlpha" headingId="runtransactionasync-methodsignature">runTransactionAsync</ApiLink> works like <ApiLink packageName="fluid-framework" apiName="TreeBranchAlpha" headingId="runtransaction-methodsignature">runTransaction</ApiLink> but accepts an `async` callback.
 
 ```typescript
 const result = await view.runTransactionAsync(async () => {
@@ -139,7 +141,7 @@ If transactions are nested, only the outermost transaction's label is used.
 
 ### Nested Transactions
 
-[runTransaction](../../api/fluid-framework/treebranchalpha-interface#runtransaction-methodsignature) and [runTransactionAsync](../../api/fluid-framework/treebranchalpha-interface#runtransactionasync-methodsignature) can be called from within the callback of another transaction, with some limitations.
+<ApiLink packageName="fluid-framework" apiName="TreeBranchAlpha" headingId="runtransaction-methodsignature">runTransaction</ApiLink> and <ApiLink packageName="fluid-framework" apiName="TreeBranchAlpha" headingId="runtransactionasync-methodsignature">runTransactionAsync</ApiLink> can be called from within the callback of another transaction, with some limitations.
 Nested transactions have the following behavior:
 
 -   If the inner transaction rolls back, only the inner transaction's changes are discarded. The outer transaction continues.
