@@ -5,7 +5,7 @@
 # — copy azure/deploy.parameters.example.json to create your own) and runs the validated
 # azure/README.md runbook (Phases 0-6, 8, 10, 12): a customer-managed VNet (dedicated AKS-node
 # and private-endpoint subnets), resource group + ACR, release-image import into ACR, AKS (AAD Workload
-# Identity), ACR hardening, Key Vault, Cosmos DB for MongoDB, Azure Cache for Redis, Storage
+# Identity), ACR hardening, Key Vault, Cosmos DB for MongoDB, Azure Managed Redis, Storage
 # Account, Azure Event Hubs, in-cluster backends, Helm install with CSI-mounted secrets,
 # LoadBalancer exposure, HPA, and Azure Front Door.
 #
@@ -19,7 +19,7 @@
 #   - phase0_network_allow_frontdoor allows Azure Front Door's backend network through the
 #     subnet's policy-attached NSG (some Azure environments have a policy that restricts new
 #     subnets to internal-network-only by default), or Front Door marks every origin unhealthy.
-#   - Cosmos DB and Redis stay credential-based (connection string/password): the Fluid
+#   - Cosmos DB and Azure Managed Redis stay credential-based (connection string/access key): the Fluid
 #     server's Redis client has no Entra ID code path, and some Azure Policy configurations
 #     require the EnableMongo capability to be explicitly declared for local auth. The Storage
 #     Account keeps `allowSharedKeyAccess=true` since the Azure Files CSI driver's SMB mount has
@@ -268,10 +268,32 @@ if [[ ${#missing[@]} -gt 0 ]]; then
 fi
 log "All required tools found: ${REQUIRED_TOOLS[*]}"
 
+# Azure Managed Redis commands are supplied by an az CLI extension. Install it visibly up front
+# so the CLI's default dynamic-install prompt cannot be hidden by a later stderr redirect and
+# leave the deployment apparently hung.
+ensure_az_extension() {
+  local ext="$1"
+  if ! az extension show --name "$ext" >/dev/null 2>&1; then
+    log "Installing the '$ext' az CLI extension"
+    az extension add --name "$ext" --yes >/dev/null 2>&1 </dev/null || {
+      echo "ERROR: could not install the '$ext' az CLI extension. Install it manually and rerun:" >&2
+      echo "  az extension add --name $ext" >&2
+      exit 1
+    }
+  fi
+}
+ensure_az_extension redisenterprise
+az redisenterprise create --help 2>/dev/null | grep --fixed-strings -- '--access-keys-authentication' >/dev/null || {
+  echo "ERROR: the redisenterprise az CLI extension is too old. Upgrade it and rerun:" >&2
+  echo "  az extension update --name redisenterprise" >&2
+  exit 1
+}
+export AZURE_EXTENSION_USE_DYNAMIC_INSTALL=yes_without_prompt
+
 # ---------------------------------------------------------------------------
 # Preflight: read-only Azure/Helm validation (azure/preflight-check.sh). Catches quota
-# shortfalls, globally-unique name conflicts (including Key Vault/Cosmos DB soft-delete
-# blocks), and Helm chart/values rendering errors before any phase below creates, modifies,
+# shortfalls, name conflicts (including Key Vault/Cosmos DB soft-delete blocks), and Helm
+# chart/values rendering errors before any phase below creates, modifies,
 # or deletes anything. Aborts here on failure rather than partway through a real deploy.
 # ---------------------------------------------------------------------------
 banner "Running preflight checks (azure/preflight-check.sh)"
@@ -289,6 +311,11 @@ SUB="$(jqr '.subscriptionId')"
 RG="$(jqr '.resourceGroup')"
 RG_LOC="$(jqr '.location')"
 FLUID_REPO_DIR="$(jqr '.fluidRepoDir')"
+if [[ "$FLUID_REPO_DIR" == "~/"* ]]; then
+  FLUID_REPO_DIR="$HOME/${FLUID_REPO_DIR:2}"
+elif [[ "$FLUID_REPO_DIR" == "~" ]]; then
+  FLUID_REPO_DIR="$HOME"
+fi
 ACR="$(jqr '.deployAcr.name')"
 AKS="$(jqr '.aks.name')"
 AKS_LOC="$(jqr '.aks.location')"; AKS_LOC="${AKS_LOC:-$RG_LOC}"
@@ -316,7 +343,7 @@ AKS_OS_SKU="$(jqr '.aks.osSku')"; AKS_OS_SKU="${AKS_OS_SKU:-AzureLinux}"
 # correlates with an Azure Scheduled Events host-maintenance action that took down 2 nodes
 # simultaneously; zones make that less
 # likely to recur. Space-separated (matches `az aks create/nodepool add --zones`'s expected
-# form) -- stored as a JSON array in parameters, same convention as redis.zones below, not a
+# form) -- stored as a JSON array in parameters, not a
 # plain string. Create-time-only -- cannot be changed on an existing pool, see phase1_aks's
 # retrofit check below. Override via aks.availabilityZones; set it to [] to opt out of zones
 # entirely (deploy.sh omits --zones in that case, rather than falling back to the default --
@@ -363,24 +390,15 @@ COSMOS_RU_NODES="$(jqr '.cosmos.throughput.nodes')"; COSMOS_RU_NODES="${COSMOS_R
 COSMOS_RU_RESERVATIONS="$(jqr '.cosmos.throughput.reservations')"; COSMOS_RU_RESERVATIONS="${COSMOS_RU_RESERVATIONS:-4000}"
 REDIS="$(jqr '.redis.clusterName')"
 REDIS_LOC="$(jqr '.redis.location')"; REDIS_LOC="${REDIS_LOC:-$RG_LOC}"
-REDIS_SKU="$(jqr '.redis.sku')"; REDIS_SKU="${REDIS_SKU:-Premium}"
-REDIS_VM_SIZE="$(jqr '.redis.vmSize')"; REDIS_VM_SIZE="${REDIS_VM_SIZE:-p1}"
-# Engine version is pinned explicitly, not left on Azure's default, so the deployed version
-# is reproducible. The classic/GA tier only offers 4.0 (legacy) and 6.0 (current).
-REDIS_VERSION="$(jqr '.redis.version')"; REDIS_VERSION="${REDIS_VERSION:-6.0}"
-# Replica count + zone redundancy are CREATE-TIME-ONLY on Azure Cache for Redis -- neither can
-# be added to an existing cache. Falls back to no replicas/zones if the region/subscription
-# can't satisfy them (see phase8_redis).
-REDIS_REPLICAS_PER_MASTER="$(jqr '.redis.replicasPerMaster')"; REDIS_REPLICAS_PER_MASTER="${REDIS_REPLICAS_PER_MASTER:-3}"
-# Same null-check as AKS_ZONES above (not a plain `${VAR:-default}`) -- an explicit
-# redis.zones: [] means "opt out of zones", which must be told apart from the field being
-# absent entirely, or [] would silently re-default to 2/3 instead of being respected.
-if jq -e '.redis.zones == null' "$PARAMS_FILE" >/dev/null 2>&1; then
-  REDIS_ZONES="2 3"
-else
-  REDIS_ZONES="$(jq -r '.redis.zones[]?' "$PARAMS_FILE" | tr '\n' ' ')"
-fi
+# Balanced_B5 is the current Azure Managed Redis mapping for the previous Premium P1 baseline:
+# 6 GB advertised / approximately 4.8 GB usable, with substantially higher throughput. The
+# database remains non-clustered because Fluid constructs a standalone Redis client rather than
+# a Redis Cluster client. HA is enabled and Azure distributes replicas across zones by default
+# where the region supports them.
+REDIS_SKU="$(jqr '.redis.sku')"; REDIS_SKU="${REDIS_SKU:-Balanced_B5}"
+REDIS_PORT=10000
 STORAGE="$(jqr '.storage.accountName')"
+
 # Standard_ZRS (Zone-Redundant Storage) by default -- falls back to Standard_LRS if create
 # fails (not all regions support ZRS, see phase8_storage). Cannot be changed on an existing
 # account (`az storage account update --help`: SKU can't be updated to/from Standard_ZRS).
@@ -1278,67 +1296,81 @@ phase8_cosmos_throughput() {
 # Phase 8 Task 4 — Azure Managed Redis
 # ===========================================================================
 phase8_redis() {
-  banner "Phase 8: Azure Cache for Redis"
-  # What's deployed here is the classic/GA "Azure Cache for Redis" service, NOT the newer
-  # Enterprise-tier "Azure Managed Redis" -- the latter hit AllocationFailed (insufficient
-  # capacity) across every region tried for this subscription.
-  #
-  # Auth is password/access-key via Key Vault, not Entra ID: the Fluid server's Redis client
-  # (RedisClientConnectionManager, shared by Routerlicious and gitrest) is 100% password-based
-  # with no Entra ID/managed-identity code path.
-  #
-  # Check provisioningState, not just existence -- a cache stuck in a non-Succeeded state still
-  # answers `show` successfully, which would otherwise look like a healthy resource to skip.
-  local existing_state
-  existing_state="$(az redis show -n "$REDIS" -g "$RG" --query provisioningState -o tsv 2>/dev/null || true)"
-  if [[ "$existing_state" == "Succeeded" ]]; then
-    log "Redis cache $REDIS already exists and provisioned successfully, skipping create"
+  banner "Phase 8: Azure Managed Redis"
+  # Fluid's RedisClientConnectionManager is password-based, so access-key authentication stays
+  # enabled and the key follows the existing Key Vault + CSI path. Entra ID remains the preferred
+  # Azure authentication model, but adopting it requires token refresh support in the Fluid
+  # server client and is deliberately not approximated in deployment configuration.
+  local existing_state cluster_ha cluster_public database_state database_auth database_protocol database_clustering database_port
+  existing_state="$(az redisenterprise show -n "$REDIS" -g "$RG" --query provisioningState -o tsv 2>/dev/null || true)"
+  if [[ -z "$existing_state" ]]; then
+    az redisenterprise create -n "$REDIS" -g "$RG" -l "$REDIS_LOC" \
+      --sku "$REDIS_SKU" \
+      --high-availability Enabled \
+      --minimum-tls-version 1.2 \
+      --public-network-access Disabled \
+      --access-keys-authentication Enabled \
+      --client-protocol Encrypted \
+      --clustering-policy NoCluster \
+      --eviction-policy VolatileLRU \
+      --port "$REDIS_PORT"
+  elif [[ "$existing_state" != "Succeeded" ]]; then
+    echo "ERROR: Azure Managed Redis $REDIS exists in provisioning state '$existing_state'." >&2
+    echo "Resolve or delete the failed resource explicitly, then rerun; deploy.sh will not destroy it automatically." >&2
+    exit 1
   else
-    if [[ -n "$existing_state" ]]; then
-      log "Redis cache $REDIS exists in non-Succeeded state '$existing_state' -- deleting and recreating"
-      az redis delete -n "$REDIS" -g "$RG" --yes
-    fi
-    # Try the real HA profile first (3 replicas, zone-redundant); both replicasPerPrimary and
-    # zones are CREATE-TIME-ONLY -- neither can be retrofitted onto an existing cache. Falls
-    # back to a plain single-instance cache if the region/subscription can't satisfy them.
-    # --zones is omitted entirely when REDIS_ZONES is empty (redis.zones: []), same reasoning
-    # as phase1_aks -- passing it as an empty value would make `az` misparse the next flag.
-    local redis_zone_args=()
-    [[ -n "$REDIS_ZONES" ]] && redis_zone_args=(--zones $REDIS_ZONES)
-    if ! az redis create -n "$REDIS" -g "$RG" -l "$REDIS_LOC" --sku "$REDIS_SKU" --vm-size "$REDIS_VM_SIZE" \
-      --redis-version "$REDIS_VERSION" \
-      --replicas-per-master "$REDIS_REPLICAS_PER_MASTER" "${redis_zone_args[@]}" \
-      --minimum-tls-version 1.2 2>/tmp/redis_create_err.$$; then
-      log "WARNING: Redis create with $REDIS_REPLICAS_PER_MASTER replicas/zones ($REDIS_ZONES) failed -- falling back to a single-instance, non-zonal cache"
-      cat /tmp/redis_create_err.$$ >&2
-      az redis create -n "$REDIS" -g "$RG" -l "$REDIS_LOC" --sku "$REDIS_SKU" --vm-size "$REDIS_VM_SIZE" \
-        --redis-version "$REDIS_VERSION" \
-        --minimum-tls-version 1.2
-    fi
-    rm -f /tmp/redis_create_err.$$
+    log "Azure Managed Redis $REDIS already exists and provisioned successfully, verifying configuration"
   fi
-  [[ "$(az redis show -n "$REDIS" -g "$RG" --query provisioningState -o tsv)" == "Succeeded" ]] \
-    || { echo "ERROR: Redis cache $REDIS did not provision successfully" >&2; exit 1; }
-  REDIS_HOSTNAME="$(az redis show -n "$REDIS" -g "$RG" --query hostName -o tsv)"
+
+  [[ "$(az redisenterprise show -n "$REDIS" -g "$RG" --query provisioningState -o tsv)" == "Succeeded" ]] \
+    || { echo "ERROR: Azure Managed Redis $REDIS did not provision successfully" >&2; exit 1; }
+  cluster_ha="$(az redisenterprise show -n "$REDIS" -g "$RG" --query highAvailability -o tsv)"
+  cluster_public="$(az redisenterprise show -n "$REDIS" -g "$RG" --query publicNetworkAccess -o tsv)"
+  if [[ "$cluster_ha" != "Enabled" || "$cluster_public" != "Disabled" ]]; then
+    az redisenterprise update -n "$REDIS" -g "$RG" \
+      --high-availability Enabled --public-network-access Disabled >/dev/null || {
+      echo "ERROR: could not enable HA and disable public access on Azure Managed Redis $REDIS." >&2
+      echo "An instance created with an older API version may need to be recreated." >&2
+      exit 1
+    }
+  fi
+
+  database_state="$(az redisenterprise database show --cluster-name "$REDIS" -g "$RG" --query provisioningState -o tsv 2>/dev/null || true)"
+  database_auth="$(az redisenterprise database show --cluster-name "$REDIS" -g "$RG" --query accessKeysAuthentication -o tsv 2>/dev/null || true)"
+  database_protocol="$(az redisenterprise database show --cluster-name "$REDIS" -g "$RG" --query clientProtocol -o tsv 2>/dev/null || true)"
+  database_clustering="$(az redisenterprise database show --cluster-name "$REDIS" -g "$RG" --query clusteringPolicy -o tsv 2>/dev/null || true)"
+  database_port="$(az redisenterprise database show --cluster-name "$REDIS" -g "$RG" --query port -o tsv 2>/dev/null || true)"
+  if [[ "$database_auth" != "Enabled" || "$database_protocol" != "Encrypted" ]]; then
+    az redisenterprise database update --cluster-name "$REDIS" -g "$RG" \
+      --access-keys-authentication Enabled --client-protocol Encrypted >/dev/null
+    database_auth="$(az redisenterprise database show --cluster-name "$REDIS" -g "$RG" --query accessKeysAuthentication -o tsv)"
+    database_protocol="$(az redisenterprise database show --cluster-name "$REDIS" -g "$RG" --query clientProtocol -o tsv)"
+  fi
+  [[ "$database_state" == "Succeeded" && "$database_auth" == "Enabled" \
+      && "$database_protocol" == "Encrypted" && "$database_clustering" == "NoCluster" \
+      && "$database_port" == "$REDIS_PORT" ]] || {
+    echo "ERROR: Azure Managed Redis $REDIS/default is incompatible with Fluid." >&2
+    echo "Expected Succeeded/Enabled/Encrypted/NoCluster/$REDIS_PORT; got $database_state/$database_auth/$database_protocol/$database_clustering/$database_port." >&2
+    echo "These database creation settings cannot all be changed in place; create a compatible instance." >&2
+    exit 1
+  }
+
+  REDIS_HOSTNAME="$(az redisenterprise show -n "$REDIS" -g "$RG" --query hostName -o tsv)"
   local redis_key redis_id
-  redis_key="$(az redis list-keys -n "$REDIS" -g "$RG" --query primaryKey -o tsv)"
-  # ALL 8 app workloads get the Redis password the same way: Key Vault + CSI mount via the one
+  redis_key="$(az redisenterprise database list-keys --cluster-name "$REDIS" -g "$RG" --query primaryKey -o tsv)"
+  # ALL 8 app workloads get the Redis access key the same way: Key Vault + CSI mount via the one
   # workload identity (see phase4_secrets_infra / phase5_helm). No plain Kubernetes Secret is
   # created for it anywhere.
   keyvault_secret_set_with_retry "$KV" redis-password "$redis_key"
   az keyvault secret show --vault-name "$KV" --name redis-password --query id -o tsv >/dev/null
 
-  # ARM control-plane calls only -- safe to disable public network access immediately, unlike
-  # Key Vault. Use the Redis-specific `az redis update --set`, not the generic `az resource
-  # update --set properties.X`, which fails on a zonal cache with an invalid merge-patch error
-  # against the zones/zonal-configuration structure.
-  redis_id="$(az redis show -n "$REDIS" -g "$RG" --query id -o tsv)"
-  if [[ "$(az redis show -n "$REDIS" -g "$RG" --query publicNetworkAccess -o tsv)" != "Disabled" ]]; then
-    az redis update -n "$REDIS" -g "$RG" --set publicNetworkAccess=Disabled >/dev/null
-  fi
-  create_private_endpoint "$redis_id" redisCache "$REDIS" privatelink.redis.cache.windows.net
+  redis_id="$(az redisenterprise show -n "$REDIS" -g "$RG" --query id -o tsv)"
+  [[ "$(az redisenterprise show -n "$REDIS" -g "$RG" --query highAvailability -o tsv)" == "Enabled" \
+      && "$(az redisenterprise show -n "$REDIS" -g "$RG" --query publicNetworkAccess -o tsv)" == "Disabled" ]] \
+    || { echo "ERROR: Azure Managed Redis $REDIS is not HA with public access disabled" >&2; exit 1; }
+  create_private_endpoint "$redis_id" redisEnterprise "$REDIS" privatelink.redis.azure.net
   unset redis_key
-  log "Phase 8 (Azure Cache for Redis) VERIFY passed — public network access disabled, only the private endpoint (AKS VNet) can reach $REDIS"
+  log "Phase 8 (Azure Managed Redis) VERIFY passed — access-key auth over TLS, public access disabled, and only the AKS VNet private endpoint can reach $REDIS"
 }
 
 # ===========================================================================
@@ -2213,11 +2245,11 @@ initialize_deploy_only_mode() {
 
   WORKLOAD_IDENTITY_CLIENT_ID="$(az identity show -g "$RG" -n "$WORKLOAD_IDENTITY" --query clientId -o tsv 2>/dev/null || true)"
   AZURE_TENANT_ID="$(az account show --query tenantId -o tsv)"
-  REDIS_HOSTNAME="$(az redis show -n "$REDIS" -g "$RG" --query hostName -o tsv 2>/dev/null || true)"
+  REDIS_HOSTNAME="$(az redisenterprise show -n "$REDIS" -g "$RG" --query hostName -o tsv 2>/dev/null || true)"
   [[ -n "$WORKLOAD_IDENTITY_CLIENT_ID" ]] \
     || { echo "ERROR: could not resolve workload identity '$WORKLOAD_IDENTITY' clientId in $RG — is the infrastructure fully deployed?" >&2; exit 1; }
   [[ -n "$REDIS_HOSTNAME" ]] \
-    || { echo "ERROR: could not resolve Redis cache '$REDIS' hostname in $RG — is the infrastructure fully deployed?" >&2; exit 1; }
+    || { echo "ERROR: could not resolve Azure Managed Redis '$REDIS' hostname in $RG — is the infrastructure fully deployed?" >&2; exit 1; }
   log "Resolved existing infra — WORKLOAD_IDENTITY_CLIENT_ID=$WORKLOAD_IDENTITY_CLIENT_ID REDIS_HOSTNAME=$REDIS_HOSTNAME"
 }
 
@@ -2283,7 +2315,7 @@ log "alfred:     https://$(az afd endpoint show -g "$RG" --profile-name "$AFD" -
 log "nexus:      wss://$(az afd endpoint show -g "$RG" --profile-name "$AFD" --endpoint-name "nexus-${AFD}" --query hostName -o tsv)"
 log "historian:  https://$(az afd endpoint show -g "$RG" --profile-name "$AFD" --endpoint-name "historian-${AFD}" --query hostName -o tsv)"
 log ""
-log "Identity + network posture: Key Vault, Cosmos DB, Azure Cache for Redis, the Storage"
+log "Identity + network posture: Key Vault, Cosmos DB, Azure Managed Redis, the Storage"
 log "Account, and the Event Hubs namespace all have public network access disabled and are only"
 log "reachable from the $VNET VNet (private endpoints). Event Hubs uses a shared-access-key"
 log "connection string held in Key Vault. All 8 app workloads authenticate as the one"

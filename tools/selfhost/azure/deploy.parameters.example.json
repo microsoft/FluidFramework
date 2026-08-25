@@ -51,11 +51,7 @@
 	"redis": {
 		"clusterName": "my-fluid-redis",
 		"location": "",
-		"sku": "Premium",
-		"vmSize": "p1",
-		"version": "6.0",
-		"replicasPerMaster": 3,
-		"zones": [1, 2, 3]
+		"sku": "Balanced_B5"
 	},
 
 	"storage": {
@@ -83,7 +79,7 @@
 		"responseTimeoutSeconds": 240
 	},
 
-	"_networkComment": "All optional -- sensible defaults are computed in deploy.sh if omitted. The VNet holds a dedicated AKS-node subnet and a dedicated private-endpoint subnet; Key Vault, Cosmos, Redis, Storage and the Event Hubs namespace all get private endpoints into it and have public network access disabled.",
+	"_networkComment": "All optional -- sensible defaults are computed in deploy.sh if omitted. The VNet holds a dedicated AKS-node subnet and a dedicated private-endpoint subnet; Key Vault, Cosmos, Azure Managed Redis, Storage and the Event Hubs namespace all get private endpoints into it and have public network access disabled.",
 	"network": {
 		"vnetName": "",
 		"addressSpace": "10.20.0.0/16",
