@@ -4,7 +4,7 @@
  */
 
 import {
-	deltaFieldMapHasVisibleChanges,
+	deltaFieldMapHasChanges,
 	makeAnonChange,
 	makeChangeAtomId,
 	makeDetachedFieldIndex,
@@ -512,7 +512,7 @@ class ModularChangeMinimizer {
 
 		const deltaForBuilds = intoDelta(makeAnonChange(changeForBuilds), this.fieldKinds);
 		assert(
-			!deltaFieldMapHasVisibleChanges(deltaForBuilds.fields),
+			!deltaFieldMapHasChanges(deltaForBuilds.fields),
 			"Expected all changes to attached tree to be filtered out",
 		);
 
