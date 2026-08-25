@@ -293,6 +293,21 @@ There are two ways. They create identical resources in the identical order.
 ./azure/deploy.sh <release-id>
 ```
 
+The release includes digest-pinned Docker Official Images. ACR imports those from Docker Hub,
+whose anonymous pull quota can be exhausted by Azure's shared import egress. If the import returns
+HTTP 429, authenticate it with a Docker Hub username and access token (not your password):
+
+```bash
+export DOCKERHUB_USERNAME=<docker-hub-username>
+read -rsp "Docker Hub access token: " DOCKERHUB_TOKEN
+export DOCKERHUB_TOKEN
+echo
+./azure/deploy.sh <release-id>
+```
+
+These values are read only from the process environment; do not put the token in
+`deploy.parameters.json`.
+
 To use a parameters file somewhere else:
 
 ```bash

@@ -381,6 +381,17 @@ else
   REDIS_ZONES="$(jq -r '.redis.zones[]?' "$PARAMS_FILE" | tr '\n' ' ')"
 fi
 STORAGE="$(jqr '.storage.accountName')"
+
+# ACR imports Docker Official Images through Docker Hub. Authentication is optional, but avoids
+# Docker Hub's anonymous pull quota, which can be exhausted by Azure's shared import egress.
+DOCKERHUB_USERNAME="${DOCKERHUB_USERNAME:-}"
+DOCKERHUB_TOKEN="${DOCKERHUB_TOKEN:-}"
+if [[ ( -n "$DOCKERHUB_USERNAME" && -z "$DOCKERHUB_TOKEN" ) ||
+      ( -z "$DOCKERHUB_USERNAME" && -n "$DOCKERHUB_TOKEN" ) ]]; then
+  echo "ERROR: set both DOCKERHUB_USERNAME and DOCKERHUB_TOKEN, or leave both unset." >&2
+  exit 1
+fi
+
 # Standard_ZRS (Zone-Redundant Storage) by default -- falls back to Standard_LRS if create
 # fails (not all regions support ZRS, see phase8_storage). Cannot be changed on an existing
 # account (`az storage account update --help`: SKU can't be updated to/from Standard_ZRS).
@@ -803,7 +814,8 @@ create_private_endpoint() {
 phase1_images() {
   banner "Phase 1: Import release images"
   az acr login -n "$ACR"
-  local name repository digest src repo ref target_tag target_repo base without_tag
+  local name repository digest src repo target_tag target_repo source_repo first
+  local dependency_auth_args=()
 
   while IFS=$'\t' read -r name repository digest; do
     [[ -n "$name" && -n "$repository" && -n "$digest" ]] || continue
@@ -834,11 +846,22 @@ phase1_images() {
 
     src="$source_repo@$digest"
     target_tag="${tag:-$RELEASE_ID}"
+    dependency_auth_args=()
+    if [[ "$source_repo" == docker.io/* && -n "$DOCKERHUB_USERNAME" ]]; then
+      dependency_auth_args=(--username "$DOCKERHUB_USERNAME" --password "$DOCKERHUB_TOKEN")
+    fi
 
     if az acr repository show --name "$ACR" --image "$target_repo:$target_tag" >/dev/null 2>&1; then
       log "$target_repo:$target_tag already in ACR, skipping import"
     else
-      az acr import --name "$ACR" --source "$src" --image "$target_repo:$target_tag" --force
+      if ! az acr import --name "$ACR" --source "$src" --image "$target_repo:$target_tag" \
+        "${dependency_auth_args[@]}" --force; then
+        if [[ "$source_repo" == docker.io/* && -z "$DOCKERHUB_USERNAME" ]]; then
+          echo "ERROR: Docker Hub rejected the anonymous ACR import." >&2
+          echo "Set DOCKERHUB_USERNAME and DOCKERHUB_TOKEN to a Docker Hub username and access token, then rerun." >&2
+        fi
+        exit 1
+      fi
     fi
   done < <(jq -r '.dependencyImages[]? | select(.status == "pinned") | [.name, (.tag // ""), .digest] | @tsv' "$IMAGES_FILE")
 

@@ -37,6 +37,17 @@ cat > "$BIN/az" <<'STUB'
 #!/usr/bin/env bash
 echo "az $*" >> "$CALLS"
 case "$*" in
+  *"acr repository show"*)
+    requested=""
+    while [[ $# -gt 0 ]]; do
+      if [[ "$1" == "--image" ]]; then requested="$2"; break; fi
+      shift
+    done
+    while IFS= read -r line; do
+      [[ "$line" == "az acr import "* && "$line" == *"--image $requested"* ]] && exit 0
+    done < "$CALLS"
+    exit 1 ;;
+  *"acr import"*)                                                        exit 0 ;;
   *"eventhubs namespace show"*"--query zoneRedundant"*)       echo "true"; exit 0 ;;
   *"eventhubs namespace show"*"--query sku.tier"*)            echo "${MOCK_TIER:-Standard}"; exit 0 ;;
   *"eventhubs namespace show"*"--query kafkaEnabled"*)        echo "true"; exit 0 ;;
@@ -77,7 +88,18 @@ REL_DIR="$RELEASE_ROOT/$REL_ID"
 mkdir -p "$REL_DIR/deployment/azure"
 cp "$AZURE_DIR"/*.yaml "$REL_DIR/deployment/azure/" 2>/dev/null || true
 printf '{"sourceRepo":"https://github.com/microsoft/FluidFramework","resolvedCommitSha":"0123456789abcdef0123456789abcdef01234567"}\n' > "$REL_DIR/source.json"
-printf '{"builtImages":[{"name":"routerlicious","status":"pinned","tag":"mock-tag"}]}\n' > "$REL_DIR/images.json"
+cat > "$REL_DIR/images.json" <<'JSON'
+{
+  "builtImages": [
+    {"name":"routerlicious","repository":"mockbuild.azurecr.io/routerlicious","digest":"sha256:111","status":"pinned","tag":"mock-tag"},
+    {"name":"historian","repository":"mockbuild.azurecr.io/historian","digest":"sha256:222","status":"pinned","tag":"mock-tag"},
+    {"name":"gitrest","repository":"mockbuild.azurecr.io/gitrest","digest":"sha256:333","status":"pinned","tag":"mock-tag"}
+  ],
+  "dependencyImages": [
+    {"name":"nginx","tag":"1.31.3","digest":"sha256:444","status":"pinned"}
+  ]
+}
+JSON
 
 PARAMS="$WORK/params.json"
 # fluidRepoDir is mandatory since the release-pipeline merge; git is stubbed, so a directory with
@@ -168,6 +190,39 @@ d="$(read_vars "$MIN" EVENTHUBS_SKU EVENTHUBS_CAPACITY EVENTHUBS_PARTITIONS EVEN
    && "$d" == *"EVENTHUBS_AUTO_INFLATE=true"* && "$d" == *"EVENTHUBS_MAX_TU=10"* ]] \
   && ok "baseline defaults apply when optional keys are omitted" \
   || no "baseline defaults apply when optional keys are omitted" "$d"
+
+# ---------------------------------------------------------------------------
+group "1b. Docker Hub authenticated ACR import"
+# ---------------------------------------------------------------------------
+: > "$CALLS"
+out="$(
+  export DOCKERHUB_USERNAME=mock-user DOCKERHUB_TOKEN=mock-token
+  run_phase 'phase1_images'
+)"; rc=$?
+assert_eq "phase1_images exits 0 with Docker Hub credentials" "$rc" "0"
+if [[ $rc -ne 0 ]]; then
+  printf '%s\n' "$out" | tail -10 | sed 's/^/         /'
+fi
+expected_import="--source docker.io/library/nginx@sha256:444 --image nginx:1.31.3 --username mock-user --password mock-token"
+if grep -qF -- "$expected_import" "$CALLS"; then
+  ok "Docker Hub credentials are passed to dependency import"
+else
+  no "Docker Hub credentials are passed to dependency import" "$(tail -30 "$CALLS")"
+fi
+if grep -F "mockbuild.azurecr.io" "$CALLS" | grep -q -- "--username"; then
+  no "Docker Hub credentials are not sent to Azure registry imports"
+else
+  ok "Docker Hub credentials are not sent to Azure registry imports"
+fi
+
+(
+  export DOCKERHUB_USERNAME=mock-user
+  unset DOCKERHUB_TOKEN
+  run_phase ':'
+) >/dev/null 2>&1
+rc=$?
+[[ $rc -ne 0 ]] && ok "partial Docker Hub credentials are rejected" \
+                || no "partial Docker Hub credentials are rejected" "expected non-zero exit"
 
 # ---------------------------------------------------------------------------
 group "2. Mock deploy: phase3_eventhubs on a fresh subscription"
