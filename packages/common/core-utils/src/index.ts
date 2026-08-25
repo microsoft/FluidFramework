@@ -3,37 +3,9 @@
  * Licensed under the MIT License.
  */
 
-export {
-	assert,
-	appendDebugMessage,
-	fail,
-	debugAssert,
-	configureDebugAsserts,
-	nonProductionConditionalsIncluded,
-	emulateProductionBuild,
-	onAssertionFailure,
-} from "./assert.js";
-export { compareArrays } from "./compare.js";
-export { delay } from "./delay.js";
-export type { IComparer, IHeapNode } from "./heap.js";
-export { Heap, NumberComparer } from "./heap.js";
-export { Lazy, LazyPromise } from "./lazy.js";
-export {
-	DoublyLinkedList,
-	type ListNode,
-	type ListNodeRange,
-	iterateListValuesWhile,
-	walkList,
-} from "./list.js";
-export type { PromiseCacheExpiry, PromiseCacheOptions } from "./promiseCache.js";
-export { PromiseCache } from "./promiseCache.js";
-export { Deferred } from "./promises.js";
-export { shallowCloneObject } from "./shallowClone.js";
-export type { IPromiseTimer, IPromiseTimerResult, ITimer } from "./timer.js";
-export { PromiseTimer, setLongTimeout, Timer } from "./timer.js";
-export { unreachableCase } from "./unreachable.js";
-export { isObject, isPromiseLike } from "./typesGuards.js";
-export { oob } from "./oob.js";
-export { transformMapValues } from "./map.js";
-export { clamp } from "./math.js";
-export { validateAllOrNone, type AllOrNoneResult } from "./allOrNone.js";
+// eslint-disable-next-line no-restricted-syntax -- This external entrypoint includes all exports shared with the internal entrypoint.
+export * from "./main.js";
+
+// Export deprecated external variant of `assert`.
+// TODO: when this export is removed, this special barrel file should be removed.
+export { assert } from "./assert.js";

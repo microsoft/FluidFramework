@@ -3,9 +3,15 @@
 This package has separate external and internal entrypoints. The entrypoints can export the same runtime value with different API metadata.
 This structure lets the package deprecate an API for external consumers while retaining a non-deprecated version for Fluid Framework code.
 
+## `src/main.ts`
+
+This barrel contains exports that have the same definition and API metadata in the external and internal entrypoints.
+Both `src/index.ts` and `src/internal.ts` re-export this barrel.
+
 ## `src/index.ts`
 
 This barrel is the source for the external runtime entrypoints.
+It re-exports `src/main.ts` and adds external-specific definitions.
 The entrypoint generator processes this barrel to produce the `public`, `alpha`, `beta`, and `legacy` declaration files.
 
 External consumers import APIs from the applicable supported entrypoint, such as `@fluidframework/core-utils` or `@fluidframework/core-utils/legacy`.
@@ -13,23 +19,20 @@ External consumers import APIs from the applicable supported entrypoint, such as
 ## `src/internal.ts`
 
 This barrel is the source for `@fluidframework/core-utils/internal`.
-It re-exports `src/index.ts`, so the internal entrypoint is a superset of the external entrypoint.
-It can also shadow an external export when Fluid Framework code requires different API metadata or typing.
+It re-exports `src/main.ts` and adds internal-specific definitions.
+Use separate external and internal definitions when an API requires different metadata or typing in each entrypoint.
 
 For example, the external `assert` export is deprecated, but Fluid Framework code still requires a non-deprecated version.
-The internal barrel exports a new `@internal` binding that references the external implementation:
+The assertion module defines a non-deprecated internal implementation and a deprecated external function that delegates to it.
+The internal barrel exports the implementation under the name `assert`:
 
 ```typescript
-import { assert as publicAssert } from "./assert.js";
-
-/**
- * @internal
- */
-export const assert: typeof publicAssert = publicAssert;
+export { assertInternal as assert } from "./assert.js";
 ```
 
-This alias preserves the complete assertion function type and the runtime function identity.
-Do not create a wrapper function because a wrapper would create a different function object and duplicate runtime behavior.
+This direct export gives the internal entrypoint an independent, non-deprecated TypeScript symbol.
+Do not type the internal export with `typeof` the deprecated external symbol.
+TypeScript follows that reference and reports internal uses as deprecated.
 
 Fluid Framework code must import this API from the internal entrypoint:
 

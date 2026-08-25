@@ -4,6 +4,21 @@
  */
 
 /**
+ * Internal implementation of the assertion API.
+ *
+ * @internal
+ */
+export function assertInternal(
+	condition: boolean,
+	message: string | number,
+	debugMessageBuilder?: () => string,
+): asserts condition {
+	if (!condition) {
+		failPrivate(message, debugMessageBuilder);
+	}
+}
+
+/**
  * Asserts the specified condition.
  *
  * @param condition - The condition that should be true, if the condition is false an error will be thrown.
@@ -36,9 +51,7 @@ export function assert(
 	message: string | number,
 	debugMessageBuilder?: () => string,
 ): asserts condition {
-	if (!condition) {
-		failPrivate(message, debugMessageBuilder);
-	}
+	assertInternal(condition, message, debugMessageBuilder);
 }
 
 /**
@@ -217,7 +230,7 @@ let debugAssertsEnabled = true;
  * @internal
  */
 export function configureDebugAsserts(enabled: boolean): boolean {
-	assert(
+	assertInternal(
 		nonProductionConditionalsIncluded(),
 		0xab1 /* Debug asserts cannot be configured since they have been optimized out. */,
 	);
@@ -279,7 +292,7 @@ export function nonProductionConditionalsIncluded(): boolean {
  */
 export function emulateProductionBuild(enable = true): void {
 	emulateProductionBuildCount += enable ? 1 : -1;
-	assert(
+	assertInternal(
 		emulateProductionBuildCount >= 0,
 		0xc70 /* emulateProductionBuild disabled more than it was enabled */,
 	);

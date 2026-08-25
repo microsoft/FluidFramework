@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "./assert.js";
+import { assertInternal as assert } from "./assert.js";
 import { Deferred } from "./promises.js";
 
 /**
