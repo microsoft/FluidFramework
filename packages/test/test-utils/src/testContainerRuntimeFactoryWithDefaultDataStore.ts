@@ -14,7 +14,7 @@ import type {
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
 
-import { defaultTestOldestSupportedClient } from "./testCompatibility.js";
+import type { defaultTestOldestSupportedClient } from "./testCompatibility.js";
 
 const getDefaultFluidObject = async (runtime: IContainerRuntime): Promise<FluidObject> => {
 	const entryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
