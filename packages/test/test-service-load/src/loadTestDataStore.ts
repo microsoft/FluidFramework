@@ -32,6 +32,7 @@ import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/inter
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import { ITaskManager, TaskManager } from "@fluidframework/task-manager/internal";
 import { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { defaultTestOldestSupportedClient } from "@fluidframework/test-utils/internal";
 
 import type { TestConfiguration } from "./testConfigFile.js";
 import { printStatus } from "./utils.js";
@@ -935,6 +936,12 @@ export const createFluidExport = (
 ): ContainerRuntimeFactoryWithDefaultDataStore =>
 	new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: LoadTestDataStoreInstantiationFactory,
+		// createBlobPayloadPending requires runtime 2.40 or later; other option combinations
+		// preserve the historical implicit runtime defaults.
+		oldestSupportedClient:
+			runtimeOptions?.createBlobPayloadPending === true
+				? "2.40.0"
+				: defaultTestOldestSupportedClient,
 		registryEntries: [
 			LoadTestDataStoreInstantiationFactory.registryEntry,
 			VirtualDataStoreFactory.registryEntry,

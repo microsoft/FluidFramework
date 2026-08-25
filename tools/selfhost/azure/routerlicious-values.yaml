@@ -1,0 +1,188 @@
+# Helm values for the routerlicious chart, full-stack on AKS.
+# Replace <ACR> with your ACR resource name (for example, myregistry; do not include
+# .azurecr.io) and <IMAGE_TAG> with the unique immutable release tag created in README
+# Phase 1. The image is built from source and pushed to ACR.
+#
+# The Cosmos connection string and Redis password are mounted via the Secrets Store CSI driver
+# from Key Vault (azure/secretproviderclass.yaml). An init container reads
+# /mnt/secrets/cosmos-connection-string and /mnt/secrets/redis-password and injects them as
+# environment variables at pod startup (see azure/README.md Phase 5). Never commit live keys or
+# connection strings.
+#
+# No tenant is seeded here -- tenant-admin.sh creates every tenant, including the default
+# "fluid" one (bootstrapped by azure/deploy.sh's phase5_bootstrap_tenant), so tenant keys live
+# only in Cosmos DB with no chart-driven re-upsert to fight (see tenant-admin/README.md).
+#
+# mongodb below points at Cosmos DB for MongoDB (standard/RU-based API, azure/deploy.sh
+# phase8_cosmos) -- operationsDbEndpoint is sourced from the CSI-mounted cosmos-connection-string
+# secret at pod startup (see azure/README.md Phase 5), not the value in this file.
+#
+# The <*_EXTERNAL_URL> placeholders below are substituted by deploy.sh, which is also where the
+# <ACR>/<IMAGE_TAG>/<REDIS_HOSTNAME> placeholders are filled in. Front Door hostnames do not
+# exist until phase12 runs, so the first pass renders the in-cluster URLs and phase12 re-runs
+# phase5_helm once the real hostnames are known. The validated client supplies separate alfred,
+# nexus, and historian endpoints directly. The referenced chart does not map nexus.externalUrl
+# to worker.deltaStreamUrl, so do not enable discovery for separate public endpoints until that
+# chart gap is fixed and validated. Never commit live IPs or credentials.
+image: <ACR>.azurecr.io/routerlicious:<IMAGE_TAG>
+imagePullPolicy: IfNotPresent
+
+# The upstream chart always renders alfred/nexus Ingress objects. The validated reference uses
+# explicit LoadBalancer Services instead, so assign a class with no installed controller. A
+# production ingress design must replace this value and supply real hosts/TLS secrets.
+ingress:
+  class: selfhost-reference-disabled
+
+alfred:
+  replicas: 4
+  host: alfred.local
+  # Substituted by deploy.sh. The real hostname does not exist until Front Door is created, so
+  # this renders as the in-cluster URL on the first pass and is replaced with the Front Door
+  # hostname once phase12_frontdoor re-runs phase5_helm. Left pointing at a name that does not
+  # resolve outside the cluster, alfred's discovery response advertises it and clients fail
+  # with ENOTFOUND.
+  externalUrl: <ALFRED_EXTERNAL_URL>
+  api:
+    patchRoot: true
+
+nexus:
+  replicas: 4
+  host: nexus.local
+  externalUrl: http://nexus.local
+  # Must be >= socketIo.gracefulShutdownDrainTimeMs (45s, see fluid-configmap.yaml) so
+  # Kubernetes doesn't SIGKILL the pod before nexus finishes draining live WebSocket
+  # connections on scale-down/restart.
+  terminationGracePeriodSeconds: 60
+  # socketConnectionsPerCluster/submitOps were previously rate-limited (60/sec + 1,800 burst),
+  # confirmed to bottleneck combined multi-cluster load well below this design's actual
+  # capacity (CAPACITY_SCALING_SUMMARY.md Part E/Still-open item K) even though CPU/Cosmos/Redis
+  # all had headroom. Disabled: this tier's autoscaling is the real limiter, not a fixed rate.
+  throttling:
+    socketConnectionsPerTenant: disabled
+    socketConnectionsPerCluster: disabled
+    submitOps: disabled
+    submitSignal: disabled
+
+deli:
+  replicas: 8
+  # The chart defaults this to false, which makes deli checkpoint on EVERY message -- one Cosmos
+  # write per op. Measured on "012": 13.3 msg/sec, CPU at ~3% of limit because it is blocked on
+  # I/O, not compute. A single partition built a 259,802-op backlog needing ~5.4h to drain
+  # against a 6h retention window, i.e. ops would age out before being sequenced. The batching
+  # values below are the chart's own; only `enable` was wrong.
+  checkpointHeuristics:
+    enable: true
+    idleTime: 10000
+    maxTime: 60000
+    maxMessages: 500
+scriptorium:
+  replicas: 8
+scribe:
+  replicas: 8
+  # Same chart default and same failure mode as deli above.
+  checkpointHeuristics:
+    enable: true
+    idleTime: 10000
+    maxTime: 60000
+    maxMessages: 500
+
+# Checkpoint durability and shutdown behaviour for the Kafka consumer lambdas (deli, scribe,
+# scriptorium). The upstream chart's defaults leave two failure modes open: a consumer offset that
+# can freeze permanently, and a partition drain that aborts on a failed final flush.
+# The upstream template does not emit `ignoreCheckpointFlushException`, and `.fluidframework/` is
+# gitignored and re-cloned on every deploy, so phase5_helm patches the template in place -- the
+# same approach already used for nexus.terminationGracePeriodSeconds.
+checkpoints:
+  # Chart defaults this false, which forces scribe to globalCheckpointOnly (see
+  # `this.globalCheckpointOnly = this.localCheckpointEnabled ? false : true` in
+  # lambdas/src/scribe/lambda.ts). That is why the Cosmos `checkpoints` collection was empty.
+  localCheckpointEnabled: true
+  # 10 days. Chart default is -1 (no TTL); with local checkpoints now being written, the
+  # collection needs a TTL or it grows without bound.
+  checkpointsTTLInSeconds: 864000
+  # Chart defaults this to false, but the code's own DefaultServiceConfiguration sets it true.
+  # When false, a consumer re-reading messages it has already processed (offset <= its durable
+  # logOffset) skips them and returns early WITHOUT committing the Kafka offset -- see the
+  # reprocess branch in lambdas/src/deli/lambda.ts. The offset can then sit frozen indefinitely
+  # while the pod stays a healthy group member holding the partition, which is invisible to the
+  # consumer-group watchdog (it checks membership, not progress).
+  kafkaCheckpointOnReprocessingOp: true
+  # On partition shutdown, a failed final checkpointManager.flush() rethrows and aborts the
+  # drain (lambdas-driver/src/kafka-service/partition.ts). true lets shutdown finish gracefully.
+  ignoreCheckpointFlushException: true
+
+riddler:
+  replicas: 4
+  # No tenants seeded here -- tenant-admin.sh creates them (including the default "fluid"
+  # bootstrap tenant, see azure/deploy.sh phase5_bootstrap_tenant), so every tenant is a normal,
+  # fully-durable Cosmos DB record with no chart-driven re-upsert to work around.
+
+storage:
+  storageUrl: http://gitrest
+  # Remote AzureClient connections use whole-summary uploads. Keep the server
+  # storage path aligned with the client.
+  enableWholeSummaryUpload: true
+
+historian:
+  externalUrl: <HISTORIAN_EXTERNAL_URL>
+  internalUrl: http://historian
+
+mongodb:
+  # operationsDbEndpoint: sourced from /mnt/secrets/cosmos-connection-string via init container (see README Phase 5 and Phase 8)
+  directConnection: false
+  # IMPORTANT -- do NOT set this to true. createCosmosDBIndexes is not "recreate the same
+  # indexes, Cosmos-compatible" -- when true it creates a DIFFERENT, weaker set of 5 separate
+  # non-unique indexes (dropping the documentId+operation.sequenceNumber+tenantId uniqueness
+  # guarantee) and switches the TTL field from mongoTimestamp to _ts. false (the chart's own
+  # default) creates the correct compound unique index and the mongoTimestamp TTL index via the
+  # native MongoDB driver, which Cosmos DB accepts fine over the wire protocol even though its
+  # ARM control-plane API rejects both as unsupported. Leave false.
+  createCosmosDBIndexes: false
+
+kafka:
+  # Azure Event Hubs over the Kafka protocol, substituted by deploy.sh as
+  # <namespace>.servicebus.windows.net:9093 (SASL_SSL/PLAIN). The credential is NOT here:
+  # rdkafkaBase.ts switches to SASL as soon as kafka:lib:eventHubConnString is set, and that
+  # arrives at runtime from a Key Vault secret via $kafka__lib__eventHubConnString so the
+  # shared-access key never lands in a ConfigMap.
+  url: <KAFKA_ENDPOINT>
+
+zookeeper:
+  url: ""
+
+# Redis auth: Routerlicious's actual client (RedisClientConnectionManager in
+# @fluidframework/server-services-utils) is password-based only -- there is no Entra ID/
+# managed-identity code path. `password` is intentionally left blank here (never put a secret
+# in a Helm values file / rendered ConfigMap); the real value is injected at container startup
+# as a `redis__pass`-style env var (nconf's `__`-separated env override beats the ConfigMap's
+# file-based value) sourced from the Key-Vault-backed `redis-password` CSI secret. See
+# phase5_helm in azure/deploy.sh for the actual wiring.
+redis:
+  url: <REDIS_HOSTNAME>
+  port: 6380
+  tls: true
+redis2:
+  url: <REDIS_HOSTNAME>
+  port: 6380
+  tls: true
+redisForThrottling:
+  url: <REDIS_HOSTNAME>
+  port: 6380
+  tls: true
+redisForTenantCache:
+  url: <REDIS_HOSTNAME>
+  port: 6380
+  tls: true
+
+# Client access tokens (Fluid JWTs signed with a tenant key).
+# Change these here, then re-run azure/deploy.sh.
+#
+# enableTokenExpiration requires `exp`/`iat` on every token and caps its declared lifetime at
+# maxTokenLifetimeSec. With it false, a token with no `exp` -- or one claiming 10 years -- is
+# accepted. (Tokens that do carry `exp` expire either way; jwt.verify enforces that.)
+#
+# maxTokenLifetimeSec caps the `exp - iat` a token may DECLARE. It is not a clock on an
+# already-issued token, and does nothing unless enableTokenExpiration is true.
+auth:
+  maxTokenLifetimeSec: 3600
+  enableTokenExpiration: true
