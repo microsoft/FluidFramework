@@ -368,6 +368,8 @@ export function createTreeCheckout(
 			{
 				change: changeFamily.rebaser.compose([]),
 				revision: "root",
+				// The root commit is synthetic, not an application edit, so it carries no metadata.
+				persistedMetadata: undefined,
 			},
 			changeFamily,
 			() => idCompressor.generateCompressedId(),
@@ -1068,6 +1070,7 @@ export class TreeCheckout implements ITreeCheckout {
 		this.pushLabelFrame(params?.label);
 		this.transaction.start({
 			postProcessor: extractTransactionChangeProcessor(params?.postProcessor),
+			persistedMetadata: params?.persistedMetadata,
 		});
 
 		addConstraintsToTransaction(this, false, params?.preconditions);

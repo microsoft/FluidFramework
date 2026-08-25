@@ -14,6 +14,10 @@ import {
 	SessionIdSchema,
 } from "../core/index.js";
 import { type Brand, brandedNumberType, strictEnum, type Values } from "../util/index.js";
+import {
+	type JsonCompatibleReadOnlyObject,
+	JsonCompatibleReadOnlyObjectSchema,
+} from "../util/index.js";
 
 import type { EncodedBranchId } from "./branch.js";
 
@@ -28,6 +32,13 @@ export interface Commit<TChangeset> {
 	readonly change: TChangeset;
 	/** An identifier representing the session/user/client that made this commit */
 	readonly sessionId: SessionId;
+	/**
+	 * Arbitrary, application-defined metadata persisted alongside this commit.
+	 * @remarks
+	 * See {@link GraphCommit.persistedMetadata}. Only written when encoding at
+	 * {@link EditManagerFormatVersion.v7} or later.
+	 */
+	readonly persistedMetadata?: JsonCompatibleReadOnlyObject;
 }
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
@@ -35,6 +46,7 @@ export type EncodedCommit<TChangeset> = {
 	readonly revision: EncodedRevisionTag;
 	readonly change: TChangeset;
 	readonly sessionId: SessionId;
+	readonly persistedMetadata?: JsonCompatibleReadOnlyObject;
 };
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
@@ -47,6 +59,7 @@ const CommitBase = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 		revision: RevisionTagSchema,
 		change: tChange,
 		sessionId: SessionIdSchema,
+		persistedMetadata: Type.Optional(JsonCompatibleReadOnlyObjectSchema),
 	});
 /**
  * @privateRemarks Commits are generally encoded from `GraphCommit`s, which often contain extra data.
@@ -164,6 +177,11 @@ export const EditManagerFormatVersion = strictEnum("editManager.FormatVersion", 
 	 */
 	v6: 6,
 	/**
+	 * Introduced and made available for writing in 3.0.0.
+	 * Adds support for {@link GraphCommit.persistedMetadata | persisted commit metadata}, carried inline on each commit.
+	 */
+	v7: 7,
+	/**
 	 * Not yet released.
 	 * Only used for testing shared branches.
 	 */
@@ -175,6 +193,7 @@ export const supportedEditManagerFormatVersions: ReadonlySet<EditManagerFormatVe
 		EditManagerFormatVersion.v3,
 		EditManagerFormatVersion.v4,
 		EditManagerFormatVersion.v6,
+		EditManagerFormatVersion.v7,
 		EditManagerFormatVersion.vSharedBranches,
 	]);
 export const editManagerFormatVersions: ReadonlySet<EditManagerFormatVersion> = new Set(

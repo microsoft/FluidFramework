@@ -27,7 +27,11 @@ import {
 	tagRollbackInverse,
 	type RebaseStatsWithDuration,
 } from "../core/index.js";
-import { hasSome, defineLazyCachedProperty } from "../util/index.js";
+import {
+	hasSome,
+	defineLazyCachedProperty,
+	type JsonCompatibleReadOnlyObject,
+} from "../util/index.js";
 
 export type BranchId = SessionSpaceCompressedId | "main";
 export type EncodedBranchId = OpSpaceCompressedId;
@@ -179,7 +183,11 @@ export class SharedTreeBranch<
 	 * @param kind - the kind of change to apply
 	 * @returns the change that was applied and the new head commit of the branch
 	 */
-	public apply(change: TaggedChange<TChange>, kind: CommitKind = CommitKind.Default): void {
+	public apply(
+		change: TaggedChange<TChange>,
+		kind: CommitKind = CommitKind.Default,
+		persistedMetadata?: JsonCompatibleReadOnlyObject,
+	): void {
 		this.assertNotDisposed();
 
 		const revisionTag = change.revision;
@@ -188,6 +196,7 @@ export class SharedTreeBranch<
 		const newHead = mintCommit(this.head, {
 			revision: revisionTag,
 			change: change.change,
+			persistedMetadata,
 		});
 
 		const changeEvent = {

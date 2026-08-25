@@ -53,6 +53,11 @@ export const MessageFormatVersion = strictEnum("MessageFormatVersion", {
 	 */
 	v6: 6,
 	/**
+	 * Introduced and made available for writing in 3.0.0.
+	 * Adds support for {@link GraphCommit.persistedMetadata | persisted commit metadata}, carried inline on the commit.
+	 */
+	v7: 7,
+	/**
 	 * Not yet released.
 	 * Only used for testing shared branches.
 	 */
@@ -63,5 +68,6 @@ export const supportedMessageFormatVersions: ReadonlySet<MessageFormatVersion> =
 	MessageFormatVersion.v3,
 	MessageFormatVersion.v4,
 	MessageFormatVersion.v6,
+	MessageFormatVersion.v7,
 	MessageFormatVersion.vSharedBranches,
 ]);

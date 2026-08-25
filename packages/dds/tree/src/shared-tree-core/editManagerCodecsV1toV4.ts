@@ -19,6 +19,7 @@ import {
 	type EditManagerEncodingContext,
 } from "./editManagerCodecsCommons.js";
 import { EncodedEditManager } from "./editManagerFormatV1toV4.js";
+import { EditManagerFormatVersion } from "./editManagerFormatCommons.js";
 
 /**
  * Create the provided version of the {@link EditManager} codec (which encodes it's {@link SummaryData}).
@@ -65,6 +66,8 @@ export function makeV1toV4andV6CodecWithVersion<TChangeset>(
 				data.main,
 				context,
 				data.originator,
+				// Persisted commit metadata was introduced in v7; older formats must not write it.
+				version >= EditManagerFormatVersion.v7,
 			);
 			const encoded: EncodedEditManager<TChangeset> = {
 				trunk: mainBranch.trunk,

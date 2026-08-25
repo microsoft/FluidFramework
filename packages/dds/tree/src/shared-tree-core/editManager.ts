@@ -17,6 +17,7 @@ import { BTree } from "@tylerbu/sorted-btree-es6";
 import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
+	CommitKind,
 	type GraphCommit,
 	type RevisionTag,
 	findAncestor,
@@ -134,6 +135,8 @@ export class EditManager<
 		this.trunkBase = {
 			revision: rootRevision,
 			change: changeFamily.rebaser.compose([]),
+			// The trunk base is a synthetic root commit, not an application edit, so it carries no metadata.
+			persistedMetadata: undefined,
 		};
 
 		if (logger !== undefined) {
@@ -824,7 +827,13 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 		} else {
 			// Otherwise, push the changes to the peer local branch and merge the branch into the trunk.
 			for (const newCommit of newCommits) {
-				peerLocalBranch.apply(tagChange(newCommit.change, newCommit.revision));
+				peerLocalBranch.apply(
+					tagChange(newCommit.change, newCommit.revision),
+					CommitKind.Default,
+					// This reconstructs an existing remote commit rather than creating a new one,
+					// so it must carry that commit's metadata across.
+					newCommit.persistedMetadata,
+				);
 			}
 			const result = this.trunk.merge(peerLocalBranch);
 			if (result !== undefined) {
@@ -1011,7 +1020,12 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 	}
 
 	private pushCommitToTrunk(sequenceId: SequenceId, commit: Commit<TChangeset>): void {
-		const mintedCommit = mintCommit(this.trunk.getHead(), commit);
+		const mintedCommit = mintCommit(this.trunk.getHead(), {
+			revision: commit.revision,
+			change: commit.change,
+			// This is the same logical commit as the one it is being rebuilt from, so it keeps its metadata.
+			persistedMetadata: commit.persistedMetadata,
+		});
 		this.pushGraphCommitToTrunk(sequenceId, mintedCommit, commit.sessionId);
 	}
 
@@ -1091,6 +1105,8 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 				revision: c.revision,
 				sequenceNumber: metadata.sequenceId.sequenceNumber,
 				sessionId: metadata.sessionId,
+				// The metadata belongs to the commit, so it must be carried into the summary with it.
+				persistedMetadata: c.persistedMetadata,
 			};
 			if (metadata.sequenceId.indexInBatch !== undefined) {
 				commit.indexInBatch = metadata.sequenceId.indexInBatch;
@@ -1116,6 +1132,8 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 								change: c.change,
 								revision: c.revision,
 								sessionId,
+								// The metadata belongs to the commit, so it must be carried into the summary with it.
+								persistedMetadata: c.persistedMetadata,
 							};
 							return commit;
 						}),
@@ -1158,7 +1176,12 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 							sequenceNumber: c.sequenceNumber,
 							indexInBatch: c.indexInBatch,
 						};
-			const commit = mintCommit(trunkHead, c);
+			const commit = mintCommit(trunkHead, {
+				revision: c.revision,
+				change: c.change,
+				// Metadata decoded from the summary belongs to this commit and travels with it.
+				persistedMetadata: c.persistedMetadata,
+			});
 			this.sequenceIdToCommit.set(sequenceId, commit);
 			this.commitMetadata.set(c.revision, {
 				sequenceId,
@@ -1178,7 +1201,12 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 
 			let branchHead = commit;
 			for (const c of branch.commits) {
-				branchHead = mintCommit(branchHead, c);
+				branchHead = mintCommit(branchHead, {
+					revision: c.revision,
+					change: c.change,
+					// Metadata decoded from the summary belongs to this commit and travels with it.
+					persistedMetadata: c.persistedMetadata,
+				});
 			}
 			this.peerLocalBranches.set(
 				sessionId,

@@ -567,6 +567,7 @@ export const FluidClientVersion: {
     readonly v2_73: "2.73.0";
     readonly v2_74: "2.74.0";
     readonly v2_80: "2.80.0";
+    readonly v3_0: "3.0.0";
 };
 
 // @alpha @sealed
@@ -1770,6 +1771,7 @@ export interface RunTransaction {
 
 // @alpha @input
 export interface RunTransactionParamsAlpha extends RunTransactionParamsBeta {
+    readonly persistedMetadata?: JsonCompatibleReadOnlyObject;
     readonly postProcessor?: TransactionPostProcessor;
     readonly preconditions?: readonly TransactionConstraintAlpha[];
 }
@@ -2493,6 +2495,7 @@ export type TreeBranchAlpha = UntypedTreeViewAlpha;
 // @alpha @sealed
 export interface TreeBranchCommitMetadata {
     getParent(): TreeBranchCommitMetadata | undefined;
+    readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined;
     readonly revision: CommitRevision;
 }
 

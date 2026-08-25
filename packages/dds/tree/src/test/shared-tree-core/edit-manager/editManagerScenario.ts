@@ -10,7 +10,7 @@ import type { SessionId } from "@fluidframework/id-compressor";
 
 import type { ChangeFamilyEditor, ChangeRebaser } from "../../../core/index.js";
 import type { Commit, EditManager, SeqNumber } from "../../../shared-tree-core/index.js";
-import { brand } from "../../../util/index.js";
+import { brand, type JsonCompatibleReadOnlyObject } from "../../../util/index.js";
 import { TestChange, asDelta } from "../../testChange.js";
 import { mintRevisionTag } from "../../utils.js";
 
@@ -118,6 +118,9 @@ type TestCommit = Commit<TestChange> & {
 	seqNumber: SeqNumber;
 	refNumber: SeqNumber;
 	intention: number;
+	// `Commit` declares this optionally, but these commits are handed to `addSequencedChanges`,
+	// which requires the `GraphCommit` shape where the property is always present.
+	persistedMetadata: JsonCompatibleReadOnlyObject | undefined;
 };
 
 const localSessionId: SessionId = "0" as SessionId;
@@ -318,6 +321,7 @@ export function runUnitTestScenario(
 							refNumber: brand(localRef),
 							change: changeset,
 							intention,
+							persistedMetadata: undefined,
 						};
 						localCommits.push(commit);
 						knownToLocal.push({ intention, seq });
@@ -385,6 +389,7 @@ export function runUnitTestScenario(
 							refNumber: brand(step.ref),
 							change: TestChange.mint(knownToPeer, intention),
 							intention,
+							persistedMetadata: undefined,
 						};
 						commits.push(commit);
 						break;

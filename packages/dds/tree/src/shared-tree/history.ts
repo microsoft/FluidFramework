@@ -9,6 +9,7 @@ import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { GraphCommit } from "../core/index.js";
 import { BranchCommitCounter, type SharedTreeBranch } from "../shared-tree-core/index.js";
 import type { TreeBranchCommitMetadata, TreeBranchHistory } from "../simple-tree/index.js";
+import type { JsonCompatibleReadOnlyObject } from "../util/index.js";
 
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
@@ -29,6 +30,10 @@ class LazyTreeBranchCommitMetadata implements TreeBranchCommitMetadata {
 	) {
 		assert(commit.revision !== "root", "Cannot construct metadata for the root commit");
 		this.revision = idCompressor.decompress(commit.revision);
+	}
+
+	public get persistedMetadata(): JsonCompatibleReadOnlyObject | undefined {
+		return this.commit.persistedMetadata;
 	}
 
 	public getParent(): TreeBranchCommitMetadata | undefined {

@@ -109,6 +109,18 @@ export function makeEditManagerCodecBuilder<TChangeset>(): VersionDispatchingCod
 				),
 		},
 		{
+			minVersionForCollab: FluidClientVersion.v3_0,
+			formatVersion: EditManagerFormatVersion.v7,
+			codec: (options: EditManagerCodecOptions<TChangeset>) =>
+				makeV1toV4andV6CodecWithVersion(
+					options.changeCodecs.resolve(
+						options.dependentChangeFormatVersion.lookup(EditManagerFormatVersion.v7),
+					),
+					options.revisionTagCodec,
+					EditManagerFormatVersion.v7,
+				),
+		},
+		{
 			minVersionForCollab: undefined,
 			formatVersion: EditManagerFormatVersion.vSharedBranches,
 			codec: (options: EditManagerCodecOptions<TChangeset>) =>

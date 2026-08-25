@@ -10,9 +10,11 @@ import {
 	benchmarkIt,
 	currentBenchmarkMode,
 } from "@fluid-tools/benchmark";
+import type { SessionId } from "@fluidframework/id-compressor";
 
 import {
 	type ChangeFamily,
+	type GraphCommit,
 	type RevisionTag,
 	rootFieldKey,
 	type ChangeFamilyEditor,
@@ -22,7 +24,6 @@ import {
 	DefaultRevisionReplacer,
 } from "../../../feature-libraries/index.js";
 import { FluidClientVersion, FormatValidatorBasic } from "../../../index.js";
-import type { Commit } from "../../../shared-tree-core/index.js";
 import { brand } from "../../../util/index.js";
 import { type Editor, makeEditMinter } from "../../editMinter.js";
 import { NoOpChangeRebaser, TestChange, testChangeFamilyFactory } from "../../testChange.js";
@@ -267,7 +268,9 @@ describe("EditManager - Bench", () => {
 								const manager = editManagerFactory(family);
 								// Subscribe to the local branch to emulate the behavior of SharedTree
 								manager.getLocalBranch("main").events.on("afterChange", ({ change }) => {});
-								const sequencedEdits: Commit<TestChange>[] = [];
+								const sequencedEdits: (GraphCommit<TestChange> & {
+									readonly sessionId: SessionId;
+								})[] = [];
 								for (let iChange = 0; iChange < count; iChange++) {
 									const revision = mintRevisionTag();
 									manager
@@ -277,6 +280,7 @@ describe("EditManager - Bench", () => {
 										change: TestChange.emptyChange,
 										revision,
 										sessionId: manager.localSessionId,
+										persistedMetadata: undefined,
 									});
 								}
 

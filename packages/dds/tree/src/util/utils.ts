@@ -361,6 +361,16 @@ export const JsonCompatibleReadOnlySchema =
 	Type.Any() as unknown as TUnsafe<JsonCompatibleReadOnly>;
 
 /**
+ * Schema for arbitrary JSON-compatible objects (as opposed to arbitrary JSON-compatible values).
+ * @remarks
+ * Like {@link JsonCompatibleReadOnlySchema}, this does not validate the contents of the object.
+ * It is used for persisted fields that carry opaque application-defined data, such as
+ * {@link GraphCommit.persistedMetadata | persisted commit metadata}.
+ */
+export const JsonCompatibleReadOnlyObjectSchema =
+	Type.Any() as unknown as TUnsafe<JsonCompatibleReadOnlyObject>;
+
+/**
  * Returns if a particular json compatible value is an object.
  * Does not include `null` or arrays.
  */

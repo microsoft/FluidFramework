@@ -36,18 +36,23 @@ const trunkCommits: SharedBranchSummaryData<TestChange>["trunk"] = [
 		sessionId: "1" as SessionId,
 		change: TestChange.mint([0], 1),
 		sequenceNumber: brand(1),
+		// Decoding always defines this property (see `decodeCommit`), so the round-trip fixtures
+		// must define it too for deep equality to hold.
+		persistedMetadata: undefined,
 	},
 	{
 		revision: tags[1],
 		sessionId: "2" as SessionId,
 		change: TestChange.mint([0, 1], 2),
 		sequenceNumber: brand(2),
+		persistedMetadata: undefined,
 	},
 	{
 		revision: tags[2],
 		sessionId: "1" as SessionId,
 		change: TestChange.mint([0, 1, 2], 3),
 		sequenceNumber: brand(3),
+		persistedMetadata: undefined,
 	},
 ];
 
@@ -125,6 +130,7 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodi
 										sessionId: "4" as SessionId,
 										revision: mintRevisionTag(),
 										change: TestChange.mint([0, 1], 4),
+										persistedMetadata: undefined,
 									},
 								],
 							},
@@ -157,6 +163,7 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodi
 										sessionId: "4",
 										revision: mintRevisionTag(),
 										change: TestChange.mint([0, 1], 4),
+										persistedMetadata: undefined,
 									},
 								],
 							},
@@ -219,6 +226,7 @@ export function testCodec(): void {
 			EditManagerFormatVersion.v3,
 			EditManagerFormatVersion.v4,
 			EditManagerFormatVersion.v6,
+			EditManagerFormatVersion.v7,
 		]);
 		makeDiscontinuedEncodingTestSuite(family, [
 			EditManagerFormatVersion.v1,

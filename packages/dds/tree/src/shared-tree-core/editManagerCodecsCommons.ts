@@ -71,8 +71,9 @@ function encodeCommit<TChangeset, T extends Commit<TChangeset>>(
 	>,
 	commit: T,
 	context: ChangeEncodingContext,
+	includePersistedMetadata: boolean,
 ) {
-	return {
+	const encoded = {
 		...commit,
 		revision: revisionTagCodec.encode(commit.revision, {
 			originatorId: commit.sessionId,
@@ -82,6 +83,13 @@ function encodeCommit<TChangeset, T extends Commit<TChangeset>>(
 		}),
 		change: changeCodec.encode(commit.change, { ...context, revision: commit.revision }),
 	};
+	// `persistedMetadata` is deliberately excluded here rather than being spread in, so that a client
+	// writing an older format never emits a field that format does not define.
+	if (!includePersistedMetadata && encoded.persistedMetadata !== undefined) {
+		const { persistedMetadata: _excluded, ...rest } = encoded;
+		return rest;
+	}
+	return encoded;
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -112,6 +120,9 @@ function decodeCommit<TChangeset, T extends EncodedCommit<JsonCompatibleReadOnly
 		...commit,
 		revision,
 		change: changeCodec.decode(commit.change, { ...context, revision }),
+		// Always define the property, even when the encoded commit predates this field, so that the
+		// decoded commit satisfies `GraphCommit`'s required `persistedMetadata`.
+		persistedMetadata: commit.persistedMetadata,
 	};
 }
 
@@ -131,16 +142,23 @@ export function encodeSharedBranch<TChangeset>(
 	data: SharedBranchSummaryData<TChangeset>,
 	context: EditManagerEncodingContext,
 	originatorId: SessionId | undefined,
+	includePersistedMetadata: boolean,
 ): EncodedSharedBranch<TChangeset> {
 	const json: Mutable<EncodedSharedBranch<TChangeset>> = {
 		trunk: data.trunk.map((commit) =>
-			encodeCommit(changeCodec, revisionTagCodec, commit, {
-				originatorId: commit.sessionId,
-				idCompressor: context.idCompressor,
-				schema: context.schema,
-				revision: undefined,
-				isSummary: context.isSummary,
-			}),
+			encodeCommit(
+				changeCodec,
+				revisionTagCodec,
+				commit,
+				{
+					originatorId: commit.sessionId,
+					idCompressor: context.idCompressor,
+					schema: context.schema,
+					revision: undefined,
+					isSummary: context.isSummary,
+				},
+				includePersistedMetadata,
+			),
 		),
 		peers: Array.from(data.peerLocalBranches.entries(), ([sessionId, branch]) => [
 			sessionId,
@@ -152,13 +170,19 @@ export function encodeSharedBranch<TChangeset>(
 					isSummary: context.isSummary,
 				}),
 				commits: branch.commits.map((commit) =>
-					encodeCommit(changeCodec, revisionTagCodec, commit, {
-						originatorId: commit.sessionId,
-						idCompressor: context.idCompressor,
-						schema: context.schema,
-						revision: undefined,
-						isSummary: context.isSummary,
-					}),
+					encodeCommit(
+						changeCodec,
+						revisionTagCodec,
+						commit,
+						{
+							originatorId: commit.sessionId,
+							idCompressor: context.idCompressor,
+							schema: context.schema,
+							revision: undefined,
+							isSummary: context.isSummary,
+						},
+						includePersistedMetadata,
+					),
 				),
 			},
 		]),

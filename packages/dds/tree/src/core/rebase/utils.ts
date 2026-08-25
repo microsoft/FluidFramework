@@ -303,6 +303,8 @@ export function rebaseBranch<TChange>(
 				revision: c.revision,
 				change,
 				parent: newHead,
+				// A rebased commit is the same logical commit as the one it was rebased from, so it keeps its metadata.
+				persistedMetadata: c.persistedMetadata,
 			};
 			sourceCommits.push(newHead);
 			editsToCompose.push(tagChange(change, c.revision));

@@ -15,12 +15,13 @@ import {
 	mintCommit,
 	rebaseBranch,
 	tagChange,
+	CommitKind,
 	type ChangeFamilyEditor,
 	type GraphCommit,
 	type ProcessChangeFn,
 	type RevisionTag,
 } from "../core/index.js";
-import { getLast, getOrCreate } from "../util/index.js";
+import { getLast, getOrCreate, type JsonCompatibleReadOnlyObject } from "../util/index.js";
 
 import type { SharedTreeBranch, SharedTreeBranchEvents } from "./branch.js";
 
@@ -290,6 +291,17 @@ export interface SquashingTransactionOptions<TChange, TChangeProcessingContext> 
 	 * {@link ChangeProcessor.applicability | applicability}.
 	 */
 	readonly postProcessor?: ChangeProcessor<TChange, TChangeProcessingContext>;
+
+	/**
+	 * Arbitrary, application-defined metadata to attach to the commit that this transaction produces.
+	 *
+	 * @remarks
+	 * Only the metadata supplied to the outermost transaction is used; metadata supplied to a nested
+	 * transaction is ignored. If the transaction produces no commit, the metadata is discarded.
+	 *
+	 * See {@link GraphCommit.persistedMetadata}.
+	 */
+	readonly persistedMetadata?: JsonCompatibleReadOnlyObject;
 }
 
 /**
@@ -409,6 +421,8 @@ export class SquashingTransactionStack<
 				startOptions?: SquashingTransactionOptions<TChange, TChangeProcessingContext>,
 			): Callbacks<SquashingTransactionOptions<TChange, TChangeProcessingContext>> => {
 				postProcessorStack.push(resolvePostProcessor(startOptions?.postProcessor));
+				// Only the outermost transaction's metadata is used; nested transactions' metadata is ignored.
+				const persistedMetadata = startOptions?.persistedMetadata;
 				// Keep track of the commit that each transaction was on when it started
 				const startHead = this.activeBranch.getHead();
 				const changeFamily = this.branch.changeFamily;
@@ -496,13 +510,18 @@ export class SquashingTransactionStack<
 								if (targetPath.length === 0) {
 									// No changes were made on the original branch since the transaction began
 									// The transaction commit can be applied directly
-									this.branch.apply(tagChange(change, transactionRevision));
+									this.branch.apply(
+										tagChange(change, transactionRevision),
+										CommitKind.Default,
+										persistedMetadata,
+									);
 									// The view is already up-to-date so there's nothing more to do
 								} else {
 									// Some changes were made on `branch` since the transaction began
 									const unrebasedHead = mintCommit(startHead, {
 										change,
 										revision: transactionRevision,
+										persistedMetadata,
 									});
 									// We need to rebase the transaction commit on top of the new changes
 									const rebased = rebaseBranch(
@@ -515,7 +534,11 @@ export class SquashingTransactionStack<
 										rebased.newSourceHead.revision === transactionRevision,
 										0xcd0 /* The transaction commit should be rebased to the tip */,
 									);
-									this.branch.apply(rebased.newSourceHead);
+									this.branch.apply(
+										rebased.newSourceHead,
+										CommitKind.Default,
+										persistedMetadata,
+									);
 									viewUpdate = rebased.sourceChange;
 								}
 							} else {

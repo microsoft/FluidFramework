@@ -10,10 +10,11 @@ import {
 	type ChangeFamilyEditor,
 	type ChangeRebaser,
 	type DeltaRoot,
+	type GraphCommit,
 	type RevisionTag,
 	emptyDelta,
 } from "../../../core/index.js";
-import { type Commit, EditManager } from "../../../shared-tree-core/index.js";
+import { EditManager } from "../../../shared-tree-core/index.js";
 import { type RecursiveReadonly, brand, makeArray } from "../../../util/index.js";
 import { TestChange, asDelta, testChangeFamilyFactory } from "../../testChange.js";
 import { mintRevisionTag, testIdCompressor } from "../../utils.js";
@@ -136,6 +137,7 @@ export function rebaseLocalEditsOverTrunkEdits<TChange>(
 			change: mintChange(revision),
 			revision,
 			sessionId: trunkSessionId,
+			persistedMetadata: undefined,
 		};
 	});
 	const run = () => {
@@ -232,6 +234,7 @@ export function rebasePeerEditsOverTrunkEdits<TChange>(
 				{
 					change: mintChange(revision),
 					revision,
+					persistedMetadata: undefined,
 				},
 			],
 			"trunk" as SessionId,
@@ -247,6 +250,7 @@ export function rebasePeerEditsOverTrunkEdits<TChange>(
 			change: mintChange(revision),
 			revision,
 			sessionId: peerSessionId,
+			persistedMetadata: undefined,
 		};
 	});
 	const run = () => {
@@ -347,6 +351,7 @@ export function rebaseAdvancingPeerEditsOverTrunkEdits<TChange>(
 				{
 					change: mintChange(revision),
 					revision,
+					persistedMetadata: undefined,
 				},
 			],
 			"trunk" as SessionId,
@@ -361,6 +366,7 @@ export function rebaseAdvancingPeerEditsOverTrunkEdits<TChange>(
 			change: mintChange(revision),
 			revision,
 			sessionId: "peer" as SessionId,
+			persistedMetadata: undefined,
 		};
 	});
 	const run = () => {
@@ -441,7 +447,7 @@ export function rebaseConcurrentPeerEdits<TChange>(
 	defer: boolean = false,
 ): void | (() => void) {
 	subscribeToLocalBranch(manager);
-	const peerEdits: Commit<TChange>[] = [];
+	const peerEdits: (GraphCommit<TChange> & { readonly sessionId: SessionId })[] = [];
 	for (let iChange = 0; iChange < editsPerPeerCount; iChange++) {
 		for (let iPeer = 0; iPeer < peerCount; iPeer++) {
 			const revision = mintRevisionTag();
@@ -449,6 +455,7 @@ export function rebaseConcurrentPeerEdits<TChange>(
 				change: mintChange(revision),
 				revision,
 				sessionId: `p${iPeer}` as SessionId,
+				persistedMetadata: undefined,
 			});
 		}
 	}

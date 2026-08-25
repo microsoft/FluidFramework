@@ -61,6 +61,9 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 						originatorId: message.sessionId,
 						changeset: changeCodec.encode(message.commit.change, changeContext),
 						branchId: encodeBranchId(context.idCompressor, message.branchId),
+						...(message.commit.persistedMetadata === undefined
+							? {}
+							: { persistedMetadata: message.commit.persistedMetadata }),
 						version,
 					};
 				}
@@ -87,6 +90,7 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 				changeset,
 				branchId: encodedBranchId,
 				branchName: encodedBranchName,
+				persistedMetadata,
 			} = encoded;
 
 			const changeContext: ChangeEncodingContext = {
@@ -120,6 +124,7 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 						idCompressor: context.idCompressor,
 						isSummary: false,
 					}),
+					persistedMetadata,
 				},
 				branchId,
 				sessionId: originatorId,

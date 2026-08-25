@@ -6,6 +6,7 @@
 import type { ErasedType } from "@fluidframework/core-interfaces";
 
 import type { TreeNode } from "../core/index.js";
+import type { JsonCompatibleReadOnlyObject } from "../../util/index.js";
 
 /**
  * A special object that signifies when a SharedTree {@link RunTransaction | transaction} should "roll back".
@@ -218,4 +219,29 @@ export interface RunTransactionParamsAlpha extends RunTransactionParamsBeta {
 	 * reserving the behavior; a real post-processor will be provided in a future change.
 	 */
 	readonly postProcessor?: TransactionPostProcessor;
+
+	/**
+	 * Arbitrary, application-defined metadata to persist alongside the commit that this transaction produces.
+	 * @remarks
+	 * The metadata is replicated to all collaborating clients and persisted in the document. It is readable
+	 * via {@link TreeBranchCommitMetadata.persistedMetadata} while walking the branch's
+	 * {@link UntypedTreeViewAlpha.branchHistory | history}.
+	 *
+	 * The metadata shares the lifetime of the commit it is attached to: once that commit is trimmed from the
+	 * trunk, the metadata goes with it. Under the default trunk eviction policy that is the width of the
+	 * collaboration window.
+	 *
+	 * If this transaction produces no commit — because its body made no changes, or because it was rolled
+	 * back — the metadata is discarded without error.
+	 *
+	 * If nested transactions each supply metadata, only the outermost transaction's metadata is used
+	 * (mirroring {@link RunTransactionParamsBeta.label | label}).
+	 *
+	 * This value must be JSON-serializable. It travels on every annotated op and occupies space in the
+	 * summary for as long as its commit survives, so it should be kept small.
+	 *
+	 * Metadata is only written to the document when `minVersionForCollab` is set to a version that supports
+	 * it. Otherwise it is retained in memory for the local session but not persisted or replicated.
+	 */
+	readonly persistedMetadata?: JsonCompatibleReadOnlyObject;
 }

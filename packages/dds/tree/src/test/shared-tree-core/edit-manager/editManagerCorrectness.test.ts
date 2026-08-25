@@ -26,6 +26,15 @@ const localSessionId: SessionId = "0" as SessionId;
 const peer1: SessionId = "1" as SessionId;
 const peer2: SessionId = "2" as SessionId;
 
+/**
+ * A {@link Commit} that is also usable as a {@link GraphCommit}.
+ * @remarks
+ * {@link Commit} declares `persistedMetadata` optionally because the persisted format omits it when absent,
+ * whereas {@link GraphCommit} requires the property to be present. These test helpers produce values that
+ * are handed directly to `addSequencedChanges`, so they must satisfy the latter.
+ */
+type SequencedTestCommit = GraphCommit<TestChange> & { readonly sessionId: SessionId };
+
 export function testCorrectness(): void {
 	describe("Rebasing Correctness", () => {
 		describe("Unit Tests", () => {
@@ -629,6 +638,7 @@ export function testCorrectness(): void {
 						{
 							change: TestChange.mint([0, 1], [2]),
 							revision: mintRevisionTag(),
+							persistedMetadata: undefined,
 						},
 					],
 					"1" as SessionId,
@@ -661,6 +671,7 @@ export function testCorrectness(): void {
 										[intention],
 									),
 									revision: mintRevisionTag(),
+									persistedMetadata: undefined,
 								},
 							],
 							peer1,
@@ -845,6 +856,7 @@ export function testCorrectness(): void {
 							{
 								change: TestChange.emptyChange,
 								revision: mintRevisionTag(),
+								persistedMetadata: undefined,
 							},
 						],
 						peer1,
@@ -857,6 +869,7 @@ export function testCorrectness(): void {
 							{
 								change: TestChange.emptyChange,
 								revision: sequencedLocalChange,
+								persistedMetadata: undefined,
 							},
 						],
 						manager.localSessionId,
@@ -884,6 +897,7 @@ export function testCorrectness(): void {
 							{
 								change: TestChange.emptyChange,
 								revision: sequencedLocalChange,
+								persistedMetadata: undefined,
 							},
 						],
 						manager.localSessionId,
@@ -896,6 +910,7 @@ export function testCorrectness(): void {
 							{
 								change: TestChange.emptyChange,
 								revision: mintRevisionTag(),
+								persistedMetadata: undefined,
 							},
 						],
 						peer1,
@@ -908,6 +923,7 @@ export function testCorrectness(): void {
 							{
 								change: TestChange.emptyChange,
 								revision: mintRevisionTag(),
+								persistedMetadata: undefined,
 							},
 						],
 						peer1,
@@ -1183,7 +1199,7 @@ function applyLocalCommit(
 	manager: EditManager<ChangeFamilyEditor, TestChange>,
 	inputContext: readonly number[] = [],
 	intention: number | number[] = [],
-): Commit<TestChange> {
+): SequencedTestCommit {
 	return applyBranchCommit(manager.getLocalBranch("main"), inputContext, intention);
 }
 
@@ -1191,7 +1207,7 @@ function applyBranchCommit(
 	branch: SharedTreeBranch<ChangeFamilyEditor, TestChange, TestChangeFamily>,
 	inputContext: readonly number[] = [],
 	intention: number | number[] = [],
-): Commit<TestChange> {
+): SequencedTestCommit {
 	const revision = mintRevisionTag();
 	branch.apply({
 		change: TestChange.mint(inputContext, intention),
@@ -1202,6 +1218,7 @@ function applyBranchCommit(
 		change: commit.change,
 		revision: commit.revision,
 		sessionId: localSessionId,
+		persistedMetadata: commit.persistedMetadata,
 	};
 }
 
@@ -1209,11 +1226,12 @@ function peerCommit(
 	peer: typeof peer1 | typeof peer2 = peer1,
 	inputContext: readonly number[] = [],
 	intention: number | number[] = [],
-): Commit<TestChange> {
+): SequencedTestCommit {
 	return {
 		change: TestChange.mint(inputContext, intention),
 		revision: mintRevisionTag(),
 		sessionId: peer,
+		persistedMetadata: undefined,
 	};
 }
 

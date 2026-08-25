@@ -34,11 +34,13 @@ import {
 const commit1 = {
 	revision: mintRevisionTag(),
 	change: TestChange.mint([], 0),
+	persistedMetadata: undefined,
 };
 
 const commit2 = {
 	revision: mintRevisionTag(),
 	change: TestChange.mint([0], [1, 2, 3]),
+	persistedMetadata: undefined,
 };
 
 const commitWithoutRevision = {
@@ -157,6 +159,7 @@ describe("message codec", () => {
 		MessageFormatVersion.v3,
 		MessageFormatVersion.v4,
 		MessageFormatVersion.v6,
+		MessageFormatVersion.v7,
 		MessageFormatVersion.vSharedBranches,
 	]);
 	makeDiscontinuedEncodingTestSuite(family, [
@@ -185,6 +188,7 @@ describe("message codec", () => {
 					revision,
 					change: TestChange.mint([], 1),
 					parent: "Extra field that should be dropped" as unknown as GraphCommit<TestChange>,
+					persistedMetadata: undefined,
 				},
 				branchId: "main",
 			};
@@ -199,6 +203,7 @@ describe("message codec", () => {
 				commit: {
 					revision,
 					change: TestChange.mint([], 1),
+					persistedMetadata: undefined,
 				},
 			});
 		});

@@ -19,7 +19,10 @@ import type {
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports -- This is referenced by doc comments.
 	TreeAlpha,
 } from "../../shared-tree/index.js";
-import type { JsonCompatibleReadOnly } from "../../util/index.js";
+import type {
+	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnlyObject,
+} from "../../util/index.js";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
 import type { Unhydrated } from "../core/index.js";
 import type {
@@ -317,6 +320,19 @@ export interface TreeBranchCommitMetadata {
 	 * The revision UUID that uniquely identifies this commit within the branch's history.
 	 */
 	readonly revision: CommitRevision;
+
+	/**
+	 * Arbitrary, application-defined metadata that was {@link RunTransactionParamsAlpha.persistedMetadata | attached}
+	 * to this commit when it was created.
+	 *
+	 * @remarks
+	 * This is `undefined` for commits that were not annotated, and for commits created before the application
+	 * began writing metadata.
+	 *
+	 * The metadata shares the lifetime of the commit it describes: once the commit is trimmed from the branch's
+	 * history, the metadata goes with it.
+	 */
+	readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined;
 
 	/**
 	 * The metadata for the commit that this commit was based on, or `undefined` if this commit has no parent
