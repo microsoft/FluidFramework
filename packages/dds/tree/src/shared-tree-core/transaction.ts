@@ -21,7 +21,12 @@ import {
 	type ProcessChangeFn,
 	type RevisionTag,
 } from "../core/index.js";
-import { getLast, getOrCreate, type JsonCompatibleReadOnlyObject } from "../util/index.js";
+import {
+	getLast,
+	getOrCreate,
+	type JsonCompatibleReadOnly,
+	type JsonCompatibleReadOnlyObject,
+} from "../util/index.js";
 
 import type { SharedTreeBranch, SharedTreeBranchEvents } from "./branch.js";
 
@@ -299,9 +304,9 @@ export interface SquashingTransactionOptions<TChange, TChangeProcessingContext> 
 	 * Only the metadata supplied to the outermost transaction is used; metadata supplied to a nested
 	 * transaction is ignored. If the transaction produces no commit, the metadata is discarded.
 	 *
-	 * See {@link GraphCommit.persistedMetadata}.
+	 * See {@link GraphCommit.customMetadata}.
 	 */
-	readonly persistedMetadata?: JsonCompatibleReadOnlyObject;
+	readonly customMetadata?: JsonCompatibleReadOnlyObject;
 }
 
 /**
@@ -421,8 +426,24 @@ export class SquashingTransactionStack<
 				startOptions?: SquashingTransactionOptions<TChange, TChangeProcessingContext>,
 			): Callbacks<SquashingTransactionOptions<TChange, TChangeProcessingContext>> => {
 				postProcessorStack.push(resolvePostProcessor(startOptions?.postProcessor));
-				// Only the outermost transaction's metadata is used; nested transactions' metadata is ignored.
-				const persistedMetadata = startOptions?.persistedMetadata;
+				// Metadata from every transaction in the stack is merged into the single commit they
+				// produce. Metadata from a nested transaction that is aborted never contributes.
+				// Collected innermost-first, so that a later `Object.assign` from an enclosing
+				// transaction overwrites conflicting keys from the transactions it contains.
+				const committedNestedMetadata: JsonCompatibleReadOnlyObject[] = [];
+				const mergeCustomMetadata = (): JsonCompatibleReadOnlyObject | undefined => {
+					const outermost = startOptions?.customMetadata;
+					if (committedNestedMetadata.length === 0) {
+						return outermost;
+					}
+					const merged: Record<string, JsonCompatibleReadOnly | undefined> = {};
+					for (const metadata of committedNestedMetadata) {
+						Object.assign(merged, metadata);
+					}
+					// The outermost transaction is applied last so that it wins on conflict.
+					Object.assign(merged, outermost);
+					return merged;
+				};
 				// Keep track of the commit that each transaction was on when it started
 				const startHead = this.activeBranch.getHead();
 				const changeFamily = this.branch.changeFamily;
@@ -507,13 +528,14 @@ export class SquashingTransactionStack<
 									transactionBranch.apply(tagChange(change, transactionRevision));
 								}
 
+								const customMetadata = mergeCustomMetadata();
 								if (targetPath.length === 0) {
 									// No changes were made on the original branch since the transaction began
 									// The transaction commit can be applied directly
 									this.branch.apply(
 										tagChange(change, transactionRevision),
 										CommitKind.Default,
-										persistedMetadata,
+										customMetadata,
 									);
 									// The view is already up-to-date so there's nothing more to do
 								} else {
@@ -521,7 +543,7 @@ export class SquashingTransactionStack<
 									const unrebasedHead = mintCommit(startHead, {
 										change,
 										revision: transactionRevision,
-										persistedMetadata,
+										customMetadata,
 									});
 									// We need to rebase the transaction commit on top of the new changes
 									const rebased = rebaseBranch(
@@ -534,11 +556,7 @@ export class SquashingTransactionStack<
 										rebased.newSourceHead.revision === transactionRevision,
 										0xcd0 /* The transaction commit should be rebased to the tip */,
 									);
-									this.branch.apply(
-										rebased.newSourceHead,
-										CommitKind.Default,
-										persistedMetadata,
-									);
+									this.branch.apply(rebased.newSourceHead, CommitKind.Default, customMetadata);
 									viewUpdate = rebased.sourceChange;
 								}
 							} else {
@@ -569,6 +587,7 @@ export class SquashingTransactionStack<
 					SquashingTransactionOptions<TChange, TChangeProcessingContext>
 				> = (nestedStartOptions) => {
 					postProcessorStack.push(resolvePostProcessor(nestedStartOptions?.postProcessor));
+					const nestedCustomMetadata = nestedStartOptions?.customMetadata;
 					const nestedStartHead = this.activeBranch.getHead();
 					const nestedOuterOnPop = onPush?.();
 					transactionBranch.editor.enterTransaction();
@@ -584,6 +603,9 @@ export class SquashingTransactionStack<
 									break;
 								}
 								case TransactionResult.Commit: {
+									if (nestedCustomMetadata !== undefined) {
+										committedNestedMetadata.push(nestedCustomMetadata);
+									}
 									// When this nested transaction supplied a post-processor that should be applied here, squash its
 									// edits into a single (post-processed) commit on the transaction branch rather than leaving them to
 									// be squashed only when the outermost transaction is committed.

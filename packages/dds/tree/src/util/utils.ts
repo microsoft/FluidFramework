@@ -363,15 +363,14 @@ export const JsonCompatibleReadOnlySchema =
 /**
  * Schema for arbitrary JSON-compatible objects (as opposed to arbitrary JSON-compatible values).
  * @remarks
- * Like {@link JsonCompatibleReadOnlySchema}, this does not validate the contents of the object.
- * It does validate that the value is an object rather than an array or a primitive, which matches
- * the declared shape of persisted fields that carry opaque application-defined data, such as
- * {@link GraphCommit.persistedMetadata | persisted commit metadata}.
+ * This validates that the value is an object whose properties are JSON-compatible, but like
+ * {@link JsonCompatibleReadOnlySchema} it does not deeply validate those property values.
+ *
+ * This mirrors the shape already used for persisted schema metadata (`PersistedMetadataFormat`).
  */
-export const JsonCompatibleReadOnlyObjectSchema = Type.Object(
-	{},
-	{ additionalProperties: true },
-) as unknown as TUnsafe<JsonCompatibleReadOnlyObject>;
+export const JsonCompatibleReadOnlyObjectSchema = Type.Unsafe<JsonCompatibleReadOnlyObject>(
+	Type.Record(Type.String(), JsonCompatibleReadOnlySchema),
+);
 
 /**
  * Returns if a particular json compatible value is an object.

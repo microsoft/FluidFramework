@@ -670,14 +670,14 @@ export class SharedTreeCore<
 		switch (type) {
 			case "commit": {
 				const {
-					commit: { revision, change, persistedMetadata },
+					commit: { revision, change, customMetadata },
 					branchId,
 				} = message;
 				this.editManager
 					.getLocalBranch(branchId)
 					// Restore the metadata from the stashed op so that metadata attached before a
 					// disconnect survives the pending-state round trip.
-					.apply({ change, revision }, CommitKind.Default, persistedMetadata);
+					.apply({ change, revision }, CommitKind.Default, customMetadata);
 				break;
 			}
 			case "branch": {

@@ -41,7 +41,7 @@ function newCommit(
 		change: TestChange.mint(inputContext2, intention),
 		revision: intention as RevisionTag,
 		parent,
-		persistedMetadata: undefined,
+		customMetadata: undefined,
 	};
 }
 

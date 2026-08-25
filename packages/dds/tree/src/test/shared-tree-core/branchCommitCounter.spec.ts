@@ -36,7 +36,7 @@ function mintCommit(revision?: RevisionTag): GraphCommit<DefaultChangeset> {
 	return {
 		change: defaultChangeFamily.rebaser.compose([]),
 		revision: revision ?? mintRevisionTag(),
-		persistedMetadata: undefined,
+		customMetadata: undefined,
 	};
 }
 

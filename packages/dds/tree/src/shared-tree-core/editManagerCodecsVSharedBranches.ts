@@ -59,7 +59,6 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 				data.main,
 				context,
 				data.originator,
-				// The shared-branches format is unreleased, so it always carries persisted metadata.
 				true,
 			);
 			assert(

@@ -137,7 +137,7 @@ export function rebaseLocalEditsOverTrunkEdits<TChange>(
 			change: mintChange(revision),
 			revision,
 			sessionId: trunkSessionId,
-			persistedMetadata: undefined,
+			customMetadata: undefined,
 		};
 	});
 	const run = () => {
@@ -234,7 +234,7 @@ export function rebasePeerEditsOverTrunkEdits<TChange>(
 				{
 					change: mintChange(revision),
 					revision,
-					persistedMetadata: undefined,
+					customMetadata: undefined,
 				},
 			],
 			"trunk" as SessionId,
@@ -250,7 +250,7 @@ export function rebasePeerEditsOverTrunkEdits<TChange>(
 			change: mintChange(revision),
 			revision,
 			sessionId: peerSessionId,
-			persistedMetadata: undefined,
+			customMetadata: undefined,
 		};
 	});
 	const run = () => {
@@ -351,7 +351,7 @@ export function rebaseAdvancingPeerEditsOverTrunkEdits<TChange>(
 				{
 					change: mintChange(revision),
 					revision,
-					persistedMetadata: undefined,
+					customMetadata: undefined,
 				},
 			],
 			"trunk" as SessionId,
@@ -366,7 +366,7 @@ export function rebaseAdvancingPeerEditsOverTrunkEdits<TChange>(
 			change: mintChange(revision),
 			revision,
 			sessionId: "peer" as SessionId,
-			persistedMetadata: undefined,
+			customMetadata: undefined,
 		};
 	});
 	const run = () => {
@@ -455,7 +455,7 @@ export function rebaseConcurrentPeerEdits<TChange>(
 				change: mintChange(revision),
 				revision,
 				sessionId: `p${iPeer}` as SessionId,
-				persistedMetadata: undefined,
+				customMetadata: undefined,
 			});
 		}
 	}

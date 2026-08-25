@@ -71,7 +71,7 @@ function encodeCommit<TChangeset, T extends Commit<TChangeset>>(
 	>,
 	commit: T,
 	context: ChangeEncodingContext,
-	includePersistedMetadata: boolean,
+	includeCustomMetadata: boolean,
 ) {
 	const encoded = {
 		...commit,
@@ -83,10 +83,10 @@ function encodeCommit<TChangeset, T extends Commit<TChangeset>>(
 		}),
 		change: changeCodec.encode(commit.change, { ...context, revision: commit.revision }),
 	};
-	// `persistedMetadata` is deliberately excluded here rather than being spread in, so that a client
+	// `customMetadata` is deliberately excluded here rather than being spread in, so that a client
 	// writing an older format never emits a field that format does not define.
-	if (!includePersistedMetadata && encoded.persistedMetadata !== undefined) {
-		const { persistedMetadata: _excluded, ...rest } = encoded;
+	if (!includeCustomMetadata && encoded.customMetadata !== undefined) {
+		const { customMetadata: _excluded, ...rest } = encoded;
 		return rest;
 	}
 	return encoded;
@@ -120,9 +120,7 @@ function decodeCommit<TChangeset, T extends EncodedCommit<JsonCompatibleReadOnly
 		...commit,
 		revision,
 		change: changeCodec.decode(commit.change, { ...context, revision }),
-		// Always define the property, even when the encoded commit predates this field, so that the
-		// decoded commit satisfies `GraphCommit`'s required `persistedMetadata`.
-		persistedMetadata: commit.persistedMetadata,
+		customMetadata: commit.customMetadata,
 	};
 }
 
@@ -142,7 +140,7 @@ export function encodeSharedBranch<TChangeset>(
 	data: SharedBranchSummaryData<TChangeset>,
 	context: EditManagerEncodingContext,
 	originatorId: SessionId | undefined,
-	includePersistedMetadata: boolean,
+	includeCustomMetadata: boolean,
 ): EncodedSharedBranch<TChangeset> {
 	const json: Mutable<EncodedSharedBranch<TChangeset>> = {
 		trunk: data.trunk.map((commit) =>
@@ -157,7 +155,7 @@ export function encodeSharedBranch<TChangeset>(
 					revision: undefined,
 					isSummary: context.isSummary,
 				},
-				includePersistedMetadata,
+				includeCustomMetadata,
 			),
 		),
 		peers: Array.from(data.peerLocalBranches.entries(), ([sessionId, branch]) => [
@@ -181,7 +179,7 @@ export function encodeSharedBranch<TChangeset>(
 							revision: undefined,
 							isSummary: context.isSummary,
 						},
-						includePersistedMetadata,
+						includeCustomMetadata,
 					),
 				),
 			},

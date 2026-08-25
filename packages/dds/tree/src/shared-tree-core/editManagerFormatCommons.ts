@@ -35,10 +35,10 @@ export interface Commit<TChangeset> {
 	/**
 	 * Arbitrary, application-defined metadata persisted alongside this commit.
 	 * @remarks
-	 * See {@link GraphCommit.persistedMetadata}. Only written when encoding at
+	 * See {@link GraphCommit.customMetadata}. Only written when encoding at
 	 * {@link EditManagerFormatVersion.v7} or later.
 	 */
-	readonly persistedMetadata?: JsonCompatibleReadOnlyObject;
+	readonly customMetadata?: JsonCompatibleReadOnlyObject;
 }
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
@@ -46,7 +46,7 @@ export type EncodedCommit<TChangeset> = {
 	readonly revision: EncodedRevisionTag;
 	readonly change: TChangeset;
 	readonly sessionId: SessionId;
-	readonly persistedMetadata?: JsonCompatibleReadOnlyObject;
+	readonly customMetadata?: JsonCompatibleReadOnlyObject;
 };
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
@@ -59,13 +59,13 @@ const CommitBase = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 		revision: RevisionTagSchema,
 		change: tChange,
 		sessionId: SessionIdSchema,
-		persistedMetadata: Type.Optional(JsonCompatibleReadOnlyObjectSchema),
+		customMetadata: Type.Optional(JsonCompatibleReadOnlyObjectSchema),
 	});
 /**
  * @privateRemarks Commits are generally encoded from `GraphCommit`s, which often contain extra data.
  * This `noAdditionalProps` is especially important in that light.
  *
- * Note that `persistedMetadata` is declared on {@link CommitBase} for every format version rather than
+ * Note that `customMetadata` is declared on {@link CommitBase} for every format version rather than
  * only for {@link EditManagerFormatVersion.v7} and later. Writing is gated on the format version by
  * `encodeCommit`, so this client never emits the field into an older format. The schema is shared
  * because making it version-dependent would require threading the version through every schema builder.
@@ -186,7 +186,7 @@ export const EditManagerFormatVersion = strictEnum("editManager.FormatVersion", 
 	v6: 6,
 	/**
 	 * Introduced and made available for writing in 3.0.0.
-	 * Adds support for {@link GraphCommit.persistedMetadata | persisted commit metadata}, carried inline on each commit.
+	 * Adds support for {@link GraphCommit.customMetadata | persisted commit metadata}, carried inline on each commit.
 	 */
 	v7: 7,
 	/**

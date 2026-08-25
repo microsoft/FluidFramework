@@ -34,16 +34,11 @@ export interface Message {
 	readonly changeset: JsonCompatibleReadOnly;
 
 	/**
-	 * Arbitrary, application-defined metadata to persist alongside the commit in this message.
+	 * Arbitrary, application-defined metadata to store alongside the commit in this message.
 	 * @remarks
 	 * Only written when encoding at {@link MessageFormatVersion.v7} or later.
-	 *
-	 * @privateRemarks
-	 * This field is declared explicitly (rather than relying on the schema tolerating additional
-	 * properties) so that the behavior is part of the documented format rather than an accident of
-	 * the schema's permissiveness.
 	 */
-	readonly persistedMetadata?: JsonCompatibleReadOnlyObject;
+	readonly customMetadata?: JsonCompatibleReadOnlyObject;
 
 	/**
 	 * The version of the message. This controls how the message is encoded.
@@ -67,7 +62,7 @@ export const Message = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 		revision: RevisionTagSchema,
 		originatorId: SessionIdSchema,
 		changeset: tChange,
-		persistedMetadata: Type.Optional(JsonCompatibleReadOnlyObjectSchema),
+		customMetadata: Type.Optional(JsonCompatibleReadOnlyObjectSchema),
 		version: Type.Optional(
 			Type.Union([
 				Type.Literal(MessageFormatVersion.v1),

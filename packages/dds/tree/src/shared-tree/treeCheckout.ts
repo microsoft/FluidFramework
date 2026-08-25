@@ -146,31 +146,32 @@ import { SerializedChange } from "./serializedChange.js";
  * commit made on a fork — it may not be serialized until long after the transaction returns. Round-tripping
  * through JSON here gives the commit a private copy, so that later mutation of the caller's object cannot
  * change an already-created commit, and so that the value read back locally is exactly the value that peers
- * and future summaries will see (rather than, say, a `NaN` locally that serializes as `null` everywhere else).
+ * and future summaries will see.
  *
- * This work is only done for transactions that actually supply metadata.
+ * Normalizing here (rather than only validating) matches how SharedTree treats unsupported numeric values in
+ * tree content, where `NaN` and the infinities become `null` "to match JSON's behavior for such values".
  * @throws A `UsageError` if the value cannot be represented as a JSON object.
  */
-function snapshotPersistedMetadata(
-	persistedMetadata: JsonCompatibleReadOnlyObject | undefined,
+function snapshotCustomMetadata(
+	customMetadata: JsonCompatibleReadOnlyObject | undefined,
 ): JsonCompatibleReadOnlyObject | undefined {
-	if (persistedMetadata === undefined) {
+	if (customMetadata === undefined) {
 		return undefined;
 	}
 	let serialized: string | undefined;
 	try {
-		serialized = JSON.stringify(persistedMetadata);
+		serialized = JSON.stringify(customMetadata);
 	} catch (error: unknown) {
 		throw new UsageError(
-			`Transaction "persistedMetadata" must be JSON-serializable: ${error instanceof Error ? error.message : String(error)}`,
+			`Transaction "customMetadata" must be JSON-serializable: ${error instanceof Error ? error.message : String(error)}`,
 		);
 	}
 	if (serialized === undefined) {
-		throw new UsageError(`Transaction "persistedMetadata" must be JSON-serializable.`);
+		throw new UsageError(`Transaction "customMetadata" must be JSON-serializable.`);
 	}
 	const snapshot: unknown = JSON.parse(serialized);
 	if (typeof snapshot !== "object" || snapshot === null || Array.isArray(snapshot)) {
-		throw new UsageError(`Transaction "persistedMetadata" must be a JSON object.`);
+		throw new UsageError(`Transaction "customMetadata" must be a JSON object.`);
 	}
 	return snapshot as JsonCompatibleReadOnlyObject;
 }
@@ -405,8 +406,7 @@ export function createTreeCheckout(
 			{
 				change: changeFamily.rebaser.compose([]),
 				revision: "root",
-				// The root commit is synthetic, not an application edit, so it carries no metadata.
-				persistedMetadata: undefined,
+				customMetadata: undefined,
 			},
 			changeFamily,
 			() => idCompressor.generateCompressedId(),
@@ -1105,15 +1105,9 @@ export class TreeCheckout implements ITreeCheckout {
 			);
 		}
 		this.pushLabelFrame(params?.label);
-		// Only the outermost transaction's metadata is used, so nested metadata is neither snapshotted
-		// nor validated (validating a value that is documented to be ignored would be surprising).
-		const persistedMetadata =
-			this.transaction.size === 0
-				? snapshotPersistedMetadata(params?.persistedMetadata)
-				: undefined;
 		this.transaction.start({
 			postProcessor: extractTransactionChangeProcessor(params?.postProcessor),
-			persistedMetadata,
+			customMetadata: snapshotCustomMetadata(params?.customMetadata),
 		});
 
 		addConstraintsToTransaction(this, false, params?.preconditions);

@@ -1212,7 +1212,7 @@ export interface RunTransaction {
 
 // @alpha @input
 export interface RunTransactionParamsAlpha extends RunTransactionParamsBeta {
-    readonly persistedMetadata?: JsonCompatibleReadOnlyObject;
+    readonly customMetadata?: JsonCompatibleReadOnlyObject;
     readonly postProcessor?: TransactionPostProcessor;
     readonly preconditions?: readonly TransactionConstraintAlpha[];
 }
@@ -1878,8 +1878,8 @@ export type TreeBranchAlpha = UntypedTreeViewAlpha;
 
 // @alpha @sealed
 export interface TreeBranchCommitMetadata {
+    readonly custom: JsonCompatibleReadOnlyObject | undefined;
     getParent(): TreeBranchCommitMetadata | undefined;
-    readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined;
     readonly revision: CommitRevision;
 }
 

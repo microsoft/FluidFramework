@@ -135,8 +135,7 @@ export class EditManager<
 		this.trunkBase = {
 			revision: rootRevision,
 			change: changeFamily.rebaser.compose([]),
-			// The trunk base is a synthetic root commit, not an application edit, so it carries no metadata.
-			persistedMetadata: undefined,
+			customMetadata: undefined,
 		};
 
 		if (logger !== undefined) {
@@ -351,14 +350,12 @@ export class EditManager<
 		// so rebase them accordingly. This is necessary to prevent peer branches from referencing any evicted commits.
 		mainBranch.trimHistory(latestEvicted, sequenceId);
 
-		// Persisted metadata shares the lifetime of its commit, so it must be dropped for every trimmed
+		// Custom metadata shares the lifetime of its commit, so it must be dropped for every trimmed
 		// commit. This covers `newTrunkBase` too: that commit has been trimmed (it is not written to the
 		// summary) but stays reachable as the trunk base, so leaving its metadata in place would let a
 		// client keep reading metadata that a client loading from the summary would never see.
-		// Clearing rather than poisoning keeps reads from a previously obtained `TreeBranchCommitMetadata`
-		// returning `undefined` instead of throwing, and releases the metadata for garbage collection.
 		for (const commit of trimmedCommits) {
-			(commit as Mutable<typeof commit>).persistedMetadata = undefined;
+			(commit as Mutable<typeof commit>).customMetadata = undefined;
 		}
 
 		// Only the last trimmed commit, which is the new trunk base, should remain accessible.
@@ -840,9 +837,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 				peerLocalBranch.apply(
 					tagChange(newCommit.change, newCommit.revision),
 					CommitKind.Default,
-					// This reconstructs an existing remote commit rather than creating a new one,
-					// so it must carry that commit's metadata across.
-					newCommit.persistedMetadata,
+					newCommit.customMetadata,
 				);
 			}
 			const result = this.trunk.merge(peerLocalBranch);
@@ -1033,8 +1028,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 		const mintedCommit = mintCommit(this.trunk.getHead(), {
 			revision: commit.revision,
 			change: commit.change,
-			// This is the same logical commit as the one it is being rebuilt from, so it keeps its metadata.
-			persistedMetadata: commit.persistedMetadata,
+			customMetadata: commit.customMetadata,
 		});
 		this.pushGraphCommitToTrunk(sequenceId, mintedCommit, commit.sessionId);
 	}
@@ -1115,8 +1109,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 				revision: c.revision,
 				sequenceNumber: metadata.sequenceId.sequenceNumber,
 				sessionId: metadata.sessionId,
-				// The metadata belongs to the commit, so it must be carried into the summary with it.
-				persistedMetadata: c.persistedMetadata,
+				customMetadata: c.customMetadata,
 			};
 			if (metadata.sequenceId.indexInBatch !== undefined) {
 				commit.indexInBatch = metadata.sequenceId.indexInBatch;
@@ -1142,8 +1135,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 								change: c.change,
 								revision: c.revision,
 								sessionId,
-								// The metadata belongs to the commit, so it must be carried into the summary with it.
-								persistedMetadata: c.persistedMetadata,
+								customMetadata: c.customMetadata,
 							};
 							return commit;
 						}),
@@ -1189,8 +1181,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 			const commit = mintCommit(trunkHead, {
 				revision: c.revision,
 				change: c.change,
-				// Metadata decoded from the summary belongs to this commit and travels with it.
-				persistedMetadata: c.persistedMetadata,
+				customMetadata: c.customMetadata,
 			});
 			this.sequenceIdToCommit.set(sequenceId, commit);
 			this.commitMetadata.set(c.revision, {
@@ -1214,8 +1205,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 				branchHead = mintCommit(branchHead, {
 					revision: c.revision,
 					change: c.change,
-					// Metadata decoded from the summary belongs to this commit and travels with it.
-					persistedMetadata: c.persistedMetadata,
+					customMetadata: c.customMetadata,
 				});
 			}
 			this.peerLocalBranches.set(

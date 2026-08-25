@@ -120,7 +120,7 @@ type TestCommit = Commit<TestChange> & {
 	intention: number;
 	// `Commit` declares this optionally, but these commits are handed to `addSequencedChanges`,
 	// which requires the `GraphCommit` shape where the property is always present.
-	persistedMetadata: JsonCompatibleReadOnlyObject | undefined;
+	customMetadata: JsonCompatibleReadOnlyObject | undefined;
 };
 
 const localSessionId: SessionId = "0" as SessionId;
@@ -321,7 +321,7 @@ export function runUnitTestScenario(
 							refNumber: brand(localRef),
 							change: changeset,
 							intention,
-							persistedMetadata: undefined,
+							customMetadata: undefined,
 						};
 						localCommits.push(commit);
 						knownToLocal.push({ intention, seq });
@@ -389,7 +389,7 @@ export function runUnitTestScenario(
 							refNumber: brand(step.ref),
 							change: TestChange.mint(knownToPeer, intention),
 							intention,
-							persistedMetadata: undefined,
+							customMetadata: undefined,
 						};
 						commits.push(commit);
 						break;

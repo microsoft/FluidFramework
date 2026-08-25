@@ -48,9 +48,9 @@ export interface Message {
 	/**
 	 * Arbitrary, application-defined metadata to persist alongside the commit in this message.
 	 * @remarks
-	 * See {@link GraphCommit.persistedMetadata}.
+	 * See {@link GraphCommit.customMetadata}.
 	 */
-	readonly persistedMetadata?: JsonCompatibleReadOnlyObject;
+	readonly customMetadata?: JsonCompatibleReadOnlyObject;
 
 	/**
 	 * The version of the message format.
@@ -67,6 +67,6 @@ export const Message = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 		changeset: Type.Optional(tChange),
 		branchId: Type.Optional(Type.Number()),
 		branchName: Type.Optional(Type.String()),
-		persistedMetadata: Type.Optional(JsonCompatibleReadOnlyObjectSchema),
+		customMetadata: Type.Optional(JsonCompatibleReadOnlyObjectSchema),
 		version: Type.Literal(MessageFormatVersion.vSharedBranches),
 	});

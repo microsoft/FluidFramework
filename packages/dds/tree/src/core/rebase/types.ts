@@ -170,21 +170,15 @@ export interface GraphCommit<TChange> {
 	/**
 	 * Arbitrary, application-defined metadata that is persisted alongside this commit.
 	 * @remarks
-	 * This is `undefined` for commits that were not annotated by the application, and for all commits
-	 * created before this feature was enabled.
+	 * Set via {@link RunTransactionParamsAlpha.customMetadata}.
 	 *
 	 * The metadata shares the lifetime of the commit it is attached to: once the commit is trimmed from
 	 * the trunk, the metadata goes with it.
 	 *
 	 * @privateRemarks
-	 * This property is deliberately required (rather than optional) even though its value may be `undefined`.
-	 * A rebased or re-parented commit is the same logical commit as the one it was rebuilt from, so it must
-	 * carry the same metadata. Requiring the property turns every site that rebuilds a commit from its parts
-	 * into a compile error, which forces an explicit decision at each one instead of silently dropping the
-	 * metadata. Only genuinely new commits (e.g. the inverse commit produced by a revert, or a rollback
-	 * commit) should set this to `undefined`.
+	 * Always copy this property when copying a commit.
 	 */
-	readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined;
+	readonly customMetadata: JsonCompatibleReadOnlyObject | undefined;
 }
 
 /**
@@ -492,12 +486,12 @@ export function mintCommit<TChange>(
 	parent: GraphCommit<TChange>,
 	commit: Omit<GraphCommit<TChange>, "parent">,
 ): GraphCommit<TChange> {
-	const { revision, change, persistedMetadata } = commit;
+	const { revision, change, customMetadata } = commit;
 	return {
 		revision,
 		change,
 		parent,
-		persistedMetadata,
+		customMetadata,
 	};
 }
 

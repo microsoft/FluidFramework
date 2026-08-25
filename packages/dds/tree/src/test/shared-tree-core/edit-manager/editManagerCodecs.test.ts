@@ -38,21 +38,21 @@ const trunkCommits: SharedBranchSummaryData<TestChange>["trunk"] = [
 		sequenceNumber: brand(1),
 		// Decoding always defines this property (see `decodeCommit`), so the round-trip fixtures
 		// must define it too for deep equality to hold.
-		persistedMetadata: undefined,
+		customMetadata: undefined,
 	},
 	{
 		revision: tags[1],
 		sessionId: "2" as SessionId,
 		change: TestChange.mint([0, 1], 2),
 		sequenceNumber: brand(2),
-		persistedMetadata: undefined,
+		customMetadata: undefined,
 	},
 	{
 		revision: tags[2],
 		sessionId: "1" as SessionId,
 		change: TestChange.mint([0, 1, 2], 3),
 		sequenceNumber: brand(3),
-		persistedMetadata: undefined,
+		customMetadata: undefined,
 	},
 ];
 
@@ -130,7 +130,7 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodi
 										sessionId: "4" as SessionId,
 										revision: mintRevisionTag(),
 										change: TestChange.mint([0, 1], 4),
-										persistedMetadata: undefined,
+										customMetadata: undefined,
 									},
 								],
 							},
@@ -163,7 +163,7 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodi
 										sessionId: "4",
 										revision: mintRevisionTag(),
 										change: TestChange.mint([0, 1], 4),
-										persistedMetadata: undefined,
+										customMetadata: undefined,
 									},
 								],
 							},
@@ -242,7 +242,7 @@ export function testCodec(): void {
 		// The round-trip suites above only prove that the current encoder and decoder agree with each
 		// other, which would remain true if the field were renamed on both sides — orphaning the metadata
 		// in summaries already written at v7.
-		describe("persisted metadata summary format", () => {
+		describe("custom metadata summary format", () => {
 			const metadata = { kind: "edit", nested: { author: "alice", count: 3 } };
 
 			/** Encodes a summary whose trunk commit and peer branch commit both carry metadata. */
@@ -257,7 +257,7 @@ export function testCodec(): void {
 								sessionId: "1" as SessionId,
 								change: TestChange.mint([0], 1),
 								sequenceNumber: brand(1),
-								persistedMetadata: metadata,
+								customMetadata: metadata,
 							},
 						],
 						peerLocalBranches: new Map([
@@ -270,7 +270,7 @@ export function testCodec(): void {
 											sessionId: "4" as SessionId,
 											revision: tags[1],
 											change: TestChange.mint([0], 4),
-											persistedMetadata: metadata,
+											customMetadata: metadata,
 										},
 									],
 								},
@@ -288,11 +288,11 @@ export function testCodec(): void {
 				const encoded = encodeAt(EditManagerFormatVersion.v7);
 				const serialized = JSON.stringify(encoded);
 				assert.equal(encoded.version, EditManagerFormatVersion.v7);
-				const trunk = encoded.trunk as { persistedMetadata?: unknown }[];
-				assert.deepEqual(trunk[0].persistedMetadata, metadata);
+				const trunk = encoded.trunk as { customMetadata?: unknown }[];
+				assert.deepEqual(trunk[0].customMetadata, metadata);
 				// The peer branch commit must carry it too, not just the trunk.
 				assert.equal(
-					serialized.split(`"persistedMetadata":`).length - 1,
+					serialized.split(`"customMetadata":`).length - 1,
 					2,
 					"Both the trunk commit and the peer branch commit should carry the metadata",
 				);
@@ -301,8 +301,8 @@ export function testCodec(): void {
 			it("omits the metadata entirely before v7", () => {
 				const encoded = encodeAt(EditManagerFormatVersion.v6);
 				assert.equal(encoded.version, EditManagerFormatVersion.v6);
-				const trunk = encoded.trunk as { persistedMetadata?: unknown }[];
-				assert.equal("persistedMetadata" in trunk[0], false);
+				const trunk = encoded.trunk as { customMetadata?: unknown }[];
+				assert.equal("customMetadata" in trunk[0], false);
 				assert.equal(JSON.stringify(encoded).includes("alice"), false);
 			});
 
@@ -313,9 +313,9 @@ export function testCodec(): void {
 					idCompressor: testIdCompressor,
 					isSummary: true,
 				});
-				assert.deepEqual(decoded.main.trunk[0].persistedMetadata, metadata);
+				assert.deepEqual(decoded.main.trunk[0].customMetadata, metadata);
 				assert.deepEqual(
-					decoded.main.peerLocalBranches.get("4" as SessionId)?.commits[0].persistedMetadata,
+					decoded.main.peerLocalBranches.get("4" as SessionId)?.commits[0].customMetadata,
 					metadata,
 				);
 			});
@@ -328,8 +328,8 @@ export function testCodec(): void {
 					isSummary: true,
 				});
 				const commit = decoded.main.trunk[0];
-				assert.equal("persistedMetadata" in commit, true);
-				assert.equal(commit.persistedMetadata, undefined);
+				assert.equal("customMetadata" in commit, true);
+				assert.equal(commit.customMetadata, undefined);
 			});
 		});
 		// TODO: testing EditManagerSummarizer class itself, specifically for attachment and normal summaries.

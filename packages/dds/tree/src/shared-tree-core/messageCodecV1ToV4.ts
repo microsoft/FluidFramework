@@ -41,7 +41,7 @@ export function makeV1ToV4CodecWithVersion<TChangeset>(
 ): CodecAndSchema<DecodedMessage<TChangeset>, MessageEncodingContext, MessageDecodingContext> {
 	const schema = Message(changeCodec.encodedSchema ?? JsonCompatibleReadOnlySchema);
 	// Persisted commit metadata was introduced in v7; older formats must not write the field.
-	const supportsPersistedMetadata = version >= MessageFormatVersion.v7;
+	const supportsCustomMetadata = version >= MessageFormatVersion.v7;
 	return {
 		schema,
 		encode: (
@@ -71,8 +71,8 @@ export function makeV1ToV4CodecWithVersion<TChangeset>(
 				}),
 				version,
 			};
-			if (supportsPersistedMetadata && commit.persistedMetadata !== undefined) {
-				encoded.persistedMetadata = commit.persistedMetadata;
+			if (supportsCustomMetadata && commit.customMetadata !== undefined) {
+				encoded.customMetadata = commit.customMetadata;
 			}
 			return encoded;
 		},
@@ -80,12 +80,7 @@ export function makeV1ToV4CodecWithVersion<TChangeset>(
 			encoded: Message & JsonCompatibleReadOnlyObject & Versioned,
 			context: MessageDecodingContext,
 		): DecodedMessage<TChangeset> => {
-			const {
-				revision: encodedRevision,
-				originatorId,
-				changeset,
-				persistedMetadata,
-			} = encoded;
+			const { revision: encodedRevision, originatorId, changeset, customMetadata } = encoded;
 
 			const revision = revisionTagCodec.decode(encodedRevision, {
 				originatorId,
@@ -105,7 +100,7 @@ export function makeV1ToV4CodecWithVersion<TChangeset>(
 						idCompressor: context.idCompressor,
 						isSummary: false,
 					}),
-					persistedMetadata,
+					customMetadata,
 				},
 				sessionId: originatorId,
 			};

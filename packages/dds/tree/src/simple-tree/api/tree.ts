@@ -322,7 +322,7 @@ export interface TreeBranchCommitMetadata {
 	readonly revision: CommitRevision;
 
 	/**
-	 * Arbitrary, application-defined metadata that was {@link RunTransactionParamsAlpha.persistedMetadata | attached}
+	 * Arbitrary, application-defined metadata that was {@link RunTransactionParamsAlpha.customMetadata | attached}
 	 * to this commit when it was created.
 	 *
 	 * @remarks
@@ -332,7 +332,7 @@ export interface TreeBranchCommitMetadata {
 	 * The metadata shares the lifetime of the commit it describes: once the commit is trimmed from the branch's
 	 * history, the metadata goes with it.
 	 */
-	readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined;
+	readonly custom: JsonCompatibleReadOnlyObject | undefined;
 
 	/**
 	 * The metadata for the commit that this commit was based on, or `undefined` if this commit has no parent

@@ -32,8 +32,8 @@ class LazyTreeBranchCommitMetadata implements TreeBranchCommitMetadata {
 		this.revision = idCompressor.decompress(commit.revision);
 	}
 
-	public get persistedMetadata(): JsonCompatibleReadOnlyObject | undefined {
-		return this.commit.persistedMetadata;
+	public get custom(): JsonCompatibleReadOnlyObject | undefined {
+		return this.commit.customMetadata;
 	}
 
 	public getParent(): TreeBranchCommitMetadata | undefined {

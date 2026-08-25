@@ -69,7 +69,7 @@ function makeFactory(
 
 /** The metadata of the branch's head commit. */
 function headMetadata(history: TreeBranchHistory): JsonCompatibleReadOnlyObject | undefined {
-	return history.getHead()?.persistedMetadata;
+	return history.getHead()?.custom;
 }
 
 /** The metadata of every commit in the branch's history, ordered from newest to oldest. */
@@ -78,7 +78,7 @@ function allMetadata(
 ): (JsonCompatibleReadOnlyObject | undefined)[] {
 	const metadata: (JsonCompatibleReadOnlyObject | undefined)[] = [];
 	for (let commit = history.getHead(); commit !== undefined; commit = commit.getParent()) {
-		metadata.push(commit.persistedMetadata);
+		metadata.push(commit.custom);
 	}
 	return metadata;
 }
@@ -109,7 +109,7 @@ async function loadFreshClient(
 	)) as ISharedTree;
 }
 
-describe("persisted commit metadata", () => {
+describe("custom commit metadata", () => {
 	describe("Reading", () => {
 		it("is readable on the local client immediately", () => {
 			const provider = new TestTreeProviderLite(1, makeFactory());
@@ -120,7 +120,7 @@ describe("persisted commit metadata", () => {
 				() => {
 					view.root.insertAtEnd("a");
 				},
-				{ persistedMetadata: { tag: "first" } },
+				{ customMetadata: { tag: "first" } },
 			);
 
 			assert.deepEqual(headMetadata(view.branchHistory), { tag: "first" });
@@ -145,7 +145,7 @@ describe("persisted commit metadata", () => {
 				() => {
 					view.root.insertAtEnd("a");
 				},
-				{ persistedMetadata: { tag: "first" } },
+				{ customMetadata: { tag: "first" } },
 			);
 			// An unannotated edit in between, to check that the metadata does not "slide" onto it.
 			view.root.insertAtEnd("b");
@@ -153,18 +153,18 @@ describe("persisted commit metadata", () => {
 				() => {
 					view.root.insertAtEnd("c");
 				},
-				{ persistedMetadata: { tag: "second" } },
+				{ customMetadata: { tag: "second" } },
 			);
 
 			const head = view.branchHistory.getHead();
 			assert(head !== undefined);
-			assert.deepEqual(head.persistedMetadata, { tag: "second" });
+			assert.deepEqual(head.custom, { tag: "second" });
 			const parent = head.getParent();
 			assert(parent !== undefined);
-			assert.equal(parent.persistedMetadata, undefined);
+			assert.equal(parent.custom, undefined);
 			const grandparent = parent.getParent();
 			assert(grandparent !== undefined);
-			assert.deepEqual(grandparent.persistedMetadata, { tag: "first" });
+			assert.deepEqual(grandparent.custom, { tag: "first" });
 		});
 	});
 
@@ -180,7 +180,7 @@ describe("persisted commit metadata", () => {
 				() => {
 					view1.root.insertAtEnd("a");
 				},
-				{ persistedMetadata: { tag: "from-peer-1" } },
+				{ customMetadata: { tag: "from-peer-1" } },
 			);
 			provider.synchronizeMessages();
 
@@ -202,7 +202,7 @@ describe("persisted commit metadata", () => {
 				() => {
 					view1.root.insertAtEnd("local");
 				},
-				{ persistedMetadata: { tag: "rebased" } },
+				{ customMetadata: { tag: "rebased" } },
 			);
 			provider.synchronizeMessages();
 
@@ -222,7 +222,7 @@ describe("persisted commit metadata", () => {
 				() => {
 					view1.root.insertAtEnd("a");
 				},
-				{ persistedMetadata: { tag: "resubmitted" } },
+				{ customMetadata: { tag: "resubmitted" } },
 			);
 			// Reconnecting resubmits the pending commit through `reSubmitCore`.
 			provider.trees[0].containerRuntime.connected = true;
@@ -246,7 +246,7 @@ describe("persisted commit metadata", () => {
 				() => {
 					fork.root.insertAtEnd("a");
 				},
-				{ persistedMetadata: { tag: "made-on-fork" } },
+				{ customMetadata: { tag: "made-on-fork" } },
 			);
 			// The metadata is on the fork's commit before it is merged anywhere.
 			assert.deepEqual(headMetadata(fork.branchHistory), { tag: "made-on-fork" });
@@ -268,7 +268,7 @@ describe("persisted commit metadata", () => {
 				() => {
 					fork.root.insertAtEnd("a");
 				},
-				{ persistedMetadata: { tag: "outlives-fork" } },
+				{ customMetadata: { tag: "outlives-fork" } },
 			);
 			view.merge(fork);
 			fork.dispose();
@@ -284,7 +284,7 @@ describe("persisted commit metadata", () => {
 			view.initialize([]);
 			const before = view.branchHistory.length;
 
-			view.runTransaction(() => {}, { persistedMetadata: { tag: "no-change" } });
+			view.runTransaction(() => {}, { customMetadata: { tag: "no-change" } });
 
 			assert.equal(view.branchHistory.length, before);
 			assert.equal(headMetadata(view.branchHistory), undefined);
@@ -301,7 +301,7 @@ describe("persisted commit metadata", () => {
 					view.root.insertAtEnd("a");
 					return { rollback: true } as const;
 				},
-				{ persistedMetadata: { tag: "rolled-back" } },
+				{ customMetadata: { tag: "rolled-back" } },
 			);
 
 			assert.equal(result.success, false);
@@ -312,7 +312,7 @@ describe("persisted commit metadata", () => {
 	});
 
 	describe("Nested transactions", () => {
-		it("resolve to the outermost transaction's metadata", () => {
+		it("give the outermost transaction precedence on conflicting properties", () => {
 			const provider = new TestTreeProviderLite(1, makeFactory());
 			const view = asAlpha(provider.trees[0].viewWith(config));
 			view.initialize([]);
@@ -323,16 +323,46 @@ describe("persisted commit metadata", () => {
 						() => {
 							view.root.insertAtEnd("a");
 						},
-						{ persistedMetadata: { tag: "inner" } },
+						{ customMetadata: { tag: "inner" } },
 					);
 				},
-				{ persistedMetadata: { tag: "outer" } },
+				{ customMetadata: { tag: "outer" } },
 			);
 
 			assert.deepEqual(headMetadata(view.branchHistory), { tag: "outer" });
 		});
 
-		it("use the outermost metadata even when only the inner transaction supplies it", () => {
+		it("merge non-conflicting properties from every level", () => {
+			const provider = new TestTreeProviderLite(1, makeFactory());
+			const view = asAlpha(provider.trees[0].viewWith(config));
+			view.initialize([]);
+
+			view.runTransaction(
+				() => {
+					view.runTransaction(
+						() => {
+							view.runTransaction(
+								() => {
+									view.root.insertAtEnd("a");
+								},
+								{ customMetadata: { innermost: 3, shared: "innermost" } },
+							);
+						},
+						{ customMetadata: { middle: 2, shared: "middle" } },
+					);
+				},
+				{ customMetadata: { outermost: 1, shared: "outermost" } },
+			);
+
+			assert.deepEqual(headMetadata(view.branchHistory), {
+				innermost: 3,
+				middle: 2,
+				outermost: 1,
+				shared: "outermost",
+			});
+		});
+
+		it("contribute the inner metadata even when the outermost supplies none", () => {
 			const provider = new TestTreeProviderLite(1, makeFactory());
 			const view = asAlpha(provider.trees[0].viewWith(config));
 			view.initialize([]);
@@ -342,11 +372,34 @@ describe("persisted commit metadata", () => {
 					() => {
 						view.root.insertAtEnd("a");
 					},
-					{ persistedMetadata: { tag: "inner" } },
+					{ customMetadata: { tag: "inner" } },
 				);
 			});
 
-			assert.equal(headMetadata(view.branchHistory), undefined);
+			assert.deepEqual(headMetadata(view.branchHistory), { tag: "inner" });
+		});
+
+		it("do not contribute metadata from a nested transaction that was rolled back", () => {
+			const provider = new TestTreeProviderLite(1, makeFactory());
+			const view = asAlpha(provider.trees[0].viewWith(config));
+			view.initialize([]);
+
+			view.runTransaction(
+				() => {
+					view.root.insertAtEnd("kept");
+					view.runTransaction(
+						() => {
+							view.root.insertAtEnd("discarded");
+							return { rollback: true } as const;
+						},
+						{ customMetadata: { discarded: true } },
+					);
+				},
+				{ customMetadata: { tag: "outer" } },
+			);
+
+			assert.deepEqual(headMetadata(view.branchHistory), { tag: "outer" });
+			assert.deepEqual([...view.root], ["kept"]);
 		});
 
 		it("is attached by runTransactionAsync as well", async () => {
@@ -359,7 +412,7 @@ describe("persisted commit metadata", () => {
 				async () => {
 					view.root.insertAtEnd("a");
 				},
-				{ persistedMetadata: { tag: "async" } },
+				{ customMetadata: { tag: "async" } },
 			);
 
 			assert.deepEqual(headMetadata(view.branchHistory), { tag: "async" });
@@ -382,7 +435,7 @@ describe("persisted commit metadata", () => {
 				() => {
 					view1.root.insertAtEnd("annotated");
 				},
-				{ persistedMetadata: { tag: "old" } },
+				{ customMetadata: { tag: "old" } },
 			);
 			provider.synchronizeMessages();
 
@@ -437,7 +490,7 @@ describe("persisted commit metadata", () => {
 					() => {
 						view1.root.insertAtEnd(`annotated-${i}`);
 					},
-					{ persistedMetadata: { tag: `old-${i}` } },
+					{ customMetadata: { tag: `old-${i}` } },
 				);
 			}
 			provider.synchronizeMessages();
@@ -452,7 +505,7 @@ describe("persisted commit metadata", () => {
 				captured.push(commit);
 			}
 			assert(
-				captured.some((c) => c.persistedMetadata !== undefined),
+				captured.some((c) => c.custom !== undefined),
 				"Expected the captured commits to include annotated ones",
 			);
 
@@ -468,7 +521,7 @@ describe("persisted commit metadata", () => {
 			// Map to the metadata values before asserting: the wrapper objects hold references to
 			// evicted commits, whose other properties throw when touched (e.g. by a test reporter).
 			assert.deepEqual(
-				captured.map((c) => c.persistedMetadata).filter((m) => m !== undefined),
+				captured.map((c) => c.custom).filter((m) => m !== undefined),
 				[],
 				"Metadata must not be readable through a previously obtained commit metadata object once its commit is trimmed",
 			);
@@ -513,7 +566,7 @@ describe("persisted commit metadata", () => {
 				() => {
 					view1.root.insertAtEnd("a");
 				},
-				{ persistedMetadata: { tag: "not-written" } },
+				{ customMetadata: { tag: "not-written" } },
 			);
 			provider.synchronizeMessages();
 
@@ -538,7 +591,7 @@ describe("persisted commit metadata", () => {
 				() => {
 					view1.root.insertAtEnd("summarized");
 				},
-				{ persistedMetadata: { tag: "in-summary" } },
+				{ customMetadata: { tag: "in-summary" } },
 			);
 			await provider.ensureSynchronized();
 
@@ -552,7 +605,7 @@ describe("persisted commit metadata", () => {
 				() => {
 					view1.root.insertAtEnd("trailing");
 				},
-				{ persistedMetadata: { tag: "trailing" } },
+				{ customMetadata: { tag: "trailing" } },
 			);
 			await provider.ensureSynchronized();
 
@@ -584,7 +637,7 @@ describe("persisted commit metadata", () => {
 				() => {
 					view1.root.insertAtEnd("stashed");
 				},
-				{ persistedMetadata: { tag: "stashed" } },
+				{ customMetadata: { tag: "stashed" } },
 			);
 			const pendingOps = await getRequiredPendingLocalState(pausedContainer);
 			pausedContainer.close();
@@ -622,7 +675,7 @@ describe("persisted commit metadata", () => {
 				() => {
 					view.root.insertAtEnd("a");
 				},
-				{ persistedMetadata: supplied },
+				{ customMetadata: supplied },
 			);
 
 			supplied.tag = "mutated";
@@ -646,7 +699,7 @@ describe("persisted commit metadata", () => {
 					view1.root.insertAtEnd("a");
 				},
 				{
-					persistedMetadata: {
+					customMetadata: {
 						notFinite: Number.NaN,
 						alsoNotFinite: Number.POSITIVE_INFINITY,
 						missing: undefined,
@@ -676,7 +729,7 @@ describe("persisted commit metadata", () => {
 						() => {
 							view.root.insertAtEnd("a");
 						},
-						{ persistedMetadata: cyclic as JsonCompatibleReadOnlyObject },
+						{ customMetadata: cyclic as JsonCompatibleReadOnlyObject },
 					),
 				validateUsageError(/must be JSON-serializable/),
 			);
@@ -694,7 +747,7 @@ describe("persisted commit metadata", () => {
 							view.root.insertAtEnd("a");
 						},
 						{
-							persistedMetadata: ["not an object"] as unknown as JsonCompatibleReadOnlyObject,
+							customMetadata: ["not an object"] as unknown as JsonCompatibleReadOnlyObject,
 						},
 					),
 				validateUsageError(/must be a JSON object/),
@@ -727,7 +780,7 @@ describe("persisted commit metadata", () => {
 				() => {
 					view.root.insertAtEnd("a");
 				},
-				{ persistedMetadata: { tag: "rolled-back-op" } },
+				{ customMetadata: { tag: "rolled-back-op" } },
 			);
 			assert.deepEqual(headMetadata(view.branchHistory), { tag: "rolled-back-op" });
 

@@ -224,7 +224,7 @@ export interface RunTransactionParamsAlpha extends RunTransactionParamsBeta {
 	 * Arbitrary, application-defined metadata to persist alongside the commit that this transaction produces.
 	 * @remarks
 	 * The metadata is replicated to all collaborating clients and persisted in the document. It is readable
-	 * via {@link TreeBranchCommitMetadata.persistedMetadata} while walking the branch's
+	 * via {@link TreeBranchCommitMetadata.custom} while walking the branch's
 	 * {@link UntypedTreeViewAlpha.branchHistory | history}.
 	 *
 	 * The metadata shares the lifetime of the commit it is attached to: once that commit is trimmed from the
@@ -234,22 +234,22 @@ export interface RunTransactionParamsAlpha extends RunTransactionParamsBeta {
 	 * If this transaction produces no commit — because its body made no changes, or because it was rolled
 	 * back — the metadata is discarded without error.
 	 *
-	 * If nested transactions each supply metadata, only the outermost transaction's metadata is used
-	 * (mirroring {@link RunTransactionParamsBeta.label | label}).
+	 * Nested transactions all contribute to the single commit they produce, so their metadata is merged into
+	 * one object. Where two of them use the same property, the outermost transaction wins. Metadata supplied
+	 * by a nested transaction that is rolled back does not contribute.
 	 *
-	 * This value must be JSON-serializable. It travels on every annotated op and occupies space in the
-	 * summary for as long as its commit survives, so it should be kept small — treat a few hundred bytes
-	 * as a guideline, and note that it is also bounded by the runtime's maximum op size.
+	 * The value is snapshotted when the transaction starts, so it is unaffected by later mutation of the
+	 * object passed here, and it is normalized to a {@link JsonCompatibleReadOnlyObject} as `JSON.stringify`
+	 * would (notably `NaN` and the infinities become `null`, matching how SharedTree treats such values
+	 * elsewhere). A `UsageError` is thrown if the value cannot be represented as a JSON object at all, such
+	 * as when it contains a cycle or a `bigint`.
 	 *
-	 * The value is snapshotted when the transaction starts: it is round-tripped through JSON, so the commit
-	 * holds a copy that is unaffected by later mutation of the object passed here, and reads of
-	 * {@link TreeBranchCommitMetadata.persistedMetadata} return exactly what peers and future summaries see.
-	 * Values with no JSON representation are normalized accordingly (for example `NaN` becomes `null` and
-	 * properties explicitly set to `undefined` are dropped). A `UsageError` is thrown if the value cannot be
-	 * represented as a JSON object at all, such as when it contains a cycle or a `bigint`.
+	 * It travels on every annotated op and occupies space in the summary for as long as its commit survives,
+	 * so it should be kept small — treat a few hundred bytes as a guideline, and note that it is also
+	 * bounded by the runtime's maximum op size.
 	 *
 	 * Metadata is only written to the document when `minVersionForCollab` is set to a version that supports
 	 * it. Otherwise it is retained in memory for the local session but not persisted or replicated.
 	 */
-	readonly persistedMetadata?: JsonCompatibleReadOnlyObject;
+	readonly customMetadata?: JsonCompatibleReadOnlyObject;
 }

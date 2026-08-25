@@ -29,7 +29,7 @@ const peer2: SessionId = "2" as SessionId;
 /**
  * A {@link Commit} that is also usable as a {@link GraphCommit}.
  * @remarks
- * {@link Commit} declares `persistedMetadata` optionally because the persisted format omits it when absent,
+ * {@link Commit} declares `customMetadata` optionally because the persisted format omits it when absent,
  * whereas {@link GraphCommit} requires the property to be present. These test helpers produce values that
  * are handed directly to `addSequencedChanges`, so they must satisfy the latter.
  */
@@ -638,7 +638,7 @@ export function testCorrectness(): void {
 						{
 							change: TestChange.mint([0, 1], [2]),
 							revision: mintRevisionTag(),
-							persistedMetadata: undefined,
+							customMetadata: undefined,
 						},
 					],
 					"1" as SessionId,
@@ -671,7 +671,7 @@ export function testCorrectness(): void {
 										[intention],
 									),
 									revision: mintRevisionTag(),
-									persistedMetadata: undefined,
+									customMetadata: undefined,
 								},
 							],
 							peer1,
@@ -856,7 +856,7 @@ export function testCorrectness(): void {
 							{
 								change: TestChange.emptyChange,
 								revision: mintRevisionTag(),
-								persistedMetadata: undefined,
+								customMetadata: undefined,
 							},
 						],
 						peer1,
@@ -869,7 +869,7 @@ export function testCorrectness(): void {
 							{
 								change: TestChange.emptyChange,
 								revision: sequencedLocalChange,
-								persistedMetadata: undefined,
+								customMetadata: undefined,
 							},
 						],
 						manager.localSessionId,
@@ -897,7 +897,7 @@ export function testCorrectness(): void {
 							{
 								change: TestChange.emptyChange,
 								revision: sequencedLocalChange,
-								persistedMetadata: undefined,
+								customMetadata: undefined,
 							},
 						],
 						manager.localSessionId,
@@ -910,7 +910,7 @@ export function testCorrectness(): void {
 							{
 								change: TestChange.emptyChange,
 								revision: mintRevisionTag(),
-								persistedMetadata: undefined,
+								customMetadata: undefined,
 							},
 						],
 						peer1,
@@ -923,7 +923,7 @@ export function testCorrectness(): void {
 							{
 								change: TestChange.emptyChange,
 								revision: mintRevisionTag(),
-								persistedMetadata: undefined,
+								customMetadata: undefined,
 							},
 						],
 						peer1,
@@ -1218,7 +1218,7 @@ function applyBranchCommit(
 		change: commit.change,
 		revision: commit.revision,
 		sessionId: localSessionId,
-		persistedMetadata: commit.persistedMetadata,
+		customMetadata: commit.customMetadata,
 	};
 }
 
@@ -1231,7 +1231,7 @@ function peerCommit(
 		change: TestChange.mint(inputContext, intention),
 		revision: mintRevisionTag(),
 		sessionId: peer,
-		persistedMetadata: undefined,
+		customMetadata: undefined,
 	};
 }
 

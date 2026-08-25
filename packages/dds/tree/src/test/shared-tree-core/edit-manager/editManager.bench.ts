@@ -280,7 +280,7 @@ describe("EditManager - Bench", () => {
 										change: TestChange.emptyChange,
 										revision,
 										sessionId: manager.localSessionId,
-										persistedMetadata: undefined,
+										customMetadata: undefined,
 									});
 								}
 

@@ -39,13 +39,13 @@ import {
 const commit1 = {
 	revision: mintRevisionTag(),
 	change: TestChange.mint([], 0),
-	persistedMetadata: undefined,
+	customMetadata: undefined,
 };
 
 const commit2 = {
 	revision: mintRevisionTag(),
 	change: TestChange.mint([0], [1, 2, 3]),
-	persistedMetadata: undefined,
+	customMetadata: undefined,
 };
 
 const commitWithoutRevision = {
@@ -193,7 +193,7 @@ describe("message codec", () => {
 					revision,
 					change: TestChange.mint([], 1),
 					parent: "Extra field that should be dropped" as unknown as GraphCommit<TestChange>,
-					persistedMetadata: undefined,
+					customMetadata: undefined,
 				},
 				branchId: "main",
 			};
@@ -208,7 +208,7 @@ describe("message codec", () => {
 				commit: {
 					revision,
 					change: TestChange.mint([], 1),
-					persistedMetadata: undefined,
+					customMetadata: undefined,
 				},
 			});
 		});
@@ -233,7 +233,7 @@ describe("message codec", () => {
 	// suites above only prove that the current encoder and decoder agree with each other, which would
 	// stay true if the field were renamed on both sides — but that would silently orphan the metadata in
 	// documents already written at v7.
-	describe("persisted metadata wire format", () => {
+	describe("custom metadata wire format", () => {
 		const sessionId: SessionId = "sessionId" as SessionId;
 		const metadata = { kind: "edit", nested: { author: "alice", count: 3 } };
 
@@ -253,7 +253,7 @@ describe("message codec", () => {
 				commit: {
 					revision: testIdCompressor.generateCompressedId(),
 					change: TestChange.mint([], 1),
-					persistedMetadata: metadata,
+					customMetadata: metadata,
 				},
 				branchId: "main",
 			};
@@ -263,13 +263,13 @@ describe("message codec", () => {
 			>;
 		}
 
-		it("writes the metadata under the 'persistedMetadata' key at v7", () => {
+		it("writes the metadata under the 'customMetadata' key at v7", () => {
 			const encoded = encodeAt(FluidClientVersion.v3_0);
 			assert.equal(encoded.version, MessageFormatVersion.v7);
-			assert.deepEqual(encoded.persistedMetadata, metadata);
+			assert.deepEqual(encoded.customMetadata, metadata);
 			// Guard against the value being nested under some other key instead.
 			assert.equal(
-				JSON.stringify(encoded).includes(`"persistedMetadata":`),
+				JSON.stringify(encoded).includes(`"customMetadata":`),
 				true,
 				"The encoded op must carry the metadata under its documented key",
 			);
@@ -278,7 +278,7 @@ describe("message codec", () => {
 		it("omits the metadata entirely before v7", () => {
 			const encoded = encodeAt(FluidClientVersion.v2_80);
 			assert.equal(encoded.version, MessageFormatVersion.v6);
-			assert.equal("persistedMetadata" in encoded, false);
+			assert.equal("customMetadata" in encoded, false);
 			assert.equal(JSON.stringify(encoded).includes("alice"), false);
 		});
 
@@ -296,7 +296,7 @@ describe("message codec", () => {
 				idCompressor: testIdCompressor,
 			});
 			assert(decoded.type === "commit");
-			assert.deepEqual(decoded.commit.persistedMetadata, metadata);
+			assert.deepEqual(decoded.commit.customMetadata, metadata);
 		});
 	});
 });

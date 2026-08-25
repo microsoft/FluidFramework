@@ -28,7 +28,7 @@ const commit0: GraphCommit<MockEnrichableChange> = {
 		updateCount: 0,
 	},
 	revision: revision0,
-	persistedMetadata: undefined,
+	customMetadata: undefined,
 };
 
 const commit1: GraphCommit<MockEnrichableChange> = {
@@ -39,7 +39,7 @@ const commit1: GraphCommit<MockEnrichableChange> = {
 	},
 	revision: revision1,
 	parent: commit0,
-	persistedMetadata: undefined,
+	customMetadata: undefined,
 };
 const commit2: GraphCommit<MockEnrichableChange> = {
 	change: {
@@ -49,7 +49,7 @@ const commit2: GraphCommit<MockEnrichableChange> = {
 	},
 	revision: revision2,
 	parent: commit1,
-	persistedMetadata: undefined,
+	customMetadata: undefined,
 };
 const commit3: GraphCommit<MockEnrichableChange> = {
 	change: {
@@ -59,7 +59,7 @@ const commit3: GraphCommit<MockEnrichableChange> = {
 	},
 	revision: revision3,
 	parent: commit2,
-	persistedMetadata: undefined,
+	customMetadata: undefined,
 };
 
 const expectedEnriched1: MockEnrichableChange = {
