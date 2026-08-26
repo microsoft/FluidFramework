@@ -53,17 +53,6 @@ export { assert } from "./assert.js";
 The external barrel file imports this symbol with a private alias.
 It defines a deprecated `assert` constant with the same call signature:
 
-```typescript
-import { assert as assertInternal } from "./assert.js";
-
-/** @deprecated Use an assertion utility appropriate for your application instead. */
-export const assert: (
-	condition: boolean,
-	message: string | number,
-	debugMessageBuilder?: () => string,
-) => asserts condition = assertInternal;
-```
-
 This structure keeps the `@deprecated` tag on the external symbol only.
 
 ## Package export map
