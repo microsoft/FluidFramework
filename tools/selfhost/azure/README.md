@@ -424,6 +424,16 @@ provisioning:
 This rebuilds and redeploys the application only. It does not touch Cosmos, Redis, Event Hubs,
 Key Vault or Front Door.
 
+## Low-IO write
+
+gitrest's `git__enableLowIoWrite` setting in `azure/backends.yaml` controls low-IO summary
+writes. When enabled, clients must use `driverPolicies.enableWholeSummaryUpload` to read
+summaries.
+
+For end-to-end tests, set `lowIoWriteEnabled` in the test parameters file to the same value.
+The test script configures `driverPolicies.enableWholeSummaryUpload` to match the low-IO write
+configuration.
+
 ## Removing the deployment
 
 Everything lives in one resource group, so deleting it removes all of it:
