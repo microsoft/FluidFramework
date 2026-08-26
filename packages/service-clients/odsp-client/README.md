@@ -218,8 +218,8 @@ For more information, read the [Code of Conduct frequently asked questions](http
 For questions or comments, contact [opencode@microsoft.com](mailto:opencode@microsoft.com).
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
-When you use these trademarks or logos, follow Microsoft's [Trademark and Brand Guidelines](https://www.microsoft.com/trademarks).
-Do not use Microsoft trademarks or logos in a modified version of this project if the use causes confusion or implies Microsoft sponsorship.
+Use of these trademarks or logos must follow Microsoft’s [Trademark & Brand Guidelines](https://www.microsoft.com/trademarks).
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 ## Help
 
