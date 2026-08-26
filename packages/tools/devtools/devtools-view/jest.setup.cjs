@@ -4,4 +4,5 @@
  */
 
 // This file is used to mock the canvas element for jest tests.
+globalThis.jest = jest;
 HTMLCanvasElement.prototype.getContext = jest.fn();
