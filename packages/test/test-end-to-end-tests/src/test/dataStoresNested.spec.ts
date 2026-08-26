@@ -16,6 +16,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
+	defaultTestOldestSupportedClient,
 	ITestObjectProvider,
 	TestContainerRuntimeFactory,
 	TestFluidObject,
@@ -69,6 +70,7 @@ describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) =>
 
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: dataStoreFactory,
+		oldestSupportedClient: defaultTestOldestSupportedClient,
 		registryEntries: [[dataStoreFactory.type, Promise.resolve(dataStoreFactory)]],
 		runtimeOptions,
 	});
