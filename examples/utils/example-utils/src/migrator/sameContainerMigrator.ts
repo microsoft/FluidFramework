@@ -4,7 +4,6 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils/legacy";
 
 import type {
 	DataTransformationCallback,
@@ -105,19 +104,22 @@ export class SameContainerMigrator
 
 	private readonly loadPausedModel = async (): Promise<void> => {
 		const acceptedSeqNum = this.currentModel.migrationTool.acceptedSeqNum;
-		assert(acceptedSeqNum !== undefined, "acceptedSeqNum should be defined");
+		if (acceptedSeqNum === undefined) {
+			throw new Error("acceptedSeqNum should be defined");
+		}
 		this._pausedModel = await this.modelLoader.loadExistingPaused(
 			this._currentModelId,
 			acceptedSeqNum,
 		);
-		assert(
-			this._pausedModel.container.deltaManager.lastSequenceNumber === acceptedSeqNum,
-			"paused model should be at accepted sequence number",
-		);
+		if (this._pausedModel.container.deltaManager.lastSequenceNumber !== acceptedSeqNum) {
+			throw new Error("paused model should be at accepted sequence number");
+		}
 	};
 
 	private readonly getExportedData = async (): Promise<void> => {
-		assert(this._pausedModel !== undefined, "this._pausedModel should be defined");
+		if (this._pausedModel === undefined) {
+			throw new Error("this._pausedModel should be defined");
+		}
 		this._exportedData = await this._pausedModel.exportData();
 	};
 
@@ -129,7 +131,9 @@ export class SameContainerMigrator
 		// TODO: Does the app developer have everything they need to dispose gracefully when recovering with
 		// a new ModelLoader?
 
-		assert(this._acceptedVersion !== undefined, "this._acceptedVersion should be defined");
+		if (this._acceptedVersion === undefined) {
+			throw new Error("this._acceptedVersion should be defined");
+		}
 		this._detachedModel = await this.modelLoader.createDetached(this._acceptedVersion);
 	};
 
@@ -139,7 +143,9 @@ export class SameContainerMigrator
 		// clients with old ModelLoaders can use that opportunity to dispose early and try to get new
 		// ModelLoaders.
 
-		assert(this._detachedModel !== undefined, "this._detachedModel should be defined");
+		if (this._detachedModel === undefined) {
+			throw new Error("this._detachedModel should be defined");
+		}
 		if (this._detachedModel.model.supportsDataFormat(this._exportedData) === true) {
 			// If the migrated model already supports the data format, go ahead with the migration.
 			this._transformedData = this._exportedData;
@@ -153,7 +159,9 @@ export class SameContainerMigrator
 		} else {
 			// Otherwise, try using the dataTransformationCallback if provided to get the exported data into
 			// a format that we can import.
-			assert(this._acceptedVersion !== undefined, "this._acceptedVersion should be defined");
+			if (this._acceptedVersion === undefined) {
+				throw new Error("this._acceptedVersion should be defined");
+			}
 			try {
 				this._transformedData = await this.dataTransformationCallback(
 					this._exportedData,
@@ -169,8 +177,12 @@ export class SameContainerMigrator
 	};
 
 	private readonly importDataIntoDetachedModel = async (): Promise<void> => {
-		assert(this._detachedModel !== undefined, "this._detachedModel should be defined");
-		assert(this._transformedData !== undefined, "this._transformedData should be defined");
+		if (this._detachedModel === undefined) {
+			throw new Error("this._detachedModel should be defined");
+		}
+		if (this._transformedData === undefined) {
+			throw new Error("this._transformedData should be defined");
+		}
 		await this._detachedModel.model.importData(this._transformedData);
 		// Store the detached model for later use and retry scenarios
 		this._preparedDetachedModel = this._detachedModel;
