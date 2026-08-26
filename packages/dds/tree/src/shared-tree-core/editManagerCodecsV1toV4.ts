@@ -48,9 +48,10 @@ export function makeV1toV4andV6CodecWithVersion<TChangeset>(
 	EditManagerEncodingContext,
 	EditManagerDecodingContext
 > {
+	const includeCustomMetadata = version >= EditManagerFormatVersion.v7;
 	const schema = EncodedEditManager(
 		changeCodec.encodedSchema ?? JsonCompatibleReadOnlySchema,
-		version >= EditManagerFormatVersion.v7,
+		includeCustomMetadata,
 	);
 
 	const codec: CodecAndSchema<
@@ -69,8 +70,7 @@ export function makeV1toV4andV6CodecWithVersion<TChangeset>(
 				data.main,
 				context,
 				data.originator,
-				// Persisted commit metadata was introduced in v7; older formats must not write it.
-				version >= EditManagerFormatVersion.v7,
+				includeCustomMetadata,
 			);
 			const encoded: EncodedEditManager<TChangeset> = {
 				trunk: mainBranch.trunk,

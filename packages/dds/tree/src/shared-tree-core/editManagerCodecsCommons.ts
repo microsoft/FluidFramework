@@ -124,10 +124,7 @@ function decodeCommit<TChangeset, T extends EncodedCommit<JsonCompatibleReadOnly
 		...commit,
 		revision,
 		change: changeCodec.decode(commit.change, { ...context, revision }),
-		customMetadata:
-			commit.customMetadata === undefined
-				? undefined
-				: decodeCustomMetadataTree(commit.customMetadata),
+		customMetadata: decodeCustomMetadataTree(commit.customMetadata),
 	};
 }
 

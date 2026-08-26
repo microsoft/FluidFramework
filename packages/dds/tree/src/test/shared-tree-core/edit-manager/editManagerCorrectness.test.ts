@@ -632,6 +632,7 @@ export function testCorrectness(): void {
 								revision,
 								sessionId: "0" as SessionId,
 								sequenceNumber: brand(1),
+								customMetadata: undefined,
 							},
 						],
 						peerLocalBranches: new Map(),

@@ -64,8 +64,6 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 						branchId: encodeBranchId(context.idCompressor, message.branchId),
 						version,
 					};
-					// Assigned conditionally so that commits without metadata omit the key entirely: an own
-					// property set to `undefined` is observable via `in` and rejected by strict schemas.
 					if (message.commit.customMetadata !== undefined) {
 						encoded.customMetadata = encodeCustomMetadataTree(message.commit.customMetadata);
 					}
@@ -128,10 +126,7 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 						idCompressor: context.idCompressor,
 						isSummary: false,
 					}),
-					customMetadata:
-						customMetadata === undefined
-							? undefined
-							: decodeCustomMetadataTree(customMetadata),
+					customMetadata: decodeCustomMetadataTree(customMetadata),
 				},
 				branchId,
 				sessionId: originatorId,

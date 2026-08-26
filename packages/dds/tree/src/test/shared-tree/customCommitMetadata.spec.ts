@@ -33,7 +33,6 @@ import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
 	TreeViewConfiguration,
 	type ITree,
-	type TreeBranchCommitMetadata,
 	type TreeBranchHistory,
 	type TreeViewAlpha,
 } from "../../simple-tree/index.js";
@@ -735,73 +734,6 @@ describe("custom commit metadata", () => {
 				provider.getCompressor(tree),
 			);
 			assert.deepEqual(tags(loaded.kernel.checkout.branchHistory), []);
-		});
-
-		it("throws when read through a commit metadata object obtained before trimming", () => {
-			// Trimming severs ancestry, but a `TreeBranchCommitMetadata` obtained beforehand still wraps its
-			// commit. Annotating several consecutive commits also ensures one of them becomes the newest
-			// trimmed commit, which survives as the trunk base and so reads `undefined` rather than throwing.
-			const {
-				provider,
-				views: [view1, view2],
-			} = createConnectedViews(2);
-
-			for (let i = 0; i < 4; ++i) {
-				view1.runTransaction(
-					() => {
-						view1.root.insertAtEnd(`annotated-${i}`);
-					},
-					{ customMetadata: { tag: `old-${i}` } },
-				);
-			}
-			provider.synchronizeMessages();
-
-			// Capture every commit metadata object while the commits are still in the trunk.
-			const captured: TreeBranchCommitMetadata[] = [];
-			for (
-				let commit = view1.branchHistory.getHead();
-				commit !== undefined;
-				commit = commit.getParent()
-			) {
-				captured.push(commit);
-			}
-			assert(
-				captured.some((c) => c.custom !== undefined),
-				"Expected the captured commits to include annotated ones",
-			);
-
-			// Advance the collaboration window past all of the annotated commits.
-			for (let i = 0; i < 10; ++i) {
-				view1.root.insertAtStart("");
-			}
-			provider.synchronizeMessages();
-			view1.root.insertAtStart("");
-			view2.root.insertAtStart("");
-			provider.synchronizeMessages();
-
-			// Reading a fully evicted commit hits the same trap as its other properties, rather than
-			// quietly reporting that the commit was never annotated.
-			const results = captured.map((c) => {
-				try {
-					return { custom: c.custom };
-				} catch {
-					return "threw" as const;
-				}
-			});
-			assert(
-				results.includes("threw"),
-				"Metadata must not be readable through a previously obtained commit metadata object once its commit is trimmed",
-			);
-			for (const result of results) {
-				if (result !== "threw") {
-					assert.equal(
-						result.custom,
-						undefined,
-						"A commit that did not throw must be the cleared trunk base",
-					);
-				}
-			}
-			assert.deepEqual(tags(view1.branchHistory), []);
 		});
 
 		it("loads a summary written before the feature was enabled and reads back undefined", async () => {

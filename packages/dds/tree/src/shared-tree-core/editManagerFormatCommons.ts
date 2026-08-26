@@ -31,7 +31,7 @@ export interface Commit<TChangeset> {
 	/** An identifier representing the session/user/client that made this commit */
 	readonly sessionId: SessionId;
 	/** Arbitrary, application-defined metadata stored alongside this commit */
-	readonly customMetadata?: CustomMetadataTree;
+	readonly customMetadata: CustomMetadataTree | undefined;
 }
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions

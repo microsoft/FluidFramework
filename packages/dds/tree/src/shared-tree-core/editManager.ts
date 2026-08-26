@@ -1025,11 +1025,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 	}
 
 	private pushCommitToTrunk(sequenceId: SequenceId, commit: Commit<TChangeset>): void {
-		const mintedCommit = mintCommit(this.trunk.getHead(), {
-			revision: commit.revision,
-			change: commit.change,
-			customMetadata: commit.customMetadata,
-		});
+		const mintedCommit = mintCommit(this.trunk.getHead(), commit);
 		this.pushGraphCommitToTrunk(sequenceId, mintedCommit, commit.sessionId);
 	}
 
@@ -1178,11 +1174,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 							sequenceNumber: c.sequenceNumber,
 							indexInBatch: c.indexInBatch,
 						};
-			const commit = mintCommit(trunkHead, {
-				revision: c.revision,
-				change: c.change,
-				customMetadata: c.customMetadata,
-			});
+			const commit = mintCommit(trunkHead, c);
 			this.sequenceIdToCommit.set(sequenceId, commit);
 			this.commitMetadata.set(c.revision, {
 				sequenceId,
@@ -1202,11 +1194,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 
 			let branchHead = commit;
 			for (const c of branch.commits) {
-				branchHead = mintCommit(branchHead, {
-					revision: c.revision,
-					change: c.change,
-					customMetadata: c.customMetadata,
-				});
+				branchHead = mintCommit(branchHead, c);
 			}
 			this.peerLocalBranches.set(
 				sessionId,

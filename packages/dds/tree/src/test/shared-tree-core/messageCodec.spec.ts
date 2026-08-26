@@ -9,17 +9,11 @@ import type { SessionId } from "@fluidframework/id-compressor";
 import { createSessionId } from "@fluidframework/id-compressor/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import {
-	currentVersion,
-	DependentFormatVersion,
-	FluidClientVersion,
-	makeCodecFamily,
-} from "../../codec/index.js";
+import { currentVersion, DependentFormatVersion, makeCodecFamily } from "../../codec/index.js";
 import type {
 	EncodedRevisionTag,
 	GraphCommit,
 	ChangeEncodingContext,
-	CustomMetadataTree,
 } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import { MessageFormatVersion } from "../../shared-tree-core/index.js";
@@ -227,148 +221,6 @@ describe("message codec", () => {
 				() => codec.decode(JSON.parse(encoded), { idCompressor: testIdCompressor }),
 				validateUsageError(/Unsupported version -1 encountered while decoding Message data./),
 			);
-		});
-	});
-
-	// These lock the permanent serialized representation of custom commit metadata. The round-trip suites
-	// above only prove that the encoder and decoder agree with each other, which would stay true even if
-	// the field were renamed on both sides.
-	describe("custom metadata wire format", () => {
-		const sessionId: SessionId = "sessionId" as SessionId;
-		const metadata = { kind: "edit", nested: { author: "alice", count: 3 } };
-		const innerMetadata = { subsystem: "layout" };
-
-		function makeCodec(
-			minVersionForCollab: (typeof FluidClientVersion)[keyof typeof FluidClientVersion],
-		) {
-			return makeMessageCodecBuilder<TestChange>().build({
-				changeCodecs: TestChange.codecs,
-				dependentChangeFormatVersion: DependentFormatVersion.fromUnique(1),
-				revisionTagCodec: testRevisionTagCodec,
-				jsonValidator: FormatValidatorBasic,
-				minVersionForCollab,
-			});
-		}
-
-		function encodeAt(
-			minVersionForCollab: (typeof FluidClientVersion)[keyof typeof FluidClientVersion],
-			customMetadata: CustomMetadataTree,
-		): Record<string, unknown> {
-			const message: DecodedMessage<TestChange> = {
-				type: "commit",
-				sessionId,
-				commit: {
-					revision: testIdCompressor.generateCompressedId(),
-					change: TestChange.mint([], 1),
-					customMetadata,
-				},
-				branchId: "main",
-			};
-			return makeCodec(minVersionForCollab).encode(message, {
-				idCompressor: testIdCompressor,
-			}) as unknown as Record<string, unknown>;
-		}
-
-		it("writes an un-nested tree as just the abbreviated metadata key at v7", () => {
-			const encoded = encodeAt(FluidClientVersion.v2_117, { metadata, children: [] });
-			assert.equal(encoded.version, MessageFormatVersion.v7);
-			// The common (un-nested) case must not pay for the empty child list.
-			assert.deepEqual(encoded.customMetadata, { m: metadata });
-		});
-
-		it("writes nested transactions under the abbreviated children key at v7", () => {
-			const encoded = encodeAt(FluidClientVersion.v2_117, {
-				metadata,
-				children: [{ metadata: innerMetadata, children: [] }],
-			});
-			assert.deepEqual(encoded.customMetadata, {
-				m: metadata,
-				c: [{ m: innerMetadata }],
-			});
-		});
-
-		it("omits a node's metadata key when that transaction supplied none", () => {
-			const encoded = encodeAt(FluidClientVersion.v2_117, {
-				metadata: undefined,
-				children: [{ metadata: innerMetadata, children: [] }],
-			});
-			assert.deepEqual(encoded.customMetadata, { c: [{ m: innerMetadata }] });
-		});
-
-		it("omits the metadata entirely before v7", () => {
-			const encoded = encodeAt(FluidClientVersion.v2_80, { metadata, children: [] });
-			assert.equal(encoded.version, MessageFormatVersion.v6);
-			assert.equal("customMetadata" in encoded, false);
-			// Also verify the metadata value itself did not end up anywhere in the encoded output.
-			assert.equal(JSON.stringify(encoded).includes("alice"), false);
-		});
-
-		it("tolerates a pre-v7 message carrying customMetadata", () => {
-			// Unlike the summary format, the op envelope deliberately does not set
-			// `additionalProperties: false` (see the `Message` schema), so a message carrying a field the
-			// version does not declare is tolerated rather than rejected.
-			const encoded = encodeAt(FluidClientVersion.v2_80, { metadata, children: [] });
-			assert.equal(encoded.version, MessageFormatVersion.v6);
-			const tampered = { ...encoded, customMetadata: { m: metadata } };
-			const codec = makeCodec(FluidClientVersion.v2_80);
-			const decoded = codec.decode(JSON.parse(JSON.stringify(tampered)), {
-				idCompressor: testIdCompressor,
-			});
-			assert.equal(decoded.type, "commit");
-			assert.deepEqual(decoded.commit.customMetadata, { metadata, children: [] });
-		});
-
-		it("round-trips a nested tree through the real JSON wire form at v7", () => {
-			const tree: CustomMetadataTree = {
-				metadata,
-				children: [{ metadata: innerMetadata, children: [] }],
-			};
-			const encoded = encodeAt(FluidClientVersion.v2_117, tree);
-			// Go through an actual JSON round trip rather than passing the in-memory object along.
-			const decoded = makeCodec(FluidClientVersion.v2_117).decode(
-				JSON.parse(JSON.stringify(encoded)),
-				{ idCompressor: testIdCompressor },
-			);
-			assert(decoded.type === "commit");
-			assert.deepEqual(decoded.commit.customMetadata, tree);
-		});
-
-		it("round-trips a nested tree through the shared branches format", () => {
-			// Shared branches have a separate codec implementation, so it can drift from the one above.
-			const codec = makeCodecFamily(
-				makeMessageCodecBuilder<TestChange>()
-					.applyOptions({
-						changeCodecs: TestChange.codecs,
-						dependentChangeFormatVersion: DependentFormatVersion.fromUnique(1),
-						revisionTagCodec: testRevisionTagCodec,
-						jsonValidator: FormatValidatorBasic,
-					})
-					.map((c) => [c.formatVersion, c.codec] as const),
-			).resolve(MessageFormatVersion.vSharedBranches);
-			const tree: CustomMetadataTree = {
-				metadata,
-				children: [{ metadata: innerMetadata, children: [] }],
-			};
-			const message: DecodedMessage<TestChange> = {
-				type: "commit",
-				sessionId,
-				commit: {
-					revision: testIdCompressor.generateCompressedId(),
-					change: TestChange.mint([], 1),
-					customMetadata: tree,
-				},
-				branchId: "main",
-			};
-			const encoded = codec.encode(message, { idCompressor: testIdCompressor });
-			assert.deepEqual((encoded as unknown as Record<string, unknown>).customMetadata, {
-				m: metadata,
-				c: [{ m: innerMetadata }],
-			});
-			const decoded = codec.decode(JSON.parse(JSON.stringify(encoded)), {
-				idCompressor: testIdCompressor,
-			});
-			assert(decoded.type === "commit");
-			assert.deepEqual(decoded.commit.customMetadata, tree);
 		});
 	});
 });

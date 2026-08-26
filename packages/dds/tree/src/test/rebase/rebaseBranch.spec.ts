@@ -11,6 +11,7 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 import {
 	type GraphCommit,
 	type RevisionTag,
+	type CustomMetadataTree,
 	findAncestor,
 	findCommonAncestor,
 	rebaseBranch,
@@ -22,6 +23,7 @@ import { mintRevisionTag } from "../utils.js";
 function newCommit(
 	intention: number | number[],
 	parent?: GraphCommit<TestChange>,
+	customMetadata?: CustomMetadataTree,
 ): GraphCommit<TestChange> {
 	const inputContext2: number[] = [];
 	if (parent !== undefined) {
@@ -41,7 +43,7 @@ function newCommit(
 		change: TestChange.mint(inputContext2, intention),
 		revision: intention as RevisionTag,
 		parent,
-		customMetadata: undefined,
+		customMetadata,
 	};
 }
 
@@ -330,6 +332,27 @@ describe("rebaseBranch", () => {
 		assert.equal(telemetryProperties.sourceBranchLength, 2);
 		assert.equal(telemetryProperties.rebaseDistance, 2);
 		assert.equal(telemetryProperties.countDropped, 2);
+	});
+
+	it("preserves the custom metadata of the rebased commits", () => {
+		// 1 ─ 2
+		// └─ 3 ─ 4
+		const meta = (tag: string): CustomMetadataTree => ({
+			metadata: { tag },
+			children: [],
+		});
+		const n1 = newCommit(1);
+		const n2 = newCommit(2, n1);
+		const n3 = newCommit(3, n1, meta("three"));
+		const n4 = newCommit(4, n3);
+
+		// 1 ─(2)
+		//     └─ 3'─ 4'
+		const { newSourceHead } = rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n4, n2);
+		assert.deepEqual(
+			getPath(n2, newSourceHead).map((c) => c.customMetadata),
+			[meta("three"), undefined],
+		);
 	});
 });
 

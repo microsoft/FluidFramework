@@ -20,8 +20,11 @@ export function encodeCustomMetadataTree(tree: CustomMetadataTree): EncodedCusto
 }
 
 export function decodeCustomMetadataTree(
-	encoded: EncodedCustomMetadataTree,
+	encoded: EncodedCustomMetadataTree | undefined,
 ): CustomMetadataTree | undefined {
+	if (encoded === undefined) {
+		return undefined;
+	}
 	const decoded = decodeNode(encoded);
 	// A tree in which no node supplied metadata carries no information.
 	return hasMetadata(decoded) ? decoded : undefined;

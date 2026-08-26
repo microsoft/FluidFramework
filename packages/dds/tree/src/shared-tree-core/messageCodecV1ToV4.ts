@@ -104,10 +104,7 @@ export function makeV1ToV4CodecWithVersion<TChangeset>(
 						idCompressor: context.idCompressor,
 						isSummary: false,
 					}),
-					customMetadata:
-						customMetadata === undefined
-							? undefined
-							: decodeCustomMetadataTree(customMetadata),
+					customMetadata: decodeCustomMetadataTree(customMetadata),
 				},
 				sessionId: originatorId,
 			};

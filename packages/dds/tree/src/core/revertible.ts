@@ -63,6 +63,7 @@ export interface RevertOptionsAlpha {
 	 * Arbitrary, application-defined metadata to attach to the commit that the revert produces.
 	 *
 	 * @remarks
+	 * When omitted, the revert commit carries no metadata of its own.
 	 * See {@link RunTransactionParamsAlpha.customMetadata} for how this metadata is persisted and read back.
 	 */
 	readonly customMetadata?: JsonCompatibleReadOnlyObject;
@@ -78,6 +79,7 @@ export interface RevertToOptionsAlpha {
 	 * Arbitrary, application-defined metadata to attach to the commit that the revert produces.
 	 *
 	 * @remarks
+	 * When omitted, the revert commit carries no metadata of its own.
 	 * See {@link RunTransactionParamsAlpha.customMetadata} for how this metadata is persisted and read back.
 	 */
 	readonly customMetadata?: JsonCompatibleReadOnlyObject;
