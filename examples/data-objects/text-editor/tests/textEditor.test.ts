@@ -260,7 +260,8 @@ test.describe("text editor", () => {
 	});
 
 	test("rejects an invalid document ID", async ({ page }) => {
-		await page.goto("/#not-a-valid-id!", { waitUntil: "load" });
+		const invalidDocumentId = "f47ac10b-58cc-4372_a567-0e02b2c3d479";
+		await page.goto(`/#${invalidDocumentId}`, { waitUntil: "load" });
 
 		await expect(
 			page.getByRole("heading", { name: "Failed to connect to Tinylicious" }),
