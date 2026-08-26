@@ -15,6 +15,7 @@ import * as Type from "@sinclair/typebox";
 import {
 	type Brand,
 	type JsonCompatibleReadOnly,
+	type JsonCompatibleReadOnlyObject,
 	type NestedMap,
 	RangeMap,
 	brand,
@@ -166,6 +167,74 @@ export interface GraphCommit<TChange> {
 	readonly change: TChange;
 	/** The parent of this commit, on whose change this commit's change is based */
 	readonly parent?: GraphCommit<TChange>;
+	/**
+	 * Arbitrary, application-defined metadata that is persisted alongside this commit.
+	 * @remarks
+	 * Set via {@link RunTransactionParamsAlpha.customMetadata}. This is a tree rather than a single
+	 * object because a commit may be produced by nested transactions.
+	 * @privateRemarks
+	 * Always copy this property when copying a commit.
+	 */
+	readonly customMetadata: CustomMetadataTree | undefined;
+}
+
+/**
+ * A tree representing the nesting structure of transaction metadata.
+ *
+ * @remarks
+ * Each transaction contributes a node whose {@link CustomMetadataTree.metadata} is its
+ * {@link RunTransactionParamsAlpha.customMetadata | metadata} (or `undefined` if none was provided).
+ * When transactions are nested, inner transaction nodes become
+ * {@link CustomMetadataTree.children | children} of outer ones.
+ *
+ * @sealed @alpha
+ */
+export interface CustomMetadataTree {
+	/**
+	 * The metadata supplied by this transaction, or `undefined` if it supplied none.
+	 */
+	readonly metadata: JsonCompatibleReadOnlyObject | undefined;
+
+	/**
+	 * The metadata trees of any nested transactions within this one.
+	 */
+	readonly children: readonly CustomMetadataTree[];
+}
+
+/**
+ * Flattens a {@link CustomMetadataTree} into a single object.
+ * @remarks
+ * Where two transactions used the same property, the outermost one wins. Among siblings, the later one
+ * wins. Returns `undefined` if no transaction in the tree supplied any metadata.
+ */
+export function flattenCustomMetadata(
+	tree: CustomMetadataTree | undefined,
+): JsonCompatibleReadOnlyObject | undefined {
+	if (tree === undefined) {
+		return undefined;
+	}
+	let flattened: Record<string, JsonCompatibleReadOnly | undefined> | undefined;
+	const visit = (node: CustomMetadataTree): void => {
+		// Descendants first, so that a containing transaction's metadata wins on conflict.
+		for (const child of node.children) {
+			visit(child);
+		}
+		if (node.metadata !== undefined) {
+			flattened ??= {};
+			// `defineProperty` rather than assignment: assigning the valid JSON key "__proto__" would
+			// invoke the inherited setter and set the prototype instead of creating a property.
+			for (const key of Object.keys(node.metadata)) {
+				Object.defineProperty(flattened, key, {
+					value: node.metadata[key],
+					writable: true,
+					enumerable: true,
+					configurable: true,
+				});
+			}
+		}
+	};
+	visit(tree);
+	return flattened;
 }
 
 /**
@@ -473,11 +542,12 @@ export function mintCommit<TChange>(
 	parent: GraphCommit<TChange>,
 	commit: Omit<GraphCommit<TChange>, "parent">,
 ): GraphCommit<TChange> {
-	const { revision, change } = commit;
+	const { revision, change, customMetadata } = commit;
 	return {
 		revision,
 		change,
 		parent,
+		customMetadata,
 	};
 }
 

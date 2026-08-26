@@ -12,7 +12,7 @@ import type {
 import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { anchorSlot, rootFieldKey } from "../core/index.js";
+import { anchorSlot, rootFieldKey, type RevertToOptionsAlpha } from "../core/index.js";
 import {
 	type NodeIdentifierManager,
 	defaultSchemaPolicy,
@@ -556,8 +556,8 @@ export class SchematizingSimpleTreeView<
 		this.checkout.rewindTo(revision);
 	}
 
-	public revertTo(revision: string): void {
-		this.checkout.revertTo(revision);
+	public revertTo(revision: string, options?: RevertToOptionsAlpha): void {
+		this.checkout.revertTo(revision, options);
 	}
 
 	public merge(context: UntypedTreeViewAlpha, disposeMerged = true): void {
