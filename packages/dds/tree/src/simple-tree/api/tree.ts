@@ -336,7 +336,9 @@ export interface TreeBranchCommitMetadata {
 	 * which transaction supplied what.
 	 *
 	 * The metadata shares the lifetime of the commit it describes: once the commit is trimmed from the branch's
-	 * history, the metadata goes with it.
+	 * history, the metadata goes with it. Reading this property through a `TreeBranchCommitMetadata` that was
+	 * obtained before its commit was trimmed is not supported and may throw, so do not retain these objects
+	 * indefinitely.
 	 */
 	readonly custom: JsonCompatibleReadOnlyObject | undefined;
 
@@ -345,9 +347,9 @@ export interface TreeBranchCommitMetadata {
 	 * the transactions that produced it.
 	 *
 	 * @remarks
-	 * This is `undefined` whenever {@link TreeBranchCommitMetadata.custom} is, and is the structural
-	 * counterpart to it — the same relationship {@link TransactionLabels.tree} has to its label set.
-	 * Prefer `custom` unless you need to know which transaction supplied a particular property.
+	 * This is `undefined` whenever {@link TreeBranchCommitMetadata.custom} is, and throws whenever it does.
+	 * It is the structural counterpart to it — the same relationship {@link TransactionLabels.tree} has to its
+	 * label set. Prefer `custom` unless you need to know which transaction supplied a particular property.
 	 */
 	readonly customTree: CustomMetadataTree | undefined;
 

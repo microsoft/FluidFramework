@@ -34,7 +34,7 @@ Because a commit may be produced by nested transactions, each of which may suppl
 
 Notes on behavior:
 
-- The metadata shares the lifetime of the commit it is attached to. Once that commit is trimmed from the trunk, the metadata goes with it — including through any `TreeBranchCommitMetadata` obtained earlier, which then reads `undefined`. Under the `retainHistory` option on `SharedTreeOptions` it is the lifetime of the document.
+- The metadata shares the lifetime of the commit it is attached to. Once that commit is trimmed from the trunk, the metadata goes with it, and reading it through a `TreeBranchCommitMetadata` obtained earlier throws, so such objects should not be retained indefinitely. Under the `retainHistory` option on `SharedTreeOptions` it is the lifetime of the document.
 - The value is `undefined` for commits that were not annotated, and for commits created before an application began writing metadata, so every read path must handle `undefined`.
 - When transactions are nested, `custom` combines every level, and where two of them use the same property the outermost wins. Metadata from a nested transaction that is rolled back does not contribute, and leaves no node in `customTree`.
 - The value is snapshotted when the transaction starts, so it is unaffected by later mutation of the object passed in, and it is normalized as `JSON.stringify` would (notably `NaN` and the infinities become `null`, matching how SharedTree treats such values elsewhere). An error is thrown for a value that cannot be represented as a JSON object at all, such as one containing a cycle.

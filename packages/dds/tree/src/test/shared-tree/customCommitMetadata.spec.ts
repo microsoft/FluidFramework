@@ -901,10 +901,11 @@ describe("custom commit metadata", () => {
 			assert.deepEqual(tags(loaded.kernel.checkout.branchHistory), []);
 		});
 
-		it("is dropped from commit metadata objects obtained before trimming", () => {
+		it("throws when read through a commit metadata object obtained before trimming", () => {
 			// Trimming severs ancestry, but a `TreeBranchCommitMetadata` obtained beforehand still wraps
 			// its commit. Annotating several consecutive commits also ensures one of them becomes the
-			// newest trimmed commit, which survives internally as the trunk base and so stays reachable.
+			// newest trimmed commit, which survives internally as the trunk base and so stays reachable —
+			// that one reads `undefined` rather than throwing, because its metadata is cleared outright.
 			const {
 				provider,
 				views: [view1, view2],
@@ -943,13 +944,28 @@ describe("custom commit metadata", () => {
 			view2.root.insertAtStart("");
 			provider.synchronizeMessages();
 
-			// Map to the metadata values before asserting: the wrapper objects hold references to
-			// evicted commits, whose other properties throw when touched (e.g. by a test reporter).
-			assert.deepEqual(
-				captured.map((c) => c.custom).filter((m) => m !== undefined),
-				[],
+			// Reading a fully evicted commit hits the same trap as its other properties, rather than
+			// quietly reporting that the commit was never annotated.
+			const results = captured.map((c) => {
+				try {
+					return { custom: c.custom };
+				} catch {
+					return "threw" as const;
+				}
+			});
+			assert(
+				results.includes("threw"),
 				"Metadata must not be readable through a previously obtained commit metadata object once its commit is trimmed",
 			);
+			for (const result of results) {
+				if (result !== "threw") {
+					assert.equal(
+						result.custom,
+						undefined,
+						"A commit that did not throw must be the cleared trunk base",
+					);
+				}
+			}
 			assert.deepEqual(tags(view1.branchHistory), []);
 		});
 
