@@ -40,8 +40,10 @@ export function assertInternal(
  * to optimize bundle size.
  *
  * This API is not intended for use outside of the Fluid Framework client codebase: it will most likely be made internal in the future.
- * @deprecated This API is intended for use only within the Fluid Framework client codebase.
+ * @deprecated 3.0.0. This API will be removed in 3.10.0.
+ * This API is intended for use only within the Fluid Framework client codebase.
  * External consumers should replace this API with an assertion utility appropriate for their application.
+ * See {@link https://github.com/microsoft/FluidFramework/issues/28084} for context.
  * @privateRemarks
  * When the external export is removed, the `skipInProduction` reference above should be turned into a link.
  * @legacy @beta
