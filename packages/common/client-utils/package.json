@@ -274,6 +274,9 @@
 			},
 			"Variable_IsoBuffer": {
 				"backCompat": false
+			},
+			"Variable_LayerCompatibilityPolicyWindowMonths": {
+				"backCompat": false
 			}
 		},
 		"entrypoint": ""
