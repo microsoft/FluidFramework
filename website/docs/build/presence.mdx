@@ -242,7 +242,7 @@ function getOurWorkspace(presence: Presence): {
 
 ### Runtime data validation
 
-The Presence API provides a simple mechanism (fully added in version 2.53.0) to validate that state data received within session from other clients matches the types declared.
+The Presence API provides a mechanism to validate that state data received from other clients during a session matches the declared types.
 
 When creating State objects using `StateFactory.latest` or `StateFactory.latestMap`, it is recommended that a validator function is specified.
 That function will be called on-demand at runtime to verify data from other clients is valid.
