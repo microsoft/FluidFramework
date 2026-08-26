@@ -468,6 +468,9 @@ export type FactoryContentObject = {
     readonly [P in string]?: InsertableContent;
 };
 
+// @alpha
+export function featureVersion<major extends `${bigint}`, minor extends `${bigint}`>(version: `${major}.${minor}.${bigint}-${string}` | `${major}.${minor}.${bigint}`): `${major}.${minor}.0`;
+
 // @public @system
 type FieldHasDefault<T extends ImplicitFieldSchema> = [T] extends [
 FieldSchema<FieldKind.Optional | FieldKind.Identifier>
