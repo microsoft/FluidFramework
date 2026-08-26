@@ -1136,7 +1136,7 @@ export const tagCodeArtifacts = <
  * ```typescript
  * {
  * 	// ...Other properties being added to a telemetry event
- * 	...tagSchemaArtifacts("someTag", {foo: 1, bar: 2}),
+ * 	...tagSchemaArtifacts({ foo: 1, bar: 2 }),
  * 	// ...
  * }
  * ```
