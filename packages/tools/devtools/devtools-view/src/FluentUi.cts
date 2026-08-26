@@ -10,6 +10,8 @@
 // or .mjs extension.
 // See @fluentui issue 30778 -- https://github.com/microsoft/fluentui/issues/30778 (closed)
 // and overall issue 23508 -- https://github.com/microsoft/fluentui/issues/23508
+//
+// Note that type-only imports are immune to this issue. But workaround is required for runtime imports.
 
 // eslint-disable-next-line no-restricted-imports -- provides MessageBar, MessageBarType, initializeIcons
 import FluentReact = require("@fluentui/react");
