@@ -63,8 +63,7 @@ export type DeprecatedContainerRuntimeFactoryWithDefaultDataStoreProps = Omit<
 > & {
 	readonly oldestSupportedClient?: undefined;
 	/**
-	 * Oldest version of Fluid Framework client that must be able to open and process documents
-	 * written by this container runtime.
+	 * {@inheritDoc BaseContainerRuntimeFactoryProps.oldestSupportedClient}
 	 *
 	 * @deprecated 2.116.0. To be removed in 3.10.0. Use `oldestSupportedClient` instead.
 	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
