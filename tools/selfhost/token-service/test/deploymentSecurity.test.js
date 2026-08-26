@@ -20,6 +20,10 @@ const TOKEN_FUNCTIONS = fs.readFileSync(
 	"utf8",
 );
 const STACK_DEPLOY = fs.readFileSync(path.join(ROOT, "azure", "deploy.sh"), "utf8");
+const PREFLIGHT = fs.readFileSync(
+	path.join(ROOT, "azure", "preflight-check.sh"),
+	"utf8",
+);
 
 test("workstation deployment restores Key Vault network isolation", () => {
 	assert.match(TOKEN_DEPLOY, /--public-network-access Enabled/);
@@ -38,6 +42,26 @@ test("temporary deployer Key Vault roles are removed on exit", () => {
 	}
 	assert.match(TOKEN_DEPLOY, /trap cleanup_deployment_state EXIT/);
 	assert.match(STACK_DEPLOY, /trap cleanup_deployment_state EXIT/);
+});
+
+test("deployment tooling uses private unpredictable temporary paths", () => {
+	for (const script of [TOKEN_DEPLOY, STACK_DEPLOY, PREFLIGHT]) {
+		assert.doesNotMatch(script, /\/tmp\/[^\s"']*\$\$/);
+		assert.doesNotMatch(script, /\$\{TMPDIR:-\/tmp\}\/[^\s"']*\$\$/);
+	}
+	assert.match(
+		TOKEN_DEPLOY,
+		/mktemp -d "\$\{TMPDIR:-\/tmp\}\/selfhost-token-service\.XXXXXX"/,
+	);
+	assert.match(TOKEN_DEPLOY, /rm -rf "\$TOKEN_SERVICE_TEMP_DIR"/);
+	assert.match(
+		STACK_DEPLOY,
+		/mktemp -d "\$TEMP_BASE\/selfhost-fluid-\$\{AKS\}\.XXXXXX"/,
+	);
+	assert.match(
+		PREFLIGHT,
+		/mktemp -d "\$\{TMPDIR:-\/tmp\}\/selfhost-preflight\.XXXXXX"/,
+	);
 });
 
 test("Function App platform hardening is configured and verified", () => {

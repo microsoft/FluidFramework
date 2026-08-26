@@ -215,7 +215,7 @@ ENTRA_TENANT_ID="$(az account show --query tenantId -o tsv)"
 # retried rather than treated as failures. Anything else fails immediately.
 site_write() {
   local desc="$1"; shift
-  local err="${TMPDIR:-/tmp}/tokensvc-write.$$" attempt
+  local err="$TOKEN_SERVICE_TEMP_DIR/site-write.err" attempt
   for attempt in 1 2 3 4; do
     if "$@" >/dev/null 2>"$err"; then
       rm -f "$err"
@@ -266,6 +266,8 @@ ensure_role_assignment() {
   fi
 }
 
+TOKEN_SERVICE_TEMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/selfhost-token-service.XXXXXX")"
+chmod 700 "$TOKEN_SERVICE_TEMP_DIR"
 TEMP_ROLE_ASSIGNMENT_IDS=()
 KV_PUBLIC_ACCESS_ORIGINAL=""
 
@@ -290,13 +292,14 @@ cleanup_temporary_role_assignments() {
 cleanup_deployment_state() {
   restore_keyvault_public_access || true
   cleanup_temporary_role_assignments
+  rm -rf "$TOKEN_SERVICE_TEMP_DIR"
 }
 trap cleanup_deployment_state EXIT
 
 # A fresh role assignment takes a minute or two to reach the data plane, so Forbidden right
 # after granting one is usually propagation rather than a real denial.
 keyvault_secret_set_with_retry() {
-  local vault="$1" name="$2" value="$3" attempt err="${TMPDIR:-/tmp}/tokensvc-kv.$$"
+  local vault="$1" name="$2" value="$3" attempt err="$TOKEN_SERVICE_TEMP_DIR/keyvault.err"
   for attempt in 1 2 3 4 5 6; do
     if az keyvault secret set --vault-name "$vault" --name "$name" --value "$value" >/dev/null 2>"$err"; then
       rm -f "$err"; return 0
@@ -342,7 +345,7 @@ phase_app_registration() {
 
   # Fail on the first Graph call rather than partway through, so a blocked directory is
   # reported once with the way forward instead of as a create error.
-  local probe_err="${TMPDIR:-/tmp}/tokensvc-graphprobe.$$"
+  local probe_err="$TOKEN_SERVICE_TEMP_DIR/graph-probe.err"
   if ! az ad app list --display-name "$APP_REG_NAME" --query "[0].appId" -o tsv >/dev/null 2>"$probe_err"; then
     if grep -q "AADSTS530084\|AADSTS50076\|AADSTS50079" "$probe_err"; then
       cat "$probe_err" >&2
@@ -372,7 +375,7 @@ on the registration. Everything else here uses ARM, which this policy does not a
     # AzureADMyOrg confines sign-in to this directory. A multi-tenant registration would let
     # any Entra account in the world authenticate, leaving the tenant check in identity.js as
     # the only thing standing between an outsider and a token.
-    local create_err="${TMPDIR:-/tmp}/tokensvc-appcreate.$$"
+    local create_err="$TOKEN_SERVICE_TEMP_DIR/app-create.err"
     if ! APP_ID="$(az ad app create \
       --display-name "$APP_REG_NAME" \
       --sign-in-audience AzureADMyOrg \
@@ -603,7 +606,7 @@ then re-run:
     # So a failed create is not treated as a failed creation. Re-issuing it would only add more
     # contention for the same lock; instead the site is polled for, and only a site that never
     # appears is a real failure.
-    local create_err="${TMPDIR:-/tmp}/tokensvc-create.$$"
+    local create_err="$TOKEN_SERVICE_TEMP_DIR/function-create.err"
     local -a create_args=(-g "$FUNC_RG" -n "$FUNC_APP" --storage-account "$FUNC_STORAGE"
       --runtime node --runtime-version "$NODE_VERSION" --assign-identity "[system]")
     if [[ "$HOSTING_PLAN" == "flex" ]]; then
@@ -717,7 +720,7 @@ phase_tenant_key() {
 
   local tenant tenant_check_err
   local -a existing_tenants=()
-  tenant_check_err="${TMPDIR:-/tmp}/tokensvc-tenant-check.$$"
+  tenant_check_err="$TOKEN_SERVICE_TEMP_DIR/tenant-check.err"
   for tenant in "${TENANTS[@]}"; do
     if "$SELFHOST_ROOT/tenant-admin/tenant-admin.sh" --params "$PARAMS_FILE" \
       get "$tenant" >/dev/null 2>"$tenant_check_err"; then
@@ -938,11 +941,12 @@ $FUNC_APP. This needs the authV2 az CLI extension: az extension add --name authV
     | ($gv | .excludedPaths = (((.excludedPaths // []) + ["/api/health"]) | unique)) as $gv2
     | { properties: ($p | .identityProviders = $ip3 | .globalValidation = $gv2) }' 2>/dev/null || true)"
   if [[ -n "$disabled" && "$disabled" != "null" ]]; then
-    printf '%s' "$disabled" > "${TMPDIR:-/tmp}/tokensvc-auth.$$"
+    local auth_body="$TOKEN_SERVICE_TEMP_DIR/auth-settings.json"
+    printf '%s' "$disabled" > "$auth_body"
     site_write "Setting audiences and disabling unused providers" \
       az rest --method PUT --url "$auth_url" --headers "Content-Type=application/json" \
-      --body "@${TMPDIR:-/tmp}/tokensvc-auth.$$"
-    rm -f "${TMPDIR:-/tmp}/tokensvc-auth.$$"
+      --body "@$auth_body"
+    rm -f "$auth_body"
   fi
 
 }

@@ -206,29 +206,30 @@ current_principal_object_id() {
 # Azure RBAC role assignments can take a couple minutes to propagate after creation. Retry on
 # Forbidden instead of failing the whole deployment over a timing race.
 keyvault_secret_set_with_retry() {
-  local vault="$1" name="$2" value="$3" attempt
+  local vault="$1" name="$2" value="$3" attempt err
+  err="$(mktemp "$DEPLOY_DIR/kv-secret-set.XXXXXX")"
   for attempt in 1 2 3 4 5 6; do
-    if az keyvault secret set --vault-name "$vault" --name "$name" --value "$value" >/dev/null 2>/tmp/kv_secret_set_err.$$; then
-      rm -f /tmp/kv_secret_set_err.$$
+    if az keyvault secret set --vault-name "$vault" --name "$name" --value "$value" >/dev/null 2>"$err"; then
+      rm -f "$err"
       return 0
     fi
     # A network-locked-down vault (public network access disabled) also contains the
     # substring "Forbidden" but retrying can never fix it -- fail immediately with a clear
     # pointer instead of burning ~90s on retries that cannot succeed.
-    if grep -q "Public network access is disabled" /tmp/kv_secret_set_err.$$ 2>/dev/null; then
-      cat /tmp/kv_secret_set_err.$$ >&2; rm -f /tmp/kv_secret_set_err.$$
+    if grep -q "Public network access is disabled" "$err" 2>/dev/null; then
+      cat "$err" >&2; rm -f "$err"
       echo "ERROR: Key Vault $vault still has public network access disabled." >&2
       echo "phase8_keyvault should have enabled it temporarily for this workstation write; confirm the update was not blocked by Azure Policy." >&2
       return 1
     fi
-    if ! grep -q "Forbidden\|ForbiddenByRbac" /tmp/kv_secret_set_err.$$ 2>/dev/null; then
-      cat /tmp/kv_secret_set_err.$$ >&2; rm -f /tmp/kv_secret_set_err.$$
+    if ! grep -q "Forbidden\|ForbiddenByRbac" "$err" 2>/dev/null; then
+      cat "$err" >&2; rm -f "$err"
       return 1
     fi
     log "Key Vault secret '$name' set forbidden (likely RBAC propagation delay), retrying in 15s (attempt $attempt/6)"
     sleep 15
   done
-  rm -f /tmp/kv_secret_set_err.$$
+  rm -f "$err"
   echo "ERROR: could not set Key Vault secret '$name' after retries -- RBAC role may not have propagated" >&2
   return 1
 }
@@ -238,20 +239,21 @@ keyvault_secret_set_with_retry() {
 # a new one fail immediately with (OperationNotAllowed), not queue behind it. Observed addon
 # operations taking 1-3 minutes to clear; retry budget below is sized with margin over that.
 aks_enable_addon_with_retry() {
-  local rg="$1" aks="$2" addon="$3" attempt
+  local rg="$1" aks="$2" addon="$3" attempt err
+  err="$(mktemp "$DEPLOY_DIR/aks-addon.XXXXXX")"
   for attempt in $(seq 1 10); do
-    if az aks enable-addons -g "$rg" -n "$aks" --addons "$addon" 2>/tmp/aks_addon_err.$$; then
-      rm -f /tmp/aks_addon_err.$$
+    if az aks enable-addons -g "$rg" -n "$aks" --addons "$addon" 2>"$err"; then
+      rm -f "$err"
       return 0
     fi
-    if ! grep -q "OperationNotAllowed" /tmp/aks_addon_err.$$ 2>/dev/null; then
-      cat /tmp/aks_addon_err.$$ >&2; rm -f /tmp/aks_addon_err.$$
+    if ! grep -q "OperationNotAllowed" "$err" 2>/dev/null; then
+      cat "$err" >&2; rm -f "$err"
       return 1
     fi
     log "AKS cluster $aks has another operation in progress, retrying '$addon' addon enable in 30s (attempt $attempt/10)"
     sleep 30
   done
-  cat /tmp/aks_addon_err.$$ >&2; rm -f /tmp/aks_addon_err.$$
+  cat "$err" >&2; rm -f "$err"
   echo "ERROR: could not enable '$addon' addon on $aks after retries -- another operation may be stuck (check with 'az aks operation show-latest -g $rg -n $aks')" >&2
   return 1
 }
@@ -1175,16 +1177,18 @@ phase8_cosmos() {
     # means that check was skipped or the region's support changed since. Fail loudly rather
     # than silently downgrading to non-zone-redundant behind the customer's back: the customer
     # sets cosmos.zoneRedundant to False themselves if their region can't support it.
+    local cosmos_create_err
+    cosmos_create_err="$(mktemp "$DEPLOY_DIR/cosmos-create.XXXXXX")"
     if ! az cosmosdb create -n "$COSMOS" -g "$RG" --kind MongoDB --capabilities EnableMongo \
       --server-version "$COSMOS_SERVER_VERSION" \
       --locations regionName="$RG_LOC" failoverPriority=0 isZoneRedundant="$COSMOS_ZONE_REDUNDANT" \
-      2>/tmp/cosmos_create_err.$$; then
-      cat /tmp/cosmos_create_err.$$ >&2
-      rm -f /tmp/cosmos_create_err.$$
+      2>"$cosmos_create_err"; then
+      cat "$cosmos_create_err" >&2
+      rm -f "$cosmos_create_err"
       echo "ERROR: Cosmos DB create with isZoneRedundant=$COSMOS_ZONE_REDUNDANT failed -- if $RG_LOC doesn't support Availability Zones, set cosmos.zoneRedundant to False in your parameters file (re-run azure/preflight-check.sh to confirm) and retry" >&2
       exit 1
     fi
-    rm -f /tmp/cosmos_create_err.$$
+    rm -f "$cosmos_create_err"
   fi
   local cosmos_conn cosmos_id
   cosmos_conn="$(az cosmosdb keys list -n "$COSMOS" -g "$RG" --type connection-strings \
@@ -1239,7 +1243,8 @@ phase8_cosmos() {
 # RU/s values are a starting point informed by a real reference deployment plus source-verified
 # usage patterns, not load-test-derived final values (design doc Section 9 "pending load test").
 phase8_cosmos_throughput() {
-  local coll max shard
+  local coll max shard throughput_err
+  throughput_err="$(mktemp "$DEPLOY_DIR/cosmos-throughput.XXXXXX")"
   # $1=name $2=max RU/s (autoscale) $3=shard key
   # documents/checkpoints/scribeDeltas sharded on documentId: matches deltas' existing sharding,
   # and lets documents scale past the ~10000 RU/s ceiling an unsharded ("fixed to unlimited
@@ -1275,11 +1280,11 @@ phase8_cosmos_throughput() {
       if [[ -z "$(az cosmosdb mongodb collection throughput show -a "$COSMOS" -g "$RG" -d admin -n "$coll" --query resource.autoscaleSettings.maxThroughput -o tsv 2>/dev/null)" ]]; then
         az cosmosdb mongodb collection throughput migrate -a "$COSMOS" -g "$RG" -d admin -n "$coll" --throughput-type autoscale -o none
       fi
-      if ! az cosmosdb mongodb collection throughput update -a "$COSMOS" -g "$RG" -d admin -n "$coll" --max-throughput "$max" -o none 2>/tmp/cosmos_thr_err.$$; then
-        if grep -q "fixed to unlimited" /tmp/cosmos_thr_err.$$; then
+      if ! az cosmosdb mongodb collection throughput update -a "$COSMOS" -g "$RG" -d admin -n "$coll" --max-throughput "$max" -o none 2>"$throughput_err"; then
+        if grep -q "fixed to unlimited" "$throughput_err"; then
           log "WARNING: $coll is a legacy 'fixed' container (capped, no autoscale) -- fixing requires manually dropping and recreating it (az cosmosdb mongodb collection delete, then create --shard $shard --max-throughput $max); not done automatically since it discards existing data"
         else
-          cat /tmp/cosmos_thr_err.$$ >&2
+          cat "$throughput_err" >&2
         fi
       fi
     else
@@ -1290,7 +1295,7 @@ phase8_cosmos_throughput() {
       fi
     fi
   done
-  rm -f /tmp/cosmos_thr_err.$$
+  rm -f "$throughput_err"
   # Clean up the one genuinely unused collection (partitions) if a prior run created it.
   if az cosmosdb mongodb collection show -a "$COSMOS" -g "$RG" -d admin -n partitions >/dev/null 2>&1; then
     az cosmosdb mongodb collection delete -a "$COSMOS" -g "$RG" -d admin -n partitions --yes
@@ -1412,14 +1417,16 @@ phase8_storage() {
     # not an ARM/RBAC error.
     # STORAGE_SKU (Standard_ZRS by default) is not available in every region -- fall back to
     # Standard_LRS on failure the same way phase8_redis/phase8_cosmos fall back.
+    local storage_create_err
+    storage_create_err="$(mktemp "$DEPLOY_DIR/storage-create.XXXXXX")"
     if ! az storage account create -g "$RG" -n "$STORAGE" -l "$RG_LOC" --sku "$STORAGE_SKU" --kind StorageV2 \
-      --allow-shared-key-access true 2>/tmp/storage_create_err.$$; then
+      --allow-shared-key-access true 2>"$storage_create_err"; then
       log "WARNING: Storage account create with SKU $STORAGE_SKU failed -- falling back to Standard_LRS (not zone-redundant)"
-      cat /tmp/storage_create_err.$$ >&2
+      cat "$storage_create_err" >&2
       az storage account create -g "$RG" -n "$STORAGE" -l "$RG_LOC" --sku Standard_LRS --kind StorageV2 \
         --allow-shared-key-access true
     fi
-    rm -f /tmp/storage_create_err.$$
+    rm -f "$storage_create_err"
     # azure/backends.yaml's PVC does NOT bind to this named share -- the azurefile-gitrest
     # StorageClass dynamically provisions its own separate share instead. This "gitrest-data"
     # share exists for parity/documentation only; its quota is unused.
