@@ -13,13 +13,13 @@ This barrel file contains exports that are the same in the external and internal
 The `src/index.ts` and `src/internal.ts` files re-export these shared APIs.
 
 The file does not export `assert`.
-The external and internal entry points require different `assert` symbols.
+The external entry point defines a deprecated alias for the internal `assert` function.
 
 ## External exports: `src/index.ts`
 
 This barrel file is the source for the external entry points.
 It re-exports the shared APIs from `src/main.ts`.
-It also exports the deprecated external `assert` function.
+It also defines the deprecated external `assert` alias.
 
 The entry point generator uses this file to generate the `public`, `alpha`, `beta`, and `legacy` declaration files.
 External consumers import APIs from a supported path such as `@fluidframework/core-utils` or `@fluidframework/core-utils/legacy`.
@@ -28,7 +28,7 @@ External consumers import APIs from a supported path such as `@fluidframework/co
 
 This barrel file is the source for `@fluidframework/core-utils/internal`.
 It re-exports the shared APIs from `src/main.ts`.
-It exports `assertInternal` with the name `assert`.
+It exports the internal `assert` function.
 
 Fluid Framework code must import `assert` from the internal entry point:
 
@@ -43,16 +43,28 @@ A type-only re-export does not remove this tag.
 An internal export that uses `typeof` on the external symbol also retains this tag.
 As a result, IntelliSense marks internal uses as deprecated.
 
-The assertion module defines a separate `assertInternal` symbol without the `@deprecated` tag.
-The external `assert` function calls `assertInternal`.
-The internal barrel file exports `assertInternal` with the name `assert`:
+The assertion module defines the internal `assert` symbol without the `@deprecated` tag.
+The internal barrel file exports this symbol without modification:
 
 ```typescript
-export { assertInternal as assert } from "./assert.js";
+export { assert } from "./assert.js";
 ```
 
-This export gives the internal entry point an independent TypeScript symbol.
-Do not define its type with `typeof` and the external `assert` symbol.
+The external barrel file imports this symbol with a private alias.
+It defines a deprecated `assert` constant with the same call signature:
+
+```typescript
+import { assert as assertInternal } from "./assert.js";
+
+/** @deprecated Use an assertion utility appropriate for your application instead. */
+export const assert: (
+	condition: boolean,
+	message: string | number,
+	debugMessageBuilder?: () => string,
+) => asserts condition = assertInternal;
+```
+
+This structure keeps the `@deprecated` tag on the external symbol only.
 
 ## Package export map
 

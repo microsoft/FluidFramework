@@ -4,21 +4,6 @@
  */
 
 /**
- * Internal implementation of the assertion API.
- *
- * @internal
- */
-export function assertInternal(
-	condition: boolean,
-	message: string | number,
-	debugMessageBuilder?: () => string,
-): asserts condition {
-	if (!condition) {
-		failPrivate(message, debugMessageBuilder);
-	}
-}
-
-/**
  * Asserts the specified condition.
  *
  * @param condition - The condition that should be true, if the condition is false an error will be thrown.
@@ -28,7 +13,7 @@ export function assertInternal(
  * Before a release, policy-check should be run, which will convert any asserts still using strings to
  * use numbered error codes instead.
  * @param debugMessageBuilder - An optional function that can be used to build a debug message to include in the error in development builds.
- * Only executed if `condition` is false. `debugMessageBuilder` is not executed in production builds, see `skipInProduction` for details.
+ * Only executed if `condition` is false. `debugMessageBuilder` is not executed in production builds, see {@link skipInProduction} for details.
  * @remarks
  * Use this instead of the node 'assert' package, which requires polyfills and has a big impact on bundle sizes.
  *
@@ -39,21 +24,16 @@ export function assertInternal(
  * In cases where the assert is very unlikely to have an impact on production code but is still useful as documentation and for debugging, consider using {@link debugAssert} instead
  * to optimize bundle size.
  *
- * This API is not intended for use outside of the Fluid Framework client codebase: it will most likely be made internal in the future.
- * @deprecated 3.0.0. This API will be removed in 3.10.0.
- * This API is intended for use only within the Fluid Framework client codebase.
- * External consumers should replace this API with an assertion utility appropriate for their application.
- * See {@link https://github.com/microsoft/FluidFramework/issues/28084} for context.
- * @privateRemarks
- * When the external export is removed, the `skipInProduction` reference above should be turned into a link.
- * @legacy @beta
+ * @internal
  */
 export function assert(
 	condition: boolean,
 	message: string | number,
 	debugMessageBuilder?: () => string,
 ): asserts condition {
-	assertInternal(condition, message, debugMessageBuilder);
+	if (!condition) {
+		failPrivate(message, debugMessageBuilder);
+	}
 }
 
 /**
@@ -232,7 +212,7 @@ let debugAssertsEnabled = true;
  * @internal
  */
 export function configureDebugAsserts(enabled: boolean): boolean {
-	assertInternal(
+	assert(
 		nonProductionConditionalsIncluded(),
 		0xab1 /* Debug asserts cannot be configured since they have been optimized out. */,
 	);
@@ -294,7 +274,7 @@ export function nonProductionConditionalsIncluded(): boolean {
  */
 export function emulateProductionBuild(enable = true): void {
 	emulateProductionBuildCount += enable ? 1 : -1;
-	assertInternal(
+	assert(
 		emulateProductionBuildCount >= 0,
 		0xc70 /* emulateProductionBuild disabled more than it was enabled */,
 	);

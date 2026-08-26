@@ -6,6 +6,6 @@
 // eslint-disable-next-line no-restricted-syntax -- This internal entrypoint includes all exports shared with the external entrypoint.
 export * from "./main.js";
 
-// Export internal variant of `assert`.
+// Export internal `assert`.
 // TODO: when the deprecated external variant is removed, this special barrel file should be removed.
-export { assertInternal as assert } from "./assert.js";
+export { assert } from "./assert.js";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assertInternal as assert } from "./assert.js";
+import { assert } from "./assert.js";
 
 /**
  * Clamps `value` to the inclusive range [`min`, `max`].
