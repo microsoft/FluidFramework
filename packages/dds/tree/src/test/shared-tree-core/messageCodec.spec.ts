@@ -304,17 +304,21 @@ describe("message codec", () => {
 			assert.equal(JSON.stringify(encoded).includes("alice"), false);
 		});
 
-		it("rejects a pre-v7 message carrying customMetadata", () => {
-			// Encode at v6, then manually inject a customMetadata field into the wire payload.
+		it("tolerates a pre-v7 message carrying customMetadata", () => {
+			// Unlike the summary format, the op envelope deliberately does not set
+			// `additionalProperties: false` (see the `Message` schema), so a message carrying a field
+			// the version does not declare is tolerated rather than rejected. Ops have always read
+			// unknown envelope properties this way, and tightening that would risk rejecting ops from
+			// other versions over fields unrelated to this one.
 			const encoded = encodeAt(FluidClientVersion.v2_80, { metadata, children: [] });
 			assert.equal(encoded.version, MessageFormatVersion.v6);
 			const tampered = { ...encoded, customMetadata: { m: metadata } };
 			const codec = makeCodec(FluidClientVersion.v2_80);
-			assert.throws(() =>
-				codec.decode(JSON.parse(JSON.stringify(tampered)), {
-					idCompressor: testIdCompressor,
-				}),
-			);
+			const decoded = codec.decode(JSON.parse(JSON.stringify(tampered)), {
+				idCompressor: testIdCompressor,
+			});
+			assert.equal(decoded.type, "commit");
+			assert.deepEqual(decoded.commit.customMetadata, { metadata, children: [] });
 		});
 
 		it("round-trips a nested tree through the real JSON wire form at v7", () => {

@@ -65,6 +65,13 @@ const CommitBase = <ChangeSchema extends TSchema>(
 			: {}),
 	});
 
+/**
+ * @param includeCustomMetadata - Whether the schema declares {@link EncodedCommit.customMetadata}.
+ * Only true at {@link EditManagerFormatVersion.v7} and later, so that earlier versions do not admit
+ * a field they never write.
+ * @privateRemarks Commits are generally encoded from `GraphCommit`s, which often contain extra data.
+ * This `noAdditionalProps` is especially important in that light.
+ */
 const Commit = <ChangeSchema extends TSchema>(
 	tChange: ChangeSchema,
 	includeCustomMetadata: boolean,

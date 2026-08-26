@@ -5,7 +5,7 @@
 
 import type { SessionId } from "@fluidframework/id-compressor";
 import * as Type from "@sinclair/typebox";
-import type { ObjectOptions, TSchema } from "@sinclair/typebox";
+import type { TSchema } from "@sinclair/typebox";
 
 import { type EncodedRevisionTag, RevisionTagSchema, SessionIdSchema } from "../core/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
@@ -52,33 +52,37 @@ export interface Message {
 		| typeof MessageFormatVersion.v7;
 }
 
-const noAdditionalProps: ObjectOptions = { additionalProperties: false };
-
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 // Return type is intentionally derived.
+/**
+ * @param includeCustomMetadata - Whether the schema declares {@link Message.customMetadata}. Only
+ * true at {@link MessageFormatVersion.v7} and later, so that earlier versions do not admit a field
+ * they never write.
+ * @privateRemarks Unlike the summary formats, this schema deliberately does *not* set
+ * `additionalProperties: false`: the op envelope has always tolerated unknown properties, and
+ * tightening it could reject ops written by other versions that legitimately carry fields this
+ * client does not know about. Changing that is worth doing on its own, separately from this format.
+ */
 export const Message = <ChangeSchema extends TSchema>(
 	tChange: ChangeSchema,
 	includeCustomMetadata: boolean,
 ) =>
-	Type.Object(
-		{
-			revision: RevisionTagSchema,
-			originatorId: SessionIdSchema,
-			changeset: tChange,
-			...(includeCustomMetadata
-				? { customMetadata: Type.Optional(EncodedCustomMetadataTree) }
-				: {}),
-			version: Type.Optional(
-				Type.Union([
-					Type.Literal(MessageFormatVersion.v1),
-					Type.Literal(MessageFormatVersion.v2),
-					Type.Literal(MessageFormatVersion.v3),
-					Type.Literal(MessageFormatVersion.v4),
-					Type.Literal(MessageFormatVersion.v6),
-					Type.Literal(MessageFormatVersion.v7),
-				]),
-			),
-		},
-		noAdditionalProps,
-	);
+	Type.Object({
+		revision: RevisionTagSchema,
+		originatorId: SessionIdSchema,
+		changeset: tChange,
+		...(includeCustomMetadata
+			? { customMetadata: Type.Optional(EncodedCustomMetadataTree) }
+			: {}),
+		version: Type.Optional(
+			Type.Union([
+				Type.Literal(MessageFormatVersion.v1),
+				Type.Literal(MessageFormatVersion.v2),
+				Type.Literal(MessageFormatVersion.v3),
+				Type.Literal(MessageFormatVersion.v4),
+				Type.Literal(MessageFormatVersion.v6),
+				Type.Literal(MessageFormatVersion.v7),
+			]),
+		),
+	});
 /* eslint-enable @typescript-eslint/explicit-function-return-type */
