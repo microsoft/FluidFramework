@@ -16,26 +16,21 @@ import {
 	type TreeChunk,
 } from "../../core/index.js";
 import { brand, idAllocatorFromMaxId, type IdAllocator } from "../../util/index.js";
-import {
-	newChangeAtomIdBTree,
-	setInChangeAtomIdMap,
-	type ChangeAtomIdBTree,
-} from "../changeAtomIdBTree.js";
-import {
-	newCrossFieldKeyTable,
-	type CrossFieldKeyTable,
-	type FieldChange,
-	type FieldChangeMap,
-	type FieldId,
-	type ModularChangeset,
-	type NodeChangeset,
-	type NodeId,
+import { newChangeAtomIdBTree, type ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
+import type {
+	FieldChange,
+	FieldChangeMap,
+	FieldId,
+	ModularChangeset,
+	NodeChangeset,
+	NodeId,
 } from "./modularChangeTypes.js";
 import {
 	CrossFieldManagerI,
 	getChangeHandler,
 	getRevInfoFromTaggedChanges,
 	hasConflicts,
+	makeChangesetInversions,
 	makeModularChangeset,
 	newConstraintState,
 	newCrossFieldTable,
@@ -87,7 +82,6 @@ export function invertModularChange(
 	const crossFieldTable: InvertTable = {
 		...newCrossFieldTable<FieldChange>(),
 		originalFieldToContext: new Map(),
-		invertedNodeToParent: brand(change.change.nodeToParent.clone()),
 	};
 	const { revInfos: oldRevInfos } = getRevInfoFromTaggedChanges([change]);
 	const revisionMetadata = revisionMetadataSourceFromInfo(oldRevInfos);
@@ -144,7 +138,11 @@ export function invertModularChange(
 		}
 	}
 
-	const crossFieldKeys = makeCrossFieldKeyTable(invertedFields, invertedNodes, fieldKinds);
+	const { crossFieldKeys, nodeToParent } = makeChangesetInversions(
+		invertedFields,
+		invertedNodes,
+		fieldKinds,
+	);
 
 	const constraintState = newConstraintState(0);
 	updateConstraintsForFields(
@@ -158,7 +156,7 @@ export function invertModularChange(
 	return makeModularChangeset({
 		fieldChanges: invertedFields,
 		nodeChanges: invertedNodes,
-		nodeToParent: crossFieldTable.invertedNodeToParent,
+		nodeToParent,
 		nodeAliases: change.change.nodeAliases,
 		crossFieldKeys,
 		maxId: genId.getMaxId(),
@@ -261,7 +259,6 @@ function invertBuilds(
 
 interface InvertTable extends CrossFieldTable<FieldChange> {
 	originalFieldToContext: Map<FieldChange, InvertContext>;
-	invertedNodeToParent: ChangeAtomIdBTree<FieldId>;
 }
 
 interface InvertContext {
@@ -279,9 +276,7 @@ class InvertManager extends CrossFieldManagerI<FieldChange> {
 		super(table, field, allowInval);
 	}
 
-	public override onMoveIn(id: ChangeAtomId): void {
-		setInChangeAtomIdMap(this.table.invertedNodeToParent, id, this.fieldId);
-	}
+	public override onMoveIn(id: ChangeAtomId): void {}
 
 	public override moveKey(
 		target: CrossFieldTarget,
@@ -294,45 +289,5 @@ class InvertManager extends CrossFieldManagerI<FieldChange> {
 
 	private get table(): InvertTable {
 		return this.crossFieldTable as InvertTable;
-	}
-}
-
-function makeCrossFieldKeyTable(
-	fields: FieldChangeMap,
-	nodes: ChangeAtomIdBTree<NodeChangeset>,
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
-): CrossFieldKeyTable {
-	const keys: CrossFieldKeyTable = newCrossFieldKeyTable();
-	populateCrossFieldKeyTableForFieldMap(keys, fields, undefined, fieldKinds);
-	nodes.forEachPair(([revision, localId], node) => {
-		if (node.fieldChanges !== undefined) {
-			populateCrossFieldKeyTableForFieldMap(
-				keys,
-				node.fieldChanges,
-				{
-					revision,
-					localId,
-				},
-				fieldKinds,
-			);
-		}
-	});
-
-	return keys;
-}
-
-function populateCrossFieldKeyTableForFieldMap(
-	table: CrossFieldKeyTable,
-	fields: FieldChangeMap,
-	parent: NodeId | undefined,
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
-): void {
-	for (const [fieldKey, fieldChange] of fields) {
-		const keys = getChangeHandler(fieldKinds, fieldChange.fieldKind).getCrossFieldKeys(
-			fieldChange.change,
-		);
-		for (const { key, count } of keys) {
-			table.set(key, count, { nodeId: parent, field: fieldKey });
-		}
 	}
 }

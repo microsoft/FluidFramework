@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Mock-deployment tests for the Azure Event Hubs ordering backend.
+# Mock-deployment tests for the Azure deployment.
 #
 # Builds a fake pinned-release bundle, stubs `az`/`kubectl`/`helm`/`docker`, then runs deploy.sh's
 # REAL phase functions against them. Nothing touches Azure: every claim is asserted against the
 # recorded command line, the rendered manifest, or a real local parser.
 #
-#   bash azure/test/deploy-eventhubs.test.sh
+#   bash azure/test/deploy.test.sh
 #
 # Optional deps degrade to SKIP: node+nconf (config resolution), helm+git (full chart render).
 set -uo pipefail
@@ -27,16 +27,34 @@ absorb() { while IFS= read -r l; do case "$l" in PASS\ *) ok "${l#PASS }";; FAIL
 
 # ---------------------------------------------------------------------------
 # Stub CLIs. Every call lands in $CALLS; --query lookups return canned values.
-# MOCK_NS_EXISTS / MOCK_TIER let individual tests steer the scenario.
+# MOCK_NS_EXISTS / MOCK_TIER / MOCK_REDIS_EXISTS let tests steer the scenario.
 # ---------------------------------------------------------------------------
 BIN="$WORK/bin"; mkdir -p "$BIN"
 export CALLS="$WORK/calls.log"; : > "$CALLS"
-export MOCK_NS_EXISTS=0 MOCK_TIER=Standard
+export MOCK_NS_EXISTS=0 MOCK_TIER=Standard MOCK_REDIS_EXISTS=0 MOCK_REDIS_HA=Enabled
 
 cat > "$BIN/az" <<'STUB'
 #!/usr/bin/env bash
 echo "az $*" >> "$CALLS"
 case "$*" in
+  *"extension show"*"redisenterprise"*)                                  exit 0 ;;
+  *"redisenterprise create --help"*)
+    printf '%s\n' "--access-keys-authentication"
+    for ((i = 0; i < 10000; i++)); do printf '%s\n' "additional help output"; done
+    exit 0 ;;
+  *"redisenterprise database show"*"--query provisioningState"*)          echo "Succeeded"; exit 0 ;;
+  *"redisenterprise database show"*"--query accessKeysAuthentication"*)  echo "Enabled"; exit 0 ;;
+  *"redisenterprise database show"*"--query clientProtocol"*)            echo "Encrypted"; exit 0 ;;
+  *"redisenterprise database show"*"--query clusteringPolicy"*)          echo "NoCluster"; exit 0 ;;
+  *"redisenterprise database show"*"--query port"*)                      echo "10000"; exit 0 ;;
+  *"redisenterprise database list-keys"*)                                echo "mock-redis-key"; exit 0 ;;
+  *"redisenterprise show"*"--query provisioningState"*)
+    if [ "${MOCK_REDIS_EXISTS:-0}" = 1 ] || grep -q "redisenterprise create -n" "$CALLS"; then echo "Succeeded"; exit 0; else exit 1; fi ;;
+  *"redisenterprise show"*"--query hostName"*)            echo "mock-redis.centralus.redis.azure.net"; exit 0 ;;
+  *"redisenterprise show"*"--query highAvailability"*)    echo "${MOCK_REDIS_HA:-Enabled}"; exit 0 ;;
+  *"redisenterprise show"*"--query publicNetworkAccess"*) echo "Disabled"; exit 0 ;;
+  *"redisenterprise show"*"--query id"*)                  echo "/subscriptions/s/resourceGroups/rg/providers/Microsoft.Cache/redisEnterprise/mock-redis"; exit 0 ;;
+  *"redisenterprise show"*)                               [ "${MOCK_REDIS_EXISTS:-0}" = 1 ] && exit 0 || exit 1 ;;
   *"eventhubs namespace show"*"--query zoneRedundant"*)       echo "true"; exit 0 ;;
   *"eventhubs namespace show"*"--query sku.tier"*)            echo "${MOCK_TIER:-Standard}"; exit 0 ;;
   *"eventhubs namespace show"*"--query kafkaEnabled"*)        echo "true"; exit 0 ;;
@@ -94,7 +112,7 @@ cat > "$PARAMS" <<JSON
   "aks": { "name": "mock-aks" },
   "keyVault": { "name": "mock-kv" },
   "cosmos": { "clusterName": "mock-cosmos" },
-  "redis": { "clusterName": "mock-redis" },
+  "redis": { "clusterName": "mock-redis", "highAvailability": "Enabled" },
   "storage": { "accountName": "mockstorage" },
   "kafka": {
     "eventHubs": {
@@ -149,7 +167,8 @@ group "1. Parameter parsing"
 # ---------------------------------------------------------------------------
 while IFS='=' read -r k v; do printf -v "V_$k" '%s' "$v"; done < <(
   read_vars "$PARAMS" EVENTHUBS_NAMESPACE EVENTHUBS_SKU EVENTHUBS_CAPACITY EVENTHUBS_PARTITIONS \
-            EVENTHUBS_RETENTION_HOURS EVENTHUBS_ZONE_REDUNDANT KAFKA_ENDPOINT)
+            EVENTHUBS_RETENTION_HOURS EVENTHUBS_ZONE_REDUNDANT KAFKA_ENDPOINT REDIS_SKU \
+            REDIS_HIGH_AVAILABILITY REDIS_PORT)
 assert_eq "namespaceName parsed"  "${V_EVENTHUBS_NAMESPACE:-}"       "mock-eventhubs"
 assert_eq "sku parsed"            "${V_EVENTHUBS_SKU:-}"             "Standard"
 assert_eq "capacity parsed"       "${V_EVENTHUBS_CAPACITY:-}"        "1"
@@ -158,6 +177,15 @@ assert_eq "retentionHours parsed" "${V_EVENTHUBS_RETENTION_HOURS:-}" "72"
 assert_eq "zoneRedundant parsed"  "${V_EVENTHUBS_ZONE_REDUNDANT:-}"  "true"
 assert_eq "KAFKA_ENDPOINT is the TLS Kafka head on 9093" \
   "${V_KAFKA_ENDPOINT:-}" "mock-eventhubs.servicebus.windows.net:9093"
+assert_eq "Azure Managed Redis defaults to Balanced_B5" "${V_REDIS_SKU:-}" "Balanced_B5"
+assert_eq "Azure Managed Redis high availability is parsed" "${V_REDIS_HIGH_AVAILABILITY:-}" "Enabled"
+assert_eq "Azure Managed Redis uses port 10000" "${V_REDIS_PORT:-}" "10000"
+
+TILDE="$WORK/params-tilde.json"
+jq '.fluidRepoDir = "~/fluid"' "$PARAMS" > "$TILDE"
+mkdir -p "$WORK/home/fluid/.git"
+tilde_root="$(HOME="$WORK/home" read_vars "$TILDE" FLUID_REPO_DIR | sed -n 's/^FLUID_REPO_DIR=//p')"
+assert_eq "fluidRepoDir expands a leading tilde" "$tilde_root" "$WORK/home/fluid"
 
 MIN="$WORK/params-min.json"
 jq 'del(.kafka.eventHubs.sku, .kafka.eventHubs.capacity, .kafka.eventHubs.partitionCount,
@@ -208,7 +236,44 @@ printf '%s' "$out" | grep -q "already exists, skipping create" \
 export MOCK_NS_EXISTS=0
 
 # ---------------------------------------------------------------------------
-group "4. Guard rails"
+group "4. Mock deploy: Azure Managed Redis"
+# ---------------------------------------------------------------------------
+: > "$CALLS"; export MOCK_REDIS_EXISTS=0
+out="$(run_phase 'phase8_redis')"; rc=$?
+assert_eq "phase8_redis exits 0" "$rc" "0"
+[[ $rc -ne 0 ]] && printf '%s\n' "$out" | tail -25 | sed 's/^/         /'
+assert_has "Managed Redis uses Balanced_B5"             "$CALLS" "--sku Balanced_B5"
+assert_has "Managed Redis keeps high availability"      "$CALLS" "--high-availability Enabled"
+assert_has "Managed Redis disables public access"       "$CALLS" "--public-network-access Disabled"
+assert_has "database enables compatible access keys"    "$CALLS" "--access-keys-authentication Enabled"
+assert_has "database requires encrypted clients"        "$CALLS" "--client-protocol Encrypted"
+assert_has "database remains non-clustered for Fluid"    "$CALLS" "--clustering-policy NoCluster"
+assert_has "database preserves volatile-only eviction"   "$CALLS" "--eviction-policy VolatileLRU"
+assert_has "database uses the managed TLS port"          "$CALLS" "--port 10000"
+assert_has "access key is written to Key Vault"          "$CALLS" "redis-password"
+assert_has "private endpoint uses redisEnterprise group" "$CALLS" "--group-id redisEnterprise"
+assert_has "private DNS zone is Managed Redis"           "$CALLS" "privatelink.redis.azure.net"
+if grep -qE '(^| )az redis (create|show|list-keys)' "$CALLS"; then
+  no "classic Azure Cache for Redis CLI is not used"
+else ok "classic Azure Cache for Redis CLI is not used"; fi
+
+: > "$CALLS"; export MOCK_REDIS_EXISTS=1
+out="$(run_phase 'phase8_redis')"; rc=$?
+assert_eq "Managed Redis re-run exits 0" "$rc" "0"
+if grep -q "redisenterprise create -n" "$CALLS"; then no "Managed Redis re-run does not recreate the cache"
+else ok "Managed Redis re-run does not recreate the cache"; fi
+export MOCK_REDIS_EXISTS=0
+
+DISABLED_HA="$WORK/params-disabled-ha.json"
+jq '.redis.highAvailability = "Disabled"' "$PARAMS" > "$DISABLED_HA"
+: > "$CALLS"; export MOCK_REDIS_EXISTS=0 MOCK_REDIS_HA=Disabled
+out="$(run_phase 'phase8_redis' "$DISABLED_HA")"; rc=$?
+assert_eq "Managed Redis supports explicitly disabled HA" "$rc" "0"
+assert_has "Managed Redis passes disabled HA to Azure" "$CALLS" "--high-availability Disabled"
+export MOCK_REDIS_HA=Enabled
+
+# ---------------------------------------------------------------------------
+group "5. Guard rails"
 # ---------------------------------------------------------------------------
 export MOCK_NS_EXISTS=1 MOCK_TIER=Basic
 out="$(run_phase 'phase3_eventhubs')"; rc=$?
@@ -224,7 +289,7 @@ out="$(run_phase 'phase3_eventhubs' "$NONS")"; rc=$?
                 || no "empty namespaceName rejected before any az call"
 
 # ---------------------------------------------------------------------------
-group "5. Rendered manifests"
+group "6. Rendered manifests"
 # ---------------------------------------------------------------------------
 SPC="$WORK/spc.yaml"
 sed -e "s|<WORKLOAD_IDENTITY_CLIENT_ID>|cid|g" -e "s|<KV>|mock-kv|g" -e "s|<AZURE_TENANT_ID>|tid|g" \
@@ -241,7 +306,7 @@ PY
 )
 
 VALS="$WORK/values.yaml"
-sed -e "s|<ACR>|mockacr|g" -e "s|<IMAGE_TAG>|t1|g" -e "s|<REDIS_HOSTNAME>|r.redis.cache.windows.net|g" \
+sed -e "s|<ACR>|mockacr|g" -e "s|<IMAGE_TAG>|t1|g" -e "s|<REDIS_HOSTNAME>|r.centralus.redis.azure.net|g" \
     -e "s|<KAFKA_ENDPOINT>|mock-eventhubs.servicebus.windows.net:9093|g" \
     -e "s|<ALFRED_EXTERNAL_URL>|http://a|g" -e "s|<NEXUS_EXTERNAL_URL>|http://n|g" \
     -e "s|<HISTORIAN_EXTERNAL_URL>|http://h|g" "$AZURE_DIR/routerlicious-values.yaml" > "$VALS"
@@ -249,6 +314,9 @@ grep -q '<[A-Z_]*>' "$VALS" && no "chart values fully substituted" || ok "chart 
 assert_eq "kafka.url points at Event Hubs" \
   "$(python3 -c "import yaml;print(yaml.safe_load(open('$VALS'))['kafka']['url'])")" \
   "mock-eventhubs.servicebus.windows.net:9093"
+assert_eq "all Routerlicious Redis clients use Managed Redis port 10000" \
+  "$(python3 -c "import yaml;d=yaml.safe_load(open('$VALS'));print(','.join(str(d[k]['port']) for k in ('redis','redis2','redisForThrottling','redisForTenantCache')))")" \
+  "10000,10000,10000,10000"
 
 missing=""
 for ph in $(grep -o '<[A-Z_]\+>' "$AZURE_DIR/routerlicious-values.yaml" | sort -u); do
@@ -258,7 +326,7 @@ done
                     || no "every values placeholder has a deploy.sh sed rule" "orphaned:$missing"
 
 # ---------------------------------------------------------------------------
-group "6. Kafka client tuning vs the reference baseline"
+group "7. Kafka client tuning vs the reference baseline"
 # ---------------------------------------------------------------------------
 read_vars "$PARAMS" KAFKA_TUNING_ENV_JSON | sed 's/^KAFKA_TUNING_ENV_JSON=//' > "$WORK/tuning.json"
 absorb < <(python3 - "$WORK/tuning.json" <<'PY'
@@ -284,7 +352,7 @@ PY
 )
 
 # ---------------------------------------------------------------------------
-group "7. Init container secret wiring"
+group "8. Init container secret wiring"
 # ---------------------------------------------------------------------------
 MNT="$WORK/mnt/secrets"; CFG="$WORK/config"; mkdir -p "$MNT" "$CFG"
 # No user:pass in this mock -- the '&' is what the test exercises, and a credential-shaped
@@ -304,7 +372,7 @@ sourced="$(sh -c ". $CFG/secrets.env; printf '%s|%s' \"\$kafka__lib__eventHubCon
                                           || no "Mongo string not truncated at '&'" "$sourced"
 
 # ---------------------------------------------------------------------------
-group "8. Config resolution through real nconf"
+group "9. Config resolution through real nconf"
 # ---------------------------------------------------------------------------
 if PATH="$REALPATH" command -v node >/dev/null 2>&1; then
   ( cd "$WORK" && PATH="$REALPATH" npm install nconf --silent --no-fund --no-audit >/dev/null 2>&1 )
@@ -340,7 +408,7 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-group "9. Chart template patch + helm render"
+group "10. Chart template patch + helm render"
 # ---------------------------------------------------------------------------
 if PATH="$REALPATH" command -v helm >/dev/null 2>&1 && PATH="$REALPATH" command -v git >/dev/null 2>&1; then
   if PATH="$REALPATH" git clone -q --branch main --depth 1 \
@@ -381,13 +449,16 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-group "10. Preflight gates"
+group "11. Preflight gates"
 # ---------------------------------------------------------------------------
 P="$AZURE_DIR/preflight-check.sh"
 grep -q "eventhubs namespace exists"   "$P" && ok "preflight checks global namespace-name availability" || no "preflight checks global namespace-name availability"
 grep -q "has no Kafka endpoint"        "$P" && ok "preflight rejects the Basic SKU"                     || no "preflight rejects the Basic SKU"
 grep -q "no Availability Zone support" "$P" && ok "preflight gates zoneRedundant on region AZ support"  || no "preflight gates zoneRedundant on region AZ support"
 grep -q "create-time only"             "$P" && ok "preflight warns zoneRedundant cannot change later"   || no "preflight warns zoneRedundant cannot change later"
+grep -q "Microsoft.Cache/redisEnterprise" "$P" && ok "preflight checks Azure Managed Redis names"       || no "preflight checks Azure Managed Redis names"
+grep -q "REDIS_HIGH_AVAILABILITY STORAGE" "$P" && ok "preflight requires Redis highAvailability"         || no "preflight requires Redis highAvailability"
+grep -q "must be exactly 'Enabled' or 'Disabled'" "$P" && ok "preflight validates Redis highAvailability" || no "preflight validates Redis highAvailability"
 
 printf '\n\033[1mTotal: %d passed, %d failed, %d skipped\033[0m\n' "$PASS" "$FAIL" "$SKIP"
 [[ $FAIL -eq 0 ]] || exit 1
