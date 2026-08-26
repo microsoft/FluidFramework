@@ -163,6 +163,7 @@ ensure_role_assignment() {
 }
 
 TEMP_ROLE_ASSIGNMENT_IDS=()
+SENSITIVE_TEMP_FILES=()
 KV_PUBLIC_ACCESS_RESTORE=""
 
 restore_keyvault_public_access() {
@@ -175,7 +176,7 @@ restore_keyvault_public_access() {
 
 cleanup_temporary_role_assignments() {
   local id
-  for id in "${TEMP_ROLE_ASSIGNMENT_IDS[@]}"; do
+  for id in "${TEMP_ROLE_ASSIGNMENT_IDS[@]+"${TEMP_ROLE_ASSIGNMENT_IDS[@]}"}"; do
     [[ -n "$id" ]] || continue
     log "Removing temporary Key Vault role assignment"
     az rest --method delete \
@@ -183,7 +184,15 @@ cleanup_temporary_role_assignments() {
   done
 }
 
+cleanup_sensitive_temp_files() {
+  local file
+  for file in "${SENSITIVE_TEMP_FILES[@]+"${SENSITIVE_TEMP_FILES[@]}"}"; do
+    [[ -n "$file" ]] && rm -f "$file"
+  done
+}
+
 cleanup_deployment_state() {
+  cleanup_sensitive_temp_files || true
   restore_keyvault_public_access || true
   cleanup_temporary_role_assignments
 }
@@ -206,30 +215,36 @@ current_principal_object_id() {
 # Azure RBAC role assignments can take a couple minutes to propagate after creation. Retry on
 # Forbidden instead of failing the whole deployment over a timing race.
 keyvault_secret_set_with_retry() {
-  local vault="$1" name="$2" value="$3" attempt err
+  local vault="$1" name="$2" value="$3" attempt err value_file
   err="$(mktemp "$DEPLOY_DIR/kv-secret-set.XXXXXX")"
+  value_file="$(mktemp "$DEPLOY_DIR/kv-secret-value.XXXXXX")"
+  SENSITIVE_TEMP_FILES+=("$value_file")
+  chmod 600 "$value_file"
+  printf '%s' "$value" > "$value_file"
+  unset value
   for attempt in 1 2 3 4 5 6; do
-    if az keyvault secret set --vault-name "$vault" --name "$name" --value "$value" >/dev/null 2>"$err"; then
-      rm -f "$err"
+    if az keyvault secret set --vault-name "$vault" --name "$name" \
+      --file "$value_file" --encoding utf-8 >/dev/null 2>"$err"; then
+      rm -f "$err" "$value_file"
       return 0
     fi
     # A network-locked-down vault (public network access disabled) also contains the
     # substring "Forbidden" but retrying can never fix it -- fail immediately with a clear
     # pointer instead of burning ~90s on retries that cannot succeed.
     if grep -q "Public network access is disabled" "$err" 2>/dev/null; then
-      cat "$err" >&2; rm -f "$err"
+      cat "$err" >&2; rm -f "$err" "$value_file"
       echo "ERROR: Key Vault $vault still has public network access disabled." >&2
       echo "phase8_keyvault should have enabled it temporarily for this workstation write; confirm the update was not blocked by Azure Policy." >&2
       return 1
     fi
     if ! grep -q "Forbidden\|ForbiddenByRbac" "$err" 2>/dev/null; then
-      cat "$err" >&2; rm -f "$err"
+      cat "$err" >&2; rm -f "$err" "$value_file"
       return 1
     fi
     log "Key Vault secret '$name' set forbidden (likely RBAC propagation delay), retrying in 15s (attempt $attempt/6)"
     sleep 15
   done
-  rm -f "$err"
+  rm -f "$err" "$value_file"
   echo "ERROR: could not set Key Vault secret '$name' after retries -- RBAC role may not have propagated" >&2
   return 1
 }

@@ -281,7 +281,7 @@ restore_keyvault_public_access() {
 
 cleanup_temporary_role_assignments() {
   local id
-  for id in "${TEMP_ROLE_ASSIGNMENT_IDS[@]}"; do
+  for id in "${TEMP_ROLE_ASSIGNMENT_IDS[@]+"${TEMP_ROLE_ASSIGNMENT_IDS[@]}"}"; do
     [[ -n "$id" ]] || continue
     log "Removing temporary Key Vault role assignment"
     az rest --method delete \
@@ -299,19 +299,26 @@ trap cleanup_deployment_state EXIT
 # A fresh role assignment takes a minute or two to reach the data plane, so Forbidden right
 # after granting one is usually propagation rather than a real denial.
 keyvault_secret_set_with_retry() {
-  local vault="$1" name="$2" value="$3" attempt err="$TOKEN_SERVICE_TEMP_DIR/keyvault.err"
+  local vault="$1" name="$2" value="$3" attempt
+  local err="$TOKEN_SERVICE_TEMP_DIR/keyvault.err"
+  local value_file="$TOKEN_SERVICE_TEMP_DIR/keyvault-value"
+  : > "$value_file"
+  chmod 600 "$value_file"
+  printf '%s' "$value" > "$value_file"
+  unset value
   for attempt in 1 2 3 4 5 6; do
-    if az keyvault secret set --vault-name "$vault" --name "$name" --value "$value" >/dev/null 2>"$err"; then
-      rm -f "$err"; return 0
+    if az keyvault secret set --vault-name "$vault" --name "$name" \
+      --file "$value_file" --encoding utf-8 >/dev/null 2>"$err"; then
+      rm -f "$err" "$value_file"; return 0
     fi
     if grep -q "Public network access is disabled" "$err" 2>/dev/null; then
-      cat "$err" >&2; rm -f "$err"
+      cat "$err" >&2; rm -f "$err" "$value_file"
       fail "Key Vault $vault is unreachable: public network access is disabled and this machine
 is outside its VNet. phase_tenant_key should have enabled it temporarily for this workstation
 write; confirm the update was not blocked by Azure Policy."
     fi
     if ! grep -qi "Forbidden\|ForbiddenByRbac" "$err" 2>/dev/null || [[ $attempt -eq 6 ]]; then
-      cat "$err" >&2; rm -f "$err"
+      cat "$err" >&2; rm -f "$err" "$value_file"
       fail "Could not write secret '$name' to Key Vault $vault."
     fi
     log "  waiting for the role assignment to propagate (attempt $attempt)..."
@@ -1044,23 +1051,30 @@ phase_deploy_code() {
     conn="$(az storage account show-connection-string -g "$FUNC_RG" -n "$FUNC_STORAGE" \
       --query connectionString -o tsv)"
 
-    az storage container create --name "$container" --connection-string "$conn" \
+    AZURE_STORAGE_CONNECTION_STRING="$conn" az storage container create --name "$container" \
       --only-show-errors >/dev/null
 
-    az storage blob upload --container-name "$container" --name "$package" --file "$zip" \
-      --connection-string "$conn" --overwrite --only-show-errors >/dev/null ||
+    AZURE_STORAGE_CONNECTION_STRING="$conn" az storage blob upload \
+      --container-name "$container" --name "$package" --file "$zip" \
+      --overwrite --only-show-errors >/dev/null ||
       fail "Could not upload the deployment package to $FUNC_STORAGE."
 
     # The app reads this URL on every cold start, so the SAS has to outlive the deployment.
     expiry="$(date -u -v+2y '+%Y-%m-%dT%H:%MZ' 2>/dev/null || date -u -d '+2 years' '+%Y-%m-%dT%H:%MZ')"
-    url="$(az storage blob generate-sas --container-name "$container" --name "$package" \
-      --permissions r --expiry "$expiry" --connection-string "$conn" \
+    url="$(AZURE_STORAGE_CONNECTION_STRING="$conn" az storage blob generate-sas \
+      --container-name "$container" --name "$package" \
+      --permissions r --expiry "$expiry" \
       --full-uri --only-show-errors -o tsv)" ||
       fail "Could not generate a read SAS for the deployment package."
+    unset conn
 
+    local package_setting="$TOKEN_SERVICE_TEMP_DIR/package-setting.json"
+    jq -n --arg url "$url" '{WEBSITE_RUN_FROM_PACKAGE: $url}' > "$package_setting"
+    unset url
     site_write "Pointing the app at the new package" \
       az functionapp config appsettings set -g "$FUNC_RG" -n "$FUNC_APP" \
-      --settings "WEBSITE_RUN_FROM_PACKAGE=$url"
+      --settings "@$package_setting"
+    rm -f "$package_setting"
 
     log "Restarting to pick up the new package"
     site_write "Restarting" az functionapp restart -g "$FUNC_RG" -n "$FUNC_APP"

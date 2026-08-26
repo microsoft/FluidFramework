@@ -64,6 +64,35 @@ test("deployment tooling uses private unpredictable temporary paths", () => {
 	);
 });
 
+test("deployment tooling keeps secret values out of process arguments", () => {
+	for (const script of [TOKEN_DEPLOY, STACK_DEPLOY]) {
+		assert.match(script, /keyvault secret set[\s\S]{0,160}--file/);
+		assert.doesNotMatch(script, /keyvault secret set[^\n]*--value/);
+	}
+	assert.match(STACK_DEPLOY, /SENSITIVE_TEMP_FILES/);
+	assert.match(STACK_DEPLOY, /cleanup_sensitive_temp_files/);
+	for (const script of [TOKEN_DEPLOY, STACK_DEPLOY]) {
+		assert.match(
+			script,
+			/\$\{TEMP_ROLE_ASSIGNMENT_IDS\[@\]\+"\$\{TEMP_ROLE_ASSIGNMENT_IDS\[@\]\}"\}/,
+		);
+	}
+	assert.match(
+		STACK_DEPLOY,
+		/\$\{SENSITIVE_TEMP_FILES\[@\]\+"\$\{SENSITIVE_TEMP_FILES\[@\]\}"\}/,
+	);
+	assert.doesNotMatch(TOKEN_DEPLOY, /--connection-string "\$conn"/);
+	assert.match(
+		TOKEN_DEPLOY,
+		/AZURE_STORAGE_CONNECTION_STRING="\$conn" az storage/,
+	);
+	assert.match(TOKEN_DEPLOY, /--settings "@\$package_setting"/);
+	assert.doesNotMatch(
+		TOKEN_DEPLOY,
+		/--settings "WEBSITE_RUN_FROM_PACKAGE=\$url"/,
+	);
+});
+
 test("Function App platform hardening is configured and verified", () => {
 	for (const setting of [
 		"properties.minTlsVersion=1.2",

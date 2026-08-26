@@ -1177,10 +1177,17 @@ az cosmosdb mongodb collection create -a "$COSMOS" -g "$RG" -d admin -n reservat
 Step 2 — Store the connection string in Key Vault
 
 ```bash
-COSMOS_CONN=$(az cosmosdb keys list -n "$COSMOS" -g "$RG" --type connection-strings \
-  --query "connectionStrings[0].connectionString" -o tsv)
-az keyvault secret set --vault-name "$KV" --name cosmos-connection-string --value "$COSMOS_CONN"
-unset COSMOS_CONN
+(
+  COSMOS_CONN=$(az cosmosdb keys list -n "$COSMOS" -g "$RG" --type connection-strings \
+    --query "connectionStrings[0].connectionString" -o tsv)
+  COSMOS_SECRET_FILE="$(mktemp)"
+  trap 'rm -f "$COSMOS_SECRET_FILE"' EXIT
+  chmod 600 "$COSMOS_SECRET_FILE"
+  printf '%s' "$COSMOS_CONN" > "$COSMOS_SECRET_FILE"
+  unset COSMOS_CONN
+  az keyvault secret set --vault-name "$KV" --name cosmos-connection-string \
+    --file "$COSMOS_SECRET_FILE" --encoding utf-8
+)
 ```
 
 Expected: `az keyvault secret set` returns JSON with a non-empty `id` (the secret's versioned URI).

@@ -233,6 +233,12 @@ assert_has "hub deltas created"                         "$CALLS" "-n deltas"
 assert_has "hubs at 32 partitions"                      "$CALLS" "--partition-count 32"
 assert_has "hubs at 72h retention"                      "$CALLS" "--retention-time-in-hours 72"
 assert_has "connection string written to Key Vault"     "$CALLS" "eventhub-connection-string"
+assert_has "Key Vault receives secret values through a private file" "$CALLS" "--file"
+if grep "keyvault secret set" "$CALLS" | grep -q "SharedAccessKey"; then
+  no "Event Hubs credentials never enter the Azure CLI argument list"
+else
+  ok "Event Hubs credentials never enter the Azure CLI argument list"
+fi
 assert_has "public network access disabled"             "$CALLS" "--public-network-access Disabled"
 assert_has "private endpoint created"                   "$CALLS" "private-endpoint create"
 assert_has "private DNS zone privatelink.servicebus"    "$CALLS" "privatelink.servicebus.windows.net"
