@@ -1114,7 +1114,8 @@ export class TreeCheckout implements ITreeCheckout {
 			// This validates the caller's metadata, and so shares the broken-state limitation described
 			// above: rejecting a malformed value also puts the checkout into a broken state rather than
 			// being recoverable. Making input validation recoverable requires the view's transaction
-			// methods to opt out of `@breakingClass`, which is left to a follow-up.
+			// methods to opt out of `@breakingClass`, which is tracked by
+			// https://github.com/microsoft/FluidFramework/issues/28085.
 			customMetadata: snapshotCustomMetadata(params?.customMetadata),
 		});
 
