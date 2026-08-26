@@ -54,6 +54,7 @@ import type {
 	ISequencedMessageEnvelope,
 	ITelemetryContext,
 	ISummarizeInternalResult,
+	OldestSupportedClientVersion,
 	StagingModeChangedEvent,
 } from "@fluidframework/runtime-definitions/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
@@ -79,7 +80,7 @@ import {
 import Sinon, { type SinonFakeTimers } from "sinon";
 
 import { ChannelCollection } from "../channelCollection.js";
-import { CompressionAlgorithms, enabledCompressionConfig } from "../compressionDefinitions.js";
+import { CompressionAlgorithms } from "../compressionDefinitions.js";
 import {
 	ContainerRuntime,
 	type IContainerRuntimeOptions,
@@ -4434,9 +4435,9 @@ describe("Runtime", () => {
 			});
 
 			// These are examples of minVersionForCollab inputs that are not valid.
-			// minVersionForCollab should be at least 1.0.0 and less than or equal to
+			// minVersionForCollab should be at least 2.0.0 and less than or equal to
 			// the current pkgVersion.
-			const invalidVersions = ["0.50.0", "100.0.0"] as const;
+			const invalidVersions = ["1.99.0", "100.0.0"] as const;
 			for (const version of invalidVersions) {
 				it(`throws when minVersionForCollab = ${version}`, async () => {
 					const logger = new MockLogger();
@@ -4447,52 +4448,11 @@ describe("Runtime", () => {
 							existing: false,
 							runtimeOptions: {},
 							provideEntryPoint: mockProvideEntryPoint,
-							// @ts-expect-error - Invalid version strings are not castable to OldestSupportedClientVersion
-							minVersionForCollab: version,
+							minVersionForCollab: version as OldestSupportedClientVersion,
 						});
 					});
 				});
 			}
-
-			it("minVersionForCollab = 1.0.0", async () => {
-				const minVersionForCollab = "1.0.0";
-				const logger = new MockLogger();
-				await ContainerRuntime.loadRuntime2({
-					context: getMockContext({ logger }) as IContainerContext,
-					registry: new FluidDataStoreRegistry([]),
-					existing: false,
-					runtimeOptions: {},
-					provideEntryPoint: mockProvideEntryPoint,
-					minVersionForCollab,
-				});
-
-				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
-					summaryOptions: {},
-					gcOptions: {},
-					loadSequenceNumberVerification: "close",
-					flushMode: FlushMode.Immediate,
-					compressionOptions: {
-						minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
-						compressionAlgorithm: CompressionAlgorithms.lz4,
-					},
-					maxBatchSizeInBytes: 716800,
-					chunkSizeInBytes: 204800,
-					enableRuntimeIdCompressor: undefined,
-					enableGroupedBatching: false,
-					explicitSchemaControl: false,
-					stagingModeAutoFlushThreshold: 1000,
-					disableSchemaUpgrade: false,
-				};
-
-				logger.assertMatchAny([
-					{
-						eventName: "ContainerRuntime:ContainerLoadStats",
-						category: "generic",
-						options: JSON.stringify(expectedRuntimeOptions),
-						minVersionForCollab,
-					},
-				]);
-			});
 
 			it('minVersionForCollab = 2.0.0-defaults ("default")', async () => {
 				const minVersionForCollab = "2.0.0-defaults";
@@ -4764,36 +4724,6 @@ describe("Runtime", () => {
 				]);
 			});
 
-			for (const runtimeOption of [
-				{ enableGroupedBatching: true },
-				{ enableGroupedBatching: true, compressionOptions: enabledCompressionConfig },
-				{ explicitSchemaControl: true },
-				{ gcOptions: { enableGCSweep: true } },
-				// Adding in an arbitrary entry into the IGCRuntimeOptions object
-				{ gcOptions: { enableGCSweep: true, sweepGracePeriodMs: 1 } },
-				{ enableRuntimeIdCompressor: "on" },
-				{ enableRuntimeIdCompressor: "delayed" },
-				{ createBlobPayloadPending: true },
-				{ flushMode: FlushMode.TurnBased },
-			]) {
-				it(`throws if minVersionForCollab is incompatible with runtimeOptions: ${JSON.stringify(runtimeOption)}`, async () => {
-					const runtimeOptions = {
-						...runtimeOption,
-					} as unknown as IContainerRuntimeOptionsInternal;
-					const logger = new MockLogger();
-					const minVersionForCollab = "1.0.0";
-					await assert.rejects(async () => {
-						await ContainerRuntime.loadRuntime2({
-							context: getMockContext({ logger }) as IContainerContext,
-							registry: new FluidDataStoreRegistry([]),
-							existing: false,
-							runtimeOptions,
-							provideEntryPoint: mockProvideEntryPoint,
-							minVersionForCollab,
-						});
-					});
-				});
-			}
 			it("does not throw if minVersionForCollab is not set and the default is incompatible with runtimeOptions", async () => {
 				const logger = new MockLogger();
 				await assert.doesNotReject(async () => {

@@ -32,18 +32,18 @@ describe("compatibilityBase", () => {
 	// The getConfigsForMinVersionForCollab tests provide a lot of coverage for this function as well.
 	describe("getConfigForMinVersionForCollab", () => {
 		it("minimal", () => {
-			const config = getConfigForMinVersionForCollab("2.2.0", { "1.0.0": "X" });
+			const config = getConfigForMinVersionForCollab("2.2.0", { "2.0.0": "X" });
 			assert.equal(config, "X");
 		});
 		it("sorting", () => {
 			// These checks are designed to fail if the items are not sorted according to semver, and are either left as ordered or sorted lexically.
-			const config = { "1.0.0": "A", "1.500.0": "D", "1.58.0": "B", "1.60.0": "C" };
-			assert.equal(getConfigForMinVersionForCollab("1.50.0", config), "A");
-			assert.equal(getConfigForMinVersionForCollab("1.58.0", config), "B");
-			assert.equal(getConfigForMinVersionForCollab("1.59.0", config), "B");
-			assert.equal(getConfigForMinVersionForCollab("1.60.0", config), "C");
-			assert.equal(getConfigForMinVersionForCollab("1.400.0", config), "C");
-			assert.equal(getConfigForMinVersionForCollab("1.500.0", config), "D");
+			const config = { "2.0.0": "A", "2.100.0": "D", "2.58.0": "B", "2.60.0": "C" };
+			assert.equal(getConfigForMinVersionForCollab("2.50.0", config), "A");
+			assert.equal(getConfigForMinVersionForCollab("2.58.0", config), "B");
+			assert.equal(getConfigForMinVersionForCollab("2.59.0", config), "B");
+			assert.equal(getConfigForMinVersionForCollab("2.60.0", config), "C");
+			assert.equal(getConfigForMinVersionForCollab("2.99.0", config), "C");
+			assert.equal(getConfigForMinVersionForCollab("2.100.0", config), "D");
 		});
 	});
 
@@ -63,36 +63,39 @@ describe("compatibilityBase", () => {
 				"2.0.0-defaults": "a1",
 				"2.50.0": "a4",
 				"2.40.0": "a3",
-				"1.0.0": "a0",
 			},
 			featureB: {
-				"1.0.0": "b1",
+				"2.0.0-defaults": "b1",
+				"2.0.0": "b1",
 				"2.30.0": "b2",
 				"2.60.0": "b4",
 				"2.46.0": "b3",
 			},
 			featureC: {
-				"1.0.0": "c1",
+				"2.0.0-defaults": "c1",
+				"2.0.0": "c1",
 				"2.40.0": "c2",
 				"2.70.0": "c4",
 				"2.50.0": "c3",
 			},
 			featureD: {
+				"2.0.0-defaults": "d1",
 				"2.46.0": "d3",
 				"2.5.0": "d2",
 				"2.55.0": "d4",
-				"1.0.0": "d1",
+				"2.0.0": "d1",
 			},
 			featureE: {
+				"2.0.0-defaults": "e1",
 				"2.35.0": "e2",
 				"2.73.0": "e4",
 				"2.65.0": "e3",
-				"1.0.0": "e1",
+				"2.0.0": "e1",
 			},
 			featureF: {
-				"1.0.0": 0,
+				"2.0.0-defaults": 1,
+				"2.0.0": 1,
 				"2.45.0": 2,
-				"1.5.0": 1,
 				"2.71.0": 4,
 				"2.65.0": 3,
 			},
@@ -102,28 +105,6 @@ describe("compatibilityBase", () => {
 			minVersionForCollab: OldestSupportedClientVersion;
 			expectedConfig: ITestConfigMap;
 		}[] = [
-			{
-				minVersionForCollab: "1.0.0",
-				expectedConfig: {
-					featureA: "a0",
-					featureB: "b1",
-					featureC: "c1",
-					featureD: "d1",
-					featureE: "e1",
-					featureF: 0,
-				},
-			},
-			{
-				minVersionForCollab: "1.5.0",
-				expectedConfig: {
-					featureA: "a0",
-					featureB: "b1",
-					featureC: "c1",
-					featureD: "d1",
-					featureE: "e1",
-					featureF: 1,
-				},
-			},
 			{
 				minVersionForCollab: "2.0.0-defaults",
 				expectedConfig: {
@@ -353,7 +334,7 @@ describe("compatibilityBase", () => {
 				runtimeOptions: { featureC: { foo: 2, bar: "bax", qaz: true }, featureA: "a4" },
 			},
 			{
-				minVersionForCollab: "1.0.0",
+				minVersionForCollab: "2.0.0",
 				runtimeOptions: { featureC: { notDocSchemaAffecting: true }, featureA: "a1" },
 			},
 		];
@@ -446,6 +427,15 @@ describe("compatibilityBase", () => {
 			{
 				version: lowestMinVersionForCollab,
 				checks: { isValidSemver: true, isGteLowestMinVersion: true, isLtePkgVersion: true },
+			},
+			{
+				version: "2.0.0-defaults",
+				checks: { isValidSemver: true, isGteLowestMinVersion: true, isLtePkgVersion: true },
+			},
+			{
+				// Cast since this is no longer a valid OldestSupportedClientVersion.
+				version: "1.99.0" as OldestSupportedClientVersion,
+				checks: { isValidSemver: true, isGteLowestMinVersion: false, isLtePkgVersion: true },
 			},
 			{
 				// Cast since this is not a valid OldestSupportedClientVersion, but is a valid semver.

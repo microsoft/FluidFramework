@@ -18,7 +18,13 @@
  * Collaboration with other clients is supported when all Fluid Framework client packages used by the client have a version that is greater than or equal
  * to the specified `OldestSupportedClientVersion`.
  *
- * Must be at least {@link @fluidframework/runtime-utils#lowestMinVersionForCollab} and cannot exceed the version of any Fluid Framework client package in use by the local client.
+ * Client 3.0 supports deployed-client values from the 2.x and 3.x release lines. Every active
+ * deployment that must collaborate needs to use Fluid Framework 2.0.0 or later before upgrading.
+ *
+ * Deployed-client values must be at least {@link @fluidframework/runtime-utils#lowestMinVersionForCollab}
+ * and cannot exceed the version of any Fluid Framework client package in use by the local client.
+ * The historical {@link @fluidframework/runtime-utils#defaultMinVersionForCollab} sentinel remains
+ * an internal exception for test and replay infrastructure.
  *
  * {@link @fluidframework/runtime-utils#validateMinimumVersionForCollab} can be used to check these invariants at runtime.
  * Since TypeScript cannot enforce all of them for literals in code, it is useful for checking values sourced from constants typed as `OldestSupportedClientVersion`.
@@ -35,7 +41,7 @@
  * Since this type is marked with `@input`, it is only consumed by the framework and never returned, so widening the accepted set is a non-breaking change.
  *
  * Historically, this type allowed arbitrary patch versions, but as noted above that is problematic for ordering, so only the major and minor versions are supported for new majors:
- * support for patch versions can be aged out as support for versions 1 and 2 are dropped (or simply deprecated and removed in a later major version).
+ * support for patch versions can be aged out as support for version 2 is dropped (or simply deprecated and removed in a later major version).
  * Once gone that simplification is done, this type will align with {@link @fluidframework/driver-definitions#OldestSupportedServiceClientVersion} and the two types can be deduplicated.
  *
  * In the future, we may want to generalize this to mean
@@ -49,8 +55,8 @@
  */
 export type OldestSupportedClientVersion =
 	| `3.${bigint}.0`
-	| `${1 | 2}.${bigint}.${bigint}`
-	| `${1 | 2}.${bigint}.${bigint}-${string}`;
+	| `2.${bigint}.${bigint}`
+	| `2.${bigint}.${bigint}-${string}`;
 
 /**
  * Oldest version of Fluid Framework client packages that must be able to open and process

@@ -11,22 +11,14 @@ import { compare, gt, gte, lte, valid, parse } from "semver-ts";
 import { pkgVersion } from "./packageVersion.js";
 
 /**
- * Our policy is to support major versions N and N-1, where N is most
- * recent public major release of the Fluid Framework Client.
- * Therefore, if the customer does not provide a minVersionForCollab, we will
- * default to use N-1.
+ * Historical compatibility configuration used before callers explicitly selected their oldest
+ * supported client.
  *
- * However, this is not consistent with today's behavior. Some options (i.e.
- * batching, compression) are enabled by default despite not being compatible
- * with 1.x clients. Since the policy was introduced during 2.x's lifespan,
- * N/N-1 compatibility by **default** will be in effect starting with 3.0.
- * Importantly though, N/N-2 compatibility is still guaranteed with the proper
- * configurations set.
- *
- * Further to distinguish unspecified `minVersionForCollab` from a specified
- * version and allow `enableExplicitSchemaControl` to default to `true` for
- * any 2.0.0+ version, we will use a special value of `2.0.0-defaults`, which
- * is semantically less than 2.0.0.
+ * @remarks
+ * This sentinel sorts below 2.0.0 so the runtime can preserve the historical defaults, including
+ * `explicitSchemaControl: false`, while explicit 2.0.0 selects the current 2.0 configuration.
+ * It remains available to internal test and replay infrastructure but is not a deployed client
+ * version.
  *
  * @internal
  */
@@ -34,10 +26,11 @@ export const defaultMinVersionForCollab =
 	"2.0.0-defaults" as const satisfies OldestSupportedClientVersion;
 
 /**
- * We don't want allow a version before the major public release of the LTS version.
- * Today we use "1.0.0", because our policy supports N/N-1 & N/N-2, which includes
- * all minor versions of N. Though LTS starts at 1.4.0, we should stay consistent
- * with our policy and allow all 1.x versions to be compatible with 2.x.
+ * Oldest deployed Fluid Framework client version supported for cross-client compatibility.
+ *
+ * @remarks
+ * The historical {@link defaultMinVersionForCollab} sentinel is also accepted internally even
+ * though it sorts below this deployed-version floor.
  *
  * @privateRemarks
  * Exported for use in tests.
@@ -45,7 +38,7 @@ export const defaultMinVersionForCollab =
  * @internal
  */
 export const lowestMinVersionForCollab =
-	"1.0.0" as const satisfies OldestSupportedClientVersion;
+	"2.0.0" as const satisfies OldestSupportedClientVersion;
 
 /**
  * String in a valid semver format specifying bottom of a minor version
@@ -219,12 +212,14 @@ export function checkValidMinVersionForCollabVerbose(minVersionForCollab: Semant
 	isLtePkgVersion: boolean;
 } {
 	const isValidSemver = valid(minVersionForCollab) !== null;
+	const isHistoricalDefault = minVersionForCollab === defaultMinVersionForCollab;
 	return {
 		isValidSemver,
 
 		// We have to check if the value is a valid semver before calling gte/lte, otherwise they will throw when parsing the version.
 		isGteLowestMinVersion:
-			isValidSemver && gte(minVersionForCollab, lowestMinVersionForCollab),
+			isValidSemver &&
+			(isHistoricalDefault || gte(minVersionForCollab, lowestMinVersionForCollab)),
 		isLtePkgVersion: isValidSemver && lte(minVersionForCollab, cleanedPackageVersion),
 	};
 }
