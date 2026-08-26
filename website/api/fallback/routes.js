@@ -29,6 +29,7 @@ const routes = [
 
 	// Legacy path we wish to preserve.
 	{ from: "/docs/deep/architecture", to: "/docs/concepts/architecture" },
+	{ from: "/docs/build/dds", to: "/docs/data-structures/tree" },
 
 	// Counter DDS document was removed in v2.
 	// Redirect legacy URL to v1 document.
