@@ -1147,12 +1147,15 @@ export class TreeCheckout implements ITreeCheckout {
 		addConstraintsToTransaction(this, true, transactionCallbackStatus?.preconditionsOnRevert);
 
 		this.popLabelFrame(false);
-		// A transaction-wrapped revert inherits the reverted commit's labels, unless this transaction
-		// supplied a label of its own (in which case the caller's label takes precedence).
-		const revertLabelTree = this.pendingRevert?.labelTree;
-		const useRevertLabels = revertLabelTree !== undefined && params?.label === undefined;
-		const previousLabelTreeNode = this.labelTreeNode;
-		if (useRevertLabels) {
+		// A transaction whose content is a revert adopts the reverted commit's labels, so that it is
+		// labeled just as a bare revert would be — unless the transaction supplied a label of its own,
+		// which takes precedence. Only the outermost transaction's commit reaches the main branch (and
+		// so reads the label tree), and `runWithTransactionLabel` clears the tree once it has.
+		const revertLabelTree =
+			this.transaction.size === 1 && params?.label === undefined
+				? this.pendingRevert?.labelTree
+				: undefined;
+		if (revertLabelTree !== undefined) {
 			this.labelTreeNode = revertLabelTree;
 		}
 		try {
@@ -1160,9 +1163,6 @@ export class TreeCheckout implements ITreeCheckout {
 				this.transaction.commit();
 			}, params?.label);
 		} finally {
-			if (useRevertLabels) {
-				this.labelTreeNode = previousLabelTreeNode;
-			}
 			this.settlePendingRevert(true);
 		}
 		return value === undefined
@@ -1830,6 +1830,11 @@ export class TreeCheckout implements ITreeCheckout {
 		// Install the original commit's label tree so the revert commit's metadata inherits
 		// the same labels. Reusing the captured tree (rather than wrapping it) ensures
 		// revert-of-revert does not introduce new nesting.
+		//
+		// This only takes effect outside a transaction, where `apply` lands the commit on the main
+		// branch immediately. Inside one it lands on the transaction branch instead, and the label
+		// state below is restored long before the transaction's commit reaches the main branch — hence
+		// `pendingRevert` carries the tree across to that point.
 		const previousLabelTreeNode = this.labelTreeNode;
 		this.labelTreeNode = labelTree;
 		const revertKind =
@@ -1846,9 +1851,6 @@ export class TreeCheckout implements ITreeCheckout {
 			// The transaction squashes its content into a single commit, which would otherwise be
 			// reported as an ordinary edit rather than as an undo or redo.
 			this.#transaction.setPendingCommitKind(revertKind);
-			// The `changed` event for a transaction's commit is emitted when it is applied to the outer
-			// branch, by which point the label state above has been restored. Carry the reverted commit's
-			// labels across so that a transaction-wrapped revert is still associated with what it reverts.
 			this.pendingRevert = { labelTree, revertible: revertibleToRelease };
 			// Keep the revert the only change in the transaction. This is self-clearing: the restriction
 			// stops applying once the transaction that owns the revert ends, or rolls it back.
