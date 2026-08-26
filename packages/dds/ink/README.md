@@ -10,7 +10,8 @@ Contains a [Distributed Data Structure](https://fluidframework.com/docs/build/dd
 **IMPORTANT: This package is experimental.**
 **The APIs can change without notice.**
 
-**Do not use this package in production.**
+**Do not use it as a public dependency.**
+**We do not guarantee the stability of this package or its APIs.**
 
 ## Using Fluid Framework libraries
 

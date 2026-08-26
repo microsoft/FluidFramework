@@ -9,7 +9,7 @@ Definitions for test drivers. Test should only take a dependency on these defini
 
 **IMPORTANT: Fluid Framework uses this package as an implementation detail.**
 **Do not use it as a public dependency.**
-**We do not guarantee API stability.**
+**We do not guarantee the stability of this package or its APIs.**
 
 <!-- prettier-ignore-end -->
 
