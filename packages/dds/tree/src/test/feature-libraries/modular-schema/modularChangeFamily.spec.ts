@@ -165,10 +165,7 @@ const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 	// We create changesets by composing an empty single node field with a change to the child.
 	// We don't want the temporarily empty single node field to be pruned away leaving us with a generic field instead.
 	isEmpty: (change) => false,
-	getNestedChanges: (change) =>
-		change === undefined
-			? []
-			: [{ nodeId: change, inputRootId: undefined, detachId: undefined }],
+	getNestedChanges: (change) => (change === undefined ? [] : [[change, 0, 0]]),
 	createEmpty: () => undefined,
 	getCrossFieldKeys: (_change) => [],
 };
