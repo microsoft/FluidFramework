@@ -15,7 +15,7 @@ import type {
 import { sequenceFieldChangeCodecFactory } from "../../../feature-libraries/sequence-field/sequenceFieldCodecs.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { Changeset } from "../../../feature-libraries/sequence-field/types.js";
-import { brand, type JsonCompatibleReadOnly } from "../../../util/index.js";
+import { brand, IdDecodingContext, type JsonCompatibleReadOnly } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
 import {
@@ -39,6 +39,14 @@ const baseContext = {
 	isSummary: false,
 	revision: tag1,
 	idCompressor: testIdCompressor,
+	idDecodingContext: new IdDecodingContext({
+		idCompressor: testIdCompressor,
+		originatorId: "session1" as SessionId,
+	}),
+	forestIdDecodingContext: new IdDecodingContext({
+		idCompressor: testIdCompressor,
+		originatorId: "session1" as SessionId,
+	}),
 };
 const encodedTag1 = testRevisionTagCodec.encode(tag1);
 const encodedTag2 = testRevisionTagCodec.encode(tag2);

@@ -28,6 +28,7 @@ import {
 	type DeltaFieldChanges,
 	type DeltaRoot,
 	type DeltaDetachedNodeId,
+	type ChangeDecodingContext,
 	type ChangeEncodingContext,
 	type ChangeAtomIdMap,
 	Multiplicity,
@@ -90,6 +91,7 @@ import {
 	brand,
 	brandConst,
 	idAllocatorFromMaxId,
+	IdDecodingContext,
 	nestedMapFromFlatList,
 	setInNestedMap,
 	tryGetFromNestedMap,
@@ -1434,16 +1436,24 @@ describe("ModularChangeFamily", () => {
 		}
 
 		const sessionId = "session1" as SessionId;
-		const context: ChangeEncodingContext = {
+		const context: ChangeEncodingContext & ChangeDecodingContext = {
 			originatorId: sessionId,
 			isSummary: false,
 			revision: tag1,
 			idCompressor: testIdCompressor,
+			idDecodingContext: new IdDecodingContext({
+				idCompressor: testIdCompressor,
+				originatorId: sessionId,
+			}),
+			forestIdDecodingContext: new IdDecodingContext({
+				idCompressor: testIdCompressor,
+				originatorId: sessionId,
+			}),
 		};
 		const encodingTestDataForAllVersions: EncodingTestData<
 			ModularChangeset,
 			EncodedModularChangesetV1,
-			ChangeEncodingContext
+			ChangeEncodingContext & ChangeDecodingContext
 		> = {
 			successes: [
 				["without constraint", inlineRevision(rootChange1a, tag1), context],
@@ -1493,7 +1503,7 @@ describe("ModularChangeFamily", () => {
 		const encodingTestDataV5Only: EncodingTestData<
 			ModularChangeset,
 			EncodedModularChangesetV2,
-			ChangeEncodingContext
+			ChangeEncodingContext & ChangeDecodingContext
 		> = {
 			successes: [
 				...encodingTestDataForAllVersions.successes,

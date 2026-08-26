@@ -11,6 +11,7 @@ import {
 	type JsonCodecPart,
 } from "../../codec/index.js";
 import type {
+	ChangeDecodingContext,
 	ChangeEncodingContext,
 	RevisionTag,
 	RevisionTagSchema,
@@ -31,7 +32,8 @@ export function makeV3Codec(
 	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
 		typeof RevisionTagSchema,
-		ChangeEncodingContext
+		ChangeEncodingContext,
+		ChangeDecodingContext
 	>,
 ): IJsonCodec<
 	Changeset,
@@ -50,7 +52,8 @@ export function makeV3Codec(
 		MarkEffect,
 		Encoded.MarkEffect,
 		Encoded.MarkEffect,
-		ChangeEncodingContext
+		ChangeEncodingContext,
+		ChangeDecodingContext
 	> = {
 		encode(effect: MarkEffect, context: ChangeEncodingContext): Encoded.MarkEffect {
 			const type = effect.type;
@@ -67,18 +70,18 @@ export function makeV3Codec(
 				}
 			}
 		},
-		decode(encoded: Encoded.MarkEffect, context: ChangeEncodingContext): MarkEffect {
+		decode(encoded: Encoded.MarkEffect, context: ChangeDecodingContext): MarkEffect {
 			return decoderLibrary.dispatch(encoded, context);
 		},
 	};
 
 	const decoderLibrary = new DiscriminatedUnionDispatcher<
 		Encoded.MarkEffect,
-		/* args */ [context: ChangeEncodingContext],
+		/* args */ [context: ChangeDecodingContext],
 		MarkEffect
 	>({
 		...decoderLibraryV2,
-		rename(encoded: Encoded.Rename, context: ChangeEncodingContext): Rename {
+		rename(encoded: Encoded.Rename, context: ChangeDecodingContext): Rename {
 			return {
 				type: "Rename",
 				idOverride: atomIdCodec.decode(encoded.idOverride, context),

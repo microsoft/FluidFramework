@@ -6,6 +6,7 @@
 import type { ICodecFamily, JsonCodecPart } from "../../codec/index.js";
 import type {
 	ChangeAtomId,
+	ChangeDecodingContext,
 	ChangeEncodingContext,
 	DeltaDetachedNodeChanges,
 	DeltaDetachedNodeId,
@@ -70,7 +71,8 @@ export interface FieldChangeHandler<
 		revisionTagCodec: JsonCodecPart<
 			RevisionTag,
 			typeof RevisionTagSchema,
-			ChangeEncodingContext
+			ChangeEncodingContext,
+			ChangeDecodingContext
 		>,
 	) => ICodecFamily<TChangeset, FieldChangeEncodingContext, FieldChangeDecodingContext>;
 	readonly editor: TEditor;
@@ -375,6 +377,6 @@ export interface FieldChangeEncodingContext {
  * The decode-side counterpart of {@link FieldChangeEncodingContext}.
  */
 export interface FieldChangeDecodingContext {
-	readonly baseContext: ChangeEncodingContext;
+	readonly baseContext: ChangeDecodingContext;
 	decodeNode(encodedNode: EncodedNodeChangeset): NodeId;
 }

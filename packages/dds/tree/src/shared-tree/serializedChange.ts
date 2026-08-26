@@ -11,10 +11,11 @@ import {
 	type ChangeFamily,
 	type RevisionTag,
 	tagChange,
+	type ChangeDecodingContext,
 	type ChangeEncodingContext,
 	type TaggedChange,
 } from "../core/index.js";
-import type { JsonCompatibleReadOnly } from "../util/index.js";
+import { IdDecodingContext, type JsonCompatibleReadOnly } from "../util/index.js";
 
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
@@ -85,11 +86,15 @@ function decodeSerializedChangeV1(
 			`Cannot apply change. A serialized changed must be applied to the same SharedTree as it was created from.`,
 		);
 	}
-	const context: ChangeEncodingContext = {
+	const idDecodingContext = new IdDecodingContext({
 		idCompressor,
 		originatorId: idCompressor.localSessionId,
+	});
+	const context: ChangeDecodingContext = {
+		idCompressor,
 		revision,
-		isSummary: false,
+		idDecodingContext,
+		forestIdDecodingContext: idDecodingContext,
 	};
 	const treeChange = changeFamily.codecs
 		.resolve(SharedTreeChangeFormatVersion.v4)

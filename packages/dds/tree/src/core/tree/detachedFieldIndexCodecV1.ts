@@ -8,7 +8,7 @@ import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { isFinalId } from "@fluidframework/id-compressor/internal";
 
 import type { CodecAndSchema, IJsonCodec } from "../../codec/index.js";
-import { brand } from "../../util/index.js";
+import { IdDecodingContext, brand } from "../../util/index.js";
 import {
 	type EncodedRevisionTag,
 	type RevisionTagCodec,
@@ -58,12 +58,16 @@ class MajorCodec implements IJsonCodec<Major, EncodedRevisionTag> {
 			major === "root" || isFinalId(major),
 			0x890 /* Expected final id on decode of detached field index revision */,
 		);
-		return this.revisionTagCodec.decode(major, {
+		// DetachedFieldIndex codecs are only used by the summarizer, where all ids are final.
+		const idDecodingContext = new IdDecodingContext({
+			idCompressor: this.idCompressor,
 			originatorId: this.revisionTagCodec.localSessionId,
+		});
+		return this.revisionTagCodec.decode(major, {
 			idCompressor: this.idCompressor,
 			revision: undefined,
-			// DetachedFieldIndex codecs are only used by the summarizer.
-			isSummary: true,
+			idDecodingContext,
+			forestIdDecodingContext: idDecodingContext,
 		});
 	}
 }

@@ -7,12 +7,14 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import type { CodecAndSchema, IJsonCodec, Versioned } from "../codec/index.js";
 import type {
+	ChangeDecodingContext,
 	ChangeEncodingContext,
 	ChangeFamilyCodec,
 	EncodedRevisionTag,
 	RevisionTag,
 } from "../core/index.js";
 import {
+	IdDecodingContext,
 	type JsonCompatibleReadOnlyObject,
 	JsonCompatibleReadOnlySchema,
 } from "../util/index.js";
@@ -28,7 +30,8 @@ export function makeV1ToV4CodecWithVersion<TChangeset>(
 		RevisionTag,
 		EncodedRevisionTag,
 		EncodedRevisionTag,
-		ChangeEncodingContext
+		ChangeEncodingContext,
+		ChangeDecodingContext
 	>,
 	version:
 		| typeof MessageFormatVersion.v1
@@ -74,24 +77,26 @@ export function makeV1ToV4CodecWithVersion<TChangeset>(
 		): DecodedMessage<TChangeset> => {
 			const { revision: encodedRevision, originatorId, changeset } = encoded;
 
-			const revision = revisionTagCodec.decode(encodedRevision, {
+			const idDecodingContext = new IdDecodingContext({
+				idCompressor: context.idCompressor,
 				originatorId,
+			});
+			const changeContext: ChangeDecodingContext = {
 				revision: undefined,
 				idCompressor: context.idCompressor,
-				isSummary: false,
-			});
+				idDecodingContext,
+				// For ops the originator session resolves forest identifiers too.
+				forestIdDecodingContext: idDecodingContext,
+			};
+
+			const revision = revisionTagCodec.decode(encodedRevision, changeContext);
 
 			return {
 				branchId: "main",
 				type: "commit",
 				commit: {
 					revision,
-					change: changeCodec.decode(changeset, {
-						originatorId,
-						revision,
-						idCompressor: context.idCompressor,
-						isSummary: false,
-					}),
+					change: changeCodec.decode(changeset, { ...changeContext, revision }),
 				},
 				sessionId: originatorId,
 			};

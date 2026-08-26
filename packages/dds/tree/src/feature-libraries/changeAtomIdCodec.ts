@@ -6,6 +6,7 @@
 import type { JsonCodecPart } from "../codec/index.js";
 import type {
 	ChangeAtomId,
+	ChangeDecodingContext,
 	ChangeEncodingContext,
 	RevisionTag,
 	RevisionTagSchema,
@@ -17,16 +18,22 @@ export function makeChangeAtomIdCodec(
 	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
 		typeof RevisionTagSchema,
-		ChangeEncodingContext
+		ChangeEncodingContext,
+		ChangeDecodingContext
 	>,
-): JsonCodecPart<ChangeAtomId, typeof EncodedChangeAtomId, ChangeEncodingContext> {
+): JsonCodecPart<
+	ChangeAtomId,
+	typeof EncodedChangeAtomId,
+	ChangeEncodingContext,
+	ChangeDecodingContext
+> {
 	return {
 		encode(changeAtomId: ChangeAtomId, context: ChangeEncodingContext): EncodedChangeAtomId {
 			return changeAtomId.revision === undefined || changeAtomId.revision === context.revision
 				? changeAtomId.localId
 				: [changeAtomId.localId, revisionTagCodec.encode(changeAtomId.revision, context)];
 		},
-		decode(changeAtomId: EncodedChangeAtomId, context: ChangeEncodingContext): ChangeAtomId {
+		decode(changeAtomId: EncodedChangeAtomId, context: ChangeDecodingContext): ChangeAtomId {
 			return Array.isArray(changeAtomId)
 				? {
 						localId: changeAtomId[0],

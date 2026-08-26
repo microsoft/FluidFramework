@@ -56,7 +56,8 @@ export function makeSharedTreeChangeCodecFamily(
 			SharedTreeChange,
 			EncodedSharedTreeChange,
 			EncodedSharedTreeChange,
-			ChangeEncodingContext
+			ChangeEncodingContext,
+			ChangeDecodingContext
 		>,
 	][] = [...dependenciesForChangeFormat.entries()].map(([format, { modularChange }]) => [
 		format,
@@ -149,19 +150,21 @@ function makeSharedTreeChangeCodec(
 		ModularChangeset,
 		JsonCompatibleReadOnly,
 		JsonCompatibleReadOnly,
-		ChangeEncodingContext
+		ChangeEncodingContext,
+		ChangeDecodingContext
 	>,
 	codecOptions: CodecWriteOptions,
 ): IJsonCodec<
 	SharedTreeChange,
 	EncodedSharedTreeChange,
 	EncodedSharedTreeChange,
-	ChangeEncodingContext
+	ChangeEncodingContext,
+	ChangeDecodingContext
 > {
 	const schemaChangeCodec = makeSchemaChangeCodec(codecOptions);
 	const decoderLibrary = new DiscriminatedUnionDispatcher<
 		EncodedSharedTreeInnerChange,
-		[context: ChangeEncodingContext],
+		[context: ChangeDecodingContext],
 		SharedTreeInnerChange
 	>({
 		data(encoded, context): SharedTreeInnerChange {

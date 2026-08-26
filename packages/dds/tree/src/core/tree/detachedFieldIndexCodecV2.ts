@@ -8,6 +8,7 @@ import type { IIdCompressor, StableId } from "@fluidframework/id-compressor";
 import { isFinalId, isStableId } from "@fluidframework/id-compressor/internal";
 
 import type { CodecAndSchema, IJsonCodec } from "../../codec/index.js";
+import { IdDecodingContext } from "../../util/index.js";
 import type { EncodedRevisionTag, RevisionTagCodec, RevisionTag } from "../rebase/index.js";
 
 import { makeDetachedFieldIndexCodecFromMajorCodec } from "./detachedFieldIndexCodecCommon.js";
@@ -47,12 +48,16 @@ class MajorCodec implements IJsonCodec<Major> {
 		if (typeof major === "string" && isStableId(major)) {
 			return this.idCompressor.recompress(major);
 		}
-		return this.revisionTagCodec.decode(major, {
+		// DetachedFieldIndex codecs are only used by the summarizer, where all ids are final.
+		const idDecodingContext = new IdDecodingContext({
+			idCompressor: this.idCompressor,
 			originatorId: this.revisionTagCodec.localSessionId,
+		});
+		return this.revisionTagCodec.decode(major, {
 			idCompressor: this.idCompressor,
 			revision: undefined,
-			// DetachedFieldIndex codecs are only used by the summarizer.
-			isSummary: true,
+			idDecodingContext,
+			forestIdDecodingContext: idDecodingContext,
 		});
 	}
 }

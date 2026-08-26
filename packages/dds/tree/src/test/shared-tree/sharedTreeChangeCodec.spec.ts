@@ -9,7 +9,7 @@ import type { SessionId } from "@fluidframework/id-compressor";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import { currentVersion, type CodecWriteOptions } from "../../codec/index.js";
-import { TreeStoredSchemaRepository, type ChangeEncodingContext } from "../../core/index.js";
+import { TreeStoredSchemaRepository, type ChangeDecodingContext } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { decode } from "../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
@@ -100,7 +100,7 @@ describe("sharedTreeChangeCodec", () => {
 				codec.decode(
 					// missing 'old' field
 					[{ schema: { new: {} } }],
-					{} as unknown as ChangeEncodingContext,
+					{} as unknown as ChangeDecodingContext,
 				),
 			validateAssertionError(/must have required property 'old'/),
 		);
