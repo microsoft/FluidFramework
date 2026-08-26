@@ -43,6 +43,6 @@ The structural view is available as `commit.customTree`, a `CustomMetadataTree` 
 Metadata shares the lifetime of the commit it is attached to, so it is dropped when that commit is trimmed from the trunk, or lasts as long as the document under the `retainHistory` option on `SharedTreeOptions`.
 It also travels on every annotated op and occupies summary space for as long as its commit survives, so it should be kept small.
 
-Persisting the metadata requires new op and summary format versions, which are written only when `minVersionForCollab` is set to `3.0.0` or later; until then, metadata is kept in memory for the local session but is neither replicated nor persisted.
-Raising that floor makes every subsequent op and summary use the new versions, whether or not any commit carries metadata, so deploy 3.0-capable code everywhere first.
+Persisting the metadata requires new op and summary format versions, which are written only when `minVersionForCollab` is set to `2.117.0` or later; until then, metadata is kept in memory for the local session but is neither replicated nor persisted.
+Raising that floor makes every subsequent op and summary use the new versions, whether or not any commit carries metadata, so deploy metadata-capable code everywhere first.
 Lowering it again is lossy: a client configured to write the older format can still read metadata but strips it when encoding.

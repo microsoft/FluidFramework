@@ -542,13 +542,25 @@ export const FluidClientVersion = {
 	v2_80: "2.80.0",
 
 	/**
-	 * Fluid Framework Client 3.0 and newer.
+	 * Fluid Framework Client 2.117 and newer.
 	 * @remarks
-	 * New formats introduced in 3.0:
-	 * - MessageFormatVersion.v7 - written when minVersionForCollab \>= 3.0
-	 * - EditManagerFormatVersion.v7 - written when minVersionForCollab \>= 3.0
+	 * New formats introduced in 2.117:
+	 * - MessageFormatVersion.v7 - written when minVersionForCollab \>= 2.117
+	 * - EditManagerFormatVersion.v7 - written when minVersionForCollab \>= 2.117
+	 *
+	 * @privateRemarks
+	 * These formats are gated at 2.117.0 rather than 3.0.0 so that they can also be carried by a
+	 * 2.117.0 minor cut from the last pre-3.0 commit on main, should one be needed for consumers
+	 * that cannot yet absorb the 3.0 breaking changes.
+	 *
+	 * This entry is a lower bound, not an assertion that 2.117.0 was published: since
+	 * 3.0.0 \> 2.117.0, 3.x clients select these formats for any minVersionForCollab at or above
+	 * 2.117.0 whether or not that release ever ships. Both lines must agree on this string, because
+	 * a client whose table maps 2.117.0 to an older format silently strips metadata when encoding.
+	 *
+	 * Do not ship a client in the range [2.117.0, 3.0.0) that lacks these formats.
 	 */
-	v3_0: "3.0.0",
+	v2_117: "2.117.0",
 } as const satisfies Record<string, OldestSupportedClientVersion>;
 
 /**

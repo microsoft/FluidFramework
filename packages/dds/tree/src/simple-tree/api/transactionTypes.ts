@@ -241,7 +241,7 @@ export interface RunTransactionParamsAlpha extends RunTransactionParamsBeta {
 	 * `bigint`. Because it is persisted, it should be kept small; it is also bounded by the runtime's maximum
 	 * op size.
 	 *
-	 * Metadata is only written to the document when `minVersionForCollab` is set to `"3.0.0"` or later.
+	 * Metadata is only written to the document when `minVersionForCollab` is set to `"2.117.0"` or later.
 	 * Otherwise it is retained in memory for the local session but not persisted or replicated.
 	 */
 	readonly customMetadata?: JsonCompatibleReadOnlyObject;

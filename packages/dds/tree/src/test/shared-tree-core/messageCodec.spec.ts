@@ -270,14 +270,14 @@ describe("message codec", () => {
 		}
 
 		it("writes an un-nested tree as just the abbreviated metadata key at v7", () => {
-			const encoded = encodeAt(FluidClientVersion.v3_0, { metadata, children: [] });
+			const encoded = encodeAt(FluidClientVersion.v2_117, { metadata, children: [] });
 			assert.equal(encoded.version, MessageFormatVersion.v7);
 			// The common (un-nested) case must not pay for the empty child list.
 			assert.deepEqual(encoded.customMetadata, { m: metadata });
 		});
 
 		it("writes nested transactions under the abbreviated children key at v7", () => {
-			const encoded = encodeAt(FluidClientVersion.v3_0, {
+			const encoded = encodeAt(FluidClientVersion.v2_117, {
 				metadata,
 				children: [{ metadata: innerMetadata, children: [] }],
 			});
@@ -288,7 +288,7 @@ describe("message codec", () => {
 		});
 
 		it("omits a node's metadata key when that transaction supplied none", () => {
-			const encoded = encodeAt(FluidClientVersion.v3_0, {
+			const encoded = encodeAt(FluidClientVersion.v2_117, {
 				metadata: undefined,
 				children: [{ metadata: innerMetadata, children: [] }],
 			});
@@ -323,9 +323,9 @@ describe("message codec", () => {
 				metadata,
 				children: [{ metadata: innerMetadata, children: [] }],
 			};
-			const encoded = encodeAt(FluidClientVersion.v3_0, tree);
+			const encoded = encodeAt(FluidClientVersion.v2_117, tree);
 			// Go through an actual JSON round trip rather than passing the in-memory object along.
-			const decoded = makeCodec(FluidClientVersion.v3_0).decode(
+			const decoded = makeCodec(FluidClientVersion.v2_117).decode(
 				JSON.parse(JSON.stringify(encoded)),
 				{ idCompressor: testIdCompressor },
 			);

@@ -67,7 +67,7 @@ interface MetadataOptions {
 function makeFactory(options: MetadataOptions = {}): IChannelFactory<ITree> {
 	return configuredSharedTree({
 		jsonValidator: FormatValidatorBasic,
-		minVersionForCollab: options.minVersionForCollab ?? FluidClientVersion.v3_0,
+		minVersionForCollab: options.minVersionForCollab ?? FluidClientVersion.v2_117,
 		retainHistory: options.retainHistory ?? false,
 	}).getFactory();
 }
@@ -77,7 +77,7 @@ function makeFactory(options: MetadataOptions = {}): IChannelFactory<ITree> {
  * @remarks Sufficient for everything that does not involve replication or persistence.
  */
 function createView(): SchematizingSimpleTreeView<typeof StringArray> {
-	const view = getView(config, { minVersionForCollab: FluidClientVersion.v3_0 });
+	const view = getView(config, { minVersionForCollab: FluidClientVersion.v2_117 });
 	view.initialize([]);
 	return view;
 }
@@ -854,7 +854,7 @@ describe("custom commit metadata", () => {
 				1,
 				SummarizeType.onDemand,
 				new SharedTreeTestFactory(() => {}, undefined, {
-					minVersionForCollab: FluidClientVersion.v3_0,
+					minVersionForCollab: FluidClientVersion.v2_117,
 					retainHistory: true,
 				}),
 			);
@@ -895,7 +895,7 @@ describe("custom commit metadata", () => {
 				2,
 				SummarizeType.disabled,
 				new SharedTreeTestFactory(() => {}, undefined, {
-					minVersionForCollab: FluidClientVersion.v3_0,
+					minVersionForCollab: FluidClientVersion.v2_117,
 				}),
 			);
 			const view1 = asAlpha(provider.trees[0].viewWith(config));

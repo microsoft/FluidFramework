@@ -126,7 +126,7 @@ export function makeMessageCodecBuilder<TChangeset>(): VersionDispatchingCodecBu
 				),
 		},
 		{
-			minVersionForCollab: FluidClientVersion.v3_0,
+			minVersionForCollab: FluidClientVersion.v2_117,
 			formatVersion: MessageFormatVersion.v7,
 			codec: (options: MessageCodecBuilderOptions<TChangeset>) =>
 				makeV1ToV4CodecWithVersion(

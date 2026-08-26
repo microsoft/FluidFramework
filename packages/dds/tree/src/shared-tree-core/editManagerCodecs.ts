@@ -109,7 +109,7 @@ export function makeEditManagerCodecBuilder<TChangeset>(): VersionDispatchingCod
 				),
 		},
 		{
-			minVersionForCollab: FluidClientVersion.v3_0,
+			minVersionForCollab: FluidClientVersion.v2_117,
 			formatVersion: EditManagerFormatVersion.v7,
 			codec: (options: EditManagerCodecOptions<TChangeset>) =>
 				makeV1toV4andV6CodecWithVersion(
