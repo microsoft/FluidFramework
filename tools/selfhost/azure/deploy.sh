@@ -130,6 +130,9 @@ FLUID_REF="$(jq -r '.resolvedCommitSha // empty' "$SOURCE_FILE")"
 
 IMAGE_TAG="$(jq -r '.builtImages[]? | select(.status == "pinned") | .tag // empty' "$IMAGES_FILE" | head -n 1)"
 IMAGE_TAG="${IMAGE_TAG:-$RELEASE_ID}"
+BUSYBOX_DIGEST="$(jq -r '.dependencyImages[]? | select(.name == "busybox" and .status == "pinned") | .digest // empty' "$IMAGES_FILE" | head -n 1)"
+[[ "$BUSYBOX_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]] \
+  || { echo "ERROR: images.json must contain a pinned busybox dependency image digest" >&2; exit 1; }
 
 log()    { printf '[%s] %s\n' "$(date -u +%H:%M:%S)" "$*"; }
 banner() { printf '\n=== %s ===\n' "$*"; }
@@ -317,6 +320,7 @@ elif [[ "$FLUID_REPO_DIR" == "~" ]]; then
   FLUID_REPO_DIR="$HOME"
 fi
 ACR="$(jqr '.deployAcr.name')"
+BUSYBOX_IMAGE="$ACR.azurecr.io/busybox@$BUSYBOX_DIGEST"
 AKS="$(jqr '.aks.name')"
 AKS_LOC="$(jqr '.aks.location')"; AKS_LOC="${AKS_LOC:-$RG_LOC}"
 AKS_K8S_VERSION="$(jqr '.aks.kubernetesVersion')"; AKS_K8S_VERSION="${AKS_K8S_VERSION:-1.35}"
@@ -515,12 +519,10 @@ done
 kubectl() { command kubectl --context "$AKS" "$@"; }
 helm() { command helm --kube-context "$AKS" "$@"; }
 
-DEPLOY_DIR="${TMPDIR:-/tmp}/selfhost-fluid-$AKS"
-mkdir -p "$DEPLOY_DIR"
-# Front Door hostnames, discovered in phase12 and consumed by phase5_helm. Persisted so a re-run
-# renders the chart values with the real hostnames from the start rather than briefly
-# advertising in-cluster names.
-AFD_HOSTS_FILE="$DEPLOY_DIR/afd-hosts.env"
+TEMP_BASE="${TMPDIR:-/tmp}"
+[[ -d "$TEMP_BASE" ]] || { echo "ERROR: temporary directory does not exist: $TEMP_BASE" >&2; exit 1; }
+DEPLOY_DIR="$(mktemp -d "$TEMP_BASE/selfhost-fluid-${AKS}.XXXXXX")"
+chmod 700 "$DEPLOY_DIR"
 LOG_FILE="$DEPLOY_DIR/deploy-$(date -u +%Y%m%dT%H%M%SZ).log"
 exec > >(tee -a "$LOG_FILE") 2>&1
 log "Logging to $LOG_FILE"
@@ -590,10 +592,15 @@ phase0_rg_acr() {
     # No --zone-redundancy flag needed: ACR zone redundancy is on by default for every tier
     # (Basic/Standard/Premium) in a region with Availability Zone support, and cannot be
     # disabled there -- the flag is legacy/backward-compat only now (aka.ms/acr/az).
-    az acr create -g "$RG" -n "$ACR" -l "$RG_LOC" --sku Standard --admin-enabled true
+    az acr create -g "$RG" -n "$ACR" -l "$RG_LOC" --sku Standard --admin-enabled false
   fi
   [[ "$(az acr show -g "$RG" -n "$ACR" --query provisioningState -o tsv)" == "Succeeded" ]] \
     || { echo "ERROR: ACR $ACR did not provision successfully" >&2; exit 1; }
+  if [[ "$(az acr show -g "$RG" -n "$ACR" --query adminUserEnabled -o tsv)" == "true" ]]; then
+    az acr update -g "$RG" -n "$ACR" --admin-enabled false
+  fi
+  [[ "$(az acr show -g "$RG" -n "$ACR" --query adminUserEnabled -o tsv)" == "false" ]] \
+    || { echo "ERROR: ACR $ACR admin account is still enabled" >&2; exit 1; }
   log "Phase 0 VERIFY passed"
 }
 
@@ -854,8 +861,8 @@ phase1_images() {
     src="$source_repo@$digest"
     target_tag="${tag:-$RELEASE_ID}"
 
-    if az acr repository show --name "$ACR" --image "$target_repo:$target_tag" >/dev/null 2>&1; then
-      log "$target_repo:$target_tag already in ACR, skipping import"
+    if az acr repository show --name "$ACR" --image "$target_repo@$digest" >/dev/null 2>&1; then
+      log "$target_repo@$digest already in ACR, skipping import"
     else
       az acr import --name "$ACR" --source "$src" --image "$target_repo:$target_tag" --force
     fi
@@ -1640,19 +1647,25 @@ phase5_helm() {
          exit 1; }
 
   # Front Door hostnames do not exist yet the first time this phase runs, so fall back to the
-  # in-cluster URLs. publish_frontdoor_hostnames writes the real hostnames to $AFD_HOSTS_FILE
-  # and re-runs this phase, which is why the substitution is here rather than in a follow-up `helm upgrade`:
+  # in-cluster URLs. Once phase12 creates them, query Azure directly rather than persisting and
+  # shell-executing deployment state from a temporary file. publish_frontdoor_hostnames re-runs
+  # this phase, which is why the substitution is here rather than in a follow-up `helm upgrade`:
   # a bare upgrade re-renders the chart's Deployments and strips the container `command`
   # overrides applied below, which is what injects the Cosmos connection string. Losing them
   # sends every stateful service into CrashLoopBackOff with `MongoParseError: Invalid scheme`.
   local ext_alfred="http://fluid-alfred" ext_nexus="ws://fluid-nexus" ext_historian="http://historian"
-  if [[ -f "$AFD_HOSTS_FILE" ]]; then
-    # shellcheck source=/dev/null
-    source "$AFD_HOSTS_FILE"
-    ext_alfred="https://$AFD_ALFRED_HOST"
-    ext_nexus="wss://$AFD_NEXUS_HOST"
-    ext_historian="https://$AFD_HISTORIAN_HOST"
-    log "Rendering chart values with Front Door hostnames ($AFD_ALFRED_HOST)"
+  local afd_alfred_host afd_nexus_host afd_historian_host
+  afd_alfred_host="$(az afd endpoint show -g "$RG" --profile-name "$AFD" \
+    --endpoint-name "alfred-${AFD}" --query hostName -o tsv 2>/dev/null || true)"
+  afd_nexus_host="$(az afd endpoint show -g "$RG" --profile-name "$AFD" \
+    --endpoint-name "nexus-${AFD}" --query hostName -o tsv 2>/dev/null || true)"
+  afd_historian_host="$(az afd endpoint show -g "$RG" --profile-name "$AFD" \
+    --endpoint-name "historian-${AFD}" --query hostName -o tsv 2>/dev/null || true)"
+  if [[ -n "$afd_alfred_host" && -n "$afd_nexus_host" && -n "$afd_historian_host" ]]; then
+    ext_alfred="https://$afd_alfred_host"
+    ext_nexus="wss://$afd_nexus_host"
+    ext_historian="https://$afd_historian_host"
+    log "Rendering chart values with Front Door hostnames ($afd_alfred_host)"
   fi
 
   # nexus's socketIo.gracefulShutdownDrainTimeMs (fluid-configmap.yaml) is 45s, but the
@@ -1761,7 +1774,7 @@ phase5_helm() {
   # file (its ENTRYPOINT is just tini plus a bare `node ...` command).
   patch_secrets_and_command() {
     local deploy="$1" real_cmd="$2" extra_env_json="${3:-[]}"
-    local init_script run_script
+    local init_script run_script busybox_image="$BUSYBOX_IMAGE"
     # shellcheck disable=SC2016
     # Values are wrapped in literal double-quotes (printf 'export NAME="%s"') because Cosmos
     # Mongo connection strings contain '&', which an unquoted `sh` source would treat as a
@@ -1862,7 +1875,7 @@ phase5_helm() {
       log "$deploy already has CSI secrets volumes/init-container, skipping that part"
     else
       local setup_patch_file="$DEPLOY_DIR/patch-$deploy-setup.json"
-      jq -n --arg initScript "$init_script" '[
+      jq -n --arg initScript "$init_script" --arg busyboxImage "$busybox_image" '[
         {"op": "add", "path": "/spec/template/spec/volumes/-", "value": {
           "name": "fluid-secrets",
           "csi": {"driver": "secrets-store.csi.k8s.io", "readOnly": true,
@@ -1870,7 +1883,7 @@ phase5_helm() {
         }},
         {"op": "add", "path": "/spec/template/spec/volumes/-", "value": {"name": "fluid-secrets-env", "emptyDir": {}}},
         {"op": "add", "path": "/spec/template/spec/initContainers", "value": [{
-          "name": "load-secrets", "image": "busybox",
+          "name": "load-secrets", "image": $busyboxImage,
           "command": ["sh", "-c", $initScript],
           "volumeMounts": [
             {"name": "fluid-secrets", "mountPath": "/mnt/secrets", "readOnly": true},
@@ -1881,16 +1894,18 @@ phase5_helm() {
       kubectl patch deployment "$deploy" --type=json --patch-file="$setup_patch_file"
     fi
 
-    # The init container's script is only written once, in the "add" branch above -- it is not
-    # re-synced if `init_script`'s content changes later. Re-check and reapply on every run so
-    # existing deployments pick up script fixes too.
-    local current_init_cmd
+    # The init container's image and script are only written once in the "add" branch above.
+    # Re-check and reapply both on every run so existing deployments move from the former
+    # mutable Docker Hub image to this release's ACR-hosted digest and pick up script fixes.
+    local current_init_cmd current_init_image
     current_init_cmd="$(kubectl get deployment "$deploy" -o jsonpath='{.spec.template.spec.initContainers[0].command[2]}' 2>/dev/null)"
-    if [[ "$current_init_cmd" == "$init_script" ]]; then
-      log "$deploy init-container script already up to date, skipping"
+    current_init_image="$(kubectl get deployment "$deploy" -o jsonpath='{.spec.template.spec.initContainers[0].image}' 2>/dev/null)"
+    if [[ "$current_init_cmd" == "$init_script" && "$current_init_image" == "$busybox_image" ]]; then
+      log "$deploy init-container image and script already up to date, skipping"
     else
       local init_patch_file="$DEPLOY_DIR/patch-$deploy-init.json"
-      jq -n --arg initScript "$init_script" '[
+      jq -n --arg initScript "$init_script" --arg busyboxImage "$busybox_image" '[
+        {"op": "replace", "path": "/spec/template/spec/initContainers/0/image", "value": $busyboxImage},
         {"op": "replace", "path": "/spec/template/spec/initContainers/0/command", "value": ["sh", "-c", $initScript]}
       ]' > "$init_patch_file"
       kubectl patch deployment "$deploy" --type=json --patch-file="$init_patch_file"
@@ -2048,11 +2063,6 @@ publish_frontdoor_hostnames() {
   fi
 
   log "Publishing Front Door hostnames into the chart's discovery values"
-  cat > "$AFD_HOSTS_FILE" <<EOF
-AFD_ALFRED_HOST=$afd_alfred
-AFD_NEXUS_HOST=$afd_nexus
-AFD_HISTORIAN_HOST=$afd_historian
-EOF
   phase5_helm
   kubectl rollout status deploy/fluid-alfred --timeout=300s >/dev/null 2>&1 || true
   advertised="$(kubectl get configmap fluid-routerlicious -o jsonpath='{.data.config\.json}' 2>/dev/null \

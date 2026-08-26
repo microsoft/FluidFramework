@@ -305,10 +305,11 @@ Redis, and waiting for Front Door DNS to propagate all take real time. Progress 
 goes and written to:
 
 ```
-${TMPDIR:-/tmp}/selfhost-fluid-<aks-name>/deploy-<timestamp>.log
+${TMPDIR:-/tmp}/selfhost-fluid-<aks-name>.<random-suffix>/deploy-<timestamp>.log
 ```
 
-When it finishes it prints your three public endpoints.
+The exact private temporary directory is printed near the start of each run. When deployment
+finishes it prints your three public endpoints.
 
 **If it fails partway, just run it again.** Every phase checks whether its resource already
 exists before creating it, so re-running skips completed work and resumes where it stopped.
@@ -573,7 +574,7 @@ Create the registry before attempting to log in or push images:
 
 ```bash
 az group create -n "$RG" -l "$RG_LOC"
-az acr create -g "$RG" -n "$ACR" -l "$ACR_LOC" --sku Standard --admin-enabled true
+az acr create -g "$RG" -n "$ACR" -l "$ACR_LOC" --sku Standard --admin-enabled false
 ```
 
 **VERIFY:** `az acr show -g "$RG" -n "$ACR" --query provisioningState -o tsv` prints
@@ -718,8 +719,8 @@ Render deployment copies outside the Git checkout so live values are not committ
 
 ```bash
 REDIS_HOSTNAME=$(az redisenterprise show --name "$REDIS" --resource-group "$RG" --query hostName -o tsv)
-DEPLOY_DIR="${TMPDIR:-/tmp}/selfhost-fluid-$AKS"
-mkdir -p "$DEPLOY_DIR"
+DEPLOY_DIR="$(mktemp -d "${TMPDIR:-/tmp}/selfhost-fluid-${AKS}.XXXXXX")"
+chmod 700 "$DEPLOY_DIR"
 sed -e "s|<ACR>|$ACR|g" -e "s|<IMAGE_TAG>|$IMAGE_TAG|g" \
     -e "s|<RG>|$RG|g" -e "s|<STORAGE>|$STORAGE|g" \
     -e "s|<REDIS_HOSTNAME>|$REDIS_HOSTNAME|g" \
@@ -825,7 +826,7 @@ for deploy in fluid-alfred fluid-nexus fluid-riddler; do
     }},
     {"op": "add", "path": "/spec/template/spec/initContainers", "value": [{
       "name": "load-secrets",
-      "image": "busybox",
+      "image": "$ACR.azurecr.io/busybox@$BUSYBOX_DIGEST",
       "command": ["sh", "-c",
         "TENANT_KEY=$(cat /mnt/secrets/tenant-key) && echo \"export TENANT_KEY=$TENANT_KEY\" > /config/secrets.env"
       ],
@@ -865,7 +866,7 @@ for deploy in fluid-scribe fluid-scriptorium; do
     }},
     {"op": "add", "path": "/spec/template/spec/initContainers", "value": [{
       "name": "load-secrets",
-      "image": "busybox",
+      "image": "$ACR.azurecr.io/busybox@$BUSYBOX_DIGEST",
       "command": ["sh", "-c",
         "COSMOS_CONN=$(cat /mnt/secrets/cosmos-connection-string) && echo \"export mongodb__operationsDbEndpoint=$COSMOS_CONN\" > /config/secrets.env"
       ],
