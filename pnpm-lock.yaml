@@ -4672,9 +4672,6 @@ importers:
 
   examples/utils/example-webpack-integration:
     dependencies:
-      '@fluidframework/tool-utils':
-        specifier: workspace:~
-        version: link:../../../packages/utils/tool-utils
       webpack:
         specifier: ^5.104.1
         version: 5.109.0(clean-css@5.3.3)(html-minifier-terser@7.2.0)(postcss@8.5.16)(uglify-js@3.19.3)(webpack-cli@5.1.4)
