@@ -18,7 +18,7 @@ const config: Linter.Config[] = [
 					allow: [
 						...importInternalModulesAllowed,
 						// This package is a candidate shipping tool, not only example code, so it can use Fluid's internal assertion utility.
-						"@fluidframework/core-utils/internal"
+						"@fluidframework/core-utils/internal",
 					],
 				},
 			],
