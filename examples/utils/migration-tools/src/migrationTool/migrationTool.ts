@@ -10,6 +10,7 @@ import type {
 	IEventProvider,
 	IFluidHandle,
 } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/legacy";
 import type {
 	IChannelFactory,
@@ -57,9 +58,7 @@ class MigrationTool implements IMigrationTool {
 	public get handle(): IFluidHandle<FluidObject> {
 		// MigrationToolFactory already provides an entryPoint initialization function to the data store runtime,
 		// so this object should always have access to a non-null entryPoint.
-		if (this.runtime.entryPoint === undefined) {
-			throw new Error("EntryPoint was undefined");
-		}
+		assert(this.runtime.entryPoint !== undefined, "EntryPoint was undefined");
 		return this.runtime.entryPoint;
 	}
 
@@ -122,9 +121,7 @@ class MigrationTool implements IMigrationTool {
 
 	public async finalizeMigration(migrationResult: unknown): Promise<void> {
 		// Only permit a single container to be set as a migration destination.
-		if (this.migrationResult !== undefined) {
-			throw new Error("Migration was already finalized");
-		}
+		assert(this.migrationResult === undefined, "Migration was already finalized");
 
 		// Using a consensus data structure is important here, because other clients might race us to set the new
 		// value.  All clients must agree on the final value even in these race conditions so everyone ends up in the
@@ -141,11 +138,10 @@ class MigrationTool implements IMigrationTool {
 		if (migrationDetails === undefined) {
 			return undefined;
 		}
-		if (migrationDetails.value === undefined) {
-			throw new Error(
-				"Expect migration version to be specified if migration has been accepted",
-			);
-		}
+		assert(
+			migrationDetails.value !== undefined,
+			"Expect migration version to be specified if migration has been accepted",
+		);
 		return {
 			newVersion: migrationDetails.value,
 			migrationSequenceNumber: migrationDetails.acceptedSequenceNumber,
@@ -154,9 +150,7 @@ class MigrationTool implements IMigrationTool {
 
 	public readonly proposeVersion = (newVersion: string): void => {
 		// Don't permit changes to the version after a new one has already been proposed.
-		if (this.proposedVersion !== undefined) {
-			throw new Error("A proposal was already made");
-		}
+		assert(this.proposedVersion === undefined, "A proposal was already made");
 
 		// Note that the accepted proposal could come from another client (e.g. two clients try to propose
 		// simultaneously).

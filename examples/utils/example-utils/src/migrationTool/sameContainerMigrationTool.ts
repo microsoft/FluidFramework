@@ -11,6 +11,7 @@ import {
 } from "@fluidframework/aqueduct/legacy";
 import type { IContainer } from "@fluidframework/container-definitions/legacy";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/legacy";
 import { MessageType } from "@fluidframework/driver-definitions/legacy";
 
@@ -383,9 +384,7 @@ export class SameContainerMigrationTool
 				// Would be good if we can verify the contents somehow too.
 				// TODO: Not appropriate to be watching _seenV1SummaryAck here, I'm just doing this to simulate second ack after acceptance
 				if (op.type === MessageType.SummaryAck) {
-					if (this.acceptedSeqNum === undefined) {
-						throw new Error("this.acceptedSeqNum should be defined");
-					}
+					assert(this.acceptedSeqNum !== undefined, "this.acceptedSeqNum should be defined");
 					acksSeen++;
 					// TODO Is this also where I want to emit an internal state event of the ack coming in to help with abort flows?
 					// Or maybe set that up in ensureV1Summary().  Note as mentioned above, waiting for 2 acks here is a hack.

@@ -4548,6 +4548,9 @@ importers:
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../packages/common/core-interfaces
+      '@fluidframework/core-utils':
+        specifier: workspace:~
+        version: link:../../../packages/common/core-utils
       '@fluidframework/datastore':
         specifier: workspace:~
         version: link:../../../packages/runtime/datastore
@@ -4791,6 +4794,9 @@ importers:
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../packages/common/core-interfaces
+      '@fluidframework/core-utils':
+        specifier: workspace:~
+        version: link:../../../packages/common/core-utils
       '@fluidframework/datastore':
         specifier: workspace:~
         version: link:../../../packages/runtime/datastore

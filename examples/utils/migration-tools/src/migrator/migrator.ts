@@ -6,6 +6,7 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IContainer } from "@fluidframework/container-definitions/legacy";
 import type { IEventProvider } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/legacy";
 
 import type {
@@ -131,9 +132,10 @@ export class Migrator implements IMigrator {
 	private readonly performMigration = (): void => {
 		(async (): Promise<void> => {
 			const acceptedMigration = this.migrationTool.acceptedMigration;
-			if (acceptedMigration === undefined) {
-				throw new Error("Expect an accepted migration before migration starts");
-			}
+			assert(
+				acceptedMigration !== undefined,
+				"Expect an accepted migration before migration starts",
+			);
 			// Delay performing the migration until we are connected.  It's possible that we'll find the migration has already
 			// completed before we finish connecting, and in that case we want to avoid doing anything.
 			if (!this.connected) {
