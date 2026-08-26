@@ -5,12 +5,17 @@
 
 import { strict as assert } from "node:assert";
 
-import type { ITelemetryBaseEvent, Tagged } from "@fluidframework/core-interfaces";
+import type {
+	ITelemetryBaseEvent,
+	ITelemetryBaseLogger,
+	Tagged,
+} from "@fluidframework/core-interfaces";
 import { LogLevel } from "@fluidframework/core-interfaces";
 
 import {
 	type ITelemetryLoggerPropertyBag,
 	type ITelemetryLoggerPropertyBags,
+	TaggedLoggerAdapter,
 	TelemetryLogger,
 	convertToBasePropertyType,
 } from "../logger.js";
@@ -251,6 +256,42 @@ describe("TelemetryLogger", () => {
 			logger.sendErrorEvent({ eventName: "errEvent" });
 			assert.deepStrictEqual(logger.logLevels, [LogLevel.essential]);
 		});
+	});
+});
+
+describe("TaggedLoggerAdapter logLevel forwarding", () => {
+	function createRecordingSink(): {
+		sink: ITelemetryBaseLogger;
+		recorded: { event: ITelemetryBaseEvent; logLevel: LogLevel | undefined }[];
+	} {
+		const recorded: { event: ITelemetryBaseEvent; logLevel: LogLevel | undefined }[] = [];
+		const sink: ITelemetryBaseLogger = {
+			send: (event, logLevel): void => {
+				recorded.push({ event, logLevel });
+			},
+		};
+		return { sink, recorded };
+	}
+
+	it("Forwards explicit logLevel unchanged to the wrapped logger", () => {
+		const { sink, recorded } = createRecordingSink();
+
+		new TaggedLoggerAdapter(sink).send(
+			{ category: "generic", eventName: "explicit" },
+			LogLevel.verbose,
+		);
+
+		assert.strictEqual(recorded[0]?.logLevel, LogLevel.verbose);
+	});
+
+	// This single-argument call models code compiled against a package version where callers
+	// could omit `logLevel`; forwarding layers must keep normalizing it for layer compatibility.
+	it("Forwards LogLevel.essential when an older caller omits logLevel", () => {
+		const { sink, recorded } = createRecordingSink();
+
+		new TaggedLoggerAdapter(sink).send({ category: "generic", eventName: "olderCaller" });
+
+		assert.strictEqual(recorded[0]?.logLevel, LogLevel.essential);
 	});
 });
 

@@ -236,5 +236,18 @@ describe("MultiSinkLogger", () => {
 			assert.strictEqual(recordedA[0]?.logLevel, LogLevel.verbose);
 			assert.strictEqual(recordedB[0]?.logLevel, LogLevel.verbose);
 		});
+
+		// This single-argument call models code compiled against a package version where callers
+		// could omit `logLevel`; forwarding layers must keep normalizing it for layer compatibility.
+		it("Forwards LogLevel.essential to every sink when an older caller omits logLevel on `send`", () => {
+			const { sink: sinkA, recorded: recordedA } = createRecordingSink(LogLevel.verbose);
+			const { sink: sinkB, recorded: recordedB } = createRecordingSink(LogLevel.verbose);
+			const multiSink = createMultiSinkLogger({ loggers: [sinkA, sinkB] });
+
+			multiSink.send({ category: "generic", eventName: "olderCaller" });
+
+			assert.strictEqual(recordedA[0]?.logLevel, LogLevel.essential);
+			assert.strictEqual(recordedB[0]?.logLevel, LogLevel.essential);
+		});
 	});
 });

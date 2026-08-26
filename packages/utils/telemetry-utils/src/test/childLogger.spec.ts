@@ -301,6 +301,17 @@ describe("logLevel forwarding", () => {
 		assert.strictEqual(recorded[0]?.logLevel, LogLevel.essential);
 	});
 
+	// This single-argument call models code compiled against a package version where callers
+	// could omit `logLevel`; forwarding layers must keep normalizing it for layer compatibility.
+	it("Forwards LogLevel.essential to the sink when an older caller omits logLevel on `send`", () => {
+		const { sink, recorded } = createRecordingSink();
+		const child = createChildLogger({ logger: sink });
+
+		child.send({ category: "generic", eventName: "olderCaller" });
+
+		assert.strictEqual(recorded[0]?.logLevel, LogLevel.essential);
+	});
+
 	it("Forwards explicit LogLevel.info to the sink via `sendTelemetryEvent`", () => {
 		const { sink, recorded } = createRecordingSink();
 		const child = createChildLogger({ logger: sink });
