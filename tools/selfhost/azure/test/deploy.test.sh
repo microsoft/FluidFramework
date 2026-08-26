@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Mock-deployment tests for the Azure Event Hubs ordering backend.
+# Mock-deployment tests for the Azure deployment.
 #
 # Builds a fake pinned-release bundle, stubs `az`/`kubectl`/`helm`/`docker`, then runs deploy.sh's
 # REAL phase functions against them. Nothing touches Azure: every claim is asserted against the
 # recorded command line, the rendered manifest, or a real local parser.
 #
-#   bash azure/test/deploy-eventhubs.test.sh
+#   bash azure/test/deploy.test.sh
 #
 # Optional deps degrade to SKIP: node+nconf (config resolution), helm+git (full chart render).
 set -uo pipefail

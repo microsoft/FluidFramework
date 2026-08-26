@@ -260,7 +260,7 @@ Two checks, both cheap. Run them in this order.
 **Validate the scripts — no Azure account needed, runs in seconds:**
 
 ```bash
-bash azure/test/deploy-eventhubs.test.sh
+bash azure/test/deploy.test.sh
 ```
 
 Expect `Total: 63 passed, 0 failed`. This runs the real deployment logic against stub tools, so
