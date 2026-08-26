@@ -13,7 +13,7 @@ import type {
 import { LogLevel } from "@fluidframework/core-interfaces";
 
 import { mixinMonitoringContext } from "../config.js";
-import { TelemetryDataTag, tagCodeArtifacts, tagData } from "../logger.js";
+import { TelemetryDataTag, tagCodeArtifacts, tagData, tagSchemaArtifacts } from "../logger.js";
 import type {
 	ITelemetryGenericEventExt,
 	TelemetryLoggerExt,
@@ -565,6 +565,42 @@ describe("tagCodeArtifacts", () => {
 			booleanValue,
 			expectedBooleanValue,
 			"boolean getter not tagged as expected",
+		);
+	});
+});
+
+describe("tagSchemaArtifacts", () => {
+	it("tagSchemaArtifacts with undefined", () => {
+		const taggedData = tagSchemaArtifacts({ node: undefined });
+		const expected: Partial<typeof taggedData> = {};
+		assert.deepStrictEqual(taggedData, expected, "undefined not tagged as expected");
+	});
+
+	it("tagSchemaArtifacts with TelemetryBaseEventPropertyType properties", () => {
+		const taggedData = tagSchemaArtifacts({
+			string: "foo",
+			number: 0,
+			boolean: true,
+			none: undefined,
+		});
+		const expected: Partial<typeof taggedData> = {
+			string: {
+				value: "foo",
+				tag: TelemetryDataTag.SchemaArtifact,
+			},
+			number: {
+				value: 0,
+				tag: TelemetryDataTag.SchemaArtifact,
+			},
+			boolean: {
+				value: true,
+				tag: TelemetryDataTag.SchemaArtifact,
+			},
+		};
+		assert.deepStrictEqual(
+			taggedData,
+			expected,
+			"TelemetryBaseEventPropertyType not tagged as expected",
 		);
 	});
 });
