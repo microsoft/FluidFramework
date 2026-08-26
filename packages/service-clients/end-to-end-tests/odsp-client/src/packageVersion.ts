@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluid-experimental/odsp-end-to-end-tests";
-export const pkgVersion = "2.116.1";
+export const pkgVersion = "2.116.2";
