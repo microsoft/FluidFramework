@@ -4,9 +4,10 @@
  */
 
 import { assert, fail } from "@fluidframework/core-utils/internal";
+import { featureVersion } from "@fluidframework/driver-definitions/internal";
 import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { compare, gt, gte, lte, valid, parse } from "semver-ts";
+import { compare, gt, gte, lte, parse } from "semver-ts";
 
 import { pkgVersion } from "./packageVersion.js";
 
@@ -55,7 +56,10 @@ export const lowestMinVersionForCollab =
  *
  * @internal
  */
-export type MinimumMinorSemanticVersion = `${bigint}.${bigint}.0` | `${bigint}.0.0-defaults`;
+export type MinimumMinorSemanticVersion =
+	| `${bigint}.${bigint}`
+	| `${bigint}.${bigint}.0`
+	| `${bigint}.0.0-defaults`;
 
 /**
  * String in a valid semver format of a specific version at least specifying minor.
@@ -65,6 +69,7 @@ export type MinimumMinorSemanticVersion = `${bigint}.${bigint}.0` | `${bigint}.0
  * @internal
  */
 export type SemanticVersion =
+	| `${bigint}.${bigint}`
 	| `${bigint}.${bigint}.${bigint}`
 	| `${bigint}.${bigint}.${bigint}-${string}`;
 
@@ -217,15 +222,25 @@ export function checkValidMinVersionForCollabVerbose(minVersionForCollab: Semant
 	isValidSemver: boolean;
 	isGteLowestMinVersion: boolean;
 	isLtePkgVersion: boolean;
+	isValidOldestSupportedClientVersion: boolean;
 } {
-	const isValidSemver = valid(minVersionForCollab) !== null;
+	const semver = parse(minVersionForCollab);
+	const isValidSemver = semver !== null;
+	// We have to check if the value is a valid semver before calling gte/lte, otherwise they will throw when parsing the version.
+	const isGteLowestMinVersion =
+		isValidSemver && gte(minVersionForCollab, lowestMinVersionForCollab);
+	const isLtePkgVersion = isValidSemver && lte(minVersionForCollab, cleanedPackageVersion);
+	// Starting with 3.x versions may only list major and minor.
+	const isValidOldestSupportedClientVersion =
+		isGteLowestMinVersion &&
+		isLtePkgVersion &&
+		(semver?.major < 3 || minVersionForCollab.split(".").length === 2);
 	return {
 		isValidSemver,
 
-		// We have to check if the value is a valid semver before calling gte/lte, otherwise they will throw when parsing the version.
-		isGteLowestMinVersion:
-			isValidSemver && gte(minVersionForCollab, lowestMinVersionForCollab),
-		isLtePkgVersion: isValidSemver && lte(minVersionForCollab, cleanedPackageVersion),
+		isGteLowestMinVersion,
+		isLtePkgVersion,
+		isValidOldestSupportedClientVersion,
 	};
 }
 
@@ -238,15 +253,12 @@ export function checkValidMinVersionForCollabVerbose(minVersionForCollab: Semant
 export function isValidMinVersionForCollab(
 	minVersionForCollab: SemanticVersion,
 ): minVersionForCollab is OldestSupportedClientVersion {
-	const { isValidSemver, isGteLowestMinVersion, isLtePkgVersion } =
-		checkValidMinVersionForCollabVerbose(minVersionForCollab);
-	return isValidSemver && isGteLowestMinVersion && isLtePkgVersion;
+	return checkValidMinVersionForCollabVerbose(minVersionForCollab)
+		.isValidOldestSupportedClientVersion;
 }
 
-const parsedPackageVersion = parse(pkgVersion) ?? fail(0xcb9 /* Invalid package version */);
-
 /**
- * `pkgVersion` version without pre-release.
+ * `pkgVersion` version with just major and minor.
  * @remarks
  * This is the version that the code in the current version of the codebase will have when officially released.
  * Generally, compatibility of prerelease builds is not guaranteed (especially for how they interact with future releases).
@@ -266,13 +278,15 @@ const parsedPackageVersion = parse(pkgVersion) ?? fail(0xcb9 /* Invalid package 
  * To accommodate some uses of the second case, it might be useful to package export this in the future.
  *
  * @privateRemarks
- * Since this is used by validateMinimumVersionForCollab, the type case to OldestSupportedClientVersion can not use it directly.
- * Thus this is just `as` cast here, and a test confirms it is valid according to validateMinimumVersionForCollab.
+ * The satisfies here is used to ensure it is valid for validateMinimumVersionForCollab.
+ * A "pkgFeatureVersion" or "pkgMajorMinorVersion" could be generated into
+ * packageVersion.ts to avoid the need for load computation.
  *
  * @internal
  */
-export const cleanedPackageVersion =
-	`${parsedPackageVersion.major}.${parsedPackageVersion.minor}.${parsedPackageVersion.patch}` as OldestSupportedClientVersion;
+export const cleanedPackageVersion = featureVersion(
+	pkgVersion,
+) satisfies OldestSupportedClientVersion;
 
 /**
  * Narrows the type of the provided {@link SemanticVersion} to a {@link @fluidframework/runtime-definitions#OldestSupportedClientVersion}, throwing a UsageError if it is not valid.
@@ -289,14 +303,19 @@ export function validateMinimumVersionForCollab(
 	semanticVersion: string,
 ): asserts semanticVersion is OldestSupportedClientVersion {
 	const minVersionForCollab = semanticVersion as OldestSupportedClientVersion;
-	const { isValidSemver, isGteLowestMinVersion, isLtePkgVersion } =
-		checkValidMinVersionForCollabVerbose(minVersionForCollab);
-	if (!(isValidSemver && isGteLowestMinVersion && isLtePkgVersion)) {
+	const {
+		isValidSemver,
+		isGteLowestMinVersion,
+		isLtePkgVersion,
+		isValidOldestSupportedClientVersion,
+	} = checkValidMinVersionForCollabVerbose(minVersionForCollab);
+	if (!isValidOldestSupportedClientVersion) {
 		throw new UsageError(
 			`Version ${minVersionForCollab} is not a valid OldestSupportedClientVersion. ` +
 				`It must be in a valid semver format, at least ${lowestMinVersionForCollab}, ` +
 				`and less than or equal to the current package version ${cleanedPackageVersion}. ` +
-				`Details: { isValidSemver: ${isValidSemver}, isGteLowestMinVersion: ${isGteLowestMinVersion}, isLtePkgVersion: ${isLtePkgVersion} }`,
+				`For 3.x+ versions, only major and minor may be specified. ` +
+				`Details: { isValidSemver: ${isValidSemver}, isGteLowestMinVersion: ${isGteLowestMinVersion}, isLtePkgVersion: ${isLtePkgVersion}, isValidOldestSupportedClientVersion: ${isValidOldestSupportedClientVersion} }`,
 		);
 	}
 }

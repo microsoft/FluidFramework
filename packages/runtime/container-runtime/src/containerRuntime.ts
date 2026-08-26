@@ -1039,7 +1039,7 @@ export class ContainerRuntime
 		// with FF runtime 2.10.0 or later.
 		if (!isValidMinVersionForCollab(minVersionForCollab)) {
 			throw new UsageError(
-				`Invalid minVersionForCollab: ${minVersionForCollab}. It must be an existing FF version (i.e. 2.22.1).`,
+				`Invalid minVersionForCollab: ${minVersionForCollab}. It must be an existing FF version (i.e. 3.0).`,
 			);
 		}
 		// We also validate that there is not a mismatch between `minVersionForCollab` and runtime options that

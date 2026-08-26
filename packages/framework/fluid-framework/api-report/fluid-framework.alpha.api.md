@@ -469,7 +469,7 @@ export type FactoryContentObject = {
 };
 
 // @alpha
-export function featureVersion<major extends `${bigint}`, minor extends `${bigint}`>(version: `${major}.${minor}.${bigint}-${string}` | `${major}.${minor}.${bigint}`): `${major}.${minor}.0`;
+export function featureVersion<const major extends `${bigint}`, const minor extends `${bigint}`>(version: `${major}.${minor}.${bigint}-${string}` | `${major}.${minor}.${bigint}`): `${major}.${minor}`;
 
 // @public @system
 type FieldHasDefault<T extends ImplicitFieldSchema> = [T] extends [
@@ -1601,7 +1601,7 @@ export interface ObservationResults<TResult> {
 export type Off = () => void;
 
 // @alpha @input
-export type OldestSupportedServiceClientVersion = `${2 | 3}.${bigint}.0`;
+export type OldestSupportedServiceClientVersion = `3.${bigint}` | `2.${bigint}.0`;
 
 // @beta
 export function onAssertionFailure(handler: (error: Error) => void): () => void;

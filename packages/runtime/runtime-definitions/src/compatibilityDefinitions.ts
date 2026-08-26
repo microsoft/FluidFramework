@@ -40,15 +40,14 @@
  *
  * In the future, we may want to generalize this to mean
  * "a value that compares less than or equal to the oldest Fluid Framework client version that must be able to open and process the container".
- * As a non-breaking change, we could then allow values such as "3.1" without requiring the trailing ".0".
- * However, omitting ".0" might make the value look less like a version and obscure semver ordering; for example, how "3.21" is greater than "3.3".
- * We may therefore want to retain the ".0" for clarity.
+ * As a non-breaking change, we could allow values such as "3.1.0" (explicit ".0" suffix) relaxing the limitation to just major.minor.
+ * Allowing ".0" might make the value look more like a version and highlight semver ordering; for example, without ".0", note how "3.21" is greater than "3.3".
  *
  * @input
  * @public
  */
 export type OldestSupportedClientVersion =
-	| `3.${bigint}.0`
+	| `3.${bigint}`
 	| `${1 | 2}.${bigint}.${bigint}`
 	| `${1 | 2}.${bigint}.${bigint}-${string}`;
 

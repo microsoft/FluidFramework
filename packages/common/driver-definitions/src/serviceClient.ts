@@ -141,7 +141,7 @@ export function createBasicRegistryKey<T>(type: string): RegistryKey<T, T> {
  * @input
  * @alpha
  */
-export type OldestSupportedServiceClientVersion = `${2 | 3}.${bigint}.0`;
+export type OldestSupportedServiceClientVersion = `3.${bigint}` | `2.${bigint}.0`;
 
 /**
  * Strips patch and prerelease from a SemVer string, returning only the major and minor version.
@@ -151,12 +151,40 @@ export type OldestSupportedServiceClientVersion = `${2 | 3}.${bigint}.0`;
  * @typeParam major - The major version number of `version` as a string, preserved in the result type.
  * @typeParam minor - The minor version number of `version` as a string, preserved in the result type.
  * @privateRemarks
- * This fills a similar role as cleanedPackageVersion in `@fluidframework/runtime-utils`.
+ * Use of this function with `pkgVersion` is same as `cleanedPackageVersion`
+ * from `@fluidframework/runtime-utils` since "workspace:~" dependency on
+ * `@fluidframework/runtime-utils` means exact pkgVersion major+minor match.
  * It can be used to workaround our generated pkgVersion values being invalid
  * `OldestSupportedServiceClientVersion` on CI due to prerelease or patched release branches.
  * @alpha
  */
-export function featureVersion<major extends `${bigint}`, minor extends `${bigint}`>(
+export function featureVersion<
+	const major extends `${bigint}`,
+	const minor extends `${bigint}`,
+>(
+	version: `${major}.${minor}.${bigint}-${string}` | `${major}.${minor}.${bigint}`,
+): `${major}.${minor}` {
+	// The SemVer package could be used to parse this version, but it wouldn't gain us anything, and would just make it harder to determine that the down casting below is valid.
+	// Since we have a strongly typed string input, we know exactly which formats are allowed, so we don't need its more general parsing and validation either.
+	// If we wanted to preserve the patch or prerelease version, that would require more complex parsing and would justify using the SemVer package, but we don't need that here.
+	const parsed = version.split(".");
+	return `${parsed[0] as major}.${parsed[1] as minor}`;
+}
+
+/**
+ * ** This just kept to demonstrate updated comments for version with .0. And a potential alternate name. **
+ * Strips patch and prerelease from a SemVer string, returning only the major and minor version with a .0 patch.
+ * @remarks
+ * This formats a version, specifying the major version, minor version, and a patch of 0.
+ * @typeParam major - The major version number of `version` as a string, preserved in the result type.
+ * @typeParam minor - The minor version number of `version` as a string, preserved in the result type.
+ * @privateRemarks
+ * This fills a similar role as cleanedPackageVersion in `@fluidframework/runtime-utils`.
+ * It can be used to workaround our generated pkgVersion values being invalid
+ * `OldestSupportedServiceClientVersion` on CI due to prerelease or patched release branches.
+ * @internal
+ */
+export function baseMinorVersion<major extends `${bigint}`, minor extends `${bigint}`>(
 	version: `${major}.${minor}.${bigint}-${string}` | `${major}.${minor}.${bigint}`,
 ): `${major}.${minor}.0` {
 	// The SemVer package could be used to parse this version, but it wouldn't gain us anything, and would just make it harder to determine that the down casting below is valid.

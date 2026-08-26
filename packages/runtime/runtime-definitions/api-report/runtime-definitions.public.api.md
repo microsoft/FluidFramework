@@ -8,7 +8,7 @@
 export type MinimumVersionForCollab = OldestSupportedClientVersion;
 
 // @public @input
-export type OldestSupportedClientVersion = `3.${bigint}.0` | `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
+export type OldestSupportedClientVersion = `3.${bigint}` | `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
 
 // (No @packageDocumentation comment for this package)
 
