@@ -7,12 +7,12 @@ import { ApiLink } from "@site/src/components/shortLinks";
 
 ## Overview
 
-We are introducing a new way to power your ephemeral experiences with Fluid: the new Presence APIs (in beta as of version 2.42.0) that provide session-focused utilities for lightweight data sharing and messaging.
+The public Presence APIs provide session-focused utilities for lightweight data sharing and messaging in ephemeral experiences.
 Collaborative features typically rely on each user maintaining their own temporary state, which is subsequently shared with others. For example, in applications featuring multiplayer cursors, the cursor position of each user signifies their state. This state can be further utilized for various purposes such as indicating typing activity or displaying a user's current selection. This concept is referred to as _presence_.
 
 By leveraging this shared state, applications can provide a seamless and interactive collaborative experience, ensuring that users are always aware of each other's actions and selections in real-time.
 
-The key scenarios for which the new Presence APIs are suitable include:
+The key scenarios for which the Presence APIs are suitable include:
 
 -   User presence
 -   Collaborative cursors
@@ -83,7 +83,7 @@ function updateMyPosition(positionTracker: Latest<PointXY>, newPosition: PointXY
 Updates from remote clients can be listened for using `events`.
 
 ```typescript
-function startTrackingOthersPositions(positionTracker: Latest<PointXY>): (() => void) {
+function startTrackingOthersPositions(positionTracker: Latest<PointXY>): () => void {
 	const stop = positionTracker.events.on("remoteUpdated", (update) => {
 		const pos = update.value();
 		if (pos === undefined) {
@@ -115,7 +115,11 @@ A change to the `local` property automatically initiates a broadcast of updates 
 `local` is a <ApiLink packageName="presence" apiName="StateMap" /> that mimics `Map` though it only supports `string | number` as property keys.
 
 ```typescript
-function updateCounter(counterTracker: LatestMap<number, string>, counterName: string, value: number): void {
+function updateCounter(
+	counterTracker: LatestMap<number, string>,
+	counterName: string,
+	value: number,
+): void {
 	counterTracker.local.set(counterName, value);
 }
 ```
@@ -124,14 +128,19 @@ Updates from remote clients can be listened for using `events`.
 `"remoteItemUpdated"` and `"remoteItemRemoved"` provide fine-grain updates and `"remoteUpdated"` (use not shown) notes any change but only provides complete new map.
 
 ```typescript
-function startTrackingOthersCounters(counterTracker: LatestMapRaw<number, string>): (() => void) {
+function startTrackingOthersCounters(counterTracker: LatestMapRaw<number, string>): () => void {
 	const stopUpdated = counterTracker.events.on("remoteItemUpdated", (update) => {
-		console.log(`Attendee ${update.attendee.attendeeId} updated counter ${update.key} to ${update.value}.`);
+		console.log(
+			`Attendee ${update.attendee.attendeeId} updated counter ${update.key} to ${update.value}.`,
+		);
 	});
 	const stopRemoved = counterTracker.events.on("remoteItemRemoved", (update) => {
 		console.log(`Attendee ${update.attendee.attendeeId} removed counter ${update.key}.`);
 	});
-	return () => { stopUpdated(); stopRemoved(); };
+	return () => {
+		stopUpdated();
+		stopRemoved();
+	};
 }
 ```
 
@@ -178,7 +187,7 @@ To access Presence APIs, use `getPresence()` with any `IFluidContainer`.
 import { getPresence } from "fluid-framework";
 
 function usePresence(container: IFluidContainer): void {
-   const presence = getPresence(container);
+	const presence = getPresence(container);
 }
 ```
 
@@ -188,16 +197,25 @@ function usePresence(container: IFluidContainer): void {
 import type { Latest, LatestMap, Presence, StatesWorkspaceSchema } from "@fluidframework/presence";
 import { StateFactory } from "@fluidframework/presence";
 
-interface PointXY { x: number; y: number }
+interface PointXY {
+	x: number;
+	y: number;
+}
 
 // Basic custom type guard
 function isPointXY(value: unknown): value is PointXY {
-	return typeof value === "object" && value !== null && "x" in value && "y" in value &&
-		typeof value.x === "number" && typeof value.y === "number";
+	return (
+		typeof value === "object" &&
+		value !== null &&
+		"x" in value &&
+		"y" in value &&
+		typeof value.x === "number" &&
+		typeof value.y === "number"
+	);
 }
 
 function numberOrUndefined(value: unknown): number | undefined {
-	return typeof value === 'number' ? value : undefined;
+	return typeof value === "number" ? value : undefined;
 }
 
 // A Presence workspace schema with two State objects named "position" and "counters".
@@ -205,18 +223,17 @@ const PresenceSchemaV1 = {
 	// This `Latest<PointXY>` state defaults all values to (0, 0).
 	position: StateFactory.latest<PointXY>({
 		local: { x: 0, y: 0 },
-		validator: (v) => isPointXY(v) ? v : undefined
+		validator: (v) => (isPointXY(v) ? v : undefined),
 	}),
 	// This `LatestMap<number, string>` state has `string` keys storing `number` values.
 	counters: StateFactory.latestMap<number, string>({ validator: numberOrUndefined }),
 } as const satisfies StatesWorkspaceSchema;
 
 // Creates our unique workspace with the State objects declared in above schema.
-function getOurWorkspace(presence: Presence):
-	{
-		position: Latest<PointXY>;
-		counters: LatestMap<number, string>;
-	} {
+function getOurWorkspace(presence: Presence): {
+	position: Latest<PointXY>;
+	counters: LatestMap<number, string>;
+} {
 	return presence.states.getWorkspace("name:PointsAndCountersV1", PresenceSchemaV1).states;
 }
 ```
@@ -255,9 +272,10 @@ See [Schema Definition and Workspace](#schema-definition-and-workspace) for exam
 For more complex types or peace of mind, consider a schema builder / validation package such as [TypeBox](https://github.com/sinclairzx81/typebox) or [Zod](https://zod.dev/).
 
 Example using TypeBox:
+
 ```typescript
 import { type Static, Type } from "@sinclair/typebox";
-import { TypeCompiler } from '@sinclair/typebox/compiler'
+import { TypeCompiler } from "@sinclair/typebox/compiler";
 
 const PointXY = Type.Object({
 	x: Type.Number(),
@@ -274,7 +292,7 @@ function validatorPointXY(value: unknown): PointXY | undefined {
 const PresenceSchemaV1 = {
 	position: StateFactory.latest({
 		local: { x: 0, y: 0 },
-		validator: validatorPointXY
+		validator: validatorPointXY,
 	}),
 } as const satisfies StatesWorkspaceSchema;
 ```
@@ -298,19 +316,23 @@ non-compatible way.
 For example:
 
 ```typescript
-presence.states.getWorkspace("app:v1states", { myState: StateFactory.latest({ local: { x: 0 }}) });
+presence.states.getWorkspace("app:v1states", { myState: StateFactory.latest({ local: { x: 0 } }) });
 ```
 
 is incompatible with
 
 ```typescript
-presence.states.getWorkspace("app:v1states", { myState: StateFactory.latest({ local: { x: "text" }}) });
+presence.states.getWorkspace("app:v1states", {
+	myState: StateFactory.latest({ local: { x: "text" } }),
+});
 ```
 
 because "app:v1states"+"myState" have different value type expectations: `{x: number}` versus `{x: string}`.
 
 ```typescript
-presence.states.getWorkspace("app:v1states", { myState2: StateFactory.latest({ local: { x: true }}) });
+presence.states.getWorkspace("app:v1states", {
+	myState2: StateFactory.latest({ local: { x: true } }),
+});
 ```
 
 would be compatible with both of the prior schemas because "myState2" is a different name. Though in this situation none of the different clients would be able to observe each other.
@@ -347,9 +369,12 @@ const stateWorkspace = presence.states.getWorkspace(
 	"app:v1states",
 	{
 		// This Latest state has an allowable latency of 100ms.
-		position: StateFactory.latest({ local: { x: 0, y: 0 }, settings: { allowableUpdateLatencyMs: 100 }}),
+		position: StateFactory.latest({
+			local: { x: 0, y: 0 },
+			settings: { allowableUpdateLatencyMs: 100 },
+		}),
 		// This Latest state uses the workspace default.
-		count: StateFactory.latest({ local: { num: 0 }}),
+		count: StateFactory.latest({ local: { num: 0 } }),
 	},
 	// Specify the default for all state in this workspace to 200ms,
 	// overriding the default value of 60ms.
