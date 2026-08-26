@@ -19,6 +19,7 @@ import {
 } from "@fluidframework/driver-utils/internal";
 import {
 	type HostStoragePolicy,
+	type IOdspResolvedUrl,
 	type IOdspUrlParts,
 	type IRelaySessionAwareDriverFactory,
 	type ISharingLinkKind,
@@ -29,11 +30,20 @@ import {
 	type TokenFetchOptions,
 	type TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	PerformanceEvent,
+	UsageError,
+	createChildLogger,
+	type TelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { useCreateNewModule } from "./createFile/index.js";
-import { type ICacheAndTracker, createOdspCacheAndTracker } from "./epochTracker.js";
+import {
+	type EpochTracker,
+	type ICacheAndTracker,
+	createOdspCacheAndTracker,
+} from "./epochTracker.js";
 import {
 	type INonPersistentCache,
 	type IPrefetchSnapshotContents,
@@ -41,6 +51,7 @@ import {
 	NonPersistentCache,
 } from "./odspCache.js";
 import { OdspDocumentService } from "./odspDocumentService.js";
+import { OdspDriverUrlResolver } from "./odspDriverUrlResolver.js";
 import {
 	odspDriverCompatDetailsForLoader,
 	odspDriverCompatRequirementsForLoader,
@@ -55,6 +66,7 @@ import {
 	toInstrumentedOdspStorageTokenFetcher,
 	toInstrumentedOdspTokenFetcher,
 } from "./odspUtils.js";
+import type { IOdspVersionManager } from "./odspVersionManager/index.js";
 
 /**
  * An ODSP document service factory that supports point-in-time (sequence-number-based) loading.
@@ -87,52 +99,11 @@ export interface IPointInTimeDocumentServiceFactory extends IDocumentServiceFact
 }
 
 /**
- * Inputs supplied by the ODSP document service factory to an injected point-in-time implementation.
- *
- * @legacy @beta
- */
-export interface IOdspPointInTimeDocumentServiceImplementationProps {
-	/** The resolved ODSP URL for the document to materialize. */
-	readonly resolvedUrl: IResolvedUrl;
-	/** The sequence number at which to materialize the document. */
-	readonly targetSequenceNumber: number;
-	/** Optional telemetry logger for the point-in-time load. */
-	readonly logger?: ITelemetryBaseLogger;
-	/** Whether to apply summarizer policies and telemetry. Defaults to `false`. */
-	readonly clientIsSummarizer?: boolean;
-	/** The persisted ODSP cache supplied to the document service factory. */
-	readonly persistedCache: IPersistedCache;
-	/** Fetches storage access tokens for ODSP requests. */
-	readonly getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>;
-	/**
-	 * Creates an ODSP document service for a resolved URL.
-	 *
-	 * @param resolvedUrl - The resolved URL for the document or file version to load.
-	 * @param logger - The telemetry logger for the document service.
-	 * @param cacheAndTracker - The cache and epoch tracker shared by the point-in-time load.
-	 * @param clientIsSummarizer - Whether to apply summarizer policies and telemetry.
-	 * @returns The document service for the resolved URL.
-	 */
-	readonly createDocumentService: (
-		resolvedUrl: IResolvedUrl,
-		logger: ITelemetryBaseLogger,
-		cacheAndTracker: ICacheAndTracker,
-		clientIsSummarizer?: boolean,
-	) => Promise<IDocumentService>;
-}
-
-/**
- * Consumer-provided implementation of ODSP point-in-time loading.
- *
- * @legacy @beta
- */
-export type OdspPointInTimeDocumentServiceImplementation = (
-	props: IOdspPointInTimeDocumentServiceImplementationProps,
-) => Promise<IDocumentService>;
-
-/**
  * Factory for creating the sharepoint document service. Use this if you want to
  * use the sharepoint implementation.
+ *
+ * This constructor should be used by environments that support dynamic imports and that wish
+ * to leverage code splitting as a means to keep bundles as small as possible.
  * @legacy
  * @beta
  */
@@ -368,7 +339,129 @@ export class OdspDocumentServiceFactoryCore
 	 * @returns A read-only {@link @fluidframework/driver-definitions#IDocumentService} materialized
 	 * at the requested sequence number.
 	 */
-	public readonly createPointInTimeDocumentService?: IPointInTimeDocumentServiceFactory["createPointInTimeDocumentService"];
+	public readonly createPointInTimeDocumentService?: IPointInTimeDocumentServiceFactory["createPointInTimeDocumentService"] =
+		async (
+			resolvedUrl: IResolvedUrl,
+			targetSequenceNumber: number,
+			logger?: ITelemetryBaseLogger,
+			clientIsSummarizer?: boolean,
+		): Promise<IDocumentService> => {
+			const odspLogger = createOdspLogger(logger);
+			const extLogger = createChildLogger({ logger: odspLogger });
+			const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
+
+			// Use one epoch tracker for version selection, the base snapshot, and live ops so a
+			// point-in-time load cannot combine data from different file lineages.
+			const cacheAndTracker = createOdspCacheAndTracker(
+				this.persistedCache,
+				new NonPersistentCache(),
+				{
+					resolvedUrl: odspResolvedUrl,
+					docId: odspResolvedUrl.hashedDocumentId,
+					fileVersion: odspResolvedUrl.fileVersion,
+				},
+				extLogger,
+				clientIsSummarizer,
+			);
+
+			const versionManager = await this.createVersionManager(
+				odspResolvedUrl,
+				extLogger,
+				cacheAndTracker.epochTracker,
+			);
+			const baseResult = await versionManager.findBaseForSeq(targetSequenceNumber);
+			if (baseResult.kind === "noBaseVersion") {
+				const oldestResolvedSequenceDetail =
+					baseResult.oldestResolvedSeq === undefined
+						? ""
+						: ` The oldest resolved file version is at sequence number ${baseResult.oldestResolvedSeq}.`;
+				throw new UsageError(
+					`No ODSP file version is available at or before sequence number ${targetSequenceNumber}.${oldestResolvedSequenceDetail}`,
+				);
+			}
+
+			const recoverableResolvedUrl = await this.resolveFileVersion(
+				resolvedUrl,
+				baseResult.base.versionId,
+			);
+			// Keep historical snapshots isolated from the normal factory cache while validating both
+			// services against the shared tracker.
+			const recoverableDocumentService = await this.createDocumentServiceCore(
+				recoverableResolvedUrl,
+				odspLogger,
+				cacheAndTracker,
+				clientIsSummarizer,
+			);
+			const liveDocumentService = await this.createDocumentServiceCore(
+				resolvedUrl,
+				odspLogger,
+				cacheAndTracker,
+				clientIsSummarizer,
+			);
+			// Delay-load the point-in-time service into its own chunk, fetched only when a
+			// consumer actually performs a point-in-time load.
+			const { OdspPointInTimeDocumentService } = await import(
+				/* webpackChunkName: "odspPointInTime" */
+				// eslint-disable-next-line import-x/no-internal-modules -- deep import needed to split point-in-time code into its own lazy chunk
+				"./pointInTimeDriver/odspPointInTimeDocumentService.js"
+			);
+			return new OdspPointInTimeDocumentService(
+				recoverableResolvedUrl,
+				recoverableDocumentService,
+				liveDocumentService,
+				targetSequenceNumber,
+			);
+		};
+
+	/**
+	 * Creates the version manager used to select the closest file version at or before the target.
+	 */
+	private async createVersionManager(
+		odspResolvedUrl: IOdspResolvedUrl,
+		logger: TelemetryLoggerExt,
+		epochTracker: EpochTracker,
+	): Promise<IOdspVersionManager> {
+		const urlParts: IOdspUrlParts = {
+			siteUrl: odspResolvedUrl.siteUrl,
+			driveId: odspResolvedUrl.driveId,
+			itemId: odspResolvedUrl.itemId,
+		};
+		const getAuthHeader = toInstrumentedOdspStorageTokenFetcher(
+			logger,
+			urlParts,
+			this.getStorageToken,
+		);
+		const { createOdspVersionManager } = await import(
+			/* webpackChunkName: "odspPointInTime" */ "./odspVersionManager/index.js"
+		);
+		return createOdspVersionManager({
+			urlParts,
+			getAuthHeader,
+			epochTracker,
+			logger,
+		});
+	}
+
+	private async resolveFileVersion(
+		resolvedUrl: IResolvedUrl,
+		fileVersion: string,
+	): Promise<IResolvedUrl> {
+		const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
+		const query = new URLSearchParams({
+			driveId: odspResolvedUrl.driveId,
+			itemId: odspResolvedUrl.itemId,
+			fileVersion,
+		});
+		if (odspResolvedUrl.dataStorePath !== undefined) {
+			query.set("path", odspResolvedUrl.dataStorePath);
+		}
+		if (odspResolvedUrl.codeHint?.containerPackageName !== undefined) {
+			query.set("containerPackageName", odspResolvedUrl.codeHint.containerPackageName);
+		}
+		return new OdspDriverUrlResolver().resolve({
+			url: `${odspResolvedUrl.siteUrl}?${query.toString()}`,
+		});
+	}
 
 	protected async createDocumentServiceCore(
 		resolvedUrl: IResolvedUrl,
