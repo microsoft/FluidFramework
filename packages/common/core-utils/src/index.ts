@@ -8,7 +8,7 @@ export * from "./main.js";
 
 import { assert as assertInternal } from "./assert.js";
 
-// TODO: when this export is removed, this special barrel file should be removed.
+// TODO:28084: when this export is removed, this special barrel file should be removed.
 /**
  * @deprecated 3.0.0. This API will be removed in 3.10.0.
  * Use an assertion utility appropriate for your application instead.

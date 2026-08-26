@@ -7,5 +7,5 @@
 export * from "./main.js";
 
 // Export internal `assert`.
-// TODO: when the deprecated external variant is removed, this special barrel file should be removed.
+// TODO:28084: when the deprecated external variant is removed, this special barrel file should be removed.
 export { assert } from "./assert.js";
