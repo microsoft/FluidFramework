@@ -8,10 +8,12 @@ import type { IFluidLoadable, IDisposable, Listenable } from "@fluidframework/co
 import type {
 	ChangeMetadata,
 	CommitMetadata,
+	CustomMetadataTree,
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
 	Revertible,
 	RevertibleAlphaFactory,
 	RevertibleFactory,
+	RevertToOptionsAlpha,
 } from "../../core/index.js";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
 import type { TreeStatus } from "../../feature-libraries/index.js";
@@ -19,7 +21,10 @@ import type {
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports -- This is referenced by doc comments.
 	TreeAlpha,
 } from "../../shared-tree/index.js";
-import type { JsonCompatibleReadOnly } from "../../util/index.js";
+import type {
+	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnlyObject,
+} from "../../util/index.js";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
 import type { SchemaUpgrade, Unhydrated } from "../core/index.js";
 import type {
@@ -320,6 +325,29 @@ export interface TreeBranchCommitMetadata {
 	readonly revision: CommitRevision;
 
 	/**
+	 * Arbitrary, application-defined metadata that was {@link RunTransactionParamsAlpha.customMetadata | attached}
+	 * to this commit when it was created, flattened into a single object.
+	 *
+	 * @remarks
+	 * This is `undefined` for commits that were not annotated.
+	 *
+	 * A commit may be produced by nested transactions, each of which may supply metadata. This property combines
+	 * them: where two of them used the same property, the outermost transaction wins, and between siblings the
+	 * later one wins. Use {@link TreeBranchCommitMetadata.customTree} to recover which transaction supplied what.
+	 */
+	readonly custom: JsonCompatibleReadOnlyObject | undefined;
+
+	/**
+	 * The {@link CustomMetadataTree | tree} of metadata attached to this commit, reflecting the nesting of
+	 * the transactions that produced it.
+	 *
+	 * @remarks
+	 * The structural counterpart to {@link TreeBranchCommitMetadata.custom}, and `undefined` whenever it is.
+	 * Prefer `custom` unless you need to know which transaction supplied a particular property.
+	 */
+	readonly customTree: CustomMetadataTree | undefined;
+
+	/**
 	 * The metadata for the commit that this commit was based on, or `undefined` if this commit has no parent
 	 * (i.e. it is the oldest commit in the branch's history).
 	 *
@@ -414,6 +442,7 @@ export interface UntypedTreeViewAlpha extends UntypedTreeView, TreeContextAlpha 
 	 *
 	 * @param revision - The {@link TreeBranchCommitMetadata.revision | revision} to restore the state of.
 	 * Can be obtained by navigating the commits on the {@link UntypedTreeViewAlpha.branchHistory | branch history}.
+	 * @param options - Optional {@link RevertToOptionsAlpha | options} for the revert.
 	 *
 	 * @remarks
 	 * The generated change is subject to the same merge semantics as the {@link Revertible.(revert:1) | reverts of individual commits}:
@@ -421,7 +450,7 @@ export interface UntypedTreeViewAlpha extends UntypedTreeView, TreeContextAlpha 
 	 *
 	 * Unlike {@link UntypedTreeViewAlpha.rewindTo | rewindTo}, this does not switch to a new branch.
 	 */
-	revertTo(revision: CommitRevision): void;
+	revertTo(revision: CommitRevision, options?: RevertToOptionsAlpha): void;
 
 	/**
 	 * {@link TreeContextAlpha.(runTransaction:1) | Run a transaction} on this view of the SharedTree.
