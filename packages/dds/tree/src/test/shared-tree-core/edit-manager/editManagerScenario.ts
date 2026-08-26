@@ -8,7 +8,11 @@ import { strict as assert } from "node:assert";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type { SessionId } from "@fluidframework/id-compressor";
 
-import type { ChangeFamilyEditor, ChangeRebaser } from "../../../core/index.js";
+import {
+	type ChangeFamilyEditor,
+	type ChangeRebaser,
+	CommitKind,
+} from "../../../core/index.js";
 import type { Commit, EditManager, SeqNumber } from "../../../shared-tree-core/index.js";
 import { brand, type JsonCompatibleReadOnlyObject } from "../../../util/index.js";
 import { TestChange, asDelta } from "../../testChange.js";
@@ -325,7 +329,9 @@ export function runUnitTestScenario(
 						localCommits.push(commit);
 						knownToLocal.push({ intention, seq });
 						// Local changes should always lead to a delta that is equivalent to the local change.
-						manager.getLocalBranch("main").apply({ change: changeset, revision });
+						manager
+							.getLocalBranch("main")
+							.apply({ change: changeset, revision }, CommitKind.Default, undefined);
 						assert.deepEqual(
 							asDelta(manager.getLocalBranch("main").getHead().change.intentions),
 							asDelta([intention]),

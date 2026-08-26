@@ -51,6 +51,7 @@ import {
 	type RevertibleAlpha,
 	type RevertOptionsAlpha,
 	type RevertToOptionsAlpha,
+	type CustomMetadataTree,
 	type GraphCommit,
 	isAncestor,
 	moveToDetachedField,
@@ -142,11 +143,10 @@ import { extractTransactionChangeProcessor } from "./transactionPostProcessor.js
 import { SerializedChange } from "./serializedChange.js";
 
 /**
- * Returns a snapshot of the given metadata which is guaranteed to match what will be persisted.
+ * Returns a defensive copy of the given metadata, validating that it can be persisted.
  * @remarks
- * Round-tripping through JSON gives the commit a private copy, so that later mutation of the caller's object
- * cannot change an already-created commit, and so that the value read back locally is exactly the value that
- * peers and future summaries will see.
+ * The round-trip through JSON ensures that the value read back locally is exactly the value that peers and
+ * future summaries will see, and that later mutation of the caller's object cannot affect an existing commit.
  * @throws A `UsageError` if the value cannot be represented as a JSON object.
  */
 function snapshotCustomMetadata(
@@ -171,6 +171,15 @@ function snapshotCustomMetadata(
 		throw new UsageError(`"customMetadata" must be a JSON object.`);
 	}
 	return snapshot as JsonCompatibleReadOnlyObject;
+}
+
+/**
+ * Wraps metadata for an operation which produces a single commit.
+ */
+function toMetadataTree(
+	customMetadata: JsonCompatibleReadOnlyObject | undefined,
+): CustomMetadataTree | undefined {
+	return customMetadata === undefined ? undefined : { metadata: customMetadata, children: [] };
 }
 
 /**
@@ -1015,7 +1024,7 @@ export class TreeCheckout implements ITreeCheckout {
 			serializedChange,
 		);
 		// Apply the change to the branch, but _not_ the `activeBranch` - we do not support squashing serialized commits in a transaction.
-		this.#transaction.branch.apply(change);
+		this.#transaction.branch.apply(change, CommitKind.Default, undefined);
 	}
 
 	// #region UntypedTreeViewAlpha
@@ -1503,7 +1512,7 @@ export class TreeCheckout implements ITreeCheckout {
 		this.#transaction.branch.apply(
 			tagChange(inverse, revisionForInvert),
 			CommitKind.Default,
-			customMetadata === undefined ? undefined : { metadata: customMetadata, children: [] },
+			toMetadataTree(customMetadata),
 		);
 	}
 
@@ -1736,7 +1745,7 @@ export class TreeCheckout implements ITreeCheckout {
 				kind === CommitKind.Default || kind === CommitKind.Redo
 					? CommitKind.Undo
 					: CommitKind.Redo,
-				customMetadata === undefined ? undefined : { metadata: customMetadata, children: [] },
+				toMetadataTree(customMetadata),
 			);
 		} finally {
 			this.labelTreeNode = previousLabelTreeNode;

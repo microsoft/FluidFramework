@@ -9,7 +9,7 @@ import {
 	type BranchTrimmingEvents,
 	SharedTreeBranch,
 } from "../../shared-tree-core/index.js";
-import type { GraphCommit, RevisionTag } from "../../core/index.js";
+import { CommitKind, type GraphCommit, type RevisionTag } from "../../core/index.js";
 import {
 	DefaultChangeFamily,
 	type DefaultChangeProcessingContext,
@@ -52,7 +52,7 @@ function createBranch(
 }
 
 function edit(branch: DefaultBranch): void {
-	branch.apply(mintCommit());
+	branch.apply(mintCommit(), CommitKind.Default, undefined);
 }
 
 describe("BranchCommitCounter", () => {

@@ -20,7 +20,7 @@ import {
 
 import type { MessageDecodingContext, MessageEncodingContext } from "./messageCodecs.js";
 import { MessageFormatVersion } from "./messageFormat.js";
-import { decodeCustomMetadataTree, encodeCustomMetadataTree } from "./customMetadataFormat.js";
+import { decodeCustomMetadataTree, encodeCustomMetadataTree } from "./customMetadataCodec.js";
 import { Message } from "./messageFormatV1ToV4.js";
 import type { DecodedMessage } from "./messageTypes.js";
 

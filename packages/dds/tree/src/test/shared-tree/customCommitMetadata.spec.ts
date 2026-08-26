@@ -356,27 +356,6 @@ describe("custom commit metadata", () => {
 			assert.equal(view.branchHistory.length, before);
 			assert.deepEqual([...view.root], []);
 		});
-
-		it("is not copied onto the new commit produced by reverting an annotated commit", () => {
-			const view = createView();
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
-
-			view.runTransaction(
-				() => {
-					view.root.insertAtEnd("a");
-				},
-				{ customMetadata: { tag: "original" } },
-			);
-			undoStack.pop()?.revert();
-
-			// The revert mints a genuinely new commit which nothing annotated, and the reverted
-			// commit keeps its own metadata.
-			assert.deepEqual(allMetadata(view.branchHistory).slice(0, 2), [
-				undefined,
-				{ tag: "original" },
-			]);
-			unsubscribe();
-		});
 	});
 
 	describe("Nested transactions", () => {
@@ -609,6 +588,18 @@ describe("custom commit metadata", () => {
 			return { view, revertible, unsubscribe };
 		}
 
+		it("do not inherit the metadata of the commit they revert", () => {
+			const { view, revertible, unsubscribe } = createViewWithRevertibleEdit();
+
+			revertible.revert();
+
+			assert.deepEqual(allMetadata(view.branchHistory).slice(0, 2), [
+				undefined,
+				{ tag: "original" },
+			]);
+			unsubscribe();
+		});
+
 		it("can be given their own metadata", () => {
 			const { view, revertible, unsubscribe } = createViewWithRevertibleEdit();
 
@@ -650,14 +641,12 @@ describe("custom commit metadata", () => {
 
 			revertible.revert({ customMetadata: { tag: "the-revert" } });
 
-			// Metadata and labels are independent: annotating a revert must not disturb the labels
-			// it inherits from the commit it reverts.
 			assert.deepEqual(labels[labels.length - 1], ["original"]);
 			assert.deepEqual(headMetadata(view.branchHistory), { tag: "the-revert" });
 			unsubscribe();
 		});
 
-		it("throw a UsageError for metadata that is not a JSON object", () => {
+		it("validate their metadata like any other commit", () => {
 			const { revertible, unsubscribe } = createViewWithRevertibleEdit();
 
 			assert.throws(

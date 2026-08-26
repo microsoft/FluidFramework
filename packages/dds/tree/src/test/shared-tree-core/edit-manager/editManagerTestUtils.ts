@@ -9,6 +9,7 @@ import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
 	type ChangeRebaser,
+	CommitKind,
 	type DeltaRoot,
 	type GraphCommit,
 	type RevisionTag,
@@ -128,7 +129,9 @@ export function rebaseLocalEditsOverTrunkEdits<TChange>(
 	subscribeToLocalBranch(manager);
 	for (let iChange = 0; iChange < localEditCount; iChange++) {
 		const revision = mintRevisionTag();
-		manager.getLocalBranch("main").apply({ change: mintChange(undefined), revision });
+		manager
+			.getLocalBranch("main")
+			.apply({ change: mintChange(undefined), revision }, CommitKind.Default, undefined);
 	}
 	const trunkSessionId = "trunk" as SessionId;
 	const trunkEdits = makeArray(trunkEditCount, () => {

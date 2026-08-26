@@ -14,6 +14,7 @@ import type { SessionId } from "@fluidframework/id-compressor";
 
 import {
 	type ChangeFamily,
+	CommitKind,
 	type GraphCommit,
 	type RevisionTag,
 	rootFieldKey,
@@ -275,7 +276,11 @@ describe("EditManager - Bench", () => {
 									const revision = mintRevisionTag();
 									manager
 										.getLocalBranch("main")
-										.apply({ change: TestChange.emptyChange, revision });
+										.apply(
+											{ change: TestChange.emptyChange, revision },
+											CommitKind.Default,
+											undefined,
+										);
 									sequencedEdits.push({
 										change: TestChange.emptyChange,
 										revision,

@@ -8,7 +8,12 @@ import { strict as assert } from "node:assert";
 import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils";
 import type { SessionId } from "@fluidframework/id-compressor";
 
-import type { ChangeFamilyEditor, GraphCommit, RevisionTag } from "../../../core/index.js";
+import {
+	type ChangeFamilyEditor,
+	CommitKind,
+	type GraphCommit,
+	type RevisionTag,
+} from "../../../core/index.js";
 import type {
 	Commit,
 	EditManager,
@@ -833,18 +838,30 @@ export function testCorrectness(): void {
 						rebaser: new NoOpChangeRebaser(),
 					});
 					const sequencedLocalChange = mintRevisionTag();
-					manager.getLocalBranch("main").apply({
-						change: TestChange.emptyChange,
-						revision: sequencedLocalChange,
-					});
+					manager.getLocalBranch("main").apply(
+						{
+							change: TestChange.emptyChange,
+							revision: sequencedLocalChange,
+						},
+						CommitKind.Default,
+						undefined,
+					);
 					const revision1 = mintRevisionTag();
 					manager
 						.getLocalBranch("main")
-						.apply({ change: TestChange.emptyChange, revision: revision1 });
+						.apply(
+							{ change: TestChange.emptyChange, revision: revision1 },
+							CommitKind.Default,
+							undefined,
+						);
 					const revision2 = mintRevisionTag();
 					manager
 						.getLocalBranch("main")
-						.apply({ change: TestChange.emptyChange, revision: revision2 });
+						.apply(
+							{ change: TestChange.emptyChange, revision: revision2 },
+							CommitKind.Default,
+							undefined,
+						);
 					const commit1 = {
 						change: TestChange.emptyChange,
 						revision: mintRevisionTag(),
@@ -883,14 +900,22 @@ export function testCorrectness(): void {
 						rebaser: new NoOpChangeRebaser(),
 					});
 					const sequencedLocalChange = mintRevisionTag();
-					manager.getLocalBranch("main").apply({
-						change: TestChange.emptyChange,
-						revision: sequencedLocalChange,
-					});
+					manager.getLocalBranch("main").apply(
+						{
+							change: TestChange.emptyChange,
+							revision: sequencedLocalChange,
+						},
+						CommitKind.Default,
+						undefined,
+					);
 					const revision1 = mintRevisionTag();
 					manager
 						.getLocalBranch("main")
-						.apply({ change: TestChange.emptyChange, revision: revision1 });
+						.apply(
+							{ change: TestChange.emptyChange, revision: revision1 },
+							CommitKind.Default,
+							undefined,
+						);
 					manager.addSequencedChanges(
 						[
 							{
@@ -1208,10 +1233,14 @@ function applyBranchCommit(
 	intention: number | number[] = [],
 ): SequencedTestCommit {
 	const revision = mintRevisionTag();
-	branch.apply({
-		change: TestChange.mint(inputContext, intention),
-		revision,
-	});
+	branch.apply(
+		{
+			change: TestChange.mint(inputContext, intention),
+			revision,
+		},
+		CommitKind.Default,
+		undefined,
+	);
 	const commit = branch.getHead();
 	return {
 		change: commit.change,

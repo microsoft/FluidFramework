@@ -24,6 +24,8 @@ import {
 } from "../core/index.js";
 import { getLast, getOrCreate, type JsonCompatibleReadOnlyObject } from "../util/index.js";
 
+import type { SharedTreeBranch, SharedTreeBranchEvents } from "./branch.js";
+
 /**
  * A {@link CustomMetadataTree} under construction.
  */
@@ -31,8 +33,6 @@ interface MutableCustomMetadataTree {
 	metadata: JsonCompatibleReadOnlyObject | undefined;
 	children: MutableCustomMetadataTree[];
 }
-
-import type { SharedTreeBranch, SharedTreeBranchEvents } from "./branch.js";
 
 /**
  * Describes the result of a transaction.
@@ -518,7 +518,11 @@ export class SquashingTransactionStack<
 									// change in their place so that the view fully reflects the modified
 									// `change`.
 									transactionBranch.removeAfter(startHead);
-									transactionBranch.apply(tagChange(change, transactionRevision));
+									transactionBranch.apply(
+										tagChange(change, transactionRevision),
+										CommitKind.Default,
+										undefined,
+									);
 								}
 
 								const customMetadata = hasCustomMetadata(rootMetadataNode)
@@ -631,6 +635,8 @@ export class SquashingTransactionStack<
 												transactionBranch.removeAfter(nestedStartHead);
 												transactionBranch.apply(
 													tagChange(processedSquash, transactionRevision),
+													CommitKind.Default,
+													undefined,
 												);
 											}
 										}

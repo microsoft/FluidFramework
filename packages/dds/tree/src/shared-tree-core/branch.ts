@@ -157,7 +157,7 @@ export class SharedTreeBranch<
 		>,
 	) {
 		this.editor = this.changeFamily.buildEditor(mintRevisionTag, (change) =>
-			this.apply(change),
+			this.apply(change, CommitKind.Default, undefined),
 		);
 		this.unsubscribeBranchTrimmer = branchTrimmer?.on("ancestryTrimmed", (commit) => {
 			this.#events.emit("ancestryTrimmed", commit);
@@ -179,16 +179,13 @@ export class SharedTreeBranch<
 	 * @param change - the change to apply
 	 * @param kind - the kind of change to apply
 	 * @param customMetadata - {@link GraphCommit.customMetadata | metadata} to attach to the new commit.
+	 * Callers reconstructing an existing commit, rather than minting one, must pass that commit's metadata.
 	 * @returns the change that was applied and the new head commit of the branch
-	 * @remarks
-	 * This mints a *new* commit. Callers that are instead reconstructing an existing commit (replaying a
-	 * remote commit, rehydrating a stashed op, or applying the commit a transaction produced) must pass
-	 * that commit's metadata, or it will be dropped.
 	 */
 	public apply(
 		change: TaggedChange<TChange>,
-		kind: CommitKind = CommitKind.Default,
-		customMetadata?: CustomMetadataTree,
+		kind: CommitKind,
+		customMetadata: CustomMetadataTree | undefined,
 	): void {
 		this.assertNotDisposed();
 

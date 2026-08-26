@@ -22,7 +22,7 @@ import {
 } from "../util/index.js";
 
 import { decodeBranchId, encodeBranchId } from "./branchIdCodec.js";
-import { decodeCustomMetadataTree, encodeCustomMetadataTree } from "./customMetadataFormat.js";
+import { decodeCustomMetadataTree, encodeCustomMetadataTree } from "./customMetadataCodec.js";
 import type { SharedBranchSummaryData } from "./editManager.js";
 import type {
 	Commit,

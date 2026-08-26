@@ -17,7 +17,7 @@ import type {
 import type { JsonCompatibleReadOnlyObject, Mutable } from "../util/index.js";
 
 import { decodeBranchId, encodeBranchId } from "./branchIdCodec.js";
-import { decodeCustomMetadataTree, encodeCustomMetadataTree } from "./customMetadataFormat.js";
+import { decodeCustomMetadataTree, encodeCustomMetadataTree } from "./customMetadataCodec.js";
 import type { MessageDecodingContext, MessageEncodingContext } from "./messageCodecs.js";
 import type { MessageFormatVersion } from "./messageFormat.js";
 import { Message } from "./messageFormatVSharedBranches.js";
