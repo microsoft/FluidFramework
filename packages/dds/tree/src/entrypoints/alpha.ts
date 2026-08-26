@@ -255,6 +255,8 @@ export {
 	RemoteChangeMetadata, 
 	RevertibleAlpha, 
 	RevertibleAlphaFactory, 
+	RevertOptionsAlpha, 
+	RevertToOptionsAlpha, 
 	RunTransactionParamsAlpha, 
 	SchemaFactoryAlpha, 
 	SchemaStaticsAlpha, 

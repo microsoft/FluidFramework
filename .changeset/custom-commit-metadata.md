@@ -41,9 +41,11 @@ Notes on behavior:
 - If a transaction produces no commit — because its body made no changes, or because it was rolled back — its metadata is discarded.
 - The metadata travels on every annotated op and occupies summary space for as long as its commit survives, so it should be kept small.
 
-A commit produced by reverting a `Revertible` previously could not be annotated, because reverts were not permitted during a transaction at all.
-That restriction is now relaxed: a revert may be performed inside a transaction provided it is that transaction's only change, which lets the revert be given its own metadata rather than inheriting the reverted commit's.
-Attempting any other change in such a transaction throws an error.
+A commit produced by reverting a `Revertible`, or by `revertTo`, can be annotated in the same way, via a new options argument:
+
+```typescript
+revertible.revert({ customMetadata: { author: "alice", intent: "undo-add" } });
+```
 
 Persisting the metadata requires new op and summary format versions, which are written only when the container runtime's `oldestSupportedClient` is set to `3.0.0` or later; until then, metadata is kept in memory for the local session but is neither replicated nor persisted.
 Raising that floor makes every subsequent op and summary use the new versions, whether or not any commit carries metadata, so deploy 3.0-capable code everywhere first.

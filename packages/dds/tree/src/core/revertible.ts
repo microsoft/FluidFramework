@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { JsonCompatibleReadOnlyObject } from "../util/index.js";
+
 import type { UntypedTreeView } from "../simple-tree/index.js";
 
 /**
@@ -24,10 +26,6 @@ export interface Revertible {
 	 *
 	 * @remarks
 	 * Concurrent changes that are sequenced before the revert will not be overwritten by the revert if they affect different parts of the document.
-	 *
-	 * A revert may be performed inside a transaction, but only as that transaction's sole change. This
-	 * allows it to be given its own {@link RunTransactionParamsAlpha.customMetadata | metadata} or
-	 * {@link RunTransactionParamsBeta.label | label}.
 	 */
 	revert(): void;
 	/**
@@ -39,10 +37,6 @@ export interface Revertible {
 	 *
 	 * @remarks
 	 * Concurrent changes that are sequenced before the revert will not be overwritten by the revert if they affect different parts of the document.
-	 *
-	 * A revert may be performed inside a transaction, but only as that transaction's sole change. When
-	 * `dispose` is true, disposal is then deferred until the transaction commits, so that rolling it
-	 * back does not consume the revertible.
 	 */
 	revert(dispose: boolean): void;
 
@@ -53,11 +47,64 @@ export interface Revertible {
 }
 
 /**
+ * Options for {@link RevertibleAlpha.(revert:3) | RevertibleAlpha.revert}.
+ *
+ * @sealed @alpha
+ */
+export interface RevertOptionsAlpha {
+	/**
+	 * If true (the default), the revertible will be disposed after being reverted.
+	 * If false, the revertible will remain valid. This can be useful for scenarios where the revert may be dropped
+	 * due to merge conflicts, and one wants to attempt reverting again.
+	 */
+	readonly dispose?: boolean;
+
+	/**
+	 * Arbitrary, application-defined metadata to attach to the commit that the revert produces.
+	 *
+	 * @remarks
+	 * See {@link RunTransactionParamsAlpha.customMetadata} for how this metadata is persisted and read back.
+	 */
+	readonly customMetadata?: JsonCompatibleReadOnlyObject;
+}
+
+/**
+ * Options for {@link UntypedTreeViewAlpha.revertTo}.
+ *
+ * @sealed @alpha
+ */
+export interface RevertToOptionsAlpha {
+	/**
+	 * Arbitrary, application-defined metadata to attach to the commit that the revert produces.
+	 *
+	 * @remarks
+	 * See {@link RunTransactionParamsAlpha.customMetadata} for how this metadata is persisted and read back.
+	 */
+	readonly customMetadata?: JsonCompatibleReadOnlyObject;
+}
+
+/**
  * A {@link Revertible} with features that are not yet stable.
  *
  * @sealed @alpha
  */
 export interface RevertibleAlpha extends Revertible {
+	/**
+	 * {@inheritDoc Revertible.(revert:1)}
+	 */
+	revert(): void;
+	/**
+	 * {@inheritDoc Revertible.(revert:2)}
+	 */
+	revert(dispose: boolean): void;
+	/**
+	 * Reverts the associated change according to the given options.
+	 *
+	 * @remarks
+	 * Concurrent changes that are sequenced before the revert will not be overwritten by the revert if they affect different parts of the document.
+	 */
+	revert(options: RevertOptionsAlpha): void;
+
 	/**
 	 * Clones the {@link Revertible} to a target view.
 	 *

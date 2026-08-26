@@ -1182,6 +1182,9 @@ export interface Revertible {
 // @alpha @sealed
 export interface RevertibleAlpha extends Revertible {
     clone: (view: UntypedTreeView) => RevertibleAlpha;
+    revert(): void;
+    revert(dispose: boolean): void;
+    revert(options: RevertOptionsAlpha): void;
 }
 
 // @alpha @sealed
@@ -1194,6 +1197,17 @@ export type RevertibleFactory = (onRevertibleDisposed?: (revertible: Revertible)
 export enum RevertibleStatus {
     Disposed = 1,
     Valid = 0
+}
+
+// @alpha @sealed
+export interface RevertOptionsAlpha {
+    readonly customMetadata?: JsonCompatibleReadOnlyObject;
+    readonly dispose?: boolean;
+}
+
+// @alpha @sealed
+export interface RevertToOptionsAlpha {
+    readonly customMetadata?: JsonCompatibleReadOnlyObject;
 }
 
 // @public
@@ -2198,7 +2212,7 @@ export interface UntypedTreeViewAlpha extends UntypedTreeView, TreeContextAlpha 
     fork(): UntypedTreeViewAlpha;
     hasRootSchema<TSchema extends ImplicitFieldSchema>(schema: TSchema): this is TreeViewAlpha<TSchema>;
     isMissingEditsFrom(view: UntypedTreeView): boolean;
-    revertTo(revision: CommitRevision): void;
+    revertTo(revision: CommitRevision, options?: RevertToOptionsAlpha): void;
     rewindTo(revision: CommitRevision): void;
     runTransaction<TSuccessValue, TFailureValue>(transaction: () => TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>, params?: RunTransactionParamsAlpha): TransactionValueResult<TSuccessValue, TFailureValue>;
     runTransaction(transaction: () => VoidTransactionCallbackStatusAlpha | void, params?: RunTransactionParamsAlpha): TransactionVoidResult;

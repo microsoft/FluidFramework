@@ -594,12 +594,10 @@ describe("custom commit metadata", () => {
 		function createViewWithRevertibleEdit(): {
 			view: ReturnType<typeof createView>;
 			revertible: RevertibleAlpha;
-			undoStack: RevertibleAlpha[];
-			redoStack: RevertibleAlpha[];
 			unsubscribe: () => void;
 		} {
 			const view = createView();
-			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
 			view.runTransaction(
 				() => {
 					view.root.insertAtEnd("a");
@@ -608,288 +606,82 @@ describe("custom commit metadata", () => {
 			);
 			const revertible = undoStack.pop();
 			assert(revertible !== undefined);
-			return { view, revertible, undoStack, redoStack, unsubscribe };
+			return { view, revertible, unsubscribe };
 		}
 
-		it("can be given their own metadata by reverting inside a transaction", () => {
+		it("can be given their own metadata", () => {
 			const { view, revertible, unsubscribe } = createViewWithRevertibleEdit();
 
-			view.runTransaction(
-				() => {
-					revertible.revert();
-				},
-				{ customMetadata: { tag: "the-revert" } },
-			);
+			revertible.revert({ customMetadata: { tag: "the-revert" } });
 
 			assert.deepEqual([...view.root], []);
-			// The revert carries its own metadata rather than inheriting the reverted commit's.
+			assert.deepEqual(tags(view.branchHistory), ["the-revert", "original"]);
+			unsubscribe();
+		});
+
+		it("can be given metadata without disposing the revertible", () => {
+			const { view, revertible, unsubscribe } = createViewWithRevertibleEdit();
+
+			revertible.revert({ dispose: false, customMetadata: { tag: "the-revert" } });
+
+			assert.equal(revertible.status, RevertibleStatus.Valid);
 			assert.deepEqual(headMetadata(view.branchHistory), { tag: "the-revert" });
 			unsubscribe();
 		});
 
-		it("are still reported as an undo, so that they can be redone", () => {
-			const { view, revertible, redoStack, unsubscribe } = createViewWithRevertibleEdit();
-
-			view.runTransaction(
-				() => {
-					revertible.revert();
-				},
-				{ customMetadata: { tag: "the-revert" } },
-			);
-
-			// Squashing the transaction must not downgrade the revert to an ordinary edit, or it
-			// would land on the undo stack instead of the redo stack.
-			assert.equal(redoStack.length, 1);
-			redoStack.pop()?.revert();
-			assert.deepEqual([...view.root], ["a"]);
-			unsubscribe();
-		});
-
-		it("throw when the transaction has already made a change", () => {
-			const { view, revertible, unsubscribe } = createViewWithRevertibleEdit();
-
-			assert.throws(
-				() =>
-					view.runTransaction(() => {
-						view.root.insertAtEnd("b");
-						revertible.revert();
-					}),
-				validateUsageError(/must be the only change in that transaction/),
-			);
-			unsubscribe();
-		});
-
-		it("throw when a further change is made in the transaction", () => {
-			const { view, revertible, unsubscribe } = createViewWithRevertibleEdit();
-
-			assert.throws(
-				() =>
-					view.runTransaction(() => {
-						revertible.revert();
-						view.root.insertAtEnd("b");
-					}),
-				validateUsageError(
-					/Editing the tree is forbidden during a transaction whose only change is a revert/,
-				),
-			);
-			unsubscribe();
-		});
-
-		it("throw when a second revert is attempted in the same transaction", () => {
+		it("still inherit the reverted commit's labels", () => {
 			const view = createView();
+			const labels: unknown[] = [];
+			view.events.on("changed", (metadata) => {
+				if (metadata.isLocal) {
+					labels.push([...metadata.labels]);
+				}
+			});
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+
+			view.runTransaction(
+				() => {
+					view.root.insertAtEnd("a");
+				},
+				{ label: "original" },
+			);
+			const revertible = undoStack.pop();
+			assert(revertible !== undefined);
+
+			revertible.revert({ customMetadata: { tag: "the-revert" } });
+
+			// Metadata and labels are independent: annotating a revert must not disturb the labels
+			// it inherits from the commit it reverts.
+			assert.deepEqual(labels[labels.length - 1], ["original"]);
+			assert.deepEqual(headMetadata(view.branchHistory), { tag: "the-revert" });
+			unsubscribe();
+		});
+
+		it("throw a UsageError for metadata that is not a JSON object", () => {
+			const { revertible, unsubscribe } = createViewWithRevertibleEdit();
+
+			assert.throws(
+				() =>
+					revertible.revert({
+						customMetadata: [] as unknown as JsonCompatibleReadOnlyObject,
+					}),
+				validateUsageError(/must be a JSON object/),
+			);
+			unsubscribe();
+		});
+	});
+
+	describe("revertTo", () => {
+		it("attaches metadata to the commit it produces", () => {
+			const view = createView();
+			const revision = view.branchHistory.getHead()?.revision;
+			assert(revision !== undefined);
+
 			view.root.insertAtEnd("a");
-			view.root.insertAtEnd("b");
-			const second = undoStack.pop();
-			const first = undoStack.pop();
-			assert(first !== undefined && second !== undefined);
-
-			assert.throws(
-				() =>
-					view.runTransaction(() => {
-						second.revert();
-						first.revert();
-					}),
-				validateUsageError(
-					/Reverting a commit is forbidden during a transaction whose only change is a revert/,
-				),
-			);
-			unsubscribe();
-		});
-
-		it("leave the view editable once the transaction has ended", () => {
-			const { view, revertible, unsubscribe } = createViewWithRevertibleEdit();
-
-			view.runTransaction(
-				() => {
-					revertible.revert();
-				},
-				{ customMetadata: { tag: "the-revert" } },
-			);
-			// The restriction applies only for the duration of the transaction.
-			view.root.insertAtEnd("b");
-
-			assert.deepEqual([...view.root], ["b"]);
-			unsubscribe();
-		});
-
-		it("are rolled back with the transaction when it is aborted", () => {
-			const { view, revertible, unsubscribe } = createViewWithRevertibleEdit();
-			const before = view.branchHistory.length;
-
-			view.runTransaction(
-				() => {
-					revertible.revert();
-					return { rollback: true } as const;
-				},
-				{ customMetadata: { tag: "the-revert" } },
-			);
-
-			assert.deepEqual([...view.root], ["a"]);
-			assert.equal(view.branchHistory.length, before);
-			// The undo must not be consumed by a revert that was rolled back.
-			assert.equal(revertible.status, RevertibleStatus.Valid);
-			unsubscribe();
-		});
-
-		it("release the revertible once the wrapping transaction commits", () => {
-			const { view, revertible, unsubscribe } = createViewWithRevertibleEdit();
-
-			view.runTransaction(
-				() => {
-					revertible.revert();
-				},
-				{ customMetadata: { tag: "the-revert" } },
-			);
-
-			assert.equal(revertible.status, RevertibleStatus.Disposed);
-			unsubscribe();
-		});
-
-		it("throw when a schema change is attempted after the revert", () => {
-			// Schema edits are applied through a different editor than data edits, so they need their
-			// own guard or they would slip into a transaction reserved for a revert.
-			const { view, revertible, unsubscribe } = createViewWithRevertibleEdit();
-
-			assert.throws(
-				() =>
-					view.runTransaction(() => {
-						revertible.revert();
-						view.checkout.updateSchema(view.checkout.storedSchema.clone(), true);
-					}),
-				validateUsageError(
-					/Editing the tree is forbidden during a transaction whose only change is a revert/,
-				),
-			);
-			unsubscribe();
-		});
-
-		it("are allowed when the transaction only added preconditions", () => {
-			// Constraints are represented as commits, but they are not changes to the document, so they
-			// must not count against the sole-change rule.
-			const { view, revertible, unsubscribe } = createViewWithRevertibleEdit();
-
-			view.runTransaction(
-				() => {
-					revertible.revert();
-				},
-				{
-					preconditions: [{ type: "noChange" }],
-					customMetadata: { tag: "with-precondition" },
-				},
-			);
+			view.revertTo(revision, { customMetadata: { tag: "the-revert" } });
 
 			assert.deepEqual([...view.root], []);
-			assert.deepEqual(headMetadata(view.branchHistory), { tag: "with-precondition" });
-			unsubscribe();
-		});
-
-		it("restore editing when a nested transaction rolls the revert back", () => {
-			const { view, revertible, unsubscribe } = createViewWithRevertibleEdit();
-
-			view.runTransaction(() => {
-				view.runTransaction(
-					() => {
-						revertible.revert();
-						return { rollback: true } as const;
-					},
-					{ customMetadata: { tag: "discarded" } },
-				);
-				// The revert was rolled back, so the enclosing transaction is free to edit again.
-				view.root.insertAtEnd("b");
-			});
-
-			assert.deepEqual([...view.root], ["a", "b"]);
-			// ...and the resulting commit is an ordinary edit, not an undo.
-			assert.equal(headMetadata(view.branchHistory), undefined);
-			// The revert did not survive, so the application keeps its undo even though the enclosing
-			// transaction went on to commit.
-			assert.equal(revertible.status, RevertibleStatus.Valid);
-			unsubscribe();
-		});
-
-		it("inherit the reverted commit's labels", () => {
-			const view = createView();
-			const labels: unknown[] = [];
-			view.events.on("changed", (metadata) => {
-				if (metadata.isLocal) {
-					labels.push([...metadata.labels]);
-				}
-			});
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
-
-			view.runTransaction(
-				() => {
-					view.root.insertAtEnd("a");
-				},
-				{ label: "original" },
-			);
-			const revertible = undoStack.pop();
-			assert(revertible !== undefined);
-
-			view.runTransaction(
-				() => {
-					revertible.revert();
-				},
-				{ customMetadata: { tag: "the-revert" } },
-			);
-
-			// A direct revert inherits the reverted commit's labels; wrapping it in a transaction
-			// purely to attach metadata must not change that.
-			assert.deepEqual(labels[labels.length - 1], ["original"]);
-			unsubscribe();
-		});
-
-		it("still block the enclosing transaction when a nested transaction commits the revert", () => {
-			const { view, revertible, unsubscribe } = createViewWithRevertibleEdit();
-
-			// Committing the nested transaction squashes the revert into the enclosing one, which
-			// therefore still has a revert as its only change.
-			assert.throws(
-				() =>
-					view.runTransaction(() => {
-						view.runTransaction(() => {
-							revertible.revert(false);
-						});
-						view.root.insertAtEnd("b");
-					}),
-				validateUsageError(
-					"Editing the tree is forbidden during a transaction whose only change is a revert",
-				),
-			);
-			unsubscribe();
-		});
-
-		it("do not leave the reverted commit's labels behind when the transaction is rolled back", () => {
-			const view = createView();
-			const labels: unknown[] = [];
-			view.events.on("changed", (metadata) => {
-				if (metadata.isLocal) {
-					labels.push([...metadata.labels]);
-				}
-			});
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
-
-			view.runTransaction(
-				() => {
-					view.root.insertAtEnd("a");
-				},
-				{ label: "original" },
-			);
-			const revertible = undoStack.pop();
-			assert(revertible !== undefined);
-
-			view.runTransaction(() => {
-				revertible.revert(false);
-				return { rollback: true } as const;
-			});
-
-			view.runTransaction(() => {
-				view.root.insertAtEnd("b");
-			});
-
-			assert.deepEqual(labels[labels.length - 1], []);
-			unsubscribe();
+			assert.deepEqual(headMetadata(view.branchHistory), { tag: "the-revert" });
 		});
 	});
 

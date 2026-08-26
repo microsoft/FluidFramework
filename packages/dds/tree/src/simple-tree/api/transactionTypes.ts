@@ -233,8 +233,8 @@ export interface RunTransactionParamsAlpha extends RunTransactionParamsBeta {
 	 * both flattened via {@link TreeBranchCommitMetadata.custom} and structurally via
 	 * {@link TreeBranchCommitMetadata.customTree}.
 	 *
-	 * To attach metadata to the commit produced by {@link Revertible.(revert:1) | reverting}, perform the revert
-	 * inside a transaction. The revert must be that transaction's only change.
+	 * To attach metadata to the commit produced by
+	 * {@link RevertibleAlpha.(revert:3) | reverting}, use {@link RevertOptionsAlpha.customMetadata} instead.
 	 *
 	 * The value is snapshotted when the transaction starts and normalized as `JSON.stringify` would. An error is
 	 * thrown if it cannot be represented as a JSON object at all, such as when it contains a cycle or a

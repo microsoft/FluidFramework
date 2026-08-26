@@ -23,6 +23,8 @@ export {
 	type RevertibleFactory,
 	type RevertibleAlphaFactory,
 	type RevertibleAlpha,
+	type RevertOptionsAlpha,
+	type RevertToOptionsAlpha,
 } from "./core/index.js";
 
 export {

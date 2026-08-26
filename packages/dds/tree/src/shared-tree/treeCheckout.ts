@@ -49,6 +49,8 @@ import {
 	visitDelta,
 	type RevertibleAlphaFactory,
 	type RevertibleAlpha,
+	type RevertOptionsAlpha,
+	type RevertToOptionsAlpha,
 	type GraphCommit,
 	isAncestor,
 	moveToDetachedField,
@@ -135,16 +137,12 @@ import {
 	hasSchemaChange,
 } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
-import type {
-	ISchemaEditor,
-	ISharedTreeEditor,
-	SharedTreeEditBuilder,
-} from "./sharedTreeEditBuilder.js";
+import type { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import { extractTransactionChangeProcessor } from "./transactionPostProcessor.js";
 import { SerializedChange } from "./serializedChange.js";
 
 /**
- * Returns a snapshot of the given transaction metadata which is guaranteed to match what will be persisted.
+ * Returns a snapshot of the given metadata which is guaranteed to match what will be persisted.
  * @remarks
  * Round-tripping through JSON gives the commit a private copy, so that later mutation of the caller's object
  * cannot change an already-created commit, and so that the value read back locally is exactly the value that
@@ -162,15 +160,15 @@ function snapshotCustomMetadata(
 		serialized = JSON.stringify(customMetadata);
 	} catch (error: unknown) {
 		throw new UsageError(
-			`Transaction "customMetadata" must be JSON-serializable: ${error instanceof Error ? error.message : String(error)}`,
+			`"customMetadata" must be JSON-serializable: ${error instanceof Error ? error.message : String(error)}`,
 		);
 	}
 	if (serialized === undefined) {
-		throw new UsageError(`Transaction "customMetadata" must be JSON-serializable.`);
+		throw new UsageError(`"customMetadata" must be JSON-serializable.`);
 	}
 	const snapshot: unknown = JSON.parse(serialized);
 	if (typeof snapshot !== "object" || snapshot === null || Array.isArray(snapshot)) {
-		throw new UsageError(`Transaction "customMetadata" must be a JSON object.`);
+		throw new UsageError(`"customMetadata" must be a JSON object.`);
 	}
 	return snapshot as JsonCompatibleReadOnlyObject;
 }
@@ -1130,7 +1128,6 @@ export class TreeCheckout implements ITreeCheckout {
 		if (rollback === true) {
 			this.popLabelFrame(true);
 			this.transaction.abort();
-			this.settlePendingRevert(false);
 			return value === undefined
 				? { success: false }
 				: { success: false, value: value as TFailureValue };
@@ -1139,23 +1136,9 @@ export class TreeCheckout implements ITreeCheckout {
 		addConstraintsToTransaction(this, true, transactionCallbackStatus?.preconditionsOnRevert);
 
 		this.popLabelFrame(false);
-		// A transaction whose content is a revert adopts the reverted commit's labels, unless the
-		// transaction supplied a label of its own. Only the outermost transaction's commit reaches the
-		// main branch (and so reads the label tree), which `runWithTransactionLabel` then clears.
-		const revertLabelTree =
-			this.transaction.size === 1 && params?.label === undefined
-				? this.pendingRevert?.labelTree
-				: undefined;
-		if (revertLabelTree !== undefined) {
-			this.labelTreeNode = revertLabelTree;
-		}
-		try {
-			this.runWithTransactionLabel(() => {
-				this.transaction.commit();
-			}, params?.label);
-		} finally {
-			this.settlePendingRevert(true);
-		}
+		this.runWithTransactionLabel(() => {
+			this.transaction.commit();
+		}, params?.label);
 		return value === undefined
 			? { success: true }
 			: { success: true, value: value as TSuccessValue };
@@ -1274,25 +1257,27 @@ export class TreeCheckout implements ITreeCheckout {
 					? RevertibleStatus.Disposed
 					: RevertibleStatus.Valid;
 			},
-			revert: (release: boolean = true) => {
+			revert: (releaseOrOptions: boolean | RevertOptionsAlpha = true) => {
 				if (revertible.status === RevertibleStatus.Disposed) {
 					throw new UsageError("Unable to revert a revertible that has been disposed.");
 				}
 
-				const inTransaction = checkout.transaction.size > 0;
-				// Inside a transaction, disposal is deferred to `pendingRevert`.
+				const options =
+					typeof releaseOrOptions === "boolean"
+						? { dispose: releaseOrOptions }
+						: releaseOrOptions;
 				const revertMetrics = checkout.revertRevertible(
 					revision,
 					kind,
 					labelTree,
-					release ? revertible : undefined,
+					snapshotCustomMetadata(options.customMetadata),
 				);
 				checkout.logger?.sendTelemetryEvent({
 					eventName: TreeCheckout.revertTelemetryEventName,
 					...revertMetrics,
 				});
 
-				if (release && !inTransaction) {
+				if (options.dispose ?? true) {
 					revertible.dispose();
 				}
 			},
@@ -1482,7 +1467,7 @@ export class TreeCheckout implements ITreeCheckout {
 		this.switchBranch(this.#transaction.branch.fork(targetCommit));
 	}
 
-	public revertTo(revisionString: string): void {
+	public revertTo(revisionString: string, options?: RevertToOptionsAlpha): void {
 		this.checkNotDisposed(
 			"The branch has already been disposed and prior revisions cannot be reverted to.",
 		);
@@ -1490,6 +1475,7 @@ export class TreeCheckout implements ITreeCheckout {
 		if (this.#transaction.size > 0) {
 			throw new UsageError("Reverting to a revision is not supported during transactions.");
 		}
+		const customMetadata = snapshotCustomMetadata(options?.customMetadata);
 		const revision = this.idCompressor.tryRecompress(revisionString as StableId);
 		if (revision === undefined) {
 			throw new UsageError(`Unrecognized revision id: ${revisionString}`);
@@ -1514,7 +1500,11 @@ export class TreeCheckout implements ITreeCheckout {
 			false,
 			revisionForInvert,
 		);
-		this.#transaction.branch.apply(tagChange(inverse, revisionForInvert));
+		this.#transaction.branch.apply(
+			tagChange(inverse, revisionForInvert),
+			CommitKind.Default,
+			customMetadata === undefined ? undefined : { metadata: customMetadata, children: [] },
+		);
 	}
 
 	private rebase(view: UntypedTreeView): void {
@@ -1687,91 +1677,28 @@ export class TreeCheckout implements ITreeCheckout {
 		this.revertibles.delete(revision);
 	}
 
-	/**
-	 * The revert performed inside the current transaction, if any.
-	 * @remarks
-	 * A revert may only occur inside a transaction as that transaction's sole change, so at most one is ever
-	 * outstanding. `labelTree` is the reverted commit's {@link LabelTree}, carried across to the
-	 * transaction's commit; `revertible` is the revertible the caller asked to release, whose disposal is
-	 * deferred until the revert is durable.
-	 */
-	private pendingRevert:
-		| {
-				readonly labelTree: LabelTree | undefined;
-				readonly revertible: RevertibleAlpha | undefined;
-		  }
-		| undefined;
-
-	/**
-	 * Resolves the revert owned by the transaction that just ended, if there is one.
-	 * @param committed - Whether that transaction committed.
-	 * @remarks
-	 * A committed transaction hands its revert to the transaction enclosing it. Otherwise the released
-	 * revertible is consumed if the revert survived, and retained if it did not.
-	 */
-	private settlePendingRevert(committed: boolean): void {
-		const pendingRevert = this.pendingRevert;
-		if (pendingRevert === undefined || (committed && this.transaction.size > 0)) {
-			return;
-		}
-		this.pendingRevert = undefined;
-		this.#transaction.clearPendingCommitKind();
-		if (committed && pendingRevert.revertible?.status === RevertibleStatus.Valid) {
-			pendingRevert.revertible.dispose();
-		}
-	}
-
-	/**
-	 * Whether the current transaction has changed the document.
-	 * @remarks
-	 * This ignores commits that carry no application-facing change — notably the constraint commits added
-	 * by {@link RunTransactionParamsAlpha.preconditions} — and ignores commits made on the branch the
-	 * transaction forked from, such as concurrent remote commits.
-	 */
-	private transactionHasApplicationFacingChanges(): boolean {
-		const startHead = this.#transaction.getTransactionStartHead();
-		if (startHead === undefined) {
-			return false;
-		}
-		const steps: GraphCommit<SharedTreeChange>[] = [];
-		findAncestor([this.#transaction.activeBranch.getHead(), steps], (c) => c === startHead);
-		return steps.some((commit) => sharedTreeChangeHasApplicationFacingChanges(commit.change));
-	}
-
 	private revertRevertible(
 		revision: RevisionTag,
 		kind: CommitKind,
 		labelTree: LabelTree | undefined,
-		revertibleToRelease: RevertibleAlpha | undefined,
+		customMetadata: JsonCompatibleReadOnlyObject | undefined,
 	): RevertMetrics {
 		this.editLock.checkUnlocked("Reverting a commit");
-		// A revert is normally forbidden during a transaction because the inverse is computed against, and
-		// applied to, the branch the transaction forked from — so it would neither account for the
-		// transaction's own edits nor be part of the transaction. Neither problem arises when the
-		// transaction has not yet changed the document: the revert then becomes the transaction's content,
-		// which is what allows it to be given its own metadata or label. Further changes are forbidden
-		// below so that it remains the only one.
-		const inTransaction = this.transaction.size > 0;
-		if (inTransaction && this.transactionHasApplicationFacingChanges()) {
-			throw new UsageError(
-				"A revert applied during a transaction must be the only change in that transaction.",
-			);
+		if (this.transaction.size > 0) {
+			throw new UsageError("Undo is not yet supported during transactions.");
 		}
 
 		const revertibleBranch = this.revertibleCommitBranches.get(revision);
 		assert(revertibleBranch !== undefined, 0x7cc /* expected to find a revertible commit */);
 		const commitToRevert = revertibleBranch.getHead();
-		// Commits within a transaction share its revision so that they can be squashed into one commit.
-		const revisionForInvert = inTransaction
-			? this.#transaction.mintTransactionRevision()
-			: this.mintRevisionTag();
+		const revisionForInvert = this.mintRevisionTag();
 
 		let change = tagChange(
 			this.changeFamily.rebaser.invert(commitToRevert, false, revisionForInvert),
 			revisionForInvert,
 		);
 
-		const headCommit = this.#transaction.activeBranch.getHead();
+		const headCommit = this.#transaction.branch.getHead();
 		// Rebase the inverted change onto any commits that occurred after the undoable commits.
 		if (commitToRevert !== headCommit) {
 			// The inverse may be rebased over newer commits which (despite being present in the history)
@@ -1801,30 +1728,18 @@ export class TreeCheckout implements ITreeCheckout {
 		// Install the original commit's label tree so the revert commit's metadata inherits
 		// the same labels. Reusing the captured tree (rather than wrapping it) ensures
 		// revert-of-revert does not introduce new nesting.
-		//
-		// This only takes effect outside a transaction, where `apply` lands the commit on the main branch
-		// immediately; inside one, `pendingRevert` carries the tree across to the transaction's commit.
 		const previousLabelTreeNode = this.labelTreeNode;
 		this.labelTreeNode = labelTree;
-		const revertKind =
-			kind === CommitKind.Default || kind === CommitKind.Redo
-				? CommitKind.Undo
-				: CommitKind.Redo;
 		try {
-			this.#transaction.activeBranch.apply(change, revertKind);
+			this.#transaction.branch.apply(
+				change,
+				kind === CommitKind.Default || kind === CommitKind.Redo
+					? CommitKind.Undo
+					: CommitKind.Redo,
+				customMetadata === undefined ? undefined : { metadata: customMetadata, children: [] },
+			);
 		} finally {
 			this.labelTreeNode = previousLabelTreeNode;
-		}
-
-		if (inTransaction) {
-			// The transaction's squashed commit would otherwise be reported as an ordinary edit.
-			this.#transaction.setPendingCommitKind(revertKind);
-			this.pendingRevert = { labelTree, revertible: revertibleToRelease };
-			// Keep the revert the only change in the transaction.
-			this.editLock.restrict(
-				"a transaction whose only change is a revert",
-				() => this.transaction.size > 0 && this.pendingRevert !== undefined,
-			);
 		}
 
 		// Derive some stats about the reversion to return to the caller.
@@ -2088,17 +2003,6 @@ class EditLock {
 		| { readonly isLocked: true; readonly reason: string } = { isLocked: false };
 
 	/**
-	 * An additional, longer-lived restriction on editing, independent of {@link EditLock.lock}.
-	 * @remarks
-	 * Unlike the lock — which is held only for the duration of a single event callback — a restriction
-	 * spans an operation such as a transaction. It carries a predicate rather than being cleared
-	 * explicitly, so that it cannot be leaked by a code path that fails to clear it.
-	 */
-	private restriction:
-		| { readonly reason: string; readonly isActive: () => boolean }
-		| undefined;
-
-	/**
 	 * @param editor - an editor which will be used to create a new editor that is monitored to determine if any changes are happening to the tree.
 	 * Use {@link EditLock.editor} in place of the original editor to ensure that changes are monitored.
 	 */
@@ -2106,15 +2010,7 @@ class EditLock {
 		const checkLock = (): void => this.checkUnlocked("Editing the tree");
 		this.editor = {
 			get schema() {
-				const schemaEditor = editor.schema;
-				return {
-					setStoredSchema(...schemaArgs: Parameters<ISchemaEditor["setStoredSchema"]>): void {
-						// Schema edits are edits too: without this they bypass the lock and any restriction,
-						// e.g. slipping into a transaction required to contain only a revert.
-						checkLock();
-						schemaEditor.setStoredSchema(...schemaArgs);
-					},
-				};
+				return editor.schema;
 			},
 			valueField(...fieldArgs) {
 				const valueField = editor.valueField(...fieldArgs);
@@ -2188,22 +2084,6 @@ class EditLock {
 		if (this.status.isLocked) {
 			throw new UsageError(`${action} is forbidden during ${this.status.reason}`);
 		}
-		if (this.restriction !== undefined) {
-			if (this.restriction.isActive()) {
-				throw new UsageError(`${action} is forbidden during ${this.restriction.reason}`);
-			}
-			// The restriction no longer applies, so stop checking it.
-			this.restriction = undefined;
-		}
-	}
-
-	/**
-	 * Prevent further changes from being made to {@link EditLock.editor} for as long as `isActive` returns true.
-	 * @param reason - A string describing why editing is restricted. This will be included in the error
-	 * message if an attempt is made to edit while the restriction applies.
-	 */
-	public restrict(reason: string, isActive: () => boolean): void {
-		this.restriction = { reason, isActive };
 	}
 
 	/**

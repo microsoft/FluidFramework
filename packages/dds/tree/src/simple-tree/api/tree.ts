@@ -13,6 +13,7 @@ import type {
 	Revertible,
 	RevertibleAlphaFactory,
 	RevertibleFactory,
+	RevertToOptionsAlpha,
 } from "../../core/index.js";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
 import type { TreeStatus } from "../../feature-libraries/index.js";
@@ -447,7 +448,7 @@ export interface UntypedTreeViewAlpha extends UntypedTreeView, TreeContextAlpha 
 	 *
 	 * Unlike {@link UntypedTreeViewAlpha.rewindTo | rewindTo}, this does not switch to a new branch.
 	 */
-	revertTo(revision: CommitRevision): void;
+	revertTo(revision: CommitRevision, options?: RevertToOptionsAlpha): void;
 
 	/**
 	 * {@link TreeContextAlpha.(runTransaction:1) | Run a transaction} on this view of the SharedTree.

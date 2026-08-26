@@ -325,56 +325,6 @@ export class SquashingTransactionStack<
 	#transactionBranch?: SharedTreeBranch<TEditor, TChange, TChangeProcessingContext>;
 
 	/**
-	 * The {@link CommitKind} to report for the commit that the current transaction produces, if it
-	 * should not be {@link CommitKind.Default}. Cleared when the outermost transaction ends.
-	 */
-	#pendingCommitKind: CommitKind | undefined;
-
-	/**
-	 * The commit the outermost transaction forked from. Cleared when that transaction ends.
-	 */
-	#transactionStartHead: GraphCommit<TChange> | undefined;
-
-	/**
-	 * Returns the revision that the commit produced by the current transaction will have, minting it if necessary.
-	 * @remarks
-	 * Every commit on the transaction branch must share this revision so that they can be squashed into a
-	 * single commit when the transaction ends. Callers applying a pre-computed change to the
-	 * {@link SquashingTransactionStack.activeBranch | active branch} (rather than editing through its
-	 * editor, which tags changes automatically) must tag that change with this revision.
-	 */
-	public mintTransactionRevision(): RevisionTag {
-		assert(this.#transactionBranch !== undefined, "Expected an open transaction");
-		return this.#transactionBranch.mintRevisionTag();
-	}
-
-	/**
-	 * The commit that the current transaction started from.
-	 * @remarks Undefined when no transaction is in progress.
-	 */
-	public getTransactionStartHead(): GraphCommit<TChange> | undefined {
-		return this.#transactionStartHead;
-	}
-
-	/**
-	 * Sets the {@link CommitKind} to report for the commit that the current transaction produces.
-	 * @remarks
-	 * Used when the content of a transaction is a revert, so that the resulting commit is still reported
-	 * as an undo or a redo.
-	 */
-	public setPendingCommitKind(kind: CommitKind): void {
-		assert(this.size > 0, "Expected an open transaction");
-		this.#pendingCommitKind = kind;
-	}
-
-	/**
-	 * Clears any {@link SquashingTransactionStack.setPendingCommitKind | pending commit kind}.
-	 */
-	public clearPendingCommitKind(): void {
-		this.#pendingCommitKind = undefined;
-	}
-
-	/**
 	 * An editor for whichever branch is currently the {@link SquashingTransactionStack.activeBranch | active branch}.
 	 * @remarks This editor can safely be held on to across transaction boundaries, as it will properly delegate to the correct branch.
 	 * In contrast, it is not safe to hold onto e.g. `activeBranch.editor` across transaction boundaries, since the active branch may change.
@@ -489,7 +439,6 @@ export class SquashingTransactionStack<
 					node.metadata !== undefined || node.children.some(hasCustomMetadata);
 				// Keep track of the commit that each transaction was on when it started
 				const startHead = this.activeBranch.getHead();
-				this.#transactionStartHead = startHead;
 				const changeFamily = this.branch.changeFamily;
 				const rebaser = changeFamily.rebaser;
 				const outerOnPop = onPush?.();
@@ -575,13 +524,12 @@ export class SquashingTransactionStack<
 								const customMetadata = hasCustomMetadata(rootMetadataNode)
 									? rootMetadataNode
 									: undefined;
-								const commitKind = this.#pendingCommitKind ?? CommitKind.Default;
 								if (targetPath.length === 0) {
 									// No changes were made on the original branch since the transaction began
 									// The transaction commit can be applied directly
 									this.branch.apply(
 										tagChange(change, transactionRevision),
-										commitKind,
+										CommitKind.Default,
 										customMetadata,
 									);
 									// The view is already up-to-date so there's nothing more to do
@@ -603,7 +551,7 @@ export class SquashingTransactionStack<
 										rebased.newSourceHead.revision === transactionRevision,
 										0xcd0 /* The transaction commit should be rebased to the tip */,
 									);
-									this.branch.apply(rebased.newSourceHead, commitKind, customMetadata);
+									this.branch.apply(rebased.newSourceHead, CommitKind.Default, customMetadata);
 									viewUpdate = rebased.sourceChange;
 								}
 							} else {
@@ -625,11 +573,8 @@ export class SquashingTransactionStack<
 							unreachableCase(result);
 						}
 					}
-					// Clear per-transaction state before any callback runs, so a throw cannot leave the stack unusable.
 					transactionBranch.dispose();
 					this.setTransactionBranch(undefined);
-					this.#pendingCommitKind = undefined;
-					this.#transactionStartHead = undefined;
 					outerOnPop?.(result, viewUpdate);
 				};
 				// Invoked when a nested transaction begins
