@@ -268,31 +268,6 @@ export interface TreeAlpha {
 	): () => void;
 
 	/**
-	 * Register an event listener on the given {@link ParentObject}.
-	 *
-	 * @param node - The {@link ParentObject} to listen on.
-	 * @param eventName - The event to listen for.
-	 * @param listener - The callback to invoke when the event fires.
-	 * @returns A function that, when called, removes the listener.
-	 *
-	 * @remarks
-	 * A {@link ParentObject} supports the same change events as a {@link TreeNode}, so callers do not
-	 * have to distinguish the two. Which events fire depends on the kind of `ParentObject`:
-	 *
-	 * - For document-root parents, `treeChanged` proxies to the current root node (and automatically
-	 * re-subscribes when the root is replaced) and also fires on root replacement; `nodeChanged` fires
-	 * when the root is replaced (the shallow change to this location's single child).
-	 *
-	 * - For detached (removed) and unhydrated parents, `nodeChanged` and `treeChanged` fire when the node
-	 * is re-inserted into the document or hydrated (inserted for the first time), leaving the location empty.
-	 */
-	on<K extends keyof TreeChangeEventsBeta>(
-		node: ParentObject,
-		eventName: K,
-		listener: TreeChangeEventsBeta[K],
-	): () => void;
-
-	/**
 	 * Register an event listener on the given {@link TreeNodeParent} (a {@link TreeNode} or {@link ParentObject}).
 	 *
 	 * @param node - The parent to listen on. Typically the result of {@link (TreeAlpha:interface).parent2}.
@@ -305,6 +280,13 @@ export interface TreeAlpha {
 	 * This overload accepts a value whose specific kind (node vs. parent object) is not statically
 	 * known, and exposes the `nodeChanged`/`treeChanged` events common to both. For the richer array-node
 	 * payloads, first narrow `node` to a {@link TreeNode}.
+	 *
+	 * For document-root parents, `treeChanged` proxies to the current root node (and automatically
+	 * re-subscribes when the root is replaced) and also fires on root replacement; `nodeChanged` fires
+	 * when the root is replaced (the shallow change to this location's single child).
+	 *
+	 * For detached (removed) and unhydrated parents, `nodeChanged` and `treeChanged` fire when the node
+	 * is re-inserted into the document or hydrated (inserted for the first time), leaving the location empty.
 	 */
 	on<K extends keyof TreeChangeEventsBeta>(
 		node: TreeNodeParent,

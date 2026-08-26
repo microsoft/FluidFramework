@@ -1828,7 +1828,6 @@ export interface TreeAlpha {
     importVerbose<const TSchema extends ImplicitFieldSchema>(schema: TSchema, data: VerboseTree | undefined, options?: TreeParsingOptions): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
     key2(node: TreeNode): string | number | undefined;
     on<K extends keyof TreeChangeEventsAlpha<TNode>, TNode extends TreeNode>(node: TNode, eventName: K, listener: NoInfer<TreeChangeEventsAlpha<TNode>[K]>): () => void;
-    on<K extends keyof TreeChangeEventsBeta>(node: ParentObject, eventName: K, listener: TreeChangeEventsBeta[K]): () => void;
     on<K extends keyof TreeChangeEventsBeta>(node: TreeNodeParent, eventName: K, listener: TreeChangeEventsBeta[K]): () => void;
     parent2(node: TreeNode): TreeNodeParent;
     tagContentSchema<TSchema extends TreeNodeSchema, TContent extends InsertableField<TSchema>>(schema: TSchema, content: TContent): TContent;
