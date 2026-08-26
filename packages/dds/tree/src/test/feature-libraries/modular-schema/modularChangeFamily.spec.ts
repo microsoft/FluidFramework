@@ -66,15 +66,17 @@ import type {
 	EncodedNodeChangeset,
 	FieldChangeDelta,
 	FieldChangeEncodingContext,
+	FieldChangeDecodingContext,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import {
-	getFieldKind,
 	intoDelta,
 	updateRefreshers,
 	relevantRemovedRoots as relevantDetachedTreesImplementation,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { getChangeHandler } from "../../../feature-libraries/modular-schema/modularChangeUtils.js";
 import {
 	newCrossFieldKeyTable,
 	type CrossFieldKeyTable,
@@ -136,7 +138,8 @@ const singleNodeCodec: IJsonCodec<
 	SingleNodeChangeset,
 	EncodedNodeChangeset | "",
 	EncodedNodeChangeset | "",
-	FieldChangeEncodingContext
+	FieldChangeEncodingContext,
+	FieldChangeDecodingContext
 > = {
 	encode: (change, context) => {
 		return change === undefined ? emptyEncodedChange : context.encodeNode(change);
@@ -162,7 +165,10 @@ const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 	// We create changesets by composing an empty single node field with a change to the child.
 	// We don't want the temporarily empty single node field to be pruned away leaving us with a generic field instead.
 	isEmpty: (change) => false,
-	getNestedChanges: (change) => (change === undefined ? [] : [[change, 0, 0]]),
+	getNestedChanges: (change) =>
+		change === undefined
+			? []
+			: [{ nodeId: change, inputRootId: undefined, detachId: undefined }],
 	createEmpty: () => undefined,
 	getCrossFieldKeys: (_change) => [],
 };
@@ -1285,6 +1291,17 @@ describe("ModularChangeFamily", () => {
 			return tryGetFromNestedMap(nodeMap, major, minor);
 		};
 
+		it("preserves no-change constraints", () => {
+			const input: ModularChangeset = {
+				...Change.empty(),
+				noChangeConstraint: { violated: false },
+				noChangeConstraintOnRevert: { violated: false },
+			};
+
+			const updated = updateRefreshers(input, getDetachedNode, []);
+			assert.deepEqual(updated, input);
+		});
+
 		it("preserves relevant refreshers that are present in the input", () => {
 			const input: ModularChangeset = {
 				...Change.empty(),
@@ -1605,14 +1622,14 @@ function normalizeChangeset(change: ModularChangeset): ModularChangeset {
 		const normalizedFieldChanges: FieldChangeMap = new Map();
 
 		for (const [field, fieldChange] of fields) {
-			const changeHandler = getFieldKind(fieldKinds, fieldChange.fieldKind).changeHandler;
+			const changeHandler = getChangeHandler(fieldKinds, fieldChange.fieldKind);
 
 			// TODO: This relies on field kinds calling prune child on all changes,
 			// while pruning is supposed to be an optimization which could be skipped.
-			normalizedFieldChanges.set(
-				field,
-				changeHandler.rebaser.prune(fieldChange.change, normalizeNodeChanges),
-			);
+			normalizedFieldChanges.set(field, {
+				...fieldChange,
+				change: brand(changeHandler.rebaser.prune(fieldChange.change, normalizeNodeChanges)),
+			});
 
 			const crossFieldKeys = changeHandler.getCrossFieldKeys(fieldChange.change);
 			for (const { key, count } of crossFieldKeys) {

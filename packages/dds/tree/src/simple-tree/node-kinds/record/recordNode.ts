@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { FluidIterableIterator } from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -17,8 +18,7 @@ import type { NodeSchemaOptionsAlpha } from "../../api/index.js";
 import {
 	type TreeNodeSchema,
 	NodeKind,
-	// eslint-disable-next-line import-x/no-deprecated
-	typeNameSymbol,
+	schemaIdentifierBrand,
 	typeSchemaSymbol,
 	type UnhydratedFlexTreeNode,
 	getInnerNode,
@@ -78,8 +78,7 @@ function createRecordNodeProxy(
 					case typeSchemaSymbol: {
 						return schema;
 					}
-					// eslint-disable-next-line import-x/no-deprecated
-					case typeNameSymbol: {
+					case schemaIdentifierBrand: {
 						return schema.identifier;
 					}
 					case Symbol.iterator: {
@@ -370,15 +369,14 @@ export function recordSchema<
 		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
 			persistedMetadata;
 
-		// eslint-disable-next-line import-x/no-deprecated
-		public get [typeNameSymbol](): TName {
+		public get [schemaIdentifierBrand](): TName {
 			return identifier;
 		}
 		public get [typeSchemaSymbol](): Output {
 			return Schema.constructorCached?.constructor as unknown as Output;
 		}
 
-		public [Symbol.iterator](): IterableIterator<
+		public [Symbol.iterator](): FluidIterableIterator<
 			[string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes>]
 		> {
 			return recordIterator(this);
@@ -412,7 +410,7 @@ export function recordSchema<
 
 function* recordIterator<TAllowedTypes extends ImplicitAllowedTypes>(
 	record: TreeRecordNode<TAllowedTypes>,
-): IterableIterator<[string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes>]> {
+): FluidIterableIterator<[string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes>]> {
 	for (const [key, value] of Object.entries(record)) {
 		yield [key, value];
 	}

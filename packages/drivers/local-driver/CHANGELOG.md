@@ -1,5 +1,152 @@
 # @fluidframework/local-driver
 
+## 2.116.0
+
+### Minor Changes
+
+- Rename minVersionForCollab to oldestSupportedClient ([#27806](https://github.com/microsoft/FluidFramework/pull/27806)) [86b912170c](https://github.com/microsoft/FluidFramework/commit/86b912170c0e12ebeb481c5201f923c72bf94498)
+
+  The cross-client compatibility parameter has new names:
+  - The
+    [`MinimumVersionForCollab`](https://fluidframework.com/docs/api/runtime-definitions/minimumversionforcollab-typealias)
+    type is now
+    [`OldestSupportedClientVersion`](https://fluidframework.com/docs/api/runtime-definitions/oldestsupportedclientversion-typealias).
+  - [`LoadContainerRuntimeParams.minVersionForCollab`](https://fluidframework.com/docs/api/container-runtime/loadcontainerruntimeparams-interface#minversionforcollab-propertysignature)
+    is now
+    [`LoadContainerRuntimeParams.oldestSupportedClient`](https://fluidframework.com/docs/api/container-runtime/loadcontainerruntimeparams-interface#oldestsupportedclient-propertysignature).
+  - [`BaseContainerRuntimeFactoryProps.minVersionForCollab`](https://fluidframework.com/docs/api/aqueduct/basecontainerruntimefactoryprops-interface#minversionforcollab-propertysignature)
+    is now
+    [`BaseContainerRuntimeFactoryProps.oldestSupportedClient`](https://fluidframework.com/docs/api/aqueduct/basecontainerruntimefactoryprops-interface#oldestsupportedclient-propertysignature).
+  - [`createTreeContainerRuntimeFactory`](https://fluidframework.com/docs/api/fluid-static/#createtreecontainerruntimefactory-function)
+    now accepts `oldestSupportedClient`.
+    `minVersionForCollaboration` remains available as a deprecated overload.
+  - `@fluidframework/driver-definitions` now exports its minor-only version type as
+    [`OldestSupportedServiceClientVersion`](https://fluidframework.com/docs/api/driver-definitions/oldestsupportedserviceclientversion-typealias),
+    and
+    [`ServiceOptions.oldestSupportedClient`](https://fluidframework.com/docs/api/driver-definitions/serviceoptions-interface#oldestsupportedclient-propertysignature)
+    is available.
+  - [`AzureClient`](https://fluidframework.com/docs/api/azure-client/azureclient-class),
+    [`OdspClient`](https://fluidframework.com/docs/api/odsp-client/odspclient-class),
+    and
+    [`TinyliciousClient`](https://fluidframework.com/docs/api/tinylicious-client/tinyliciousclient-class)
+    methods now use `oldestSupportedClient` and
+    [`OldestSupportedClientVersion`](https://fluidframework.com/docs/api/runtime-definitions/oldestsupportedclientversion-typealias)
+    in their signatures.
+
+  The previous property and type names in `@fluidframework/runtime-definitions`,
+  `@fluidframework/container-runtime`, `@fluidframework/aqueduct`, and
+  `@fluidframework/fluid-static` are deprecated and will be removed in future
+  releases. Where both old and new property names remain available, specifying both
+  is an error. The alpha `MinimumVersionForCollaboration` type and
+  `ServiceOptions.minVersionForCollaboration` property are replaced directly rather
+  than retained as aliases.
+
+  ```typescript
+  // Before
+  const runtime = await loadContainerRuntime({
+    context,
+    registryEntries,
+    provideEntryPoint,
+    minVersionForCollab: "2.40.0",
+  });
+
+  // After
+  const runtime = await loadContainerRuntime({
+    context,
+    registryEntries,
+    provideEntryPoint,
+    oldestSupportedClient: "2.40.0",
+  });
+  ```
+
+  Telemetry property names are unchanged.
+
+## 2.115.0
+
+### Minor Changes
+
+- Simplify creating attached Fluid containers with ServiceClient ([#27789](https://github.com/microsoft/FluidFramework/pull/27789)) [1671447b57](https://github.com/microsoft/FluidFramework/commit/1671447b57852875ec90a9d1c16b3817ce25e004)
+
+  Added `ServiceClient.createAttachedContainer` which creates and attaches a Fluid container in one operation.
+  It is a convenient shorthand for calling `createContainer` followed by `attach` when detached-container access is not needed.
+
+  ```typescript
+  const container = await client.createAttachedContainer(dataStoreKind);
+  ```
+
+## 2.114.0
+
+### Minor Changes
+
+- Add new @alpha ServiceClient API for creating and loading Fluid containers ([#27693](https://github.com/microsoft/FluidFramework/pull/27693)) [ee47192d4a](https://github.com/microsoft/FluidFramework/commit/ee47192d4ae91bc28f9154c4d1ead2acad762f3c)
+
+  This introduces an experimental (`@alpha`), service-agnostic API for working with Fluid containers whose root is an arbitrary data store, along with an in-memory implementation for testing.
+
+  The new surface is made up of:
+  - `ServiceClient` (`@fluidframework/driver-definitions`): the entry point for creating and loading containers. Along with it come the supporting container types (`FluidContainer`, `FluidContainerWithService`, `FluidContainerAttached`), the data store model (`DataStoreKind`, `DataStoreKey`, `DataStoreRegistry`, `DataStoreCreator`), and the generic registry primitives (`Registry`, `RegistryKey`, `lookupInRegistry`, `createBasicRegistryKey`).
+  - `defineDataStore` and `sharedObjectRegistryFromIterable` (`@fluidframework/shared-object-base`): build a `DataStoreKind` from a root shared object and a registry of shared object kinds.
+  - `defineTreeDataStore` and `instantiateTreeFirstTime` (`@fluidframework/tree`): a SharedTree-specific convenience wrapper that produces a `DataStoreKind` backed by a `TreeView`.
+  - `startEphemeralService` (`@fluidframework/local-driver`): starts an in-memory `EphemeralService` for tests. The service owns the lifetime of the in-memory documents and resources, and produces `ServiceClient`s connected to it (via `EphemeralService.newClient` or `EphemeralService.defaultClient`). The helpers `cleanupEphemeralService` and `getDefaultEphemeralService` manage an optional default service instance.
+
+  Apart from the `@fluidframework/local-driver` helpers (which come from `@fluidframework/local-driver/alpha`), these APIs are also re-exported from `fluid-framework`. None reference any `@legacy` types.
+
+  Example:
+
+  ```typescript
+  import { startEphemeralService } from "@fluidframework/local-driver/alpha";
+  import {
+    ServiceClient,
+    defineTreeDataStore,
+    TreeViewConfiguration,
+    SchemaFactory,
+  } from "fluid-framework/alpha";
+  import { strict as assert } from "node:assert";
+
+  // Start an ephemeral in-memory service and get a ServiceClient connected to it.
+  const service = startEphemeralService();
+  const client: ServiceClient = service.defaultClient;
+  // Define a DataStoreKind which uses a SharedTree.
+  // In this case the schema is for a single number with an initializer that starts the it at 1.
+  // This schema is captures in the type allowing for strongly typed access to the data in the tree,
+  // where the type matches the schema based runtime enforcement of the schema.
+  const numberStore = defineTreeDataStore({
+    type: "my-app-root",
+    config: new TreeViewConfiguration({ schema: SchemaFactory.number }),
+    initializer: () => 1,
+  });
+
+  // Create a container in the service with the above DataStoreKind.
+  // Ideally this creation would use a service independent API, and only the attach call would be service dependent,
+  // but that is not supported yet.
+  const detachedContainer1 = await client.createContainer(numberStore);
+  const container1 = await detachedContainer1.attach();
+
+  // We now have easy and type safe access to the data in the tree, which will be synced over the service.
+  assert.equal(container1.data.root, 1);
+
+  // A second client can load the same container from the service, and will see the same data.
+  const container2 = await client.loadContainer(container1.id, numberStore);
+  assert.equal(container2.data.root, 1);
+
+  // Both clients can modify the data, and the changes will be synced over the service.
+  container2.data.root = 2;
+  // Since we are using an ephemeral service, we can await the synchronization using service.synchronize.
+  await service.synchronize();
+
+  // And now the changes are visible for all clients.
+  assert.equal(container1.data.root, 2);
+  assert.equal(container2.data.root, 2);
+  ```
+
+  Note that this example does a couple of things which are difficult to do with the other API surfaces:
+  1. It creates a container, then loads a second copy of it, allowing for collaboration. There is currently no non-legacy API surface which allows this without spawning a server process. This is also cleaner than the exacting legacy API options, and can replace the test specific APIs for this as well.
+  2. It creates a container which has a SharedTree at the root, and nothing else. This avoids depending on legacy DDS implementations, which is great for long-term document support and bundle size. This is currently impossible using `fluid-static`, which forces a special root data store. It is also impossible if using `aqueduct`, which forces a root directory in every data store. It can be done using the low level legacy APIs directly, but this new API for it is much simpler.
+  3. There is a common interface all services implement (`ServiceClient`), making the container creation part of the code work for any service implementation.
+
+## 2.113.0
+
+Dependency updates only.
+
 ## 2.112.0
 
 Dependency updates only.

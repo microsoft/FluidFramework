@@ -7,12 +7,17 @@ import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
-import type { IChannel } from "@fluidframework/datastore-definitions/internal";
+import type {
+	IChannelFactory,
+	IChannel,
+} from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import { startEphemeralService } from "@fluidframework/local-driver/internal";
 import type {
 	ISharedObjectKind,
-	SharedObjectKind,
+	SharedObjectKindAlpha,
 } from "@fluidframework/shared-object-base/internal";
 import {
 	MockContainerRuntimeFactory,
@@ -30,13 +35,12 @@ import { asAlpha } from "../../api.js";
 import { FluidClientVersion } from "../../codec/index.js";
 import {
 	CommitKind,
+	CommitOutcome,
 	type Revertible,
 	type UpPath,
 	moveToDetachedField,
 	rootFieldKey,
 	storedEmptyFieldSchema,
-	type ChangeFamily,
-	type ChangeFamilyEditor,
 	EmptyKey,
 	ValueSchema,
 } from "../../core/index.js";
@@ -46,6 +50,7 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/chunked-forest/chunkedForest.js";
 import {
+	ComparisonForest,
 	flexTreeSlot,
 	MockNodeIdentifierManager,
 	TreeCompressionStrategy,
@@ -64,15 +69,7 @@ import {
 	Tree,
 	type TreeCheckout,
 } from "../../shared-tree/index.js";
-import {
-	SchematizingSimpleTreeView,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../shared-tree/schematizingTreeView.js";
-import type { EditManager } from "../../shared-tree-core/index.js";
-import {
-	TreeBeta,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../simple-tree/api/index.js";
+import { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { simpleTreeNodeSlot } from "../../simple-tree/core/treeNodeKernel.js";
 import {
@@ -89,13 +86,19 @@ import {
 	FieldKind,
 	type SimpleLeafNodeSchema,
 } from "../../simple-tree/index.js";
-import { handleSchema, numberSchema, stringSchema } from "../../simple-tree/index.js";
+import {
+	handleSchema,
+	numberSchema,
+	stringSchema,
+	TreeBeta,
+} from "../../simple-tree/index.js";
 import {
 	configuredSharedTree,
 	resolveOptions,
 	SharedTree as SharedTreeKind,
 	type ISharedTree,
 } from "../../treeFactory.js";
+import { defineTreeDataStore } from "../../treeDataStore.js";
 import { brand } from "../../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { TreeSimpleContent } from "../feature-libraries/flex-tree/utils.js";
@@ -120,6 +123,8 @@ import {
 	DefaultTestSharedTreeKind,
 	getView,
 	createSnapshotCompressor,
+	StringAndNumberArray,
+	StringAndBoolArray,
 } from "../utils.js";
 
 const enableSchemaValidation = true;
@@ -127,7 +132,7 @@ const enableSchemaValidation = true;
 const DebugSharedTree = configuredSharedTree({
 	jsonValidator: FormatValidatorBasic,
 	forest: ForestTypeExpensiveDebug,
-}) as SharedObjectKind<ISharedTree> & ISharedObjectKind<ISharedTree>;
+}) as SharedObjectKindAlpha<ISharedTree> & ISharedObjectKind<ISharedTree>;
 
 class MockSharedTreeRuntime extends MockFluidDataStoreRuntime {
 	public constructor() {
@@ -954,19 +959,6 @@ describe("SharedTree", () => {
 		assert.deepEqual([...view2.root], ["A", "B", "C"]);
 	});
 
-	// It's not clear if we'll ever want to expose the EditManager to ISharedTree consumers or
-	// if we'll ever expose some memory stats in which the trunk length would be included.
-	// If we do then this test should be updated to use that code path.
-	interface EditManagerKludge {
-		kernel?: {
-			editManager?: EditManager<
-				ChangeFamilyEditor,
-				unknown,
-				ChangeFamily<ChangeFamilyEditor, unknown>
-			>;
-		};
-	}
-
 	it("has bounded memory growth in EditManager", () => {
 		const provider = new TestTreeProviderLite(2);
 		const viewInit = provider.trees[0].viewWith(
@@ -990,6 +982,9 @@ describe("SharedTree", () => {
 
 		provider.synchronizeMessages();
 
+		assert.equal(provider.trees[0].kernel.checkout.branchHistory.length, 10);
+		assert.equal(provider.trees[1].kernel.checkout.branchHistory.length, 10);
+
 		// These two edit will have ref numbers that correspond to the last of the above edits
 		view1.root.insertAtStart("");
 		view2.root.insertAtStart("");
@@ -997,16 +992,12 @@ describe("SharedTree", () => {
 		// This synchronization point should ensure that both trees see the edits with the higher ref numbers.
 		provider.synchronizeMessages();
 
-		const t1 = provider.trees[0] as unknown as EditManagerKludge;
-		const t2 = provider.trees[1] as unknown as EditManagerKludge;
-		assert(
-			t1.kernel?.editManager !== undefined && t2.kernel?.editManager !== undefined,
-			"EditManager has moved. This test must be updated.",
-		);
-		assert(t1.kernel.editManager.getTrunkChanges("main").length < 10);
-		assert(t2.kernel.editManager.getTrunkChanges("main").length < 10);
+		assert.equal(provider.trees[0].kernel.checkout.branchHistory.length, 2);
+		assert.equal(provider.trees[1].kernel.checkout.branchHistory.length, 2);
 	});
 
+	// This covers in-memory retention only. See the "retainHistory persistence" suite below for the
+	// summary round-trip behavior.
 	it("does not evict trunk commits when retainHistory is enabled", () => {
 		const provider = new TestTreeProviderLite(
 			2,
@@ -1025,15 +1016,8 @@ describe("SharedTree", () => {
 		viewInit.dispose();
 		provider.synchronizeMessages();
 
-		const t1 = provider.trees[0] as unknown as EditManagerKludge;
-		const t2 = provider.trees[1] as unknown as EditManagerKludge;
-		assert(
-			t1.kernel?.editManager !== undefined && t2.kernel?.editManager !== undefined,
-			"EditManager has moved. This test must be updated.",
-		);
-
-		const priorEditCount = t1.kernel.editManager?.getTrunkChanges("main").length;
-		assert.equal(t2.kernel.editManager.getTrunkChanges("main").length, priorEditCount);
+		const priorEditCount = provider.trees[0].kernel.checkout.branchHistory.length;
+		assert.equal(provider.trees[1].kernel.checkout.branchHistory.length, priorEditCount);
 
 		const [view1, view2] = provider.trees.map((t) =>
 			t.viewWith(new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation })),
@@ -1057,8 +1041,105 @@ describe("SharedTree", () => {
 		// All of the edits (plus the two additional ones) should still be present on the trunk since
 		// retainHistory prevents trunk commits from ever being trimmed.
 		const expectedCount = priorEditCount + sequencedEditCount + 2;
-		assert.equal(t1.kernel.editManager.getTrunkChanges("main").length, expectedCount);
-		assert.equal(t2.kernel.editManager.getTrunkChanges("main").length, expectedCount);
+		assert.equal(provider.trees[0].kernel.checkout.branchHistory.length, expectedCount);
+		assert.equal(provider.trees[1].kernel.checkout.branchHistory.length, expectedCount);
+	});
+
+	describe("Persists retained history", () => {
+		/**
+		 * Creates two connected trees and sequences enough edits that the collaboration window advances
+		 * past most of them.
+		 * @returns the provider and the number of trunk commits the first tree still holds in memory.
+		 */
+		function generateHistory(factory: IChannelFactory<ITree>): {
+			provider: TestTreeProviderLite;
+			retainedCommitCount: number;
+		} {
+			const provider = new TestTreeProviderLite(2, factory);
+			const viewInit = provider.trees[0].viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
+			viewInit.initialize([]);
+			viewInit.dispose();
+			provider.synchronizeMessages();
+
+			const [view1, view2] = provider.trees.map((t) =>
+				t.viewWith(new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation })),
+			);
+
+			for (let i = 0; i < 10; ++i) {
+				view1.root.insertAtStart("");
+			}
+			provider.synchronizeMessages();
+
+			// These two edits have ref numbers corresponding to the last of the above edits, which advances
+			// the collaboration window past them.
+			view1.root.insertAtStart("");
+			view2.root.insertAtStart("");
+			provider.synchronizeMessages();
+
+			return {
+				provider,
+				retainedCommitCount: trunkCommitCount(provider.trees[0]),
+			};
+		}
+
+		/**
+		 * Summarizes `tree` and loads a fresh client from the resulting summary.
+		 * @param idCompressor - must be able to decode the revision tags in the summary, so this reuses the
+		 * summarizing client's compressor rather than creating an empty one.
+		 */
+		async function loadFreshClient(
+			tree: ITree,
+			factory: IChannelFactory<ITree>,
+			idCompressor: IIdCompressor,
+		): Promise<ISharedTree> {
+			const { summary } = await (tree as unknown as IChannel).summarize();
+			const runtime = new MockFluidDataStoreRuntime({ idCompressor });
+			return (await factory.load(
+				runtime,
+				"loaded",
+				{
+					deltaConnection: runtime.createDeltaConnection(),
+					objectStorage: MockStorage.createFromSummary(summary),
+				},
+				factory.attributes,
+			)) as ISharedTree;
+		}
+
+		function trunkCommitCount(tree: ISharedTree): number {
+			return tree.kernel.checkout.branchHistory.length;
+		}
+
+		it("persists the retained trunk when retainHistory is enabled", async () => {
+			const factory = configuredSharedTree({
+				jsonValidator: FormatValidatorBasic,
+				retainHistory: true,
+			}).getFactory();
+			const { provider, retainedCommitCount } = generateHistory(factory);
+			// Nothing was evicted, so the summarizing client holds every commit.
+			assert(retainedCommitCount > 10);
+			const tree = provider.trees[0];
+			assert.equal(
+				trunkCommitCount(await loadFreshClient(tree, factory, provider.getCompressor(tree))),
+				retainedCommitCount,
+				"A client loading from the summary should recover the full retained history",
+			);
+		});
+
+		it("persists only the collaboration window by default", async () => {
+			const factory = configuredSharedTree({
+				jsonValidator: FormatValidatorBasic,
+			}).getFactory();
+			const { provider, retainedCommitCount } = generateHistory(factory);
+			assert(retainedCommitCount < 10);
+			const tree = provider.trees[0];
+			assert.equal(
+				trunkCommitCount(await loadFreshClient(tree, factory, provider.getCompressor(tree))),
+				retainedCommitCount,
+				"The default path must persist exactly the collaboration window",
+			);
+		});
 	});
 
 	it("can process changes while detached", async () => {
@@ -2008,6 +2089,302 @@ describe("SharedTree", () => {
 
 			unsubscribe();
 		});
+
+		describe("emits settled event once a local commit is sequenced", () => {
+			it("FullyApplied outcome ", () => {
+				// Setup
+				const provider = new TestTreeProviderLite(1);
+				const treeA = provider.trees[0];
+				const config = new TreeViewConfiguration({
+					schema: StringArray,
+					enableSchemaValidation,
+				});
+				const viewA = asAlpha(treeA.viewWith(config));
+				viewA.initialize([]);
+				provider.synchronizeMessages();
+
+				const outcomes: CommitOutcome[] = [];
+				const unsubscribeCallbacks = new Set<() => void>();
+				unsubscribeCallbacks.add(
+					viewA.events.on("changed", (metadata) => {
+						if (metadata.isLocal) {
+							unsubscribeCallbacks.add(
+								metadata.events.on("settled", (outcome) => {
+									outcomes.push(outcome);
+								}),
+							);
+						}
+					}),
+				);
+				viewA.root.insertAtStart("Hello");
+				assert.deepEqual(outcomes, []);
+
+				// Act
+				provider.synchronizeMessages();
+
+				// Verify
+				assert.deepEqual(outcomes, [CommitOutcome.FullyApplied]);
+
+				// Cleanup
+				for (const unsubscribe of unsubscribeCallbacks) unsubscribe();
+			});
+			it("NewContentOnly outcome ", () => {
+				// Setup
+				const provider = new TestTreeProviderLite(2);
+				const treeA = provider.trees[0];
+				const treeB = provider.trees[1];
+				const config = new TreeViewConfiguration({
+					schema: StringArray,
+					enableSchemaValidation,
+				});
+				const viewA = asAlpha(treeA.viewWith(config));
+				viewA.initialize([]);
+				provider.synchronizeMessages();
+
+				const viewB = asAlpha(treeB.viewWith(config));
+
+				const outcomesOnB: CommitOutcome[] = [];
+				const unsubscribeCallbacks = new Set<() => void>();
+				unsubscribeCallbacks.add(
+					viewB.events.on("changed", (metadata) => {
+						if (metadata.isLocal) {
+							unsubscribeCallbacks.add(
+								metadata.events.on("settled", (outcome) => {
+									outcomesOnB.push(outcome);
+								}),
+							);
+						}
+					}),
+				);
+				viewA.runTransaction(
+					() => {
+						viewA.root.insertAt(0, "A Won");
+					},
+					{ preconditions: [{ type: "noChange" }] },
+				);
+				viewB.runTransaction(
+					() => {
+						viewB.root.insertAt(0, "B Won");
+					},
+					{ preconditions: [{ type: "noChange" }] },
+				);
+				assert.deepEqual(outcomesOnB, []);
+
+				// Act
+				provider.synchronizeMessages();
+
+				// Verify
+				assert.deepEqual(outcomesOnB, [CommitOutcome.NewContentOnly]);
+
+				// Cleanup
+				for (const unsubscribe of unsubscribeCallbacks) unsubscribe();
+			});
+			it("FullyDropped outcome", () => {
+				// Setup
+				const provider = new TestTreeProviderLite(3);
+				const treeA = provider.trees[0];
+				const treeB = provider.trees[1];
+				const treeC = provider.trees[2];
+				const configA = new TreeViewConfiguration({
+					schema: StringArray,
+					enableSchemaValidation,
+				});
+				const configB = new TreeViewConfiguration({
+					schema: StringAndBoolArray,
+					enableSchemaValidation,
+				});
+				const configC = new TreeViewConfiguration({
+					schema: StringAndNumberArray,
+					enableSchemaValidation,
+				});
+				const viewA = treeA.viewWith(configA);
+				viewA.initialize([]);
+				provider.synchronizeMessages();
+
+				const viewB = asAlpha(treeB.viewWith(configB));
+				const viewC = asAlpha(treeC.viewWith(configC));
+
+				const outcomesOnC: CommitOutcome[] = [];
+				const unsubscribeCallbacks = new Set<() => void>();
+				unsubscribeCallbacks.add(
+					viewC.events.on("changed", (metadata) => {
+						if (metadata.isLocal) {
+							unsubscribeCallbacks.add(
+								metadata.events.on("settled", (outcome) => {
+									outcomesOnC.push(outcome);
+								}),
+							);
+						}
+					}),
+				);
+				viewB.upgradeSchema();
+				// This second schema upgrade will conflict with the first, causing the second to be dropped
+				viewC.upgradeSchema();
+				assert.deepEqual(outcomesOnC, []);
+
+				// Act
+				provider.synchronizeMessages();
+
+				// Verify
+				assert.deepEqual(outcomesOnC, [CommitOutcome.FullyDropped]);
+
+				// Cleanup
+				for (const unsubscribe of unsubscribeCallbacks) unsubscribe();
+			});
+			it("for a merged edit", () => {
+				// Setup
+				const provider = new TestTreeProviderLite(1);
+				const tree = provider.trees[0];
+				const view = tree.kernel.viewWith(
+					new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+				);
+				view.initialize([]);
+				provider.synchronizeMessages();
+
+				const fork = view.fork();
+				fork.root.insertAtStart("42");
+
+				const outcomes: CommitOutcome[] = [];
+				const unsubscribeCallbacks = new Set<() => void>();
+				unsubscribeCallbacks.add(
+					view.events.on("changed", (metadata) => {
+						if (metadata.isLocal) {
+							unsubscribeCallbacks.add(
+								metadata.events.on("settled", (outcome) => {
+									outcomes.push(outcome);
+								}),
+							);
+						}
+					}),
+				);
+
+				view.merge(fork);
+				assert.deepEqual(outcomes, []);
+
+				// Act
+				provider.synchronizeMessages();
+
+				// Verify
+				assert.deepEqual(outcomes, [CommitOutcome.FullyApplied]);
+
+				// Cleanup
+				for (const unsubscribe of unsubscribeCallbacks) unsubscribe();
+			});
+			it("a new edit cannot be submitted synchronously during the settled event callback", () => {
+				// Setup
+				const provider = new TestTreeProviderLite(2);
+				const treeA = provider.trees[0];
+				const treeB = provider.trees[1];
+				const config = new TreeViewConfiguration({
+					schema: StringArray,
+					enableSchemaValidation,
+				});
+				const viewA = asAlpha(treeA.viewWith(config));
+				viewA.initialize([]);
+				provider.synchronizeMessages();
+
+				const viewB = asAlpha(treeB.viewWith(config));
+
+				const outcomesOnB: CommitOutcome[] = [];
+				const unsubscribeCallbacks = new Set<() => void>();
+				unsubscribeCallbacks.add(
+					viewB.events.on("changed", (metadata) => {
+						if (metadata.isLocal) {
+							unsubscribeCallbacks.add(
+								metadata.events.on("settled", (outcome) => {
+									outcomesOnB.push(outcome);
+									assert.throws(
+										() => viewB.root.insertAtStart("B came second"),
+										validateUsageError(
+											"Editing the tree is forbidden during a commit settled event callback",
+										),
+									);
+								}),
+							);
+						}
+					}),
+				);
+
+				// Create conflicting transactions so B's local edit settles with NewContentOnly.
+				viewA.runTransaction(() => {
+					viewA.root.insertAt(0, "A Won");
+				});
+				viewB.runTransaction(
+					() => {
+						viewB.root.insertAt(0, "B Won");
+					},
+					{ preconditions: [{ type: "noChange" }] },
+				);
+
+				// Act
+				provider.synchronizeMessages();
+
+				// Verify
+				assert.deepEqual(outcomesOnB, [CommitOutcome.NewContentOnly]);
+
+				// Cleanup
+				for (const unsubscribe of unsubscribeCallbacks) unsubscribe();
+			});
+			it("a new edit can be submitted asynchronously in response to the event", async () => {
+				// Setup
+				const provider = new TestTreeProviderLite(2);
+				const treeA = provider.trees[0];
+				const treeB = provider.trees[1];
+				const config = new TreeViewConfiguration({
+					schema: StringArray,
+					enableSchemaValidation,
+				});
+				const viewA = asAlpha(treeA.viewWith(config));
+				viewA.initialize([]);
+				provider.synchronizeMessages();
+
+				const viewB = asAlpha(treeB.viewWith(config));
+
+				let promise: Promise<void>;
+				const unsubscribeCallbacks = new Set<() => void>();
+				unsubscribeCallbacks.add(
+					viewB.events.on("changed", (metadata) => {
+						if (metadata.isLocal) {
+							unsubscribeCallbacks.add(
+								metadata.events.on("settled", (outcome) => {
+									if (outcome !== CommitOutcome.FullyApplied) {
+										promise = new Promise<void>((resolve) => {
+											setTimeout(() => {
+												viewB.root.insertAtEnd("B came second");
+												resolve();
+											});
+										});
+									}
+								}),
+							);
+						}
+					}),
+				);
+
+				// Create conflicting transactions so B's local edit settles with NewContentOnly.
+				viewA.runTransaction(() => {
+					viewA.root.insertAt(0, "A Won");
+				});
+				viewB.runTransaction(
+					() => {
+						viewB.root.insertAt(0, "B Won");
+					},
+					{ preconditions: [{ type: "noChange" }] },
+				);
+
+				// Act
+				provider.synchronizeMessages();
+
+				// Verify
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- this a check to ensure that the promise is set
+				assert(promise! !== undefined, "Expected promise to be set");
+				await promise;
+				assert.deepEqual([...viewB.root], ["A Won", "B came second"]);
+
+				// Cleanup
+				for (const unsubscribe of unsubscribeCallbacks) unsubscribe();
+			});
+		});
 	});
 
 	describe("Rebasing", () => {
@@ -2058,26 +2435,30 @@ describe("SharedTree", () => {
 	});
 
 	describe("tolerates open async transactions in the face of inbound commits", () => {
+		const config = new TreeViewConfiguration({
+			schema: StringArray,
+			enableSchemaValidation,
+		});
+		const testArrayTree = defineTreeDataStore({
+			type: "testArrayTree",
+			config,
+			initializer: () => ["A", "C", "E"],
+		});
 		it("committed transaction", async () => {
-			const provider = await TestTreeProvider.create(2);
-			const tree1 = provider.trees[0];
-			const tree2 = provider.trees[1];
-			const config = new TreeViewConfiguration({
-				schema: StringArray,
-				enableSchemaValidation,
-			});
-			const view1 = asAlpha(tree1.viewWith(config));
-			const view2 = tree2.viewWith(config);
-			view1.initialize(["A", "C", "E"]);
-			await provider.ensureSynchronized();
+			const client = startEphemeralService().defaultClient;
+			const container1 = await client.createAttachedContainer(testArrayTree);
+			const container2 = await client.loadContainer(container1.id, testArrayTree);
+			const view1 = asAlpha(container1.data);
+			const view2 = container2.data;
 
 			await view1.runTransactionAsync(async () => {
 				view1.root.insertAt(2, "D");
 				assert.deepEqual([...view1.root], ["A", "C", "D", "E"]);
 
+				// An edit on view2 while view1 is in an async open transaction
 				view2.root.insertAt(1, "B");
 				assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
-				await provider.ensureSynchronized();
+				await client.service.synchronize();
 
 				assert.deepEqual([...view1.root], ["A", "C", "D", "E"]);
 				assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
@@ -2085,31 +2466,26 @@ describe("SharedTree", () => {
 			assert.deepEqual([...view1.root], ["A", "B", "C", "D", "E"]);
 			assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
 
-			await provider.ensureSynchronized();
+			await client.service.synchronize();
 			assert.deepEqual([...view1.root], ["A", "B", "C", "D", "E"]);
 			assert.deepEqual([...view2.root], ["A", "B", "C", "D", "E"]);
 		});
 
 		it("aborted transaction", async () => {
-			const provider = await TestTreeProvider.create(2);
-			const tree1 = provider.trees[0];
-			const tree2 = provider.trees[1];
-			const config = new TreeViewConfiguration({
-				schema: StringArray,
-				enableSchemaValidation,
-			});
-			const view1 = asAlpha(tree1.viewWith(config));
-			const view2 = tree2.viewWith(config);
-			view1.initialize(["A", "C", "E"]);
-			await provider.ensureSynchronized();
+			const client = startEphemeralService().defaultClient;
+			const container1 = await client.createAttachedContainer(testArrayTree);
+			const container2 = await client.loadContainer(container1.id, testArrayTree);
+			const view1 = asAlpha(container1.data);
+			const view2 = container2.data;
 
 			await view1.runTransactionAsync(async () => {
 				view1.root.insertAt(2, "D");
 				assert.deepEqual([...view1.root], ["A", "C", "D", "E"]);
 
+				// An edit on view2 while view1 is in an async open transaction
 				view2.root.insertAt(1, "B");
 				assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
-				await provider.ensureSynchronized();
+				await client.service.synchronize();
 
 				assert.deepEqual([...view1.root], ["A", "C", "D", "E"]);
 				assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
@@ -2118,7 +2494,7 @@ describe("SharedTree", () => {
 			assert.deepEqual([...view1.root], ["A", "B", "C", "E"]);
 			assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
 
-			await provider.ensureSynchronized();
+			await client.service.synchronize();
 			assert.deepEqual([...view1.root], ["A", "B", "C", "E"]);
 			assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
 		});
@@ -2483,10 +2859,12 @@ describe("SharedTree", () => {
 					forest: ForestTypeOptimized,
 				}).getFactory(),
 			);
-			assert.equal(trees[0].kernel.checkout.forest instanceof ChunkedForest, true);
+			const { checkout } = trees[0].kernel;
+			assert(checkout.forest instanceof ChunkedForest);
+			assert.equal(checkout.forest.breaker, checkout.breaker);
 		});
 
-		it("ForestTypeExpensive uses ObjectForest with additionalAsserts flag set to true", () => {
+		it("ForestTypeExpensive uses a ComparisonForest of ChunkedForest and ObjectForest with additionalAsserts set to true", () => {
 			const { trees } = new TestTreeProviderLite(
 				1,
 				configuredSharedTree({
@@ -2495,8 +2873,12 @@ describe("SharedTree", () => {
 				}).getFactory(),
 			);
 			const forest = trees[0].kernel.checkout.forest;
-			assert(forest instanceof ObjectForest);
-			assert.equal(forest.additionalAsserts, true);
+			assert(forest instanceof ComparisonForest);
+			assert(forest.main instanceof ChunkedForest);
+			assert(forest.reference instanceof ObjectForest);
+			assert.equal(forest.main.breaker, trees[0].kernel.checkout.breaker);
+			assert.equal(forest.reference.breaker, trees[0].kernel.checkout.breaker);
+			assert.equal(forest.reference.additionalAsserts, true);
 		});
 	});
 	describe("Schema based op encoding", () => {
@@ -2753,7 +3135,7 @@ describe("SharedTree", () => {
 		const sharedObject = configuredSharedTree({
 			jsonValidator: FormatValidatorBasic,
 			forest: ForestTypeExpensiveDebug,
-		}) as SharedObjectKind<ISharedTree> & ISharedObjectKind<ISharedTree>;
+		}) as SharedObjectKindAlpha<ISharedTree> & ISharedObjectKind<ISharedTree>;
 		const tree = sharedObject.getFactory().create(runtime, "tree");
 		const runtimeFactory = new MockContainerRuntimeFactory();
 		runtimeFactory.createContainerRuntime(runtime);

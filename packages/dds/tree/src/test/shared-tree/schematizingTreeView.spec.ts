@@ -554,12 +554,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 			// Case which doesn't update due to root being required
 			assert.throws(() => view.upgradeSchema(), validateUsageError(/cannot be upgraded/));
-
-			const reference = checkoutWithContent({
-				schema: emptySchema,
-				initialTree: fieldJsonCursor([]),
-			});
-			validateViewConsistency(reference, view.checkout);
+			assert.throws(() => view.root, validateUsageError(/invalid state by another error/));
 		});
 
 		it("update non-empty", () => {
@@ -600,7 +595,9 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(view.compatibility.isEquivalent, false);
 		assert.throws(
 			() => view.root,
-			(e) => e instanceof UsageError,
+			validateUsageError(
+				/TreeView\.root is unavailable because the view schema is not compatible with the document's stored schema\. The first schema mismatch is: the root field has different allowed node types: only the view schema allows \["com\.fluidframework\.leaf\.string"\]\. The stored schema can be upgraded; call TreeView\.upgradeSchema\(\)/,
+			),
 		);
 
 		view.upgradeSchema();
@@ -624,7 +621,9 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(view.compatibility.isEquivalent, false);
 		assert.throws(
 			() => view.root,
-			(e) => e instanceof UsageError,
+			validateUsageError(
+				/TreeView\.root is unavailable because the view schema is not compatible with the document's stored schema\. The first schema mismatch is: the root field has different allowed node types: only the stored schema allows \["com\.fluidframework\.leaf\.string"\]\. The schemas cannot be upgraded automatically\./,
+			),
 		);
 
 		assert.throws(
@@ -646,7 +645,9 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(view.compatibility.isEquivalent, false);
 		assert.throws(
 			() => view.root,
-			(e) => e instanceof UsageError,
+			validateUsageError(
+				/TreeView\.root is unavailable because the view schema is not compatible with the document's stored schema\. The first schema mismatch is: the root field has different allowed node types: only the view schema allows \["com\.fluidframework\.leaf\.boolean"\]; only the stored schema allows \["com\.fluidframework\.leaf\.string"\]\. The schemas cannot be upgraded automatically\./,
+			),
 		);
 
 		assert.throws(

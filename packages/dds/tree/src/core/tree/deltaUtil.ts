@@ -4,6 +4,7 @@
  */
 
 import type { Mutable } from "../../util/index.js";
+import { comparePartialRevisions } from "../rebase/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
 import type { TreeChunk } from "./chunk.js";
@@ -37,12 +38,19 @@ export function makeDetachedNodeId(
 	return out;
 }
 
-export function offsetDetachId(id: DetachedNodeId, offset: number): DetachedNodeId;
-export function offsetDetachId(
+export function offsetDetachId(id: DetachedNodeId, offset: number): DetachedNodeId {
+	return {
+		...id,
+		minor: id.minor + offset,
+	};
+}
+
+export function offsetDetachIdOpt(id: DetachedNodeId, offset: number): DetachedNodeId;
+export function offsetDetachIdOpt(
 	id: DetachedNodeId | undefined,
 	offset: number,
 ): DetachedNodeId | undefined;
-export function offsetDetachId(
+export function offsetDetachIdOpt(
 	id: DetachedNodeId | undefined,
 	offset: number,
 ): DetachedNodeId | undefined {
@@ -55,21 +63,66 @@ export function offsetDetachId(
 	};
 }
 
+export function subtractDetachedNodeId(a: DetachedNodeId, b: DetachedNodeId): number {
+	const cmp = comparePartialRevisions(a.major, b.major);
+	if (cmp !== 0) {
+		return cmp * Number.POSITIVE_INFINITY;
+	}
+
+	return a.minor - b.minor;
+}
+
 export function areDetachedNodeIdsEqual(a: DetachedNodeId, b: DetachedNodeId): boolean {
 	return a.major === b.major && a.minor === b.minor;
 }
 
 /**
- * Returns true if a delta field map contains any changes that would be visible in the document (i.e., a detach or an attach)
- * @param fields - Delta FieldMap to check for visible changes
- * @returns True if change map contains any changes that would be visible in the document, false otherwise
+ * Describes the types of changes present in a delta.
  */
-export function deltaFieldMapHasVisibleChanges(fields: FieldMap | undefined): boolean {
+export interface DeltaChangeProfile {
+	/** Whether the delta includes any build operations. */
+	hasBuilds: boolean;
+	/** Whether the delta includes any destroy operations. */
+	hasDestroys: boolean;
+	/** Whether the delta includes any rename operations. */
+	hasRenames: boolean;
+	/** Whether the delta includes any changes in the document tree. */
+	hasChangesInDocumentTree: boolean;
+	/** Whether the delta includes any changes in detached trees. */
+	hasChangesInDetachedTrees: boolean;
+}
+
+/**
+ * Reports the kinds of changes present in a delta.
+ * @param delta - The delta to analyze.
+ * @returns An object indicating which kinds of changes are present.
+ */
+export function getDeltaChangeProfile(delta: Root): DeltaChangeProfile {
+	const profile: DeltaChangeProfile = {
+		hasBuilds: delta.build !== undefined && delta.build.length > 0,
+		hasDestroys: delta.destroy !== undefined && delta.destroy.length > 0,
+		hasRenames: delta.rename !== undefined && delta.rename.length > 0,
+		hasChangesInDocumentTree: deltaFieldMapHasChanges(delta.fields),
+		hasChangesInDetachedTrees:
+			delta.global?.some((detachedNodeChanges) =>
+				deltaFieldMapHasChanges(detachedNodeChanges.fields),
+			) === true,
+	};
+	return profile;
+}
+
+/**
+ * Returns true if a delta field map contains any changes.
+ * Note that the changes may not be noticeable to the user (e.g., a change that replaces a node with another structurally identical node).
+ * @param fields - Delta FieldMap to check for changes
+ * @returns True if change map contains any changes, false otherwise
+ */
+export function deltaFieldMapHasChanges(fields: FieldMap | undefined): boolean {
 	if (fields === undefined || fields.size === 0) {
 		return false;
 	}
 	for (const [, fieldChanges] of fields) {
-		if (deltaFieldChangesHaveVisibleChanges(fieldChanges)) {
+		if (deltaFieldChangesHaveChanges(fieldChanges)) {
 			return true;
 		}
 	}
@@ -77,16 +130,17 @@ export function deltaFieldMapHasVisibleChanges(fields: FieldMap | undefined): bo
 }
 
 /**
- * Returns true if the given field changes contains any changes that would be visible in the document (i.e., a detach or an attach)
- * @param fieldChanges - Field changes to check for visible changes
- * @returns True if the field changes contain any changes that would be visible in the document, false otherwise
+ * Returns true if the given field changes contain any changes.
+ * Note that the changes may not be noticeable to the user (e.g., a change that replaces a node with another structurally identical node).
+ * @param fieldChanges - Field changes to check for changes
+ * @returns True if the field changes contain any changes, false otherwise
  */
-export function deltaFieldChangesHaveVisibleChanges(fieldChanges: FieldChanges): boolean {
+export function deltaFieldChangesHaveChanges(fieldChanges: FieldChanges): boolean {
 	for (const mark of fieldChanges.marks) {
 		if (
 			mark.attach !== undefined ||
 			mark.detach !== undefined ||
-			deltaFieldMapHasVisibleChanges(mark.fields)
+			deltaFieldMapHasChanges(mark.fields)
 		) {
 			return true;
 		}

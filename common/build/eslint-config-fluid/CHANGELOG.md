@@ -1,5 +1,116 @@
 # @fluidframework/eslint-config-fluid Changelog
 
+## [14.1.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v14.1.0)
+
+The custom Fluid ESLint rules are now maintained and published as part of this package. Rule names remain unchanged
+under the `@fluid-internal/fluid` namespace.
+
+## [14.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v14.0.0)
+
+### TypeScript 6 support
+
+TypeScript 6 is now the supported version of TypeScript. The TypeScript ESLint dependencies have been upgraded from
+8.54 to 8.58, which adds TypeScript 6 support.
+
+**Requirements:**
+
+- TypeScript 6
+- override transitive TypeScript ESLint dependencies before 8.58
+
+#### overrides for transitive TypeScript ESLint dependencies
+
+`@typescript-eslint/*` packages need to be 8.58 or later for TypeScript 6 support.
+But latest version of packages known at 2026-08-05 use versions prior to 8.58 and should be overridden.
+
+##### Minimal overrides
+
+`@rushstack/eslint-plugin` and `eslint-plugin-tsdoc` are part of this config and will need overridden.
+Example override for pnpm:
+
+```yaml
+# @typescript-eslint/utils overrides
+#   As of 2026-08-05 @rushstack/eslint-plugin (v0.23.2), does not have a version using v8.58 or later.
+"@rushstack/eslint-plugin>@typescript-eslint/utils@<8.58.0": ~8.58.0
+#   As of 2026-08-05 eslint-plugin-tsdoc (v0.5.2), does not have a version using v8.58 or later.
+"eslint-plugin-tsdoc>@typescript-eslint/utils@<8.58.0": ~8.58.0
+```
+
+##### Additional overrides
+
+`eslint-plugin-jest`, while not part of this config, is known to require `eslint-plugin` update.
+If package manager does not select more recent update, then a temporary override may be needed to coerce
+a new resolution. After lockfile refresh, the override may be removed.
+Example override for pnpm:
+
+```yaml
+# @typescript-eslint/eslint-plugin override to force resolution update
+"eslint-plugin-jest>@typescript-eslint/eslint-plugin@<8.58.0": ^8.58.0
+```
+
+### Breaking: `@eslint-react/eslint-plugin` upgraded to v5
+
+`@eslint-react/eslint-plugin` has been upgraded from 2.13 to 5.9. The v5 plugin exposes its rules through a single,
+flattened namespace. Any `eslint-disable` comments or custom rule overrides that reference the previous nested rule
+names must be updated.
+
+Key rule name changes:
+
+| Previous rule                                                 | New rule                                |
+| ------------------------------------------------------------- | --------------------------------------- |
+| `@eslint-react/dom/*`                                         | `@eslint-react/dom-*`                   |
+| `@eslint-react/web-api/*`                                     | `@eslint-react/web-api-*`               |
+| `@eslint-react/naming-convention/*`                           | `@eslint-react/naming-convention-*`     |
+| `@eslint-react/rsc/function-definition`                       | `@eslint-react/rsc-function-definition` |
+| `@eslint-react/no-children-prop`                              | `@eslint-react/jsx-no-children-prop`    |
+| `@eslint-react/no-useless-fragment`                           | `@eslint-react/jsx-no-useless-fragment` |
+| `@eslint-react/jsx-key-before-spread`                         | `@eslint-react/jsx-no-key-after-spread` |
+| `@eslint-react/hooks-extra/no-direct-set-state-in-use-effect` | `@eslint-react/set-state-in-effect`     |
+| `@eslint-react/dom/no-namespace`                              | `@eslint-react/jsx-no-namespace`        |
+| `@eslint-react/naming-convention/use-state`                   | `@eslint-react/use-state`               |
+
+#### Newly enabled rules
+
+The v5 `recommended-typescript` preset enables additional checks. The most significant newly enabled rules are:
+
+- Errors: `@eslint-react/error-boundaries`, `@eslint-react/jsx-no-children-prop-with-children`,
+  `@eslint-react/jsx-no-key-after-spread`, `@eslint-react/jsx-no-namespace`, `@eslint-react/rules-of-hooks`,
+  `@eslint-react/set-state-in-render`, `@eslint-react/static-components`, `@eslint-react/unsupported-syntax`, and
+  `@eslint-react/use-memo`.
+- Warnings: `@eslint-react/exhaustive-deps`, `@eslint-react/jsx-no-leaked-dollar`,
+  `@eslint-react/jsx-no-leaked-semicolon`, `@eslint-react/purity`, `@eslint-react/use-state`,
+  `@eslint-react/web-api-no-leaked-fetch`, and `@eslint-react/web-api-no-leaked-intersection-observer`.
+
+These include React Compiler-oriented checks. Consumers may need file-specific overrides for code that cannot
+immediately comply. For example:
+
+```javascript
+import { strict } from "@fluidframework/eslint-config-fluid";
+
+export default [
+	...strict,
+	{
+		files: ["src/legacy-react/**/*.tsx"],
+		rules: {
+			"@eslint-react/static-components": "off",
+			"@eslint-react/use-memo": "off",
+		},
+	},
+];
+```
+
+#### Rules no longer enabled by the preset
+
+The v5 preset no longer enables the following rules that v2 enabled:
+
+- `@eslint-react/no-default-props`
+- `@eslint-react/no-prop-types`
+- `@eslint-react/no-redundant-should-component-update`
+- `@eslint-react/no-string-refs`
+- `@eslint-react/no-useless-forward-ref`
+- `@eslint-react/prefer-use-state-lazy-initialization`
+
+Consumers that still want these checks should verify whether v5 provides a replacement and configure it explicitly.
+
 ## [13.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v13.0.0)
 
 ### Restrict the named `Type` import from `@sinclair/typebox`

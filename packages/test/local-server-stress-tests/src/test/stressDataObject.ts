@@ -396,6 +396,10 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 			const runtime = await loadContainerRuntime({
 				context,
 				existing,
+				// 2.40 is the oldest runtime that understands the document format written when
+				// createBlobPayloadPending is enabled; choosing a newer version would unnecessarily
+				// reduce the clients that this stress test can interoperate with.
+				oldestSupportedClient: "2.40.0",
 				runtimeOptions,
 				registryEntries: [
 					[

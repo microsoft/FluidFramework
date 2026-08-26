@@ -9,7 +9,14 @@ packages:
   - "."
 
 # Supply chain security settings - see /DEV.md for documentation
-minimumReleaseAge: 1440
+# Use minimumReleaseAge at 10080 when updating dependencies to ensure that
+# each package has been published for at least 7 days (10080 minutes) before
+# it is consumed to match repository policies regarding npmjs registry.
+# Use `pnpm install-no-frozen`.
+minimumReleaseAge: 0
+minimumReleaseAgeExclude:
+  - "@fluid-internal/*"
+  - "@fluidframework/*"
 resolutionMode: highest
 blockExoticSubdeps: true
 trustPolicy: no-downgrade
@@ -30,21 +37,26 @@ frozenLockfile: true
 strictPeerDependencies: true
 updateNotifier: false
 
-# Security overrides.
-# - Address vulnerabilities in brace-expansion, chokidar, diff, js-yaml, minimatch,
-#   serialize-javascript, and picomatch.
 overrides:
+  # @typescript-eslint/eslint-utils need to be 5.58 or later for TypeScript 6 support.
+  #   As of 2026-08-05 @rushstack/eslint-plugin (v0.23.2), does not have a version using v8.58 or later.
+  "@rushstack/eslint-plugin>@typescript-eslint/utils@<8.58.0": ~8.58.0
+  #   As of 2026-08-05 eslint-plugin-tsdoc (v0.5.2), does not have a version using v8.58 or later.
+  "eslint-plugin-tsdoc>@typescript-eslint/utils@<8.58.0": ~8.58.0
+
+  # Security overrides.
   # Resolve known security vulnerabilities in transitive dependencies.
   "@babel/core@>=7 <8": ^7.29.6
-  brace-expansion@>=2 <3: ^2.0.3
-  brace-expansion@>=5 <6: ^5.0.6
-  diff@>=7 <8: ^8.0.3
-  keyv@>=4 <5: ^5.5.3
-
-  brace-expansion@>=1 <2: ^1.1.13
+  brace-expansion@>=1 <2: ^1.1.17
+  brace-expansion@>=2 <3: ^2.1.3
+  brace-expansion@>=5 <6: ^5.0.8
   chokidar: ^5
   diff@>=5 <6: ^5.2.2
-  js-yaml: ^4.1.1
+  diff@>=7 <8: ^8.0.3
+  # fast-uri: CVE-2026-16221 fixed in 4.1.1 and CVE-2026-18446 fixed in 4.1.2.
+  fast-uri: ^4.1.2
+  js-yaml: 4.3.0
+  keyv@>=4 <5: ^5.5.3
   minimatch@>=3 <4: ^3.1.5
   minimatch@>=5 <6: ^5.1.9
   minimatch@>=6 <7: ^6.2.3

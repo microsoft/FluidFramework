@@ -50,7 +50,7 @@ export {
 	visitDelta,
 	createAnnouncedVisitor,
 	combineVisitors,
-	announceDelta,
+	makeBreakingVisitor,
 	applyDelta,
 	makeDetachedFieldIndex,
 	setGenericTreeField,
@@ -69,6 +69,8 @@ export {
 	deltaForRootInitialization,
 	makeDetachedNodeId,
 	offsetDetachId,
+	offsetDetachIdOpt,
+	subtractDetachedNodeId,
 	emptyDelta,
 	type AnchorSlot,
 	type AnchorNode,
@@ -83,6 +85,7 @@ export {
 	CursorMarker,
 	isCursor,
 	DetachedFieldIndex,
+	type DetachedFieldSummaryData,
 	type ReadOnlyDetachedFieldIndex,
 	type DetachedFieldIndexCheckpoint,
 	type ForestRootId,
@@ -107,8 +110,9 @@ export {
 	DetachedFieldIndexFormatVersion,
 	detachedFieldIndexCodecBuilder,
 	areDetachedNodeIdsEqual,
-	deltaFieldMapHasVisibleChanges,
-	deltaFieldChangesHaveVisibleChanges,
+	deltaFieldMapHasChanges,
+	deltaFieldChangesHaveChanges,
+	getDeltaChangeProfile,
 	forEachNodeSubsequence,
 } from "./tree/index.js";
 
@@ -160,13 +164,15 @@ export {
 	SchemaFormatVersion,
 } from "./schema-stored/index.js";
 
-export {
-	type ChangeFamily,
-	type ChangeFamilyCodec,
-	type ChangeEncodingContext,
-	type ChangeFamilyEditor,
-	EditBuilder,
+export type {
+	ChangeFamily,
+	ChangeFamilyCodec,
+	ChangeEncodingContext,
+	ChangeDecodingContext,
+	ChangeFamilyEditor,
+	ProcessChangeFn,
 } from "./change-family/index.js";
+export { EditBuilder } from "./change-family/index.js";
 
 export {
 	areEqualChangeAtomIds,
@@ -179,6 +185,8 @@ export {
 	type GraphCommit,
 	CommitKind,
 	type CommitMetadata,
+	CommitOutcome,
+	type LocalCommitEvents,
 	type LocalChangeMetadata,
 	type RemoteChangeMetadata,
 	type ChangeMetadata,
@@ -218,6 +226,7 @@ export {
 	isAncestor,
 	type ChangeAtomIdRangeMap,
 	newChangeAtomIdRangeMap,
+	newChangeAtomIdTransform,
 	comparePartialRevisions,
 	compareChangesetLocalIds,
 	comparePartialChangesetLocalIds,

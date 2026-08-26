@@ -1423,14 +1423,110 @@ describe("ArrayNode", () => {
 			assert.equal(anchor.index, 2);
 		});
 
-		// This case sticks to the end of the array, which is not ideal, and will need to be fixed with a more sophisticated anchor implementation.
 		it("removed item", () => {
 			const array = init(CustomizableNumberArray, [1, 2, 3]);
 			const anchor = createArrayInsertionAnchor(array, 1);
 			array.removeAt(1);
-			// It's good to test that this still gives a valid index and does not crash, but ideally this would anchor to the range between items rather than jumping to the end.
-			assert.equal(anchor.index, 2);
+			// The item originally at the anchor point is gone; the anchor rests between the surviving
+			// neighbors (now [1, 3]).
+			assert.equal(anchor.index, 1);
+			anchor.dispose();
 		});
+
+		it("throws when reading index after dispose", () => {
+			const array = init(CustomizableNumberArray, [1, 2, 3]);
+			const anchor = createArrayInsertionAnchor(array, 1);
+			assert.equal(anchor.index, 1);
+			anchor.dispose();
+			// Reading the index of a disposed anchor is a usage error.
+			assert.throws(() => anchor.index, validateUsageError(/disposed/));
+			// Disposing again is a no-op.
+			anchor.dispose();
+		});
+
+		it("shifts left when a multi-element range before the anchor is removed", () => {
+			const array = init(CustomizableNumberArray, [10, 20, 30, 40, 50]);
+			const anchor = createArrayInsertionAnchor(array, 4); // gap between 40 and 50
+			array.removeRange(0, 2); // remove 10, 20 -> [30, 40, 50]
+			assert.equal(anchor.index, 2); // still in the gap between 40 and 50
+			anchor.dispose();
+		});
+
+		it("collapses to the removal start when the removed range contains the anchor's position", () => {
+			const array = init(CustomizableNumberArray, [10, 20, 30, 40, 50]);
+			const anchor = createArrayInsertionAnchor(array, 3); // gap between 30 and 40
+			array.removeRange(1, 4); // remove 20, 30, 40 -> [10, 50]
+			// The anchor's position (the gap between 30 and 40) was in the middle of the removed range, so
+			// it collapses to where that range started.
+			assert.equal(anchor.index, 1); // between 10 and 50
+			anchor.dispose();
+		});
+
+		it("tracks across a move within the array", () => {
+			const array = init(CustomizableNumberArray, [10, 20, 30, 40, 50]);
+			const anchor = createArrayInsertionAnchor(array, 2); // gap between 20 and 30
+			array.moveToIndex(0, 4); // move 50 to the front -> [50, 10, 20, 30, 40]
+			// The moved node is inserted before the anchor (shifting it right by one); its removal is
+			// after the anchor and so does not move it.
+			assert.equal(anchor.index, 3); // still in the gap between 20 and 30
+			anchor.dispose();
+		});
+
+		it("throws on an out-of-range initial index", () => {
+			const array = init(CustomizableNumberArray, [1, 2, 3]);
+			// One past the end is valid (an insertion point after the last child).
+			const anchor = createArrayInsertionAnchor(array, 3);
+			assert.equal(anchor.index, 3);
+			anchor.dispose();
+			// Anything beyond that, or negative, is a usage error.
+			assert.throws(
+				() => createArrayInsertionAnchor(array, 4),
+				validateUsageError(/out of bounds/),
+			);
+			assert.throws(
+				() => createArrayInsertionAnchor(array, -1),
+				validateUsageError(/non-negative/),
+			);
+		});
+	});
+
+	it("throws descriptive TypeError for an unsupported Array.prototype method", () => {
+		const array = hydrate(PojoEmulationNumberArray, [1, 2, 3]);
+		const sort = (array as unknown as Record<string, unknown>).sort as (
+			...args: unknown[]
+		) => unknown;
+		assert.equal(typeof sort, "function");
+		assert.throws(
+			() => sort.call(array),
+			(error: Error) =>
+				error instanceof TypeError &&
+				error.message ===
+					"ArrayNode does not support 'sort'. Use the ArrayNode API (e.g., insertAt, removeAt, moveToIndex, splice).",
+		);
+	});
+
+	it("throws descriptive TypeError for future unsupported Array.prototype methods", () => {
+		const array = hydrate(PojoEmulationNumberArray, [1, 2, 3]);
+		const methodName = "__testUnsupportedArrayMethod__";
+		(Array.prototype as unknown as Record<string, unknown>)[methodName] = function () {
+			return "should not reach here";
+		};
+		try {
+			const method = (array as unknown as Record<string, unknown>)[methodName] as (
+				...args: unknown[]
+			) => unknown;
+			assert.equal(typeof method, "function");
+			assert.throws(
+				() => method.call(array),
+				(error: Error) =>
+					error instanceof TypeError &&
+					error.message ===
+						`ArrayNode does not support '${methodName}'. Use the ArrayNode API (e.g., insertAt, removeAt, moveToIndex, splice).`,
+			);
+		} finally {
+			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- Cleaning up test-only method added to Array.prototype
+			delete (Array.prototype as unknown as Record<string, unknown>)[methodName];
+		}
 	});
 });
 

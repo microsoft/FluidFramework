@@ -56,13 +56,20 @@ export type SharedTreeBranchChange<TChange> =
 	| {
 			type: "rebase";
 			change: TaggedChange<TChange> | undefined;
+			/** The commits removed from the head of the branch by this operation */
+			removedCommits: readonly GraphCommit<TChange>[];
+			/** The commits appended to the head of the branch by this operation */
+			newCommits: readonly GraphCommit<TChange>[];
 	  };
 
 /**
  * The events emitted by a `SharedTreeBranch`
  */
-export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TChange>
-	extends BranchTrimmingEvents {
+export interface SharedTreeBranchEvents<
+	TEditor extends ChangeFamilyEditor,
+	TChange,
+	TChangeProcessingContext,
+> extends BranchTrimmingEvents {
 	/**
 	 * Fired just before the head of this branch changes.
 	 * @param change - the change to this branch's state and commits
@@ -79,7 +86,18 @@ export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TCha
 	 * Fired when this branch forks
 	 * @param fork - the new branch that forked off of this branch
 	 */
-	fork(fork: SharedTreeBranch<TEditor, TChange>): void;
+	fork(fork: SharedTreeBranch<TEditor, TChange, TChangeProcessingContext>): void;
+
+	/**
+	 * Fired when a commit is ordered by the sequencing service.
+	 * @param commit - The commit that was sequenced
+	 *
+	 * @remarks
+	 * Once a commit is sequenced, the following guarantees hold:
+	 * 1. The changes carried by the commit have been persisted and other peers are able to see them.
+	 * 2. There can be no more concurrent changes sequenced before this commit, which means this commit has reached its settled form.
+	 */
+	commitSequenced(commit: GraphCommit<TChange>): void;
 
 	/**
 	 * Fired after this branch is disposed
@@ -107,9 +125,16 @@ export interface BranchTrimmingEvents {
 /**
  * A branch of changes that can be applied to a SharedTree.
  */
-export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
-	readonly #events = createEmitter<SharedTreeBranchEvents<TEditor, TChange>>();
-	public readonly events: Listenable<SharedTreeBranchEvents<TEditor, TChange>> = this.#events;
+export class SharedTreeBranch<
+	TEditor extends ChangeFamilyEditor,
+	TChange,
+	TChangeProcessingContext,
+> {
+	readonly #events =
+		createEmitter<SharedTreeBranchEvents<TEditor, TChange, TChangeProcessingContext>>();
+	public readonly events: Listenable<
+		SharedTreeBranchEvents<TEditor, TChange, TChangeProcessingContext>
+	> = this.#events;
 	public readonly editor: TEditor;
 	private disposed = false;
 	private readonly unsubscribeBranchTrimmer?: () => void;
@@ -123,7 +148,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 	 */
 	public constructor(
 		private head: GraphCommit<TChange>,
-		public readonly changeFamily: ChangeFamily<TEditor, TChange>,
+		public readonly changeFamily: ChangeFamily<TEditor, TChange, TChangeProcessingContext>,
 		private readonly mintRevisionTag: () => RevisionTag,
 		private readonly branchTrimmer?: Listenable<BranchTrimmingEvents>,
 		private readonly telemetryEventBatcher?: TelemetryEventBatcher<
@@ -178,10 +203,38 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 	}
 
 	/**
+	 * Notifies the branch that a commit has been sequenced by the sequencing service.
+	 * @param commit - The commit that was sequenced
+	 */
+	public commitWasSequenced(commit: GraphCommit<TChange>): void {
+		this.#events.emit("commitSequenced", commit);
+	}
+
+	/**
 	 * Gets the commit at the head of this branch.
 	 */
 	public getHead(): GraphCommit<TChange> {
 		return this.head;
+	}
+
+	/**
+	 * Gets the number of commits in this branch.
+	 * This includes commits on ancestor branches but excludes the sentinel commit at the root of all branches.
+	 * @remarks
+	 * This method has linear complexity in the number of commits in the branch.
+	 * See {@link BranchCommitCounter} for a cached version.
+	 */
+	public getCommitCount(): number {
+		let count = 0;
+		for (
+			let commit: GraphCommit<TChange> | undefined = this.head;
+			commit !== undefined;
+			commit = commit.parent
+		) {
+			count++;
+		}
+		// Exclude the sentinel commit that serves as the base to all branches.
+		return count - 1;
 	}
 
 	/**
@@ -194,7 +247,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 	public fork(
 		commit: GraphCommit<TChange> = this.head,
 		mintRevisionTag: () => RevisionTag = this.mintRevisionTag,
-	): SharedTreeBranch<TEditor, TChange> {
+	): SharedTreeBranch<TEditor, TChange, TChangeProcessingContext> {
 		this.assertNotDisposed();
 		const fork = new SharedTreeBranch(
 			commit,
@@ -215,7 +268,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 	 * @returns the result of the rebase or undefined if nothing changed
 	 */
 	public rebaseOnto(
-		branch: SharedTreeBranch<TEditor, TChange>,
+		branch: SharedTreeBranch<TEditor, TChange, TChangeProcessingContext>,
 		upTo = branch.getHead(),
 	): void {
 		this.assertNotDisposed();
@@ -291,7 +344,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 	 * @returns the commits that were added to this branch by the merge, or undefined if nothing changed
 	 */
 	public merge(
-		branch: SharedTreeBranch<TEditor, TChange>,
+		branch: SharedTreeBranch<TEditor, TChange, TChangeProcessingContext>,
 	): { sourceCommits: GraphCommit<TChange>[] } | undefined {
 		this.assertNotDisposed();
 		branch.assertNotDisposed();
@@ -328,8 +381,8 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 
 	/** Rebase `branchHead` onto `onto`, but return undefined if nothing changed */
 	private rebaseBranch(
-		branch: SharedTreeBranch<TEditor, TChange>,
-		onto: SharedTreeBranch<TEditor, TChange>,
+		branch: SharedTreeBranch<TEditor, TChange, TChangeProcessingContext>,
+		onto: SharedTreeBranch<TEditor, TChange, TChangeProcessingContext>,
 		upTo = onto.getHead(),
 	): BranchRebaseResult<TChange> | undefined {
 		const { head } = branch;

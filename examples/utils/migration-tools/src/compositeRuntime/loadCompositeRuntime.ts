@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { exampleOldestSupportedClient } from "@fluid-example/example-utils";
 import type {
 	IContainerContext,
 	IRuntime,
@@ -98,6 +99,7 @@ export const loadCompositeRuntime = async (
 		provideEntryPoint: compositeEntryPoint.provideEntryPoint,
 		runtimeOptions,
 		existing,
+		oldestSupportedClient: exampleOldestSupportedClient,
 	});
 
 	if (!existing) {

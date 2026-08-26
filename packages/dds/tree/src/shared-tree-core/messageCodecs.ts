@@ -4,7 +4,7 @@
  */
 
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/internal";
 import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 
 import {
@@ -33,6 +33,14 @@ import type { DecodedMessage } from "./messageTypes.js";
 export interface MessageEncodingContext {
 	idCompressor: IIdCompressor;
 	schema?: SchemaAndPolicy;
+}
+
+/**
+ * Context required for decoding a message. Unlike {@link MessageEncodingContext}, no schema is
+ * needed: message decoding is schema-agnostic.
+ */
+export interface MessageDecodingContext {
+	idCompressor: IIdCompressor;
 }
 
 /**
@@ -65,14 +73,16 @@ export function makeMessageCodecBuilder<TChangeset>(): VersionDispatchingCodecBu
 	DecodedMessage<TChangeset>,
 	MessageEncodingContext,
 	MessageFormatVersion | undefined,
-	typeof messageCodecName
+	typeof messageCodecName,
+	MessageDecodingContext
 > {
 	// See MessageFormatVersion and its members for documentation on what changed in each version.
 	const versions: CodecVersion<
 		DecodedMessage<TChangeset>,
 		MessageEncodingContext,
 		MessageFormatVersion | undefined,
-		MessageCodecBuilderOptions<TChangeset>
+		MessageCodecBuilderOptions<TChangeset>,
+		MessageDecodingContext
 	>[] = [
 		// The "undefined" wire format (no version field) is discontinued.
 		makeDiscontinuedCodecAndSchema(undefined, "2.73.0"),
@@ -133,7 +143,7 @@ export function makeMessageCodecBuilder<TChangeset>(): VersionDispatchingCodecBu
 }
 
 export function getCodecTreeForMessageFormatWithChange(
-	clientVersion: MinimumVersionForCollab,
+	clientVersion: OldestSupportedClientVersion,
 	changeFormat: CodecTree,
 ): CodecTree {
 	const builder = makeMessageCodecBuilder();

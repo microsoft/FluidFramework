@@ -49,13 +49,23 @@ parameters:
     type: string
     default: docker
 
+  - name: publishOverride
+    type: string
+    default: default
+
+  # Indicates who owns the publish step for this build:
+  #   true  - publishing happens as part of this build pipeline's own publish stages.
+  #   false - publishing is delegated to the dedicated publish pipeline, which consumes the packed tarballs
+  #           and publish-metadata.json produced here.
+  # This is recorded in publish-metadata.json so the publish pipeline can tell which runs it owns.
+  # Deliberately has no default: every pipeline must state which side owns its publishing, so that a search
+  # for `publishAsPartOfBuild: true` is an accurate list of what has not been migrated yet.
+  - name: publishAsPartOfBuild
+    type: boolean
+
   - name: tagName
     type: string
     default:
-
-  - name: isReleaseGroup
-    type: boolean
-    default: false
 
   - name: pool
     type: string
@@ -133,6 +143,11 @@ parameters:
 
   # Whether the docker build for this package includes a bump of the package version.
   - name: dockerBuildBumpsVersion
+    type: boolean
+    default: false
+
+  # Whether to append the pushed Docker candidate's digest to publish-metadata.json.
+  - name: emitDockerImageDigest
     type: boolean
     default: false
 
@@ -243,9 +258,9 @@ extends:
                 buildToolsVersionToInstall=${{ parameters.buildToolsVersionToInstall }}
                 containerBaseDir=${{ parameters.containerBaseDir }}
                 interdependencyRange='${{ parameters.interdependencyRange }}'
-                isReleaseGroup=${{ parameters.isReleaseGroup }}
                 installPackages=${{ parameters.installPackages }}
                 installWorkspaceRootOnly=${{ parameters.installWorkspaceRootOnly }}
+                emitDockerImageDigest=${{ parameters.emitDockerImageDigest }}
                 releaseKind=${{ parameters.releaseKind }}
                 setVersion=${{ parameters.setVersion }}
                 shouldPublishNpmPackages=${{ parameters.shouldPublishNpmPackages }}
@@ -362,6 +377,22 @@ extends:
                 echo "$(containerTagSuffix)"
                 echo "##vso[task.setvariable variable=version;isOutput=true]$(containerTagSuffix)"
 
+        # GitSSH has no npm package or base image stage, but its downstream Docker publisher still consumes
+        # the common pack artifact and publish metadata contract.
+        - ${{ if and(eq(parameters.tagName, 'gitssh'), eq(parameters.emitDockerImageDigest, true)) }}:
+          - task: Bash@3
+            displayName: Create publish artifact directory
+            inputs:
+              targetType: inline
+              script: |
+                set -eu -o pipefail
+                mkdir -p $(hostPathToPackArtifact)
+
+          - template: /tools/pipelines/templates/include-generate-publish-metadata.yml@self
+            parameters:
+              publishOverride: ${{ parameters.publishOverride }}
+              publishAsPartOfBuild: ${{ parameters.publishAsPartOfBuild }}
+
         - task: Bash@3
           name: DockerBuildArgs
           displayName: Set docker build arguments
@@ -449,23 +480,27 @@ extends:
                 volumes:
                   $(hostPathToPackArtifact)/tarballs:/usr/src/pack
 
-            # Generating package lists manually because using scripts/pack-packages.sh (like build-npm-package.yml does)
-            # inside the Docker container is proving problematic.
-            # See https://github.com/microsoft/FluidFramework/pull/18445 for details.
+            # Package metadata can be read from the host checkout, but packing must remain in the built
+            # container above because its generated output is not present on the host.
+            # See https://github.com/microsoft/FluidFramework/pull/22072 for the regression this avoids.
             - task: Bash@3
               displayName: Generate package lists
               env:
                 RELEASE_GROUP: ${{ parameters.tagName }}
                 STAGING_PATH: $(Build.ArtifactStagingDirectory)
               inputs:
-                targetType: 'inline'
+                targetType: filePath
                 workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
-                script: |
-                  set -eu -o pipefail
-                  flub list --no-private $RELEASE_GROUP --tarball --feed public --outFile $STAGING_PATH/pack/packagePublishOrder-public.txt
-                  flub list --no-private $RELEASE_GROUP --tarball --feed internal-build --outFile $STAGING_PATH/pack/packagePublishOrder-internal-build.txt
-                  flub list --no-private $RELEASE_GROUP --tarball --feed internal-dev --outFile $STAGING_PATH/pack/packagePublishOrder-internal-dev.txt
-                  flub list --no-private $RELEASE_GROUP --tarball --feed internal-test --outFile $STAGING_PATH/pack/packagePublishOrder-internal-test.txt
+                filePath: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/scripts/generate-package-publish-order.sh
+
+            - template: /tools/pipelines/templates/include-generate-publish-metadata.yml@self
+              parameters:
+                # A docker-only release publishes no npm packages.
+                ${{ if eq(parameters.releaseKind, 'docker') }}:
+                  publishOverride: skip
+                ${{ else }}:
+                  publishOverride: ${{ parameters.publishOverride }}
+                publishAsPartOfBuild: ${{ parameters.publishAsPartOfBuild }}
 
           # At this point we want to publish the artifact with npm-packed packages, but as part of 1ES migration that's
           # now part of templateContext.outputs below.
@@ -601,6 +636,9 @@ extends:
               localImage: $(containerTag)
               remoteImage: $(ComputeFinalTagList.FinalTagList)
 
+          - ${{ if eq(parameters.emitDockerImageDigest, true) }}:
+            - template: /tools/pipelines/templates/include-add-docker-image-digest.yml@self
+
         - ${{ if eq(parameters.installPackages, true) }}:
           # Prune the pnpm store before it's cached. This removes any deps that are not used by the current build.
           - task: Bash@3
@@ -633,39 +671,3 @@ extends:
               artifactName: _api-extractor-temp
               publishLocation: 'pipeline'
               sbomEnabled: false
-
-    # Publish stages
-    # Note: normally (i.e. when the releaseKind is 'both') we tag the git repo when we publish the npm packages.
-    # This is also true if the releaseKind is 'npm' (meaning we only want to publish the npm packages).
-    # But if the releaseKind is 'docker' (meaning we only want to publish the docker images, not the npm packages),
-    # then those steps should tag the repo.
-    - ${{ if and(eq(parameters.shouldPublishNpmPackages, true), ne(parameters.releaseKind, 'docker')) }}:
-      - template: /tools/pipelines/templates/include-publish-npm-package.yml@self
-        parameters:
-          tagName: ${{ parameters.tagName }}
-          isReleaseGroup: ${{ parameters.isReleaseGroup }}
-          buildDirectory: ${{ parameters.buildDirectory }}
-
-    - ${{ if eq(parameters.shouldReleaseDockerImage, true) }}:
-      - stage: publish_docker_official
-        dependsOn: build
-        displayName: Publish Official Docker Image
-        condition: and(succeeded(), eq(variables['release'], 'release'))
-        variables:
-        - template: /tools/pipelines/templates/include-vars-docker.yml@self
-          parameters:
-            containerName: ${{ parameters.containerName }}
-            shouldPushDockerImage: ${{ parameters.shouldPushDockerImage }}
-            testBuild: ${{ parameters.testBuild }}
-        jobs:
-        - template: /tools/pipelines/templates/include-publish-docker-service-steps.yml@self
-          parameters:
-            environment: container-registry-public
-            # $(containerRegistryUrl) comes from the container-registry-info variable
-            # group and needs to be specified as a runtime variable (variables from variable groups apparently are never
-            # available "statically" at parse/compile time, so can't be used with template-expression syntax ( '${{ }}' )).
-            containerRegistryUrl: $(containerRegistryUrl)
-            containerTag: $(containerTag)
-            containerName: public/${{ parameters.containerName }}
-            ${{ if eq(parameters.releaseKind, 'docker') }}:
-              tagName: ${{ parameters.tagName }}
