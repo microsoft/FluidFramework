@@ -50,14 +50,14 @@ export const dataStoreCompatDetailsForRuntime: ILayerCompatDetails = {
 export const runtimeSupportRequirementsForDataStore: ILayerCompatSupportRequirements = {
 	/**
 	 * Minimum generation that Runtime must be at to be compatible with this DataStore. This is calculated
-	 * based on the LayerCompatibilityPolicyWindowMonths.DataStoreRuntime value which defines how many months old can
-	 * the Runtime layer be compared to the DataStore layer for them to still be considered compatible.
+	 * based on the LayerCompatibilityPolicyWindowMonths.NewDataStoreOldRuntime value which defines how many months
+	 * old can the Runtime layer be compared to the DataStore layer for them to still be considered compatible.
 	 * The minimum valid generation value is 0.
 	 */
 	minSupportedGeneration: Math.max(
 		0,
 		dataStoreCoreCompatDetails.generation -
-			LayerCompatibilityPolicyWindowMonths.DataStoreRuntime,
+			LayerCompatibilityPolicyWindowMonths.NewDataStoreOldRuntime,
 	),
 	/**
 	 * The features that the Runtime must support to be compatible with DataStore.
@@ -75,12 +75,15 @@ export function validateRuntimeCompatibility(
 	mc: MonitoringContext,
 ): void {
 	validateLayerCompatibility(
-		"dataStore",
-		"runtime",
-		dataStoreCompatDetailsForRuntime,
-		runtimeSupportRequirementsForDataStore,
-		maybeRuntimeCompatDetails,
-		disposeFn,
-		mc,
+		/* validatingLayer */ {
+			layer: "dataStore",
+			packageInfo: dataStoreCoreCompatDetails,
+			compatSupportRequirements: runtimeSupportRequirementsForDataStore,
+		},
+		/* targetLayer */ {
+			layer: "runtime",
+			compatDetails: maybeRuntimeCompatDetails,
+		},
+		{ disposeFn, mc },
 	);
 }

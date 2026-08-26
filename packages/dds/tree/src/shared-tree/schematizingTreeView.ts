@@ -58,8 +58,11 @@ import {
 	toInitialSchema,
 	toUpgradeSchema,
 	type UntypedTreeView,
+	type TreeBranchHistory,
 	type UntypedTreeViewAlpha,
 	type TreeSchema,
+	type SchemaUpgrade,
+	type StagedUpgradeStatus,
 	getSchemaCompatibilityError,
 } from "../simple-tree/index.js";
 import {
@@ -131,9 +134,14 @@ export class SchematizingSimpleTreeView<
 	private flexTreeContext: Context | undefined;
 
 	/**
-	 * Undefined iff uninitialized or disposed.
+	 * Undefined if and only if uninitialized or disposed.
 	 */
 	private currentCompatibility: SchemaCompatibilityStatus | undefined;
+	/**
+	 * Cached map of upgrade statuses, computed alongside compatibility.
+	 * @remarks Undefined if and only if uninitialized or disposed.
+	 */
+	private currentEnabledUpgrades: ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus> | undefined;
 	public readonly events: Listenable<TreeViewEvents & TreeBranchEvents> &
 		IEmitter<TreeViewEvents & TreeBranchEvents> &
 		HasListeners<TreeViewEvents & TreeBranchEvents> = createEmitter();
@@ -191,9 +199,7 @@ export class SchematizingSimpleTreeView<
 		const stagedUpgradePolicy =
 			config instanceof TreeViewConfigurationAlpha ? config.stagedUpgradePolicy : undefined;
 		const configAlpha = new TreeViewConfigurationAlpha({
-			schema: config.schema,
-			enableSchemaValidation: config.enableSchemaValidation,
-			preventAmbiguity: config.preventAmbiguity,
+			...config,
 			stagedUpgradePolicy,
 		});
 		this.stagedUpgradePolicy = configAlpha.stagedUpgradePolicy;
@@ -207,6 +213,7 @@ export class SchematizingSimpleTreeView<
 			isEquivalent: false,
 			canInitialize: true,
 		};
+		this.currentEnabledUpgrades = new Map();
 		this.update();
 
 		this.unregisterCallbacks.add(
@@ -319,6 +326,13 @@ export class SchematizingSimpleTreeView<
 		}
 
 		this.runSchemaEdit(() => this.checkout.updateSchema(newSchema));
+	}
+
+	public isStagedUpgradeEnabled(upgrade: SchemaUpgrade): StagedUpgradeStatus {
+		if (!this.currentEnabledUpgrades) {
+			this.failDisposed();
+		}
+		return this.currentEnabledUpgrades.get(upgrade) ?? "disabled";
 	}
 
 	/**
@@ -478,12 +492,16 @@ export class SchematizingSimpleTreeView<
 		}
 	}
 
+	/**
+	 * Computes the current schema compatibility status and updates the cached enabled upgrades.
+	 */
 	private computeCompatibility(): SchemaCompatibilityStatus {
-		const compatibility = checkSchemaCompatibility(
+		const { enabledUpgrades, ...compatibility } = checkSchemaCompatibility(
 			this.viewSchema,
 			this.checkout.storedSchema,
 			this.stagedUpgradePolicy,
 		);
+		this.currentEnabledUpgrades = enabledUpgrades;
 		return {
 			...compatibility,
 			canInitialize: canInitialize(this.checkout),
@@ -537,6 +555,7 @@ export class SchematizingSimpleTreeView<
 		}
 		this.checkout.forest.anchors.slots.delete(ViewSlot);
 		this.currentCompatibility = undefined;
+		this.currentEnabledUpgrades = undefined;
 		this.onDispose?.();
 		if (!this.checkout.isSharedBranch && !this.checkout.disposed) {
 			// All non-shared branches are 1:1 with views, so if a user manually disposes a view, we should also dispose the checkout/branch.
@@ -588,6 +607,14 @@ export class SchematizingSimpleTreeView<
 		return this.checkout.fork().viewWith(this.config);
 	}
 
+	public rewindTo(revision: string): void {
+		this.checkout.rewindTo(revision);
+	}
+
+	public revertTo(revision: string): void {
+		this.checkout.revertTo(revision);
+	}
+
 	public merge(context: UntypedTreeViewAlpha, disposeMerged = true): void {
 		this.checkout.merge(context, disposeMerged);
 	}
@@ -607,4 +634,8 @@ export class SchematizingSimpleTreeView<
 	}
 
 	// #endregion Branching
+
+	public get branchHistory(): TreeBranchHistory {
+		return this.checkout.branchHistory;
+	}
 }

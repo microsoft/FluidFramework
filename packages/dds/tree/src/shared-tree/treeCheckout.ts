@@ -10,8 +10,12 @@ import type {
 	Listenable,
 } from "@fluidframework/core-interfaces/internal";
 import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
-import { type TelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils/internal";
+import type { IIdCompressor, StableId } from "@fluidframework/id-compressor";
+import {
+	type TelemetryLoggerExt,
+	UsageError,
+	tagCodeArtifacts,
+} from "@fluidframework/telemetry-utils/internal";
 
 import {
 	FluidClientVersion,
@@ -63,6 +67,7 @@ import {
 	rebaseBranch,
 	type LocalCommitEvents,
 	getDeltaChangeProfile,
+	findAncestor,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -119,6 +124,7 @@ import {
 } from "../util/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
+import { DefaultTreeBranchHistory } from "./history.js";
 import { SharedTreeChangeEnricher } from "./sharedTreeChangeEnricher.js";
 import type { SharedTreeChangeProcessingContext } from "./sharedTreeChangeFamily.js";
 import {
@@ -573,16 +579,22 @@ export class TreeCheckout implements ITreeCheckout {
 	 * @privateRemarks Exposed for testing purposes.
 	 */
 	public static readonly revertTelemetryEventName = "RevertRevertible";
+	/**
+	 * The name of the telemetry event logged when a schema change is applied.
+	 * @privateRemarks Exposed for testing purposes.
+	 */
+	public static readonly schemaChangeTelemetryEventName = "SchemaChangeApplied";
 
 	readonly #events = createEmitter<CheckoutEvents>();
 	public events: Listenable<CheckoutEvents> = this.#events;
+	private _branchHistory?: DefaultTreeBranchHistory;
 
 	public get isBatchInProgress(): boolean {
 		return this.editLock.isLocked;
 	}
 
 	public constructor(
-		branch: SharedTreeBranch<
+		private branch: SharedTreeBranch<
 			SharedTreeEditBuilder,
 			SharedTreeChange,
 			SharedTreeChangeProcessingContext
@@ -605,6 +617,11 @@ export class TreeCheckout implements ITreeCheckout {
 		this.#transaction = this.createTransactionStack(branch);
 		this.editLock = new EditLock(this.#transaction.activeBranchEditor);
 		this.registerForBranchEvents();
+	}
+
+	public get branchHistory(): DefaultTreeBranchHistory {
+		this._branchHistory ??= new DefaultTreeBranchHistory(this.branch, this.idCompressor);
+		return this._branchHistory;
 	}
 
 	/**
@@ -1129,7 +1146,22 @@ export class TreeCheckout implements ITreeCheckout {
 				// They will however be rebased over the rollback of the schema change. This rebasing will
 				// ensure that these data changes are muted if they would render some trees invalid under the
 				// original (reinstated) schema.
-				this.storedSchema.apply(innerChange.innerChange.schema.new);
+				const newSchema = innerChange.innerChange.schema.new;
+				const telemetryMetrics = getSchemaChangeTelemetryMetrics(
+					this.storedSchema,
+					newSchema,
+					innerChange.innerChange.isInverse,
+				);
+				this.storedSchema.apply(newSchema);
+				this.logger?.sendTelemetryEvent({
+					eventName: TreeCheckout.schemaChangeTelemetryEventName,
+					...tagCodeArtifacts({
+						details: JSON.stringify({
+							...telemetryMetrics,
+							isSharedBranch: this.isSharedBranch,
+						}),
+					}),
+				});
 			} else {
 				fail(0xad1 /* Unknown Shared Tree change type. */);
 			}
@@ -1352,11 +1384,15 @@ export class TreeCheckout implements ITreeCheckout {
 			SharedTreeChangeProcessingContext
 		>,
 	): void {
-		// TODO: Dispose old branch, if necessary
 		assert(
 			this.#transaction.size === 0,
 			0xc55 /* Cannot switch branches during a transaction */,
 		);
+		if (this.isSharedBranch) {
+			throw new UsageError(
+				"Cannot switch a view away from a shared branch. Consider forking first.",
+			);
+		}
 		const diff = diffHistories(
 			this.changeFamily.rebaser,
 			this.#transaction.branch.getHead(),
@@ -1367,12 +1403,69 @@ export class TreeCheckout implements ITreeCheckout {
 		this.unregisterFromBranchEvents();
 
 		this.#transaction = this.createTransactionStack(branch);
+		this.branch = branch;
+		this._branchHistory?.dispose();
+		this._branchHistory = undefined;
 		this.editLock = new EditLock(this.#transaction.activeBranchEditor);
 		this.registerForBranchEvents();
 
 		// TODO: Rework eventing
 		this.applyInternalChange(diff);
 		this.#events.emit("afterBatch");
+	}
+
+	public rewindTo(revisionString: string): void {
+		this.checkNotDisposed("The branch has already been disposed and cannot be rewound.");
+		if (this.#transaction.size > 0) {
+			throw new UsageError("Rewinding is not supported during transactions.");
+		}
+		const revision = this.idCompressor.tryRecompress(revisionString as StableId);
+		if (revision === undefined) {
+			throw new UsageError(`Unrecognized revision id: ${revisionString}`);
+		}
+		const targetCommit = findAncestor(
+			this.#transaction.branch.getHead(),
+			(commit) => commit.revision === revision,
+		);
+		if (targetCommit === undefined) {
+			throw new UsageError(`No commit found with revision: ${revisionString}`);
+		}
+		this.switchBranch(this.#transaction.branch.fork(targetCommit));
+	}
+
+	public revertTo(revisionString: string): void {
+		this.checkNotDisposed(
+			"The branch has already been disposed and prior revisions cannot be reverted to.",
+		);
+		this.editLock.checkUnlocked("Reverting to a revision");
+		if (this.#transaction.size > 0) {
+			throw new UsageError("Reverting to a revision is not supported during transactions.");
+		}
+		const revision = this.idCompressor.tryRecompress(revisionString as StableId);
+		if (revision === undefined) {
+			throw new UsageError(`Unrecognized revision id: ${revisionString}`);
+		}
+		// Populated with the commits that came after the target commit, from oldest to newest.
+		const commitsToUndo: GraphCommit<SharedTreeChange>[] = [];
+		const targetCommit = findAncestor(
+			[this.#transaction.activeBranch.getHead(), commitsToUndo],
+			(commit) => commit.revision === revision,
+		);
+		if (targetCommit === undefined) {
+			throw new UsageError(`No commit found with revision: ${revisionString}`);
+		}
+		if (!hasSome(commitsToUndo)) {
+			// The target commit is already the head of the branch, so there is nothing to revert.
+			return;
+		}
+		const revisionForInvert = this.mintRevisionTag();
+		const toUndo = this.changeFamily.rebaser.compose(commitsToUndo);
+		const inverse = this.changeFamily.rebaser.invert(
+			makeAnonChange(toUndo),
+			false,
+			revisionForInvert,
+		);
+		this.#transaction.branch.apply(tagChange(inverse, revisionForInvert));
 	}
 
 	private rebase(view: UntypedTreeView): void {
@@ -1499,6 +1592,8 @@ export class TreeCheckout implements ITreeCheckout {
 			view.dispose();
 		}
 		this.#events.emit("dispose");
+		this._branchHistory?.dispose();
+		this._branchHistory = undefined;
 	}
 
 	public getRemovedRoots(): [string | number | undefined, number, JsonableTree][] {
@@ -1799,6 +1894,54 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	// #endregion Enrichment
+}
+
+function getSchemaChangeTelemetryMetrics(
+	oldSchema: TreeStoredSchema,
+	newSchema: TreeStoredSchema,
+	isInverse: boolean,
+): {
+	changeKind: "initialize" | "upgrade" | "restriction" | "rollback";
+	isInverse: boolean;
+	oldNodeSchemaCount: number;
+	newNodeSchemaCount: number;
+	addedNodeSchemaCount: number;
+	removedNodeSchemaCount: number;
+	rootFieldKindChanged: boolean;
+	oldRootAllowedTypeCount: number;
+	newRootAllowedTypeCount: number;
+} {
+	let addedNodeSchemaCount = 0;
+	for (const identifier of newSchema.nodeSchema.keys()) {
+		if (!oldSchema.nodeSchema.has(identifier)) {
+			addedNodeSchemaCount++;
+		}
+	}
+
+	let removedNodeSchemaCount = 0;
+	for (const identifier of oldSchema.nodeSchema.keys()) {
+		if (!newSchema.nodeSchema.has(identifier)) {
+			removedNodeSchemaCount++;
+		}
+	}
+
+	return {
+		changeKind: isInverse
+			? "rollback"
+			: oldSchema.nodeSchema.size === 0
+				? "initialize"
+				: allowsRepoSuperset(defaultSchemaPolicy, oldSchema, newSchema)
+					? "upgrade"
+					: "restriction",
+		isInverse,
+		oldNodeSchemaCount: oldSchema.nodeSchema.size,
+		newNodeSchemaCount: newSchema.nodeSchema.size,
+		addedNodeSchemaCount,
+		removedNodeSchemaCount,
+		rootFieldKindChanged: oldSchema.rootFieldSchema.kind !== newSchema.rootFieldSchema.kind,
+		oldRootAllowedTypeCount: oldSchema.rootFieldSchema.types.size,
+		newRootAllowedTypeCount: newSchema.rootFieldSchema.types.size,
+	};
 }
 
 /**

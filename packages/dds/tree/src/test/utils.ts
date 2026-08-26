@@ -186,6 +186,7 @@ import {
 	type TreeViewConfiguration,
 	SchemaFactory,
 	type TreeView,
+	type TreeBranchHistory,
 	type UntypedTreeViewAlpha,
 	type TreeBranchEvents,
 	type ITree,
@@ -1527,6 +1528,14 @@ export class MockTreeCheckout implements ITreeCheckout {
 		},
 	) {}
 
+	public rewindTo(): void {
+		throw new Error("'rewindTo' not implemented.");
+	}
+
+	public revertTo(): void {
+		throw new Error("'revertTo' not implemented.");
+	}
+
 	public viewWith<TRoot extends ImplicitFieldSchema>(
 		config: TreeViewConfiguration<TRoot>,
 	): TreeView<TRoot> {
@@ -1588,6 +1597,9 @@ export class MockTreeCheckout implements ITreeCheckout {
 	}
 	public isMissingEditsFrom(branch: unknown): never {
 		throw new Error("Method 'isMissingEditsFrom' not implemented in MockTreeCheckout.");
+	}
+	public get branchHistory(): TreeBranchHistory {
+		throw new Error("'history' property not implemented in MockTreeCheckout.");
 	}
 	public dispose(): void {
 		throw new Error("Method 'dispose' not implemented in MockTreeCheckout.");

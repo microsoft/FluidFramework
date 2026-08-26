@@ -104,7 +104,9 @@ import { pkgVersion } from "../packageVersion.js";
 import type { IPendingMessage, PendingStateManager } from "../pendingStateManager.js";
 import {
 	type ISummaryCancellationToken,
+	type IContainerRuntimeMetadata,
 	neverCancelledSummaryToken,
+	metadataBlobName,
 	recentBatchInfoBlobName,
 	type IRefreshSummaryAckOptions,
 } from "../summary/index.js";
@@ -2886,16 +2888,117 @@ describe("Runtime", () => {
 					"Expected DuplicateBatch telemetry to still be logged",
 				);
 			});
+
+			it("Version mark tracking keeps the earlier resolution for a tolerated duplicate batch with no explicit batchId", async () => {
+				const logger = new MockLogger();
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
+					context: getMockContext({ logger }) as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					runtimeOptions: {
+						enableRuntimeIdCompressor: "on",
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				// Subscribing activates version-mark tracking on the inbound batch path.
+				const promotions: { sequenceNumber: number; timestamp: number | undefined }[] = [];
+				containerRuntime.versionMarkResolver.onBatchSequenced(
+					(_batchId, sequenceNumber, timestamp) => {
+						promotions.push({ sequenceNumber, timestamp });
+					},
+				);
+
+				const makeMessage = (
+					sequenceNumber: number,
+					timestamp: number,
+				): ISequencedDocumentMessage =>
+					({
+						clientId: "clientId",
+						clientSequenceNumber: 1,
+						sequenceNumber,
+						timestamp,
+						type: MessageType.Operation,
+						contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+					}) satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage;
+
+				containerRuntime.process(makeMessage(123, 1000), false);
+
+				// The service re-broadcasts the same batch under a different sequence number/timestamp.
+				// DuplicateBatchDetector tolerates this (no explicit batchId), so it must not throw, and
+				// VersionMarkResolver must keep the earlier (first-landed) resolution rather than remapping
+				// to the duplicate's sequence number.
+				assert.doesNotThrow(
+					() => containerRuntime.process(makeMessage(234, 2000), false),
+					"Should not throw when the duplicate batch has no explicit batchId",
+				);
+				logger.assertMatchAny(
+					[{ eventName: "ContainerRuntime:DuplicateBatch" }],
+					"Expected DuplicateBatch telemetry to be logged",
+				);
+				assert.deepStrictEqual(
+					promotions,
+					[{ sequenceNumber: 123, timestamp: 1000 }],
+					"Only the first (original) resolution should have been promoted to listeners",
+				);
+			});
 		});
 
 		describe("Version mark inbound update", () => {
+			it("captures the summary timestamp after load before any new ops arrive", async () => {
+				const sequenceNumber = 42;
+				const timestamp = 123456;
+				const metadata: IContainerRuntimeMetadata = {
+					summaryFormatVersion: 1,
+					message: {
+						clientId: mockClientId,
+						clientSequenceNumber: 1,
+						minimumSequenceNumber: 0,
+						referenceSequenceNumber: 41,
+						sequenceNumber,
+						timestamp,
+						type: MessageType.Operation,
+					},
+				};
+				const context = getMockContext({
+					baseSnapshot: {
+						trees: { ".channels": { trees: {}, blobs: {} } },
+						blobs: { [metadataBlobName]: "metadata-id" },
+					},
+					mockStorage: {
+						...defaultMockStorage,
+						readBlob: async (id) => {
+							assert.equal(id, "metadata-id");
+							return stringToBuffer(JSON.stringify(metadata), "utf8");
+						},
+					},
+				});
+				const deltaManager = context.deltaManager as MockDeltaManager;
+				deltaManager.initialSequenceNumber = sequenceNumber;
+				deltaManager.lastSequenceNumber = sequenceNumber;
+				deltaManager.lastMessage = undefined;
+
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
+					context: context as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: true,
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				assert.deepEqual(containerRuntime.versionMarkResolver.sealAndCaptureVersionMark(), {
+					kind: "resolved",
+					sequenceNumber,
+					timestamp,
+				});
+			});
+
 			it("resolves through context fetchOps and the historical unpack pipeline", async () => {
 				let capturedSignal: AbortSignal | undefined;
 				let readCount = 0;
 				const context = {
 					...getMockContext(),
 					fetchOps: async (from, to, abortSignal) => {
-						assert.equal(from, 11, "the history read starts at the inclusive lower bound");
+						assert.equal(from, 10, "the history read starts at the inclusive lower bound");
 						assert.equal(to, undefined, "the history read has no fixed upper bound");
 						capturedSignal = abortSignal;
 						return {
@@ -2919,6 +3022,7 @@ describe("Runtime", () => {
 											{
 												type: MessageType.Operation,
 												sequenceNumber: 13,
+												timestamp: 13000,
 												clientId: "targetClient",
 												clientSequenceNumber: 7,
 												contents: {
@@ -2943,8 +3047,8 @@ describe("Runtime", () => {
 				});
 
 				assert.deepEqual(
-					await containerRuntime.versionMarkResolver.resolve("targetBatch", 11),
-					{ kind: "resolved", sequenceNumber: 13 },
+					await containerRuntime.versionMarkResolver.resolve("targetBatch", 10),
+					{ kind: "resolved", sequenceNumber: 13, timestamp: 13000 },
 				);
 				assert.equal(readCount, 1, "the stream stops reading after the target batch");
 				assert.equal(capturedSignal?.aborted, true, "the fetch is aborted after the match");

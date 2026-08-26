@@ -22,7 +22,11 @@ import {
 import { SharedMap } from "@fluidframework/map/internal";
 import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { LocalCodeLoader, TestFluidObjectFactory } from "@fluidframework/test-utils/internal";
+import {
+	defaultTestOldestSupportedClient,
+	LocalCodeLoader,
+	TestFluidObjectFactory,
+} from "@fluidframework/test-utils/internal";
 
 /**
  * This allows the input object to be general,
@@ -78,6 +82,7 @@ export function createLoader<T extends CreateLoaderParams>(
 		opts.runtimeFactory ??
 		new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: defaultDataStoreFactory,
+			oldestSupportedClient: defaultTestOldestSupportedClient,
 			registryEntries: [
 				[defaultDataStoreFactory.type, Promise.resolve(defaultDataStoreFactory)],
 			],

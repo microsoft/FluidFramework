@@ -38,8 +38,12 @@ import {
 import {
 	SchemaFactory,
 	type ImplicitFieldSchema,
+	type TreeBranchAlpha,
 	type TreeView,
+	type TreeViewAlpha,
 	type TreeViewConfiguration,
+	type TreeBranchHistory,
+	type UntypedTreeViewAlpha,
 } from "../../simple-tree/index.js";
 import { toInitialSchema } from "../../simple-tree/index.js";
 import { Breakable } from "../../util/index.js";
@@ -184,14 +188,22 @@ describe("schematizeTree", () => {
 			fork(): ITreeCheckout {
 				throw new Error("Function not implemented.");
 			},
-			isBranch(): boolean {
+			isBranch(): this is TreeBranchAlpha {
 				return true;
 			},
-			isView(): boolean {
+			isView(): this is UntypedTreeViewAlpha {
 				return true;
 			},
-			hasRootSchema(): boolean {
+			hasRootSchema<TSchema extends ImplicitFieldSchema>(
+				_schema: TSchema,
+			): this is TreeViewAlpha<TSchema> {
 				return false;
+			},
+			rewindTo(): void {
+				throw new Error("Function not implemented.");
+			},
+			revertTo(): void {
+				throw new Error("Function not implemented.");
 			},
 			runTransaction(): never {
 				throw new Error("Function not implemented.");
@@ -214,6 +226,7 @@ describe("schematizeTree", () => {
 			isMissingEditsFrom(branch: unknown): never {
 				throw new Error("Function not implemented.");
 			},
+			branchHistory: undefined as unknown as TreeBranchHistory,
 			dispose(): void {
 				throw new Error("Function not implemented.");
 			},

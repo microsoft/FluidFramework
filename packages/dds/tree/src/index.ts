@@ -61,6 +61,7 @@ export {
 } from "./shared-tree/index.js";
 
 export {
+	type CommitRevision,
 	TreeArrayNode,
 	type TreeArrayNodeAlpha,
 	type Unhydrated,
@@ -115,7 +116,6 @@ export {
 	type ArrayNodeTreeChangedDeltaOp,
 	type ArrayNodeTreeChangedRetainOp,
 	type NodeChangedData,
-	type NodeChangedDataAlpha,
 	type NodeChangedDataDelta,
 	type NodeChangedDataProperties,
 	type NodeChangedDataTreeDelta,
@@ -164,6 +164,7 @@ export {
 	singletonSchema,
 	type UnsafeUnknownSchema,
 	type TreeViewAlpha,
+	type StagedUpgradeStatus,
 	type TreeViewBeta,
 	type InsertableField,
 	type Insertable,
@@ -189,7 +190,6 @@ export {
 	// Beta APIs
 	TreeBeta,
 	type TreeChangeEventsBeta,
-	type TreeChangeEventsAlpha,
 	// Other
 	type VerboseTreeNode,
 	type TreeEncodingOptions,
@@ -244,6 +244,8 @@ export {
 	type TreeBranchAlpha,
 	type UntypedTreeViewAlpha,
 	type TreeBranchEvents,
+	type TreeBranchCommitMetadata,
+	type TreeBranchHistory,
 	type NodeSchemaOptions,
 	type NodeSchemaOptionsAlpha,
 	type NodeSchemaMetadata,
