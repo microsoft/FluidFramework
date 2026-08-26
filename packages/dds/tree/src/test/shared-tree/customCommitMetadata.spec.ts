@@ -59,10 +59,7 @@ interface MetadataOptions {
 	readonly minVersionForCollab?: (typeof FluidClientVersion)[keyof typeof FluidClientVersion];
 }
 
-/**
- * Builds a SharedTree factory.
- * @param options - `minVersionForCollab` defaults to the first version that persists commit metadata.
- */
+/** A factory whose defaults enable persisted commit metadata. */
 function makeFactory(options: MetadataOptions = {}): IChannelFactory<ITree> {
 	return configuredSharedTree({
 		jsonValidator: FormatValidatorBasic,
