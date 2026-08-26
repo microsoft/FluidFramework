@@ -82,7 +82,9 @@
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"test": "npm run test:mocha",
-		"test:mocha": "cross-env FLUID_TEST_MODULE_SYSTEM=CJS mocha",
+		"test:mocha": "npm run test:mocha:esm",
+		"test:mocha:cjs": "cross-env FLUID_TEST_MODULE_SYSTEM=CJS mocha",
+		"test:mocha:esm": "mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"typetests:gen": "flub generate typetests --dir . -v"
 	},

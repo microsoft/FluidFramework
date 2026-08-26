@@ -53,7 +53,9 @@
 		"pack:tests": "tar -cf ./experimental-tree.test-files.tar ./src/test ./dist/test ./lib/test",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
-		"test:mocha": "mocha",
+		"test:mocha": "npm run test:mocha:esm",
+		"test:mocha:cjs": "cross-env FLUID_TEST_MODULE_SYSTEM=CJS mocha",
+		"test:mocha:esm": "mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:stress": "cross-env FUZZ_TEST_COUNT=10 FUZZ_STRESS_RUN=normal \"MOCHA_SPEC=dist/test/**/*.fuzz.tests.js\" mocha"
 	},
