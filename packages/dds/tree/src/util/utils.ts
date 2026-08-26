@@ -361,14 +361,6 @@ export const JsonCompatibleReadOnlySchema =
 	Type.Any() as unknown as TUnsafe<JsonCompatibleReadOnly>;
 
 /**
- * Schema for arbitrary JSON-compatible objects (as opposed to arbitrary JSON-compatible values).
- * @remarks Like {@link JsonCompatibleReadOnlySchema}, this does not validate property values.
- */
-export const JsonCompatibleReadOnlyObjectSchema = Type.Unsafe<JsonCompatibleReadOnlyObject>(
-	Type.Record(Type.String(), JsonCompatibleReadOnlySchema),
-);
-
-/**
  * Returns if a particular json compatible value is an object.
  * Does not include `null` or arrays.
  */

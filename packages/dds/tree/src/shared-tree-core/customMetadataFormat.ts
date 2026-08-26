@@ -7,7 +7,7 @@ import * as Type from "@sinclair/typebox";
 
 import {
 	type JsonCompatibleReadOnlyObject,
-	JsonCompatibleReadOnlyObjectSchema,
+	JsonCompatibleReadOnlySchema,
 } from "../util/index.js";
 
 /**
@@ -27,7 +27,11 @@ export type EncodedCustomMetadataTree = {
 export const EncodedCustomMetadataTree = Type.Recursive((Self) =>
 	Type.Object(
 		{
-			m: Type.Optional(JsonCompatibleReadOnlyObjectSchema),
+			m: Type.Optional(
+				Type.Unsafe<JsonCompatibleReadOnlyObject>(
+					Type.Record(Type.String(), JsonCompatibleReadOnlySchema),
+				),
+			),
 			c: Type.Optional(Type.Array(Self)),
 		},
 		{ additionalProperties: false },
