@@ -6,8 +6,8 @@
 import type {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
+	LogLevel,
 } from "@fluidframework/core-interfaces";
-import { LogLevel } from "@fluidframework/core-interfaces";
 import type { ITelemetryGenericEventExt } from "@fluidframework/telemetry-utils/internal";
 
 import { isNonEmptyArray } from "./nonEmptyArrayType.js";
@@ -101,7 +101,7 @@ export class EventAndErrorTrackingLogger
 			}
 		}
 
-		this.baseLogger?.send(event, logLevel ?? LogLevel.essential);
+		this.baseLogger?.send(event, logLevel);
 	}
 
 	public reportAndClearTrackedEvents(): {

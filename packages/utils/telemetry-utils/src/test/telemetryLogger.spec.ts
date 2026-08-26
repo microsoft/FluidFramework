@@ -284,14 +284,17 @@ describe("TaggedLoggerAdapter logLevel forwarding", () => {
 		assert.strictEqual(recorded[0]?.logLevel, LogLevel.verbose);
 	});
 
-	// This single-argument call models code compiled against a package version where callers
-	// could omit `logLevel`; forwarding layers must keep normalizing it for layer compatibility.
-	it("Forwards LogLevel.essential when an older caller omits logLevel", () => {
+	// The adapter is a pass-through: it rewrites tagged properties but applies no log-level
+	// policy. An omitted `logLevel` must therefore reach the wrapped logger still omitted, so
+	// that "no preference expressed" stays distinguishable from an explicit `LogLevel.essential`.
+	// Contrast with childLogger.spec.ts and multiSinkLogger.spec.ts, which do apply policy.
+	it("Forwards an omitted logLevel through to the wrapped logger without substituting one", () => {
 		const { sink, recorded } = createRecordingSink();
 
 		new TaggedLoggerAdapter(sink).send({ category: "generic", eventName: "olderCaller" });
 
-		assert.strictEqual(recorded[0]?.logLevel, LogLevel.essential);
+		assert.strictEqual(recorded.length, 1);
+		assert.strictEqual(recorded[0]?.logLevel, undefined);
 	});
 });
 

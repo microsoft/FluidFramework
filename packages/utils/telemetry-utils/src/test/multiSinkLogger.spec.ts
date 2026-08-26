@@ -237,9 +237,10 @@ describe("MultiSinkLogger", () => {
 			assert.strictEqual(recordedB[0]?.logLevel, LogLevel.verbose);
 		});
 
-		// This single-argument call models code compiled against a package version where callers
-		// could omit `logLevel`; forwarding layers must keep normalizing it for layer compatibility.
-		it("Forwards LogLevel.essential to every sink when an older caller omits logLevel on `send`", () => {
+		// `MultiSinkLogger` applies log-level policy - each sink is filtered against its own
+		// minimum - so it resolves an omitted `logLevel` to the default rather than passing the
+		// omission along. Contrast with `TaggedLoggerAdapter` in telemetryLogger.spec.ts.
+		it("Resolves an omitted logLevel to LogLevel.essential before forwarding to every sink", () => {
 			const { sink: sinkA, recorded: recordedA } = createRecordingSink(LogLevel.verbose);
 			const { sink: sinkB, recorded: recordedB } = createRecordingSink(LogLevel.verbose);
 			const multiSink = createMultiSinkLogger({ loggers: [sinkA, sinkB] });

@@ -15,8 +15,8 @@ import {
 	ConfigTypes,
 	IConfigProviderBase,
 	type ITelemetryBaseLogger,
+	type LogLevel,
 } from "@fluidframework/core-interfaces";
-import { LogLevel } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
@@ -89,7 +89,7 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 			loaderProps: {
 				logger: wrapObjectAndOverride<ITelemetryBaseLogger>(mockLogger, {
 					send: (tb) => (event, logLevel?: LogLevel) => {
-						tb.send(event, logLevel ?? LogLevel.essential);
+						tb.send(event, logLevel);
 						if (
 							event.eventName === "fluid:telemetry:serializedStateManager:SnapshotRefreshed"
 						) {
@@ -161,7 +161,7 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 			loaderProps: {
 				logger: wrapObjectAndOverride<ITelemetryBaseLogger>(mockLogger, {
 					send: (tb) => (event, logLevel?: LogLevel) => {
-						tb.send(event, logLevel ?? LogLevel.essential);
+						tb.send(event, logLevel);
 						if (
 							event.eventName === "fluid:telemetry:serializedStateManager:SnapshotRefreshed"
 						) {
@@ -221,7 +221,7 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 			loaderProps: {
 				logger: wrapObjectAndOverride<ITelemetryBaseLogger>(mockLogger, {
 					send: (tb) => (event, logLevel?: LogLevel) => {
-						tb.send(event, logLevel ?? LogLevel.essential);
+						tb.send(event, logLevel);
 						if (
 							event.eventName ===
 							"fluid:telemetry:serializedStateManager:OldSnapshotFetchWhileRefreshing"

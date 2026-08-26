@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
-import { LogLevel } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
 
 import { loggerToMonitoringContext } from "./config.js";
 import type {
@@ -76,7 +75,7 @@ export function createSampledLogger(
 				if (isSamplingDisabled && (skipLoggingWhenSamplingIsDisabled ?? false)) {
 					return;
 				}
-				logger.send(event, logLevel ?? LogLevel.essential);
+				logger.send(event, logLevel);
 			}
 		},
 		sendTelemetryEvent: (

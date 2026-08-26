@@ -108,7 +108,7 @@ class FileLogger implements ITelemetryBufferedLogger {
 		if (process.env.FLUID_LOGGER_PROPS !== undefined) {
 			plainEvent.details = process.env.FLUID_LOGGER_PROPS;
 		}
-		this.baseLogger?.send(plainEvent, logLevel ?? LogLevel.essential);
+		this.baseLogger?.send(plainEvent, logLevel);
 
 		event.Event_Time = Date.now();
 		// keep track of the frequency of every log event, as we'll sort by most common on write

@@ -301,9 +301,11 @@ describe("logLevel forwarding", () => {
 		assert.strictEqual(recorded[0]?.logLevel, LogLevel.essential);
 	});
 
-	// This single-argument call models code compiled against a package version where callers
-	// could omit `logLevel`; forwarding layers must keep normalizing it for layer compatibility.
-	it("Forwards LogLevel.essential to the sink when an older caller omits logLevel on `send`", () => {
+	// `ChildLogger` applies log-level policy - it filters against a configured minimum before
+	// forwarding - so it resolves an omitted `logLevel` to the default rather than passing the
+	// omission along. Contrast with `TaggedLoggerAdapter` in telemetryLogger.spec.ts, which is a
+	// pass-through and forwards the omission unchanged.
+	it("Resolves an omitted logLevel to LogLevel.essential before forwarding to the sink", () => {
 		const { sink, recorded } = createRecordingSink();
 		const child = createChildLogger({ logger: sink });
 

@@ -434,16 +434,15 @@ describe("Sampling", () => {
 			]);
 		});
 
-		// `send` differs from `sendTelemetryEvent` above: this single-argument call models code
-		// compiled against a package version where callers could omit `logLevel`, so the
-		// forwarding layer must normalize it for layer compatibility.
-		it("Forwards LogLevel.essential through `send` when an older caller omits logLevel", () => {
+		// The sampled logger only decides *whether* to forward an event, never at what level.
+		// So an omitted `logLevel` passes straight through, matching `sendTelemetryEvent` above.
+		it("Forwards an omitted logLevel through `send` without substituting one", () => {
 			const { logger, captures } = createCapturingLogger();
 			const sampled = createSampledLogger(logger);
 
 			sampled.send({ category: "generic", eventName: "x" });
 
-			assert.deepStrictEqual(captures, [{ method: "send", logLevel: LogLevel.essential }]);
+			assert.deepStrictEqual(captures, [{ method: "send", logLevel: undefined }]);
 		});
 	});
 });
