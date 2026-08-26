@@ -76,29 +76,6 @@ That service must satisfy the following:
 
 The loader detects this capability structurally so callers pass the driver's factory directly. The adapter is internal and cannot create new containers.
 
-### Capability typing and validation boundary
-
-The point-in-time capability is not part of the general `IDocumentServiceFactory` contract. Fluid
-therefore owns both runtime checks needed to bridge the optional capability:
-
-- `getOdspPointInTimeDocumentServiceFactory` constructs an `OdspDocumentServiceFactory`, verifies
-  that its optional `createPointInTimeDocumentService` member is present, and returns the public
-  `IPointInTimeDocumentServiceFactory` type.
-- `asPointInTimeCapableFactory` performs the cross-driver structural check at the loader boundary.
-  `loadContainerToSequenceNumber` uses this check before constructing its internal adapter.
-
-A host should not repeat either check or cast a general factory. It receives the typed ODSP factory
-from `getOdspPointInTimeDocumentServiceFactory` and passes that factory directly to
-`loadContainerToSequenceNumber`. Keeping detection in Fluid also gives non-ODSP drivers one generic
-loader boundary to satisfy without exposing their implementation details to hosts.
-
-If the host-facing orchestration moves to the proposed feature package, the private generic
-capability interface, `asPointInTimeCapableFactory`, and
-`PointInTimeDocumentServiceFactory` move with it. The ODSP public interface, construction helper,
-and implementation remain in `@fluidframework/odsp-driver`. The capability should move into a
-shared driver contract only if multiple drivers need a public compile-time type; structural
-detection is sufficient for the current single-provider alpha API.
-
 ## Package ownership and planned extraction
 
 The current placement in `@fluidframework/container-loader` was explicitly described as
@@ -141,7 +118,7 @@ be regenerated rather than edited by hand.
 | Current owner | What remains | Why |
 | --- | --- | --- |
 | `@fluidframework/container-loader` | `loadContainerPaused` and its general loading machinery | This is the driver-agnostic loader primitive. It predates point-in-time loading and is also used by non-ODSP callers. The feature package should compose it rather than duplicate loader internals. |
-| `@fluidframework/odsp-driver` | The point-in-time capability on `OdspDocumentServiceFactoryCore`, `getOdspPointInTimeDocumentServiceFactory`, `pointInTimeDriver/`, and `odspVersionManager/` | These components depend on ODSP file-version APIs, resolved URLs, caches, storage policies, and epoch tracking. Moving them would either leak ODSP internals into the feature package or duplicate driver construction logic. |
+| `@fluidframework/odsp-driver` | `pointInTimeDriver/`, `odspVersionManager/`, and `getOdspPointInTimeDocumentServiceFactory` | These components depend on ODSP file-version APIs, resolved URLs, caches, storage policies, and epoch tracking. Moving them would either leak ODSP internals into the feature package or duplicate driver construction logic. |
 | `@fluidframework/container-runtime` | `versionMarks/` resolver implementation and runtime hooks | Capture and locator resolution are driver-agnostic but tightly coupled to outbound batching, pending state, inbound processing, and the runtime lifecycle. They produce the sequence number consumed by the feature package; they do not perform historical loading. |
 
 The new package should not import ODSP directly. Its contract remains capability-based so another
@@ -173,14 +150,7 @@ must not make container-loader depend on ODSP or merge mark resolution into cont
 
 ## ODSP implementation
 
-`OdspDocumentServiceFactoryCore` implements the optional
-`createPointInTimeDocumentService` capability alongside its normal document-service creation path.
-`getOdspPointInTimeDocumentServiceFactory` constructs the public factory and narrows it to
-`IPointInTimeDocumentServiceFactory`, allowing hosts to pass it directly to the loader without an
-ODSP-specific adapter.
-
-For each point-in-time request, ODSP resolves the closest recoverable driveItem version at or before
-the target. It then composes:
+ODSP resolves the closest recoverable driveItem version at or before the target. It then composes:
 
 - storage from that file version;
 - bounded delta storage from the live document;
@@ -209,8 +179,7 @@ Like normal storage catch-up, retriable network failures may retry for an extend
 | `loadContainerToSequenceNumber.ts` | Validates the target and driver capability, installs the adapter, and starts the paused load. |
 | `pointInTimeServices.ts` | Defines the structural driver capability and adapts it to `IDocumentServiceFactory`. |
 | `loadPaused.ts` | Loads read-only, replays to the exact target, pauses processing, disconnects, and handles cancellation. |
-| `packages/drivers/odsp-driver/src/odspDocumentServiceFactory.ts` | Exports `IPointInTimeDocumentServiceFactory` and constructs a typed point-in-time-capable ODSP factory for hosts. |
-| `packages/drivers/odsp-driver/src/odspDocumentServiceFactoryCore.ts` | Implements the optional point-in-time capability, selects the ODSP base version, and creates the historical service with shared epoch tracking. |
+| `packages/drivers/odsp-driver/src/pointInTimeDriver/odspPointInTimeDocumentServiceFactory.ts` | Selects the ODSP base version and creates the historical service with shared epoch tracking. |
 | `packages/drivers/odsp-driver/src/pointInTimeDriver/odspPointInTimeDocumentService.ts` | Recombines historical storage with bounded live delta storage and enforces storage-only behavior. |
 
 ## Test map

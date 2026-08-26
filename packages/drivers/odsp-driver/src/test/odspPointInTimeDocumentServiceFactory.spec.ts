@@ -20,13 +20,11 @@ import { stub } from "sinon";
 
 import { EpochTracker, type ICacheAndTracker } from "../epochTracker.js";
 import { LocalPersistentCache } from "../odspCache.js";
-import {
-	createLocalOdspDocumentServiceFactory,
-	getOdspPointInTimeDocumentServiceFactory,
-} from "../odspDocumentServiceFactory.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
 // eslint-disable-next-line import-x/no-internal-modules -- test targets the point-in-time driver directly
 import { OdspPointInTimeDocumentService } from "../pointInTimeDriver/odspPointInTimeDocumentService.js";
+// eslint-disable-next-line import-x/no-internal-modules -- test targets the point-in-time driver directly
+import { getOdspPointInTimeDocumentServiceFactory } from "../pointInTimeDriver/odspPointInTimeDocumentServiceFactory.js";
 import type { BaseForSeq, IOdspVersionManager } from "../odspVersionManager/index.js";
 import {
 	OdspVersionManager,
@@ -52,15 +50,6 @@ describe("OdspPointInTimeDocumentServiceFactory lineage guard", () => {
 	const itemId = "itemId";
 
 	const getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions> = async () => "******";
-
-	it("does not expose point-in-time loading on the local factory", () => {
-		const factory = createLocalOdspDocumentServiceFactory(new Uint8Array());
-		assert.equal(
-			(factory as { createPointInTimeDocumentService?: unknown })
-				.createPointInTimeDocumentService,
-			undefined,
-		);
-	});
 
 	/** A minimal ODSP-shaped resolved URL sufficient for `getOdspResolvedUrl`. */
 	async function makeResolvedUrl(fileVersion?: string): Promise<IOdspResolvedUrl> {

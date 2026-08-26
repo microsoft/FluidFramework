@@ -15,10 +15,7 @@ import type {
 
 // eslint-disable-next-line import-x/no-internal-modules
 import { LocalOdspDocumentServiceFactory } from "./localOdspDriver/localOdspDocumentServiceFactory.js";
-import {
-	type IPointInTimeDocumentServiceFactory,
-	OdspDocumentServiceFactoryCore,
-} from "./odspDocumentServiceFactoryCore.js";
+import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore.js";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
@@ -35,43 +32,6 @@ export class OdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
 	) {
 		super(getStorageToken, getWebsocketToken, persistedCache, hostPolicy);
 	}
-}
-
-function isPointInTimeDocumentServiceFactory(
-	factory: OdspDocumentServiceFactory,
-): factory is OdspDocumentServiceFactory & IPointInTimeDocumentServiceFactory {
-	return typeof factory.createPointInTimeDocumentService === "function";
-}
-
-/**
- * Creates an ODSP document service factory that supports point-in-time loading.
- *
- * @param getStorageToken - Fetches storage access tokens.
- * @param getWebsocketToken - Fetches websocket access tokens, or `undefined` when unavailable.
- * @param persistedCache - Persisted ODSP cache. When omitted, a local in-memory cache is used.
- * @param hostPolicy - Host storage policy. When omitted, the default driver policies are used.
- * @returns An ODSP document service factory with point-in-time loading capability.
- *
- * @legacy @beta
- */
-export function getOdspPointInTimeDocumentServiceFactory(
-	getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>,
-	getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined,
-	persistedCache?: IPersistedCache,
-	hostPolicy?: HostStoragePolicy,
-): IPointInTimeDocumentServiceFactory {
-	const factory = new OdspDocumentServiceFactory(
-		getStorageToken,
-		getWebsocketToken,
-		persistedCache,
-		hostPolicy,
-	);
-	if (!isPointInTimeDocumentServiceFactory(factory)) {
-		throw new Error(
-			"The ODSP document service factory does not support point-in-time loading.",
-		);
-	}
-	return factory;
 }
 
 /**
