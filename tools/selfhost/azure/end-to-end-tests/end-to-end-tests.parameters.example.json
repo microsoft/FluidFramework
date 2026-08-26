@@ -8,5 +8,5 @@
 		"profileName": "my-fluid-afd"
 	},
 	"tenantId": "fluid",
-	"lowIoWriteEnabled": false
+	"lowIoWriteEnabled": true
 }
