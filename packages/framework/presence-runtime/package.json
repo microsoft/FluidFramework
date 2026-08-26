@@ -51,7 +51,7 @@
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:states:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-states-bundle.json",
-		"check:exports:states:cjs": "api-extractor run --config api-extractor/api-extractor-lint-states.cjs.json",
+		"check:exports:states:cjs": "echo disabled: api-extractor run --config api-extractor/api-extractor-lint-states.cjs.json",
 		"check:exports:states:esm": "api-extractor run --config api-extractor/api-extractor-lint-states.esm.json",
 		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",

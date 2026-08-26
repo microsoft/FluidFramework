@@ -85,11 +85,12 @@ module.exports = {
 			// Note that "api" is included as "compile" intends to build a complete package
 			// and "api" generates package entrypoint files for some packages.
 			dependsOn: [
-				"commonjs",
+				// "commonjs",
 				"build:esnext",
 				"build:package",
 				"api",
-				"build:test",
+				"build:test:esm",
+				"build:test:esm:no-exactOptionalPropertyTypes",
 				"build:copy",
 			],
 			script: false,
@@ -148,7 +149,9 @@ module.exports = {
 			script: false,
 		},
 		"build:package:cjs": {
-			dependsOn: ["build:entrypoints:cjs", "build:cjs"],
+			// CJS builds are off by default and map to ESM to use require-esm.
+			// If a package has a CJS build, it should override this.
+			dependsOn: ["build:entrypoints:esm", "build:esm", "check:types:require-esm"],
 			script: false,
 		},
 		"build:package:esm": {

@@ -50,17 +50,6 @@
 		"rimraf": "^6.1.3",
 		"typescript": "~6.0.3"
 	},
-	"fluidBuild": {
-		"_tasksComment1": "Only builds ESM; so, CJS deps are remapped to ESM.",
-		"tasks": {
-			"build:package:cjs": {
-				"dependsOn": [
-					"build:package:esm"
-				],
-				"script": false
-			}
-		}
-	},
 	"typeValidation": {
 		"disabled": true
 	}
