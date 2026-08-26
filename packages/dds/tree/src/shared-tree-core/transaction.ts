@@ -306,7 +306,7 @@ export interface SquashingTransactionOptions<TChange, TChangeProcessingContext> 
 	 *
 	 * @remarks
 	 * Every transaction in the stack contributes a node to the resulting {@link CustomMetadataTree}, so
-	 * nested transactions'' metadata is retained rather than discarded. If the transaction produces no
+	 * nested transactions' metadata is retained rather than discarded. If the transaction produces no
 	 * commit, the metadata is discarded.
 	 *
 	 * See {@link GraphCommit.customMetadata}.

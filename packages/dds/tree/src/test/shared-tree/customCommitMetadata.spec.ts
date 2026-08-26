@@ -790,7 +790,7 @@ describe("custom commit metadata", () => {
 			view.runTransaction(() => {
 				view.runTransaction(
 					() => {
-						revertible.revert(false);
+						revertible.revert();
 						return { rollback: true } as const;
 					},
 					{ customMetadata: { tag: "discarded" } },
@@ -802,6 +802,9 @@ describe("custom commit metadata", () => {
 			assert.deepEqual([...view.root], ["a", "b"]);
 			// ...and the resulting commit is an ordinary edit, not an undo.
 			assert.equal(headMetadata(view.branchHistory), undefined);
+			// The revert did not survive, so the application keeps its undo even though the enclosing
+			// transaction went on to commit.
+			assert.equal(revertible.status, RevertibleStatus.Valid);
 			unsubscribe();
 		});
 
@@ -834,6 +837,58 @@ describe("custom commit metadata", () => {
 			// A direct revert inherits the reverted commit's labels; wrapping it in a transaction
 			// purely to attach metadata must not change that.
 			assert.deepEqual(labels[labels.length - 1], ["original"]);
+			unsubscribe();
+		});
+
+		it("still block the enclosing transaction when a nested transaction commits the revert", () => {
+			const { view, revertible, unsubscribe } = createViewWithRevertibleEdit();
+
+			// Committing the nested transaction squashes the revert into the enclosing one, which
+			// therefore still has a revert as its only change.
+			assert.throws(
+				() =>
+					view.runTransaction(() => {
+						view.runTransaction(() => {
+							revertible.revert(false);
+						});
+						view.root.insertAtEnd("b");
+					}),
+				validateUsageError(
+					"Editing the tree is forbidden during a transaction whose only change is a revert",
+				),
+			);
+			unsubscribe();
+		});
+
+		it("do not leave the reverted commit's labels behind when the transaction is rolled back", () => {
+			const view = createView();
+			const labels: unknown[] = [];
+			view.events.on("changed", (metadata) => {
+				if (metadata.isLocal) {
+					labels.push([...metadata.labels]);
+				}
+			});
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+
+			view.runTransaction(
+				() => {
+					view.root.insertAtEnd("a");
+				},
+				{ label: "original" },
+			);
+			const revertible = undoStack.pop();
+			assert(revertible !== undefined);
+
+			view.runTransaction(() => {
+				revertible.revert(false);
+				return { rollback: true } as const;
+			});
+
+			view.runTransaction(() => {
+				view.root.insertAtEnd("b");
+			});
+
+			assert.deepEqual(labels[labels.length - 1], []);
 			unsubscribe();
 		});
 	});

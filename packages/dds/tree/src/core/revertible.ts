@@ -27,7 +27,8 @@ export interface Revertible {
 	 *
 	 * A revert may be performed inside a transaction, but only as that transaction's sole change: no other
 	 * change (including another revert) may be made in the transaction either before or after it. This
-	 * allows a revert to be given its own {@link RunTransactionParamsAlpha.customMetadata | metadata}.
+	 * allows a revert to be given its own {@link RunTransactionParamsAlpha.customMetadata | metadata}
+	 * and/or {@link RunTransactionParamsBeta.label | label}.
 	 */
 	revert(): void;
 	/**
@@ -40,7 +41,7 @@ export interface Revertible {
 	 * @remarks
 	 * Concurrent changes that are sequenced before the revert will not be overwritten by the revert if they affect different parts of the document.
 	 *
-	 * A revert may be performed inside a transaction, but only as that transaction''s sole change. When
+	 * A revert may be performed inside a transaction, but only as that transaction's sole change. When
 	 * `dispose` is true and the revert is performed inside a transaction, disposal is deferred until that
 	 * transaction commits, so that rolling it back does not consume the revertible.
 	 */

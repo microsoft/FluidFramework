@@ -14,7 +14,7 @@ import type {
 	EncodedRevisionTag,
 	RevisionTag,
 } from "../core/index.js";
-import type { JsonCompatibleReadOnlyObject } from "../util/index.js";
+import type { JsonCompatibleReadOnlyObject, Mutable } from "../util/index.js";
 
 import { decodeBranchId, encodeBranchId } from "./branchIdCodec.js";
 import { decodeCustomMetadataTree, encodeCustomMetadataTree } from "./customMetadataFormat.js";
@@ -52,7 +52,7 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 						isSummary: false,
 					};
 
-					return {
+					const encoded: Mutable<Message & JsonCompatibleReadOnlyObject & Versioned> = {
 						revision: revisionTagCodec.encode(message.commit.revision, {
 							originatorId: message.sessionId,
 							idCompressor: context.idCompressor,
@@ -62,13 +62,16 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 						originatorId: message.sessionId,
 						changeset: changeCodec.encode(message.commit.change, changeContext),
 						branchId: encodeBranchId(context.idCompressor, message.branchId),
-						...(message.commit.customMetadata === undefined
-							? {}
-							: {
-									customMetadata: encodeCustomMetadataTree(message.commit.customMetadata),
-								}),
 						version,
 					};
+					// Assigned conditionally rather than as `customMetadata: <undefined>` so that commits
+					// without metadata omit the key entirely instead of carrying an own property set to
+					// `undefined`. Both serialize identically, but the latter is observable via `in` and
+					// would be rejected by any schema that disallows additional properties.
+					if (message.commit.customMetadata !== undefined) {
+						encoded.customMetadata = encodeCustomMetadataTree(message.commit.customMetadata);
+					}
+					return encoded;
 				}
 				case "branch": {
 					return {

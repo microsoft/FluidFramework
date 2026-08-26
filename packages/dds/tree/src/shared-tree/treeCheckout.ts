@@ -1111,6 +1111,10 @@ export class TreeCheckout implements ITreeCheckout {
 		this.pushLabelFrame(params?.label);
 		this.transaction.start({
 			postProcessor: extractTransactionChangeProcessor(params?.postProcessor),
+			// This validates the caller's metadata, and so shares the broken-state limitation described
+			// above: rejecting a malformed value also puts the checkout into a broken state rather than
+			// being recoverable. Making input validation recoverable requires the view's transaction
+			// methods to opt out of `@breakingClass`, which is left to a follow-up.
 			customMetadata: snapshotCustomMetadata(params?.customMetadata),
 		});
 
@@ -1133,12 +1137,7 @@ export class TreeCheckout implements ITreeCheckout {
 		if (rollback === true) {
 			this.popLabelFrame(true);
 			this.transaction.abort();
-			if (this.transaction.size > 0 && !this.transactionHasApplicationFacingChanges()) {
-				// A nested transaction whose content was a revert has been rolled back, so the
-				// enclosing transaction no longer produces a revert commit.
-				this.#transaction.clearPendingCommitKind();
-				this.pendingRevertLabelTree = undefined;
-			}
+			this.settlePendingRevert(false);
 			this.releaseDeferredRevertibles(false);
 			return value === undefined
 				? { success: false }
@@ -1150,7 +1149,9 @@ export class TreeCheckout implements ITreeCheckout {
 		this.popLabelFrame(false);
 		// A transaction-wrapped revert inherits the reverted commit's labels, unless this transaction
 		// supplied a label of its own (in which case the caller's label takes precedence).
-		const revertLabelTree = this.pendingRevertLabelTree;
+		const pendingRevert = this.pendingRevert;
+		const revertLabelTree =
+			pendingRevert?.depth === this.transaction.size ? pendingRevert.labelTree : undefined;
 		const useRevertLabels = revertLabelTree !== undefined && params?.label === undefined;
 		const previousLabelTreeNode = this.labelTreeNode;
 		if (useRevertLabels) {
@@ -1164,9 +1165,7 @@ export class TreeCheckout implements ITreeCheckout {
 			if (useRevertLabels) {
 				this.labelTreeNode = previousLabelTreeNode;
 			}
-			if (this.transaction.size === 0) {
-				this.pendingRevertLabelTree = undefined;
-			}
+			this.settlePendingRevert(true);
 			this.releaseDeferredRevertibles(true);
 		}
 		return value === undefined
@@ -1701,42 +1700,92 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	/**
-	 * Revertibles whose disposal has been deferred because they were reverted inside a transaction.
+	 * Revertibles whose disposal has been deferred because they were reverted inside a transaction,
+	 * each paired with the depth of the transaction that currently owns it.
 	 * @remarks
 	 * A revert performed in a transaction is not durable until that transaction commits, so releasing the
 	 * revertible immediately would consume the application's undo even if the transaction is rolled back.
+	 * `depth` moves outwards as nested transactions commit and merge their content upwards, so a revert
+	 * is only consumed once the outermost transaction containing it commits.
 	 */
-	private readonly deferredRevertibleDisposals: RevertibleAlpha[] = [];
+	private readonly deferredRevertibleDisposals: {
+		depth: number;
+		readonly revertible: RevertibleAlpha;
+	}[] = [];
 
 	/**
-	 * The {@link LabelTree} of the commit reverted inside the current transaction, if any.
+	 * The revert performed inside the current transaction, if any, along with the depth of the
+	 * transaction that currently owns it.
 	 * @remarks
-	 * A direct revert inherits the reverted commit's labels so that a commit and its revert can be
-	 * associated. When the revert is wrapped in a transaction the resulting commit is applied later, so the
-	 * labels have to be carried across to that point.
+	 * A revert is only permitted inside a transaction as that transaction's sole change, so at most one of
+	 * these is outstanding. Tracking it explicitly is what tells the enclosing transaction that it still
+	 * produces a revert commit: `depth` moves outwards as nested transactions commit and merge their
+	 * content upwards, and the whole thing is discarded if the transaction that owns it rolls back.
+	 *
+	 * `labelTree` is the reverted commit's {@link LabelTree}. A direct revert inherits it so that a commit
+	 * and its revert can be associated, and because a transaction's commit is applied only when the
+	 * transaction ends, it has to be carried across to that point.
 	 */
-	private pendingRevertLabelTree: LabelTree | undefined;
+	private pendingRevert:
+		| { readonly depth: number; readonly labelTree: LabelTree | undefined }
+		| undefined;
+
+	/**
+	 * Updates {@link TreeCheckout.pendingRevert} once the transaction that was innermost has ended.
+	 * @param committed - Whether that transaction committed, in which case its content becomes part of the
+	 * enclosing transaction rather than being discarded.
+	 */
+	private settlePendingRevert(committed: boolean): void {
+		const pendingRevert = this.pendingRevert;
+		if (pendingRevert === undefined || pendingRevert.depth <= this.transaction.size) {
+			// The transaction that ended was nested inside the one that owns the revert, so the revert
+			// is unaffected.
+			return;
+		}
+		// A committed transaction hands its revert to the transaction enclosing it, if there is one.
+		this.pendingRevert =
+			committed && this.transaction.size > 0
+				? { depth: this.transaction.size, labelTree: pendingRevert.labelTree }
+				: undefined;
+		if (this.pendingRevert === undefined) {
+			this.#transaction.clearPendingCommitKind();
+		}
+	}
 
 	/** See {@link TreeCheckout.deferredRevertibleDisposals}. */
 	private deferRevertibleDisposal(revertible: RevertibleAlpha): void {
-		this.deferredRevertibleDisposals.push(revertible);
+		this.deferredRevertibleDisposals.push({ depth: this.transaction.size, revertible });
 	}
 
 	/**
-	 * Disposes (or retains) revertibles whose disposal was deferred by a transaction.
-	 * @param committed - Whether the transaction that deferred them committed.
+	 * Disposes (or retains) revertibles whose disposal was deferred by the transaction that just ended.
+	 * @param committed - Whether that transaction committed, in which case its reverts become part of the
+	 * enclosing transaction rather than being discarded.
+	 * @remarks
+	 * Revertibles owned by an enclosing transaction are left alone. Those owned by the transaction that
+	 * ended are re-homed to the enclosing transaction if it committed, retained undisposed if it rolled
+	 * back (the revert did not survive, so the application keeps its undo), and only disposed once the
+	 * outermost transaction containing the revert commits.
 	 */
 	private releaseDeferredRevertibles(committed: boolean): void {
-		if (this.transaction.size > 0) {
-			// An inner transaction ended; the outermost one still decides the outcome.
-			return;
-		}
-		const deferred = this.deferredRevertibleDisposals.splice(0);
-		if (committed) {
-			for (const revertible of deferred) {
-				if (revertible.status !== RevertibleStatus.Disposed) {
-					revertible.dispose();
-				}
+		const depth = this.transaction.size;
+		for (let i = this.deferredRevertibleDisposals.length - 1; i >= 0; i -= 1) {
+			// Non-null asserting is safe because `i` is a valid index into the array.
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const deferral = this.deferredRevertibleDisposals[i]!;
+			if (deferral.depth <= depth) {
+				// Owned by a transaction that is still open, so its outcome is not yet decided.
+				continue;
+			}
+			if (committed && depth > 0) {
+				// The revert is now part of the enclosing transaction, which decides its fate instead.
+				deferral.depth = depth;
+				continue;
+			}
+			this.deferredRevertibleDisposals.splice(i, 1);
+			if (committed && deferral.revertible.status !== RevertibleStatus.Disposed) {
+				// The outermost transaction containing the revert committed, so the revert is durable.
+				deferral.revertible.dispose();
 			}
 		}
 	}
@@ -1847,13 +1896,12 @@ export class TreeCheckout implements ITreeCheckout {
 			// The `changed` event for a transaction's commit is emitted when it is applied to the outer
 			// branch, by which point the label state above has been restored. Carry the reverted commit's
 			// labels across so that a transaction-wrapped revert is still associated with what it reverts.
-			this.pendingRevertLabelTree = labelTree;
+			this.pendingRevert = { depth: this.transaction.size, labelTree };
 			// Keep the revert the only change in the transaction. This is self-clearing: the restriction
-			// stops applying once the transaction ends, or if the revert is rolled back by a nested
-			// transaction (in which case the transaction once again has no changes of its own).
+			// stops applying once the transaction that owns the revert ends, or rolls it back.
 			this.editLock.restrict(
 				"a transaction whose only change is a revert",
-				() => this.transaction.size > 0 && this.transactionHasApplicationFacingChanges(),
+				() => this.transaction.size > 0 && this.pendingRevert !== undefined,
 			);
 		}
 

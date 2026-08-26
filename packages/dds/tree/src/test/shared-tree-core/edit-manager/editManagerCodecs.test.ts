@@ -8,11 +8,16 @@ import { strict as assert } from "node:assert";
 import type { SessionId } from "@fluidframework/id-compressor";
 
 import { DependentFormatVersion, makeCodecFamily } from "../../../codec/index.js";
-import type { ChangeEncodingContext, CustomMetadataTree } from "../../../core/index.js";
+import type {
+	ChangeEncodingContext,
+	CustomMetadataTree,
+	RevisionTag,
+} from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { makeEditManagerCodecBuilder } from "../../../shared-tree-core/editManagerCodecs.js";
 import {
+	type BranchId,
 	EditManagerFormatVersion,
 	type SharedBranchSummaryData,
 	type SummaryData,
@@ -344,6 +349,70 @@ export function testCodec(): void {
 						isSummary: true,
 					}),
 				);
+			});
+
+			it("round-trips metadata on every branch of a shared branches summary", () => {
+				// Shared branches have a separate codec implementation which encodes the main branch and
+				// the child branches through separate calls, so each has to opt into the metadata itself.
+				const codec = family.resolve(EditManagerFormatVersion.vSharedBranches);
+				const childBranchId = testIdCompressor.generateCompressedId();
+				const branch = (
+					revision: RevisionTag,
+					sessionId: SessionId,
+					id?: BranchId,
+				): SharedBranchSummaryData<TestChange> => ({
+					id,
+					trunk: [
+						{
+							revision,
+							sessionId,
+							change: TestChange.mint([0], 1),
+							sequenceNumber: brand(1),
+							customMetadata: tree,
+						},
+					],
+					peerLocalBranches: new Map([
+						[
+							sessionId,
+							{
+								base: revision,
+								commits: [
+									{
+										sessionId,
+										revision: testIdCompressor.generateCompressedId(),
+										change: TestChange.mint([0], 4),
+										customMetadata: tree,
+									},
+								],
+							},
+						],
+					]),
+				});
+				const data: SummaryData<TestChange> = {
+					originator: dummyContext.originatorId,
+					main: branch(tags[0], "1" as SessionId),
+					branches: new Map([
+						[childBranchId, branch(tags[1], "2" as SessionId, childBranchId)],
+					]),
+				};
+
+				const encoded = codec.encode(data, {
+					idCompressor: testIdCompressor,
+					isSummary: true,
+				});
+				const decoded = codec.decode(JSON.parse(JSON.stringify(encoded)), {
+					idCompressor: testIdCompressor,
+					isSummary: true,
+				});
+
+				for (const summaryBranch of [decoded.main, decoded.branches?.get(childBranchId)]) {
+					assert(summaryBranch !== undefined);
+					assert.deepEqual(summaryBranch.trunk[0]?.customMetadata, tree);
+					assert.deepEqual(
+						[...summaryBranch.peerLocalBranches.values()][0]?.commits[0]?.customMetadata,
+						tree,
+					);
+				}
 			});
 		});
 		// TODO: testing EditManagerSummarizer class itself, specifically for attachment and normal summaries.
