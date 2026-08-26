@@ -1,34 +1,33 @@
 # Entry point structure for `@fluidframework/core-utils`
 
-This package has separate external and internal entry points.
-An entry point controls the exports that are available from a package import path.
+The package has separate external and internal entry points.
+An entry point specifies the exports for a package import path.
 
 A barrel file re-exports application programming interfaces (APIs) from other modules.
-This package uses three barrel files to give external and internal APIs different support metadata.
-For example, an external API can have the `@deprecated` tag while the equivalent internal API does not have this tag.
+The package uses three barrel files to assign different support metadata to external and internal APIs.
+For example, the external `assert` API has the `@deprecated` tag.
+The internal `assert` API does not have the `@deprecated` tag.
 
 ## Shared exports: `src/main.ts`
 
-This barrel file contains exports that are the same in the external and internal entry points.
-The `src/index.ts` and `src/internal.ts` files re-export these shared APIs.
+The `src/main.ts` file exports APIs that have the same metadata in both entry points.
+The `src/index.ts` and `src/internal.ts` files re-export the shared APIs.
 
-The file does not export `assert`.
-The external entry point defines a deprecated alias for the internal `assert` function.
+The `src/main.ts` file does not export `assert`.
+The other two barrel files export different `assert` symbols.
 
 ## External exports: `src/index.ts`
 
-This barrel file is the source for the external entry points.
-It re-exports the shared APIs from `src/main.ts`.
-It also defines the deprecated external `assert` alias.
+The `src/index.ts` file is the source for the external entry points.
+It re-exports the shared APIs from `src/main.ts` and the deprecated external `assert` constant.
 
-The entry point generator uses this file to generate the `public`, `alpha`, `beta`, and `legacy` declaration files.
-External consumers import APIs from a supported path such as `@fluidframework/core-utils` or `@fluidframework/core-utils/legacy`.
+The entry point generator uses `src/index.ts` to generate the `public`, `alpha`, `beta`, and `legacy` declaration files.
+External consumers use a supported path such as `@fluidframework/core-utils` or `@fluidframework/core-utils/legacy`.
 
 ## Internal exports: `src/internal.ts`
 
-This barrel file is the source for `@fluidframework/core-utils/internal`.
-It re-exports the shared APIs from `src/main.ts`.
-It exports the internal `assert` function.
+The `src/internal.ts` file is the source for `@fluidframework/core-utils/internal`.
+It re-exports the shared APIs from `src/main.ts` and the internal `assert` function.
 
 Fluid Framework code must import `assert` from the internal entry point:
 
@@ -38,39 +37,42 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 ## Separate `assert` symbols
 
-TypeScript stores the `@deprecated` tag on the external `assert` symbol.
-A type-only re-export does not remove this tag.
-An internal export that uses `typeof` on the external symbol also retains this tag.
-As a result, IntelliSense marks internal uses as deprecated.
+TypeScript associates the `@deprecated` tag with the external `assert` symbol.
+A type-only re-export keeps the `@deprecated` tag.
+An export that uses `typeof` on the external symbol also keeps the `@deprecated` tag.
+Therefore, IntelliSense marks both export forms as deprecated.
 
-The assertion module defines the internal `assert` symbol without the `@deprecated` tag.
-The internal barrel file exports this symbol without modification:
+The assertion module defines the internal `assert` function without the `@deprecated` tag.
+The internal barrel file exports the function directly:
 
 ```typescript
 export { assert } from "./assert.js";
 ```
 
-The external barrel file imports this symbol with a private alias.
-It defines a deprecated `assert` constant with the same call signature:
+The external barrel file imports the function with a private alias.
+The file defines a deprecated `assert` constant with the same call signature.
 
-This structure keeps the `@deprecated` tag on the external symbol only.
+The separate symbols put the `@deprecated` tag only on the external symbol.
 
 ## Package export map
 
-The `exports` field in `package.json` maps each import path to its declaration file and JavaScript file.
+The `exports` field in `package.json` maps each import path to a declaration file and a JavaScript file.
 External import paths use generated declaration files and the `index.js` file.
 The internal import path uses the `internal.d.ts` and `internal.js` files.
 
-The `lib` directory contains ECMAScript module (ESM) output.
+The `lib` directory contains ECMAScript module output.
 The `dist` directory contains CommonJS output.
 
-The bundled API Extractor check uses `internal.d.ts`.
-This declaration file contains the complete package API surface.
+The API Extractor check uses `internal.d.ts`.
+The file contains the complete package API surface.
 
 ## Validate a change
 
-Run these commands from the `packages/common/core-utils` directory:
+Run the following commands in sequence from the `packages/common/core-utils` directory:
 
-1. Run `npm run build:compile` to compile the package and generate the entry points.
-2. Run `npm run check:exports` to validate the generated entry points and API release tags.
-3. Run `npm run check:biome` to validate the file format.
+1. Run `npm run build:compile`.
+	This command compiles the package and generates the entry points.
+2. Run `npm run check:exports`.
+	This command validates the generated entry points and API release tags.
+3. Run `npm run check:biome`.
+	This command validates the file format.
