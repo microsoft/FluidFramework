@@ -4,14 +4,14 @@ Run Fluid Framework as a service you operate yourself, in your own Azure subscri
 
 This repository deploys the full, multi-service Routerlicious topology onto Azure Kubernetes
 Service, with Azure Event Hubs for ordering, Azure Cosmos DB for MongoDB for document data and
-operations, Azure Cache for Redis, and Azure Files for snapshots. You own every resource it
+operations, Azure Managed Redis, and Azure Files for snapshots. You own every resource it
 creates.
 
 ## Cost
 
 > **Planned:** a basic cost estimate for the default configuration will be added here.
 
-This deployment provisions managed Azure services — AKS nodes, Premium Redis,
+This deployment provisions managed Azure services — AKS nodes, Azure Managed Redis,
 provisioned-throughput Cosmos DB, Event Hubs, and Front Door. They bill from the moment they are
 created, not only while you are actively using them. Until an estimate is published here, price
 your own configuration with the
