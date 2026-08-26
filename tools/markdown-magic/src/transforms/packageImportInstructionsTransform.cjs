@@ -43,22 +43,22 @@ const generateImportInstructionsSection = (packageMetadata, headingOptions) => {
 	}
 
 	const lines = [
-		"This package leverages [package.json exports](https://nodejs.org/api/packages.html#exports) to separate its APIs by support level.",
-		"For more information on the related support guarantees, see [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).",
+		"This package uses [package.json exports](https://nodejs.org/api/packages.html#exports) to separate APIs by support level.",
+		"For information about the support guarantees, read [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).",
 		"", // Blank line
-		`To access the \`public\` ([SemVer](https://semver.org/)) APIs, import via \`${packageName}\` like normal.`,
+		`Import the \`public\` ([Semantic Versioning (SemVer)](https://semver.org/)) APIs from \`${packageName}\`.`,
 	];
 
 	if (hasBetaExport) {
-		lines.push("", `To access the \`beta\` APIs, import via \`${packageName}/beta\`.`);
+		lines.push("", `Import the \`beta\` APIs from \`${packageName}/beta\`.`);
 	}
 
 	if (hasAlphaExport) {
-		lines.push("", `To access the \`alpha\` APIs, import via \`${packageName}/alpha\`.`);
+		lines.push("", `Import the \`alpha\` APIs from \`${packageName}/alpha\`.`);
 	}
 
 	if (hasLegacyExport) {
-		lines.push("", `To access the \`legacy\` APIs, import via \`${packageName}/legacy\`.`);
+		lines.push("", `Import the \`legacy\` APIs from \`${packageName}/legacy\`.`);
 	}
 
 	const sectionBody = lines.join("\n");
