@@ -230,10 +230,9 @@ describe("message codec", () => {
 		});
 	});
 
-	// These lock the permanent serialized representation of custom commit metadata. The round-trip
-	// suites above only prove that the current encoder and decoder agree with each other, which would
-	// stay true if the field were renamed on both sides — but that would silently orphan the metadata in
-	// documents already written at v7.
+	// These lock the permanent serialized representation of custom commit metadata. The round-trip suites
+	// above only prove that the encoder and decoder agree with each other, which would stay true even if
+	// the field were renamed on both sides.
 	describe("custom metadata wire format", () => {
 		const sessionId: SessionId = "sessionId" as SessionId;
 		const metadata = { kind: "edit", nested: { author: "alice", count: 3 } };
@@ -306,10 +305,8 @@ describe("message codec", () => {
 
 		it("tolerates a pre-v7 message carrying customMetadata", () => {
 			// Unlike the summary format, the op envelope deliberately does not set
-			// `additionalProperties: false` (see the `Message` schema), so a message carrying a field
-			// the version does not declare is tolerated rather than rejected. Ops have always read
-			// unknown envelope properties this way, and tightening that would risk rejecting ops from
-			// other versions over fields unrelated to this one.
+			// `additionalProperties: false` (see the `Message` schema), so a message carrying a field the
+			// version does not declare is tolerated rather than rejected.
 			const encoded = encodeAt(FluidClientVersion.v2_80, { metadata, children: [] });
 			assert.equal(encoded.version, MessageFormatVersion.v6);
 			const tampered = { ...encoded, customMetadata: { m: metadata } };

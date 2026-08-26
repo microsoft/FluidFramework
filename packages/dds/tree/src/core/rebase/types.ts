@@ -170,13 +170,8 @@ export interface GraphCommit<TChange> {
 	/**
 	 * Arbitrary, application-defined metadata that is persisted alongside this commit.
 	 * @remarks
-	 * Set via {@link RunTransactionParamsAlpha.customMetadata}. Because a commit may be produced by
-	 * nested transactions, this is a {@link CustomMetadataTree | tree} mirroring that nesting rather
-	 * than a single object.
-	 *
-	 * The metadata shares the lifetime of the commit it is attached to: once the commit is trimmed from
-	 * the trunk, the metadata goes with it.
-	 *
+	 * Set via {@link RunTransactionParamsAlpha.customMetadata}. This is a tree rather than a single
+	 * object because a commit may be produced by nested transactions.
 	 * @privateRemarks
 	 * Always copy this property when copying a commit.
 	 */
@@ -184,15 +179,13 @@ export interface GraphCommit<TChange> {
 }
 
 /**
- * A tree representing the nesting structure of {@link RunTransactionParamsAlpha.customMetadata | transaction metadata}.
+ * A tree representing the nesting structure of transaction metadata.
  *
  * @remarks
- * This mirrors {@link LabelTree}: each transaction that contributed to the commit provides a node, and
- * the nodes of nested transactions become {@link CustomMetadataTree.children | children} of the nodes of
- * the transactions containing them. Metadata from a transaction that was rolled back is not included.
- *
- * Unlike {@link LabelTree}, this is persisted with the commit, so it is available to every client that
- * reads the commit's history rather than only to the client that authored it.
+ * Each transaction contributes a node whose {@link CustomMetadataTree.metadata} is its
+ * {@link RunTransactionParamsAlpha.customMetadata | metadata} (or `undefined` if none was provided).
+ * When transactions are nested, inner transaction nodes become
+ * {@link CustomMetadataTree.children | children} of outer ones.
  *
  * @sealed @alpha
  */
@@ -222,17 +215,14 @@ export function flattenCustomMetadata(
 	}
 	let flattened: Record<string, JsonCompatibleReadOnly | undefined> | undefined;
 	const visit = (node: CustomMetadataTree): void => {
-		// Descendants are applied first so that the metadata of the transactions containing them
-		// overwrites theirs on conflict.
+		// Descendants first, so that a containing transaction's metadata wins on conflict.
 		for (const child of node.children) {
 			visit(child);
 		}
 		if (node.metadata !== undefined) {
 			flattened ??= {};
-			// Copy with own-property semantics. `Object.assign` and spread both invoke inherited
-			// setters, which would turn the perfectly valid JSON key "__proto__" into the result's
-			// prototype rather than one of its properties. `defineProperty` creates an own property
-			// that shadows the inherited accessor, matching what `JSON.parse` produces.
+			// `defineProperty` rather than assignment: assigning the valid JSON key "__proto__" would
+			// invoke the inherited setter and set the prototype instead of creating a property.
 			for (const key of Object.keys(node.metadata)) {
 				Object.defineProperty(flattened, key, {
 					value: node.metadata[key],

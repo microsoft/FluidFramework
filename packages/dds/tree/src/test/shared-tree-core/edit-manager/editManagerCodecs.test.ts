@@ -41,8 +41,7 @@ const trunkCommits: SharedBranchSummaryData<TestChange>["trunk"] = [
 		sessionId: "1" as SessionId,
 		change: TestChange.mint([0], 1),
 		sequenceNumber: brand(1),
-		// Decoding always defines this property (see `decodeCommit`), so the round-trip fixtures
-		// must define it too for deep equality to hold.
+		// Decoding always defines this property, so the fixtures must too for deep equality to hold.
 		customMetadata: undefined,
 	},
 	{
@@ -243,10 +242,9 @@ export function testCodec(): void {
 			EditManagerFormatVersion.vSharedBranches,
 		]);
 
-		// These lock the permanent serialized representation of custom commit metadata in the summary.
-		// The round-trip suites above only prove that the current encoder and decoder agree with each
-		// other, which would remain true if the field were renamed on both sides — orphaning the metadata
-		// in summaries already written at v7.
+		// These lock the permanent serialized representation of custom commit metadata in the summary. The
+		// round-trip suites above only prove that the encoder and decoder agree with each other, which
+		// would stay true even if the field were renamed on both sides.
 		describe("custom metadata summary format", () => {
 			const metadata = { kind: "edit", nested: { author: "alice", count: 3 } };
 			const tree: CustomMetadataTree = { metadata, children: [] };

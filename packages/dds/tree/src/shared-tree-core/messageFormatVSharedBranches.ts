@@ -44,8 +44,7 @@ export interface Message {
 
 	/**
 	 * Arbitrary, application-defined metadata to persist alongside the commit in this message.
-	 * @remarks
-	 * See {@link GraphCommit.customMetadata}.
+	 * @remarks See {@link GraphCommit.customMetadata}.
 	 */
 	readonly customMetadata?: EncodedCustomMetadataTree;
 

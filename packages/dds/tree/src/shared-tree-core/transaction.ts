@@ -305,11 +305,8 @@ export interface SquashingTransactionOptions<TChange, TChangeProcessingContext> 
 	 * Arbitrary, application-defined metadata to attach to the commit that this transaction produces.
 	 *
 	 * @remarks
-	 * Every transaction in the stack contributes a node to the resulting {@link CustomMetadataTree}, so
-	 * nested transactions' metadata is retained rather than discarded. If the transaction produces no
-	 * commit, the metadata is discarded.
-	 *
-	 * See {@link GraphCommit.customMetadata}.
+	 * Each transaction in the stack contributes a node to the resulting {@link CustomMetadataTree}. If
+	 * the transaction produces no commit, the metadata is discarded.
 	 */
 	readonly customMetadata?: JsonCompatibleReadOnlyObject;
 }
@@ -341,13 +338,10 @@ export class SquashingTransactionStack<
 	/**
 	 * Returns the revision that the commit produced by the current transaction will have, minting it if necessary.
 	 * @remarks
-	 * Every commit made on the transaction branch must share this revision so that they can be squashed
-	 * into a single commit when the transaction ends. Callers that apply a pre-computed change to the
+	 * Every commit on the transaction branch must share this revision so that they can be squashed into a
+	 * single commit when the transaction ends. Callers applying a pre-computed change to the
 	 * {@link SquashingTransactionStack.activeBranch | active branch} (rather than editing through its
 	 * editor, which tags changes automatically) must tag that change with this revision.
-	 *
-	 * The transaction branch is forked with exactly this minter, so asking it for a revision tag yields
-	 * the transaction's shared revision.
 	 */
 	public mintTransactionRevision(): RevisionTag {
 		assert(this.#transactionBranch !== undefined, "Expected an open transaction");
@@ -366,7 +360,7 @@ export class SquashingTransactionStack<
 	 * Sets the {@link CommitKind} to report for the commit that the current transaction produces.
 	 * @remarks
 	 * Used when the content of a transaction is a revert, so that the resulting commit is still reported
-	 * as an undo or a redo rather than as an ordinary edit.
+	 * as an undo or a redo.
 	 */
 	public setPendingCommitKind(kind: CommitKind): void {
 		assert(this.size > 0, "Expected an open transaction");
@@ -484,16 +478,13 @@ export class SquashingTransactionStack<
 				startOptions?: SquashingTransactionOptions<TChange, TChangeProcessingContext>,
 			): Callbacks<SquashingTransactionOptions<TChange, TChangeProcessingContext>> => {
 				postProcessorStack.push(resolvePostProcessor(startOptions?.postProcessor));
-				// Every transaction in the stack contributes a node to a tree mirroring the transaction
-				// nesting, which is attached to the single commit they produce. `openMetadataNode` is the
-				// node for the transaction currently being run; a nested transaction that is aborted has
-				// its node removed again, so it never contributes.
+				// Each transaction in the stack contributes a node to a tree mirroring the nesting, which is
+				// attached to the single commit they produce. `openMetadataNode` is the innermost open node.
 				const rootMetadataNode: MutableCustomMetadataTree = {
 					metadata: startOptions?.customMetadata,
 					children: [],
 				};
 				let openMetadataNode = rootMetadataNode;
-				/** Whether any transaction in the stack supplied metadata. */
 				const hasCustomMetadata = (node: CustomMetadataTree): boolean =>
 					node.metadata !== undefined || node.children.some(hasCustomMetadata);
 				// Keep track of the commit that each transaction was on when it started
@@ -634,8 +625,7 @@ export class SquashingTransactionStack<
 							unreachableCase(result);
 						}
 					}
-					// Clear the per-transaction state before invoking any further callbacks, so that a
-					// throwing callback cannot leave the stack unusable for subsequent transactions.
+					// Clear per-transaction state before any callback runs, so a throw cannot leave the stack unusable.
 					transactionBranch.dispose();
 					this.setTransactionBranch(undefined);
 					this.#pendingCommitKind = undefined;
@@ -665,8 +655,7 @@ export class SquashingTransactionStack<
 							transactionBranch.editor.exitTransaction();
 							switch (result) {
 								case TransactionResult.Abort: {
-									// The transaction contributed nothing, so remove its metadata node again.
-									// It is necessarily the last child, as it was open until now.
+									// The aborted transaction contributed nothing; its node is necessarily the last child.
 									metadataParent.children.pop();
 									// When a transaction is aborted, roll back all the transaction's changes on the current branch
 									transactionBranch.removeAfter(nestedStartHead);

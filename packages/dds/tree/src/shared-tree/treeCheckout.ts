@@ -146,14 +146,9 @@ import { SerializedChange } from "./serializedChange.js";
 /**
  * Returns a snapshot of the given transaction metadata which is guaranteed to match what will be persisted.
  * @remarks
- * The commit produced by the transaction holds this value for as long as the commit lives, and — for a
- * commit made on a fork — it may not be serialized until long after the transaction returns. Round-tripping
- * through JSON here gives the commit a private copy, so that later mutation of the caller's object cannot
- * change an already-created commit, and so that the value read back locally is exactly the value that peers
- * and future summaries will see.
- *
- * Normalizing here (rather than only validating) matches how SharedTree treats unsupported numeric values in
- * tree content, where `NaN` and the infinities become `null` "to match JSON's behavior for such values".
+ * Round-tripping through JSON gives the commit a private copy, so that later mutation of the caller's object
+ * cannot change an already-created commit, and so that the value read back locally is exactly the value that
+ * peers and future summaries will see.
  * @throws A `UsageError` if the value cannot be represented as a JSON object.
  */
 function snapshotCustomMetadata(
@@ -1111,11 +1106,8 @@ export class TreeCheckout implements ITreeCheckout {
 		this.pushLabelFrame(params?.label);
 		this.transaction.start({
 			postProcessor: extractTransactionChangeProcessor(params?.postProcessor),
-			// This validates the caller's metadata, and so shares the broken-state limitation described
-			// above: rejecting a malformed value also puts the checkout into a broken state rather than
-			// being recoverable. Making input validation recoverable requires the view's transaction
-			// methods to opt out of `@breakingClass`, which is tracked by
-			// https://github.com/microsoft/FluidFramework/issues/28085.
+			// Like the validation described above, rejecting malformed metadata breaks the checkout rather
+			// than being recoverable. Tracked by https://github.com/microsoft/FluidFramework/issues/28085.
 			customMetadata: snapshotCustomMetadata(params?.customMetadata),
 		});
 
@@ -1147,10 +1139,9 @@ export class TreeCheckout implements ITreeCheckout {
 		addConstraintsToTransaction(this, true, transactionCallbackStatus?.preconditionsOnRevert);
 
 		this.popLabelFrame(false);
-		// A transaction whose content is a revert adopts the reverted commit's labels, so that it is
-		// labeled just as a bare revert would be — unless the transaction supplied a label of its own,
-		// which takes precedence. Only the outermost transaction's commit reaches the main branch (and
-		// so reads the label tree), and `runWithTransactionLabel` clears the tree once it has.
+		// A transaction whose content is a revert adopts the reverted commit's labels, unless the
+		// transaction supplied a label of its own. Only the outermost transaction's commit reaches the
+		// main branch (and so reads the label tree), which `runWithTransactionLabel` then clears.
 		const revertLabelTree =
 			this.transaction.size === 1 && params?.label === undefined
 				? this.pendingRevert?.labelTree
@@ -1289,9 +1280,7 @@ export class TreeCheckout implements ITreeCheckout {
 				}
 
 				const inTransaction = checkout.transaction.size > 0;
-				// A revert made in a transaction is not durable until that transaction commits, so the
-				// revertible is held by {@link TreeCheckout.pendingRevert} until then rather than being
-				// consumed up front.
+				// Inside a transaction, disposal is deferred to `pendingRevert`.
 				const revertMetrics = checkout.revertRevertible(
 					revision,
 					kind,
@@ -1701,18 +1690,10 @@ export class TreeCheckout implements ITreeCheckout {
 	/**
 	 * The revert performed inside the current transaction, if any.
 	 * @remarks
-	 * A revert is only permitted inside a transaction as that transaction's sole change, and no further
-	 * transaction may be started once one has happened, so at most one revert is ever outstanding and it
-	 * always belongs to the innermost open transaction. Tracking it is what tells that transaction that
-	 * it still produces a revert commit.
-	 *
-	 * `labelTree` is the reverted commit's {@link LabelTree}. The revert inherits it so that a commit and
-	 * its revert can be associated, and because a transaction's commit is applied only when the
-	 * transaction ends, it has to be carried across to that point.
-	 *
-	 * `revertible` is the revertible the caller asked to release, if any. A revert made in a transaction
-	 * is not durable until that transaction commits, so consuming it up front would spend the
-	 * application's undo even if the transaction rolls back.
+	 * A revert may only occur inside a transaction as that transaction's sole change, so at most one is ever
+	 * outstanding. `labelTree` is the reverted commit's {@link LabelTree}, carried across to the
+	 * transaction's commit; `revertible` is the revertible the caller asked to release, whose disposal is
+	 * deferred until the revert is durable.
 	 */
 	private pendingRevert:
 		| {
@@ -1725,10 +1706,8 @@ export class TreeCheckout implements ITreeCheckout {
 	 * Resolves the revert owned by the transaction that just ended, if there is one.
 	 * @param committed - Whether that transaction committed.
 	 * @remarks
-	 * A committed transaction hands its revert to the transaction enclosing it, which decides its fate
-	 * instead. Otherwise the revert is resolved: the released revertible is consumed if the outermost
-	 * transaction containing the revert committed, and retained if it rolled back, since the revert did
-	 * not survive and the application keeps its undo.
+	 * A committed transaction hands its revert to the transaction enclosing it. Otherwise the released
+	 * revertible is consumed if the revert survived, and retained if it did not.
 	 */
 	private settlePendingRevert(committed: boolean): void {
 		const pendingRevert = this.pendingRevert;
@@ -1766,19 +1745,12 @@ export class TreeCheckout implements ITreeCheckout {
 		revertibleToRelease: RevertibleAlpha | undefined,
 	): RevertMetrics {
 		this.editLock.checkUnlocked("Reverting a commit");
-		// A revert is normally forbidden during a transaction because the inverse is computed against,
-		// and applied to, the branch the transaction forked from — so it would neither account for the
-		// transaction's own edits nor be part of the transaction.
-		//
-		// Neither problem arises when the transaction has not yet changed the document: the inverse is
-		// then computed against exactly the state it would be outside a transaction. Applying it to the
-		// transaction branch makes the revert the transaction's content, which is what allows an
-		// application to attach {@link RunTransactionParamsAlpha.customMetadata | custom metadata} to a
-		// revert. Further changes are forbidden below so that the revert remains the only one.
-		//
-		// Note that this deliberately tests for *document* changes rather than for the transaction branch
-		// having advanced: constraints added by `preconditions` are commits too, and a concurrent remote
-		// commit advances the branch the transaction forked from without being part of the transaction.
+		// A revert is normally forbidden during a transaction because the inverse is computed against, and
+		// applied to, the branch the transaction forked from — so it would neither account for the
+		// transaction's own edits nor be part of the transaction. Neither problem arises when the
+		// transaction has not yet changed the document: the revert then becomes the transaction's content,
+		// which is what allows it to be given its own metadata or label. Further changes are forbidden
+		// below so that it remains the only one.
 		const inTransaction = this.transaction.size > 0;
 		if (inTransaction && this.transactionHasApplicationFacingChanges()) {
 			throw new UsageError(
@@ -1789,8 +1761,7 @@ export class TreeCheckout implements ITreeCheckout {
 		const revertibleBranch = this.revertibleCommitBranches.get(revision);
 		assert(revertibleBranch !== undefined, 0x7cc /* expected to find a revertible commit */);
 		const commitToRevert = revertibleBranch.getHead();
-		// Commits made within a transaction all share the transaction's revision so that they can be
-		// squashed into one commit when it ends.
+		// Commits within a transaction share its revision so that they can be squashed into one commit.
 		const revisionForInvert = inTransaction
 			? this.#transaction.mintTransactionRevision()
 			: this.mintRevisionTag();
@@ -1831,10 +1802,8 @@ export class TreeCheckout implements ITreeCheckout {
 		// the same labels. Reusing the captured tree (rather than wrapping it) ensures
 		// revert-of-revert does not introduce new nesting.
 		//
-		// This only takes effect outside a transaction, where `apply` lands the commit on the main
-		// branch immediately. Inside one it lands on the transaction branch instead, and the label
-		// state below is restored long before the transaction's commit reaches the main branch — hence
-		// `pendingRevert` carries the tree across to that point.
+		// This only takes effect outside a transaction, where `apply` lands the commit on the main branch
+		// immediately; inside one, `pendingRevert` carries the tree across to the transaction's commit.
 		const previousLabelTreeNode = this.labelTreeNode;
 		this.labelTreeNode = labelTree;
 		const revertKind =
@@ -1848,12 +1817,10 @@ export class TreeCheckout implements ITreeCheckout {
 		}
 
 		if (inTransaction) {
-			// The transaction squashes its content into a single commit, which would otherwise be
-			// reported as an ordinary edit rather than as an undo or redo.
+			// The transaction's squashed commit would otherwise be reported as an ordinary edit.
 			this.#transaction.setPendingCommitKind(revertKind);
 			this.pendingRevert = { labelTree, revertible: revertibleToRelease };
-			// Keep the revert the only change in the transaction. This is self-clearing: the restriction
-			// stops applying once the transaction that owns the revert ends, or rolls it back.
+			// Keep the revert the only change in the transaction.
 			this.editLock.restrict(
 				"a transaction whose only change is a revert",
 				() => this.transaction.size > 0 && this.pendingRevert !== undefined,
@@ -2142,9 +2109,8 @@ class EditLock {
 				const schemaEditor = editor.schema;
 				return {
 					setStoredSchema(...schemaArgs: Parameters<ISchemaEditor["setStoredSchema"]>): void {
-						// Schema edits are edits too: without this, they bypass both the lock and any
-						// restriction, which would let them slip into a transaction that is required to
-						// contain only a revert.
+						// Schema edits are edits too: without this they bypass the lock and any restriction,
+						// e.g. slipping into a transaction required to contain only a revert.
 						checkLock();
 						schemaEditor.setStoredSchema(...schemaArgs);
 					},

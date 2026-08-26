@@ -362,11 +362,7 @@ export const JsonCompatibleReadOnlySchema =
 
 /**
  * Schema for arbitrary JSON-compatible objects (as opposed to arbitrary JSON-compatible values).
- * @remarks
- * This validates that the value is an object whose properties are JSON-compatible, but like
- * {@link JsonCompatibleReadOnlySchema} it does not deeply validate those property values.
- *
- * This mirrors the shape already used for persisted schema metadata (`PersistedMetadataFormat`).
+ * @remarks Like {@link JsonCompatibleReadOnlySchema}, this does not validate property values.
  */
 export const JsonCompatibleReadOnlyObjectSchema = Type.Unsafe<JsonCompatibleReadOnlyObject>(
 	Type.Record(Type.String(), JsonCompatibleReadOnlySchema),

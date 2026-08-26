@@ -31,9 +31,8 @@ export interface Message {
 	readonly changeset: JsonCompatibleReadOnly;
 
 	/**
-	 * Arbitrary, application-defined metadata to store alongside the commit in this message.
-	 * @remarks
-	 * Only written when encoding at {@link MessageFormatVersion.v7} or later.
+	 * Arbitrary, application-defined metadata to persist alongside the commit in this message.
+	 * @remarks Only written at {@link MessageFormatVersion.v7} and later.
 	 */
 	readonly customMetadata?: EncodedCustomMetadataTree;
 
@@ -54,15 +53,8 @@ export interface Message {
 
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 // Return type is intentionally derived.
-/**
- * @param includeCustomMetadata - Whether the schema declares {@link Message.customMetadata}. Only
- * true at {@link MessageFormatVersion.v7} and later, so that earlier versions do not admit a field
- * they never write.
- * @privateRemarks Unlike the summary formats, this schema deliberately does *not* set
- * `additionalProperties: false`: the op envelope has always tolerated unknown properties, and
- * tightening it could reject ops written by other versions that legitimately carry fields this
- * client does not know about. Changing that is worth doing on its own, separately from this format.
- */
+// Unlike the summary formats, this schema does not set `additionalProperties: false`: the op envelope
+// has always tolerated unknown properties, and tightening it could reject ops from other versions.
 export const Message = <ChangeSchema extends TSchema>(
 	tChange: ChangeSchema,
 	includeCustomMetadata: boolean,

@@ -30,12 +30,7 @@ export interface Commit<TChangeset> {
 	readonly change: TChangeset;
 	/** An identifier representing the session/user/client that made this commit */
 	readonly sessionId: SessionId;
-	/**
-	 * Arbitrary, application-defined metadata stored alongside this commit.
-	 * @remarks
-	 * This is the in-memory form; {@link EncodedCommit} holds the persisted form. Only written when
-	 * encoding at {@link EditManagerFormatVersion.v7} or later.
-	 */
+	/** Arbitrary, application-defined metadata stored alongside this commit */
 	readonly customMetadata?: CustomMetadataTree;
 }
 
@@ -66,9 +61,6 @@ const CommitBase = <ChangeSchema extends TSchema>(
 	});
 
 /**
- * @param includeCustomMetadata - Whether the schema declares {@link EncodedCommit.customMetadata}.
- * Only true at {@link EditManagerFormatVersion.v7} and later, so that earlier versions do not admit
- * a field they never write.
  * @privateRemarks Commits are generally encoded from `GraphCommit`s, which often contain extra data.
  * This `noAdditionalProps` is especially important in that light.
  */
@@ -201,7 +193,7 @@ export const EditManagerFormatVersion = strictEnum("editManager.FormatVersion", 
 	v6: 6,
 	/**
 	 * Introduced and made available for writing in 3.0.0.
-	 * Adds support for {@link GraphCommit.customMetadata | persisted commit metadata}, carried inline on each commit.
+	 * Adds support for {@link GraphCommit.customMetadata | persisted commit metadata}.
 	 */
 	v7: 7,
 	/**

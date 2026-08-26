@@ -118,8 +118,7 @@ type TestCommit = Commit<TestChange> & {
 	seqNumber: SeqNumber;
 	refNumber: SeqNumber;
 	intention: number;
-	// `Commit` declares this optionally, but these commits are handed to `addSequencedChanges`,
-	// which requires the `GraphCommit` shape where the property is always present.
+	// Required rather than optional because these commits are handed to `addSequencedChanges`.
 	customMetadata: JsonCompatibleReadOnlyObject | undefined;
 };
 

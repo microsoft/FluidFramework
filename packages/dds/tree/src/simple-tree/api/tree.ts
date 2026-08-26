@@ -327,18 +327,11 @@ export interface TreeBranchCommitMetadata {
 	 * to this commit when it was created, flattened into a single object.
 	 *
 	 * @remarks
-	 * This is `undefined` for commits that were not annotated, and for commits created before the application
-	 * began writing metadata.
+	 * This is `undefined` for commits that were not annotated.
 	 *
-	 * A commit may be produced by nested transactions, each of which may supply metadata. This property
-	 * combines them all: where two of them used the same property, the outermost transaction wins, and
-	 * between siblings the later one wins. Use {@link TreeBranchCommitMetadata.customTree} to recover
-	 * which transaction supplied what.
-	 *
-	 * The metadata shares the lifetime of the commit it describes: once the commit is trimmed from the branch's
-	 * history, the metadata goes with it. Reading this property through a `TreeBranchCommitMetadata` that was
-	 * obtained before its commit was trimmed is not supported and may throw, so do not retain these objects
-	 * indefinitely.
+	 * A commit may be produced by nested transactions, each of which may supply metadata. This property combines
+	 * them: where two of them used the same property, the outermost transaction wins, and between siblings the
+	 * later one wins. Use {@link TreeBranchCommitMetadata.customTree} to recover which transaction supplied what.
 	 */
 	readonly custom: JsonCompatibleReadOnlyObject | undefined;
 
@@ -347,9 +340,8 @@ export interface TreeBranchCommitMetadata {
 	 * the transactions that produced it.
 	 *
 	 * @remarks
-	 * This is `undefined` whenever {@link TreeBranchCommitMetadata.custom} is, and throws whenever it does.
-	 * It is the structural counterpart to it — the same relationship {@link TransactionLabels.tree} has to its
-	 * label set. Prefer `custom` unless you need to know which transaction supplied a particular property.
+	 * The structural counterpart to {@link TreeBranchCommitMetadata.custom}, and `undefined` whenever it is.
+	 * Prefer `custom` unless you need to know which transaction supplied a particular property.
 	 */
 	readonly customTree: CustomMetadataTree | undefined;
 

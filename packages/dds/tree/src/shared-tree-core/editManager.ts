@@ -350,12 +350,9 @@ export class EditManager<
 		// so rebase them accordingly. This is necessary to prevent peer branches from referencing any evicted commits.
 		mainBranch.trimHistory(latestEvicted, sequenceId);
 
-		// Custom metadata shares the lifetime of its commit, so it must be dropped for every trimmed
-		// commit. This covers `newTrunkBase` too: that commit has been trimmed (it is not written to the
-		// summary) but stays reachable as the trunk base, so leaving its metadata in place would let a
-		// client keep reading metadata that a client loading from the summary would never see.
-		// The trunk base is still accessible (it is the sentinel for the reachable history), so its
-		// metadata is cleared to `undefined`. Fully evicted commits get a throwing trap instead.
+		// Custom metadata shares the lifetime of its commit, so it must be dropped when the commit is
+		// trimmed. The new trunk base stays reachable as the sentinel for the remaining history, so its
+		// metadata is cleared rather than trapped; fully evicted commits get the throwing trap below.
 		(newTrunkBase as Mutable<typeof newTrunkBase>).customMetadata = undefined;
 
 		// Only the last trimmed commit, which is the new trunk base, should remain accessible.

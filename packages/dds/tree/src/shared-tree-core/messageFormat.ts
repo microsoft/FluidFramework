@@ -54,7 +54,7 @@ export const MessageFormatVersion = strictEnum("MessageFormatVersion", {
 	v6: 6,
 	/**
 	 * Introduced and made available for writing in 3.0.0.
-	 * Adds support for {@link GraphCommit.customMetadata | persisted commit metadata}, carried inline on the commit.
+	 * Adds support for {@link GraphCommit.customMetadata | persisted commit metadata}.
 	 */
 	v7: 7,
 	/**

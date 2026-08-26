@@ -15,17 +15,12 @@ import {
 /**
  * The persisted form of a {@link CustomMetadataTree}.
  * @remarks
- * The property names are abbreviated, and both are optional, because this rides on every annotated op
- * and occupies summary space for as long as its commit survives. Most commits are produced by a single
- * (un-nested) transaction, for which this encodes as just `{"m":\{...\}}`.
- *
- * - `m`: the metadata supplied by this transaction, omitted when it supplied none.
- * - `c`: the nodes of nested transactions, omitted when there were none.
- *
+ * The property names (`m` for metadata, `c` for children) are abbreviated and both are optional because
+ * this rides on every annotated op and occupies summary space for as long as its commit survives.
  * @privateRemarks
- * Each node forbids additional properties. Extending the shape of a node is therefore a breaking format
- * change and must be introduced under a new message/EditManager format version rather than by adding a
- * key here: silently ignoring an unknown key would lose metadata when an older client re-summarizes.
+ * Each node forbids additional properties, so extending the shape of a node requires a new
+ * message/EditManager format version: silently ignoring an unknown key would lose metadata when an older
+ * client re-summarizes.
  */
 // Declared as a type alias rather than an interface so that it satisfies the index signature of
 // `JsonCompatibleReadOnlyObject`, which the encoded message and summary types are constrained to.
@@ -60,8 +55,7 @@ export function decodeCustomMetadataTree(
 	encoded: EncodedCustomMetadataTree,
 ): CustomMetadataTree | undefined {
 	const decoded = decodeNode(encoded);
-	// A tree in which no transaction supplied metadata carries no information, and would otherwise
-	// break the invariant that `customTree` is defined exactly when the flattened view is.
+	// A tree in which no transaction supplied metadata carries no information.
 	return hasMetadata(decoded) ? decoded : undefined;
 }
 

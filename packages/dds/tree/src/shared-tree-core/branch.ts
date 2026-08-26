@@ -181,12 +181,9 @@ export class SharedTreeBranch<
 	 * @param customMetadata - {@link GraphCommit.customMetadata | metadata} to attach to the new commit.
 	 * @returns the change that was applied and the new head commit of the branch
 	 * @remarks
-	 * This mints a *new* commit, so `customMetadata` is correctly omitted for genuinely new edits
-	 * (editor edits, reverts, and intermediate transaction commits).
-	 *
-	 * Callers that are instead *reconstructing an existing commit* — for example replaying a remote
-	 * commit, rehydrating a stashed op, or applying the commit a transaction produced — must pass the
-	 * source commit's metadata, or it will be silently dropped.
+	 * This mints a *new* commit. Callers that are instead reconstructing an existing commit (replaying a
+	 * remote commit, rehydrating a stashed op, or applying the commit a transaction produced) must pass
+	 * that commit's metadata, or it will be dropped.
 	 */
 	public apply(
 		change: TaggedChange<TChange>,

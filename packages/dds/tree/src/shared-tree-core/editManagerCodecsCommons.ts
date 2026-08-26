@@ -84,9 +84,8 @@ function encodeCommit<TChangeset, T extends Commit<TChangeset>>(
 		}),
 		change: changeCodec.encode(commit.change, { ...context, revision: commit.revision }),
 	};
-	// `customMetadata` is deliberately rebuilt here rather than being spread through, both to convert
-	// it to its persisted form and so that a client writing an older format never emits a field that
-	// format does not define.
+	// Rebuilt rather than spread through, both to convert it to the persisted form and so that a client
+	// writing an older format never emits a field that format does not define.
 	if (encoded.customMetadata === undefined) {
 		const { customMetadata: _, ...withoutMetadata } = encoded;
 		return withoutMetadata;

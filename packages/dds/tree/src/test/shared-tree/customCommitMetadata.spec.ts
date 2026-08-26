@@ -957,10 +957,9 @@ describe("custom commit metadata", () => {
 		});
 
 		it("throws when read through a commit metadata object obtained before trimming", () => {
-			// Trimming severs ancestry, but a `TreeBranchCommitMetadata` obtained beforehand still wraps
-			// its commit. Annotating several consecutive commits also ensures one of them becomes the
-			// newest trimmed commit, which survives internally as the trunk base and so stays reachable —
-			// that one reads `undefined` rather than throwing, because its metadata is cleared outright.
+			// Trimming severs ancestry, but a `TreeBranchCommitMetadata` obtained beforehand still wraps its
+			// commit. Annotating several consecutive commits also ensures one of them becomes the newest
+			// trimmed commit, which survives as the trunk base and so reads `undefined` rather than throwing.
 			const {
 				provider,
 				views: [view1, view2],

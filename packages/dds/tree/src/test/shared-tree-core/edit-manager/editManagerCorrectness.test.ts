@@ -29,9 +29,8 @@ const peer2: SessionId = "2" as SessionId;
 /**
  * A {@link Commit} that is also usable as a {@link GraphCommit}.
  * @remarks
- * {@link Commit} declares `customMetadata` optionally because the persisted format omits it when absent,
- * whereas {@link GraphCommit} requires the property to be present. These test helpers produce values that
- * are handed directly to `addSequencedChanges`, so they must satisfy the latter.
+ * {@link Commit} declares `customMetadata` optionally, but these commits are handed to
+ * `addSequencedChanges`, which requires the `GraphCommit` shape where the property is always present.
  */
 type SequencedTestCommit = GraphCommit<TestChange> & { readonly sessionId: SessionId };
 
