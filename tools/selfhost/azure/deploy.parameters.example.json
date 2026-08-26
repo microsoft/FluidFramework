@@ -51,7 +51,8 @@
 	"redis": {
 		"clusterName": "my-fluid-redis",
 		"location": "",
-		"sku": "Balanced_B5"
+		"sku": "Balanced_B5",
+		"highAvailability": "Enabled"
 	},
 
 	"storage": {

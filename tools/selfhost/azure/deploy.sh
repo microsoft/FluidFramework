@@ -393,9 +393,10 @@ REDIS_LOC="$(jqr '.redis.location')"; REDIS_LOC="${REDIS_LOC:-$RG_LOC}"
 # Balanced_B5 is the current Azure Managed Redis mapping for the previous Premium P1 baseline:
 # 6 GB advertised / approximately 4.8 GB usable, with substantially higher throughput. The
 # database remains non-clustered because Fluid constructs a standalone Redis client rather than
-# a Redis Cluster client. HA is enabled and Azure distributes replicas across zones by default
-# where the region supports them.
+# a Redis Cluster client. HA defaults to Enabled in the example parameters and can be disabled
+# explicitly where the selected region or SKU cannot provide it.
 REDIS_SKU="$(jqr '.redis.sku')"; REDIS_SKU="${REDIS_SKU:-Balanced_B5}"
+REDIS_HIGH_AVAILABILITY="$(jqr '.redis.highAvailability')"
 REDIS_PORT=10000
 STORAGE="$(jqr '.storage.accountName')"
 
@@ -1306,7 +1307,7 @@ phase8_redis() {
   if [[ -z "$existing_state" ]]; then
     az redisenterprise create -n "$REDIS" -g "$RG" -l "$REDIS_LOC" \
       --sku "$REDIS_SKU" \
-      --high-availability Enabled \
+      --high-availability "$REDIS_HIGH_AVAILABILITY" \
       --minimum-tls-version 1.2 \
       --public-network-access Disabled \
       --access-keys-authentication Enabled \
@@ -1326,10 +1327,10 @@ phase8_redis() {
     || { echo "ERROR: Azure Managed Redis $REDIS did not provision successfully" >&2; exit 1; }
   cluster_ha="$(az redisenterprise show -n "$REDIS" -g "$RG" --query highAvailability -o tsv)"
   cluster_public="$(az redisenterprise show -n "$REDIS" -g "$RG" --query publicNetworkAccess -o tsv)"
-  if [[ "$cluster_ha" != "Enabled" || "$cluster_public" != "Disabled" ]]; then
+  if [[ "$cluster_ha" != "$REDIS_HIGH_AVAILABILITY" || "$cluster_public" != "Disabled" ]]; then
     az redisenterprise update -n "$REDIS" -g "$RG" \
-      --high-availability Enabled --public-network-access Disabled >/dev/null || {
-      echo "ERROR: could not enable HA and disable public access on Azure Managed Redis $REDIS." >&2
+      --high-availability "$REDIS_HIGH_AVAILABILITY" --public-network-access Disabled >/dev/null || {
+      echo "ERROR: could not set high availability to $REDIS_HIGH_AVAILABILITY and disable public access on Azure Managed Redis $REDIS." >&2
       echo "An instance created with an older API version may need to be recreated." >&2
       exit 1
     }
@@ -1365,12 +1366,12 @@ phase8_redis() {
   az keyvault secret show --vault-name "$KV" --name redis-password --query id -o tsv >/dev/null
 
   redis_id="$(az redisenterprise show -n "$REDIS" -g "$RG" --query id -o tsv)"
-  [[ "$(az redisenterprise show -n "$REDIS" -g "$RG" --query highAvailability -o tsv)" == "Enabled" \
+  [[ "$(az redisenterprise show -n "$REDIS" -g "$RG" --query highAvailability -o tsv)" == "$REDIS_HIGH_AVAILABILITY" \
       && "$(az redisenterprise show -n "$REDIS" -g "$RG" --query publicNetworkAccess -o tsv)" == "Disabled" ]] \
-    || { echo "ERROR: Azure Managed Redis $REDIS is not HA with public access disabled" >&2; exit 1; }
+    || { echo "ERROR: Azure Managed Redis $REDIS does not have highAvailability=$REDIS_HIGH_AVAILABILITY with public access disabled" >&2; exit 1; }
   create_private_endpoint "$redis_id" redisEnterprise "$REDIS" privatelink.redis.azure.net
   unset redis_key
-  log "Phase 8 (Azure Managed Redis) VERIFY passed — access-key auth over TLS, public access disabled, and only the AKS VNet private endpoint can reach $REDIS"
+  log "Phase 8 (Azure Managed Redis) VERIFY passed — highAvailability=$REDIS_HIGH_AVAILABILITY, access-key auth over TLS, public access disabled, and only the AKS VNet private endpoint can reach $REDIS"
 }
 
 # ===========================================================================

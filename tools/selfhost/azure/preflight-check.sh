@@ -91,6 +91,7 @@ COSMOS_ZONE_REDUNDANT="$(jqr '.cosmos.zoneRedundant')"; COSMOS_ZONE_REDUNDANT="$
 REDIS="$(jqr '.redis.clusterName')"
 REDIS_LOC="$(jqr '.redis.location')"; REDIS_LOC="${REDIS_LOC:-$RG_LOC}"
 REDIS_SKU="$(jqr '.redis.sku')"; REDIS_SKU="${REDIS_SKU:-Balanced_B5}"
+REDIS_HIGH_AVAILABILITY="$(jqr '.redis.highAvailability')"
 STORAGE="$(jqr '.storage.accountName')"
 EVENTHUBS_NAMESPACE="$(jqr '.kafka.eventHubs.namespaceName')"
 EVENTHUBS_SKU="$(jqr '.kafka.eventHubs.sku')"; EVENTHUBS_SKU="${EVENTHUBS_SKU:-Standard}"
@@ -98,7 +99,7 @@ EVENTHUBS_ZONE_REDUNDANT="$(jqr '.kafka.eventHubs.zoneRedundant')"; EVENTHUBS_ZO
 AFD="$(jqr '.frontDoor.profileName')"
 
 banner "Parameters file completeness"
-for required in SUB RG RG_LOC BUILD_ACR DEPLOY_ACR AKS KV COSMOS REDIS STORAGE AFD; do
+for required in SUB RG RG_LOC BUILD_ACR DEPLOY_ACR AKS KV COSMOS REDIS REDIS_HIGH_AVAILABILITY STORAGE AFD; do
   if [[ -z "${!required}" ]]; then
     fail "'$required' is missing from $PARAMS_FILE"
   else
@@ -114,6 +115,9 @@ if [[ -n "$legacy_redis_keys" ]]; then
 fi
 if [[ "$REDIS_SKU" != *_* ]]; then
   fail "redis.sku '$REDIS_SKU' is not an Azure Managed Redis SKU (for example, Balanced_B5)"
+fi
+if [[ "$REDIS_HIGH_AVAILABILITY" != "Enabled" && "$REDIS_HIGH_AVAILABILITY" != "Disabled" ]]; then
+  fail "redis.highAvailability must be exactly 'Enabled' or 'Disabled' (got '${REDIS_HIGH_AVAILABILITY:-empty}')"
 fi
 if [[ $FAILURES -gt 0 ]]; then
   echo "Parameters file incomplete -- stopping (remaining checks need these values)." >&2

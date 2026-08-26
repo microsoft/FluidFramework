@@ -192,17 +192,18 @@ two being set to the same registry.
 
 ### Choosing a region
 
-Pick a region that supports **Availability Zones**. Three settings depend on it —
-`aks.availabilityZones`, `redis.zones`, and `kafka.eventHubs.zoneRedundant` — and they spread
-your deployment across physically separate datacenters so a single one failing does not take the
-service down.
+Pick a region that supports **Availability Zones**. The AKS and Event Hubs settings
+`aks.availabilityZones` and `kafka.eventHubs.zoneRedundant` depend on them and spread your
+deployment across physically separate datacenters so a single one failing does not take the
+service down. Azure Managed Redis HA is selected separately with the required
+`redis.highAvailability` setting.
 
 `kafka.eventHubs.zoneRedundant` **can only be set when the namespace is created.** Changing your
 mind later means deleting and rebuilding it. Preflight checks your region for zone support before
 anything else is provisioned, precisely because this mistake is expensive to undo.
 
 If you must use a region without zones, set `kafka.eventHubs.zoneRedundant` to `false`,
-`aks.availabilityZones` to `[]`, and `redis.zones` to `[]`.
+`aks.availabilityZones` to `[]`, and `redis.highAvailability` to `Disabled`.
 
 ### Sizing and cost
 
@@ -214,7 +215,7 @@ that drive most of the bill:
 | `aks.systemNodeVmSize` | `Standard_D8as_v5` | 8 vCPU per node |
 | `aks.systemNodeMinCount` / `MaxCount` | 3 / 10 | Autoscaling range. You need quota for `(max + 1) × 8` vCPUs |
 | `cosmos.throughput.*` | 4,000–80,000 RU/s | Per-collection database capacity. `deltas` and `documents` are the large ones |
-| `redis.sku` / `vmSize` | `Premium` / `p1` | Premium is required for zone redundancy |
+| `redis.sku` / `highAvailability` | `Balanced_B5` / `Enabled` | Disable HA only when the selected region or SKU cannot provide it |
 | `storage.gitrestQuota` | `20Ti` | Provisioned file-share size |
 | `kafka.eventHubs.capacity` | `4` | Event Hubs throughput units — see below |
 

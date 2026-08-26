@@ -31,7 +31,7 @@ absorb() { while IFS= read -r l; do case "$l" in PASS\ *) ok "${l#PASS }";; FAIL
 # ---------------------------------------------------------------------------
 BIN="$WORK/bin"; mkdir -p "$BIN"
 export CALLS="$WORK/calls.log"; : > "$CALLS"
-export MOCK_NS_EXISTS=0 MOCK_TIER=Standard MOCK_REDIS_EXISTS=0
+export MOCK_NS_EXISTS=0 MOCK_TIER=Standard MOCK_REDIS_EXISTS=0 MOCK_REDIS_HA=Enabled
 
 cat > "$BIN/az" <<'STUB'
 #!/usr/bin/env bash
@@ -51,7 +51,7 @@ case "$*" in
   *"redisenterprise show"*"--query provisioningState"*)
     if [ "${MOCK_REDIS_EXISTS:-0}" = 1 ] || grep -q "redisenterprise create -n" "$CALLS"; then echo "Succeeded"; exit 0; else exit 1; fi ;;
   *"redisenterprise show"*"--query hostName"*)            echo "mock-redis.centralus.redis.azure.net"; exit 0 ;;
-  *"redisenterprise show"*"--query highAvailability"*)    echo "Enabled"; exit 0 ;;
+  *"redisenterprise show"*"--query highAvailability"*)    echo "${MOCK_REDIS_HA:-Enabled}"; exit 0 ;;
   *"redisenterprise show"*"--query publicNetworkAccess"*) echo "Disabled"; exit 0 ;;
   *"redisenterprise show"*"--query id"*)                  echo "/subscriptions/s/resourceGroups/rg/providers/Microsoft.Cache/redisEnterprise/mock-redis"; exit 0 ;;
   *"redisenterprise show"*)                               [ "${MOCK_REDIS_EXISTS:-0}" = 1 ] && exit 0 || exit 1 ;;
@@ -112,7 +112,7 @@ cat > "$PARAMS" <<JSON
   "aks": { "name": "mock-aks" },
   "keyVault": { "name": "mock-kv" },
   "cosmos": { "clusterName": "mock-cosmos" },
-  "redis": { "clusterName": "mock-redis" },
+  "redis": { "clusterName": "mock-redis", "highAvailability": "Enabled" },
   "storage": { "accountName": "mockstorage" },
   "kafka": {
     "eventHubs": {
@@ -167,7 +167,8 @@ group "1. Parameter parsing"
 # ---------------------------------------------------------------------------
 while IFS='=' read -r k v; do printf -v "V_$k" '%s' "$v"; done < <(
   read_vars "$PARAMS" EVENTHUBS_NAMESPACE EVENTHUBS_SKU EVENTHUBS_CAPACITY EVENTHUBS_PARTITIONS \
-            EVENTHUBS_RETENTION_HOURS EVENTHUBS_ZONE_REDUNDANT KAFKA_ENDPOINT REDIS_SKU REDIS_PORT)
+            EVENTHUBS_RETENTION_HOURS EVENTHUBS_ZONE_REDUNDANT KAFKA_ENDPOINT REDIS_SKU \
+            REDIS_HIGH_AVAILABILITY REDIS_PORT)
 assert_eq "namespaceName parsed"  "${V_EVENTHUBS_NAMESPACE:-}"       "mock-eventhubs"
 assert_eq "sku parsed"            "${V_EVENTHUBS_SKU:-}"             "Standard"
 assert_eq "capacity parsed"       "${V_EVENTHUBS_CAPACITY:-}"        "1"
@@ -177,6 +178,7 @@ assert_eq "zoneRedundant parsed"  "${V_EVENTHUBS_ZONE_REDUNDANT:-}"  "true"
 assert_eq "KAFKA_ENDPOINT is the TLS Kafka head on 9093" \
   "${V_KAFKA_ENDPOINT:-}" "mock-eventhubs.servicebus.windows.net:9093"
 assert_eq "Azure Managed Redis defaults to Balanced_B5" "${V_REDIS_SKU:-}" "Balanced_B5"
+assert_eq "Azure Managed Redis high availability is parsed" "${V_REDIS_HIGH_AVAILABILITY:-}" "Enabled"
 assert_eq "Azure Managed Redis uses port 10000" "${V_REDIS_PORT:-}" "10000"
 
 TILDE="$WORK/params-tilde.json"
@@ -261,6 +263,14 @@ assert_eq "Managed Redis re-run exits 0" "$rc" "0"
 if grep -q "redisenterprise create -n" "$CALLS"; then no "Managed Redis re-run does not recreate the cache"
 else ok "Managed Redis re-run does not recreate the cache"; fi
 export MOCK_REDIS_EXISTS=0
+
+DISABLED_HA="$WORK/params-disabled-ha.json"
+jq '.redis.highAvailability = "Disabled"' "$PARAMS" > "$DISABLED_HA"
+: > "$CALLS"; export MOCK_REDIS_EXISTS=0 MOCK_REDIS_HA=Disabled
+out="$(run_phase 'phase8_redis' "$DISABLED_HA")"; rc=$?
+assert_eq "Managed Redis supports explicitly disabled HA" "$rc" "0"
+assert_has "Managed Redis passes disabled HA to Azure" "$CALLS" "--high-availability Disabled"
+export MOCK_REDIS_HA=Enabled
 
 # ---------------------------------------------------------------------------
 group "5. Guard rails"
@@ -447,6 +457,8 @@ grep -q "has no Kafka endpoint"        "$P" && ok "preflight rejects the Basic S
 grep -q "no Availability Zone support" "$P" && ok "preflight gates zoneRedundant on region AZ support"  || no "preflight gates zoneRedundant on region AZ support"
 grep -q "create-time only"             "$P" && ok "preflight warns zoneRedundant cannot change later"   || no "preflight warns zoneRedundant cannot change later"
 grep -q "Microsoft.Cache/redisEnterprise" "$P" && ok "preflight checks Azure Managed Redis names"       || no "preflight checks Azure Managed Redis names"
+grep -q "REDIS_HIGH_AVAILABILITY STORAGE" "$P" && ok "preflight requires Redis highAvailability"         || no "preflight requires Redis highAvailability"
+grep -q "must be exactly 'Enabled' or 'Disabled'" "$P" && ok "preflight validates Redis highAvailability" || no "preflight validates Redis highAvailability"
 
 printf '\n\033[1mTotal: %d passed, %d failed, %d skipped\033[0m\n' "$PASS" "$FAIL" "$SKIP"
 [[ $FAIL -eq 0 ]] || exit 1
