@@ -4,7 +4,7 @@
  */
 
 import { assert, fail } from "@fluidframework/core-utils/internal";
-import { featureVersion } from "@fluidframework/driver-definitions/internal";
+import { baseMinorVersion, featureVersion } from "@fluidframework/driver-definitions/internal";
 import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { compare, gt, gte, lte, parse } from "semver-ts";
@@ -46,7 +46,7 @@ export const defaultMinVersionForCollab =
  * @internal
  */
 export const lowestMinVersionForCollab =
-	"1.0.0" as const satisfies OldestSupportedClientVersion;
+	"1.0.0" as const satisfies OldestSupportedClientVersion satisfies `${bigint}.${bigint}.${bigint}`;
 
 /**
  * String in a valid semver format specifying bottom of a minor version
@@ -56,10 +56,7 @@ export const lowestMinVersionForCollab =
  *
  * @internal
  */
-export type MinimumMinorSemanticVersion =
-	| `${bigint}.${bigint}`
-	| `${bigint}.${bigint}.0`
-	| `${bigint}.0.0-defaults`;
+export type MinimumMinorSemanticVersion = `${bigint}.${bigint}.0` | `${bigint}.0.0-defaults`;
 
 /**
  * String in a valid semver format of a specific version at least specifying minor.
@@ -69,7 +66,6 @@ export type MinimumMinorSemanticVersion =
  * @internal
  */
 export type SemanticVersion =
-	| `${bigint}.${bigint}`
 	| `${bigint}.${bigint}.${bigint}`
 	| `${bigint}.${bigint}.${bigint}-${string}`;
 
@@ -224,20 +220,20 @@ export function checkValidMinVersionForCollabVerbose(minVersionForCollab: Semant
 	isLtePkgVersion: boolean;
 	isValidOldestSupportedClientVersion: boolean;
 } {
-	const semver = parse(minVersionForCollab);
-	const isValidSemver = semver !== null;
-	// We have to check if the value is a valid semver before calling gte/lte, otherwise they will throw when parsing the version.
+	// Semantic version might be a major.minor only version. Append .0 in that case.
+	const parsedOldestVersion = parse(minVersionForCollab);
+	const isValidSemver = parsedOldestVersion !== null && parsedOldestVersion.build.length === 0;
 	const isGteLowestMinVersion =
 		isValidSemver && gte(minVersionForCollab, lowestMinVersionForCollab);
-	const isLtePkgVersion = isValidSemver && lte(minVersionForCollab, cleanedPackageVersion);
-	// Starting with 3.x versions may only list major and minor.
+	const isLtePkgVersion = isValidSemver && lte(minVersionForCollab, highestBaseVersion);
+	// Starting with 3.x versions, the patch may only be 0 and no prerelease is allowed.
 	const isValidOldestSupportedClientVersion =
 		isGteLowestMinVersion &&
 		isLtePkgVersion &&
-		(semver?.major < 3 || minVersionForCollab.split(".").length === 2);
+		(parsedOldestVersion.major < 3 ||
+			(parsedOldestVersion.patch === 0 && parsedOldestVersion.prerelease.length === 0));
 	return {
 		isValidSemver,
-
 		isGteLowestMinVersion,
 		isLtePkgVersion,
 		isValidOldestSupportedClientVersion,
@@ -251,8 +247,9 @@ export function checkValidMinVersionForCollabVerbose(minVersionForCollab: Semant
  * @internal
  */
 export function isValidMinVersionForCollab(
-	minVersionForCollab: SemanticVersion,
-): minVersionForCollab is OldestSupportedClientVersion {
+	minVersionForCollab: OldestSupportedClientVersion,
+	// There are too many problems here!
+): minVersionForCollab is OldestSupportedClientVersion & SemanticVersion {
 	return checkValidMinVersionForCollabVerbose(minVersionForCollab)
 		.isValidOldestSupportedClientVersion;
 }
@@ -278,7 +275,6 @@ export function isValidMinVersionForCollab(
  * To accommodate some uses of the second case, it might be useful to package export this in the future.
  *
  * @privateRemarks
- * The satisfies here is used to ensure it is valid for validateMinimumVersionForCollab.
  * A "pkgFeatureVersion" or "pkgMajorMinorVersion" could be generated into
  * packageVersion.ts to avoid the need for load computation.
  *
@@ -287,6 +283,13 @@ export function isValidMinVersionForCollab(
 export const cleanedPackageVersion = featureVersion(
 	pkgVersion,
 ) satisfies OldestSupportedClientVersion;
+
+/**
+ * `pkgVersion` version with just major, minor, and .0 patch.
+ * @remarks
+ * The satisfies here is used to ensure it is valid for checkValidMinVersionForCollabVerbose's use with `lte`.
+ */
+const highestBaseVersion = baseMinorVersion(pkgVersion) satisfies `${bigint}.${bigint}.0`;
 
 /**
  * Narrows the type of the provided {@link SemanticVersion} to a {@link @fluidframework/runtime-definitions#OldestSupportedClientVersion}, throwing a UsageError if it is not valid.
@@ -300,9 +303,9 @@ export const cleanedPackageVersion = featureVersion(
  * @internal
  */
 export function validateMinimumVersionForCollab(
-	semanticVersion: string,
-): asserts semanticVersion is OldestSupportedClientVersion {
-	const minVersionForCollab = semanticVersion as OldestSupportedClientVersion;
+	semanticVersion: SemanticVersion,
+): asserts semanticVersion is OldestSupportedClientVersion & SemanticVersion {
+	const minVersionForCollab = semanticVersion; // as SemanticVersion;
 	const {
 		isValidSemver,
 		isGteLowestMinVersion,
@@ -313,7 +316,7 @@ export function validateMinimumVersionForCollab(
 		throw new UsageError(
 			`Version ${minVersionForCollab} is not a valid OldestSupportedClientVersion. ` +
 				`It must be in a valid semver format, at least ${lowestMinVersionForCollab}, ` +
-				`and less than or equal to the current package version ${cleanedPackageVersion}. ` +
+				`and less than or equal to the current package version ${highestBaseVersion}. ` +
 				`For 3.x+ versions, only major and minor may be specified. ` +
 				`Details: { isValidSemver: ${isValidSemver}, isGteLowestMinVersion: ${isGteLowestMinVersion}, isLtePkgVersion: ${isLtePkgVersion}, isValidOldestSupportedClientVersion: ${isValidOldestSupportedClientVersion} }`,
 		);

@@ -172,7 +172,6 @@ export function featureVersion<
 }
 
 /**
- * ** This just kept to demonstrate updated comments for version with .0. And a potential alternate name. **
  * Strips patch and prerelease from a SemVer string, returning only the major and minor version with a .0 patch.
  * @remarks
  * This formats a version, specifying the major version, minor version, and a patch of 0.
