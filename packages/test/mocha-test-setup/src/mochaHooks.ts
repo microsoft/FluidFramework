@@ -51,7 +51,7 @@ class FluidTestRunLogger implements ITelemetryBufferedLogger {
 				hostName: envLoggerProps?.hostName ?? pkgName,
 				testEnvProps: JSON.stringify(envLoggerProps),
 			},
-			logLevel,
+			logLevel ?? LogLevel.essential,
 		);
 	}
 	async flush(): Promise<void> {
