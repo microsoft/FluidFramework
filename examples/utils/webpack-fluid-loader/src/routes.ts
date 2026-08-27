@@ -5,7 +5,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { getOdspCredentials } from "@fluid-private/test-drivers";
 import type { IFluidPackage } from "@fluidframework/container-definitions/internal";
@@ -266,7 +266,7 @@ const makeAfterMiddlewares = (
 			middleware: async (req, res) => {
 				const ready = await isReady(req, res);
 				if (ready) {
-					fluid(req, res, baseDir, options);
+					await fluid(req, res, baseDir, options);
 				}
 			},
 		},
@@ -304,7 +304,7 @@ const makeAfterMiddlewares = (
 
 				const ready = await isReady(req, res);
 				if (ready) {
-					fluid(req, res, baseDir, options);
+					await fluid(req, res, baseDir, options);
 				}
 			},
 		},
@@ -398,16 +398,20 @@ export function commonExampleConfig(
 	};
 }
 
-const fluid = (
+const fluid = async (
 	req: express.Request,
 	res: express.Response,
 	baseDir: string,
 	options: RouteOptions,
-): void => {
+): Promise<void> => {
 	const documentId = req.params.id;
-	const packageJson = JSON.parse(
-		fs.readFileSync(path.join(baseDir, "./package.json"), "utf8"),
-	) as IFluidPackage;
+	// JSON imports are cached and is used here for efficiency, so package.json
+	// changes (specifically to `fluid.browser.umd`) require restarting the dev
+	// server.
+	const { default: packageJson } = (await import(
+		pathToFileURL(path.join(baseDir, "./package.json")).href,
+		{ with: { type: "json" } }
+	)) as { default: IFluidPackage };
 
 	const umd = packageJson.fluid.browser?.umd;
 	assert(umd !== undefined, 0x329 /* browser.umd property is undefined */);
