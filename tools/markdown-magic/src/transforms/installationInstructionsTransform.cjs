@@ -27,7 +27,7 @@ const generateInstallationInstructionsSection = (
 	devDependency,
 	headingOptions,
 ) => {
-	const sectionBody = `To get started, install the package by running the following command:
+	const sectionBody = `Run this command to install the package:
 
 \`\`\`bash
 npm i ${packageName}${devDependency ? " -D" : ""}
