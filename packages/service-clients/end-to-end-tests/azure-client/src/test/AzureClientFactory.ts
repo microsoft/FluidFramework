@@ -7,6 +7,7 @@ import {
 	AzureClient,
 	type AzureLocalConnectionConfig,
 	type AzureRemoteConnectionConfig,
+	type ITelemetryBaseLogger,
 } from "@fluidframework/azure-client";
 // eslint-disable-next-line import-x/no-internal-modules -- TODO consider a test exposure to avoid /internal
 import type { AzureClientPropsInternal } from "@fluidframework/azure-client/internal";
@@ -104,7 +105,7 @@ export function createAzureClient(
 				endpoint: "http://localhost:7071", // Port for local Azure Fluid Relay (AFR) service
 				type: "local",
 			};
-	const getLogger = (): ITelemetryBaseLoggerImplementation | undefined => {
+	const getLogger = (): ITelemetryBaseLogger | undefined => {
 		const testLogger = getTestLogger?.();
 		if (!logger && !testLogger) {
 			return undefined;
