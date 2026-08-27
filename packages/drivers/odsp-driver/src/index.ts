@@ -27,14 +27,11 @@ export { prefetchLatestSnapshot } from "./prefetchLatestSnapshot.js";
 // Factory
 export {
 	createLocalOdspDocumentServiceFactory,
-	createOdspDocumentServiceFactory,
-	type IOdspDocumentServiceFactoryOptions,
+	getOdspPointInTimeDocumentServiceFactory,
 	OdspDocumentServiceFactory,
 } from "./odspDocumentServiceFactory.js";
 export {
-	type IOdspPointInTimeDocumentServiceImplementationProps,
 	type IPointInTimeDocumentServiceFactory,
-	type OdspPointInTimeDocumentServiceImplementation,
 	OdspDocumentServiceFactoryCore,
 } from "./odspDocumentServiceFactoryCore.js";
 
