@@ -20,10 +20,8 @@ import type {
 	RelevantRemovedRootsFromChild,
 } from "../../../feature-libraries/index.js";
 import type {
-	ChildChangeInfo,
 	FieldChangeDelta,
-	FilterAttachResult,
-	FilterDetachResult,
+	NestedChangesIndices,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/fieldChangeHandler.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -978,87 +976,57 @@ describe("optionalField", () => {
 		it("includes changes to the node in the field", () => {
 			const change: OptionalChangeset = Change.child(nodeId1);
 			const actual = optionalChangeHandler.getNestedChanges(change);
-			const expected: ChildChangeInfo[] = [
-				{ nodeId: nodeId1, inputRootId: undefined, detachId: undefined },
-			];
+			const expected: NestedChangesIndices = [[nodeId1, 0, 0]];
 			assert.deepEqual(actual, expected);
 		});
 		it("includes changes to a node being removed from the field", () => {
-			const rootId: ChangeAtomId = { revision: tag, localId: brand(41) };
 			const change: OptionalChangeset = Change.atOnce(
 				Change.child(nodeId1),
-				Change.clear("self", rootId),
+				Change.clear("self", brand(41)),
 			);
 			const actual = optionalChangeHandler.getNestedChanges(change);
-			const expected: ChildChangeInfo[] = [
-				{ nodeId: nodeId1, inputRootId: undefined, detachId: rootId },
-			];
+			const expected: NestedChangesIndices = [[nodeId1, 0, undefined]];
 			assert.deepEqual(actual, expected);
 		});
 		it("includes changes to a node being moved into from the field", () => {
-			const rootId: ChangeAtomId = { revision: tag, localId: brand(42) };
 			const change: OptionalChangeset = Change.atOnce(
 				Change.reserve("self", brand(41)),
-				Change.childAt(rootId, nodeId1),
-				Change.move(rootId, "self"),
+				Change.childAt(brand(42), nodeId1),
+				Change.move(brand(42), "self"),
 			);
 			const actual = optionalChangeHandler.getNestedChanges(change);
-			const expected: ChildChangeInfo[] = [
-				{ nodeId: nodeId1, inputRootId: rootId, detachId: undefined },
-			];
+			const expected: NestedChangesIndices = [[nodeId1, undefined, 0]];
 			assert.deepEqual(actual, expected);
 		});
 		it("includes changes to removed nodes", () => {
-			const rootId1: ChangeAtomId = { revision: tag, localId: brand(41) };
-			const rootId2: ChangeAtomId = { revision: tag, localId: brand(42) };
-
 			const change: OptionalChangeset = Change.atOnce(
-				Change.childAt(rootId1, nodeId1),
-				Change.childAt(rootId2, nodeId2),
+				Change.childAt(brand(41), nodeId1),
+				Change.childAt(brand(42), nodeId2),
 			);
 			const actual = optionalChangeHandler.getNestedChanges(change);
-			const expected: ChildChangeInfo[] = [
-				{ nodeId: nodeId1, inputRootId: rootId1, detachId: undefined },
-				{ nodeId: nodeId2, inputRootId: rootId2, detachId: undefined },
+			const expected: NestedChangesIndices = [
+				[nodeId1, undefined, undefined],
+				[nodeId2, undefined, undefined],
 			];
 			assert.deepEqual(actual, expected);
 		});
 	});
 
 	describe("Filter edits", () => {
-		function preserveAllDetaches(
+		function preserveAll(
 			id: ChangeAtomId,
 			count: number,
 			endpoint?: ChangeAtomId,
-		): RangeQueryResult<FilterDetachResult> {
-			return { length: count, value: { action: EditFilterStatus.Preserve } };
+		): RangeQueryResult<EditFilterStatus> {
+			return { length: count, value: EditFilterStatus.Preserve };
 		}
 
-		function preserveAllAttaches(
+		function removeAll(
 			id: ChangeAtomId,
 			count: number,
 			endpoint?: ChangeAtomId,
-		): RangeQueryResult<FilterAttachResult> {
-			return { length: count, value: { action: EditFilterStatus.Preserve } };
-		}
-
-		function removeAllDetaches(
-			id: ChangeAtomId,
-			count: number,
-			endpoint?: ChangeAtomId,
-		): RangeQueryResult<FilterDetachResult> {
-			return {
-				length: count,
-				value: { action: EditFilterStatus.Remove, shouldRemoveChild: false },
-			};
-		}
-
-		function removeAllAttaches(
-			id: ChangeAtomId,
-			count: number,
-			endpoint?: ChangeAtomId,
-		): RangeQueryResult<FilterAttachResult> {
-			return { length: count, value: { action: EditFilterStatus.Remove } };
+		): RangeQueryResult<EditFilterStatus> {
+			return { length: count, value: EditFilterStatus.Remove };
 		}
 
 		it("can preserve all", () => {
@@ -1070,8 +1038,8 @@ describe("optionalField", () => {
 			);
 
 			const filtered = optionalChangeRebaser.filterEdits(change, {
-				filterDetach: preserveAllDetaches,
-				filterAttach: preserveAllAttaches,
+				filterDetach: preserveAll,
+				filterAttach: preserveAll,
 				preserveOtherEdits: true,
 			});
 
@@ -1088,8 +1056,8 @@ describe("optionalField", () => {
 			const change = Change.atOnce(changeWithoutRename, Change.move(register0, register1));
 
 			const filtered = optionalChangeRebaser.filterEdits(change, {
-				filterDetach: preserveAllDetaches,
-				filterAttach: preserveAllAttaches,
+				filterDetach: preserveAll,
+				filterAttach: preserveAll,
 				preserveOtherEdits: false,
 			});
 
@@ -1106,8 +1074,8 @@ describe("optionalField", () => {
 			const change = Change.atOnce(changeWithoutSet, Change.move(register3, "self"));
 
 			const filtered = optionalChangeRebaser.filterEdits(change, {
-				filterDetach: preserveAllDetaches,
-				filterAttach: removeAllAttaches,
+				filterDetach: preserveAll,
+				filterAttach: removeAll,
 				preserveOtherEdits: true,
 			});
 
@@ -1127,8 +1095,8 @@ describe("optionalField", () => {
 			);
 
 			const filtered = optionalChangeRebaser.filterEdits(change, {
-				filterDetach: removeAllDetaches,
-				filterAttach: removeAllAttaches,
+				filterDetach: removeAll,
+				filterAttach: removeAll,
 				preserveOtherEdits: true,
 			});
 

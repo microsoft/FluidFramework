@@ -35,7 +35,6 @@ export {
 	subtractChangeAtomIds,
 	type ChangeAtomIdRangeMap,
 	newChangeAtomIdRangeMap,
-	newChangeAtomIdTransform,
 	comparePartialRevisions,
 	compareChangesetLocalIds,
 	comparePartialChangesetLocalIds,

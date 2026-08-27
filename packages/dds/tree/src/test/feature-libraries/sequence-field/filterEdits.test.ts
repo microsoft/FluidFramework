@@ -6,12 +6,7 @@
 // eslint-disable-next-line import-x/no-internal-modules
 import { filterEdits } from "../../../feature-libraries/sequence-field/filterEdits.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import {
-	EditFilterStatus,
-	FilterAttachResult,
-	FilterDetachResult,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/modular-schema/index.js";
+import { EditFilterStatus } from "../../../feature-libraries/modular-schema/index.js";
 import {
 	areEqualChangeAtomIds,
 	offsetChangeAtomId,
@@ -33,39 +28,20 @@ const id5: ChangeAtomId = { revision: tag3, localId: brand(0) };
 const id6: ChangeAtomId = { revision: tag3, localId: brand(1) };
 const id7: ChangeAtomId = { revision: tag3, localId: brand(2) };
 
-function preserveAllDetaches(
+function preserveAll(
 	id: ChangeAtomId,
 	count: number,
 	endpoint?: ChangeAtomId,
-): RangeQueryResult<FilterDetachResult> {
-	return { length: count, value: { action: EditFilterStatus.Preserve } };
+): RangeQueryResult<EditFilterStatus> {
+	return { length: count, value: EditFilterStatus.Preserve };
 }
 
-function preserveAllAttaches(
+function removeAll(
 	id: ChangeAtomId,
 	count: number,
 	endpoint?: ChangeAtomId,
-): RangeQueryResult<FilterAttachResult> {
-	return { length: count, value: { action: EditFilterStatus.Preserve } };
-}
-
-function removeAllDetaches(
-	id: ChangeAtomId,
-	count: number,
-	endpoint?: ChangeAtomId,
-): RangeQueryResult<FilterDetachResult> {
-	return {
-		length: count,
-		value: { action: EditFilterStatus.Remove, shouldRemoveChild: false },
-	};
-}
-
-function removeAllAttaches(
-	id: ChangeAtomId,
-	count: number,
-	endpoint?: ChangeAtomId,
-): RangeQueryResult<FilterAttachResult> {
-	return { length: count, value: { action: EditFilterStatus.Remove } };
+): RangeQueryResult<EditFilterStatus> {
+	return { length: count, value: EditFilterStatus.Remove };
 }
 
 export function testFilterEdits(): void {
@@ -80,8 +56,8 @@ export function testFilterEdits(): void {
 				MarkMaker.tomb(tag1, brand(5), 2),
 			];
 			const filtered = filterEdits(unfiltered, {
-				filterDetach: preserveAllDetaches,
-				filterAttach: preserveAllAttaches,
+				filterDetach: preserveAll,
+				filterAttach: preserveAll,
 				preserveOtherEdits: true,
 			});
 
@@ -99,8 +75,8 @@ export function testFilterEdits(): void {
 			];
 
 			const filtered = filterEdits(unfiltered, {
-				filterDetach: preserveAllDetaches,
-				filterAttach: preserveAllAttaches,
+				filterDetach: preserveAll,
+				filterAttach: preserveAll,
 				preserveOtherEdits: false,
 			});
 
@@ -122,19 +98,15 @@ export function testFilterEdits(): void {
 			const filtered = filterEdits(unfiltered, {
 				filterDetach: (id, count) => ({
 					length: 1,
-					value: {
-						action: areEqualChangeAtomIds(id, id4)
-							? EditFilterStatus.Remove
-							: EditFilterStatus.Preserve,
-					},
+					value: areEqualChangeAtomIds(id, id4)
+						? EditFilterStatus.Remove
+						: EditFilterStatus.Preserve,
 				}),
 				filterAttach: (id, count) => ({
 					length: 1,
-					value: {
-						action: areEqualChangeAtomIds(id, id2)
-							? EditFilterStatus.Remove
-							: EditFilterStatus.Preserve,
-					},
+					value: areEqualChangeAtomIds(id, id2)
+						? EditFilterStatus.Remove
+						: EditFilterStatus.Preserve,
 				}),
 				preserveOtherEdits: false,
 			});
@@ -158,11 +130,7 @@ export function testFilterEdits(): void {
 					MarkMaker.tomb(tag1, brand(5), 2),
 					MarkMaker.remove(1, id2),
 				],
-				{
-					filterDetach: removeAllDetaches,
-					filterAttach: removeAllAttaches,
-					preserveOtherEdits: false,
-				},
+				{ filterDetach: removeAll, filterAttach: removeAll, preserveOtherEdits: false },
 			);
 
 			assertChangesetsEqual(filtered, [
@@ -182,9 +150,9 @@ export function testFilterEdits(): void {
 				{
 					filterDetach: (id, count, endpoint) => ({
 						length: 1,
-						value: { action: EditFilterStatus.PreserveWithoutMove },
+						value: EditFilterStatus.PreserveWithoutMove,
 					}),
-					filterAttach: removeAllAttaches,
+					filterAttach: removeAll,
 					preserveOtherEdits: false,
 				},
 			);
@@ -205,10 +173,10 @@ export function testFilterEdits(): void {
 					MarkMaker.moveIn(1, id2, { finalEndpoint: id1 }),
 				],
 				{
-					filterDetach: removeAllDetaches,
+					filterDetach: removeAll,
 					filterAttach: (id, count, endpoint) => ({
 						length: 1,
-						value: { action: EditFilterStatus.PreserveWithoutMove },
+						value: EditFilterStatus.PreserveWithoutMove,
 					}),
 					preserveOtherEdits: false,
 				},

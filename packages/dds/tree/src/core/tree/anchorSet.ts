@@ -24,7 +24,7 @@ import type { FieldKey } from "../schema-stored/index.js";
 
 import type { ITreeCursorSynchronous } from "./cursor.js";
 import type * as Delta from "./delta.js";
-import { offsetDetachIdOpt } from "./deltaUtil.js";
+import { offsetDetachId } from "./deltaUtil.js";
 import {
 	isDetachedUpPathRoot,
 	type INormalizedUpPath,
@@ -585,7 +585,7 @@ export class AnchorSet implements AnchorLocator {
 			node.parentField = destination.parentField;
 			// If the destination is a detached root, propagate its detachedNodeId, otherwise remove any existing one
 			node.detachedNodeId = isDetachedUpPathRoot(destination)
-				? offsetDetachIdOpt(
+				? offsetDetachId(
 						destination.detachedNodeId,
 						node.parentIndex - destination.parentIndex,
 					)

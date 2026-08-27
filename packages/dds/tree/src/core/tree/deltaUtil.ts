@@ -4,7 +4,6 @@
  */
 
 import type { Mutable } from "../../util/index.js";
-import { comparePartialRevisions } from "../rebase/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
 import type { TreeChunk } from "./chunk.js";
@@ -38,19 +37,12 @@ export function makeDetachedNodeId(
 	return out;
 }
 
-export function offsetDetachId(id: DetachedNodeId, offset: number): DetachedNodeId {
-	return {
-		...id,
-		minor: id.minor + offset,
-	};
-}
-
-export function offsetDetachIdOpt(id: DetachedNodeId, offset: number): DetachedNodeId;
-export function offsetDetachIdOpt(
+export function offsetDetachId(id: DetachedNodeId, offset: number): DetachedNodeId;
+export function offsetDetachId(
 	id: DetachedNodeId | undefined,
 	offset: number,
 ): DetachedNodeId | undefined;
-export function offsetDetachIdOpt(
+export function offsetDetachId(
 	id: DetachedNodeId | undefined,
 	offset: number,
 ): DetachedNodeId | undefined {
@@ -61,15 +53,6 @@ export function offsetDetachIdOpt(
 		...id,
 		minor: id.minor + offset,
 	};
-}
-
-export function subtractDetachedNodeId(a: DetachedNodeId, b: DetachedNodeId): number {
-	const cmp = comparePartialRevisions(a.major, b.major);
-	if (cmp !== 0) {
-		return cmp * Number.POSITIVE_INFINITY;
-	}
-
-	return a.minor - b.minor;
 }
 
 export function areDetachedNodeIdsEqual(a: DetachedNodeId, b: DetachedNodeId): boolean {
