@@ -112,7 +112,7 @@ function allMetadata(
 /** The `tag` property of every annotated commit in the branch's history, newest first. */
 function tags(history: TreeBranchHistory): unknown[] {
 	return allMetadata(history)
-		.filter((m) => m !== undefined)
+		.filter((m): m is JsonCompatibleReadOnlyObject => m !== undefined)
 		.map((m) => m.tag);
 }
 
