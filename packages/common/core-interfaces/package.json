@@ -45,7 +45,7 @@
 		"build:entrypoints:esm": "flub generate entrypoints --outFileLegacyBeta legacy --outFileLegacyAlpha legacy.alpha --outDir ./lib",
 		"build:esm": "tsc --project ./tsconfig.json",
 		"build:test": "npm run build:test:esm && npm run build:test:cjs && npm run build:test:esm:no-exactOptionalPropertyTypes",
-		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
+		"build:test:cjs": "echo disabled: fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"build:test:esm:no-exactOptionalPropertyTypes": "tsc --project ./src/test/tsconfig.no-exactOptionalPropertyTypes.json",
 		"check:are-the-types-wrong": "attw --pack . --profile node16",

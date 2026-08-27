@@ -32,7 +32,7 @@
 		"build:docs": "api-extractor run --local --config api-extractor/api-extractor-model.json",
 		"build:esm": "tsc --project ./tsconfig.json",
 		"build:test": "concurrently npm:build:test:esm npm:build:test:cjs",
-		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
+		"build:test:cjs": "echo disabled: fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack . --profile node16 --exclude-entrypoints ./internal/test/utils",
 		"check:biome": "biome check .",

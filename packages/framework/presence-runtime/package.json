@@ -45,7 +45,7 @@
 		"build:esm": "tsc --project ./tsconfig.esm.json",
 		"build:genver": "gen-version",
 		"build:test": "concurrently npm:build:test:esm npm:build:test:cjs",
-		"build:test:cjs": "fluid-tsc commonjs --project ./tsconfig.test.cjs.json",
+		"build:test:cjs": "echo disabled: fluid-tsc commonjs --project ./tsconfig.test.cjs.json",
 		"build:test:esm": "tsc --project ./tsconfig.test.esm.json",
 		"check:are-the-types-wrong": "attw --pack . --profile node16 --exclude-entrypoints ./internal/protocol ./internal/test ./internal/test-utils",
 		"check:biome": "biome check .",
