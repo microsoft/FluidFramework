@@ -13244,7 +13244,7 @@ importers:
         version: link:../../azure-client
       '@fluidframework/azure-client-legacy':
         specifier: npm:@fluidframework/azure-client@^1.2.0
-        version: '@fluidframework/azure-client@1.2.0(debug@4.4.3)(supports-color@10.2.2)'
+        version: '@fluidframework/azure-client@1.2.0(debug@4.4.3)(supports-color@8.1.1)'
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../common/container-definitions
@@ -13268,7 +13268,7 @@ importers:
         version: link:../../../dds/map
       '@fluidframework/map-legacy':
         specifier: npm:@fluidframework/map@^1.4.0
-        version: '@fluidframework/map@1.4.0(debug@4.4.3)(supports-color@10.2.2)'
+        version: '@fluidframework/map@1.4.0(debug@4.4.3)(supports-color@8.1.1)'
       '@fluidframework/matrix':
         specifier: workspace:~
         version: link:../../../dds/matrix
@@ -13296,21 +13296,24 @@ importers:
       cross-env:
         specifier: ^10.1.0
         version: 10.1.0
+      fluid-framework:
+        specifier: workspace:~
+        version: link:../../../framework/fluid-framework
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+        version: 1.5.1(mocha@11.7.5)(supports-color@8.1.1)
       sinon:
         specifier: ^18.0.1
         version: 18.0.1
       start-server-and-test:
         specifier: ^2.0.3
-        version: 2.0.8(supports-color@10.2.2)
+        version: 2.0.8(supports-color@8.1.1)
       tinylicious:
         specifier: ^7.0.1
-        version: 7.0.1(debug@4.4.3)(supports-color@10.2.2)
+        version: 7.0.1(debug@4.4.3)(supports-color@8.1.1)
       uuid:
         specifier: ^11.1.1
         version: 11.1.1
@@ -13323,13 +13326,13 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
-        version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
+        version: 0.67.0(@types/node@22.19.17)(supports-color@8.1.1)
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../../common/driver-definitions
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
-        version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@6.0.3)
+        version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@8.1.1)(typescript@6.0.3)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -13347,16 +13350,13 @@ importers:
         version: 10.1.3
       eslint:
         specifier: catalog:eslint
-        version: 9.39.1(jiti@2.6.1)(supports-color@10.2.2)
-      fluid-framework:
-        specifier: workspace:~
-        version: link:../../../framework/fluid-framework
+        version: 9.39.1(jiti@2.6.1)(supports-color@8.1.1)
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
       nock:
         specifier: ^13.3.3
-        version: 13.5.6(supports-color@10.2.2)
+        version: 13.5.6(supports-color@8.1.1)
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -29590,21 +29590,21 @@ snapshots:
     transitivePeerDependencies:
       - tslib
 
-  '@fluidframework/aqueduct@1.4.0(debug@4.4.3)(supports-color@10.2.2)':
+  '@fluidframework/aqueduct@1.4.0(debug@4.4.3)(supports-color@8.1.1)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 0.32.2
       '@fluidframework/container-definitions': 1.4.0
-      '@fluidframework/container-loader': 1.4.0(debug@4.4.3)(supports-color@10.2.2)
-      '@fluidframework/container-runtime': 1.4.0(debug@4.4.3)(supports-color@10.2.2)
+      '@fluidframework/container-loader': 1.4.0(debug@4.4.3)(supports-color@8.1.1)
+      '@fluidframework/container-runtime': 1.4.0(debug@4.4.3)(supports-color@8.1.1)
       '@fluidframework/container-runtime-definitions': 1.4.0
       '@fluidframework/core-interfaces': 1.4.0
-      '@fluidframework/datastore': 1.4.0(debug@4.4.3)(supports-color@10.2.2)
+      '@fluidframework/datastore': 1.4.0(debug@4.4.3)(supports-color@8.1.1)
       '@fluidframework/datastore-definitions': 1.4.0
-      '@fluidframework/map': 1.4.0(debug@4.4.3)(supports-color@10.2.2)
-      '@fluidframework/request-handler': 1.4.0(supports-color@10.2.2)
+      '@fluidframework/map': 1.4.0(debug@4.4.3)(supports-color@8.1.1)
+      '@fluidframework/request-handler': 1.4.0(supports-color@8.1.1)
       '@fluidframework/runtime-definitions': 1.4.0
-      '@fluidframework/runtime-utils': 1.4.0(supports-color@10.2.2)
+      '@fluidframework/runtime-utils': 1.4.0(supports-color@8.1.1)
       '@fluidframework/synthesize': 1.4.0
       '@fluidframework/view-interfaces': 1.4.0
       uuid: 11.1.1
@@ -29633,21 +29633,21 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/azure-client@1.2.0(debug@4.4.3)(supports-color@10.2.2)':
+  '@fluidframework/azure-client@1.2.0(debug@4.4.3)(supports-color@8.1.1)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 1.4.0
-      '@fluidframework/container-loader': 1.4.0(debug@4.4.3)(supports-color@10.2.2)
+      '@fluidframework/container-loader': 1.4.0(debug@4.4.3)(supports-color@8.1.1)
       '@fluidframework/core-interfaces': 1.4.0
       '@fluidframework/driver-definitions': 1.4.0
-      '@fluidframework/driver-utils': 1.4.0(debug@4.4.3)(supports-color@10.2.2)
-      '@fluidframework/fluid-static': 1.4.0(debug@4.4.3)(supports-color@10.2.2)
-      '@fluidframework/map': 1.4.0(debug@4.4.3)(supports-color@10.2.2)
+      '@fluidframework/driver-utils': 1.4.0(debug@4.4.3)(supports-color@8.1.1)
+      '@fluidframework/fluid-static': 1.4.0(debug@4.4.3)(supports-color@8.1.1)
+      '@fluidframework/map': 1.4.0(debug@4.4.3)(supports-color@8.1.1)
       '@fluidframework/protocol-definitions': 1.2.0
-      '@fluidframework/routerlicious-driver': 1.4.0(debug@4.4.3)(supports-color@10.2.2)
-      '@fluidframework/runtime-utils': 1.4.0(supports-color@10.2.2)
-      '@fluidframework/server-services-client': 0.1036.5002(supports-color@10.2.2)
+      '@fluidframework/routerlicious-driver': 1.4.0(debug@4.4.3)(supports-color@8.1.1)
+      '@fluidframework/runtime-utils': 1.4.0(supports-color@8.1.1)
+      '@fluidframework/server-services-client': 0.1036.5002(supports-color@8.1.1)
       axios: 0.33.0(debug@4.4.3)
       uuid: 11.1.1
     transitivePeerDependencies:
@@ -29812,18 +29812,18 @@ snapshots:
       '@fluidframework/core-interfaces': 2.116.0
       '@fluidframework/driver-definitions': 2.116.0
 
-  '@fluidframework/container-loader@1.4.0(debug@4.4.3)(supports-color@10.2.2)':
+  '@fluidframework/container-loader@1.4.0(debug@4.4.3)(supports-color@8.1.1)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 0.32.2
       '@fluidframework/container-definitions': 1.4.0
-      '@fluidframework/container-utils': 1.4.0(supports-color@10.2.2)
+      '@fluidframework/container-utils': 1.4.0(supports-color@8.1.1)
       '@fluidframework/core-interfaces': 1.4.0
       '@fluidframework/driver-definitions': 1.4.0
-      '@fluidframework/driver-utils': 1.4.0(debug@4.4.3)(supports-color@10.2.2)
+      '@fluidframework/driver-utils': 1.4.0(debug@4.4.3)(supports-color@8.1.1)
       '@fluidframework/protocol-base': 0.1036.5002
       '@fluidframework/protocol-definitions': 0.1028.2000
-      '@fluidframework/telemetry-utils': 1.4.0(supports-color@10.2.2)
+      '@fluidframework/telemetry-utils': 1.4.0(supports-color@8.1.1)
       abort-controller: 3.0.0
       double-ended-queue: 2.1.0-0
       events: 3.3.0
@@ -29869,23 +29869,23 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/container-runtime@1.4.0(debug@4.4.3)(supports-color@10.2.2)':
+  '@fluidframework/container-runtime@1.4.0(debug@4.4.3)(supports-color@8.1.1)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 0.32.2
       '@fluidframework/container-definitions': 1.4.0
       '@fluidframework/container-runtime-definitions': 1.4.0
-      '@fluidframework/container-utils': 1.4.0(supports-color@10.2.2)
+      '@fluidframework/container-utils': 1.4.0(supports-color@8.1.1)
       '@fluidframework/core-interfaces': 1.4.0
-      '@fluidframework/datastore': 1.4.0(debug@4.4.3)(supports-color@10.2.2)
+      '@fluidframework/datastore': 1.4.0(debug@4.4.3)(supports-color@8.1.1)
       '@fluidframework/driver-definitions': 1.4.0
-      '@fluidframework/driver-utils': 1.4.0(debug@4.4.3)(supports-color@10.2.2)
+      '@fluidframework/driver-utils': 1.4.0(debug@4.4.3)(supports-color@8.1.1)
       '@fluidframework/garbage-collector': 1.4.0
       '@fluidframework/protocol-base': 0.1036.5002
       '@fluidframework/protocol-definitions': 0.1028.2000
       '@fluidframework/runtime-definitions': 1.4.0
-      '@fluidframework/runtime-utils': 1.4.0(supports-color@10.2.2)
-      '@fluidframework/telemetry-utils': 1.4.0(supports-color@10.2.2)
+      '@fluidframework/runtime-utils': 1.4.0(supports-color@8.1.1)
+      '@fluidframework/telemetry-utils': 1.4.0(supports-color@8.1.1)
       double-ended-queue: 2.1.0-0
       events: 3.3.0
       uuid: 11.1.1
@@ -29915,13 +29915,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/container-utils@1.4.0(supports-color@10.2.2)':
+  '@fluidframework/container-utils@1.4.0(supports-color@8.1.1)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 0.32.2
       '@fluidframework/container-definitions': 1.4.0
       '@fluidframework/protocol-definitions': 0.1028.2000
-      '@fluidframework/telemetry-utils': 1.4.0(supports-color@10.2.2)
+      '@fluidframework/telemetry-utils': 1.4.0(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -29962,22 +29962,22 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/datastore@1.4.0(debug@4.4.3)(supports-color@10.2.2)':
+  '@fluidframework/datastore@1.4.0(debug@4.4.3)(supports-color@8.1.1)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 0.32.2
       '@fluidframework/container-definitions': 1.4.0
-      '@fluidframework/container-utils': 1.4.0(supports-color@10.2.2)
+      '@fluidframework/container-utils': 1.4.0(supports-color@8.1.1)
       '@fluidframework/core-interfaces': 1.4.0
       '@fluidframework/datastore-definitions': 1.4.0
       '@fluidframework/driver-definitions': 1.4.0
-      '@fluidframework/driver-utils': 1.4.0(debug@4.4.3)(supports-color@10.2.2)
+      '@fluidframework/driver-utils': 1.4.0(debug@4.4.3)(supports-color@8.1.1)
       '@fluidframework/garbage-collector': 1.4.0
       '@fluidframework/protocol-base': 0.1036.5002
       '@fluidframework/protocol-definitions': 0.1028.2000
       '@fluidframework/runtime-definitions': 1.4.0
-      '@fluidframework/runtime-utils': 1.4.0(supports-color@10.2.2)
-      '@fluidframework/telemetry-utils': 1.4.0(supports-color@10.2.2)
+      '@fluidframework/runtime-utils': 1.4.0(supports-color@8.1.1)
+      '@fluidframework/telemetry-utils': 1.4.0(supports-color@8.1.1)
       lodash: 4.18.1
       uuid: 11.1.1
     transitivePeerDependencies:
@@ -30044,14 +30044,14 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/driver-base@1.4.0(debug@4.4.3)(supports-color@10.2.2)':
+  '@fluidframework/driver-base@1.4.0(debug@4.4.3)(supports-color@8.1.1)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 0.32.2
       '@fluidframework/driver-definitions': 1.4.0
-      '@fluidframework/driver-utils': 1.4.0(debug@4.4.3)(supports-color@10.2.2)
+      '@fluidframework/driver-utils': 1.4.0(debug@4.4.3)(supports-color@8.1.1)
       '@fluidframework/protocol-definitions': 0.1028.2000
-      '@fluidframework/telemetry-utils': 1.4.0(supports-color@10.2.2)
+      '@fluidframework/telemetry-utils': 1.4.0(supports-color@8.1.1)
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -30077,7 +30077,7 @@ snapshots:
     dependencies:
       '@fluidframework/core-interfaces': 2.116.0
 
-  '@fluidframework/driver-utils@1.4.0(debug@4.4.3)(supports-color@10.2.2)':
+  '@fluidframework/driver-utils@1.4.0(debug@4.4.3)(supports-color@8.1.1)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 0.32.2
@@ -30086,7 +30086,7 @@ snapshots:
       '@fluidframework/gitresources': 0.1036.5002
       '@fluidframework/protocol-base': 0.1036.5002
       '@fluidframework/protocol-definitions': 0.1028.2000
-      '@fluidframework/telemetry-utils': 1.4.0(supports-color@10.2.2)
+      '@fluidframework/telemetry-utils': 1.4.0(supports-color@8.1.1)
       axios: 0.33.0(debug@4.4.3)
       uuid: 11.1.1
     transitivePeerDependencies:
@@ -30206,20 +30206,20 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/fluid-static@1.4.0(debug@4.4.3)(supports-color@10.2.2)':
+  '@fluidframework/fluid-static@1.4.0(debug@4.4.3)(supports-color@8.1.1)':
     dependencies:
-      '@fluidframework/aqueduct': 1.4.0(debug@4.4.3)(supports-color@10.2.2)
+      '@fluidframework/aqueduct': 1.4.0(debug@4.4.3)(supports-color@8.1.1)
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 0.32.2
       '@fluidframework/container-definitions': 1.4.0
-      '@fluidframework/container-loader': 1.4.0(debug@4.4.3)(supports-color@10.2.2)
+      '@fluidframework/container-loader': 1.4.0(debug@4.4.3)(supports-color@8.1.1)
       '@fluidframework/container-runtime-definitions': 1.4.0
       '@fluidframework/core-interfaces': 1.4.0
       '@fluidframework/datastore-definitions': 1.4.0
       '@fluidframework/protocol-definitions': 0.1028.2000
-      '@fluidframework/request-handler': 1.4.0(supports-color@10.2.2)
+      '@fluidframework/request-handler': 1.4.0(supports-color@8.1.1)
       '@fluidframework/runtime-definitions': 1.4.0
-      '@fluidframework/runtime-utils': 1.4.0(supports-color@10.2.2)
+      '@fluidframework/runtime-utils': 1.4.0(supports-color@8.1.1)
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -30296,18 +30296,18 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/map@1.4.0(debug@4.4.3)(supports-color@10.2.2)':
+  '@fluidframework/map@1.4.0(debug@4.4.3)(supports-color@8.1.1)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 0.32.2
-      '@fluidframework/container-utils': 1.4.0(supports-color@10.2.2)
+      '@fluidframework/container-utils': 1.4.0(supports-color@8.1.1)
       '@fluidframework/core-interfaces': 1.4.0
       '@fluidframework/datastore-definitions': 1.4.0
-      '@fluidframework/driver-utils': 1.4.0(debug@4.4.3)(supports-color@10.2.2)
+      '@fluidframework/driver-utils': 1.4.0(debug@4.4.3)(supports-color@8.1.1)
       '@fluidframework/protocol-definitions': 0.1028.2000
       '@fluidframework/runtime-definitions': 1.4.0
-      '@fluidframework/runtime-utils': 1.4.0(supports-color@10.2.2)
-      '@fluidframework/shared-object-base': 1.4.0(debug@4.4.3)(supports-color@10.2.2)
+      '@fluidframework/runtime-utils': 1.4.0(supports-color@8.1.1)
+      '@fluidframework/shared-object-base': 1.4.0(debug@4.4.3)(supports-color@8.1.1)
       path-browserify: 1.0.1
     transitivePeerDependencies:
       - debug
@@ -30472,13 +30472,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/request-handler@1.4.0(supports-color@10.2.2)':
+  '@fluidframework/request-handler@1.4.0(supports-color@8.1.1)':
     dependencies:
       '@fluidframework/common-utils': 0.32.2
       '@fluidframework/container-runtime-definitions': 1.4.0
       '@fluidframework/core-interfaces': 1.4.0
       '@fluidframework/runtime-definitions': 1.4.0
-      '@fluidframework/runtime-utils': 1.4.0(supports-color@10.2.2)
+      '@fluidframework/runtime-utils': 1.4.0(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -30492,22 +30492,22 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/routerlicious-driver@1.4.0(debug@4.4.3)(supports-color@10.2.2)':
+  '@fluidframework/routerlicious-driver@1.4.0(debug@4.4.3)(supports-color@8.1.1)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 0.32.2
-      '@fluidframework/driver-base': 1.4.0(debug@4.4.3)(supports-color@10.2.2)
+      '@fluidframework/driver-base': 1.4.0(debug@4.4.3)(supports-color@8.1.1)
       '@fluidframework/driver-definitions': 1.4.0
-      '@fluidframework/driver-utils': 1.4.0(debug@4.4.3)(supports-color@10.2.2)
+      '@fluidframework/driver-utils': 1.4.0(debug@4.4.3)(supports-color@8.1.1)
       '@fluidframework/gitresources': 0.1036.5002
       '@fluidframework/protocol-base': 0.1036.5002
       '@fluidframework/protocol-definitions': 0.1028.2000
-      '@fluidframework/server-services-client': 0.1036.5002(supports-color@10.2.2)
-      '@fluidframework/telemetry-utils': 1.4.0(supports-color@10.2.2)
+      '@fluidframework/server-services-client': 0.1036.5002(supports-color@8.1.1)
+      '@fluidframework/telemetry-utils': 1.4.0(supports-color@8.1.1)
       cross-fetch: 3.1.8
       json-stringify-safe: 5.0.1
       querystring: 0.2.1
-      socket.io-client: 4.8.3(supports-color@10.2.2)
+      socket.io-client: 4.8.3(supports-color@8.1.1)
       url-parse: 1.5.10
       uuid: 11.1.1
     transitivePeerDependencies:
@@ -30561,7 +30561,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/runtime-utils@1.4.0(supports-color@10.2.2)':
+  '@fluidframework/runtime-utils@1.4.0(supports-color@8.1.1)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 0.32.2
@@ -30573,7 +30573,7 @@ snapshots:
       '@fluidframework/protocol-base': 0.1036.5002
       '@fluidframework/protocol-definitions': 0.1028.2000
       '@fluidframework/runtime-definitions': 1.4.0
-      '@fluidframework/telemetry-utils': 1.4.0(supports-color@10.2.2)
+      '@fluidframework/telemetry-utils': 1.4.0(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -30615,6 +30615,21 @@ snapshots:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/server-services-client': 7.0.1(supports-color@10.2.2)
       '@fluidframework/server-services-core': 7.0.1(supports-color@10.2.2)
+      '@fluidframework/server-services-telemetry': 7.0.1
+      assert: 2.1.0
+      async: 3.2.6
+      events: 3.3.0
+      lodash: 4.18.1
+      nconf: 0.12.1
+      serialize-error: 8.1.0
+    transitivePeerDependencies:
+      - supports-color
+
+  '@fluidframework/server-lambdas-driver@7.0.1(supports-color@8.1.1)':
+    dependencies:
+      '@fluidframework/common-utils': 3.1.0
+      '@fluidframework/server-services-client': 7.0.1(supports-color@8.1.1)
+      '@fluidframework/server-services-core': 7.0.1(supports-color@8.1.1)
       '@fluidframework/server-services-telemetry': 7.0.1
       assert: 2.1.0
       async: 3.2.6
@@ -30683,6 +30698,35 @@ snapshots:
       - debug
       - supports-color
 
+  '@fluidframework/server-lambdas@7.0.1(debug@4.4.3)(supports-color@8.1.1)':
+    dependencies:
+      '@fluidframework/common-utils': 3.1.0
+      '@fluidframework/gitresources': 7.0.1
+      '@fluidframework/protocol-base': 7.0.1
+      '@fluidframework/protocol-definitions': 3.2.0
+      '@fluidframework/server-lambdas-driver': 7.0.1(supports-color@8.1.1)
+      '@fluidframework/server-services-client': 7.0.1(supports-color@8.1.1)
+      '@fluidframework/server-services-core': 7.0.1(supports-color@8.1.1)
+      '@fluidframework/server-services-telemetry': 7.0.1
+      '@types/semver': 7.7.0
+      assert: 2.1.0
+      async: 3.2.6
+      axios: 1.18.1(debug@4.4.3)(supports-color@8.1.1)
+      buffer: 6.0.3
+      double-ended-queue: 2.1.0-0
+      events: 3.3.0
+      json-stringify-safe: 5.0.1
+      lodash: 4.18.1
+      nconf: 0.12.1
+      opossum: 8.5.0
+      semver: 7.8.5
+      serialize-error: 8.1.0
+      sha.js: 2.4.12
+      uuid: 11.1.1
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+
   '@fluidframework/server-lambdas@7.0.1(supports-color@10.2.2)':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
@@ -30731,6 +30775,25 @@ snapshots:
       - supports-color
       - utf-8-validate
 
+  '@fluidframework/server-local-server@7.0.1(supports-color@8.1.1)':
+    dependencies:
+      '@fluidframework/common-utils': 3.1.0
+      '@fluidframework/protocol-definitions': 3.2.0
+      '@fluidframework/server-lambdas': 7.0.1(debug@4.4.3)(supports-color@8.1.1)
+      '@fluidframework/server-memory-orderer': 7.0.1(supports-color@8.1.1)
+      '@fluidframework/server-services-client': 7.0.1(supports-color@8.1.1)
+      '@fluidframework/server-services-core': 7.0.1(supports-color@8.1.1)
+      '@fluidframework/server-services-telemetry': 7.0.1
+      '@fluidframework/server-test-utils': 7.0.1(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@8.1.1)
+      events_pkg: events@3.3.0
+      jsrsasign: 11.1.1
+      uuid: 11.1.1
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+
   '@fluidframework/server-memory-orderer@7.0.1(supports-color@10.2.2)':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
@@ -30758,7 +30821,34 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/server-services-client@0.1036.5002(supports-color@10.2.2)':
+  '@fluidframework/server-memory-orderer@7.0.1(supports-color@8.1.1)':
+    dependencies:
+      '@fluidframework/common-utils': 3.1.0
+      '@fluidframework/protocol-base': 7.0.1
+      '@fluidframework/protocol-definitions': 3.2.0
+      '@fluidframework/server-lambdas': 7.0.1(debug@4.4.3)(supports-color@8.1.1)
+      '@fluidframework/server-services-client': 7.0.1(supports-color@8.1.1)
+      '@fluidframework/server-services-core': 7.0.1(supports-color@8.1.1)
+      '@fluidframework/server-services-telemetry': 7.0.1
+      '@types/debug': 4.1.12
+      '@types/double-ended-queue': 2.1.7
+      '@types/lodash': 4.17.13
+      '@types/node': 22.19.17
+      '@types/ws': 6.0.4
+      assert: 2.1.0
+      debug: 4.4.3(supports-color@8.1.1)
+      double-ended-queue: 2.1.0-0
+      events: 3.3.0
+      lodash: 4.18.1
+      sillyname: 0.1.0
+      uuid: 11.1.1
+      ws: 7.5.11
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+
+  '@fluidframework/server-services-client@0.1036.5002(supports-color@8.1.1)':
     dependencies:
       '@fluidframework/common-utils': 0.32.2
       '@fluidframework/gitresources': 0.1036.5002
@@ -30766,7 +30856,7 @@ snapshots:
       '@fluidframework/protocol-definitions': 0.1028.2000
       axios: 0.33.0(debug@4.4.3)
       crc-32: 1.2.0
-      debug: 4.4.3(supports-color@10.2.2)
+      debug: 4.4.3(supports-color@8.1.1)
       json-stringify-safe: 5.0.1
       jsrsasign: 11.1.1
       jwt-decode: 3.1.2
@@ -30793,6 +30883,23 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@fluidframework/server-services-client@7.0.1(supports-color@8.1.1)':
+    dependencies:
+      '@fluidframework/common-utils': 3.1.0
+      '@fluidframework/gitresources': 7.0.1
+      '@fluidframework/protocol-base': 7.0.1
+      '@fluidframework/protocol-definitions': 3.2.0
+      axios: 1.18.1(debug@4.4.3)(supports-color@8.1.1)
+      crc-32: 1.2.0
+      debug: 4.4.3(supports-color@8.1.1)
+      json-stringify-safe: 5.0.1
+      jsrsasign: 11.1.1
+      jwt-decode: 4.0.0
+      sillyname: 0.1.0
+      uuid: 11.1.1
+    transitivePeerDependencies:
+      - supports-color
+
   '@fluidframework/server-services-core@7.0.1(supports-color@10.2.2)':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
@@ -30803,6 +30910,21 @@ snapshots:
       '@types/nconf': 0.10.7
       '@types/node': 22.19.17
       debug: 4.4.3(supports-color@10.2.2)
+      events: 3.3.0
+      nconf: 0.12.1
+    transitivePeerDependencies:
+      - supports-color
+
+  '@fluidframework/server-services-core@7.0.1(supports-color@8.1.1)':
+    dependencies:
+      '@fluidframework/common-utils': 3.1.0
+      '@fluidframework/gitresources': 7.0.1
+      '@fluidframework/protocol-definitions': 3.2.0
+      '@fluidframework/server-services-client': 7.0.1(supports-color@8.1.1)
+      '@fluidframework/server-services-telemetry': 7.0.1
+      '@types/nconf': 0.10.7
+      '@types/node': 22.19.17
+      debug: 4.4.3(supports-color@8.1.1)
       events: 3.3.0
       nconf: 0.12.1
     transitivePeerDependencies:
@@ -30840,6 +30962,38 @@ snapshots:
       - supports-color
       - utf-8-validate
 
+  '@fluidframework/server-services-shared@7.0.1(supports-color@8.1.1)':
+    dependencies:
+      '@fluidframework/common-utils': 3.1.0
+      '@fluidframework/gitresources': 7.0.1
+      '@fluidframework/protocol-base': 7.0.1
+      '@fluidframework/protocol-definitions': 3.2.0
+      '@fluidframework/server-services-client': 7.0.1(supports-color@8.1.1)
+      '@fluidframework/server-services-core': 7.0.1(supports-color@8.1.1)
+      '@fluidframework/server-services-telemetry': 7.0.1
+      '@fluidframework/server-services-utils': 7.0.1(supports-color@8.1.1)
+      '@socket.io/redis-adapter': 8.3.0(socket.io-adapter@2.5.6)(supports-color@8.1.1)
+      '@socket.io/sticky': 1.0.4
+      body-parser: 1.20.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@8.1.1)
+      events: 3.3.0
+      express: 4.22.1(supports-color@8.1.1)
+      fast-redact: 3.5.0
+      ioredis: 5.6.1(supports-color@8.1.1)
+      lodash: 4.18.1
+      nconf: 0.12.1
+      notepack.io: 2.3.0
+      serialize-error: 8.1.0
+      socket.io: 4.8.3(supports-color@8.1.1)
+      socket.io-adapter: 2.5.6(supports-color@8.1.1)
+      socket.io-parser: 4.2.6(supports-color@8.1.1)
+      uuid: 11.1.1
+      winston: 3.17.0
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+
   '@fluidframework/server-services-telemetry@7.0.1':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
@@ -30860,6 +31014,28 @@ snapshots:
       json-stringify-safe: 5.0.1
       jsonwebtoken: 9.0.2
       morgan: 1.10.0(supports-color@10.2.2)
+      nconf: 0.12.1
+      serialize-error: 8.1.0
+      sillyname: 0.1.0
+      split: 1.0.1
+      uuid: 11.1.1
+      winston: 3.17.0
+      winston-transport: 4.9.0
+    transitivePeerDependencies:
+      - supports-color
+
+  '@fluidframework/server-services-utils@7.0.1(supports-color@8.1.1)':
+    dependencies:
+      '@fluidframework/protocol-definitions': 3.2.0
+      '@fluidframework/server-services-client': 7.0.1(supports-color@8.1.1)
+      '@fluidframework/server-services-core': 7.0.1(supports-color@8.1.1)
+      '@fluidframework/server-services-telemetry': 7.0.1
+      debug: 4.4.3(supports-color@8.1.1)
+      express: 4.22.1(supports-color@8.1.1)
+      ioredis: 5.6.1(supports-color@8.1.1)
+      json-stringify-safe: 5.0.1
+      jsonwebtoken: 9.0.2
+      morgan: 1.10.0(supports-color@8.1.1)
       nconf: 0.12.1
       serialize-error: 8.1.0
       sillyname: 0.1.0
@@ -30891,20 +31067,41 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/shared-object-base@1.4.0(debug@4.4.3)(supports-color@10.2.2)':
+  '@fluidframework/server-test-utils@7.0.1(supports-color@8.1.1)':
+    dependencies:
+      '@fluidframework/common-utils': 3.1.0
+      '@fluidframework/gitresources': 7.0.1
+      '@fluidframework/protocol-base': 7.0.1
+      '@fluidframework/protocol-definitions': 3.2.0
+      '@fluidframework/server-services-client': 7.0.1(supports-color@8.1.1)
+      '@fluidframework/server-services-core': 7.0.1(supports-color@8.1.1)
+      '@fluidframework/server-services-telemetry': 7.0.1
+      '@types/ioredis-mock': 8.2.6(ioredis@5.6.1)
+      assert: 2.1.0
+      debug: 4.4.3(supports-color@8.1.1)
+      events: 3.3.0
+      ioredis: 5.6.1(supports-color@8.1.1)
+      ioredis-mock: 8.9.0(@types/ioredis-mock@8.2.6)(ioredis@5.6.1)
+      lodash: 4.18.1
+      string-hash: 1.1.3
+      uuid: 11.1.1
+    transitivePeerDependencies:
+      - supports-color
+
+  '@fluidframework/shared-object-base@1.4.0(debug@4.4.3)(supports-color@8.1.1)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 0.32.2
       '@fluidframework/container-definitions': 1.4.0
-      '@fluidframework/container-runtime': 1.4.0(debug@4.4.3)(supports-color@10.2.2)
-      '@fluidframework/container-utils': 1.4.0(supports-color@10.2.2)
+      '@fluidframework/container-runtime': 1.4.0(debug@4.4.3)(supports-color@8.1.1)
+      '@fluidframework/container-utils': 1.4.0(supports-color@8.1.1)
       '@fluidframework/core-interfaces': 1.4.0
-      '@fluidframework/datastore': 1.4.0(debug@4.4.3)(supports-color@10.2.2)
+      '@fluidframework/datastore': 1.4.0(debug@4.4.3)(supports-color@8.1.1)
       '@fluidframework/datastore-definitions': 1.4.0
       '@fluidframework/protocol-definitions': 0.1028.2000
       '@fluidframework/runtime-definitions': 1.4.0
-      '@fluidframework/runtime-utils': 1.4.0(supports-color@10.2.2)
-      '@fluidframework/telemetry-utils': 1.4.0(supports-color@10.2.2)
+      '@fluidframework/runtime-utils': 1.4.0(supports-color@8.1.1)
+      '@fluidframework/telemetry-utils': 1.4.0(supports-color@8.1.1)
       uuid: 11.1.1
     transitivePeerDependencies:
       - debug
@@ -30959,11 +31156,11 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/telemetry-utils@1.4.0(supports-color@10.2.2)':
+  '@fluidframework/telemetry-utils@1.4.0(supports-color@8.1.1)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 0.32.2
-      debug: 4.4.3(supports-color@10.2.2)
+      debug: 4.4.3(supports-color@8.1.1)
       events: 3.3.0
       uuid: 11.1.1
     transitivePeerDependencies:
@@ -32694,6 +32891,15 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@socket.io/redis-adapter@8.3.0(socket.io-adapter@2.5.6)(supports-color@8.1.1)':
+    dependencies:
+      debug: 4.3.7(supports-color@8.1.1)
+      notepack.io: 3.0.1
+      socket.io-adapter: 2.5.6(supports-color@8.1.1)
+      uid2: 1.0.0
+    transitivePeerDependencies:
+      - supports-color
+
   '@socket.io/sticky@1.0.4': {}
 
   '@standard-schema/spec@1.1.0': {}
@@ -33016,7 +33222,7 @@ snapshots:
 
   '@types/ioredis-mock@8.2.6(ioredis@5.6.1)':
     dependencies:
-      ioredis: 5.6.1(supports-color@10.2.2)
+      ioredis: 5.6.1(supports-color@8.1.1)
 
   '@types/istanbul-lib-coverage@2.0.6': {}
 
@@ -33851,6 +34057,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  agent-base@6.0.2(supports-color@8.1.1):
+    dependencies:
+      debug: 4.4.3(supports-color@8.1.1)
+    transitivePeerDependencies:
+      - supports-color
+
   agent-base@7.1.3: {}
 
   agentkeepalive@4.6.0:
@@ -34110,11 +34322,31 @@ snapshots:
       - debug
       - supports-color
 
+  axios@1.18.1(debug@4.3.7)(supports-color@8.1.1):
+    dependencies:
+      follow-redirects: 1.16.0(debug@4.3.7)
+      form-data: 4.0.6
+      https-proxy-agent: 5.0.1(supports-color@8.1.1)
+      proxy-from-env: 2.1.0
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+
   axios@1.18.1(debug@4.4.3)(supports-color@10.2.2):
     dependencies:
       follow-redirects: 1.16.0(debug@4.4.3)
       form-data: 4.0.6
       https-proxy-agent: 5.0.1(supports-color@10.2.2)
+      proxy-from-env: 2.1.0
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+
+  axios@1.18.1(debug@4.4.3)(supports-color@8.1.1):
+    dependencies:
+      follow-redirects: 1.16.0(debug@4.4.3)
+      form-data: 4.0.6
+      https-proxy-agent: 5.0.1(supports-color@8.1.1)
       proxy-from-env: 2.1.0
     transitivePeerDependencies:
       - debug
@@ -34286,6 +34518,23 @@ snapshots:
       bytes: 3.1.2
       content-type: 1.0.5
       debug: 2.6.9(supports-color@10.2.2)
+      depd: 2.0.0
+      destroy: 1.2.0
+      http-errors: 2.0.0
+      iconv-lite: 0.4.24
+      on-finished: 2.4.1
+      qs: 6.15.3
+      raw-body: 2.5.2
+      type-is: 1.6.18
+      unpipe: 1.0.0
+    transitivePeerDependencies:
+      - supports-color
+
+  body-parser@1.20.3(supports-color@8.1.1):
+    dependencies:
+      bytes: 3.1.2
+      content-type: 1.0.5
+      debug: 2.6.9(supports-color@8.1.1)
       depd: 2.0.0
       destroy: 1.2.0
       http-errors: 2.0.0
@@ -34766,6 +35015,18 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  compression@1.8.1(supports-color@8.1.1):
+    dependencies:
+      bytes: 3.1.2
+      compressible: 2.0.18
+      debug: 2.6.9(supports-color@8.1.1)
+      negotiator: 0.6.4
+      on-headers: 1.1.0
+      safe-buffer: 5.2.1
+      vary: 1.1.2
+    transitivePeerDependencies:
+      - supports-color
+
   concat-map@0.0.1: {}
 
   concat-stream@1.6.2:
@@ -35054,6 +35315,12 @@ snapshots:
     optionalDependencies:
       supports-color: 10.2.2
 
+  debug@2.6.9(supports-color@8.1.1):
+    dependencies:
+      ms: 2.0.0
+    optionalDependencies:
+      supports-color: 8.1.1
+
   debug@3.2.7(supports-color@10.2.2):
     dependencies:
       ms: 2.1.3
@@ -35065,6 +35332,12 @@ snapshots:
       ms: 2.1.3
     optionalDependencies:
       supports-color: 10.2.2
+
+  debug@4.3.7(supports-color@8.1.1):
+    dependencies:
+      ms: 2.1.3
+    optionalDependencies:
+      supports-color: 8.1.1
 
   debug@4.4.3(supports-color@10.2.2):
     dependencies:
@@ -35197,6 +35470,13 @@ snapshots:
     dependencies:
       address: 1.2.2
       debug: 4.4.3(supports-color@10.2.2)
+    transitivePeerDependencies:
+      - supports-color
+
+  detect-port@1.6.1(supports-color@8.1.1):
+    dependencies:
+      address: 1.2.2
+      debug: 4.4.3(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -35381,6 +35661,18 @@ snapshots:
       - supports-color
       - utf-8-validate
 
+  engine.io-client@6.6.4(supports-color@8.1.1):
+    dependencies:
+      '@socket.io/component-emitter': 3.1.2
+      debug: 4.4.3(supports-color@8.1.1)
+      engine.io-parser: 5.2.3
+      ws: 8.21.0
+      xmlhttprequest-ssl: 2.1.2
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+
   engine.io-parser@5.2.3: {}
 
   engine.io@6.6.6(supports-color@10.2.2):
@@ -35393,6 +35685,23 @@ snapshots:
       cookie: 0.7.2
       cors: 2.8.5
       debug: 4.4.3(supports-color@10.2.2)
+      engine.io-parser: 5.2.3
+      ws: 8.21.0
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+
+  engine.io@6.6.6(supports-color@8.1.1):
+    dependencies:
+      '@types/cors': 2.8.17
+      '@types/node': 22.19.17
+      '@types/ws': 8.5.13
+      accepts: 1.3.8
+      base64id: 2.0.0
+      cookie: 0.7.2
+      cors: 2.8.5
+      debug: 4.4.3(supports-color@8.1.1)
       engine.io-parser: 5.2.3
       ws: 8.21.0
     transitivePeerDependencies:
@@ -35584,7 +35893,7 @@ snapshots:
       tinyglobby: 0.2.15
       unrs-resolver: 1.11.1
     optionalDependencies:
-      eslint-plugin-import-x: 4.16.2(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@8.1.1)
+      eslint-plugin-import-x: 4.16.2(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)
     transitivePeerDependencies:
       - supports-color
 
@@ -36229,6 +36538,42 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  express@4.22.1(supports-color@8.1.1):
+    dependencies:
+      accepts: 1.3.8
+      array-flatten: 1.1.1
+      body-parser: 1.20.3(supports-color@8.1.1)
+      content-disposition: 0.5.4
+      content-type: 1.0.5
+      cookie: 0.7.2
+      cookie-signature: 1.0.6
+      debug: 2.6.9(supports-color@8.1.1)
+      depd: 2.0.0
+      encodeurl: 2.0.0
+      escape-html: 1.0.3
+      etag: 1.8.1
+      finalhandler: 1.3.1(supports-color@8.1.1)
+      fresh: 0.5.2
+      http-errors: 2.0.0
+      merge-descriptors: 1.0.3
+      methods: 1.1.2
+      on-finished: 2.4.1
+      parseurl: 1.3.3
+      path-to-regexp: 0.1.13
+      proxy-addr: 2.0.7
+      qs: 6.15.3
+      range-parser: 1.2.1
+      safe-buffer: 5.2.1
+      send: 0.19.0(supports-color@8.1.1)
+      serve-static: 1.16.2(supports-color@8.1.1)
+      setprototypeof: 1.2.0
+      statuses: 2.0.1
+      type-is: 1.6.18
+      utils-merge: 1.0.1
+      vary: 1.1.2
+    transitivePeerDependencies:
+      - supports-color
+
   extend-shallow@2.0.1:
     dependencies:
       is-extendable: 0.1.1
@@ -36353,6 +36698,18 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  finalhandler@1.3.1(supports-color@8.1.1):
+    dependencies:
+      debug: 2.6.9(supports-color@8.1.1)
+      encodeurl: 2.0.0
+      escape-html: 1.0.3
+      on-finished: 2.4.1
+      parseurl: 1.3.3
+      statuses: 2.0.1
+      unpipe: 1.0.0
+    transitivePeerDependencies:
+      - supports-color
+
   find-root@1.1.0: {}
 
   find-up@4.1.0:
@@ -36411,7 +36768,7 @@ snapshots:
 
   follow-redirects@1.16.0(debug@4.3.7):
     optionalDependencies:
-      debug: 4.3.7(supports-color@10.2.2)
+      debug: 4.3.7(supports-color@8.1.1)
 
   follow-redirects@1.16.0(debug@4.4.3):
     optionalDependencies:
@@ -36965,6 +37322,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  https-proxy-agent@5.0.1(supports-color@8.1.1):
+    dependencies:
+      agent-base: 6.0.2(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@8.1.1)
+    transitivePeerDependencies:
+      - supports-color
+
   https-proxy-agent@7.0.6(supports-color@10.2.2):
     dependencies:
       agent-base: 7.1.3
@@ -37104,7 +37468,7 @@ snapshots:
       '@types/ioredis-mock': 8.2.6(ioredis@5.6.1)
       fengari: 0.1.4
       fengari-interop: 0.1.3(fengari@0.1.4)
-      ioredis: 5.6.1(supports-color@10.2.2)
+      ioredis: 5.6.1(supports-color@8.1.1)
       semver: 7.8.5
 
   ioredis@5.6.1(supports-color@10.2.2):
@@ -37112,6 +37476,20 @@ snapshots:
       '@ioredis/commands': 1.2.0
       cluster-key-slot: 1.1.2
       debug: 4.4.3(supports-color@10.2.2)
+      denque: 2.1.0
+      lodash.defaults: 4.2.0
+      lodash.isarguments: 3.1.0
+      redis-errors: 1.2.0
+      redis-parser: 3.0.0
+      standard-as-callback: 2.1.0
+    transitivePeerDependencies:
+      - supports-color
+
+  ioredis@5.6.1(supports-color@8.1.1):
+    dependencies:
+      '@ioredis/commands': 1.2.0
+      cluster-key-slot: 1.1.2
+      debug: 4.4.3(supports-color@8.1.1)
       denque: 2.1.0
       lodash.defaults: 4.2.0
       lodash.isarguments: 3.1.0
@@ -39138,6 +39516,14 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  mocha-multi-reporters@1.5.1(mocha@11.7.5)(supports-color@8.1.1):
+    dependencies:
+      debug: 4.4.3(supports-color@8.1.1)
+      lodash: 4.18.1
+      mocha: 11.7.5
+    transitivePeerDependencies:
+      - supports-color
+
   mocha@11.7.5:
     dependencies:
       browser-stdout: 1.3.1
@@ -39180,6 +39566,16 @@ snapshots:
     dependencies:
       basic-auth: 2.0.1
       debug: 2.6.9(supports-color@10.2.2)
+      depd: 2.0.0
+      on-finished: 2.3.0
+      on-headers: 1.1.0
+    transitivePeerDependencies:
+      - supports-color
+
+  morgan@1.10.0(supports-color@8.1.1):
+    dependencies:
+      basic-auth: 2.0.1
+      debug: 2.6.9(supports-color@8.1.1)
       depd: 2.0.0
       on-finished: 2.3.0
       on-headers: 1.1.0
@@ -39312,6 +39708,14 @@ snapshots:
   nock@13.5.6(supports-color@10.2.2):
     dependencies:
       debug: 4.4.3(supports-color@10.2.2)
+      json-stringify-safe: 5.0.1
+      propagate: 2.0.1
+    transitivePeerDependencies:
+      - supports-color
+
+  nock@13.5.6(supports-color@8.1.1):
+    dependencies:
+      debug: 4.4.3(supports-color@8.1.1)
       json-stringify-safe: 5.0.1
       propagate: 2.0.1
     transitivePeerDependencies:
@@ -40809,6 +41213,24 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  send@0.19.0(supports-color@8.1.1):
+    dependencies:
+      debug: 2.6.9(supports-color@8.1.1)
+      depd: 2.0.0
+      destroy: 1.2.0
+      encodeurl: 1.0.2
+      escape-html: 1.0.3
+      etag: 1.8.1
+      fresh: 0.5.2
+      http-errors: 2.0.0
+      mime: 1.6.0
+      ms: 2.1.3
+      on-finished: 2.4.1
+      range-parser: 1.2.1
+      statuses: 2.0.1
+    transitivePeerDependencies:
+      - supports-color
+
   sentence-case@3.0.4:
     dependencies:
       no-case: 3.0.4
@@ -40839,6 +41261,15 @@ snapshots:
       escape-html: 1.0.3
       parseurl: 1.3.3
       send: 0.19.0(supports-color@10.2.2)
+    transitivePeerDependencies:
+      - supports-color
+
+  serve-static@1.16.2(supports-color@8.1.1):
+    dependencies:
+      encodeurl: 2.0.0
+      escape-html: 1.0.3
+      parseurl: 1.3.3
+      send: 0.19.0(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -41047,12 +41478,32 @@ snapshots:
       - supports-color
       - utf-8-validate
 
+  socket.io-adapter@2.5.6(supports-color@8.1.1):
+    dependencies:
+      debug: 4.4.3(supports-color@8.1.1)
+      ws: 8.21.0
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+
   socket.io-client@4.8.3(supports-color@10.2.2):
     dependencies:
       '@socket.io/component-emitter': 3.1.2
       debug: 4.4.3(supports-color@10.2.2)
       engine.io-client: 6.6.4(supports-color@10.2.2)
       socket.io-parser: 4.2.6(supports-color@10.2.2)
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+
+  socket.io-client@4.8.3(supports-color@8.1.1):
+    dependencies:
+      '@socket.io/component-emitter': 3.1.2
+      debug: 4.4.3(supports-color@8.1.1)
+      engine.io-client: 6.6.4(supports-color@8.1.1)
+      socket.io-parser: 4.2.6(supports-color@8.1.1)
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -41065,6 +41516,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  socket.io-parser@4.2.6(supports-color@8.1.1):
+    dependencies:
+      '@socket.io/component-emitter': 3.1.2
+      debug: 4.4.3(supports-color@8.1.1)
+    transitivePeerDependencies:
+      - supports-color
+
   socket.io@4.8.3(supports-color@10.2.2):
     dependencies:
       accepts: 1.3.8
@@ -41074,6 +41532,20 @@ snapshots:
       engine.io: 6.6.6(supports-color@10.2.2)
       socket.io-adapter: 2.5.6(supports-color@10.2.2)
       socket.io-parser: 4.2.6(supports-color@10.2.2)
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+
+  socket.io@4.8.3(supports-color@8.1.1):
+    dependencies:
+      accepts: 1.3.8
+      base64id: 2.0.0
+      cors: 2.8.5
+      debug: 4.4.3(supports-color@8.1.1)
+      engine.io: 6.6.6(supports-color@8.1.1)
+      socket.io-adapter: 2.5.6(supports-color@8.1.1)
+      socket.io-parser: 4.2.6(supports-color@8.1.1)
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -41244,6 +41716,19 @@ snapshots:
       lazy-ass: 1.6.0
       ps-tree: 1.2.0
       wait-on: 8.0.1(debug@4.3.7)(supports-color@10.2.2)
+    transitivePeerDependencies:
+      - supports-color
+
+  start-server-and-test@2.0.8(supports-color@8.1.1):
+    dependencies:
+      arg: 5.0.2
+      bluebird: 3.7.2
+      check-more-types: 2.24.0
+      debug: 4.3.7(supports-color@8.1.1)
+      execa: 5.1.1
+      lazy-ass: 1.6.0
+      ps-tree: 1.2.0
+      wait-on: 8.0.1(debug@4.3.7)(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -41709,6 +42194,47 @@ snapshots:
       morgan: 1.10.0(supports-color@10.2.2)
       nconf: 0.12.1
       socket.io: 4.8.3(supports-color@10.2.2)
+      split: 1.0.1
+      uuid: 11.1.1
+      winston: 3.17.0
+    transitivePeerDependencies:
+      - bufferutil
+      - debug
+      - supports-color
+      - utf-8-validate
+
+  tinylicious@7.0.1(debug@4.4.3)(supports-color@8.1.1):
+    dependencies:
+      '@fluidframework/common-utils': 3.1.0
+      '@fluidframework/gitresources': 7.0.1
+      '@fluidframework/protocol-base': 7.0.1
+      '@fluidframework/protocol-definitions': 3.2.0
+      '@fluidframework/server-lambdas': 7.0.1(debug@4.4.3)(supports-color@8.1.1)
+      '@fluidframework/server-local-server': 7.0.1(supports-color@8.1.1)
+      '@fluidframework/server-memory-orderer': 7.0.1(supports-color@8.1.1)
+      '@fluidframework/server-services-client': 7.0.1(supports-color@8.1.1)
+      '@fluidframework/server-services-core': 7.0.1(supports-color@8.1.1)
+      '@fluidframework/server-services-shared': 7.0.1(supports-color@8.1.1)
+      '@fluidframework/server-services-telemetry': 7.0.1
+      '@fluidframework/server-services-utils': 7.0.1(supports-color@8.1.1)
+      '@fluidframework/server-test-utils': 7.0.1(supports-color@8.1.1)
+      agentkeepalive: 4.6.0
+      axios: 1.18.1(debug@4.4.3)(supports-color@8.1.1)
+      body-parser: 1.20.3(supports-color@8.1.1)
+      charwise: 3.0.1
+      compression: 1.8.1(supports-color@8.1.1)
+      cookie-parser: 1.4.7
+      cors: 2.8.5
+      detect-port: 1.6.1(supports-color@8.1.1)
+      express: 4.22.1(supports-color@8.1.1)
+      isomorphic-git: 1.27.2
+      json-stringify-safe: 5.0.1
+      level: 8.0.1
+      level-sublevel: 6.6.4
+      lodash: 4.18.1
+      morgan: 1.10.0(supports-color@8.1.1)
+      nconf: 0.12.1
+      socket.io: 4.8.3(supports-color@8.1.1)
       split: 1.0.1
       uuid: 11.1.1
       winston: 3.17.0
@@ -42379,6 +42905,17 @@ snapshots:
   wait-on@8.0.1(debug@4.3.7)(supports-color@10.2.2):
     dependencies:
       axios: 1.18.1(debug@4.3.7)(supports-color@10.2.2)
+      joi: 17.13.3
+      lodash: 4.18.1
+      minimist: 1.2.8
+      rxjs: 7.8.2
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+
+  wait-on@8.0.1(debug@4.3.7)(supports-color@8.1.1):
+    dependencies:
+      axios: 1.18.1(debug@4.3.7)(supports-color@8.1.1)
       joi: 17.13.3
       lodash: 4.18.1
       minimist: 1.2.8
