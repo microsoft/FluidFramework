@@ -34,6 +34,7 @@ export function extractLogSafeErrorProperties(
 	message: string;
 	errorType?: string | undefined;
 	stack?: string | undefined;
+	constantMessage?: string | undefined;
 } {
 	const removeMessageFromStack = (stack: string, errorName?: string): string => {
 		if (!sanitizeStack) {
@@ -52,12 +53,19 @@ export function extractLogSafeErrorProperties(
 			? (error as Error).message
 			: String(error);
 
-	const safeProps: { message: string; errorType?: string; stack?: string } = {
+	const safeProps: {
+		message: string;
+		errorType?: string;
+		stack?: string;
+		constantMessage?: string;
+	} = {
 		message,
 	};
 
 	if (isRegularObject(error)) {
-		const { errorType, stack, name } = error as Partial<IFluidErrorBase>;
+		const { errorType, stack, name, constantMessage } = error as Partial<
+			IFluidErrorBase & { constantMessage: string }
+		>;
 
 		if (typeof errorType === "string") {
 			safeProps.errorType = errorType;
@@ -66,6 +74,10 @@ export function extractLogSafeErrorProperties(
 		if (typeof stack === "string") {
 			const errorName = typeof name === "string" ? name : undefined;
 			safeProps.stack = removeMessageFromStack(stack, errorName);
+		}
+
+		if (typeof constantMessage === "string") {
+			safeProps.constantMessage = constantMessage;
 		}
 	}
 

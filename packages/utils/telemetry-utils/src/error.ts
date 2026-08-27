@@ -8,8 +8,10 @@ import {
 	FluidErrorTypes,
 	type IGenericError,
 	type ILayerIncompatibilityError,
+	type ILoggingError,
 	type IUsageError,
 } from "@fluidframework/core-interfaces/internal";
+import { AssertionError } from "@fluidframework/core-utils/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import {
@@ -20,7 +22,7 @@ import {
 	wrapError,
 } from "./errorLogging.js";
 import type { IFluidErrorBase } from "./fluidErrorBase.js";
-import type { ITelemetryPropertiesExt } from "./telemetryTypes.js";
+import type { ITelemetryPropertiesExt, TelemetryLoggerExt } from "./telemetryTypes.js";
 
 /**
  * A subset of `ISequencedDocumentMessage` properties that are safe to log for telemetry.
@@ -182,6 +184,41 @@ export class GenericError extends LoggingError implements IGenericError, IFluidE
 		// Don't try to log the inner error
 		super(message, props, new Set(["error"]));
 	}
+}
+
+class TelemetryAssertionError extends AssertionError implements ILoggingError {
+	public constructor(
+		message: string | number,
+		private readonly telemetryProps: ITelemetryBaseProperties,
+		private readonly logger?: TelemetryLoggerExt,
+	) {
+		super(message);
+	}
+
+	public getTelemetryProperties(): ITelemetryBaseProperties {
+		return { ...this.telemetryProps, constantMessage: this.constantMessage };
+	}
+
+	public override throw(): never {
+		this.logger?.sendErrorEvent({ eventName: "AssertionError" }, this);
+		return super.throw();
+	}
+}
+
+/**
+ * Unconditionally throws an assertion error with optional telemetry properties and logging.
+ *
+ * @param message - A constant message or tagged numeric code identifying the assertion.
+ * @param logger - Optional logger used to report the assertion before it is thrown.
+ * @param props - Telemetry properties to include when the error is logged.
+ * @internal
+ */
+export function failWithTelemetry(
+	message: string | number,
+	logger?: TelemetryLoggerExt,
+	props: ITelemetryBaseProperties = {},
+): never {
+	return new TelemetryAssertionError(message, props, logger).throw();
 }
 
 /**

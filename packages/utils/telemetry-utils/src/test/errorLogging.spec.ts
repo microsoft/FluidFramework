@@ -20,6 +20,12 @@ import sinon from "sinon";
 import { v4 as uuid } from "uuid";
 
 import {
+	AssertionError,
+	assert as coreAssert,
+	fail,
+} from "@fluidframework/core-utils/internal";
+
+import {
 	type IFluidErrorAnnotations,
 	LoggingError,
 	extractLogSafeErrorProperties,
@@ -64,6 +70,33 @@ describe("Error Logging", () => {
 			event = freshEvent();
 			TelemetryLogger.prepareErrorObject(event, null, false);
 			assert.strictEqual(event.error, "null", "null should work");
+		});
+		it("adds the constant message from an AssertionError", () => {
+			const event = freshEvent();
+			const error = new AssertionError("constant message");
+			TelemetryLogger.prepareErrorObject(event, error, false);
+
+			assert.strictEqual(event.error, "constant message");
+			assert.strictEqual(event.constantMessage, "constant message");
+		});
+		it("adds the constant message from assert and fail errors", () => {
+			for (const throwError of [
+				(): void => coreAssert(false, 0xabc, () => "dynamic assert details"),
+				(): void => fail(0xdef, () => "dynamic fail details"),
+			]) {
+				let error: unknown;
+				try {
+					throwError();
+				} catch (caught: unknown) {
+					error = caught;
+				}
+				assert(error instanceof AssertionError);
+
+				const event = freshEvent();
+				TelemetryLogger.prepareErrorObject(event, error, false);
+				assert.strictEqual(event.constantMessage, error.constantMessage);
+				assert.doesNotMatch(event.constantMessage as string, /dynamic/);
+			}
 		});
 		it("stack and message added to event (stack should exclude message)", () => {
 			const event = freshEvent();

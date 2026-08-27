@@ -36,26 +36,67 @@ export function assert(
 	debugMessageBuilder?: () => string,
 ): asserts condition {
 	if (!condition) {
-		failPrivate(message, debugMessageBuilder);
+		const error = new AssertionError(message);
+		prepareAssertionError(error, debugMessageBuilder);
+		return error.throw();
 	}
 }
 
 /**
- * {@link fail}'s implementation, but extracted to avoid assert tagging trying to tag the use of it in `assert`.
+ * An error which indicates a bug in the Fluid Framework codebase.
+ * @privateRemarks
+ * This can't use the error types in telemetry-utils, since that would create a circular dependency between the packages.
+ *
+ * This should not be constructed directly, instead use an API like {@link assert} or {@link fail} which is registered for assert message tagging.
+ * @internal
  */
-function failPrivate(message: string | number, debugMessageBuilder?: () => string): never {
-	let messageString =
-		typeof message === "number" ? `0x${message.toString(16).padStart(3, "0")}` : message;
+export class AssertionError extends Error {
+	/**
+	 * A constant string, which might be a string literal or hex encoding of a numeric code which corresponds to string literal.
+	 * @remarks
+	 * As this is a constant from the Fluid Framework codebase, it should contain no variable information, and be safe to log.
+	 */
+	public readonly constantMessage: string;
+
+	public constructor(
+		/**
+		 * A constant string, or numeric code which corresponds to a constant string, which can be used to identify the assertion location in the codebase.
+		 * Thus must contain no variable information, and should be a string literal or numeric code.
+		 * @remarks
+		 * As this is a constant from the Fluid Framework codebase, it should contain no variable information, and be safe to log.
+		 */
+		message: string | number,
+	) {
+		const constantMessage =
+			typeof message === "number" ? `0x${message.toString(16).padStart(3, "0")}` : message;
+		super(constantMessage);
+		this.constantMessage = constantMessage;
+		this.name = "AssertionError";
+		// We do not call onAssertionError(this) here so that subclasses can provide additional information in their constructor before the error is reported.
+	}
+
+	/**
+	 * Throw this error, after reporting it to any registered assertion failure handlers.
+	 */
+	public throw(): never {
+		onAssertionError(this);
+		throw this;
+	}
+}
+
+function prepareAssertionError(
+	error: AssertionError,
+	debugMessageBuilder?: () => string,
+): void {
 	skipInProduction(() => {
 		if (debugMessageBuilder !== undefined) {
-			messageString = `${messageString}\nDebug Message: ${debugMessageBuilder()}`;
+			Object.assign(error, {
+				message: `${error.constantMessage}\nDebug Message: ${debugMessageBuilder()}`,
+			});
 		}
 		// Using console.log instead of console.error or console.warn since the latter two may break downstream users.
-		console.log(`Bug in Fluid Framework: Failed Assertion: ${messageString}`);
+		console.log(`Bug in Fluid Framework: Failed Assertion: ${error.message}`);
 	});
-	const error = new Error(messageString);
-	onAssertionError(error);
-	throw error;
 }
 
 /**
@@ -75,7 +116,9 @@ function failPrivate(message: string | number, debugMessageBuilder?: () => strin
  * @internal
  */
 export function fail(message: string | number, debugMessageBuilder?: () => string): never {
-	failPrivate(message, debugMessageBuilder);
+	const error = new AssertionError(message);
+	prepareAssertionError(error, debugMessageBuilder);
+	return error.throw();
 }
 
 /**

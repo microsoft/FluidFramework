@@ -5,6 +5,7 @@
 
 export {
 	assert,
+	AssertionError,
 	appendDebugMessage,
 	fail,
 	debugAssert,
