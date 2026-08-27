@@ -3,7 +3,7 @@
 "fluid-framework": minor
 "__section": tree
 ---
-Reduce optimized SharedTree memory use after sequence edits
+Optimize memory use of arrays when using ForestTypeOptimized
 
-`ForestTypeOptimized` now coalesces adjacent uniformly shaped chunks after sequence insertions and removals.
-For sequences of small, uniformly shaped subtrees, such as plain text, this reduces fragmentation and can reduce memory use by approximately 60%.
+[`ForestTypeOptimized`](https://fluidframework.com/docs/api/fluid-framework#foresttypeoptimized-variable) now more efficiently deduplicates structural information for adjacent children in [array nodes](https://fluidframework.com/docs/api/tree/treearraynode-interface) after edits.
+For arrays of small, uniformly shaped subtrees, such as [`PlainText`](https://fluidframework.com/docs/api/fluid-framework/plaintext-namespace), this reduces fragmentation and can reduce memory use by approximately 60%.

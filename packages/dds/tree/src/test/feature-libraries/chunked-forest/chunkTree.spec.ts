@@ -1333,6 +1333,29 @@ describe("chunkTree", () => {
 			assertNumbersChunk(field[2], [4]);
 		});
 
+		it("supports coalescing fields larger than the function argument limit", () => {
+			const blocker = new BasicChunk(numberType, new Map(), 99);
+			const field = makeArray<TreeChunk>(200_000, (index) => {
+				switch (index) {
+					case 0: {
+						return numbersChunk([1]);
+					}
+					case 1: {
+						return numbersChunk([2]);
+					}
+					default: {
+						return blocker;
+					}
+				}
+			});
+
+			coalesceUniformChunks(field, policy);
+
+			assert.equal(field.length, 199_999);
+			assertNumbersChunk(field[0], [1, 2]);
+			assert.equal(field[field.length - 1], blocker);
+		});
+
 		it("keeps chunk count at the optimal partition under repeated mid-field edits", () => {
 			// Steady-state stress: each round simulates a mid-field edit by calling
 			// splitFieldAtIndex at the field's midpoint and splicing a fresh same-shape chunk

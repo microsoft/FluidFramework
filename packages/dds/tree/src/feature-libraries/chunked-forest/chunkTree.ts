@@ -29,6 +29,7 @@ import {
 	assertNonNegativeSafeInteger,
 	getOrCreate,
 	type IndexRange,
+	validateIndexRange,
 } from "../../util/index.js";
 import { isStableNodeIdentifier } from "../node-identifier/index.js";
 
@@ -646,11 +647,16 @@ export function splitFieldAtIndex(
 }
 
 /**
- * Coalesce adjacent same-shape {@link UniformChunk}s within an optional sub-range of `chunks`
- * into single larger {@link UniformChunk}s, capped at
- * {@link ChunkPolicy.uniformChunkNodeCountDynamicTargetMax} top-level nodes per chunk.
+ * Coalesce adjacent small same-shape {@link UniformChunk}s into larger {@link UniformChunk}s.
+ *
+ * @param chunks - The chunks array, modified in place.
+ * @param policy - The {@link ChunkPolicy} supplying the per-chunk cap.
+ * @param range - Half-open `[start, end)` sub-range of `chunks` (by chunk index) to consider for
+ * merging. Defaults to the whole array. `end` must not exceed `chunks.length`.
  *
  * @remarks
+ * Size capped at {@link ChunkPolicy.uniformChunkNodeCountDynamicTargetMax} top-level nodes per chunk.
+ * @privateRemarks
  * Walks the range from left to right, attempting to merge each chunk with its left neighbor via
  * {@link tryCoalesceUniformChunks}. Performs at most one in-place `splice` on `chunks`. Non-mergeable
  * chunks are passed through unchanged.
@@ -659,11 +665,6 @@ export function splitFieldAtIndex(
  * matches the threshold {@link splitFieldAtIndex} uses when bisecting a chunk: if coalescing
  * produced chunks larger than that threshold, a subsequent split would immediately re-divide
  * them, so matching the two keeps repeated split/coalesce cycles from oscillating.
- *
- * @param chunks - The chunks array, modified in place.
- * @param policy - The {@link ChunkPolicy} supplying the per-chunk cap.
- * @param range - Half-open `[start, end)` sub-range of `chunks` (by chunk index) to consider for
- * merging. Defaults to the whole array. `end` must not exceed `chunks.length`.
  */
 export function coalesceUniformChunks(
 	chunks: TreeChunk[],
@@ -672,26 +673,19 @@ export function coalesceUniformChunks(
 ): void {
 	const rangeStart = range?.start ?? 0;
 	const rangeEnd = range?.end ?? chunks.length;
-	debugAssert(
-		() =>
-			(rangeStart <= rangeEnd && rangeEnd <= chunks.length) ||
-			"coalesceUniformChunks: invalid range",
-	);
+	validateIndexRange(rangeStart, rangeEnd, chunks, "coalesceUniformChunks");
 	if (rangeEnd - rangeStart < 2) {
+		// Zero and 1 chunks are common cases, so as an optimization we return early as there is never anything to do for them.
 		return;
 	}
 
-	// Build the resulting chunk list for [rangeStart, rangeEnd). Passthrough chunks keep their
-	// identity; merged pairs are replaced by the chunk returned from `tryCoalesceUniformChunks`,
-	// which also handles ref-count bookkeeping for chunks that drop out of the array.
-	const result: TreeChunk[] = [];
+	// Updating `chunks` as we go could incur a lot of overhead if there are a lot of chunks after the location we are editing,
+	// so we instead build up this separate array which is spliced over the selected range.
+	// As we traverse, ownership of the chunks (tracked via the refcounts) is moved to this array.
+	const result: TreeChunk[] = [chunks[rangeStart] ?? oob()];
 	let mutated = false;
-	for (let chunkIndex = rangeStart; chunkIndex < rangeEnd; chunkIndex++) {
+	for (let chunkIndex = rangeStart + 1; chunkIndex < rangeEnd; chunkIndex++) {
 		const current = chunks[chunkIndex] ?? oob();
-		if (result.length === 0) {
-			result.push(current);
-			continue;
-		}
 		const previous = result[result.length - 1] ?? oob();
 		const coalesced = tryCoalesceUniformChunks(previous, current, policy);
 		if (coalesced === undefined) {
@@ -703,7 +697,10 @@ export function coalesceUniformChunks(
 	}
 
 	if (mutated) {
-		chunks.splice(rangeStart, rangeEnd - rangeStart, ...result);
+		for (let resultIndex = 0; resultIndex < result.length; resultIndex++) {
+			chunks[rangeStart + resultIndex] = result[resultIndex] ?? oob();
+		}
+		chunks.splice(rangeStart + result.length, rangeEnd - rangeStart - result.length);
 	}
 }
 
