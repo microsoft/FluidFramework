@@ -13,20 +13,10 @@
 	"author": "Microsoft and contributors",
 	"type": "module",
 	"exports": {
-		".": {
-			"import": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			}
-		}
+		".": "./lib/index.js"
 	},
 	"scripts": {
 		"build": "fluid-build . --task build",
-		"build:cjs": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:esm": "tsc --project ./tsconfig.json",
@@ -34,7 +24,8 @@
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"build:webpack": "npm run webpack",
-		"check:are-the-types-wrong": "attw --pack . --profile node16",
+		"check:are-the-types-wrong": "attw --pack . --profile esm-only",
+		"check:types:require-esm": "fluid-tsc commonjs --project ./tsconfig.cjs.json --noEmit --skipLibCheck --emitDeclarationOnly false --tsBuildInfoFile ./tsconfig.require-esm.tsbuildinfo",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
@@ -133,16 +124,19 @@
 	},
 	"fluidBuild": {
 		"_tasksComment1": "webpack-fluid-loader injects a script tag pointing at its own bundle (/code/fluid-loader.bundle.js) into the page. This bundle must remain up to date for webpack-fluid-loader users.",
-		"_tasksComment2": "Using build:esm over something like compile guarantees that this happens, since the build:esm target depends on all transitive dependencies' build:esm targets.",
-		"_tasksComment3": "The webpack task is then set to depend on ^build:esm overriding default that also include ^build:cjs",
+		"_tasksComment2": "Using `build:esm` instead of something like `compile` task guarantees that this happens, since the `build:esm` task depends on all transitive dependencies' `build:package:esm` tasks.",
+		"_tasksComment3": "This package only builds ESM; so, CJS deps (`build:package:cjs` task) are remapped to ESM.",
 		"tasks": {
 			"build:esm": [
 				"...",
 				"webpack"
 			],
-			"webpack": [
-				"^build:package:esm"
-			]
+			"build:package:cjs": {
+				"dependsOn": [
+					"build:package:esm"
+				],
+				"script": false
+			}
 		}
 	},
 	"typeValidation": {

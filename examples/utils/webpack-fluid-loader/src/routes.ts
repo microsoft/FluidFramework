@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { getOdspCredentials } from "@fluid-private/test-drivers";
-import { IFluidPackage } from "@fluidframework/container-definitions/internal";
+import type { IFluidPackage } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	LoginCredentials,
@@ -25,6 +26,8 @@ import { tinyliciousUrls } from "./getUrlResolver.js";
 import { RouteOptions } from "./loader.js";
 
 const tokenManager = new OdspTokenManager(odspTokensCache);
+const sourceMapLoaderPath = fileURLToPath(import.meta.resolve("source-map-loader"));
+const tsLoaderPath = fileURLToPath(import.meta.resolve("ts-loader"));
 
 const getThisOrigin = (options: RouteOptions): string => `http://localhost:${options.port}`;
 
@@ -373,11 +376,11 @@ export function commonExampleConfig(
 			rules: [
 				{
 					test: /\.tsx?$/,
-					loader: require.resolve("ts-loader"),
+					loader: tsLoaderPath,
 				},
 				{
 					test: /\.[cm]?js$/,
-					use: [require.resolve("source-map-loader")],
+					use: [sourceMapLoaderPath],
 					enforce: "pre",
 				},
 			],
@@ -402,8 +405,9 @@ const fluid = (
 	options: RouteOptions,
 ): void => {
 	const documentId = req.params.id;
-	// eslint-disable-next-line @typescript-eslint/no-require-imports
-	const packageJson = require(path.join(baseDir, "./package.json")) as IFluidPackage;
+	const packageJson = JSON.parse(
+		fs.readFileSync(path.join(baseDir, "./package.json"), "utf8"),
+	) as IFluidPackage;
 
 	const umd = packageJson.fluid.browser?.umd;
 	assert(umd !== undefined, 0x329 /* browser.umd property is undefined */);
