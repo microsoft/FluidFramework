@@ -17,13 +17,14 @@ import {
 	type AzureRemoteConnectionConfig as AzureRemoteConnectionConfigLegacy,
 } from "@fluidframework/azure-client-legacy";
 import type { IRuntimeFactory } from "@fluidframework/container-definitions/legacy";
-/* eslint-disable import-x/no-internal-modules -- Fluid-internal tests need the relaxed logger implementation contract. */
+import type {
+	 IConfigProviderBase,
+	 ITelemetryBaseEvent,
+} from "@fluidframework/core-interfaces";
+
 import {
-	type IConfigProviderBase,
-	type ITelemetryBaseEvent,
 	LogLevel,
 } from "@fluidframework/core-interfaces";
-/* eslint-enable import-x/no-internal-modules */
 import { ScopeType } from "@fluidframework/driver-definitions/legacy";
 import type { ContainerSchema } from "@fluidframework/fluid-static";
 import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions";
