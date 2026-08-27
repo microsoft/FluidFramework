@@ -1978,5 +1978,8 @@ export const shortCodeMap = {
 	"0xd30": "Detach range start must not exceed end",
 	"0xd31": "Detach range must not exceed field length",
 	"0xd32": "Detach destination must be a new empty field",
-	"0xd33": "compatibilityMode must be defined"
+	"0xd33": "compatibilityMode must be defined",
+	"0xd34": "Cannot construct metadata for the root commit",
+	"0xd35": "Trimmed more commits than exist in the branch",
+	"0xd36": "Should not access 'customMetadata' property of an evicted commit"
 };
