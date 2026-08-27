@@ -11,7 +11,6 @@ import { type EncodedRevisionTag, RevisionTagSchema, SessionIdSchema } from "../
 import type { JsonCompatibleReadOnly } from "../util/index.js";
 
 import type { EncodedBranchId } from "./branch.js";
-import { EncodedCustomMetadataTree } from "./customMetadataFormat.js";
 import { MessageFormatVersion } from "./messageFormat.js";
 
 /**
@@ -43,12 +42,6 @@ export interface Message {
 	readonly branchName?: string;
 
 	/**
-	 * Arbitrary, application-defined metadata to persist alongside the commit in this message.
-	 * @remarks See {@link GraphCommit.customMetadata}.
-	 */
-	readonly customMetadata?: EncodedCustomMetadataTree;
-
-	/**
 	 * The version of the message format.
 	 */
 	readonly version: typeof MessageFormatVersion.vSharedBranches;
@@ -63,6 +56,5 @@ export const Message = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 		changeset: Type.Optional(tChange),
 		branchId: Type.Optional(Type.Number()),
 		branchName: Type.Optional(Type.String()),
-		customMetadata: Type.Optional(EncodedCustomMetadataTree),
 		version: Type.Literal(MessageFormatVersion.vSharedBranches),
 	});

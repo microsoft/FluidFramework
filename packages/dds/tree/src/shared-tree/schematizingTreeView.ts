@@ -12,7 +12,7 @@ import type {
 import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { anchorSlot, rootFieldKey, type RevertToOptionsAlpha } from "../core/index.js";
+import { anchorSlot, rootFieldKey } from "../core/index.js";
 import {
 	type NodeIdentifierManager,
 	defaultSchemaPolicy,
@@ -58,7 +58,6 @@ import {
 	TreeViewConfigurationAlpha,
 	toInitialSchema,
 	toUpgradeSchema,
-	type TreeBranchHistory,
 	type UntypedTreeViewAlpha,
 	type TreeSchema,
 	type SchemaUpgrade,
@@ -593,14 +592,6 @@ export class SchematizingSimpleTreeView<
 		return this.checkout.fork().viewWith(this.config);
 	}
 
-	public rewindTo(revision: string): void {
-		this.checkout.rewindTo(revision);
-	}
-
-	public revertTo(revision: string, options?: RevertToOptionsAlpha): void {
-		this.checkout.revertTo(revision, options);
-	}
-
 	public merge(context: UntypedTreeViewAlpha, disposeMerged = true): void {
 		this.checkout.merge(context, disposeMerged);
 	}
@@ -620,8 +611,4 @@ export class SchematizingSimpleTreeView<
 	}
 
 	// #endregion Branching
-
-	public get branchHistory(): TreeBranchHistory {
-		return this.checkout.branchHistory;
-	}
 }

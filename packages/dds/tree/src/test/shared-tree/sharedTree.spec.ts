@@ -41,6 +41,7 @@ import {
 	moveToDetachedField,
 	rootFieldKey,
 	storedEmptyFieldSchema,
+	type ChangeFamilyEditor,
 	EmptyKey,
 	ValueSchema,
 } from "../../core/index.js";
@@ -70,6 +71,7 @@ import {
 	type TreeCheckout,
 } from "../../shared-tree/index.js";
 import { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
+import type { EditManager } from "../../shared-tree-core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { simpleTreeNodeSlot } from "../../simple-tree/core/treeNodeKernel.js";
 import {
@@ -959,6 +961,15 @@ describe("SharedTree", () => {
 		assert.deepEqual([...view2.root], ["A", "B", "C"]);
 	});
 
+	// It's not clear if we'll ever want to expose the EditManager to ISharedTree consumers or
+	// if we'll ever expose some memory stats in which the trunk length would be included.
+	// If we do then this test should be updated to use that code path.
+	interface EditManagerKludge {
+		kernel?: {
+			editManager?: EditManager<ChangeFamilyEditor, unknown>;
+		};
+	}
+
 	it("has bounded memory growth in EditManager", () => {
 		const provider = new TestTreeProviderLite(2);
 		const viewInit = provider.trees[0].viewWith(
@@ -982,9 +993,6 @@ describe("SharedTree", () => {
 
 		provider.synchronizeMessages();
 
-		assert.equal(provider.trees[0].kernel.checkout.branchHistory.length, 10);
-		assert.equal(provider.trees[1].kernel.checkout.branchHistory.length, 10);
-
 		// These two edit will have ref numbers that correspond to the last of the above edits
 		view1.root.insertAtStart("");
 		view2.root.insertAtStart("");
@@ -992,8 +1000,14 @@ describe("SharedTree", () => {
 		// This synchronization point should ensure that both trees see the edits with the higher ref numbers.
 		provider.synchronizeMessages();
 
-		assert.equal(provider.trees[0].kernel.checkout.branchHistory.length, 2);
-		assert.equal(provider.trees[1].kernel.checkout.branchHistory.length, 2);
+		const t1 = provider.trees[0] as unknown as EditManagerKludge;
+		const t2 = provider.trees[1] as unknown as EditManagerKludge;
+		assert(
+			t1.kernel?.editManager !== undefined && t2.kernel?.editManager !== undefined,
+			"EditManager has moved. This test must be updated.",
+		);
+		assert(t1.kernel.editManager.getTrunkChanges("main").length < 10);
+		assert(t2.kernel.editManager.getTrunkChanges("main").length < 10);
 	});
 
 	// This covers in-memory retention only. See the "retainHistory persistence" suite below for the
@@ -1016,8 +1030,15 @@ describe("SharedTree", () => {
 		viewInit.dispose();
 		provider.synchronizeMessages();
 
-		const priorEditCount = provider.trees[0].kernel.checkout.branchHistory.length;
-		assert.equal(provider.trees[1].kernel.checkout.branchHistory.length, priorEditCount);
+		const t1 = provider.trees[0] as unknown as EditManagerKludge;
+		const t2 = provider.trees[1] as unknown as EditManagerKludge;
+		assert(
+			t1.kernel?.editManager !== undefined && t2.kernel?.editManager !== undefined,
+			"EditManager has moved. This test must be updated.",
+		);
+
+		const priorEditCount = t1.kernel.editManager?.getTrunkChanges("main").length;
+		assert.equal(t2.kernel.editManager.getTrunkChanges("main").length, priorEditCount);
 
 		const [view1, view2] = provider.trees.map((t) =>
 			t.viewWith(new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation })),
@@ -1041,8 +1062,8 @@ describe("SharedTree", () => {
 		// All of the edits (plus the two additional ones) should still be present on the trunk since
 		// retainHistory prevents trunk commits from ever being trimmed.
 		const expectedCount = priorEditCount + sequencedEditCount + 2;
-		assert.equal(provider.trees[0].kernel.checkout.branchHistory.length, expectedCount);
-		assert.equal(provider.trees[1].kernel.checkout.branchHistory.length, expectedCount);
+		assert.equal(t1.kernel.editManager.getTrunkChanges("main").length, expectedCount);
+		assert.equal(t2.kernel.editManager.getTrunkChanges("main").length, expectedCount);
 	});
 
 	describe("Persists retained history", () => {
@@ -1107,8 +1128,13 @@ describe("SharedTree", () => {
 			)) as ISharedTree;
 		}
 
-		function trunkCommitCount(tree: ISharedTree): number {
-			return tree.kernel.checkout.branchHistory.length;
+		function trunkCommitCount(tree: ITree): number {
+			const kludge = tree as unknown as EditManagerKludge;
+			assert(
+				kludge.kernel?.editManager !== undefined,
+				"EditManager has moved. This test must be updated.",
+			);
+			return kludge.kernel.editManager.getTrunkChanges("main").length;
 		}
 
 		it("persists the retained trunk when retainHistory is enabled", async () => {

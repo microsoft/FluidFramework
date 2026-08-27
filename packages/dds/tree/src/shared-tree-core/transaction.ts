@@ -15,24 +15,14 @@ import {
 	mintCommit,
 	rebaseBranch,
 	tagChange,
-	CommitKind,
 	type ChangeFamilyEditor,
-	type CustomMetadataTree,
 	type GraphCommit,
 	type ProcessChangeFn,
 	type RevisionTag,
 } from "../core/index.js";
-import { getLast, getOrCreate, type JsonCompatibleReadOnlyObject } from "../util/index.js";
+import { getLast, getOrCreate } from "../util/index.js";
 
 import type { SharedTreeBranch, SharedTreeBranchEvents } from "./branch.js";
-
-/**
- * A {@link CustomMetadataTree} under construction.
- */
-interface MutableCustomMetadataTree {
-	metadata: JsonCompatibleReadOnlyObject | undefined;
-	children: MutableCustomMetadataTree[];
-}
 
 /**
  * Describes the result of a transaction.
@@ -300,15 +290,6 @@ export interface SquashingTransactionOptions<TChange, TChangeProcessingContext> 
 	 * {@link ChangeProcessor.applicability | applicability}.
 	 */
 	readonly postProcessor?: ChangeProcessor<TChange, TChangeProcessingContext>;
-
-	/**
-	 * Arbitrary, application-defined metadata to attach to the commit that this transaction produces.
-	 *
-	 * @remarks
-	 * Each transaction in the stack contributes a node to the resulting {@link CustomMetadataTree}. If
-	 * the transaction produces no commit, the metadata is discarded.
-	 */
-	readonly customMetadata?: JsonCompatibleReadOnlyObject;
 }
 
 /**
@@ -428,15 +409,6 @@ export class SquashingTransactionStack<
 				startOptions?: SquashingTransactionOptions<TChange, TChangeProcessingContext>,
 			): Callbacks<SquashingTransactionOptions<TChange, TChangeProcessingContext>> => {
 				postProcessorStack.push(resolvePostProcessor(startOptions?.postProcessor));
-				// Each transaction in the stack contributes a node to a tree mirroring the nesting, which is
-				// attached to the single commit they produce. `openMetadataNode` is the innermost open node.
-				const rootMetadataNode: MutableCustomMetadataTree = {
-					metadata: startOptions?.customMetadata,
-					children: [],
-				};
-				let openMetadataNode = rootMetadataNode;
-				const hasCustomMetadata = (node: CustomMetadataTree): boolean =>
-					node.metadata !== undefined || node.children.some(hasCustomMetadata);
 				// Keep track of the commit that each transaction was on when it started
 				const startHead = this.activeBranch.getHead();
 				const changeFamily = this.branch.changeFamily;
@@ -518,31 +490,19 @@ export class SquashingTransactionStack<
 									// change in their place so that the view fully reflects the modified
 									// `change`.
 									transactionBranch.removeAfter(startHead);
-									transactionBranch.apply(
-										tagChange(change, transactionRevision),
-										CommitKind.Default,
-										undefined,
-									);
+									transactionBranch.apply(tagChange(change, transactionRevision));
 								}
 
-								const customMetadata = hasCustomMetadata(rootMetadataNode)
-									? rootMetadataNode
-									: undefined;
 								if (targetPath.length === 0) {
 									// No changes were made on the original branch since the transaction began
 									// The transaction commit can be applied directly
-									this.branch.apply(
-										tagChange(change, transactionRevision),
-										CommitKind.Default,
-										customMetadata,
-									);
+									this.branch.apply(tagChange(change, transactionRevision));
 									// The view is already up-to-date so there's nothing more to do
 								} else {
 									// Some changes were made on `branch` since the transaction began
 									const unrebasedHead = mintCommit(startHead, {
 										change,
 										revision: transactionRevision,
-										customMetadata,
 									});
 									// We need to rebase the transaction commit on top of the new changes
 									const rebased = rebaseBranch(
@@ -555,7 +515,7 @@ export class SquashingTransactionStack<
 										rebased.newSourceHead.revision === transactionRevision,
 										0xcd0 /* The transaction commit should be rebased to the tip */,
 									);
-									this.branch.apply(rebased.newSourceHead, CommitKind.Default, customMetadata);
+									this.branch.apply(rebased.newSourceHead);
 									viewUpdate = rebased.sourceChange;
 								}
 							} else {
@@ -586,13 +546,6 @@ export class SquashingTransactionStack<
 					SquashingTransactionOptions<TChange, TChangeProcessingContext>
 				> = (nestedStartOptions) => {
 					postProcessorStack.push(resolvePostProcessor(nestedStartOptions?.postProcessor));
-					const nestedMetadataNode: MutableCustomMetadataTree = {
-						metadata: nestedStartOptions?.customMetadata,
-						children: [],
-					};
-					const metadataParent = openMetadataNode;
-					metadataParent.children.push(nestedMetadataNode);
-					openMetadataNode = nestedMetadataNode;
 					const nestedStartHead = this.activeBranch.getHead();
 					const nestedOuterOnPop = onPush?.();
 					transactionBranch.editor.enterTransaction();
@@ -600,12 +553,9 @@ export class SquashingTransactionStack<
 						// Invoked when a nested transaction ends
 						onPop: (result) => {
 							const nestedPostProcessor = postProcessorStack.pop();
-							openMetadataNode = metadataParent;
 							transactionBranch.editor.exitTransaction();
 							switch (result) {
 								case TransactionResult.Abort: {
-									// The aborted transaction contributed nothing; its node is necessarily the last child.
-									metadataParent.children.pop();
 									// When a transaction is aborted, roll back all the transaction's changes on the current branch
 									transactionBranch.removeAfter(nestedStartHead);
 									break;
@@ -635,8 +585,6 @@ export class SquashingTransactionStack<
 												transactionBranch.removeAfter(nestedStartHead);
 												transactionBranch.apply(
 													tagChange(processedSquash, transactionRevision),
-													CommitKind.Default,
-													undefined,
 												);
 											}
 										}

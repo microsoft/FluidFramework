@@ -18,13 +18,10 @@ export {
 	type RemoteChangeMetadata,
 	type ChangeMetadata,
 	type LabelTree,
-	type CustomMetadataTree,
 	type TransactionLabels,
 	type RevertibleFactory,
 	type RevertibleAlphaFactory,
 	type RevertibleAlpha,
-	type RevertOptionsAlpha,
-	type RevertToOptionsAlpha,
 } from "./core/index.js";
 
 export {
@@ -62,7 +59,6 @@ export {
 } from "./shared-tree/index.js";
 
 export {
-	type CommitRevision,
 	TreeArrayNode,
 	type TreeArrayNodeAlpha,
 	type Unhydrated,
@@ -245,8 +241,6 @@ export {
 	type TreeBranchAlpha,
 	type UntypedTreeViewAlpha,
 	type TreeBranchEvents,
-	type TreeBranchCommitMetadata,
-	type TreeBranchHistory,
 	type NodeSchemaOptions,
 	type NodeSchemaOptionsAlpha,
 	type NodeSchemaMetadata,

@@ -8,7 +8,6 @@ import * as Type from "@sinclair/typebox";
 import type { ObjectOptions, Static, TSchema } from "@sinclair/typebox";
 
 import {
-	type CustomMetadataTree,
 	type EncodedRevisionTag,
 	type RevisionTag,
 	RevisionTagSchema,
@@ -17,7 +16,6 @@ import {
 import { type Brand, brandedNumberType, strictEnum, type Values } from "../util/index.js";
 
 import type { EncodedBranchId } from "./branch.js";
-import { EncodedCustomMetadataTree } from "./customMetadataFormat.js";
 
 /**
  * Contains a single change to the `SharedTree` and associated metadata.
@@ -30,8 +28,6 @@ export interface Commit<TChangeset> {
 	readonly change: TChangeset;
 	/** An identifier representing the session/user/client that made this commit */
 	readonly sessionId: SessionId;
-	/** Arbitrary, application-defined metadata stored alongside this commit */
-	readonly customMetadata: CustomMetadataTree | undefined;
 }
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
@@ -39,7 +35,6 @@ export type EncodedCommit<TChangeset> = {
 	readonly revision: EncodedRevisionTag;
 	readonly change: TChangeset;
 	readonly sessionId: SessionId;
-	readonly customMetadata?: EncodedCustomMetadataTree;
 };
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
@@ -47,27 +42,18 @@ const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 // Many of the return types in this module are intentionally derived, rather than explicitly specified.
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 
-const CommitBase = <ChangeSchema extends TSchema>(
-	tChange: ChangeSchema,
-	includeCustomMetadata: boolean,
-) =>
+const CommitBase = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 	Type.Object({
 		revision: RevisionTagSchema,
 		change: tChange,
 		sessionId: SessionIdSchema,
-		...(includeCustomMetadata
-			? { customMetadata: Type.Optional(EncodedCustomMetadataTree) }
-			: {}),
 	});
-
 /**
  * @privateRemarks Commits are generally encoded from `GraphCommit`s, which often contain extra data.
  * This `noAdditionalProps` is especially important in that light.
  */
-const Commit = <ChangeSchema extends TSchema>(
-	tChange: ChangeSchema,
-	includeCustomMetadata: boolean,
-) => Type.Composite([CommitBase(tChange, includeCustomMetadata)], noAdditionalProps);
+const Commit = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
+	Type.Composite([CommitBase(tChange)], noAdditionalProps);
 
 export type SeqNumber = Brand<number, "edit-manager.SeqNumber">;
 const SeqNumber = brandedNumberType<SeqNumber>({ multipleOf: 1 });
@@ -84,14 +70,8 @@ export type SequenceId = Static<typeof SequenceId>;
  */
 export interface SequencedCommit<TChangeset> extends Commit<TChangeset>, SequenceId {}
 
-/** The persisted counterpart of {@link SequencedCommit}. */
-export type EncodedSequencedCommit<TChangeset> = EncodedCommit<TChangeset> & SequenceId;
-
-export const SequencedCommit = <ChangeSchema extends TSchema>(
-	tChange: ChangeSchema,
-	includeCustomMetadata: boolean,
-) =>
-	Type.Composite([CommitBase(tChange, includeCustomMetadata), SequenceId], noAdditionalProps);
+export const SequencedCommit = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
+	Type.Composite([CommitBase(tChange), SequenceId], noAdditionalProps);
 
 /**
  * A branch off of the trunk for use in summaries.
@@ -106,17 +86,14 @@ export interface SummarySessionBranch<TChangeset> {
 
 export interface EncodedSummarySessionBranch<TChangeset> {
 	readonly base: EncodedRevisionTag;
-	readonly commits: EncodedCommit<TChangeset>[];
+	readonly commits: Commit<TChangeset>[];
 }
 
-export const SummarySessionBranch = <ChangeSchema extends TSchema>(
-	tChange: ChangeSchema,
-	includeCustomMetadata: boolean,
-) =>
+export const SummarySessionBranch = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 	Type.Object(
 		{
 			base: RevisionTagSchema,
-			commits: Type.Array(Commit(tChange, includeCustomMetadata)),
+			commits: Type.Array(Commit(tChange)),
 		},
 		noAdditionalProps,
 	);
@@ -127,14 +104,11 @@ export interface EncodedSharedBranch<TChangeset> {
 	readonly author?: string;
 	readonly session?: SessionId;
 	readonly base?: EncodedRevisionTag;
-	readonly trunk: readonly Readonly<EncodedSequencedCommit<TChangeset>>[];
+	readonly trunk: readonly Readonly<SequencedCommit<TChangeset>>[];
 	readonly peers: readonly [SessionId, Readonly<EncodedSummarySessionBranch<TChangeset>>][];
 }
 
-export const EncodedSharedBranch = <ChangeSchema extends TSchema>(
-	tChange: ChangeSchema,
-	includeCustomMetadata: boolean,
-) =>
+export const EncodedSharedBranch = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 	Type.Object(
 		{
 			id: Type.Optional(Type.Number()),
@@ -142,10 +116,8 @@ export const EncodedSharedBranch = <ChangeSchema extends TSchema>(
 			session: Type.Optional(SessionIdSchema),
 			author: Type.Optional(Type.String()),
 			base: Type.Optional(RevisionTagSchema),
-			trunk: Type.Array(SequencedCommit(tChange, includeCustomMetadata)),
-			peers: Type.Array(
-				Type.Tuple([SessionIdSchema, SummarySessionBranch(tChange, includeCustomMetadata)]),
-			),
+			trunk: Type.Array(SequencedCommit(tChange)),
+			peers: Type.Array(Type.Tuple([SessionIdSchema, SummarySessionBranch(tChange)])),
 		},
 		noAdditionalProps,
 	);
@@ -192,11 +164,6 @@ export const EditManagerFormatVersion = strictEnum("editManager.FormatVersion", 
 	 */
 	v6: 6,
 	/**
-	 * Introduced and made available for writing in 2.117.0.
-	 * Adds support for {@link GraphCommit.customMetadata | persisted commit metadata}.
-	 */
-	v7: 7,
-	/**
 	 * Not yet released.
 	 * Only used for testing shared branches.
 	 */
@@ -208,7 +175,6 @@ export const supportedEditManagerFormatVersions: ReadonlySet<EditManagerFormatVe
 		EditManagerFormatVersion.v3,
 		EditManagerFormatVersion.v4,
 		EditManagerFormatVersion.v6,
-		EditManagerFormatVersion.v7,
 		EditManagerFormatVersion.vSharedBranches,
 	]);
 export const editManagerFormatVersions: ReadonlySet<EditManagerFormatVersion> = new Set(
