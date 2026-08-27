@@ -22,6 +22,7 @@ import {
 } from "../util/index.js";
 
 import { decodeBranchId, encodeBranchId } from "./branchIdCodec.js";
+import { decodeCustomMetadataTree, encodeCustomMetadataTree } from "./customMetadataCodec.js";
 import type { SharedBranchSummaryData } from "./editManager.js";
 import type {
 	Commit,
@@ -71,8 +72,9 @@ function encodeCommit<TChangeset, T extends Commit<TChangeset>>(
 	>,
 	commit: T,
 	context: ChangeEncodingContext,
+	includeCustomMetadata: boolean,
 ) {
-	return {
+	const encoded = {
 		...commit,
 		revision: revisionTagCodec.encode(commit.revision, {
 			originatorId: commit.sessionId,
@@ -82,6 +84,16 @@ function encodeCommit<TChangeset, T extends Commit<TChangeset>>(
 		}),
 		change: changeCodec.encode(commit.change, { ...context, revision: commit.revision }),
 	};
+	// Rebuilt rather than spread through, both to convert it to the persisted form and so that a client
+	// writing an older format never emits a field that format does not define.
+	if (encoded.customMetadata === undefined) {
+		const { customMetadata: _, ...withoutMetadata } = encoded;
+		return withoutMetadata;
+	}
+	const { customMetadata, ...rest } = encoded;
+	return includeCustomMetadata
+		? { ...rest, customMetadata: encodeCustomMetadataTree(customMetadata) }
+		: rest;
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -112,6 +124,7 @@ function decodeCommit<TChangeset, T extends EncodedCommit<JsonCompatibleReadOnly
 		...commit,
 		revision,
 		change: changeCodec.decode(commit.change, { ...context, revision }),
+		customMetadata: decodeCustomMetadataTree(commit.customMetadata),
 	};
 }
 
@@ -131,16 +144,23 @@ export function encodeSharedBranch<TChangeset>(
 	data: SharedBranchSummaryData<TChangeset>,
 	context: EditManagerEncodingContext,
 	originatorId: SessionId | undefined,
+	includeCustomMetadata: boolean,
 ): EncodedSharedBranch<TChangeset> {
 	const json: Mutable<EncodedSharedBranch<TChangeset>> = {
 		trunk: data.trunk.map((commit) =>
-			encodeCommit(changeCodec, revisionTagCodec, commit, {
-				originatorId: commit.sessionId,
-				idCompressor: context.idCompressor,
-				schema: context.schema,
-				revision: undefined,
-				isSummary: context.isSummary,
-			}),
+			encodeCommit(
+				changeCodec,
+				revisionTagCodec,
+				commit,
+				{
+					originatorId: commit.sessionId,
+					idCompressor: context.idCompressor,
+					schema: context.schema,
+					revision: undefined,
+					isSummary: context.isSummary,
+				},
+				includeCustomMetadata,
+			),
 		),
 		peers: Array.from(data.peerLocalBranches.entries(), ([sessionId, branch]) => [
 			sessionId,
@@ -152,13 +172,19 @@ export function encodeSharedBranch<TChangeset>(
 					isSummary: context.isSummary,
 				}),
 				commits: branch.commits.map((commit) =>
-					encodeCommit(changeCodec, revisionTagCodec, commit, {
-						originatorId: commit.sessionId,
-						idCompressor: context.idCompressor,
-						schema: context.schema,
-						revision: undefined,
-						isSummary: context.isSummary,
-					}),
+					encodeCommit(
+						changeCodec,
+						revisionTagCodec,
+						commit,
+						{
+							originatorId: commit.sessionId,
+							idCompressor: context.idCompressor,
+							schema: context.schema,
+							revision: undefined,
+							isSummary: context.isSummary,
+						},
+						includeCustomMetadata,
+					),
 				),
 			},
 		]),
