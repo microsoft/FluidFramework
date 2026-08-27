@@ -18,10 +18,11 @@ import {
 } from "@fluidframework/azure-client-legacy";
 import type { IRuntimeFactory } from "@fluidframework/container-definitions/legacy";
 /* eslint-disable import-x/no-internal-modules -- Fluid-internal tests need the relaxed logger implementation contract. */
-import type {
-	IConfigProviderBase,
-	ITelemetryBaseLoggerImplementation,
-} from "@fluidframework/core-interfaces/internal";
+import {
+	type IConfigProviderBase,
+	type ITelemetryBaseEvent,
+	LogLevel,
+} from "@fluidframework/core-interfaces";
 /* eslint-enable import-x/no-internal-modules */
 import { ScopeType } from "@fluidframework/driver-definitions/legacy";
 import type { ContainerSchema } from "@fluidframework/fluid-static";
@@ -172,7 +173,7 @@ export function createAzureClientLegacy(
 					endpoint: "http://localhost:7071", // Port for local Azure Fluid Relay (AFR) service
 					type: "local",
 				};
-	const getLogger = (): ITelemetryBaseLoggerImplementation | undefined => {
+	const getLogger = (): ITelemetryBaseLogger | undefined => {
 		const testLogger = getTestLogger?.();
 		if (!logger && !testLogger) {
 			return undefined;
@@ -182,9 +183,15 @@ export function createAzureClientLegacy(
 		}
 		return logger ?? testLogger;
 	};
+	const baseLogger = getLogger();
 	return new AzureClientLegacy({
 		connection: connectionProps,
-		logger: getLogger(),
+		logger:
+			baseLogger === undefined
+				? undefined
+				: {
+						send: (event: ITelemetryBaseEvent) => baseLogger.send(event, LogLevel.essential),
+					},
 	});
 }
 
