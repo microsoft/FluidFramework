@@ -32,7 +32,8 @@ pnpm exec markdown-magic [--files <glob> ...] [--workingDirectory <directory>]
 | `--workingDirectory` | `-w`  | The base directory for glob patterns and relative paths                      | The current working directory |
 | `--help`             | `-h`  | None                                                                         | Not applicable                |
 
-The search includes files only and applies `.gitignore` rules. To process a `.markdown` file, select it explicitly with `--files`.
+The search includes files only and applies `.gitignore` rules.
+To process a `.markdown` file, select it explicitly with `--files`.
 
 For example, the following command updates Markdown and MDX files in `docs` except for `docs/README.md`:
 
@@ -40,11 +41,15 @@ For example, the following command updates Markdown and MDX files in `docs` exce
 pnpm exec markdown-magic --files "docs/**/*.{md,mdx}" "!docs/README.md"
 ```
 
-The command reports the number of files that changed. If an error occurs, the command writes the error to stderr and returns exit code `1`.
+The command reports the number of files that changed.
+If an error occurs, the command writes the error to stderr and returns exit code `1`.
 
 ## Markers
 
-Add a begin marker and an end marker to a Markdown file. The begin marker contains a JSON object. The `transform` property is required. Add transform options as other properties in the object.
+Add a begin marker and an end marker to a Markdown file.
+The begin marker contains a JSON object.
+The `transform` property is required.
+Add transform options as other properties in the object.
 
 The following example includes `overview.md` in a Markdown document:
 
@@ -56,7 +61,8 @@ The tool writes generated content here.
 <!-- markdown-magic:end -->
 ```
 
-For MDX, use MDX comments. HTML comments are not valid in MDX.
+For MDX, use MDX comments.
+HTML comments are not valid in MDX.
 
 The following example includes `overview.mdx` in an MDX document:
 
@@ -68,9 +74,12 @@ The tool writes generated content here.
 {/* markdown-magic:end */}
 ```
 
-The marker must be a top-level block in the document syntax tree. Marker text in a code block or another nested construct is not active.
+The marker must be a top-level block in the document syntax tree.
+Marker text in a code block or another nested construct is not active.
 
-The tool parses the complete document. It replaces only the source range between each marker pair. It does not serialize the authored content outside that range.
+The tool parses the complete document.
+It replaces only the source range between each marker pair.
+It does not serialize the authored content outside that range.
 
 The tool adds these items to each generated region:
 
@@ -79,7 +88,8 @@ The tool adds these items to each generated region:
 3. The serialized transform output.
 4. A `prettier-ignore-end` comment.
 
-The tool uses remark and GitHub Flavored Markdown to serialize generated content. The serializer can normalize lists, links, tables, and whitespace inside a generated region.
+The tool uses remark and GitHub Flavored Markdown to serialize generated content.
+The serializer can normalize lists, links, tables, and whitespace inside a generated region.
 
 The tool rejects these inputs:
 
@@ -91,19 +101,32 @@ The tool rejects these inputs:
 - Nested regions.
 - An opening or closing marker without its matching marker.
 
-The tool validates and generates all regions in one destination file before it writes that file. Thus, a failed region does not cause a partial write to that file. The command processes multiple files concurrently. A different file can finish before an error stops the command.
+The tool validates and generates all regions in one destination file before it writes that file.
+Thus, a failed region does not cause a partial write to that file.
+The command processes multiple files concurrently.
+A different file can finish before an error stops the command.
 
 ### Generated headings
 
-Transforms that generate a section determine its heading depth from the marker position. A following authored heading defines the depth. Otherwise, the nearest preceding authored heading defines the depth. A section after the document title uses level two. A section in a document without authored headings uses level one.
+Transforms that generate a section determine its heading depth from the marker position.
+A following authored heading defines the depth.
+Otherwise, the nearest preceding authored heading defines the depth.
+A section after the document title uses level two.
+A section in a document without authored headings uses level one.
 
-The tool ignores headings inside generated regions when it determines the depth. Thus, existing generated content does not change the result. At the end of a section, the generated heading is a sibling of the nearest preceding heading. To generate a child section, put the marker before an authored child heading of the required depth.
+The tool ignores headings inside generated regions when it determines the depth.
+Thus, existing generated content does not change the result.
+At the end of a section, the generated heading is a sibling of the nearest preceding heading.
+To generate a child section, put the marker before an authored child heading of the required depth.
 
 The tool stops with an error if adjusted headings in a shared template would be deeper than level six.
 
 ## Transforms
 
-Transform names use kebab case. Option names use camel case. Option values use native JSON types. For example, use `true` instead of `"true"`.
+Transform names use kebab case.
+Option names use camel case.
+Option values use native JSON types.
+For example, use `true` instead of `"true"`.
 
 | Transform                                                                     | Purpose                                                                      |
 | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
@@ -128,7 +151,9 @@ Each linked guide contains the option types, default values, behavior notes, and
 
 ## Architecture
 
-The command processes each destination as a Markdown abstract syntax tree (mdast). Authored content stays in its original source form. The tool serializes only generated regions and replaces them by source offset.
+The command processes each destination as a Markdown abstract syntax tree (mdast).
+Authored content stays in its original source form.
+The tool serializes only generated regions and replaces them by source offset.
 
 ```mermaid
 flowchart TD
@@ -159,11 +184,18 @@ The main modules have these responsibilities:
 
 The executable bin file uses `jiti` to load the TypeScript source. The package does not emit JavaScript build output.
 
-A transform has a `validateOptions` function and a `generate` function. `validateOptions` converts an unknown JSON value to validated options. `generate` returns an array of mdast root-content nodes. A composite transform combines node arrays. It does not combine serialized Markdown strings.
+A transform has a `validateOptions` function and a `generate` function.
+`validateOptions` converts an unknown JSON value to validated options.
+`generate` returns an array of mdast root-content nodes.
+A composite transform combines node arrays.
+It does not combine serialized Markdown strings.
 
-The transform context provides the destination path, destination format, path resolution, document parsing, and file reading. New transforms must return nodes that the destination processor can serialize.
+The transform context provides the destination path, destination format, path resolution, document parsing, and file reading.
+New transforms must return nodes that the destination processor can serialize.
 
-`migrateLegacyMarkers.ts` contains the one-use migration from the former marker syntax. It changes marker text only. It does not change generated content between markers.
+`migrateLegacyMarkers.ts` contains the one-use migration from the former marker syntax.
+It changes marker text only.
+It does not change generated content between markers.
 
 ## Validation
 
@@ -222,8 +254,3 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 <!-- prettier-ignore-end -->
 
 <!-- markdown-magic:end -->
-
-<!-- Links -->
-
-[tinylicious]: https://github.com/microsoft/FluidFramework/tree/main/server/routerlicious/packages/tinylicious/
-[api-extractor]: https://api-extractor.com/
