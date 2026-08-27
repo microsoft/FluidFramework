@@ -7,6 +7,8 @@
 // eslint-disable-next-line no-restricted-syntax, @typescript-eslint/no-restricted-imports
 export * from "./index.js";
 
+export type { ITelemetryBaseLoggerImplementation } from "./logger.js";
+
 export type { JsonString, JsonStringifyOptions } from "./jsonString.js";
 export { JsonStringify, JsonParse } from "./jsonString.js";
 
