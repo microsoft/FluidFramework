@@ -11,17 +11,23 @@ import type {
 	IChannelStorageService,
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions/internal";
-import { FileMode, MessageType, TreeEntry } from "@fluidframework/driver-definitions/internal";
-import type { ITree } from "@fluidframework/driver-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import type {
+	ISummaryBuilder,
 	ISummaryTreeWithStats,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
 	ISequencedMessageEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
-import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils/internal";
-import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
-import { SharedObject } from "@fluidframework/shared-object-base/internal";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import type {
+	IFluidSerializer,
+	ISummaryContentSink,
+} from "@fluidframework/shared-object-base/internal";
+import {
+	SharedObject,
+	summaryTreeBuilderSink,
+} from "@fluidframework/shared-object-base/internal";
 
 import type {
 	ISharedSignal,
@@ -97,24 +103,20 @@ export class SharedSignalClass<T extends SerializableTypeForSharedSignal = any>
 	}
 
 	protected summarizeCore(_serializer: IFluidSerializer): ISummaryTreeWithStats {
-		const tree: ITree = {
-			entries: [
-				{
-					mode: FileMode.File,
-					path: snapshotFileName,
-					type: TreeEntry[TreeEntry.Blob],
-					value: {
-						contents: JSON.stringify(""),
-						// eslint-disable-next-line unicorn/text-encoding-identifier-case
-						encoding: "utf-8",
-					},
-				},
-			],
-		};
+		const builder = new SummaryTreeBuilder();
+		this.summarizeInto(summaryTreeBuilderSink(builder));
+		return builder.getSummaryTree();
+	}
 
-		const summaryTreeWithStats = convertToSummaryTreeWithStats(tree);
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.generateSummaryCore}
+	 */
+	protected override generateSummaryCore(summaryBuilder: ISummaryBuilder): void {
+		this.summarizeInto(summaryBuilder);
+	}
 
-		return summaryTreeWithStats;
+	private summarizeInto(sink: ISummaryContentSink): void {
+		sink.addBlob(snapshotFileName, JSON.stringify(""));
 	}
 
 	/**

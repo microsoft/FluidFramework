@@ -114,6 +114,7 @@ export {
 	type IDocumentSchemaFeatures,
 } from "./documentSchema.js";
 export {
+	enableSummarizeV2Key,
 	getFailMessage,
 	RetriableSummaryError,
 	type SummarizeReason,

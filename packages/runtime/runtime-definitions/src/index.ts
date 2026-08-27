@@ -70,16 +70,19 @@ export type {
 export {
 	encodeHandlesInContainerRuntime,
 	notifiesReadOnlyState,
+	generateSummary,
 } from "./runtimeLayerCompatFeatureNames.js";
 export type {
 	CreateChildSummarizerNodeParam,
 	IExperimentalIncrementalSummaryContext,
+	ISummarizable,
 	ISummarizeInternalResult,
 	ISummarizeResult,
 	ISummarizerNode,
 	ISummarizerNodeConfig,
 	ISummarizerNodeConfigWithGC,
 	ISummarizerNodeWithGC,
+	ISummaryBuilder,
 	ISummaryStats,
 	ISummaryTreeWithStats,
 	ITelemetryContext,

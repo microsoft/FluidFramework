@@ -82,6 +82,20 @@ export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRu
 }
 
 // @beta @legacy
+export class SummaryBuilder implements ISummaryBuilder {
+    addAttachment(key: string, id: string): void;
+    addBlob(key: string, content: string | Uint8Array): void;
+    addHandle(key: string, handleType: SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment, handle: string): void;
+    addTree(key: string, summarizeResult: ISummarizeResult): void;
+    createBuilderForChild(childId: string, fullTree: boolean): ISummaryBuilder;
+    static createRootBuilder(fullTree: boolean): ISummaryBuilder;
+    getSummaryTreeWithStats(): ISummaryTreeWithStats;
+    markUnreferenced(): void;
+    nodeDidNotChange(): void;
+    setGroupId(groupId: string): void;
+}
+
+// @beta @legacy
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {
     constructor(params?: {
         groupId?: string;

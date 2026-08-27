@@ -18,6 +18,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject<IConsensus
     protected complete(acquireId: string): Promise<void>;
     // (undocumented)
     protected completeCore(acquireId: string): void;
+    protected generateSummaryCore(summaryBuilder: ISummaryBuilder, serializer: IFluidSerializer): void;
     // (undocumented)
     protected isActive(): boolean;
     protected loadCore(storage: IChannelStorageService): Promise<void>;

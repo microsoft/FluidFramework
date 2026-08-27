@@ -126,7 +126,7 @@ export interface IExperimentalIncrementalSummaryContext {
 }
 
 // @beta @legacy
-export interface IFluidDataStoreChannel extends IDisposable {
+export interface IFluidDataStoreChannel extends IDisposable, Partial<ISummarizable> {
     // (undocumented)
     applyStashedOp(content: any): Promise<unknown>;
     readonly entryPoint: IFluidHandleInternal<FluidObject>;
@@ -227,6 +227,7 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     // (undocumented)
     readonly idCompressor?: IIdCompressor;
     readonly isReadOnly?: () => boolean;
+    readonly loadedFromSequenceNumber?: number;
     readonly loadingGroupId?: string;
     makeLocallyVisible(): void;
     readonly minVersionForCollab: OldestSupportedClientVersion;
@@ -301,6 +302,11 @@ export interface IRuntimeStorageService {
 export type ISequencedMessageEnvelope = Omit<ISequencedDocumentMessage, "contents" | "clientSequenceNumber">;
 
 // @beta @legacy
+export interface ISummarizable {
+    generateSummary(summaryBuilder: ISummaryBuilder, latestSummarySequenceNumber: number, fullTree: boolean, telemetryContext: ITelemetryContext): Promise<void>;
+}
+
+// @beta @legacy
 export interface ISummarizeInternalResult extends ISummarizeResult {
     // (undocumented)
     id: string;
@@ -359,6 +365,19 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     isReferenced(): boolean;
     updateUsedRoutes(usedRoutes: string[]): void;
+}
+
+// @beta @legacy
+export interface ISummaryBuilder {
+    addAttachment(key: string, id: string): void;
+    addBlob(key: string, content: string | Uint8Array): void;
+    addHandle(key: string, handleType: SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment, handle: string): void;
+    addTree(key: string, summarizeResult: ISummarizeResult): void;
+    createBuilderForChild(childId: string, fullTree: boolean): ISummaryBuilder;
+    getSummaryTreeWithStats(): ISummaryTreeWithStats;
+    markUnreferenced(): void;
+    nodeDidNotChange(): void;
+    setGroupId(groupId: string): void;
 }
 
 // @beta @legacy

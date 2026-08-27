@@ -12,6 +12,7 @@ import type {
 } from "@fluidframework/datastore-definitions/internal";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
 import type {
+	ISummaryBuilder,
 	ISummaryTreeWithStats,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
@@ -20,7 +21,9 @@ import type {
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import {
 	type IFluidSerializer,
+	type ISummaryContentSink,
 	SharedObject,
+	summaryTreeBuilderSink,
 } from "@fluidframework/shared-object-base/internal";
 import { extractTelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
@@ -206,16 +209,30 @@ export class ConsensusOrderedCollection<T = any>
 	}
 
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
+		const builder = new SummaryTreeBuilder();
+		this.summarizeInto(summaryTreeBuilderSink(builder), serializer);
+		return builder.getSummaryTree();
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.generateSummaryCore}
+	 */
+	protected override generateSummaryCore(
+		summaryBuilder: ISummaryBuilder,
+		serializer: IFluidSerializer,
+	): void {
+		this.summarizeInto(summaryBuilder, serializer);
+	}
+
+	private summarizeInto(sink: ISummaryContentSink, serializer: IFluidSerializer): void {
 		// If we are transitioning from unattached to attached mode,
 		// then we are losing all checked out work!
 		this.removeClient(idForLocalUnattachedClient);
 
-		const builder = new SummaryTreeBuilder();
 		let blobContent = this.serializeValue(this.data.asArray(), serializer);
-		builder.addBlob(snapshotFileNameData, blobContent);
+		sink.addBlob(snapshotFileNameData, blobContent);
 		blobContent = this.serializeValue([...this.jobTracking.entries()], serializer);
-		builder.addBlob(snapshotFileNameTracking, blobContent);
-		return builder.getSummaryTree();
+		sink.addBlob(snapshotFileNameTracking, blobContent);
 	}
 
 	protected isActive(): boolean {

@@ -12,6 +12,7 @@ import type {
 import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type {
+	ISummaryBuilder,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	IRuntimeMessageCollection,
@@ -19,8 +20,14 @@ import type {
 	ISequencedMessageEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
-import { SharedObject } from "@fluidframework/shared-object-base/internal";
+import type {
+	IFluidSerializer,
+	ISummaryContentSink,
+} from "@fluidframework/shared-object-base/internal";
+import {
+	SharedObject,
+	summaryTreeBuilderSink,
+} from "@fluidframework/shared-object-base/internal";
 
 import type { ISharedMap, ISharedMapEvents } from "./interfaces.js";
 import {
@@ -177,12 +184,26 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 		serializer: IFluidSerializer,
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTreeWithStats {
+		const builder = new SummaryTreeBuilder();
+		this.summarizeInto(summaryTreeBuilderSink(builder), serializer);
+		return builder.getSummaryTree();
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.generateSummaryCore}
+	 */
+	protected override generateSummaryCore(
+		summaryBuilder: ISummaryBuilder,
+		serializer: IFluidSerializer,
+	): void {
+		this.summarizeInto(summaryBuilder, serializer);
+	}
+
+	private summarizeInto(sink: ISummaryContentSink, serializer: IFluidSerializer): void {
 		let currentSize = 0;
 		let counter = 0;
 		let headerBlob: IMapDataObjectSerializable = {};
 		const blobs: string[] = [];
-
-		const builder = new SummaryTreeBuilder();
 
 		const data = this.kernel.getSerializedStorage(serializer);
 
@@ -214,7 +235,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 						value: JSON.parse(value.value) as unknown,
 					},
 				};
-				builder.addBlob(blobName, JSON.stringify(content));
+				sink.addBlob(blobName, JSON.stringify(content));
 			} else {
 				currentSize += value.type.length + 21; // Approximation cost of property header
 				if (value.value) {
@@ -225,7 +246,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 					const blobName = `blob${counter}`;
 					counter++;
 					blobs.push(blobName);
-					builder.addBlob(blobName, JSON.stringify(headerBlob));
+					sink.addBlob(blobName, JSON.stringify(headerBlob));
 					headerBlob = {};
 					currentSize = 0;
 				}
@@ -240,9 +261,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 			blobs,
 			content: headerBlob,
 		};
-		builder.addBlob(snapshotFileName, JSON.stringify(header));
-
-		return builder.getSummaryTree();
+		sink.addBlob(snapshotFileName, JSON.stringify(header));
 	}
 
 	/**

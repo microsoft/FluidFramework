@@ -17,11 +17,16 @@ import type {
 	ITelemetryContext,
 	IGarbageCollectionData,
 	IFluidDataStoreContext,
+	ISummarizable,
 	ISummarizeResult,
+	ISummaryBuilder,
 	IRuntimeMessageCollection,
 	IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
-import { addBlobToSummary } from "@fluidframework/runtime-utils/internal";
+import {
+	addBlobToSummary,
+	addSummaryTreeToBuilder,
+} from "@fluidframework/runtime-utils/internal";
 import {
 	DataCorruptionError,
 	tagCodeArtifacts,
@@ -34,7 +39,16 @@ import type { ISharedObjectRegistry } from "./dataStoreRuntime.js";
 
 export const attributesBlobKey = ".attributes";
 
-export interface IChannelContext {
+/**
+ * "Last changed at" sequence number for content that is known not to be present in any uploaded summary yet.
+ *
+ * @remarks
+ * The generateSummary flow reuses a node's previous summary when `latestSummarySequenceNumber >= lastChangedSequenceNumber`.
+ * Using a value no summary can ever reach forces the node to be summarized in full.
+ */
+export const neverSummarizedSequenceNumber = Number.MAX_SAFE_INTEGER;
+
+export interface IChannelContext extends ISummarizable {
 	getChannel(): Promise<IChannel>;
 
 	setConnectionState(connected: boolean, clientId?: string);
@@ -135,6 +149,38 @@ export async function summarizeChannelAsync(
 	// Add the channel attributes to the returned result.
 	addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(channel.attributes));
 	return summarizeResult;
+}
+
+/**
+ * Writes a channel's summary into `summaryBuilder` using the channel's generateSummary implementation.
+ *
+ * @remarks
+ * A channel from a version that predates `generateSummary` cannot participate in this flow, so its content is
+ * produced by the old API and copied in. Nothing in that channel is incremental.
+ */
+export async function summarizeChannelAsync2(
+	channel: IChannel,
+	summaryBuilder: ISummaryBuilder,
+	latestSummarySequenceNumber: number,
+	fullTree: boolean,
+	telemetryContext: ITelemetryContext,
+): Promise<void> {
+	if (channel.generateSummary === undefined) {
+		addSummaryTreeToBuilder(
+			summaryBuilder,
+			(await channel.summarize(fullTree, false /* trackState */, telemetryContext)).summary,
+		);
+	} else {
+		await channel.generateSummary(
+			summaryBuilder,
+			latestSummarySequenceNumber,
+			fullTree,
+			telemetryContext,
+		);
+	}
+
+	// Add the channel attributes to the summary.
+	summaryBuilder.addBlob(attributesBlobKey, JSON.stringify(channel.attributes));
 }
 
 export async function loadChannelFactoryAndAttributes(

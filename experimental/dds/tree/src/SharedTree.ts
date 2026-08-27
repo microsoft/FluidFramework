@@ -799,14 +799,14 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 */
 	public saveSummary(): SharedTreeSummaryBase {
 		assert(this.editLog.numberOfLocalEdits === 0, 0x62f /* generateSummary must not be called with local edits */);
-		return this.generateSummary();
+		return this.createSummary();
 	}
 
 	/**
 	 * Generates a SharedTree summary for the current state of the tree.
 	 * Will never be called when local edits are present.
 	 */
-	private generateSummary(): SharedTreeSummaryBase {
+	private createSummary(): SharedTreeSummaryBase {
 		try {
 			switch (this.writeFormat) {
 				case WriteFormat.v0_0_2:

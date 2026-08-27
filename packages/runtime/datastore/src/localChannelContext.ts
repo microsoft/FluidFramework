@@ -15,6 +15,7 @@ import type {
 	IFluidDataStoreContext,
 	IGarbageCollectionData,
 	ISummarizeResult,
+	ISummaryBuilder,
 	IPendingMessagesState,
 	IRuntimeMessageCollection,
 	IRuntimeStorageService,
@@ -35,6 +36,8 @@ import {
 	loadChannelFactoryAndAttributes,
 	summarizeChannel,
 	summarizeChannelAsync,
+	summarizeChannelAsync2,
+	neverSummarizedSequenceNumber,
 } from "./channelContext.js";
 import type { ISharedObjectRegistry } from "./dataStoreRuntime.js";
 
@@ -59,6 +62,16 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 	) {
 		assert(!this.id.includes("/"), 0x30f /* Channel context ID cannot contain slashes */);
 	}
+
+	/**
+	 * Sequence number at which this context's content last changed, used by the generateSummary flow.
+	 *
+	 * @remarks
+	 * A locally created channel starts out not present in any summary, so it stays fully summarized until it has
+	 * processed an op. From then on the op's sequence number is an accurate "last changed at", because any summary
+	 * with a higher reference sequence number necessarily contains the channel.
+	 */
+	protected lastChangedSequenceNumber: number = neverSummarizedSequenceNumber;
 
 	protected get isGloballyVisible(): boolean {
 		return this.globallyVisible;
@@ -91,6 +104,8 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 			this.globallyVisible,
 			0x2d3 /* "Local channel must be globally visible when processing op" */,
 		);
+
+		this.lastChangedSequenceNumber = messageCollection.envelope.sequenceNumber;
 
 		// A local channel may not be loaded in case where we rehydrate the container from a snapshot because of
 		// delay loading. So after the container is attached and some other client joins which start generating
@@ -142,6 +157,26 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 	): Promise<ISummarizeResult> {
 		const channel = await this.getChannel();
 		return summarizeChannelAsync(channel, fullTree, trackState, telemetryContext);
+	}
+
+	public async generateSummary(
+		summaryBuilder: ISummaryBuilder,
+		latestSummarySequenceNumber: number,
+		fullTree: boolean,
+		telemetryContext: ITelemetryContext,
+	): Promise<void> {
+		if (!fullTree && latestSummarySequenceNumber >= this.lastChangedSequenceNumber) {
+			summaryBuilder.nodeDidNotChange();
+			return;
+		}
+		const channel = await this.getChannel();
+		await summarizeChannelAsync2(
+			channel,
+			summaryBuilder,
+			latestSummarySequenceNumber,
+			fullTree,
+			telemetryContext,
+		);
 	}
 
 	/**
@@ -302,6 +337,8 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 		);
 
 		this.dirtyFn = () => {
+			// The local change is not represented by a sequence number until its op is processed.
+			this.lastChangedSequenceNumber = neverSummarizedSequenceNumber;
 			dirtyFn(id);
 		};
 	}
@@ -375,6 +412,8 @@ export class LocalChannelContext extends LocalChannelContextBase {
 		this.channel = channel;
 
 		this.dirtyFn = () => {
+			// The local change is not represented by a sequence number until its op is processed.
+			this.lastChangedSequenceNumber = neverSummarizedSequenceNumber;
 			dirtyFn(channel.id);
 		};
 	}

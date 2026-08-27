@@ -45,6 +45,7 @@ import type {
 } from "./protocol.js";
 import type {
 	CreateChildSummarizerNodeParam,
+	ISummarizable,
 	ISummarizerNodeWithGC,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
@@ -405,7 +406,7 @@ export interface IFluidDataStorePolicies {
  * and connection state notifications
  * @legacy @beta
  */
-export interface IFluidDataStoreChannel extends IDisposable {
+export interface IFluidDataStoreChannel extends IDisposable, Partial<ISummarizable> {
 	/**
 	 * Optional policies that the data store channel may adhere to that the data store context should know about.
 	 * These policies influence the behavior of the data store, such as its readonly state in specific modes.
@@ -626,6 +627,20 @@ export interface IFluidParentContext
 	 * @deprecated this functionality has been removed.
 	 */
 	readonly gcTombstoneEnforcementAllowed: boolean;
+
+	/**
+	 * The sequence number this context's content was loaded at, i.e. the sequence number at or before which all
+	 * of its content is already captured in a previously uploaded summary.
+	 *
+	 * @remarks
+	 * Used by the generateSummary flow as the starting value for a child's "last changed at" sequence number. For a
+	 * context loaded from a snapshot this is the snapshot's sequence number; for one created from an attach op it
+	 * is that op's sequence number.
+	 *
+	 * Optional for back-compat with older parent contexts. When it is undefined, children conservatively treat
+	 * themselves as always changed and no summary content is reused.
+	 */
+	readonly loadedFromSequenceNumber?: number;
 
 	/**
 	 * Returns the current quorum.

@@ -72,6 +72,7 @@ describe("RemoteChannelContext Tests", () => {
 				sharedObjectRegistry,
 				undefined,
 				undefined as unknown as CreateChildSummarizerNodeFn,
+				-1 /* loadedFromSequenceNumber */,
 				"SomeAttachMessageType",
 			);
 		assert.throws(
@@ -119,6 +120,7 @@ describe("RemoteChannelContext Tests", () => {
 			failingRegistry,
 			undefined /* extraBlobs */,
 			createSummarizerNode,
+			-1 /* loadedFromSequenceNumber */,
 			"SomeAttachMessageType",
 		);
 
@@ -215,6 +217,7 @@ describe("RemoteChannelContext Tests", () => {
 			registry,
 			undefined /* extraBlobs */,
 			createSummarizerNode,
+			-1 /* loadedFromSequenceNumber */,
 			"SomeAttachMessageType",
 		);
 

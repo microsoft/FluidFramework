@@ -54,6 +54,17 @@ export interface Summarizable {
 	}): ISummaryTreeWithStats;
 
 	/**
+	 * Whether this element's summary can be reused from the latest successful summary.
+	 *
+	 * @remarks
+	 * Used by the generateSummary flow, where reuse is expressed by not writing the element at all rather than by
+	 * building a handle from a path. An element that does not implement this is always written in full.
+	 *
+	 * @param latestSummarySequenceNumber - Reference sequence number of the latest successful summary.
+	 */
+	canReuseSummary?(latestSummarySequenceNumber: number): boolean;
+
+	/**
 	 * Allows the component to perform custom loading. The storage service is scoped to this component and therefore
 	 * paths in this component will not collide with those in other components, even if they are the same string.
 	 * @param service - Storage used by the component
