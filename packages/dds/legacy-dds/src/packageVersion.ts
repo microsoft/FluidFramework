@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/legacy-dds";
-export const pkgVersion = "2.116.2";
+export const pkgVersion = "2.117.0";
