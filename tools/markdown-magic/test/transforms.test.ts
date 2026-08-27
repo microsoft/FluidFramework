@@ -13,9 +13,13 @@ import { createTransformRegistry } from "../src/transformRegistry.js";
 
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 
-async function generate(transformName, options) {
+async function generate(
+	transformName: string,
+	options: Record<string, unknown>,
+): Promise<string> {
 	const registry = createTransformRegistry();
-	const transform = registry[transformName];
+	const transform = registry.transforms[transformName];
+	assert(transform !== undefined);
 	const validatedOptions = transform.validateOptions(options);
 	const nodes = await transform.generate(
 		validatedOptions,
@@ -87,16 +91,20 @@ test("example app header honors the Tinylicious option", async () => {
 
 test("transform options reject unknown properties", () => {
 	const registry = createTransformRegistry();
+	const transform = registry.transforms["library-readme-header"];
+	assert(transform !== undefined);
 	assert.throws(
-		() => registry["library-readme-header"].validateOptions({ scripts: true }),
+		() => transform.validateOptions({ scripts: true }),
 		/Unknown option "scripts" for transform "library-readme-header"/,
 	);
 });
 
 test("transform options reject null values", () => {
 	const registry = createTransformRegistry();
+	const transform = registry.transforms["readme-footer"];
+	assert(transform !== undefined);
 	assert.throws(
-		() => registry["readme-footer"].validateOptions({ scripts: null }),
+		() => transform.validateOptions({ scripts: null }),
 		/Option "scripts" for "readme-footer" must be a boolean/,
 	);
 });
@@ -104,12 +112,14 @@ test("transform options reject null values", () => {
 test("section transforms reject heading levels outside 1 through 6", () => {
 	const registry = createTransformRegistry();
 	for (const transformName of ["api-docs", "installation-instructions", "package-scripts"]) {
+		const transform = registry.transforms[transformName];
+		assert(transform !== undefined);
 		assert.throws(
-			() => registry[transformName].validateOptions({ headingLevel: 0 }),
+			() => transform.validateOptions({ headingLevel: 0 }),
 			/Option "headingLevel".*must be between 1 and 6/,
 		);
 		assert.throws(
-			() => registry[transformName].validateOptions({ headingLevel: 7 }),
+			() => transform.validateOptions({ headingLevel: 7 }),
 			/Option "headingLevel".*must be between 1 and 6/,
 		);
 	}

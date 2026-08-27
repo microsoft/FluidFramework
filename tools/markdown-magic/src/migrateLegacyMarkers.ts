@@ -26,7 +26,7 @@ const transformNames = {
 	PACKAGE_SCRIPTS: "package-scripts",
 	README_FOOTER: "readme-footer",
 	TRADEMARK: "trademark",
-};
+} as const;
 
 const integerOptions = new Set(["start", "end", "headingLevel"]);
 
@@ -37,7 +37,7 @@ const integerOptions = new Set(["start", "end", "headingLevel"]);
  * @param {string} key - The option key.
  * @returns {boolean | number | string} The converted value.
  */
-function parseLegacyValue(value, key) {
+function parseLegacyValue(value: string, key: string): boolean | number | string {
 	if (value === "TRUE") {
 		return true;
 	}
@@ -61,8 +61,11 @@ function parseLegacyValue(value, key) {
  * @param {string} transformName - The new transform name.
  * @returns {Record<string, boolean | number | string>} The options with JSON-compatible values.
  */
-function parseLegacyOptions(source, transformName) {
-	const options = {};
+function parseLegacyOptions(
+	source: string | undefined,
+	transformName: string,
+): Record<string, boolean | number | string> {
+	const options: Record<string, boolean | number | string> = {};
 	if (source === undefined || source.length === 0) {
 		return options;
 	}
@@ -92,9 +95,9 @@ function parseLegacyOptions(source, transformName) {
  * @returns {string} The source text with converted marker comments.
  * @throws If the source contains an unknown transform or an invalid legacy option.
  */
-export function migrateLegacyMarkers(source, filePath) {
+export function migrateLegacyMarkers(source: string, filePath: string): string {
 	const document = parseDocument(source, filePath);
-	const replacements = [];
+	const replacements: { start: number; end: number; content: string }[] = [];
 
 	for (const node of document.tree.children) {
 		if (
@@ -116,7 +119,11 @@ export function migrateLegacyMarkers(source, filePath) {
 		if (match === null) {
 			continue;
 		}
-		const transformName = transformNames[match[1]];
+		const legacyName = match[1];
+		const transformName =
+			legacyName === undefined
+				? undefined
+				: transformNames[legacyName as keyof typeof transformNames];
 		if (transformName === undefined) {
 			throw new Error(
 				`${filePath}:${node.position.start.line}: Unknown legacy transform "${match[1]}".`,

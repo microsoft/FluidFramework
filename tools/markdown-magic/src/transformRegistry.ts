@@ -8,6 +8,20 @@ import path from "node:path";
 
 import { parseDocument } from "./processorProfiles.js";
 import { createReadmeTransforms } from "./transforms.js";
+import type {
+	DocumentFormat,
+	GeneratedNodes,
+	Transform,
+	TransformContext,
+	TransformRegistry,
+} from "./types.js";
+
+interface IncludeOptions {
+	path: string;
+	start: number | undefined;
+	end: number | undefined;
+	language?: string | undefined;
+}
 
 /**
  * Requires a transform's options to be an object.
@@ -16,11 +30,11 @@ import { createReadmeTransforms } from "./transforms.js";
  * @param {string} transformName - The transform name to include in an error.
  * @returns {Record<string, unknown>} The options object.
  */
-function requireOptionsObject(value, transformName) {
+function requireOptionsObject(value: unknown, transformName: string): Record<string, unknown> {
 	if (value === null || Array.isArray(value) || typeof value !== "object") {
 		throw new TypeError(`Options for "${transformName}" must be an object.`);
 	}
-	return value;
+	return value as Record<string, unknown>;
 }
 
 /**
@@ -30,7 +44,11 @@ function requireOptionsObject(value, transformName) {
  * @param {readonly string[]} allowedKeys - The accepted option keys.
  * @param {string} transformName - The transform name to include in an error.
  */
-function rejectUnknownOptions(options, allowedKeys, transformName) {
+function rejectUnknownOptions(
+	options: Record<string, unknown>,
+	allowedKeys: readonly string[],
+	transformName: string,
+): void {
 	for (const key of Object.keys(options)) {
 		if (!allowedKeys.includes(key)) {
 			throw new TypeError(`Unknown option "${key}" for transform "${transformName}".`);
@@ -45,14 +63,14 @@ function rejectUnknownOptions(options, allowedKeys, transformName) {
  * @param {string} name - The option name to include in an error.
  * @returns {number | undefined} The integer, or `undefined` if no value was supplied.
  */
-function optionalInteger(value, name) {
+function optionalInteger(value: unknown, name: string): number | undefined {
 	if (value === undefined) {
 		return undefined;
 	}
 	if (!Number.isInteger(value)) {
 		throw new TypeError(`Option "${name}" must be an integer.`);
 	}
-	return value;
+	return value as number;
 }
 
 /**
@@ -62,7 +80,7 @@ function optionalInteger(value, name) {
  * @param {string} name - The option name to include in an error.
  * @returns {string} The validated string.
  */
-function requiredString(value, name) {
+function requiredString(value: unknown, name: string): string {
 	if (typeof value !== "string" || value.length === 0) {
 		throw new TypeError(`Option "${name}" must be a non-empty string.`);
 	}
@@ -77,14 +95,18 @@ function requiredString(value, name) {
  * @param {boolean} includeLanguage - Whether to accept the `language` option.
  * @returns {{ path: string; start: number | undefined; end: number | undefined; language?: string }} The validated options.
  */
-function validateIncludeOptions(value, transformName, includeLanguage) {
+function validateIncludeOptions(
+	value: unknown,
+	transformName: string,
+	includeLanguage: boolean,
+): IncludeOptions {
 	const options = requireOptionsObject(value, transformName);
 	const allowedKeys = includeLanguage
 		? ["path", "start", "end", "language"]
 		: ["path", "start", "end"];
 	rejectUnknownOptions(options, allowedKeys, transformName);
 
-	const validated = {
+	const validated: IncludeOptions = {
 		path: requiredString(options.path, "path"),
 		start: optionalInteger(options.start, "start"),
 		end: optionalInteger(options.end, "end"),
@@ -106,7 +128,7 @@ function validateIncludeOptions(value, transformName, includeLanguage) {
  * @param {number | undefined} end - The exclusive zero-based end index.
  * @returns {string} The selected source text.
  */
-function sliceLines(source, start, end) {
+function sliceLines(source: string, start?: number, end?: number): string {
 	if (start === undefined && end === undefined) {
 		return source.trim();
 	}
@@ -120,7 +142,10 @@ function sliceLines(source, start, end) {
  * @param {"markdown" | "mdx"} destinationFormat - The destination document format.
  * @returns {{ destinationPath: string; destinationFormat: "markdown" | "mdx"; resolvePath: (relativePath: string) => string; parseDocument: typeof parseDocument; readFile: typeof readFile }} The transform context.
  */
-function createContext(destinationPath, destinationFormat) {
+function createContext(
+	destinationPath: string,
+	destinationFormat: DocumentFormat,
+): TransformContext {
 	return {
 		destinationPath,
 		destinationFormat,
@@ -139,42 +164,44 @@ function createContext(destinationPath, destinationFormat) {
  *
  * @returns {Record<string, unknown> & { createContext: typeof createContext }} The transform registry and its context factory.
  */
-export function createTransformRegistry() {
+export function createTransformRegistry(): TransformRegistry {
 	return {
-		...createReadmeTransforms(),
 		createContext,
-		include: {
-			validateOptions(value) {
-				return validateIncludeOptions(value, "include", false);
+		transforms: {
+			...createReadmeTransforms(),
+			include: {
+				validateOptions(value: unknown) {
+					return validateIncludeOptions(value, "include", false);
+				},
+				async generate(options: IncludeOptions, context: TransformContext) {
+					const sourcePath = context.resolvePath(options.path);
+					const source = await context.readFile(sourcePath, "utf8");
+					const selectedSource = sliceLines(source, options.start, options.end);
+					const sourceDocument = context.parseDocument(selectedSource, sourcePath);
+					const nodes: GeneratedNodes = sourceDocument.tree.children;
+					Object.defineProperty(nodes, "sourcePath", {
+						value: sourcePath,
+						enumerable: false,
+					});
+					return nodes;
+				},
 			},
-			async generate(options, context) {
-				const sourcePath = context.resolvePath(options.path);
-				const source = await context.readFile(sourcePath, "utf8");
-				const selectedSource = sliceLines(source, options.start, options.end);
-				const sourceDocument = context.parseDocument(selectedSource, sourcePath);
-				const nodes = sourceDocument.tree.children;
-				Object.defineProperty(nodes, "sourcePath", {
-					value: sourcePath,
-					enumerable: false,
-				});
-				return nodes;
+			"include-code": {
+				validateOptions(value: unknown) {
+					return validateIncludeOptions(value, "include-code", true);
+				},
+				async generate(options: IncludeOptions, context: TransformContext) {
+					const sourcePath = context.resolvePath(options.path);
+					const source = await context.readFile(sourcePath, "utf8");
+					return [
+						{
+							type: "code",
+							lang: options.language,
+							value: sliceLines(source, options.start, options.end),
+						},
+					];
+				},
 			},
-		},
-		"include-code": {
-			validateOptions(value) {
-				return validateIncludeOptions(value, "include-code", true);
-			},
-			async generate(options, context) {
-				const sourcePath = context.resolvePath(options.path);
-				const source = await context.readFile(sourcePath, "utf8");
-				return [
-					{
-						type: "code",
-						lang: options.language,
-						value: sliceLines(source, options.start, options.end),
-					},
-				];
-			},
-		},
+		} as unknown as Record<string, Transform<Record<string, unknown>>>,
 	};
 }

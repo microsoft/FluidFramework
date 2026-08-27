@@ -7,6 +7,7 @@ import { readFile, writeFile } from "node:fs/promises";
 
 import { parseDocument, serializeNodes } from "./processorProfiles.js";
 import { findGeneratedRegions } from "./regions.js";
+import type { DocumentFormat, TransformRegistry } from "./types.js";
 
 const generatedContentNotice =
 	"NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly.";
@@ -18,7 +19,7 @@ const generatedContentNotice =
  * @param {string} value - The comment text without comment delimiters.
  * @returns {import("mdast").RootContent} The HTML or MDX comment node.
  */
-function commentNode(format, value) {
+function commentNode(format: DocumentFormat, value: string): import("mdast").RootContent {
 	return format === "mdx"
 		? { type: "mdxFlowExpression", value: `/* ${value} */` }
 		: { type: "html", value: `<!-- ${value} -->` };
@@ -30,7 +31,7 @@ function commentNode(format, value) {
  * @param {import("mdast").Nodes} node - The node to inspect.
  * @returns {boolean} `true` if the node or one of its descendants is an MDX node.
  */
-function containsMdxNode(node) {
+function containsMdxNode(node: import("mdast").Nodes): boolean {
 	if (node.type.startsWith("mdx")) {
 		return true;
 	}
@@ -46,11 +47,11 @@ function containsMdxNode(node) {
  * @param {string} destinationPath - The destination path to include in an error.
  */
 function validateDestinationCompatibility(
-	nodes,
-	destinationFormat,
-	sourcePath,
-	destinationPath,
-) {
+	nodes: readonly import("mdast").RootContent[],
+	destinationFormat: DocumentFormat,
+	sourcePath: string,
+	destinationPath: string,
+): void {
 	if (destinationFormat === "markdown" && nodes.some((node) => containsMdxNode(node))) {
 		throw new Error(
 			`MDX content from "${sourcePath}" cannot be generated in Markdown document "${destinationPath}".`,
@@ -65,8 +66,11 @@ function validateDestinationCompatibility(
  * @param {"markdown" | "mdx"} format - The destination document format.
  * @returns {Promise<string>} The serialized region body with boundary blank lines.
  */
-async function serializeGeneratedBody(nodes, format) {
-	const wrappedNodes = [
+async function serializeGeneratedBody(
+	nodes: readonly import("mdast").RootContent[],
+	format: DocumentFormat,
+): Promise<string> {
+	const wrappedNodes: import("mdast").RootContent[] = [
 		commentNode(format, "prettier-ignore-start"),
 		commentNode(format, generatedContentNotice),
 		...nodes,
@@ -89,15 +93,18 @@ async function serializeGeneratedBody(nodes, format) {
  * @returns {Promise<boolean>} `true` if the file changed.
  * @throws If reading, parsing, validation, generation, serialization, or writing fails.
  */
-export async function processDocument(filePath, registry) {
+export async function processDocument(
+	filePath: string,
+	registry: TransformRegistry,
+): Promise<boolean> {
 	const source = await readFile(filePath, "utf8");
 	const document = parseDocument(source, filePath);
 	const regions = findGeneratedRegions(document);
-	const replacements = [];
+	const replacements: { start: number; end: number; content: string }[] = [];
 
 	for (const region of regions) {
-		const transform = registry[region.transformName];
-		if (transform === undefined || typeof transform !== "object") {
+		const transform = registry.transforms[region.transformName];
+		if (transform === undefined) {
 			throw new Error(
 				`${filePath}:${region.line}: Unknown transform "${region.transformName}".`,
 			);

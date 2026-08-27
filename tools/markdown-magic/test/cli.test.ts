@@ -29,7 +29,15 @@ test("CLI processes selected files from the working directory", async () => {
 
 	const { stdout } = await execFileAsync(
 		process.execPath,
-		["src/index.js", "--files", "destination.md", "--workingDirectory", directory],
+		[
+			"--import",
+			"jiti/register",
+			"src/index.ts",
+			"--files",
+			"destination.md",
+			"--workingDirectory",
+			directory,
+		],
 		{ cwd: path.resolve(import.meta.dirname, "..") },
 	);
 

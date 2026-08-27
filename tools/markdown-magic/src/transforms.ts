@@ -7,6 +7,61 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import type { RootContent } from "mdast";
+
+import type { Transform, TransformContext } from "./types.js";
+
+type SchemaDefinition =
+	| {
+			type: "boolean";
+			default?: boolean;
+			required?: boolean;
+	  }
+	| {
+			type: "integer";
+			default?: number;
+			required?: boolean;
+			minimum?: number;
+			maximum?: number;
+	  }
+	| {
+			type: "string";
+			default?: string;
+			required?: boolean;
+			values?: readonly string[];
+	  };
+
+type OptionsSchema = Record<string, SchemaDefinition>;
+type SchemaValue<TDefinition extends SchemaDefinition> = TDefinition["type"] extends "boolean"
+	? boolean
+	: TDefinition["type"] extends "integer"
+		? number
+		: string;
+type RequiredSchemaKeys<TSchema extends OptionsSchema> = {
+	[TKey in keyof TSchema]: TSchema[TKey] extends { default: unknown } | { required: true }
+		? TKey
+		: never;
+}[keyof TSchema];
+type ValidatedOptions<TSchema extends OptionsSchema> = {
+	[TKey in RequiredSchemaKeys<TSchema>]: SchemaValue<TSchema[TKey]>;
+} & {
+	[TKey in Exclude<keyof TSchema, RequiredSchemaKeys<TSchema>>]?: SchemaValue<TSchema[TKey]>;
+};
+
+interface PackageMetadata {
+	name: string;
+	private?: boolean;
+	exports?: Record<string, unknown>;
+	scripts?: Record<string, string>;
+}
+
+interface HeadingOptions {
+	includeHeading: boolean;
+	headingLevel: number;
+}
+
+type ScopeKind = keyof typeof scopeTemplates | "FRAMEWORK";
+
 const templatesDirectory = path.join(
 	path.dirname(fileURLToPath(import.meta.url)),
 	"templates",
@@ -28,7 +83,11 @@ const scopeTemplates = {
  * @param {Record<string, { type: "boolean" | "integer" | "string"; default?: unknown; required?: boolean; values?: readonly string[]; minimum?: number; maximum?: number }>} schema - The accepted keys, types, defaults, and limits.
  * @returns {Record<string, unknown>} The validated options with defaults applied.
  */
-function validateOptions(value, transformName, schema) {
+function validateOptions<TSchema extends OptionsSchema>(
+	value: unknown,
+	transformName: string,
+	schema: TSchema,
+): ValidatedOptions<TSchema> {
 	if (value === null || Array.isArray(value) || typeof value !== "object") {
 		throw new TypeError(`Options for "${transformName}" must be an object.`);
 	}
@@ -38,9 +97,10 @@ function validateOptions(value, transformName, schema) {
 		}
 	}
 
-	const result = {};
+	const options = value as Record<string, unknown>;
+	const result: Record<string, unknown> = {};
 	for (const [key, definition] of Object.entries(schema)) {
-		const option = Object.hasOwn(value, key) ? value[key] : definition.default;
+		const option = Object.hasOwn(options, key) ? options[key] : definition.default;
 		if (option === undefined) {
 			if (definition.required === true) {
 				throw new TypeError(`Transform "${transformName}" requires option "${key}".`);
@@ -51,9 +111,10 @@ function validateOptions(value, transformName, schema) {
 			if (!Number.isInteger(option)) {
 				throw new TypeError(`Option "${key}" for "${transformName}" must be an integer.`);
 			}
+			const integerOption = option as number;
 			if (
-				(definition.minimum !== undefined && option < definition.minimum) ||
-				(definition.maximum !== undefined && option > definition.maximum)
+				(definition.minimum !== undefined && integerOption < definition.minimum) ||
+				(definition.maximum !== undefined && integerOption > definition.maximum)
 			) {
 				throw new TypeError(
 					`Option "${key}" for "${transformName}" must be between ${definition.minimum} and ${definition.maximum}.`,
@@ -64,26 +125,37 @@ function validateOptions(value, transformName, schema) {
 				`Option "${key}" for "${transformName}" must be a ${definition.type}.`,
 			);
 		}
-		if (definition.values !== undefined && !definition.values.includes(option)) {
+		if (
+			definition.type === "string" &&
+			definition.values !== undefined &&
+			!definition.values.includes(option as string)
+		) {
 			throw new TypeError(
 				`Option "${key}" for "${transformName}" has invalid value "${option}".`,
 			);
 		}
 		result[key] = option;
 	}
-	return result;
+	return result as ValidatedOptions<TSchema>;
 }
 
 const packageSchema = {
 	packageJsonPath: { type: "string", default: "./package.json" },
-};
+} as const;
 
 const headingSchema = {
 	includeHeading: { type: "boolean", default: true },
 	headingLevel: { type: "integer", default: 2, minimum: 1, maximum: 6 },
-};
+} as const;
 
-const scopeValues = ["FRAMEWORK", "EXAMPLE", "EXPERIMENTAL", "INTERNAL", "PRIVATE", "TOOLS"];
+const scopeValues = [
+	"FRAMEWORK",
+	"EXAMPLE",
+	"EXPERIMENTAL",
+	"INTERNAL",
+	"PRIVATE",
+	"TOOLS",
+] as const;
 
 /**
  * Parses generated Markdown into nodes for structural composition.
@@ -93,7 +165,11 @@ const scopeValues = ["FRAMEWORK", "EXAMPLE", "EXPERIMENTAL", "INTERNAL", "PRIVAT
  * @param {string} name - The fragment name to use in the virtual path.
  * @returns {import("mdast").RootContent[]} The parsed root-content nodes.
  */
-function parseFragment(markdown, context, name) {
+function parseFragment(
+	markdown: string,
+	context: TransformContext,
+	name: string,
+): RootContent[] {
 	const virtualPath = path.join(
 		path.dirname(context.destinationPath),
 		`.markdown-magic-${name}.md`,
@@ -108,7 +184,10 @@ function parseFragment(markdown, context, name) {
  * @param {{ destinationPath: string; parseDocument: Function }} context - The transform context.
  * @returns {Promise<import("mdast").RootContent[]>} A mutable copy of the template nodes.
  */
-async function readTemplateNodes(templateName, context) {
+async function readTemplateNodes(
+	templateName: string,
+	context: TransformContext,
+): Promise<RootContent[]> {
 	const templatePath = path.join(templatesDirectory, templateName);
 	const source = await readFile(templatePath, "utf8");
 	return structuredClone(context.parseDocument(source, templatePath).tree.children);
@@ -123,14 +202,19 @@ async function readTemplateNodes(templateName, context) {
  * @param {object} context - The transform context.
  * @returns {Promise<import("mdast").RootContent[]>} The section nodes.
  */
-async function generateTemplateSection(templateName, options, headingText, context) {
+async function generateTemplateSection(
+	templateName: string,
+	options: HeadingOptions,
+	headingText: string,
+	context: TransformContext,
+): Promise<RootContent[]> {
 	if (options.headingLevel < 1 || options.headingLevel > 6) {
 		throw new TypeError(`Option "headingLevel" must be between 1 and 6.`);
 	}
 	const nodes = await readTemplateNodes(templateName, context);
 	for (const node of nodes) {
 		if (node.type === "heading") {
-			node.depth += options.headingLevel;
+			node.depth = (node.depth + options.headingLevel) as import("mdast").Heading["depth"];
 			if (node.depth > 6) {
 				throw new TypeError(`Template heading depth exceeds 6.`);
 			}
@@ -140,7 +224,7 @@ async function generateTemplateSection(templateName, options, headingText, conte
 		? [
 				{
 					type: "heading",
-					depth: options.headingLevel,
+					depth: options.headingLevel as import("mdast").Heading["depth"],
 					children: [{ type: "text", value: headingText }],
 				},
 				...nodes,
@@ -155,7 +239,7 @@ async function generateTemplateSection(templateName, options, headingText, conte
  * @param {string} relativePath - The path relative to the document directory.
  * @returns {string} The absolute path.
  */
-function resolveRelativePath(documentPath, relativePath) {
+function resolveRelativePath(documentPath: string, relativePath: string): string {
 	return path.resolve(path.dirname(documentPath), relativePath);
 }
 
@@ -166,9 +250,12 @@ function resolveRelativePath(documentPath, relativePath) {
  * @param {{ packageJsonPath: string }} options - The package file option.
  * @returns {Promise<Record<string, unknown>>} The parsed package metadata.
  */
-async function readPackage(context, options) {
+async function readPackage(
+	context: TransformContext,
+	options: { packageJsonPath: string },
+): Promise<PackageMetadata> {
 	const packagePath = resolveRelativePath(context.destinationPath, options.packageJsonPath);
-	return JSON.parse(await readFile(packagePath, "utf8"));
+	return JSON.parse(await readFile(packagePath, "utf8")) as PackageMetadata;
 }
 
 /**
@@ -177,19 +264,29 @@ async function readPackage(context, options) {
  * @param {string} packageName - The package name.
  * @returns {string | undefined} The package kind, or `undefined` for an unknown scope.
  */
-function getScopeKind(packageName) {
+function getScopeKind(packageName: string): ScopeKind | undefined {
 	if (packageName === "fluid-framework") {
 		return "FRAMEWORK";
 	}
 	const scope = packageName.startsWith("@") ? packageName.split("/")[0] : "";
-	return {
-		"@fluidframework": "FRAMEWORK",
-		"@fluid-example": "EXAMPLE",
-		"@fluid-experimental": "EXPERIMENTAL",
-		"@fluid-internal": "INTERNAL",
-		"@fluid-private": "PRIVATE",
-		"@fluid-tools": "TOOLS",
-	}[scope];
+	return (
+		{
+			"@fluidframework": "FRAMEWORK",
+			"@fluid-example": "EXAMPLE",
+			"@fluid-experimental": "EXPERIMENTAL",
+			"@fluid-internal": "INTERNAL",
+			"@fluid-private": "PRIVATE",
+			"@fluid-tools": "TOOLS",
+		} as const
+	)[
+		scope as
+			| "@fluidframework"
+			| "@fluid-example"
+			| "@fluid-experimental"
+			| "@fluid-internal"
+			| "@fluid-private"
+			| "@fluid-tools"
+	];
 }
 
 /**
@@ -198,7 +295,7 @@ function getScopeKind(packageName) {
  * @param {Record<string, unknown>} packageMetadata - The package metadata.
  * @returns {boolean} `true` for a non-private framework or experimental package.
  */
-function isPublic(packageMetadata) {
+function isPublic(packageMetadata: PackageMetadata): boolean {
 	if (packageMetadata.private === true) {
 		return false;
 	}
@@ -215,8 +312,12 @@ function isPublic(packageMetadata) {
  * @param {object} context - The transform context.
  * @returns {Promise<import("mdast").RootContent[]>} The notice nodes, or an empty array if the kind has no notice.
  */
-async function generateScopeNotice(kind, context) {
-	const templateName = scopeTemplates[kind];
+async function generateScopeNotice(
+	kind: ScopeKind | undefined,
+	context: TransformContext,
+): Promise<RootContent[]> {
+	const templateName =
+		kind === undefined || kind === "FRAMEWORK" ? undefined : scopeTemplates[kind];
 	return templateName === undefined ? [] : readTemplateNodes(templateName, context);
 }
 
@@ -229,7 +330,12 @@ async function generateScopeNotice(kind, context) {
  * @param {object} context - The transform context.
  * @returns {import("mdast").RootContent[]} The installation section nodes.
  */
-function generateInstallation(packageName, devDependency, options, context) {
+function generateInstallation(
+	packageName: string,
+	devDependency: boolean,
+	options: HeadingOptions,
+	context: TransformContext,
+): RootContent[] {
 	const heading = options.includeHeading
 		? `${"#".repeat(options.headingLevel)} Installation\n\n`
 		: "";
@@ -248,7 +354,11 @@ function generateInstallation(packageName, devDependency, options, context) {
  * @param {object} context - The transform context.
  * @returns {import("mdast").RootContent[]} The API documentation section nodes.
  */
-function generateApiDocs(packageName, options, context) {
+function generateApiDocs(
+	packageName: string,
+	options: HeadingOptions,
+	context: TransformContext,
+): RootContent[] {
 	const shortName = packageName.includes("/")
 		? packageName.slice(packageName.indexOf("/") + 1)
 		: packageName;
@@ -270,7 +380,11 @@ function generateApiDocs(packageName, options, context) {
  * @param {object} context - The transform context.
  * @returns {import("mdast").RootContent[]} The import section nodes, or an empty array if no special export exists.
  */
-function generateImportInstructions(packageMetadata, options, context) {
+function generateImportInstructions(
+	packageMetadata: PackageMetadata,
+	options: HeadingOptions,
+	context: TransformContext,
+): RootContent[] {
 	const packageExports = packageMetadata.exports;
 	if (
 		packageExports === undefined ||
@@ -308,7 +422,12 @@ function generateImportInstructions(packageMetadata, options, context) {
  * @param {object} context - The transform context.
  * @returns {import("mdast").RootContent[]} The setup section nodes.
  */
-function generateGettingStarted(packageMetadata, usesTinylicious, options, context) {
+function generateGettingStarted(
+	packageMetadata: PackageMetadata,
+	usesTinylicious: boolean,
+	options: HeadingOptions,
+	context: TransformContext,
+): RootContent[] {
 	const heading = options.includeHeading
 		? `${"#".repeat(options.headingLevel)} Getting Started\n\n`
 		: "";
@@ -340,15 +459,18 @@ function generateGettingStarted(packageMetadata, usesTinylicious, options, conte
  * @param {{ includeHeading: boolean; headingLevel: number }} options - The heading options.
  * @returns {import("mdast").RootContent[]} The optional heading and table nodes.
  */
-function generateScripts(scripts, options) {
-	const rows = Object.entries(scripts).map(([name, command]) => ({
+function generateScripts(
+	scripts: Record<string, string>,
+	options: HeadingOptions,
+): RootContent[] {
+	const rows: import("mdast").TableRow[] = Object.entries(scripts).map(([name, command]) => ({
 		type: "tableRow",
 		children: [name, command].map((value) => ({
 			type: "tableCell",
 			children: [{ type: "inlineCode", value }],
 		})),
 	}));
-	const table = {
+	const table: import("mdast").Table = {
 		type: "table",
 		align: [null, null],
 		children: [
@@ -366,7 +488,7 @@ function generateScripts(scripts, options) {
 		? [
 				{
 					type: "heading",
-					depth: options.headingLevel,
+					depth: options.headingLevel as import("mdast").Heading["depth"],
 					children: [{ type: "text", value: "Scripts" }],
 				},
 				table,
@@ -382,7 +504,14 @@ function generateScripts(scripts, options) {
  * @param {(options: object, context: object) => Promise<readonly object[]> | readonly object[]} generate - The node generator.
  * @returns {{ validateOptions: (value: unknown) => Record<string, unknown>; generate: typeof generate }} The transform implementation.
  */
-function transform(name, schema, generate) {
+function transform<TSchema extends OptionsSchema>(
+	name: string,
+	schema: TSchema,
+	generate: (
+		options: ValidatedOptions<TSchema>,
+		context: TransformContext,
+	) => RootContent[] | Promise<RootContent[]>,
+): Transform<ValidatedOptions<TSchema>> {
 	return {
 		validateOptions: (value) => validateOptions(value, name, schema),
 		generate,
@@ -396,7 +525,7 @@ function transform(name, schema, generate) {
  *
  * @returns {Record<string, { validateOptions: (value: unknown) => Record<string, unknown>; generate: Function }>} The README transform registry.
  */
-export function createReadmeTransforms() {
+export function createReadmeTransforms(): Record<string, Transform<Record<string, unknown>>> {
 	const templateTransforms = {
 		"client-requirements": ["Client-Requirements-Template.md", "Minimum Client Requirements"],
 		trademark: ["Trademark-Template.md", "Trademark"],
@@ -409,8 +538,8 @@ export function createReadmeTransforms() {
 			"Using Fluid Framework libraries",
 		],
 		help: ["Help-Template.md", "Help"],
-	};
-	const transforms = {};
+	} as const;
+	const transforms: Record<string, Transform<Record<string, unknown>>> = {};
 	for (const [name, [templateName, headingText]] of Object.entries(templateTransforms)) {
 		transforms[name] = transform(name, headingSchema, (options, context) =>
 			generateTemplateSection(templateName, options, headingText, context),
@@ -426,7 +555,7 @@ export function createReadmeTransforms() {
 		async (options, context) => {
 			const packageMetadata = await readPackage(context, options);
 			return generateScopeNotice(
-				options.scopeKind ?? getScopeKind(packageMetadata.name),
+				(options.scopeKind as ScopeKind | undefined) ?? getScopeKind(packageMetadata.name),
 				context,
 			);
 		},
@@ -504,7 +633,8 @@ export function createReadmeTransforms() {
 			const sectionOptions = { includeHeading: true, headingLevel: 2 };
 			return [
 				...(await generateScopeNotice(
-					options.packageScopeNotice ?? getScopeKind(packageMetadata.name),
+					(options.packageScopeNotice as ScopeKind | undefined) ??
+						getScopeKind(packageMetadata.name),
 					context,
 				)),
 				...((options.dependencyGuidelines ?? packageIsPublic)

@@ -20,37 +20,28 @@ const defaultMatchPattern = ["**/*.md", "**/*.mdx"];
 /** Maximum number of documentation files that the CLI processes concurrently. */
 const maximumConcurrentFiles = 8;
 
-/**
- * Applies an asynchronous operation to each value with a fixed concurrency limit.
- *
- * @template T - The input value type.
- * @template U - The result value type.
- * @param {readonly T[]} values - The values to process.
- * @param {number} concurrency - The maximum number of operations that can run concurrently.
- * @param {(value: T) => Promise<U>} operation - The operation to apply to each value.
- * @returns {Promise<U[]>} The results in the same order as the input values.
- */
-async function mapWithConcurrency(values, concurrency, operation) {
-	const results = new Array(values.length);
+/** Applies an asynchronous operation to each value with a fixed concurrency limit. */
+async function mapWithConcurrency<T, U>(
+	values: readonly T[],
+	concurrency: number,
+	operation: (value: T) => Promise<U>,
+): Promise<U[]> {
+	const results: U[] = new Array<U>(values.length);
 	let nextIndex = 0;
 	async function worker() {
 		while (nextIndex < values.length) {
 			const index = nextIndex++;
-			results[index] = await operation(values[index]);
+			results[index] = await operation(values[index] as T);
 		}
 	}
 	await Promise.all(Array.from({ length: Math.min(concurrency, values.length) }, worker));
 	return results;
 }
 
-/**
- * Selects documentation files and updates their generated regions.
- *
- * @param {string[]} [argumentsList] - The command-line arguments. The default excludes the Node.js executable and script path.
- * @returns {Promise<number>} The number of files that changed.
- * @throws If file selection, parsing, transformation, or writing fails.
- */
-export async function runCli(argumentsList = hideBin(process.argv)) {
+/** Selects documentation files and updates their generated regions. */
+export async function runCli(
+	argumentsList: string[] = hideBin(process.argv),
+): Promise<number> {
 	const argv = yargs(argumentsList)
 		.usage("Usage: $0 [options]")
 		.option("f", {
@@ -67,8 +58,12 @@ export async function runCli(argumentsList = hideBin(process.argv)) {
 		.alias("h", "help")
 		.parseSync();
 
-	const workingDirectory = path.resolve(argv.workingDirectory ?? process.cwd());
-	const patterns = argv.files ?? defaultMatchPattern;
+	const workingDirectory = path.resolve(
+		typeof argv.workingDirectory === "string" ? argv.workingDirectory : process.cwd(),
+	);
+	const patterns = Array.isArray(argv.files)
+		? argv.files.filter((value: unknown): value is string => typeof value === "string")
+		: defaultMatchPattern;
 	const files = await globby(patterns, {
 		cwd: workingDirectory,
 		gitignore: true,

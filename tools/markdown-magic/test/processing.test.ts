@@ -37,14 +37,18 @@ test("include parses Markdown into nodes before generation", async () => {
 	);
 
 	const registry = createTransformRegistry();
-	const nodes = await registry.include.generate(
-		registry.include.validateOptions({ path: "./source.md" }),
+	const includeTransform = registry.transforms.include;
+	assert(includeTransform !== undefined);
+	const nodes = await includeTransform.generate(
+		includeTransform.validateOptions({ path: "./source.md" }),
 		registry.createContext(destinationPath, "markdown"),
 	);
 
-	assert.equal(nodes[0].type, "paragraph");
-	assert.equal(nodes[0].children[1].type, "link");
-	assert.equal(nodes[0].children[1].url, "./guide.md");
+	const paragraph = nodes[0];
+	assert(paragraph?.type === "paragraph");
+	const link = paragraph.children[1];
+	assert(link?.type === "link");
+	assert.equal(link.url, "./guide.md");
 
 	await processDocument(destinationPath, registry);
 	const output = await readFile(destinationPath, "utf8");
@@ -60,8 +64,10 @@ test("include-code creates a code node", async () => {
 	await writeFile(sourcePath, "const value = 1;\n");
 
 	const registry = createTransformRegistry();
-	const nodes = await registry["include-code"].generate(
-		registry["include-code"].validateOptions({
+	const includeCodeTransform = registry.transforms["include-code"];
+	assert(includeCodeTransform !== undefined);
+	const nodes = await includeCodeTransform.generate(
+		includeCodeTransform.validateOptions({
 			path: "./source.ts",
 			language: "typescript",
 		}),
@@ -84,12 +90,14 @@ test("MDX include preserves MDX nodes", async () => {
 	await writeFile(sourcePath, '<Callout kind="note">\n\nContent\n\n</Callout>\n');
 
 	const registry = createTransformRegistry();
-	const nodes = await registry.include.generate(
-		registry.include.validateOptions({ path: "./source.mdx" }),
+	const includeTransform = registry.transforms.include;
+	assert(includeTransform !== undefined);
+	const nodes = await includeTransform.generate(
+		includeTransform.validateOptions({ path: "./source.mdx" }),
 		registry.createContext(destinationPath, "mdx"),
 	);
 
-	assert.equal(nodes[0].type, "mdxJsxFlowElement");
+	assert.equal(nodes[0]?.type, "mdxJsxFlowElement");
 });
 
 test("Markdown destinations reject MDX nodes", async () => {

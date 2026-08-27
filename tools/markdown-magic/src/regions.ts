@@ -6,6 +6,12 @@
 const markdownMarkerPattern = /^<!-- markdown-magic:(begin(?: (\{.*\}))?|end) -->$/s;
 const mdxMarkerPattern = /^\/\* markdown-magic:(begin(?: (\{.*\}))?|end) \*\/$/s;
 
+import type { GeneratedRegion, ParsedDocument } from "./types.js";
+
+type ParsedMarker =
+	| { kind: "begin"; line: number; startOffset: number; endOffset: number; json: string }
+	| { kind: "end" | "invalid-begin"; line: number; startOffset: number; endOffset: number };
+
 /**
  * Creates a marker error with its source location.
  *
@@ -14,7 +20,7 @@ const mdxMarkerPattern = /^\/\* markdown-magic:(begin(?: (\{.*\}))?|end) \*\/$/s
  * @param {string} message - The error details.
  * @returns {Error} The location-aware error.
  */
-function markerError(filePath, line, message) {
+function markerError(filePath: string, line: number, message: string): Error {
 	return new Error(`${filePath}:${line}: ${message}`);
 }
 
@@ -25,7 +31,10 @@ function markerError(filePath, line, message) {
  * @param {"markdown" | "mdx"} format - The document format.
  * @returns {{ kind: "begin"; line: number; startOffset: number; endOffset: number; json: string } | { kind: "end" | "invalid-begin"; line: number; startOffset: number; endOffset: number } | undefined} The marker details, or `undefined` if the node is not a marker.
  */
-function parseMarkerNode(node, format) {
+function parseMarkerNode(
+	node: import("mdast").RootContent,
+	format: ParsedDocument["format"],
+): ParsedMarker | undefined {
 	const isMarkdownMarker = format === "markdown" && node.type === "html";
 	const isMdxMarker = format === "mdx" && node.type === "mdxFlowExpression";
 	if (!isMarkdownMarker && !isMdxMarker) {
@@ -58,7 +67,7 @@ function parseMarkerNode(node, format) {
 		line,
 		startOffset,
 		endOffset,
-		json: match[2],
+		json: match[2] as string,
 	};
 }
 
@@ -71,9 +80,16 @@ function parseMarkerNode(node, format) {
  * @returns {{ destinationPath: string; destinationFormat: "markdown" | "mdx"; transformName: string; options: Record<string, unknown>; openingMarkerEnd: number; closingMarkerStart: number; line: number }[]} The validated generated regions.
  * @throws If a marker or marker pair is invalid.
  */
-export function findGeneratedRegions(document) {
-	const regions = [];
-	let openingMarker;
+export function findGeneratedRegions(document: ParsedDocument): GeneratedRegion[] {
+	const regions: GeneratedRegion[] = [];
+	let openingMarker:
+		| {
+				transform: string;
+				transformOptions: Record<string, unknown>;
+				line: number;
+				endOffset: number;
+		  }
+		| undefined;
 
 	for (const node of document.tree.children) {
 		const marker = parseMarkerNode(node, document.format);
@@ -90,7 +106,7 @@ export function findGeneratedRegions(document) {
 				throw markerError(document.path, marker.line, "Generated regions must not nest.");
 			}
 
-			let options;
+			let options: unknown;
 			try {
 				options = JSON.parse(marker.json);
 			} catch {
@@ -99,7 +115,11 @@ export function findGeneratedRegions(document) {
 			if (options === null || Array.isArray(options) || typeof options !== "object") {
 				throw markerError(document.path, marker.line, "Marker options must be a JSON object.");
 			}
-			if (typeof options.transform !== "string" || options.transform.length === 0) {
+			const markerOptions = options as Record<string, unknown>;
+			if (
+				typeof markerOptions.transform !== "string" ||
+				markerOptions.transform.length === 0
+			) {
 				throw markerError(
 					document.path,
 					marker.line,
@@ -107,10 +127,12 @@ export function findGeneratedRegions(document) {
 				);
 			}
 
-			const { transform, ...transformOptions } = options;
+			const { transform, ...transformOptions } = markerOptions as Record<string, unknown> & {
+				transform: string;
+			};
 			openingMarker = {
-				transformName: transform,
-				options: transformOptions,
+				transform,
+				transformOptions,
 				line: marker.line,
 				endOffset: marker.endOffset,
 			};
@@ -124,8 +146,8 @@ export function findGeneratedRegions(document) {
 		regions.push({
 			destinationPath: document.path,
 			destinationFormat: document.format,
-			transformName: openingMarker.transformName,
-			options: openingMarker.options,
+			transformName: openingMarker.transform,
+			options: openingMarker.transformOptions,
 			openingMarkerEnd: openingMarker.endOffset,
 			closingMarkerStart: marker.startOffset,
 			line: openingMarker.line,

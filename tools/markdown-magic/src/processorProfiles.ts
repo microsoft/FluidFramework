@@ -9,11 +9,7 @@ import { remark } from "remark";
 import remarkGfm from "remark-gfm";
 import remarkMdx from "remark-mdx";
 
-/**
- * A supported documentation format.
- *
- * @typedef {"markdown" | "mdx"} DocumentFormat
- */
+import type { DocumentFormat, ParsedDocument } from "./types.js";
 
 /**
  * Gets the document format from a file extension.
@@ -22,7 +18,7 @@ import remarkMdx from "remark-mdx";
  * @returns {DocumentFormat} The format for the document processor.
  * @throws If the file extension is not `.md`, `.markdown`, or `.mdx`.
  */
-export function getDocumentFormat(filePath) {
+export function getDocumentFormat(filePath: string): DocumentFormat {
 	const extension = path.extname(filePath).toLowerCase();
 	if (extension === ".mdx") {
 		return "mdx";
@@ -39,7 +35,7 @@ export function getDocumentFormat(filePath) {
  * @param {DocumentFormat} format - The document format.
  * @returns {import("remark").Remark} The configured remark processor.
  */
-export function createProcessor(format) {
+export function createProcessor(format: DocumentFormat) {
 	const processor = remark().use(remarkGfm, {
 		// Use compact table delimiters to keep generated output stable.
 		tablePipeAlign: false,
@@ -54,7 +50,7 @@ export function createProcessor(format) {
  * @param {string} filePath - The document path. Its extension selects the parser.
  * @returns {{ format: DocumentFormat; path: string; source: string; tree: import("mdast").Root }} The parsed document.
  */
-export function parseDocument(source, filePath) {
+export function parseDocument(source: string, filePath: string): ParsedDocument {
 	const format = getDocumentFormat(filePath);
 	return {
 		format,
@@ -71,12 +67,15 @@ export function parseDocument(source, filePath) {
  * @param {DocumentFormat} format - The destination document format.
  * @returns {Promise<string>} The serialized content without leading or trailing whitespace.
  */
-export async function serializeNodes(nodes, format) {
+export async function serializeNodes(
+	nodes: readonly import("mdast").RootContent[],
+	format: DocumentFormat,
+): Promise<string> {
 	const processor = createProcessor(format);
-	const tree = {
+	const tree: import("mdast").Root = {
 		type: "root",
-		children: structuredClone(nodes),
+		children: structuredClone([...nodes]),
 	};
 	const transformedTree = await processor.run(tree);
-	return processor.stringify(transformedTree).trim();
+	return processor.stringify(transformedTree as import("mdast").Root).trim();
 }

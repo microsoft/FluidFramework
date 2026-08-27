@@ -122,18 +122,20 @@ Each linked guide contains the option types, default values, behavior notes, and
 
 The processing pipeline has these stages:
 
-1. `processorProfiles.js` selects the Markdown or MDX parser from the destination extension.
-2. `regions.js` reads top-level marker nodes and validates marker pairs.
-3. `transformRegistry.js` validates file-transform options and creates transform context.
-4. `transforms.js` validates and generates package and template sections as mdast nodes.
-5. `processing.js` validates destination compatibility, serializes each generated region, and patches source ranges from last to first.
-6. `cli.js` selects files and processes at most eight files concurrently.
+1. `processorProfiles.ts` selects the Markdown or MDX parser from the destination extension.
+2. `regions.ts` reads top-level marker nodes and validates marker pairs.
+3. `transformRegistry.ts` validates file-transform options and creates transform context.
+4. `transforms.ts` validates and generates package and template sections as mdast nodes.
+5. `processing.ts` validates destination compatibility, serializes each generated region, and patches source ranges from last to first.
+6. `cli.ts` selects files and processes at most eight files concurrently.
+
+The executable bin file uses `jiti` to load the TypeScript source. The package does not emit JavaScript build output.
 
 A transform has a `validateOptions` function and a `generate` function. `validateOptions` converts an unknown JSON value to validated options. `generate` returns an array of mdast root-content nodes. A composite transform combines node arrays. It does not combine serialized Markdown strings.
 
 The transform context provides the destination path, destination format, path resolution, document parsing, and file reading. New transforms must return nodes that the destination processor can serialize.
 
-`migrateLegacyMarkers.js` contains the one-use migration from the former marker syntax. It changes marker text only. It does not change generated content between markers.
+`migrateLegacyMarkers.ts` contains the one-use migration from the former marker syntax. It changes marker text only. It does not change generated content between markers.
 
 ## Validation
 

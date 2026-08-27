@@ -42,6 +42,7 @@ test("finds an MDX generated region", () => {
 	].join("\n");
 	const document = parseDocument(source, "/repo/docs/destination.mdx");
 	const [region] = findGeneratedRegions(document);
+	assert(region !== undefined);
 
 	assert.equal(region.destinationFormat, "mdx");
 	assert.equal(region.transformName, "include");
