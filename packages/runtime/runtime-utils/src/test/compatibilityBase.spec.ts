@@ -20,6 +20,7 @@ import {
 	checkValidMinVersionForCollabVerbose,
 	cleanedPackageVersion,
 	validateMinimumVersionForCollab,
+	isValidMinVersionForCollab,
 	getConfigForMinVersionForCollab,
 	selectVersionRoundedDown,
 } from "../compatibilityBase.js";
@@ -431,46 +432,98 @@ describe("compatibilityBase", () => {
 	});
 
 	describe("minVersionForCollab validation", () => {
+		it("rejects nonzero patch versions for major version 3", () => {
+			assert.equal(isValidMinVersionForCollab("3.0.1"), false);
+			assert.throws(
+				() => validateMinimumVersionForCollab("3.0.1"),
+				(error: Error) => {
+					assert(isFluidError(error));
+					return (
+						/Version 3\.0\.1 is not a valid OldestSupportedClientVersion/.exec(
+							error.message,
+						) !== null
+					);
+				},
+			);
+		});
+
 		const testCases: {
 			version: OldestSupportedClientVersion;
 			checks: {
 				isValidSemver: boolean;
 				isGteLowestMinVersion: boolean;
 				isLtePkgVersion: boolean;
+				isValidPatchVersion: boolean;
 			};
 		}[] = [
 			{
 				version: cleanedPackageVersion,
-				checks: { isValidSemver: true, isGteLowestMinVersion: true, isLtePkgVersion: true },
+				checks: {
+					isValidSemver: true,
+					isGteLowestMinVersion: true,
+					isLtePkgVersion: true,
+					isValidPatchVersion: true,
+				},
 			},
 			{
 				version: lowestMinVersionForCollab,
-				checks: { isValidSemver: true, isGteLowestMinVersion: true, isLtePkgVersion: true },
+				checks: {
+					isValidSemver: true,
+					isGteLowestMinVersion: true,
+					isLtePkgVersion: true,
+					isValidPatchVersion: true,
+				},
+			},
+			{
+				// Cast since this is not a valid OldestSupportedClientVersion, but is a valid semver.
+				version: "3.999999.1" as OldestSupportedClientVersion,
+				checks: {
+					isValidSemver: true,
+					isGteLowestMinVersion: true,
+					isLtePkgVersion: false,
+					isValidPatchVersion: false,
+				},
 			},
 			{
 				// Cast since this is not a valid OldestSupportedClientVersion, but is a valid semver.
 				version: "0.0.0" as OldestSupportedClientVersion,
-				checks: { isValidSemver: true, isGteLowestMinVersion: false, isLtePkgVersion: true },
+				checks: {
+					isValidSemver: true,
+					isGteLowestMinVersion: false,
+					isLtePkgVersion: true,
+					isValidPatchVersion: true,
+				},
 			},
 			{
 				// Cast since this is not a valid OldestSupportedClientVersion, but is a valid semver.
 				version: "1000000.0.0" as OldestSupportedClientVersion,
-				checks: { isValidSemver: true, isGteLowestMinVersion: true, isLtePkgVersion: false },
+				checks: {
+					isValidSemver: true,
+					isGteLowestMinVersion: true,
+					isLtePkgVersion: false,
+					isValidPatchVersion: true,
+				},
 			},
 			{
 				// Cast since this is not a valid OldestSupportedClientVersion and is not a valid semver.
 				version: "1.2" as OldestSupportedClientVersion,
-				checks: { isValidSemver: false, isGteLowestMinVersion: false, isLtePkgVersion: false },
+				checks: {
+					isValidSemver: false,
+					isGteLowestMinVersion: false,
+					isLtePkgVersion: false,
+					isValidPatchVersion: false,
+				},
 			},
 		];
 
 		for (const testCase of testCases) {
 			it(`checkValidMinVersionForCollabVerbose return value for ${testCase.version} matches expected result.`, () => {
-				const { isValidSemver, isGteLowestMinVersion, isLtePkgVersion } =
+				const { isValidSemver, isGteLowestMinVersion, isLtePkgVersion, isValidPatchVersion } =
 					checkValidMinVersionForCollabVerbose(testCase.version);
 				assert.deepEqual(isValidSemver, testCase.checks.isValidSemver);
 				assert.deepEqual(isGteLowestMinVersion, testCase.checks.isGteLowestMinVersion);
 				assert.deepEqual(isLtePkgVersion, testCase.checks.isLtePkgVersion);
+				assert.deepEqual(isValidPatchVersion, testCase.checks.isValidPatchVersion);
 			});
 		}
 	});
