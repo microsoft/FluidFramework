@@ -186,7 +186,8 @@ import {
 	type TreeViewConfiguration,
 	SchemaFactory,
 	type TreeView,
-	type TreeBranchAlpha,
+	type TreeBranchHistory,
+	type UntypedTreeViewAlpha,
 	type TreeBranchEvents,
 	type ITree,
 	type UnsafeUnknownSchema,
@@ -1526,6 +1527,14 @@ export class MockTreeCheckout implements ITreeCheckout {
 		},
 	) {}
 
+	public rewindTo(): void {
+		throw new Error("'rewindTo' not implemented.");
+	}
+
+	public revertTo(): void {
+		throw new Error("'revertTo' not implemented.");
+	}
+
 	public viewWith<TRoot extends ImplicitFieldSchema>(
 		config: TreeViewConfiguration<TRoot>,
 	): TreeView<TRoot> {
@@ -1558,8 +1567,11 @@ export class MockTreeCheckout implements ITreeCheckout {
 	public fork(): ITreeCheckout {
 		throw new Error("Method 'branch' not implemented in MockTreeCheckout.");
 	}
-	public isBranch(): this is TreeBranchAlpha {
+	public isBranch(): this is UntypedTreeViewAlpha {
 		throw new Error("Method 'isBranch' not implemented in MockTreeCheckout.");
+	}
+	public isView(): this is UntypedTreeViewAlpha {
+		throw new Error("Method 'isView' not implemented in MockTreeCheckout.");
 	}
 	public hasRootSchema<TSchema extends ImplicitFieldSchema>(): this is TreeViewAlpha<TSchema> {
 		throw new Error("Method 'hasRootSchema' not implemented in MockTreeCheckout.");
@@ -1584,6 +1596,9 @@ export class MockTreeCheckout implements ITreeCheckout {
 	}
 	public isMissingEditsFrom(branch: unknown): never {
 		throw new Error("Method 'isMissingEditsFrom' not implemented in MockTreeCheckout.");
+	}
+	public get branchHistory(): TreeBranchHistory {
+		throw new Error("'history' property not implemented in MockTreeCheckout.");
 	}
 	public dispose(): void {
 		throw new Error("Method 'dispose' not implemented in MockTreeCheckout.");

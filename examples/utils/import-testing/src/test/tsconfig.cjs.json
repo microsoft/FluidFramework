@@ -5,8 +5,9 @@
 		"outDir": "../../dist/test",
 	},
 	"exclude": [
-		// bundler is only produced and tested for ESM, so exclude it from CJS compilation.
+		// Bundler and NodeNext outputs are only produced and tested for ESM, so exclude them from CJS compilation.
 		"./crossPackage/bundlerImporter.ts",
+		"./crossPackage/nodeNextImporter.ts",
 	],
 	"references": [
 		{
@@ -14,6 +15,9 @@
 		},
 		{
 			"path": "../../tsconfig.crossPackage.node16.cjs.json",
+		},
+		{
+			"path": "../../tsconfig.crossPackage.node20.cjs.json",
 		},
 	],
 }

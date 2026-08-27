@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 
 import {
 	type IMockLoggerExt,
+	TelemetryDataTag,
 	createMockLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
@@ -20,7 +21,10 @@ import {
 	CommitKind,
 	EmptyKey,
 	type NormalizedFieldUpPath,
+	LeafNodeStoredSchema,
+	type TreeNodeSchemaIdentifier,
 	TreeStoredSchemaRepository,
+	ValueSchema,
 } from "../../core/index.js";
 import { FieldKinds, MockNodeIdentifierManager } from "../../feature-libraries/index.js";
 import {
@@ -52,12 +56,13 @@ import {
 	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
 	type TransactionVoidResult,
-	type TreeBranch,
+	type UntypedTreeView,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { stringSchema } from "../../simple-tree/leafNodeSchema.js";
 import { brand, Breakable } from "../../util/index.js";
 import {
+	StringArray,
 	TestTreeProviderLite,
 	buildTestForest,
 	chunkFromJsonableTrees,
@@ -77,6 +82,24 @@ const rootField: NormalizedFieldUpPath = {
 };
 
 const enableSchemaValidation = true;
+
+function parseCodeArtifactDetails(details: unknown): Record<string, unknown> {
+	assert(typeof details === "object" && details !== null, "Expected telemetry details.");
+	assert(
+		"tag" in details && details.tag === TelemetryDataTag.CodeArtifact,
+		"Expected details to be tagged as a code artifact.",
+	);
+	assert(
+		"value" in details && typeof details.value === "string",
+		"Expected details to contain a JSON string.",
+	);
+	const parsed: unknown = JSON.parse(details.value);
+	assert(
+		typeof parsed === "object" && parsed !== null && !Array.isArray(parsed),
+		"Expected details to contain a JSON object.",
+	);
+	return parsed as Record<string, unknown>;
+}
 
 describe("sharedTreeView", () => {
 	describe("Events", () => {
@@ -864,14 +887,23 @@ describe("sharedTreeView", () => {
 
 			view.runTransaction(() => {
 				view.root.insertAtEnd("A");
+				view.root.insertAtEnd("B");
 			});
 
+			// Verify that the fork was created
 			assert.equal(forks.length, 1);
+			const fork = forks[0];
+			assert.deepEqual(fork.disposed, false);
+			assert.deepEqual(fork.root, ["A", "B"]);
 
-			assert.deepEqual(forks[0].disposed, false);
-			assert.deepEqual(forks[0].root, ["A"]);
+			// Verify that the fork can be modified independently of the parent view
+			fork.root.insertAtEnd("C");
+			assert.deepEqual(fork.root, ["A", "B", "C"]);
+			assert.deepEqual(view.root, ["A", "B"]);
 
-			assert.deepEqual(view.root, ["A"]);
+			// Verify that the fork can be merged back into the parent view
+			view.merge(fork);
+			assert.deepEqual(view.root, ["A", "B", "C"]);
 		});
 
 		/**
@@ -1129,6 +1161,36 @@ describe("sharedTreeView", () => {
 				assert.deepEqual(otherView.root, ["A", "B"]);
 				validateViewConsistency(view.checkout, otherView.checkout);
 			});
+		});
+	});
+
+	describe("history", () => {
+		it("exposes historical information for the current branch", () => {
+			const provider = new TestTreeProviderLite(1);
+			const tree = provider.trees[0];
+			const checkout = tree.kernel.checkout;
+			const view1 = tree.kernel.viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
+			view1.initialize([]);
+
+			const commitBeforeFork = checkout.branchHistory.getHead();
+			assert.notEqual(commitBeforeFork, undefined);
+
+			const fork = view1.fork();
+
+			fork.root.insertAtEnd("A");
+			fork.root.insertAtEnd("B");
+
+			const commitAfterEdits = fork.branchHistory.getHead();
+			assert.notEqual(commitAfterEdits, undefined);
+			assert.notEqual(commitAfterEdits?.revision, commitBeforeFork?.revision);
+
+			fork.checkout.switchBranch(checkout.mainBranch);
+
+			const headCommitAfterSwitch = fork.branchHistory.getHead();
+			assert.notEqual(headCommitAfterSwitch, undefined);
+			assert.equal(headCommitAfterSwitch?.revision, commitBeforeFork?.revision);
 		});
 	});
 
@@ -1593,6 +1655,68 @@ describe("sharedTreeView", () => {
 				unsubscribe();
 			});
 		}
+
+		itView("logs privacy-safe schema change telemetry", ({ view, logger }) => {
+			const initialEvents = logger
+				.events()
+				.filter((event) =>
+					event.eventName.endsWith(TreeCheckout.schemaChangeTelemetryEventName),
+				);
+			const initialDetails = initialEvents.map((event) =>
+				parseCodeArtifactDetails(event.details),
+			);
+			assert.deepEqual(
+				initialDetails.map((details) => details.changeKind),
+				["initialize", "restriction"],
+			);
+			const initializationDetails = initialDetails[0];
+			assert.deepEqual(
+				{
+					isInverse: initializationDetails.isInverse,
+					oldNodeSchemaCount: initializationDetails.oldNodeSchemaCount,
+					newNodeSchemaCount: initializationDetails.newNodeSchemaCount,
+					addedNodeSchemaCount: initializationDetails.addedNodeSchemaCount,
+					removedNodeSchemaCount: initializationDetails.removedNodeSchemaCount,
+				},
+				{
+					isInverse: false,
+					oldNodeSchemaCount: 0,
+					newNodeSchemaCount: view.checkout.storedSchema.nodeSchema.size,
+					addedNodeSchemaCount: view.checkout.storedSchema.nodeSchema.size,
+					removedNodeSchemaCount: 0,
+				},
+			);
+
+			const oldSchema = view.checkout.storedSchema.clone();
+			const addedIdentifier = brand<TreeNodeSchemaIdentifier>("schema-change-telemetry-test");
+			view.checkout.updateSchema({
+				rootFieldSchema: oldSchema.rootFieldSchema,
+				nodeSchema: new Map([
+					...oldSchema.nodeSchema,
+					[addedIdentifier, new LeafNodeStoredSchema(ValueSchema.Boolean)],
+				]),
+			});
+
+			const schemaChangeEvents = logger
+				.events()
+				.filter((event) =>
+					event.eventName.endsWith(TreeCheckout.schemaChangeTelemetryEventName),
+				);
+			const upgradeEvent = schemaChangeEvents.at(-1);
+			assert(upgradeEvent !== undefined, "Expected schema change telemetry.");
+			assert.deepEqual(parseCodeArtifactDetails(upgradeEvent.details), {
+				changeKind: "upgrade",
+				isInverse: false,
+				isSharedBranch: view.checkout.isSharedBranch,
+				oldNodeSchemaCount: oldSchema.nodeSchema.size,
+				newNodeSchemaCount: oldSchema.nodeSchema.size + 1,
+				addedNodeSchemaCount: 1,
+				removedNodeSchemaCount: 0,
+				rootFieldKindChanged: false,
+				oldRootAllowedTypeCount: oldSchema.rootFieldSchema.types.size,
+				newRootAllowedTypeCount: oldSchema.rootFieldSchema.types.size,
+			});
+		});
 	});
 
 	describe("throws an error if it is in the middle of an edit when a user attempts to", () => {
@@ -1671,10 +1795,10 @@ describe("sharedTreeView", () => {
 		});
 
 		it("dispose", () => {
-			let branch: TreeBranch | undefined;
+			let view: UntypedTreeView | undefined;
 			expectErrorDuringEdit({
-				setup: (view) => (branch = view.fork()), // Create a fork of the view because the main view can't be disposed
-				duringEdit: (view) => view.dispose(),
+				setup: (mainView) => (view = mainView.fork()), // Create a fork of the view because the main view can't be disposed
+				duringEdit: (forkedView) => forkedView.dispose(),
 				error: "Disposing a view is forbidden during a change event callback",
 			});
 		});

@@ -18,7 +18,7 @@ import type {
 } from "@fluidframework/core-interfaces";
 import type { AllOrNone } from "@fluidframework/core-interfaces/internal";
 import { validateAllOrNone } from "@fluidframework/core-utils/internal";
-import type { IClientDetails } from "@fluidframework/driver-definitions";
+import type { IClient, IClientDetails } from "@fluidframework/driver-definitions";
 import type {
 	IDocumentServiceFactory,
 	IResolvedUrl,
@@ -32,6 +32,7 @@ import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
 import {
 	GenericError,
 	UsageError,
+	createChildLogger,
 	normalizeError,
 	createChildMonitoringContext,
 	mixinMonitoringContext,
@@ -50,8 +51,11 @@ import {
 	snapshotHasLoadingGroups,
 	unreferencedAttachmentBlobLocalIds,
 	type IBlobAttachReference,
+	type IGcSnapshotData,
 } from "./captureReferencedContents.js";
-import { DebugLogger } from "./debugLogger.js";
+import { CatchUpMonitor } from "./catchUpMonitor.js";
+import { mixinDebugLogger } from "./debugLogger.js";
+import { createDeltaManager } from "./deltaManagerFactory.js";
 import { createFrozenDocumentServiceFactory } from "./frozenServices.js";
 import { Loader } from "./loader.js";
 import { pkgVersion } from "./packageVersion.js";
@@ -321,19 +325,19 @@ export async function loadExistingContainer(
  * resolver's external URL format is unknown without a real `IUrlResolver`.
  *
  * **Offline form precondition.** With no driver wiring there is no live
- * storage to read attachment blobs from, so any blob the runtime dereferences
- * during load must already be inlined into `pendingLocalState`. The pending
- * state must therefore be produced by {@link captureFullContainerState}
- * (which inlines all referenced attachment blobs) rather than
- * `IContainer.getPendingLocalState` / `getRequiredPendingLocalState` (which
- * do not). If the runtime needs an attachment blob that is not inlined, the
- * load fails with `UsageError` from the synthesized storage service.
+ * storage to read blobs from, so every structural and attachment blob the
+ * runtime dereferences during load must already be inlined into
+ * `pendingLocalState`. The pending state must therefore be produced by
+ * {@link captureFullContainerState} with its default `"inline"` blob capture
+ * mode rather than its `"reference"` mode or
+ * `IContainer.getPendingLocalState` / `getRequiredPendingLocalState`. Missing
+ * blob payloads fail the load with `UsageError`.
  *
  * **URL shape requirement.** In the offline form the captured
  * `pendingLocalState.url` is the only URL available; it is parsed in place of
  * a real `IUrlResolver.resolve()` call, so it must satisfy
  * {@link tryParseCompatibleResolvedUrl}'s contract — a resolved URL of shape
- * `protocol://<string>/.../..?<querystring>`. This is the format that
+ * `protocol://{host}/.../..?{queryString}`. This is the format that
  * Fluid-shipped drivers emit; drivers that emit a non-standard resolved-URL
  * shape will surface as a `UsageError` at load time. The online form has no
  * such constraint because the supplied resolver controls URL parsing.
@@ -418,6 +422,11 @@ export async function loadFrozenContainerFromPendingState(
 		// returns a resolved URL whose `url` equals `pendingLocalState.url`, so the
 		// identity guard in `Loader.resolveCore` is trivially satisfied.
 		const pending = getAttachedContainerStateFromSerializedContainer(pendingLocalState);
+		if (pending.blobContentsMode === "reference") {
+			throw new UsageError(
+				`${fnName}: pending state does not contain inlined snapshot blob contents. Reference-only state captured by ${captureFullContainerState.name} requires online driver wiring.`,
+			);
+		}
 		const parsed = tryParseCompatibleResolvedUrl(pending.url);
 		if (parsed === undefined) {
 			throw new UsageError(
@@ -505,6 +514,18 @@ export interface ICaptureFullContainerStateProps {
 	 * Optional logger for driver-side telemetry.
 	 */
 	readonly logger?: ITelemetryBaseLogger | undefined;
+	/**
+	 * Controls whether blob payloads are included in the captured state.
+	 *
+	 * `"inline"` (the default) includes blob contents, producing self-contained
+	 * state that supports fully offline loading with {@link loadFrozenContainerFromPendingState}.
+	 *
+	 * `"reference"` preserves blob IDs in the snapshot tree but omits their
+	 * payloads. This reduces the captured state size, but loading requires live
+	 * storage through {@link loadExistingContainer} or the online form of
+	 * {@link loadFrozenContainerFromPendingState}.
+	 */
+	readonly blobCaptureMode?: "inline" | "reference" | undefined;
 }
 
 /**
@@ -514,11 +535,19 @@ export interface ICaptureFullContainerStateProps {
  * format produced by a live container's pending-state serialization, and can
  * be handed to {@link loadExistingContainer} as `pendingLocalState`.
  *
- * The output is a self-contained view of the container's referenced graph:
- * the latest snapshot, inlined contents of every blob reachable through
+ * By default, the output is a self-contained view of the container's referenced
+ * graph: the latest snapshot, inlined contents of every blob reachable through
  * referenced subtrees, inlined contents of every referenced attachment blob
  * keyed by storage id, and all ops with sequence numbers after the base
- * snapshot's sequence number (as read from its attributes blob).
+ * snapshot's sequence number through the point observed when the delta stream
+ * connects. The same DeltaManager catch-up path used by container loading
+ * combines delta-storage and delta-stream ops, so recently sequenced ops do
+ * not need to have reached durable delta storage before capture.
+ *
+ * When `blobCaptureMode` is `"reference"`, the snapshot tree retains the blob
+ * IDs needed to load the container, but structural and attachment payloads are
+ * omitted. Reference-only state requires live storage during load and cannot be
+ * used with the fully offline form of {@link loadFrozenContainerFromPendingState}.
  *
  * Reachability respects GC. Snapshot subtrees flagged `unreferenced: true`
  * are skipped (their contents are not inlined). Attachment blobs that GC has
@@ -539,7 +568,8 @@ export interface ICaptureFullContainerStateProps {
  * is a known consumer and end-to-end coverage, the capture refuses rather
  * than silently producing pending state that omits group data.
  *
- * Note: if a new snapshot lands between the snapshot fetch and the ops fetch,
+ * @privateRemarks
+ * Note: if a new snapshot lands between the snapshot fetch and delta catch-up,
  * the returned state may not reflect the very latest snapshot, but remains
  * internally consistent: ops are anchored to the snapshot that was captured.
  *
@@ -556,20 +586,20 @@ export async function captureFullContainerState({
 	documentServiceFactory,
 	request,
 	logger,
+	blobCaptureMode = "inline",
 }: ICaptureFullContainerStateProps): Promise<string> {
 	const resolvedUrl = await urlResolver.resolve(request);
 	if (resolvedUrl === undefined) {
 		throw new UsageError("Failed to resolve request to a Fluid URL");
 	}
 
-	// Validate the resolver's URL shape at capture time. The captured pending
-	// state is rehydrated later (possibly in a different process) via the
-	// offline form of `loadFrozenContainerFromPendingState`, which requires
-	// `tryParseCompatibleResolvedUrl` to succeed on `pendingLocalState.url`.
-	// Failing fast here turns "your captured artifact silently isn't
-	// rehydratable" into a same-call error a partner can act on, instead of
-	// surfacing as a `UsageError` at offline-load time in a different process.
-	if (tryParseCompatibleResolvedUrl(resolvedUrl.url) === undefined) {
+	// Inline state supports the offline form of `loadFrozenContainerFromPendingState`,
+	// which requires `tryParseCompatibleResolvedUrl` to succeed on `pendingLocalState.url`.
+	// Reference-only state always uses the caller's live resolver, so it has no such constraint.
+	if (
+		blobCaptureMode === "inline" &&
+		tryParseCompatibleResolvedUrl(resolvedUrl.url) === undefined
+	) {
 		throw new UsageError(
 			`${captureFullContainerState.name}: resolved URL is not in the shape required by tryParseCompatibleResolvedUrl (protocol://<string>/<tenantId>/<docId>?<querystring>); captured state would not rehydrate offline (${resolvedUrl.url})`,
 		);
@@ -579,6 +609,43 @@ export async function captureFullContainerState({
 		resolvedUrl,
 		logger,
 	);
+	const captureLogger = createChildLogger({ logger, namespace: "captureFullContainerState" });
+	const client: IClient = {
+		details: { capabilities: { interactive: true } },
+		mode: "read",
+		permission: [],
+		scopes: [],
+		user: { id: "" },
+	};
+	const deltaManager = createDeltaManager({
+		serviceProvider: () => documentService,
+		logger: captureLogger,
+		active: () => false,
+		containerDirty: () => false,
+		client,
+		reconnectAllowed: true,
+	});
+	const connectedP = new Promise<void>((resolve) => {
+		deltaManager.once("connect", () => resolve());
+	});
+	const closedP = new Promise<never>((_resolve, reject) => {
+		deltaManager.once("closed", (error) => {
+			reject(
+				error === undefined
+					? new GenericError("DeltaManager closed while capturing container state")
+					: normalizeError(error),
+			);
+		});
+	});
+	deltaManager.connect({
+		reason: { text: "captureFullContainerState" },
+		mode: "read",
+		// Ops will be fetched from storage using the later "attachOpHandler" call. Attempting to fetch here is a no-op anyway as
+		// no op handler is yet attached.
+		// Fetching the snapshot first such that an op handler could be attached using its sequence number information may simplify
+		// the code, but doing it this way allows parallelization of snapshot fetch and establishing a connection.
+		fetchOpsFromStorage: false,
+	});
 	try {
 		const storage = await documentService.connectToStorage();
 
@@ -610,42 +677,46 @@ export async function captureFullContainerState({
 			);
 		}
 		const attributes = await getDocumentAttributes(storage, baseSnapshot);
-		const gcData = await parseGcSnapshotData(baseSnapshot, storage);
+		let gcData: IGcSnapshotData | undefined;
+		let snapshotBlobs = {};
+		let attachmentBlobContents = {};
 		// Structural snapshot blobs (JSON/text the runtime authored) are
 		// UTF-8-encoded; attachment blobs may carry arbitrary binary bytes
 		// and are base64-encoded. Keep them on separate fields of the
 		// pending state so the load side can apply the matching decoder
 		// without ambiguity. See IPendingContainerState.attachmentBlobContents.
-		const [snapshotBlobs, attachmentBlobContents] = await Promise.all([
-			readReferencedSnapshotBlobs(snapshot, storage), // utf8 encoded
-			captureReferencedAttachmentBlobs(baseSnapshot, storage, gcData), // base64 encoded
-		]);
+		if (blobCaptureMode === "inline") {
+			gcData = await parseGcSnapshotData(baseSnapshot, storage);
+			[snapshotBlobs, attachmentBlobContents] = await Promise.all([
+				readReferencedSnapshotBlobs(snapshot, storage), // utf8 encoded
+				captureReferencedAttachmentBlobs(baseSnapshot, storage, gcData), // base64 encoded
+			]);
+		}
 
-		const deltaStorage = await documentService.connectToDeltaStorage();
-		const opsStream = deltaStorage.fetchMessages(
-			attributes.sequenceNumber + 1,
-			undefined,
-			undefined,
-			false,
-			"captureFullContainerState",
-		);
 		const savedOps: ISequencedDocumentMessage[] = [];
+		const attachP = deltaManager.attachOpHandler(
+			attributes.minimumSequenceNumber,
+			attributes.sequenceNumber,
+			{
+				process: (message) => savedOps.push(message),
+				processSignal: () => {},
+			},
+			"all",
+		);
+		await Promise.race([Promise.all([connectedP, attachP]), closedP]);
+		await Promise.race([waitForCatchUp(deltaManager), closedP]);
+		deltaManager.dispose();
+
 		const postSnapshotBlobReferences: IBlobAttachReference[] = [];
-		let opsResult = await opsStream.read();
-		while (!opsResult.done) {
-			for (const op of opsResult.value) {
-				savedOps.push(op);
+		if (blobCaptureMode === "inline") {
+			for (const op of savedOps) {
 				// Blobs uploaded after the base snapshot are not in its
 				// `.blobs` redirect table, so `captureReferencedAttachmentBlobs`
 				// did not see them. The wire-format BlobAttach op carries
 				// `(localId, storageId)` in its metadata; collect those here so
 				// we can backfill the bytes before sealing the artifact.
-				const refs = extractBlobAttachReferences(op);
-				if (refs.length > 0) {
-					postSnapshotBlobReferences.push(...refs);
-				}
+				postSnapshotBlobReferences.push(...extractBlobAttachReferences(op));
 			}
-			opsResult = await opsStream.read();
 		}
 
 		if (postSnapshotBlobReferences.length > 0) {
@@ -662,6 +733,7 @@ export async function captureFullContainerState({
 			attached: true,
 			baseSnapshot,
 			snapshotBlobs,
+			blobContentsMode: blobCaptureMode === "reference" ? "reference" : undefined,
 			attachmentBlobContents:
 				Object.keys(attachmentBlobContents).length === 0 ? undefined : attachmentBlobContents,
 			loadedGroupIdSnapshots: undefined,
@@ -671,8 +743,21 @@ export async function captureFullContainerState({
 		};
 		return JSON.stringify(pendingState);
 	} finally {
+		deltaManager.dispose();
 		documentService.dispose();
 	}
+}
+
+async function waitForCatchUp(
+	deltaManager: ReturnType<typeof createDeltaManager>,
+): Promise<void> {
+	await new Promise<void>((resolve) => {
+		const monitor = new CatchUpMonitor(deltaManager, () => {
+			monitor.dispose();
+			resolve();
+		});
+		monitor.start();
+	});
 }
 
 /**
@@ -708,7 +793,7 @@ async function loadSummarizerContainerAndMakeSummaryInternal(
 	};
 
 	const subMc = mixinMonitoringContext(
-		DebugLogger.mixinDebugLogger("fluid:telemetry", logger, {
+		mixinDebugLogger("fluid:telemetry", logger, {
 			all: telemetryProps,
 		}),
 		sessionStorageConfigProvider.value,
