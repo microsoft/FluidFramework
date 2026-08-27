@@ -23,7 +23,7 @@
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"check:types:test:playwright": "tsc --project ./test/tsconfig.json",
-		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
+		"clean": "rimraf --glob bundle dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --quiet --format stylish src test",
 		"eslint:fix": "eslint --quiet --format stylish src test --fix",
 		"format": "npm run format:biome",
