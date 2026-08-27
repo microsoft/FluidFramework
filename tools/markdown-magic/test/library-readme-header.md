@@ -6,7 +6,7 @@
 **IMPORTANT: This package is experimental.**
 **The APIs can change without notice.**
 
-**Do not use it as a public dependency.**
+**Do not use it as a dependency in production scenarios.**
 **We do not guarantee the stability of this package or its APIs.**
 
 ## Using Fluid Framework libraries
@@ -30,7 +30,7 @@ npm i @fluidframework/test-package -D
 This package uses [package.json exports](https://nodejs.org/api/packages.html#exports) to separate APIs by support level.
 For information about the support guarantees, read [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
 
-Import the `public` ([Semantic Versioning (SemVer)](https://semver.org/)) APIs from `@fluidframework/test-package`.
+Import the `public` APIs from `@fluidframework/test-package`.
 
 Import the `alpha` APIs from `@fluidframework/test-package/alpha`.
 

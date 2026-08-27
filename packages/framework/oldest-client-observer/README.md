@@ -8,7 +8,7 @@
 **IMPORTANT: This package is experimental.**
 **The APIs can change without notice.**
 
-**Do not use it as a public dependency.**
+**Do not use it as a dependency in production scenarios.**
 **We do not guarantee the stability of this package or its APIs.**
 
 ## Using Fluid Framework libraries
@@ -32,7 +32,7 @@ npm i @fluid-experimental/oldest-client-observer
 This package uses [package.json exports](https://nodejs.org/api/packages.html#exports) to separate APIs by support level.
 For information about the support guarantees, read [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
 
-Import the `public` ([Semantic Versioning (SemVer)](https://semver.org/)) APIs from `@fluid-experimental/oldest-client-observer`.
+Import the `public` APIs from `@fluid-experimental/oldest-client-observer`.
 
 Import the `legacy` APIs from `@fluid-experimental/oldest-client-observer/legacy`.
 
@@ -109,7 +109,7 @@ You can [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTR
 -   Review [source code changes](https://github.com/microsoft/FluidFramework/pulls).
 -   [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
 
-For detailed instructions, read the [Fluid Framework wiki](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Home.md).
+For detailed instructions, read the [repo documentation](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Home.md).
 
 This project follows the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
 For more information, read the [Code of Conduct frequently asked questions](https://opensource.microsoft.com/codeofconduct/faq/).

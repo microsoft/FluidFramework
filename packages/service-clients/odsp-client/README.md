@@ -28,7 +28,7 @@ npm i @fluidframework/odsp-client
 This package uses [package.json exports](https://nodejs.org/api/packages.html#exports) to separate APIs by support level.
 For information about the support guarantees, read [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
 
-Import the `public` ([Semantic Versioning (SemVer)](https://semver.org/)) APIs from `@fluidframework/odsp-client`.
+Import the `public` APIs from `@fluidframework/odsp-client`.
 
 Import the `beta` APIs from `@fluidframework/odsp-client/beta`.
 
@@ -211,7 +211,7 @@ You can [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTR
 -   Review [source code changes](https://github.com/microsoft/FluidFramework/pulls).
 -   [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
 
-For detailed instructions, read the [Fluid Framework wiki](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Home.md).
+For detailed instructions, read the [repo documentation](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Home.md).
 
 This project follows the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
 For more information, read the [Code of Conduct frequently asked questions](https://opensource.microsoft.com/codeofconduct/faq/).

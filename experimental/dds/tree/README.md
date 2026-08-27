@@ -12,7 +12,7 @@
 **IMPORTANT: This package is experimental.**
 **The APIs can change without notice.**
 
-**Do not use it as a public dependency.**
+**Do not use it as a dependency in production scenarios.**
 **We do not guarantee the stability of this package or its APIs.**
 
 ## Using Fluid Framework libraries
@@ -447,7 +447,7 @@ You can [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTR
 -   Review [source code changes](https://github.com/microsoft/FluidFramework/pulls).
 -   [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
 
-For detailed instructions, read the [Fluid Framework wiki](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Home.md).
+For detailed instructions, read the [repo documentation](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Home.md).
 
 This project follows the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
 For more information, read the [Code of Conduct frequently asked questions](https://opensource.microsoft.com/codeofconduct/faq/).

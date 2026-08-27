@@ -28,7 +28,7 @@ npm i @fluidframework/id-compressor
 This package uses [package.json exports](https://nodejs.org/api/packages.html#exports) to separate APIs by support level.
 For information about the support guarantees, read [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
 
-Import the `public` ([Semantic Versioning (SemVer)](https://semver.org/)) APIs from `@fluidframework/id-compressor`.
+Import the `public` APIs from `@fluidframework/id-compressor`.
 
 Import the `legacy` APIs from `@fluidframework/id-compressor/legacy`.
 
