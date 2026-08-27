@@ -89,6 +89,7 @@ export enum TelemetryDataTag {
 	/**
 	 * Data containing identifiers or other metadata from a DDS's schema (e.g. SharedTree schema
 	 * identifiers) that may have been dynamically defined by application code.
+	 * @remarks
 	 * Note: only log schema artifacts that do not contain user data, or that have been sanitized to remove user data.
 	 */
 	SchemaArtifact = "SchemaArtifact",
@@ -1136,7 +1137,7 @@ export const tagCodeArtifacts = <
  * ```typescript
  * {
  * 	// ...Other properties being added to a telemetry event
- * 	...tagSchemaArtifacts({ foo: 1, bar: 2 }),
+ * 	...tagSchemaArtifacts({ nodeType: node.type }),
  * 	// ...
  * }
  * ```
