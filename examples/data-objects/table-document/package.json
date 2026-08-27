@@ -111,16 +111,6 @@
 		"rimraf": "^6.1.3",
 		"typescript": "~6.0.3"
 	},
-	"fluid": {
-		"browser": {
-			"umd": {
-				"files": [
-					"dist/main.bundle.js"
-				],
-				"library": "main"
-			}
-		}
-	},
 	"typeValidation": {
 		"disabled": true
 	}
