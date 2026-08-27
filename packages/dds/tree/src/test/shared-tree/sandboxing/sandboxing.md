@@ -15,7 +15,7 @@ thus alleviating the need for custom protocols and custom conflict resolution.
 Similar to that used around virtual machines, we can refer to the two sides as "Host" and "Guest".
 
 - Host: the SharedTree actually connected to fluid services.
-- Guest: the TreeView and its related internals which are separated from the Host my a message protocol, and does not require any shared state.
+- Guest: the TreeView and its related internals, which are separated from the Host by a message protocol, and do not require any shared state.
 
 - Host-local edits: local to the host (not sequenced yet).
 - Guest-local edits: local to the guest (not acknowledged by the host yet).
@@ -34,7 +34,8 @@ Update documentation and code to match choices in this section.
 are expected to arrive in the order they were sent.
 There is no assumption about the relative order of arrival of messages going in opposite directions.
 3. The tree code on both sides is the same exact version, so no stabilization of this protocol is required.
-4. All messages, including initialization, are compatible with [MessagePort](https://developer.mozilla.org/en-US/docs/Web/API/MessagePort) (This is not yet true for the example, see "ID Sharding" and "Fluid Handles" below).
+4. All messages, including initialization, are compatible with [MessagePort](https://developer.mozilla.org/en-US/docs/Web/API/MessagePort).
+This is not yet true for the example. See "ID Sharding" and "Fluid Handles" below.
 
 ## Path to Production
 
@@ -62,7 +63,7 @@ For the initial use case, the host only needs to support blob handles.
 Other handles can error when `get` is called and the result from the handle is not a blob.
 
 To ensure the sandbox cannot request any blobs it should not have access to, the tokens used should not be the handle URLs, but instead values which only have meaning to the host and its ability to map them back to the URL.
-Thus the tokens can be simple numbers, allocated sequentially, which correspond indexes in an array of handles the cached on the host side used to implement the blob lookup.
+Thus the tokens can be simple numbers, allocated sequentially, which correspond to indexes in an array of handles cached on the host side and used to implement the blob lookup.
 
 When sandbox changes are sent to the host, the sandbox serializer should convert the handles back to their tokens,
 and the host should restore and bind the real handles before applying the changes.
@@ -71,7 +72,7 @@ The production implementation should preserve handle identity for repeated refer
 It should cache fetched blobs in their handles to save sandbox traversal for repeated lookups.
 Deduplication of concurrent lookups (to prevent sending the same data into the sandbox more than once) would be good, but not strictly required (note if not done as possible improvement).
 
-Review features of [MessagePort](https://developer.mozilla.org/en-US/docs/Web/API/MessagePort) when picking how to transfer the data (likely having it copy an ArrayBuffer is simplest, but there are other options that can avoid a copy if the host already has a copy of the data can could instead transfer it).
+Review features of [MessagePort](https://developer.mozilla.org/en-US/docs/Web/API/MessagePort) when picking how to transfer the data (likely having it copy an ArrayBuffer is simplest, but there are other options that can avoid a copy if the host already has a copy of the data and could instead transfer it).
 
 ### Host lifetime extensions
 
@@ -86,7 +87,7 @@ If a unified branch based solution can be implemented (which leverages that reve
 ### Trunk Trimming for Guest
 
 Not a hard requirement of V1 as supporting timeline will opt out of this trimming anyway,
-but in generally we should ensure the guest doesn't leak unbounded history unless its specifically configured to retain it.
+but in general we should ensure the guest doesn't leak unbounded history unless it's specifically configured to retain it.
 
 ### `MessagePort` and IFrame Testing
 
