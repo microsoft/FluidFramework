@@ -108,13 +108,43 @@ export interface ITelemetryBaseLogger {
 	 * @param event - The event to log.
 	 * @param logLevel - The log level of the event. If undefined, the logLevel should be treated as {@link LogLevelConst.essential | LogLevel.essential}.
 	 */
-	send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
+	send(event: ITelemetryBaseEvent, logLevel: LogLevel): void;
 
 	/**
 	 * Minimum log level to be logged.
 	 * @defaultValue {@link LogLevelConst.info | LogLevel.info}.
 	 */
 	minLogLevel?: LogLevel | undefined;
+}
+
+/**
+ * Implementor-facing interface for telemetry sinks.
+ *
+ * @remarks
+ * Implementations that may be reached by callers compiled against older Fluid packages must use
+ * this relaxed contract. Fluid supports running with a mix of package versions, so code compiled
+ * before log levels were required still calls `send(event)` with a single argument and will keep
+ * doing so for as long as those versions are supported.
+ *
+ * Treat a missing `logLevel` as {@link LogLevelConst.essential} before
+ * filtering or forwarding. Otherwise, older callers could have their events silently dropped or
+ * handled at the wrong level. Code that emits telemetry should hold the stricter
+ * {@link ITelemetryBaseLogger} type so TypeScript requires the level at each call site.
+ *
+ * This interface can be deprecated, removed, or narrowed only after the layer-compatibility window
+ * for callers that may omit `logLevel` has closed in a future coordinated breaking change.
+ *
+ * @internal
+ */
+export interface ITelemetryBaseLoggerImplementation extends ITelemetryBaseLogger {
+	/**
+	 * Log a telemetry event, if it meets the appropriate log-level threshold (see {@link ITelemetryBaseLoggerImplementation.minLogLevel}).
+	 *
+	 * @param event - The event to log.
+	 * @param logLevel - The log level of the event. If omitted, treat it as
+	 * {@link LogLevelConst.essential}.
+	 */
+	send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
 }
 
 /**

@@ -7,7 +7,6 @@ import {
 	AzureClient,
 	type AzureLocalConnectionConfig,
 	type AzureRemoteConnectionConfig,
-	type ITelemetryBaseLogger,
 } from "@fluidframework/azure-client";
 // eslint-disable-next-line import-x/no-internal-modules -- TODO consider a test exposure to avoid /internal
 import type { AzureClientPropsInternal } from "@fluidframework/azure-client/internal";
@@ -15,10 +14,14 @@ import {
 	AzureClient as AzureClientLegacy,
 	type AzureLocalConnectionConfig as AzureLocalConnectionConfigLegacy,
 	type AzureRemoteConnectionConfig as AzureRemoteConnectionConfigLegacy,
-	type ITelemetryBaseLogger as ITelemetryBaseLoggerLegacy,
 } from "@fluidframework/azure-client-legacy";
 import type { IRuntimeFactory } from "@fluidframework/container-definitions/legacy";
-import type { IConfigProviderBase } from "@fluidframework/core-interfaces";
+/* eslint-disable import-x/no-internal-modules -- Fluid-internal tests need the relaxed logger implementation contract. */
+import type {
+	IConfigProviderBase,
+	ITelemetryBaseLoggerImplementation,
+} from "@fluidframework/core-interfaces/internal";
+/* eslint-enable import-x/no-internal-modules */
 import { ScopeType } from "@fluidframework/driver-definitions/legacy";
 import type { ContainerSchema } from "@fluidframework/fluid-static";
 import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions";
@@ -101,7 +104,7 @@ export function createAzureClient(
 				endpoint: "http://localhost:7071", // Port for local Azure Fluid Relay (AFR) service
 				type: "local",
 			};
-	const getLogger = (): ITelemetryBaseLogger | undefined => {
+	const getLogger = (): ITelemetryBaseLoggerImplementation | undefined => {
 		const testLogger = getTestLogger?.();
 		if (!logger && !testLogger) {
 			return undefined;
@@ -168,7 +171,7 @@ export function createAzureClientLegacy(
 					endpoint: "http://localhost:7071", // Port for local Azure Fluid Relay (AFR) service
 					type: "local",
 				};
-	const getLogger = (): ITelemetryBaseLoggerLegacy | undefined => {
+	const getLogger = (): ITelemetryBaseLoggerImplementation | undefined => {
 		const testLogger = getTestLogger?.();
 		if (!logger && !testLogger) {
 			return undefined;

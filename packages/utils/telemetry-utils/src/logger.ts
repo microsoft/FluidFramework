@@ -404,7 +404,7 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 				}
 			}
 		}
-		this.logger.send(newEvent, logLevel);
+		this.logger.send(newEvent, logLevel ?? LogLevel.essential);
 	}
 }
 
