@@ -1,0 +1,26 @@
+# `include`
+
+Use `include` to parse content from another Markdown or MDX file and add its syntax-tree nodes to the destination document.
+
+## Options
+
+| Option  | Type    | Required | Description                                             |
+| ------- | ------- | -------- | ------------------------------------------------------- |
+| `path`  | string  | Yes      | Source path relative to the destination document.       |
+| `start` | integer | No       | Zero-based index of the first source line to include.   |
+| `end`   | integer | No       | Zero-based index after the last source line to include. |
+
+`start` is inclusive. `end` is exclusive. Negative indexes count from the end of the source file. The transform removes leading and trailing whitespace from the selected content.
+
+The transform preserves link destinations from the source content. It does not rewrite relative links for the destination document.
+
+The source file extension selects the Markdown or MDX parser. Markdown content can be included in an MDX document. MDX content can be included in a Markdown document only when the generated syntax tree contains no MDX-specific nodes.
+
+## Example
+
+The following marker includes lines 3 through 8 from `overview.md`:
+
+```markdown
+<!-- markdown-magic:begin {"transform":"include","path":"./overview.md","start":2,"end":8} -->
+<!-- markdown-magic:end -->
+```

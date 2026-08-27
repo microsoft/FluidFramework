@@ -1,6 +1,6 @@
 # @fluid-tools/markdown-magic
 
-This library contains tools for generating and embedding documentation contents in [Markdown](https://www.markdownguide.org/) documentation.
+This package generates and embeds content in Markdown and MDX documents.
 
 <!-- markdown-magic:begin {"transform":"library-readme-header"} -->
 
@@ -18,76 +18,134 @@ This library contains tools for generating and embedding documentation contents 
 
 ## Usage
 
-Run `markdown-magic` from the command line:
+Run the command from a workspace that depends on this package:
 
 ```shell
-npm run markdown-magic -- [--files <glob> ...] [--workingDirectory <directory>]
+pnpm exec markdown-magic [--files <glob> ...] [--workingDirectory <directory>]
 ```
 
-The `--files` option accepts one or more [globby](https://github.com/sindresorhus/globby#readme) patterns. It selects the files to update. The default patterns are `**/*.md` and `**/*.mdx`.
+### Command options
 
-The `--workingDirectory` option sets the directory from which the tool resolves glob patterns and relative paths. The default is the current working directory.
+| Option               | Alias | Value                                                                        | Default                       |
+| -------------------- | ----- | ---------------------------------------------------------------------------- | ----------------------------- |
+| `--files`            | `-f`  | One or more [globby](https://github.com/sindresorhus/globby#readme) patterns | `**/*.md` and `**/*.mdx`      |
+| `--workingDirectory` | `-w`  | The base directory for glob patterns and relative paths                      | The current working directory |
+| `--help`             | `-h`  | None                                                                         | Not applicable                |
+
+The search includes files only and applies `.gitignore` rules. To process a `.markdown` file, select it explicitly with `--files`.
 
 For example, the following command updates Markdown and MDX files in `docs` except for `docs/README.md`:
 
 ```shell
-npm run markdown-magic -- --files "docs/**/*.{md,mdx}" "!docs/README.md"
+pnpm exec markdown-magic --files "docs/**/*.{md,mdx}" "!docs/README.md"
 ```
+
+The command reports the number of files that changed. If an error occurs, the command writes the error to stderr and returns exit code `1`.
 
 ## Markers
 
-Add a begin marker and an end marker to a Markdown file. The begin marker contains a JSON object. The `transform` property is required. Other properties are transform options.
+Add a begin marker and an end marker to a Markdown file. The begin marker contains a JSON object. The `transform` property is required. Add transform options as other properties in the object.
+
+The following example includes `overview.md` in a Markdown document:
 
 ```markdown
 <!-- markdown-magic:begin {"transform":"include","path":"./overview.md"} -->
 
-Generated content appears here.
+The tool writes generated content here.
 
 <!-- markdown-magic:end -->
 ```
 
-For MDX, use MDX comments. HTML comments are not valid MDX syntax.
+For MDX, use MDX comments. HTML comments are not valid in MDX.
+
+The following example includes `overview.mdx` in an MDX document:
 
 ```mdx
 {/* markdown-magic:begin {"transform":"include","path":"./overview.mdx"} */}
 
-Generated content appears here.
+The tool writes generated content here.
 
 {/* markdown-magic:end */}
 ```
 
-The tool parses the full document but writes only the content between the markers. It rejects malformed JSON, unknown transforms, unknown options, nested regions, and unmatched markers.
+The marker must be a top-level block in the document syntax tree. Marker text in a code block or another nested construct is not active.
+
+The tool parses the complete document. It replaces only the source range between each marker pair. It does not serialize the authored content outside that range.
+
+The tool adds these items to each generated region:
+
+1. A `prettier-ignore-start` comment.
+2. A generated-content notice.
+3. The serialized transform output.
+4. A `prettier-ignore-end` comment.
+
+The tool uses remark and GitHub Flavored Markdown to serialize generated content. The serializer can normalize lists, links, tables, and whitespace inside a generated region.
+
+The tool rejects these inputs:
+
+- A begin marker without a JSON object.
+- Invalid JSON or a JSON value that is not an object.
+- A missing or empty `transform` property.
+- An unknown transform or option.
+- An option with the wrong JSON type.
+- Nested regions.
+- An opening or closing marker without its matching marker.
+
+The tool validates and generates all regions in one destination file before it writes that file. Thus, a failed region does not cause a partial write to that file. The command processes multiple files concurrently. A different file can finish before an error stops the command.
 
 ## Transforms
 
-Transform names use kebab case.
+Transform names use kebab case. Option names use camel case. Option values use native JSON types. For example, use `true` instead of `"true"`.
 
-| Transform | Purpose | Options |
-| --- | --- | --- |
-| `include` | Include Markdown or MDX from another file. | `path` (required), `start`, `end` |
-| `include-code` | Include a file in a fenced code block. | `path` (required), `start`, `end`, `language` |
-| `library-readme-header` | Generate the standard sections at the start of a library README. | `packageJsonPath`, `packageScopeNotice`, `dependencyGuidelines`, `installation`, `devDependency`, `importInstructions`, `apiDocs` |
-| `example-app-readme-header` | Generate the standard section at the start of an example app README. | `packageJsonPath`, `gettingStarted`, `usesTinylicious` |
-| `readme-footer` | Generate the standard sections at the end of a README. | `packageJsonPath`, `scripts`, `clientRequirements`, `contributionGuidelines`, `help`, `trademark` |
-| `example-getting-started` | Generate setup instructions for an example app. | `packageJsonPath`, `usesTinylicious`, `includeHeading`, `headingLevel` |
-| `api-docs` | Generate a link to the package API documentation. | `packageJsonPath`, `includeHeading`, `headingLevel` |
-| `installation-instructions` | Generate the package installation command. | `packageJsonPath`, `devDependency`, `includeHeading`, `headingLevel` |
-| `import-instructions` | Generate instructions for package export paths. | `packageJsonPath`, `includeHeading`, `headingLevel` |
-| `package-scripts` | Generate a table of package scripts. | `packageJsonPath`, `includeHeading`, `headingLevel` |
-| `package-scope-notice` | Generate a notice for the package scope. | `packageJsonPath`, `scopeKind` |
-| `client-requirements` | Generate the minimum client requirements section. | `includeHeading`, `headingLevel` |
-| `contribution-guidelines` | Generate the contribution guidelines section. | `includeHeading`, `headingLevel` |
-| `dependency-guidelines` | Generate the dependency guidelines section. | `includeHeading`, `headingLevel` |
-| `help` | Generate the help section. | `includeHeading`, `headingLevel` |
-| `trademark` | Generate the trademark section. | `includeHeading`, `headingLevel` |
+| Transform                                                                     | Purpose                                                                      |
+| ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| [`include`](./docs/transforms/include.md)                                     | Parse and include Markdown or MDX from a file.                               |
+| [`include-code`](./docs/transforms/include-code.md)                           | Include text from a file in a fenced code block.                             |
+| [`library-readme-header`](./docs/transforms/library-readme-header.md)         | Generate the standard sections at the start of a library README.             |
+| [`example-app-readme-header`](./docs/transforms/example-app-readme-header.md) | Generate the standard section at the start of an example application README. |
+| [`readme-footer`](./docs/transforms/readme-footer.md)                         | Generate the standard sections at the end of a package README.               |
+| [`example-getting-started`](./docs/transforms/example-getting-started.md)     | Generate setup instructions for an example application.                      |
+| [`api-docs`](./docs/transforms/api-docs.md)                                   | Generate a link to package API documentation.                                |
+| [`installation-instructions`](./docs/transforms/installation-instructions.md) | Generate the package installation command.                                   |
+| [`import-instructions`](./docs/transforms/import-instructions.md)             | Generate instructions for supported package export paths.                    |
+| [`package-scripts`](./docs/transforms/package-scripts.md)                     | Generate a table from the package `scripts` object.                          |
+| [`package-scope-notice`](./docs/transforms/package-scope-notice.md)           | Generate a notice for the package kind.                                      |
+| [`client-requirements`](./docs/transforms/client-requirements.md)             | Generate the minimum client requirements.                                    |
+| [`contribution-guidelines`](./docs/transforms/contribution-guidelines.md)     | Generate the contribution guidelines.                                        |
+| [`dependency-guidelines`](./docs/transforms/dependency-guidelines.md)         | Generate the dependency guidelines.                                          |
+| [`help`](./docs/transforms/help.md)                                           | Generate links to support resources.                                         |
+| [`trademark`](./docs/transforms/trademark.md)                                 | Generate the Microsoft trademark notice.                                     |
 
-Relative paths use the destination document's directory. Line indexes for `start` and `end` use JavaScript array-slice rules. `start` is inclusive, and `end` is exclusive. Negative indexes count from the end of the file.
+Each linked guide contains the option types, default values, behavior notes, and a basic marker example.
 
-For section transforms, `includeHeading` defaults to `true`, and `headingLevel` defaults to `2`. The valid heading levels are 1 through 6. `packageJsonPath` defaults to `./package.json`.
+## Implementation
 
-The valid `scopeKind` values are `FRAMEWORK`, `EXAMPLE`, `EXPERIMENTAL`, `INTERNAL`, `PRIVATE`, and `TOOLS`.
+The processing pipeline has these stages:
 
-An `include` transform can include MDX only when the destination file is also MDX. This rule prevents the tool from writing MDX syntax into a Markdown file.
+1. `processorProfiles.js` selects the Markdown or MDX parser from the destination extension.
+2. `regions.js` reads top-level marker nodes and validates marker pairs.
+3. `transformRegistry.js` validates file-transform options and creates transform context.
+4. `transforms.js` validates and generates package and template sections as mdast nodes.
+5. `processing.js` validates destination compatibility, serializes each generated region, and patches source ranges from last to first.
+6. `cli.js` selects files and processes at most eight files concurrently.
+
+A transform has a `validateOptions` function and a `generate` function. `validateOptions` converts an unknown JSON value to validated options. `generate` returns an array of mdast root-content nodes. A composite transform combines node arrays. It does not combine serialized Markdown strings.
+
+The transform context provides the destination path, destination format, path resolution, document parsing, and file reading. New transforms must return nodes that the destination processor can serialize.
+
+`migrateLegacyMarkers.js` contains the one-use migration from the former marker syntax. It changes marker text only. It does not change generated content between markers.
+
+## Validation
+
+Run the package tests and documentation generation:
+
+```shell
+pnpm --dir tools/markdown-magic test
+pnpm --dir tools/markdown-magic build:docs
+pnpm --dir tools/markdown-magic check:biome
+```
+
+Run generation twice. The second run must report `Updated 0 files.`
 
 <!-- markdown-magic:begin {"transform":"readme-footer"} -->
 
