@@ -75,15 +75,12 @@ export function validateRuntimeCompatibility(
 	mc: MonitoringContext,
 ): void {
 	validateLayerCompatibility(
-		/* validatingLayer */ {
-			layer: "dataStore",
-			packageInfo: dataStoreCoreCompatDetails,
-			compatSupportRequirements: runtimeSupportRequirementsForDataStore,
-		},
-		/* targetLayer */ {
-			layer: "runtime",
-			compatDetails: maybeRuntimeCompatDetails,
-		},
-		{ disposeFn, mc },
+		"dataStore",
+		"runtime",
+		dataStoreCompatDetailsForRuntime,
+		runtimeSupportRequirementsForDataStore,
+		maybeRuntimeCompatDetails,
+		disposeFn,
+		mc,
 	);
 }

@@ -9,7 +9,6 @@ import {
 	TypedEventEmitter,
 	performanceNow,
 	type ILayerCompatDetails,
-	type ILayerCompatSupportRequirements,
 } from "@fluid-internal/client-utils";
 import {
 	AttachState,
@@ -132,7 +131,6 @@ import type { ILoaderServices } from "./loader.js";
 import { RelativeLoader } from "./loader.js";
 import {
 	validateDriverCompatibility,
-	validateLoaderCompatibilityWithDriver,
 	validateRuntimeCompatibility,
 } from "./loaderLayerCompatState.js";
 import {
@@ -759,30 +757,13 @@ export class Container
 			protocolHandlerBuilder,
 		} = createProps;
 
-		const maybeDriverCompat = documentServiceFactory as FluidObject<ILayerCompatDetails> &
-			FluidObject<ILayerCompatSupportRequirements>;
-		const driverCompatMonitoringContext = createChildMonitoringContext({
-			logger: subLogger,
-			namespace: "Container",
-		});
-
-		// Validate that the Driver is compatible with this Loader. This is the standard direction: the Loader holds
-		// a reference to the Driver and validates it.
+		// Validate that the Driver is compatible with this Loader.
+		const maybeDriverCompatDetails =
+			documentServiceFactory as FluidObject<ILayerCompatDetails>;
 		validateDriverCompatibility(
-			maybeDriverCompat.ILayerCompatDetails,
+			maybeDriverCompatDetails.ILayerCompatDetails,
 			(error) => {} /* disposeFn */, // There is nothing to dispose here, so just ignore the error.
-			driverCompatMonitoringContext,
-		);
-
-		// Validate that this Loader is compatible with the Driver. This is the reverse, non-standard direction: a
-		// layer normally validates the layer it holds a reference to, but the Driver has no reference to the Loader
-		// and so cannot validate it itself. The Driver instead publishes the requirements it has for the Loader (via
-		// ILayerCompatSupportRequirements), and the Loader validates itself against them here, on the Driver's behalf.
-		validateLoaderCompatibilityWithDriver(
-			maybeDriverCompat.ILayerCompatDetails,
-			maybeDriverCompat.ILayerCompatSupportRequirements,
-			(error) => {} /* disposeFn */, // There is nothing to dispose here, so just ignore the error.
-			driverCompatMonitoringContext,
+			createChildMonitoringContext({ logger: subLogger, namespace: "Container" }),
 		);
 
 		this.connectionTransitionTimes[ConnectionState.Disconnected] = performanceNow();

@@ -128,17 +128,14 @@ export function validateLoaderCompatibility(
 	);
 
 	validateLayerCompatibility(
-		/* validatingLayer */ {
-			layer: "runtime",
-			packageInfo: runtimeCoreCompatDetails,
-			compatSupportRequirements: loaderSupportRequirementsForRuntime,
-		},
-		/* targetLayer */ {
-			layer: "loader",
-			compatDetails: maybeLoaderCompatDetailsForRuntime,
-			strictCompatibilityCheck: disableStrictLoaderLayerCompatibilityCheck !== true,
-		},
-		{ disposeFn, mc },
+		"runtime",
+		"loader",
+		runtimeCompatDetailsForLoader,
+		loaderSupportRequirementsForRuntime,
+		maybeLoaderCompatDetailsForRuntime,
+		disposeFn,
+		mc,
+		disableStrictLoaderLayerCompatibilityCheck !== true /* strictCompatibilityCheck */,
 	);
 }
 
@@ -152,15 +149,12 @@ export function validateDatastoreCompatibility(
 	mc: MonitoringContext,
 ): void {
 	validateLayerCompatibility(
-		/* validatingLayer */ {
-			layer: "runtime",
-			packageInfo: runtimeCoreCompatDetails,
-			compatSupportRequirements: dataStoreSupportRequirementsForRuntime,
-		},
-		/* targetLayer */ {
-			layer: "dataStore",
-			compatDetails: maybeDataStoreCompatDetailsForRuntime,
-		},
-		{ disposeFn, mc },
+		"runtime",
+		"dataStore",
+		runtimeCompatDetailsForDataStore,
+		dataStoreSupportRequirementsForRuntime,
+		maybeDataStoreCompatDetailsForRuntime,
+		disposeFn,
+		mc,
 	);
 }

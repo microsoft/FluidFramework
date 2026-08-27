@@ -8,7 +8,6 @@ import { strict as assert } from "node:assert";
 import {
 	TypedEventEmitter,
 	type IProvideLayerCompatDetails,
-	type IProvideLayerCompatSupportRequirements,
 } from "@fluid-internal/client-utils";
 import type { IAudience } from "@fluidframework/container-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
@@ -82,10 +81,9 @@ class MockContainer
 }
 
 const documentServiceFactoryProxy = failSometimeProxy<
-	IDocumentServiceFactory & IProvideLayerCompatDetails & IProvideLayerCompatSupportRequirements
+	IDocumentServiceFactory & IProvideLayerCompatDetails
 >({
 	ILayerCompatDetails: AbsentProperty,
-	ILayerCompatSupportRequirements: AbsentProperty,
 });
 
 function createTestContainer(mockLogger: MockLogger): Container {

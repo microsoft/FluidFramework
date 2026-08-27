@@ -6,8 +6,6 @@
 import type {
 	ILayerCompatDetails,
 	IProvideLayerCompatDetails,
-	ILayerCompatSupportRequirements,
-	IProvideLayerCompatSupportRequirements,
 } from "@fluid-internal/client-utils";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
@@ -37,10 +35,7 @@ import type { ISnapshotTreeVersion } from "./definitions.js";
 import { DocumentService } from "./documentService.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 import type { IRouterliciousDriverPolicies } from "./policies.js";
-import {
-	r11sDriverCompatDetailsForLoader,
-	r11sDriverCompatRequirementsForLoader,
-} from "./r11sLayerCompatState.js";
+import { r11sDriverCompatDetailsForLoader } from "./r11sLayerCompatState.js";
 import {
 	RouterliciousOrdererRestWrapper,
 	RouterliciousStorageRestWrapper,
@@ -71,10 +66,7 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
  * @internal
  */
 export class RouterliciousDocumentServiceFactory
-	implements
-		IDocumentServiceFactory,
-		IProvideLayerCompatDetails,
-		IProvideLayerCompatSupportRequirements
+	implements IDocumentServiceFactory, IProvideLayerCompatDetails
 {
 	private readonly driverPolicies: IRouterliciousDriverPolicies;
 	private readonly blobCache: ICache<ArrayBufferLike>;
@@ -114,15 +106,6 @@ export class RouterliciousDocumentServiceFactory
 	 */
 	public get ILayerCompatDetails(): ILayerCompatDetails {
 		return r11sDriverCompatDetailsForLoader;
-	}
-
-	/**
-	 * The requirements that the Loader layer must meet to be compatible with this Routerlicious Driver. This is
-	 * exposed to the Loader layer so that it can validate Loader / Driver compatibility on this Driver's behalf
-	 * (the Driver has no reference to the Loader to validate it directly).
-	 */
-	public get ILayerCompatSupportRequirements(): ILayerCompatSupportRequirements {
-		return r11sDriverCompatRequirementsForLoader;
 	}
 
 	/**

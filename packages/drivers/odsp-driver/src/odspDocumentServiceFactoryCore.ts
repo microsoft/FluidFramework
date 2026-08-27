@@ -41,10 +41,8 @@ import {
 	NonPersistentCache,
 } from "./odspCache.js";
 import { OdspDocumentService } from "./odspDocumentService.js";
-import {
-	odspDriverCompatDetailsForLoader,
-	odspDriverCompatRequirementsForLoader,
-} from "./odspLayerCompatState.js";
+import { OdspDriverUrlResolver } from "./odspDriverUrlResolver.js";
+import { odspDriverCompatDetailsForLoader } from "./odspLayerCompatState.js";
 import {
 	type IExistingFileInfo,
 	type INewFileInfo,
@@ -329,17 +327,6 @@ export class OdspDocumentServiceFactoryCore
 	 * is currently marked as legacy alpha. So, using unknown here.
 	 */
 	public readonly ILayerCompatDetails?: unknown = odspDriverCompatDetailsForLoader;
-
-	/**
-	 * The requirements that the Loader layer must meet to be compatible with this ODSP Driver. This is exposed to
-	 * the Loader layer so that it can validate Loader / Driver compatibility on this Driver's behalf (the Driver has
-	 * no reference to the Loader to validate it directly).
-	 * @remarks This is for internal use only.
-	 * The type of this should be ILayerCompatSupportRequirements. However, ILayerCompatSupportRequirements is
-	 * internal and this class is currently marked as legacy alpha. So, using unknown here.
-	 */
-	public readonly ILayerCompatSupportRequirements?: unknown =
-		odspDriverCompatRequirementsForLoader;
 
 	public async createDocumentService(
 		resolvedUrl: IResolvedUrl,
