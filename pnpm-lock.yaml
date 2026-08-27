@@ -3472,6 +3472,12 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@6.0.3)
+      '@fluidframework/test-tools':
+        specifier: ^2.0.0
+        version: 2.0.1
+      '@playwright/test':
+        specifier: ^1.62.1
+        version: 1.62.1
       '@testing-library/react':
         specifier: ^16.3.0
         version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@18.3.3)(@types/react@18.3.15)(react-dom@18.3.1)(react@18.3.1)
@@ -3487,6 +3493,9 @@ importers:
       '@types/react-dom':
         specifier: ^18.3.1
         version: 18.3.3(@types/react@18.3.15)
+      cross-env:
+        specifier: ^10.1.0
+        version: 10.1.0
       css-loader:
         specifier: ^7.1.2
         version: 7.1.2(webpack@5.109.0)
@@ -4672,9 +4681,6 @@ importers:
 
   examples/utils/example-webpack-integration:
     dependencies:
-      '@fluidframework/tool-utils':
-        specifier: workspace:~
-        version: link:../../../packages/utils/tool-utils
       webpack:
         specifier: ^5.104.1
         version: 5.109.0(clean-css@5.3.3)(html-minifier-terser@7.2.0)(postcss@8.5.16)(uglify-js@3.19.3)(webpack-cli@5.1.4)

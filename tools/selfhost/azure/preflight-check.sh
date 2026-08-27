@@ -33,6 +33,25 @@ if [[ ${#missing[@]} -gt 0 ]]; then
   exit 1
 fi
 
+ensure_az_extension() {
+  local ext="$1"
+  if ! az extension show --name "$ext" >/dev/null 2>&1; then
+    log "Installing the '$ext' az CLI extension"
+    az extension add --name "$ext" --yes >/dev/null 2>&1 </dev/null || {
+      echo "ERROR: could not install the '$ext' az CLI extension. Install it manually and rerun:" >&2
+      echo "  az extension add --name $ext" >&2
+      exit 1
+    }
+  fi
+}
+ensure_az_extension redisenterprise
+az redisenterprise create --help 2>/dev/null | grep --fixed-strings -- '--access-keys-authentication' >/dev/null || {
+  echo "ERROR: the redisenterprise az CLI extension is too old. Upgrade it and rerun:" >&2
+  echo "  az extension update --name redisenterprise" >&2
+  exit 1
+}
+export AZURE_EXTENSION_USE_DYNAMIC_INSTALL=yes_without_prompt
+
 # ---------------------------------------------------------------------------
 # Load parameters (same shape/defaults as deploy.sh)
 # ---------------------------------------------------------------------------
@@ -42,6 +61,11 @@ SUB="$(jqr '.subscriptionId')"
 RG="$(jqr '.resourceGroup')"
 RG_LOC="$(jqr '.location')"
 FLUID_REPO_DIR="$(jqr '.fluidRepoDir')"
+if [[ "$FLUID_REPO_DIR" == "~/"* ]]; then
+  FLUID_REPO_DIR="$HOME/${FLUID_REPO_DIR:2}"
+elif [[ "$FLUID_REPO_DIR" == "~" ]]; then
+  FLUID_REPO_DIR="$HOME"
+fi
 BUILD_ACR="$(jqr '.buildAcr.name')"
 DEPLOY_ACR="$(jqr '.deployAcr.name')"
 AKS="$(jqr '.aks.name')"
@@ -66,6 +90,8 @@ COSMOS="$(jqr '.cosmos.clusterName')"
 COSMOS_ZONE_REDUNDANT="$(jqr '.cosmos.zoneRedundant')"; COSMOS_ZONE_REDUNDANT="${COSMOS_ZONE_REDUNDANT:-True}"
 REDIS="$(jqr '.redis.clusterName')"
 REDIS_LOC="$(jqr '.redis.location')"; REDIS_LOC="${REDIS_LOC:-$RG_LOC}"
+REDIS_SKU="$(jqr '.redis.sku')"; REDIS_SKU="${REDIS_SKU:-Balanced_B5}"
+REDIS_HIGH_AVAILABILITY="$(jqr '.redis.highAvailability')"
 STORAGE="$(jqr '.storage.accountName')"
 EVENTHUBS_NAMESPACE="$(jqr '.kafka.eventHubs.namespaceName')"
 EVENTHUBS_SKU="$(jqr '.kafka.eventHubs.sku')"; EVENTHUBS_SKU="${EVENTHUBS_SKU:-Standard}"
@@ -73,7 +99,7 @@ EVENTHUBS_ZONE_REDUNDANT="$(jqr '.kafka.eventHubs.zoneRedundant')"; EVENTHUBS_ZO
 AFD="$(jqr '.frontDoor.profileName')"
 
 banner "Parameters file completeness"
-for required in SUB RG RG_LOC BUILD_ACR DEPLOY_ACR AKS KV COSMOS REDIS STORAGE AFD; do
+for required in SUB RG RG_LOC BUILD_ACR DEPLOY_ACR AKS KV COSMOS REDIS REDIS_HIGH_AVAILABILITY STORAGE AFD; do
   if [[ -z "${!required}" ]]; then
     fail "'$required' is missing from $PARAMS_FILE"
   else
@@ -82,6 +108,16 @@ for required in SUB RG RG_LOC BUILD_ACR DEPLOY_ACR AKS KV COSMOS REDIS STORAGE A
 done
 if [[ -n "$BUILD_ACR" && "$BUILD_ACR" == "$DEPLOY_ACR" ]]; then
   fail "buildAcr.name and deployAcr.name must not be the same"
+fi
+legacy_redis_keys="$(jq -r '[((.redis // {}) | keys[]) | select(. == "vmSize" or . == "version" or . == "replicasPerMaster" or . == "zones")] | join(", ")' "$PARAMS_FILE")"
+if [[ -n "$legacy_redis_keys" ]]; then
+  fail "removed Azure Cache for Redis parameters are still present: redis.{$legacy_redis_keys}; replace the redis block from deploy.parameters.example.json"
+fi
+if [[ "$REDIS_SKU" != *_* ]]; then
+  fail "redis.sku '$REDIS_SKU' is not an Azure Managed Redis SKU (for example, Balanced_B5)"
+fi
+if [[ "$REDIS_HIGH_AVAILABILITY" != "Enabled" && "$REDIS_HIGH_AVAILABILITY" != "Disabled" ]]; then
+  fail "redis.highAvailability must be exactly 'Enabled' or 'Disabled' (got '${REDIS_HIGH_AVAILABILITY:-empty}')"
 fi
 if [[ $FAILURES -gt 0 ]]; then
   echo "Parameters file incomplete -- stopping (remaining checks need these values)." >&2
@@ -200,28 +236,26 @@ if [[ "$EVENTHUBS_ZONE_REDUNDANT" == "true" ]]; then
   fi
 fi
 
-# Redis cache name (globally unique) -- no dedicated CLI check-name subcommand; use the raw
-# ARM checkNameAvailability action for Microsoft.Cache directly.
-if az redis show -n "$REDIS" -g "$RG" >/dev/null 2>&1; then
-  ok "Redis cache '$REDIS' already exists in target RG $RG -- deploy.sh will reuse it"
+# Azure Managed Redis names are regionally scoped. There is no supported checkNameAvailability
+# request for Microsoft.Cache/redisEnterprise, so check existing resources in this subscription
+# and let the create operation remain authoritative across subscriptions.
+if az redisenterprise show -n "$REDIS" -g "$RG" >/dev/null 2>&1; then
+  ok "Azure Managed Redis '$REDIS' already exists in target RG $RG -- deploy.sh will verify and reuse it"
 else
-  redis_sub_id="$(az account show --query id -o tsv)"
-  redis_resp="$(az rest --method post \
-    --url "https://management.azure.com/subscriptions/$redis_sub_id/providers/Microsoft.Cache/checkNameAvailability?api-version=2025-08-01-preview" \
-    --body "{\"name\":\"$REDIS\",\"type\":\"Microsoft.Cache/redis\"}" 2>/tmp/redis_check_err.$$)"
-  if [[ -z "$redis_resp" ]]; then
-    ok "Redis cache name '$REDIS' is available"
-  elif echo "$redis_resp" | jq -e '.nameAvailable == false' >/dev/null 2>&1; then
-    fail "Redis cache name '$REDIS' is not available -- pick a different redis.clusterName"
+  redis_loc_normalized="$(printf '%s' "$REDIS_LOC" | tr '[:upper:]' '[:lower:]' | tr -d ' ')"
+  redis_match="$(az resource list --resource-type Microsoft.Cache/redisEnterprise -o json | \
+    jq -r --arg name "$REDIS" --arg location "$redis_loc_normalized" \
+      '.[] | select(.name == $name and ((.location | ascii_downcase | gsub(" "; "")) == $location)) | .id' | head -1)"
+  if [[ -n "$redis_match" ]]; then
+    fail "Azure Managed Redis '$REDIS' already exists in $REDIS_LOC at $redis_match -- pick a different redis.clusterName or target that resource group"
   else
-    note "could not conclusively verify Redis name '$REDIS' availability ($(cat /tmp/redis_check_err.$$ 2>/dev/null | head -1))"
+    note "no Azure Managed Redis named '$REDIS' was found in $REDIS_LOC in this subscription; Azure will perform the authoritative availability check during create"
   fi
-  rm -f /tmp/redis_check_err.$$
-  unset redis_resp redis_sub_id
+  unset redis_loc_normalized redis_match
 fi
 
 # ---------------------------------------------------------------------------
-# Storage account count quota -- Microsoft.Cache (Redis), Microsoft.DocumentDB (Cosmos DB),
+# Storage account count quota -- Microsoft.Cache (Azure Managed Redis), Microsoft.DocumentDB (Cosmos DB),
 # Microsoft.KeyVault, and Microsoft.ContainerRegistry expose no equivalent subscription-level
 # usages/quota API (confirmed via `az provider show --namespace <ns>` for each -- none list a
 # usages/checkResourceUsage resource type), so only Storage and Front Door (below) can be
@@ -402,7 +436,7 @@ if [[ ! -d "$CHART_DIR" ]]; then
 else
   tmp_values="$(mktemp)"
   sed -e "s|<ACR>|placeholderacr|g" -e "s|<IMAGE_TAG>|placeholder-tag|g" \
-      -e "s|<REDIS_HOSTNAME>|placeholder.redis.cache.windows.net|g" \
+      -e "s|<REDIS_HOSTNAME>|placeholder.eastus.redis.azure.net|g" \
       "$SELFHOST_ROOT/azure/routerlicious-values.yaml" > "$tmp_values"
   if helm template fluid "$CHART_DIR" -f "$tmp_values" >/tmp/helm_template_out.$$ 2>/tmp/helm_template_err.$$; then
     ok "helm template rendered successfully ($(wc -l </tmp/helm_template_out.$$ | tr -d ' ') lines of manifests)"

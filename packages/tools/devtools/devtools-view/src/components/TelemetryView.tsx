@@ -3,25 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import {
-	Button,
-	Combobox,
-	type ComboboxProps,
-	CounterBadge,
-	DataGrid,
-	DataGridBody,
-	DataGridCell,
-	DataGridHeader,
-	DataGridHeaderCell,
-	DataGridRow,
-	Dropdown,
-	type DropdownProps,
-	Option,
-	type TableColumnDefinition,
-	createTableColumn,
-	makeStyles,
-	shorthands,
-	tokens,
+import type {
+	ComboboxProps,
+	DropdownProps,
+	TableColumnDefinition,
 } from "@fluentui/react-components";
 import {
 	DevtoolsDisposed,
@@ -42,6 +27,7 @@ import {
 	useState,
 } from "react";
 
+import { FluentReactComponents } from "../FluentUi.cjs";
 import { useMessageRelay } from "../MessageRelayContext.js";
 import { useLogger } from "../TelemetryUtils.js";
 import { ThemeOption, useThemeContext } from "../ThemeHelper.js";
@@ -49,6 +35,24 @@ import { ThemeOption, useThemeContext } from "../ThemeHelper.js";
 import { SplitPane } from "./SplitPane.cjs";
 import { Waiting } from "./Waiting.js";
 import { ScreenReaderAnnouncement } from "./utility-components/index.js";
+
+const {
+	Button,
+	Combobox,
+	CounterBadge,
+	DataGrid,
+	DataGridBody,
+	DataGridCell,
+	DataGridHeader,
+	DataGridHeaderCell,
+	DataGridRow,
+	Dropdown,
+	Option,
+	createTableColumn,
+	makeStyles,
+	shorthands,
+	tokens,
+} = FluentReactComponents;
 
 /**
  * Set the default displayed size to 100.

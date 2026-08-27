@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as axe from "axe-core";
+import axe from "axe-core";
 
 /**
  * Represents an accessibility violation found by axe

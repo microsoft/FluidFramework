@@ -33,15 +33,23 @@ To run the example with SharePoint, complete these steps:
 
 ## Testing
 
+Run the in-memory React component tests with Mocha:
+
 ```bash
-    npm run test:mocha
+pnpm test:mocha
 ```
 
-## Trademark
+Run the service-backed browser tests with Playwright:
 
-This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these trademarks
-or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
-Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
+```bash
+pnpm test:playwright
+```
+
+Playwright starts Tinylicious and the webpack development server.
+If Tinylicious is already listening on port 7070, Playwright reuses that server.
+Each test creates a new Fluid document.
+A collaboration test opens each additional page in a separate browser context.
+Playwright closes the additional contexts after the test.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
