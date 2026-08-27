@@ -723,6 +723,49 @@ Snapshots exist for versions: [
 			assert.deepEqual([...snapshots.keys()], ["1.json", "2.json", "3.json"]);
 		});
 
+		it("custom snapshot file name format", () => {
+			const snapshotDirectory = "dir";
+			const [fileSystem, snapshots] = inMemorySnapshotFileSystem();
+			const snapshotFileNameFormat = {
+				prefix: "point-schema-",
+				suffix: "-snapshot",
+			};
+			const schema = new TreeViewConfiguration({ schema: [] });
+
+			snapshotSchemaCompatibility({
+				version: "1.0.0",
+				schema,
+				fileSystem,
+				minVersionForCollaboration: "1.0.0",
+				mode: "update",
+				snapshotDirectory,
+				snapshotFileNameFormat,
+				snapshotUnchangedVersions: true,
+			});
+
+			snapshots.set("unrelated.json", "{}");
+
+			snapshotSchemaCompatibility({
+				version: "2.0.0",
+				schema,
+				fileSystem,
+				minVersionForCollaboration: "1.0.0",
+				mode: "update",
+				snapshotDirectory,
+				snapshotFileNameFormat,
+				snapshotUnchangedVersions: true,
+			});
+
+			assert.deepEqual(
+				[...snapshots.keys()],
+				[
+					"point-schema-1.0.0-snapshot.json",
+					"unrelated.json",
+					"point-schema-2.0.0-snapshot.json",
+				],
+			);
+		});
+
 		it("snapshotUnchangedVersions", () => {
 			const snapshotDirectory = "dir";
 			const [fileSystem] = inMemorySnapshotFileSystem();

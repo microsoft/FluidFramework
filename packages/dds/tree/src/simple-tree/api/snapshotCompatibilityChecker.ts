@@ -264,6 +264,26 @@ export interface SnapshotSchemaCompatibilityOptions {
 	readonly snapshotDirectory: string;
 
 	/**
+	 * Customizes the names of schema snapshot files.
+	 * @remarks
+	 * Snapshot files are named by surrounding the version with the provided strings, followed by the ".json" extension.
+	 * For example, `{ prefix: "schema-", suffix: "-snapshot" }` produces `schema-1.0.0-snapshot.json` for version `1.0.0`.
+	 *
+	 * Only JSON files matching this format are treated as schema snapshots.
+	 */
+	readonly snapshotFileNameFormat?: {
+		/**
+		 * Text to include before the version.
+		 */
+		readonly prefix?: string;
+
+		/**
+		 * Text to include after the version and before the ".json" extension.
+		 */
+		readonly suffix?: string;
+	};
+
+	/**
 	 * How the `snapshotDirectory` is accessed.
 	 */
 	readonly fileSystem: SnapshotFileSystem;
@@ -492,6 +512,7 @@ export function snapshotSchemaCompatibility(
 	const checker = new SnapshotCompatibilityChecker(
 		options.snapshotDirectory,
 		options.fileSystem,
+		options.snapshotFileNameFormat,
 	);
 	const {
 		version: currentVersion,
@@ -743,12 +764,19 @@ export class SnapshotCompatibilityChecker {
 		 * How the `snapshotDirectory` is accessed.
 		 */
 		private readonly fileSystemMethods: SnapshotFileSystem,
+		/**
+		 * Text surrounding the version in snapshot file names.
+		 */
+		private readonly snapshotFileNameFormat: {
+			readonly prefix?: string;
+			readonly suffix?: string;
+		} = {},
 	) {}
 
 	public writeSchemaSnapshot(snapshotName: string, snapshot: JsonCompatibleReadOnly): void {
 		const fullPath = this.fileSystemMethods.join(
 			this.snapshotDirectory,
-			`${snapshotName}.json`,
+			this.getSnapshotFileName(snapshotName),
 		);
 		this.ensureSnapshotDirectoryExists();
 		this.fileSystemMethods.writeFileSync(fullPath, JSON.stringify(snapshot, undefined, "\t"), {
@@ -764,7 +792,7 @@ export class SnapshotCompatibilityChecker {
 	public readSchemaSnapshotRaw(snapshotName: string): JsonCompatibleReadOnly {
 		const fullPath = this.fileSystemMethods.join(
 			this.snapshotDirectory,
-			`${snapshotName}.json`,
+			this.getSnapshotFileName(snapshotName),
 		);
 		const snapshot = JSON.parse(
 			this.fileSystemMethods.readFileSync(fullPath, "utf8"),
@@ -782,8 +810,8 @@ export class SnapshotCompatibilityChecker {
 		const files = this.fileSystemMethods.readdirSync(this.snapshotDirectory);
 		const versions: string[] = [];
 		for (const file of files) {
-			if (file.endsWith(".json")) {
-				const snapshotName = file.slice(0, ".json".length * -1);
+			const snapshotName = this.getSnapshotName(file);
+			if (snapshotName !== undefined) {
 				versions.push(snapshotName);
 			}
 		}
@@ -799,6 +827,32 @@ export class SnapshotCompatibilityChecker {
 
 	public ensureSnapshotDirectoryExists(): void {
 		this.fileSystemMethods.mkdirSync(this.snapshotDirectory, { recursive: true });
+	}
+
+	private getSnapshotFileName(snapshotName: string): string {
+		const { prefix = "", suffix = "" } = this.snapshotFileNameFormat;
+		return `${prefix}${snapshotName}${suffix}.json`;
+	}
+
+	private getSnapshotName(fileName: string): string | undefined {
+		const extension = ".json";
+		if (!fileName.endsWith(extension)) {
+			return undefined;
+		}
+
+		const { prefix = "", suffix = "" } = this.snapshotFileNameFormat;
+		const fileNameWithoutExtension = fileName.slice(0, -extension.length);
+		if (
+			!fileNameWithoutExtension.startsWith(prefix) ||
+			!fileNameWithoutExtension.endsWith(suffix)
+		) {
+			return undefined;
+		}
+
+		return fileNameWithoutExtension.slice(
+			prefix.length,
+			fileNameWithoutExtension.length - suffix.length,
+		);
 	}
 }
 
