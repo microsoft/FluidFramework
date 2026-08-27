@@ -686,7 +686,7 @@ export function coalesceUniformChunks(
 	let mutated = false;
 	for (let chunkIndex = rangeStart + 1; chunkIndex < rangeEnd; chunkIndex++) {
 		const current = chunks[chunkIndex] ?? oob();
-		const previous = result[result.length - 1] ?? oob();
+		const previous = result.at(-1) ?? oob();
 		const coalesced = tryCoalesceUniformChunks(previous, current, policy);
 		if (coalesced === undefined) {
 			result.push(current);
