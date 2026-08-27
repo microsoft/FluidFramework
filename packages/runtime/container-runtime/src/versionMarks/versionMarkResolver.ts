@@ -30,17 +30,12 @@ export interface IHistoricalOpReader {
 }
 
 /**
- * Result of resolving a pending batchId. A resolved result includes the matched batch's last op server
- * timestamp when available. The property is optional for compatibility with previously stored results.
+ * Result of resolving a pending batchId.
  *
  * @legacy @beta
  */
 export type ResolveResult =
-	| {
-			readonly kind: "resolved";
-			readonly sequenceNumber: number;
-			readonly timestamp?: number;
-	  }
+	| { readonly kind: "resolved"; readonly sequenceNumber: number }
 	| { readonly kind: "pending" }
 	| { readonly kind: "unresolvable" };
 
@@ -58,11 +53,7 @@ export type VersionMarkCapture =
 			readonly batchId: string;
 			readonly sequenceNumberLowerBound: number;
 	  }
-	| {
-			readonly kind: "resolved";
-			readonly sequenceNumber: number;
-			readonly timestamp?: number;
-	  };
+	| { readonly kind: "resolved"; readonly sequenceNumber: number };
 
 /**
  * Runtime-owned resolver for app-stored version mark locators.
@@ -74,16 +65,13 @@ export interface IVersionMarkResolver {
 	 * Captures a version mark at the current point. Seals the current outbound batch first (so a just-made
 	 * local edit has a stable `batchId`, which is only assigned when a batch is flushed), then returns the
 	 * mark data atomically: a `pending` capture (`batchId` + `sequenceNumberLowerBound`) when there is an
-	 * unacked local batch, or a `resolved` capture (`sequenceNumber` + the last processed op's server
-	 * `timestamp`) when there is no in-flight local work. The timestamp property is optional both for
-	 * compatibility with previously stored captures and because it is `undefined` when neither a last
-	 * processed message nor a last-summary message is available.
+	 * unacked local batch, or a `resolved` capture (`sequenceNumber`) when there is no in-flight local work.
 	 *
 	 * @remarks Sealing the batch is a side effect (it submits the current batch), so capture at savepoint
 	 * boundaries, not per keystroke.
 	 *
-	 * @returns The pending batch identity and inclusive sequence number lower bound, or the current sequence
-	 * number and corresponding op timestamp (when available) when there is no pending local batch.
+	 * @returns The pending batch identity and inclusive sequence number lower bound, or the current sequence number
+	 * when there is no pending local batch.
 	 */
 	sealAndCaptureVersionMark(): VersionMarkCapture;
 	/**
@@ -93,21 +81,18 @@ export interface IVersionMarkResolver {
 	 *
 	 * @param batchId - The stable identity of the pending batch.
 	 * @param sequenceNumberLowerBound - The inclusive lower bound for the historical op search.
-	 * @returns The resolved sequence number and server timestamp, or a result indicating that the batch
-	 * remains pending or can no longer be resolved.
+	 * @returns The resolved sequence number, or a result indicating that the batch remains pending or can
+	 * no longer be resolved.
 	 */
 	resolve(batchId: string, sequenceNumberLowerBound: number): Promise<ResolveResult>;
 	/**
-	 * Subscribes to inbound batch sequencing: fires `(batchId, sequenceNumber, timestamp)` per batch so any
-	 * connected client can promote a matching pending mark. Returns an unsubscribe function.
+	 * Subscribes to inbound batch sequencing: fires `(batchId, sequenceNumber)` per batch so any connected
+	 * client can promote a matching pending mark. Returns an unsubscribe function.
 	 *
-	 * @param listener - Called with the stable batch identity, its final sequence number, and the final op's
-	 * server timestamp.
+	 * @param listener - Called with the stable batch identity and its final sequence number.
 	 * @returns A function that unsubscribes the listener.
 	 */
-	onBatchSequenced(
-		listener: (batchId: string, sequenceNumber: number, timestamp?: number) => void,
-	): () => void;
+	onBatchSequenced(listener: (batchId: string, sequenceNumber: number) => void): () => void;
 }
 
 /**
@@ -115,7 +100,6 @@ export interface IVersionMarkResolver {
  */
 export interface VersionMarkResolverRuntimeHooks {
 	readonly getCurrentSequenceNumber: () => number;
-	readonly getCurrentTimestamp: () => number | undefined;
 	readonly getCurrentMinimumSequenceNumber: () => number;
 	readonly getCurrentPendingBatchId: () => string | undefined;
 	/** Logs faults from app-supplied `onBatchSequenced` listeners (see {@link VersionMarkResolver.processInboundBatch}). */
@@ -149,12 +133,9 @@ export interface VersionMarkResolverRuntimeHooks {
  * @internal
  */
 export class VersionMarkResolver implements IVersionMarkResolver {
-	private readonly resolvedBatchById = new Map<
-		string,
-		{ readonly sequenceNumber: number; readonly timestamp: number }
-	>();
+	private readonly sequenceNumberByBatchId = new Map<string, number>();
 	private readonly batchListeners = new Set<
-		(batchId: string, sequenceNumber: number, timestamp: number) => void
+		(batchId: string, sequenceNumber: number) => void
 	>();
 	/**
 	 * Sticky flag: false until the feature is first used this session (a pending capture or a listener).
@@ -178,11 +159,7 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 		const batchId = this.hooks.getCurrentPendingBatchId();
 		if (batchId === undefined) {
 			// No unacked local batch: the mark already points at a durable sequence number.
-			return {
-				kind: "resolved",
-				sequenceNumber: referenceSequenceNumber,
-				timestamp: this.hooks.getCurrentTimestamp(),
-			};
+			return { kind: "resolved", sequenceNumber: referenceSequenceNumber };
 		}
 		// A pending mark needs its batch tracked so resolve() can promote it from the live map.
 		this.tracking = true;
@@ -205,8 +182,8 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 		let resolvedSequenceNumber: number | undefined;
 		try {
 			// Fast path: batch sequenced live this session.
-			const resolvedBatch = this.sessionResolutionFor(batchId);
-			if (resolvedBatch === undefined) {
+			const sequenceNumber = this.sessionSequenceFor(batchId);
+			if (sequenceNumber === undefined) {
 				const reader = this.hooks.getHistoricalOpReader?.();
 				if (reader === undefined) {
 					// No reader: the batch may still sequence live, so report pending.
@@ -229,8 +206,8 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 			}
 			path = "session";
 			outcome = "resolved";
-			resolvedSequenceNumber = resolvedBatch.sequenceNumber;
-			return { kind: "resolved", ...resolvedBatch };
+			resolvedSequenceNumber = sequenceNumber;
+			return { kind: "resolved", sequenceNumber };
 		} finally {
 			this.hooks.logger.sendTelemetryEvent({
 				eventName: "Resolve",
@@ -282,11 +259,7 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 					const update = inboundVersionMarkUpdate(inboundResult, carriedBatchId);
 					carriedBatchId = update.carriedBatchId;
 					if (update.sequenced?.batchId === batchId) {
-						return {
-							kind: "resolved",
-							sequenceNumber: update.sequenced.sequenceNumber,
-							timestamp: update.sequenced.timestamp,
-						};
+						return { kind: "resolved", sequenceNumber: update.sequenced.sequenceNumber };
 					}
 				}
 			}
@@ -331,7 +304,7 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 	}
 
 	public onBatchSequenced(
-		listener: (batchId: string, sequenceNumber: number, timestamp?: number) => void,
+		listener: (batchId: string, sequenceNumber: number) => void,
 	): () => void {
 		// A subscriber wants live promotions, so start tracking inbound batches from here on.
 		this.tracking = true;
@@ -341,32 +314,29 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 		};
 	}
 
-	/** The resolved point for a batch seen live this session, or undefined. */
-	private sessionResolutionFor(
-		batchId: string,
-	): { readonly sequenceNumber: number; readonly timestamp: number } | undefined {
-		return this.resolvedBatchById.get(batchId);
+	/** The sequence number for a batch seen live this session, or undefined. */
+	private sessionSequenceFor(batchId: string): number | undefined {
+		return this.sequenceNumberByBatchId.get(batchId);
 	}
 
 	/** Records an inbound batch and notifies listeners so any client can promote matching pending marks. */
-	public processInboundBatch(
-		batchId: string,
-		sequenceNumber: number,
-		timestamp: number,
-	): void {
-		const existingResolution = this.resolvedBatchById.get(batchId);
-		if (existingResolution !== undefined) {
-			// NOTE: It's possible (but exceedingly rare) that this is a spurious duplicated batch,
-			// with a different sequence number/timestamp.
-			// Rather than asserting or overwriting, we let the earlier version mark stand, it is sufficient.
+	public processInboundBatch(batchId: string, sequenceNumber: number): void {
+		const existingSequenceNumber = this.sequenceNumberByBatchId.get(batchId);
+		if (existingSequenceNumber === sequenceNumber) {
 			return;
 		}
+		// The protocol guarantees a `batchId` maps to one sequence number; a conflicting remap would also
+		// break the insertion-order invariant MSN eviction relies on, so fail loudly instead of overwriting.
+		assert(
+			existingSequenceNumber === undefined,
+			0xd34 /* version mark batchId remapped to a different sequence number */,
+		);
 
-		this.resolvedBatchById.set(batchId, { sequenceNumber, timestamp });
+		this.sequenceNumberByBatchId.set(batchId, sequenceNumber);
 		this.evictBelowMinimumSequenceNumber();
 		for (const listener of this.batchListeners) {
 			try {
-				listener(batchId, sequenceNumber, timestamp);
+				listener(batchId, sequenceNumber);
 			} catch (error) {
 				// Isolate each app listener (like the container's EventEmitterWithErrorHandling): one throw
 				// must not abort op processing or starve the rest. Log and continue rather than fault the
@@ -384,11 +354,11 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 	 */
 	private evictBelowMinimumSequenceNumber(): void {
 		const minimumSequenceNumber = this.hooks.getCurrentMinimumSequenceNumber();
-		for (const [id, resolution] of this.resolvedBatchById) {
-			if (resolution.sequenceNumber >= minimumSequenceNumber) {
+		for (const [id, sequenceNumber] of this.sequenceNumberByBatchId) {
+			if (sequenceNumber >= minimumSequenceNumber) {
 				break;
 			}
-			this.resolvedBatchById.delete(id);
+			this.sequenceNumberByBatchId.delete(id);
 		}
 	}
 }

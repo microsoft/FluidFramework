@@ -18,12 +18,9 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules -- test targets the inbound-batch helper directly
 } from "../../versionMarks/inboundBatch.js";
 
-/** The helper reads the sequence number and server timestamp off messages. */
+/** The helper only reads `sequenceNumber` off messages. */
 function msg(sequenceNumber: number): InboundSequencedContainerRuntimeMessage {
-	return {
-		sequenceNumber,
-		timestamp: sequenceNumber * 1000,
-	} as unknown as InboundSequencedContainerRuntimeMessage;
+	return { sequenceNumber } as unknown as InboundSequencedContainerRuntimeMessage;
 }
 
 function batchStart(batchId: string | undefined, keyMessageSeq: number): BatchStartInfo {
@@ -31,10 +28,7 @@ function batchStart(batchId: string | undefined, keyMessageSeq: number): BatchSt
 		batchId,
 		clientId: "client",
 		batchStartCsn: 3,
-		keyMessage: {
-			sequenceNumber: keyMessageSeq,
-			timestamp: keyMessageSeq * 1000,
-		} as unknown as ISequencedDocumentMessage,
+		keyMessage: { sequenceNumber: keyMessageSeq } as unknown as ISequencedDocumentMessage,
 	};
 }
 
@@ -64,7 +58,7 @@ describe("inboundVersionMarkUpdate", () => {
 				"stale_[9]",
 			);
 			assert.deepEqual(result, {
-				sequenced: { batchId: "b_[3]", sequenceNumber: 12, timestamp: 12000 },
+				sequenced: { batchId: "b_[3]", sequenceNumber: 12 },
 				carriedBatchId: undefined,
 			});
 		});
@@ -75,7 +69,7 @@ describe("inboundVersionMarkUpdate", () => {
 				undefined,
 			);
 			assert.deepEqual(result, {
-				sequenced: { batchId: "b_[3]", sequenceNumber: 42, timestamp: 42000 },
+				sequenced: { batchId: "b_[3]", sequenceNumber: 42 },
 				carriedBatchId: undefined,
 			});
 		});
@@ -86,11 +80,7 @@ describe("inboundVersionMarkUpdate", () => {
 				undefined,
 			);
 			assert.deepEqual(result, {
-				sequenced: {
-					batchId: generateBatchId("client", 3),
-					sequenceNumber: 7,
-					timestamp: 7000,
-				},
+				sequenced: { batchId: generateBatchId("client", 3), sequenceNumber: 7 },
 				carriedBatchId: undefined,
 			});
 		});
@@ -113,7 +103,7 @@ describe("inboundVersionMarkUpdate", () => {
 		it("records the carried id at the batch's last op and clears the carry", () => {
 			const result = inboundVersionMarkUpdate(nextBatchMessage(22, true), "b_[3]");
 			assert.deepEqual(result, {
-				sequenced: { batchId: "b_[3]", sequenceNumber: 22, timestamp: 22000 },
+				sequenced: { batchId: "b_[3]", sequenceNumber: 22 },
 				carriedBatchId: undefined,
 			});
 		});
@@ -133,7 +123,7 @@ describe("inboundVersionMarkUpdate", () => {
 
 			const end = inboundVersionMarkUpdate(nextBatchMessage(32, true), mid.carriedBatchId);
 			assert.deepEqual(end, {
-				sequenced: { batchId: "b_[3]", sequenceNumber: 32, timestamp: 32000 },
+				sequenced: { batchId: "b_[3]", sequenceNumber: 32 },
 				carriedBatchId: undefined,
 			});
 		});

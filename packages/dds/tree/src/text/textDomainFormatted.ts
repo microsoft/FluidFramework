@@ -392,7 +392,7 @@ export namespace FormattedText {
 			public onCharactersChanged(
 				callback: (ops: readonly PlainText.TextOp[] | undefined) => void,
 			): () => void {
-				return TreeBeta.on(this.content, "nodeChanged", ({ delta }) =>
+				return TreeAlpha.on(this.content, "nodeChanged", ({ delta }) =>
 					processCharactersChangedDelta(
 						delta,
 						(index) => this.getAtomCharacterAt(index),
@@ -408,7 +408,7 @@ export namespace FormattedText {
 			public onContentChanged(
 				callback: (ops: readonly PlainText.TextOp[] | undefined) => void,
 			): () => void {
-				return TreeBeta.on(this.content, "treeChanged", ({ delta }) =>
+				return TreeAlpha.on(this.content, "treeChanged", ({ delta }) =>
 					processCharactersChangedDelta(
 						delta,
 						(index) => this.getAtomCharacterAt(index),
