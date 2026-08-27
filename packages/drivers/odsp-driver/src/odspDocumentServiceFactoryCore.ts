@@ -41,7 +41,6 @@ import {
 	NonPersistentCache,
 } from "./odspCache.js";
 import { OdspDocumentService } from "./odspDocumentService.js";
-import { OdspDriverUrlResolver } from "./odspDriverUrlResolver.js";
 import { odspDriverCompatDetailsForLoader } from "./odspLayerCompatState.js";
 import {
 	type IExistingFileInfo,
