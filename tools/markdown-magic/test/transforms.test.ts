@@ -23,7 +23,7 @@ async function generate(
 	const validatedOptions = transform.validateOptions(options);
 	const nodes = await transform.generate(
 		validatedOptions,
-		registry.createContext(path.join(testDirectory, "fixture.md"), "markdown"),
+		registry.createContext(path.join(testDirectory, "fixture.md"), "markdown", 2),
 	);
 	return serializeNodes(nodes, "markdown");
 }
@@ -109,18 +109,14 @@ test("transform options reject null values", () => {
 	);
 });
 
-test("section transforms reject heading levels outside 1 through 6", () => {
+test("section transforms reject the removed heading level option", () => {
 	const registry = createTransformRegistry();
 	for (const transformName of ["api-docs", "installation-instructions", "package-scripts"]) {
 		const transform = registry.transforms[transformName];
 		assert(transform !== undefined);
 		assert.throws(
-			() => transform.validateOptions({ headingLevel: 0 }),
-			/Option "headingLevel".*must be between 1 and 6/,
-		);
-		assert.throws(
-			() => transform.validateOptions({ headingLevel: 7 }),
-			/Option "headingLevel".*must be between 1 and 6/,
+			() => transform.validateOptions({ headingLevel: 2 }),
+			/Unknown option "headingLevel"/,
 		);
 	}
 });

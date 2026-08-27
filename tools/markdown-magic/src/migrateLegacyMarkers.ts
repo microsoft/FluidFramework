@@ -28,7 +28,7 @@ const transformNames = {
 	TRADEMARK: "trademark",
 } as const;
 
-const integerOptions = new Set(["start", "end", "headingLevel"]);
+const integerOptions = new Set(["start", "end"]);
 
 /**
  * Converts a legacy string value to its JSON value.
@@ -76,7 +76,10 @@ function parseLegacyOptions(
 		}
 		const key = option.slice(0, separator);
 		const value = option.slice(separator + 1);
-		if (transformName === "library-readme-header" && key === "scripts") {
+		if (
+			(transformName === "library-readme-header" && key === "scripts") ||
+			key === "headingLevel"
+		) {
 			continue;
 		}
 		options[key] = parseLegacyValue(value, key);

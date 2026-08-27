@@ -6,12 +6,11 @@ The transform reads the package name from `package.json` and uses it in the buil
 
 ## Options
 
-| Option            | Type    | Default          | Description                                             |
-| ----------------- | ------- | ---------------- | ------------------------------------------------------- |
-| `packageJsonPath` | string  | `./package.json` | Package file path relative to the destination document. |
-| `includeHeading`  | boolean | `true`           | Include the `Getting Started` heading.                  |
-| `headingLevel`    | integer | `2`              | Heading level from `1` through `6`.                     |
-| `usesTinylicious` | boolean | `true`           | Include the Tinylicious setup steps.                    |
+| Option            | Type    | Default          | Description                                             | Notes                                                                                                                                    |
+| ----------------- | ------- | ---------------- | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `packageJsonPath` | string  | `./package.json` | Package file path relative to the destination document. | None.                                                                                                                                    |
+| `includeHeading`  | boolean | `true`           | Include the `Getting Started` heading.                  | When enabled, the transform determines the depth from the marker position. See [Generated headings](../../README.md#generated-headings). |
+| `usesTinylicious` | boolean | `true`           | Include the Tinylicious setup steps.                    | None.                                                                                                                                    |
 
 ## Example
 

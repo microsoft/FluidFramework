@@ -4,7 +4,7 @@
 
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
-## Getting Started
+# Getting Started
 
 You can run this example using the following steps:
 

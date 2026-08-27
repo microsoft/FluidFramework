@@ -93,6 +93,14 @@ The tool rejects these inputs:
 
 The tool validates and generates all regions in one destination file before it writes that file. Thus, a failed region does not cause a partial write to that file. The command processes multiple files concurrently. A different file can finish before an error stops the command.
 
+### Generated headings
+
+Transforms that generate a section determine its heading depth from the marker position. A following authored heading defines the depth. Otherwise, the nearest preceding authored heading defines the depth. A section after the document title uses level two. A section in a document without authored headings uses level one.
+
+The tool ignores headings inside generated regions when it determines the depth. Thus, existing generated content does not change the result. At the end of a section, the generated heading is a sibling of the nearest preceding heading. To generate a child section, put the marker before an authored child heading of the required depth.
+
+The tool stops with an error if adjusted headings in a shared template would be deeper than level six.
+
 ## Transforms
 
 Transform names use kebab case. Option names use camel case. Option values use native JSON types. For example, use `true` instead of `"true"`.

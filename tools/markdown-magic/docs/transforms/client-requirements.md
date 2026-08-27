@@ -4,18 +4,17 @@ Use `client-requirements` to generate the minimum client requirements section fr
 
 ## Options
 
-| Option           | Type    | Default | Description                                        |
-| ---------------- | ------- | ------- | -------------------------------------------------- |
-| `includeHeading` | boolean | `true`  | Include the `Minimum Client Requirements` heading. |
-| `headingLevel`   | integer | `2`     | Heading level from `1` through `6`.                |
-
-The transform adjusts headings in the shared template relative to `headingLevel`.
+| Option           | Type    | Default | Description                                        | Notes                                                                                                                                                                                 |
+| ---------------- | ------- | ------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `includeHeading` | boolean | `true`  | Include the `Minimum Client Requirements` heading. | When enabled, the transform determines the depth from the marker position and adjusts template headings relative to it. See [Generated headings](../../README.md#generated-headings). |
 
 ## Example
 
-The following marker generates a level-three section:
+The following marker generates a level-three section because it follows a level-three heading:
 
 ```markdown
-<!-- markdown-magic:begin {"transform":"client-requirements","headingLevel":3} -->
+### Existing section
+
+<!-- markdown-magic:begin {"transform":"client-requirements"} -->
 <!-- markdown-magic:end -->
 ```

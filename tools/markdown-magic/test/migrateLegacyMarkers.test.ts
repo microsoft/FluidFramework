@@ -44,6 +44,21 @@ test("migrates booleans and removes an ignored library-header option", () => {
 	);
 });
 
+test("removes the legacy heading level option", () => {
+	const source = [
+		"<!-- AUTO-GENERATED-CONTENT:START (HELP:includeHeading=TRUE&headingLevel=3) -->",
+		"<!-- AUTO-GENERATED-CONTENT:END -->",
+	].join("\n");
+
+	assert.equal(
+		migrateLegacyMarkers(source, "fixture.md"),
+		[
+			'<!-- markdown-magic:begin {"transform":"help","includeHeading":true} -->',
+			"<!-- markdown-magic:end -->",
+		].join("\n"),
+	);
+});
+
 test("migrates an empty legacy option list", () => {
 	const source = [
 		"<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER:) -->",

@@ -145,10 +145,12 @@ function sliceLines(source: string, start?: number, end?: number): string {
 function createContext(
 	destinationPath: string,
 	destinationFormat: DocumentFormat,
+	sectionHeadingDepth: import("mdast").Heading["depth"],
 ): TransformContext {
 	return {
 		destinationPath,
 		destinationFormat,
+		sectionHeadingDepth,
 		resolvePath(relativePath) {
 			return path.resolve(path.dirname(destinationPath), relativePath);
 		},

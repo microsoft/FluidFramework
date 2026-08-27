@@ -30,7 +30,7 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
-## Contribution Guidelines
+# Contribution Guidelines
 
 There are many ways to [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid.
 

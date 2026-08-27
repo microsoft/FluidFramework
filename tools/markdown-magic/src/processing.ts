@@ -5,6 +5,7 @@
 
 import { readFile, writeFile } from "node:fs/promises";
 
+import { inferSectionHeadingDepth } from "./headings.js";
 import { parseDocument, serializeNodes } from "./processorProfiles.js";
 import { findGeneratedRegions } from "./regions.js";
 import type { DocumentFormat, TransformRegistry } from "./types.js";
@@ -110,7 +111,11 @@ export async function processDocument(
 			);
 		}
 		const options = transform.validateOptions(region.options);
-		const context = registry.createContext(filePath, region.destinationFormat);
+		const context = registry.createContext(
+			filePath,
+			region.destinationFormat,
+			inferSectionHeadingDepth(document, regions, region),
+		);
 		const nodes = await transform.generate(options, context);
 		const sourcePath = nodes.sourcePath ?? filePath;
 		validateDestinationCompatibility(nodes, region.destinationFormat, sourcePath, filePath);

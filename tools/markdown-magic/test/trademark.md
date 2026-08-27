@@ -14,13 +14,13 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 
 <!-- markdown-magic:end -->
 
-<!-- markdown-magic:begin {"transform":"trademark","headingLevel":2} -->
+<!-- markdown-magic:begin {"transform":"trademark"} -->
 
 <!-- prettier-ignore-start -->
 
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
-## Trademark
+# Trademark
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
 

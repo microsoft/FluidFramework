@@ -57,7 +57,6 @@ interface PackageMetadata {
 
 interface HeadingOptions {
 	includeHeading: boolean;
-	headingLevel: number;
 }
 
 type ScopeKind = keyof typeof scopeTemplates | "FRAMEWORK";
@@ -145,7 +144,6 @@ const packageSchema = {
 
 const headingSchema = {
 	includeHeading: { type: "boolean", default: true },
-	headingLevel: { type: "integer", default: 2, minimum: 1, maximum: 6 },
 } as const;
 
 const scopeValues = [
@@ -197,7 +195,7 @@ async function readTemplateNodes(
  * Creates a section from a template and adjusts nested heading depths.
  *
  * @param {string} templateName - The template file name.
- * @param {{ includeHeading: boolean; headingLevel: number }} options - The heading options.
+ * @param {HeadingOptions} options - The heading options.
  * @param {string} headingText - The optional section heading text.
  * @param {object} context - The transform context.
  * @returns {Promise<import("mdast").RootContent[]>} The section nodes.
@@ -208,13 +206,11 @@ async function generateTemplateSection(
 	headingText: string,
 	context: TransformContext,
 ): Promise<RootContent[]> {
-	if (options.headingLevel < 1 || options.headingLevel > 6) {
-		throw new TypeError(`Option "headingLevel" must be between 1 and 6.`);
-	}
 	const nodes = await readTemplateNodes(templateName, context);
 	for (const node of nodes) {
 		if (node.type === "heading") {
-			node.depth = (node.depth + options.headingLevel) as import("mdast").Heading["depth"];
+			node.depth = (node.depth +
+				context.sectionHeadingDepth) as import("mdast").Heading["depth"];
 			if (node.depth > 6) {
 				throw new TypeError(`Template heading depth exceeds 6.`);
 			}
@@ -224,7 +220,7 @@ async function generateTemplateSection(
 		? [
 				{
 					type: "heading",
-					depth: options.headingLevel as import("mdast").Heading["depth"],
+					depth: context.sectionHeadingDepth,
 					children: [{ type: "text", value: headingText }],
 				},
 				...nodes,
@@ -326,7 +322,7 @@ async function generateScopeNotice(
  *
  * @param {string} packageName - The package name to install.
  * @param {boolean} devDependency - Whether to add the development-dependency flag.
- * @param {{ includeHeading: boolean; headingLevel: number }} options - The heading options.
+ * @param {HeadingOptions} options - The heading options.
  * @param {object} context - The transform context.
  * @returns {import("mdast").RootContent[]} The installation section nodes.
  */
@@ -337,7 +333,7 @@ function generateInstallation(
 	context: TransformContext,
 ): RootContent[] {
 	const heading = options.includeHeading
-		? `${"#".repeat(options.headingLevel)} Installation\n\n`
+		? `${"#".repeat(context.sectionHeadingDepth)} Installation\n\n`
 		: "";
 	return parseFragment(
 		`${heading}To get started, install the package by running the following command:\n\n\`\`\`bash\nnpm i ${packageName}${devDependency ? " -D" : ""}\n\`\`\``,
@@ -350,7 +346,7 @@ function generateInstallation(
  * Generates a link to the package API documentation.
  *
  * @param {string} packageName - The package name.
- * @param {{ includeHeading: boolean; headingLevel: number }} options - The heading options.
+ * @param {HeadingOptions} options - The heading options.
  * @param {object} context - The transform context.
  * @returns {import("mdast").RootContent[]} The API documentation section nodes.
  */
@@ -363,7 +359,7 @@ function generateApiDocs(
 		? packageName.slice(packageName.indexOf("/") + 1)
 		: packageName;
 	const heading = options.includeHeading
-		? `${"#".repeat(options.headingLevel)} API Documentation\n\n`
+		? `${"#".repeat(context.sectionHeadingDepth)} API Documentation\n\n`
 		: "";
 	return parseFragment(
 		`${heading}API documentation for **${packageName}** is available at <https://fluidframework.com/docs/apis/${shortName}>.`,
@@ -376,7 +372,7 @@ function generateApiDocs(
  * Generates instructions for the supported special package exports.
  *
  * @param {Record<string, unknown>} packageMetadata - The package metadata.
- * @param {{ includeHeading: boolean; headingLevel: number }} options - The heading options.
+ * @param {HeadingOptions} options - The heading options.
  * @param {object} context - The transform context.
  * @returns {import("mdast").RootContent[]} The import section nodes, or an empty array if no special export exists.
  */
@@ -401,7 +397,7 @@ function generateImportInstructions(
 	}
 	const packageName = packageMetadata.name;
 	const heading = options.includeHeading
-		? `${"#".repeat(options.headingLevel)} Importing from this package\n\n`
+		? `${"#".repeat(context.sectionHeadingDepth)} Importing from this package\n\n`
 		: "";
 	const paragraphs = [
 		"This package leverages [package.json exports](https://nodejs.org/api/packages.html#exports) to separate its APIs by support level.\nFor more information on the related support guarantees, see [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).",
@@ -418,7 +414,7 @@ function generateImportInstructions(
  *
  * @param {Record<string, unknown>} packageMetadata - The package metadata.
  * @param {boolean} usesTinylicious - Whether to include Tinylicious setup steps.
- * @param {{ includeHeading: boolean; headingLevel: number }} options - The heading options.
+ * @param {HeadingOptions} options - The heading options.
  * @param {object} context - The transform context.
  * @returns {import("mdast").RootContent[]} The setup section nodes.
  */
@@ -429,7 +425,7 @@ function generateGettingStarted(
 	context: TransformContext,
 ): RootContent[] {
 	const heading = options.includeHeading
-		? `${"#".repeat(options.headingLevel)} Getting Started\n\n`
+		? `${"#".repeat(context.sectionHeadingDepth)} Getting Started\n\n`
 		: "";
 	const steps = [
 		"1. Enable [corepack](https://nodejs.org/docs/latest-v16.x/api/corepack.html) by running `corepack enable`.",
@@ -456,12 +452,13 @@ function generateGettingStarted(
  * Generates a GitHub Flavored Markdown table of package scripts.
  *
  * @param {Record<string, string>} scripts - The package scripts.
- * @param {{ includeHeading: boolean; headingLevel: number }} options - The heading options.
+ * @param {HeadingOptions} options - The heading options.
  * @returns {import("mdast").RootContent[]} The optional heading and table nodes.
  */
 function generateScripts(
 	scripts: Record<string, string>,
 	options: HeadingOptions,
+	context: TransformContext,
 ): RootContent[] {
 	const rows: import("mdast").TableRow[] = Object.entries(scripts).map(([name, command]) => ({
 		type: "tableRow",
@@ -488,7 +485,7 @@ function generateScripts(
 		? [
 				{
 					type: "heading",
-					depth: options.headingLevel as import("mdast").Heading["depth"],
+					depth: context.sectionHeadingDepth,
 					children: [{ type: "text", value: "Scripts" }],
 				},
 				table,
@@ -612,7 +609,7 @@ export function createReadmeTransforms(): Record<string, Transform<Record<string
 		{ ...packageSchema, ...headingSchema },
 		async (options, context) => {
 			const packageMetadata = await readPackage(context, options);
-			return generateScripts(packageMetadata.scripts ?? {}, options);
+			return generateScripts(packageMetadata.scripts ?? {}, options, context);
 		},
 	);
 
@@ -630,7 +627,7 @@ export function createReadmeTransforms(): Record<string, Transform<Record<string
 		async (options, context) => {
 			const packageMetadata = await readPackage(context, options);
 			const packageIsPublic = isPublic(packageMetadata);
-			const sectionOptions = { includeHeading: true, headingLevel: 2 };
+			const sectionOptions = { includeHeading: true };
 			return [
 				...(await generateScopeNotice(
 					(options.packageScopeNotice as ScopeKind | undefined) ??
@@ -675,7 +672,7 @@ export function createReadmeTransforms(): Record<string, Transform<Record<string
 				? generateGettingStarted(
 						await readPackage(context, options),
 						options.usesTinylicious,
-						{ includeHeading: true, headingLevel: 2 },
+						{ includeHeading: true },
 						context,
 					)
 				: [],
@@ -693,10 +690,10 @@ export function createReadmeTransforms(): Record<string, Transform<Record<string
 		},
 		async (options, context) => {
 			const packageMetadata = await readPackage(context, options);
-			const sectionOptions = { includeHeading: true, headingLevel: 2 };
+			const sectionOptions = { includeHeading: true };
 			return [
 				...(options.scripts
-					? generateScripts(packageMetadata.scripts ?? {}, sectionOptions)
+					? generateScripts(packageMetadata.scripts ?? {}, sectionOptions, context)
 					: []),
 				...((options.clientRequirements ?? isPublic(packageMetadata))
 					? await generateTemplateSection(

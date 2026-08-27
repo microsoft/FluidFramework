@@ -4,12 +4,9 @@ Use `contribution-guidelines` to generate the contribution guidelines section fr
 
 ## Options
 
-| Option           | Type    | Default | Description                                    |
-| ---------------- | ------- | ------- | ---------------------------------------------- |
-| `includeHeading` | boolean | `true`  | Include the `Contribution Guidelines` heading. |
-| `headingLevel`   | integer | `2`     | Heading level from `1` through `6`.            |
-
-The transform adjusts headings in the shared template relative to `headingLevel`.
+| Option           | Type    | Default | Description                                    | Notes                                                                                                                                                                                 |
+| ---------------- | ------- | ------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `includeHeading` | boolean | `true`  | Include the `Contribution Guidelines` heading. | When enabled, the transform determines the depth from the marker position and adjusts template headings relative to it. See [Generated headings](../../README.md#generated-headings). |
 
 ## Example
 

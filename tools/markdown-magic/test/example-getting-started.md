@@ -1,10 +1,10 @@
-<!-- markdown-magic:begin {"transform":"example-getting-started","headingLevel":2} -->
+<!-- markdown-magic:begin {"transform":"example-getting-started"} -->
 
 <!-- prettier-ignore-start -->
 
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
-## Getting Started
+# Getting Started
 
 You can run this example using the following steps:
 
@@ -21,13 +21,13 @@ You can run this example using the following steps:
 
 <!-- markdown-magic:end -->
 
-<!-- markdown-magic:begin {"transform":"example-getting-started","headingLevel":2,"usesTinylicious":false} -->
+<!-- markdown-magic:begin {"transform":"example-getting-started","usesTinylicious":false} -->
 
 <!-- prettier-ignore-start -->
 
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
-## Getting Started
+# Getting Started
 
 You can run this example using the following steps:
 

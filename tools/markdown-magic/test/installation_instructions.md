@@ -14,13 +14,13 @@ npm i @fluidframework/test-package
 
 <!-- markdown-magic:end -->
 
-<!-- markdown-magic:begin {"transform":"installation-instructions","packageJsonPath":"package.json","devDependency":true,"headingLevel":3} -->
+<!-- markdown-magic:begin {"transform":"installation-instructions","packageJsonPath":"package.json","devDependency":true} -->
 
 <!-- prettier-ignore-start -->
 
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
-### Installation
+# Installation
 
 To get started, install the package by running the following command:
 

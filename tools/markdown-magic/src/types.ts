@@ -23,6 +23,7 @@ export type GeneratedNodes = RootContent[] & { readonly sourcePath?: string };
 export interface TransformContext {
 	readonly destinationPath: string;
 	readonly destinationFormat: DocumentFormat;
+	readonly sectionHeadingDepth: import("mdast").Heading["depth"];
 	resolvePath(relativePath: string): string;
 	readonly parseDocument: (source: string, filePath: string) => ParsedDocument;
 	readonly readFile: typeof import("node:fs/promises").readFile;
@@ -40,7 +41,11 @@ export interface Transform<TOptions extends object = Record<string, unknown>> {
 /** A registry that contains transforms and creates their execution context. */
 export interface TransformRegistry {
 	readonly transforms: Readonly<Record<string, Transform<Record<string, unknown>>>>;
-	createContext(destinationPath: string, destinationFormat: DocumentFormat): TransformContext;
+	createContext(
+		destinationPath: string,
+		destinationFormat: DocumentFormat,
+		sectionHeadingDepth: import("mdast").Heading["depth"],
+	): TransformContext;
 }
 
 /** A generated region in a destination document. */
