@@ -17,17 +17,15 @@
 	},
 	"scripts": {
 		"build": "fluid-build . --task build",
-		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:esm": "tsc --project ./tsconfig.json",
-		"build:test": "concurrently npm:build:test:esm npm:build:test:cjs",
-		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
+		"build:test": "npm run build:test:esm",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"build:webpack": "npm run webpack",
 		"check:are-the-types-wrong": "attw --pack . --profile esm-only",
-		"check:types:require-esm": "fluid-tsc commonjs --project ./tsconfig.cjs.json --noEmit --skipLibCheck --emitDeclarationOnly false --tsBuildInfoFile ./tsconfig.require-esm.tsbuildinfo",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
+		"check:types:require-esm": "fluid-tsc commonjs --project ./tsconfig.cjs.json --noEmit --skipLibCheck --emitDeclarationOnly false --tsBuildInfoFile ./tsconfig.require-esm.tsbuildinfo",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --quiet --format stylish src",
 		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -38,8 +36,7 @@
 		"prepack": "npm run webpack",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
-		"test:mocha": "npm run test:mocha:esm && echo skipping cjs to avoid overhead - npm run test:mocha:cjs",
-		"test:mocha:cjs": "cross-env FLUID_TEST_MODULE_SYSTEM=CJS mocha",
+		"test:mocha": "npm run test:mocha:esm",
 		"test:mocha:esm": "mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"webpack": "webpack --color --config webpack.config.cjs"
@@ -49,13 +46,11 @@
 		"cache-dir": "nyc/.cache",
 		"exclude": [
 			"src/test/**/*.*ts",
-			"dist/test/**/*.*js",
 			"lib/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"include": [
 			"src/**/*.*ts",
-			"dist/**/*.*js",
 			"lib/**/*.*js"
 		],
 		"report-dir": "nyc/report",
@@ -109,7 +104,6 @@
 		"@types/mocha": "^10.0.10",
 		"@types/node": "catalog:types",
 		"c8": "^10.1.3",
-		"concurrently": "^10.0.3",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^10.1.0",
 		"eslint": "catalog:eslint",

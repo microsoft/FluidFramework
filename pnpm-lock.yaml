@@ -5027,9 +5027,6 @@ importers:
       c8:
         specifier: ^10.1.3
         version: 10.1.3
-      concurrently:
-        specifier: ^10.0.3
-        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
