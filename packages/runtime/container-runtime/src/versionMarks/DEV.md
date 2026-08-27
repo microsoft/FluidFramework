@@ -69,7 +69,7 @@ An app (e.g. the Loop/office-bohemia host) consumes a small `@legacy @beta` surf
 - Types `IVersionMarkResolver`, `ResolveResult`, and `VersionMarkCapture` are exported from `@fluidframework/container-runtime/legacy`.
 - Restore side: `loadContainerToSequenceNumber` and `ILoadContainerToSequenceNumberProps` are exported from `@fluidframework/container-loader/legacy/alpha`, fed the `resolved` sequence number.
 - ODSP point-in-time support: `createOdspDocumentServiceFactory` accepts the implementation exported
-  from `@fluidframework/odsp-driver/legacy/point-in-time` through its options.
+	from `@fluidframework/odsp-driver/legacy` through its options.
 
 ### Capturing a mark (app side)
 

@@ -92,15 +92,9 @@ async function resolveFileVersion(
 }
 
 /**
- * ODSP's point-in-time document service implementation.
+ * Creates the point-in-time service loaded by the public lazy wrapper.
  *
- * @remarks Import this function from the dedicated point-in-time entrypoint and inject it through
- * {@link IOdspDocumentServiceFactoryOptions.pointInTimeDocumentServiceImplementation}.
- *
- * @param props - ODSP service dependencies and point-in-time load parameters supplied by the factory.
- * @returns A read-only ODSP document service materialized at the requested sequence number.
- *
- * @legacy @beta
+ * @internal
  */
 export async function createPointInTimeDocumentService(
 	props: IOdspPointInTimeDocumentServiceImplementationProps,

@@ -3,28 +3,29 @@
  * Licensed under the MIT License.
  */
 
-/**
- * Optional ODSP point-in-time loading implementation for consumer injection.
- *
- * @packageDocumentation
- */
+import type { IDocumentService } from "@fluidframework/driver-definitions/internal";
 
-// eslint-disable-next-line import-x/no-internal-modules -- Dedicated entrypoint for the optional point-in-time implementation.
-export { createPointInTimeDocumentService } from "./pointInTimeDriver/createPointInTimeDocumentService.js";
-export type {
-	IOdspPointInTimeDocumentServiceImplementationProps,
-	OdspPointInTimeDocumentServiceImplementation,
-} from "./odspDocumentServiceFactoryCore.js";
-export type {
-	EpochTracker,
-	FetchType,
-	FetchTypeInternal,
-	ICacheAndTracker,
-} from "./epochTracker.js";
-export type {
-	INonPersistentCache,
-	IOdspCache,
-	IPersistedFileCache,
-	IPrefetchSnapshotContents,
-} from "./odspCache.js";
-export type { IOdspResponse } from "./odspUtils.js";
+import type { IOdspPointInTimeDocumentServiceImplementationProps } from "./odspDocumentServiceFactoryCore.js";
+
+/**
+ * ODSP's point-in-time document service implementation.
+ *
+ * @remarks Import this function from the legacy beta entrypoint and inject it through
+ * {@link IOdspDocumentServiceFactoryOptions.pointInTimeDocumentServiceImplementation}.
+ * The implementation is loaded on demand so consumers that do not enable point-in-time loading do
+ * not include it in their main bundle.
+ *
+ * @param props - ODSP service dependencies and point-in-time load parameters supplied by the factory.
+ * @returns A read-only ODSP document service materialized at the requested sequence number.
+ *
+ * @legacy @beta
+ */
+export async function createPointInTimeDocumentService(
+	props: IOdspPointInTimeDocumentServiceImplementationProps,
+): Promise<IDocumentService> {
+	const { createPointInTimeDocumentService: createService } = await import(
+		// eslint-disable-next-line import-x/no-internal-modules -- Lazily loads the optional implementation.
+		"./pointInTimeDriver/createPointInTimeDocumentService.js"
+	);
+	return createService(props);
+}

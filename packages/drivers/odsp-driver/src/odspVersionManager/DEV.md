@@ -36,8 +36,8 @@ Part 1 is built in three components:
 - **Component A — the version manager**: choose which file version to load or replay from. **This
   folder is Component A**, and this document is mostly about it.
 - **Component B — the recomposed driver**: load the chosen version and replay ops forward to the exact
-  target. **Built** in `../pointInTimeDriver/`, exported through the consumer-injected
-  `../pointInTime.ts` entrypoint — see [Part V](#part-v--components-b--c-as-built).
+  target. **Built** in `../pointInTimeDriver/`, exported through the consumer-injected legacy beta
+  entrypoint — see [Part V](#part-v--components-b--c-as-built).
 - **Component C — the loader hookup**: expose Component B through the container loader. **Built** in
   `@fluidframework/container-loader` (`loadContainerToSequenceNumber`) — see
   [Part V](#part-v--components-b--c-as-built). This is the current prototype-era package
@@ -556,8 +556,10 @@ is what ships today.
 
 ### Component B — how does the recomposed driver materialize the target?
 
-The host imports `createPointInTimeDocumentService` from the dedicated point-in-time entrypoint and
-injects it through `createOdspDocumentServiceFactory`. The returned factory exposes the optional
+The host imports the lazy `createPointInTimeDocumentService` wrapper from
+`@fluidframework/odsp-driver/legacy` and injects it through `createOdspDocumentServiceFactory`. The
+wrapper loads the implementation on demand so unrelated ESM and CommonJS consumers do not include
+it in their main bundles. The returned factory exposes the optional
 `createPointInTimeDocumentService(resolvedUrl, targetSequenceNumber)` capability as a thin delegate.
 The injected implementation:
 
