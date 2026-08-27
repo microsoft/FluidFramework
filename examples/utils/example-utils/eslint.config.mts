@@ -18,7 +18,8 @@ const config: Linter.Config[] = [
 					allow: [
 						...importInternalModulesAllowed,
 
-						// This package contains candidate shipping tools, not only example code, so it can use Fluid's internal assertion utility.
+						// This package is not itself an example. It contains shared utilities for common example patterns / boilerplate.
+						// Such utilities could be productionized in the future, so leveraging `assert` like other framework code seems reasonable.
 						"@fluidframework/core-utils/internal",
 
 						// `react-dom/client` is a subpath export, so the rule treats it as an internal module even though it is
