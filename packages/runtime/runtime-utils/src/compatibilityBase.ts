@@ -218,18 +218,22 @@ export function checkValidMinVersionForCollabVerbose(minVersionForCollab: Semant
 	isValidSemver: boolean;
 	isGteLowestMinVersion: boolean;
 	isLtePkgVersion: boolean;
-	isValidPatchVersion: boolean;
+	isValidOldestSupportedClientVersion: boolean;
 } {
 	const parsed = parse(minVersionForCollab);
-	const isValidSemver = parsed !== null;
+	const isValidSemver = parsed !== null && parsed.build.length === 0;
+	const isGteLowestMinVersion =
+		isValidSemver && gte(minVersionForCollab, lowestMinVersionForCollab);
+	const isLtePkgVersion = isValidSemver && lte(minVersionForCollab, cleanedPackageVersion);
+	const isValidOldestSupportedClientVersion =
+		isGteLowestMinVersion &&
+		isLtePkgVersion &&
+		(parsed.major < 3 || (parsed.patch === 0 && parsed.prerelease.length === 0));
 	return {
 		isValidSemver,
-
-		// We have to check if the value is a valid semver before calling gte/lte, otherwise they will throw when parsing the version.
-		isGteLowestMinVersion:
-			isValidSemver && gte(minVersionForCollab, lowestMinVersionForCollab),
-		isLtePkgVersion: isValidSemver && lte(minVersionForCollab, cleanedPackageVersion),
-		isValidPatchVersion: parsed !== null && (parsed.major !== 3 || parsed.patch === 0),
+		isGteLowestMinVersion,
+		isLtePkgVersion,
+		isValidOldestSupportedClientVersion,
 	};
 }
 
@@ -242,9 +246,8 @@ export function checkValidMinVersionForCollabVerbose(minVersionForCollab: Semant
 export function isValidMinVersionForCollab(
 	minVersionForCollab: SemanticVersion,
 ): minVersionForCollab is OldestSupportedClientVersion {
-	const { isValidSemver, isGteLowestMinVersion, isLtePkgVersion, isValidPatchVersion } =
-		checkValidMinVersionForCollabVerbose(minVersionForCollab);
-	return isValidSemver && isGteLowestMinVersion && isLtePkgVersion && isValidPatchVersion;
+	return checkValidMinVersionForCollabVerbose(minVersionForCollab)
+		.isValidOldestSupportedClientVersion;
 }
 
 /**
@@ -281,17 +284,21 @@ export function validateMinimumVersionForCollab(
 	semanticVersion: string,
 ): asserts semanticVersion is OldestSupportedClientVersion {
 	const minVersionForCollab = semanticVersion as OldestSupportedClientVersion;
-	const { isValidSemver, isGteLowestMinVersion, isLtePkgVersion, isValidPatchVersion } =
-		checkValidMinVersionForCollabVerbose(minVersionForCollab);
+	const {
+		isValidSemver,
+		isGteLowestMinVersion,
+		isLtePkgVersion,
+		isValidOldestSupportedClientVersion,
+	} = checkValidMinVersionForCollabVerbose(minVersionForCollab);
 
-	if (!(isValidSemver && isGteLowestMinVersion && isLtePkgVersion && isValidPatchVersion)) {
+	if (!isValidOldestSupportedClientVersion) {
 		throw new UsageError(
 			`Version ${minVersionForCollab} is not a valid OldestSupportedClientVersion. ` +
 				`It must be in a valid semver format, at least ${lowestMinVersionForCollab}, ` +
 				`less than or equal to the current package version ${cleanedPackageVersion}, ` +
-				`and use patch version 0 for major version 3. ` +
+				`and use patch version 0 with no prerelease component for major version 3 and later. ` +
 				`Use "featureVersion" to normalize a package version to the correct format. ` +
-				`Details: { isValidSemver: ${isValidSemver}, isGteLowestMinVersion: ${isGteLowestMinVersion}, isLtePkgVersion: ${isLtePkgVersion}, isValidPatchVersion: ${isValidPatchVersion} }`,
+				`Details: { isValidSemver: ${isValidSemver}, isGteLowestMinVersion: ${isGteLowestMinVersion}, isLtePkgVersion: ${isLtePkgVersion}, isValidOldestSupportedClientVersion: ${isValidOldestSupportedClientVersion} }`,
 		);
 	}
 }
