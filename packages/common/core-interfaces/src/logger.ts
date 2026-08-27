@@ -125,25 +125,6 @@ export interface ITelemetryBaseLogger {
 }
 
 /**
- * Implementor-facing interface for telemetry sinks.
- *
- * @remarks
- * Implementations that may be reached by callers compiled against older Fluid packages must use
- * this relaxed contract.
- *
- * @internal
- */
-export interface ITelemetryBaseLoggerImplementation extends ITelemetryBaseLogger {
-	/**
-	 * Log a telemetry event, if it meets the appropriate log-level threshold (see {@link ITelemetryBaseLoggerImplementation.minLogLevel}).
-	 *
-	 * @param event - The event to log.
-	 * @param logLevel - The log level of the event. If omitted, treat it as {@link LogLevelConst.essential}.
-	 */
-	send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
-}
-
-/**
  * Error telemetry event.
  * Maps to category = "error"
  *
