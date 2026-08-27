@@ -12,8 +12,11 @@ const generatedContentNotice =
 	"NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly.";
 
 /**
- * @param {"markdown" | "mdx"} format
- * @param {string} value
+ * Creates a comment node for the selected document format.
+ *
+ * @param {"markdown" | "mdx"} format - The destination document format.
+ * @param {string} value - The comment text without comment delimiters.
+ * @returns {import("mdast").RootContent} The HTML or MDX comment node.
  */
 function commentNode(format, value) {
 	return format === "mdx"
@@ -22,7 +25,10 @@ function commentNode(format, value) {
 }
 
 /**
- * @param {import("mdast").Nodes} node
+ * Tests whether a syntax-tree node contains MDX-specific syntax.
+ *
+ * @param {import("mdast").Nodes} node - The node to inspect.
+ * @returns {boolean} `true` if the node or one of its descendants is an MDX node.
  */
 function containsMdxNode(node) {
 	if (node.type.startsWith("mdx")) {
@@ -32,10 +38,12 @@ function containsMdxNode(node) {
 }
 
 /**
- * @param {readonly import("mdast").RootContent[]} nodes
- * @param {"markdown" | "mdx"} destinationFormat
- * @param {string} sourcePath
- * @param {string} destinationPath
+ * Verifies that the destination processor can serialize the generated nodes.
+ *
+ * @param {readonly import("mdast").RootContent[]} nodes - The generated nodes.
+ * @param {"markdown" | "mdx"} destinationFormat - The destination document format.
+ * @param {string} sourcePath - The source path to include in an error.
+ * @param {string} destinationPath - The destination path to include in an error.
  */
 function validateDestinationCompatibility(
 	nodes,
@@ -51,8 +59,11 @@ function validateDestinationCompatibility(
 }
 
 /**
- * @param {readonly import("mdast").RootContent[]} nodes
- * @param {"markdown" | "mdx"} format
+ * Adds generated-content notices and serializes one generated region.
+ *
+ * @param {readonly import("mdast").RootContent[]} nodes - The transform output.
+ * @param {"markdown" | "mdx"} format - The destination document format.
+ * @returns {Promise<string>} The serialized region body with boundary blank lines.
  */
 async function serializeGeneratedBody(nodes, format) {
 	const wrappedNodes = [
@@ -62,13 +73,21 @@ async function serializeGeneratedBody(nodes, format) {
 		commentNode(format, "prettier-ignore-end"),
 	];
 	const serialized = await serializeNodes(wrappedNodes, format);
+	// Parse the output before any write so invalid generated syntax cannot replace valid content.
 	parseDocument(serialized, format === "mdx" ? "generated.mdx" : "generated.md");
 	return `\n\n${serialized}\n\n`;
 }
 
 /**
- * @param {string} filePath
- * @param {ReturnType<import("./transformRegistry.js").createTransformRegistry>} registry
+ * Updates all generated regions in one documentation file.
+ *
+ * The function validates and generates every region before it writes the file. A failure does not
+ * cause a partial write to this file.
+ *
+ * @param {string} filePath - The path of the destination document.
+ * @param {ReturnType<import("./transformRegistry.js").createTransformRegistry>} registry - The available transforms and context factory.
+ * @returns {Promise<boolean>} `true` if the file changed.
+ * @throws If reading, parsing, validation, generation, serialization, or writing fails.
  */
 export async function processDocument(filePath, registry) {
 	const source = await readFile(filePath, "utf8");
@@ -96,6 +115,7 @@ export async function processDocument(filePath, registry) {
 	}
 
 	let output = source;
+	// Apply replacements from the end of the file so that earlier offsets remain valid.
 	for (const replacement of replacements.sort((left, right) => right.start - left.start)) {
 		output = `${output.slice(0, replacement.start)}${replacement.content}${output.slice(replacement.end)}`;
 	}

@@ -92,3 +92,25 @@ test("transform options reject unknown properties", () => {
 		/Unknown option "scripts" for transform "library-readme-header"/,
 	);
 });
+
+test("transform options reject null values", () => {
+	const registry = createTransformRegistry();
+	assert.throws(
+		() => registry["readme-footer"].validateOptions({ scripts: null }),
+		/Option "scripts" for "readme-footer" must be a boolean/,
+	);
+});
+
+test("section transforms reject heading levels outside 1 through 6", () => {
+	const registry = createTransformRegistry();
+	for (const transformName of ["api-docs", "installation-instructions", "package-scripts"]) {
+		assert.throws(
+			() => registry[transformName].validateOptions({ headingLevel: 0 }),
+			/Option "headingLevel".*must be between 1 and 6/,
+		);
+		assert.throws(
+			() => registry[transformName].validateOptions({ headingLevel: 7 }),
+			/Option "headingLevel".*must be between 1 and 6/,
+		);
+	}
+});

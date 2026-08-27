@@ -14,13 +14,21 @@ import { hideBin } from "yargs/helpers";
 import { processDocument } from "./processing.js";
 import { createTransformRegistry } from "./transformRegistry.js";
 
+/** Default glob patterns for Markdown and MDX documents. */
 const defaultMatchPattern = ["**/*.md", "**/*.mdx"];
 
+/** Maximum number of documentation files that the CLI processes concurrently. */
+const maximumConcurrentFiles = 8;
+
 /**
- * @template T, U
- * @param {readonly T[]} values
- * @param {number} concurrency
- * @param {(value: T) => Promise<U>} operation
+ * Applies an asynchronous operation to each value with a fixed concurrency limit.
+ *
+ * @template T - The input value type.
+ * @template U - The result value type.
+ * @param {readonly T[]} values - The values to process.
+ * @param {number} concurrency - The maximum number of operations that can run concurrently.
+ * @param {(value: T) => Promise<U>} operation - The operation to apply to each value.
+ * @returns {Promise<U[]>} The results in the same order as the input values.
  */
 async function mapWithConcurrency(values, concurrency, operation) {
 	const results = new Array(values.length);
@@ -35,6 +43,13 @@ async function mapWithConcurrency(values, concurrency, operation) {
 	return results;
 }
 
+/**
+ * Selects documentation files and updates their generated regions.
+ *
+ * @param {string[]} [argumentsList] - The command-line arguments. The default excludes the Node.js executable and script path.
+ * @returns {Promise<number>} The number of files that changed.
+ * @throws If file selection, parsing, transformation, or writing fails.
+ */
 export async function runCli(argumentsList = hideBin(process.argv)) {
 	const argv = yargs(argumentsList)
 		.usage("Usage: $0 [options]")
@@ -58,10 +73,9 @@ export async function runCli(argumentsList = hideBin(process.argv)) {
 		cwd: workingDirectory,
 		gitignore: true,
 		onlyFiles: true,
-		deep: 5,
 	});
 	const registry = createTransformRegistry();
-	const changed = await mapWithConcurrency(files, 8, (file) =>
+	const changed = await mapWithConcurrency(files, maximumConcurrentFiles, (file) =>
 		processDocument(path.resolve(workingDirectory, file), registry),
 	);
 	const changedCount = changed.filter(Boolean).length;

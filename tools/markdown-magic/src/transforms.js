@@ -21,9 +21,12 @@ const scopeTemplates = {
 };
 
 /**
- * @param {unknown} value
- * @param {string} transformName
- * @param {Record<string, { type: "boolean" | "integer" | "string"; default?: unknown; required?: boolean; values?: readonly string[] }>} schema
+ * Validates transform options against a small JSON-compatible schema.
+ *
+ * @param {unknown} value - The options value to validate.
+ * @param {string} transformName - The transform name to include in an error.
+ * @param {Record<string, { type: "boolean" | "integer" | "string"; default?: unknown; required?: boolean; values?: readonly string[]; minimum?: number; maximum?: number }>} schema - The accepted keys, types, defaults, and limits.
+ * @returns {Record<string, unknown>} The validated options with defaults applied.
  */
 function validateOptions(value, transformName, schema) {
 	if (value === null || Array.isArray(value) || typeof value !== "object") {
@@ -37,7 +40,7 @@ function validateOptions(value, transformName, schema) {
 
 	const result = {};
 	for (const [key, definition] of Object.entries(schema)) {
-		const option = value[key] ?? definition.default;
+		const option = Object.hasOwn(value, key) ? value[key] : definition.default;
 		if (option === undefined) {
 			if (definition.required === true) {
 				throw new TypeError(`Transform "${transformName}" requires option "${key}".`);
@@ -47,6 +50,14 @@ function validateOptions(value, transformName, schema) {
 		if (definition.type === "integer") {
 			if (!Number.isInteger(option)) {
 				throw new TypeError(`Option "${key}" for "${transformName}" must be an integer.`);
+			}
+			if (
+				(definition.minimum !== undefined && option < definition.minimum) ||
+				(definition.maximum !== undefined && option > definition.maximum)
+			) {
+				throw new TypeError(
+					`Option "${key}" for "${transformName}" must be between ${definition.minimum} and ${definition.maximum}.`,
+				);
 			}
 		} else if (typeof option !== definition.type) {
 			throw new TypeError(
@@ -69,15 +80,18 @@ const packageSchema = {
 
 const headingSchema = {
 	includeHeading: { type: "boolean", default: true },
-	headingLevel: { type: "integer", default: 2 },
+	headingLevel: { type: "integer", default: 2, minimum: 1, maximum: 6 },
 };
 
 const scopeValues = ["FRAMEWORK", "EXAMPLE", "EXPERIMENTAL", "INTERNAL", "PRIVATE", "TOOLS"];
 
 /**
- * @param {string} markdown
- * @param {{ destinationPath: string; parseDocument: Function }} context
- * @param {string} name
+ * Parses generated Markdown into nodes for structural composition.
+ *
+ * @param {string} markdown - The generated Markdown fragment.
+ * @param {{ destinationPath: string; parseDocument: Function }} context - The transform context.
+ * @param {string} name - The fragment name to use in the virtual path.
+ * @returns {import("mdast").RootContent[]} The parsed root-content nodes.
  */
 function parseFragment(markdown, context, name) {
 	const virtualPath = path.join(
@@ -88,8 +102,11 @@ function parseFragment(markdown, context, name) {
 }
 
 /**
- * @param {string} templateName
- * @param {{ destinationPath: string; parseDocument: Function }} context
+ * Reads and parses a shared Markdown template.
+ *
+ * @param {string} templateName - The template file name.
+ * @param {{ destinationPath: string; parseDocument: Function }} context - The transform context.
+ * @returns {Promise<import("mdast").RootContent[]>} A mutable copy of the template nodes.
  */
 async function readTemplateNodes(templateName, context) {
 	const templatePath = path.join(templatesDirectory, templateName);
@@ -98,10 +115,13 @@ async function readTemplateNodes(templateName, context) {
 }
 
 /**
- * @param {string} templateName
- * @param {{ includeHeading: boolean; headingLevel: number }} options
- * @param {string} headingText
- * @param {object} context
+ * Creates a section from a template and adjusts nested heading depths.
+ *
+ * @param {string} templateName - The template file name.
+ * @param {{ includeHeading: boolean; headingLevel: number }} options - The heading options.
+ * @param {string} headingText - The optional section heading text.
+ * @param {object} context - The transform context.
+ * @returns {Promise<import("mdast").RootContent[]>} The section nodes.
  */
 async function generateTemplateSection(templateName, options, headingText, context) {
 	if (options.headingLevel < 1 || options.headingLevel > 6) {
@@ -129,16 +149,22 @@ async function generateTemplateSection(templateName, options, headingText, conte
 }
 
 /**
- * @param {string} documentPath
- * @param {string} relativePath
+ * Resolves a path from the directory that contains a document.
+ *
+ * @param {string} documentPath - The destination document path.
+ * @param {string} relativePath - The path relative to the document directory.
+ * @returns {string} The absolute path.
  */
 function resolveRelativePath(documentPath, relativePath) {
 	return path.resolve(path.dirname(documentPath), relativePath);
 }
 
 /**
- * @param {{ destinationPath: string }} context
- * @param {{ packageJsonPath: string }} options
+ * Reads package metadata for a destination document.
+ *
+ * @param {{ destinationPath: string }} context - The transform context.
+ * @param {{ packageJsonPath: string }} options - The package file option.
+ * @returns {Promise<Record<string, unknown>>} The parsed package metadata.
  */
 async function readPackage(context, options) {
 	const packagePath = resolveRelativePath(context.destinationPath, options.packageJsonPath);
@@ -146,7 +172,10 @@ async function readPackage(context, options) {
 }
 
 /**
- * @param {string} packageName
+ * Maps a package name to a supported Fluid package kind.
+ *
+ * @param {string} packageName - The package name.
+ * @returns {string | undefined} The package kind, or `undefined` for an unknown scope.
  */
 function getScopeKind(packageName) {
 	if (packageName === "fluid-framework") {
@@ -164,7 +193,10 @@ function getScopeKind(packageName) {
 }
 
 /**
- * @param {Record<string, unknown>} packageMetadata
+ * Tests whether package defaults must include public guidance.
+ *
+ * @param {Record<string, unknown>} packageMetadata - The package metadata.
+ * @returns {boolean} `true` for a non-private framework or experimental package.
  */
 function isPublic(packageMetadata) {
 	if (packageMetadata.private === true) {
@@ -177,8 +209,11 @@ function isPublic(packageMetadata) {
 }
 
 /**
- * @param {string | undefined} kind
- * @param {object} context
+ * Generates the notice for a package kind.
+ *
+ * @param {string | undefined} kind - The package kind.
+ * @param {object} context - The transform context.
+ * @returns {Promise<import("mdast").RootContent[]>} The notice nodes, or an empty array if the kind has no notice.
  */
 async function generateScopeNotice(kind, context) {
 	const templateName = scopeTemplates[kind];
@@ -186,10 +221,13 @@ async function generateScopeNotice(kind, context) {
 }
 
 /**
- * @param {string} packageName
- * @param {boolean} devDependency
- * @param {{ includeHeading: boolean; headingLevel: number }} options
- * @param {object} context
+ * Generates package installation instructions.
+ *
+ * @param {string} packageName - The package name to install.
+ * @param {boolean} devDependency - Whether to add the development-dependency flag.
+ * @param {{ includeHeading: boolean; headingLevel: number }} options - The heading options.
+ * @param {object} context - The transform context.
+ * @returns {import("mdast").RootContent[]} The installation section nodes.
  */
 function generateInstallation(packageName, devDependency, options, context) {
 	const heading = options.includeHeading
@@ -203,9 +241,12 @@ function generateInstallation(packageName, devDependency, options, context) {
 }
 
 /**
- * @param {string} packageName
- * @param {{ includeHeading: boolean; headingLevel: number }} options
- * @param {object} context
+ * Generates a link to the package API documentation.
+ *
+ * @param {string} packageName - The package name.
+ * @param {{ includeHeading: boolean; headingLevel: number }} options - The heading options.
+ * @param {object} context - The transform context.
+ * @returns {import("mdast").RootContent[]} The API documentation section nodes.
  */
 function generateApiDocs(packageName, options, context) {
 	const shortName = packageName.includes("/")
@@ -222,9 +263,12 @@ function generateApiDocs(packageName, options, context) {
 }
 
 /**
- * @param {Record<string, unknown>} packageMetadata
- * @param {{ includeHeading: boolean; headingLevel: number }} options
- * @param {object} context
+ * Generates instructions for the supported special package exports.
+ *
+ * @param {Record<string, unknown>} packageMetadata - The package metadata.
+ * @param {{ includeHeading: boolean; headingLevel: number }} options - The heading options.
+ * @param {object} context - The transform context.
+ * @returns {import("mdast").RootContent[]} The import section nodes, or an empty array if no special export exists.
  */
 function generateImportInstructions(packageMetadata, options, context) {
 	const packageExports = packageMetadata.exports;
@@ -256,10 +300,13 @@ function generateImportInstructions(packageMetadata, options, context) {
 }
 
 /**
- * @param {Record<string, unknown>} packageMetadata
- * @param {boolean} usesTinylicious
- * @param {{ includeHeading: boolean; headingLevel: number }} options
- * @param {object} context
+ * Generates setup steps for an example package.
+ *
+ * @param {Record<string, unknown>} packageMetadata - The package metadata.
+ * @param {boolean} usesTinylicious - Whether to include Tinylicious setup steps.
+ * @param {{ includeHeading: boolean; headingLevel: number }} options - The heading options.
+ * @param {object} context - The transform context.
+ * @returns {import("mdast").RootContent[]} The setup section nodes.
  */
 function generateGettingStarted(packageMetadata, usesTinylicious, options, context) {
 	const heading = options.includeHeading
@@ -287,8 +334,11 @@ function generateGettingStarted(packageMetadata, usesTinylicious, options, conte
 }
 
 /**
- * @param {Record<string, string>} scripts
- * @param {{ includeHeading: boolean; headingLevel: number }} options
+ * Generates a GitHub Flavored Markdown table of package scripts.
+ *
+ * @param {Record<string, string>} scripts - The package scripts.
+ * @param {{ includeHeading: boolean; headingLevel: number }} options - The heading options.
+ * @returns {import("mdast").RootContent[]} The optional heading and table nodes.
  */
 function generateScripts(scripts, options) {
 	const rows = Object.entries(scripts).map(([name, command]) => ({
@@ -325,9 +375,12 @@ function generateScripts(scripts, options) {
 }
 
 /**
- * @param {string} name
- * @param {Record<string, object>} schema
- * @param {(options: object, context: object) => Promise<readonly object[]> | readonly object[]} generate
+ * Creates a transform with schema-based option validation.
+ *
+ * @param {string} name - The transform name.
+ * @param {Record<string, object>} schema - The option schema.
+ * @param {(options: object, context: object) => Promise<readonly object[]> | readonly object[]} generate - The node generator.
+ * @returns {{ validateOptions: (value: unknown) => Record<string, unknown>; generate: typeof generate }} The transform implementation.
  */
 function transform(name, schema, generate) {
 	return {
@@ -336,6 +389,13 @@ function transform(name, schema, generate) {
 	};
 }
 
+/**
+ * Creates transforms for standard README sections and package metadata.
+ *
+ * Composite transforms call node generators directly. They do not serialize intermediate output.
+ *
+ * @returns {Record<string, { validateOptions: (value: unknown) => Record<string, unknown>; generate: Function }>} The README transform registry.
+ */
 export function createReadmeTransforms() {
 	const templateTransforms = {
 		"client-requirements": ["Client-Requirements-Template.md", "Minimum Client Requirements"],

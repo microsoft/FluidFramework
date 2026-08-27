@@ -7,17 +7,23 @@ const markdownMarkerPattern = /^<!-- markdown-magic:(begin(?: (\{.*\}))?|end) --
 const mdxMarkerPattern = /^\/\* markdown-magic:(begin(?: (\{.*\}))?|end) \*\/$/s;
 
 /**
- * @param {string} filePath
- * @param {number} line
- * @param {string} message
+ * Creates a marker error with its source location.
+ *
+ * @param {string} filePath - The document path.
+ * @param {number} line - The one-based source line.
+ * @param {string} message - The error details.
+ * @returns {Error} The location-aware error.
  */
 function markerError(filePath, line, message) {
 	return new Error(`${filePath}:${line}: ${message}`);
 }
 
 /**
- * @param {import("mdast").RootContent} node
- * @param {"markdown" | "mdx"} format
+ * Parses a top-level syntax-tree node as a generated-region marker.
+ *
+ * @param {import("mdast").RootContent} node - The node to inspect.
+ * @param {"markdown" | "mdx"} format - The document format.
+ * @returns {{ kind: "begin"; line: number; startOffset: number; endOffset: number; json: string } | { kind: "end" | "invalid-begin"; line: number; startOffset: number; endOffset: number } | undefined} The marker details, or `undefined` if the node is not a marker.
  */
 function parseMarkerNode(node, format) {
 	const isMarkdownMarker = format === "markdown" && node.type === "html";
@@ -57,7 +63,13 @@ function parseMarkerNode(node, format) {
 }
 
 /**
- * @param {{ format: "markdown" | "mdx"; path: string; tree: import("mdast").Root }} document
+ * Finds and validates generated regions in document order.
+ *
+ * Only top-level comment nodes can define regions. Generated regions cannot nest.
+ *
+ * @param {{ format: "markdown" | "mdx"; path: string; tree: import("mdast").Root }} document - The parsed destination document.
+ * @returns {{ destinationPath: string; destinationFormat: "markdown" | "mdx"; transformName: string; options: Record<string, unknown>; openingMarkerEnd: number; closingMarkerStart: number; line: number }[]} The validated generated regions.
+ * @throws If a marker or marker pair is invalid.
  */
 export function findGeneratedRegions(document) {
 	const regions = [];

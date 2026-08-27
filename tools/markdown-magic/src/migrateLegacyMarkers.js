@@ -31,8 +31,11 @@ const transformNames = {
 const integerOptions = new Set(["start", "end", "headingLevel"]);
 
 /**
- * @param {string} value
- * @param {string} key
+ * Converts a legacy string value to its JSON value.
+ *
+ * @param {string} value - The legacy option value.
+ * @param {string} key - The option key.
+ * @returns {boolean | number | string} The converted value.
  */
 function parseLegacyValue(value, key) {
 	if (value === "TRUE") {
@@ -52,8 +55,11 @@ function parseLegacyValue(value, key) {
 }
 
 /**
- * @param {string | undefined} source
- * @param {string} transformName
+ * Parses the legacy ampersand-separated option syntax.
+ *
+ * @param {string | undefined} source - The legacy option text.
+ * @param {string} transformName - The new transform name.
+ * @returns {Record<string, boolean | number | string>} The options with JSON-compatible values.
  */
 function parseLegacyOptions(source, transformName) {
 	const options = {};
@@ -76,8 +82,15 @@ function parseLegacyOptions(source, transformName) {
 }
 
 /**
- * @param {string} source
- * @param {string} filePath
+ * Converts legacy Markdown markers without changing generated region bodies.
+ *
+ * This helper is for the one-use repository migration. It recognizes top-level HTML comment
+ * markers in Markdown documents. It does not migrate MDX markers.
+ *
+ * @param {string} source - The Markdown source text.
+ * @param {string} filePath - The source path used for parsing and errors.
+ * @returns {string} The source text with converted marker comments.
+ * @throws If the source contains an unknown transform or an invalid legacy option.
  */
 export function migrateLegacyMarkers(source, filePath) {
 	const document = parseDocument(source, filePath);
@@ -121,6 +134,7 @@ export function migrateLegacyMarkers(source, filePath) {
 	}
 
 	let output = source;
+	// Apply replacements in reverse source order so that recorded offsets remain valid.
 	for (const replacement of replacements.sort((left, right) => right.start - left.start)) {
 		output = `${output.slice(0, replacement.start)}${replacement.content}${output.slice(replacement.end)}`;
 	}

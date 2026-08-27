@@ -10,8 +10,11 @@ import { parseDocument } from "./processorProfiles.js";
 import { createReadmeTransforms } from "./transforms.js";
 
 /**
- * @param {unknown} value
- * @param {string} transformName
+ * Requires a transform's options to be an object.
+ *
+ * @param {unknown} value - The value to validate.
+ * @param {string} transformName - The transform name to include in an error.
+ * @returns {Record<string, unknown>} The options object.
  */
 function requireOptionsObject(value, transformName) {
 	if (value === null || Array.isArray(value) || typeof value !== "object") {
@@ -21,9 +24,11 @@ function requireOptionsObject(value, transformName) {
 }
 
 /**
- * @param {Record<string, unknown>} options
- * @param {readonly string[]} allowedKeys
- * @param {string} transformName
+ * Rejects option keys that the transform does not define.
+ *
+ * @param {Record<string, unknown>} options - The options to inspect.
+ * @param {readonly string[]} allowedKeys - The accepted option keys.
+ * @param {string} transformName - The transform name to include in an error.
  */
 function rejectUnknownOptions(options, allowedKeys, transformName) {
 	for (const key of Object.keys(options)) {
@@ -34,8 +39,11 @@ function rejectUnknownOptions(options, allowedKeys, transformName) {
 }
 
 /**
- * @param {unknown} value
- * @param {string} name
+ * Validates an optional integer.
+ *
+ * @param {unknown} value - The value to validate.
+ * @param {string} name - The option name to include in an error.
+ * @returns {number | undefined} The integer, or `undefined` if no value was supplied.
  */
 function optionalInteger(value, name) {
 	if (value === undefined) {
@@ -48,8 +56,11 @@ function optionalInteger(value, name) {
 }
 
 /**
- * @param {unknown} value
- * @param {string} name
+ * Validates a required non-empty string.
+ *
+ * @param {unknown} value - The value to validate.
+ * @param {string} name - The option name to include in an error.
+ * @returns {string} The validated string.
  */
 function requiredString(value, name) {
 	if (typeof value !== "string" || value.length === 0) {
@@ -59,9 +70,12 @@ function requiredString(value, name) {
 }
 
 /**
- * @param {unknown} value
- * @param {string} transformName
- * @param {boolean} includeLanguage
+ * Validates options for an include transform.
+ *
+ * @param {unknown} value - The options value to validate.
+ * @param {string} transformName - The transform name to include in an error.
+ * @param {boolean} includeLanguage - Whether to accept the `language` option.
+ * @returns {{ path: string; start: number | undefined; end: number | undefined; language?: string }} The validated options.
  */
 function validateIncludeOptions(value, transformName, includeLanguage) {
 	const options = requireOptionsObject(value, transformName);
@@ -85,9 +99,12 @@ function validateIncludeOptions(value, transformName, includeLanguage) {
 }
 
 /**
- * @param {string} source
- * @param {number | undefined} start
- * @param {number | undefined} end
+ * Selects lines with JavaScript array-slice rules and trims boundary whitespace.
+ *
+ * @param {string} source - The source text.
+ * @param {number | undefined} start - The inclusive zero-based start index.
+ * @param {number | undefined} end - The exclusive zero-based end index.
+ * @returns {string} The selected source text.
  */
 function sliceLines(source, start, end) {
 	if (start === undefined && end === undefined) {
@@ -97,8 +114,11 @@ function sliceLines(source, start, end) {
 }
 
 /**
- * @param {string} destinationPath
- * @param {"markdown" | "mdx"} destinationFormat
+ * Creates the services that a transform can use.
+ *
+ * @param {string} destinationPath - The absolute destination path.
+ * @param {"markdown" | "mdx"} destinationFormat - The destination document format.
+ * @returns {{ destinationPath: string; destinationFormat: "markdown" | "mdx"; resolvePath: (relativePath: string) => string; parseDocument: typeof parseDocument; readFile: typeof readFile }} The transform context.
  */
 function createContext(destinationPath, destinationFormat) {
 	return {
@@ -112,6 +132,13 @@ function createContext(destinationPath, destinationFormat) {
 	};
 }
 
+/**
+ * Creates the complete transform registry for README and file transforms.
+ *
+ * Each transform validates unknown JSON options before it generates mdast nodes.
+ *
+ * @returns {Record<string, unknown> & { createContext: typeof createContext }} The transform registry and its context factory.
+ */
 export function createTransformRegistry() {
 	return {
 		...createReadmeTransforms(),
