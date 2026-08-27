@@ -12,7 +12,7 @@ import type {
 import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { anchorSlot, rootFieldKey } from "../core/index.js";
+import { anchorSlot, rootFieldKey, type RevertToOptionsAlpha } from "../core/index.js";
 import {
 	type NodeIdentifierManager,
 	defaultSchemaPolicy,
@@ -58,7 +58,8 @@ import {
 	TreeViewConfigurationAlpha,
 	toInitialSchema,
 	toUpgradeSchema,
-	type TreeBranchAlpha,
+	type TreeBranchHistory,
+	type UntypedTreeViewAlpha,
 	type TreeSchema,
 } from "../simple-tree/index.js";
 import {
@@ -180,7 +181,11 @@ export class SchematizingSimpleTreeView<
 		);
 	}
 
-	public isBranch(): this is TreeBranchAlpha {
+	public isBranch(): this is UntypedTreeViewAlpha {
+		return this.isView();
+	}
+
+	public isView(): this is UntypedTreeViewAlpha {
 		return true;
 	}
 
@@ -542,28 +547,40 @@ export class SchematizingSimpleTreeView<
 
 	// #region Branching
 
-	public fork(): ReturnType<TreeBranchAlpha["fork"]> &
+	public fork(): ReturnType<UntypedTreeViewAlpha["fork"]> &
 		SchematizingSimpleTreeView<TRootSchema> {
 		return this.checkout.fork().viewWith(this.config);
 	}
 
-	public merge(context: TreeBranchAlpha, disposeMerged = true): void {
+	public rewindTo(revision: string): void {
+		this.checkout.rewindTo(revision);
+	}
+
+	public revertTo(revision: string, options?: RevertToOptionsAlpha): void {
+		this.checkout.revertTo(revision, options);
+	}
+
+	public merge(context: UntypedTreeViewAlpha, disposeMerged = true): void {
 		this.checkout.merge(context, disposeMerged);
 	}
 
-	public rebaseOnto(context: TreeBranchAlpha): void {
+	public rebaseOnto(context: UntypedTreeViewAlpha): void {
 		this.checkout.rebaseOnto(context);
 	}
 
-	public isMissingEditsFrom(context: TreeBranchAlpha): boolean {
+	public isMissingEditsFrom(context: UntypedTreeViewAlpha): boolean {
 		return this.checkout.isMissingEditsFrom(context);
 	}
 
 	public computeNetChangeIfRebasedOnto(
-		context: TreeBranchAlpha,
+		context: UntypedTreeViewAlpha,
 	): JsonCompatibleReadOnly | undefined {
 		return this.checkout.computeNetChangeIfRebasedOnto(context);
 	}
 
 	// #endregion Branching
+
+	public get branchHistory(): TreeBranchHistory {
+		return this.checkout.branchHistory;
+	}
 }

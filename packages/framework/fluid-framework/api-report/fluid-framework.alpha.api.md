@@ -231,6 +231,9 @@ export enum CommitOutcome {
 }
 
 // @alpha
+export type CommitRevision = string;
+
+// @alpha
 export function comparePersistedSchema(persisted: JsonCompatible, view: ImplicitFieldSchema, options: ICodecOptions): Omit<SchemaCompatibilityStatus, "canInitialize">;
 
 // @alpha
@@ -341,6 +344,12 @@ export function createTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey e
 
 // @beta
 export function createTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue, TSchema extends TreeNodeSchema>(view: TreeView<TFieldSchema>, indexer: Map<TreeNodeSchema, string>, getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey, indexableSchema: readonly TSchema[]): TreeIndex<TKey, TValue>;
+
+// @alpha @sealed
+export interface CustomMetadataTree {
+    readonly children: readonly CustomMetadataTree[];
+    readonly metadata: JsonCompatibleReadOnlyObject | undefined;
+}
 
 // @alpha @sealed
 export interface DataStoreContext extends SharedObjectCreator {
@@ -565,6 +574,7 @@ export const FluidClientVersion: {
     readonly v2_73: "2.73.0";
     readonly v2_74: "2.74.0";
     readonly v2_80: "2.80.0";
+    readonly v2_117: "2.117.0";
 };
 
 // @alpha @sealed
@@ -1734,7 +1744,10 @@ export interface Revertible {
 
 // @alpha @sealed
 export interface RevertibleAlpha extends Revertible {
-    clone: (branch: TreeBranch) => RevertibleAlpha;
+    clone: (view: UntypedTreeView) => RevertibleAlpha;
+    revert(): void;
+    revert(dispose: boolean): void;
+    revert(options: RevertOptionsAlpha): void;
 }
 
 // @alpha @sealed
@@ -1747,6 +1760,17 @@ export type RevertibleFactory = (onRevertibleDisposed?: (revertible: Revertible)
 export enum RevertibleStatus {
     Disposed = 1,
     Valid = 0
+}
+
+// @alpha @sealed
+export interface RevertOptionsAlpha {
+    readonly customMetadata?: JsonCompatibleReadOnlyObject;
+    readonly dispose?: boolean;
+}
+
+// @alpha @sealed
+export interface RevertToOptionsAlpha {
+    readonly customMetadata?: JsonCompatibleReadOnlyObject;
 }
 
 // @public
@@ -1771,6 +1795,7 @@ export interface RunTransaction {
 
 // @alpha @input
 export interface RunTransactionParamsAlpha extends RunTransactionParamsBeta {
+    readonly customMetadata?: JsonCompatibleReadOnlyObject;
     readonly postProcessor?: TransactionPostProcessor;
     readonly preconditions?: readonly TransactionConstraintAlpha[];
 }
@@ -2433,8 +2458,6 @@ export const Tree: Tree;
 
 // @alpha @sealed
 export interface TreeAlpha {
-    // @deprecated
-    branch(node: TreeNode): TreeBranchAlpha | undefined;
     child(node: TreeNode, key: string | number): TreeNode | TreeLeafValue | undefined;
     children(node: TreeNode): Iterable<[propertyKey: string | number, child: TreeNode | TreeLeafValue]>;
     context(node: TreeNode): TreeContextAlpha;
@@ -2514,32 +2537,29 @@ export interface TreeBeta {
 // @beta
 export const TreeBeta: TreeBeta;
 
-// @beta @sealed
-export interface TreeBranch extends IDisposable {
-    dispose(error?: Error): void;
-    fork(): TreeBranch;
-    merge(branch: TreeBranch, disposeMerged?: boolean): void;
-    rebaseOnto(branch: TreeBranch): void;
-}
+// @beta @deprecated
+export type TreeBranch = UntypedTreeView;
+
+// @alpha @deprecated
+export type TreeBranchAlpha = UntypedTreeViewAlpha;
 
 // @alpha @sealed
-export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
-    applyChange(change: JsonCompatibleReadOnly): void;
-    computeNetChangeIfRebasedOnto(branch: TreeBranch): JsonCompatibleReadOnly | undefined;
-    readonly events: Listenable<TreeBranchEvents>;
-    // (undocumented)
-    fork(): TreeBranchAlpha;
-    hasRootSchema<TSchema extends ImplicitFieldSchema>(schema: TSchema): this is TreeViewAlpha<TSchema>;
-    isMissingEditsFrom(branch: TreeBranch): boolean;
-    runTransaction<TSuccessValue, TFailureValue>(transaction: () => TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>, params?: RunTransactionParamsAlpha): TransactionValueResult<TSuccessValue, TFailureValue>;
-    runTransaction(transaction: () => VoidTransactionCallbackStatusAlpha | void, params?: RunTransactionParamsAlpha): TransactionVoidResult;
-    runTransactionAsync<TSuccessValue, TFailureValue>(transaction: () => Promise<TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>>, params?: RunTransactionParamsAlpha): Promise<TransactionValueResult<TSuccessValue, TFailureValue>>;
-    runTransactionAsync(transaction: () => Promise<VoidTransactionCallbackStatusAlpha | void>, params?: RunTransactionParamsAlpha): Promise<TransactionVoidResult>;
+export interface TreeBranchCommitMetadata {
+    readonly custom: JsonCompatibleReadOnlyObject | undefined;
+    readonly customTree: CustomMetadataTree | undefined;
+    getParent(): TreeBranchCommitMetadata | undefined;
+    readonly revision: CommitRevision;
 }
 
 // @alpha @sealed
 export interface TreeBranchEvents {
     changed(data: ChangeMetadata, getRevertible?: RevertibleAlphaFactory): void;
+}
+
+// @alpha @sealed
+export interface TreeBranchHistory {
+    getHead(): TreeBranchCommitMetadata | undefined;
+    readonly length: number;
 }
 
 // @public @sealed
@@ -2568,7 +2588,9 @@ export enum TreeCompressionStrategy {
 
 // @alpha
 export interface TreeContextAlpha {
-    isBranch(): this is TreeBranchAlpha;
+    // @deprecated
+    isBranch(): this is UntypedTreeViewAlpha;
+    isView(): this is UntypedTreeViewAlpha;
     runTransaction<TValue>(transaction: () => WithValue<TValue>, params?: RunTransactionParamsAlpha): TransactionValueResult<TValue, TValue>;
     runTransaction(transaction: () => void, params?: RunTransactionParamsAlpha): TransactionVoidResult;
     runTransactionAsync<TValue>(transaction: () => Promise<WithValue<TValue>>, params?: RunTransactionParamsAlpha): Promise<TransactionValueResult<TValue, TValue>>;
@@ -2595,10 +2617,10 @@ export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = Fie
 // @alpha @sealed
 export interface TreeIdentifierUtils {
     (node: TreeNode): string | undefined;
-    create(branch: TreeBranch): string;
+    create(view: UntypedTreeView): string;
     getShort(node: TreeNode): number | undefined;
-    lengthen(branch: TreeBranch, nodeIdentifier: number): string;
-    shorten(branch: TreeBranch, nodeIdentifier: string): number | undefined;
+    lengthen(view: UntypedTreeView, nodeIdentifier: number): string;
+    shorten(view: UntypedTreeView, nodeIdentifier: string): number | undefined;
 }
 
 // @beta @sealed
@@ -2738,11 +2760,11 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 }
 
 // @alpha @sealed
-export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> extends Omit<TreeViewBeta<ReadSchema<TSchema>>, "root" | "initialize" | "fork" | "runTransaction" | "runTransactionAsync">, TreeBranchAlpha {
+export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> extends Omit<TreeViewBeta<ReadSchema<TSchema>>, "root" | "initialize" | "fork" | "runTransaction" | "runTransactionAsync">, UntypedTreeViewAlpha {
     // (undocumented)
     readonly events: Listenable<TreeViewEvents & TreeBranchEvents>;
     // (undocumented)
-    fork(): ReturnType<TreeBranch["fork"]> & TreeViewAlpha<TSchema>;
+    fork(): ReturnType<UntypedTreeView["fork"]> & TreeViewAlpha<TSchema>;
     initialize(content: InsertableField<TSchema>): void;
     // (undocumented)
     get root(): ReadableField<TSchema>;
@@ -2750,9 +2772,9 @@ export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | Unsa
 }
 
 // @beta @sealed
-export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema> extends TreeView<TSchema>, TreeBranch {
+export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema> extends TreeView<TSchema>, UntypedTreeView {
     // (undocumented)
-    fork(): ReturnType<TreeBranch["fork"]> & TreeViewBeta<TSchema>;
+    fork(): ReturnType<UntypedTreeView["fork"]> & TreeViewBeta<TSchema>;
     runTransaction<TOut extends TransactionCallbackStatusBeta<unknown, unknown> | VoidTransactionCallbackStatusBeta | void>(transaction: () => TOut, params?: RunTransactionParamsBeta): TOut extends TransactionCallbackStatusBeta<infer TSuccessValue, infer TFailureValue> ? TransactionValueResult<TSuccessValue, TFailureValue> : TransactionVoidResult;
     runTransactionAsync<TOut extends TransactionCallbackStatusBeta<unknown, unknown> | VoidTransactionCallbackStatusBeta | void>(transaction: () => Promise<TOut>, params?: RunTransactionParamsBeta): Promise<TOut extends TransactionCallbackStatusBeta<infer TSuccessValue, infer TFailureValue> ? TransactionValueResult<TSuccessValue, TFailureValue> : TransactionVoidResult>;
 }
@@ -2822,6 +2844,32 @@ export const UnsafeUnknownSchema: unique symbol;
 
 // @alpha
 export type UnsafeUnknownSchema = typeof UnsafeUnknownSchema;
+
+// @beta @sealed
+export interface UntypedTreeView extends IDisposable {
+    dispose(error?: Error): void;
+    fork(): UntypedTreeView;
+    merge(view: UntypedTreeView, disposeMerged?: boolean): void;
+    rebaseOnto(view: UntypedTreeView): void;
+}
+
+// @alpha @sealed
+export interface UntypedTreeViewAlpha extends UntypedTreeView, TreeContextAlpha {
+    applyChange(change: JsonCompatibleReadOnly): void;
+    readonly branchHistory: TreeBranchHistory;
+    computeNetChangeIfRebasedOnto(view: UntypedTreeView): JsonCompatibleReadOnly | undefined;
+    readonly events: Listenable<TreeBranchEvents>;
+    // (undocumented)
+    fork(): UntypedTreeViewAlpha;
+    hasRootSchema<TSchema extends ImplicitFieldSchema>(schema: TSchema): this is TreeViewAlpha<TSchema>;
+    isMissingEditsFrom(view: UntypedTreeView): boolean;
+    revertTo(revision: CommitRevision, options?: RevertToOptionsAlpha): void;
+    rewindTo(revision: CommitRevision): void;
+    runTransaction<TSuccessValue, TFailureValue>(transaction: () => TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>, params?: RunTransactionParamsAlpha): TransactionValueResult<TSuccessValue, TFailureValue>;
+    runTransaction(transaction: () => VoidTransactionCallbackStatusAlpha | void, params?: RunTransactionParamsAlpha): TransactionVoidResult;
+    runTransactionAsync<TSuccessValue, TFailureValue>(transaction: () => Promise<TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>>, params?: RunTransactionParamsAlpha): Promise<TransactionValueResult<TSuccessValue, TFailureValue>>;
+    runTransactionAsync(transaction: () => Promise<VoidTransactionCallbackStatusAlpha | void>, params?: RunTransactionParamsAlpha): Promise<TransactionVoidResult>;
+}
 
 // @public
 export type ValidateRecursiveSchema<T extends ValidateRecursiveSchemaTemplate<T>> = true;
