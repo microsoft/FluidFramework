@@ -1,6 +1,7 @@
 {
 	"type": "commonjs",
 	"exports": {
-		"./crossPackageSchema/node16": "./crossPackage/node16/schemaDefinitions.js"
+		"./crossPackageSchema/node16": "./crossPackage/node16/schemaDefinitions.js",
+		"./crossPackageSchema/node20": "./crossPackage/node20/schemaDefinitions.js"
 	}
 }

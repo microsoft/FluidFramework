@@ -2,5 +2,7 @@
 	"extends": "./tsconfig.crossPackage.base.json",
 	"compilerOptions": {
 		"outDir": "./lib/crossPackage/node16",
+		"module": "node16",
+		"moduleResolution": "node16",
 	},
 }

@@ -20,6 +20,7 @@ import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import {
+	defaultTestOldestSupportedClient,
 	type ITestObjectProvider,
 	createSummarizerFromFactory,
 	summarizeNow,
@@ -93,6 +94,7 @@ describeCompat(
 		// The 1st runtime factory, V1 of the code
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: dataObjectFactory,
+			oldestSupportedClient: defaultTestOldestSupportedClient,
 			registryEntries: [dataObjectFactory.registryEntry],
 			runtimeOptions,
 		});
