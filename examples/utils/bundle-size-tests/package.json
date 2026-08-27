@@ -20,7 +20,7 @@
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
-		"clean": "rimraf --glob build bundle dist lib bundleAnalysis bundleAnalyzerJson compareBundlesOutput \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
+		"clean": "rimraf --glob build dist lib bundleAnalysis bundleAnalyzerJson compareBundlesOutput \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"compare:bundles": "flub generate bundleAnalysisReposWithComparison",
 		"eslint": "eslint --quiet --format stylish src",
 		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
