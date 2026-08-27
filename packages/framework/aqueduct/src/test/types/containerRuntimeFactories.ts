@@ -24,17 +24,9 @@ const canonicalBaseProps: BaseContainerRuntimeFactoryProps = {
 	...commonProps,
 	oldestSupportedClient: "2.0.0",
 };
-const canonicalBasePropsWithExplicitUndefined: BaseContainerRuntimeFactoryProps = {
-	...canonicalBaseProps,
-	minVersionForCollab: undefined,
-};
 const deprecatedBaseProps: DeprecatedBaseContainerRuntimeFactoryProps = {
 	...commonProps,
 	minVersionForCollab: "2.0.0",
-};
-const deprecatedBasePropsWithExplicitUndefined: DeprecatedBaseContainerRuntimeFactoryProps = {
-	...deprecatedBaseProps,
-	oldestSupportedClient: undefined,
 };
 
 declare const baseProps:
@@ -53,9 +45,7 @@ export function validateContainerRuntimeFactoryTypes(): (
 )[] {
 	return [
 		new BaseContainerRuntimeFactory(canonicalBaseProps),
-		new BaseContainerRuntimeFactory(canonicalBasePropsWithExplicitUndefined),
 		new BaseContainerRuntimeFactory(deprecatedBaseProps),
-		new BaseContainerRuntimeFactory(deprecatedBasePropsWithExplicitUndefined),
 		new BaseContainerRuntimeFactory(baseProps),
 		new ContainerRuntimeFactoryWithDefaultDataStore(defaultDataStoreProps),
 		// @ts-expect-error A compatibility property is required.

@@ -989,15 +989,9 @@ export function loadContainerRuntime(
 export async function loadContainerRuntime(
 	params: LoadContainerRuntimeParams | DeprecatedLoadContainerRuntimeParams,
 ): Promise<IContainerRuntime & IRuntime> {
-	const oldestSupportedClient = getExplicitOldestSupportedClient(params);
-	const {
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Omit the deprecated property after normalizing it.
-		minVersionForCollab: _deprecatedMinVersionForCollab,
-		...paramsWithoutDeprecatedProperty
-	} = params;
+	getExplicitOldestSupportedClient(params);
 	return ContainerRuntime.loadRuntime({
-		...paramsWithoutDeprecatedProperty,
-		oldestSupportedClient,
+		...params,
 		registry: new FluidDataStoreRegistry(params.registryEntries),
 	});
 }
@@ -1018,15 +1012,9 @@ export async function loadContainerRuntime(
 export async function loadContainerRuntimeAlpha(params: LoadContainerRuntimeParams): Promise<{
 	runtime: IContainerRuntime & IRuntime;
 }> {
-	const oldestSupportedClient = getAlphaOldestSupportedClient(params);
-	const {
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Keep the internal load input canonical even for erased callers.
-		minVersionForCollab: _deprecatedMinVersionForCollab,
-		...paramsWithoutDeprecatedProperty
-	} = params;
+	getAlphaOldestSupportedClient(params);
 	return ContainerRuntime.loadRuntime2({
-		...paramsWithoutDeprecatedProperty,
-		oldestSupportedClient,
+		...params,
 		registry: new FluidDataStoreRegistry(params.registryEntries),
 	});
 }

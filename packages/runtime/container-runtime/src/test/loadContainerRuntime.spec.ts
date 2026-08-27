@@ -48,13 +48,13 @@ describe("loadContainerRuntime compatibility parameter", () => {
 		);
 	});
 
-	it("normalizes the deprecated compatibility parameter before validation", async () => {
+	it("accepts the deprecated compatibility parameter at the public boundary", async () => {
 		const context = {
 			taggedLogger: { send: () => {} },
 		} as unknown as IContainerContext;
 
-		// Reaching version validation instead of the exact-one guard proves the deprecated property
-		// was normalized to the canonical input before loading the runtime.
+		// Reaching version validation proves the public exact-one guard accepted the deprecated
+		// property. The invalid version avoids requiring a complete container context in this test.
 		await assert.rejects(
 			loadContainerRuntime({
 				...commonParams,

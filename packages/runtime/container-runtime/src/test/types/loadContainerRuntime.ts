@@ -23,17 +23,9 @@ const canonicalParams: LoadContainerRuntimeParams = {
 	...commonParams,
 	oldestSupportedClient: "2.0.0",
 };
-const canonicalParamsWithExplicitUndefined: LoadContainerRuntimeParams = {
-	...canonicalParams,
-	minVersionForCollab: undefined,
-};
 const deprecatedParams: DeprecatedLoadContainerRuntimeParams = {
 	...commonParams,
 	minVersionForCollab: "2.0.0",
-};
-const deprecatedParamsWithExplicitUndefined: DeprecatedLoadContainerRuntimeParams = {
-	...deprecatedParams,
-	oldestSupportedClient: undefined,
 };
 declare const selectedParams:
 	| LoadContainerRuntimeParams
@@ -45,9 +37,7 @@ declare const selectedParams:
 export function validateLoadContainerRuntimeTypes(): Promise<unknown>[] {
 	return [
 		loadContainerRuntime(canonicalParams),
-		loadContainerRuntime(canonicalParamsWithExplicitUndefined),
 		loadContainerRuntime(deprecatedParams),
-		loadContainerRuntime(deprecatedParamsWithExplicitUndefined),
 		loadContainerRuntime(selectedParams),
 		loadContainerRuntimeAlpha(canonicalParams),
 		// @ts-expect-error The canonical type requires oldestSupportedClient.

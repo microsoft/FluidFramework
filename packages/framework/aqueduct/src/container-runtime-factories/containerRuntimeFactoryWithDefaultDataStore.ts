@@ -8,7 +8,6 @@ import type {
 	// eslint-disable-next-line import-x/no-deprecated
 	IContainerRuntimeWithResolveHandle_Deprecated,
 } from "@fluidframework/container-runtime-definitions/internal";
-import { getExplicitOldestSupportedClient } from "@fluidframework/container-runtime/internal";
 import type { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import type {
 	IFluidDataStoreFactory,
@@ -123,15 +122,8 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 			return undefined; // continue search
 		};
 
-		const oldestSupportedClient = getExplicitOldestSupportedClient(props);
-		const {
-			// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Omit the deprecated property after normalizing it.
-			minVersionForCollab: _deprecatedMinVersionForCollab,
-			...propsWithoutDeprecatedProperty
-		} = props;
 		super({
-			...propsWithoutDeprecatedProperty,
-			oldestSupportedClient,
+			...props,
 			requestHandlers: [getDefaultObject, ...requestHandlers],
 			provideEntryPoint,
 		});
