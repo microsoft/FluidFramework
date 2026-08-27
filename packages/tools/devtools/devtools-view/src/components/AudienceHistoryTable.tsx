@@ -3,29 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHeader,
-	TableRow,
-	makeStyles,
-	tokens,
-} from "@fluentui/react-components";
-import {
-	ArrowExitRegular,
-	ArrowJoinRegular,
-	Clock12Regular,
-	DoorArrowLeftRegular,
-	Person12Regular,
-} from "@fluentui/react-icons";
 import type { ReactElement } from "react";
 
+import { FluentReactComponents, FluentReactIcons } from "../FluentUi.cjs";
 import { ThemeOption, useThemeContext } from "../ThemeHelper.js";
 
 import type { TransformedAudienceHistoryData } from "./AudienceView.js";
 import { clientIdTooltipText } from "./TooltipTexts.js";
 import { LabelCellLayout } from "./utility-components/index.js";
+
+const { Table, TableBody, TableCell, TableHeader, TableRow, makeStyles, tokens } =
+	FluentReactComponents;
+const {
+	ArrowExitRegular,
+	ArrowJoinRegular,
+	Clock12Regular,
+	DoorArrowLeftRegular,
+	Person12Regular,
+} = FluentReactIcons;
 
 const audienceStyles = makeStyles({
 	joined: {
