@@ -126,16 +126,36 @@ Transform names use kebab case. Option names use camel case. Option values use n
 
 Each linked guide contains the option types, default values, behavior notes, and a basic marker example.
 
-## Implementation
+## Architecture
 
-The processing pipeline has these stages:
+The command processes each destination as a Markdown abstract syntax tree (mdast). Authored content stays in its original source form. The tool serializes only generated regions and replaces them by source offset.
 
-1. `processorProfiles.ts` selects the Markdown or MDX parser from the destination extension.
-2. `regions.ts` reads top-level marker nodes and validates marker pairs.
-3. `transformRegistry.ts` validates file-transform options and creates transform context.
-4. `transforms.ts` validates and generates package and template sections as mdast nodes.
-5. `processing.ts` validates destination compatibility, serializes each generated region, and patches source ranges from last to first.
-6. `cli.ts` selects files and processes at most eight files concurrently.
+```mermaid
+flowchart TD
+	CLI[CLI selects Markdown and MDX files] --> READ[Read one destination]
+	READ --> PARSE[Select profile and parse to mdast]
+	PARSE --> REGIONS[Find and validate marker regions]
+	REGIONS --> EACH{For each region}
+	EACH --> DEPTH[Infer heading depth from authored headings]
+	DEPTH --> OPTIONS[Validate transform options]
+	OPTIONS --> GENERATE[Generate mdast nodes]
+	GENERATE --> COMPAT[Validate destination compatibility]
+	COMPAT --> SERIALIZE[Serialize the generated region]
+	SERIALIZE --> READY{All regions valid?}
+	READY -->|Yes| PATCH[Apply replacements from last to first]
+	PATCH --> WRITE[Write only when content changed]
+	READY -->|No| STOP[Stop without writing the destination]
+```
+
+The main modules have these responsibilities:
+
+1. `cli.ts` selects files and processes at most eight files concurrently.
+2. `processorProfiles.ts` selects the Markdown or MDX parser from the destination extension.
+3. `regions.ts` reads top-level marker nodes and validates marker pairs.
+4. `headings.ts` determines the heading depth for each generated section.
+5. `transformRegistry.ts` validates file-transform options and creates transform context.
+6. `transforms.ts` generates package and template sections as mdast nodes.
+7. `processing.ts` coordinates validation, serialization, source-range replacement, and writes.
 
 The executable bin file uses `jiti` to load the TypeScript source. The package does not emit JavaScript build output.
 
