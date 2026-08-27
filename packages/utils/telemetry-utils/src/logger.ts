@@ -364,10 +364,7 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 	/**
 	 * {@inheritDoc @fluidframework/core-interfaces#ITelemetryBaseLogger.send}
 	 */
-	// `logLevel` stays optional on purpose: older layers may still call `send` without one, so
-	// implementations must keep handling `undefined`. It is forwarded as-is so the base logger
-	// applies its own default rather than this adapter guessing one.
-	public send(eventWithTagsMaybe: ITelemetryBaseEvent, logLevel?: LogLevel): void {
+	public send(eventWithTagsMaybe: ITelemetryBaseEvent, logLevel: LogLevel): void {
 		const newEvent: ITelemetryBaseEvent = {
 			category: eventWithTagsMaybe.category,
 			eventName: eventWithTagsMaybe.eventName,
