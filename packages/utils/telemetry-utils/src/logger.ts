@@ -84,6 +84,10 @@ export function extractTelemetryLoggerExt<
 export enum TelemetryDataTag {
 	/**
 	 * Data containing terms or IDs from code packages that may have been dynamically loaded
+	 *
+	 * @remarks
+	 * For identifiers or other metadata derived from a DDS's schema (e.g. SharedTree schema
+	 * identifiers), use {@link TelemetryDataTag.SchemaArtifact} instead.
 	 */
 	CodeArtifact = "CodeArtifact",
 	/**
@@ -1088,6 +1092,9 @@ export const tagData = <
  * @remarks
  * It supports properties of type {@link @fluidframework/core-interfaces#TelemetryBaseEventPropertyType},
  * as well as callbacks that return that type.
+ *
+ * Note: for identifiers or other metadata derived from a DDS's schema (e.g. SharedTree schema
+ * identifiers), use {@link tagSchemaArtifacts} instead.
  *
  * @example Sample usage
  * ```typescript
