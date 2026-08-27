@@ -532,6 +532,11 @@ module.exports = {
 			"fluid-build-tasks-tsc": [
 				// Server packages need to be cleaned up; excluding as a workaround
 				"^server/routerlicious/packages/.*/package.json",
+				// Client no-CJS build is problematic as built-tools doesn't understand require-esm
+				"^azure/.*",
+				"^examples/.*",
+				"^experimental/.*",
+				"^packages/.*",
 			],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts
