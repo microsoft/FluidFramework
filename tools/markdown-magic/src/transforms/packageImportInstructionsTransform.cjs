@@ -46,7 +46,7 @@ const generateImportInstructionsSection = (packageMetadata, headingOptions) => {
 		"This package uses [package.json exports](https://nodejs.org/api/packages.html#exports) to separate APIs by support level.",
 		"For information about the support guarantees, read [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).",
 		"", // Blank line
-		`Import the \`public\` ([Semantic Versioning (SemVer)](https://semver.org/)) APIs from \`${packageName}\`.`,
+		`Import the \`public\` APIs from \`${packageName}\`.`,
 	];
 
 	if (hasBetaExport) {
