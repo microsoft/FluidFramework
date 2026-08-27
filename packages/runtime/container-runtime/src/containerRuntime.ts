@@ -482,10 +482,10 @@ export interface ContainerRuntimeOptions {
 	readonly explicitSchemaControl: boolean;
 
 	/**
-	 * Create blob handles with pending payloads when calling createBlob (default is `undefined` (disabled)).
+	 * Create blob handles with pending payloads when calling createBlob (default is `undefined`/`false` (disabled)).
 	 * When enabled (`true`), createBlob will return a handle before the blob upload completes.
 	 */
-	readonly createBlobPayloadPending: true | undefined;
+	readonly createBlobPayloadPending: boolean | undefined;
 
 	/**
 	 * Controls automatic batch flushing during staging mode.
@@ -1094,7 +1094,10 @@ export class ContainerRuntime
 				(key) =>
 					runtimeOptionKeysThatRequireExplicitSchemaControl.includes(
 						key as RuntimeOptionKeysThatRequireExplicitSchemaControl,
-					) && runtimeOptions[key] !== undefined,
+					) &&
+					runtimeOptions[key] !== undefined &&
+					// `false` is equivalent to the option being disabled/unset, so it doesn't require explicitSchemaControl.
+					runtimeOptions[key] !== false,
 			);
 			if (disallowedKeys.length > 0) {
 				throw new UsageError(`explicitSchemaControl must be enabled to use ${disallowedKeys}`);
@@ -1280,7 +1283,9 @@ export class ContainerRuntime
 				compressionLz4,
 				idCompressorMode,
 				opGroupingEnabled: enableGroupedBatching,
-				createBlobPayloadPending,
+				// Document schema only recognizes `true | undefined` for this feature (see DocumentSchemaValueType),
+				// so normalize an explicit `false` runtime option to `undefined` before persisting.
+				createBlobPayloadPending: createBlobPayloadPending === true ? true : undefined,
 				disallowedVersions: [],
 			},
 			(schema) => {

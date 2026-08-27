@@ -207,6 +207,7 @@ const runtimeOptionsAffectingDocSchemaConfigValidationMap: ConfigValidationMap<R
 		]),
 		createBlobPayloadPending: configValueToMinVersionForCollab([
 			[undefined, "1.0.0"],
+			[false, "1.0.0"],
 			[true, "2.40.0"],
 		]),
 	};
