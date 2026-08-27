@@ -30,17 +30,16 @@ export interface TransformContext {
 }
 
 /** A transform that validates marker options and generates syntax-tree nodes. */
-export interface Transform<TOptions extends object = Record<string, unknown>> {
-	validateOptions(value: unknown): TOptions;
+export interface Transform {
 	generate(
-		options: TOptions,
+		options: unknown,
 		context: TransformContext,
 	): GeneratedNodes | Promise<GeneratedNodes>;
 }
 
 /** A registry that contains transforms and creates their execution context. */
 export interface TransformRegistry {
-	readonly transforms: Readonly<Record<string, Transform<Record<string, unknown>>>>;
+	readonly transforms: Readonly<Record<string, Transform>>;
 	createContext(
 		destinationPath: string,
 		destinationFormat: DocumentFormat,

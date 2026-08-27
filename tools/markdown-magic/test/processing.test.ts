@@ -48,7 +48,7 @@ test("include parses Markdown into nodes before generation", async () => {
 	const includeTransform = registry.transforms.include;
 	assert(includeTransform !== undefined);
 	const nodes = await includeTransform.generate(
-		includeTransform.validateOptions({ path: "./source.md" }),
+		{ path: "./source.md" },
 		registry.createContext(destinationPath, "markdown", 2),
 	);
 
@@ -75,10 +75,10 @@ test("include-code creates a code node", async () => {
 	const includeCodeTransform = registry.transforms["include-code"];
 	assert(includeCodeTransform !== undefined);
 	const nodes = await includeCodeTransform.generate(
-		includeCodeTransform.validateOptions({
+		{
 			path: "./source.ts",
 			language: "typescript",
-		}),
+		},
 		registry.createContext(destinationPath, "markdown", 2),
 	);
 
@@ -101,7 +101,7 @@ test("MDX include preserves MDX nodes", async () => {
 	const includeTransform = registry.transforms.include;
 	assert(includeTransform !== undefined);
 	const nodes = await includeTransform.generate(
-		includeTransform.validateOptions({ path: "./source.mdx" }),
+		{ path: "./source.mdx" },
 		registry.createContext(destinationPath, "mdx", 2),
 	);
 

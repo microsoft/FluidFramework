@@ -508,10 +508,9 @@ function transform<TSchema extends OptionsSchema>(
 		options: ValidatedOptions<TSchema>,
 		context: TransformContext,
 	) => RootContent[] | Promise<RootContent[]>,
-): Transform<ValidatedOptions<TSchema>> {
+): Transform {
 	return {
-		validateOptions: (value) => validateOptions(value, name, schema),
-		generate,
+		generate: (value, context) => generate(validateOptions(value, name, schema), context),
 	};
 }
 
@@ -522,7 +521,7 @@ function transform<TSchema extends OptionsSchema>(
  *
  * @returns {Record<string, { validateOptions: (value: unknown) => Record<string, unknown>; generate: Function }>} The README transform registry.
  */
-export function createReadmeTransforms(): Record<string, Transform<Record<string, unknown>>> {
+export function createReadmeTransforms(): Record<string, Transform> {
 	const templateTransforms = {
 		"client-requirements": ["Client-Requirements-Template.md", "Minimum Client Requirements"],
 		trademark: ["Trademark-Template.md", "Trademark"],
@@ -536,7 +535,7 @@ export function createReadmeTransforms(): Record<string, Transform<Record<string
 		],
 		help: ["Help-Template.md", "Help"],
 	} as const;
-	const transforms: Record<string, Transform<Record<string, unknown>>> = {};
+	const transforms: Record<string, Transform> = {};
 	for (const [name, [templateName, headingText]] of Object.entries(templateTransforms)) {
 		transforms[name] = transform(name, headingSchema, (options, context) =>
 			generateTemplateSection(templateName, options, headingText, context),

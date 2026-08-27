@@ -20,9 +20,8 @@ async function generate(
 	const registry = createTransformRegistry();
 	const transform = registry.transforms[transformName];
 	assert(transform !== undefined);
-	const validatedOptions = transform.validateOptions(options);
 	const nodes = await transform.generate(
-		validatedOptions,
+		options,
 		registry.createContext(path.join(testDirectory, "fixture.md"), "markdown", 2),
 	);
 	return serializeNodes(nodes, "markdown");
@@ -89,33 +88,45 @@ test("example app header honors the Tinylicious option", async () => {
 	assert.match(output, /pnpm start/);
 });
 
-test("transform options reject unknown properties", () => {
+test("transform options reject unknown properties", async () => {
 	const registry = createTransformRegistry();
 	const transform = registry.transforms["library-readme-header"];
 	assert(transform !== undefined);
-	assert.throws(
-		() => transform.validateOptions({ scripts: true }),
+	await assert.rejects(
+		async () =>
+			transform.generate(
+				{ scripts: true },
+				registry.createContext(path.join(testDirectory, "fixture.md"), "markdown", 2),
+			),
 		/Unknown option "scripts" for transform "library-readme-header"/,
 	);
 });
 
-test("transform options reject null values", () => {
+test("transform options reject null values", async () => {
 	const registry = createTransformRegistry();
 	const transform = registry.transforms["readme-footer"];
 	assert(transform !== undefined);
-	assert.throws(
-		() => transform.validateOptions({ scripts: null }),
+	await assert.rejects(
+		async () =>
+			transform.generate(
+				{ scripts: null },
+				registry.createContext(path.join(testDirectory, "fixture.md"), "markdown", 2),
+			),
 		/Option "scripts" for "readme-footer" must be a boolean/,
 	);
 });
 
-test("section transforms reject the removed heading level option", () => {
+test("section transforms reject the removed heading level option", async () => {
 	const registry = createTransformRegistry();
 	for (const transformName of ["api-docs", "installation-instructions", "package-scripts"]) {
 		const transform = registry.transforms[transformName];
 		assert(transform !== undefined);
-		assert.throws(
-			() => transform.validateOptions({ headingLevel: 2 }),
+		await assert.rejects(
+			async () =>
+				transform.generate(
+					{ headingLevel: 2 },
+					registry.createContext(path.join(testDirectory, "fixture.md"), "markdown", 2),
+				),
 			/Unknown option "headingLevel"/,
 		);
 	}

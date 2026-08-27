@@ -110,13 +110,12 @@ export async function processDocument(
 				`${filePath}:${region.line}: Unknown transform "${region.transformName}".`,
 			);
 		}
-		const options = transform.validateOptions(region.options);
 		const context = registry.createContext(
 			filePath,
 			region.destinationFormat,
 			inferSectionHeadingDepth(document, regions, region),
 		);
-		const nodes = await transform.generate(options, context);
+		const nodes = await transform.generate(region.options, context);
 		const sourcePath = nodes.sourcePath ?? filePath;
 		validateDestinationCompatibility(nodes, region.destinationFormat, sourcePath, filePath);
 		replacements.push({

@@ -11,7 +11,6 @@ import { createReadmeTransforms } from "./transforms.js";
 import type {
 	DocumentFormat,
 	GeneratedNodes,
-	Transform,
 	TransformContext,
 	TransformRegistry,
 } from "./types.js";
@@ -172,10 +171,8 @@ export function createTransformRegistry(): TransformRegistry {
 		transforms: {
 			...createReadmeTransforms(),
 			include: {
-				validateOptions(value: unknown) {
-					return validateIncludeOptions(value, "include", false);
-				},
-				async generate(options: IncludeOptions, context: TransformContext) {
+				async generate(value: unknown, context: TransformContext) {
+					const options = validateIncludeOptions(value, "include", false);
 					const sourcePath = context.resolvePath(options.path);
 					const source = await context.readFile(sourcePath, "utf8");
 					const selectedSource = sliceLines(source, options.start, options.end);
@@ -189,10 +186,8 @@ export function createTransformRegistry(): TransformRegistry {
 				},
 			},
 			"include-code": {
-				validateOptions(value: unknown) {
-					return validateIncludeOptions(value, "include-code", true);
-				},
-				async generate(options: IncludeOptions, context: TransformContext) {
+				async generate(value: unknown, context: TransformContext) {
+					const options = validateIncludeOptions(value, "include-code", true);
 					const sourcePath = context.resolvePath(options.path);
 					const source = await context.readFile(sourcePath, "utf8");
 					return [
@@ -204,6 +199,6 @@ export function createTransformRegistry(): TransformRegistry {
 					];
 				},
 			},
-		} as unknown as Record<string, Transform<Record<string, unknown>>>,
+		},
 	};
 }
