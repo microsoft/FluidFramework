@@ -27,49 +27,19 @@ function commentNode(format: DocumentFormat, value: string): import("mdast").Roo
 }
 
 /**
- * Tests whether a syntax-tree node contains MDX-specific syntax.
- *
- * @param {import("mdast").Nodes} node - The node to inspect.
- * @returns {boolean} `true` if the node or one of its descendants is an MDX node.
- */
-function containsMdxNode(node: import("mdast").Nodes): boolean {
-	if (node.type.startsWith("mdx")) {
-		return true;
-	}
-	return "children" in node && node.children.some((child) => containsMdxNode(child));
-}
-
-/**
- * Verifies that the destination processor can serialize the generated nodes.
- *
- * @param {readonly import("mdast").RootContent[]} nodes - The generated nodes.
- * @param {"markdown" | "mdx"} destinationFormat - The destination document format.
- * @param {string} sourcePath - The source path to include in an error.
- * @param {string} destinationPath - The destination path to include in an error.
- */
-function validateDestinationCompatibility(
-	nodes: readonly import("mdast").RootContent[],
-	destinationFormat: DocumentFormat,
-	sourcePath: string,
-	destinationPath: string,
-): void {
-	if (destinationFormat === "markdown" && nodes.some((node) => containsMdxNode(node))) {
-		throw new Error(
-			`MDX content from "${sourcePath}" cannot be generated in Markdown document "${destinationPath}".`,
-		);
-	}
-}
-
-/**
  * Adds generated-content notices and serializes one generated region.
  *
  * @param {readonly import("mdast").RootContent[]} nodes - The transform output.
  * @param {"markdown" | "mdx"} format - The destination document format.
+ * @param {string} sourcePath - The source path to include in an error.
+ * @param {string} destinationPath - The destination path to include in an error.
  * @returns {Promise<string>} The serialized region body with boundary blank lines.
  */
 async function serializeGeneratedBody(
 	nodes: readonly import("mdast").RootContent[],
 	format: DocumentFormat,
+	sourcePath: string,
+	destinationPath: string,
 ): Promise<string> {
 	const wrappedNodes: import("mdast").RootContent[] = [
 		commentNode(format, "prettier-ignore-start"),
@@ -77,7 +47,18 @@ async function serializeGeneratedBody(
 		...nodes,
 		commentNode(format, "prettier-ignore-end"),
 	];
-	const serialized = await serializeNodes(wrappedNodes, format);
+	let serialized: string;
+	try {
+		// Remark does not expose a capability check for node types. Serialization is its
+		// authoritative compatibility check and automatically covers node types added later.
+		serialized = await serializeNodes(wrappedNodes, format);
+	} catch (error) {
+		const formatName = format === "mdx" ? "MDX" : "Markdown";
+		throw new Error(
+			`Content from "${sourcePath}" cannot be generated in ${formatName} document "${destinationPath}".`,
+			{ cause: error },
+		);
+	}
 	// Parse the output before any write so invalid generated syntax cannot replace valid content.
 	parseDocument(serialized, format === "mdx" ? "generated.mdx" : "generated.md");
 	return `\n\n${serialized}\n\n`;
@@ -117,11 +98,15 @@ export async function processDocument(
 		);
 		const nodes = await transform.generate(region.options, context);
 		const sourcePath = nodes.sourcePath ?? filePath;
-		validateDestinationCompatibility(nodes, region.destinationFormat, sourcePath, filePath);
 		replacements.push({
 			start: region.openingMarkerEnd,
 			end: region.closingMarkerStart,
-			content: await serializeGeneratedBody(nodes, region.destinationFormat),
+			content: await serializeGeneratedBody(
+				nodes,
+				region.destinationFormat,
+				sourcePath,
+				filePath,
+			),
 		});
 	}
 

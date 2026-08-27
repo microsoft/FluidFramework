@@ -9,6 +9,8 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 
+import type { RootContent } from "mdast";
+
 import { processDocument } from "../src/processing.js";
 import { createTransformRegistry } from "../src/transformRegistry.js";
 
@@ -126,8 +128,42 @@ test("Markdown destinations reject MDX nodes", async () => {
 
 	await assert.rejects(
 		processDocument(destinationPath, createTransformRegistry()),
-		/MDX content from .*source\.mdx.* cannot be generated in Markdown document .*destination\.md/,
+		/Content from .*source\.mdx.* cannot be generated in Markdown document .*destination\.md/,
 	);
+});
+
+test("destination serialization rejects unknown future node types", async () => {
+	const directory = await createTempDirectory();
+	const destinationPath = path.join(directory, "destination.md");
+	await writeFile(
+		destinationPath,
+		[
+			`<!-- markdown-magic:begin {"transform":"future-node"} -->`,
+			"",
+			"Old content.",
+			"",
+			"<!-- markdown-magic:end -->",
+		].join("\n"),
+	);
+
+	const baseRegistry = createTransformRegistry();
+	const registry = {
+		...baseRegistry,
+		transforms: {
+			...baseRegistry.transforms,
+			"future-node": {
+				generate: () => [{ type: "mdxFutureNode" } as unknown as RootContent],
+			},
+		},
+	};
+
+	await assert.rejects(processDocument(destinationPath, registry), (error: unknown) => {
+		assert(error instanceof Error);
+		assert.match(error.message, /cannot be generated in Markdown document/);
+		assert(error.cause instanceof Error);
+		assert.match(error.cause.message, /Cannot handle unknown node `mdxFutureNode`/);
+		return true;
+	});
 });
 
 test("infers generated heading depth from the region placement", async () => {
