@@ -8,7 +8,7 @@
 // @ts-check
 
 /**
- * Dependencies for the "eslint" (and "eslint:fix") tasks.
+ * Dependencies for type-aware code lint tasks.
  *
  * eslint does type-aware linting driven by the TypeScript *sources* (via projectService),
  * so it must resolve the same imported types that tsc does.
@@ -18,7 +18,7 @@
  * We specifically avoid depending on this package's test compilation: it is unnecessary
  * and would slow down building individual packages by starting lint much later.
  */
-const eslintDependsOn = [
+const typeAwareLintDependsOn = [
 	"^build:package:esm",
 	"build:genver",
 	"typetests:gen",
@@ -303,8 +303,10 @@ module.exports = {
 		},
 		"check:biome": [],
 		"check:prettier": [],
-		"eslint": eslintDependsOn,
-		"eslint:fix": eslintDependsOn,
+		"eslint": typeAwareLintDependsOn,
+		"eslint:fix": typeAwareLintDependsOn,
+		"oxlint": typeAwareLintDependsOn,
+		"oxlint:fix": typeAwareLintDependsOn,
 		"good-fences": [],
 		"format:biome": [],
 		"format:prettier": [],
@@ -734,6 +736,7 @@ module.exports = {
 				["mocha", "mocha"],
 				["nyc", "nyc"],
 				["oclif", "oclif"],
+				["oxlint", "oxlint"],
 				["prettier", "prettier"],
 				["rimraf", "rimraf"],
 				["tinylicious", "tinylicious"],

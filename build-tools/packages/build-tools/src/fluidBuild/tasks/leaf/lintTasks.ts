@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { getEsLintConfigFilePath, getInstalledPackageVersion } from "../taskUtils.js";
+import {
+	getEsLintConfigFilePath,
+	getInstalledPackageVersion,
+	getOxLintConfigFilePath,
+} from "../taskUtils.js";
 import { TscDependentTask } from "./tscTask.js";
 
 export class EsLintTask extends TscDependentTask {
@@ -30,5 +34,28 @@ export class EsLintTask extends TscDependentTask {
 
 	protected async getToolVersion(): Promise<string> {
 		return getInstalledPackageVersion("eslint", this.node.pkg.directory);
+	}
+}
+
+export class OxLintTask extends TscDependentTask {
+	private _configFileFullPath: string | undefined;
+
+	protected get taskSpecificConfigFiles(): string[] {
+		if (!this._configFileFullPath) {
+			this._configFileFullPath = getOxLintConfigFilePath(this.package.directory, this.command);
+			if (!this._configFileFullPath) {
+				throw new Error(`Unable to find config file for oxlint ${this.command}`);
+			}
+		}
+
+		return [this._configFileFullPath];
+	}
+
+	protected async getToolVersion(): Promise<string> {
+		const [oxlint, tsgolint] = await Promise.all([
+			getInstalledPackageVersion("oxlint", this.node.pkg.directory),
+			getInstalledPackageVersion("oxlint-tsgolint", this.node.pkg.directory),
+		]);
+		return `oxlint@${oxlint};oxlint-tsgolint@${tsgolint}`;
 	}
 }

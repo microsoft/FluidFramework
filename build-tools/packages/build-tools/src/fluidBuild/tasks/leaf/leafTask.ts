@@ -164,7 +164,10 @@ export abstract class LeafTask extends Task {
 		if (this.isTemp) {
 			return true;
 		}
-		const isLintTask = this.executable === "eslint" || this.executable === "prettier";
+		const isLintTask =
+			this.executable === "eslint" ||
+			this.executable === "oxlint" ||
+			this.executable === "prettier";
 		return (options.nolint && isLintTask) || (options.lintonly && !isLintTask);
 	}
 

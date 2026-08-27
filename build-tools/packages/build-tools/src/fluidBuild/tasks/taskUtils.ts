@@ -43,11 +43,51 @@ export function getEsLintConfigFilePath(dir: string): string | undefined {
 	return undefined;
 }
 
+export function getOxLintConfigFilePath(
+	dir: string,
+	commandLine?: string,
+): string | undefined {
+	const commandArgs = commandLine?.split(/\s+/) ?? [];
+	const configArgumentIndex = commandArgs.findIndex(
+		(arg) => arg === "--config" || arg === "-c",
+	);
+	if (configArgumentIndex !== -1) {
+		const configPath = commandArgs[configArgumentIndex + 1];
+		return configPath === undefined ? undefined : path.resolve(dir, configPath);
+	}
+
+	const configArgument = commandArgs.find((arg) => arg.startsWith("--config="));
+	if (configArgument !== undefined) {
+		return path.resolve(dir, configArgument.slice("--config=".length));
+	}
+
+	for (const configFile of [
+		".oxlintrc.json",
+		".oxlintrc.jsonc",
+		"oxlint.config.ts",
+		"oxlint.config.mts",
+	]) {
+		const configFileFullPath = path.join(dir, configFile);
+		if (existsSync(configFileFullPath)) {
+			return configFileFullPath;
+		}
+	}
+	return undefined;
+}
+
 export async function getInstalledPackageVersion(
 	packageName: string,
 	cwd: string,
 ): Promise<string> {
-	const resolvedPath = require.resolve(packageName, { paths: [cwd] });
+	let resolvedPath: string;
+	try {
+		resolvedPath = require.resolve(packageName, { paths: [cwd] });
+	} catch (error) {
+		if ((error as NodeJS.ErrnoException).code !== "MODULE_NOT_FOUND") {
+			throw error;
+		}
+		resolvedPath = require.resolve(`${packageName}/package.json`, { paths: [cwd] });
+	}
 	const packageJsonPath = lookUpDirSync(resolvedPath, (currentDir) => {
 		return existsSync(path.join(currentDir, "package.json"));
 	});

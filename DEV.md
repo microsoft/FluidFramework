@@ -37,6 +37,19 @@ The following dependencies are pinned to older major versions because newer vers
 
 ## ESLint and typescript-eslint
 
+### Client code lint commands
+
+The client workspace runs Oxlint and ESLint together during the migration:
+
+- `pnpm lint:code` runs type-aware Oxlint plus the ESLint compatibility pass. This is the
+  coverage-preserving code-lint command.
+- `pnpm oxlint` runs Oxlint alone for migration diagnostics and performance comparisons.
+- `pnpm eslint` runs the unchanged ESLint pass for direct comparison.
+
+Oxlint alone is not yet a replacement for ESLint. Unsupported plugins, custom rules, and known
+semantic differences remain enforced by ESLint until diagnostic parity is proven. Packages that
+cannot yet run type-aware Oxlint remain ESLint-only and are skipped by the Oxlint task.
+
 ### projectService vs explicit project arrays
 
 The shared ESLint config uses `parserOptions.projectService: true` by default for TypeScript files. This is the recommended approach as of typescript-eslint v8. However, some packages require explicit `parserOptions.project` arrays due to non-standard tsconfig structures.

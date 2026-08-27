@@ -15,7 +15,7 @@ import { DeclarativeLeafTask } from "./leaf/declarativeTask.js";
 import { FlubCheckLayerTask, FlubCheckPolicyTask, FlubListTask } from "./leaf/flubTasks.js";
 import { GenerateEntrypointsTask } from "./leaf/generateEntrypointsTask.js";
 import { type LeafTask, UnknownLeafTask } from "./leaf/leafTask.js";
-import { EsLintTask } from "./leaf/lintTasks.js";
+import { EsLintTask, OxLintTask } from "./leaf/lintTasks.js";
 import {
 	CopyfilesTask,
 	DepCruiseTask,
@@ -40,6 +40,7 @@ const executableToLeafTask: {
 	"tsc": TscTask,
 	"fluid-tsc": TscTask,
 	"eslint": EsLintTask,
+	"oxlint": OxLintTask,
 	"webpack": WebpackTask,
 	"parallel-webpack": WebpackTask,
 	"lessc": LesscTask,

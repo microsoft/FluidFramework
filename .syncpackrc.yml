@@ -121,6 +121,8 @@ semverGroups:
       - "eslint-plugin-*"
       - "eslint"
       - "less"
+      - "oxlint"
+      - "oxlint-tsgolint"
       - "prettier"
       - "typescript"
       - "typescript-eslint"

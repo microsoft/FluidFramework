@@ -35,6 +35,8 @@
 		"full": "node ./dist/main.js --profile full",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
+		"oxlint": "oxlint --type-aware --quiet --config ../../../.oxlintrc.json src",
+		"oxlint:fix": "oxlint --type-aware --quiet --config ../../../.oxlintrc.json --fix src",
 		"start": "node ./dist/main.js",
 		"start:frs": "node ./dist/main.js --driver routerlicious --driverEndpoint frs --profile ci_frs",
 		"start:frs:canary": "node ./dist/main.js --driver routerlicious --driverEndpoint frsCanary --profile ci_frs",
@@ -118,6 +120,8 @@
 		"eslint": "catalog:eslint",
 		"jiti": "^2.6.1",
 		"mocha": "^11.7.5",
+		"oxlint": "catalog:oxlint",
+		"oxlint-tsgolint": "catalog:oxlint",
 		"rimraf": "^6.1.3",
 		"typescript": "~6.0.3"
 	},

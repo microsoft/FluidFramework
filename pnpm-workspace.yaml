@@ -45,6 +45,10 @@ catalogs:
     "@fluidframework/eslint-config-fluid": "^14.0.0"
     "eslint": "~9.39.1"
     "eslint-config-prettier": "~10.1.8"
+  # Oxlint and its type-aware sidecar must be upgraded together.
+  oxlint:
+    "oxlint": "~1.80.0"
+    "oxlint-tsgolint": "~7.0.2001"
   # Type definitions
   types:
     "@types/node": "~22.19.17"

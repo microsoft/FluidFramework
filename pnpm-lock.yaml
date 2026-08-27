@@ -29,6 +29,13 @@ catalogs:
     eslint-config-prettier:
       specifier: ~10.1.8
       version: 10.1.8
+  oxlint:
+    oxlint:
+      specifier: ~1.80.0
+      version: 1.80.0
+    oxlint-tsgolint:
+      specifier: ~7.0.2001
+      version: 7.0.2001
 
 overrides:
   '@babel/core@>=7 <8': ^7.29.6
@@ -159,6 +166,12 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       playwright:
         specifier: ^1.59.1
         version: 1.62.1
@@ -205,6 +218,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       pm2:
         specifier: ^5.4.2
         version: 5.4.3(supports-color@10.2.2)
@@ -266,6 +285,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -369,6 +394,12 @@ importers:
       html-webpack-plugin:
         specifier: ^5.6.0
         version: 5.6.3(webpack@5.109.0)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       prettier:
         specifier: ~3.6.2
         version: 3.6.2
@@ -472,6 +503,12 @@ importers:
       html-webpack-plugin:
         specifier: ^5.6.0
         version: 5.6.3(webpack@5.109.0)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -572,6 +609,12 @@ importers:
       html-webpack-plugin:
         specifier: ^5.6.0
         version: 5.6.3(webpack@5.109.0)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -672,6 +715,12 @@ importers:
       html-webpack-plugin:
         specifier: ^5.6.0
         version: 5.6.3(webpack@5.109.0)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -823,6 +872,12 @@ importers:
       html-webpack-plugin:
         specifier: ^5.6.0
         version: 5.6.3(webpack@5.109.0)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -920,6 +975,12 @@ importers:
       html-webpack-plugin:
         specifier: ^5.6.0
         version: 5.6.3(webpack@5.109.0)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -1035,6 +1096,12 @@ importers:
       html-webpack-plugin:
         specifier: ^5.6.0
         version: 5.6.3(webpack@5.109.0)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -1165,6 +1232,12 @@ importers:
       html-webpack-plugin:
         specifier: ^5.6.0
         version: 5.6.3(webpack@5.109.0)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -1265,6 +1338,12 @@ importers:
       html-webpack-plugin:
         specifier: ^5.6.0
         version: 5.6.3(webpack@5.109.0)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -1341,6 +1420,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -1453,6 +1538,12 @@ importers:
       html-webpack-plugin:
         specifier: ^5.6.0
         version: 5.6.3(webpack@5.109.0)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -1541,6 +1632,12 @@ importers:
       eslint:
         specifier: catalog:eslint
         version: 9.39.1(jiti@2.6.1)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -1620,6 +1717,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -1690,6 +1793,12 @@ importers:
       eslint:
         specifier: catalog:eslint
         version: 9.39.1(jiti@2.6.1)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -1775,6 +1884,12 @@ importers:
       eslint:
         specifier: catalog:eslint
         version: 9.39.1(jiti@2.6.1)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -1851,6 +1966,12 @@ importers:
       eslint:
         specifier: catalog:eslint
         version: 9.39.1(jiti@2.6.1)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -1945,6 +2066,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -2081,6 +2208,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -2172,6 +2305,12 @@ importers:
       less-loader:
         specifier: ^12.3.1
         version: 12.3.1(less@3.12.2)(webpack@5.109.0)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -2257,6 +2396,12 @@ importers:
       eslint:
         specifier: catalog:eslint
         version: 9.39.1(jiti@2.6.1)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -2360,6 +2505,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -2451,6 +2602,12 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -2530,6 +2687,12 @@ importers:
       monaco-editor-webpack-plugin:
         specifier: ^6.0.0
         version: 6.0.0(monaco-editor@0.30.1)(webpack@5.109.0)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -2603,6 +2766,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -2646,6 +2815,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -2740,6 +2915,12 @@ importers:
       eslint:
         specifier: catalog:eslint
         version: 9.39.1(jiti@2.6.1)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -2795,6 +2976,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -2829,6 +3016,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -2869,6 +3062,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -2909,6 +3108,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -2949,6 +3154,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -3079,6 +3290,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -3175,6 +3392,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -3302,6 +3525,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -3396,6 +3625,12 @@ importers:
       eslint:
         specifier: catalog:eslint
         version: 9.39.1(jiti@2.6.1)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -3514,6 +3749,12 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -3626,6 +3867,12 @@ importers:
       eslint:
         specifier: catalog:eslint
         version: 9.39.1(jiti@2.6.1)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -3768,6 +4015,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -3964,6 +4217,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -4082,6 +4341,12 @@ importers:
       html-webpack-plugin:
         specifier: ^5.6.0
         version: 5.6.3(webpack@5.109.0)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -4218,6 +4483,12 @@ importers:
       html-webpack-plugin:
         specifier: ^5.6.0
         version: 5.6.3(webpack@5.109.0)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -4315,6 +4586,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -4448,6 +4725,12 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -4536,6 +4819,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -4663,6 +4952,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -4712,6 +5007,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -4782,6 +5083,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -4870,6 +5177,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -5042,6 +5355,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -5130,6 +5449,12 @@ importers:
       html-webpack-plugin:
         specifier: ^5.6.0
         version: 5.6.3(webpack@5.109.0)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -5269,6 +5594,12 @@ importers:
       html-webpack-plugin:
         specifier: ^5.6.0
         version: 5.6.3(webpack@5.109.0)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -5423,6 +5754,12 @@ importers:
       html-webpack-plugin:
         specifier: ^5.6.0
         version: 5.6.3(webpack@5.109.0)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -5556,6 +5893,12 @@ importers:
       html-webpack-plugin:
         specifier: ^5.6.0
         version: 5.6.3(webpack@5.109.0)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -5665,6 +6008,12 @@ importers:
       html-webpack-plugin:
         specifier: ^5.6.0
         version: 5.6.3(webpack@5.109.0)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -5780,6 +6129,12 @@ importers:
       html-webpack-plugin:
         specifier: ^5.6.0
         version: 5.6.3(webpack@5.109.0)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -5874,6 +6229,12 @@ importers:
       html-webpack-plugin:
         specifier: ^5.6.0
         version: 5.6.3(webpack@5.109.0)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       process:
         specifier: ^0.11.10
         version: 0.11.10
@@ -5983,6 +6344,12 @@ importers:
       nock:
         specifier: ^13.3.3
         version: 13.5.6(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -6086,6 +6453,12 @@ importers:
       nock:
         specifier: ^13.3.3
         version: 13.5.6(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -6237,6 +6610,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -6319,6 +6698,12 @@ importers:
       nock:
         specifier: ^13.3.3
         version: 13.5.6(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -6416,6 +6801,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       quill-delta:
         specifier: ^4.2.2
         version: 4.2.2
@@ -6510,6 +6901,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -6604,6 +7001,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -6755,6 +7158,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -6828,6 +7237,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -6895,6 +7310,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -6995,6 +7416,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -7059,6 +7486,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -7197,6 +7630,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -7249,6 +7688,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -7346,6 +7791,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -7443,6 +7894,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -7543,6 +8000,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -7634,6 +8097,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -7743,6 +8212,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -7861,6 +8336,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -7994,6 +8475,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -8112,6 +8599,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -8218,6 +8711,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -8312,6 +8811,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -8412,6 +8917,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -8539,6 +9050,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       random-js:
         specifier: ^2.1.0
         version: 2.1.0
@@ -8657,6 +9174,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -8754,6 +9277,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -8863,6 +9392,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -8966,6 +9501,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -9135,6 +9676,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -9199,6 +9746,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -9284,6 +9837,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -9442,6 +10001,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -9575,6 +10140,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -9681,6 +10252,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -9736,6 +10313,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -9818,6 +10401,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -9891,6 +10480,12 @@ importers:
       nock:
         specifier: ^13.3.3
         version: 13.5.6(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -9991,6 +10586,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -10079,6 +10680,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -10161,6 +10768,12 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -10246,6 +10859,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -10361,6 +10980,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -10476,6 +11101,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -10555,6 +11186,12 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -10646,6 +11283,12 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -10746,6 +11389,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -10828,6 +11477,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -10958,6 +11613,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -11025,6 +11686,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -11086,6 +11753,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -11141,6 +11814,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -11244,6 +11923,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -11353,6 +12038,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -11474,6 +12165,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -11562,6 +12259,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -11641,6 +12344,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -11750,6 +12459,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -11850,6 +12565,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -11926,6 +12647,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -11996,6 +12723,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -12087,6 +12820,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -12202,6 +12941,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -12299,6 +13044,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -12357,6 +13108,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -12499,6 +13256,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -12563,6 +13326,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -12675,6 +13444,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -12739,6 +13514,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -12830,6 +13611,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -12894,6 +13681,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -12997,6 +13790,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -13118,6 +13917,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -13224,6 +14029,12 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -13369,6 +14180,12 @@ importers:
       nock:
         specifier: ^13.3.3
         version: 13.5.6(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -13478,6 +14295,12 @@ importers:
       nock:
         specifier: ^13.3.3
         version: 13.5.6(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -13584,6 +14407,12 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -13696,6 +14525,12 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -13828,6 +14663,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -13988,6 +14829,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -14117,6 +14964,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -14184,6 +15037,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -14305,6 +15164,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -14384,6 +15249,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       random-js:
         specifier: ^2.1.0
         version: 2.1.0
@@ -14436,6 +15307,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -14539,6 +15416,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -14820,6 +15703,12 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -14953,6 +15842,12 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -15098,6 +15993,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -15273,6 +16174,12 @@ importers:
       nock:
         specifier: ^13.3.3
         version: 13.5.6(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -15325,6 +16232,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -15401,6 +16314,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -15561,6 +16480,12 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -15715,6 +16640,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -15872,6 +16803,12 @@ importers:
       html-webpack-plugin:
         specifier: ^5.6.0
         version: 5.6.3(webpack@5.109.0)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -16056,6 +16993,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       playwright:
         specifier: ^1.59.1
         version: 1.62.1
@@ -16153,6 +17096,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -16253,6 +17202,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -16380,6 +17335,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -16468,6 +17429,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -16559,6 +17526,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -16656,6 +17629,12 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      oxlint:
+        specifier: catalog:oxlint
+        version: 1.80.0(oxlint-tsgolint@7.0.2001)
+      oxlint-tsgolint:
+        specifier: catalog:oxlint
+        version: 7.0.2001
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -19093,6 +20072,158 @@ packages:
 
   '@octokit/types@16.0.0':
     resolution: {integrity: sha512-sKq+9r1Mm4efXW1FCk7hFSeJo4QKreL/tTbR0rz/qx/r1Oa2VV83LTA/H/MuCOX7uCIJmQVRKBcbmWoySjAnSg==}
+
+  '@oxlint-tsgolint/darwin-arm64@7.0.2001':
+    resolution: {integrity: sha512-CUJEdbSZ54+Xy9OXqOhWLTKZKV0BBiV7C2i/ygyVmXtkUNXx5YCzN8DpSSshTAKktoL7S+tnQ/ftFG/i7X896w==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@oxlint-tsgolint/darwin-x64@7.0.2001':
+    resolution: {integrity: sha512-pXfBb5BqONCcgrXQNUZWXgiYmRSWJzd97S8i41VVOh6ut0tyo+cJ5FKFpczDHxiVNfj/3e7c9B4MtztNdpIVCw==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@oxlint-tsgolint/linux-arm64@7.0.2001':
+    resolution: {integrity: sha512-roP7zujb/QDPzDwEKsFFpzNHHy91/Y7oX9vQXk78ekyZtcQj1QXDIMH33gjDdHBfRl4K9pZ36xhRgrP4Zr+R8A==}
+    cpu: [arm64]
+    os: [linux]
+
+  '@oxlint-tsgolint/linux-x64@7.0.2001':
+    resolution: {integrity: sha512-UDezNqdECVmngu2TPnjaS1YoAmcTaBoI5lV9vk3VahBxoi+I5r9k3iJTT7qZoYWOXTD/7T7bNcwRgrocR6BscQ==}
+    cpu: [x64]
+    os: [linux]
+
+  '@oxlint-tsgolint/win32-arm64@7.0.2001':
+    resolution: {integrity: sha512-uJZhqB6pdXLuN+AD1F5082byyQti/NPmJA77GtcFlmT2HzRelqbNls3SaIqxpjdFgvSBF9g0yOKGBkGFg7kX8Q==}
+    cpu: [arm64]
+    os: [win32]
+
+  '@oxlint-tsgolint/win32-x64@7.0.2001':
+    resolution: {integrity: sha512-FkDRm8hx9OwzGQqyWG1tO5QrTLRApff9DzSgpz9QZau37BR8d1VYKOxMLGf6shPZntJFoTwIIJYT68VndYDCog==}
+    cpu: [x64]
+    os: [win32]
+
+  '@oxlint/binding-android-arm-eabi@1.80.0':
+    resolution: {integrity: sha512-RM3Plj+biQpxa5d1GOOX6ciDlcUROmm4OZ/pLTpitkQt2mJv4jhtY4cbgaetOm5UKWZe05/TGQ6o1Vl8EOHkrA==}
+    engines: {node: ^20.19.0 || >=22.12.0}
+    cpu: [arm]
+    os: [android]
+
+  '@oxlint/binding-android-arm64@1.80.0':
+    resolution: {integrity: sha512-YlO5JEf0Yr2bUUlu8O8daVcUxtcGGbcSmyV7E7nSbJbfAdxTE0PFPwgnIlw7wXJaTYjb+qs5hI5q3jxUkI7cAw==}
+    engines: {node: ^20.19.0 || >=22.12.0}
+    cpu: [arm64]
+    os: [android]
+
+  '@oxlint/binding-darwin-arm64@1.80.0':
+    resolution: {integrity: sha512-BULDOyO3AhsmdWfQeIUCykDt3dd7XZBGLhp1eIh56skRv01O+cNjNPwXMIbeW1x4+pxcln5if72wcRgViVo7PA==}
+    engines: {node: ^20.19.0 || >=22.12.0}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@oxlint/binding-darwin-x64@1.80.0':
+    resolution: {integrity: sha512-YJ4JzLw7N5TDSQFlA0hAQGHvnDZgyypm1yunObVWcWiF9KM7eGCJKYKLgTC2Fi/57OdnBhbj4OkzPGdFQJ6HyA==}
+    engines: {node: ^20.19.0 || >=22.12.0}
+    cpu: [x64]
+    os: [darwin]
+
+  '@oxlint/binding-freebsd-x64@1.80.0':
+    resolution: {integrity: sha512-AYUIk5QnL0s8oWAYsREZwkRYy1SupJTXALo93J1TgzHywxQtdM99FecRMQ87MXEdPQ0j1TmEpeeq3fGNkpvMqg==}
+    engines: {node: ^20.19.0 || >=22.12.0}
+    cpu: [x64]
+    os: [freebsd]
+
+  '@oxlint/binding-linux-arm-gnueabihf@1.80.0':
+    resolution: {integrity: sha512-9hBZVANupQ89W9dXyE0n8doCyaW5pDyGn3y6XlIMPZ+rIKuyqkr3SNUXmVJIhuvUq0NBU3RBiSXXE69l4XI6KA==}
+    engines: {node: ^20.19.0 || >=22.12.0}
+    cpu: [arm]
+    os: [linux]
+
+  '@oxlint/binding-linux-arm-musleabihf@1.80.0':
+    resolution: {integrity: sha512-SvS2uKqzY+pbfuvAHzH4338R6Zwo805GAwrIMVvK1KxoOWCIjZUdfzTCvilD7z6JK91v011+zYMryabhDo2AsQ==}
+    engines: {node: ^20.19.0 || >=22.12.0}
+    cpu: [arm]
+    os: [linux]
+
+  '@oxlint/binding-linux-arm64-gnu@1.80.0':
+    resolution: {integrity: sha512-tCLadyqRVL3pQTRPNg7cjXKvcvS4fbyXeQHhKk5BTJ1oftQln5/yIIWbu/Xom/DX41zv2P9QGt6+D/TtQVtY3A==}
+    engines: {node: ^20.19.0 || >=22.12.0}
+    cpu: [arm64]
+    os: [linux]
+    libc: [glibc]
+
+  '@oxlint/binding-linux-arm64-musl@1.80.0':
+    resolution: {integrity: sha512-XfpCNRlOPcLlJl4Bn/FUhjqlR6BVavEykERBf/MV7YA9VZDa5g5znVqYhyviMafcxS9Pe/i/kPvHNO0U6svEHQ==}
+    engines: {node: ^20.19.0 || >=22.12.0}
+    cpu: [arm64]
+    os: [linux]
+    libc: [musl]
+
+  '@oxlint/binding-linux-ppc64-gnu@1.80.0':
+    resolution: {integrity: sha512-3I4yMwcFG9NeO8ioY6JBBuKsIm5GL/x7MATt1S4tVWaxPu5HcJ+XnLUbcVBTxG8q2Wu56HSj+NmXQiVYb1lp6A==}
+    engines: {node: ^20.19.0 || >=22.12.0}
+    cpu: [ppc64]
+    os: [linux]
+    libc: [glibc]
+
+  '@oxlint/binding-linux-riscv64-gnu@1.80.0':
+    resolution: {integrity: sha512-E1wAKymkpe1/E8helzBKdm81OBOF+ezxRyXRMEuik3ZpWDER5CPOKZwF66RsdwW98uwZv8UTFremUQtC1CzdJA==}
+    engines: {node: ^20.19.0 || >=22.12.0}
+    cpu: [riscv64]
+    os: [linux]
+    libc: [glibc]
+
+  '@oxlint/binding-linux-riscv64-musl@1.80.0':
+    resolution: {integrity: sha512-+gLRGD4sIo3+VA++iham5UxD9tKSoJ/VOrROCEXIcknrYtQg6iIQgvjN0cpiRF7N6UYC7pJbvHJlDnMge5LRpQ==}
+    engines: {node: ^20.19.0 || >=22.12.0}
+    cpu: [riscv64]
+    os: [linux]
+    libc: [musl]
+
+  '@oxlint/binding-linux-s390x-gnu@1.80.0':
+    resolution: {integrity: sha512-aR0PrzHj9leW3NmzBAAP4EzdoBNoJcs9sjnIQPIwyRnBGYrRbXUIpEB5Q39AqK3PLY5JK5uEhDQDiUa1QSAstw==}
+    engines: {node: ^20.19.0 || >=22.12.0}
+    cpu: [s390x]
+    os: [linux]
+    libc: [glibc]
+
+  '@oxlint/binding-linux-x64-gnu@1.80.0':
+    resolution: {integrity: sha512-vSVh5cSo3Xxs6ghBCcFJlpbkbENzDog1qXtoXLa/HC3aCrR4XO76GZbXmQoCPHnu99nQpdCeC3H9tdNICfDh7A==}
+    engines: {node: ^20.19.0 || >=22.12.0}
+    cpu: [x64]
+    os: [linux]
+    libc: [glibc]
+
+  '@oxlint/binding-linux-x64-musl@1.80.0':
+    resolution: {integrity: sha512-FfzBXpNQ8u7/ZI/p8bl73MeZ508Ax3hxWp3SiJpEFiC+BB9XcXy5FAZHTLKDPSzrUpxQZSZJAVdDmuJp/+HDBQ==}
+    engines: {node: ^20.19.0 || >=22.12.0}
+    cpu: [x64]
+    os: [linux]
+    libc: [musl]
+
+  '@oxlint/binding-openharmony-arm64@1.80.0':
+    resolution: {integrity: sha512-zMzbkumtmprCgRwoYNzcB3iC39fXdJIMLMU33KdCjEGLlJGOEt1+LwQ4LF8ndLzAEKVz4BR0y3V6Xrkk3Nm3yA==}
+    engines: {node: ^20.19.0 || >=22.12.0}
+    cpu: [arm64]
+    os: [openharmony]
+
+  '@oxlint/binding-win32-arm64-msvc@1.80.0':
+    resolution: {integrity: sha512-ib6iRcrXsk4t1fm3iKcwksyWh1ZkZXC/2mEzakl0ai2+6HZunf1WWMZ/xP9EJAvw9g9K4UVTC3NF/+G2qLrbTQ==}
+    engines: {node: ^20.19.0 || >=22.12.0}
+    cpu: [arm64]
+    os: [win32]
+
+  '@oxlint/binding-win32-ia32-msvc@1.80.0':
+    resolution: {integrity: sha512-xhRWBMpLxZvgKAH6+DJZmpP+W8Y8UdQOSU1JfxSWNXsaBaRGW77j+1hCuNHlzj7OH4SPN8fYd1q0o2qrDtoVyw==}
+    engines: {node: ^20.19.0 || >=22.12.0}
+    cpu: [ia32]
+    os: [win32]
+
+  '@oxlint/binding-win32-x64-msvc@1.80.0':
+    resolution: {integrity: sha512-yAnO7lwBYQnz2pcfBPIGQQZWIX5zd5R/1aAKIF3oE+TVj7IhoHcROjOkz3sRDngzqhfPKfFaXqug5j5rE5dn6Q==}
+    engines: {node: ^20.19.0 || >=22.12.0}
+    cpu: [x64]
+    os: [win32]
 
   '@package-json/types@0.0.12':
     resolution: {integrity: sha512-uu43FGU34B5VM9mCNjXCwLaGHYjXdNincqKLaraaCW+7S2+SmiBg1Nv8bPnmschrIfZmfKNY9f3fC376MRrObw==}
@@ -24536,6 +25667,23 @@ packages:
   own-keys@1.0.1:
     resolution: {integrity: sha512-qFOyK5PjiWZd+QQIh+1jhdb9LpxTF0qs7Pm8o5QHYZ0M3vKqSqzsZaEB6oWlxZ+q2sJBMI/Ktgd2N5ZwQoRHfg==}
     engines: {node: '>= 0.4'}
+
+  oxlint-tsgolint@7.0.2001:
+    resolution: {integrity: sha512-KjK/XLcXr1DSyonKhsuFqJRiuKqcyG9j3LJ8nkOsrLzGvodBPqzHOKauy10asLMDI0sUpvb+1sxlzff3udZvfg==}
+    hasBin: true
+
+  oxlint@1.80.0:
+    resolution: {integrity: sha512-5nTiSps4qdbCWLbxzuO00alHkEO2exR9YMN/ig6QXWrLsYSG0KaObOAM+l6oU2LcKPWoSAGYbkZIGEu1ViiWKA==}
+    engines: {node: ^20.19.0 || >=22.12.0}
+    hasBin: true
+    peerDependencies:
+      oxlint-tsgolint: '>=7.0.2001'
+      vite-plus: '*'
+    peerDependenciesMeta:
+      oxlint-tsgolint:
+        optional: true
+      vite-plus:
+        optional: true
 
   p-cancelable@3.0.0:
     resolution: {integrity: sha512-mlVgR3PGuzlo0MmTdk4cXqXWlwQDLnONTAg6sm62XkMJEiRxN3GL3SffkYvqwonbkJBcrI7Uvv5Zh9yjvn2iUw==}
@@ -32391,6 +33539,81 @@ snapshots:
     dependencies:
       '@octokit/openapi-types': 27.0.0
 
+  '@oxlint-tsgolint/darwin-arm64@7.0.2001':
+    optional: true
+
+  '@oxlint-tsgolint/darwin-x64@7.0.2001':
+    optional: true
+
+  '@oxlint-tsgolint/linux-arm64@7.0.2001':
+    optional: true
+
+  '@oxlint-tsgolint/linux-x64@7.0.2001':
+    optional: true
+
+  '@oxlint-tsgolint/win32-arm64@7.0.2001':
+    optional: true
+
+  '@oxlint-tsgolint/win32-x64@7.0.2001':
+    optional: true
+
+  '@oxlint/binding-android-arm-eabi@1.80.0':
+    optional: true
+
+  '@oxlint/binding-android-arm64@1.80.0':
+    optional: true
+
+  '@oxlint/binding-darwin-arm64@1.80.0':
+    optional: true
+
+  '@oxlint/binding-darwin-x64@1.80.0':
+    optional: true
+
+  '@oxlint/binding-freebsd-x64@1.80.0':
+    optional: true
+
+  '@oxlint/binding-linux-arm-gnueabihf@1.80.0':
+    optional: true
+
+  '@oxlint/binding-linux-arm-musleabihf@1.80.0':
+    optional: true
+
+  '@oxlint/binding-linux-arm64-gnu@1.80.0':
+    optional: true
+
+  '@oxlint/binding-linux-arm64-musl@1.80.0':
+    optional: true
+
+  '@oxlint/binding-linux-ppc64-gnu@1.80.0':
+    optional: true
+
+  '@oxlint/binding-linux-riscv64-gnu@1.80.0':
+    optional: true
+
+  '@oxlint/binding-linux-riscv64-musl@1.80.0':
+    optional: true
+
+  '@oxlint/binding-linux-s390x-gnu@1.80.0':
+    optional: true
+
+  '@oxlint/binding-linux-x64-gnu@1.80.0':
+    optional: true
+
+  '@oxlint/binding-linux-x64-musl@1.80.0':
+    optional: true
+
+  '@oxlint/binding-openharmony-arm64@1.80.0':
+    optional: true
+
+  '@oxlint/binding-win32-arm64-msvc@1.80.0':
+    optional: true
+
+  '@oxlint/binding-win32-ia32-msvc@1.80.0':
+    optional: true
+
+  '@oxlint/binding-win32-x64-msvc@1.80.0':
+    optional: true
+
   '@package-json/types@0.0.12': {}
 
   '@peculiar/asn1-cms@2.8.0':
@@ -39588,6 +40811,38 @@ snapshots:
       get-intrinsic: 1.3.0
       object-keys: 1.1.1
       safe-push-apply: 1.0.0
+
+  oxlint-tsgolint@7.0.2001:
+    optionalDependencies:
+      '@oxlint-tsgolint/darwin-arm64': 7.0.2001
+      '@oxlint-tsgolint/darwin-x64': 7.0.2001
+      '@oxlint-tsgolint/linux-arm64': 7.0.2001
+      '@oxlint-tsgolint/linux-x64': 7.0.2001
+      '@oxlint-tsgolint/win32-arm64': 7.0.2001
+      '@oxlint-tsgolint/win32-x64': 7.0.2001
+
+  oxlint@1.80.0(oxlint-tsgolint@7.0.2001):
+    optionalDependencies:
+      '@oxlint/binding-android-arm-eabi': 1.80.0
+      '@oxlint/binding-android-arm64': 1.80.0
+      '@oxlint/binding-darwin-arm64': 1.80.0
+      '@oxlint/binding-darwin-x64': 1.80.0
+      '@oxlint/binding-freebsd-x64': 1.80.0
+      '@oxlint/binding-linux-arm-gnueabihf': 1.80.0
+      '@oxlint/binding-linux-arm-musleabihf': 1.80.0
+      '@oxlint/binding-linux-arm64-gnu': 1.80.0
+      '@oxlint/binding-linux-arm64-musl': 1.80.0
+      '@oxlint/binding-linux-ppc64-gnu': 1.80.0
+      '@oxlint/binding-linux-riscv64-gnu': 1.80.0
+      '@oxlint/binding-linux-riscv64-musl': 1.80.0
+      '@oxlint/binding-linux-s390x-gnu': 1.80.0
+      '@oxlint/binding-linux-x64-gnu': 1.80.0
+      '@oxlint/binding-linux-x64-musl': 1.80.0
+      '@oxlint/binding-openharmony-arm64': 1.80.0
+      '@oxlint/binding-win32-arm64-msvc': 1.80.0
+      '@oxlint/binding-win32-ia32-msvc': 1.80.0
+      '@oxlint/binding-win32-x64-msvc': 1.80.0
+      oxlint-tsgolint: 7.0.2001
 
   p-cancelable@3.0.0: {}
 

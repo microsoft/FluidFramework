@@ -22,6 +22,8 @@
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
+		"oxlint": "oxlint --type-aware --config ../../../.oxlintrc.json index.js",
+		"oxlint:fix": "oxlint --type-aware --config ../../../.oxlintrc.json --fix index.js",
 		"start": "pm2 start -n azure-local-service index.js",
 		"start:debug": "node --inspect=0.0.0.0:9229 index.js",
 		"stop": "pm2 stop azure-local-service",
@@ -38,6 +40,8 @@
 		"eslint": "catalog:eslint",
 		"eslint-config-prettier": "catalog:eslint",
 		"jiti": "^2.6.1",
+		"oxlint": "catalog:oxlint",
+		"oxlint-tsgolint": "catalog:oxlint",
 		"pm2": "^5.4.2",
 		"rimraf": "^6.1.3"
 	},
