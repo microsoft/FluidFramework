@@ -10,6 +10,7 @@ export {
 	type IContainerRuntimeOptions,
 	type IContainerRuntimeOptionsInternal,
 	type DeprecatedLoadContainerRuntimeParams,
+	getExplicitOldestSupportedClient,
 	loadContainerRuntime,
 	loadContainerRuntimeAlpha,
 	type LoadContainerRuntime2Params,

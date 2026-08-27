@@ -899,7 +899,12 @@ export type LoadContainerRuntime2Params = Omit<
 	runtimeOptions?: IContainerRuntimeOptionsInternal;
 };
 
-function getExplicitOldestSupportedClient(
+/**
+ * Resolves the required compatibility choice while both property names remain accepted.
+ *
+ * @internal
+ */
+export function getExplicitOldestSupportedClient(
 	params: Readonly<{
 		oldestSupportedClient?: OldestSupportedClientVersion;
 		minVersionForCollab?: OldestSupportedClientVersion;
@@ -922,6 +927,13 @@ function getExplicitOldestSupportedClient(
 	return oldestSupportedClient;
 }
 
+/**
+ * Enforces the canonical-only alpha input contract for JavaScript and erased TypeScript callers.
+ *
+ * @remarks
+ * This intentionally differs from {@link getExplicitOldestSupportedClient}, which accepts the
+ * deprecated property as a temporary beta migration path.
+ */
 function getAlphaOldestSupportedClient(
 	params: Readonly<{
 		oldestSupportedClient?: OldestSupportedClientVersion;
@@ -978,10 +990,14 @@ export async function loadContainerRuntime(
 	params: LoadContainerRuntimeParams | DeprecatedLoadContainerRuntimeParams,
 ): Promise<IContainerRuntime & IRuntime> {
 	const oldestSupportedClient = getExplicitOldestSupportedClient(params);
+	const {
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Omit the deprecated property after normalizing it.
+		minVersionForCollab: _deprecatedMinVersionForCollab,
+		...paramsWithoutDeprecatedProperty
+	} = params;
 	return ContainerRuntime.loadRuntime({
-		...params,
+		...paramsWithoutDeprecatedProperty,
 		oldestSupportedClient,
-		minVersionForCollab: undefined,
 		registry: new FluidDataStoreRegistry(params.registryEntries),
 	});
 }
@@ -1003,10 +1019,14 @@ export async function loadContainerRuntimeAlpha(params: LoadContainerRuntimePara
 	runtime: IContainerRuntime & IRuntime;
 }> {
 	const oldestSupportedClient = getAlphaOldestSupportedClient(params);
+	const {
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Keep the internal load input canonical even for erased callers.
+		minVersionForCollab: _deprecatedMinVersionForCollab,
+		...paramsWithoutDeprecatedProperty
+	} = params;
 	return ContainerRuntime.loadRuntime2({
-		...params,
+		...paramsWithoutDeprecatedProperty,
 		oldestSupportedClient,
-		minVersionForCollab: undefined,
 		registry: new FluidDataStoreRegistry(params.registryEntries),
 	});
 }
@@ -1152,7 +1172,7 @@ export class ContainerRuntime
 		if (!isValidMinVersionForCollab(minVersionForCollab)) {
 			throw new UsageError(
 				`Invalid compatibility version: ${minVersionForCollab}. ` +
-					"`oldestSupportedClient` (or deprecated `minVersionForCollab`) must be an existing FF version (i.e. 2.22.1).",
+					"`oldestSupportedClient` must be an existing FF version (i.e. 2.22.1).",
 			);
 		}
 		// We also validate that there is not a mismatch between `minVersionForCollab` and runtime options that

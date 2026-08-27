@@ -9,7 +9,6 @@ import type { IContainerContext } from "@fluidframework/container-definitions/in
 import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/internal";
 
 import {
-	type DeprecatedLoadContainerRuntimeParams,
 	type LoadContainerRuntimeParams,
 	loadContainerRuntime,
 	loadContainerRuntimeAlpha,
@@ -23,51 +22,6 @@ const commonParams = {
 };
 
 describe("loadContainerRuntime compatibility parameter", () => {
-	it("requires the canonical parameter at compile time while preserving the deprecated overload", () => {
-		const acceptCanonical = (_params: LoadContainerRuntimeParams): void => {};
-		const acceptDeprecated = (_params: DeprecatedLoadContainerRuntimeParams): void => {};
-		const acceptAlpha = (_params: Parameters<typeof loadContainerRuntimeAlpha>[0]): void => {};
-		const callDeprecatedOverload = async (): ReturnType<typeof loadContainerRuntime> =>
-			loadContainerRuntime({
-				...commonParams,
-				minVersionForCollab: "2.0.0",
-			});
-		const callEitherOverload = async (
-			params: LoadContainerRuntimeParams | DeprecatedLoadContainerRuntimeParams,
-		): ReturnType<typeof loadContainerRuntime> => loadContainerRuntime(params);
-
-		acceptCanonical({
-			...commonParams,
-			oldestSupportedClient: "2.0.0",
-			minVersionForCollab: undefined,
-		});
-		acceptDeprecated({
-			...commonParams,
-			oldestSupportedClient: undefined,
-			minVersionForCollab: "2.0.0",
-		});
-		assert.equal(typeof callDeprecatedOverload, "function");
-		assert.equal(typeof callEitherOverload, "function");
-		acceptAlpha({
-			...commonParams,
-			oldestSupportedClient: "2.0.0",
-		});
-
-		// @ts-expect-error -- the canonical type requires oldestSupportedClient.
-		acceptCanonical(commonParams);
-		acceptCanonical({
-			...commonParams,
-			oldestSupportedClient: "2.0.0",
-			// @ts-expect-error -- the canonical type cannot include the deprecated property.
-			minVersionForCollab: "2.0.0",
-		});
-		acceptAlpha({
-			...commonParams,
-			// @ts-expect-error -- the alpha API only accepts the canonical property.
-			minVersionForCollab: "2.0.0",
-		});
-	});
-
 	const callWithCompatibilityProperties = async (properties: {
 		readonly oldestSupportedClient?: OldestSupportedClientVersion;
 		readonly minVersionForCollab?: OldestSupportedClientVersion;
@@ -94,11 +48,13 @@ describe("loadContainerRuntime compatibility parameter", () => {
 		);
 	});
 
-	it("forwards the deprecated compatibility parameter", async () => {
+	it("normalizes the deprecated compatibility parameter before validation", async () => {
 		const context = {
 			taggedLogger: { send: () => {} },
 		} as unknown as IContainerContext;
 
+		// Reaching version validation instead of the exact-one guard proves the deprecated property
+		// was normalized to the canonical input before loading the runtime.
 		await assert.rejects(
 			loadContainerRuntime({
 				...commonParams,

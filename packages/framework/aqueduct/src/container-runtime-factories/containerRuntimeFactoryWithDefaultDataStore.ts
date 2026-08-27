@@ -8,6 +8,7 @@ import type {
 	// eslint-disable-next-line import-x/no-deprecated
 	IContainerRuntimeWithResolveHandle_Deprecated,
 } from "@fluidframework/container-runtime-definitions/internal";
+import { getExplicitOldestSupportedClient } from "@fluidframework/container-runtime/internal";
 import type { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import type {
 	IFluidDataStoreFactory,
@@ -18,7 +19,6 @@ import { RequestParser } from "@fluidframework/runtime-utils/internal";
 import {
 	BaseContainerRuntimeFactory,
 	type BaseContainerRuntimeFactoryProps,
-	getExplicitOldestSupportedClient,
 } from "./baseContainerRuntimeFactory.js";
 
 const defaultDataStoreId = "default";
@@ -71,10 +71,6 @@ export type DeprecatedContainerRuntimeFactoryWithDefaultDataStoreProps = Omit<
 	readonly minVersionForCollab: OldestSupportedClientVersion;
 };
 
-type ContainerRuntimeFactoryWithDefaultDataStorePropsInternal =
-	| ContainerRuntimeFactoryWithDefaultDataStoreProps
-	| DeprecatedContainerRuntimeFactoryWithDefaultDataStoreProps;
-
 /**
  * A ContainerRuntimeFactory that initializes Containers with a single default data store, which can be requested from
  * the container with an empty URL.
@@ -102,7 +98,11 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 			| ContainerRuntimeFactoryWithDefaultDataStoreProps
 			| DeprecatedContainerRuntimeFactoryWithDefaultDataStoreProps,
 	);
-	public constructor(props: ContainerRuntimeFactoryWithDefaultDataStorePropsInternal) {
+	public constructor(
+		props:
+			| ContainerRuntimeFactoryWithDefaultDataStoreProps
+			| DeprecatedContainerRuntimeFactoryWithDefaultDataStoreProps,
+	) {
 		const requestHandlers = props.requestHandlers ?? [];
 		const provideEntryPoint = props.provideEntryPoint ?? getDefaultFluidObject;
 
@@ -124,10 +124,14 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 		};
 
 		const oldestSupportedClient = getExplicitOldestSupportedClient(props);
+		const {
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Omit the deprecated property after normalizing it.
+			minVersionForCollab: _deprecatedMinVersionForCollab,
+			...propsWithoutDeprecatedProperty
+		} = props;
 		super({
-			...props,
+			...propsWithoutDeprecatedProperty,
 			oldestSupportedClient,
-			minVersionForCollab: undefined,
 			requestHandlers: [getDefaultObject, ...requestHandlers],
 			provideEntryPoint,
 		});
