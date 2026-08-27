@@ -1,6 +1,7 @@
-<!-- AUTO-GENERATED-CONTENT:START (HELP:includeHeading=FALSE) -->
+<!-- markdown-magic:begin {"transform":"help","includeHeading":false} -->
 
 <!-- prettier-ignore-start -->
+
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 Not finding what you're looking for in this README?
@@ -13,11 +14,12 @@ Thank you!
 
 <!-- prettier-ignore-end -->
 
-<!-- AUTO-GENERATED-CONTENT:END -->
+<!-- markdown-magic:end -->
 
-<!-- AUTO-GENERATED-CONTENT:START (HELP) -->
+<!-- markdown-magic:begin {"transform":"help"} -->
 
 <!-- prettier-ignore-start -->
+
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Help
@@ -32,4 +34,4 @@ Thank you!
 
 <!-- prettier-ignore-end -->
 
-<!-- AUTO-GENERATED-CONTENT:END -->
+<!-- markdown-magic:end -->

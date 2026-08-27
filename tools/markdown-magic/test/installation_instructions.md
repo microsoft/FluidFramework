@@ -1,6 +1,7 @@
-<!-- AUTO-GENERATED-CONTENT:START (INSTALLATION_INSTRUCTIONS:includeHeading=FALSE) -->
+<!-- markdown-magic:begin {"transform":"installation-instructions","includeHeading":false} -->
 
 <!-- prettier-ignore-start -->
+
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 To get started, install the package by running the following command:
@@ -11,11 +12,12 @@ npm i @fluidframework/test-package
 
 <!-- prettier-ignore-end -->
 
-<!-- AUTO-GENERATED-CONTENT:END -->
+<!-- markdown-magic:end -->
 
-<!-- AUTO-GENERATED-CONTENT:START (INSTALLATION_INSTRUCTIONS:packageJsonPath=package.json&devDependency=TRUE&headingLevel=3) -->
+<!-- markdown-magic:begin {"transform":"installation-instructions","packageJsonPath":"package.json","devDependency":true,"headingLevel":3} -->
 
 <!-- prettier-ignore-start -->
+
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ### Installation
@@ -28,4 +30,4 @@ npm i @fluidframework/test-package -D
 
 <!-- prettier-ignore-end -->
 
-<!-- AUTO-GENERATED-CONTENT:END -->
+<!-- markdown-magic:end -->

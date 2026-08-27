@@ -11,24 +11,26 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
+	"type": "module",
 	"sideEffects": false,
 	"bin": {
 		"markdown-magic": "bin/markdown-magic"
 	},
 	"scripts": {
 		"build": "npm run build:docs",
-		"build:docs": "node src/index.cjs --files README.md",
+		"build:docs": "node src/index.js --files README.md",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
-		"test": "node src/index.cjs --files \"test/**/*.md\" !test/README.md"
+		"test": "node --test test/*.test.mjs && node src/index.js --files \"test/**/*.md\" !test/README.md"
 	},
 	"dependencies": {
-		"@rushstack/node-core-library": "^3.61.0",
-		"@tylerbu/markdown-magic": "2.4.0-tylerbu-1",
 		"chalk": "^4.1.2",
-		"markdown-magic-package-scripts": "^1.2.2",
+		"globby": "^14.1.0",
+		"remark": "^15.0.1",
+		"remark-gfm": "^4.0.1",
+		"remark-mdx": "^3.1.1",
 		"yargs": "17.7.2"
 	},
 	"devDependencies": {
@@ -36,9 +38,6 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"jiti": "^2.6.1"
 	},
-	"dependencyComments": [
-		"chalk is left at version 4 (not 5) to keep CommonJS support."
-	],
 	"typeValidation": {
 		"disabled": true
 	}

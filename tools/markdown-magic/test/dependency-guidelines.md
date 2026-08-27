@@ -1,6 +1,7 @@
-<!-- AUTO-GENERATED-CONTENT:START (DEPENDENCY_GUIDELINES:includeHeading=FALSE) -->
+<!-- markdown-magic:begin {"transform":"dependency-guidelines","includeHeading":false} -->
 
 <!-- prettier-ignore-start -->
+
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 When taking a dependency on a Fluid Framework library's public APIs, we recommend using a `^` (caret) version range, such as `^1.3.4`.
@@ -11,11 +12,12 @@ If using any of Fluid Framework's unstable APIs (for example, its `beta` APIs), 
 
 <!-- prettier-ignore-end -->
 
-<!-- AUTO-GENERATED-CONTENT:END -->
+<!-- markdown-magic:end -->
 
-<!-- AUTO-GENERATED-CONTENT:START (DEPENDENCY_GUIDELINES:headingLevel=2) -->
+<!-- markdown-magic:begin {"transform":"dependency-guidelines","headingLevel":2} -->
 
 <!-- prettier-ignore-start -->
+
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Using Fluid Framework libraries
@@ -28,4 +30,4 @@ If using any of Fluid Framework's unstable APIs (for example, its `beta` APIs), 
 
 <!-- prettier-ignore-end -->
 
-<!-- AUTO-GENERATED-CONTENT:END -->
+<!-- markdown-magic:end -->
