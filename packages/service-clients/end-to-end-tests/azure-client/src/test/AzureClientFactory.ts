@@ -18,13 +18,11 @@ import {
 } from "@fluidframework/azure-client-legacy";
 import type { IRuntimeFactory } from "@fluidframework/container-definitions/legacy";
 import type {
-	 IConfigProviderBase,
-	 ITelemetryBaseEvent,
+	IConfigProviderBase,
+	ITelemetryBaseEvent,
 } from "@fluidframework/core-interfaces";
 
-import {
-	LogLevel,
-} from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import { ScopeType } from "@fluidframework/driver-definitions/legacy";
 import type { ContainerSchema } from "@fluidframework/fluid-static";
 import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions";
