@@ -5668,6 +5668,17 @@ export class ContainerRuntime
 				eventName: "getPendingLocalState",
 			},
 			(event) => {
+				const pendingAttachmentBlobs = this.blobManager.getPendingBlobs();
+				if (!this.hasPendingMessages() && pendingAttachmentBlobs === undefined) {
+					// Sequenced saved ops can reconstruct the runtime state without carrying
+					// session-scoped state such as the IdCompressor's ongoing session.
+					event.end({
+						attachmentBlobsSize: 0,
+						pendingOpsSize: 0,
+					});
+					return undefined;
+				}
+
 				const { pending } = this.pendingStateManager.getLocalState(
 					props?.snapshotSequenceNumber,
 				);
@@ -5675,7 +5686,6 @@ export class ContainerRuntime
 					props?.sessionExpiryTimerStarted ?? this.garbageCollector.sessionExpiryTimerStarted;
 
 				const pendingIdCompressorState = this._idCompressor?.serialize(true);
-				const pendingAttachmentBlobs = this.blobManager.getPendingBlobs();
 
 				const pendingRuntimeState: IPendingRuntimeState = {
 					pending,
