@@ -42,6 +42,7 @@ import {
 	type TreeView,
 	type TreeViewAlpha,
 	type TreeViewConfiguration,
+	type TreeBranchHistory,
 	type UntypedTreeViewAlpha,
 } from "../../simple-tree/index.js";
 import { toInitialSchema } from "../../simple-tree/index.js";
@@ -218,6 +219,7 @@ describe("schematizeTree", () => {
 			isMissingEditsFrom(branch: unknown): never {
 				throw new Error("Function not implemented.");
 			},
+			branchHistory: undefined as unknown as TreeBranchHistory,
 			dispose(): void {
 				throw new Error("Function not implemented.");
 			},

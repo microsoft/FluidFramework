@@ -63,21 +63,6 @@ export interface RevertOptionsAlpha {
 }
 
 /**
- * Options for {@link UntypedTreeViewAlpha.revertTo}.
- *
- * @sealed @alpha
- */
-export interface RevertToOptionsAlpha {
-	/**
-	 * Arbitrary, application-defined metadata to attach to the commit that the revert produces.
-	 *
-	 * @remarks
-	 * See {@link RunTransactionParamsAlpha.customMetadata} for how this metadata is persisted and read back.
-	 */
-	readonly customMetadata?: JsonCompatibleReadOnlyObject;
-}
-
-/**
  * A {@link Revertible} with features that are not yet stable.
  *
  * @sealed @alpha

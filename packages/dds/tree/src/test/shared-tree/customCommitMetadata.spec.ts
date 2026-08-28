@@ -656,20 +656,6 @@ describe("custom commit metadata", () => {
 		});
 	});
 
-	describe("revertTo", () => {
-		it("attaches metadata to the commit it produces", () => {
-			const view = createView();
-			const revision = view.branchHistory.getHead()?.revision;
-			assert(revision !== undefined);
-
-			view.root.insertAtEnd("a");
-			view.revertTo(revision, { customMetadata: { tag: "the-revert" } });
-
-			assert.deepEqual([...view.root], []);
-			assert.deepEqual(headMetadata(view.branchHistory), { tag: "the-revert" });
-		});
-	});
-
 	describe("Persistence", () => {
 		/**
 		 * Creates two connected trees and sequences enough edits that the collaboration window advances

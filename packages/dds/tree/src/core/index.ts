@@ -243,5 +243,4 @@ export {
 	type RevertibleAlphaFactory,
 	type RevertibleAlpha,
 	type RevertOptionsAlpha,
-	type RevertToOptionsAlpha,
 } from "./revertible.js";

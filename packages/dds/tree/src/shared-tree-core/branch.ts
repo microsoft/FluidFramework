@@ -57,6 +57,10 @@ export type SharedTreeBranchChange<TChange> =
 	| {
 			type: "rebase";
 			change: TaggedChange<TChange> | undefined;
+			/** The commits removed from the head of the branch by this operation */
+			removedCommits: readonly GraphCommit<TChange>[];
+			/** The commits appended to the head of the branch by this operation */
+			newCommits: readonly GraphCommit<TChange>[];
 	  };
 
 /**
@@ -219,6 +223,26 @@ export class SharedTreeBranch<
 	 */
 	public getHead(): GraphCommit<TChange> {
 		return this.head;
+	}
+
+	/**
+	 * Gets the number of commits in this branch.
+	 * This includes commits on ancestor branches but excludes the sentinel commit at the root of all branches.
+	 * @remarks
+	 * This method has linear complexity in the number of commits in the branch.
+	 * See {@link BranchCommitCounter} for a cached version.
+	 */
+	public getCommitCount(): number {
+		let count = 0;
+		for (
+			let commit: GraphCommit<TChange> | undefined = this.head;
+			commit !== undefined;
+			commit = commit.parent
+		) {
+			count++;
+		}
+		// Exclude the sentinel commit that serves as the base to all branches.
+		return count - 1;
 	}
 
 	/**
