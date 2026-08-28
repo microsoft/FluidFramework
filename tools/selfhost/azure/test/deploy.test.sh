@@ -571,5 +571,21 @@ grep -q "Microsoft.Cache/redisEnterprise" "$P" && ok "preflight checks Azure Man
 grep -q "REDIS_HIGH_AVAILABILITY STORAGE" "$P" && ok "preflight requires Redis highAvailability"         || no "preflight requires Redis highAvailability"
 grep -q "must be exactly 'Enabled' or 'Disabled'" "$P" && ok "preflight validates Redis highAvailability" || no "preflight validates Redis highAvailability"
 
+PREFLIGHT_FAIL_BIN="$WORK/preflight-fail-bin"
+mkdir -p "$PREFLIGHT_FAIL_BIN"
+cat > "$PREFLIGHT_FAIL_BIN/mktemp" <<'STUB'
+#!/usr/bin/env bash
+exit 1
+STUB
+chmod +x "$PREFLIGHT_FAIL_BIN/mktemp"
+preflight_mktemp_out="$(PATH="$PREFLIGHT_FAIL_BIN:$PATH" bash "$P" "$WORK/missing-parameters.json" 2>&1)"
+preflight_mktemp_rc=$?
+assert_eq "preflight exits when its private temporary directory cannot be created" "$preflight_mktemp_rc" "1"
+if grep -qF "ERROR: could not create a private preflight temporary directory." <<<"$preflight_mktemp_out"; then
+  ok "preflight reports temporary-directory creation failures"
+else
+  no "preflight reports temporary-directory creation failures" "$preflight_mktemp_out"
+fi
+
 printf '\n\033[1mTotal: %d passed, %d failed, %d skipped\033[0m\n' "$PASS" "$FAIL" "$SKIP"
 [[ $FAIL -eq 0 ]] || exit 1

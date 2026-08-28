@@ -9,9 +9,17 @@ set -uo pipefail   # deliberately NOT -e: a single failed check must not abort t
 
 SELFHOST_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PARAMS_FILE="${1:-$SELFHOST_ROOT/azure/deploy.parameters.json}"
-PREFLIGHT_TEMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/selfhost-preflight.XXXXXX")"
-chmod 700 "$PREFLIGHT_TEMP_DIR"
-trap 'rm -rf "$PREFLIGHT_TEMP_DIR"' EXIT
+PREFLIGHT_TEMP_DIR=""
+if ! PREFLIGHT_TEMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/selfhost-preflight.XXXXXX")"; then
+  echo "ERROR: could not create a private preflight temporary directory." >&2
+  exit 1
+fi
+if ! chmod 700 "$PREFLIGHT_TEMP_DIR"; then
+  echo "ERROR: could not secure the preflight temporary directory." >&2
+  rm -rf -- "$PREFLIGHT_TEMP_DIR"
+  exit 1
+fi
+trap 'rm -rf -- "$PREFLIGHT_TEMP_DIR"' EXIT
 
 if [[ ! -f "$PARAMS_FILE" ]]; then
   echo "ERROR: parameters file not found: $PARAMS_FILE" >&2
