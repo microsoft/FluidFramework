@@ -22,6 +22,11 @@ const templateTransforms = {
 	help: ["Help-Template.md", "Help"],
 } as const;
 
+/**
+ * Creates transforms backed by shared section templates.
+ *
+ * @returns The template transforms indexed by marker name.
+ */
 export function createTemplateSectionTransforms(): Record<string, Transform> {
 	const transforms: Record<string, Transform> = {};
 	for (const [name, [templateName, headingText]] of Object.entries(templateTransforms)) {

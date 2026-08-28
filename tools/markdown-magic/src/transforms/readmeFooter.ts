@@ -10,6 +10,9 @@ import { generateScripts } from "./packageScripts.js";
 import { packageSchema } from "./schemas.js";
 import { generateTemplateSection } from "./templates.js";
 
+/**
+ * Generates the standard sections that follow a package README body.
+ */
 export const readmeFooterTransform: Transform = transform(
 	"readme-footer",
 	{

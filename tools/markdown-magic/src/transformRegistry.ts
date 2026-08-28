@@ -6,6 +6,8 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
+import type { Heading } from "mdast";
+
 import { parseDocument } from "./processorProfiles.js";
 import { createTransforms } from "./transforms/index.js";
 import type { DocumentFormat, TransformContext, TransformRegistry } from "./types.js";
@@ -13,14 +15,15 @@ import type { DocumentFormat, TransformContext, TransformRegistry } from "./type
 /**
  * Creates the services that a transform can use.
  *
- * @param {string} destinationPath - The absolute destination path.
- * @param {"markdown" | "mdx"} destinationFormat - The destination document format.
- * @returns {{ destinationPath: string; destinationFormat: "markdown" | "mdx"; resolvePath: (relativePath: string) => string; parseDocument: typeof parseDocument; readFile: typeof readFile }} The transform context.
+ * @param destinationPath - The absolute destination path.
+ * @param destinationFormat - The destination document format.
+ * @param sectionHeadingDepth - The heading depth assigned to the generated section.
+ * @returns The services and destination details for executing a transform.
  */
 function createContext(
 	destinationPath: string,
 	destinationFormat: DocumentFormat,
-	sectionHeadingDepth: import("mdast").Heading["depth"],
+	sectionHeadingDepth: Heading["depth"],
 ): TransformContext {
 	return {
 		destinationPath,
@@ -37,9 +40,9 @@ function createContext(
 /**
  * Creates the complete transform registry for README and file transforms.
  *
- * Each transform validates unknown JSON options before it generates mdast nodes.
+ * Each transform validates its unknown JSON options and generates mdast nodes in one operation.
  *
- * @returns {Record<string, unknown> & { createContext: typeof createContext }} The transform registry and its context factory.
+ * @returns The transform registry and its context factory.
  */
 export function createTransformRegistry(): TransformRegistry {
 	return {

@@ -11,7 +11,14 @@ import { transform } from "./options.js";
 import { readPackage, type PackageMetadata } from "./packageMetadata.js";
 import { headingSchema, type HeadingOptions, packageSchema } from "./schemas.js";
 
-/** Generates instructions for the supported special package exports. */
+/**
+ * Generates instructions for the supported special package exports.
+ *
+ * @param packageMetadata - The package metadata that defines the exports.
+ * @param options - The section heading options.
+ * @param context - The services and destination details for the transform.
+ * @returns Import guidance nodes, or an empty array when no special exports exist.
+ */
 export function generateImportInstructions(
 	packageMetadata: PackageMetadata,
 	options: HeadingOptions,
@@ -45,6 +52,9 @@ export function generateImportInstructions(
 	return parseFragment(`${heading}${paragraphs.join("\n\n")}`, context, "import-instructions");
 }
 
+/**
+ * Generates import guidance from package metadata.
+ */
 export const importInstructionsTransform: Transform = transform(
 	"import-instructions",
 	{ ...packageSchema, ...headingSchema },

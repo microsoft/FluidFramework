@@ -9,6 +9,9 @@ import { transform } from "./options.js";
 import { readPackage } from "./packageMetadata.js";
 import { packageSchema } from "./schemas.js";
 
+/**
+ * Generates the standard sections that precede an example application README body.
+ */
 export const exampleAppReadmeHeaderTransform: Transform = transform(
 	"example-app-readme-header",
 	{

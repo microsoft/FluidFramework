@@ -11,7 +11,15 @@ import { transform } from "./options.js";
 import { readPackage } from "./packageMetadata.js";
 import { headingSchema, type HeadingOptions, packageSchema } from "./schemas.js";
 
-/** Generates package installation instructions. */
+/**
+ * Generates package installation instructions.
+ *
+ * @param packageName - The npm package name to install.
+ * @param devDependency - Whether the command installs the package as a development dependency.
+ * @param options - The section heading options.
+ * @param context - The services and destination details for the transform.
+ * @returns The generated installation instruction nodes.
+ */
 export function generateInstallation(
 	packageName: string,
 	devDependency: boolean,
@@ -28,6 +36,9 @@ export function generateInstallation(
 	);
 }
 
+/**
+ * Generates installation instructions from package metadata and marker options.
+ */
 export const installationInstructionsTransform: Transform = transform(
 	"installation-instructions",
 	{ ...packageSchema, ...headingSchema, devDependency: { type: "boolean", default: false } },

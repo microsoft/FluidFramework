@@ -11,7 +11,15 @@ import { transform } from "./options.js";
 import { readPackage, type PackageMetadata } from "./packageMetadata.js";
 import { headingSchema, type HeadingOptions, packageSchema } from "./schemas.js";
 
-/** Generates setup steps for an example package. */
+/**
+ * Generates setup steps for an example package.
+ *
+ * @param packageMetadata - The example package metadata.
+ * @param usesTinylicious - Whether to include Tinylicious setup steps.
+ * @param options - The section heading options.
+ * @param context - The services and destination details for the transform.
+ * @returns The generated setup instruction nodes.
+ */
 export function generateGettingStarted(
 	packageMetadata: PackageMetadata,
 	usesTinylicious: boolean,
@@ -42,6 +50,9 @@ export function generateGettingStarted(
 	);
 }
 
+/**
+ * Generates example setup steps from package metadata and marker options.
+ */
 export const exampleGettingStartedTransform: Transform = transform(
 	"example-getting-started",
 	{

@@ -5,10 +5,28 @@
 
 import type { GeneratedNodes, Transform, TransformContext } from "../types.js";
 
+/**
+ * Options shared by the file and code include transforms.
+ */
 interface IncludeOptions {
+	/**
+	 * The source path relative to the destination document.
+	 */
 	path: string;
+
+	/**
+	 * The zero-based, inclusive line index at which selection starts.
+	 */
 	start: number | undefined;
+
+	/**
+	 * The zero-based, exclusive line index at which selection ends.
+	 */
 	end: number | undefined;
+
+	/**
+	 * The fenced code language for a code include.
+	 */
 	language?: string | undefined;
 }
 
@@ -80,6 +98,9 @@ function sliceLines(source: string, start?: number, end?: number): string {
 	return source.split(/\r?\n/).slice(start, end).join("\n").trim();
 }
 
+/**
+ * Includes a Markdown file as parsed syntax-tree nodes.
+ */
 export const includeTransform: Transform = {
 	async generate(value: unknown, context: TransformContext) {
 		const options = validateIncludeOptions(value, "include", false);
@@ -96,6 +117,9 @@ export const includeTransform: Transform = {
 	},
 };
 
+/**
+ * Includes text from a file in a fenced code block.
+ */
 export const includeCodeTransform: Transform = {
 	async generate(value: unknown, context: TransformContext) {
 		const options = validateIncludeOptions(value, "include-code", true);

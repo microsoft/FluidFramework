@@ -5,15 +5,34 @@
 
 import type { TransformContext } from "../types.js";
 
+/**
+ * Package metadata used to generate package documentation.
+ */
 export interface PackageMetadata {
+	/**
+	 * The npm package name.
+	 */
 	name: string;
+
+	/**
+	 * Whether npm treats the package as private.
+	 */
 	private?: boolean;
+
+	/**
+	 * The package export map indexed by subpath.
+	 */
 	exports?: Record<string, unknown>;
+
+	/**
+	 * The package scripts indexed by command name.
+	 */
 	scripts?: Record<string, string>;
 }
 
-export type ScopeKind = (typeof scopeValues)[number];
-
+/**
+ * The supported Fluid package scope classifications.
+ */
 export const scopeValues = [
 	"FRAMEWORK",
 	"EXAMPLE",
@@ -23,7 +42,18 @@ export const scopeValues = [
 	"TOOLS",
 ] as const;
 
-/** Reads package metadata relative to the destination document. */
+/**
+ * A Fluid package classification derived from its npm scope.
+ */
+export type ScopeKind = (typeof scopeValues)[number];
+
+/**
+ * Reads package metadata relative to the destination document.
+ *
+ * @param context - The services and destination details for the transform.
+ * @param options - The package metadata path option.
+ * @returns The parsed package metadata.
+ */
 export async function readPackage(
 	context: TransformContext,
 	options: { packageJsonPath: string },
@@ -32,7 +62,12 @@ export async function readPackage(
 	return JSON.parse(await context.readFile(packagePath, "utf8")) as PackageMetadata;
 }
 
-/** Maps a package name to a supported Fluid package kind. */
+/**
+ * Maps a package name to a supported Fluid package classification.
+ *
+ * @param packageName - The npm package name to classify.
+ * @returns The package classification, or `undefined` for an unsupported scope.
+ */
 export function getScopeKind(packageName: string): ScopeKind | undefined {
 	if (packageName === "fluid-framework") {
 		return "FRAMEWORK";
@@ -58,7 +93,12 @@ export function getScopeKind(packageName: string): ScopeKind | undefined {
 	];
 }
 
-/** Tests whether package defaults must include public guidance. */
+/**
+ * Tests whether package defaults must include public guidance.
+ *
+ * @param packageMetadata - The package metadata to test.
+ * @returns `true` for public framework and experimental packages; otherwise, `false`.
+ */
 export function isPublic(packageMetadata: PackageMetadata): boolean {
 	if (packageMetadata.private === true) {
 		return false;

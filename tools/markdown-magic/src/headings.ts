@@ -20,6 +20,11 @@ function isInGeneratedRegion(offset: number, regions: readonly GeneratedRegion[]
  * A following authored heading defines the depth. Otherwise, the nearest preceding authored
  * heading defines the depth. A section after the document title starts at depth two. A section in
  * a document without authored headings starts at depth one.
+ *
+ * @param document - The parsed destination document.
+ * @param regions - All generated regions in the document.
+ * @param region - The region whose heading depth is needed.
+ * @returns The heading depth for content generated in the region.
  */
 export function inferSectionHeadingDepth(
 	document: ParsedDocument,

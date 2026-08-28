@@ -19,7 +19,13 @@ const scopeTemplates = {
 	TOOLS: "Tools-Package-Notice-Template.md",
 };
 
-/** Generates the notice for a package kind. */
+/**
+ * Generates the notice for a package classification.
+ *
+ * @param kind - The package classification, or `undefined` for an unsupported scope.
+ * @param context - The services and destination details for the transform.
+ * @returns The package notice nodes, or an empty array when no notice applies.
+ */
 export async function generateScopeNotice(
 	kind: ScopeKind | undefined,
 	context: TransformContext,
@@ -29,6 +35,9 @@ export async function generateScopeNotice(
 	return templateName === undefined ? [] : readTemplateNodes(templateName, context);
 }
 
+/**
+ * Generates a package scope notice from package metadata or an explicit classification.
+ */
 export const packageScopeNoticeTransform: Transform = transform(
 	"package-scope-notice",
 	{

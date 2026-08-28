@@ -5,6 +5,8 @@
 
 import { readFile, writeFile } from "node:fs/promises";
 
+import type { RootContent } from "mdast";
+
 import { inferSectionHeadingDepth } from "./headings.js";
 import { parseDocument, serializeNodes } from "./processorProfiles.js";
 import { findGeneratedRegions } from "./regions.js";
@@ -16,11 +18,11 @@ const generatedContentNotice =
 /**
  * Creates a comment node for the selected document format.
  *
- * @param {"markdown" | "mdx"} format - The destination document format.
- * @param {string} value - The comment text without comment delimiters.
- * @returns {import("mdast").RootContent} The HTML or MDX comment node.
+ * @param format - The destination document format.
+ * @param value - The comment text without comment delimiters.
+ * @returns An HTML or MDX comment node for the selected format.
  */
-function commentNode(format: DocumentFormat, value: string): import("mdast").RootContent {
+function commentNode(format: DocumentFormat, value: string): RootContent {
 	return format === "mdx"
 		? { type: "mdxFlowExpression", value: `/* ${value} */` }
 		: { type: "html", value: `<!-- ${value} -->` };
@@ -29,19 +31,19 @@ function commentNode(format: DocumentFormat, value: string): import("mdast").Roo
 /**
  * Adds generated-content notices and serializes one generated region.
  *
- * @param {readonly import("mdast").RootContent[]} nodes - The transform output.
- * @param {"markdown" | "mdx"} format - The destination document format.
- * @param {string} sourcePath - The source path to include in an error.
- * @param {string} destinationPath - The destination path to include in an error.
- * @returns {Promise<string>} The serialized region body with boundary blank lines.
+ * @param nodes - The transform output.
+ * @param format - The destination document format.
+ * @param sourcePath - The source path to include in an error.
+ * @param destinationPath - The destination path to include in an error.
+ * @returns The serialized region body with boundary blank lines.
  */
 async function serializeGeneratedBody(
-	nodes: readonly import("mdast").RootContent[],
+	nodes: readonly RootContent[],
 	format: DocumentFormat,
 	sourcePath: string,
 	destinationPath: string,
 ): Promise<string> {
-	const wrappedNodes: import("mdast").RootContent[] = [
+	const wrappedNodes: RootContent[] = [
 		commentNode(format, "prettier-ignore-start"),
 		commentNode(format, generatedContentNotice),
 		...nodes,
@@ -70,9 +72,9 @@ async function serializeGeneratedBody(
  * The function validates and generates every region before it writes the file. A failure does not
  * cause a partial write to this file.
  *
- * @param {string} filePath - The path of the destination document.
- * @param {ReturnType<import("./transformRegistry.js").createTransformRegistry>} registry - The available transforms and context factory.
- * @returns {Promise<boolean>} `true` if the file changed.
+ * @param filePath - The path of the destination document.
+ * @param registry - The available transforms and context factory.
+ * @returns `true` if the file changed; otherwise, `false`.
  * @throws If reading, parsing, validation, generation, serialization, or writing fails.
  */
 export async function processDocument(

@@ -16,7 +16,11 @@ import { packageScriptsTransform } from "./packageScripts.js";
 import { readmeFooterTransform } from "./readmeFooter.js";
 import { createTemplateSectionTransforms } from "./templateSections.js";
 
-/** Creates the complete transform record. */
+/**
+ * Creates the complete transform record.
+ *
+ * @returns All supported transforms indexed by marker name.
+ */
 export function createTransforms(): Record<string, Transform> {
 	return {
 		...createTemplateSectionTransforms(),

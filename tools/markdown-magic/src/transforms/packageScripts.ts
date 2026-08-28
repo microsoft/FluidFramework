@@ -3,27 +3,34 @@
  * Licensed under the MIT License.
  */
 
-import type { RootContent } from "mdast";
+import type { RootContent, Table, TableRow } from "mdast";
 
 import type { Transform, TransformContext } from "../types.js";
 import { transform } from "./options.js";
 import { readPackage } from "./packageMetadata.js";
 import { headingSchema, type HeadingOptions, packageSchema } from "./schemas.js";
 
-/** Generates a GitHub Flavored Markdown table of package scripts. */
+/**
+ * Generates a GitHub Flavored Markdown table of package scripts.
+ *
+ * @param scripts - The package scripts indexed by command name.
+ * @param options - The section heading options.
+ * @param context - The services and destination details for the transform.
+ * @returns The generated script table and optional heading.
+ */
 export function generateScripts(
 	scripts: Record<string, string>,
 	options: HeadingOptions,
 	context: TransformContext,
 ): RootContent[] {
-	const rows: import("mdast").TableRow[] = Object.entries(scripts).map(([name, command]) => ({
+	const rows: TableRow[] = Object.entries(scripts).map(([name, command]) => ({
 		type: "tableRow",
 		children: [name, command].map((value) => ({
 			type: "tableCell",
 			children: [{ type: "inlineCode", value }],
 		})),
 	}));
-	const table: import("mdast").Table = {
+	const table: Table = {
 		type: "table",
 		align: [null, null],
 		children: [
@@ -49,6 +56,9 @@ export function generateScripts(
 		: [table];
 }
 
+/**
+ * Generates a script table from package metadata.
+ */
 export const packageScriptsTransform: Transform = transform(
 	"package-scripts",
 	{ ...packageSchema, ...headingSchema },

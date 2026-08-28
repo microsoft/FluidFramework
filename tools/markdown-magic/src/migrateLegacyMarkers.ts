@@ -33,9 +33,9 @@ const integerOptions = new Set(["start", "end"]);
 /**
  * Converts a legacy string value to its JSON value.
  *
- * @param {string} value - The legacy option value.
- * @param {string} key - The option key.
- * @returns {boolean | number | string} The converted value.
+ * @param value - The legacy option value.
+ * @param key - The option key.
+ * @returns The Boolean, integer, or unchanged string value represented by the legacy text.
  */
 function parseLegacyValue(value: string, key: string): boolean | number | string {
 	if (value === "TRUE") {
@@ -57,9 +57,9 @@ function parseLegacyValue(value: string, key: string): boolean | number | string
 /**
  * Parses the legacy ampersand-separated option syntax.
  *
- * @param {string | undefined} source - The legacy option text.
- * @param {string} transformName - The new transform name.
- * @returns {Record<string, boolean | number | string>} The options with JSON-compatible values.
+ * @param source - The legacy option text.
+ * @param transformName - The new transform name.
+ * @returns The options with JSON-compatible values.
  */
 function parseLegacyOptions(
 	source: string | undefined,
@@ -93,9 +93,9 @@ function parseLegacyOptions(
  * This helper is for the one-use repository migration. It recognizes top-level HTML comment
  * markers in Markdown documents. It does not migrate MDX markers.
  *
- * @param {string} source - The Markdown source text.
- * @param {string} filePath - The source path used for parsing and errors.
- * @returns {string} The source text with converted marker comments.
+ * @param source - The Markdown source text.
+ * @param filePath - The source path used for parsing and errors.
+ * @returns The source text with converted marker comments.
  * @throws If the source contains an unknown transform or an invalid legacy option.
  */
 export function migrateLegacyMarkers(source: string, filePath: string): string {

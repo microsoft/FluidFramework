@@ -7,7 +7,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import type { RootContent } from "mdast";
+import type { Heading, RootContent } from "mdast";
 
 import type { TransformContext } from "../types.js";
 import type { HeadingOptions } from "./schemas.js";
@@ -18,7 +18,13 @@ const templatesDirectory = path.join(
 	"templates",
 );
 
-/** Reads and parses a shared Markdown template. */
+/**
+ * Reads and parses a shared Markdown template.
+ *
+ * @param templateName - The file name within the template directory.
+ * @param context - The services and destination details for the transform.
+ * @returns A clone of the parsed template nodes.
+ */
 export async function readTemplateNodes(
 	templateName: string,
 	context: TransformContext,
@@ -28,7 +34,15 @@ export async function readTemplateNodes(
 	return structuredClone(context.parseDocument(source, templatePath).tree.children);
 }
 
-/** Creates a section from a template and adjusts nested heading depths. */
+/**
+ * Creates a section from a template and adjusts nested heading depths.
+ *
+ * @param templateName - The file name within the template directory.
+ * @param options - The section heading options.
+ * @param headingText - The text for the optional section heading.
+ * @param context - The services and destination details for the transform.
+ * @returns The template nodes with heading depths adjusted for the destination.
+ */
 export async function generateTemplateSection(
 	templateName: string,
 	options: HeadingOptions,
@@ -38,8 +52,7 @@ export async function generateTemplateSection(
 	const nodes = await readTemplateNodes(templateName, context);
 	for (const node of nodes) {
 		if (node.type === "heading") {
-			node.depth = (node.depth +
-				context.sectionHeadingDepth) as import("mdast").Heading["depth"];
+			node.depth = (node.depth + context.sectionHeadingDepth) as Heading["depth"];
 			if (node.depth > 6) {
 				throw new TypeError(`Template heading depth exceeds 6.`);
 			}

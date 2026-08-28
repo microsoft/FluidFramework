@@ -7,37 +7,117 @@ import type { RootContent } from "mdast";
 
 import type { Transform, TransformContext } from "../types.js";
 
-export type SchemaDefinition =
-	| {
-			type: "boolean";
-			default?: boolean;
-			required?: boolean;
-	  }
-	| {
-			type: "integer";
-			default?: number;
-			required?: boolean;
-			minimum?: number;
-			maximum?: number;
-	  }
-	| {
-			type: "string";
-			default?: string;
-			required?: boolean;
-			values?: readonly string[];
-	  };
+/**
+ * Defines a Boolean transform option.
+ */
+interface BooleanSchemaDefinition {
+	/**
+	 * The required runtime type of the option.
+	 */
+	type: "boolean";
 
+	/**
+	 * The value to use when the marker omits the option.
+	 */
+	default?: boolean;
+
+	/**
+	 * Whether the marker must provide the option when no default exists.
+	 */
+	required?: boolean;
+}
+
+/**
+ * Defines an integer transform option and its accepted range.
+ */
+interface IntegerSchemaDefinition {
+	/**
+	 * The required runtime type of the option.
+	 */
+	type: "integer";
+
+	/**
+	 * The value to use when the marker omits the option.
+	 */
+	default?: number;
+
+	/**
+	 * Whether the marker must provide the option when no default exists.
+	 */
+	required?: boolean;
+
+	/**
+	 * The inclusive lower bound for the option.
+	 */
+	minimum?: number;
+
+	/**
+	 * The inclusive upper bound for the option.
+	 */
+	maximum?: number;
+}
+
+/**
+ * Defines a string transform option and its accepted values.
+ */
+interface StringSchemaDefinition {
+	/**
+	 * The required runtime type of the option.
+	 */
+	type: "string";
+
+	/**
+	 * The value to use when the marker omits the option.
+	 */
+	default?: string;
+
+	/**
+	 * Whether the marker must provide the option when no default exists.
+	 */
+	required?: boolean;
+
+	/**
+	 * The complete set of accepted values, when the option is restricted.
+	 */
+	values?: readonly string[];
+}
+
+/**
+ * A schema definition for one JSON-compatible transform option.
+ */
+export type SchemaDefinition =
+	| BooleanSchemaDefinition
+	| IntegerSchemaDefinition
+	| StringSchemaDefinition;
+
+/**
+ * A transform's option definitions indexed by marker option name.
+ */
 export type OptionsSchema = Record<string, SchemaDefinition>;
+
+/**
+ * Resolves a schema definition to the value type accepted at runtime.
+ */
 type SchemaValue<TDefinition extends SchemaDefinition> = TDefinition["type"] extends "boolean"
 	? boolean
 	: TDefinition["type"] extends "integer"
 		? number
 		: string;
+
+/**
+ * Selects schema keys that validation always supplies because they are required or have defaults.
+ */
 type RequiredSchemaKeys<TSchema extends OptionsSchema> = {
 	[TKey in keyof TSchema]: TSchema[TKey] extends { default: unknown } | { required: true }
 		? TKey
 		: never;
 }[keyof TSchema];
+
+/**
+ * Maps an option schema to its validated value shape.
+ *
+ * Keys with defaults or required definitions are present. Other keys remain optional.
+ */
 export type ValidatedOptions<TSchema extends OptionsSchema> = {
 	[TKey in RequiredSchemaKeys<TSchema>]: SchemaValue<TSchema[TKey]>;
 } & {

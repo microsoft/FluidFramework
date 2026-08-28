@@ -8,14 +8,15 @@ import path from "node:path";
 import { remark } from "remark";
 import remarkGfm from "remark-gfm";
 import remarkMdx from "remark-mdx";
+import type { Root, RootContent } from "mdast";
 
 import type { DocumentFormat, ParsedDocument } from "./types.js";
 
 /**
  * Gets the document format from a file extension.
  *
- * @param {string} filePath - The document path.
- * @returns {DocumentFormat} The format for the document processor.
+ * @param filePath - The document path.
+ * @returns The document format selected from the path extension.
  * @throws If the file extension is not `.md`, `.markdown`, or `.mdx`.
  */
 export function getDocumentFormat(filePath: string): DocumentFormat {
@@ -32,8 +33,8 @@ export function getDocumentFormat(filePath: string): DocumentFormat {
 /**
  * Creates a remark processor for Markdown or MDX with GitHub Flavored Markdown support.
  *
- * @param {DocumentFormat} format - The document format.
- * @returns {import("remark").Remark} The configured remark processor.
+ * @param format - The document format.
+ * @returns A remark processor configured for the selected format and GitHub Flavored Markdown.
  */
 export function createProcessor(format: DocumentFormat) {
 	const processor = remark().use(remarkGfm, {
@@ -46,9 +47,9 @@ export function createProcessor(format: DocumentFormat) {
 /**
  * Parses a documentation file and retains the source details needed for range replacement.
  *
- * @param {string} source - The document source text.
- * @param {string} filePath - The document path. Its extension selects the parser.
- * @returns {{ format: DocumentFormat; path: string; source: string; tree: import("mdast").Root }} The parsed document.
+ * @param source - The document source text.
+ * @param filePath - The document path. Its extension selects the parser.
+ * @returns The parsed document and the source details needed for range replacement.
  */
 export function parseDocument(source: string, filePath: string): ParsedDocument {
 	const format = getDocumentFormat(filePath);
@@ -63,19 +64,19 @@ export function parseDocument(source: string, filePath: string): ParsedDocument 
 /**
  * Runs and serializes generated root-content nodes with the selected processor.
  *
- * @param {readonly import("mdast").RootContent[]} nodes - The nodes to serialize.
- * @param {DocumentFormat} format - The destination document format.
- * @returns {Promise<string>} The serialized content without leading or trailing whitespace.
+ * @param nodes - The nodes to serialize.
+ * @param format - The destination document format.
+ * @returns The serialized content without leading or trailing whitespace.
  */
 export async function serializeNodes(
-	nodes: readonly import("mdast").RootContent[],
+	nodes: readonly RootContent[],
 	format: DocumentFormat,
 ): Promise<string> {
 	const processor = createProcessor(format);
-	const tree: import("mdast").Root = {
+	const tree: Root = {
 		type: "root",
 		children: structuredClone([...nodes]),
 	};
 	const transformedTree = await processor.run(tree);
-	return processor.stringify(transformedTree as import("mdast").Root).trim();
+	return processor.stringify(transformedTree as Root).trim();
 }

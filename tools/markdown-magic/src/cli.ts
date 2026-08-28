@@ -38,7 +38,12 @@ async function mapWithConcurrency<T, U>(
 	return results;
 }
 
-/** Selects documentation files and updates their generated regions. */
+/**
+ * Selects documentation files and updates their generated regions.
+ *
+ * @param argumentsList - The command-line arguments to parse.
+ * @returns The number of files whose generated content changed.
+ */
 export async function runCli(
 	argumentsList: string[] = hideBin(process.argv),
 ): Promise<number> {

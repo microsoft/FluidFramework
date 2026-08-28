@@ -11,7 +11,14 @@ import { transform } from "./options.js";
 import { readPackage } from "./packageMetadata.js";
 import { headingSchema, type HeadingOptions, packageSchema } from "./schemas.js";
 
-/** Generates a link to the package API documentation. */
+/**
+ * Generates a link to the package API documentation.
+ *
+ * @param packageName - The full npm package name.
+ * @param options - The section heading options.
+ * @param context - The services and destination details for the transform.
+ * @returns The generated API documentation nodes.
+ */
 export function generateApiDocs(
 	packageName: string,
 	options: HeadingOptions,
@@ -30,6 +37,9 @@ export function generateApiDocs(
 	);
 }
 
+/**
+ * Generates API documentation guidance from package metadata.
+ */
 export const apiDocsTransform: Transform = transform(
 	"api-docs",
 	{ ...packageSchema, ...headingSchema },

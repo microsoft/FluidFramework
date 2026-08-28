@@ -19,6 +19,9 @@ import { generateScopeNotice } from "./packageScopeNotice.js";
 import { packageSchema } from "./schemas.js";
 import { generateTemplateSection } from "./templates.js";
 
+/**
+ * Generates the standard sections that precede a library README body.
+ */
 export const libraryReadmeHeaderTransform: Transform = transform(
 	"library-readme-header",
 	{

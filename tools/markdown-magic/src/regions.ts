@@ -6,6 +6,8 @@
 const markdownMarkerPattern = /^<!-- markdown-magic:(begin(?: (\{.*\}))?|end) -->$/s;
 const mdxMarkerPattern = /^\/\* markdown-magic:(begin(?: (\{.*\}))?|end) \*\/$/s;
 
+import type { RootContent } from "mdast";
+
 import type { GeneratedRegion, ParsedDocument } from "./types.js";
 
 type ParsedMarker =
@@ -15,10 +17,10 @@ type ParsedMarker =
 /**
  * Creates a marker error with its source location.
  *
- * @param {string} filePath - The document path.
- * @param {number} line - The one-based source line.
- * @param {string} message - The error details.
- * @returns {Error} The location-aware error.
+ * @param filePath - The document path.
+ * @param line - The one-based source line.
+ * @param message - The error details.
+ * @returns An error that includes the source path and line.
  */
 function markerError(filePath: string, line: number, message: string): Error {
 	return new Error(`${filePath}:${line}: ${message}`);
@@ -27,12 +29,12 @@ function markerError(filePath: string, line: number, message: string): Error {
 /**
  * Parses a top-level syntax-tree node as a generated-region marker.
  *
- * @param {import("mdast").RootContent} node - The node to inspect.
- * @param {"markdown" | "mdx"} format - The document format.
- * @returns {{ kind: "begin"; line: number; startOffset: number; endOffset: number; json: string } | { kind: "end" | "invalid-begin"; line: number; startOffset: number; endOffset: number } | undefined} The marker details, or `undefined` if the node is not a marker.
+ * @param node - The node to inspect.
+ * @param format - The document format.
+ * @returns The marker details, or `undefined` if the node is not a marker.
  */
 function parseMarkerNode(
-	node: import("mdast").RootContent,
+	node: RootContent,
 	format: ParsedDocument["format"],
 ): ParsedMarker | undefined {
 	const isMarkdownMarker = format === "markdown" && node.type === "html";
@@ -76,8 +78,8 @@ function parseMarkerNode(
  *
  * Only top-level comment nodes can define regions. Generated regions cannot nest.
  *
- * @param {{ format: "markdown" | "mdx"; path: string; tree: import("mdast").Root }} document - The parsed destination document.
- * @returns {{ destinationPath: string; destinationFormat: "markdown" | "mdx"; transformName: string; options: Record<string, unknown>; openingMarkerEnd: number; closingMarkerStart: number; line: number }[]} The validated generated regions.
+ * @param document - The parsed destination document.
+ * @returns The validated generated regions in source order.
  * @throws If a marker or marker pair is invalid.
  */
 export function findGeneratedRegions(document: ParsedDocument): GeneratedRegion[] {
