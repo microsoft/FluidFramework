@@ -17,21 +17,21 @@ interface IncludeOptions {
 	/**
 	 * The zero-based, inclusive line index at which selection starts.
 	 *
-	 * If omitted, selection starts at the first line.
+	 * @defaultValue The first line.
 	 */
 	start: number | undefined;
 
 	/**
 	 * The zero-based, exclusive line index at which selection ends.
 	 *
-	 * If omitted, selection continues to the end of the source.
+	 * @defaultValue The end of the source.
 	 */
 	end: number | undefined;
 
 	/**
 	 * The fenced code language for a code include.
 	 *
-	 * If omitted, the generated code fence has no language identifier.
+	 * @defaultValue No language identifier.
 	 */
 	language?: string | undefined;
 }

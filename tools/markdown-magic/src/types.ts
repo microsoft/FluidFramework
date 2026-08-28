@@ -44,7 +44,7 @@ interface GeneratedNodeMetadata {
 	/**
 	 * The source path to report when generated content cannot be serialized.
 	 *
-	 * If omitted, diagnostics use the destination document path.
+	 * @defaultValue The destination document path.
 	 */
 	readonly sourcePath?: string;
 }
