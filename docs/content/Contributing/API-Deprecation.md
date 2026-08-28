@@ -36,6 +36,16 @@ When you deprecate a public or beta (including legacy) API:
 1. You _must_ introduce a [changeset](./Breaking-vs-Non-Breaking-Changes/Changesets.md) calling attention to the change (see also [changeset FAQ](./Breaking-vs-Non-Breaking-Changes/Changesets-FAQ.md)). If an issue was filed, you may keep changeset light and reference the issue.
    Otherwise, add details to the changeset.
 
+#### Under-Development Beta APIs
+
+An `@beta` API may be exempt from advance deprecation and communication when it is exposed only through a documented, feature-specific entrypoint under `/dev`, such as `@fluidframework/container-runtime/dev/version-mark`, and its absence is part of its compatibility contract.
+
+Such an API may be changed or removed without prior deprecation only in a release where Beta breaking changes are permitted.
+The breaking change must still be documented by a changeset and in the release notes.
+
+Once an API is exported from the standard `/beta` entrypoint, this exemption no longer applies.
+See [Under-Development Beta entrypoints](./Breaking-vs-Non-Breaking-Changes/Beta-Break-Process.md#under-development-beta-entrypoints) for the complete requirements.
+
 #### Creating a GitHub Issue
 
 For public client API, issue should be created as sub-issue of next major breaking changes issue, currently [Client 4.0 Breaking Changes](https://github.com/microsoft/FluidFramework/issues/27453).

@@ -4,6 +4,35 @@ Beta and Legacy+Beta APIs are both used in production by partners and not settle
 They are supported under an agreement that allows them to be carefully changed ahead of major version bumps.
 **New deprecations** should follow [API Deprecation](../API-Deprecation.md) leveraging the table below to schedule removal.
 
+## Under-Development Beta entrypoints
+
+An API may be designated **Under-Development Beta** when it needs more stability than Alpha permits but is not ready for the standard `/beta` entrypoint.
+Under-Development Beta APIs follow the normal Beta breaking-change schedule but do not require advance deprecation or announcement.
+
+This exception applies only when:
+
+- The API is tagged `@beta`.
+- The API is exported only through a documented, feature-specific `/dev/<feature>` entrypoint, such as:
+
+    ```typescript
+    import { captureVersionMark } from "@fluidframework/container-runtime/dev/version-mark";
+    ```
+
+- The API is not also available from the package root or standard `/beta` entrypoint.
+- The capability is optional from a compatibility perspective: consumers must tolerate it being unavailable, and mixed-version interactions must continue to work without it.
+- The API documentation states that the API is Under-Development Beta and may be changed or removed at a Beta-breaking release without advance notice.
+
+Under-Development Beta APIs may be changed or removed at a Beta-breaking release without:
+
+- Publishing an earlier release that marks the API as deprecated.
+- Advance announcement through the Beta-break tracking process.
+- Providing a replacement API or migration path.
+
+The breaking change must still receive normal API review and be documented in a changeset and the release notes.
+Partner repositories must also be checked as part of release validation.
+
+Once an API is exported from the standard `/beta` entrypoint, this exception no longer applies and the API follows the ordinary Beta deprecation and communication process.
+
 ## To Create Issue for an **Existing** Deprecation
 
 _ONLY_ if the API deprecation does not have an issue per [API Deprecation](../API-Deprecation.md) (preferred), use these steps to track without duplicating a lot of information.
