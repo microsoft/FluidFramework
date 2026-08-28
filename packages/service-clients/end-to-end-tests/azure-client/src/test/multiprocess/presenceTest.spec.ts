@@ -87,10 +87,6 @@ function setTestTimeout(context: Mocha.Context, duration: number): void {
 	}
 }
 
-function escapeAzureDevOpsLogMessage(message: string): string {
-	return message.replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A");
-}
-
 function skipOnAfrAvailabilityDip(context: Mocha.Context, error: unknown): void {
 	if (!useAzureFluidRelayFrs || !isAfrAvailabilityDip(error)) {
 		return;
@@ -98,9 +94,7 @@ function skipOnAfrAvailabilityDip(context: Mocha.Context, error: unknown): void 
 
 	const testTitle = context.test?.fullTitle() ?? context.test?.title ?? "Presence test";
 	testConsole.log(
-		`##vso[task.logissue type=warning]${escapeAzureDevOpsLogMessage(
-			`Skipping AFR e2e test due to service availability dip (ADO 78423 / bug 59980): ${testTitle}`,
-		)}`,
+		`##vso[task.logissue type=warning]Skipping AFR e2e test due to service availability dip: ${testTitle}`,
 	);
 	context.skip();
 }
@@ -169,11 +163,10 @@ describe(`Presence with AzureClient`, () => {
 			for (const writeClients of [numClients, 1]) {
 				it(`announces 'attendeeConnected' when remote client joins session [${numClients} clients, ${writeClients} writers]`, async function testAnnouncesAttendeeConnected(this: Mocha.Context) {
 					try {
-						/**
-						 * Note: This test is currently skipped in the AFR driver due to General Network Errors in the Service Clients End to End tests pipelines.
-						 * For more context, see AB#59980.
-						 */
 						if (useAzure && numClients > 50) {
+							// Even with increased timeouts, more than 50 clients can be too large for AFR.
+							// This may be due to slow responses/inactivity from the clients that are
+							// creating pressure on ADO agent.
 							this.skip();
 						}
 						setTestTimeout(this, childConnectTimeoutMs + allAttendeesJoinedTimeoutMs + 1000);

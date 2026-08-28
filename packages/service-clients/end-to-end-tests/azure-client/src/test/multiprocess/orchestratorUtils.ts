@@ -53,8 +53,8 @@ function isObjectRecord(value: unknown): value is Record<string, unknown> {
 	return value !== null && typeof value === "object";
 }
 
-// ADO 78423 / bug 59980: AFR can transiently return Azure Front Door 502s to these
-// live-service tests; detect only that signature so client regressions still fail.
+// AFR can transiently return Azure Front Door 502s to these live-service tests; detect only
+// that signature so client regressions still fail. See AB#59980 for the service-side issue.
 export function isAfrAvailabilityDip(error: unknown): boolean {
 	if (!isObjectRecord(error)) {
 		return false;
