@@ -6,7 +6,6 @@
 // Note: `assert` is omitted here intentionally.
 // The internal variant is explicitly exported by `internal.ts`, and the deprecated external variant is exported by `index.ts`.
 export {
-	appendDebugMessage,
 	fail,
 	debugAssert,
 	configureDebugAsserts,
