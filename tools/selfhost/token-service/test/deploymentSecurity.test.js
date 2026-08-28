@@ -20,10 +20,7 @@ const TOKEN_FUNCTIONS = fs.readFileSync(
 	"utf8",
 );
 const STACK_DEPLOY = fs.readFileSync(path.join(ROOT, "azure", "deploy.sh"), "utf8");
-const PREFLIGHT = fs.readFileSync(
-	path.join(ROOT, "azure", "preflight-check.sh"),
-	"utf8",
-);
+const PREFLIGHT = fs.readFileSync(path.join(ROOT, "azure", "preflight-check.sh"), "utf8");
 
 test("workstation deployment restores Key Vault network isolation", () => {
 	assert.match(TOKEN_DEPLOY, /--public-network-access Enabled/);
@@ -54,14 +51,8 @@ test("deployment tooling uses private unpredictable temporary paths", () => {
 		/mktemp -d "\$\{TMPDIR:-\/tmp\}\/selfhost-token-service\.XXXXXX"/,
 	);
 	assert.match(TOKEN_DEPLOY, /rm -rf "\$TOKEN_SERVICE_TEMP_DIR"/);
-	assert.match(
-		STACK_DEPLOY,
-		/mktemp -d "\$TEMP_BASE\/selfhost-fluid-\$\{AKS\}\.XXXXXX"/,
-	);
-	assert.match(
-		PREFLIGHT,
-		/mktemp -d "\$\{TMPDIR:-\/tmp\}\/selfhost-preflight\.XXXXXX"/,
-	);
+	assert.match(STACK_DEPLOY, /mktemp -d "\$TEMP_BASE\/selfhost-fluid-\$\{AKS\}\.XXXXXX"/);
+	assert.match(PREFLIGHT, /mktemp -d "\$\{TMPDIR:-\/tmp\}\/selfhost-preflight\.XXXXXX"/);
 });
 
 test("deployment tooling keeps secret values out of process arguments", () => {
@@ -82,15 +73,9 @@ test("deployment tooling keeps secret values out of process arguments", () => {
 		/\$\{SENSITIVE_TEMP_FILES\[@\]\+"\$\{SENSITIVE_TEMP_FILES\[@\]\}"\}/,
 	);
 	assert.doesNotMatch(TOKEN_DEPLOY, /--connection-string "\$conn"/);
-	assert.match(
-		TOKEN_DEPLOY,
-		/AZURE_STORAGE_CONNECTION_STRING="\$conn" az storage/,
-	);
+	assert.match(TOKEN_DEPLOY, /AZURE_STORAGE_CONNECTION_STRING="\$conn" az storage/);
 	assert.match(TOKEN_DEPLOY, /--settings "@\$package_setting"/);
-	assert.doesNotMatch(
-		TOKEN_DEPLOY,
-		/--settings "WEBSITE_RUN_FROM_PACKAGE=\$url"/,
-	);
+	assert.doesNotMatch(TOKEN_DEPLOY, /--settings "WEBSITE_RUN_FROM_PACKAGE=\$url"/);
 });
 
 test("Function App platform hardening is configured and verified", () => {
