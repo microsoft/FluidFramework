@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-"use strict";
-
 /**
  * Mocha loads this module before it loads the tests. This module creates the jsdom environment,
  * supplies browser APIs that jsdom does not implement, and releases test resources.
  */
+
+"use strict";
 
 const globalJsdom = require("global-jsdom");
 
