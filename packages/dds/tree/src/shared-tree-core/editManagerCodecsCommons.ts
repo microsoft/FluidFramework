@@ -28,7 +28,6 @@ import type { SharedBranchSummaryData } from "./editManager.js";
 import type {
 	Commit,
 	EncodedCommit,
-	EncodedSequencedCommit,
 	EncodedSharedBranch,
 	SequenceId,
 	SequencedCommit,
@@ -74,7 +73,7 @@ function encodeCommit<TChangeset, T extends Commit<TChangeset>>(
 	commit: T,
 	context: ChangeEncodingContext,
 	includeCustomMetadata: boolean,
-): EncodedCommit<JsonCompatibleReadOnly> {
+): Mutable<EncodedCommit<JsonCompatibleReadOnly>> {
 	const encoded: Mutable<EncodedCommit<JsonCompatibleReadOnly>> = {
 		change: changeCodec.encode(commit.change, { ...context, revision: commit.revision }),
 		revision: revisionTagCodec.encode(commit.revision, {
@@ -143,22 +142,20 @@ export function encodeSharedBranch<TChangeset>(
 ): EncodedSharedBranch<JsonCompatibleReadOnly> {
 	const json: Mutable<EncodedSharedBranch<JsonCompatibleReadOnly>> = {
 		trunk: data.trunk.map((commit) => {
-			const encoded: Mutable<EncodedSequencedCommit<JsonCompatibleReadOnly>> = {
-				...encodeCommit(
-					changeCodec,
-					revisionTagCodec,
-					commit,
-					{
-						originatorId: commit.sessionId,
-						idCompressor: context.idCompressor,
-						schema: context.schema,
-						revision: undefined,
-						isSummary: context.isSummary,
-					},
-					includeCustomMetadata,
-				),
-				sequenceNumber: commit.sequenceNumber,
-			};
+			const encoded = encodeCommit(
+				changeCodec,
+				revisionTagCodec,
+				commit,
+				{
+					originatorId: commit.sessionId,
+					idCompressor: context.idCompressor,
+					schema: context.schema,
+					revision: undefined,
+					isSummary: context.isSummary,
+				},
+				includeCustomMetadata,
+			);
+			copyProperty(commit, "sequenceNumber", encoded);
 			copyProperty(commit, "indexInBatch", encoded);
 			return encoded;
 		}),
@@ -233,20 +230,17 @@ export function decodeSharedBranch<TChangeset>(
 	context: EditManagerDecodingContext,
 	originatorId: SessionId | undefined,
 ): SharedBranchSummaryData<TChangeset> {
-	// TODO: sort out EncodedCommit vs Commit, and make this type check without type assertion.
 	const trunk = json.trunk as readonly (EncodedCommit<JsonCompatibleReadOnly> & SequenceId)[];
 	const data: Mutable<SharedBranchSummaryData<TChangeset>> = {
 		trunk: trunk.map((commit): SequencedCommit<TChangeset> => {
-			const decoded = {
-				...decodeCommit(changeCodec, revisionTagCodec, commit, {
-					originatorId: commit.sessionId,
-					idCompressor: context.idCompressor,
-					revision: undefined,
-					isSummary: context.isSummary,
-					healing: context.healing,
-				}),
-				sequenceNumber: commit.sequenceNumber,
-			};
+			const decoded = decodeCommit(changeCodec, revisionTagCodec, commit, {
+				originatorId: commit.sessionId,
+				idCompressor: context.idCompressor,
+				revision: undefined,
+				isSummary: context.isSummary,
+				healing: context.healing,
+			});
+			copyProperty(commit, "sequenceNumber", decoded);
 			copyProperty(commit, "indexInBatch", decoded);
 			return decoded;
 		}),
