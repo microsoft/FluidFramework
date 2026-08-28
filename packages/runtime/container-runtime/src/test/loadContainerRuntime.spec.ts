@@ -8,10 +8,7 @@ import { strict as assert } from "node:assert";
 import type { IContainerContext } from "@fluidframework/container-definitions/internal";
 import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/internal";
 
-import {
-	loadContainerRuntime,
-	loadContainerRuntimeAlpha,
-} from "../containerRuntime.js";
+import { loadContainerRuntime, loadContainerRuntimeAlpha } from "../containerRuntime.js";
 
 const commonParams = {
 	context: undefined as unknown as IContainerContext,
