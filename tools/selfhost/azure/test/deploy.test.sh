@@ -35,6 +35,7 @@ BIN="$WORK/bin"; mkdir -p "$BIN"
 export CALLS="$WORK/calls.log"; : > "$CALLS"
 export MOCK_NS_EXISTS=0 MOCK_TIER=Standard MOCK_REDIS_EXISTS=0 MOCK_REDIS_HA=Enabled
 export MOCK_ACR_EXISTS=0 MOCK_ACR_ADMIN_ENABLED=false MOCK_BUSYBOX_DIGEST_EXISTS=0
+export MOCK_DNS_LINK_TO_VNET=0
 
 cat > "$BIN/az" <<'STUB'
 #!/usr/bin/env bash
@@ -81,6 +82,10 @@ case "$*" in
   *"authorization-rule keys list"*)                           echo 'Endpoint=sb://ns.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=abc+/='; exit 0 ;;
   *"keyvault secret show"*)                                   echo "https://kv.vault.azure.net/secrets/eventhub-connection-string/1"; exit 0 ;;
   *"privateLinkServiceConnections"*)                          echo "Approved"; exit 0 ;;
+  *"network vnet show"*"--query id"*)                         echo "/subscriptions/s/resourceGroups/mock-rg/providers/Microsoft.Network/virtualNetworks/mock-vnet"; exit 0 ;;
+  *"private-dns link vnet list"*)
+    [ "${MOCK_DNS_LINK_TO_VNET:-0}" = 1 ] && echo "link-legacy-resource"
+    exit 0 ;;
   *"private-endpoint show"*|*"private-dns zone show"*|*"private-dns link vnet show"*) exit 1 ;;
 esac
 exit 0
@@ -99,8 +104,9 @@ export PATH="$BIN:$PATH"
 # at import, so the extracted function block has to sit in a repo-shaped tree with preflight
 # stubbed out -- the real one makes live Azure calls.
 # ---------------------------------------------------------------------------
-REPO="$WORK/repo"; mkdir -p "$REPO/azure"
+REPO="$WORK/repo"; mkdir -p "$REPO/azure" "$REPO/release"
 cp "$AZURE_DIR"/*.yaml "$AZURE_DIR"/*.json "$AZURE_DIR"/*.sh "$REPO/azure/" 2>/dev/null || true
+cp "$AZURE_DIR/../release/lib.sh" "$REPO/release/lib.sh"
 printf '#!/usr/bin/env bash\nexit 0\n' > "$REPO/azure/preflight-check.sh"
 chmod +x "$REPO/azure/preflight-check.sh"
 
@@ -114,8 +120,11 @@ printf '{"builtImages":[{"name":"routerlicious","status":"pinned","tag":"mock-ta
 
 PARAMS="$WORK/params.json"
 # fluidRepoDir is mandatory since the release-pipeline merge; git is stubbed, so a directory with
-# a .git marker is enough to get past the checkout logic.
+# a .git marker and compatible Historian source are enough to get past the checkout logic.
 mkdir -p "$WORK/fluid/.git"
+mkdir -p "$WORK/fluid/server/historian/packages/historian-base/src/services"
+printf '%s\n' 'const tokenLifetimeInSec = Math.floor(tokenLifetimeInMSec / 1000);' \
+  > "$WORK/fluid/server/historian/packages/historian-base/src/services/riddlerService.ts"
 cat > "$PARAMS" <<JSON
 {
   "subscriptionId": "00000000-0000-0000-0000-000000000000",
@@ -201,6 +210,9 @@ assert_eq "secret init image uses the release-pinned ACR digest" "${V_BUSYBOX_IM
 TILDE="$WORK/params-tilde.json"
 jq '.fluidRepoDir = "~/fluid"' "$PARAMS" > "$TILDE"
 mkdir -p "$WORK/home/fluid/.git"
+mkdir -p "$WORK/home/fluid/server/historian/packages/historian-base/src/services"
+printf '%s\n' 'const tokenLifetimeInSec = Math.floor(tokenLifetimeInMSec / 1000);' \
+  > "$WORK/home/fluid/server/historian/packages/historian-base/src/services/riddlerService.ts"
 tilde_root="$(HOME="$WORK/home" read_vars "$TILDE" FLUID_REPO_DIR | sed -n 's/^FLUID_REPO_DIR=//p')"
 assert_eq "fluidRepoDir expands a leading tilde" "$tilde_root" "$WORK/home/fluid"
 
@@ -257,6 +269,18 @@ else ok "re-run does not recreate the namespace"; fi
 printf '%s' "$out" | grep -q "already exists, skipping create" \
   && ok "re-run reports the skip" || no "re-run reports the skip"
 export MOCK_NS_EXISTS=0
+
+: > "$CALLS"; export MOCK_DNS_LINK_TO_VNET=1
+out="$(run_phase 'create_private_endpoint /subscriptions/s/resourceGroups/mock-rg/providers/Microsoft.Storage/storageAccounts/new-storage file new-storage privatelink.file.core.windows.net')"; rc=$?
+assert_eq "renamed resource reuses the VNet's existing private DNS link" "$rc" "0"
+if grep -q "private-dns link vnet create" "$CALLS"; then
+  no "existing VNet link is not recreated under the new resource name"
+else
+  ok "existing VNet link is not recreated under the new resource name"
+fi
+printf '%s' "$out" | grep -q "reusing it" \
+  && ok "existing private DNS link reuse is reported" || no "existing private DNS link reuse is reported"
+export MOCK_DNS_LINK_TO_VNET=0
 
 # ---------------------------------------------------------------------------
 group "4. Mock deploy: Azure Managed Redis"

@@ -760,7 +760,8 @@ Store CSI driver** rather than rendered into ConfigMaps or Helm metadata.
 >
 > The upstream chart writes both into its ConfigMap as literals rather than Helm values, so a
 > values file has nothing to override. `phase5_helm` rewrites those two lines in the chart
-> template to read from `auth:`, once per checkout; that is the only reason the patch exists.
+> template to read from `auth:` and emits the legacy root-level value still read by Historian,
+> once per checkout; that is the only reason the patch exists.
 
 **Check:** after Phase 5,
 
@@ -772,6 +773,10 @@ kubectl get cm fluid-routerlicious -o jsonpath='{.data.config\.json}' \
 reports `'enableTokenExpiration': True`. To confirm enforcement, sign a token with **no `exp`
 claim** and call alfred with it — expect `403 Invalid token expiry`. An already-expired token is
 not a valid check: those are rejected either way.
+
+The same phase ensures `usage.clientConnectivityCountingEnabled` is a JSON boolean. An older
+chart rendered the disabled value as the truthy string `"false"`, causing Nexus to append every
+disconnect to the non-expiring `clientConnectivityUsage` Redis list.
 
 > **Superseded:** the SecretProviderClass now authenticates via **AAD Workload Identity** (one
 > shared managed identity + a Kubernetes ServiceAccount, `azure/secretproviderclass.yaml`'s

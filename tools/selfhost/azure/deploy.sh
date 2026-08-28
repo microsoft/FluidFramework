@@ -54,6 +54,7 @@ set -euo pipefail
 # manifests + logs (never commit rendered files with live values).
 # ---------------------------------------------------------------------------
 SELFHOST_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+. "$SELFHOST_ROOT/release/lib.sh"
 
 usage() {
   cat >&2 <<'EOF'
@@ -592,6 +593,7 @@ if [[ "$(git -C "$FLUID_ROOT" rev-parse HEAD 2>/dev/null || true)" != "$FLUID_RE
   fi
   git -C "$FLUID_ROOT" checkout --detach "$FLUID_REF"
 fi
+validate_selfhost_source_compatibility "$FLUID_ROOT"
 
 # ===========================================================================
 # Phase 0 — Resource group + ACR
@@ -809,11 +811,17 @@ phase0_network_allow_frontdoor() {
 create_private_endpoint() {
   local resource_id="$1" group_id="$2" short_name="$3" zone_name="$4"
   local pe_name="pe-$short_name" zone_link_name="link-$short_name"
+  local vnet_id existing_zone_link
 
   if ! az network private-dns zone show -g "$RG" -n "$zone_name" >/dev/null 2>&1; then
     az network private-dns zone create -g "$RG" -n "$zone_name"
   fi
-  if ! az network private-dns link vnet show -g "$RG" -n "$zone_link_name" -z "$zone_name" >/dev/null 2>&1; then
+  vnet_id="$(az network vnet show -g "$RG" -n "$VNET" --query id -o tsv)"
+  existing_zone_link="$(az network private-dns link vnet list -g "$RG" -z "$zone_name" \
+    --query "[?virtualNetwork.id=='$vnet_id'] | [0].name" -o tsv)"
+  if [[ -n "$existing_zone_link" ]]; then
+    log "Private DNS zone $zone_name is already linked to $VNET as $existing_zone_link, reusing it"
+  else
     az network private-dns link vnet create -g "$RG" -n "$zone_link_name" -z "$zone_name" \
       -v "$VNET" -e false
   fi
@@ -1652,6 +1660,8 @@ phase5_helm() {
   # upstream chart writes them into its ConfigMap as literals rather than Helm values, so a
   # values file has nothing to override. Rewrite the two literals to read from `auth:` once per
   # checkout; after this, changing those settings is just editing the values file and re-running.
+  # Historian still reads the legacy root-level maxTokenLifetimeSec, while Routerlicious reads
+  # auth:maxTokenLifetimeSec, so emit both paths from the same value.
   local cm_tmpl="$FLUID_ROOT/server/routerlicious/kubernetes/routerlicious/templates/fluid-configmap.yaml"
   awk '
     $0 == "            \"maxTokenLifetimeSec\": 3600," {
@@ -1663,9 +1673,33 @@ phase5_helm() {
     { print }
   ' "$cm_tmpl" > "$cm_tmpl.tmp"
   mv "$cm_tmpl.tmp" "$cm_tmpl"
+  if ! grep -qF '        "maxTokenLifetimeSec": {{ .Values.auth.maxTokenLifetimeSec }},' "$cm_tmpl"; then
+    awk '
+      $0 == "        \"auth\": {" {
+        print "        \"maxTokenLifetimeSec\": {{ .Values.auth.maxTokenLifetimeSec }},"
+      }
+      { print }
+    ' "$cm_tmpl" > "$cm_tmpl.tmp"
+    mv "$cm_tmpl.tmp" "$cm_tmpl"
+  fi
   grep -qF '.Values.auth.maxTokenLifetimeSec' "$cm_tmpl" \
     && grep -qF '.Values.auth.enableTokenExpiration' "$cm_tmpl" \
+    && grep -qF '        "maxTokenLifetimeSec": {{ .Values.auth.maxTokenLifetimeSec }},' "$cm_tmpl" \
     || { echo "ERROR: could not point the auth block in $cm_tmpl at .Values.auth -- upstream changed it." >&2
+         exit 1; }
+
+  # The upstream template quotes this one boolean (unlike the other two usage flags), rendering
+  # false as the truthy string "false". Nexus then records every disconnect in the non-expiring
+  # clientConnectivityUsage Redis list. Keep it a JSON boolean so the disabled default is honored.
+  awk '
+    $0 == "            \"clientConnectivityCountingEnabled\": \"{{ .Values.usage.clientConnectivityCountingEnabled }}\"," {
+      print "            \"clientConnectivityCountingEnabled\": {{ .Values.usage.clientConnectivityCountingEnabled }},"; next
+    }
+    { print }
+  ' "$cm_tmpl" > "$cm_tmpl.tmp"
+  mv "$cm_tmpl.tmp" "$cm_tmpl"
+  grep -qF '"clientConnectivityCountingEnabled": {{ .Values.usage.clientConnectivityCountingEnabled }},' "$cm_tmpl" \
+    || { echo "ERROR: could not render clientConnectivityCountingEnabled as a boolean in $cm_tmpl -- upstream changed it." >&2
          exit 1; }
 
   # Front Door hostnames do not exist yet the first time this phase runs, so fall back to the

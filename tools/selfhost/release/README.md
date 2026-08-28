@@ -33,8 +33,35 @@ Run from the `tools/selfhost` root:
 TARGET_PLATFORM=linux/amd64 \
 ACR_LOGIN_SERVER=myacr.azurecr.io \
 FLUID_DIR=~/src/FluidFramework \
-./release/generate-release.sh client_v2.43.0 r0.1.0
+./release/generate-release.sh <reviewed-client-tag> r0.1.0
 ```
+
+Fluid Framework client tags are published on the
+[FluidFramework tags page](https://github.com/microsoft/FluidFramework/tags). To list them from the
+dedicated clone, including tags not present when the clone was created:
+
+```bash
+cd "$FLUID_DIR"
+git fetch origin --tags
+git tag --list 'client_v*' --sort=-version:refname | head -20
+```
+
+After selecting and reviewing a tag, pass it directly to `generate-release.sh`:
+
+```bash
+FLUID_TAG=client_v2.116.1
+git -C "$FLUID_DIR" show --no-patch --format=fuller "$FLUID_TAG"
+
+TARGET_PLATFORM=linux/amd64 \
+ACR_LOGIN_SERVER=myacr.azurecr.io \
+FLUID_DIR="$FLUID_DIR" \
+./release/generate-release.sh "$FLUID_TAG" r0.1.0
+```
+
+Review the selected tag and commit according to your source-review and change-management process
+before generating the release. The release tooling resolves the tag and records its immutable
+40-character commit SHA in `release-artifacts/<release-id>/source.json`. A full 40-character SHA can
+still be passed instead when releasing a reviewed commit that has no tag.
 
 This runs:
 
