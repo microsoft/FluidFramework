@@ -126,18 +126,6 @@ export function makeMessageCodecBuilder<TChangeset>(): VersionDispatchingCodecBu
 				),
 		},
 		{
-			minVersionForCollab: FluidClientVersion.v2_117,
-			formatVersion: MessageFormatVersion.v7,
-			codec: (options: MessageCodecBuilderOptions<TChangeset>) =>
-				makeV1ToV4CodecWithVersion(
-					options.changeCodecs.resolve(
-						options.dependentChangeFormatVersion.lookup(MessageFormatVersion.v7),
-					),
-					options.revisionTagCodec,
-					MessageFormatVersion.v7,
-				),
-		},
-		{
 			minVersionForCollab: undefined,
 			formatVersion: MessageFormatVersion.vSharedBranches,
 			codec: (options: MessageCodecBuilderOptions<TChangeset>) =>

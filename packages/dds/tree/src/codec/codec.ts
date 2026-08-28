@@ -540,25 +540,6 @@ export const FluidClientVersion = {
 	 * - ModularChangeFormatVersion.v5 - written when minVersionForCollab \>= 2.80
 	 */
 	v2_80: "2.80.0",
-
-	/**
-	 * Fluid Framework Client 2.117 and newer.
-	 * @remarks
-	 * New formats introduced in 2.117:
-	 * - MessageFormatVersion.v7 - written when minVersionForCollab \>= 2.117
-	 * - EditManagerFormatVersion.v7 - written when minVersionForCollab \>= 2.117
-	 *
-	 * @privateRemarks
-	 * These formats are gated at 2.117.0 rather than 3.0.0 so that they can also be carried by a
-	 * 2.117.0 minor cut from the last pre-3.0 commit on main, should one be needed for consumers
-	 * that cannot yet absorb the 3.0 breaking changes. Since 3.0.0 \> 2.117.0, 3.x clients select
-	 * these formats for any minVersionForCollab at or above 2.117.0 whether or not that release
-	 * ever ships.
-	 *
-	 * Every client at or above 2.117.0 must therefore be able to read and write these formats. A
-	 * client that maps 2.117.0 to an older format would silently strip metadata when encoding.
-	 */
-	v2_117: "2.117.0",
 } as const satisfies Record<string, OldestSupportedClientVersion>;
 
 /**

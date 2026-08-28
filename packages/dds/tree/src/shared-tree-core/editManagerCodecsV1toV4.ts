@@ -19,7 +19,6 @@ import {
 	type EditManagerEncodingContext,
 } from "./editManagerCodecsCommons.js";
 import { EncodedEditManager } from "./editManagerFormatV1toV4.js";
-import { EditManagerFormatVersion } from "./editManagerFormatCommons.js";
 
 /**
  * Create the provided version of the {@link EditManager} codec (which encodes it's {@link SummaryData}).
@@ -48,11 +47,7 @@ export function makeV1toV4andV6CodecWithVersion<TChangeset>(
 	EditManagerEncodingContext,
 	EditManagerDecodingContext
 > {
-	const includeCustomMetadata = version >= EditManagerFormatVersion.v7;
-	const schema = EncodedEditManager(
-		changeCodec.encodedSchema ?? JsonCompatibleReadOnlySchema,
-		includeCustomMetadata,
-	);
+	const schema = EncodedEditManager(changeCodec.encodedSchema ?? JsonCompatibleReadOnlySchema);
 
 	const codec: CodecAndSchema<
 		SummaryData<TChangeset>,
@@ -70,7 +65,6 @@ export function makeV1toV4andV6CodecWithVersion<TChangeset>(
 				data.main,
 				context,
 				data.originator,
-				includeCustomMetadata,
 			);
 			const encoded: EncodedEditManager<TChangeset> = {
 				trunk: mainBranch.trunk,

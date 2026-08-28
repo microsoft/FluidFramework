@@ -366,7 +366,6 @@ export function testPerf(): void {
 								{
 									change: TestChange.emptyChange,
 									revision: mintRevisionTag(),
-									customMetadata: undefined,
 								},
 							],
 							"peer" as SessionId,
@@ -445,7 +444,6 @@ export function testPerf(): void {
 								{
 									change: TestChange.emptyChange,
 									revision: mintRevisionTag(),
-									customMetadata: undefined,
 								},
 							],
 							"peer" as SessionId,
