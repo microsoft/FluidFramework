@@ -412,29 +412,27 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): ReactEle
 	};
 
 	return (
-		<div data-testid="test-dynamic-composed-chart" style={{ width: "100%", height: "100%" }}>
-			<ResponsiveContainer width="100%" height="100%">
-				<ComposedChart data={mergeDataSets(props.dataSets)} margin={props.margin}>
-					<CartesianGrid strokeDasharray="2 2" stroke={graphColorPalette.cartesianGrid} />
-					<XAxis dataKey={"x"} tick={CustomizedXAxisTick}>
-						<Label value="Timestamp" offset={12} position="bottom" />
-					</XAxis>
-					<YAxis tick={CustomizedYAxisTick} />
-					<Tooltip
-						contentStyle={{
-							fontSize: "14px",
-							backgroundColor: graphColorPalette.toolTipBackround,
-						}}
-					/>
-					<Legend
-						wrapperStyle={{ bottom: "-10px", fontSize: "14px", ...props.legendStyle }}
-						onClick={handleLegendClick}
-						content={renderLegend}
-					/>
+		<ResponsiveContainer width="100%" height="100%">
+			<ComposedChart data={mergeDataSets(props.dataSets)} margin={props.margin}>
+				<CartesianGrid strokeDasharray="2 2" stroke={graphColorPalette.cartesianGrid} />
+				<XAxis dataKey={"x"} tick={CustomizedXAxisTick}>
+					<Label value="Timestamp" offset={12} position="bottom" />
+				</XAxis>
+				<YAxis tick={CustomizedYAxisTick} />
+				<Tooltip
+					contentStyle={{
+						fontSize: "14px",
+						backgroundColor: graphColorPalette.toolTipBackround,
+					}}
+				/>
+				<Legend
+					wrapperStyle={{ bottom: "-10px", fontSize: "14px", ...props.legendStyle }}
+					onClick={handleLegendClick}
+					content={renderLegend}
+				/>
 
-					{renderChartComponentsFromGraphDataSets(props.dataSets)}
-				</ComposedChart>
-			</ResponsiveContainer>
-		</div>
+				{renderChartComponentsFromGraphDataSets(props.dataSets)}
+			</ComposedChart>
+		</ResponsiveContainer>
 	);
 }

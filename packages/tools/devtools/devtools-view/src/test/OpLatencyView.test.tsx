@@ -58,8 +58,10 @@ describe("OpLatencyView component tests", () => {
 		const opLatencyHeaderElement = await screen.findByText("Op Latency");
 		assert.match(opLatencyHeaderElement.tagName, /h[1-6]/i);
 
-		// Confirm the rechart graph was rendered
-		await within(opLatencyMainContainerElement).findByTestId("test-dynamic-composed-chart");
+		// Confirm that the chart rendered each latency data set.
+		for (const dataSetName of ["Duration Outbound", "Duration Network", "Duration Inbound"]) {
+			await within(opLatencyMainContainerElement).findByText(dataSetName);
+		}
 
 		// Confirm helper text header exists
 		await screen.findByText("About");

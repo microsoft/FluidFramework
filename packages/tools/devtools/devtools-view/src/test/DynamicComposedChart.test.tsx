@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { render, screen } from "@testing-library/react";
+import { strict as assert } from "node:assert";
+
+import { render, screen, waitFor } from "@testing-library/react";
 
 import { DynamicComposedChart, type GraphDataSet } from "../components/graphs/index.js";
 
@@ -62,13 +64,19 @@ describe("DynamicComposedChart component test", () => {
 		},
 	];
 
-	it("renders without crashing with data", async () => {
+	it("renders each data set", async () => {
 		render(<DynamicComposedChart dataSets={testDataSets} />);
-		await screen.findByTestId("test-dynamic-composed-chart");
+
+		for (const dataSet of testDataSets) {
+			await screen.findByText(dataSet.schema.displayName);
+		}
 	});
 
-	it("renders without crashing without data", async () => {
-		render(<DynamicComposedChart dataSets={[]} />);
-		await screen.findByTestId("test-dynamic-composed-chart");
+	it("renders an empty chart when there is no data", async () => {
+		const { container } = render(<DynamicComposedChart dataSets={[]} />);
+
+		await waitFor(() => {
+			assert.notEqual(container.querySelector("svg.recharts-surface"), null);
+		});
 	});
 });
