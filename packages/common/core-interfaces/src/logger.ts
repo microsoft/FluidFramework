@@ -107,6 +107,7 @@ export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
  * an omitted level as {@link LogLevelConst.essential} before filtering or forwarding. This protects
  * mixed-version deployments where older callers can still invoke `send(event)` with one argument.
  *
+ * @input
  * @public
  */
 export interface ITelemetryBaseLogger {
