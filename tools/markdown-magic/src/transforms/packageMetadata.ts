@@ -16,16 +16,22 @@ export interface PackageMetadata {
 
 	/**
 	 * Whether npm treats the package as private.
+	 *
+	 * Defaults to `false`.
 	 */
 	private?: boolean;
 
 	/**
 	 * The package export map indexed by subpath.
+	 *
+	 * If omitted, transforms generate no special-export instructions.
 	 */
 	exports?: Record<string, unknown>;
 
 	/**
 	 * The package scripts indexed by command name.
+	 *
+	 * If omitted, transforms use an empty script map.
 	 */
 	scripts?: Record<string, string>;
 }

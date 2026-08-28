@@ -16,16 +16,22 @@ interface IncludeOptions {
 
 	/**
 	 * The zero-based, inclusive line index at which selection starts.
+	 *
+	 * If omitted, selection starts at the first line.
 	 */
 	start: number | undefined;
 
 	/**
 	 * The zero-based, exclusive line index at which selection ends.
+	 *
+	 * If omitted, selection continues to the end of the source.
 	 */
 	end: number | undefined;
 
 	/**
 	 * The fenced code language for a code include.
+	 *
+	 * If omitted, the generated code fence has no language identifier.
 	 */
 	language?: string | undefined;
 }
@@ -91,6 +97,14 @@ function validateIncludeOptions(
 	return validated;
 }
 
+/**
+ * Selects a range of lines and removes boundary whitespace.
+ *
+ * @param source - The source text to select from.
+ * @param start - The zero-based, inclusive start index. Defaults to the first line.
+ * @param end - The zero-based, exclusive end index. Defaults to the end of the source.
+ * @returns The selected source text without boundary whitespace.
+ */
 function sliceLines(source: string, start?: number, end?: number): string {
 	if (start === undefined && end === undefined) {
 		return source.trim();

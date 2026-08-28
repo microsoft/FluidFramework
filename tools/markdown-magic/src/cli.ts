@@ -41,7 +41,7 @@ async function mapWithConcurrency<T, U>(
 /**
  * Selects documentation files and updates their generated regions.
  *
- * @param argumentsList - The command-line arguments to parse.
+ * @param argumentsList - The command-line arguments to parse. Defaults to the current process arguments.
  * @returns The number of files whose generated content changed.
  */
 export async function runCli(

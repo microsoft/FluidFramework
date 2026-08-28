@@ -18,11 +18,15 @@ interface BooleanSchemaDefinition {
 
 	/**
 	 * The value to use when the marker omits the option.
+	 *
+	 * If omitted, the option has no default value.
 	 */
 	default?: boolean;
 
 	/**
 	 * Whether the marker must provide the option when no default exists.
+	 *
+	 * Defaults to `false`.
 	 */
 	required?: boolean;
 }
@@ -38,21 +42,29 @@ interface IntegerSchemaDefinition {
 
 	/**
 	 * The value to use when the marker omits the option.
+	 *
+	 * If omitted, the option has no default value.
 	 */
 	default?: number;
 
 	/**
 	 * Whether the marker must provide the option when no default exists.
+	 *
+	 * Defaults to `false`.
 	 */
 	required?: boolean;
 
 	/**
 	 * The inclusive lower bound for the option.
+	 *
+	 * If omitted, the option has no lower bound.
 	 */
 	minimum?: number;
 
 	/**
 	 * The inclusive upper bound for the option.
+	 *
+	 * If omitted, the option has no upper bound.
 	 */
 	maximum?: number;
 }
@@ -68,16 +80,22 @@ interface StringSchemaDefinition {
 
 	/**
 	 * The value to use when the marker omits the option.
+	 *
+	 * If omitted, the option has no default value.
 	 */
 	default?: string;
 
 	/**
 	 * Whether the marker must provide the option when no default exists.
+	 *
+	 * Defaults to `false`.
 	 */
 	required?: boolean;
 
 	/**
 	 * The complete set of accepted values, when the option is restricted.
+	 *
+	 * If omitted, validation accepts any string value.
 	 */
 	values?: readonly string[];
 }
