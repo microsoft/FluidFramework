@@ -4,7 +4,7 @@
 		"isolatedModules": true,
 		"rootDir": "src",
 		"outDir": "./lib",
-		"types": ["jest"],
+		"types": ["mocha", "node"],
 		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["src/**/*"],

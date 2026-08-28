@@ -9,7 +9,12 @@ import { App } from "../../components/index.js";
 
 describe("App Insights Example App UI test", () => {
 	it("App renders", async (): Promise<void> => {
-		render(<App />);
-		await screen.findByText("Loading Shared container...");
+		const getContainerInfo = async (): Promise<never> => new Promise(() => {});
+		const { unmount } = render(<App getContainerInfo={getContainerInfo} />);
+		try {
+			await screen.findByText("Loading Shared container...");
+		} finally {
+			unmount();
+		}
 	});
 });
