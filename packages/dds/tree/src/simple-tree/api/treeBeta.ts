@@ -56,6 +56,7 @@ export interface TreeBeta {
 	/**
 	 * Retrieve the {@link TreeContextBeta | context} for the given node.
 	 * @param node - The node to query.
+	 * @returns The {@link TreeContextBeta} associated with `node`.
 	 */
 	context(node: TreeNode): TreeContextBeta;
 

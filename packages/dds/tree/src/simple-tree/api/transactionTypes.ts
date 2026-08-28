@@ -62,7 +62,7 @@ export interface WithValue<TValue> {
 }
 
 /**
- * Contains a value and status returned from a user-supplied {@link UntypedTreeView.(runTransaction:1) | transaction callback}.
+ * Contains a value and status returned from a user-supplied {@link UntypedTreeView.(runTransaction:3) | transaction callback}.
  * @input
  * @beta
  */
