@@ -5,10 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import type {
-	IFluidDataStoreFactory,
-	OldestSupportedClientVersion,
-} from "@fluidframework/runtime-definitions/internal";
+import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 
 import {
 	BaseContainerRuntimeFactory,
@@ -33,6 +30,17 @@ const defaultFactory: IFluidDataStoreFactory = {
 	},
 };
 
+const createBaseContainerRuntimeFactory = (
+	props: BaseContainerRuntimeFactoryProps | DeprecatedBaseContainerRuntimeFactoryProps,
+): BaseContainerRuntimeFactory => new BaseContainerRuntimeFactory(props);
+
+const createContainerRuntimeFactoryWithDefaultDataStore = (
+	props:
+		| ContainerRuntimeFactoryWithDefaultDataStoreProps
+		| DeprecatedContainerRuntimeFactoryWithDefaultDataStoreProps,
+): ContainerRuntimeFactoryWithDefaultDataStore =>
+	new ContainerRuntimeFactoryWithDefaultDataStore(props);
+
 describe("BaseContainerRuntimeFactory compatibility parameter", () => {
 	it("keeps the canonical construction properties extendable", () => {
 		interface ExtendedProps extends BaseContainerRuntimeFactoryProps {
@@ -44,7 +52,7 @@ describe("BaseContainerRuntimeFactory compatibility parameter", () => {
 			customProperty: true,
 		};
 
-		assert.doesNotThrow(() => new BaseContainerRuntimeFactory(props));
+		assert.doesNotThrow(() => createBaseContainerRuntimeFactory(props));
 	});
 
 	it("preserves the deprecated construction overload", () => {
@@ -53,35 +61,39 @@ describe("BaseContainerRuntimeFactory compatibility parameter", () => {
 			minVersionForCollab: "2.0.0",
 		};
 
-		assert.doesNotThrow(() => new BaseContainerRuntimeFactory(props));
+		assert.doesNotThrow(() => createBaseContainerRuntimeFactory(props));
 	});
 
-	const createWithCompatibilityProperties = (properties: {
-		readonly oldestSupportedClient?: OldestSupportedClientVersion;
-		readonly minVersionForCollab?: OldestSupportedClientVersion;
-	}): BaseContainerRuntimeFactory =>
-		new BaseContainerRuntimeFactory({
-			...commonProps,
-			...properties,
-		} as unknown as BaseContainerRuntimeFactoryProps);
-
 	it("rejects a missing compatibility parameter", () => {
-		assert.throws(() => createWithCompatibilityProperties({}), /Specify exactly one/);
+		assert.throws(() => {
+			// @ts-expect-error A compatibility property is required.
+			new BaseContainerRuntimeFactory(commonProps);
+		}, /Specify exactly one/);
 	});
 
 	it("rejects both compatibility parameters", () => {
-		assert.throws(
-			() =>
-				createWithCompatibilityProperties({
-					oldestSupportedClient: "2.0.0",
-					minVersionForCollab: "2.0.0",
-				}),
-			/Specify exactly one/,
-		);
+		assert.throws(() => {
+			// @ts-expect-error Exactly one compatibility property may be supplied.
+			new BaseContainerRuntimeFactory({
+				...commonProps,
+				oldestSupportedClient: "2.0.0",
+				minVersionForCollab: "2.0.0",
+			});
+		}, /Specify exactly one/);
 	});
 });
 
 describe("ContainerRuntimeFactoryWithDefaultDataStore compatibility parameter", () => {
+	it("preserves the canonical construction overload", () => {
+		const props: ContainerRuntimeFactoryWithDefaultDataStoreProps = {
+			...commonProps,
+			defaultFactory,
+			oldestSupportedClient: "2.0.0",
+		};
+
+		assert.doesNotThrow(() => createContainerRuntimeFactoryWithDefaultDataStore(props));
+	});
+
 	it("preserves the deprecated construction overload", () => {
 		const props: DeprecatedContainerRuntimeFactoryWithDefaultDataStoreProps = {
 			...commonProps,
@@ -89,31 +101,28 @@ describe("ContainerRuntimeFactoryWithDefaultDataStore compatibility parameter", 
 			minVersionForCollab: "2.0.0",
 		};
 
-		assert.doesNotThrow(() => new ContainerRuntimeFactoryWithDefaultDataStore(props));
+		assert.doesNotThrow(() => createContainerRuntimeFactoryWithDefaultDataStore(props));
 	});
 
-	const createWithCompatibilityProperties = (properties: {
-		readonly oldestSupportedClient?: OldestSupportedClientVersion;
-		readonly minVersionForCollab?: OldestSupportedClientVersion;
-	}): ContainerRuntimeFactoryWithDefaultDataStore =>
-		new ContainerRuntimeFactoryWithDefaultDataStore({
-			...commonProps,
-			defaultFactory,
-			...properties,
-		} as unknown as ContainerRuntimeFactoryWithDefaultDataStoreProps);
-
 	it("rejects a missing compatibility parameter", () => {
-		assert.throws(() => createWithCompatibilityProperties({}), /Specify exactly one/);
+		assert.throws(() => {
+			// @ts-expect-error A compatibility property is required.
+			new ContainerRuntimeFactoryWithDefaultDataStore({
+				...commonProps,
+				defaultFactory,
+			});
+		}, /Specify exactly one/);
 	});
 
 	it("rejects both compatibility parameters", () => {
-		assert.throws(
-			() =>
-				createWithCompatibilityProperties({
-					oldestSupportedClient: "2.0.0",
-					minVersionForCollab: "2.0.0",
-				}),
-			/Specify exactly one/,
-		);
+		assert.throws(() => {
+			// @ts-expect-error Exactly one compatibility property may be supplied.
+			new ContainerRuntimeFactoryWithDefaultDataStore({
+				...commonProps,
+				defaultFactory,
+				oldestSupportedClient: "2.0.0",
+				minVersionForCollab: "2.0.0",
+			});
+		}, /Specify exactly one/);
 	});
 });
