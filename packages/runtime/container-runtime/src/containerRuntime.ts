@@ -899,7 +899,12 @@ export type LoadContainerRuntime2Params = Omit<
 	runtimeOptions?: IContainerRuntimeOptionsInternal;
 };
 
-function getExplicitOldestSupportedClient(
+/**
+ * Resolves the required compatibility choice while both property names remain accepted.
+ *
+ * @internal
+ */
+export function getExplicitOldestSupportedClient(
 	params: Readonly<{
 		oldestSupportedClient?: OldestSupportedClientVersion;
 		minVersionForCollab?: OldestSupportedClientVersion;
@@ -922,12 +927,19 @@ function getExplicitOldestSupportedClient(
 	return oldestSupportedClient;
 }
 
-function getAlphaOldestSupportedClient(
+/**
+ * Enforces the canonical-only alpha input contract for JavaScript and erased TypeScript callers.
+ *
+ * @remarks
+ * This intentionally differs from {@link getExplicitOldestSupportedClient}, which accepts the
+ * deprecated property as a temporary beta migration path.
+ */
+function validateAlphaOldestSupportedClient(
 	params: Readonly<{
 		oldestSupportedClient?: OldestSupportedClientVersion;
 		minVersionForCollab?: OldestSupportedClientVersion;
 	}>,
-): OldestSupportedClientVersion {
+): void {
 	if (params.minVersionForCollab !== undefined) {
 		throw new UsageError(
 			"minVersionForCollab is not supported by loadContainerRuntimeAlpha. Use oldestSupportedClient instead.",
@@ -936,7 +948,6 @@ function getAlphaOldestSupportedClient(
 	if (params.oldestSupportedClient === undefined) {
 		throw new UsageError("oldestSupportedClient must be specified.");
 	}
-	return params.oldestSupportedClient;
 }
 
 /**
@@ -977,11 +988,11 @@ export function loadContainerRuntime(
 export async function loadContainerRuntime(
 	params: LoadContainerRuntimeParams | DeprecatedLoadContainerRuntimeParams,
 ): Promise<IContainerRuntime & IRuntime> {
-	const oldestSupportedClient = getExplicitOldestSupportedClient(params);
+	// Unlike the internal loader, this public API requires an explicit compatibility choice.
+	// Validate here, then let the internal loader handle either accepted property name.
+	getExplicitOldestSupportedClient(params);
 	return ContainerRuntime.loadRuntime({
 		...params,
-		oldestSupportedClient,
-		minVersionForCollab: undefined,
 		registry: new FluidDataStoreRegistry(params.registryEntries),
 	});
 }
@@ -1002,11 +1013,10 @@ export async function loadContainerRuntime(
 export async function loadContainerRuntimeAlpha(params: LoadContainerRuntimeParams): Promise<{
 	runtime: IContainerRuntime & IRuntime;
 }> {
-	const oldestSupportedClient = getAlphaOldestSupportedClient(params);
+	// The internal loader accepts deprecated and missing values for compatibility, alpha does not.
+	validateAlphaOldestSupportedClient(params);
 	return ContainerRuntime.loadRuntime2({
 		...params,
-		oldestSupportedClient,
-		minVersionForCollab: undefined,
 		registry: new FluidDataStoreRegistry(params.registryEntries),
 	});
 }
@@ -1152,7 +1162,7 @@ export class ContainerRuntime
 		if (!isValidMinVersionForCollab(minVersionForCollab)) {
 			throw new UsageError(
 				`Invalid compatibility version: ${minVersionForCollab}. ` +
-					"`oldestSupportedClient` (or deprecated `minVersionForCollab`) must be an existing FF version (i.e. 2.22.1).",
+					"`oldestSupportedClient` must be an existing FF version (i.e. 2.22.1).",
 			);
 		}
 		// We also validate that there is not a mismatch between `minVersionForCollab` and runtime options that

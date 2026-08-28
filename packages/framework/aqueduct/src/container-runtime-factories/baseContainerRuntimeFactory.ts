@@ -9,12 +9,12 @@ import type {
 } from "@fluidframework/container-definitions/internal";
 import {
 	FluidDataStoreRegistry,
+	getExplicitOldestSupportedClient,
 	loadContainerRuntime,
 	type IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { FluidObject } from "@fluidframework/core-interfaces";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	// eslint-disable-next-line import-x/no-deprecated
 	type RuntimeRequestHandler,
@@ -101,46 +101,13 @@ export type DeprecatedBaseContainerRuntimeFactoryProps = Omit<
 > & {
 	readonly oldestSupportedClient?: undefined;
 	/**
-	 * Oldest version of Fluid Framework client that must be able to open and process documents
-	 * written by this container runtime.
+	 * {@inheritDoc BaseContainerRuntimeFactoryProps.oldestSupportedClient}
 	 *
 	 * @deprecated 2.116.0. To be removed in 3.10.0. Use `oldestSupportedClient` instead.
 	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
 	 */
 	readonly minVersionForCollab: OldestSupportedClientVersion;
 };
-
-type BaseContainerRuntimeFactoryPropsInternal =
-	| BaseContainerRuntimeFactoryProps
-	| DeprecatedBaseContainerRuntimeFactoryProps;
-
-/**
- * Resolves the required compatibility choice while both property names remain accepted.
- *
- * @internal
- */
-export function getExplicitOldestSupportedClient(
-	props: Readonly<{
-		oldestSupportedClient?: OldestSupportedClientVersion;
-		minVersionForCollab?: OldestSupportedClientVersion;
-	}>,
-): OldestSupportedClientVersion {
-	const { oldestSupportedClient, minVersionForCollab } = props;
-	if (oldestSupportedClient === undefined) {
-		if (minVersionForCollab !== undefined) {
-			return minVersionForCollab;
-		}
-		throw new UsageError(
-			"Specify exactly one of oldestSupportedClient or minVersionForCollab (deprecated).",
-		);
-	}
-	if (minVersionForCollab !== undefined) {
-		throw new UsageError(
-			"Specify exactly one of oldestSupportedClient or minVersionForCollab (deprecated).",
-		);
-	}
-	return oldestSupportedClient;
-}
 
 /**
  * BaseContainerRuntimeFactory produces container runtimes with the specified data store and service registries,
@@ -181,7 +148,9 @@ export class BaseContainerRuntimeFactory
 	public constructor(
 		props: BaseContainerRuntimeFactoryProps | DeprecatedBaseContainerRuntimeFactoryProps,
 	);
-	public constructor(props: BaseContainerRuntimeFactoryPropsInternal) {
+	public constructor(
+		props: BaseContainerRuntimeFactoryProps | DeprecatedBaseContainerRuntimeFactoryProps,
+	) {
 		super();
 
 		this.registryEntries = props.registryEntries;

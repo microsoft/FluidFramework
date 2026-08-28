@@ -18,7 +18,6 @@ import { RequestParser } from "@fluidframework/runtime-utils/internal";
 import {
 	BaseContainerRuntimeFactory,
 	type BaseContainerRuntimeFactoryProps,
-	getExplicitOldestSupportedClient,
 } from "./baseContainerRuntimeFactory.js";
 
 const defaultDataStoreId = "default";
@@ -63,18 +62,13 @@ export type DeprecatedContainerRuntimeFactoryWithDefaultDataStoreProps = Omit<
 > & {
 	readonly oldestSupportedClient?: undefined;
 	/**
-	 * Oldest version of Fluid Framework client that must be able to open and process documents
-	 * written by this container runtime.
+	 * {@inheritDoc BaseContainerRuntimeFactoryProps.oldestSupportedClient}
 	 *
 	 * @deprecated 2.116.0. To be removed in 3.10.0. Use `oldestSupportedClient` instead.
 	 * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
 	 */
 	readonly minVersionForCollab: OldestSupportedClientVersion;
 };
-
-type ContainerRuntimeFactoryWithDefaultDataStorePropsInternal =
-	| ContainerRuntimeFactoryWithDefaultDataStoreProps
-	| DeprecatedContainerRuntimeFactoryWithDefaultDataStoreProps;
 
 /**
  * A ContainerRuntimeFactory that initializes Containers with a single default data store, which can be requested from
@@ -103,7 +97,11 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 			| ContainerRuntimeFactoryWithDefaultDataStoreProps
 			| DeprecatedContainerRuntimeFactoryWithDefaultDataStoreProps,
 	);
-	public constructor(props: ContainerRuntimeFactoryWithDefaultDataStorePropsInternal) {
+	public constructor(
+		props:
+			| ContainerRuntimeFactoryWithDefaultDataStoreProps
+			| DeprecatedContainerRuntimeFactoryWithDefaultDataStoreProps,
+	) {
 		const requestHandlers = props.requestHandlers ?? [];
 		const provideEntryPoint = props.provideEntryPoint ?? getDefaultFluidObject;
 
@@ -124,11 +122,8 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 			return undefined; // continue search
 		};
 
-		const oldestSupportedClient = getExplicitOldestSupportedClient(props);
 		super({
 			...props,
-			oldestSupportedClient,
-			minVersionForCollab: undefined,
 			requestHandlers: [getDefaultObject, ...requestHandlers],
 			provideEntryPoint,
 		});
