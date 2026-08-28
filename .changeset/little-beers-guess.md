@@ -11,8 +11,12 @@ entry point and the Aqueduct
 [`BaseContainerRuntimeFactory`](https://fluidframework.com/docs/api/aqueduct/basecontainerruntimefactory-class)
 and
 [`ContainerRuntimeFactoryWithDefaultDataStore`](https://fluidframework.com/docs/api/aqueduct/containerruntimefactorywithdefaultdatastore-class)
-no longer choose a compatibility version when one is omitted. New code must specify
-[`oldestSupportedClient`](https://fluidframework.com/docs/api/container-runtime/loadcontainerruntimeparams-interface#oldestsupportedclient-propertysignature).
+no longer choose a compatibility version when one is omitted.
+The `oldestSupportedClient` property is now required on
+[`LoadContainerRuntimeParams`](https://fluidframework.com/docs/api/container-runtime/loadcontainerruntimeparams-interface),
+[`BaseContainerRuntimeFactoryProps`](https://fluidframework.com/docs/api/aqueduct/basecontainerruntimefactoryprops-interface),
+and
+[`ContainerRuntimeFactoryWithDefaultDataStoreProps`](https://fluidframework.com/docs/api/aqueduct/containerruntimefactorywithdefaultdatastoreprops-interface).
 Typed callers that temporarily retain the deprecated `minVersionForCollab` property must use
 [`DeprecatedLoadContainerRuntimeParams`](https://fluidframework.com/docs/api/container-runtime/deprecatedloadcontainerruntimeparams-typealias),
 [`DeprecatedBaseContainerRuntimeFactoryProps`](https://fluidframework.com/docs/api/aqueduct/deprecatedbasecontainerruntimefactoryprops-typealias),
