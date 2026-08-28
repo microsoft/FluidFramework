@@ -60,8 +60,6 @@ import {
 	toUpgradeSchema,
 	type UntypedTreeViewAlpha,
 	type TreeSchema,
-	type SchemaUpgrade,
-	type StagedUpgradeStatus,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,

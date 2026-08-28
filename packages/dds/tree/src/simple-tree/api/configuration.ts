@@ -158,21 +158,21 @@ export interface ITreeViewConfiguration<
 
 /**
  * Property-bag configuration for {@link TreeViewConfigurationAlpha} construction.
- * @input
  * @alpha
  */
 export interface ITreeViewConfigurationAlpha<
 	TSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
 > extends ITreeViewConfiguration<TSchema> {
 	/**
-	 * Policy for generating stored schema from the view schema during staged schema upgrades.
+	 * Policy for generating stored schema from the view schema.
 	 *
 	 * @remarks
+	 * If omitted or `undefined`, defaults to {@link StagedSchemaUpgradePolicyFactory.restrictive}
+	 * which does not enable any staged schema upgrades.
+	 *
 	 * If provided, this policy is used when generating stored schema to include in documents via
 	 * `initialize` / `upgradeSchema` as well as in {@link snapshotSchemaCompatibility} to validate
 	 * the compatibility of such documents.
-	 *
-	 * @defaultValue {@link StagedSchemaUpgradePolicyFactory.restrictive}
 	 *
 	 * @example Enabling specific staged upgrades
 	 * ```typescript
