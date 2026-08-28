@@ -167,6 +167,7 @@ export {
 	type TreeBranchEvents,
 	type TreeBranchCommitMetadata,
 	type TreeBranchHistory,
+	type TreeContextBeta,
 	getPropertyKeyFromStoredKey,
 	getStoredKey,
 	tryGetSchema,

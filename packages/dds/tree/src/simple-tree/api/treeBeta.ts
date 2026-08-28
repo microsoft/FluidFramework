@@ -9,6 +9,7 @@ import {
 	FieldKinds,
 	isTreeValue,
 } from "../../feature-libraries/index.js";
+import { TreeAlpha } from "../../shared-tree/index.js";
 import { brand } from "../../util/index.js";
 import {
 	Context,
@@ -38,6 +39,7 @@ import type { TreeEncodingOptions } from "./customTree.js";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used by docs
 import type { ObjectSchemaOptions } from "./schemaFactory.js";
 import type { TreeChangeEventsBeta } from "./treeChangeEventsBeta.js";
+import type { TreeContextBeta } from "./tree.js";
 import { treeNodeApi } from "./treeNodeApi.js";
 import { cursorFromVerbose } from "./verboseTree.js";
 
@@ -51,6 +53,12 @@ import { cursorFromVerbose } from "./verboseTree.js";
  * @sealed @beta
  */
 export interface TreeBeta {
+	/**
+	 * Retrieve the {@link TreeContextBeta | context} for the given node.
+	 * @param node - The node to query.
+	 */
+	context(node: TreeNode): TreeContextBeta;
+
 	/**
 	 * Register an event listener on the given node.
 	 * @param node - The node whose events should be subscribed to.
@@ -247,6 +255,10 @@ export function exportConcise(
  * @beta
  */
 export const TreeBeta: TreeBeta = {
+	context(node: TreeNode): TreeContextBeta {
+		return TreeAlpha.context(node);
+	},
+
 	on<K extends keyof TreeChangeEventsBeta<TNode>, TNode extends TreeNode>(
 		node: TNode,
 		eventName: K,

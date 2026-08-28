@@ -247,6 +247,7 @@ export {
 	type TreeBranchEvents,
 	type TreeBranchCommitMetadata,
 	type TreeBranchHistory,
+	type TreeContextBeta,
 	type NodeSchemaOptions,
 	type NodeSchemaOptionsAlpha,
 	type NodeSchemaMetadata,

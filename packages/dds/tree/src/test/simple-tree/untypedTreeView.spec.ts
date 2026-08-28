@@ -10,9 +10,11 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 import { TreeAlpha } from "../../shared-tree/index.js";
 import {
 	SchemaFactory,
+	TreeBeta,
 	TreeViewConfiguration,
 	type TreeView,
 	type TreeViewAlpha,
+	type UntypedTreeView,
 } from "../../simple-tree/index.js";
 import type { requireAssignableTo } from "../../util/index.js";
 import { getView } from "../utils.js";
@@ -43,6 +45,38 @@ describe("UntypedTreeView", () => {
 		assert.equal(context.hasRootSchema(Array), true);
 		assert.equal(context.hasRootSchema(schemaFactory.number), false);
 		assert.deepEqual([...array], ["a", "b", "c"]);
+	});
+
+	it("runs beta transactions on a hydrated node", () => {
+		const view = init(["a"]);
+		const context = TreeBeta.context(view.root);
+		assert(context.isView());
+		type _check = requireAssignableTo<typeof context, UntypedTreeView>;
+		const result = context.runTransaction(
+			() => {
+				view.root.insertAtEnd("b");
+				return { value: view.root.length };
+			},
+			{ label: "append" },
+		);
+		assert.deepEqual(result, { success: true, value: 2 });
+		assert.deepEqual([...view.root], ["a", "b"]);
+	});
+
+	it("runs beta transactions on an unhydrated node", () => {
+		// eslint-disable-next-line unicorn/no-new-array -- "Array" is the new of the schema
+		const node = new Array(["a"]);
+		const context = TreeBeta.context(node);
+		assert.equal(context.isView(), false);
+		const result = context.runTransaction(
+			() => {
+				node.insertAtEnd("b");
+				return { value: node.length };
+			},
+			{ label: "append" },
+		);
+		assert.deepEqual(result, { success: true, value: 2 });
+		assert.deepEqual([...node], ["a", "b"]);
 	});
 
 	describe("forked views", () => {
