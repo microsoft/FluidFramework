@@ -524,6 +524,7 @@ export const changeFormatVersionForEditManager = DependentFormatVersion.fromPair
 	[EditManagerFormatVersion.v4, SharedTreeChangeFormatVersion.v4],
 	[EditManagerFormatVersion.vSharedBranches, SharedTreeChangeFormatVersion.v4],
 	[EditManagerFormatVersion.v6, SharedTreeChangeFormatVersion.v5],
+	[EditManagerFormatVersion.v7, SharedTreeChangeFormatVersion.v5],
 ]);
 
 /**
@@ -540,6 +541,7 @@ export const changeFormatVersionForMessage = DependentFormatVersion.fromPairs<
 	[MessageFormatVersion.v4, SharedTreeChangeFormatVersion.v4],
 	[MessageFormatVersion.vSharedBranches, SharedTreeChangeFormatVersion.v4],
 	[MessageFormatVersion.v6, SharedTreeChangeFormatVersion.v5],
+	[MessageFormatVersion.v7, SharedTreeChangeFormatVersion.v5],
 ]);
 
 function getCodecTreeForEditManagerFormat(
@@ -659,8 +661,9 @@ export interface SharedTreeOptions
 	 * @remarks
 	 * By default, SharedTree evicts trunk commits once all peers have acknowledged them (i.e. once they
 	 * are outside the collaboration window), and they are not otherwise retained (e.g. by revertibles or
-	 * local branches), to bound memory usage. Enabling this flag retains the full trunk history for the
-	 * lifetime of the client, which increases memory usage over time and should be used with care.
+	 * local branches), to bound memory usage and document size.
+	 * As long as this flag is enabled, trunk commits are retained - this increases memory usage and document size
+	 * over time and should be used with care.
 	 */
 	readonly retainHistory?: boolean;
 

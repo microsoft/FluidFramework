@@ -18,10 +18,13 @@ export {
 	type RemoteChangeMetadata,
 	type ChangeMetadata,
 	type LabelTree,
+	type CustomMetadataTree,
 	type TransactionLabels,
 	type RevertibleFactory,
 	type RevertibleAlphaFactory,
 	type RevertibleAlpha,
+	type RevertOptionsAlpha,
+	type RevertToOptionsAlpha,
 } from "./core/index.js";
 
 export {
@@ -113,7 +116,6 @@ export {
 	type ArrayNodeTreeChangedDeltaOp,
 	type ArrayNodeTreeChangedRetainOp,
 	type NodeChangedData,
-	type NodeChangedDataAlpha,
 	type NodeChangedDataDelta,
 	type NodeChangedDataProperties,
 	type NodeChangedDataTreeDelta,
@@ -162,6 +164,7 @@ export {
 	singletonSchema,
 	type UnsafeUnknownSchema,
 	type TreeViewAlpha,
+	type StagedUpgradeStatus,
 	type TreeViewBeta,
 	type InsertableField,
 	type Insertable,
@@ -187,7 +190,6 @@ export {
 	// Beta APIs
 	TreeBeta,
 	type TreeChangeEventsBeta,
-	type TreeChangeEventsAlpha,
 	// Other
 	type VerboseTreeNode,
 	type TreeEncodingOptions,

@@ -93,7 +93,11 @@
 		"typescript": "~6.0.3"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_ReplayDocumentServiceFactory": {
+				"forwardCompat": false
+			}
+		},
 		"entrypoint": "internal"
 	}
 }

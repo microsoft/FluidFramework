@@ -152,7 +152,7 @@ module.exports = {
 			script: false,
 		},
 		"build:package:esm": {
-			dependsOn: ["build:entrypoints:esm", "build:esm"],
+			dependsOn: ["build:entrypoints:esm", "build:esm", "build:copy"],
 			script: false,
 		},
 		// Generic build:test script should be replaced by :esm or :cjs specific versions.

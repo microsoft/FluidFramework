@@ -187,6 +187,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory, 
     readonly createPointInTimeDocumentService?: IPointInTimeDocumentServiceFactory["createPointInTimeDocumentService"];
     getRelayServiceSessionInfo(resolvedUrl: IResolvedUrl): Promise<ISocketStorageDiscovery | undefined>;
     readonly ILayerCompatDetails?: unknown;
+    readonly ILayerCompatSupportRequirements?: unknown;
     // (undocumented)
     get IRelaySessionAwareDriverFactory(): this;
     // (undocumented)

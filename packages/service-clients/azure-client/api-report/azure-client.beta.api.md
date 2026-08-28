@@ -84,10 +84,10 @@ export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
     eventName: string;
 }
 
-// @public
+// @public @input
 export interface ITelemetryBaseLogger {
     minLogLevel?: LogLevel | undefined;
-    send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
+    send(event: ITelemetryBaseEvent, logLevel: LogLevel): void;
 }
 
 // @public
@@ -109,6 +109,6 @@ export interface IUser {
 }
 
 // @public @input
-export type OldestSupportedClientVersion = `${1 | 2 | 3}.${bigint}.${bigint}` | `${1 | 2 | 3}.${bigint}.${bigint}-${string}`;
+export type OldestSupportedClientVersion = `3.${bigint}.0` | `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
 
 ```

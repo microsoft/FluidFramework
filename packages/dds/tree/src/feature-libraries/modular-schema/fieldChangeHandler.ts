@@ -23,11 +23,20 @@ import type { CrossFieldManager } from "./crossFieldQueries.js";
 import type { EncodedNodeChangeset } from "./modularChangeFormatV1.js";
 import type { CrossFieldKeyRange, NodeId } from "./modularChangeTypes.js";
 
-export type NestedChangesIndices = [
-	NodeId,
-	number | undefined /* inputIndex */,
-	number | undefined /* outputIndex */,
-][];
+export interface ChildChangeInfo {
+	nodeId: NodeId;
+
+	/**
+	 * The root ID for this node in the input context of the changeset.
+	 * Undefined if the node was attached in the input context.
+	 */
+	inputRootId: ChangeAtomId | undefined;
+
+	/**
+	 * The ID this changeset detaches this node with.
+	 */
+	detachId: ChangeAtomId | undefined;
+}
 
 /**
  * The return value of calling {@link FieldChangeHandler.intoDelta}.
@@ -106,7 +115,7 @@ export interface FieldChangeHandler<
 	 * the indices are are ordered from smallest to largest (with no duplicates).
 	 * The returned array is owned by the caller.
 	 */
-	getNestedChanges(change: TChangeset): NestedChangesIndices;
+	getNestedChanges(change: TChangeset): ChildChangeInfo[];
 
 	/**
 	 * @returns A list of all cross-field keys contained in the change.
@@ -182,18 +191,74 @@ export interface FieldChangeRebaser<TChangeset> {
 	filterEdits(
 		change: TChangeset,
 		options: {
-			filterDetach: EditFilterFunc;
-			filterAttach: EditFilterFunc;
+			filterDetach: FilterDetachFunc;
+			filterAttach: FilterAttachFunc;
 			preserveOtherEdits: boolean;
 		},
 	): TChangeset;
 }
 
-export type EditFilterFunc = (
-	id: ChangeAtomId,
+export type FilterDetachFunc = (
+	/**
+	 * The ID of the detach being queried.
+	 */
+	detachId: ChangeAtomId,
 	count: number,
+
+	/**
+	 * The input-context ID of the nodes being detached, if they are already detached.
+	 */
+	inputRootId: ChangeAtomId | undefined,
+
+	/**
+	 * The ID of the associated attach, if this is part of a move with a different attach ID.
+	 */
 	endpoint?: ChangeAtomId,
-) => RangeQueryResult<EditFilterStatus>;
+) => RangeQueryResult<FilterDetachResult>;
+
+export type FilterAttachFunc = (
+	/**
+	 * The ID of the attach being queried.
+	 */
+	attachId: ChangeAtomId,
+	count: number,
+
+	/**
+	 * The output-context ID of the nodes being attached, if they are only transiently attached.
+	 */
+	outputRootId: ChangeAtomId | undefined,
+
+	/**
+	 * The ID of the associated detach, if this is part of a move with a different detach ID.
+	 */
+	endpoint?: ChangeAtomId,
+) => RangeQueryResult<FilterAttachResult>;
+
+export interface FilterDetachResult {
+	readonly action: EditFilterStatus;
+
+	/**
+	 * If true, the filtered change should also remove any child changes for the detached nodes.
+	 * This will only be set when `action` is `EditFilterStatus.Remove`.
+	 */
+	readonly shouldRemoveChild?: boolean;
+}
+
+export interface FilterAttachResult {
+	readonly action: EditFilterStatus;
+
+	/**
+	 * When `action` is `EditFilterStatus.PreserveWithoutMove`,
+	 * the filtered change should include a child change with this ID.
+	 */
+	readonly nodeId?: NodeId;
+
+	/**
+	 * When `action` is `EditFilterStatus.PreserveWithoutMove`,
+	 * this ID should be used as the attach ID for the filtered change.
+	 */
+	readonly newAttachId?: ChangeAtomId;
+}
 
 /**
  * Used to describe what should be done with a particular attach or detach during `filterEdits`.
