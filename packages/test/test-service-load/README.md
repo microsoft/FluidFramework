@@ -26,7 +26,7 @@ This package runs in two different modes: Orchestrator Mode and Test Runner mode
 _This is the main entry point to the test - this Orchestrator process will spawn many Test Runner processes._
 
 ```bash
-node ./dist/main.js [--url <url>] [--tenant <tenant>] [--profile <profile>] [--debug] [--log <filterTerm>]
+node ./lib/main.js [--url <url>] [--tenant <tenant>] [--profile <profile>] [--debug] [--log <filterTerm>]
 ```
 
 ### Test Runner Mode
@@ -34,11 +34,11 @@ node ./dist/main.js [--url <url>] [--tenant <tenant>] [--profile <profile>] [--d
 _This is not typically invoked manually - rather, the Orchestrator process spawns Test Runners using this mode._
 _See the call to `child_process.spawn` in the source code to refer to arguments used to launch in this mode_
 
-### npm scripts
+### package scripts
 
-There are several npm scripts in [package.json](./package.json) to make it quicker to launch this tool. Among others:
-`npm run start` - Launches in Orchestrator Mode with default options
-`npm run debug` - Debugs in Orchestrator Mode with `--debug` provided to allow for attaching to child test runners.
+There are several scripts in [package.json](./package.json) to make it quicker to launch this tool. Among others:
+`pnpm start` - Launches in Orchestrator Mode with default options
+`pnpm debug` - Debugs in Orchestrator Mode with `--debug` provided to allow for attaching to child test runners.
 
 ### URL
 

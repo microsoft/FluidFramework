@@ -51,7 +51,7 @@ export function useLogger(): TelemetryLoggerExt | undefined {
 export class ConsoleVerboseLogger implements ITelemetryBaseLogger {
 	public constructor(private readonly baseLogger?: ITelemetryBaseLogger) {}
 
-	public send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
+	public send(event: ITelemetryBaseEvent, logLevel: LogLevel): void {
 		// Deliberately using console.debug() instead of console.log() so the events are only shown when the console's
 		// verbosity level is set to "Verbose".
 		console.debug(`USAGE_TELEMETRY: ${JSON.stringify(event)}`);
@@ -105,7 +105,7 @@ export const useTelemetryOptIn = (): [boolean, Dispatch<SetStateAction<boolean>>
 export class TelemetryOptInLogger implements ITelemetryBaseLogger {
 	public constructor(private readonly baseLogger?: ITelemetryBaseLogger) {}
 
-	public send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
+	public send(event: ITelemetryBaseEvent, logLevel: LogLevel): void {
 		const optIn = getStorageValue(telemetryOptInKey);
 		if (optIn === true) {
 			this.baseLogger?.send(event, logLevel);
