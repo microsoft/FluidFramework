@@ -25,11 +25,6 @@ These terms are similar to the terms for virtual machines.
 
 Add new terminology decisions to this section when necessary.
 
-Some current documentation uses "sandbox" for the Guest.
-Use "Guest" because this protocol does not require a security boundary.
-
-Update the documentation and code to use the terms in this section.
-
 ## Key Assumptions
 
 1. Each message between the Host and the Guest eventually arrives.
@@ -91,7 +86,7 @@ The simplest method is probably to copy an `ArrayBuffer`.
 
 ### Host Lifetime Extensions
 
-How the host manages the lifetime of some data must be adjusted.
+How the Host manages the lifetime of some data must be adjusted.
 The Host revision manager must retain additional branches to support the Guest.
 
 A branch-based solution should be able to address the Guest's use of revertables as well as local branches.
