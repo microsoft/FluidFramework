@@ -85,6 +85,7 @@
 		"@fluidframework/test-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
 		"cross-env": "^10.1.0",
+		"fluid-framework": "workspace:~",
 		"mocha": "^11.7.5",
 		"mocha-multi-reporters": "^1.5.1",
 		"sinon": "^18.0.1",

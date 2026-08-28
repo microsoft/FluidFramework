@@ -8,7 +8,7 @@
 export type ITinyliciousAudience = IServiceAudience<TinyliciousMember>;
 
 // @public @input
-export type OldestSupportedClientVersion = `${1 | 2 | 3}.${bigint}.${bigint}` | `${1 | 2 | 3}.${bigint}.${bigint}-${string}`;
+export type OldestSupportedClientVersion = `3.${bigint}.0` | `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
 
 // @public @sealed
 export class TinyliciousClient {
