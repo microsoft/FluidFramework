@@ -69,6 +69,7 @@ export {
 	TaggedLoggerAdapter,
 	tagData,
 	tagCodeArtifacts,
+	tagSchemaArtifacts,
 	TelemetryDataTag,
 	toITelemetryLoggerExt,
 } from "./logger.js";
