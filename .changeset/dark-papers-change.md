@@ -3,7 +3,6 @@
 "fluid-framework": minor
 "__section": tree
 ---
-
 Tree contexts now support beta transactions
 
 The new [`TreeBeta.context`](https://fluidframework.com/docs/api/tree/treebeta-interface#context-methodsignature) method gets a [`TreeContextBeta`](https://fluidframework.com/docs/api/tree/treecontextbeta-interface) for a tree node.
