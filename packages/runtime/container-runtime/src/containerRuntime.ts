@@ -1129,9 +1129,10 @@ export class ContainerRuntime
 				"Specify only one of oldestSupportedClient or minVersionForCollab (deprecated), not both.",
 			);
 		}
-		// Internally this value is still threaded through as `minVersionForCollab`. Renaming the
-		// Runtime/DataStore/DDS propagation path crosses API layers and requires a staged migration
-		// where both names coexist for old and new consumers. See #27851.
+		// Resolve either accepted input name to the legacy internal name. Below, this value is
+		// reconciled with the persisted document-schema value as `updatedMinVersionForCollab`,
+		// stored on ContainerRuntime as `minVersionForCollab`, and exposed through
+		// FluidDataStoreContext and FluidDataStoreRuntime to DDSes. See #27851.
 		const minVersionForCollab =
 			oldestSupportedClientParam ??
 			deprecatedMinVersionForCollab ??

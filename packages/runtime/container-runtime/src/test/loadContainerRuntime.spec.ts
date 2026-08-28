@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import type { IContainerContext } from "@fluidframework/container-definitions/internal";
-import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/internal";
+import { defaultMinVersionForCollab as defaultTestOldestSupportedClient } from "@fluidframework/runtime-utils/internal";
 
 import { loadContainerRuntime, loadContainerRuntimeAlpha } from "../containerRuntime.js";
 
@@ -31,8 +31,8 @@ describe("loadContainerRuntime compatibility parameter", () => {
 			// @ts-expect-error Exactly one compatibility property may be supplied.
 			loadContainerRuntime({
 				...commonParams,
-				oldestSupportedClient: "2.0.0",
-				minVersionForCollab: "2.0.0",
+				oldestSupportedClient: defaultTestOldestSupportedClient,
+				minVersionForCollab: defaultTestOldestSupportedClient,
 			}),
 			/Specify exactly one of oldestSupportedClient or minVersionForCollab/,
 		);
@@ -49,7 +49,8 @@ describe("loadContainerRuntime compatibility parameter", () => {
 			loadContainerRuntime({
 				...commonParams,
 				context,
-				minVersionForCollab: "1.2.3.4" as OldestSupportedClientVersion,
+				// @ts-expect-error "1.2.3.4" is not a valid compatibility version shape.
+				minVersionForCollab: "1.2.3.4",
 			}),
 			/Invalid compatibility version: 1\.2\.3\.4/,
 		);
@@ -68,7 +69,7 @@ describe("loadContainerRuntime compatibility parameter", () => {
 			loadContainerRuntimeAlpha({
 				...commonParams,
 				// @ts-expect-error The alpha API only accepts the canonical property.
-				minVersionForCollab: "2.0.0",
+				minVersionForCollab: defaultTestOldestSupportedClient,
 			}),
 			/minVersionForCollab is not supported by loadContainerRuntimeAlpha/,
 		);

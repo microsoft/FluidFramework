@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
+import { defaultMinVersionForCollab as defaultTestOldestSupportedClient } from "@fluidframework/runtime-utils/internal";
 
 import {
 	BaseContainerRuntimeFactory,
@@ -48,7 +49,7 @@ describe("BaseContainerRuntimeFactory compatibility parameter", () => {
 		}
 		const props: ExtendedProps = {
 			...commonProps,
-			oldestSupportedClient: "2.0.0",
+			oldestSupportedClient: defaultTestOldestSupportedClient,
 			customProperty: true,
 		};
 
@@ -58,7 +59,7 @@ describe("BaseContainerRuntimeFactory compatibility parameter", () => {
 	it("preserves the deprecated construction overload", () => {
 		const props: DeprecatedBaseContainerRuntimeFactoryProps = {
 			...commonProps,
-			minVersionForCollab: "2.0.0",
+			minVersionForCollab: defaultTestOldestSupportedClient,
 		};
 
 		assert.doesNotThrow(() => createBaseContainerRuntimeFactory(props));
@@ -76,8 +77,8 @@ describe("BaseContainerRuntimeFactory compatibility parameter", () => {
 			// @ts-expect-error Exactly one compatibility property may be supplied.
 			new BaseContainerRuntimeFactory({
 				...commonProps,
-				oldestSupportedClient: "2.0.0",
-				minVersionForCollab: "2.0.0",
+				oldestSupportedClient: defaultTestOldestSupportedClient,
+				minVersionForCollab: defaultTestOldestSupportedClient,
 			});
 		}, /Specify exactly one/);
 	});
@@ -88,7 +89,7 @@ describe("ContainerRuntimeFactoryWithDefaultDataStore compatibility parameter", 
 		const props: ContainerRuntimeFactoryWithDefaultDataStoreProps = {
 			...commonProps,
 			defaultFactory,
-			oldestSupportedClient: "2.0.0",
+			oldestSupportedClient: defaultTestOldestSupportedClient,
 		};
 
 		assert.doesNotThrow(() => createContainerRuntimeFactoryWithDefaultDataStore(props));
@@ -98,7 +99,7 @@ describe("ContainerRuntimeFactoryWithDefaultDataStore compatibility parameter", 
 		const props: DeprecatedContainerRuntimeFactoryWithDefaultDataStoreProps = {
 			...commonProps,
 			defaultFactory,
-			minVersionForCollab: "2.0.0",
+			minVersionForCollab: defaultTestOldestSupportedClient,
 		};
 
 		assert.doesNotThrow(() => createContainerRuntimeFactoryWithDefaultDataStore(props));
@@ -120,8 +121,8 @@ describe("ContainerRuntimeFactoryWithDefaultDataStore compatibility parameter", 
 			new ContainerRuntimeFactoryWithDefaultDataStore({
 				...commonProps,
 				defaultFactory,
-				oldestSupportedClient: "2.0.0",
-				minVersionForCollab: "2.0.0",
+				oldestSupportedClient: defaultTestOldestSupportedClient,
+				minVersionForCollab: defaultTestOldestSupportedClient,
 			});
 		}, /Specify exactly one/);
 	});
