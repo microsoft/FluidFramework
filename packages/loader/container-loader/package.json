@@ -17,26 +17,6 @@
 			"types": "./lib/public.d.ts",
 			"default": "./lib/index.js"
 		},
-		"./internal/test/container": {
-			"types": "./lib/container.d.ts",
-			"default": "./lib/container.js"
-		},
-		"./internal/test/contracts": {
-			"types": "./lib/contracts.d.ts",
-			"default": "./lib/contracts.js"
-		},
-		"./internal/test/connectionManager": {
-			"types": "./lib/connectionManager.d.ts",
-			"default": "./lib/connectionManager.js"
-		},
-		"./internal/test/deltaManager": {
-			"types": "./lib/deltaManager.d.ts",
-			"default": "./lib/deltaManager.js"
-		},
-		"./internal/test/utils": {
-			"types": "./lib/utils.d.ts",
-			"default": "./lib/utils.js"
-		},
 		"./legacy": {
 			"types": "./lib/legacy.d.ts",
 			"default": "./lib/index.js"
@@ -48,7 +28,12 @@
 		"./internal": {
 			"types": "./lib/index.d.ts",
 			"default": "./lib/index.js"
-		}
+		},
+		"./internal/test/container": "./lib/container.js",
+		"./internal/test/contracts": "./lib/contracts.js",
+		"./internal/test/connectionManager": "./lib/connectionManager.js",
+		"./internal/test/deltaManager": "./lib/deltaManager.js",
+		"./internal/test/utils": "./lib/utils.js"
 	},
 	"scripts": {
 		"build": "fluid-build . --task build",
@@ -67,7 +52,7 @@
 		"build:test": "concurrently npm:build:test:esm npm:build:test:cjs",
 		"build:test:cjs": "echo disabled: fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack . --profile node16 --exclude-entrypoints ./internal/test/container ./internal/test/contracts ./internal/test/connectionManager ./internal/test/deltaManager ./internal/test/utils",
+		"check:are-the-types-wrong": "attw --pack . --profile esm-only",
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
