@@ -136,7 +136,6 @@ export {
 	type TreeSchemaEncodingOptions,
 	getJsonSchema,
 	getSimpleSchema,
-	type StagedUpgradeStatus,
 	type VerboseTreeNode,
 	type TreeEncodingOptions,
 	type VerboseTree,

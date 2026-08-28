@@ -48,8 +48,8 @@ const view = tree.viewWith(
 ```
 
 When a view is constructed with enabled staged upgrades:
-- <ApiLink packageName="fluid-framework" apiName="TreeViewAlpha" apiType="Interface" headingId="initialize-methodsignature">`initialize()`</ApiLink> includes the enabled staged changes in the new document's stored schema.
-- <ApiLink packageName="fluid-framework" apiName="TreeView" headingId="upgradeschema-methodsignature">`upgradeSchema()`</ApiLink> includes them when upgrading an existing document.
+- `initialize()` includes the enabled staged changes in the new document's stored schema.
+- `upgradeSchema()` includes them when upgrading an existing document.
 - `compatibility` reflects the enabled upgrades when determining what actions are possible.
 
 The upgrade set is fixed at view construction time and cannot be changed afterwards.
@@ -164,16 +164,16 @@ const config = new TreeViewConfiguration({ schema: Board });
 
 ## Understanding Irreversibility
 
-Once a document's stored schema has been upgraded, it cannot be downgraded.
-However, rolling back a feature flag is safe.
-With the feature flag rolled back, new documents and any documents that haven't been upgraded yet will not have the upgrade enabled.
-You can use <ApiLink packageName="fluid-framework" apiName="TreeViewAlpha" apiType="Interface" headingId="isstagedupgradeenabled-methodsignature">isStagedUpgradeEnabled</ApiLink> to check whether a document has already been upgraded and conditionally include that upgrade token for those documents.
+:::warning
+Once a document's stored schema has been upgraded, it cannot be downgraded. Do not disable a feature flag that has already been enabled in production — there is currently no API to determine which documents have been upgraded, so you cannot safely roll back without risking incompatibility for clients that encounter already-upgraded documents. An API for querying per-document upgrade status is in progress.
+:::
 
 Disabling the feature flag prevents **new** documents from being upgraded, but documents that have already been upgraded retain the new schema.
 This means:
 
 - **Clients running the staged code** (Step 1 and above) can still open and read upgraded documents — their view schema is compatible.
 - **Clients running older code** (before the staged type was added) **cannot** open upgraded documents. This is why [client saturation](./index.mdx#staged-rollouts) of the staged code is important before enabling the flag.
+- There is currently no API to query whether a particular document has already been upgraded (this capability is in progress). This means there is no built-in mechanism to selectively target only non-upgraded documents when disabling the flag.
 
 Plan your rollout with this in mind: ensure that all active clients have the staged code before turning on the flag.
 
