@@ -13,6 +13,17 @@ export interface UserIdAndName {
 	name: string;
 }
 
+/**
+ * Type guard for values that can be indexed by string key.
+ *
+ * @remarks
+ * Used to safely inspect untyped values (such as caught errors) before reading properties
+ * off them for transmission across the parent/child process boundary.
+ */
+export function isObjectRecord(value: unknown): value is Record<string, unknown> {
+	return value !== null && typeof value === "object";
+}
+
 export interface EventEntry {
 	timestamp: number;
 	agentId: string;

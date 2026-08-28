@@ -10,6 +10,7 @@ import { ScopeType } from "@fluidframework/driver-definitions/legacy";
 import type { AttendeeId } from "@fluidframework/presence";
 import { timeoutAwait, timeoutPromise } from "@fluidframework/test-utils/internal";
 
+import { isObjectRecord } from "./messageTypes.js";
 import type {
 	ConnectCommand,
 	MessageFromChild,
@@ -47,10 +48,6 @@ interface ErrorWithAfrAvailabilityDipTelemetry {
 	errorType?: unknown;
 	statusCode?: unknown;
 	message?: unknown;
-}
-
-function isObjectRecord(value: unknown): value is Record<string, unknown> {
-	return value !== null && typeof value === "object";
 }
 
 // AFR can transiently return Azure Front Door 502s to these live-service tests; detect only

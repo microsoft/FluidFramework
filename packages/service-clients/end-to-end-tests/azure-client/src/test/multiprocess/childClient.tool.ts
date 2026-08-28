@@ -33,6 +33,7 @@ import { createAzureTokenProvider } from "../AzureTokenFactory.js";
 import { TestDataObject } from "../TestDataObject.js";
 import { currentVersion } from "../utils.js";
 
+import { isObjectRecord } from "./messageTypes.js";
 import type {
 	MessageFromChild as MessageToParent,
 	MessageToChild as MessageFromParent,
@@ -214,10 +215,6 @@ function isStringOrNumberRecord(value: unknown): value is Record<string, string 
 		}
 	}
 	return true;
-}
-
-function isObjectRecord(value: unknown): value is Record<string, unknown> {
-	return value !== null && typeof value === "object";
 }
 
 function getErrorEventDetails(error: unknown): { errorType?: string; statusCode?: number } {
