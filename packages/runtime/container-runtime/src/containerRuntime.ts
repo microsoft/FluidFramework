@@ -934,12 +934,12 @@ export function getExplicitOldestSupportedClient(
  * This intentionally differs from {@link getExplicitOldestSupportedClient}, which accepts the
  * deprecated property as a temporary beta migration path.
  */
-function getAlphaOldestSupportedClient(
+function validateAlphaOldestSupportedClient(
 	params: Readonly<{
 		oldestSupportedClient?: OldestSupportedClientVersion;
 		minVersionForCollab?: OldestSupportedClientVersion;
 	}>,
-): OldestSupportedClientVersion {
+): void {
 	if (params.minVersionForCollab !== undefined) {
 		throw new UsageError(
 			"minVersionForCollab is not supported by loadContainerRuntimeAlpha. Use oldestSupportedClient instead.",
@@ -948,7 +948,6 @@ function getAlphaOldestSupportedClient(
 	if (params.oldestSupportedClient === undefined) {
 		throw new UsageError("oldestSupportedClient must be specified.");
 	}
-	return params.oldestSupportedClient;
 }
 
 /**
@@ -989,6 +988,8 @@ export function loadContainerRuntime(
 export async function loadContainerRuntime(
 	params: LoadContainerRuntimeParams | DeprecatedLoadContainerRuntimeParams,
 ): Promise<IContainerRuntime & IRuntime> {
+	// Unlike the internal loader, this public API requires an explicit compatibility choice.
+	// Validate here, then let the internal loader handle either accepted property name.
 	getExplicitOldestSupportedClient(params);
 	return ContainerRuntime.loadRuntime({
 		...params,
@@ -1012,7 +1013,8 @@ export async function loadContainerRuntime(
 export async function loadContainerRuntimeAlpha(params: LoadContainerRuntimeParams): Promise<{
 	runtime: IContainerRuntime & IRuntime;
 }> {
-	getAlphaOldestSupportedClient(params);
+	// The internal loader accepts deprecated and missing values for compatibility, alpha does not.
+	validateAlphaOldestSupportedClient(params);
 	return ContainerRuntime.loadRuntime2({
 		...params,
 		registry: new FluidDataStoreRegistry(params.registryEntries),
