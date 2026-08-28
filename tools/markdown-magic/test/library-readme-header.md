@@ -5,21 +5,22 @@
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 **IMPORTANT: This package is experimental.**
-**Its APIs may change without notice.**
+**The APIs can change without notice.**
 
-**Do not use in production scenarios.**
+**Do not use it as a dependency in production scenarios.**
+**We do not guarantee the stability of this package or its APIs.**
 
 # Using Fluid Framework libraries
 
-When taking a dependency on a Fluid Framework library's public APIs, we recommend using a `^` (caret) version range, such as `^1.3.4`.
-While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
-library consumers should always prefer `^`.
+For a dependency on a Fluid Framework library's public APIs, we recommend a `^` (caret) version range.
+For example, use `^1.3.4`.
 
-If using any of Fluid Framework's unstable APIs (for example, its `beta` APIs), we recommend using a more constrained version range, such as `~`.
+For a dependency on an unstable API, such as a `beta` API, we recommend a more restrictive version range.
+For example, use a `~` version range.
 
 # Installation
 
-To get started, install the package by running the following command:
+Run this command to install the package:
 
 ```bash
 npm i @fluidframework/test-package -D
@@ -27,18 +28,18 @@ npm i @fluidframework/test-package -D
 
 # Importing from this package
 
-This package leverages [package.json exports](https://nodejs.org/api/packages.html#exports) to separate its APIs by support level.
-For more information on the related support guarantees, see [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
+This package uses [package.json exports](https://nodejs.org/api/packages.html#exports) to separate APIs by support level.
+For information about the support guarantees, read [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
 
-To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidframework/test-package` like normal.
+Import the `public` APIs from `@fluidframework/test-package`.
 
-To access the `alpha` APIs, import via `@fluidframework/test-package/alpha`.
+Import the `alpha` APIs from `@fluidframework/test-package/alpha`.
 
-To access the `legacy` APIs, import via `@fluidframework/test-package/legacy`.
+Import the `legacy` APIs from `@fluidframework/test-package/legacy`.
 
 # API Documentation
 
-API documentation for **@fluidframework/test-package** is available at <https://fluidframework.com/docs/apis/test-package>.
+Read the **@fluidframework/test-package** API documentation at <https://fluidframework.com/docs/apis/test-package>.
 
 <!-- prettier-ignore-end -->
 

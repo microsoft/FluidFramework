@@ -43,10 +43,10 @@ export function generateImportInstructions(
 		? `${"#".repeat(context.sectionHeadingDepth)} Importing from this package\n\n`
 		: "";
 	const paragraphs = [
-		"This package leverages [package.json exports](https://nodejs.org/api/packages.html#exports) to separate its APIs by support level.\nFor more information on the related support guarantees, see [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).",
-		`To access the \`public\` ([SemVer](https://semver.org/)) APIs, import via \`${packageName}\` like normal.`,
+		"This package uses [package.json exports](https://nodejs.org/api/packages.html#exports) to separate APIs by support level.\nFor information about the support guarantees, read [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).",
+		`Import the \`public\` APIs from \`${packageName}\`.`,
 		...specialExports.map(
-			(name) => `To access the \`${name}\` APIs, import via \`${packageName}/${name}\`.`,
+			(name) => `Import the \`${name}\` APIs from \`${packageName}/${name}\`.`,
 		),
 	];
 	return parseFragment(`${heading}${paragraphs.join("\n\n")}`, context, "import-instructions");

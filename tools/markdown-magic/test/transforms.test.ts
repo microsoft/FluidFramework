@@ -36,7 +36,7 @@ test("library header applies public package defaults", async () => {
 
 	assert.match(output, /^\*\*IMPORTANT: This package is experimental\.\*\*/);
 	assert.match(output, /## Using Fluid Framework libraries/);
-	assert.match(output, /## Installation\n\nTo get started/);
+	assert.match(output, /## Installation\n\nRun this command/);
 	assert.match(output, /npm i @fluidframework\/test-package -D/);
 	assert.match(output, /## Importing from this package/);
 	assert.match(output, /@fluidframework\/test-package\/alpha/);

@@ -8,9 +8,9 @@ This package generates and embeds content in Markdown and MDX documents.
 
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
-**NOTE: This package is a library intended for use within the [microsoft/FluidFramework](https://github.com/microsoft/FluidFramework) repository.**
-**It is not intended for public use.**
-**We make no stability guarantees regarding this library and its APIs.**
+**NOTE: This package is a library for use in the [microsoft/FluidFramework](https://github.com/microsoft/FluidFramework) repository.**
+**Do not use this package as a public dependency.**
+**We do not guarantee the stability of this package or its APIs.**
 
 <!-- prettier-ignore-end -->
 
@@ -162,10 +162,8 @@ flowchart TD
 	PARSE --> REGIONS[Find and validate marker regions]
 	REGIONS --> EACH{For each region}
 	EACH --> DEPTH[Infer heading depth from authored headings]
-	DEPTH --> OPTIONS[Validate transform options]
-	OPTIONS --> GENERATE[Generate mdast nodes]
-	GENERATE --> COMPAT[Validate destination compatibility]
-	COMPAT --> SERIALIZE[Serialize the generated region]
+	DEPTH --> GENERATE[Validate options and generate mdast nodes]
+	GENERATE --> SERIALIZE[Serialize with the destination processor]
 	SERIALIZE --> READY{All regions valid?}
 	READY -->|Yes| PATCH[Apply replacements from last to first]
 	PATCH --> WRITE[Write only when content changed]
@@ -178,15 +176,14 @@ The main modules have these responsibilities:
 2. `processorProfiles.ts` selects the Markdown or MDX parser from the destination extension.
 3. `regions.ts` reads top-level marker nodes and validates marker pairs.
 4. `headings.ts` determines the heading depth for each generated section.
-5. `transformRegistry.ts` validates file-transform options and creates transform context.
-6. `transforms.ts` generates package and template sections as mdast nodes.
+5. `transformRegistry.ts` creates transform context and assembles the transform registry.
+6. Modules in `transforms` validate options and generate package, file, and template content as mdast nodes.
 7. `processing.ts` coordinates validation, serialization, source-range replacement, and writes.
 
 The executable bin file uses `jiti` to load the TypeScript source. The package does not emit JavaScript build output.
 
-A transform has a `validateOptions` function and a `generate` function.
-`validateOptions` converts an unknown JSON value to validated options.
-`generate` returns an array of mdast root-content nodes.
+A transform has a `generate` function.
+The function validates the unknown JSON options before it returns an array of mdast root-content nodes.
 A composite transform combines node arrays.
 It does not combine serialized Markdown strings.
 
@@ -217,17 +214,18 @@ Run generation twice. The second run must report `Updated 0 files.`
 
 ## Contribution Guidelines
 
-There are many ways to [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid.
+You can [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid Framework in these ways:
 
-* Participate in Q\&A in our [GitHub Discussions](https://github.com/microsoft/FluidFramework/discussions).
-* [Submit bugs](https://github.com/microsoft/FluidFramework/issues) and help us verify fixes as they are checked in.
-* Review the [source code changes](https://github.com/microsoft/FluidFramework/pulls).
+* Answer questions in [GitHub Discussions](https://github.com/microsoft/FluidFramework/discussions).
+* [Submit bug reports](https://github.com/microsoft/FluidFramework/issues) and help verify fixes.
+* Review [source code changes](https://github.com/microsoft/FluidFramework/pulls).
 * [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
 
-Detailed instructions for working in the repo can be found in the [Wiki](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Home.md).
+For detailed instructions, read the [repo documentation](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Home.md).
 
-This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
-For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact <opencode@microsoft.com> with any additional questions or comments.
+This project follows the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
+For more information, read the [Code of Conduct frequently asked questions](https://opensource.microsoft.com/codeofconduct/faq/).
+For questions or comments, contact <opencode@microsoft.com>.
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
 Use of these trademarks or logos must follow Microsoft’s [Trademark & Brand Guidelines](https://www.microsoft.com/trademarks).
@@ -235,13 +233,9 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 
 ## Help
 
-Not finding what you're looking for in this README?
-Check out [fluidframework.com](https://fluidframework.com/docs/).
+Read the [Fluid Framework documentation](https://fluidframework.com/docs/) for information about Fluid Framework concepts and APIs.
 
-Still not finding what you're looking for?
-Please [file an issue](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Contributing/Submitting-Bugs-and-Feature-Requests.md).
-
-Thank you!
+To request information that the documentation does not contain, [create an issue](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Contributing/Submitting-Bugs-and-Feature-Requests.md).
 
 ## Trademark
 

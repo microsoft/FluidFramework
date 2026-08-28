@@ -31,7 +31,7 @@ export function generateApiDocs(
 		? `${"#".repeat(context.sectionHeadingDepth)} API Documentation\n\n`
 		: "";
 	return parseFragment(
-		`${heading}API documentation for **${packageName}** is available at <https://fluidframework.com/docs/apis/${shortName}>.`,
+		`${heading}Read the **${packageName}** API documentation at <https://fluidframework.com/docs/apis/${shortName}>.`,
 		context,
 		"api-docs",
 	);

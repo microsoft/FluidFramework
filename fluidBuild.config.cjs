@@ -111,8 +111,7 @@ module.exports = {
 		},
 		"lint": {
 			dependsOn: [
-				"check:types:inexactOptionalPropertyTypes",
-				"check:types:test:playwright",
+				"check:types",
 				"eslint",
 				"good-fences",
 				"depcruise",
@@ -153,7 +152,7 @@ module.exports = {
 			script: false,
 		},
 		"build:package:esm": {
-			dependsOn: ["build:entrypoints:esm", "build:esm"],
+			dependsOn: ["build:entrypoints:esm", "build:esm", "build:copy"],
 			script: false,
 		},
 		// Generic build:test script should be replaced by :esm or :cjs specific versions.
@@ -288,11 +287,28 @@ module.exports = {
 		// therefore we need to require both before running api-extractor.
 		"check:release-tags": ["tsc", "build:esnext"],
 		"check:are-the-types-wrong": ["build:package", "tsc", "build:esnext", "api"],
+		// check:types is an alias for all the type-checking tasks.
+		"check:types": {
+			dependsOn: [
+				"check:types:inexactOptionalPropertyTypes",
+				"check:types:require-esm",
+				"check:types:test:playwright",
+			],
+			script: false,
+		},
 		"check:types:inexactOptionalPropertyTypes": [
 			"^build:package:esm",
 			"^build:esnext",
 			"^api-extractor:esnext",
 		],
+		// check:types:require-esm is meant to ensure that the package is require-esm
+		// compatible and can be imported by in CommonJS context. Mostly this means
+		// no top-level await. For now, we just check that the package can be compiled
+		// to CommonJS which ensures that it has no top-level await.
+		// In CommonJS build context, the CJS versions of the package's dependencies
+		// are used, so this task also ensures that the package's CommonJS support is
+		// built (which may mean its ESM build).
+		"check:types:require-esm": ["^build:package:cjs"],
 		"check:format": {
 			dependencies: [],
 			script: true,

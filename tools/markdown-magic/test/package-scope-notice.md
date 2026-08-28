@@ -15,8 +15,10 @@
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 **NOTE: This package is private to the `@microsoft/fluid-framework` repository.**
-**It is not published, and therefore may only be used in packages within the same pnpm workspace in this repo using the [workspace:\*](https://pnpm.io/workspaces#workspace-protocol-workspace) schema.**
-**Since this package is not published, it may also only be used as a dev dependency, or as a dependency in packages that are not published.**
+**This package is not published.**
+**Use it only in packages in the same pnpm workspace.**
+**Specify [`workspace:*`](https://pnpm.io/workspaces#workspace-protocol-workspace) as the version.**
+**Use this package only as a development dependency or as a dependency of an unpublished package.**
 
 <!-- prettier-ignore-end -->
 
@@ -28,8 +30,9 @@
 
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
-**IMPORTANT: This package is intended strictly as an implementation detail of the Fluid Framework and is not intended for public consumption.**
-**We make no stability guarantees regarding its APIs.**
+**IMPORTANT: Fluid Framework uses this package as an implementation detail.**
+**Do not use it as a public dependency.**
+**We do not guarantee the stability of this package or its APIs.**
 
 <!-- prettier-ignore-end -->
 
@@ -41,9 +44,9 @@
 
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
-**NOTE: This package is a library intended for use within the [microsoft/FluidFramework](https://github.com/microsoft/FluidFramework) repository.**
-**It is not intended for public use.**
-**We make no stability guarantees regarding this library and its APIs.**
+**NOTE: This package is a library for use in the [microsoft/FluidFramework](https://github.com/microsoft/FluidFramework) repository.**
+**Do not use this package as a public dependency.**
+**We do not guarantee the stability of this package or its APIs.**
 
 <!-- prettier-ignore-end -->
 
@@ -55,9 +58,10 @@
 
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
-**NOTE: This package is an example leveraging the [Fluid Framework](https://fluidframework.com).**
-**It is intended only as an example, and is not intended for public use.**
-**We make no stability guarantees regarding this library and its APIs.**
+**NOTE: This package contains an example that uses [Fluid Framework](https://fluidframework.com).**
+**Use this package only as an example.**
+**Do not use it as a public dependency.**
+**We do not guarantee the stability of this package or its APIs.**
 
 <!-- prettier-ignore-end -->
 
@@ -70,9 +74,10 @@
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 **IMPORTANT: This package is experimental.**
-**Its APIs may change without notice.**
+**The APIs can change without notice.**
 
-**Do not use in production scenarios.**
+**Do not use it as a dependency in production scenarios.**
+**We do not guarantee the stability of this package or its APIs.**
 
 <!-- prettier-ignore-end -->
 

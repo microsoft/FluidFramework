@@ -4,7 +4,7 @@
 
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
-To get started, install the package by running the following command:
+Run this command to install the package:
 
 ```bash
 npm i @fluidframework/test-package
@@ -22,7 +22,7 @@ npm i @fluidframework/test-package
 
 # Installation
 
-To get started, install the package by running the following command:
+Run this command to install the package:
 
 ```bash
 npm i @fluidframework/test-package -D

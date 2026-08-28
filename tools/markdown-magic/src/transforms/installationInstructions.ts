@@ -30,7 +30,7 @@ export function generateInstallation(
 		? `${"#".repeat(context.sectionHeadingDepth)} Installation\n\n`
 		: "";
 	return parseFragment(
-		`${heading}To get started, install the package by running the following command:\n\n\`\`\`bash\nnpm i ${packageName}${devDependency ? " -D" : ""}\n\`\`\``,
+		`${heading}Run this command to install the package:\n\n\`\`\`bash\nnpm i ${packageName}${devDependency ? " -D" : ""}\n\`\`\``,
 		context,
 		"installation",
 	);
