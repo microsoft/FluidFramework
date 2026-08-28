@@ -59,7 +59,6 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 				data.main,
 				context,
 				data.originator,
-				true,
 			);
 			assert(
 				data.originator !== undefined,
@@ -80,7 +79,6 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 							branch,
 							context,
 							data.originator,
-							true,
 						),
 					);
 				}

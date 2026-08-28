@@ -14,10 +14,9 @@ import type {
 	EncodedRevisionTag,
 	RevisionTag,
 } from "../core/index.js";
-import type { JsonCompatibleReadOnlyObject, Mutable } from "../util/index.js";
+import type { JsonCompatibleReadOnlyObject } from "../util/index.js";
 
 import { decodeBranchId, encodeBranchId } from "./branchIdCodec.js";
-import { decodeCustomMetadataTree, encodeCustomMetadataTree } from "./customMetadataCodec.js";
 import type { MessageDecodingContext, MessageEncodingContext } from "./messageCodecs.js";
 import type { MessageFormatVersion } from "./messageFormat.js";
 import { Message } from "./messageFormatVSharedBranches.js";
@@ -52,7 +51,7 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 						isSummary: false,
 					};
 
-					const encoded: Mutable<Message & JsonCompatibleReadOnlyObject & Versioned> = {
+					return {
 						revision: revisionTagCodec.encode(message.commit.revision, {
 							originatorId: message.sessionId,
 							idCompressor: context.idCompressor,
@@ -64,10 +63,6 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 						branchId: encodeBranchId(context.idCompressor, message.branchId),
 						version,
 					};
-					if (message.commit.customMetadata !== undefined) {
-						encoded.customMetadata = encodeCustomMetadataTree(message.commit.customMetadata);
-					}
-					return encoded;
 				}
 				case "branch": {
 					return {
@@ -92,7 +87,6 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 				changeset,
 				branchId: encodedBranchId,
 				branchName: encodedBranchName,
-				customMetadata,
 			} = encoded;
 
 			const changeContext: ChangeEncodingContext = {
@@ -126,7 +120,6 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 						idCompressor: context.idCompressor,
 						isSummary: false,
 					}),
-					customMetadata: decodeCustomMetadataTree(customMetadata),
 				},
 				branchId,
 				sessionId: originatorId,

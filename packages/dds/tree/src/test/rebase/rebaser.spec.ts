@@ -74,7 +74,6 @@ describe("rebaser", () => {
 						revision: makeRevisionTag(revision),
 						change: {},
 						parent: cur,
-						customMetadata: undefined,
 					};
 					this[revision] = cur;
 				}
@@ -86,7 +85,6 @@ describe("rebaser", () => {
 						revision: makeRevisionTag(revision),
 						change: {},
 						parent: cur,
-						customMetadata: undefined,
 					};
 				}
 

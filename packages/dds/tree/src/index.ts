@@ -18,12 +18,10 @@ export {
 	type RemoteChangeMetadata,
 	type ChangeMetadata,
 	type LabelTree,
-	type CustomMetadataTree,
 	type TransactionLabels,
 	type RevertibleFactory,
 	type RevertibleAlphaFactory,
 	type RevertibleAlpha,
-	type RevertOptionsAlpha,
 } from "./core/index.js";
 
 export {

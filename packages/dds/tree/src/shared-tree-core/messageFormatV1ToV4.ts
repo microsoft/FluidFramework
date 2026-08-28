@@ -10,7 +10,6 @@ import type { TSchema } from "@sinclair/typebox";
 import { type EncodedRevisionTag, RevisionTagSchema, SessionIdSchema } from "../core/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
 
-import { EncodedCustomMetadataTree } from "./customMetadataFormat.js";
 import { MessageFormatVersion } from "./messageFormat.js";
 
 /**
@@ -31,12 +30,6 @@ export interface Message {
 	readonly changeset: JsonCompatibleReadOnly;
 
 	/**
-	 * Arbitrary, application-defined metadata to persist alongside the commit in this message.
-	 * @remarks Only written at {@link MessageFormatVersion.v7} and later.
-	 */
-	readonly customMetadata?: EncodedCustomMetadataTree;
-
-	/**
 	 * The version of the message. This controls how the message is encoded.
 	 *
 	 * This was not set historically and was added before making any breaking changes to the format.
@@ -47,25 +40,16 @@ export interface Message {
 		| typeof MessageFormatVersion.v2
 		| typeof MessageFormatVersion.v3
 		| typeof MessageFormatVersion.v4
-		| typeof MessageFormatVersion.v6
-		| typeof MessageFormatVersion.v7;
+		| typeof MessageFormatVersion.v6;
 }
 
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
 // Return type is intentionally derived.
-// Unlike the summary formats, this schema does not set `additionalProperties: false`: the op envelope
-// has always tolerated unknown properties, and tightening it could reject ops from other versions.
-export const Message = <ChangeSchema extends TSchema>(
-	tChange: ChangeSchema,
-	includeCustomMetadata: boolean,
-) =>
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+export const Message = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 	Type.Object({
 		revision: RevisionTagSchema,
 		originatorId: SessionIdSchema,
 		changeset: tChange,
-		...(includeCustomMetadata
-			? { customMetadata: Type.Optional(EncodedCustomMetadataTree) }
-			: {}),
 		version: Type.Optional(
 			Type.Union([
 				Type.Literal(MessageFormatVersion.v1),
@@ -73,8 +57,6 @@ export const Message = <ChangeSchema extends TSchema>(
 				Type.Literal(MessageFormatVersion.v3),
 				Type.Literal(MessageFormatVersion.v4),
 				Type.Literal(MessageFormatVersion.v6),
-				Type.Literal(MessageFormatVersion.v7),
 			]),
 		),
 	});
-/* eslint-enable @typescript-eslint/explicit-function-return-type */

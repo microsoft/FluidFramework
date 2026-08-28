@@ -53,11 +53,6 @@ export const MessageFormatVersion = strictEnum("MessageFormatVersion", {
 	 */
 	v6: 6,
 	/**
-	 * Introduced and made available for writing in 2.117.0.
-	 * Adds support for {@link GraphCommit.customMetadata | persisted commit metadata}.
-	 */
-	v7: 7,
-	/**
 	 * Not yet released.
 	 * Only used for testing shared branches.
 	 */
@@ -68,6 +63,5 @@ export const supportedMessageFormatVersions: ReadonlySet<MessageFormatVersion> =
 	MessageFormatVersion.v3,
 	MessageFormatVersion.v4,
 	MessageFormatVersion.v6,
-	MessageFormatVersion.v7,
 	MessageFormatVersion.vSharedBranches,
 ]);
