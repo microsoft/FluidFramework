@@ -27,15 +27,16 @@ export { prefetchLatestSnapshot } from "./prefetchLatestSnapshot.js";
 // Factory
 export {
 	createLocalOdspDocumentServiceFactory,
+	createOdspDocumentServiceFactory,
+	type IOdspDocumentServiceFactoryOptions,
 	OdspDocumentServiceFactory,
 } from "./odspDocumentServiceFactory.js";
-export { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore.js";
-/* eslint-disable import-x/no-internal-modules */
 export {
-	getOdspPointInTimeDocumentServiceFactory,
+	type IOdspPointInTimeDocumentServiceImplementationProps,
 	type IPointInTimeDocumentServiceFactory,
-} from "./pointInTimeDriver/odspPointInTimeDocumentServiceFactory.js";
-/* eslint-enable import-x/no-internal-modules */
+	type OdspPointInTimeDocumentServiceImplementation,
+	OdspDocumentServiceFactoryCore,
+} from "./odspDocumentServiceFactoryCore.js";
 
 // File creation
 export { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest.js";
