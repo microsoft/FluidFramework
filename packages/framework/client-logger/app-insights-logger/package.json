@@ -67,6 +67,7 @@
 		"check:exports:esm:beta": "api-extractor run --config api-extractor/api-extractor-lint-beta.esm.json",
 		"check:exports:esm:public": "api-extractor run --config api-extractor/api-extractor-lint-public.esm.json",
 		"check:format": "npm run check:biome",
+		"check:types:inexactOptionalPropertyTypes": "tsc --project ./tsconfig.json --noEmit --exactOptionalPropertyTypes false --skipLibCheck --emitDeclarationOnly false --tsBuildInfoFile ./tsconfig.inexactOptionalPropertyTypes.tsbuildinfo",
 		"ci:build:api-reports": "api-extractor run --config api-extractor/api-extractor-report.json",
 		"ci:build:docs": "api-extractor run --config api-extractor/api-extractor-model.json",
 		"clean": "rimraf --glob _api-extractor-temp coverage dist lib {alpha,beta,internal,legacy}.d.ts nyc \"**/*.tsbuildinfo\" \"**/*.build.log\"",
