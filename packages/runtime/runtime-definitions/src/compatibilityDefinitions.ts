@@ -47,8 +47,9 @@
  * In the future, we may want to generalize this to mean
  * "a value that compares less than or equal to the oldest Fluid Framework client version that must be able to open and process the container".
  * As a non-breaking change, we could then allow values such as "3.1" without requiring the trailing ".0".
- * However, omitting ".0" might make the value look less like a version and obscure semver ordering; for example, how "3.21" is greater than "3.3".
- * We may therefore want to retain the ".0" for clarity.
+ * However, omitting ".0" has some complications on the implementation side and might make the value look less like a version and obscure semver ordering;
+ * for example, how "3.21" is greater than "3.3".
+ * We may therefore want to retain the ".0" for simplicity and clarity.
  *
  * @input
  * @public
