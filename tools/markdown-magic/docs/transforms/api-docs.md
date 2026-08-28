@@ -2,6 +2,8 @@
 
 Use `api-docs` to generate a link to a package's API documentation.
 
+Use this transform only for a published Fluid Framework package that has API documentation on `fluidframework.com`.
+
 The transform reads the package name from `package.json`. For a scoped package, it removes the scope from the documentation path.
 
 ## Options
