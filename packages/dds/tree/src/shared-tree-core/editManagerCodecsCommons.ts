@@ -15,6 +15,7 @@ import type {
 	SchemaAndPolicy,
 } from "../core/index.js";
 import {
+	copyProperty,
 	mapIterable,
 	type IdentifierHealingConfig,
 	type JsonCompatibleReadOnly,
@@ -27,6 +28,7 @@ import type { SharedBranchSummaryData } from "./editManager.js";
 import type {
 	Commit,
 	EncodedCommit,
+	EncodedSequencedCommit,
 	EncodedSharedBranch,
 	SequenceId,
 	SequencedCommit,
@@ -56,7 +58,6 @@ export interface EditManagerDecodingContext {
 	readonly healing?: IdentifierHealingConfig;
 }
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function encodeCommit<TChangeset, T extends Commit<TChangeset>>(
 	changeCodec: IJsonCodec<
 		TChangeset,
@@ -73,27 +74,21 @@ function encodeCommit<TChangeset, T extends Commit<TChangeset>>(
 	commit: T,
 	context: ChangeEncodingContext,
 	includeCustomMetadata: boolean,
-) {
-	const encoded = {
-		...commit,
+): EncodedCommit<JsonCompatibleReadOnly> {
+	const encoded: Mutable<EncodedCommit<JsonCompatibleReadOnly>> = {
+		change: changeCodec.encode(commit.change, { ...context, revision: commit.revision }),
 		revision: revisionTagCodec.encode(commit.revision, {
 			originatorId: commit.sessionId,
 			idCompressor: context.idCompressor,
 			revision: undefined,
 			isSummary: context.isSummary,
 		}),
-		change: changeCodec.encode(commit.change, { ...context, revision: commit.revision }),
+		sessionId: commit.sessionId,
 	};
-	// Rebuilt rather than spread through, both to convert it to the persisted form and so that a client
-	// writing an older format never emits a field that format does not define.
-	if (encoded.customMetadata === undefined) {
-		const { customMetadata: _, ...withoutMetadata } = encoded;
-		return withoutMetadata;
+	if (includeCustomMetadata && commit.customMetadata !== undefined) {
+		encoded.customMetadata = encodeCustomMetadataTree(commit.customMetadata);
 	}
-	const { customMetadata, ...rest } = encoded;
-	return includeCustomMetadata
-		? { ...rest, customMetadata: encodeCustomMetadataTree(customMetadata) }
-		: rest;
+	return encoded;
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -121,7 +116,7 @@ function decodeCommit<TChangeset, T extends EncodedCommit<JsonCompatibleReadOnly
 	});
 
 	return {
-		...commit,
+		sessionId: commit.sessionId,
 		revision,
 		change: changeCodec.decode(commit.change, { ...context, revision }),
 		customMetadata: decodeCustomMetadataTree(commit.customMetadata),
@@ -145,23 +140,28 @@ export function encodeSharedBranch<TChangeset>(
 	context: EditManagerEncodingContext,
 	originatorId: SessionId | undefined,
 	includeCustomMetadata: boolean,
-): EncodedSharedBranch<TChangeset> {
-	const json: Mutable<EncodedSharedBranch<TChangeset>> = {
-		trunk: data.trunk.map((commit) =>
-			encodeCommit(
-				changeCodec,
-				revisionTagCodec,
-				commit,
-				{
-					originatorId: commit.sessionId,
-					idCompressor: context.idCompressor,
-					schema: context.schema,
-					revision: undefined,
-					isSummary: context.isSummary,
-				},
-				includeCustomMetadata,
-			),
-		),
+): EncodedSharedBranch<JsonCompatibleReadOnly> {
+	const json: Mutable<EncodedSharedBranch<JsonCompatibleReadOnly>> = {
+		trunk: data.trunk.map((commit) => {
+			const encoded: Mutable<EncodedSequencedCommit<JsonCompatibleReadOnly>> = {
+				...encodeCommit(
+					changeCodec,
+					revisionTagCodec,
+					commit,
+					{
+						originatorId: commit.sessionId,
+						idCompressor: context.idCompressor,
+						schema: context.schema,
+						revision: undefined,
+						isSummary: context.isSummary,
+					},
+					includeCustomMetadata,
+				),
+				sequenceNumber: commit.sequenceNumber,
+			};
+			copyProperty(commit, "indexInBatch", encoded);
+			return encoded;
+		}),
 		peers: Array.from(data.peerLocalBranches.entries(), ([sessionId, branch]) => [
 			sessionId,
 			{
@@ -236,17 +236,20 @@ export function decodeSharedBranch<TChangeset>(
 	// TODO: sort out EncodedCommit vs Commit, and make this type check without type assertion.
 	const trunk = json.trunk as readonly (EncodedCommit<JsonCompatibleReadOnly> & SequenceId)[];
 	const data: Mutable<SharedBranchSummaryData<TChangeset>> = {
-		trunk: trunk.map(
-			(commit): SequencedCommit<TChangeset> =>
-				// TODO: sort out EncodedCommit vs Commit, and make this type check without `as`.
-				decodeCommit(changeCodec, revisionTagCodec, commit, {
+		trunk: trunk.map((commit): SequencedCommit<TChangeset> => {
+			const decoded = {
+				...decodeCommit(changeCodec, revisionTagCodec, commit, {
 					originatorId: commit.sessionId,
 					idCompressor: context.idCompressor,
 					revision: undefined,
 					isSummary: context.isSummary,
 					healing: context.healing,
 				}),
-		),
+				sequenceNumber: commit.sequenceNumber,
+			};
+			copyProperty(commit, "indexInBatch", decoded);
+			return decoded;
+		}),
 		peerLocalBranches: new Map(
 			mapIterable(json.peers, ([sessionId, branch]) => [
 				sessionId,
@@ -258,7 +261,6 @@ export function decodeSharedBranch<TChangeset>(
 						isSummary: context.isSummary,
 					}),
 					commits: branch.commits.map((commit) =>
-						// TODO: sort out EncodedCommit vs Commit, and make this type check without `as`.
 						decodeCommit(
 							changeCodec,
 							revisionTagCodec,
