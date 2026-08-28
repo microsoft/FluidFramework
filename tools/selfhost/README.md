@@ -37,15 +37,19 @@ Steps 1–4 get you a running, verified deployment. Steps 5–6 are what you nee
 
 Once step 1 is done, `release/create-and-deploy-release.sh` runs steps 2 and 3 as a single command
 if you would rather not do them separately. It needs the `FLUID_DIR` environment variable set (see
-below) and a real commit SHA rather than a branch name — resolve one with `git rev-parse`. Also
-sign in to the build registry first: this step pushes freshly built images, and an expired ACR
+below) and a tag or a real commit SHA rather than a branch name — two ways to get one:
+
+- **Use an existing release tag** — search [the release list](https://github.com/microsoft/FluidFramework/releases?page=1)
+  for one (for example, `server_v7.0.1`).
+- **Resolve a SHA from a branch** with `git rev-parse`, e.g. `git rev-parse origin/main`.
+
+Also sign in to the build registry first: this step pushes freshly built images, and an expired ACR
 login is a common cause of a failed push partway through the build.
 
 ```bash
 az acr login -n <buildAcr.name from your parameters file>
-git rev-parse origin/main
 FLUID_DIR=/path/to/your/FluidFramework/clone ACR_LOGIN_SERVER=<buildAcr.name>.azurecr.io \
-  ./release/create-and-deploy-release.sh <sha-from-git-rev-parse> <release-id>
+  ./release/create-and-deploy-release.sh <tag-or-sha> <release-id>
 ```
 
 ## What each folder is
