@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
 import axe from "axe-core";
 
 /**
@@ -30,5 +32,5 @@ export async function assertNoAccessibilityViolations(container: HTMLElement): P
 		}
 	}
 
-	expect(results.violations).toStrictEqual([]);
+	assert.deepEqual(results.violations, []);
 }

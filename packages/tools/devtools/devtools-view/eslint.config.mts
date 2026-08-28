@@ -18,12 +18,6 @@ const config: Linter.Config[] = [
 			"unicorn/no-null": "off",
 			"unicorn/no-useless-undefined": "off",
 			"no-restricted-imports": ["error", "@fluentui/react"],
-			"import-x/no-unassigned-import": [
-				"error",
-				{
-					"allow": ["@testing-library/jest-dom"],
-				},
-			],
 		},
 	},
 	{
@@ -54,8 +48,7 @@ const config: Linter.Config[] = [
 	},
 	{
 		// Override @typescript-eslint/parser to use explicit project list instead of projectService.
-		// Tests use tsconfig.jest.json instead of the standard src/test/tsconfig.json naming,
-		// so typescript-eslint's projectService can't auto-discover the test configuration.
+		// Use an explicit project list for the package's ESM source and test configurations.
 		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
 		languageOptions: {
 			parserOptions: {
