@@ -232,9 +232,6 @@ export enum CommitOutcome {
 }
 
 // @alpha
-export type CommitRevision = string;
-
-// @alpha
 export function comparePersistedSchema(persisted: JsonCompatible, view: ImplicitFieldSchema, options: ICodecOptions): Omit<SchemaCompatibilityStatus, "canInitialize">;
 
 // @alpha
@@ -2513,22 +2510,8 @@ export type TreeBranch = UntypedTreeView;
 export type TreeBranchAlpha = UntypedTreeViewAlpha;
 
 // @alpha @sealed
-export interface TreeBranchCommitMetadata {
-    readonly custom: JsonCompatibleReadOnlyObject | undefined;
-    readonly customTree: CustomMetadataTree | undefined;
-    getParent(): TreeBranchCommitMetadata | undefined;
-    readonly revision: CommitRevision;
-}
-
-// @alpha @sealed
 export interface TreeBranchEvents {
     changed(data: ChangeMetadata, getRevertible?: RevertibleAlphaFactory): void;
-}
-
-// @alpha @sealed
-export interface TreeBranchHistory {
-    getHead(): TreeBranchCommitMetadata | undefined;
-    readonly length: number;
 }
 
 // @public @sealed
@@ -2817,7 +2800,6 @@ export interface UntypedTreeView extends IDisposable {
 // @alpha @sealed
 export interface UntypedTreeViewAlpha extends UntypedTreeView, TreeContextAlpha {
     applyChange(change: JsonCompatibleReadOnly): void;
-    readonly branchHistory: TreeBranchHistory;
     computeNetChangeIfRebasedOnto(view: UntypedTreeView): JsonCompatibleReadOnly | undefined;
     readonly events: Listenable<TreeBranchEvents>;
     // (undocumented)

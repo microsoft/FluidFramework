@@ -58,7 +58,6 @@ import {
 	TreeViewConfigurationAlpha,
 	toInitialSchema,
 	toUpgradeSchema,
-	type TreeBranchHistory,
 	type UntypedTreeViewAlpha,
 	type TreeSchema,
 	type SchemaUpgrade,
@@ -589,8 +588,4 @@ export class SchematizingSimpleTreeView<
 	}
 
 	// #endregion Branching
-
-	public get branchHistory(): TreeBranchHistory {
-		return this.checkout.branchHistory;
-	}
 }

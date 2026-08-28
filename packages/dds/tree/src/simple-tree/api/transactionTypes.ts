@@ -223,15 +223,13 @@ export interface RunTransactionParamsAlpha extends RunTransactionParamsBeta {
 	/**
 	 * Arbitrary, application-defined metadata to persist alongside the commit that this transaction produces.
 	 * @remarks
-	 * The metadata is replicated to all collaborating clients and persisted in the document, and is readable
-	 * via {@link TreeBranchCommitMetadata.custom} while walking the branch's
-	 * {@link UntypedTreeViewAlpha.branchHistory | history}. It shares the lifetime of the commit it is attached
-	 * to: once that commit is trimmed from the trunk, the metadata goes with it. If the transaction produces no
-	 * commit — because its body made no changes, or because it was rolled back — the metadata is discarded.
+	 * The metadata is replicated to all collaborating clients and persisted in the document alongside the commit.
+	 * It shares the lifetime of the commit it is attached to: once that commit is trimmed from the trunk, the
+	 * metadata goes with it. If the transaction produces no commit — because its body made no changes, or because
+	 * it was rolled back — the metadata is discarded.
 	 *
-	 * Nested transactions all contribute to the single commit they produce, and their metadata is available
-	 * both flattened via {@link TreeBranchCommitMetadata.custom} and structurally via
-	 * {@link TreeBranchCommitMetadata.customTree}.
+	 * Nested transactions all contribute to the single commit they produce. Their metadata is retained both as a
+	 * flattened object and as a structure reflecting transaction nesting.
 	 *
 	 * To attach metadata to the commit produced by
 	 * {@link RevertibleAlpha.(revert:3) | reverting}, use {@link RevertOptionsAlpha.customMetadata} instead.
