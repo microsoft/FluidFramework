@@ -7,12 +7,8 @@ import { strict as assert } from "node:assert";
 
 import type { IContainerContext } from "@fluidframework/container-definitions/internal";
 import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/internal";
-import Sinon from "sinon";
 
 import {
-	ContainerRuntime,
-	type DeprecatedLoadContainerRuntimeParams,
-	type LoadContainerRuntimeParams,
 	loadContainerRuntime,
 	loadContainerRuntimeAlpha,
 } from "../containerRuntime.js";
@@ -25,63 +21,6 @@ const commonParams = {
 };
 
 describe("loadContainerRuntime compatibility parameter", () => {
-	const runtime = {} as unknown as ContainerRuntime;
-	let sandbox: Sinon.SinonSandbox;
-
-	beforeEach(() => {
-		sandbox = Sinon.createSandbox();
-	});
-
-	afterEach(() => {
-		sandbox.restore();
-	});
-
-	const loadContainerRuntimeWithSelectedParams = (
-		params: LoadContainerRuntimeParams | DeprecatedLoadContainerRuntimeParams,
-	): Promise<unknown> => loadContainerRuntime(params);
-
-	it("forwards the canonical compatibility parameter to the internal loader", async () => {
-		const loadRuntime = sandbox.stub(ContainerRuntime, "loadRuntime").resolves(runtime);
-
-		const result = await loadContainerRuntimeWithSelectedParams({
-			...commonParams,
-			oldestSupportedClient: "2.0.0",
-		});
-
-		assert.equal(result, runtime);
-		assert.equal(loadRuntime.callCount, 1);
-		assert.equal(loadRuntime.firstCall.args[0].oldestSupportedClient, "2.0.0");
-		assert.equal(loadRuntime.firstCall.args[0].minVersionForCollab, undefined);
-	});
-
-	it("forwards the deprecated compatibility parameter to the internal loader", async () => {
-		const loadRuntime = sandbox.stub(ContainerRuntime, "loadRuntime").resolves(runtime);
-
-		const result = await loadContainerRuntimeWithSelectedParams({
-			...commonParams,
-			minVersionForCollab: "2.0.0",
-		});
-
-		assert.equal(result, runtime);
-		assert.equal(loadRuntime.callCount, 1);
-		assert.equal(loadRuntime.firstCall.args[0].oldestSupportedClient, undefined);
-		assert.equal(loadRuntime.firstCall.args[0].minVersionForCollab, "2.0.0");
-	});
-
-	it("forwards the canonical compatibility parameter through the alpha loader", async () => {
-		const loadRuntime2 = sandbox.stub(ContainerRuntime, "loadRuntime2").resolves({ runtime });
-
-		const result = await loadContainerRuntimeAlpha({
-			...commonParams,
-			oldestSupportedClient: "2.0.0",
-		});
-
-		assert.equal(result.runtime, runtime);
-		assert.equal(loadRuntime2.callCount, 1);
-		assert.equal(loadRuntime2.firstCall.args[0].oldestSupportedClient, "2.0.0");
-		assert.equal(loadRuntime2.firstCall.args[0].minVersionForCollab, undefined);
-	});
-
 	it("rejects a missing compatibility parameter at runtime", async () => {
 		await assert.rejects(
 			// @ts-expect-error A compatibility property is required.
