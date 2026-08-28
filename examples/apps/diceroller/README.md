@@ -11,16 +11,23 @@ defined in main.tsx.
 
 ## Getting Started
 
-You can run this example using the following steps:
+Complete these steps to run the example:
 
-1. Enable [corepack](https://nodejs.org/docs/latest-v16.x/api/corepack.html) by running `corepack enable`.
-1. Run `pnpm install` and `pnpm run build:fast --nolint` from the `FluidFramework` root directory.
-    - For an even faster build, you can add the package name to the build command, like this:
+1. Run `corepack enable` to enable [Corepack](https://nodejs.org/docs/latest-v16.x/api/corepack.html).
+1. From the `FluidFramework` root directory, run `pnpm install`.
+1. From the `FluidFramework` root directory, run `pnpm run build:fast --nolint`.
+    - To build only this package, add the package name to the command:
       `pnpm run build:fast --nolint @fluid-example/diceroller`
-1. In a separate terminal, start a Tinylicious server by running `pnpm tinylicious` in this directory.
-1. If using codespaces in a browser, set tinylicious (port 7070) visibility to "public". "Private to Organization" will not work. See [sharing a port](https://docs.github.com/en/codespaces/developing-in-a-codespace/forwarding-ports-in-your-codespace#sharing-a-port) for how to do this.
-1. Run `pnpm start` from this directory and open <http://localhost:8080> in a web browser to see the app running.
-1. If you want to run the app against SharePoint, follow the instructions in [webpack-fluid-loader](https://github.com/microsoft/FluidFramework/blob/main/examples/utils/webpack-fluid-loader/README.md#sharepoint) to get auth credentials. Then run `pnpm start:spo` or `pnpm start:spo-df` and open <http://localhost:8080> like above.
+1. In a separate terminal, run `pnpm tinylicious` from this directory to start Tinylicious.
+1. If you use GitHub Codespaces in a browser, set the visibility of the Tinylicious port (7070) to `public`. Do not use `Private to Organization`. For instructions, read [Sharing a port](https://docs.github.com/en/codespaces/developing-in-a-codespace/forwarding-ports-in-your-codespace#sharing-a-port).
+1. Run `pnpm start` from this directory.
+1. Open <http://localhost:8080> in a web browser.
+
+To run the example with SharePoint, complete these steps:
+
+1. Follow the [webpack-fluid-loader instructions](https://github.com/microsoft/FluidFramework/blob/main/examples/utils/webpack-fluid-loader/README.md#sharepoint) to get authentication credentials.
+1. Run `pnpm start:spo` or `pnpm start:spo-df` from this directory.
+1. Open <http://localhost:8080> in a web browser.
 
 <!-- prettier-ignore-end -->
 
@@ -51,17 +58,18 @@ Dice Roller uses the following distributed data structures:
 
 ## Contribution Guidelines
 
-There are many ways to [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid.
+You can [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid Framework in these ways:
 
--   Participate in Q&A in our [GitHub Discussions](https://github.com/microsoft/FluidFramework/discussions).
--   [Submit bugs](https://github.com/microsoft/FluidFramework/issues) and help us verify fixes as they are checked in.
--   Review the [source code changes](https://github.com/microsoft/FluidFramework/pulls).
+-   Answer questions in [GitHub Discussions](https://github.com/microsoft/FluidFramework/discussions).
+-   [Submit bug reports](https://github.com/microsoft/FluidFramework/issues) and help verify fixes.
+-   Review [source code changes](https://github.com/microsoft/FluidFramework/pulls).
 -   [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
 
-Detailed instructions for working in the repo can be found in the [Wiki](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Home.md).
+For detailed instructions, read the [repo documentation](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Home.md).
 
-This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
-For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+This project follows the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
+For more information, read the [Code of Conduct frequently asked questions](https://opensource.microsoft.com/codeofconduct/faq/).
+For questions or comments, contact [opencode@microsoft.com](mailto:opencode@microsoft.com).
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
 Use of these trademarks or logos must follow Microsoft’s [Trademark & Brand Guidelines](https://www.microsoft.com/trademarks).
@@ -69,13 +77,9 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 
 ## Help
 
-Not finding what you're looking for in this README?
-Check out [fluidframework.com](https://fluidframework.com/docs/).
+Read the [Fluid Framework documentation](https://fluidframework.com/docs/) for information about Fluid Framework concepts and APIs.
 
-Still not finding what you're looking for?
-Please [file an issue](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Contributing/Submitting-Bugs-and-Feature-Requests.md).
-
-Thank you!
+To request information that the documentation does not contain, [create an issue](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Contributing/Submitting-Bugs-and-Feature-Requests.md).
 
 ## Trademark
 

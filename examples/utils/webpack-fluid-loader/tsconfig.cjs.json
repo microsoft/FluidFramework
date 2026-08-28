@@ -1,7 +1,14 @@
 {
 	// This config must be used in a "type": "commonjs" environment. (Use fluid-tsc commonjs.)
 	"extends": "./tsconfig.json",
+	// This exclusion is a kludge to skip checking the ESM specific code in routes.ts.
+	// This config is only used for checking require-esm support - basically no
+	// top-level await. Ideally there would instead be a linter rule, but no such
+	// rule appears to exist for eslint as of 2026-08-27. (oxlint has one.)
+	// And it is sad that we are excluding an ESM targeting file.
+	"exclude": ["src/index.ts", "src/routes.ts", "src/test/**/*"],
 	"compilerOptions": {
+		"noEmit": true,
 		"outDir": "./dist",
 	},
 }

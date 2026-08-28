@@ -53,7 +53,7 @@
 		"rebuild": "npm run clean && npm run build",
 		"test": "npm run test:jest",
 		"test:coverage": "npm run test:jest:coverage",
-		"test:jest": "pnpm test:jest:cjs && echo skip per fluentui issue 30778 - pnpm test:jest:esm",
+		"test:jest": "pnpm test:jest:esm",
 		"test:jest:cjs": "jest --ci --roots ./dist",
 		"test:jest:coverage": "jest --coverage --ci",
 		"test:jest:esm": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --roots ./lib",
