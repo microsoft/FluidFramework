@@ -44,13 +44,6 @@ function getContainerIdFromLocation(location: Location): string {
 	return location.hash.slice(1);
 }
 
-async function getSharedFluidData(): Promise<ContainerInfo> {
-	const containerId = getContainerIdFromLocation(window.location);
-	return containerId.length === 0
-		? createFluidContainer(containerSchema, populateRootMap)
-		: loadExistingFluidContainer(containerId, containerSchema);
-}
-
 /**
  * Populate the app's `rootMap` with the desired initial data for use with the client debug view.
  */
@@ -86,16 +79,19 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
  * Initializes the Fluid Container and displays app view once it is ready.
  * @internal
  */
-interface AppProps {
-	readonly getContainerInfo?: () => Promise<ContainerInfo>;
-}
-
-export function App({ getContainerInfo = getSharedFluidData }: AppProps = {}): ReactElement {
+export function App(): ReactElement {
 	const [containerInfo, setContainerInfo] = useState<ContainerInfo | undefined>();
+
+	const getSharedFluidData = async (): Promise<ContainerInfo> => {
+		const containerId = getContainerIdFromLocation(window.location);
+		return containerId.length === 0
+			? createFluidContainer(containerSchema, populateRootMap)
+			: loadExistingFluidContainer(containerId, containerSchema);
+	};
 
 	// Get the Fluid Data data on app startup and store in the state
 	useEffect(() => {
-		getContainerInfo().then(
+		getSharedFluidData().then(
 			(data) => {
 				if (getContainerIdFromLocation(window.location) !== data.containerId) {
 					window.location.hash = data.containerId;
@@ -106,7 +102,7 @@ export function App({ getContainerInfo = getSharedFluidData }: AppProps = {}): R
 				throw error;
 			},
 		);
-	}, [getContainerInfo]);
+	}, []);
 
 	return (
 		<>

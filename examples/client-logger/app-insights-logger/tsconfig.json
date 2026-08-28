@@ -4,8 +4,9 @@
 		"isolatedModules": true,
 		"rootDir": "src",
 		"outDir": "./lib",
-		"types": ["mocha", "node"],
+		"types": ["react", "node"],
 		"exactOptionalPropertyTypes": false,
 	},
+	// Playwright transpiles the tests and configuration at runtime.
 	"include": ["src/**/*"],
 }
