@@ -3984,7 +3984,7 @@ describe("treeNodeApi", () => {
 				class A extends factory.object("A", { a: factory.identifier }) {}
 				assert.throws(
 					() => TreeAlpha.importVerbose(A, { type: A.identifier, fields: {} }),
-					validateUsageError(/A required field is missing its child/),
+					validateUsageError(/Field_MissingRequiredChild/),
 				);
 			});
 

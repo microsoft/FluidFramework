@@ -63,7 +63,6 @@ import {
 	type TreeSchema,
 	type SchemaUpgrade,
 	type StagedUpgradeStatus,
-	getSchemaCompatibilityError,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -81,28 +80,6 @@ import type { TreeCheckout } from "./treeCheckout.js";
  * exists and error if creating a second.
  */
 export const ViewSlot = anchorSlot<TreeView<ImplicitFieldSchema>>();
-
-function throwIfSchemaIsIncompatible(
-	compatibility: SchemaCompatibilityStatus,
-	viewSchema: TreeSchema,
-	storedSchema: TreeCheckout["storedSchema"],
-): void {
-	if (compatibility.canView) {
-		return;
-	}
-
-	const discrepancy = getSchemaCompatibilityError(viewSchema, storedSchema);
-	const details =
-		discrepancy === undefined ? "" : ` The first schema mismatch is: ${discrepancy}.`;
-	const resolution = compatibility.canInitialize
-		? "The document is uninitialized; call TreeView.initialize() before reading or writing TreeView.root."
-		: compatibility.canUpgrade
-			? "The stored schema can be upgraded; call TreeView.upgradeSchema() before reading or writing TreeView.root."
-			: "The schemas cannot be upgraded automatically. Review the reported mismatch and use a compatible view schema or explicitly migrate the document schema and data.";
-	throw new UsageError(
-		`TreeView.root is unavailable because the view schema is not compatible with the document's stored schema.${details} ${resolution}`,
-	);
-}
 
 /**
  * Implementation of TreeView wrapping a FlexTreeView.
@@ -551,11 +528,11 @@ export class SchematizingSimpleTreeView<
 
 	private get flexRoot(): FlexTreeOptionalField | FlexTreeRequiredField {
 		this.breaker.use();
-		throwIfSchemaIsIncompatible(
-			this.compatibility,
-			this.viewSchema,
-			this.checkout.storedSchema,
-		);
+		if (!this.compatibility.canView) {
+			throw new UsageError(
+				"Document is out of schema. Check TreeView.compatibility before accessing TreeView.root.",
+			);
+		}
 		const view = this.getFlexTreeContext();
 		assert(
 			view.root.is(FieldKinds.optional) ||
@@ -572,11 +549,11 @@ export class SchematizingSimpleTreeView<
 
 	public set root(newRoot: InsertableField<TRootSchema>) {
 		this.breaker.use();
-		throwIfSchemaIsIncompatible(
-			this.compatibility,
-			this.viewSchema,
-			this.checkout.storedSchema,
-		);
+		if (!this.compatibility.canView) {
+			throw new UsageError(
+				"Document is out of schema. Check TreeView.compatibility before accessing TreeView.root.",
+			);
+		}
 		const view = this.getFlexTreeContext();
 		setField(
 			view.root,

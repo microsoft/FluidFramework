@@ -6,7 +6,6 @@
 import { strict } from "node:assert";
 
 import {
-	appendDebugMessage,
 	assert,
 	configureDebugAsserts,
 	debugAssert,
@@ -85,29 +84,6 @@ describe("assert", () => {
 			"Error: message",
 		);
 		emulateProductionBuild(false);
-
-		strict.deepEqual(log, []);
-	});
-
-	it("appendDebugMessage", () => {
-		strict.equal(
-			appendDebugMessage("message", () => "details"),
-			"message details",
-		);
-
-		const log: string[] = [];
-		emulateProductionBuild(true);
-		try {
-			strict.equal(
-				appendDebugMessage("message", () => {
-					log.push("built");
-					return "details";
-				}),
-				"message",
-			);
-		} finally {
-			emulateProductionBuild(false);
-		}
 
 		strict.deepEqual(log, []);
 	});

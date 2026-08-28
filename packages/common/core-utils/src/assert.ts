@@ -74,26 +74,6 @@ export function fail(message: string | number, debugMessageBuilder?: () => strin
 	failPrivate(message, debugMessageBuilder);
 }
 
-/**
- * Appends additional diagnostic text in non-production builds.
- *
- * @param message - The message to include in all builds.
- * @param debugMessageBuilder - Builds the additional text to include only in non-production builds.
- * @returns The message with the additional diagnostic text when non-production conditionals are enabled.
- *
- * @internal
- */
-export function appendDebugMessage(
-	message: string,
-	debugMessageBuilder: () => string,
-): string {
-	let messageWithDebugDetails = message;
-	skipInProduction(() => {
-		messageWithDebugDetails = `${messageWithDebugDetails} ${debugMessageBuilder()}`;
-	});
-	return messageWithDebugDetails;
-}
-
 function onAssertionError(error: Error): void {
 	for (const handler of firstChanceAssertionHandler) {
 		handler(error);
