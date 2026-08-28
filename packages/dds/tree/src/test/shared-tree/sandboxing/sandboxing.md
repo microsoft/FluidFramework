@@ -16,8 +16,8 @@ Application developers can use its existing APIs and conflict resolution instead
 Use the terms "Host" and "Guest" for the two sides.
 These terms are similar to the terms for virtual machines.
 
-- Host: The SharedTree that connects to Fluid services.
-- Guest: The TreeView and its related internal components. A message protocol separates the Guest from the Host. The Guest does not share state with the Host.
+- **Host**: The SharedTree that connects to Fluid services.
+- **Guest**: The TreeView and its related internal components. A message protocol separates the Guest from the Host. The Guest does not share state with the Host.
 
 - Host-local edits: Edits on the Host that are not sequenced.
 - Guest-local edits: Edits on the Guest that the Host has not acknowledged.
