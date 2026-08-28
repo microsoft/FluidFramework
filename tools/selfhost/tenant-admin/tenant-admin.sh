@@ -259,7 +259,7 @@ case "$COMMAND" in
     case "$KV_CHECK" in
       performed)
         echo "Write the new key into Key Vault so the token service picks it up:" >&2
-        echo "  az keyvault secret set --vault-name $KV_NAME --name $KV_SECRET --value <the new key>" >&2
+        echo "  az keyvault secret set --vault-name $KV_NAME --name $KV_SECRET --file <0600-file-containing-the-new-key> --encoding utf-8" >&2
         ;;
       skipped-no-secret)
         echo "In-use key check: no secret '$KV_SECRET' in Key Vault '$KV_NAME' -- no token service uses this tenant's key." >&2

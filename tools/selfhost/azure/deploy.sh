@@ -54,6 +54,7 @@ set -euo pipefail
 # manifests + logs (never commit rendered files with live values).
 # ---------------------------------------------------------------------------
 SELFHOST_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+. "$SELFHOST_ROOT/release/lib.sh"
 
 usage() {
   cat >&2 <<'EOF'
@@ -130,6 +131,9 @@ FLUID_REF="$(jq -r '.resolvedCommitSha // empty' "$SOURCE_FILE")"
 
 IMAGE_TAG="$(jq -r '.builtImages[]? | select(.status == "pinned") | .tag // empty' "$IMAGES_FILE" | head -n 1)"
 IMAGE_TAG="${IMAGE_TAG:-$RELEASE_ID}"
+BUSYBOX_DIGEST="$(jq -r '.dependencyImages[]? | select(.name == "busybox" and .status == "pinned") | .digest // empty' "$IMAGES_FILE" | head -n 1)"
+[[ "$BUSYBOX_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]] \
+  || { echo "ERROR: images.json must contain a pinned busybox dependency image digest" >&2; exit 1; }
 
 log()    { printf '[%s] %s\n' "$(date -u +%H:%M:%S)" "$*"; }
 banner() { printf '\n=== %s ===\n' "$*"; }
@@ -160,6 +164,7 @@ ensure_role_assignment() {
 }
 
 TEMP_ROLE_ASSIGNMENT_IDS=()
+SENSITIVE_TEMP_FILES=()
 KV_PUBLIC_ACCESS_RESTORE=""
 
 restore_keyvault_public_access() {
@@ -172,7 +177,7 @@ restore_keyvault_public_access() {
 
 cleanup_temporary_role_assignments() {
   local id
-  for id in "${TEMP_ROLE_ASSIGNMENT_IDS[@]}"; do
+  for id in "${TEMP_ROLE_ASSIGNMENT_IDS[@]+"${TEMP_ROLE_ASSIGNMENT_IDS[@]}"}"; do
     [[ -n "$id" ]] || continue
     log "Removing temporary Key Vault role assignment"
     az rest --method delete \
@@ -180,7 +185,15 @@ cleanup_temporary_role_assignments() {
   done
 }
 
+cleanup_sensitive_temp_files() {
+  local file
+  for file in "${SENSITIVE_TEMP_FILES[@]+"${SENSITIVE_TEMP_FILES[@]}"}"; do
+    [[ -n "$file" ]] && rm -f "$file"
+  done
+}
+
 cleanup_deployment_state() {
+  cleanup_sensitive_temp_files || true
   restore_keyvault_public_access || true
   cleanup_temporary_role_assignments
 }
@@ -203,29 +216,36 @@ current_principal_object_id() {
 # Azure RBAC role assignments can take a couple minutes to propagate after creation. Retry on
 # Forbidden instead of failing the whole deployment over a timing race.
 keyvault_secret_set_with_retry() {
-  local vault="$1" name="$2" value="$3" attempt
+  local vault="$1" name="$2" value="$3" attempt err value_file
+  err="$(mktemp "$DEPLOY_DIR/kv-secret-set.XXXXXX")"
+  value_file="$(mktemp "$DEPLOY_DIR/kv-secret-value.XXXXXX")"
+  SENSITIVE_TEMP_FILES+=("$value_file")
+  chmod 600 "$value_file"
+  printf '%s' "$value" > "$value_file"
+  unset value
   for attempt in 1 2 3 4 5 6; do
-    if az keyvault secret set --vault-name "$vault" --name "$name" --value "$value" >/dev/null 2>/tmp/kv_secret_set_err.$$; then
-      rm -f /tmp/kv_secret_set_err.$$
+    if az keyvault secret set --vault-name "$vault" --name "$name" \
+      --file "$value_file" --encoding utf-8 >/dev/null 2>"$err"; then
+      rm -f "$err" "$value_file"
       return 0
     fi
     # A network-locked-down vault (public network access disabled) also contains the
     # substring "Forbidden" but retrying can never fix it -- fail immediately with a clear
     # pointer instead of burning ~90s on retries that cannot succeed.
-    if grep -q "Public network access is disabled" /tmp/kv_secret_set_err.$$ 2>/dev/null; then
-      cat /tmp/kv_secret_set_err.$$ >&2; rm -f /tmp/kv_secret_set_err.$$
+    if grep -q "Public network access is disabled" "$err" 2>/dev/null; then
+      cat "$err" >&2; rm -f "$err" "$value_file"
       echo "ERROR: Key Vault $vault still has public network access disabled." >&2
       echo "phase8_keyvault should have enabled it temporarily for this workstation write; confirm the update was not blocked by Azure Policy." >&2
       return 1
     fi
-    if ! grep -q "Forbidden\|ForbiddenByRbac" /tmp/kv_secret_set_err.$$ 2>/dev/null; then
-      cat /tmp/kv_secret_set_err.$$ >&2; rm -f /tmp/kv_secret_set_err.$$
+    if ! grep -q "Forbidden\|ForbiddenByRbac" "$err" 2>/dev/null; then
+      cat "$err" >&2; rm -f "$err" "$value_file"
       return 1
     fi
     log "Key Vault secret '$name' set forbidden (likely RBAC propagation delay), retrying in 15s (attempt $attempt/6)"
     sleep 15
   done
-  rm -f /tmp/kv_secret_set_err.$$
+  rm -f "$err" "$value_file"
   echo "ERROR: could not set Key Vault secret '$name' after retries -- RBAC role may not have propagated" >&2
   return 1
 }
@@ -235,20 +255,21 @@ keyvault_secret_set_with_retry() {
 # a new one fail immediately with (OperationNotAllowed), not queue behind it. Observed addon
 # operations taking 1-3 minutes to clear; retry budget below is sized with margin over that.
 aks_enable_addon_with_retry() {
-  local rg="$1" aks="$2" addon="$3" attempt
+  local rg="$1" aks="$2" addon="$3" attempt err
+  err="$(mktemp "$DEPLOY_DIR/aks-addon.XXXXXX")"
   for attempt in $(seq 1 10); do
-    if az aks enable-addons -g "$rg" -n "$aks" --addons "$addon" 2>/tmp/aks_addon_err.$$; then
-      rm -f /tmp/aks_addon_err.$$
+    if az aks enable-addons -g "$rg" -n "$aks" --addons "$addon" 2>"$err"; then
+      rm -f "$err"
       return 0
     fi
-    if ! grep -q "OperationNotAllowed" /tmp/aks_addon_err.$$ 2>/dev/null; then
-      cat /tmp/aks_addon_err.$$ >&2; rm -f /tmp/aks_addon_err.$$
+    if ! grep -q "OperationNotAllowed" "$err" 2>/dev/null; then
+      cat "$err" >&2; rm -f "$err"
       return 1
     fi
     log "AKS cluster $aks has another operation in progress, retrying '$addon' addon enable in 30s (attempt $attempt/10)"
     sleep 30
   done
-  cat /tmp/aks_addon_err.$$ >&2; rm -f /tmp/aks_addon_err.$$
+  cat "$err" >&2; rm -f "$err"
   echo "ERROR: could not enable '$addon' addon on $aks after retries -- another operation may be stuck (check with 'az aks operation show-latest -g $rg -n $aks')" >&2
   return 1
 }
@@ -317,6 +338,7 @@ elif [[ "$FLUID_REPO_DIR" == "~" ]]; then
   FLUID_REPO_DIR="$HOME"
 fi
 ACR="$(jqr '.deployAcr.name')"
+BUSYBOX_IMAGE="$ACR.azurecr.io/busybox@$BUSYBOX_DIGEST"
 AKS="$(jqr '.aks.name')"
 AKS_LOC="$(jqr '.aks.location')"; AKS_LOC="${AKS_LOC:-$RG_LOC}"
 AKS_K8S_VERSION="$(jqr '.aks.kubernetesVersion')"; AKS_K8S_VERSION="${AKS_K8S_VERSION:-1.35}"
@@ -515,12 +537,10 @@ done
 kubectl() { command kubectl --context "$AKS" "$@"; }
 helm() { command helm --kube-context "$AKS" "$@"; }
 
-DEPLOY_DIR="${TMPDIR:-/tmp}/selfhost-fluid-$AKS"
-mkdir -p "$DEPLOY_DIR"
-# Front Door hostnames, discovered in phase12 and consumed by phase5_helm. Persisted so a re-run
-# renders the chart values with the real hostnames from the start rather than briefly
-# advertising in-cluster names.
-AFD_HOSTS_FILE="$DEPLOY_DIR/afd-hosts.env"
+TEMP_BASE="${TMPDIR:-/tmp}"
+[[ -d "$TEMP_BASE" ]] || { echo "ERROR: temporary directory does not exist: $TEMP_BASE" >&2; exit 1; }
+DEPLOY_DIR="$(mktemp -d "$TEMP_BASE/selfhost-fluid-${AKS}.XXXXXX")"
+chmod 700 "$DEPLOY_DIR"
 LOG_FILE="$DEPLOY_DIR/deploy-$(date -u +%Y%m%dT%H%M%SZ).log"
 exec > >(tee -a "$LOG_FILE") 2>&1
 log "Logging to $LOG_FILE"
@@ -573,6 +593,7 @@ if [[ "$(git -C "$FLUID_ROOT" rev-parse HEAD 2>/dev/null || true)" != "$FLUID_RE
   fi
   git -C "$FLUID_ROOT" checkout --detach "$FLUID_REF"
 fi
+validate_selfhost_source_compatibility "$FLUID_ROOT"
 
 # ===========================================================================
 # Phase 0 — Resource group + ACR
@@ -590,10 +611,15 @@ phase0_rg_acr() {
     # No --zone-redundancy flag needed: ACR zone redundancy is on by default for every tier
     # (Basic/Standard/Premium) in a region with Availability Zone support, and cannot be
     # disabled there -- the flag is legacy/backward-compat only now (aka.ms/acr/az).
-    az acr create -g "$RG" -n "$ACR" -l "$RG_LOC" --sku Standard --admin-enabled true
+    az acr create -g "$RG" -n "$ACR" -l "$RG_LOC" --sku Standard --admin-enabled false
   fi
   [[ "$(az acr show -g "$RG" -n "$ACR" --query provisioningState -o tsv)" == "Succeeded" ]] \
     || { echo "ERROR: ACR $ACR did not provision successfully" >&2; exit 1; }
+  if [[ "$(az acr show -g "$RG" -n "$ACR" --query adminUserEnabled -o tsv)" == "true" ]]; then
+    az acr update -g "$RG" -n "$ACR" --admin-enabled false
+  fi
+  [[ "$(az acr show -g "$RG" -n "$ACR" --query adminUserEnabled -o tsv)" == "false" ]] \
+    || { echo "ERROR: ACR $ACR admin account is still enabled" >&2; exit 1; }
   log "Phase 0 VERIFY passed"
 }
 
@@ -785,11 +811,17 @@ phase0_network_allow_frontdoor() {
 create_private_endpoint() {
   local resource_id="$1" group_id="$2" short_name="$3" zone_name="$4"
   local pe_name="pe-$short_name" zone_link_name="link-$short_name"
+  local vnet_id existing_zone_link
 
   if ! az network private-dns zone show -g "$RG" -n "$zone_name" >/dev/null 2>&1; then
     az network private-dns zone create -g "$RG" -n "$zone_name"
   fi
-  if ! az network private-dns link vnet show -g "$RG" -n "$zone_link_name" -z "$zone_name" >/dev/null 2>&1; then
+  vnet_id="$(az network vnet show -g "$RG" -n "$VNET" --query id -o tsv)"
+  existing_zone_link="$(az network private-dns link vnet list -g "$RG" -z "$zone_name" \
+    --query "[?virtualNetwork.id=='$vnet_id'] | [0].name" -o tsv)"
+  if [[ -n "$existing_zone_link" ]]; then
+    log "Private DNS zone $zone_name is already linked to $VNET as $existing_zone_link, reusing it"
+  else
     az network private-dns link vnet create -g "$RG" -n "$zone_link_name" -z "$zone_name" \
       -v "$VNET" -e false
   fi
@@ -854,8 +886,8 @@ phase1_images() {
     src="$source_repo@$digest"
     target_tag="${tag:-$RELEASE_ID}"
 
-    if az acr repository show --name "$ACR" --image "$target_repo:$target_tag" >/dev/null 2>&1; then
-      log "$target_repo:$target_tag already in ACR, skipping import"
+    if az acr repository show --name "$ACR" --image "$target_repo@$digest" >/dev/null 2>&1; then
+      log "$target_repo@$digest already in ACR, skipping import"
     else
       az acr import --name "$ACR" --source "$src" --image "$target_repo:$target_tag" --force
     fi
@@ -1168,16 +1200,18 @@ phase8_cosmos() {
     # means that check was skipped or the region's support changed since. Fail loudly rather
     # than silently downgrading to non-zone-redundant behind the customer's back: the customer
     # sets cosmos.zoneRedundant to False themselves if their region can't support it.
+    local cosmos_create_err
+    cosmos_create_err="$(mktemp "$DEPLOY_DIR/cosmos-create.XXXXXX")"
     if ! az cosmosdb create -n "$COSMOS" -g "$RG" --kind MongoDB --capabilities EnableMongo \
       --server-version "$COSMOS_SERVER_VERSION" \
       --locations regionName="$RG_LOC" failoverPriority=0 isZoneRedundant="$COSMOS_ZONE_REDUNDANT" \
-      2>/tmp/cosmos_create_err.$$; then
-      cat /tmp/cosmos_create_err.$$ >&2
-      rm -f /tmp/cosmos_create_err.$$
+      2>"$cosmos_create_err"; then
+      cat "$cosmos_create_err" >&2
+      rm -f "$cosmos_create_err"
       echo "ERROR: Cosmos DB create with isZoneRedundant=$COSMOS_ZONE_REDUNDANT failed -- if $RG_LOC doesn't support Availability Zones, set cosmos.zoneRedundant to False in your parameters file (re-run azure/preflight-check.sh to confirm) and retry" >&2
       exit 1
     fi
-    rm -f /tmp/cosmos_create_err.$$
+    rm -f "$cosmos_create_err"
   fi
   local cosmos_conn cosmos_id
   cosmos_conn="$(az cosmosdb keys list -n "$COSMOS" -g "$RG" --type connection-strings \
@@ -1232,7 +1266,8 @@ phase8_cosmos() {
 # RU/s values are a starting point informed by a real reference deployment plus source-verified
 # usage patterns, not load-test-derived final values (design doc Section 9 "pending load test").
 phase8_cosmos_throughput() {
-  local coll max shard
+  local coll max shard throughput_err
+  throughput_err="$(mktemp "$DEPLOY_DIR/cosmos-throughput.XXXXXX")"
   # $1=name $2=max RU/s (autoscale) $3=shard key
   # documents/checkpoints/scribeDeltas sharded on documentId: matches deltas' existing sharding,
   # and lets documents scale past the ~10000 RU/s ceiling an unsharded ("fixed to unlimited
@@ -1268,11 +1303,11 @@ phase8_cosmos_throughput() {
       if [[ -z "$(az cosmosdb mongodb collection throughput show -a "$COSMOS" -g "$RG" -d admin -n "$coll" --query resource.autoscaleSettings.maxThroughput -o tsv 2>/dev/null)" ]]; then
         az cosmosdb mongodb collection throughput migrate -a "$COSMOS" -g "$RG" -d admin -n "$coll" --throughput-type autoscale -o none
       fi
-      if ! az cosmosdb mongodb collection throughput update -a "$COSMOS" -g "$RG" -d admin -n "$coll" --max-throughput "$max" -o none 2>/tmp/cosmos_thr_err.$$; then
-        if grep -q "fixed to unlimited" /tmp/cosmos_thr_err.$$; then
+      if ! az cosmosdb mongodb collection throughput update -a "$COSMOS" -g "$RG" -d admin -n "$coll" --max-throughput "$max" -o none 2>"$throughput_err"; then
+        if grep -q "fixed to unlimited" "$throughput_err"; then
           log "WARNING: $coll is a legacy 'fixed' container (capped, no autoscale) -- fixing requires manually dropping and recreating it (az cosmosdb mongodb collection delete, then create --shard $shard --max-throughput $max); not done automatically since it discards existing data"
         else
-          cat /tmp/cosmos_thr_err.$$ >&2
+          cat "$throughput_err" >&2
         fi
       fi
     else
@@ -1283,7 +1318,7 @@ phase8_cosmos_throughput() {
       fi
     fi
   done
-  rm -f /tmp/cosmos_thr_err.$$
+  rm -f "$throughput_err"
   # Clean up the one genuinely unused collection (partitions) if a prior run created it.
   if az cosmosdb mongodb collection show -a "$COSMOS" -g "$RG" -d admin -n partitions >/dev/null 2>&1; then
     az cosmosdb mongodb collection delete -a "$COSMOS" -g "$RG" -d admin -n partitions --yes
@@ -1405,14 +1440,16 @@ phase8_storage() {
     # not an ARM/RBAC error.
     # STORAGE_SKU (Standard_ZRS by default) is not available in every region -- fall back to
     # Standard_LRS on failure the same way phase8_redis/phase8_cosmos fall back.
+    local storage_create_err
+    storage_create_err="$(mktemp "$DEPLOY_DIR/storage-create.XXXXXX")"
     if ! az storage account create -g "$RG" -n "$STORAGE" -l "$RG_LOC" --sku "$STORAGE_SKU" --kind StorageV2 \
-      --allow-shared-key-access true 2>/tmp/storage_create_err.$$; then
+      --allow-shared-key-access true 2>"$storage_create_err"; then
       log "WARNING: Storage account create with SKU $STORAGE_SKU failed -- falling back to Standard_LRS (not zone-redundant)"
-      cat /tmp/storage_create_err.$$ >&2
+      cat "$storage_create_err" >&2
       az storage account create -g "$RG" -n "$STORAGE" -l "$RG_LOC" --sku Standard_LRS --kind StorageV2 \
         --allow-shared-key-access true
     fi
-    rm -f /tmp/storage_create_err.$$
+    rm -f "$storage_create_err"
     # azure/backends.yaml's PVC does NOT bind to this named share -- the azurefile-gitrest
     # StorageClass dynamically provisions its own separate share instead. This "gitrest-data"
     # share exists for parity/documentation only; its quota is unused.
@@ -1623,6 +1660,8 @@ phase5_helm() {
   # upstream chart writes them into its ConfigMap as literals rather than Helm values, so a
   # values file has nothing to override. Rewrite the two literals to read from `auth:` once per
   # checkout; after this, changing those settings is just editing the values file and re-running.
+  # Historian still reads the legacy root-level maxTokenLifetimeSec, while Routerlicious reads
+  # auth:maxTokenLifetimeSec, so emit both paths from the same value.
   local cm_tmpl="$FLUID_ROOT/server/routerlicious/kubernetes/routerlicious/templates/fluid-configmap.yaml"
   awk '
     $0 == "            \"maxTokenLifetimeSec\": 3600," {
@@ -1634,25 +1673,55 @@ phase5_helm() {
     { print }
   ' "$cm_tmpl" > "$cm_tmpl.tmp"
   mv "$cm_tmpl.tmp" "$cm_tmpl"
+  if ! grep -qF '        "maxTokenLifetimeSec": {{ .Values.auth.maxTokenLifetimeSec }},' "$cm_tmpl"; then
+    awk '
+      $0 == "        \"auth\": {" {
+        print "        \"maxTokenLifetimeSec\": {{ .Values.auth.maxTokenLifetimeSec }},"
+      }
+      { print }
+    ' "$cm_tmpl" > "$cm_tmpl.tmp"
+    mv "$cm_tmpl.tmp" "$cm_tmpl"
+  fi
   grep -qF '.Values.auth.maxTokenLifetimeSec' "$cm_tmpl" \
     && grep -qF '.Values.auth.enableTokenExpiration' "$cm_tmpl" \
+    && grep -qF '        "maxTokenLifetimeSec": {{ .Values.auth.maxTokenLifetimeSec }},' "$cm_tmpl" \
     || { echo "ERROR: could not point the auth block in $cm_tmpl at .Values.auth -- upstream changed it." >&2
          exit 1; }
 
+  # The upstream template quotes this one boolean (unlike the other two usage flags), rendering
+  # false as the truthy string "false". Nexus then records every disconnect in the non-expiring
+  # clientConnectivityUsage Redis list. Keep it a JSON boolean so the disabled default is honored.
+  awk '
+    $0 == "            \"clientConnectivityCountingEnabled\": \"{{ .Values.usage.clientConnectivityCountingEnabled }}\"," {
+      print "            \"clientConnectivityCountingEnabled\": {{ .Values.usage.clientConnectivityCountingEnabled }},"; next
+    }
+    { print }
+  ' "$cm_tmpl" > "$cm_tmpl.tmp"
+  mv "$cm_tmpl.tmp" "$cm_tmpl"
+  grep -qF '"clientConnectivityCountingEnabled": {{ .Values.usage.clientConnectivityCountingEnabled }},' "$cm_tmpl" \
+    || { echo "ERROR: could not render clientConnectivityCountingEnabled as a boolean in $cm_tmpl -- upstream changed it." >&2
+         exit 1; }
+
   # Front Door hostnames do not exist yet the first time this phase runs, so fall back to the
-  # in-cluster URLs. publish_frontdoor_hostnames writes the real hostnames to $AFD_HOSTS_FILE
-  # and re-runs this phase, which is why the substitution is here rather than in a follow-up `helm upgrade`:
+  # in-cluster URLs. Once phase12 creates them, query Azure directly rather than persisting and
+  # shell-executing deployment state from a temporary file. publish_frontdoor_hostnames re-runs
+  # this phase, which is why the substitution is here rather than in a follow-up `helm upgrade`:
   # a bare upgrade re-renders the chart's Deployments and strips the container `command`
   # overrides applied below, which is what injects the Cosmos connection string. Losing them
   # sends every stateful service into CrashLoopBackOff with `MongoParseError: Invalid scheme`.
   local ext_alfred="http://fluid-alfred" ext_nexus="ws://fluid-nexus" ext_historian="http://historian"
-  if [[ -f "$AFD_HOSTS_FILE" ]]; then
-    # shellcheck source=/dev/null
-    source "$AFD_HOSTS_FILE"
-    ext_alfred="https://$AFD_ALFRED_HOST"
-    ext_nexus="wss://$AFD_NEXUS_HOST"
-    ext_historian="https://$AFD_HISTORIAN_HOST"
-    log "Rendering chart values with Front Door hostnames ($AFD_ALFRED_HOST)"
+  local afd_alfred_host afd_nexus_host afd_historian_host
+  afd_alfred_host="$(az afd endpoint show -g "$RG" --profile-name "$AFD" \
+    --endpoint-name "alfred-${AFD}" --query hostName -o tsv 2>/dev/null || true)"
+  afd_nexus_host="$(az afd endpoint show -g "$RG" --profile-name "$AFD" \
+    --endpoint-name "nexus-${AFD}" --query hostName -o tsv 2>/dev/null || true)"
+  afd_historian_host="$(az afd endpoint show -g "$RG" --profile-name "$AFD" \
+    --endpoint-name "historian-${AFD}" --query hostName -o tsv 2>/dev/null || true)"
+  if [[ -n "$afd_alfred_host" && -n "$afd_nexus_host" && -n "$afd_historian_host" ]]; then
+    ext_alfred="https://$afd_alfred_host"
+    ext_nexus="wss://$afd_nexus_host"
+    ext_historian="https://$afd_historian_host"
+    log "Rendering chart values with Front Door hostnames ($afd_alfred_host)"
   fi
 
   # nexus's socketIo.gracefulShutdownDrainTimeMs (fluid-configmap.yaml) is 45s, but the
@@ -1761,7 +1830,7 @@ phase5_helm() {
   # file (its ENTRYPOINT is just tini plus a bare `node ...` command).
   patch_secrets_and_command() {
     local deploy="$1" real_cmd="$2" extra_env_json="${3:-[]}"
-    local init_script run_script
+    local init_script run_script busybox_image="$BUSYBOX_IMAGE"
     # shellcheck disable=SC2016
     # Values are wrapped in literal double-quotes (printf 'export NAME="%s"') because Cosmos
     # Mongo connection strings contain '&', which an unquoted `sh` source would treat as a
@@ -1862,7 +1931,7 @@ phase5_helm() {
       log "$deploy already has CSI secrets volumes/init-container, skipping that part"
     else
       local setup_patch_file="$DEPLOY_DIR/patch-$deploy-setup.json"
-      jq -n --arg initScript "$init_script" '[
+      jq -n --arg initScript "$init_script" --arg busyboxImage "$busybox_image" '[
         {"op": "add", "path": "/spec/template/spec/volumes/-", "value": {
           "name": "fluid-secrets",
           "csi": {"driver": "secrets-store.csi.k8s.io", "readOnly": true,
@@ -1870,7 +1939,7 @@ phase5_helm() {
         }},
         {"op": "add", "path": "/spec/template/spec/volumes/-", "value": {"name": "fluid-secrets-env", "emptyDir": {}}},
         {"op": "add", "path": "/spec/template/spec/initContainers", "value": [{
-          "name": "load-secrets", "image": "busybox",
+          "name": "load-secrets", "image": $busyboxImage,
           "command": ["sh", "-c", $initScript],
           "volumeMounts": [
             {"name": "fluid-secrets", "mountPath": "/mnt/secrets", "readOnly": true},
@@ -1881,16 +1950,18 @@ phase5_helm() {
       kubectl patch deployment "$deploy" --type=json --patch-file="$setup_patch_file"
     fi
 
-    # The init container's script is only written once, in the "add" branch above -- it is not
-    # re-synced if `init_script`'s content changes later. Re-check and reapply on every run so
-    # existing deployments pick up script fixes too.
-    local current_init_cmd
+    # The init container's image and script are only written once in the "add" branch above.
+    # Re-check and reapply both on every run so existing deployments move from the former
+    # mutable Docker Hub image to this release's ACR-hosted digest and pick up script fixes.
+    local current_init_cmd current_init_image
     current_init_cmd="$(kubectl get deployment "$deploy" -o jsonpath='{.spec.template.spec.initContainers[0].command[2]}' 2>/dev/null)"
-    if [[ "$current_init_cmd" == "$init_script" ]]; then
-      log "$deploy init-container script already up to date, skipping"
+    current_init_image="$(kubectl get deployment "$deploy" -o jsonpath='{.spec.template.spec.initContainers[0].image}' 2>/dev/null)"
+    if [[ "$current_init_cmd" == "$init_script" && "$current_init_image" == "$busybox_image" ]]; then
+      log "$deploy init-container image and script already up to date, skipping"
     else
       local init_patch_file="$DEPLOY_DIR/patch-$deploy-init.json"
-      jq -n --arg initScript "$init_script" '[
+      jq -n --arg initScript "$init_script" --arg busyboxImage "$busybox_image" '[
+        {"op": "replace", "path": "/spec/template/spec/initContainers/0/image", "value": $busyboxImage},
         {"op": "replace", "path": "/spec/template/spec/initContainers/0/command", "value": ["sh", "-c", $initScript]}
       ]' > "$init_patch_file"
       kubectl patch deployment "$deploy" --type=json --patch-file="$init_patch_file"
@@ -2048,11 +2119,6 @@ publish_frontdoor_hostnames() {
   fi
 
   log "Publishing Front Door hostnames into the chart's discovery values"
-  cat > "$AFD_HOSTS_FILE" <<EOF
-AFD_ALFRED_HOST=$afd_alfred
-AFD_NEXUS_HOST=$afd_nexus
-AFD_HISTORIAN_HOST=$afd_historian
-EOF
   phase5_helm
   kubectl rollout status deploy/fluid-alfred --timeout=300s >/dev/null 2>&1 || true
   advertised="$(kubectl get configmap fluid-routerlicious -o jsonpath='{.data.config\.json}' 2>/dev/null \
