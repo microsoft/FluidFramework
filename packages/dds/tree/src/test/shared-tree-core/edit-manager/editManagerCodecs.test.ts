@@ -280,7 +280,7 @@ export function testCodec(): void {
 				// this invocation should throw if extra properties are not filtered out during encoding.
 				const encoded = codec.encode(data, dummyContext);
 				const stringified = JSON.stringify(encoded);
-				// This assert added as redundant check in case we stop validating encoded data against the schema
+				// This assert is added as a redundant check in case we stop validating encoded data against the schema
 				// or in case the schema is relaxed by mistake (e.g., using `CommitBase` instead of `Commit`, which allows extra properties).
 				assert(
 					!stringified.includes("☠️"),
