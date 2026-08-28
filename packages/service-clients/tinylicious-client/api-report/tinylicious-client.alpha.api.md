@@ -4,29 +4,20 @@
 
 ```ts
 
-export { CompatibilityMode }
-
 // @public @sealed
 export type ITinyliciousAudience = IServiceAudience<TinyliciousMember>;
+
+// @public @input
+export type OldestSupportedClientVersion = `3.${bigint}.0` | `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
 
 // @public @sealed
 export class TinyliciousClient {
     constructor(properties?: TinyliciousClientProps);
-    createContainer<TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema, minVersionForCollab: MinimumVersionForCollab): Promise<{
+    createContainer<TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema, oldestSupportedClient: OldestSupportedClientVersion): Promise<{
         container: IFluidContainer<TContainerSchema>;
         services: TinyliciousContainerServices;
     }>;
-    // @deprecated
-    createContainer<TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema, compatibilityMode: CompatibilityMode): Promise<{
-        container: IFluidContainer<TContainerSchema>;
-        services: TinyliciousContainerServices;
-    }>;
-    getContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, minVersionForCollab: MinimumVersionForCollab): Promise<{
-        container: IFluidContainer<TContainerSchema>;
-        services: TinyliciousContainerServices;
-    }>;
-    // @deprecated
-    getContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, compatibilityMode: CompatibilityMode): Promise<{
+    getContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, oldestSupportedClient: OldestSupportedClientVersion): Promise<{
         container: IFluidContainer<TContainerSchema>;
         services: TinyliciousContainerServices;
     }>;

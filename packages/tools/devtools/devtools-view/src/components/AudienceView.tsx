@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { Divider } from "@fluentui/react-components";
 import {
 	AudienceSummary,
 	GetAudienceSummary,
@@ -15,11 +14,14 @@ import {
 import type { IClient } from "@fluidframework/driver-definitions";
 import { type ReactElement, useEffect, useState } from "react";
 
+import { FluentReactComponents } from "../FluentUi.cjs";
 import { useMessageRelay } from "../MessageRelayContext.js";
 
 import { AudienceHistoryTable } from "./AudienceHistoryTable.js";
 import { AudienceStateTable } from "./AudienceStateTable.js";
 import { Waiting } from "./Waiting.js";
+
+const { Divider } = FluentReactComponents;
 
 // TODOs:
 // - Special annotation for the member elected as the summarizer

@@ -14,12 +14,13 @@ import { FluidObject, IFluidLoadable, IRequest } from "@fluidframework/core-inte
 import { IFluidHandleContext, type IResponse } from "@fluidframework/core-interfaces/internal";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import { featureVersion } from "@fluidframework/driver-definitions/internal";
 import { ISharedDirectory } from "@fluidframework/map/internal";
 import {
 	IContainerRuntimeBase,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
-	type MinimumVersionForCollab,
+	type OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestContainerConfig,
@@ -46,15 +47,15 @@ import { getRequestedVersion } from "./versionUtils.js";
 export const TestDataObjectType = "@fluid-example/test-dataStore";
 
 /**
- * Determines the MinimumVersionForCollab that should be used for compatibility tests.
+ * Determines the OldestSupportedClientVersion that should be used for compatibility tests.
  *
- * The MinimumVersionForCollab returned will be the lesser of the two versions:
+ * The OldestSupportedClientVersion returned will be the lesser of the two versions:
  * - runtimeVersion: The version of the runtime that is being used to create the container.
  * - runtimeVersionForLoading: The version of the runtime that is being used to load the container.
  * Outside of cross-client compat tests these two versions are the same, so the result is simply that
  * shared version.
  *
- * Note: The MinimumVersionForCollab returned will only be used if a minVersionForCollab was not provided
+ * Note: The OldestSupportedClientVersion returned will only be used if a minVersionForCollab was not provided
  * in the ITestContainerConfig object.
  *
  * For example, if we are running a cross-client compat test with the following versions:
@@ -62,25 +63,38 @@ export const TestDataObjectType = "@fluid-example/test-dataStore";
  * - runtimeVersionForLoading: "1.4.0"
  * We will return "1.4.0" since it's the lower of the two versions.
  */
-function getMinVersionForCollab(
+export function getMinVersionForCollab(
 	runtimeVersion: string,
 	runtimeVersionForLoading: string,
-): MinimumVersionForCollab {
-	assertValidMinVersionForCollab(runtimeVersion);
-	assertValidMinVersionForCollab(runtimeVersionForLoading);
+): OldestSupportedClientVersion {
+	// Represent the current package by its major/minor feature version, regardless of its patch or
+	// prerelease metadata.
+	// This discards the prerelease, ensuring that features that would be enabled in the next release are tested.
+	// This discards patch versions, which is required (due to how OldestSupportedClientVersion is defined),
+	// and is safe as lowering versions is safe from an OldestSupportedClientVersion perspective.
+	// Preserve explicitly requested versions because featureVersion would discard
+	// meaningful values such as `2.0.0-defaults` and 1.x/2.x patches.
+	const normalizedRuntimeVersion =
+		runtimeVersion === pkgVersion ? featureVersion(pkgVersion) : runtimeVersion;
+	const normalizedRuntimeVersionForLoading =
+		runtimeVersionForLoading === pkgVersion
+			? featureVersion(pkgVersion)
+			: runtimeVersionForLoading;
+	assertValidMinVersionForCollab(normalizedRuntimeVersion);
+	assertValidMinVersionForCollab(normalizedRuntimeVersionForLoading);
 	// Use the lower of the two versions to ensure compatibility between the two runtimes.
 	// (Outside of cross-client compat the two versions are the same, so this is a no-op.)
-	return semver.compare(runtimeVersion, runtimeVersionForLoading) <= 0
-		? runtimeVersion
-		: runtimeVersionForLoading;
+	return semver.compare(normalizedRuntimeVersion, normalizedRuntimeVersionForLoading) <= 0
+		? normalizedRuntimeVersion
+		: normalizedRuntimeVersionForLoading;
 }
 
 /**
- * Asserts the given version is valid semver and is type MinimumVersionForCollab.
+ * Asserts the given version is valid semver and is type OldestSupportedClientVersion.
  */
 function assertValidMinVersionForCollab(
 	version: string,
-): asserts version is MinimumVersionForCollab {
+): asserts version is OldestSupportedClientVersion {
 	if (semver.valid(version) === null) {
 		throw new Error(`Runtime version must be valid semver: ${version}`);
 	}

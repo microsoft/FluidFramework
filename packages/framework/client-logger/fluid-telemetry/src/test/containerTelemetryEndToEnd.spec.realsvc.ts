@@ -57,7 +57,7 @@ describe("container telemetry E2E", () => {
 	});
 
 	it("IFluid container's 'connected' system event produces expected ContainerConnectedTelemetry using ITelemetryConsumer", async () => {
-		const { container } = await tinyliciousClient.createContainer(schema, "2");
+		const { container } = await tinyliciousClient.createContainer(schema, "2.0.0");
 
 		const containerId = await container.attach();
 		startTelemetry({
@@ -102,7 +102,7 @@ describe("container telemetry E2E", () => {
 	});
 
 	it("IFluid container's 'disconnected' system event produces expected ContainerDisconnectedTelemetry using ITelemetryConsumer", async () => {
-		const { container } = await tinyliciousClient.createContainer(schema, "2");
+		const { container } = await tinyliciousClient.createContainer(schema, "2.0.0");
 
 		const containerId = await container.attach();
 		startTelemetry({
@@ -156,7 +156,7 @@ describe("container telemetry E2E", () => {
 	});
 
 	it("IFluid container's 'disposed' system event produces expected ContainerDisposedTelemetry using ITelemetryConsumer", async () => {
-		const { container } = await tinyliciousClient.createContainer(schema, "2");
+		const { container } = await tinyliciousClient.createContainer(schema, "2.0.0");
 
 		const containerId = await container.attach();
 		startTelemetry({

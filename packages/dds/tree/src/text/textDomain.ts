@@ -14,15 +14,17 @@ import {
 import { typeFactory as tf } from "@fluidframework/type-factory/internal";
 
 import { EmptyKey, mapCursorField, type ITreeCursorSynchronous } from "../core/index.js";
-import { TreeAlpha } from "../shared-tree/index.js";
 import {
+	createArrayInsertionAnchor,
 	eraseSchemaDetails,
 	getInnerNode,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TreeArrayNode,
+	TreeBeta,
 } from "../simple-tree/index.js";
 import type {
+	ArrayPlaceAnchor,
 	ArrayNodeDeltaOp,
 	ArrayNodeTreeChangedDeltaOp,
 	TreeNode,
@@ -176,9 +178,13 @@ class TextNode
 	public onCharactersChanged(
 		callback: (ops: readonly PlainText.TextOp[] | undefined) => void,
 	): () => void {
-		return TreeAlpha.on(this.content, "nodeChanged", ({ delta }) =>
+		return TreeBeta.on(this.content, "nodeChanged", ({ delta }) =>
 			processCharactersChangedDelta(delta, (i) => this.content[i], callback),
 		);
+	}
+
+	public createInsertionAnchor(index: number): ArrayPlaceAnchor {
+		return createArrayInsertionAnchor(this.content, index);
 	}
 
 	public static fromString(value: string): TextNode {
@@ -501,6 +507,13 @@ export namespace PlainText {
 		 * corresponds to two UTF-16 code units — convert before using the counts as string indices.
 		 */
 		onCharactersChanged(callback: (ops: readonly TextOp[] | undefined) => void): () => void;
+
+		/**
+		 * Creates an anchor that tracks an insertion point at `index` as the text is edited.
+		 * @param index - The character index of the insertion point to track.
+		 * @returns An anchor whose index updates as the text is edited. Call {@link ArrayPlaceAnchor.dispose} when it is no longer needed.
+		 */
+		createInsertionAnchor(index: number): ArrayPlaceAnchor;
 	}
 
 	/**

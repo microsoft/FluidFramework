@@ -6,6 +6,7 @@
 import type { ErasedType } from "@fluidframework/core-interfaces";
 
 import type { TreeNode } from "../core/index.js";
+import type { JsonCompatibleReadOnlyObject } from "../../util/index.js";
 
 /**
  * A special object that signifies when a SharedTree {@link RunTransaction | transaction} should "roll back".
@@ -103,7 +104,7 @@ export type TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue> =
 	};
 
 /**
- * The result of a {@link TreeBranchAlpha.(runTransaction:2) | transaction} that doesn't return a value.
+ * The result of a {@link UntypedTreeViewAlpha.(runTransaction:2) | transaction} that doesn't return a value.
  * @input
  * @alpha
  */
@@ -181,7 +182,7 @@ export interface RunTransactionParamsBeta {
 	/**
 	 * A label for this transaction that allows it to be correlated with later edits (e.g. for controlling undo/redo grouping).
 	 * @remarks
-	 * If this transaction is applied to a {@link TreeBranchAlpha | branch}, the label will be available in the {@link LocalChangeMetadata.label | metadata} of the {@link TreeBranchEvents.changed | `changed`} event.
+	 * If this transaction is applied to an {@link UntypedTreeViewAlpha | untyped view}, the label will be available in the {@link LocalChangeMetadata.label | metadata} of the {@link TreeBranchEvents.changed | `changed`} event.
 	 *
 	 * If there is a nested transaction, only the outermost transaction label will be used.
 	 */
@@ -218,4 +219,30 @@ export interface RunTransactionParamsAlpha extends RunTransactionParamsBeta {
 	 * reserving the behavior; a real post-processor will be provided in a future change.
 	 */
 	readonly postProcessor?: TransactionPostProcessor;
+
+	/**
+	 * Arbitrary, application-defined metadata to persist alongside the commit that this transaction produces.
+	 * @remarks
+	 * The metadata is replicated to all collaborating clients and persisted in the document, and is readable
+	 * via {@link TreeBranchCommitMetadata.custom} while walking the branch's
+	 * {@link UntypedTreeViewAlpha.branchHistory | history}. It shares the lifetime of the commit it is attached
+	 * to: once that commit is trimmed from the trunk, the metadata goes with it. If the transaction produces no
+	 * commit — because its body made no changes, or because it was rolled back — the metadata is discarded.
+	 *
+	 * Nested transactions all contribute to the single commit they produce, and their metadata is available
+	 * both flattened via {@link TreeBranchCommitMetadata.custom} and structurally via
+	 * {@link TreeBranchCommitMetadata.customTree}.
+	 *
+	 * To attach metadata to the commit produced by
+	 * {@link RevertibleAlpha.(revert:3) | reverting}, use {@link RevertOptionsAlpha.customMetadata} instead.
+	 *
+	 * The value is snapshotted when the transaction starts and normalized as `JSON.stringify` would. An error is
+	 * thrown if it cannot be represented as a JSON object at all, such as when it contains a cycle or a
+	 * `bigint`. Because it is persisted, it should be kept small; it is also bounded by the runtime's maximum
+	 * op size.
+	 *
+	 * Metadata is only written to the document when `minVersionForCollab` is set to `"2.117.0"` or later.
+	 * Otherwise it is retained in memory for the local session but not persisted or replicated.
+	 */
+	readonly customMetadata?: JsonCompatibleReadOnlyObject;
 }

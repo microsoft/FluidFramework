@@ -111,7 +111,6 @@
 				"packages": [
 					"@fluidframework/build-common",
 					"@fluidframework/eslint-config-fluid",
-					"@fluid-internal/eslint-plugin-fluid",
 					"@fluid-tools/benchmark"
 				]
 			},
