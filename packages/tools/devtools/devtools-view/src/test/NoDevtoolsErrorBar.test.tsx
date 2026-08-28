@@ -22,7 +22,6 @@ describe("NoDevtoolsErrorBar component tests", () => {
 		assert.equal(helpLink.getAttribute("href"), docsLinkUrl);
 	});
 
-	// user-event can exceed Mocha's default timeout under full-suite jsdom load.
 	it("Clicking close button invokes `dismiss`", async (): Promise<void> => {
 		const dismiss = spy();
 		render(<NoDevtoolsErrorBar dismiss={dismiss} retrySearch={(): void => {}} />);
@@ -30,9 +29,8 @@ describe("NoDevtoolsErrorBar component tests", () => {
 		const dismissButton = await screen.findByRole("button"); // Dismiss button is first button rendered
 		await userEvent.click(dismissButton);
 		assert.equal(dismiss.called, true);
-	}).timeout(5000);
+	});
 
-	// user-event can exceed Mocha's default timeout under full-suite jsdom load.
 	it("Clicking retry button invokes `retrySearch`", async (): Promise<void> => {
 		const retrySearch = spy();
 		render(<NoDevtoolsErrorBar dismiss={(): void => {}} retrySearch={retrySearch} />);
@@ -40,5 +38,5 @@ describe("NoDevtoolsErrorBar component tests", () => {
 		const retrySearchButton = await screen.findByTestId("retry-search-button");
 		await userEvent.click(retrySearchButton);
 		assert.equal(retrySearch.called, true);
-	}).timeout(5000);
+	});
 });

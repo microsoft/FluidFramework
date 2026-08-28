@@ -7,4 +7,10 @@
 
 const getFluidTestMochaConfig = require("@fluid-internal/mocha-test-setup/mocharc-common");
 
-module.exports = getFluidTestMochaConfig(__dirname, ["./test-setup.cjs"]);
+const config = getFluidTestMochaConfig(__dirname, ["./test-setup.cjs"]);
+module.exports = {
+	...config,
+	// Many tests interact with React components in jsdom. These interactions and
+	// accessibility checks can exceed Mocha's two-second default under full-suite load.
+	timeout: 5000,
+};

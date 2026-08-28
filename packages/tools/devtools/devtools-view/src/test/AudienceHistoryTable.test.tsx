@@ -58,14 +58,12 @@ describe("AudienceHistoryTable component tests", () => {
 });
 
 describe("AudienceHistoryTable Accessibility Check", () => {
-	// axe-core can exceed Mocha's default timeout under full-suite jsdom load.
-	// The test timeout has been increased to accommodate it.
 	it("AudienceHistoryTable is accessible", async () => {
 		const { container } = render(<AudienceHistoryTable audienceHistoryItems={[]} />);
 		await assertNoAccessibilityViolations(container);
-	}).timeout(5000);
+	});
 
-	// user-event can exceed Mocha's default timeout under full-suite jsdom load.
+	// user-event can exceed the package's five-second timeout under full-suite jsdom load.
 	// The test timeout has been increased to accommodate it.
 	it("Can tab/arrow navigate through AudienceHistoryTable", async () => {
 		render(<AudienceHistoryTable audienceHistoryItems={[]} />);
