@@ -61,7 +61,7 @@
 		"build:test:mocha:esm": "tsc --project ./src/test/mocha/tsconfig.json",
 		"build:test:playwright": "tsc --project ./src/test/playwright/tsconfig.json && webpack --config webpack.playwright.cjs",
 		"build:test:types": "tsc --project ./src/test/types/tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack . --profile node16 --exclude-entrypoints ./internal-api-report/current ./internal-api-report/legacy",
+		"check:are-the-types-wrong": "attw --pack . --profile esm-only --exclude-entrypoints ./internal-api-report/current ./internal-api-report/legacy",
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
