@@ -900,11 +900,12 @@ export type LoadContainerRuntime2Params = Omit<
 };
 
 /**
- * Resolves the required compatibility choice while both property names remain accepted.
+ * Validates and returns the required compatibility choice while both property names remain
+ * accepted.
  *
  * @internal
  */
-export function getExplicitOldestSupportedClient(
+export function validateExplicitOldestSupportedClient(
 	params: Readonly<{
 		oldestSupportedClient?: OldestSupportedClientVersion;
 		minVersionForCollab?: OldestSupportedClientVersion;
@@ -931,8 +932,8 @@ export function getExplicitOldestSupportedClient(
  * Enforces the canonical-only alpha input contract for JavaScript and erased TypeScript callers.
  *
  * @remarks
- * This intentionally differs from {@link getExplicitOldestSupportedClient}, which accepts the
- * deprecated property as a temporary beta migration path.
+ * This intentionally differs from {@link validateExplicitOldestSupportedClient}, which accepts
+ * the deprecated property as a temporary beta migration path.
  */
 function validateAlphaOldestSupportedClient(
 	params: Readonly<{
@@ -990,7 +991,7 @@ export async function loadContainerRuntime(
 ): Promise<IContainerRuntime & IRuntime> {
 	// Unlike the internal loader, this public API requires an explicit compatibility choice.
 	// Validate here, then let the internal loader handle either accepted property name.
-	getExplicitOldestSupportedClient(params);
+	validateExplicitOldestSupportedClient(params);
 	return ContainerRuntime.loadRuntime({
 		...params,
 		registry: new FluidDataStoreRegistry(params.registryEntries),

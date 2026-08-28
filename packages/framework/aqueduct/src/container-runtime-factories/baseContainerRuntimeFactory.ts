@@ -9,9 +9,9 @@ import type {
 } from "@fluidframework/container-definitions/internal";
 import {
 	FluidDataStoreRegistry,
-	getExplicitOldestSupportedClient,
 	loadContainerRuntime,
 	type IContainerRuntimeOptions,
+	validateExplicitOldestSupportedClient,
 } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { FluidObject } from "@fluidframework/core-interfaces";
@@ -159,7 +159,7 @@ export class BaseContainerRuntimeFactory
 		this.provideEntryPoint = props.provideEntryPoint;
 		this.requestHandlers = props.requestHandlers ?? [];
 		this.registry = new FluidDataStoreRegistry(this.registryEntries);
-		this.oldestSupportedClient = getExplicitOldestSupportedClient(props);
+		this.oldestSupportedClient = validateExplicitOldestSupportedClient(props);
 	}
 
 	/**
