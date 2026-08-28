@@ -314,8 +314,8 @@ for (const testOpts of testMatrix) {
 		 * Expected behavior: an error should not be thrown nor should a rejected promise
 		 * be returned.
 		 */
-		for (const compatibilityMode of ["1.0.0", "2.0.0"] as const) {
-			it(`Current AzureClient (mode: "${compatibilityMode}") can get container made by legacy AzureClient`, async () => {
+		for (const oldestSupportedClient of ["1.0.0", "2.0.0"] as const) {
+			it(`Current AzureClient (oldestSupportedClient: "${oldestSupportedClient}") can get container made by legacy AzureClient`, async () => {
 				const { container: containerLegacy } =
 					await clientLegacy.createContainer(schemaLegacy);
 				const containerId = await containerLegacy.attach();
@@ -352,8 +352,8 @@ for (const testOpts of testMatrix) {
 				// Await the value being saved, especially important if we dispose the legacy container.
 				await valueSetP;
 
-				if (compatibilityMode === "2.0.0") {
-					// We don't support interop between legacy containers and "2" mode, dispose the legacy
+				if (oldestSupportedClient === "2.0.0") {
+					// We don't support interop between legacy containers and oldestSupportedClient "2.0.0", dispose the legacy
 					// container to avoid this case.
 					containerLegacy.dispose();
 				}
@@ -361,7 +361,7 @@ for (const testOpts of testMatrix) {
 				const resources = clientCurrent.getContainer(
 					containerId,
 					schemaCurrent,
-					compatibilityMode,
+					oldestSupportedClient,
 				);
 				await assert.doesNotReject(resources, () => true, "container could not be loaded");
 
@@ -384,7 +384,7 @@ for (const testOpts of testMatrix) {
 	});
 
 	/**
-	 * Testing creating/loading containers between the compatibility modes.
+	 * Testing creating/loading containers across oldest supported client versions.
 	 */
 	describe(`Container create with current version (${testOpts.variant})`, () => {
 		const connectTimeoutMs = 10_000;
@@ -429,10 +429,10 @@ for (const testOpts of testMatrix) {
 		 * Expected behavior: an error should not be thrown nor should a rejected promise
 		 * be returned.
 		 */
-		it(`Legacy AzureClient can get container made by current AzureClient (mode: "1")`, async () => {
+		it(`Legacy AzureClient can get container made by current AzureClient (oldestSupportedClient: "1.0.0")`, async () => {
 			const { container: containerCurrent } = await clientCurrent1.createContainer(
 				schemaCurrent,
-				// Note: Only containers created in compatibility mode "1" may be loaded by legacy client.
+				// Note: Only containers created with oldestSupportedClient "1.0.0" may be loaded by a legacy client.
 				"1.0.0",
 			);
 			const containerId = await containerCurrent.attach();
@@ -467,11 +467,11 @@ for (const testOpts of testMatrix) {
 		});
 
 		/**
-		 * Scenario: test if a current AzureClient in compatibility mode "2" can get a container made by the current AzureClient in mode "1".
+		 * Scenario: test if a current AzureClient using oldestSupportedClient "2.0.0" can get a container made by the current AzureClient using "1.0.0".
 		 *
 		 * Expected behavior: an error should not be thrown nor should a rejected promise be returned.
 		 */
-		it(`Current AzureClient (mode: "2") can get container made by current AzureClient (mode: "1")`, async () => {
+		it(`Current AzureClient (oldestSupportedClient: "2.0.0") can get container made by current AzureClient (oldestSupportedClient: "1.0.0")`, async () => {
 			const { container: containerCurrent1 } = await clientCurrent1.createContainer(
 				schemaCurrent,
 				"1.0.0",
@@ -509,11 +509,11 @@ for (const testOpts of testMatrix) {
 		});
 
 		/**
-		 * Scenario: test if a current AzureClient in compatibility mode "1" can get a container made by the current AzureClient in mode "2".
+		 * Scenario: test if a current AzureClient using oldestSupportedClient "1.0.0" can get a container made by the current AzureClient using "2.0.0".
 		 *
 		 * Expected behavior: an error should not be thrown nor should a rejected promise be returned.
 		 */
-		it(`Current AzureClient (mode: "1") can get container made by current AzureClient (mode: "2")`, async () => {
+		it(`Current AzureClient (oldestSupportedClient: "1.0.0") can get container made by current AzureClient (oldestSupportedClient: "2.0.0")`, async () => {
 			const { container: containerCurrent2 } = await clientCurrent2.createContainer(
 				schemaCurrent,
 				"2.0.0",
@@ -609,11 +609,11 @@ for (const testOpts of testMatrix) {
 			}
 		});
 
-		for (const compatibilityMode of ["1.0.0", "2.0.0"] as const) {
-			it(`op grouping works as expected (compatibilityMode: ${compatibilityMode})`, async () => {
+		for (const oldestSupportedClient of ["1.0.0", "2.0.0"] as const) {
+			it(`op grouping works as expected (oldestSupportedClient: ${oldestSupportedClient})`, async () => {
 				const { container: container1 } = await clientCurrent1.createContainer(
 					schemaCurrent,
-					compatibilityMode,
+					oldestSupportedClient,
 				);
 				const containerId = await container1.attach();
 
@@ -642,7 +642,7 @@ for (const testOpts of testMatrix) {
 				const { container: container2 } = await clientCurrent1.getContainer(
 					containerId,
 					schemaCurrent,
-					compatibilityMode,
+					oldestSupportedClient,
 				);
 				const map2 = container2.initialObjects.map1;
 
@@ -664,17 +664,17 @@ for (const testOpts of testMatrix) {
 					}
 				}
 
-				if (compatibilityMode === "1.0.0") {
+				if (oldestSupportedClient === "1.0.0") {
 					assert.strictEqual(
 						groupedBatchCount,
 						0,
-						"expect no op grouping in compatibilityMode 1",
+						"expect no op grouping with oldestSupportedClient 1.0.0",
 					);
 				} else {
 					assert.strictEqual(
 						groupedBatchCount,
 						1,
-						"expect op grouping in compatibilityMode 2",
+						"expect op grouping with oldestSupportedClient 2.0.0",
 					);
 				}
 			});
@@ -695,13 +695,13 @@ describe("Container create in tree-only mode", () => {
 			undefined,
 			undefined,
 			undefined,
-			({ schema, minVersionForCollaboration }) => {
+			({ schema, minVersionForCollaboration: oldestSupportedClient }) => {
 				if (!isTreeContainerSchema(schema)) {
 					throw new UsageError(invalidSchemaErrorMessage);
 				}
 				return createTreeContainerRuntimeFactory({
 					schema,
-					minVersionForCollaboration,
+					oldestSupportedClient,
 				});
 			},
 		);

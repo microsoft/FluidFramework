@@ -24,7 +24,7 @@ const {
  */
 const generateApiDocsSection = (packageName, headingOptions) => {
 	const shortName = PackageName.getUnscopedName(packageName);
-	const sectionBody = `API documentation for **${packageName}** is available at <https://fluidframework.com/docs/apis/${shortName}>.`;
+	const sectionBody = `Read the **${packageName}** API documentation at <https://fluidframework.com/docs/apis/${shortName}>.`;
 	return formattedSectionText(sectionBody, {
 		...headingOptions,
 		headingText: "API Documentation",

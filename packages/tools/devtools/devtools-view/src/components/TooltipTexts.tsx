@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Link } from "@fluentui/react-components";
+import { FluentReactComponents } from "../FluentUi.cjs";
+
+const { Link } = FluentReactComponents;
 
 /**
  * Description of "Client ID" for use in tooltips.

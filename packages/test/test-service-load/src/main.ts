@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import {
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import type {
 	DriverEndpoint,
 	ITestDriver,
 	TestDriverTypes,
@@ -98,7 +101,11 @@ const main = async (): Promise<void> => {
 	);
 
 	const startTime = Date.now();
-	const outputDir = `${__dirname}/output/${startTime}`;
+	const outputDir = path.join(
+		path.dirname(fileURLToPath(import.meta.url)),
+		"output",
+		`${startTime}`,
+	);
 	const { logger, flush } = await createLogger(outputDir, "orchestrator", {
 		driverType: testDriver.type,
 		driverEndpointName: testDriver.endpointName,

@@ -19,7 +19,7 @@ import {
 	CrossFieldTarget,
 	type NodeId,
 	type CrossFieldKeyRange,
-	type NestedChangesIndices,
+	type ChildChangeInfo,
 } from "../modular-schema/index.js";
 
 import type {
@@ -62,25 +62,13 @@ export function createEmpty(): Changeset {
 	return [];
 }
 
-export function getNestedChanges(change: Changeset): NestedChangesIndices {
-	const output: NestedChangesIndices = [];
-	let inputIndex = 0;
-	let outputIndex = 0;
-	for (const mark of change) {
-		const { changes, count } = mark;
-		if (changes !== undefined) {
-			output.push([
-				changes,
-				areInputCellsEmpty(mark) ? undefined : inputIndex /* inputIndex */,
-				areOutputCellsEmpty(mark) ? undefined : outputIndex /* outputIndex */,
-			]);
-		}
-		if (!areInputCellsEmpty(mark)) {
-			inputIndex += count;
-		}
+export function getNestedChanges(change: Changeset): ChildChangeInfo[] {
+	const output: ChildChangeInfo[] = [];
 
-		if (!areOutputCellsEmpty(mark)) {
-			outputIndex += count;
+	for (const mark of change) {
+		if (mark.changes !== undefined) {
+			const detachId = isDetach(mark) ? getDetachedNodeId(mark) : undefined;
+			output.push({ nodeId: mark.changes, inputRootId: mark.cellId, detachId });
 		}
 	}
 	return output;
@@ -278,7 +266,7 @@ export function compareCellPositionsUsingTombstones(
 			//
 			// The same scenario can arise in the context of compose (just consider composing `old'` and `new'` from
 			// the examples above) with the same resolution.
-			assert(false, 0x8a2 /* Invalid cell ordering scenario */);
+			fail(0x8a2 /* Invalid cell ordering scenario */);
 		}
 
 		// The absence of metadata for a cell with a defined revision means that the cell is from a revision that

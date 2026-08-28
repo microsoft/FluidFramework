@@ -91,7 +91,7 @@ class FileLogger implements ITelemetryBufferedLogger {
 		this.schema.clear();
 		this.logs = [];
 	}
-	send(event: ITelemetryBaseEvent): void {
+	send(event: ITelemetryBaseEvent, logLevel: LogLevel): void {
 		if (typeof event.testCategoryOverride === "string") {
 			event.category = event.testCategoryOverride;
 		} else if (
@@ -109,7 +109,7 @@ class FileLogger implements ITelemetryBufferedLogger {
 		if (process.env.FLUID_LOGGER_PROPS !== undefined) {
 			plainEvent.details = process.env.FLUID_LOGGER_PROPS;
 		}
-		this.baseLogger?.send(plainEvent);
+		this.baseLogger?.send(plainEvent, logLevel);
 
 		event.Event_Time = Date.now();
 		// keep track of the frequency of every log event, as we'll sort by most common on write

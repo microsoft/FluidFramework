@@ -10,7 +10,7 @@ const config: Linter.Config[] = [
 	...strict,
 	{
 		// Override @typescript-eslint/parser to use explicit project list instead of projectService.
-		// This package has non-standard test directories (mocha/, jest/, types/) that
+		// This package has non-standard test directories (mocha/, playwright/, types/) that
 		// typescript-eslint's projectService can't auto-discover.
 		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
 		languageOptions: {
@@ -19,7 +19,7 @@ const config: Linter.Config[] = [
 				project: [
 					"./tsconfig.json",
 					"./src/test/mocha/tsconfig.json",
-					"./src/test/jest/tsconfig.cjs.json",
+					"./src/test/playwright/tsconfig.json",
 					"./src/test/types/tsconfig.json",
 				],
 			},
