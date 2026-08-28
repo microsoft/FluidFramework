@@ -64,7 +64,7 @@ describe("UntypedTreeView", () => {
 	});
 
 	it("runs beta transactions on an unhydrated node", () => {
-		// eslint-disable-next-line unicorn/no-new-array -- "Array" is the new of the schema
+		// eslint-disable-next-line unicorn/no-new-array -- "Array" is the name of the schema
 		const node = new Array(["a"]);
 		const context = TreeBeta.context(node);
 		assert.equal(context.isView(), false);
