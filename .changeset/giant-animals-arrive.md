@@ -3,7 +3,6 @@
 "fluid-framework": minor
 "__section": fix
 ---
-
 Preserve SharedTree's baseline format for historical runtime defaults
 
 SharedTree now treats the historical `2.0.0-defaults` runtime setting as its 2.0 baseline
