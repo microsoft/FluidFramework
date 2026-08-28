@@ -13342,9 +13342,6 @@ importers:
       eslint:
         specifier: catalog:eslint
         version: 9.39.1(jiti@2.6.1)(supports-color@10.2.2)
-      fluid-framework:
-        specifier: workspace:~
-        version: link:../../../framework/fluid-framework
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
