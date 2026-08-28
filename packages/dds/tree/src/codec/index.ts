@@ -30,6 +30,7 @@ export {
 	eraseEncodedType,
 	type JsonCodecPart,
 } from "./codec.js";
+export { normalizeTreeMinVersionForCollab } from "./compatibility.js";
 export {
 	DiscriminatedUnionDispatcher,
 	type DiscriminatedUnionLibrary,

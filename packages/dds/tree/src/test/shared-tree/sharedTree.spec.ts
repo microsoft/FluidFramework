@@ -19,6 +19,7 @@ import type {
 	ISharedObjectKind,
 	SharedObjectKindAlpha,
 } from "@fluidframework/shared-object-base/internal";
+import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
@@ -162,6 +163,35 @@ function treeTestFactory(): ISharedTree {
 }
 
 describe("SharedTree", () => {
+	it("supports the runtime's historical compatibility sentinel", () => {
+		const provider = new TestTreeProviderLite(
+			1,
+			configuredSharedTree({
+				jsonValidator: FormatValidatorBasic,
+				minVersionForCollab: defaultMinVersionForCollab,
+			}).getFactory(),
+		);
+		const view = provider.trees[0].viewWith(
+			new TreeViewConfiguration({ schema: numberSchema }),
+		);
+		view.initialize(10);
+		assert.equal(view.root, 10);
+	});
+
+	it("rejects compatibility versions before SharedTree 2.0", () => {
+		assert.throws(
+			() =>
+				new TestTreeProviderLite(
+					1,
+					configuredSharedTree({
+						jsonValidator: FormatValidatorBasic,
+						minVersionForCollab: "1.99.0",
+					}).getFactory(),
+				),
+			validateUsageError("SharedTree requires minVersionForCollab of at least 2.0.0"),
+		);
+	});
+
 	describe("viewWith", () => {
 		it("@Smoke initialize tree", () => {
 			const tree = treeTestFactory();

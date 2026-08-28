@@ -17,11 +17,11 @@ import { gte } from "semver-ts";
  * (e.g. enableRuntimeIdCompressor to support SharedTree).
  */
 const minVersionForCollabToDefaultRuntimeOptions: Record<
-	"1" | "2",
+	"historical" | "supported",
 	IContainerRuntimeOptionsInternal
 > = {
-	"1": {},
-	"2": {
+	historical: {},
+	supported: {
 		// The runtime ID compressor is a prerequisite to use SharedTree but is off by default and must be explicitly enabled.
 		// In general, we don't want to enable this by default since it increases the bundle size. However, since SharedTree
 		// is bundled with the fluid-framework package, we need to enable it here to support SharedTree.
@@ -42,6 +42,6 @@ export function defaultRuntimeOptionsForMinVersion(
 	minVersionForCollab: OldestSupportedClientVersion,
 ): IContainerRuntimeOptionsInternal {
 	return minVersionForCollabToDefaultRuntimeOptions[
-		gte(minVersionForCollab, "2.0.0") ? "2" : "1"
+		gte(minVersionForCollab, "2.0.0") ? "supported" : "historical"
 	];
 }

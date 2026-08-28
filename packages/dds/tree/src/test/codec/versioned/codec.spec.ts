@@ -6,13 +6,20 @@
 import { strict as assert } from "node:assert";
 
 import { nonProductionConditionalsIncluded } from "@fluidframework/core-utils/internal";
-import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
+import {
+	defaultMinVersionForCollab,
+	lowestMinVersionForCollab,
+} from "@fluidframework/runtime-utils/internal";
 import {
 	validateAssertionError,
 	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { FluidClientVersion, Versioned } from "../../../codec/index.js";
+import {
+	FluidClientVersion,
+	normalizeTreeMinVersionForCollab,
+	Versioned,
+} from "../../../codec/index.js";
 import {
 	VersionDispatchingCodecBuilder,
 	type CodecAndSchema,
@@ -92,6 +99,24 @@ describe("versioned Codecs", () => {
 				validateUsageError(`Unsupported version 3 encountered while decoding Test data. Supported versions for this data are: [1,2,"X"].
 The client which encoded this data likely specified an "minVersionForCollab" value which corresponds to a version newer than the version of this client ("${pkgVersion}").`),
 			);
+		});
+
+		it("uses the SharedTree 2.0 baseline for the historical compatibility sentinel", () => {
+			assert.equal(
+				normalizeTreeMinVersionForCollab(defaultMinVersionForCollab),
+				FluidClientVersion.v2_0,
+			);
+
+			const codec = builder.build({
+				minVersionForCollab: defaultMinVersionForCollab,
+				jsonValidator: FormatValidatorBasic,
+				writeVersionOverrides: new Map([["Test", 1]]),
+			});
+			assert.deepEqual(codec.encode(42), { version: 1, value1: 42 });
+			assert.deepEqual(builder.getCodecTree(defaultMinVersionForCollab), {
+				name: "Test",
+				version: 1,
+			});
 		});
 
 		it("unstable version", () => {

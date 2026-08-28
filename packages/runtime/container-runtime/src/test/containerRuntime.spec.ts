@@ -4794,6 +4794,27 @@ describe("Runtime", () => {
 					});
 				});
 			}
+			it("throws if createBlobPayloadPending is incompatible with minVersionForCollab 2.0.0", async () => {
+				await assert.rejects(
+					async () =>
+						ContainerRuntime.loadRuntime2({
+							context: getMockContext() as IContainerContext,
+							registry: new FluidDataStoreRegistry([]),
+							existing: false,
+							runtimeOptions: {
+								createBlobPayloadPending: true,
+								explicitSchemaControl: true,
+							},
+							provideEntryPoint: mockProvideEntryPoint,
+							minVersionForCollab: "2.0.0",
+						}),
+					(error: IErrorBase) =>
+						error.errorType === ContainerErrorTypes.usageError &&
+						error.message ===
+							"Runtime option createBlobPayloadPending:true requires runtime version 2.40.0. Please update minVersionForCollab (currently 2.0.0) to 2.40.0 or later to proceed.",
+				);
+			});
+
 			it("does not throw if minVersionForCollab is not set and the default is incompatible with runtimeOptions", async () => {
 				const logger = new MockLogger();
 				await assert.doesNotReject(async () => {

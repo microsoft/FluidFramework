@@ -9,7 +9,7 @@ import {
 	lowestMinVersionForCollab,
 } from "@fluidframework/runtime-utils/internal";
 
-import { FluidClientVersion } from "../../codec/index.js";
+import { FluidClientVersion, normalizeTreeMinVersionForCollab } from "../../codec/index.js";
 
 import { ForestSummaryFormatVersion } from "./summaryFormatCommon.js";
 import { summaryContentBlobKey as summaryContentBlobKeyV1ToV2 } from "./summaryFormatV1ToV2.js";
@@ -21,7 +21,7 @@ import { summaryContentBlobKey as summaryContentBlobKeyV3 } from "./summaryForma
 export function minVersionToForestSummaryFormatVersion(
 	version: OldestSupportedClientVersion,
 ): ForestSummaryFormatVersion {
-	return getConfigForMinVersionForCollab(version, {
+	return getConfigForMinVersionForCollab(normalizeTreeMinVersionForCollab(version), {
 		[lowestMinVersionForCollab]: ForestSummaryFormatVersion.v2,
 		[FluidClientVersion.v2_74]: ForestSummaryFormatVersion.v3,
 	});

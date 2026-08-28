@@ -15,6 +15,7 @@ import type {
 	IExperimentalIncrementalSummaryContext,
 	OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
+import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
@@ -1269,6 +1270,23 @@ describe("ForestSummarizer", () => {
 	});
 
 	describe("Summary metadata validation", () => {
+		it("writes baseline metadata for the historical compatibility sentinel", () => {
+			const { forestSummarizer } = createForestSummarizer({
+				encodeType: TreeCompressionStrategy.Compressed,
+				forestType: ForestTypeOptimized,
+				minVersionForCollab: defaultMinVersionForCollab,
+			});
+
+			const summary = forestSummarizer.summarize({ stringify: JSON.stringify });
+			const metadataBlob = summary.summary.tree[summarizablesMetadataKey];
+			assert(metadataBlob !== undefined, "Metadata blob should exist");
+			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
+			const metadataContent = JSON.parse(
+				metadataBlob.content as string,
+			) as SharedTreeSummarizableMetadata;
+			assert.equal(metadataContent.version, ForestSummaryFormatVersion.v2);
+		});
+
 		it("writes metadata blob with version 2", () => {
 			const { forestSummarizer } = createForestSummarizer({
 				encodeType: TreeCompressionStrategy.Compressed,

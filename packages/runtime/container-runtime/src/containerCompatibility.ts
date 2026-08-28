@@ -108,10 +108,12 @@ const runtimeOptionsAffectingDocSchemaConfigMap: ConfigMap<RuntimeOptionsAffecti
 		enableGroupedBatching: {
 			"1.0.0": false,
 			"2.0.0-defaults": true,
+			"2.0.0": true,
 		},
 		compressionOptions: {
 			"1.0.0": disabledCompressionConfig,
 			"2.0.0-defaults": enabledCompressionConfig,
+			"2.0.0": enabledCompressionConfig,
 		},
 		enableRuntimeIdCompressor: {
 			// For IdCompressorMode, `undefined` represents a logical state (off).
@@ -119,6 +121,8 @@ const runtimeOptionsAffectingDocSchemaConfigMap: ConfigMap<RuntimeOptionsAffecti
 			// `exactOptionalPropertyTypes` is `false` (TODO: AB#8215), we need
 			// to have it defined, so we trick the type checker here.
 			"1.0.0": undefined,
+			"2.0.0-defaults": undefined,
+			"2.0.0": undefined,
 			// We do not yet want to enable idCompressor by default since it will
 			// increase bundle sizes, and not all customers will benefit from it.
 			// Therefore, we will require customers to explicitly enable it. We
@@ -145,9 +149,12 @@ const runtimeOptionsAffectingDocSchemaConfigMap: ConfigMap<RuntimeOptionsAffecti
 			// fewer messages will be included per flush.
 			"1.0.0": FlushMode.Immediate,
 			"2.0.0-defaults": FlushMode.TurnBased,
+			"2.0.0": FlushMode.TurnBased,
 		},
 		gcOptions: {
 			"1.0.0": {},
+			"2.0.0-defaults": {},
+			"2.0.0": {},
 			// Although sweep is supported in 2.x, it is disabled by default until minVersionForCollab>=3.0.0 to be extra safe.
 			// Note that enabling this is a significant change, that should likely be announced in the relevant version:
 			// It would be bad if this simple caused the enablement when when the current package version passed this point without anyone being aware.
@@ -161,6 +168,8 @@ const runtimeOptionsAffectingDocSchemaConfigMap: ConfigMap<RuntimeOptionsAffecti
 			// closed on the version where that will happen yet.  Probably a .10 release since blob functionality is not
 			// exposed on the `@public` API surface.
 			"1.0.0": undefined,
+			"2.0.0-defaults": undefined,
+			"2.0.0": undefined,
 		},
 	};
 

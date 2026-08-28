@@ -13,7 +13,9 @@ import type {
 	IFluidSerializer,
 	SharedKernel,
 } from "@fluidframework/shared-object-base/internal";
+import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { lt } from "semver-ts";
 
 import {
 	type CodecTree,
@@ -23,6 +25,7 @@ import {
 	FluidClientVersion,
 	FormatValidatorNoOp,
 	type ICodecOptions,
+	normalizeTreeMinVersionForCollab,
 } from "../codec/index.js";
 import {
 	type FieldKey,
@@ -209,13 +212,19 @@ export class SharedTreeKernel
 		idCompressor: IIdCompressor,
 		optionsParam: SharedTreeOptionsInternal,
 	) {
+		const minVersionForCollab =
+			optionsParam.minVersionForCollab ?? defaultSharedTreeOptions.minVersionForCollab;
+		if (
+			minVersionForCollab !== defaultMinVersionForCollab &&
+			lt(minVersionForCollab, FluidClientVersion.v2_0)
+		) {
+			throw new UsageError("SharedTree requires minVersionForCollab of at least 2.0.0");
+		}
 		const options: Required<SharedTreeOptionsInternal> = {
 			...defaultSharedTreeOptions,
 			...optionsParam,
+			minVersionForCollab: normalizeTreeMinVersionForCollab(minVersionForCollab),
 		};
-		if (options.minVersionForCollab < FluidClientVersion.v2_0) {
-			throw new UsageError("SharedTree requires minVersionForCollab of at least 2.0.0");
-		}
 		const schema = new TreeStoredSchemaRepository();
 		const forest = buildConfiguredForest(
 			breaker,

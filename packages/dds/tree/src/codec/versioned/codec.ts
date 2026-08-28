@@ -30,6 +30,7 @@ import {
 	type CodecName,
 	type CodecTree,
 } from "../codec.js";
+import { normalizeTreeMinVersionForCollab } from "../compatibility.js";
 
 import { Versioned } from "./format.js";
 
@@ -580,6 +581,7 @@ function getWriteVersion<T extends CodecVersionBase>(
 	options: CodecWriteOptions,
 	versions: readonly T[],
 ): T {
+	const minVersionForCollab = normalizeTreeMinVersionForCollab(options.minVersionForCollab);
 	if (options.writeVersionOverrides?.has(name) === true) {
 		const selectedFormatVersion = options.writeVersionOverrides.get(name);
 		const selected = versions.find((codec) => codec.formatVersion === selectedFormatVersion);
@@ -593,7 +595,7 @@ function getWriteVersion<T extends CodecVersionBase>(
 				throw new UsageError(
 					`Codec "${name}" does not support requested format version ${JSON.stringify(selectedFormatVersion)} because it has minVersionForCollab undefined. Use "allowPossiblyIncompatibleWriteVersionOverrides" to suppress this error if appropriate.`,
 				);
-			} else if (gt(selectedMinVersionForCollab, options.minVersionForCollab)) {
+			} else if (gt(selectedMinVersionForCollab, minVersionForCollab)) {
 				throw new UsageError(
 					`Codec "${name}" does not support requested format version ${JSON.stringify(selectedFormatVersion)} because it is only compatible back to client version ${selectedMinVersionForCollab} and the requested oldest compatible client was ${options.minVersionForCollab}. Use "allowPossiblyIncompatibleWriteVersionOverrides" to suppress this error if appropriate.`,
 				);
@@ -621,7 +623,7 @@ function getWriteVersionNoOverrides<T extends CodecVersionBase>(
 	}
 
 	const result: T = getConfigForMinVersionForCollabIterable(
-		minVersionForCollab,
+		normalizeTreeMinVersionForCollab(minVersionForCollab),
 		stableVersions,
 	);
 	return result;
