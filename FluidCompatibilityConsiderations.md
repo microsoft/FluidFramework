@@ -113,6 +113,7 @@ This is done using an [OldestSupportedClientVersion](https://fluidframework.com/
 Fluid supports `OldestSupportedClientVersion` back to releases at least 18-months ago,
 and will only ever change the minimum supported version in a major release (as doing so is a breaking change).
 This means users of Fluid are given at least 18-months to roll out any version while being able to maintain collaboration across the rollout.
+Client 3.0 supports values from the 2.x and 3.x release lines, so every active deployment that must collaborate needs to use Fluid Framework 2.0.0 or later before upgrading.
 
 Details on exactly how this is tracked can be found in
 [Cross-Client Compatibility Policy](./CrossClientCompatibility.md#cross-client-compatibility-policy).

@@ -276,7 +276,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 							},
 						]),
 					validateAssertionError(
-						`Debug assert failed: Codec Test has multiple entries for version "1.0.0"`,
+						`Debug assert failed: Codec Test has multiple entries for version "${lowestMinVersionForCollab}"`,
 					),
 				);
 

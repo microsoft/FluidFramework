@@ -12,22 +12,14 @@ import { compare, gt, gte, lte, parse } from "semver-ts";
 import { pkgVersion } from "./packageVersion.js";
 
 /**
- * Our policy is to support major versions N and N-1, where N is most
- * recent public major release of the Fluid Framework Client.
- * Therefore, if the customer does not provide a minVersionForCollab, we will
- * default to use N-1.
+ * Historical compatibility configuration used before callers explicitly selected their oldest
+ * supported client.
  *
- * However, this is not consistent with today's behavior. Some options (i.e.
- * batching, compression) are enabled by default despite not being compatible
- * with 1.x clients. Since the policy was introduced during 2.x's lifespan,
- * N/N-1 compatibility by **default** will be in effect starting with 3.0.
- * Importantly though, N/N-2 compatibility is still guaranteed with the proper
- * configurations set.
- *
- * Further to distinguish unspecified `minVersionForCollab` from a specified
- * version and allow `enableExplicitSchemaControl` to default to `true` for
- * any 2.0.0+ version, we will use a special value of `2.0.0-defaults`, which
- * is semantically less than 2.0.0.
+ * @remarks
+ * This sentinel sorts below 2.0.0 so the runtime can preserve the historical defaults, including
+ * `explicitSchemaControl: false`, while explicit 2.0.0 selects the current 2.0 configuration.
+ * It remains the fallback for callers that omit an explicit compatibility value and for internal
+ * test and replay infrastructure, but it is not a deployed client version.
  *
  * @internal
  */
@@ -35,10 +27,11 @@ export const defaultMinVersionForCollab =
 	"2.0.0-defaults" as const satisfies OldestSupportedClientVersion;
 
 /**
- * We don't want allow a version before the major public release of the LTS version.
- * Today we use "1.0.0", because our policy supports N/N-1 & N/N-2, which includes
- * all minor versions of N. Though LTS starts at 1.4.0, we should stay consistent
- * with our policy and allow all 1.x versions to be compatible with 2.x.
+ * Oldest deployed Fluid Framework client version supported for cross-client compatibility.
+ *
+ * @remarks
+ * The historical {@link defaultMinVersionForCollab} sentinel is also accepted as the implicit
+ * fallback even though it sorts below this deployed-version floor.
  *
  * @privateRemarks
  * Exported for use in tests.
@@ -46,7 +39,7 @@ export const defaultMinVersionForCollab =
  * @internal
  */
 export const lowestMinVersionForCollab =
-	"1.0.0" as const satisfies OldestSupportedClientVersion;
+	"2.0.0" as const satisfies OldestSupportedClientVersion;
 
 /**
  * String in a valid semver format specifying bottom of a minor version
@@ -95,8 +88,10 @@ export interface ConfigMapEntry<T> {
 	// This index signature (See https://www.typescriptlang.org/docs/handbook/2/objects.html#index-signatures) requires all properties on this type to to have keys that are a MinimumMinorSemanticVersion and values of type T.
 	// Note that the "version" part of this syntax is really just documentation and has no impact on the type checking (other than some identifier being required to the syntax here to differentiate it from the computed property syntax).
 	[version: MinimumMinorSemanticVersion]: T;
-	// Require an entry for the defaultMinVersionForCollab:
-	// this ensures that all versions of lowestMinVersionForCollab or later have a specified value in the ConfigMap.
+	// Require an entry for lowestMinVersionForCollab:
+	// this ensures that every supported deployed-client version has a specified value in the ConfigMap.
+	// Maps that distinguish the historical default must also provide an explicit
+	// defaultMinVersionForCollab entry.
 	// Note that this is NOT an index signature.
 	// This is a regular property with a computed name (See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Object_initializer#computed_property_names).
 	[lowestMinVersionForCollab]: T;
@@ -222,8 +217,10 @@ export function checkValidMinVersionForCollabVerbose(minVersionForCollab: Semant
 } {
 	const parsed = parse(minVersionForCollab);
 	const isValidSemver = parsed !== null && parsed.build.length === 0;
+	const isHistoricalDefault = minVersionForCollab === defaultMinVersionForCollab;
 	const isGteLowestMinVersion =
-		isValidSemver && gte(minVersionForCollab, lowestMinVersionForCollab);
+		isValidSemver &&
+		(isHistoricalDefault || gte(minVersionForCollab, lowestMinVersionForCollab));
 	const isLtePkgVersion = isValidSemver && lte(minVersionForCollab, cleanedPackageVersion);
 	const isValidOldestSupportedClientVersion =
 		isGteLowestMinVersion &&

@@ -185,6 +185,7 @@ describe("SharedTree", () => {
 					1,
 					configuredSharedTree({
 						jsonValidator: FormatValidatorBasic,
+						// @ts-expect-error Client 3.0 excludes 1.x values, but runtime validation must reject type-erased input.
 						minVersionForCollab: "1.99.0",
 					}).getFactory(),
 				),
