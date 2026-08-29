@@ -99,6 +99,20 @@ export function normalizePackageVersions(snapshot: IFileSnapshot): IFileSnapshot
 }
 
 /**
+ * Configures how a generated snapshot is compared with its reference snapshot.
+ *
+ * @internal
+ */
+export interface SnapshotComparisonOptions {
+	/**
+	 * Top-level blob paths that may exist only in the reference snapshot because the source
+	 * data cannot reconstruct their state. If the generated snapshot contains a listed path,
+	 * its contents are compared strictly.
+	 */
+	readonly allowedReferenceOnlyBlobPaths: readonly string[];
+}
+
+/**
  * Returns a shallow copy of the snapshot with the named top-level blobs removed.
  */
 function withoutTopLevelBlobs(
@@ -121,10 +135,8 @@ function withoutTopLevelBlobs(
 /**
  * Compares a snapshot against a reference snapshot file and reports any differences.
  *
- * @param referenceSnapshotBlobPathsToIgnore - Top-level blobs that may exist only in the
- * reference because the source data cannot reconstruct their state. A blob is ignored in the
- * reference only when it is absent from the generated snapshot; otherwise it is compared
- * strictly.
+ * @param options - Controls explicitly allowed differences between the generated and reference
+ * snapshots.
  *
  * @internal
  */
@@ -132,7 +144,7 @@ export function compareWithReferenceSnapshot(
 	snapshot: IFileSnapshot,
 	referenceSnapshotFilename: string,
 	errorHandler: (description: string, error?: any) => void,
-	referenceSnapshotBlobPathsToIgnore: readonly string[] = [],
+	options: SnapshotComparisonOptions,
 ): void {
 	// Read the reference snapshot and covert it to normalized IFileSnapshot.
 	const referenceSnapshotString = fs.readFileSync(
@@ -148,7 +160,7 @@ export function compareWithReferenceSnapshot(
 	const normalizedReferenceSnapshot = normalizePackageVersions(
 		withoutTopLevelBlobs(
 			getNormalizedFileSnapshot(referenceSnapshot),
-			referenceSnapshotBlobPathsToIgnore.filter(
+			options.allowedReferenceOnlyBlobPaths.filter(
 				(path) => !generatedSnapshotBlobPaths.has(path),
 			),
 		),

@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { SnapshotComparisonOptions } from "./helpers.js";
+
 /**
  * Base class for replay tool arguments
  * @internal
@@ -25,7 +27,9 @@ export class ReplayArgs {
 	public expandFiles = true;
 	public testSummaries = false;
 	public strictChannels = false;
-	public referenceSnapshotBlobPathsToIgnore: readonly string[] = [];
+	public snapshotComparisonOptions: SnapshotComparisonOptions = {
+		allowedReferenceOnlyBlobPaths: [],
+	};
 
 	public checkArgs(): void {
 		if (this.from > this.to) {

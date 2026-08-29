@@ -64,7 +64,7 @@ describe("Snapshot comparison", () => {
 			(_description, error) => {
 				comparisonError = error;
 			},
-			[blobPath],
+			{ allowedReferenceOnlyBlobPaths: [blobPath] },
 		);
 
 		assert.equal(comparisonError, undefined);
@@ -80,7 +80,7 @@ describe("Snapshot comparison", () => {
 			(_description, error) => {
 				comparisonError = error;
 			},
-			[blobPath],
+			{ allowedReferenceOnlyBlobPaths: [blobPath] },
 		);
 
 		assert.ok(comparisonError instanceof Error);
@@ -99,6 +99,7 @@ describe("Snapshot comparison", () => {
 				(_description, error) => {
 					comparisonError = error;
 				},
+				{ allowedReferenceOnlyBlobPaths: [] },
 			);
 		} finally {
 			if (originalForceColor === undefined) {

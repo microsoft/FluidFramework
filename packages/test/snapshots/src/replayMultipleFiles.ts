@@ -157,9 +157,11 @@ export async function processOneNode(args: IWorkerArgs): Promise<void> {
 	replayArgs.write = args.mode === Mode.NewSnapshots || args.mode === Mode.UpdateSnapshots;
 	replayArgs.compare = args.mode === Mode.Compare;
 	if (replayArgs.compare && baseSnapshotLacksBlob(args.folder, recentBatchInfoBlobName)) {
-		// Replay cannot reconstruct state that was not persisted in the base snapshot. Ignore the
-		// same blob that back-compat validation ignores when its source predates batch ID tracking.
-		replayArgs.referenceSnapshotBlobPathsToIgnore = [recentBatchInfoBlobName];
+		// Replay cannot reconstruct state that was not persisted in the base snapshot. Allow the
+		// same reference-only blob as back-compat validation when the source predates batch ID tracking.
+		replayArgs.snapshotComparisonOptions = {
+			allowedReferenceOnlyBlobPaths: [recentBatchInfoBlobName],
+		};
 	}
 	// Make it easier to see problems in stress tests
 	replayArgs.expandFiles = args.mode === Mode.Stress;

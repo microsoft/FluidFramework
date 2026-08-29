@@ -8,6 +8,7 @@ export {
 	getNormalizedFileSnapshot,
 	loadContainer,
 	normalizePackageVersions,
+	type SnapshotComparisonOptions,
 	uploadSummary,
 } from "./helpers.js";
 export { ReplayArgs } from "./replayArgs.js";
