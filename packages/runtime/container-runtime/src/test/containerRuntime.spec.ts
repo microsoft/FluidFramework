@@ -4794,7 +4794,7 @@ describe("Runtime", () => {
 					});
 				});
 			}
-			it("throws if createBlobPayloadPending is incompatible with minVersionForCollab 2.0.0", async () => {
+			it("throws if createBlobPayloadPending is incompatible with oldestSupportedClient 2.0.0", async () => {
 				await assert.rejects(
 					async () =>
 						ContainerRuntime.loadRuntime2({
@@ -4806,7 +4806,7 @@ describe("Runtime", () => {
 								explicitSchemaControl: true,
 							},
 							provideEntryPoint: mockProvideEntryPoint,
-							minVersionForCollab: "2.0.0",
+							oldestSupportedClient: "2.0.0",
 						}),
 					(error: IErrorBase) =>
 						error.errorType === ContainerErrorTypes.usageError &&
