@@ -231,7 +231,9 @@ To tighten runtime enforcement:
 Fluid's end-to-end test suite automatically generates cross-client compatibility
 variations using `describeCompat()` with `"FullCompat"`. The variations test
 cross-client compatibility scenarios by using one version of the Fluid runtime for
-creating containers and a different version for loading containers.
+creating containers and a different version for loading containers. Prior checkpoints
+below `lowestMinVersionForCollab` are excluded because they are outside the supported
+deployed-client range.
 
 **Example:** With current build `3.0.0` (N) and in-window prior Compatibility
 Checkpoints `2.80.0` (CC#4), `2.40.0` (CC#3), and `2.0.9` (CC#2), a SharedCell
