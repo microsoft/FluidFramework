@@ -25,6 +25,7 @@ export class ReplayArgs {
 	public expandFiles = true;
 	public testSummaries = false;
 	public strictChannels = false;
+	public referenceSnapshotBlobPathsToIgnore: readonly string[] = [];
 
 	public checkArgs(): void {
 		if (this.from > this.to) {

@@ -5,6 +5,7 @@
 
 import { strict } from "assert";
 import fs from "fs";
+import { stripVTControlCharacters } from "node:util";
 
 import type {
 	IContainer,
@@ -98,7 +99,32 @@ export function normalizePackageVersions(snapshot: IFileSnapshot): IFileSnapshot
 }
 
 /**
+ * Returns a shallow copy of the snapshot with the named top-level blobs removed.
+ */
+function withoutTopLevelBlobs(
+	snapshot: IFileSnapshot,
+	blobPaths: readonly string[],
+): IFileSnapshot {
+	if (blobPaths.length === 0) {
+		return snapshot;
+	}
+	const ignoredPaths = new Set(blobPaths);
+	return {
+		commits: snapshot.commits,
+		tree: {
+			...snapshot.tree,
+			entries: snapshot.tree.entries.filter((entry) => !ignoredPaths.has(entry.path)),
+		},
+	};
+}
+
+/**
  * Compares a snapshot against a reference snapshot file and reports any differences.
+ *
+ * @param referenceSnapshotBlobPathsToIgnore - Top-level blobs that may exist only in the
+ * reference because the source data cannot reconstruct their state. A blob is ignored in the
+ * reference only when it is absent from the generated snapshot; otherwise it is compared
+ * strictly.
  *
  * @internal
  */
@@ -106,23 +132,38 @@ export function compareWithReferenceSnapshot(
 	snapshot: IFileSnapshot,
 	referenceSnapshotFilename: string,
 	errorHandler: (description: string, error?: any) => void,
+	referenceSnapshotBlobPathsToIgnore: readonly string[] = [],
 ): void {
 	// Read the reference snapshot and covert it to normalized IFileSnapshot.
 	const referenceSnapshotString = fs.readFileSync(
 		`${referenceSnapshotFilename}.json`,
 		"utf-8",
 	);
-	const referenceSnapshot = JSON.parse(referenceSnapshotString);
+	const referenceSnapshot = JSON.parse(referenceSnapshotString) as IFileSnapshot;
 
 	const normalizedSnapshot = normalizePackageVersions(getNormalizedFileSnapshot(snapshot));
+	const generatedSnapshotBlobPaths = new Set(
+		normalizedSnapshot.tree.entries.map((entry) => entry.path),
+	);
 	const normalizedReferenceSnapshot = normalizePackageVersions(
-		getNormalizedFileSnapshot(referenceSnapshot),
+		withoutTopLevelBlobs(
+			getNormalizedFileSnapshot(referenceSnapshot),
+			referenceSnapshotBlobPathsToIgnore.filter(
+				(path) => !generatedSnapshotBlobPaths.has(path),
+			),
+		),
 	);
 
 	// Put the assert in a try catch block, so that we can report errors, if any.
 	try {
 		strict.deepStrictEqual(normalizedSnapshot, normalizedReferenceSnapshot);
 	} catch (error) {
+		if (error instanceof Error) {
+			error.message = stripVTControlCharacters(error.message);
+			if (error.stack !== undefined) {
+				error.stack = stripVTControlCharacters(error.stack);
+			}
+		}
 		errorHandler(`Mismatch in snapshot ${referenceSnapshotFilename}.json`, error);
 	}
 }

@@ -3,14 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { strict } from "node:assert";
 import fs from "node:fs";
 
 import {
 	compareWithReferenceSnapshot,
 	getNormalizedFileSnapshot,
 	loadContainer,
-	normalizePackageVersions,
 	uploadSummary,
 } from "@fluid-internal/replay-tool";
 import { IContainer } from "@fluidframework/container-definitions/internal";
@@ -29,7 +27,7 @@ import {
 import { SnapshotStorageService } from "./snapshotStorageService.js";
 
 const metadataBlobName = ".metadata";
-const recentBatchInfoBlobName = ".recentBatchInfo";
+export const recentBatchInfoBlobName = ".recentBatchInfo";
 
 /**
  * Returns true if the snapshot tree contains a top-level blob with the given path.
@@ -38,56 +36,6 @@ function snapshotHasBlob(snapshot: IFileSnapshot, blobPath: string): boolean {
 	return snapshot.tree.entries.some(
 		(entry) => entry.path === blobPath && entry.type === TreeEntry.Blob,
 	);
-}
-
-/**
- * Returns a shallow copy of the snapshot with the named top-level blob removed.
- *
- * Used so back-compat tests (loading older snapshots that pre-date a new summary blob and
- * re-summarizing them) can still compare against the current reference, which does include
- * that blob. The runtime cannot reconstruct the new state when loading an older snapshot,
- * so the strict byte-equal comparison must ignore that blob in that direction.
- */
-function withoutTopLevelBlob(snapshot: IFileSnapshot, blobPath: string): IFileSnapshot {
-	return {
-		commits: snapshot.commits,
-		tree: {
-			...snapshot.tree,
-			entries: snapshot.tree.entries.filter((entry) => entry.path !== blobPath),
-		},
-	};
-}
-
-/**
- * Compare a produced snapshot against a reference file, ignoring a named top-level blob on
- * both sides. Mirrors the relevant parts of {@link compareWithReferenceSnapshot} but applies
- * an additional filter so we can validate back-compat scenarios where the source snapshot
- * pre-dates a new state-carrying blob.
- */
-function compareIgnoringBlob(
-	produced: IFileSnapshot,
-	referenceSnapshotFilename: string,
-	blobToIgnore: string,
-	errorHandler: (description: string, error?: unknown) => void,
-): void {
-	const referenceSnapshotString = fs.readFileSync(
-		`${referenceSnapshotFilename}.json`,
-		"utf-8",
-	);
-	const referenceSnapshot = JSON.parse(referenceSnapshotString) as IFileSnapshot;
-
-	const filteredProduced = normalizePackageVersions(
-		withoutTopLevelBlob(produced, blobToIgnore),
-	);
-	const filteredReference = normalizePackageVersions(
-		withoutTopLevelBlob(getNormalizedFileSnapshot(referenceSnapshot), blobToIgnore),
-	);
-
-	try {
-		strict.deepStrictEqual(filteredProduced, filteredReference);
-	} catch (error) {
-		errorHandler(`Mismatch in snapshot ${referenceSnapshotFilename}.json`, error);
-	}
 }
 
 /**
@@ -160,20 +108,12 @@ export async function validateSnapshots(
 						seqToMessage.get(container.deltaManager.lastSequenceNumber),
 					),
 				);
-				if (sourceLacksRecentBatchInfo) {
-					compareIgnoringBlob(
-						produced,
-						`${destDir}/${snapshotFileName}`,
-						recentBatchInfoBlobName,
-						reportError,
-					);
-				} else {
-					compareWithReferenceSnapshot(
-						produced,
-						`${destDir}/${snapshotFileName}`,
-						reportError,
-					);
-				}
+				compareWithReferenceSnapshot(
+					produced,
+					`${destDir}/${snapshotFileName}`,
+					reportError,
+					sourceLacksRecentBatchInfo ? [recentBatchInfoBlobName] : [],
+				);
 			};
 			const storage = new SnapshotStorageService(sourceSnapshot, onSnapshotCb);
 

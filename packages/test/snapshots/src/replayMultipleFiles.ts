@@ -14,7 +14,7 @@ import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/in
 import { getMetadata, writeMetadataFile } from "./metadata.js";
 import { pkgVersion } from "./packageVersion.js";
 import { getTestContent } from "./testContent.js";
-import { validateSnapshots } from "./validateSnapshots.js";
+import { recentBatchInfoBlobName, validateSnapshots } from "./validateSnapshots.js";
 
 // Determine relative contents files location
 function getTestContentPath(): string {
@@ -34,6 +34,17 @@ const srcSnapshots = "src_snapshots";
 const baseSnapshot = "base_snapshot";
 
 const numberOfThreads = 4;
+
+function baseSnapshotLacksBlob(snapshotFolder: string, blobPath: string): boolean {
+	const treePath = nodePath.join(snapshotFolder, baseSnapshot, "tree.json");
+	if (!fs.existsSync(treePath)) {
+		return false;
+	}
+	const tree = JSON.parse(fs.readFileSync(treePath, "utf8")) as {
+		blobs?: Record<string, string>;
+	};
+	return tree.blobs?.[blobPath] === undefined;
+}
 
 export enum Mode {
 	Compare, // Compare snapshots generated to files stored on disk.
@@ -145,6 +156,11 @@ export async function processOneNode(args: IWorkerArgs): Promise<void> {
 	replayArgs.testSummaries = !!args.testSummaries;
 	replayArgs.write = args.mode === Mode.NewSnapshots || args.mode === Mode.UpdateSnapshots;
 	replayArgs.compare = args.mode === Mode.Compare;
+	if (replayArgs.compare && baseSnapshotLacksBlob(args.folder, recentBatchInfoBlobName)) {
+		// Replay cannot reconstruct state that was not persisted in the base snapshot. Ignore the
+		// same blob that back-compat validation ignores when its source predates batch ID tracking.
+		replayArgs.referenceSnapshotBlobPathsToIgnore = [recentBatchInfoBlobName];
+	}
 	// Make it easier to see problems in stress tests
 	replayArgs.expandFiles = args.mode === Mode.Stress;
 	replayArgs.initializeFromSnapshotsDir = args.initializeFromSnapshotsDir;
