@@ -23,26 +23,21 @@
 		"./internal/workspace-states": "./lib/workspace-states/stateDatastoreTypes.js"
 	},
 	"files": [
-		"dist/**/*",
 		"lib/**/*",
 		"!**/test/**"
 	],
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:api-reports": "api-extractor run --local --config api-extractor/api-extractor-report.json",
-		"build:cjs": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ./src/cjs/package.json ./dist",
-		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local --config api-extractor/api-extractor-model.json",
 		"build:esm": "tsc --project ./tsconfig.json",
-		"build:test": "concurrently npm:build:test:esm npm:build:test:cjs",
-		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
+		"build:test": "npm run build:test:esm",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack . --profile esm-only",
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
-		"check:exports:cjs:index": "api-extractor run --config api-extractor/api-extractor-lint-index.cjs.json",
 		"check:exports:esm:index": "api-extractor run --config api-extractor/api-extractor-lint-index.esm.json",
 		"check:format": "npm run check:biome",
 		"check:types:inexactOptionalPropertyTypes": "tsc --project ./tsconfig.json --noEmit --exactOptionalPropertyTypes false --skipLibCheck --emitDeclarationOnly false --tsBuildInfoFile ./tsconfig.inexactOptionalPropertyTypes.tsbuildinfo",
@@ -80,9 +75,6 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"check:exports:cjs:index": [
-				"build:cjs"
-			],
 			"check:exports:esm:index": [
 				"build:esm"
 			]
