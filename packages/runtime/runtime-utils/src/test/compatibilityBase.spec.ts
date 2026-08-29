@@ -16,6 +16,7 @@ import {
 	type SemanticVersion,
 	type ConfigValidationMap,
 	configValueToMinVersionForCollab,
+	defaultMinVersionForCollab,
 	lowestMinVersionForCollab,
 	checkValidMinVersionForCollabVerbose,
 	cleanedPackageVersion,
@@ -33,12 +34,21 @@ describe("compatibilityBase", () => {
 	// The getConfigsForMinVersionForCollab tests provide a lot of coverage for this function as well.
 	describe("getConfigForMinVersionForCollab", () => {
 		it("minimal", () => {
-			const config = getConfigForMinVersionForCollab("2.2.0", { "2.0.0": "X" });
+			const config = getConfigForMinVersionForCollab("2.2.0", {
+				[defaultMinVersionForCollab]: "X",
+				[lowestMinVersionForCollab]: "X",
+			});
 			assert.equal(config, "X");
 		});
 		it("sorting", () => {
 			// These checks are designed to fail if the items are not sorted according to semver, and are either left as ordered or sorted lexically.
-			const config = { "2.0.0": "A", "2.100.0": "D", "2.58.0": "B", "2.60.0": "C" };
+			const config = {
+				[defaultMinVersionForCollab]: "A",
+				[lowestMinVersionForCollab]: "A",
+				"2.100.0": "D",
+				"2.58.0": "B",
+				"2.60.0": "C",
+			};
 			assert.equal(getConfigForMinVersionForCollab("2.50.0", config), "A");
 			assert.equal(getConfigForMinVersionForCollab("2.58.0", config), "B");
 			assert.equal(getConfigForMinVersionForCollab("2.59.0", config), "B");
@@ -431,7 +441,7 @@ describe("compatibilityBase", () => {
 		});
 
 		const testCases: {
-			version: OldestSupportedClientVersion;
+			version: SemanticVersion;
 			checks: {
 				isValidSemver: boolean;
 				isGteLowestMinVersion: boolean;
@@ -458,8 +468,7 @@ describe("compatibilityBase", () => {
 				},
 			},
 			{
-				// Cast since this is not a valid OldestSupportedClientVersion, but is a valid semver.
-				version: "3.999999.1" as OldestSupportedClientVersion,
+				version: "3.999999.1",
 				checks: {
 					isValidSemver: true,
 					isGteLowestMinVersion: true,
@@ -468,8 +477,7 @@ describe("compatibilityBase", () => {
 				},
 			},
 			{
-				// Cast since this is not a valid OldestSupportedClientVersion, but is a valid semver.
-				version: "3.999999.0-test" as OldestSupportedClientVersion,
+				version: "3.999999.0-test",
 				checks: {
 					isValidSemver: true,
 					isGteLowestMinVersion: true,
@@ -487,8 +495,7 @@ describe("compatibilityBase", () => {
 				},
 			},
 			{
-				// Cast since this is no longer a valid OldestSupportedClientVersion.
-				version: "1.99.0" as OldestSupportedClientVersion,
+				version: "1.99.0",
 				checks: {
 					isValidSemver: true,
 					isGteLowestMinVersion: false,
@@ -497,8 +504,7 @@ describe("compatibilityBase", () => {
 				},
 			},
 			{
-				// Cast since this is not a valid OldestSupportedClientVersion, but is a valid semver.
-				version: "0.0.0" as OldestSupportedClientVersion,
+				version: "0.0.0",
 				checks: {
 					isValidSemver: true,
 					isGteLowestMinVersion: false,
@@ -507,8 +513,7 @@ describe("compatibilityBase", () => {
 				},
 			},
 			{
-				// Cast since this is not a valid OldestSupportedClientVersion, but is a valid semver.
-				version: "1000000.0.0" as OldestSupportedClientVersion,
+				version: "1000000.0.0",
 				checks: {
 					isValidSemver: true,
 					isGteLowestMinVersion: true,
@@ -517,8 +522,8 @@ describe("compatibilityBase", () => {
 				},
 			},
 			{
-				// Cast since this is not a valid OldestSupportedClientVersion and is not a valid semver.
-				version: "1.2" as OldestSupportedClientVersion,
+				// @ts-expect-error This intentionally exercises runtime validation of an invalid semantic-version shape.
+				version: "1.2",
 				checks: {
 					isValidSemver: false,
 					isGteLowestMinVersion: false,

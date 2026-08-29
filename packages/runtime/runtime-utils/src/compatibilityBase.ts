@@ -95,6 +95,7 @@ export interface ConfigMapEntry<T> {
 	// Note that this is NOT an index signature.
 	// This is a regular property with a computed name (See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Object_initializer#computed_property_names).
 	[lowestMinVersionForCollab]: T;
+	[defaultMinVersionForCollab]: T;
 }
 
 /**
