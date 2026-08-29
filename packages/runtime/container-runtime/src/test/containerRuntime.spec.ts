@@ -4380,7 +4380,7 @@ describe("Runtime", () => {
 									createBlobPayloadPending: true,
 									explicitSchemaControl: false,
 								},
-								minVersionForCollab: "2.40.0",
+								oldestSupportedClient: "2.40.0",
 								provideEntryPoint: mockProvideEntryPoint,
 							}),
 						(error: IErrorBase) => {

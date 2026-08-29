@@ -476,6 +476,19 @@ describe("Runtime", () => {
 		});
 	});
 
+	it("advances a persisted prerelease across its matching compatibility checkpoint", () => {
+		testMinVersionForCollabUpdateProcess({
+			initialSchema: {
+				...validConfig,
+				info: { minVersionForCollab: "2.43.0-beta.1" },
+			},
+			newMinVersionForCollab: defaultMinVersionForCollab,
+			expectedMessageMinVersionForCollab: "2.43.0",
+			expectedFinalMinVersionForCollab: "2.43.0",
+			expectSchemaChangeMessage: true,
+		});
+	});
+
 	it("New DocumentSchemaController will produce schema update message when the provided minVersionForCollab is higher than the initial schema's non-default minVersionForCollab", () => {
 		testMinVersionForCollabUpdateProcess({
 			initialSchema: {

@@ -339,7 +339,7 @@ export const genCrossClientCompatConfig = (): CompatConfig[] => {
 
 	// We build a map of all the versions we want to test the current version against.
 	// The key is the version and the value is a string describing the delta from the current version.
-	// We will not add any versions below 1.0.0 (only >1.0.0 is supported by our cross-client compat policy).
+	// Checkpoints below the deployed-client compatibility floor are excluded.
 	const deltaVersions: Map<string, string> = new Map();
 	const current = getCurrentCheckpoint(pkgVersion);
 

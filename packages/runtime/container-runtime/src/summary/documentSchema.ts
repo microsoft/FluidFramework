@@ -486,7 +486,12 @@ function or(
 }
 
 /**
- * Migrates 2.x prerelease values accepted by older clients to a stable, monotonic floor.
+ * Migrates 2.x prerelease values accepted by older clients to the corresponding stable version.
+ *
+ * @remarks
+ * This is monotonic under SemVer and can cross a compatibility checkpoint when the prerelease
+ * shares that checkpoint's major, minor, and patch. Client 3.0 no longer supports active
+ * prerelease collaborators, so the persisted requirement advances before format selection.
  */
 function normalizePersistedMinVersionForCollab(
 	minVersionForCollab: SemanticVersion,

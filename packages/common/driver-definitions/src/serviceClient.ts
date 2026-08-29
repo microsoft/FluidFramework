@@ -134,7 +134,6 @@ export function createBasicRegistryKey<T>(type: string): RegistryKey<T, T> {
  * This differs in that:
  * - This is `alpha` instead of `public`.
  * - This is available to drivers due to its location in `driver-definitions` instead of `runtime-definitions`.
- * - This does not allow requesting collaboration with pre-2.0.0 versions.
  * - Patch versions cannot be set: a given minor release is not guaranteed to be greater or equal compat wise to all patches of the previous release, so we do not enable features based on patch versions (instead fall back to the next minor if needed).
  * Therefore allowing patch versions here could be misleading and could lead to bugs.
  *

@@ -36,9 +36,8 @@ export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
 	 * Compatibility setting used by all constructor shapes supported by this helper.
 	 *
 	 * @remarks
-	 * Positional constructors predate this property. Restricting the value to the canonical test
-	 * default preserves their implicit behavior while allowing object-shaped constructors to
-	 * receive the now-explicit setting.
+	 * Object-shaped constructors receive this setting explicitly. Positional constructors predate
+	 * the setting and continue to use the historical package's own implicit default.
 	 */
 	readonly oldestSupportedClient: typeof defaultTestOldestSupportedClient;
 

@@ -6,6 +6,7 @@
 "@fluidframework/aqueduct": minor
 "@fluidframework/fluid-static": minor
 "@fluidframework/azure-client": minor
+"@fluidframework/odsp-client": minor
 "@fluidframework/tinylicious-client": minor
 "@fluidframework/test-runtime-utils": minor
 "@fluidframework/test-utils": minor
@@ -17,7 +18,7 @@ Require oldest supported clients to use Fluid Framework 2.0 or later
 
 Client 3.0 narrows
 [`OldestSupportedClientVersion`](https://fluidframework.com/docs/api/runtime-definitions/oldestsupportedclientversion-typealias)
-to stable supported values from the 2.x and 3.x release lines. The deprecated
+to stable 2.x versions and 3.x minor checkpoints whose patch is zero. The deprecated
 [`MinimumVersionForCollab`](https://fluidframework.com/docs/api/runtime-definitions/minimumversionforcollab-typealias)
 alias inherits the same restriction and remains available until Client 4.0.
 
@@ -27,7 +28,8 @@ as explicitly passing `"2.0.0"`.
 
 Before upgrading an application to Client 3.0, upgrade every active deployment that must
 collaborate to Fluid Framework 2.0.0 or later. Explicit compatibility settings must use the
-canonical property or service-client argument with a supported 2.x or 3.x value:
+canonical property or Azure, ODSP, or Tinylicious service-client argument with a stable 2.x
+version or a 3.x minor checkpoint such as `"3.1.0"`:
 
 ```typescript
 const { container } = await azureClient.getContainer(

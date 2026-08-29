@@ -18,8 +18,9 @@
  * Collaboration with other clients is supported when all Fluid Framework client packages used by the client have a version that is greater than or equal
  * to the specified `OldestSupportedClientVersion`.
  *
- * Client 3.0 supports deployed-client values from the 2.x and 3.x release lines. Every active
- * deployment that must collaborate needs to use Fluid Framework 2.0.0 or later before upgrading.
+ * Client 3.0 supports stable 2.x versions and 3.x minor checkpoints whose patch is zero. Every
+ * active deployment that must collaborate needs to use Fluid Framework 2.0.0 or later before
+ * upgrading.
  *
  * Deployed-client values must be at least {@link @fluidframework/runtime-utils#lowestMinVersionForCollab}
  * and cannot exceed the version of any Fluid Framework client package in use by the local client.

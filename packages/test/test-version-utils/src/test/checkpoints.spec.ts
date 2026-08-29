@@ -8,6 +8,7 @@ import { readFileSync } from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import * as semver from "semver";
 
 import {
@@ -132,7 +133,7 @@ describe("checkpoints", () => {
 			const cc4 = checkpoints.find((c) => c.name === "CC#4");
 			assert(cc4 !== undefined, "CC#4 expected in checkpoints");
 			assert.deepStrictEqual(
-				getInWindowPriorCheckpoints(cc4, "2.0.0").map((c) => c.name),
+				getInWindowPriorCheckpoints(cc4, lowestMinVersionForCollab).map((c) => c.name),
 				["CC#3", "CC#2"],
 			);
 		});

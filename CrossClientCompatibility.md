@@ -83,7 +83,7 @@ compatibility window for a client toward the end of a Range can be up to ~24 mon
 
 If `oldestSupportedClient` is not explicitly set, Client 3.0 uses `"2.0.0"`. Omission and explicitly passing `"2.0.0"` therefore select the same runtime defaults and validation. Passing a value below the supported floor or a prerelease value is not permitted — the runtime will fail to instantiate and throw a `UsageError` (see [Errors and Warnings to Monitor](#errors-and-warnings-to-monitor)). For details on the default value, see `defaultMinVersionForCollab` in [compatibilityBase.ts](./packages/runtime/runtime-utils/src/compatibilityBase.ts).
 
-Client 3.0 accepts stable supported 2.x and 3.x values. Before upgrading an application to Client 3.0, ensure every active deployment that must collaborate uses Fluid Framework 2.0.0 or later.
+Client 3.0 accepts stable 2.x versions and 3.x minor checkpoints whose patch is zero. Before upgrading an application to Client 3.0, ensure every active deployment that must collaborate uses Fluid Framework 2.0.0 or later.
 
 ### What This Means for an Application
 

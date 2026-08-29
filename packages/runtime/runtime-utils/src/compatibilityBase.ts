@@ -14,9 +14,6 @@ import { pkgVersion } from "./packageVersion.js";
 /**
  * Oldest deployed Fluid Framework client version supported for cross-client compatibility.
  *
- * @privateRemarks
- * Exported for use in tests.
- *
  * @internal
  */
 export const lowestMinVersionForCollab =
@@ -37,14 +34,18 @@ export const defaultMinVersionForCollab = lowestMinVersionForCollab;
 /**
  * String in a valid semver format specifying the bottom of a minor version.
  *
+ * @remarks
+ * Configuration maps use major/minor checkpoints. Exact patch and prerelease versions are values
+ * supplied to the selection logic, not configuration-map keys.
+ *
  * @internal
  */
 export type MinimumMinorSemanticVersion = `${bigint}.${bigint}.0`;
 
 /**
  * String in a valid semver format of a specific version at least specifying minor.
- * Unlike {@link @fluidframework/runtime-definitions#OldestSupportedClientVersion}, this type allows any bigint for the major version.
- * Used as a more generic type that allows major versions other than 1 or 2.
+ * Unlike {@link @fluidframework/runtime-definitions#OldestSupportedClientVersion}, this type does
+ * not encode the active compatibility floor or major-specific patch restrictions.
  *
  * @internal
  */
