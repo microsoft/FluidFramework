@@ -54,7 +54,6 @@ import type {
 	ISequencedMessageEnvelope,
 	ITelemetryContext,
 	ISummarizeInternalResult,
-	OldestSupportedClientVersion,
 	StagingModeChangedEvent,
 } from "@fluidframework/runtime-definitions/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
@@ -4448,7 +4447,8 @@ describe("Runtime", () => {
 							existing: false,
 							runtimeOptions: {},
 							provideEntryPoint: mockProvideEntryPoint,
-							minVersionForCollab: version as OldestSupportedClientVersion,
+							// @ts-expect-error Explicit 1.x and future versions are rejected by the public type and at runtime.
+							minVersionForCollab: version,
 						});
 					});
 				});
