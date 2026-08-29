@@ -451,6 +451,31 @@ describe("Runtime", () => {
 		});
 	});
 
+	it("advances a persisted historical default to the Client 3.0 floor", () => {
+		testMinVersionForCollabUpdateProcess({
+			initialSchema: {
+				...validConfig,
+				info: { minVersionForCollab: "2.0.0-defaults" },
+			},
+			newMinVersionForCollab: defaultMinVersionForCollab,
+			expectedFinalMinVersionForCollab: defaultMinVersionForCollab,
+			expectSchemaChangeMessage: true,
+		});
+	});
+
+	it("advances a persisted historical 2.x prerelease to its stable version", () => {
+		testMinVersionForCollabUpdateProcess({
+			initialSchema: {
+				...validConfig,
+				info: { minVersionForCollab: "2.40.1-beta.1" },
+			},
+			newMinVersionForCollab: defaultMinVersionForCollab,
+			expectedMessageMinVersionForCollab: "2.40.1",
+			expectedFinalMinVersionForCollab: "2.40.1",
+			expectSchemaChangeMessage: true,
+		});
+	});
+
 	it("New DocumentSchemaController will produce schema update message when the provided minVersionForCollab is higher than the initial schema's non-default minVersionForCollab", () => {
 		testMinVersionForCollabUpdateProcess({
 			initialSchema: {
@@ -832,11 +857,13 @@ describe("Runtime", () => {
 	function testMinVersionForCollabUpdateProcess({
 		initialSchema,
 		newMinVersionForCollab,
+		expectedMessageMinVersionForCollab = newMinVersionForCollab,
 		expectedFinalMinVersionForCollab,
 		expectSchemaChangeMessage,
 	}: {
 		initialSchema: IDocumentSchema;
 		newMinVersionForCollab: SemanticVersion;
+		expectedMessageMinVersionForCollab?: SemanticVersion;
 		expectedFinalMinVersionForCollab: SemanticVersion;
 		expectSchemaChangeMessage: boolean;
 	}): IDocumentSchema | IDocumentSchemaCurrent {
@@ -864,8 +891,8 @@ describe("Runtime", () => {
 			assert(message !== undefined, "Schema change message should be generated");
 			assert.strictEqual(
 				message.info?.minVersionForCollab,
-				newMinVersionForCollab,
-				`Message should contain the target minVersionForCollab (${newMinVersionForCollab})`,
+				expectedMessageMinVersionForCollab,
+				`Message should contain the target minVersionForCollab (${expectedMessageMinVersionForCollab})`,
 			);
 			assert(
 				controller.processDocumentSchemaMessages(

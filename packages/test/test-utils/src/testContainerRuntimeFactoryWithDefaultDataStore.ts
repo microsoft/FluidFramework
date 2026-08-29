@@ -37,7 +37,7 @@ export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
 	 *
 	 * @remarks
 	 * Positional constructors predate this property. Restricting the value to the canonical test
-	 * sentinel preserves their implicit behavior while allowing object-shaped constructors to
+	 * default preserves their implicit behavior while allowing object-shaped constructors to
 	 * receive the now-explicit setting.
 	 */
 	readonly oldestSupportedClient: typeof defaultTestOldestSupportedClient;
