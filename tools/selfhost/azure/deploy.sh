@@ -331,6 +331,14 @@ AKS_TIER="$(jqr '.aks.tier')"; AKS_TIER="${AKS_TIER:-standard}"
 # since the CHANNEL SETTING is customer-configurable even though the upgrade itself was fully
 # automatic. Override via aks.nodeOsUpgradeChannel if scheduled auto-upgrades are wanted instead.
 AKS_NODE_OS_UPGRADE_CHANNEL="$(jqr '.aks.nodeOsUpgradeChannel')"; AKS_NODE_OS_UPGRADE_CHANNEL="${AKS_NODE_OS_UPGRADE_CHANNEL:-None}"
+# none/patch/stable/rapid/node-image -- controls Kubernetes VERSION auto-upgrades (control plane,
+# then node pools one by one), separate from nodeOsUpgradeChannel above which only patches the
+# node OS image. Defaults to none (Azure's own default -- no automatic version upgrades at all;
+# kubernetesVersion above stays a manually-bumped pin). Node pool upgrades triggered by this
+# channel use the same rolling-upgrade/max-surge mechanism as nodeOsUpgradeChannel, so the same
+# surge-headroom caveat applies if this is set to anything other than none. Override via
+# aks.upgradeChannel.
+AKS_UPGRADE_CHANNEL="$(jqr '.aks.upgradeChannel')"; AKS_UPGRADE_CHANNEL="${AKS_UPGRADE_CHANNEL:-none}"
 # Ubuntu/AzureLinux/etc, applies to both the system pool and gitrestpool (phase1_gitrest_nodepool)
 # -- defaults to AzureLinux (Microsoft-maintained, smaller image/attack surface than Ubuntu). CAN
 # be migrated in place on an EXISTING pool via `az aks nodepool update --os-sku`, but that's a
@@ -893,6 +901,7 @@ phase1_aks() {
       --network-plugin azure --vnet-subnet-id "$AKS_SUBNET_ID" \
       --enable-oidc-issuer --enable-workload-identity \
       --node-os-upgrade-channel "$AKS_NODE_OS_UPGRADE_CHANNEL" \
+      --auto-upgrade-channel "$AKS_UPGRADE_CHANNEL" \
       "${aks_zone_args[@]}" \
       --tier "$AKS_TIER" --generate-ssh-keys
   fi
@@ -919,6 +928,11 @@ phase1_aks() {
   # created fresh after this change existed.
   if [[ "$(az aks show -g "$RG" -n "$AKS" --query autoUpgradeProfile.nodeOsUpgradeChannel -o tsv)" != "$AKS_NODE_OS_UPGRADE_CHANNEL" ]]; then
     az aks update -g "$RG" -n "$AKS" --node-os-upgrade-channel "$AKS_NODE_OS_UPGRADE_CHANNEL"
+  fi
+  # Same idempotent retrofit for the cluster (Kubernetes version) auto-upgrade channel -- also
+  # settable on an existing cluster via `az aks update`.
+  if [[ "$(az aks show -g "$RG" -n "$AKS" --query autoUpgradeProfile.upgradeChannel -o tsv)" != "$AKS_UPGRADE_CHANNEL" ]]; then
+    az aks update -g "$RG" -n "$AKS" --auto-upgrade-channel "$AKS_UPGRADE_CHANNEL"
   fi
   # Same idempotent retrofit pattern for the system node pool's cluster autoscaler -- unlike
   # VM size/subnet (create-time-only), autoscaler min/max CAN be added to an existing node
