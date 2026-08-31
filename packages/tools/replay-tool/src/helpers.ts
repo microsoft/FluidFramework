@@ -5,7 +5,6 @@
 
 import { strict } from "assert";
 import fs from "fs";
-import { stripVTControlCharacters } from "node:util";
 
 import type {
 	IContainer,
@@ -99,44 +98,7 @@ export function normalizePackageVersions(snapshot: IFileSnapshot): IFileSnapshot
 }
 
 /**
- * Configures how a generated snapshot is compared with its reference snapshot.
- *
- * @internal
- */
-export interface SnapshotComparisonOptions {
-	/**
-	 * Top-level blob paths that may exist only in the reference snapshot because the source
-	 * data cannot reconstruct their state. If the generated snapshot contains a listed path,
-	 * its contents are compared strictly.
-	 */
-	readonly allowedReferenceOnlyBlobPaths: readonly string[];
-}
-
-/**
- * Returns a shallow copy of the snapshot with the named top-level blobs removed.
- */
-function withoutTopLevelBlobs(
-	snapshot: IFileSnapshot,
-	blobPaths: readonly string[],
-): IFileSnapshot {
-	if (blobPaths.length === 0) {
-		return snapshot;
-	}
-	const ignoredPaths = new Set(blobPaths);
-	return {
-		commits: snapshot.commits,
-		tree: {
-			...snapshot.tree,
-			entries: snapshot.tree.entries.filter((entry) => !ignoredPaths.has(entry.path)),
-		},
-	};
-}
-
-/**
  * Compares a snapshot against a reference snapshot file and reports any differences.
- *
- * @param options - Controls explicitly allowed differences between the generated and reference
- * snapshots.
  *
  * @internal
  */
@@ -144,38 +106,23 @@ export function compareWithReferenceSnapshot(
 	snapshot: IFileSnapshot,
 	referenceSnapshotFilename: string,
 	errorHandler: (description: string, error?: any) => void,
-	options: SnapshotComparisonOptions,
 ): void {
 	// Read the reference snapshot and covert it to normalized IFileSnapshot.
 	const referenceSnapshotString = fs.readFileSync(
 		`${referenceSnapshotFilename}.json`,
 		"utf-8",
 	);
-	const referenceSnapshot = JSON.parse(referenceSnapshotString) as IFileSnapshot;
+	const referenceSnapshot = JSON.parse(referenceSnapshotString);
 
 	const normalizedSnapshot = normalizePackageVersions(getNormalizedFileSnapshot(snapshot));
-	const generatedSnapshotBlobPaths = new Set(
-		normalizedSnapshot.tree.entries.map((entry) => entry.path),
-	);
 	const normalizedReferenceSnapshot = normalizePackageVersions(
-		withoutTopLevelBlobs(
-			getNormalizedFileSnapshot(referenceSnapshot),
-			options.allowedReferenceOnlyBlobPaths.filter(
-				(path) => !generatedSnapshotBlobPaths.has(path),
-			),
-		),
+		getNormalizedFileSnapshot(referenceSnapshot),
 	);
 
 	// Put the assert in a try catch block, so that we can report errors, if any.
 	try {
 		strict.deepStrictEqual(normalizedSnapshot, normalizedReferenceSnapshot);
 	} catch (error) {
-		if (error instanceof Error) {
-			error.message = stripVTControlCharacters(error.message);
-			if (error.stack !== undefined) {
-				error.stack = stripVTControlCharacters(error.stack);
-			}
-		}
 		errorHandler(`Mismatch in snapshot ${referenceSnapshotFilename}.json`, error);
 	}
 }
@@ -237,6 +184,9 @@ export async function loadContainer(
 	// Older snapshots may not contain summary acks, so the summarizer will throw error in case it faces more
 	// ops than "maxOpsSinceLastSummary". So set it to a higher number to suppress those errors and run tests.
 	const runtimeOptions: IContainerRuntimeOptions = {
+		// Preserve historical replay behavior for documents that have not enabled explicit schema control.
+		// A document that already persisted explicit schema control remains in that mode.
+		explicitSchemaControl: false,
 		summaryOptions: {
 			summaryConfigOverrides: {
 				state: "disabled",

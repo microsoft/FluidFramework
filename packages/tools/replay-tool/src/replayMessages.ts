@@ -620,7 +620,6 @@ export class ReplayTool {
 					content.normalizedSnapshot,
 					`${dir}/${this.mainDocument.getFileName()}`,
 					(description: string, error?: any) => this.reportError(description, error),
-					this.args.snapshotComparisonOptions,
 				);
 			} else if (this.args.write) {
 				fs.mkdirSync(dir, { recursive: true });
