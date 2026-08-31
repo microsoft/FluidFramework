@@ -93,8 +93,14 @@ function skipOnAfrAvailabilityDip(context: Mocha.Context, error: unknown): void 
 	}
 
 	const testTitle = context.test?.fullTitle() ?? context.test?.title ?? "Presence test";
+	// Include the underlying error so a run that skips persistently can be diagnosed from the
+	// pipeline log rather than looking like the tests simply stopped running. It is truncated
+	// because the R11s error message embeds the full Azure Front Door HTML error page.
+	const fullReason = error instanceof Error ? error.message : String(error);
+	const reason =
+		fullReason.length > 200 ? `${fullReason.slice(0, 200)}... (truncated)` : fullReason;
 	testConsole.log(
-		`##vso[task.logissue type=warning]Skipping AFR e2e test due to service availability dip: ${testTitle}`,
+		`##vso[task.logissue type=warning]Skipping AFR e2e test due to service availability dip (502): ${testTitle} -- ${reason}`,
 	);
 	context.skip();
 }

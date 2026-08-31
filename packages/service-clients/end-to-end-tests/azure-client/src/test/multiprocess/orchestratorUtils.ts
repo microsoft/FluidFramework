@@ -47,26 +47,27 @@ export const testConsole = {
 interface ErrorWithAfrAvailabilityDipTelemetry {
 	errorType?: unknown;
 	statusCode?: unknown;
-	message?: unknown;
 }
 
-// AFR can transiently return Azure Front Door 502s to these live-service tests; detect only
-// that signature so client regressions still fail. See AB#59980 for the service-side issue.
+/**
+ * Detects the AFR availability-dip signature: Azure Front Door could not reach the AFR
+ * backend and returned a 502. See AB#59980 for the service-side issue.
+ *
+ * @remarks
+ * Matching is deliberately limited to the structured `genericNetworkError` + HTTP 502 pair
+ * rather than the wording of Azure Front Door's error page. A 502 is emitted by the gateway
+ * when it cannot reach the origin, so it cannot be produced by a client-side regression —
+ * which is the failure this matcher must avoid masking. Matching on the error page text would
+ * therefore add no protection against that risk, while making detection silently dependent on
+ * the contents of a service-owned HTML page that this repo does not control.
+ */
 export function isAfrAvailabilityDip(error: unknown): boolean {
 	if (!isObjectRecord(error)) {
 		return false;
 	}
 
-	const { errorType, statusCode, message } = error as ErrorWithAfrAvailabilityDipTelemetry;
-	if (errorType !== "genericNetworkError" || statusCode !== 502) {
-		return false;
-	}
-
-	return (
-		typeof message !== "string" ||
-		message.includes("isn't responding to Azure Front Door") ||
-		message.includes("OriginConnectionAborted")
-	);
+	const { errorType, statusCode } = error as ErrorWithAfrAvailabilityDipTelemetry;
+	return errorType === "genericNetworkError" && statusCode === 502;
 }
 
 function createChildProcessError(childId: number | string, msg: ErrorEvent): Error {
