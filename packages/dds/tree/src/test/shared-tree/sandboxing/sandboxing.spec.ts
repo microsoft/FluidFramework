@@ -767,9 +767,7 @@ describe("Host and Guest Demo", () => {
 
 	it("Guest edits can be reverted", async () => {
 		const { host, guest } = setup([]);
-		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
-			guest.view.events,
-		);
+		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(guest.view.events);
 
 		// Make undoable edits in the Guest
 		guest.view.root.push("Ga");
@@ -965,16 +963,12 @@ describe("Host and Guest Demo", () => {
 					}
 					if (hasSome(interop.hostToGuest)) {
 						potentialNext.push(
-							interop.hostToGuest[0] === Ack
-								? Step.HostToGuestAck
-								: Step.HostToGuestEdit,
+							interop.hostToGuest[0] === Ack ? Step.HostToGuestAck : Step.HostToGuestEdit,
 						);
 					}
 					if (hasSome(interop.guestToHost)) {
 						potentialNext.push(
-							interop.guestToHost[0] === Ack
-								? Step.GuestToHostAck
-								: Step.GuestToHostEdit,
+							interop.guestToHost[0] === Ack ? Step.GuestToHostAck : Step.GuestToHostEdit,
 						);
 					}
 					potential.push(potentialNext);
