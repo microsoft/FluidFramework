@@ -15,24 +15,12 @@
 	"exports": {
 		".": {
 			"node": {
-				"import": {
-					"types": "./lib/indexNode.d.ts",
-					"default": "./lib/indexNode.js"
-				},
-				"require": {
-					"types": "./dist/indexNode.d.ts",
-					"default": "./dist/indexNode.js"
-				}
+				"types": "./lib/indexNode.d.ts",
+				"default": "./lib/indexNode.js"
 			},
 			"default": {
-				"import": {
-					"types": "./lib/indexBrowser.d.ts",
-					"default": "./lib/indexBrowser.js"
-				},
-				"require": {
-					"types": "./dist/indexBrowser.d.ts",
-					"default": "./dist/indexBrowser.js"
-				}
+				"types": "./lib/indexBrowser.d.ts",
+				"default": "./lib/indexBrowser.js"
 			}
 		},
 		"./internal-api-report/current": {
@@ -72,7 +60,7 @@
 		"build:test:mocha:esm": "tsc --project ./src/test/mocha/tsconfig.json",
 		"build:test:playwright": "tsc --project ./src/test/playwright/tsconfig.json && webpack --config webpack.playwright.cjs",
 		"build:test:types": "tsc --project ./src/test/types/tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack . --profile node16 --exclude-entrypoints ./internal-api-report/current ./internal-api-report/legacy",
+		"check:are-the-types-wrong": "attw --pack . --profile esm-only --exclude-entrypoints ./internal-api-report/current ./internal-api-report/legacy",
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
@@ -85,6 +73,7 @@
 		"check:exports:esm:node:current": "api-extractor run --config api-extractor/api-extractor-lint-node.current.esm.json",
 		"check:exports:esm:node:legacy": "api-extractor run --config api-extractor/api-extractor-lint-node.legacy.esm.json",
 		"check:format": "npm run check:biome",
+		"check:types:inexactOptionalPropertyTypes": "tsc --project ./tsconfig.json --noEmit --exactOptionalPropertyTypes false --skipLibCheck --emitDeclarationOnly false --tsBuildInfoFile ./tsconfig.inexactOptionalPropertyTypes.tsbuildinfo",
 		"ci:build:api-reports": "concurrently \"npm:ci:build:api-reports:*\"",
 		"ci:build:api-reports:browser:current": "api-extractor run --config api-extractor/api-extractor-report-browser.current.json",
 		"ci:build:api-reports:browser:legacy": "api-extractor run --config api-extractor/api-extractor-report-browser.legacy.json",
