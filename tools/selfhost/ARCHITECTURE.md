@@ -197,7 +197,7 @@ Helm values, a ConfigMap, or an image layer.
 |---|---|---|---|
 | Key Vault | Private Endpoint (`privatelink.vaultcore.azure.net`); public access is re-enabled only transiently while `deploy.sh` itself writes secrets, then disabled again (Section 7.5) | RBAC — `Key Vault Secrets User` for pods, `Key Vault Secrets Officer` for the deploying caller | The one workload identity, federated via AKS's OIDC issuer to the `fluid-workload-identity` ServiceAccount |
 | Cosmos DB for MongoDB | Private Endpoint (`privatelink.mongo.cosmos.azure.com`), public access disabled | Connection string (the credential itself), stored in Key Vault and CSI-mounted (Section 7.1) | — |
-| Azure Cache for Redis | Private Endpoint (`privatelink.redis.cache.windows.net`), public access disabled | Password/access key (the credential itself), stored in Key Vault and CSI-mounted (Section 7.2) | — |
+| Azure Managed Redis | Private Endpoint (`privatelink.redis.azure.net`), public access disabled | Access key (the credential itself), stored in Key Vault and CSI-mounted (Section 7.2) | — |
 | Storage Account (gitrest) | Private Endpoint (`privatelink.file.core.windows.net`), public access disabled; `allowSharedKeyAccess` stays `true` (Section 7.4) | Storage account key, fetched live from ARM at mount/provision time — never persisted anywhere | AKS kubelet identity (`Storage Account Key Operator Service Role`, node-level SMB mount) and the AKS cluster's own control-plane identity (`Storage Account Contributor`, PVC provisioning) |
 | ACR | Public endpoint — no Private Endpoint | RBAC (`AcrPull`); admin account disabled (Section 7.8) | AKS kubelet identity |
 | Azure Front Door → AKS origins | Public (LoadBalancer IPs), inbound only, NSG-restricted to the `AzureFrontDoor.Backend` service tag (Section 7.7) | Network-level restriction, not an identity | — |
@@ -313,50 +313,29 @@ loss risk otherwise, see `phase8_cosmos_throughput`). All values here are starti
 informed by a real reference deployment, source-verified usage patterns, and live capacity
 findings — not load-test-derived final numbers (Section 9 still applies).
 
-### 7.2 Redis → Azure Cache for Redis today, Azure Managed Redis planned
+### 7.2 Redis → Azure Managed Redis
 
-> **What is deployed:** the classic, GA **Azure Cache for Redis**, authenticated with an access key
-> held in Key Vault.
->
-> **Planned:** move to **Azure Managed Redis** (`redisenterprise`). The Entra ID design described
-> first below is the eventual target, not what runs today — it needs client-side work that does not
-> exist yet, so the move to Managed Redis will keep access keys enabled until that lands. See
-> "Implementation update" for the current state.
+Replaces Azure Cache for Redis with Azure Managed Redis (`Microsoft.Cache/redisEnterprise`).
+The deployed database uses encrypted client traffic on port `10000`, high availability,
+`NoCluster`, and the service-default `VolatileLRU` eviction policy. Non-clustered mode is required because
+`RedisClientConnectionManager` (`@fluidframework/server-services-utils`) constructs a standalone
+Redis client and does not handle Redis Cluster `MOVED` redirects. Azure distributes HA replicas
+across availability zones by default where the region supports them.
 
-Replaces the in-cluster `redis:7-alpine` deployment (no auth, ClusterIP-only). Azure Managed
-Redis uses Microsoft Entra ID authentication **by default** on new instances — no access key
-required.
+**Authentication approach:** access-key authentication is explicitly enabled and the primary key
+is stored in Key Vault and CSI-mounted into every Fluid workload. Microsoft Entra ID is the
+preferred Azure Managed Redis authentication mode, but Fluid's current client is password-based
+and has no token acquisition or refresh path. Access keys therefore provide the compatible
+migration path without carrying credentials in Helm values, ConfigMaps, Kubernetes Secrets, or
+images.
 
-**Authentication approach:** the AKS workload identity authenticates to the cache using an Entra
-ID token (`User` = the managed identity's Object ID, `Password` = the Entra token, scope
-`https://redis.azure.com/.default`), not a static password. This is a genuine improvement over
-access-key auth, but it is **not a config-only change**: the existing chart fields (`redis` /
-`redis2` / `redisForThrottling` / `redisForTenantCache` — `url`, `port`, `tls`, `password` — in
-routerlicious-values.yaml, and the raw `redis__host` / `redis__port` env vars on `gitrest` and
-`historian` in backends.yaml) all assume a **static** password value; they can't perform the
-periodic token-acquisition-and-`AUTH`-refresh cycle Entra ID auth requires (tokens expire
-hourly). Implementing this requires real client-side logic — acquiring an Entra token,
-connecting, and re-sending `AUTH` before each expiry — wherever Routerlicious/gitrest/historian
-construct their Redis clients. **Scoped as Phase 4 implementation work**, not a values-file edit.
-
-**Implementation update — what's actually deployed, and its auth strategy.** This uses the
-classic, GA **Azure Cache for Redis** service (Basic/Standard/Premium tiers). **Moving to Azure
-Managed Redis (`redisenterprise`) is the plan**; the blocker is not the service but the client.
-**Auth strategy: password/access-key via Key
-Vault, not Entra ID** — this directly contradicts the Entra ID plan described above:
-`RedisClientConnectionManager` (`@fluidframework/server-services-utils`) is 100%
-password-based, with no Entra ID code path anywhere in that class. Managed Redis must therefore
-be provisioned with access keys enabled until that client work is done —
-`--access-keys-authentication Disabled` would leave the application unable to authenticate on
-either service. Final HA/capacity
-configuration, matching a real production reference deployment's setting:
-**Premium P1**, **3 replicas per primary**, **zone-redundant
-across zones 2 and 3**, no clustering/`shardCount` (that cluster doesn't shard either — redundancy, not
-horizontal partitioning, is the lever used at this scale). `replicasPerPrimary` and zone
-placement are **create-time-only** on Azure Cache for Redis — confirmed live that neither can
-be retrofitted onto an already-running cache via `az redis update` — so getting this right at
-initial creation matters; recreating an existing cache to fix it is a real (if low-risk, since
-Redis here is a rebuildable cache, not a source of truth) destructive operation.
+The earlier Azure Managed Redis attempt used the older Enterprise SKU family and failed with
+`AllocationFailed`/`OperationFailed` across the regions tested; it also disabled access keys,
+which made the password-only Fluid client unable to authenticate. The current implementation
+uses the newer Balanced SKU family and enables access keys. `Balanced_B5` is the starting
+baseline because Microsoft maps a non-clustered Premium P1 cache to B5: both advertise 6 GB
+(approximately 4.8 GB usable after service reservation). Production sizing must still use
+observed peak memory, server load, bandwidth, and connection metrics.
 
 ### 7.3 Azure Event Hubs — the ordering backend
 
@@ -600,11 +579,12 @@ fallback only if a customer's own quota increase is denied or insufficient.
 
 ### 7.8 ACR credential hardening
 
-The AKS kubelet identity holds `AcrPull` on the ACR (`azure/deploy.sh`'s `phase2_acr_harden`);
-there is no long-lived admin-password secret, and the ACR admin account is disabled. An earlier
-state (`az acr create --admin-enabled true`, with the admin username/password stored as a
-Kubernetes `regsecret`) predates this and is no longer how a fresh deployment provisions ACR
-access.
+The AKS kubelet identity holds `AcrPull` on the deploy ACR
+(`azure/deploy.sh`'s `phase2_acr_harden`), and build operators authenticate to the build ACR
+through `az acr login`. Both registries are created with their admin accounts disabled and
+reconcile an existing registry back to that state. There is no long-lived admin-password secret.
+An earlier state, with an admin username/password stored as a Kubernetes `regsecret`, predates
+this and is no longer how a fresh deployment provisions ACR access.
 
 ### 7.9 AKS application-tier scaling
 
@@ -647,7 +627,7 @@ Tracked here as this design's own decision register:
 | Whether Cosmos DB for MongoDB vCore supports Entra ID/managed-identity authentication for MongoDB data-plane connections | — | **Moot** — vCore was abandoned for the RU-based API for MongoDB (Section 7.1's "Implementation update") before this was ever confirmed; connection-string-via-Key-Vault is what's actually deployed, not a fallback pending verification. |
 | Custom domain ownership and management (optional layer on top of Front Door's default `azurefd.net` hostname) | Project owner's team | **Open** — no longer blocks HTTPS, since Front Door's auto-generated hostname + managed certificate work without one |
 | Exact Cosmos DB RU/s, Managed Redis tier, AKS HPA thresholds | Implementation phase | Pending load test against the ~347 peak concurrent/customer target |
-| Move Redis from Azure Cache for Redis to **Azure Managed Redis** (`redisenterprise`) | Implementation phase | **Planned** (Section 7.2). Not blocked on the service: `RedisClientConnectionManager` is password-only, so Managed Redis must be created with access keys enabled. Entra ID auth is separate client work \u2014 acquiring a token and re-sending `AUTH` before hourly expiry wherever Routerlicious/gitrest/historian build their Redis clients \u2014 and is the prerequisite for `--access-keys-authentication Disabled` |
+| Move Redis from Azure Cache for Redis to **Azure Managed Redis** (`redisenterprise`) | Implementation phase | **Implemented** (Section 7.2) with access keys enabled for the password-only `RedisClientConnectionManager`. Entra ID auth remains separate client work: acquiring a token and re-sending `AUTH` before hourly expiry wherever Routerlicious/gitrest/historian build their Redis clients is the prerequisite for `--access-keys-authentication Disabled`. |
 | Front Door WebSocket connection quota increase (above the default 3,000/profile, if needed) | **Customer**, for their own deployment's subscription | Guidance provided (monitor at ~70–80% utilization); filing the request is the customer's own action, matching this repo's existing customer-owned-resources pattern |
 | Number of tenants the operator runs on one deployment instance (this design assumes one customer operates one independent deployment in their own subscription, not multiple third parties sharing one deployment) | Customer/operator | Their own decision; capacity and quota planning for however many tenants they choose scales from the same per-tenant figures in Section 4 |
 | Which Azure subscription and resource-group name to deploy into | **Customer** | Not prescribed by this design — the customer selects their own subscription and names their own resource group, matching `azure/README.md`'s existing Prerequisites convention (`SUB`/`RG`/`RG_LOC` as customer inputs). Every concrete name in this spec (e.g. `example-fluid-deployment-001`) is this project's own test choice, not a requirement |

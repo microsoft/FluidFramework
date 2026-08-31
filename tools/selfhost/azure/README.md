@@ -11,7 +11,7 @@ You own every resource it creates, in your own resource group.
 | Snapshot storage (gitrest, historian) | AKS + Azure Files |
 | Ordering / message log | Azure Event Hubs, over the Kafka protocol |
 | Document database | Azure Cosmos DB for MongoDB |
-| Cache | Azure Cache for Redis |
+| Cache | Azure Managed Redis |
 | Secrets | Azure Key Vault |
 | Container images | Azure Container Registry |
 | Public HTTPS endpoints | Azure Front Door |
@@ -129,7 +129,7 @@ longer than that budget, which fails the deployment right at the end even though
 created correctly. If that happens, re-run — the resources already exist, so it will skip straight
 to re-checking.
 
-**Regional capacity is not guaranteed.** Premium Redis with zone redundancy, and the VM size for
+**Regional capacity is not guaranteed.** Azure Managed Redis Balanced SKUs, and the VM size for
 your AKS nodes, can both fail with `AllocationFailed` in a region that is temporarily full. This
 is unrelated to your quota. If it happens, try another region, or a different VM size.
 
@@ -137,7 +137,7 @@ is unrelated to your quota. If it happens, try another region, or a different VM
 to peer this deployment with an existing network, make sure that range does not overlap, because
 changing it later means rebuilding the VNet and everything attached to it.
 
-**Budget for the running cost.** This provisions AKS nodes, Premium Redis, provisioned-throughput
+**Budget for the running cost.** This provisions AKS nodes, Azure Managed Redis, provisioned-throughput
 Cosmos DB, Event Hubs, and Front Door — all billing continuously from the moment they exist, not
 just while you are using them. Price your specific configuration with the
 [Azure pricing calculator](https://azure.microsoft.com/pricing/calculator/) before deploying, and
@@ -192,17 +192,18 @@ two being set to the same registry.
 
 ### Choosing a region
 
-Pick a region that supports **Availability Zones**. Three settings depend on it —
-`aks.availabilityZones`, `redis.zones`, and `kafka.eventHubs.zoneRedundant` — and they spread
-your deployment across physically separate datacenters so a single one failing does not take the
-service down.
+Pick a region that supports **Availability Zones**. The AKS and Event Hubs settings
+`aks.availabilityZones` and `kafka.eventHubs.zoneRedundant` depend on them and spread your
+deployment across physically separate datacenters so a single one failing does not take the
+service down. Azure Managed Redis HA is selected separately with the required
+`redis.highAvailability` setting.
 
 `kafka.eventHubs.zoneRedundant` **can only be set when the namespace is created.** Changing your
 mind later means deleting and rebuilding it. Preflight checks your region for zone support before
 anything else is provisioned, precisely because this mistake is expensive to undo.
 
 If you must use a region without zones, set `kafka.eventHubs.zoneRedundant` to `false`,
-`aks.availabilityZones` to `[]`, and `redis.zones` to `[]`.
+`aks.availabilityZones` to `[]`, and `redis.highAvailability` to `Disabled`.
 
 ### Sizing and cost
 
@@ -214,7 +215,7 @@ that drive most of the bill:
 | `aks.systemNodeVmSize` | `Standard_D8as_v5` | 8 vCPU per node |
 | `aks.systemNodeMinCount` / `MaxCount` | 3 / 10 | Autoscaling range. You need quota for `(max + 1) × 8` vCPUs |
 | `cosmos.throughput.*` | 4,000–80,000 RU/s | Per-collection database capacity. `deltas` and `documents` are the large ones |
-| `redis.sku` / `vmSize` | `Premium` / `p1` | Premium is required for zone redundancy |
+| `redis.sku` / `highAvailability` | `Balanced_B5` / `Enabled` | Disable HA only when the selected region or SKU cannot provide it |
 | `storage.gitrestQuota` | `20Ti` | Provisioned file-share size |
 | `kafka.eventHubs.capacity` | `4` | Event Hubs throughput units — see below |
 
@@ -260,7 +261,7 @@ Two checks, both cheap. Run them in this order.
 **Validate the scripts — no Azure account needed, runs in seconds:**
 
 ```bash
-bash azure/test/deploy-eventhubs.test.sh
+bash azure/test/deploy.test.sh
 ```
 
 Expect `Total: 63 passed, 0 failed`. This runs the real deployment logic against stub tools, so
@@ -304,10 +305,11 @@ Redis, and waiting for Front Door DNS to propagate all take real time. Progress 
 goes and written to:
 
 ```
-${TMPDIR:-/tmp}/selfhost-fluid-<aks-name>/deploy-<timestamp>.log
+${TMPDIR:-/tmp}/selfhost-fluid-<aks-name>.<random-suffix>/deploy-<timestamp>.log
 ```
 
-When it finishes it prints your three public endpoints.
+The exact private temporary directory is printed near the start of each run. When deployment
+finishes it prints your three public endpoints.
 
 **If it fails partway, just run it again.** Every phase checks whether its resource already
 exists before creating it, so re-running skips completed work and resumes where it stopped.
@@ -356,7 +358,7 @@ The remaining phases, in order:
   phase8_workload_identity       # the managed identity pods use for Key Vault
   phase8_keyvault                # Key Vault
   phase8_cosmos                  # Cosmos DB for MongoDB
-  phase8_redis                   # Azure Cache for Redis
+  phase8_redis                   # Azure Managed Redis
   phase8_storage                 # Storage account for snapshots
 
   phase3_eventhubs               # Event Hubs namespace, hubs, private endpoint
@@ -424,6 +426,16 @@ provisioning:
 This rebuilds and redeploys the application only. It does not touch Cosmos, Redis, Event Hubs,
 Key Vault or Front Door.
 
+## Low-IO write
+
+gitrest's `git__enableLowIoWrite` setting in `azure/backends.yaml` controls low-IO summary
+writes. When enabled, clients must use `driverPolicies.enableWholeSummaryUpload` to read
+summaries.
+
+For end-to-end tests, set `lowIoWriteEnabled` in the test parameters file to the same value.
+The test script configures `driverPolicies.enableWholeSummaryUpload` to match the low-IO write
+configuration.
+
 ## Removing the deployment
 
 Everything lives in one resource group, so deleting it removes all of it:
@@ -474,7 +486,7 @@ continue to let AKS create and own its generated `MC_...` node resource group.
 | Event Hubs (broker) | `deploy.sh` `phase3_eventhubs` | Managed PaaS, zone-redundant, private endpoint |
 | gitrest + historian | `backends.yaml` (in-cluster) | gitrest → **Azure Files PV** |
 | MongoDB (ops/metadata) | Cosmos DB for MongoDB (managed, `phase8_cosmos`) | Cosmos-managed storage, outside the AKS node resource group |
-| Redis | Azure Cache for Redis (managed, `phase8_redis`) | Cache-managed storage, outside the AKS node resource group |
+| Redis | Azure Managed Redis (managed, `phase8_redis`) | Cache-managed storage, outside the AKS node resource group |
 | Client token minting | Trusted customer backend required for production; unfinished Azure Function prototype included for reference | protected tenant key |
 
 ### Azure resource ownership
@@ -484,7 +496,7 @@ continue to let AKS create and own its generated `MC_...` node resource group.
 | Customer resource group | ACR and AKS managed cluster | Customer creates, names, secures, monitors, and deletes these resources |
 | AKS-managed node resource group (`MC_<rg>_<aks>_<region>`) | VM scale sets, VNet/NSG, load balancer, public IPs, managed identities, CSI-created disks and storage accounts | AKS creates and reconciles this group; do not deploy or edit it as an independent stack |
 | Kubernetes namespace | Routerlicious, historian, gitrest, Services, Secrets, and PVCs | Customer operates the workloads and protects their configuration and credentials |
-| Durable state | gitrest Azure Files share, Cosmos DB, Azure Cache for Redis, and the Event Hubs namespace | Customer owns retention, backup, restore, locks, and teardown decisions. All four are managed services or resources outside the AKS node resource group and survive AKS cluster deletion independently |
+| Durable state | gitrest Azure Files share, Cosmos DB, Azure Managed Redis, and the Event Hubs namespace | Customer owns retention, backup, restore, locks, and teardown decisions. All four are managed services or resources outside the AKS node resource group and survive AKS cluster deletion independently |
 
 Exact generated resource names and counts vary by region, AKS version, networking mode, node
 configuration, CSI driver behavior, and the number of exposed LoadBalancer services. Treat Azure's
@@ -572,7 +584,7 @@ Create the registry before attempting to log in or push images:
 
 ```bash
 az group create -n "$RG" -l "$RG_LOC"
-az acr create -g "$RG" -n "$ACR" -l "$ACR_LOC" --sku Standard --admin-enabled true
+az acr create -g "$RG" -n "$ACR" -l "$ACR_LOC" --sku Standard --admin-enabled false
 ```
 
 **VERIFY:** `az acr show -g "$RG" -n "$ACR" --query provisioningState -o tsv` prints
@@ -705,7 +717,7 @@ so `preflight-check.sh` checks the region for Availability Zone support before p
 ### Phase 4 — In-cluster backends (gitrest on Azure Files PV)
 
 **Requires Phase 8 to have already run** — this phase's manifest references the Storage
-Account (`$STORAGE`) and Redis cache hostname Phase 8 creates; see "Phase execution order"
+Account (`$STORAGE`) and Azure Managed Redis hostname Phase 8 creates; see "Phase execution order"
 above. Without Phase 8 having run first, `$STORAGE` and `$REDIS_HOSTNAME` below are undefined.
 
 **Creates:** Azure Files StorageClass (referencing the Phase 8 Storage Account directly by
@@ -716,9 +728,9 @@ in-cluster resource created here.
 Render deployment copies outside the Git checkout so live values are not committed:
 
 ```bash
-REDIS_HOSTNAME=$(az redis show --name "$REDIS" --resource-group "$RG" --query hostName -o tsv)
-DEPLOY_DIR="${TMPDIR:-/tmp}/selfhost-fluid-$AKS"
-mkdir -p "$DEPLOY_DIR"
+REDIS_HOSTNAME=$(az redisenterprise show --name "$REDIS" --resource-group "$RG" --query hostName -o tsv)
+DEPLOY_DIR="$(mktemp -d "${TMPDIR:-/tmp}/selfhost-fluid-${AKS}.XXXXXX")"
+chmod 700 "$DEPLOY_DIR"
 sed -e "s|<ACR>|$ACR|g" -e "s|<IMAGE_TAG>|$IMAGE_TAG|g" \
     -e "s|<RG>|$RG|g" -e "s|<STORAGE>|$STORAGE|g" \
     -e "s|<REDIS_HOSTNAME>|$REDIS_HOSTNAME|g" \
@@ -745,7 +757,7 @@ backend resolves this release's `fluid-riddler` service. The values assign the I
 `selfhost-reference-disabled`, a class that must have no controller in the reference cluster;
 Phase 6 uses explicit LoadBalancer Services instead.
 
-The Cosmos connection string and Redis password are mounted from Key Vault via the **Secrets
+The Cosmos connection string and Redis access key are mounted from Key Vault via the **Secrets
 Store CSI driver** rather than rendered into ConfigMaps or Helm metadata.
 
 > **Client token lifetime is bounded.** Set in `azure/routerlicious-values.yaml` under `auth:` —
@@ -758,7 +770,8 @@ Store CSI driver** rather than rendered into ConfigMaps or Helm metadata.
 >
 > The upstream chart writes both into its ConfigMap as literals rather than Helm values, so a
 > values file has nothing to override. `phase5_helm` rewrites those two lines in the chart
-> template to read from `auth:`, once per checkout; that is the only reason the patch exists.
+> template to read from `auth:` and emits the legacy root-level value still read by Historian,
+> once per checkout; that is the only reason the patch exists.
 
 **Check:** after Phase 5,
 
@@ -770,6 +783,10 @@ kubectl get cm fluid-routerlicious -o jsonpath='{.data.config\.json}' \
 reports `'enableTokenExpiration': True`. To confirm enforcement, sign a token with **no `exp`
 claim** and call alfred with it — expect `403 Invalid token expiry`. An already-expired token is
 not a valid check: those are rejected either way.
+
+The same phase ensures `usage.clientConnectivityCountingEnabled` is a JSON boolean. An older
+chart rendered the disabled value as the truthy string `"false"`, causing Nexus to append every
+disconnect to the non-expiring `clientConnectivityUsage` Redis list.
 
 > **Superseded:** the SecretProviderClass now authenticates via **AAD Workload Identity** (one
 > shared managed identity + a Kubernetes ServiceAccount, `azure/secretproviderclass.yaml`'s
@@ -824,7 +841,7 @@ for deploy in fluid-alfred fluid-nexus fluid-riddler; do
     }},
     {"op": "add", "path": "/spec/template/spec/initContainers", "value": [{
       "name": "load-secrets",
-      "image": "busybox",
+      "image": "$ACR.azurecr.io/busybox@$BUSYBOX_DIGEST",
       "command": ["sh", "-c",
         "TENANT_KEY=$(cat /mnt/secrets/tenant-key) && echo \"export TENANT_KEY=$TENANT_KEY\" > /config/secrets.env"
       ],
@@ -864,7 +881,7 @@ for deploy in fluid-scribe fluid-scriptorium; do
     }},
     {"op": "add", "path": "/spec/template/spec/initContainers", "value": [{
       "name": "load-secrets",
-      "image": "busybox",
+      "image": "$ACR.azurecr.io/busybox@$BUSYBOX_DIGEST",
       "command": ["sh", "-c",
         "COSMOS_CONN=$(cat /mnt/secrets/cosmos-connection-string) && echo \"export mongodb__operationsDbEndpoint=$COSMOS_CONN\" > /config/secrets.env"
       ],
@@ -1175,10 +1192,17 @@ az cosmosdb mongodb collection create -a "$COSMOS" -g "$RG" -d admin -n reservat
 Step 2 — Store the connection string in Key Vault
 
 ```bash
-COSMOS_CONN=$(az cosmosdb keys list -n "$COSMOS" -g "$RG" --type connection-strings \
-  --query "connectionStrings[0].connectionString" -o tsv)
-az keyvault secret set --vault-name "$KV" --name cosmos-connection-string --value "$COSMOS_CONN"
-unset COSMOS_CONN
+(
+  COSMOS_CONN=$(az cosmosdb keys list -n "$COSMOS" -g "$RG" --type connection-strings \
+    --query "connectionStrings[0].connectionString" -o tsv)
+  COSMOS_SECRET_FILE="$(mktemp)"
+  trap 'rm -f "$COSMOS_SECRET_FILE"' EXIT
+  chmod 600 "$COSMOS_SECRET_FILE"
+  printf '%s' "$COSMOS_CONN" > "$COSMOS_SECRET_FILE"
+  unset COSMOS_CONN
+  az keyvault secret set --vault-name "$KV" --name cosmos-connection-string \
+    --file "$COSMOS_SECRET_FILE" --encoding utf-8
+)
 ```
 
 Expected: `az keyvault secret set` returns JSON with a non-empty `id` (the secret's versioned URI).
@@ -1197,65 +1221,57 @@ az cosmosdb show -n "$COSMOS" -g "$RG" --query provisioningState -o tsv
 az keyvault secret show --vault-name "$KV" --name cosmos-connection-string --query id -o tsv
 ```
 
-Step 1 — Confirm the current CLI command group for Azure Cache for Redis
+Step 1 — Confirm the current CLI command group for Azure Managed Redis
 
 ```bash
-az redis create --help 2>/dev/null | head -5
+az redisenterprise create --help 2>/dev/null | head -5
 ```
 
-Expected: help output for `az redis create` listing `--name`, `--resource-group`, `--location`, `--sku`, `--vm-size`.
+Expected: help output for `az redisenterprise create` listing `--cluster-name`,
+`--resource-group`, `--location`, and `--sku`.
 
-Step 2 — Create the Redis cache in the AKS resource group
+Step 2 — Create Azure Managed Redis in the AKS resource group
 
 ```bash
 REDIS="my-fluid-redis-001"
-az redis create \
+az redisenterprise create \
   --name "$REDIS" \
   --resource-group "$RG" \
   --location "$RG_LOC" \
-  --sku Premium \
-  --vm-size p1 \
-  --redis-version 6.0 \
-  --replicas-per-master 3 \
-  --zones 2 3 \
-  --minimum-tls-version 1.2
+  --sku Balanced_B5 \
+  --high-availability Enabled \
+  --minimum-tls-version 1.2 \
+  --public-network-access Disabled \
+  --access-keys-authentication Enabled \
+  --client-protocol Encrypted \
+  --clustering-policy NoCluster \
+  --eviction-policy VolatileLRU \
+  --port 10000
 ```
 
-Expected: `"provisioningState": "Succeeded"` (Premium creation with replicas/zones takes
-significantly longer than Basic/Standard). `--sku Premium --vm-size p1 --replicas-per-master 3
---zones 2 3` matches a known-good production reference deployment's setting --
-a starting point for the target load, not a
-load-test-derived final value. **Both `--replicas-per-master` and `--zones` are
-create-time-only** -- confirmed live that neither can be added to an already-existing cache
-via `az redis update` (`"cannot be modified: 'properties_replicasPerMaster'"`, and
-`zonalAllocationPolicy` alone doesn't retroactively move a running instance into zones). If
-the region/subscription can't satisfy replicas+zones, fall
-back to the same command without `--replicas-per-master`/`--zones`.
+Expected: `"provisioningState": "Succeeded"`. `Balanced_B5` is Microsoft's current
+non-clustered Premium P1 migration mapping (6 GB advertised, approximately 4.8 GB usable).
+Treat it as a starting point and size from observed cache metrics. HA instances are
+zone-redundant by default in supported regions, so the deployment does not pin zones or retry
+with a silently degraded non-HA configuration.
 
-> **Planned change: moving to Azure Managed Redis.** This deployment currently uses the
-> classic/GA **Azure Cache for Redis** (`az redis`), and the intent is to move to **Azure Managed
-> Redis** (`redisenterprise`). One constraint shapes how that move happens: Routerlicious's and
-> gitrest's Redis client (`RedisClientConnectionManager` in
-> `@fluidframework/server-services-utils`, shared by both) is **password-based only** -- it has no
-> Entra ID/managed-identity code path at all. Managed Redis must therefore be created with access
-> keys enabled; `--access-keys-authentication Disabled` would leave the application unable to
-> authenticate. Entra ID auth for Redis is a separate piece of client work, tracked in
-> [ARCHITECTURE.md](../ARCHITECTURE.md) Section 7.2.
->
-> The password is retrieved via `az redis list-keys`
-> and stored in Key Vault (`redis-password`) — **superseded:** gitrest/historian now also read
-> it from there via the same CSI mount + one workload identity as the Helm services
-> (`azure/backends.yaml`), not a plain Kubernetes Secret; no `redis-secret` Secret exists
-> anymore. Public network access is disabled and a Private Endpoint is the only path in
-> (`azure/deploy.sh`'s `phase8_redis`). **Engine version** is pinned to `6.0` via
-> `--redis-version` (`deploy.parameters.json`'s `redis.version`, default `6.0`) instead of
-> Azure's implicit default — the classic tier only offers `4.0` (legacy) and `6.0` (current).
+> **Architecture note:** the earlier Azure Managed Redis attempt combined an older Enterprise
+> SKU family that repeatedly encountered regional allocation failures with Entra-only
+> authentication. The second choice was independently incompatible:
+> `RedisClientConnectionManager` is password-based and cannot refresh Entra tokens. Azure
+> Managed Redis now supports explicitly enabled access keys, so the key is retrieved with
+> `az redisenterprise database list-keys`, stored as `redis-password` in Key Vault, and
+> CSI-mounted into every workload. `NoCluster` preserves compatibility with Fluid's standalone
+> client, encrypted port `10000` replaces Azure Cache for Redis's TLS port `6380`, and a Private
+> Endpoint is the only network path.
 
 **VERIFY:** confirm cache provisioning and retrieve the connection details.
 
 ```bash
-az redis show --name "$REDIS" --resource-group "$RG" --query provisioningState -o tsv
-az redis show --name "$REDIS" --resource-group "$RG" --query hostName -o tsv
+az redisenterprise show --name "$REDIS" --resource-group "$RG" --query provisioningState -o tsv
+az redisenterprise show --name "$REDIS" --resource-group "$RG" --query hostName -o tsv
+az redisenterprise database show --cluster-name "$REDIS" --resource-group "$RG" \
+  --query '{state:provisioningState,auth:accessKeysAuthentication,protocol:clientProtocol,clustering:clusteringPolicy,port:port}'
 ```
 
 Step 1 — Create the Storage Account and file share directly in the AKS resource group
@@ -1480,7 +1496,7 @@ key-rotation procedure, are in [../tenant-admin/README.md](../tenant-admin/READM
   count (design spec Section 4) — `capacity` is a hard ceiling because auto-inflate is off,
   though it can be raised on a live namespace.
 - **Durable-state survivability if the AKS cluster is deleted:** Cosmos DB for MongoDB, Azure
-  Cache for Redis and the Event Hubs namespace are all provisioned outside the AKS node resource
+  Managed Redis and the Event Hubs namespace are all provisioned outside the AKS node resource
   group — deleting the AKS cluster (or its `MC_...` node resource group) does not affect them.
   The gitrest Azure Files share is the remaining exception; see "Durable-state survivability"
   below.
@@ -1493,14 +1509,13 @@ key-rotation procedure, are in [../tenant-admin/README.md](../tenant-admin/READM
   Cosmos compatibility with real load, test connection-string auth/TLS end-to-end, implement
   backup/restore, conduct failover testing, and measure performance against the sizing
   assumptions in design spec Section 4.
-- **Managed Redis-compatible service:** Phase 8 provisions Azure Cache for Redis (classic/GA
-  tier) and wires its host/port/TLS/password into the Routerlicious Helm values and the raw
-  gitrest/historian Deployments. **The plan is to move to Azure Managed Redis**; because the
-  Redis client is password-only, that move keeps access keys enabled until Entra ID auth is
-  implemented client-side (see Phase 8's note). Remaining work: validate client compatibility and
-  recovery/failover behavior under real load.
+- **Managed Redis-compatible service:** Phase 8 provisions Azure Managed Redis with access-key
+  authentication and non-clustered compatibility for Fluid's password-only standalone client
+  (see Phase 8's architecture note), then wires its host/port/TLS/key into the Helm values and raw
+  gitrest/historian Deployments. Remaining work: validate client compatibility and recovery/
+  failover behavior under real load.
 - **Image pinning:** pin every application and infrastructure image by a unique immutable tag or
-  digest, including the proxy images (Cosmos DB, Azure Cache for Redis and Event Hubs are
+  digest, including the proxy images (Cosmos DB, Azure Managed Redis and Event Hubs are
   managed services with no image to pin); retain a tested rollback set.
 - **Storage ownership:** decide whether the AKS-provisioned Azure Files and managed disks may
   remain associated with cluster-managed resources or must move under a separately managed

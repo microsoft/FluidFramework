@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { InfoLabel, Label, TableCellLayout } from "@fluentui/react-components";
 import type { PropsWithChildren, ReactElement } from "react";
+
+import { FluentReactComponents } from "../../FluentUi.cjs";
+
+const { InfoLabel, Label, TableCellLayout } = FluentReactComponents;
 
 /**
  * {@link LabelCellLayout} input props.

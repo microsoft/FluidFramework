@@ -57,7 +57,10 @@ import type {
 	StagingModeChangedEvent,
 } from "@fluidframework/runtime-definitions/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
-import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
+import {
+	cleanedPackageVersion,
+	defaultMinVersionForCollab,
+} from "@fluidframework/runtime-utils/internal";
 import {
 	type IFluidErrorBase,
 	MockLogger,
@@ -76,7 +79,7 @@ import {
 import Sinon, { type SinonFakeTimers } from "sinon";
 
 import { ChannelCollection } from "../channelCollection.js";
-import { CompressionAlgorithms, enabledCompressionConfig } from "../compressionDefinitions.js";
+import { CompressionAlgorithms } from "../compressionDefinitions.js";
 import {
 	ContainerRuntime,
 	type IContainerRuntimeOptions,
@@ -100,7 +103,6 @@ import type {
 	InboundMessageResult,
 	LocalBatchMessage,
 } from "../opLifecycle/index.js";
-import { pkgVersion } from "../packageVersion.js";
 import type { IPendingMessage, PendingStateManager } from "../pendingStateManager.js";
 import {
 	type ISummaryCancellationToken,
@@ -2010,7 +2012,7 @@ describe("Runtime", () => {
 				chunkSizeInBytes: 204800,
 				enableRuntimeIdCompressor: undefined,
 				enableGroupedBatching: true, // Redundant, but makes the JSON.stringify yield the same result as the logs
-				explicitSchemaControl: false,
+				explicitSchemaControl: true,
 				createBlobPayloadPending: undefined,
 				stagingModeAutoFlushThreshold: 1000,
 				disableSchemaUpgrade: false,
@@ -4376,7 +4378,9 @@ describe("Runtime", () => {
 								existing: false,
 								runtimeOptions: {
 									createBlobPayloadPending: true,
+									explicitSchemaControl: false,
 								},
+								oldestSupportedClient: "2.40.0",
 								provideEntryPoint: mockProvideEntryPoint,
 							}),
 						(error: IErrorBase) => {
@@ -4416,7 +4420,7 @@ describe("Runtime", () => {
 					chunkSizeInBytes: 204800,
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: true,
-					explicitSchemaControl: false,
+					explicitSchemaControl: true,
 					stagingModeAutoFlushThreshold: 1000,
 					disableSchemaUpgrade: false,
 				};
@@ -4431,10 +4435,50 @@ describe("Runtime", () => {
 				]);
 			});
 
+			it("loads and advances a persisted historical 2.x prerelease", async () => {
+				const metadata: IContainerRuntimeMetadata = {
+					summaryFormatVersion: 1,
+					documentSchema: {
+						version: 1,
+						refSeq: 0,
+						info: { minVersionForCollab: "2.40.1-beta.1" },
+						runtime: { explicitSchemaControl: true },
+					},
+				};
+				const context = getMockContext({
+					baseSnapshot: {
+						trees: { ".channels": { trees: {}, blobs: {} } },
+						blobs: { [metadataBlobName]: "metadata-id" },
+					},
+					mockStorage: {
+						...defaultMockStorage,
+						readBlob: async (id) => {
+							assert.equal(id, "metadata-id");
+							return stringToBuffer(JSON.stringify(metadata), "utf8");
+						},
+					},
+				});
+
+				const { runtime } = await ContainerRuntime.loadRuntime2({
+					context: context as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: true,
+					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				assert.equal(runtime.minVersionForCollab, "2.40.1");
+			});
+
 			// These are examples of minVersionForCollab inputs that are not valid.
-			// minVersionForCollab should be at least 1.0.0 and less than or equal to
+			// minVersionForCollab should be at least 2.0.0 and less than or equal to
 			// the current pkgVersion.
-			const invalidVersions = ["0.50.0", "100.0.0"] as const;
+			const invalidVersions = [
+				"1.99.0",
+				"2.0.0-defaults",
+				"2.116.1-beta.1",
+				"100.0.0",
+			] as const;
 			for (const version of invalidVersions) {
 				it(`throws when minVersionForCollab = ${version}`, async () => {
 					const logger = new MockLogger();
@@ -4445,92 +4489,12 @@ describe("Runtime", () => {
 							existing: false,
 							runtimeOptions: {},
 							provideEntryPoint: mockProvideEntryPoint,
-							// @ts-expect-error - Invalid version strings are not castable to OldestSupportedClientVersion
+							// @ts-expect-error Invalid compatibility versions are rejected by the public type and at runtime.
 							minVersionForCollab: version,
 						});
 					});
 				});
 			}
-
-			it("minVersionForCollab = 1.0.0", async () => {
-				const minVersionForCollab = "1.0.0";
-				const logger = new MockLogger();
-				await ContainerRuntime.loadRuntime2({
-					context: getMockContext({ logger }) as IContainerContext,
-					registry: new FluidDataStoreRegistry([]),
-					existing: false,
-					runtimeOptions: {},
-					provideEntryPoint: mockProvideEntryPoint,
-					minVersionForCollab,
-				});
-
-				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
-					summaryOptions: {},
-					gcOptions: {},
-					loadSequenceNumberVerification: "close",
-					flushMode: FlushMode.Immediate,
-					compressionOptions: {
-						minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
-						compressionAlgorithm: CompressionAlgorithms.lz4,
-					},
-					maxBatchSizeInBytes: 716800,
-					chunkSizeInBytes: 204800,
-					enableRuntimeIdCompressor: undefined,
-					enableGroupedBatching: false,
-					explicitSchemaControl: false,
-					stagingModeAutoFlushThreshold: 1000,
-					disableSchemaUpgrade: false,
-				};
-
-				logger.assertMatchAny([
-					{
-						eventName: "ContainerRuntime:ContainerLoadStats",
-						category: "generic",
-						options: JSON.stringify(expectedRuntimeOptions),
-						minVersionForCollab,
-					},
-				]);
-			});
-
-			it('minVersionForCollab = 2.0.0-defaults ("default")', async () => {
-				const minVersionForCollab = "2.0.0-defaults";
-				const logger = new MockLogger();
-				await ContainerRuntime.loadRuntime2({
-					context: getMockContext({ logger }) as IContainerContext,
-					registry: new FluidDataStoreRegistry([]),
-					existing: false,
-					runtimeOptions: {},
-					provideEntryPoint: mockProvideEntryPoint,
-					minVersionForCollab,
-				});
-
-				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
-					summaryOptions: {},
-					gcOptions: {},
-					loadSequenceNumberVerification: "close",
-					flushMode: FlushMode.TurnBased,
-					compressionOptions: {
-						minimumBatchSizeInBytes: 614400,
-						compressionAlgorithm: CompressionAlgorithms.lz4,
-					},
-					maxBatchSizeInBytes: 716800,
-					chunkSizeInBytes: 204800,
-					enableRuntimeIdCompressor: undefined,
-					enableGroupedBatching: true,
-					explicitSchemaControl: false,
-					stagingModeAutoFlushThreshold: 1000,
-					disableSchemaUpgrade: false,
-				};
-
-				logger.assertMatchAny([
-					{
-						eventName: "ContainerRuntime:ContainerLoadStats",
-						category: "generic",
-						options: JSON.stringify(expectedRuntimeOptions),
-						minVersionForCollab: defaultMinVersionForCollab,
-					},
-				]);
-			});
 
 			it("minVersionForCollab = 2.0.0 (explicit)", async () => {
 				const minVersionForCollab = "2.0.0";
@@ -4643,7 +4607,7 @@ describe("Runtime", () => {
 					chunkSizeInBytes: 200,
 					enableRuntimeIdCompressor: "on",
 					enableGroupedBatching: false,
-					explicitSchemaControl: false,
+					explicitSchemaControl: true,
 					stagingModeAutoFlushThreshold: 1000,
 					disableSchemaUpgrade: false,
 				};
@@ -4705,7 +4669,7 @@ describe("Runtime", () => {
 						chunkSizeInBytes: 204800,
 						enableRuntimeIdCompressor: undefined, // idCompressor is undefined, since that represents a logical state (off)
 						enableGroupedBatching: true,
-						explicitSchemaControl: false,
+						explicitSchemaControl: true,
 						stagingModeAutoFlushThreshold: 1000,
 						disableSchemaUpgrade: false,
 					};
@@ -4722,8 +4686,8 @@ describe("Runtime", () => {
 
 			// Note: We may need to update `expectedRuntimeOptions` for this test
 			// when we bump to certain versions.
-			it("minVersionForCollab = pkgVersion", async () => {
-				const minVersionForCollab = pkgVersion;
+			it("minVersionForCollab = cleanedPackageVersion", async () => {
+				const minVersionForCollab = cleanedPackageVersion;
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime2({
 					context: getMockContext({ logger }) as IContainerContext,
@@ -4762,49 +4726,42 @@ describe("Runtime", () => {
 				]);
 			});
 
-			for (const runtimeOption of [
-				{ enableGroupedBatching: true },
-				{ enableGroupedBatching: true, compressionOptions: enabledCompressionConfig },
-				{ explicitSchemaControl: true },
-				{ gcOptions: { enableGCSweep: true } },
-				// Adding in an arbitrary entry into the IGCRuntimeOptions object
-				{ gcOptions: { enableGCSweep: true, sweepGracePeriodMs: 1 } },
-				{ enableRuntimeIdCompressor: "on" },
-				{ enableRuntimeIdCompressor: "delayed" },
-				{ createBlobPayloadPending: true },
-				{ flushMode: FlushMode.TurnBased },
-			]) {
-				it(`throws if minVersionForCollab is incompatible with runtimeOptions: ${JSON.stringify(runtimeOption)}`, async () => {
-					const runtimeOptions = {
-						...runtimeOption,
-					} as unknown as IContainerRuntimeOptionsInternal;
-					const logger = new MockLogger();
-					const minVersionForCollab = "1.0.0";
-					await assert.rejects(async () => {
-						await ContainerRuntime.loadRuntime2({
-							context: getMockContext({ logger }) as IContainerContext,
+			it("throws if createBlobPayloadPending is incompatible with oldestSupportedClient 2.0.0", async () => {
+				await assert.rejects(
+					async () =>
+						ContainerRuntime.loadRuntime2({
+							context: getMockContext() as IContainerContext,
 							registry: new FluidDataStoreRegistry([]),
 							existing: false,
-							runtimeOptions,
+							runtimeOptions: {
+								createBlobPayloadPending: true,
+								explicitSchemaControl: true,
+							},
 							provideEntryPoint: mockProvideEntryPoint,
-							minVersionForCollab,
-						});
-					});
-				});
-			}
-			it("does not throw if minVersionForCollab is not set and the default is incompatible with runtimeOptions", async () => {
+							oldestSupportedClient: "2.0.0",
+						}),
+					(error: IErrorBase) =>
+						error.errorType === ContainerErrorTypes.usageError &&
+						error.message ===
+							"Runtime option createBlobPayloadPending:true requires runtime version 2.40.0. Please update minVersionForCollab (currently 2.0.0) to 2.40.0 or later to proceed.",
+				);
+			});
+
+			it("throws if the default minVersionForCollab is incompatible with runtimeOptions", async () => {
 				const logger = new MockLogger();
-				await assert.doesNotReject(async () => {
-					await ContainerRuntime.loadRuntime2({
+				await assert.rejects(
+					ContainerRuntime.loadRuntime2({
 						context: getMockContext({ logger }) as IContainerContext,
 						registry: new FluidDataStoreRegistry([]),
 						existing: false,
-						// We would normally throw (since `createBlobPayloadPending` requires 2.40), but since we did
-						// not explicity set minVersionForCollab, we allow it.
 						runtimeOptions: { createBlobPayloadPending: true, explicitSchemaControl: true },
 						provideEntryPoint: mockProvideEntryPoint,
-					});
-				});
+					}),
+					(error: IErrorBase) =>
+						error.errorType === ContainerErrorTypes.usageError &&
+						error.message ===
+							"Runtime option createBlobPayloadPending:true requires runtime version 2.40.0. Please update minVersionForCollab (currently 2.0.0) to 2.40.0 or later to proceed.",
+				);
 			});
 		});
 

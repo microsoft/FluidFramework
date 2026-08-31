@@ -819,10 +819,10 @@ export interface LoadContainerRuntimeParams {
 	 *
 	 * @privateRemarks
 	 * Used to determine the default configuration for {@link IContainerRuntimeOptionsInternal} that affect the document schema.
-	 * For example, let's say that feature `foo` was added in 2.0 which introduces a new op type. Additionally, option `bar`
-	 * was added to `IContainerRuntimeOptionsInternal` in 2.0 to enable/disable `foo` since clients prior to 2.0 would not
-	 * understand the new op type. If a customer were to set oldestSupportedClient to 2.0.0, then `bar` would be set to
-	 * enable `foo` by default. If a customer were to set oldestSupportedClient to 1.0.0, then `bar` would be set to
+	 * For example, let's say that feature `foo` was added in 2.40 which introduces a new op type. Additionally, option `bar`
+	 * was added to `IContainerRuntimeOptionsInternal` in 2.40 to enable/disable `foo` since clients prior to 2.40 would not
+	 * understand the new op type. If a customer were to set oldestSupportedClient to 2.40.0, then `bar` would be set to
+	 * enable `foo` by default. If a customer were to set oldestSupportedClient to 2.0.0, then `bar` would be set to
 	 * disable `foo` by default.
 	 */
 	oldestSupportedClient?: OldestSupportedClientVersion;
@@ -1034,8 +1034,8 @@ export class ContainerRuntime
 
 		// Some options require a minimum version of the FF runtime to operate, so the default configs will be generated
 		// based on the minVersionForCollab.
-		// For example, if minVersionForCollab is set to "1.0.0", the default configs will ensure compatibility with FF runtime
-		// 1.0.0 or later. If the minVersionForCollab is set to "2.10.0", the default values will be generated to ensure compatibility
+		// For example, if minVersionForCollab is set to "2.0.0", the default configs will ensure compatibility with FF runtime
+		// 2.0.0 or later. If the minVersionForCollab is set to "2.10.0", the default values will be generated to ensure compatibility
 		// with FF runtime 2.10.0 or later.
 		if (!isValidMinVersionForCollab(minVersionForCollab)) {
 			throw new UsageError(

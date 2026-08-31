@@ -15,14 +15,8 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"import": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./lib/index.d.ts",
+			"default": "./lib/index.js"
 		}
 	},
 	"scripts": {
@@ -35,7 +29,7 @@
 		"build:test": "concurrently npm:build:test:cjs npm:build:test:esm",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "fluid-tsc module --project ./src/test/tsconfig.esm.json",
-		"check:are-the-types-wrong": "attw --pack . --profile node16",
+		"check:are-the-types-wrong": "attw --pack . --profile esm-only",
 		"check:biome": "biome check .",
 		"check:exports": "api-extractor run --config ./api-extractor-lint.json",
 		"check:format": "npm run check:biome",
@@ -53,7 +47,7 @@
 		"rebuild": "npm run clean && npm run build",
 		"test": "npm run test:jest",
 		"test:coverage": "npm run test:jest:coverage",
-		"test:jest": "pnpm test:jest:cjs && echo skip per fluentui issue 30778 - pnpm test:jest:esm",
+		"test:jest": "pnpm test:jest:esm",
 		"test:jest:cjs": "jest --ci --roots ./dist",
 		"test:jest:coverage": "jest --coverage --ci",
 		"test:jest:esm": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --roots ./lib",

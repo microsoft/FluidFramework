@@ -59,18 +59,19 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 				data.main,
 				context,
 				data.originator,
+				true,
 			);
 			assert(
 				data.originator !== undefined,
 				0xca5 /* Cannot encode vSharedBranches summary without originator */,
 			);
-			const json: Mutable<EncodedEditManager<TChangeset>> = {
+			const json: Mutable<EncodedEditManager<JsonCompatibleReadOnly>> = {
 				main: mainBranch,
 				originator: data.originator,
 				version,
 			};
 			if (data.branches !== undefined && data.branches.size > 0) {
-				const branches: EncodedSharedBranch<TChangeset>[] = [];
+				const branches: EncodedSharedBranch<JsonCompatibleReadOnly>[] = [];
 				for (const [_, branch] of data.branches) {
 					branches.push(
 						encodeSharedBranch(
@@ -79,6 +80,7 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 							branch,
 							context,
 							data.originator,
+							true,
 						),
 					);
 				}

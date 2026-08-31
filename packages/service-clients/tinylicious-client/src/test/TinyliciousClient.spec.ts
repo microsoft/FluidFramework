@@ -51,7 +51,7 @@ const waitForDataCorruption = async (container: IFluidContainer): Promise<void> 
 		}),
 	);
 
-for (const oldestSupportedClient of ["1.0.0", "2.0.0"] as const) {
+for (const oldestSupportedClient of ["2.0.0"] as const) {
 	describe(`TinyliciousClient (oldestSupportedClient: ${oldestSupportedClient})`, function () {
 		let tinyliciousClient: TinyliciousClient;
 		const schema = {

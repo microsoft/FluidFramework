@@ -41,6 +41,7 @@ export const createLogger = async (
 	dimensions: {
 		driverType: string;
 		driverEndpointName: string | undefined;
+		driverTenantName: string | undefined;
 		profile: string;
 		runId: number | undefined;
 	},
@@ -90,7 +91,7 @@ class FileLogger implements ITelemetryBufferedLogger {
 		this.schema.clear();
 		this.logs = [];
 	}
-	send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
+	send(event: ITelemetryBaseEvent, logLevel: LogLevel): void {
 		if (typeof event.testCategoryOverride === "string") {
 			event.category = event.testCategoryOverride;
 		} else if (
