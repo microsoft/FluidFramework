@@ -14,7 +14,6 @@ import type {
 	SharedKernel,
 } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { lt } from "semver-ts";
 
 import {
 	type CodecTree,
@@ -214,7 +213,7 @@ export class SharedTreeKernel
 			...defaultSharedTreeOptions,
 			...optionsParam,
 		};
-		if (lt(options.minVersionForCollab, FluidClientVersion.v2_0)) {
+		if (options.minVersionForCollab < FluidClientVersion.v2_0) {
 			throw new UsageError("SharedTree requires minVersionForCollab of at least 2.0.0");
 		}
 		const schema = new TreeStoredSchemaRepository();
