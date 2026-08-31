@@ -146,6 +146,12 @@
 			},
 			"Interface_IDataObjectProps": {
 				"backCompat": false
+			},
+			"Interface_BaseContainerRuntimeFactoryProps": {
+				"forwardCompat": false
+			},
+			"Interface_ContainerRuntimeFactoryWithDefaultDataStoreProps": {
+				"forwardCompat": false
 			}
 		},
 		"entrypoint": "legacy"

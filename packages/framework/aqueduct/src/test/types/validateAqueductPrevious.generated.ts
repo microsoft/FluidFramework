@@ -240,6 +240,7 @@ declare type current_as_old_for_ClassStatics_TreeDataObjectFactory = requireAssi
  * typeValidation.broken:
  * "Interface_BaseContainerRuntimeFactoryProps": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_BaseContainerRuntimeFactoryProps = requireAssignableTo<TypeOnly<old.BaseContainerRuntimeFactoryProps>, TypeOnly<current.BaseContainerRuntimeFactoryProps>>
 
 /*
@@ -249,6 +250,7 @@ declare type old_as_current_for_Interface_BaseContainerRuntimeFactoryProps = req
  * typeValidation.broken:
  * "Interface_ContainerRuntimeFactoryWithDefaultDataStoreProps": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_ContainerRuntimeFactoryWithDefaultDataStoreProps = requireAssignableTo<TypeOnly<old.ContainerRuntimeFactoryWithDefaultDataStoreProps>, TypeOnly<current.ContainerRuntimeFactoryWithDefaultDataStoreProps>>
 
 /*

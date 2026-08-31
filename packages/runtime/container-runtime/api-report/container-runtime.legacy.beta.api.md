@@ -54,6 +54,12 @@ export interface ContainerRuntimeOptions {
 // @beta @legacy (undocumented)
 export const DefaultSummaryConfiguration: ISummaryConfiguration;
 
+// @beta @deprecated @legacy @input
+export type DeprecatedLoadContainerRuntimeParams = Omit<LoadContainerRuntimeParams, "oldestSupportedClient" | "minVersionForCollab"> & {
+    readonly oldestSupportedClient?: undefined;
+    readonly minVersionForCollab: OldestSupportedClientVersion;
+};
+
 // @beta @legacy (undocumented)
 export const disabledCompressionConfig: ICompressionRuntimeOptions;
 
@@ -349,13 +355,19 @@ export interface IVersionMarkResolver {
 export function loadContainerRuntime(params: LoadContainerRuntimeParams): Promise<IContainerRuntime & IRuntime>;
 
 // @beta @legacy
+export function loadContainerRuntime(params: DeprecatedLoadContainerRuntimeParams): Promise<IContainerRuntime & IRuntime>;
+
+// @beta @legacy
+export function loadContainerRuntime(params: LoadContainerRuntimeParams | DeprecatedLoadContainerRuntimeParams): Promise<IContainerRuntime & IRuntime>;
+
+// @beta @legacy
 export interface LoadContainerRuntimeParams {
     containerScope?: FluidObject;
     context: IContainerContext;
     existing: boolean;
     // @deprecated
-    minVersionForCollab?: OldestSupportedClientVersion;
-    oldestSupportedClient?: OldestSupportedClientVersion;
+    minVersionForCollab?: undefined;
+    oldestSupportedClient: OldestSupportedClientVersion;
     provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
     registryEntries: NamedFluidDataStoreRegistryEntries;
     // @deprecated
