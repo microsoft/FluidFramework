@@ -14,34 +14,22 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"import": {
-				"types": "./lib/public.d.ts",
-				"default": "./lib/api.js"
-			},
-			"require": {
-				"types": "./dist/public.d.ts",
-				"default": "./dist/api.js"
+			"types": "./lib/public.d.ts",
+			"default": "./lib/api.js",
+			"internal-entrypoint-generation": {
+				"types": "./dist/public.d.ts"
 			}
 		},
 		"./legacy": {
-			"import": {
-				"types": "./lib/legacy.d.ts",
-				"default": "./lib/api.js"
-			},
-			"require": {
-				"types": "./dist/legacy.d.ts",
-				"default": "./dist/api.js"
+			"types": "./lib/legacy.d.ts",
+			"default": "./lib/api.js",
+			"internal-entrypoint-generation": {
+				"types": "./dist/legacy.d.ts"
 			}
 		},
 		"./internal": {
-			"import": {
-				"types": "./lib/internal.d.ts",
-				"default": "./lib/internal.js"
-			},
-			"require": {
-				"types": "./dist/internal.d.ts",
-				"default": "./dist/internal.js"
-			}
+			"types": "./lib/internal.d.ts",
+			"default": "./lib/internal.js"
 		}
 	},
 	"scripts": {
@@ -61,7 +49,7 @@
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"bump-version": "npm version minor --no-push --no-git-tag-version",
-		"check:are-the-types-wrong": "attw --pack . --profile node16",
+		"check:are-the-types-wrong": "attw --pack . --profile esm-only",
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:api-bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-api-bundle.json",
