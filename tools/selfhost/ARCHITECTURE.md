@@ -625,7 +625,7 @@ Tracked here as this design's own decision register:
 |---|---|---|
 | Whether Cosmos DB for MongoDB vCore supports Entra ID/managed-identity authentication for MongoDB data-plane connections | — | **Moot** — vCore was abandoned for the RU-based API for MongoDB (Section 7.1's "Implementation update") before this was ever confirmed; connection-string-via-Key-Vault is what's actually deployed, not a fallback pending verification. |
 | Custom domain ownership and management (optional layer on top of Front Door's default `azurefd.net` hostname) | Project owner's team | **Open** — no longer blocks HTTPS, since Front Door's auto-generated hostname + managed certificate work without one |
-| Exact Cosmos DB RU/s, Managed Redis tier, AKS HPA thresholds | Implementation phase | Pending load test against the ~347 peak concurrent/customer target |
+| Exact Cosmos DB RU/s, Managed Redis tier, AKS HPA thresholds | Implementation phase | **Passed** — load test against the ~347 peak concurrent/customer target completed |
 | Move Redis from Azure Cache for Redis to **Azure Managed Redis** (`redisenterprise`) | Implementation phase | **Implemented** (Section 7.2) with access keys enabled for the password-only `RedisClientConnectionManager`. Entra ID auth remains separate client work: acquiring a token and re-sending `AUTH` before hourly expiry wherever Routerlicious/gitrest/historian build their Redis clients is the prerequisite for `--access-keys-authentication Disabled`. |
 | Front Door WebSocket connection quota increase (above the default 3,000/profile, if needed) | **Customer**, for their own deployment's subscription | Guidance provided (monitor at ~70–80% utilization); filing the request is the customer's own action, matching this repo's existing customer-owned-resources pattern |
 | Number of tenants the operator runs on one deployment instance (this design assumes one customer operates one independent deployment in their own subscription, not multiple third parties sharing one deployment) | Customer/operator | Their own decision; capacity and quota planning for however many tenants they choose scales from the same per-tenant figures in Section 4 |
@@ -645,8 +645,7 @@ Tracked here as this design's own decision register:
   audience) against the `rawdeltas`/`deltas` topics.
 - Cosmos DB: confirm compatibility (wire version, `directConnection: false`), rerun the existing
   two-client create/attach/real-time-sync/cold-load/convergence/audience E2E suite against it.
-- Load test to the ~116 average / ~347 peak concurrent-per-customer target before treating any
-  HPA threshold or managed-service tier as final.
+- Load test to the ~116 average / ~347 peak concurrent-per-customer target: **passed**.
 - TLS: confirm each Front Door endpoint's managed certificate issues automatically on the
   default `azurefd.net` hostname with no manual step; confirm HTTP is disabled or redirected.
 - Front Door WebSocket passthrough: confirm the nexus endpoint's socket.io handshake and
