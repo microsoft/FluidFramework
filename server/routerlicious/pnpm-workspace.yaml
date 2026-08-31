@@ -159,7 +159,7 @@ overrides:
   tar: ^7.5.11
 
   # Pin zookeeper to 7.x; earlier versions fail to compile and may be brought in transitively.
-  zookeeper: ^7.2.0
+  zookeeper: ^7.3.0
 
   # Resolve known security vulnerabilities across all major version ranges.
   minimatch@>=3 <4: ^3.1.5
