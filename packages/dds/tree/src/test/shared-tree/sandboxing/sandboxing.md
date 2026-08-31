@@ -16,19 +16,14 @@ Application developers can use its existing APIs and conflict resolution instead
 Use the terms "Host" and "Guest" for the two sides.
 These terms are similar to the terms for virtual machines.
 
-- Host: The SharedTree that connects to Fluid services.
-- Guest: The TreeView and its related internal components. A message protocol separates the Guest from the Host. The Guest does not share state with the Host.
+- **Host**: The SharedTree that connects to Fluid services.
+- **Guest**: The TreeView and its related internal components. A message protocol separates the Guest from the Host. The Guest does not share state with the Host.
 
 - Host-local edits: Edits on the Host that are not sequenced.
 - Guest-local edits: Edits on the Guest that the Host has not acknowledged.
 - Host-originated edits: Edits that the Host makes directly. These edits do not come from a Guest.
 
 Add new terminology decisions to this section when necessary.
-
-Some current documentation uses "sandbox" for the Guest.
-Use "Guest" because this protocol does not require a security boundary.
-
-Update the documentation and code to use the terms in this section.
 
 ## Key Assumptions
 
@@ -91,7 +86,7 @@ The simplest method is probably to copy an `ArrayBuffer`.
 
 ### Host Lifetime Extensions
 
-How the host manages the lifetime of some data must be adjusted.
+How the Host manages the lifetime of some data must be adjusted.
 The Host revision manager must retain additional branches to support the Guest.
 
 A branch-based solution should be able to address the Guest's use of revertables as well as local branches.
