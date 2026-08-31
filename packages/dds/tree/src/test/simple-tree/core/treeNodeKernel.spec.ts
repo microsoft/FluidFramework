@@ -192,6 +192,69 @@ describe("withBufferedTreeEvents", () => {
 		assert.equal(eventCounter, 1); // Only a single event should have been raised.
 	});
 
+	it("flushes all buffers when an event listener throws", () => {
+		const first = hydrate(MyObject, new MyObject({ foo: "first", bar: true }));
+		const second = hydrate(MyObject, new MyObject({ foo: "second", bar: true }));
+		let secondListenerCalled = false;
+		TreeBeta.on(first, "nodeChanged", () => {
+			throw new Error("listener failure");
+		});
+		TreeBeta.on(second, "nodeChanged", () => {
+			secondListenerCalled = true;
+		});
+
+		assert.throws(
+			() =>
+				withBufferedTreeEvents(() => {
+					first.foo = "updated first";
+					second.foo = "updated second";
+				}),
+			/listener failure/,
+		);
+
+		assert.equal(secondListenerCalled, true);
+		assert.equal(TEST_activeBufferCount(), 0);
+	});
+
+	it("discards buffered events when the callback throws", () => {
+		const myObject = hydrate(MyObject, new MyObject({ foo: "hi", bar: true }));
+		let listenerCalled = false;
+		TreeBeta.on(myObject, "nodeChanged", () => {
+			listenerCalled = true;
+		});
+
+		assert.throws(
+			() =>
+				withBufferedTreeEvents(() => {
+					myObject.foo = "updated";
+					throw new Error("callback failure");
+				}),
+			/callback failure/,
+		);
+
+		assert.equal(listenerCalled, false);
+		assert.equal(TEST_activeBufferCount(), 0);
+	});
+
+	it("delivers pending events when another flush listener disposes their kernel", () => {
+		const first = hydrate(MyObject, new MyObject({ foo: "first", bar: true }));
+		const second = hydrate(MyObject, new MyObject({ foo: "second", bar: true }));
+		const secondKernel = getKernel(second);
+		let secondListenerCalled = false;
+		TreeBeta.on(first, "nodeChanged", () => secondKernel.dispose());
+		TreeBeta.on(second, "nodeChanged", () => {
+			secondListenerCalled = true;
+		});
+
+		withBufferedTreeEvents(() => {
+			first.foo = "updated first";
+			second.foo = "updated second";
+		});
+
+		assert.equal(secondListenerCalled, true);
+		assert.throws(() => secondKernel.getInnerNode(), /Cannot access a deleted node/);
+	});
+
 	// Regression tests for a leak where KernelEventBuffers were retained indefinitely
 	// by a module-level emitter subscription. After the fix, module-level state should
 	// only reference buffers during an active withBufferedTreeEvents window.
@@ -748,8 +811,8 @@ describe("array move events", () => {
 	});
 });
 
-describe("statusChangedAfterBatch", () => {
-	const sf = new SchemaFactory("statusChangedAfterBatch");
+describe("statusChanged", () => {
+	const sf = new SchemaFactory("statusChanged");
 	class Item extends sf.object("Item", { value: sf.number }) {}
 	class Container extends sf.object("Container", { items: sf.array(Item) }) {}
 
@@ -765,7 +828,7 @@ describe("statusChangedAfterBatch", () => {
 		const kernel = getKernel(item);
 
 		const events: StatusChangedEventData[] = [];
-		kernel.statusEvents.on("statusChangedAfterBatch", (data) => events.push(data));
+		kernel.events.on("statusChanged", (data) => events.push(data));
 
 		// Subscribing does not fire spuriously.
 		assert.equal(events.length, 0);
@@ -777,29 +840,12 @@ describe("statusChangedAfterBatch", () => {
 		assert.equal(events[0].newStatus, TreeStatus.Removed);
 	});
 
-	it("is the only status event for InDocument -> Removed (synchronous statusChanged does not fire)", () => {
-		// The synchronous `statusChanged` only fires on hydrate/dispose; the detach -> Removed transition
-		// has no dedicated signal and is surfaced exclusively by the batch-aligned watcher.
-		const { view, item } = setup();
-		const kernel = getKernel(item);
-
-		const sync: TreeStatus[] = [];
-		const batched: TreeStatus[] = [];
-		kernel.statusEvents.on("statusChanged", (d) => sync.push(d.newStatus));
-		kernel.statusEvents.on("statusChangedAfterBatch", (d) => batched.push(d.newStatus));
-
-		view.root.items.removeAt(0);
-
-		assert.deepEqual(sync, []);
-		assert.deepEqual(batched, [TreeStatus.Removed]);
-	});
-
 	it("observes a consistent status when the listener runs", () => {
 		const { view, item } = setup();
 		const kernel = getKernel(item);
 
 		let observed: TreeStatus | undefined;
-		kernel.statusEvents.on("statusChangedAfterBatch", () => {
+		kernel.events.on("statusChanged", () => {
 			observed = Tree.status(item);
 		});
 
@@ -813,7 +859,7 @@ describe("statusChangedAfterBatch", () => {
 		const kernel = getKernel(item);
 
 		const events: StatusChangedEventData[] = [];
-		const off = kernel.statusEvents.on("statusChangedAfterBatch", (data) => events.push(data));
+		const off = kernel.events.on("statusChanged", (data) => events.push(data));
 		off();
 
 		view.root.items.removeAt(0);
@@ -827,8 +873,8 @@ describe("statusChangedAfterBatch", () => {
 
 		const a: StatusChangedEventData[] = [];
 		const b: StatusChangedEventData[] = [];
-		const offA = kernel.statusEvents.on("statusChangedAfterBatch", (data) => a.push(data));
-		kernel.statusEvents.on("statusChangedAfterBatch", (data) => b.push(data));
+		const offA = kernel.events.on("statusChanged", (data) => a.push(data));
+		kernel.events.on("statusChanged", (data) => b.push(data));
 
 		offA();
 
@@ -844,7 +890,7 @@ describe("statusChangedAfterBatch", () => {
 		const kernel = getKernel(item);
 
 		const events: StatusChangedEventData[] = [];
-		kernel.statusEvents.on("statusChangedAfterBatch", (data) => events.push(data));
+		kernel.events.on("statusChanged", (data) => events.push(data));
 
 		Tree.runTransaction(view, () => {
 			view.root.items.insertAtEnd(new Item({ value: 2 }));
@@ -855,6 +901,59 @@ describe("statusChangedAfterBatch", () => {
 		assert.equal(events[0].newStatus, TreeStatus.Removed);
 	});
 
+	it("buffers status changes with content events", () => {
+		const { view, item } = setup();
+		const events: StatusChangedEventData[] = [];
+		getKernel(item).events.on("statusChanged", (data) => events.push(data));
+
+		withBufferedTreeEvents(() => {
+			view.root.items.removeAt(0);
+			assert.deepEqual(events, []);
+		});
+
+		assert.deepEqual(events, [
+			{ oldStatus: TreeStatus.InDocument, newStatus: TreeStatus.Removed },
+		]);
+	});
+
+	it("coalesces buffered transitions while preserving that a transition occurred", () => {
+		const { view, item } = setup();
+		const undoRedo = createTestUndoRedoStacks(view.checkout.events);
+		const events: StatusChangedEventData[] = [];
+		getKernel(item).events.on("statusChanged", (data) => events.push(data));
+
+		withBufferedTreeEvents(() => {
+			view.root.items.removeAt(0);
+			undoRedo.undoStack.pop()?.revert();
+		});
+
+		assert.deepEqual(events, [
+			{ oldStatus: TreeStatus.InDocument, newStatus: TreeStatus.InDocument },
+		]);
+		undoRedo.unsubscribe();
+	});
+
+	it("reports a discarded buffered transition after the next batch", () => {
+		const { view, item } = setup();
+		const events: StatusChangedEventData[] = [];
+		getKernel(item).events.on("statusChanged", (data) => events.push(data));
+
+		assert.throws(
+			() =>
+				withBufferedTreeEvents(() => {
+					view.root.items.removeAt(0);
+					throw new Error("callback failure");
+				}),
+			/callback failure/,
+		);
+		assert.deepEqual(events, []);
+
+		view.root.items.insertAtEnd(new Item({ value: 2 }));
+		assert.deepEqual(events, [
+			{ oldStatus: TreeStatus.InDocument, newStatus: TreeStatus.Removed },
+		]);
+	});
+
 	it("surfaces the Removed -> InDocument transition on reattach (via undo)", () => {
 		const { view, item } = setup();
 		const kernel = getKernel(item);
@@ -863,7 +962,7 @@ describe("statusChangedAfterBatch", () => {
 		view.root.items.removeAt(0);
 
 		const events: StatusChangedEventData[] = [];
-		kernel.statusEvents.on("statusChangedAfterBatch", (data) => events.push(data));
+		kernel.events.on("statusChanged", (data) => events.push(data));
 
 		undoRedo.undoStack.pop()?.revert();
 
@@ -879,7 +978,7 @@ describe("statusChangedAfterBatch", () => {
 		const kernel = getKernel(item);
 
 		const events: StatusChangedEventData[] = [];
-		kernel.statusEvents.on("statusChangedAfterBatch", (data) => events.push(data));
+		kernel.events.on("statusChanged", (data) => events.push(data));
 
 		// Disposing the view deletes the nodes (anchors destroyed -> kernel.dispose()).
 		view.dispose();
@@ -888,5 +987,25 @@ describe("statusChangedAfterBatch", () => {
 		assert(events.length > 0);
 		const last = events.at(-1);
 		assert.equal(last?.newStatus, TreeStatus.Deleted);
+	});
+
+	it("completes disposal after delivering a buffered terminal transition", () => {
+		const { view, item } = setup();
+		const kernel = getKernel(item);
+		let inspectedBeforeDisposal = false;
+		kernel.events.on("statusChanged", ({ newStatus }) => {
+			if (newStatus === TreeStatus.Deleted) {
+				kernel.getInnerNode();
+				inspectedBeforeDisposal = true;
+			}
+		});
+
+		withBufferedTreeEvents(() => {
+			view.dispose();
+			assert.equal(inspectedBeforeDisposal, false);
+		});
+
+		assert.equal(inspectedBeforeDisposal, true);
+		assert.throws(() => kernel.getInnerNode(), /Cannot access a deleted node/);
 	});
 });

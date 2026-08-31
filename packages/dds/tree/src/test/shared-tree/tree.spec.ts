@@ -589,6 +589,30 @@ describe("treeApi", () => {
 
 				undoRedoStacks.unsubscribe();
 			});
+
+			it("invalidates when a node moves to a different removed location while events are buffered", () => {
+				const view = getView(new TreeViewConfiguration({ schema: Container }));
+				view.initialize({ items: [{ value: 42 }] });
+				const undoRedoStacks = createTestUndoRedoStacks(view.events);
+				const item = view.root.items[0];
+				view.root.items.removeAt(0);
+
+				const parent = TreeAlpha.parent2(item);
+				assert(parent instanceof RemovedRootParent);
+				let changed = false;
+				TreeAlpha.on(parent, "nodeChanged", () => {
+					changed = true;
+				});
+
+				withBufferedTreeEvents(() => {
+					undoRedoStacks.undoStack.pop()?.revert();
+					view.root.items.removeAt(0);
+				});
+
+				assert.equal(changed, true);
+				assert.notEqual(TreeAlpha.parent2(item), parent);
+				undoRedoStacks.unsubscribe();
+			});
 		});
 
 		describe("UnhydratedParent", () => {

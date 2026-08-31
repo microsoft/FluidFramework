@@ -19,8 +19,7 @@ import {
 	getKernel,
 	treeNodeApi,
 	isTreeNode,
-	isBufferingTreeEvents,
-	onTreeEventsFlush,
+	BufferedTreeEvent,
 } from "../simple-tree/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
@@ -68,7 +67,7 @@ export type TreeNodeParent = TreeNode | ParentObject;
  * @remarks
  * `nodeChanged` carries a data payload; since a {@link ParentObject} is a location without schema, it is
  * delivered with an empty payload (no {@link NodeChangedData.changedProperties}). `treeChanged` takes no
- * argument. This lets both events flow through the no-argument {@link NotifyCoalescer}.
+ * argument. This lets both events flow through the no-argument {@link BufferedTreeEvent}.
  */
 function makeOccupancyNotifier<K extends keyof TreeChangeEventsBeta>(
 	eventName: K,
@@ -77,48 +76,6 @@ function makeOccupancyNotifier<K extends keyof TreeChangeEventsBeta>(
 	return eventName === "nodeChanged"
 		? () => (listener as TreeChangeEventsBeta["nodeChanged"])({})
 		: (listener as TreeChangeEventsBeta["treeChanged"]);
-}
-
-/**
- * Coalesces a no-argument notification (e.g. `nodeChanged` or `treeChanged` fired for a root
- * replacement) so that, inside a
- * {@link withBufferedTreeEvents} window, it fires at most once at the end of the window. Delivers
- * immediately when no window is active.
- */
-class NotifyCoalescer {
-	#pending = false;
-	#flushScheduled = false;
-	#active = true;
-
-	public constructor(private readonly listener: () => void) {}
-
-	public fire(): void {
-		if (!this.#active) {
-			return;
-		}
-		if (!isBufferingTreeEvents()) {
-			this.listener();
-			return;
-		}
-		this.#pending = true;
-		if (!this.#flushScheduled) {
-			this.#flushScheduled = true;
-			onTreeEventsFlush(() => this.#flush());
-		}
-	}
-
-	#flush(): void {
-		this.#flushScheduled = false;
-		if (this.#active && this.#pending) {
-			this.#pending = false;
-			this.listener();
-		}
-	}
-
-	public dispose(): void {
-		this.#active = false;
-		this.#pending = false;
-	}
 }
 
 /**
@@ -281,11 +238,11 @@ export class DocumentRootParent extends ParentObjectBase {
 		// `withBufferedTreeEvents` windows (matching how content events are coalesced).
 		const nodeChangedCoalescer =
 			eventName === "nodeChanged"
-				? new NotifyCoalescer(makeOccupancyNotifier(eventName, listener))
+				? new BufferedTreeEvent(makeOccupancyNotifier(eventName, listener))
 				: undefined;
 		const treeChangedCoalescer =
 			eventName === "treeChanged"
-				? new NotifyCoalescer(listener as TreeChangeEventsBeta["treeChanged"])
+				? new BufferedTreeEvent(listener as TreeChangeEventsBeta["treeChanged"])
 				: undefined;
 
 		const subscribeToRoot = (): void => {
@@ -329,8 +286,8 @@ export class DocumentRootParent extends ParentObjectBase {
 			// - `treeChanged` fires because something in the tree changed (the root was replaced).
 			// - `nodeChanged` fires because this location's single child changed.
 			// Both are routed through coalescers so they merge within a `withBufferedTreeEvents` window.
-			treeChangedCoalescer?.fire();
-			nodeChangedCoalescer?.fire();
+			treeChangedCoalescer?.emit();
+			nodeChangedCoalescer?.emit();
 
 			subscribeToRoot();
 		});
@@ -436,22 +393,17 @@ export class RemovedRootParent extends ParentObjectBase {
 			return () => {};
 		}
 		const kernel = getKernel(this.detachedNode);
-		const coalescer = new NotifyCoalescer(makeOccupancyNotifier(eventName, listener));
+		const notify = makeOccupancyNotifier(eventName, listener);
 
-		// The kernel's batch-aligned `statusChangedAfterBatch` fires after the batch settles, so the tree
-		// is consistent when the listener runs. It also owns the `afterBatch` polling needed to detect the
-		// detach → re-attach transition, so no per-consumer afterBatch subscription is required here.
-		const unsubscribeStatus = kernel.statusEvents.on("statusChangedAfterBatch", () => {
+		// The kernel's status event is batch-aligned and participates in tree event buffering.
+		const unsubscribeStatus = kernel.events.on("statusChanged", () => {
 			// The transition is one-shot for this location: once the node leaves, stop listening.
 			unsubscribeStatus();
 			// The node left this location (e.g., re-attached into the document), leaving it empty.
-			coalescer.fire();
+			notify();
 		});
 
-		return () => {
-			coalescer.dispose();
-			unsubscribeStatus();
-		};
+		return unsubscribeStatus;
 	}
 }
 
@@ -525,20 +477,15 @@ export class UnhydratedParent extends ParentObjectBase {
 		}
 		const node = this.getTreeNode();
 		const kernel = getKernel(node);
-		const coalescer = new NotifyCoalescer(makeOccupancyNotifier(eventName, listener));
+		const notify = makeOccupancyNotifier(eventName, listener);
 
-		// The kernel's batch-aligned `statusChangedAfterBatch` handles deferral to `afterBatch` internally
-		// (whether hydration occurs mid-batch, e.g. `insertAtEnd`, or after the tree has already settled,
-		// e.g. `view.initialize()`), so the listener always observes a consistent `Tree.status()`.
-		const unsubscribeStatus = kernel.statusEvents.on("statusChangedAfterBatch", () => {
+		// The kernel's status event handles batch alignment and tree event buffering.
+		const unsubscribeStatus = kernel.events.on("statusChanged", () => {
 			// One-shot: hydration is a single New -> InDocument transition for this location.
 			unsubscribeStatus();
 			// The node was hydrated into the document, leaving this unhydrated location empty.
-			coalescer.fire();
+			notify();
 		});
-		return () => {
-			coalescer.dispose();
-			unsubscribeStatus();
-		};
+		return unsubscribeStatus;
 	}
 }

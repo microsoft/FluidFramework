@@ -1794,14 +1794,8 @@ export const Tree: Tree;
 
 // @alpha @sealed
 export interface TreeAlpha {
-    child(node: TreeNode, key: string | number): TreeNode | TreeLeafValue | undefined;
-    // (undocumented)
-    child(node: ParentObject, key: undefined): TreeNode | TreeLeafValue | undefined;
-    // (undocumented)
     child(node: TreeNodeParent, key: string | number | undefined): TreeNode | TreeLeafValue | undefined;
     children(node: TreeNode): Iterable<[propertyKey: string | number, child: TreeNode | TreeLeafValue]>;
-    // (undocumented)
-    children(node: ParentObject): Iterable<[propertyKey: undefined, child: TreeNode | TreeLeafValue]>;
     // (undocumented)
     children(node: TreeNodeParent): Iterable<[propertyKey: string | number | undefined, child: TreeNode | TreeLeafValue]>;
     context(node: TreeNode): TreeContextAlpha;

@@ -101,7 +101,7 @@ import {
 	UnhydratedParent,
 	ParentObjectBase,
 } from "./parentObject.js";
-import type { ParentObject, TreeNodeParent } from "./parentObject.js";
+import type { TreeNodeParent } from "./parentObject.js";
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
 import { UnhydratedTreeContext } from "./unhydratedTreeContext.js";
 
@@ -255,9 +255,8 @@ export interface TreeAlpha {
 	 * @returns A function that, when called, removes the listener.
 	 *
 	 * @remarks
-	 * This overload accepts a value whose specific kind (node vs. parent object) is not statically
-	 * known, and exposes the `nodeChanged`/`treeChanged` events common to both. For the richer array-node
-	 * payloads, first narrow `node` to a {@link TreeNode}.
+	 * This method exposes the `nodeChanged` and `treeChanged` events common to {@link TreeNode} and
+	 * {@link ParentObject}.
 	 *
 	 * For document-root parents, `treeChanged` proxies to the current root node (and automatically
 	 * re-subscribes when the root is replaced) and also fires on root replacement; `nodeChanged` fires
@@ -445,8 +444,6 @@ export interface TreeAlpha {
 	 * @see {@link (TreeAlpha:interface).key2}
 	 * @see {@link (TreeAlpha:interface).parent2}
 	 */
-	child(node: TreeNode, key: string | number): TreeNode | TreeLeafValue | undefined;
-	child(node: ParentObject, key: undefined): TreeNode | TreeLeafValue | undefined;
 	child(
 		node: TreeNodeParent,
 		key: string | number | undefined,
@@ -486,9 +483,6 @@ export interface TreeAlpha {
 	children(
 		node: TreeNode,
 	): Iterable<[propertyKey: string | number, child: TreeNode | TreeLeafValue]>;
-	children(
-		node: ParentObject,
-	): Iterable<[propertyKey: undefined, child: TreeNode | TreeLeafValue]>;
 	children(
 		node: TreeNodeParent,
 	): Iterable<[propertyKey: string | number | undefined, child: TreeNode | TreeLeafValue]>;
@@ -855,8 +849,8 @@ function treeAlphaChildren(
 	node: TreeNode,
 ): Iterable<[propertyKey: string | number, child: TreeNode | TreeLeafValue]>;
 function treeAlphaChildren(
-	node: ParentObject,
-): Iterable<[propertyKey: undefined, child: TreeNode | TreeLeafValue]>;
+	node: TreeNodeParent,
+): Iterable<[propertyKey: string | number | undefined, child: TreeNode | TreeLeafValue]>;
 function treeAlphaChildren(
 	node: TreeNodeParent,
 ): Iterable<[propertyKey: string | number | undefined, child: TreeNode | TreeLeafValue]> {
