@@ -72,7 +72,7 @@ export function makeV1toV4andV6CodecWithVersion<TChangeset>(
 				data.originator,
 				includeCustomMetadata,
 			);
-			const encoded: EncodedEditManager<TChangeset> = {
+			const encoded: EncodedEditManager<JsonCompatibleReadOnly> = {
 				trunk: mainBranch.trunk,
 				branches: mainBranch.peers,
 				version,

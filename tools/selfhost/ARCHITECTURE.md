@@ -579,11 +579,12 @@ fallback only if a customer's own quota increase is denied or insufficient.
 
 ### 7.8 ACR credential hardening
 
-The AKS kubelet identity holds `AcrPull` on the ACR (`azure/deploy.sh`'s `phase2_acr_harden`);
-there is no long-lived admin-password secret, and the ACR admin account is disabled. An earlier
-state (`az acr create --admin-enabled true`, with the admin username/password stored as a
-Kubernetes `regsecret`) predates this and is no longer how a fresh deployment provisions ACR
-access.
+The AKS kubelet identity holds `AcrPull` on the deploy ACR
+(`azure/deploy.sh`'s `phase2_acr_harden`), and build operators authenticate to the build ACR
+through `az acr login`. Both registries are created with their admin accounts disabled and
+reconcile an existing registry back to that state. There is no long-lived admin-password secret.
+An earlier state, with an admin username/password stored as a Kubernetes `regsecret`, predates
+this and is no longer how a fresh deployment provisions ACR access.
 
 ### 7.9 AKS application-tier scaling
 
