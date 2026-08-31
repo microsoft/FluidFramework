@@ -156,12 +156,7 @@ export {
 	replaceConciseTreeHandles,
 } from "./conciseTree.js";
 
-export {
-	borrowCursorFromTreeNodeOrValue,
-	exportConcise,
-	importConcise,
-	TreeBeta,
-} from "./treeBeta.js";
+export { cloneTree } from "./cloneTree.js";
 export type {
 	ArrayNodeDeltaOp,
 	ArrayNodeInsertOp,

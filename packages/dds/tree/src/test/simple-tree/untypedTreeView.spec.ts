@@ -5,12 +5,14 @@
 
 import { strict as assert } from "node:assert";
 
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import {
+	validateAssertionError,
+	validateUsageError,
+} from "@fluidframework/test-runtime-utils/internal";
 
-import { TreeAlpha } from "../../shared-tree/index.js";
+import { TreeAlpha, TreeBeta } from "../../shared-tree/index.js";
 import {
 	SchemaFactory,
-	TreeBeta,
 	TreeViewConfiguration,
 	type TreeView,
 	type TreeViewAlpha,
@@ -77,6 +79,33 @@ describe("UntypedTreeView", () => {
 		);
 		assert.deepEqual(result, { success: true, value: 2 });
 		assert.deepEqual([...node], ["a", "b"]);
+	});
+
+	it("shares unhydrated transaction state between beta and alpha contexts", async () => {
+		// eslint-disable-next-line unicorn/no-new-array -- "Array" is the name of the schema
+		const node = new Array(["a"]);
+		const betaContext = TreeBeta.context(node);
+		const alphaContext = TreeAlpha.context(node);
+		const expectedError = validateUsageError(
+			/An asynchronous transaction cannot be started while another transaction is already in progress/,
+		);
+
+		let transactionPromise: Promise<unknown> | undefined;
+		betaContext.runTransaction(() => {
+			transactionPromise = alphaContext.runTransactionAsync(async () => {});
+		});
+		await assert.rejects(
+			transactionPromise ?? assert.fail("Expected transactionPromise to be assigned"),
+			expectedError,
+		);
+
+		alphaContext.runTransaction(() => {
+			transactionPromise = betaContext.runTransactionAsync(async () => {});
+		});
+		await assert.rejects(
+			transactionPromise ?? assert.fail("Expected transactionPromise to be assigned"),
+			expectedError,
+		);
 	});
 
 	describe("forked views", () => {
