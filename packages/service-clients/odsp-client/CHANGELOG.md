@@ -1,5 +1,9 @@
 # @fluid-experimental/odsp-client
 
+## 2.117.0
+
+Dependency updates only.
+
 ## 2.116.0
 
 ### Minor Changes

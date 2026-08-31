@@ -1,5 +1,121 @@
 # fluid-framework
 
+## 2.117.0
+
+### Minor Changes
+
+- Rename TreeBranch and TreeBranchAlpha to UntypedTreeView ([#28104](https://github.com/microsoft/FluidFramework/pull/28104)) [e75bc54fa2](https://github.com/microsoft/FluidFramework/commit/e75bc54fa2cd24f8331e05e094c09ff602337c50)
+
+  `UntypedTreeView` and `UntypedTreeViewAlpha` replace the beta `TreeBranch` and alpha `TreeBranchAlpha` interfaces, clarifying that they represent tree views without known schemas. The old names remain available as deprecated compatibility aliases and will be removed in a future release.
+
+  Update API imports and type annotations to use the new names:
+
+  ```typescript
+  // Before
+  import type { TreeBranch } from "fluid-framework/beta";
+  import type { TreeBranchAlpha } from "fluid-framework/alpha";
+  const betaBranch: TreeBranch = betaView.fork();
+  const alphaBranch: TreeBranchAlpha = alphaView.fork();
+
+  // After
+  import type { UntypedTreeView } from "fluid-framework/beta";
+  import type { UntypedTreeViewAlpha } from "fluid-framework/alpha";
+  const betaForkedView: UntypedTreeView = betaView.fork();
+  const alphaForkedView: UntypedTreeViewAlpha = alphaView.fork();
+  ```
+
+- New alpha API for attaching custom metadata to commits ([#28104](https://github.com/microsoft/FluidFramework/pull/28104)) [e75bc54fa2](https://github.com/microsoft/FluidFramework/commit/e75bc54fa2cd24f8331e05e094c09ff602337c50)
+
+  Applications can now attach arbitrary, JSON-serializable metadata to a commit, replicate it to collaborating clients, and persist it in the document.
+
+  Supply it via the new `customMetadata` field on [`RunTransactionParamsAlpha`](https://fluidframework.com/docs/api/fluid-framework/runtransactionparamsalpha-interface):
+
+  ```typescript
+  view.runTransaction(
+    () => {
+      view.root.insertAtEnd("new item");
+    },
+    { customMetadata: { author: "alice", intent: "add-item" } },
+  );
+  ```
+
+  The commit produced by reverting a `Revertible`, or by `revertTo`, can be annotated the same way via a new options argument:
+
+  ```typescript
+  revertible.revert({
+    customMetadata: { author: "alice", intent: "undo-add" },
+  });
+  view.revertTo(revision, {
+    customMetadata: { author: "alice", intent: "undo-add" },
+  });
+  ```
+
+  Read it back while walking the branch's [history](https://fluidframework.com/docs/api/fluid-framework/treebranchhistory-interface), via the new `custom` property on `TreeBranchCommitMetadata`:
+
+  ```typescript
+  for (
+    let commit = view.branchHistory.getHead();
+    commit !== undefined;
+    commit = commit.getParent()
+  ) {
+    const metadata = commit.custom;
+  }
+  ```
+
+  Because a commit may be produced by nested transactions, each of which may supply metadata, `custom` is the flattened combination of them all, with the outermost transaction winning on conflicting properties.
+  The structural view is available as `commit.customTree`, a `CustomMetadataTree` mirroring the transaction nesting — the same relationship `labels.tree` has to a change's label set.
+
+  Metadata shares the lifetime of the commit it is attached to, so it is dropped when that commit is trimmed from the trunk, or lasts as long as the document under the `retainHistory` option on `SharedTreeOptions`.
+  It also travels on every annotated op and occupies summary space for as long as its commit survives, so it should be kept small.
+
+  Persisting the metadata requires new op and summary format versions, which are written only when `minVersionForCollab` is set to `2.117.0` or later; until then, metadata is kept in memory for the local session but is neither replicated nor persisted.
+  Raising that floor makes every subsequent op and summary use the new versions, whether or not any commit carries metadata, so deploy metadata-capable code everywhere first.
+  Lowering it again is lossy: a client configured to write the older format can still read metadata but strips it when encoding.
+
+- Bug fix: forking during changed event callback is now safe ([#28074](https://github.com/microsoft/FluidFramework/pull/28074)) [ca9458aa1a](https://github.com/microsoft/FluidFramework/commit/ca9458aa1ae9061928c5c7ff837b61d888468174)
+
+  [Forking](https://fluidframework.com/docs/api/fluid-framework/treeviewbeta-interface#fork-methodsignature) (beta) a view during the callback for the ["changed" event](https://fluidframework.com/docs/api/fluid-framework/treebranchevents-interface#changed-methodsignature) (alpha) emitted when a transaction is committed would create a fork with malformed change data.
+  This could result in asserts being triggered when utilizing the fork (including, but not limited to, error code `0x7ce`).
+
+- Remove the deprecated TreeAlpha.branch API ([#28104](https://github.com/microsoft/FluidFramework/pull/28104)) [e75bc54fa2](https://github.com/microsoft/FluidFramework/commit/e75bc54fa2cd24f8331e05e094c09ff602337c50)
+
+  The deprecated alpha `TreeAlpha.branch(node)` API has been removed. Use [`TreeAlpha.context(node)`](https://fluidframework.com/docs/api/fluid-framework/treealpha-interface#context-methodsignature) and check [`isView()`](https://fluidframework.com/docs/api/fluid-framework/treecontextalpha-interface#isview-methodsignature) to access the untyped view for a hydrated node:
+
+  ```typescript
+  const context = TreeAlpha.context(node);
+  if (context.isView()) {
+    // `context` is an UntypedTreeViewAlpha here.
+  }
+  ```
+
+- retainHistory now retains history in summaries ([#28104](https://github.com/microsoft/FluidFramework/pull/28104)) [e75bc54fa2](https://github.com/microsoft/FluidFramework/commit/e75bc54fa2cd24f8331e05e094c09ff602337c50)
+
+  The `retainHistory` option on `SharedTreeOptions` is documented as causing growth in summaries/snapshots as well as in memory, but it only ever prevented trunk commits from being evicted from memory.
+  Summaries continued to contain just the collaboration window, so retained history was discarded at the next summary and was unavailable to clients that loaded from it.
+
+  Summaries produced by a client with `retainHistory` enabled now contain the full trunk, matching the option's documented behavior.
+  History accumulated while the flag is enabled survives summarization and is available to clients that join later.
+  History is only retained from the point at which the flag is enabled: commits that were already evicted by a prior session cannot be recovered.
+
+  There is no change to the default (`retainHistory: false`) behavior, and no change to the persisted format.
+
+- New alpha APIs for inspecting history and restoring past states ([#28104](https://github.com/microsoft/FluidFramework/pull/28104)) [e75bc54fa2](https://github.com/microsoft/FluidFramework/commit/e75bc54fa2cd24f8331e05e094c09ff602337c50)
+
+  `UntypedTreeViewAlpha` (formerly [`TreeBranchAlpha`](https://fluidframework.com/docs/api/fluid-framework/treebranchalpha-interface)) now exposes a `branchHistory` property which returns a `TreeBranchHistory` object with:
+  - `commitCount`: the number of commits currently in the branch's history.
+    This number grows when a new edit is made on the branch, when a branch containing new commits is merged into it, or when it is rebased onto a branch containing new commits.
+    It shrinks when past commits are trimmed from the history.
+  - `getHeadCommit()`: returns the `TreeBranchCommitMetadata` for the branch's head commit, or `undefined` if the branch has no commits.
+    Each `TreeBranchCommitMetadata` exposes the commit's `revision` string and its `parent` commit metadata, so the history can be walked backwards from the head.
+
+  A `revision` obtained this way can be passed to either of two new methods on `UntypedTreeViewAlpha` implementations:
+  - `revertTo(revision)`: applies a new change which reverts all changes made since `revision`.
+    The generated change is subject to the same merge semantics as the reverts of individual commits, so concurrent changes sequenced before the revert which affect different parts of the document are not overwritten.
+  - `rewindTo(revision)`: switches the view to a new underlying branch whose head is the commit at `revision`, without applying a change.
+    The original underlying branch is disposed unless it is the main branch or a shared branch, so consider `fork()`ing before rewinding if it needs to be retained.
+
+  How much history is available depends on how many commits the client retains; see the `retainHistory` option on `SharedTreeOptions`.
+
 ## 2.116.0
 
 ### Minor Changes
