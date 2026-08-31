@@ -144,7 +144,7 @@ export function generateRuntimeOptions(
 
 	// Override explicitSchemaControl to enabled if createBlobPayloadPending is enabled
 	pairwiseOptions.map((options) => {
-		if (options.createBlobPayloadPending) {
+		if (options.createBlobPayloadPending === true) {
 			(
 				options as {
 					// Remove readonly modifier to allow overriding

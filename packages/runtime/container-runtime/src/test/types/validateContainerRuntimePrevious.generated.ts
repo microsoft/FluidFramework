@@ -105,6 +105,7 @@ declare type old_as_current_for_Interface_ContainerRuntimeOptions = requireAssig
  * typeValidation.broken:
  * "Interface_ContainerRuntimeOptions": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_ContainerRuntimeOptions = requireAssignableTo<TypeOnly<current.ContainerRuntimeOptions>, TypeOnly<old.ContainerRuntimeOptions>>
 
 /*
@@ -772,6 +773,7 @@ declare type old_as_current_for_TypeAlias_IContainerRuntimeOptions = requireAssi
  * typeValidation.broken:
  * "TypeAlias_IContainerRuntimeOptions": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_IContainerRuntimeOptions = requireAssignableTo<TypeOnly<current.IContainerRuntimeOptions>, TypeOnly<old.IContainerRuntimeOptions>>
 
 /*
