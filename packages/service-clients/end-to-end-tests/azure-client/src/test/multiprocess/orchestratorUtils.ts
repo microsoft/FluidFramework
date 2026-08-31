@@ -44,35 +44,39 @@ export const testConsole = {
 	error: console.error,
 };
 
-interface ErrorWithAfrAvailabilityDipTelemetry {
+interface ErrorWithNetworkTelemetry {
 	errorType?: unknown;
 	statusCode?: unknown;
 }
 
 /**
- * Detects the AFR availability-dip signature: Azure Front Door could not reach the AFR
- * backend and returned a 502. See AB#59980 for the service-side issue.
+ * Detects a Bad Gateway (HTTP 502) network error, i.e. a gateway could not reach the service
+ * behind it.
  *
  * @remarks
+ * This check is service-agnostic: it says nothing about *which* service failed. Callers that
+ * only want to act on a specific service (for example, skipping tests during an AFR
+ * availability dip — see AB#59980) must additionally verify that the run targets that service.
+ *
  * Matching is deliberately limited to the structured `genericNetworkError` + HTTP 502 pair
- * rather than the wording of Azure Front Door's error page. A 502 is emitted by the gateway
- * when it cannot reach the origin, so it cannot be produced by a client-side regression —
- * which is the failure this matcher must avoid masking. Matching on the error page text would
- * therefore add no protection against that risk, while making detection silently dependent on
- * the contents of a service-owned HTML page that this repo does not control.
+ * rather than the wording of a gateway's error page. A 502 is emitted when the gateway cannot
+ * reach the origin, so it cannot be produced by a client-side regression — which is the failure
+ * callers must avoid masking. Matching on error page text would therefore add no protection
+ * against that risk, while making detection silently dependent on the contents of a
+ * service-owned HTML page that this repo does not control.
  */
-export function isAfrAvailabilityDip(error: unknown): boolean {
+export function isBadGatewayError(error: unknown): boolean {
 	if (!isObjectRecord(error)) {
 		return false;
 	}
 
-	const { errorType, statusCode } = error as ErrorWithAfrAvailabilityDipTelemetry;
+	const { errorType, statusCode } = error as ErrorWithNetworkTelemetry;
 	return errorType === "genericNetworkError" && statusCode === 502;
 }
 
 function createChildProcessError(childId: number | string, msg: ErrorEvent): Error {
 	const error = new Error(`Child ${childId} process error: ${msg.error}`) as Error &
-		ErrorWithAfrAvailabilityDipTelemetry;
+		ErrorWithNetworkTelemetry;
 	error.errorType = msg.errorType;
 	error.statusCode = msg.statusCode;
 	return error;

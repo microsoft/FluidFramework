@@ -19,7 +19,7 @@ import {
 	forkChildProcesses,
 	getLatestMapValueResponses,
 	getLatestValueResponses,
-	isAfrAvailabilityDip,
+	isBadGatewayError,
 	registerWorkspaceOnChildren,
 	testConsole,
 	waitForLatestMapValueUpdates,
@@ -87,8 +87,14 @@ function setTestTimeout(context: Mocha.Context, duration: number): void {
 	}
 }
 
+/**
+ * Skips the current test when it failed because AFR was unreachable behind its gateway.
+ *
+ * @remarks
+ * The 502 check is service-agnostic, so this is gated on the run actually targeting AFR.
+ */
 function skipOnAfrAvailabilityDip(context: Mocha.Context, error: unknown): void {
-	if (!useAzureFluidRelayFrs || !isAfrAvailabilityDip(error)) {
+	if (!useAzureFluidRelayFrs || !isBadGatewayError(error)) {
 		return;
 	}
 
