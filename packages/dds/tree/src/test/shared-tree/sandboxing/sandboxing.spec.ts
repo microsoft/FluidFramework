@@ -289,7 +289,7 @@ class Guest<const TSchema extends ImplicitFieldSchema> {
 		config: TreeViewConfiguration<TSchema>,
 		options: ForestOptions & ICodecOptions,
 		content: ViewContent,
-		/** The callback to send changes from to the Host. */
+		/** The callback to send changes from the Guest to the Host. */
 		sendChangeToHost: (change: JsonCompatibleReadOnly) => void,
 		/** The callback to send acknowledgements of changes received from the Host. */
 		private readonly ackChangeFromHost: () => void,
