@@ -29,6 +29,9 @@ const tokenManager = new OdspTokenManager(odspTokensCache);
 const sourceMapLoaderPath = fileURLToPath(import.meta.resolve("source-map-loader"));
 const tsLoaderPath = fileURLToPath(import.meta.resolve("ts-loader"));
 
+const appBundleDirectory = "bundle";
+const appBundlePublicPath = "/app";
+
 const getThisOrigin = (options: RouteOptions): string => `http://localhost:${options.port}`;
 
 function getTestTenantCredentials(mode: "spo" | "spo-df"): {
@@ -327,12 +330,12 @@ export function devServerConfig(
 			static: {
 				directory: path.join(
 					baseDir,
-					"/node_modules/@fluid-example/webpack-fluid-loader/dist/",
+					"/node_modules/@fluid-example/webpack-fluid-loader/bundle/",
 				),
 				publicPath: "/code",
 			},
 			devMiddleware: {
-				publicPath: "/dist",
+				publicPath: appBundlePublicPath,
 			},
 			setupMiddlewares: (middlewares, devServer) => {
 				for (const beforeMiddleware of beforeMiddlewares) {
@@ -387,7 +390,7 @@ export function commonExampleConfig(
 		},
 		output: {
 			filename: "[name].bundle.js",
-			path: path.resolve(baseDir, "dist"),
+			path: path.resolve(baseDir, appBundleDirectory),
 			library: { name: "[name]", type: "umd" },
 		},
 		watchOptions: {
@@ -415,6 +418,13 @@ const fluid = async (
 
 	const umd = packageJson.fluid.browser?.umd;
 	assert(umd !== undefined, 0x329 /* browser.umd property is undefined */);
+	const bundleScripts = umd.files.map((file) => {
+		assert(
+			file.startsWith(`${appBundleDirectory}/`),
+			"browser UMD files must be emitted under the bundle directory",
+		);
+		return `<script src="${appBundlePublicPath}/${file.slice(appBundleDirectory.length + 1)}"></script>\n`;
+	});
 
 	const html = `<!DOCTYPE html>
 <html style="height: 100%;" lang="en">
@@ -427,7 +437,7 @@ const fluid = async (
     <div id="content" style="min-height: 100%;"></div>
 
     <script src="/code/fluid-loader.bundle.js"></script>
-    ${umd.files.map((file) => `<script src="/${file}"></script>\n`)}
+    ${bundleScripts.join("")}
     <script>
         var options = ${JSON.stringify(options)};
         var fluidStarted = false;

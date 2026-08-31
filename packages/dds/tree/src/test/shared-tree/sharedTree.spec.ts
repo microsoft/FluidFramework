@@ -162,6 +162,21 @@ function treeTestFactory(): ISharedTree {
 }
 
 describe("SharedTree", () => {
+	it("rejects compatibility versions before SharedTree 2.0", () => {
+		assert.throws(
+			() =>
+				new TestTreeProviderLite(
+					1,
+					configuredSharedTree({
+						jsonValidator: FormatValidatorBasic,
+						// @ts-expect-error Client 3.0 excludes 1.x values, but runtime validation must reject type-erased input.
+						minVersionForCollab: "1.99.0",
+					}).getFactory(),
+				),
+			validateUsageError("SharedTree requires minVersionForCollab of at least 2.0.0"),
+		);
+	});
+
 	describe("viewWith", () => {
 		it("@Smoke initialize tree", () => {
 			const tree = treeTestFactory();
