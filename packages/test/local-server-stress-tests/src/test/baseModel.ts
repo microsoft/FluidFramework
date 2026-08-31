@@ -160,8 +160,6 @@ export function makeGenerator<T extends BaseOperation>(
 				tag: state.tag("blob"),
 			}),
 			5,
-			// local server doesn't support detached blobs
-			(state) => state.client.container.attachState !== AttachState.Detached,
 		],
 		[
 			async (state) => ({

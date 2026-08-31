@@ -63,7 +63,8 @@ export interface TestConfiguration {
 	 */
 	blobSize?: number;
 	/**
-	 * Number of "attachment" type blobs to add while detached. Note this is only supported on ODSP currently.
+	 * Number of blobs to add while detached. This requires ODSP attachment support or
+	 * `inlineDetachedBlobsAsSummaryBlobs`.
 	 */
 	detachedBlobCount?: number;
 

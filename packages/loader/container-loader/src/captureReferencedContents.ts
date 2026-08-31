@@ -151,9 +151,10 @@ export async function parseGcSnapshotData(
  * from GC state, so honouring it filters out dead subtrees without a
  * separate GC-path traversal.
  *
- * The root-level `.blobs` subtree is special-cased: only its `.redirectTable`
- * blob is read, because attachment blob contents are captured separately via
- * {@link captureReferencedAttachmentBlobs}.
+ * The root-level `.blobs` subtree is special-cased because its direct blob
+ * entries are attachment payloads captured separately via
+ * {@link captureReferencedAttachmentBlobs}. Its `.redirectTable` and blobs in
+ * child trees are ordinary structural summary data and are captured here.
  */
 export async function readReferencedSnapshotBlobs(
 	snapshot: ISnapshot | ISnapshotTree,
@@ -173,9 +174,9 @@ export async function readReferencedSnapshotBlobs(
 /**
  * Synchronously walks the snapshot tree and gathers the set of blob ids that
  * should be inlined. Subtrees flagged `unreferenced: true` are skipped
- * entirely. The root-level `.blobs` subtree is special-cased: only its
- * `.redirectTable` id is collected, because attachment blob contents are
- * captured separately via {@link captureReferencedAttachmentBlobs}.
+ * entirely. The root-level `.blobs` subtree is special-cased: direct
+ * attachment entries are skipped, while its `.redirectTable` and structural
+ * child-tree blobs are collected.
  */
 function collectReferencedBlobIds(
 	tree: ISnapshotTree,
@@ -193,6 +194,9 @@ function collectReferencedBlobIds(
 			const tableBlobId = subTree.blobs[redirectTableBlobName];
 			if (tableBlobId !== undefined) {
 				ids.add(tableBlobId);
+			}
+			for (const childTree of Object.values(subTree.trees)) {
+				collectReferencedBlobIds(childTree, false, ids);
 			}
 		} else {
 			collectReferencedBlobIds(subTree, false, ids);
@@ -420,10 +424,12 @@ export async function inlineAttachmentBlobsByReference(
 }
 
 /**
- * Returns true if any referenced subtree of `baseSnapshot` declares a
- * `groupId` — the snapshot-tree wire field that carries the runtime's
- * loading-group identifier. Subtrees flagged `unreferenced` are skipped —
- * a dead subtree's `groupId` would not be loaded by the runtime either.
+ * Returns true if any referenced subtree outside the root `.blobs` tree
+ * declares a `groupId` — the snapshot-tree wire field that carries the
+ * runtime's loading-group identifier. Subtrees flagged `unreferenced` are
+ * skipped because a dead subtree's `groupId` would not be loaded either.
+ * Groups under `.blobs` are self-contained structural summary trees whose
+ * blob IDs are present in the base snapshot, so they are captured normally.
  *
  * `captureFullContainerState` does not yet support loading groups: prefetching
  * per-group snapshots adds a code path that has no end-to-end coverage and no
@@ -437,10 +443,20 @@ export function snapshotHasLoadingGroups(baseSnapshot: ISnapshotTree): boolean {
 	if (baseSnapshot.groupId !== undefined) {
 		return true;
 	}
-	for (const child of Object.values(baseSnapshot.trees)) {
-		if (snapshotHasLoadingGroups(child)) {
-			return true;
-		}
+	return Object.entries(baseSnapshot.trees).some(
+		([key, child]) =>
+			// BlobManager's internal groups are self-contained summary blobs whose
+			// IDs can be read directly. They do not require a group snapshot fetch.
+			key !== blobsTreeName && subtreeHasLoadingGroups(child),
+	);
+}
+
+function subtreeHasLoadingGroups(subtree: ISnapshotTree): boolean {
+	if (subtree.unreferenced === true) {
+		return false;
 	}
-	return false;
+	if (subtree.groupId !== undefined) {
+		return true;
+	}
+	return Object.values(subtree.trees).some(subtreeHasLoadingGroups);
 }

@@ -13,6 +13,7 @@ import {
 	itExpects,
 } from "@fluid-private/test-version-utils";
 import { AttachState } from "@fluidframework/container-definitions";
+import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
@@ -28,8 +29,10 @@ import {
 	ChannelFactoryRegistry,
 	ITestContainerConfig,
 	ITestObjectProvider,
+	createSummarizer,
 	createTestConfigProvider,
 	getContainerEntryPointBackCompat,
+	summarizeNow,
 	waitForContainerConnection,
 	timeoutPromise,
 } from "@fluidframework/test-utils/internal";
@@ -471,6 +474,98 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 		},
 	);
 }
+
+describeCompat(
+	"Detached blob single-request create",
+	"NoCompat",
+	(getTestObjectProvider, apis) => {
+		const testContainerConfig: ITestContainerConfig = {
+			...makeTestContainerConfig(
+				[["sharedString", apis.dds.SharedString.getFactory()]],
+				undefined,
+			),
+			minVersionForCollab: "2.115.0",
+			runtimeOptions: {
+				...makeTestContainerConfig([], undefined).runtimeOptions,
+				explicitSchemaControl: true,
+				inlineDetachedBlobsAsSummaryBlobs: true,
+			},
+		};
+		let provider: ITestObjectProvider;
+
+		beforeEach(() => {
+			provider = getTestObjectProvider();
+		});
+
+		it("round-trips serialized detached blobs through every service", async () => {
+			const loader = provider.makeTestLoader(testContainerConfig);
+			let container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+			const dataStore = (await container.getEntryPoint()) as ITestDataObject;
+			const first = new Uint8Array([0xfe, 0x01, 0x00]);
+			const second = new Uint8Array([0x10, 0x20, 0x30, 0xff]);
+			dataStore._root.set("first", await dataStore._runtime.uploadBlob(first.buffer));
+			dataStore._root.set("second", await dataStore._runtime.uploadBlob(second.buffer));
+			const serializedState = container.serialize();
+			container.close();
+			container = await loader.rehydrateDetachedContainerFromSnapshot(serializedState);
+
+			await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
+			const url = await container.getAbsoluteUrl("");
+			assert(url !== undefined);
+			const loaded = await loader.resolve({ url });
+			const loadedDataStore = (await loaded.getEntryPoint()) as ITestDataObject;
+			assert.deepStrictEqual(
+				[...new Uint8Array(await loadedDataStore._root.get("first").get())],
+				[...first],
+			);
+			assert.deepStrictEqual(
+				[...new Uint8Array(await loadedDataStore._root.get("second").get())],
+				[...second],
+			);
+		});
+
+		it("preserves a detached summary blob through later summaries", async () => {
+			const loader = provider.makeTestLoader(testContainerConfig);
+			const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+			const dataStore = (await container.getEntryPoint()) as ITestDataObject;
+			const expected = new Uint8Array([0xff, 0x80, 0x01]);
+			dataStore._root.set("blob", await dataStore._runtime.uploadBlob(expected.buffer));
+			await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
+			const url = await container.getAbsoluteUrl("");
+			assert(url !== undefined);
+
+			const fresh = await loader.resolve({ url });
+			const { summarizer } = await createSummarizer(provider, fresh, testContainerConfig);
+			const { summaryVersion } = await summarizeNow(
+				summarizer,
+				"detached blob handle summary",
+			);
+			const summarized = await loader.resolve({
+				url,
+				headers: { [LoaderHeader.version]: summaryVersion },
+			});
+			const summarizedDataStore = (await summarized.getEntryPoint()) as ITestDataObject;
+			assert.deepStrictEqual(
+				[...new Uint8Array(await summarizedDataStore._root.get("blob").get())],
+				[...expected],
+			);
+
+			const { summaryVersion: fullTreeSummaryVersion } = await summarizeNow(summarizer, {
+				reason: "detached blob full-tree summary",
+				fullTree: true,
+			});
+			const fullTreeSummarized = await loader.resolve({
+				url,
+				headers: { [LoaderHeader.version]: fullTreeSummaryVersion },
+			});
+			const fullTreeDataStore = (await fullTreeSummarized.getEntryPoint()) as ITestDataObject;
+			assert.deepStrictEqual(
+				[...new Uint8Array(await fullTreeDataStore._root.get("blob").get())],
+				[...expected],
+			);
+		});
+	},
+);
 
 function serializationTests({
 	testContainerConfig,

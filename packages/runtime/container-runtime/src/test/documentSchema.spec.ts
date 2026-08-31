@@ -57,6 +57,7 @@ describe("Runtime", () => {
 		opGroupingEnabled: false,
 		idCompressorMode: "delayed",
 		createBlobPayloadPending: undefined,
+		inlineDetachedBlobsAsSummaryBlobs: undefined,
 		disallowedVersions: [],
 	} as const satisfies IDocumentSchemaFeatures;
 
@@ -252,6 +253,52 @@ describe("Runtime", () => {
 			"bbb",
 			"ccc",
 		]);
+	});
+
+	it("preserves inline detached summary blobs through schema update and reload", () => {
+		const inlineDetachedBlobsFeatures = {
+			...features,
+			inlineDetachedBlobsAsSummaryBlobs: true,
+		} as const satisfies IDocumentSchemaFeatures;
+		const controller = new DocumentsSchemaController(
+			true,
+			0,
+			{
+				...validConfig,
+				runtime: { ...validConfig.runtime, explicitSchemaControl: true },
+			},
+			inlineDetachedBlobsFeatures,
+			() => {},
+			{ minVersionForCollab: defaultMinVersionForCollab },
+			logger,
+			false,
+		);
+
+		const message = controller.maybeGenerateSchemaMessage();
+		assert(message !== undefined);
+		assert.equal(message.runtime.inlineDetachedBlobsAsSummaryBlobs, true);
+		assert.equal(controller.processDocumentSchemaMessages([message], true, 100), true);
+		assert.equal(controller.sessionSchema.runtime.inlineDetachedBlobsAsSummaryBlobs, true);
+
+		const summarizedSchema = controller.summarizeDocumentSchema(200);
+		assert(summarizedSchema !== undefined);
+		assert.equal(summarizedSchema.runtime.inlineDetachedBlobsAsSummaryBlobs, true);
+
+		const reloadedController = new DocumentsSchemaController(
+			true,
+			200,
+			JSON.parse(JSON.stringify(summarizedSchema)) as IDocumentSchema,
+			inlineDetachedBlobsFeatures,
+			() => {},
+			{ minVersionForCollab: defaultMinVersionForCollab },
+			logger,
+			false,
+		);
+		assert.equal(
+			reloadedController.sessionSchema.runtime.inlineDetachedBlobsAsSummaryBlobs,
+			true,
+		);
+		assert.equal(reloadedController.maybeGenerateSchemaMessage(), undefined);
 	});
 
 	it("wrong values for known properties", () => {

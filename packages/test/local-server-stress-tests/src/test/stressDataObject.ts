@@ -385,6 +385,7 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 		},
 		enableRuntimeIdCompressor: "on",
 		createBlobPayloadPending: true,
+		inlineDetachedBlobsAsSummaryBlobs: true,
 		explicitSchemaControl: true,
 	};
 
@@ -401,6 +402,7 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 				// reduce the clients that this stress test can interoperate with.
 				oldestSupportedClient: "2.40.0",
 				runtimeOptions,
+				minVersionForCollab: "2.115.0",
 				registryEntries: [
 					[
 						defaultStressDataObjectFactory.type,

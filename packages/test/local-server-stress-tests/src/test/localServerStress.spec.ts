@@ -40,8 +40,12 @@ describe("Local Server Stress", () => {
 		},
 		// Minimization is slow with many seeds; use only to minimize specific failing seeds.
 		skipMinimization: true,
-		// Pre-existing DDS bugs: seeds 0 and 54 (ConsensusOrderedCollection), seed 92 (Matrix).
-		skip: [0, 54, 92],
+		// Current ConsensusOrderedCollection failures:
+		// seed 0: snapshot/catch-up reconciliation (https://github.com/microsoft/FluidFramework/issues/28040)
+		// seed 180: remove-member/requeue ordering (https://github.com/microsoft/FluidFramework/issues/28041)
+		// The prior distribution's ConsensusOrderedCollection seed 54 is noted in issue 28040;
+		// its Matrix seed 92 is tracked by https://github.com/microsoft/FluidFramework/pull/27579.
+		skip: [0, 180],
 		// Use skip, replay, and only properties to control which seeds run.
 	});
 });

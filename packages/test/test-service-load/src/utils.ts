@@ -95,8 +95,9 @@ export async function initialize(
 	const container: IContainer = await createDetachedContainer({ ...loaderProps, codeDetails });
 	if ((testConfig.detachedBlobCount ?? 0) > 0) {
 		assert(
-			testDriver.type === "odsp",
-			"attachment blobs in detached container not supported on this service",
+			testDriver.type === "odsp" ||
+				containerRuntimeOptions.inlineDetachedBlobsAsSummaryBlobs === true,
+			"Detached blobs require ODSP attachment support or summary-blob storage",
 		);
 		const ds = (await container.getEntryPoint()) as ILoadTest;
 		const dsm = await ds.detached({ testConfig, verbose, random, logger });
