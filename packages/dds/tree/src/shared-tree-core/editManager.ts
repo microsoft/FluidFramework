@@ -340,10 +340,12 @@ export class EditManager<
 		// `newTrunkBase`. Therefore, no branches should have unique references to any of the commits being evicted here.
 		// We mutate the most recent of the evicted commits to become the new trunk base. That way, any other commits that
 		// have parent pointers to the latest evicted commit will stay linked, even though that it is no longer part of the trunk.
-		const newTrunkBase = latestEvicted as Mutable<typeof latestEvicted>;
+		const newTrunkBase = latestEvicted as Mutable<GraphCommit<TChangeset>>;
 
 		// collect the revisions that will be trimmed to send as part of the branch trimmed event
-		const trimmedCommits = getPathFromBase(newTrunkBase, this.trunkBase);
+		const trimmedCommits = getPathFromBase(newTrunkBase, this.trunkBase) as Mutable<
+			GraphCommit<TChangeset>
+		>[];
 		const trimmedRevisions = trimmedCommits.map((c) => c.revision);
 
 		// The minimum sequence number informs us that all peer branches are at least caught up to the tail commit,
@@ -353,9 +355,10 @@ export class EditManager<
 		// Custom metadata shares the lifetime of its commit, so it must be dropped when the commit is
 		// trimmed. The new trunk base stays reachable as the sentinel for the remaining history, so its
 		// metadata is cleared rather than trapped; fully evicted commits get the throwing trap below.
-		(newTrunkBase as Mutable<typeof newTrunkBase>).customMetadata = undefined;
+		newTrunkBase.customMetadata = undefined;
 
-		// Only the last trimmed commit, which is the new trunk base, should remain accessible.
+		// Access to the intrinsic properties of trimmed commits indicates a bug in SharedTree.
+		// Throwing lowers the risk of such a bug causing data loss or corruption.
 		for (const commit of trimmedCommits.slice(0, -1)) {
 			Reflect.defineProperty(commit, "change", {
 				get: () => fail(0xa5e /* Should not access 'change' property of an evicted commit */),
@@ -367,16 +370,17 @@ export class EditManager<
 						0xa5f /* Should not access 'revision' property of an evicted commit */,
 					),
 			});
-			Reflect.defineProperty(commit, "parent", {
-				get: () => fail(0xa60 /* Should not access 'parent' property of an evicted commit */),
-			});
 			Reflect.defineProperty(commit, "customMetadata", {
 				get: () => fail("Should not access 'customMetadata' property of an evicted commit"),
 			});
+			// Allowing the `parent` property to be read from evicted commits spares readers from having to check `wasTrimmed` in order to safely find the root commit.
+			delete commit.parent;
+			commit.wasTrimmed = true;
 		}
 
 		// Dropping the parent field removes (transitively) all references to the evicted commits so they can be garbage collected.
 		delete newTrunkBase.parent;
+		newTrunkBase.wasTrimmed = true;
 		this.trunkBase = newTrunkBase;
 
 		this._events.emit("ancestryTrimmed", trimmedRevisions);

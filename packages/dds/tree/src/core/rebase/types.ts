@@ -165,7 +165,11 @@ export interface GraphCommit<TChange> {
 	readonly revision: RevisionTag;
 	/** The change that will result from applying this commit */
 	readonly change: TChange;
-	/** The parent of this commit, on whose change this commit's change is based */
+	/**
+	 * The parent of this commit, on whose change this commit's change is based.
+	 * @remarks
+	 * This property is `undefined` for the trunk base commit, which is the root of the commit graph.
+	 */
 	readonly parent?: GraphCommit<TChange>;
 	/**
 	 * Arbitrary, application-defined metadata that is persisted alongside this commit.
@@ -176,6 +180,14 @@ export interface GraphCommit<TChange> {
 	 * Always copy this property when copying a commit.
 	 */
 	readonly customMetadata: CustomMetadataTree | undefined;
+
+	/**
+	 * Indicates whether this commit was trimmed from the history.
+	 * @remarks
+	 * This property is set to `true` during trunk trimming on all trimmed commits (including the new trunk base).
+	 * When true, this property and the `parent` property are the only properties that are safe to read from this commit.
+	 */
+	readonly wasTrimmed?: true;
 }
 
 /**
