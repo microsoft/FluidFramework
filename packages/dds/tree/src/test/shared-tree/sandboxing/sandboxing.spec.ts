@@ -252,7 +252,7 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 	}
 
 	/**
-	 * Returns a promise that resolves when all changes know to the Host have been reflected in the Guest,
+	 * Returns a promise that resolves when all changes known to the Host have been reflected in the Guest,
 	 * or undefined if all such changes have already been reflected on the Guest.
 	 *
 	 * If new changes are received while a promise is already in progress,
