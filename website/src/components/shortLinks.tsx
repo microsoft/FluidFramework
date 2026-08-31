@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { useActivePluginAndVersion, useDoc } from "@docusaurus/plugin-content-docs/client";
+import { useActivePluginAndVersion } from "@docusaurus/plugin-content-docs/client";
 import { usePluginData } from "@docusaurus/useGlobalData";
 import type { ReactNode } from "react";
 
@@ -116,9 +116,11 @@ export function ApiLink<const TApiSelector extends string>({
  * Accounts for versioning.
  */
 function useLinkPathBase(): string {
-	const docContext = useDoc();
-	const version = docContext.metadata.version;
-	return `/docs/${version === "current" ? "" : `v${version}/`}api/`;
+	const activeVersion = useActivePluginAndVersion()?.activeVersion;
+	if (activeVersion === undefined) {
+		throw new Error("PackageLink must be rendered within a versioned Docusaurus document.");
+	}
+	return `${activeVersion.path}/api/`;
 }
 
 /**

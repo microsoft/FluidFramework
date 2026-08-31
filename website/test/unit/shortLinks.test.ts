@@ -15,7 +15,6 @@ const { useActivePluginAndVersion, usePluginData } = vi.hoisted(() => ({
 
 vi.mock("@docusaurus/plugin-content-docs/client", () => ({
 	useActivePluginAndVersion,
-	useDoc: vi.fn(),
 }));
 
 vi.mock("@docusaurus/useGlobalData", () => ({ usePluginData }));
@@ -24,7 +23,7 @@ vi.mock("@docusaurus/useGlobalData", () => ({ usePluginData }));
 /* eslint-disable import/no-internal-modules */
 import type { ApiLinkManifests } from "../../src/apiLinkManifest.js";
 import type { ApiDeclarationReference } from "../../src/apiLinkReference.js";
-import { ApiLink, type ApiLinkProps } from "../../src/components/shortLinks.js";
+import { ApiLink, type ApiLinkProps, PackageLink } from "../../src/components/shortLinks.js";
 /* eslint-enable import/no-internal-modules */
 
 function useVersion(name: string, path: string): void {
@@ -103,6 +102,26 @@ function renderApiLink(props: ApiLinkProps): { href: string; children: ReactNode
 	const link = ApiLink(props) as ReactElement<{ href: string; children: ReactNode }>;
 	return { href: link.props.href, children: link.props.children };
 }
+
+describe("PackageLink", () => {
+	afterEach(() => {
+		useActivePluginAndVersion.mockReset();
+	});
+
+	it("uses the configured path for the active documentation version", () => {
+		useVersion("local", "/docs/local");
+
+		const link = PackageLink({ package: "example" }) as ReactElement<{
+			href: string;
+			children: ReactNode;
+		}>;
+
+		expect({ href: link.props.href, children: link.props.children }).toEqual({
+			href: "/docs/local/api/example",
+			children: "example",
+		});
+	});
+});
 
 describe("ApiLink", () => {
 	afterEach(() => {
