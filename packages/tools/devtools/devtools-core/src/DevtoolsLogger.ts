@@ -132,7 +132,7 @@ class DevtoolsLogger implements IDevtoolsLogger {
 	 *
 	 * @param event - The telemetry event to send.
 	 */
-	public send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
+	public send(event: ITelemetryBaseEvent, logLevel: LogLevel): void {
 		// Forward event to base logger
 		this.baseLogger?.send(event, logLevel);
 

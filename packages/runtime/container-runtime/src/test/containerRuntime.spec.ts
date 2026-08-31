@@ -57,7 +57,10 @@ import type {
 	StagingModeChangedEvent,
 } from "@fluidframework/runtime-definitions/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
-import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
+import {
+	cleanedPackageVersion,
+	defaultMinVersionForCollab,
+} from "@fluidframework/runtime-utils/internal";
 import {
 	type IFluidErrorBase,
 	MockLogger,
@@ -100,7 +103,6 @@ import type {
 	InboundMessageResult,
 	LocalBatchMessage,
 } from "../opLifecycle/index.js";
-import { pkgVersion } from "../packageVersion.js";
 import type { IPendingMessage, PendingStateManager } from "../pendingStateManager.js";
 import {
 	type ISummaryCancellationToken,
@@ -4722,8 +4724,8 @@ describe("Runtime", () => {
 
 			// Note: We may need to update `expectedRuntimeOptions` for this test
 			// when we bump to certain versions.
-			it("minVersionForCollab = pkgVersion", async () => {
-				const minVersionForCollab = pkgVersion;
+			it("minVersionForCollab = cleanedPackageVersion", async () => {
+				const minVersionForCollab = cleanedPackageVersion;
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime2({
 					context: getMockContext({ logger }) as IContainerContext,
