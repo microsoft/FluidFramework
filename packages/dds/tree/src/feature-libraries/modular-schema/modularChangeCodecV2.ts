@@ -11,6 +11,7 @@ import {
 } from "../../codec/index.js";
 import type {
 	ChangeEncodingContext,
+	ChangeDecodingContext,
 	RevisionTag,
 	RevisionTagSchema,
 } from "../../core/index.js";
@@ -30,7 +31,8 @@ type ModularChangeCodec = IJsonCodec<
 	ModularChangeset,
 	EncodedModularChangesetV2,
 	EncodedModularChangesetV2,
-	ChangeEncodingContext
+	ChangeEncodingContext,
+	ChangeDecodingContext
 >;
 
 export function makeModularChangeCodecV2(

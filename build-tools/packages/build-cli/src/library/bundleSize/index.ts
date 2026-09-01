@@ -3,10 +3,17 @@
  * Licensed under the MIT License.
  */
 
+export {
+	type CollectAndCompareBundlesOptions,
+	collectAndCompareBundles,
+} from "./collectAndCompareBundles.js";
+export { type CollectBundleOptions, collectBundle } from "./collectBundle.js";
+export { type CompareBundlesOptions, compareBundles } from "./compareBundles.js";
 export { compareJsonReportsByPackage } from "./compareJsonReports.js";
 export { extractAnalyzerJsonsFromArtifact } from "./extractAnalyzerJsonsFromArtifact.js";
 export {
 	bundleSizeArtifactsBaselinePipeline,
+	bundleSizeArtifactsGitHubRepo,
 	bundleSizeArtifactsPrPipeline,
 } from "./pipelineConstants.js";
 export {
@@ -14,7 +21,7 @@ export {
 	readAnalyzerJsonsFromFileSystem,
 } from "./readAnalyzerJsonsFromFileSystem.js";
 export { sourcePackageFromAnalyzerPath } from "./sourcePackageFromAnalyzerPath.js";
-export {
+export type {
 	AnalyzerJsonByPackage,
 	BundleData,
 	BundlesComparison,

@@ -205,6 +205,8 @@ describe("nodeShape", () => {
 					makeIdentifierShape(),
 					makeContext(idCompressor, false),
 					{ type: brand("id"), value: stableUuid },
+					undefined,
+					idCompressor,
 				);
 				assert.equal(buffer.length, 1);
 				assert.equal(typeof buffer[0], "number");
@@ -228,6 +230,8 @@ describe("nodeShape", () => {
 					makeIdentifierShape(),
 					makeContext(idCompressor, true),
 					{ type: brand("id"), value: stableUuid },
+					undefined,
+					idCompressor,
 				);
 				assert.deepEqual(buffer, [stableUuid]);
 			});
@@ -248,6 +252,8 @@ describe("nodeShape", () => {
 					makeIdentifierShape(),
 					makeContext(idCompressor, true),
 					{ type: brand("id"), value: stableUuid },
+					undefined,
+					idCompressor,
 				);
 				assert.deepEqual(buffer, [opSpaceId]);
 			});

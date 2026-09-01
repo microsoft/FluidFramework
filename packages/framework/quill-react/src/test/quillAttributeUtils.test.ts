@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { TreeViewConfiguration } from "@fluidframework/tree";
-import { independentView, FormattedTextAsTree } from "@fluidframework/tree/internal";
+import { independentView, FormattedTextDefault } from "@fluidframework/tree/internal";
 import globalJsdom from "global-jsdom";
 import DeltaPackage from "quill-delta";
 
@@ -41,13 +41,13 @@ function makeFormat(
 		size: number;
 		font: string;
 	}> = {},
-): FormattedTextAsTree.CharacterFormat {
+): FormattedTextDefault.CharacterFormat {
 	const tree = independentView(
-		new TreeViewConfiguration({ schema: FormattedTextAsTree.Tree }),
+		new TreeViewConfiguration({ schema: FormattedTextDefault.Tree }),
 		{},
 	);
-	tree.initialize(FormattedTextAsTree.Tree.fromString(""));
-	return new FormattedTextAsTree.CharacterFormat({
+	tree.initialize(FormattedTextDefault.Tree.fromString(""));
+	return new FormattedTextDefault.CharacterFormat({
 		bold: props.bold ?? false,
 		italic: props.italic ?? false,
 		underline: props.underline ?? false,
@@ -126,24 +126,24 @@ describe("quillAttributeUtils", () => {
 		});
 
 		it("maps Quill header levels to LineTag values", () => {
-			assert.deepEqual(parseLineTag({ header: 1 }), FormattedTextAsTree.LineTag("h1"));
-			assert.deepEqual(parseLineTag({ header: 5 }), FormattedTextAsTree.LineTag("h5"));
+			assert.deepEqual(parseLineTag({ header: 1 }), FormattedTextDefault.LineTag("h1"));
+			assert.deepEqual(parseLineTag({ header: 5 }), FormattedTextDefault.LineTag("h5"));
 		});
 
 		it("falls back to h5 for unsupported header levels", () => {
-			assert.deepEqual(parseLineTag({ header: 99 }), FormattedTextAsTree.LineTag("h5"));
+			assert.deepEqual(parseLineTag({ header: 99 }), FormattedTextDefault.LineTag("h5"));
 		});
 
 		it("maps Quill list types to LineTag values", () => {
-			assert.deepEqual(parseLineTag({ list: "bullet" }), FormattedTextAsTree.LineTag("li"));
-			assert.deepEqual(parseLineTag({ list: "ordered" }), FormattedTextAsTree.LineTag("ol"));
+			assert.deepEqual(parseLineTag({ list: "bullet" }), FormattedTextDefault.LineTag("li"));
+			assert.deepEqual(parseLineTag({ list: "ordered" }), FormattedTextDefault.LineTag("ol"));
 			assert.deepEqual(
 				parseLineTag({ list: "checked" }),
-				FormattedTextAsTree.LineTag("checked"),
+				FormattedTextDefault.LineTag("checked"),
 			);
 			assert.deepEqual(
 				parseLineTag({ list: "unchecked" }),
-				FormattedTextAsTree.LineTag("unchecked"),
+				FormattedTextDefault.LineTag("unchecked"),
 			);
 		});
 
@@ -154,11 +154,11 @@ describe("quillAttributeUtils", () => {
 		it("maps blockquote and code-block", () => {
 			assert.deepEqual(
 				parseLineTag({ blockquote: true }),
-				FormattedTextAsTree.LineTag("blockquote"),
+				FormattedTextDefault.LineTag("blockquote"),
 			);
 			assert.deepEqual(
 				parseLineTag({ "code-block": "plain" }),
-				FormattedTextAsTree.LineTag("codeBlock"),
+				FormattedTextDefault.LineTag("codeBlock"),
 			);
 		});
 

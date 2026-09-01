@@ -17,6 +17,9 @@ import {
 	getDriveId,
 	getDriveItemByRootFileName,
 } from "@fluidframework/odsp-doclib-utils/internal";
+import { createOdspDocumentServiceFactory } from "@fluidframework/odsp-driver/internal";
+// eslint-disable-next-line import-x/no-internal-modules -- Explicitly opts this test host into point-in-time loading.
+import { createPointInTimeDocumentService } from "@fluidframework/odsp-driver/legacy/point-in-time";
 import type {
 	HostStoragePolicy,
 	OdspResourceTokenFetchOptions,
@@ -341,6 +344,9 @@ export class OdspTestDriver implements ITestDriver {
 	}
 
 	public readonly type = "odsp";
+	public readonly endpointName?: string;
+	public readonly tenantName?: string;
+	public readonly userIndex?: number;
 	public get version(): string {
 		return this.api.version;
 	}
@@ -349,11 +355,21 @@ export class OdspTestDriver implements ITestDriver {
 	private constructor(
 		private readonly config: Readonly<IOdspTestDriverConfig>,
 		private readonly api = OdspDriverApi,
-		public readonly tenantName?: string,
-		public readonly userIndex?: number,
-		public readonly endpointName?: string,
+		tenantName?: string,
+		userIndex?: number,
+		endpointName?: string,
 		private readonly tokenManager: OdspTokenManager = defaultTokenManager,
-	) {}
+	) {
+		if (endpointName !== undefined) {
+			this.endpointName = endpointName;
+		}
+		if (tenantName !== undefined) {
+			this.tenantName = tenantName;
+		}
+		if (userIndex !== undefined) {
+			this.userIndex = userIndex;
+		}
+	}
 
 	/**
 	 * Returns the url to container which can be used to load the container through loader.
@@ -400,7 +416,29 @@ export class OdspTestDriver implements ITestDriver {
 			this.config.options,
 		);
 		// Automatically reset the cache after creating the factory
-		this.cache = undefined;
+		delete this.cache;
+		return documentServiceFactory;
+	}
+
+	/**
+	 * Creates a point-in-time document service factory wired to this driver's tokens.
+	 *
+	 * @remarks
+	 * Point-in-time loading (`loadContainerToSequenceNumber`) requires a factory that can materialize
+	 * the document at a target sequence number. Unlike `createDocumentServiceFactory`, this is
+	 * imported directly from the current `@fluidframework/odsp-driver` rather than through the
+	 * versioned driver api, so it is only appropriate for `NoCompat` tests.
+	 */
+	createPointInTimeDocumentServiceFactory(): IDocumentServiceFactory {
+		const documentServiceFactory = createOdspDocumentServiceFactory({
+			getStorageToken: this.getStorageToken.bind(this),
+			getWebsocketToken: this.getPushToken.bind(this),
+			persistedCache: this.cache,
+			hostPolicy: this.config.options,
+			pointInTimeDocumentServiceImplementation: createPointInTimeDocumentService,
+		});
+		// Automatically reset the cache after creating the factory
+		delete this.cache;
 		return documentServiceFactory;
 	}
 
@@ -437,5 +475,19 @@ export class OdspTestDriver implements ITestDriver {
 			itemId,
 			dataStorePath: "/",
 		});
+	}
+
+	/**
+	 * Fetches a storage-scoped access token for the given ODSP resource.
+	 *
+	 * @remarks
+	 * Exposed for test infrastructure that needs to make raw ODSP REST calls outside the driver
+	 * (e.g. point-in-time version setup: listing, restoring, and snapping file versions). The
+	 * returned value is the raw access token, not an `Authorization` header value.
+	 */
+	public async getStorageTokenForResource(
+		options: OdspResourceTokenFetchOptions,
+	): Promise<string> {
+		return this.getStorageToken(options);
 	}
 }

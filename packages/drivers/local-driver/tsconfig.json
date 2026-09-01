@@ -1,10 +1,12 @@
 {
-	"extends": "../../../common/build/build-common/tsconfig.node16.json",
+	"extends": "../../../common/build/build-common/tsconfig.node20.json",
 	"include": ["src/**/*"],
 	"exclude": ["src/test/**/*"],
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "./lib",
+		// Disabled because this package imports container-runtime/container-loader, whose emitted
+		// declarations are incompatible with exactOptionalPropertyTypes.
 		"exactOptionalPropertyTypes": false,
 	},
 }

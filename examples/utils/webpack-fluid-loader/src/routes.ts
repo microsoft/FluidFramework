@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { getOdspCredentials } from "@fluid-private/test-drivers";
-import { IFluidPackage } from "@fluidframework/container-definitions/internal";
+import type { IFluidPackage } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	LoginCredentials,
@@ -17,6 +18,7 @@ import {
 import Axios from "axios";
 import express from "express";
 import nconf from "nconf";
+import type { Configuration as WebpackConfiguration } from "webpack";
 import type Server from "webpack-dev-server";
 import type { Configuration, ExpressRequestHandler, Middleware } from "webpack-dev-server";
 
@@ -24,6 +26,11 @@ import { tinyliciousUrls } from "./getUrlResolver.js";
 import { RouteOptions } from "./loader.js";
 
 const tokenManager = new OdspTokenManager(odspTokensCache);
+const sourceMapLoaderPath = fileURLToPath(import.meta.resolve("source-map-loader"));
+const tsLoaderPath = fileURLToPath(import.meta.resolve("ts-loader"));
+
+const appBundleDirectory = "bundle";
+const appBundlePublicPath = "/app";
 
 const getThisOrigin = (options: RouteOptions): string => `http://localhost:${options.port}`;
 
@@ -262,7 +269,7 @@ const makeAfterMiddlewares = (
 			middleware: async (req, res) => {
 				const ready = await isReady(req, res);
 				if (ready) {
-					fluid(req, res, baseDir, options);
+					await fluid(req, res, baseDir, options);
 				}
 			},
 		},
@@ -300,7 +307,7 @@ const makeAfterMiddlewares = (
 
 				const ready = await isReady(req, res);
 				if (ready) {
-					fluid(req, res, baseDir, options);
+					await fluid(req, res, baseDir, options);
 				}
 			},
 		},
@@ -323,12 +330,12 @@ export function devServerConfig(
 			static: {
 				directory: path.join(
 					baseDir,
-					"/node_modules/@fluid-example/webpack-fluid-loader/dist/",
+					"/node_modules/@fluid-example/webpack-fluid-loader/bundle/",
 				),
 				publicPath: "/code",
 			},
 			devMiddleware: {
-				publicPath: "/dist",
+				publicPath: appBundlePublicPath,
 			},
 			setupMiddlewares: (middlewares, devServer) => {
 				for (const beforeMiddleware of beforeMiddlewares) {
@@ -347,18 +354,77 @@ export function devServerConfig(
 	};
 }
 
-const fluid = (
+/**
+ * Creates a webpack config suitable for a typical example using webpack-fluid-loader.
+ * @internal
+ */
+export function commonExampleConfig(
+	baseDir: string,
+	env: RouteOptions & { production?: boolean },
+): WebpackConfiguration {
+	const { production } = env;
+	return {
+		...devServerConfig(baseDir, env),
+		entry: {
+			main: "./src/index.ts",
+		},
+		resolve: {
+			extensionAlias: {
+				".js": [".ts", ".tsx", ".js"],
+				".cjs": [".cts", ".cjs"],
+				".mjs": [".mts", ".mjs"],
+			},
+		},
+		module: {
+			rules: [
+				{
+					test: /\.tsx?$/,
+					loader: tsLoaderPath,
+				},
+				{
+					test: /\.[cm]?js$/,
+					use: [sourceMapLoaderPath],
+					enforce: "pre",
+				},
+			],
+		},
+		output: {
+			filename: "[name].bundle.js",
+			path: path.resolve(baseDir, appBundleDirectory),
+			library: { name: "[name]", type: "umd" },
+		},
+		watchOptions: {
+			ignored: "**/node_modules/**",
+		},
+		mode: production ? "production" : "development",
+		devtool: production ? "source-map" : "inline-source-map",
+	};
+}
+
+const fluid = async (
 	req: express.Request,
 	res: express.Response,
 	baseDir: string,
 	options: RouteOptions,
-): void => {
+): Promise<void> => {
 	const documentId = req.params.id;
-	// eslint-disable-next-line @typescript-eslint/no-require-imports
-	const packageJson = require(path.join(baseDir, "./package.json")) as IFluidPackage;
+	// JSON imports are cached and is used here for efficiency, so package.json
+	// changes (specifically to `fluid.browser.umd`) require restarting the dev
+	// server.
+	const { default: packageJson } = (await import(
+		pathToFileURL(path.join(baseDir, "./package.json")).href,
+		{ with: { type: "json" } }
+	)) as { default: IFluidPackage };
 
 	const umd = packageJson.fluid.browser?.umd;
 	assert(umd !== undefined, 0x329 /* browser.umd property is undefined */);
+	const bundleScripts = umd.files.map((file) => {
+		assert(
+			file.startsWith(`${appBundleDirectory}/`),
+			"browser UMD files must be emitted under the bundle directory",
+		);
+		return `<script src="${appBundlePublicPath}/${file.slice(appBundleDirectory.length + 1)}"></script>\n`;
+	});
 
 	const html = `<!DOCTYPE html>
 <html style="height: 100%;" lang="en">
@@ -371,7 +437,7 @@ const fluid = (
     <div id="content" style="min-height: 100%;"></div>
 
     <script src="/code/fluid-loader.bundle.js"></script>
-    ${umd.files.map((file) => `<script src="/${file}"></script>\n`)}
+    ${bundleScripts.join("")}
     <script>
         var options = ${JSON.stringify(options)};
         var fluidStarted = false;

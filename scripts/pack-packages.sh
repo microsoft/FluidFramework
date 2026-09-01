@@ -38,10 +38,5 @@ else
   mv -t $STAGING_PATH/pack/tarballs/ ./*.tgz
 fi
 
-# This saves a list of the packages in the working directory in topological order to a temporary file.
-# Packages will be published in this order to avoid dependency issues.
-# See tools/pipelines/templates/include-publish-npm-package-steps.yml for details about how this file is used.
-flub list $RELEASE_GROUP --no-private --feed public --outFile $STAGING_PATH/pack/packagePublishOrder-public.txt
-flub list $RELEASE_GROUP --no-private --feed internal-build --outFile $STAGING_PATH/pack/packagePublishOrder-internal-build.txt
-flub list $RELEASE_GROUP --no-private --feed internal-dev --outFile $STAGING_PATH/pack/packagePublishOrder-internal-dev.txt
-flub list $RELEASE_GROUP --no-private --feed internal-test --outFile $STAGING_PATH/pack/packagePublishOrder-internal-test.txt
+SCRIPT_DIRECTORY="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+bash "$SCRIPT_DIRECTORY/generate-package-publish-order.sh"

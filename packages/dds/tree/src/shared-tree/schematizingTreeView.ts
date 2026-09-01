@@ -10,9 +10,9 @@ import type {
 	Listenable,
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { tagSchemaArtifacts, UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { anchorSlot, rootFieldKey } from "../core/index.js";
+import { anchorSlot, rootFieldKey, type RevertToOptionsAlpha } from "../core/index.js";
 import {
 	type NodeIdentifierManager,
 	defaultSchemaPolicy,
@@ -23,17 +23,19 @@ import {
 	type FlexTreeUnknownUnboxed,
 	FieldKinds,
 	type FlexTreeRequiredField,
+	allowsRepoSuperset,
 } from "../feature-libraries/index.js";
 import {
 	type ImplicitFieldSchema,
 	type SchemaCompatibilityStatus,
-	type TreeView,
+	type TreeContextAlpha,
 	type TreeViewEvents,
 	tryGetTreeNodeForField,
 	setField,
 	normalizeFieldSchema,
-	SchemaCompatibilityTester,
+	checkSchemaCompatibility,
 	type InsertableContent,
+	type StagedSchemaUpgradePolicy,
 	type TreeViewConfiguration,
 	type TreeViewAlpha,
 	type InsertableField,
@@ -41,11 +43,11 @@ import {
 	type ReadSchema,
 	type UnsafeUnknownSchema,
 	type TreeBranchEvents,
-	type VoidTransactionCallbackStatus,
-	type TransactionCallbackStatus,
-	type TransactionResult,
-	type TransactionResultExt,
-	type RunTransactionParams,
+	type VoidTransactionCallbackStatusAlpha,
+	type TransactionCallbackStatusAlpha,
+	type TransactionVoidResult,
+	type TransactionValueResult,
+	type RunTransactionParamsAlpha,
 	HydratedContext,
 	SimpleContextSlot,
 	areImplicitFieldSchemaEqual,
@@ -56,7 +58,12 @@ import {
 	TreeViewConfigurationAlpha,
 	toInitialSchema,
 	toUpgradeSchema,
-	type TreeBranchAlpha,
+	type TreeBranchHistory,
+	type UntypedTreeViewAlpha,
+	type TreeSchema,
+	type SchemaUpgrade,
+	type StagedUpgradeStatus,
+	getSchemaIncompatibilityDetails,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -73,7 +80,31 @@ import type { TreeCheckout } from "./treeCheckout.js";
  * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already
  * exists and error if creating a second.
  */
-export const ViewSlot = anchorSlot<TreeView<ImplicitFieldSchema>>();
+export const ViewSlot = anchorSlot<TreeContextAlpha>();
+
+function throwIfSchemaIsIncompatible(
+	compatibility: SchemaCompatibilityStatus,
+	viewSchema: TreeSchema,
+	storedSchema: TreeCheckout["storedSchema"],
+): void {
+	if (compatibility.canView) {
+		return;
+	}
+
+	const schemaIncompatibilityDetails = getSchemaIncompatibilityDetails(
+		viewSchema,
+		storedSchema,
+	);
+	const resolution = compatibility.canInitialize
+		? "The document is uninitialized; call TreeView.initialize() before reading or writing TreeView.root."
+		: compatibility.canUpgrade
+			? "The stored schema can be upgraded; call TreeView.upgradeSchema() before reading or writing TreeView.root."
+			: "The schemas cannot be upgraded automatically. Use a compatible view schema or explicitly migrate the document schema and data.";
+	throw new UsageError(
+		`TreeView.root is unavailable because the view schema is incompatible with the stored schema. ${resolution}`,
+		tagSchemaArtifacts({ schemaIncompatibilityDetails }),
+	);
+}
 
 /**
  * Implementation of TreeView wrapping a FlexTreeView.
@@ -91,14 +122,26 @@ export class SchematizingSimpleTreeView<
 	private flexTreeContext: Context | undefined;
 
 	/**
-	 * Undefined iff uninitialized or disposed.
+	 * Undefined if and only if uninitialized or disposed.
 	 */
 	private currentCompatibility: SchemaCompatibilityStatus | undefined;
+	/**
+	 * Cached map of upgrade statuses, computed alongside compatibility.
+	 * @remarks Undefined if and only if uninitialized or disposed.
+	 */
+	private currentEnabledUpgrades: ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus> | undefined;
 	public readonly events: Listenable<TreeViewEvents & TreeBranchEvents> &
 		IEmitter<TreeViewEvents & TreeBranchEvents> &
 		HasListeners<TreeViewEvents & TreeBranchEvents> = createEmitter();
 
-	private readonly viewSchema: SchemaCompatibilityTester;
+	/**
+	 * The schema for this view, captured at construction time for compatibility checking.
+	 */
+	private readonly viewSchema: TreeSchema;
+	/**
+	 * Stored-schema generation policy from the view configuration, frozen at construction time.
+	 */
+	private readonly stagedUpgradePolicy: StagedSchemaUpgradePolicy;
 
 	/**
 	 * Events to unregister upon flex-tree view disposal.
@@ -141,9 +184,16 @@ export class SchematizingSimpleTreeView<
 
 		this.rootFieldSchema = normalizeFieldSchema(config.schema);
 
-		const configAlpha = new TreeViewConfigurationAlpha({ schema: config.schema });
+		const stagedUpgradePolicy =
+			config instanceof TreeViewConfigurationAlpha ? config.stagedUpgradePolicy : undefined;
+		const configAlpha = new TreeViewConfigurationAlpha({
+			...config,
+			stagedUpgradePolicy,
+		});
+		this.stagedUpgradePolicy = configAlpha.stagedUpgradePolicy;
 
-		this.viewSchema = new SchemaCompatibilityTester(configAlpha);
+		// Store viewSchema directly from the configuration (TreeViewConfigurationAlpha implements TreeSchema)
+		this.viewSchema = configAlpha;
 		// This must be initialized before `update` can be called.
 		this.currentCompatibility = {
 			canView: false,
@@ -151,6 +201,7 @@ export class SchematizingSimpleTreeView<
 			isEquivalent: false,
 			canInitialize: true,
 		};
+		this.currentEnabledUpgrades = new Map();
 		this.update();
 
 		this.unregisterCallbacks.add(
@@ -161,7 +212,11 @@ export class SchematizingSimpleTreeView<
 		);
 	}
 
-	public isBranch(): this is TreeBranchAlpha {
+	public isBranch(): this is UntypedTreeViewAlpha {
+		return this.isView();
+	}
+
+	public isView(): this is UntypedTreeViewAlpha {
 		return true;
 	}
 
@@ -188,7 +243,7 @@ export class SchematizingSimpleTreeView<
 		}
 
 		this.runSchemaEdit(() => {
-			const schema = toInitialSchema(this.config.schema);
+			const schema = toInitialSchema(this.config.schema, this.stagedUpgradePolicy);
 			// This has to be the contextless version, since when "initialize" is called (right after this),
 			// it will do a schema change which would dispose of the current context (see inside `update`).
 			// Thus using the current context (if any) would hydrate nodes then
@@ -246,20 +301,26 @@ export class SchematizingSimpleTreeView<
 	public upgradeSchema(): void {
 		this.ensureUndisposed();
 
-		const compatibility = this.compatibility;
-		if (compatibility.isEquivalent) {
+		const newSchema = toUpgradeSchema(this.viewSchema.root, this.stagedUpgradePolicy);
+		const storedSchema = this.checkout.storedSchema.clone();
+		if (!allowsRepoSuperset(defaultSchemaPolicy, storedSchema, newSchema)) {
+			throw new UsageError(
+				"Existing stored schema cannot be upgraded to the requested schema (see TreeView.compatibility.canUpgrade).",
+			);
+		}
+		if (allowsRepoSuperset(defaultSchemaPolicy, newSchema, storedSchema)) {
 			// No-op
 			return;
 		}
 
-		if (!compatibility.canUpgrade) {
-			throw new UsageError(
-				"Existing stored schema cannot be upgraded (see TreeView.compatibility.canUpgrade).",
-			);
-		}
-
-		const newSchema = toUpgradeSchema(this.viewSchema.viewSchema.root);
 		this.runSchemaEdit(() => this.checkout.updateSchema(newSchema));
+	}
+
+	public isStagedUpgradeEnabled(upgrade: SchemaUpgrade): StagedUpgradeStatus {
+		if (!this.currentEnabledUpgrades) {
+			this.failDisposed();
+		}
+		return this.currentEnabledUpgrades.get(upgrade) ?? "disabled";
 	}
 
 	/**
@@ -272,40 +333,40 @@ export class SchematizingSimpleTreeView<
 	}
 
 	public runTransaction<TSuccessValue, TFailureValue>(
-		transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>,
-		params?: RunTransactionParams,
-	): TransactionResultExt<TSuccessValue, TFailureValue>;
+		transaction: () => TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>,
+		params?: RunTransactionParamsAlpha,
+	): TransactionValueResult<TSuccessValue, TFailureValue>;
 	public runTransaction(
-		transaction: () => VoidTransactionCallbackStatus | void,
-		params?: RunTransactionParams,
-	): TransactionResult;
+		transaction: () => VoidTransactionCallbackStatusAlpha | void,
+		params?: RunTransactionParamsAlpha,
+	): TransactionVoidResult;
 	public runTransaction<TSuccessValue, TFailureValue>(
 		transaction: () =>
-			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
-			| VoidTransactionCallbackStatus
+			| TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>
+			| VoidTransactionCallbackStatusAlpha
 			| void,
-		params?: RunTransactionParams,
-	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
+		params?: RunTransactionParamsAlpha,
+	): TransactionValueResult<TSuccessValue, TFailureValue> | TransactionVoidResult {
 		this.ensureUndisposed();
 		return this.checkout.runTransaction(transaction, params);
 	}
 
 	public runTransactionAsync<TSuccessValue, TFailureValue>(
-		transaction: () => Promise<TransactionCallbackStatus<TSuccessValue, TFailureValue>>,
-		params?: RunTransactionParams,
-	): Promise<TransactionResultExt<TSuccessValue, TFailureValue>>;
+		transaction: () => Promise<TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>>,
+		params?: RunTransactionParamsAlpha,
+	): Promise<TransactionValueResult<TSuccessValue, TFailureValue>>;
 	public runTransactionAsync(
-		transaction: () => Promise<VoidTransactionCallbackStatus | void>,
-		params?: RunTransactionParams,
-	): Promise<TransactionResult>;
+		transaction: () => Promise<VoidTransactionCallbackStatusAlpha | void>,
+		params?: RunTransactionParamsAlpha,
+	): Promise<TransactionVoidResult>;
 	public async runTransactionAsync<TSuccessValue, TFailureValue>(
 		transaction: () => Promise<
-			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
-			| VoidTransactionCallbackStatus
+			| TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>
+			| VoidTransactionCallbackStatusAlpha
 			| void
 		>,
-		params: RunTransactionParams | undefined,
-	): Promise<TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult> {
+		params: RunTransactionParamsAlpha | undefined,
+	): Promise<TransactionValueResult<TSuccessValue, TFailureValue> | TransactionVoidResult> {
 		this.ensureUndisposed();
 		if (this.checkout.transaction.size > 0) {
 			// breaker.break() sets brokenBy synchronously before throwing.
@@ -347,12 +408,8 @@ export class SchematizingSimpleTreeView<
 	private update(): void {
 		this.disposeFlexView();
 
-		const compatibility = this.viewSchema.checkCompatibility(this.checkout.storedSchema);
-
-		this.currentCompatibility = {
-			...compatibility,
-			canInitialize: canInitialize(this.checkout),
-		};
+		const compatibility = this.computeCompatibility();
+		this.currentCompatibility = compatibility;
 
 		const anchors = this.checkout.forest.anchors;
 		const slots = anchors.slots;
@@ -423,6 +480,22 @@ export class SchematizingSimpleTreeView<
 		}
 	}
 
+	/**
+	 * Computes the current schema compatibility status and updates the cached enabled upgrades.
+	 */
+	private computeCompatibility(): SchemaCompatibilityStatus {
+		const { enabledUpgrades, ...compatibility } = checkSchemaCompatibility(
+			this.viewSchema,
+			this.checkout.storedSchema,
+			this.stagedUpgradePolicy,
+		);
+		this.currentEnabledUpgrades = enabledUpgrades;
+		return {
+			...compatibility,
+			canInitialize: canInitialize(this.checkout),
+		};
+	}
+
 	private runSchemaEdit(edit: () => void): void {
 		this.midUpgrade = true;
 		try {
@@ -470,6 +543,7 @@ export class SchematizingSimpleTreeView<
 		}
 		this.checkout.forest.anchors.slots.delete(ViewSlot);
 		this.currentCompatibility = undefined;
+		this.currentEnabledUpgrades = undefined;
 		this.onDispose?.();
 		if (!this.checkout.isSharedBranch && !this.checkout.disposed) {
 			// All non-shared branches are 1:1 with views, so if a user manually disposes a view, we should also dispose the checkout/branch.
@@ -479,11 +553,11 @@ export class SchematizingSimpleTreeView<
 
 	private get flexRoot(): FlexTreeOptionalField | FlexTreeRequiredField {
 		this.breaker.use();
-		if (!this.compatibility.canView) {
-			throw new UsageError(
-				"Document is out of schema. Check TreeView.compatibility before accessing TreeView.root.",
-			);
-		}
+		throwIfSchemaIsIncompatible(
+			this.compatibility,
+			this.viewSchema,
+			this.checkout.storedSchema,
+		);
 		const view = this.getFlexTreeContext();
 		assert(
 			view.root.is(FieldKinds.optional) ||
@@ -500,11 +574,11 @@ export class SchematizingSimpleTreeView<
 
 	public set root(newRoot: InsertableField<TRootSchema>) {
 		this.breaker.use();
-		if (!this.compatibility.canView) {
-			throw new UsageError(
-				"Document is out of schema. Check TreeView.compatibility before accessing TreeView.root.",
-			);
-		}
+		throwIfSchemaIsIncompatible(
+			this.compatibility,
+			this.viewSchema,
+			this.checkout.storedSchema,
+		);
 		const view = this.getFlexTreeContext();
 		setField(
 			view.root,
@@ -516,18 +590,40 @@ export class SchematizingSimpleTreeView<
 
 	// #region Branching
 
-	public fork(): ReturnType<TreeBranchAlpha["fork"]> &
+	public fork(): ReturnType<UntypedTreeViewAlpha["fork"]> &
 		SchematizingSimpleTreeView<TRootSchema> {
 		return this.checkout.fork().viewWith(this.config);
 	}
 
-	public merge(context: TreeBranchAlpha, disposeMerged = true): void {
+	public rewindTo(revision: string): void {
+		this.checkout.rewindTo(revision);
+	}
+
+	public revertTo(revision: string, options?: RevertToOptionsAlpha): void {
+		this.checkout.revertTo(revision, options);
+	}
+
+	public merge(context: UntypedTreeViewAlpha, disposeMerged = true): void {
 		this.checkout.merge(context, disposeMerged);
 	}
 
-	public rebaseOnto(context: TreeBranchAlpha): void {
+	public rebaseOnto(context: UntypedTreeViewAlpha): void {
 		this.checkout.rebaseOnto(context);
 	}
 
+	public isMissingEditsFrom(context: UntypedTreeViewAlpha): boolean {
+		return this.checkout.isMissingEditsFrom(context);
+	}
+
+	public computeNetChangeIfRebasedOnto(
+		context: UntypedTreeViewAlpha,
+	): JsonCompatibleReadOnly | undefined {
+		return this.checkout.computeNetChangeIfRebasedOnto(context);
+	}
+
 	// #endregion Branching
+
+	public get branchHistory(): TreeBranchHistory {
+		return this.checkout.branchHistory;
+	}
 }

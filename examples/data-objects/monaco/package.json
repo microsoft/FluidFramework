@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/monaco",
-	"version": "2.110.0",
+	"version": "3.0.0",
 	"private": true,
 	"description": "Monaco code editor",
 	"homepage": "https://fluidframework.com",
@@ -16,10 +16,10 @@
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:esm": "tsc --project ./tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
-		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
+		"clean": "rimraf --glob bundle dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"eslint": "eslint --quiet --format stylish src",
 		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
@@ -65,18 +65,18 @@
 		"source-map-loader": "^5.0.0",
 		"style-loader": "^4.0.0",
 		"ts-loader": "^9.5.1",
-		"typescript": "~5.4.5",
+		"typescript": "~6.0.3",
 		"url-loader": "^4.1.1",
 		"webpack": "^5.94.0",
 		"webpack-cli": "^5.1.4",
-		"webpack-dev-server": "~4.15.2",
+		"webpack-dev-server": "~5.2.6",
 		"webpack-merge": "^6.0.1"
 	},
 	"fluid": {
 		"browser": {
 			"umd": {
 				"files": [
-					"dist/main.bundle.js"
+					"bundle/main.bundle.js"
 				],
 				"library": "main"
 			}

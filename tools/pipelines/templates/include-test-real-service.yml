@@ -246,13 +246,18 @@ stages:
 
         - template: /tools/pipelines/templates/include-install-pnpm.yml@self
           parameters:
+            # Install pnpm based on the FF repo settings as it has an engine requirement whereas
+            # ff_pipeline_host does not yet. So long a FF repo's pnpm version is compatible with
+            # ff_pipeline_host this single install and ordering of steps will suffice. If the
+            # needs diverge, then additional coordination may be required.
             buildDirectory: $(FluidFrameworkDirectory)
             # The compat-workspaces lockfile is committed to the FluidFramework repo and changes
             # whenever legacy package versions are added or removed. Including it in the pnpm store
             # cache key ensures a cache miss whenever the set of compat packages changes.
             # The ff_pipeline_host lockfile is included so the cache key also invalidates when the
             # internal tooling dependencies change.
-            additionalCacheKey: '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/packages/test/test-version-utils/compat-workspaces/full/pnpm-lock.yaml | $(Pipeline.Workspace)/$(FFPipelineHostDirectory)/pnpm-lock.yaml'
+            additionalOptionalCacheKey: '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/packages/test/test-version-utils/compat-workspaces/full/pnpm-lock.yaml | $(Pipeline.Workspace)/$(FFPipelineHostDirectory)/pnpm-lock.yaml'
+            requiredCacheKey: '"$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/packages/test/test-version-utils/compat-workspaces/full/pnpm-lock.yaml" | "$(Pipeline.Workspace)/$(FFPipelineHostDirectory)/pnpm-lock.yaml"'
 
         - template: /tools/pipelines/templates/include-setup-npmrc-for-download.yml@self
 

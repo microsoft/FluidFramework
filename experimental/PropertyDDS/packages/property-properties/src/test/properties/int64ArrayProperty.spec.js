@@ -7,19 +7,18 @@
  * @fileoverview In this file, we will test the Int64ArrayProperty object described in /src/properties/arrayProperty.js
  */
 
+import { ChangeSet } from "@fluid-experimental/property-changeset";
+import { Int64, constants } from "@fluid-experimental/property-common";
+
+import { BaseProperty, PropertyFactory } from "../../index.js";
+
+const { MSG } = constants;
+
 describe("Int64ArrayProperty", function () {
-	var PropertyFactory, BaseProperty, ChangeSet, MSG;
 	var changeSetWithEntries, removalChangeSet;
-	var myInt64Prop, Int64;
+	var myInt64Prop;
 
 	before(function () {
-		// Get all the objects we need in this test here.
-		PropertyFactory = require("../..").PropertyFactory;
-		BaseProperty = require("../..").BaseProperty;
-		ChangeSet = require("@fluid-experimental/property-changeset").ChangeSet;
-		Int64 = require("@fluid-experimental/property-common").Int64;
-		MSG = require("@fluid-experimental/property-common").constants.MSG;
-
 		// Register a template with a set property for the tests
 		var SimpleInt64TestPropertyTemplate = {
 			typeid: "autodesk.tests:SimpleInt64TestProperty-1.0.0",

@@ -3,16 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	Divider,
-	type SelectTabData,
-	type SelectTabEvent,
-	Tab,
-	TabList,
-	type TabValue,
-	makeStyles,
-	shorthands,
-} from "@fluentui/react-components";
+import type { SelectTabData, SelectTabEvent, TabValue } from "@fluentui/react-components";
 import {
 	type ContainerDevtoolsFeatureFlags,
 	ContainerDevtoolsFeatures,
@@ -25,6 +16,7 @@ import {
 import { type ReactElement, useEffect, useState } from "react";
 
 import { ContainerFeatureFlagContext } from "../ContainerFeatureFlagHelper.js";
+import { FluentReactComponents } from "../FluentUi.cjs";
 import { useMessageRelay } from "../MessageRelayContext.js";
 import { useLogger } from "../TelemetryUtils.js";
 
@@ -33,6 +25,8 @@ import { ContainerHistoryView } from "./ContainerHistoryView.js";
 import { ContainerSummaryView } from "./ContainerSummaryView.js";
 import { DataObjectsView } from "./DataObjectsView.js";
 import { Waiting } from "./Waiting.js";
+
+const { Divider, Tab, TabList, makeStyles, shorthands } = FluentReactComponents;
 
 // TODOs:
 // - Allow consumers to specify additional tabs / views for list of inner app view options.
@@ -131,7 +125,7 @@ export function ContainerDevtoolsView(props: ContainerDevtoolsViewProps): ReactE
 	return supportedFeatures === undefined ? (
 		<Waiting />
 	) : (
-		<_ContainerDevtoolsView
+		<ContainerDevtoolsViewInternal
 			containerKey={containerKey}
 			supportedFeatures={supportedFeatures}
 		/>
@@ -139,9 +133,9 @@ export function ContainerDevtoolsView(props: ContainerDevtoolsViewProps): ReactE
 }
 
 /**
- * {@link _ContainerDevtoolsView} input props.
+ * {@link ContainerDevtoolsViewInternal} input props.
  */
-interface _ContainerDevtoolsViewProps extends HasContainerKey {
+interface ContainerDevtoolsViewInternalProps extends HasContainerKey {
 	/**
 	 * Set of features supported by the corresponding Container-level devtools instance.
 	 */
@@ -151,7 +145,9 @@ interface _ContainerDevtoolsViewProps extends HasContainerKey {
 /**
  * Internal {@link ContainerDevtoolsView}, displayed after supported feature set has been acquired from the webpage.
  */
-function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): ReactElement {
+function ContainerDevtoolsViewInternal(
+	props: ContainerDevtoolsViewInternalProps,
+): ReactElement {
 	const { containerKey, supportedFeatures } = props;
 
 	const styles = useStyles();

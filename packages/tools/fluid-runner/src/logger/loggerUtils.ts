@@ -5,14 +5,47 @@
 
 import * as fs from "fs";
 
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
 	type TelemetryLoggerExt,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { CSVFileLogger } from "./csvFileLogger.js";
-import { type IFileLogger, type ITelemetryOptions, OutputFormat } from "./fileLogger.js";
+import {
+	type IFileLogger,
+	type IFileLoggerTelemetryOptions,
+	OutputFormat,
+} from "./fileLogger.js";
 import { JSONFileLogger } from "./jsonFileLogger.js";
+
+/**
+ * Create a telemetry logger wrapped around an {@link IFileLogger} that writes to the given file path.
+ *
+ * @remarks
+ * All telemetry events should be sent through the returned `logger`. The returned `fileLogger` is the
+ * underlying sink — its `close()` method must be called at the end of execution to flush any buffered
+ * events to disk.
+ *
+ * If `options.outputFormat` is not supplied, telemetry is written as JSON. Use {@link OutputFormat.CSV}
+ * to write CSV instead. See {@link IFileLoggerTelemetryOptions} for supported options including default
+ * properties applied to every event and flush batching.
+ *
+ * @param filePath - Path to the file telemetry will be written to. If the file already exists its
+ * contents will be overwritten or corrupted — callers should verify the path is unused before calling.
+ * @param options - Optional telemetry configuration. See {@link IFileLoggerTelemetryOptions}.
+ * @returns The wrapped telemetry logger to send events through, and the underlying `IFileLogger`
+ * which must be closed when telemetry collection is finished.
+ *
+ * @legacy
+ * @beta
+ */
+export function createFluidRunnerLogger(
+	filePath: string,
+	options?: IFileLoggerTelemetryOptions,
+): { logger: ITelemetryBaseLogger; fileLogger: IFileLogger } {
+	return createLogger(filePath, options);
+}
 
 /**
  * Create an {@link @fluidframework/telemetry-utils#TelemetryLoggerExt} wrapped around provided {@link IFileLogger}.
@@ -26,11 +59,13 @@ import { JSONFileLogger } from "./jsonFileLogger.js";
  * Note: if an output format is not supplied, default is JSON.
  *
  * @returns Both the `IFileLogger` implementation and `TelemetryLoggerExt` wrapper to be called.
+ *
+ * @deprecated Use {@link createFluidRunnerLogger}.
  * @internal
  */
 export function createLogger(
 	filePath: string,
-	options?: ITelemetryOptions,
+	options?: IFileLoggerTelemetryOptions,
 ): { logger: TelemetryLoggerExt; fileLogger: IFileLogger } {
 	const fileLogger =
 		options?.outputFormat === OutputFormat.CSV
@@ -73,7 +108,9 @@ export function validateAndParseTelemetryOptions(
 	format?: string,
 	props?: (string | number)[],
 	eventsPerFlush?: number,
-): { success: false; error: string } | { success: true; telemetryOptions: ITelemetryOptions } {
+):
+	| { success: false; error: string }
+	| { success: true; telemetryOptions: IFileLoggerTelemetryOptions } {
 	let outputFormat: OutputFormat | undefined;
 	const defaultProps: Record<string, string | number> = {};
 

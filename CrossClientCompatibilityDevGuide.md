@@ -9,7 +9,7 @@ Cross-client compatibility ensures users on different Fluid Framework versions c
 This guide covers:
 
 - **Identifying Breaking Changes** - How to determine if a change affects cross-client compatibility
-- **Enforcing the Policy** - How `minVersionForCollab`, default configurations, and unsafe configuration prevention work together
+- **Enforcing the Policy** - How `oldestSupportedClient`, default configurations, and unsafe configuration prevention work together
 - **Safely Staging Breaking Changes** - Step-by-step process for shipping data-format changes
 - **Cleaning Up Old Feature Gates** - When and how to remove feature gates that have aged out of the compatibility window
 - **Designating a New Compatibility Checkpoint** - Checklist of updates required each time a new checkpoint is designated
@@ -23,8 +23,8 @@ for full terminology definitions. Key terms used in this guide:
 <!-- prettier-ignore -->
 | Term | Definition |
 | --- | --- |
-| **Compatibility Checkpoint Release** | The first Fluid release in a checkpoint range (e.g., `2.100.0` for CC-4). |
-| **Compatibility Checkpoint Range** | The semver range of Fluid releases that are part of a checkpoint (e.g., `>=2.100.0 <2.130.0` for CC-4). All releases in the range share the same cross-client compatibility guarantees as the first release of the range. |
+| **Compatibility Checkpoint Release** | The first Fluid release in a checkpoint range (e.g., `2.100.0` for CC#4). |
+| **Compatibility Checkpoint Range** | The semver range of Fluid releases that are part of a checkpoint (e.g., `>=2.100.0 <2.130.0` for CC#4). All releases in the range share the same cross-client compatibility guarantees as the first release of the range. |
 | **Compatibility Window** | The set of checkpoints guaranteed to be cross-client compatible (currently ~18 months in each direction, spanning Checkpoint N-3 through Checkpoint N+3). |
 
 ## Identifying Cross-Client Compatibility Breaking Changes
@@ -42,49 +42,48 @@ However, there are many other types of changes that could impact cross-client co
 
 ## Cross-Client Compatibility Enforcement
 
-If a change affects the data format (see above), it should be gated by a **container runtime option**. Runtime options are enforced via the `minVersionForCollab` property to ensure customers do not accidentally break older clients by enabling cross-client compatibility breaking features prematurely.
+If a change affects the data format (see above), it should be gated by a **container runtime option**. Runtime options are enforced via the `oldestSupportedClient` property to ensure customers do not accidentally break older clients by enabling cross-client compatibility breaking features prematurely.
 
-`minVersionForCollab` defines the minimum Fluid runtime version required for collaboration on a document. Customers are encouraged to set `minVersionForCollab` to the highest version their users are saturated on. If the customer does not set `minVersionForCollab`, a default value is assigned. `minVersionForCollab` controls the "default configurations" and "unsafe configuration prevention" mechanisms explained below.
+`oldestSupportedClient` defines the oldest Fluid client version that must be able to access documents written by the runtime. Customers are encouraged to set `oldestSupportedClient` to the highest version their users are saturated on. Client 3.0 accepts stable 2.x versions and 3.x minor checkpoints whose patch is zero, so all active deployments that must collaborate need to be running Fluid Framework 2.0.0 or later. If the customer does not set `oldestSupportedClient`, Client 3.0 uses `"2.0.0"` and applies the same defaults and validation as an explicit `"2.0.0"`. `oldestSupportedClient` controls the "default configurations" and "unsafe configuration prevention" mechanisms explained below.
 
 ### Default Configurations
 
-The runtime uses `minVersionForCollab` to automatically set certain container runtime options. This is handled by the `runtimeOptionsAffectingDocSchemaConfigMap` in [containerCompatibility.ts](./packages/runtime/container-runtime/src/containerCompatibility.ts).
+The runtime uses `oldestSupportedClient` to automatically set certain container runtime options. This is handled by the `runtimeOptionsAffectingDocSchemaConfigMap` in [containerCompatibility.ts](./packages/runtime/container-runtime/src/containerCompatibility.ts).
 
-**Example:** If `minVersionForCollab` is set to `"2.0.0"`, then features such as grouped batching are safely enabled, since the lowest version we need to support collaboration with understands the associated data format changes. On the other hand, features such as `createBlobPayloadPending` remain disabled, as clients need to be running runtime version 2.40.0 or later to understand the associated data format changes.
+**Example:** If `oldestSupportedClient` is set to `"2.0.0"`, then features such as grouped batching are safely enabled, since the oldest client that must retain document access understands the associated data format changes. On the other hand, features such as `createBlobPayloadPending` remain disabled, as clients need to be running runtime version 2.40.0 or later to understand the associated data format changes.
 
 ```typescript
 // Simplified view of the config map (see containerCompatibility.ts for full details)
 const runtimeOptionsAffectingDocSchemaConfigMap: ConfigMap<RuntimeOptionsAffectingDocSchema> = {
 	enableGroupedBatching: {
-		"1.0.0": false,
-		"2.0.0-defaults": true,
+		"2.0.0": true,
 	},
 	createBlobPayloadPending: {
-		"1.0.0": undefined,
+		"2.0.0": undefined,
 		// Could be enabled by default in a future version
 	},
 	// ... other options
 };
 ```
 
-> **Note on `"2.0.0-defaults"`:** This is a special version string (considered less than `"2.0.0"` by `semver`) used as the default when a customer does not explicitly set `minVersionForCollab`. It exists to distinguish the unspecified case from an explicit `"2.0.0"` setting. Some options (e.g., `explicitSchemaControl`) use a threshold of `"2.0.0"` rather than `"2.0.0-defaults"`, meaning they only activate when the customer _explicitly_ sets `minVersionForCollab` to `"2.0.0"` or higher. See `defaultMinVersionForCollab` in [compatibilityBase.ts](./packages/runtime/runtime-utils/src/compatibilityBase.ts) for more information.
+When the setting is omitted, Client 3.0 uses `"2.0.0"` before consulting this map. Omitted and explicit `"2.0.0"` settings therefore produce the same configuration.
 
 ### Unsafe Configuration Prevention
 
-If a client tries to enable a runtime option that requires a version higher than the document's `minVersionForCollab`, the runtime will fail to instantiate and throw a `UsageError`. This is handled by the `runtimeOptionsAffectingDocSchemaConfigValidationMap` in [containerCompatibility.ts](./packages/runtime/container-runtime/src/containerCompatibility.ts).
+If a client tries to enable a runtime option that requires a version higher than the document's `oldestSupportedClient`, the runtime will fail to instantiate and throw a `UsageError`. This is handled by the `runtimeOptionsAffectingDocSchemaConfigValidationMap` in [containerCompatibility.ts](./packages/runtime/container-runtime/src/containerCompatibility.ts).
 
-**Example:** A container author sets `minVersionForCollab` to `"1.4.0"` and `enableGroupedBatching` to `true`. The runtime fails immediately stating that `minVersionForCollab` must be updated, since clients running runtime version 1.4.0 cannot understand the data format of grouped batching being enabled.
+**Example:** A container author sets `oldestSupportedClient` to `"2.0.0"` and `createBlobPayloadPending` to `true`. The runtime fails immediately stating that `oldestSupportedClient` must be updated to at least `"2.40.0"`, when support for the associated data format was introduced.
 
 ```typescript
 // Simplified view of the validation map (see containerCompatibility.ts for full details)
 const runtimeOptionsAffectingDocSchemaConfigValidationMap: ConfigValidationMap<RuntimeOptionsAffectingDocSchema> =
 	{
 		enableGroupedBatching: configValueToMinVersionForCollab([
-			[false, "1.0.0"],
-			[true, "2.0.0-defaults"],
+			[false, "2.0.0"],
+			[true, "2.0.0"],
 		]),
 		createBlobPayloadPending: configValueToMinVersionForCollab([
-			[undefined, "1.0.0"],
+			[undefined, "2.0.0"],
 			[true, "2.40.0"],
 		]),
 		// ... other options
@@ -125,9 +124,9 @@ In [containerCompatibility.ts](./packages/runtime/container-runtime/src/containe
 > breaking change must go through it. If you are following the steps in this section, your option must
 > be configured in both maps below.
 
-**First map: `runtimeOptionsAffectingDocSchemaConfigMap`** — Handles the [Default Configurations](#default-configurations) described above. Configure the entry corresponding to your runtime option as per the comments in the code. Each entry maps `MinimumVersionForCollab` values to the appropriate default value for that option.
+**First map: `runtimeOptionsAffectingDocSchemaConfigMap`** — Handles the [Default Configurations](#default-configurations) described above. Configure the entry corresponding to your runtime option as per the comments in the code. Each entry maps `OldestSupportedClientVersion` values to the appropriate default value for that option.
 
-**Second map: `runtimeOptionsAffectingDocSchemaConfigValidationMap`** — Handles [Unsafe Configuration Prevention](#unsafe-configuration-prevention) described above. Configure the entry corresponding to your runtime option as per the comments in the code. Each entry maps config values to the minimum `minVersionForCollab` required to use that value.
+**Second map: `runtimeOptionsAffectingDocSchemaConfigValidationMap`** — Handles [Unsafe Configuration Prevention](#unsafe-configuration-prevention) described above. Configure the entry corresponding to your runtime option as per the comments in the code. Each entry maps config values to the minimum `oldestSupportedClient` required to use that value.
 
 > The exact implementation of these configuration maps may change in the future. Refer to the code comments for the latest guidance as they should be the most up-to-date source of truth.
 
@@ -168,14 +167,14 @@ A feature gate can be removed when **all** of the following are true:
    been approved for cleanup.
 
 **Example:** Suppose `enableFoo` was introduced in version `2.95.0` and there are checkpoints
-CC-4 (`"2.100.0"`), CC-5 (`"2.130.0"`), CC-6 (`"2.160.0"`), CC-7 (`"2.190.0"`), and CC-8 (`"2.220.0"`).
+CC#4 (`"2.100.0"`), CC#5 (`"2.130.0"`), CC#6 (`"2.160.0"`), CC#7 (`"2.190.0"`), and CC#8 (`"2.220.0"`).
 
-- **At CC-6** the compat window is CC-3 through CC-6, so CC-3 clients are still
-  supported and the gate must remain. Some CC-3 clients (e.g., `2.90.0`) cannot understand the data format with `enableFoo` enabled, so the feature must remain gated.
-- **At CC-7** the window shifts to CC-4 through CC-7. The oldest supported
+- **At CC#6** the compat window is CC#3 through CC#6, so CC#3 clients are still
+  supported and the gate must remain. Some CC#3 clients (e.g., `2.90.0`) cannot understand the data format with `enableFoo` enabled, so the feature must remain gated.
+- **At CC#7** the window shifts to CC#4 through CC#7. The oldest supported
   version (`2.100.0`) is above the `2.95.0` threshold, so every client in the
   window understands the feature. The gate can be removed once
-  `lowestMinVersionForCollab` is `>= 2.95.0`. This becomes possible at the CC-7 designation.
+  `lowestMinVersionForCollab` is `>= 2.95.0`. This becomes possible at the CC#7 designation.
 
 ### How to remove a feature gate
 
@@ -200,9 +199,8 @@ A new checkpoint should be designated no less than 6 months after the previous o
 **To designate a new checkpoint:**
 
 1. Add the new checkpoint to `checkpoints` in [`packages/test/test-version-utils/src/checkpoints.ts`](./packages/test/test-version-utils/src/checkpoints.ts), and remove the corresponding future (TBD) estimate from the `futureCheckpoints` array in the same file.
-2. From `packages/test/test-version-utils`, run `pnpm run update-compat-versions` to refresh the per-version compat workspaces and regenerate the table in [`CompatibilityCheckpoints.md`](./CompatibilityCheckpoints.md). Do **not** edit that table by hand.
-3. From `packages/test/test-version-utils`, run `pnpm run update-compat-versions` to update the installed versions used by e2e tests.
-4. Include a changeset noting the new boundary so it appears in the release notes.
+2. Run `pnpm -r --filter @fluid-private/test-version-utils run update-compat-versions` (from any directory in the client workspace) to refresh the per-version compat workspaces, update the installed versions used by e2e tests, and regenerate the table in [`CompatibilityCheckpoints.md`](./CompatibilityCheckpoints.md). Do **not** edit that table by hand.
+3. Include a changeset noting the new boundary so it appears in the release notes.
 
 ## Tightening Runtime Enforcement
 
@@ -210,48 +208,52 @@ Once a checkpoint has aged out of the supported window, the runtime's compatibil
 
 To tighten runtime enforcement:
 
-1. **Advance `defaultMinVersionForCollab`:** Update the default in
-   [compatibilityBase.ts](./packages/runtime/runtime-utils/src/compatibilityBase.ts)
-   to the oldest checkpoint still in the supported window.
-2. **Advance `lowestMinVersionForCollab`:** Update the floor in
+1. **Advance `lowestMinVersionForCollab`:** Update the deployed-client floor in
    [compatibilityBase.ts](./packages/runtime/runtime-utils/src/compatibilityBase.ts)
    to match the oldest checkpoint still in the supported window.
    `lowestMinVersionForCollab` is the absolute minimum value a customer can
-   pass as `minVersionForCollab` — values below it cause a `UsageError` at
+   pass as `oldestSupportedClient` — values below it cause a `UsageError` at
    runtime. Include a changeset noting the raised minimum supported version,
    since this is a customer-visible breaking change. If
    `lowestMinVersionForCollab` advances across a major version boundary
-   (e.g., `2.x` → `3.x`), also narrow the `MinimumVersionForCollab` type in
+   (e.g., `2.x` → `3.x`), also narrow the `OldestSupportedClientVersion` type in
    [compatibilityDefinitions.ts](./packages/runtime/runtime-definitions/src/compatibilityDefinitions.ts)
    to drop the now-unsupported major from its definition.
+2. **Keep omission aligned with the floor:** While customer-facing APIs still permit
+   `oldestSupportedClient` to be omitted, update `defaultMinVersionForCollab` to the same
+   value as `lowestMinVersionForCollab`. Omitted and explicit floor values must use the
+   same configuration and unsafe-option validation. Remove this fallback once those APIs
+   require the setting.
 
 ## Testing
 
 Fluid's end-to-end test suite automatically generates cross-client compatibility
 variations using `describeCompat()` with `"FullCompat"`. The variations test
 cross-client compatibility scenarios by using one version of the Fluid runtime for
-creating containers and a different version for loading containers.
+creating containers and a different version for loading containers. Prior checkpoints
+below `lowestMinVersionForCollab` are excluded because they are outside the supported
+deployed-client range.
 
-**Example:** With current build `2.101.0` (N) and in-window prior Compatibility
-Checkpoints `2.40.0` (CC-3), `2.0.9` (CC-2), and `1.4.0` (CC-1), a SharedCell
+**Example:** With current build `3.0.0` (N) and in-window prior Compatibility
+Checkpoints `2.80.0` (CC#4), `2.40.0` (CC#3), and `2.0.9` (CC#2), a SharedCell
 test generates these cross-client variations:
 
 ```
-compat cross-client - create with 2.101.0 (N) + load with 2.40.0 (CC-3)
+compat cross-client - create with 3.0.0 (N) + load with 2.80.0 (CC#4)
   ✔ Example test
-compat cross-client - create with 2.101.0 (N) + load with 2.0.9 (CC-2)
+compat cross-client - create with 3.0.0 (N) + load with 2.40.0 (CC#3)
   ✔ Example test
-compat cross-client - create with 2.101.0 (N) + load with 1.4.0 (CC-1)
+compat cross-client - create with 3.0.0 (N) + load with 2.0.9 (CC#2)
   ✔ Example test
-compat cross-client - create with 2.40.0 (CC-3) + load with 2.101.0 (N)
+compat cross-client - create with 2.80.0 (CC#4) + load with 3.0.0 (N)
   ✔ Example test
-compat cross-client - create with 2.0.9 (CC-2) + load with 2.101.0 (N)
+compat cross-client - create with 2.40.0 (CC#3) + load with 3.0.0 (N)
   ✔ Example test
-compat cross-client - create with 1.4.0 (CC-1) + load with 2.101.0 (N)
+compat cross-client - create with 2.0.9 (CC#2) + load with 3.0.0 (N)
   ✔ Example test
 ```
 
-To ensure your change is tested properly, write tests with multiple clients. If necessary, you can pass `minVersionForCollab` and container runtime options via `ITestContainerConfig` (defined in [testObjectProvider.ts](./packages/test/test-utils/src/testObjectProvider.ts)).
+To ensure your change is tested properly, write tests with multiple clients. If necessary, you can pass the value through the internal `minVersionForCollab` field and container runtime options on `ITestContainerConfig` (defined in [testObjectProvider.ts](./packages/test/test-utils/src/testObjectProvider.ts)).
 
 The `test-version-utils` package provides infrastructure for testing compatibility across different version combinations in CI/CD.
 
@@ -260,7 +262,7 @@ The `test-version-utils` package provides infrastructure for testing compatibili
 ### Core Implementation
 
 - [containerCompatibility.ts](./packages/runtime/container-runtime/src/containerCompatibility.ts) — `RuntimeOptionsAffectingDocSchema` type, configuration maps (`runtimeOptionsAffectingDocSchemaConfigMap`, `runtimeOptionsAffectingDocSchemaConfigValidationMap`), and validation logic
-- [containerRuntime.ts](./packages/runtime/container-runtime/src/containerRuntime.ts) — `minVersionForCollab` parameter and runtime initialization
+- [containerRuntime.ts](./packages/runtime/container-runtime/src/containerRuntime.ts) — `oldestSupportedClient` parameter and runtime initialization
 - [documentSchema.ts](./packages/runtime/container-runtime/src/summary/documentSchema.ts) — `IDocumentSchemaFeatures` interface, `documentSchemaSupportedConfigs`, and `DocumentsSchemaController`
 - [compatibilityBase.ts](./packages/runtime/runtime-utils/src/compatibilityBase.ts) — `ConfigMap`, `ConfigValidationMap`, and `getConfigsForMinVersionForCollab` utilities
 

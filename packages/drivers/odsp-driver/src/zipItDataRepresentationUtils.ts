@@ -8,7 +8,7 @@
  * https://microsoft.sharepoint-df.com/:w:/t/ODSPFileStore/ER06b64K_XdDjEyAKl-UT60BJiId39SCVkYSyo_2pvH9gQ?e=KYQ0c5
  */
 
-import { Uint8ArrayToArrayBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
+import { Uint8ArrayToArrayBufferLike, Uint8ArrayToString } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import { NonRetryableError } from "@fluidframework/driver-utils/internal";
 import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
@@ -128,11 +128,12 @@ export function iteratePairs<T>(it: IterableIterator<T>): IterableIterator<[T, T
 		next: () => {
 			const a = it.next();
 			if (a.done) {
+				// Note: there is no assertion here that b is also done.
 				return { value: undefined, done: true };
 			}
 			const b = it.next();
 			assert(b.done !== true, 0x22b /* "Should be a pair" */);
-			return { value: [a.value, b.value], done: b.done };
+			return { value: [a.value, b.value], done: false };
 		},
 		[Symbol.iterator]: () => {
 			return res;
@@ -185,7 +186,7 @@ class BlobDeepCopy extends BlobCore {
 	}
 
 	public get arrayBuffer(): ArrayBufferLike {
-		return Uint8ArrayToArrayBuffer(this.buffer);
+		return Uint8ArrayToArrayBufferLike(this.buffer);
 	}
 
 	public static read(buffer: ReadBuffer, lengthLen: number): BlobCore {
@@ -221,7 +222,7 @@ export class BlobShallowCopy extends BlobCore {
 		return this.data.subarray(this.start, this.end);
 	}
 
-	// Equivalent to Uint8ArrayToArrayBuffer(this.buffer)
+	// Equivalent to Uint8ArrayToArrayBufferLike(this.buffer)
 	public get arrayBuffer(): ArrayBufferLike {
 		const offset = this.data.byteOffset;
 		return this.data.buffer.slice(this.start + offset, this.end + offset);
@@ -413,9 +414,7 @@ export class NodeCore {
 		durationStructure: number;
 		durationStrings: number;
 	} {
-		const [stringsToResolve, durationStructure] = measure(() =>
-			this.loadStructure(buffer, logger),
-		);
+		const [stringsToResolve, durationStructure] = measure(() => this.loadStructure(buffer));
 		const [, durationStrings] = measure(() =>
 			this.loadStrings(buffer, stringsToResolve, logger),
 		);
@@ -426,10 +425,7 @@ export class NodeCore {
 	 * Load and parse the buffer into a tree.
 	 * @param buffer - buffer to read from.
 	 */
-	protected loadStructure(
-		buffer: ReadBuffer,
-		logger: TelemetryLoggerExt,
-	): IStringElementInternal[] {
+	protected loadStructure(buffer: ReadBuffer): IStringElementInternal[] {
 		const stack: NodeTypes[][] = [];
 		const stringsToResolve: IStringElementInternal[] = [];
 		const dictionary: IStringElement[] = [];

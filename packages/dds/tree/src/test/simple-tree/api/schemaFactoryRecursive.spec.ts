@@ -770,7 +770,6 @@ describe("SchemaFactory Recursive methods", () => {
 				}
 
 				{
-					// @ts-expect-error Objects take a record type with fields, not a field directly.
 					class Test extends schemaFactory.objectRecursive(
 						"Test",
 						// @ts-expect-error Objects take a record type with fields, not a field directly.
@@ -781,7 +780,6 @@ describe("SchemaFactory Recursive methods", () => {
 				}
 
 				{
-					// @ts-expect-error 'MapRecursive' is referenced directly or indirectly in its own base expression.
 					class MapRecursive extends schemaFactory.mapRecursive(
 						"Test",
 						// @ts-expect-error Maps accept allowed types, not field schema.
@@ -1184,7 +1182,31 @@ describe("SchemaFactory Recursive methods", () => {
 			>();
 		});
 
-		it("minimal use: already staged", () => {
+		it("multiple types", () => {
+			const types = SchemaFactoryAlpha.typesRecursive([
+				SchemaFactoryAlpha.number,
+				SchemaFactoryAlpha.string,
+			]);
+
+			allowUnused<requireAssignableTo<typeof types, ImplicitAllowedTypes>>();
+			allowUnused<requireAssignableTo<typeof types, AllowedTypes>>();
+
+			allowUnused<
+				requireTrue<
+					areSafelyAssignable<
+						typeof types,
+						AllowedTypesFull<
+							readonly [
+								AnnotatedAllowedType<typeof SchemaFactoryAlpha.number>,
+								AnnotatedAllowedType<typeof SchemaFactoryAlpha.string>,
+							]
+						>
+					>
+				>
+			>();
+		});
+
+		it("minimal use: already annotated", () => {
 			const ref = {
 				type: () => SchemaFactoryAlpha.number,
 				metadata: {},
@@ -1205,6 +1227,59 @@ describe("SchemaFactory Recursive methods", () => {
 			>();
 		});
 
+		it("unannotated not actually recursive", () => {
+			const factory = new SchemaFactoryAlpha("");
+
+			//  one type
+			{
+				const types = SchemaFactoryAlpha.typesRecursive([factory.number]);
+				class Recursive extends factory.arrayRecursive("Recursive", types) {}
+
+				type _check = ValidateRecursiveSchema<typeof Recursive>;
+
+				const node = new Recursive([]);
+				const node2 = new Recursive([2]);
+				const popped = node2[0];
+				// Current compiler settings for tests don't include undefined here, but adding it if required by compiler is valid.
+				type _check2 = requireTrue<areSafelyAssignable<typeof popped, number>>;
+
+				type Insertable = System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<
+					typeof types
+				>;
+				allowUnused<requireAssignableTo<number, Insertable>>();
+			}
+
+			//  more than one type, end to end
+			{
+				const types = SchemaFactoryAlpha.typesRecursive([factory.string, factory.number]);
+				class Recursive extends factory.arrayRecursive("Recursive", types) {}
+
+				allowUnused<ValidateRecursiveSchema<typeof Recursive>>();
+
+				const node = new Recursive([]);
+				const node2 = new Recursive([2, "2"]);
+				const popped = node2[0];
+				// Current compiler settings for tests don't include undefined here, but adding it if required by compiler is valid.
+				allowUnused<requireTrue<areSafelyAssignable<typeof popped, string | number>>>();
+			}
+
+			//  more than one type, minimal
+			{
+				const types = SchemaFactoryAlpha.typesRecursive([factory.string, factory.number]);
+				const schema = factory.arrayRecursive("Recursive", types);
+				type Builder = ConstructorParameters<typeof schema>[0];
+				allowUnused<requireAssignableTo<number[], Builder>>();
+
+				// The bug which these various more than one type tests detected turned out to be in System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe
+				// See its unit tests for more details.
+				type Insertable = System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<
+					typeof types
+				>;
+				allowUnused<requireAssignableTo<number, Insertable>>();
+				allowUnused<requireAssignableTo<string, Insertable>>();
+			}
+		});
+
 		it("recursive unannotated", () => {
 			const factory = new SchemaFactoryAlpha("");
 
@@ -1214,11 +1289,32 @@ describe("SchemaFactory Recursive methods", () => {
 				type _check = ValidateRecursiveSchema<typeof Recursive>;
 			}
 
+			// No "types" wrapper, more than one type
+			{
+				class Recursive extends factory.arrayRecursive("Recursive", [
+					factory.string,
+					() => Recursive,
+				]) {}
+				type _check = ValidateRecursiveSchema<typeof Recursive>;
+			}
+
 			//  "types" wrapper
 			{
 				class Recursive extends factory.arrayRecursive(
 					"Recursive",
 					SchemaFactoryAlpha.typesRecursive([() => Recursive]),
+				) {}
+
+				type _check = ValidateRecursiveSchema<typeof Recursive>;
+
+				const node = new Recursive([]);
+			}
+
+			//  "types" wrapper, more than one type
+			{
+				class Recursive extends factory.arrayRecursive(
+					"Recursive",
+					SchemaFactoryAlpha.typesRecursive([factory.string, () => Recursive]),
 				) {}
 
 				type _check = ValidateRecursiveSchema<typeof Recursive>;
@@ -1240,10 +1336,41 @@ describe("SchemaFactory Recursive methods", () => {
 				type _check = ValidateRecursiveSchema<typeof Recursive>;
 			}
 
+			// Valid
 			{
 				class Recursive extends factory.arrayRecursive(
 					"Recursive",
 					SchemaFactoryAlpha.typesRecursive([{ type: () => Recursive, metadata: {} }]),
+				) {}
+
+				type _check = ValidateRecursiveSchema<typeof Recursive>;
+
+				const node = new Recursive([]);
+			}
+
+			// Valid with second type
+			{
+				class Recursive extends factory.arrayRecursive(
+					"Recursive",
+					SchemaFactoryAlpha.typesRecursive([
+						factory.string,
+						{ type: () => Recursive, metadata: {} },
+					]),
+				) {}
+
+				type _check = ValidateRecursiveSchema<typeof Recursive>;
+
+				const node = new Recursive([]);
+			}
+
+			// Valid with second annotated type
+			{
+				class Recursive extends factory.arrayRecursive(
+					"Recursive",
+					SchemaFactoryAlpha.typesRecursive([
+						{ type: () => factory.string, metadata: {} },
+						{ type: () => Recursive, metadata: {} },
+					]),
 				) {}
 
 				type _check = ValidateRecursiveSchema<typeof Recursive>;
@@ -1397,7 +1524,7 @@ describe("SchemaFactory Recursive methods", () => {
 	 * They also have poorer error quality and IntelliSense (for example the compiler and IntelliSense disagree on which are valid).
 	 *
 	 * These tests are all about the typing.
-	 * They mostly check which cases TypeScript gives "referenced directly or indirectly in its own base expression" errors.
+	 * They document recursive schema patterns whose compiler support has changed over time.
 	 */
 	describe("Use of recursive schema without explicit sub-classing", () => {
 		it("recursive with non-subclassed array", () => {
@@ -1405,7 +1532,6 @@ describe("SchemaFactory Recursive methods", () => {
 		});
 
 		it("co-recursive object with out of line non-lazy array", () => {
-			// @ts-expect-error co-recursive arrays without named subclass cause "referenced directly or indirectly in its own base expression" errors.
 			const TheArray = schemaFactory.arrayRecursive("FooList", [() => Foo]);
 			{
 				// In this case the error above does not cause ValidateRecursiveSchema to fail to compile.
@@ -1415,24 +1541,19 @@ describe("SchemaFactory Recursive methods", () => {
 				type _check = ValidateRecursiveSchema<typeof TheArray>;
 			}
 
-			// @ts-expect-error due to error above
 			class Foo extends schemaFactory.objectRecursive("Foo", {
 				fooList: TheArray,
 			}) {}
 			{
-				// @ts-expect-error due to error above
 				type _check = ValidateRecursiveSchema<typeof Foo>;
 			}
 		});
 
 		it("co-recursive object with inline array", () => {
-			// @ts-expect-error Inline co-recursive arrays without named subclass cause "referenced directly or indirectly in its own base expression" errors.
 			class Foo extends schemaFactory.objectRecursive("Foo", {
-				// @ts-expect-error due to error above
 				fooList: schemaFactory.arrayRecursive("FooList", [() => Foo]),
 			}) {}
 			{
-				// @ts-expect-error due to error above
 				type _check = ValidateRecursiveSchema<typeof Foo>;
 			}
 		});
@@ -1459,14 +1580,11 @@ describe("SchemaFactory Recursive methods", () => {
 		});
 
 		it("co-recursive map with inline array", () => {
-			// @ts-expect-error Inline non-lazy co-recursive arrays cause "referenced directly or indirectly in its own base expression" errors.
 			class Foo extends schemaFactory.mapRecursive(
 				"Foo",
-				// @ts-expect-error Implicit any due to error above
 				schemaFactory.arrayRecursive("FooList", [() => Foo]),
 			) {}
 			{
-				// @ts-expect-error due to error above
 				type _check = ValidateRecursiveSchema<typeof Foo>;
 			}
 		});
@@ -1481,14 +1599,11 @@ describe("SchemaFactory Recursive methods", () => {
 		});
 
 		it("co-recursive array with inline array", () => {
-			// @ts-expect-error Inline non-lazy co-recursive arrays cause "referenced directly or indirectly in its own base expression" errors.
 			class Foo extends schemaFactory.arrayRecursive(
 				"Foo",
-				// @ts-expect-error Implicit any due to error above
 				schemaFactory.arrayRecursive("FooList", [() => Foo]),
 			) {}
 			{
-				// @ts-expect-error due to error above
 				type _check = ValidateRecursiveSchema<typeof Foo>;
 			}
 		});

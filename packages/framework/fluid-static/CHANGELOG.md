@@ -1,5 +1,96 @@
 # @fluidframework/fluid-static
 
+## 2.116.0
+
+### Minor Changes
+
+- Rename minVersionForCollab to oldestSupportedClient ([#27806](https://github.com/microsoft/FluidFramework/pull/27806)) [86b912170c](https://github.com/microsoft/FluidFramework/commit/86b912170c0e12ebeb481c5201f923c72bf94498)
+
+  The cross-client compatibility parameter has new names:
+  - The
+    [`MinimumVersionForCollab`](https://fluidframework.com/docs/api/runtime-definitions/minimumversionforcollab-typealias)
+    type is now
+    [`OldestSupportedClientVersion`](https://fluidframework.com/docs/api/runtime-definitions/oldestsupportedclientversion-typealias).
+  - [`LoadContainerRuntimeParams.minVersionForCollab`](https://fluidframework.com/docs/api/container-runtime/loadcontainerruntimeparams-interface#minversionforcollab-propertysignature)
+    is now
+    [`LoadContainerRuntimeParams.oldestSupportedClient`](https://fluidframework.com/docs/api/container-runtime/loadcontainerruntimeparams-interface#oldestsupportedclient-propertysignature).
+  - [`BaseContainerRuntimeFactoryProps.minVersionForCollab`](https://fluidframework.com/docs/api/aqueduct/basecontainerruntimefactoryprops-interface#minversionforcollab-propertysignature)
+    is now
+    [`BaseContainerRuntimeFactoryProps.oldestSupportedClient`](https://fluidframework.com/docs/api/aqueduct/basecontainerruntimefactoryprops-interface#oldestsupportedclient-propertysignature).
+  - [`createTreeContainerRuntimeFactory`](https://fluidframework.com/docs/api/fluid-static/#createtreecontainerruntimefactory-function)
+    now accepts `oldestSupportedClient`.
+    `minVersionForCollaboration` remains available as a deprecated overload.
+  - `@fluidframework/driver-definitions` now exports its minor-only version type as
+    [`OldestSupportedServiceClientVersion`](https://fluidframework.com/docs/api/driver-definitions/oldestsupportedserviceclientversion-typealias),
+    and
+    [`ServiceOptions.oldestSupportedClient`](https://fluidframework.com/docs/api/driver-definitions/serviceoptions-interface#oldestsupportedclient-propertysignature)
+    is available.
+  - [`AzureClient`](https://fluidframework.com/docs/api/azure-client/azureclient-class),
+    [`OdspClient`](https://fluidframework.com/docs/api/odsp-client/odspclient-class),
+    and
+    [`TinyliciousClient`](https://fluidframework.com/docs/api/tinylicious-client/tinyliciousclient-class)
+    methods now use `oldestSupportedClient` and
+    [`OldestSupportedClientVersion`](https://fluidframework.com/docs/api/runtime-definitions/oldestsupportedclientversion-typealias)
+    in their signatures.
+
+  The previous property and type names in `@fluidframework/runtime-definitions`,
+  `@fluidframework/container-runtime`, `@fluidframework/aqueduct`, and
+  `@fluidframework/fluid-static` are deprecated and will be removed in future
+  releases. Where both old and new property names remain available, specifying both
+  is an error. The alpha `MinimumVersionForCollaboration` type and
+  `ServiceOptions.minVersionForCollaboration` property are replaced directly rather
+  than retained as aliases.
+
+  ```typescript
+  // Before
+  const runtime = await loadContainerRuntime({
+    context,
+    registryEntries,
+    provideEntryPoint,
+    minVersionForCollab: "2.40.0",
+  });
+
+  // After
+  const runtime = await loadContainerRuntime({
+    context,
+    registryEntries,
+    provideEntryPoint,
+    oldestSupportedClient: "2.40.0",
+  });
+  ```
+
+  Telemetry property names are unchanged.
+
+## 2.115.0
+
+Dependency updates only.
+
+## 2.114.0
+
+Dependency updates only.
+
+## 2.113.0
+
+Dependency updates only.
+
+## 2.112.0
+
+Dependency updates only.
+
+## 2.111.0
+
+Dependency updates only.
+
+## 2.110.0
+
+### Minor Changes
+
+- minVersionForCollabOverride removed from createTreeContainerRuntimeFactory props argument ([#27540](https://github.com/microsoft/FluidFramework/pull/27540)) [da469ffe44a](https://github.com/microsoft/FluidFramework/commit/da469ffe44a189ba8741e8d98a62f82ecf6bc348)
+
+  Instead specify `minVersionForCollaboration` property directly.
+  (Deprecated `compatibilityMode` property should also be removed.)
+  See [#27356](https://github.com/microsoft/FluidFramework/issues/27356) and [#23289](https://github.com/microsoft/FluidFramework/issues/23289).
+
 ## 2.103.0
 
 Dependency updates only.

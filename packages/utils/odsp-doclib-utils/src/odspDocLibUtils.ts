@@ -13,7 +13,14 @@ const odspTenants = new Map<string, string>([
  * @internal
  */
 export function isOdspHostname(server: string): boolean {
-	return server.endsWith("sharepoint.com") || server.endsWith("sharepoint-df.com");
+	// Normalize: strip scheme and any path/port, then lowercase, so we compare the bare host.
+	const host = (server.replace(/^https?:\/\//i, "").split(/[/:]/)[0] ?? "").toLowerCase();
+	return (
+		host === "sharepoint.com" ||
+		host.endsWith(".sharepoint.com") ||
+		host === "sharepoint-df.com" ||
+		host.endsWith(".sharepoint-df.com")
+	);
 }
 
 // eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation

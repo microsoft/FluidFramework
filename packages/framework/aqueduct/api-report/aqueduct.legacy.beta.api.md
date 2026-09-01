@@ -19,7 +19,9 @@ export class BaseContainerRuntimeFactory extends RuntimeFactoryHelper implements
 export interface BaseContainerRuntimeFactoryProps {
     // @deprecated (undocumented)
     dependencyContainer?: IFluidDependencySynthesizer;
-    minVersionForCollab?: MinimumVersionForCollab | undefined;
+    // @deprecated
+    minVersionForCollab?: OldestSupportedClientVersion | undefined;
+    oldestSupportedClient?: OldestSupportedClientVersion | undefined;
     provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
     registryEntries: NamedFluidDataStoreRegistryEntries;
     // @deprecated
@@ -38,16 +40,10 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 }
 
 // @beta @legacy
-export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
+export interface ContainerRuntimeFactoryWithDefaultDataStoreProps extends Omit<BaseContainerRuntimeFactoryProps, "provideEntryPoint"> {
     // (undocumented)
     defaultFactory: IFluidDataStoreFactory;
-    // @deprecated (undocumented)
-    dependencyContainer?: IFluidDependencySynthesizer;
     provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
-    registryEntries: NamedFluidDataStoreRegistryEntries;
-    // @deprecated
-    requestHandlers?: RuntimeRequestHandler[];
-    runtimeOptions?: IContainerRuntimeOptions;
 }
 
 // @beta @legacy

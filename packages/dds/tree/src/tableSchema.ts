@@ -486,6 +486,7 @@ export namespace System_TableSchema {
 		type Scope = typeof schemaFactory.scope;
 
 		type CellValueType = TreeNodeFromImplicitAllowedTypes<TCellSchema>;
+		type CellInsertableType = InsertableTreeNodeFromImplicitAllowedTypes<TCellSchema>;
 		type ColumnValueType = TreeNodeFromImplicitAllowedTypes<TColumnSchema>;
 		type ColumnInsertableType = InsertableTreeNodeFromImplicitAllowedTypes<TColumnSchema>;
 		type RowValueType = TreeNodeFromImplicitAllowedTypes<TRowSchema>;
@@ -627,10 +628,10 @@ export namespace System_TableSchema {
 				return (row as RowValueInternalType).cells[columnId];
 			}
 
-			public insertColumns({
-				columns,
-				index,
-			}: TableSchema.InsertColumnsParameters<TColumnSchema>): ColumnValueType[] {
+			public insertColumns(
+				columns: readonly ColumnInsertableType[],
+				index?: number,
+			): ColumnValueType[] {
 				// #region Input validation
 
 				// Ensure specified index is valid
@@ -675,10 +676,7 @@ export namespace System_TableSchema {
 				return columns as unknown as ColumnValueType[];
 			}
 
-			public insertRows({
-				index,
-				rows,
-			}: TableSchema.InsertRowsParameters<TRowSchema>): RowValueType[] {
+			public insertRows(rows: readonly RowInsertableType[], index?: number): RowValueType[] {
 				// #region Input validation
 
 				// Ensure specified index is valid
@@ -721,12 +719,11 @@ export namespace System_TableSchema {
 				return rows as unknown as RowValueType[];
 			}
 
-			public setCell({
-				key,
-				cell,
-			}: TableSchema.SetCellParameters<TCellSchema, TColumnSchema, TRowSchema>): void {
-				const { column: columnOrId, row: rowOrId } = key;
-
+			public setCell(
+				rowOrId: string | number | RowValueType,
+				columnOrId: string | number | ColumnValueType,
+				cell: CellInsertableType,
+			): void {
 				const row = this.#getRow(rowOrId);
 				const column = this.#getColumn(columnOrId);
 
@@ -952,9 +949,9 @@ export namespace System_TableSchema {
 			}
 
 			public removeCell(
-				key: TableSchema.CellKey<TColumnSchema, TRowSchema>,
+				rowOrIdOrIndex: string | number | RowValueType,
+				columnOrIdOrIndex: string | number | ColumnValueType,
 			): CellValueType | undefined {
-				const { column: columnOrIdOrIndex, row: rowOrIdOrIndex } = key;
 				const row = this.#getRow(rowOrIdOrIndex) as RowValueInternalType;
 				const column = this.#getColumn(columnOrIdOrIndex);
 
@@ -1049,19 +1046,14 @@ export namespace System_TableSchema {
 				preconditionsOnRevert?: readonly TransactionConstraintAlpha[];
 			}): void {
 				const { applyEdits, preconditions, preconditionsOnRevert } = options;
-				const branch = TreeAlpha.branch(this);
+				const context = TreeAlpha.context(this);
 
 				// Ensure events are paused until all of the edits are applied.
 				// This ensures that the user sees the corresponding table-level edit as atomic,
 				// and ensures they are not spammed with intermediate events.
 				withBufferedTreeEvents(() => {
-					if (branch === undefined) {
-						// If this node does not have a corresponding branch, then it is unhydrated.
-						// I.e., it is not part of a collaborative session yet.
-						// Therefore, we don't need to run the edits as a transaction.
-						applyEdits();
-					} else {
-						branch.runTransaction(
+					if (context.isView()) {
+						context.runTransaction(
 							() => {
 								applyEdits();
 								if (preconditionsOnRevert !== undefined) {
@@ -1070,6 +1062,11 @@ export namespace System_TableSchema {
 							},
 							preconditions === undefined ? undefined : { preconditions },
 						);
+					} else {
+						// If this node does not have a corresponding view, then it is unhydrated.
+						// I.e., it is not part of a collaborative session yet.
+						// Therefore, we don't need to run the edits as a transaction.
+						applyEdits();
 					}
 				});
 			}
@@ -1094,7 +1091,7 @@ export namespace System_TableSchema {
 			#buildColumnInDocumentConstraintsForRows(
 				rows: Iterable<RowValueType>,
 			): TransactionConstraintAlpha[] | undefined {
-				if (!TreeAlpha.context(this).isBranch()) {
+				if (!TreeAlpha.context(this).isView()) {
 					return undefined;
 				}
 
@@ -1117,10 +1114,13 @@ export namespace System_TableSchema {
 				const columnCache = this.#getColumnCache();
 				const constraints: TransactionConstraintAlpha[] = [];
 				for (const id of referencedColumnIds) {
-					const column = columnCache.get(id) ?? fail("Column ID not found in cache");
+					const column = columnCache.get(id) ?? fail(0xd05 /* Column ID not found in cache */);
 					constraints.push({ type: "nodeInDocument", node: column });
 				}
-				assert(constraints.length > 0, "No constraints generated for column references.");
+				assert(
+					constraints.length > 0,
+					0xd06 /* No constraints generated for column references. */,
+				);
 				return constraints;
 			}
 
@@ -1513,7 +1513,7 @@ function removeRangeFromArray<TNodeSchema extends ImplicitAllowedTypes>(
  *
  * Also note: these APIs leverage `SharedTree` functionality that was added in version `2.80.0`,
  * which is not compatible with previous versions of this library.
- * To ensure safe collaboration, you will need to configure the {@link @fluidframework/runtime-definitions#MinimumVersionForCollab}
+ * To ensure safe collaboration, you will need to configure the {@link @fluidframework/runtime-definitions#OldestSupportedClientVersion}
  * for the Fluid Runtime and/or `SharedTree` to at least `2.80.0`.
  * To set this minimum version for `SharedTree`, use {@link configuredSharedTreeBeta}.
  *
@@ -1817,60 +1817,6 @@ export namespace TableSchema {
 	}
 
 	/**
-	 * {@link TableSchema.Table.insertColumns} parameters.
-	 * @input @beta
-	 */
-	export interface InsertColumnsParameters<TColumn extends ImplicitAllowedTypes> {
-		/**
-		 * The index at which to insert the new columns.
-		 * @remarks If not provided, the columns will be appended to the end of the table.
-		 */
-		readonly index?: number | undefined;
-
-		/**
-		 * The columns to insert.
-		 */
-		readonly columns: InsertableTreeNodeFromImplicitAllowedTypes<TColumn>[];
-	}
-
-	/**
-	 * {@link TableSchema.Table.insertRows} parameters.
-	 * @input @beta
-	 */
-	export interface InsertRowsParameters<TRow extends ImplicitAllowedTypes> {
-		/**
-		 * The index at which to insert the new rows.
-		 * @remarks If not provided, the rows will be appended to the end of the table.
-		 */
-		readonly index?: number | undefined;
-
-		/**
-		 * The rows to insert.
-		 */
-		readonly rows: InsertableTreeNodeFromImplicitAllowedTypes<TRow>[];
-	}
-
-	/**
-	 * {@link TableSchema.Table.setCell} parameters.
-	 * @input @beta
-	 */
-	export interface SetCellParameters<
-		TCell extends ImplicitAllowedTypes,
-		TColumn extends ImplicitAllowedTypes,
-		TRow extends ImplicitAllowedTypes,
-	> {
-		/**
-		 * The key to uniquely identify a cell in a table.
-		 */
-		readonly key: CellKey<TColumn, TRow>;
-
-		/**
-		 * The cell to set.
-		 */
-		readonly cell: InsertableTreeNodeFromImplicitAllowedTypes<TCell>;
-	}
-
-	/**
 	 * A table.
 	 *
 	 * @remarks Table schema is created via the {@link TableSchema.(table:1)} factory.
@@ -1941,35 +1887,43 @@ export namespace TableSchema {
 
 		/**
 		 * Inserts 0 or more columns into the table.
-		 *
-		 * @throws Throws an error if the specified index is out of range.
-		 *
-		 * No columns are inserted in this case.
+		 * @param columns - The columns to insert.
+		 * @param index - The index at which to insert the new columns. If omitted, the columns are appended to the end of the table.
+		 * @throws Throws an error if the specified index is out of range. No columns are inserted in this case.
 		 */
 		insertColumns(
-			params: InsertColumnsParameters<TColumn>,
+			columns: readonly InsertableTreeNodeFromImplicitAllowedTypes<TColumn>[],
+			index?: number,
 		): TreeNodeFromImplicitAllowedTypes<TColumn>[];
-
 		/**
 		 * Inserts 0 or more rows into the table.
-		 *
+		 * @param rows - The rows to insert.
+		 * @param index - The index at which to insert the new rows. If omitted, the rows are appended to the end of the table.
 		 * @throws
 		 * Throws an error in the following cases:
 		 *
-		 * - The row contains cells, but the table does not contain matching columns for one or more of those cells.
+		 * - One or more of the rows contains cells for columns that do not exist in the table.
 		 *
 		 * - The specified index is out of range.
 		 *
 		 * No rows are inserted in these cases.
 		 */
-		insertRows(params: InsertRowsParameters<TRow>): TreeNodeFromImplicitAllowedTypes<TRow>[];
-
+		insertRows(
+			rows: readonly InsertableTreeNodeFromImplicitAllowedTypes<TRow>[],
+			index?: number,
+		): TreeNodeFromImplicitAllowedTypes<TRow>[];
 		/**
 		 * Sets the cell at the specified location in the table.
-		 * @remarks To remove a cell, call {@link TableSchema.Table.removeCell} instead.
+		 * @param row - The {@link TableSchema.Row}, {@link TableSchema.Row.id}, or row index at which the cell is located.
+		 * @param column - The {@link TableSchema.Column}, {@link TableSchema.Column.id}, or column index at which the cell is located.
+		 * @param cell - The cell to set.
+		 * @remarks To remove a cell, call {@link TableSchema.Table.(removeCell:1)} instead.
 		 */
-		setCell(params: SetCellParameters<TCell, TColumn, TRow>): void;
-
+		setCell(
+			row: string | number | TreeNodeFromImplicitAllowedTypes<TRow>,
+			column: string | number | TreeNodeFromImplicitAllowedTypes<TColumn>,
+			cell: InsertableTreeNodeFromImplicitAllowedTypes<TCell>,
+		): void;
 		/**
 		 * Removes a range of columns from the table.
 		 *
@@ -2048,11 +2002,14 @@ export namespace TableSchema {
 
 		/**
 		 * Removes the cell at the specified location in the table.
+		 * @param row - The {@link TableSchema.Row}, {@link TableSchema.Row.id}, or row index at which the cell is located.
+		 * @param column - The {@link TableSchema.Column}, {@link TableSchema.Column.id}, or column index at which the cell is located.
 		 * @returns The cell if it exists, otherwise undefined.
 		 * @throws Throws an error if the location does not exist in the table.
 		 */
 		removeCell(
-			key: CellKey<TColumn, TRow>,
+			row: string | number | TreeNodeFromImplicitAllowedTypes<TRow>,
+			column: string | number | TreeNodeFromImplicitAllowedTypes<TColumn>,
 		): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
 	}
 

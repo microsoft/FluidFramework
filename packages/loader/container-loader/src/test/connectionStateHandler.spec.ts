@@ -313,6 +313,68 @@ describe("ConnectionStateHandler Tests", () => {
 		);
 	});
 
+	// Regression test for assert 0x3eb ("catchUpMonitor should be gone").
+	//
+	// Repro conditions (both are required to exercise the original bug):
+	//   1. The connection is already caught up at the moment of the Connected transition, so
+	//      CatchUpMonitor fires its listener *synchronously* (from `start()`).
+	//   2. Something re-enters with a synchronous Disconnected from within that "connected"
+	//      notification (e.g. an app/runtime handler reacting to the "connected" event by
+	//      disconnecting - such as a container forced into readonly mode).
+	//
+	// Before the fix, the CatchUpMonitor's synchronous caught-up check ran from its constructor,
+	// before `this.catchUpMonitor` was assigned, so the re-entrant Disconnected handler's
+	// `this.catchUpMonitor = undefined` no-oped and left a stale monitor attached - the next
+	// reconnect's transition to Connected then tripped assert 0x3eb. The fix assigns the field
+	// before calling `start()`, so the re-entrant disconnect disposes and clears the monitor
+	// correctly and the reconnect succeeds.
+	it("read client: re-entrant disconnect from a synchronous 'connected' notification reconnects cleanly (0x3eb regression)", () => {
+		// Condition 1: connection is already caught up at connect time (lastSequenceNumber === lastKnownSeqNumber),
+		// so CatchUpMonitor fires transitionToConnectedState synchronously from its constructor.
+		deltaManagerForCatchingUp.lastSequenceNumber =
+			deltaManagerForCatchingUp.lastKnownSeqNumber;
+
+		// Condition 2: simulate a host/runtime handler that synchronously disconnects in response to the
+		// "connected" notification. connectionStateChanged is invoked by transitionToConnectedState, which
+		// runs inside the CatchUpMonitor constructor for an already-caught-up connection.
+		let reentered = false;
+		handlerInputs.connectionStateChanged = (value): void => {
+			if (value === ConnectionState.Connected && !reentered) {
+				reentered = true;
+				connectionStateHandler.receivedDisconnectEvent({ text: "re-entrant disconnect" });
+			}
+		};
+
+		connectionStateHandler = createHandler(
+			true, // connectedRaisedWhenCaughtUp -> ConnectionStateCatchup wrapper (where 0x3eb lives)
+			false,
+		); // readClientsWaitForJoinSignal -> read connection goes straight to Connected
+
+		// Initial read connection: Connected is raised synchronously and the re-entrant disconnect fires.
+		// With the fix, the monitor field is already assigned, so the Disconnected handler disposes and
+		// clears it - no stale monitor is left behind.
+		connectionStateHandler.establishingConnection({ text: "read" });
+		connectionStateHandler.receivedConnectEvent(connectionDetails);
+		assert.strictEqual(
+			connectionStateHandler.connectionState,
+			ConnectionState.Disconnected,
+			"Re-entrant disconnect should have moved handler back to Disconnected",
+		);
+
+		// The reconnect (async in production) transitions to Connected again. Because the stale monitor
+		// was cleared, this no longer trips assert 0x3eb and the handler reaches Connected.
+		connectionStateHandler.establishingConnection({ text: "reconnect" });
+		assert.doesNotThrow(
+			() => connectionStateHandler.receivedConnectEvent(connectionDetails),
+			"Reconnect should not hit assert 0x3eb - the stale catchUpMonitor must have been cleared",
+		);
+		assert.strictEqual(
+			connectionStateHandler.connectionState,
+			ConnectionState.Connected,
+			"Reconnect should reach Connected cleanly",
+		);
+	});
+
 	it("Should move to connected after receiving join op for read client", async () => {
 		connectionStateHandler = createHandler(
 			false, // connectedRaisedWhenCaughtUp

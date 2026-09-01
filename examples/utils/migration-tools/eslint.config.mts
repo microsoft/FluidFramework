@@ -5,8 +5,25 @@
 
 import type { Linter } from "eslint";
 import { recommended } from "@fluidframework/eslint-config-fluid/flat.mts";
-import sharedConfig from "../../eslint.config.data.mts";
+import sharedConfig, { importInternalModulesAllowed } from "../../eslint.config.data.mts";
 
-const config: Linter.Config[] = [...recommended, ...sharedConfig];
+const config: Linter.Config[] = [
+	...recommended,
+	...sharedConfig,
+	{
+		rules: {
+			"import-x/no-internal-modules": [
+				"error",
+				{
+					allow: [
+						...importInternalModulesAllowed,
+						// This package is a candidate shipping tool, not only example code, so it can use Fluid's internal assertion utility.
+						"@fluidframework/core-utils/internal",
+					],
+				},
+			],
+		},
+	},
+];
 
 export default config;

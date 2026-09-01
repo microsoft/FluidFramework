@@ -49,7 +49,7 @@ describe("kafka-service", () => {
 			async function verifyRejection(promise: Promise<any>): Promise<any> {
 				await promise
 					.then(() => {
-						assert(false, "promise should have been rejected");
+						assert.fail("promise should have been rejected");
 					})
 					.catch((error) => {
 						return;

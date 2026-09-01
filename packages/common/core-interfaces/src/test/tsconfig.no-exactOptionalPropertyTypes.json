@@ -8,11 +8,7 @@
 		"exactOptionalPropertyTypes": false,
 		"noEmit": true,
 	},
-	"exclude": [
-		"./jsonSerializable.exactOptionalPropertyTypes.true.spec.ts",
-		// To be removed during next previous version update
-		"./types/validateCoreInterfacesPrevious.generated.ts",
-	],
+	"exclude": ["./jsonSerializable.exactOptionalPropertyTypes.true.spec.ts"],
 	"references": [
 		{
 			"path": "../..",
