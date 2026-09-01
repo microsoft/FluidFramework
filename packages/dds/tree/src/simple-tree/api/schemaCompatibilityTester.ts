@@ -41,6 +41,7 @@ export function getSchemaIncompatibilityDetails(
 			switch (value.mismatch) {
 				case "allowedTypes": {
 					return {
+						mismatch: value.mismatch,
 						location:
 							value.identifier === undefined
 								? "root"
@@ -49,11 +50,18 @@ export function getSchemaIncompatibilityDetails(
 										fieldKey: value.fieldKey ?? null,
 									},
 						view: value.view.map(({ type }) => type.identifier).sort(),
+						...(value.stagedView === undefined
+							? {}
+							: {
+									stagedView: value.stagedView.map(({ type }) => type.identifier).sort(),
+								}),
 						stored: [...value.stored].sort(),
+						...(value.viewIsStagedOptional === true ? { viewIsStagedOptional: true } : {}),
 					};
 				}
 				case "fieldKind": {
 					return {
+						mismatch: value.mismatch,
 						location:
 							value.identifier === undefined
 								? "root"
@@ -63,10 +71,12 @@ export function getSchemaIncompatibilityDetails(
 									},
 						view: value.view,
 						stored: value.stored,
+						...(value.viewIsStagedOptional === true ? { viewIsStagedOptional: true } : {}),
 					};
 				}
 				case "valueSchema": {
 					return {
+						mismatch: value.mismatch,
 						nodeType: value.identifier,
 						view: value.view === undefined ? null : ValueSchema[value.view],
 						stored: value.stored === undefined ? null : ValueSchema[value.stored],
@@ -80,6 +90,7 @@ export function getSchemaIncompatibilityDetails(
 								? "Map"
 								: "Leaf";
 					return {
+						mismatch: value.mismatch,
 						nodeType: value.identifier,
 						view: NodeKind[value.view],
 						stored: storedNodeKind,

@@ -78,6 +78,7 @@ describe("getSchemaIncompatibilityDetails", () => {
 			getSchemaIncompatibilityDetails(schema, toUpgradeSchema(factory.number)),
 			JSON.stringify([
 				{
+					mismatch: "allowedTypes",
 					location: "root",
 					view: [factory.string.identifier],
 					stored: [factory.number.identifier],
@@ -97,11 +98,13 @@ describe("getSchemaIncompatibilityDetails", () => {
 			),
 			JSON.stringify([
 				{
+					mismatch: "allowedTypes",
 					location: "root",
 					view: [factory.string.identifier],
 					stored: [factory.number.identifier],
 				},
 				{
+					mismatch: "fieldKind",
 					location: "root",
 					view: "Optional",
 					stored: "Value",
@@ -119,6 +122,7 @@ describe("getSchemaIncompatibilityDetails", () => {
 			getSchemaIncompatibilityDetails(schema, toUpgradeSchema(storedLeaf)),
 			JSON.stringify([
 				{
+					mismatch: "valueSchema",
 					nodeType: identifier,
 					view: "Number",
 					stored: "String",
@@ -135,9 +139,60 @@ describe("getSchemaIncompatibilityDetails", () => {
 			getSchemaIncompatibilityDetails(schema, toUpgradeSchema(StoredNode)),
 			JSON.stringify([
 				{
+					mismatch: "nodeKind",
 					nodeType: ViewNode.identifier,
 					view: "Object",
 					stored: "Map",
+				},
+			]),
+		);
+	});
+
+	it("formats staged allowed type context", () => {
+		class ViewNode extends factory.objectAlpha("stagedAllowedTypeDetails", {
+			foo: factory.types([factory.number, factory.staged(factory.string)]),
+		}) {}
+		class StoredNode extends factory.objectAlpha("stagedAllowedTypeDetails", {
+			foo: [factory.number, factory.null],
+		}) {}
+		const schema = new TreeViewConfigurationAlpha({ schema: ViewNode });
+
+		assert.equal(
+			getSchemaIncompatibilityDetails(schema, toUpgradeSchema(StoredNode)),
+			JSON.stringify([
+				{
+					mismatch: "allowedTypes",
+					location: {
+						nodeType: ViewNode.identifier,
+						fieldKey: "foo",
+					},
+					view: [],
+					stagedView: [factory.string.identifier],
+					stored: [factory.null.identifier],
+				},
+			]),
+		);
+	});
+
+	it("formats staged optional field context", () => {
+		class ViewNode extends factory.objectAlpha("stagedOptionalDetails", {
+			foo: factory.stagedOptional(factory.number),
+		}) {}
+		class StoredNode extends factory.objectAlpha("stagedOptionalDetails", {}) {}
+		const schema = new TreeViewConfigurationAlpha({ schema: ViewNode });
+
+		assert.equal(
+			getSchemaIncompatibilityDetails(schema, toUpgradeSchema(StoredNode)),
+			JSON.stringify([
+				{
+					mismatch: "fieldKind",
+					location: {
+						nodeType: ViewNode.identifier,
+						fieldKey: "foo",
+					},
+					view: "Optional",
+					stored: "Forbidden",
+					viewIsStagedOptional: true,
 				},
 			]),
 		);

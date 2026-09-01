@@ -955,7 +955,8 @@ export interface SchemaCompatibilityStatus {
 	 * formatted as a JSON-serialized array.
 	 *
 	 * @remarks
-	 * This property is present when the view schema has discrepancies with the stored schema.
+	 * This property is undefined when {@link SchemaCompatibilityStatus.canView} is true and present
+	 * when `canView` is false.
 	 * It can include application-defined schema identifiers and field keys.
 	 */
 	readonly discrepancies?: string;

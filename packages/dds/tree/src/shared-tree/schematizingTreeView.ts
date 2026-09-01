@@ -484,10 +484,9 @@ export class SchematizingSimpleTreeView<
 			this.stagedUpgradePolicy,
 		);
 		this.currentEnabledUpgrades = enabledUpgrades;
-		const schemaIncompatibilityDetails = getSchemaIncompatibilityDetails(
-			this.viewSchema,
-			this.checkout.storedSchema,
-		);
+		const schemaIncompatibilityDetails = compatibility.canView
+			? undefined
+			: getSchemaIncompatibilityDetails(this.viewSchema, this.checkout.storedSchema);
 		return {
 			...compatibility,
 			canInitialize: canInitialize(this.checkout),

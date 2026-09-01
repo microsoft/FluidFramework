@@ -597,6 +597,7 @@ describe("SchematizingSimpleTreeView", () => {
 			view.compatibility.discrepancies,
 			JSON.stringify([
 				{
+					mismatch: "allowedTypes",
 					location: "root",
 					view: ["com.fluidframework.leaf.string"],
 					stored: [],
@@ -615,6 +616,7 @@ describe("SchematizingSimpleTreeView", () => {
 					tag: TelemetryDataTag.SchemaArtifact,
 					value: JSON.stringify([
 						{
+							mismatch: "allowedTypes",
 							location: "root",
 							view: ["com.fluidframework.leaf.string"],
 							stored: [],
@@ -649,6 +651,7 @@ describe("SchematizingSimpleTreeView", () => {
 			view.compatibility.discrepancies,
 			JSON.stringify([
 				{
+					mismatch: "allowedTypes",
 					location: "root",
 					view: [],
 					stored: ["com.fluidframework.leaf.string"],
@@ -667,6 +670,7 @@ describe("SchematizingSimpleTreeView", () => {
 					tag: TelemetryDataTag.SchemaArtifact,
 					value: JSON.stringify([
 						{
+							mismatch: "allowedTypes",
 							location: "root",
 							view: [],
 							stored: ["com.fluidframework.leaf.string"],
@@ -704,6 +708,7 @@ describe("SchematizingSimpleTreeView", () => {
 				tag: TelemetryDataTag.SchemaArtifact,
 				value: JSON.stringify([
 					{
+						mismatch: "allowedTypes",
 						location: "root",
 						view: ["com.fluidframework.leaf.boolean"],
 						stored: ["com.fluidframework.leaf.string"],
