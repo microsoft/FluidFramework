@@ -21,7 +21,8 @@
  *   3. Writes `compat-workspaces/generated-versions.cjs` with the resolved exact versions.
  *   4. Creates or updates per-version `package.json` files in `compat-workspaces/full/`.
  *   5. Removes version directories that are no longer needed.
- *   6. Runs `pnpm install --no-frozen-lockfile` in the workspace to regenerate the lockfile.
+ *   6. Runs `pnpm install --no-frozen-lockfile` against npmjs in the workspace to regenerate the lockfile.
+ *      The generated lockfile is validated to reject registry metadata from internal mirrors.
  *   7. Regenerates the checkpoints table in `CompatibilityCheckpoints.md` from
  *      the single source of truth in `src/checkpoints.ts`.
  *
@@ -35,7 +36,7 @@
  *   The auto-generated table block in CompatibilityCheckpoints.md
  */
 
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import {
 	existsSync,
 	mkdirSync,
@@ -70,6 +71,7 @@ import {
 	getInWindowPriorCheckpoints,
 	injectCheckpointsTable,
 } from "../src/checkpoints.js";
+import { assertNoInternalRegistryReferences } from "../src/compatLockfile.js";
 
 // ---------------------------------------------------------------------------
 // Configuration
@@ -80,6 +82,8 @@ const pkgRoot = path.resolve(scriptDir, "..");
 const gitRoot = findGitRootSync(pkgRoot);
 const compatWorkspacesDir = path.join(pkgRoot, "compat-workspaces");
 const generatedVersionsCjsPath = path.join(compatWorkspacesDir, "generated-versions.cjs");
+const publicNpmRegistry = "https://registry.npmjs.org/";
+const pnpmCommand = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 
 // ---------------------------------------------------------------------------
 // Version resolution
@@ -188,12 +192,23 @@ function removeStaleVersionDirs(workspaceDir: string, keepVersions: Set<string>)
 }
 
 function pnpmInstallWorkspace(workspaceDir: string): void {
-	console.log(`\nRunning pnpm install in ${path.relative(pkgRoot, workspaceDir)} ...`);
-	execSync(`pnpm install --no-frozen-lockfile`, {
-		cwd: workspaceDir,
-		env: { ...process.env, NODE_OPTIONS: "" },
-		stdio: "inherit",
-	});
+	console.log(
+		`\nRunning pnpm install against ${publicNpmRegistry} in ${path.relative(pkgRoot, workspaceDir)} ...`,
+	);
+	execFileSync(
+		pnpmCommand,
+		["install", "--no-frozen-lockfile", `--config.registry=${publicNpmRegistry}`],
+		{
+			cwd: workspaceDir,
+			env: { ...process.env, NODE_OPTIONS: "" },
+			// Windows cannot launch pnpm.cmd through execFileSync without a shell.
+			shell: process.platform === "win32",
+			stdio: "inherit",
+		},
+	);
+
+	const lockfilePath = path.join(workspaceDir, "pnpm-lock.yaml");
+	assertNoInternalRegistryReferences(readFileSync(lockfilePath, "utf8"), lockfilePath);
 }
 
 // ---------------------------------------------------------------------------

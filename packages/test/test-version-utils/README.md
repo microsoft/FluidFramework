@@ -164,10 +164,15 @@ The script (`scripts/updateCompatVersions.ts`) does the following:
 3. Writes `compat-workspaces/generated-versions.cjs` with the resolved exact versions.
 4. Creates or updates per-version `package.json` files in `compat-workspaces/full/`.
 5. Removes version directories that are no longer needed.
-6. Runs `pnpm install --no-frozen-lockfile` in the workspace to regenerate the committed lockfile.
+6. Runs `pnpm install --no-frozen-lockfile` against `registry.npmjs.org` in the workspace to regenerate the committed
+   lockfile, then rejects any Microsoft-internal registry references in the generated file.
 
 Commit all files produced by the script: `generated-versions.cjs`, per-version `package.json` files, and
 `compat-workspaces/full/pnpm-lock.yaml`.
+
+The compatibility lockfile is an open-source artifact and must work for contributors who install directly from npmjs.
+The update script therefore ignores a developer's normal registry mirror for this one generation step. Internal mirrors
+remain supported for all other repository work.
 
 ### Adding pinned versions for specific tests
 
