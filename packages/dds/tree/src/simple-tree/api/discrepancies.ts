@@ -361,6 +361,10 @@ export function findExtraAllowedTypes(
 		viewAllowedTypes.map((value) => value.type.identifier),
 	);
 
+	// TODO:
+	// Add detecting which SchemaUpgrades have been made.
+	// When doing so, each will fall into one of three states: staged, partially applied, or fully applied.
+	// This would allow for nicer compatibility errors and more detailed compatibility status in the future.
 	const view = viewAllowedTypes.filter(
 		(value) =>
 			!storedAllowedTypes.has(brand(value.type.identifier)) &&
