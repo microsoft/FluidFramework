@@ -100,6 +100,18 @@ export interface HostStoragePolicy {
 	snapshotOptions?: ISnapshotOptions;
 
 	/**
+	 * Immutable host-owned attribution metadata applied to every outbound ODSP HTTP request.
+	 *
+	 * Driver-owned request headers take precedence on case-insensitive name collisions. This
+	 * prevents hosts from overriding authentication, content type, epoch, correlation, and
+	 * protocol headers. The driver copies these values when it constructs the factory.
+	 *
+	 * Custom WebSocket headers, including `User-Agent`, depend on Node.js transport support and
+	 * might not be sent by browsers.
+	 */
+	requestHeaders?: Readonly<Record<string, string>>;
+
+	/**
 	 * If set to true, tells driver to concurrently fetch snapshot from storage (SPO) and cache
 	 * Container loads from whatever comes first in such case.
 	 * Snapshot fetched from storage is pushed to cache in either case.

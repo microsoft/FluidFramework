@@ -25,7 +25,12 @@ import { EpochTracker } from "../epochTracker.js";
 import { LocalPersistentCache } from "../odspCache.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
 
-import { mockFetchOk, mockFetchSingle, createResponse } from "./mockFetch.js";
+import {
+	mockFetchMultiple,
+	mockFetchOk,
+	mockFetchSingle,
+	createResponse,
+} from "./mockFetch.js";
 
 const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 
@@ -253,6 +258,81 @@ describe("Tests for Epoch Tracker", () => {
 		assert(
 			response.propsToLog.XRequestStatsHeader !== undefined,
 			"CorrelationId should be present",
+		);
+	});
+
+	it("applies host request headers to every fetch style with driver headers taking precedence", async () => {
+		epochTracker = new EpochTracker(
+			localCache,
+			{
+				docId: hashedDocumentId,
+				resolvedUrl,
+			},
+			createChildLogger(),
+			undefined,
+			{
+				"X-Agent-Id": "agent",
+				"content-type": "host-content-type",
+				"X-Fluid-Epoch": "host-epoch",
+				"X-RequestStats": "host-correlation",
+			},
+		);
+		epochTracker.setEpoch("driver-epoch", false, "test");
+
+		const validateHeaders = async (headers?: Record<string, string>): Promise<object> => {
+			assert.strictEqual(headers?.["x-agent-id"], "agent");
+			assert.strictEqual(headers?.["content-type"], "driver-content-type");
+			assert.strictEqual(headers?.["x-fluid-epoch"], "driver-epoch");
+			assert.notStrictEqual(headers?.["x-requeststats"], "host-correlation");
+			return createResponse({ "x-fluid-epoch": "driver-epoch" }, {}, 200);
+		};
+
+		await mockFetchMultiple(async () => {
+			await epochTracker.fetch(
+				"fetchUrl",
+				{
+					headers: { "Content-Type": "driver-content-type" },
+				},
+				"test",
+			);
+			await epochTracker.fetchAndParseAsJSON(
+				"fetchUrl",
+				{ headers: { "Content-Type": "driver-content-type" } },
+				"test",
+			);
+			await epochTracker.fetchArray(
+				"fetchUrl",
+				{
+					headers: { "Content-Type": "driver-content-type" },
+				} as unknown as { [index: string]: RequestInit },
+				"test",
+			);
+		}, [validateHeaders, validateHeaders, validateHeaders]);
+	});
+
+	it("keeps host headers outside UMP multipart bodies", async () => {
+		epochTracker = new EpochTracker(
+			localCache,
+			{ docId: hashedDocumentId, resolvedUrl },
+			createChildLogger(),
+			undefined,
+			{ "X-Agent-Id": "agent" },
+		);
+		const fetchOptions = {
+			body: "--boundary\r\nContent\r\n--boundary--",
+			headers: { "Content-Type": "multipart/form-data;boundary=boundary" },
+		};
+
+		await mockFetchSingle(
+			async () => epochTracker.fetch("fetchUrl", fetchOptions, "test", true),
+			async (headers) => {
+				assert.strictEqual(headers?.["x-agent-id"], "agent");
+				assert(
+					!fetchOptions.body.includes("X-Agent-Id"),
+					"host header must not be added to the UMP body",
+				);
+				return createResponse({}, {}, 200);
+			},
 		);
 	});
 

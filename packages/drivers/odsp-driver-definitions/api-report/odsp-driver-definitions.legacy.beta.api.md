@@ -25,6 +25,7 @@ export interface HostStoragePolicy {
     // (undocumented)
     opsBatchSize?: number;
     opsCaching?: IOpsCachingPolicy;
+    requestHeaders?: Readonly<Record<string, string>>;
     sessionOptions?: ICollabSessionOptions;
     // (undocumented)
     snapshotOptions?: ISnapshotOptions;

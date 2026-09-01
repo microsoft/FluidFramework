@@ -668,6 +668,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				removeEntries,
 				loadingGroupIds,
 				this.hostPolicy.enableRedeemFallback,
+				this.hostPolicy.requestHeaders,
 			);
 			return odspSnapshot;
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -709,6 +710,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					removeEntries,
 					loadingGroupIds,
 					this.hostPolicy.enableRedeemFallback,
+					this.hostPolicy.requestHeaders,
 				);
 				return odspSnapshot;
 			}

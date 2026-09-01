@@ -55,6 +55,7 @@ import {
 	toInstrumentedOdspStorageTokenFetcher,
 	toInstrumentedOdspTokenFetcher,
 } from "./odspUtils.js";
+import { copyRequestHeaders } from "./requestHeaders.js";
 
 /**
  * An ODSP document service factory that supports point-in-time (sequence-number-based) loading.
@@ -104,6 +105,8 @@ export interface IOdspPointInTimeDocumentServiceImplementationProps {
 	readonly persistedCache: IPersistedCache;
 	/** Fetches storage access tokens for ODSP requests. */
 	readonly getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>;
+	/** Host-owned attribution metadata for ODSP requests. */
+	readonly requestHeaders?: Readonly<Record<string, string>>;
 	/**
 	 * Creates an ODSP document service for a resolved URL.
 	 *
@@ -141,6 +144,8 @@ export class OdspDocumentServiceFactoryCore
 {
 	private readonly nonPersistentCache: INonPersistentCache = new NonPersistentCache();
 	private readonly socketReferenceKeyPrefix?: string;
+	private readonly hostPolicy: HostStoragePolicy;
+	public readonly requestHeaders?: Readonly<Record<string, string>>;
 
 	public get snapshotPrefetchResultCache(): PromiseCache<string, IPrefetchSnapshotContents> {
 		return this.nonPersistentCache.snapshotPrefetchResultCache;
@@ -231,6 +236,7 @@ export class OdspDocumentServiceFactoryCore
 			fileEntry,
 			odspLogger,
 			clientIsSummarizer,
+			this.requestHeaders,
 		);
 
 		return PerformanceEvent.timedExecAsync(
@@ -307,8 +313,13 @@ export class OdspDocumentServiceFactoryCore
 			| TokenFetcher<OdspResourceTokenFetchOptions>
 			| undefined,
 		protected persistedCache: IPersistedCache = new LocalPersistentCache(),
-		private readonly hostPolicy: HostStoragePolicy = {},
+		hostPolicy: HostStoragePolicy = {},
 	) {
+		this.requestHeaders = copyRequestHeaders(hostPolicy.requestHeaders);
+		this.hostPolicy =
+			this.requestHeaders === undefined
+				? hostPolicy
+				: { ...hostPolicy, requestHeaders: this.requestHeaders };
 		if (this.hostPolicy.isolateSocketCache === true) {
 			// create the key to separate the socket reuse cache
 			this.socketReferenceKeyPrefix = uuid();
@@ -396,6 +407,7 @@ export class OdspDocumentServiceFactoryCore
 				},
 				extLogger,
 				clientIsSummarizer,
+				this.requestHeaders,
 			);
 
 		const storageTokenFetcher = toInstrumentedOdspStorageTokenFetcher(

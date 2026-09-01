@@ -148,6 +148,57 @@ describe("OdspDocumentDeltaConnection tests", () => {
 			disconnectedEvent = true;
 		});
 
+		it("passes extraHeaders and isolates sockets across header sets", async () => {
+			const sockets = [new ClientSocketMock(), new ClientSocketMock()];
+			const socketCreationStub = stub(SocketIOClientStatic, mockify.key);
+			socketCreationStub.onFirstCall().returns(sockets[0] as unknown as Socket);
+			socketCreationStub.onSecondCall().returns(sockets[1] as unknown as Socket);
+
+			try {
+				const first = await OdspDocumentDeltaConnection.create(
+					tenantId,
+					documentId,
+					token,
+					client,
+					webSocketUrl,
+					logger,
+					60000,
+					epochTracker,
+					undefined,
+					undefined,
+					{ "X-Agent-Id": "agent-one" },
+				);
+				const second = await OdspDocumentDeltaConnection.create(
+					tenantId,
+					documentId,
+					token,
+					client,
+					webSocketUrl,
+					logger,
+					60000,
+					epochTracker,
+					undefined,
+					undefined,
+					{ "X-Agent-Id": "agent-two" },
+				);
+
+				assert.strictEqual(socketCreationStub.callCount, 2);
+				assert.deepStrictEqual(socketCreationStub.firstCall.args[1]?.extraHeaders, {
+					"X-Agent-Id": "agent-one",
+				});
+				assert.deepStrictEqual(socketCreationStub.secondCall.args[1]?.extraHeaders, {
+					"X-Agent-Id": "agent-two",
+				});
+				first.dispose();
+				second.dispose();
+			} finally {
+				socketCreationStub.restore();
+				for (const createdSocket of sockets) {
+					createdSocket.close();
+				}
+			}
+		});
+
 		connection.dispose();
 		assert(connection.disposed, "connection should be disposed now");
 		assert(disconnectedEvent, "disconnect Event should happed");
