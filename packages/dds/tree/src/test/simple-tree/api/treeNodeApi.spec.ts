@@ -92,6 +92,7 @@ import {
 import {
 	checkoutWithContent,
 	chunkFromJsonableTrees,
+	createTestUndoRedoStacks,
 	fieldCursorFromInsertable,
 	getView,
 	testIdCompressor,
@@ -454,6 +455,72 @@ describe("treeNodeApi", () => {
 			});
 		},
 	);
+
+	describe("parent observation", () => {
+		class ObservedItem extends schema.object("ObservedItem", {
+			value: schema.number,
+		}) {}
+		class ObservedContainer extends schema.object("ObservedContainer", {
+			items: schema.array(ObservedItem),
+		}) {}
+
+		it("tracks an unhydrated root location", () => {
+			const view = getView(new TreeViewConfiguration({ schema: ObservedContainer }));
+			view.initialize({ items: [] });
+			const item = new ObservedItem({ value: 1 });
+			let invalidations = 0;
+
+			const observation = TreeAlpha.trackObservationsOnce(
+				() => invalidations++,
+				() => TreeAlpha.parent2(item),
+			);
+
+			assert.equal(invalidations, 0);
+			assert.equal(observation.result, TreeAlpha.parent2(item));
+			view.root.items.insertAtEnd(item);
+			assert.equal(invalidations, 1);
+		});
+
+		it("tracks and unsubscribes from a document root location", () => {
+			const view = getView(new TreeViewConfiguration({ schema: ObservedItem }));
+			view.initialize({ value: 1 });
+			const root = view.root;
+			const invalidations: string[] = [];
+
+			const unsubscribed = TreeAlpha.trackObservationsOnce(
+				() => invalidations.push("unsubscribed"),
+				() => TreeAlpha.parent2(root),
+			);
+			TreeAlpha.trackObservationsOnce(
+				() => invalidations.push("active"),
+				() => TreeAlpha.parent2(root),
+			);
+
+			unsubscribed.unsubscribe();
+			view.root = new ObservedItem({ value: 2 });
+			assert.deepEqual(invalidations, ["active"]);
+		});
+
+		it("tracks a removed root location", () => {
+			const view = getView(new TreeViewConfiguration({ schema: ObservedContainer }));
+			view.initialize({ items: [{ value: 1 }] });
+			const undoRedoStacks = createTestUndoRedoStacks(view.events);
+			const item = view.root.items[0];
+			view.root.items.removeAt(0);
+			let invalidations = 0;
+
+			const observation = TreeAlpha.trackObservationsOnce(
+				() => invalidations++,
+				() => TreeAlpha.parent2(item),
+			);
+
+			assert.equal(invalidations, 0);
+			assert.equal(observation.result, TreeAlpha.parent2(item));
+			undoRedoStacks.undoStack.pop()?.revert();
+			assert.equal(invalidations, 1);
+			undoRedoStacks.unsubscribe();
+		});
+	});
 
 	describe("is", () => {
 		it("is", () => {

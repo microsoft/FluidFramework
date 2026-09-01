@@ -515,7 +515,7 @@ export interface TreeAlpha {
 	/**
 	 * {@link (TreeAlpha:interface).trackObservations} except automatically unsubscribes when the first invalidation occurs.
 	 * @remarks
-	 * This also supports tracking parentage, unlike {@link (TreeAlpha:interface).trackObservations}, as long as the parent is not undefined.
+	 * This also supports tracking parentage, unlike {@link (TreeAlpha:interface).trackObservations}.
 	 *
 	 * @example Simple cached value invalidation
 	 * ```typescript
@@ -722,6 +722,7 @@ class NodeSubscription {
 		onlyOnce = false,
 	): { observer: Observer; unsubscribe: () => void } {
 		const subscriptions = new Map<FlexTreeNode, NodeSubscription>();
+		const parentObjectSubscriptions = new Map<ParentObjectBase, () => void>();
 		const observer: Observer = {
 			observeNodeDeep(flexNode: FlexTreeNode): void {
 				if (flexNode.value !== undefined) {
@@ -778,28 +779,27 @@ class NodeSubscription {
 				}
 			},
 			observeParentOf(node: FlexTreeNode): void {
-				// Supporting parent tracking is more difficult that it might seem at first.
-				// There are two main complicating factors:
-				// 1. The parent may be undefined (the node is a root).
-				// 2. If tracking this by subscribing to the parent's changes, then which events are subscribed to needs to be updated after the parent changes.
-				//
-				// If not supporting the first case (undefined parents), the second case gets problematic: edits which un-parent a node could error due to being unable to update the event subscription.
-				// For now this is mitigated by only supporting one of tracking (non-undefined) parents or maintaining event subscriptions across edits.
-
 				if (!onlyOnce) {
 					// TODO: better APIS should be provided which make handling this case practical.
 					throw new UsageError("Observation tracking for parents is currently not supported.");
 				}
 
 				const parent = withObservation(undefined, () => node.parentField.parent);
+				if (parent.parent !== undefined) {
+					observer.observeNodeField(parent.parent, parent.key);
+					return;
+				}
 
-				if (parent.parent === undefined) {
-					// TODO: better APIS should be provided which make handling this case practical.
-					throw new UsageError(
-						"Observation tracking for parents is currently not supported when parent is undefined.",
+				const treeNode = getOrCreateNodeFromInnerNode(node);
+				assert(treeNode instanceof TreeNode, "Expected a tree node");
+				const parentObject = withObservation(undefined, () => resolveTreeNodeParent(treeNode));
+				assert(parentObject instanceof ParentObjectBase, "Expected a parent object");
+				if (!parentObjectSubscriptions.has(parentObject)) {
+					parentObjectSubscriptions.set(
+						parentObject,
+						parentObject.subscribe("nodeChanged", invalidate),
 					);
 				}
-				observer.observeNodeField(parent.parent, parent.key);
 			},
 		};
 
@@ -814,6 +814,9 @@ class NodeSubscription {
 				subscribed = false;
 				for (const subscription of subscriptions.values()) {
 					subscription.unsubscribe();
+				}
+				for (const unsubscribeParentObject of parentObjectSubscriptions.values()) {
+					unsubscribeParentObject();
 				}
 			},
 		};
@@ -920,6 +923,31 @@ function treeAlphaChildren(
 		}
 	}
 	return result;
+}
+
+function resolveTreeNodeParent(node: TreeNode): TreeNodeParent {
+	const parent = treeNodeApi.parent(node);
+	if (parent !== undefined) {
+		return parent;
+	}
+
+	const kernel = getKernel(node);
+	if (!kernel.isHydrated()) {
+		const innerNode = getInnerNode(node);
+		assert(innerNode instanceof UnhydratedFlexTreeNode, "Expected an unhydrated inner node");
+		return UnhydratedParent.getOrCreate(innerNode);
+	}
+
+	const anchorNode = kernel.anchorNode;
+	const parentField = anchorNode.parentField;
+	if (parentField === rootFieldKey) {
+		const branch = anchorNode.anchorSet.slots.get(ViewSlot);
+		assert(branch !== undefined, "Expected a tree context");
+		assert(branch.isView(), "Expected a tree view for a document root");
+		return DocumentRootParent.getOrCreate(branch);
+	}
+
+	return RemovedRootParent.getOrCreate(keyAsDetachedField(parentField), node);
 }
 
 /**
@@ -1206,39 +1234,7 @@ export const TreeAlpha: TreeAlpha = {
 	},
 
 	parent2(node: TreeNode): TreeNodeParent {
-		const parent = treeNodeApi.parent(node);
-		if (parent !== undefined) {
-			return parent;
-		}
-
-		// Node has no parent - determine the type of non-TreeNode parent
-		const kernel = getKernel(node);
-
-		if (!kernel.isHydrated()) {
-			// Unhydrated node - return an UnhydratedParent
-			const innerNode = getInnerNode(node);
-			assert(
-				innerNode instanceof UnhydratedFlexTreeNode,
-				"Expected unhydrated inner node when kernel is not hydrated",
-			);
-			return UnhydratedParent.getOrCreate(innerNode);
-		}
-
-		// Hydrated node with no parent - check if it's at root or detached
-		const anchorNode = kernel.anchorNode;
-		const parentField = anchorNode.parentField;
-
-		if (parentField === rootFieldKey) {
-			// Node is at the document root
-			const branch = anchorNode.anchorSet.slots.get(ViewSlot);
-			assert(branch !== undefined, "Expected TreeBranch to be present in ViewSlot");
-			assert(branch.isView(), "Expected a tree view for a document root");
-			return DocumentRootParent.getOrCreate(branch);
-		} else {
-			// Node is detached (removed from tree but not deleted)
-			const detachedField = keyAsDetachedField(parentField);
-			return RemovedRootParent.getOrCreate(detachedField, node);
-		}
+		return resolveTreeNodeParent(node);
 	},
 
 	on<K extends keyof TreeChangeEventsBeta>(
