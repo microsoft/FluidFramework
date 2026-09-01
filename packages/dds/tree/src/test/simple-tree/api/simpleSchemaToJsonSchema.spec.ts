@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { ValueSchema } from "../../../core/index.js";
-import { TreeAlpha } from "../../../shared-tree/index.js";
+import { TreeAlpha, TreeBeta } from "../../../shared-tree/index.js";
 import {
 	convertObjectNodeSchema,
 	toJsonSchema,
@@ -22,7 +22,6 @@ import {
 	numberSchema,
 	SchemaFactoryAlpha,
 	stringSchema,
-	TreeBeta,
 	type JsonObjectNodeSchema,
 	type JsonTreeSchema,
 	type UnsafeUnknownSchema,
