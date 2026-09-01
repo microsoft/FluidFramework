@@ -106,6 +106,7 @@ export {
 	type TreeNodeFromImplicitAllowedTypes,
 	type TreeNodeSchemaClass,
 	type SchemaCompatibilityStatus,
+	type SchemaDiscrepancy,
 	type FieldProps,
 	type FieldPropsAlpha,
 	normalizeFieldSchema,

@@ -593,17 +593,14 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(view.compatibility.canView, false);
 		assert.equal(view.compatibility.canUpgrade, true);
 		assert.equal(view.compatibility.isEquivalent, false);
-		assert.equal(
-			view.discrepancies,
-			JSON.stringify([
-				{
-					mismatch: "allowedTypes",
-					location: "root",
-					view: ["com.fluidframework.leaf.string"],
-					stored: [],
-				},
-			]),
-		);
+		assert.deepEqual(view.discrepancies, [
+			{
+				mismatch: "allowedTypes",
+				location: "root",
+				view: ["com.fluidframework.leaf.string"],
+				stored: [],
+			},
+		]);
 		assert.throws(
 			() => view.root,
 			(error) => {
@@ -647,17 +644,14 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(view.compatibility.canView, false);
 		assert.equal(view.compatibility.canUpgrade, false);
 		assert.equal(view.compatibility.isEquivalent, false);
-		assert.equal(
-			view.discrepancies,
-			JSON.stringify([
-				{
-					mismatch: "allowedTypes",
-					location: "root",
-					view: [],
-					stored: ["com.fluidframework.leaf.string"],
-				},
-			]),
-		);
+		assert.deepEqual(view.discrepancies, [
+			{
+				mismatch: "allowedTypes",
+				location: "root",
+				view: [],
+				stored: ["com.fluidframework.leaf.string"],
+			},
+		]);
 		assert.throws(
 			() => view.root,
 			(error) => {

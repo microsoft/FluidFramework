@@ -62,6 +62,7 @@ import {
 	type UntypedTreeViewAlpha,
 	type TreeSchema,
 	type SchemaUpgrade,
+	type SchemaDiscrepancy,
 	type StagedUpgradeStatus,
 	getSchemaIncompatibilityDetails,
 } from "../simple-tree/index.js";
@@ -84,7 +85,7 @@ export const ViewSlot = anchorSlot<TreeContextAlpha>();
 
 function throwIfSchemaIsIncompatible(
 	compatibility: SchemaCompatibilityStatus,
-	discrepancies: string | undefined,
+	discrepancies: readonly SchemaDiscrepancy[] | undefined,
 ): void {
 	if (compatibility.canView) {
 		return;
@@ -98,7 +99,8 @@ function throwIfSchemaIsIncompatible(
 	throw new UsageError(
 		`TreeView.root is unavailable because the view schema is incompatible with the stored schema. ${resolution}`,
 		tagSchemaArtifacts({
-			schemaIncompatibilityDetails: discrepancies,
+			schemaIncompatibilityDetails:
+				discrepancies === undefined ? undefined : JSON.stringify(discrepancies),
 		}),
 	);
 }
@@ -122,7 +124,7 @@ export class SchematizingSimpleTreeView<
 	 * Undefined if and only if uninitialized or disposed.
 	 */
 	private currentCompatibility: SchemaCompatibilityStatus | undefined;
-	private currentDiscrepancies: string | undefined;
+	private currentDiscrepancies: readonly SchemaDiscrepancy[] | undefined;
 	/**
 	 * Cached map of upgrade statuses, computed alongside compatibility.
 	 * @remarks Undefined if and only if uninitialized or disposed.
@@ -536,7 +538,7 @@ export class SchematizingSimpleTreeView<
 		return this.currentCompatibility;
 	}
 
-	public get discrepancies(): string | undefined {
+	public get discrepancies(): readonly SchemaDiscrepancy[] | undefined {
 		if (!this.currentCompatibility) {
 			this.failDisposed();
 		}

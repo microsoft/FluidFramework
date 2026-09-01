@@ -126,6 +126,7 @@ export {
 	PopUnion, 
 	RecordNodeInsertableData, 
 	RunTransactionParamsBeta, 
+	SchemaDiscrepancy,
 	SchemaFactoryBeta, 
 	SchemaStaticsBeta, 
 	SchemaUpgrade, 

@@ -74,16 +74,16 @@ describe("getSchemaIncompatibilityDetails", () => {
 
 	it("formats an allowed types discrepancy", () => {
 		const schema = new TreeViewConfigurationAlpha({ schema: factory.string });
-		assert.equal(
+		assert.deepEqual(
 			getSchemaIncompatibilityDetails(schema, toUpgradeSchema(factory.number)),
-			JSON.stringify([
+			[
 				{
 					mismatch: "allowedTypes",
 					location: "root",
 					view: [factory.string.identifier],
 					stored: [factory.number.identifier],
 				},
-			]),
+			],
 		);
 	});
 
@@ -91,12 +91,12 @@ describe("getSchemaIncompatibilityDetails", () => {
 		const schema = new TreeViewConfigurationAlpha({
 			schema: factory.optional(factory.string),
 		});
-		assert.equal(
+		assert.deepEqual(
 			getSchemaIncompatibilityDetails(
 				schema,
 				toUpgradeSchema(factory.required(factory.number)),
 			),
-			JSON.stringify([
+			[
 				{
 					mismatch: "allowedTypes",
 					location: "root",
@@ -109,7 +109,7 @@ describe("getSchemaIncompatibilityDetails", () => {
 					view: "Optional",
 					stored: "Value",
 				},
-			]),
+			],
 		);
 	});
 
@@ -118,34 +118,28 @@ describe("getSchemaIncompatibilityDetails", () => {
 		const viewLeaf = new LeafNodeSchema(identifier, ValueSchema.Number);
 		const storedLeaf = new LeafNodeSchema(identifier, ValueSchema.String);
 		const schema = new TreeViewConfigurationAlpha({ schema: viewLeaf });
-		assert.equal(
-			getSchemaIncompatibilityDetails(schema, toUpgradeSchema(storedLeaf)),
-			JSON.stringify([
-				{
-					mismatch: "valueSchema",
-					nodeType: identifier,
-					view: "Number",
-					stored: "String",
-				},
-			]),
-		);
+		assert.deepEqual(getSchemaIncompatibilityDetails(schema, toUpgradeSchema(storedLeaf)), [
+			{
+				mismatch: "valueSchema",
+				nodeType: identifier,
+				view: "Number",
+				stored: "String",
+			},
+		]);
 	});
 
 	it("formats a node kind discrepancy", () => {
 		class ViewNode extends factory.object("nodeKind", {}) {}
 		class StoredNode extends factory.map("nodeKind", []) {}
 		const schema = new TreeViewConfigurationAlpha({ schema: ViewNode });
-		assert.equal(
-			getSchemaIncompatibilityDetails(schema, toUpgradeSchema(StoredNode)),
-			JSON.stringify([
-				{
-					mismatch: "nodeKind",
-					nodeType: ViewNode.identifier,
-					view: "Object",
-					stored: "Map",
-				},
-			]),
-		);
+		assert.deepEqual(getSchemaIncompatibilityDetails(schema, toUpgradeSchema(StoredNode)), [
+			{
+				mismatch: "nodeKind",
+				nodeType: ViewNode.identifier,
+				view: "Object",
+				stored: "Map",
+			},
+		]);
 	});
 
 	it("formats staged allowed type context", () => {
@@ -157,21 +151,18 @@ describe("getSchemaIncompatibilityDetails", () => {
 		}) {}
 		const schema = new TreeViewConfigurationAlpha({ schema: ViewNode });
 
-		assert.equal(
-			getSchemaIncompatibilityDetails(schema, toUpgradeSchema(StoredNode)),
-			JSON.stringify([
-				{
-					mismatch: "allowedTypes",
-					location: {
-						nodeType: ViewNode.identifier,
-						fieldKey: "foo",
-					},
-					view: [],
-					stagedView: [factory.string.identifier],
-					stored: [factory.null.identifier],
+		assert.deepEqual(getSchemaIncompatibilityDetails(schema, toUpgradeSchema(StoredNode)), [
+			{
+				mismatch: "allowedTypes",
+				location: {
+					nodeType: ViewNode.identifier,
+					fieldKey: "foo",
 				},
-			]),
-		);
+				view: [],
+				stagedView: [factory.string.identifier],
+				stored: [factory.null.identifier],
+			},
+		]);
 	});
 
 	it("formats staged optional field context", () => {
@@ -181,21 +172,18 @@ describe("getSchemaIncompatibilityDetails", () => {
 		class StoredNode extends factory.objectAlpha("stagedOptionalDetails", {}) {}
 		const schema = new TreeViewConfigurationAlpha({ schema: ViewNode });
 
-		assert.equal(
-			getSchemaIncompatibilityDetails(schema, toUpgradeSchema(StoredNode)),
-			JSON.stringify([
-				{
-					mismatch: "fieldKind",
-					location: {
-						nodeType: ViewNode.identifier,
-						fieldKey: "foo",
-					},
-					view: "Optional",
-					stored: "Forbidden",
-					viewIsStagedOptional: true,
+		assert.deepEqual(getSchemaIncompatibilityDetails(schema, toUpgradeSchema(StoredNode)), [
+			{
+				mismatch: "fieldKind",
+				location: {
+					nodeType: ViewNode.identifier,
+					fieldKey: "foo",
 				},
-			]),
-		);
+				view: "Optional",
+				stored: "Forbidden",
+				viewIsStagedOptional: true,
+			},
+		]);
 	});
 });
 

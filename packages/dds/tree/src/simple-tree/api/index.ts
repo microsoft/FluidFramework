@@ -19,6 +19,7 @@ export type {
 	ViewableTree,
 	TreeViewEvents,
 	SchemaCompatibilityStatus,
+	SchemaDiscrepancy,
 	TreeViewAlpha,
 	TreeViewBeta,
 	UntypedTreeView,
