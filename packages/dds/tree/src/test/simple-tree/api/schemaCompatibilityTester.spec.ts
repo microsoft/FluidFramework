@@ -76,28 +76,37 @@ describe("getSchemaIncompatibilityDetails", () => {
 		const schema = new TreeViewConfigurationAlpha({ schema: factory.string });
 		assert.equal(
 			getSchemaIncompatibilityDetails(schema, toUpgradeSchema(factory.number)),
-			JSON.stringify({
-				location: { nodeType: null, fieldKey: null },
-				view: [factory.string.identifier],
-				stored: [factory.number.identifier],
-			}),
+			JSON.stringify([
+				{
+					location: "root",
+					view: [factory.string.identifier],
+					stored: [factory.number.identifier],
+				},
+			]),
 		);
 	});
 
-	it("formats a field kind discrepancy", () => {
+	it("formats all discrepancies", () => {
 		const schema = new TreeViewConfigurationAlpha({
-			schema: factory.optional(factory.number),
+			schema: factory.optional(factory.string),
 		});
 		assert.equal(
 			getSchemaIncompatibilityDetails(
 				schema,
 				toUpgradeSchema(factory.required(factory.number)),
 			),
-			JSON.stringify({
-				location: { nodeType: null, fieldKey: null },
-				view: "Optional",
-				stored: "Value",
-			}),
+			JSON.stringify([
+				{
+					location: "root",
+					view: [factory.string.identifier],
+					stored: [factory.number.identifier],
+				},
+				{
+					location: "root",
+					view: "Optional",
+					stored: "Value",
+				},
+			]),
 		);
 	});
 
@@ -108,11 +117,13 @@ describe("getSchemaIncompatibilityDetails", () => {
 		const schema = new TreeViewConfigurationAlpha({ schema: viewLeaf });
 		assert.equal(
 			getSchemaIncompatibilityDetails(schema, toUpgradeSchema(storedLeaf)),
-			JSON.stringify({
-				nodeType: identifier,
-				view: "Number",
-				stored: "String",
-			}),
+			JSON.stringify([
+				{
+					nodeType: identifier,
+					view: "Number",
+					stored: "String",
+				},
+			]),
 		);
 	});
 
@@ -122,11 +133,13 @@ describe("getSchemaIncompatibilityDetails", () => {
 		const schema = new TreeViewConfigurationAlpha({ schema: ViewNode });
 		assert.equal(
 			getSchemaIncompatibilityDetails(schema, toUpgradeSchema(StoredNode)),
-			JSON.stringify({
-				nodeType: ViewNode.identifier,
-				view: "Object",
-				stored: "Map",
-			}),
+			JSON.stringify([
+				{
+					nodeType: ViewNode.identifier,
+					view: "Object",
+					stored: "Map",
+				},
+			]),
 		);
 	});
 });

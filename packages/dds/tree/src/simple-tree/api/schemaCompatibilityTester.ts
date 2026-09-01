@@ -24,66 +24,73 @@ import {
 import type { SchemaCompatibilityStatus } from "./tree.js";
 
 /**
- * Describes the first discrepancy that prevents a view schema from viewing a stored schema as a
- * JSON-serialized object.
+ * Describes the discrepancies that prevent a view schema from viewing a stored schema as a
+ * JSON-serialized array.
  */
 export function getSchemaIncompatibilityDetails(
 	viewSchema: TreeSchema,
 	stored: TreeStoredSchema,
 ): string | undefined {
-	const discrepancy = getDiscrepanciesInAllowedContent(viewSchema, stored)
-		[Symbol.iterator]()
-		.next();
-	if (discrepancy.done === true) {
+	const discrepancies = [...getDiscrepanciesInAllowedContent(viewSchema, stored)];
+	if (discrepancies.length === 0) {
 		return undefined;
 	}
 
-	const value = discrepancy.value;
-	switch (value.mismatch) {
-		case "allowedTypes": {
-			return JSON.stringify({
-				location: {
-					nodeType: value.identifier ?? null,
-					fieldKey: value.fieldKey ?? null,
-				},
-				view: value.view.map(({ type }) => type.identifier).sort(),
-				stored: [...value.stored].sort(),
-			});
-		}
-		case "fieldKind": {
-			return JSON.stringify({
-				location: {
-					nodeType: value.identifier ?? null,
-					fieldKey: value.fieldKey ?? null,
-				},
-				view: value.view,
-				stored: value.stored,
-			});
-		}
-		case "valueSchema": {
-			return JSON.stringify({
-				nodeType: value.identifier,
-				view: value.view === undefined ? null : ValueSchema[value.view],
-				stored: value.stored === undefined ? null : ValueSchema[value.stored],
-			});
-		}
-		case "nodeKind": {
-			const storedNodeKind =
-				value.stored === ObjectNodeStoredSchema
-					? "Object"
-					: value.stored === MapNodeStoredSchema
-						? "Map"
-						: "Leaf";
-			return JSON.stringify({
-				nodeType: value.identifier,
-				view: NodeKind[value.view],
-				stored: storedNodeKind,
-			});
-		}
-		default: {
-			return unreachableCase(value);
-		}
-	}
+	return JSON.stringify(
+		discrepancies.map((value) => {
+			switch (value.mismatch) {
+				case "allowedTypes": {
+					return {
+						location:
+							value.identifier === undefined
+								? "root"
+								: {
+										nodeType: value.identifier,
+										fieldKey: value.fieldKey ?? null,
+									},
+						view: value.view.map(({ type }) => type.identifier).sort(),
+						stored: [...value.stored].sort(),
+					};
+				}
+				case "fieldKind": {
+					return {
+						location:
+							value.identifier === undefined
+								? "root"
+								: {
+										nodeType: value.identifier,
+										fieldKey: value.fieldKey ?? null,
+									},
+						view: value.view,
+						stored: value.stored,
+					};
+				}
+				case "valueSchema": {
+					return {
+						nodeType: value.identifier,
+						view: value.view === undefined ? null : ValueSchema[value.view],
+						stored: value.stored === undefined ? null : ValueSchema[value.stored],
+					};
+				}
+				case "nodeKind": {
+					const storedNodeKind =
+						value.stored === ObjectNodeStoredSchema
+							? "Object"
+							: value.stored === MapNodeStoredSchema
+								? "Map"
+								: "Leaf";
+					return {
+						nodeType: value.identifier,
+						view: NodeKind[value.view],
+						stored: storedNodeKind,
+					};
+				}
+				default: {
+					return unreachableCase(value);
+				}
+			}
+		}),
+	);
 }
 
 /**

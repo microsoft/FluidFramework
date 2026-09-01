@@ -603,11 +603,13 @@ describe("SchematizingSimpleTreeView", () => {
 				);
 				assert.deepEqual(error.getTelemetryProperties().schemaIncompatibilityDetails, {
 					tag: TelemetryDataTag.SchemaArtifact,
-					value: JSON.stringify({
-						location: { nodeType: null, fieldKey: null },
-						view: ["com.fluidframework.leaf.string"],
-						stored: [],
-					}),
+					value: JSON.stringify([
+						{
+							location: "root",
+							view: ["com.fluidframework.leaf.string"],
+							stored: [],
+						},
+					]),
 				});
 				return true;
 			},
@@ -642,11 +644,13 @@ describe("SchematizingSimpleTreeView", () => {
 				);
 				assert.deepEqual(error.getTelemetryProperties().schemaIncompatibilityDetails, {
 					tag: TelemetryDataTag.SchemaArtifact,
-					value: JSON.stringify({
-						location: { nodeType: null, fieldKey: null },
-						view: [],
-						stored: ["com.fluidframework.leaf.string"],
-					}),
+					value: JSON.stringify([
+						{
+							location: "root",
+							view: [],
+							stored: ["com.fluidframework.leaf.string"],
+						},
+					]),
 				});
 				return true;
 			},
@@ -677,11 +681,13 @@ describe("SchematizingSimpleTreeView", () => {
 			);
 			assert.deepEqual(error.getTelemetryProperties().schemaIncompatibilityDetails, {
 				tag: TelemetryDataTag.SchemaArtifact,
-				value: JSON.stringify({
-					location: { nodeType: null, fieldKey: null },
-					view: ["com.fluidframework.leaf.boolean"],
-					stored: ["com.fluidframework.leaf.string"],
-				}),
+				value: JSON.stringify([
+					{
+						location: "root",
+						view: ["com.fluidframework.leaf.boolean"],
+						stored: ["com.fluidframework.leaf.string"],
+					},
+				]),
 			});
 			return true;
 		};
