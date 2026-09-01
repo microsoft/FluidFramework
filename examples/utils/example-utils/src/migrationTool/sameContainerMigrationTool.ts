@@ -11,7 +11,7 @@ import {
 } from "@fluidframework/aqueduct/legacy";
 import type { IContainer } from "@fluidframework/container-definitions/legacy";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/legacy";
+import { assert } from "@fluidframework/core-utils/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/legacy";
 import { MessageType } from "@fluidframework/driver-definitions/legacy";
 

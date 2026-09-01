@@ -10,7 +10,7 @@ import type {
 	IEventProvider,
 	IFluidHandle,
 } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/legacy";
+import { assert } from "@fluidframework/core-utils/internal";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/legacy";
 import type {
 	IChannelFactory,

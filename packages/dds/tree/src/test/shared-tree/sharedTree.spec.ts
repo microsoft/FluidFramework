@@ -67,6 +67,7 @@ import {
 	ForestTypeReference,
 	type ITreePrivate,
 	Tree,
+	TreeBeta,
 	type TreeCheckout,
 } from "../../shared-tree/index.js";
 import { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
@@ -86,12 +87,7 @@ import {
 	FieldKind,
 	type SimpleLeafNodeSchema,
 } from "../../simple-tree/index.js";
-import {
-	handleSchema,
-	numberSchema,
-	stringSchema,
-	TreeBeta,
-} from "../../simple-tree/index.js";
+import { handleSchema, numberSchema, stringSchema } from "../../simple-tree/index.js";
 import {
 	configuredSharedTree,
 	resolveOptions,
@@ -162,6 +158,21 @@ function treeTestFactory(): ISharedTree {
 }
 
 describe("SharedTree", () => {
+	it("rejects compatibility versions before SharedTree 2.0", () => {
+		assert.throws(
+			() =>
+				new TestTreeProviderLite(
+					1,
+					configuredSharedTree({
+						jsonValidator: FormatValidatorBasic,
+						// @ts-expect-error Client 3.0 excludes 1.x values, but runtime validation must reject type-erased input.
+						minVersionForCollab: "1.99.0",
+					}).getFactory(),
+				),
+			validateUsageError("SharedTree requires minVersionForCollab of at least 2.0.0"),
+		);
+	});
+
 	describe("viewWith", () => {
 		it("@Smoke initialize tree", () => {
 			const tree = treeTestFactory();

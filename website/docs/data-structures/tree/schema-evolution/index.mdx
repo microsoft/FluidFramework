@@ -9,7 +9,7 @@ import { ApiLink, PackageLink } from "@site/src/components/shortLinks";
 
 As your application (or library) grows and evolves, you may need to modify the structure of your [SharedTree](../index.mdx) data.
 SharedTree makes it possible to update your [schemas](../schema-definition/index.mdx) in ways that allow an app to load or upgrade documents created or edited by earlier versions of the app (see [understanding compatibility](./index.mdx#understanding-compatibility)).
-To ensure such changes to maintain the ability to open existing documents and collaborate with other deployed application versions, write a test using <PackageLink packageName="fluid-framework" headingId="snapshotschemacompatibility-function">`snapshotSchemaCompatibility`</PackageLink>.
+To ensure such changes to maintain the ability to open existing documents and collaborate with other deployed application versions, write a test using <ApiLink package="fluid-framework" api="snapshotSchemaCompatibility">`snapshotSchemaCompatibility`</ApiLink>.
 
 :::note
 For detailed information about which types of changes are safe versus breaking, see [types of schema changes](./types-of-changes.mdx).
@@ -19,7 +19,7 @@ For detailed information about which types of changes are safe versus breaking, 
 
 When updating your schema, it's important to understand the difference between the two types of schemas:
 
-- **View Schema**: The schema defined in your application code using <ApiLink packageName="fluid-framework" apiName="SchemaFactory" />
+- **View Schema**: The schema defined in your application code using <ApiLink package="fluid-framework" api="SchemaFactory" />
 - **Stored Schema**: The schema persisted with each document. It describes what type of tree can be stored in the document.
 
 When a document is first created, its stored schema is set using the given view schema.
@@ -52,7 +52,7 @@ Therefore, a Fluid application should be prepared to encounter any version of a 
 When you open a document, SharedTree compares your application's view schema with the document's stored schema to determine compatibility:
 
 - **Compatible**: Document can be opened and used normally
-- **Upgradeable**: Document can be upgraded to match your view schema using <ApiLink packageName="fluid-framework" apiName="TreeView" headingId="upgradeschema-methodsignature">`view.upgradeSchema()`</ApiLink>
+- **Upgradeable**: Document can be upgraded to match your view schema using <ApiLink package="fluid-framework" api="TreeView.upgradeSchema">`view.upgradeSchema()`</ApiLink>
 - **Incompatible**: Document cannot be opened with or upgraded to match your current view schema
 
 They must be compatible or upgradeable in order for the application to work - otherwise, it cannot read or write data from/to the document.
@@ -110,9 +110,9 @@ To prevent this, the application can employ a [staged rollout](./index.mdx#stage
 
 ### Checking Compatibility
 
-Use <ApiLink packageName="fluid-framework" apiName="TreeView" headingId="compatibility-propertysignature">`TreeView.compatibility`</ApiLink> to check if your schema changes are compatible with existing documents.
+Use <ApiLink package="fluid-framework" api="TreeView.compatibility">`TreeView.compatibility`</ApiLink> to check if your schema changes are compatible with existing documents.
 
-Generally, the most important properties of the `compatibility` object to monitor are <ApiLink packageName="fluid-framework" apiName="SchemaCompatibilityStatus" headingId="canview-propertysignature">`canView`</ApiLink> and <ApiLink packageName="fluid-framework" apiName="SchemaCompatibilityStatus" headingId="canupgrade-propertysignature">`canUpgrade`</ApiLink>.
+Generally, the most important properties of the `compatibility` object to monitor are <ApiLink package="fluid-framework" api="SchemaCompatibilityStatus.canView">`canView`</ApiLink> and <ApiLink package="fluid-framework" api="SchemaCompatibilityStatus.canUpgrade">`canUpgrade`</ApiLink>.
 `canView` indicates that the view schema is [compatible](./index.mdx#schema-compatibility) with the stored schema while `canUpgrade` indicates that it is valid to [upgrade the schema](./index.mdx#schema-upgrade-process).
 
 ### Monitoring Remote Schema Changes
@@ -129,7 +129,7 @@ view.events.on("schemaChanged", () => {
 
 ## Schema Upgrade Process
 
-When you make [backwards compatible](./index.mdx#understanding-compatibility) changes to your schema, you can upgrade existing documents to use the new schema using <ApiLink packageName="fluid-framework" apiName="TreeView" headingId="upgradeschema-methodsignature">`view.upgradeSchema()`</ApiLink>:
+When you make [backwards compatible](./index.mdx#understanding-compatibility) changes to your schema, you can upgrade existing documents to use the new schema using <ApiLink package="fluid-framework" api="TreeView.upgradeSchema">`view.upgradeSchema()`</ApiLink>:
 
 ```typescript
 import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
@@ -170,8 +170,8 @@ A **staged schema upgrade** is a schema change that is declared in the view sche
 This allows your application code to understand and handle the new schema shape (reading documents that contain it) before the upgrade is activated for writes.
 
 SharedTree provides two mechanisms for defining staged schema upgrades:
-- <ApiLink packageName="fluid-framework" apiName="SchemaFactoryBeta" headingId="staged-property">`staged()`</ApiLink> -- marks a new allowed type as staged
-- <ApiLink packageName="fluid-framework" apiName="SchemaFactoryAlpha" headingId="stagedoptional-property">`stagedOptional()`</ApiLink> -- marks a field as optionally present during migration from required to optional
+- <ApiLink package="fluid-framework" api="SchemaFactoryBeta.staged">`staged()`</ApiLink> -- marks a new allowed type as staged
+- <ApiLink package="fluid-framework" api="SchemaFactoryAlpha.stagedOptional">`stagedOptional()`</ApiLink> -- marks a field as optionally present during migration from required to optional
 
 Staged schema upgrades are the building blocks of [staged rollouts](#staged-rollouts) and [feature-flag-driven upgrades](./feature-flag-schema-upgrades.mdx).
 

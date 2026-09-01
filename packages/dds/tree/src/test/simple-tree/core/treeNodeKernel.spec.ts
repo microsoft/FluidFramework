@@ -9,7 +9,7 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 
 import { rootFieldKey, type UpPath } from "../../../core/index.js";
 import { TreeStatus } from "../../../feature-libraries/index.js";
-import { Tree } from "../../../shared-tree/index.js";
+import { Tree, TreeBeta } from "../../../shared-tree/index.js";
 import {
 	TEST_activeBufferCount,
 	getKernel,
@@ -23,7 +23,6 @@ import {
 	type ArrayNodeDeltaOp,
 	SchemaFactory,
 	SchemaFactoryAlpha,
-	TreeBeta,
 	TreeViewConfiguration,
 } from "../../../simple-tree/index.js";
 import { createTestUndoRedoStacks, getView } from "../../utils.js";

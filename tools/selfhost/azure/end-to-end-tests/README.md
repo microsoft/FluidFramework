@@ -39,3 +39,10 @@ runs the suite with `--driver=r11s --r11sEndpointName=custom`.
 
 The driver configuration contains the remote service URLs and the tenant secret
 only in process memory. It is not written to the parameters file.
+
+## Low-IO write
+
+Set `lowIoWriteEnabled` in the test parameters file to match the deployed gitrest
+`enableLowIoWrite` setting. The script applies this value to
+`driverPolicies.enableWholeSummaryUpload`. This policy must be enabled to read summaries from a
+deployment that uses low-IO write.

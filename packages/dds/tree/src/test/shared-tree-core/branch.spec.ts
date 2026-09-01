@@ -379,6 +379,7 @@ describe("Branches", () => {
 		const initCommit: GraphCommit<DefaultChangeset> = {
 			change: defaultChangeFamily.rebaser.compose([]),
 			revision: nullRevisionTag,
+			customMetadata: undefined,
 		};
 
 		const branch = new SharedTreeBranch(initCommit, defaultChangeFamily, mintRevisionTag);

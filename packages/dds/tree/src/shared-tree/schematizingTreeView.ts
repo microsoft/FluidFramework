@@ -10,9 +10,9 @@ import type {
 	Listenable,
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { tagSchemaArtifacts, UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { anchorSlot, rootFieldKey } from "../core/index.js";
+import { anchorSlot, rootFieldKey, type RevertToOptionsAlpha } from "../core/index.js";
 import {
 	type NodeIdentifierManager,
 	defaultSchemaPolicy,
@@ -28,6 +28,7 @@ import {
 import {
 	type ImplicitFieldSchema,
 	type SchemaCompatibilityStatus,
+	type TreeContextAlpha,
 	type TreeViewEvents,
 	tryGetTreeNodeForField,
 	setField,
@@ -57,13 +58,12 @@ import {
 	TreeViewConfigurationAlpha,
 	toInitialSchema,
 	toUpgradeSchema,
-	type UntypedTreeView,
 	type TreeBranchHistory,
 	type UntypedTreeViewAlpha,
 	type TreeSchema,
 	type SchemaUpgrade,
 	type StagedUpgradeStatus,
-	getSchemaCompatibilityError,
+	getSchemaIncompatibilityDetails,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -77,24 +77,13 @@ import { canInitialize, initialize, initializerFromChunk } from "./schematizeTre
 import type { TreeCheckout } from "./treeCheckout.js";
 
 /**
- * Stores the {@link UntypedTreeView} associated with a checkout's anchor set.
+ * Stores the tree context for a checkout.
  *
  * @remarks
- * This is used for two purposes:
- *
- * 1. To detect (and prevent) creating multiple tree views from the same checkout: if this slot is already
- * populated when a view is created, a second view is being created and we error.
- *
- * 2. To retrieve the branch for a document-root node in {@link (TreeAlpha:interface).parent2}
- * (via `DocumentRootParent`).
- *
- * The stored type is {@link UntypedTreeView} rather than `TreeView<ImplicitFieldSchema>`. Detecting a prior view
- * (purpose 1) only needed presence, but retrieving a usable branch (purpose 2) needs a handle that works for
- * any branch. `TreeView` is invariant over its schema, so a `TreeView<ImplicitFieldSchema>` cannot actually be
- * used as a view for a branch with a more specific schema, and would not cover non-main branches at all.
- * {@link UntypedTreeView} is the correct general type for "any branch" here.
+ * This prevents multiple views for one checkout. {@link (TreeAlpha:interface).parent2} also uses the
+ * context to get the view for a document-root node.
  */
-export const ViewSlot = anchorSlot<UntypedTreeView>();
+export const ViewSlot = anchorSlot<TreeContextAlpha>();
 
 function throwIfSchemaIsIncompatible(
 	compatibility: SchemaCompatibilityStatus,
@@ -105,16 +94,18 @@ function throwIfSchemaIsIncompatible(
 		return;
 	}
 
-	const discrepancy = getSchemaCompatibilityError(viewSchema, storedSchema);
-	const details =
-		discrepancy === undefined ? "" : ` The first schema mismatch is: ${discrepancy}.`;
+	const schemaIncompatibilityDetails = getSchemaIncompatibilityDetails(
+		viewSchema,
+		storedSchema,
+	);
 	const resolution = compatibility.canInitialize
 		? "The document is uninitialized; call TreeView.initialize() before reading or writing TreeView.root."
 		: compatibility.canUpgrade
 			? "The stored schema can be upgraded; call TreeView.upgradeSchema() before reading or writing TreeView.root."
-			: "The schemas cannot be upgraded automatically. Review the reported mismatch and use a compatible view schema or explicitly migrate the document schema and data.";
+			: "The schemas cannot be upgraded automatically. Use a compatible view schema or explicitly migrate the document schema and data.";
 	throw new UsageError(
-		`TreeView.root is unavailable because the view schema is not compatible with the document's stored schema.${details} ${resolution}`,
+		`TreeView.root is unavailable because the view schema is incompatible with the stored schema. ${resolution}`,
+		tagSchemaArtifacts({ schemaIncompatibilityDetails }),
 	);
 }
 
@@ -611,8 +602,8 @@ export class SchematizingSimpleTreeView<
 		this.checkout.rewindTo(revision);
 	}
 
-	public revertTo(revision: string): void {
-		this.checkout.revertTo(revision);
+	public revertTo(revision: string, options?: RevertToOptionsAlpha): void {
+		this.checkout.revertTo(revision, options);
 	}
 
 	public merge(context: UntypedTreeViewAlpha, disposeMerged = true): void {

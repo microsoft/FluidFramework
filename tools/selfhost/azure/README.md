@@ -251,6 +251,11 @@ You can leave these alone. Every one has a working default:
   you intend to peer with.
 - **`workloadIdentity`** — the managed identity your pods use to read Key Vault. Defaults to
   `<aks-name>-workload-identity`.
+- **`aks.nodeOsUpgradeChannel`** / **`aks.upgradeChannel`** — AKS auto-upgrade channels for the
+  node OS image and the Kubernetes version. Both default to fully manual (`None` / `none`)
+  rather than Azure's own defaults, since an unattended node-image rotation with no surge
+  capacity can take an entire small node pool down near-simultaneously. Override either to opt
+  into scheduled auto-upgrades instead.
 - **`tokenService`** — an optional reference token service. It is **not** deployed by the main
   script. See [`token-service/README.md`](../token-service/README.md).
 
@@ -305,10 +310,11 @@ Redis, and waiting for Front Door DNS to propagate all take real time. Progress 
 goes and written to:
 
 ```
-${TMPDIR:-/tmp}/selfhost-fluid-<aks-name>/deploy-<timestamp>.log
+${TMPDIR:-/tmp}/selfhost-fluid-<aks-name>.<random-suffix>/deploy-<timestamp>.log
 ```
 
-When it finishes it prints your three public endpoints.
+The exact private temporary directory is printed near the start of each run. When deployment
+finishes it prints your three public endpoints.
 
 **If it fails partway, just run it again.** Every phase checks whether its resource already
 exists before creating it, so re-running skips completed work and resumes where it stopped.
@@ -424,6 +430,16 @@ provisioning:
 
 This rebuilds and redeploys the application only. It does not touch Cosmos, Redis, Event Hubs,
 Key Vault or Front Door.
+
+## Low-IO write
+
+gitrest's `git__enableLowIoWrite` setting in `azure/backends.yaml` controls low-IO summary
+writes. When enabled, clients must use `driverPolicies.enableWholeSummaryUpload` to read
+summaries.
+
+For end-to-end tests, set `lowIoWriteEnabled` in the test parameters file to the same value.
+The test script configures `driverPolicies.enableWholeSummaryUpload` to match the low-IO write
+configuration.
 
 ## Removing the deployment
 
@@ -573,7 +589,7 @@ Create the registry before attempting to log in or push images:
 
 ```bash
 az group create -n "$RG" -l "$RG_LOC"
-az acr create -g "$RG" -n "$ACR" -l "$ACR_LOC" --sku Standard --admin-enabled true
+az acr create -g "$RG" -n "$ACR" -l "$ACR_LOC" --sku Standard --admin-enabled false
 ```
 
 **VERIFY:** `az acr show -g "$RG" -n "$ACR" --query provisioningState -o tsv` prints
@@ -718,8 +734,8 @@ Render deployment copies outside the Git checkout so live values are not committ
 
 ```bash
 REDIS_HOSTNAME=$(az redisenterprise show --name "$REDIS" --resource-group "$RG" --query hostName -o tsv)
-DEPLOY_DIR="${TMPDIR:-/tmp}/selfhost-fluid-$AKS"
-mkdir -p "$DEPLOY_DIR"
+DEPLOY_DIR="$(mktemp -d "${TMPDIR:-/tmp}/selfhost-fluid-${AKS}.XXXXXX")"
+chmod 700 "$DEPLOY_DIR"
 sed -e "s|<ACR>|$ACR|g" -e "s|<IMAGE_TAG>|$IMAGE_TAG|g" \
     -e "s|<RG>|$RG|g" -e "s|<STORAGE>|$STORAGE|g" \
     -e "s|<REDIS_HOSTNAME>|$REDIS_HOSTNAME|g" \
@@ -759,7 +775,8 @@ Store CSI driver** rather than rendered into ConfigMaps or Helm metadata.
 >
 > The upstream chart writes both into its ConfigMap as literals rather than Helm values, so a
 > values file has nothing to override. `phase5_helm` rewrites those two lines in the chart
-> template to read from `auth:`, once per checkout; that is the only reason the patch exists.
+> template to read from `auth:` and emits the legacy root-level value still read by Historian,
+> once per checkout; that is the only reason the patch exists.
 
 **Check:** after Phase 5,
 
@@ -771,6 +788,10 @@ kubectl get cm fluid-routerlicious -o jsonpath='{.data.config\.json}' \
 reports `'enableTokenExpiration': True`. To confirm enforcement, sign a token with **no `exp`
 claim** and call alfred with it — expect `403 Invalid token expiry`. An already-expired token is
 not a valid check: those are rejected either way.
+
+The same phase ensures `usage.clientConnectivityCountingEnabled` is a JSON boolean. An older
+chart rendered the disabled value as the truthy string `"false"`, causing Nexus to append every
+disconnect to the non-expiring `clientConnectivityUsage` Redis list.
 
 > **Superseded:** the SecretProviderClass now authenticates via **AAD Workload Identity** (one
 > shared managed identity + a Kubernetes ServiceAccount, `azure/secretproviderclass.yaml`'s
@@ -825,7 +846,7 @@ for deploy in fluid-alfred fluid-nexus fluid-riddler; do
     }},
     {"op": "add", "path": "/spec/template/spec/initContainers", "value": [{
       "name": "load-secrets",
-      "image": "busybox",
+      "image": "$ACR.azurecr.io/busybox@$BUSYBOX_DIGEST",
       "command": ["sh", "-c",
         "TENANT_KEY=$(cat /mnt/secrets/tenant-key) && echo \"export TENANT_KEY=$TENANT_KEY\" > /config/secrets.env"
       ],
@@ -865,7 +886,7 @@ for deploy in fluid-scribe fluid-scriptorium; do
     }},
     {"op": "add", "path": "/spec/template/spec/initContainers", "value": [{
       "name": "load-secrets",
-      "image": "busybox",
+      "image": "$ACR.azurecr.io/busybox@$BUSYBOX_DIGEST",
       "command": ["sh", "-c",
         "COSMOS_CONN=$(cat /mnt/secrets/cosmos-connection-string) && echo \"export mongodb__operationsDbEndpoint=$COSMOS_CONN\" > /config/secrets.env"
       ],
@@ -1176,10 +1197,17 @@ az cosmosdb mongodb collection create -a "$COSMOS" -g "$RG" -d admin -n reservat
 Step 2 — Store the connection string in Key Vault
 
 ```bash
-COSMOS_CONN=$(az cosmosdb keys list -n "$COSMOS" -g "$RG" --type connection-strings \
-  --query "connectionStrings[0].connectionString" -o tsv)
-az keyvault secret set --vault-name "$KV" --name cosmos-connection-string --value "$COSMOS_CONN"
-unset COSMOS_CONN
+(
+  COSMOS_CONN=$(az cosmosdb keys list -n "$COSMOS" -g "$RG" --type connection-strings \
+    --query "connectionStrings[0].connectionString" -o tsv)
+  COSMOS_SECRET_FILE="$(mktemp)"
+  trap 'rm -f "$COSMOS_SECRET_FILE"' EXIT
+  chmod 600 "$COSMOS_SECRET_FILE"
+  printf '%s' "$COSMOS_CONN" > "$COSMOS_SECRET_FILE"
+  unset COSMOS_CONN
+  az keyvault secret set --vault-name "$KV" --name cosmos-connection-string \
+    --file "$COSMOS_SECRET_FILE" --encoding utf-8
+)
 ```
 
 Expected: `az keyvault secret set` returns JSON with a non-empty `id` (the secret's versioned URI).
