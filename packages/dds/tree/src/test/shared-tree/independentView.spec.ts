@@ -19,6 +19,7 @@ import {
 	independentInitializedView,
 	createIndependentTreeAlpha,
 	createIndependentTreeBeta,
+	createIndependentTreeView,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree/independentView.js";
 import { ForestTypeExpensiveDebug, TreeAlpha } from "../../shared-tree/index.js";
@@ -27,6 +28,7 @@ import {
 	FieldKind,
 	SchemaFactory,
 	SchemaFactoryAlpha,
+	type TreeViewBeta,
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
 } from "../../simple-tree/index.js";
@@ -279,6 +281,16 @@ describe("independentView", () => {
 		const view = tree.viewWith(
 			new TreeViewConfigurationAlpha({ schema: SchemaFactory.number }),
 		);
+		view.initialize(42);
+		assert.equal(view.root, 42);
+		view.dispose();
+	});
+
+	it("createIndependentTreeView", () => {
+		const view: TreeViewBeta<typeof SchemaFactory.number> = createIndependentTreeView(
+			new TreeViewConfiguration({ schema: SchemaFactory.number }),
+		);
+		assert(view.compatibility.canInitialize);
 		view.initialize(42);
 		assert.equal(view.root, 42);
 		view.dispose();
