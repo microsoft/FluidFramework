@@ -1128,6 +1128,7 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 
 // @beta @sealed
 export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema> extends TreeView<TSchema>, UntypedTreeView {
+    readonly discrepancies: string | undefined;
     // (undocumented)
     fork(): ReturnType<UntypedTreeView["fork"]> & TreeViewBeta<TSchema>;
 }

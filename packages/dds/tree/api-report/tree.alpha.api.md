@@ -2124,7 +2124,6 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 
 // @alpha @sealed
 export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> extends Omit<TreeViewBeta<ReadSchema<TSchema>>, "root" | "initialize" | "fork" | "runTransaction" | "runTransactionAsync" | "isView">, UntypedTreeViewAlpha {
-    readonly discrepancies: string | undefined;
     // (undocumented)
     readonly events: Listenable<TreeViewEvents & TreeBranchEvents>;
     // (undocumented)
@@ -2138,6 +2137,7 @@ export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | Unsa
 
 // @beta @sealed
 export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema> extends TreeView<TSchema>, UntypedTreeView {
+    readonly discrepancies: string | undefined;
     // (undocumented)
     fork(): ReturnType<UntypedTreeView["fork"]> & TreeViewBeta<TSchema>;
 }

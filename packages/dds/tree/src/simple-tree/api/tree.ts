@@ -803,6 +803,17 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema>
 	extends TreeView<TSchema>,
 		UntypedTreeView {
+	/**
+	 * Details about the schema discrepancies that prevent this view from accessing the tree,
+	 * formatted as a JSON-serialized array.
+	 *
+	 * @remarks
+	 * This property is undefined when {@link SchemaCompatibilityStatus.canView} is true and present
+	 * when `canView` is false.
+	 * It can include application-defined schema identifiers and field keys.
+	 */
+	readonly discrepancies: string | undefined;
+
 	// Override the base branch method to return a typed view rather than merely a branch.
 	fork(): ReturnType<UntypedTreeView["fork"]> & TreeViewBeta<TSchema>;
 }
@@ -838,17 +849,6 @@ export interface TreeViewAlpha<
 	 * @param content - The content to initialize the tree with.
 	 */
 	initialize(content: InsertableField<TSchema>): void;
-
-	/**
-	 * Details about the schema discrepancies that prevent this view from accessing the tree,
-	 * formatted as a JSON-serialized array.
-	 *
-	 * @remarks
-	 * This property is undefined when {@link SchemaCompatibilityStatus.canView} is true and present
-	 * when `canView` is false.
-	 * It can include application-defined schema identifiers and field keys.
-	 */
-	readonly discrepancies: string | undefined;
 
 	/**
 	 * Checks whether a staged schema upgrade has been applied to the document's stored schema.
