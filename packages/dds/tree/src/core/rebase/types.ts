@@ -168,7 +168,7 @@ export interface GraphCommit<TChange> {
 	/**
 	 * The parent of this commit, on whose change this commit's change is based.
 	 * @remarks
-	 * This property is `undefined` for the trunk base commit, which is the root of the commit graph.
+	 * This property is only `undefined` for the trunk base commit, which is the root of the commit graph.
 	 */
 	readonly parent?: GraphCommit<TChange>;
 	/**
