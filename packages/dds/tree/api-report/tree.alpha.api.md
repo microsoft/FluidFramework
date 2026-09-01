@@ -1882,6 +1882,7 @@ export interface TreeArrayNodeAlpha<TAllowedTypes extends System_Unsafe.Implicit
 // @beta @sealed
 export interface TreeBeta {
     clone<const TSchema extends ImplicitFieldSchema>(node: TreeFieldFromImplicitField<TSchema>): TreeFieldFromImplicitField<TSchema>;
+    context(node: TreeNode): TreeContextBeta;
     create<const TSchema extends ImplicitFieldSchema>(schema: TSchema, data: InsertableTreeFieldFromImplicitField<TSchema>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
     exportConcise(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): ConciseTree;
     exportConcise(node: TreeNode | TreeLeafValue | undefined, options?: TreeEncodingOptions): ConciseTree | undefined;
@@ -1936,15 +1937,28 @@ export enum TreeCompressionStrategy {
     Uncompressed = 1
 }
 
-// @alpha
-export interface TreeContextAlpha {
+// @alpha @sealed
+export interface TreeContextAlpha extends TreeContextBeta {
     // @deprecated
     isBranch(): this is UntypedTreeViewAlpha;
     isView(): this is UntypedTreeViewAlpha;
+    // (undocumented)
     runTransaction<TValue>(transaction: () => WithValue<TValue>, params?: RunTransactionParamsAlpha): TransactionValueResult<TValue, TValue>;
+    // (undocumented)
     runTransaction(transaction: () => void, params?: RunTransactionParamsAlpha): TransactionVoidResult;
+    // (undocumented)
     runTransactionAsync<TValue>(transaction: () => Promise<WithValue<TValue>>, params?: RunTransactionParamsAlpha): Promise<TransactionValueResult<TValue, TValue>>;
+    // (undocumented)
     runTransactionAsync(transaction: () => Promise<void>, params?: RunTransactionParamsAlpha): Promise<TransactionVoidResult>;
+}
+
+// @beta @sealed
+export interface TreeContextBeta {
+    isView(): this is UntypedTreeView;
+    runTransaction<TValue>(transaction: () => WithValue<TValue>, params?: RunTransactionParamsBeta): TransactionValueResult<TValue, TValue>;
+    runTransaction(transaction: () => void, params?: RunTransactionParamsBeta): TransactionVoidResult;
+    runTransactionAsync<TValue>(transaction: () => Promise<WithValue<TValue>>, params?: RunTransactionParamsBeta): Promise<TransactionValueResult<TValue, TValue>>;
+    runTransactionAsync(transaction: () => Promise<void>, params?: RunTransactionParamsBeta): Promise<TransactionVoidResult>;
 }
 
 // @alpha @input
@@ -2109,7 +2123,7 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 }
 
 // @alpha @sealed
-export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> extends Omit<TreeViewBeta<ReadSchema<TSchema>>, "root" | "initialize" | "fork" | "runTransaction" | "runTransactionAsync">, UntypedTreeViewAlpha {
+export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> extends Omit<TreeViewBeta<ReadSchema<TSchema>>, "root" | "initialize" | "fork" | "runTransaction" | "runTransactionAsync" | "isView">, UntypedTreeViewAlpha {
     // (undocumented)
     readonly events: Listenable<TreeViewEvents & TreeBranchEvents>;
     // (undocumented)
@@ -2125,8 +2139,6 @@ export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | Unsa
 export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema> extends TreeView<TSchema>, UntypedTreeView {
     // (undocumented)
     fork(): ReturnType<UntypedTreeView["fork"]> & TreeViewBeta<TSchema>;
-    runTransaction<TOut extends TransactionCallbackStatusBeta<unknown, unknown> | VoidTransactionCallbackStatusBeta | void>(transaction: () => TOut, params?: RunTransactionParamsBeta): TOut extends TransactionCallbackStatusBeta<infer TSuccessValue, infer TFailureValue> ? TransactionValueResult<TSuccessValue, TFailureValue> : TransactionVoidResult;
-    runTransactionAsync<TOut extends TransactionCallbackStatusBeta<unknown, unknown> | VoidTransactionCallbackStatusBeta | void>(transaction: () => Promise<TOut>, params?: RunTransactionParamsBeta): Promise<TOut extends TransactionCallbackStatusBeta<infer TSuccessValue, infer TFailureValue> ? TransactionValueResult<TSuccessValue, TFailureValue> : TransactionVoidResult>;
 }
 
 // @public @sealed
@@ -2193,15 +2205,25 @@ export const UnsafeUnknownSchema: unique symbol;
 export type UnsafeUnknownSchema = typeof UnsafeUnknownSchema;
 
 // @beta @sealed
-export interface UntypedTreeView extends IDisposable {
+export interface UntypedTreeView extends IDisposable, TreeContextBeta {
     dispose(error?: Error): void;
     fork(): UntypedTreeView;
     merge(view: UntypedTreeView, disposeMerged?: boolean): void;
     rebaseOnto(view: UntypedTreeView): void;
+    // (undocumented)
+    runTransaction<TValue>(transaction: () => WithValue<TValue>, params?: RunTransactionParamsBeta): TransactionValueResult<TValue, TValue>;
+    // (undocumented)
+    runTransaction(transaction: () => void, params?: RunTransactionParamsBeta): TransactionVoidResult;
+    runTransaction<TOut extends TransactionCallbackStatusBeta<unknown, unknown> | VoidTransactionCallbackStatusBeta | void>(transaction: () => TOut, params?: RunTransactionParamsBeta): TOut extends TransactionCallbackStatusBeta<infer TSuccessValue, infer TFailureValue> ? TransactionValueResult<TSuccessValue, TFailureValue> : TransactionVoidResult;
+    // (undocumented)
+    runTransactionAsync<TValue>(transaction: () => Promise<WithValue<TValue>>, params?: RunTransactionParamsBeta): Promise<TransactionValueResult<TValue, TValue>>;
+    // (undocumented)
+    runTransactionAsync(transaction: () => Promise<void>, params?: RunTransactionParamsBeta): Promise<TransactionVoidResult>;
+    runTransactionAsync<TOut extends TransactionCallbackStatusBeta<unknown, unknown> | VoidTransactionCallbackStatusBeta | void>(transaction: () => Promise<TOut>, params?: RunTransactionParamsBeta): Promise<TOut extends TransactionCallbackStatusBeta<infer TSuccessValue, infer TFailureValue> ? TransactionValueResult<TSuccessValue, TFailureValue> : TransactionVoidResult>;
 }
 
 // @alpha @sealed
-export interface UntypedTreeViewAlpha extends UntypedTreeView, TreeContextAlpha {
+export interface UntypedTreeViewAlpha extends Omit<UntypedTreeView, "runTransaction" | "runTransactionAsync" | "isView">, TreeContextAlpha {
     applyChange(change: JsonCompatibleReadOnly): void;
     readonly branchHistory: TreeBranchHistory;
     computeNetChangeIfRebasedOnto(view: UntypedTreeView): JsonCompatibleReadOnly | undefined;

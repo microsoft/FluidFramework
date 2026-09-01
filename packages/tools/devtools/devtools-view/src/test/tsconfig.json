@@ -6,6 +6,6 @@
 	"include": ["./**/*"],
 	"compilerOptions": {
 		"rootDir": "./",
-		"types": ["jest"],
+		"types": ["mocha", "node"],
 	},
 }

@@ -16,6 +16,12 @@ const downloadedDocModelsDirectoryPath = path.resolve(dirname, "..", ".doc-model
 const currentDocsPath = path.resolve(dirname, "..", "docs");
 const versionedDocsPath = path.resolve(dirname, "..", "versioned_docs");
 
+/**
+ * Path to the directory where API link manifests are generated and stored.
+ * These manifests are used to generate links between API docs for different versions of the docs.
+ */
+const apiLinkManifestsPath = path.resolve(dirname, "..", ".generated", "api-link-manifests");
+
 const config = {
 	// Current version of the site.
 	// Served under `/docs`.
@@ -26,6 +32,7 @@ const config = {
 		current: true,
 		apiDocs: {
 			inputPath: path.resolve(downloadedDocModelsDirectoryPath, "v3"),
+			manifestPath: path.resolve(apiLinkManifestsPath, "v3.json"),
 			outputPath: path.resolve(currentDocsPath, "api"),
 			uriRoot: "/docs/api",
 		},
@@ -40,6 +47,7 @@ const config = {
 			path: "v2",
 			apiDocs: {
 				inputPath: path.resolve(downloadedDocModelsDirectoryPath, "v2"),
+				manifestPath: path.resolve(apiLinkManifestsPath, "v2.json"),
 				outputPath: path.resolve(versionedDocsPath, "version-2", "api"),
 				uriRoot: "/docs/v2/api",
 			},
@@ -51,6 +59,7 @@ const config = {
 			path: "v1",
 			apiDocs: {
 				inputPath: path.resolve(downloadedDocModelsDirectoryPath, "v1"),
+				manifestPath: path.resolve(apiLinkManifestsPath, "v1.json"),
 				outputPath: path.resolve(versionedDocsPath, "version-1", "api"),
 				uriRoot: "/docs/v1/api",
 			},
@@ -66,6 +75,7 @@ const config = {
 		path: "local",
 		apiDocs: {
 			inputPath: path.resolve(dirname, "..", "..", "_api-extractor-temp", "doc-models"),
+			manifestPath: path.resolve(apiLinkManifestsPath, "local.json"),
 			outputPath: path.resolve(versionedDocsPath, "version-local", "api"),
 			uriRoot: "/docs/local/api",
 		},

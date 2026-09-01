@@ -32,9 +32,7 @@ The `Loader` constructor is called by both `createContainer()` and `getContainer
 interface as its constructor argument. `ILoaderProps` interface has an optional logger parameter that will take the
 `ITelemetryBaseLogger` defined by the user.
 
-<ApiLink packageName="container-loader" apiName="ILoaderProps" headingId="logger-propertysignature">
-	ILoaderProps.logger
-</ApiLink>
+<ApiLink package="container-loader" api="ILoaderProps.logger" />
 is used by `Loader` to pipe to container's telemetry system.
 
 ### Properties and methods
@@ -241,23 +239,23 @@ This custom logger should be provided in the service client constructor. Fluid w
 
 ```ts
 async function start(): Promise<void> {
-  // Create a custom ITelemetryBaseLogger object to pass into the Tinylicious container
-  // and hook to the Telemetry system
-  const client = new TinyliciousClient({logger: new ConsoleLogger()});
-  let container: FluidContainer;
-  let services: TinyliciousContainerServices;
+	// Create a custom ITelemetryBaseLogger object to pass into the Tinylicious container
+	// and hook to the Telemetry system
+	const client = new TinyliciousClient({ logger: new ConsoleLogger() });
+	let container: FluidContainer;
+	let services: TinyliciousContainerServices;
 
-  // Get or create the document depending if we are running through the create new flow
-  const createNew = !location.hash;
-  if (createNew) {
-      // The client will create a new detached container using the schema
-      // A detached container will enable the app to modify the container before attaching it to the client
-      ({container, services} = await client.createContainer(containerSchema));
+	// Get or create the document depending if we are running through the create new flow
+	const createNew = !location.hash;
+	if (createNew) {
+		// The client will create a new detached container using the schema
+		// A detached container will enable the app to modify the container before attaching it to the client
+		({ container, services } = await client.createContainer(containerSchema));
 
-      // Assign the returned ID to the URL hash for subsequent load flow
-      const id = await container.attach();
-      location.hash = id;
-  }
+		// Assign the returned ID to the URL hash for subsequent load flow
+		const id = await container.attach();
+		location.hash = id;
+	}
 }
 ```
 
