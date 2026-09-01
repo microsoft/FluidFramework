@@ -234,16 +234,7 @@ export class DocumentRootParent extends ParentObjectBase {
 		// The root value we last observed, used to detect actual root replacements.
 		let lastRoot: TreeNode | TreeLeafValue | undefined;
 
-		// Coalescers so that root-replacement notifications fired below participate in
-		// `withBufferedTreeEvents` windows (matching how content events are coalesced).
-		const nodeChangedCoalescer =
-			eventName === "nodeChanged"
-				? new BufferedTreeEvent(makeOccupancyNotifier(eventName, listener))
-				: undefined;
-		const treeChangedCoalescer =
-			eventName === "treeChanged"
-				? new BufferedTreeEvent(listener as TreeChangeEventsBeta["treeChanged"])
-				: undefined;
+		const locationChanged = new BufferedTreeEvent(makeOccupancyNotifier(eventName, listener));
 
 		const subscribeToRoot = (): void => {
 			// Skip (re-)subscribing if the caller has already unsubscribed (this is also invoked from the
@@ -285,17 +276,15 @@ export class DocumentRootParent extends ParentObjectBase {
 			// Root replacement is a change within this location's subtree AND a shallow (occupancy) change:
 			// - `treeChanged` fires because something in the tree changed (the root was replaced).
 			// - `nodeChanged` fires because this location's single child changed.
-			// Both are routed through coalescers so they merge within a `withBufferedTreeEvents` window.
-			treeChangedCoalescer?.emit();
-			nodeChangedCoalescer?.emit();
+			// Merge repeated replacements during a buffered event window.
+			locationChanged.emit();
 
 			subscribeToRoot();
 		});
 
 		return () => {
 			isSubscribed = false;
-			treeChangedCoalescer?.dispose();
-			nodeChangedCoalescer?.dispose();
+			locationChanged.dispose();
 			if (currentNodeUnsubscribe !== undefined) {
 				currentNodeUnsubscribe();
 				currentNodeUnsubscribe = undefined;
