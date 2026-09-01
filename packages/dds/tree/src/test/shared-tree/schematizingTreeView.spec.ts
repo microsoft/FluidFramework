@@ -593,6 +593,16 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(view.compatibility.canView, false);
 		assert.equal(view.compatibility.canUpgrade, true);
 		assert.equal(view.compatibility.isEquivalent, false);
+		assert.equal(
+			view.compatibility.discrepancies,
+			JSON.stringify([
+				{
+					location: "root",
+					view: ["com.fluidframework.leaf.string"],
+					stored: [],
+				},
+			]),
+		);
 		assert.throws(
 			() => view.root,
 			(error) => {
@@ -620,6 +630,7 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.deepEqual(log, [["rootChanged", 5]]);
 
 		assert.equal(view.compatibility.isEquivalent, true);
+		assert.equal(view.compatibility.discrepancies, undefined);
 		assert.equal(view.root, 5);
 	});
 
@@ -634,6 +645,16 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(view.compatibility.canView, false);
 		assert.equal(view.compatibility.canUpgrade, false);
 		assert.equal(view.compatibility.isEquivalent, false);
+		assert.equal(
+			view.compatibility.discrepancies,
+			JSON.stringify([
+				{
+					location: "root",
+					view: [],
+					stored: ["com.fluidframework.leaf.string"],
+				},
+			]),
+		);
 		assert.throws(
 			() => view.root,
 			(error) => {

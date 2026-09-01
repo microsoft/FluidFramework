@@ -291,6 +291,7 @@ export interface SchemaCompatibilityStatus {
     readonly canInitialize: boolean;
     readonly canUpgrade: boolean;
     readonly canView: boolean;
+    readonly discrepancies?: string;
     readonly isEquivalent: boolean;
 }
 

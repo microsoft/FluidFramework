@@ -950,9 +950,18 @@ export interface SchemaCompatibilityStatus {
 	 */
 	readonly canInitialize: boolean;
 
+	/**
+	 * Details about the schema discrepancies that prevent this view from accessing the tree,
+	 * formatted as a JSON-serialized array.
+	 *
+	 * @remarks
+	 * This property is present when the view schema has discrepancies with the stored schema.
+	 * It can include application-defined schema identifiers and field keys.
+	 */
+	readonly discrepancies?: string;
+
 	// TODO: Consider extending this status to include:
 	// - application-defined metadata about the stored schema
-	// - details about the differences between the stored and view schema sufficient for implementing "safe mismatch" policies
 }
 
 /**
