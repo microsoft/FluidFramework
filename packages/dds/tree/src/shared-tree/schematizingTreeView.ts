@@ -10,7 +10,7 @@ import type {
 	Listenable,
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { tagSchemaArtifacts, UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { anchorSlot, rootFieldKey, type RevertToOptionsAlpha } from "../core/index.js";
 import {
@@ -63,7 +63,7 @@ import {
 	type TreeSchema,
 	type SchemaUpgrade,
 	type StagedUpgradeStatus,
-	getSchemaCompatibilityError,
+	getSchemaIncompatibilityDetails,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -91,16 +91,18 @@ function throwIfSchemaIsIncompatible(
 		return;
 	}
 
-	const discrepancy = getSchemaCompatibilityError(viewSchema, storedSchema);
-	const details =
-		discrepancy === undefined ? "" : ` The first schema mismatch is: ${discrepancy}.`;
+	const schemaIncompatibilityDetails = getSchemaIncompatibilityDetails(
+		viewSchema,
+		storedSchema,
+	);
 	const resolution = compatibility.canInitialize
 		? "The document is uninitialized; call TreeView.initialize() before reading or writing TreeView.root."
 		: compatibility.canUpgrade
 			? "The stored schema can be upgraded; call TreeView.upgradeSchema() before reading or writing TreeView.root."
-			: "The schemas cannot be upgraded automatically. Review the reported mismatch and use a compatible view schema or explicitly migrate the document schema and data.";
+			: "The schemas cannot be upgraded automatically. Use a compatible view schema or explicitly migrate the document schema and data.";
 	throw new UsageError(
-		`TreeView.root is unavailable because the view schema is not compatible with the document's stored schema.${details} ${resolution}`,
+		`TreeView.root is unavailable because the view schema is incompatible with the stored schema. ${resolution}`,
+		tagSchemaArtifacts({ schemaIncompatibilityDetails }),
 	);
 }
 

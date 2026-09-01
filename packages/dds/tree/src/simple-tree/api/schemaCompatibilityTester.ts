@@ -6,7 +6,6 @@
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
-	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
 	type TreeStoredSchema,
@@ -19,85 +18,72 @@ import { toUpgradeSchema } from "../toStoredSchema.js";
 import type { TreeSchema } from "../treeSchema.js";
 
 import {
-	type Discrepancy,
-	type FieldDiscrepancyLocation,
 	getDiscrepanciesInAllowedContent,
 	type UpgradeLocationCollector,
 } from "./discrepancies.js";
 import type { SchemaCompatibilityStatus } from "./tree.js";
 
-function formatLocation(location: FieldDiscrepancyLocation): string {
-	if (location.identifier === undefined) {
-		return "the root field";
-	}
-	if (location.fieldKey === undefined) {
-		return `the fields of node type ${JSON.stringify(location.identifier)}`;
-	}
-	return `field ${JSON.stringify(location.fieldKey)} of node type ${JSON.stringify(location.identifier)}`;
-}
-
-function formatStoredNodeKind(
-	kind:
-		| typeof ObjectNodeStoredSchema
-		| typeof MapNodeStoredSchema
-		| typeof LeafNodeStoredSchema,
-): string {
-	if (kind === ObjectNodeStoredSchema) {
-		return "Object";
-	}
-	if (kind === MapNodeStoredSchema) {
-		return "Map";
-	}
-	if (kind === LeafNodeStoredSchema) {
-		return "Leaf";
-	}
-	throw new TypeError("Unknown stored node kind.");
-}
-
-function formatDiscrepancy(discrepancy: Discrepancy): string {
-	switch (discrepancy.mismatch) {
-		case "allowedTypes": {
-			const differences: string[] = [];
-			if (discrepancy.view.length > 0) {
-				const viewTypes = discrepancy.view.map(({ type }) => type.identifier).sort();
-				differences.push(`only the view schema allows ${JSON.stringify(viewTypes)}`);
-			}
-			if (discrepancy.stored.length > 0) {
-				differences.push(
-					`only the stored schema allows ${JSON.stringify([...discrepancy.stored].sort())}`,
-				);
-			}
-			return `${formatLocation(discrepancy)} has different allowed node types: ${differences.join("; ")}`;
-		}
-		case "fieldKind": {
-			return `${formatLocation(discrepancy)} has field kind ${JSON.stringify(discrepancy.view)} in the view schema but ${JSON.stringify(discrepancy.stored)} in the stored schema`;
-		}
-		case "valueSchema": {
-			const view = discrepancy.view === undefined ? undefined : ValueSchema[discrepancy.view];
-			const stored =
-				discrepancy.stored === undefined ? undefined : ValueSchema[discrepancy.stored];
-			return `node type ${JSON.stringify(discrepancy.identifier)} has value schema ${JSON.stringify(view)} in the view schema but ${JSON.stringify(stored)} in the stored schema`;
-		}
-		case "nodeKind": {
-			return `node type ${JSON.stringify(discrepancy.identifier)} has node kind ${JSON.stringify(NodeKind[discrepancy.view])} in the view schema but ${JSON.stringify(formatStoredNodeKind(discrepancy.stored))} in the stored schema`;
-		}
-		default: {
-			return unreachableCase(discrepancy);
-		}
-	}
-}
-
 /**
- * Describes the first discrepancy that prevents a view schema from viewing a stored schema.
+ * Describes the first discrepancy that prevents a view schema from viewing a stored schema as a
+ * JSON object.
  */
-export function getSchemaCompatibilityError(
+export function getSchemaIncompatibilityDetails(
 	viewSchema: TreeSchema,
 	stored: TreeStoredSchema,
 ): string | undefined {
 	const discrepancy = getDiscrepanciesInAllowedContent(viewSchema, stored)
 		[Symbol.iterator]()
 		.next();
-	return discrepancy.done === true ? undefined : formatDiscrepancy(discrepancy.value);
+	if (discrepancy.done === true) {
+		return undefined;
+	}
+
+	const value = discrepancy.value;
+	switch (value.mismatch) {
+		case "allowedTypes": {
+			return JSON.stringify({
+				location: {
+					nodeType: value.identifier ?? null,
+					fieldKey: value.fieldKey ?? null,
+				},
+				view: value.view.map(({ type }) => type.identifier).sort(),
+				stored: [...value.stored].sort(),
+			});
+		}
+		case "fieldKind": {
+			return JSON.stringify({
+				location: {
+					nodeType: value.identifier ?? null,
+					fieldKey: value.fieldKey ?? null,
+				},
+				view: value.view,
+				stored: value.stored,
+			});
+		}
+		case "valueSchema": {
+			return JSON.stringify({
+				nodeType: value.identifier,
+				view: value.view === undefined ? null : ValueSchema[value.view],
+				stored: value.stored === undefined ? null : ValueSchema[value.stored],
+			});
+		}
+		case "nodeKind": {
+			const storedNodeKind =
+				value.stored === ObjectNodeStoredSchema
+					? "Object"
+					: value.stored === MapNodeStoredSchema
+						? "Map"
+						: "Leaf";
+			return JSON.stringify({
+				nodeType: value.identifier,
+				view: NodeKind[value.view],
+				stored: storedNodeKind,
+			});
+		}
+		default: {
+			return unreachableCase(value);
+		}
+	}
 }
 
 /**
