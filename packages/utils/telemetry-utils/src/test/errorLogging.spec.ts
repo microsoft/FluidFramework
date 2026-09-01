@@ -775,7 +775,10 @@ describe("normalizeError", () => {
 				expectedOutput: typicalOutput(
 					"boom",
 					"<<stack from input>>",
-				).withExpectedTelemetryProps({ untrustedOrigin: 1 }),
+				).withExpectedTelemetryProps({
+					untrustedOrigin: 1,
+					errorRunningExternalCode: "yes",
+				}),
 			}),
 			"LoggingError": () => ({
 				input: new LoggingError("boom"),
@@ -786,26 +789,36 @@ describe("normalizeError", () => {
 				expectedOutput: typicalOutput(
 					"[object Object]",
 					"<<natural stack>>",
-				).withExpectedTelemetryProps({ untrustedOrigin: 1 }),
+				).withExpectedTelemetryProps({
+					untrustedOrigin: 1,
+					errorRunningExternalCode: "yes",
+				}),
 			}),
 			"object with stack": () => ({
 				input: { message: "whatever", stack: "fake stack goes here" },
 				expectedOutput: typicalOutput(
 					"whatever",
 					"<<stack from input>>",
-				).withExpectedTelemetryProps({ untrustedOrigin: 1 }),
+				).withExpectedTelemetryProps({
+					untrustedOrigin: 1,
+					errorRunningExternalCode: "yes",
+				}),
 			}),
 			"object with non-string message and name": () => ({
 				input: { message: 42, name: true },
 				expectedOutput: typicalOutput(
 					"[object Object]",
 					"<<natural stack>>",
-				).withExpectedTelemetryProps({ untrustedOrigin: 1 }),
+				).withExpectedTelemetryProps({
+					untrustedOrigin: 1,
+					errorRunningExternalCode: "yes",
+				}),
 			}),
 			"nullValue": () => ({
 				input: null,
 				expectedOutput: typicalOutput("null", "<<natural stack>>").withExpectedTelemetryProps({
 					untrustedOrigin: 1,
+					errorRunningExternalCode: "yes",
 				}),
 			}),
 			"undef": () => ({
@@ -813,12 +826,20 @@ describe("normalizeError", () => {
 				expectedOutput: typicalOutput(
 					"undefined",
 					"<<natural stack>>",
-				).withExpectedTelemetryProps({ typeofError: "undefined", untrustedOrigin: 1 }),
+				).withExpectedTelemetryProps({
+					typeofError: "undefined",
+					untrustedOrigin: 1,
+					errorRunningExternalCode: "yes",
+				}),
 			}),
 			"false": () => ({
 				input: false,
 				expectedOutput: typicalOutput("false", "<<natural stack>>").withExpectedTelemetryProps(
-					{ typeofError: "boolean", untrustedOrigin: 1 },
+					{
+						typeofError: "boolean",
+						untrustedOrigin: 1,
+						errorRunningExternalCode: "yes",
+					},
 				),
 			}),
 			"true": () => ({
@@ -826,6 +847,7 @@ describe("normalizeError", () => {
 				expectedOutput: typicalOutput("true", "<<natural stack>>").withExpectedTelemetryProps({
 					typeofError: "boolean",
 					untrustedOrigin: 1,
+					errorRunningExternalCode: "yes",
 				}),
 			}),
 			"number": () => ({
@@ -833,6 +855,7 @@ describe("normalizeError", () => {
 				expectedOutput: typicalOutput("3.14", "<<natural stack>>").withExpectedTelemetryProps({
 					typeofError: "number",
 					untrustedOrigin: 1,
+					errorRunningExternalCode: "yes",
 				}),
 			}),
 			"symbol": () => ({
@@ -840,25 +863,34 @@ describe("normalizeError", () => {
 				expectedOutput: typicalOutput(
 					"Symbol(Unique)",
 					"<<natural stack>>",
-				).withExpectedTelemetryProps({ typeofError: "symbol", untrustedOrigin: 1 }),
+				).withExpectedTelemetryProps({
+					typeofError: "symbol",
+					untrustedOrigin: 1,
+					errorRunningExternalCode: "yes",
+				}),
 			}),
 			"function": () => ({
 				input: (): void => {},
 				expectedOutput: typicalOutput(
 					"() => { }",
 					"<<natural stack>>",
-				).withExpectedTelemetryProps({ typeofError: "function", untrustedOrigin: 1 }),
+				).withExpectedTelemetryProps({
+					typeofError: "function",
+					untrustedOrigin: 1,
+					errorRunningExternalCode: "yes",
+				}),
 			}),
 			"emptyArray": () => ({
 				input: [],
 				expectedOutput: typicalOutput("", "<<natural stack>>").withExpectedTelemetryProps({
 					untrustedOrigin: 1,
+					errorRunningExternalCode: "yes",
 				}),
 			}),
 			"array": () => ({
 				input: [1, 2, 3],
 				expectedOutput: typicalOutput("1,2,3", "<<natural stack>>").withExpectedTelemetryProps(
-					{ untrustedOrigin: 1 },
+					{ untrustedOrigin: 1, errorRunningExternalCode: "yes" },
 				),
 			}),
 		};
@@ -1010,33 +1042,53 @@ describe("wrapError", () => {
 			newError.getTelemetryProperties().innerErrorInstanceId === innerError.errorInstanceId,
 		);
 	});
-	it("Properly set untrustedOrigin", () => {
+	it("Properly sets external error telemetry properties", () => {
 		const untrustedError = createExternalError("untrusted");
 
 		const singleWrapped = wrapError(untrustedError, createTestError);
+		const singleWrappedProps = singleWrapped.getTelemetryProperties();
 		assert(
-			singleWrapped.getTelemetryProperties().untrustedOrigin === 1,
+			singleWrappedProps.untrustedOrigin === 1,
 			"wrapped external error should be 'untrustedOrigin'",
+		);
+		assert(
+			singleWrappedProps.errorRunningExternalCode === "yes",
+			"wrapped external error should be 'errorRunningExternalCode'",
 		);
 
 		const doubleWrapped = wrapError(singleWrapped, createTestError);
+		const doubleWrappedProps = doubleWrapped.getTelemetryProperties();
 		assert(
-			doubleWrapped.getTelemetryProperties().untrustedOrigin === 1,
+			doubleWrappedProps.untrustedOrigin === 1,
 			"doubly-wrapped external error should be 'untrustedOrigin'",
+		);
+		assert(
+			doubleWrappedProps.errorRunningExternalCode === "yes",
+			"doubly-wrapped external error should be 'errorRunningExternalCode'",
 		);
 
 		const normalizedError = normalizeError(untrustedError);
 		const wrappedNormalized = wrapError(normalizedError, createTestError);
+		const wrappedNormalizedProps = wrappedNormalized.getTelemetryProperties();
 		assert(
-			wrappedNormalized.getTelemetryProperties().untrustedOrigin === 1,
+			wrappedNormalizedProps.untrustedOrigin === 1,
 			"normalized-then-wrapped external error should be 'untrustedOrigin'",
+		);
+		assert(
+			wrappedNormalizedProps.errorRunningExternalCode === "yes",
+			"normalized-then-wrapped external error should be 'errorRunningExternalCode'",
 		);
 
 		const trustedError = createTestError("trusted");
 		const wrappedTrusted = wrapError(trustedError, createTestError);
+		const wrappedTrustedProps = wrappedTrusted.getTelemetryProperties();
 		assert(
-			wrappedTrusted.getTelemetryProperties().untrustedOrigin === undefined,
+			wrappedTrustedProps.untrustedOrigin === undefined,
 			"wrapped Fluid error should not be 'untrustedOrigin'",
+		);
+		assert(
+			wrappedTrustedProps.errorRunningExternalCode === undefined,
+			"wrapped Fluid error should not be 'errorRunningExternalCode'",
 		);
 	});
 });
@@ -1077,6 +1129,7 @@ describe("Error Discovery", () => {
 		const wrappedError = wrapError("wrap me", createTestError);
 		assert(!isExternalError(wrappedError));
 		assert(wrappedError.getTelemetryProperties().untrustedOrigin === 1); // But it should still say untrustedOrigin
+		assert(wrappedError.getTelemetryProperties().errorRunningExternalCode === "yes");
 
 		const loggingError = new LoggingError("testLoggingError");
 		assert(!isExternalError(loggingError), "new LoggingError is not external");
@@ -1085,7 +1138,7 @@ describe("Error Discovery", () => {
 			"normalized LoggingError is not external",
 		);
 
-		// Future compat - Eventually we want to switch untrustedOrigin to errorRunningExternalCode, so set up "read" code now in 2.0
+		// Cross-version compatibility requires accepting prior values of this property.
 		assert(
 			isExternalError(
 				normalizeError(loggingError, { props: { errorRunningExternalCode: 1 } }),
@@ -1093,7 +1146,6 @@ describe("Error Discovery", () => {
 			"normalized loggingError with errorRunningExternalCode flag is external",
 		);
 
-		// Future compat - Eventually we want to switch untrustedOrigin to errorRunningExternalCode, so set up "read" code now in 2.0
 		assert(
 			isExternalError(
 				normalizeError(loggingError, { props: { errorRunningExternalCode: "callback" } }),

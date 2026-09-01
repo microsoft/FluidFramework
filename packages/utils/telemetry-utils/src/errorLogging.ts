@@ -159,9 +159,7 @@ export function normalizeError(
 		? error.getTelemetryProperties()
 		: {
 				untrustedOrigin: 1, // This will let us filter errors that did not originate from our own codebase
-				// FUTURE: Once 2.0 becomes LTS, switch to this more explicit property name
-				// Consider using a string to distinguish cases like "dependency" v. "callback"
-				// errorRunningExternalCode: 1,
+				errorRunningExternalCode: "yes",
 			};
 
 	fluidError.addTelemetryProperties({
@@ -249,13 +247,11 @@ export function wrapError<T extends LoggingError>(
 		overwriteStack(newError, stack);
 	}
 
-	// Mark external errors with untrustedOrigin flag
+	// Mark external errors with both the legacy and replacement properties during migration.
 	if (isExternalError(innerError)) {
 		newError.addTelemetryProperties({
 			untrustedOrigin: 1,
-			// FUTURE: Once 2.0 becomes LTS, switch to this more explicit property name
-			// Consider using a string to distinguish cases like "dependency" v. "callback"
-			// errorRunningExternalCode: 1,
+			errorRunningExternalCode: "yes",
 		});
 	}
 
@@ -338,8 +334,6 @@ export function isExternalError(error: unknown): boolean {
 	if (LoggingError.typeCheck(error)) {
 		if ((error as NormalizedLoggingError).errorType === NORMALIZED_ERROR_TYPE) {
 			const props = error.getTelemetryProperties();
-			// NOTE: errorRunningExternalCode is not currently used - once this "read" code reaches LTS,
-			// we can switch to writing this more explicit property
 			return props.untrustedOrigin === 1 || Boolean(props.errorRunningExternalCode);
 		}
 		return false;
