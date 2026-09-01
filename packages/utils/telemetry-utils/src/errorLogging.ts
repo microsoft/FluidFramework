@@ -159,7 +159,7 @@ export function normalizeError(
 		? error.getTelemetryProperties()
 		: {
 				untrustedOrigin: 1, // This will let us filter errors that did not originate from our own codebase
-				errorRunningExternalCode: "yes",
+				errorRunningExternalCode: "unclassified",
 			};
 
 	fluidError.addTelemetryProperties({
@@ -251,7 +251,7 @@ export function wrapError<T extends LoggingError>(
 	if (isExternalError(innerError)) {
 		newError.addTelemetryProperties({
 			untrustedOrigin: 1,
-			errorRunningExternalCode: "yes",
+			errorRunningExternalCode: "unclassified",
 		});
 	}
 
@@ -334,7 +334,11 @@ export function isExternalError(error: unknown): boolean {
 	if (LoggingError.typeCheck(error)) {
 		if ((error as NormalizedLoggingError).errorType === NORMALIZED_ERROR_TYPE) {
 			const props = error.getTelemetryProperties();
-			return props.untrustedOrigin === 1 || Boolean(props.errorRunningExternalCode);
+			return (
+				props.untrustedOrigin === 1 ||
+				(typeof props.errorRunningExternalCode === "string" &&
+					props.errorRunningExternalCode.length > 0)
+			);
 		}
 		return false;
 	}

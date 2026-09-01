@@ -24,7 +24,7 @@ describe("Errors", () => {
 			assert(dce.getTelemetryProperties().dataProcessingError === 1);
 			assert(dce.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
 			assert(dce.getTelemetryProperties().untrustedOrigin === 1);
-			assert(dce.getTelemetryProperties().errorRunningExternalCode === "yes");
+			assert(dce.getTelemetryProperties().errorRunningExternalCode === "unclassified");
 		});
 	});
 	describe("DataProcessingError.create", () => {
@@ -39,7 +39,7 @@ describe("Errors", () => {
 			assert(dpe.getTelemetryProperties().dataProcessingError === 1);
 			assert(dpe.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
 			assert(dpe.getTelemetryProperties().untrustedOrigin === 1);
-			assert(dpe.getTelemetryProperties().errorRunningExternalCode === "yes");
+			assert(dpe.getTelemetryProperties().errorRunningExternalCode === "unclassified");
 		});
 	});
 	describe("DataProcessingError coercion via DataProcessingError.wrapIfUnrecognized", () => {
@@ -96,7 +96,9 @@ describe("Errors", () => {
 			assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
 			assert(coercedError.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
 			assert(coercedError.getTelemetryProperties().untrustedOrigin === 1);
-			assert(coercedError.getTelemetryProperties().errorRunningExternalCode === "yes");
+			assert(
+				coercedError.getTelemetryProperties().errorRunningExternalCode === "unclassified",
+			);
 		});
 		it("Should coerce external error object even with errorType", () => {
 			const originalError = {
@@ -114,7 +116,9 @@ describe("Errors", () => {
 			assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
 			assert(coercedError.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
 			assert(coercedError.getTelemetryProperties().untrustedOrigin === 1);
-			assert(coercedError.getTelemetryProperties().errorRunningExternalCode === "yes");
+			assert(
+				coercedError.getTelemetryProperties().errorRunningExternalCode === "unclassified",
+			);
 			assert(coercedError.message === "[object Object]");
 		});
 		it("Should coerce LoggingError missing errorType", () => {
@@ -190,7 +194,7 @@ describe("Errors", () => {
 						error.getTelemetryProperties().dataProcessingError === 1 &&
 						error.getTelemetryProperties().dataProcessingCodepath === "someCodepath" &&
 						error.getTelemetryProperties().untrustedOrigin === 1 &&
-						error.getTelemetryProperties().errorRunningExternalCode === "yes",
+						error.getTelemetryProperties().errorRunningExternalCode === "unclassified",
 				),
 			);
 			assert(
