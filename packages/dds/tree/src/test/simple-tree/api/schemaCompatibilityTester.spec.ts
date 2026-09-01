@@ -9,11 +9,14 @@ import {
 	EmptyKey,
 	storedEmptyFieldSchema,
 	type TreeStoredSchema,
+	ValueSchema,
 } from "../../../core/index.js";
 import { allowsRepoSuperset, defaultSchemaPolicy } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { checkSchemaCompatibility } from "../../../simple-tree/api/schemaCompatibilityTester.js";
+import { LeafNodeSchema } from "../../../simple-tree/leafNodeSchema.js";
 import {
+	checkSchemaCompatibility,
+	getSchemaIncompatibilityDetails,
 	type ImplicitFieldSchema,
 	type SchemaCompatibilityStatus,
 	type SchemaUpgrade,
@@ -59,6 +62,87 @@ function expectCompatibility(
 		assert.equal(allowsRepoSuperset(defaultSchemaPolicy, viewStored, stored), true);
 	}
 }
+
+describe("getSchemaIncompatibilityDetails", () => {
+	it("returns undefined for compatible schema", () => {
+		const schema = new TreeViewConfigurationAlpha({ schema: factory.number });
+		assert.equal(
+			getSchemaIncompatibilityDetails(schema, toUpgradeSchema(factory.number)),
+			undefined,
+		);
+	});
+
+	it("formats an allowed types discrepancy", () => {
+		const schema = new TreeViewConfigurationAlpha({ schema: factory.string });
+		assert.equal(
+			getSchemaIncompatibilityDetails(schema, toUpgradeSchema(factory.number)),
+			JSON.stringify([
+				{
+					location: "root",
+					view: [factory.string.identifier],
+					stored: [factory.number.identifier],
+				},
+			]),
+		);
+	});
+
+	it("formats all discrepancies", () => {
+		const schema = new TreeViewConfigurationAlpha({
+			schema: factory.optional(factory.string),
+		});
+		assert.equal(
+			getSchemaIncompatibilityDetails(
+				schema,
+				toUpgradeSchema(factory.required(factory.number)),
+			),
+			JSON.stringify([
+				{
+					location: "root",
+					view: [factory.string.identifier],
+					stored: [factory.number.identifier],
+				},
+				{
+					location: "root",
+					view: "Optional",
+					stored: "Value",
+				},
+			]),
+		);
+	});
+
+	it("formats a value schema discrepancy", () => {
+		const identifier = "valueSchema";
+		const viewLeaf = new LeafNodeSchema(identifier, ValueSchema.Number);
+		const storedLeaf = new LeafNodeSchema(identifier, ValueSchema.String);
+		const schema = new TreeViewConfigurationAlpha({ schema: viewLeaf });
+		assert.equal(
+			getSchemaIncompatibilityDetails(schema, toUpgradeSchema(storedLeaf)),
+			JSON.stringify([
+				{
+					nodeType: identifier,
+					view: "Number",
+					stored: "String",
+				},
+			]),
+		);
+	});
+
+	it("formats a node kind discrepancy", () => {
+		class ViewNode extends factory.object("nodeKind", {}) {}
+		class StoredNode extends factory.map("nodeKind", []) {}
+		const schema = new TreeViewConfigurationAlpha({ schema: ViewNode });
+		assert.equal(
+			getSchemaIncompatibilityDetails(schema, toUpgradeSchema(StoredNode)),
+			JSON.stringify([
+				{
+					nodeType: ViewNode.identifier,
+					view: "Object",
+					stored: "Map",
+				},
+			]),
+		);
+	});
+});
 
 describe("checkSchemaCompatibility", () => {
 	describe("function", () => {

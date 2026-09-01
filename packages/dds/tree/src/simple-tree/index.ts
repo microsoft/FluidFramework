@@ -145,7 +145,7 @@ export {
 	comparePersistedSchema,
 	type ConciseTree,
 	checkSchemaCompatibility,
-	getSchemaCompatibilityError,
+	getSchemaIncompatibilityDetails,
 	type Unenforced,
 	type System_Unsafe,
 	type ArrayNodeCustomizableSchemaUnsafe,
