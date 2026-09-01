@@ -35,23 +35,23 @@ import {
 const shouldRunScaleTests = process.env.FLUID_TEST_SCALE !== undefined;
 
 const useAzure = process.env.FLUID_CLIENT === "azure";
-const getArgValue = (name: string): string | undefined => {
+const getArgValueFromProcessCmd = (argv: string[], name: string): string | undefined => {
 	const prefix = `${name}=`;
-	const inlineArg = process.argv.find((arg) => arg.startsWith(prefix));
+	const inlineArg = argv.find((arg) => arg.startsWith(prefix));
 	if (inlineArg !== undefined) {
 		return inlineArg.slice(prefix.length);
 	}
 
-	const index = process.argv.indexOf(name);
-	const nextArg = process.argv[index + 1];
+	const index = argv.indexOf(name);
+	const nextArg = argv[index + 1];
 	return index === -1 || nextArg === undefined || nextArg.startsWith("-")
 		? undefined
 		: nextArg;
 };
-const useAzureFluidRelayFrs =
+const useFrsEndpoint =
 	useAzure &&
-	getArgValue("--driver") === "r11s" &&
-	getArgValue("--r11sEndpointName") === "frs";
+	getArgValueFromProcessCmd(process.argv, "--driver") === "r11s" &&
+	getArgValueFromProcessCmd(process.argv, "--r11sEndpointName") === "frs";
 
 /**
  * Detects if the debugger is attached (when code loaded).
@@ -94,7 +94,7 @@ function setTestTimeout(context: Mocha.Context, duration: number): void {
  * The 502 check is service-agnostic, so this is gated on the run actually targeting AFR.
  */
 function skipOnAfrAvailabilityDip(context: Mocha.Context, error: unknown): void {
-	if (!useAzureFluidRelayFrs || !isBadGatewayError(error)) {
+	if (!useFrsEndpoint || !isBadGatewayError(error)) {
 		return;
 	}
 
