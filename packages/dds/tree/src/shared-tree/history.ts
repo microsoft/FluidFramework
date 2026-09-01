@@ -28,11 +28,12 @@ class LazyTreeBranchCommitMetadata implements TreeBranchCommitMetadata {
 	 */
 	private readonly snapshot: {
 		readonly revision: SessionSpaceCompressedId;
+		readonly parent: GraphCommit<SharedTreeChange> | undefined;
 		readonly customMetadata: CustomMetadataTree | undefined;
 	};
 	private parentCache?: {
-		readonly prior: GraphCommit<SharedTreeChange>;
-		readonly cached: TreeBranchCommitMetadata;
+		readonly prior: GraphCommit<SharedTreeChange> | undefined;
+		readonly cached: TreeBranchCommitMetadata | undefined;
 	};
 
 	public constructor(
@@ -42,6 +43,7 @@ class LazyTreeBranchCommitMetadata implements TreeBranchCommitMetadata {
 		assert(commit.revision !== "root", "Cannot construct metadata for the root commit");
 		this.snapshot = {
 			revision: commit.revision,
+			parent: commit.parent,
 			customMetadata: commit.customMetadata,
 		};
 	}
@@ -59,16 +61,19 @@ class LazyTreeBranchCommitMetadata implements TreeBranchCommitMetadata {
 	}
 
 	public getParent(): TreeBranchCommitMetadata | undefined {
-		// The parent of the commit may change over time due to trunk trimming.
-		if (this.commit.parent !== this.parentCache?.prior) {
-			const { parent } = this.commit;
-			this.parentCache =
-				parent === undefined || parent.revision === "root"
-					? undefined
-					: {
-							prior: parent,
-							cached: new LazyTreeBranchCommitMetadata(parent, this.idCompressor),
-						};
+		if (this.commit.wasTrimmed) {
+			delete this.parentCache;
+			return undefined;
+		}
+		const parent = this.snapshot.parent;
+		if (parent !== this.parentCache?.prior) {
+			this.parentCache = {
+				prior: parent,
+				cached:
+					parent === undefined || parent.wasTrimmed || parent.revision === "root"
+						? undefined
+						: new LazyTreeBranchCommitMetadata(parent, this.idCompressor),
+			};
 		}
 		return this.parentCache?.cached;
 	}

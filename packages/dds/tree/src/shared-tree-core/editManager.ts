@@ -136,6 +136,7 @@ export class EditManager<
 			revision: rootRevision,
 			change: changeFamily.rebaser.compose([]),
 			customMetadata: undefined,
+			wasTrimmed: true,
 		};
 
 		if (logger !== undefined) {
@@ -373,12 +374,15 @@ export class EditManager<
 			Reflect.defineProperty(commit, "customMetadata", {
 				get: () => fail("Should not access 'customMetadata' property of an evicted commit"),
 			});
-			// Allowing the `parent` property to be read from evicted commits spares readers from having to check `wasTrimmed` in order to safely find the root commit.
-			delete commit.parent;
+			Reflect.defineProperty(commit, "parent", {
+				get: () =>
+					assert(false, 0xa60 /* Should not access 'parent' property of an evicted commit */),
+			});
 			commit.wasTrimmed = true;
 		}
 
-		// Dropping the parent field removes (transitively) all references to the evicted commits so they can be garbage collected.
+		// Dropping the parent field (transitively) removes references to the evicted commits so they can be garbage collected.
+		// Allowing the `parent` property to be read from the trunk base (despite it being a trimmed commit) spares readers from having to check `wasTrimmed` in order to safely find the root commit.
 		delete newTrunkBase.parent;
 		newTrunkBase.wasTrimmed = true;
 		this.trunkBase = newTrunkBase;
