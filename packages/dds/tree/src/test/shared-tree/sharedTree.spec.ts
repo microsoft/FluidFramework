@@ -67,6 +67,7 @@ import {
 	ForestTypeReference,
 	type ITreePrivate,
 	Tree,
+	TreeBeta,
 	type TreeCheckout,
 } from "../../shared-tree/index.js";
 import { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
@@ -85,13 +86,9 @@ import {
 	type SimpleTreeSchema,
 	FieldKind,
 	type SimpleLeafNodeSchema,
+	type TreeBranchCommitMetadata,
 } from "../../simple-tree/index.js";
-import {
-	handleSchema,
-	numberSchema,
-	stringSchema,
-	TreeBeta,
-} from "../../simple-tree/index.js";
+import { handleSchema, numberSchema, stringSchema } from "../../simple-tree/index.js";
 import {
 	configuredSharedTree,
 	resolveOptions,
@@ -974,90 +971,185 @@ describe("SharedTree", () => {
 		assert.deepEqual([...view2.root], ["A", "B", "C"]);
 	});
 
-	it("has bounded memory growth in EditManager", () => {
-		const provider = new TestTreeProviderLite(2);
-		const viewInit = provider.trees[0].viewWith(
-			new TreeViewConfiguration({
-				schema: StringArray,
-				enableSchemaValidation,
-			}),
-		);
-		viewInit.initialize([]);
-		viewInit.dispose();
-		provider.synchronizeMessages();
+	describe("Trunk Trimming", () => {
+		it("has bounded memory growth in EditManager", () => {
+			const provider = new TestTreeProviderLite(2);
+			const viewInit = provider.trees[0].viewWith(
+				new TreeViewConfiguration({
+					schema: StringArray,
+					enableSchemaValidation,
+				}),
+			);
+			viewInit.initialize([]);
+			viewInit.dispose();
+			provider.synchronizeMessages();
 
-		const [view1, view2] = provider.trees.map((t) =>
-			t.viewWith(new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation })),
-		);
+			const [view1, view2] = provider.trees.map((t) =>
+				t.viewWith(new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation })),
+			);
 
-		// Make some arbitrary number of edits
-		for (let i = 0; i < 10; ++i) {
+			// Make some arbitrary number of edits
+			for (let i = 0; i < 10; ++i) {
+				view1.root.insertAtStart("");
+			}
+
+			provider.synchronizeMessages();
+
+			assert.equal(provider.trees[0].kernel.checkout.branchHistory.length, 10);
+			assert.equal(provider.trees[1].kernel.checkout.branchHistory.length, 10);
+
+			// These two edits will have ref numbers that correspond to the last of the above edits
 			view1.root.insertAtStart("");
+			view2.root.insertAtStart("");
+
+			// This synchronization point should ensure that both trees see the edits with the higher ref numbers.
+			provider.synchronizeMessages();
+
+			assert.equal(provider.trees[0].kernel.checkout.branchHistory.length, 2);
+			assert.equal(provider.trees[1].kernel.checkout.branchHistory.length, 2);
+		});
+
+		/**
+		 * Gets all commits reachable from the given commit, including the commit itself.
+		 * Order: most recent commit first.
+		 */
+		function getHistory(
+			commit: TreeBranchCommitMetadata | undefined,
+		): TreeBranchCommitMetadata[] {
+			const history: TreeBranchCommitMetadata[] = [];
+			let currentCommit = commit;
+			while (currentCommit !== undefined) {
+				history.push(currentCommit);
+				currentCommit = currentCommit.getParent();
+			}
+			return history;
 		}
 
-		provider.synchronizeMessages();
-
-		assert.equal(provider.trees[0].kernel.checkout.branchHistory.length, 10);
-		assert.equal(provider.trees[1].kernel.checkout.branchHistory.length, 10);
-
-		// These two edit will have ref numbers that correspond to the last of the above edits
-		view1.root.insertAtStart("");
-		view2.root.insertAtStart("");
-
-		// This synchronization point should ensure that both trees see the edits with the higher ref numbers.
-		provider.synchronizeMessages();
-
-		assert.equal(provider.trees[0].kernel.checkout.branchHistory.length, 2);
-		assert.equal(provider.trees[1].kernel.checkout.branchHistory.length, 2);
-	});
-
-	// This covers in-memory retention only. See the "retainHistory persistence" suite below for the
-	// summary round-trip behavior.
-	it("does not evict trunk commits when retainHistory is enabled", () => {
-		const provider = new TestTreeProviderLite(
-			2,
-			configuredSharedTree({
-				jsonValidator: FormatValidatorBasic,
-				retainHistory: true,
-			}).getFactory(),
-		);
-		const viewInit = provider.trees[0].viewWith(
-			new TreeViewConfiguration({
-				schema: StringArray,
-				enableSchemaValidation,
-			}),
-		);
-		viewInit.initialize([]);
-		viewInit.dispose();
-		provider.synchronizeMessages();
-
-		const priorEditCount = provider.trees[0].kernel.checkout.branchHistory.length;
-		assert.equal(provider.trees[1].kernel.checkout.branchHistory.length, priorEditCount);
-
-		const [view1, view2] = provider.trees.map((t) =>
-			t.viewWith(new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation })),
-		);
-
-		const sequencedEditCount = 10;
-		for (let i = 0; i < sequencedEditCount; ++i) {
-			view1.root.insertAtStart("");
+		/**
+		 * Checks that all properties of the given commit are safe to read.
+		 * @remarks
+		 * This function recursively checks all ancestor commits.
+		 */
+		function checkHistorySafety(commit: TreeBranchCommitMetadata): void {
+			assert.doesNotThrow(() => commit.revision);
+			assert.doesNotThrow(() => commit.custom);
+			assert.doesNotThrow(() => commit.customTree);
+			assert.doesNotThrow(() => commit.getParent());
+			const parent = commit.getParent();
+			if (parent !== undefined) {
+				checkHistorySafety(parent);
+			}
 		}
 
-		provider.synchronizeMessages();
+		it("branch history remains safe to read after trunk trimming", () => {
+			const provider = new TestTreeProviderLite(2);
+			const viewInit = provider.trees[0].viewWith(
+				new TreeViewConfiguration({
+					schema: StringArray,
+					enableSchemaValidation,
+				}),
+			);
+			viewInit.initialize([]);
+			viewInit.dispose();
+			provider.synchronizeMessages();
 
-		// These two edits will have ref numbers that correspond to the last of the above edits
-		view1.root.insertAtStart("");
-		view2.root.insertAtStart("");
+			const [view1, view2] = provider.trees.map((t) =>
+				asAlpha(
+					t.viewWith(
+						new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+					),
+				),
+			);
 
-		// This synchronization point should ensure that both trees see the edits with the higher ref numbers,
-		// and would normally cause the earlier commits to be evicted from the trunk.
-		provider.synchronizeMessages();
+			// Make some arbitrary number of edits
+			view1.root.insertAtStart("A");
+			view1.root.insertAtStart("B");
+			view1.root.insertAtStart("C");
 
-		// All of the edits (plus the two additional ones) should still be present on the trunk since
-		// retainHistory prevents trunk commits from ever being trimmed.
-		const expectedCount = priorEditCount + sequencedEditCount + 2;
-		assert.equal(provider.trees[0].kernel.checkout.branchHistory.length, expectedCount);
-		assert.equal(provider.trees[1].kernel.checkout.branchHistory.length, expectedCount);
+			provider.synchronizeMessages();
+
+			// These two edits will have ref numbers that correspond to the last of the above edits
+			view1.root.insertAtStart("D1");
+			view2.root.insertAtStart("D2");
+
+			assert.equal(provider.trees[0].kernel.checkout.branchHistory.length, 4);
+			assert.equal(provider.trees[1].kernel.checkout.branchHistory.length, 4);
+
+			// Capture all commit metadata objects reachable before trimming
+			const view1HistoryBeforeTrimming = getHistory(view1.branchHistory.getHead());
+			const view2HistoryBeforeTrimming = getHistory(view2.branchHistory.getHead());
+
+			// This synchronization point should ensure that both trees see the edits with the higher ref numbers.
+			provider.synchronizeMessages();
+			// Test-check: trimming should have occurred
+			assert.equal(provider.trees[0].kernel.checkout.branchHistory.length, 2);
+			assert.equal(provider.trees[1].kernel.checkout.branchHistory.length, 2);
+
+			// Check that the newly reachable history post-trimming is safe to read
+			checkHistorySafety(
+				view1.branchHistory.getHead() ?? assert.fail("Expected view1 to have a head commit"),
+			);
+			checkHistorySafety(
+				view2.branchHistory.getHead() ?? assert.fail("Expected view2 to have a head commit"),
+			);
+
+			// For each commit metadata object that might have been produced prior to trimming, check that it is still safe to read.
+			for (const commit of view1HistoryBeforeTrimming) {
+				checkHistorySafety(commit);
+			}
+			for (const commit of view2HistoryBeforeTrimming) {
+				checkHistorySafety(commit);
+			}
+		});
+
+		// This covers in-memory retention only. See the "retainHistory persistence" suite below for the
+		// summary round-trip behavior.
+		it("does not evict trunk commits when retainHistory is enabled", () => {
+			const provider = new TestTreeProviderLite(
+				2,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					retainHistory: true,
+				}).getFactory(),
+			);
+			const viewInit = provider.trees[0].viewWith(
+				new TreeViewConfiguration({
+					schema: StringArray,
+					enableSchemaValidation,
+				}),
+			);
+			viewInit.initialize([]);
+			viewInit.dispose();
+			provider.synchronizeMessages();
+
+			const priorEditCount = provider.trees[0].kernel.checkout.branchHistory.length;
+			assert.equal(provider.trees[1].kernel.checkout.branchHistory.length, priorEditCount);
+
+			const [view1, view2] = provider.trees.map((t) =>
+				t.viewWith(new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation })),
+			);
+
+			const sequencedEditCount = 10;
+			for (let i = 0; i < sequencedEditCount; ++i) {
+				view1.root.insertAtStart("");
+			}
+
+			provider.synchronizeMessages();
+
+			// These two edits will have ref numbers that correspond to the last of the above edits
+			view1.root.insertAtStart("");
+			view2.root.insertAtStart("");
+
+			// This synchronization point should ensure that both trees see the edits with the higher ref numbers,
+			// and would normally cause the earlier commits to be evicted from the trunk.
+			provider.synchronizeMessages();
+
+			// All of the edits (plus the two additional ones) should still be present on the trunk since
+			// retainHistory prevents trunk commits from ever being trimmed.
+			const expectedCount = priorEditCount + sequencedEditCount + 2;
+			assert.equal(provider.trees[0].kernel.checkout.branchHistory.length, expectedCount);
+			assert.equal(provider.trees[1].kernel.checkout.branchHistory.length, expectedCount);
+		});
 	});
 
 	describe("Persists retained history", () => {

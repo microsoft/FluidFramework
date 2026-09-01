@@ -1106,7 +1106,7 @@ packages:
     resolution: {integrity: sha512-bgtpIXRnRPb42PDF53V0Gh4MT1cvwmDccnfiUSvlcXsJp0uisTR5YSvMxKLzzf2vySjm33OsFdu3iNVXPbmrpw==}
 
   '@fluid-experimental/sequence-deprecated@2.117.0':
-    resolution: {integrity: sha1-i3HjyvsJ/xG2c6pIpB30k+zx58U=, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluid-experimental/sequence-deprecated/-/sequence-deprecated-2.117.0.tgz}
+    resolution: {integrity: sha512-+RPo4qsYdC2aMsP+99JVVxWaM0R47qwrYjaU082Cj3ODJi6q2V6924H4qm0hlqN/ypP+i+BPH6ylH7C4KdF2ZA==}
 
   '@fluid-experimental/sequence-deprecated@2.13.0':
     resolution: {integrity: sha512-tVpoRVFMWb+iGyLEFZhJQFEGl8mr6pRDbZvS3F0wGPoyGEf1EjR7Q3BQfUcZ9K5CY7oyR/43sxJgqaPwZMYvaw==}
@@ -1154,7 +1154,7 @@ packages:
     resolution: {integrity: sha512-wmqHV/XVKaE7OJrr3S5RjGNP0wUSbRo/hnmnoCcGkP8TeebKms2p3vWQsSgLin74ESyqot0eoKXsc8VK2U8Fjg==}
 
   '@fluid-internal/client-utils@2.117.0':
-    resolution: {integrity: sha1-LBEVWL2ujLFjvFxSPZnRaZF87Io=, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluid-internal/client-utils/-/client-utils-2.117.0.tgz}
+    resolution: {integrity: sha512-+MmmzK8LTPq4NHOVzfXmcgWTrlrcxR/0e/chR07e2rHgwLHVPjvtZGS3tf5mnpSQhE5Qxh/OOr3/qO1LCEPNow==}
 
   '@fluid-internal/client-utils@2.13.0':
     resolution: {integrity: sha512-1HnG2I24G7279aTFqxgNdilAcP28Yfn0NJZB7frMZ5OtyWtF25+odAR0vWwMZMvmTwG+7ZdgRtQK0uctYpcNiw==}
@@ -1199,7 +1199,7 @@ packages:
     resolution: {integrity: sha512-7E1iAfo27dyktVPCaKGDSB4oHPamysu3C1wrMLFpVZzjib3+K7p/vFxbTxtgLsWd8aLc7fQnYX9uQQrayE2dAQ==}
 
   '@fluid-internal/test-driver-definitions@2.117.0':
-    resolution: {integrity: sha1-eInweHINXYzisu6p5c+KF0GI2Ag=, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluid-internal/test-driver-definitions/-/test-driver-definitions-2.117.0.tgz}
+    resolution: {integrity: sha512-h6xtYlfrwsfG/TKyi5B7A6sgBXUGhVr3kJxw6G9gPcHdp3LvNCutubXcTysFVBtVJF8TNXixLf+V+ZVUFfNqGg==}
 
   '@fluid-internal/test-driver-definitions@2.13.0':
     resolution: {integrity: sha512-ukMOLVON8eGMC361VNtpeXoDAfQqBCjr16ljUcj1ID1GOAr3PsXExz+XVa6AEEBf1pJfmC46sZUYXzvdmJoMhQ==}
@@ -1256,7 +1256,7 @@ packages:
     resolution: {integrity: sha512-j2wJsWK02SjwMSDPGVQL1Grem/2HPTNpoYgwuy3dSZXUfEiy4TKbnBFRwNEvkTbowMW4bgqliI9fYkBZyL55+g==}
 
   '@fluidframework/agent-scheduler@2.117.0':
-    resolution: {integrity: sha1-zdtM/sU181r3/IcFAdT1sDxwgJY=, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/agent-scheduler/-/agent-scheduler-2.117.0.tgz}
+    resolution: {integrity: sha512-w/47il1YYqoQX1XO3htQHEPDjvjoWOUU1nfh9/eZYg9iJSKnzh1L8yfemgqZlemY6YyQDOztzy9qVDOaBPmjxw==}
 
   '@fluidframework/agent-scheduler@2.13.0':
     resolution: {integrity: sha512-llFIRK1eYxNbIbJ07obFAP5mGhcNvgKWPaosO2/30HZG1RufW4i2V6QZ9Is6LEZGs/KSNxNSPUIxXFmUrnr11w==}
@@ -1313,7 +1313,7 @@ packages:
     resolution: {integrity: sha512-Odi13OUSbViN1NRnV9BXZ5TY2wcy8JUmrcL0KPy/5RCr1E6RCQa6dHZRJf/UPIDLyVyadebXYjAVQ1wNha9DWQ==}
 
   '@fluidframework/aqueduct@2.117.0':
-    resolution: {integrity: sha1-CHf7kD7BZJ6Kiz+gYvA9gOHbgQU=, tarball: https://ms-feed-17.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/aqueduct/-/aqueduct-2.117.0.tgz}
+    resolution: {integrity: sha512-BqW5J82QRSQyPMjCJSXl3wPhG5rLQmCPCushuDQWQlA+mYvxvVZNSvMvO4ik/fPVqVgwG7DSuOhs4Cim+gwJ5w==}
 
   '@fluidframework/aqueduct@2.13.0':
     resolution: {integrity: sha512-otYAZm1iVfwFin6kMcgtz5hunyB1pKQVSH8V8uHm88MbspAEPxGA+X7QVDuzRxMaOoHT4AdM8uQtcGjD5kpVmw==}
@@ -1373,7 +1373,7 @@ packages:
     resolution: {integrity: sha512-TvlG7xhTLrCI5y0gtWx7/6A75yoo4O1S6Ia+03h5ngmwHHp5TQ9utnlC+FCy3tTuzHGc5cmPPkecO+hKLbbeuQ==}
 
   '@fluidframework/cell@2.117.0':
-    resolution: {integrity: sha1-qGJtrkokGPhJU3lxcG9ipqaTzfo=, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/cell/-/cell-2.117.0.tgz}
+    resolution: {integrity: sha512-/r4FUpBFsb2k/YCuzCGh2hlXoWgMHicVUUOLT9VHTANXk7MSG1bUpCo7c8w+Ts3g853AMO5PKblAIDWgUnFpXg==}
 
   '@fluidframework/cell@2.13.0':
     resolution: {integrity: sha512-+6/mWfvL0+XKOAOM9vS/0ue/yE7Vbi4F6/okD7PEdKx3AswFymdDSkxFy3r3bA9QMIt47gjt/ucTL2mg00G0dQ==}
@@ -1445,7 +1445,7 @@ packages:
     resolution: {integrity: sha512-JevyLwOq1VBNZlR8fddnrr38/sgKewJX1XU1FiKqq4seQQ3VH6tImalX53jAd55PnYAIjM53vRsX9ictwz5b3A==}
 
   '@fluidframework/container-definitions@2.117.0':
-    resolution: {integrity: sha1-WT4ROm5WWddbQJEVako1JSA3RZI=, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/container-definitions/-/container-definitions-2.117.0.tgz}
+    resolution: {integrity: sha512-xlPT+2kH3NnriviBimpScvUQhtD0sWT92okfyHa0CtFWBWXML3bJYMH81S+H1E/vtC5lFgZISsha/y8VQEJMeg==}
 
   '@fluidframework/container-definitions@2.13.0':
     resolution: {integrity: sha512-E5jfiCopeiZXpYRn85dTYcnwXJdfKAV3IEIKchdqvkeyou3bu+7M4motZysqR9PV79TPEzPIoojplV7f+JTI9g==}
@@ -1502,7 +1502,7 @@ packages:
     resolution: {integrity: sha512-ktwgADxK0TPkLbR8nAqBIv2yVNhLcu4q6RiROboOvvwTo+J7GSnY465U37w6NQYbYaM6nmII/Ppj3LnHTew8Vw==}
 
   '@fluidframework/container-loader@2.117.0':
-    resolution: {integrity: sha1-gtzC2zsYMhFUZu3mrXT6Q0sSYcw=, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/container-loader/-/container-loader-2.117.0.tgz}
+    resolution: {integrity: sha512-EF6LuXjBbY327K98NXOqS+8XU9QrWuco16c+pgINO8l+GRILYuPxvhtwftDlE26GrK+8lM8hr16TBvSF12xzNg==}
 
   '@fluidframework/container-loader@2.13.0':
     resolution: {integrity: sha512-W/A9pGlPG02oL6RjOEnbe9Q5yO1OiW/K+CY8D0W9LvSLKd1x+J83u0mz1+1a7L/a6i9SCABeE5uiRuZFDKefsQ==}
@@ -1559,7 +1559,7 @@ packages:
     resolution: {integrity: sha512-5X9y+ZVPXWnaTQ1J1U2js/U+qRMa98Mq75thK9Jqi0iM6er4Kcqm8JKldiOth+AOBQL8vZuHnRxBElfGuSedKQ==}
 
   '@fluidframework/container-runtime-definitions@2.117.0':
-    resolution: {integrity: sha1-ACGPqA7o1aRUUfM6KDIO0AuvLKQ=, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/container-runtime-definitions/-/container-runtime-definitions-2.117.0.tgz}
+    resolution: {integrity: sha512-e90IaU55Me5NMI4YfZ+gxN8kPWpM+3jQhdXL/B8J6E4seK6i1e1qcJ/SZqaTZUpjEmDswcFqdCxK6AZwpPVdpA==}
 
   '@fluidframework/container-runtime-definitions@2.13.0':
     resolution: {integrity: sha512-GF0tzQkYzaVHRKoP9js/K4zgrbqxOHvAwQzvaDVAoT5birclGxLJM2KvDn3Ww2WNuR8CDG3gkLVCs2EPH0LSkw==}
@@ -1604,7 +1604,7 @@ packages:
     resolution: {integrity: sha512-wVzYj9GQQyFin4ZA9+VCRmgQac7mSg5H/g8UypYcWPJiGquDSHMxdI75Q1cC/6ZafmKXkNzdGRPr2/19e8ASOw==}
 
   '@fluidframework/container-runtime@2.0.0-internal.1.4.9':
-    resolution: {integrity: sha1-lxQwoolPlrLVdgsR89U2/1bw1O8=, tarball: https://ms-feed-17.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/container-runtime/-/container-runtime-2.0.0-internal.1.4.9.tgz}
+    resolution: {integrity: sha512-SBTsodFSKnLGxOzQjWi54Pi82Le2OdGpwKQu8Ltvtk1GBoHWGPkSaLCsjGP3bu4wf5raC2yYrfl6qIGtHGfQXA==}
 
   '@fluidframework/container-runtime@2.0.0-internal.5.4.2':
     resolution: {integrity: sha512-iPoTgAfZ6F0bBBKZkNl2TFbbsjh5xpdlSbLHebFh42SqazFV8+8iSowxR2nEX7yv7zQqV2zEGIENp+3a9Alucg==}
@@ -1613,7 +1613,7 @@ packages:
     resolution: {integrity: sha512-Ju+58IfRVZeQS5zgk0u6QHq9av0GQABV33BAioKOqtB685a1fbVhgTTPX74KtQlB0MKaXyt0mZNW9oXUkoUSpA==}
 
   '@fluidframework/container-runtime@2.0.0-internal.7.0.3':
-    resolution: {integrity: sha1-GPQYjTvmJZm/O4UgTQhVhy+G4kU=, tarball: https://ms-feed-17.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/container-runtime/-/container-runtime-2.0.0-internal.7.0.3.tgz}
+    resolution: {integrity: sha512-5HPp0olMbNOFS1SKk8kFhQEboMKSau6ODhXeZP/VyUmkuwmYYqH531DgChtcoriMVLAyMU8t0fKPcpgrcJGu0g==}
 
   '@fluidframework/container-runtime@2.0.9':
     resolution: {integrity: sha512-JizT3WHZzs3IuOnA5oAghDJ5o13cKhwD3U45Luvt2EbIADl+wB1W1TEjaKxiMXvty+ciR7oNX2HE1MXv4Ukwpw==}
@@ -1622,7 +1622,7 @@ packages:
     resolution: {integrity: sha512-PLUoaWGbOk8f3/NDnOjn9SUjJh6pA8LGXv3C7v4WeKODHg7vp3hEL4EHRgh0suOzg7G0Yg0aLN6OoGDSp18Zlw==}
 
   '@fluidframework/container-runtime@2.117.0':
-    resolution: {integrity: sha1-qpB+UI8O99QQFRlryL8GvDR1G5c=, tarball: https://ms-feed-17.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/container-runtime/-/container-runtime-2.117.0.tgz}
+    resolution: {integrity: sha512-iEB9KNt0B5RhGrQZDOOmnmFsge8txpk2t9XKrJPqXS1qeaFCqTNmoX8ZtrAxG+reyYXQPIwVxziC8Nh2T7Hzfg==}
 
   '@fluidframework/container-runtime@2.13.0':
     resolution: {integrity: sha512-K+8gbl9MF57DKgg5Uzc8rDyT08y5yXBv08xI4N2IFSZhXnasQLMRaURh9FKIAHVcCWqLOxvpEbeDrGlMuaApIw==}
@@ -1688,7 +1688,7 @@ packages:
     resolution: {integrity: sha512-rHyMcPC6N24CtxLQMx9nYOa9xUnXxLvV5/dA4F5oUySigOU04xioL9faRNE5+b+YB92aGh2a1f/l68/U2uVV+A==}
 
   '@fluidframework/core-interfaces@2.117.0':
-    resolution: {integrity: sha1-3UMXJA9pjHr1oI0Iww5iwIui7U8=, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/core-interfaces/-/core-interfaces-2.117.0.tgz}
+    resolution: {integrity: sha512-io1guHaPXJgJOGHIqITY7K9dCGaMgBukEoo/kHJ1dnFZKlN8nMxxjij+2hMD30ubggsw7HUTNkpgbiwQsKVteA==}
 
   '@fluidframework/core-interfaces@2.13.0':
     resolution: {integrity: sha512-PUorh8Vd4bOArdebDice8HnVUmksb3cpwahoxcpUnVEzqqe6E8cYrl1tZFB+4qtw7Jl/WBSkyIdaeQH8GWgcaA==}
@@ -1739,7 +1739,7 @@ packages:
     resolution: {integrity: sha512-WYCbB0j522nX6IiUiOfMODHMIONpF17fcug0MMNq/7BfDFip0jOvT+xUOQkkotfbloxmdpTD6/RS1FvMWcrg7g==}
 
   '@fluidframework/core-utils@2.117.0':
-    resolution: {integrity: sha1-q1CSqe/CJzjg/XNiySLdD8yJG2U=, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/core-utils/-/core-utils-2.117.0.tgz}
+    resolution: {integrity: sha512-MO1/JLiWusuwD9QPO6sOKNtSlkktTyn0oLtz0ikJCUyUhywUZ1hzbF9nfnT4STUXzWeJXUIxO9L13oTVMDYhvQ==}
 
   '@fluidframework/core-utils@2.13.0':
     resolution: {integrity: sha512-8r1cW8a7UT/oCcHZNINBUu2MrlqclJajh21BqOLGjGWn2WdNvI3iWh1F1KKE7WcvYS8RPi9V5/PdvA25tsqt7g==}
@@ -1796,7 +1796,7 @@ packages:
     resolution: {integrity: sha512-JLsFpFjd7Kx9vuPfrRaXO3PA9WJ7aZ4wPnvznkKa5leIh0vi7B0gHkio4sb9pZgxuQB6gghnP2cdTgUQ6JgiXQ==}
 
   '@fluidframework/counter@2.117.0':
-    resolution: {integrity: sha1-DxWjTYPAFGlQofm6sXX9wc7ztvU=, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/counter/-/counter-2.117.0.tgz}
+    resolution: {integrity: sha512-3t5CbsD4CUfsIxpcAqCkfcSd10x9Eo/zY8fDkOx2O1S2gqVpm1KZMlG2eeEfzfgXdlrVnkUj5qNdPJZfkdRrUQ==}
 
   '@fluidframework/counter@2.13.0':
     resolution: {integrity: sha512-YtqkqAX2dsVnKKcWYO4d9Be+zsbyYJLSc2C6mhrOY77SATopDdi9w0TSsjZ6y0GSASpg+xRxsHXQkEQScvah4Q==}
@@ -1853,7 +1853,7 @@ packages:
     resolution: {integrity: sha512-CsG8031l8HH2FOGE9v231CFgEGOk6G+J3i9ApQqplzF/C3G6+WVqpgCY6lU7XxgxxJGMt8y9eRT7SYSPzDzkTw==}
 
   '@fluidframework/datastore-definitions@2.117.0':
-    resolution: {integrity: sha1-iu2xHwe2mcSWqrL9k5tsmnv77dM=, tarball: https://ms-feed-17.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/datastore-definitions/-/datastore-definitions-2.117.0.tgz}
+    resolution: {integrity: sha512-GuuoK1Lz4N6df7NOAUEdmyJ2wnyxu6ApDYGcVDSiqNcH0pLtm/usWvwxEEw/5ySQ5+w1fVVeVMWhCVoK/thDHg==}
 
   '@fluidframework/datastore-definitions@2.13.0':
     resolution: {integrity: sha512-2pi7gNu127piWnvPmw5snBjObV4VSoHpuE0NIsuW4vqctrn4h6aqGKpEOSgL9FZM8PndasRskp2mlcVl00Ivaw==}
@@ -1895,13 +1895,13 @@ packages:
     resolution: {integrity: sha512-Y5Y8OC30kJG4BtLUcd4T7w+WLLiVKtapAcunyqP5ZODcNtNOaD+Z90XZAQj5p1zTw9b+FNqtq7iOaPWx42dh2A==}
 
   '@fluidframework/datastore@0.56.11':
-    resolution: {integrity: sha1-wGoU3DPVVtSM7t4RAB+nLH0GG4A=, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/datastore/-/datastore-0.56.11.tgz}
+    resolution: {integrity: sha512-r4WHPYxoPdBUeGV4cTcvWmhQ/W9bAnK24DnhDsRQw0QuOjH4TnCk+vKfekLFBcTFifTHO7yhQqXyADpX6jP0oA==}
 
   '@fluidframework/datastore@2.0.0-internal.1.4.6':
     resolution: {integrity: sha512-HzjG+9y0rnR2cDkr28NHJO2mPNdsPjP2pGwwyPER3prGuUNfxwTsIE76TR6UsfsfXLtFx8nEM1ZMnzLVpPAlSA==}
 
   '@fluidframework/datastore@2.0.0-internal.1.4.9':
-    resolution: {integrity: sha1-qKFZ0s4KqIoF3PR+gnmF+Zu7aNo=, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/datastore/-/datastore-2.0.0-internal.1.4.9.tgz}
+    resolution: {integrity: sha512-rASd+rTg6tjc4MlKlB9t15x/rR7JrcUF0Zy2Uf8Op9+9IZIZfw83tcXUFhJgcpuADQrrKlT4Y/mo8ntjfUZ2AA==}
 
   '@fluidframework/datastore@2.0.0-internal.5.4.2':
     resolution: {integrity: sha512-s4RGXDzA3sALD7b5UT8zxmq6Y5VpPre7bKpdWlb3dutGWSU42hgq+B2B4YyJKlvppKwK2tQfYnHl7vA7cNqd/w==}
@@ -1910,7 +1910,7 @@ packages:
     resolution: {integrity: sha512-jpRJ9ArExfNvGcj+ymPq52jSd+KphExV6ryYXGr9T8K2+akSS4ap0G/zzgOSvnxDk69jUev38s9DISr3wLHCVg==}
 
   '@fluidframework/datastore@2.0.0-internal.7.0.3':
-    resolution: {integrity: sha1-NFCQhuf9XZwDzIMlnreyirvzyew=, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/datastore/-/datastore-2.0.0-internal.7.0.3.tgz}
+    resolution: {integrity: sha512-9lhMx5e7qk/yW1zSATazqADXzGm6+ZNPaTO3GyWYIsf07UpxQCbulB5NPPgtsLLL7Fk7baOP9a8AT+RUTF/PcQ==}
 
   '@fluidframework/datastore@2.0.9':
     resolution: {integrity: sha512-f565ajAjOfnD/skb0Hu4SvRrrod/riBacc6+D88ZoqnrtxfdBz5whoycxFeQ/CZtE7ldgJ/vLBWeyRN290FYXA==}
@@ -1919,7 +1919,7 @@ packages:
     resolution: {integrity: sha512-zc+awra6bddjaxhxEd9kNmjlOhZFJYcE47beo1nFYa2IGq9YJ/BbEyrpIjpQ1o+4NktL4crfqxGcbFHNjODP0A==}
 
   '@fluidframework/datastore@2.117.0':
-    resolution: {integrity: sha1-q3lMuhTE7095tEdIvrEqzvTkag8=, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/datastore/-/datastore-2.117.0.tgz}
+    resolution: {integrity: sha512-lMiU4WmSVm2SHHuPdN/eshxrIO+HGxKrHQH1pwwFnBuntSSYUBHld+Pxc2LTDt1wU3w3zg5gkX/KgZlz3hn8xA==}
 
   '@fluidframework/datastore@2.13.0':
     resolution: {integrity: sha512-HgddKvTdT7+1neDHtnklquQRzjfoxB1bfgY1ZGARgBWW7pojjbF6h9yWlQ9H9aIdBlk0m+3qgo+vpTX1bWcsGA==}
@@ -1976,7 +1976,7 @@ packages:
     resolution: {integrity: sha512-9OLbWReB/hQ8HCKSh7cU0Ymw54RdYycrUICR2/mx3DSqP3OtUgHcRCcDTOSJ+PK6X+vlNHKYu5RKpU2uJUnQ0A==}
 
   '@fluidframework/driver-base@2.117.0':
-    resolution: {integrity: sha1-vq16fxvvR6QHfmEw5LcFd2yf9KI=, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/driver-base/-/driver-base-2.117.0.tgz}
+    resolution: {integrity: sha512-gInqbMvfpihs7idCM7lNZzmQQEtR8n564crl4mgqloRgO06AYVVaWLUhsCRonNtcyiEn05w0VtrbYoNkD4uU9w==}
 
   '@fluidframework/driver-base@2.13.0':
     resolution: {integrity: sha512-5nHQDikLJHY1SxoBa+pCRL6+sF3/q1DA2+nMFCdKF88/Cn51PNUP4H43c4y7orfhN4QrSIqNSkVHSDtUl0krog==}
@@ -2033,7 +2033,7 @@ packages:
     resolution: {integrity: sha512-6diQxn8hwtrrM89wOVbZvYDykWWGLPRzCIf2GBlnsqt4RCrcMs+ER6UZ8EwW7AVU/ttKEJJX3Os/ZnTtr4XJoA==}
 
   '@fluidframework/driver-definitions@2.117.0':
-    resolution: {integrity: sha1-HXhBPD/Nd/NWmqHWy7GeY7LQ7+g=, tarball: https://ms-feed-17.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/driver-definitions/-/driver-definitions-2.117.0.tgz}
+    resolution: {integrity: sha512-JXAtoU1alzNrOhIzUR5rijmpzvAWpyx1sTs6DBzTsiA/CGXZpEwslUUfjWir45k6Gg5FHcv3tZ17EOYbPhEsVQ==}
 
   '@fluidframework/driver-definitions@2.13.0':
     resolution: {integrity: sha512-4R/YluUM929x6j96un2imJGrczPsdDhpfOPEe1ENiAOe0oGTfFBV+3o7uEBei8KD4AbjKuEIma0/dCfO5Z9zug==}
@@ -2090,7 +2090,7 @@ packages:
     resolution: {integrity: sha512-M3cX8yL1GN8v3zuLaEgR7AboeOOFDSvw1OzJ7hzbzQ4j5KvIj4tt4K5w67Zv/jcFTrYbBqnQgYSmKXgM0+LThg==}
 
   '@fluidframework/driver-utils@2.117.0':
-    resolution: {integrity: sha1-auuuuRBR/yiw9C40xWyEVeg7JwU=, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/driver-utils/-/driver-utils-2.117.0.tgz}
+    resolution: {integrity: sha512-pIRNzcqthxkJdLuL/T/ZNPcnnUXqFmQ3NM1Cr56C179Drc8yw3cawsWSYt0P4Qa9Plh3UfD4PgOAx/D9XA1bCA==}
 
   '@fluidframework/driver-utils@2.13.0':
     resolution: {integrity: sha512-BxF5OFUzb9AfJWZv2FZBfX8YlforO3GORIJJNuhmDbLbp4B16FUUydP5K8U+JWFZaYRHkiBhR1A2D72QJnjZxw==}
@@ -2162,7 +2162,7 @@ packages:
     resolution: {integrity: sha512-/qCbB/X5UdYSPzr1772UObUzXHoMST3uWEwCjPA0sYiGf7ilZHF7aaSSTWkDvdS8sYX+VMFAp7QBxG6XOhsWTA==}
 
   '@fluidframework/id-compressor@2.117.0':
-    resolution: {integrity: sha1-EszP4TM3BB484IhyrgFG4xPyF74=, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/id-compressor/-/id-compressor-2.117.0.tgz}
+    resolution: {integrity: sha512-r/BsJvnZ1h59iE34kfZu99Nwofg24oiNkxgFP4MVPhuFOmoOPzA6ft61Y1gPqW5ae9Yo2Azf3CnV8e8kgJsilw==}
 
   '@fluidframework/id-compressor@2.13.0':
     resolution: {integrity: sha512-Ape+kFFITYmDnX6B9tuZXWmJgYsf4d7lk4AT2Oj0zEqBMxJJOEEpga00LL2Zt2EVWJ5VdUH/MqAowB8SbVgW0g==}
@@ -2219,7 +2219,7 @@ packages:
     resolution: {integrity: sha512-UQo6oB9su40lF/VuAkDjINw36Haq/Hadta/6/fj0TNcOiywOX90Hfno9NrqEfrKyH6dF6Zass2/SkkAlITXCYg==}
 
   '@fluidframework/local-driver@2.117.0':
-    resolution: {integrity: sha1-JoEv6N2jF9bU+UG4UqQAT7ejGbk=, tarball: https://ms-feed-17.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/local-driver/-/local-driver-2.117.0.tgz}
+    resolution: {integrity: sha512-vrF6rRcY4zC6iWaWyBkHOeCkBfF3Aap9uTlH1i1gZsaiOGBJpSfEM+JzrEsXonJxkEhV2QF8DFAr2XjStVOyXg==}
 
   '@fluidframework/local-driver@2.13.0':
     resolution: {integrity: sha512-+ZjAPFQCNvgT0nx2VD6sxMmmoaBwJd4iLTtaZXotjK1ZVz7kJAporMg8JDL/M7xqQmz7aBIP32gYr1HQv8F4QA==}
@@ -2276,7 +2276,7 @@ packages:
     resolution: {integrity: sha512-JLzB1wOQle0IdLuzQxP3qibLK8Gy6ZioA0gYq5pePlhJHiwGX5BBADvN+N6viXtcKHQjrrb2AHwlsJd4hvCWzQ==}
 
   '@fluidframework/map@2.117.0':
-    resolution: {integrity: sha1-MjWYRBfUjrTGVr0ryWCwVWvDAVQ=, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/map/-/map-2.117.0.tgz}
+    resolution: {integrity: sha512-vtN3cs6VHTKY5o4rcKiS61fVYcWkI2avTqT69dKyQEwmqEwDs9aAD9VlxWngNL+lG4TLhSqX0tYhA/aRNQAXAQ==}
 
   '@fluidframework/map@2.13.0':
     resolution: {integrity: sha512-LiXT/+r7rN509x1V8G+iiC8xzvh99lfh2vnEXKlNiznvHJOMP7+YUCX3YPB1VZy2FHgWFrAzzhyM/9WU89ER0A==}
@@ -2333,7 +2333,7 @@ packages:
     resolution: {integrity: sha512-W035dzQHLKF/SZlgHe0M/prSq8mFC895b4UjinakVvQzeqCwryqubO9harn6DjYcQBBXQpvd0vhCQavWWVkvSw==}
 
   '@fluidframework/matrix@2.117.0':
-    resolution: {integrity: sha1-jR1rbO4tAnjzGwvejnkTXK2X8Is=, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/matrix/-/matrix-2.117.0.tgz}
+    resolution: {integrity: sha512-RMPLDUuT0rjphXJZKsWRAg43gYJgexJKq+be95DLus0+qhmjrk8bwQCOE29vY3fjTRdQd2CruIEfjb+huq70sw==}
 
   '@fluidframework/matrix@2.13.0':
     resolution: {integrity: sha512-2n3ewjzXFD8jcrQFrM3y9tEnv/H1LVO9EhEoN7D8sNwZNxE+3nNTRf1pOxdrrkrcmPUHYoq9CT4feMF72vqy0Q==}
@@ -2390,7 +2390,7 @@ packages:
     resolution: {integrity: sha512-O8pFeQLGPJh2awfYrZgkoUgj3H/bEjVZkSwU4p8m0VysDqOoTDmnLRXfLhxreN+S4xZ5kdYjhF4Vl63rrawNwQ==}
 
   '@fluidframework/merge-tree@2.117.0':
-    resolution: {integrity: sha1-sRvDoitbx5989f55/o13kfttpBk=, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/merge-tree/-/merge-tree-2.117.0.tgz}
+    resolution: {integrity: sha512-4mxeRxRuKKgL90B+X98EakzcmloclOSTmLJ6Dtyp5ROb9lzNKIgQZsIEdURyEIi/pTMn96Wbnb6jx/yDrR3lbg==}
 
   '@fluidframework/merge-tree@2.13.0':
     resolution: {integrity: sha512-MzGR0hXebEVpFG64hL0h40ua7V8ZTpTbDmNzDqhXlKHW/c5RAcxr6v3jdMNs9S7SQwTVmBMyf+jLDtoPMKJnBg==}
@@ -2447,7 +2447,7 @@ packages:
     resolution: {integrity: sha512-0oeZC4qsoOgJj01AFZSZvQ7vugyaR4eIpVDX+Lg0B1s8IWeeTQXbPQZ+9EtyfeyYTXYYk2XuOPznE8q/558TOw==}
 
   '@fluidframework/odsp-doclib-utils@2.117.0':
-    resolution: {integrity: sha1-fYXAQ22Rtt2rgNIFn+I7HOG6FTc=, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/odsp-doclib-utils/-/odsp-doclib-utils-2.117.0.tgz}
+    resolution: {integrity: sha512-axCB5Tjw2vJ7UstGbBN5x7vZPEt61oGUQZs3rBGBPTfQ/sUrW6MFwwEdb4yaUdhYQ5XHYGdUoayzlWWQC46lJg==}
 
   '@fluidframework/odsp-doclib-utils@2.13.0':
     resolution: {integrity: sha512-mVYPAGGC2Az7wmTRVgPnpisLwarUdXau84hRW1aR3xoHDGxSsixiD8admYYclUrMt5z85UNJ/s5jqePq+7TJHw==}
@@ -2504,7 +2504,7 @@ packages:
     resolution: {integrity: sha512-WOuOggDXjrokRwvUAQz/WA2u15SH8ngROMkcaMk6+oGb/m8Hy5RoxhN3ueHlv6U2W/cQ5kwgg/zKctyEeswq7A==}
 
   '@fluidframework/odsp-driver-definitions@2.117.0':
-    resolution: {integrity: sha1-iyQ38TNgxBrdp0E6DOClyIJKh1I=, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/odsp-driver-definitions/-/odsp-driver-definitions-2.117.0.tgz}
+    resolution: {integrity: sha512-B3DmguIvpPltaPPgwehnTjNyImV1m4kXLDo1th9/uM/ieXOsGgdc/7NanrXRH4TF6p5uYYVF3O/C34hCl7euvQ==}
 
   '@fluidframework/odsp-driver-definitions@2.13.0':
     resolution: {integrity: sha512-FA2J+A4lPRuRun3bvij+SUJBhFygeOoWPw3LMYOg4OxnvIzxZq+D3vlQNUdB2DbS1DlNpffaHk3V80HbB+18ww==}
@@ -2561,7 +2561,7 @@ packages:
     resolution: {integrity: sha512-YssWfKeI2d7RYCs4tyB5wgIk1jQmkNc2hqEznbaQ6SDolSfOXmD/d5bULuxnXcdWOf2BGyf/VO5gtMmjpVRaYQ==}
 
   '@fluidframework/odsp-driver@2.117.0':
-    resolution: {integrity: sha1-FjOHyOMb/MkbsZGf8JwHARwZJQU=, tarball: https://ms-feed-17.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/odsp-driver/-/odsp-driver-2.117.0.tgz}
+    resolution: {integrity: sha512-asu07NPlqRN8S9gBOBQ2R8hNPabYzJrwjmug0LY5k9IB8x7U99+Yc6x2fzPXoObLH+u7C8IJxDVgClLvqa9jjQ==}
 
   '@fluidframework/odsp-driver@2.13.0':
     resolution: {integrity: sha512-+HUISS1MDS2MXzHuP23njwjFb3t4xU/SRau77AAxcius+YpaNhJrsodcHc4seXiOAOqEoXtf62zJFs4fGLUAcw==}
@@ -2618,7 +2618,7 @@ packages:
     resolution: {integrity: sha512-+Z5Q4t+PD+LRdFo06hDonCSOIYLuEI4QXcxR2BEejI4Fy+u5NqD7+A7hK2sMl0pe9CVmE5crFC8d90F0eJ4e/w==}
 
   '@fluidframework/ordered-collection@2.117.0':
-    resolution: {integrity: sha1-6wHp+72xGus2ZoRE3hJGZk6Ab78=, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/ordered-collection/-/ordered-collection-2.117.0.tgz}
+    resolution: {integrity: sha512-DtaUb8UjkWDKTxc5afGGgbU1s9bijPBtwaNZ3qQZKkHlIvqEr8HvpdzhgIDzpd+KABf8A+pLCTfDffb/rnx7aA==}
 
   '@fluidframework/ordered-collection@2.13.0':
     resolution: {integrity: sha512-sYIH/+4R1tQcwjgagd+6JocCFy5vewI/qvIVoBgiZUlxgAOvo26aRgYH0ov5xbuCT18yrzSjMIeDcdMY98ukhQ==}
@@ -2675,7 +2675,7 @@ packages:
     resolution: {integrity: sha512-LUSTKQBJVnemMLMQUuoszHvl46XBfflI8U9R8kW+12T2W/Vvt+ldML7203MvNg4E/sFScGfqqZS5OzYn0z1TIw==}
 
   '@fluidframework/protocol-base@7.0.1':
-    resolution: {integrity: sha1-waA3jkhKW1grQTqrEyTD+w4UzDI=, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/protocol-base/-/protocol-base-7.0.1.tgz}
+    resolution: {integrity: sha512-WfMf+vN0OmUHl0xJIsY6jnnsF5p27apMRd38pC9TlMx1URt+3C2fV4WLEybn2wYEGepYcK03ZMqe6I+DXt7/6g==}
 
   '@fluidframework/protocol-definitions@0.1026.0':
     resolution: {integrity: sha512-dDjLGrpZd02NU9oXEzgQlW50EDt75v2CSU90xhg4S1VkHHuNrQfc/jEEeYNAVqac9duPutcDK4pP1n4AESYjlw==}
@@ -2705,7 +2705,7 @@ packages:
     resolution: {integrity: sha512-Vg1I3a/DQeBb+WZh/32gL/mijie9F0AL1sGL+O/U5DdZCD2Ym/XgTFWRfAFZyK4BKadc11KgVSijVzz2lJmlOg==}
 
   '@fluidframework/register-collection@2.117.0':
-    resolution: {integrity: sha1-6H74Lqv6R0q+rkmueOn8f+Y+7/k=, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/register-collection/-/register-collection-2.117.0.tgz}
+    resolution: {integrity: sha512-0QSfu4Fe5T/SCgWItf0e7sP/EyHzdXGBYzfpqxPHOkS7+SzU+KJrow0GT5k6ZqAnhLO6boVXhN/wi1WLb8njXQ==}
 
   '@fluidframework/register-collection@2.13.0':
     resolution: {integrity: sha512-ZT9PfiwWk9vp0W/03pS7AW83BPTUxFH1H05Ey4BdLtLu7KKUhQ0qJeTlwDkdG4iz698hRYSiO+08ka13RZEICQ==}
@@ -2762,7 +2762,7 @@ packages:
     resolution: {integrity: sha512-wqK+EYXsHlU2Vbc+P+ZKBsGeZ01Wcc0pFJN3+zkQGxXgKn7IPerjneIqCx0Bd1/fJQBBo4oTwZPgF4pAApfiQg==}
 
   '@fluidframework/request-handler@2.117.0':
-    resolution: {integrity: sha1-e2kldd70B/JQbbZ7oM+YgC28YSM=, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/request-handler/-/request-handler-2.117.0.tgz}
+    resolution: {integrity: sha512-fzMeb/YfHNtSdThvj2fiFpWHJwW8ridaOubicLmNMRg3ES4mYXPJGsor7jBuf6KC8yeFbJNKXwMDCj1uLxK8LQ==}
 
   '@fluidframework/request-handler@2.13.0':
     resolution: {integrity: sha512-mCq5GeKp0ve+iORP4XMtjsttCMm9hSZZ3jT0nsV1zHvOCNwRx4z/DQe/Icpp/Kn45e9iU2NZTbcs7hq4zhIPfA==}
@@ -2804,13 +2804,13 @@ packages:
     resolution: {integrity: sha512-cOZOvmLRzohQZ3wqSrWRsjV1ycwSqOSmgxa0FCgQoCuaHIGrwjuqIh/FHm3wCmGKL4YSq1sNMv+mBYDWj6OpmQ==}
 
   '@fluidframework/routerlicious-driver@0.56.11':
-    resolution: {integrity: sha1-y4XzJuCofS9JglJQ3B+IvQLjllY=, tarball: https://ms-feed-17.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/routerlicious-driver/-/routerlicious-driver-0.56.11.tgz}
+    resolution: {integrity: sha512-vDeEJW3TEPSA9O2uc0H5sn3LIQZx6cGUW22Tr2bYTgN9fqQgFC38pXkinmKmQfiNmxqEjTcxoR9/YF7Mg8f+GQ==}
 
   '@fluidframework/routerlicious-driver@2.0.0-internal.1.4.6':
     resolution: {integrity: sha512-itS0NT1jzHuEsqZLfvOrnkZ0Lf10gLduz+NJlyioi/JDiHZejNhxbWF2XPnBJVr2V442DmZxT39EPIYximLvLA==}
 
   '@fluidframework/routerlicious-driver@2.0.0-internal.1.4.9':
-    resolution: {integrity: sha1-Om6owDd1vnrVuaroaxtIHmClRK8=, tarball: https://ms-feed-17.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/routerlicious-driver/-/routerlicious-driver-2.0.0-internal.1.4.9.tgz}
+    resolution: {integrity: sha512-gj5A0d+W34TrGm3v+Rs8UeY0YXnEH4BBA/BQF4G2KUiHwygf4i+5Mvm135ZqzFllBekBOvCOiBFMrR5S4ZpBQw==}
 
   '@fluidframework/routerlicious-driver@2.0.0-internal.5.4.2':
     resolution: {integrity: sha512-ZVPs2+xCqTxarQZGkcTNFP62R3Yx7cn5sGH/62qJGcNa0LMlISsT+DThy9sOPxC71VvQpvGFH5r7y+28azYQ7w==}
@@ -2819,7 +2819,7 @@ packages:
     resolution: {integrity: sha512-+O1Omih8k3gLXfClw3A6CFlgNccBkujUBkeW/4t67LXVr2Z3/q4OOqfSmXVEFePyjiJZ0O6mErAXRRJ78euJVA==}
 
   '@fluidframework/routerlicious-driver@2.0.0-internal.7.0.3':
-    resolution: {integrity: sha1-WWUf++krdjlZcAw3/opZMN+Qnwo=, tarball: https://ms-feed-17.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/routerlicious-driver/-/routerlicious-driver-2.0.0-internal.7.0.3.tgz}
+    resolution: {integrity: sha512-dd2jTGgp/Cwcvucfo8wB04SMkBgdKR3JwvlxWYz1+13n7NE681WPyWKIiiQpe3EY6QDHT4259VvK3z337JG96g==}
 
   '@fluidframework/routerlicious-driver@2.0.9':
     resolution: {integrity: sha512-IDbhZXr36Pvn86nE9qCpnWHOC/gN9iIedrcW2NAzXowRNPkH7IuBisCvLrSFeca13gjqfOh3RZU9pwGYeuQSAA==}
@@ -2828,7 +2828,7 @@ packages:
     resolution: {integrity: sha512-SIMiSZj9SZDvatRZpg5an0aaC1oWVRVX0uH+xw+bYTyIuAf9X+WSgbVgcdDZy4pvH4hesnkacAkntG2dAGp7Zw==}
 
   '@fluidframework/routerlicious-driver@2.117.0':
-    resolution: {integrity: sha1-htHG1Ir8PvWJCgpEUeLk9lqBxtM=, tarball: https://ms-feed-17.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/routerlicious-driver/-/routerlicious-driver-2.117.0.tgz}
+    resolution: {integrity: sha512-4CfcAGHtEMcY1mnuGUscKkoQdnGaWUrtHY1ZbWyCdiqPX2ZMsms8KmfG3k94DDDGXBTg+fqe33qmqzYmnyvm1g==}
 
   '@fluidframework/routerlicious-driver@2.13.0':
     resolution: {integrity: sha512-dQJE/+1rVTjP26PoHtfzJJTjWH9QLAV+7hNF5fs9zA6plAjEAPFc0bC54uAKwfDbT5VBJXveqRv9k4mPXwAMnQ==}
@@ -2885,7 +2885,7 @@ packages:
     resolution: {integrity: sha512-lpxw+jsonEKXRm1LhjfutaFGWRd1xJmtuDrQB8tFDjdtIGt3NW6h8FEA3DNg7/LeAb61+44lfY4YFjChws6Wjw==}
 
   '@fluidframework/runtime-definitions@2.117.0':
-    resolution: {integrity: sha1-polFCIs1H7gQcgRdjhc1QPQkug8=, tarball: https://ms-feed-17.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/runtime-definitions/-/runtime-definitions-2.117.0.tgz}
+    resolution: {integrity: sha512-tx9WY3m2uFDKLjOk09WJ2HQVFaTQLE5rdLvhJDekX5g2d2pwgfSFw6kzwaT+W8qqspniS9vWOUt4PRrX58o3BQ==}
 
   '@fluidframework/runtime-definitions@2.13.0':
     resolution: {integrity: sha512-X46gNWCCxvrtXRdrijBnaNaB11mSgctJj38w2PaEsQrfdL+KE1RKkgr/919yen1RRmJK/xzNvS44AS7Y0b5N0w==}
@@ -2942,7 +2942,7 @@ packages:
     resolution: {integrity: sha512-Q0xqImU3YQ7zYZzP9mfvTBXbiLlUpAQxuNOFQJRsD4kd+u7rHAKfGp76Q+GL2HE/7ApHu5pFewJjcHb8Hs6azw==}
 
   '@fluidframework/runtime-utils@2.117.0':
-    resolution: {integrity: sha1-eSjoiO2DL5sYW+/n1Ilv769PM4U=, tarball: https://ms-feed-17.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/runtime-utils/-/runtime-utils-2.117.0.tgz}
+    resolution: {integrity: sha512-hSGYCyRD296PnihW8THdwEQqY4ERUYb+PhXS4I6oZIS+XgIvMDHxP0JL9aonpzsGQ4AHf8jRM80GO1Rl2rnb3w==}
 
   '@fluidframework/runtime-utils@2.13.0':
     resolution: {integrity: sha512-8e0EeWINuNfy1NwVlwymggIowtO2i6funhyko7ByY9QAJ3q4eHt5f3mTSGXWdH+YB0GrSFHN+hfapXaLOHFRGg==}
@@ -2999,7 +2999,7 @@ packages:
     resolution: {integrity: sha512-JTdQe49YE+l8m5BGfj2ownX2JciRHeCk6Sdm25blCu6KCxk+I3oW2gdILCn1IZuQKSkQcLeWkMwOt1Du3mJCMA==}
 
   '@fluidframework/sequence@2.117.0':
-    resolution: {integrity: sha1-s5yEUk35y8iO8+nfajF4KZP6jHc=, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/sequence/-/sequence-2.117.0.tgz}
+    resolution: {integrity: sha512-G1RRxhSHAO1jCAAOFhDtZSBM9hDvGJSQx0T/YRxf6Sh185wR0zRqAkErarvYwt0wKUs5ECG8dnFc+8CbSzOjPg==}
 
   '@fluidframework/sequence@2.13.0':
     resolution: {integrity: sha512-mV/IYX7mhZUfOdpiTDe3hDn5Ln4z8ort1qSjt5s/GCxyeCHS1NaMZDnygHrdiocUoaVi1cYZl1h7wdl3jduLsw==}
@@ -3098,7 +3098,7 @@ packages:
     resolution: {integrity: sha512-ygCDPr3pE8HCakMtdYOlv8X6jpyzqval1hbf45v3egBI5LmolA+RDxKGA/nNKo525u13kGglPWvsuC/8tN82qA==}
 
   '@fluidframework/server-local-server@7.0.1':
-    resolution: {integrity: sha1-YLyQCw8qK5/Ggrmb0i2bi5QosW4=, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/server-local-server/-/server-local-server-7.0.1.tgz}
+    resolution: {integrity: sha512-MjszPW3Io2/wITc5qCxQlhocRssobDePYOicLccWKItIZ3XuN2wAp33+pOYte9ImYvlQlV4M2F6ratYppn/Nrg==}
 
   '@fluidframework/server-memory-orderer@0.1034.0':
     resolution: {integrity: sha512-SsLP2YpwqHw4g4OGGdTrLI+SJoURNrlphLnWMdEDy8kKoHQSP8O5FIf1BAUYzXsec3CJ6uLKnwvNq4AKPUOJdw==}
@@ -3140,7 +3140,7 @@ packages:
     resolution: {integrity: sha512-gzEvH6wNpRuMsyZhY22JrOHbTFsPGSzjLIlAWmnT7UT0znYGCDaMC39WPbOLLm7O8JSvmUblGe2Vx8N1+gCOgQ==}
 
   '@fluidframework/server-services-client@7.0.1':
-    resolution: {integrity: sha1-CuF3LJGPwSq+g10/niCDlc/04FI=, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/server-services-client/-/server-services-client-7.0.1.tgz}
+    resolution: {integrity: sha512-39T7SZba2JdrkkOYqcGr8ZEg+SqPtxVTsHM02CI1yrvZPL78jog0iGcNRe8BrPyTCH0Xw9QOqpJND4/QbV/l4Q==}
 
   '@fluidframework/server-services-core@0.1034.0':
     resolution: {integrity: sha512-vI+9pJGjvZkfh3qDtdjnmk0blBJgDjSp+kR+priX8XRhQa5JZaIrvMxfo8uzwOXU2K+yJQNfGAaXOOwx9X5UQg==}
@@ -3161,7 +3161,7 @@ packages:
     resolution: {integrity: sha512-LdPERvJ/8nyXOxDPJ0VsWBHsGjwaCve7kdOcMTBk26UQhsHKtSl1D4ZuStoremzzQZBnA0FuksoZsA2yDizwAg==}
 
   '@fluidframework/server-services-core@7.0.1':
-    resolution: {integrity: sha1-HQfbuc3wtDg4q2QFcc2TyOHD3K4=, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/server-services-core/-/server-services-core-7.0.1.tgz}
+    resolution: {integrity: sha512-5LCpUKcEaV4bFf7SkqkHv8SpHNUWacXtKNzI5JLfkTUCPdiax4tDUjaTTkrMAibrt/3q3eCdb/ZnqY7Xc4qE6A==}
 
   '@fluidframework/server-services-telemetry@0.1034.0':
     resolution: {integrity: sha512-1RQ2Xgeb3QVjuqgjlLR1fGAkD8+g+Y0WGdhgo2rim3Z7ySAC3V9y7HQAfrQ4DIXh/0cpGCOZH+RNF2u7zGBCmQ==}
@@ -3203,7 +3203,7 @@ packages:
     resolution: {integrity: sha512-ACUoJDbL3sckzeDe/1DGUamYI9IIGyYyeP88MfEnunqgz9FoDrdn3Jae2Vl1SSBYLtck8IxG86rSOh0kbXcPHQ==}
 
   '@fluidframework/server-test-utils@7.0.1':
-    resolution: {integrity: sha1-6XDkXHdXn/bkTBC2ASLl5Gj6KVw=, tarball: https://ms-feed-17.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/server-test-utils/-/server-test-utils-7.0.1.tgz}
+    resolution: {integrity: sha512-x6WN7pJNfjFBzCHdQKheIbIDgIb3jsi9AMx30JWPVqciBUWptMGrQK7/0Qo2URdQhzJ0A1j8jmE5ghKbGpYFYA==}
 
   '@fluidframework/shared-object-base@0.56.11':
     resolution: {integrity: sha512-v2DaZSDvTWpKC7Ja9Z4KStem8Gwugds2CCHCBkcWV7BJgy236IFkJA48f35u8HwhZ8t49M9+iSNsA74155f62A==}
@@ -3224,7 +3224,7 @@ packages:
     resolution: {integrity: sha512-X0a4AknstOmmBB12WU41v6JqLD0N6QaXmqG0XLprRVu2vdWdrB/Kyppb1ANHIJ3bUycR7YcVN7qHfhvW3jscZg==}
 
   '@fluidframework/shared-object-base@2.117.0':
-    resolution: {integrity: sha1-1kePKNeKvIRH9c8xj9SdGSsUHr4=, tarball: https://ms-feed-17.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/shared-object-base/-/shared-object-base-2.117.0.tgz}
+    resolution: {integrity: sha512-xqjQ/enmzGUrKfVuWBP4CzA3kJphXWolrMd17oyGcL/w63AHkrwAe3l7FexQpegTsGPd6SRbgLmEi2gD0oqKMg==}
 
   '@fluidframework/shared-object-base@2.13.0':
     resolution: {integrity: sha512-Bf6SJ2mkxIIagIkecWvhly4FXbbLO5Dy9p4S6Wge4cWMy5eP1UrY1Hc81ieK1v3dWnrilK6XQe+7qXxKRAuWzw==}
@@ -3281,7 +3281,7 @@ packages:
     resolution: {integrity: sha512-fFYDd6fxMGbya88Q05mGsutKvVzssN+Myw9xE5wvhjHhOw5yFJ0nOe10PYHhWS+7JY5mLnP7HEPfIg4PMCzUNg==}
 
   '@fluidframework/synthesize@2.117.0':
-    resolution: {integrity: sha1-LKNXFWuqqq60WXpO4HKE/we5LkY=, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/synthesize/-/synthesize-2.117.0.tgz}
+    resolution: {integrity: sha512-76Giy+l5a4o7RQQr6xKspOtism7+NgT/1NB+7l4xCs4N/nBCaEjyy9ftQKUTcFSx+3QLcusams4bX0UdRcbK4A==}
 
   '@fluidframework/synthesize@2.13.0':
     resolution: {integrity: sha512-liTu6wF2IsXE3Py8bHtDEo03B2h95hSsvYv1SgXBmHRBpUUM7CTAlHDlymL9y1x72a8l44Ge9HTpbuQaD2ZYXA==}
@@ -3338,7 +3338,7 @@ packages:
     resolution: {integrity: sha512-taXPEZ+AePNhrQsZJGjxNjLUV+ZiujK65Zz/E5zh5PWaPHM9JaDhfhAvnnDkVK5z7whorQaCI1BTi6f6f/BOlA==}
 
   '@fluidframework/telemetry-utils@2.117.0':
-    resolution: {integrity: sha1-OYsjHGjeSdepYx2uYwCZ81lKtwQ=, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/telemetry-utils/-/telemetry-utils-2.117.0.tgz}
+    resolution: {integrity: sha512-EK9ZlSPQw2NvVGcMTNnAEBDvjB4Zn9Uyzz613t2njhAwGT7C2De9GGDWnQz1DJaJTjT/TNdPi5YsNrf91qYhTA==}
 
   '@fluidframework/telemetry-utils@2.13.0':
     resolution: {integrity: sha512-AvMSSf30G6DNStf7CL15WzjpFmKJoRqppuATGNXliktm5iLtokxZ2dKNiS8bLa/mB9zV/q0pCHD9Lsngx+zvcg==}
@@ -3419,7 +3419,7 @@ packages:
     resolution: {integrity: sha512-MEfv3rAVyvvx5tqf5j4wjG5JGMcA0szuyYJJSZdNp3Awh59bB0bjzhSffXg7TZqtDB/j8URM3EpgVfRu5XxqEA==}
 
   '@fluidframework/test-utils@2.117.0':
-    resolution: {integrity: sha1-VTMGLH2t0fSkOVhnk/G8db1eTbk=, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/test-utils/-/test-utils-2.117.0.tgz}
+    resolution: {integrity: sha512-ogMke3rm4oMdEDFCOwl9ytFCUG4Zf/5j6p5vyaS2ztRaDh3x/OtNxiScBzWU2HldPaxN7+Sy3wJQiZLyk+oLxg==}
 
   '@fluidframework/test-utils@2.13.0':
     resolution: {integrity: sha512-MaZ541H9A4q9oaf2jGqgAA7Ziviq426Ct81X+dlOsesvDdesbUcOeIZP3v1H4BICOUuneu/GoJzZi+siM10HJA==}
@@ -3464,7 +3464,7 @@ packages:
     resolution: {integrity: sha512-2a3u59PNikNBbc135ZOz/4LIsjKAzmTBCK1Sk1fZ+QF0giYGY0wdpmZrWNR6rvy2Qkg/4S1lcdybzY16yKRlEw==}
 
   '@fluidframework/tree@2.117.0':
-    resolution: {integrity: sha1-10v6RKHegd8I59ssFG8bkh3FEzw=, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/tree/-/tree-2.117.0.tgz}
+    resolution: {integrity: sha512-WnVE63e3vDeWHXqMBM4z9L5Y5OHHZxoz2eDAQLFUkxQogrohRnNhzqMen/6M0Oe6SDADHsRJjMlOiDsS2xZczQ==}
 
   '@fluidframework/tree@2.13.0':
     resolution: {integrity: sha512-s3h6J5QC+jS3Ty2TH3hmg0PLb++TEeN+cVQ2jNEAt9C3FCfy/5OZOs7F9tiLkZNvxGA6NwwZ2E8OlK4KChyi1g==}
@@ -3506,7 +3506,7 @@ packages:
     resolution: {integrity: sha512-suNuOuXl40b7gHERizNURyi1PxnzBARAYF1rAceHNcgQcVNetuKylv/4OCNsVLz7RKEmthCDu/PGuTIICf0Juw==}
 
   '@fluidframework/type-factory@2.117.0':
-    resolution: {integrity: sha1-IM3Fl6x0+IyvVip/V3DBeXST3B8=, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@fluidframework/type-factory/-/type-factory-2.117.0.tgz}
+    resolution: {integrity: sha512-TN9pMdIwKlkISR23BCpU1nN3onqVSKj1PtyBegiczmEvOyVvs01MxlN1gdG5Kn6SvEIiJgkbWddq5RxuQnnDBQ==}
 
   '@fluidframework/type-factory@2.93.0':
     resolution: {integrity: sha512-Er0jL6zkXqSsio1qgpFEU2A/7TyLfnIKtfSI1Volq9zVblgA7paq4essF4R05ZMmuJTvKnODRlOy3b3acQiL2g==}
@@ -3542,13 +3542,13 @@ packages:
     resolution: {integrity: sha512-9BCxFwvbGg/RsZK9tjXd8s4UcwR0MWeFQ1XEKIQVVvAGJyINdrqKMcTRyLoK8Rse1GjzLV9cwjWV1olXRWEXVA==}
 
   '@tiny-calc/nano@0.0.0-alpha.5':
-    resolution: {integrity: sha1-Tm7zNoj8PnFPCSz6C0/U9OcP8rc=, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@tiny-calc/nano/-/nano-0.0.0-alpha.5.tgz}
+    resolution: {integrity: sha512-Hs37tz9ZtvK21/5s4tjt5RBa/PFHKYS0AzvdxiXuSd3+AKQN2ygxw7uwD9j0DIG9qONddg1vIASO77JIGyZzyw==}
 
   '@tylerbu/sorted-btree-es6@1.8.0':
     resolution: {integrity: sha512-qkwgE0G5OGn7F+1fMkFZLwyjc99xCy4kmQ8p7N0Jj540HD6xU0jTPjcqELogH4f5YGMPXLqd8sQ7uOYC0QRBeg==}
 
   '@tylerbu/sorted-btree-es6@2.1.1':
-    resolution: {integrity: sha1-4NmDLt/LJIxlV+keEI0OiEvyIz4=, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@tylerbu/sorted-btree-es6/-/sorted-btree-es6-2.1.1.tgz}
+    resolution: {integrity: sha512-M0EHlEW9Aaz0P8NT/pC1E6wAfuWY7TpvF4U1Ha3wE87KEhiiahnFbHbzmwGsLxm7ma70A/L94cu5pqvickF2nw==}
 
   '@types/debug@4.1.13':
     resolution: {integrity: sha512-KSVgmQmzMwPlmtljOomayoR89W4FynCAi3E8PPs7vmDVPe84hT+vGPKkJfThkmXs0x0jAaa9U8uW8bbfyS2fWw==}
@@ -3557,7 +3557,7 @@ packages:
     resolution: {integrity: sha512-OVbdb2iOJakEg/Ou6dVZsH0LLxlO+GFjc1FB2W8/jT7bnhoFVJwnZOqi/H26ospeMBaEbGiX3Qy2a7r6pfZKXQ==}
 
   '@types/events@3.0.3':
-    resolution: {integrity: sha1-qO+JQwWvKNH8bS39/JjomVkepSk=, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@types/events/-/events-3.0.3.tgz}
+    resolution: {integrity: sha512-trOc4AAUThEz9hapPtSd7wf5tiQKvTtu5b371UxXdTuqzIh0ArcRspRP0i0Viu+LXstIQ1z96t1nsPxT9ol01g==}
 
   '@types/ioredis-mock@8.2.7':
     resolution: {integrity: sha512-YsGiaOIYBKeVvu/7GYziAD8qX3LJem5LK00d5PKykzsQJMLysAqXA61AkNuYWCekYl64tbMTqVOMF4SYoCPbQg==}
@@ -3656,7 +3656,7 @@ packages:
     resolution: {integrity: sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==}
 
   best-random@1.0.3:
-    resolution: {integrity: sha1-MdkujvpZHKn4DbnxKBCOv0eWvdQ=, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/best-random/-/best-random-1.0.3.tgz}
+    resolution: {integrity: sha512-zrncs76CBFyhE7KVsq85lsc/TT5PUfGTS8arh2aJZcIzQU+WdGNwWYwFsn+w/nuedk04efQdqMy8g5C5pw4shQ==}
 
   blob@0.0.5:
     resolution: {integrity: sha512-gaqbzQPqOoamawKg0LGVd7SzLgXS+JH61oWprSLH+P+abTczqJbhTR8CmJ2u9/bUYNmHTGJx/UEmn6doAvvuig==}
@@ -3723,7 +3723,7 @@ packages:
         optional: true
 
   debug@4.1.1:
-    resolution: {integrity: sha1-O3ImAlUQnGtYnO4FDx1RYTlmR5E=, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/debug/-/debug-4.1.1.tgz}
+    resolution: {integrity: sha512-pYAIzeRo8J6KPEaJ0VWOh5Pzkbw/RetuzehGM7QRRX5he4fPHx2rdKMB256ehJCkX+XRQm16eZLqLNS8RSZXZw==}
     deprecated: Debug versions >=3.2.0 <3.2.7 || >=4 <4.3.1 have a low-severity ReDos regression when used in a Node.js environment. It is recommended you upgrade to 3.2.7 or 4.3.1. (https://github.com/visionmedia/debug/issues/797)
     peerDependencies:
       supports-color: '*'
@@ -3741,7 +3741,7 @@ packages:
         optional: true
 
   debug@4.4.3:
-    resolution: {integrity: sha1-xq5DLZvZZiWC/OCHCbA4xY6ePWo=, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/debug/-/debug-4.4.3.tgz}
+    resolution: {integrity: sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA==}
     engines: {node: '>=6.0'}
     peerDependencies:
       supports-color: '*'
@@ -3766,7 +3766,7 @@ packages:
     engines: {node: '>=0.10'}
 
   double-ended-queue@2.1.0-0:
-    resolution: {integrity: sha1-ED01J/0xUo9AGIEwyEHv3XgmTlw=, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/double-ended-queue/-/double-ended-queue-2.1.0-0.tgz}
+    resolution: {integrity: sha512-+BNfZ+deCo8hMNpDqDnvT+c0XpJ5cUa6mqYq89bho2Ifze4URTqRkcwR399hWoTrTkbZ/XJYDgP6rc7pRgffEQ==}
 
   dunder-proto@1.0.1:
     resolution: {integrity: sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A==}
@@ -3816,7 +3816,7 @@ packages:
     engines: {node: '>=6'}
 
   events@3.3.0:
-    resolution: {integrity: sha1-Mala0Kkk4tLEGagTrrLE6HjqdAA=, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/events/-/events-3.3.0.tgz}
+    resolution: {integrity: sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q==}
     engines: {node: '>=0.8.x'}
 
   exit-on-epipe@1.0.1:
@@ -3962,7 +3962,7 @@ packages:
     resolution: {integrity: sha512-qvUtwJ3j6qwsF3jLxkZ72qCgjMysPzDfeV240JHiGZsANBYd+EEuu35v7dfrJ9Up0Ak07D7GGSkGhCHTqg/5wA==}
 
   json-stringify-safe@5.0.1:
-    resolution: {integrity: sha1-Epai1Y/UXxmg9s4B1lcB4sc1tus=, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/json-stringify-safe/-/json-stringify-safe-5.0.1.tgz}
+    resolution: {integrity: sha512-ZClg6AaYvamvYEE82d3Iyd3vSSIjQ+odgjaTzRuO3s7toCdFKczob2i0zCh7JE8kWn17yvAWhUVxvqGwUalsRA==}
 
   jsrsasign@11.1.2:
     resolution: {integrity: sha512-GJuqiU/Grs6BaBBXMAZM9kxhsBrksZE0pF3qIfpkopMd7OMJ9zZmE/+CpV//97srfEyyyq1Ec0ELQtSlW/gPTA==}
@@ -3985,7 +3985,7 @@ packages:
     resolution: {integrity: sha512-dMInicTPVE8d1e5otfwmmjlxkZoUpiVLwyeTdUsi/Caj/gfzzblBcCE5sRHV/AsjuCmxWrte2TNGSYuCeCq+0Q==}
 
   lz4js@0.2.0:
-    resolution: {integrity: sha1-CfGjl8shWPZ1FGwzUd3oUFjLMi8=, tarball: https://ms-feed-17.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/lz4js/-/lz4js-0.2.0.tgz}
+    resolution: {integrity: sha512-gY2Ia9Lm7Ep8qMiuGRhvUq0Q7qUereeldZPP1PMEJxPtEWHJLqw9pgX68oHajBH0nzJK4MaZEA/YNV3jT8u8Bg==}
 
   math-intrinsics@1.1.0:
     resolution: {integrity: sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g==}
@@ -4052,7 +4052,7 @@ packages:
     resolution: {integrity: sha512-AUjen8sAkGgao7UyCX6Ahv0gIK2fABKmYjvP4xmy5JaKvcbTRueIqIPHLAfq30xJddqSE033IOMUSOMCcK3Sow==}
 
   path-browserify@1.0.1:
-    resolution: {integrity: sha1-2YRUqcN1PVeQhg8W9ohnueRr4f0=, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/path-browserify/-/path-browserify-1.0.1.tgz}
+    resolution: {integrity: sha512-b7uo2UCUOYZcnF/3ID0lulOJi/bafxa1xPe7ZPsammBSpjSWQkjNxlt635YGS2MiR9GjvuXCtz2emr3jbsz98g==}
 
   possible-typed-array-names@1.1.0:
     resolution: {integrity: sha512-/+5VFTchJDoVj3bhoqi6UeymcD00DAwb1nJwamzPvHEszJ4FpF6SNNbUbOS8yI56qHzdV8eK0qEfOSiodkTdxg==}
@@ -4115,7 +4115,7 @@ packages:
     resolution: {integrity: sha512-nZi59hW3Sl5P3+wOO89eHBAAGwmCPd2aE1+dLZV5MO+ItQctIvAqihzaAXIQhvtH4KJPxM080HsnqltR2y8cWg==}
 
   semver-ts@1.0.3:
-    resolution: {integrity: sha1-9CN1LLB9ENf3dkWh2oRCUvWyuUo=, tarball: https://ms-feed-17.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/semver-ts/-/semver-ts-1.0.3.tgz}
+    resolution: {integrity: sha512-RMf2+Nbd0Hiq5u8LADzqnSRb09Vu1UKOLFw9P9nm8XY3JPeFjv3DLVYBZjPWFHUxBVz7ktIVGR3xFjYilHlXng==}
     engines: {node: '>=0.10.0'}
 
   semver@6.3.1:
@@ -4167,7 +4167,7 @@ packages:
     engines: {node: '>=10.0.0'}
 
   socket.io-client@4.8.3:
-    resolution: {integrity: sha1-YnF+3UajGMkYEltX6S3H+Ltxw0w=, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/socket.io-client/-/socket.io-client-4.8.3.tgz}
+    resolution: {integrity: sha512-uP0bpjWrjQmUt5DTHq9RuoCBdFJF10cdX9X+a368j/Ft0wmaVgxlrjvK3kjvgCODOMMOz9lcaRzxmso0bTWZ/g==}
     engines: {node: '>=10.0.0'}
 
   socket.io-parser@3.4.5:
@@ -4216,7 +4216,7 @@ packages:
     resolution: {integrity: sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==}
 
   tslib@2.8.1:
-    resolution: {integrity: sha1-YS7+TtI11Wfoq6Xypfq3AoCt6D8=, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/tslib/-/tslib-2.8.1.tgz}
+    resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
 
   type-fest@0.20.2:
     resolution: {integrity: sha512-Ne+eE4r0/iWnpAxD852z3A+N0Bt5RN//NjJwRd2VFHEmrywxf5vsZlh4R6lixl6B+wz/8d+maTSAkN1FIkI3LQ==}
@@ -4240,7 +4240,7 @@ packages:
     resolution: {integrity: sha512-kZf/K6hEIrWHI6XqOFUiiMa+79wE/D8Q+NCNAWclkyg3b4d2k7s0QGepNjiABc+aR3N1PAyHL7p6UcLY6LmrnA==}
 
   uuid@11.1.1:
-    resolution: {integrity: sha1-9tgdLhxl0Adi5eKbFsXS2ZXiCK0=, tarball: https://ms-feed-17.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/uuid/-/uuid-11.1.1.tgz}
+    resolution: {integrity: sha512-vIYxrBCC/N/K+Js3qSN88go7kIfNPssr/hHCesKCQNAjmgvYS2oqr69kIufEG+O4+PfezOH4EbIeHCfFov8ZgQ==}
     hasBin: true
 
   webidl-conversions@3.0.1:

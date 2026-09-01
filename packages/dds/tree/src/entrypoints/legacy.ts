@@ -142,6 +142,7 @@ export {
 	TreeBeta, 
 	TreeBranch, 
 	TreeChangeEventsBeta, 
+	TreeContextBeta, 
 	TreeEncodingOptions, 
 	TreeIndex, 
 	TreeIndexKey, 

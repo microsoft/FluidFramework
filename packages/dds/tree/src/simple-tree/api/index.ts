@@ -28,6 +28,7 @@ export type {
 	TreeBranchEvents,
 	TreeBranchCommitMetadata,
 	TreeBranchHistory,
+	TreeContextBeta,
 	TreeContextAlpha,
 	ITreeAlpha,
 } from "./tree.js";
@@ -107,7 +108,7 @@ export { getJsonSchema } from "./getJsonSchema.js";
 export { getSimpleSchema } from "./getSimpleSchema.js";
 export {
 	checkSchemaCompatibility,
-	getSchemaCompatibilityError,
+	getSchemaIncompatibilityDetails,
 } from "./schemaCompatibilityTester.js";
 export { type StagedUpgradeStatus } from "./schemaCompatibilityTester.js";
 export type {
@@ -155,12 +156,7 @@ export {
 	replaceConciseTreeHandles,
 } from "./conciseTree.js";
 
-export {
-	borrowCursorFromTreeNodeOrValue,
-	exportConcise,
-	importConcise,
-	TreeBeta,
-} from "./treeBeta.js";
+export { cloneTree } from "./cloneTree.js";
 export type {
 	ArrayNodeDeltaOp,
 	ArrayNodeInsertOp,

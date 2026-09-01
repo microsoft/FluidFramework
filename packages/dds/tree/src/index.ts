@@ -42,6 +42,7 @@ export {
 	type ForestType,
 	type SharedTreeFormatOptions,
 	Tree,
+	TreeBeta,
 	type RunTransaction,
 	type ForestOptions,
 	independentInitializedView,
@@ -189,7 +190,6 @@ export {
 	type InsertableObjectFromSchemaRecordAlpha,
 	type FieldHasDefaultAlpha,
 	// Beta APIs
-	TreeBeta,
 	type TreeChangeEventsBeta,
 	// Other
 	type VerboseTreeNode,
@@ -247,6 +247,7 @@ export {
 	type TreeBranchEvents,
 	type TreeBranchCommitMetadata,
 	type TreeBranchHistory,
+	type TreeContextBeta,
 	type NodeSchemaOptions,
 	type NodeSchemaOptionsAlpha,
 	type NodeSchemaMetadata,

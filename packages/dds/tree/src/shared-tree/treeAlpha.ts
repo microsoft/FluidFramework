@@ -42,7 +42,6 @@ import {
 	getKernel,
 	TreeNode,
 	type Unhydrated,
-	TreeBeta,
 	tryGetSchema,
 	createFromCursor,
 	FieldKind,
@@ -77,9 +76,6 @@ import {
 	type NodeChangedData,
 	type TreeChangeEventsBeta,
 	type ConciseTree,
-	importConcise,
-	exportConcise,
-	borrowCursorFromTreeNodeOrValue,
 	contentSchemaSymbol,
 	type TreeContextAlpha,
 	type TreeNodeSchema,
@@ -88,7 +84,13 @@ import {
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 
 import { independentInitializedView, type ViewContent } from "./independentView.js";
-import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
+import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
+import {
+	borrowCursorFromTreeNodeOrValue,
+	exportConcise,
+	importConcise,
+	TreeBeta,
+} from "./treeBeta.js";
 import { UnhydratedTreeContext } from "./unhydratedTreeContext.js";
 
 const identifier: TreeIdentifierUtils = (node: TreeNode): string | undefined => {
@@ -821,12 +823,7 @@ export const TreeAlpha: TreeAlpha = {
 		if (!kernel.isHydrated()) {
 			return UnhydratedTreeContext.instance;
 		}
-		const view = kernel.anchorNode.anchorSet.slots.get(ViewSlot);
-		assert(
-			view instanceof SchematizingSimpleTreeView,
-			0xa5c /* Unexpected view implementation */,
-		);
-		return view;
+		return TreeBeta.context(node) as TreeContextAlpha;
 	},
 
 	create<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
