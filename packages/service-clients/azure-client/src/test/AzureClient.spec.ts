@@ -78,8 +78,8 @@ const connectionModeOf = (container: IFluidContainer): ConnectionMode => {
 	return getContainerConnectionMode(container.container);
 };
 
-for (const compatibilityMode of ["1.0.0", "2.0.0"] as const) {
-	describe(`AzureClient (compatibilityMode: ${compatibilityMode})`, function () {
+for (const oldestSupportedClient of ["2.0.0"] as const) {
+	describe(`AzureClient (oldestSupportedClient: ${oldestSupportedClient})`, function () {
 		const connectTimeoutMs = 1000;
 		let client: AzureClient;
 		let schema: {
@@ -105,7 +105,7 @@ for (const compatibilityMode of ["1.0.0", "2.0.0"] as const) {
 		 * be returned.
 		 */
 		it("can create new Azure Fluid Relay container successfully", async function () {
-			const resourcesP = client.createContainer(schema, compatibilityMode);
+			const resourcesP = client.createContainer(schema, oldestSupportedClient);
 
 			await assert.doesNotReject(
 				resourcesP,
@@ -122,7 +122,7 @@ for (const compatibilityMode of ["1.0.0", "2.0.0"] as const) {
 		 * be returned.
 		 */
 		it("created container is detached", async function () {
-			const { container } = await client.createContainer(schema, compatibilityMode);
+			const { container } = await client.createContainer(schema, oldestSupportedClient);
 			assert.strictEqual(
 				container.attachState,
 				AttachState.Detached,
@@ -137,7 +137,7 @@ for (const compatibilityMode of ["1.0.0", "2.0.0"] as const) {
 		 * be returned.
 		 */
 		it("can attach a container", async function () {
-			const { container } = await client.createContainer(schema, compatibilityMode);
+			const { container } = await client.createContainer(schema, oldestSupportedClient);
 			const containerId = await container.attach();
 
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison -- container.connectionState is typed as ConnectionState but test doesn't type it precisely
@@ -163,7 +163,7 @@ for (const compatibilityMode of ["1.0.0", "2.0.0"] as const) {
 		 * be returned.
 		 */
 		it("cannot attach a container twice", async function () {
-			const { container } = await client.createContainer(schema, compatibilityMode);
+			const { container } = await client.createContainer(schema, oldestSupportedClient);
 			const containerId = await container.attach();
 
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison -- container.connectionState is typed as ConnectionState but test doesn't type it precisely
@@ -196,7 +196,7 @@ for (const compatibilityMode of ["1.0.0", "2.0.0"] as const) {
 		it("can retrieve existing Azure Fluid Relay container successfully", async function () {
 			const { container: newContainer } = await client.createContainer(
 				schema,
-				compatibilityMode,
+				oldestSupportedClient,
 			);
 			const containerId = await newContainer.attach();
 
@@ -208,7 +208,7 @@ for (const compatibilityMode of ["1.0.0", "2.0.0"] as const) {
 				});
 			}
 
-			const resources = client.getContainer(containerId, schema, compatibilityMode);
+			const resources = client.getContainer(containerId, schema, oldestSupportedClient);
 			await assert.doesNotReject(
 				resources,
 				() => true,
@@ -227,7 +227,7 @@ for (const compatibilityMode of ["1.0.0", "2.0.0"] as const) {
 			const containerAndServicesP = client.getContainer(
 				"containerConfig",
 				schema,
-				compatibilityMode,
+				oldestSupportedClient,
 			);
 
 			const errorFunction = (error: Error): boolean => {
@@ -256,7 +256,7 @@ for (const compatibilityMode of ["1.0.0", "2.0.0"] as const) {
 
 			const { container } = await readOnlyAzureClient.createContainer(
 				schema,
-				compatibilityMode,
+				oldestSupportedClient,
 			);
 			const containerId = await container.attach();
 			await timeoutPromise((resolve) => container.once("connected", resolve), {
@@ -266,7 +266,7 @@ for (const compatibilityMode of ["1.0.0", "2.0.0"] as const) {
 			const { container: containerGet } = await readOnlyAzureClient.getContainer(
 				containerId,
 				schema,
-				compatibilityMode,
+				oldestSupportedClient,
 			);
 
 			assert.strictEqual(
@@ -296,7 +296,7 @@ for (const compatibilityMode of ["1.0.0", "2.0.0"] as const) {
 
 			const { container } = await readWriteAzureClient.createContainer(
 				schema,
-				compatibilityMode,
+				oldestSupportedClient,
 			);
 			const containerId = await container.attach();
 			await timeoutPromise((resolve) => container.once("connected", resolve), {
@@ -306,7 +306,7 @@ for (const compatibilityMode of ["1.0.0", "2.0.0"] as const) {
 			const { container: containerGet } = await readWriteAzureClient.getContainer(
 				containerId,
 				schema,
-				compatibilityMode,
+				oldestSupportedClient,
 			);
 
 			assert.strictEqual(
@@ -322,10 +322,10 @@ for (const compatibilityMode of ["1.0.0", "2.0.0"] as const) {
 			);
 		});
 
-		it("GC is disabled for both compat modes", async function () {
+		it("GC is disabled for both oldest supported client versions", async function () {
 			const { container: container_defaultConfig } = await client.createContainer(
 				schema,
-				compatibilityMode,
+				oldestSupportedClient,
 			);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const { sweepEnabled, throwOnTombstoneLoad } =
@@ -340,7 +340,7 @@ for (const compatibilityMode of ["1.0.0", "2.0.0"] as const) {
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				{ sweepEnabled, throwOnTombstoneLoad },
 				expectedConfigs,
-				"Expected GC to be disabled per compatibilityModeRuntimeOptions",
+				"Expected GC to be disabled by the defaults for oldestSupportedClient",
 			);
 		});
 
@@ -356,7 +356,7 @@ for (const compatibilityMode of ["1.0.0", "2.0.0"] as const) {
 							map: SharedMap,
 						},
 					},
-					compatibilityMode,
+					oldestSupportedClient,
 				);
 
 				// Ensure that the 'map' API is accessible without casting or suppressing lint rules:
@@ -364,17 +364,13 @@ for (const compatibilityMode of ["1.0.0", "2.0.0"] as const) {
 			});
 
 			it("preserves 'SharedTree' type", async function () {
-				// SharedTree is not supported in compatibilityMode "1", because it requires idCompressor to be enabled.
-				if (compatibilityMode === "1.0.0") {
-					this.skip();
-				}
 				const { container } = await client.createContainer(
 					{
 						initialObjects: {
 							tree: SharedTree,
 						},
 					},
-					compatibilityMode,
+					oldestSupportedClient,
 				);
 
 				// Ensure that the 'tree' API is accessible without casting or suppressing lint rules:
@@ -395,32 +391,14 @@ for (const compatibilityMode of ["1.0.0", "2.0.0"] as const) {
 			});
 		});
 
-		describe("compatibilityModeRuntimeOptions", () => {
-			it("should set correct runtime options for compatibilityMode", async () => {
+		describe("runtime options for oldestSupportedClient", () => {
+			it("sets the correct runtime options for oldestSupportedClient", async () => {
 				const { container: container_defaultConfig } = await client.createContainer(
 					schema,
-					compatibilityMode,
+					oldestSupportedClient,
 				);
 
-				const expectedRuntimeOptions1 = {
-					summaryOptions: {},
-					gcOptions: {},
-					loadSequenceNumberVerification: "close",
-					flushMode: 0,
-					compressionOptions: {
-						minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
-						compressionAlgorithm: CompressionAlgorithms.lz4,
-					},
-					maxBatchSizeInBytes: 716800,
-					chunkSizeInBytes: 204800,
-					enableRuntimeIdCompressor: undefined,
-					enableGroupedBatching: false,
-					explicitSchemaControl: false,
-					createBlobPayloadPending: undefined,
-					disableSchemaUpgrade: false,
-					stagingModeAutoFlushThreshold: 1000,
-				} as const satisfies ContainerRuntimeOptionsInternal;
-				const expectedRuntimeOptions2 = {
+				const expectedRuntimeOptions = {
 					summaryOptions: {},
 					gcOptions: {},
 					loadSequenceNumberVerification: "close",
@@ -439,8 +417,6 @@ for (const compatibilityMode of ["1.0.0", "2.0.0"] as const) {
 					stagingModeAutoFlushThreshold: 1000,
 				} as const satisfies ContainerRuntimeOptionsInternal;
 
-				const expectedRuntimeOptions =
-					compatibilityMode === "1.0.0" ? expectedRuntimeOptions1 : expectedRuntimeOptions2;
 				assert(isInternalFluidContainer(container_defaultConfig));
 				const actualRuntimeOptions = getRuntimeOptions(
 					getContainerRuntime(container_defaultConfig.container),
@@ -449,7 +425,7 @@ for (const compatibilityMode of ["1.0.0", "2.0.0"] as const) {
 				assert.deepStrictEqual(
 					actualRuntimeOptions,
 					expectedRuntimeOptions,
-					"Runtime options set properly based on compatibilityMode",
+					"Runtime options set properly based on oldestSupportedClient",
 				);
 			});
 		});

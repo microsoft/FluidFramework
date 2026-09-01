@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/test-end-to-end-tests",
-	"version": "2.115.0",
+	"version": "3.0.0",
 	"description": "End to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -147,15 +147,13 @@
 		"mocha-multi-reporters": "^1.5.1",
 		"nock": "^13.3.3",
 		"rimraf": "^6.1.3",
-		"typescript": "~5.4.5"
+		"typescript": "~6.0.3"
 	},
 	"fluidBuild": {
-		"_tasks_comment": "test-driver-definitions CJS build is required for ESM builds as test-driver-definitions is globally imported via TypeScript \"types\" module which only resolves CJS types (at least as of TS 5.4).",
 		"tasks": {
 			"build:test:esm": [
-				"^build:esnext",
-				"build:genver",
-				"@fluid-internal/test-driver-definitions#tsc"
+				"^build:esm",
+				"build:genver"
 			]
 		}
 	},

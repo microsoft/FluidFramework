@@ -248,7 +248,7 @@ function contentOpsToQuillDelta(
 	if (remainingQuillContent.length > 0) {
 		assert(
 			remainingQuillContent === "\n",
-			"Expected only Quill's mandatory terminal newline to remain",
+			0xd1a /* Expected only Quill's mandatory terminal newline to remain */,
 		);
 		// Delete the extra new line which is required by quill.
 		quillOps.push({ delete: 1 });
@@ -388,7 +388,7 @@ export function applyQuillDeltaToTree(
 	// these commits — unlabeled commits would only show up in the global undo stack.
 	// Mirrors the plain text view's transaction pattern (`quillView.tsx` / `plainTextView.tsx`).
 	const context = TreeAlpha.context(root);
-	if (context.isBranch()) {
+	if (context.isView()) {
 		context.runTransaction(applyDelta, label === undefined ? undefined : { label });
 	} else {
 		// If this node does not have a corresponding branch, then it is unhydrated.

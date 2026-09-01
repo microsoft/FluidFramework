@@ -18,43 +18,14 @@ export {
 	type RemoteChangeMetadata,
 	type ChangeMetadata,
 	type LabelTree,
+	type CustomMetadataTree,
 	type TransactionLabels,
 	type RevertibleFactory,
 	type RevertibleAlphaFactory,
 	type RevertibleAlpha,
+	type RevertOptionsAlpha,
+	type RevertToOptionsAlpha,
 } from "./core/index.js";
-
-import type {
-	Listeners as EventListeners,
-	IsListener as EventIsListener,
-	Listenable as EventListenable,
-	Off as EventOff,
-} from "@fluidframework/core-interfaces";
-
-/**
- * {@inheritdoc @fluidframework/core-interfaces#Listeners}
- * @public
- * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
- */
-export type Listeners<T extends object> = EventListeners<T>;
-/**
- * {@inheritdoc @fluidframework/core-interfaces#IsListener}
- * @public
- * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
- */
-export type IsListener<T> = EventIsListener<T>;
-/**
- * {@inheritdoc @fluidframework/core-interfaces#Listenable}
- * @public
- * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
- */
-export type Listenable<T extends object> = EventListenable<T>;
-/**
- * {@inheritdoc @fluidframework/core-interfaces#Off}
- * @public
- * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
- */
-export type Off = EventOff;
 
 export {
 	TreeStatus,
@@ -71,6 +42,7 @@ export {
 	type ForestType,
 	type SharedTreeFormatOptions,
 	Tree,
+	TreeBeta,
 	type RunTransaction,
 	type ForestOptions,
 	independentInitializedView,
@@ -91,6 +63,7 @@ export {
 } from "./shared-tree/index.js";
 
 export {
+	type CommitRevision,
 	TreeArrayNode,
 	type TreeArrayNodeAlpha,
 	type Unhydrated,
@@ -145,7 +118,6 @@ export {
 	type ArrayNodeTreeChangedDeltaOp,
 	type ArrayNodeTreeChangedRetainOp,
 	type NodeChangedData,
-	type NodeChangedDataAlpha,
 	type NodeChangedDataDelta,
 	type NodeChangedDataProperties,
 	type NodeChangedDataTreeDelta,
@@ -194,6 +166,7 @@ export {
 	singletonSchema,
 	type UnsafeUnknownSchema,
 	type TreeViewAlpha,
+	type StagedUpgradeStatus,
 	type TreeViewBeta,
 	type InsertableField,
 	type Insertable,
@@ -217,9 +190,7 @@ export {
 	type InsertableObjectFromSchemaRecordAlpha,
 	type FieldHasDefaultAlpha,
 	// Beta APIs
-	TreeBeta,
 	type TreeChangeEventsBeta,
-	type TreeChangeEventsAlpha,
 	// Other
 	type VerboseTreeNode,
 	type TreeEncodingOptions,
@@ -269,10 +240,14 @@ export {
 	type ReadonlyArrayNode,
 	type InsertableTreeNodeFromAllowedTypes,
 	type Input,
+	type UntypedTreeView,
 	type TreeBranch,
 	type TreeBranchAlpha,
+	type UntypedTreeViewAlpha,
 	type TreeBranchEvents,
-	asTreeViewAlpha,
+	type TreeBranchCommitMetadata,
+	type TreeBranchHistory,
+	type TreeContextBeta,
 	type NodeSchemaOptions,
 	type NodeSchemaOptionsAlpha,
 	type NodeSchemaMetadata,
@@ -392,7 +367,7 @@ export type {
 } from "./util/index.js";
 export { cloneWithReplacements } from "./util/index.js";
 
-import * as InternalTypes from "./internalTypes.js";
+import type * as InternalTypes from "./internalTypes.js";
 /**
  * Contains types used by the API, but which serve mechanical purposes and do not represent semantic concepts.
  * They are used internally to implement API aspects, but are not intended for use by external consumers.
@@ -404,10 +379,10 @@ import * as InternalTypes from "./internalTypes.js";
  * support level tag is recognized by flub entrypoint generation.
  */
 // eslint-disable-next-line unicorn/prefer-export-from -- fixing requires `export * as` (breaks API-Extractor)
-export { InternalTypes };
+export type { InternalTypes };
 
 // Internal/System types:
-// These would be put in `internalTypes` except doing so tents to cause errors like:
+// These would be put in `internalTypes` except doing so tends to cause errors like:
 // The inferred type of 'NodeMap' cannot be named without a reference to '../../node_modules/@fluidframework/tree/lib/internalTypes.js'. This is likely not portable. A type annotation is necessary.
 export type { MapNodeInsertableData } from "./simple-tree/index.js";
 

@@ -36,7 +36,7 @@ module.exports = {
 				directory: ".",
 				releaseGroups: {
 					client: {
-						include: [...fluidScopes, "fluid-framework", "@types/jest-environment-puppeteer"],
+						include: [...fluidScopes, "fluid-framework"],
 						rootPackageName: "client-release-group-root",
 						defaultInterdependencyRange: "workspace:~",
 					},
@@ -153,18 +153,6 @@ module.exports = {
 						defaultInterdependencyRange: "workspace:~",
 						adoPipelineUrl:
 							"https://dev.azure.com/fluidframework/internal/_build?definitionId=7",
-					},
-				},
-			},
-			"@fluid-internal/eslint-plugin-fluid": {
-				directory: "common/build/eslint-plugin-fluid",
-				releaseGroups: {
-					"eslint-plugin-fluid": {
-						include: ["@fluid-internal/eslint-plugin-fluid"],
-						rootPackageName: "@fluid-internal/eslint-plugin-fluid",
-						defaultInterdependencyRange: "workspace:~",
-						adoPipelineUrl:
-							"https://dev.azure.com/fluidframework/internal/_build?definitionId=135",
 					},
 				},
 			},

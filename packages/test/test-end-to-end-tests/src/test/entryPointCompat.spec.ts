@@ -26,7 +26,10 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { FluidObject } from "@fluidframework/core-interfaces";
 import type { IDirectory } from "@fluidframework/map/internal";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
-import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
+import {
+	defaultTestOldestSupportedClient,
+	ITestObjectProvider,
+} from "@fluidframework/test-utils/internal";
 
 import { pkgVersion } from "../packageVersion.js";
 
@@ -54,6 +57,7 @@ describe("entryPoint compat", () => {
 		});
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: dataObjectFactory,
+			oldestSupportedClient: defaultTestOldestSupportedClient,
 			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
 			provideEntryPoint: async (runtime: IContainerRuntime) => getDefaultFluidObject(runtime),
 		});

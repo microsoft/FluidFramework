@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/table-document",
-	"version": "2.115.0",
+	"version": "3.0.0",
 	"description": "Chaincode component containing a table's data",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -14,26 +14,20 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"import": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./lib/index.d.ts",
+			"default": "./lib/index.js"
 		}
 	},
-	"main": "lib/index.js",
-	"types": "lib/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
+		"build:cjs": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:esm": "tsc --project ./tsconfig.json",
+		"build:genver": "gen-version",
 		"build:test": "npm run build:test:esm",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack .",
+		"check:are-the-types-wrong": "attw --pack . --profile esm-only",
 		"check:biome": "biome check .",
 		"check:exports": "echo skip concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
@@ -51,8 +45,7 @@
 		"test:coverage": "c8 npm test",
 		"test:mocha": "npm run test:mocha:esm",
 		"test:mocha:esm": "mocha",
-		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
+		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha"
 	},
 	"c8": {
 		"all": true,
@@ -78,7 +71,6 @@
 		"@fluid-experimental/sequence-deprecated": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/request-handler": "workspace:~",
@@ -87,7 +79,7 @@
 		"debug": "^4.3.4"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.18.2",
+		"@arethetypeswrong/cli": "^0.18.5",
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "catalog:buildTools",
@@ -110,17 +102,7 @@
 		"mocha": "^11.7.5",
 		"mocha-multi-reporters": "^1.5.1",
 		"rimraf": "^6.1.3",
-		"typescript": "~5.4.5"
-	},
-	"fluid": {
-		"browser": {
-			"umd": {
-				"files": [
-					"dist/main.bundle.js"
-				],
-				"library": "main"
-			}
-		}
+		"typescript": "~6.0.3"
 	},
 	"typeValidation": {
 		"disabled": true

@@ -7,8 +7,12 @@ import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
-import type { IChannel } from "@fluidframework/datastore-definitions/internal";
+import type {
+	IChannelFactory,
+	IChannel,
+} from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { startEphemeralService } from "@fluidframework/local-driver/internal";
 import type {
@@ -37,7 +41,6 @@ import {
 	moveToDetachedField,
 	rootFieldKey,
 	storedEmptyFieldSchema,
-	type ChangeFamilyEditor,
 	EmptyKey,
 	ValueSchema,
 } from "../../core/index.js";
@@ -64,10 +67,10 @@ import {
 	ForestTypeReference,
 	type ITreePrivate,
 	Tree,
+	TreeBeta,
 	type TreeCheckout,
 } from "../../shared-tree/index.js";
 import { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
-import type { EditManager } from "../../shared-tree-core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { simpleTreeNodeSlot } from "../../simple-tree/core/treeNodeKernel.js";
 import {
@@ -83,13 +86,9 @@ import {
 	type SimpleTreeSchema,
 	FieldKind,
 	type SimpleLeafNodeSchema,
+	type TreeBranchCommitMetadata,
 } from "../../simple-tree/index.js";
-import {
-	handleSchema,
-	numberSchema,
-	stringSchema,
-	TreeBeta,
-} from "../../simple-tree/index.js";
+import { handleSchema, numberSchema, stringSchema } from "../../simple-tree/index.js";
 import {
 	configuredSharedTree,
 	resolveOptions,
@@ -160,6 +159,21 @@ function treeTestFactory(): ISharedTree {
 }
 
 describe("SharedTree", () => {
+	it("rejects compatibility versions before SharedTree 2.0", () => {
+		assert.throws(
+			() =>
+				new TestTreeProviderLite(
+					1,
+					configuredSharedTree({
+						jsonValidator: FormatValidatorBasic,
+						// @ts-expect-error Client 3.0 excludes 1.x values, but runtime validation must reject type-erased input.
+						minVersionForCollab: "1.99.0",
+					}).getFactory(),
+				),
+			validateUsageError("SharedTree requires minVersionForCollab of at least 2.0.0"),
+		);
+	});
+
 	describe("viewWith", () => {
 		it("@Smoke initialize tree", () => {
 			const tree = treeTestFactory();
@@ -957,107 +971,282 @@ describe("SharedTree", () => {
 		assert.deepEqual([...view2.root], ["A", "B", "C"]);
 	});
 
-	// It's not clear if we'll ever want to expose the EditManager to ISharedTree consumers or
-	// if we'll ever expose some memory stats in which the trunk length would be included.
-	// If we do then this test should be updated to use that code path.
-	interface EditManagerKludge {
-		kernel?: {
-			editManager?: EditManager<ChangeFamilyEditor, unknown>;
-		};
-	}
+	describe("Trunk Trimming", () => {
+		it("has bounded memory growth in EditManager", () => {
+			const provider = new TestTreeProviderLite(2);
+			const viewInit = provider.trees[0].viewWith(
+				new TreeViewConfiguration({
+					schema: StringArray,
+					enableSchemaValidation,
+				}),
+			);
+			viewInit.initialize([]);
+			viewInit.dispose();
+			provider.synchronizeMessages();
 
-	it("has bounded memory growth in EditManager", () => {
-		const provider = new TestTreeProviderLite(2);
-		const viewInit = provider.trees[0].viewWith(
-			new TreeViewConfiguration({
-				schema: StringArray,
-				enableSchemaValidation,
-			}),
-		);
-		viewInit.initialize([]);
-		viewInit.dispose();
-		provider.synchronizeMessages();
+			const [view1, view2] = provider.trees.map((t) =>
+				t.viewWith(new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation })),
+			);
 
-		const [view1, view2] = provider.trees.map((t) =>
-			t.viewWith(new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation })),
-		);
+			// Make some arbitrary number of edits
+			for (let i = 0; i < 10; ++i) {
+				view1.root.insertAtStart("");
+			}
 
-		// Make some arbitrary number of edits
-		for (let i = 0; i < 10; ++i) {
+			provider.synchronizeMessages();
+
+			assert.equal(provider.trees[0].kernel.checkout.branchHistory.length, 10);
+			assert.equal(provider.trees[1].kernel.checkout.branchHistory.length, 10);
+
+			// These two edits will have ref numbers that correspond to the last of the above edits
 			view1.root.insertAtStart("");
+			view2.root.insertAtStart("");
+
+			// This synchronization point should ensure that both trees see the edits with the higher ref numbers.
+			provider.synchronizeMessages();
+
+			assert.equal(provider.trees[0].kernel.checkout.branchHistory.length, 2);
+			assert.equal(provider.trees[1].kernel.checkout.branchHistory.length, 2);
+		});
+
+		/**
+		 * Gets all commits reachable from the given commit, including the commit itself.
+		 * Order: most recent commit first.
+		 */
+		function getHistory(
+			commit: TreeBranchCommitMetadata | undefined,
+		): TreeBranchCommitMetadata[] {
+			const history: TreeBranchCommitMetadata[] = [];
+			let currentCommit = commit;
+			while (currentCommit !== undefined) {
+				history.push(currentCommit);
+				currentCommit = currentCommit.getParent();
+			}
+			return history;
 		}
 
-		provider.synchronizeMessages();
+		/**
+		 * Checks that all properties of the given commit are safe to read.
+		 * @remarks
+		 * This function recursively checks all ancestor commits.
+		 */
+		function checkHistorySafety(commit: TreeBranchCommitMetadata): void {
+			assert.doesNotThrow(() => commit.revision);
+			assert.doesNotThrow(() => commit.custom);
+			assert.doesNotThrow(() => commit.customTree);
+			assert.doesNotThrow(() => commit.getParent());
+			const parent = commit.getParent();
+			if (parent !== undefined) {
+				checkHistorySafety(parent);
+			}
+		}
 
-		// These two edit will have ref numbers that correspond to the last of the above edits
-		view1.root.insertAtStart("");
-		view2.root.insertAtStart("");
+		it("branch history remains safe to read after trunk trimming", () => {
+			const provider = new TestTreeProviderLite(2);
+			const viewInit = provider.trees[0].viewWith(
+				new TreeViewConfiguration({
+					schema: StringArray,
+					enableSchemaValidation,
+				}),
+			);
+			viewInit.initialize([]);
+			viewInit.dispose();
+			provider.synchronizeMessages();
 
-		// This synchronization point should ensure that both trees see the edits with the higher ref numbers.
-		provider.synchronizeMessages();
+			const [view1, view2] = provider.trees.map((t) =>
+				asAlpha(
+					t.viewWith(
+						new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+					),
+				),
+			);
 
-		const t1 = provider.trees[0] as unknown as EditManagerKludge;
-		const t2 = provider.trees[1] as unknown as EditManagerKludge;
-		assert(
-			t1.kernel?.editManager !== undefined && t2.kernel?.editManager !== undefined,
-			"EditManager has moved. This test must be updated.",
-		);
-		assert(t1.kernel.editManager.getTrunkChanges("main").length < 10);
-		assert(t2.kernel.editManager.getTrunkChanges("main").length < 10);
+			// Make some arbitrary number of edits
+			view1.root.insertAtStart("A");
+			view1.root.insertAtStart("B");
+			view1.root.insertAtStart("C");
+
+			provider.synchronizeMessages();
+
+			// These two edits will have ref numbers that correspond to the last of the above edits
+			view1.root.insertAtStart("D1");
+			view2.root.insertAtStart("D2");
+
+			assert.equal(provider.trees[0].kernel.checkout.branchHistory.length, 4);
+			assert.equal(provider.trees[1].kernel.checkout.branchHistory.length, 4);
+
+			// Capture all commit metadata objects reachable before trimming
+			const view1HistoryBeforeTrimming = getHistory(view1.branchHistory.getHead());
+			const view2HistoryBeforeTrimming = getHistory(view2.branchHistory.getHead());
+
+			// This synchronization point should ensure that both trees see the edits with the higher ref numbers.
+			provider.synchronizeMessages();
+			// Test-check: trimming should have occurred
+			assert.equal(provider.trees[0].kernel.checkout.branchHistory.length, 2);
+			assert.equal(provider.trees[1].kernel.checkout.branchHistory.length, 2);
+
+			// Check that the newly reachable history post-trimming is safe to read
+			checkHistorySafety(
+				view1.branchHistory.getHead() ?? assert.fail("Expected view1 to have a head commit"),
+			);
+			checkHistorySafety(
+				view2.branchHistory.getHead() ?? assert.fail("Expected view2 to have a head commit"),
+			);
+
+			// For each commit metadata object that might have been produced prior to trimming, check that it is still safe to read.
+			for (const commit of view1HistoryBeforeTrimming) {
+				checkHistorySafety(commit);
+			}
+			for (const commit of view2HistoryBeforeTrimming) {
+				checkHistorySafety(commit);
+			}
+		});
+
+		// This covers in-memory retention only. See the "retainHistory persistence" suite below for the
+		// summary round-trip behavior.
+		it("does not evict trunk commits when retainHistory is enabled", () => {
+			const provider = new TestTreeProviderLite(
+				2,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					retainHistory: true,
+				}).getFactory(),
+			);
+			const viewInit = provider.trees[0].viewWith(
+				new TreeViewConfiguration({
+					schema: StringArray,
+					enableSchemaValidation,
+				}),
+			);
+			viewInit.initialize([]);
+			viewInit.dispose();
+			provider.synchronizeMessages();
+
+			const priorEditCount = provider.trees[0].kernel.checkout.branchHistory.length;
+			assert.equal(provider.trees[1].kernel.checkout.branchHistory.length, priorEditCount);
+
+			const [view1, view2] = provider.trees.map((t) =>
+				t.viewWith(new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation })),
+			);
+
+			const sequencedEditCount = 10;
+			for (let i = 0; i < sequencedEditCount; ++i) {
+				view1.root.insertAtStart("");
+			}
+
+			provider.synchronizeMessages();
+
+			// These two edits will have ref numbers that correspond to the last of the above edits
+			view1.root.insertAtStart("");
+			view2.root.insertAtStart("");
+
+			// This synchronization point should ensure that both trees see the edits with the higher ref numbers,
+			// and would normally cause the earlier commits to be evicted from the trunk.
+			provider.synchronizeMessages();
+
+			// All of the edits (plus the two additional ones) should still be present on the trunk since
+			// retainHistory prevents trunk commits from ever being trimmed.
+			const expectedCount = priorEditCount + sequencedEditCount + 2;
+			assert.equal(provider.trees[0].kernel.checkout.branchHistory.length, expectedCount);
+			assert.equal(provider.trees[1].kernel.checkout.branchHistory.length, expectedCount);
+		});
 	});
 
-	it("does not evict trunk commits when retainHistory is enabled", () => {
-		const provider = new TestTreeProviderLite(
-			2,
-			configuredSharedTree({
-				jsonValidator: FormatValidatorBasic,
-				retainHistory: true,
-			}).getFactory(),
-		);
-		const viewInit = provider.trees[0].viewWith(
-			new TreeViewConfiguration({
-				schema: StringArray,
-				enableSchemaValidation,
-			}),
-		);
-		viewInit.initialize([]);
-		viewInit.dispose();
-		provider.synchronizeMessages();
+	describe("Persists retained history", () => {
+		/**
+		 * Creates two connected trees and sequences enough edits that the collaboration window advances
+		 * past most of them.
+		 * @returns the provider and the number of trunk commits the first tree still holds in memory.
+		 */
+		function generateHistory(factory: IChannelFactory<ITree>): {
+			provider: TestTreeProviderLite;
+			retainedCommitCount: number;
+		} {
+			const provider = new TestTreeProviderLite(2, factory);
+			const viewInit = provider.trees[0].viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
+			viewInit.initialize([]);
+			viewInit.dispose();
+			provider.synchronizeMessages();
 
-		const t1 = provider.trees[0] as unknown as EditManagerKludge;
-		const t2 = provider.trees[1] as unknown as EditManagerKludge;
-		assert(
-			t1.kernel?.editManager !== undefined && t2.kernel?.editManager !== undefined,
-			"EditManager has moved. This test must be updated.",
-		);
+			const [view1, view2] = provider.trees.map((t) =>
+				t.viewWith(new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation })),
+			);
 
-		const priorEditCount = t1.kernel.editManager?.getTrunkChanges("main").length;
-		assert.equal(t2.kernel.editManager.getTrunkChanges("main").length, priorEditCount);
+			for (let i = 0; i < 10; ++i) {
+				view1.root.insertAtStart("");
+			}
+			provider.synchronizeMessages();
 
-		const [view1, view2] = provider.trees.map((t) =>
-			t.viewWith(new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation })),
-		);
-
-		const sequencedEditCount = 10;
-		for (let i = 0; i < sequencedEditCount; ++i) {
+			// These two edits have ref numbers corresponding to the last of the above edits, which advances
+			// the collaboration window past them.
 			view1.root.insertAtStart("");
+			view2.root.insertAtStart("");
+			provider.synchronizeMessages();
+
+			return {
+				provider,
+				retainedCommitCount: trunkCommitCount(provider.trees[0]),
+			};
 		}
 
-		provider.synchronizeMessages();
+		/**
+		 * Summarizes `tree` and loads a fresh client from the resulting summary.
+		 * @param idCompressor - must be able to decode the revision tags in the summary, so this reuses the
+		 * summarizing client's compressor rather than creating an empty one.
+		 */
+		async function loadFreshClient(
+			tree: ITree,
+			factory: IChannelFactory<ITree>,
+			idCompressor: IIdCompressor,
+		): Promise<ISharedTree> {
+			const { summary } = await (tree as unknown as IChannel).summarize();
+			const runtime = new MockFluidDataStoreRuntime({ idCompressor });
+			return (await factory.load(
+				runtime,
+				"loaded",
+				{
+					deltaConnection: runtime.createDeltaConnection(),
+					objectStorage: MockStorage.createFromSummary(summary),
+				},
+				factory.attributes,
+			)) as ISharedTree;
+		}
 
-		// These two edits will have ref numbers that correspond to the last of the above edits
-		view1.root.insertAtStart("");
-		view2.root.insertAtStart("");
+		function trunkCommitCount(tree: ISharedTree): number {
+			return tree.kernel.checkout.branchHistory.length;
+		}
 
-		// This synchronization point should ensure that both trees see the edits with the higher ref numbers,
-		// and would normally cause the earlier commits to be evicted from the trunk.
-		provider.synchronizeMessages();
+		it("persists the retained trunk when retainHistory is enabled", async () => {
+			const factory = configuredSharedTree({
+				jsonValidator: FormatValidatorBasic,
+				retainHistory: true,
+			}).getFactory();
+			const { provider, retainedCommitCount } = generateHistory(factory);
+			// Nothing was evicted, so the summarizing client holds every commit.
+			assert(retainedCommitCount > 10);
+			const tree = provider.trees[0];
+			assert.equal(
+				trunkCommitCount(await loadFreshClient(tree, factory, provider.getCompressor(tree))),
+				retainedCommitCount,
+				"A client loading from the summary should recover the full retained history",
+			);
+		});
 
-		// All of the edits (plus the two additional ones) should still be present on the trunk since
-		// retainHistory prevents trunk commits from ever being trimmed.
-		const expectedCount = priorEditCount + sequencedEditCount + 2;
-		assert.equal(t1.kernel.editManager.getTrunkChanges("main").length, expectedCount);
-		assert.equal(t2.kernel.editManager.getTrunkChanges("main").length, expectedCount);
+		it("persists only the collaboration window by default", async () => {
+			const factory = configuredSharedTree({
+				jsonValidator: FormatValidatorBasic,
+			}).getFactory();
+			const { provider, retainedCommitCount } = generateHistory(factory);
+			assert(retainedCommitCount < 10);
+			const tree = provider.trees[0];
+			assert.equal(
+				trunkCommitCount(await loadFreshClient(tree, factory, provider.getCompressor(tree))),
+				retainedCommitCount,
+				"The default path must persist exactly the collaboration window",
+			);
+		});
 	});
 
 	it("can process changes while detached", async () => {
@@ -2777,7 +2966,9 @@ describe("SharedTree", () => {
 					forest: ForestTypeOptimized,
 				}).getFactory(),
 			);
-			assert.equal(trees[0].kernel.checkout.forest instanceof ChunkedForest, true);
+			const { checkout } = trees[0].kernel;
+			assert(checkout.forest instanceof ChunkedForest);
+			assert.equal(checkout.forest.breaker, checkout.breaker);
 		});
 
 		it("ForestTypeExpensive uses a ComparisonForest of ChunkedForest and ObjectForest with additionalAsserts set to true", () => {
@@ -2792,6 +2983,8 @@ describe("SharedTree", () => {
 			assert(forest instanceof ComparisonForest);
 			assert(forest.main instanceof ChunkedForest);
 			assert(forest.reference instanceof ObjectForest);
+			assert.equal(forest.main.breaker, trees[0].kernel.checkout.breaker);
+			assert.equal(forest.reference.breaker, trees[0].kernel.checkout.breaker);
 			assert.equal(forest.reference.additionalAsserts, true);
 		});
 	});
