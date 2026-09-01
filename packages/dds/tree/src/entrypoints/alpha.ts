@@ -317,6 +317,7 @@ export {
 	contentSchemaSymbol, 
 	createArrayInsertionAnchor, 
 	createIndependentTreeAlpha, 
+	createIndependentTreeViewAlpha, 
 	decodeSchemaCompatibilitySnapshot, 
 	defineTreeDataStore, 
 	encodeSchemaCompatibilitySnapshot, 

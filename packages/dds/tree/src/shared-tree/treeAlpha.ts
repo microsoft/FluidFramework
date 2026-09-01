@@ -362,7 +362,7 @@ export interface TreeAlpha {
 	 * @param options - If {@link (TreeAlpha:interface).exportCompressed} was given an `idCompressor`, it must be provided here.
 	 *
 	 * @remarks
-	 * If the data could have been encoded with a different schema, consider encoding the schema along side it using {@link extractPersistedSchema} and loading the data using {@link independentView}.
+	 * If the data could have been encoded with a different schema, consider encoding the schema along side it using {@link extractPersistedSchema} and loading the data using {@link createIndependentTreeViewAlpha}.
 	 *
 	 * @privateRemarks
 	 * This API could be improved:
