@@ -320,7 +320,7 @@ export class OdspDocumentServiceFactoryCore
 			this.requestHeaders === undefined
 				? hostPolicy
 				: { ...hostPolicy, requestHeaders: this.requestHeaders };
-		if (this.hostPolicy.isolateSocketCache === true) {
+		if (this.hostPolicy.isolateSocketCache === true || this.requestHeaders !== undefined) {
 			// create the key to separate the socket reuse cache
 			this.socketReferenceKeyPrefix = uuid();
 		}

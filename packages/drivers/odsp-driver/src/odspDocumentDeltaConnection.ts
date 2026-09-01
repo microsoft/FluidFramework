@@ -272,9 +272,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		// do not include the specific tenant/doc id in the ref key when multiplexing
 		// this will allow multiple documents to share the same websocket connection
 		const immutableRequestHeaders = copyRequestHeaders(requestHeaders);
-		const effectiveKeyPrefix =
-			immutableRequestHeaders === undefined ? socketReferenceKeyPrefix : uuid();
-		const key = effectiveKeyPrefix ? `${effectiveKeyPrefix},${url}` : url;
+		const key = socketReferenceKeyPrefix ? `${socketReferenceKeyPrefix},${url}` : url;
 		const socketReferenceKey = enableMultiplexing ? key : `${key},${tenantId},${documentId}`;
 
 		const socketReference = OdspDocumentDeltaConnection.getOrCreateSocketIoReference(
