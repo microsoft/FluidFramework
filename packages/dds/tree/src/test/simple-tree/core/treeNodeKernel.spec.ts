@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import { rootFieldKey, type UpPath } from "../../../core/index.js";
+import { TreeBeta } from "../../../shared-tree/index.js";
 import {
 	TEST_activeBufferCount,
 	getKernel,
@@ -20,7 +21,6 @@ import {
 	type ArrayNodeDeltaOp,
 	SchemaFactory,
 	SchemaFactoryAlpha,
-	TreeBeta,
 	TreeViewConfiguration,
 } from "../../../simple-tree/index.js";
 import { getView } from "../../utils.js";

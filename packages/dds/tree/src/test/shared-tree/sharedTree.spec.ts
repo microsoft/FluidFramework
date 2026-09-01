@@ -67,6 +67,7 @@ import {
 	ForestTypeReference,
 	type ITreePrivate,
 	Tree,
+	TreeBeta,
 	type TreeCheckout,
 } from "../../shared-tree/index.js";
 import { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
@@ -86,12 +87,7 @@ import {
 	FieldKind,
 	type SimpleLeafNodeSchema,
 } from "../../simple-tree/index.js";
-import {
-	handleSchema,
-	numberSchema,
-	stringSchema,
-	TreeBeta,
-} from "../../simple-tree/index.js";
+import { handleSchema, numberSchema, stringSchema } from "../../simple-tree/index.js";
 import {
 	configuredSharedTree,
 	resolveOptions,
