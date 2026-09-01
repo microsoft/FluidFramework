@@ -1,5 +1,89 @@
 # fluid-framework
 
+## 2.116.0
+
+### Minor Changes
+
+- Improve validation in SharedTree forests ([#27920](https://github.com/microsoft/FluidFramework/pull/27920)) [9c67a984ca](https://github.com/microsoft/FluidFramework/commit/9c67a984cacefffb0c5bd0c85e9e5b838c6d72eb)
+
+  Our [ForestType](https://fluidframework.com/docs/api/tree/foresttype-interface) implementations now have better and more consistent validation of changes being applied.
+  This should only impact cases which have hit bugs, resulting in edits which are not valid for the tree they are being applied to.
+  Now the asserts should be more specific, helping to triage such issues.
+  This also reduces the risk of document corruption by catching invalid data earlier and more consistently.
+
+- Additional change validation options ([#27977](https://github.com/microsoft/FluidFramework/pull/27977)) [d3a9a3e1bf](https://github.com/microsoft/FluidFramework/commit/d3a9a3e1bf5b45f5e9bc050759729515ba070367)
+
+  Adds the following new options to `SharedTreeOptions` (alpha):
+  - `validateCommitsOnFirstSubmission`: (default: `false`) When `true`, validates that commits being submitted for the first time can be applied without errors to a view.
+  - `validateRebasedCommitsBeforeResubmission`: (default: `false`) When `true`, validates that the commits being resubmitted can be applied without errors to a view.
+
+  In the event that a commit cannot be applied, SharedTree will throw an error and will enter a "broken" state, preventing the offending commit (and any further commits) from being submitted.
+  This can be enabled (at the cost of performance) to improve safety against document corruption in the event of a bug in the SharedTree code:
+  when the additional validation is enabled, a client will error instead of potentially corrupting the document.
+
+  These flags are experimental.
+  We recommend turning them on (first `validateRebasedCommitsBeforeResubmission` and, if needed, `validateCommitsOnFirstSubmission`)
+  when trying to mitigate bugs in SharedTree or performing root cause analysis.
+
+  We recommend [configuring SharedTree](https://fluidframework.com/docs/api/fluid-framework/forestoptions-interface#forest-propertysignature) with the [optimized forest implementation](https://fluidframework.com/docs/api/tree#foresttypeoptimized-variable) to reduce the performance impact of this validation.
+
+- Rename minVersionForCollab to oldestSupportedClient ([#27806](https://github.com/microsoft/FluidFramework/pull/27806)) [86b912170c](https://github.com/microsoft/FluidFramework/commit/86b912170c0e12ebeb481c5201f923c72bf94498)
+
+  The cross-client compatibility parameter has new names:
+  - The
+    [`MinimumVersionForCollab`](https://fluidframework.com/docs/api/runtime-definitions/minimumversionforcollab-typealias)
+    type is now
+    [`OldestSupportedClientVersion`](https://fluidframework.com/docs/api/runtime-definitions/oldestsupportedclientversion-typealias).
+  - [`LoadContainerRuntimeParams.minVersionForCollab`](https://fluidframework.com/docs/api/container-runtime/loadcontainerruntimeparams-interface#minversionforcollab-propertysignature)
+    is now
+    [`LoadContainerRuntimeParams.oldestSupportedClient`](https://fluidframework.com/docs/api/container-runtime/loadcontainerruntimeparams-interface#oldestsupportedclient-propertysignature).
+  - [`BaseContainerRuntimeFactoryProps.minVersionForCollab`](https://fluidframework.com/docs/api/aqueduct/basecontainerruntimefactoryprops-interface#minversionforcollab-propertysignature)
+    is now
+    [`BaseContainerRuntimeFactoryProps.oldestSupportedClient`](https://fluidframework.com/docs/api/aqueduct/basecontainerruntimefactoryprops-interface#oldestsupportedclient-propertysignature).
+  - [`createTreeContainerRuntimeFactory`](https://fluidframework.com/docs/api/fluid-static/#createtreecontainerruntimefactory-function)
+    now accepts `oldestSupportedClient`.
+    `minVersionForCollaboration` remains available as a deprecated overload.
+  - `@fluidframework/driver-definitions` now exports its minor-only version type as
+    [`OldestSupportedServiceClientVersion`](https://fluidframework.com/docs/api/driver-definitions/oldestsupportedserviceclientversion-typealias),
+    and
+    [`ServiceOptions.oldestSupportedClient`](https://fluidframework.com/docs/api/driver-definitions/serviceoptions-interface#oldestsupportedclient-propertysignature)
+    is available.
+  - [`AzureClient`](https://fluidframework.com/docs/api/azure-client/azureclient-class),
+    [`OdspClient`](https://fluidframework.com/docs/api/odsp-client/odspclient-class),
+    and
+    [`TinyliciousClient`](https://fluidframework.com/docs/api/tinylicious-client/tinyliciousclient-class)
+    methods now use `oldestSupportedClient` and
+    [`OldestSupportedClientVersion`](https://fluidframework.com/docs/api/runtime-definitions/oldestsupportedclientversion-typealias)
+    in their signatures.
+
+  The previous property and type names in `@fluidframework/runtime-definitions`,
+  `@fluidframework/container-runtime`, `@fluidframework/aqueduct`, and
+  `@fluidframework/fluid-static` are deprecated and will be removed in future
+  releases. Where both old and new property names remain available, specifying both
+  is an error. The alpha `MinimumVersionForCollaboration` type and
+  `ServiceOptions.minVersionForCollaboration` property are replaced directly rather
+  than retained as aliases.
+
+  ```typescript
+  // Before
+  const runtime = await loadContainerRuntime({
+    context,
+    registryEntries,
+    provideEntryPoint,
+    minVersionForCollab: "2.40.0",
+  });
+
+  // After
+  const runtime = await loadContainerRuntime({
+    context,
+    registryEntries,
+    provideEntryPoint,
+    oldestSupportedClient: "2.40.0",
+  });
+  ```
+
+  Telemetry property names are unchanged.
+
 ## 2.115.0
 
 ### Minor Changes

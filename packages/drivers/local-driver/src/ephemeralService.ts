@@ -18,16 +18,17 @@ import {
 	type ErasedBaseType,
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import type {
-	DataStoreKind,
-	DataStoreRegistry,
-	FluidContainerAttached,
-	FluidContainerWithService,
-	Registry,
-	ServiceClient,
-	ServiceOptions,
+import {
+	featureVersion,
+	type DataStoreKind,
+	type DataStoreRegistry,
+	type FluidContainerAttached,
+	type FluidContainerWithService,
+	type OldestSupportedServiceClientVersion,
+	type Registry,
+	type ServiceClient,
+	type ServiceOptions,
 } from "@fluidframework/driver-definitions/internal";
-import { featureVersion } from "@fluidframework/driver-definitions/internal";
 import {
 	type ContainerRuntimeLoader,
 	type ContainerRuntimeLoaderParams,
@@ -108,6 +109,10 @@ export function getDefaultEphemeralService(): EphemeralService {
  */
 export interface EphemeralServiceOptions extends ServiceOptions {
 	/**
+	 * {@inheritdoc @fluidframework/driver-definitions#ServiceOptions.oldestSupportedClient}
+	 */
+	readonly oldestSupportedClient: OldestSupportedServiceClientVersion;
+	/**
 	 * The service instance to connect to.
 	 */
 	readonly service: EphemeralService;
@@ -129,7 +134,7 @@ export interface EphemeralServiceOptions extends ServiceOptions {
  * This is separated out from the actual {@link @fluidframework/driver-definitions#ServiceClient} object so that it's possible to create multiple service clients
  * connected to the same service.
  * Doing so is rarely necessary, but would be needed to test multiple clients collaborating on the same
- * document with different minVersionForCollaboration values.
+ * document with different `oldestSupportedClient` values.
  * This also exposes a place to put APIs for preloading and exporting document contents in the future.
  *
  * This is an erased type: its only implementation is the module-private {@link EphemeralServiceImplementation}, which holds
@@ -184,8 +189,8 @@ export interface EphemeralService extends ErasedBaseType<readonly ["EphemeralSer
 	/**
 	 * Creates and returns a {@link EphemeralServiceClient} for an in-memory, ephemeral Fluid service.
 	 *
-	 * @param options - Options for the client. `minVersionForCollaboration` may be omitted (since all collaborators
-	 * are in the same process, it defaults to the current version). `service` may be omitted to allocate a new
+	 * @param options - Options for the client. `oldestSupportedClient` may be omitted because all
+	 * clients are in the same process, so it defaults to the current version. `service` may be omitted to allocate a new
 	 * {@link EphemeralService} dedicated to this client, or provided to connect the client to an existing service instance.
 	 *
 	 * @remarks
@@ -248,8 +253,7 @@ class EphemeralServiceImplementation
 	}
 	public newClient(options?: Partial<ServiceOptions>): EphemeralServiceClient {
 		const finalOptions: EphemeralServiceOptions = {
-			minVersionForCollaboration:
-				options?.minVersionForCollaboration ?? featureVersion(pkgVersion),
+			oldestSupportedClient: options?.oldestSupportedClient ?? featureVersion(pkgVersion),
 			service: this,
 		};
 		return new EphemeralServiceClientImplementation(finalOptions);
@@ -417,7 +421,7 @@ const containerRuntimeLoader: ContainerRuntimeLoader = async (
 		registry: parameters.registry,
 		provideEntryPoint: parameters.provideEntryPoint,
 		existing: parameters.existing,
-		minVersionForCollab: parameters.minVersionForCollab,
+		oldestSupportedClient: parameters.minVersionForCollab,
 		runtimeOptions: { enableRuntimeIdCompressor: "on" },
 	});
 	if (!parameters.existing) {
@@ -478,7 +482,7 @@ export class EphemeralServiceContainer<TData>
 			documentServiceFactory: options.service.getDocumentServiceFactory(),
 			codeLoader: makeCodeLoader(
 				registry,
-				options.minVersionForCollaboration,
+				options.oldestSupportedClient,
 				containerRuntimeLoader,
 				root,
 			),
@@ -505,7 +509,7 @@ export class EphemeralServiceContainer<TData>
 			documentServiceFactory: options.service.getDocumentServiceFactory(),
 			codeLoader: makeCodeLoader(
 				registry,
-				options.minVersionForCollaboration,
+				options.oldestSupportedClient,
 				containerRuntimeLoader,
 			),
 		});

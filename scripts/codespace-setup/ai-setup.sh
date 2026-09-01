@@ -40,7 +40,7 @@ fi
 
 # Install welcome notice so it displays in every interactive terminal session,
 # using the same shell-init strategy as agent-aliases above.
-sudo install -Dm644 "$SCRIPT_DIR/../../.devcontainer/ai-agent/first-run-notice.txt" /usr/local/etc/fluid-welcome-notice.txt
+sudo install -Dm644 "$SCRIPT_DIR/../../.devcontainer/first-run-notice.txt" /usr/local/etc/fluid-welcome-notice.txt
 sudo install -Dm644 "$SCRIPT_DIR/welcome-notice.sh" /usr/local/lib/welcome-notice.sh
 
 sudo ln -sf /usr/local/lib/welcome-notice.sh /etc/profile.d/welcome-notice.sh

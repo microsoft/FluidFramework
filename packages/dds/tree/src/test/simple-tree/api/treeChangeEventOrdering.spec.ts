@@ -4,10 +4,10 @@
  */
 
 import { strict as assert } from "node:assert";
+import { TreeBeta } from "../../../shared-tree/index.js";
 
 import {
 	SchemaFactory,
-	TreeBeta,
 	TreeViewConfiguration,
 	type ImplicitFieldSchema,
 	type InsertableField,

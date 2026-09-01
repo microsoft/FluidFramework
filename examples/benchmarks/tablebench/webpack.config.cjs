@@ -4,6 +4,7 @@
  */
 
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const path = require("path");
 
 module.exports = (env) => {
 	const htmlTemplate = "./src/index.html";
@@ -40,6 +41,7 @@ module.exports = (env) => {
 		mode,
 		output: {
 			filename: "[name].[contenthash].js",
+			path: path.resolve(__dirname, "bundle"),
 			clean: env && env.clean,
 		},
 		plugins: [new HtmlWebpackPlugin({ template: htmlTemplate })],

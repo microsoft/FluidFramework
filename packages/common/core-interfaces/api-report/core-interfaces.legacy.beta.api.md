@@ -472,10 +472,10 @@ export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
     eventName: string;
 }
 
-// @public
+// @public @input
 export interface ITelemetryBaseLogger {
     minLogLevel?: LogLevel | undefined;
-    send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
+    send(event: ITelemetryBaseEvent, logLevel: LogLevel): void;
 }
 
 // @public
@@ -509,10 +509,6 @@ export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 
 // @public
 export interface LogLevelConst {
-    // @deprecated
-    readonly default: 20;
-    // @deprecated
-    readonly error: 30;
     readonly essential: 30;
     readonly info: 20;
     readonly verbose: 10;
