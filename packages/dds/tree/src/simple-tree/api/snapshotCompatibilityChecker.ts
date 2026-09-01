@@ -256,7 +256,9 @@ export interface SnapshotSchemaCompatibilityOptions {
 	 * and not erased when regenerating snapshots.
 	 *
 	 * This directory will be created if it does not already exist.
-	 * All ".json" files in this directory will be treated as schema snapshots.
+	 * By default, all ".json" files in this directory will be treated as schema snapshots.
+	 * When {@link SnapshotSchemaCompatibilityOptions.snapshotFileNameFormat} is provided,
+	 * only JSON files matching that format will be treated as schema snapshots.
 	 * It is recommended to use a dedicated directory for each {@link snapshotSchemaCompatibility} powered test.
 	 *
 	 * This can use any path syntax supported by the provided {@link SnapshotSchemaCompatibilityOptions.fileSystem}.
@@ -270,6 +272,7 @@ export interface SnapshotSchemaCompatibilityOptions {
 	 * For example, `{ prefix: "schema-", suffix: "-snapshot" }` produces `schema-1.0.0-snapshot.json` for version `1.0.0`.
 	 *
 	 * Only JSON files matching this format are treated as schema snapshots.
+	 * The prefix and suffix must not contain path separators ("/" or "\").
 	 */
 	readonly snapshotFileNameFormat?: {
 		/**
@@ -771,7 +774,19 @@ export class SnapshotCompatibilityChecker {
 			readonly prefix?: string;
 			readonly suffix?: string;
 		} = {},
-	) {}
+	) {
+		const { prefix = "", suffix = "" } = snapshotFileNameFormat;
+		for (const [property, value] of [
+			["prefix", prefix],
+			["suffix", suffix],
+		] as const) {
+			if (value.includes("/") || value.includes("\\")) {
+				throw new UsageError(
+					`Invalid snapshotFileNameFormat.${property}: ${JSON.stringify(value)}. Must not contain path separators ("/" or "\\").`,
+				);
+			}
+		}
+	}
 
 	public writeSchemaSnapshot(snapshotName: string, snapshot: JsonCompatibleReadOnly): void {
 		const fullPath = this.fileSystemMethods.join(

@@ -766,6 +766,34 @@ Snapshots exist for versions: [
 			);
 		});
 
+		it("rejects path separators in custom snapshot file name format", () => {
+			const [fileSystem] = inMemorySnapshotFileSystem();
+			const schema = new TreeViewConfiguration({ schema: [] });
+
+			for (const [property, value] of [
+				["prefix", "schema/"],
+				["prefix", "schema\\"],
+				["suffix", "/snapshot"],
+				["suffix", "\\snapshot"],
+			] as const) {
+				assert.throws(
+					() =>
+						snapshotSchemaCompatibility({
+							version: "1.0.0",
+							schema,
+							fileSystem,
+							minVersionForCollaboration: "1.0.0",
+							mode: "update",
+							snapshotDirectory: "dir",
+							snapshotFileNameFormat: { [property]: value },
+						}),
+					validateUsageError(
+						`Invalid snapshotFileNameFormat.${property}: ${JSON.stringify(value)}. Must not contain path separators ("/" or "\\").`,
+					),
+				);
+			}
+		});
+
 		it("snapshotUnchangedVersions", () => {
 			const snapshotDirectory = "dir";
 			const [fileSystem] = inMemorySnapshotFileSystem();
