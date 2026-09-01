@@ -184,7 +184,7 @@ export interface GraphCommit<TChange> {
 	/**
 	 * Indicates whether this commit was trimmed from the history.
 	 * @remarks
-	 * This property is set to `true` during trunk trimming on all trimmed commits (including the new trunk base).
+	 * During trunk trimming, this property is set to `true` on all trimmed commits (including the new trunk base).
 	 */
 	readonly wasTrimmed?: true;
 }
