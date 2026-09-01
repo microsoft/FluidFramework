@@ -70,7 +70,7 @@ class LazyTreeBranchCommitMetadata implements TreeBranchCommitMetadata {
 			this.parentCache = {
 				prior: parent,
 				cached:
-					parent === undefined || parent.wasTrimmed || parent.revision === "root"
+					parent === undefined || parent.wasTrimmed
 						? undefined
 						: new LazyTreeBranchCommitMetadata(parent, this.idCompressor),
 			};
