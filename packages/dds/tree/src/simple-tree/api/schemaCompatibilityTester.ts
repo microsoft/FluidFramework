@@ -24,8 +24,8 @@ import {
 import type { SchemaCompatibilityStatus } from "./tree.js";
 
 /**
- * Describes the first discrepancy that prevents a view schema from viewing a stored schema, as a
- * JSON object.
+ * Describes the first discrepancy that prevents a view schema from viewing a stored schema as a
+ * JSON-serialized object.
  */
 export function getSchemaIncompatibilityDetails(
 	viewSchema: TreeSchema,

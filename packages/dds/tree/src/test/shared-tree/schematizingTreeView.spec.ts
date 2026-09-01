@@ -669,25 +669,26 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(view.compatibility.canView, false);
 		assert.equal(view.compatibility.canUpgrade, false);
 		assert.equal(view.compatibility.isEquivalent, false);
-		assert.throws(
-			() => view.root,
-			(error) => {
-				assert(error instanceof UsageError);
-				assert.equal(
-					error.message,
-					"TreeView.root is unavailable because the view schema is incompatible with the stored schema. The schemas cannot be upgraded automatically. Use a compatible view schema or explicitly migrate the document schema and data.",
-				);
-				assert.deepEqual(error.getTelemetryProperties().schemaIncompatibilityDetails, {
-					tag: TelemetryDataTag.SchemaArtifact,
-					value: JSON.stringify({
-						location: { nodeType: null, fieldKey: null },
-						view: ["com.fluidframework.leaf.boolean"],
-						stored: ["com.fluidframework.leaf.string"],
-					}),
-				});
-				return true;
-			},
-		);
+		const validateIncompatibleSchemaError = (error: unknown): boolean => {
+			assert(error instanceof UsageError);
+			assert.equal(
+				error.message,
+				"TreeView.root is unavailable because the view schema is incompatible with the stored schema. The schemas cannot be upgraded automatically. Use a compatible view schema or explicitly migrate the document schema and data.",
+			);
+			assert.deepEqual(error.getTelemetryProperties().schemaIncompatibilityDetails, {
+				tag: TelemetryDataTag.SchemaArtifact,
+				value: JSON.stringify({
+					location: { nodeType: null, fieldKey: null },
+					view: ["com.fluidframework.leaf.boolean"],
+					stored: ["com.fluidframework.leaf.string"],
+				}),
+			});
+			return true;
+		};
+		assert.throws(() => view.root, validateIncompatibleSchemaError);
+		assert.throws(() => {
+			view.root = 7;
+		}, validateIncompatibleSchemaError);
 
 		assert.throws(
 			() => view.upgradeSchema(),
