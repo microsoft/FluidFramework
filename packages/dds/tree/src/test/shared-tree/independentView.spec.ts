@@ -38,7 +38,7 @@ import { ajvValidator } from "../codec/index.js";
 import { testIdCompressor } from "../utils.js";
 
 describe("independentView", () => {
-	it("createIndependentViewAlpha", () => {
+	it("createIndependentTreeViewAlpha", () => {
 		const config = new TreeViewConfiguration({ schema: SchemaFactory.number });
 		// Keep this deprecated call to verify compatibility with the previous API name.
 		const view = independentView(config);
