@@ -1807,7 +1807,6 @@ export interface SchemaCompatibilityStatus {
     readonly canInitialize: boolean;
     readonly canUpgrade: boolean;
     readonly canView: boolean;
-    readonly discrepancies?: string;
     readonly isEquivalent: boolean;
 }
 
@@ -2744,6 +2743,7 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 
 // @alpha @sealed
 export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> extends Omit<TreeViewBeta<ReadSchema<TSchema>>, "root" | "initialize" | "fork" | "runTransaction" | "runTransactionAsync" | "isView">, UntypedTreeViewAlpha {
+    readonly discrepancies: string | undefined;
     // (undocumented)
     readonly events: Listenable<TreeViewEvents & TreeBranchEvents>;
     // (undocumented)

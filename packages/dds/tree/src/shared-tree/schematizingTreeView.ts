@@ -82,7 +82,10 @@ import type { TreeCheckout } from "./treeCheckout.js";
  */
 export const ViewSlot = anchorSlot<TreeContextAlpha>();
 
-function throwIfSchemaIsIncompatible(compatibility: SchemaCompatibilityStatus): void {
+function throwIfSchemaIsIncompatible(
+	compatibility: SchemaCompatibilityStatus,
+	discrepancies: string | undefined,
+): void {
 	if (compatibility.canView) {
 		return;
 	}
@@ -95,7 +98,7 @@ function throwIfSchemaIsIncompatible(compatibility: SchemaCompatibilityStatus): 
 	throw new UsageError(
 		`TreeView.root is unavailable because the view schema is incompatible with the stored schema. ${resolution}`,
 		tagSchemaArtifacts({
-			schemaIncompatibilityDetails: compatibility.discrepancies,
+			schemaIncompatibilityDetails: discrepancies,
 		}),
 	);
 }
@@ -119,6 +122,7 @@ export class SchematizingSimpleTreeView<
 	 * Undefined if and only if uninitialized or disposed.
 	 */
 	private currentCompatibility: SchemaCompatibilityStatus | undefined;
+	private currentDiscrepancies: string | undefined;
 	/**
 	 * Cached map of upgrade statuses, computed alongside compatibility.
 	 * @remarks Undefined if and only if uninitialized or disposed.
@@ -484,15 +488,12 @@ export class SchematizingSimpleTreeView<
 			this.stagedUpgradePolicy,
 		);
 		this.currentEnabledUpgrades = enabledUpgrades;
-		const schemaIncompatibilityDetails = compatibility.canView
+		this.currentDiscrepancies = compatibility.canView
 			? undefined
 			: getSchemaIncompatibilityDetails(this.viewSchema, this.checkout.storedSchema);
 		return {
 			...compatibility,
 			canInitialize: canInitialize(this.checkout),
-			...(schemaIncompatibilityDetails === undefined
-				? {}
-				: { discrepancies: schemaIncompatibilityDetails }),
 		};
 	}
 
@@ -535,6 +536,13 @@ export class SchematizingSimpleTreeView<
 		return this.currentCompatibility;
 	}
 
+	public get discrepancies(): string | undefined {
+		if (!this.currentCompatibility) {
+			this.failDisposed();
+		}
+		return this.currentDiscrepancies;
+	}
+
 	public dispose(): void {
 		this.disposed = true;
 		this.disposeFlexView();
@@ -543,6 +551,7 @@ export class SchematizingSimpleTreeView<
 		}
 		this.checkout.forest.anchors.slots.delete(ViewSlot);
 		this.currentCompatibility = undefined;
+		this.currentDiscrepancies = undefined;
 		this.currentEnabledUpgrades = undefined;
 		this.onDispose?.();
 		if (!this.checkout.isSharedBranch && !this.checkout.disposed) {
@@ -553,7 +562,7 @@ export class SchematizingSimpleTreeView<
 
 	private get flexRoot(): FlexTreeOptionalField | FlexTreeRequiredField {
 		this.breaker.use();
-		throwIfSchemaIsIncompatible(this.compatibility);
+		throwIfSchemaIsIncompatible(this.compatibility, this.discrepancies);
 		const view = this.getFlexTreeContext();
 		assert(
 			view.root.is(FieldKinds.optional) ||
@@ -570,7 +579,7 @@ export class SchematizingSimpleTreeView<
 
 	public set root(newRoot: InsertableField<TRootSchema>) {
 		this.breaker.use();
-		throwIfSchemaIsIncompatible(this.compatibility);
+		throwIfSchemaIsIncompatible(this.compatibility, this.discrepancies);
 		const view = this.getFlexTreeContext();
 		setField(
 			view.root,

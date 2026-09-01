@@ -594,7 +594,7 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(view.compatibility.canUpgrade, true);
 		assert.equal(view.compatibility.isEquivalent, false);
 		assert.equal(
-			view.compatibility.discrepancies,
+			view.discrepancies,
 			JSON.stringify([
 				{
 					mismatch: "allowedTypes",
@@ -632,7 +632,7 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.deepEqual(log, [["rootChanged", 5]]);
 
 		assert.equal(view.compatibility.isEquivalent, true);
-		assert.equal(view.compatibility.discrepancies, undefined);
+		assert.equal(view.discrepancies, undefined);
 		assert.equal(view.root, 5);
 	});
 
@@ -648,7 +648,7 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(view.compatibility.canUpgrade, false);
 		assert.equal(view.compatibility.isEquivalent, false);
 		assert.equal(
-			view.compatibility.discrepancies,
+			view.discrepancies,
 			JSON.stringify([
 				{
 					mismatch: "allowedTypes",

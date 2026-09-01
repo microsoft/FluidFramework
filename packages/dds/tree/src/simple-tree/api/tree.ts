@@ -840,6 +840,17 @@ export interface TreeViewAlpha<
 	initialize(content: InsertableField<TSchema>): void;
 
 	/**
+	 * Details about the schema discrepancies that prevent this view from accessing the tree,
+	 * formatted as a JSON-serialized array.
+	 *
+	 * @remarks
+	 * This property is undefined when {@link SchemaCompatibilityStatus.canView} is true and present
+	 * when `canView` is false.
+	 * It can include application-defined schema identifiers and field keys.
+	 */
+	readonly discrepancies: string | undefined;
+
+	/**
 	 * Checks whether a staged schema upgrade has been applied to the document's stored schema.
 	 *
 	 * @param upgrade - The upgrade token to check.
@@ -950,19 +961,9 @@ export interface SchemaCompatibilityStatus {
 	 */
 	readonly canInitialize: boolean;
 
-	/**
-	 * Details about the schema discrepancies that prevent this view from accessing the tree,
-	 * formatted as a JSON-serialized array.
-	 *
-	 * @remarks
-	 * This property is undefined when {@link SchemaCompatibilityStatus.canView} is true and present
-	 * when `canView` is false.
-	 * It can include application-defined schema identifiers and field keys.
-	 */
-	readonly discrepancies?: string;
-
 	// TODO: Consider extending this status to include:
 	// - application-defined metadata about the stored schema
+	// - details about the differences between the stored and view schema sufficient for implementing "safe mismatch" policies
 }
 
 /**
