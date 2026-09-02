@@ -11,7 +11,11 @@ import { remark } from "remark";
 import remarkGfm from "remark-gfm";
 import { visit } from "unist-util-visit";
 
-import { ADMONITION_REGEX, stripSoftBreaks } from "../../library/markdown.js";
+import {
+	ADMONITION_REGEX,
+	stripSoftBreaks,
+	TRAILING_ADMONITION_REGEX,
+} from "../../library/markdown.js";
 
 /**
  * The admonition types that GitHub supports, and that the regular expression is expected to recognize.
@@ -104,6 +108,54 @@ describe("ADMONITION_REGEX", () => {
 	});
 });
 
+describe("TRAILING_ADMONITION_REGEX", () => {
+	/**
+	 * Applies {@link TRAILING_ADMONITION_REGEX} the way `stripSoftBreaks` does.
+	 */
+	function splitTrailingTitle(input: string): string {
+		return input.replace(TRAILING_ADMONITION_REGEX, "$1\n");
+	}
+
+	describe("splits a title left at the end of the string", () => {
+		const cases: [name: string, input: string][] = [
+			["with no trailing whitespace", "[!NOTE]"],
+			["with a trailing space", "[!NOTE] "],
+			["with trailing spaces", "[!NOTE]   "],
+			["with a trailing line break", "[!NOTE]\n"],
+			["after other content", "Leading text. [!NOTE] "],
+		];
+
+		for (const [name, input] of cases) {
+			it(name, () => {
+				assert.equal(splitTrailingTitle(input), `${input.trimEnd()}\n`);
+			});
+		}
+	});
+
+	it("is idempotent, so an already-split title does not gain a second line break", () => {
+		assert.equal(splitTrailingTitle(splitTrailingTitle("[!NOTE] ")), "[!NOTE]\n");
+	});
+
+	describe("leaves the string alone", () => {
+		const cases: [name: string, input: string][] = [
+			["when the title is followed by content", "[!NOTE] Body text."],
+			["when there is no title", "Body text."],
+			["when the type is not supported", "[!DANGER] "],
+			["when the type is lowercase", "[!note] "],
+		];
+
+		for (const [name, input] of cases) {
+			it(name, () => {
+				assert.equal(splitTrailingTitle(input), input);
+			});
+		}
+	});
+
+	it("is not multiline, so a title at the end of an inner line is left alone", () => {
+		assert.equal(splitTrailingTitle("[!NOTE]\nBody text."), "[!NOTE]\nBody text.");
+	});
+});
+
 describe("stripSoftBreaks", () => {
 	/**
 	 * Parses markdown into an mdast tree, applies the `stripSoftBreaks` plugin to it, and returns the values of every
@@ -133,6 +185,51 @@ describe("stripSoftBreaks", () => {
 		// the collapsed soft break and is not split back onto its own line.
 		assert.deepEqual(stripAndCollectText("[!NOTE]\nBody line one.\n"), [
 			"[!NOTE] Body line one.",
+		]);
+	});
+
+	describe("keeps the title on its own line when the body starts with formatting", () => {
+		// Markdown parsers put the title and the body in sibling nodes when the body starts with anything other than
+		// plain text, which leaves the title alone at the end of its own text node. The title still needs its line
+		// break, otherwise the alert collapses onto one line and GitHub stops rendering it as an alert.
+		const cases: [name: string, markdown: string, expected: string[]][] = [
+			[
+				"bold text",
+				"> [!NOTE]\n> **Bold body** and more.\n",
+				["[!NOTE]\n", "Bold body", " and more."],
+			],
+			[
+				"a link",
+				"> [!TIP]\n> [a link](https://example.com) then text.\n",
+				["[!TIP]\n", "a link", " then text."],
+			],
+			["inline code", "> [!WARNING]\n> `code` first.\n", ["[!WARNING]\n", " first."]],
+		];
+
+		for (const [name, markdown, expected] of cases) {
+			it(name, () => {
+				assert.deepEqual(stripAndCollectText(markdown), expected);
+			});
+		}
+	});
+
+	it("does not add a line break to a title that has no body", () => {
+		assert.deepEqual(stripAndCollectText("> [!NOTE]\n"), ["[!NOTE]"]);
+	});
+
+	it("does not add a line break when a hard break already follows the title", () => {
+		// The two trailing spaces produce a `break` node, which already supplies the line break the alert needs.
+		assert.deepEqual(stripAndCollectText("> [!NOTE]  \n> **Bold body**\n"), [
+			"[!NOTE]",
+			"Bold body",
+		]);
+	});
+
+	it("leaves a blockquote that is not an admonition alone", () => {
+		assert.deepEqual(stripAndCollectText("> Regular quote with **bold** text.\n"), [
+			"Regular quote with ",
+			"bold",
+			" text.",
 		]);
 	});
 });

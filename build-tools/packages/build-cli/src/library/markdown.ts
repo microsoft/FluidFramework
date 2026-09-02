@@ -85,6 +85,27 @@ export const ADMONITION_REGEX = /(\[!(?:CAUTION|IMPORTANT|NOTE|TIP|WARNING)])(?!
 const SOFT_BREAK_REGEX = /$[^$]/gms;
 
 /**
+ * A regular expression that extracts an admonition title that sits at the very end of a string, ignoring any trailing
+ * whitespace.
+ *
+ * Capture group 1 is the admonition type/title, exactly as in {@link ADMONITION_REGEX}.
+ *
+ * @remarks
+ *
+ * {@link ADMONITION_REGEX} deliberately skips a title that is the only thing on its line, because such a title already
+ * has a line of its own. That check only sees a single text node, though. When an alert body starts with formatting -
+ * `**bold**`, a link, or inline code, for example - markdown parsers put the title and the body in sibling nodes, so
+ * the title ends up alone at the end of its own text node and {@link ADMONITION_REGEX} leaves it untouched. This
+ * regular expression matches those titles so the caller can restore the line break the alert needs.
+ *
+ * Note that this regular expression is deliberately not multiline: `$` must mean the end of the whole string, not the
+ * end of any line within it.
+ *
+ * @internal
+ */
+export const TRAILING_ADMONITION_REGEX = /(\[!(?:CAUTION|IMPORTANT|NOTE|TIP|WARNING)])\s*$/;
+
+/**
  * A remarkjs/unist plugin that strips soft line breaks. This is a workaround for GitHub's inconsistent markdown
  * rendering in GitHub Releases. According to CommonMark, Markdown paragraphs are denoted by two line breaks, and single
  * line breaks should be ignored. But in GitHub releases, single line breaks are rendered. This plugin removes the soft
@@ -99,10 +120,29 @@ export function stripSoftBreaks(): (tree: Node) => void {
 
 		// preserve GitHub admonitions; without this the line breaks in the alert are lost and it doesn't render correctly.
 		visit(tree, "blockquote", (node: Node) => {
-			visit(node, "text", (innerNode: { value: string }) => {
-				// If the text is an admonition title, split
-				innerNode.value = innerNode.value.replace(ADMONITION_REGEX, "$1\n");
-			});
+			visit(
+				node,
+				"text",
+				(
+					innerNode: { value: string },
+					index: number | undefined,
+					parent: Parent | undefined,
+				) => {
+					// If the text is an admonition title, split
+					innerNode.value = innerNode.value.replace(ADMONITION_REGEX, "$1\n");
+
+					if (index === undefined || parent === undefined) {
+						return;
+					}
+
+					const nextSibling = parent.children[index + 1];
+					// A title left at the end of this text node still needs its line break when the alert body continues in
+					// a sibling node. A `break` sibling is skipped because it already supplies the line break.
+					if (nextSibling !== undefined && nextSibling.type !== "break") {
+						innerNode.value = innerNode.value.replace(TRAILING_ADMONITION_REGEX, "$1\n");
+					}
+				},
+			);
 		});
 	};
 }
