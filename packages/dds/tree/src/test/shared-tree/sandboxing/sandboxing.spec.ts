@@ -1296,6 +1296,8 @@ describe("Host and Guest Demo", () => {
 				): void {
 					messagesMovingToRelay += 1;
 					try {
+						// The branches select different `MessagePort.postMessage` overloads.
+						// TypeScript cannot pass the union directly because no overload accepts both types.
 						if (Array.isArray(transferOrOptions)) {
 							this.innerPort.postMessage(message, transferOrOptions);
 						} else {
