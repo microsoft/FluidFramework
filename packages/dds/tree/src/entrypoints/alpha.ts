@@ -281,7 +281,7 @@ export {
 	SimpleTreeSchema, 
 	StagedSchemaUpgradePolicy, 
 	StagedSchemaUpgradePolicyFactory, 
-	StagedUpgradeStatus, 
+	StagedUpgradeStatus,
 	StringSchema, 
 	TransactionCallbackStatusAlpha, 
 	TransactionConstraintAlpha, 
