@@ -122,6 +122,7 @@ export type {
 } from "@fluidframework/driver-definitions/internal";
 export {
 	createBasicRegistryKey,
+	featureVersion,
 	lookupInRegistry,
 	// Due to this currently referencing several existing public types we do not want to stabilize as reexports from here,
 	// do not reexport getContainerAudience for now.

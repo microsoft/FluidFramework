@@ -12,10 +12,7 @@
 	"author": "Microsoft and contributors",
 	"type": "module",
 	"exports": {
-		".": {
-			"import": "./lib/index.js",
-			"require": "./dist/index.js"
-		}
+		".": "./lib/index.js"
 	},
 	"scripts": {
 		"build": "fluid-build . --task build",

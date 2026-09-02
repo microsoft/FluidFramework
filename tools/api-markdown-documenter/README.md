@@ -31,13 +31,13 @@ The following terms are leveraged heavily in this package's APIs and documentati
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
-**NOTE: This package is a library intended for use within the [microsoft/FluidFramework](https://github.com/microsoft/FluidFramework) repository.**
-**It is not intended for public use.**
-**We make no stability guarantees regarding this library and its APIs.**
+**NOTE: This package is a library for use in the [microsoft/FluidFramework](https://github.com/microsoft/FluidFramework) repository.**
+**Do not use this package as a public dependency.**
+**We do not guarantee the stability of this package or its APIs.**
 
 ## Installation
 
-To get started, install the package by running the following command:
+Run this command to install the package:
 
 ```bash
 npm i @fluid-tools/api-markdown-documenter -D
@@ -45,12 +45,12 @@ npm i @fluid-tools/api-markdown-documenter -D
 
 ## Importing from this package
 
-This package leverages [package.json exports](https://nodejs.org/api/packages.html#exports) to separate its APIs by support level.
-For more information on the related support guarantees, see [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
+This package uses [package.json exports](https://nodejs.org/api/packages.html#exports) to separate APIs by support level.
+For information about the support guarantees, read [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
 
-To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluid-tools/api-markdown-documenter` like normal.
+Import the `public` APIs from `@fluid-tools/api-markdown-documenter`.
 
-To access the `beta` APIs, import via `@fluid-tools/api-markdown-documenter/beta`.
+Import the `beta` APIs from `@fluid-tools/api-markdown-documenter/beta`.
 
 <!-- prettier-ignore-end -->
 
@@ -330,17 +330,18 @@ Other validation may be added in the future as needed.
 
 ## Contribution Guidelines
 
-There are many ways to [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid.
+You can [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid Framework in these ways:
 
--   Participate in Q&A in our [GitHub Discussions](https://github.com/microsoft/FluidFramework/discussions).
--   [Submit bugs](https://github.com/microsoft/FluidFramework/issues) and help us verify fixes as they are checked in.
--   Review the [source code changes](https://github.com/microsoft/FluidFramework/pulls).
+-   Answer questions in [GitHub Discussions](https://github.com/microsoft/FluidFramework/discussions).
+-   [Submit bug reports](https://github.com/microsoft/FluidFramework/issues) and help verify fixes.
+-   Review [source code changes](https://github.com/microsoft/FluidFramework/pulls).
 -   [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
 
-Detailed instructions for working in the repo can be found in the [Wiki](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Home.md).
+For detailed instructions, read the [repo documentation](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Home.md).
 
-This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
-For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+This project follows the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
+For more information, read the [Code of Conduct frequently asked questions](https://opensource.microsoft.com/codeofconduct/faq/).
+For questions or comments, contact [opencode@microsoft.com](mailto:opencode@microsoft.com).
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
 Use of these trademarks or logos must follow Microsoft’s [Trademark & Brand Guidelines](https://www.microsoft.com/trademarks).
@@ -348,13 +349,9 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 
 ## Help
 
-Not finding what you're looking for in this README?
-Check out [fluidframework.com](https://fluidframework.com/docs/).
+Read the [Fluid Framework documentation](https://fluidframework.com/docs/) for information about Fluid Framework concepts and APIs.
 
-Still not finding what you're looking for?
-Please [file an issue](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Contributing/Submitting-Bugs-and-Feature-Requests.md).
-
-Thank you!
+To request information that the documentation does not contain, [create an issue](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Contributing/Submitting-Bugs-and-Feature-Requests.md).
 
 ## Trademark
 

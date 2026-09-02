@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { Divider } from "@fluentui/react-components";
 import {
 	type ConnectionStateChangeLogEntry,
 	ContainerStateHistory,
@@ -15,10 +14,13 @@ import {
 } from "@fluidframework/devtools-core/internal";
 import { type ReactElement, useEffect, useState } from "react";
 
+import { FluentReactComponents } from "../FluentUi.cjs";
 import { useMessageRelay } from "../MessageRelayContext.js";
 
 import { ContainerHistoryLog } from "./ContainerHistoryLog.js";
 import { Waiting } from "./Waiting.js";
+
+const { Divider } = FluentReactComponents;
 
 /**
  * {@link ContainerHistoryView} input props.

@@ -3,28 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import {
-	Button,
-	makeStyles,
-	mergeClasses,
-	shorthands,
-	tokens,
-	Tooltip,
-} from "@fluentui/react-components";
-import {
-	QuestionCircle16Regular,
-	ArrowSync16Regular,
-	CatchUp16Regular,
-	Run16Regular,
-	LockClosed16Regular,
-	PlugConnected16Regular,
-	PlugDisconnected16Regular,
-	Delete16Regular,
-	Dismiss24Regular,
-	Attach16Regular,
-	DocumentDataLink16Regular,
-	DocumentDismiss16Regular,
-} from "@fluentui/react-icons";
 import { ConnectionState } from "@fluidframework/container-loader";
 import type {
 	HasContainerKey,
@@ -48,11 +26,29 @@ import {
 	useState,
 } from "react";
 
+import { FluentReactComponents, FluentReactIcons } from "../FluentUi.cjs";
 import { useMessageRelay } from "../MessageRelayContext.js";
 import { useLogger } from "../TelemetryUtils.js";
 
 import { Waiting } from "./Waiting.js";
 import { ScreenReaderAnnouncement } from "./utility-components/index.js";
+
+const { Button, makeStyles, mergeClasses, shorthands, tokens, Tooltip } =
+	FluentReactComponents;
+const {
+	QuestionCircle16Regular,
+	ArrowSync16Regular,
+	CatchUp16Regular,
+	Run16Regular,
+	LockClosed16Regular,
+	PlugConnected16Regular,
+	PlugDisconnected16Regular,
+	Delete16Regular,
+	Dismiss24Regular,
+	Attach16Regular,
+	DocumentDataLink16Regular,
+	DocumentDismiss16Regular,
+} = FluentReactIcons;
 
 const useMenuStyles = makeStyles({
 	root: {

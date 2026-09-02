@@ -49,6 +49,9 @@ import {
 	visitDelta,
 	type RevertibleAlphaFactory,
 	type RevertibleAlpha,
+	type RevertOptionsAlpha,
+	type RevertToOptionsAlpha,
+	type CustomMetadataTree,
 	type GraphCommit,
 	isAncestor,
 	moveToDetachedField,
@@ -120,6 +123,7 @@ import {
 	hasSome,
 	throwIfBroken,
 	type JsonCompatibleReadOnly,
+	type JsonCompatibleReadOnlyObject,
 	type WithBreakable,
 } from "../util/index.js";
 
@@ -137,6 +141,46 @@ import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import { extractTransactionChangeProcessor } from "./transactionPostProcessor.js";
 import { SerializedChange } from "./serializedChange.js";
+
+/**
+ * Returns a defensive copy of the given metadata, validating that it can be persisted.
+ * @remarks
+ * The round-trip through JSON ensures that the value read back locally is exactly the value that peers and
+ * future summaries will see, and that later mutation of the caller's object cannot affect an existing commit.
+ * @throws A `UsageError` if the value cannot be represented as a JSON object.
+ */
+function snapshotCustomMetadata(
+	customMetadata: JsonCompatibleReadOnlyObject | undefined,
+): JsonCompatibleReadOnlyObject | undefined {
+	if (customMetadata === undefined) {
+		return undefined;
+	}
+	let serialized: string | undefined;
+	try {
+		serialized = JSON.stringify(customMetadata);
+	} catch (error: unknown) {
+		throw new UsageError(
+			`"customMetadata" must be JSON-serializable: ${error instanceof Error ? error.message : String(error)}`,
+		);
+	}
+	if (serialized === undefined) {
+		throw new UsageError(`"customMetadata" must be JSON-serializable.`);
+	}
+	const snapshot: unknown = JSON.parse(serialized);
+	if (typeof snapshot !== "object" || snapshot === null || Array.isArray(snapshot)) {
+		throw new UsageError(`"customMetadata" must be a JSON object.`);
+	}
+	return snapshot as JsonCompatibleReadOnlyObject;
+}
+
+/**
+ * Wraps metadata for an operation which produces a single commit.
+ */
+function toMetadataTree(
+	customMetadata: JsonCompatibleReadOnlyObject | undefined,
+): CustomMetadataTree | undefined {
+	return customMetadata === undefined ? undefined : { metadata: customMetadata, children: [] };
+}
 
 /**
  * Yields all defined (non-`undefined`) labels from a {@link LabelTree}, depth-first.
@@ -368,6 +412,8 @@ export function createTreeCheckout(
 			{
 				change: changeFamily.rebaser.compose([]),
 				revision: "root",
+				customMetadata: undefined,
+				wasTrimmed: true,
 			},
 			changeFamily,
 			() => idCompressor.generateCompressedId(),
@@ -979,7 +1025,7 @@ export class TreeCheckout implements ITreeCheckout {
 			serializedChange,
 		);
 		// Apply the change to the branch, but _not_ the `activeBranch` - we do not support squashing serialized commits in a transaction.
-		this.#transaction.branch.apply(change);
+		this.#transaction.branch.apply(change, CommitKind.Default, undefined);
 	}
 
 	// #region UntypedTreeViewAlpha
@@ -1068,6 +1114,9 @@ export class TreeCheckout implements ITreeCheckout {
 		this.pushLabelFrame(params?.label);
 		this.transaction.start({
 			postProcessor: extractTransactionChangeProcessor(params?.postProcessor),
+			// Like the validation described above, rejecting malformed metadata breaks the checkout rather
+			// than being recoverable. Tracked by https://github.com/microsoft/FluidFramework/issues/28085.
+			customMetadata: snapshotCustomMetadata(params?.customMetadata),
 		});
 
 		addConstraintsToTransaction(this, false, params?.preconditions);
@@ -1218,18 +1267,27 @@ export class TreeCheckout implements ITreeCheckout {
 					? RevertibleStatus.Disposed
 					: RevertibleStatus.Valid;
 			},
-			revert: (release: boolean = true) => {
+			revert: (releaseOrOptions: boolean | RevertOptionsAlpha = true) => {
 				if (revertible.status === RevertibleStatus.Disposed) {
 					throw new UsageError("Unable to revert a revertible that has been disposed.");
 				}
 
-				const revertMetrics = checkout.revertRevertible(revision, kind, labelTree);
+				const options =
+					typeof releaseOrOptions === "boolean"
+						? { dispose: releaseOrOptions }
+						: releaseOrOptions;
+				const revertMetrics = checkout.revertRevertible(
+					revision,
+					kind,
+					labelTree,
+					snapshotCustomMetadata(options.customMetadata),
+				);
 				checkout.logger?.sendTelemetryEvent({
 					eventName: TreeCheckout.revertTelemetryEventName,
 					...revertMetrics,
 				});
 
-				if (release) {
+				if (options.dispose ?? true) {
 					revertible.dispose();
 				}
 			},
@@ -1419,7 +1477,7 @@ export class TreeCheckout implements ITreeCheckout {
 		this.switchBranch(this.#transaction.branch.fork(targetCommit));
 	}
 
-	public revertTo(revisionString: string): void {
+	public revertTo(revisionString: string, options?: RevertToOptionsAlpha): void {
 		this.checkNotDisposed(
 			"The branch has already been disposed and prior revisions cannot be reverted to.",
 		);
@@ -1427,6 +1485,7 @@ export class TreeCheckout implements ITreeCheckout {
 		if (this.#transaction.size > 0) {
 			throw new UsageError("Reverting to a revision is not supported during transactions.");
 		}
+		const customMetadata = snapshotCustomMetadata(options?.customMetadata);
 		const revision = this.idCompressor.tryRecompress(revisionString as StableId);
 		if (revision === undefined) {
 			throw new UsageError(`Unrecognized revision id: ${revisionString}`);
@@ -1451,7 +1510,11 @@ export class TreeCheckout implements ITreeCheckout {
 			false,
 			revisionForInvert,
 		);
-		this.#transaction.branch.apply(tagChange(inverse, revisionForInvert));
+		this.#transaction.branch.apply(
+			tagChange(inverse, revisionForInvert),
+			CommitKind.Default,
+			toMetadataTree(customMetadata),
+		);
 	}
 
 	private rebase(view: UntypedTreeView): void {
@@ -1628,6 +1691,7 @@ export class TreeCheckout implements ITreeCheckout {
 		revision: RevisionTag,
 		kind: CommitKind,
 		labelTree: LabelTree | undefined,
+		customMetadata: JsonCompatibleReadOnlyObject | undefined,
 	): RevertMetrics {
 		this.editLock.checkUnlocked("Reverting a commit");
 		if (this.transaction.size > 0) {
@@ -1682,6 +1746,7 @@ export class TreeCheckout implements ITreeCheckout {
 				kind === CommitKind.Default || kind === CommitKind.Redo
 					? CommitKind.Undo
 					: CommitKind.Redo,
+				toMetadataTree(customMetadata),
 			);
 		} finally {
 			this.labelTreeNode = previousLabelTreeNode;

@@ -20,6 +20,7 @@ const TOKEN_FUNCTIONS = fs.readFileSync(
 	"utf8",
 );
 const STACK_DEPLOY = fs.readFileSync(path.join(ROOT, "azure", "deploy.sh"), "utf8");
+const PREFLIGHT = fs.readFileSync(path.join(ROOT, "azure", "preflight-check.sh"), "utf8");
 
 test("workstation deployment restores Key Vault network isolation", () => {
 	assert.match(TOKEN_DEPLOY, /--public-network-access Enabled/);
@@ -38,6 +39,43 @@ test("temporary deployer Key Vault roles are removed on exit", () => {
 	}
 	assert.match(TOKEN_DEPLOY, /trap cleanup_deployment_state EXIT/);
 	assert.match(STACK_DEPLOY, /trap cleanup_deployment_state EXIT/);
+});
+
+test("deployment tooling uses private unpredictable temporary paths", () => {
+	for (const script of [TOKEN_DEPLOY, STACK_DEPLOY, PREFLIGHT]) {
+		assert.doesNotMatch(script, /\/tmp\/[^\s"']*\$\$/);
+		assert.doesNotMatch(script, /\$\{TMPDIR:-\/tmp\}\/[^\s"']*\$\$/);
+	}
+	assert.match(
+		TOKEN_DEPLOY,
+		/mktemp -d "\$\{TMPDIR:-\/tmp\}\/selfhost-token-service\.XXXXXX"/,
+	);
+	assert.match(TOKEN_DEPLOY, /rm -rf "\$TOKEN_SERVICE_TEMP_DIR"/);
+	assert.match(STACK_DEPLOY, /mktemp -d "\$TEMP_BASE\/selfhost-fluid-\$\{AKS\}\.XXXXXX"/);
+	assert.match(PREFLIGHT, /mktemp -d "\$\{TMPDIR:-\/tmp\}\/selfhost-preflight\.XXXXXX"/);
+});
+
+test("deployment tooling keeps secret values out of process arguments", () => {
+	for (const script of [TOKEN_DEPLOY, STACK_DEPLOY]) {
+		assert.match(script, /keyvault secret set[\s\S]{0,160}--file/);
+		assert.doesNotMatch(script, /keyvault secret set[^\n]*--value/);
+	}
+	assert.match(STACK_DEPLOY, /SENSITIVE_TEMP_FILES/);
+	assert.match(STACK_DEPLOY, /cleanup_sensitive_temp_files/);
+	for (const script of [TOKEN_DEPLOY, STACK_DEPLOY]) {
+		assert.match(
+			script,
+			/\$\{TEMP_ROLE_ASSIGNMENT_IDS\[@\]\+"\$\{TEMP_ROLE_ASSIGNMENT_IDS\[@\]\}"\}/,
+		);
+	}
+	assert.match(
+		STACK_DEPLOY,
+		/\$\{SENSITIVE_TEMP_FILES\[@\]\+"\$\{SENSITIVE_TEMP_FILES\[@\]\}"\}/,
+	);
+	assert.doesNotMatch(TOKEN_DEPLOY, /--connection-string "\$conn"/);
+	assert.match(TOKEN_DEPLOY, /AZURE_STORAGE_CONNECTION_STRING="\$conn" az storage/);
+	assert.match(TOKEN_DEPLOY, /--settings "@\$package_setting"/);
+	assert.doesNotMatch(TOKEN_DEPLOY, /--settings "WEBSITE_RUN_FROM_PACKAGE=\$url"/);
 });
 
 test("Function App platform hardening is configured and verified", () => {

@@ -4,14 +4,6 @@
  */
 
 import {
-	Body1,
-	Body1Strong,
-	Button,
-	Link,
-	Subtitle1,
-	makeStyles,
-} from "@fluentui/react-components";
-import {
 	DevtoolsFeatures,
 	GetDevtoolsFeatures,
 	type ISourcedDevtoolsMessage,
@@ -22,9 +14,12 @@ import {
 } from "@fluidframework/devtools-core/internal";
 import { type ReactElement, useEffect, useState } from "react";
 
+import { FluentReactComponents } from "../FluentUi.cjs";
 import { useMessageRelay } from "../MessageRelayContext.js";
 
 import { DynamicComposedChart, type GraphDataSet } from "./graphs/index.js";
+
+const { Body1, Body1Strong, Button, Link, Subtitle1, makeStyles } = FluentReactComponents;
 
 const useStyles = makeStyles({
 	flexColumn: {
