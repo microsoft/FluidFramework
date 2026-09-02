@@ -1,5 +1,7 @@
 ---
 "@fluidframework/driver-definitions": minor
+"@fluidframework/container-loader": minor
+"@fluidframework/odsp-driver": minor
 "__section": fix
 ---
 

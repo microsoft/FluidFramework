@@ -96,6 +96,7 @@ class FrozenDocumentService
 	// a single field because `IDocumentService.connectToStorage` is a public API that can be
 	// called more than once — we cannot assume the Container holds a single instance.
 	private readonly storageServices = new Set<FrozenDocumentStorageService>();
+	private driverState: unknown;
 
 	constructor(
 		public readonly resolvedUrl: IResolvedUrl,
@@ -120,9 +121,10 @@ class FrozenDocumentService
 
 	public readonly policies: IDocumentServicePolicies;
 	getDriverState(): unknown {
-		return this.documentService?.getDriverState?.();
+		return this.documentService?.getDriverState?.() ?? this.driverState;
 	}
 	setDriverState(state: unknown): void {
+		this.driverState = state;
 		this.documentService?.setDriverState?.(state);
 	}
 	async connectToStorage(): Promise<IDocumentStorageService> {

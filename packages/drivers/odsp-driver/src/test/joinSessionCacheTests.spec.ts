@@ -62,8 +62,8 @@ describe("expose joinSessionInfo Tests", () => {
 			url: createOdspUrl({ driveId, itemId, siteUrl, dataStorePath: "/" }),
 		});
 		const service = await odspDocumentServiceFactory.createDocumentService(odspResolvedUrl);
-		service.setDriverState?.("epoch1");
-		assert.strictEqual(service.getDriverState?.(), "epoch1");
+		service.setDriverState?.({ epoch: "epoch1" });
+		assert.deepStrictEqual(service.getDriverState?.(), { epoch: "epoch1" });
 	});
 
 	function addJoinSessionStub(): SinonStub {

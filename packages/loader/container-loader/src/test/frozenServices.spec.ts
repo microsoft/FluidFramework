@@ -169,6 +169,19 @@ describe("FrozenDocumentService.connectToDeltaStream", () => {
 	});
 });
 
+describe("FrozenDocumentService driver state", () => {
+	it("preserves state without an inner document service", async () => {
+		const service = await new FrozenDocumentServiceFactory(false).createDocumentService(
+			fakeUrl,
+		);
+		const state = { epoch: "epoch1" };
+
+		service.setDriverState?.(state);
+
+		assert.deepStrictEqual(service.getDriverState?.(), state);
+	});
+});
+
 describe("FrozenDocumentService disposal", () => {
 	it("dispose() rejects in-flight createBlob promises on writable-frozen storage", async () => {
 		// The writable-frozen `createBlob` returns a never-resolving promise so the

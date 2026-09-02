@@ -167,15 +167,22 @@ export class OdspDocumentService
 		return this._policies;
 	}
 
-	public getDriverState(): string | undefined {
-		return this.epochTracker.fluidEpoch;
+	public getDriverState(): Record<string, unknown> | undefined {
+		const epoch = this.epochTracker.fluidEpoch;
+		return epoch === undefined ? undefined : { epoch };
 	}
 
 	public setDriverState(state: unknown): void {
-		if (typeof state !== "string") {
-			throw new UsageError("ODSP driver state must be an epoch string");
+		if (
+			typeof state !== "object" ||
+			state === null ||
+			Array.isArray(state) ||
+			!("epoch" in state) ||
+			typeof state.epoch !== "string"
+		) {
+			throw new UsageError("ODSP driver state must contain an epoch string");
 		}
-		this.epochTracker.setEpoch(state, false, "cache");
+		this.epochTracker.setEpoch(state.epoch, true, "cache");
 	}
 
 	/**

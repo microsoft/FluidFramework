@@ -374,10 +374,16 @@ export interface IDocumentService extends IEventProvider<IDocumentServiceEvents>
 
 	/**
 	 * Returns opaque driver state that should be preserved with pending container state.
+	 *
+	 * The returned value must be JSON-serializable. Returning `undefined` indicates that there is no
+	 * driver state to preserve.
 	 */
 	getDriverState?(): unknown;
 	/**
-	 * Restores opaque driver state preserved with pending container state.
+	 * Restores opaque driver state preserved with pending container state. This is called before the
+	 * document service connects to storage or the delta stream.
+	 *
+	 * @param state - The JSON-deserialized value previously returned by `getDriverState`.
 	 */
 	setDriverState?(state: unknown): void;
 

@@ -31,6 +31,11 @@
 import { strict as assert } from "assert";
 
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
+import {
+	createLoader,
+	getRequiredPendingLocalState,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
 
 import { listFileVersions, restoreFileVersion } from "./odspVersionTestApi.js";
 import {
@@ -44,6 +49,55 @@ describeCompat(
 	"NoCompat",
 	(getTestObjectProvider, apis) => {
 		const suite = setupPointInTimeSuite(getTestObjectProvider, apis);
+
+		itExpects(
+			"rejects pending state captured before a file restore",
+			[
+				{
+					eventName: "fluid:telemetry:Container:ContainerClose",
+					errorType: "fileOverwrittenInStorage",
+				},
+			],
+			async function (this: Mocha.Context) {
+				this.timeout(120_000);
+
+				const ctx = await createPointInTimeTestContext(suite, apis, {
+					withSummarizer: true,
+				});
+				await ctx.incrementAndSync(1);
+				const olderVersion = await ctx.snapVersion("pending-state-base");
+				await ctx.incrementAndSync(1);
+				await ctx.snapVersion("pending-state-tip");
+
+				ctx.container.disconnect();
+				ctx.dataObject.increment();
+				const pendingState = await getRequiredPendingLocalState(ctx.container);
+				ctx.container.close();
+
+				const restored = await restoreFileVersion(ctx.versionApi, olderVersion.id);
+				assert.strictEqual(restored, true, "restore should succeed (HTTP 204)");
+
+				const provider = suite.provider();
+				const loader = createLoader(
+					[[provider.defaultCodeDetails, suite.runtimeFactory()]],
+					provider.documentServiceFactory,
+					provider.urlResolver,
+					provider.logger,
+				);
+				const url = await provider.driver.createContainerUrl(ctx.documentId);
+
+				const resumed = await loader.resolve({ url }, pendingState);
+				await assert.rejects(
+					waitForContainerConnection(resumed, true, {
+						durationMs: 60_000,
+						errorMsg: "timed out waiting for the stale pending-state container to close",
+					}),
+					(error: Error & { errorType?: string }) =>
+						error.errorType === "fileOverwrittenInStorage",
+					"expected pending state from the previous epoch to be rejected",
+				);
+			},
+		);
 
 		// The failed point-in-time load closes its container with the driver's non-retryable
 		// fileOverwrittenInStorage (epoch-mismatch) error. That ContainerClose is the expected
