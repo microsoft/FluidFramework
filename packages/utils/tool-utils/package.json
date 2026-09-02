@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/tool-utils",
-	"version": "2.117.1",
+	"version": "2.118.0",
 	"description": "Common utilities for Fluid tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {

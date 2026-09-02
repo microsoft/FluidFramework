@@ -1,6 +1,6 @@
 {
 	"name": "client-release-group-root",
-	"version": "2.117.1",
+	"version": "2.118.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
