@@ -382,8 +382,10 @@ export type ResolveResult = {
     readonly timestamp?: number;
 } | {
     readonly kind: "pending";
+    readonly reason?: string;
 } | {
     readonly kind: "unresolvable";
+    readonly reason?: string;
 };
 
 // @beta @legacy

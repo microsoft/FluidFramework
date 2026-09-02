@@ -362,7 +362,10 @@ describe("VersionMarkResolver", () => {
 	describe("resolve - no reader wired", () => {
 		it("reports an unknown batchId as pending when no reader is available", async () => {
 			const resolver = makeResolver();
-			assert.deepEqual(await resolver.resolve("missing_[1]", 0), { kind: "pending" });
+			assert.deepEqual(await resolver.resolve("missing_[1]", 0), {
+				kind: "pending",
+				reason: "historicalOpsUnavailable",
+			});
 		});
 	});
 
@@ -628,6 +631,7 @@ describe("VersionMarkResolver", () => {
 
 			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 1), 5), {
 				kind: "pending",
+				reason: "awaitingSequence",
 			});
 		});
 	});
@@ -641,6 +645,7 @@ describe("VersionMarkResolver", () => {
 			const resolver = makeResolver({ reader, currentSequenceNumber: 12 });
 			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 9), 1), {
 				kind: "unresolvable",
+				reason: "historyTrimmed",
 			});
 		});
 
@@ -650,6 +655,7 @@ describe("VersionMarkResolver", () => {
 			const resolver = makeResolver({ reader, currentSequenceNumber: 20 });
 			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 9), 1), {
 				kind: "unresolvable",
+				reason: "historyTrimmed",
 			});
 		});
 
@@ -660,6 +666,7 @@ describe("VersionMarkResolver", () => {
 			const resolver = makeResolver({ reader, currentSequenceNumber: 6 });
 			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 9), 6), {
 				kind: "unresolvable",
+				reason: "historyTrimmed",
 			});
 		});
 
@@ -674,6 +681,7 @@ describe("VersionMarkResolver", () => {
 			const resolver = makeResolver({ reader, currentSequenceNumber: 7 });
 			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 9), 6), {
 				kind: "pending",
+				reason: "awaitingSequence",
 			});
 		});
 
@@ -683,6 +691,7 @@ describe("VersionMarkResolver", () => {
 			const resolver = makeResolver({ reader, currentSequenceNumber: 5 });
 			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 9), 6), {
 				kind: "pending",
+				reason: "awaitingSequence",
 			});
 		});
 
@@ -870,7 +879,10 @@ describe("VersionMarkResolver", () => {
 			minimumSequenceNumber = 8;
 			resolver.processInboundBatch("c_[3]", 12, 12000);
 
-			assert.deepEqual(await resolver.resolve("a_[1]", 0), { kind: "pending" });
+			assert.deepEqual(await resolver.resolve("a_[1]", 0), {
+				kind: "pending",
+				reason: "historicalOpsUnavailable",
+			});
 			assert.deepEqual(await resolver.resolve("b_[2]", 0), {
 				kind: "resolved",
 				sequenceNumber: 10,
@@ -934,6 +946,7 @@ describe("VersionMarkResolver", () => {
 			const resolver = makeResolver({ logger });
 			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 1), 5), {
 				kind: "pending",
+				reason: "historicalOpsUnavailable",
 			});
 			logger.assertMatch([
 				{
