@@ -152,7 +152,10 @@ describe("TRAILING_ADMONITION_REGEX", () => {
 	});
 
 	it("is not multiline, so a title at the end of an inner line is left alone", () => {
-		assert.equal(splitTrailingTitle("[!NOTE]\nBody text."), "[!NOTE]\nBody text.");
+		// The title here ends the first line, so the `m` flag would make `$` match right after it. Without that flag
+		// `$` means the end of the whole string, so the title is left alone.
+		const input = "Leading text. [!NOTE]\nBody text.";
+		assert.equal(splitTrailingTitle(input), input);
 	});
 });
 
