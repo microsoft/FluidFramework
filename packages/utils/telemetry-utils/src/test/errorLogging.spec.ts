@@ -180,6 +180,23 @@ describe("Error Logging", () => {
 			);
 			events.pop();
 		});
+		it("TaggedLoggerAdapter - tagged SchemaArtifact are preserved", () => {
+			const event = {
+				category: "cat",
+				eventName: "event",
+				schemaDataObject: {
+					tag: TelemetryDataTag.SchemaArtifact,
+					value: "someSchemaData",
+				},
+			};
+			adaptedLogger.send(event, LogLevel.essential);
+			assert.strictEqual(
+				events[0].schemaDataObject,
+				"someSchemaData",
+				"someSchemaData should be preserved",
+			);
+			events.pop();
+		});
 		it("TaggedLoggerAdapter - tagged [unrecognized tag] are removed", () => {
 			const event = {
 				category: "cat",
@@ -202,6 +219,7 @@ describe("Error Logging", () => {
 		it("Ensure backwards compatibility", () => {
 			// The values of the enum should never change (even if the keys are renamed)
 			assert(TelemetryDataTag.CodeArtifact === ("CodeArtifact" as TelemetryDataTag));
+			assert(TelemetryDataTag.SchemaArtifact === ("SchemaArtifact" as TelemetryDataTag));
 			assert(TelemetryDataTag.UserData === ("UserData" as TelemetryDataTag));
 		});
 	});
