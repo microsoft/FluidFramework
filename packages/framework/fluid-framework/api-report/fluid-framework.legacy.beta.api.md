@@ -1328,6 +1328,11 @@ export interface SchemaCompatibilityStatus {
 }
 
 // @beta
+export interface SchemaCompatibilityStatusBeta extends SchemaCompatibilityStatus {
+    readonly discrepancies: readonly SchemaDiscrepancy[] | undefined;
+}
+
+// @beta
 export type SchemaDiscrepancy = {
     readonly mismatch: "allowedTypes";
     readonly location: "root" | {
@@ -2028,7 +2033,7 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 
 // @beta @sealed
 export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema> extends TreeView<TSchema>, UntypedTreeView {
-    readonly discrepancies: readonly SchemaDiscrepancy[] | undefined;
+    readonly compatibility: SchemaCompatibilityStatusBeta;
     // (undocumented)
     fork(): ReturnType<UntypedTreeView["fork"]> & TreeViewBeta<TSchema>;
 }

@@ -844,15 +844,13 @@ export type SchemaDiscrepancy =
 	  };
 
 /**
- * {@link TreeView} with additional beta APIs.
- * @sealed @beta
+ * {@link SchemaCompatibilityStatus} with additional beta APIs.
+ *
+ * @beta
  */
-export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema>
-	extends TreeView<TSchema>,
-		UntypedTreeView {
+export interface SchemaCompatibilityStatusBeta extends SchemaCompatibilityStatus {
 	/**
-	 * Details about the schema discrepancies that prevent this view from accessing the tree,
-	 * represented as a readonly array.
+	 * Details about the schema discrepancies that prevent this view from accessing the tree.
 	 *
 	 * @remarks
 	 * This property is undefined when {@link SchemaCompatibilityStatus.canView} is true and present
@@ -860,6 +858,19 @@ export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema>
 	 * It can include application-defined schema identifiers and field keys.
 	 */
 	readonly discrepancies: readonly SchemaDiscrepancy[] | undefined;
+}
+
+/**
+ * {@link TreeView} with additional beta APIs.
+ * @sealed @beta
+ */
+export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema>
+	extends TreeView<TSchema>,
+		UntypedTreeView {
+	/**
+	 * {@inheritDoc TreeView.compatibility}
+	 */
+	readonly compatibility: SchemaCompatibilityStatusBeta;
 
 	// Override the base branch method to return a typed view rather than merely a branch.
 	fork(): ReturnType<UntypedTreeView["fork"]> & TreeViewBeta<TSchema>;

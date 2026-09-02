@@ -39,16 +39,21 @@ const factory = new SchemaFactoryAlpha("");
 
 function expectCompatibility(
 	{ view, stored }: { view: ImplicitFieldSchema; stored: TreeStoredSchema },
-	expected: Omit<ReturnType<typeof checkSchemaCompatibility>, "enabledUpgrades"> & {
+	expected: Omit<
+		ReturnType<typeof checkSchemaCompatibility>,
+		"enabledUpgrades" | "discrepancies"
+	> & {
 		enabledUpgrades?: ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus>;
 	},
 ) {
 	const viewSchema = new TreeViewConfigurationAlpha({ schema: view });
 	const compatibility = checkSchemaCompatibility(viewSchema, stored);
-	assert.deepEqual(compatibility, {
+	const { discrepancies, ...compatibilityWithoutDiscrepancies } = compatibility;
+	assert.deepEqual(compatibilityWithoutDiscrepancies, {
 		enabledUpgrades: new Map(),
 		...expected,
 	});
+	assert.equal(discrepancies === undefined, compatibility.canView);
 
 	// This does not include staged allowed types.
 	const viewStored = toUpgradeSchema(view);
@@ -703,12 +708,11 @@ describe("checkSchemaCompatibility", () => {
 
 				expectCompatibility(
 					{ view: Compatible1, stored: toUpgradeSchema(Compatible2) },
-					// enabledUpgrades may be incomplete when canView is false (early break).
 					{
 						canView: false,
 						canUpgrade: false,
 						isEquivalent: false,
-						enabledUpgrades: new Map(),
+						enabledUpgrades: new Map([[upgrade, "enabled"]]),
 					},
 				);
 			});
