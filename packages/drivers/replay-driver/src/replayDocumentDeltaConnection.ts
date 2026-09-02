@@ -124,12 +124,15 @@ export class ReplayControllerStatic extends ReplayController {
 	): Promise<void> {
 		let current = this.skipToIndex(fetchedOps);
 
-		return new Promise((resolve) => {
+		return new Promise((resolve, reject) => {
 			const replayNextOps = (): void => {
 				// Emit the ops from replay to the end every "deltainterval" milliseconds
 				// to simulate the socket stream
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- scheduleNext() only schedules this callback while current < fetchedOps.length
-				const currentOp = fetchedOps[current]!;
+				const currentOp = fetchedOps[current];
+				if (currentOp === undefined) {
+					reject(new Error(`No op found at replay index ${current}`));
+					return;
+				}
 				const playbackOps = [currentOp];
 				let nextInterval = ReplayControllerStatic.DelayInterval;
 				current += 1;
@@ -140,8 +143,11 @@ export class ReplayControllerStatic extends ReplayController {
 						// Emit more ops that is in the ReplayResolution window
 
 						while (current < fetchedOps.length) {
-							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- the loop condition guarantees this index is in bounds
-							const op = fetchedOps[current]!;
+							const op = fetchedOps[current];
+							if (op === undefined) {
+								reject(new Error(`No op found at replay index ${current}`));
+								return;
+							}
 							if (op.timestamp === undefined) {
 								// Missing timestamp, just delay the standard amount of time
 								break;
