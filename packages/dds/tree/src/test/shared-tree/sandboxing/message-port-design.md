@@ -2,25 +2,24 @@
 
 ## Status
 
-This document is a proposal.
-It describes preliminary cleanup for the Host and Guest messaging pattern in the SharedTree sandboxing demo.
+This design is implemented in the SharedTree sandboxing demo.
 
 ## Purpose
 
-The Host and the Guest currently use separate callbacks for data changes and acknowledgments.
-Each participant has one callback for each message type.
-This pattern couples the participants to the test transport.
-It also does not test communication across a realm boundary.
+The Host and the Guest previously used separate callbacks for data changes and acknowledgments.
+Each participant had one callback for each message type.
+That pattern coupled the participants to the test transport.
+It also did not test communication across a realm boundary.
 
-Replace these callbacks with one duplex [`MessagePort`](https://developer.mozilla.org/en-US/docs/Web/API/MessagePort) for each participant.
-The ports will carry data-change messages and acknowledgment messages in both directions.
+The implementation replaces these callbacks with one duplex [`MessagePort`](https://developer.mozilla.org/en-US/docs/Web/API/MessagePort) for each participant.
+The ports carry data-change messages and acknowledgment messages in both directions.
 
-This change will simplify the participant interfaces.
-It will also prepare the demo for communication with an iframe, worker, or separate process.
+This change simplifies the participant interfaces.
+It also prepares the demo for communication with an iframe, worker, or separate process.
 
 ## Scope
 
-This design includes these changes:
+The implementation includes these changes:
 
 - Define a typed protocol for data changes and acknowledgments.
 - Give the Host and the Guest one `MessagePort` each.
@@ -42,15 +41,15 @@ This design does not include these changes:
 
 These items remain separate production tasks.
 
-## Current Pattern
+## Previous Pattern
 
-The Host currently receives two callbacks:
+The Host received two callbacks:
 
 - A callback that sends a data change to the Guest.
 - A callback that sends an acknowledgment to the Guest.
 
-The Guest receives the equivalent two callbacks for messages to the Host.
-The test setup connects these callbacks directly to methods on the other participant.
+The Guest received the equivalent two callbacks for messages to the Host.
+The test setup connected these callbacks directly to methods on the other participant.
 
 This pattern has these problems:
 
@@ -60,10 +59,10 @@ This pattern has these problems:
 - The pattern does not model a browser or worker messaging boundary.
 - The timeout transport and queue transport duplicate routing logic.
 
-## Proposed Architecture
+## Architecture
 
-Create one `MessageChannel` for each Host and Guest session.
-Give one endpoint to the Host and the other endpoint to the Guest.
+The test creates one `MessageChannel` for each Host and Guest session.
+It gives one endpoint to the Host and the other endpoint to the Guest.
 Each participant uses its endpoint to send and receive messages.
 
 ```mermaid
@@ -73,8 +72,8 @@ flowchart LR
     GuestPort <-->|Typed protocol messages| Guest
 ```
 
-The Host and the Guest will not hold direct references to each other.
-The port will be their only runtime communication path.
+The Host and the Guest do not hold direct references to each other.
+The port is their only runtime communication path.
 
 ## Protocol Schema
 
@@ -138,7 +137,7 @@ Send structured-clone deserialization failures to the same protocol-error handle
 
 ## Host Design
 
-Change the Host constructor so that it receives one `MessagePort` instead of two send callbacks.
+The Host constructor receives one `MessagePort` instead of two send callbacks.
 
 The following example shows the intended constructor shape:
 
@@ -159,7 +158,7 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 }
 ```
 
-The Host message listener will route messages as follows:
+The Host message listener routes messages as follows:
 
 - Route `dataChange` to the existing Guest-change processing logic.
 - Route `acknowledgment` to the existing Guest-acknowledgment processing logic.
@@ -168,21 +167,21 @@ Keep the state-machine methods separate from the transport listener.
 Make them private after the tests no longer call them directly.
 This separation keeps protocol routing independent from tree synchronization.
 
-The Host will send messages with `port.postMessage()`.
-It will send a `dataChange` message when it updates the Guest.
-It will send an `acknowledgment` after it applies a Guest change.
+The Host sends messages with `port.postMessage()`.
+It sends a `dataChange` message when it updates the Guest.
+It sends an `acknowledgment` after it applies a Guest change.
 
 ## Guest Design
 
-Change the Guest constructor so that it receives one `MessagePort` instead of two send callbacks.
+The Guest constructor receives one `MessagePort` instead of two send callbacks.
 
-The Guest message listener will route messages as follows:
+The Guest message listener routes messages as follows:
 
 - Route `dataChange` to the existing Host-change processing logic.
 - Route `acknowledgment` to the existing Host-acknowledgment processing logic.
 
-The Guest will send a `dataChange` message for each local Guest change.
-It will send an `acknowledgment` after it applies a Host update.
+The Guest sends a `dataChange` message for each local Guest change.
+It sends an `acknowledgment` after it applies a Host update.
 
 The existing in-flight counters and promises can remain unchanged.
 This cleanup changes the transport, not the synchronization algorithm.
@@ -237,13 +236,14 @@ The same implementation must work in browsers and iframes.
 The transport cleanup must not leave a promise pending forever.
 Reject each pending synchronization promise with a `SessionDisposedError` when the participant that owns the promise is disposed.
 This error lets callers distinguish disposal from protocol and SharedTree failures.
+Its `source` property identifies the participant that was disposed.
 
 The following example shows the error type:
 
 ```typescript
 class SessionDisposedError extends Error {
-	public constructor() {
-		super("The Host and Guest session was disposed before synchronization completed.");
+	public constructor(public readonly source: "Host" | "Guest") {
+		super(`The ${source} was disposed before synchronization completed.`);
 	}
 }
 ```
@@ -253,7 +253,7 @@ Call the rejection function during disposal before the participant releases its 
 
 ## Ordinary Test Setup
 
-Replace the timeout callback transport with a real `MessageChannel`.
+The ordinary tests use a real `MessageChannel`.
 
 The following example shows the new setup:
 
@@ -326,41 +326,19 @@ It must not send an acknowledgment after a failed apply operation.
 This cleanup must not define a remote error-response message.
 Error responses require a larger protocol decision about recovery and compatibility.
 
-## Test Plan
+## Test Coverage
 
-Keep the current behavior tests.
-Update them to wait for messages delivered through the ports.
+The tests cover these behaviors:
 
-Add these focused tests:
-
-1. A Guest data change crosses the channel and reaches the Host.
-2. The Host acknowledgment crosses the same channel and reaches the Guest.
-3. A Host update crosses the channel and reaches the Guest.
-4. The Guest acknowledgment crosses the same channel and reaches the Host.
-5. The receiver gets a clone of the message instead of the original object.
-6. Messages keep their send order in each direction.
-7. An unknown message type enters the protocol-error path.
-8. An invalid message envelope enters the protocol-error path.
-9. An invalid SharedTree change is not acknowledged.
-10. Disposal rejects pending synchronization promises with a `SessionDisposedError`.
-11. Disposal removes listeners and closes each owned port.
-12. The relay preserves deterministic control of both directions.
-13. The existing permutation scenarios still pass through the relay.
-
-## Implementation Sequence
-
-Use this implementation sequence:
-
-1. Add the protocol types and validator near the demo classes.
-2. Add port-based listeners and send helpers to the Host.
-3. Add port-based listeners and send helpers to the Guest.
-4. Replace the callback parameters in both constructors.
-5. Replace the timeout callback transport with a direct `MessageChannel`.
-6. Add the relay for the permutation test.
-7. Add protocol validation and disposal tests.
-8. Update the sandboxing overview to describe the implemented transport.
-9. Run the Tree test build and the focused sandboxing test.
-10. Run formatting, lint, and `git diff --check` for the changed files.
+1. Data changes and acknowledgments cross the channel in both directions.
+2. The receiver gets a clone of each protocol message.
+3. Messages keep their send order in each direction.
+4. Invalid envelopes enter the protocol-error path.
+5. An invalid SharedTree change does not cause an acknowledgment.
+6. Disposal rejects pending Host and Guest synchronization promises with a `SessionDisposedError`.
+7. Teardown removes the listeners and closes the owned ports.
+8. The relay gives the permutation test deterministic control of both directions.
+9. The existing permutation scenarios pass through the relay.
 
 ## Compatibility and Future Extensions
 
