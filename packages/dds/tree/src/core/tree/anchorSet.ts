@@ -1226,9 +1226,8 @@ class PathNode extends ReferenceCountedBase implements AnchorNode {
 		assert(this.status === Status.Alive, 0x40e /* PathNode must be alive */);
 		const key = child.parentField;
 		const field = this.children.get(key);
-		// TODO: should do more optimized search (ex: binary search or better) using child.parentIndex()
-		// Note that this is the index in the list of child paths, not the index within the field
-		const childIndex = field?.indexOf(child) ?? -1;
+		// Note that this is the index in the list of child paths, not the index within the field.
+		const childIndex = field === undefined ? -1 : binaryFindIndex(field, child.parentIndex);
 		assert(childIndex !== -1, 0x35c /* child must be parented to be removed */);
 		field?.splice(childIndex, 1);
 		if (field?.length === 0) {
@@ -1308,6 +1307,32 @@ function binaryFind(sorted: readonly PathNode[], index: number): PathNode | unde
 		}
 	}
 	return undefined; // If we reach here, target is not in array (or array was not sorted)
+}
+
+/**
+ * Find the array index of a child PathNode by its parentIndex using a binary search.
+ * @param sorted - array of PathNode's sorted by parentIndex.
+ * @param index - parentIndex being looked for.
+ * @returns array index of the child with the requested parentIndex, or -1 if not found.
+ */
+function binaryFindIndex(sorted: readonly PathNode[], index: number): number {
+	// inclusive
+	let min = 0;
+	// exclusive
+	let max = sorted.length;
+
+	while (min !== max) {
+		const mid = Math.floor((min + max) / 2);
+		const found = sorted[mid]!.parentIndex;
+		if (found === index) {
+			return mid;
+		} else if (found > index) {
+			max = mid;
+		} else {
+			min = mid + 1;
+		}
+	}
+	return -1;
 }
 
 interface BufferedEvent {
