@@ -1685,6 +1685,7 @@ export class ContainerRuntime
 			maybeLoaderCompatDetailsForRuntime.ILayerCompatDetails,
 			this.disposeFn,
 			this.mc,
+			context.taggedLogger === undefined,
 		);
 
 		// If we support multiple algorithms in the future, then we would need to manage it here carefully.

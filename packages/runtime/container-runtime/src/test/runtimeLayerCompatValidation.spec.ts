@@ -356,34 +356,26 @@ describe("Runtime Layer compatibility", () => {
 	});
 
 	describe("DisableStrictLoaderLayerCompatibilityCheck config for missing loader compat details", () => {
-		let originalMinSupportedGeneration: number;
 		let mc: MonitoringContext;
 		let logger: MockLogger;
 		let configProvider: ReturnType<typeof createTestConfigProvider>;
 
 		beforeEach(() => {
-			const loaderSupportRequirements =
-				loaderSupportRequirementsForRuntime as ILayerCompatSupportRequirementsOverride;
-			// Set up incompatible configuration
-			originalMinSupportedGeneration = loaderSupportRequirements.minSupportedGeneration;
-			loaderSupportRequirements.minSupportedGeneration = 1;
-
 			configProvider = createTestConfigProvider();
 			logger = new MockLogger();
 			mc = mixinMonitoringContext(logger.toTelemetryLogger(), configProvider);
 		});
 
-		afterEach(() => {
-			// Restore original configuration
-			const loaderSupportRequirements =
-				loaderSupportRequirementsForRuntime as ILayerCompatSupportRequirementsOverride;
-			loaderSupportRequirements.minSupportedGeneration = originalMinSupportedGeneration;
-		});
-
 		it("DisableStrictLoaderLayerCompatibilityCheck = undefined (default) should fail validation", () => {
 			const disposeFn = Sinon.fake();
 			assert.throws(
-				() => validateLoaderCompatibility(undefined /* maybeCompatDetails */, disposeFn, mc),
+				() =>
+					validateLoaderCompatibility(
+						undefined /* maybeCompatDetails */,
+						disposeFn,
+						mc,
+						true /* rejectLegacyLoader */,
+					),
 				(error: Error) => isLayerIncompatibilityError(error),
 				"Should throw LayerIncompatibilityError when loader compat details are missing and strict check is enabled",
 			);
@@ -399,7 +391,13 @@ describe("Runtime Layer compatibility", () => {
 			configProvider.set(disableStrictLoaderLayerCompatibilityCheckKey, false);
 			const disposeFn = Sinon.fake();
 			assert.throws(
-				() => validateLoaderCompatibility(undefined /* maybeCompatDetails */, disposeFn, mc),
+				() =>
+					validateLoaderCompatibility(
+						undefined /* maybeCompatDetails */,
+						disposeFn,
+						mc,
+						true /* rejectLegacyLoader */,
+					),
 				(error: Error) => isLayerIncompatibilityError(error),
 				"Should throw LayerIncompatibilityError when loader compat details are missing and strict check is enabled",
 			);
@@ -415,15 +413,20 @@ describe("Runtime Layer compatibility", () => {
 			configProvider.set(disableStrictLoaderLayerCompatibilityCheckKey, true);
 			const disposeFn = Sinon.fake();
 			assert.doesNotThrow(
-				() => validateLoaderCompatibility(undefined /* maybeCompatDetails */, disposeFn, mc),
-				"Should not throw when loader compat details are missing and strict check is enabled",
+				() =>
+					validateLoaderCompatibility(
+						undefined /* maybeCompatDetails */,
+						disposeFn,
+						mc,
+						true /* rejectLegacyLoader */,
+					),
+				"Should not throw when loader compat details are missing and strict check is disabled",
 			);
 			assert(disposeFn.notCalled, "Dispose should not be called");
-			logger.assertMatch([
-				{
-					eventName: "LayerIncompatibilityDetectedButBypassed",
-				},
-			]);
+			assert(
+				!logger.events.some((event) => event.eventName === "LayerIncompatibilityError"),
+				"Should not log a layer incompatibility error",
+			);
 		});
 	});
 });

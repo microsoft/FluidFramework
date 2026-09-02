@@ -111,12 +111,15 @@ export const dataStoreSupportRequirementsForRuntime: ILayerCompatSupportRequirem
 
 /**
  * Validates that the Loader layer is compatible with this Runtime.
+ * @param rejectLegacyLoader - Reject a loader without compatibility details even while generation 0 remains
+ * within the calculated compatibility window.
  * @internal
  */
 export function validateLoaderCompatibility(
 	maybeLoaderCompatDetailsForRuntime: ILayerCompatDetails | undefined,
 	disposeFn: (error?: ICriticalContainerError) => void,
 	mc: MonitoringContext,
+	rejectLegacyLoader: boolean = false,
 ): void {
 	// By default, use strictCompatibilityCheck here - If the Loader doesn't provide compatibility details,
 	// assume it's a very old version and should be considered incompatible,
@@ -126,11 +129,22 @@ export function validateLoaderCompatibility(
 		disableStrictLoaderLayerCompatibilityCheckKey,
 	);
 
+	const loaderSupportRequirements =
+		rejectLegacyLoader && maybeLoaderCompatDetailsForRuntime === undefined
+			? {
+					...loaderSupportRequirementsForRuntime,
+					minSupportedGeneration: Math.max(
+						1,
+						loaderSupportRequirementsForRuntime.minSupportedGeneration,
+					),
+				}
+			: loaderSupportRequirementsForRuntime;
+
 	validateLayerCompatibility(
 		"runtime",
 		"loader",
 		runtimeCompatDetailsForLoader,
-		loaderSupportRequirementsForRuntime,
+		loaderSupportRequirements,
 		maybeLoaderCompatDetailsForRuntime,
 		disposeFn,
 		mc,
