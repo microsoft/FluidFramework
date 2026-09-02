@@ -4,12 +4,16 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IIdCompressor, SessionSpaceCompressedId } from "@fluidframework/id-compressor";
 
 import type { GraphCommit, CustomMetadataTree } from "../core/index.js";
 import { flattenCustomMetadata } from "../core/index.js";
 import { BranchCommitCounter, type SharedTreeBranch } from "../shared-tree-core/index.js";
-import type { TreeBranchCommitMetadata, TreeBranchHistory } from "../simple-tree/index.js";
+import type {
+	CommitRevision,
+	TreeBranchCommitMetadata,
+	TreeBranchHistory,
+} from "../simple-tree/index.js";
 import type { JsonCompatibleReadOnlyObject } from "../util/index.js";
 
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
@@ -19,10 +23,17 @@ import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
  * A lazily constructed implementation of {@link TreeBranchCommitMetadata} that wraps a {@link GraphCommit}.
  */
 class LazyTreeBranchCommitMetadata implements TreeBranchCommitMetadata {
-	public readonly revision: string;
+	/**
+	 * Holds a copy of data that may become inaccessible when the commit is trimmed.
+	 */
+	private readonly snapshot: {
+		readonly revision: SessionSpaceCompressedId;
+		readonly parent: GraphCommit<SharedTreeChange> | undefined;
+		readonly customMetadata: CustomMetadataTree | undefined;
+	};
 	private parentCache?: {
-		readonly prior: GraphCommit<SharedTreeChange>;
-		readonly cached: TreeBranchCommitMetadata;
+		readonly prior: GraphCommit<SharedTreeChange> | undefined;
+		readonly cached: TreeBranchCommitMetadata | undefined;
 	};
 
 	public constructor(
@@ -30,28 +41,39 @@ class LazyTreeBranchCommitMetadata implements TreeBranchCommitMetadata {
 		private readonly idCompressor: IIdCompressor,
 	) {
 		assert(commit.revision !== "root", "Cannot construct metadata for the root commit");
-		this.revision = idCompressor.decompress(commit.revision);
+		this.snapshot = {
+			revision: commit.revision,
+			parent: commit.parent,
+			customMetadata: commit.customMetadata,
+		};
+	}
+
+	public get revision(): CommitRevision {
+		return this.idCompressor.decompress(this.snapshot.revision);
 	}
 
 	public get custom(): JsonCompatibleReadOnlyObject | undefined {
-		return flattenCustomMetadata(this.commit.customMetadata);
+		return flattenCustomMetadata(this.snapshot.customMetadata);
 	}
 
 	public get customTree(): CustomMetadataTree | undefined {
-		return this.commit.customMetadata;
+		return this.snapshot.customMetadata;
 	}
 
 	public getParent(): TreeBranchCommitMetadata | undefined {
-		// The parent of the commit may change over time due to trunk trimming.
-		if (this.commit.parent !== this.parentCache?.prior) {
-			const { parent } = this.commit;
-			this.parentCache =
-				parent === undefined || parent.revision === "root"
-					? undefined
-					: {
-							prior: parent,
-							cached: new LazyTreeBranchCommitMetadata(parent, this.idCompressor),
-						};
+		if (this.commit.wasTrimmed) {
+			delete this.parentCache;
+			return undefined;
+		}
+		const parent = this.snapshot.parent;
+		if (parent !== this.parentCache?.prior) {
+			this.parentCache = {
+				prior: parent,
+				cached:
+					parent === undefined || parent.wasTrimmed
+						? undefined
+						: new LazyTreeBranchCommitMetadata(parent, this.idCompressor),
+			};
 		}
 		return this.parentCache?.cached;
 	}
