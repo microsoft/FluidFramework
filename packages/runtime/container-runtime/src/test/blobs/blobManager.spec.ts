@@ -5,7 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import type {
+	IFluidHandle,
+	IFluidHandleContext,
+} from "@fluidframework/core-interfaces/internal";
 import type { ISequencedMessageEnvelope } from "@fluidframework/runtime-definitions/internal";
 import {
 	isFluidHandlePayloadPending,
@@ -17,6 +20,7 @@ import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 // eslint-disable-next-line import-x/no-internal-modules
 import { BlobHandle } from "../../blobManager/blobManager.js";
 import {
+	type BlobManager,
 	getGCNodePathFromLocalId,
 	type IBlobManagerLoadInfo,
 } from "../../blobManager/index.js";
@@ -28,6 +32,7 @@ import {
 	ensureBlobsShared,
 	getSummaryContentsWithFormatValidation,
 	MockStorageAdapter,
+	recordOutstandingBlobWork,
 	simulateAttach,
 	textToBlob,
 	unpackHandle,
@@ -101,6 +106,22 @@ for (const createBlobPayloadPending of [false, true]) {
 					0,
 					"Should not try to send messages in detached state",
 				);
+			});
+
+			it("Never counts detached blobs as outstanding work", async () => {
+				const { blobManager } = createTestMaterial({
+					attached: false,
+					createBlobPayloadPending,
+				});
+				const dirtyTransitions = recordOutstandingBlobWork(blobManager);
+
+				await blobManager.createBlob(textToBlob("hello"));
+
+				// Detached blobs go straight to attached state, and a detached container is already dirty
+				// on its own, so the blob does not need to contribute separately.
+				assert.strictEqual(blobManager.unsharedBlobCount, 0);
+				assert.strictEqual(blobManager.hasOutstandingBlobWork, false);
+				assert.deepStrictEqual(dirtyTransitions, []);
 			});
 		});
 
@@ -818,6 +839,334 @@ for (const createBlobPayloadPending of [false, true]) {
 			});
 
 			describe("getPendingBlobs", () => {});
+		});
+
+		// #region Unshared blob tracking
+		// This is the BlobManager's contribution to container dirty state. The container is only safe to
+		// close when this reaches zero, so these tests pin down exactly when a blob starts and stops counting.
+		describe("Unshared blob tracking", () => {
+			/**
+			 * Creates a blob and starts sharing its payload, in whichever way is appropriate for the mode
+			 * under test: pending-payload creation does nothing until the handle is attached to the graph,
+			 * whereas legacy creation starts the flow synchronously inside createBlob().
+			 *
+			 * The handle promise is returned wrapped in an object, because in the legacy mode it doesn't
+			 * settle until the whole sharing flow is over - returning it bare would make awaiting this
+			 * helper wait for that.
+			 */
+			const createAndStartSharing = async (
+				blobManager: BlobManager,
+				text: string,
+			): Promise<{ handleP: Promise<IFluidHandle<ArrayBufferLike>> }> => {
+				const handleP = blobManager.createBlob(textToBlob(text));
+				if (createBlobPayloadPending) {
+					attachHandle(await handleP);
+				}
+				return { handleP };
+			};
+
+			it("Counts a blob from the start of sharing until its BlobAttach is processed", async () => {
+				const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
+					createBlobPayloadPending,
+				});
+				// Hold both services so each stage of the flow can be inspected independently.
+				mockBlobStorage.pause();
+				mockOrderingService.pause();
+				const dirtyTransitions = recordOutstandingBlobWork(blobManager);
+
+				assert.strictEqual(blobManager.unsharedBlobCount, 0, "Nothing outstanding yet");
+
+				const handleP = blobManager.createBlob(textToBlob("hello"));
+				if (createBlobPayloadPending) {
+					const pendingHandle = await handleP;
+					assert.strictEqual(
+						blobManager.unsharedBlobCount,
+						0,
+						"Creating a pending-payload handle must not start work on its own",
+					);
+					attachHandle(pendingHandle);
+				}
+
+				assert.strictEqual(blobManager.unsharedBlobCount, 1, "Counted once sharing starts");
+				await mockBlobStorage.waitCreateOne();
+				assert.strictEqual(
+					blobManager.unsharedBlobCount,
+					1,
+					"Uploaded is not durable - the BlobAttach op still has to be acked",
+				);
+
+				await mockOrderingService.waitSequenceOne();
+				assert.strictEqual(blobManager.unsharedBlobCount, 0, "Durable once BlobAttach lands");
+
+				const handle = await handleP;
+				await waitHandlePayloadShared(handle);
+				assert.deepStrictEqual(
+					dirtyTransitions,
+					[true, false],
+					"Expected exactly one transition each way",
+				);
+			});
+
+			it("Counts a blob whose payload sharing starts before its handle is attached", async function () {
+				if (!createBlobPayloadPending) {
+					this.skip();
+				}
+
+				const { mockBlobStorage, blobManager } = createTestMaterial({
+					createBlobPayloadPending,
+				});
+				mockBlobStorage.pause();
+
+				const handle = await blobManager.createBlob(textToBlob("hello"));
+				assert(isLocalFluidHandle(handle), "Expected a local pending-payload handle");
+				assert(handle.sharePayload !== undefined, "Expected sharePayload to be available");
+				assert.strictEqual(blobManager.unsharedBlobCount, 0);
+
+				// Sharing can be started imperatively, before (or without) the handle entering the graph.
+				// The upload is real work that would be lost on close, so it counts from here.
+				handle.sharePayload();
+				assert.strictEqual(blobManager.unsharedBlobCount, 1);
+				handle.sharePayload();
+				assert.strictEqual(
+					blobManager.unsharedBlobCount,
+					1,
+					"Repeated sharePayload calls must not double-count",
+				);
+
+				mockBlobStorage.unpause();
+				await waitHandlePayloadShared(handle);
+				assert.strictEqual(blobManager.unsharedBlobCount, 0);
+			});
+
+			it("Does not count a pending-payload handle that never starts sharing", async function () {
+				if (!createBlobPayloadPending) {
+					this.skip();
+				}
+
+				const { blobManager } = createTestMaterial({ createBlobPayloadPending });
+				const dirtyTransitions = recordOutstandingBlobWork(blobManager);
+
+				// A handle the app drops without storing anywhere must not pin the container dirty forever.
+				await blobManager.createBlob(textToBlob("hello"));
+
+				assert.strictEqual(blobManager.unsharedBlobCount, 0);
+				assert.deepStrictEqual(dirtyTransitions, []);
+			});
+
+			it("Counts concurrent uploads independently", async () => {
+				const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
+					createBlobPayloadPending,
+				});
+				mockBlobStorage.pause();
+				mockOrderingService.pause();
+				const dirtyTransitions = recordOutstandingBlobWork(blobManager);
+
+				const handlePs = ["one", "two", "three"].map(async (text) =>
+					blobManager.createBlob(textToBlob(text)),
+				);
+				if (createBlobPayloadPending) {
+					for (const handle of await Promise.all(handlePs)) {
+						attachHandle(handle);
+					}
+				}
+				assert.strictEqual(blobManager.unsharedBlobCount, 3, "All three are outstanding");
+
+				for (let i = 0; i < 3; i++) {
+					await mockBlobStorage.waitCreateOne();
+				}
+				assert.strictEqual(
+					blobManager.unsharedBlobCount,
+					3,
+					"Uploading all three doesn't make any of them durable",
+				);
+
+				await mockOrderingService.waitSequenceOne();
+				assert.strictEqual(blobManager.unsharedBlobCount, 2);
+				await mockOrderingService.waitSequenceOne();
+				assert.strictEqual(blobManager.unsharedBlobCount, 1);
+				await mockOrderingService.waitSequenceOne();
+				assert.strictEqual(blobManager.unsharedBlobCount, 0);
+
+				const handles = await Promise.all(handlePs);
+				await Promise.all(handles.map(async (handle) => waitHandlePayloadShared(handle)));
+				assert.deepStrictEqual(
+					dirtyTransitions,
+					[true, false],
+					"Concurrent uploads are one continuous span of outstanding work",
+				);
+			});
+
+			it("Stops counting a blob whose upload fails terminally", async () => {
+				const { mockBlobStorage, blobManager } = createTestMaterial({
+					createBlobPayloadPending,
+				});
+				mockBlobStorage.pause();
+				const dirtyTransitions = recordOutstandingBlobWork(blobManager);
+
+				const { handleP } = await createAndStartSharing(blobManager, "hello");
+				assert.strictEqual(blobManager.unsharedBlobCount, 1);
+
+				await mockBlobStorage.waitCreateOne({
+					error: new LoggingError("fake driver error"),
+				});
+				await (createBlobPayloadPending
+					? assert.rejects(waitHandlePayloadShared(await handleP), {
+							message: "fake driver error",
+						})
+					: assert.rejects(handleP, { message: "fake driver error" }));
+
+				// No further work is pending for this blob, so it must not hold the container dirty.
+				// The failure is reported through the handle, not through dirty state.
+				assert.strictEqual(blobManager.unsharedBlobCount, 0);
+				assert.deepStrictEqual(dirtyTransitions, [true, false]);
+			});
+
+			it("Cleans up when storage throws synchronously", async () => {
+				const error = new LoggingError("synchronous storage failure");
+				const { blobManager } = createTestMaterial({
+					createBlobPayloadPending,
+					storageCreateBlob: () => {
+						throw error;
+					},
+				});
+				const dirtyTransitions = recordOutstandingBlobWork(blobManager);
+
+				const handleP = blobManager.createBlob(textToBlob("hello"));
+				const sharingP = createBlobPayloadPending
+					? ensureBlobsShared([await handleP])
+					: handleP;
+				await assert.rejects(sharingP, { message: error.message });
+
+				assert.strictEqual(blobManager.unsharedBlobCount, 0);
+				assert.strictEqual(
+					blobManager.getPendingBlobs(),
+					undefined,
+					"A terminal synchronous failure must not leave resumable blob state behind",
+				);
+				assert.deepStrictEqual(dirtyTransitions, [true, false]);
+			});
+
+			it("Never counts an upload that was aborted before it started", async () => {
+				const { blobManager } = createTestMaterial({ createBlobPayloadPending });
+				const dirtyTransitions = recordOutstandingBlobWork(blobManager);
+
+				const ac = new AbortController();
+				ac.abort("abort test");
+				const createP = blobManager.createBlob(textToBlob("hello"), ac.signal);
+				await assert.rejects(
+					createBlobPayloadPending ? ensureBlobsShared([await createP]) : createP,
+					{ message: "uploadBlob aborted" },
+				);
+
+				assert.strictEqual(blobManager.unsharedBlobCount, 0);
+				assert.deepStrictEqual(
+					dirtyTransitions,
+					[],
+					"Work that never started must not churn dirty state",
+				);
+			});
+
+			it("Stops counting an upload that is aborted in flight", async () => {
+				const { mockBlobStorage, blobManager } = createTestMaterial({
+					createBlobPayloadPending,
+				});
+				mockBlobStorage.pause();
+				const dirtyTransitions = recordOutstandingBlobWork(blobManager);
+
+				const ac = new AbortController();
+				const createP = blobManager.createBlob(textToBlob("hello"), ac.signal);
+				if (createBlobPayloadPending) {
+					attachHandle(await createP);
+				}
+				assert.strictEqual(blobManager.unsharedBlobCount, 1);
+
+				ac.abort("abort test");
+				await assert.rejects(
+					createBlobPayloadPending ? ensureBlobsShared([await createP]) : createP,
+					{ message: "uploadBlob aborted" },
+				);
+
+				assert.strictEqual(blobManager.unsharedBlobCount, 0);
+				assert.deepStrictEqual(dirtyTransitions, [true, false]);
+			});
+
+			it("Keeps counting a blob across a TTL-driven re-upload", async () => {
+				const { mockBlobStorage, blobManager } = createTestMaterial({
+					createBlobPayloadPending,
+				});
+				mockBlobStorage.pause();
+				const dirtyTransitions = recordOutstandingBlobWork(blobManager);
+
+				const { handleP } = await createAndStartSharing(blobManager, "hello");
+				assert.strictEqual(blobManager.unsharedBlobCount, 1);
+
+				// A negative TTL forces the blob to be treated as expired, sending it back to the start of
+				// the flow. It is still non-durable throughout, so it must stay counted the whole time.
+				await mockBlobStorage.waitCreateOne({ minTTLOverride: -1 });
+				assert.strictEqual(blobManager.unsharedBlobCount, 1);
+
+				mockBlobStorage.unpause();
+				const handle = await handleP;
+				await ensureBlobsShared([handle]);
+
+				assert.strictEqual(
+					mockBlobStorage.blobsCreated,
+					2,
+					"Blob should have been reuploaded",
+				);
+				assert.strictEqual(blobManager.unsharedBlobCount, 0);
+				assert.deepStrictEqual(
+					dirtyTransitions,
+					[true, false],
+					"Re-upload must not churn dirty state",
+				);
+			});
+
+			it("Keeps counting a blob across a BlobAttach resubmit", async () => {
+				const { mockOrderingService, blobManager } = createTestMaterial({
+					createBlobPayloadPending,
+				});
+				mockOrderingService.pause();
+				const dirtyTransitions = recordOutstandingBlobWork(blobManager);
+
+				const { handleP } = await createAndStartSharing(blobManager, "hello");
+				assert.strictEqual(blobManager.unsharedBlobCount, 1);
+
+				// Dropping the message stands in for losing it across a disconnect, which triggers resubmit.
+				await mockOrderingService.waitDropOne();
+				assert.strictEqual(
+					blobManager.unsharedBlobCount,
+					1,
+					"Still outstanding while the resubmitted message is in flight",
+				);
+
+				await mockOrderingService.waitSequenceOne();
+				assert.strictEqual(blobManager.unsharedBlobCount, 0);
+
+				const handle = await handleP;
+				await waitHandlePayloadShared(handle);
+				assert.deepStrictEqual(
+					dirtyTransitions,
+					[true, false],
+					"Resubmit must not churn dirty state",
+				);
+			});
+
+			it("Does not count blobs shared by remote clients", async () => {
+				const { mockOrderingService, blobManager } = createTestMaterial({
+					createBlobPayloadPending,
+				});
+				const dirtyTransitions = recordOutstandingBlobWork(blobManager);
+
+				mockOrderingService.sendBlobAttachMessage(
+					"remoteClientId",
+					"remoteLocalId",
+					"remoteStorageId",
+				);
+
+				assert.strictEqual(blobManager.unsharedBlobCount, 0);
+				assert.deepStrictEqual(dirtyTransitions, []);
+			});
 		});
 
 		// #region Summaries
