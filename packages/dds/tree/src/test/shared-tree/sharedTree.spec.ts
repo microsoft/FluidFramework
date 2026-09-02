@@ -13,7 +13,6 @@ import type {
 } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { startEphemeralService } from "@fluidframework/local-driver/internal";
 import type {
 	ISharedObjectKind,

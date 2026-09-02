@@ -10,6 +10,7 @@ import {
 	createSessionId,
 	isFinalId,
 	deserializeIdCompressor,
+	SerializationVersion,
 	serializeIdCompressor,
 	toIdCompressorWithCore,
 } from "@fluidframework/id-compressor/internal";
@@ -200,7 +201,10 @@ describe("independentView", () => {
 					id: schemaFactory.identifier,
 				}) {}
 
-				const sourceCompressor = createIdCompressor(createSessionId());
+				const sourceCompressor = createIdCompressor(
+					createSessionId(),
+					SerializationVersion.V3,
+				);
 				const localId = sourceCompressor.generateCompressedId();
 				const identifier = sourceCompressor.decompress(localId);
 				const sourceTree = TreeAlpha.create(HasIdentifier, { id: identifier });
@@ -233,6 +237,7 @@ describe("independentView", () => {
 				const targetCompressor = deserializeIdCompressor(
 					serializeIdCompressor(sourceCompressor, false),
 					createSessionId(),
+					SerializationVersion.V3,
 				);
 				assert(targetCompressor.localSessionId !== sourceCompressor.localSessionId);
 
