@@ -36,7 +36,6 @@ The design does not do these tasks:
 -   It does not permit arbitrary broken links.
 -   It does not add a fallback URL supplied by an author.
 -   It does not find renamed APIs automatically.
--   It does not validate an arbitrary `headingId` in `PackageLink`.
 -   It does not make transition warnings fail the build.
 
 ## Proposed component API
@@ -54,7 +53,6 @@ export interface PackageLinkRename {
 export interface PackageLinkProps {
 	children?: ReactNode;
 	package: string | PackageLinkRename;
-	headingId?: string;
 	newApi?: boolean;
 }
 ```
@@ -96,7 +94,6 @@ export interface ApiLinkProps<
 	package: string;
 	api: ApiDeclarationReference<TApiSelector> | ApiLinkRename<TApiSelector, TNewApiSelector>;
 	newApi?: boolean;
-	headingId?: string;
 }
 ```
 
@@ -146,8 +143,6 @@ The following table applies when `package` is an object:
 | No                         | No                      | Not set      | Render the current original-package link. Existing broken-link checks apply.  |
 
 If the object form and `newApi` are both present, rename resolution runs first. `newApi` controls only the final state in which neither package exists.
-
-The manifest identifies package existence. It does not contain package-heading metadata. Therefore, `headingId` continues to use the normal Docusaurus anchor check.
 
 ### `ApiLink` behavior
 
@@ -297,14 +292,6 @@ Use a module-level `Set<string>` to reduce duplicate warnings in one process. In
 Only emit these warnings when `typeof window === "undefined"`. This rule prevents every reader from receiving author diagnostics in the browser console. Parallel Docusaurus workers can still produce more than one copy of a warning. Duplicate prevention is best effort and must not affect correctness.
 
 Warnings are best-effort build messages. They must not fail the build. A later change can add a stricter cleanup mechanism if the team needs one.
-
-## `headingId` behavior
-
-`ApiLink.headingId` is deprecated. The new resolution order does not change that status.
-
-When `headingId` is present, it overrides the generated heading ID for the target that wins API resolution. Authors should not use it for an API replacement transition because one override might not be correct for both targets. Qualified declaration references remain the supported solution.
-
-`PackageLink.headingId` keeps its current behavior. One heading ID must work with both package targets during a package replacement transition.
 
 ## Implementation plan
 

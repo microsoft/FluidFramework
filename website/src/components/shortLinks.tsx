@@ -46,8 +46,6 @@ export interface PackageLinkProps {
 	 */
 	package: string | PackageLinkRename;
 
-	headingId?: string;
-
 	/**
 	 * Permits the package to be absent from the published API documentation.
 	 *
@@ -60,7 +58,6 @@ export interface PackageLinkProps {
  * A convenient mechanism for linking to a package's API documentation.
  */
 export function PackageLink({
-	headingId,
 	package: packageNameOrRename,
 	children,
 	newApi = false,
@@ -74,9 +71,8 @@ export function PackageLink({
 	const needsManifest = newApi || rename !== undefined;
 	const { activeVersion, manifest } = useApiLinkContext("PackageLink", needsManifest);
 	const root = `${activeVersion.path}/api/`;
-	const headingPostfix = headingId === undefined ? "" : `#${headingId}`;
 	if (!needsManifest) {
-		return <a href={`${root}${packageName}${headingPostfix}`}>{children ?? packageName}</a>;
+		return <a href={`${root}${packageName}`}>{children ?? packageName}</a>;
 	}
 
 	if (manifest === undefined) {
@@ -91,7 +87,7 @@ export function PackageLink({
 			`PackageLink|rename|${activeVersion.name}|${newPackageName}`,
 			`[PackageLink] New package name "${newPackageName}" exists in API documentation version "${activeVersion.name}". Set package="${newPackageName}".`,
 		);
-		return <a href={`${root}${newPackageName}${headingPostfix}`}>{children ?? defaultText}</a>;
+		return <a href={`${root}${newPackageName}`}>{children ?? defaultText}</a>;
 	}
 
 	if (manifest[packageName] !== undefined) {
@@ -101,14 +97,14 @@ export function PackageLink({
 				`[PackageLink] Package "${packageName}" exists in API documentation version "${activeVersion.name}". Remove the newApi prop.`,
 			);
 		}
-		return <a href={`${root}${packageName}${headingPostfix}`}>{children ?? defaultText}</a>;
+		return <a href={`${root}${packageName}`}>{children ?? defaultText}</a>;
 	}
 
 	if (newApi) {
 		return <code>{children ?? defaultText}</code>;
 	}
 
-	return <a href={`${root}${packageName}${headingPostfix}`}>{children ?? defaultText}</a>;
+	return <a href={`${root}${packageName}`}>{children ?? defaultText}</a>;
 }
 
 /**
@@ -159,13 +155,6 @@ export interface ApiLinkProps<
 	 * @remarks Remove this prop when the API documentation is available.
 	 */
 	newApi?: boolean;
-
-	/**
-	 * Overrides the generated heading ID for the target API item.
-	 *
-	 * @deprecated Use a qualified {@link ApiLinkProps.api} reference to link directly to a member.
-	 */
-	headingId?: string;
 }
 
 /**
@@ -177,7 +166,6 @@ export function ApiLink<const TApiSelector extends string, const TNewApiSelector
 	api: apiOrRename,
 	package: packageName,
 	newApi = false,
-	headingId,
 	children,
 }: ApiLinkProps<TApiSelector, TNewApiSelector>): JSX.Element {
 	const { activeVersion, manifest } = useApiLinkContext("ApiLink", true);
@@ -203,7 +191,6 @@ export function ApiLink<const TApiSelector extends string, const TNewApiSelector
 		return renderApiLink(
 			activeVersion.path,
 			replacementResult.target,
-			headingId,
 			children ?? replacementResult.defaultText,
 		);
 	}
@@ -222,22 +209,15 @@ export function ApiLink<const TApiSelector extends string, const TNewApiSelector
 		);
 	}
 
-	return renderApiLink(
-		activeVersion.path,
-		result.target,
-		headingId,
-		children ?? result.defaultText,
-	);
+	return renderApiLink(activeVersion.path, result.target, children ?? result.defaultText);
 }
 
 function renderApiLink(
 	versionPath: string,
 	target: { readonly documentPath: string; readonly headingId?: string },
-	headingId: string | undefined,
 	children: ReactNode,
 ): JSX.Element {
-	const targetHeadingId = headingId ?? target.headingId;
-	const headingPostfix = targetHeadingId === undefined ? "" : `#${targetHeadingId}`;
+	const headingPostfix = target.headingId === undefined ? "" : `#${target.headingId}`;
 	return <a href={`${versionPath}/api/${target.documentPath}${headingPostfix}`}>{children}</a>;
 }
 

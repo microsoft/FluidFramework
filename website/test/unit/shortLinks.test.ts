@@ -253,22 +253,6 @@ describe("ApiLink", () => {
 		});
 	});
 
-	it("allows a compatibility heading to override the manifest heading", () => {
-		useVersion("current", "/docs");
-		useMockApiLinkManifests();
-
-		expect(
-			renderApiLink({
-				package: "example",
-				api: "(Widget:class).run",
-				headingId: "legacy-heading",
-			}),
-		).toEqual({
-			href: "/docs/api/example/widget-class#legacy-heading",
-			children: "Widget.run",
-		});
-	});
-
 	it("renders inline code with rich children when a new API is not documented", () => {
 		useVersion("current", "/docs");
 		useMockApiLinkManifests();
