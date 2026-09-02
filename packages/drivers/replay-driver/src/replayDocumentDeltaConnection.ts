@@ -123,31 +123,25 @@ export class ReplayControllerStatic extends ReplayController {
 		fetchedOps: ISequencedDocumentMessage[],
 	): Promise<void> {
 		let current = this.skipToIndex(fetchedOps);
+		const remainingOps = fetchedOps.slice(current).values();
+		let nextOp = remainingOps.next();
 
-		return new Promise((resolve, reject) => {
-			const replayNextOps = (): void => {
+		return new Promise((resolve) => {
+			const replayNextOps = (currentOp: ISequencedDocumentMessage): void => {
 				// Emit the ops from replay to the end every "deltainterval" milliseconds
 				// to simulate the socket stream
-				const currentOp = fetchedOps[current];
-				if (currentOp === undefined) {
-					reject(new Error(`No op found at replay index ${current}`));
-					return;
-				}
 				const playbackOps = [currentOp];
 				let nextInterval = ReplayControllerStatic.DelayInterval;
 				current += 1;
+				nextOp = remainingOps.next();
 
 				if (this.unitIsTime === true) {
 					const currentTimeStamp = currentOp.timestamp;
 					if (currentTimeStamp !== undefined) {
 						// Emit more ops that is in the ReplayResolution window
 
-						while (current < fetchedOps.length) {
-							const op = fetchedOps[current];
-							if (op === undefined) {
-								reject(new Error(`No op found at replay index ${current}`));
-								return;
-							}
+						while (!nextOp.done) {
+							const op = nextOp.value;
 							if (op.timestamp === undefined) {
 								// Missing timestamp, just delay the standard amount of time
 								break;
@@ -167,6 +161,7 @@ export class ReplayControllerStatic extends ReplayController {
 							// The op is within the ReplayResolution emit it now
 							playbackOps.push(op);
 							current += 1;
+							nextOp = remainingOps.next();
 						}
 
 						if (
@@ -182,8 +177,9 @@ export class ReplayControllerStatic extends ReplayController {
 				emitter(playbackOps);
 			};
 			const scheduleNext = (nextInterval: number): void => {
-				if (nextInterval >= 0 && current < fetchedOps.length) {
-					setTimeout(replayNextOps, nextInterval);
+				if (nextInterval >= 0 && !nextOp.done) {
+					const opToPlay = nextOp.value;
+					setTimeout(() => replayNextOps(opToPlay), nextInterval);
 				} else {
 					this.replayCurrent += current;
 					resolve();
