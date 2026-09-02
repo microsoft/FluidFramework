@@ -171,7 +171,9 @@ describe("PackageLink", () => {
 		useMockApiLinkManifests();
 		const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-		const link = PackageLink({ package: "example", replacementPackage: "replacement" });
+		const link = PackageLink({
+			package: { previous: "example", new: "replacement" },
+		});
 
 		expect({ href: link.props.href, children: link.props.children }).toEqual({
 			href: "/docs/api/example",
@@ -185,14 +187,16 @@ describe("PackageLink", () => {
 		useMockApiLinkManifests();
 		const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-		const link = PackageLink({ package: "old-package", replacementPackage: "example" });
+		const link = PackageLink({
+			package: { previous: "old-package", new: "example" },
+		});
 
 		expect({ href: link.props.href, children: link.props.children }).toEqual({
 			href: "/docs/api/example",
 			children: "example",
 		});
 		expect(warn).toHaveBeenCalledWith(
-			'[PackageLink] Replacement package "example" exists in API documentation version "current". Set package="example" and remove the replacementPackage prop.',
+			'[PackageLink] New package name "example" exists in API documentation version "current". Set package="example".',
 		);
 	});
 });
@@ -299,15 +303,45 @@ describe("ApiLink", () => {
 
 		const link = renderApiLink({
 			package: "example",
-			api: "(Widget:class)",
-			replacementApi: "Replacement",
+			api: { previous: "(Widget:class)", new: "Replacement" },
 		});
 
 		expect(link).toEqual({
 			href: "/docs/api/example/widget-class",
-			children: "Replacement",
+			children: "Widget",
 		});
 		expect(warn).not.toHaveBeenCalled();
+	});
+
+	it("preserves rich children while an API rename is staged", () => {
+		useVersion("current", "/docs");
+		useMockApiLinkManifests();
+		const children = createElement("strong", undefined, "Renamed API");
+
+		const link = ApiLink({
+			package: "example",
+			api: { previous: "(Widget:class)", new: "Replacement" },
+			children,
+		});
+
+		expect(link.type).toBe("a");
+		expect(link.props.children).toBe(children);
+	});
+
+	it("renders inline code when neither API rename target is documented", () => {
+		useVersion("current", "/docs");
+		useMockApiLinkManifests();
+
+		const link = ApiLink({
+			package: "example",
+			api: { previous: "OldMissing", new: "NewMissing" },
+			newApi: true,
+		});
+
+		expect({ type: link.type, children: link.props.children }).toEqual({
+			type: "code",
+			children: "NewMissing",
+		});
 	});
 
 	it("uses and warns about a documented replacement API", () => {
@@ -317,8 +351,7 @@ describe("ApiLink", () => {
 
 		const link = renderApiLink({
 			package: "example",
-			api: "Missing",
-			replacementApi: "(Widget:class)",
+			api: { previous: "Missing", new: "(Widget:class)" },
 		});
 
 		expect(link).toEqual({
@@ -326,7 +359,7 @@ describe("ApiLink", () => {
 			children: "Widget",
 		});
 		expect(warn).toHaveBeenCalledWith(
-			'[ApiLink] Replacement API "example/(Widget:class)" exists in API documentation version "current". Set api="(Widget:class)" and remove the replacementApi prop.',
+			'[ApiLink] New API name "example/(Widget:class)" exists in API documentation version "current". Set api="(Widget:class)".',
 		);
 	});
 
@@ -337,8 +370,7 @@ describe("ApiLink", () => {
 		expect(() =>
 			ApiLink({
 				package: "example",
-				api: "Missing",
-				replacementApi: "(Widget:static)" as string,
+				api: { previous: "Missing", new: "(Widget:static)" as string },
 				newApi: true,
 			}),
 		).toThrowError(
@@ -353,8 +385,10 @@ describe("ApiLink", () => {
 		expect(() =>
 			ApiLink({
 				package: "example",
-				api: "(Widget:static)" as string,
-				replacementApi: "(Widget:class)",
+				api: {
+					previous: "(Widget:static)" as string,
+					new: "(Widget:class)",
+				},
 			}),
 		).toThrowError(
 			'Unsupported selector "static" in API declaration reference "(Widget:static)".',
@@ -449,8 +483,12 @@ describe("ApiDeclarationReference", () => {
 		expectTypeOf<ApiDeclarationReference<"Widget.(run:0)">>().toEqualTypeOf<never>();
 		expectTypeOf<ApiDeclarationReference<"(Widget:static).run">>().toEqualTypeOf<never>();
 		expectTypeOf<ApiDeclarationReference<"Widget.(run:2).result">>().toEqualTypeOf<never>();
-		expectTypeOf<
-			ApiLinkProps<"Widget", "(Replacement:class)">["replacementApi"]
-		>().toEqualTypeOf<"(Replacement:class)" | undefined>();
+		expectTypeOf<ApiLinkProps<"Widget", "(Replacement:class)">["api"]>().toEqualTypeOf<
+			| "Widget"
+			| {
+					previous: "Widget";
+					new: "(Replacement:class)";
+			  }
+		>();
 	});
 });

@@ -5,8 +5,8 @@
 Add two transition mechanisms to `PackageLink` and `ApiLink`:
 
 -   A `newApi` prop permits a target to be absent from the active API documentation. The component renders inline code when the target is absent. When the target exists, the component renders a link and logs a warning that tells the author to remove `newApi`.
--   A `replacementApi` prop gives `ApiLink` a preferred API reference. The component tries this reference before the reference in `api`. It uses `api` as a fallback while published API documentation still contains the old name. When `replacementApi` resolves, the component logs a warning that tells the author to make the new reference permanent.
--   A `replacementPackage` prop gives `PackageLink` the same rename behavior for package names.
+-   An object value for `ApiLink.api` gives `ApiLink` a preferred API reference in `new` and a fallback reference in `previous`. When `new` resolves, the component logs a warning that tells the author to make the new reference permanent.
+-   An object value for `PackageLink.package` gives `PackageLink` the same rename behavior for package names. The object contains `previous` and `new` names.
 
 These mechanisms let a website change merge with its related API change. The website can then work before and after release artifacts contain the API change.
 
@@ -43,13 +43,17 @@ The design does not do these tasks:
 
 ### `PackageLink`
 
-Add optional `newApi` and `replacementPackage` props:
+Update `package` to accept a string or a staged rename object. Add the optional `newApi` prop:
 
 ```tsx
+export interface PackageLinkRename {
+	previous: string;
+	new: string;
+}
+
 export interface PackageLinkProps {
 	children?: ReactNode;
-	package: string;
-	replacementPackage?: string;
+	package: string | PackageLinkRename;
 	headingId?: string;
 	newApi?: boolean;
 }
@@ -66,24 +70,31 @@ The package name remains unscoped. This rule is the same as the current rule.
 An MDX file can prepare for a package rename:
 
 ```mdx
-<PackageLink package="old-package" replacementPackage="new-package" />
+<PackageLink package={{ previous: "old-package", new: "new-package" }} />
 ```
 
-`replacementPackage` contains the preferred unscoped package name. The `package` prop remains the fallback name. When the transition is complete, the author copies the `replacementPackage` value to `package` and removes `replacementPackage`.
+`previous` contains the fallback unscoped package name. `new` contains the preferred unscoped package name. When the transition is complete, the author replaces the object with the `new` string value.
 
 ### `ApiLink`
 
-Add optional `newApi` and `replacementApi` props:
+Update `api` to accept a declaration reference or a staged rename object. Add the optional `newApi` prop:
 
 ```tsx
+export interface ApiLinkRename<
+	TPreviousApiSelector extends string = string,
+	TNewApiSelector extends string = string,
+> {
+	previous: ApiDeclarationReference<TPreviousApiSelector>;
+	new: ApiDeclarationReference<TNewApiSelector>;
+}
+
 export interface ApiLinkProps<
 	TApiSelector extends string = string,
-	TReplacementApiSelector extends string = string,
+	TNewApiSelector extends string = string,
 > {
 	children?: ReactNode;
 	package: string;
-	api: ApiDeclarationReference<TApiSelector>;
-	replacementApi?: ApiDeclarationReference<TReplacementApiSelector>;
+	api: ApiDeclarationReference<TApiSelector> | ApiLinkRename<TApiSelector, TNewApiSelector>;
 	newApi?: boolean;
 	headingId?: string;
 }
@@ -100,12 +111,12 @@ Because `newApi` has the `boolean` type, MDX and JSX permit the shorthand `newAp
 An MDX file can prepare for a rename:
 
 ```mdx
-<ApiLink package="fluid-framework" api="OldApi" replacementApi="(NewApi:class)" />
+<ApiLink package="fluid-framework" api={{ previous: "OldApi", new: "(NewApi:class)" }} />
 ```
 
-`replacementApi` uses the same declaration-reference grammar as `api`. An author specifies an API item kind with a TSDoc selector. For example, `(NewApi:class)` selects a class and `(NewApi:interface).method` selects a method on an interface. A separate API-kind prop is not necessary.
+Both object properties use the same declaration-reference grammar as a string `api` value. An author specifies an API item kind with a TSDoc selector. For example, `(NewApi:class)` selects a class and `(NewApi:interface).method` selects a method on an interface. A separate API-kind prop is not necessary.
 
-The `api` prop remains the fallback reference. When the transition is complete, the author copies the `replacementApi` value to `api` and removes `replacementApi`.
+`previous` is the fallback reference. `new` is the preferred reference. When the transition is complete, the author replaces the object with the `new` string value.
 
 ## Resolution behavior
 
@@ -115,9 +126,9 @@ All checks use the manifest for the active Docusaurus documentation version. A t
 
 A normal `PackageLink` keeps its current behavior. It creates the package URL without a manifest lookup.
 
-A `PackageLink` with `replacementPackage` checks the replacement package first. If the replacement package does not exist, it uses `package`. When the replacement package exists, the component links to it and logs a warning to make the replacement permanent.
+A `PackageLink` with an object `package` value checks the `new` package first. If the new package does not exist, it uses `previous`. When the new package exists, the component links to it and logs a warning to make the new name permanent.
 
-The following table applies when `replacementPackage` is not present:
+The following table applies when `package` is a string:
 
 | `newApi` | Package exists | Result                                                      |
 | -------- | -------------- | ----------------------------------------------------------- |
@@ -125,33 +136,42 @@ The following table applies when `replacementPackage` is not present:
 | `true`   | No             | Render the content as inline code. Do not throw.            |
 | `true`   | Yes            | Render the link. Log a warning to remove `newApi`.          |
 
-The following table applies when `replacementPackage` is present:
+The following table applies when `package` is an object:
 
-| Replacement package exists | Original package exists | `newApi`     | Result                                                                                          |
-| -------------------------- | ----------------------- | ------------ | ----------------------------------------------------------------------------------------------- |
-| Yes                        | Either state            | Either state | Link to `replacementPackage`. Log a warning to replace `package` and remove the temporary prop. |
-| No                         | Yes                     | Either state | Link to `package`. Do not log a transition warning.                                             |
-| No                         | No                      | `true`       | Render inline code. Do not throw.                                                               |
-| No                         | No                      | Not set      | Render the current original-package link. Existing broken-link checks apply.                    |
+| Replacement package exists | Original package exists | `newApi`     | Result                                                                        |
+| -------------------------- | ----------------------- | ------------ | ----------------------------------------------------------------------------- |
+| Yes                        | Either state            | Either state | Link to `new`. Log a warning to replace the object with the new package name. |
+| No                         | Yes                     | Either state | Link to `previous`. Do not log a transition warning.                          |
+| No                         | No                      | `true`       | Render inline code. Do not throw.                                             |
+| No                         | No                      | Not set      | Render the current original-package link. Existing broken-link checks apply.  |
 
-If `replacementPackage` and `newApi` are both present, replacement resolution runs first. `newApi` controls only the final state in which neither package exists.
+If the object form and `newApi` are both present, rename resolution runs first. `newApi` controls only the final state in which neither package exists.
 
 The manifest identifies package existence. It does not contain package-heading metadata. Therefore, `headingId` continues to use the normal Docusaurus anchor check.
 
 ### `ApiLink` behavior
 
-`ApiLink` resolves `replacementApi` first when that prop is present. If the preferred reference is not found, it resolves `api`.
+`ApiLink` resolves `new` first when `api` is an object. If the preferred reference is not found, it resolves `previous`.
 
-| `replacementApi` target           | `api` target   | `newApi`     | Result                                                                                |
-| --------------------------------- | -------------- | ------------ | ------------------------------------------------------------------------------------- |
-| Exists                            | Either state   | Either state | Link to `replacementApi`. Log a warning to replace `api` and remove `replacementApi`. |
-| Does not exist                    | Exists         | Either state | Link to `api`. Do not log a transition warning.                                       |
-| Not supplied                      | Exists         | `true`       | Link to `api`. Log a warning to remove `newApi`.                                      |
-| Not supplied                      | Exists         | Not set      | Render the current link.                                                              |
-| Does not exist or is not supplied | Does not exist | `true`       | Render inline code. Do not throw.                                                     |
-| Does not exist or is not supplied | Does not exist | Not set      | Throw the current not-found error.                                                    |
+The following table applies when `api` is a string:
 
-If both `replacementApi` and `newApi` are present, replacement resolution runs first. `newApi` only controls the final state in which neither reference exists. This combination supports a new API that changes name before its first API documentation artifact is published.
+| `api` target   | `newApi` | Result                                           |
+| -------------- | -------- | ------------------------------------------------ |
+| Exists         | `true`   | Link to `api`. Log a warning to remove `newApi`. |
+| Exists         | Not set  | Render the current link.                         |
+| Does not exist | `true`   | Render inline code. Do not throw.                |
+| Does not exist | Not set  | Throw the current not-found error.               |
+
+The following table applies when `api` is an object:
+
+| `new` target   | `previous` target | `newApi`     | Result                                                                         |
+| -------------- | ----------------- | ------------ | ------------------------------------------------------------------------------ |
+| Exists         | Either state      | Either state | Link to `new`. Log a warning to replace the object with the new API reference. |
+| Does not exist | Exists            | Either state | Link to `previous`. Do not log a transition warning.                           |
+| Does not exist | Does not exist    | `true`       | Render inline code. Do not throw.                                              |
+| Does not exist | Does not exist    | Not set      | Throw the current not-found error for `previous`.                              |
+
+If the object form and `newApi` are both present, rename resolution runs first. `newApi` only controls the final state in which neither reference exists. This combination supports a new API that changes name before its first API documentation artifact is published.
 
 ### Errors that remain strict
 
@@ -175,21 +195,21 @@ Each component preserves explicit `children`, including rich React content:
 <code>{children ?? defaultText}</code>
 ```
 
-For `PackageLink` without `replacementPackage`, `defaultText` is the package name.
+For `PackageLink` with a string `package` value, `defaultText` is the package name.
 
-For `PackageLink` with `replacementPackage`, `defaultText` is always the replacement package name. This rule applies when the component links to the original package.
+For `PackageLink` with an object `package` value, `defaultText` is always `new`. This rule applies when the component links to `previous`.
 
-For `ApiLink` without `replacementApi`, `defaultText` is the selector-free dotted path from `api`. This behavior matches the current link text.
+For `ApiLink` with a string `api` value, `defaultText` is the selector-free dotted path from `api`. This behavior matches the current link text.
 
-For `ApiLink` with `replacementApi`, `defaultText` is always the selector-free dotted path from `replacementApi`. This rule applies when the component links to the old target. It lets the visible documentation use the new API name before the new API documentation exists.
+For `ApiLink` with an object `api` value, `defaultText` is the selector-free dotted path for the target that resolves. It uses `previous` while the old target resolves and `new` after the new target resolves. If neither target resolves and `newApi` is present, the inline-code fallback uses `new`.
 
 For example, this source:
 
 ```mdx
-<ApiLink package="fluid-framework" api="OldApi" replacementApi="(NewApi:class)" />
+<ApiLink package="fluid-framework" api={{ previous: "OldApi", new: "(NewApi:class)" }} />
 ```
 
-renders visible text `NewApi` in both transition states. Before publication, the link points to `OldApi`. After publication, the link points to `NewApi`.
+renders visible text `OldApi` and links to `OldApi` before publication. After publication, it renders visible text `NewApi` and links to `NewApi`.
 
 All transition states permit rich child content. The component puts the same child tree in the link or the inline-code fallback. Authors can use inline elements such as emphasis and API display formatting. Authors should not add an outer inline-code element because the fallback already creates one.
 
@@ -257,11 +277,11 @@ Warnings should use stable and actionable text. Proposed messages are:
 ```
 
 ```text
-[ApiLink] Replacement API "fluid-framework/NewApi" exists in API documentation version "current". Set api="NewApi" and remove the replacementApi prop.
+[ApiLink] New API name "fluid-framework/NewApi" exists in API documentation version "current". Set api="NewApi".
 ```
 
 ```text
-[PackageLink] Replacement package "new-package" exists in API documentation version "current". Set package="new-package" and remove the replacementPackage prop.
+[PackageLink] New package name "new-package" exists in API documentation version "current". Set package="new-package".
 ```
 
 The actual message must preserve selector syntax when it tells the author which value to put in `api`.
@@ -304,7 +324,7 @@ Update `website/src/components/shortLinks.tsx`:
 
 1. Add a helper that gets the active version and its manifest.
 2. Use this helper in `ApiLink`.
-3. Use this helper in `PackageLink` when `newApi` is true or `replacementPackage` is present.
+3. Use this helper in `PackageLink` when `newApi` is true or `package` is an object.
 4. Preserve the current normal `PackageLink` path construction.
 
 The helper must keep the current errors for a missing version context and a missing manifest. Error text can name the calling component.
@@ -317,7 +337,7 @@ Update `PackageLink` and `ApiLink`:
 2. Implement the resolution tables in this document.
 3. Render `<code>` for the permitted final not-found state.
 4. Keep explicit children unchanged.
-5. Use the preferred replacement reference or package name for default display text.
+5. Use the preferred new reference or package name for default display text.
 6. Preserve rich child content in link and inline-code output.
 
 ### 4. Add warning support
@@ -328,7 +348,7 @@ Do not add warning data to the generated manifest. The warning depends on compon
 
 ### 5. Add documentation examples
 
-Add contributor guidance for these props after implementation. State that both props are temporary. Include the required cleanup operation for each warning.
+Add contributor guidance for these transition values after implementation. State that `newApi` and the rename object forms are temporary. Include the required cleanup operation for each warning.
 
 Do not add a new-API example to published product documentation only to test the component. Use unit tests for transition states.
 
@@ -341,10 +361,10 @@ Extend `website/test/unit/shortLinks.test.ts` and the resolver unit tests.
 Verify these cases:
 
 -   `newApi` is accepted by both components with JSX boolean shorthand.
--   `replacementApi` accepts a valid dotted reference.
--   `replacementApi` accepts a kind selector.
--   `replacementApi` rejects an invalid literal reference.
--   `replacementPackage` accepts a string.
+-   `api` accepts an object with valid `previous` and `new` declaration references.
+-   The object properties accept kind selectors.
+-   The object properties reject invalid literal references.
+-   `package` accepts a string or an object with string `previous` and `new` properties.
 -   Existing `api` type checks continue to work.
 
 ### `PackageLink` tests
@@ -357,9 +377,9 @@ Verify these cases:
 -   An existing package renders a link when `newApi` is present.
 -   An existing package logs the cleanup warning when `newApi` is present.
 -   The warning includes the active version.
--   A missing `replacementPackage` target falls back to `package` without a warning.
--   An existing `replacementPackage` target wins and logs a cleanup warning.
--   Default text uses `replacementPackage` before and after the target exists.
+-   A missing `new` package falls back to `previous` without a warning.
+-   An existing `new` package wins and logs a cleanup warning.
+-   Default text uses `new` before and after the package target exists.
 -   Explicit rich children remain unchanged before and after the target exists.
 -   If both package names are absent, `newApi` controls code output versus the current original-package link.
 
@@ -370,9 +390,9 @@ Verify these cases:
 -   A missing API renders `<code>` when `newApi` is present.
 -   A missing API preserves explicit children when `newApi` is present.
 -   An existing API renders a link and logs the cleanup warning when `newApi` is present.
--   A missing `replacementApi` target falls back to `api` without a warning.
--   An existing `replacementApi` target wins and logs a cleanup warning.
--   Default text uses `replacementApi` before and after the target exists.
+-   A missing `new` target falls back to `previous` without a warning.
+-   An existing `new` target wins and logs a cleanup warning.
+-   Default text uses the API reference that resolves.
 -   Explicit rich children remain unchanged before and after the target exists.
 -   If both references are absent, `newApi` controls code output versus an error.
 -   A malformed preferred reference throws and does not fall back.
@@ -441,23 +461,23 @@ For a new API or package:
 
 For a renamed API:
 
-1. Keep the old reference in `api`.
-2. Put the new qualified reference in `replacementApi`.
-3. The website displays the new name and links to the old API documentation before publication.
+1. Put the old qualified reference in `api.previous`.
+2. Put the new qualified reference in `api.new`.
+3. The website displays the old name and links to the old API documentation before publication when child content is omitted.
 4. The website links to the new API documentation and logs a warning after publication.
-5. Copy the `replacementApi` value to `api` and remove `replacementApi`.
+5. Replace the `api` object with the value from `api.new`.
 
 For a renamed package:
 
-1. Keep the old package name in `package`.
-2. Put the new unscoped package name in `replacementPackage`.
+1. Put the old unscoped package name in `package.previous`.
+2. Put the new unscoped package name in `package.new`.
 3. The website displays the new package name and links to the old package documentation before publication.
 4. The website links to the new package documentation and logs a warning after publication.
-5. Copy the `replacementPackage` value to `package` and remove `replacementPackage`.
+5. Replace the `package` object with the value from `package.new`.
 
 ## Resolved design decisions
 
-1. Use `replacementApi` for API rename transitions.
+1. Use the object form of `ApiLink.api` for API rename transitions.
 2. Use best-effort build warnings. Do not add stricter cleanup enforcement now.
-3. Support package rename transitions with `replacementPackage` in the first implementation.
+3. Support package rename transitions with the object form of `PackageLink.package` in the first implementation.
 4. Permit rich child content in all link and fallback states.

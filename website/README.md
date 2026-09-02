@@ -190,26 +190,35 @@ The `newApi` shorthand is equivalent to `newApi={true}`.
 Invalid references and ambiguous references remain build errors.
 Use a TSDoc selector to resolve an ambiguous API kind, such as `(NewApi:class)` or `(NewApi:interface)`.
 
-Use `replacementApi` when an API is renamed.
-Keep the old reference in `api` and put the new reference in `replacementApi`:
+For an API rename, set `api` to an object with `previous` and `new` declaration references:
 
 ```mdx
-<ApiLink package="fluid-framework" api="OldApi" replacementApi="(NewApi:class)" />
+<ApiLink package="fluid-framework" api={{ previous: "OldApi", new: "(NewApi:class)" }} />
 ```
 
-The component tries `replacementApi` first.
-It uses `api` while the published model contains only the old API.
-The visible default text uses the replacement name in both states.
-When the replacement exists, the component writes a build warning.
-Copy the `replacementApi` value to `api`, and then remove `replacementApi`.
-
-Use `replacementPackage` in the same way for a package rename:
+The component tries `new` first.
+It uses `previous` while the published model contains only the old API.
+When child content is omitted, the component displays the name of the API that resolves.
+When `new` exists, the component writes a build warning.
+Replace the object with the new declaration reference at that time:
 
 ```mdx
-<PackageLink package="old-package" replacementPackage="new-package" />
+<ApiLink package="fluid-framework" api="(NewApi:class)" />
 ```
 
-When the replacement package exists, copy its name to `package`, and then remove `replacementPackage`.
+For a package rename, set `package` to an object with `previous` and `new` names:
+
+```mdx
+<PackageLink package={{ previous: "old-package", new: "new-package" }} />
+```
+
+The component uses `previous` while the published model contains only the old package.
+When the `new` package exists, the component writes a build warning.
+Replace the object with the new string value at that time:
+
+```mdx
+<PackageLink package="new-package" />
+```
 
 All transition modes permit explicit rich child content.
 The component preserves the child content when it renders a link or inline code:

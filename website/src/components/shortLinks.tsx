@@ -17,27 +17,34 @@ import type { SiteVersion } from "../utilityTypes";
 const emittedTransitionWarnings = new Set<string>();
 
 /**
+ * The package names used while API documentation transitions through a package rename.
+ */
+export interface PackageLinkRename {
+	/**
+	 * The package name in the current published API documentation.
+	 */
+	previous: string;
+
+	/**
+	 * The new package name that will replace {@link PackageLinkRename.previous}.
+	 */
+	new: string;
+}
+
+/**
  * {@link PackageLink} input props.
  */
 export interface PackageLinkProps {
 	/**
 	 * Contents to display within the link.
-	 * @defaultValue {@link PackageLinkProps.package}
+	 * When omitted during a package rename, the new package name is displayed.
 	 */
 	children?: ReactNode;
 
 	/**
-	 * The unscoped name of the package whose API documentation is linked.
+	 * The unscoped package name, or the previous and new names for a staged package rename.
 	 */
-	package: string;
-
-	/**
-	 * The new unscoped package name after a package rename.
-	 *
-	 * @remarks Remove this prop and update {@link PackageLinkProps.package} when the new package API
-	 * documentation is available.
-	 */
-	replacementPackage?: string;
+	package: string | PackageLinkRename;
 
 	headingId?: string;
 
@@ -54,12 +61,17 @@ export interface PackageLinkProps {
  */
 export function PackageLink({
 	headingId,
-	package: packageName,
-	replacementPackage,
+	package: packageNameOrRename,
 	children,
 	newApi = false,
 }: PackageLinkProps): JSX.Element {
-	const needsManifest = newApi || replacementPackage !== undefined;
+	const rename = typeof packageNameOrRename === "string" ? undefined : packageNameOrRename;
+	const packageName =
+		typeof packageNameOrRename === "string"
+			? packageNameOrRename
+			: packageNameOrRename.previous;
+	const newPackageName = rename?.new;
+	const needsManifest = newApi || rename !== undefined;
 	const { activeVersion, manifest } = useApiLinkContext("PackageLink", needsManifest);
 	const root = `${activeVersion.path}/api/`;
 	const headingPostfix = headingId === undefined ? "" : `#${headingId}`;
@@ -73,19 +85,17 @@ export function PackageLink({
 		);
 	}
 
-	const defaultText = replacementPackage ?? packageName;
-	if (replacementPackage !== undefined && manifest[replacementPackage] !== undefined) {
+	const defaultText = newPackageName ?? packageName;
+	if (newPackageName !== undefined && manifest[newPackageName] !== undefined) {
 		warnOnce(
-			`PackageLink|replacementPackage|${activeVersion.name}|${replacementPackage}`,
-			`[PackageLink] Replacement package "${replacementPackage}" exists in API documentation version "${activeVersion.name}". Set package="${replacementPackage}" and remove the replacementPackage prop.`,
+			`PackageLink|rename|${activeVersion.name}|${newPackageName}`,
+			`[PackageLink] New package name "${newPackageName}" exists in API documentation version "${activeVersion.name}". Set package="${newPackageName}".`,
 		);
-		return (
-			<a href={`${root}${replacementPackage}${headingPostfix}`}>{children ?? defaultText}</a>
-		);
+		return <a href={`${root}${newPackageName}${headingPostfix}`}>{children ?? defaultText}</a>;
 	}
 
 	if (manifest[packageName] !== undefined) {
-		if (replacementPackage === undefined && newApi) {
+		if (rename === undefined && newApi) {
 			warnOnce(
 				`PackageLink|newApi|${activeVersion.name}|${packageName}`,
 				`[PackageLink] Package "${packageName}" exists in API documentation version "${activeVersion.name}". Remove the newApi prop.`,
@@ -102,17 +112,33 @@ export function PackageLink({
 }
 
 /**
+ * The declaration references used while API documentation transitions through an API rename.
+ */
+export interface ApiLinkRename<
+	TPreviousApiSelector extends string = string,
+	TNewApiSelector extends string = string,
+> {
+	/**
+	 * The API declaration reference in the current published API documentation.
+	 */
+	previous: ApiDeclarationReference<TPreviousApiSelector>;
+
+	/**
+	 * The new API declaration reference that will replace {@link ApiLinkRename.previous}.
+	 */
+	new: ApiDeclarationReference<TNewApiSelector>;
+}
+
+/**
  * {@link ApiLink} input props.
  */
 export interface ApiLinkProps<
 	TApiSelector extends string = string,
-	TReplacementApiSelector extends string = string,
+	TNewApiSelector extends string = string,
 > {
 	/**
 	 * Contents to display within the link.
-	 * When omitted, the API declaration reference is displayed without selectors.
-	 *
-	 * @defaultValue {@link ApiLinkProps.api}
+	 * When omitted, the resolved API declaration reference is displayed without selectors.
 	 */
 	children?: ReactNode;
 
@@ -122,17 +148,10 @@ export interface ApiLinkProps<
 	package: string;
 
 	/**
-	 * A TSDoc-style declaration reference identifying the API item within the package.
+	 * A TSDoc-style declaration reference, or the previous and new references for a staged API
+	 * rename.
 	 */
-	api: ApiDeclarationReference<TApiSelector>;
-
-	/**
-	 * The declaration reference for the API after a rename.
-	 *
-	 * @remarks Remove this prop and update {@link ApiLinkProps.api} when the replacement API
-	 * documentation is available.
-	 */
-	replacementApi?: ApiDeclarationReference<TReplacementApiSelector>;
+	api: ApiDeclarationReference<TApiSelector> | ApiLinkRename<TApiSelector, TNewApiSelector>;
 
 	/**
 	 * Permits the API to be absent from the published API documentation.
@@ -154,17 +173,13 @@ export interface ApiLinkProps<
  *
  * @throws If the requested API cannot be uniquely resolved in the active documentation version.
  */
-export function ApiLink<
-	const TApiSelector extends string,
-	const TReplacementApiSelector extends string,
->({
-	api,
+export function ApiLink<const TApiSelector extends string, const TNewApiSelector extends string>({
+	api: apiOrRename,
 	package: packageName,
-	replacementApi,
 	newApi = false,
 	headingId,
 	children,
-}: ApiLinkProps<TApiSelector, TReplacementApiSelector>): JSX.Element {
+}: ApiLinkProps<TApiSelector, TNewApiSelector>): JSX.Element {
 	const { activeVersion, manifest } = useApiLinkContext("ApiLink", true);
 	if (manifest === undefined) {
 		throw new Error(
@@ -172,15 +187,18 @@ export function ApiLink<
 		);
 	}
 
+	const rename = typeof apiOrRename === "string" ? undefined : apiOrRename;
+	const api = typeof apiOrRename === "string" ? apiOrRename : apiOrRename.previous;
+	const newApiReference = rename?.new;
 	const replacementResult =
-		replacementApi === undefined
+		newApiReference === undefined
 			? undefined
-			: tryResolveApiLinkTarget(manifest, packageName, replacementApi);
+			: tryResolveApiLinkTarget(manifest, packageName, newApiReference);
 	const result = tryResolveApiLinkTarget(manifest, packageName, api);
 	if (replacementResult?.found === true) {
 		warnOnce(
-			`ApiLink|replacementApi|${activeVersion.name}|${packageName}|${replacementApi}`,
-			`[ApiLink] Replacement API "${packageName}/${replacementApi}" exists in API documentation version "${activeVersion.name}". Set api="${replacementApi}" and remove the replacementApi prop.`,
+			`ApiLink|rename|${activeVersion.name}|${packageName}|${newApiReference}`,
+			`[ApiLink] New API name "${packageName}/${newApiReference}" exists in API documentation version "${activeVersion.name}". Set api="${newApiReference}".`,
 		);
 		return renderApiLink(
 			activeVersion.path,
@@ -190,22 +208,26 @@ export function ApiLink<
 		);
 	}
 
-	const defaultText = replacementResult?.defaultText ?? result.defaultText;
 	if (!result.found) {
 		if (newApi) {
-			return <code>{children ?? defaultText}</code>;
+			return <code>{children ?? replacementResult?.defaultText ?? result.defaultText}</code>;
 		}
 		throw new Error(`No API documentation found for "${packageName}/${api}".`);
 	}
 
-	if (replacementApi === undefined && newApi) {
+	if (rename === undefined && newApi) {
 		warnOnce(
 			`ApiLink|newApi|${activeVersion.name}|${packageName}|${api}`,
 			`[ApiLink] API "${packageName}/${api}" exists in API documentation version "${activeVersion.name}". Remove the newApi prop.`,
 		);
 	}
 
-	return renderApiLink(activeVersion.path, result.target, headingId, children ?? defaultText);
+	return renderApiLink(
+		activeVersion.path,
+		result.target,
+		headingId,
+		children ?? result.defaultText,
+	);
 }
 
 function renderApiLink(
