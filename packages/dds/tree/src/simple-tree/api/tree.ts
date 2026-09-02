@@ -920,8 +920,8 @@ export interface TreeViewAlpha<
 	 * whether to include an upgrade token in the view configuration after a feature flag rollback.
 	 *
 	 * Results are derived from this view's schema and the current stored schema.
-	 * When the view is not compatible with the stored schema (i.e. `compatibility.canView` is
-	 * false), the result may be incomplete because the schema walk is interrupted early.
+	 * The full schema is checked even when the view is incompatible with the stored schema, so the
+	 * result includes all locations declared by the view schema.
 	 */
 	isStagedUpgradeEnabled(upgrade: SchemaUpgrade): StagedUpgradeStatus;
 

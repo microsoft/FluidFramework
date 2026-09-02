@@ -163,6 +163,8 @@ export function checkSchemaCompatibility(
 	// determined by the view schema (i.e. objects with extra optional fields in the stored schema have opted into allowing this.
 	// In the future, this would also include things like:
 	// - fields with more allowed types in the stored schema than in the view schema have out-of-schema "unknown content" adapters
+	// Complete the full walk even after finding an incompatibility so discrepancy details and
+	// staged-upgrade status contain all available information for debugging.
 	const discrepancies: SchemaDiscrepancy[] = [];
 	for (const discrepancy of getDiscrepanciesInAllowedContent(
 		viewSchema,
