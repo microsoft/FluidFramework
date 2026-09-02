@@ -50,7 +50,7 @@ function formatSchemaDiscrepancy(value: Discrepancy): SchemaDiscrepancy {
 						? "root"
 						: {
 								nodeType: value.identifier,
-								fieldKey: value.fieldKey ?? null,
+								fieldKey: value.fieldKey,
 							},
 				view: value.view.map(({ type }) => type.identifier).sort(),
 				...(value.stagedView === undefined
@@ -70,7 +70,7 @@ function formatSchemaDiscrepancy(value: Discrepancy): SchemaDiscrepancy {
 						? "root"
 						: {
 								nodeType: value.identifier,
-								fieldKey: value.fieldKey ?? null,
+								fieldKey: value.fieldKey,
 							},
 				view: value.view,
 				stored: value.stored,
@@ -81,8 +81,8 @@ function formatSchemaDiscrepancy(value: Discrepancy): SchemaDiscrepancy {
 			return {
 				mismatch: value.mismatch,
 				nodeType: value.identifier,
-				view: value.view === undefined ? null : ValueSchema[value.view],
-				stored: value.stored === undefined ? null : ValueSchema[value.stored],
+				view: value.view === undefined ? undefined : ValueSchema[value.view],
+				stored: value.stored === undefined ? undefined : ValueSchema[value.stored],
 			};
 		}
 		case "nodeKind": {

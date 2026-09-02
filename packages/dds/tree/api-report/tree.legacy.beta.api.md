@@ -562,7 +562,7 @@ export type SchemaDiscrepancy = {
     readonly mismatch: "allowedTypes";
     readonly location: "root" | {
         readonly nodeType: string;
-        readonly fieldKey: string | null;
+        readonly fieldKey: string | undefined;
     };
     readonly view: readonly string[];
     readonly stagedView?: readonly string[];
@@ -572,7 +572,7 @@ export type SchemaDiscrepancy = {
     readonly mismatch: "fieldKind";
     readonly location: "root" | {
         readonly nodeType: string;
-        readonly fieldKey: string | null;
+        readonly fieldKey: string | undefined;
     };
     readonly view: string;
     readonly stored: string;
@@ -580,8 +580,8 @@ export type SchemaDiscrepancy = {
 } | {
     readonly mismatch: "valueSchema";
     readonly nodeType: string;
-    readonly view: string | null;
-    readonly stored: string | null;
+    readonly view: string | undefined;
+    readonly stored: string | undefined;
 } | {
     readonly mismatch: "nodeKind";
     readonly nodeType: string;
