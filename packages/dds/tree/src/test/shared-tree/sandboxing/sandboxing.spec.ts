@@ -185,33 +185,6 @@ function normalizeProtocolError(error: unknown): Error {
 		: new Error("Host and Guest protocol processing failed.", { cause: error });
 }
 
-describe("Host and Guest message protocol", () => {
-	it("accepts data changes and acknowledgments", () => {
-		const dataChange: DataChangeMessage = { type: "dataChange", change: { value: 1 } };
-		const acknowledgment: AcknowledgmentMessage = { type: "acknowledgment" };
-
-		strict.equal(parseHostGuestMessage(dataChange), dataChange);
-		strict.equal(parseHostGuestMessage(acknowledgment), acknowledgment);
-	});
-
-	it("rejects invalid message envelopes", () => {
-		const invalidMessages: unknown[] = [
-			null,
-			"dataChange",
-			{},
-			{ type: "unknown" },
-			{ type: "dataChange" },
-		];
-
-		for (const message of invalidMessages) {
-			strict.throws(
-				() => parseHostGuestMessage(message),
-				/Invalid Host and Guest protocol message/,
-			);
-		}
-	});
-});
-
 class Host<const TSchema extends ImplicitFieldSchema> {
 	/** The main branch on the Host. Is automatically updated when peer changes are received. */
 	public readonly main: TreeViewAlpha<TSchema>;
@@ -599,6 +572,33 @@ class Guest<const TSchema extends ImplicitFieldSchema> {
 		return this.pushInProgress?.promise;
 	}
 }
+
+describe("Host and Guest message protocol", () => {
+	it("accepts data changes and acknowledgments", () => {
+		const dataChange: DataChangeMessage = { type: "dataChange", change: { value: 1 } };
+		const acknowledgment: AcknowledgmentMessage = { type: "acknowledgment" };
+
+		strict.equal(parseHostGuestMessage(dataChange), dataChange);
+		strict.equal(parseHostGuestMessage(acknowledgment), acknowledgment);
+	});
+
+	it("rejects invalid message envelopes", () => {
+		const invalidMessages: unknown[] = [
+			null,
+			"dataChange",
+			{},
+			{ type: "unknown" },
+			{ type: "dataChange" },
+		];
+
+		for (const message of invalidMessages) {
+			strict.throws(
+				() => parseHostGuestMessage(message),
+				/Invalid Host and Guest protocol message/,
+			);
+		}
+	});
+});
 
 describe("Host and Guest Demo", () => {
 	/**
