@@ -35,6 +35,7 @@ import {
 	type ContainerRuntimeFactoryWithDefaultDataStoreConstructor,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 } from "./testContainerRuntimeFactoryWithDefaultDataStore.js";
+import { defaultTestOldestSupportedClient } from "./testCompatibility.js";
 import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider.js";
 import { timeoutAwait } from "./timeoutUtils.js";
 
@@ -136,6 +137,7 @@ export async function createSummarizerFromFactory(
 		containerRuntimeFactoryType ?? ContainerRuntimeFactoryWithDefaultDataStore,
 		{
 			defaultFactory: dataStoreFactory,
+			oldestSupportedClient: defaultTestOldestSupportedClient,
 			registryEntries: registryEntries ?? [
 				[dataStoreFactory.type, Promise.resolve(dataStoreFactory)],
 			],

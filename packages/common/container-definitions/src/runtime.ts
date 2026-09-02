@@ -494,7 +494,12 @@ export interface IContainerContextInternal extends IContainerContext {
 	 * Reads a range of sequenced ops from delta storage, the read counterpart of `submitFn`. The container
 	 * owns delta storage and injects this so the runtime can pull historical ops (e.g. to resolve a batch
 	 * identity to a sequence number). `abortSignal` cancels an in-flight fetch when the runtime stops reading
-	 * early. Optional: absent means the runtime has no historical-op read.
+	 * early. The range is `[from, to)`: `from` is inclusive, `to` is exclusive, and an undefined `to`
+	 * means there is no fixed upper bound. Optional: absent means the runtime has no historical-op read.
+	 *
+	 * @param from - The inclusive sequence number at which to start reading.
+	 * @param to - The exclusive sequence number at which to stop reading, or undefined for no fixed bound.
+	 * @param abortSignal - Cancels the in-flight fetch when the runtime stops reading early.
 	 */
 	readonly fetchOps?: (
 		from: number,

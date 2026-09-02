@@ -109,8 +109,8 @@
                             }
                           ],
                           "revision": 513,
-                          "sequenceNumber": 6,
-                          "sessionId": "a0693eac-892a-4396-86f7-ad20dc1cade2"
+                          "sessionId": "a0693eac-892a-4396-86f7-ad20dc1cade2",
+                          "sequenceNumber": 6
                         },
                         {
                           "change": [
@@ -178,8 +178,8 @@
                             }
                           ],
                           "revision": 514,
-                          "sequenceNumber": 8,
-                          "sessionId": "a0693eac-892a-4396-86f7-ad20dc1cade2"
+                          "sessionId": "a0693eac-892a-4396-86f7-ad20dc1cade2",
+                          "sequenceNumber": 8
                         },
                         {
                           "change": [
@@ -306,8 +306,8 @@
                             }
                           ],
                           "revision": 2,
-                          "sequenceNumber": 10,
-                          "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
+                          "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06",
+                          "sequenceNumber": 10
                         },
                         {
                           "change": [
@@ -383,8 +383,8 @@
                             }
                           ],
                           "revision": 3,
-                          "sequenceNumber": 12,
-                          "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
+                          "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06",
+                          "sequenceNumber": 12
                         }
                       ],
                       "branches": [

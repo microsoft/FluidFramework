@@ -1,5 +1,17 @@
 # @fluidframework/eslint-config-fluid Changelog
 
+## [14.1.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v14.1.0)
+
+The custom Fluid ESLint rules are now maintained and published as part of this package. Rule names remain unchanged
+under the `@fluid-internal/fluid` namespace.
+
+### `react-hooks/component-hook-factories` is no longer enabled
+
+`eslint-plugin-react-hooks` has been upgraded to 7.1.1.
+The `component-hook-factories` rule is no longer enabled by the plugin's recommended config because the rule is deprecated and now does nothing.
+Version 7.1.1 retains the rule only for backward compatibility with configs that reference it.
+See the [`eslint-plugin-react-hooks` 7.1.1 release notes](https://github.com/facebook/react/releases/tag/eslint-plugin-react-hooks%407.1.1) for details.
+
 ## [14.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v14.0.0)
 
 ### TypeScript 6 support
@@ -10,12 +22,12 @@ TypeScript 6 is now the supported version of TypeScript. The TypeScript ESLint d
 **Requirements:**
 
 - TypeScript 6
-- override transitive TypeScript ESLint dependencies before 5.58
+- override transitive TypeScript ESLint dependencies before 8.58
 
 #### overrides for transitive TypeScript ESLint dependencies
 
-`@typescript-eslint/eslint-*` packages need to be 5.58 or later for TypeScript 6 support.
-But latest version of packages known at 2026-08-05 use versions prior to 5.58 and should be overridden.
+`@typescript-eslint/*` packages need to be 8.58 or later for TypeScript 6 support.
+But latest version of packages known at 2026-08-05 use versions prior to 8.58 and should be overridden.
 
 ##### Minimal overrides
 
@@ -23,7 +35,7 @@ But latest version of packages known at 2026-08-05 use versions prior to 5.58 an
 Example override for pnpm:
 
 ```yaml
-# @typescript-eslint/eslint-utils overrides
+# @typescript-eslint/utils overrides
 #   As of 2026-08-05 @rushstack/eslint-plugin (v0.23.2), does not have a version using v8.58 or later.
 "@rushstack/eslint-plugin>@typescript-eslint/utils@<8.58.0": ~8.58.0
 #   As of 2026-08-05 eslint-plugin-tsdoc (v0.5.2), does not have a version using v8.58 or later.
@@ -32,13 +44,14 @@ Example override for pnpm:
 
 ##### Additional overrides
 
-`eslint-plugin-jest`, while not part of this config, is known to require `eslint-plugin` override.
+`eslint-plugin-jest`, while not part of this config, is known to require `eslint-plugin` update.
+If package manager does not select more recent update, then a temporary override may be needed to coerce
+a new resolution. After lockfile refresh, the override may be removed.
 Example override for pnpm:
 
 ```yaml
-# @typescript-eslint/eslint-plugin overrides
-#   As of 2026-08-05 eslint-plugin-jest (v29.6.2), does not have a version using v8.58 or later.
-"eslint-plugin-jest>@typescript-eslint/eslint-plugin@<8.58.0": ~8.58.0
+# @typescript-eslint/eslint-plugin override to force resolution update
+"eslint-plugin-jest>@typescript-eslint/eslint-plugin@<8.58.0": ^8.58.0
 ```
 
 ### Breaking: `@eslint-react/eslint-plugin` upgraded to v5

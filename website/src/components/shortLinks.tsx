@@ -3,9 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { useDoc } from "@docusaurus/plugin-content-docs/client";
-import type { ApiItemKind } from "@fluid-tools/api-markdown-documenter";
+import { useActivePluginAndVersion } from "@docusaurus/plugin-content-docs/client";
+import { usePluginData } from "@docusaurus/useGlobalData";
 import type { ReactNode } from "react";
+
+import { type ApiLinkManifests, apiLinkManifestPluginName } from "../apiLinkManifest";
+import { type ApiDeclarationReference, resolveApiLinkTarget } from "../apiLinkReference";
+import type { SiteVersion } from "../utilityTypes";
 
 // TODO: how will versioning interact with these?
 
@@ -15,17 +19,26 @@ import type { ReactNode } from "react";
 export interface PackageLinkProps {
 	/**
 	 * Contents to display within the link.
-	 * @defaultValue {@link PackageLinkProps.packageName}
+	 * @defaultValue {@link PackageLinkProps.package}
 	 */
 	children?: ReactNode;
-	packageName: string;
+
+	/**
+	 * The unscoped name of the package whose API documentation is linked.
+	 */
+	package: string;
+
 	headingId?: string;
 }
 
 /**
  * A convenient mechanism for linking to a package's API documentation.
  */
-export function PackageLink({ headingId, packageName, children }: PackageLinkProps): JSX.Element {
+export function PackageLink({
+	headingId,
+	package: packageName,
+	children,
+}: PackageLinkProps): JSX.Element {
 	const root = useLinkPathBase();
 	const headingPostfix = headingId === undefined ? "" : `#${headingId}`;
 	return <a href={`${root}${packageName}${headingPostfix}`}>{children ?? packageName}</a>;
@@ -34,48 +47,68 @@ export function PackageLink({ headingId, packageName, children }: PackageLinkPro
 /**
  * {@link ApiLink} input props.
  */
-export interface ApiLinkProps {
+export interface ApiLinkProps<TApiSelector extends string = string> {
 	/**
 	 * Contents to display within the link.
-	 * @defaultValue {@link ApiLinkProps.apiName}
+	 * When omitted, the API declaration reference is displayed without selectors.
+	 *
+	 * @defaultValue {@link ApiLinkProps.api}
 	 */
 	children?: ReactNode;
-	packageName: string;
-	apiName: string;
-	// TODO: do we have enough context to determine this automatically when unambiguous?
-	apiType: ApiItemKind;
 
 	/**
-	 * (Optional) heading ID on the target page to link to.
+	 * The unscoped name of the package containing the API item.
+	 */
+	package: string;
+
+	/**
+	 * A TSDoc-style declaration reference identifying the API item within the package.
+	 */
+	api: ApiDeclarationReference<TApiSelector>;
+
+	/**
+	 * Overrides the generated heading ID for the target API item.
 	 *
-	 * @remarks
-	 * This is useful for linking to a particular member of an API item, if that member is rendered to its parent item's page.
-	 *
-	 * @privateRemarks
-	 * TODO: in the future, it would be better to consume aspects of the API docs config, and automatically derive
-	 * the right path to link to any kind of API item, regardless of whether or not it is configured to render to its
-	 * own page or its parents.
-	 * This would also be much more resilient to changes in the API docs config.
+	 * @deprecated Use a qualified {@link ApiLinkProps.api} reference to link directly to a member.
 	 */
 	headingId?: string;
 }
 
 /**
  * A convenient mechanism for linking to the API documentation for a specified API item.
+ *
+ * @throws If the requested API cannot be uniquely resolved in the active documentation version.
  */
-export function ApiLink({
-	apiName,
-	apiType,
-	packageName,
+export function ApiLink<const TApiSelector extends string>({
+	api,
+	package: packageName,
 	headingId,
 	children,
-}: ApiLinkProps): JSX.Element {
-	const root = useLinkPathBase();
-	const headingPostfix = headingId === undefined ? "" : `#${headingId}`;
-	// `api-documenter` generates all lowercase entries for API item names and types.
-	// Convert input names and types to lowercase to match.
-	const path = `${root}${packageName}/${apiName.toLocaleLowerCase()}-${apiType.toLocaleLowerCase()}${headingPostfix}`;
-	return <a href={path}>{children ?? apiName}</a>;
+}: ApiLinkProps<TApiSelector>): JSX.Element {
+	const activePluginAndVersion = useActivePluginAndVersion();
+	const manifests = usePluginData(apiLinkManifestPluginName, undefined, {
+		failfast: true,
+	}) as ApiLinkManifests;
+	const activeVersion = activePluginAndVersion?.activeVersion;
+	if (activeVersion === undefined) {
+		throw new Error("ApiLink must be rendered within a versioned Docusaurus document.");
+	}
+
+	const manifest = manifests[activeVersion.name as SiteVersion];
+	if (manifest === undefined) {
+		throw new Error(
+			`No API link manifest found for documentation version "${activeVersion.name}".`,
+		);
+	}
+
+	const { target, defaultText } = resolveApiLinkTarget(manifest, packageName, api);
+	const targetHeadingId = headingId ?? target.headingId;
+	const headingPostfix = targetHeadingId === undefined ? "" : `#${targetHeadingId}`;
+	return (
+		<a href={`${activeVersion.path}/api/${target.documentPath}${headingPostfix}`}>
+			{children ?? defaultText}
+		</a>
+	);
 }
 
 /**
@@ -83,9 +116,11 @@ export function ApiLink({
  * Accounts for versioning.
  */
 function useLinkPathBase(): string {
-	const docContext = useDoc();
-	const version = docContext.metadata.version;
-	return `/docs/${version === "current" ? "" : `v${version}/`}api/`;
+	const activeVersion = useActivePluginAndVersion()?.activeVersion;
+	if (activeVersion === undefined) {
+		throw new Error("PackageLink must be rendered within a versioned Docusaurus document.");
+	}
+	return `${activeVersion.path}/api/`;
 }
 
 /**

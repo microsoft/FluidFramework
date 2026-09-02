@@ -17,6 +17,7 @@ import { BTree } from "@tylerbu/sorted-btree-es6";
 import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
+	CommitKind,
 	type GraphCommit,
 	type RevisionTag,
 	findAncestor,
@@ -134,6 +135,8 @@ export class EditManager<
 		this.trunkBase = {
 			revision: rootRevision,
 			change: changeFamily.rebaser.compose([]),
+			customMetadata: undefined,
+			wasTrimmed: true,
 		};
 
 		if (logger !== undefined) {
@@ -338,21 +341,28 @@ export class EditManager<
 		// `newTrunkBase`. Therefore, no branches should have unique references to any of the commits being evicted here.
 		// We mutate the most recent of the evicted commits to become the new trunk base. That way, any other commits that
 		// have parent pointers to the latest evicted commit will stay linked, even though that it is no longer part of the trunk.
-		const newTrunkBase = latestEvicted as Mutable<typeof latestEvicted>;
+		const newTrunkBase = latestEvicted as Mutable<GraphCommit<TChangeset>>;
 
 		// collect the revisions that will be trimmed to send as part of the branch trimmed event
-		const trimmedCommits = getPathFromBase(newTrunkBase, this.trunkBase);
+		const trimmedCommits = getPathFromBase(newTrunkBase, this.trunkBase) as Mutable<
+			GraphCommit<TChangeset>
+		>[];
 		const trimmedRevisions = trimmedCommits.map((c) => c.revision);
 
 		// The minimum sequence number informs us that all peer branches are at least caught up to the tail commit,
 		// so rebase them accordingly. This is necessary to prevent peer branches from referencing any evicted commits.
 		mainBranch.trimHistory(latestEvicted, sequenceId);
 
-		// Only the last trimmed commit, which is the new trunk base, should remain accessible.
+		// Custom metadata shares the lifetime of its commit, so it must be dropped when the commit is
+		// trimmed. The new trunk base stays reachable as the sentinel for the remaining history, so its
+		// metadata is cleared rather than trapped; fully evicted commits get the throwing trap below.
+		newTrunkBase.customMetadata = undefined;
+
+		// Access to the intrinsic properties of trimmed commits indicates a bug in SharedTree.
+		// Throwing lowers the risk of such a bug causing data loss or corruption.
 		for (const commit of trimmedCommits.slice(0, -1)) {
 			Reflect.defineProperty(commit, "change", {
-				get: () =>
-					assert(false, 0xa5e /* Should not access 'change' property of an evicted commit */),
+				get: () => fail(0xa5e /* Should not access 'change' property of an evicted commit */),
 			});
 			Reflect.defineProperty(commit, "revision", {
 				get: () =>
@@ -361,14 +371,20 @@ export class EditManager<
 						0xa5f /* Should not access 'revision' property of an evicted commit */,
 					),
 			});
+			Reflect.defineProperty(commit, "customMetadata", {
+				get: () => fail("Should not access 'customMetadata' property of an evicted commit"),
+			});
 			Reflect.defineProperty(commit, "parent", {
 				get: () =>
 					assert(false, 0xa60 /* Should not access 'parent' property of an evicted commit */),
 			});
+			commit.wasTrimmed = true;
 		}
 
-		// Dropping the parent field removes (transitively) all references to the evicted commits so they can be garbage collected.
+		// Dropping the parent field (transitively) removes references to the evicted commits so they can be garbage collected.
+		// Allowing the `parent` property to be read from the trunk base (despite it being a trimmed commit) spares readers from having to check `wasTrimmed` in order to safely find the root commit.
 		delete newTrunkBase.parent;
+		newTrunkBase.wasTrimmed = true;
 		this.trunkBase = newTrunkBase;
 
 		this._events.emit("ancestryTrimmed", trimmedRevisions);
@@ -388,11 +404,13 @@ export class EditManager<
 		// Trimming the trunk before serializing ensures that the trunk data in the summary is as minimal as possible.
 		this.trimHistory();
 
+		const mainBranch = this.getSharedBranch("main");
 		const minSeqNumberToSummarize: SequenceId = {
 			sequenceNumber: brand(this.minimumSequenceNumber + 1),
 		};
-		let minBaseSeqId: SequenceId = minSeqNumberToSummarize;
-		const mainBranch = this.getSharedBranch("main");
+		let minBaseSeqId: SequenceId = this.retainHistory
+			? (mainBranch.sequenceIdToCommit.minKey() ?? minimumPossibleSequenceId)
+			: minSeqNumberToSummarize;
 		const branches = new Map<BranchId, SharedBranchSummaryData<TChangeset>>();
 		for (const [branchId, branch] of this.sharedBranches) {
 			if (branchId !== "main") {
@@ -824,7 +842,11 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 		} else {
 			// Otherwise, push the changes to the peer local branch and merge the branch into the trunk.
 			for (const newCommit of newCommits) {
-				peerLocalBranch.apply(tagChange(newCommit.change, newCommit.revision));
+				peerLocalBranch.apply(
+					tagChange(newCommit.change, newCommit.revision),
+					CommitKind.Default,
+					newCommit.customMetadata,
+				);
 			}
 			const result = this.trunk.merge(peerLocalBranch);
 			if (result !== undefined) {
@@ -1091,6 +1113,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 				revision: c.revision,
 				sequenceNumber: metadata.sequenceId.sequenceNumber,
 				sessionId: metadata.sessionId,
+				customMetadata: c.customMetadata,
 			};
 			if (metadata.sequenceId.indexInBatch !== undefined) {
 				commit.indexInBatch = metadata.sequenceId.indexInBatch;
@@ -1116,6 +1139,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 								change: c.change,
 								revision: c.revision,
 								sessionId,
+								customMetadata: c.customMetadata,
 							};
 							return commit;
 						}),

@@ -57,13 +57,7 @@ trigger:
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-generate-notice-steps.yml
-    - tools/pipelines/templates/include-publish-npm-package.yml
-    - tools/pipelines/templates/include-publish-npm-package-deployment.yml
-    - tools/pipelines/templates/include-publish-npm-package-steps.yml
-    - tools/pipelines/templates/include-publish-docker-service-steps.yml
-    - tools/pipelines/templates/include-git-tag-steps.yml
     - tools/pipelines/templates/include-use-node-version.yml
-    - tools/pipelines/templates/upload-server-manifest.yml
     exclude:
     - server/routerlicious/kubernetes/routerlicious
 
@@ -87,7 +81,6 @@ pr:
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-use-node-version.yml
-    - tools/pipelines/templates/upload-server-manifest.yml
     exclude:
     - server/routerlicious/kubernetes/routerlicious
 
@@ -112,7 +105,7 @@ extends:
     shouldPublishNpmPackages: ${{ variables.publish }}
     releaseKind: both
     publishOverride: ${{ parameters.publishOverride }}
-    publishAsPartOfBuild: true
+    publishAsPartOfBuild: false
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     interdependencyRange: ${{ parameters.interdependencyRange }}
     buildDirectory: ${{ variables.FluidFrameworkDirectory }}/server/routerlicious
@@ -124,7 +117,6 @@ extends:
     # Root deps are still needed for the version-setting step.
     installWorkspaceRootOnly: true
     tagName: server
-    isReleaseGroup: true
     pool: Large-eastus2
     pack: true
     lint: true

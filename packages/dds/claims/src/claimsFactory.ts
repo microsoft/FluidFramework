@@ -79,14 +79,14 @@ export class ClaimsFactory implements IChannelFactory<IClaims> {
  * ```typescript
  * const result = claims.trySetClaim("singleton-component", componentHandle);
  * if (result.status === "AlreadyClaimed") {
- *     // Another client already claimed it; use result.currentValue.
+ *     // Another client already claimed it; use claims.get(key) to read the winning value.
  * } else if (result.status === "Pending") {
  *     // Wait for the server to confirm the claim.
  *     const confirmation = await result.promise;
  *     if (confirmation.status === "Accepted") {
  *         // This client successfully claimed the key.
  *     } else if (confirmation.status === "AlreadyClaimed") {
- *         // Another client claimed it first; use confirmation.currentValue.
+ *         // Another client claimed it first; use claims.get(key) to read the winning value.
  *     }
  * }
  * ```

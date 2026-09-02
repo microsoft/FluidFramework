@@ -9,8 +9,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { markEager } from "./flexList.js";
 import { tryGetTreeNodeSchema } from "./treeNodeKernel.js";
 import { NodeKind, type TreeNodeSchemaClass } from "./treeNodeSchema.js";
-// eslint-disable-next-line import-x/no-deprecated
-import { type WithType, typeNameSymbol, type typeSchemaSymbol } from "./withType.js";
+import type { WithType, schemaIdentifierBrand, typeSchemaSymbol } from "./withType.js";
 
 /**
  * A non-{@link NodeKind.Leaf|leaf} SharedTree node. Includes objects, arrays, and maps.
@@ -76,18 +75,15 @@ export abstract class TreeNode implements WithType {
 	readonly #brand!: unknown;
 
 	/**
-	 * Adds a type symbol for stronger typing.
-	 * @privateRemarks
-	 * Subclasses provide more specific strings for this to get strong typing of otherwise type compatible nodes.
-	 * @deprecated Use {@link typeSchemaSymbol} instead.
+	 * Adds a `schemaIdentifierBrand` for stronger and more efficient type checking.
+	 * @privateRemarks Subclasses provide more specific values to distinguish otherwise type-compatible nodes.
 	 */
-	// eslint-disable-next-line import-x/no-deprecated
-	public abstract get [typeNameSymbol](): string;
+	public abstract get [schemaIdentifierBrand](): string;
 
 	/**
-	 * Adds a type symbol for stronger typing.
+	 * {@inheritDoc typeSchemaSymbol}
 	 * @privateRemarks
-	 * Subclasses provide more specific strings for this to get strong typing of otherwise type compatible nodes.
+	 * Subclasses provide more specific values for this to get strong typing of otherwise type compatible nodes.
 	 */
 	public abstract get [typeSchemaSymbol](): TreeNodeSchemaClass;
 

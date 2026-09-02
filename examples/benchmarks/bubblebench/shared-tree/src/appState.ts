@@ -10,6 +10,7 @@ import {
 	makeBubble,
 	randomColor,
 } from "@fluid-example/bubblebench-common";
+import type { FluidIterable } from "@fluidframework/core-interfaces";
 import { type TreeView, Tree } from "@fluidframework/tree";
 
 import { type App, Client } from "./schema.js";
@@ -50,7 +51,7 @@ export class AppState implements IAppState {
 		return client;
 	}
 
-	public get clients(): Iterable<IClient> {
+	public get clients(): FluidIterable<IClient> {
 		return this.tree.root.clients;
 	}
 

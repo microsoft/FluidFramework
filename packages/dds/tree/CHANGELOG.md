@@ -1,5 +1,280 @@
 # @fluidframework/tree
 
+## 2.116.0
+
+### Minor Changes
+
+- Improve validation in SharedTree forests ([#27920](https://github.com/microsoft/FluidFramework/pull/27920)) [9c67a984ca](https://github.com/microsoft/FluidFramework/commit/9c67a984cacefffb0c5bd0c85e9e5b838c6d72eb)
+
+  Our [ForestType](https://fluidframework.com/docs/api/tree/foresttype-interface) implementations now have better and more consistent validation of changes being applied.
+  This should only impact cases which have hit bugs, resulting in edits which are not valid for the tree they are being applied to.
+  Now the asserts should be more specific, helping to triage such issues.
+  This also reduces the risk of document corruption by catching invalid data earlier and more consistently.
+
+- Additional change validation options ([#27977](https://github.com/microsoft/FluidFramework/pull/27977)) [d3a9a3e1bf](https://github.com/microsoft/FluidFramework/commit/d3a9a3e1bf5b45f5e9bc050759729515ba070367)
+
+  Adds the following new options to `SharedTreeOptions` (alpha):
+  - `validateCommitsOnFirstSubmission`: (default: `false`) When `true`, validates that commits being submitted for the first time can be applied without errors to a view.
+  - `validateRebasedCommitsBeforeResubmission`: (default: `false`) When `true`, validates that the commits being resubmitted can be applied without errors to a view.
+
+  In the event that a commit cannot be applied, SharedTree will throw an error and will enter a "broken" state, preventing the offending commit (and any further commits) from being submitted.
+  This can be enabled (at the cost of performance) to improve safety against document corruption in the event of a bug in the SharedTree code:
+  when the additional validation is enabled, a client will error instead of potentially corrupting the document.
+
+  These flags are experimental.
+  We recommend turning them on (first `validateRebasedCommitsBeforeResubmission` and, if needed, `validateCommitsOnFirstSubmission`)
+  when trying to mitigate bugs in SharedTree or performing root cause analysis.
+
+  We recommend [configuring SharedTree](https://fluidframework.com/docs/api/fluid-framework/forestoptions-interface#forest-propertysignature) with the [optimized forest implementation](https://fluidframework.com/docs/api/tree#foresttypeoptimized-variable) to reduce the performance impact of this validation.
+
+- Rename minVersionForCollab to oldestSupportedClient ([#27806](https://github.com/microsoft/FluidFramework/pull/27806)) [86b912170c](https://github.com/microsoft/FluidFramework/commit/86b912170c0e12ebeb481c5201f923c72bf94498)
+
+  The cross-client compatibility parameter has new names:
+  - The
+    [`MinimumVersionForCollab`](https://fluidframework.com/docs/api/runtime-definitions/minimumversionforcollab-typealias)
+    type is now
+    [`OldestSupportedClientVersion`](https://fluidframework.com/docs/api/runtime-definitions/oldestsupportedclientversion-typealias).
+  - [`LoadContainerRuntimeParams.minVersionForCollab`](https://fluidframework.com/docs/api/container-runtime/loadcontainerruntimeparams-interface#minversionforcollab-propertysignature)
+    is now
+    [`LoadContainerRuntimeParams.oldestSupportedClient`](https://fluidframework.com/docs/api/container-runtime/loadcontainerruntimeparams-interface#oldestsupportedclient-propertysignature).
+  - [`BaseContainerRuntimeFactoryProps.minVersionForCollab`](https://fluidframework.com/docs/api/aqueduct/basecontainerruntimefactoryprops-interface#minversionforcollab-propertysignature)
+    is now
+    [`BaseContainerRuntimeFactoryProps.oldestSupportedClient`](https://fluidframework.com/docs/api/aqueduct/basecontainerruntimefactoryprops-interface#oldestsupportedclient-propertysignature).
+  - [`createTreeContainerRuntimeFactory`](https://fluidframework.com/docs/api/fluid-static/#createtreecontainerruntimefactory-function)
+    now accepts `oldestSupportedClient`.
+    `minVersionForCollaboration` remains available as a deprecated overload.
+  - `@fluidframework/driver-definitions` now exports its minor-only version type as
+    [`OldestSupportedServiceClientVersion`](https://fluidframework.com/docs/api/driver-definitions/oldestsupportedserviceclientversion-typealias),
+    and
+    [`ServiceOptions.oldestSupportedClient`](https://fluidframework.com/docs/api/driver-definitions/serviceoptions-interface#oldestsupportedclient-propertysignature)
+    is available.
+  - [`AzureClient`](https://fluidframework.com/docs/api/azure-client/azureclient-class),
+    [`OdspClient`](https://fluidframework.com/docs/api/odsp-client/odspclient-class),
+    and
+    [`TinyliciousClient`](https://fluidframework.com/docs/api/tinylicious-client/tinyliciousclient-class)
+    methods now use `oldestSupportedClient` and
+    [`OldestSupportedClientVersion`](https://fluidframework.com/docs/api/runtime-definitions/oldestsupportedclientversion-typealias)
+    in their signatures.
+
+  The previous property and type names in `@fluidframework/runtime-definitions`,
+  `@fluidframework/container-runtime`, `@fluidframework/aqueduct`, and
+  `@fluidframework/fluid-static` are deprecated and will be removed in future
+  releases. Where both old and new property names remain available, specifying both
+  is an error. The alpha `MinimumVersionForCollaboration` type and
+  `ServiceOptions.minVersionForCollaboration` property are replaced directly rather
+  than retained as aliases.
+
+  ```typescript
+  // Before
+  const runtime = await loadContainerRuntime({
+    context,
+    registryEntries,
+    provideEntryPoint,
+    minVersionForCollab: "2.40.0",
+  });
+
+  // After
+  const runtime = await loadContainerRuntime({
+    context,
+    registryEntries,
+    provideEntryPoint,
+    oldestSupportedClient: "2.40.0",
+  });
+  ```
+
+  Telemetry property names are unchanged.
+
+## 2.115.0
+
+### Minor Changes
+
+- Promote FormattedText APIs to alpha ([#27843](https://github.com/microsoft/FluidFramework/pull/27843)) [71895da92a](https://github.com/microsoft/FluidFramework/commit/71895da92ad598a366694ae6cd2cd8c296533804)
+
+  The [`FormattedText`](https://fluidframework.com/docs/api/fluid-framework/formattedtext-namespace) namespace is now available from the `fluid-framework/alpha` entrypoint.
+  It provides a generic, collaborative rich-text domain built on SharedTree, parameterized by the formatting you want to associate with each unit of text and by any extra "atom" (embedded object) types you want to allow alongside plain characters.
+
+  Use `FormattedText.createSchema` to generate a text schema for your chosen formatting, then treat the resulting node like a formatted string.
+
+  ```typescript
+  import { SchemaFactory } from "fluid-framework";
+  import { SchemaFactoryBeta } from "fluid-framework/beta";
+  import { FormattedText } from "fluid-framework/alpha";
+
+  // Note that a beta schema factory is currently required for use with `FormattedText`
+  const schemaFactory = new SchemaFactoryBeta("com.example.doc");
+
+  // Describe the formatting associated with each character.
+  class CharacterFormat extends schemaFactory.object("CharacterFormat", {
+    bold: SchemaFactory.boolean,
+    italic: SchemaFactory.boolean,
+  }) {}
+
+  // Generate the formatted-text schema. The last argument is the format applied
+  // to text inserted through the non-formatted APIs (for example `fromString`).
+  class RichText extends FormattedText.createSchema(
+    schemaFactory,
+    CharacterFormat,
+    [], // No extra embedded atom types.
+    { bold: false, italic: false },
+  ) {}
+  ```
+
+  Once you have a schema, you can construct and edit formatted text:
+
+  ```typescript
+  // Create some text using the default format.
+  const text = RichText.fromString("hello world");
+
+  // Append more text with an explicit format.
+  text.insertAt(text.characterCount(), "!", { bold: true, italic: false });
+
+  // Bold everything from index 0 up to (but not including) index 5.
+  text.formatRange(0, 5, { bold: true });
+
+  // Read back the content with its associated formatting.
+  for (const atom of text.charactersWithFormatting()) {
+    console.log(atom.content, atom.format.bold, atom.format.italic);
+  }
+  ```
+
+  `FormattedText` is currently surfaced as an alpha API and is subject to change.
+
+- Array node deltas now cover the complete array ([#27809](https://github.com/microsoft/FluidFramework/pull/27809)) [6af2aba044](https://github.com/microsoft/FluidFramework/commit/6af2aba044e050b20386ae9e67111693117da5bd)
+
+  `ArrayNodeDeltaOp` and `ArrayNodeTreeChangedDeltaOp` sequences now include a final retain operation for an unchanged trailing portion of the array. Consumers can process the operations as a complete delta without separately retaining an omitted suffix.
+
+  Text deltas inherit the same complete-coverage behavior.
+
+  This should not break any existing users as this behavior was allowed under the old specification, but may allow some users to simplify their processing of the delta.
+
+- Settled change notification ([#27814](https://github.com/microsoft/FluidFramework/pull/27814)) [73360b3d70](https://github.com/microsoft/FluidFramework/commit/73360b3d7036a5ce8be1f88a1ada3cfbe680541b)
+
+  `LocalChangeMetadata` now exposes an `events: Listenable<LocalCommitEvents>` property that fires a `"settled"` event once a commit has been ordered by the sequencing service.
+
+  Once a commit is sequenced, the following guarantees hold:
+  1. The changes carried by the commit have been persisted and other peers are able to see them.
+  2. There can be no more concurrent changes sequenced before this commit, which means this commit has reached its settled form.
+
+  The `"settled"` event provides details about the outcome of applying this settled form.
+  This can be used by an application to determine whether any constraints associated with the commits were violated.
+
+  This event can be used by applications to inform the end user that their changes have been saved (`CommitOutcome.FullyApplied`) or rejected (`CommitOutcome.FullyDropped` and `CommitOutcome.NewContentOnly`).
+  It can also be used to queue up a new attempt at making the rejected changes. Note however that new edits must be made outside of the event callback.
+
+  Example:
+
+  ```typescript
+  // Use `asAlpha` API to access the settled event API
+  const view = asAlpha(tree.viewWith(config));
+
+  // Function to clear all contents of the tree, with a precondition that no changes have occurred.
+  const clearAllContents = () => {
+    view.runTransaction(
+      () => {
+        // Remove all contents at the root
+        view.root.removeRange();
+      },
+      { preconditions: [{ type: "noChange" }] },
+    );
+  };
+
+  // Register the logic for notifying the user of the outcome and allow them to retry
+  view.events.on("changed", (metadata) => {
+    if (metadata.isLocal) {
+      metadata.events.on("settled", (outcome) => {
+        if (outcome === CommitOutcome.FullyApplied) {
+          alert("Clear operation succeeded.");
+        } else {
+          const shouldTryAgain = confirm(
+            "The contents have changed. Do you still want to clear everything?",
+          );
+          if (shouldTryAgain) {
+            // It is invalid to make edits during the event callback, so we schedule the retry to occur asynchronously.
+            setTimeout(clearAllContents);
+          } else {
+            alert("Clear operation aborted.");
+          }
+        }
+      });
+    }
+  });
+
+  // First attempt to clear all contents.
+  // This will synchronously trigger the changed "event" and register the listener for the settled event.
+  clearAllContents();
+  ```
+
+- SharedTree now emits telemetry when it heals an unresolvable identifier on decode ([#27756](https://github.com/microsoft/FluidFramework/pull/27756)) [e5ada10ff4](https://github.com/microsoft/FluidFramework/commit/e5ada10ff41a959abe599bb407300e42e1008be3)
+
+  When [`SharedTreeOptionsBeta.healUnresolvableIdentifiersOnDecode`](https://fluidframework.com/docs/api/tree/sharedtreeoptionsbeta-interface#healunresolvableidentifiersondecode-propertysignature) is enabled and an unresolvable identifier is healed while loading a summary, SharedTree now records a `HealUnresolvableIdentifierOnDecode` telemetry event (at `LogLevel.essential`). This lets applications relying on the healing workaround detect which documents actually required healing.
+
+  This only affects applications that have opted into `healUnresolvableIdentifiersOnDecode`; the telemetry is emitted through the same logger the DDS already uses, and no behavior other than the added telemetry has changed.
+
+- Array insertion anchors now track their index from change deltas ([#27697](https://github.com/microsoft/FluidFramework/pull/27697)) [99d71d7054](https://github.com/microsoft/FluidFramework/commit/99d71d7054dd3ae5b2451c902bb7f7daf925c9f3)
+
+  The `@alpha` [`ArrayPlaceAnchor`](https://fluidframework.com/docs/api/tree/arrayplaceanchor-interface) returned by [`createArrayInsertionAnchor`](https://fluidframework.com/docs/api/tree/#createarrayinsertionanchor-function) now maintains its `index` incrementally from the array node's change delta instead of re-deriving it from the child that happened to sit at the anchor point when it was created. Inserts and removes before the anchor shift it, while edits after it leave it in place.
+
+  As a result, removing the child originally at the anchor's index no longer sends the anchor to the end of the array: it now stays in the gap between the surviving neighbors, which is the behavior an insertion point (such as a text cursor) needs.
+
+  Because the anchor now holds a subscription to the array node to receive those deltas, `ArrayPlaceAnchor` gained a `dispose()` method. Call it when the anchor is no longer needed to release the subscription. Interacting with an anchor after it has been disposed is invalid and will throw.
+
+  ```typescript
+  const anchor = createArrayInsertionAnchor(array, 1);
+  // ... use anchor.index as content is inserted and removed around it ...
+  anchor.dispose(); // release the subscription when done
+  ```
+
+- Rename the TextAsTree domain to PlainText ([#27853](https://github.com/microsoft/FluidFramework/pull/27853)) [cd26d781f4](https://github.com/microsoft/FluidFramework/commit/cd26d781f436da469abb79c9d63e40d3c3b8c5dc)
+
+  The experimental (`@alpha`) text domain namespace exported from `@fluidframework/tree` has been renamed: `TextAsTree` is now `PlainText`.
+  This is a breaking rename.
+
+  Consumers should update their imports and usages accordingly. For example:
+
+  ```typescript
+  // Before
+  import { TextAsTree } from "@fluidframework/tree/alpha";
+  const node = TextAsTree.Tree.fromString("hello");
+
+  // After
+  import { PlainText } from "@fluidframework/tree/alpha";
+  const node = PlainText.Tree.fromString("hello");
+  ```
+
+  The persisted schema identifiers for this domain are unchanged, so existing documents remain compatible.
+
+- Add getOrInsert and getOrInsertComputed methods to TreeMapNodeAlpha ([#27787](https://github.com/microsoft/FluidFramework/pull/27787)) [e84cb5f754](https://github.com/microsoft/FluidFramework/commit/e84cb5f754d4e916b02896c128c11b6526c8cef3)
+
+  [`TreeMapNodeAlpha`](https://fluidframework.com/docs/api/fluid-framework/treemapnodealpha-interface) now has `getOrInsert` and `getOrInsertComputed` methods, further aligning it with JavaScript's built-in Map API.
+  Both return the value at a key, first inserting a value if the map has no entry for that key: `getOrInsert` takes the fallback value directly, while `getOrInsertComputed` takes a callback which is only invoked (with the key) when an insert is needed, which is preferable when producing the fallback value is expensive.
+
+  When the fallback value is inserted and is not already a [`TreeNode`](https://fluidframework.com/docs/api/fluid-framework/treenode-class), the inserted and returned value is the result of implicitly constructing a node from it.
+
+  These methods are available on `TreeMapNodeAlpha`, which can be obtained from an existing `TreeMapNode` via `asAlpha`, or by declaring the schema with `SchemaFactoryAlpha`'s `mapAlpha`.
+
+  ```typescript
+  const schemaFactory = new SchemaFactoryAlpha("example");
+  class Inventory extends schemaFactory.mapAlpha(
+    "Inventory",
+    schemaFactory.number,
+  ) {}
+
+  const inventory = new Inventory(
+    new Map([
+      ["apples", 5],
+      ["pears", 3],
+    ]),
+  );
+
+  inventory.getOrInsert("apples", 10); // 5 (existing value returned, not overwritten)
+  inventory.getOrInsert("oranges", 10); // 10 (inserted and returned)
+
+  inventory.getOrInsertComputed("pears", () => computeRestockAmount()); // 3 (existing value returned, callback not invoked)
+  inventory.getOrInsertComputed("plums", () => computeRestockAmount()); // inserts and returns the computed value
+
+  inventory.size; // 4
+  ```
+
 ## 2.114.0
 
 ### Minor Changes

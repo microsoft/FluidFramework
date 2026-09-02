@@ -761,7 +761,6 @@ function independentInitializedViewInternal<const TSchema extends ImplicitFieldS
 	const checkout = createTreeCheckout(idCompressor, mintRevisionTag, revisionTagCodec, {
 		forest,
 		schema: schemaRepository,
-		breaker,
 	});
 
 	initialize(

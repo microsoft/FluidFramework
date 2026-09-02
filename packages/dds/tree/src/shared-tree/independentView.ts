@@ -9,10 +9,7 @@ import {
 	type IIdCompressor,
 	createIdCompressor,
 } from "@fluidframework/id-compressor/internal";
-import {
-	createChildLogger,
-	extractTelemetryLoggerExt,
-} from "@fluidframework/telemetry-utils/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import type { CodecWriteOptions, ICodecOptions } from "../codec/index.js";
 import {
@@ -224,12 +221,10 @@ export function createIndependentTreeBeta<const TSchema extends ImplicitFieldSch
 export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSchema>(
 	options?: CreateIndependentTreeAlphaOptions,
 ): ViewableTree & Pick<ITreeAlpha, "exportVerbose" | "exportSimpleSchema"> {
-	const logger = extractTelemetryLoggerExt(
-		createChildLogger({
-			logger: options?.logger,
-			namespace: "independentView",
-		}),
-	);
+	const logger = createChildLogger({
+		logger: options?.logger,
+		namespace: "independentView",
+	});
 	const breaker = new Breakable("independentView", logger);
 	const idCompressor: IIdCompressor =
 		options?.idCompressor ?? options?.content?.idCompressor ?? createIdCompressor();
@@ -250,8 +245,6 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 	const checkout = createTreeCheckout(idCompressor, mintRevisionTag, revisionTagCodec, {
 		forest,
 		schema: schemaRepository,
-		breaker,
-		logger,
 		codecOptions: options,
 	});
 

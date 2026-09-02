@@ -23,6 +23,7 @@ import {
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import {
+	defaultTestOldestSupportedClient,
 	createAndAttachContainerUsingProps,
 	ITestFluidObject,
 	LoaderContainerTracker,
@@ -136,6 +137,7 @@ describe("Document Dirty", () => {
 
 			const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 				defaultFactory,
+				oldestSupportedClient: defaultTestOldestSupportedClient,
 				registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
 			});
 
@@ -529,6 +531,7 @@ describe("Document Dirty", () => {
 
 			const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 				defaultFactory,
+				oldestSupportedClient: defaultTestOldestSupportedClient,
 				registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
 			});
 

@@ -5,7 +5,7 @@
 
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listenable } from "@fluidframework/core-interfaces";
-import { assert, oob, fail } from "@fluidframework/core-utils/internal";
+import { assert, oob, fail, debugAssert } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import {
@@ -29,6 +29,7 @@ import {
 	aboveRootPlaceholder,
 	combineVisitors,
 	detachedFieldAsKey,
+	makeBreakingVisitor,
 	mapCursorField,
 	rootFieldKey,
 	type ChunkedCursor,
@@ -36,11 +37,13 @@ import {
 	type DeltaDetachedNodeId,
 } from "../../core/index.js";
 import {
+	assertNonNegativeSafeInteger,
 	brand,
 	getLast,
 	getOrAddEmptyToMap,
 	hasSome,
-	type Breakable,
+	Breakable,
+	type WithBreakable,
 } from "../../util/index.js";
 
 import { BasicChunk, BasicChunkCursor, type SiblingsOrKey } from "./basicChunk.js";
@@ -57,8 +60,112 @@ function makeRoot(): BasicChunk {
 	return new BasicChunk(aboveRootPlaceholder, new Map());
 }
 
+/** Returns the number of top-level nodes represented by a field's chunks. */
+function getFieldLength(field: readonly TreeChunk[]): number {
+	return field.reduce((length, chunk) => length + chunk.topLevelLength, 0);
+}
+
+/**
+ * Locates a top-level node within a field's chunk representation.
+ * @param chunks - The chunks representing the field.
+ * @param index - The node index within the field.
+ * @returns The containing chunk, its array index, and the node's offset within it.
+ */
+export function locateNodeInChunks(
+	chunks: readonly TreeChunk[],
+	index: number,
+): { chunk: TreeChunk; indexOfChunk: number; indexWithinChunk: number } {
+	assertNonNegativeSafeInteger(index);
+	// Remaining node offset while scanning chunks; afterward, the offset within the matched chunk.
+	let indexWithinChunk = index;
+	// Array index of the chunk currently being examined.
+	let indexOfChunk = 0;
+	while (true) {
+		const chunk = chunks[indexOfChunk] ?? oob();
+		if (indexWithinChunk < chunk.topLevelLength) {
+			return { chunk, indexOfChunk, indexWithinChunk };
+		}
+		indexWithinChunk -= chunk.topLevelLength;
+		indexOfChunk++;
+		if (indexOfChunk === chunks.length) {
+			fail(0xaf7 /* missing edited node */);
+		}
+	}
+}
+
+/**
+ * Ensures the node at index `index` within the field represented by `chunks` is contained in a non-shared {@link BasicChunk}.
+ *
+ * @param chunks - The chunks representing the field which will be modified to ensure the node at
+ * `index` is in a non-shared {@link BasicChunk}.
+ * @param index - The node index within the field.
+ * @returns The exclusively owned {@link BasicChunk} containing the node at `index`. This chunk is part of and owned by `chunks`.
+ * @remarks
+ * This function may modify the `chunks` array to ensure the node at `index` is in a non-shared {@link BasicChunk}.
+ * This can include splitting chunks, and cloning.
+ */
+export function ensureExclusiveBasicChunk(
+	chunks: TreeChunk[],
+	index: number,
+	compressor: ChunkCompressor,
+): BasicChunk {
+	const { chunk, indexOfChunk, indexWithinChunk } = locateNodeInChunks(chunks, index);
+
+	// Normalize to a BasicChunk, splitting the chunk if needed.
+	let finalIndexOfChunk: number;
+	let basicChunk: BasicChunk;
+	if (chunk instanceof BasicChunk) {
+		basicChunk = chunk;
+		finalIndexOfChunk = indexOfChunk;
+	} else {
+		// TODO:Perf: support in place editing of other chunk formats when possible:
+		// 1. Support updating values in uniform chunks.
+		// 2. Support traversing sequence chunks.
+		//
+		// Maybe build path when visitor navigates then lazily sync to chunk tree when editing?
+		const newChunks = mapCursorField(chunk.cursor(), (cursor) =>
+			basicChunkTree(cursor, compressor),
+		);
+		// TODO: this could fail for really long chunks being split (due to argument count limits).
+		// Current implementations of chunks shouldn't ever be that long, but it could be an issue if they get bigger.
+		chunks.splice(indexOfChunk, 1, ...newChunks);
+		// We just overwrote the reference to the old chunk in the array, so drop the ref count for it.
+		chunk.referenceRemoved();
+
+		// Sanity check that the chunk indexing is as expected before updating it.
+		debugAssert(
+			() =>
+				newChunks[indexWithinChunk] === chunks[indexOfChunk + indexWithinChunk] ||
+				"bad chunk indexing",
+		);
+		basicChunk = newChunks[indexWithinChunk] ?? oob();
+		finalIndexOfChunk = indexOfChunk + indexWithinChunk;
+	}
+
+	debugAssert(() => chunks[finalIndexOfChunk] === basicChunk || "bad child index");
+
+	// Ensure the BasicChunk we have is exclusively owned, so we can edit it in place.
+	let exclusiveChunk: BasicChunk;
+	if (basicChunk.isShared()) {
+		exclusiveChunk = chunks[finalIndexOfChunk] = basicChunk.clone();
+		basicChunk.referenceRemoved();
+	} else {
+		exclusiveChunk = basicChunk;
+	}
+	return exclusiveChunk;
+}
+
+/**
+ * Layer in the stack of basic chunks from traversing down the tree.
+ */
 interface StackNode {
+	/**
+	 * The parent node.
+	 */
 	mutableChunk: BasicChunk;
+	/**
+	 * A key under {@link mutableChunk} into which this stack traverses.
+	 */
 	key: FieldKey;
 }
 
@@ -67,7 +174,7 @@ interface StackNode {
  *
  * This implementation focuses on performance.
  */
-export class ChunkedForest implements IEditableForest {
+export class ChunkedForest implements IEditableForest, WithBreakable {
 	private activeVisitor?: DeltaVisitor;
 
 	private readonly deltaVisitors: Set<() => AnnouncedVisitor> = new Set();
@@ -86,18 +193,29 @@ export class ChunkedForest implements IEditableForest {
 		public readonly chunker: IChunker,
 		public readonly anchors: AnchorSet = new AnchorSet(),
 		public readonly idCompressor?: IIdCompressor,
+		public readonly breaker: Breakable = new Breakable("ChunkedForest"),
 	) {}
 
 	public get isEmpty(): boolean {
+		this.breaker.use();
 		return this.roots.fields.size === 0;
 	}
 
-	public clone(schema: TreeStoredSchemaSubscription, _breaker?: Breakable): ChunkedForest {
+	public clone(schema: TreeStoredSchemaSubscription, breaker?: Breakable): ChunkedForest {
+		this.breaker.use();
 		this.roots.referenceAdded();
-		return new ChunkedForest(this.roots, schema, this.chunker.clone(schema));
+		return new ChunkedForest(
+			this.roots,
+			schema,
+			this.chunker.clone(schema),
+			undefined,
+			this.idCompressor,
+			breaker ?? this.breaker,
+		);
 	}
 
 	public chunkField(cursor: ITreeCursorSynchronous): TreeChunk[] {
+		this.breaker.use();
 		return chunkField(cursor, { idCompressor: this.idCompressor, policy: this.chunker });
 	}
 
@@ -114,6 +232,7 @@ export class ChunkedForest implements IEditableForest {
 	}
 
 	public acquireVisitor(): DeltaVisitor {
+		this.breaker.use();
 		assert(
 			this.activeVisitor === undefined,
 			0x76a /* Must release existing visitor before acquiring another */,
@@ -123,11 +242,24 @@ export class ChunkedForest implements IEditableForest {
 			this.roots = this.roots.clone();
 		}
 
+		// The `CombinableVisitor` which can apply deltas to this forest.
+		// Annoyingly declaring the type here or in a satisfies clause causes this code not to build,
+		// so the type is inferred.
+		//
+		// This visitor works by shallow copying (where needed) the forest as it's walked down
+		// to ensure the location being traversed (and thus possibly edited) is an exclusively owned BasicChunk.
+		// Future optimizations may improve this, but currently that is a requirement for the editing code to work.
 		const forestVisitor = {
 			forest: this,
-			// Current location in the tree, as a non-shared BasicChunk (TODO: support in-place modification of other chunk formats when possible).
-			// Start above root detached sequences.
+			/**
+			 * Current location in the tree, as a non-shared BasicChunk (TODO: support in-place modification of other chunk formats when possible).
+			 * Starts above root detached sequences.
+			 */
 			mutableChunkStack: [] as StackNode[],
+			/**
+			 * When at a node level, this is set to the basic chunk for the current node.
+			 * When at a field level, undefined, see mutableChunkStack for the field.
+			 */
 			mutableChunk: this.roots as BasicChunk | undefined,
 			getParent(): StackNode {
 				assert(hasSome(this.mutableChunkStack), 0x532 /* invalid access to root's parent */);
@@ -144,10 +276,23 @@ export class ChunkedForest implements IEditableForest {
 			},
 			destroy(detachedField: FieldKey, count: number): void {
 				this.forest.#events.emit("beforeChange");
+				const field = this.forest.roots.fields.get(detachedField);
+				assert(field !== undefined, 0xd1d /* Destroyed field must exist */);
+				assert(
+					getFieldLength(field) === count,
+					0xd1e /* Destroy count must match field length */,
+				);
 				this.forest.roots.fields.delete(detachedField);
+				for (const chunk of field) {
+					chunk.referenceRemoved();
+				}
 			},
 			create(content: readonly ITreeCursorSynchronous[], destination: FieldKey): void {
 				this.forest.#events.emit("beforeChange");
+				assert(
+					!this.forest.roots.fields.has(destination),
+					0xd1f /* Create destination must be a new empty field */,
+				);
 				const chunks: TreeChunk[] = content.map((c) =>
 					chunkTree(c, {
 						policy: this.forest.chunker,
@@ -171,18 +316,27 @@ export class ChunkedForest implements IEditableForest {
 			 */
 			attachEdit(source: FieldKey, count: number, destination: PlaceIndex): void {
 				this.forest.#events.emit("beforeChange");
-				const sourceField = this.forest.roots.fields.get(source) ?? [];
-				this.forest.roots.fields.delete(source);
-				if (sourceField.length === 0) {
-					return; // Prevent creating 0 sized fields when inserting empty into empty.
-				}
-
 				const parent = this.getParent();
+				assert(
+					parent.mutableChunk !== this.forest.roots || parent.key !== source,
+					0xd20 /* Attach source field must be different from current field */,
+				);
+				const sourceField = this.forest.roots.fields.get(source);
+				assert(sourceField !== undefined, 0xd21 /* Attach source field must exist */);
+				assert(
+					getFieldLength(sourceField) === count,
+					0xd22 /* Attach must consume all nodes in source field */,
+				);
 				const destinationField = getOrAddEmptyToMap(parent.mutableChunk.fields, parent.key);
+				assert(
+					destination <= getFieldLength(destinationField),
+					0xd23 /* Attach destination must not exceed field length */,
+				);
 				const destinationChunkIndex = splitFieldAtIndex(destinationField, destination, {
 					policy: this.forest.chunker,
 					idCompressor: this.forest.idCompressor,
 				});
+				this.forest.roots.fields.delete(source);
 				// TODO: this will fail for very large moves due to argument limits.
 				destinationField.splice(destinationChunkIndex, 0, ...sourceField);
 			},
@@ -203,7 +357,21 @@ export class ChunkedForest implements IEditableForest {
 				this.forest.#events.emit("beforeChange");
 				const parent = this.getParent();
 				const sourceField = parent.mutableChunk.fields.get(parent.key) ?? [];
-				assert(source.start <= source.end, 0xcf8 /* detach range start must not exceed end */);
+				assert(source.start <= source.end, 0xd24 /* Detach range start must not exceed end */);
+				assert(
+					source.end <= getFieldLength(sourceField),
+					0xd25 /* Detach range must not exceed field length */,
+				);
+				if (destination !== undefined) {
+					assert(
+						parent.mutableChunk !== this.forest.roots || parent.key !== destination,
+						0xd26 /* Detach destination field must be different from current field */,
+					);
+					assert(
+						!this.forest.roots.fields.has(destination),
+						0xd27 /* Detach destination must be a new empty field */,
+					);
+				}
 
 				const policy: ChunkCompressor = {
 					policy: this.forest.chunker,
@@ -222,10 +390,6 @@ export class ChunkedForest implements IEditableForest {
 						child.referenceRemoved();
 					}
 				} else {
-					assert(
-						!this.forest.roots.fields.has(destination),
-						0x7af /* Destination must be a new empty detached field */,
-					);
 					if (newField.length > 0) {
 						this.forest.roots.fields.set(destination, newField);
 					}
@@ -236,49 +400,24 @@ export class ChunkedForest implements IEditableForest {
 					parent.mutableChunk.fields.delete(parent.key);
 				}
 			},
+			/**
+			 * Ensure the selected node (by `index`) is an exclusively owned basic node,
+			 * and store it under `this.mutableChunk`.
+			 */
 			enterNode(index: number): void {
 				assert(this.mutableChunk === undefined, 0x535 /* should be in field */);
+
+				// Get the mutable parent, which we might have to modify to ensure the desired child is an exclusively owned (and thus mutable) BasicChunk.
 				const parent = this.getParent();
+
+				// Lookup the current location of the node to be entered
 				const chunks =
 					parent.mutableChunk.fields.get(parent.key) ?? fail(0xaf6 /* missing edited field */);
-				let indexWithinChunk = index;
-				let indexOfChunk = 0;
-				let chunk = chunks[indexOfChunk] ?? oob();
-				while (indexWithinChunk >= chunk.topLevelLength) {
-					indexWithinChunk -= chunk.topLevelLength;
-					indexOfChunk++;
-					if (indexOfChunk === chunks.length) {
-						fail(0xaf7 /* missing edited node */);
-					}
-					chunk = chunks[indexOfChunk] ?? oob();
-				}
-				let found = chunks[indexOfChunk] ?? oob();
-				if (!(found instanceof BasicChunk)) {
-					// TODO:Perf: support in place editing of other chunk formats when possible:
-					// 1. Support updating values in uniform chunks.
-					// 2. Support traversing sequence chunks.
-					//
-					// Maybe build path when visitor navigates then lazily sync to chunk tree when editing?
-					const newChunks = mapCursorField(found.cursor(), (cursor) =>
-						basicChunkTree(cursor, {
-							policy: this.forest.chunker,
-							idCompressor: this.forest.idCompressor,
-						}),
-					);
-					// TODO: this could fail for really long chunks being split (due to argument count limits).
-					// Current implementations of chunks shouldn't ever be that long, but it could be an issue if they get bigger.
-					chunks.splice(indexOfChunk, 1, ...newChunks);
-					found.referenceRemoved();
 
-					found = newChunks[indexWithinChunk] ?? oob();
-				}
-				assert(found instanceof BasicChunk, 0x536 /* chunk should have been normalized */);
-				if (found.isShared()) {
-					this.mutableChunk = chunks[indexOfChunk] = found.clone();
-					found.referenceRemoved();
-				} else {
-					this.mutableChunk = found;
-				}
+				this.mutableChunk = ensureExclusiveBasicChunk(chunks, index, {
+					policy: this.forest.chunker,
+					idCompressor: this.forest.idCompressor,
+				});
 			},
 			exitNode(index: number): void {
 				assert(this.mutableChunk !== undefined, 0x537 /* should be in node */);
@@ -300,9 +439,12 @@ export class ChunkedForest implements IEditableForest {
 		for (const getVisitor of this.deltaVisitors) {
 			announcedVisitors.push(getVisitor());
 		}
-		const combinedVisitor = combineVisitors([forestVisitor, ...announcedVisitors]);
-		this.activeVisitor = combinedVisitor;
-		return combinedVisitor;
+		const visitor = combineVisitors([
+			makeBreakingVisitor(forestVisitor, this.breaker),
+			...announcedVisitors,
+		]);
+		this.activeVisitor = visitor;
+		return visitor;
 	}
 
 	private nextDetachedFieldIdentifier = 0;
@@ -317,6 +459,7 @@ export class ChunkedForest implements IEditableForest {
 	}
 
 	public allocateCursor(): Cursor {
+		this.breaker.use();
 		return new Cursor(
 			this,
 			ITreeSubscriptionCursorState.Cleared,
@@ -337,6 +480,7 @@ export class ChunkedForest implements IEditableForest {
 		destination: Anchor,
 		cursorToMove: ITreeSubscriptionCursor,
 	): TreeNavigationResult {
+		this.breaker.use();
 		const path = this.anchors.locate(destination);
 		if (path === undefined) {
 			return TreeNavigationResult.NotFound;
@@ -349,6 +493,7 @@ export class ChunkedForest implements IEditableForest {
 		destination: FieldAnchor,
 		cursorToMove: ITreeSubscriptionCursor,
 	): TreeNavigationResult {
+		this.breaker.use();
 		assert(
 			cursorToMove instanceof Cursor,
 			0x53b /* ChunkedForest must only be given its own Cursor type */,
@@ -367,6 +512,7 @@ export class ChunkedForest implements IEditableForest {
 	}
 
 	public moveCursorToPath(destination: UpPath, cursorToMove: ITreeSubscriptionCursor): void {
+		this.breaker.use();
 		assert(
 			cursorToMove instanceof Cursor,
 			0x53c /* ChunkedForest must only be given its own Cursor type */,
@@ -402,6 +548,7 @@ export class ChunkedForest implements IEditableForest {
 	}
 
 	public getCursorAboveDetachedFields(): ITreeCursorSynchronous {
+		this.breaker.use();
 		const rootCursor = this.roots.cursor();
 		rootCursor.enterNode(0);
 		return rootCursor;
@@ -497,6 +644,14 @@ export function buildChunkedForest(
 	chunker: IChunker,
 	anchors?: AnchorSet,
 	idCompressor?: IIdCompressor,
+	breaker?: Breakable,
 ): ChunkedForest {
-	return new ChunkedForest(makeRoot(), chunker.schema, chunker, anchors, idCompressor);
+	return new ChunkedForest(
+		makeRoot(),
+		chunker.schema,
+		chunker,
+		anchors,
+		idCompressor,
+		breaker,
+	);
 }

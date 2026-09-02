@@ -22,7 +22,6 @@ export { createDOProviderContainerRuntimeFactory } from "./rootDataObject.js";
 export { createServiceAudience } from "./serviceAudience.js";
 export { createTreeContainerRuntimeFactory } from "./treeRootDataObject.js";
 export type {
-	CompatibilityMode,
 	ContainerSchema,
 	ContainerAttachProps,
 	IConnection,
@@ -33,7 +32,4 @@ export type {
 	Myself,
 	TreeContainerSchema,
 } from "./types.js";
-export {
-	isTreeContainerSchema,
-	resolveCompatibilityModeToMinVersionForCollab,
-} from "./utils.js";
+export { isTreeContainerSchema } from "./utils.js";

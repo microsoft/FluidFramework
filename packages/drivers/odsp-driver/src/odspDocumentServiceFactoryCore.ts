@@ -41,7 +41,10 @@ import {
 	NonPersistentCache,
 } from "./odspCache.js";
 import { OdspDocumentService } from "./odspDocumentService.js";
-import { odspDriverCompatDetailsForLoader } from "./odspLayerCompatState.js";
+import {
+	odspDriverCompatDetailsForLoader,
+	odspDriverCompatRequirementsForLoader,
+} from "./odspLayerCompatState.js";
 import {
 	type IExistingFileInfo,
 	type INewFileInfo,
@@ -54,11 +57,82 @@ import {
 } from "./odspUtils.js";
 
 /**
+ * An ODSP document service factory that supports point-in-time (sequence-number-based) loading.
+ *
+ * @remarks
+ * The loader detects this capability structurally, so hosts can pass this factory directly to
+ * {@link @fluidframework/container-loader#loadContainerToSequenceNumber}.
+ *
+ * @legacy @beta
+ */
+export interface IPointInTimeDocumentServiceFactory extends IDocumentServiceFactory {
+	/**
+	 * Creates a document service that materializes the document at the requested sequence number.
+	 *
+	 * @param resolvedUrl - The resolved ODSP {@link @fluidframework/driver-definitions#IResolvedUrl}.
+	 * @param targetSequenceNumber - The sequence number at which to materialize the document. See
+	 * {@link @fluidframework/container-loader#ILoadContainerToSequenceNumberProps.loadToSequenceNumber}.
+	 * @param logger - Optional {@link @fluidframework/core-interfaces#ITelemetryBaseLogger}.
+	 * @param clientIsSummarizer - Whether to apply summarizer policies and telemetry to the
+	 * underlying document services. Defaults to `false`.
+	 * @returns A read-only {@link @fluidframework/driver-definitions#IDocumentService} materialized
+	 * at the requested sequence number.
+	 */
+	createPointInTimeDocumentService(
+		resolvedUrl: IResolvedUrl,
+		targetSequenceNumber: number,
+		logger?: ITelemetryBaseLogger,
+		clientIsSummarizer?: boolean,
+	): Promise<IDocumentService>;
+}
+
+/**
+ * Inputs supplied by the ODSP document service factory to an injected point-in-time implementation.
+ *
+ * @legacy @beta
+ */
+export interface IOdspPointInTimeDocumentServiceImplementationProps {
+	/** The resolved ODSP URL for the document to materialize. */
+	readonly resolvedUrl: IResolvedUrl;
+	/** The sequence number at which to materialize the document. */
+	readonly targetSequenceNumber: number;
+	/** Optional telemetry logger for the point-in-time load. */
+	readonly logger?: ITelemetryBaseLogger;
+	/** Whether to apply summarizer policies and telemetry. Defaults to `false`. */
+	readonly clientIsSummarizer?: boolean;
+	/** The persisted ODSP cache supplied to the document service factory. */
+	readonly persistedCache: IPersistedCache;
+	/** Fetches storage access tokens for ODSP requests. */
+	readonly getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>;
+	/**
+	 * Creates an ODSP document service for a resolved URL.
+	 *
+	 * @param resolvedUrl - The resolved URL for the document or file version to load.
+	 * @param logger - The telemetry logger for the document service.
+	 * @param cacheAndTracker - The cache and epoch tracker shared by the point-in-time load.
+	 * @param clientIsSummarizer - Whether to apply summarizer policies and telemetry.
+	 * @returns The document service for the resolved URL.
+	 */
+	readonly createDocumentService: (
+		resolvedUrl: IResolvedUrl,
+		logger: ITelemetryBaseLogger,
+		cacheAndTracker: ICacheAndTracker,
+		clientIsSummarizer?: boolean,
+	) => Promise<IDocumentService>;
+}
+
+/**
+ * Consumer-provided implementation of ODSP point-in-time loading.
+ *
+ * @legacy @beta
+ */
+export type OdspPointInTimeDocumentServiceImplementation = (
+	props: IOdspPointInTimeDocumentServiceImplementationProps,
+) => Promise<IDocumentService>;
+
+/**
  * Factory for creating the sharepoint document service. Use this if you want to
  * use the sharepoint implementation.
- *
- * This constructor should be used by environments that support dynamic imports and that wish
- * to leverage code splitting as a means to keep bundles as small as possible.
  * @legacy
  * @beta
  */
@@ -256,6 +330,17 @@ export class OdspDocumentServiceFactoryCore
 	 */
 	public readonly ILayerCompatDetails?: unknown = odspDriverCompatDetailsForLoader;
 
+	/**
+	 * The requirements that the Loader layer must meet to be compatible with this ODSP Driver. This is exposed to
+	 * the Loader layer so that it can validate Loader / Driver compatibility on this Driver's behalf (the Driver has
+	 * no reference to the Loader to validate it directly).
+	 * @remarks This is for internal use only.
+	 * The type of this should be ILayerCompatSupportRequirements. However, ILayerCompatSupportRequirements is
+	 * internal and this class is currently marked as legacy alpha. So, using unknown here.
+	 */
+	public readonly ILayerCompatSupportRequirements?: unknown =
+		odspDriverCompatRequirementsForLoader;
+
 	public async createDocumentService(
 		resolvedUrl: IResolvedUrl,
 		logger?: ITelemetryBaseLogger,
@@ -268,6 +353,22 @@ export class OdspDocumentServiceFactoryCore
 			clientIsSummarizer,
 		);
 	}
+
+	/**
+	 * Creates a document service that reads its snapshot from the closest file version at or before
+	 * the target and its deltas from the live document, materializing a requested sequence number
+	 * through replay.
+	 *
+	 * @param resolvedUrl - The resolved ODSP {@link @fluidframework/driver-definitions#IResolvedUrl}.
+	 * @param targetSequenceNumber - The sequence number at which to materialize the document. See
+	 * {@link @fluidframework/container-loader#ILoadContainerToSequenceNumberProps.loadToSequenceNumber}.
+	 * @param logger - Optional {@link @fluidframework/core-interfaces#ITelemetryBaseLogger}.
+	 * @param clientIsSummarizer - Whether to apply summarizer policies and telemetry to the
+	 * underlying document services. Defaults to `false`.
+	 * @returns A read-only {@link @fluidframework/driver-definitions#IDocumentService} materialized
+	 * at the requested sequence number.
+	 */
+	public readonly createPointInTimeDocumentService?: IPointInTimeDocumentServiceFactory["createPointInTimeDocumentService"];
 
 	protected async createDocumentServiceCore(
 		resolvedUrl: IResolvedUrl,

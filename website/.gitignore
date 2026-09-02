@@ -10,6 +10,7 @@
 .docusaurus
 .cache-loader
 .doc-models
+.generated
 versions.json
 
 # Generated API docs.

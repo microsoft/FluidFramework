@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/text-editor",
-	"version": "2.115.0",
+	"version": "3.0.0",
 	"private": true,
 	"description": "Minimal sample of SharedTree/React text editor integration.",
 	"homepage": "https://fluidframework.com",
@@ -15,12 +15,12 @@
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:esm": "tsc --project ./tsconfig.json",
 		"build:test": "npm run build:test:esm",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
-		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
+		"clean": "rimraf --glob bundle dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --quiet --format stylish src",
 		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
@@ -32,6 +32,8 @@
 		"test": "npm run test:mocha",
 		"test:mocha": "npm run test:mocha:esm",
 		"test:mocha:esm": "mocha",
+		"test:playwright": "playwright test",
+		"test:playwright:verbose": "cross-env FLUID_TEST_VERBOSE=1 playwright test",
 		"tinylicious": "tinylicious",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
@@ -56,11 +58,14 @@
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/devtools": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
+		"@fluidframework/test-tools": "^2.0.0",
+		"@playwright/test": "^1.62.1",
 		"@testing-library/react": "^16.3.0",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "catalog:types",
 		"@types/react": "^18.3.11",
 		"@types/react-dom": "^18.3.1",
+		"cross-env": "^10.1.0",
 		"css-loader": "^7.1.2",
 		"eslint": "catalog:eslint",
 		"eslint-plugin-react": "~7.37.5",
@@ -75,7 +80,7 @@
 		"style-loader": "^4.0.0",
 		"tinylicious": "^7.0.1",
 		"ts-loader": "^9.5.1",
-		"typescript": "~5.4.5",
+		"typescript": "~6.0.3",
 		"webpack": "^5.94.0",
 		"webpack-cli": "^5.1.4",
 		"webpack-dev-server": "~5.2.6",
@@ -85,7 +90,7 @@
 		"browser": {
 			"umd": {
 				"files": [
-					"dist/main.bundle.js"
+					"bundle/main.bundle.js"
 				],
 				"library": "main"
 			}

@@ -1,5 +1,5 @@
 {
-	// Used by build.spec.ts to compile this package with multiple TS versions (5.4-5.9).
+	// Used by build.spec.ts to compile this package with multiple TS versions (5.7-7.0).
 	// Includes src/**/* (not just test/) because the test verifies that the package's
 	// exports type-check correctly across TS versions with skipLibCheck: false.
 	"include": ["src/**/*"],

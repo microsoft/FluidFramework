@@ -22,6 +22,12 @@ strictPeerDependencies: true
 # The registry.npmjs mirror does not preserve all the npm package metadata necessary for the
 # no-downgrade trust policy to function correctly, so it is disabled (matching the root workspace).
 trustPolicy: off
+
+overrides:
+  # Resolve known security vulnerabilities in transitive dependencies.
+  # js-yaml: CVE-2026-59869 (quadratic CPU DoS via merge-key chains).
+  js-yaml@>=3 <4: 3.15.0
+  js-yaml@>=4 <5: 4.3.0
 # Disable pnpm update notifications since we use corepack to install package managers.
 updateNotifier: false
 # pnpm 11 enabled this check by default, which runs a frozen-lockfile install before every

@@ -18,7 +18,7 @@ If an API change is made without the corresponding report change, then the CI bu
 
 ## Enabling the API report for a package
 
-1. Change the package's `api-extractor.json` to extend `@fluidframework/build-common/api-extractor-common-report.json`.
+1. Create or update the package's `api-extractor-report.json` so it transitively extends `common/build/build-common/api-extractor-report-base.esm.json`.
 2. Run a local build and commit the files generated in the `api-report` folder.
 3. Open a PR with the changes.
 4. Once merged, you're done!

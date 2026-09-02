@@ -81,10 +81,6 @@ parameters:
 - name: tagName
   type: string
 
-- name: isReleaseGroup
-  type: boolean
-  default: false
-
 - name: buildToolsVersionToInstall
   type: string
   default: repo
@@ -114,11 +110,6 @@ parameters:
 # Indicates if this run is going to publish npm packages (and run extra steps necessary in that case) or not
 - name: publish
   type: boolean
-
-# Indicates if publishing to the public npmjs.org registry is allowed.
-- name: allowPublishingToNpmjs
-  type: boolean
-  default: false
 
 # Indicates who owns the publish step for this build:
 #   true  - publishing happens as part of this build pipeline's own publish stages.
@@ -915,34 +906,12 @@ extends:
                   # Failed test runs still produce JUnit reports that should be published.
                   condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
 
-      # Publish stage
-      - ${{ if and(eq(parameters.publish, true), eq(parameters.publishAsPartOfBuild, true)) }}:
-        - template: /tools/pipelines/templates/include-publish-npm-package.yml@self
-          parameters:
-            tagName: ${{ parameters.tagName }}
-            isReleaseGroup: ${{ parameters.isReleaseGroup }}
-            allowPublishingToNpmjs: ${{ parameters.allowPublishingToNpmjs }}
-            buildDirectory: ${{ parameters.buildDirectory }}
-
       # Capture pipeline stage results
       - ${{ if eq(parameters.telemetry, true) }}:
         - template: /tools/pipelines/templates/upload-telemetry/include-stage-upload-telemetry.yml@self
           parameters:
             dependsOn:
               - build
-              - ${{ if and(eq(parameters.publish, true), eq(parameters.publishAsPartOfBuild, true)) }}:
-                # Note: the publish stages are created in include-publish-npm-package.yml. We need to match the ids exactly.
-                - publish_npm_internal_test
-                - publish_npm_internal_build
-                - publish_npm_public
-                # NOTE: This is brittle; since the publish_npm_internal_dev stage is added to the pipeline conditionally,
-                # we create a dependency on it based on the same condition.
-                # So this needs to be kept in sync with the logic that include-publish-npm-package.yml uses to create the stage.
-                # At some point it might be preferable to always create the stage, control its execution solely with
-                # 'condition:', and update this bit to always depend on publish_npm_internal_dev, since it will always exist.
-                - ${{ if eq(parameters.isReleaseGroup, true) }}:
-                  - publish_npm_internal_dev
-                - upload_manifests
             telemetryDescription: 'stage_timing'
             telemetry_upload_steps:
               - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-stage-timing.yml@self

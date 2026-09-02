@@ -9,8 +9,6 @@ Four workflows compose the PR fleet review system:
 | [`pr-review-dispatch.yml`](./pr-review-dispatch.yml) | Label-driven alternate entry point — stages PR context as an artifact |
 | [`pr-review-fleet.yml`](./pr-review-fleet.yml) | Runs the fleet of reviewer agents in parallel, consolidates results, posts the report |
 
-> `pr-changeset-review.yml` is unrelated — it's Vale linting on changeset files.
-
 ## 1. `pr-review-auto-route.yml` — Sizer + Proposal
 
 - **Trigger:** `pull_request_target` on `opened` / `reopened` / `synchronize` (base branches `main`, `next`, `release/**/*`).

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { Breakable } from "../../util/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 import type { Anchor, DeltaVisitor, DetachedField } from "../tree/index.js";
 
@@ -12,6 +13,7 @@ import type { IForestSubscription, ITreeSubscriptionCursor } from "./forest.js";
  * Editing APIs.
  */
 export interface IEditableForest extends IForestSubscription {
+	readonly breaker: Breakable;
 	/**
 	 * Provides a visitor that can be used to mutate the forest.
 	 *

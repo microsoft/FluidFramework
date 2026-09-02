@@ -11,7 +11,7 @@ import {
 	type ISummaryTree,
 	type SummaryObject,
 } from "@fluidframework/driver-definitions/internal";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/internal";
 import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { FluidClientVersion, FormatValidatorNoOp } from "../../codec/index.js";
@@ -36,7 +36,7 @@ import { brand } from "../../util/index.js";
 import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
 
 function createDetachedFieldIndexSummarizer(options?: {
-	minVersionForCollab?: MinimumVersionForCollab;
+	minVersionForCollab?: OldestSupportedClientVersion;
 }): {
 	summarizer: DetachedFieldIndexSummarizer;
 	index: DetachedFieldIndex;

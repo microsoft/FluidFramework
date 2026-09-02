@@ -27,7 +27,7 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
-import type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
+import type { OldestSupportedClientVersion } from "./compatibilityDefinitions.js";
 import type { ContainerExtensionProvider } from "./containerExtensionProvider.js";
 import type {
 	IFluidDataStoreFactory,
@@ -585,11 +585,17 @@ export interface IFluidParentContext
 	 */
 	readonly isReadOnly?: () => boolean;
 	/**
-	 * Minimum version of the FF runtime that is required to collaborate on new documents.
+	 * Oldest Fluid Framework client version that must be able to process documents written by the
+	 * runtime.
 	 * Consumed by {@link @fluidframework/container-runtime#FluidDataStoreContext}.
-	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.oldestSupportedClient}
+	 * for more details.
+	 *
+	 * @remarks
+	 * The property name is retained while the cross-layer dual-property migration in
+	 * {@link https://github.com/microsoft/FluidFramework/issues/27851} is completed.
 	 */
-	readonly minVersionForCollab: MinimumVersionForCollab;
+	readonly minVersionForCollab: OldestSupportedClientVersion;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	readonly storage: IRuntimeStorageService;
 	readonly baseLogger: ITelemetryBaseLogger;

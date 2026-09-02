@@ -6,9 +6,15 @@
 import { strict as assert } from "node:assert";
 
 import {
+	validateAssertionError,
+	validateUsageError,
+} from "@fluidframework/test-runtime-utils/internal";
+
+import {
 	type DeltaFieldChanges,
 	type DeltaFieldMap,
 	type DeltaMark,
+	type DeltaVisitor,
 	type DetachedField,
 	EmptyKey,
 	type FieldKey,
@@ -401,6 +407,168 @@ export function testForest(config: ForestTestConfiguration): void {
 		const detachedCursor = forest.allocateCursor();
 		moveToDetachedField(forest, detachedCursor, detachedField);
 		assert.equal(detachedCursor.getFieldLength(), 0);
+	});
+
+	/**
+	 * This suite checks that forests assert on invalid deltas.
+	 *
+	 * Generally asserts like this are not part of the contract we would expect from an interface implementation,
+	 * but malformed deltas and corrupted forests are difficult to triage and have a high risk for persisted data corruption,
+	 * so we make an exception and ensure the validation is consistent.
+	 *
+	 * Among other things this ensures that when swapping forest implementations to try and see if the issue is a bug in the forest,
+	 * we don't get confusing signals due to missing validation.
+	 */
+	describe("rejects invalid deltas", () => {
+		const detachedField: DetachedField = brand("invalidDeltaSource");
+		const detachedKey = detachedFieldAsKey(detachedField);
+
+		function setupForest(): IEditableForest {
+			const forest = factory(new TreeStoredSchemaRepository(jsonSequenceRootSchema));
+			initializeForest(forest, fieldJsonCursor([0, 1, 2, 3, 4]));
+			return forest;
+		}
+
+		function afterAssert(forest: IEditableForest, visitor: DeltaVisitor): void {
+			// Ensure the forest has been put into a broken state due to the edit which failed during application.
+			// This helps ensure that once a forest is in an invalid state, and likely out of sync with what is required/assumed,
+			// it can't be read, preventing further corruption.
+			// This is part of a defense in depth approach:
+			// it only matters if there is a bug that resulted in a invalid delta,
+			// and the higher level logic applying the delta to the forest
+			// should also handle application failure and track its own broken state as needed.
+			assert.throws(
+				() => forest.isEmpty,
+				validateUsageError(/invalid state by another error/),
+			);
+			assert.throws(
+				() => visitor.free(),
+				validateUsageError(/invalid state by another error/),
+			);
+		}
+
+		it("rejects destroying a missing detached field", () => {
+			const forest = setupForest();
+			const visitor = forest.acquireVisitor();
+
+			assert.throws(
+				() => visitor.destroy(detachedKey, 0),
+				validateAssertionError("Destroyed field must exist"),
+			);
+			afterAssert(forest, visitor);
+		});
+
+		it("rejects creating an occupied detached field", () => {
+			const forest = setupForest();
+			const visitor = forest.acquireVisitor();
+
+			assert.throws(
+				() => visitor.create([singleJsonCursor(99)], rootFieldKey),
+				validateAssertionError("Create destination must be a new empty field"),
+			);
+			afterAssert(forest, visitor);
+		});
+
+		it("rejects attaching from a missing detached field", () => {
+			const forest = setupForest();
+			const visitor = forest.acquireVisitor();
+			visitor.enterField(rootFieldKey);
+
+			assert.throws(
+				() => visitor.attach(detachedKey, 1, 0),
+				validateAssertionError("Attach source field must exist"),
+			);
+			afterAssert(forest, visitor);
+		});
+
+		it("rejects attaching with a mismatched count", () => {
+			const forest = setupForest();
+			const visitor = forest.acquireVisitor();
+			visitor.create([singleJsonCursor(98), singleJsonCursor(99)], detachedKey);
+			visitor.enterField(rootFieldKey);
+
+			assert.throws(
+				() => visitor.attach(detachedKey, 1, 0),
+				validateAssertionError("Attach must consume all nodes in source field"),
+			);
+			afterAssert(forest, visitor);
+		});
+
+		it("rejects attaching beyond the destination field", () => {
+			const forest = setupForest();
+			const visitor = forest.acquireVisitor();
+			visitor.create([singleJsonCursor(99)], detachedKey);
+			visitor.enterField(rootFieldKey);
+
+			assert.throws(
+				() => visitor.attach(detachedKey, 1, 6),
+				validateAssertionError("Attach destination must not exceed field length"),
+			);
+			afterAssert(forest, visitor);
+		});
+
+		it("rejects attaching a detached field into itself", () => {
+			const forest = setupForest();
+			const visitor = forest.acquireVisitor();
+			visitor.enterField(rootFieldKey);
+
+			assert.throws(
+				() => visitor.attach(rootFieldKey, 5, 0),
+				validateAssertionError("Attach source field must be different from current field"),
+			);
+			afterAssert(forest, visitor);
+		});
+
+		it("rejects detaching beyond the source field", () => {
+			const forest = setupForest();
+			const visitor = forest.acquireVisitor();
+			visitor.enterField(rootFieldKey);
+
+			assert.throws(
+				() => visitor.detach({ start: 4, end: 6 }, detachedKey, detachId, false),
+				validateAssertionError("Detach range must not exceed field length"),
+			);
+			afterAssert(forest, visitor);
+		});
+
+		it("rejects detaching into the source field", () => {
+			const forest = setupForest();
+			const visitor = forest.acquireVisitor();
+			visitor.enterField(rootFieldKey);
+
+			assert.throws(
+				() => visitor.detach({ start: 1, end: 2 }, rootFieldKey, detachId, false),
+				validateAssertionError(
+					"Detach destination field must be different from current field",
+				),
+			);
+			afterAssert(forest, visitor);
+		});
+
+		it("rejects detaching into an occupied detached field", () => {
+			const forest = setupForest();
+			const visitor = forest.acquireVisitor();
+			visitor.create([singleJsonCursor(99)], detachedKey);
+			visitor.enterField(rootFieldKey);
+
+			assert.throws(
+				() => visitor.detach({ start: 1, end: 2 }, detachedKey, detachId, false),
+				validateAssertionError("Detach destination must be a new empty field"),
+			);
+			afterAssert(forest, visitor);
+		});
+
+		it("rejects destroying with a mismatched count", () => {
+			const forest = setupForest();
+			const visitor = forest.acquireVisitor();
+			visitor.create([singleJsonCursor(98), singleJsonCursor(99)], detachedKey);
+
+			assert.throws(
+				() => visitor.destroy(detachedKey, 1),
+				validateAssertionError("Destroy count must match field length"),
+			);
+			afterAssert(forest, visitor);
+		});
 	});
 
 	describe("can clone", () => {

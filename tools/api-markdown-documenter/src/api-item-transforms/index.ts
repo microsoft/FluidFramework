@@ -8,12 +8,14 @@
  */
 
 export {
+	type ApiItemLinkTarget,
 	createQualifiedDocumentNameForApiItem,
 	doesItemRequireOwnDocument,
 	doesItemKindRequireOwnDocument,
 	filterItems,
 	getHeadingForApiItem,
 	getLinkForApiItem,
+	getLinkTargetForApiItem,
 	shouldItemBeIncluded,
 } from "./utilities/index.js";
 export {

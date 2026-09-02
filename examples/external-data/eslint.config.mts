@@ -38,7 +38,7 @@ const config: Linter.Config[] = [
 		},
 	},
 	{
-		files: ["tests/**"],
+		files: ["src/test/**", "test/**"],
 		rules: {
 			"import-x/no-extraneous-dependencies": [
 				"error",

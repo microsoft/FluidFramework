@@ -1489,6 +1489,45 @@ describe("ArrayNode", () => {
 			);
 		});
 	});
+
+	it("throws descriptive TypeError for an unsupported Array.prototype method", () => {
+		const array = hydrate(PojoEmulationNumberArray, [1, 2, 3]);
+		const sort = (array as unknown as Record<string, unknown>).sort as (
+			...args: unknown[]
+		) => unknown;
+		assert.equal(typeof sort, "function");
+		assert.throws(
+			() => sort.call(array),
+			(error: Error) =>
+				error instanceof TypeError &&
+				error.message ===
+					"ArrayNode does not support 'sort'. Use the ArrayNode API (e.g., insertAt, removeAt, moveToIndex, splice).",
+		);
+	});
+
+	it("throws descriptive TypeError for future unsupported Array.prototype methods", () => {
+		const array = hydrate(PojoEmulationNumberArray, [1, 2, 3]);
+		const methodName = "__testUnsupportedArrayMethod__";
+		(Array.prototype as unknown as Record<string, unknown>)[methodName] = function () {
+			return "should not reach here";
+		};
+		try {
+			const method = (array as unknown as Record<string, unknown>)[methodName] as (
+				...args: unknown[]
+			) => unknown;
+			assert.equal(typeof method, "function");
+			assert.throws(
+				() => method.call(array),
+				(error: Error) =>
+					error instanceof TypeError &&
+					error.message ===
+						`ArrayNode does not support '${methodName}'. Use the ArrayNode API (e.g., insertAt, removeAt, moveToIndex, splice).`,
+			);
+		} finally {
+			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- Cleaning up test-only method added to Array.prototype
+			delete (Array.prototype as unknown as Record<string, unknown>)[methodName];
+		}
+	});
 });
 
 // Workaround to avoid

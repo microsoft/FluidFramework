@@ -4,7 +4,7 @@
  */
 
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/internal";
 import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 
 import {
@@ -126,6 +126,18 @@ export function makeMessageCodecBuilder<TChangeset>(): VersionDispatchingCodecBu
 				),
 		},
 		{
+			minVersionForCollab: FluidClientVersion.v2_117,
+			formatVersion: MessageFormatVersion.v7,
+			codec: (options: MessageCodecBuilderOptions<TChangeset>) =>
+				makeV1ToV4CodecWithVersion(
+					options.changeCodecs.resolve(
+						options.dependentChangeFormatVersion.lookup(MessageFormatVersion.v7),
+					),
+					options.revisionTagCodec,
+					MessageFormatVersion.v7,
+				),
+		},
+		{
 			minVersionForCollab: undefined,
 			formatVersion: MessageFormatVersion.vSharedBranches,
 			codec: (options: MessageCodecBuilderOptions<TChangeset>) =>
@@ -143,7 +155,7 @@ export function makeMessageCodecBuilder<TChangeset>(): VersionDispatchingCodecBu
 }
 
 export function getCodecTreeForMessageFormatWithChange(
-	clientVersion: MinimumVersionForCollab,
+	clientVersion: OldestSupportedClientVersion,
 	changeFormat: CodecTree,
 ): CodecTree {
 	const builder = makeMessageCodecBuilder();

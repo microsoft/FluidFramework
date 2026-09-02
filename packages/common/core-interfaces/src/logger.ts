@@ -78,20 +78,6 @@ export interface LogLevelConst {
 	 * @remarks It is recommended that these should always be collected, even in production, for diagnostic purposes.
 	 */
 	readonly essential: 30;
-
-	/**
-	 * Default LogLevel
-	 * @deprecated Prefer {@link LogLevelConst.info | LogLevel.info} when selecting a level explicitly to preserve prior treatment. Planned to be removed in 3.0.0.
-	 * @see {@link https://github.com/microsoft/FluidFramework/issues/26969 | Issue #26969} for removal tracking.
-	 */
-	readonly default: 20;
-
-	/**
-	 * To log errors.
-	 * @deprecated Prefer {@link LogLevelConst.essential | LogLevel.essential} when selecting a level. Planned to be removed in 3.0.0.
-	 * @see {@link https://github.com/microsoft/FluidFramework/issues/26969 | Issue #26969} for removal tracking.
-	 */
-	readonly error: 30;
 }
 
 /**
@@ -103,8 +89,6 @@ export const LogLevel: LogLevelConst = {
 	verbose: 10,
 	info: 20,
 	essential: 30,
-	default: 20,
-	error: 30,
 };
 
 /**
@@ -116,15 +100,23 @@ export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 /**
  * Interface to output telemetry events.
  * Implemented by hosting app / loader
+ *
+ * @remarks
+ * Logger implementations that may be reached by callers compiled against older Fluid packages must
+ * continue to declare their `send` implementation with an optional `logLevel` parameter and treat
+ * an omitted level as {@link LogLevelConst.essential} before filtering or forwarding. This protects
+ * mixed-version deployments where older callers can still invoke `send(event)` with one argument.
+ *
+ * @input
  * @public
  */
 export interface ITelemetryBaseLogger {
 	/**
 	 * Log a telemetry event, if it meets the appropriate log-level threshold (see {@link ITelemetryBaseLogger.minLogLevel}).
 	 * @param event - The event to log.
-	 * @param logLevel - The log level of the event. If undefined, the logLevel should be treated as {@link LogLevelConst.essential | LogLevel.essential}.
+	 * @param logLevel - The log level of the event
 	 */
-	send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
+	send(event: ITelemetryBaseEvent, logLevel: LogLevel): void;
 
 	/**
 	 * Minimum log level to be logged.

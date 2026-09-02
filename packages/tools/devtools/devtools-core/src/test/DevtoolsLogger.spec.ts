@@ -4,6 +4,7 @@
  */
 
 import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { expect } from "chai";
 
@@ -22,7 +23,7 @@ describe("DevtoolsLogger unit tests", () => {
 			category: "test-category",
 		};
 
-		devtoolsLogger.send(event);
+		devtoolsLogger.send(event, LogLevel.essential);
 
 		expect(baseLogger.events.length).to.equal(1);
 		expect(baseLogger.events[0]).to.deep.equal(event);

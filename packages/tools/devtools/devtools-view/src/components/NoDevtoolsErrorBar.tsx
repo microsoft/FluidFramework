@@ -6,10 +6,12 @@
 // The `MessageBar` component was removed in FluentUI React v9 with no replacement offered.
 // In the future, we will want to re-write this component to use something else, but for now this import is required.
 // When these imports are removed, the `@fluentui/react` dependency should be removed from this package.
-// eslint-disable-next-line no-restricted-imports
-import { MessageBar, MessageBarType, initializeIcons } from "@fluentui/react";
-import { Button, Link, Tooltip, makeStyles } from "@fluentui/react-components";
 import type { ReactElement } from "react";
+
+import { FluentReact, FluentReactComponents } from "../FluentUi.cjs";
+
+const { MessageBar, MessageBarType, initializeIcons } = FluentReact;
+const { Button, Link, Tooltip, makeStyles } = FluentReactComponents;
 
 // NoDevtoolsErrorBar uses legacy @fluentui/react, which requires explicit icon initialization.
 initializeIcons();

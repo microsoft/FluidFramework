@@ -14,6 +14,9 @@ import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import { makeEditManagerCodecBuilder } from "../../../shared-tree-core/editManagerCodecs.js";
 import {
 	EditManagerFormatVersion,
+	supportedEditManagerFormatVersions,
+	type Commit,
+	type SequencedCommit,
 	type SharedBranchSummaryData,
 	type SummaryData,
 } from "../../../shared-tree-core/index.js";
@@ -36,18 +39,22 @@ const trunkCommits: SharedBranchSummaryData<TestChange>["trunk"] = [
 		sessionId: "1" as SessionId,
 		change: TestChange.mint([0], 1),
 		sequenceNumber: brand(1),
+		// Decoding always defines this property, so the fixtures must too for deep equality to hold.
+		customMetadata: undefined,
 	},
 	{
 		revision: tags[1],
 		sessionId: "2" as SessionId,
 		change: TestChange.mint([0, 1], 2),
 		sequenceNumber: brand(2),
+		customMetadata: undefined,
 	},
 	{
 		revision: tags[2],
 		sessionId: "1" as SessionId,
 		change: TestChange.mint([0, 1, 2], 3),
 		sequenceNumber: brand(3),
+		customMetadata: undefined,
 	},
 ];
 
@@ -125,6 +132,7 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodi
 										sessionId: "4" as SessionId,
 										revision: mintRevisionTag(),
 										change: TestChange.mint([0, 1], 4),
+										customMetadata: undefined,
 									},
 								],
 							},
@@ -157,6 +165,7 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodi
 										sessionId: "4",
 										revision: mintRevisionTag(),
 										change: TestChange.mint([0, 1], 4),
+										customMetadata: undefined,
 									},
 								],
 							},
@@ -219,6 +228,7 @@ export function testCodec(): void {
 			EditManagerFormatVersion.v3,
 			EditManagerFormatVersion.v4,
 			EditManagerFormatVersion.v6,
+			EditManagerFormatVersion.v7,
 		]);
 		makeDiscontinuedEncodingTestSuite(family, [
 			EditManagerFormatVersion.v1,
@@ -229,6 +239,56 @@ export function testCodec(): void {
 		makeEncodingTestSuite(family, testCases, undefined, [
 			EditManagerFormatVersion.vSharedBranches,
 		]);
+
+		it("Extra properties on commits are omitted from encoding", () => {
+			interface ExtraData {
+				"☠️": "☠️";
+			}
+			const trunkCommit = {
+				revision: tags[0],
+				sessionId: "1" as SessionId,
+				change: TestChange.mint([0], 1),
+				sequenceNumber: brand(1),
+				customMetadata: undefined,
+				"☠️": "☠️",
+			} satisfies SequencedCommit<TestChange> & ExtraData;
+			const branchCommit = {
+				sessionId: "4" as SessionId,
+				revision: mintRevisionTag(),
+				change: TestChange.mint([0, 1], 4),
+				customMetadata: undefined,
+				"☠️": "☠️",
+			} satisfies Commit<TestChange> & ExtraData;
+			const data = {
+				originator: dummyContext.originatorId,
+				main: {
+					trunk: [trunkCommit],
+					peerLocalBranches: new Map([
+						[
+							"4" as SessionId,
+							{
+								base: tags[1],
+								commits: [branchCommit],
+							},
+						],
+					]),
+				},
+			} satisfies SummaryData<TestChange>;
+			for (const version of supportedEditManagerFormatVersions) {
+				const codec = family.resolve(version);
+				// So long as we keep validating encoded data against the schema,
+				// this invocation should throw if extra properties are not filtered out during encoding.
+				const encoded = codec.encode(data, dummyContext);
+				const stringified = JSON.stringify(encoded);
+				// This assert is added as a redundant check in case we stop validating encoded data against the schema
+				// or in case the schema is relaxed by mistake (e.g., using `CommitBase` instead of `Commit`, which allows extra properties).
+				assert(
+					!stringified.includes("☠️"),
+					"Extra properties should be filtered out during encoding",
+				);
+			}
+		});
+
 		// TODO: testing EditManagerSummarizer class itself, specifically for attachment and normal summaries.
 		// TODO: format compatibility tests to detect breaking of existing documents.
 	});

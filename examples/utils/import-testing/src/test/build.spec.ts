@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// import { strict as assert } from "node:assert";
+import { strict as assert } from "node:assert";
 import { execFile } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -13,7 +13,23 @@ import { promisify } from "node:util";
 
 // When available (typescript 5.8+), update dynamic parsing to static import
 // import typescriptHostPackageJson from "@fluid-example/typescript-versions-host/package.json"; : with { type: "json" };
-import type { PackageJson } from "@fluidframework/build-tools";
+
+/**
+ * Minimal shape of the parts of package.json this test reads.
+ *
+ * @remarks
+ * Declared locally rather than imported from `@fluidframework/build-tools` because that package is
+ * ESM-only: its CommonJS `exports` condition resolves to a stub that does not include
+ * `PackageJson`, and this file is also compiled as CommonJS.
+ *
+ * TODO: AB#80348: once this test's CommonJS compilation is able to import ESM, remove this
+ * interface and restore `import type { PackageJson } from "@fluidframework/build-tools"`. That
+ * requires both a `module-sync` export condition in build-tools and a TypeScript upgrade:
+ * 5.4.5 fails under `node16` and `nodenext` alike, while 5.9 resolves it under `nodenext`.
+ */
+interface PackageJsonDevDependencies {
+	readonly devDependencies: Readonly<Record<string, string>>;
+}
 
 // Resolve the typescript-versions-host package which hosts the aliased TypeScript versions.
 // Use process.cwd() as the base for createRequire so this works in both ESM
@@ -28,7 +44,7 @@ const typescriptHostDir = path.dirname(
 
 const typescriptHostPackageJson = JSON.parse(
 	readFileSync(path.join(typescriptHostDir, "package.json"), "utf8"),
-) as Required<Pick<PackageJson, "devDependencies">>;
+) as PackageJsonDevDependencies;
 
 // All are expected to match, but be cautious.
 const typescriptVersions = Object.entries(typescriptHostPackageJson.devDependencies).filter(
@@ -77,31 +93,80 @@ describe("build tests", () => {
 		}
 
 		describe("can build with esnext.disposable", () => {
-			it("typescript-5.5", async () => {
-				await compileTest("typescript-5.5", ["--lib", "ES2022,DOM,esnext.disposable"]);
+			// This test is skipped highlighting a case that is deficient. The
+			// following case documents the issue and assert current expectations
+			// as unfortunate as they are.
+			it.skip("typescript-6.0", async () => {
+				await compileTest("typescript-6.0", ["--lib", "ES2022,DOM,esnext.disposable"]);
 			});
-			// Currently fails for typescript 5.6 and newer:
-			it.skip("typescript-5.6", async () => {
-				await compileTest("typescript-5.6", ["--lib", "ES2022,DOM,esnext.disposable"]);
+			// Currently fails for typescript 5.6 (5.7 is our lower check bound) and newer:
+			it("typescript-5.7 and newer fail", async () => {
+				const compileResultPromise = compileTest("typescript-5.7", [
+					"--lib",
+					"ES2022,DOM,esnext.disposable",
+				]);
+				await assert.rejects(
+					compileResultPromise,
+					/areSafelyAssignable<ImportedArrayNodeIterator, ArrayIterator>/,
+				);
+				await assert.rejects(compileResultPromise, /Found 1 error/);
 			});
 		});
 
-		// Error: ../../../packages/utils/telemetry-utils/lib/config.d.ts(37,56): error TS2304: Cannot find name 'Storage'.
-		// That code isn't even package exported: might be fixable by fixing how we do roll-ups?
-		it.skip("without DOM", async () => {
-			await compileTest("typescript-5.4", ["--lib", "ES2022"]);
+		describe("without DOM", () => {
+			it("excluding apiExamples.spec.ts", async () => {
+				await compileTest("typescript-6.0", [], "./tsconfig.test.noDOM.json");
+			});
+
+			// Errors:
+			//  1. ../../../node_modules/.pnpm/@fluidframework+common-utils@3.1.0/node_modules/@fluidframework/common-utils/dist/performanceIsomorphic.d.ts:12:53 - error TS2304: Cannot find name 'Performance'.
+			// Declaration dependency chain:
+			//	apiExamples.spec.ts imports @fluidframework/local-driver/alpha
+			//	→ local-driver/lib/alpha.d.ts → local-driver/lib/index.d.ts
+			//	→   localDocumentDeltaConnection.d.ts imports @fluidframework/server-services-core
+			//	→ server-services-core/dist/queue.d.ts imports @fluidframework/common-utils
+			//	→ common-utils/dist/index.d.ts
+			//	→   performanceIsomorphic.d.ts
+			//
+			// `queue.d.ts` imports `Deferred` from `@fluidframework/common-utils`; that package’s root declaration re-exports `performanceIsomorphic`, whose `Partial<Performance>` requires the DOM `Performance` type.
+			//
+			// 2. ../../../node_modules/.pnpm/engine.io-client@6.6.4_supports-color@10.2.2/node_modules/engine.io-client/build/esm/transports/polling-xhr.d.ts:65:58 - error TS2304: Cannot find name 'XMLHttpRequest'.
+			// Declaration dependency chain:
+			//	apiExamples.spec.ts imports @fluidframework/local-driver/alpha
+			//	→ local-driver/lib/alpha.d.ts → local-driver/lib/index.d.ts
+			//	→   localDocumentDeltaConnection.d.ts imports imports socket.io-client imports engine.io-client
+			//	→ engine.io-client/build/esm/index.d.ts
+			//	→   transports/polling-xhr.d.ts
+			//
+			// DOM requirement was introduced in commit `ee47192d4ae` (“Introduce Unified ServiceClient API”), which added:
+			//	"@fluidframework/local-driver": "workspace:~"
+			// to `examples/utils/import-testing/package.json`, along with the import in `src/test/apiExamples.spec.ts`:
+			//	import {
+			//		startEphemeralService,
+			//		cleanupEphemeralService,
+			//	} from "@fluidframework/local-driver/alpha";
+			//
+			it("including apiExamples.spec.ts reports errors from `@fluidframework/common-utils`", async () => {
+				await assert.rejects(
+					compileTest("typescript-6.0", ["--lib", "ES2022"]),
+					/Cannot find name 'Performance'/,
+				);
+			});
 		});
 
 		// Several errors.
 		// Many of the errors are in types with no release tag which are intended to be package private: this might indicate an issue or limitation of how we do roll-ups?
-		it.skip("exactOptionalPropertyTypes", async () => {
-			await compileTest("typescript-5.4", ["--exactOptionalPropertyTypes"]);
+		it("exactOptionalPropertyTypes is not sufficiently supported", async () => {
+			await assert.rejects(
+				compileTest("typescript-6.0", ["--exactOptionalPropertyTypes"]),
+				/Found \d+ error/,
+			);
 		});
 
 		// Ensure the isolatedDeclarations.ts file actually builds when isolatedDeclarations is enabled.
 		// Requires TypeScript 5.5 or newer.
 		it("isolatedDeclarations", async () => {
-			await compileTest("typescript-5.5", [], "./src/test/tsconfig.isolatedDeclarations.json");
+			await compileTest("typescript-6.0", [], "./src/test/tsconfig.isolatedDeclarations.json");
 		});
 	}
 });
