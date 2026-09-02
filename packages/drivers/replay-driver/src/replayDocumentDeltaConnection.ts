@@ -128,7 +128,8 @@ export class ReplayControllerStatic extends ReplayController {
 			const replayNextOps = (): void => {
 				// Emit the ops from replay to the end every "deltainterval" milliseconds
 				// to simulate the socket stream
-				const currentOp = fetchedOps[current];
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- scheduleNext() only schedules this callback while current < fetchedOps.length
+				const currentOp = fetchedOps[current]!;
 				const playbackOps = [currentOp];
 				let nextInterval = ReplayControllerStatic.DelayInterval;
 				current += 1;
@@ -139,7 +140,8 @@ export class ReplayControllerStatic extends ReplayController {
 						// Emit more ops that is in the ReplayResolution window
 
 						while (current < fetchedOps.length) {
-							const op = fetchedOps[current];
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- the loop condition guarantees this index is in bounds
+							const op = fetchedOps[current]!;
 							if (op.timestamp === undefined) {
 								// Missing timestamp, just delay the standard amount of time
 								break;
@@ -335,7 +337,11 @@ export class ReplayDocumentDeltaConnection
 
 				const messages = result.value;
 				currentOp += messages.length;
-				done = controller.isDoneFetch(currentOp, messages[messages.length - 1].timestamp);
+				const lastMessage = messages.at(-1);
+				if (lastMessage === undefined) {
+					throw new Error("Delta storage returned an empty batch of messages");
+				}
+				done = controller.isDoneFetch(currentOp, lastMessage.timestamp);
 			} while (!done);
 
 			abortController.abort();
