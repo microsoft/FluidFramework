@@ -70,10 +70,20 @@ export function getEffectiveBatchId(
  */
 export class BatchManager {
 	private pendingBatch: LocalBatchMessage[] = [];
-	private hasReentrantOps = false;
+	private _hasReentrantOps = false;
 
 	public get length(): number {
 		return this.pendingBatch.length;
+	}
+
+	/**
+	 * Whether any of the messages currently pending in this batch were submitted from a reentrant context
+	 * (i.e. submitted while another op was being processed). Such a batch must be rebased before being flushed.
+	 *
+	 * @remarks Reset when the batch is popped via {@link BatchManager.popBatch}.
+	 */
+	public get hasReentrantOps(): boolean {
+		return this._hasReentrantOps;
 	}
 
 	public get sequenceNumbers(): BatchSequenceNumbers {
@@ -103,7 +113,7 @@ export class BatchManager {
 		reentrant: boolean,
 		currentClientSequenceNumber?: number,
 	): void {
-		this.hasReentrantOps = this.hasReentrantOps || reentrant;
+		this._hasReentrantOps = this._hasReentrantOps || reentrant;
 
 		if (this.pendingBatch.length === 0) {
 			this.clientSequenceNumber = currentClientSequenceNumber;
@@ -125,13 +135,13 @@ export class BatchManager {
 		const batch: LocalBatch = {
 			messages: this.pendingBatch,
 			referenceSequenceNumber: this.referenceSequenceNumber,
-			hasReentrantOps: this.hasReentrantOps,
+			hasReentrantOps: this._hasReentrantOps,
 			staged: this.pendingBatch[0].staged,
 		};
 
 		this.pendingBatch = [];
 		this.clientSequenceNumber = undefined;
-		this.hasReentrantOps = false;
+		this._hasReentrantOps = false;
 
 		return batch;
 	}
@@ -141,10 +151,14 @@ export class BatchManager {
 	 */
 	public checkpoint(): IBatchCheckpoint {
 		const startSequenceNumber = this.clientSequenceNumber;
+		const startHasReentrantOps = this._hasReentrantOps;
 		const startPoint = this.pendingBatch.length;
 		return {
 			rollback: (process: (message: LocalBatchMessage) => void) => {
 				this.clientSequenceNumber = startSequenceNumber;
+				// Any reentrant ops pushed after the checkpoint are being rolled back, so restore the flag as well.
+				// Otherwise it could remain set for a batch which no longer contains any reentrant ops.
+				this._hasReentrantOps = startHasReentrantOps;
 				const rollbackOpsLifo = this.pendingBatch.splice(startPoint).reverse();
 				for (const message of rollbackOpsLifo) {
 					process(message);

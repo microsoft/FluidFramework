@@ -356,6 +356,13 @@ export class Outbox {
 	}
 
 	private flushAll(resubmitInfo?: BatchResubmitInfo): void {
+		// Rebasing must happen before *any* batch is flushed. Rebasing resubmits ops one-by-one, and
+		// resubmitting an op can add new ops to *any* BatchManager, not just the one being rebased
+		// (e.g. resubmitting a BlobAttach op can generate a DocumentSchemaChange op in the main batch).
+		// If we flushed as we went, ops landing in an already-flushed BatchManager would be stranded in
+		// the Outbox (ADO:39273), and blobAttach ops could end up sequenced after the ops referencing them.
+		this.rebaseAllIfNeeded(resubmitInfo);
+
 		const allBatchesEmpty = this.blobAttachBatch.empty && this.mainBatch.empty;
 		if (allBatchesEmpty) {
 			// If we're resubmitting with a batchId and all batches are empty, we need to flush an empty batch.
@@ -422,22 +429,12 @@ export class Outbox {
 		const groupingEnabled =
 			!batchManager.options.disableGroupedBatching &&
 			this.params.groupingManager.groupedBatchingEnabled();
-		if (rawBatch.hasReentrantOps === true) {
-			assert(
-				resubmitInfo === undefined,
-				0xcf2 /* Re-submitting a batch with reentrant ops is not supported */,
-			);
-			assert(!this.rebasing, 0x6fa /* A rebased batch should never have reentrant ops */);
-			// Rebase the current batch (resubmit the ops one-by-one) and then reinvoke flushInternal.
-			// If a batch contains reentrant ops (ops created as a result from processing another op)
-			// it needs to be rebased so that we can ensure consistent reference sequence numbers
-			// and eventual consistency at the DDS level.
-			// Note: Since this is happening in the same turn the ops were originally created with,
-			// and they haven't gone to PendingStateManager yet, we can just let them respect
-			// ContainerRuntime.inStagingMode.  So we do not plumb local 'staged' variable through here.
-			this.rebase(rawBatch, batchManager);
-			return;
-		}
+
+		// Rebasing happens up front in flushAll, so by the time we get here no batch may contain reentrant ops.
+		assert(
+			rawBatch.hasReentrantOps !== true,
+			0x6fa /* A rebased batch should never have reentrant ops */,
+		);
 
 		// Did we disconnect? (i.e. is shouldSend false?)
 		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
@@ -474,15 +471,63 @@ export class Outbox {
 	}
 
 	/**
+	 * Rebases every batch which contains reentrant ops (ops created as a result of processing another op).
+	 * A batch containing such ops must be rebased so that we can ensure consistent reference sequence
+	 * numbers and eventual consistency at the DDS level.
+	 *
+	 * @remarks
+	 * All batches which need rebasing are popped *before* any op is resubmitted. Resubmitting an op can add
+	 * new ops to any BatchManager, and those newly generated ops must not be swept into another batch's
+	 * rebase (they are brand new, so they need no rebasing, and some op types are intentionally dropped
+	 * rather than resubmitted).
+	 *
+	 * @param resubmitInfo - Key information when flushing a resubmitted batch. Undefined means this is not resubmit.
+	 */
+	private rebaseAllIfNeeded(resubmitInfo?: BatchResubmitInfo): void {
+		const blobAttachNeedsRebase =
+			!this.blobAttachBatch.empty && this.blobAttachBatch.hasReentrantOps;
+		const mainNeedsRebase = !this.mainBatch.empty && this.mainBatch.hasReentrantOps;
+		if (!blobAttachNeedsRebase && !mainNeedsRebase) {
+			return;
+		}
+
+		assert(
+			resubmitInfo === undefined,
+			0xcf2 /* Re-submitting a batch with reentrant ops is not supported */,
+		);
+		assert(!this.rebasing, 0x6fb /* Reentrancy */);
+
+		// Pop everything that needs rebasing before resubmitting any op (see remarks above).
+		const batchesToRebase = [
+			blobAttachNeedsRebase ? this.blobAttachBatch.popBatch() : undefined,
+			mainNeedsRebase ? this.mainBatch.popBatch() : undefined,
+		];
+
+		// Note: Since this is happening in the same turn the ops were originally created with,
+		// and they haven't gone to PendingStateManager yet, we can just let them respect
+		// ContainerRuntime.inStagingMode. So we do not plumb the batches' 'staged' value through here.
+		this.rebasing = true;
+		try {
+			for (const rawBatch of batchesToRebase) {
+				if (rawBatch !== undefined) {
+					this.rebase(rawBatch);
+				}
+			}
+		} finally {
+			this.rebasing = false;
+		}
+	}
+
+	/**
 	 * Rebases a batch. All the ops in the batch are resubmitted to the runtime and
-	 * they will end up back in the same batch manager they were flushed from and subsequently flushed.
+	 * they will end up back in the Outbox (typically in the same batch manager they were popped from)
+	 * to be flushed once all rebasing is complete.
 	 *
 	 * @param rawBatch - the batch to be rebased
 	 */
-	private rebase(rawBatch: LocalBatch, batchManager: BatchManager): void {
-		assert(!this.rebasing, 0x6fb /* Reentrancy */);
+	private rebase(rawBatch: LocalBatch): void {
+		assert(this.rebasing, "Must be rebasing");
 
-		this.rebasing = true;
 		const squash = false;
 		for (const message of rawBatch.messages) {
 			this.params.reSubmit(
@@ -506,9 +551,6 @@ export class Outbox {
 			);
 			this.batchRebasesToReport--;
 		}
-
-		this.flushInternal(batchManager);
-		this.rebasing = false;
 	}
 
 	private isContextReentrant(): boolean {

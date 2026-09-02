@@ -241,6 +241,11 @@ describe("Outbox", () => {
 		opGroupingConfig?: OpGroupingManagerConfig;
 		immediateMode?: boolean;
 		generateIdAllocationOp?: () => LocalBatchMessage | undefined;
+		/**
+		 * Override for the reSubmit callback. The default just counts the resubmitted ops.
+		 * Note that implementations should still increment `state.opsResubmitted`.
+		 */
+		reSubmit?: (message: PendingMessageResubmitData) => void;
 	}) => {
 		const { submitFn, submitBatchFn, deltaManager } = params.context;
 
@@ -268,9 +273,11 @@ describe("Outbox", () => {
 				mockLogger,
 			),
 			getCurrentSequenceNumbers: () => currentSeqNumbers,
-			reSubmit: (message: PendingMessageResubmitData) => {
-				state.opsResubmitted++;
-			},
+			reSubmit:
+				params.reSubmit ??
+				((message: PendingMessageResubmitData) => {
+					state.opsResubmitted++;
+				}),
 			opReentrancy: () => state.isReentrant,
 			generateIdAllocationOp: params.generateIdAllocationOp ?? (() => undefined),
 		});
@@ -1061,6 +1068,27 @@ describe("Outbox", () => {
 			validateCounts(0, 0, 2);
 		});
 
+		it("both batches have reentrant ops", () => {
+			// Both batch managers must be rebased, and neither may be left behind in the Outbox.
+			const outbox = getOutbox({
+				context: getMockContext(),
+				opGroupingConfig: {
+					groupedBatchingEnabled: true,
+				},
+			});
+
+			state.isReentrant = true;
+			outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "0"));
+			outbox.submitBlobAttach(createMessage(ContainerMessageType.BlobAttach, "1"));
+			outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "2"));
+			state.isReentrant = false;
+
+			outbox.flush();
+
+			validateCounts(0, 0, 3);
+			assert.strictEqual(outbox.isEmpty, true, "Outbox must be empty after flush");
+		});
+
 		it("non-reentrant blobAttach ops do not trigger rebase", () => {
 			const outbox = getOutbox({
 				context: getMockContext(),
@@ -1098,6 +1126,121 @@ describe("Outbox", () => {
 			assert.throws(
 				() => outbox.flush({ batchId: "batchId", staged: false }),
 				(e: Error) => e.message === "0xcf2",
+			);
+		});
+
+		/**
+		 * Converts the data handed to the reSubmit callback back into a message which can be
+		 * submitted to the Outbox, mimicking what ContainerRuntime.reSubmit does for most op types.
+		 */
+		const toResubmittedMessage = ({
+			runtimeOp,
+			localOpMetadata,
+			opMetadata,
+		}: PendingMessageResubmitData): LocalBatchMessage => ({
+			runtimeOp,
+			localOpMetadata,
+			metadata: opMetadata,
+			referenceSequenceNumber: Number.POSITIVE_INFINITY,
+		});
+
+		it("ops added to a different batch manager while rebasing are still flushed", () => {
+			// ADO:39273 - Resubmitting an op while rebasing can add ops to a *different* BatchManager than
+			// the one being rebased (e.g. resubmitting a main batch op can generate a BlobAttach op).
+			// Those ops must not be left behind in the Outbox, otherwise ContainerRuntime.flush's
+			// `assert(this.outbox.isEmpty, 0x3cf)` fires and the container is closed.
+			const outboxRef: { current?: Outbox } = {};
+			let blobAttachGenerated = false;
+			const outbox = getOutbox({
+				context: getMockContext(),
+				opGroupingConfig: {
+					groupedBatchingEnabled: true,
+				},
+				reSubmit: (resubmitData: PendingMessageResubmitData) => {
+					state.opsResubmitted++;
+					if (!blobAttachGenerated) {
+						blobAttachGenerated = true;
+						outboxRef.current?.submitBlobAttach(
+							createMessage(ContainerMessageType.BlobAttach, "blob"),
+						);
+					}
+					outboxRef.current?.submit(toResubmittedMessage(resubmitData));
+				},
+			});
+			outboxRef.current = outbox;
+
+			state.isReentrant = true;
+			outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "0"));
+			outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "1"));
+			state.isReentrant = false;
+
+			outbox.flush();
+
+			assert.strictEqual(state.opsResubmitted, 2, "unexpected opsResubmitted");
+			assert.strictEqual(
+				outbox.isEmpty,
+				true,
+				"Outbox must be empty after flush (otherwise ContainerRuntime asserts 0x3cf)",
+			);
+			assert.strictEqual(
+				state.batchesSubmitted.length,
+				2,
+				"expected a blobAttach batch and a main batch",
+			);
+			assert.strictEqual(
+				state.batchesSubmitted[0].messages[0].contents?.includes(`"blob"`),
+				true,
+				"the blobAttach batch must be sent before the main batch",
+			);
+		});
+
+		it("ops generated while rebasing one batch are not swept into another batch's rebase", () => {
+			// Resubmitting a blobAttach op can generate a brand new main batch op (e.g. a
+			// DocumentSchemaChange). Since it's brand new it needs no rebasing, and some op types are
+			// intentionally dropped rather than resubmitted, so it must not be fed through reSubmit as
+			// part of the main batch's rebase - it must simply be flushed.
+			const outboxRef: { current?: Outbox } = {};
+			let schemaOpGenerated = false;
+			const resubmittedContents: unknown[] = [];
+			const outbox = getOutbox({
+				context: getMockContext(),
+				opGroupingConfig: {
+					groupedBatchingEnabled: true,
+				},
+				reSubmit: (resubmitData: PendingMessageResubmitData) => {
+					state.opsResubmitted++;
+					resubmittedContents.push(resubmitData.runtimeOp.contents);
+					if (resubmitData.runtimeOp.type === ContainerMessageType.BlobAttach) {
+						if (!schemaOpGenerated) {
+							schemaOpGenerated = true;
+							outboxRef.current?.submit(
+								createMessage(ContainerMessageType.DocumentSchemaChange, "generated"),
+							);
+						}
+						outboxRef.current?.submitBlobAttach(toResubmittedMessage(resubmitData));
+					} else {
+						outboxRef.current?.submit(toResubmittedMessage(resubmitData));
+					}
+				},
+			});
+			outboxRef.current = outbox;
+
+			state.isReentrant = true;
+			outbox.submitBlobAttach(createMessage(ContainerMessageType.BlobAttach, "blob"));
+			outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "main"));
+			state.isReentrant = false;
+
+			outbox.flush();
+
+			assert.deepStrictEqual(
+				resubmittedContents,
+				["blob", "main"],
+				"only the originally reentrant ops may be rebased",
+			);
+			assert.strictEqual(outbox.isEmpty, true, "Outbox must be empty after flush");
+			assert.ok(
+				state.pendingOpContents.some((pending) => pending.runtimeOp?.contents === "generated"),
+				"the op generated during rebase must be flushed",
 			);
 		});
 
