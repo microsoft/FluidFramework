@@ -338,6 +338,9 @@ export class ConnectionManager implements IConnectionManager {
 			serviceConfiguration: connection.serviceConfiguration,
 			version: connection.version,
 			reason,
+			...(connection.checkpointSequenceNumber === undefined
+				? {}
+				: { rawCheckpointSequenceNumber: connection.checkpointSequenceNumber }),
 		};
 	}
 

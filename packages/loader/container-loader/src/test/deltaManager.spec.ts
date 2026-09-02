@@ -55,6 +55,8 @@ describe("Loader", () => {
 				deltaStorageFactory?: () => IDocumentDeltaStorageService,
 				checkpointSequenceNumber?: number,
 				lastProcessedSequenceNumber = 0,
+				initialMessages: ISequencedDocumentMessage[] = [],
+				connectBeforeAttach = false,
 			): Promise<void> {
 				const service = new MockDocumentService(deltaStorageFactory, () => {
 					// Always create new connection, as reusing old closed connection
@@ -69,6 +71,7 @@ describe("Loader", () => {
 							}
 						).checkpointSequenceNumber = checkpointSequenceNumber;
 					}
+					deltaConnection.initialMessages = initialMessages;
 					return deltaConnection;
 				});
 				const client: Partial<IClient> = {
@@ -98,6 +101,16 @@ describe("Loader", () => {
 					noopHeuristic.notifyMessageSent();
 				});
 
+				const connect = async (): Promise<void> =>
+					new Promise((resolve) => {
+						deltaManager.on("connect", resolve);
+						deltaManager.connect({ reason: { text: "test" } });
+					});
+
+				if (connectBeforeAttach) {
+					await connect();
+				}
+
 				await deltaManager.attachOpHandler(
 					0,
 					0,
@@ -109,10 +122,9 @@ describe("Loader", () => {
 					lastProcessedSequenceNumber,
 				);
 
-				await new Promise((resolve) => {
-					deltaManager.on("connect", resolve);
-					deltaManager.connect({ reason: { text: "test" } });
-				});
+				if (!connectBeforeAttach) {
+					await connect();
+				}
 			}
 
 			// function to yield control in the Javascript event loop.
@@ -194,20 +206,47 @@ describe("Loader", () => {
 				clock.restore();
 			});
 
-			it("logs a regressed checkpoint sequence number", async () => {
+			it("logs the raw checkpoint when initial messages normalize it", async () => {
 				const mockLogger = new MockLogger();
-				await startDeltaManager(true, mockLogger.toTelemetryLogger(), undefined, 5, 13);
+				const initialMessage = {
+					...generateOp(),
+					sequenceNumber: 14,
+				};
+				await startDeltaManager(true, mockLogger.toTelemetryLogger(), undefined, 5, 13, [
+					initialMessage,
+				]);
+
+				mockLogger.assertMatchAny([
+					{
+						eventName: "CheckpointSequenceNumberRegression",
+						checkpointSequenceNumber: 5,
+						lastProcessedSequenceNumber: 13,
+						lastQueuedSequenceNumber: 14,
+						lastObservedSequenceNumber: 14,
+						clientId: "test",
+						mode: "write",
+						socketDocumentId: "documentId",
+					},
+				]);
+			});
+
+			it("logs a regressed checkpoint after sequence tracking is initialized", async () => {
+				const mockLogger = new MockLogger();
+				await startDeltaManager(
+					true,
+					mockLogger.toTelemetryLogger(),
+					undefined,
+					5,
+					13,
+					undefined,
+					true,
+				);
 
 				mockLogger.assertMatch([
 					{
 						eventName: "CheckpointSequenceNumberRegression",
 						checkpointSequenceNumber: 5,
 						lastProcessedSequenceNumber: 13,
-						lastQueuedSequenceNumber: 13,
-						lastObservedSequenceNumber: 13,
-						clientId: "test",
-						mode: "write",
-						socketDocumentId: "documentId",
 					},
 				]);
 			});

@@ -190,6 +190,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	private lastObservedSeqNumber: number = 0;
 	private lastProcessedSequenceNumber: number = 0;
 	private lastProcessedMessage: ISequencedDocumentMessage | undefined;
+	private rawCheckpointSequenceNumber: number | undefined;
 
 	/**
 	 * Map of clientId to the last observed message from that client. This is used to validate
@@ -517,6 +518,25 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		this.emit("establishingConnection", reason);
 	}
 
+	private logCheckpointSequenceNumberRegression(): void {
+		if (
+			this.rawCheckpointSequenceNumber === undefined ||
+			this.rawCheckpointSequenceNumber >= this.lastProcessedSequenceNumber
+		) {
+			return;
+		}
+
+		this.logger.sendTelemetryEvent({
+			eventName: "CheckpointSequenceNumberRegression",
+			...this.connectionManager.connectionProps,
+			...this.connectionManager.connectionVerboseProps,
+			checkpointSequenceNumber: this.rawCheckpointSequenceNumber,
+			lastProcessedSequenceNumber: this.lastProcessedSequenceNumber,
+			lastQueuedSequenceNumber: this.lastQueuedSequenceNumber,
+			lastObservedSequenceNumber: this.lastObservedSeqNumber,
+		});
+	}
+
 	private connectHandler(connection: IConnectionDetailsInternal): void {
 		this.refreshDelayInfo(this.deltaStreamDelayId);
 
@@ -525,20 +545,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		props.connectionLastObservedSeqNumber = this.lastObservedSeqNumber;
 
 		const checkpointSequenceNumber = connection.checkpointSequenceNumber;
-		if (
-			checkpointSequenceNumber !== undefined &&
-			checkpointSequenceNumber < this.lastProcessedSequenceNumber
-		) {
-			this.logger.sendTelemetryEvent({
-				eventName: "CheckpointSequenceNumberRegression",
-				...this.connectionManager.connectionProps,
-				...props,
-				checkpointSequenceNumber,
-				lastProcessedSequenceNumber: this.lastProcessedSequenceNumber,
-				lastQueuedSequenceNumber: this.lastQueuedSequenceNumber,
-				lastObservedSequenceNumber: this.lastObservedSeqNumber,
-			});
-		}
+		this.rawCheckpointSequenceNumber = connection.rawCheckpointSequenceNumber;
+		this.logCheckpointSequenceNumberRegression();
 		this._checkpointSequenceNumber = checkpointSequenceNumber;
 		if (checkpointSequenceNumber !== undefined) {
 			this.updateLatestKnownOpSeqNumber(checkpointSequenceNumber);
@@ -619,6 +627,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		this.handler = handler;
 		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 		assert(!!this.handler, 0x0e3 /* "Newly set op handler is null/undefined!" */);
+		this.logCheckpointSequenceNumberRegression();
 
 		// There should be no pending fetch!
 		// This API is called right after attachOpHandler by Container.load().
