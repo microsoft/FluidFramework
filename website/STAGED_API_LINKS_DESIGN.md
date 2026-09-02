@@ -43,7 +43,7 @@ The design does not do these tasks:
 
 ### `PackageLink`
 
-Add an optional `newApi` prop:
+Add optional `newApi` and `replacementPackage` props:
 
 ```tsx
 export interface PackageLinkProps {
@@ -304,7 +304,7 @@ Update `website/src/components/shortLinks.tsx`:
 
 1. Add a helper that gets the active version and its manifest.
 2. Use this helper in `ApiLink`.
-3. Use this helper in `PackageLink` only when `newApi` is true.
+3. Use this helper in `PackageLink` when `newApi` is true or `replacementPackage` is present.
 4. Preserve the current normal `PackageLink` path construction.
 
 The helper must keep the current errors for a missing version context and a missing manifest. Error text can name the calling component.

@@ -3,15 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { useActivePluginAndVersion } from "@docusaurus/plugin-content-docs/client";
+import {
+	type GlobalVersion,
+	useActivePluginAndVersion,
+} from "@docusaurus/plugin-content-docs/client";
 import { usePluginData } from "@docusaurus/useGlobalData";
 import type { ReactNode } from "react";
 
 import { type ApiLinkManifests, apiLinkManifestPluginName } from "../apiLinkManifest";
-import { type ApiDeclarationReference, resolveApiLinkTarget } from "../apiLinkReference";
+import { type ApiDeclarationReference, tryResolveApiLinkTarget } from "../apiLinkReference";
 import type { SiteVersion } from "../utilityTypes";
 
-// TODO: how will versioning interact with these?
+const emittedTransitionWarnings = new Set<string>();
 
 /**
  * {@link PackageLink} input props.
@@ -28,7 +31,22 @@ export interface PackageLinkProps {
 	 */
 	package: string;
 
+	/**
+	 * The new unscoped package name after a package rename.
+	 *
+	 * @remarks Remove this prop and update {@link PackageLinkProps.package} when the new package API
+	 * documentation is available.
+	 */
+	replacementPackage?: string;
+
 	headingId?: string;
+
+	/**
+	 * Permits the package to be absent from the published API documentation.
+	 *
+	 * @remarks Remove this prop when the package API documentation is available.
+	 */
+	newApi?: boolean;
 }
 
 /**
@@ -37,17 +55,59 @@ export interface PackageLinkProps {
 export function PackageLink({
 	headingId,
 	package: packageName,
+	replacementPackage,
 	children,
+	newApi = false,
 }: PackageLinkProps): JSX.Element {
-	const root = useLinkPathBase();
+	const needsManifest = newApi || replacementPackage !== undefined;
+	const { activeVersion, manifest } = useApiLinkContext("PackageLink", needsManifest);
+	const root = `${activeVersion.path}/api/`;
 	const headingPostfix = headingId === undefined ? "" : `#${headingId}`;
-	return <a href={`${root}${packageName}${headingPostfix}`}>{children ?? packageName}</a>;
+	if (!needsManifest) {
+		return <a href={`${root}${packageName}${headingPostfix}`}>{children ?? packageName}</a>;
+	}
+
+	if (manifest === undefined) {
+		throw new Error(
+			`No API link manifest found for documentation version "${activeVersion.name}".`,
+		);
+	}
+
+	const defaultText = replacementPackage ?? packageName;
+	if (replacementPackage !== undefined && manifest[replacementPackage] !== undefined) {
+		warnOnce(
+			`PackageLink|replacementPackage|${activeVersion.name}|${replacementPackage}`,
+			`[PackageLink] Replacement package "${replacementPackage}" exists in API documentation version "${activeVersion.name}". Set package="${replacementPackage}" and remove the replacementPackage prop.`,
+		);
+		return (
+			<a href={`${root}${replacementPackage}${headingPostfix}`}>{children ?? defaultText}</a>
+		);
+	}
+
+	if (manifest[packageName] !== undefined) {
+		if (replacementPackage === undefined && newApi) {
+			warnOnce(
+				`PackageLink|newApi|${activeVersion.name}|${packageName}`,
+				`[PackageLink] Package "${packageName}" exists in API documentation version "${activeVersion.name}". Remove the newApi prop.`,
+			);
+		}
+		return <a href={`${root}${packageName}${headingPostfix}`}>{children ?? defaultText}</a>;
+	}
+
+	if (newApi) {
+		return <code>{children ?? defaultText}</code>;
+	}
+
+	return <a href={`${root}${packageName}${headingPostfix}`}>{children ?? defaultText}</a>;
 }
 
 /**
  * {@link ApiLink} input props.
  */
-export interface ApiLinkProps<TApiSelector extends string = string> {
+export interface ApiLinkProps<
+	TApiSelector extends string = string,
+	TReplacementApiSelector extends string = string,
+> {
 	/**
 	 * Contents to display within the link.
 	 * When omitted, the API declaration reference is displayed without selectors.
@@ -67,6 +127,21 @@ export interface ApiLinkProps<TApiSelector extends string = string> {
 	api: ApiDeclarationReference<TApiSelector>;
 
 	/**
+	 * The declaration reference for the API after a rename.
+	 *
+	 * @remarks Remove this prop and update {@link ApiLinkProps.api} when the replacement API
+	 * documentation is available.
+	 */
+	replacementApi?: ApiDeclarationReference<TReplacementApiSelector>;
+
+	/**
+	 * Permits the API to be absent from the published API documentation.
+	 *
+	 * @remarks Remove this prop when the API documentation is available.
+	 */
+	newApi?: boolean;
+
+	/**
 	 * Overrides the generated heading ID for the target API item.
 	 *
 	 * @deprecated Use a qualified {@link ApiLinkProps.api} reference to link directly to a member.
@@ -79,48 +154,103 @@ export interface ApiLinkProps<TApiSelector extends string = string> {
  *
  * @throws If the requested API cannot be uniquely resolved in the active documentation version.
  */
-export function ApiLink<const TApiSelector extends string>({
+export function ApiLink<
+	const TApiSelector extends string,
+	const TReplacementApiSelector extends string,
+>({
 	api,
 	package: packageName,
+	replacementApi,
+	newApi = false,
 	headingId,
 	children,
-}: ApiLinkProps<TApiSelector>): JSX.Element {
-	const activePluginAndVersion = useActivePluginAndVersion();
-	const manifests = usePluginData(apiLinkManifestPluginName, undefined, {
-		failfast: true,
-	}) as ApiLinkManifests;
-	const activeVersion = activePluginAndVersion?.activeVersion;
-	if (activeVersion === undefined) {
-		throw new Error("ApiLink must be rendered within a versioned Docusaurus document.");
-	}
-
-	const manifest = manifests[activeVersion.name as SiteVersion];
+}: ApiLinkProps<TApiSelector, TReplacementApiSelector>): JSX.Element {
+	const { activeVersion, manifest } = useApiLinkContext("ApiLink", true);
 	if (manifest === undefined) {
 		throw new Error(
 			`No API link manifest found for documentation version "${activeVersion.name}".`,
 		);
 	}
 
-	const { target, defaultText } = resolveApiLinkTarget(manifest, packageName, api);
-	const targetHeadingId = headingId ?? target.headingId;
-	const headingPostfix = targetHeadingId === undefined ? "" : `#${targetHeadingId}`;
-	return (
-		<a href={`${activeVersion.path}/api/${target.documentPath}${headingPostfix}`}>
-			{children ?? defaultText}
-		</a>
-	);
+	const replacementResult =
+		replacementApi === undefined
+			? undefined
+			: tryResolveApiLinkTarget(manifest, packageName, replacementApi);
+	const result = tryResolveApiLinkTarget(manifest, packageName, api);
+	if (replacementResult?.found === true) {
+		warnOnce(
+			`ApiLink|replacementApi|${activeVersion.name}|${packageName}|${replacementApi}`,
+			`[ApiLink] Replacement API "${packageName}/${replacementApi}" exists in API documentation version "${activeVersion.name}". Set api="${replacementApi}" and remove the replacementApi prop.`,
+		);
+		return renderApiLink(
+			activeVersion.path,
+			replacementResult.target,
+			headingId,
+			children ?? replacementResult.defaultText,
+		);
+	}
+
+	const defaultText = replacementResult?.defaultText ?? result.defaultText;
+	if (!result.found) {
+		if (newApi) {
+			return <code>{children ?? defaultText}</code>;
+		}
+		throw new Error(`No API documentation found for "${packageName}/${api}".`);
+	}
+
+	if (replacementApi === undefined && newApi) {
+		warnOnce(
+			`ApiLink|newApi|${activeVersion.name}|${packageName}|${api}`,
+			`[ApiLink] API "${packageName}/${api}" exists in API documentation version "${activeVersion.name}". Remove the newApi prop.`,
+		);
+	}
+
+	return renderApiLink(activeVersion.path, result.target, headingId, children ?? defaultText);
 }
 
-/**
- * Gets the base URI for a link to API docs.
- * Accounts for versioning.
- */
-function useLinkPathBase(): string {
+function renderApiLink(
+	versionPath: string,
+	target: { readonly documentPath: string; readonly headingId?: string },
+	headingId: string | undefined,
+	children: ReactNode,
+): JSX.Element {
+	const targetHeadingId = headingId ?? target.headingId;
+	const headingPostfix = targetHeadingId === undefined ? "" : `#${targetHeadingId}`;
+	return <a href={`${versionPath}/api/${target.documentPath}${headingPostfix}`}>{children}</a>;
+}
+
+function useApiLinkContext(
+	componentName: "ApiLink" | "PackageLink",
+	requireManifest: boolean,
+): {
+	readonly activeVersion: GlobalVersion;
+	readonly manifest: ApiLinkManifests[SiteVersion] | undefined;
+} {
 	const activeVersion = useActivePluginAndVersion()?.activeVersion;
+	const manifests = usePluginData(apiLinkManifestPluginName, undefined, {
+		failfast: requireManifest,
+	}) as ApiLinkManifests | undefined;
 	if (activeVersion === undefined) {
-		throw new Error("PackageLink must be rendered within a versioned Docusaurus document.");
+		throw new Error(
+			`${componentName} must be rendered within a versioned Docusaurus document.`,
+		);
 	}
-	return `${activeVersion.path}/api/`;
+
+	const manifest = manifests?.[activeVersion.name as SiteVersion];
+	if (requireManifest && manifest === undefined) {
+		throw new Error(
+			`No API link manifest found for documentation version "${activeVersion.name}".`,
+		);
+	}
+	return { activeVersion, manifest };
+}
+
+function warnOnce(key: string, message: string): void {
+	if (typeof window !== "undefined" || emittedTransitionWarnings.has(key)) {
+		return;
+	}
+	emittedTransitionWarnings.add(key);
+	console.warn(message);
 }
 
 /**

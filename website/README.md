@@ -157,6 +157,73 @@ For an overview of how to leverage React components in MDX documentation, see [h
 React components should be saved under `src/components/...`.
 They can be imported in other components, pages, and documents via `@site/src/components/...`.
 
+##### Linking to API documentation
+
+Use `PackageLink` and `ApiLink` to link to generated API documentation from an MDX document.
+These components select the API documentation for the active documentation version.
+
+Import the components that the document uses:
+
+```tsx
+import { ApiLink, PackageLink } from "@site/src/components/shortLinks";
+```
+
+Use the unscoped package name with both components.
+Use a TSDoc declaration reference for the `api` value of `ApiLink`:
+
+```mdx
+See <PackageLink package="fluid-framework" /> and <ApiLink package="fluid-framework" api="TreeView.upgradeSchema" />.
+```
+
+Add `newApi` when the current published API model does not contain a new package or API.
+The component renders its content as inline code until the target exists.
+When the target exists, the component renders a link and writes a build warning.
+Remove `newApi` when this warning occurs.
+
+```mdx
+<PackageLink package="new-package" newApi />
+
+<ApiLink package="fluid-framework" api="NewApi" newApi />
+```
+
+The `newApi` shorthand is equivalent to `newApi={true}`.
+Invalid references and ambiguous references remain build errors.
+Use a TSDoc selector to resolve an ambiguous API kind, such as `(NewApi:class)` or `(NewApi:interface)`.
+
+Use `replacementApi` when an API is renamed.
+Keep the old reference in `api` and put the new reference in `replacementApi`:
+
+```mdx
+<ApiLink package="fluid-framework" api="OldApi" replacementApi="(NewApi:class)" />
+```
+
+The component tries `replacementApi` first.
+It uses `api` while the published model contains only the old API.
+The visible default text uses the replacement name in both states.
+When the replacement exists, the component writes a build warning.
+Copy the `replacementApi` value to `api`, and then remove `replacementApi`.
+
+Use `replacementPackage` in the same way for a package rename:
+
+```mdx
+<PackageLink package="old-package" replacementPackage="new-package" />
+```
+
+When the replacement package exists, copy its name to `package`, and then remove `replacementPackage`.
+
+All transition modes permit explicit rich child content.
+The component preserves the child content when it renders a link or inline code:
+
+```mdx
+<ApiLink package="fluid-framework" api="NewApi" newApi>
+	**New API**
+</ApiLink>
+```
+
+Transition behavior is version-specific.
+A component can render inline code or use its old target in one documentation version and use its new target in another version.
+For implementation details and the complete behavior tables, see the [API link transitions design](./STAGED_API_LINKS_DESIGN.md).
+
 #### Comments
 
 A common pattern for adding inline comments in `.md` files looks like:
