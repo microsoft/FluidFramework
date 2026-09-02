@@ -7,6 +7,19 @@
  * Result of resolving a pending batchId. A resolved result includes the matched batch's last op server
  * timestamp when available. The property is optional for compatibility with previously stored results.
  *
+ * @remarks
+ * `kind` is the stable lifecycle disposition hosts drive their behavior from:
+ *
+ * - `resolved`: the mark resolved and can be used.
+ * - `pending`: the mark has not resolved yet but should be retained because it may become resolvable later.
+ * - `unresolvable`: resolution is terminal; stop retrying and leave the mark unresolved.
+ *
+ * `reason` is an optional, opaque diagnostic string explaining *why* the resolver returned that `kind`. It
+ * exists for logging and diagnostics only; hosts must not branch on it. New `reason` values may be added,
+ * changed, or omitted at any time, so acting on `kind` alone is always correct. It is transient operational
+ * context (not persisted). A future state that needs genuinely different host behavior should be a new
+ * `kind`, not a new `reason`.
+ *
  * @legacy @beta
  */
 export type ResolveResult =
@@ -15,8 +28,30 @@ export type ResolveResult =
 			readonly sequenceNumber: number;
 			readonly timestamp?: number;
 	  }
-	| { readonly kind: "pending" }
-	| { readonly kind: "unresolvable" };
+	| {
+			/**
+			 * The mark has not resolved yet but should be retained because it may become resolvable later.
+			 *
+			 * @remarks Diagnostic strings the runtime may set on `reason` (log-only, do not branch on them):
+			 *
+			 * - `awaitingSequence`: the runtime has not sequenced far enough to resolve the mark yet.
+			 * - `historicalOpsUnavailable`: the current loader does not provide the historical-op capability
+			 * needed to resolve an older mark; a later load with a capable loader may resolve it.
+			 */
+			readonly kind: "pending";
+			readonly reason?: string;
+	  }
+	| {
+			/**
+			 * Resolution is terminal. Stop retrying and leave the mark unresolved.
+			 *
+			 * @remarks Diagnostic strings the runtime may set on `reason` (log-only, do not branch on them):
+			 *
+			 * - `historyTrimmed`: the historical ops required to resolve the mark are no longer retained.
+			 */
+			readonly kind: "unresolvable";
+			readonly reason?: string;
+	  };
 
 /**
  * The data captured for a version mark. `pending` when the captured edit is local and not yet sequenced

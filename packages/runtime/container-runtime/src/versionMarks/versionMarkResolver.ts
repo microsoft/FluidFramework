@@ -144,10 +144,12 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 			if (resolvedBatch === undefined) {
 				const reader = this.hooks.getHistoricalOpReader?.();
 				if (reader === undefined) {
-					// No reader: the batch may still sequence live, so report pending.
+					// No reader: the batch may still sequence live, so report pending. The current loader
+					// does not provide the historical-op capability, so retrying with this pairing will not
+					// help (a later load with a capable loader may resolve it).
 					path = "noReader";
 					outcome = "pending";
-					return { kind: "pending" };
+					return { kind: "pending", reason: "historicalOpsUnavailable" };
 				}
 				// Otherwise scan history from the mark's reference point.
 				path = "history";
@@ -254,20 +256,20 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 		const tip = this.hooks.getCurrentSequenceNumber();
 		if (from > tip) {
 			// Nothing is sequenced at/after the mark's lower bound yet, so the batch cannot have landed.
-			return { kind: "pending" };
+			return { kind: "pending", reason: "awaitingSequence" };
 		}
 		if (firstScannedSequenceNumber === undefined) {
 			// Empty read though ops should exist in `[from, tip]` → trimmed. ODSP-specific: a strict driver
 			// empties a `from`-misaligned trimmed range (validateMessages); a return-from-earliest driver
 			// would instead surface the trim via the `firstScannedSequenceNumber > from` branch below.
-			return { kind: "unresolvable" };
+			return { kind: "unresolvable", reason: "historyTrimmed" };
 		}
 		if (firstScannedSequenceNumber > from) {
 			// A trim gap at the anchor: the mark's ops (at/after its lower bound) are gone.
-			return { kind: "unresolvable" };
+			return { kind: "unresolvable", reason: "historyTrimmed" };
 		}
 		// Ops are present from the lower bound and the batch is not among them: not yet sequenced.
-		return { kind: "pending" };
+		return { kind: "pending", reason: "awaitingSequence" };
 	}
 
 	public onBatchSequenced(
