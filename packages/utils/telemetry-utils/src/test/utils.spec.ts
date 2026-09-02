@@ -124,8 +124,14 @@ describe("Sampling", () => {
 
 		const totalEventCount = 15;
 		for (let i = 0; i < totalEventCount; i++) {
-			loggerWithoutSampling.send({ category: "generic", eventName: "noSampling" });
-			loggerWithEvery5Sampling.send({ category: "generic", eventName: "oneEveryFive" });
+			loggerWithoutSampling.send(
+				{ category: "generic", eventName: "noSampling" },
+				LogLevel.essential,
+			);
+			loggerWithEvery5Sampling.send(
+				{ category: "generic", eventName: "oneEveryFive" },
+				LogLevel.essential,
+			);
 		}
 		assert.equal(
 			events.filter((event) => event.eventName === "noSampling").length,
@@ -148,7 +154,10 @@ describe("Sampling", () => {
 
 		const totalEventCount = 15;
 		for (let i = 0; i < totalEventCount; i++) {
-			loggerWithoutSampling.send({ category: "generic", eventName: "noSampling" });
+			loggerWithoutSampling.send(
+				{ category: "generic", eventName: "noSampling" },
+				LogLevel.essential,
+			);
 		}
 		assert.equal(
 			events.filter((event) => event.eventName === "noSampling").length,
@@ -167,7 +176,10 @@ describe("Sampling", () => {
 
 		const totalEventCount = 15;
 		for (let i = 0; i < totalEventCount; i++) {
-			loggerWithoutSampling.send({ category: "generic", eventName: "noSampling" });
+			loggerWithoutSampling.send(
+				{ category: "generic", eventName: "noSampling" },
+				LogLevel.essential,
+			);
 		}
 		assert.equal(
 			events.filter((event) => event.eventName === "noSampling").length,
@@ -194,8 +206,14 @@ describe("Sampling", () => {
 
 		const totalEventCount = 15;
 		for (let i = 0; i < totalEventCount; i++) {
-			loggerWithoutSampling.send({ category: "generic", eventName: "noSampling" });
-			loggerWithEvery5Sampling.send({ category: "generic", eventName: "oneEveryFive" });
+			loggerWithoutSampling.send(
+				{ category: "generic", eventName: "noSampling" },
+				LogLevel.essential,
+			);
+			loggerWithEvery5Sampling.send(
+				{ category: "generic", eventName: "oneEveryFive" },
+				LogLevel.essential,
+			);
 		}
 		assert.equal(
 			events.filter((event) => event.eventName === "noSampling").length,
@@ -230,9 +248,18 @@ describe("Sampling", () => {
 
 		const totalEventCount = 15;
 		for (let i = 0; i < totalEventCount; i++) {
-			loggerWithoutSampling.send({ category: "generic", eventName: "noSampling" });
-			loggerWithEvery3Sampling.send({ category: "generic", eventName: "oneEveryThree" });
-			loggerWithEvery5Sampling.send({ category: "generic", eventName: "oneEveryFive" });
+			loggerWithoutSampling.send(
+				{ category: "generic", eventName: "noSampling" },
+				LogLevel.essential,
+			);
+			loggerWithEvery3Sampling.send(
+				{ category: "generic", eventName: "oneEveryThree" },
+				LogLevel.essential,
+			);
+			loggerWithEvery5Sampling.send(
+				{ category: "generic", eventName: "oneEveryFive" },
+				LogLevel.essential,
+			);
 		}
 
 		assert.equal(
@@ -309,15 +336,18 @@ describe("Sampling", () => {
 				exampleAppDataModeString = "not_ready";
 			}
 
-			loggerWithSampling.send({
-				category: "generic",
-				eventName,
-				eventNumber: i,
-				appNumber1: exampleAppDataNumber1,
-				appNumber2: exampleAppDataNumber2,
-				appBoolean1: exampleAppDataBoolean1,
-				appModeString: exampleAppDataModeString,
-			});
+			loggerWithSampling.send(
+				{
+					category: "generic",
+					eventName,
+					eventNumber: i,
+					appNumber1: exampleAppDataNumber1,
+					appNumber2: exampleAppDataNumber2,
+					appBoolean1: exampleAppDataBoolean1,
+					appModeString: exampleAppDataModeString,
+				},
+				LogLevel.essential,
+			);
 		}
 
 		const emittedEvents = events.filter((event) => event.eventName === eventName);

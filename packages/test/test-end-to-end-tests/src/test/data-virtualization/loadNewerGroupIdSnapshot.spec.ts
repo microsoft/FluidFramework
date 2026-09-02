@@ -21,6 +21,7 @@ import type {
 	IConfigProviderBase,
 	IFluidHandle,
 } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import { Deferred, delay } from "@fluidframework/core-utils/internal";
 import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
@@ -489,11 +490,14 @@ describeCompat(
 						"submitSummary should fail in base stage because summarizer is behind",
 					);
 				} else {
-					dataObjectA1.logger.send({
-						category: "error",
-						eventName: "FluidDataStoreContext:RealizeError",
-						error: "Summarizer client behind, loaded newer snapshot with loadingGroupId",
-					});
+					dataObjectA1.logger.send(
+						{
+							category: "error",
+							eventName: "FluidDataStoreContext:RealizeError",
+							error: "Summarizer client behind, loaded newer snapshot with loadingGroupId",
+						},
+						LogLevel.essential,
+					);
 				}
 			},
 		);
