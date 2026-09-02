@@ -491,6 +491,20 @@ export interface IContainerContext {
  */
 export interface IContainerContextInternal extends IContainerContext {
 	/**
+	 * Reports whether the runtime has local operations that have not been acknowledged.
+	 *
+	 * @remarks
+	 * This is intentionally distinct from {@link IContainerContext.updateDirtyContainerState}, whose
+	 * host-facing state may also include outstanding attachment blob work. The loader uses the op-only
+	 * state for reconnect ordering and pending-state snapshot management, where blobs are irrelevant.
+	 *
+	 * Optional for compatibility with older loaders. A runtime must not broaden host-facing dirty state
+	 * to include blobs unless this callback is available, since older loaders use the host-facing state
+	 * for op-specific decisions.
+	 */
+	readonly updatePendingOpState?: (pending: boolean) => void;
+
+	/**
 	 * Reads a range of sequenced ops from delta storage, the read counterpart of `submitFn`. The container
 	 * owns delta storage and injects this so the runtime can pull historical ops (e.g. to resolve a batch
 	 * identity to a sequence number). `abortSignal` cancels an in-flight fetch when the runtime stops reading

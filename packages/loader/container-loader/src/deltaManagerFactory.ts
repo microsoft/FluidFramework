@@ -18,6 +18,7 @@ export interface ICreateDeltaManagerProps {
 	readonly logger: TelemetryLoggerExt;
 	readonly active: () => boolean;
 	readonly containerDirty: () => boolean;
+	readonly containerOpDirty: () => boolean;
 	readonly client: IClient;
 	readonly reconnectAllowed: boolean;
 	readonly maxInitialConnectionAttempts?: number;
@@ -31,6 +32,7 @@ export function createDeltaManager({
 	logger,
 	active,
 	containerDirty,
+	containerOpDirty,
 	client,
 	reconnectAllowed,
 	maxInitialConnectionAttempts,
@@ -43,6 +45,7 @@ export function createDeltaManager({
 			new ConnectionManager(
 				serviceProvider,
 				containerDirty,
+				containerOpDirty,
 				client,
 				reconnectAllowed,
 				createChildLogger({ logger, namespace: "ConnectionManager" }),

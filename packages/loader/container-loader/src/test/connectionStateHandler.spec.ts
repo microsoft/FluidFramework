@@ -156,7 +156,7 @@ describe("ConnectionStateHandler Tests", () => {
 		const logger = createChildLogger();
 		handlerInputs = {
 			maxClientLeaveWaitTime: expectedTimeout,
-			shouldClientJoinWrite: (): boolean => shouldClientJoinWrite,
+			hasPendingOps: (): boolean => shouldClientJoinWrite,
 			logConnectionIssue: (
 				eventName: string,
 				category: TelemetryEventCategory,
@@ -686,6 +686,29 @@ describe("ConnectionStateHandler Tests", () => {
 		);
 	});
 
+	it("write connection without pending ops does not wait for the previous client to leave", async () => {
+		connectionDetails.mode = "write";
+		connectionStateHandler.receivedConnectEvent(connectionDetails);
+		connectionStateHandler_receivedAddMemberEvent(pendingClientId);
+		assert.strictEqual(
+			connectionStateHandler.connectionState,
+			ConnectionState.Connected,
+			"Client 1 should be connected",
+		);
+
+		// The next connection is writable, but no op was submitted under Client 1.
+		shouldClientJoinWrite = false;
+		connectionStateHandler.receivedDisconnectEvent({ text: "Test" });
+
+		connectionStateHandler.receivedConnectEvent(connectionDetails2);
+		connectionStateHandler_receivedAddMemberEvent(pendingClientId2);
+		assert.strictEqual(
+			connectionStateHandler.connectionState,
+			ConnectionState.Connected,
+			"Client 2 should not wait for Client 1's Leave when no old-client op is pending",
+		);
+	});
+
 	it("Should wait for timeout before moving to connected state if no leave received", async () => {
 		connectionDetails.mode = "write";
 		connectionStateHandler.receivedConnectEvent(connectionDetails);
@@ -766,8 +789,8 @@ describe("ConnectionStateHandler Tests", () => {
 			"Client 2 should still be in connecting state as we are waiting for timeout",
 		);
 
-		// Fire the container saved event.
-		connectionStateHandler.containerSaved();
+		// Report that all pending operations have been saved.
+		connectionStateHandler.pendingOpsSaved();
 		assert.strictEqual(
 			connectionStateHandler.connectionState,
 			ConnectionState.Connected,
@@ -984,7 +1007,7 @@ describe("ConnectionStateHandler Tests", () => {
 			"Client 3 should still be in connecting state as timeout has not occurred",
 		);
 
-		connectionStateHandler.containerSaved();
+		connectionStateHandler.pendingOpsSaved();
 		assert.strictEqual(
 			connectionStateHandler.connectionState,
 			ConnectionState.Connected,
