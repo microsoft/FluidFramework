@@ -766,15 +766,22 @@ Snapshots exist for versions: [
 			);
 		});
 
-		it("rejects path separators in custom snapshot file name format", () => {
+		it("rejects invalid characters in custom snapshot file name format", () => {
 			const [fileSystem] = inMemorySnapshotFileSystem();
 			const schema = new TreeViewConfiguration({ schema: [] });
 
 			for (const [property, value] of [
 				["prefix", "schema/"],
 				["prefix", "schema\\"],
-				["suffix", "/snapshot"],
-				["suffix", "\\snapshot"],
+				["prefix", "schema\0"],
+				["prefix", "schema\u0001"],
+				["suffix", "<snapshot"],
+				["suffix", ">snapshot"],
+				["suffix", ":snapshot"],
+				["suffix", '"snapshot'],
+				["suffix", "|snapshot"],
+				["suffix", "?snapshot"],
+				["suffix", "*snapshot"],
 			] as const) {
 				assert.throws(
 					() =>
@@ -788,7 +795,7 @@ Snapshots exist for versions: [
 							snapshotFileNameFormat: { [property]: value },
 						}),
 					validateUsageError(
-						`Invalid snapshotFileNameFormat.${property}: ${JSON.stringify(value)}. Must not contain path separators ("/" or "\\").`,
+						`Invalid snapshotFileNameFormat.${property}: ${JSON.stringify(value)}. Must not contain ASCII control characters or any of <>:"/\\|?*.`,
 					),
 				);
 			}

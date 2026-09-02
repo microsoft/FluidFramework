@@ -272,7 +272,7 @@ export interface SnapshotSchemaCompatibilityOptions {
 	 * For example, `{ prefix: "schema-", suffix: "-snapshot" }` produces `schema-1.0.0-snapshot.json` for version `1.0.0`.
 	 *
 	 * Only JSON files matching this format are treated as schema snapshots.
-	 * The prefix and suffix must not contain path separators ("/" or "\").
+	 * The prefix and suffix must not contain ASCII control characters or characters that are invalid in cross-platform file names.
 	 */
 	readonly snapshotFileNameFormat?: {
 		/**
@@ -776,13 +776,15 @@ export class SnapshotCompatibilityChecker {
 		} = {},
 	) {
 		const { prefix = "", suffix = "" } = snapshotFileNameFormat;
+		// eslint-disable-next-line no-control-regex -- The control character range is intentionally invalid for cross-platform file names.
+		const invalidFileNameCharacters = /[\u0000-\u001F<>:"/\\|?*]/u;
 		for (const [property, value] of [
 			["prefix", prefix],
 			["suffix", suffix],
 		] as const) {
-			if (value.includes("/") || value.includes("\\")) {
+			if (invalidFileNameCharacters.test(value)) {
 				throw new UsageError(
-					`Invalid snapshotFileNameFormat.${property}: ${JSON.stringify(value)}. Must not contain path separators ("/" or "\\").`,
+					`Invalid snapshotFileNameFormat.${property}: ${JSON.stringify(value)}. Must not contain ASCII control characters or any of <>:"/\\|?*.`,
 				);
 			}
 		}
@@ -844,11 +846,17 @@ export class SnapshotCompatibilityChecker {
 		this.fileSystemMethods.mkdirSync(this.snapshotDirectory, { recursive: true });
 	}
 
+	/**
+	 * Builds the file name used to read or write a snapshot with a known snapshot name.
+	 */
 	private getSnapshotFileName(snapshotName: string): string {
 		const { prefix = "", suffix = "" } = this.snapshotFileNameFormat;
 		return `${prefix}${snapshotName}${suffix}.json`;
 	}
 
+	/**
+	 * Extracts the snapshot name from a matching file found while scanning the snapshot directory.
+	 */
 	private getSnapshotName(fileName: string): string | undefined {
 		const extension = ".json";
 		if (!fileName.endsWith(extension)) {
