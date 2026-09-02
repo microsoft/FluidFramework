@@ -18,6 +18,10 @@ This is processed for entrypoint generation along public and legacy lines.
 Main entry for internal access that re-exports main.ts and all internal only APIs, which mak up the largest part of this package.
 This can include non-deprecated versions of externally accessible APIs and/or APIs with internal-only typing.
 
+## How are tagged loggers handled across Fluid layers?
+
+Supported loaders provide a tagged logger to the container runtime. Telemetry utilities do not adapt untagged loggers from loaders outside the supported layer compatibility window.
+
 # Current work
 
 ## ITelemetryLoggerExt external deprecation

@@ -66,7 +66,6 @@ export {
 	type MultiSinkLoggerProperties,
 	numberFromString,
 	PerformanceEvent,
-	TaggedLoggerAdapter,
 	tagData,
 	tagCodeArtifacts,
 	TelemetryDataTag,

@@ -97,6 +97,8 @@ A telemetry event named `LayerIncompatibilityError` will be logged whenever a la
 
 Layer compatibility policy describes specific **support windows** between layers to ensure reliable interoperability while allowing independent upgrades. These windows define how far apart (in months) two adjacent layers can be before they become incompatible.
 
+These rolling support windows supersede the historical policy that tied compatibility to a fixed loader LTS version.
+
 ### Support Window by Layer Boundary
 
 | Layer Boundary | Support Window | What This Means |
