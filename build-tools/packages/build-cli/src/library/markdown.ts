@@ -60,9 +60,15 @@ export function addHeadingLinks(): (tree: Node) => void {
  *
  * This regular expression matches patterns in the form of `[!WORD]` where WORD can be CAUTION, IMPORTANT, NOTE, TIP, or
  * WARNING. It ensures that the pattern is not followed by only whitespace characters until the end of the line.
- * Additionally, it captures any whitespace characters that follow the matched pattern.
+ * Additionally, it consumes any whitespace characters that follow the matched pattern, so those characters are part of
+ * the overall match even though they are not part of capture group 1.
+ *
+ * Exported for testing. Note that this regular expression is global, so `exec`/`test` mutate its `lastIndex`; copy it
+ * with `new RegExp(ADMONITION_REGEX)` before using those methods.
+ *
+ * @internal
  */
-const ADMONITION_REGEX = /(\[!(?:CAUTION|IMPORTANT|NOTE|TIP|WARNING)])(?!\s*$)\s*/gm;
+export const ADMONITION_REGEX = /(\[!(?:CAUTION|IMPORTANT|NOTE|TIP|WARNING)])(?!\s*$)\s*/gm;
 
 /**
  * A regular expression to remove single line breaks from text. This is used to remove extraneous line breaks in text
