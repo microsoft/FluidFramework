@@ -950,6 +950,12 @@ export class ContainerRuntime
 			minVersionForCollab = defaultMinVersionForCollab,
 		} = params;
 
+		if (context.taggedLogger === undefined) {
+			const error = new UsageError("Loader must provide a tagged logger");
+			context.closeFn(error);
+			throw error;
+		}
+
 		const logger = createChildLogger({
 			logger: context.taggedLogger,
 			properties: {
@@ -1685,7 +1691,6 @@ export class ContainerRuntime
 			maybeLoaderCompatDetailsForRuntime.ILayerCompatDetails,
 			this.disposeFn,
 			this.mc,
-			context.taggedLogger === undefined,
 		);
 
 		// If we support multiple algorithms in the future, then we would need to manage it here carefully.

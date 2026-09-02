@@ -64,7 +64,6 @@ import {
 	createChildLogger,
 	isFluidError,
 	isILoggingError,
-	isLayerIncompatibilityError,
 	mixinMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -101,6 +100,7 @@ import type {
 } from "../opLifecycle/index.js";
 import { pkgVersion } from "../packageVersion.js";
 import type { IPendingMessage, PendingStateManager } from "../pendingStateManager.js";
+import { disableStrictLoaderLayerCompatibilityCheckKey } from "../runtimeLayerCompatState.js";
 import {
 	type ISummaryCancellationToken,
 	neverCancelledSummaryToken,
@@ -336,33 +336,43 @@ describe("Runtime", () => {
 
 	describe("Container Runtime", () => {
 		describe("legacy loader compatibility", () => {
-			it("rejects a loader without tagged logger or compatibility details", async () => {
-				const untaggedLogger = new MockLogger();
-				const disposeFn = Sinon.fake();
-				const legacyContext = {
-					...getMockContext(),
-					taggedLogger: undefined,
-					logger: untaggedLogger,
-					disposeFn,
-				};
+			for (const [name, settings] of [
+				["strict compatibility enabled by default", {}],
+				[
+					"strict compatibility disabled",
+					{ [disableStrictLoaderLayerCompatibilityCheckKey]: true },
+				],
+			] as const) {
+				it(`rejects a loader without a tagged logger when ${name}`, async () => {
+					const untaggedLogger = new MockLogger();
+					const closeFn = Sinon.fake();
+					const legacyContext = {
+						...getMockContext({ logger: untaggedLogger, settings }),
+						taggedLogger: undefined,
+						logger: untaggedLogger,
+						closeFn,
+					};
 
-				await assert.rejects(
-					ContainerRuntime.loadRuntime2({
-						context: legacyContext as unknown as IContainerContext,
-						registry: new FluidDataStoreRegistry([]),
-						existing: false,
-						provideEntryPoint: mockProvideEntryPoint,
-					}),
-					(error: Error) => isLayerIncompatibilityError(error),
-				);
+					await assert.rejects(
+						ContainerRuntime.loadRuntime2({
+							context: legacyContext as unknown as IContainerContext,
+							registry: new FluidDataStoreRegistry([]),
+							existing: false,
+							provideEntryPoint: mockProvideEntryPoint,
+						}),
+						(error: Error) =>
+							error instanceof UsageError &&
+							error.message === "Loader must provide a tagged logger",
+					);
 
-				assert(disposeFn.calledOnce, "The incompatible container should be disposed");
-				assert.deepEqual(
-					untaggedLogger.events,
-					[],
-					"Runtime telemetry must not be sent to the untagged logger",
-				);
-			});
+					assert(closeFn.calledOnce, "The incompatible container should be closed");
+					assert.deepEqual(
+						untaggedLogger.events,
+						[],
+						"Runtime telemetry must not be sent to the untagged logger",
+					);
+				});
+			}
 		});
 
 		describe("IdCompressor", () => {
