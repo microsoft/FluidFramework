@@ -1198,6 +1198,7 @@ export class Container
 			this.clientId,
 			this.runtime,
 			this.resolvedUrl,
+			this.service?.getDriverState?.(),
 		);
 		return pendingState;
 	}
@@ -1567,7 +1568,9 @@ export class Container
 	 */
 	private async createDocumentService(
 		resolvedUrl: IResolvedUrl,
-		props: { mode: "load" } | { mode: "attach"; summary: ISummaryTree | undefined },
+		props:
+			| { mode: "load"; driverState?: unknown }
+			| { mode: "attach"; summary: ISummaryTree | undefined },
 	): Promise<IDocumentService> {
 		let service: IDocumentService;
 		if (props.mode === "load") {
@@ -1576,6 +1579,9 @@ export class Container
 				this.subLogger,
 				this.client.details.type === summarizerClientType,
 			);
+			if (props.driverState !== undefined) {
+				service.setDriverState?.(props.driverState);
+			}
 			if (service.on !== undefined) {
 				// Back-compat for Old driver
 				service.on("metadataUpdate", this.metadataUpdateHandler);
@@ -1624,7 +1630,10 @@ export class Container
 		numUnsummarizedOps: number;
 	}> {
 		const timings: Record<string, number> = { phase1: performanceNow() };
-		this.service = await this.createDocumentService(resolvedUrl, { mode: "load" });
+		this.service = await this.createDocumentService(resolvedUrl, {
+			mode: "load",
+			driverState: pendingLocalState?.driverState,
+		});
 
 		// Except in cases where its requested by feature gate, the container will connect in "read" mode
 		const mode =

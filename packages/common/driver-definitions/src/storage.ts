@@ -373,6 +373,15 @@ export interface IDocumentService extends IEventProvider<IDocumentServiceEvents>
 	resolvedUrl: IResolvedUrl;
 
 	/**
+	 * Returns opaque driver state that should be preserved with pending container state.
+	 */
+	getDriverState?(): unknown;
+	/**
+	 * Restores opaque driver state preserved with pending container state.
+	 */
+	setDriverState?(state: unknown): void;
+
+	/**
 	 * Policies implemented/instructed by driver.
 	 */
 	policies?: IDocumentServicePolicies | undefined;

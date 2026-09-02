@@ -27,6 +27,7 @@ import {
 	createChildMonitoringContext,
 	type MonitoringContext,
 	type TelemetryLoggerExt,
+	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { HostStoragePolicyInternal } from "./contracts.js";
@@ -164,6 +165,17 @@ export class OdspDocumentService
 	}
 	public get policies(): IDocumentServicePolicies {
 		return this._policies;
+	}
+
+	public getDriverState(): string | undefined {
+		return this.epochTracker.fluidEpoch;
+	}
+
+	public setDriverState(state: unknown): void {
+		if (typeof state !== "string") {
+			throw new UsageError("ODSP driver state must be an epoch string");
+		}
+		this.epochTracker.setEpoch(state, false, "cache");
 	}
 
 	/**

@@ -43,6 +43,14 @@ export abstract class DocumentServiceProxy
 		return this._service.connectToDeltaStream(client);
 	}
 
+	public getDriverState(): unknown {
+		return this._service.getDriverState?.();
+	}
+
+	public setDriverState(state: unknown): void {
+		this._service.setDriverState?.(state);
+	}
+
 	public dispose(error?: unknown): void {
 		this._service.dispose(error);
 	}
