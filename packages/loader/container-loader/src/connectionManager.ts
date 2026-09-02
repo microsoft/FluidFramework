@@ -274,8 +274,8 @@ export class ConnectionManager implements IConnectionManager {
 	public shouldJoinWrite(): boolean {
 		// Previous behavior was to force write mode here only when there are outstanding ops (besides
 		// no-ops). Op dirty state provides the same behavior for stashed ops that have not reached the
-		// container layer yet, while aggregate dirty state additionally requests write mode for blob work
-		// whose BlobAttach op has not been created yet.
+		// container layer yet, while aggregate dirty state may additionally request write mode for local
+		// work that has not produced an operation yet.
 		const outstandingOps = this.hasOutstandingOps;
 		const opDirty = this.containerOpDirty();
 		const isDirty = this.containerDirty();
@@ -291,9 +291,9 @@ export class ConnectionManager implements IConnectionManager {
 	/**
 	 * Whether the current or prior connection may still have local operations in flight.
 	 *
-	 * @remarks Unlike {@link ConnectionManager.shouldJoinWrite}, this deliberately excludes attachment
-	 * blob work that has not produced a BlobAttach op. Reconnect ordering only needs to wait for the
-	 * previous client when an operation could still be sequenced under that client's ID.
+	 * @remarks Unlike {@link ConnectionManager.shouldJoinWrite}, this deliberately excludes aggregate
+	 * dirty-state contributions that have not produced an operation. Reconnect ordering only needs to
+	 * wait for the previous client when an operation could still be sequenced under that client's ID.
 	 */
 	public hasPendingOps(): boolean {
 		return this.hasOutstandingOps || this.containerOpDirty();

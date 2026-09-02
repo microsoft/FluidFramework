@@ -495,12 +495,12 @@ export interface IContainerContextInternal extends IContainerContext {
 	 *
 	 * @remarks
 	 * This is intentionally distinct from {@link IContainerContext.updateDirtyContainerState}, whose
-	 * host-facing state may also include outstanding attachment blob work. The loader uses the op-only
-	 * state for reconnect ordering and pending-state snapshot management, where blobs are irrelevant.
+	 * host-facing state may include local work that has not produced an operation. The loader uses the
+	 * op-only state for reconnect ordering and pending-state snapshot management.
 	 *
-	 * Optional for compatibility with older loaders. A runtime must not broaden host-facing dirty state
-	 * to include blobs unless this callback is available, since older loaders use the host-facing state
-	 * for op-specific decisions.
+	 * Optional for compatibility with older loaders. A runtime must report op-only state separately before
+	 * broadening host-facing dirty state, since older loaders use the host-facing state for op-specific
+	 * decisions.
 	 */
 	readonly updatePendingOpState?: (pending: boolean) => void;
 

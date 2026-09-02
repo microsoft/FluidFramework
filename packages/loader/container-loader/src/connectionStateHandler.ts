@@ -467,7 +467,7 @@ export class ConnectionStateHandler implements IConnectionStateHandler {
 	public pendingOpsSaved(): void {
 		// If we were waiting for moving to Connected state, then only apply for state change. Since the container
 		// has no pending ops to roundtrip, we can clear the timer and apply for connected state. Aggregate
-		// host-facing dirty state may remain true because of attachment blob work.
+		// host-facing dirty state may remain true because of non-op work.
 		if (this.waitingForLeaveOp) {
 			this.prevClientLeftTimer.clear();
 			this.applyForConnectedState("pendingOpsSaved");

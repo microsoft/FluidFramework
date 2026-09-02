@@ -188,8 +188,8 @@ export class SerializedStateManager implements IDisposable {
 	 * @param storageAdapter - Storage adapter for fetching snapshots
 	 * @param offlineLoadEnabled - Is serializing/rehydrating containers allowed?
 	 * @param pendingOpEvent - Source of the "saved" event when the container has no pending operations.
-	 * @param hasPendingOps - Whether local operations may not have been received by the service yet. Attachment
-	 * blob work is excluded because it is serialized independently and does not prevent advancing the snapshot.
+	 * @param hasPendingOps - Whether local operations may not have been received by the service yet. Aggregate
+	 * non-op work is excluded because it cannot leave the pending-operation state behind a newer snapshot.
 	 */
 	constructor(
 		subLogger: ITelemetryBaseLogger,
