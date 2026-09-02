@@ -5,7 +5,11 @@
 
 import type { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import {
+	DoublyLinkedList,
+	assert,
+	unreachableCase,
+} from "@fluidframework/core-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import { ValueType } from "@fluidframework/shared-object-base/internal";
 
@@ -74,6 +78,12 @@ export type IMapDataObjectSerialized = Record<string, ISerializedValue>;
 interface PendingKeySet {
 	type: "set";
 	value: ILocalValue;
+	/**
+	 * Back-pointer to the {@link PendingKeyLifetime} that contains this keySet. Lets consumers
+	 * (e.g. rollback) locate the containing lifetime in O(1) given just the keySet metadata,
+	 * avoiding a linear scan over `pendingData`.
+	 */
+	lifetime: PendingKeyLifetime;
 }
 
 interface PendingKeyDelete {
@@ -89,11 +99,11 @@ interface PendingKeyLifetime {
 	type: "lifetime";
 	key: string;
 	/**
-	 * A non-empty array of pending key sets that occurred during this lifetime.  If the list
+	 * A non-empty list of pending key sets that occurred during this lifetime.  If the list
 	 * becomes empty (e.g. during processing or rollback), the lifetime no longer exists and
 	 * must be removed from the pending data.
 	 */
-	keySets: PendingKeySet[];
+	keySets: DoublyLinkedList<PendingKeySet>;
 }
 
 /**
@@ -219,7 +229,7 @@ export class MapKernel {
 					if (nextPendingEntryIndex > mostRecentDeleteOrClearIndex) {
 						const latestPendingValue =
 							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-							nextPendingEntry.keySets[nextPendingEntry.keySets.length - 1]!;
+							nextPendingEntry.keySets.last!.data;
 						// Skip iterating if we would have would have already iterated it as part of the sequenced data.
 						// This is not a perfect check in the case the map has changed since the iterator was created
 						// (e.g. if a remote client added the same key in the meantime).
@@ -357,7 +367,7 @@ export class MapKernel {
 		} else if (latestPendingEntry.type === "lifetime") {
 			const latestPendingSet =
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				latestPendingEntry.keySets[latestPendingEntry.keySets.length - 1]!;
+				latestPendingEntry.keySets.last!.data;
 			return latestPendingSet.value;
 		} else {
 			// Delete or clear
@@ -419,12 +429,17 @@ export class MapKernel {
 			latestPendingEntry.type === "delete" ||
 			latestPendingEntry.type === "clear"
 		) {
-			latestPendingEntry = { type: "lifetime", key, keySets: [] };
+			latestPendingEntry = {
+				type: "lifetime",
+				key,
+				keySets: new DoublyLinkedList<PendingKeySet>(),
+			};
 			this.pendingData.push(latestPendingEntry);
 		}
 		const pendingKeySet: PendingKeySet = {
 			type: "set",
 			value: localValue,
+			lifetime: latestPendingEntry,
 		};
 		latestPendingEntry.keySets.push(pendingKeySet);
 
@@ -655,43 +670,47 @@ export class MapKernel {
 					this.eventEmitter,
 				);
 			}
+		} else if (typedLocalOpMetadata.type === "set") {
+			// Fast path: the PendingKeySet carries a back-pointer to its containing lifetime, so
+			// we can locate the lifetime in O(1) without a linear scan over pendingData. Only if
+			// removing the keySet leaves the lifetime empty do we need to find its position in
+			// pendingData to splice it out.
+			const pendingEntry = typedLocalOpMetadata.lifetime;
+			const pendingKeySetNode = pendingEntry.keySets.pop();
+			assert(
+				pendingKeySetNode?.data === typedLocalOpMetadata,
+				0xbf5 /* Unexpected set rollback */,
+			);
+			if (pendingEntry.keySets.empty) {
+				const pendingEntryIndex = this.pendingData.indexOf(pendingEntry);
+				assert(pendingEntryIndex !== -1, "lifetime must be present in pendingData");
+				this.pendingData.splice(pendingEntryIndex, 1);
+			}
+			this.eventEmitter.emit(
+				"valueChanged",
+				{ key: mapOp.key, previousValue: pendingKeySetNode.data.value.value },
+				true,
+				this.eventEmitter,
+			);
 		} else {
-			// A pending set/delete may not be last in the list, as the lifetimes' order is based on when
-			// they were created, not when they were last modified.
+			// Delete rollback: a pending delete may not be last in the list, as the lifetimes'
+			// order is based on when they were created, not when they were last modified.
 			const pendingEntryIndex = findLastIndex(
 				this.pendingData,
 				(entry) => entry.type !== "clear" && entry.key === mapOp.key,
 			);
 			const pendingEntry = this.pendingData[pendingEntryIndex];
 			assert(
-				pendingEntry !== undefined &&
-					(pendingEntry.type === "delete" || pendingEntry.type === "lifetime"),
+				pendingEntry?.type === "delete",
 				0xbf3 /* Unexpected pending data for set/delete op */,
 			);
-			if (pendingEntry.type === "delete") {
-				assert(pendingEntry === typedLocalOpMetadata, 0xbf4 /* Unexpected delete rollback */);
-				this.pendingData.splice(pendingEntryIndex, 1);
-				// Only emit if rolling back the delete actually results in a value becoming visible.
-				if (this.getOptimisticLocalValue(mapOp.key) !== undefined) {
-					this.eventEmitter.emit(
-						"valueChanged",
-						{ key: mapOp.key, previousValue: undefined },
-						true,
-						this.eventEmitter,
-					);
-				}
-			} else if (pendingEntry.type === "lifetime") {
-				const pendingKeySet = pendingEntry.keySets.pop();
-				assert(
-					pendingKeySet !== undefined && pendingKeySet === typedLocalOpMetadata,
-					0xbf5 /* Unexpected set rollback */,
-				);
-				if (pendingEntry.keySets.length === 0) {
-					this.pendingData.splice(pendingEntryIndex, 1);
-				}
+			assert(pendingEntry === typedLocalOpMetadata, 0xbf4 /* Unexpected delete rollback */);
+			this.pendingData.splice(pendingEntryIndex, 1);
+			// Only emit if rolling back the delete actually results in a value becoming visible.
+			if (this.getOptimisticLocalValue(mapOp.key) !== undefined) {
 				this.eventEmitter.emit(
 					"valueChanged",
-					{ key: mapOp.key, previousValue: pendingKeySet.value.value },
+					{ key: mapOp.key, previousValue: undefined },
 					true,
 					this.eventEmitter,
 				);
@@ -767,17 +786,12 @@ export class MapKernel {
 				const { key } = op;
 
 				if (local) {
-					const pendingEntryIndex = this.pendingData.findIndex(
-						(entry) => entry.type !== "clear" && entry.key === key,
-					);
-					const pendingEntry = this.pendingData[pendingEntryIndex];
 					assert(
-						// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- using ?. could change behavior
-						pendingEntry !== undefined &&
-							pendingEntry.type === "delete" &&
-							pendingEntry === localOpMetadata,
-						0xbf7 /* Got a local delete message we weren't expecting */,
+						localOpMetadata?.type === "delete",
+						"Got a local delete message we weren't expecting",
 					);
+					const pendingEntryIndex = this.pendingData.indexOf(localOpMetadata);
+					assert(pendingEntryIndex !== -1, "Local delete metadata not found in pending data");
 					this.pendingData.splice(pendingEntryIndex, 1);
 
 					this.sequencedData.delete(key);
@@ -808,25 +822,23 @@ export class MapKernel {
 				const { key, value } = op;
 
 				if (local) {
-					const pendingEntryIndex = this.pendingData.findIndex(
-						(entry) => entry.type !== "clear" && entry.key === key,
-					);
-					const pendingEntry = this.pendingData[pendingEntryIndex];
 					assert(
-						// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- using ?. could change behavior
-						pendingEntry !== undefined && pendingEntry.type === "lifetime",
-						0xbf8 /* Couldn't match local set message to pending lifetime */,
+						localOpMetadata?.type === "set",
+						"Got a local set message we weren't expecting",
 					);
-					const pendingKeySet = pendingEntry.keySets.shift();
+					// Locate the parent lifetime via the back-pointer on the PendingKeySet, avoiding a linear scan.
+					const pendingEntry = localOpMetadata.lifetime;
+					const pendingKeySetNode = pendingEntry.keySets.shift();
 					assert(
-						pendingKeySet !== undefined && pendingKeySet === localOpMetadata,
-						0xbf9 /* Got a local set message we weren't expecting */,
+						pendingKeySetNode?.data === localOpMetadata,
+						"Got a local set message we weren't expecting",
 					);
-					if (pendingEntry.keySets.length === 0) {
+					if (pendingEntry.keySets.empty) {
+						const pendingEntryIndex = this.pendingData.indexOf(pendingEntry);
 						this.pendingData.splice(pendingEntryIndex, 1);
 					}
 
-					this.sequencedData.set(key, pendingKeySet.value);
+					this.sequencedData.set(key, pendingKeySetNode.data.value);
 				} else {
 					migrateIfSharedSerializable(value, this.serializer, this.handle);
 					const localValue: ILocalValue = { value: value.value };
