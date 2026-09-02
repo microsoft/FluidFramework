@@ -43,7 +43,7 @@ export interface IConnectionDetailsInternal extends IConnectionDetails {
 	initialClients: ISignalClient[];
 	reason: IConnectionStateChangeReason;
 	/** The checkpoint reported by the service before initial-message normalization. */
-	rawCheckpointSequenceNumber?: number;
+	serviceCheckpointSequenceNumber?: number;
 }
 
 /**

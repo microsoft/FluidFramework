@@ -1664,10 +1664,8 @@ export class Container
 		const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(baseSnapshot);
 		this._loadedFromVersion = version;
 
-		// If we saved ops, we will replay them and don't need DeltaManager to fetch them
-		const lastProcessedSequenceNumber =
-			pendingLocalState?.savedOps[pendingLocalState.savedOps.length - 1]?.sequenceNumber ??
-			attributes.sequenceNumber;
+		// Preserve the latest saved op so DeltaManager can validate the service history before replay.
+		const lastProcessedMessage = pendingLocalState?.savedOps.at(-1);
 		let opsBeforeReturnP: Promise<void> | undefined;
 
 		// Attach op handlers to finish initialization and be able to start processing ops
@@ -1679,7 +1677,7 @@ export class Container
 				this.attachDeltaManagerOpHandler(
 					attributes,
 					loadMode.deltaConnection === "none" ? "none" : "all",
-					lastProcessedSequenceNumber,
+					lastProcessedMessage,
 				);
 				break;
 			}
@@ -1688,7 +1686,7 @@ export class Container
 				opsBeforeReturnP = this.attachDeltaManagerOpHandler(
 					attributes,
 					loadMode.opsBeforeReturn,
-					lastProcessedSequenceNumber,
+					lastProcessedMessage,
 				);
 				break;
 			}
@@ -2127,7 +2125,7 @@ export class Container
 	private async attachDeltaManagerOpHandler(
 		attributes: IDocumentAttributes,
 		prefetchType?: "cached" | "all" | "none",
-		lastProcessedSequenceNumber?: number,
+		lastProcessedMessage?: ISequencedDocumentMessage,
 	): Promise<void> {
 		return this._deltaManager.attachOpHandler(
 			attributes.minimumSequenceNumber /* minimumSequenceNumber */,
@@ -2139,7 +2137,7 @@ export class Container
 				},
 			} /* handler to process incoming delta messages */,
 			prefetchType,
-			lastProcessedSequenceNumber,
+			lastProcessedMessage,
 		);
 	}
 

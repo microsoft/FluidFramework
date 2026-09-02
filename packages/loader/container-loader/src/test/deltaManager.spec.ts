@@ -21,6 +21,7 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import {
 	createChildLogger,
+	isFluidError,
 	MockLogger,
 	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
@@ -54,9 +55,8 @@ describe("Loader", () => {
 				dmLogger: TelemetryLoggerExt = logger,
 				deltaStorageFactory?: () => IDocumentDeltaStorageService,
 				checkpointSequenceNumber?: number,
-				lastProcessedSequenceNumber = 0,
-				initialMessages: ISequencedDocumentMessage[] = [],
-				connectBeforeAttach = false,
+				lastProcessedMessage?: ISequencedDocumentMessage,
+				prefetchType: "cached" | "all" | "none" = "none",
 			): Promise<void> {
 				const service = new MockDocumentService(deltaStorageFactory, () => {
 					// Always create new connection, as reusing old closed connection
@@ -71,7 +71,6 @@ describe("Loader", () => {
 							}
 						).checkpointSequenceNumber = checkpointSequenceNumber;
 					}
-					deltaConnection.initialMessages = initialMessages;
 					return deltaConnection;
 				});
 				const client: Partial<IClient> = {
@@ -107,10 +106,6 @@ describe("Loader", () => {
 						deltaManager.connect({ reason: { text: "test" } });
 					});
 
-				if (connectBeforeAttach) {
-					await connect();
-				}
-
 				await deltaManager.attachOpHandler(
 					0,
 					0,
@@ -118,13 +113,11 @@ describe("Loader", () => {
 						process: (message) => noopHeuristic.notifyMessageProcessed(message),
 						processSignal() {},
 					},
-					"none",
-					lastProcessedSequenceNumber,
+					prefetchType,
+					lastProcessedMessage,
 				);
 
-				if (!connectBeforeAttach) {
-					await connect();
-				}
+				await connect();
 			}
 
 			// function to yield control in the Javascript event loop.
@@ -133,6 +126,8 @@ describe("Loader", () => {
 					realSetTimeout(resolve, 0);
 				});
 			}
+
+			const assertNoExpectedError = (): void => assert.strictEqual(expectedError, undefined);
 
 			function generateOp(
 				type: MessageType = MessageType.Operation,
@@ -206,49 +201,93 @@ describe("Loader", () => {
 				clock.restore();
 			});
 
-			it("logs the raw checkpoint when initial messages normalize it", async () => {
-				const mockLogger = new MockLogger();
-				const initialMessage = {
+			it("validates the last saved op when loading pending state", async () => {
+				const savedOp = {
 					...generateOp(),
-					sequenceNumber: 14,
+					sequenceNumber: 13,
+					minimumSequenceNumber: 10,
+					timestamp: 1000,
+					referenceSequenceNumber: 12,
 				};
-				await startDeltaManager(true, mockLogger.toTelemetryLogger(), undefined, 5, 13, [
-					initialMessage,
-				]);
-
-				mockLogger.assertMatchAny([
-					{
-						eventName: "CheckpointSequenceNumberRegression",
-						checkpointSequenceNumber: 5,
-						lastProcessedSequenceNumber: 13,
-						lastQueuedSequenceNumber: 14,
-						lastObservedSequenceNumber: 14,
-						clientId: "test",
-						mode: "write",
-						socketDocumentId: "documentId",
-					},
-				]);
-			});
-
-			it("logs a regressed checkpoint after sequence tracking is initialized", async () => {
-				const mockLogger = new MockLogger();
+				let requestedFrom: number | undefined;
+				let read = false;
 				await startDeltaManager(
 					true,
-					mockLogger.toTelemetryLogger(),
-					undefined,
+					logger,
+					() => ({
+						fetchMessages: (from): IStream<ISequencedDocumentMessage[]> => {
+							requestedFrom = from;
+							return {
+								read: async (): Promise<IStreamResult<ISequencedDocumentMessage[]>> => {
+									if (read) {
+										return { done: true };
+									}
+									read = true;
+									return { done: false, value: [savedOp] };
+								},
+							};
+						},
+					}),
 					5,
-					13,
-					undefined,
-					true,
+					savedOp,
+					"all",
 				);
+				assert.strictEqual(requestedFrom, savedOp.sequenceNumber);
 
-				mockLogger.assertMatch([
+				deltaManager.on("closed", (error: Error) => {
+					expectedError = error;
+				});
+				const continuingOp = {
+					...savedOp,
+					clientSequenceNumber: savedOp.clientSequenceNumber + 1,
+					sequenceNumber: savedOp.sequenceNumber + 1,
+					timestamp: savedOp.timestamp + 1,
+				};
+				deltaConnection.emitOp(docId, [continuingOp]);
+				await yieldEventLoop();
+				assert.strictEqual(deltaManager.lastSequenceNumber, continuingOp.sequenceNumber);
+				assertNoExpectedError();
+
+				deltaConnection.emitOp(docId, [{ ...continuingOp, clientId: "Different client" }]);
+				assert.match(
+					expectedError?.message ?? "",
+					/same sequenceNumber but different payloads/,
+				);
+				assert(isFluidError(expectedError));
+				assert.strictEqual(
+					expectedError.getTelemetryProperties().serviceCheckpointSequenceNumber,
+					5,
+				);
+			});
+
+			it("uses the last saved op's minimum sequence number", async () => {
+				const savedOp = {
+					...generateOp(),
+					sequenceNumber: 13,
+					minimumSequenceNumber: 10,
+					timestamp: 1000,
+					referenceSequenceNumber: 12,
+				};
+				await startDeltaManager(true, logger, undefined, 5, savedOp);
+				deltaManager.on("closed", (error: Error) => {
+					expectedError = error;
+				});
+
+				deltaConnection.emitOp(docId, [
 					{
-						eventName: "CheckpointSequenceNumberRegression",
-						checkpointSequenceNumber: 5,
-						lastProcessedSequenceNumber: 13,
+						...generateOp(),
+						sequenceNumber: 14,
+						minimumSequenceNumber: 9,
 					},
 				]);
+				await yieldEventLoop();
+
+				assert.match(expectedError?.message ?? "", /Invalid MinimumSequenceNumber/);
+				assert(isFluidError(expectedError));
+				assert.strictEqual(
+					expectedError.getTelemetryProperties().serviceCheckpointSequenceNumber,
+					5,
+				);
 			});
 
 			describe("Update Minimum Sequence Number", () => {

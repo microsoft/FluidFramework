@@ -326,11 +326,12 @@ export class ConnectionManager implements IConnectionManager {
 	private static detailsFromConnection(
 		connection: IDocumentDeltaConnection,
 		reason: IConnectionStateChangeReason,
+		checkpointSequenceNumber: number | undefined,
 	): IConnectionDetailsInternal {
 		return {
 			claims: connection.claims,
 			clientId: connection.clientId,
-			checkpointSequenceNumber: connection.checkpointSequenceNumber,
+			checkpointSequenceNumber,
 			get initialClients(): ISignalClient[] {
 				return connection.initialClients;
 			},
@@ -340,7 +341,7 @@ export class ConnectionManager implements IConnectionManager {
 			reason,
 			...(connection.checkpointSequenceNumber === undefined
 				? {}
-				: { rawCheckpointSequenceNumber: connection.checkpointSequenceNumber }),
+				: { serviceCheckpointSequenceNumber: connection.checkpointSequenceNumber }),
 		};
 	}
 
@@ -914,8 +915,11 @@ export class ConnectionManager implements IConnectionManager {
 			this.connectFirstConnection ? "InitialOps" : "ReconnectOps",
 		);
 
-		this._connectionDetails = ConnectionManager.detailsFromConnection(connection, reason);
-		this._connectionDetails.checkpointSequenceNumber = checkpointSequenceNumber;
+		this._connectionDetails = ConnectionManager.detailsFromConnection(
+			connection,
+			reason,
+			checkpointSequenceNumber,
+		);
 		this.props.connectHandler(this._connectionDetails);
 
 		this.connectFirstConnection = false;
