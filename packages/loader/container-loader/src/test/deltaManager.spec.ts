@@ -53,6 +53,8 @@ describe("Loader", () => {
 				reconnectAllowed = true,
 				dmLogger: TelemetryLoggerExt = logger,
 				deltaStorageFactory?: () => IDocumentDeltaStorageService,
+				checkpointSequenceNumber?: number,
+				lastProcessedSequenceNumber = 0,
 			): Promise<void> {
 				const service = new MockDocumentService(deltaStorageFactory, () => {
 					// Always create new connection, as reusing old closed connection
@@ -60,6 +62,13 @@ describe("Loader", () => {
 					deltaConnection = new MockDocumentDeltaConnection("test", (messages) =>
 						emitter.emit(submitEvent, messages),
 					);
+					if (checkpointSequenceNumber !== undefined) {
+						(
+							deltaConnection as MockDocumentDeltaConnection & {
+								checkpointSequenceNumber: number;
+							}
+						).checkpointSequenceNumber = checkpointSequenceNumber;
+					}
 					return deltaConnection;
 				});
 				const client: Partial<IClient> = {
@@ -89,10 +98,16 @@ describe("Loader", () => {
 					noopHeuristic.notifyMessageSent();
 				});
 
-				await deltaManager.attachOpHandler(0, 0, {
-					process: (message) => noopHeuristic.notifyMessageProcessed(message),
-					processSignal() {},
-				});
+				await deltaManager.attachOpHandler(
+					0,
+					0,
+					{
+						process: (message) => noopHeuristic.notifyMessageProcessed(message),
+						processSignal() {},
+					},
+					"none",
+					lastProcessedSequenceNumber,
+				);
 
 				await new Promise((resolve) => {
 					deltaManager.on("connect", resolve);
@@ -177,6 +192,24 @@ describe("Loader", () => {
 
 			after(() => {
 				clock.restore();
+			});
+
+			it("logs a regressed checkpoint sequence number", async () => {
+				const mockLogger = new MockLogger();
+				await startDeltaManager(true, mockLogger.toTelemetryLogger(), undefined, 5, 13);
+
+				mockLogger.assertMatch([
+					{
+						eventName: "CheckpointSequenceNumberRegression",
+						checkpointSequenceNumber: 5,
+						lastProcessedSequenceNumber: 13,
+						lastQueuedSequenceNumber: 13,
+						lastObservedSequenceNumber: 13,
+						clientId: "test",
+						mode: "write",
+						socketDocumentId: "documentId",
+					},
+				]);
 			});
 
 			describe("Update Minimum Sequence Number", () => {

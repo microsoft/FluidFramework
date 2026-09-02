@@ -525,6 +525,20 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		props.connectionLastObservedSeqNumber = this.lastObservedSeqNumber;
 
 		const checkpointSequenceNumber = connection.checkpointSequenceNumber;
+		if (
+			checkpointSequenceNumber !== undefined &&
+			checkpointSequenceNumber < this.lastProcessedSequenceNumber
+		) {
+			this.logger.sendTelemetryEvent({
+				eventName: "CheckpointSequenceNumberRegression",
+				...this.connectionManager.connectionProps,
+				...props,
+				checkpointSequenceNumber,
+				lastProcessedSequenceNumber: this.lastProcessedSequenceNumber,
+				lastQueuedSequenceNumber: this.lastQueuedSequenceNumber,
+				lastObservedSequenceNumber: this.lastObservedSeqNumber,
+			});
+		}
 		this._checkpointSequenceNumber = checkpointSequenceNumber;
 		if (checkpointSequenceNumber !== undefined) {
 			this.updateLatestKnownOpSeqNumber(checkpointSequenceNumber);
