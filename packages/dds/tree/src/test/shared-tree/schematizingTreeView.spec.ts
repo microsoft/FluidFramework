@@ -499,6 +499,70 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(viewGeneralized.root[1].address, "123 Main St");
 	});
 
+	it("views with different optional fields are incompatible despite allowing unknown optional fields", () => {
+		const factoryA = new SchemaFactoryBeta(undefined);
+		const factoryB = new SchemaFactoryBeta(undefined);
+
+		class ThingA extends factoryA.object(
+			"Thing",
+			{
+				name: factoryA.string,
+				fieldA: factoryA.optional(factoryA.string),
+			},
+			{ allowUnknownOptionalFields: true },
+		) {}
+
+		class ThingB extends factoryB.object(
+			"Thing",
+			{
+				name: factoryB.string,
+				fieldB: factoryB.optional(factoryB.string),
+			},
+			{ allowUnknownOptionalFields: true },
+		) {}
+
+		const configA = new TreeViewConfiguration({ schema: ThingA });
+		const configB = new TreeViewConfiguration({ schema: ThingB });
+
+		const checkoutA = checkoutWithInitialTree(
+			configA,
+			new ThingA({ name: "docA", fieldA: "valueA" }),
+		);
+		const viewBOnDocA = new SchematizingSimpleTreeView(
+			checkoutA,
+			configB,
+			new MockNodeIdentifierManager(),
+		);
+
+		assert.deepEqual(viewBOnDocA.compatibility, {
+			canView: false,
+			canUpgrade: false,
+			isEquivalent: false,
+			canInitialize: false,
+		});
+		assert.throws(() => viewBOnDocA.root, validateUsageError(/not compatible/));
+		viewBOnDocA.dispose();
+
+		const checkoutB = checkoutWithInitialTree(
+			configB,
+			new ThingB({ name: "docB", fieldB: "valueB" }),
+		);
+		const viewAOnDocB = new SchematizingSimpleTreeView(
+			checkoutB,
+			configA,
+			new MockNodeIdentifierManager(),
+		);
+
+		assert.deepEqual(viewAOnDocB.compatibility, {
+			canView: false,
+			canUpgrade: false,
+			isEquivalent: false,
+			canInitialize: false,
+		});
+		assert.throws(() => viewAOnDocB.root, validateUsageError(/not compatible/));
+		viewAOnDocB.dispose();
+	});
+
 	describe("upgradeSchema", () => {
 		const builder = new SchemaFactory("test");
 		const root = builder.number;
