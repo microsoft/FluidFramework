@@ -86,12 +86,14 @@ describeCompat(
 				);
 				const url = await provider.driver.createContainerUrl(ctx.documentId);
 
-				const resumed = await loader.resolve({ url }, pendingState);
 				await assert.rejects(
-					waitForContainerConnection(resumed, true, {
-						durationMs: 60_000,
-						errorMsg: "timed out waiting for the stale pending-state container to close",
-					}),
+					async () => {
+						const resumed = await loader.resolve({ url }, pendingState);
+						await waitForContainerConnection(resumed, true, {
+							durationMs: 60_000,
+							errorMsg: "timed out waiting for the stale pending-state container to close",
+						});
+					},
 					(error: Error & { errorType?: string }) =>
 						error.errorType === "fileOverwrittenInStorage",
 					"expected pending state from the previous epoch to be rejected",

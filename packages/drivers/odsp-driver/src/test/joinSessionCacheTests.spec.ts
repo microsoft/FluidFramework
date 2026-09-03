@@ -62,8 +62,14 @@ describe("expose joinSessionInfo Tests", () => {
 			url: createOdspUrl({ driveId, itemId, siteUrl, dataStorePath: "/" }),
 		});
 		const service = await odspDocumentServiceFactory.createDocumentService(odspResolvedUrl);
-		service.setDriverState?.({ epoch: "epoch1" });
-		assert.deepStrictEqual(service.getDriverState?.(), { epoch: "epoch1" });
+		assert(service.driverStatePersistence !== undefined);
+		service.driverStatePersistence.set({ epoch: "epoch1" });
+		service.driverStatePersistence.set({ epoch: "epoch1" });
+		assert.deepStrictEqual(service.driverStatePersistence.get(), { epoch: "epoch1" });
+		assert.throws(
+			() => service.driverStatePersistence?.set({ epoch: "epoch2" }),
+			/ODSP driver state epoch does not match the current epoch/,
+		);
 	});
 
 	function addJoinSessionStub(): SinonStub {

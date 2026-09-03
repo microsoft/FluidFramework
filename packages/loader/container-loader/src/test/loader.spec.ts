@@ -237,6 +237,59 @@ describe("DisableLoadConnectionRetries", () => {
 		return error;
 	}
 
+	it("restores driver state before connecting the document service", async () => {
+		const driverState = { epoch: "epoch1" };
+		let restored = false;
+		const documentServiceFactory = failSometimeProxy<
+			IDocumentServiceFactory &
+				IProvideLayerCompatDetails &
+				IProvideLayerCompatSupportRequirements
+		>({
+			createDocumentService: async () =>
+				failSometimeProxy<IDocumentService>({
+					policies: {},
+					resolvedUrl,
+					driverStatePersistence: {
+						get: () => undefined,
+						set: (state) => {
+							assert.deepStrictEqual(state, driverState);
+							restored = true;
+						},
+					},
+					connectToStorage: async () => {
+						assert(restored, "Driver state must be restored before connecting to storage");
+						throw new Error("stop after ordering check");
+					},
+					connectToDeltaStream: async () => new Promise(() => {}),
+					on: AbsentProperty,
+					off: AbsentProperty,
+					dispose: () => {},
+				}),
+			ILayerCompatDetails: AbsentProperty,
+			ILayerCompatSupportRequirements: AbsentProperty,
+		});
+		const loader = new Loader({
+			codeLoader: createTestCodeLoaderProxy(),
+			documentServiceFactory,
+			urlResolver,
+		});
+		const pendingState = JSON.stringify({
+			attached: true,
+			baseSnapshot: { blobs: {}, trees: {} },
+			snapshotBlobs: {},
+			pendingRuntimeState: {},
+			savedOps: [],
+			url: resolvedUrl.url,
+			driverState,
+		});
+
+		await assert.rejects(
+			async () => loader.resolve({ url: "test" }, pendingState),
+			/stop after ordering check/,
+		);
+		assert(restored);
+	});
+
 	it("load rejects when connectToStorage fails with retryable error and flag is enabled", async () => {
 		const documentServiceFactory = failSometimeProxy<
 			IDocumentServiceFactory &

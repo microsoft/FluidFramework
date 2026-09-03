@@ -176,9 +176,41 @@ describe("FrozenDocumentService driver state", () => {
 		);
 		const state = { epoch: "epoch1" };
 
-		service.setDriverState?.(state);
+		service.driverStatePersistence?.set(state);
 
-		assert.deepStrictEqual(service.getDriverState?.(), state);
+		assert.deepStrictEqual(service.driverStatePersistence?.get(), state);
+	});
+
+	it("uses the inner service state when its persistence capability is present", async () => {
+		let innerState: unknown;
+		const innerService = {
+			resolvedUrl: fakeUrl,
+			policies: {},
+			driverStatePersistence: {
+				get: () => innerState,
+				set: () => {},
+			},
+		} as unknown as IDocumentService;
+		const innerFactory: IDocumentServiceFactory = {
+			createDocumentService: async () => innerService,
+			createContainer: async () => {
+				throw new Error("not used in this test");
+			},
+		};
+		const service = await new FrozenDocumentServiceFactory(
+			false,
+			innerFactory,
+		).createDocumentService(fakeUrl);
+
+		service.driverStatePersistence?.set({ epoch: "restored" });
+		assert.strictEqual(service.driverStatePersistence?.get(), undefined);
+
+		const nullState: unknown = JSON.parse("null");
+		innerState = nullState;
+		assert.strictEqual(service.driverStatePersistence?.get(), nullState);
+
+		innerState = { epoch: "live" };
+		assert.deepStrictEqual(service.driverStatePersistence?.get(), innerState);
 	});
 });
 

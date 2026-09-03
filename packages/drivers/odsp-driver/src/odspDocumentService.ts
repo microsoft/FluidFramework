@@ -167,23 +167,31 @@ export class OdspDocumentService
 		return this._policies;
 	}
 
-	public getDriverState(): Record<string, unknown> | undefined {
-		const epoch = this.epochTracker.fluidEpoch;
-		return epoch === undefined ? undefined : { epoch };
-	}
-
-	public setDriverState(state: unknown): void {
-		if (
-			typeof state !== "object" ||
-			state === null ||
-			Array.isArray(state) ||
-			!("epoch" in state) ||
-			typeof state.epoch !== "string"
-		) {
-			throw new UsageError("ODSP driver state must contain an epoch string");
-		}
-		this.epochTracker.setEpoch(state.epoch, true, "cache");
-	}
+	public readonly driverStatePersistence = {
+		get: (): Record<string, unknown> | undefined => {
+			const epoch = this.epochTracker.fluidEpoch;
+			return epoch === undefined ? undefined : { epoch };
+		},
+		set: (state: unknown): void => {
+			if (
+				typeof state !== "object" ||
+				state === null ||
+				Array.isArray(state) ||
+				!("epoch" in state) ||
+				typeof state.epoch !== "string"
+			) {
+				throw new UsageError("ODSP driver state must contain an epoch string");
+			}
+			const currentEpoch = this.epochTracker.fluidEpoch;
+			if (currentEpoch === state.epoch) {
+				return;
+			}
+			if (currentEpoch !== undefined) {
+				throw new UsageError("ODSP driver state epoch does not match the current epoch");
+			}
+			this.epochTracker.setEpoch(state.epoch, true, "cache");
+		},
+	};
 
 	/**
 	 * Connects to a storage endpoint for snapshot service.

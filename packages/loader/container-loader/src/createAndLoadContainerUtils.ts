@@ -740,7 +740,7 @@ export async function captureFullContainerState({
 			pendingRuntimeState: undefined,
 			savedOps,
 			url: resolvedUrl.url,
-			driverState: documentService.getDriverState?.(),
+			driverState: documentService.driverStatePersistence?.get(),
 		};
 		return JSON.stringify(pendingState);
 	} finally {

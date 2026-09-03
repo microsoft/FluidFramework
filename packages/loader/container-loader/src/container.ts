@@ -1198,7 +1198,7 @@ export class Container
 			this.clientId,
 			this.runtime,
 			this.resolvedUrl,
-			this.service?.getDriverState?.(),
+			this.service?.driverStatePersistence?.get(),
 		);
 		return pendingState;
 	}
@@ -1580,7 +1580,7 @@ export class Container
 				this.client.details.type === summarizerClientType,
 			);
 			if (props.driverState !== undefined) {
-				service.setDriverState?.(props.driverState);
+				service.driverStatePersistence?.set(props.driverState);
 			}
 			if (service.on !== undefined) {
 				// Back-compat for Old driver

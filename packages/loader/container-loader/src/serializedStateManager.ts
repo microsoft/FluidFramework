@@ -120,7 +120,8 @@ export interface IPendingContainerState extends SnapshotWithBlobs {
 	 */
 	clientId?: string;
 	/**
-	 * Opaque state supplied by the document service for use when rehydrating.
+	 * Opaque state supplied by the document service for use when rehydrating. This value is
+	 * persisted by the host and must not contain customer-identifying information.
 	 */
 	driverState?: unknown;
 }

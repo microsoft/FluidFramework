@@ -120,13 +120,16 @@ class FrozenDocumentService
 	}
 
 	public readonly policies: IDocumentServicePolicies;
-	getDriverState(): unknown {
-		return this.documentService?.getDriverState?.() ?? this.driverState;
-	}
-	setDriverState(state: unknown): void {
-		this.driverState = state;
-		this.documentService?.setDriverState?.(state);
-	}
+	public readonly driverStatePersistence = {
+		get: (): unknown =>
+			this.documentService?.driverStatePersistence === undefined
+				? this.driverState
+				: this.documentService.driverStatePersistence.get(),
+		set: (state: unknown): void => {
+			this.driverState = state;
+			this.documentService?.driverStatePersistence?.set(state);
+		},
+	};
 	async connectToStorage(): Promise<IDocumentStorageService> {
 		const storage = new FrozenDocumentStorageService(
 			this.readOnly,

@@ -114,8 +114,15 @@ export class FaultInjectionDocumentService
 		this._currentDeltaStorage?.goOnline();
 	}
 
+	public readonly driverStatePersistence?: NonNullable<
+		IDocumentService["driverStatePersistence"]
+	>;
+
 	constructor(private readonly internal: IDocumentService) {
 		super();
+		if (internal.driverStatePersistence !== undefined) {
+			this.driverStatePersistence = internal.driverStatePersistence;
+		}
 	}
 
 	public get resolvedUrl(): IResolvedUrl {
@@ -123,12 +130,6 @@ export class FaultInjectionDocumentService
 	}
 	public get policies(): IDocumentServicePolicies | undefined {
 		return this.internal.policies;
-	}
-	public getDriverState(): unknown {
-		return this.internal.getDriverState?.();
-	}
-	public setDriverState(state: unknown): void {
-		this.internal.setDriverState?.(state);
 	}
 	public get documentDeltaConnection(): FaultInjectionDocumentDeltaConnection | undefined {
 		return this._currentDeltaStream;

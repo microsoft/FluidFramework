@@ -23,8 +23,15 @@ export abstract class DocumentServiceProxy
 	extends TypedEventEmitter<IDocumentServiceEvents>
 	implements IDocumentService
 {
+	public readonly driverStatePersistence?: NonNullable<
+		IDocumentService["driverStatePersistence"]
+	>;
+
 	constructor(private readonly _service: IDocumentService) {
 		super();
+		if (_service.driverStatePersistence !== undefined) {
+			this.driverStatePersistence = _service.driverStatePersistence;
+		}
 	}
 
 	public get service(): IDocumentService {
@@ -41,14 +48,6 @@ export abstract class DocumentServiceProxy
 
 	public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
 		return this._service.connectToDeltaStream(client);
-	}
-
-	public getDriverState(): unknown {
-		return this._service.getDriverState?.();
-	}
-
-	public setDriverState(state: unknown): void {
-		this._service.setDriverState?.(state);
 	}
 
 	public dispose(error?: unknown): void {
