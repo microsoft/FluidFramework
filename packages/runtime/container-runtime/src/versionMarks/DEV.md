@@ -89,10 +89,10 @@ are ignored until they are applied into the current session's pending queue.
   promotion is recoverable — the app can still resolve that mark later via `resolve()`'s history scan — so a listener
   fault logs and continues rather than faulting the container.
 
-Host exposure: `ContainerRuntime` exposes an `@internal` `versionMarkResolver` getter backed by the concrete
-`versionMarkResolverInternal`. An app gets it from the runtime instance passed to `provideEntryPoint`, or exposes it
-from its own entryPoint. A future public API may move this onto container-runtime definitions rather than the concrete
-runtime class.
+Host exposure: `ContainerRuntime` exposes a `versionMarkResolver` getter backed by the concrete
+`versionMarkResolverInternal`, and the resolver is now exposed on the `@legacy @beta` `IContainerRuntime` interface (in
+`@fluidframework/container-runtime-definitions`). An app gets it from the runtime instance passed to
+`provideEntryPoint`, or exposes it from its own entryPoint.
 
 ### Capture implementation
 
@@ -119,7 +119,7 @@ state between flushing, reading the sequence number, and reading the batch id.
 
 An app (e.g. the Loop/office-bohemia host) consumes a small `@legacy @beta` surface:
 
-- Get the resolver: `ContainerRuntime.versionMarkResolver` -> `IVersionMarkResolver`.
+- Get the resolver: `IContainerRuntime.versionMarkResolver` -> `IVersionMarkResolver`.
 - `IVersionMarkResolver` methods: `sealAndCaptureVersionMark()` -> `VersionMarkCapture` (seals the batch and returns the
   locator data atomically), `onBatchSequenced(listener)` (live promotion), `resolve(batchId, sequenceNumberLowerBound)`
   -> `ResolveResult` (load-time sweep / restore).
@@ -368,10 +368,10 @@ so all apps can feed one shared dashboard. Design events around the questions a 
 
 ### Events
 
-| Event                                  | When                                                                   | Dimensions                                                                                                                                            | Answers                                                                                                                                                                                                                               |
-| -------------------------------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Resolve` **(implemented)**            | end of `resolve()` (via `finally`, so a thrown scan is still reported) | `outcome` (`resolved`\|`pending`\|`unresolvable`\|`error`), `path` (`session`\|`history`\|`noReader`), `durationMs`, `sequenceNumber` (when resolved) | success rate; how often history is needed; latency; `unresolvable` = data-loss KPI; `error` = the scan threw. `session` means the final result came from the live map, including a live resolution found by the post-history recheck. |
-| `Capture` **(implemented — AB#80270)** | `sealAndCaptureVersionMark()`                                          | `kind` (`pending`\|`resolved`)                                                                                                                        | capture volume; pending ratio                                                                                                                                                                                                         |
+| Event                                  | When                                                                   | Dimensions                                                                                                                                                                                                          | Answers                                                                                                                                                                                                                                                                      |
+| -------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Resolve` **(implemented)**            | end of `resolve()` (via `finally`, so a thrown scan is still reported) | `outcome` (`resolved`\|`pending`\|`unresolvable`\|`error`), `path` (`session`\|`history`\|`noReader`), `durationMs`, `sequenceNumber` (when resolved), `reason` (the diagnostic string when the result carries one) | success rate; how often history is needed; latency; `unresolvable` = data-loss KPI; `error` = the scan threw; `reason` = why a mark did not resolve. `session` means the final result came from the live map, including a live resolution found by the post-history recheck. |
+| `Capture` **(implemented — AB#80270)** | `sealAndCaptureVersionMark()`                                          | `kind` (`pending`\|`resolved`)                                                                                                                                                                                      | capture volume; pending ratio                                                                                                                                                                                                                                                |
 
 ### Correlation and the app funnel (planned)
 
@@ -603,13 +603,13 @@ known sequence number and exercise loading. They do not create that sequence num
 
 ### API and design follow-ups
 
-- **Loader/runtime compatibility pattern (resolved with Navin).** `fetchOps` is a new loader-provided API consumed by
-  runtime logic. Making the member optional and using its presence as the capability signal is the correct cross-layer
-  pattern; a separate `supportedFeatures` negotiation is unnecessary for a new API. Fluid supports a 12-month Runtime ->
-  Loader compatibility window, so a newer runtime must continue to work with an older loader that predates `fetchOps`.
-  The capability first shipped in client 2.115.0 at layer generation 9. Keep the optional branch through generation 20;
-  at generation 21 every supported loader is guaranteed to provide it, and AB#81034 tracks making the member required
-  and removing the branch.
+- **Loader/runtime compatibility pattern.** `fetchOps` is a new loader-provided API consumed by runtime logic. Making
+  the member optional and using its presence as the capability signal is the correct cross-layer pattern; a separate
+  `supportedFeatures` negotiation is unnecessary for a new API. Fluid supports a 12-month Runtime -> Loader
+  compatibility window, so a newer runtime must continue to work with an older loader that predates `fetchOps`. The
+  capability first shipped in client 2.115.0 at layer generation 9. Keep the optional branch through generation 20; at
+  generation 21 every supported loader is guaranteed to provide it, and AB#81034 tracks making the member required and
+  removing the branch.
 - Consider merging `getCurrentPendingBatchId` into `flushPendingBatch` so sealing the batch returns its resulting
   `batchId`. This would keep the ordered flush-then-read operation inside one runtime hook instead of requiring the
   resolver to call two hooks in sequence.
@@ -629,10 +629,10 @@ known sequence number and exercise loading. They do not create that sequence num
   open question is whether to instead extend the existing `batchEnd` event (on `IContainerRuntimeBaseEvents`) to expose
   the effective stable batch ID and reuse it, retiring `onBatchSequenced`.
 
-  **Case for consolidating (Mark's original point):** the new event is largely a subset of `batchEnd` plus one
-  generally-applicable field (the stable batch id). If API changes were free we would not add a second parallel
-  notification API; every extra public API is long-term surface we are then responsible for maintaining, documenting,
-  and evolving. Avoiding that cruft is the benefit.
+  **Case for consolidating:** the new event is largely a subset of `batchEnd` plus one generally-applicable field (the
+  stable batch id). If API changes were free we would not add a second parallel notification API; every extra public API
+  is long-term surface we are then responsible for maintaining, documenting, and evolving. Avoiding that cruft is the
+  benefit.
 
   **Case for keeping `onBatchSequenced` separate:** it is **not** a strict subset of `batchEnd` — its firing contract is
   correctness-load-bearing and differs in three ways: (1) it fires **only after pending-state validation**, so a
@@ -682,24 +682,27 @@ substitute: its current contract means retained history was available but the ta
 proven gone. A later container load with a newer loader could resolve a mark that the old-loader pairing could not
 inspect.
 
-Before production, choose and document one policy:
+`ResolveResult` keeps its three existing `kind` values. The `pending` and `unresolvable` members also carry an optional
+`reason?: string` with transient, log-only diagnostic context:
 
-- **Non-breaking clarification (preferred if sufficient):** add an optional reason to the existing `pending` member,
-  such as `reason?: "awaitingSequence" | "historicalOpsUnavailable"`. Existing consumers and older runtime results
-  remain valid, while an updated host can choose a different retry policy.
-- **Clean distinct outcome:** add an `unavailable`/`indeterminate` result, or make a reason required. This is a breaking
-  change to the exported `@legacy @beta` union because exhaustive consumers must handle the new shape. It requires a
-  changeset, regenerated API reports, API Council approval, an allowed beta-break window, and office-bohemia partner
-  lead time/integration testing.
-- **Reuse `unresolvable` (not recommended without redefining it):** this avoids a new union member, but would blur a
-  terminal retained-history result with a capability-limited result that may become resolvable after loading with a
-  newer loader. If selected, its contract and host retry behavior must be deliberately changed and documented.
-- **Keep current behavior:** explicitly define no-reader `pending` as a conservative compatibility result and require
-  the host to bound retries or rely on live promotion. This avoids an API change but preserves the ambiguity.
+- `pending` currently reports `awaitingSequence` or `historicalOpsUnavailable`.
+- `unresolvable` currently reports `historyTrimmed`.
 
-Whichever policy is selected, test both a current loader and an old-loader-shaped context with no `fetchOps`, and
-document whether a host should retain and retry the mark after a later deployment/reload. Do not remove the optional
-branch as part of this decision; that cleanup remains independently gated by AB#81034 and generation 21.
+Hosts drive behavior from `kind` and must not branch on or persist `reason`. Keeping `reason` as a plain string allows
+new diagnostic values without creating a second discriminator; a state that requires different host behavior should be
+represented by a new `kind`. `unresolvable` remains terminal. A host using an older loader may receive
+`historicalOpsUnavailable` as the reason for `pending`, then successfully resolve the same mark after loading with a
+newer loader.
+
+Before the changes are ready for production:
+
+1. Test both a current loader and an old-loader-shaped context with no `fetchOps`.
+1. Document whether a host should retain and retry the mark after a later deployment or reload.
+1. Update office-bohemia to log `reason` when it moves to the supported resolver access point, without changing behavior
+   based on the diagnostic value.
+
+Keep the optional `fetchOps` branch through layer generation 20. AB#81034 tracks making `fetchOps` required and removing
+the branch at generation 21.
 
 ### Flush side effect and corner cases
 

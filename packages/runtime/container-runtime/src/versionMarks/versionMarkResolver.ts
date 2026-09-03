@@ -4,6 +4,11 @@
  */
 
 import type {
+	IVersionMarkResolver,
+	ResolveResult,
+	VersionMarkCapture,
+} from "@fluidframework/container-runtime-definitions/internal";
+import type {
 	ISequencedDocumentMessage,
 	IStream,
 } from "@fluidframework/driver-definitions/internal";
@@ -27,87 +32,6 @@ export interface IHistoricalOpReader {
 		to?: number,
 		abortSignal?: AbortSignal,
 	): Promise<IStream<ISequencedDocumentMessage[]>>;
-}
-
-/**
- * Result of resolving a pending batchId. A resolved result includes the matched batch's last op server
- * timestamp when available. The property is optional for compatibility with previously stored results.
- *
- * @legacy @beta
- */
-export type ResolveResult =
-	| {
-			readonly kind: "resolved";
-			readonly sequenceNumber: number;
-			readonly timestamp?: number;
-	  }
-	| { readonly kind: "pending" }
-	| { readonly kind: "unresolvable" };
-
-/**
- * The data captured for a version mark. `pending` when the captured edit is local and not yet sequenced
- * (resolve it later via {@link IVersionMarkResolver.resolve}); `resolved` when there is no in-flight local
- * work, so the mark already points at a durable sequence number. The app packs its own stored record from
- * this — the runtime does not define the stored locator shape.
- *
- * @legacy @beta
- */
-export type VersionMarkCapture =
-	| {
-			readonly kind: "pending";
-			readonly batchId: string;
-			readonly sequenceNumberLowerBound: number;
-	  }
-	| {
-			readonly kind: "resolved";
-			readonly sequenceNumber: number;
-			readonly timestamp?: number;
-	  };
-
-/**
- * Runtime-owned resolver for app-stored version mark locators.
- *
- * @legacy @beta
- */
-export interface IVersionMarkResolver {
-	/**
-	 * Captures a version mark at the current point. Seals the current outbound batch first (so a just-made
-	 * local edit has a stable `batchId`, which is only assigned when a batch is flushed), then returns the
-	 * mark data atomically: a `pending` capture (`batchId` + `sequenceNumberLowerBound`) when there is an
-	 * unacked local batch, or a `resolved` capture (`sequenceNumber` + the last processed op's server
-	 * `timestamp`) when there is no in-flight local work. The timestamp property is optional both for
-	 * compatibility with previously stored captures and because it is `undefined` when neither a last
-	 * processed message nor a last-summary message is available.
-	 *
-	 * @remarks Sealing the batch is a side effect (it submits the current batch), so capture at savepoint
-	 * boundaries, not per keystroke.
-	 *
-	 * @returns The pending batch identity and inclusive sequence number lower bound, or the current sequence
-	 * number and corresponding op timestamp (when available) when there is no pending local batch.
-	 */
-	sealAndCaptureVersionMark(): VersionMarkCapture;
-	/**
-	 * Resolves a pending mark's batchId to a global sequence number (`sequenceNumberLowerBound` is the
-	 * inclusive lower bound for a history read). A `resolved` sequence number feeds the loader's
-	 * `loadContainerToSequenceNumber`.
-	 *
-	 * @param batchId - The stable identity of the pending batch.
-	 * @param sequenceNumberLowerBound - The inclusive lower bound for the historical op search.
-	 * @returns The resolved sequence number and server timestamp, or a result indicating that the batch
-	 * remains pending or can no longer be resolved.
-	 */
-	resolve(batchId: string, sequenceNumberLowerBound: number): Promise<ResolveResult>;
-	/**
-	 * Subscribes to inbound batch sequencing: fires `(batchId, sequenceNumber, timestamp)` per batch so any
-	 * connected client can promote a matching pending mark. Returns an unsubscribe function.
-	 *
-	 * @param listener - Called with the stable batch identity, its final sequence number, and the final op's
-	 * server timestamp.
-	 * @returns A function that unsubscribes the listener.
-	 */
-	onBatchSequenced(
-		listener: (batchId: string, sequenceNumber: number, timestamp?: number) => void,
-	): () => void;
 }
 
 /**
@@ -214,16 +138,20 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 		let path: "session" | "history" | "noReader" = "history";
 		let outcome: ResolveResult["kind"] | "error" = "error";
 		let resolvedSequenceNumber: number | undefined;
+		let resolvedReason: string | undefined;
 		try {
 			// Fast path: batch sequenced live this session.
 			const resolvedBatch = this.sessionResolutionFor(batchId);
 			if (resolvedBatch === undefined) {
 				const reader = this.hooks.getHistoricalOpReader?.();
 				if (reader === undefined) {
-					// No reader: the batch may still sequence live, so report pending.
+					// No reader: the batch may still sequence live, so report pending. The current loader
+					// does not provide the historical-op capability, so retrying with this pairing will not
+					// help (a later load with a capable loader may resolve it).
 					path = "noReader";
 					outcome = "pending";
-					return { kind: "pending" };
+					resolvedReason = "historicalOpsUnavailable";
+					return { kind: "pending", reason: "historicalOpsUnavailable" };
 				}
 				// Otherwise scan history from the mark's reference point.
 				path = "history";
@@ -240,6 +168,8 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 				outcome = result.kind;
 				if (result.kind === "resolved") {
 					resolvedSequenceNumber = result.sequenceNumber;
+				} else {
+					resolvedReason = result.reason;
 				}
 				return result;
 			}
@@ -256,6 +186,7 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 				...(resolvedSequenceNumber === undefined
 					? {}
 					: { sequenceNumber: resolvedSequenceNumber }),
+				...(resolvedReason === undefined ? {} : { reason: resolvedReason }),
 			});
 		}
 	}
@@ -330,20 +261,20 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 		const tip = this.hooks.getCurrentSequenceNumber();
 		if (from > tip) {
 			// Nothing is sequenced at/after the mark's lower bound yet, so the batch cannot have landed.
-			return { kind: "pending" };
+			return { kind: "pending", reason: "awaitingSequence" };
 		}
 		if (firstScannedSequenceNumber === undefined) {
 			// Empty read though ops should exist in `[from, tip]` → trimmed. ODSP-specific: a strict driver
 			// empties a `from`-misaligned trimmed range (validateMessages); a return-from-earliest driver
 			// would instead surface the trim via the `firstScannedSequenceNumber > from` branch below.
-			return { kind: "unresolvable" };
+			return { kind: "unresolvable", reason: "historyTrimmed" };
 		}
 		if (firstScannedSequenceNumber > from) {
 			// A trim gap at the anchor: the mark's ops (at/after its lower bound) are gone.
-			return { kind: "unresolvable" };
+			return { kind: "unresolvable", reason: "historyTrimmed" };
 		}
 		// Ops are present from the lower bound and the batch is not among them: not yet sequenced.
-		return { kind: "pending" };
+		return { kind: "pending", reason: "awaitingSequence" };
 	}
 
 	public onBatchSequenced(
