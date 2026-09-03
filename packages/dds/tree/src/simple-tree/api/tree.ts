@@ -806,40 +806,111 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
  */
 export type SchemaDiscrepancy =
 	| {
+			/**
+			 * Indicates that a field allows different node types in the view and stored schemas.
+			 */
 			readonly mismatch: "allowedTypes";
+			/**
+			 * The field with the discrepancy.
+			 *
+			 * `"root"` identifies the root field. Otherwise, `nodeType` identifies the containing
+			 * node schema and `fieldKey` identifies its field. `fieldKey` is undefined for a map
+			 * node's implicit field.
+			 */
 			readonly location:
 				| "root"
 				| {
 						readonly nodeType: string;
 						readonly fieldKey: string | undefined;
 				  };
+			/**
+			 * Non-staged node type identifiers allowed by the view schema but not the stored schema.
+			 */
 			readonly view: readonly string[];
+			/**
+			 * Staged node type identifiers allowed by the view schema but not the stored schema.
+			 *
+			 * @remarks These types provide rollout context but do not cause the discrepancy.
+			 */
 			readonly stagedView?: readonly string[];
+			/**
+			 * Node type identifiers allowed by the stored schema but not the view schema.
+			 */
 			readonly stored: readonly string[];
+			/**
+			 * Whether the view field is a staged optional field.
+			 *
+			 * @remarks Omitted when false.
+			 */
 			readonly viewIsStagedOptional?: true;
 	  }
 	| {
+			/**
+			 * Indicates that a field has different field kinds in the view and stored schemas.
+			 */
 			readonly mismatch: "fieldKind";
+			/**
+			 * The field with the discrepancy.
+			 *
+			 * `"root"` identifies the root field. Otherwise, `nodeType` identifies the containing
+			 * node schema and `fieldKey` identifies its field. `fieldKey` is undefined for a map
+			 * node's implicit field.
+			 */
 			readonly location:
 				| "root"
 				| {
 						readonly nodeType: string;
 						readonly fieldKey: string | undefined;
 				  };
+			/**
+			 * The field kind required by the view schema.
+			 */
 			readonly view: string;
+			/**
+			 * The field kind recorded in the stored schema.
+			 */
 			readonly stored: string;
+			/**
+			 * Whether the view field is a staged optional field.
+			 *
+			 * @remarks Omitted when false.
+			 */
 			readonly viewIsStagedOptional?: true;
 	  }
 	| {
+			/**
+			 * Indicates that a leaf node accepts different value types in the view and stored schemas.
+			 */
 			readonly mismatch: "valueSchema";
+			/**
+			 * The identifier of the leaf node schema with the discrepancy.
+			 */
 			readonly nodeType: string;
+			/**
+			 * The value schema required by the view, or undefined when it does not constrain values.
+			 */
 			readonly view: string | undefined;
+			/**
+			 * The value schema recorded in the stored schema, or undefined when it does not constrain values.
+			 */
 			readonly stored: string | undefined;
 	  }
 	| {
+			/**
+			 * Indicates that a node is represented by different node kinds in the view and stored schemas.
+			 */
 			readonly mismatch: "nodeKind";
+			/**
+			 * The identifier of the node schema with the discrepancy.
+			 */
 			readonly nodeType: string;
+			/**
+			 * The node kind required by the view schema.
+			 */
 			readonly view: string;
+			/**
+			 * The node kind recorded in the stored schema.
+			 */
 			readonly stored: string;
 	  };
 
@@ -856,6 +927,29 @@ export interface SchemaCompatibilityStatusBeta extends SchemaCompatibilityStatus
 	 * This property is undefined when {@link SchemaCompatibilityStatus.canView} is true and present
 	 * when `canView` is false.
 	 * It can include application-defined schema identifiers and field keys.
+	 *
+	 * @example Interpreting an allowed-types discrepancy
+	 *
+	 * If a document's stored schema allows `string` for `Todo.title`, but the view schema expects
+	 * `number`, the discrepancy identifies the field and the type permitted by each schema:
+	 *
+	 * ```typescript
+	 * const sf = new SchemaFactory("com.example");
+	 * class Todo extends sf.object("Todo", {
+	 * 	title: sf.number,
+	 * }) {}
+	 *
+	 * const view = asBeta(tree.viewWith(new TreeViewConfiguration({ schema: Todo })));
+	 * if (!view.compatibility.canView) {
+	 * 	// [{
+	 * 	//   mismatch: "allowedTypes",
+	 * 	//   location: { nodeType: "com.example.Todo", fieldKey: "title" },
+	 * 	//   view: ["com.fluidframework.leaf.number"],
+	 * 	//   stored: ["com.fluidframework.leaf.string"],
+	 * 	// }]
+	 * 	console.error(view.compatibility.discrepancies);
+	 * }
+	 * ```
 	 */
 	readonly discrepancies: readonly SchemaDiscrepancy[] | undefined;
 }
