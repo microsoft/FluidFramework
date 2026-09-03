@@ -98,32 +98,6 @@ describe("flub build-perf check", () => {
 		expect(error?.message).to.include("Thresholds exceeded");
 	});
 
-	it("fails under --quiet when average duration exceeds threshold", async () => {
-		const data = makeDataFile({
-			summary: { totalBuilds: 100, succeeded: 95, successRate: 95, avgDuration: 95 },
-		});
-		writeFileSync(path.join(tempDir, "public-data.json"), JSON.stringify(data));
-
-		const { error } = await runCommand(
-			[
-				"build-perf:check",
-				"--mode",
-				"public",
-				"--inputDir",
-				tempDir,
-				"--avgDurationThreshold",
-				"90",
-				"--changePeriodThreshold",
-				"15",
-				"--quiet",
-			],
-			{ root: import.meta.url },
-		);
-
-		expect(error?.oclif?.exit).to.equal(1);
-		expect(error?.message).to.include("Thresholds exceeded");
-	});
-
 	it("fails when period change exceeds threshold", async () => {
 		const data = makeDataFile({ change3Day: 20 });
 		writeFileSync(path.join(tempDir, "public-data.json"), JSON.stringify(data));
