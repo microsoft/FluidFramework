@@ -1580,6 +1580,8 @@ export class Container
 				this.client.details.type === summarizerClientType,
 			);
 			if (props.driverState !== undefined) {
+				// Restoration errors deliberately reject the load: ignoring malformed or foreign
+				// state could reconnect without the driver's persisted consistency protection.
 				service.driverStatePersistence?.set(props.driverState);
 			}
 			if (service.on !== undefined) {

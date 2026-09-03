@@ -237,9 +237,11 @@ describe("DisableLoadConnectionRetries", () => {
 		return error;
 	}
 
-	it("restores driver state before connecting the document service", async () => {
+	it("restores driver state before connecting and propagates restoration errors", async () => {
 		const driverState = { epoch: "epoch1" };
 		let restored = false;
+		let restoreError: Error | undefined;
+		let connectionAttempts = 0;
 		const documentServiceFactory = failSometimeProxy<
 			IDocumentServiceFactory &
 				IProvideLayerCompatDetails &
@@ -253,10 +255,14 @@ describe("DisableLoadConnectionRetries", () => {
 						get: () => undefined,
 						set: (state) => {
 							assert.deepStrictEqual(state, driverState);
+							if (restoreError !== undefined) {
+								throw restoreError;
+							}
 							restored = true;
 						},
 					},
 					connectToStorage: async () => {
+						connectionAttempts++;
 						assert(restored, "Driver state must be restored before connecting to storage");
 						throw new Error("stop after ordering check");
 					},
@@ -288,6 +294,14 @@ describe("DisableLoadConnectionRetries", () => {
 			/stop after ordering check/,
 		);
 		assert(restored);
+		assert.strictEqual(connectionAttempts, 1);
+
+		restoreError = new Error("invalid driver state");
+		await assert.rejects(
+			async () => loader.resolve({ url: "test" }, pendingState),
+			restoreError,
+		);
+		assert.strictEqual(connectionAttempts, 1);
 	});
 
 	it("load rejects when connectToStorage fails with retryable error and flag is enabled", async () => {

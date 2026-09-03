@@ -189,6 +189,8 @@ export class OdspDocumentService
 			if (currentEpoch !== undefined) {
 				throw new UsageError("ODSP driver state epoch does not match the current epoch");
 			}
+			// Pending state and the ODSP cache are both persisted client state; keep them in the
+			// same telemetry category rather than widening the exported FetchTypeInternal API.
 			this.epochTracker.setEpoch(state.epoch, true, "cache");
 		},
 	};
