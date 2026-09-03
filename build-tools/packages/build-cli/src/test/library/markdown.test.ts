@@ -116,13 +116,12 @@ describe("TRAILING_ADMONITION_REGEX", () => {
 		return input.replace(TRAILING_ADMONITION_REGEX, "$1\n");
 	}
 
-	describe("splits a title left at the end of the string", () => {
+	describe("splits a title that is the whole text node", () => {
 		const cases: [name: string, input: string][] = [
 			["with no trailing whitespace", "[!NOTE]"],
 			["with a trailing space", "[!NOTE] "],
 			["with trailing spaces", "[!NOTE]   "],
 			["with a trailing line break", "[!NOTE]\n"],
-			["after other content", "Leading text. [!NOTE] "],
 		];
 
 		for (const [name, input] of cases) {
@@ -139,6 +138,9 @@ describe("TRAILING_ADMONITION_REGEX", () => {
 	describe("leaves the string alone", () => {
 		const cases: [name: string, input: string][] = [
 			["when the title is followed by content", "[!NOTE] Body text."],
+			// GitHub only treats a blockquote as an alert when the title is the very first thing in it, so a title with
+			// text in front of it is ordinary prose and must not be split.
+			["when the title is preceded by content", "Leading text. [!NOTE] "],
 			["when there is no title", "Body text."],
 			["when the type is not supported", "[!DANGER] "],
 			["when the type is lowercase", "[!note] "],
@@ -151,10 +153,10 @@ describe("TRAILING_ADMONITION_REGEX", () => {
 		}
 	});
 
-	it("is not multiline, so a title at the end of an inner line is left alone", () => {
-		// The title here ends the first line, so the `m` flag would make `$` match right after it. Without that flag
-		// `$` means the end of the whole string, so the title is left alone.
-		const input = "Leading text. [!NOTE]\nBody text.";
+	it("is not multiline, so a title alone on the first line of a longer string is left alone", () => {
+		// With the `m` flag `^` and `$` would match the bounds of the first line and this would split. Without it they
+		// mean the bounds of the whole string, so the title is left alone.
+		const input = "[!NOTE]\nBody text.";
 		assert.equal(splitTrailingTitle(input), input);
 	});
 });
@@ -233,6 +235,16 @@ describe("stripSoftBreaks", () => {
 			"Regular quote with ",
 			"bold",
 			" text.",
+		]);
+	});
+
+	it("does not split a title that is preceded by text in the same blockquote", () => {
+		// GitHub only renders an alert when the title is the very first thing in the blockquote, so this blockquote is
+		// ordinary prose. Splitting it would push a line break into the middle of the author's sentence.
+		assert.deepEqual(stripAndCollectText("> Please read [!NOTE] **carefully**.\n"), [
+			"Please read [!NOTE] ",
+			"carefully",
+			".",
 		]);
 	});
 });

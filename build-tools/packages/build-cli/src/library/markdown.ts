@@ -85,7 +85,7 @@ export const ADMONITION_REGEX = /(\[!(?:CAUTION|IMPORTANT|NOTE|TIP|WARNING)])(?!
 const SOFT_BREAK_REGEX = /$[^$]/gms;
 
 /**
- * A regular expression that extracts an admonition title that sits at the very end of a string, ignoring any trailing
+ * A regular expression that matches a text node whose entire content is an admonition title, ignoring any trailing
  * whitespace.
  *
  * Capture group 1 is the admonition type/title, exactly as in {@link ADMONITION_REGEX}.
@@ -98,12 +98,14 @@ const SOFT_BREAK_REGEX = /$[^$]/gms;
  * the title ends up alone at the end of its own text node and {@link ADMONITION_REGEX} leaves it untouched. This
  * regular expression matches those titles so the caller can restore the line break the alert needs.
  *
- * Note that this regular expression is deliberately not multiline: `$` must mean the end of the whole string, not the
- * end of any line within it.
+ * The `^` anchor matters: GitHub only treats a blockquote as an alert when the title is the very first thing in it, so
+ * a title with text before it is ordinary prose and must not be split. Note also that this regular expression is
+ * deliberately not multiline, so `^` and `$` mean the start and end of the whole string rather than of any line
+ * within it.
  *
  * @internal
  */
-export const TRAILING_ADMONITION_REGEX = /(\[!(?:CAUTION|IMPORTANT|NOTE|TIP|WARNING)])\s*$/;
+export const TRAILING_ADMONITION_REGEX = /^(\[!(?:CAUTION|IMPORTANT|NOTE|TIP|WARNING)])\s*$/;
 
 /**
  * A remarkjs/unist plugin that strips soft line breaks. This is a workaround for GitHub's inconsistent markdown
