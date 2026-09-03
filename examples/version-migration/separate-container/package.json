@@ -84,7 +84,7 @@
 		"style-loader": "^4.0.0",
 		"tinylicious": "^7.0.1",
 		"ts-loader": "^9.5.1",
-		"typescript": "~6.0.3",
+		"typescript": "catalog:TypeScript",
 		"webpack": "^5.94.0",
 		"webpack-cli": "^5.1.4",
 		"webpack-dev-server": "~5.2.6"
