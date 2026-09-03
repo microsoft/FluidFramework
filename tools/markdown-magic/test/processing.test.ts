@@ -246,6 +246,31 @@ test("infers generated heading depth from the region placement", async () => {
 	}
 });
 
+test("uses an explicit heading level as the generated heading context", async () => {
+	const source = [
+		"# Document",
+		"",
+		"#### Preceding section",
+		"",
+		'<!-- markdown-magic:begin {"transform":"client-requirements","headingLevel":2} -->',
+		"<!-- markdown-magic:end -->",
+	].join("\n");
+
+	const output = await processHelpRegion(source);
+	assert.match(output, /^## Minimum Client Requirements$/m);
+	assert.match(output, /^### Supported Runtimes$/m);
+});
+
+test("rejects an explicit heading level outside the Markdown range", async () => {
+	const marker =
+		'<!-- markdown-magic:begin {"transform":"help","headingLevel":7} -->\n<!-- markdown-magic:end -->';
+
+	await assert.rejects(
+		processHelpRegion(marker),
+		/Option "headingLevel" for "help" must be between 1 and 6/,
+	);
+});
+
 test("ignores headings in generated regions when it infers heading depth", async () => {
 	const source = [
 		"# Document",

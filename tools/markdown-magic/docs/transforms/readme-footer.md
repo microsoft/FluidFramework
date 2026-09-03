@@ -7,6 +7,7 @@ Use `readme-footer` to generate standard sections at the end of a package README
 | Option                   | Type    | Default                | Description                                             |
 | ------------------------ | ------- | ---------------------- | ------------------------------------------------------- |
 | `packageJsonPath`        | string  | `./package.json`       | Package file path relative to the destination document. |
+| `headingLevel`           | integer | Inferred               | Context heading level for all generated sections.       |
 | `scripts`                | boolean | `false`                | Include a table of package scripts.                     |
 | `clientRequirements`     | boolean | Public-package default | Include minimum client requirements.                    |
 | `contributionGuidelines` | boolean | `true`                 | Include contribution guidance.                          |
@@ -20,6 +21,6 @@ A public package is a non-private package in the `FRAMEWORK` or `EXPERIMENTAL` p
 The following marker adds the standard footer and a package-script table:
 
 ```markdown
-<!-- markdown-magic:begin {"transform":"readme-footer","scripts":true} -->
+<!-- markdown-magic:begin {"transform":"readme-footer","scripts":true,"headingLevel":2} -->
 <!-- markdown-magic:end -->
 ```

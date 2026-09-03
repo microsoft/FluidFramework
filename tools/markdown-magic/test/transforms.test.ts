@@ -116,18 +116,16 @@ test("transform options reject null values", async () => {
 	);
 });
 
-test("section transforms reject the removed heading level option", async () => {
+test("section transforms use the explicit heading level", async () => {
 	const registry = createTransformRegistry();
 	for (const transformName of ["api-docs", "installation-instructions", "package-scripts"]) {
 		const transform = registry.transforms[transformName];
 		assert(transform !== undefined);
-		await assert.rejects(
-			async () =>
-				transform.generate(
-					{ headingLevel: 2 },
-					registry.createContext(path.join(testDirectory, "fixture.md"), "markdown", 2),
-				),
-			/Unknown option "headingLevel"/,
+		const nodes = await transform.generate(
+			{ headingLevel: 2 },
+			registry.createContext(path.join(testDirectory, "fixture.md"), "markdown", 4),
 		);
+		assert.equal(nodes[0]?.type, "heading");
+		assert.equal(nodes[0].depth, 2);
 	}
 });

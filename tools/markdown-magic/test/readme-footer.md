@@ -1,17 +1,17 @@
-<!-- markdown-magic:begin {"transform":"readme-footer","packageJsonPath":"./package.json","scripts":true} -->
+<!-- markdown-magic:begin {"transform":"readme-footer","packageJsonPath":"./package.json","scripts":true,"headingLevel":2} -->
 
 <!-- prettier-ignore-start -->
 
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
-# Scripts
+## Scripts
 
 | Script | Description |
 | - | - |
 | `test-script-1` | `echo This is a test script` |
 | `test-script-2` | `echo This is another test script` |
 
-# Minimum Client Requirements
+## Minimum Client Requirements
 
 Fluid Framework client libraries support the platforms in this document.
 These requirements are intentionally restrictive.
@@ -27,14 +27,14 @@ In the issue, specify the current status of the configuration:
 * The configuration works but needs official support.
 * The configuration does not work and requires changes.
 
-## Supported Runtimes
+### Supported Runtimes
 
 * Fluid Framework supports Node.js versions 22 and 24 while they receive [upstream support](https://nodejs.org/en/about/previous-releases).
   * Fluid Framework will stop support for version 22 [when upstream support ends on 2027-04-30](https://github.com/nodejs/release#release-schedule).
   * Fluid Framework does not support Node.js with the `--no-experimental-fetch` flag.
 * Fluid Framework supports modern browsers that support the ES2022 standard library.
 
-## Supported Tools
+### Supported Tools
 
 * [TypeScript 6.0](https://typescriptdocs.com/release-notes/TypeScript%206.0):
   * Fluid Framework supports all [`strict`](https://www.typescriptlang.org/tsconfig) options.
@@ -48,21 +48,21 @@ In the issue, specify the current status of the configuration:
   * We do not require a specific bundler.
     Other bundlers that handle ES Modules can work, but we actively test only webpack.
 
-## Module Resolution
+### Module Resolution
 
 In TypeScript `compilerOptions`, use [`Node16`, `Node20`, `NodeNext`, or `Bundler`](https://www.typescriptlang.org/tsconfig#moduleResolution) module resolution.
 These settings follow the [Node.js v12+ ESM Resolution and Loading algorithm](https://nodejs.github.io/nodejs.dev/en/api/v20/esm/#resolution-and-loading-algorithm).
 
 Do not use `Node10` module resolution.
 
-## Module Formats
+### Module Formats
 
 * ES Modules:
   Use ES Modules to consume Fluid Framework client packages, including in Node.js.
 * CommonJS:
   Fluid Framework does not officially support CommonJS in version 3.0 or later.
 
-# Contribution Guidelines
+## Contribution Guidelines
 
 You can [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid Framework in these ways:
 
@@ -81,13 +81,13 @@ This project may contain Microsoft trademarks or logos for Microsoft projects, p
 Use of these trademarks or logos must follow Microsoft’s [Trademark & Brand Guidelines](https://www.microsoft.com/trademarks).
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
-# Help
+## Help
 
 Read the [Fluid Framework documentation](https://fluidframework.com/docs/) for information about Fluid Framework concepts and APIs.
 
 To request information that the documentation does not contain, [create an issue](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Contributing/Submitting-Bugs-and-Feature-Requests.md).
 
-# Trademark
+## Trademark
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
 

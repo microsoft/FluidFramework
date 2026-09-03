@@ -1,10 +1,10 @@
-<!-- markdown-magic:begin {"transform":"example-app-readme-header","packageJsonPath":"./package.json"} -->
+<!-- markdown-magic:begin {"transform":"example-app-readme-header","packageJsonPath":"./package.json","headingLevel":2} -->
 
 <!-- prettier-ignore-start -->
 
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
-# Getting Started
+## Getting Started
 
 Complete these steps to run the example:
 

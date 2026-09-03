@@ -1,4 +1,4 @@
-<!-- markdown-magic:begin {"transform":"help","includeHeading":false} -->
+<!-- markdown-magic:begin {"transform":"help","includeHeading":false,"headingLevel":2} -->
 
 <!-- prettier-ignore-start -->
 
@@ -12,13 +12,13 @@ To request information that the documentation does not contain, [create an issue
 
 <!-- markdown-magic:end -->
 
-<!-- markdown-magic:begin {"transform":"help"} -->
+<!-- markdown-magic:begin {"transform":"help","headingLevel":2} -->
 
 <!-- prettier-ignore-start -->
 
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
-# Help
+## Help
 
 Read the [Fluid Framework documentation](https://fluidframework.com/docs/) for information about Fluid Framework concepts and APIs.
 

@@ -10,6 +10,7 @@ The transform reads the package name and `exports` object from `package.json`. I
 | ----------------- | ------- | ---------------- | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | `packageJsonPath` | string  | `./package.json` | Package file path relative to the destination document. | None.                                                                                                                                    |
 | `includeHeading`  | boolean | `true`           | Include the `Importing from this package` heading.      | When enabled, the transform determines the depth from the marker position. See [Generated headings](../../README.md#generated-headings). |
+| `headingLevel`    | integer | Inferred         | Set the context heading level from 1 through 6.         | This value overrides the depth inferred from the marker position.                                                                            |
 
 ## Example
 

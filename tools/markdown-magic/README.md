@@ -2,7 +2,7 @@
 
 This package generates and embeds content in Markdown and MDX documents.
 
-<!-- markdown-magic:begin {"transform":"library-readme-header"} -->
+<!-- markdown-magic:begin {"transform":"library-readme-header","headingLevel":2} -->
 
 <!-- prettier-ignore-start -->
 
@@ -119,6 +119,11 @@ Otherwise, the nearest preceding authored heading defines the depth.
 A section after the document title uses level two.
 A section in a document without authored headings uses level one.
 
+Set `headingLevel` to specify the context heading level for generated content.
+This value overrides the level inferred from the marker position.
+The transform derives all generated heading levels from this context.
+For example, a template heading at level one becomes level three when `headingLevel` is `2`.
+
 The tool ignores headings inside generated regions when it determines the depth.
 Thus, existing generated content does not change the result.
 At the end of a section, the generated heading is a sibling of the nearest preceding heading.
@@ -195,10 +200,6 @@ It does not combine serialized Markdown strings.
 The transform context provides the destination path, destination format, path resolution, document parsing, and file reading.
 New transforms must return nodes that the destination processor can serialize.
 
-`migrateLegacyMarkers.ts` contains the one-use migration from the former marker syntax.
-It changes marker text only.
-It does not change generated content between markers.
-
 ## Validation
 
 Run the package tests and documentation generation:
@@ -211,7 +212,7 @@ pnpm --dir tools/markdown-magic check:biome
 
 Run generation twice. The second run must report `Updated 0 files.`
 
-<!-- markdown-magic:begin {"transform":"readme-footer"} -->
+<!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
 
 <!-- prettier-ignore-start -->
 

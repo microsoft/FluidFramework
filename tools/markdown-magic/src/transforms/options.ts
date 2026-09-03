@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { RootContent } from "mdast";
+import type { Heading, RootContent } from "mdast";
 
 import type { Transform, TransformContext } from "../types.js";
 
@@ -223,6 +223,15 @@ export function transform<TSchema extends OptionsSchema>(
 	) => RootContent[] | Promise<RootContent[]>,
 ): Transform {
 	return {
-		generate: (value, context) => generate(validateOptions(value, name, schema), context),
+		generate: (value, context) => {
+			const options = validateOptions(value, name, schema);
+			const headingLevel = (options as Record<string, unknown>).headingLevel;
+			return generate(
+				options,
+				typeof headingLevel === "number"
+					? { ...context, sectionHeadingDepth: headingLevel as Heading["depth"] }
+					: context,
+			);
+		},
 	};
 }

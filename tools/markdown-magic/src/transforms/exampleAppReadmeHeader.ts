@@ -7,7 +7,7 @@ import type { Transform } from "../types.js";
 import { generateGettingStarted } from "./exampleGettingStarted.js";
 import { transform } from "./options.js";
 import { readPackage } from "./packageMetadata.js";
-import { packageSchema } from "./schemas.js";
+import { headingLevelSchema, packageSchema } from "./schemas.js";
 
 /**
  * Generates the standard sections that precede an example application README body.
@@ -16,6 +16,7 @@ export const exampleAppReadmeHeaderTransform: Transform = transform(
 	"example-app-readme-header",
 	{
 		...packageSchema,
+		...headingLevelSchema,
 		gettingStarted: { type: "boolean", default: true },
 		usesTinylicious: { type: "boolean", default: true },
 	},

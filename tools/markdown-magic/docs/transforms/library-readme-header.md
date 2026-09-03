@@ -7,6 +7,7 @@ Use `library-readme-header` to generate the standard sections at the start of a 
 | Option                 | Type    | Default                        | Description                                             |
 | ---------------------- | ------- | ------------------------------ | ------------------------------------------------------- |
 | `packageJsonPath`      | string  | `./package.json`               | Package file path relative to the destination document. |
+| `headingLevel`         | integer | Inferred from marker position  | Context heading level for all generated sections.       |
 | `packageScopeNotice`   | string  | Detected from the package name | Package kind for the scope notice.                      |
 | `dependencyGuidelines` | boolean | Public-package default         | Include dependency guidance.                            |
 | `installation`         | boolean | Public-package default         | Include installation instructions.                      |
@@ -25,6 +26,6 @@ Import instructions appear only when the package exports an `alpha`, `beta`, or 
 The following marker generates a header for an experimental package and installs it as a development dependency:
 
 ```markdown
-<!-- markdown-magic:begin {"transform":"library-readme-header","packageScopeNotice":"EXPERIMENTAL","devDependency":true} -->
+<!-- markdown-magic:begin {"transform":"library-readme-header","packageScopeNotice":"EXPERIMENTAL","devDependency":true,"headingLevel":2} -->
 <!-- markdown-magic:end -->
 ```

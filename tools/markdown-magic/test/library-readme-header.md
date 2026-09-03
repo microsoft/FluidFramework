@@ -1,4 +1,4 @@
-<!-- markdown-magic:begin {"transform":"library-readme-header","packageJsonPath":"./package.json","devDependency":true,"packageScopeNotice":"EXPERIMENTAL"} -->
+<!-- markdown-magic:begin {"transform":"library-readme-header","packageJsonPath":"./package.json","devDependency":true,"packageScopeNotice":"EXPERIMENTAL","headingLevel":2} -->
 
 <!-- prettier-ignore-start -->
 
@@ -10,7 +10,7 @@
 **Do not use it as a dependency in production scenarios.**
 **We do not guarantee the stability of this package or its APIs.**
 
-# Using Fluid Framework libraries
+## Using Fluid Framework libraries
 
 For a dependency on a Fluid Framework library's public APIs, we recommend a `^` (caret) version range.
 For example, use `^1.3.4`.
@@ -18,7 +18,7 @@ For example, use `^1.3.4`.
 For a dependency on an unstable API, such as a `beta` API, we recommend a more restrictive version range.
 For example, use a `~` version range.
 
-# Installation
+## Installation
 
 Run this command to install the package:
 
@@ -26,7 +26,7 @@ Run this command to install the package:
 npm i @fluidframework/test-package -D
 ```
 
-# Importing from this package
+## Importing from this package
 
 This package uses [package.json exports](https://nodejs.org/api/packages.html#exports) to separate APIs by support level.
 For information about the support guarantees, read [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
@@ -37,7 +37,7 @@ Import the `alpha` APIs from `@fluidframework/test-package/alpha`.
 
 Import the `legacy` APIs from `@fluidframework/test-package/legacy`.
 
-# API Documentation
+## API Documentation
 
 Read the **@fluidframework/test-package** API documentation at <https://fluidframework.com/docs/apis/test-package>.
 

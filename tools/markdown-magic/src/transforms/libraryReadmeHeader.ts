@@ -16,7 +16,7 @@ import {
 	scopeValues,
 } from "./packageMetadata.js";
 import { generateScopeNotice } from "./packageScopeNotice.js";
-import { packageSchema } from "./schemas.js";
+import { headingLevelSchema, packageSchema } from "./schemas.js";
 import { generateTemplateSection } from "./templates.js";
 
 /**
@@ -26,6 +26,7 @@ export const libraryReadmeHeaderTransform: Transform = transform(
 	"library-readme-header",
 	{
 		...packageSchema,
+		...headingLevelSchema,
 		packageScopeNotice: { type: "string", values: scopeValues },
 		dependencyGuidelines: { type: "boolean" },
 		installation: { type: "boolean" },

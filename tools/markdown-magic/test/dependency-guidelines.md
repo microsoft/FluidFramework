@@ -1,4 +1,4 @@
-<!-- markdown-magic:begin {"transform":"dependency-guidelines","includeHeading":false} -->
+<!-- markdown-magic:begin {"transform":"dependency-guidelines","includeHeading":false,"headingLevel":2} -->
 
 <!-- prettier-ignore-start -->
 
@@ -14,13 +14,13 @@ For example, use a `~` version range.
 
 <!-- markdown-magic:end -->
 
-<!-- markdown-magic:begin {"transform":"dependency-guidelines"} -->
+<!-- markdown-magic:begin {"transform":"dependency-guidelines","headingLevel":2} -->
 
 <!-- prettier-ignore-start -->
 
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
-# Using Fluid Framework libraries
+## Using Fluid Framework libraries
 
 For a dependency on a Fluid Framework library's public APIs, we recommend a `^` (caret) version range.
 For example, use `^1.3.4`.
