@@ -1264,6 +1264,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			return;
 		}
 
+		const pendingStateAnchor = cacheOnly ? undefined : this.pendingStateAnchor;
+		let refetchAfterUnvalidatedAnchor = false;
 		try {
 			let from = this.lastQueuedSequenceNumber + 1;
 
@@ -1292,6 +1294,23 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				},
 				cacheOnly,
 			);
+			if (
+				pendingStateAnchor !== undefined &&
+				this.pendingStateAnchor === pendingStateAnchor &&
+				!this._closed
+			) {
+				this.logger.sendTelemetryEvent({
+					eventName: "PendingStateAnchorNotValidated",
+					sequenceNumber: pendingStateAnchor.sequenceNumber,
+					fetchFrom: from,
+					serviceCheckpointSequenceNumber: this.serviceCheckpointSequenceNumber,
+				});
+				this.pendingStateAnchor = undefined;
+				if (this.previouslyProcessedMessage === pendingStateAnchor) {
+					this.previouslyProcessedMessage = undefined;
+				}
+				refetchAfterUnvalidatedAnchor = true;
+			}
 		} catch (error) {
 			this.logger.sendErrorEvent({ eventName: "GetDeltas_Exception" }, error);
 			this.close(normalizeError(error));
@@ -1299,6 +1318,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			this.refreshDelayInfo(this.deltaStorageDelayId);
 			this.fetchReason = undefined;
 			this.processPendingOps(reason);
+			if (refetchAfterUnvalidatedAnchor && this.fetchReason === undefined) {
+				this.fetchMissingDeltas("PendingStateAnchorNotValidated");
+			}
 		}
 	}
 

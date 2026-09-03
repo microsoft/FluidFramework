@@ -351,6 +351,63 @@ describe("Loader", () => {
 				assert.strictEqual(expectedError, undefined);
 			});
 
+			it("continues fetching when the saved op is no longer available", async () => {
+				const savedOp = {
+					...generateOp(),
+					sequenceNumber: 13,
+					minimumSequenceNumber: 10,
+					timestamp: 1000,
+					referenceSequenceNumber: 12,
+				};
+				const continuingOp = {
+					...savedOp,
+					clientSequenceNumber: savedOp.clientSequenceNumber + 1,
+					sequenceNumber: savedOp.sequenceNumber + 1,
+					timestamp: savedOp.timestamp + 1,
+				};
+				const requestedFrom: number[] = [];
+				let fetchCompleted: (() => void) | undefined;
+				const fetchCompletedP = new Promise<void>((resolve) => {
+					fetchCompleted = resolve;
+				});
+
+				await startDeltaManager(
+					true,
+					logger,
+					() => ({
+						fetchMessages: (from): IStream<ISequencedDocumentMessage[]> => {
+							requestedFrom.push(from);
+							let read = false;
+							return {
+								read: async (): Promise<IStreamResult<ISequencedDocumentMessage[]>> => {
+									if (from === savedOp.sequenceNumber) {
+										return { done: true };
+									}
+									if (read) {
+										fetchCompleted?.();
+										return { done: true };
+									}
+									read = true;
+									return { done: false, value: [continuingOp] };
+								},
+							};
+						},
+					}),
+					5,
+					savedOp,
+					"all",
+				);
+				await fetchCompletedP;
+				await yieldEventLoop();
+
+				assert.deepStrictEqual(requestedFrom, [
+					savedOp.sequenceNumber,
+					savedOp.sequenceNumber + 1,
+				]);
+				assert.strictEqual(deltaManager.hasPendingStateAnchor, false);
+				assert.strictEqual(deltaManager.lastSequenceNumber, continuingOp.sequenceNumber);
+			});
+
 			it("uses the last saved op's minimum sequence number", async () => {
 				const savedOp = {
 					...generateOp(),
