@@ -167,8 +167,7 @@ const config = new TreeViewConfiguration({ schema: Board });
 Once a document's stored schema has been upgraded, it cannot be downgraded.
 However, rolling back a feature flag is safe.
 With the feature flag rolled back, new documents and any documents that haven't been upgraded yet will not have the upgrade enabled.
-{/* TODO: link directly to `isStagedUpgradeEnabled` property once it has been released. */}
-You can use <ApiLink package="fluid-framework" api="(TreeViewAlpha:interface)"/>'s `isStagedUpgradeEnabled` property to check whether a document has already been upgraded and conditionally include that upgrade token for those documents.
+You can use <ApiLink package="fluid-framework" api="(TreeViewAlpha:interface).isStagedUpgradeEnabled" newApi/> to check whether a document has already been upgraded and conditionally include that upgrade token for those documents.
 
 Disabling the feature flag prevents **new** documents from being upgraded, but documents that have already been upgraded retain the new schema.
 This means:
