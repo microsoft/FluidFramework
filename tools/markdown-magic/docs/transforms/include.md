@@ -24,7 +24,8 @@ Markdown content can be included in an MDX document.
 When the Markdown source contains HTML comments, the transform converts them to MDX comments.
 Other HTML nodes are unchanged and must be valid in the MDX destination.
 
-MDX content can be included in a Markdown document only when the generated syntax tree contains no MDX-specific nodes.
+When the MDX source contains MDX comments, the transform converts them to HTML comments in a Markdown destination.
+Other MDX content can be included in a Markdown document only when the generated syntax tree contains no MDX-specific nodes.
 
 ## Example
 

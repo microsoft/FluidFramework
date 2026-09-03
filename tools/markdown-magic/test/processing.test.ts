@@ -200,6 +200,24 @@ test("MDX destinations convert included Markdown comments to MDX comments", asyn
 	assert.match(output, /\{\/\* Included comment\. \*\/\}/);
 });
 
+test("Markdown destinations convert included MDX comments to HTML comments", async () => {
+	const directory = await createTempDirectory();
+	const sourcePath = path.join(directory, "source.mdx");
+	const destinationPath = path.join(directory, "destination.md");
+	await writeFile(sourcePath, "{/* Included comment. */}\n");
+	await writeFile(
+		destinationPath,
+		[
+			`<!-- markdown-magic:begin {"transform":"include","path":"./source.mdx"} -->`,
+			"<!-- markdown-magic:end -->",
+		].join("\n"),
+	);
+
+	await processDocument(destinationPath, createTransformRegistry());
+	const output = await readFile(destinationPath, "utf8");
+	assert.match(output, /<!-- Included comment\. -->/);
+});
+
 test("Markdown destinations reject MDX nodes", async () => {
 	const directory = await createTempDirectory();
 	const sourcePath = path.join(directory, "source.mdx");

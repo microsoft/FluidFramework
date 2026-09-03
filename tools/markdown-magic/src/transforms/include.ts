@@ -28,6 +28,26 @@ function convertCommentToMdx(node: RootContent): RootContent {
 }
 
 /**
+ * Matches one complete MDX comment expression and captures the text between its delimiters.
+ */
+const mdxCommentPattern = /^\/\*([\s\S]*?)\*\/$/;
+
+/**
+ * Converts a complete MDX comment expression to a Markdown HTML comment node.
+ * Other MDX expressions are unchanged so that destination serialization can reject them.
+ *
+ * @param node - The parsed MDX node to convert.
+ * @returns The equivalent Markdown comment node, or the original node when it is not a comment.
+ */
+function convertCommentToMarkdown(node: RootContent): RootContent {
+	if (node.type !== "mdxFlowExpression") {
+		return node;
+	}
+	const match = mdxCommentPattern.exec(node.value);
+	return match === null ? node : { type: "html", value: `<!--${match[1]}-->` };
+}
+
+/**
  * Options shared by the file and code include transforms.
  */
 interface IncludeOptions {
@@ -232,7 +252,7 @@ export const includeTransform: Transform = {
 		const nodes: GeneratedNodes =
 			context.destinationFormat === "mdx"
 				? selectedNodes.map(convertCommentToMdx)
-				: selectedNodes;
+				: selectedNodes.map(convertCommentToMarkdown);
 		Object.defineProperty(nodes, "sourcePath", {
 			value: sourcePath,
 			enumerable: false,
