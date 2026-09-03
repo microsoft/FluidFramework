@@ -104,6 +104,7 @@ import type {
 	LocalBatchMessage,
 } from "../opLifecycle/index.js";
 import type { IPendingMessage, PendingStateManager } from "../pendingStateManager.js";
+import { disableStrictLoaderLayerCompatibilityCheckKey } from "../runtimeLayerCompatState.js";
 import {
 	type ISummaryCancellationToken,
 	type IContainerRuntimeMetadata,
@@ -340,6 +341,46 @@ describe("Runtime", () => {
 	});
 
 	describe("Container Runtime", () => {
+		describe("legacy loader compatibility", () => {
+			for (const [name, settings] of [
+				["strict compatibility enabled by default", {}],
+				[
+					"strict compatibility disabled",
+					{ [disableStrictLoaderLayerCompatibilityCheckKey]: true },
+				],
+			] as const) {
+				it(`rejects a loader without a tagged logger when ${name}`, async () => {
+					const untaggedLogger = new MockLogger();
+					const closeFn = Sinon.fake();
+					const legacyContext = {
+						...getMockContext({ logger: untaggedLogger, settings }),
+						taggedLogger: undefined,
+						logger: untaggedLogger,
+						closeFn,
+					};
+
+					await assert.rejects(
+						ContainerRuntime.loadRuntime2({
+							context: legacyContext as unknown as IContainerContext,
+							registry: new FluidDataStoreRegistry([]),
+							existing: false,
+							provideEntryPoint: mockProvideEntryPoint,
+						}),
+						(error: Error) =>
+							error instanceof UsageError &&
+							error.message === "Loader must provide a tagged logger",
+					);
+
+					assert(closeFn.calledOnce, "The incompatible container should be closed");
+					assert.deepEqual(
+						untaggedLogger.events,
+						[],
+						"Runtime telemetry must not be sent to the untagged logger",
+					);
+				});
+			}
+		});
+
 		describe("IdCompressor", () => {
 			it("finalizes idRange on attach", async () => {
 				const logger = new MockLogger();
