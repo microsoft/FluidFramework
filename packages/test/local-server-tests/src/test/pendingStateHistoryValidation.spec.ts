@@ -10,6 +10,7 @@ import {
 	createDetachedContainer,
 	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
+import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import type { IErrorBase } from "@fluidframework/core-interfaces/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import type {
@@ -139,6 +140,41 @@ describe("Pending-state history validation", () => {
 		const closedP = new Promise<IErrorBase | undefined>((resolve) =>
 			rehydrated.once("closed", (closeError) => resolve(closeError)),
 		);
+		releaseValidation.resolve();
+
+		const error = await timeoutAwait(closedP);
+		assert.match(error?.message ?? "", /same sequenceNumber but different payloads/);
+		assert.strictEqual(rehydrated.closed, true);
+	});
+
+	it("validates pending state after a deferred connection", async () => {
+		const { codeLoader, documentServiceFactory, urlResolver, url, pendingLocalState, anchor } =
+			await createPendingState();
+		const validationStarted = new Deferred<void>();
+		const releaseValidation = new Deferred<void>();
+		const rehydrated = await timeoutAwait(
+			loadExistingContainer({
+				codeLoader,
+				documentServiceFactory: delayMismatchedAnchor(
+					documentServiceFactory,
+					anchor.sequenceNumber,
+					validationStarted,
+					releaseValidation,
+				),
+				urlResolver,
+				request: {
+					url,
+					headers: { [LoaderHeader.loadMode]: { deltaConnection: "none" } },
+				},
+				pendingLocalState,
+			}),
+		);
+		const closedP = new Promise<IErrorBase | undefined>((resolve) =>
+			rehydrated.once("closed", (closeError) => resolve(closeError)),
+		);
+
+		rehydrated.connect();
+		await timeoutAwait(validationStarted.promise);
 		releaseValidation.resolve();
 
 		const error = await timeoutAwait(closedP);

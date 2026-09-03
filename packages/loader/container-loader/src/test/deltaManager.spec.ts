@@ -217,6 +217,7 @@ describe("Loader", () => {
 						minimumSequenceNumber: 10,
 						timestamp: 1000,
 						referenceSequenceNumber: 12,
+						contents: JSON.stringify({ value: "original" }),
 					}),
 				) as ISequencedDocumentMessage;
 				const initialMessage = {
@@ -253,7 +254,12 @@ describe("Loader", () => {
 									await fetchReleasedP;
 									return {
 										done: false,
-										value: [{ ...savedOp, clientId: "Different client" }],
+										value: [
+											{
+												...savedOp,
+												contents: JSON.stringify({ value: "restored" }),
+											},
+										],
 									};
 								},
 							};
@@ -292,6 +298,7 @@ describe("Loader", () => {
 					expectedError.getTelemetryProperties().serviceCheckpointSequenceNumber,
 					5,
 				);
+				assert.strictEqual(expectedError.getTelemetryProperties().contentsDiffer, true);
 			});
 
 			it("continues loading when the saved op matches service history", async () => {
@@ -302,6 +309,7 @@ describe("Loader", () => {
 						minimumSequenceNumber: 10,
 						timestamp: 1000,
 						referenceSequenceNumber: 12,
+						contents: { value: "same" },
 					}),
 				) as ISequencedDocumentMessage;
 				let read = false;
@@ -315,7 +323,10 @@ describe("Loader", () => {
 									return { done: true };
 								}
 								read = true;
-								return { done: false, value: [savedOp] };
+								return {
+									done: false,
+									value: [{ ...savedOp, contents: JSON.stringify(savedOp.contents) }],
+								};
 							},
 						}),
 					}),

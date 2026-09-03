@@ -272,6 +272,13 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	}
 
 	/**
+	 * Indicates whether pending-state history still needs validation against storage.
+	 */
+	public get hasPendingStateAnchor(): boolean {
+		return this.pendingStateAnchor !== undefined;
+	}
+
+	/**
 	 * Tells if  current connection has checkpoint information.
 	 * I.e. we know how far behind the client was at the time of establishing connection
 	 */
@@ -901,6 +908,10 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		return `${m.clientId}-${m.type}-${m.minimumSequenceNumber}-${m.referenceSequenceNumber}-${m.timestamp}`;
 	}
 
+	private comparableMessageContents(m: ISequencedDocumentMessage): string | undefined {
+		return typeof m.contents === "string" ? m.contents : JSON.stringify(m.contents);
+	}
+
 	/**
 	 * Validates that the clientSequenceNumber for a given clientId is always increasing.
 	 * @param message - The message to validate.
@@ -1068,7 +1079,11 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				if (previouslyObservedMessage?.sequenceNumber === message.sequenceNumber) {
 					const message1 = this.comparableMessagePayload(previouslyObservedMessage);
 					const message2 = this.comparableMessagePayload(message);
-					if (message1 !== message2) {
+					const contentsDiffer =
+						previouslyObservedMessage === this.pendingStateAnchor &&
+						this.comparableMessageContents(previouslyObservedMessage) !==
+							this.comparableMessageContents(message);
+					if (message1 !== message2 || contentsDiffer) {
 						const error = new NonRetryableError(
 							// This looks like a data corruption but the culprit was that the file was overwritten
 							// in storage.  See PR #5882.
@@ -1086,6 +1101,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 								serviceCheckpointSequenceNumber: this.serviceCheckpointSequenceNumber,
 								message1,
 								message2,
+								contentsDiffer,
 								driverVersion: undefined,
 							},
 						);

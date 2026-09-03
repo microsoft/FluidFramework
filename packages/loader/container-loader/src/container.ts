@@ -1388,12 +1388,11 @@ export class Container
 		} else if (this.attachState !== AttachState.Attached) {
 			throw new UsageError(`The Container is not attached and cannot be connected`);
 		} else if (!this.connected) {
-			// Note: no need to fetch ops as we do it preemptively as part of DeltaManager.attachOpHandler().
-			// If there is gap, we will learn about it once connected, but the gap should be small (if any),
-			// assuming that connect() is called quickly after initial container boot.
+			// Fetch only if a deltaConnection: "none" pending-state load deferred anchor validation.
+			// Otherwise attachOpHandler already fetched preemptively.
 			this.connectInternal({
 				reason: { text: "DocumentConnect" },
-				fetchOpsFromStorage: false,
+				fetchOpsFromStorage: this._deltaManager.hasPendingStateAnchor,
 			});
 		}
 	}
