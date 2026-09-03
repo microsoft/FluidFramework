@@ -802,7 +802,7 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
  * @remarks
  * The `mismatch` property discriminates the different discrepancy shapes.
  *
- * @beta
+ * @sealed @beta
  */
 export type SchemaDiscrepancy =
 	| {
@@ -917,7 +917,7 @@ export type SchemaDiscrepancy =
 /**
  * {@link SchemaCompatibilityStatus} with additional beta APIs.
  *
- * @beta
+ * @sealed @beta
  */
 export interface SchemaCompatibilityStatusBeta extends SchemaCompatibilityStatus {
 	/**
