@@ -1986,5 +1986,6 @@ export const shortCodeMap = {
 	"0xd3a": "TODO: Handle chunk with range of nodes",
 	"0xd3b": "TODO: Handle chunks which are only partially attached",
 	"0xd3c": "AttachAndDetach marks in changesets should always represent MoveIn + Remove",
-	"0xd3d": "A supported client version must be defined"
+	"0xd3d": "A supported client version must be defined",
+	"0xd3e": "Enabled upgrades must be available for an active view"
 };
