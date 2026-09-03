@@ -21,7 +21,13 @@ import {
 	type CodecWriteOptions,
 	FormatValidatorNoOp,
 } from "../codec/index.js";
-import { EmptyKey, type FieldKey, type ITreeCursorSynchronous } from "../core/index.js";
+import {
+	EmptyKey,
+	keyAsDetachedField,
+	rootFieldKey,
+	type FieldKey,
+	type ITreeCursorSynchronous,
+} from "../core/index.js";
 import {
 	cursorForMapTreeField,
 	defaultSchemaPolicy,
@@ -80,11 +86,19 @@ import {
 	type TreeContextAlpha,
 	type TreeNodeSchema,
 	getUnhydratedContext,
+	UnhydratedFlexTreeNode,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 
 import { independentInitializedView, type ViewContent } from "./independentView.js";
-import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
+import {
+	DocumentRootParent,
+	RemovedRootParent,
+	UnhydratedParent,
+	ParentObjectBase,
+} from "./parentObject.js";
+import type { TreeNodeParent } from "./parentObject.js";
+import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
 import {
 	borrowCursorFromTreeNodeOrValue,
 	exportConcise,
@@ -234,13 +248,29 @@ export interface TreeIdentifierUtils {
  */
 export interface TreeAlpha {
 	/**
-	 * {@inheritDoc (TreeBeta:interface).on}
-	 * @deprecated Use {@link (TreeBeta:interface).on} instead.
+	 * Register an event listener on the given {@link TreeNodeParent} (a {@link TreeNode} or {@link ParentObject}).
+	 *
+	 * @param node - The parent to listen on. Typically the result of {@link (TreeAlpha:interface).parent2}.
+	 * @param eventName - The event to listen for. `"nodeChanged"` and `"treeChanged"` are common to both a
+	 * {@link TreeNode} and a {@link ParentObject}, so they are the events available on the un-narrowed union.
+	 * @param listener - The callback to invoke when the event fires.
+	 * @returns A function that, when called, removes the listener.
+	 *
+	 * @remarks
+	 * This method exposes the `nodeChanged` and `treeChanged` events common to {@link TreeNode} and
+	 * {@link ParentObject}.
+	 *
+	 * For document-root parents, `treeChanged` proxies to the current root node (and automatically
+	 * re-subscribes when the root is replaced) and also fires on root replacement; `nodeChanged` fires
+	 * when the root is replaced (the shallow change to this location's single child).
+	 *
+	 * For detached (removed) and unhydrated parents, `nodeChanged` and `treeChanged` fire when the node
+	 * is re-inserted into the document or hydrated (inserted for the first time), leaving the location empty.
 	 */
-	on<K extends keyof TreeChangeEventsBeta<TNode>, TNode extends TreeNode>(
-		node: TNode,
+	on<K extends keyof TreeChangeEventsBeta>(
+		node: TreeNodeParent,
 		eventName: K,
-		listener: NoInfer<TreeChangeEventsBeta<TNode>[K]>,
+		listener: TreeChangeEventsBeta[K],
 	): () => void;
 
 	/**
@@ -388,8 +418,13 @@ export interface TreeAlpha {
 	 * The key of the given node under its parent.
 	 * @remarks
 	 * If `node` is an element in a {@link (TreeArrayNode:interface)}, this returns the index of `node` in the array node (a `number`).
-	 * If `node` is the root node, this returns undefined.
+	 * If `node`'s parent is a {@link ParentObject} (root, detached, or unhydrated), this returns `undefined`.
 	 * Otherwise, this returns the key of the field that it is under (a `string`).
+	 *
+	 * The following invariant holds for all nodes:
+	 * ```
+	 * TreeAlpha.child(TreeAlpha.parent2(node), TreeAlpha.key2(node)) === node
+	 * ```
 	 */
 	key2(node: TreeNode): string | number | undefined;
 
@@ -398,31 +433,46 @@ export interface TreeAlpha {
 	 *
 	 * @remarks {@link ObjectSchemaOptions.allowUnknownOptionalFields | Unknown optional fields} of Object nodes will not be returned by this method.
 	 *
-	 * @param node - The parent node whose child is being requested.
-	 * @param key - The property key under the node under which the child is being requested.
+	 * @param node - The {@link TreeNodeParent} whose child is being requested.
+	 * @param key - The property key under the node for which the child is being requested.
 	 * For Object nodes, this is the developer-facing "property key", not the "{@link SimpleObjectFieldSchema.storedKey | stored keys}".
+	 * For ParentObject parents, use `undefined` to get the root/detached/unhydrated child.
 	 *
 	 * @returns The child node or leaf value under the given key, or `undefined` if no such child exists.
 	 *
+	 * @throws A usage error if a `DocumentRootParent` with incompatible
+	 * schema ({@link SchemaCompatibilityStatus.canView} is false) is provided.
+	 *
 	 * @see {@link (TreeAlpha:interface).key2}
-	 * @see {@link (TreeNodeApi:interface).parent}
+	 * @see {@link (TreeAlpha:interface).parent2}
 	 */
-	child(node: TreeNode, key: string | number): TreeNode | TreeLeafValue | undefined;
+	child(
+		node: TreeNodeParent,
+		key: string | number | undefined,
+	): TreeNode | TreeLeafValue | undefined;
 
 	/**
 	 * Gets the children of the provided node, paired with their property keys under the node.
 	 *
 	 * @remarks
-	 * No guarantees are made regarding the order of the children in the returned array.
+	 * No guarantees are made regarding the order of the children in the returned iterable.
 	 *
 	 * Optional properties of Object nodes with no value are not included in the result.
 	 *
 	 * {@link ObjectSchemaOptions.allowUnknownOptionalFields | Unknown optional fields} of Object nodes are not included in the result.
 	 *
-	 * @param node - The node whose children are being requested.
+	 * For TreeNode parents, the key will always be `string | number` (never `undefined`).
+	 *
+	 * For ParentObject parents (root, detached, unhydrated), returns a single child with key `undefined`.
+	 * Returns empty results if no child exists (e.g., optional root with no value).
+	 *
+	 * @throws A usage error if a `DocumentRootParent` with incompatible
+	 * schema ({@link SchemaCompatibilityStatus.canView} is false) is provided.
+	 *
+	 * @param node - The {@link TreeNodeParent} whose children are being requested.
 	 *
 	 * @returns
-	 * An array of pairs of the form `[propertyKey, child]`.
+	 * An iterable of pairs of the form `[propertyKey, child]`.
 	 *
 	 * For Array nodes, the `propertyKey` is the index of the child in the array.
 	 *
@@ -430,10 +480,14 @@ export interface TreeAlpha {
 	 *
 	 * @see {@link (TreeAlpha:interface).key2}
 	 * @see {@link (TreeNodeApi:interface).parent}
+	 * @see {@link (TreeAlpha:interface).parent2}
 	 */
 	children(
 		node: TreeNode,
 	): Iterable<[propertyKey: string | number, child: TreeNode | TreeLeafValue]>;
+	children(
+		node: TreeNodeParent,
+	): Iterable<[propertyKey: string | number | undefined, child: TreeNode | TreeLeafValue]>;
 
 	/**
 	 * Track observations of any TreeNode content.
@@ -461,7 +515,7 @@ export interface TreeAlpha {
 	/**
 	 * {@link (TreeAlpha:interface).trackObservations} except automatically unsubscribes when the first invalidation occurs.
 	 * @remarks
-	 * This also supports tracking parentage, unlike {@link (TreeAlpha:interface).trackObservations}, as long as the parent is not undefined.
+	 * This also supports tracking parentage, unlike {@link (TreeAlpha:interface).trackObservations}.
 	 *
 	 * @example Simple cached value invalidation
 	 * ```typescript
@@ -568,6 +622,19 @@ export interface TreeAlpha {
 		schema: TSchema,
 		content: TContent,
 	): TContent;
+
+	/**
+	 * Retrieve the parent of the given node.
+	 * @param node - The node to get the parent for.
+	 * @returns The parent {@link TreeNode} if a parent node exists, or a {@link ParentObject}
+	 * representing the root, detached, or unhydrated state.
+	 *
+	 * @remarks
+	 * This method always returns a value, unlike {@link (TreeNodeApi:interface).parent} which returns
+	 * undefined for root nodes. The returned value satisfies the invariant:
+	 * `TreeAlpha.child(TreeAlpha.parent2(node), TreeAlpha.key2(node)) === node`
+	 */
+	parent2(node: TreeNode): TreeNodeParent;
 }
 
 /**
@@ -655,6 +722,7 @@ class NodeSubscription {
 		onlyOnce = false,
 	): { observer: Observer; unsubscribe: () => void } {
 		const subscriptions = new Map<FlexTreeNode, NodeSubscription>();
+		const parentObjectSubscriptions = new Map<ParentObjectBase, () => void>();
 		const observer: Observer = {
 			observeNodeDeep(flexNode: FlexTreeNode): void {
 				if (flexNode.value !== undefined) {
@@ -711,28 +779,27 @@ class NodeSubscription {
 				}
 			},
 			observeParentOf(node: FlexTreeNode): void {
-				// Supporting parent tracking is more difficult that it might seem at first.
-				// There are two main complicating factors:
-				// 1. The parent may be undefined (the node is a root).
-				// 2. If tracking this by subscribing to the parent's changes, then which events are subscribed to needs to be updated after the parent changes.
-				//
-				// If not supporting the first case (undefined parents), the second case gets problematic: edits which un-parent a node could error due to being unable to update the event subscription.
-				// For now this is mitigated by only supporting one of tracking (non-undefined) parents or maintaining event subscriptions across edits.
-
 				if (!onlyOnce) {
 					// TODO: better APIS should be provided which make handling this case practical.
 					throw new UsageError("Observation tracking for parents is currently not supported.");
 				}
 
 				const parent = withObservation(undefined, () => node.parentField.parent);
+				if (parent.parent !== undefined) {
+					observer.observeNodeField(parent.parent, parent.key);
+					return;
+				}
 
-				if (parent.parent === undefined) {
-					// TODO: better APIS should be provided which make handling this case practical.
-					throw new UsageError(
-						"Observation tracking for parents is currently not supported when parent is undefined.",
+				const treeNode = getOrCreateNodeFromInnerNode(node);
+				assert(treeNode instanceof TreeNode, "Expected a tree node");
+				const parentObject = withObservation(undefined, () => resolveTreeNodeParent(treeNode));
+				assert(parentObject instanceof ParentObjectBase, "Expected a parent object");
+				if (!parentObjectSubscriptions.has(parentObject)) {
+					parentObjectSubscriptions.set(
+						parentObject,
+						parentObject.subscribe("nodeChanged", invalidate),
 					);
 				}
-				observer.observeNodeField(parent.parent, parent.key);
 			},
 		};
 
@@ -747,6 +814,9 @@ class NodeSubscription {
 				subscribed = false;
 				for (const subscription of subscriptions.values()) {
 					subscription.unsubscribe();
+				}
+				for (const unsubscribeParentObject of parentObjectSubscriptions.values()) {
+					unsubscribeParentObject();
 				}
 			},
 		};
@@ -780,20 +850,112 @@ function trackObservations<TResult>(
 	};
 }
 
+function treeAlphaChildren(
+	node: TreeNode,
+): Iterable<[propertyKey: string | number, child: TreeNode | TreeLeafValue]>;
+function treeAlphaChildren(
+	node: TreeNodeParent,
+): Iterable<[propertyKey: string | number | undefined, child: TreeNode | TreeLeafValue]>;
+function treeAlphaChildren(
+	node: TreeNodeParent,
+): Iterable<[propertyKey: string | number | undefined, child: TreeNode | TreeLeafValue]> {
+	// Handle ParentObject cases via polymorphic dispatch
+	if (node instanceof ParentObjectBase) {
+		return node.getChildren();
+	}
+
+	if (!isTreeNode(node)) {
+		fail("Unknown ParentObject type");
+	}
+
+	// Handle TreeNode case
+	const flexNode = getInnerNode(node);
+	debugAssert(
+		() => !flexNode.context.isDisposed() || "The provided tree node has been disposed.",
+	);
+
+	const schema = treeNodeApi.schema(node);
+
+	const result: [string | number | undefined, TreeNode | TreeLeafValue][] = [];
+	switch (schema.kind) {
+		case NodeKind.Array: {
+			const sequence = flexNode.tryGetField(EmptyKey) as FlexTreeSequenceField | undefined;
+			if (sequence === undefined) {
+				break;
+			}
+
+			for (let index = 0; index < sequence.length; index++) {
+				const childFlexTree = sequence.at(index);
+				assert(childFlexTree !== undefined, 0xbc4 /* Sequence child was undefined. */);
+				const childTree = getOrCreateNodeFromInnerUnboxedNode(childFlexTree);
+				result.push([index, childTree]);
+			}
+			break;
+		}
+		case NodeKind.Map:
+		case NodeKind.Record: {
+			for (const [key, flexField] of flexNode.fields) {
+				const childTreeNode = tryGetTreeNodeForField(flexField);
+				if (childTreeNode !== undefined) {
+					result.push([key, childTreeNode]);
+				}
+			}
+			break;
+		}
+		case NodeKind.Object: {
+			assert(isObjectNodeSchema(schema), 0xbc5 /* Expected object schema. */);
+			for (const [propertyKey, fieldSchema] of schema.fields) {
+				const storedKey = fieldSchema.storedKey;
+				const flexField = flexNode.tryGetField(brand(String(storedKey)));
+				if (flexField !== undefined) {
+					const childTreeNode = tryGetTreeNodeForField(flexField);
+					assert(childTreeNode !== undefined, 0xbc6 /* Expected child tree node for field. */);
+					result.push([propertyKey, childTreeNode]);
+				}
+			}
+			break;
+		}
+		case NodeKind.Leaf: {
+			fail(0xbc7 /* Leaf schema associated with non-leaf tree node. */);
+		}
+		default: {
+			unreachableCase(schema.kind);
+		}
+	}
+	return result;
+}
+
+function resolveTreeNodeParent(node: TreeNode): TreeNodeParent {
+	const parent = treeNodeApi.parent(node);
+	if (parent !== undefined) {
+		return parent;
+	}
+
+	const kernel = getKernel(node);
+	if (!kernel.isHydrated()) {
+		const innerNode = getInnerNode(node);
+		assert(innerNode instanceof UnhydratedFlexTreeNode, "Expected an unhydrated inner node");
+		return UnhydratedParent.getOrCreate(innerNode);
+	}
+
+	const anchorNode = kernel.anchorNode;
+	const parentField = anchorNode.parentField;
+	if (parentField === rootFieldKey) {
+		const branch = anchorNode.anchorSet.slots.get(ViewSlot);
+		assert(branch !== undefined, "Expected a tree context");
+		assert(branch.isView(), "Expected a tree view for a document root");
+		return DocumentRootParent.getOrCreate(branch);
+	}
+
+	return RemovedRootParent.getOrCreate(keyAsDetachedField(parentField), node);
+}
+
 /**
  * Extensions to {@link (Tree:variable)} and {@link (TreeBeta:variable)} which are not yet stable.
  * @see {@link (TreeAlpha:interface)}.
  * @alpha
  */
 export const TreeAlpha: TreeAlpha = {
-	on<K extends keyof TreeChangeEventsBeta<TNode>, TNode extends TreeNode>(
-		node: TNode,
-		eventName: K,
-		listener: NoInfer<TreeChangeEventsBeta<TNode>[K]>,
-	): () => void {
-		return TreeBeta.on(node, eventName, listener);
-	},
-
 	trackObservations<TResult>(
 		onInvalidation: () => void,
 		trackDuring: () => TResult,
@@ -952,7 +1114,7 @@ export const TreeAlpha: TreeAlpha = {
 	identifier,
 
 	key2(node: TreeNode): string | number | undefined {
-		// If the parent is undefined, then this node is under the root field,
+		// If the parent is undefined, then this node is under a ParentObject (root, detached, or unhydrated)
 		const parent = treeNodeApi.parent(node);
 		if (parent === undefined) {
 			return undefined;
@@ -967,9 +1129,23 @@ export const TreeAlpha: TreeAlpha = {
 	},
 
 	child: (
-		node: TreeNode,
-		propertyKey: string | number,
+		node: TreeNodeParent,
+		propertyKey: string | number | undefined,
 	): TreeNode | TreeLeafValue | undefined => {
+		// Handle ParentObject cases via polymorphic dispatch
+		if (node instanceof ParentObjectBase) {
+			return node.getChild(propertyKey);
+		}
+
+		if (!isTreeNode(node)) {
+			fail("Unknown ParentObject type");
+		}
+
+		// Handle TreeNode case - key must not be undefined for TreeNode parents
+		if (propertyKey === undefined) {
+			return undefined;
+		}
+
 		const flexNode = getInnerNode(node);
 		debugAssert(
 			() => !flexNode.context.isDisposed() || "The provided tree node has been disposed.",
@@ -1040,65 +1216,7 @@ export const TreeAlpha: TreeAlpha = {
 		}
 	},
 
-	children(node: TreeNode): [propertyKey: string | number, child: TreeNode | TreeLeafValue][] {
-		const flexNode = getInnerNode(node);
-		debugAssert(
-			() => !flexNode.context.isDisposed() || "The provided tree node has been disposed.",
-		);
-
-		const schema = treeNodeApi.schema(node);
-
-		const result: [string | number, TreeNode | TreeLeafValue][] = [];
-		switch (schema.kind) {
-			case NodeKind.Array: {
-				const sequence = flexNode.tryGetField(EmptyKey) as FlexTreeSequenceField | undefined;
-				if (sequence === undefined) {
-					break;
-				}
-
-				for (let index = 0; index < sequence.length; index++) {
-					const childFlexTree = sequence.at(index);
-					assert(childFlexTree !== undefined, 0xbc4 /* Sequence child was undefined. */);
-					const childTree = getOrCreateNodeFromInnerUnboxedNode(childFlexTree);
-					result.push([index, childTree]);
-				}
-				break;
-			}
-			case NodeKind.Map:
-			case NodeKind.Record: {
-				for (const [key, flexField] of flexNode.fields) {
-					const childTreeNode = tryGetTreeNodeForField(flexField);
-					if (childTreeNode !== undefined) {
-						result.push([key, childTreeNode]);
-					}
-				}
-				break;
-			}
-			case NodeKind.Object: {
-				assert(isObjectNodeSchema(schema), 0xbc5 /* Expected object schema. */);
-				for (const [propertyKey, fieldSchema] of schema.fields) {
-					const storedKey = fieldSchema.storedKey;
-					const flexField = flexNode.tryGetField(brand(String(storedKey)));
-					if (flexField !== undefined) {
-						const childTreeNode = tryGetTreeNodeForField(flexField);
-						assert(
-							childTreeNode !== undefined,
-							0xbc6 /* Expected child tree node for field. */,
-						);
-						result.push([propertyKey, childTreeNode]);
-					}
-				}
-				break;
-			}
-			case NodeKind.Leaf: {
-				fail(0xbc7 /* Leaf schema associated with non-leaf tree node. */);
-			}
-			default: {
-				unreachableCase(schema.kind);
-			}
-		}
-		return result;
-	},
+	children: treeAlphaChildren,
 
 	tagContentSchema<TSchema extends TreeNodeSchema, TNode extends InsertableField<TSchema>>(
 		schema: TSchema,
@@ -1113,6 +1231,29 @@ export const TreeAlpha: TreeAlpha = {
 			});
 		}
 		return node;
+	},
+
+	parent2(node: TreeNode): TreeNodeParent {
+		return resolveTreeNodeParent(node);
+	},
+
+	on<K extends keyof TreeChangeEventsBeta>(
+		node: TreeNodeParent,
+		eventName: K,
+		listener: TreeChangeEventsBeta[K],
+	): () => void {
+		// Handle ParentObject cases via polymorphic dispatch
+		if (node instanceof ParentObjectBase) {
+			return node.subscribe(eventName, listener);
+		}
+
+		if (isTreeNode(node)) {
+			// A ParentObject exposes the same `nodeChanged`/`treeChanged` events as a node, so the event
+			// name always maps directly to a base content event on the underlying TreeNode.
+			return treeNodeApi.on(node, eventName, listener);
+		}
+
+		unreachableCase(node as never);
 	},
 };
 

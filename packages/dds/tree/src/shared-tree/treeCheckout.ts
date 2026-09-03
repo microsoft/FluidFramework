@@ -343,6 +343,16 @@ export interface ITreeCheckout
 	readonly events: Listenable<CheckoutEvents>;
 
 	/**
+	 * Whether a batch of changes is currently being applied to this checkout.
+	 * @remarks
+	 * This is `true` between the {@link CheckoutEvents.beforeBatch} and {@link CheckoutEvents.afterBatch}
+	 * events, during which the forest, flex tree, and anchor set are being mutated and are not in a
+	 * consistent state to be observed. Callers that react to mid-batch signals (e.g. status changes
+	 * emitted during hydration) can use this to decide whether to defer work to the next `afterBatch`.
+	 */
+	readonly isBatchInProgress: boolean;
+
+	/**
 	 * Events about the root of the tree in this view.
 	 */
 	readonly rootEvents: Listenable<AnchorSetRootEvents>;
@@ -624,6 +634,10 @@ export class TreeCheckout implements ITreeCheckout {
 	readonly #events = createEmitter<CheckoutEvents>();
 	public events: Listenable<CheckoutEvents> = this.#events;
 	private _branchHistory?: DefaultTreeBranchHistory;
+
+	public get isBatchInProgress(): boolean {
+		return this.editLock.isLocked;
+	}
 
 	public constructor(
 		private branch: SharedTreeBranch<
@@ -2011,6 +2025,13 @@ class EditLock {
 	private status:
 		| { readonly isLocked: false }
 		| { readonly isLocked: true; readonly reason: string } = { isLocked: false };
+
+	/**
+	 * Whether the lock is currently held, i.e. a batch of changes is being applied.
+	 */
+	public get isLocked(): boolean {
+		return this.status.isLocked;
+	}
 
 	/**
 	 * @param editor - an editor which will be used to create a new editor that is monitored to determine if any changes are happening to the tree.

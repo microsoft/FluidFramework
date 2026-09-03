@@ -29,6 +29,7 @@ import {
 	TreeStatus,
 	treeStatusFromAnchorCache,
 	type FlexTreeNode,
+	type FlexTreeHydratedContext,
 	type HydratedFlexTreeNode,
 } from "../../feature-libraries/index.js";
 
@@ -92,6 +93,12 @@ interface HydratedState {
 /** State within a {@link TreeNodeKernel} that is related to the hydration process */
 type HydrationState = UnhydratedState | HydratedState;
 
+enum KernelLifecycle {
+	Active,
+	DisposeRequested,
+	Disposed,
+}
+
 /** True if and only if the given {@link HydrationState} is post-hydration */
 function isHydrated(state: HydrationState): state is HydratedState {
 	return state.innerNode.isHydrated();
@@ -103,7 +110,14 @@ function isHydrated(state: HydrationState): state is HydratedState {
  * The kernel has the same lifetime as the node and spans both its unhydrated and hydrated states.
  */
 export class TreeNodeKernel {
-	private disposed = false;
+	/**
+	 * The kernel lifecycle.
+	 *
+	 * @remarks
+	 * Disposal can wait for buffered events to flush. The kernel rejects new listeners while disposal
+	 * is pending, but existing listeners can inspect it until the flush ends.
+	 */
+	#lifecycle = KernelLifecycle.Active;
 
 	/**
 	 * Generation number which is incremented any time we have an edit on the node.
@@ -123,13 +137,29 @@ export class TreeNodeKernel {
 	 * Handler for events listeners registered with the kernel.
 	 *
 	 * @remarks
-	 * Supports event buffering via {@link withBufferedEvents}.
+	 * Supports event buffering via {@link withBufferedTreeEvents}.
 	 *
 	 * Allocated lazily on first access to {@link TreeNodeKernel.events}.
 	 * We expect the majority of nodes to never have event listeners registered, so
 	 * deferring construction avoids per-kernel allocations.
 	 */
 	#eventBuffer: KernelEventBuffer | undefined;
+
+	/**
+	 * The status at the last event boundary.
+	 * @remarks
+	 * Compared with the status at the end of each batch to detect transitions. When tree events are
+	 * buffered, the event buffer combines transitions while this value continues to track the latest
+	 * observed status.
+	 */
+	#status: TreeStatus;
+
+	/**
+	 * Subscription to the checkout's `afterBatch` event used to detect status transitions at batch
+	 * boundaries. Present only while there is at least one `statusChanged` listener and the node is
+	 * hydrated.
+	 */
+	#afterBatchWatcherOff: Off | undefined;
 
 	/**
 	 * Create a TreeNodeKernel which can be looked up with {@link getKernel}.
@@ -159,9 +189,13 @@ export class TreeNodeKernel {
 			this.#hydrationState = {
 				innerNode,
 			};
+
+			this.#status = TreeStatus.New;
 		} else {
 			// Hydrated case
 			this.#hydrationState = this.createHydratedState(innerNode);
+			// For hydrated nodes created directly, compute initial status
+			this.#status = this.getStatus();
 		}
 	}
 
@@ -184,7 +218,10 @@ export class TreeNodeKernel {
 	 * Cleans up mappings to {@link UnhydratedFlexTreeNode} - it is assumed that they are no longer needed once this node has an anchor node.
 	 */
 	public hydrate(inner: HydratedFlexTreeNode): void {
-		assert(!this.disposed, 0xa2a /* cannot hydrate a disposed node */);
+		assert(
+			this.#lifecycle === KernelLifecycle.Active,
+			0xa2a /* cannot hydrate a disposed node */,
+		);
 		assert(!isHydrated(this.#hydrationState), 0xa2b /* hydration should only happen once */);
 
 		this.#hydrationState = this.createHydratedState(inner);
@@ -193,6 +230,92 @@ export class TreeNodeKernel {
 		// If no one ever subscribed to this kernel's events, the buffer was never allocated
 		// and there is nothing to migrate.
 		this.#eventBuffer?.migrateEventSource(inner.anchorNode.events);
+
+		if (this.#eventBuffer?.hasListeners("statusChanged") === true) {
+			this.#startAfterBatchWatcher();
+			// Surface the New -> InDocument transition to listeners. If hydration happens
+			// mid-batch (e.g. `insertAtEnd`), the watcher's `afterBatch` will deliver it once the tree is
+			// consistent. If the tree is already settled (e.g. hydration via `view.initialize()`), no
+			// trailing `afterBatch` follows, so deliver synchronously here — using the known `InDocument`
+			// status rather than `getStatus()`, which would pollute `treeStatusFromAnchorCache` mid-hydration.
+			const flexContext = this.#getHydratedFlexContext();
+			if (!flexContext.checkout.isBatchInProgress) {
+				this.#checkAndEmitStatusChange(TreeStatus.InDocument);
+			}
+		}
+	}
+
+	/**
+	 * Emits a status change if `newStatus` differs from the last status reported to listeners.
+	 */
+	#checkAndEmitStatusChange(newStatus: TreeStatus = this.getStatus()): void {
+		const oldStatus = this.#status;
+		if (oldStatus !== newStatus) {
+			this.#status = newStatus;
+			this.#eventBuffer?.emitStatusChanged({ oldStatus, newStatus });
+		}
+	}
+
+	/**
+	 * Starts or stops status observation when the first listener is added or the last is removed.
+	 */
+	#onStatusListenerPresenceChanged(hasListeners: boolean): void {
+		if (hasListeners) {
+			if (this.isHydrated()) {
+				const flexContext = this.#getHydratedFlexContext();
+				if (flexContext.checkout.isBatchInProgress) {
+					// The current batch can contain an earlier status change. Use its final status as
+					// the baseline so a new listener does not receive that earlier change.
+					this.#startAfterBatchWatcher(true);
+				} else {
+					// A new listener observes only later status changes.
+					this.#status = this.getStatus();
+					this.#startAfterBatchWatcher();
+				}
+			} else {
+				this.#status = TreeStatus.New;
+			}
+		} else {
+			this.#releaseAfterBatchWatcher();
+		}
+	}
+
+	/**
+	 * Subscribes to the checkout's `afterBatch` event so status transitions are surfaced via
+	 * `statusChanged` once the tree (and thus `getStatus()`) is consistent.
+	 * @remarks
+	 * Must only be called when hydrated. Reading status is deferred to the event callback so this is safe
+	 * to call during {@link TreeNodeKernel.hydrate}.
+	 */
+	#startAfterBatchWatcher(baselineAtNextBatch: boolean = false): void {
+		if (this.#afterBatchWatcherOff !== undefined) {
+			return;
+		}
+		const flexContext = this.#getHydratedFlexContext();
+		const checkout = flexContext.checkout;
+		let shouldBaselineAtNextBatch = baselineAtNextBatch;
+		this.#afterBatchWatcherOff = checkout.events.on("afterBatch", () => {
+			if (shouldBaselineAtNextBatch) {
+				shouldBaselineAtNextBatch = false;
+				this.#status = this.getStatus();
+			} else {
+				this.#checkAndEmitStatusChange();
+			}
+		});
+	}
+
+	/**
+	 * Tears down the `afterBatch` status watcher once the last status listener has been removed.
+	 */
+	#releaseAfterBatchWatcher(): void {
+		this.#afterBatchWatcherOff?.();
+		this.#afterBatchWatcherOff = undefined;
+	}
+
+	#getHydratedFlexContext(): FlexTreeHydratedContext {
+		const flexContext = this.context.flexContext;
+		assert(flexContext.isHydrated(), "Expected a hydrated flex-tree context");
+		return flexContext;
 	}
 
 	private createHydratedState(innerNode: HydratedFlexTreeNode): HydratedState {
@@ -214,7 +337,7 @@ export class TreeNodeKernel {
 	}
 
 	public getStatus(): TreeStatus {
-		if (this.disposed) {
+		if (this.#lifecycle === KernelLifecycle.Disposed) {
 			return TreeStatus.Deleted;
 		}
 		if (!isHydrated(this.#hydrationState)) {
@@ -234,26 +357,58 @@ export class TreeNodeKernel {
 	}
 
 	public get events(): Listenable<KernelEvents> {
-		assert(!this.disposed, 0xcfa /* Cannot register events on a disposed node */);
+		assert(
+			this.#lifecycle === KernelLifecycle.Active,
+			"Cannot register events on a disposed node",
+		);
 		// Allocate the buffer on first access. See {@link TreeNodeKernel.#eventBuffer} for rationale.
 		if (this.#eventBuffer === undefined) {
 			const eventSource = isHydrated(this.#hydrationState)
 				? this.#hydrationState.innerNode.anchorNode.events
 				: this.#hydrationState.innerNode.events;
-			this.#eventBuffer = new KernelEventBuffer(eventSource);
+			this.#eventBuffer = new KernelEventBuffer(
+				eventSource,
+				this.#onStatusListenerPresenceChanged.bind(this),
+				(oldStatus) => {
+					this.#status = oldStatus;
+				},
+			);
 		}
 		return this.#eventBuffer;
 	}
 
 	public dispose(): void {
-		debugAssert(() => !this.disposed || "Cannot dispose a disposed node");
-		this.disposed = true;
+		debugAssert(
+			() =>
+				this.#lifecycle === KernelLifecycle.Active || "Cannot dispose a kernel more than once",
+		);
+		if (this.#lifecycle !== KernelLifecycle.Active) {
+			return;
+		}
+		this.#lifecycle = KernelLifecycle.DisposeRequested;
+
+		// Emit the terminal status change before completing disposal.
+		// This ordering matters: listeners receiving this event may still need to call
+		// methods on the kernel (e.g., `getStatus()`, `getInnerNode()`) which throw
+		// once `disposed` is true. When events are buffered, disposal is completed after
+		// the buffered event is delivered.
+		this.#checkAndEmitStatusChange(TreeStatus.Deleted);
+		this.#releaseAfterBatchWatcher();
+
+		if (this.#eventBuffer === undefined) {
+			this.#finishDispose();
+		} else {
+			this.#eventBuffer.dispose(this.#finishDispose.bind(this));
+		}
+	}
+
+	#finishDispose(): void {
+		this.#lifecycle = KernelLifecycle.Disposed;
 		if (isHydrated(this.#hydrationState)) {
 			for (const off of this.#hydrationState.offAnchorNode) {
 				off();
 			}
 		}
-		this.#eventBuffer?.dispose();
 		// TODO: go to the context and remove myself from withAnchors
 	}
 
@@ -286,7 +441,7 @@ export class TreeNodeKernel {
 			return this.#hydrationState.innerNode; // Unhydrated case
 		}
 
-		if (this.disposed) {
+		if (this.#lifecycle === KernelLifecycle.Disposed) {
 			throw new UsageError("Cannot access a deleted node.");
 		}
 
@@ -307,12 +462,45 @@ export class TreeNodeKernel {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const kernelEvents = ["childrenChangedAfterBatch", "subtreeChangedAfterBatch"] as const;
 
-type KernelEvents = Pick<AnchorEvents, (typeof kernelEvents)[number]>;
+type KernelContentEvents = Pick<AnchorEvents, (typeof kernelEvents)[number]>;
+
+/**
+ * Event data for status change events.
+ */
+export interface StatusChangedEventData {
+	/**
+	 * The status before the change.
+	 */
+	readonly oldStatus: TreeStatus;
+	/**
+	 * The status after the change.
+	 */
+	readonly newStatus: TreeStatus;
+}
+
+/**
+ * Events surfaced through {@link TreeNodeKernel.events}.
+ */
+interface KernelEvents extends KernelContentEvents {
+	/**
+	 * Emitted after the batch in which the node's {@link TreeStatus} changed has settled.
+	 * @remarks
+	 * Buffered and coalesced with content events when inside a {@link withBufferedTreeEvents} window.
+	 * `oldStatus` and `newStatus` may be equal when one or more intermediate transitions occurred during
+	 * that window. This preserves location invalidation when a node leaves and returns with the same
+	 * status.
+	 */
+	statusChanged(data: StatusChangedEventData): void;
+}
 
 // #region TreeNodeEventBuffer
 
 /**
- * Whether or not events from {@link TreeNodeKernel} should be buffered instead of emitted immediately.
+ * Coordinates buffered events for tree nodes and parent locations.
+ *
+ * @remarks
+ * Content events report edits. Derived events report the resulting status or location. All content
+ * events flush before any derived event.
  */
 let bufferTreeEvents: boolean = false;
 
@@ -328,29 +516,114 @@ let bufferTreeEvents: boolean = false;
  */
 export function withBufferedTreeEvents(callback: () => void): void {
 	if (bufferTreeEvents) {
-		// Already buffering - just run the callback
 		callback();
-	} else {
-		bufferTreeEvents = true;
-		const toFlush: KernelEventBuffer[] = [];
-		try {
-			callback();
-		} finally {
-			bufferTreeEvents = false;
-			// Snapshot-and-clear before flushing to safely handle reentrant `withBufferedTreeEvents`
-			// calls made by listeners that fire during `buffer.flush()` below:
-			// - Iterating an array means a reentrant call's `clear()` cannot truncate our loop
-			//   and cause buffers later in `activeBuffers` to be skipped (and their events dropped).
-			// - Clearing up front means the reentrant call starts from an empty set, so its own
-			//   finally block only flushes what it buffered - not a re-flush of our remaining buffers.
-			toFlush.push(...activeBuffers);
-			activeBuffers.clear();
-		}
+		return;
+	}
 
-		// Don't flush/emit events in the case of an error
-		for (const buffer of toFlush) {
-			buffer.flush();
+	bufferTreeEvents = true;
+	try {
+		callback();
+	} catch (error) {
+		bufferTreeEvents = false;
+		for (const buffer of takeActiveBuffers()) {
+			buffer.discard();
 		}
+		throw error;
+	}
+
+	bufferTreeEvents = false;
+	flushTreeEventBuffers(takeActiveBuffers());
+}
+
+/**
+ * Stores events during a {@link withBufferedTreeEvents} call.
+ *
+ * @remarks
+ * Content events flush before derived events. This order lets all listeners observe the final tree.
+ */
+interface TreeEventBuffer {
+	/** Flushes events that report direct content changes. */
+	flushContent?(): void;
+	/** Flushes events that are derived from the final tree state. */
+	flush(): void;
+	/** Removes all pending events. */
+	discard(): void;
+}
+
+function takeActiveBuffers(): TreeEventBuffer[] {
+	const buffers = [...activeBuffers];
+	activeBuffers.clear();
+	return buffers;
+}
+
+/**
+ * Flushes all buffers and reports the first listener error.
+ *
+ * @remarks
+ * A listener error must not prevent other buffers from flushing. Some buffers finish disposal when
+ * they flush.
+ */
+function flushTreeEventBuffers(buffers: readonly TreeEventBuffer[]): void {
+	const errors: unknown[] = [];
+	for (const flush of [
+		(buffer: TreeEventBuffer): void => buffer.flushContent?.(),
+		(buffer: TreeEventBuffer): void => buffer.flush(),
+	]) {
+		for (const buffer of buffers) {
+			try {
+				flush(buffer);
+			} catch (error) {
+				errors.push(error);
+			}
+		}
+	}
+	if (errors.length > 0) {
+		throw errors[0];
+	}
+}
+
+/**
+ * A coalescing no-argument tree event which shares the kernel event buffering lifecycle.
+ *
+ * @remarks
+ * This encapsulates the temporary global buffering mechanism so consumers do not need to inspect or
+ * coordinate its state.
+ */
+export class BufferedTreeEvent implements TreeEventBuffer {
+	/** True when the event must fire at the end of the current buffer window. */
+	#pending = false;
+	/** False after the subscription is removed. */
+	#active = true;
+
+	public constructor(private readonly listener: () => void) {}
+
+	public emit(): void {
+		if (!this.#active) {
+			return;
+		}
+		if (bufferTreeEvents) {
+			this.#pending = true;
+			activeBuffers.add(this);
+		} else {
+			this.listener();
+		}
+	}
+
+	public flush(): void {
+		if (this.#active && this.#pending) {
+			this.#pending = false;
+			this.listener();
+		}
+	}
+
+	public discard(): void {
+		this.#pending = false;
+	}
+
+	public dispose(): void {
+		this.#active = false;
+		this.#pending = false;
+		activeBuffers.delete(this);
 	}
 }
 
@@ -361,7 +634,7 @@ export function withBufferedTreeEvents(callback: () => void): void {
  * @remarks
  * The set should be empty whenever no buffering window is in progress.
  */
-const activeBuffers: Set<KernelEventBuffer> = new Set();
+const activeBuffers: Set<TreeEventBuffer> = new Set();
 
 /**
  * Test-only accessor for the current size of {@link activeBuffers}.
@@ -378,11 +651,15 @@ export function TEST_activeBufferCount(): number {
  */
 class KernelEventBuffer implements Listenable<KernelEvents> {
 	#disposed: boolean = false;
+	/** True while this buffer has events in the current flush cycle. */
+	#flushPending: boolean = false;
+	/** Completes kernel disposal after pending events flush. */
+	#disposeAfterFlush: (() => void) | undefined;
 
 	readonly #events = createEmitter<KernelEvents>();
 
-	#eventSource: Listenable<KernelEvents> & HasListeners<KernelEvents>;
-	readonly #disposeSourceListeners: Map<keyof KernelEvents, Off> = new Map();
+	#eventSource: Listenable<KernelContentEvents> & HasListeners<KernelContentEvents>;
+	readonly #disposeSourceListeners: Map<keyof KernelContentEvents, Off> = new Map();
 
 	/**
 	 * Buffer of fields that have changed since events were paused.
@@ -412,13 +689,26 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 	 */
 	#subTreeChangedBuffer: boolean = false;
 
+	/**
+	 * Status transition accumulated while events are paused.
+	 * @remarks
+	 * The first old status and latest new status are retained so intermediate transitions are hidden.
+	 */
+	#statusChangedBuffer: StatusChangedEventData | undefined;
+
 	public constructor(
 		/**
 		 * Source of the kernel events.
 		 * Subscriptions will be created on-demand when listeners are added to this.events,
 		 * and those subscriptions will be cleaned up when all corresponding listeners have been removed.
 		 */
-		eventSource: Listenable<KernelEvents> & HasListeners<KernelEvents>,
+		eventSource: Listenable<KernelContentEvents> & HasListeners<KernelContentEvents>,
+		/** Starts or stops status tracking when listener demand changes. */
+		private readonly onStatusListenerPresenceChanged: (hasListeners: boolean) => void,
+		/**
+		 * Restores the kernel status baseline when a callback fails and its events are discarded.
+		 */
+		private readonly onStatusDiscarded: (oldStatus: TreeStatus) => void,
 	) {
 		this.#eventSource = eventSource;
 	}
@@ -431,7 +721,7 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 	 * Binds events to the new source for each event with active listeners.
 	 */
 	public migrateEventSource(
-		newSource: Listenable<KernelEvents> & HasListeners<KernelEvents>,
+		newSource: Listenable<KernelContentEvents> & HasListeners<KernelContentEvents>,
 	): void {
 		// Unsubscribe from the old source
 		for (const off of this.#disposeSourceListeners.values()) {
@@ -445,20 +735,29 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 			const off = this.#eventSource.on(
 				"childrenChangedAfterBatch",
 				({ changedFields, fieldMarks }) =>
-					this.#emit("childrenChangedAfterBatch", { changedFields, fieldMarks }),
+					this.#emitContent("childrenChangedAfterBatch", { changedFields, fieldMarks }),
 			);
 			this.#disposeSourceListeners.set("childrenChangedAfterBatch", off);
 		}
 		if (this.#events.hasListeners("subtreeChangedAfterBatch")) {
 			const off = this.#eventSource.on("subtreeChangedAfterBatch", () =>
-				this.#emit("subtreeChangedAfterBatch"),
+				this.#emitContent("subtreeChangedAfterBatch"),
 			);
 			this.#disposeSourceListeners.set("subtreeChangedAfterBatch", off);
 		}
 	}
 
-	public on(eventName: keyof KernelEvents, listener: KernelEvents[typeof eventName]): Off {
+	public on<K extends keyof KernelEvents>(eventName: K, listener: KernelEvents[K]): Off {
 		this.#assertNotDisposed();
+
+		if (eventName === "statusChanged") {
+			const hadListeners = this.#events.hasListeners(eventName);
+			this.#events.on(eventName, listener);
+			if (!hadListeners) {
+				this.onStatusListenerPresenceChanged(true);
+			}
+			return this.off.bind(this, eventName, listener);
+		}
 
 		// Lazily bind event listeners to the source.
 		// If we do not have any existing listeners for this event, then we need to bind to the source.
@@ -468,11 +767,12 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 				0xc4f /* Should not have a dispose function without listeners */,
 			);
 
+			const contentEventName: keyof KernelContentEvents = eventName;
 			const off: Off =
 				eventName === "childrenChangedAfterBatch"
-					? this.#eventSource.on(eventName, (args) => this.#emit(eventName, args))
-					: this.#eventSource.on(eventName, () => this.#emit(eventName));
-			this.#disposeSourceListeners.set(eventName, off);
+					? this.#eventSource.on(eventName, (args) => this.#emitContent(eventName, args))
+					: this.#eventSource.on(eventName, () => this.#emitContent(eventName));
+			this.#disposeSourceListeners.set(contentEventName, off);
 		}
 
 		this.#events.on(eventName, listener);
@@ -482,19 +782,32 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		return this.off.bind(this, eventName, listener);
 	}
 
-	public off(eventName: keyof KernelEvents, listener: KernelEvents[typeof eventName]): void {
+	public off<K extends keyof KernelEvents>(eventName: K, listener: KernelEvents[K]): void {
 		this.#events.off(eventName, listener);
+
+		if (eventName === "statusChanged") {
+			if (!this.#events.hasListeners(eventName)) {
+				this.onStatusListenerPresenceChanged(false);
+			}
+			return;
+		}
 
 		// If there are no remaining listeners for the event, unbind from the source
 		if (!this.#events.hasListeners(eventName)) {
-			const off = this.#disposeSourceListeners.get(eventName);
+			const contentEventName: keyof KernelContentEvents = eventName;
+			const off = this.#disposeSourceListeners.get(contentEventName);
 			off?.();
-			this.#disposeSourceListeners.delete(eventName);
+			this.#disposeSourceListeners.delete(contentEventName);
 		}
 	}
 
-	#emit(
-		eventName: keyof KernelEvents,
+	/** Returns whether the kernel has listeners for an event. */
+	public hasListeners(eventName: keyof KernelEvents): boolean {
+		return this.#events.hasListeners(eventName);
+	}
+
+	#emitContent(
+		eventName: keyof KernelContentEvents,
 		arg?: {
 			changedFields: ReadonlySet<FieldKey>;
 			fieldMarks: ReadonlyMap<FieldKey, readonly DeltaMark[]>;
@@ -520,6 +833,7 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		fieldMarks: ReadonlyMap<FieldKey, readonly DeltaMark[]>,
 	): void {
 		if (bufferTreeEvents) {
+			this.#flushPending = true;
 			activeBuffers.add(this);
 			for (const fieldKey of changedFields) {
 				this.#childrenChangedBuffer.add(fieldKey);
@@ -548,6 +862,7 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 
 	#handleSubtreeChangedAfterBatch(): void {
 		if (bufferTreeEvents) {
+			this.#flushPending = true;
 			activeBuffers.add(this);
 			this.#subTreeChangedBuffer = true;
 		} else {
@@ -555,40 +870,140 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		}
 	}
 
+	public emitStatusChanged(data: StatusChangedEventData): void {
+		this.#assertNotDisposed();
+		if (!this.#events.hasListeners("statusChanged")) {
+			return;
+		}
+		if (bufferTreeEvents || this.#flushPending) {
+			if (bufferTreeEvents) {
+				activeBuffers.add(this);
+			}
+			this.#flushPending = true;
+			const oldStatus = this.#statusChangedBuffer?.oldStatus ?? data.oldStatus;
+			this.#statusChangedBuffer = { oldStatus, newStatus: data.newStatus };
+		} else {
+			this.#events.emit("statusChanged", data);
+		}
+	}
+
 	/**
 	 * Flushes any events buffered due to {@link withBufferedTreeEvents}.
 	 */
-	public flush(): void {
+	public flushContent(): void {
 		this.#assertNotDisposed();
 
-		if (this.#childrenChangedBuffer.size > 0) {
-			this.#events.emit("childrenChangedAfterBatch", {
-				changedFields: this.#childrenChangedBuffer,
-				fieldMarks: this.#fieldMarksBuffer,
-			});
-			this.#childrenChangedBuffer.clear();
-			this.#fieldMarksBuffer.clear();
-			this.#invalidatedFieldMarkKeys.clear();
-		}
+		const childrenChanged =
+			this.#childrenChangedBuffer.size === 0
+				? undefined
+				: {
+						changedFields: new Set(this.#childrenChangedBuffer),
+						fieldMarks: new Map(this.#fieldMarksBuffer),
+					};
+		const subtreeChanged = this.#subTreeChangedBuffer;
+		this.#childrenChangedBuffer.clear();
+		this.#fieldMarksBuffer.clear();
+		this.#invalidatedFieldMarkKeys.clear();
+		this.#subTreeChangedBuffer = false;
 
-		if (this.#subTreeChangedBuffer) {
-			this.#events.emit("subtreeChangedAfterBatch");
-			this.#subTreeChangedBuffer = false;
+		let emitError: unknown;
+		let emitThrew = false;
+		const emit = (callback: () => void): void => {
+			try {
+				callback();
+			} catch (error) {
+				if (!emitThrew) {
+					emitError = error;
+					emitThrew = true;
+				}
+			}
+		};
+
+		if (childrenChanged !== undefined) {
+			emit(() => this.#events.emit("childrenChangedAfterBatch", childrenChanged));
 		}
+		if (subtreeChanged) {
+			emit(() => this.#events.emit("subtreeChangedAfterBatch"));
+		}
+		if (emitThrew) {
+			throw emitError;
+		}
+	}
+
+	/**
+	 * Flushes status events after all content events.
+	 */
+	public flush(): void {
+		this.#assertNotDisposed();
+		const statusChanged = this.#statusChangedBuffer;
+		this.#statusChangedBuffer = undefined;
+		this.#flushPending = false;
+		try {
+			if (statusChanged !== undefined) {
+				this.#events.emit("statusChanged", statusChanged);
+			}
+		} finally {
+			if (this.#disposeAfterFlush !== undefined) {
+				this.#finishDispose();
+			}
+		}
+	}
+
+	/**
+	 * Discards pending events after the buffered callback fails.
+	 */
+	public discard(): void {
+		const oldStatus = this.#statusChangedBuffer?.oldStatus;
+		this.#clearBufferedEvents();
+		this.#flushPending = false;
+		if (oldStatus !== undefined) {
+			this.onStatusDiscarded(oldStatus);
+		}
+		if (this.#disposeAfterFlush !== undefined) {
+			this.#finishDispose();
+		}
+	}
+
+	#clearBufferedEvents(): void {
+		this.#childrenChangedBuffer.clear();
+		this.#fieldMarksBuffer.clear();
+		this.#invalidatedFieldMarkKeys.clear();
+		this.#subTreeChangedBuffer = false;
+		this.#statusChangedBuffer = undefined;
 	}
 
 	#assertNotDisposed(): void {
 		assert(!this.#disposed, 0xc51 /* Event handler disposed. */);
 	}
 
-	public dispose(): void {
+	/**
+	 * Stops this buffer after pending events flush.
+	 */
+	public dispose(afterDispose: () => void): void {
 		if (this.#disposed) {
+			afterDispose();
 			return;
 		}
 
+		if (this.#flushPending) {
+			this.#disposeAfterFlush = afterDispose;
+			for (const off of this.#disposeSourceListeners.values()) {
+				off();
+			}
+			this.#disposeSourceListeners.clear();
+			return;
+		}
+
+		this.#finishDispose();
+		afterDispose();
+	}
+
+	#finishDispose(): void {
 		debugAssert(
 			() =>
-				(this.#childrenChangedBuffer.size === 0 && !this.#subTreeChangedBuffer) ||
+				(this.#childrenChangedBuffer.size === 0 &&
+					!this.#subTreeChangedBuffer &&
+					this.#statusChangedBuffer === undefined) ||
 				"Buffered kernel events should have been flushed before disposing.",
 		);
 		debugAssert(
@@ -600,12 +1015,13 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		}
 		this.#disposeSourceListeners.clear();
 
-		this.#childrenChangedBuffer.clear();
-		this.#fieldMarksBuffer.clear();
-		this.#invalidatedFieldMarkKeys.clear();
-		this.#subTreeChangedBuffer = false;
+		this.#clearBufferedEvents();
+		this.#flushPending = false;
 
 		this.#disposed = true;
+		const afterDispose = this.#disposeAfterFlush;
+		this.#disposeAfterFlush = undefined;
+		afterDispose?.();
 	}
 }
 

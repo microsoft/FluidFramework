@@ -77,8 +77,11 @@ import { canInitialize, initialize, initializerFromChunk } from "./schematizeTre
 import type { TreeCheckout } from "./treeCheckout.js";
 
 /**
- * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already
- * exists and error if creating a second.
+ * Stores the tree context for a checkout.
+ *
+ * @remarks
+ * This prevents multiple views for one checkout. {@link (TreeAlpha:interface).parent2} also uses the
+ * context to get the view for a document-root node.
  */
 export const ViewSlot = anchorSlot<TreeContextAlpha>();
 

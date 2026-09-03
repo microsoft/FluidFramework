@@ -1519,6 +1519,7 @@ export function viewCheckout<const TSchema extends ImplicitFieldSchema>(
  */
 export class MockTreeCheckout implements ITreeCheckout {
 	public readonly breaker: Breakable = new Breakable("MockTreeCheckout");
+	public readonly isBatchInProgress: boolean = false;
 	public constructor(
 		public readonly forest: IForestSubscription,
 		private readonly options?: {

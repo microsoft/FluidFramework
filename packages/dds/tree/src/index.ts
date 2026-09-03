@@ -50,6 +50,8 @@ export {
 	TreeAlpha,
 	type ObservationResults,
 	type TreeIdentifierUtils,
+	type ParentObject,
+	type TreeNodeParent,
 	independentView,
 	type IndependentViewOptions,
 	type IndependentViewTelemetryOptions,

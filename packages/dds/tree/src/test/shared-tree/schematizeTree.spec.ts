@@ -179,6 +179,7 @@ describe("schematizeTree", () => {
 		const checkout: ITreeCheckout = {
 			disposed: false,
 			breaker: new Breakable("mockCheckout"),
+			isBatchInProgress: false,
 			storedSchema,
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			forest: { isEmpty } as IForestSubscription,
