@@ -1265,7 +1265,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		}
 
 		const pendingStateAnchor = cacheOnly ? undefined : this.pendingStateAnchor;
-		let refetchAfterUnvalidatedAnchor = false;
+		let fetchFrom: number | undefined;
+		let fetchCompleted = false;
 		try {
 			let from = this.lastQueuedSequenceNumber + 1;
 
@@ -1280,6 +1281,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				assert(from > 1, 0x0f3 /* "not positive" */);
 				from--;
 			}
+			fetchFrom = from;
 
 			const fetchReason = `${reason}_fetch`;
 			this.fetchReason = fetchReason;
@@ -1294,23 +1296,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				},
 				cacheOnly,
 			);
-			if (
-				pendingStateAnchor !== undefined &&
-				this.pendingStateAnchor === pendingStateAnchor &&
-				!this._closed
-			) {
-				this.logger.sendTelemetryEvent({
-					eventName: "PendingStateAnchorNotValidated",
-					sequenceNumber: pendingStateAnchor.sequenceNumber,
-					fetchFrom: from,
-					serviceCheckpointSequenceNumber: this.serviceCheckpointSequenceNumber,
-				});
-				this.pendingStateAnchor = undefined;
-				if (this.previouslyProcessedMessage === pendingStateAnchor) {
-					this.previouslyProcessedMessage = undefined;
-				}
-				refetchAfterUnvalidatedAnchor = true;
-			}
+			fetchCompleted = true;
 		} catch (error) {
 			this.logger.sendErrorEvent({ eventName: "GetDeltas_Exception" }, error);
 			this.close(normalizeError(error));
@@ -1318,7 +1304,23 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			this.refreshDelayInfo(this.deltaStorageDelayId);
 			this.fetchReason = undefined;
 			this.processPendingOps(reason);
-			if (refetchAfterUnvalidatedAnchor && this.fetchReason === undefined) {
+			if (
+				fetchCompleted &&
+				pendingStateAnchor !== undefined &&
+				this.pendingStateAnchor === pendingStateAnchor &&
+				!this._closed &&
+				this.fetchReason === undefined
+			) {
+				this.logger.sendTelemetryEvent({
+					eventName: "PendingStateAnchorNotValidated",
+					sequenceNumber: pendingStateAnchor.sequenceNumber,
+					fetchFrom,
+					serviceCheckpointSequenceNumber: this.serviceCheckpointSequenceNumber,
+				});
+				this.pendingStateAnchor = undefined;
+				if (this.previouslyProcessedMessage === pendingStateAnchor) {
+					this.previouslyProcessedMessage = undefined;
+				}
 				this.fetchMissingDeltas("PendingStateAnchorNotValidated");
 			}
 		}

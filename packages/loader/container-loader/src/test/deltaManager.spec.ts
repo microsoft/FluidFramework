@@ -408,6 +408,40 @@ describe("Loader", () => {
 				assert.strictEqual(deltaManager.lastSequenceNumber, continuingOp.sequenceNumber);
 			});
 
+			it("validates a buffered saved op when storage no longer has it", async () => {
+				const savedOp = {
+					...generateOp(),
+					sequenceNumber: 13,
+					minimumSequenceNumber: 10,
+					timestamp: 1000,
+					referenceSequenceNumber: 12,
+				};
+				const loadP = startDeltaManager(
+					true,
+					logger,
+					() => ({
+						fetchMessages: (): IStream<ISequencedDocumentMessage[]> => ({
+							read: async () => ({ done: true }),
+						}),
+					}),
+					5,
+					savedOp,
+					"all",
+					[{ ...savedOp, clientId: "restored-history-client" }],
+					true,
+				);
+				deltaManager.on("closed", (error: Error) => {
+					expectedError = error;
+				});
+				await loadP;
+
+				assert.match(
+					expectedError?.message ?? "",
+					/same sequenceNumber but different payloads/,
+				);
+				assert.strictEqual(deltaManager.hasPendingStateAnchor, false);
+			});
+
 			it("uses the last saved op's minimum sequence number", async () => {
 				const savedOp = {
 					...generateOp(),
