@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { RedBlackTree } from "@fluidframework/merge-tree/internal";
-
 import type { SequenceInterval } from "../intervals/index.js";
 import { createTransientIntervalFromSequence } from "../intervals/index.js";
 import type { ISharedSegmentSequence } from "../sequence.js";
 import type { ISharedString } from "../sharedString.js";
 
 import type { SequenceIntervalIndex } from "./intervalIndex.js";
+import { SequenceIntervalEndSet } from "./sequenceIntervalEndpointSet.js";
 
 /**
  * @internal
@@ -30,36 +29,26 @@ export interface IEndpointIndex extends SequenceIntervalIndex {
 }
 
 export class EndpointIndex implements IEndpointIndex {
-	private readonly endIntervalTree: RedBlackTree<SequenceInterval, SequenceInterval>;
+	private readonly endIntervals = new SequenceIntervalEndSet();
 
-	constructor(private readonly sequence: ISharedSegmentSequence<any>) {
-		this.endIntervalTree = new RedBlackTree<SequenceInterval, SequenceInterval>((a, b) =>
-			a.compareEnd(b),
-		);
-	}
+	constructor(private readonly sequence: ISharedSegmentSequence<any>) {}
 
 	public previousInterval(pos: number): SequenceInterval | undefined {
 		const transientInterval = createTransientIntervalFromSequence(pos, pos, this.sequence);
-		const rbNode = this.endIntervalTree.floor(transientInterval);
-		if (rbNode) {
-			return rbNode.data;
-		}
+		return this.endIntervals.lastAtOrBefore(transientInterval);
 	}
 
 	public nextInterval(pos: number): SequenceInterval | undefined {
 		const transientInterval = createTransientIntervalFromSequence(pos, pos, this.sequence);
-		const rbNode = this.endIntervalTree.ceil(transientInterval);
-		if (rbNode) {
-			return rbNode.data;
-		}
+		return this.endIntervals.firstAtOrAfter(transientInterval);
 	}
 
 	public add(interval: SequenceInterval): void {
-		this.endIntervalTree.put(interval, interval);
+		this.endIntervals.addOrUpdate(interval);
 	}
 
 	public remove(interval: SequenceInterval): void {
-		this.endIntervalTree.remove(interval);
+		this.endIntervals.remove(interval);
 	}
 }
 
