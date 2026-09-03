@@ -14,7 +14,7 @@ import {
 import type { SchemaUpgrade, StagedSchemaUpgradePolicy } from "../core/index.js";
 import { NodeKind } from "../core/index.js";
 import { allowsRepoSuperset, defaultSchemaPolicy } from "../../feature-libraries/index.js";
-import { toUpgradeSchema } from "../toStoredSchema.js";
+import { resolveStoredSchemaGenerationOptions, toUpgradeSchema } from "../toStoredSchema.js";
 import type { TreeSchema } from "../treeSchema.js";
 
 import {
@@ -140,6 +140,8 @@ export function checkSchemaCompatibility(
 } {
 	// The public API surface assumes defaultSchemaPolicy
 	const policy = defaultSchemaPolicy;
+	const configuredPolicy = resolveStoredSchemaGenerationOptions(stagedSchemaUpgrades);
+	const includeAlreadyEnabledUpgrades = configuredPolicy.includeAlreadyEnabledUpgrades ?? true;
 
 	// Collect upgrade locations during the discrepancy walk (single pass).
 	const totalLocations = new Map<SchemaUpgrade, number>();
@@ -175,7 +177,11 @@ export function checkSchemaCompatibility(
 	}
 	const canView = discrepancies.length === 0;
 
-	const wouldUpgradeTo = toUpgradeSchema(viewSchema.root, stagedSchemaUpgrades);
+	const enabledUpgrades = computeUpgradeStatuses(totalLocations, enabledLocations);
+	const upgradePolicy = includeAlreadyEnabledUpgrades
+		? includeEnabledUpgrades(configuredPolicy, enabledUpgrades)
+		: configuredPolicy;
+	const wouldUpgradeTo = toUpgradeSchema(viewSchema.root, upgradePolicy);
 
 	const canUpgrade = allowsRepoSuperset(policy, stored, wouldUpgradeTo);
 
@@ -184,14 +190,27 @@ export function checkSchemaCompatibility(
 	const isEquivalent =
 		canView && canUpgrade && allowsRepoSuperset(policy, wouldUpgradeTo, stored);
 
-	const enabledUpgrades = computeUpgradeStatuses(totalLocations, enabledLocations);
-
 	return {
 		canView,
 		canUpgrade,
 		isEquivalent,
 		discrepancies: canView ? undefined : discrepancies,
 		enabledUpgrades,
+	};
+}
+
+function includeEnabledUpgrades(
+	configuredPolicy: StagedSchemaUpgradePolicy,
+	enabledUpgrades: ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus>,
+): StagedSchemaUpgradePolicy {
+	if (enabledUpgrades.size === 0) {
+		return configuredPolicy;
+	}
+	return {
+		includeStaged: (upgrade) =>
+			configuredPolicy.includeStaged(upgrade) || enabledUpgrades.has(upgrade),
+		includeStagedOptional: (upgrade) =>
+			configuredPolicy.includeStagedOptional(upgrade) || enabledUpgrades.has(upgrade),
 	};
 }
 
