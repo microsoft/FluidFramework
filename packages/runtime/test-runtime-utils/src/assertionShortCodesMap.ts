@@ -1383,7 +1383,6 @@ export const shortCodeMap = {
 	"0xa55": "missing simple tree context",
 	"0xa57": "Expected EagerMapTree required field to have a value",
 	"0xa5b": "must have exactly 1 field in batch",
-	"0xa5c": "Unexpected view implementation",
 	"0xa5d": "Shared branches cannot be rebased onto another branch.",
 	"0xa5e": "Should not access 'change' property of an evicted commit",
 	"0xa5f": "Should not access 'revision' property of an evicted commit",
@@ -1867,7 +1866,6 @@ export const shortCodeMap = {
 	"0xcb6": "Expected node to be on new fork.",
 	"0xcb7": "Unexpected node schema",
 	"0xcb8": "No config map entry for version",
-	"0xcb9": "Invalid package version",
 	"0xcc1": "New commits must have a parent.",
 	"0xcc2": "Missing enriched commit.",
 	"0xcc3": "New commits must have a parent.",
@@ -1978,6 +1976,15 @@ export const shortCodeMap = {
 	"0xd30": "Detach range start must not exceed end",
 	"0xd31": "Detach range must not exceed field length",
 	"0xd32": "Detach destination must be a new empty field",
-	"0xd33": "compatibilityMode must be defined",
-	"0xd34": "version mark batchId remapped to a different sequence number"
+	"0xd33": "Cannot construct metadata for the root commit",
+	"0xd34": "A hydrated node must be associated with a view.",
+	"0xd35": "Trimmed more commits than exist in the branch",
+	"0xd36": "Should not access 'customMetadata' property of an evicted commit",
+	"0xd37": "Should have attach state for every node ID",
+	"0xd38": "Expected all changes to attached tree to be filtered out",
+	"0xd39": "TODO: Handle multiple chunks",
+	"0xd3a": "TODO: Handle chunk with range of nodes",
+	"0xd3b": "TODO: Handle chunks which are only partially attached",
+	"0xd3c": "AttachAndDetach marks in changesets should always represent MoveIn + Remove",
+	"0xd3d": "A supported client version must be defined"
 };

@@ -133,7 +133,7 @@ class ModularChangeMinimizer {
 			(getFromChangeAtomIdMap(
 				this.outputAttachStates,
 				normalizeNodeId(nodeId, this.change.nodeAliases),
-			) ?? fail("Should have attach state for every node ID")) === NodeAttachState.Detached
+			) ?? fail(0xd37 /* Should have attach state for every node ID */)) === NodeAttachState.Detached
 		);
 	}
 
@@ -513,7 +513,7 @@ class ModularChangeMinimizer {
 		const deltaForBuilds = intoDelta(makeAnonChange(changeForBuilds), this.fieldKinds);
 		assert(
 			!deltaFieldMapHasChanges(deltaForBuilds.fields),
-			"Expected all changes to attached tree to be filtered out",
+			0xd38 /* Expected all changes to attached tree to be filtered out */,
 		);
 
 		// There may still be paths to existing nodes in the delta, which must be removed before being applied to an empty forest.
@@ -532,9 +532,9 @@ class ModularChangeMinimizer {
 
 			// Delta visiting currently splits ranges of nodes into individual elements,
 			// so for now we will not have more than one node in a detached field.
-			assert(hasSingle(chunks), "TODO: Handle multiple chunks");
+			assert(hasSingle(chunks), 0xd39 /* TODO: Handle multiple chunks */);
 			const chunk = chunks[0];
-			assert(chunk.topLevelLength === 1, "TODO: Handle chunk with range of nodes");
+			assert(chunk.topLevelLength === 1, 0xd3a /* TODO: Handle chunk with range of nodes */);
 
 			const rootId: ChangeAtomId = {
 				revision: entry.id.major,
@@ -544,7 +544,7 @@ class ModularChangeMinimizer {
 			const isAttachedEntry = this.attachedRootIds.getFirst(rootId, chunk.topLevelLength);
 			assert(
 				isAttachedEntry.length === chunk.topLevelLength,
-				"TODO: Handle chunks which are only partially attached",
+				0xd3b /* TODO: Handle chunks which are only partially attached */,
 			);
 
 			if (isAttachedEntry.value) {
