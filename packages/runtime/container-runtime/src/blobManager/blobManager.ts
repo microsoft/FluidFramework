@@ -233,7 +233,7 @@ const isTTLTooCloseToExpiry = (blobRecord: UploadedBlob | AttachingBlob): boolea
 	Date.now() - blobRecord.uploadTime > (blobRecord.minTTLInSeconds / 2) * 1000;
 
 /**
- * Events raised by the {@link BlobManager} for consumption by its host (the ContainerRuntime).
+ * Events raised by the {@link BlobManager}.
  */
 export interface IBlobManagerEvents {
 	/**
@@ -266,7 +266,7 @@ export class BlobManager {
 
 	private readonly _events = createEmitter<IBlobManagerEvents>();
 	/**
-	 * Events raised by the BlobManager for consumption by its host.
+	 * Events raised by the BlobManager.
 	 */
 	public get events(): Listenable<IBlobManagerEvents> {
 		return this._events;
@@ -393,10 +393,9 @@ export class BlobManager {
 				// in case we need to round-trip them back out again due to another getPendingBlobs() call.
 				this.pendingBlobsWithAttachedHandles.add(localId);
 				this.pendingOnlyLocalIds.add(localId);
-				// These blobs are non-durable local content that the container is responsible for sharing,
-				// starting from the moment we load with them (rather than from when sharePendingBlobs() runs).
-				// Otherwise a container restored from pending state would look clean during the window
-				// between load and the start of sharing.
+				// These blobs are non-durable local content that this BlobManager is responsible for sharing,
+				// starting from the moment we load with them rather than from when sharePendingBlobs() runs.
+				// Otherwise it would report no outstanding work between load and the start of sharing.
 				this.startTrackingUnsharedBlob(localId);
 			}
 		}
@@ -419,14 +418,13 @@ export class BlobManager {
 	 * A blob stops counting when that responsibility ends, which is:
 	 *
 	 * 1. When its BlobAttach op is processed, at which point the service retains the blob and all clients
-	 * can resolve it. This happens synchronously with op processing so that the host observes the container
-	 * become saved as soon as the last blob lands.
+	 * can resolve it. The aggregate signal changes synchronously with op processing.
 	 *
 	 * 2. When the flow terminates without sharing the blob: the upload failed non-retriably, or the caller's
 	 * `AbortSignal` fired. In both cases the blob is dropped and no further work is pending, so the blob no
 	 * longer contributes. Terminal failures for a pending-payload handle are reported through that handle's
-	 * `payloadShareFailed` event and `payloadShareError`; container dirty state is an aggregate liveness
-	 * signal and deliberately does not report per-blob failure.
+	 * `payloadShareFailed` event and `payloadShareError`; this aggregate reports liveness and deliberately
+	 * does not report per-blob failure.
 	 *
 	 * Retries stay counted throughout: a blob whose storage TTL expires before its BlobAttach lands returns to
 	 * the start of the flow and keeps contributing across the re-upload. This is also why a completed upload
@@ -664,7 +662,7 @@ export class BlobManager {
 		signal?: AbortSignal,
 	): Promise<void> => {
 		// An upload that was aborted before it began never becomes outstanding work, so don't count it at
-		// all - otherwise it would produce a spurious dirty/saved pair for work that never started.
+		// all - otherwise it would produce a spurious aggregate transition for work that never started.
 		if (signal?.aborted !== true) {
 			this.startTrackingUnsharedBlob(localId);
 		}
