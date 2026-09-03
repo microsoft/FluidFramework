@@ -127,7 +127,7 @@
 		"sinon": "^18.0.1",
 		"sinon-chrome": "^3.0.1",
 		"ts-loader": "^9.5.1",
-		"typescript": "~6.0.3",
+		"typescript": "catalog:TypeScript",
 		"webpack": "^5.94.0",
 		"webpack-cli": "^5.1.4"
 	},

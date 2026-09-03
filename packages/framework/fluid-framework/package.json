@@ -114,7 +114,7 @@
 		"fluid-framework-previous": "npm:fluid-framework@2.116.0",
 		"jiti": "^2.6.1",
 		"rimraf": "^6.1.3",
-		"typescript": "~6.0.3"
+		"typescript": "catalog:TypeScript"
 	},
 	"typeValidation": {
 		"entrypoint": "public",

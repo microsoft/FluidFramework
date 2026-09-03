@@ -29,6 +29,10 @@ catalogs:
     eslint-config-prettier:
       specifier: ~10.1.8
       version: 10.1.8
+  TypeScript:
+    typescript:
+      specifier: ~6.0.3
+      version: 6.0.3
 
 overrides:
   '@babel/core@>=7 <8': ^7.29.6
@@ -178,7 +182,7 @@ importers:
         specifier: ^2.19.0
         version: 2.19.0
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   azure/packages/azure-local-service:
@@ -273,7 +277,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   examples/apps/blobs:
@@ -388,7 +392,7 @@ importers:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -485,7 +489,7 @@ importers:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -588,7 +592,7 @@ importers:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -688,7 +692,7 @@ importers:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -845,7 +849,7 @@ importers:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       url-loader:
         specifier: ^4.1.1
@@ -933,7 +937,7 @@ importers:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -1051,7 +1055,7 @@ importers:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -1178,7 +1182,7 @@ importers:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -1272,7 +1276,7 @@ importers:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -1339,7 +1343,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   examples/apps/tree-comparison:
@@ -1463,7 +1467,7 @@ importers:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -1542,7 +1546,7 @@ importers:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -1618,7 +1622,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   examples/benchmarks/bubblebench/experimental-tree:
@@ -1691,7 +1695,7 @@ importers:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -1776,7 +1780,7 @@ importers:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -1855,7 +1859,7 @@ importers:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -1952,7 +1956,7 @@ importers:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -2070,7 +2074,7 @@ importers:
         specifier: ^2.8.1
         version: 2.8.1
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -2149,7 +2153,7 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       url-loader:
         specifier: ^4.1.1
@@ -2234,7 +2238,7 @@ importers:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -2337,7 +2341,7 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -2425,7 +2429,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -2519,7 +2523,7 @@ importers:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       url-loader:
         specifier: ^4.1.1
@@ -2577,7 +2581,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   examples/data-objects/multiview/constellation-view:
@@ -2620,7 +2624,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   examples/data-objects/multiview/container:
@@ -2720,7 +2724,7 @@ importers:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -2769,7 +2773,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   examples/data-objects/multiview/interface:
@@ -2803,7 +2807,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   examples/data-objects/multiview/plot-coordinate-view:
@@ -2843,7 +2847,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   examples/data-objects/multiview/slider-coordinate-view:
@@ -2883,7 +2887,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   examples/data-objects/multiview/triangle-view:
@@ -2923,7 +2927,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   examples/data-objects/prosemirror:
@@ -3053,7 +3057,7 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -3152,7 +3156,7 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -3267,7 +3271,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   examples/data-objects/table-tree:
@@ -3364,7 +3368,7 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -3500,7 +3504,7 @@ importers:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -3603,7 +3607,7 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -3745,7 +3749,7 @@ importers:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@22.19.17)(typescript@6.0.3)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       url-loader:
         specifier: ^4.1.1
@@ -3950,7 +3954,7 @@ importers:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -4068,7 +4072,7 @@ importers:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -4207,7 +4211,7 @@ importers:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -4295,7 +4299,7 @@ importers:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -4437,7 +4441,7 @@ importers:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@22.19.17)(typescript@6.0.3)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -4507,7 +4511,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   examples/utils/example-utils:
@@ -4634,7 +4638,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   examples/utils/example-webpack-integration:
@@ -4680,7 +4684,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   examples/utils/import-testing:
@@ -4750,7 +4754,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   examples/utils/migration-tools:
@@ -4838,7 +4842,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   examples/utils/typescript-versions-host:
@@ -5007,7 +5011,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -5101,7 +5105,7 @@ importers:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -5243,7 +5247,7 @@ importers:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -5397,7 +5401,7 @@ importers:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -5533,7 +5537,7 @@ importers:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -5630,7 +5634,7 @@ importers:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -5742,7 +5746,7 @@ importers:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -5839,7 +5843,7 @@ importers:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -5942,7 +5946,7 @@ importers:
         specifier: ^18.0.1
         version: 18.0.1
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   experimental/PropertyDDS/packages/property-common:
@@ -6045,7 +6049,7 @@ importers:
         specifier: ^18.0.1
         version: 18.0.1
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   experimental/PropertyDDS/packages/property-dds:
@@ -6193,7 +6197,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   experimental/PropertyDDS/packages/property-properties:
@@ -6278,7 +6282,7 @@ importers:
         specifier: ^18.0.1
         version: 18.0.1
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   experimental/dds/ot/ot:
@@ -6375,7 +6379,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   experimental/dds/ot/sharejs/json1:
@@ -6466,7 +6470,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   experimental/dds/sequence-deprecated:
@@ -6560,7 +6564,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   experimental/dds/tree:
@@ -6711,7 +6715,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   experimental/framework/data-objects:
@@ -6784,7 +6788,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   experimental/framework/last-edited:
@@ -6851,7 +6855,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/common/client-utils:
@@ -6957,7 +6961,7 @@ importers:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@22.19.17)(typescript@6.0.3)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -7015,7 +7019,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/common/core-interfaces:
@@ -7078,7 +7082,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/common/core-utils:
@@ -7156,7 +7160,7 @@ importers:
         specifier: ^18.0.1
         version: 18.0.1
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/common/driver-definitions:
@@ -7205,7 +7209,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/dds/cell:
@@ -7302,7 +7306,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/dds/claims:
@@ -7399,7 +7403,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/dds/counter:
@@ -7499,7 +7503,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/dds/ink:
@@ -7590,7 +7594,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/dds/legacy-dds:
@@ -7699,7 +7703,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/dds/map:
@@ -7817,7 +7821,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/dds/matrix:
@@ -7953,7 +7957,7 @@ importers:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@22.19.17)(typescript@6.0.3)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/dds/merge-tree:
@@ -8068,7 +8072,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/dds/ordered-collection:
@@ -8174,7 +8178,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/dds/pact-map:
@@ -8268,7 +8272,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/dds/register-collection:
@@ -8368,7 +8372,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/dds/sequence:
@@ -8498,7 +8502,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/dds/shared-object-base:
@@ -8619,7 +8623,7 @@ importers:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@22.19.17)(typescript@6.0.3)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/dds/shared-summary-block:
@@ -8710,7 +8714,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/dds/task-manager:
@@ -8819,7 +8823,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/dds/test-dds-utils:
@@ -8922,7 +8926,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/dds/tree:
@@ -9091,7 +9095,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/drivers/debugger:
@@ -9155,7 +9159,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/drivers/driver-base:
@@ -9243,7 +9247,7 @@ importers:
         specifier: ^4.8.3
         version: 4.8.3(supports-color@10.2.2)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/drivers/driver-web-cache:
@@ -9331,7 +9335,7 @@ importers:
         specifier: ^18.0.1
         version: 18.0.1
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/drivers/file-driver:
@@ -9398,7 +9402,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/drivers/local-driver:
@@ -9534,7 +9538,7 @@ importers:
         specifier: ^4.8.3
         version: 4.8.3(supports-color@10.2.2)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/drivers/odsp-driver:
@@ -9640,7 +9644,7 @@ importers:
         specifier: ^18.0.1
         version: 18.0.1
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/drivers/odsp-driver-definitions:
@@ -9692,7 +9696,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/drivers/odsp-urlResolver:
@@ -9774,7 +9778,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/drivers/replay-driver:
@@ -9847,7 +9851,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/drivers/routerlicious-driver:
@@ -9950,7 +9954,7 @@ importers:
         specifier: ^18.0.1
         version: 18.0.1
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       uuid:
         specifier: ^11.1.1
@@ -10035,7 +10039,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/drivers/tinylicious-driver:
@@ -10117,7 +10121,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/framework/agent-scheduler:
@@ -10202,7 +10206,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/framework/aqueduct:
@@ -10317,7 +10321,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/framework/attributor:
@@ -10432,7 +10436,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/framework/client-logger/app-insights-logger:
@@ -10517,7 +10521,7 @@ importers:
         specifier: ^2.8.1
         version: 2.8.1
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/framework/client-logger/fluid-telemetry:
@@ -10614,7 +10618,7 @@ importers:
         specifier: ^2.8.1
         version: 2.8.1
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/framework/dds-interceptions:
@@ -10702,7 +10706,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/framework/fluid-framework:
@@ -10784,7 +10788,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/framework/fluid-static:
@@ -10914,7 +10918,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/framework/oldest-client-observer:
@@ -10981,7 +10985,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/framework/presence:
@@ -11042,7 +11046,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/framework/presence-definitions:
@@ -11097,7 +11101,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/framework/presence-runtime:
@@ -11203,7 +11207,7 @@ importers:
         specifier: ^18.0.1
         version: 18.0.1
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/framework/quill-react:
@@ -11309,8 +11313,10 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
+
+  packages/framework/quill-react/lib.check: {}
 
   packages/framework/react:
     dependencies:
@@ -11430,8 +11436,10 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
+
+  packages/framework/react/lib.check: {}
 
   packages/framework/request-handler:
     dependencies:
@@ -11518,7 +11526,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/framework/synthesize:
@@ -11597,7 +11605,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/framework/tree-agent:
@@ -11709,7 +11717,7 @@ importers:
         specifier: ^1.14.0
         version: 1.14.0
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/framework/tree-agent-langchain:
@@ -11806,7 +11814,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/framework/tree-agent-ses:
@@ -11882,7 +11890,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/framework/type-factory:
@@ -11952,7 +11960,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/framework/undo-redo:
@@ -12043,7 +12051,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/loader/container-loader:
@@ -12161,7 +12169,7 @@ importers:
         specifier: ^18.0.1
         version: 18.0.1
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/loader/driver-utils:
@@ -12258,7 +12266,7 @@ importers:
         specifier: ^18.0.1
         version: 18.0.1
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/loader/test-loader-utils:
@@ -12313,7 +12321,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/runtime/container-runtime:
@@ -12458,7 +12466,7 @@ importers:
         specifier: ^18.0.1
         version: 18.0.1
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/runtime/container-runtime-definitions:
@@ -12519,7 +12527,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/runtime/datastore:
@@ -12634,7 +12642,7 @@ importers:
         specifier: ^18.0.1
         version: 18.0.1
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/runtime/datastore-definitions:
@@ -12695,7 +12703,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/runtime/id-compressor:
@@ -12786,7 +12794,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/runtime/runtime-definitions:
@@ -12850,7 +12858,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/runtime/runtime-utils:
@@ -12959,7 +12967,7 @@ importers:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@22.19.17)(typescript@6.0.3)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/runtime/test-runtime-utils:
@@ -13074,7 +13082,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/service-clients/azure-client:
@@ -13183,7 +13191,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.8(supports-color@10.2.2)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       uuid:
         specifier: ^11.1.1
@@ -13328,7 +13336,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/service-clients/end-to-end-tests/odsp-client:
@@ -13440,7 +13448,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/service-clients/odsp-client:
@@ -13546,7 +13554,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/service-clients/tinylicious-client:
@@ -13664,7 +13672,7 @@ importers:
         specifier: ^7.0.1
         version: 7.0.1(supports-color@10.2.2)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/test/functional-tests:
@@ -13796,7 +13804,7 @@ importers:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -13953,7 +13961,7 @@ importers:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/test/local-server-tests:
@@ -14085,7 +14093,7 @@ importers:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/test/mocha-test-setup:
@@ -14146,7 +14154,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/test/snapshots:
@@ -14267,7 +14275,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/test/stochastic-test-utils:
@@ -14349,7 +14357,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/test/test-driver-definitions:
@@ -14398,7 +14406,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/test/test-drivers:
@@ -14501,7 +14509,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/test/test-end-to-end-tests:
@@ -14718,7 +14726,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/test/test-pairwise-generator:
@@ -14782,7 +14790,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/test/test-service-load:
@@ -14912,7 +14920,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/test/test-utils:
@@ -15057,7 +15065,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/test/test-version-utils:
@@ -15238,7 +15246,7 @@ importers:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       uuid:
         specifier: ^11.1.1
@@ -15262,7 +15270,7 @@ importers:
         specifier: ^0.3.0
         version: 0.3.0(@changesets/cli@2.29.8)(supports-color@10.2.2)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
     devDependencies:
       '@biomejs/biome':
@@ -15363,7 +15371,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/tools/devtools/devtools-browser-extension:
@@ -15532,7 +15540,7 @@ importers:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -15677,7 +15685,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/tools/devtools/devtools-test-app:
@@ -15837,7 +15845,7 @@ importers:
         specifier: ^9.5.1
         version: 9.5.1(typescript@6.0.3)(webpack@5.109.0)
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
       webpack:
         specifier: ^5.104.1
@@ -16021,8 +16029,10 @@ importers:
         specifier: ^18.0.1
         version: 18.0.1
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
+
+  packages/tools/devtools/devtools-view/lib.check: {}
 
   packages/tools/fetch-tool:
     dependencies:
@@ -16106,7 +16116,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/tools/fluid-runner:
@@ -16206,7 +16216,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/tools/replay-tool:
@@ -16333,7 +16343,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/utils/odsp-doclib-utils:
@@ -16421,7 +16431,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/utils/telemetry-utils:
@@ -16515,7 +16525,7 @@ importers:
         specifier: ^18.0.1
         version: 18.0.1
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   packages/utils/tool-utils:
@@ -16609,7 +16619,7 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
   tools/markdown-magic:
