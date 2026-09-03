@@ -23,8 +23,15 @@ export abstract class DocumentServiceProxy
 	extends TypedEventEmitter<IDocumentServiceEvents>
 	implements IDocumentService
 {
+	public readonly driverStatePersistence?: NonNullable<
+		IDocumentService["driverStatePersistence"]
+	>;
+
 	constructor(private readonly _service: IDocumentService) {
 		super();
+		if (_service.driverStatePersistence !== undefined) {
+			this.driverStatePersistence = _service.driverStatePersistence;
+		}
 	}
 
 	public get service(): IDocumentService {

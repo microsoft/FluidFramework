@@ -27,6 +27,7 @@ import {
 	createChildMonitoringContext,
 	type MonitoringContext,
 	type TelemetryLoggerExt,
+	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { HostStoragePolicyInternal } from "./contracts.js";
@@ -165,6 +166,41 @@ export class OdspDocumentService
 	public get policies(): IDocumentServicePolicies {
 		return this._policies;
 	}
+
+	public readonly driverStatePersistence = {
+		get: (): Record<string, unknown> | undefined => {
+			const epoch = this.epochTracker.fluidEpoch;
+			return epoch === undefined
+				? undefined
+				: { documentId: this.odspResolvedUrl.hashedDocumentId, epoch };
+		},
+		set: (state: unknown): void => {
+			if (
+				typeof state !== "object" ||
+				state === null ||
+				Array.isArray(state) ||
+				!("epoch" in state) ||
+				typeof state.epoch !== "string" ||
+				!("documentId" in state) ||
+				typeof state.documentId !== "string"
+			) {
+				throw new UsageError("ODSP driver state must contain epoch and document ID strings");
+			}
+			if (state.documentId !== this.odspResolvedUrl.hashedDocumentId) {
+				throw new UsageError("ODSP driver state belongs to a different document");
+			}
+			const currentEpoch = this.epochTracker.fluidEpoch;
+			if (currentEpoch === state.epoch) {
+				return;
+			}
+			if (currentEpoch !== undefined) {
+				throw new UsageError("ODSP driver state epoch does not match the current epoch");
+			}
+			// Pending state and the ODSP cache are both persisted client state; keep them in the
+			// same telemetry category rather than widening the exported FetchTypeInternal API.
+			this.epochTracker.setEpoch(state.epoch, true, "cache");
+		},
+	};
 
 	/**
 	 * Connects to a storage endpoint for snapshot service.

@@ -56,6 +56,27 @@ describe("expose joinSessionInfo Tests", () => {
 		async (_options) => "token",
 	);
 
+	it("preserves an epoch supplied in pending driver state", async () => {
+		const resolver = new OdspDriverUrlResolver();
+		const odspResolvedUrl = await resolver.resolve({
+			url: createOdspUrl({ driveId, itemId, siteUrl, dataStorePath: "/" }),
+		});
+		const service = await odspDocumentServiceFactory.createDocumentService(odspResolvedUrl);
+		assert(service.driverStatePersistence !== undefined);
+		const driverState = { documentId: odspResolvedUrl.hashedDocumentId, epoch: "epoch1" };
+		service.driverStatePersistence.set(driverState);
+		service.driverStatePersistence.set(driverState);
+		assert.deepStrictEqual(service.driverStatePersistence.get(), driverState);
+		assert.throws(
+			() => service.driverStatePersistence?.set({ ...driverState, epoch: "epoch2" }),
+			/ODSP driver state epoch does not match the current epoch/,
+		);
+		assert.throws(
+			() => service.driverStatePersistence?.set({ ...driverState, documentId: "other" }),
+			/ODSP driver state belongs to a different document/,
+		);
+	});
+
 	function addJoinSessionStub(): SinonStub {
 		const joinSessionStub = stub(fetchJoinSession, mockify.key).callsFake(
 			async () => joinSessionResponse,

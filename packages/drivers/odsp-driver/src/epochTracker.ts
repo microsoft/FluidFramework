@@ -126,7 +126,7 @@ export class EpochTracker implements IPersistedFileCache {
 			: maximumCacheDurationMs;
 	}
 
-	// public for UT purposes only!
+	// Sets the initial epoch from cache, restored driver state, or tests.
 	public setEpoch(epoch: string, fromCache: boolean, fetchType: FetchTypeInternal): void {
 		assert(this._fluidEpoch === undefined, 0x1db /* "epoch exists" */);
 		this._fluidEpoch = epoch;

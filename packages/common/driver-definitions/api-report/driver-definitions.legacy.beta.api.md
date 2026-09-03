@@ -267,6 +267,10 @@ export interface IDocumentService extends IEventProvider<IDocumentServiceEvents>
     connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection>;
     connectToStorage(): Promise<IDocumentStorageService>;
     dispose(error?: any): void;
+    readonly driverStatePersistence?: {
+        get(): unknown;
+        set(state: unknown): void;
+    };
     policies?: IDocumentServicePolicies | undefined;
     // (undocumented)
     resolvedUrl: IResolvedUrl;
