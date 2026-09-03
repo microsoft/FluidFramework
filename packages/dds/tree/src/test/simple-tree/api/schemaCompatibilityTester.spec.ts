@@ -39,16 +39,21 @@ const factory = new SchemaFactoryAlpha("");
 
 function expectCompatibility(
 	{ view, stored }: { view: ImplicitFieldSchema; stored: TreeStoredSchema },
-	expected: Omit<ReturnType<typeof checkSchemaCompatibility>, "enabledUpgrades"> & {
+	expected: Omit<
+		ReturnType<typeof checkSchemaCompatibility>,
+		"enabledUpgrades" | "discrepancies"
+	> & {
 		enabledUpgrades?: ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus>;
 	},
 ) {
 	const viewSchema = new TreeViewConfigurationAlpha({ schema: view });
 	const compatibility = checkSchemaCompatibility(viewSchema, stored);
-	assert.deepEqual(compatibility, {
+	const { discrepancies, ...compatibilityWithoutDiscrepancies } = compatibility;
+	assert.deepEqual(compatibilityWithoutDiscrepancies, {
 		enabledUpgrades: new Map(),
 		...expected,
 	});
+	assert.equal(discrepancies === undefined, compatibility.canView);
 
 	// This does not include staged allowed types.
 	const viewStored = toUpgradeSchema(view);
@@ -74,15 +79,16 @@ describe("getSchemaIncompatibilityDetails", () => {
 
 	it("formats an allowed types discrepancy", () => {
 		const schema = new TreeViewConfigurationAlpha({ schema: factory.string });
-		assert.equal(
+		assert.deepEqual(
 			getSchemaIncompatibilityDetails(schema, toUpgradeSchema(factory.number)),
-			JSON.stringify([
+			[
 				{
+					mismatch: "allowedTypes",
 					location: "root",
 					view: [factory.string.identifier],
 					stored: [factory.number.identifier],
 				},
-			]),
+			],
 		);
 	});
 
@@ -90,23 +96,25 @@ describe("getSchemaIncompatibilityDetails", () => {
 		const schema = new TreeViewConfigurationAlpha({
 			schema: factory.optional(factory.string),
 		});
-		assert.equal(
+		assert.deepEqual(
 			getSchemaIncompatibilityDetails(
 				schema,
 				toUpgradeSchema(factory.required(factory.number)),
 			),
-			JSON.stringify([
+			[
 				{
+					mismatch: "allowedTypes",
 					location: "root",
 					view: [factory.string.identifier],
 					stored: [factory.number.identifier],
 				},
 				{
+					mismatch: "fieldKind",
 					location: "root",
 					view: "Optional",
 					stored: "Value",
 				},
-			]),
+			],
 		);
 	});
 
@@ -115,32 +123,72 @@ describe("getSchemaIncompatibilityDetails", () => {
 		const viewLeaf = new LeafNodeSchema(identifier, ValueSchema.Number);
 		const storedLeaf = new LeafNodeSchema(identifier, ValueSchema.String);
 		const schema = new TreeViewConfigurationAlpha({ schema: viewLeaf });
-		assert.equal(
-			getSchemaIncompatibilityDetails(schema, toUpgradeSchema(storedLeaf)),
-			JSON.stringify([
-				{
-					nodeType: identifier,
-					view: "Number",
-					stored: "String",
-				},
-			]),
-		);
+		assert.deepEqual(getSchemaIncompatibilityDetails(schema, toUpgradeSchema(storedLeaf)), [
+			{
+				mismatch: "valueSchema",
+				nodeType: identifier,
+				view: "Number",
+				stored: "String",
+			},
+		]);
 	});
 
 	it("formats a node kind discrepancy", () => {
 		class ViewNode extends factory.object("nodeKind", {}) {}
 		class StoredNode extends factory.map("nodeKind", []) {}
 		const schema = new TreeViewConfigurationAlpha({ schema: ViewNode });
-		assert.equal(
-			getSchemaIncompatibilityDetails(schema, toUpgradeSchema(StoredNode)),
-			JSON.stringify([
-				{
+		assert.deepEqual(getSchemaIncompatibilityDetails(schema, toUpgradeSchema(StoredNode)), [
+			{
+				mismatch: "nodeKind",
+				nodeType: ViewNode.identifier,
+				view: "Object",
+				stored: "Map",
+			},
+		]);
+	});
+
+	it("formats staged allowed type context", () => {
+		class ViewNode extends factory.objectAlpha("stagedAllowedTypeDetails", {
+			foo: factory.types([factory.number, factory.staged(factory.string)]),
+		}) {}
+		class StoredNode extends factory.objectAlpha("stagedAllowedTypeDetails", {
+			foo: [factory.number, factory.null],
+		}) {}
+		const schema = new TreeViewConfigurationAlpha({ schema: ViewNode });
+
+		assert.deepEqual(getSchemaIncompatibilityDetails(schema, toUpgradeSchema(StoredNode)), [
+			{
+				mismatch: "allowedTypes",
+				location: {
 					nodeType: ViewNode.identifier,
-					view: "Object",
-					stored: "Map",
+					fieldKey: "foo",
 				},
-			]),
-		);
+				view: [],
+				stagedView: [factory.string.identifier],
+				stored: [factory.null.identifier],
+			},
+		]);
+	});
+
+	it("formats staged optional field context", () => {
+		class ViewNode extends factory.objectAlpha("stagedOptionalDetails", {
+			foo: factory.stagedOptional(factory.number),
+		}) {}
+		class StoredNode extends factory.objectAlpha("stagedOptionalDetails", {}) {}
+		const schema = new TreeViewConfigurationAlpha({ schema: ViewNode });
+
+		assert.deepEqual(getSchemaIncompatibilityDetails(schema, toUpgradeSchema(StoredNode)), [
+			{
+				mismatch: "fieldKind",
+				location: {
+					nodeType: ViewNode.identifier,
+					fieldKey: "foo",
+				},
+				view: "Optional",
+				stored: "Forbidden",
+				viewIsStagedOptional: true,
+			},
+		]);
 	});
 });
 
@@ -660,12 +708,11 @@ describe("checkSchemaCompatibility", () => {
 
 				expectCompatibility(
 					{ view: Compatible1, stored: toUpgradeSchema(Compatible2) },
-					// enabledUpgrades may be incomplete when canView is false (early break).
 					{
 						canView: false,
 						canUpgrade: false,
 						isEquivalent: false,
-						enabledUpgrades: new Map(),
+						enabledUpgrades: new Map([[upgrade, "enabled"]]),
 					},
 				);
 			});
