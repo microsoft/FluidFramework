@@ -189,16 +189,9 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 	 * The callback to unsubscribe from main branch changes.
 	 */
 	private readonly offMainChanged: () => void;
-	/** Indicates whether this Host released its resources. */
-	private disposed: boolean = false;
 
 	/** Receives and routes protocol messages from the Guest. */
 	private readonly onMessage = (event: MessageEvent<unknown>): void => {
-		if (this.disposed) {
-			this.handleProtocolError(new Error("The Host received a message after disposal."));
-			return;
-		}
-
 		try {
 			const message = parseHostGuestMessage(event.data);
 			switch (message.type) {
@@ -250,11 +243,6 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 	}
 
 	public dispose(): void {
-		if (this.disposed) {
-			return;
-		}
-		this.disposed = true;
-
 		this.port.removeEventListener("message", this.onMessage);
 		this.port.removeEventListener("messageerror", this.onMessageError);
 		this.port.close();
@@ -410,16 +398,9 @@ class Guest<const TSchema extends ImplicitFieldSchema> {
 	 * True when the Guest is applying changes from the Host.
 	 */
 	private isApplyingChangesFromHost: boolean = false;
-	/** Indicates whether this Guest released its resources. */
-	private disposed: boolean = false;
 
 	/** Receives and routes protocol messages from the Host. */
 	private readonly onMessage = (event: MessageEvent<unknown>): void => {
-		if (this.disposed) {
-			this.handleProtocolError(new Error("The Guest received a message after disposal."));
-			return;
-		}
-
 		try {
 			const message = parseHostGuestMessage(event.data);
 			switch (message.type) {
@@ -482,10 +463,6 @@ class Guest<const TSchema extends ImplicitFieldSchema> {
 	}
 
 	public dispose(): void {
-		if (this.disposed) {
-			return;
-		}
-		this.disposed = true;
 		this.port.removeEventListener("message", this.onMessage);
 		this.port.removeEventListener("messageerror", this.onMessageError);
 		this.port.close();
