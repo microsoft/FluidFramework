@@ -335,9 +335,9 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 			// The Guest is now caught up with the Host's main branch
 			if (this.updateInProgress !== undefined) {
 				this.logger("Host:   resolving update promise");
-				const resolve = this.updateInProgress.resolver;
+				const resolver = this.updateInProgress.resolver;
 				this.updateInProgress = undefined;
-				resolve();
+				resolver();
 			}
 		}
 	}
@@ -509,10 +509,10 @@ class Guest<const TSchema extends ImplicitFieldSchema> {
 				this.pushInProgress !== undefined,
 				"Missing push promise despite in-flight changes",
 			);
-			const resolve = this.pushInProgress.resolver;
+			const resolver = this.pushInProgress.resolver;
 			this.pushInProgress = undefined;
 			this.logger(`Guest:   all my changes were acked. Resolving push promise.`);
-			resolve();
+			resolver();
 		}
 	}
 
