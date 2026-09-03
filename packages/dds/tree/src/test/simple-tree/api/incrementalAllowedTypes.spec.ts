@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import {
 	SchemaFactoryAlpha,
 	TreeViewConfigurationAlpha,
+	type ValidateRecursiveSchema,
 	incrementalEncodingPolicyForAllowedTypes,
 	incrementalSummaryHint,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
@@ -58,5 +59,24 @@ describe("incremental allowed types", () => {
 		);
 		assert.equal(policy(Root.identifier, "singleton"), true);
 		assert.equal(policy(Root.identifier, "union"), true);
+	});
+
+	it("supports recursive schemas", () => {
+		class Recursive extends sf.arrayRecursive(
+			"Recursive",
+			sf.incrementalSummaryRecursive([() => Recursive]),
+		) {}
+		type _check = ValidateRecursiveSchema<typeof Recursive>;
+
+		const allowedTypes = Recursive.info;
+		assert.equal(
+			(allowedTypes.metadata.custom as Record<symbol, unknown>)[incrementalSummaryHint],
+			true,
+		);
+
+		const policy = incrementalEncodingPolicyForAllowedTypes(
+			new TreeViewConfigurationAlpha({ schema: Recursive }),
+		);
+		assert.equal(policy(Recursive.identifier), true);
 	});
 });
