@@ -61,6 +61,9 @@ import {
 	type TreeBranchHistory,
 	type UntypedTreeViewAlpha,
 	type TreeSchema,
+	type SchemaUpgrade,
+	type StagedUpgradeStatus,
+	getSchemaCompatibilityError,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -79,6 +82,28 @@ import type { TreeCheckout } from "./treeCheckout.js";
  */
 export const ViewSlot = anchorSlot<TreeView<ImplicitFieldSchema>>();
 
+function throwIfSchemaIsIncompatible(
+	compatibility: SchemaCompatibilityStatus,
+	viewSchema: TreeSchema,
+	storedSchema: TreeCheckout["storedSchema"],
+): void {
+	if (compatibility.canView) {
+		return;
+	}
+
+	const discrepancy = getSchemaCompatibilityError(viewSchema, storedSchema);
+	const details =
+		discrepancy === undefined ? "" : ` The first schema mismatch is: ${discrepancy}.`;
+	const resolution = compatibility.canInitialize
+		? "The document is uninitialized; call TreeView.initialize() before reading or writing TreeView.root."
+		: compatibility.canUpgrade
+			? "The stored schema can be upgraded; call TreeView.upgradeSchema() before reading or writing TreeView.root."
+			: "The schemas cannot be upgraded automatically. Review the reported mismatch and use a compatible view schema or explicitly migrate the document schema and data.";
+	throw new UsageError(
+		`TreeView.root is unavailable because the view schema is not compatible with the document's stored schema.${details} ${resolution}`,
+	);
+}
+
 /**
  * Implementation of TreeView wrapping a FlexTreeView.
  */
@@ -95,9 +120,14 @@ export class SchematizingSimpleTreeView<
 	private flexTreeContext: Context | undefined;
 
 	/**
-	 * Undefined iff uninitialized or disposed.
+	 * Undefined if and only if uninitialized or disposed.
 	 */
 	private currentCompatibility: SchemaCompatibilityStatus | undefined;
+	/**
+	 * Cached map of upgrade statuses, computed alongside compatibility.
+	 * @remarks Undefined if and only if uninitialized or disposed.
+	 */
+	private currentEnabledUpgrades: ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus> | undefined;
 	public readonly events: Listenable<TreeViewEvents & TreeBranchEvents> &
 		IEmitter<TreeViewEvents & TreeBranchEvents> &
 		HasListeners<TreeViewEvents & TreeBranchEvents> = createEmitter();
@@ -155,9 +185,7 @@ export class SchematizingSimpleTreeView<
 		const stagedUpgradePolicy =
 			config instanceof TreeViewConfigurationAlpha ? config.stagedUpgradePolicy : undefined;
 		const configAlpha = new TreeViewConfigurationAlpha({
-			schema: config.schema,
-			enableSchemaValidation: config.enableSchemaValidation,
-			preventAmbiguity: config.preventAmbiguity,
+			...config,
 			stagedUpgradePolicy,
 		});
 		this.stagedUpgradePolicy = configAlpha.stagedUpgradePolicy;
@@ -171,6 +199,7 @@ export class SchematizingSimpleTreeView<
 			isEquivalent: false,
 			canInitialize: true,
 		};
+		this.currentEnabledUpgrades = new Map();
 		this.update();
 
 		this.unregisterCallbacks.add(
@@ -283,6 +312,13 @@ export class SchematizingSimpleTreeView<
 		}
 
 		this.runSchemaEdit(() => this.checkout.updateSchema(newSchema));
+	}
+
+	public isStagedUpgradeEnabled(upgrade: SchemaUpgrade): StagedUpgradeStatus {
+		if (!this.currentEnabledUpgrades) {
+			this.failDisposed();
+		}
+		return this.currentEnabledUpgrades.get(upgrade) ?? "disabled";
 	}
 
 	/**
@@ -442,12 +478,16 @@ export class SchematizingSimpleTreeView<
 		}
 	}
 
+	/**
+	 * Computes the current schema compatibility status and updates the cached enabled upgrades.
+	 */
 	private computeCompatibility(): SchemaCompatibilityStatus {
-		const compatibility = checkSchemaCompatibility(
+		const { enabledUpgrades, ...compatibility } = checkSchemaCompatibility(
 			this.viewSchema,
 			this.checkout.storedSchema,
 			this.stagedUpgradePolicy,
 		);
+		this.currentEnabledUpgrades = enabledUpgrades;
 		return {
 			...compatibility,
 			canInitialize: canInitialize(this.checkout),
@@ -501,6 +541,7 @@ export class SchematizingSimpleTreeView<
 		}
 		this.checkout.forest.anchors.slots.delete(ViewSlot);
 		this.currentCompatibility = undefined;
+		this.currentEnabledUpgrades = undefined;
 		this.onDispose?.();
 		if (!this.checkout.isSharedBranch && !this.checkout.disposed) {
 			// All non-shared branches are 1:1 with views, so if a user manually disposes a view, we should also dispose the checkout/branch.
@@ -510,11 +551,11 @@ export class SchematizingSimpleTreeView<
 
 	private get flexRoot(): FlexTreeOptionalField | FlexTreeRequiredField {
 		this.breaker.use();
-		if (!this.compatibility.canView) {
-			throw new UsageError(
-				"Document is out of schema. Check TreeView.compatibility before accessing TreeView.root.",
-			);
-		}
+		throwIfSchemaIsIncompatible(
+			this.compatibility,
+			this.viewSchema,
+			this.checkout.storedSchema,
+		);
 		const view = this.getFlexTreeContext();
 		assert(
 			view.root.is(FieldKinds.optional) ||
@@ -531,11 +572,11 @@ export class SchematizingSimpleTreeView<
 
 	public set root(newRoot: InsertableField<TRootSchema>) {
 		this.breaker.use();
-		if (!this.compatibility.canView) {
-			throw new UsageError(
-				"Document is out of schema. Check TreeView.compatibility before accessing TreeView.root.",
-			);
-		}
+		throwIfSchemaIsIncompatible(
+			this.compatibility,
+			this.viewSchema,
+			this.checkout.storedSchema,
+		);
 		const view = this.getFlexTreeContext();
 		setField(
 			view.root,
