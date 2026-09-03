@@ -149,7 +149,7 @@ function filterMark(
 		case "AttachAndDetach": {
 			assert(
 				mark.attach.type === "MoveIn",
-				"AttachAndDetach marks in changesets should always represent MoveIn + Remove",
+				0xd3c /* AttachAndDetach marks in changesets should always represent MoveIn + Remove */,
 			);
 
 			if (mark.cellId === undefined) {
