@@ -12,15 +12,18 @@ import {
 } from "@fluid-private/test-loader-utils";
 import type { IClient } from "@fluidframework/driver-definitions";
 import {
+	DriverErrorTypes,
 	type IDocumentDeltaStorageService,
 	type IDocumentMessage,
 	MessageType,
 	type ISequencedDocumentMessage,
+	type ISequencedDocumentSystemMessage,
 	type IStream,
 	type IStreamResult,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	createChildLogger,
+	isFluidError,
 	MockLogger,
 	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
@@ -53,13 +56,26 @@ describe("Loader", () => {
 				reconnectAllowed = true,
 				dmLogger: TelemetryLoggerExt = logger,
 				deltaStorageFactory?: () => IDocumentDeltaStorageService,
+				sequenceState?: {
+					snapshotSequenceNumber?: number;
+					lastProcessedSequenceNumber?: number;
+					initialMessages?: ISequencedDocumentMessage[];
+					connectBeforeAttach?: boolean;
+					earlySocketMessages?: ISequencedDocumentMessage[];
+					clientIds?: string[];
+				},
 			): Promise<void> {
 				const service = new MockDocumentService(deltaStorageFactory, () => {
 					// Always create new connection, as reusing old closed connection
 					// Forces DM into infinite reconnection loop.
-					deltaConnection = new MockDocumentDeltaConnection("test", (messages) =>
-						emitter.emit(submitEvent, messages),
+					deltaConnection = new MockDocumentDeltaConnection(
+						sequenceState?.clientIds?.shift() ?? "test",
+						(messages) => emitter.emit(submitEvent, messages),
 					);
+					if (sequenceState !== undefined) {
+						Object.defineProperty(deltaConnection, "checkpointSequenceNumber", { value: 5 });
+					}
+					deltaConnection.initialMessages = sequenceState?.initialMessages ?? [];
 					return deltaConnection;
 				});
 				const client: Partial<IClient> = {
@@ -81,6 +97,9 @@ describe("Loader", () => {
 							props,
 						),
 				);
+				deltaManager.on("closed", (error: Error) => {
+					expectedError = error;
+				});
 
 				const noopHeuristic = new NoopHeuristic(expectedTimeout, noopCountFrequency);
 
@@ -89,15 +108,29 @@ describe("Loader", () => {
 					noopHeuristic.notifyMessageSent();
 				});
 
-				await deltaManager.attachOpHandler(0, 0, {
-					process: (message) => noopHeuristic.notifyMessageProcessed(message),
-					processSignal() {},
-				});
-
-				await new Promise((resolve) => {
-					deltaManager.on("connect", resolve);
-					deltaManager.connect({ reason: { text: "test" } });
-				});
+				const connect = async (): Promise<void> =>
+					new Promise((resolve) => {
+						deltaManager.once("connect", resolve);
+						deltaManager.once("closed", () => resolve());
+						deltaManager.connect({ reason: { text: "test" } });
+					});
+				if (sequenceState?.connectBeforeAttach === true) {
+					await connect();
+					deltaConnection.emitOp(docId, sequenceState.earlySocketMessages ?? []);
+				}
+				await deltaManager.attachOpHandler(
+					0,
+					sequenceState?.snapshotSequenceNumber ?? 0,
+					{
+						process: (message) => noopHeuristic.notifyMessageProcessed(message),
+						processSignal() {},
+					},
+					sequenceState?.connectBeforeAttach === true ? "all" : "none",
+					sequenceState?.lastProcessedSequenceNumber,
+				);
+				if (sequenceState?.connectBeforeAttach !== true) {
+					await connect();
+				}
 			}
 
 			// function to yield control in the Javascript event loop.
@@ -117,6 +150,25 @@ describe("Loader", () => {
 					sequenceNumber: seq++,
 					type,
 				} as unknown as ISequencedDocumentMessage;
+			}
+
+			function generateClientJoin(
+				clientId: string,
+				sequenceNumber: number,
+			): ISequencedDocumentSystemMessage {
+				return {
+					sequenceNumber,
+					minimumSequenceNumber: 0,
+					clientSequenceNumber: 1,
+					type: MessageType.ClientJoin,
+					// API uses null
+					// eslint-disable-next-line unicorn/no-null
+					clientId: null,
+					referenceSequenceNumber: 0,
+					timestamp: 1000,
+					contents: undefined,
+					data: JSON.stringify({ clientId }),
+				};
 			}
 
 			async function sendAndReceiveOps(count: number, type: MessageType): Promise<void> {
@@ -177,6 +229,135 @@ describe("Loader", () => {
 
 			after(() => {
 				clock.restore();
+			});
+
+			describe("Self-join sequence validation", () => {
+				it("closes when the current connection's self-join predates pending state", async () => {
+					await startDeltaManager(true, logger, undefined, {
+						lastProcessedSequenceNumber: 13,
+					});
+					deltaConnection.emitOp(docId, [generateClientJoin("test", 6)]);
+
+					assert(isFluidError(expectedError));
+					assert.strictEqual(
+						expectedError.errorType,
+						DriverErrorTypes.fileOverwrittenInStorage,
+					);
+					assert.strictEqual(deltaManager.disposed, true);
+					const telemetry = expectedError.getTelemetryProperties();
+					assert.strictEqual(telemetry.canRetry, false);
+					assert.strictEqual(telemetry.selfJoinSequenceNumber, 6);
+					assert.strictEqual(telemetry.connectionSequenceBaseline, 13);
+					assert.strictEqual(telemetry.clientId, "test");
+					assert.strictEqual(telemetry.snapshotSequenceNumber, 0);
+					assert.strictEqual(telemetry.loadedSequenceNumber, 13);
+					assert.strictEqual(telemetry.lastProcessedSequenceNumber, 13);
+					assert.strictEqual(telemetry.lastQueuedSequenceNumber, 13);
+					assert.strictEqual(telemetry.serviceCheckpointSequenceNumber, 5);
+				});
+
+				it("accepts a valid self-join and its duplicate after later operations", async () => {
+					await startDeltaManager(true, logger, undefined, {
+						lastProcessedSequenceNumber: 13,
+					});
+					const join = generateClientJoin("test", 14);
+					deltaConnection.emitOp(docId, [join]);
+					await yieldEventLoop();
+					assert.strictEqual(deltaManager.lastSequenceNumber, 14);
+					assert.strictEqual(expectedError, undefined);
+
+					deltaConnection.emitOp(docId, [{ ...generateOp(), sequenceNumber: 15 }]);
+					await yieldEventLoop();
+					deltaConnection.emitOp(docId, [join]);
+					await yieldEventLoop();
+					assert.strictEqual(deltaManager.lastSequenceNumber, 15);
+					assert.strictEqual(expectedError, undefined);
+					assert.strictEqual(deltaManager.disposed, false);
+				});
+
+				it("allows an older join for another client", async () => {
+					await startDeltaManager(true, logger, undefined, {
+						lastProcessedSequenceNumber: 13,
+					});
+					deltaConnection.emitOp(docId, [generateClientJoin("other", 6)]);
+					assert.strictEqual(expectedError, undefined);
+					assert.strictEqual(deltaManager.disposed, false);
+					assert.strictEqual(deltaManager.lastSequenceNumber, 13);
+				});
+
+				for (const source of ["initial", "socket"] as const) {
+					for (const state of ["pending", "snapshot"] as const) {
+						it(`uses ${state} state for ${source} messages delivered before attach`, async () => {
+							const messages = [generateClientJoin("test", 6)];
+							await startDeltaManager(true, logger, undefined, {
+								connectBeforeAttach: true,
+								lastProcessedSequenceNumber: state === "pending" ? 13 : undefined,
+								snapshotSequenceNumber: state === "snapshot" ? 13 : 0,
+								initialMessages: source === "initial" ? messages : [],
+								earlySocketMessages: source === "socket" ? messages : [],
+							});
+							assert(isFluidError(expectedError));
+							assert.strictEqual(
+								expectedError.errorType,
+								DriverErrorTypes.fileOverwrittenInStorage,
+							);
+							assert.strictEqual(
+								expectedError.getTelemetryProperties().connectionSequenceBaseline,
+								13,
+							);
+						});
+					}
+				}
+
+				it("rejects a self-join exactly at the baseline in initial messages", async () => {
+					await startDeltaManager(true, logger, undefined, {
+						lastProcessedSequenceNumber: 13,
+						initialMessages: [generateClientJoin("test", 13)],
+					});
+					assert(isFluidError(expectedError));
+					assert.strictEqual(
+						expectedError.errorType,
+						DriverErrorTypes.fileOverwrittenInStorage,
+					);
+					assert.strictEqual(
+						expectedError.getTelemetryProperties().serviceCheckpointSequenceNumber,
+						5,
+					);
+				});
+
+				for (const clientId of ["new-client", "test"]) {
+					it(`refreshes the baseline on reconnect with client ID '${clientId}'`, async () => {
+						await startDeltaManager(true, logger, undefined, {
+							lastProcessedSequenceNumber: 13,
+							clientIds: ["test", clientId],
+						});
+						deltaConnection.emitOp(docId, [
+							generateClientJoin("test", 14),
+							{ ...generateOp(), sequenceNumber: 15 },
+						]);
+						await yieldEventLoop();
+						const reconnectP = new Promise<void>((resolve) => {
+							deltaManager.once("connect", () => resolve());
+						});
+						deltaConnection.emitError({
+							errorType: DriverErrorTypes.genericError,
+							message: "Reconnect for test",
+							canRetry: true,
+						});
+						await reconnectP;
+						deltaConnection.emitOp(docId, [generateClientJoin(clientId, 14)]);
+						assert(isFluidError(expectedError));
+						assert.strictEqual(
+							expectedError.errorType,
+							DriverErrorTypes.fileOverwrittenInStorage,
+						);
+						assert.strictEqual(
+							expectedError.getTelemetryProperties().connectionSequenceBaseline,
+							15,
+						);
+						assert.strictEqual(expectedError.getTelemetryProperties().clientId, clientId);
+					});
+				}
 			});
 
 			describe("Update Minimum Sequence Number", () => {
