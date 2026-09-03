@@ -1982,5 +1982,5 @@ export const shortCodeMap = {
 	"0xd34": "Cannot construct metadata for the root commit",
 	"0xd35": "Trimmed more commits than exist in the branch",
 	"0xd36": "Should not access 'customMetadata' property of an evicted commit",
-	"0xd37": "Enabled upgrades must be available for an active view"
+	"0xd3e": "Enabled upgrades must be available for an active view"
 };

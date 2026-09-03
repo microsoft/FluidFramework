@@ -328,7 +328,7 @@ export class SchematizingSimpleTreeView<
 		const enabledUpgrades = this.currentEnabledUpgrades;
 		assert(
 			enabledUpgrades !== undefined,
-			0xd37 /* Enabled upgrades must be available for an active view */,
+			0xd3e /* Enabled upgrades must be available for an active view */,
 		);
 		if (enabledUpgrades.size === 0) {
 			return configuredPolicy;
