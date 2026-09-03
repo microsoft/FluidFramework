@@ -118,6 +118,35 @@ test("include applies negative indexes from the end of the source", async () => 
 	assert.equal(thirdHeading.children[0].value, "Third");
 });
 
+test("include resolves reference links defined outside the selected range", async () => {
+	const directory = await createTempDirectory();
+	const sourcePath = path.join(directory, "source.md");
+	const destinationPath = path.join(directory, "destination.mdx");
+	await writeFile(
+		sourcePath,
+		[
+			"Read the [guide][guide] and view the ![diagram][diagram].",
+			"",
+			'[guide]: ./guide.md "Guide title"',
+			"[diagram]: ./diagram.png",
+		].join("\n"),
+	);
+	await writeFile(
+		destinationPath,
+		[
+			`{/* markdown-magic:begin {"transform":"include","path":"./source.md","start":0,"end":1} */}`,
+			"{/* markdown-magic:end */}",
+		].join("\n"),
+	);
+
+	await processDocument(destinationPath, createTransformRegistry());
+	const output = await readFile(destinationPath, "utf8");
+	assert.match(output, /\[guide\]\(\.\/guide\.md "Guide title"\)/);
+	assert.match(output, /!\[diagram\]\(\.\/diagram\.png\)/);
+	assert.doesNotMatch(output, /^\[guide\]:/m);
+	assert.doesNotMatch(output, /^\[diagram\]:/m);
+});
+
 test("include-code negative indexes count a terminal empty line", async () => {
 	const directory = await createTempDirectory();
 	const sourcePath = path.join(directory, "source.ts");
@@ -151,6 +180,24 @@ test("MDX include preserves MDX nodes", async () => {
 	);
 
 	assert.equal(nodes[0]?.type, "mdxJsxFlowElement");
+});
+
+test("MDX destinations convert included Markdown comments to MDX comments", async () => {
+	const directory = await createTempDirectory();
+	const sourcePath = path.join(directory, "source.md");
+	const destinationPath = path.join(directory, "destination.mdx");
+	await writeFile(sourcePath, "<!-- Included comment. -->\n");
+	await writeFile(
+		destinationPath,
+		[
+			`{/* markdown-magic:begin {"transform":"include","path":"./source.md"} */}`,
+			"{/* markdown-magic:end */}",
+		].join("\n"),
+	);
+
+	await processDocument(destinationPath, createTransformRegistry());
+	const output = await readFile(destinationPath, "utf8");
+	assert.match(output, /\{\/\* Included comment\. \*\/\}/);
 });
 
 test("Markdown destinations reject MDX nodes", async () => {

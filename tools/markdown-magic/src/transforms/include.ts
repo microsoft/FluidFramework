@@ -3,7 +3,29 @@
  * Licensed under the MIT License.
  */
 
+import type { Definition, Nodes, PhrasingContent, RootContent } from "mdast";
+
 import type { GeneratedNodes, Transform, TransformContext } from "../types.js";
+
+/**
+ * Matches one complete HTML comment and captures the text between its delimiters.
+ */
+const htmlCommentPattern = /^<!--([\s\S]*?)-->$/;
+
+/**
+ * Converts a complete Markdown HTML comment node to an MDX comment expression.
+ * Other HTML nodes are unchanged so that destination serialization can validate them.
+ *
+ * @param node - The parsed Markdown node to convert.
+ * @returns The equivalent MDX comment node, or the original node when it is not a comment.
+ */
+function convertCommentToMdx(node: RootContent): RootContent {
+	if (node.type !== "html") {
+		return node;
+	}
+	const match = htmlCommentPattern.exec(node.value);
+	return match === null ? node : { type: "mdxFlowExpression", value: `/*${match[1]}*/` };
+}
 
 /**
  * Options shared by the file and code include transforms.
@@ -117,6 +139,87 @@ function sliceLines(source: string, start?: number, end?: number): string {
 }
 
 /**
+ * Resolves reference-style links and images to inline nodes using source link definitions.
+ *
+ * @param node - The node whose references to resolve.
+ * @param definitions - The source definitions indexed by normalized identifier.
+ * @returns A copy of the node with resolvable references converted to inline nodes.
+ */
+function resolveReferences(node: Nodes, definitions: ReadonlyMap<string, Definition>): Nodes {
+	if (node.type === "linkReference") {
+		const definition = definitions.get(node.identifier);
+		return definition === undefined
+			? node
+			: {
+					type: "link",
+					url: definition.url,
+					title: definition.title,
+					children: node.children.map(
+						(child) => resolveReferences(child, definitions) as PhrasingContent,
+					),
+				};
+	}
+	if (node.type === "imageReference") {
+		const definition = definitions.get(node.identifier);
+		return definition === undefined
+			? node
+			: {
+					type: "image",
+					url: definition.url,
+					title: definition.title,
+					alt: node.alt,
+				};
+	}
+	return "children" in node
+		? ({
+				...node,
+				children: node.children.map((child) => resolveReferences(child, definitions)),
+			} as Nodes)
+		: node;
+}
+
+/**
+ * Parses selected source with the source document's link definitions as temporary context.
+ * Definitions outside the selection let remark recognize reference-style links. The resulting
+ * references are resolved to inline links, and definitions outside the requested range are removed.
+ */
+function parseSelectedSource(
+	source: string,
+	selectedSource: string,
+	sourcePath: string,
+	context: TransformContext,
+): RootContent[] {
+	const sourceDocument = context.parseDocument(source, sourcePath);
+	const definitionsByIdentifier = new Map(
+		sourceDocument.tree.children
+			.filter((node): node is Definition => node.type === "definition")
+			.map((definition) => [definition.identifier, definition]),
+	);
+	const definitions = sourceDocument.tree.children.flatMap((node) => {
+		const start = node.position?.start.offset;
+		const end = node.position?.end.offset;
+		return node.type === "definition" && start !== undefined && end !== undefined
+			? [source.slice(start, end)]
+			: [];
+	});
+	if (definitions.length === 0) {
+		return context.parseDocument(selectedSource, sourcePath).tree.children;
+	}
+
+	const separator = "\n\n";
+	const definitionStart = selectedSource.length + separator.length;
+	const contextualSource = `${selectedSource}${separator}${definitions.join("\n")}`;
+	return context
+		.parseDocument(contextualSource, sourcePath)
+		.tree.children.filter(
+			(node) =>
+				node.type !== "definition" &&
+				(node.position?.start.offset ?? definitionStart) < definitionStart,
+		)
+		.map((node) => resolveReferences(node, definitionsByIdentifier) as RootContent);
+}
+
+/**
  * Includes a Markdown file as parsed syntax-tree nodes.
  */
 export const includeTransform: Transform = {
@@ -125,8 +228,11 @@ export const includeTransform: Transform = {
 		const sourcePath = context.resolvePath(options.path);
 		const source = await context.readFile(sourcePath, "utf8");
 		const selectedSource = sliceLines(source, options.start, options.end);
-		const sourceDocument = context.parseDocument(selectedSource, sourcePath);
-		const nodes: GeneratedNodes = sourceDocument.tree.children;
+		const selectedNodes = parseSelectedSource(source, selectedSource, sourcePath, context);
+		const nodes: GeneratedNodes =
+			context.destinationFormat === "mdx"
+				? selectedNodes.map(convertCommentToMdx)
+				: selectedNodes;
 		Object.defineProperty(nodes, "sourcePath", {
 			value: sourcePath,
 			enumerable: false,

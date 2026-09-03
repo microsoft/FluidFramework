@@ -222,5 +222,5 @@ flowchart TD
     A --> M["handle: '/gc'"]:::handle
 ```
 
-[summary-protocol]: /common/lib/protocol-definitions/src/summary.ts
-[storage-protocol]: /common/lib/protocol-definitions/src/storage.ts
+[summary-protocol]: https://github.com/microsoft/FluidFramework/blob/main/common/lib/protocol-definitions/src/summary.ts
+[storage-protocol]: https://github.com/microsoft/FluidFramework/blob/main/common/lib/protocol-definitions/src/storage.ts
