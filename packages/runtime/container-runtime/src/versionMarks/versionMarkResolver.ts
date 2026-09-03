@@ -176,20 +176,28 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 		this.hooks.flushPendingBatch();
 		const referenceSequenceNumber = this.hooks.getCurrentSequenceNumber();
 		const batchId = this.hooks.getCurrentPendingBatchId();
+		let result: VersionMarkCapture;
 		if (batchId === undefined) {
 			// No unacked local batch: the mark already points at a durable sequence number.
-			return {
+			result = {
 				kind: "resolved",
 				sequenceNumber: referenceSequenceNumber,
 				timestamp: this.hooks.getCurrentTimestamp(),
 			};
+		} else {
+			// A pending mark needs its batch tracked so resolve() can promote it from the live map.
+			this.tracking = true;
+			// The pending batch is sequenced after the reference point, so its first possible sequence
+			// number is `referenceSequenceNumber + 1`. Store that as an inclusive lower bound so resolve()
+			// scans directly from it.
+			result = {
+				kind: "pending",
+				batchId,
+				sequenceNumberLowerBound: referenceSequenceNumber + 1,
+			};
 		}
-		// A pending mark needs its batch tracked so resolve() can promote it from the live map.
-		this.tracking = true;
-		// The pending batch is sequenced after the reference point, so its first possible sequence
-		// number is `referenceSequenceNumber + 1`. Store that as an inclusive lower bound so resolve()
-		// scans directly from it.
-		return { kind: "pending", batchId, sequenceNumberLowerBound: referenceSequenceNumber + 1 };
+		this.hooks.logger.sendTelemetryEvent({ eventName: "Capture", kind: result.kind });
+		return result;
 	}
 
 	public async resolve(
@@ -197,6 +205,9 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 		sequenceNumberLowerBound: number,
 	): Promise<ResolveResult> {
 		const startTime = Date.now();
+		// Track from here so inbound batches are recorded even without a prior capture/subscribe; otherwise
+		// a batch sequencing during the scan (or live, in the no-reader case) is skipped and unrecoverable.
+		this.tracking = true;
 		// Defaults cover the throw path (only the history scan can throw — e.g. an unpacker
 		// DataCorruptionError or the 0xd1c reader-contract assert): the Resolve event still fires via
 		// `finally`, with outcome "error".
@@ -216,11 +227,16 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 				}
 				// Otherwise scan history from the mark's reference point.
 				path = "history";
-				const result = await this.resolveFromHistory(
-					reader,
-					batchId,
-					sequenceNumberLowerBound,
-				);
+				let result = await this.resolveFromHistory(reader, batchId, sequenceNumberLowerBound);
+				if (result.kind !== "resolved") {
+					// The batch may have sequenced live while the history scan was in progress. Prefer that
+					// authoritative in-session result over a stale history miss.
+					const liveResult = this.sessionResolutionFor(batchId);
+					if (liveResult !== undefined) {
+						path = "session";
+						result = { kind: "resolved", ...liveResult };
+					}
+				}
 				outcome = result.kind;
 				if (result.kind === "resolved") {
 					resolvedSequenceNumber = result.sequenceNumber;
