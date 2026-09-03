@@ -6,8 +6,11 @@
 import type { RestrictiveStringRecord } from "../../util/index.js";
 import {
 	type NodeKind,
+	type TreeNodeSchema,
 	type TreeNodeSchemaClass,
 	type ImplicitAllowedTypes,
+	type AllowedTypesFullFromMixed,
+	type LazyItem,
 	type WithType,
 	normalizeAllowedTypes,
 	isTreeNode,
@@ -52,6 +55,7 @@ import {
 	type ScopedSchemaName,
 } from "./schemaFactory.js";
 import { SchemaFactoryBeta } from "./schemaFactoryBeta.js";
+import { incrementalSummaryHint } from "./incrementalAllowedTypes.js";
 import { schemaStatics } from "./schemaStatics.js";
 import { cloneTree } from "./cloneTree.js";
 import type {
@@ -98,11 +102,44 @@ import type {
 export type NodeProvider<T> = T | (() => T);
 
 /**
- * Stateless APIs exposed via {@link SchemaFactoryBeta} as both instance properties and as statics.
+ * Stateless APIs exposed via {@link SchemaFactoryAlpha} as both instance properties and as statics.
  * @see {@link SchemaStatics} for why this is useful.
  * @system @sealed @alpha
  */
 export interface SchemaStaticsAlpha {
+	/**
+	 * Marks a set of allowed types as an incremental-summary boundary.
+	 *
+	 * @remarks
+	 * During incremental summarization, an unchanged field marked with this helper can reuse its
+	 * previously generated summary instead of being re-encoded and uploaded again.
+	 *
+	 * This helper accepts either a single schema or an array of allowed types.
+	 * Recursive schema declarations that require relaxed typing are not supported.
+	 *
+	 * @param allowedTypes - The types allowed at the incremental-summary boundary.
+	 * @returns The normalized allowed types with incremental-summary metadata attached.
+	 *
+	 * @example
+	 * ```typescript
+	 * const sf = new SchemaFactoryAlpha("example");
+	 *
+	 * class Section extends sf.objectAlpha("Section", {
+	 *   title: sf.string,
+	 * }) {}
+	 *
+	 * class Document extends sf.objectAlpha("Document", {
+	 *   sections: sf.incrementalSummary(sf.map(Section)),
+	 * }) {}
+	 * ```
+	 */
+	readonly incrementalSummary: {
+		<const T extends TreeNodeSchema>(allowedType: T): AllowedTypesFullFromMixed<readonly [T]>;
+		<const T extends readonly LazyItem<TreeNodeSchema>[]>(
+			allowedTypes: T,
+		): AllowedTypesFullFromMixed<T>;
+	};
+
 	/**
 	 * Creates a field schema with a default value.
 	 *
@@ -341,7 +378,15 @@ const stagedOptional = <const T extends ImplicitAllowedTypes, const TCustomMetad
 	});
 };
 
+const incrementalSummary = (<const T extends ImplicitAllowedTypes>(allowedTypes: T) => {
+	const normalizedAllowedTypes = normalizeAllowedTypes(allowedTypes);
+	return SchemaFactoryBeta.types(normalizedAllowedTypes.types, {
+		custom: { [incrementalSummaryHint]: true },
+	});
+}) as unknown as SchemaStaticsAlpha["incrementalSummary"];
+
 const schemaStaticsAlpha: SchemaStaticsAlpha = {
+	incrementalSummary,
 	withDefault,
 	withDefaultRecursive: withDefault as SchemaStaticsAlpha["withDefaultRecursive"],
 	stagedOptional,
@@ -543,6 +588,16 @@ export class SchemaFactoryAlpha<
 	 * {@inheritDoc SchemaStatics.requiredRecursive}
 	 */
 	public override readonly requiredRecursive = schemaStatics.requiredRecursive;
+
+	/**
+	 * {@inheritdoc SchemaStaticsAlpha.incrementalSummary}
+	 */
+	public readonly incrementalSummary = schemaStaticsAlpha.incrementalSummary;
+
+	/**
+	 * {@inheritdoc SchemaStaticsAlpha.incrementalSummary}
+	 */
+	public static readonly incrementalSummary = schemaStaticsAlpha.incrementalSummary;
 
 	/**
 	 * {@inheritdoc SchemaStaticsAlpha.withDefault}
