@@ -723,6 +723,84 @@ Snapshots exist for versions: [
 			assert.deepEqual([...snapshots.keys()], ["1.json", "2.json", "3.json"]);
 		});
 
+		it("custom snapshot file name format", () => {
+			const snapshotDirectory = "dir";
+			const [fileSystem, snapshots] = inMemorySnapshotFileSystem();
+			const snapshotFileNameFormat = {
+				prefix: "point-schema-",
+				suffix: "-snapshot",
+			};
+			const schema = new TreeViewConfiguration({ schema: [] });
+
+			snapshotSchemaCompatibility({
+				version: "1.0.0",
+				schema,
+				fileSystem,
+				minVersionForCollaboration: "1.0.0",
+				mode: "update",
+				snapshotDirectory,
+				snapshotFileNameFormat,
+				snapshotUnchangedVersions: true,
+			});
+
+			snapshots.set("unrelated.json", "{}");
+
+			snapshotSchemaCompatibility({
+				version: "2.0.0",
+				schema,
+				fileSystem,
+				minVersionForCollaboration: "1.0.0",
+				mode: "update",
+				snapshotDirectory,
+				snapshotFileNameFormat,
+				snapshotUnchangedVersions: true,
+			});
+
+			assert.deepEqual(
+				[...snapshots.keys()],
+				[
+					"point-schema-1.0.0-snapshot.json",
+					"unrelated.json",
+					"point-schema-2.0.0-snapshot.json",
+				],
+			);
+		});
+
+		it("rejects invalid characters in custom snapshot file name format", () => {
+			const [fileSystem] = inMemorySnapshotFileSystem();
+			const schema = new TreeViewConfiguration({ schema: [] });
+
+			for (const [property, value] of [
+				["prefix", "schema/"],
+				["prefix", "schema\\"],
+				["prefix", "schema\0"],
+				["prefix", "schema\u0001"],
+				["suffix", "<snapshot"],
+				["suffix", ">snapshot"],
+				["suffix", ":snapshot"],
+				["suffix", '"snapshot'],
+				["suffix", "|snapshot"],
+				["suffix", "?snapshot"],
+				["suffix", "*snapshot"],
+			] as const) {
+				assert.throws(
+					() =>
+						snapshotSchemaCompatibility({
+							version: "1.0.0",
+							schema,
+							fileSystem,
+							minVersionForCollaboration: "1.0.0",
+							mode: "update",
+							snapshotDirectory: "dir",
+							snapshotFileNameFormat: { [property]: value },
+						}),
+					validateUsageError(
+						`Invalid snapshotFileNameFormat.${property}: ${JSON.stringify(value)}. Must not contain ASCII control characters or any of <>:"/\\|?*.`,
+					),
+				);
+			}
+		});
+
 		it("snapshotUnchangedVersions", () => {
 			const snapshotDirectory = "dir";
 			const [fileSystem] = inMemorySnapshotFileSystem();

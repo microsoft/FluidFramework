@@ -1579,6 +1579,10 @@ export interface SnapshotSchemaCompatibilityOptions {
     readonly rejectVersionsWithNoSchemaChange?: true;
     readonly schema: TreeViewConfiguration;
     readonly snapshotDirectory: string;
+    readonly snapshotFileNameFormat?: {
+        readonly prefix?: string;
+        readonly suffix?: string;
+    };
     readonly snapshotUnchangedVersions?: true;
     readonly version: string;
     readonly versionComparer?: (a: string, b: string) => number;
