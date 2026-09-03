@@ -164,6 +164,7 @@ export {
 	configuredSharedTreeBeta, 
 	createIdentifierIndex, 
 	createIndependentTreeBeta, 
+	createIndependentTreeView, 
 	createTreeIndex, 
 	enumFromStrings, 
 	singletonSchema, 
