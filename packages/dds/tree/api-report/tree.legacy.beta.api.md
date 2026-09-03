@@ -552,12 +552,12 @@ export interface SchemaCompatibilityStatus {
     readonly isEquivalent: boolean;
 }
 
-// @beta
+// @beta @sealed
 export interface SchemaCompatibilityStatusBeta extends SchemaCompatibilityStatus {
     readonly discrepancies: readonly SchemaDiscrepancy[] | undefined;
 }
 
-// @beta
+// @beta @sealed
 export type SchemaDiscrepancy = {
     readonly mismatch: "allowedTypes";
     readonly location: "root" | {
