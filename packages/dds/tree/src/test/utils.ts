@@ -172,7 +172,7 @@ import {
 	type TreeCheckout,
 	createTreeCheckout,
 	type ISharedTreeEditor,
-	independentView,
+	createIndependentTreeViewAlpha,
 	SchematizingSimpleTreeView,
 	type ForestOptions,
 	buildConfiguredForest,
@@ -1479,7 +1479,7 @@ export function getView<const TSchema extends ImplicitFieldSchema>(
 ): SchematizingSimpleTreeView<TSchema> {
 	// Default to v2_80 to support noChange constraints in table operations
 	const minVersionForCollab = options.minVersionForCollab ?? FluidClientVersion.v2_80;
-	const view = independentView(config, {
+	const view = createIndependentTreeViewAlpha(config, {
 		...options,
 		idCompressor: options.idCompressor ?? createSnapshotCompressor(),
 		minVersionForCollab,

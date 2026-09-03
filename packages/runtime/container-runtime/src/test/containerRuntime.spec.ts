@@ -2994,6 +2994,29 @@ describe("Runtime", () => {
 				});
 			});
 
+			it("returns pending when the loader does not provide fetchOps", async () => {
+				const logger = new MockLogger();
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
+					context: getMockContext({ logger }) as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				assert.deepEqual(
+					await containerRuntime.versionMarkResolver.resolve("targetBatch", 11),
+					{ kind: "pending" },
+					"an older loader without fetchOps should not break the newer runtime",
+				);
+				logger.assertMatch([
+					{
+						eventName: "VersionMarkResolver:Resolve",
+						outcome: "pending",
+						path: "noReader",
+					},
+				]);
+			});
+
 			it("resolves through context fetchOps and the historical unpack pipeline", async () => {
 				let capturedSignal: AbortSignal | undefined;
 				let readCount = 0;

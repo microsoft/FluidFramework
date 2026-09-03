@@ -13,7 +13,7 @@ import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import { defaultSchemaPolicy } from "../../../feature-libraries/index.js";
 import {
 	independentInitializedView,
-	independentView,
+	createIndependentTreeViewAlpha,
 	TreeAlpha,
 	type ViewContent,
 } from "../../../shared-tree/index.js";
@@ -45,7 +45,7 @@ describe("runtime schema upgrade API", () => {
 	);
 
 	it("initialize can enable a staged schema upgrade", () => {
-		const view = independentView(
+		const view = createIndependentTreeViewAlpha(
 			new TreeViewConfigurationAlpha({
 				schema: schemaWithStagedType,
 				stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(stringUpgrade),
@@ -59,7 +59,7 @@ describe("runtime schema upgrade API", () => {
 
 	it("initialize can enable a staged schema upgrade via stagedUpgradePolicy", () => {
 		const enabled = new Set([stringUpgrade]);
-		const view = independentView(
+		const view = createIndependentTreeViewAlpha(
 			new TreeViewConfigurationAlpha({
 				schema: schemaWithStagedType,
 				stagedUpgradePolicy: {
@@ -75,7 +75,7 @@ describe("runtime schema upgrade API", () => {
 	});
 
 	it("initialize without upgrades keeps staged schema upgrades disabled", () => {
-		const view = independentView(
+		const view = createIndependentTreeViewAlpha(
 			new TreeViewConfigurationAlpha({
 				schema: schemaWithStagedType,
 			}),
@@ -240,7 +240,7 @@ describe("staged allowed type upgrade", () => {
 			schema: baseSchema,
 		});
 
-		const viewBase = independentView(configBase);
+		const viewBase = createIndependentTreeViewAlpha(configBase);
 		viewBase.initialize(5);
 
 		assert.deepEqual(viewBase.root, 5);
@@ -307,14 +307,18 @@ describe("staged allowed type upgrade", () => {
 
 		const expectCompatibility = (
 			schema: typeof baseSchema | typeof schemaWithStagedType | typeof fullyMigratedSchema,
-			expected: Omit<ReturnType<typeof checkSchemaCompatibility>, "enabledUpgrades"> & {
+			expected: Omit<
+				ReturnType<typeof checkSchemaCompatibility>,
+				"enabledUpgrades" | "discrepancies"
+			> & {
 				enabledUpgrades?: ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus>;
 			},
 		): void => {
-			assert.deepEqual(
-				checkSchemaCompatibility(new TreeViewConfigurationAlpha({ schema }), stored),
-				{ enabledUpgrades: new Map(), ...expected },
+			const { discrepancies: _discrepancies, ...compatibility } = checkSchemaCompatibility(
+				new TreeViewConfigurationAlpha({ schema }),
+				stored,
 			);
+			assert.deepEqual(compatibility, { enabledUpgrades: new Map(), ...expected });
 		};
 
 		expectCompatibility(baseSchema, {
@@ -370,7 +374,7 @@ describe("staged allowed type upgrade", () => {
 	});
 
 	it("can query staged allowed type upgrade enablement", () => {
-		const before = independentView(
+		const before = createIndependentTreeViewAlpha(
 			new TreeViewConfigurationAlpha({
 				schema: baseSchema,
 			}),
@@ -378,7 +382,7 @@ describe("staged allowed type upgrade", () => {
 		before.initialize(5);
 		assert.equal(before.isStagedUpgradeEnabled(stringUpgrade), "disabled");
 
-		const during = independentView(
+		const during = createIndependentTreeViewAlpha(
 			new TreeViewConfigurationAlpha({
 				schema: schemaWithStagedType,
 			}),
@@ -386,7 +390,7 @@ describe("staged allowed type upgrade", () => {
 		during.initialize(5);
 		assert.equal(during.isStagedUpgradeEnabled(stringUpgrade), "disabled");
 
-		const enabled = independentView(
+		const enabled = createIndependentTreeViewAlpha(
 			new TreeViewConfigurationAlpha({
 				schema: schemaWithStagedType,
 				stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(stringUpgrade),
@@ -460,7 +464,7 @@ describe("staged optional upgrade", () => {
 	});
 
 	it("can query staged optional upgrade enablement", () => {
-		const before = independentView(
+		const before = createIndependentTreeViewAlpha(
 			new TreeViewConfigurationAlpha({
 				schema: requiredSchema,
 			}),
@@ -468,7 +472,7 @@ describe("staged optional upgrade", () => {
 		before.initialize(5);
 		assert.equal(before.isStagedUpgradeEnabled(optionalUpgrade), "disabled");
 
-		const during = independentView(
+		const during = createIndependentTreeViewAlpha(
 			new TreeViewConfigurationAlpha({
 				schema: stagedOptionalSchema,
 			}),
@@ -476,7 +480,7 @@ describe("staged optional upgrade", () => {
 		during.initialize(5);
 		assert.equal(during.isStagedUpgradeEnabled(optionalUpgrade), "disabled");
 
-		const enabled = independentView(
+		const enabled = createIndependentTreeViewAlpha(
 			new TreeViewConfigurationAlpha({
 				schema: stagedOptionalSchema,
 				stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(optionalUpgrade),
@@ -557,14 +561,18 @@ describe("staged optional upgrade", () => {
 
 		const expectCompatibility = (
 			schema: typeof requiredSchema | typeof stagedOptionalSchema | typeof optionalSchema,
-			expected: Omit<ReturnType<typeof checkSchemaCompatibility>, "enabledUpgrades"> & {
+			expected: Omit<
+				ReturnType<typeof checkSchemaCompatibility>,
+				"enabledUpgrades" | "discrepancies"
+			> & {
 				enabledUpgrades?: ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus>;
 			},
 		): void => {
-			assert.deepEqual(
-				checkSchemaCompatibility(new TreeViewConfigurationAlpha({ schema }), stored),
-				{ enabledUpgrades: new Map(), ...expected },
+			const { discrepancies: _discrepancies, ...compatibility } = checkSchemaCompatibility(
+				new TreeViewConfigurationAlpha({ schema }),
+				stored,
 			);
+			assert.deepEqual(compatibility, { enabledUpgrades: new Map(), ...expected });
 		};
 
 		// baseSchema is equivalent to the initial required-number stored schema.

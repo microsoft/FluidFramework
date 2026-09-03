@@ -169,12 +169,25 @@ export async function createPointInTimeDocumentServiceCore(
 		cacheAndTracker,
 		clientIsSummarizer,
 	);
-	const liveDocumentService = await createDocumentService(
-		resolvedUrl,
-		odspLogger,
-		cacheAndTracker,
-		clientIsSummarizer,
-	);
+	let liveDocumentService: IDocumentService;
+	try {
+		liveDocumentService = await createDocumentService(
+			resolvedUrl,
+			odspLogger,
+			cacheAndTracker,
+			clientIsSummarizer,
+		);
+	} catch (error) {
+		try {
+			recoverableDocumentService.dispose();
+		} catch (disposeError) {
+			extLogger.sendErrorEvent(
+				{ eventName: "PointInTimeRecoverableDocumentServiceDisposeError" },
+				disposeError,
+			);
+		}
+		throw error;
+	}
 	return new OdspPointInTimeDocumentService(
 		recoverableResolvedUrl,
 		recoverableDocumentService,
