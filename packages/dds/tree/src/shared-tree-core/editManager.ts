@@ -372,7 +372,8 @@ export class EditManager<
 					),
 			});
 			Reflect.defineProperty(commit, "customMetadata", {
-				get: () => fail(0xd36 /* Should not access 'customMetadata' property of an evicted commit */),
+				get: () =>
+					fail(0xd36 /* Should not access 'customMetadata' property of an evicted commit */),
 			});
 			Reflect.defineProperty(commit, "parent", {
 				get: () =>

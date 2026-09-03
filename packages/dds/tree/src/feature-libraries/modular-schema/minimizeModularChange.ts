@@ -133,7 +133,8 @@ class ModularChangeMinimizer {
 			(getFromChangeAtomIdMap(
 				this.outputAttachStates,
 				normalizeNodeId(nodeId, this.change.nodeAliases),
-			) ?? fail(0xd37 /* Should have attach state for every node ID */)) === NodeAttachState.Detached
+			) ?? fail(0xd37 /* Should have attach state for every node ID */)) ===
+			NodeAttachState.Detached
 		);
 	}
 
