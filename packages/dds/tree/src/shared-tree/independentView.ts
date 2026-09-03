@@ -8,6 +8,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type IIdCompressor,
 	createIdCompressor,
+	SerializationVersion,
 } from "@fluidframework/id-compressor/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
@@ -227,7 +228,9 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 	});
 	const breaker = new Breakable("independentView", logger);
 	const idCompressor: IIdCompressor =
-		options?.idCompressor ?? options?.content?.idCompressor ?? createIdCompressor();
+		options?.idCompressor ??
+		options?.content?.idCompressor ??
+		createIdCompressor(SerializationVersion.V3);
 	const mintRevisionTag = (): RevisionTag => idCompressor.generateCompressedId();
 	const revisionTagCodec = new RevisionTagCodec(idCompressor);
 

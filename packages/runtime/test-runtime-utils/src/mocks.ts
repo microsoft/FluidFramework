@@ -49,6 +49,7 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
+	SerializationVersion,
 	createIdCompressor,
 	toIdCompressorWithCore,
 	type IdCreationRange,
@@ -253,12 +254,14 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		return deltaConnection;
 	}
 
-	public finalizeIdRange(range: IdCreationRange): void {
+	public finalizeIdRange(range: unknown): void {
 		assert(
 			this.dataStoreRuntime.idCompressor !== undefined,
 			"Shouldn't try to finalize IdRanges without an IdCompressor",
 		);
-		toIdCompressorWithCore(this.dataStoreRuntime.idCompressor).finalizeCreationRange(range);
+		toIdCompressorWithCore(this.dataStoreRuntime.idCompressor).finalizeCreationRange(
+			range as IdCreationRange,
+		);
 	}
 
 	// This enables manual control over flush mode, allowing operations like rollback to be executed in a controlled environment.
@@ -894,7 +897,7 @@ export class MockFluidDataStoreRuntime
 			childLoggerProps.logger = logger;
 		}
 		this.logger = createChildLogger(childLoggerProps);
-		this.idCompressor = overrides?.idCompressor ?? createIdCompressor();
+		this.idCompressor = overrides?.idCompressor ?? createIdCompressor(SerializationVersion.V3);
 		this._attachState = overrides?.attachState ?? AttachState.Attached;
 
 		const registry = overrides?.registry;
