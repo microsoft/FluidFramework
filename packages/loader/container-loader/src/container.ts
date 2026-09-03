@@ -1582,7 +1582,12 @@ export class Container
 			if (props.driverState !== undefined) {
 				// Restoration errors deliberately reject the load: ignoring malformed or foreign
 				// state could reconnect without the driver's persisted consistency protection.
-				service.driverStatePersistence?.set(props.driverState);
+				try {
+					service.driverStatePersistence?.set(props.driverState);
+				} catch (error) {
+					service.dispose(error);
+					throw error;
+				}
 			}
 			if (service.on !== undefined) {
 				// Back-compat for Old driver

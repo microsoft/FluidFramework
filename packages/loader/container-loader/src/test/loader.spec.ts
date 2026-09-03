@@ -243,6 +243,7 @@ describe("DisableLoadConnectionRetries", () => {
 		let shouldThrowRestoreError = false;
 		const restoreError = new Error("invalid driver state");
 		let connectionAttempts = 0;
+		const disposalErrors: unknown[] = [];
 		const documentServiceFactory = failSometimeProxy<
 			IDocumentServiceFactory &
 				IProvideLayerCompatDetails &
@@ -270,7 +271,7 @@ describe("DisableLoadConnectionRetries", () => {
 					connectToDeltaStream: async () => new Promise(() => {}),
 					on: AbsentProperty,
 					off: AbsentProperty,
-					dispose: () => {},
+					dispose: (error) => disposalErrors.push(error),
 				}),
 			ILayerCompatDetails: AbsentProperty,
 			ILayerCompatSupportRequirements: AbsentProperty,
@@ -303,6 +304,7 @@ describe("DisableLoadConnectionRetries", () => {
 			restoreError,
 		);
 		assert.strictEqual(connectionAttempts, 1);
+		assert.strictEqual(disposalErrors.at(-1), restoreError);
 	});
 
 	it("load rejects when connectToStorage fails with retryable error and flag is enabled", async () => {
