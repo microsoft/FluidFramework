@@ -16,6 +16,7 @@ interface IncludeOptions {
 
 	/**
 	 * The zero-based, inclusive line index at which selection starts.
+	 * A negative index counts backward from the end of the split source array.
 	 *
 	 * @defaultValue The first line.
 	 */
@@ -23,6 +24,7 @@ interface IncludeOptions {
 
 	/**
 	 * The zero-based, exclusive line index at which selection ends.
+	 * A negative index counts backward from the end of the split source array.
 	 *
 	 * @defaultValue The end of the source.
 	 */
@@ -99,6 +101,8 @@ function validateIncludeOptions(
 
 /**
  * Selects a range of lines and removes boundary whitespace.
+ * Negative indexes use {@link Array.slice} semantics.
+ * A terminal line ending creates an empty final array entry and affects negative indexes.
  *
  * @param source - The source text to select from.
  * @param start - The zero-based, inclusive start index. Defaults to the first line.

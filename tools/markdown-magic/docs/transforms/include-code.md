@@ -11,7 +11,11 @@ Use `include-code` to add text from another file to a fenced code block.
 | `end`      | integer | No       | Zero-based index after the last source line to include. |
 | `language` | string  | No       | Language identifier for the code fence.                 |
 
-`start` is inclusive. `end` is exclusive. Negative indexes count from the end of the source file. The transform removes leading and trailing whitespace from the selected text.
+`start` is inclusive.
+`end` is exclusive.
+Negative indexes use JavaScript array-slice rules and count backward from the end of the source.
+A terminal line ending creates an empty final entry and affects negative indexes.
+The transform removes leading and trailing whitespace from the selected text.
 
 If `language` is absent, the transform creates a code fence without a language identifier.
 
@@ -21,5 +25,12 @@ The following marker includes TypeScript source after the first five lines:
 
 ```markdown
 <!-- markdown-magic:begin {"transform":"include-code","path":"./example.ts","language":"typescript","start":5} -->
+<!-- markdown-magic:end -->
+```
+
+The following marker includes the last two lines from a source that ends with a line ending:
+
+```markdown
+<!-- markdown-magic:begin {"transform":"include-code","path":"./example.ts","language":"typescript","start":-3,"end":-1} -->
 <!-- markdown-magic:end -->
 ```

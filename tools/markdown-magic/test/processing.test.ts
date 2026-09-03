@@ -93,6 +93,49 @@ test("include-code creates a code node", async () => {
 	]);
 });
 
+test("include applies negative indexes from the end of the source", async () => {
+	const directory = await createTempDirectory();
+	const sourcePath = path.join(directory, "source.md");
+	const destinationPath = path.join(directory, "destination.md");
+	await writeFile(sourcePath, "# First\n# Second\n# Third\n# Fourth");
+
+	const registry = createTransformRegistry();
+	const includeTransform = registry.transforms.include;
+	assert(includeTransform !== undefined);
+	const nodes = await includeTransform.generate(
+		{ path: "./source.md", start: -3, end: -1 },
+		registry.createContext(destinationPath, "markdown", 2),
+	);
+
+	assert.equal(nodes.length, 2);
+	const secondHeading = nodes[0];
+	assert(secondHeading?.type === "heading");
+	assert.equal(secondHeading.children[0]?.type, "text");
+	assert.equal(secondHeading.children[0].value, "Second");
+	const thirdHeading = nodes[1];
+	assert(thirdHeading?.type === "heading");
+	assert.equal(thirdHeading.children[0]?.type, "text");
+	assert.equal(thirdHeading.children[0].value, "Third");
+});
+
+test("include-code negative indexes count a terminal empty line", async () => {
+	const directory = await createTempDirectory();
+	const sourcePath = path.join(directory, "source.ts");
+	const destinationPath = path.join(directory, "destination.md");
+	await writeFile(sourcePath, "first\nsecond\nthird\nfourth\n");
+
+	const registry = createTransformRegistry();
+	const includeCodeTransform = registry.transforms["include-code"];
+	assert(includeCodeTransform !== undefined);
+	const nodes = await includeCodeTransform.generate(
+		{ path: "./source.ts", start: -3, end: -1 },
+		registry.createContext(destinationPath, "markdown", 2),
+	);
+
+	assert.equal(nodes[0]?.type, "code");
+	assert.equal(nodes[0].value, "third\nfourth");
+});
+
 test("MDX include preserves MDX nodes", async () => {
 	const directory = await createTempDirectory();
 	const sourcePath = path.join(directory, "source.mdx");
