@@ -898,9 +898,8 @@ for (const createBlobPayloadPending of [false, true]) {
 			});
 		});
 
-		// Blobs restored from pending state are non-durable local content that the container is
-		// responsible for, so they must count towards dirty state for the whole time they're held -
-		// including while the container is frozen and sharing has not been started at all.
+		// Blobs restored from pending state are non-durable local content that this BlobManager is
+		// responsible for, so they remain outstanding even before sharing has started.
 		describe("Unshared blob tracking across pending state", () => {
 			const twoPendingBlobs = async (): Promise<IPendingBlobs> => ({
 				["blob1"]: {
@@ -932,13 +931,13 @@ for (const createBlobPayloadPending of [false, true]) {
 					pendingBlobs: await twoPendingBlobs(),
 					createBlobPayloadPending,
 				});
-				const dirtyTransitions = recordOutstandingBlobWork(blobManager);
+				const outstandingWorkTransitions = recordOutstandingBlobWork(blobManager);
 
 				await blobManager.sharePendingBlobs();
 
 				assert.strictEqual(blobManager.unsharedBlobCount, 0);
 				assert.deepStrictEqual(
-					dirtyTransitions,
+					outstandingWorkTransitions,
 					[false],
 					"Restored blobs are already outstanding at load, so sharing them must only end that span",
 				);
@@ -978,8 +977,7 @@ for (const createBlobPayloadPending of [false, true]) {
 
 				const pendingBlobs = blobManager.getPendingBlobs();
 				if (createBlobPayloadPending) {
-					// The handle is in the document, so the blob round-trips: the container is dirty and the
-					// work it is dirty for is preserved.
+					// The handle is in the document, so the outstanding blob work round-trips.
 					assert.notStrictEqual(pendingBlobs, undefined);
 					const { blobManager: blobManager2 } = createTestMaterial({
 						pendingBlobs,
@@ -987,8 +985,8 @@ for (const createBlobPayloadPending of [false, true]) {
 					});
 					assert.strictEqual(blobManager2.unsharedBlobCount, 1);
 				} else {
-					// Legacy creation has no handle to store yet, so there is nothing to preserve. The
-					// container is still dirty, which is the honest signal that closing now loses the upload.
+					// Legacy creation has no handle to store yet, so there is nothing to preserve even
+					// though this BlobManager still has outstanding work.
 					assert.strictEqual(pendingBlobs, undefined);
 					assert.strictEqual(blobManager.unsharedBlobCount, 1);
 				}
