@@ -213,6 +213,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	private opsSize: number = 0;
 	private prevEnqueueMessagesReason: string | undefined;
 	private previouslyProcessedMessage: ISequencedDocumentMessage | undefined;
+	private pendingStateAnchor: ISequencedDocumentMessage | undefined;
 
 	// The sequence number we initially loaded from
 	// In case of reading from a snapshot or pending state, its value will be equal to
@@ -591,6 +592,12 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		prefetchType: "cached" | "all" | "none" = "none",
 		lastProcessedMessage?: ISequencedDocumentMessage,
 	): Promise<void> {
+		if (lastProcessedMessage !== undefined) {
+			assert(
+				lastProcessedMessage.minimumSequenceNumber >= minSequenceNumber,
+				"The last processed message's minimum sequence number is below the snapshot minimum sequence number",
+			);
+		}
 		const lastProcessedSequenceNumber =
 			lastProcessedMessage?.sequenceNumber ?? snapshotSequenceNumber;
 		this.initSequenceNumber = snapshotSequenceNumber;
@@ -599,6 +606,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		this.lastQueuedSequenceNumber = lastProcessedSequenceNumber;
 		this.lastObservedSeqNumber = lastProcessedSequenceNumber;
 		this.previouslyProcessedMessage = lastProcessedMessage;
+		this.pendingStateAnchor = lastProcessedMessage;
 
 		// We will use same check in other places to make sure all the seq number above are set properly.
 		assert(
@@ -623,12 +631,18 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			return;
 		}
 
+		let prefetchP: Promise<void> | undefined;
+		const cacheOnly = prefetchType === "cached";
+		if (prefetchType !== "none") {
+			// Capture the saved-op validation range before queued socket ops can advance it.
+			prefetchP = this.fetchMissingDeltasCore(`DocumentOpen_${prefetchType}`, cacheOnly);
+		}
+
 		this._inbound.resume();
 		this._inboundSignal.resume();
 
-		if (prefetchType !== "none") {
-			const cacheOnly = prefetchType === "cached";
-			await this.fetchMissingDeltasCore(`DocumentOpen_${prefetchType}`, cacheOnly);
+		if (prefetchP !== undefined) {
+			await prefetchP;
 
 			// Keep going with fetching ops from storage once we have all cached ops in.
 			// But do not block load and make this request async / not blocking this api.
@@ -1047,8 +1061,12 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			if (message.sequenceNumber <= this.lastQueuedSequenceNumber) {
 				// Validate that we do not have data loss, i.e. sequencing is reset and started again
 				// with numbers that this client already observed before.
-				if (this.previouslyProcessedMessage?.sequenceNumber === message.sequenceNumber) {
-					const message1 = this.comparableMessagePayload(this.previouslyProcessedMessage);
+				const previouslyObservedMessage =
+					this.pendingStateAnchor?.sequenceNumber === message.sequenceNumber
+						? this.pendingStateAnchor
+						: this.previouslyProcessedMessage;
+				if (previouslyObservedMessage?.sequenceNumber === message.sequenceNumber) {
+					const message1 = this.comparableMessagePayload(previouslyObservedMessage);
 					const message2 = this.comparableMessagePayload(message);
 					if (message1 !== message2) {
 						const error = new NonRetryableError(
@@ -1072,6 +1090,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 							},
 						);
 						this.close(error);
+					}
+					if (previouslyObservedMessage === this.pendingStateAnchor) {
+						this.pendingStateAnchor = undefined;
 					}
 				}
 			} else if (message.sequenceNumber === this.lastQueuedSequenceNumber + 1) {

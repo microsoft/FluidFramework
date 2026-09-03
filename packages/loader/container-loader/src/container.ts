@@ -1672,7 +1672,8 @@ export class Container
 		// Kick off any ops fetching if required.
 		switch (loadMode.opsBeforeReturn) {
 			case undefined: {
-				// Start prefetch, but not set opsBeforeReturnP - boot is not blocked by it!
+				// Pending-state loads validate the saved-op anchor asynchronously so rehydration
+				// does not wait for network access.
 				// eslint-disable-next-line @typescript-eslint/no-floating-promises
 				this.attachDeltaManagerOpHandler(
 					attributes,

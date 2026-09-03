@@ -57,6 +57,9 @@ describe("Loader", () => {
 				checkpointSequenceNumber?: number,
 				lastProcessedMessage?: ISequencedDocumentMessage,
 				prefetchType: "cached" | "all" | "none" = "none",
+				initialMessages: ISequencedDocumentMessage[] = [],
+				connectBeforeAttach = false,
+				minimumSequenceNumber = 0,
 			): Promise<void> {
 				const service = new MockDocumentService(deltaStorageFactory, () => {
 					// Always create new connection, as reusing old closed connection
@@ -71,6 +74,7 @@ describe("Loader", () => {
 							}
 						).checkpointSequenceNumber = checkpointSequenceNumber;
 					}
+					deltaConnection.initialMessages = initialMessages;
 					return deltaConnection;
 				});
 				const client: Partial<IClient> = {
@@ -106,8 +110,12 @@ describe("Loader", () => {
 						deltaManager.connect({ reason: { text: "test" } });
 					});
 
+				if (connectBeforeAttach) {
+					await connect();
+				}
+
 				await deltaManager.attachOpHandler(
-					0,
+					minimumSequenceNumber,
 					0,
 					{
 						process: (message) => noopHeuristic.notifyMessageProcessed(message),
@@ -117,7 +125,9 @@ describe("Loader", () => {
 					lastProcessedMessage,
 				);
 
-				await connect();
+				if (!connectBeforeAttach) {
+					await connect();
+				}
 			}
 
 			// function to yield control in the Javascript event loop.
@@ -126,8 +136,6 @@ describe("Loader", () => {
 					realSetTimeout(resolve, 0);
 				});
 			}
-
-			const assertNoExpectedError = (): void => assert.strictEqual(expectedError, undefined);
 
 			function generateOp(
 				type: MessageType = MessageType.Operation,
@@ -201,29 +209,50 @@ describe("Loader", () => {
 				clock.restore();
 			});
 
-			it("validates the last saved op when loading pending state", async () => {
-				const savedOp = {
-					...generateOp(),
-					sequenceNumber: 13,
-					minimumSequenceNumber: 10,
-					timestamp: 1000,
-					referenceSequenceNumber: 12,
+			it("rejects a saved op that differs from service history", async () => {
+				const savedOp = JSON.parse(
+					JSON.stringify({
+						...generateOp(),
+						sequenceNumber: 13,
+						minimumSequenceNumber: 10,
+						timestamp: 1000,
+						referenceSequenceNumber: 12,
+					}),
+				) as ISequencedDocumentMessage;
+				const initialMessage = {
+					...savedOp,
+					clientSequenceNumber: savedOp.clientSequenceNumber + 1,
+					sequenceNumber: savedOp.sequenceNumber + 1,
+					timestamp: savedOp.timestamp + 1,
 				};
 				let requestedFrom: number | undefined;
 				let read = false;
-				await startDeltaManager(
+				let releaseFetch: (() => void) | undefined;
+				const fetchReleasedP = new Promise<void>((resolve) => {
+					releaseFetch = resolve;
+				});
+				let fetchStarted: (() => void) | undefined;
+				const fetchStartedP = new Promise<void>((resolve) => {
+					fetchStarted = resolve;
+				});
+				const loadP = startDeltaManager(
 					true,
 					logger,
 					() => ({
 						fetchMessages: (from): IStream<ISequencedDocumentMessage[]> => {
 							requestedFrom = from;
+							fetchStarted?.();
 							return {
 								read: async (): Promise<IStreamResult<ISequencedDocumentMessage[]>> => {
 									if (read) {
 										return { done: true };
 									}
 									read = true;
-									return { done: false, value: [savedOp] };
+									await fetchReleasedP;
+									return {
+										done: false,
+										value: [{ ...savedOp, clientId: "Different client" }],
+									};
 								},
 							};
 						},
@@ -231,24 +260,17 @@ describe("Loader", () => {
 					5,
 					savedOp,
 					"all",
+					[initialMessage],
+					true,
 				);
-				assert.strictEqual(requestedFrom, savedOp.sequenceNumber);
-
+				await fetchStartedP;
 				deltaManager.on("closed", (error: Error) => {
 					expectedError = error;
 				});
-				const continuingOp = {
-					...savedOp,
-					clientSequenceNumber: savedOp.clientSequenceNumber + 1,
-					sequenceNumber: savedOp.sequenceNumber + 1,
-					timestamp: savedOp.timestamp + 1,
-				};
-				deltaConnection.emitOp(docId, [continuingOp]);
-				await yieldEventLoop();
-				assert.strictEqual(deltaManager.lastSequenceNumber, continuingOp.sequenceNumber);
-				assertNoExpectedError();
+				releaseFetch?.();
+				await loadP;
+				assert.strictEqual(requestedFrom, savedOp.sequenceNumber);
 
-				deltaConnection.emitOp(docId, [{ ...continuingOp, clientId: "Different client" }]);
 				assert.match(
 					expectedError?.message ?? "",
 					/same sequenceNumber but different payloads/,
@@ -258,6 +280,52 @@ describe("Loader", () => {
 					expectedError.getTelemetryProperties().serviceCheckpointSequenceNumber,
 					5,
 				);
+			});
+
+			it("continues loading when the saved op matches service history", async () => {
+				const savedOp = JSON.parse(
+					JSON.stringify({
+						...generateOp(),
+						sequenceNumber: 13,
+						minimumSequenceNumber: 10,
+						timestamp: 1000,
+						referenceSequenceNumber: 12,
+					}),
+				) as ISequencedDocumentMessage;
+				let read = false;
+				await startDeltaManager(
+					true,
+					logger,
+					() => ({
+						fetchMessages: (): IStream<ISequencedDocumentMessage[]> => ({
+							read: async (): Promise<IStreamResult<ISequencedDocumentMessage[]>> => {
+								if (read) {
+									return { done: true };
+								}
+								read = true;
+								return { done: false, value: [savedOp] };
+							},
+						}),
+					}),
+					5,
+					savedOp,
+					"all",
+				);
+				deltaManager.on("closed", (error: Error) => {
+					expectedError = error;
+				});
+
+				const continuingOp = {
+					...savedOp,
+					clientSequenceNumber: savedOp.clientSequenceNumber + 1,
+					sequenceNumber: savedOp.sequenceNumber + 1,
+					timestamp: savedOp.timestamp + 1,
+				};
+				deltaConnection.emitOp(docId, [continuingOp]);
+				await yieldEventLoop();
+
+				assert.strictEqual(deltaManager.lastSequenceNumber, continuingOp.sequenceNumber);
+				assert.strictEqual(expectedError, undefined);
 			});
 
 			it("uses the last saved op's minimum sequence number", async () => {
@@ -287,6 +355,29 @@ describe("Loader", () => {
 				assert.strictEqual(
 					expectedError.getTelemetryProperties().serviceCheckpointSequenceNumber,
 					5,
+				);
+			});
+
+			it("rejects a saved-op MSN below the snapshot MSN", async () => {
+				const savedOp = {
+					...generateOp(),
+					sequenceNumber: 13,
+					minimumSequenceNumber: 9,
+				};
+
+				await assert.rejects(
+					startDeltaManager(
+						true,
+						logger,
+						undefined,
+						undefined,
+						savedOp,
+						"none",
+						[],
+						false,
+						10,
+					),
+					/The last processed message's minimum sequence number is below the snapshot minimum sequence number/,
 				);
 			});
 
