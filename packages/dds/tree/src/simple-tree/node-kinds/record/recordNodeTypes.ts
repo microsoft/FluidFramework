@@ -47,7 +47,7 @@ import type { SchemaType, SimpleRecordNodeSchema } from "../../simpleSchema.js";
 export interface TreeRecordNode<
 	TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 > extends TreeNode,
-		Record<string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes>> {
+		Record<string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes> | undefined> {
 	/**
 	 * Allows the record's entries to be iterated over, including in contexts like `for...of` loops.
 	 */
@@ -60,9 +60,9 @@ export interface TreeRecordNode<
  * Content which can be used to construct a Record node, explicitly or implicitly.
  * @system @beta
  */
-export type RecordNodeInsertableData<T extends ImplicitAllowedTypes> = RestrictiveStringRecord<
-	InsertableTreeNodeFromImplicitAllowedTypes<T>
->;
+export type RecordNodeInsertableData<T extends ImplicitAllowedTypes> =
+	| RestrictiveStringRecord<InsertableTreeNodeFromImplicitAllowedTypes<T>>
+	| TreeRecordNode<T>;
 
 /**
  * A schema for customizable {@link (TreeMapNode:interface)}s.

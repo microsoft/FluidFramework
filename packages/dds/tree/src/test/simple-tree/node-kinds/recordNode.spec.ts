@@ -35,8 +35,8 @@ function assertEqualTrees(actual: TreeNode, expected: ConciseTree): void {
 describe("RecordNode", () => {
 	{
 		// Assignable to TypeScript record
-		const _record1: Record<string, number> = PojoEmulationNumberRecord.create({});
-		const _record2: Record<string, number> = new CustomizableNumberRecord({});
+		const _record1: Record<string, number | undefined> = PojoEmulationNumberRecord.create({});
+		const _record2: Record<string, number | undefined> = new CustomizableNumberRecord({});
 	}
 
 	describe("construction", () => {
@@ -103,6 +103,7 @@ describe("RecordNode", () => {
 			});
 
 			delete myRecord.b;
+			assert(myRecord.a !== undefined);
 			myRecord.a.foo = 100;
 
 			myRecord.c = new InnerObject({ foo: 200, bar: "New entry!" });

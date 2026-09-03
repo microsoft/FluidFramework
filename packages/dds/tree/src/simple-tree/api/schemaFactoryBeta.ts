@@ -522,18 +522,18 @@ export class SchemaFactoryBeta<
 			options,
 		);
 
+		// The mapped branch avoids recursive type errors, while the node branch preserves
+		// the ability to use an existing record node as constructor data.
 		return RecordSchema as TreeNodeSchemaClass<
 			/* Name */ ScopedSchemaName<TScope, Name>,
 			/* Kind */ NodeKind.Record,
 			/* TNode */ TreeRecordNodeUnsafe<T> &
 				WithType<ScopedSchemaName<TScope, Name>, NodeKind.Record>,
-			/* TInsertable */ {
-				// Ideally this would be
-				// RestrictiveStringRecord<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>>,
-				// but doing so breaks recursive types.
-				// Instead we do a less nice version:
-				readonly [P in string]: System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>;
-			},
+			/* TInsertable */
+			| TreeRecordNodeUnsafe<T>
+			| {
+					readonly [P in string]: System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>;
+			  },
 			/* ImplicitlyConstructable */ false,
 			/* Info */ T,
 			/* TConstructorExtra */ undefined,
