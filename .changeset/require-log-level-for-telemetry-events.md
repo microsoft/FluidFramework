@@ -2,7 +2,7 @@
 "@fluidframework/core-interfaces": minor
 "@fluidframework/telemetry-utils": minor
 "@fluidframework/azure-client": minor
-"@fluidframework/devtools-view": minor
+"@fluid-internal/devtools-view": minor
 "fluid-framework": minor
 "__section": breaking
 "__highlight": true
