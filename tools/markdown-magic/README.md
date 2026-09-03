@@ -55,6 +55,7 @@ Add a begin marker and an end marker to a Markdown file.
 The begin marker contains a JSON object.
 The `transform` property is required.
 Add transform options as other properties in the object.
+The JSON object can span multiple lines in both Markdown and MDX markers.
 
 The following example includes `overview.md` in a Markdown document:
 

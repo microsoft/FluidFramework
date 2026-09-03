@@ -43,18 +43,45 @@ test("library header applies public package defaults", async () => {
 	assert.match(output, /## API Documentation/);
 });
 
-test("README footer can include package scripts", async () => {
-	const output = await generate("readme-footer", {
+test("README footer rejects the removed scripts option", async () => {
+	await assert.rejects(
+		generate("readme-footer", { scripts: true }),
+		/Unknown option "scripts" for transform "readme-footer"/,
+	);
+});
+
+test("package scripts include optional descriptions in a separate column", async () => {
+	const output = await generate("package-scripts", {
 		packageJsonPath: "./package.json",
-		scripts: true,
+		scriptDescriptions: {
+			"test-script-1": "Runs the **first** test script.",
+		},
 	});
 
-	assert.match(output, /^## Scripts/);
-	assert.match(output, /test-script-1/);
-	assert.match(output, /## Minimum Client Requirements/);
-	assert.match(output, /## Contribution Guidelines/);
-	assert.match(output, /## Help/);
-	assert.match(output, /## Trademark/);
+	assert.match(output, /\| Script Name \| Script Body \| Description \|/);
+	assert.match(
+		output,
+		/\| `test-script-1` \| `echo This is a test script` \| Runs the \*\*first\*\* test script\. \|/,
+	);
+	assert.match(output, /\| `test-script-2` \| `echo This is another test script` \|\s*\|/);
+});
+
+test("package scripts reject non-string descriptions", async () => {
+	await assert.rejects(
+		generate("package-scripts", {
+			scriptDescriptions: { test: true },
+		}),
+		/Option "scriptDescriptions" for "package-scripts" must be a record of strings/,
+	);
+});
+
+test("package scripts reject descriptions for unknown scripts", async () => {
+	await assert.rejects(
+		generate("package-scripts", {
+			scriptDescriptions: { unknown: "Unknown script." },
+		}),
+		/Description provided for unknown script "unknown"/,
+	);
 });
 
 test("template transforms apply heading options structurally", async () => {
@@ -109,10 +136,10 @@ test("transform options reject null values", async () => {
 	await assert.rejects(
 		async () =>
 			transform.generate(
-				{ scripts: null },
+				{ help: null },
 				registry.createContext(path.join(testDirectory, "fixture.md"), "markdown", 2),
 			),
-		/Option "scripts" for "readme-footer" must be a boolean/,
+		/Option "help" for "readme-footer" must be a boolean/,
 	);
 });
 

@@ -101,12 +101,37 @@ interface StringSchemaDefinition {
 }
 
 /**
+ * Defines a record whose values must be strings.
+ */
+interface StringRecordSchemaDefinition {
+	/**
+	 * The required runtime type of the option.
+	 */
+	type: "stringRecord";
+
+	/**
+	 * The value to use when the marker omits the option.
+	 *
+	 * @defaultValue `undefined`
+	 */
+	default?: Readonly<Record<string, string>>;
+
+	/**
+	 * Whether the marker must provide the option when no default exists.
+	 *
+	 * @defaultValue `false`
+	 */
+	required?: boolean;
+}
+
+/**
  * A schema definition for one JSON-compatible transform option.
  */
 export type SchemaDefinition =
 	| BooleanSchemaDefinition
 	| IntegerSchemaDefinition
-	| StringSchemaDefinition;
+	| StringSchemaDefinition
+	| StringRecordSchemaDefinition;
 
 /**
  * A transform's option definitions indexed by marker option name.
@@ -120,7 +145,9 @@ type SchemaValue<TDefinition extends SchemaDefinition> = TDefinition["type"] ext
 	? boolean
 	: TDefinition["type"] extends "integer"
 		? number
-		: string;
+		: TDefinition["type"] extends "stringRecord"
+			? Readonly<Record<string, string>>
+			: string;
 
 /**
  * Selects schema keys that validation always supplies because they are required or have defaults.
@@ -174,7 +201,18 @@ function validateOptions<TSchema extends OptionsSchema>(
 			}
 			continue;
 		}
-		if (definition.type === "integer") {
+		if (definition.type === "stringRecord") {
+			if (
+				option === null ||
+				Array.isArray(option) ||
+				typeof option !== "object" ||
+				Object.values(option).some((value) => typeof value !== "string")
+			) {
+				throw new TypeError(
+					`Option "${key}" for "${transformName}" must be a record of strings.`,
+				);
+			}
+		} else if (definition.type === "integer") {
 			if (!Number.isInteger(option)) {
 				throw new TypeError(`Option "${key}" for "${transformName}" must be an integer.`);
 			}

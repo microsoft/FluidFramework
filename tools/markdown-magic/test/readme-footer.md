@@ -1,15 +1,8 @@
-<!-- markdown-magic:begin {"transform":"readme-footer","packageJsonPath":"./package.json","scripts":true,"headingLevel":2} -->
+<!-- markdown-magic:begin {"transform":"readme-footer","packageJsonPath":"./package.json","headingLevel":2} -->
 
 <!-- prettier-ignore-start -->
 
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## Scripts
-
-| Script | Description |
-| - | - |
-| `test-script-1` | `echo This is a test script` |
-| `test-script-2` | `echo This is another test script` |
 
 ## Minimum Client Requirements
 

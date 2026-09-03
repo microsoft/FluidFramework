@@ -6,7 +6,6 @@
 import type { Transform } from "../types.js";
 import { transform } from "./options.js";
 import { isPublic, readPackage } from "./packageMetadata.js";
-import { generateScripts } from "./packageScripts.js";
 import { headingLevelSchema, packageSchema } from "./schemas.js";
 import { generateTemplateSection } from "./templates.js";
 
@@ -18,7 +17,6 @@ export const readmeFooterTransform: Transform = transform(
 	{
 		...packageSchema,
 		...headingLevelSchema,
-		scripts: { type: "boolean", default: false },
 		clientRequirements: { type: "boolean" },
 		contributionGuidelines: { type: "boolean", default: true },
 		help: { type: "boolean", default: true },
@@ -28,9 +26,6 @@ export const readmeFooterTransform: Transform = transform(
 		const packageMetadata = await readPackage(context, options);
 		const sectionOptions = { includeHeading: true };
 		return [
-			...(options.scripts
-				? generateScripts(packageMetadata.scripts ?? {}, sectionOptions, context)
-				: []),
 			...((options.clientRequirements ?? isPublic(packageMetadata))
 				? await generateTemplateSection(
 						"Client-Requirements-Template.md",

@@ -52,6 +52,46 @@ test("finds an MDX generated region", () => {
 	assert.equal(region.line, 1);
 });
 
+test("finds a Markdown region with multi-line JSON options", () => {
+	const source = [
+		"<!-- markdown-magic:begin {",
+		'  "transform": "package-scripts",',
+		'  "scriptDescriptions": {',
+		'    "test": "Run all tests."',
+		"  }",
+		"} -->",
+		"<!-- markdown-magic:end -->",
+	].join("\n");
+	const document = parseDocument(source, "/repo/README.md");
+	const [region] = findGeneratedRegions(document);
+	assert(region !== undefined);
+
+	assert.equal(region.transformName, "package-scripts");
+	assert.deepEqual(region.options, {
+		scriptDescriptions: { test: "Run all tests." },
+	});
+});
+
+test("finds an MDX region with multi-line JSON options", () => {
+	const source = [
+		"{/* markdown-magic:begin {",
+		'  "transform": "package-scripts",',
+		'  "scriptDescriptions": {',
+		'    "test": "Run all tests."',
+		"  }",
+		"} */}",
+		"{/* markdown-magic:end */}",
+	].join("\n");
+	const document = parseDocument(source, "/repo/README.mdx");
+	const [region] = findGeneratedRegions(document);
+	assert(region !== undefined);
+
+	assert.equal(region.transformName, "package-scripts");
+	assert.deepEqual(region.options, {
+		scriptDescriptions: { test: "Run all tests." },
+	});
+});
+
 test("rejects an opening marker without a closing marker", () => {
 	const source = '<!-- markdown-magic:begin {"transform":"include","path":"./source.md"} -->';
 	const document = parseDocument(source, "/repo/docs/destination.md");
