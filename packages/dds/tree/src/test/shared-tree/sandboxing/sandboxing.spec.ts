@@ -26,7 +26,7 @@ import {
 import {
 	extractPersistedSchema,
 	type TreeViewAlpha,
-	// eslint-disable-next-line import-x/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules -- The test requires internal Simple Tree APIs.
 } from "../../../simple-tree/api/index.js";
 import {
 	TreeViewConfiguration,
@@ -78,21 +78,92 @@ function getRevision(newChange: JsonCompatibleReadOnly) {
 	return (newChange as unknown as { revision: RevisionTag }).revision;
 }
 
+/**
+ * A serialized SharedTree change that one participant sends to the other participant.
+ */
+interface DataChangeMessage {
+	/** Identifies this message as a data-change message. */
+	readonly type: "dataChange";
+	/** The serialized SharedTree change to apply. */
+	readonly change: JsonCompatibleReadOnly;
+}
+
+/**
+ * Confirms that the receiver applied one data-change message.
+ */
+interface AcknowledgmentMessage {
+	/** Identifies this message as an acknowledgment message. */
+	readonly type: "acknowledgment";
+}
+
+/** A message that the Host and the Guest can send through their shared protocol. */
+type HostGuestMessage = DataChangeMessage | AcknowledgmentMessage;
+
+/**
+ * Validates data from a Host and Guest message channel.
+ *
+ * @param data - The message data to validate.
+ * @returns The validated protocol message.
+ * @throws An error if the data is not a valid protocol message envelope.
+ */
+function parseHostGuestMessage(data: unknown): HostGuestMessage {
+	if (typeof data !== "object" || data === null || !("type" in data)) {
+		throw new Error("Invalid Host and Guest protocol message.");
+	}
+
+	if (data.type === "acknowledgment") {
+		return data as AcknowledgmentMessage;
+	}
+
+	if (data.type === "dataChange" && "change" in data) {
+		return data as DataChangeMessage;
+	}
+
+	throw new Error("Invalid Host and Guest protocol message.");
+}
+
+/** A promise and the function that resolves it. */
 interface PromiseWithResolver {
+	/** The synchronization operation that a caller can await. */
 	readonly promise: Promise<void>;
+	/** Resolves the synchronization operation. */
 	readonly resolver: () => void;
 }
 
 /**
- * Creates a promise and a resolver for the promise.
+ * Creates a promise and the function that resolves it.
+ *
+ * @returns The promise and its resolver.
  */
 function makePromiseWithResolver(): PromiseWithResolver {
 	let resolver: undefined | (() => void);
 	const promise = new Promise<void>((resolve) => {
 		resolver = resolve;
 	});
-	assert(resolver !== undefined, "Resolver should have been assigned");
+	assert(resolver !== undefined, "Resolve function should have been assigned");
 	return { promise, resolver };
+}
+
+/**
+ * Implements the default protocol-error behavior.
+ *
+ * @param error - The protocol error to throw.
+ * @throws The specified protocol error.
+ */
+function throwProtocolError(error: Error): never {
+	throw error;
+}
+
+/**
+ * Converts a thrown value to an error that the protocol-error handler can process.
+ *
+ * @param error - The value that message processing threw.
+ * @returns The original error, or a new error that has the thrown value as its cause.
+ */
+function normalizeProtocolError(error: unknown): Error {
+	return error instanceof Error
+		? error
+		: new Error("Host and Guest protocol processing failed.", { cause: error });
 }
 
 class Host<const TSchema extends ImplicitFieldSchema> {
@@ -119,12 +190,40 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 	 */
 	private readonly offMainChanged: () => void;
 
+	/** Receives and routes protocol messages from the Guest. */
+	private readonly onMessage = (event: MessageEvent<unknown>): void => {
+		try {
+			const message = parseHostGuestMessage(event.data);
+			switch (message.type) {
+				case "dataChange": {
+					this.receiveChangeFromGuest(message.change);
+					break;
+				}
+				case "acknowledgment": {
+					this.receiveAckFromGuest();
+					break;
+				}
+				default: {
+					fail("Unexpected Host and Guest message type");
+				}
+			}
+		} catch (error) {
+			this.handleProtocolError(normalizeProtocolError(error));
+		}
+	};
+
+	/** Reports a protocol message that the platform cannot deserialize. */
+	private readonly onMessageError = (): void => {
+		this.handleProtocolError(new Error("The Host could not deserialize a protocol message."));
+	};
+
 	public constructor(
 		main: TreeViewAlpha<TSchema>,
-		/** The callback to send changes from the Host to the Guest. */
-		private readonly sendChangeToGuest: (change: JsonCompatibleReadOnly) => void,
-		/** The callback to acknowledge changes from the Guest. */
-		private readonly ackChangeFromGuest: () => void,
+		/** The Host endpoint of the Host and Guest message channel. */
+		private readonly port: MessagePort,
+		/** Receives errors from protocol validation and message processing. */
+		private readonly handleProtocolError: (error: Error) => void = throwProtocolError,
+		/** Receives diagnostic messages from the synchronization algorithm. */
 		private readonly logger: (message: string) => void = () => {},
 	) {
 		this.main = main;
@@ -138,10 +237,19 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 				this.tryUpdateGuest("after main branch changed");
 			}
 		});
+		this.port.addEventListener("message", this.onMessage);
+		this.port.addEventListener("messageerror", this.onMessageError);
+		this.port.start();
 	}
 
 	public dispose(): void {
+		this.port.removeEventListener("message", this.onMessage);
+		this.port.removeEventListener("messageerror", this.onMessageError);
+		this.port.close();
+		this.updateInProgress = undefined;
 		this.offMainChanged();
+		this.mainHeadFromLastUpdate?.dispose();
+		this.mainHeadFromLastUpdate = undefined;
 		this.local.dispose();
 		this.main.dispose();
 	}
@@ -151,7 +259,7 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 	 * This method synchronously applies the change to the Host's local and main branches
 	 * then asynchronously attempts to update the Guest if need be.
 	 */
-	public receiveChangeFromGuest(change: JsonCompatibleReadOnly): void {
+	private receiveChangeFromGuest(change: JsonCompatibleReadOnly): void {
 		this.logger(`Host: received change [${getRevision(change)}] from Guest`);
 		if (this.mainHeadFromLastUpdate !== undefined) {
 			// There is an update in progress but the Guest has authored and sent a new change before applying that update.
@@ -171,9 +279,12 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 			`Host:   merging changes from Guest: ${getMissingCommits(this.main, this.local)}`,
 		);
 		this.isApplyingGuestChanges = true;
-		this.main.merge(this.local, false);
-		this.isApplyingGuestChanges = false;
-		this.ackChangeFromGuest();
+		try {
+			this.main.merge(this.local, false);
+		} finally {
+			this.isApplyingGuestChanges = false;
+		}
+		this.port.postMessage({ type: "acknowledgment" } satisfies AcknowledgmentMessage);
 		this.tryUpdateGuest("after receiving change from Guest");
 	}
 
@@ -215,7 +326,10 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 				"Expected update to be defined since local is missing edits from main",
 			);
 			this.logger("Host:   sending update to Guest");
-			this.sendChangeToGuest(update);
+			this.port.postMessage({
+				type: "dataChange",
+				change: update,
+			} satisfies DataChangeMessage);
 		} else {
 			this.logger("Host:   no changes that need to be reflected in Guest");
 			// The Guest is now caught up with the Host's main branch
@@ -233,7 +347,7 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 	 * This allows the Host to reflect the acknowledged change on the local branch.
 	 * This may also trigger the Host to send new changes to the Guest if the Guest is currently behind the Host's main branch.
 	 */
-	public receiveAckFromGuest(): void {
+	private receiveAckFromGuest(): void {
 		assert(this.updateInProgress !== undefined, "Expected update to be in progress");
 		assert(
 			this.mainHeadFromLastUpdate !== undefined,
@@ -285,14 +399,42 @@ class Guest<const TSchema extends ImplicitFieldSchema> {
 	 */
 	private isApplyingChangesFromHost: boolean = false;
 
+	/** Receives and routes protocol messages from the Host. */
+	private readonly onMessage = (event: MessageEvent<unknown>): void => {
+		try {
+			const message = parseHostGuestMessage(event.data);
+			switch (message.type) {
+				case "dataChange": {
+					this.receiveChangeFromHost(message.change);
+					break;
+				}
+				case "acknowledgment": {
+					this.receiveAckFromHost();
+					break;
+				}
+				default: {
+					fail("Unexpected Host and Guest message type");
+				}
+			}
+		} catch (error) {
+			this.handleProtocolError(normalizeProtocolError(error));
+		}
+	};
+
+	/** Reports a protocol message that the platform cannot deserialize. */
+	private readonly onMessageError = (): void => {
+		this.handleProtocolError(new Error("The Guest could not deserialize a protocol message."));
+	};
+
 	public constructor(
 		config: TreeViewConfiguration<TSchema>,
 		options: ForestOptions & ICodecOptions,
 		content: ViewContent,
-		/** The callback to send changes from the Guest to the Host. */
-		sendChangeToHost: (change: JsonCompatibleReadOnly) => void,
-		/** The callback to send acknowledgements of changes received from the Host. */
-		private readonly ackChangeFromHost: () => void,
+		/** The Guest endpoint of the Host and Guest message channel. */
+		private readonly port: MessagePort,
+		/** Receives errors from protocol validation and message processing. */
+		private readonly handleProtocolError: (error: Error) => void = throwProtocolError,
+		/** Receives diagnostic messages from the synchronization algorithm. */
 		private readonly logger: (message: string) => void = () => {},
 	) {
 		this.view = independentInitializedView(config, options, content);
@@ -309,12 +451,22 @@ class Guest<const TSchema extends ImplicitFieldSchema> {
 					this.logger("Guest:   Reusing existing push promise.");
 				}
 				this.inFlight += 1;
-				sendChangeToHost(newChange);
+				this.port.postMessage({
+					type: "dataChange",
+					change: newChange,
+				} satisfies DataChangeMessage);
 			}
 		});
+		this.port.addEventListener("message", this.onMessage);
+		this.port.addEventListener("messageerror", this.onMessageError);
+		this.port.start();
 	}
 
 	public dispose(): void {
+		this.port.removeEventListener("message", this.onMessage);
+		this.port.removeEventListener("messageerror", this.onMessageError);
+		this.port.close();
+		this.pushInProgress = undefined;
 		this.offViewChanged();
 		this.view.dispose();
 	}
@@ -325,7 +477,7 @@ class Guest<const TSchema extends ImplicitFieldSchema> {
 	 * The `ackChangeFromHost` callback will be invoked iff the update is applied.
 	 * @param change - The change to apply.
 	 */
-	public receiveChangeFromHost(change: JsonCompatibleReadOnly): void {
+	private receiveChangeFromHost(change: JsonCompatibleReadOnly): void {
 		if (this.inFlight > 0) {
 			// There are local changes that have not yet been reflected on the Host,
 			// so this change is not applicable to the current state of the Guest.
@@ -334,16 +486,19 @@ class Guest<const TSchema extends ImplicitFieldSchema> {
 			return;
 		}
 		this.isApplyingChangesFromHost = true;
-		this.view.applyChange(change);
-		this.isApplyingChangesFromHost = false;
+		try {
+			this.view.applyChange(change);
+		} finally {
+			this.isApplyingChangesFromHost = false;
+		}
 		this.logger("Guest: applied update from Host");
-		this.ackChangeFromHost();
+		this.port.postMessage({ type: "acknowledgment" } satisfies AcknowledgmentMessage);
 	}
 
 	/**
 	 * Must be called when the Host acknowledges a new local change.
 	 */
-	public receiveAckFromHost(): void {
+	private receiveAckFromHost(): void {
 		assert(this.inFlight > 0, "Unexpectedly received ack from Host");
 		this.logger(`Guest: local change acked (inFlight:${this.inFlight}->${this.inFlight - 1})`);
 		this.inFlight -= 1;
@@ -374,71 +529,122 @@ class Guest<const TSchema extends ImplicitFieldSchema> {
 	}
 }
 
+describe("Host and Guest message protocol", () => {
+	it("accepts data changes and acknowledgments", () => {
+		const dataChange: DataChangeMessage = { type: "dataChange", change: { value: 1 } };
+		const acknowledgment: AcknowledgmentMessage = { type: "acknowledgment" };
+
+		strict.equal(parseHostGuestMessage(dataChange), dataChange);
+		strict.equal(parseHostGuestMessage(acknowledgment), acknowledgment);
+	});
+
+	it("rejects invalid message envelopes", () => {
+		const invalidMessages: unknown[] = [
+			null,
+			"dataChange",
+			{},
+			{ type: "unknown" },
+			{ type: "dataChange" },
+		];
+
+		for (const message of invalidMessages) {
+			strict.throws(
+				() => parseHostGuestMessage(message),
+				/Invalid Host and Guest protocol message/,
+			);
+		}
+	});
+});
+
 describe("Host and Guest Demo", () => {
 	/**
-	 * The set of functions that are used to emulate communications between the Host and Guest.
+	 * The ports and test controls for one Host and Guest session.
 	 */
-	interface InteropFunctions {
-		readonly sendChangeFromHostToGuest: (update: JsonCompatibleReadOnly) => void;
-		readonly sendChangeFromGuestToHost: (change: JsonCompatibleReadOnly) => void;
-		readonly sendAckOfHostBoundChangeFromHostToGuest: () => void;
-		readonly sendAckOfGuestBoundChangeFromGuestToHost: () => void;
+	interface SessionPorts<TInterop> {
+		/** The port that the Host owns. */
+		readonly hostPort: MessagePort;
+		/** The port that the Guest owns. */
+		readonly guestPort: MessagePort;
+		/** The controls that the test uses to manage message delivery. */
+		readonly interop: TInterop;
+		/** Releases transport resources that the Host and the Guest do not own. */
+		dispose(): void;
+	}
+
+	/** A function that builds the ports and test controls for one session. */
+	type SessionPortsBuilder<TInterop> = () => SessionPorts<TInterop>;
+
+	/**
+	 * Builds a direct channel between the Host and the Guest.
+	 */
+	function buildDirectSessionPorts(): SessionPorts<undefined> {
+		const channel = new MessageChannel();
+		return {
+			hostPort: channel.port1,
+			guestPort: channel.port2,
+			interop: undefined,
+			dispose: () => {},
+		};
+	}
+
+	/** Ports that let a test send messages to each participant independently. */
+	interface IsolatedPortControls {
+		/** Sends a test message to the Host. */
+		readonly sendToHost: MessagePort;
+		/** Sends a test message to the Guest. */
+		readonly sendToGuest: MessagePort;
 	}
 
 	/**
-	 * A function that builds interop functions given getters for the Host and Guest.
+	 * Builds separate channels that let a test send messages to each participant.
 	 */
-	type InteropFunctionsBuilder<T extends InteropFunctions> = (
-		getHost: () => Host<typeof StringArray>,
-		getGuest: () => Guest<typeof StringArray>,
-	) => T;
-
-	/**
-	 * Builds interop functions that use setTimeout to simulate async communication between the Host and Guest.
-	 * @param getHost - A function that returns the Host. Used to avoid circular dependencies when building the interop functions.
-	 * @param getGuest - A function that returns the Guest. Used to avoid circular dependencies when building the interop functions.
-	 * @returns An object containing the interop functions.
-	 */
-	function buildTimeoutInterop(
-		getHost: () => Host<typeof StringArray>,
-		getGuest: () => Guest<typeof StringArray>,
-	): InteropFunctions {
+	function buildIsolatedSessionPorts(): SessionPorts<IsolatedPortControls> {
+		const hostChannel = new MessageChannel();
+		const guestChannel = new MessageChannel();
 		return {
-			sendChangeFromHostToGuest: (update: JsonCompatibleReadOnly): void => {
-				setTimeout(() => getGuest().receiveChangeFromHost(update));
+			hostPort: hostChannel.port1,
+			guestPort: guestChannel.port1,
+			interop: {
+				sendToHost: hostChannel.port2,
+				sendToGuest: guestChannel.port2,
 			},
-			sendChangeFromGuestToHost: (change: JsonCompatibleReadOnly): void => {
-				setTimeout(() => getHost().receiveChangeFromGuest(change));
-			},
-			sendAckOfHostBoundChangeFromHostToGuest: (): void => {
-				setTimeout(() => getGuest().receiveAckFromHost());
-			},
-			sendAckOfGuestBoundChangeFromGuestToHost: (): void => {
-				setTimeout(() => getHost().receiveAckFromGuest());
+			dispose: () => {
+				hostChannel.port2.close();
+				guestChannel.port2.close();
 			},
 		};
 	}
 
+	const activeTeardowns = new Set<() => void>();
+
+	afterEach(() => {
+		for (const teardown of [...activeTeardowns]) {
+			teardown();
+		}
+	});
+
 	/**
-	 * Sets up a Host, Guest, and peer with the given initial state and timeout-based interop functions.
+	 * Sets up a Host, Guest, and peer with the given initial state and a direct message channel.
 	 * @param initialState - The initial state of the shared tree.
-	 * @returns An object containing the Host, Guest, peer, and interop functions.
+	 * @returns The session components and teardown function.
 	 */
 	function setup(initialState: string[]) {
-		return setupCustom(initialState, buildTimeoutInterop);
+		return setupCustom(initialState, buildDirectSessionPorts);
 	}
 
 	/**
-	 * Sets up a Host, Guest, and peer with the given initial state and custom interop functions.
+	 * Sets up a Host, Guest, and peer with the given initial state and session ports.
 	 * @param initialState - The initial state of the shared tree.
-	 * @param interopBuilder - A function that builds the interop functions.
+	 * @param sessionPortsBuilder - A function that builds the ports and test controls.
 	 * @param logging - Whether to enable logging.
-	 * @returns An object containing the Host, Guest, peer, and interop functions.
+	 * @param handleProtocolError - A function that handles protocol errors.
+	 * @returns The session components and test controls.
 	 */
-	function setupCustom<T extends InteropFunctions>(
+	function setupCustom<TInterop>(
 		initialState: string[],
-		interopBuilder: InteropFunctionsBuilder<T>,
+		sessionPortsBuilder: SessionPortsBuilder<TInterop>,
 		logging: boolean = false,
+		handleProtocolError: (error: Error) => void = throwProtocolError,
 	) {
 		const logger = (message: string) => {
 			if (logging) {
@@ -462,22 +668,8 @@ describe("Host and Guest Demo", () => {
 		provider.synchronizeMessages();
 
 		const main = asAlpha(provider.trees[1].viewWith(config));
-		// eslint-disable-next-line prefer-const -- it is assigned below
-		let guest: Guest<typeof StringArray>;
-		// eslint-disable-next-line prefer-const -- it is assigned below
-		let host: Host<typeof StringArray>;
-
-		const interop = interopBuilder(
-			() => host ?? fail("Interop function called before Host was initialized"),
-			() => guest ?? fail("Interop function called before Guest was initialized"),
-		);
-
-		host = new Host(
-			main,
-			interop.sendChangeFromHostToGuest,
-			interop.sendAckOfHostBoundChangeFromHostToGuest,
-			logger,
-		);
+		const sessionPorts = sessionPortsBuilder();
+		const host = new Host(main, sessionPorts.hostPort, handleProtocolError, logger);
 
 		const hostCompressor = provider.getCompressor(provider.trees[1]);
 		const startingState = TreeAlpha.exportCompressed(host.local.root, {
@@ -486,7 +678,7 @@ describe("Host and Guest Demo", () => {
 			minVersionForCollab: FluidClientVersion.v2_80,
 		});
 
-		guest = new Guest(
+		const guest = new Guest(
 			config,
 			{ jsonValidator: FormatValidatorBasic },
 			{
@@ -495,18 +687,104 @@ describe("Host and Guest Demo", () => {
 				// TODO: shard the compressor here?
 				idCompressor: hostCompressor,
 			},
-			interop.sendChangeFromGuestToHost,
-			interop.sendAckOfGuestBoundChangeFromGuestToHost,
+			sessionPorts.guestPort,
+			handleProtocolError,
 			logger,
 		);
 
 		const teardown = () => {
+			if (!activeTeardowns.delete(teardown)) {
+				return;
+			}
 			guest.dispose();
 			host.dispose();
+			sessionPorts.dispose();
 		};
+		activeTeardowns.add(teardown);
 
-		return { teardown, peer, host, guest, provider, interop, logger };
+		return {
+			teardown,
+			peer,
+			host,
+			guest,
+			provider,
+			interop: sessionPorts.interop,
+			logger,
+		};
 	}
+
+	it("uses structured clones for protocol messages", async () => {
+		const channel = new MessageChannel();
+		const change = { revision: "test revision" };
+		const message: DataChangeMessage = { type: "dataChange", change };
+		const received = new Promise<HostGuestMessage>((resolve) => {
+			channel.port2.addEventListener(
+				"message",
+				(event: MessageEvent<unknown>) => resolve(parseHostGuestMessage(event.data)),
+				{ once: true },
+			);
+			channel.port2.start();
+		});
+
+		channel.port1.postMessage(message);
+		const receivedMessage = await received;
+
+		strict.deepEqual(receivedMessage, message);
+		strict.notEqual(receivedMessage, message);
+		if (receivedMessage.type === "dataChange") {
+			strict.notEqual(receivedMessage.change, change);
+		}
+		channel.port1.close();
+		channel.port2.close();
+	});
+
+	it("routes invalid messages to the protocol-error handler", async () => {
+		let reportProtocolError: ((error: Error) => void) | undefined;
+		const protocolError = new Promise<Error>((resolve) => {
+			reportProtocolError = resolve;
+		});
+		assert(reportProtocolError !== undefined, "Protocol error reporter should be assigned");
+		const { interop } = setupCustom([], buildIsolatedSessionPorts, false, reportProtocolError);
+
+		interop.sendToHost.postMessage({ type: "unknown" });
+
+		const error = await protocolError;
+		strict.match(error.message, /Invalid Host and Guest protocol message/);
+	});
+
+	it("does not acknowledge an invalid SharedTree change", async () => {
+		let reportProtocolError: ((error: Error) => void) | undefined;
+		const protocolError = new Promise<Error>((resolve) => {
+			reportProtocolError = resolve;
+		});
+		assert(reportProtocolError !== undefined, "Protocol error reporter should be assigned");
+		const channel = new MessageChannel();
+		const local = {
+			applyChange: () => {
+				throw new Error("Cannot apply change. Invalid serialized change format.");
+			},
+			dispose: () => {},
+		} as unknown as TreeViewAlpha<typeof StringArray>;
+		const main = {
+			fork: () => local,
+			events: { on: () => () => {} },
+			dispose: () => {},
+		} as unknown as TreeViewAlpha<typeof StringArray>;
+		const host = new Host(main, channel.port1, reportProtocolError);
+		let acknowledgmentReceived = false;
+		channel.port2.addEventListener("message", () => {
+			acknowledgmentReceived = true;
+		});
+		channel.port2.start();
+
+		channel.port2.postMessage({ type: "dataChange", change: {} });
+		await protocolError;
+		await new Promise((resolve) => setTimeout(resolve, 0));
+
+		strict.equal(acknowledgmentReceived, false);
+		host.dispose();
+		channel.port2.close();
+	});
 
 	it("the initial state is consistent across the Host and Guest", async () => {
 		const { host, guest } = setup(["A"]);
@@ -833,7 +1111,7 @@ describe("Host and Guest Demo", () => {
 	});
 
 	// TODO: investigate and fix the memory leaks in this test, then run it with higher number of steps.
-	it("All permutations", function () {
+	it("All permutations", async function () {
 		this.timeout(20_000);
 		/**
 		 * The number of {@link Step | steps} in each scenario.
@@ -863,62 +1141,173 @@ describe("Host and Guest Demo", () => {
 			HostToGuestAck = "H2Ga",
 		}
 
-		type Ack = "Ack";
-		const Ack: Ack = "Ack";
-		type Message = JsonCompatibleReadOnly | Ack;
-		interface QueueInteropFunctions extends InteropFunctions {
-			readonly hostToGuest: Message[];
-			readonly guestToHost: Message[];
+		/** Controls queued message delivery between the Host and the Guest. */
+		interface MessageRelay {
+			/** Messages that the Host sent and the relay has not sent to the Guest. */
+			readonly hostToGuest: HostGuestMessage[];
+			/** Messages that the Guest sent and the relay has not sent to the Host. */
+			readonly guestToHost: HostGuestMessage[];
 
+			/** Sends the first queued Host message to the Guest. */
 			dispatchToGuest(): void;
+			/** Sends the first queued Guest message to the Host. */
 			dispatchToHost(): void;
+			/** Waits until all dispatched messages reach a relay queue or participant. */
+			waitForMessages(): Promise<void>;
 		}
 
 		/**
-		 * Generates a set of interop functions that keep messages in queues,
-		 * making it possible to control which queue progresses and when.
-		 * @param getHost - A function that returns the Host instance.
-		 * @param getGuest - A function that returns the Guest instance.
-		 * @returns An object containing the queued interop functions.
+		 * Builds a two-channel relay that controls message delivery.
+		 * @returns The session ports and relay controls.
 		 */
-		function buildQueueInterop(
-			getHost: () => Host<typeof StringArray>,
-			getGuest: () => Guest<typeof StringArray>,
-		): QueueInteropFunctions {
-			const out: QueueInteropFunctions = {
+		function buildMessageRelay(): SessionPorts<MessageRelay> {
+			const hostChannel = new MessageChannel();
+			const guestChannel = new MessageChannel();
+			const hostRelayPort = hostChannel.port2;
+			const guestRelayPort = guestChannel.port1;
+			/** The number of messages that participants sent but the relay has not received. */
+			let messagesMovingToRelay = 0;
+			/** The number of messages that the relay sent but participants have not processed. */
+			let messagesMovingToParticipants = 0;
+			/** Functions that resolve calls to `waitForMessages()`. */
+			const settledResolvers: (() => void)[] = [];
+
+			/** Resolves each waiter when no message is moving through a channel. */
+			const resolveIfSettled = (): void => {
+				if (messagesMovingToRelay === 0 && messagesMovingToParticipants === 0) {
+					for (const resolve of settledResolvers.splice(0)) {
+						resolve();
+					}
+				}
+			};
+
+			/**
+			 * Tracks messages that move between a participant and its relay endpoint.
+			 */
+			class TrackedParticipantPort extends EventTarget {
+				public constructor(
+					/** The MessagePort that carries messages across the structured-clone boundary. */
+					private readonly innerPort: MessagePort,
+				) {
+					super();
+					this.innerPort.addEventListener("message", (event: MessageEvent<unknown>) => {
+						try {
+							this.dispatchEvent(new MessageEvent("message", { data: event.data }));
+						} finally {
+							messagesMovingToParticipants -= 1;
+							resolveIfSettled();
+						}
+					});
+					this.innerPort.addEventListener("messageerror", () => {
+						try {
+							this.dispatchEvent(new MessageEvent("messageerror"));
+						} finally {
+							messagesMovingToParticipants -= 1;
+							resolveIfSettled();
+						}
+					});
+				}
+
+				/**
+				 * Sends a message to the relay and tracks its delivery.
+				 *
+				 * @param message - The message to send.
+				 * @param transferOrOptions - Transferable objects or structured-clone options.
+				 */
+				public postMessage(
+					message: unknown,
+					transferOrOptions?: Transferable[] | StructuredSerializeOptions,
+				): void {
+					messagesMovingToRelay += 1;
+					try {
+						// The branches select different `MessagePort.postMessage` overloads.
+						// TypeScript cannot pass the union directly because no overload accepts both types.
+						if (Array.isArray(transferOrOptions)) {
+							this.innerPort.postMessage(message, transferOrOptions);
+						} else {
+							this.innerPort.postMessage(message, transferOrOptions);
+						}
+					} catch (error) {
+						messagesMovingToRelay -= 1;
+						resolveIfSettled();
+						throw error;
+					}
+				}
+
+				/** Starts message delivery on the inner port. */
+				public start(): void {
+					this.innerPort.start();
+				}
+
+				/** Closes the inner port. */
+				public close(): void {
+					this.innerPort.close();
+				}
+			}
+
+			const hostPort = new TrackedParticipantPort(hostChannel.port1);
+			const guestPort = new TrackedParticipantPort(guestChannel.port2);
+
+			const relay: MessageRelay = {
 				hostToGuest: [],
 				guestToHost: [],
-				sendChangeFromHostToGuest: (update: JsonCompatibleReadOnly): void => {
-					out.hostToGuest.push(update);
-				},
 				dispatchToGuest: (): void => {
-					const message =
-						out.hostToGuest.shift() ?? fail("No Guest-bound changes in the queue");
-					if (message === Ack) {
-						getGuest().receiveAckFromHost();
-					} else {
-						getGuest().receiveChangeFromHost(message);
+					const message = relay.hostToGuest.shift() ?? fail("No Guest-bound messages");
+					messagesMovingToParticipants += 1;
+					try {
+						guestRelayPort.postMessage(message);
+					} catch (error) {
+						messagesMovingToParticipants -= 1;
+						resolveIfSettled();
+						throw error;
 					}
-				},
-				sendAckOfGuestBoundChangeFromGuestToHost: (): void => {
-					out.guestToHost.push(Ack);
-				},
-				sendChangeFromGuestToHost: (change: JsonCompatibleReadOnly): void => {
-					out.guestToHost.push(change);
 				},
 				dispatchToHost: (): void => {
-					const message = out.guestToHost.shift() ?? fail("No Host-bound changes in queue");
-					if (message === Ack) {
-						getHost().receiveAckFromGuest();
-					} else {
-						getHost().receiveChangeFromGuest(message);
+					const message = relay.guestToHost.shift() ?? fail("No Host-bound messages");
+					messagesMovingToParticipants += 1;
+					try {
+						hostRelayPort.postMessage(message);
+					} catch (error) {
+						messagesMovingToParticipants -= 1;
+						resolveIfSettled();
+						throw error;
 					}
 				},
-				sendAckOfHostBoundChangeFromHostToGuest: (): void => {
-					out.hostToGuest.push(Ack);
+				waitForMessages: async (): Promise<void> => {
+					if (messagesMovingToRelay !== 0 || messagesMovingToParticipants !== 0) {
+						await new Promise<void>((resolve) => settledResolvers.push(resolve));
+					}
 				},
 			};
-			return out;
+
+			hostRelayPort.addEventListener("message", (event: MessageEvent<unknown>) => {
+				try {
+					relay.hostToGuest.push(parseHostGuestMessage(event.data));
+				} finally {
+					messagesMovingToRelay -= 1;
+					resolveIfSettled();
+				}
+			});
+			guestRelayPort.addEventListener("message", (event: MessageEvent<unknown>) => {
+				try {
+					relay.guestToHost.push(parseHostGuestMessage(event.data));
+				} finally {
+					messagesMovingToRelay -= 1;
+					resolveIfSettled();
+				}
+			});
+			hostRelayPort.start();
+			guestRelayPort.start();
+
+			return {
+				hostPort: hostPort as unknown as MessagePort,
+				guestPort: guestPort as unknown as MessagePort,
+				interop: relay,
+				dispose: () => {
+					hostRelayPort.close();
+					guestRelayPort.close();
+				},
+			};
 		}
 
 		type Edit = "Edit";
@@ -937,7 +1326,7 @@ describe("Host and Guest Demo", () => {
 			scenario += 1;
 			const { teardown, peer, host, guest, provider, interop, logger } = setupCustom(
 				[],
-				buildQueueInterop,
+				buildMessageRelay,
 				false,
 			);
 			let peerEditCounter = 0;
@@ -963,12 +1352,16 @@ describe("Host and Guest Demo", () => {
 					}
 					if (hasSome(interop.hostToGuest)) {
 						potentialNext.push(
-							interop.hostToGuest[0] === Ack ? Step.HostToGuestAck : Step.HostToGuestEdit,
+							interop.hostToGuest[0].type === "acknowledgment"
+								? Step.HostToGuestAck
+								: Step.HostToGuestEdit,
 						);
 					}
 					if (hasSome(interop.guestToHost)) {
 						potentialNext.push(
-							interop.guestToHost[0] === Ack ? Step.GuestToHostAck : Step.GuestToHostEdit,
+							interop.guestToHost[0].type === "acknowledgment"
+								? Step.GuestToHostAck
+								: Step.GuestToHostEdit,
 						);
 					}
 					potential.push(potentialNext);
@@ -1020,6 +1413,7 @@ describe("Host and Guest Demo", () => {
 						throw new Error(`Unexpected step: ${step}`);
 					}
 				}
+				await interop.waitForMessages();
 				actual.push(step);
 				if (interop.hostToGuest.length === 0 && interop.guestToHost.length === 0) {
 					strict.deepEqual([...host.main.root], [...guest.view.root]);
