@@ -307,14 +307,18 @@ describe("staged allowed type upgrade", () => {
 
 		const expectCompatibility = (
 			schema: typeof baseSchema | typeof schemaWithStagedType | typeof fullyMigratedSchema,
-			expected: Omit<ReturnType<typeof checkSchemaCompatibility>, "enabledUpgrades"> & {
+			expected: Omit<
+				ReturnType<typeof checkSchemaCompatibility>,
+				"enabledUpgrades" | "discrepancies"
+			> & {
 				enabledUpgrades?: ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus>;
 			},
 		): void => {
-			assert.deepEqual(
-				checkSchemaCompatibility(new TreeViewConfigurationAlpha({ schema }), stored),
-				{ enabledUpgrades: new Map(), ...expected },
+			const { discrepancies: _discrepancies, ...compatibility } = checkSchemaCompatibility(
+				new TreeViewConfigurationAlpha({ schema }),
+				stored,
 			);
+			assert.deepEqual(compatibility, { enabledUpgrades: new Map(), ...expected });
 		};
 
 		expectCompatibility(baseSchema, {
@@ -557,14 +561,18 @@ describe("staged optional upgrade", () => {
 
 		const expectCompatibility = (
 			schema: typeof requiredSchema | typeof stagedOptionalSchema | typeof optionalSchema,
-			expected: Omit<ReturnType<typeof checkSchemaCompatibility>, "enabledUpgrades"> & {
+			expected: Omit<
+				ReturnType<typeof checkSchemaCompatibility>,
+				"enabledUpgrades" | "discrepancies"
+			> & {
 				enabledUpgrades?: ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus>;
 			},
 		): void => {
-			assert.deepEqual(
-				checkSchemaCompatibility(new TreeViewConfigurationAlpha({ schema }), stored),
-				{ enabledUpgrades: new Map(), ...expected },
+			const { discrepancies: _discrepancies, ...compatibility } = checkSchemaCompatibility(
+				new TreeViewConfigurationAlpha({ schema }),
+				stored,
 			);
+			assert.deepEqual(compatibility, { enabledUpgrades: new Map(), ...expected });
 		};
 
 		// baseSchema is equivalent to the initial required-number stored schema.
