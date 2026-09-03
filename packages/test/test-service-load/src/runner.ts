@@ -15,7 +15,7 @@ import {
 	loadExistingContainer,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
-import { IRequestHeader } from "@fluidframework/core-interfaces";
+import { IRequestHeader, LogLevel } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils/internal";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
@@ -93,11 +93,38 @@ async function main(): Promise<void> {
 		process.env.DEBUG = log;
 	}
 
-	const { logger, flush } = await createLogger(outputDir, runId.toString(), {
+	const baseLoggerDimensions = {
 		runId,
 		driverType: driver,
 		driverEndpointName: endpoint,
 		profile: profileName,
+	};
+
+	// The driver is created before the logger so its tenant name can be logged as a dimension.
+	let testDriver: ITestDriver;
+	try {
+		testDriver = await createTestDriver(driver, endpoint, seed, runId);
+	} catch (error) {
+		// No driver means no tenant name, but the failure itself still needs to be reported.
+		const { logger: setupLogger, flush: flushSetup } = await createLogger(
+			outputDir,
+			runId.toString(),
+			{ ...baseLoggerDimensions, driverTenantName: undefined },
+		);
+		setupLogger.sendErrorEvent({ eventName: "runnerFailed" }, error);
+		// Flush before rethrowing: the top-level handler exits the process immediately.
+		// A failure to flush must not replace the driver creation error being reported.
+		try {
+			await flushSetup();
+		} catch (flushError) {
+			console.error("Failed to flush setup telemetry", flushError);
+		}
+		throw error;
+	}
+
+	const { logger, flush } = await createLogger(outputDir, runId.toString(), {
+		...baseLoggerDimensions,
+		driverTenantName: testDriver.tenantName,
 	});
 
 	// this will enabling capturing the full stack for errors
@@ -149,6 +176,7 @@ async function main(): Promise<void> {
 		const random = makeRandom(seed, runId);
 
 		await runnerProcess(
+			testDriver,
 			driver,
 			endpoint,
 			{
@@ -221,6 +249,7 @@ function* factoryPermutations<T extends IDocumentServiceFactory>(
  * Implementation of the runner process. Returns the return code to exit the process with.
  */
 async function runnerProcess(
+	testDriver: ITestDriver,
 	driver: TestDriverTypes,
 	endpoint: DriverEndpoint | undefined,
 	runConfig: IRunConfig,
@@ -236,13 +265,6 @@ async function runnerProcess(
 	const loaderOptions = generateLoaderOptions(seed, optionsOverride?.loader);
 	const containerOptions = generateRuntimeOptions(seed, optionsOverride?.container);
 	const configurations = generateConfigurations(seed, optionsOverride?.configurations);
-
-	const testDriver: ITestDriver = await createTestDriver(
-		driver,
-		endpoint,
-		seed,
-		runConfig.runId,
-	);
 
 	// Cycle between creating new factory vs. reusing factory.
 	// Certain behavior (like driver caches) are per factory instance, and by reusing it we hit those code paths
@@ -550,10 +572,7 @@ async function scheduleOffline(
 				if (container.closed) {
 					return undefined;
 				}
-				if (
-					runConfig.loaderConfig?.enableOfflineLoad === true &&
-					random.real() < stashPercent
-				) {
+				if (random.real() < stashPercent) {
 					printStatus(runConfig, "closing offline container!");
 					const pendingState = await getRequiredPendingLocalState(container);
 					container.close();
@@ -638,65 +657,83 @@ async function setupOpsMetrics(
 	let t: NodeJS.Timeout | undefined;
 	const sendMetrics = (): void => {
 		if (submittedOps > 0) {
-			logger.send({
-				category: "metric",
-				eventName: "Fluid Operations Sent",
-				testHarnessEvent: true,
-				value: submittedOps,
-				clientId: container.clientId,
-				userName: getUserName(container),
-			});
+			logger.send(
+				{
+					category: "metric",
+					eventName: "Fluid Operations Sent",
+					testHarnessEvent: true,
+					value: submittedOps,
+					clientId: container.clientId,
+					userName: getUserName(container),
+				},
+				LogLevel.essential,
+			);
 		}
 		if (receivedOps > 0) {
-			logger.send({
-				category: "metric",
-				eventName: "Fluid Operations Received",
-				testHarnessEvent: true,
-				value: receivedOps,
-				clientId: container.clientId,
-				userName: getUserName(container),
-			});
+			logger.send(
+				{
+					category: "metric",
+					eventName: "Fluid Operations Received",
+					testHarnessEvent: true,
+					value: receivedOps,
+					clientId: container.clientId,
+					userName: getUserName(container),
+				},
+				LogLevel.essential,
+			);
 		}
 
 		if (submittedSignals > 0) {
-			logger.send({
-				category: "metric",
-				eventName: "Fluid Signals Submitted",
-				testHarnessEvent: true,
-				value: submittedSignals,
-				clientId: container.clientId,
-				userName: getUserName(container),
-			});
+			logger.send(
+				{
+					category: "metric",
+					eventName: "Fluid Signals Submitted",
+					testHarnessEvent: true,
+					value: submittedSignals,
+					clientId: container.clientId,
+					userName: getUserName(container),
+				},
+				LogLevel.essential,
+			);
 		}
 		if (receivedSignals > 0) {
-			logger.send({
-				category: "metric",
-				eventName: "Fluid Signals Received",
-				testHarnessEvent: true,
-				value: receivedSignals,
-				clientId: container.clientId,
-				userName: getUserName(container),
-			});
+			logger.send(
+				{
+					category: "metric",
+					eventName: "Fluid Signals Received",
+					testHarnessEvent: true,
+					value: receivedSignals,
+					clientId: container.clientId,
+					userName: getUserName(container),
+				},
+				LogLevel.essential,
+			);
 		}
 		if (submittedOps > 0) {
-			logger.send({
-				category: "metric",
-				eventName: "Size of Fluid Operations Sent",
-				testHarnessEvent: true,
-				value: submittedOpsSize,
-				clientId: container.clientId,
-				userName: getUserName(container),
-			});
+			logger.send(
+				{
+					category: "metric",
+					eventName: "Size of Fluid Operations Sent",
+					testHarnessEvent: true,
+					value: submittedOpsSize,
+					clientId: container.clientId,
+					userName: getUserName(container),
+				},
+				LogLevel.essential,
+			);
 		}
 		if (receivedOps > 0) {
-			logger.send({
-				category: "metric",
-				eventName: "Size of Fluid Operations Received",
-				testHarnessEvent: true,
-				value: receivedOpsSize,
-				clientId: container.clientId,
-				userName: getUserName(container),
-			});
+			logger.send(
+				{
+					category: "metric",
+					eventName: "Size of Fluid Operations Received",
+					testHarnessEvent: true,
+					value: receivedOpsSize,
+					clientId: container.clientId,
+					userName: getUserName(container),
+				},
+				LogLevel.essential,
+			);
 		}
 
 		submittedOps = 0;

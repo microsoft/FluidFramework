@@ -171,16 +171,15 @@ const frozenDocumentStorageServiceHandler = (): never => {
 
 /**
  * Distinct from {@link frozenDocumentStorageServiceHandler} because callers
- * that hit this path are almost always exercising a fully-offline frozen load
- * whose pending state was produced by {@link getPendingLocalState} (which omits
- * inlined attachment blobs) rather than {@link captureFullContainerState}. A
- * generic "operation not supported" is technically true but unhelpful; this
- * message names the missing precondition and the API that produces it.
+ * that hit this path are exercising a fully-offline frozen load whose pending
+ * state omits a required structural or attachment blob. A generic "operation
+ * not supported" is technically true but unhelpful; this message names the
+ * missing precondition and the API mode that satisfies it.
  */
 const frozenReadBlobOfflineHandler = async (): Promise<never> => {
 	throw new UsageError(
-		"Attempted to read an attachment blob from a frozen-loaded container without a live storage service. " +
-			"Fully-offline frozen loads must use pending state produced by `captureFullContainerState`, which inlines all referenced attachment blobs.",
+		"Attempted to read a blob from a frozen-loaded container without a live storage service. " +
+			"Fully-offline frozen loads must use pending state produced by `captureFullContainerState` with the default inline blob capture mode.",
 	);
 };
 
@@ -200,10 +199,7 @@ class FrozenDocumentStorageService implements IDocumentStorageService, IDisposab
 		return this._disposed;
 	}
 
-	constructor(
-		readOnly: boolean,
-		private readonly documentStorageService?: IDocumentStorageService,
-	) {
+	constructor(readOnly: boolean, documentStorageService?: IDocumentStorageService) {
 		let rejectFn!: (error: Error) => void;
 		const promise = new Promise<never>((_, reject) => {
 			rejectFn = reject;
@@ -225,15 +221,16 @@ class FrozenDocumentStorageService implements IDocumentStorageService, IDisposab
 		this.createBlob = readOnly
 			? frozenDocumentStorageServiceHandler
 			: async () => this.disposalDeferred.promise;
+		this.readBlob =
+			documentStorageService?.readBlob.bind(documentStorageService) ??
+			frozenReadBlobOfflineHandler;
 	}
 
 	getSnapshotTree = frozenDocumentStorageServiceHandler;
 	getSnapshot = frozenDocumentStorageServiceHandler;
 	getVersions = frozenDocumentStorageServiceHandler;
 	createBlob: IDocumentStorageService["createBlob"];
-	readBlob =
-		this.documentStorageService?.readBlob.bind(this.documentStorageService) ??
-		frozenReadBlobOfflineHandler;
+	readBlob: IDocumentStorageService["readBlob"];
 	uploadSummaryWithContext = frozenDocumentStorageServiceHandler;
 	downloadSummary = frozenDocumentStorageServiceHandler;
 

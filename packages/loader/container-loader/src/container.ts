@@ -9,6 +9,7 @@ import {
 	TypedEventEmitter,
 	performanceNow,
 	type ILayerCompatDetails,
+	type ILayerCompatSupportRequirements,
 } from "@fluid-internal/client-utils";
 import {
 	AttachState,
@@ -20,6 +21,7 @@ import type {
 	IBatchMessage,
 	ICodeDetailsLoader,
 	IContainer,
+	IContainerContextInternal,
 	IContainerEvents,
 	IContainerLoadMode,
 	IDeltaManager,
@@ -110,7 +112,7 @@ import {
 	runRetriableAttachProcess,
 } from "./attachment.js";
 import { Audience } from "./audience.js";
-import { ConnectionManager } from "./connectionManager.js";
+import type { ConnectionManager } from "./connectionManager.js";
 import { ConnectionState } from "./connectionState.js";
 import {
 	type IConnectionStateHandler,
@@ -120,16 +122,17 @@ import { ContainerContext } from "./containerContext.js";
 import { ContainerStorageAdapter } from "./containerStorageAdapter.js";
 import {
 	type IConnectionDetailsInternal,
-	type IConnectionManagerFactoryArgs,
 	type IConnectionStateChangeReason,
 	ReconnectMode,
 	getPackageName,
 } from "./contracts.js";
-import { DeltaManager, type IConnectionArgs } from "./deltaManager.js";
+import type { DeltaManager, IConnectionArgs } from "./deltaManager.js";
+import { createDeltaManager } from "./deltaManagerFactory.js";
 import type { ILoaderServices } from "./loader.js";
 import { RelativeLoader } from "./loader.js";
 import {
 	validateDriverCompatibility,
+	validateLoaderCompatibilityWithDriver,
 	validateRuntimeCompatibility,
 } from "./loaderLayerCompatState.js";
 import {
@@ -534,6 +537,17 @@ export class Container
 
 	private readonly _deltaManager: DeltaManager<ConnectionManager>;
 	private service: IDocumentService | undefined;
+	private readonly fetchOps: NonNullable<IContainerContextInternal["fetchOps"]> = async (
+		from,
+		to,
+		abortSignal,
+	) => {
+		const deltaStorage = await this.service?.connectToDeltaStorage();
+		if (deltaStorage === undefined) {
+			throw new Error("Cannot fetch ops: delta storage is unavailable");
+		}
+		return deltaStorage.fetchMessages(from, to, abortSignal);
+	};
 
 	private _runtime: IRuntime | undefined;
 	private get runtime(): IRuntime {
@@ -745,13 +759,30 @@ export class Container
 			protocolHandlerBuilder,
 		} = createProps;
 
-		// Validate that the Driver is compatible with this Loader.
-		const maybeDriverCompatDetails =
-			documentServiceFactory as FluidObject<ILayerCompatDetails>;
+		const maybeDriverCompat = documentServiceFactory as FluidObject<ILayerCompatDetails> &
+			FluidObject<ILayerCompatSupportRequirements>;
+		const driverCompatMonitoringContext = createChildMonitoringContext({
+			logger: subLogger,
+			namespace: "Container",
+		});
+
+		// Validate that the Driver is compatible with this Loader. This is the standard direction: the Loader holds
+		// a reference to the Driver and validates it.
 		validateDriverCompatibility(
-			maybeDriverCompatDetails.ILayerCompatDetails,
+			maybeDriverCompat.ILayerCompatDetails,
 			(error) => {} /* disposeFn */, // There is nothing to dispose here, so just ignore the error.
-			createChildMonitoringContext({ logger: subLogger, namespace: "Container" }),
+			driverCompatMonitoringContext,
+		);
+
+		// Validate that this Loader is compatible with the Driver. This is the reverse, non-standard direction: a
+		// layer normally validates the layer it holds a reference to, but the Driver has no reference to the Loader
+		// and so cannot validate it itself. The Driver instead publishes the requirements it has for the Loader (via
+		// ILayerCompatSupportRequirements), and the Loader validates itself against them here, on the Driver's behalf.
+		validateLoaderCompatibilityWithDriver(
+			maybeDriverCompat.ILayerCompatDetails,
+			maybeDriverCompat.ILayerCompatSupportRequirements,
+			(error) => {} /* disposeFn */, // There is nothing to dispose here, so just ignore the error.
+			driverCompatMonitoringContext,
 		);
 
 		this.connectionTransitionTimes[ConnectionState.Disconnected] = performanceNow();
@@ -963,9 +994,7 @@ export class Container
 
 		const offlineLoadEnabled =
 			this.isInteractiveClient &&
-			(this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ??
-				this.mc.config.getBoolean("Fluid.Container.enableOfflineFull") ??
-				options.enableOfflineLoad !== false);
+			(this.mc.config.getBoolean("Fluid.Container.enableOfflineFull") ?? true);
 		this.serializedStateManager = new SerializedStateManager(
 			this.subLogger,
 			this.storageAdapter,
@@ -2011,21 +2040,15 @@ export class Container
 		const serviceProvider = (): IDocumentService | undefined => this.service;
 		const disableLoadConnectionRetries =
 			this.mc.config.getBoolean("Fluid.Container.DisableLoadConnectionRetries") === true;
-		const deltaManager = new DeltaManager<ConnectionManager>(
+		const deltaManager = createDeltaManager({
 			serviceProvider,
-			createChildLogger({ logger: this.subLogger, namespace: "DeltaManager" }),
-			() => this.activeConnection(),
-			(props: IConnectionManagerFactoryArgs) =>
-				new ConnectionManager(
-					serviceProvider,
-					() => this.isDirty,
-					this.client,
-					this._canReconnect,
-					createChildLogger({ logger: this.subLogger, namespace: "ConnectionManager" }),
-					props,
-					disableLoadConnectionRetries ? 1 : undefined /* maxInitialConnectionAttempts */,
-				),
-		);
+			logger: this.subLogger,
+			active: () => this.activeConnection(),
+			containerDirty: () => this.isDirty,
+			client: this.client,
+			reconnectAllowed: this._canReconnect,
+			maxInitialConnectionAttempts: disableLoadConnectionRetries ? 1 : undefined,
+		});
 
 		// Disable inbound queues as Container is not ready to accept any ops until we are fully loaded!
 		// eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -2445,6 +2468,7 @@ export class Container
 					this.submitBatch(batch, referenceSequenceNumber),
 				submitSignalFn: (content, targetClientId) =>
 					this.submitSignal(content, targetClientId),
+				fetchOps: this.fetchOps,
 				disposeFn: (error?: ICriticalContainerError) => this.dispose(error),
 				closeFn: (error?: ICriticalContainerError) => this.close(error),
 				updateDirtyContainerState: this.updateDirtyContainerState,

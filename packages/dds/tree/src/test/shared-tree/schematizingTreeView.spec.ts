@@ -5,7 +5,7 @@
 
 import { strict as assert, fail } from "node:assert";
 
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { TelemetryDataTag, UsageError } from "@fluidframework/telemetry-utils/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { CommitKind, type RevertibleAlpha, type TransactionLabels } from "../../core/index.js";
@@ -30,8 +30,8 @@ import {
 	type InsertableField,
 	type InsertableTypedNode,
 	type UnsafeUnknownSchema,
-	type TransactionResult,
-	type TransactionResultExt,
+	type TransactionVoidResult,
+	type TransactionValueResult,
 	getKernel,
 	toInitialSchema,
 	toUpgradeSchema,
@@ -236,7 +236,7 @@ describe("SchematizingSimpleTreeView", () => {
 		);
 
 		// Put into broken state by trying incompatible upgrade
-		assert.throws(() => view.upgradeSchema(), validateUsageError(/compatibility/));
+		assert.throws(() => view.upgradeSchema(), validateUsageError(/cannot be upgraded/));
 
 		assert.throws(
 			() => view.initialize(5),
@@ -405,6 +405,7 @@ describe("SchematizingSimpleTreeView", () => {
 			canUpgrade: false,
 			isEquivalent: false,
 			canInitialize: false,
+			discrepancies: undefined,
 		});
 
 		assert.equal(Object.keys(viewSpecific.root).length, 2);
@@ -423,6 +424,7 @@ describe("SchematizingSimpleTreeView", () => {
 			canUpgrade: true,
 			isEquivalent: true,
 			canInitialize: false,
+			discrepancies: undefined,
 		});
 		assert.equal(Object.keys(viewGeneralized.root).length, 3);
 		assert.equal(Object.entries(viewGeneralized.root).length, 3);
@@ -469,6 +471,7 @@ describe("SchematizingSimpleTreeView", () => {
 			canUpgrade: false,
 			isEquivalent: false,
 			canInitialize: false,
+			discrepancies: undefined,
 		});
 
 		viewSpecific.root.moveRangeToEnd(0, 1);
@@ -490,6 +493,7 @@ describe("SchematizingSimpleTreeView", () => {
 			canUpgrade: true,
 			isEquivalent: true,
 			canInitialize: false,
+			discrepancies: undefined,
 		});
 
 		// ...however, despite that client making an edit to Alice, the field is preserved via the move APIs.
@@ -554,12 +558,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 			// Case which doesn't update due to root being required
 			assert.throws(() => view.upgradeSchema(), validateUsageError(/cannot be upgraded/));
-
-			const reference = checkoutWithContent({
-				schema: emptySchema,
-				initialTree: fieldJsonCursor([]),
-			});
-			validateViewConsistency(reference, view.checkout);
+			assert.throws(() => view.root, validateUsageError(/invalid state by another error/));
 		});
 
 		it("update non-empty", () => {
@@ -598,9 +597,35 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(view.compatibility.canView, false);
 		assert.equal(view.compatibility.canUpgrade, true);
 		assert.equal(view.compatibility.isEquivalent, false);
+		assert.deepEqual(view.compatibility.discrepancies, [
+			{
+				mismatch: "allowedTypes",
+				location: "root",
+				view: ["com.fluidframework.leaf.string"],
+				stored: [],
+			},
+		]);
 		assert.throws(
 			() => view.root,
-			(e) => e instanceof UsageError,
+			(error) => {
+				assert(error instanceof UsageError);
+				assert.equal(
+					error.message,
+					"TreeView.root is unavailable because the view schema is incompatible with the stored schema. The stored schema can be upgraded; call TreeView.upgradeSchema() before reading or writing TreeView.root.",
+				);
+				assert.deepEqual(error.getTelemetryProperties().schemaIncompatibilityDetails, {
+					tag: TelemetryDataTag.SchemaArtifact,
+					value: JSON.stringify([
+						{
+							mismatch: "allowedTypes",
+							location: "root",
+							view: ["com.fluidframework.leaf.string"],
+							stored: [],
+						},
+					]),
+				});
+				return true;
+			},
 		);
 
 		view.upgradeSchema();
@@ -608,6 +633,7 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.deepEqual(log, [["rootChanged", 5]]);
 
 		assert.equal(view.compatibility.isEquivalent, true);
+		assert.equal(view.compatibility.discrepancies, undefined);
 		assert.equal(view.root, 5);
 	});
 
@@ -622,9 +648,35 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(view.compatibility.canView, false);
 		assert.equal(view.compatibility.canUpgrade, false);
 		assert.equal(view.compatibility.isEquivalent, false);
+		assert.deepEqual(view.compatibility.discrepancies, [
+			{
+				mismatch: "allowedTypes",
+				location: "root",
+				view: [],
+				stored: ["com.fluidframework.leaf.string"],
+			},
+		]);
 		assert.throws(
 			() => view.root,
-			(e) => e instanceof UsageError,
+			(error) => {
+				assert(error instanceof UsageError);
+				assert.equal(
+					error.message,
+					"TreeView.root is unavailable because the view schema is incompatible with the stored schema. The schemas cannot be upgraded automatically. Use a compatible view schema or explicitly migrate the document schema and data.",
+				);
+				assert.deepEqual(error.getTelemetryProperties().schemaIncompatibilityDetails, {
+					tag: TelemetryDataTag.SchemaArtifact,
+					value: JSON.stringify([
+						{
+							mismatch: "allowedTypes",
+							location: "root",
+							view: [],
+							stored: ["com.fluidframework.leaf.string"],
+						},
+					]),
+				});
+				return true;
+			},
 		);
 
 		assert.throws(
@@ -644,10 +696,29 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(view.compatibility.canView, false);
 		assert.equal(view.compatibility.canUpgrade, false);
 		assert.equal(view.compatibility.isEquivalent, false);
-		assert.throws(
-			() => view.root,
-			(e) => e instanceof UsageError,
-		);
+		const validateIncompatibleSchemaError = (error: unknown): boolean => {
+			assert(error instanceof UsageError);
+			assert.equal(
+				error.message,
+				"TreeView.root is unavailable because the view schema is incompatible with the stored schema. The schemas cannot be upgraded automatically. Use a compatible view schema or explicitly migrate the document schema and data.",
+			);
+			assert.deepEqual(error.getTelemetryProperties().schemaIncompatibilityDetails, {
+				tag: TelemetryDataTag.SchemaArtifact,
+				value: JSON.stringify([
+					{
+						mismatch: "allowedTypes",
+						location: "root",
+						view: ["com.fluidframework.leaf.boolean"],
+						stored: ["com.fluidframework.leaf.string"],
+					},
+				]),
+			});
+			return true;
+		};
+		assert.throws(() => view.root, validateIncompatibleSchemaError);
+		assert.throws(() => {
+			view.root = 7;
+		}, validateIncompatibleSchemaError);
 
 		assert.throws(
 			() => view.upgradeSchema(),
@@ -783,7 +854,7 @@ describe("SchematizingSimpleTreeView", () => {
 					view.root.content = 43;
 				});
 				assert.equal(view.root.content, 43, "The transaction did not commit");
-				const expectedResult: TransactionResult = { success: true };
+				const expectedResult: TransactionVoidResult = { success: true };
 				assert.deepStrictEqual(
 					runTransactionResult,
 					expectedResult,
@@ -798,7 +869,7 @@ describe("SchematizingSimpleTreeView", () => {
 					return { rollback: false };
 				});
 				assert.equal(view.root.content, 43, "The transaction did not commit");
-				const expectedResult: TransactionResult = { success: true };
+				const expectedResult: TransactionVoidResult = { success: true };
 				assert.deepStrictEqual(
 					runTransactionResult,
 					expectedResult,
@@ -813,7 +884,7 @@ describe("SchematizingSimpleTreeView", () => {
 					return { rollback: true };
 				});
 				assert.equal(view.root.content, 42, "The transaction did not rollback");
-				const expectedResult: TransactionResult = { success: false };
+				const expectedResult: TransactionVoidResult = { success: false };
 				assert.deepStrictEqual(
 					runTransactionResult,
 					expectedResult,
@@ -828,7 +899,7 @@ describe("SchematizingSimpleTreeView", () => {
 					return { value: view.root.content };
 				});
 				assert.equal(view.root.content, 43, "The transaction did not commit");
-				const expectedResult: TransactionResultExt<number, undefined> = {
+				const expectedResult: TransactionValueResult<number, undefined> = {
 					success: true,
 					value: 43,
 				};
@@ -847,7 +918,7 @@ describe("SchematizingSimpleTreeView", () => {
 				});
 				// The transaction is rolled back. So, the content is reverted to the original value.
 				assert.equal(view.root.content, 42, "The transaction did not rollback");
-				const expectedResult: TransactionResultExt<undefined, number> = {
+				const expectedResult: TransactionValueResult<undefined, number> = {
 					success: false,
 					// Note that this is the value that was returned before the transaction was rolled back.
 					value: 43,
@@ -868,7 +939,7 @@ describe("SchematizingSimpleTreeView", () => {
 					};
 				});
 				assert.equal(view.root.content, 43, "The transaction did not commit");
-				const expectedResult: TransactionResult = {
+				const expectedResult: TransactionVoidResult = {
 					success: true,
 				};
 				assert.deepStrictEqual(
@@ -888,7 +959,7 @@ describe("SchematizingSimpleTreeView", () => {
 					};
 				});
 				assert.equal(view.root.content, 42, "The transaction did not rollback");
-				const expectedResult: TransactionResult = {
+				const expectedResult: TransactionVoidResult = {
 					success: false,
 				};
 				assert.deepStrictEqual(
@@ -906,7 +977,7 @@ describe("SchematizingSimpleTreeView", () => {
 					view.root.content = 43;
 				});
 				assert.equal(view.root.content, 43);
-				const expectedResult: TransactionResult = { success: true };
+				const expectedResult: TransactionVoidResult = { success: true };
 				assert.deepStrictEqual(
 					runTransactionResult,
 					expectedResult,
@@ -921,7 +992,7 @@ describe("SchematizingSimpleTreeView", () => {
 					return { rollback: true };
 				});
 				assert.equal(view.root.content, 42);
-				const expectedResult: TransactionResult = { success: false };
+				const expectedResult: TransactionVoidResult = { success: false };
 				assert.deepStrictEqual(
 					runTransactionResult,
 					expectedResult,
@@ -953,7 +1024,7 @@ describe("SchematizingSimpleTreeView", () => {
 					view.root.content = 43;
 					view.root.content = 44;
 				});
-				const expectedResult: TransactionResult = { success: true };
+				const expectedResult: TransactionVoidResult = { success: true };
 				assert.deepStrictEqual(
 					runTransactionResult,
 					expectedResult,
@@ -1023,7 +1094,7 @@ describe("SchematizingSimpleTreeView", () => {
 						preconditions: [{ type: "nodeInDocument", node: childB }],
 					},
 				);
-				const expectedResult: TransactionResult = { success: true };
+				const expectedResult: TransactionVoidResult = { success: true };
 				assert.deepStrictEqual(
 					runTransactionResult,
 					expectedResult,
@@ -1094,7 +1165,7 @@ describe("SchematizingSimpleTreeView", () => {
 					};
 				});
 				assert.equal(view.root.content, 43, "The transaction did not succeed");
-				const expectedResult: TransactionResult = {
+				const expectedResult: TransactionVoidResult = {
 					success: true,
 				};
 				assert.deepStrictEqual(
@@ -1339,6 +1410,21 @@ describe("SchematizingSimpleTreeView", () => {
 			assert.equal(receivedLabels.tree.sublabels[0]?.sublabels[0]?.label, "deep");
 			assert.equal(receivedLabels.tree.sublabels[1]?.label, "middle2");
 			assert.equal(receivedLabels.tree.sublabels[1]?.sublabels.length, 0);
+		});
+
+		it("direct (non-transaction) edit from a changed listener throws", () => {
+			// Exercises the internal `changed` event. The equivalent guarantee through the public
+			// `nodeChanged`/`treeChanged` API is covered in the treeNodeApi tests.
+			const view = getTestObjectView();
+
+			view.checkout.events.on("changed", () => {
+				view.root.content = view.root.content + 1;
+			});
+
+			assert.throws(
+				() => (view.root.content = 1),
+				validateUsageError("Editing the tree is forbidden during a change event callback"),
+			);
 		});
 
 		it("creates a single-node LabelTree for a non-nested labeled transaction", () => {

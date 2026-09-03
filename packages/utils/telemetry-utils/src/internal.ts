@@ -68,6 +68,7 @@ export {
 	PerformanceEvent,
 	tagData,
 	tagCodeArtifacts,
+	tagSchemaArtifacts,
 	TelemetryDataTag,
 	toITelemetryLoggerExt,
 } from "./logger.js";

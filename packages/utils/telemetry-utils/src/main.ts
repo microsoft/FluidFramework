@@ -14,6 +14,7 @@ export type {
 	TelemetryEventPropertyTypes,
 } from "./logger.js";
 export type {
+	ITelemetryLoggerExt,
 	ITelemetryPropertiesExt,
 	TelemetryEventPropertyTypeExt,
 } from "./telemetryTypes.js";

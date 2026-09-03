@@ -3,15 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { IIdCompressor } from "@fluidframework/id-compressor";
-
 import type { CodecAndSchema, IJsonCodec, Versioned } from "../codec/index.js";
-import type {
-	ChangeEncodingContext,
-	EncodedRevisionTag,
-	RevisionTag,
-	SchemaAndPolicy,
-} from "../core/index.js";
+import type { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../core/index.js";
 import {
 	type JsonCompatibleReadOnly,
 	type JsonCompatibleReadOnlyObject,
@@ -19,16 +12,14 @@ import {
 } from "../util/index.js";
 
 import type { SummaryData } from "./editManager.js";
-import { decodeSharedBranch, encodeSharedBranch } from "./editManagerCodecsCommons.js";
+import {
+	decodeSharedBranch,
+	encodeSharedBranch,
+	type EditManagerDecodingContext,
+	type EditManagerEncodingContext,
+} from "./editManagerCodecsCommons.js";
 import { EncodedEditManager } from "./editManagerFormatV1toV4.js";
-
-export interface EditManagerEncodingContext {
-	idCompressor: IIdCompressor;
-	readonly schema?: SchemaAndPolicy;
-	readonly isSummary: boolean;
-	readonly healUnresolvableIdentifiersOnDecode?: boolean;
-	readonly sharedObjectId?: string;
-}
+import { EditManagerFormatVersion } from "./editManagerFormatCommons.js";
 
 /**
  * Create the provided version of the {@link EditManager} codec (which encodes it's {@link SummaryData}).
@@ -52,10 +43,22 @@ export function makeV1toV4andV6CodecWithVersion<TChangeset>(
 		ChangeEncodingContext
 	>,
 	version: EncodedEditManager<TChangeset>["version"],
-): CodecAndSchema<SummaryData<TChangeset>, EditManagerEncodingContext> {
-	const schema = EncodedEditManager(changeCodec.encodedSchema ?? JsonCompatibleReadOnlySchema);
+): CodecAndSchema<
+	SummaryData<TChangeset>,
+	EditManagerEncodingContext,
+	EditManagerDecodingContext
+> {
+	const includeCustomMetadata = version >= EditManagerFormatVersion.v7;
+	const schema = EncodedEditManager(
+		changeCodec.encodedSchema ?? JsonCompatibleReadOnlySchema,
+		includeCustomMetadata,
+	);
 
-	const codec: CodecAndSchema<SummaryData<TChangeset>, EditManagerEncodingContext> = {
+	const codec: CodecAndSchema<
+		SummaryData<TChangeset>,
+		EditManagerEncodingContext,
+		EditManagerDecodingContext
+	> = {
 		schema,
 		encode: (
 			data: SummaryData<TChangeset>,
@@ -67,8 +70,9 @@ export function makeV1toV4andV6CodecWithVersion<TChangeset>(
 				data.main,
 				context,
 				data.originator,
+				includeCustomMetadata,
 			);
-			const encoded: EncodedEditManager<TChangeset> = {
+			const encoded: EncodedEditManager<JsonCompatibleReadOnly> = {
 				trunk: mainBranch.trunk,
 				branches: mainBranch.peers,
 				version,
@@ -79,7 +83,7 @@ export function makeV1toV4andV6CodecWithVersion<TChangeset>(
 		},
 		decode: (
 			json: EncodedEditManager<TChangeset> & JsonCompatibleReadOnly,
-			context: EditManagerEncodingContext,
+			context: EditManagerDecodingContext,
 		): SummaryData<TChangeset> => {
 			return {
 				main: decodeSharedBranch(

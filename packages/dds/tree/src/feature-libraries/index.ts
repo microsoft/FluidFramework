@@ -27,6 +27,7 @@ export {
 	type MinimalFieldMap,
 } from "./mapTreeCursor.js";
 export { buildForest } from "./object-forest/index.js";
+export { ComparisonForest } from "./comparison-forest/index.js";
 export {
 	SchemaSummarizer,
 	schemaCodecBuilder,
@@ -45,6 +46,8 @@ export {
 	jsonableTreeFromCursor,
 	jsonableTreeFromFieldCursor,
 	jsonableTreeFromForest,
+	forestsEqual,
+	assertForestsEqual,
 } from "./treeTextCursor.js";
 export {
 	buildNodeComparator,
@@ -88,11 +91,13 @@ export {
 	updateRefreshers,
 	type NodeId,
 	type FieldChangeEncodingContext,
+	type FieldChangeDecodingContext,
 	type FieldKindConfiguration,
 	type FieldKindConfigurationEntry,
 	isNeverTree,
 	DefaultRevisionReplacer,
 	ModularChangeFormatVersion,
+	minimizeModularChangeset,
 } from "./modular-schema/index.js";
 
 export { mapRootChanges } from "./deltaUtils.js";
@@ -109,11 +114,14 @@ export {
 	FieldBatchFormatVersion,
 	makeTreeChunker,
 	fieldBatchCodecBuilder,
+	FieldBatchDecodingContext,
 	type FieldBatchEncodingContext,
 	emptyChunk,
 	combineChunks,
 	type IncrementalEncodingPolicy,
 	defaultIncrementalEncodingPolicy,
+	type IncrementalDecoder,
+	type IncrementalEncoder,
 } from "./chunked-forest/index.js";
 
 export {
@@ -129,6 +137,7 @@ export {
 
 export {
 	FieldKinds,
+	type DefaultChangeProcessingContext,
 	type DefaultChangeset,
 	DefaultChangeFamily,
 	DefaultEditBuilder,
@@ -146,6 +155,7 @@ export {
 
 export {
 	SchemaValidationError,
+	type SchemaValidationErrorDetails,
 	isNodeInSchema,
 	isFieldInSchema,
 	throwOutOfSchema,

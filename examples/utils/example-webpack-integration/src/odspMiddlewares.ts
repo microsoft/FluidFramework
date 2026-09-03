@@ -3,41 +3,36 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import-x/no-nodejs-modules
-import process from "node:process";
-
-// eslint-disable-next-line import-x/no-internal-modules
-import { OdspTokenManager } from "@fluidframework/tool-utils/internal";
 import type { Middleware, Request, Response } from "webpack-dev-server";
 
-type TestAccounts = { UserPrincipalName: string; Password: string }[];
-const isTestAccounts = (value: unknown): value is TestAccounts =>
-	Array.isArray(value) &&
-	value.every(
-		(account) =>
-			typeof account === "object" &&
-			account !== null &&
-			"UserPrincipalName" in account &&
-			"Password" in account &&
-			typeof (account as { UserPrincipalName: unknown }).UserPrincipalName === "string" &&
-			typeof (account as { Password: unknown }).Password === "string",
-	);
+import { getOdspCredentials, resolveOdspEnvironment } from "./tenantUtils.js";
 
-const parseTestAccounts = (
-	stringAccounts: string,
-): { username: string; password: string; siteUrl: string; server: string } => {
-	const testAccounts: unknown = JSON.parse(stringAccounts);
-	if (!isTestAccounts(testAccounts) || testAccounts[0] === undefined) {
-		throw new Error(
-			`stringAccounts did not parse to a valid array of test accounts: ${stringAccounts}`,
-		);
+/**
+ * Construct the set of middleware required to support the odsp example driver.
+ *
+ * @remarks
+ * Relies on environment variables containing the test tenant and user information, which will be
+ * automatically configured by running tenant-setup. All environment access and validation happens
+ * here at the entry point so that misconfiguration fails fast (before any token is requested) and
+ * resolved, strongly-typed values are passed through the rest of the flow.
+ *
+ * process.env.login__odsp__fic__test__users - JSON array of users/credentials with deducible tenants
+ * process.env.token__package__import__location - import location of the test tenant checkout client
+ */
+export const createOdspMiddlewares = (): Middleware[] => {
+	const { usernames, packageImportLocation } = resolveOdspEnvironment();
+
+	const credentials = getOdspCredentials("odsp", usernames, packageImportLocation);
+	const firstCredential = credentials[0];
+	if (firstCredential === undefined) {
+		throw new Error("No credentials found from getOdspCredentials.");
 	}
-	const { UserPrincipalName: username, Password: password } = testAccounts[0];
+	const { username } = firstCredential;
+
+	// Derive siteUrl from the username's email domain
 	const atIndex = username.indexOf("@");
 	if (atIndex === -1) {
-		throw new Error(
-			`UserPrincipalName "${username}" is not a valid email address (missing "@").`,
-		);
+		throw new Error(`Username "${username}" is not a valid email address (missing "@").`);
 	}
 	const emailServer = username.slice(atIndex + 1);
 	const dotIndex = emailServer.indexOf(".");
@@ -48,39 +43,7 @@ const parseTestAccounts = (
 	}
 	const tenantName = emailServer.slice(0, dotIndex);
 	const siteUrl = `https://${tenantName}.sharepoint.com`;
-	const server = new URL(siteUrl).host;
 
-	return { username, password, siteUrl, server };
-};
-/**
- * Construct the set of middleware required to support the odsp example driver.
- *
- * @remarks
- * Relies on environment variables containing the test tenant and user information, which will be
- * automatically configured by running trips-setup.
- *
- * process.env.login__odsp__test__tenants - JSON array of users/credentials with deducible tenants
- * process.env.login__microsoft__clientId - the client ID to use
- */
-export const createOdspMiddlewares = (): Middleware[] => {
-	if (process.env.login__odsp__test__tenants === undefined) {
-		throw new Error(
-			"process.env.login__odsp__test__tenants is missing. Make sure you ran trips-setup and restarted your terminal.",
-		);
-	}
-	if (process.env.login__microsoft__clientId === undefined) {
-		throw new Error(
-			"process.env.login__microsoft__clientId is missing. Make sure you ran trips-setup and restarted your terminal.",
-		);
-	}
-
-	const { username, password, siteUrl, server } = parseTestAccounts(
-		process.env.login__odsp__test__tenants,
-	);
-
-	const clientId = process.env.login__microsoft__clientId;
-
-	const tokenManager = new OdspTokenManager();
 	// Cache fetch attempts to avoid multiple calls
 	let storageTokenP: Promise<string>;
 	let pushTokenP: Promise<string>;
@@ -97,17 +60,7 @@ export const createOdspMiddlewares = (): Middleware[] => {
 			name: "get-storage-token",
 			path: "/storageToken",
 			middleware: (req: Request, res: Response) => {
-				storageTokenP ??= tokenManager
-					.getOdspTokens(
-						server,
-						{ clientId },
-						{
-							type: "password",
-							username,
-							password,
-						},
-					)
-					.then((tokens) => tokens.accessToken);
+				storageTokenP ??= firstCredential.fetchToken("storage");
 				storageTokenP
 					.then((storageToken) => {
 						res.send(storageToken);
@@ -121,17 +74,7 @@ export const createOdspMiddlewares = (): Middleware[] => {
 			name: "get-push-token",
 			path: "/pushToken",
 			middleware: (req: Request, res: Response) => {
-				pushTokenP ??= tokenManager
-					.getPushTokens(
-						server,
-						{ clientId },
-						{
-							type: "password",
-							username,
-							password,
-						},
-					)
-					.then((tokens) => tokens.accessToken);
+				pushTokenP ??= firstCredential.fetchToken("push");
 				pushTokenP
 					.then((pushToken) => {
 						res.send(pushToken);

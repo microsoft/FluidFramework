@@ -3211,6 +3211,34 @@ describe("Editing", () => {
 
 				stack.unsubscribe();
 			});
+
+			it("inverse node existence constraint on moved node not violated by unrelated change", () => {
+				const tree = makeTreeFromJsonSequence(["A", "B"]);
+				const branch = tree.fork();
+				const stack = createTestUndoRedoStacks(tree.events);
+
+				// Make transaction that does the following:
+				// 1. Moves "A" after "B".
+				// 2. Adds inverse constraint on existence of node "A".
+				branch.transaction.start();
+				branch.editor.move(rootField, 0, 1, rootField, 2);
+				branch.editor.addNodeExistsConstraintOnRevert(rootNode2);
+				branch.transaction.commit();
+				expectJsonTree(branch, ["B", "A"]);
+
+				insert(tree, 2, "C");
+				expectJsonTree(tree, ["A", "B", "C"]);
+
+				tree.merge(branch);
+				expectJsonTree(tree, ["B", "A", "C"]);
+				const moveRevertible = stack.undoStack[1] ?? assert.fail("Missing undo");
+
+				// The inverse constraint should not be violated.
+				moveRevertible.revert();
+				expectJsonTree(tree, ["A", "B", "C"]);
+
+				stack.unsubscribe();
+			});
 		});
 
 		it("Rebase over conflicted change", () => {
@@ -3381,7 +3409,7 @@ describe("Editing", () => {
 		});
 
 		describe("No Change constraint on revert", () => {
-			it("Should not revert when constraint is violated", () => {
+			it("Should be violated when rebasing over an edit to the attached document tree", () => {
 				const tree = makeTreeFromJsonSequence(["A", "B"], {
 					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
 				});
@@ -3398,7 +3426,7 @@ describe("Editing", () => {
 				assert(revertible !== undefined, "Missing revertible");
 				revertible.revert();
 
-				// Revert should go through on the branch since the constraint shouldnt be violated yet
+				// Revert should go through on the branch since the constraint shouldn't be violated yet
 				expectJsonTree(branch, ["A", "B"]);
 
 				// Make an edit on the main tree to force a rebase
@@ -3409,6 +3437,46 @@ describe("Editing", () => {
 				// and the revert transaction should be dropped
 				branch.rebaseOnto(tree);
 				expectJsonTree(branch, ["Y", "A", "X", "B"]);
+				unsubscribe();
+			});
+
+			it("Should be violated when rebasing over an edit to detached trees", () => {
+				const tree = makeTreeFromJsonSequence([{ value: "initial" }], {
+					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
+				});
+
+				const branchWithEdit = tree.fork();
+				branchWithEdit.editor
+					.valueField({ field: brand("value"), parent: rootNode })
+					.set(chunkFromJsonTrees(["updated"]));
+				expectJsonTree(branchWithEdit, [{ value: "updated" }]);
+
+				tree.editor.sequenceField(rootField).remove(0, 1);
+				expectJsonTree(tree, []);
+
+				const branch = tree.fork();
+				// Add a No Change constraint and make an edit
+				const { undoStack, unsubscribe } = createTestUndoRedoStacks(branch.events);
+				branch.transaction.start();
+				branch.editor.sequenceField(rootField).insert(0, chunkFromJsonTrees(["X"]));
+				branch.editor.addNoChangeConstraintOnRevert();
+				branch.transaction.commit();
+				expectJsonTree(branch, ["X"]);
+				const revertible = undoStack.pop();
+				assert(revertible !== undefined, "Missing revertible");
+				revertible.revert();
+
+				// Revert should go through on the branch since the constraint shouldn't be violated yet
+				expectJsonTree(branch, []);
+
+				// Merge the branch edit to impact the detached object
+				tree.merge(branchWithEdit);
+
+				// When rebasing, the No Change constraint should be violated
+				// and the revert transaction should be dropped
+				tree.merge(branch, false);
+				branch.rebaseOnto(tree);
+				expectJsonTree(branch, ["X"]);
 				unsubscribe();
 			});
 
@@ -3433,7 +3501,7 @@ describe("Editing", () => {
 				unsubscribe();
 			});
 
-			it("Should not be violated when there are multiple inserts reverted", () => {
+			it("Should not be violated when rebasing over inserts and their reversals", () => {
 				const tree = makeTreeFromJsonSequence(["A", "B"], {
 					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
 				});
@@ -3464,14 +3532,17 @@ describe("Editing", () => {
 				undo1.revert();
 				const undo2 = undoStack.pop() ?? assert.fail("Missing undo");
 				undo2.revert();
+
+				// Act
 				const undo3 = undoStack.pop() ?? assert.fail("Missing undo");
 				undo3.revert();
 
+				// Verify
 				expectJsonTree(branch, ["A", "X", "B"]);
 				unsubscribe();
 			});
 
-			it("Should not be violated when there are multiple moves reverted", () => {
+			it("Should not be violated when rebasing over moves and their reversals", () => {
 				const tree = makeTreeFromJsonSequence([{ "A": 1, "B": 2, "C": 3 }], {
 					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
 				});
@@ -3516,11 +3587,16 @@ describe("Editing", () => {
 				const undo2 = undoStack.pop() ?? assert.fail("Missing undo");
 				undo2.revert();
 
-				expectJsonTree(branch, [{ "X": 1, "B": 2, "C": 3 }]);
+				// Act
+				const undo3 = undoStack.pop() ?? assert.fail("Missing undo");
+				undo3.revert();
+
+				// Verify
+				expectJsonTree(branch, [{ "A": 1, "B": 2, "C": 3 }]);
 				unsubscribe();
 			});
 
-			it("Should not be violated when a non-constrained edit is inserted but then removed by later edits", () => {
+			it("Should not be violated when content is inserted then removed by later edits", () => {
 				const tree = makeTreeFromJsonSequence([], {
 					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
 				});

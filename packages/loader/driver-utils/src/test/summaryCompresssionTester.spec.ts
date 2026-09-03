@@ -109,7 +109,6 @@ function generateSummaryWithBinaryContent(
 
 const misotestid: string = "misotest-id";
 
-const abcContent = "ABC";
 class InternalTestStorage implements IDocumentStorageService {
 	constructor() {}
 	private _uploadedSummary: ISummaryTree | undefined;
@@ -136,9 +135,8 @@ class InternalTestStorage implements IDocumentStorageService {
 		throw new Error("Method not implemented.");
 	}
 	async readBlob(id: string): Promise<ArrayBufferLike> {
-		return id === misotestid
-			? new TextEncoder().encode(abcContent)
-			: getHeaderContent(this._uploadedSummary!);
+		assert(id !== misotestid);
+		return getHeaderContent(this._uploadedSummary!);
 	}
 	async uploadSummaryWithContext(
 		summary: ISummaryTree,
@@ -150,7 +148,7 @@ class InternalTestStorage implements IDocumentStorageService {
 	async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
 		return this._uploadedSummary!;
 	}
-	disposed?: boolean | undefined;
+	disposed?: boolean;
 	dispose?(error?: Error | undefined): void {
 		throw new Error("Method not implemented.");
 	}
@@ -581,9 +579,8 @@ async function testEncDecBinaryLoop(
 	}
 }
 
-function compareTwoBlobs(blob1: ArrayBufferLike, blob2: ArrayBufferLike): boolean {
+function compareTwoBlobs(blob1: ArrayBufferLike, blob2View: Uint8Array): boolean {
 	const blob1View = new Uint8Array(blob1);
-	const blob2View = new Uint8Array(blob2);
 	if (blob1View.length !== blob2View.length) {
 		return false;
 	}
@@ -609,7 +606,7 @@ async function checkEncDecConfigurable(
 		ackHandle: "test",
 	});
 	await storage.getSnapshotTree({ id: "test", treeId: "test" }, "test");
-	const blob: ArrayBufferLike = await storage.readBlob("abcd");
+	const blob = await storage.readBlob("abcd");
 	if (typeof originBlob === "string") {
 		const blobStr = new TextDecoder().decode(blob);
 		assert(

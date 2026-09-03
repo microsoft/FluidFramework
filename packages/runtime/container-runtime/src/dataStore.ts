@@ -13,8 +13,8 @@ import type {
 	IFluidDataStoreChannel,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	type TelemetryLoggerExt,
 	TelemetryDataTag,
+	type TelemetryLoggerExt,
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 

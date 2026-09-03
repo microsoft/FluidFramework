@@ -24,10 +24,15 @@ import {
 	SchemaFactory,
 	TreeViewConfiguration,
 	unhydratedFlexTreeFromInsertable,
+	type ImplicitFieldSchema,
+	type TreeView,
+	type TreeViewAlpha,
+	type TreeViewBeta,
 } from "../../../simple-tree/index.js";
 import { SharedTree } from "../../../treeFactory.js";
-import type { JsonCompatibleReadOnly } from "../../../util/index.js";
-import { getView } from "../../utils.js";
+import type { JsonCompatibleReadOnly, requireAssignableTo } from "../../../util/index.js";
+import { getView, StringArray, TestTreeProviderLite } from "../../utils.js";
+import { getViewForForkedBranch } from "../utils.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -36,6 +41,21 @@ class NodeList extends schema.array("NoteList", schema.string) {}
 class Canvas extends schema.object("Canvas", { stuff: [NodeMap, NodeList] }) {}
 
 const factory = SharedTree.getFactory();
+
+// Type tests
+{
+	// TreeViewBeta should be assignable to TreeView
+	type _checkBetaAssignableToPublic = requireAssignableTo<
+		TreeViewBeta<ImplicitFieldSchema>,
+		TreeView<ImplicitFieldSchema>
+	>;
+
+	// TreeViewAlpha should be assignable to TreeViewBeta
+	type _checkAlphaAssignableToBeta = requireAssignableTo<
+		TreeViewAlpha<ImplicitFieldSchema>,
+		TreeViewBeta<ImplicitFieldSchema>
+	>;
+}
 
 describe("simple-tree tree", () => {
 	it("ListRoot", () => {
@@ -99,7 +119,10 @@ describe("simple-tree tree", () => {
 
 		it("invalid default - initialize", () => {
 			const view = getView(config);
-			assert.throws(() => view.initialize({}), validateUsageError(/Field_NodeTypeNotAllowed/));
+			assert.throws(
+				() => view.initialize({}),
+				validateUsageError(/A node type is not allowed in its field/),
+			);
 		});
 
 		it("invalid default - insert", () => {
@@ -112,7 +135,7 @@ describe("simple-tree tree", () => {
 				() => {
 					view.root = newNode;
 				},
-				validateUsageError(/Field_NodeTypeNotAllowed/),
+				validateUsageError(/A node type is not allowed in its field/),
 			);
 		});
 	});
@@ -210,7 +233,10 @@ describe("simple-tree tree", () => {
 		const view = getView(config);
 		// Note: the tree's schema hasn't been initialized at this point, so even though the view schema
 		// allows an optional field, explicit initialization must occur.
-		assert.throws(() => view.root, /Document is out of schema./);
+		assert.throws(
+			() => view.root,
+			/TreeView\.root is unavailable because the view schema is incompatible with the stored schema\. The document is uninitialized; call TreeView\.initialize\(\)/,
+		);
 		view.initialize(undefined);
 		assert.equal(view.root, undefined);
 	});
@@ -405,6 +431,383 @@ describe("simple-tree tree", () => {
 				viewA.applyChange(change);
 			});
 			assert.equal(viewA.root, 5);
+		});
+	});
+
+	describe("computeNetChangeIfRebasedOnto", () => {
+		const scenarios = [
+			{ editSource: false, editTarget: false },
+			{ editSource: true, editTarget: false },
+			{ editSource: false, editTarget: true },
+			{ editSource: true, editTarget: true },
+		];
+		for (const { editSource, editTarget } of scenarios) {
+			it(`when source branch is ${editSource ? "edited" : "not edited"} and target branch is ${
+				editTarget ? "edited" : "not edited"
+			}`, () => {
+				const config = new TreeViewConfiguration({ schema: StringArray });
+				const targetView = getView(config);
+				targetView.initialize([]);
+				const sourceView = targetView.fork();
+
+				if (editSource) {
+					sourceView.root.insertAtEnd("source edit");
+				}
+				if (editTarget) {
+					targetView.root.insertAtEnd("target edit");
+				}
+				const rebasedView = getViewForForkedBranch(sourceView).forkView;
+				const appliedView = getViewForForkedBranch(sourceView).forkView;
+
+				rebasedView.rebaseOnto(targetView);
+
+				// Validating the output of `computeNetChangeIfRebasedOnto` directly would make the test brittle since the internals of the format are implementation details.
+				// Instead, we apply the net change to the applied view and then compare the resulting state to the rebased view to ensure they are equivalent.
+				const netChange = appliedView.computeNetChangeIfRebasedOnto(targetView);
+				if (netChange !== undefined) {
+					appliedView.applyChange(netChange);
+				}
+
+				assert.deepEqual([...appliedView.root], [...rebasedView.root]);
+			});
+		}
+	});
+
+	describe("isMissingEditsFrom", () => {
+		it("returns false when the branches are equivalent", () => {
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const viewA = getView(config);
+			viewA.initialize(3);
+			const viewB = viewA.fork();
+
+			assert.equal(viewA.isMissingEditsFrom(viewB), false);
+			assert.equal(viewB.isMissingEditsFrom(viewA), false);
+		});
+
+		it("returns false when only 'this' branch is ahead", () => {
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const viewA = getView(config);
+			viewA.initialize(3);
+			const viewB = viewA.fork();
+
+			viewB.root = 4;
+			assert.equal(viewB.isMissingEditsFrom(viewA), false);
+		});
+
+		it("returns true when only the other branch is ahead", () => {
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const viewA = getView(config);
+			viewA.initialize(3);
+			const viewB = viewA.fork();
+
+			viewB.root = 4;
+			assert.equal(viewA.isMissingEditsFrom(viewB), true);
+		});
+
+		it("returns true when both branches are diverged", () => {
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const viewA = getView(config);
+			viewA.initialize(3);
+			const viewB = viewA.fork();
+
+			viewA.root = 4;
+			viewB.root = 4;
+			assert.equal(viewA.isMissingEditsFrom(viewB), true);
+			assert.equal(viewB.isMissingEditsFrom(viewA), true);
+		});
+	});
+
+	describe("rewindTo", () => {
+		it("is not allowed on a shared branch", () => {
+			// Setup
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const view = getView(config);
+			view.initialize(1);
+
+			const revision1 = view.branchHistory.getHead()?.revision;
+			assert(revision1 !== undefined, "revision should be defined");
+
+			assert.throws(
+				() => view.rewindTo(revision1),
+				/Cannot switch a view away from a shared branch/,
+			);
+		});
+
+		it("rewinds the view", () => {
+			// Setup
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const view = getView(config);
+			view.initialize(1);
+
+			const revision1 = view.branchHistory.getHead()?.revision;
+			assert(revision1 !== undefined, "revision should be defined");
+			view.root = 2;
+
+			// Fork to a branch that can be rewound
+			const fork = getViewForForkedBranch(view).forkView;
+
+			const revision2 = fork.branchHistory.getHead()?.revision;
+			assert(revision2 !== undefined, "revision should be defined");
+			fork.root = 3;
+			fork.root = 4;
+
+			// Consistency check
+			assert.equal(fork.branchHistory.length, 4);
+
+			// Act
+			fork.rewindTo(revision2);
+
+			// Verify
+			assert.equal(fork.branchHistory.length, 2);
+			assert.equal(fork.root, 2);
+
+			// Act
+			fork.rewindTo(revision1);
+
+			// Verify
+			assert.equal(fork.branchHistory.length, 1);
+			assert.equal(fork.root, 1);
+		});
+
+		it("new edits can be made after rewinding", () => {
+			// Setup
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const view = getView(config);
+			view.initialize(1);
+
+			// Fork to a branch that can be rewound
+			const fork = getViewForForkedBranch(view).forkView;
+
+			const revision1 = fork.branchHistory.getHead()?.revision;
+			assert(revision1 !== undefined, "revision should be defined");
+			fork.root = 2;
+
+			fork.rewindTo(revision1);
+			assert.equal(fork.branchHistory.length, 1);
+
+			// Act
+			fork.root = 42;
+
+			// Verify
+			assert.equal(fork.branchHistory.length, 2);
+			assert.equal(fork.root, 42);
+		});
+
+		it("new edits made after rewinding do not affect the original branch", () => {
+			// Setup
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const view = getView(config);
+			view.initialize(1);
+			// Fork to a branch that can be rewound
+			const fork = getViewForForkedBranch(view).forkView;
+			const revision1 = fork.branchHistory.getHead()?.revision;
+			assert(revision1 !== undefined, "revision should be defined");
+			fork.root = 2;
+
+			const branchBeforeRewind = fork.checkout.mainBranch;
+
+			fork.rewindTo(revision1);
+
+			// Act
+			fork.root = 42;
+			fork.root = 43;
+			fork.root = 44;
+
+			// Verify
+			fork.checkout.switchBranch(branchBeforeRewind);
+			assert.equal(fork.branchHistory.length, 2);
+			assert.equal(fork.root, 2);
+		});
+	});
+
+	describe("revertTo", () => {
+		it("restores the state of the given revision with a new commit", () => {
+			// Setup
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const view = getView(config);
+			view.initialize(1);
+
+			const revision1 = view.branchHistory.getHead()?.revision;
+			assert(revision1 !== undefined, "revision should be defined");
+			view.root = 2;
+			const revision2 = view.branchHistory.getHead()?.revision;
+			assert(revision2 !== undefined, "revision should be defined");
+			view.root = 3;
+			view.root = 4;
+
+			// Consistency check
+			assert.equal(view.branchHistory.length, 4);
+
+			// Act
+			view.revertTo(revision2);
+
+			const revision5 = view.branchHistory.getHead()?.revision;
+			assert(revision5 !== undefined, "revision should be defined");
+
+			// Verify
+			assert.equal(view.root, 2);
+			assert.equal(view.branchHistory.length, 5);
+
+			// Act
+			view.revertTo(revision1);
+
+			// Verify
+			assert.equal(view.root, 1);
+			assert.equal(view.branchHistory.length, 6);
+
+			// Act
+			view.revertTo(revision5);
+
+			// Verify
+			assert.equal(view.root, 2);
+			assert.equal(view.branchHistory.length, 7);
+		});
+
+		it("is a no-op when given the revision of the head commit", () => {
+			// Setup
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const view = getView(config);
+			view.initialize(1);
+			view.root = 2;
+			const revision = view.branchHistory.getHead()?.revision;
+			assert(revision !== undefined, "revision should be defined");
+
+			// Act
+			view.revertTo(revision);
+
+			// Verify
+			assert.equal(view.root, 2);
+			assert.equal(view.branchHistory.length, 2);
+		});
+
+		it("produces a commit which can be reverted", () => {
+			// Setup
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const view = getView(config);
+			view.initialize(1);
+			const revision1 = view.branchHistory.getHead()?.revision;
+			assert(revision1 !== undefined, "revision should be defined");
+			view.root = 2;
+			view.root = 3;
+
+			const revertibles: Revertible[] = [];
+			const unsubscribe = view.events.on("changed", (_, getRevertible) => {
+				if (getRevertible !== undefined) {
+					revertibles.push(getRevertible());
+				}
+			});
+
+			view.revertTo(revision1);
+			unsubscribe();
+
+			assert.equal(view.root, 1);
+			assert.equal(revertibles.length, 1);
+			assert.equal(view.branchHistory.length, 4);
+
+			// Act
+			revertibles[0]?.revert();
+
+			// Verify
+			assert.equal(view.root, 3);
+			assert.equal(view.branchHistory.length, 5);
+		});
+
+		it("throws when the revision is not on the branch", () => {
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const view = getView(config);
+			view.initialize(1);
+			const revision = view.branchHistory.getHead()?.revision;
+			assert(revision !== undefined, "revision should be defined");
+			const fork = view.fork();
+			fork.root = 2;
+			const forkRevision = fork.branchHistory.getHead()?.revision;
+			assert(forkRevision !== undefined, "revision should be defined");
+
+			assert.throws(
+				() => view.revertTo(forkRevision),
+				validateUsageError(/No commit found with revision/),
+			);
+		});
+
+		it("overwrites concurrent changes that are sequenced before it when they affect the same part of the tree", () => {
+			// Setup: two clients viewing the same tree.
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const provider = new TestTreeProviderLite(2);
+			const [treeA, treeB] = provider.trees;
+			const viewA = treeA.kernel.viewWith(config);
+			const viewB = treeB.kernel.viewWith(config);
+			viewA.initialize(1);
+			provider.synchronizeMessages();
+
+			const revision1 = viewA.branchHistory.getHead()?.revision;
+			assert(revision1 !== undefined, "revision should be defined");
+			viewA.root = 2;
+			provider.synchronizeMessages();
+
+			// Consistency check
+			assert.equal(viewA.root, 2);
+			assert.equal(viewB.root, 2);
+
+			// Act:
+			// Client B edits the root, and client A reverts back to revision1.
+			// The provider sequences ops in the order of submission, so B's edit is sequenced before A's revert.
+			viewB.root = 3;
+			viewA.revertTo(revision1);
+
+			// Both clients optimistically see their own change before sequencing.
+			assert.equal(viewA.root, 1);
+			assert.equal(viewB.root, 3);
+
+			provider.synchronizeMessages();
+
+			// Verify:
+			// Because the revert affects the same part of the tree as the concurrent change,
+			// and because it is sequenced after it, the revert overwrites the concurrent change.
+			assert.equal(viewA.root, 1);
+			assert.equal(viewB.root, 1);
+		});
+
+		it("does not overwrite concurrent changes that are sequenced before it when they affect a different part of the tree", () => {
+			// Setup: two clients viewing the same tree.
+			// Unlike the test above, this schema has two independent fields, which allows the
+			// concurrent change to target a different part of the tree than the revert does.
+			class Pair extends schema.object("Pair", {
+				foo: schema.number,
+				bar: schema.number,
+			}) {}
+			const config = new TreeViewConfiguration({ schema: Pair });
+			const provider = new TestTreeProviderLite(2);
+			const [treeA, treeB] = provider.trees;
+			const viewA = treeA.kernel.viewWith(config);
+			const viewB = treeB.kernel.viewWith(config);
+			viewA.initialize({ foo: 1, bar: 1 });
+			provider.synchronizeMessages();
+
+			const revision1 = viewA.branchHistory.getHead()?.revision;
+			assert(revision1 !== undefined, "revision should be defined");
+			viewA.root.foo = 2;
+			provider.synchronizeMessages();
+
+			// Consistency check
+			assert.deepEqual([viewA.root.foo, viewA.root.bar], [2, 1]);
+			assert.deepEqual([viewB.root.foo, viewB.root.bar], [2, 1]);
+
+			// Act:
+			// Client B edits `bar`, and client A reverts back to revision1 (which only affects `foo`).
+			// The provider sequences ops in the order of submission, so B's edit is sequenced before A's revert.
+			viewB.root.bar = 3;
+			viewA.revertTo(revision1);
+
+			// Both clients optimistically see their own change before sequencing.
+			assert.deepEqual([viewA.root.foo, viewA.root.bar], [1, 1]);
+			assert.deepEqual([viewB.root.foo, viewB.root.bar], [2, 3]);
+
+			provider.synchronizeMessages();
+
+			// Verify:
+			// The revert only affects `foo`, so the concurrent change to `bar` is preserved.
+			assert.deepEqual([viewA.root.foo, viewA.root.bar], [1, 3]);
+			assert.deepEqual([viewB.root.foo, viewB.root.bar], [1, 3]);
 		});
 	});
 });

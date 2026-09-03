@@ -7,7 +7,30 @@
 // See https://www.typescriptlang.org/docs/handbook/intro-to-js-ts.html#ts-check
 // @ts-check
 
-const tscDependsOn = ["^tsc", "^api", "build:genver", "ts2esm"];
+/**
+ * Dependencies for the "eslint" (and "eslint:fix") tasks.
+ *
+ * eslint does type-aware linting driven by the TypeScript *sources* (via projectService),
+ * so it must resolve the same imported types that tsc does.
+ *
+ * To handle test code we also depend on code generation which is either linted or used by tests.
+ *
+ * We specifically avoid depending on this package's test compilation: it is unnecessary
+ * and would slow down building individual packages by starting lint much later.
+ */
+const eslintDependsOn = [
+	"^build:package:esm",
+	"build:genver",
+	"typetests:gen",
+	// in case test code imports from package entrypoint (which is desirable)
+	"build:package:esm",
+	// legacy dependencies that are not needed for client packages, but can be for other workspaces
+	"^build:esnext",
+	"ts2esm",
+	"^tsc",
+	"^api",
+	"api",
+];
 
 // release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
 // have packages at today. Once we can upgrade to a later version of
@@ -23,7 +46,7 @@ const releaseGroupPackageJsonGlobs = [
  * The settings in this file configure the Fluid build tools, such as fluid-build and flub. Some settings apply to the
  * whole repo, while others apply only to the client release group.
  *
- * See https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-tools/src/common/fluidTaskDefinitions.ts
+ * See https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-tools/src/fluidBuild/fluidTaskDefinitions.ts
  * for details on the task and dependency definition format.
  *
  * @type {import("@fluidframework/build-tools").IFluidBuildConfig & import("@fluid-tools/build-cli").FlubConfig}
@@ -60,8 +83,15 @@ module.exports = {
 		},
 		"compile": {
 			// Note that "api" is included as "compile" intends to build a complete package
-			// and "api" generates package entrypoint files.
-			dependsOn: ["commonjs", "build:esnext", "api", "build:test", "build:copy"],
+			// and "api" generates package entrypoint files for some packages.
+			dependsOn: [
+				"commonjs",
+				"build:esnext",
+				"build:package",
+				"api",
+				"build:test",
+				"build:copy",
+			],
 			script: false,
 		},
 		"compile:esm": {
@@ -71,8 +101,8 @@ module.exports = {
 		"compile:esm:packages": {
 			// Note that "api-extractor:esnext" is included as "compile" intends
 			// to build complete packages and "api-extractor:esnext" currently
-			// generates package entrypoint files.
-			dependsOn: ["build:esnext", "api-extractor:esnext", "build:copy"],
+			// generates package entrypoint files outside of client workspace.
+			dependsOn: ["build:package:esm", "build:esnext", "api-extractor:esnext", "build:copy"],
 			script: false,
 		},
 		"commonjs": {
@@ -80,7 +110,14 @@ module.exports = {
 			script: false,
 		},
 		"lint": {
-			dependsOn: ["eslint", "good-fences", "depcruise", "check:exports", "check:release-tags"],
+			dependsOn: [
+				"check:types",
+				"eslint",
+				"good-fences",
+				"depcruise",
+				"check:exports",
+				"check:release-tags",
+			],
 			script: false,
 		},
 		"checks": {
@@ -96,34 +133,79 @@ module.exports = {
 		"layerGeneration:gen": [],
 		"typetests:gen": [],
 		"ts2esm": [],
-		"tsc": tscDependsOn,
+		"tsc": ["^tsc", "^api", "build:genver", "ts2esm"],
 		"place:cjs:package-stub": [], // no cross-package deps needed (without definition default is [^*])
+		"build:cjs": ["^build:package:cjs", "build:genver"],
+		"build:esm": ["^build:package:esm", "build:genver"],
 		"build:esnext": ["^build:esnext", "^api-extractor:esnext", "build:genver"],
+		"build:entrypoints:esm": ["build:esm"],
+		"build:entrypoints:cjs": ["build:cjs"],
+		// Aliases to depend on complete package (or ESM/CJS specific side) implementation.
+		// These will dependent on the outermost of the entrypoint generation which may just
+		// be the code build.
+		"build:package": {
+			dependsOn: ["build:package:esm", "build:package:cjs"],
+			script: false,
+		},
+		"build:package:cjs": {
+			// CJS entrypoints are off and fall to ESM default via require-esm.
+			// Continue building CJS to verify require-esm, support CJS testing,
+			// and ability to rollback entrypoint trimming without new issues
+			// sneaking in.
+			dependsOn: [
+				// keep verifying CJS buildability
+				"build:entrypoints:cjs",
+				"build:cjs",
+				// build the real requirements for require-esm that will be used.
+				"build:entrypoints:esm",
+				"build:esm",
+				"check:types:require-esm",
+			],
+			script: false,
+		},
+		"build:package:esm": {
+			dependsOn: ["build:entrypoints:esm", "build:esm", "build:copy"],
+			script: false,
+		},
 		// Generic build:test script should be replaced by :esm or :cjs specific versions.
 		// "tsc" would be nice to eliminate from here, but plenty of packages still focus
 		// on CommonJS.
-		"build:test": ["typetests:gen", "tsc", "api-extractor:commonjs", "api-extractor:esnext"],
+		"build:test": [
+			"typetests:gen",
+			"tsc",
+			"build:package:esm",
+			// "build:package:cjs" is left out intentionally here as client workspace
+			// packages are ESM first and they are only ones using build:package.
+			"api-extractor:commonjs",
+			"api-extractor:esnext",
+		],
 		"build:test:cjs": [
 			"typetests:gen",
+			"build:package:cjs",
 			"tsc",
 			"api-extractor:commonjs",
 			// depend on ancestor packages in case current package doesn't have production build (e.g. test-only packages)
+			"^build:package:cjs",
 			"^tsc",
 			"^api-extractor:commonjs",
 		],
 		"build:test:esm": [
 			"typetests:gen",
+			"build:package:esm",
 			"build:esnext",
 			"api-extractor:esnext",
 			// depend on ancestor packages in case current package doesn't have production build (e.g. test-only packages)
+			"^build:package:esm",
 			"^build:esnext",
 			"^api-extractor:esnext",
 		],
+		// At least as of 2026-08-21, no test's code uses package entrypoints; so just the ESM build is sufficient.
+		"build:test:playwright": ["build:esm"],
+		"check:types:test:playwright": ["build:esm"],
 		"api": {
 			dependsOn: [
 				"api-extractor:commonjs",
 				"api-extractor:esnext",
-				"build:entrypoints:node10",
 				// Depend on "tsc" and "build:esnext" in case there is no matching "api-extractor:*".
 				"tsc",
 				"build:esnext",
@@ -135,21 +217,64 @@ module.exports = {
 			dependsOn: ["build:esnext"],
 			script: true,
 		},
-		// build:api-reports may be handled in one step with build:docs when a
-		// package only uses api-extractor supported exports, which is a single
-		// export/entrypoint. For packages with /legacy exports, we need to
-		// generate reports from legacy entrypoint as well as the "current" one.
+		// Packages with a single API report may handle build:api-reports directly.
+		// Packages with /legacy exports generate reports from legacy and "current" entrypoints using child tasks.
 		// The "current" entrypoint should be the broadest of "public.d.ts",
 		// "beta.d.ts", and "alpha.d.ts".
-		"build:api-reports:current": ["api-extractor:esnext", "build:esnext"],
-		"build:api-reports:legacy": ["api-extractor:esnext", "build:esnext"],
-		"ci:build:api-reports:current": ["api-extractor:esnext", "build:esnext"],
-		"ci:build:api-reports:legacy": ["api-extractor:esnext", "build:esnext"],
-		// With most packages in client building ESM first, there is ideally just "build:esnext" dependency.
+		"build:api-reports": [
+			"build:package:esm",
+			"api-extractor:esnext",
+			"build:esnext",
+			// kludge: api-extractor requires tsdoc-metadata.json to be present in the package type folder
+			// to know that it can use the tsdocs in source package.
+			"^build:api-reports",
+		],
+		"build:api-reports:current": [
+			"build:package:esm",
+			"api-extractor:esnext",
+			"build:esnext",
+			// kludge: api-extractor requires tsdoc-metadata.json to be present in the package type folder
+			// to know that it can use the tsdocs in source package.
+			"^build:api-reports",
+		],
+		"build:api-reports:legacy": [
+			"build:package:esm",
+			"api-extractor:esnext",
+			"build:esnext",
+			// kludge: api-extractor requires tsdoc-metadata.json to be present in the package type folder
+			// to know that it can use the tsdocs in source package.
+			"^build:api-reports",
+		],
+		"ci:build:api-reports": [
+			"build:package:esm",
+			"api-extractor:esnext",
+			"build:esnext",
+			// kludge: api-extractor requires tsdoc-metadata.json to be present in the package type folder
+			// to know that it can use the tsdocs in source package. Under CI, these checks do the generation.
+			"^ci:build:api-reports",
+		],
+		"ci:build:api-reports:current": [
+			"build:package:esm",
+			"api-extractor:esnext",
+			"build:esnext",
+			// kludge: api-extractor requires tsdoc-metadata.json to be present in the package type folder
+			// to know that it can use the tsdocs in source package. Under CI, these checks do the generation.
+			"^ci:build:api-reports",
+		],
+		"ci:build:api-reports:legacy": [
+			"build:package:esm",
+			"api-extractor:esnext",
+			"build:esnext",
+			// kludge: api-extractor requires tsdoc-metadata.json to be present in the package type folder
+			// to know that it can use the tsdocs in source package. Under CI, these checks do the generation.
+			"^ci:build:api-reports",
+		],
+		// With most packages in client building ESM first, there is ideally just "build:esnext" and "build:package:esm" (or "api-extractor:esnext") dependencies.
 		// The package's local 'api-extractor.json' may use the entrypoint from either CJS or ESM,
-		// therefore we need to require both before running api-extractor.
-		"build:docs": ["tsc", "build:esnext"],
-		"ci:build:docs": ["tsc", "build:esnext"],
+		// therefore we need to require both before running api-extractor until other packages are
+		// updated to use ESM entrypoints or customize their build configs.
+		"build:docs": ["build:package:esm", "tsc", "build:esnext", "api-extractor:esnext"],
+		"ci:build:docs": ["build:package:esm", "tsc", "build:esnext", "api-extractor:esnext"],
 		"build:readme": {
 			dependsOn: ["compile"],
 			script: true,
@@ -159,12 +284,43 @@ module.exports = {
 			script: true,
 		},
 		"depcruise": [],
-		"check:exports": ["api"],
-		"check:exports:bundle-release-tags": ["build:esnext"],
+		// check:exports provides protection for all of the subtasks so long as
+		// they are not the specifically requested task by requiring all
+		// entrypoints to be built before any of the child tasks are run.
+		// This is done because the "check:exports:*" tasks have variable
+		// names depending on the package configuration and fluid-build does
+		// not support wildcards in task dependencies.
+		// note: these are technically missing dependency on a task that generates tsdoc-metadata.json.
+		// However different tasks are used to do that depending on run under CI or not. The metadata
+		// file is small and changes rarely so it can be checked-in in future to avoid complexity.
+		"check:exports": ["build:package", "api"],
+		"check:exports:bundle-release-tags": ["build:esm", "build:esnext"],
 		// The package's local 'api-extractor-lint.json' may use the entrypoint from either CJS or ESM,
 		// therefore we need to require both before running api-extractor.
 		"check:release-tags": ["tsc", "build:esnext"],
-		"check:are-the-types-wrong": ["tsc", "build:esnext", "api"],
+		"check:are-the-types-wrong": ["build:package", "tsc", "build:esnext", "api"],
+		// check:types is an alias for all the type-checking tasks.
+		"check:types": {
+			dependsOn: [
+				"check:types:inexactOptionalPropertyTypes",
+				"check:types:require-esm",
+				"check:types:test:playwright",
+			],
+			script: false,
+		},
+		"check:types:inexactOptionalPropertyTypes": [
+			"^build:package:esm",
+			"^build:esnext",
+			"^api-extractor:esnext",
+		],
+		// check:types:require-esm is meant to ensure that the package is require-esm
+		// compatible and can be imported by in CommonJS context. Mostly this means
+		// no top-level await. For now, we just check that the package can be compiled
+		// to CommonJS which ensures that it has no top-level await.
+		// In CommonJS build context, the CJS versions of the package's dependencies
+		// are used, so this task also ensures that the package's CommonJS support is
+		// built (which may mean its ESM build).
+		"check:types:require-esm": ["^build:package:cjs"],
 		"check:format": {
 			dependencies: [],
 			script: true,
@@ -175,17 +331,15 @@ module.exports = {
 		},
 		"check:biome": [],
 		"check:prettier": [],
-		// ADO #7297: Review why the direct dependency on 'build:esm:test' is necessary.
-		//            Should 'compile' be enough?  compile -> build:test -> build:test:esm
-		"eslint": ["compile", "build:test:esm"],
-		"eslint:fix": ["compile", "build:test:esm"],
+		"eslint": eslintDependsOn,
+		"eslint:fix": eslintDependsOn,
 		"good-fences": [],
 		"format:biome": [],
 		"format:prettier": [],
 		"prettier": [],
 		"prettier:fix": [],
-		"webpack": ["^api-extractor:esnext", "^build:esnext"],
-		"webpack:profile": ["^api-extractor:esnext", "^build:esnext"],
+		"webpack": ["^build:package:esm", "^api-extractor:esnext", "^build:esnext"],
+		"webpack:profile": ["^build:package:esm", "^api-extractor:esnext", "^build:esnext"],
 		"clean": {
 			before: ["*"],
 		},
@@ -195,12 +349,22 @@ module.exports = {
 		"test:cjs": { dependsOn: ["test:unit:cjs"], script: false },
 		"test:esm": { dependsOn: ["test:unit:esm"], script: false },
 		"test:jest": ["build:compile"],
+		"test:playwright": [
+			"build:test:playwright",
+			// In common case there is no playwright build as it generates as it runs.
+			// In those cases, depend on the implementation. Since all playwright tests
+			// are ESM focused, just depend on the ESM build.
+			"build:esm",
+			// This is not strictly a dependency as these only typecheck and don't emit,
+			// but it is best to have passing typechecks and these are fast.
+			"check:types:test:playwright",
+		],
 		"test:mocha": ["build:test"],
 		"test:mocha:cjs": ["build:test:cjs"],
 		"test:mocha:esm": ["build:test:esm"],
-		"test:unit": { dependsOn: ["test:mocha", "test:jest"], script: false },
+		"test:unit": { dependsOn: ["test:mocha", "test:jest", "test:playwright"], script: false },
 		"test:unit:cjs": { dependsOn: ["test:mocha:cjs"], script: false },
-		"test:unit:esm": { dependsOn: ["test:mocha:esm"], script: false },
+		"test:unit:esm": { dependsOn: ["test:mocha:esm", "test:playwright"], script: false },
 
 		// alias for back compat
 		"build:full": {
@@ -325,7 +489,6 @@ module.exports = {
 		// Independent packages
 		"build-common": "common/build/build-common",
 		"eslint-config-fluid": "common/build/eslint-config-fluid",
-		"eslint-plugin-fluid": "common/build/eslint-plugin-fluid",
 		"common-utils": "common/lib/common-utils",
 		"protocol-def": "common/lib/protocol-definitions",
 
@@ -347,7 +510,7 @@ module.exports = {
 			"tools/markdown-magic/test/package.json",
 
 			// Not a real package
-			"docs/api/",
+			"website/api/",
 
 			// Source to output package.json files - not real packages
 			// These should only be files that are not in an pnpm workspace.
@@ -390,7 +553,7 @@ module.exports = {
 				"server/routerlicious/packages/tinylicious/src/index.ts",
 
 				// minified DOMPurify is not a source file, so it doesn't need a header.
-				"docs/static/dompurify/purify.min.js",
+				"website/static/dompurify/purify.min.js",
 
 				// printed ESLint configs do not need headers
 				".*/.eslint-print-configs/.*",
@@ -407,6 +570,10 @@ module.exports = {
 				"experimental/PropertyDDS/.*",
 				"azure/packages/azure-local-service/index.js",
 
+				// selfhost's sub-projects are plain CommonJS npm packages (Azure Functions app,
+				// CLIs); their cross-file require() calls assume the .js extension.
+				"tools/selfhost/.*",
+
 				// These oclif packages are still CJS vs. build-infrastructure which is ESM so is not excluded here.
 				"build-tools/packages/build-cli/bin/dev.js",
 				"build-tools/packages/build-cli/bin/run.js",
@@ -416,9 +583,8 @@ module.exports = {
 				// Could be renamed, but there is tooling that uses this name and it's not worth it.
 				"common/build/build-common/gen_version.js",
 
-				// ESLint shared config and plugin
+				// ESLint shared config
 				"common/build/eslint-config-fluid/.*",
-				"common/build/eslint-plugin-fluid/.*",
 
 				"common/lib/common-utils/jest-puppeteer.config.js",
 				"common/lib/common-utils/jest.config.js",
@@ -428,9 +594,9 @@ module.exports = {
 				"^packages/.+/.mocharc.js$",
 
 				// Avoids MIME-type issues in the browser.
-				"docs/static/trusted-types-policy.js",
-				"docs/static/dompurify/purify.min.js",
-				"docs/static/js/add-code-copy-button.js",
+				"website/static/trusted-types-policy.js",
+				"website/static/dompurify/purify.min.js",
+				"website/static/js/add-code-copy-button.js",
 				"examples/data-objects/monaco/loaders/blobUrl.js",
 				"examples/data-objects/monaco/loaders/compile.js",
 				"examples/service-clients/odsp-client/shared-tree-demo/tailwind.config.js",
@@ -504,7 +670,7 @@ module.exports = {
 				// this package has a irregular build pattern, so our clean script rule doesn't apply.
 				"tools/markdown-magic/package.json",
 				// Docs directory breaks cleaning down into multiple scripts.
-				"docs/package.json",
+				"website/package.json",
 			],
 			"npm-strange-package-name": [
 				"server/gitrest/package.json",
@@ -615,7 +781,6 @@ module.exports = {
 			"@fluidframework/build-common",
 			"@fluidframework/common-utils",
 			"@fluidframework/eslint-config-fluid",
-			"@fluid-internal/eslint-plugin-fluid",
 			"@fluidframework/protocol-definitions",
 			"@fluidframework/test-tools",
 			"fluidframework-docs",

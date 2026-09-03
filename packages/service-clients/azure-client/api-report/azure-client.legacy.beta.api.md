@@ -7,30 +7,16 @@
 // @public
 export class AzureClient {
     constructor(properties: AzureClientProps);
-    createContainer<const TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema, minVersionForCollab: MinimumVersionForCollab): Promise<{
+    createContainer<const TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema, oldestSupportedClient: OldestSupportedClientVersion): Promise<{
         container: IFluidContainer<TContainerSchema>;
         services: AzureContainerServices;
     }>;
-    // @deprecated
-    createContainer<const TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema, compatibilityMode: CompatibilityMode): Promise<{
-        container: IFluidContainer<TContainerSchema>;
-        services: AzureContainerServices;
-    }>;
-    getContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, minVersionForCollab: MinimumVersionForCollab): Promise<{
-        container: IFluidContainer<TContainerSchema>;
-        services: AzureContainerServices;
-    }>;
-    // @deprecated
-    getContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, compatibilityMode: CompatibilityMode): Promise<{
+    getContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, oldestSupportedClient: OldestSupportedClientVersion): Promise<{
         container: IFluidContainer<TContainerSchema>;
         services: AzureContainerServices;
     }>;
     getContainerVersions(id: string, options?: AzureGetVersionsOptions): Promise<AzureContainerVersion[]>;
-    viewContainerVersion<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, version: AzureContainerVersion, minVersionForCollab: MinimumVersionForCollab): Promise<{
-        container: IFluidContainer<TContainerSchema>;
-    }>;
-    // @deprecated
-    viewContainerVersion<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, version: AzureContainerVersion, compatibilityMode: CompatibilityMode): Promise<{
+    viewContainerVersion<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, version: AzureContainerVersion, oldestSupportedClient: OldestSupportedClientVersion): Promise<{
         container: IFluidContainer<TContainerSchema>;
     }>;
 }
@@ -87,9 +73,6 @@ export interface AzureRemoteConnectionConfig extends AzureConnectionConfig {
     type: "remote";
 }
 
-// @public @deprecated
-export type CompatibilityMode = "1" | "2";
-
 // @public
 export type IAzureAudience = IServiceAudience<AzureMember>;
 
@@ -101,10 +84,10 @@ export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
     eventName: string;
 }
 
-// @public
+// @public @input
 export interface ITelemetryBaseLogger {
-    minLogLevel?: LogLevel;
-    send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
+    minLogLevel?: LogLevel | undefined;
+    send(event: ITelemetryBaseEvent, logLevel: LogLevel): void;
 }
 
 // @public
@@ -124,5 +107,8 @@ export interface ITokenResponse {
 export interface IUser {
     id: string;
 }
+
+// @public @input
+export type OldestSupportedClientVersion = `3.${bigint}.0` | `2.${bigint}.${bigint}`;
 
 ```

@@ -27,14 +27,13 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import type {
 	IFluidDataStoreRegistry,
-	MinimumVersionForCollab,
+	OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { defaultRuntimeOptionsForMinVersion } from "./compatibilityConfiguration.js";
 import type {
-	// eslint-disable-next-line import-x/no-deprecated
-	CompatibilityMode,
 	IRootDataObject,
 	IStaticEntryPoint,
 	LoadableObjectKind,
@@ -48,7 +47,6 @@ import {
 	isSharedObjectKind,
 	makeFluidObject,
 	parseDataObjectsFromSharedObjects,
-	resolveCompatibilityModeToMinVersionForCollab,
 } from "./utils.js";
 
 /**
@@ -138,7 +136,7 @@ class TreeContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 	public constructor(
 		treeRootDataObjectFactory: TreeDataObjectFactory<TreeRootDataObject>,
 		config: {
-			minVersionForCollab: MinimumVersionForCollab;
+			minVersionForCollab: OldestSupportedClientVersion;
 			runtimeOptions?: Partial<IContainerRuntimeOptions>;
 		},
 	) {
@@ -149,7 +147,7 @@ class TreeContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 				...config.runtimeOptions,
 			},
 			provideEntryPoint,
-			minVersionForCollab: config.minVersionForCollab,
+			oldestSupportedClient: config.minVersionForCollab,
 		});
 		this.#treeRootDataObjectFactory = treeRootDataObjectFactory;
 	}
@@ -209,10 +207,14 @@ export function createTreeContainerRuntimeFactory(props: {
 	readonly schema: TreeContainerSchema;
 
 	/**
-	 * Minimum Fluid Framework version required for collaboration as a
-	 * {@link @fluidframework/runtime-definitions#MinimumVersionForCollab} SemVer string.
+	 * Oldest Fluid Framework client version that must be able to open and process documents written
+	 * by this runtime.
+	 *
+	 * @remarks
+	 * Choosing an older version may limit the features and write formats the application can use to
+	 * those supported by that version.
 	 */
-	readonly minVersionForCollaboration: MinimumVersionForCollab;
+	readonly oldestSupportedClient: OldestSupportedClientVersion;
 	/**
 	 * Optional registry of data stores to pass to the DataObject factory.
 	 * If not provided, one will be created based on the schema.
@@ -220,7 +222,7 @@ export function createTreeContainerRuntimeFactory(props: {
 	readonly rootDataStoreRegistry?: IFluidDataStoreRegistry;
 	/**
 	 * Optional overrides for the container runtime options.
-	 * If not provided, only the default options for the given minVersionForCollaboration will be used.
+	 * If not provided, only the default options for the given `oldestSupportedClient` will be used.
 	 */
 	readonly runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
 }): IRuntimeFactory;
@@ -232,9 +234,10 @@ export function createTreeContainerRuntimeFactory(props: {
  * @remarks
  * The entry point is opaque to caller.
  * The root data object's registry and shared objects are configured based on the provided
- * SharedTree and optional data store registry.
+ * SharedTree and optionally data store registry.
  *
- * @deprecated Pass `minVersionForCollaboration` directly instead of using `compatibilityMode`.
+ * @deprecated 2.116.0. To be removed in 3.10.0. Pass `oldestSupportedClient` instead.
+ * See {@link https://github.com/microsoft/FluidFramework/issues/27851} for context.
  *
  * @legacy @beta
  */
@@ -245,10 +248,10 @@ export function createTreeContainerRuntimeFactory(props: {
 	readonly schema: TreeContainerSchema;
 
 	/**
-	 * Legacy compatibility mode for the container.
+	 * Minimum Fluid Framework version required for collaboration as an
+	 * {@link @fluidframework/runtime-definitions#OldestSupportedClientVersion} SemVer string.
 	 */
-	// eslint-disable-next-line import-x/no-deprecated
-	readonly compatibilityMode: CompatibilityMode;
+	readonly minVersionForCollaboration: OldestSupportedClientVersion;
 	/**
 	 * Optional registry of data stores to pass to the DataObject factory.
 	 * If not provided, one will be created based on the schema.
@@ -256,49 +259,39 @@ export function createTreeContainerRuntimeFactory(props: {
 	readonly rootDataStoreRegistry?: IFluidDataStoreRegistry;
 	/**
 	 * Optional overrides for the container runtime options.
-	 * If not provided, only the default options for the given compatibilityMode will be used.
+	 * If not provided, only the default options for the given `minVersionForCollaboration` will be
+	 * used.
 	 */
 	readonly runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
-	/**
-	 * Optional override for minimum version for collaboration.
-	 * @remarks
-	 * If not provided, the default for the given compatibilityMode will be used.
-	 * Rather than defining this, omit `compatibilityMode` and pass `minVersionForCollaboration` directly.
-	 */
-	readonly minVersionForCollabOverride?: MinimumVersionForCollab;
 }): IRuntimeFactory;
 
 // Implementation
 export function createTreeContainerRuntimeFactory(props: {
 	readonly schema: TreeContainerSchema;
-	// eslint-disable-next-line import-x/no-deprecated
-	readonly compatibilityMode?: CompatibilityMode;
-	readonly minVersionForCollaboration?: MinimumVersionForCollab;
+	readonly minVersionForCollaboration?: OldestSupportedClientVersion;
+	readonly oldestSupportedClient?: OldestSupportedClientVersion;
 	readonly rootDataStoreRegistry?: IFluidDataStoreRegistry;
 	readonly runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
-	readonly minVersionForCollabOverride?: MinimumVersionForCollab;
 }): IRuntimeFactory {
 	const {
-		compatibilityMode,
 		minVersionForCollaboration,
-		minVersionForCollabOverride,
+		oldestSupportedClient,
 		rootDataStoreRegistry,
 		runtimeOptionOverrides,
 		schema,
 	} = props;
 
-	let minVersionForCollab: MinimumVersionForCollab;
-	if (minVersionForCollaboration !== undefined) {
-		minVersionForCollab = minVersionForCollaboration;
-	} else if (compatibilityMode === undefined) {
-		throw new Error(
-			"Either minVersionForCollaboration or compatibilityMode (deprecated) must be provided.",
+	const specifiedVersionOptions = [minVersionForCollaboration, oldestSupportedClient].filter(
+		(value) => value !== undefined,
+	).length;
+	if (specifiedVersionOptions !== 1) {
+		throw new UsageError(
+			"Specify exactly one of oldestSupportedClient or minVersionForCollaboration (deprecated).",
 		);
-	} else {
-		minVersionForCollab =
-			minVersionForCollabOverride ??
-			resolveCompatibilityModeToMinVersionForCollab(compatibilityMode);
 	}
+
+	const minVersionForCollab = oldestSupportedClient ?? minVersionForCollaboration;
+	assert(minVersionForCollab !== undefined, "A supported client version must be defined");
 
 	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
 	const registry = rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);

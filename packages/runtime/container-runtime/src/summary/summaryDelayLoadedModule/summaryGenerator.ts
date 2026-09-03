@@ -11,8 +11,8 @@ import { getRetryDelaySecondsFromError } from "@fluidframework/driver-utils/inte
 import { TelemetryContext } from "@fluidframework/runtime-utils/internal";
 import {
 	isFluidError,
-	type TelemetryLoggerExt,
 	PerformanceEvent,
+	type TelemetryLoggerExt,
 	wrapError,
 } from "@fluidframework/telemetry-utils/internal";
 

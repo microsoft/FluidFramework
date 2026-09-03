@@ -8,9 +8,11 @@
  *
  * Run this script after:
  * - A Fluid Framework version bump as part of the release process
- * - A new compatibility checkpoint is designated
+ * - Any change to `src/checkpoints.ts` (e.g. designating a new compatibility
+ *   checkpoint, correcting a date, or adjusting a future estimate), since step 7
+ *   regenerates the `CompatibilityCheckpoints.md` table from that file
  *
- *   pnpm run update-compat-versions
+ *   pnpm -r --filter @fluid-private/test-version-utils run update-compat-versions
  *
  * The script:
  *   1. Reads the current package version from `src/packageVersion.ts`.
@@ -46,6 +48,7 @@ import * as path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { findGitRootSync } from "@fluid-tools/build-infrastructure";
+import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import * as semver from "semver";
 
 // Re-use version arithmetic and package list from the main source to keep them in sync.
@@ -217,7 +220,13 @@ async function main(): Promise<void> {
 	// Used to ensure versions are only installed once across all types of compat testing.
 	// `oldestCompatibleVersion` is added at the start to ensure it is installed.
 	const seenVersions = new Set<string>([oldestCompatibleVersion]);
-	for (const checkpoint of getInWindowPriorCheckpoints(currentCheckpoint)) {
+	// The current checkpoint is included (first) so its lower-bound version is installed for
+	// the cross-client matrix (current build vs. current checkpoint lower bound). The prior
+	// in-window checkpoints follow.
+	for (const checkpoint of [
+		currentCheckpoint,
+		...getInWindowPriorCheckpoints(currentCheckpoint, lowestMinVersionForCollab),
+	]) {
 		const range = checkpointResolutionRange(checkpoint);
 		// Unlike the back-compat deltas below, designated checkpoints are expected to always
 		// resolve to a published version, so we let resolveRangeViaRegistry throw to surface a

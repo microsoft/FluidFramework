@@ -23,9 +23,9 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import { addBlobToSummary } from "@fluidframework/runtime-utils/internal";
 import {
-	type TelemetryLoggerExt,
 	DataCorruptionError,
 	tagCodeArtifacts,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { ChannelDeltaConnection } from "./channelDeltaConnection.js";

@@ -86,9 +86,6 @@
 			// Generated oclif manifest files
 			"!**/oclif.manifest.json",
 
-			// es5 build output
-			"!**/packages/framework/data-object-base/es5",
-
 			// Test coverage reports
 			"!**/coverage/**/*",
 			"!**/nyc/**/*",
@@ -127,7 +124,7 @@
 			// Paths below are outside the client release group and aren't configured for biome.
 			"!**/common/build/**",
 			"!**/common/lib/**",
-			"!**/docs/**",
+			"!**/website/**",
 			"!**/server/**",
 			"!**/tools/benchmark/**",
 			"!**/tools/getkeys/**",

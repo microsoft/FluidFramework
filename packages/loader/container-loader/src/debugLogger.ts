@@ -10,11 +10,11 @@ import type {
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
 import {
-	type TelemetryLoggerExt,
-	type ITelemetryLoggerPropertyBags,
 	createMultiSinkLogger,
 	eventNamespaceSeparator,
 	formatTick,
+	type ITelemetryLoggerPropertyBags,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 // This import style is necessary to ensure the emitted JS code works in both CJS and ESM.
 import debugPkg from "debug";
@@ -25,46 +25,8 @@ const { debug: registerDebug } = debugPkg;
 /**
  * Implementation of debug logger
  */
-export class DebugLogger implements ITelemetryBaseLogger {
-	/**
-	 * Mix in debug logger with another logger.
-	 * Returned logger will output events to both newly created debug logger, as well as base logger
-	 * @param namespace - Telemetry event name prefix to add to all events
-	 * @param properties - Base properties to add to all events
-	 * @param propertyGetters - Getters to add additional properties to all events
-	 * @param baseLogger - Base logger to output events (in addition to debug logger being created). Can be undefined.
-	 */
-	public static mixinDebugLogger(
-		namespace: string,
-		baseLogger?: ITelemetryBaseLogger,
-		properties?: ITelemetryLoggerPropertyBags,
-	): TelemetryLoggerExt {
-		// Setup base logger upfront, such that host can disable it (if needed)
-		const debug = registerDebug(namespace);
-
-		// Create one for errors that is always enabled
-		// It can be silenced by replacing console.error if the debug namespace is not enabled.
-		const debugErr = registerDebug(namespace);
-		debugErr.log = function (...args: unknown[]): void {
-			if (debug.enabled === true) {
-				// if the namespace is enabled, just use the default logger
-				registerDebug.log(...args);
-			} else {
-				// other wise, use the console logger (which could be replaced and silenced)
-				console.error(...args);
-			}
-		};
-		debugErr.enabled = true;
-
-		return createMultiSinkLogger({
-			namespace,
-			loggers: [baseLogger, new DebugLogger(debug, debugErr)],
-			properties,
-			tryInheritProperties: true,
-		});
-	}
-
-	private constructor(
+class DebugLogger implements ITelemetryBaseLogger {
+	public constructor(
 		private readonly debug: IDebugger,
 		private readonly debugErr: IDebugger,
 	) {}
@@ -118,4 +80,41 @@ export class DebugLogger implements ITelemetryBaseLogger {
 		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		logger(`${name} ${payload} ${tick} ${stack}`);
 	}
+}
+
+/**
+ * Mix in debug logger with another logger.
+ * Returned logger will output events to both newly created debug logger, as well as base logger
+ * @param namespace - Telemetry event name prefix to add to all events
+ * @param baseLogger - Base logger to output events (in addition to debug logger being created). Can be undefined.
+ * @param properties - Base properties to add to all events
+ */
+export function mixinDebugLogger(
+	namespace: string,
+	baseLogger?: ITelemetryBaseLogger,
+	properties?: ITelemetryLoggerPropertyBags,
+): TelemetryLoggerExt {
+	// Setup base logger upfront, such that host can disable it (if needed)
+	const debug = registerDebug(namespace);
+
+	// Create one for errors that is always enabled
+	// It can be silenced by replacing console.error if the debug namespace is not enabled.
+	const debugErr = registerDebug(namespace);
+	debugErr.log = function (...args: unknown[]): void {
+		if (debug.enabled === true) {
+			// if the namespace is enabled, just use the default logger
+			registerDebug.log(...args);
+		} else {
+			// other wise, use the console logger (which could be replaced and silenced)
+			console.error(...args);
+		}
+	};
+	debugErr.enabled = true;
+
+	return createMultiSinkLogger({
+		namespace,
+		loggers: [baseLogger, new DebugLogger(debug, debugErr)],
+		properties,
+		tryInheritProperties: true,
+	});
 }

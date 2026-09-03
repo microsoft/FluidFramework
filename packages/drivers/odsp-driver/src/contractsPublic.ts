@@ -11,10 +11,10 @@ import type { IOdspUrlParts } from "@fluidframework/odsp-driver-definitions/inte
  */
 export interface OdspFluidDataStoreLocator extends IOdspUrlParts {
 	dataStorePath: string;
-	appName?: string;
-	containerPackageName?: string;
-	fileVersion?: string;
-	context?: string;
+	appName?: string | undefined;
+	containerPackageName?: string | undefined;
+	fileVersion?: string | undefined;
+	context?: string | undefined;
 }
 
 /**

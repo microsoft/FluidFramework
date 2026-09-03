@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
+import {
+	AnyUint8ArrayToArrayBuffer,
+	Uint8ArrayToString,
+	stringToBuffer,
+} from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	type ISummaryBlob,
@@ -19,8 +23,8 @@ import {
 } from "@fluidframework/driver-utils/internal";
 import type { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	type TelemetryLoggerExt,
 	PerformanceEvent,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -87,7 +91,7 @@ function convertCreateNewSummaryTreeToTreeAndBlobsCore(
 				const contentBuffer =
 					typeof summaryObject.content === "string"
 						? stringToBuffer(summaryObject.content, "utf8")
-						: summaryObject.content;
+						: AnyUint8ArrayToArrayBuffer(summaryObject.content);
 				const blobId = uuid();
 				treeNode.blobs[key] = blobId;
 				blobs.set(blobId, contentBuffer);

@@ -6,6 +6,7 @@
 		"types": ["mocha", "node"],
 		"declaration": false,
 		"declarationMap": false,
+		"exactOptionalPropertyTypes": true,
 	},
 	"include": ["./**/*"],
 	"references": [

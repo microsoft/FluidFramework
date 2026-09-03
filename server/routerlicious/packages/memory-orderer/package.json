@@ -11,9 +11,6 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"main": "dist/index.js",
-	"browser": {
-		"moniker": "@fluidframework/server-services-client/dist/generateNames.js"
-	},
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "npm run build:genver && concurrently npm:build:compile npm:lint",
@@ -84,7 +81,7 @@
 		"@types/mocha": "^10.0.1",
 		"@types/ws": "^6.0.1",
 		"c8": "^10.1.3",
-		"concurrently": "^9.2.1",
+		"concurrently": "^10.0.3",
 		"eslint": "~8.57.0",
 		"mocha": "^10.8.2",
 		"prettier": "~3.0.3",
@@ -94,6 +91,9 @@
 	},
 	"typeValidation": {
 		"broken": {
+			"Class_LocalOrderer": {
+				"forwardCompat": false
+			},
 			"Class_WebSocketSubscriber": {
 				"forwardCompat": false
 			},

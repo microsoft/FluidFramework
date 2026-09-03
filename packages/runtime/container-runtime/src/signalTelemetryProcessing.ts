@@ -5,8 +5,8 @@
 
 import type { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import type {
-	TelemetryLoggerExt,
 	TelemetryEventPropertyTypeExt,
+	TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 const defaultTelemetrySignalSampleCount = 100;

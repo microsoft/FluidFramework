@@ -5,14 +5,18 @@
 
 import { type ICodecFamily, type IJsonCodec, makeCodecFamily } from "../../codec/index.js";
 
-import type { FieldChangeEncodingContext } from "./fieldChangeHandler.js";
+import type {
+	FieldChangeEncodingContext,
+	FieldChangeDecodingContext,
+} from "./fieldChangeHandler.js";
 import { EncodedGenericChangeset } from "./genericFieldKindFormat.js";
 import { newGenericChangeset, type GenericChangeset } from "./genericFieldKindTypes.js";
 import { EncodedNodeChangeset } from "./modularChangeFormatV1.js";
 
 export function makeGenericChangeCodec(): ICodecFamily<
 	GenericChangeset,
-	FieldChangeEncodingContext
+	FieldChangeEncodingContext,
+	FieldChangeDecodingContext
 > {
 	return makeCodecFamily([[1, makeV1Codec()]]);
 }
@@ -21,7 +25,8 @@ function makeV1Codec(): IJsonCodec<
 	GenericChangeset,
 	EncodedGenericChangeset,
 	EncodedGenericChangeset,
-	FieldChangeEncodingContext
+	FieldChangeEncodingContext,
+	FieldChangeDecodingContext
 > {
 	return {
 		encode: (
@@ -35,7 +40,7 @@ function makeV1Codec(): IJsonCodec<
 		},
 		decode: (
 			encoded: EncodedGenericChangeset,
-			context: FieldChangeEncodingContext,
+			context: FieldChangeDecodingContext,
 		): GenericChangeset => {
 			return newGenericChangeset(
 				encoded.map(([index, nodeChange]) => [index, context.decodeNode(nodeChange)]),

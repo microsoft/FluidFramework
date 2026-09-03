@@ -140,6 +140,7 @@ describe("Error Logging", () => {
 		it("Ensure backwards compatibility", () => {
 			// The values of the enum should never change (even if the keys are renamed)
 			assert(TelemetryDataTag.CodeArtifact === ("CodeArtifact" as TelemetryDataTag));
+			assert(TelemetryDataTag.SchemaArtifact === ("SchemaArtifact" as TelemetryDataTag));
 			assert(TelemetryDataTag.UserData === ("UserData" as TelemetryDataTag));
 		});
 	});

@@ -84,8 +84,19 @@ export function extractTelemetryLoggerExt<
 export enum TelemetryDataTag {
 	/**
 	 * Data containing terms or IDs from code packages that may have been dynamically loaded
+	 *
+	 * @remarks
+	 * For identifiers or other metadata derived from a DDS's schema (e.g. SharedTree schema
+	 * identifiers), use {@link TelemetryDataTag.SchemaArtifact} instead.
 	 */
 	CodeArtifact = "CodeArtifact",
+	/**
+	 * Data containing identifiers or other metadata from a DDS's schema (e.g. SharedTree schema
+	 * identifiers) that may have been dynamically defined by application code.
+	 * @remarks
+	 * Note: only log schema artifacts that do not contain user data, or that have been sanitized to remove user data.
+	 */
+	SchemaArtifact = "SchemaArtifact",
 	/**
 	 * Personal data of a variety of classifications that pertains to the user
 	 */
@@ -216,6 +227,7 @@ export abstract class TelemetryLogger implements TelemetryLoggerExt {
 	 * Send an event with the logger
 	 *
 	 * @param event - the event to send
+	 * @param logLevel - the level of the log to filter out logs based on.
 	 */
 	public abstract send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
 
@@ -376,7 +388,7 @@ function toEitherTelemetryLoggerExt(
  * exactly an {@link ITelemetryLoggerExt}.
  */
 export function createChildLogger(props?: {
-	logger?: ITelemetryBaseLogger;
+	logger?: ITelemetryBaseLogger | undefined;
 	namespace?: string;
 	properties?: ITelemetryLoggerPropertyBags;
 }): TelemetryLoggerExt & ITelemetryLoggerExt {
@@ -399,8 +411,8 @@ export class ChildLogger extends TelemetryLogger {
 	 * @param properties - Base properties to add to all events
 	 */
 	public static create(
-		baseLogger?: ITelemetryBaseLogger,
-		namespace?: string,
+		baseLogger: ITelemetryBaseLogger | undefined,
+		namespace: string | undefined,
 		properties?: ITelemetryLoggerPropertyBags,
 	): TelemetryLogger {
 		// if we are creating a child of a child, rather than nest, which will increase
@@ -474,6 +486,7 @@ export class ChildLogger extends TelemetryLogger {
 	 * Send an event with the logger
 	 *
 	 * @param event - the event to send
+	 * @param logLevel - the level of the log
 	 */
 	public send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
 		if (this.shouldFilterOutEvent(event, logLevel)) {
@@ -598,6 +611,7 @@ export class MultiSinkLogger extends TelemetryLogger {
 	 * Send an event to the loggers
 	 *
 	 * @param event - the event to send to all the registered logger
+	 * @param logLevel - the level of the log
 	 */
 	public send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
 		const newEvent = this.prepareEvent(event);
@@ -751,9 +765,9 @@ export class PerformanceEvent {
 		return performanceNow() - this.startTime;
 	}
 
-	private event?: ITelemetryGenericEventExt;
+	private event: ITelemetryGenericEventExt | undefined;
 	private readonly startTime = performanceNow();
-	private startMark?: string;
+	private startMark: string | undefined;
 
 	private constructor(
 		private readonly logger: TelemetryLoggerExt,
@@ -1021,6 +1035,9 @@ export const tagData = <
  * It supports properties of type {@link @fluidframework/core-interfaces#TelemetryBaseEventPropertyType},
  * as well as callbacks that return that type.
  *
+ * Note: for identifiers or other metadata derived from a DDS's schema (e.g. SharedTree schema
+ * identifiers), use {@link tagSchemaArtifacts} instead.
+ *
  * @example Sample usage
  * ```typescript
  * {
@@ -1055,3 +1072,47 @@ export const tagCodeArtifacts = <
 					})
 		| (T[P] extends undefined ? undefined : never);
 } => tagData<TelemetryDataTag.CodeArtifact, T>(TelemetryDataTag.CodeArtifact, values);
+
+/**
+ * Tags all provided `values` as {@link TelemetryDataTag.SchemaArtifact}.
+ *
+ * @param values - The values to be tagged.
+ *
+ * @remarks
+ * It supports properties of type {@link @fluidframework/core-interfaces#TelemetryBaseEventPropertyType},
+ * as well as callbacks that return that type.
+ *
+ * @example Sample usage
+ * ```typescript
+ * {
+ * 	// ...Other properties being added to a telemetry event
+ * 	...tagSchemaArtifacts({ nodeType: node.type }),
+ * 	// ...
+ * }
+ * ```
+ * This will result in `foo` and `bar` added to the event with their values tagged as {@link TelemetryDataTag.SchemaArtifact}.
+ *
+ * @see {@link tagData}
+ *
+ * @internal
+ */
+export const tagSchemaArtifacts = <
+	T extends Record<
+		string,
+		TelemetryBaseEventPropertyType | (() => TelemetryBaseEventPropertyType)
+	>,
+>(
+	values: T,
+): {
+	[P in keyof T]:
+		| (T[P] extends () => TelemetryBaseEventPropertyType
+				? () => {
+						value: ReturnType<T[P]>;
+						tag: TelemetryDataTag.SchemaArtifact;
+					}
+				: {
+						value: Exclude<T[P], undefined>;
+						tag: TelemetryDataTag.SchemaArtifact;
+					})
+		| (T[P] extends undefined ? undefined : never);
+} => tagData<TelemetryDataTag.SchemaArtifact, T>(TelemetryDataTag.SchemaArtifact, values);
