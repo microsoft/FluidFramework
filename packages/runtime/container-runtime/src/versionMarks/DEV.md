@@ -253,6 +253,7 @@ supplied sequence number and server timestamp.
 
 `resolve(batchId, sequenceNumberLowerBound)` performs:
 
+1. Enable tracking so inbound batches are recorded from here on (see [Tracking gate](#tracking-gate-istracking)).
 1. Look up `batchId` in the session map. A hit immediately returns `resolved` and never consults storage.
 1. Call `getHistoricalOpReader` on a miss. If no reader is available, return `pending`.
 1. Set `from = sequenceNumberLowerBound`, create a fresh unpacker, and create an `AbortController`.
@@ -501,7 +502,9 @@ Per-inbound-batch work (deriving the batch identity and populating the map/notif
 mirrors #22497, which gated `DuplicateBatchDetector` on offline load being enabled even though its cost was small —
 there is no reason to pay a predictable per-batch cost for a feature that can't do anything. Tracking flips on (and
 stays on) the first time the feature is actually used this session: a **pending** `sealAndCaptureVersionMark()` (a
-resolved capture needs no tracking) or an `onBatchSequenced` subscription. The runtime reads
+resolved capture needs no tracking), an `onBatchSequenced` subscription, or a `resolve()` call. `resolve()` enables it
+up front so that a batch which sequences during the history scan (or live, in the no-reader case) is recorded and can be
+recovered by the post-scan session-map recheck, even when the caller never captured or subscribed. The runtime reads
 `versionMarkResolverInternal.isTracking` and skips the whole update block while it is false. A batch in flight at the
 moment tracking flips on may be missed, which is harmless: an app's own captured mark is for a not-yet-sequenced edit
 (tracked once it lands), and cross-session resolution uses the history scan regardless.

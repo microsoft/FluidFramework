@@ -205,6 +205,9 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 		sequenceNumberLowerBound: number,
 	): Promise<ResolveResult> {
 		const startTime = Date.now();
+		// Track from here so inbound batches are recorded even without a prior capture/subscribe; otherwise
+		// a batch sequencing during the scan (or live, in the no-reader case) is skipped and unrecoverable.
+		this.tracking = true;
 		// Defaults cover the throw path (only the history scan can throw — e.g. an unpacker
 		// DataCorruptionError or the 0xd1c reader-contract assert): the Resolve event still fires via
 		// `finally`, with outcome "error".

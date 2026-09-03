@@ -291,6 +291,14 @@ describe("VersionMarkResolver", () => {
 			resolver.onBatchSequenced(() => {});
 			assert.equal(resolver.isTracking, true);
 		});
+
+		it("starts tracking after resolve(), even without a prior capture or subscription", async () => {
+			// resolve() must enable tracking so the runtime records a batch that sequences during the scan.
+			const resolver = makeResolver();
+			assert.equal(resolver.isTracking, false);
+			await resolver.resolve("client_[1]", 0);
+			assert.equal(resolver.isTracking, true);
+		});
 	});
 
 	describe("resolve - in-session fast path", () => {
