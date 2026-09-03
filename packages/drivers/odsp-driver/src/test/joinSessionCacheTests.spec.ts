@@ -63,12 +63,17 @@ describe("expose joinSessionInfo Tests", () => {
 		});
 		const service = await odspDocumentServiceFactory.createDocumentService(odspResolvedUrl);
 		assert(service.driverStatePersistence !== undefined);
-		service.driverStatePersistence.set({ epoch: "epoch1" });
-		service.driverStatePersistence.set({ epoch: "epoch1" });
-		assert.deepStrictEqual(service.driverStatePersistence.get(), { epoch: "epoch1" });
+		const driverState = { documentId: odspResolvedUrl.hashedDocumentId, epoch: "epoch1" };
+		service.driverStatePersistence.set(driverState);
+		service.driverStatePersistence.set(driverState);
+		assert.deepStrictEqual(service.driverStatePersistence.get(), driverState);
 		assert.throws(
-			() => service.driverStatePersistence?.set({ epoch: "epoch2" }),
+			() => service.driverStatePersistence?.set({ ...driverState, epoch: "epoch2" }),
 			/ODSP driver state epoch does not match the current epoch/,
+		);
+		assert.throws(
+			() => service.driverStatePersistence?.set({ ...driverState, documentId: "other" }),
+			/ODSP driver state belongs to a different document/,
 		);
 	});
 

@@ -170,7 +170,9 @@ export class OdspDocumentService
 	public readonly driverStatePersistence = {
 		get: (): Record<string, unknown> | undefined => {
 			const epoch = this.epochTracker.fluidEpoch;
-			return epoch === undefined ? undefined : { epoch };
+			return epoch === undefined
+				? undefined
+				: { documentId: this.odspResolvedUrl.hashedDocumentId, epoch };
 		},
 		set: (state: unknown): void => {
 			if (
@@ -178,9 +180,14 @@ export class OdspDocumentService
 				state === null ||
 				Array.isArray(state) ||
 				!("epoch" in state) ||
-				typeof state.epoch !== "string"
+				typeof state.epoch !== "string" ||
+				!("documentId" in state) ||
+				typeof state.documentId !== "string"
 			) {
-				throw new UsageError("ODSP driver state must contain an epoch string");
+				throw new UsageError("ODSP driver state must contain epoch and document ID strings");
+			}
+			if (state.documentId !== this.odspResolvedUrl.hashedDocumentId) {
+				throw new UsageError("ODSP driver state belongs to a different document");
 			}
 			const currentEpoch = this.epochTracker.fluidEpoch;
 			if (currentEpoch === state.epoch) {

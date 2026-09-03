@@ -97,6 +97,9 @@ class FrozenDocumentService
 	// called more than once — we cannot assume the Container holds a single instance.
 	private readonly storageServices = new Set<FrozenDocumentStorageService>();
 	private driverState: unknown;
+	public readonly driverStatePersistence?: NonNullable<
+		IDocumentService["driverStatePersistence"]
+	>;
 
 	constructor(
 		public readonly resolvedUrl: IResolvedUrl,
@@ -117,19 +120,20 @@ class FrozenDocumentService
 		// indistinguishable from a normal container at the policies layer; downstream behavior
 		// flows through the live `WritableFrozenDeltaStream` instead.
 		this.policies = readOnly ? { storageOnly: true } : {};
+		const innerPersistence = this.documentService?.driverStatePersistence;
+		if (this.documentService === undefined || innerPersistence !== undefined) {
+			this.driverStatePersistence = {
+				get: () =>
+					innerPersistence === undefined ? this.driverState : innerPersistence.get(),
+				set: (state) => {
+					this.driverState = state;
+					innerPersistence?.set(state);
+				},
+			};
+		}
 	}
 
 	public readonly policies: IDocumentServicePolicies;
-	public readonly driverStatePersistence = {
-		get: (): unknown =>
-			this.documentService?.driverStatePersistence === undefined
-				? this.driverState
-				: this.documentService.driverStatePersistence.get(),
-		set: (state: unknown): void => {
-			this.driverState = state;
-			this.documentService?.driverStatePersistence?.set(state);
-		},
-	};
 	async connectToStorage(): Promise<IDocumentStorageService> {
 		const storage = new FrozenDocumentStorageService(
 			this.readOnly,

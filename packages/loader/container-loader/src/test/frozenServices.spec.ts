@@ -212,6 +212,25 @@ describe("FrozenDocumentService driver state", () => {
 		innerState = { epoch: "live" };
 		assert.deepStrictEqual(service.driverStatePersistence?.get(), innerState);
 	});
+
+	it("does not expose persistence when the inner service cannot validate state", async () => {
+		const innerService = {
+			resolvedUrl: fakeUrl,
+			policies: {},
+		} as unknown as IDocumentService;
+		const innerFactory: IDocumentServiceFactory = {
+			createDocumentService: async () => innerService,
+			createContainer: async () => {
+				throw new Error("not used in this test");
+			},
+		};
+		const service = await new FrozenDocumentServiceFactory(
+			false,
+			innerFactory,
+		).createDocumentService(fakeUrl);
+
+		assert.strictEqual(service.driverStatePersistence, undefined);
+	});
 });
 
 describe("FrozenDocumentService disposal", () => {

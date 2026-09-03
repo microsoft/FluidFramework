@@ -237,10 +237,11 @@ describe("DisableLoadConnectionRetries", () => {
 		return error;
 	}
 
-	it("restores driver state before connecting and propagates restoration errors", async () => {
+	it("delegates identity validation and restores driver state before connecting", async () => {
 		const driverState = { epoch: "epoch1" };
 		let restored = false;
 		let shouldThrowRestoreError = false;
+		let supportsDriverStatePersistence = true;
 		const restoreError = new Error("invalid driver state");
 		let connectionAttempts = 0;
 		const disposalErrors: unknown[] = [];
@@ -253,16 +254,18 @@ describe("DisableLoadConnectionRetries", () => {
 				failSometimeProxy<IDocumentService>({
 					policies: {},
 					resolvedUrl,
-					driverStatePersistence: {
-						get: () => undefined,
-						set: (state) => {
-							assert.deepStrictEqual(state, driverState);
-							if (shouldThrowRestoreError) {
-								throw restoreError;
+					driverStatePersistence: supportsDriverStatePersistence
+						? {
+								get: () => undefined,
+								set: (state) => {
+									assert.deepStrictEqual(state, driverState);
+									if (shouldThrowRestoreError) {
+										throw restoreError;
+									}
+									restored = true;
+								},
 							}
-							restored = true;
-						},
-					},
+						: AbsentProperty,
 					connectToStorage: async () => {
 						connectionAttempts++;
 						assert(restored, "Driver state must be restored before connecting to storage");
@@ -281,15 +284,16 @@ describe("DisableLoadConnectionRetries", () => {
 			documentServiceFactory,
 			urlResolver,
 		});
-		const pendingState = JSON.stringify({
+		const pendingStateData = {
 			attached: true,
 			baseSnapshot: { blobs: {}, trees: {} },
 			snapshotBlobs: {},
 			pendingRuntimeState: {},
 			savedOps: [],
-			url: resolvedUrl.url,
+			url: `https://localhost/tenant/${uuid()}`,
 			driverState,
-		});
+		};
+		const pendingState = JSON.stringify(pendingStateData);
 
 		await assert.rejects(
 			async () => loader.resolve({ url: "test" }, pendingState),
@@ -305,6 +309,22 @@ describe("DisableLoadConnectionRetries", () => {
 		);
 		assert.strictEqual(connectionAttempts, 1);
 		assert.strictEqual(disposalErrors.at(-1), restoreError);
+
+		await assert.rejects(
+			async () =>
+				loader.resolve(
+					{ url: "test" },
+					JSON.stringify({ ...pendingStateData, driverState: undefined }),
+				),
+			/does not match pending state URL/,
+		);
+
+		supportsDriverStatePersistence = false;
+		await assert.rejects(
+			async () => loader.resolve({ url: "test" }, pendingState),
+			/Document service cannot restore pending driver state/,
+		);
+		assert.strictEqual(connectionAttempts, 1);
 	});
 
 	it("load rejects when connectToStorage fails with retryable error and flag is enabled", async () => {

@@ -112,7 +112,8 @@ export interface IPendingContainerState extends SnapshotWithBlobs {
 	 */
 	savedOps: ISequencedDocumentMessage[];
 	/**
-	 * The Container's URL in the service, needed to hook up the driver during rehydration
+	 * The Container's URL in the service, needed to hook up the driver during rehydration and to
+	 * validate the document identity of legacy pending state that has no {@link driverState}.
 	 */
 	url: string;
 	/**
@@ -121,7 +122,8 @@ export interface IPendingContainerState extends SnapshotWithBlobs {
 	clientId?: string;
 	/**
 	 * Opaque state supplied by the document service for use when rehydrating. This value is
-	 * persisted by the host and must not contain customer-identifying information.
+	 * persisted by the host, must not contain customer-identifying information, and is responsible
+	 * for validating that it belongs to the document being loaded.
 	 */
 	driverState?: unknown;
 }

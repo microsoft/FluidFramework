@@ -1583,7 +1583,10 @@ export class Container
 				// Restoration errors deliberately reject the load: ignoring malformed or foreign
 				// state could reconnect without the driver's persisted consistency protection.
 				try {
-					service.driverStatePersistence?.set(props.driverState);
+					if (service.driverStatePersistence === undefined) {
+						throw new UsageError("Document service cannot restore pending driver state");
+					}
+					service.driverStatePersistence.set(props.driverState);
 				} catch (error) {
 					service.dispose(error);
 					throw error;

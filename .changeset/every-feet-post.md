@@ -7,4 +7,4 @@
 
 Preserve driver state in pending container state
 
-Pending container state now captures and restores opaque driver state before reconnecting. ODSP uses this to retain the cached epoch, allowing restored files to reject stale pending state after a server-side restore.
+Pending container state now captures and restores opaque driver state before reconnecting. ODSP uses this to retain the cached epoch and validate document identity, allowing restored files to reject stale pending state after a server-side restore.
