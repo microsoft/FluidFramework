@@ -1,5 +1,9 @@
 # @fluid-internal/test-service-load
 
+## 2.118.0
+
+Dependency updates only.
+
 ## 2.117.0
 
 Dependency updates only.

@@ -1,5 +1,61 @@
 # @fluidframework/odsp-driver
 
+## 2.118.0
+
+### Minor Changes
+
+- Make point-in-time support optional and consumer-supplied ([#28152](https://github.com/microsoft/FluidFramework/pull/28152)) [46e6f7fe56e](https://github.com/microsoft/FluidFramework/commit/46e6f7fe56e67d71f6d55c359313a98434cbb838)
+
+  Point-in-time loading is now an optional implementation supplied by the host. Consumers that do
+  not enable the feature no longer include its implementation in their dependency graph. Hosts can
+  control when the feature is loaded by dynamically importing its dedicated entrypoint:
+
+  ```typescript
+  const factory = createOdspDocumentServiceFactory({
+    getStorageToken,
+    getWebsocketToken,
+    persistedCache,
+    hostPolicy,
+    pointInTimeDocumentServiceImplementation: async (props) => {
+      const { createPointInTimeDocumentService } = await import(
+        "@fluidframework/odsp-driver/legacy/point-in-time"
+      );
+      return createPointInTimeDocumentService(props);
+    },
+  });
+  ```
+
+  The legacy-beta `getOdspPointInTimeDocumentServiceFactory` helper is deprecated. Point-in-time
+  consumers should migrate to `createOdspDocumentServiceFactory`, which accepts tokens, cache, host
+  policy, and optional feature implementations in one options object. The deprecated helper now
+  loads the implementation only when point-in-time loading is used. Existing
+  `OdspDocumentServiceFactory` and `OdspDocumentServiceFactoryCore` constructor signatures remain
+  unchanged.
+
+- Enable point-in-time loading on the standard ODSP document service factory ([#28152](https://github.com/microsoft/FluidFramework/pull/28152)) [46e6f7fe56e](https://github.com/microsoft/FluidFramework/commit/46e6f7fe56e67d71f6d55c359313a98434cbb838)
+
+  [`OdspDocumentServiceFactoryCore`](https://fluidframework.com/docs/api/odsp-driver/odspdocumentservicefactorycore-class)
+  now exposes the optional `createPointInTimeDocumentService` capability.
+  [`OdspDocumentServiceFactory`](https://fluidframework.com/docs/api/odsp-driver/odspdocumentservicefactory-class)
+  inherits this capability, so hosts can use the standard factory with
+  [`loadContainerToSequenceNumber`](https://fluidframework.com/docs/api/container-loader/loadcontainertosequencenumber-function)
+  for sequence-number-based document loading. Factories that do not support point-in-time loading
+  leave the capability undefined.
+
+  ```typescript
+  const factory = new OdspDocumentServiceFactory(
+    getStorageToken,
+    getWebsocketToken,
+  );
+
+  if (factory.createPointInTimeDocumentService !== undefined) {
+    const documentService = await factory.createPointInTimeDocumentService(
+      resolvedUrl,
+      targetSequenceNumber,
+    );
+  }
+  ```
+
 ## 2.117.0
 
 Dependency updates only.
