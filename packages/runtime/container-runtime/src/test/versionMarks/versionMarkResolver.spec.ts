@@ -953,6 +953,7 @@ describe("VersionMarkResolver", () => {
 					eventName: "Resolve",
 					outcome: "pending",
 					path: "noReader",
+					reason: "historicalOpsUnavailable",
 				},
 			]);
 		});

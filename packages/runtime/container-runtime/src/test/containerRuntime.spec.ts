@@ -3013,6 +3013,7 @@ describe("Runtime", () => {
 						eventName: "VersionMarkResolver:Resolve",
 						outcome: "pending",
 						path: "noReader",
+						reason: "historicalOpsUnavailable",
 					},
 				]);
 			});

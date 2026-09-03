@@ -89,7 +89,8 @@ export interface IVersionMarkResolver {
 	 * processed message nor a last-summary message is available.
 	 *
 	 * @remarks Sealing the batch is a side effect (it submits the current batch), so capture at savepoint
-	 * boundaries, not per keystroke.
+	 * boundaries, not per keystroke. Do not call during manual batch accumulation (for example inside
+	 * `orderSequentially`): the flush is disallowed there and throws, which closes the container.
 	 *
 	 * @returns The pending batch identity and inclusive sequence number lower bound, or the current sequence
 	 * number and corresponding op timestamp (when available) when there is no pending local batch.
