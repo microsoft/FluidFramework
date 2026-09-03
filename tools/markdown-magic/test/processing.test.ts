@@ -30,7 +30,7 @@ test("include parses Markdown into nodes before generation", async () => {
 	const directory = await createTempDirectory();
 	const sourcePath = path.join(directory, "source.md");
 	const destinationPath = path.join(directory, "destination.md");
-	await writeFile(sourcePath, "Read the [guide](./guide.md).\n");
+	await writeFile(sourcePath, "Read the [guide](https://example.com/guide).\n");
 	await writeFile(
 		destinationPath,
 		[
@@ -58,12 +58,12 @@ test("include parses Markdown into nodes before generation", async () => {
 	assert(paragraph?.type === "paragraph");
 	const link = paragraph.children[1];
 	assert(link?.type === "link");
-	assert.equal(link.url, "./guide.md");
+	assert.equal(link.url, "https://example.com/guide");
 
 	await processDocument(destinationPath, registry);
 	const output = await readFile(destinationPath, "utf8");
 	assert.match(output, /^Before\.\n\n<!-- markdown-magic:begin/m);
-	assert.match(output, /Read the \[guide\]\(\.\/guide\.md\)\./);
+	assert.match(output, /Read the \[guide\]\(https:\/\/example\.com\/guide\)\./);
 	assert.match(output, /<!-- markdown-magic:end -->\n\nAfter\.$/);
 });
 
@@ -127,8 +127,8 @@ test("include resolves reference links defined outside the selected range", asyn
 		[
 			"Read the [guide][guide] and view the ![diagram][diagram].",
 			"",
-			'[guide]: ./guide.md "Guide title"',
-			"[diagram]: ./diagram.png",
+			'[guide]: https://example.com/guide "Guide title"',
+			"[diagram]: https://example.com/diagram.png",
 		].join("\n"),
 	);
 	await writeFile(
@@ -141,10 +141,38 @@ test("include resolves reference links defined outside the selected range", asyn
 
 	await processDocument(destinationPath, createTransformRegistry());
 	const output = await readFile(destinationPath, "utf8");
-	assert.match(output, /\[guide\]\(\.\/guide\.md "Guide title"\)/);
-	assert.match(output, /!\[diagram\]\(\.\/diagram\.png\)/);
+	assert.match(output, /\[guide\]\(https:\/\/example\.com\/guide "Guide title"\)/);
+	assert.match(output, /!\[diagram\]\(https:\/\/example\.com\/diagram\.png\)/);
 	assert.doesNotMatch(output, /^\[guide\]:/m);
 	assert.doesNotMatch(output, /^\[diagram\]:/m);
+});
+
+test("include rejects relative link and image targets", async () => {
+	const cases = [
+		{ source: "Read the [guide](./guide.md).", target: "./guide.md" },
+		{
+			source: "View the ![diagram][diagram].\n\n[diagram]: ../diagram.png",
+			target: "../diagram.png",
+		},
+	];
+	for (const testCase of cases) {
+		const directory = await createTempDirectory();
+		const sourcePath = path.join(directory, "source.md");
+		const destinationPath = path.join(directory, "destination.mdx");
+		await writeFile(sourcePath, testCase.source);
+
+		const registry = createTransformRegistry();
+		const includeTransform = registry.transforms.include;
+		assert(includeTransform !== undefined);
+		await assert.rejects(
+			async () =>
+				includeTransform.generate(
+					{ path: "./source.md" },
+					registry.createContext(destinationPath, "mdx", 2),
+				),
+			new RegExp(`relative link target "${testCase.target.replace(".", "\\.")}"`),
+		);
+	}
 });
 
 test("include-code negative indexes count a terminal empty line", async () => {

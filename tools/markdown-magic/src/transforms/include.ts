@@ -199,6 +199,43 @@ function resolveReferences(node: Nodes, definitions: ReadonlyMap<string, Definit
 }
 
 /**
+ * Determines whether a link target depends on the source document's directory.
+ * Absolute URLs, root-relative URLs, anchors, and query-only references do not depend on it.
+ *
+ * @param target - The link or image URL to classify.
+ * @returns `true` when the target is a relative path.
+ */
+function isRelativePathTarget(target: string): boolean {
+	return (
+		target.length > 0 &&
+		!target.startsWith("/") &&
+		!target.startsWith("#") &&
+		!target.startsWith("?") &&
+		!URL.canParse(target)
+	);
+}
+
+/**
+ * Rejects links and images whose targets would resolve relative to the source document.
+ *
+ * @param node - The generated node to validate.
+ * @param sourcePath - The source path included in the diagnostic.
+ * @throws When a link or image has a relative path target.
+ */
+function validateLinkTargets(node: Nodes, sourcePath: string): void {
+	if ((node.type === "link" || node.type === "image") && isRelativePathTarget(node.url)) {
+		throw new TypeError(
+			`Included content from "${sourcePath}" contains relative link target "${node.url}". Use an absolute URL or a document-local target.`,
+		);
+	}
+	if ("children" in node) {
+		for (const child of node.children) {
+			validateLinkTargets(child, sourcePath);
+		}
+	}
+}
+
+/**
  * Parses selected source with the source document's link definitions as temporary context.
  * Definitions outside the selection let remark recognize reference-style links. The resulting
  * references are resolved to inline links, and definitions outside the requested range are removed.
@@ -249,6 +286,13 @@ export const includeTransform: Transform = {
 		const source = await context.readFile(sourcePath, "utf8");
 		const selectedSource = sliceLines(source, options.start, options.end);
 		const selectedNodes = parseSelectedSource(source, selectedSource, sourcePath, context);
+
+		// Validate that included content does not contain relative link targets,
+		// which would be invalid in the destination document.
+		for (const node of selectedNodes) {
+			validateLinkTargets(node, sourcePath);
+		}
+
 		const nodes: GeneratedNodes =
 			context.destinationFormat === "mdx"
 				? selectedNodes.map(convertCommentToMdx)

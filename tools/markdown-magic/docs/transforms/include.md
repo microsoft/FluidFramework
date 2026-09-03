@@ -16,7 +16,8 @@ Negative indexes use JavaScript array-slice rules and count backward from the en
 A terminal line ending creates an empty final entry and affects negative indexes.
 The transform removes leading and trailing whitespace from the selected content.
 
-The transform preserves link destinations from the source content. It does not rewrite relative links for the destination document.
+The transform preserves link destinations from the source content.
+Link and image targets must be absolute URLs, root-relative URLs, anchors, or query-only references. The transform rejects relative paths because they would resolve from the destination document instead of the source document.
 The transform resolves reference-style links and images to inline Markdown when their definitions are in the source document. The definitions do not need to be in the selected line range or the destination document.
 
 The source file extension selects the Markdown or MDX parser.
