@@ -102,6 +102,40 @@ export function createOdspDocumentServiceFactory(
 		options.hostPolicy,
 	);
 }
+
+/**
+ * Creates an ODSP document service factory that supports point-in-time loading.
+ *
+ * @param getStorageToken - Fetches storage access tokens.
+ * @param getWebsocketToken - Fetches websocket access tokens, or `undefined` when unavailable.
+ * @param persistedCache - Optional persisted ODSP cache.
+ * @param hostPolicy - Optional host storage policy.
+ * @returns An ODSP document service factory with point-in-time loading capability.
+ *
+ * @deprecated Use
+ * {@link createOdspDocumentServiceFactory} with a point-in-time implementation instead.
+ * See {@link https://github.com/microsoft/FluidFramework/issues/26500} for context.
+ *
+ * @legacy @beta
+ */
+export function getOdspPointInTimeDocumentServiceFactory(
+	getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>,
+	getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined,
+	persistedCache?: IPersistedCache,
+	hostPolicy?: HostStoragePolicy,
+): IPointInTimeDocumentServiceFactory {
+	return createOdspDocumentServiceFactory({
+		getStorageToken,
+		getWebsocketToken,
+		persistedCache,
+		hostPolicy,
+		pointInTimeDocumentServiceImplementation: async (props) => {
+			const { createPointInTimeDocumentService } = await import("./pointInTime.js");
+			return createPointInTimeDocumentService(props);
+		},
+	}) as IPointInTimeDocumentServiceFactory;
+}
+
 /**
  * Creates a factory instance for creating a sharepoint document service from a provided snapshot.
  *

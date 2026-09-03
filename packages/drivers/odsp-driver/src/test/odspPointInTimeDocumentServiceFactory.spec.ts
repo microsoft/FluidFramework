@@ -18,6 +18,7 @@ import { LocalPersistentCache } from "../odspCache.js";
 import {
 	createLocalOdspDocumentServiceFactory,
 	createOdspDocumentServiceFactory,
+	getOdspPointInTimeDocumentServiceFactory,
 } from "../odspDocumentServiceFactory.js";
 import type { IOdspPointInTimeDocumentServiceImplementationProps } from "../odspDocumentServiceFactoryCore.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
@@ -91,6 +92,11 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 		assert.equal(capturedProps?.getStorageToken, getStorageToken);
 		assert.equal(capturedProps?.persistedCache, persistedCache);
 		assert.equal(typeof capturedProps?.createDocumentService, "function");
+	});
+
+	it("keeps the deprecated factory helper compatible", () => {
+		const factory = getOdspPointInTimeDocumentServiceFactory(getStorageToken, undefined);
+		assert.equal(typeof factory.createPointInTimeDocumentService, "function");
 	});
 
 	it("does not expose point-in-time loading on the local factory", () => {

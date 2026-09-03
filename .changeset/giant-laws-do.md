@@ -23,7 +23,9 @@ const factory = createOdspDocumentServiceFactory({
 });
 ```
 
-The legacy-beta `getOdspPointInTimeDocumentServiceFactory` helper is removed. Point-in-time
-consumers should use `createOdspDocumentServiceFactory`, which accepts tokens, cache, host policy,
-and optional feature implementations in one options object. Existing `OdspDocumentServiceFactory`
-and `OdspDocumentServiceFactoryCore` constructor signatures remain unchanged.
+The legacy-beta `getOdspPointInTimeDocumentServiceFactory` helper is deprecated. Point-in-time
+consumers should migrate to `createOdspDocumentServiceFactory`, which accepts tokens, cache, host
+policy, and optional feature implementations in one options object. The deprecated helper now
+loads the implementation only when point-in-time loading is used. Existing
+`OdspDocumentServiceFactory` and `OdspDocumentServiceFactoryCore` constructor signatures remain
+unchanged.
