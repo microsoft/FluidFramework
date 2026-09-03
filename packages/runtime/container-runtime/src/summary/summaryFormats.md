@@ -48,8 +48,8 @@ Each tree node in a summary tree is represented by the `ISummaryTree` interface 
 
         ```typescript
         export interface ISummaryBlob {
-        	type: SummaryType.Blob;
-        	content: string | Uint8Array;
+                type: SummaryType.Blob;
+                content: string | Uint8Array;
         }
         ```
 
@@ -57,8 +57,8 @@ Each tree node in a summary tree is represented by the `ISummaryTree` interface 
 
         ```typescript
         export interface ISummaryAttachment {
-        	type: SummaryType.Attachment;
-        	id: string;
+                type: SummaryType.Attachment;
+                id: string;
         }
         ```
 

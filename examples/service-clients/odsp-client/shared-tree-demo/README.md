@@ -18,25 +18,26 @@ You can run this example using the following steps:
 1. Run `pnpm start` from this directory and open <http://localhost:8080> in a web browser to see the app running.
 1. Login with your M365 tenant email and password to see the example in action on your web browser. If you encounter issues like `Need admin approval`, consider using a private or incognito window to execute the example. In particular, beware of Edge's work profiles which will sign in automatically with the linked Microsoft credentials, which might not have access to the M356 tenant.
 
-<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
+<!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
 
 <!-- prettier-ignore-start -->
+
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Contribution Guidelines
 
 You can [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid Framework in these ways:
 
--   Answer questions in [GitHub Discussions](https://github.com/microsoft/FluidFramework/discussions).
--   [Submit bug reports](https://github.com/microsoft/FluidFramework/issues) and help verify fixes.
--   Review [source code changes](https://github.com/microsoft/FluidFramework/pulls).
--   [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
+* Answer questions in [GitHub Discussions](https://github.com/microsoft/FluidFramework/discussions).
+* [Submit bug reports](https://github.com/microsoft/FluidFramework/issues) and help verify fixes.
+* Review [source code changes](https://github.com/microsoft/FluidFramework/pulls).
+* [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
 
 For detailed instructions, read the [repo documentation](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Home.md).
 
 This project follows the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
 For more information, read the [Code of Conduct frequently asked questions](https://opensource.microsoft.com/codeofconduct/faq/).
-For questions or comments, contact [opencode@microsoft.com](mailto:opencode@microsoft.com).
+For questions or comments, contact <opencode@microsoft.com>.
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
 Use of these trademarks or logos must follow Microsoft’s [Trademark & Brand Guidelines](https://www.microsoft.com/trademarks).
@@ -58,4 +59,4 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 
 <!-- prettier-ignore-end -->
 
-<!-- AUTO-GENERATED-CONTENT:END -->
+<!-- markdown-magic:end -->

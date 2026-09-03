@@ -137,31 +137,32 @@ ESLint provides a way to print the config that would apply to a file (`--print-c
 print out the applied config as a JSON file. As we make changes to the config, we can print out the config again and get
 a diff to review as part of a PR -- just like we do with API reports for code changes.
 
-<!-- AUTO-GENERATED-CONTENT:START (PACKAGE_SCRIPTS) -->
+<!-- markdown-magic:begin {"transform":"package-scripts","headingLevel":2} -->
 
 <!-- prettier-ignore-start -->
+
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Scripts
 
-| Script | Description |
-|--------|-------------|
-| `build` | `npm run build:readme && npm run build:test:examples && npm run print-configs && npm run prettier` |
-| `build:readme` | `markdown-magic --files "**/*.md"` |
-| `build:test:examples` | `tsc --project ./src/rules/test/test-cases/tsconfig.json` |
-| `clean` | `rimraf --glob dist "**/*.build.log" nyc` |
-| `format` | `npm run prettier:fix` |
-| `install-no-frozen` | `pnpm --config.minimum-release-age=10080 i --no-frozen-lockfile` |
-| `prettier` | `prettier --check . --cache --ignore-path ../../../.prettierignore` |
-| `prettier:fix` | `prettier --write . --cache --ignore-path ../../../.prettierignore` |
-| `print-configs` | `jiti scripts/print-configs.ts printed-configs` |
-| `test` | `npm run test:eslint9 && npm run test:eslint8` |
-| `test:eslint8` | `cross-env ESLINT_PACKAGE=eslint8 mocha "src/rules/test/**/*.test.js"` |
-| `test:eslint9` | `npm run test:mocha` |
-| `test:mocha` | `mocha "src/{rules/test,test}/**/*.test.{js,mts}"` |
+| Script Name | Script Body | Description |
+| - | - | - |
+| `build` | `npm run build:readme && npm run build:test:examples && npm run print-configs && npm run prettier` | |
+| `build:readme` | `markdown-magic --files "**/*.md"` | |
+| `build:test:examples` | `tsc --project ./src/rules/test/test-cases/tsconfig.json` | |
+| `clean` | `rimraf --glob dist "**/*.build.log" nyc` | |
+| `format` | `npm run prettier:fix` | |
+| `install-no-frozen` | `pnpm --config.minimum-release-age=10080 i --no-frozen-lockfile` | |
+| `prettier` | `prettier --check . --cache --ignore-path ../../../.prettierignore` | |
+| `prettier:fix` | `prettier --write . --cache --ignore-path ../../../.prettierignore` | |
+| `print-configs` | `jiti scripts/print-configs.ts printed-configs` | |
+| `test` | `npm run test:eslint9 && npm run test:eslint8` | |
+| `test:eslint8` | `cross-env ESLINT_PACKAGE=eslint8 mocha "src/rules/test/**/*.test.js"` | |
+| `test:eslint9` | `npm run test:mocha` | |
+| `test:mocha` | `mocha "src/{rules/test,test}/**/*.test.{js,mts}"` | |
 
 <!-- prettier-ignore-end -->
 
-<!-- AUTO-GENERATED-CONTENT:END -->
+<!-- markdown-magic:end -->
 
 See [GitHub](https://github.com/microsoft/FluidFramework) for more details on the Fluid Framework and packages within.
