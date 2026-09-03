@@ -78,6 +78,53 @@ test("CLI reports an unknown transform as an error", async () => {
 	assert.equal(await readFile(destinationPath, "utf8"), source);
 });
 
+test("CLI completes all files and reports all errors", async () => {
+	const directory = await mkdtemp(path.join(os.tmpdir(), "markdown-magic-cli-"));
+	await writeFile(path.join(directory, "source.md"), "Generated content.\n");
+	await writeFile(
+		path.join(directory, "invalid-transform.md"),
+		[
+			`<!-- markdown-magic:begin {"transform":"unknown"} -->`,
+			"",
+			"Old content.",
+			"",
+			"<!-- markdown-magic:end -->",
+		].join("\n"),
+	);
+	await writeFile(
+		path.join(directory, "invalid-options.md"),
+		[
+			`<!-- markdown-magic:begin {"transform":"include"} -->`,
+			"",
+			"Old content.",
+			"",
+			"<!-- markdown-magic:end -->",
+		].join("\n"),
+	);
+	const validPath = path.join(directory, "valid.md");
+	await writeFile(
+		validPath,
+		[
+			`<!-- markdown-magic:begin {"transform":"include","path":"./source.md"} -->`,
+			"",
+			"Old content.",
+			"",
+			"<!-- markdown-magic:end -->",
+		].join("\n"),
+	);
+
+	await assert.rejects(runCli(directory, "*.md"), (error: unknown) => {
+		assert(error instanceof Error);
+		assert("code" in error);
+		assert.equal(error.code, 1);
+		assert("stderr" in error && typeof error.stderr === "string");
+		assert.match(error.stderr, /invalid-transform\.md:1: Unknown transform "unknown"/);
+		assert.match(error.stderr, /Option "path" must be a non-empty string/);
+		return true;
+	});
+	assert.match(await readFile(validPath, "utf8"), /Generated content\./);
+});
+
 test("CLI does not write a file when a later transform has invalid options", async () => {
 	const directory = await mkdtemp(path.join(os.tmpdir(), "markdown-magic-cli-"));
 	const destinationPath = path.join(directory, "destination.md");

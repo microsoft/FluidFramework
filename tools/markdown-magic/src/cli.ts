@@ -20,21 +20,33 @@ const defaultMatchPattern = ["**/*.md", "**/*.mdx"];
 /** Maximum number of documentation files that the CLI processes concurrently. */
 const maximumConcurrentFiles = 8;
 
-/** Applies an asynchronous operation to each value with a fixed concurrency limit. */
+/**
+ * Applies an asynchronous operation to each value with a fixed concurrency limit.
+ *
+ * All operations complete before this function reports their errors.
+ */
 async function mapWithConcurrency<T, U>(
 	values: readonly T[],
 	concurrency: number,
 	operation: (value: T) => Promise<U>,
 ): Promise<U[]> {
 	const results: U[] = new Array<U>(values.length);
+	const errors: unknown[] = [];
 	let nextIndex = 0;
 	async function worker() {
 		while (nextIndex < values.length) {
 			const index = nextIndex++;
-			results[index] = await operation(values[index] as T);
+			try {
+				results[index] = await operation(values[index] as T);
+			} catch (error) {
+				errors.push(error);
+			}
 		}
 	}
 	await Promise.all(Array.from({ length: Math.min(concurrency, values.length) }, worker));
+	if (errors.length > 0) {
+		throw new AggregateError(errors, `${errors.length} operations failed.`);
+	}
 	return results;
 }
 

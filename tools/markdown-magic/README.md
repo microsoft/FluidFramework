@@ -42,7 +42,8 @@ pnpm exec markdown-magic --files "docs/**/*.{md,mdx}" "!docs/README.md"
 ```
 
 The command reports the number of files that changed.
-If an error occurs, the command writes the error to stderr and returns exit code `1`.
+The command processes all selected files before it reports errors.
+If one or more errors occur, the command writes all errors to stderr and returns exit code `1`.
 
 ## Markers
 
