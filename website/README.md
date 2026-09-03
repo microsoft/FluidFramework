@@ -177,6 +177,7 @@ See <PackageLink package="fluid-framework" /> and <ApiLink package="fluid-framew
 
 Add `newApi` when the current published API model does not contain a new package or API.
 The component renders its content as inline code until the target exists.
+The component writes a build debug message when it renders inline code.
 When the target exists, the component renders a link and writes a build warning.
 Remove `newApi` when this warning occurs.
 
@@ -198,6 +199,7 @@ For an API rename, set `api` to an object with `previous` and `new` declaration 
 
 The component tries `new` first.
 It uses `previous` while the published model contains only the old API.
+It writes a build debug message when it uses `previous`.
 When child content is omitted, the component displays the name of the API that resolves.
 When `new` exists, the component writes a build warning.
 Replace the object with the new declaration reference at that time:
@@ -213,6 +215,7 @@ For a package rename, set `package` to an object with `previous` and `new` names
 ```
 
 The component uses `previous` while the published model contains only the old package.
+It writes a build debug message when it uses `previous`.
 When the `new` package exists, the component writes a build warning.
 Replace the object with the new string value at that time:
 

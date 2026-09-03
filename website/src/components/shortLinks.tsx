@@ -14,7 +14,7 @@ import { type ApiLinkManifests, apiLinkManifestPluginName } from "../apiLinkMani
 import { type ApiDeclarationReference, tryResolveApiLinkTarget } from "../apiLinkReference";
 import type { SiteVersion } from "../utilityTypes";
 
-const emittedTransitionWarnings = new Set<string>();
+const emittedTransitionDiagnostics = new Set<string>();
 
 /**
  * The package names used while API documentation transitions through a package rename.
@@ -96,11 +96,20 @@ export function PackageLink({
 				`PackageLink|newApi|${activeVersion.name}|${packageName}`,
 				`[PackageLink] Package "${packageName}" exists in API documentation version "${activeVersion.name}". Remove the newApi prop.`,
 			);
+		} else if (newPackageName !== undefined) {
+			debugOnce(
+				`PackageLink|rename-fallback|${activeVersion.name}|${packageName}|${newPackageName}`,
+				`[PackageLink] New package name "${newPackageName}" does not exist in API documentation version "${activeVersion.name}". Linking to previous package "${packageName}".`,
+			);
 		}
 		return <a href={`${root}${packageName}`}>{children ?? defaultText}</a>;
 	}
 
 	if (newApi) {
+		debugOnce(
+			`PackageLink|code-fallback|${activeVersion.name}|${defaultText}`,
+			`[PackageLink] New package "${defaultText}" does not exist in API documentation version "${activeVersion.name}". Rendering inline code placeholder.`,
+		);
 		return <code>{children ?? defaultText}</code>;
 	}
 
@@ -197,6 +206,11 @@ export function ApiLink<const TApiSelector extends string, const TNewApiSelector
 
 	if (!result.found) {
 		if (newApi) {
+			const unresolvedApi = newApiReference ?? api;
+			debugOnce(
+				`ApiLink|code-fallback|${activeVersion.name}|${packageName}|${unresolvedApi}`,
+				`[ApiLink] New API "${packageName}/${unresolvedApi}" does not exist in API documentation version "${activeVersion.name}". Rendering inline code placeholder.`,
+			);
 			return <code>{children ?? replacementResult?.defaultText ?? result.defaultText}</code>;
 		}
 		throw new Error(`No API documentation found for "${packageName}/${api}".`);
@@ -206,6 +220,11 @@ export function ApiLink<const TApiSelector extends string, const TNewApiSelector
 		warnOnce(
 			`ApiLink|newApi|${activeVersion.name}|${packageName}|${api}`,
 			`[ApiLink] API "${packageName}/${api}" exists in API documentation version "${activeVersion.name}". Remove the newApi prop.`,
+		);
+	} else if (newApiReference !== undefined) {
+		debugOnce(
+			`ApiLink|rename-fallback|${activeVersion.name}|${packageName}|${api}|${newApiReference}`,
+			`[ApiLink] New API name "${packageName}/${newApiReference}" does not exist in API documentation version "${activeVersion.name}". Linking to previous API "${packageName}/${api}".`,
 		);
 	}
 
@@ -248,11 +267,19 @@ function useApiLinkContext(
 }
 
 function warnOnce(key: string, message: string): void {
-	if (typeof window !== "undefined" || emittedTransitionWarnings.has(key)) {
+	logOnce(key, message, console.warn);
+}
+
+function debugOnce(key: string, message: string): void {
+	logOnce(key, message, console.debug);
+}
+
+function logOnce(key: string, message: string, log: (message: string) => void): void {
+	if (typeof window !== "undefined" || emittedTransitionDiagnostics.has(key)) {
 		return;
 	}
-	emittedTransitionWarnings.add(key);
-	console.warn(message);
+	emittedTransitionDiagnostics.add(key);
+	log(message);
 }
 
 /**

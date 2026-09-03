@@ -127,6 +127,7 @@ describe("PackageLink", () => {
 	it("renders inline code when a new package is not documented", () => {
 		useVersion("current", "/docs");
 		useMockApiLinkManifests();
+		const debug = vi.spyOn(console, "debug").mockImplementation(() => {});
 
 		const link = PackageLink({ package: "new-package", newApi: true });
 
@@ -134,6 +135,9 @@ describe("PackageLink", () => {
 			type: "code",
 			children: "new-package",
 		});
+		expect(debug).toHaveBeenCalledWith(
+			'[PackageLink] New package "new-package" does not exist in API documentation version "current". Rendering inline code placeholder.',
+		);
 	});
 
 	it("preserves rich children when a new package is not documented", () => {
@@ -170,6 +174,7 @@ describe("PackageLink", () => {
 		useVersion("current", "/docs");
 		useMockApiLinkManifests();
 		const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+		const debug = vi.spyOn(console, "debug").mockImplementation(() => {});
 
 		const link = PackageLink({
 			package: { previous: "example", new: "replacement" },
@@ -180,6 +185,9 @@ describe("PackageLink", () => {
 			children: "replacement",
 		});
 		expect(warn).not.toHaveBeenCalled();
+		expect(debug).toHaveBeenCalledWith(
+			'[PackageLink] New package name "replacement" does not exist in API documentation version "current". Linking to previous package "example".',
+		);
 	});
 
 	it("uses and warns about a documented replacement package", () => {
@@ -197,6 +205,25 @@ describe("PackageLink", () => {
 		});
 		expect(warn).toHaveBeenCalledWith(
 			'[PackageLink] New package name "example" exists in API documentation version "current". Set package="example".',
+		);
+	});
+
+	it("renders inline code when neither package rename target is documented", () => {
+		useVersion("current", "/docs");
+		useMockApiLinkManifests();
+		const debug = vi.spyOn(console, "debug").mockImplementation(() => {});
+
+		const link = PackageLink({
+			package: { previous: "old-package", new: "renamed-package" },
+			newApi: true,
+		});
+
+		expect({ type: link.type, children: link.props.children }).toEqual({
+			type: "code",
+			children: "renamed-package",
+		});
+		expect(debug).toHaveBeenCalledWith(
+			'[PackageLink] New package "renamed-package" does not exist in API documentation version "current". Rendering inline code placeholder.',
 		);
 	});
 });
@@ -257,11 +284,15 @@ describe("ApiLink", () => {
 		useVersion("current", "/docs");
 		useMockApiLinkManifests();
 		const children = createElement("strong", undefined, "New API");
+		const debug = vi.spyOn(console, "debug").mockImplementation(() => {});
 
 		const link = ApiLink({ package: "example", api: "Missing", newApi: true, children });
 
 		expect(link.type).toBe("code");
 		expect(link.props.children).toBe(children);
+		expect(debug).toHaveBeenCalledWith(
+			'[ApiLink] New API "example/Missing" does not exist in API documentation version "current". Rendering inline code placeholder.',
+		);
 	});
 
 	it("links and warns when a new API is documented", () => {
@@ -284,6 +315,7 @@ describe("ApiLink", () => {
 		useVersion("current", "/docs");
 		useMockApiLinkManifests();
 		const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+		const debug = vi.spyOn(console, "debug").mockImplementation(() => {});
 
 		const link = renderApiLink({
 			package: "example",
@@ -295,6 +327,9 @@ describe("ApiLink", () => {
 			children: "Widget",
 		});
 		expect(warn).not.toHaveBeenCalled();
+		expect(debug).toHaveBeenCalledWith(
+			'[ApiLink] New API name "example/Replacement" does not exist in API documentation version "current". Linking to previous API "example/(Widget:class)".',
+		);
 	});
 
 	it("preserves rich children while an API rename is staged", () => {
@@ -315,6 +350,7 @@ describe("ApiLink", () => {
 	it("renders inline code when neither API rename target is documented", () => {
 		useVersion("current", "/docs");
 		useMockApiLinkManifests();
+		const debug = vi.spyOn(console, "debug").mockImplementation(() => {});
 
 		const link = ApiLink({
 			package: "example",
@@ -326,6 +362,9 @@ describe("ApiLink", () => {
 			type: "code",
 			children: "NewMissing",
 		});
+		expect(debug).toHaveBeenCalledWith(
+			'[ApiLink] New API "example/NewMissing" does not exist in API documentation version "current". Rendering inline code placeholder.',
+		);
 	});
 
 	it("uses and warns about a documented replacement API", () => {
