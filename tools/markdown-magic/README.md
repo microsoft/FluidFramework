@@ -32,7 +32,8 @@ pnpm exec markdown-magic [--files <glob> ...] [--workingDirectory <directory>]
 | `--workingDirectory` | `-w`  | The base directory for glob patterns and relative paths                      | The current working directory |
 | `--help`             | `-h`  | None                                                                         | Not applicable                |
 
-The search includes files only and applies `.gitignore` rules.
+The command reports when it starts to find documentation files.
+The search includes files only, excludes `node_modules` directories, and applies `.gitignore` rules.
 To process a `.markdown` file, select it explicitly with `--files`.
 
 For example, the following command updates Markdown and MDX files in `docs` except for `docs/README.md`:
@@ -41,7 +42,10 @@ For example, the following command updates Markdown and MDX files in `docs` exce
 pnpm exec markdown-magic --files "docs/**/*.{md,mdx}" "!docs/README.md"
 ```
 
-The command reports the number of files that changed.
+The command displays the number of processed files and the total number of selected files.
+In an interactive terminal, each progress update replaces the previous update.
+In redirected output, each progress update is on a separate line.
+After processing, the command reports the number of files that changed.
 The command processes all selected files before it reports errors.
 If one or more errors occur, the command writes all errors to stderr and returns exit code `1`.
 

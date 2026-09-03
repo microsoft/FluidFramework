@@ -17,8 +17,25 @@ import { createTransformRegistry } from "./transformRegistry.js";
 /** Default glob patterns for Markdown and MDX documents. */
 const defaultMatchPattern = ["**/*.md", "**/*.mdx"];
 
+/** Glob patterns that the file search always excludes. */
+const defaultIgnorePattern = ["**/node_modules/**"];
+
 /** Maximum number of documentation files that the CLI processes concurrently. */
 const maximumConcurrentFiles = 8;
+
+/** Reports file-processing progress to standard output. */
+function reportProgress(processedCount: number, totalCount: number): void {
+	const fileLabel = totalCount === 1 ? "file" : "files";
+	const message = `Processed ${processedCount} of ${totalCount} ${fileLabel}.`;
+	if (process.stdout.isTTY) {
+		process.stdout.write(`\r${message}`);
+		if (processedCount === totalCount) {
+			process.stdout.write("\n");
+		}
+	} else {
+		console.log(message);
+	}
+}
 
 /**
  * Applies an asynchronous operation to each value with a fixed concurrency limit.
@@ -29,10 +46,12 @@ async function mapWithConcurrency<T, U>(
 	values: readonly T[],
 	concurrency: number,
 	operation: (value: T) => Promise<U>,
+	onProgress: (processedCount: number, totalCount: number) => void,
 ): Promise<U[]> {
 	const results: U[] = new Array<U>(values.length);
 	const errors: unknown[] = [];
 	let nextIndex = 0;
+	let processedCount = 0;
 	async function worker() {
 		while (nextIndex < values.length) {
 			const index = nextIndex++;
@@ -40,6 +59,8 @@ async function mapWithConcurrency<T, U>(
 				results[index] = await operation(values[index] as T);
 			} catch (error) {
 				errors.push(error);
+			} finally {
+				onProgress(++processedCount, values.length);
 			}
 		}
 	}
@@ -81,14 +102,20 @@ export async function runCli(
 	const patterns = Array.isArray(argv.files)
 		? argv.files.filter((value: unknown): value is string => typeof value === "string")
 		: defaultMatchPattern;
+	console.log("Finding documentation files...");
 	const files = await globby(patterns, {
 		cwd: workingDirectory,
 		gitignore: true,
+		ignore: defaultIgnorePattern,
 		onlyFiles: true,
 	});
 	const registry = createTransformRegistry();
-	const changed = await mapWithConcurrency(files, maximumConcurrentFiles, (file) =>
-		processDocument(path.resolve(workingDirectory, file), registry),
+	reportProgress(0, files.length);
+	const changed = await mapWithConcurrency(
+		files,
+		maximumConcurrentFiles,
+		(file) => processDocument(path.resolve(workingDirectory, file), registry),
+		reportProgress,
 	);
 	const changedCount = changed.filter(Boolean).length;
 	console.log(

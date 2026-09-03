@@ -5,7 +5,7 @@
 
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -46,11 +46,40 @@ test("CLI processes selected files from the working directory", async () => {
 
 	const { stdout } = await runCli(directory);
 
+	assert.match(stdout, /Processed 0 of 1 file\./);
+	assert.match(stdout, /Processed 1 of 1 file\./);
 	assert.match(stdout, /Updated 1 file\./);
 	assert.match(
 		await readFile(path.join(directory, "destination.md"), "utf8"),
 		/Generated \*\*content\*\*\./,
 	);
+});
+
+test("CLI reports discovery and excludes dependency directories", async () => {
+	const directory = await mkdtemp(path.join(os.tmpdir(), "markdown-magic-cli-"));
+	await writeFile(path.join(directory, "source.md"), "Generated content.\n");
+	await writeFile(
+		path.join(directory, "destination.md"),
+		[
+			`<!-- markdown-magic:begin {"transform":"include","path":"./source.md"} -->`,
+			"",
+			"Old content.",
+			"",
+			"<!-- markdown-magic:end -->",
+		].join("\n"),
+	);
+	const dependencyDirectory = path.join(directory, "nested", "node_modules", "dependency");
+	await mkdir(dependencyDirectory, { recursive: true });
+	await writeFile(
+		path.join(dependencyDirectory, "README.md"),
+		`<!-- markdown-magic:begin {"transform":"unknown"} -->\n<!-- markdown-magic:end -->`,
+	);
+
+	const { stdout } = await runCli(directory, "**/*.md");
+
+	assert.match(stdout, /Finding documentation files\.\.\./);
+	assert.match(stdout, /Processed 0 of 2 files\./);
+	assert.match(stdout, /Processed 2 of 2 files\./);
 });
 
 test("CLI reports an unknown transform as an error", async () => {
@@ -117,6 +146,10 @@ test("CLI completes all files and reports all errors", async () => {
 		assert(error instanceof Error);
 		assert("code" in error);
 		assert.equal(error.code, 1);
+		assert("stdout" in error && typeof error.stdout === "string");
+		for (let processedCount = 0; processedCount <= 4; processedCount++) {
+			assert.match(error.stdout, new RegExp(`Processed ${processedCount} of 4 files\\.`));
+		}
 		assert("stderr" in error && typeof error.stderr === "string");
 		assert.match(error.stderr, /invalid-transform\.md:1: Unknown transform "unknown"/);
 		assert.match(error.stderr, /Option "path" must be a non-empty string/);
