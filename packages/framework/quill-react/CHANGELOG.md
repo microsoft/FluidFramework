@@ -1,5 +1,9 @@
 # @fluidframework/quill-react
 
+## 2.118.0
+
+Dependency updates only.
+
 ## 2.117.0
 
 Dependency updates only.

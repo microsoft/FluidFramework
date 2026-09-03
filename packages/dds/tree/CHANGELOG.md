@@ -1,5 +1,91 @@
 # @fluidframework/tree
 
+## 2.118.0
+
+### Minor Changes
+
+- Preserve enabled staged schema upgrades by default ([#28155](https://github.com/microsoft/FluidFramework/pull/28155)) [9b61289e943](https://github.com/microsoft/FluidFramework/commit/9b61289e9432a4e84e18d834b76d1d6818a3a6a7)
+
+  [`TreeView.upgradeSchema()`](https://fluidframework.com/docs/api/tree/treeview-interface#upgradeschema-method) now includes staged schema upgrades that are already enabled in the document, even when the view's staged upgrade policy does not select them.
+  This prevents a schema upgrade from accidentally attempting to narrow stored schema enabled by another client.
+
+  Set [`includeAlreadyEnabledUpgrades`](https://fluidframework.com/docs/api/tree/stagedschemaupgradepolicy-interface#includealreadyenabledupgrades-property) to `false` when creating the staged upgrade policy to require upgrades to be selected explicitly:
+
+  ```typescript
+  const config = new TreeViewConfigurationAlpha({
+    schema: AppSchema,
+    stagedUpgradePolicy: {
+      includeAlreadyEnabledUpgrades: false,
+      ...StagedSchemaUpgradePolicy.enabledStagedUpgrades(myUpgrade),
+    },
+  });
+  ```
+
+- Expose schema incompatibility details on TreeViewBeta ([#28155](https://github.com/microsoft/FluidFramework/pull/28155)) [9b61289e943](https://github.com/microsoft/FluidFramework/commit/9b61289e9432a4e84e18d834b76d1d6818a3a6a7)
+
+  `TreeViewBeta.compatibility.discrepancies` now provides typed `SchemaDiscrepancy` objects when a view cannot access a tree because its view schema is incompatible with the stored schema.
+  The readonly array may include application-defined schema identifiers and field keys.
+  Each entry includes a `mismatch` discriminator so consumers can distinguish allowed-type, field-kind, value-schema, and node-kind differences.
+  Allowed-type discrepancies include staged types that are absent from the stored schema in `stagedView`, while discrepancies on staged optional fields include `viewIsStagedOptional: true`.
+  Staged-only differences remain compatible and do not produce discrepancies by themselves.
+
+  ```typescript
+  const sf = new SchemaFactory("com.example");
+  class Todo extends sf.object("Todo", {
+    title: sf.number,
+  }) {}
+
+  const view = asBeta(
+    tree.viewWith(new TreeViewConfiguration({ schema: Todo })),
+  );
+  if (!view.compatibility.canView) {
+    console.error(view.compatibility.discrepancies);
+  }
+  ```
+
+  If the stored schema allows `string` for `Todo.title`, the output is:
+
+  ```json
+  [
+    {
+      "mismatch": "allowedTypes",
+      "location": { "nodeType": "com.example.Todo", "fieldKey": "title" },
+      "view": ["com.fluidframework.leaf.number"],
+      "stored": ["com.fluidframework.leaf.string"]
+    }
+  ]
+  ```
+
+  Applications can see from `mismatch: "allowedTypes"` that the schemas differ in their allowed types, compare `view` with `stored` to determine which types each schema permits, and use `location` to find the field where the mismatch occurs.
+
+- SharedTree schema errors now explain the mismatch ([#28153](https://github.com/microsoft/FluidFramework/pull/28153)) [850aa1f1c47](https://github.com/microsoft/FluidFramework/commit/850aa1f1c47ea737b0c8a34e826f8caac97f0a7b)
+
+  Schema validation errors now report the mismatch category and attach relevant diagnostic context. Depending on the mismatch, tagged telemetry properties identify the node type, field kind, child count, expected leaf value type, actual value type, unexpected fields, or path, making invalid content easier to diagnose while allowing consumers to filter potentially sensitive user data.
+
+  When a view schema cannot access a document's stored schema, the error now reports the first schema mismatch and explains whether to initialize the document, upgrade its stored schema, use a compatible view schema, or explicitly migrate the document.
+
+- TreeViewAlpha can now query whether a staged schema upgrade has been applied ([#28154](https://github.com/microsoft/FluidFramework/pull/28154)) [0ea7aa88589](https://github.com/microsoft/FluidFramework/commit/0ea7aa885896ba58fb063fdbc3ee1c66dbd6b8e1)
+
+  A new [`isStagedUpgradeEnabled`](https://fluidframework.com/docs/api/tree/treeviewalpha-interface#isstagedupgradeenabled-methodsignature) method on [`TreeViewAlpha`](https://fluidframework.com/docs/api/tree/treeviewalpha-interface) checks whether a given [`SchemaUpgrade`](https://fluidframework.com/docs/api/tree/schemaupgrade-typealias) token has already been applied to a document's stored schema.
+
+  This is useful when gradually rolling out a staged schema upgrade via feature flags — for example, to conditionally include the upgrade token in the view configuration after a flag rollback, or to show UI that depends on the upgraded schema.
+
+  ```typescript
+  const view = tree.viewWith(
+    new TreeViewConfigurationAlpha({
+      schema: mySchema,
+      stagedUpgradePolicy: featureFlag.isEnabled
+        ? StagedSchemaUpgradePolicy.enabledStagedUpgrades(myUpgrade)
+        : StagedSchemaUpgradePolicy.restrictive,
+    }),
+  );
+
+  // Show a "create poll" button only if the document supports the new poll schema
+  if (view.isStagedUpgradeEnabled(myUpgrade)) {
+    showCreatePollButton();
+  }
+  ```
+
 ## 2.117.0
 
 ### Minor Changes
