@@ -89,10 +89,10 @@ are ignored until they are applied into the current session's pending queue.
   promotion is recoverable — the app can still resolve that mark later via `resolve()`'s history scan — so a listener
   fault logs and continues rather than faulting the container.
 
-Host exposure: `ContainerRuntime` exposes an `@internal` `versionMarkResolver` getter backed by the concrete
-`versionMarkResolverInternal`. An app gets it from the runtime instance passed to `provideEntryPoint`, or exposes it
-from its own entryPoint. A future public API may move this onto container-runtime definitions rather than the concrete
-runtime class.
+Host exposure: `ContainerRuntime` exposes a `versionMarkResolver` getter backed by the concrete
+`versionMarkResolverInternal`, and the resolver is now exposed on the `@legacy @beta` `IContainerRuntime` interface (in
+`@fluidframework/container-runtime-definitions`). An app gets it from the runtime instance passed to
+`provideEntryPoint`, or exposes it from its own entryPoint.
 
 ### Capture implementation
 
@@ -119,7 +119,7 @@ state between flushing, reading the sequence number, and reading the batch id.
 
 An app (e.g. the Loop/office-bohemia host) consumes a small `@legacy @beta` surface:
 
-- Get the resolver: `ContainerRuntime.versionMarkResolver` -> `IVersionMarkResolver`.
+- Get the resolver: `IContainerRuntime.versionMarkResolver` -> `IVersionMarkResolver`.
 - `IVersionMarkResolver` methods: `sealAndCaptureVersionMark()` -> `VersionMarkCapture` (seals the batch and returns the
   locator data atomically), `onBatchSequenced(listener)` (live promotion), `resolve(batchId, sequenceNumberLowerBound)`
   -> `ResolveResult` (load-time sweep / restore).
@@ -368,10 +368,10 @@ so all apps can feed one shared dashboard. Design events around the questions a 
 
 ### Events
 
-| Event                                  | When                                                                   | Dimensions                                                                                                                                            | Answers                                                                                                                                                                                                                               |
-| -------------------------------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Resolve` **(implemented)**            | end of `resolve()` (via `finally`, so a thrown scan is still reported) | `outcome` (`resolved`\|`pending`\|`unresolvable`\|`error`), `path` (`session`\|`history`\|`noReader`), `durationMs`, `sequenceNumber` (when resolved) | success rate; how often history is needed; latency; `unresolvable` = data-loss KPI; `error` = the scan threw. `session` means the final result came from the live map, including a live resolution found by the post-history recheck. |
-| `Capture` **(implemented — AB#80270)** | `sealAndCaptureVersionMark()`                                          | `kind` (`pending`\|`resolved`)                                                                                                                        | capture volume; pending ratio                                                                                                                                                                                                         |
+| Event                                  | When                                                                   | Dimensions                                                                                                                                                                                                          | Answers                                                                                                                                                                                                                                                                      |
+| -------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Resolve` **(implemented)**            | end of `resolve()` (via `finally`, so a thrown scan is still reported) | `outcome` (`resolved`\|`pending`\|`unresolvable`\|`error`), `path` (`session`\|`history`\|`noReader`), `durationMs`, `sequenceNumber` (when resolved), `reason` (the diagnostic string when the result carries one) | success rate; how often history is needed; latency; `unresolvable` = data-loss KPI; `error` = the scan threw; `reason` = why a mark did not resolve. `session` means the final result came from the live map, including a live resolution found by the post-history recheck. |
+| `Capture` **(implemented — AB#80270)** | `sealAndCaptureVersionMark()`                                          | `kind` (`pending`\|`resolved`)                                                                                                                                                                                      | capture volume; pending ratio                                                                                                                                                                                                                                                |
 
 ### Correlation and the app funnel (planned)
 

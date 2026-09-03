@@ -138,6 +138,7 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 		let path: "session" | "history" | "noReader" = "history";
 		let outcome: ResolveResult["kind"] | "error" = "error";
 		let resolvedSequenceNumber: number | undefined;
+		let resolvedReason: string | undefined;
 		try {
 			// Fast path: batch sequenced live this session.
 			const resolvedBatch = this.sessionResolutionFor(batchId);
@@ -149,6 +150,7 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 					// help (a later load with a capable loader may resolve it).
 					path = "noReader";
 					outcome = "pending";
+					resolvedReason = "historicalOpsUnavailable";
 					return { kind: "pending", reason: "historicalOpsUnavailable" };
 				}
 				// Otherwise scan history from the mark's reference point.
@@ -166,6 +168,8 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 				outcome = result.kind;
 				if (result.kind === "resolved") {
 					resolvedSequenceNumber = result.sequenceNumber;
+				} else {
+					resolvedReason = result.reason;
 				}
 				return result;
 			}
@@ -182,6 +186,7 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 				...(resolvedSequenceNumber === undefined
 					? {}
 					: { sequenceNumber: resolvedSequenceNumber }),
+				...(resolvedReason === undefined ? {} : { reason: resolvedReason }),
 			});
 		}
 	}
