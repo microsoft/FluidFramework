@@ -240,7 +240,8 @@ describe("DisableLoadConnectionRetries", () => {
 	it("restores driver state before connecting and propagates restoration errors", async () => {
 		const driverState = { epoch: "epoch1" };
 		let restored = false;
-		let restoreError: Error | undefined;
+		let shouldThrowRestoreError = false;
+		const restoreError = new Error("invalid driver state");
 		let connectionAttempts = 0;
 		const documentServiceFactory = failSometimeProxy<
 			IDocumentServiceFactory &
@@ -255,7 +256,7 @@ describe("DisableLoadConnectionRetries", () => {
 						get: () => undefined,
 						set: (state) => {
 							assert.deepStrictEqual(state, driverState);
-							if (restoreError !== undefined) {
+							if (shouldThrowRestoreError) {
 								throw restoreError;
 							}
 							restored = true;
@@ -296,7 +297,7 @@ describe("DisableLoadConnectionRetries", () => {
 		assert(restored);
 		assert.strictEqual(connectionAttempts, 1);
 
-		restoreError = new Error("invalid driver state");
+		shouldThrowRestoreError = true;
 		await assert.rejects(
 			async () => loader.resolve({ url: "test" }, pendingState),
 			restoreError,
