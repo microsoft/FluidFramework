@@ -277,11 +277,15 @@ export interface SnapshotSchemaCompatibilityOptions {
 	readonly snapshotFileNameFormat?: {
 		/**
 		 * Text to include before the version.
+		 *
+		 * @defaultValue `""`
 		 */
 		readonly prefix?: string;
 
 		/**
 		 * Text to include after the version and before the ".json" extension.
+		 *
+		 * @defaultValue `""`
 		 */
 		readonly suffix?: string;
 	};
