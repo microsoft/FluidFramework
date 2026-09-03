@@ -28,7 +28,7 @@ import {
 import {
 	type ImplicitFieldSchema,
 	type SchemaCompatibilityStatusBeta,
-	type TreeContextAlpha,
+	type TreeView,
 	type TreeViewEvents,
 	tryGetTreeNodeForField,
 	setField,
