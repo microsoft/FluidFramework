@@ -333,6 +333,9 @@ export class SchematizingSimpleTreeView<
 			enabledUpgrades !== undefined,
 			"Enabled upgrades must be available for an active view",
 		);
+		if (enabledUpgrades.size === 0) {
+			return configuredPolicy;
+		}
 
 		return {
 			includeStaged: (upgrade) =>

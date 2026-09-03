@@ -194,6 +194,9 @@ function includeEnabledUpgrades(
 	configuredPolicy: StagedSchemaUpgradePolicy,
 	enabledUpgrades: ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus>,
 ): StagedSchemaUpgradePolicy {
+	if (enabledUpgrades.size === 0) {
+		return configuredPolicy;
+	}
 	return {
 		includeStaged: (upgrade) =>
 			configuredPolicy.includeStaged(upgrade) || enabledUpgrades.has(upgrade),
