@@ -602,9 +602,9 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	 *
 	 * When using {@link TreeViewConfigurationAlpha} with a {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy},
 	 * staged schema upgrades matching the configured policy are included in the target stored schema.
-	 * Once a staged schema upgrade has been enabled in a document's stored schema, loading that document
-	 * with a view that does not include equivalent staged members in its construction-time policy will cause
-	 * `upgradeSchema` to throw a `UsageError` because the requested target would narrow the stored schema.
+	 * Staged upgrades that are already enabled in the document are also included by default. Set
+	 * {@link (StagedSchemaUpgradePolicy:interface).includeAlreadyEnabledUpgrades} to `false` when
+	 * creating the policy to only include staged upgrades selected explicitly by the policy.
 	 *
 	 * @example Enabling a staged allowed type for documents, selected by a feature flag
 	 *
@@ -677,12 +677,175 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 }
 
 /**
+ * A discrepancy between a view schema and a document's stored schema.
+ *
+ * @remarks
+ * The `mismatch` property discriminates the different discrepancy shapes.
+ *
+ * @sealed @beta
+ */
+export type SchemaDiscrepancy =
+	| {
+			/**
+			 * Indicates that a field allows different node types in the view and stored schemas.
+			 */
+			readonly mismatch: "allowedTypes";
+			/**
+			 * The field with the discrepancy.
+			 *
+			 * `"root"` identifies the root field. Otherwise, `nodeType` identifies the containing
+			 * node schema and `fieldKey` identifies its field. `fieldKey` is undefined for a map
+			 * node's implicit field.
+			 */
+			readonly location:
+				| "root"
+				| {
+						readonly nodeType: string;
+						readonly fieldKey: string | undefined;
+				  };
+			/**
+			 * Non-staged node type identifiers allowed by the view schema but not the stored schema.
+			 */
+			readonly view: readonly string[];
+			/**
+			 * Staged node type identifiers allowed by the view schema but not the stored schema.
+			 *
+			 * @remarks These types provide rollout context but do not cause the discrepancy.
+			 */
+			readonly stagedView?: readonly string[];
+			/**
+			 * Node type identifiers allowed by the stored schema but not the view schema.
+			 */
+			readonly stored: readonly string[];
+			/**
+			 * Whether the view field is a staged optional field.
+			 *
+			 * @remarks Omitted when false.
+			 */
+			readonly viewIsStagedOptional?: true;
+	  }
+	| {
+			/**
+			 * Indicates that a field has different field kinds in the view and stored schemas.
+			 */
+			readonly mismatch: "fieldKind";
+			/**
+			 * The field with the discrepancy.
+			 *
+			 * `"root"` identifies the root field. Otherwise, `nodeType` identifies the containing
+			 * node schema and `fieldKey` identifies its field. `fieldKey` is undefined for a map
+			 * node's implicit field.
+			 */
+			readonly location:
+				| "root"
+				| {
+						readonly nodeType: string;
+						readonly fieldKey: string | undefined;
+				  };
+			/**
+			 * The field kind required by the view schema.
+			 */
+			readonly view: string;
+			/**
+			 * The field kind recorded in the stored schema.
+			 */
+			readonly stored: string;
+			/**
+			 * Whether the view field is a staged optional field.
+			 *
+			 * @remarks Omitted when false.
+			 */
+			readonly viewIsStagedOptional?: true;
+	  }
+	| {
+			/**
+			 * Indicates that a leaf node accepts different value types in the view and stored schemas.
+			 */
+			readonly mismatch: "valueSchema";
+			/**
+			 * The identifier of the leaf node schema with the discrepancy.
+			 */
+			readonly nodeType: string;
+			/**
+			 * The value schema required by the view, or undefined when it does not constrain values.
+			 */
+			readonly view: string | undefined;
+			/**
+			 * The value schema recorded in the stored schema, or undefined when it does not constrain values.
+			 */
+			readonly stored: string | undefined;
+	  }
+	| {
+			/**
+			 * Indicates that a node is represented by different node kinds in the view and stored schemas.
+			 */
+			readonly mismatch: "nodeKind";
+			/**
+			 * The identifier of the node schema with the discrepancy.
+			 */
+			readonly nodeType: string;
+			/**
+			 * The node kind required by the view schema.
+			 */
+			readonly view: string;
+			/**
+			 * The node kind recorded in the stored schema.
+			 */
+			readonly stored: string;
+	  };
+
+/**
+ * {@link SchemaCompatibilityStatus} with additional beta APIs.
+ *
+ * @sealed @beta
+ */
+export interface SchemaCompatibilityStatusBeta extends SchemaCompatibilityStatus {
+	/**
+	 * Details about the schema discrepancies that prevent this view from accessing the tree.
+	 *
+	 * @remarks
+	 * This property is undefined when {@link SchemaCompatibilityStatus.canView} is true and present
+	 * when `canView` is false.
+	 * It can include application-defined schema identifiers and field keys.
+	 *
+	 * @example Interpreting an allowed-types discrepancy
+	 *
+	 * If a document's stored schema allows `string` for `Todo.title`, but the view schema expects
+	 * `number`, the discrepancy identifies the field and the type permitted by each schema:
+	 *
+	 * ```typescript
+	 * const sf = new SchemaFactory("com.example");
+	 * class Todo extends sf.object("Todo", {
+	 * 	title: sf.number,
+	 * }) {}
+	 *
+	 * const view = asBeta(tree.viewWith(new TreeViewConfiguration({ schema: Todo })));
+	 * if (!view.compatibility.canView) {
+	 * 	// [{
+	 * 	//   mismatch: "allowedTypes",
+	 * 	//   location: { nodeType: "com.example.Todo", fieldKey: "title" },
+	 * 	//   view: ["com.fluidframework.leaf.number"],
+	 * 	//   stored: ["com.fluidframework.leaf.string"],
+	 * 	// }]
+	 * 	console.error(view.compatibility.discrepancies);
+	 * }
+	 * ```
+	 */
+	readonly discrepancies: readonly SchemaDiscrepancy[] | undefined;
+}
+
+/**
  * {@link TreeView} with additional beta APIs.
  * @sealed @beta
  */
 export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema>
 	extends TreeView<TSchema>,
 		UntypedTreeView {
+	/**
+	 * {@inheritDoc TreeView.compatibility}
+	 */
+	readonly compatibility: SchemaCompatibilityStatusBeta;
+
 	// Override the base branch method to return a typed view rather than merely a branch.
 	fork(): ReturnType<UntypedTreeView["fork"]> & TreeViewBeta<TSchema>;
 
@@ -774,10 +937,6 @@ export interface TreeViewAlpha<
 	 * Only valid to call when this view's {@link SchemaCompatibilityStatus.canInitialize} is true.
 	 *
 	 * Enables staged schema upgrades declared by {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy} when generating the initial stored schema.
-	 * Once a staged schema upgrade has been enabled in a document's stored schema, loading that document
-	 * with a view that does not include equivalent staged members in its construction-time policy will cause
-	 * a subsequent `upgradeSchema` call to throw a `UsageError` because the stored schema already contains
-	 * the upgraded members and the new target would narrow it.
 	 *
 	 * Applications should typically call this function before attaching a `SharedTree`.
 	 * @param content - The content to initialize the tree with.
@@ -796,8 +955,8 @@ export interface TreeViewAlpha<
 	 * whether to include an upgrade token in the view configuration after a feature flag rollback.
 	 *
 	 * Results are derived from this view's schema and the current stored schema.
-	 * When the view is not compatible with the stored schema (i.e. `compatibility.canView` is
-	 * false), the result may be incomplete because the schema walk is interrupted early.
+	 * The full schema is checked even when the view is incompatible with the stored schema, so the
+	 * result includes all locations declared by the view schema.
 	 */
 	isStagedUpgradeEnabled(upgrade: SchemaUpgrade): StagedUpgradeStatus;
 

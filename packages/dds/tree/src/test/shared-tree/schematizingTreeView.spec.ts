@@ -5,7 +5,7 @@
 
 import { strict as assert, fail } from "node:assert";
 
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { TelemetryDataTag, UsageError } from "@fluidframework/telemetry-utils/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { CommitKind, type RevertibleAlpha, type TransactionLabels } from "../../core/index.js";
@@ -405,6 +405,7 @@ describe("SchematizingSimpleTreeView", () => {
 			canUpgrade: false,
 			isEquivalent: false,
 			canInitialize: false,
+			discrepancies: undefined,
 		});
 
 		assert.equal(Object.keys(viewSpecific.root).length, 2);
@@ -423,6 +424,7 @@ describe("SchematizingSimpleTreeView", () => {
 			canUpgrade: true,
 			isEquivalent: true,
 			canInitialize: false,
+			discrepancies: undefined,
 		});
 		assert.equal(Object.keys(viewGeneralized.root).length, 3);
 		assert.equal(Object.entries(viewGeneralized.root).length, 3);
@@ -469,6 +471,7 @@ describe("SchematizingSimpleTreeView", () => {
 			canUpgrade: false,
 			isEquivalent: false,
 			canInitialize: false,
+			discrepancies: undefined,
 		});
 
 		viewSpecific.root.moveRangeToEnd(0, 1);
@@ -490,6 +493,7 @@ describe("SchematizingSimpleTreeView", () => {
 			canUpgrade: true,
 			isEquivalent: true,
 			canInitialize: false,
+			discrepancies: undefined,
 		});
 
 		// ...however, despite that client making an edit to Alice, the field is preserved via the move APIs.
@@ -593,11 +597,35 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(view.compatibility.canView, false);
 		assert.equal(view.compatibility.canUpgrade, true);
 		assert.equal(view.compatibility.isEquivalent, false);
+		assert.deepEqual(view.compatibility.discrepancies, [
+			{
+				mismatch: "allowedTypes",
+				location: "root",
+				view: ["com.fluidframework.leaf.string"],
+				stored: [],
+			},
+		]);
 		assert.throws(
 			() => view.root,
-			validateUsageError(
-				/TreeView\.root is unavailable because the view schema is not compatible with the document's stored schema\. The first schema mismatch is: the root field has different allowed node types: only the view schema allows \["com\.fluidframework\.leaf\.string"\]\. The stored schema can be upgraded; call TreeView\.upgradeSchema\(\)/,
-			),
+			(error) => {
+				assert(error instanceof UsageError);
+				assert.equal(
+					error.message,
+					"TreeView.root is unavailable because the view schema is incompatible with the stored schema. The stored schema can be upgraded; call TreeView.upgradeSchema() before reading or writing TreeView.root.",
+				);
+				assert.deepEqual(error.getTelemetryProperties().schemaIncompatibilityDetails, {
+					tag: TelemetryDataTag.SchemaArtifact,
+					value: JSON.stringify([
+						{
+							mismatch: "allowedTypes",
+							location: "root",
+							view: ["com.fluidframework.leaf.string"],
+							stored: [],
+						},
+					]),
+				});
+				return true;
+			},
 		);
 
 		view.upgradeSchema();
@@ -605,6 +633,7 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.deepEqual(log, [["rootChanged", 5]]);
 
 		assert.equal(view.compatibility.isEquivalent, true);
+		assert.equal(view.compatibility.discrepancies, undefined);
 		assert.equal(view.root, 5);
 	});
 
@@ -619,11 +648,35 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(view.compatibility.canView, false);
 		assert.equal(view.compatibility.canUpgrade, false);
 		assert.equal(view.compatibility.isEquivalent, false);
+		assert.deepEqual(view.compatibility.discrepancies, [
+			{
+				mismatch: "allowedTypes",
+				location: "root",
+				view: [],
+				stored: ["com.fluidframework.leaf.string"],
+			},
+		]);
 		assert.throws(
 			() => view.root,
-			validateUsageError(
-				/TreeView\.root is unavailable because the view schema is not compatible with the document's stored schema\. The first schema mismatch is: the root field has different allowed node types: only the stored schema allows \["com\.fluidframework\.leaf\.string"\]\. The schemas cannot be upgraded automatically\./,
-			),
+			(error) => {
+				assert(error instanceof UsageError);
+				assert.equal(
+					error.message,
+					"TreeView.root is unavailable because the view schema is incompatible with the stored schema. The schemas cannot be upgraded automatically. Use a compatible view schema or explicitly migrate the document schema and data.",
+				);
+				assert.deepEqual(error.getTelemetryProperties().schemaIncompatibilityDetails, {
+					tag: TelemetryDataTag.SchemaArtifact,
+					value: JSON.stringify([
+						{
+							mismatch: "allowedTypes",
+							location: "root",
+							view: [],
+							stored: ["com.fluidframework.leaf.string"],
+						},
+					]),
+				});
+				return true;
+			},
 		);
 
 		assert.throws(
@@ -643,12 +696,29 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(view.compatibility.canView, false);
 		assert.equal(view.compatibility.canUpgrade, false);
 		assert.equal(view.compatibility.isEquivalent, false);
-		assert.throws(
-			() => view.root,
-			validateUsageError(
-				/TreeView\.root is unavailable because the view schema is not compatible with the document's stored schema\. The first schema mismatch is: the root field has different allowed node types: only the view schema allows \["com\.fluidframework\.leaf\.boolean"\]; only the stored schema allows \["com\.fluidframework\.leaf\.string"\]\. The schemas cannot be upgraded automatically\./,
-			),
-		);
+		const validateIncompatibleSchemaError = (error: unknown): boolean => {
+			assert(error instanceof UsageError);
+			assert.equal(
+				error.message,
+				"TreeView.root is unavailable because the view schema is incompatible with the stored schema. The schemas cannot be upgraded automatically. Use a compatible view schema or explicitly migrate the document schema and data.",
+			);
+			assert.deepEqual(error.getTelemetryProperties().schemaIncompatibilityDetails, {
+				tag: TelemetryDataTag.SchemaArtifact,
+				value: JSON.stringify([
+					{
+						mismatch: "allowedTypes",
+						location: "root",
+						view: ["com.fluidframework.leaf.boolean"],
+						stored: ["com.fluidframework.leaf.string"],
+					},
+				]),
+			});
+			return true;
+		};
+		assert.throws(() => view.root, validateIncompatibleSchemaError);
+		assert.throws(() => {
+			view.root = 7;
+		}, validateIncompatibleSchemaError);
 
 		assert.throws(
 			() => view.upgradeSchema(),

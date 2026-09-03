@@ -10,7 +10,7 @@ import type {
 	Listenable,
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { tagSchemaArtifacts, UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { anchorSlot, rootFieldKey, type RevertToOptionsAlpha } from "../core/index.js";
 import {
@@ -27,7 +27,7 @@ import {
 } from "../feature-libraries/index.js";
 import {
 	type ImplicitFieldSchema,
-	type SchemaCompatibilityStatus,
+	type SchemaCompatibilityStatusBeta,
 	type TreeView,
 	type TreeViewEvents,
 	tryGetTreeNodeForField,
@@ -63,7 +63,6 @@ import {
 	type TreeSchema,
 	type SchemaUpgrade,
 	type StagedUpgradeStatus,
-	getSchemaCompatibilityError,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -82,25 +81,24 @@ import type { TreeCheckout } from "./treeCheckout.js";
  */
 export const ViewSlot = anchorSlot<TreeView<ImplicitFieldSchema>>();
 
-function throwIfSchemaIsIncompatible(
-	compatibility: SchemaCompatibilityStatus,
-	viewSchema: TreeSchema,
-	storedSchema: TreeCheckout["storedSchema"],
-): void {
+function throwIfSchemaIsIncompatible(compatibility: SchemaCompatibilityStatusBeta): void {
 	if (compatibility.canView) {
 		return;
 	}
 
-	const discrepancy = getSchemaCompatibilityError(viewSchema, storedSchema);
-	const details =
-		discrepancy === undefined ? "" : ` The first schema mismatch is: ${discrepancy}.`;
 	const resolution = compatibility.canInitialize
 		? "The document is uninitialized; call TreeView.initialize() before reading or writing TreeView.root."
 		: compatibility.canUpgrade
 			? "The stored schema can be upgraded; call TreeView.upgradeSchema() before reading or writing TreeView.root."
-			: "The schemas cannot be upgraded automatically. Review the reported mismatch and use a compatible view schema or explicitly migrate the document schema and data.";
+			: "The schemas cannot be upgraded automatically. Use a compatible view schema or explicitly migrate the document schema and data.";
 	throw new UsageError(
-		`TreeView.root is unavailable because the view schema is not compatible with the document's stored schema.${details} ${resolution}`,
+		`TreeView.root is unavailable because the view schema is incompatible with the stored schema. ${resolution}`,
+		tagSchemaArtifacts({
+			schemaIncompatibilityDetails:
+				compatibility.discrepancies === undefined
+					? undefined
+					: JSON.stringify(compatibility.discrepancies),
+		}),
 	);
 }
 
@@ -122,7 +120,7 @@ export class SchematizingSimpleTreeView<
 	/**
 	 * Undefined if and only if uninitialized or disposed.
 	 */
-	private currentCompatibility: SchemaCompatibilityStatus | undefined;
+	private currentCompatibility: SchemaCompatibilityStatusBeta | undefined;
 	/**
 	 * Cached map of upgrade statuses, computed alongside compatibility.
 	 * @remarks Undefined if and only if uninitialized or disposed.
@@ -198,6 +196,7 @@ export class SchematizingSimpleTreeView<
 			canUpgrade: true,
 			isEquivalent: false,
 			canInitialize: true,
+			discrepancies: undefined,
 		};
 		this.currentEnabledUpgrades = new Map();
 		this.update();
@@ -299,7 +298,7 @@ export class SchematizingSimpleTreeView<
 	public upgradeSchema(): void {
 		this.ensureUndisposed();
 
-		const newSchema = toUpgradeSchema(this.viewSchema.root, this.stagedUpgradePolicy);
+		const newSchema = toUpgradeSchema(this.viewSchema.root, this.effectiveUpgradePolicy);
 		const storedSchema = this.checkout.storedSchema.clone();
 		if (!allowsRepoSuperset(defaultSchemaPolicy, storedSchema, newSchema)) {
 			throw new UsageError(
@@ -319,6 +318,28 @@ export class SchematizingSimpleTreeView<
 			this.failDisposed();
 		}
 		return this.currentEnabledUpgrades.get(upgrade) ?? "disabled";
+	}
+
+	private get effectiveUpgradePolicy(): StagedSchemaUpgradePolicy {
+		const configuredPolicy = this.stagedUpgradePolicy;
+		if (configuredPolicy.includeAlreadyEnabledUpgrades === false) {
+			return configuredPolicy;
+		}
+		const enabledUpgrades = this.currentEnabledUpgrades;
+		assert(
+			enabledUpgrades !== undefined,
+			"Enabled upgrades must be available for an active view",
+		);
+		if (enabledUpgrades.size === 0) {
+			return configuredPolicy;
+		}
+
+		return {
+			includeStaged: (upgrade) =>
+				configuredPolicy.includeStaged(upgrade) || enabledUpgrades.has(upgrade),
+			includeStagedOptional: (upgrade) =>
+				configuredPolicy.includeStagedOptional(upgrade) || enabledUpgrades.has(upgrade),
+		};
 	}
 
 	/**
@@ -481,7 +502,7 @@ export class SchematizingSimpleTreeView<
 	/**
 	 * Computes the current schema compatibility status and updates the cached enabled upgrades.
 	 */
-	private computeCompatibility(): SchemaCompatibilityStatus {
+	private computeCompatibility(): SchemaCompatibilityStatusBeta {
 		const { enabledUpgrades, ...compatibility } = checkSchemaCompatibility(
 			this.viewSchema,
 			this.checkout.storedSchema,
@@ -526,7 +547,7 @@ export class SchematizingSimpleTreeView<
 		anchors.slots.delete(SimpleContextSlot);
 	}
 
-	public get compatibility(): SchemaCompatibilityStatus {
+	public get compatibility(): SchemaCompatibilityStatusBeta {
 		if (!this.currentCompatibility) {
 			this.failDisposed();
 		}
@@ -551,11 +572,7 @@ export class SchematizingSimpleTreeView<
 
 	private get flexRoot(): FlexTreeOptionalField | FlexTreeRequiredField {
 		this.breaker.use();
-		throwIfSchemaIsIncompatible(
-			this.compatibility,
-			this.viewSchema,
-			this.checkout.storedSchema,
-		);
+		throwIfSchemaIsIncompatible(this.compatibility);
 		const view = this.getFlexTreeContext();
 		assert(
 			view.root.is(FieldKinds.optional) ||
@@ -572,11 +589,7 @@ export class SchematizingSimpleTreeView<
 
 	public set root(newRoot: InsertableField<TRootSchema>) {
 		this.breaker.use();
-		throwIfSchemaIsIncompatible(
-			this.compatibility,
-			this.viewSchema,
-			this.checkout.storedSchema,
-		);
+		throwIfSchemaIsIncompatible(this.compatibility);
 		const view = this.getFlexTreeContext();
 		setField(
 			view.root,

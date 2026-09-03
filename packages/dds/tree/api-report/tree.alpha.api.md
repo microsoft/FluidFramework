@@ -1262,6 +1262,43 @@ export interface SchemaCompatibilityStatus {
     readonly isEquivalent: boolean;
 }
 
+// @beta @sealed
+export interface SchemaCompatibilityStatusBeta extends SchemaCompatibilityStatus {
+    readonly discrepancies: readonly SchemaDiscrepancy[] | undefined;
+}
+
+// @beta @sealed
+export type SchemaDiscrepancy = {
+    readonly mismatch: "allowedTypes";
+    readonly location: "root" | {
+        readonly nodeType: string;
+        readonly fieldKey: string | undefined;
+    };
+    readonly view: readonly string[];
+    readonly stagedView?: readonly string[];
+    readonly stored: readonly string[];
+    readonly viewIsStagedOptional?: true;
+} | {
+    readonly mismatch: "fieldKind";
+    readonly location: "root" | {
+        readonly nodeType: string;
+        readonly fieldKey: string | undefined;
+    };
+    readonly view: string;
+    readonly stored: string;
+    readonly viewIsStagedOptional?: true;
+} | {
+    readonly mismatch: "valueSchema";
+    readonly nodeType: string;
+    readonly view: string | undefined;
+    readonly stored: string | undefined;
+} | {
+    readonly mismatch: "nodeKind";
+    readonly nodeType: string;
+    readonly view: string;
+    readonly stored: string;
+};
+
 // @public @sealed
 export class SchemaFactory<out TScope extends string | undefined = string | undefined, TName extends number | string = string> extends SchemaFactory_base {
     constructor(
@@ -1542,6 +1579,7 @@ export interface SnapshotSchemaCompatibilityOptions {
 
 // @alpha @input
 export interface StagedSchemaUpgradePolicy {
+    readonly includeAlreadyEnabledUpgrades?: boolean;
     includeStaged(upgrade: SchemaUpgrade): boolean;
     includeStagedOptional(upgrade: SchemaUpgrade): boolean;
 }
@@ -2169,6 +2207,7 @@ export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | Unsa
 
 // @beta @sealed
 export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema> extends TreeView<TSchema>, UntypedTreeView {
+    readonly compatibility: SchemaCompatibilityStatusBeta;
     // (undocumented)
     fork(): ReturnType<UntypedTreeView["fork"]> & TreeViewBeta<TSchema>;
     runTransaction<TOut extends TransactionCallbackStatusBeta<unknown, unknown> | VoidTransactionCallbackStatusBeta | void>(transaction: () => TOut, params?: RunTransactionParamsBeta): TOut extends TransactionCallbackStatusBeta<infer TSuccessValue, infer TFailureValue> ? TransactionValueResult<TSuccessValue, TFailureValue> : TransactionVoidResult;

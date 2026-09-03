@@ -19,6 +19,8 @@ export type {
 	ViewableTree,
 	TreeViewEvents,
 	SchemaCompatibilityStatus,
+	SchemaCompatibilityStatusBeta,
+	SchemaDiscrepancy,
 	TreeViewAlpha,
 	TreeViewBeta,
 	UntypedTreeView,
@@ -107,7 +109,7 @@ export { getJsonSchema } from "./getJsonSchema.js";
 export { getSimpleSchema } from "./getSimpleSchema.js";
 export {
 	checkSchemaCompatibility,
-	getSchemaCompatibilityError,
+	getSchemaIncompatibilityDetails,
 } from "./schemaCompatibilityTester.js";
 export { type StagedUpgradeStatus } from "./schemaCompatibilityTester.js";
 export type {
