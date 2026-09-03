@@ -301,7 +301,7 @@ export class SchematizingSimpleTreeView<
 	public upgradeSchema(): void {
 		this.ensureUndisposed();
 
-		const newSchema = toUpgradeSchema(this.viewSchema.root, this.stagedUpgradePolicy);
+		const newSchema = toUpgradeSchema(this.viewSchema.root, this.effectiveUpgradePolicy);
 		const storedSchema = this.checkout.storedSchema.clone();
 		if (!allowsRepoSuperset(defaultSchemaPolicy, storedSchema, newSchema)) {
 			throw new UsageError(
@@ -321,6 +321,25 @@ export class SchematizingSimpleTreeView<
 			this.failDisposed();
 		}
 		return this.currentEnabledUpgrades.get(upgrade) ?? "disabled";
+	}
+
+	private get effectiveUpgradePolicy(): StagedSchemaUpgradePolicy {
+		const configuredPolicy = this.stagedUpgradePolicy;
+		if (configuredPolicy.includeAlreadyEnabledUpgrades === false) {
+			return configuredPolicy;
+		}
+		const enabledUpgrades = this.currentEnabledUpgrades;
+		assert(
+			enabledUpgrades !== undefined,
+			"Enabled upgrades must be available for an active view",
+		);
+
+		return {
+			includeStaged: (upgrade) =>
+				configuredPolicy.includeStaged(upgrade) || enabledUpgrades.has(upgrade),
+			includeStagedOptional: (upgrade) =>
+				configuredPolicy.includeStagedOptional(upgrade) || enabledUpgrades.has(upgrade),
+		};
 	}
 
 	/**

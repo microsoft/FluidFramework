@@ -50,8 +50,7 @@ function expectCompatibility(
 		...expected,
 	});
 
-	// This does not include staged allowed types.
-	const viewStored = toUpgradeSchema(view);
+	const viewStored = toUpgradeSchema(view, compatibility.enabledUpgrades.keys());
 
 	// if it says upgradable, deriving a stored schema from the view schema gives one thats a superset of the old stored schema
 	if (compatibility.canUpgrade) {
@@ -595,7 +594,7 @@ describe("checkSchemaCompatibility", () => {
 				);
 			});
 
-			it("clients with staged schema allow viewing but not upgrading after upgrade", () => {
+			it("clients with staged schema preserve already enabled upgrades", () => {
 				const stagedString = SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string);
 				const upgrade = stagedString.metadata.stagedSchemaUpgrade;
 				assert(upgrade !== undefined);
@@ -612,8 +611,8 @@ describe("checkSchemaCompatibility", () => {
 					{ view: Compatible1, stored: toUpgradeSchema(Compatible2) },
 					{
 						canView: true,
-						canUpgrade: false,
-						isEquivalent: false,
+						canUpgrade: true,
+						isEquivalent: true,
 						enabledUpgrades: new Map([[upgrade, "enabled"]]),
 					},
 				);

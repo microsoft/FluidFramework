@@ -722,9 +722,9 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	 *
 	 * When using {@link TreeViewConfigurationAlpha} with a {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy},
 	 * staged schema upgrades matching the configured policy are included in the target stored schema.
-	 * Once a staged schema upgrade has been enabled in a document's stored schema, loading that document
-	 * with a view that does not include equivalent staged members in its construction-time policy will cause
-	 * `upgradeSchema` to throw a `UsageError` because the requested target would narrow the stored schema.
+	 * Staged upgrades that are already enabled in the document are also included by default. Set
+	 * {@link (StagedSchemaUpgradePolicy:interface).includeAlreadyEnabledUpgrades} to `false` when
+	 * creating the policy to only include staged upgrades selected explicitly by the policy.
 	 *
 	 * @example Enabling a staged allowed type for documents, selected by a feature flag
 	 *
@@ -829,10 +829,6 @@ export interface TreeViewAlpha<
 	 * Only valid to call when this view's {@link SchemaCompatibilityStatus.canInitialize} is true.
 	 *
 	 * Enables staged schema upgrades declared by {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy} when generating the initial stored schema.
-	 * Once a staged schema upgrade has been enabled in a document's stored schema, loading that document
-	 * with a view that does not include equivalent staged members in its construction-time policy will cause
-	 * a subsequent `upgradeSchema` call to throw a `UsageError` because the stored schema already contains
-	 * the upgraded members and the new target would narrow it.
 	 *
 	 * Applications should typically call this function before attaching a `SharedTree`.
 	 * @param content - The content to initialize the tree with.
