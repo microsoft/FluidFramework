@@ -122,45 +122,26 @@ function parseHostGuestMessage(data: unknown): HostGuestMessage {
 	throw new Error("Invalid Host and Guest protocol message.");
 }
 
-/** A promise and the functions that settle it. */
-interface PromiseWithResolvers {
+/** A promise and the function that resolves it. */
+interface PromiseWithResolver {
 	/** The synchronization operation that a caller can await. */
 	readonly promise: Promise<void>;
 	/** Resolves the synchronization operation. */
 	readonly resolve: () => void;
-	/** Rejects the synchronization operation with the specified error. */
-	readonly reject: (error: Error) => void;
 }
 
 /**
- * Creates a promise with functions that resolve or reject it.
+ * Creates a promise and the function that resolves it.
  *
- * @returns The promise and its settlement functions.
+ * @returns The promise and its resolver.
  */
-function makePromiseWithResolvers(): PromiseWithResolvers {
+function makePromiseWithResolver(): PromiseWithResolver {
 	let promiseResolve: undefined | (() => void);
-	let promiseReject: undefined | ((error: Error) => void);
-	const promise = new Promise<void>((resolve, reject) => {
+	const promise = new Promise<void>((resolve) => {
 		promiseResolve = resolve;
-		promiseReject = reject;
 	});
-	promise.catch(() => {});
 	assert(promiseResolve !== undefined, "Resolve function should have been assigned");
-	assert(promiseReject !== undefined, "Reject function should have been assigned");
-	return { promise, resolve: promiseResolve, reject: promiseReject };
-}
-
-/**
- * Indicates that disposal stopped a pending Host or Guest synchronization operation.
- */
-class SessionDisposedError extends Error {
-	public constructor(
-		/** The participant whose disposal stopped the synchronization operation. */
-		public readonly source: "Host" | "Guest",
-	) {
-		super(`The ${source} was disposed before synchronization completed.`);
-		this.name = "SessionDisposedError";
-	}
+	return { promise, resolve: promiseResolve };
 }
 
 /**
@@ -195,7 +176,7 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 	 * When defined, the Guest is behind the Host's main branch. The promise resolves when the Guest has caught up with the Host's main branch.
 	 * When undefined, no update is in progress and the Guest is up-to-date with the Host's main branch.
 	 */
-	private updateInProgress?: PromiseWithResolvers;
+	private updateInProgress?: PromiseWithResolver;
 	/**
 	 * Clone of main branch from when the last update to the Guest was initiated.
 	 */
@@ -277,7 +258,6 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 		this.port.removeEventListener("message", this.onMessage);
 		this.port.removeEventListener("messageerror", this.onMessageError);
 		this.port.close();
-		this.updateInProgress?.reject(new SessionDisposedError("Host"));
 		this.updateInProgress = undefined;
 		this.offMainChanged();
 		this.mainHeadFromLastUpdate?.dispose();
@@ -347,7 +327,7 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 				this.logger(
 					"Host:   no pre-existing update in progress. Creating new update promise.",
 				);
-				this.updateInProgress = makePromiseWithResolvers();
+				this.updateInProgress = makePromiseWithResolver();
 			} else {
 				this.logger("Host:   Reusing existing update promise.");
 			}
@@ -421,7 +401,7 @@ class Guest<const TSchema extends ImplicitFieldSchema> {
 	 * The promise resolves when the Host acknowledges the Guest changes.
 	 * When undefined, the Host is up-to-date with the Guest.
 	 */
-	private pushInProgress?: PromiseWithResolvers;
+	private pushInProgress?: PromiseWithResolver;
 	/**
 	 * Callback to unsubscribe from view changes.
 	 */
@@ -485,7 +465,7 @@ class Guest<const TSchema extends ImplicitFieldSchema> {
 				);
 				if (this.pushInProgress === undefined) {
 					this.logger("Guest:   no pre-existing push in progress. Creating new push promise.");
-					this.pushInProgress = makePromiseWithResolvers();
+					this.pushInProgress = makePromiseWithResolver();
 				} else {
 					this.logger("Guest:   Reusing existing push promise.");
 				}
@@ -509,7 +489,6 @@ class Guest<const TSchema extends ImplicitFieldSchema> {
 		this.port.removeEventListener("message", this.onMessage);
 		this.port.removeEventListener("messageerror", this.onMessageError);
 		this.port.close();
-		this.pushInProgress?.reject(new SessionDisposedError("Guest"));
 		this.pushInProgress = undefined;
 		this.offViewChanged();
 		this.view.dispose();
@@ -828,38 +807,6 @@ describe("Host and Guest Demo", () => {
 		strict.equal(acknowledgmentReceived, false);
 		host.dispose();
 		channel.port2.close();
-	});
-
-	it("rejects a pending Guest synchronization during disposal", async () => {
-		const { teardown, guest } = setup([]);
-		guest.view.root.push("G");
-		const updateHostPromise =
-			guest.updateHostPromise ?? strict.fail("Expected a Guest synchronization");
-		const rejection = strict.rejects(updateHostPromise, (error: unknown) => {
-			strict(error instanceof SessionDisposedError);
-			strict.equal(error.source, "Guest");
-			return true;
-		});
-
-		teardown();
-
-		await rejection;
-	});
-
-	it("rejects a pending Host synchronization during disposal", async () => {
-		const { teardown, host } = setup([]);
-		host.main.root.push("H");
-		const updateGuestPromise =
-			host.updateGuestPromise ?? strict.fail("Expected a Host synchronization");
-		const rejection = strict.rejects(updateGuestPromise, (error: unknown) => {
-			strict(error instanceof SessionDisposedError);
-			strict.equal(error.source, "Host");
-			return true;
-		});
-
-		teardown();
-
-		await rejection;
 	});
 
 	it("the initial state is consistent across the Host and Guest", async () => {
