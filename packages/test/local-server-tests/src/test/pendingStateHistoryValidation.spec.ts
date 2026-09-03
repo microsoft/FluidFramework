@@ -124,7 +124,7 @@ describe("Pending-state history validation", () => {
 		await timeoutAwait(validationStarted.promise);
 		const rehydrated = await timeoutAwait(loadP);
 		const closedP = new Promise<IErrorBase | undefined>((resolve) =>
-			rehydrated.once("closed", (error) => resolve(error)),
+			rehydrated.once("closed", (closeError) => resolve(closeError)),
 		);
 		releaseValidation.resolve();
 
