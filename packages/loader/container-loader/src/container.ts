@@ -1674,12 +1674,11 @@ export class Container
 			case undefined: {
 				// Pending-state loads validate the saved-op anchor asynchronously so rehydration
 				// does not wait for network access.
-				// eslint-disable-next-line @typescript-eslint/no-floating-promises
 				this.attachDeltaManagerOpHandler(
 					attributes,
 					loadMode.deltaConnection === "none" ? "none" : "all",
 					lastProcessedMessage,
-				);
+				).catch((error) => this.close(normalizeError(error)));
 				break;
 			}
 			case "cached":

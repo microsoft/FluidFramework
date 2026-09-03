@@ -746,7 +746,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			// Ops that are coming from this request should not cancel itself.
 			// This is useless for known ranges (to is defined) as it means request is over either way.
 			// And it will cancel unbound request too early, not allowing us to learn where the end of the file is.
-			if (!opsFromFetch && cancelFetch(op)) {
+			if (!opsFromFetch && this.pendingStateAnchor === undefined && cancelFetch(op)) {
 				controller.abort("DeltaManager getDeltas fetch cancelled");
 				this._inbound.off("push", opListener);
 			}

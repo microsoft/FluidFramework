@@ -226,6 +226,7 @@ describe("Loader", () => {
 					timestamp: savedOp.timestamp + 1,
 				};
 				let requestedFrom: number | undefined;
+				let fetchSignal: AbortSignal | undefined;
 				let read = false;
 				let releaseFetch: (() => void) | undefined;
 				const fetchReleasedP = new Promise<void>((resolve) => {
@@ -239,8 +240,9 @@ describe("Loader", () => {
 					true,
 					logger,
 					() => ({
-						fetchMessages: (from): IStream<ISequencedDocumentMessage[]> => {
+						fetchMessages: (from, _to, signal): IStream<ISequencedDocumentMessage[]> => {
 							requestedFrom = from;
+							fetchSignal = signal;
 							fetchStarted?.();
 							return {
 								read: async (): Promise<IStreamResult<ISequencedDocumentMessage[]>> => {
@@ -267,6 +269,16 @@ describe("Loader", () => {
 				deltaManager.on("closed", (error: Error) => {
 					expectedError = error;
 				});
+				deltaConnection.emitOp(docId, [
+					{
+						...initialMessage,
+						clientSequenceNumber: initialMessage.clientSequenceNumber + 1,
+						sequenceNumber: initialMessage.sequenceNumber + 1,
+						timestamp: initialMessage.timestamp + 1,
+					},
+				]);
+				await yieldEventLoop();
+				assert.strictEqual(fetchSignal?.aborted, false);
 				releaseFetch?.();
 				await loadP;
 				assert.strictEqual(requestedFrom, savedOp.sequenceNumber);
