@@ -43,6 +43,16 @@
 				"default": "./dist/index.js"
 			}
 		},
+		"./legacy/point-in-time": {
+			"import": {
+				"types": "./lib/pointInTime.d.ts",
+				"default": "./lib/pointInTime.js"
+			},
+			"require": {
+				"types": "./dist/pointInTime.d.ts",
+				"default": "./dist/pointInTime.js"
+			}
+		},
 		"./internal": {
 			"import": {
 				"types": "./lib/index.d.ts",
@@ -61,6 +71,7 @@
 		"build:api-reports": "concurrently \"npm:build:api-reports:*\"",
 		"build:api-reports:current": "api-extractor run --local --config api-extractor/api-extractor.current.json",
 		"build:api-reports:legacy": "api-extractor run --local --config api-extractor/api-extractor.legacy.json",
+		"build:api-reports:pointInTime": "api-extractor run --local --config api-extractor/api-extractor-report.pointInTime.json",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
@@ -78,14 +89,17 @@
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
 		"check:exports:cjs:legacy": "api-extractor run --config api-extractor/api-extractor-lint-legacy.cjs.json",
 		"check:exports:cjs:legacyAlpha": "api-extractor run --config api-extractor/api-extractor-lint-legacyAlpha.cjs.json",
+		"check:exports:cjs:pointInTime": "api-extractor run --config api-extractor/api-extractor-lint-pointInTime.cjs.json",
 		"check:exports:cjs:public": "api-extractor run --config api-extractor/api-extractor-lint-public.cjs.json",
 		"check:exports:esm:legacy": "api-extractor run --config api-extractor/api-extractor-lint-legacy.esm.json",
 		"check:exports:esm:legacyAlpha": "api-extractor run --config api-extractor/api-extractor-lint-legacyAlpha.esm.json",
+		"check:exports:esm:pointInTime": "api-extractor run --config api-extractor/api-extractor-lint-pointInTime.esm.json",
 		"check:exports:esm:public": "api-extractor run --config api-extractor/api-extractor-lint-public.esm.json",
 		"check:format": "npm run check:biome",
 		"ci:build:api-reports": "concurrently \"npm:ci:build:api-reports:*\"",
 		"ci:build:api-reports:current": "api-extractor run --config api-extractor/api-extractor.current.json",
 		"ci:build:api-reports:legacy": "api-extractor run --config api-extractor/api-extractor.legacy.json",
+		"ci:build:api-reports:pointInTime": "api-extractor run --config api-extractor/api-extractor-report.pointInTime.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib {alpha,beta,internal,legacy}.d.ts legacyAlpha.d.ts \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --quiet --format stylish src",
