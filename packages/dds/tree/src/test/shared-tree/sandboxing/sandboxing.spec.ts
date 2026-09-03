@@ -127,7 +127,7 @@ interface PromiseWithResolver {
 	/** The synchronization operation that a caller can await. */
 	readonly promise: Promise<void>;
 	/** Resolves the synchronization operation. */
-	readonly resolve: () => void;
+	readonly resolver: () => void;
 }
 
 /**
@@ -136,12 +136,12 @@ interface PromiseWithResolver {
  * @returns The promise and its resolver.
  */
 function makePromiseWithResolver(): PromiseWithResolver {
-	let promiseResolve: undefined | (() => void);
+	let resolver: undefined | (() => void);
 	const promise = new Promise<void>((resolve) => {
-		promiseResolve = resolve;
+		resolver = resolve;
 	});
-	assert(promiseResolve !== undefined, "Resolve function should have been assigned");
-	return { promise, resolve: promiseResolve };
+	assert(resolver !== undefined, "Resolve function should have been assigned");
+	return { promise, resolver };
 }
 
 /**
@@ -347,7 +347,7 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 			// The Guest is now caught up with the Host's main branch
 			if (this.updateInProgress !== undefined) {
 				this.logger("Host:   resolving update promise");
-				const resolve = this.updateInProgress.resolve;
+				const resolve = this.updateInProgress.resolver;
 				this.updateInProgress = undefined;
 				resolve();
 			}
@@ -532,7 +532,7 @@ class Guest<const TSchema extends ImplicitFieldSchema> {
 				this.pushInProgress !== undefined,
 				"Missing push promise despite in-flight changes",
 			);
-			const resolve = this.pushInProgress.resolve;
+			const resolve = this.pushInProgress.resolver;
 			this.pushInProgress = undefined;
 			this.logger(`Guest:   all my changes were acked. Resolving push promise.`);
 			resolve();
