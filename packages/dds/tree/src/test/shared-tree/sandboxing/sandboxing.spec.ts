@@ -713,6 +713,8 @@ describe("Host and Guest Demo", () => {
 		};
 	}
 
+	// The Host and Guest are intended to support being run in separate JavaScript realms.
+	// Verify that protocol messages are serializable and that synchronization does not depend on shared object identity.
 	it("uses structured clones for protocol messages", async () => {
 		const channel = new MessageChannel();
 		const change = { revision: "test revision" };
