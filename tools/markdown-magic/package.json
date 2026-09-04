@@ -11,8 +11,8 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
-	"type": "module",
 	"sideEffects": false,
+	"type": "module",
 	"bin": {
 		"markdown-magic": "bin/markdown-magic"
 	},
@@ -24,7 +24,7 @@
 		"check:types": "tsc --noEmit",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
-		"test": "node --import jiti/register --test test/*.test.ts && node --import jiti/register src/index.ts --files \"test/**/*.md\" !test/README.md"
+		"test": "node --import jiti/register --test \"test/*.test.ts\" && node --import jiti/register src/index.ts --files \"test/**/*.md\" !test/README.md"
 	},
 	"dependencies": {
 		"chalk": "^4.1.2",
