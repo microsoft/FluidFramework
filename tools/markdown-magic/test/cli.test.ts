@@ -80,6 +80,21 @@ test("CLI reports discovery and excludes dependency directories", async () => {
 	assert.match(stdout, /Processed 2 files\./);
 });
 
+test("CLI reports an empty file selection as an error", async () => {
+	const directory = await mkdtemp(path.join(os.tmpdir(), "markdown-magic-cli-"));
+
+	await assert.rejects(runCli(directory, "*.md"), (error: unknown) => {
+		assert(error instanceof Error);
+		assert("code" in error);
+		assert.equal(error.code, 1);
+		assert("stdout" in error && typeof error.stdout === "string");
+		assert.doesNotMatch(error.stdout, /Processed|Updated/);
+		assert("stderr" in error && typeof error.stderr === "string");
+		assert.match(error.stderr, /No files found matching the specified patterns: "\*\.md"\./);
+		return true;
+	});
+});
+
 test("CLI reports an unknown transform as an error", async () => {
 	const directory = await mkdtemp(path.join(os.tmpdir(), "markdown-magic-cli-"));
 	const destinationPath = path.join(directory, "destination.md");

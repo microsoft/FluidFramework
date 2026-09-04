@@ -23,6 +23,9 @@ const defaultIgnorePattern = ["**/node_modules/**"];
 /** Maximum number of documentation files that the CLI processes concurrently. */
 const maximumConcurrentFiles = 8;
 
+/** Minimum delay between file-processing progress updates. */
+const progressReportingIntervalMs = 100;
+
 /**
  * Reports file-processing progress to standard output.
  * @remarks
@@ -58,6 +61,13 @@ async function mapWithConcurrency<T, U>(
 	const errors: unknown[] = [];
 	let nextIndex = 0;
 	let processedCount = 0;
+	let progressTimer: ReturnType<typeof setTimeout> | undefined;
+	function scheduleProgressUpdate(): void {
+		progressTimer ??= setTimeout(() => {
+			progressTimer = undefined;
+			onProgress(processedCount, values.length);
+		}, progressReportingIntervalMs);
+	}
 	async function worker() {
 		while (nextIndex < values.length) {
 			const index = nextIndex++;
@@ -66,11 +76,18 @@ async function mapWithConcurrency<T, U>(
 			} catch (error) {
 				errors.push(error);
 			} finally {
-				onProgress(++processedCount, values.length);
+				processedCount++;
+				scheduleProgressUpdate();
 			}
 		}
 	}
 	await Promise.all(Array.from({ length: Math.min(concurrency, values.length) }, worker));
+	if (progressTimer !== undefined) {
+		clearTimeout(progressTimer);
+	}
+	if (values.length > 0) {
+		onProgress(processedCount, values.length);
+	}
 	if (errors.length > 0) {
 		throw new AggregateError(errors, `${errors.length} operations failed.`);
 	}
@@ -115,6 +132,10 @@ export async function runCli(
 		ignore: defaultIgnorePattern,
 		onlyFiles: true,
 	});
+	if (files.length === 0) {
+		const formattedPatterns = patterns.map((pattern) => JSON.stringify(pattern)).join(", ");
+		throw new Error(`No files found matching the specified patterns: ${formattedPatterns}.`);
+	}
 	const registry = createTransformRegistry();
 	reportProgress(0, files.length);
 	const changed = await mapWithConcurrency(
