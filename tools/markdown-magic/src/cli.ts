@@ -23,17 +23,23 @@ const defaultIgnorePattern = ["**/node_modules/**"];
 /** Maximum number of documentation files that the CLI processes concurrently. */
 const maximumConcurrentFiles = 8;
 
-/** Reports file-processing progress to standard output. */
+/**
+ * Reports file-processing progress to standard output.
+ * @remarks
+ * Interactive terminals receive in-place updates.
+ * Redirected and piped output receives only the
+ * final count so that CI logs and parent process multiplexers do not print one line per file.
+ */
 function reportProgress(processedCount: number, totalCount: number): void {
 	const fileLabel = totalCount === 1 ? "file" : "files";
-	const message = `Processed ${processedCount} of ${totalCount} ${fileLabel}.`;
 	if (process.stdout.isTTY) {
+		const message = `Processed ${processedCount} of ${totalCount} ${fileLabel}.`;
 		process.stdout.write(`\r${message}`);
 		if (processedCount === totalCount) {
 			process.stdout.write("\n");
 		}
-	} else {
-		console.log(message);
+	} else if (processedCount === totalCount) {
+		console.log(`Processed ${processedCount} ${fileLabel}.`);
 	}
 }
 

@@ -46,8 +46,7 @@ test("CLI processes selected files from the working directory", async () => {
 
 	const { stdout } = await runCli(directory);
 
-	assert.match(stdout, /Processed 0 of 1 file\./);
-	assert.match(stdout, /Processed 1 of 1 file\./);
+	assert.match(stdout, /Processed 1 file\./);
 	assert.match(stdout, /Updated 1 file\./);
 	assert.match(
 		await readFile(path.join(directory, "destination.md"), "utf8"),
@@ -78,8 +77,7 @@ test("CLI reports discovery and excludes dependency directories", async () => {
 	const { stdout } = await runCli(directory, "**/*.md");
 
 	assert.match(stdout, /Finding documentation files\.\.\./);
-	assert.match(stdout, /Processed 0 of 2 files\./);
-	assert.match(stdout, /Processed 2 of 2 files\./);
+	assert.match(stdout, /Processed 2 files\./);
 });
 
 test("CLI reports an unknown transform as an error", async () => {
@@ -147,9 +145,7 @@ test("CLI completes all files and reports all errors", async () => {
 		assert("code" in error);
 		assert.equal(error.code, 1);
 		assert("stdout" in error && typeof error.stdout === "string");
-		for (let processedCount = 0; processedCount <= 4; processedCount++) {
-			assert.match(error.stdout, new RegExp(`Processed ${processedCount} of 4 files\\.`));
-		}
+		assert.match(error.stdout, /Processed 4 files\./);
 		assert("stderr" in error && typeof error.stderr === "string");
 		assert.match(error.stderr, /invalid-transform\.md:1: Unknown transform "unknown"/);
 		assert.match(error.stderr, /Option "path" must be a non-empty string/);
