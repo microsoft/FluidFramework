@@ -23,6 +23,7 @@ import { EpochTracker } from "../../epochTracker.js";
 import { mockify } from "../../mockify.js";
 import type { LocalPersistentCache } from "../../odspCache.js";
 import { OdspDocumentDeltaConnection } from "../../odspDocumentDeltaConnection.js";
+import { OdspDocumentServiceFactory } from "../../odspDocumentServiceFactory.js";
 import { getHashedDocumentId } from "../../odspPublicUtils.js";
 import { SocketIOClientStatic } from "../../socketModule.js";
 
@@ -152,6 +153,95 @@ describe("OdspDocumentDeltaConnection tests", () => {
 		assert(connection.disposed, "connection should be disposed now");
 		assert(disconnectedEvent, "disconnect Event should happed");
 		assert(socket.connected, "socket should still be connected");
+	});
+
+	it("reuses a socket within one header-bearing factory and isolates different factories", async () => {
+		const firstHeaders = { "X-Agent-Id": "agent-one" };
+		const secondHeaders = { "X-Agent-Id": "agent-two" };
+		const firstFactory = new OdspDocumentServiceFactory(
+			async () => "token",
+			undefined,
+			undefined,
+			{
+				requestHeaders: firstHeaders,
+			},
+		);
+		const secondFactory = new OdspDocumentServiceFactory(
+			async () => "token",
+			undefined,
+			undefined,
+			{ requestHeaders: secondHeaders },
+		);
+		const prefixOf = (factory: OdspDocumentServiceFactory): string | undefined =>
+			(factory as unknown as { socketReferenceKeyPrefix?: string }).socketReferenceKeyPrefix;
+		const sockets = [new ClientSocketMock(), new ClientSocketMock()];
+		const socketCreationStub = stub(SocketIOClientStatic, mockify.key);
+		socketCreationStub.onFirstCall().returns(sockets[0] as unknown as Socket);
+		socketCreationStub.onSecondCall().returns(sockets[1] as unknown as Socket);
+		const connections: OdspDocumentDeltaConnection[] = [];
+
+		try {
+			connections.push(
+				await OdspDocumentDeltaConnection.create(
+					tenantId,
+					documentId,
+					token,
+					client,
+					webSocketUrl,
+					logger,
+					60000,
+					epochTracker,
+					prefixOf(firstFactory),
+					undefined,
+					firstHeaders,
+				),
+			);
+			connections.push(
+				await OdspDocumentDeltaConnection.create(
+					tenantId,
+					documentId,
+					token,
+					client,
+					webSocketUrl,
+					logger,
+					60000,
+					epochTracker,
+					prefixOf(firstFactory),
+					undefined,
+					firstHeaders,
+				),
+			);
+			connections.push(
+				await OdspDocumentDeltaConnection.create(
+					tenantId,
+					documentId,
+					token,
+					client,
+					webSocketUrl,
+					logger,
+					60000,
+					epochTracker,
+					prefixOf(secondFactory),
+					undefined,
+					secondHeaders,
+				),
+			);
+
+			assert.strictEqual(socketCreationStub.callCount, 2);
+			assert.deepStrictEqual(socketCreationStub.firstCall.args[1]?.extraHeaders, firstHeaders);
+			assert.deepStrictEqual(
+				socketCreationStub.secondCall.args[1]?.extraHeaders,
+				secondHeaders,
+			);
+		} finally {
+			for (const connection of connections) {
+				connection.dispose();
+			}
+			socketCreationStub.restore();
+			for (const createdSocket of sockets) {
+				createdSocket.close();
+			}
+		}
 	});
 
 	it("Connect document error on connection", async () => {

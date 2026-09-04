@@ -32,6 +32,7 @@ import type { EpochTracker } from "./epochTracker.js";
 import { errorObjectFromSocketError } from "./odspError.js";
 import { pkgVersion } from "./packageVersion.js";
 import { SocketIOClientStatic } from "./socketModule.js";
+import { copyRequestHeaders } from "./requestHeaders.js";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 const feature_get_ops = "api_get_ops";
@@ -259,6 +260,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		epochTracker: EpochTracker,
 		socketReferenceKeyPrefix: string | undefined,
 		connectionId: string = uuid(),
+		requestHeaders?: Readonly<Record<string, string>>,
 	): Promise<OdspDocumentDeltaConnection> {
 		const mc = loggerToMonitoringContext(telemetryLogger);
 
@@ -269,6 +271,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 
 		// do not include the specific tenant/doc id in the ref key when multiplexing
 		// this will allow multiple documents to share the same websocket connection
+		const immutableRequestHeaders = copyRequestHeaders(requestHeaders);
 		const key = socketReferenceKeyPrefix ? `${socketReferenceKeyPrefix},${url}` : url;
 		const socketReferenceKey = enableMultiplexing ? key : `${key},${tenantId},${documentId}`;
 
@@ -279,6 +282,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			enableMultiplexing,
 			tenantId,
 			documentId,
+			immutableRequestHeaders,
 		);
 
 		const socket = socketReference.socket;
@@ -388,6 +392,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		enableMultiplexing: boolean,
 		tenantId: string,
 		documentId: string,
+		requestHeaders?: Readonly<Record<string, string>>,
 	): SocketReference {
 		// eslint-disable-next-line unicorn/no-array-method-this-argument
 		const existingSocketReference = SocketReference.find(key);
@@ -403,6 +408,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			reconnection: false,
 			transports: ["websocket"],
 			timeout: timeoutMs,
+			...(requestHeaders === undefined ? {} : { extraHeaders: requestHeaders }),
 		});
 
 		return new SocketReference(key, socket);

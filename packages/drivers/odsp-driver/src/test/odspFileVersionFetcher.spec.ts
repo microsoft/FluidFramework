@@ -348,6 +348,40 @@ describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 		);
 	});
 
+	it("getLiveDocumentEpoch sends host request headers without overriding authorization", async () => {
+		const requestHeaders = {
+			"x-session-attribution": "session-value",
+			Authorization: "host-token",
+		};
+		const headerFetcher = createOdspFileVersionFetcher({
+			urlParts,
+			getAuthHeader,
+			epochTracker,
+			logger,
+			requestHeaders,
+		});
+		const fetchStub = stub(globalThis, "fetch");
+		fetchStub.resolves(
+			(await createResponse(
+				epochHeaders("epoch-live"),
+				new Uint8Array(0),
+				200,
+			)) as unknown as Response,
+		);
+
+		try {
+			await headerFetcher.getLiveDocumentEpoch();
+			const init = fetchStub.firstCall.args[1];
+			const headers = new Headers(init?.headers);
+			assert.equal(headers.get("x-session-attribution"), "session-value");
+			const authorization = headers.get("authorization");
+			assert.notEqual(authorization, null);
+			assert.notEqual(authorization, "host-token");
+		} finally {
+			fetchStub.restore();
+		}
+	});
+
 	it("getRecoverableVersionEpoch reads x-fluid-epoch from the versioned snapshot endpoint", async () => {
 		// @q F-EPOCH-02
 		const { result, urls } = await withFetch(

@@ -84,6 +84,7 @@ describe("Tests1 for snapshot fetch", () => {
 		summarizerClient: true,
 		fetchBinarySnapshotFormat: false,
 		concurrentSnapshotFetch: true,
+		requestHeaders: { "X-Agent-Id": "snapshot-agent" },
 	};
 
 	const resolver = new OdspDriverUrlResolver();
@@ -561,7 +562,10 @@ describe("Tests1 for snapshot fetch", () => {
 					async () => service.getSnapshot({}),
 					[
 						notFound,
-						async (): Promise<MockResponse> => okResponse({}, {}),
+						async (headers): Promise<MockResponse> => {
+							assert.strictEqual(headers?.["x-agent-id"], "snapshot-agent");
+							return okResponse({}, {});
+						},
 						async (): Promise<Response> => {
 							return response;
 						},

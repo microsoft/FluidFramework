@@ -28,6 +28,7 @@ import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "../odspSnapshotParser
 import { getApiRoot } from "../odspUrlHelper.js";
 import { fetchArray, getWithRetryForTokenRefresh } from "../odspUtils.js";
 import { pkgVersion as driverVersion } from "../packageVersion.js";
+import { mergeRequestHeaders } from "../requestHeaders.js";
 
 /**
  * A single ODSP file version, as listed by the file's version history.
@@ -96,6 +97,7 @@ export interface OdspFileVersionFetcherProps {
 	readonly getAuthHeader: InstrumentedStorageTokenFetcher;
 	readonly epochTracker: EpochTracker;
 	readonly logger: TelemetryLoggerExt;
+	readonly requestHeaders?: Readonly<Record<string, string>>;
 }
 
 /**
@@ -104,7 +106,7 @@ export interface OdspFileVersionFetcherProps {
 export function createOdspFileVersionFetcher(
 	props: OdspFileVersionFetcherProps,
 ): IOdspFileVersionFetcher {
-	const { urlParts, getAuthHeader, epochTracker, logger } = props;
+	const { urlParts, getAuthHeader, epochTracker, logger, requestHeaders } = props;
 	const { siteUrl, driveId, itemId } = urlParts;
 
 	const listFileVersions = async (): Promise<OdspFileVersionRef[]> =>
@@ -209,7 +211,10 @@ export function createOdspFileVersionFetcher(
 				scenarioName,
 			);
 			const headers = getHeadersWithAuth(token);
-			const response = await fetchArray(url, { method, headers });
+			const response = await fetchArray(url, {
+				method,
+				headers: mergeRequestHeaders(requestHeaders, headers),
+			});
 			return response.headers.get("x-fluid-epoch") ?? undefined;
 		});
 

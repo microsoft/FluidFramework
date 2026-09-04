@@ -559,6 +559,7 @@ export class OdspDelayLoadedDeltaStream {
 			this.epochTracker,
 			this.socketReferenceKeyPrefix,
 			connectionId,
+			this.hostPolicy.requestHeaders,
 		);
 		const duration = performanceNow() - startTime;
 		// This event happens rather often, so it adds up to cost of telemetry.
