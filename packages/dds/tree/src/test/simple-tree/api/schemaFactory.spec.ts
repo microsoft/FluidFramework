@@ -842,9 +842,17 @@ describe("schemaFactory", () => {
 			const factory = new SchemaFactoryAlpha("test");
 			class NamedRecord extends factory.record("name", factory.number) {}
 			const namedInstance = new NamedRecord({ x: 5 });
-			const x: number = namedInstance.x;
-			// TODO: AB#47136: this (and likely the line above as well) should not compile as the typing is incorrect (y is undefined, not number)
-			const y: number = namedInstance.y;
+			const x = namedInstance.x;
+			type _checkX = requireTrue<areSafelyAssignable<typeof x, number | undefined>>;
+			assert.equal(x, 5);
+
+			const y = namedInstance.y;
+			type _checkY = requireTrue<areSafelyAssignable<typeof y, number | undefined>>;
+			assert.equal(y, undefined);
+
+			// @ts-expect-error Record reads may be undefined.
+			// eslint-disable-next-line @fluid-internal/fluid/no-unchecked-record-access -- Intentionally testing an unchecked record read.
+			const invalid: number = namedInstance.x;
 			delete namedInstance.x;
 		});
 

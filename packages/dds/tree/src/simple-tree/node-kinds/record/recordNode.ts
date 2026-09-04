@@ -269,7 +269,7 @@ export function recordSchema<
 		/**
 		 * Record-like index signature for the node.
 		 */
-		[key: string]: TreeNodeFromImplicitAllowedTypes<TAllowedTypes>;
+		[key: string]: TreeNodeFromImplicitAllowedTypes<TAllowedTypes> | undefined;
 
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
@@ -412,6 +412,7 @@ function* recordIterator<TAllowedTypes extends ImplicitAllowedTypes>(
 	record: TreeRecordNode<TAllowedTypes>,
 ): FluidIterableIterator<[string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes>]> {
 	for (const [key, value] of Object.entries(record)) {
+		assert(value !== undefined, "Record entries must not contain undefined values.");
 		yield [key, value];
 	}
 }

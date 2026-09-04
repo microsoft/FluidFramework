@@ -1065,11 +1065,13 @@ describe("SchemaFactory Recursive methods", () => {
 				type _check5 = requireAssignableTo<Record<string, TInsert>, TBuild>;
 			}
 
-			node.x = new RecordRecursive();
-			node.x.x = new RecordRecursive({});
+			const x = new RecordRecursive();
+			node.x = x;
+			x.x = new RecordRecursive({});
 
-			// This should not build, but it does.
 			assert.throws(() => {
+				// @ts-expect-error Each record read may be undefined.
+				// eslint-disable-next-line @fluid-internal/fluid/no-unchecked-record-access -- Intentionally testing an unchecked record read.
 				node.y.x.z.q = new RecordRecursive({});
 			}, validateTypeError("Cannot read properties of undefined (reading 'x')"));
 		});
