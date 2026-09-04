@@ -12,33 +12,38 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
+	"type": "module",
 	"bin": {
 		"markdown-magic": "bin/markdown-magic"
 	},
 	"scripts": {
-		"build": "npm run build:docs",
-		"build:docs": "node src/index.cjs --files README.md",
+		"build": "npm run check:types && npm run build:docs",
+		"build:docs": "node --import jiti/register src/index.ts --files README.md",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
+		"check:types": "tsc --noEmit",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
-		"test": "node src/index.cjs --files \"test/**/*.md\" !test/README.md"
+		"test": "node --import jiti/register --test \"test/*.test.ts\" && node --import jiti/register src/index.ts --files \"test/**/*.md\" !test/README.md"
 	},
 	"dependencies": {
-		"@rushstack/node-core-library": "^3.61.0",
-		"@tylerbu/markdown-magic": "2.4.0-tylerbu-1",
 		"chalk": "^4.1.2",
-		"markdown-magic-package-scripts": "^1.2.2",
+		"globby": "^14.1.0",
+		"jiti": "^2.6.1",
+		"remark": "^15.0.1",
+		"remark-gfm": "^4.0.1",
+		"remark-mdx": "^3.1.1",
+		"unified": "^11.0.5",
 		"yargs": "17.7.2"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~2.4.5",
 		"@fluidframework/build-common": "^2.0.3",
-		"jiti": "^2.6.1"
+		"@types/mdast": "^4.0.4",
+		"@types/node": "catalog:types",
+		"@types/yargs": "^17.0.35",
+		"typescript": "~6.0.3"
 	},
-	"dependencyComments": [
-		"chalk is left at version 4 (not 5) to keep CommonJS support."
-	],
 	"typeValidation": {
 		"disabled": true
 	}

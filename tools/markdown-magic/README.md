@@ -1,10 +1,11 @@
 # @fluid-tools/markdown-magic
 
-This library contains tools for generating and embedding documentation contents in [Markdown](https://www.markdownguide.org/) documentation.
+This package generates and embeds content in Markdown and MDX documents.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
+<!-- markdown-magic:begin {"transform":"library-readme-header","headingLevel":2} -->
 
 <!-- prettier-ignore-start -->
+
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 **NOTE: This package is a library for use in the [microsoft/FluidFramework](https://github.com/microsoft/FluidFramework) repository.**
@@ -13,367 +14,225 @@ This library contains tools for generating and embedding documentation contents 
 
 <!-- prettier-ignore-end -->
 
-<!-- AUTO-GENERATED-CONTENT:END -->
+<!-- markdown-magic:end -->
 
 ## Usage
 
-### Script
-
-To run the `markdown-magic` script against your Markdown files, run the following from the command line:
+Run the command from a workspace that depends on this package:
 
 ```shell
-npm run markdown-magic [--files <one or more file globs, space-separated>] [--workingDirectory <directory in which to run the script>]
+pnpm exec markdown-magic [--files <glob> ...] [--workingDirectory <directory>]
 ```
 
-#### Arguments
+### Command options
 
-##### `files`
+| Option               | Alias | Value                                                                        | Default                       |
+| -------------------- | ----- | ---------------------------------------------------------------------------- | ----------------------------- |
+| `--files`            | `-f`  | One or more [globby](https://github.com/sindresorhus/globby#readme) patterns | `**/*.md` and `**/*.mdx`      |
+| `--workingDirectory` | `-w`  | The base directory for glob patterns and relative paths                      | The current working directory |
+| `--help`             | `-h`  | None                                                                         | Not applicable                |
 
-Accepts one or more glob values to match against.
-Only file names matching the pattern(s) will have their contents parsed and updated.
+The command reports when it starts to find documentation files.
+The search includes files only, excludes `node_modules` directories, and applies `.gitignore` rules.
+To process a `.markdown` file, select it explicitly with `--files`.
 
-Uses the [globby](https://github.com/sindresorhus/globby#readme) format.
-
-**Default**: `**/*.md`
-
-###### Example
+For example, the following command updates Markdown and MDX files in `docs` except for `docs/README.md`:
 
 ```shell
-npm run markdown-magic --files \"docs/*\" \"!docs/README.md\"
+pnpm exec markdown-magic --files "docs/**/*.{md,mdx}" "!docs/README.md"
 ```
 
-Will run on all Markdown contents under the `docs` directory, except for `!docs/README.md`.
+The command displays the number of processed files and the total number of selected files.
+In an interactive terminal, each progress update replaces the previous update.
+In redirected output, each progress update is on a separate line.
+After processing, the command reports the number of files that changed.
+The command processes all selected files before it reports errors.
+If one or more errors occur, the command writes all errors to stderr and returns exit code `1`.
 
-##### `workingDirectory`
+## Markers
 
-Specifies the directory from which the script will be run.
-Useful when the directory from which the Node.js process is run is not the hierarchical root from which you wish to run documentation generation.
+Add a begin marker and an end marker to a Markdown file.
+The begin marker contains a JSON object.
+The `transform` property is required.
+Add transform options as other properties in the object.
+The JSON object can span multiple lines in both Markdown and MDX markers.
 
-Default: `Node.js`'s working directory (i.e. the directory from which the script was executed).
-
-###### Example
-
-```shell
-npm run markdown-magic --workingDirectory ../../
-```
-
-Will run the script from two levels higher in the file structure relative to where the `npm` script itself was executed.
-
-### Transforms
-
-The following is a list of supported transform pragmas that can be included in your Markdown documentation to automatically generate / embed contents.
-
-To include a transform in your document, use the following syntax:
+The following example includes `overview.md` in a Markdown document:
 
 ```markdown
-<!-- AUTO-GENERATED-CONTENT:START (<transform-name>[:<argument-1>=<value-1>[&<argument-2>=<value-2>...&<argument-N>=<value-N>]]) -->
-<!-- AUTO-GENERATED-CONTENT:END -->
+<!-- markdown-magic:begin {"transform":"include","path":"./overview.md"} -->
+
+The tool writes generated content here.
+
+<!-- markdown-magic:end -->
 ```
 
-#### `INCLUDE`
-
-Can be used to embed contents from another file into the Markdown file.
-
-Arguments:
-
--   `path`: Relative path from the document to the file being embedded.
--   `start`: (optional) First line from the target file to be embedded (inclusive). If positive, the value is relative to the beginning of the file. If negative, the value is relative to the end of the file.
--   `end`: (optional) Limit line from the target file to be embedded (exclusive). If positive, the value is relative to the beginning of the file. If negative, the value is relative to the end of the file.
-
-#### `LIBRARY_README_HEADER`
-
-Generates simple "header" contents for a library package README.
-Contains instructions for installing the package and importing its contents.
-
-Generally recommended for inclusion after a brief package introduction, but before more detailed sections.
-
-Notes:
-
--   This strictly intended as a starter template to remove the need for some handwritten boilerplate.
-    You will still need to fill in semantic and usage information.
--   This is effectively just a wrapper around lower-level templates.
-    If you want more fine-grained control over the content structure, we recommend using other templates.
-    -   [PACKAGE_SCOPE_NOTICE](#package_scope_notice)
-    -   [INSTALLATION_INSTRUCTIONS](#installation_instructions)
-    -   [IMPORT_INSTRUCTIONS](#import_instructions)
-    -   [API_DOCS](#api_docs)
-
-Arguments:
-
--   `packageJsonPath`: Relative file path to the library package's `package.json` file.
-    Used for generation of package metadata.
-    -   Default: `./package.json`.
--   `packageScopeNotice`: (optional) Override the automatic scope detection behavior with an explicit scope kind: `FRAMEWORK`, `EXPERIMENTAL`, `INTERNAL`, `PRIVATE`, `TOOLS`, or `EXAMPLE`.
--   `installation`: Whether or not to include the package "Installation" section.
-    -   Default: `true`.
-    -   See [INSTALLATION_INSTRUCTIONS](#installation_instructions).
--   `devDependency`: Whether or not the package is intended to be installed as a dev dependency.
-    -   Default: `false`.
-    -   Only observed if `installation` is `true`.
--   `apiDocs`: Whether or not to include a section pointing to the library's generated API documentation on `fluidframework.com`.
-    -   Default: `true` if the package is intended for direct public use. `false` otherwise.
-    -   Assumes that the package is published, uses [API-Extractor][], and has its documentation published under `fluidframework.com/apis/<package-name>`.
-    -   See [API_DOCS](#api_docs)
-
-#### `EXAMPLE_APP_README_HEADER`
-
-Generates a complete starter `README.md` file for a `Fluid` example app package.
-
-Notes:
-
--   This strictly intended as a starter template to remove the need for some handwritten boilerplate.
-    You will still need to fill in semantic and usage information.
--   This is effectively just a wrapper around lower-level templates.
-    If you want more fine-grained control over the content structure, we recommend using other templates.
-    -   [EXAMPLE_GETTING_STARTED](#example-getting-started)
-
-Arguments:
-
--   `packageJsonPath`: Relative file path to the library package's `package.json` file.
-    Used for generation of package metadata.
-    -   Default: `./package.json`.
--   `gettingStarted`: Whether or not to include a simple "getting started" usage section.
-    -   Default: `true`.
-    -   See [EXAMPLE_GETTING_STARTED](#example_getting_started).
--   `usesTinylicious`: Whether or not running the example app requires running [Tinylicious][] from another terminal.
-    -   Default: `true`.
-    -   Only observed if `gettingStarted` is `true`.
-
-#### `README_FOOTER`
-
-Generates simple "footer" contents for a package README.
-
-Generally recommended for inclusion at the end of the README.
-
-Notes:
-
--   This is strictly intended as a starter template to remove the need for some handwritten boilerplate.
-    You will still need to fill in semantic and usage information.
--   This is effectively just a wrapper around lower-level templates.
-    If you want more fine-grained control over the content structure, we recommend using other templates.
-    -   [PACKAGE_SCRIPTS](#package_scripts)
-    -   [CLIENT_REQUIREMENTS](#client_requirements)
-    -   [CONTRIBUTION_GUIDELINES](#contribution-guidelines)
-    -   [HELP](#help)
-    -   [TRADEMARK](#trademark)
-
-Arguments:
-
--   `packageJsonPath`: Relative file path to the library package's `package.json` file.
-    Used for generation of package metadata.
-    -   Default: `./package.json`.
--   `scripts`: Whether or not to include a section listing the package's `npm` scripts.
-    -   Default: `false`.
-    -   See [PACKAGE_SCRIPTS](#readme-package_scripts).
--   `clientRequirements`: Whether or not to include a section outlining the minimum client requirements for using Fluid Framework packages.
-    -   Default: `true` if the package is intended for direct public use. `false` otherwise.
-    -   See [CLIENT_REQUIREMENTS](#client_requirements).
--   `contributionGuidelines`: Whether or not to include a section enumerating `fluid-framework`'s contribution guidelines.
-    -   Default: `true`.
-    -   See [CONTRIBUTION_GUIDELINES](#readme_contribution_guidelines_section).
--   `help`: Whether or not to include a simple "help" section, which points the reader to various resources.
-    -   Default: `true`.
-    -   See [HELP](#help).
--   `trademark`: Whether or not to include a section containing our `Microsoft` trademark.
-    -   Default: `true`.
-    -   See [TRADEMARK](#trademark).
-
-#### `EXAMPLE_GETTING_STARTED`
-
-Generates a simple "getting started" usage section for a `Fluid` example app README.
-
-Arguments:
-
--   `packageJsonPath`: Relative file path to the library package's `package.json` file.
-    Used for generation of package metadata.
-    -   Default: `./package.json`.
--   `usesTinylicious`: Whether or not running the example app requires running [Tinylicious][] from another terminal.
-    -   Default: `true`.
--   `includeHeading`: Whether or not to include a section heading above the generated contents.
-    -   Default: `true`.
--   `headingLevel`: Root heading level for the generated section.
-    Must be a positive integer.
-    -   Default: 2.
-
-#### `API_DOCS`
-
-Generates a README section pointing to the library's generated API documentation on `fluidframework.com`.
-
-Assumes that the package is published, uses [API-Extractor][], and has its documentation published under `fluidframework.com/apis/<package-name>`.
-
-Arguments:
-
--   `packageJsonPath`: Relative file path to the library package's `package.json` file.
-    Used for generation of package metadata.
-    -   Default: `./package.json`.
--   `includeHeading`: Whether or not to include a section heading above the generated contents.
-    -   Default: `true`.
--   `headingLevel`: Root heading level for the generated section.
-    Must be a positive integer.
-    -   Default: 2.
-
-#### `INSTALLATION_INSTRUCTIONS`
-
-Generates a README section including package installation instructions.
-
-Assumes that the package is published and can be installed via `npm`.
-
-Arguments:
-
--   `packageJsonPath`: Relative file path to the library package's `package.json` file.
-    Used for generation of package metadata.
-    -   Default: `./package.json`.
--   `includeHeading`: Whether or not to include a section heading above the generated contents.
-    -   Default: `true`.
--   `headingLevel`: Root heading level for the generated section.
-    Must be a positive integer.
-    -   Default: 2.
-
-#### `DEPENDENCY_GUIDELINES`
-
-Generates a README section with fluid-framework dependency guidelines.
-
-Assumes that the package is published and can be installed via `npm`.
-
-Arguments:
-
--   `packageJsonPath`: Relative file path to the library package's `package.json` file.
-    Used for generation of package metadata.
-    -   Default: `./package.json`.
--   `includeHeading`: Whether or not to include a section heading above the generated contents.
-    -   Default: `true`.
--   `headingLevel`: Root heading level for the generated section.
-    Must be a positive integer.
-    -   Default: 2.
-
-#### `IMPORT_INSTRUCTIONS`
-
-Generates a README section including instructions for how to import from Fluid Framework library packages.
-Accounts for our use of package.json exports.
-Arguments:
-
--   `packageJsonPath`: Relative file path to the library package's `package.json` file.
-    Used for generation of package metadata.
-    -   Default: `./package.json`.
--   `includeHeading`: Whether or not to include a section heading above the generated contents.
-    -   Default: `true`.
--   `headingLevel`: Root heading level for the generated section.
-    Must be a positive integer.
-    -   Default: 2.
-
-#### `EXAMPLE_GETTING_STARTED`
-
-Generates a "Getting Started" section for an example app README.
-Arguments:
-
--   `packageJsonPath`: Relative file path to the library package's `package.json` file.
-    Used for generation of package metadata.
-    -   Default: `./package.json`.
--   `usesTinylicious`: Whether or not running the example app requires running [Tinylicious][] from another terminal.
-    -   Default: `true`.
-
-#### `CLIENT_REQUIREMENTS`
-
-Generates a section containing minimum client requirements for using Fluid Framework packages.
-
-See the corresponding template [here](./src/templates/Client-Requirements-Template.md).
-
-Arguments:
-
--   `includeHeading`: Whether or not to include a section heading above the generated contents.
-    -   Default: `true`.
--   `headingLevel`: Root heading level for the generated section.
-    Must be a positive integer.
-    -   Default: 2.
-
-#### `TRADEMARK`
-
-Generates a section containing our `Microsoft` trademark.
-
-See the corresponding template [here](./src/templates/Trademark-Template.md).
-
-Arguments:
-
--   `includeHeading`: Whether or not to include a section heading above the generated contents.
-    -   Default: `true`.
--   `headingLevel`: Root heading level for the generated section.
-    Must be a positive integer.
-    -   Default: 2.
-
-#### `CONTRIBUTION_GUIDELINES`
-
-Generates a section enumerating `fluid-framework`'s contribution guidelines.
-
-See the corresponding template [here](./src/templates/Contribution-Guidelines-Template.md).
-
-Arguments:
-
--   `includeHeading`: Whether or not to include a section heading above the generated contents.
-    -   Default: `true`.
--   `headingLevel`: Root heading level for the generated section.
-    Must be a positive integer.
-    -   Default: 2.
-
-#### `HELP`
-
-Generates a simple "help" section, which points the reader to various resources.
-
-See the corresponding template [here](./src/templates/Help-Template.md).
-
-Arguments:
-
--   `includeHeading`: Whether or not to include a section heading above the generated contents.
-    -   Default: `true`.
--   `headingLevel`: Root heading level for the generated section.
-    Must be a positive integer.
-    -   Default: 2.
-
-#### `PACKAGE_SCRIPTS`
-
-Generates a section containing a table enumerating the package's `npm` scripts.
-
-Arguments:
-
--   `packageJsonPath`: Relative file path to the library package's `package.json` file.
-    Used for generation of package metadata.
-    -   Default: `./package.json`.
--   `includeHeading`: Whether or not to include a section heading above the generated contents.
-    -   Default: `true`.
--   `headingLevel`: Root heading level for the generated section.
-    Must be a positive integer.
-    -   Default: 2.
-
-#### `PACKAGE_SCOPE_NOTICE`
-
-Generates a user-facing notice about target audience and support characteristics of the package based on its scope.
-By default, it generates the appropriate notice based on the package name's scope (if it's one the system recognizes), but this can be overridden by specifying `scopeKind`.
-
-Arguments:
-
--   `packageJsonPath`: : Relative file path to the library package's `package.json` file.
-    Used to read the package name's scope (when the `scopeKind` argument is not provided).
-    -   Default: `./package.json`.
--   `scopeKind`: (optional) Override the automatic scope detection behavior with an explicit scope kind: `FRAMEWORK`, `EXPERIMENTAL`, `INTERNAL`, `PRIVATE`, `TOOLS`, or `EXAMPLE`.
-
-<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
+For MDX, use MDX comments.
+HTML comments are not valid in MDX.
+
+The following example includes `overview.mdx` in an MDX document:
+
+```mdx
+{/* markdown-magic:begin {"transform":"include","path":"./overview.mdx"} */}
+
+The tool writes generated content here.
+
+{/* markdown-magic:end */}
+```
+
+The marker must be a top-level block in the document syntax tree.
+Marker text in a code block or another nested construct is not active.
+
+The tool parses the complete document.
+It replaces only the source range between each marker pair.
+It does not serialize the authored content outside that range.
+
+The tool adds these items to each generated region:
+
+1. A `prettier-ignore-start` comment.
+2. A generated-content notice.
+3. The serialized transform output.
+4. A `prettier-ignore-end` comment.
+
+The tool uses remark and GitHub Flavored Markdown to serialize generated content.
+The serializer can normalize lists, links, tables, and whitespace inside a generated region.
+
+The tool rejects these inputs:
+
+- A begin marker without a JSON object.
+- Invalid JSON or a JSON value that is not an object.
+- A missing or empty `transform` property.
+- An unknown transform or option.
+- An option with the wrong JSON type.
+- Nested regions.
+- An opening or closing marker without its matching marker.
+
+The tool validates and generates all regions in one destination file before it writes that file.
+Thus, a failed region does not cause a partial write to that file.
+The command processes multiple files concurrently.
+A different file can finish before an error stops the command.
+
+### Generated headings
+
+Transforms that generate a section determine its heading depth from the marker position.
+A following authored heading defines the depth.
+Otherwise, the nearest preceding authored heading defines the depth.
+A section after the document title uses level two.
+A section in a document without authored headings uses level one.
+
+Set `headingLevel` to specify the context heading level for generated content.
+This value overrides the level inferred from the marker position.
+The transform derives all generated heading levels from this context.
+For example, a template heading at level one becomes level three when `headingLevel` is `2`.
+
+The tool ignores headings inside generated regions when it determines the depth.
+Thus, existing generated content does not change the result.
+At the end of a section, the generated heading is a sibling of the nearest preceding heading.
+To generate a child section, put the marker before an authored child heading of the required depth.
+
+The tool stops with an error if adjusted headings in a shared template would be deeper than level six.
+
+## Transforms
+
+Transform names use kebab case.
+Option names use camel case.
+Option values use native JSON types.
+For example, use `true` instead of `"true"`.
+
+| Transform                                                                     | Purpose                                                                      |
+| ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| [`include`](./docs/transforms/include.md)                                     | Parse and include Markdown or MDX from a file.                               |
+| [`include-code`](./docs/transforms/include-code.md)                           | Include text from a file in a fenced code block.                             |
+| [`library-readme-header`](./docs/transforms/library-readme-header.md)         | Generate the standard sections at the start of a library README.             |
+| [`example-app-readme-header`](./docs/transforms/example-app-readme-header.md) | Generate the standard section at the start of an example application README. |
+| [`readme-footer`](./docs/transforms/readme-footer.md)                         | Generate the standard sections at the end of a package README.               |
+| [`example-getting-started`](./docs/transforms/example-getting-started.md)     | Generate setup instructions for an example application.                      |
+| [`api-docs`](./docs/transforms/api-docs.md)                                   | Generate a link to package API documentation.                                |
+| [`installation-instructions`](./docs/transforms/installation-instructions.md) | Generate the package installation command.                                   |
+| [`import-instructions`](./docs/transforms/import-instructions.md)             | Generate instructions for supported package export paths.                    |
+| [`package-scripts`](./docs/transforms/package-scripts.md)                     | Generate a table from the package `scripts` object.                          |
+| [`package-scope-notice`](./docs/transforms/package-scope-notice.md)           | Generate a notice for the package kind.                                      |
+| [`client-requirements`](./docs/transforms/client-requirements.md)             | Generate the minimum client requirements.                                    |
+| [`contribution-guidelines`](./docs/transforms/contribution-guidelines.md)     | Generate the contribution guidelines.                                        |
+| [`dependency-guidelines`](./docs/transforms/dependency-guidelines.md)         | Generate the dependency guidelines.                                          |
+| [`help`](./docs/transforms/help.md)                                           | Generate links to support resources.                                         |
+| [`trademark`](./docs/transforms/trademark.md)                                 | Generate the Microsoft trademark notice.                                     |
+
+Each linked guide contains the option types, default values, behavior notes, and a basic marker example.
+
+## Architecture
+
+The command processes each destination as a Markdown abstract syntax tree (mdast).
+Authored content stays in its original source form.
+The tool serializes only generated regions and replaces them by source offset.
+
+```mermaid
+flowchart TD
+	CLI[CLI selects Markdown and MDX files] --> READ[Read one destination]
+	READ --> PARSE[Select profile and parse to mdast]
+	PARSE --> REGIONS[Find and validate marker regions]
+	REGIONS --> EACH{For each region}
+	EACH --> DEPTH[Infer heading depth from authored headings]
+	DEPTH --> GENERATE[Validate options and generate mdast nodes]
+	GENERATE --> SERIALIZE[Serialize with the destination processor]
+	SERIALIZE --> READY{All regions valid?}
+	READY -->|Yes| PATCH[Apply replacements from last to first]
+	PATCH --> WRITE[Write only when content changed]
+	READY -->|No| STOP[Stop without writing the destination]
+```
+
+The main modules have these responsibilities:
+
+1. `cli.ts` selects files and processes at most eight files concurrently.
+2. `processorProfiles.ts` selects the Markdown or MDX parser from the destination extension.
+3. `regions.ts` reads top-level marker nodes and validates marker pairs.
+4. `headings.ts` determines the heading depth for each generated section.
+5. `transformRegistry.ts` creates transform context and assembles the transform registry.
+6. Modules in `transforms` validate options and generate package, file, and template content as mdast nodes.
+7. `processing.ts` coordinates validation, serialization, source-range replacement, and writes.
+
+The executable bin file uses `jiti` to load the TypeScript source. The package does not emit JavaScript build output.
+
+A transform has a `generate` function.
+The function validates the unknown JSON options before it returns an array of mdast root-content nodes.
+A composite transform combines node arrays.
+It does not combine serialized Markdown strings.
+
+The transform context provides the destination path, destination format, path resolution, document parsing, and file reading.
+New transforms must return nodes that the destination processor can serialize.
+
+## Validation
+
+Run the package tests and documentation generation:
+
+```shell
+pnpm --dir tools/markdown-magic test
+pnpm --dir tools/markdown-magic build:docs
+pnpm --dir tools/markdown-magic check:biome
+```
+
+Run generation twice. The second run must report `Updated 0 files.`
+
+<!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
 
 <!-- prettier-ignore-start -->
+
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Contribution Guidelines
 
 You can [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid Framework in these ways:
 
--   Answer questions in [GitHub Discussions](https://github.com/microsoft/FluidFramework/discussions).
--   [Submit bug reports](https://github.com/microsoft/FluidFramework/issues) and help verify fixes.
--   Review [source code changes](https://github.com/microsoft/FluidFramework/pulls).
--   [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
+* Answer questions in [GitHub Discussions](https://github.com/microsoft/FluidFramework/discussions).
+* [Submit bug reports](https://github.com/microsoft/FluidFramework/issues) and help verify fixes.
+* Review [source code changes](https://github.com/microsoft/FluidFramework/pulls).
+* [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
 
 For detailed instructions, read the [repo documentation](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Home.md).
 
 This project follows the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
 For more information, read the [Code of Conduct frequently asked questions](https://opensource.microsoft.com/codeofconduct/faq/).
-For questions or comments, contact [opencode@microsoft.com](mailto:opencode@microsoft.com).
+For questions or comments, contact <opencode@microsoft.com>.
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
 Use of these trademarks or logos must follow Microsoft’s [Trademark & Brand Guidelines](https://www.microsoft.com/trademarks).
@@ -395,9 +254,4 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 
 <!-- prettier-ignore-end -->
 
-<!-- AUTO-GENERATED-CONTENT:END -->
-
-<!-- Links -->
-
-[tinylicious]: https://github.com/microsoft/FluidFramework/tree/main/server/routerlicious/packages/tinylicious/
-[api-extractor]: https://api-extractor.com/
+<!-- markdown-magic:end -->

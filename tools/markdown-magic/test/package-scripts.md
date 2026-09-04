@@ -1,29 +1,31 @@
-<!-- AUTO-GENERATED-CONTENT:START (PACKAGE_SCRIPTS:includeHeading=FALSE) -->
+<!-- markdown-magic:begin {"transform":"package-scripts","includeHeading":false,"scriptDescriptions":{"test-script-1":"Runs the first test script."}} -->
 
 <!-- prettier-ignore-start -->
+
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
-| Script | Description |
-|--------|-------------|
-| `test-script-1` | `echo This is a test script` |
-| `test-script-2` | `echo This is another test script` |
+| Script Name | Script Body | Description |
+| - | - | - |
+| `test-script-1` | `echo This is a test script` | Runs the first test script. |
+| `test-script-2` | `echo This is another test script` | |
 
 <!-- prettier-ignore-end -->
 
-<!-- AUTO-GENERATED-CONTENT:END -->
+<!-- markdown-magic:end -->
 
-<!-- AUTO-GENERATED-CONTENT:START (PACKAGE_SCRIPTS) -->
+<!-- markdown-magic:begin {"transform":"package-scripts"} -->
 
 <!-- prettier-ignore-start -->
+
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
-## Scripts
+# Scripts
 
-| Script | Description |
-|--------|-------------|
-| `test-script-1` | `echo This is a test script` |
-| `test-script-2` | `echo This is another test script` |
+| Script Name | Script Body | Description |
+| - | - | - |
+| `test-script-1` | `echo This is a test script` | |
+| `test-script-2` | `echo This is another test script` | |
 
 <!-- prettier-ignore-end -->
 
-<!-- AUTO-GENERATED-CONTENT:END -->
+<!-- markdown-magic:end -->

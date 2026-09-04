@@ -1,0 +1,16 @@
+{
+	"extends": "../../common/build/build-common/tsconfig.node16.json",
+	"compilerOptions": {
+		"composite": false,
+		"declaration": false,
+		"declarationMap": false,
+		"incremental": false,
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
+		"noEmit": true,
+		"noImplicitAny": true,
+		"rootDir": ".",
+		"types": ["node"],
+	},
+	"include": ["src", "test"],
+}
