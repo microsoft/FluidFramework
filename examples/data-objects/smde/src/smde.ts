@@ -5,7 +5,6 @@
 
 import { EventEmitter } from "@fluid-example/example-utils";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/legacy";
 import { FluidDataStoreRuntime, FluidObjectHandle } from "@fluidframework/datastore/legacy";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/legacy";
 import { ISharedMap, SharedMap } from "@fluidframework/map/legacy";
@@ -50,7 +49,9 @@ export class SmdeDataObject extends EventEmitter implements IFluidLoadable {
 	private _text: SharedString | undefined;
 
 	public get text(): ISharedString {
-		assert(this._text !== undefined, "SharedString property missing!");
+		if (this._text === undefined) {
+			throw new Error("SharedString property missing!");
+		}
 		return this._text;
 	}
 	constructor(private readonly runtime: IFluidDataStoreRuntime) {

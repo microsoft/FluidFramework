@@ -13,6 +13,7 @@ import {
 import {
 	ContainerErrorTypes,
 	type IContainerContext,
+	type IContainerContextInternal,
 	type IBatchMessage,
 	type IContainerStorageService,
 } from "@fluidframework/container-definitions/internal";
@@ -56,7 +57,10 @@ import type {
 	StagingModeChangedEvent,
 } from "@fluidframework/runtime-definitions/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
-import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
+import {
+	cleanedPackageVersion,
+	defaultMinVersionForCollab,
+} from "@fluidframework/runtime-utils/internal";
 import {
 	type IFluidErrorBase,
 	MockLogger,
@@ -75,7 +79,7 @@ import {
 import Sinon, { type SinonFakeTimers } from "sinon";
 
 import { ChannelCollection } from "../channelCollection.js";
-import { CompressionAlgorithms, enabledCompressionConfig } from "../compressionDefinitions.js";
+import { CompressionAlgorithms } from "../compressionDefinitions.js";
 import {
 	ContainerRuntime,
 	type IContainerRuntimeOptions,
@@ -99,11 +103,12 @@ import type {
 	InboundMessageResult,
 	LocalBatchMessage,
 } from "../opLifecycle/index.js";
-import { pkgVersion } from "../packageVersion.js";
 import type { IPendingMessage, PendingStateManager } from "../pendingStateManager.js";
 import {
 	type ISummaryCancellationToken,
+	type IContainerRuntimeMetadata,
 	neverCancelledSummaryToken,
+	metadataBlobName,
 	recentBatchInfoBlobName,
 	type IRefreshSummaryAckOptions,
 } from "../summary/index.js";
@@ -567,7 +572,7 @@ describe("Runtime", () => {
 						return 999; // CSN not used in test asserts below
 					};
 
-				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
+				const containerRuntime = await ContainerRuntime.loadRuntime({
 					context: mockContext as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
@@ -1828,21 +1833,18 @@ describe("Runtime", () => {
 			// A legacy partner team overrides the summarizeInternal method to add custom data to the Summary.
 			// Let's make sure we don't break them inadvertently, while we work to move them to a better pattern.
 			it("Ensure private member is stable to support legacy usage", async () => {
-				const { runtime: containerRuntime_withSummarizeInternal_untyped } =
-					await ContainerRuntime.loadRuntime2({
-						context: getMockContext() as IContainerContext,
-						registry: new FluidDataStoreRegistry([]),
-						existing: false,
-						provideEntryPoint: mockProvideEntryPoint,
-					});
-				const containerRuntime_withSummarizeInternal =
-					containerRuntime_withSummarizeInternal_untyped as unknown as {
-						summarizeInternal(
-							fullTree: boolean,
-							trackState: boolean,
-							telemetryContext?: ITelemetryContext,
-						): Promise<ISummarizeInternalResult>;
-					};
+				const containerRuntime_withSummarizeInternal = (await ContainerRuntime.loadRuntime({
+					context: getMockContext() as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					provideEntryPoint: mockProvideEntryPoint,
+				})) as unknown as {
+					summarizeInternal(
+						fullTree: boolean,
+						trackState: boolean,
+						telemetryContext?: ITelemetryContext,
+					): Promise<ISummarizeInternalResult>;
+				};
 
 				assert(
 					typeof containerRuntime_withSummarizeInternal.summarizeInternal === "function",
@@ -2010,7 +2012,7 @@ describe("Runtime", () => {
 				chunkSizeInBytes: 204800,
 				enableRuntimeIdCompressor: undefined,
 				enableGroupedBatching: true, // Redundant, but makes the JSON.stringify yield the same result as the logs
-				explicitSchemaControl: false,
+				explicitSchemaControl: true,
 				createBlobPayloadPending: undefined,
 				stagingModeAutoFlushThreshold: 1000,
 				disableSchemaUpgrade: false,
@@ -2886,6 +2888,239 @@ describe("Runtime", () => {
 				logger.assertMatchAny(
 					[{ eventName: "ContainerRuntime:DuplicateBatch" }],
 					"Expected DuplicateBatch telemetry to still be logged",
+				);
+			});
+
+			it("Version mark tracking keeps the earlier resolution for a tolerated duplicate batch with no explicit batchId", async () => {
+				const logger = new MockLogger();
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
+					context: getMockContext({ logger }) as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					runtimeOptions: {
+						enableRuntimeIdCompressor: "on",
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				// Subscribing activates version-mark tracking on the inbound batch path.
+				const promotions: { sequenceNumber: number; timestamp: number | undefined }[] = [];
+				containerRuntime.versionMarkResolver.onBatchSequenced(
+					(_batchId, sequenceNumber, timestamp) => {
+						promotions.push({ sequenceNumber, timestamp });
+					},
+				);
+
+				const makeMessage = (
+					sequenceNumber: number,
+					timestamp: number,
+				): ISequencedDocumentMessage =>
+					({
+						clientId: "clientId",
+						clientSequenceNumber: 1,
+						sequenceNumber,
+						timestamp,
+						type: MessageType.Operation,
+						contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+					}) satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage;
+
+				containerRuntime.process(makeMessage(123, 1000), false);
+
+				// The service re-broadcasts the same batch under a different sequence number/timestamp.
+				// DuplicateBatchDetector tolerates this (no explicit batchId), so it must not throw, and
+				// VersionMarkResolver must keep the earlier (first-landed) resolution rather than remapping
+				// to the duplicate's sequence number.
+				assert.doesNotThrow(
+					() => containerRuntime.process(makeMessage(234, 2000), false),
+					"Should not throw when the duplicate batch has no explicit batchId",
+				);
+				logger.assertMatchAny(
+					[{ eventName: "ContainerRuntime:DuplicateBatch" }],
+					"Expected DuplicateBatch telemetry to be logged",
+				);
+				assert.deepStrictEqual(
+					promotions,
+					[{ sequenceNumber: 123, timestamp: 1000 }],
+					"Only the first (original) resolution should have been promoted to listeners",
+				);
+			});
+		});
+
+		describe("Version mark inbound update", () => {
+			it("captures the summary timestamp after load before any new ops arrive", async () => {
+				const sequenceNumber = 42;
+				const timestamp = 123456;
+				const metadata: IContainerRuntimeMetadata = {
+					summaryFormatVersion: 1,
+					message: {
+						clientId: mockClientId,
+						clientSequenceNumber: 1,
+						minimumSequenceNumber: 0,
+						referenceSequenceNumber: 41,
+						sequenceNumber,
+						timestamp,
+						type: MessageType.Operation,
+					},
+				};
+				const context = getMockContext({
+					baseSnapshot: {
+						trees: { ".channels": { trees: {}, blobs: {} } },
+						blobs: { [metadataBlobName]: "metadata-id" },
+					},
+					mockStorage: {
+						...defaultMockStorage,
+						readBlob: async (id) => {
+							assert.equal(id, "metadata-id");
+							return stringToBuffer(JSON.stringify(metadata), "utf8");
+						},
+					},
+				});
+				const deltaManager = context.deltaManager as MockDeltaManager;
+				deltaManager.initialSequenceNumber = sequenceNumber;
+				deltaManager.lastSequenceNumber = sequenceNumber;
+				deltaManager.lastMessage = undefined;
+
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
+					context: context as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: true,
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				assert.deepEqual(containerRuntime.versionMarkResolver.sealAndCaptureVersionMark(), {
+					kind: "resolved",
+					sequenceNumber,
+					timestamp,
+				});
+			});
+
+			it("returns pending when the loader does not provide fetchOps", async () => {
+				const logger = new MockLogger();
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
+					context: getMockContext({ logger }) as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				assert.deepEqual(
+					await containerRuntime.versionMarkResolver.resolve("targetBatch", 11),
+					{ kind: "pending" },
+					"an older loader without fetchOps should not break the newer runtime",
+				);
+				logger.assertMatch([
+					{
+						eventName: "VersionMarkResolver:Resolve",
+						outcome: "pending",
+						path: "noReader",
+					},
+				]);
+			});
+
+			it("resolves through context fetchOps and the historical unpack pipeline", async () => {
+				let capturedSignal: AbortSignal | undefined;
+				let readCount = 0;
+				const context = {
+					...getMockContext(),
+					fetchOps: async (from, to, abortSignal) => {
+						assert.equal(from, 10, "the history read starts at the inclusive lower bound");
+						assert.equal(to, undefined, "the history read has no fixed upper bound");
+						capturedSignal = abortSignal;
+						return {
+							read: async () => {
+								readCount++;
+								if (readCount === 1) {
+									return {
+										done: false as const,
+										value: [
+											{
+												type: MessageType.ClientJoin,
+												sequenceNumber: 11,
+												clientId: "system",
+											} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+											{
+												type: MessageType.Operation,
+												sequenceNumber: 12,
+												// eslint-disable-next-line unicorn/no-null -- server-generated ops have a null clientId
+												clientId: null,
+											} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+											{
+												type: MessageType.Operation,
+												sequenceNumber: 13,
+												timestamp: 13000,
+												clientId: "targetClient",
+												clientSequenceNumber: 7,
+												contents: {
+													type: ContainerMessageType.Rejoin,
+													contents: undefined,
+												},
+												metadata: { batchId: "targetBatch" },
+											} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+										],
+									};
+								}
+								return { done: true as const };
+							},
+						};
+					},
+				} satisfies Partial<IContainerContextInternal>;
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
+					context: context as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				assert.deepEqual(
+					await containerRuntime.versionMarkResolver.resolve("targetBatch", 10),
+					{ kind: "resolved", sequenceNumber: 13, timestamp: 13000 },
+				);
+				assert.equal(readCount, 1, "the stream stops reading after the target batch");
+				assert.equal(capturedSignal?.aborted, true, "the fetch is aborted after the match");
+			});
+
+			it("does not notify version-mark listeners when inbound validation throws", async () => {
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
+					context: getMockContext() as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				// Record every version-mark notification.
+				const notifications: [string, number][] = [];
+				containerRuntime.versionMarkResolver.onBatchSequenced((batchId, sequenceNumber) =>
+					notifications.push([batchId, sequenceNumber]),
+				);
+
+				// Simulate a validation failure (fork detection / pending-content mismatch):
+				// processInboundMessages throws for a batch that must be rejected.
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- patch a private field
+				(containerRuntime as any).pendingStateManager.processInboundMessages = (): never => {
+					throw new Error("inbound validation failed");
+				};
+
+				assert.throws(
+					() =>
+						containerRuntime.process(
+							{
+								sequenceNumber: 123,
+								type: MessageType.Operation,
+								contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+								metadata: { batchId: "batchId1" },
+							} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+							false,
+						),
+					/inbound validation failed/,
+					"the inbound batch should be rejected by validation",
+				);
+
+				// The version-mark update + notification run only after processInboundMessages validates,
+				// so a rejected batch must not have promoted a mark in an external store.
+				assert.deepEqual(
+					notifications,
+					[],
+					"no version-mark notification should fire for a batch validation rejected",
 				);
 			});
 		});
@@ -4166,7 +4401,9 @@ describe("Runtime", () => {
 								existing: false,
 								runtimeOptions: {
 									createBlobPayloadPending: true,
+									explicitSchemaControl: false,
 								},
+								oldestSupportedClient: "2.40.0",
 								provideEntryPoint: mockProvideEntryPoint,
 							}),
 						(error: IErrorBase) => {
@@ -4206,7 +4443,7 @@ describe("Runtime", () => {
 					chunkSizeInBytes: 204800,
 					enableRuntimeIdCompressor: undefined,
 					enableGroupedBatching: true,
-					explicitSchemaControl: false,
+					explicitSchemaControl: true,
 					stagingModeAutoFlushThreshold: 1000,
 					disableSchemaUpgrade: false,
 				};
@@ -4221,10 +4458,50 @@ describe("Runtime", () => {
 				]);
 			});
 
+			it("loads and advances a persisted historical 2.x prerelease", async () => {
+				const metadata: IContainerRuntimeMetadata = {
+					summaryFormatVersion: 1,
+					documentSchema: {
+						version: 1,
+						refSeq: 0,
+						info: { minVersionForCollab: "2.40.1-beta.1" },
+						runtime: { explicitSchemaControl: true },
+					},
+				};
+				const context = getMockContext({
+					baseSnapshot: {
+						trees: { ".channels": { trees: {}, blobs: {} } },
+						blobs: { [metadataBlobName]: "metadata-id" },
+					},
+					mockStorage: {
+						...defaultMockStorage,
+						readBlob: async (id) => {
+							assert.equal(id, "metadata-id");
+							return stringToBuffer(JSON.stringify(metadata), "utf8");
+						},
+					},
+				});
+
+				const { runtime } = await ContainerRuntime.loadRuntime2({
+					context: context as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: true,
+					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				assert.equal(runtime.minVersionForCollab, "2.40.1");
+			});
+
 			// These are examples of minVersionForCollab inputs that are not valid.
-			// minVersionForCollab should be at least 1.0.0 and less than or equal to
+			// minVersionForCollab should be at least 2.0.0 and less than or equal to
 			// the current pkgVersion.
-			const invalidVersions = ["0.50.0", "100.0.0"] as const;
+			const invalidVersions = [
+				"1.99.0",
+				"2.0.0-defaults",
+				"2.116.1-beta.1",
+				"100.0.0",
+			] as const;
 			for (const version of invalidVersions) {
 				it(`throws when minVersionForCollab = ${version}`, async () => {
 					const logger = new MockLogger();
@@ -4235,92 +4512,12 @@ describe("Runtime", () => {
 							existing: false,
 							runtimeOptions: {},
 							provideEntryPoint: mockProvideEntryPoint,
-							// @ts-expect-error - Invalid version strings are not castable to MinimumVersionForCollab
+							// @ts-expect-error Invalid compatibility versions are rejected by the public type and at runtime.
 							minVersionForCollab: version,
 						});
 					});
 				});
 			}
-
-			it("minVersionForCollab = 1.0.0", async () => {
-				const minVersionForCollab = "1.0.0";
-				const logger = new MockLogger();
-				await ContainerRuntime.loadRuntime2({
-					context: getMockContext({ logger }) as IContainerContext,
-					registry: new FluidDataStoreRegistry([]),
-					existing: false,
-					runtimeOptions: {},
-					provideEntryPoint: mockProvideEntryPoint,
-					minVersionForCollab,
-				});
-
-				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
-					summaryOptions: {},
-					gcOptions: {},
-					loadSequenceNumberVerification: "close",
-					flushMode: FlushMode.Immediate,
-					compressionOptions: {
-						minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
-						compressionAlgorithm: CompressionAlgorithms.lz4,
-					},
-					maxBatchSizeInBytes: 716800,
-					chunkSizeInBytes: 204800,
-					enableRuntimeIdCompressor: undefined,
-					enableGroupedBatching: false,
-					explicitSchemaControl: false,
-					stagingModeAutoFlushThreshold: 1000,
-					disableSchemaUpgrade: false,
-				};
-
-				logger.assertMatchAny([
-					{
-						eventName: "ContainerRuntime:ContainerLoadStats",
-						category: "generic",
-						options: JSON.stringify(expectedRuntimeOptions),
-						minVersionForCollab,
-					},
-				]);
-			});
-
-			it('minVersionForCollab = 2.0.0-defaults ("default")', async () => {
-				const minVersionForCollab = "2.0.0-defaults";
-				const logger = new MockLogger();
-				await ContainerRuntime.loadRuntime2({
-					context: getMockContext({ logger }) as IContainerContext,
-					registry: new FluidDataStoreRegistry([]),
-					existing: false,
-					runtimeOptions: {},
-					provideEntryPoint: mockProvideEntryPoint,
-					minVersionForCollab,
-				});
-
-				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
-					summaryOptions: {},
-					gcOptions: {},
-					loadSequenceNumberVerification: "close",
-					flushMode: FlushMode.TurnBased,
-					compressionOptions: {
-						minimumBatchSizeInBytes: 614400,
-						compressionAlgorithm: CompressionAlgorithms.lz4,
-					},
-					maxBatchSizeInBytes: 716800,
-					chunkSizeInBytes: 204800,
-					enableRuntimeIdCompressor: undefined,
-					enableGroupedBatching: true,
-					explicitSchemaControl: false,
-					stagingModeAutoFlushThreshold: 1000,
-					disableSchemaUpgrade: false,
-				};
-
-				logger.assertMatchAny([
-					{
-						eventName: "ContainerRuntime:ContainerLoadStats",
-						category: "generic",
-						options: JSON.stringify(expectedRuntimeOptions),
-						minVersionForCollab: defaultMinVersionForCollab,
-					},
-				]);
-			});
 
 			it("minVersionForCollab = 2.0.0 (explicit)", async () => {
 				const minVersionForCollab = "2.0.0";
@@ -4433,7 +4630,7 @@ describe("Runtime", () => {
 					chunkSizeInBytes: 200,
 					enableRuntimeIdCompressor: "on",
 					enableGroupedBatching: false,
-					explicitSchemaControl: false,
+					explicitSchemaControl: true,
 					stagingModeAutoFlushThreshold: 1000,
 					disableSchemaUpgrade: false,
 				};
@@ -4495,7 +4692,7 @@ describe("Runtime", () => {
 						chunkSizeInBytes: 204800,
 						enableRuntimeIdCompressor: undefined, // idCompressor is undefined, since that represents a logical state (off)
 						enableGroupedBatching: true,
-						explicitSchemaControl: false,
+						explicitSchemaControl: true,
 						stagingModeAutoFlushThreshold: 1000,
 						disableSchemaUpgrade: false,
 					};
@@ -4512,8 +4709,8 @@ describe("Runtime", () => {
 
 			// Note: We may need to update `expectedRuntimeOptions` for this test
 			// when we bump to certain versions.
-			it("minVersionForCollab = pkgVersion", async () => {
-				const minVersionForCollab = pkgVersion;
+			it("minVersionForCollab = cleanedPackageVersion", async () => {
+				const minVersionForCollab = cleanedPackageVersion;
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime2({
 					context: getMockContext({ logger }) as IContainerContext,
@@ -4552,49 +4749,42 @@ describe("Runtime", () => {
 				]);
 			});
 
-			for (const runtimeOption of [
-				{ enableGroupedBatching: true },
-				{ enableGroupedBatching: true, compressionOptions: enabledCompressionConfig },
-				{ explicitSchemaControl: true },
-				{ gcOptions: { enableGCSweep: true } },
-				// Adding in an arbitrary entry into the IGCRuntimeOptions object
-				{ gcOptions: { enableGCSweep: true, sweepGracePeriodMs: 1 } },
-				{ enableRuntimeIdCompressor: "on" },
-				{ enableRuntimeIdCompressor: "delayed" },
-				{ createBlobPayloadPending: true },
-				{ flushMode: FlushMode.TurnBased },
-			]) {
-				it(`throws if minVersionForCollab is incompatible with runtimeOptions: ${JSON.stringify(runtimeOption)}`, async () => {
-					const runtimeOptions = {
-						...runtimeOption,
-					} as unknown as IContainerRuntimeOptionsInternal;
-					const logger = new MockLogger();
-					const minVersionForCollab = "1.0.0";
-					await assert.rejects(async () => {
-						await ContainerRuntime.loadRuntime2({
-							context: getMockContext({ logger }) as IContainerContext,
+			it("throws if createBlobPayloadPending is incompatible with oldestSupportedClient 2.0.0", async () => {
+				await assert.rejects(
+					async () =>
+						ContainerRuntime.loadRuntime2({
+							context: getMockContext() as IContainerContext,
 							registry: new FluidDataStoreRegistry([]),
 							existing: false,
-							runtimeOptions,
+							runtimeOptions: {
+								createBlobPayloadPending: true,
+								explicitSchemaControl: true,
+							},
 							provideEntryPoint: mockProvideEntryPoint,
-							minVersionForCollab,
-						});
-					});
-				});
-			}
-			it("does not throw if minVersionForCollab is not set and the default is incompatible with runtimeOptions", async () => {
+							oldestSupportedClient: "2.0.0",
+						}),
+					(error: IErrorBase) =>
+						error.errorType === ContainerErrorTypes.usageError &&
+						error.message ===
+							"Runtime option createBlobPayloadPending:true requires runtime version 2.40.0. Please update minVersionForCollab (currently 2.0.0) to 2.40.0 or later to proceed.",
+				);
+			});
+
+			it("throws if the default minVersionForCollab is incompatible with runtimeOptions", async () => {
 				const logger = new MockLogger();
-				await assert.doesNotReject(async () => {
-					await ContainerRuntime.loadRuntime2({
+				await assert.rejects(
+					ContainerRuntime.loadRuntime2({
 						context: getMockContext({ logger }) as IContainerContext,
 						registry: new FluidDataStoreRegistry([]),
 						existing: false,
-						// We would normally throw (since `createBlobPayloadPending` requires 2.40), but since we did
-						// not explicity set minVersionForCollab, we allow it.
 						runtimeOptions: { createBlobPayloadPending: true, explicitSchemaControl: true },
 						provideEntryPoint: mockProvideEntryPoint,
-					});
-				});
+					}),
+					(error: IErrorBase) =>
+						error.errorType === ContainerErrorTypes.usageError &&
+						error.message ===
+							"Runtime option createBlobPayloadPending:true requires runtime version 2.40.0. Please update minVersionForCollab (currently 2.0.0) to 2.40.0 or later to proceed.",
+				);
 			});
 		});
 

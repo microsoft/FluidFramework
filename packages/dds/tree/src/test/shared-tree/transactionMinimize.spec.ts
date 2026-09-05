@@ -3,12 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
+import { strict as assert, fail } from "node:assert";
 
 import type { JsonString } from "@fluidframework/core-interfaces/internal";
 import { JsonStringify } from "@fluidframework/core-interfaces/internal";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
-import type { ImplicitFieldSchema, ValidateRecursiveSchema } from "@fluidframework/tree";
+import type {
+	ImplicitFieldSchema,
+	TreeArrayNode,
+	ValidateRecursiveSchema,
+} from "@fluidframework/tree";
 import type {
 	InsertableField,
 	JsonCompatibleReadOnly,
@@ -16,8 +21,28 @@ import type {
 } from "@fluidframework/tree/alpha";
 import { createIndependentTreeAlpha, minimize } from "@fluidframework/tree/alpha";
 
-import { SchematizingSimpleTreeView, SharedTreeChange } from "../../shared-tree/index.js";
+import {
+	SchematizingSimpleTreeView,
+	SharedTreeChange,
+	Tree,
+} from "../../shared-tree/index.js";
+import { nodeFlowCensusFromDelta } from "../nodeFlowCensusFromDelta.js";
 import { TestTreeProviderLite, validateViewConsistency } from "../utils.js";
+import { makeAnonChange } from "../../core/index.js";
+import {
+	compareStrings,
+	createTupleComparator,
+	hasSingle,
+	newTupleBTree,
+	type TupleBTree,
+} from "../../util/index.js";
+import { intoDelta } from "../../feature-libraries/index.js";
+import {
+	allEndpoints,
+	assertNoFlow,
+	isPossibleFlow,
+	NodeFlowEndpoint,
+} from "../nodeFlowCensus.js";
 
 /**
  * Reads the change associated with the head commit on the main branch.
@@ -88,6 +113,7 @@ const OptionalBox = sf.optional(Box);
 const BoxArray = sf.array("BoxArray", Box);
 
 class Pallet extends sf.object("Pallet", {
+	id: sf.string,
 	boxes: BoxArray,
 }) {}
 const PalletArray = sf.array("PalletArray", Pallet);
@@ -1111,8 +1137,8 @@ const parallelObjectScenarios = {
 	boxes_inserted_then_some_moved_to_sibling_Pallet_that_is_then_removed: {
 		schema: PalletArray,
 		initialContent: () => [
-			new Pallet({ boxes: [new Box({ value: "1⌚" }), new Box({ value: "2⌚" })] }),
-			new Pallet({ boxes: [new Box({ value: "3⌚" }), new Box({ value: "4⌚" })] }),
+			new Pallet({ id: "", boxes: [new Box({ value: "1⌚" }), new Box({ value: "2⌚" })] }),
+			new Pallet({ id: "", boxes: [new Box({ value: "3⌚" }), new Box({ value: "4⌚" })] }),
 		],
 		apply: (root) => {
 			const [pallet0, pallet1] = root;
@@ -1141,8 +1167,8 @@ const parallelObjectScenarios = {
 		{
 			schema: PalletArray,
 			initialContent: () => [
-				new Pallet({ boxes: [new Box({ value: "1⌚" }), new Box({ value: "2⌚" })] }),
-				new Pallet({ boxes: [new Box({ value: "3⌚" }), new Box({ value: "4⌚" })] }),
+				new Pallet({ id: "", boxes: [new Box({ value: "1⌚" }), new Box({ value: "2⌚" })] }),
+				new Pallet({ id: "", boxes: [new Box({ value: "3⌚" }), new Box({ value: "4⌚" })] }),
 			],
 			apply: (root) => {
 				const [pallet0, pallet1] = root;
@@ -1171,11 +1197,12 @@ const parallelObjectScenarios = {
 		{
 			schema: PalletArray,
 			initialContent: () => [
-				new Pallet({ boxes: [new Box({ value: "1⌚" }), new Box({ value: "2⌚" })] }),
+				new Pallet({ id: "", boxes: [new Box({ value: "1⌚" }), new Box({ value: "2⌚" })] }),
 			],
 			apply: (root) => {
 				const [pallet0] = root;
 				const pallet1 = new Pallet({
+					id: "",
 					boxes: [new Box({ value: "3❤️" }), new Box({ value: "4☠️" })],
 				});
 				root.insertAtEnd(pallet1);
@@ -1204,11 +1231,11 @@ const parallelObjectScenarios = {
 		{
 			schema: PalletArray,
 			initialContent: () => [
-				new Pallet({ boxes: [new Box({ value: "1⌚" }), new Box({ value: "2⌚" })] }),
+				new Pallet({ id: "", boxes: [new Box({ value: "1⌚" }), new Box({ value: "2⌚" })] }),
 			],
 			apply: (root) => {
 				const [pallet0] = root;
-				const pallet1 = new Pallet({ boxes: [] });
+				const pallet1 = new Pallet({ id: "", boxes: [] });
 				root.insertAtEnd(pallet1);
 				pallet1.boxes.insertAtStart(new Box({ value: "3❤️" }), new Box({ value: "4☠️" }));
 				pallet0.boxes.moveRangeToIndex(1, 0, 1, pallet1.boxes);
@@ -1235,11 +1262,11 @@ const parallelObjectScenarios = {
 	boxes_moved_into_new_Pallet_then_new_Pallet_is_then_removed: {
 		schema: PalletArray,
 		initialContent: () => [
-			new Pallet({ boxes: [new Box({ value: "1⌚" }), new Box({ value: "2⌚" })] }),
+			new Pallet({ id: "", boxes: [new Box({ value: "1⌚" }), new Box({ value: "2⌚" })] }),
 		],
 		apply: (root) => {
 			const [pallet0] = root;
-			const pallet1 = new Pallet({ boxes: [new Box({ value: "3☠️" })] });
+			const pallet1 = new Pallet({ id: "", boxes: [new Box({ value: "3☠️" })] });
 			root.insertAtEnd(pallet1);
 			pallet1.boxes.moveRangeToIndex(1, 0, 1, pallet0.boxes);
 			root.removeAt(1);
@@ -1310,6 +1337,7 @@ function generateDoubleMoveScenarios(
 							if (palletState.initiallyPresent) {
 								content.push(
 									new Pallet({
+										id: "",
 										boxes: [
 											new Box({
 												value: `pal${index}⌚${surviveOrPerishMarker(palletState)}`,
@@ -1345,12 +1373,7 @@ function generateDoubleMoveScenarios(
 									if (index === 0 && !insertMovedAsOwnRoot) {
 										boxes.unshift(movingBox);
 									}
-									root.insertAt(
-										index,
-										new Pallet({
-											boxes,
-										}),
-									);
+									root.insertAt(index, new Pallet({ id: "", boxes }));
 								}
 							}
 
@@ -1393,6 +1416,281 @@ const doubleMoveScenarios = {
 	),
 	remaining_under_destination: generateDoubleMoveScenarios(/* detachMovedAsOwnRoot */ false),
 } as const;
+// #endregion
+
+// #region Generated edit trees scenarios
+
+class BoxRecord extends sf.object("BoxRecord", {
+	origin: sf.string,
+	destiny: sf.string,
+	required: Box,
+	optional: sf.optional(Box),
+	sequence: BoxArray,
+}) {}
+class Records extends sf.object("Records", {
+	attachedPrior: sf.optional(BoxRecord),
+	detachingPrior: sf.optional(BoxRecord),
+	attachingPrior: sf.optional(BoxRecord),
+	attachingBuilt: sf.optional(BoxRecord),
+	detachedPrior: sf.optional(BoxRecord),
+	detachedBuilt: sf.optional(BoxRecord),
+}) {}
+type EditScenario = TransactionScenario<typeof Records> & {
+	unminimizedBuildExpectations: BuildStatistics;
+};
+
+type EditTreeScenariosKey = [source: NodeFlowEndpoint, destination: NodeFlowEndpoint];
+type EditTreeScenarios = TupleBTree<
+	EditTreeScenariosKey,
+	{ sequence?: EditScenario; optional?: EditScenario; required?: EditScenario }
+>;
+const compareKeys = createTupleComparator<EditTreeScenariosKey>([
+	compareStrings,
+	compareStrings,
+]);
+
+/**
+ * Generates a set of scenarios where a tree is edited.
+ * Emphasis is placed on the movement of content between different trees, themselves moving in different ways.
+ */
+function generateEditedTreeScenarios(): EditTreeScenarios {
+	const scenarios: EditTreeScenarios = newTupleBTree(compareKeys);
+	function initialContentGenerator(): Records {
+		return new Records({
+			attachedPrior: new BoxRecord({
+				origin: "⌚",
+				destiny: "❤️",
+				required: new Box({}),
+				optional: new Box({}),
+				sequence: [new Box({})],
+			}),
+			detachingPrior: new BoxRecord({
+				origin: "⌚",
+				destiny: "☠️",
+				required: new Box({}),
+				optional: new Box({}),
+				sequence: [new Box({})],
+			}),
+		});
+	}
+	function applyIntroAttachEdits(root: Records) {
+		root.attachingBuilt = new BoxRecord({
+			origin: "🐣",
+			destiny: "❤️",
+			required: new Box({}),
+			optional: new Box({}),
+			sequence: [new Box({})],
+		});
+		root.detachedBuilt = new BoxRecord({
+			origin: "🐣",
+			destiny: "☠️",
+			required: new Box({}),
+			optional: new Box({}),
+			sequence: [new Box({})],
+		});
+	}
+	function applyOutroDetachEdits(root: Records) {
+		root.detachedBuilt = undefined;
+		root.detachedPrior = undefined;
+		root.detachingPrior = undefined;
+	}
+	function getMarkers(start: NodeFlowEndpoint, end: NodeFlowEndpoint): string {
+		const origin = start.includes("Built") ? "🐣" : "⌚";
+		const destiny = end.includes("Attach") ? "❤️" : "☠️";
+		return origin + destiny;
+	}
+	function tryGetRecord(
+		root: Records,
+		locationOfEditedTree: NodeFlowEndpoint,
+	): BoxRecord | undefined {
+		switch (locationOfEditedTree) {
+			case NodeFlowEndpoint.UnderAttachingPriorTree: {
+				return root.attachingPrior;
+			}
+			case NodeFlowEndpoint.UnderDetachedPriorTree: {
+				return root.detachedPrior;
+			}
+			case NodeFlowEndpoint.UnderDetachingPriorTree: {
+				return root.detachingPrior;
+			}
+			case NodeFlowEndpoint.UnderAttachedPriorTree: {
+				return root.attachedPrior;
+			}
+			case NodeFlowEndpoint.UnderAttachingBuiltTree: {
+				return root.attachingBuilt;
+			}
+			case NodeFlowEndpoint.UnderDetachedBuiltTree: {
+				return root.detachedBuilt;
+			}
+			case NodeFlowEndpoint.DetachedBuiltRoot:
+			case NodeFlowEndpoint.DetachedPriorRoot: {
+				fail(`No record is present at ${locationOfEditedTree}`);
+			}
+			default: {
+				unreachableCase(locationOfEditedTree);
+			}
+		}
+	}
+	function getRecord(root: Records, locationOfEditedTree: NodeFlowEndpoint): BoxRecord {
+		const record = tryGetRecord(root, locationOfEditedTree);
+		assert.ok(record, `Expected pallet to be present at ${locationOfEditedTree}`);
+		return record;
+	}
+
+	for (const sourceEndpoint of allEndpoints) {
+		for (const destinationEndpoint of allEndpoints) {
+			if (!isPossibleFlow(sourceEndpoint, destinationEndpoint)) {
+				continue;
+			}
+
+			if (
+				sourceEndpoint === NodeFlowEndpoint.DetachedBuiltRoot &&
+				destinationEndpoint === NodeFlowEndpoint.DetachedBuiltRoot
+			) {
+				// This case is tested by `BoxRecord.attachingBuilt` being transient in every scenario.
+				continue;
+			}
+
+			if (
+				sourceEndpoint === NodeFlowEndpoint.DetachedPriorRoot ||
+				sourceEndpoint === NodeFlowEndpoint.UnderAttachingPriorTree ||
+				sourceEndpoint === NodeFlowEndpoint.UnderDetachedPriorTree ||
+				destinationEndpoint === NodeFlowEndpoint.UnderAttachingPriorTree ||
+				destinationEndpoint === NodeFlowEndpoint.UnderDetachedPriorTree
+			) {
+				// TODO: cover these cases once editing and attaching of prior detached tree is supported.
+				continue;
+			}
+
+			const buildsForSource = sourceEndpoint === NodeFlowEndpoint.DetachedBuiltRoot ? 1 : 0;
+
+			const scenariosSet: {
+				sequence?: EditScenario;
+				optional?: EditScenario;
+				required?: EditScenario;
+			} = {};
+
+			scenariosSet.sequence = {
+				schema: Records,
+				initialContent: initialContentGenerator,
+				apply: (root: Records) => {
+					applyIntroAttachEdits(root);
+					if (sourceEndpoint.includes("Root") || destinationEndpoint.includes("Root")) {
+						if (sourceEndpoint.includes("Root")) {
+							let toInsert: Box;
+							if (sourceEndpoint.includes("Prior")) {
+								fail("TODO: add handling for detached root source");
+							} else {
+								toInsert = new Box({
+									value: getMarkers(sourceEndpoint, destinationEndpoint),
+								});
+							}
+							const destination = getRecord(root, destinationEndpoint);
+							destination.sequence.insertAtEnd(toInsert);
+						}
+						if (destinationEndpoint.includes("Root")) {
+							const source = getRecord(root, sourceEndpoint);
+							source.sequence.removeAt(0);
+						}
+					} else {
+						const source = getRecord(root, sourceEndpoint);
+						const destination = getRecord(root, destinationEndpoint);
+						destination.sequence.moveToEnd(0, source.sequence);
+					}
+					applyOutroDetachEdits(root);
+				},
+				unminimizedBuildExpectations: {
+					builds: 2 + buildsForSource,
+					tops: 2 + buildsForSource,
+				},
+				expectSurvivingMarker: true,
+			};
+
+			if (sourceEndpoint.includes("Root") || destinationEndpoint.includes("Root")) {
+				scenariosSet.optional = {
+					schema: Records,
+					initialContent: initialContentGenerator,
+					apply: (root: Records) => {
+						applyIntroAttachEdits(root);
+						if (sourceEndpoint.includes("Root") || destinationEndpoint.includes("Root")) {
+							if (sourceEndpoint.includes("Root")) {
+								let toInsert: Box;
+								if (sourceEndpoint.includes("Prior")) {
+									fail("TODO: add handling for detached root source");
+								} else {
+									toInsert = new Box({
+										value: getMarkers(sourceEndpoint, destinationEndpoint),
+									});
+								}
+								const destination = getRecord(root, destinationEndpoint);
+								destination.optional = toInsert;
+							}
+							if (destinationEndpoint.includes("Root")) {
+								const source = getRecord(root, sourceEndpoint);
+								source.optional = undefined;
+							}
+						} else {
+							const source = getRecord(root, sourceEndpoint);
+							const destination = getRecord(root, destinationEndpoint);
+							const movedBox = source.optional;
+							source.optional = undefined;
+							destination.optional = movedBox;
+						}
+						applyOutroDetachEdits(root);
+					},
+					unminimizedBuildExpectations: {
+						builds: 2 + buildsForSource,
+						tops: 2 + buildsForSource,
+					},
+					expectSurvivingMarker: true,
+				};
+
+				const buildsForReplace = destinationEndpoint.includes("Root") ? 1 : 0;
+				scenariosSet.required = {
+					schema: Records,
+					initialContent: initialContentGenerator,
+					apply: (root: Records) => {
+						applyIntroAttachEdits(root);
+						if (sourceEndpoint.includes("Root") || destinationEndpoint.includes("Root")) {
+							if (sourceEndpoint.includes("Root")) {
+								let toInsert: Box;
+								if (sourceEndpoint.includes("Prior")) {
+									fail("TODO: add handling for detached root source");
+								} else {
+									toInsert = new Box({
+										value: getMarkers(sourceEndpoint, destinationEndpoint),
+									});
+								}
+								const destination = getRecord(root, destinationEndpoint);
+								destination.required = toInsert;
+							}
+							if (destinationEndpoint.includes("Root")) {
+								const source = getRecord(root, sourceEndpoint);
+								const value = `🐣${source.destiny}`;
+								source.required = new Box({ value });
+							}
+						} else {
+							fail(
+								"We do not support moving nodes between fields when either field is required. This scenario should never be generated.",
+							);
+						}
+						applyOutroDetachEdits(root);
+					},
+					unminimizedBuildExpectations: {
+						builds: 2 + buildsForSource + buildsForReplace,
+						tops: 2 + buildsForSource + buildsForReplace,
+					},
+					expectSurvivingMarker: true,
+				};
+			}
+
+			scenarios.set([sourceEndpoint, destinationEndpoint], scenariosSet);
+		}
+	}
+	return scenarios;
+}
+
+const editedDetachedTreeScenarios = generateEditedTreeScenarios();
 // #endregion
 
 // #region Schema upgrade scenarios
@@ -1555,8 +1853,8 @@ describe("transaction minimize post-processor", () => {
 			// None were inserted; should always pass.
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
-			// "A❤️", "B❤️", and "C❤️" all survive (only reordered), so both builds (A and B-C) should remain.
-			assert.deepEqual(countBuilds(change), { builds: 2, tops: 3 });
+			// "A❤️", "B❤️", and "C❤️" all survive (only reordered).
+			assert.deepEqual(countBuilds(change), { builds: 3, tops: 3 });
 		});
 
 		// If any of these tests start to fail, the system has new capabilities
@@ -2019,9 +2317,8 @@ describe("transaction minimize post-processor", () => {
 	});
 
 	// These tests assert that the squashed change carries no extraneous information about nodes that are not
-	// present in the final document. They are NOT EXPECTED TO PASS (though some may by accident) until the
-	// minimization algorithm is implemented. (`minimize` is currently a no-op.)
-	describe.skip("removes extraneous data from the squashed changes (expected to fail until minimize is implemented)", () => {
+	// present in the final document.
+	describe("removes extraneous data from the squashed changes", () => {
 		it("drops the build and destroy for a create-then-remove", () => {
 			const { view, stringifiedChange } = runScenario(arrayScenarios.A_added_then_removed);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
@@ -2286,9 +2583,9 @@ describe("transaction minimize post-processor", () => {
 			);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
-			// Both the inserted root Box (originally carrying "x☠️") and the separately inserted "y❤️" survive
-			// in the final document, so both builds should remain.
-			assert.deepEqual(countBuilds(change), { builds: 2, tops: 2 });
+			// A single build should remain, containing both the inserted root Box (originally carrying "x☠️")
+			// with the separately inserted "y❤️" within it.
+			assert.deepEqual(countBuilds(change), { builds: 1, tops: 1 });
 		});
 
 		it("keeps the surviving box's build when boxes are inserted and one moved to sibling that is then removed", () => {
@@ -2362,10 +2659,264 @@ describe("transaction minimize post-processor", () => {
 			);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
-			// Only the final Box value "D❤️" survives the transaction but the
-			// Box insert was separate action, so two builds should remain
-			// with the first one having been altered.
-			assert.deepEqual(countBuilds(change), { builds: 2, tops: 2 });
+			// A single build should remain,
+			// containing both the inserted root Box and the separately inserted "D❤️" within it.
+			assert.deepEqual(countBuilds(change), { builds: 1, tops: 1 });
+		});
+	});
+
+	describe("minimizes edits not visible in the output document tree", () => {
+		const endpointsUnderNodesThatEndUpDetached = new Set([
+			NodeFlowEndpoint.UnderDetachingPriorTree,
+			NodeFlowEndpoint.UnderDetachedPriorTree,
+			NodeFlowEndpoint.UnderDetachedBuiltTree,
+		]);
+		const endpointsThatEndUpDetached = new Set([
+			...endpointsUnderNodesThatEndUpDetached,
+			NodeFlowEndpoint.DetachedBuiltRoot,
+			NodeFlowEndpoint.DetachedPriorRoot,
+		]);
+
+		const endpointsUnderBuiltTrees = new Set([
+			NodeFlowEndpoint.UnderDetachedBuiltTree,
+			NodeFlowEndpoint.UnderAttachingBuiltTree,
+		]);
+
+		const endpointsFromBuiltTrees = new Set([
+			...endpointsUnderBuiltTrees,
+			NodeFlowEndpoint.DetachedBuiltRoot,
+		]);
+
+		function testNodeFlow<TSchema extends ImplicitFieldSchema>(
+			scenario: TransactionScenario<TSchema>,
+			scenarioName: string,
+		): void {
+			const { tree: unminimizedTree, view: unminimizedView } = runScenario(scenario, {
+				doNotMinimize: true,
+			});
+			const { tree: minimizedTree, view: minimizedView } = runScenario(scenario, {
+				validateConsistency: true,
+			});
+			assert.deepEqual(minimizedTree.exportVerbose(), unminimizedTree.exportVerbose());
+			const { changes } = getHeadChange(minimizedView);
+			assert(hasSingle(changes) && changes[0].type === "data");
+			const minimizedDelta = intoDelta(makeAnonChange(changes[0].innerChange));
+			const minimizedNodeFlow = nodeFlowCensusFromDelta(minimizedDelta);
+
+			// Testing self-check: verify that the unminimized view has the expected build counts.
+			if (scenario.unminimizedBuildExpectations !== undefined) {
+				assertUnminimizedExpectations(
+					scenario.unminimizedBuildExpectations,
+					unminimizedView,
+					scenarioName,
+				);
+			}
+
+			// No node, no matter its source endpoint, should be transferred under a tree that ends up detached
+			assertNoFlow(minimizedNodeFlow, allEndpoints, endpointsUnderNodesThatEndUpDetached);
+
+			// No node detached from a tree that ends up detached should end up detached or be transferred under a tree that ends up detached
+			assertNoFlow(
+				minimizedNodeFlow,
+				endpointsUnderNodesThatEndUpDetached,
+				endpointsThatEndUpDetached,
+			);
+
+			// No built node should end up unused
+			assertNoFlow(minimizedNodeFlow, endpointsFromBuiltTrees, [
+				NodeFlowEndpoint.DetachedBuiltRoot,
+			]);
+
+			// Note: the assertions below are not necessary for ensuring that no invisible edit remains.
+			// We do nonetheless expect them to hold based on the intended minimization algorithm.
+			// These assertions could therefore be removed if the minimization algorithm changes.
+
+			// No node, no matter its destination endpoint, should be detached from a built tree
+			assertNoFlow(minimizedNodeFlow, endpointsUnderBuiltTrees, allEndpoints);
+
+			// No built node should be attached under a built tree
+			assertNoFlow(minimizedNodeFlow, endpointsFromBuiltTrees, endpointsUnderBuiltTrees);
+		}
+
+		for (const [[source, destination], scenarioSet] of editedDetachedTreeScenarios.entries()) {
+			describe(`${source} -> ${destination}`, () => {
+				for (const [field, scenario] of Object.entries(scenarioSet)) {
+					it(`${field} field`, () => {
+						testNodeFlow(scenario, `${source} -> ${destination} (${field} field)`);
+					});
+				}
+			});
+		}
+
+		// This test exercises the minimization algorithm's ability to handle detaches...
+		// - at shallow depths and deep depths
+		// - under subtrees to be kept and under subtrees to be removed
+		// - within prior attached trees and newly built trees
+		// ... and attaches...
+		// - starting with a prior attached node and starting with a newly built node
+		// - nested under a prior attached node and nested under a newly built node
+		// - nested in an order that is consistent with detach depth and nested in an order that is the reverse of detach depth
+		it("minimizes deeply nested detaches and attaches", () => {
+			class Node extends sf.objectRecursive("Node", {
+				nested: sf.requiredRecursive([() => NodeArray]),
+				destinationSubtree: sf.optional(sf.string),
+				destinationDepth: sf.optional(sf.number),
+				tags: sf.optional(sf.string),
+			}) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof Node>;
+			}
+			const NodeArray = sf.arrayRecursive("NodeArray", Node);
+			{
+				type _check = ValidateRecursiveSchema<typeof NodeArray>;
+			}
+
+			/**
+			 * Recursively Traverses the `source`, moving each node to be kept to the `destination` array, and removing the rest.
+			 */
+			function atomizeTree(
+				source: TreeArrayNode<typeof Node>,
+				destination: TreeArrayNode<typeof Node>,
+			): void {
+				const count = source.length;
+				for (let i = count - 1; i >= 0; i--) {
+					atomizeTree(source[i].nested, destination);
+					if (source[i].destinationSubtree === undefined) {
+						source.removeAt(i);
+					} else {
+						destination.moveToEnd(i, source);
+					}
+				}
+			}
+
+			/**
+			 * Assembles the subset of nodes in `source` whose `destinationSubtree` matches `treeId` into a nested tree.
+			 */
+			function assembleTree(source: TreeArrayNode<typeof Node>, treeId: string): void {
+				const nodes: Node[] = source.filter((node) => node.destinationSubtree === treeId);
+				nodes.sort((a, b) => (a.destinationDepth ?? 0) - (b.destinationDepth ?? 0));
+				while (nodes.length > 1) {
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- Length is checked in the while condition
+					const deepest = nodes.pop()!;
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- Length is checked in the while condition
+					const parent = nodes.at(-1)!;
+					parent.nested.moveToEnd(
+						Tree.key(deepest) as number,
+						Tree.parent(deepest) as TreeArrayNode<typeof Node>,
+					);
+				}
+			}
+
+			const scenario = {
+				schema: NodeArray,
+				initialContent: () =>
+					new NodeArray([
+						new Node({
+							tags: "⌚❤️",
+							destinationSubtree: "A",
+							destinationDepth: 0,
+							nested: new NodeArray([
+								new Node({
+									tags: "⌚☠️",
+									nested: new NodeArray([
+										new Node({
+											tags: "⌚❤️",
+											destinationSubtree: "A",
+											destinationDepth: 2,
+											nested: new NodeArray([
+												new Node({
+													tags: "⌚☠️",
+													nested: new NodeArray(),
+												}),
+											]),
+										}),
+									]),
+								}),
+							]),
+						}),
+						new Node({
+							tags: "⌚☠️",
+							nested: new NodeArray([
+								new Node({
+									tags: "⌚❤️",
+									destinationSubtree: "B",
+									destinationDepth: 2,
+									nested: new NodeArray([
+										new Node({
+											tags: "⌚☠️",
+											nested: new NodeArray([
+												new Node({
+													tags: "⌚❤️",
+													destinationSubtree: "B",
+													destinationDepth: 0,
+													nested: new NodeArray(),
+												}),
+											]),
+										}),
+									]),
+								}),
+							]),
+						}),
+					]),
+				apply: (root, tree, view) => {
+					const newNodes = [
+						new Node({
+							tags: "🐣❤️",
+							destinationSubtree: "B",
+							destinationDepth: 3,
+							nested: new NodeArray([
+								new Node({
+									tags: "🐣☠️",
+									nested: new NodeArray([
+										new Node({
+											tags: "🐣❤️",
+											destinationSubtree: "B",
+											destinationDepth: 1,
+											nested: new NodeArray([
+												new Node({
+													tags: "🐣☠️",
+													nested: new NodeArray(),
+												}),
+											]),
+										}),
+									]),
+								}),
+							]),
+						}),
+						new Node({
+							tags: "🐣☠️",
+							nested: new NodeArray([
+								new Node({
+									tags: "🐣❤️",
+									destinationSubtree: "A",
+									destinationDepth: 1,
+									nested: new NodeArray([
+										new Node({
+											tags: "🐣☠️",
+											nested: new NodeArray([
+												new Node({
+													tags: "🐣❤️",
+													destinationSubtree: "A",
+													destinationDepth: 3,
+													nested: new NodeArray(),
+												}),
+											]),
+										}),
+									]),
+								}),
+							]),
+						}),
+					];
+					root.insertAtStart(...newNodes);
+					atomizeTree(view.root, view.root);
+
+					assembleTree(view.root, "A");
+					assembleTree(view.root, "B");
+				},
+				unminimizedBuildExpectations: { builds: 1, tops: 2 },
+				expectSurvivingMarker: true,
+			} as const satisfies TransactionScenario<typeof NodeArray>;
+			testNodeFlow(scenario, "Deeply nesting boxes attach");
 		});
 	});
 });

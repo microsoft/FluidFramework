@@ -9,18 +9,27 @@ import {
 	EmptyKey,
 	storedEmptyFieldSchema,
 	type TreeStoredSchema,
+	ValueSchema,
 } from "../../../core/index.js";
 import { allowsRepoSuperset, defaultSchemaPolicy } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { checkSchemaCompatibility } from "../../../simple-tree/api/schemaCompatibilityTester.js";
+import { LeafNodeSchema } from "../../../simple-tree/leafNodeSchema.js";
 import {
+	checkSchemaCompatibility,
+	getSchemaIncompatibilityDetails,
 	type ImplicitFieldSchema,
 	type LibraryId,
 	type SchemaCompatibilityStatus,
+	type SchemaUpgrade,
+	type StagedUpgradeStatus,
+	type ValidateRecursiveSchema,
+	schemaStatics,
+	StagedSchemaUpgradePolicy,
 	TreeViewConfigurationAlpha,
 	toUpgradeSchema,
 } from "../../../simple-tree/index.js";
 import { SchemaFactoryAlpha } from "../../../simple-tree/index.js";
+import { TestSchemaRepository } from "../../utils.js";
 
 const emptySchema: TreeStoredSchema = {
 	nodeSchema: new Map(),
@@ -32,14 +41,23 @@ const testLibraryId = "test" as LibraryId;
 
 function expectCompatibility(
 	{ view, stored }: { view: ImplicitFieldSchema; stored: TreeStoredSchema },
-	expected: ReturnType<typeof checkSchemaCompatibility>,
+	expected: Omit<
+		ReturnType<typeof checkSchemaCompatibility>,
+		"enabledUpgrades" | "discrepancies"
+	> & {
+		enabledUpgrades?: ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus>;
+	},
 ) {
 	const viewSchema = new TreeViewConfigurationAlpha({ schema: view });
 	const compatibility = checkSchemaCompatibility(viewSchema, stored);
-	assert.deepEqual(compatibility, expected);
+	const { discrepancies, ...compatibilityWithoutDiscrepancies } = compatibility;
+	assert.deepEqual(compatibilityWithoutDiscrepancies, {
+		enabledUpgrades: new Map(),
+		...expected,
+	});
+	assert.equal(discrepancies === undefined, compatibility.canView);
 
-	// This does not include staged allowed types.
-	const viewStored = toUpgradeSchema(view);
+	const viewStored = toUpgradeSchema(view, compatibility.enabledUpgrades.keys());
 
 	// if it says upgradable, deriving a stored schema from the view schema gives one thats a superset of the old stored schema
 	if (compatibility.canUpgrade) {
@@ -50,6 +68,130 @@ function expectCompatibility(
 		assert.equal(allowsRepoSuperset(defaultSchemaPolicy, viewStored, stored), true);
 	}
 }
+
+describe("getSchemaIncompatibilityDetails", () => {
+	it("returns undefined for compatible schema", () => {
+		const schema = new TreeViewConfigurationAlpha({ schema: factory.number });
+		assert.equal(
+			getSchemaIncompatibilityDetails(schema, toUpgradeSchema(factory.number)),
+			undefined,
+		);
+	});
+
+	it("formats an allowed types discrepancy", () => {
+		const schema = new TreeViewConfigurationAlpha({ schema: factory.string });
+		assert.deepEqual(
+			getSchemaIncompatibilityDetails(schema, toUpgradeSchema(factory.number)),
+			[
+				{
+					mismatch: "allowedTypes",
+					location: "root",
+					view: [factory.string.identifier],
+					stored: [factory.number.identifier],
+				},
+			],
+		);
+	});
+
+	it("formats all discrepancies", () => {
+		const schema = new TreeViewConfigurationAlpha({
+			schema: factory.optional(factory.string),
+		});
+		assert.deepEqual(
+			getSchemaIncompatibilityDetails(
+				schema,
+				toUpgradeSchema(factory.required(factory.number)),
+			),
+			[
+				{
+					mismatch: "allowedTypes",
+					location: "root",
+					view: [factory.string.identifier],
+					stored: [factory.number.identifier],
+				},
+				{
+					mismatch: "fieldKind",
+					location: "root",
+					view: "Optional",
+					stored: "Value",
+				},
+			],
+		);
+	});
+
+	it("formats a value schema discrepancy", () => {
+		const identifier = "valueSchema";
+		const viewLeaf = new LeafNodeSchema(identifier, ValueSchema.Number);
+		const storedLeaf = new LeafNodeSchema(identifier, ValueSchema.String);
+		const schema = new TreeViewConfigurationAlpha({ schema: viewLeaf });
+		assert.deepEqual(getSchemaIncompatibilityDetails(schema, toUpgradeSchema(storedLeaf)), [
+			{
+				mismatch: "valueSchema",
+				nodeType: identifier,
+				view: "Number",
+				stored: "String",
+			},
+		]);
+	});
+
+	it("formats a node kind discrepancy", () => {
+		class ViewNode extends factory.object("nodeKind", {}) {}
+		class StoredNode extends factory.map("nodeKind", []) {}
+		const schema = new TreeViewConfigurationAlpha({ schema: ViewNode });
+		assert.deepEqual(getSchemaIncompatibilityDetails(schema, toUpgradeSchema(StoredNode)), [
+			{
+				mismatch: "nodeKind",
+				nodeType: ViewNode.identifier,
+				view: "Object",
+				stored: "Map",
+			},
+		]);
+	});
+
+	it("formats staged allowed type context", () => {
+		class ViewNode extends factory.objectAlpha("stagedAllowedTypeDetails", {
+			foo: factory.types([factory.number, factory.staged(factory.string)]),
+		}) {}
+		class StoredNode extends factory.objectAlpha("stagedAllowedTypeDetails", {
+			foo: [factory.number, factory.null],
+		}) {}
+		const schema = new TreeViewConfigurationAlpha({ schema: ViewNode });
+
+		assert.deepEqual(getSchemaIncompatibilityDetails(schema, toUpgradeSchema(StoredNode)), [
+			{
+				mismatch: "allowedTypes",
+				location: {
+					nodeType: ViewNode.identifier,
+					fieldKey: "foo",
+				},
+				view: [],
+				stagedView: [factory.string.identifier],
+				stored: [factory.null.identifier],
+			},
+		]);
+	});
+
+	it("formats staged optional field context", () => {
+		class ViewNode extends factory.objectAlpha("stagedOptionalDetails", {
+			foo: factory.stagedOptional(factory.number),
+		}) {}
+		class StoredNode extends factory.objectAlpha("stagedOptionalDetails", {}) {}
+		const schema = new TreeViewConfigurationAlpha({ schema: ViewNode });
+
+		assert.deepEqual(getSchemaIncompatibilityDetails(schema, toUpgradeSchema(StoredNode)), [
+			{
+				mismatch: "fieldKind",
+				location: {
+					nodeType: ViewNode.identifier,
+					fieldKey: "foo",
+				},
+				view: "Optional",
+				stored: "Forbidden",
+				viewIsStagedOptional: true,
+			},
+		]);
+	});
+});
 
 describe("checkSchemaCompatibility", () => {
 	describe("function", () => {
@@ -243,11 +385,15 @@ describe("checkSchemaCompatibility", () => {
 						schema: factory.identifier,
 						schemaVersion: { [testLibraryId]: 2 },
 					});
-					assert.deepEqual(checkSchemaCompatibility(view, stored), {
+					const { discrepancies, enabledUpgrades, ...compatibility } =
+						checkSchemaCompatibility(view, stored);
+					assert.deepEqual(compatibility, {
 						canView: false,
 						canUpgrade: true,
 						isEquivalent: false,
 					});
+					assert(discrepancies !== undefined);
+					assert.equal(enabledUpgrades.size, 0);
 				});
 
 				it("required string to identifier fails with a decreased schema version", () => {
@@ -540,12 +686,13 @@ describe("checkSchemaCompatibility", () => {
 				);
 			});
 
-			it("clients with staged schema allow viewing but not upgrading after upgrade", () => {
+			it("clients with staged schema preserve already enabled upgrades", () => {
+				const stagedString = SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string);
+				const upgrade = stagedString.metadata.stagedSchemaUpgrade;
+				assert(upgrade !== undefined);
+
 				class Compatible1 extends factory.object("MyType", {
-					foo: SchemaFactoryAlpha.types([
-						SchemaFactoryAlpha.number,
-						SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
-					]),
+					foo: SchemaFactoryAlpha.types([SchemaFactoryAlpha.number, stagedString]),
 				}) {}
 
 				class Compatible2 extends factory.object("MyType", {
@@ -554,7 +701,12 @@ describe("checkSchemaCompatibility", () => {
 
 				expectCompatibility(
 					{ view: Compatible1, stored: toUpgradeSchema(Compatible2) },
-					{ canView: true, canUpgrade: false, isEquivalent: false },
+					{
+						canView: true,
+						canUpgrade: true,
+						isEquivalent: true,
+						enabledUpgrades: new Map([[upgrade, "enabled"]]),
+					},
 				);
 			});
 
@@ -585,11 +737,12 @@ describe("checkSchemaCompatibility", () => {
 					bar: SchemaFactoryAlpha.number,
 				}) {}
 
+				const stagedDeep = SchemaFactoryAlpha.staged(Deep1);
+				const upgrade = stagedDeep.metadata.stagedSchemaUpgrade;
+				assert(upgrade !== undefined);
+
 				class Compatible1 extends factory.object("MyType", {
-					foo: SchemaFactoryAlpha.types([
-						SchemaFactoryAlpha.number,
-						SchemaFactoryAlpha.staged(Deep1),
-					]),
+					foo: SchemaFactoryAlpha.types([SchemaFactoryAlpha.number, stagedDeep]),
 				}) {}
 
 				class Compatible2 extends factory.object("MyType", {
@@ -598,9 +751,217 @@ describe("checkSchemaCompatibility", () => {
 
 				expectCompatibility(
 					{ view: Compatible1, stored: toUpgradeSchema(Compatible2) },
-					{ canView: false, canUpgrade: false, isEquivalent: false },
+					{
+						canView: false,
+						canUpgrade: false,
+						isEquivalent: false,
+						enabledUpgrades: new Map([[upgrade, "enabled"]]),
+					},
 				);
 			});
 		});
+	});
+});
+
+describe("checkSchemaCompatibility enabledUpgrades", () => {
+	const schemaFactory = new SchemaFactoryAlpha("findEnabledUpgradesTest");
+
+	it("returns empty map when no upgrades are enabled", () => {
+		const baseSchema = schemaFactory.optional([schemaFactory.number]);
+
+		const stored = new TestSchemaRepository(defaultSchemaPolicy);
+		assert(stored.tryUpdateRootFieldSchema(toUpgradeSchema(baseSchema).rootFieldSchema));
+		assert(stored.tryUpdateTreeSchema(schemaStatics.number));
+
+		const config = new TreeViewConfigurationAlpha({ schema: baseSchema });
+		const { enabledUpgrades } = checkSchemaCompatibility(config, stored);
+		assert.equal(enabledUpgrades.size, 0);
+	});
+
+	it("detects enabled staged allowed type upgrade", () => {
+		const stagedString = schemaFactory.staged(schemaFactory.string);
+		const upgrade = stagedString.metadata.stagedSchemaUpgrade;
+		assert(upgrade !== undefined);
+
+		const schemaWithStaged = schemaFactory.optional(
+			schemaFactory.types([schemaFactory.number, stagedString]),
+		);
+
+		const stored = new TestSchemaRepository(defaultSchemaPolicy);
+		assert(
+			stored.tryUpdateRootFieldSchema(
+				toUpgradeSchema(
+					schemaWithStaged,
+					StagedSchemaUpgradePolicy.enabledStagedUpgrades(upgrade),
+				).rootFieldSchema,
+			),
+		);
+		assert(stored.tryUpdateTreeSchema(schemaStatics.number));
+		assert(stored.tryUpdateTreeSchema(schemaStatics.string));
+
+		const config = new TreeViewConfigurationAlpha({ schema: schemaWithStaged });
+		const { enabledUpgrades } = checkSchemaCompatibility(config, stored);
+		assert.equal(enabledUpgrades.size, 1);
+		assert.equal(enabledUpgrades.get(upgrade), "enabled");
+	});
+
+	it("does not include upgrades that have not been applied", () => {
+		const stagedString = schemaFactory.staged(schemaFactory.string);
+		const upgrade = stagedString.metadata.stagedSchemaUpgrade;
+		assert(upgrade !== undefined);
+
+		const schemaWithStaged = schemaFactory.optional(
+			schemaFactory.types([schemaFactory.number, stagedString]),
+		);
+
+		const stored = new TestSchemaRepository(defaultSchemaPolicy);
+		assert(stored.tryUpdateRootFieldSchema(toUpgradeSchema(schemaWithStaged).rootFieldSchema));
+		assert(stored.tryUpdateTreeSchema(schemaStatics.number));
+
+		const config = new TreeViewConfigurationAlpha({ schema: schemaWithStaged });
+		const { enabledUpgrades } = checkSchemaCompatibility(config, stored);
+		assert.equal(enabledUpgrades.size, 0);
+	});
+
+	it("detects enabled staged optional upgrade", () => {
+		const stagedField = schemaFactory.stagedOptional(schemaFactory.number);
+		const optionalUpgrade = stagedField.isStagedOptional;
+		assert(optionalUpgrade !== false && optionalUpgrade !== undefined);
+
+		class ObjStaged extends schemaFactory.objectAlpha("Obj", {
+			value: stagedField,
+		}) {}
+
+		const schemaStaged = schemaFactory.required(ObjStaged);
+
+		const stored = new TestSchemaRepository(
+			defaultSchemaPolicy,
+			toUpgradeSchema(
+				schemaStaged,
+				StagedSchemaUpgradePolicy.enabledStagedUpgrades(optionalUpgrade),
+			),
+		);
+
+		const config = new TreeViewConfigurationAlpha({ schema: schemaStaged });
+		const { enabledUpgrades } = checkSchemaCompatibility(config, stored);
+		assert.equal(enabledUpgrades.size, 1);
+		assert.equal(enabledUpgrades.get(optionalUpgrade), "enabled");
+	});
+
+	it("does not detect staged optional when stored field is still required", () => {
+		const stagedField = schemaFactory.stagedOptional(schemaFactory.number);
+		const optionalUpgrade = stagedField.isStagedOptional;
+		assert(optionalUpgrade !== false && optionalUpgrade !== undefined);
+
+		class ObjStaged extends schemaFactory.objectAlpha("Obj2", {
+			value: stagedField,
+		}) {}
+
+		const schemaStaged = schemaFactory.required(ObjStaged);
+
+		const stored = new TestSchemaRepository(
+			defaultSchemaPolicy,
+			toUpgradeSchema(schemaStaged),
+		);
+
+		const config = new TreeViewConfigurationAlpha({ schema: schemaStaged });
+		const { enabledUpgrades } = checkSchemaCompatibility(config, stored);
+		assert.equal(enabledUpgrades.size, 0);
+	});
+
+	it("returns multiple upgrades when several are enabled", () => {
+		const stagedString = schemaFactory.staged(schemaFactory.string);
+		const stagedBool = schemaFactory.staged(schemaFactory.boolean);
+		const upgradeStr = stagedString.metadata.stagedSchemaUpgrade;
+		const upgradeBool = stagedBool.metadata.stagedSchemaUpgrade;
+		assert(upgradeStr !== undefined);
+		assert(upgradeBool !== undefined);
+
+		const schema = schemaFactory.optional(
+			schemaFactory.types([schemaFactory.number, stagedString, stagedBool]),
+		);
+
+		const stored = new TestSchemaRepository(defaultSchemaPolicy);
+		assert(
+			stored.tryUpdateRootFieldSchema(
+				toUpgradeSchema(
+					schema,
+					StagedSchemaUpgradePolicy.enabledStagedUpgrades(upgradeStr, upgradeBool),
+				).rootFieldSchema,
+			),
+		);
+		assert(stored.tryUpdateTreeSchema(schemaStatics.number));
+		assert(stored.tryUpdateTreeSchema(schemaStatics.string));
+		assert(stored.tryUpdateTreeSchema(schemaStatics.boolean));
+
+		const config = new TreeViewConfigurationAlpha({ schema });
+		const { enabledUpgrades } = checkSchemaCompatibility(config, stored);
+		assert.equal(enabledUpgrades.size, 2);
+		assert.equal(enabledUpgrades.get(upgradeStr), "enabled");
+		assert.equal(enabledUpgrades.get(upgradeBool), "enabled");
+	});
+
+	it("counts an upgrade as partial if it's enabled in only some locations", () => {
+		const sfLocal = new SchemaFactoryAlpha("enabledInOneLocation");
+		const stagedString = sfLocal.staged(sfLocal.string);
+		const upgrade = stagedString.metadata.stagedSchemaUpgrade;
+		assert(upgrade !== undefined);
+
+		class ObjV1 extends sfLocal.objectAlpha("Obj", {
+			fieldA: sfLocal.optional(sfLocal.types([sfLocal.number, stagedString])),
+			fieldB: sfLocal.optional([sfLocal.number]),
+		}) {}
+
+		const stored = new TestSchemaRepository(
+			defaultSchemaPolicy,
+			toUpgradeSchema(
+				sfLocal.required(ObjV1),
+				StagedSchemaUpgradePolicy.enabledStagedUpgrades(upgrade),
+			),
+		);
+
+		class ObjV2 extends sfLocal.objectAlpha("Obj", {
+			fieldA: sfLocal.optional(sfLocal.types([sfLocal.number, stagedString])),
+			fieldB: sfLocal.optional(sfLocal.types([sfLocal.number, stagedString])),
+		}) {}
+
+		const config = new TreeViewConfigurationAlpha({ schema: sfLocal.required(ObjV2) });
+		const { enabledUpgrades } = checkSchemaCompatibility(config, stored);
+		assert.equal(enabledUpgrades.size, 1);
+		assert.equal(enabledUpgrades.get(upgrade), "partial");
+	});
+
+	it("detects enabled upgrades in recursive types", () => {
+		const sfLocal = new SchemaFactoryAlpha("recursiveUpgrade");
+
+		// Create the recursive field separately so we can access its metadata
+		const childField = sfLocal.stagedOptionalRecursive([() => TreeNode]);
+
+		// Define a recursive node where the child uses stagedOptionalRecursive
+		class TreeNode extends sfLocal.objectRecursiveAlpha("TreeNode", {
+			value: sfLocal.number,
+			child: childField,
+		}) {}
+		{
+			type _check = ValidateRecursiveSchema<typeof TreeNode>;
+		}
+
+		const childUpgrade = childField.isStagedOptional;
+		assert(childUpgrade !== false && childUpgrade !== undefined);
+
+		const stored = new TestSchemaRepository(
+			defaultSchemaPolicy,
+			toUpgradeSchema(
+				sfLocal.required(TreeNode),
+				StagedSchemaUpgradePolicy.enabledStagedUpgrades(childUpgrade),
+			),
+		);
+
+		const result = checkSchemaCompatibility(
+			new TreeViewConfigurationAlpha({ schema: TreeNode }),
+			stored,
+		);
+		assert(result.enabledUpgrades !== undefined);
+		assert.equal(result.enabledUpgrades.get(childUpgrade), "enabled");
 	});
 });

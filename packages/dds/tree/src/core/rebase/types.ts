@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { Listenable } from "@fluidframework/core-interfaces";
 import type {
 	OpSpaceCompressedId,
 	SessionId,
@@ -14,6 +15,7 @@ import * as Type from "@sinclair/typebox";
 import {
 	type Brand,
 	type JsonCompatibleReadOnly,
+	type JsonCompatibleReadOnlyObject,
 	type NestedMap,
 	RangeMap,
 	brand,
@@ -163,8 +165,87 @@ export interface GraphCommit<TChange> {
 	readonly revision: RevisionTag;
 	/** The change that will result from applying this commit */
 	readonly change: TChange;
-	/** The parent of this commit, on whose change this commit's change is based */
+	/**
+	 * The parent of this commit, on whose change this commit's change is based.
+	 * @remarks
+	 * This property is only `undefined` for the trunk base commit, which is the root of the commit graph.
+	 */
 	readonly parent?: GraphCommit<TChange>;
+	/**
+	 * Arbitrary, application-defined metadata that is persisted alongside this commit.
+	 * @remarks
+	 * Set via {@link RunTransactionParamsAlpha.customMetadata}. This is a tree rather than a single
+	 * object because a commit may be produced by nested transactions.
+	 * @privateRemarks
+	 * Always copy this property when copying a commit.
+	 */
+	readonly customMetadata: CustomMetadataTree | undefined;
+
+	/**
+	 * Indicates whether this commit was trimmed from the history.
+	 * @remarks
+	 * During trunk trimming, this property is set to `true` on all trimmed commits (including the new trunk base).
+	 */
+	readonly wasTrimmed?: true;
+}
+
+/**
+ * A tree representing the nesting structure of transaction metadata.
+ *
+ * @remarks
+ * Each transaction contributes a node whose {@link CustomMetadataTree.metadata} is its
+ * {@link RunTransactionParamsAlpha.customMetadata | metadata} (or `undefined` if none was provided).
+ * When transactions are nested, inner transaction nodes become
+ * {@link CustomMetadataTree.children | children} of outer ones.
+ *
+ * @sealed @alpha
+ */
+export interface CustomMetadataTree {
+	/**
+	 * The metadata supplied by this transaction, or `undefined` if it supplied none.
+	 */
+	readonly metadata: JsonCompatibleReadOnlyObject | undefined;
+
+	/**
+	 * The metadata trees of any nested transactions within this one.
+	 */
+	readonly children: readonly CustomMetadataTree[];
+}
+
+/**
+ * Flattens a {@link CustomMetadataTree} into a single object.
+ * @remarks
+ * Where two transactions used the same property, the outermost one wins. Among siblings, the later one
+ * wins. Returns `undefined` if no transaction in the tree supplied any metadata.
+ */
+export function flattenCustomMetadata(
+	tree: CustomMetadataTree | undefined,
+): JsonCompatibleReadOnlyObject | undefined {
+	if (tree === undefined) {
+		return undefined;
+	}
+	let flattened: Record<string, JsonCompatibleReadOnly | undefined> | undefined;
+	const visit = (node: CustomMetadataTree): void => {
+		// Descendants first, so that a containing transaction's metadata wins on conflict.
+		for (const child of node.children) {
+			visit(child);
+		}
+		if (node.metadata !== undefined) {
+			flattened ??= {};
+			// `defineProperty` rather than assignment: assigning the valid JSON key "__proto__" would
+			// invoke the inherited setter and set the prototype instead of creating a property.
+			for (const key of Object.keys(node.metadata)) {
+				Object.defineProperty(flattened, key, {
+					value: node.metadata[key],
+					writable: true,
+					enumerable: true,
+					configurable: true,
+				});
+			}
+		}
+	};
+	visit(tree);
+	return flattened;
 }
 
 /**
@@ -209,7 +290,7 @@ export interface LocalChangeMetadata extends CommitMetadata {
 	/**
 	 * Returns a serializable object that encodes the change.
 	 * @remarks This is only available for local changes.
-	 * This change object can be {@link TreeBranchAlpha.applyChange | applied to another branch} in the same state as the one which generated it.
+	 * This change object can be {@link UntypedTreeViewAlpha.applyChange | applied to another view} in the same state as the one which generated it.
 	 * The change object must be applied to a SharedTree with the same IdCompressor session ID as it was created from.
 	 * @privateRemarks
 	 * This is a `SerializedChange` from treeCheckout.ts.
@@ -271,6 +352,72 @@ export interface LocalChangeMetadata extends CommitMetadata {
 	 * ```
 	 */
 	readonly labels: TransactionLabels;
+
+	/**
+	 * Events related to a local change that has been applied.
+	 */
+	readonly events: Listenable<LocalCommitEvents>;
+}
+
+/**
+ * Events related to a local commit that has been applied.
+ * @sealed @alpha
+ */
+export interface LocalCommitEvents {
+	/**
+	 * Fired once a commit has been ordered by the sequencing service.
+	 * @param outcome - information about what changes from the commit were applied or not
+	 *
+	 * @remarks
+	 * Once a commit is sequenced, the following guarantees hold:
+	 * 1. The changes carried by the commit have been persisted and other peers are able to see them.
+	 * 2. There can be no more concurrent changes sequenced before this commit, which means this commit has reached its settled form.
+	 *
+	 * This event can be used by applications to inform the end user that their changes have been saved (`CommitOutcome.FullyApplied`) or rejected (`CommitOutcome.FullyDropped` and `CommitOutcome.NewContentOnly`).
+	 * It can also be used to queue up a new attempt at making the rejected changes. Note however that new edits must be made outside of the event callback.
+	 * @example Notifying the user of the outcome and allowing them to retry:
+	 * ```typescript
+	 * // Use `asAlpha` API to access the settled event API
+	 * const view = asAlpha(tree.viewWith(config));
+	 *
+	 * // Function to clear all contents of the tree, with a precondition that no changes have occurred.
+	 * const clearAllContents = () => {
+	 * 	view.runTransaction(
+	 * 		() => {
+	 * 			// Remove all contents at the root
+	 * 			view.root.removeRange();
+	 * 		},
+	 * 		{ preconditions: [{ type: "noChange" }] },
+	 * 	);
+	 * };
+	 *
+	 * // Register the logic for notifying the user of the outcome and allow them to retry
+	 *  view.events.on("changed", (metadata) => {
+	 * 	if (metadata.isLocal) {
+	 * 		metadata.events.on("settled", (outcome) => {
+	 * 			if (outcome === CommitOutcome.FullyApplied) {
+	 * 				alert("Clear operation succeeded.");
+	 * 			} else {
+	 * 				const shouldTryAgain = confirm(
+	 * 					"The contents have changed. Do you still want to clear everything?",
+	 * 				);
+	 * 				if (shouldTryAgain) {
+	 * 					// It is invalid to make edits during the event callback, so we schedule the retry to occur asynchronously.
+	 * 					setTimeout(clearAllContents);
+	 * 				} else {
+	 * 					alert("Clear operation aborted.");
+	 * 				}
+	 * 			}
+	 * 		});
+	 * 	}
+	 * });
+	 *
+	 * // First attempt to clear all contents.
+	 * // This will synchronously trigger the changed "event" and register the listener for the settled event.
+	 * clearAllContents();
+	 * ```
+	 */
+	settled(outcome: CommitOutcome): void;
 }
 
 /**
@@ -310,6 +457,52 @@ export interface LabelTree {
  * @sealed @alpha
  */
 export type TransactionLabels = Set<unknown> & { tree?: LabelTree };
+
+/**
+ * Details about what changes from a commit were applied or not.
+ * @alpha
+ */
+export enum CommitOutcome {
+	/**
+	 * All of the changes in the commit were applied.
+	 */
+	FullyApplied,
+	/**
+	 * None of the changes in the commit were applied.
+	 * @remarks
+	 * This occurs when an implicit constraint has been violated.
+	 * Implicit constraints are those that are automatically enforced by SharedTree on all changes.
+	 *
+	 * Such a violation typically arises in one of two scenarios:
+	 * 1. A schema change conflicts with a concurrent data or schema change that was sequenced before it.
+	 * 2. A data change conflicts with a concurrent schema change that was sequenced before it.
+	 */
+	FullyDropped,
+	/**
+	 * Only the creation of new content was applied.
+	 * All other changes (including the insertion and/or modification of the new content) were dropped.
+	 * @remarks
+	 * This occurs when at least one explicit constraint has been violated
+	 * (and no implicit constraints were violated.)
+	 *
+	 * Explicit constraints are those that are explicitly added
+	 * through {@link RunTransactionParamsAlpha.preconditions | preconditions}
+	 * or {@link TransactionCallbackStatusAlpha.preconditionsOnRevert | preconditionsOnRevert}.
+	 *
+	 * The new content may be edited (and potentially inserted) by subsequent commits,
+	 * assuming those commits are not themselves subject to constraint violations.
+	 * Note that, if left uninserted, new content will eventually be garbage-collected from the document.
+	 *
+	 * Applications typically choose to treat this outcome as equivalent to {@link CommitOutcome.FullyDropped | FullyDropped}
+	 * and, when reattempting the change, generate a different copy of the new content if any.
+	 *
+	 * @privateRemarks
+	 * New content is preserved so that subsequent commits that reference it without having to carry their own copies of it.
+	 * This can become expensive: one extra copy per subsequent commit, included in both in cases where we know the prior commit was dropped and in cases where we don't yet know.
+	 * We could instead drop all subsequent commits that reference the new content, but that would create a greater risk of data loss.
+	 */
+	NewContentOnly,
+}
 
 /**
  * Information about a change that has been applied by a remote client.
@@ -360,11 +553,12 @@ export function mintCommit<TChange>(
 	parent: GraphCommit<TChange>,
 	commit: Omit<GraphCommit<TChange>, "parent">,
 ): GraphCommit<TChange> {
-	const { revision, change } = commit;
+	const { revision, change, customMetadata } = commit;
 	return {
 		revision,
 		change,
 		parent,
+		customMetadata,
 	};
 }
 
@@ -374,6 +568,10 @@ export function newChangeAtomIdRangeMap<V>(
 	offsetValue?: (value: V, offset: number) => V,
 ): ChangeAtomIdRangeMap<V> {
 	return new RangeMap(offsetChangeAtomId, subtractChangeAtomIds, offsetValue);
+}
+
+export function newChangeAtomIdTransform(): ChangeAtomIdRangeMap<ChangeAtomId> {
+	return new RangeMap(offsetChangeAtomId, subtractChangeAtomIds, offsetChangeAtomId);
 }
 
 export function subtractChangeAtomIds(a: ChangeAtomId, b: ChangeAtomId): number {

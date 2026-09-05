@@ -20,6 +20,7 @@ import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/i
 import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
+	defaultTestOldestSupportedClient,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 
@@ -63,6 +64,7 @@ describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider, api
 		ContainerRuntimeFactoryWithDefaultDataStore,
 		{
 			defaultFactory: dataObjectFactory,
+			oldestSupportedClient: defaultTestOldestSupportedClient,
 			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
 			runtimeOptions,
 		},

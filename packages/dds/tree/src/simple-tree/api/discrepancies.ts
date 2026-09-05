@@ -27,6 +27,7 @@ import {
 	NodeKind,
 	normalizeAndEvaluateAnnotatedAllowedTypes,
 	type AnnotatedAllowedType,
+	type SchemaUpgrade,
 	type TreeNodeSchema,
 } from "../core/index.js";
 import {
@@ -47,6 +48,25 @@ import { convertFieldKind } from "../toStoredSchema.js";
 import type { TreeSchema } from "../treeSchema.js";
 
 import { tryStoredSchemaAsArray } from "./customTree.js";
+
+/**
+ * Collects upgrade location data during a schema walk.
+ * @remarks Called for each staged type or staged optional field encountered.
+ */
+export interface UpgradeLocationCollector {
+	/**
+	 * Record a staged allowed type location.
+	 * @param upgrade - The upgrade token guarding this type.
+	 * @param isEnabled - Whether this type is present in stored schema.
+	 */
+	allowedType(upgrade: SchemaUpgrade, isEnabled: boolean): void;
+	/**
+	 * Record a staged optional field location.
+	 * @param upgrade - The upgrade token guarding this field.
+	 * @param isEnabled - Whether the stored field is already optional.
+	 */
+	optionalField(upgrade: SchemaUpgrade, isEnabled: boolean): void;
+}
 
 /**
  * Discriminated union (keyed on `mismatch`) of discrepancies between a view and stored schema which
@@ -79,6 +99,11 @@ export interface FieldDiscrepancyLocation {
 	 * - the discrepancy is for 'all fields' of a map node
 	 */
 	readonly fieldKey: FieldKey | undefined;
+	/**
+	 * Whether the view field is a staged optional field.
+	 * Omitted when false.
+	 */
+	readonly viewIsStagedOptional?: true;
 }
 
 /**
@@ -94,6 +119,13 @@ export interface AllowedTypeDiscrepancy extends FieldDiscrepancyLocation {
 	 * (excluding {@link SchemaStaticsBeta.staged | staged} schema) which are not allowed in stored schema.
 	 */
 	readonly view: readonly AnnotatedAllowedType<TreeNodeSchema>[];
+	/**
+	 * Staged allowed types in the view schema which are not allowed in stored schema.
+	 *
+	 * @remarks
+	 * These types do not cause the discrepancy and are omitted when there are none.
+	 */
+	readonly stagedView?: readonly AnnotatedAllowedType<TreeNodeSchema>[];
 	/**
 	 * Allowed type identifiers in stored schema which are not allowed in view schema
 	 * (including the view schema's {@link SchemaStaticsBeta.staged | staged} schema).
@@ -174,15 +206,25 @@ function doesNodeKindMatchStoredNodeKind(
 
 /**
  * Finds and reports discrepancies between a view schema and a stored schema which make "canView" false.
+ *
+ * Optionally collects upgrade location information for staged schema upgrades during the same walk.
+ *
  * @remarks
  * See documentation on {@link Discrepancy} and its subtypes for details of possible discrepancies.
  */
 export function* getDiscrepanciesInAllowedContent(
 	view: TreeSchema,
 	stored: TreeStoredSchema,
+	upgradeCollector?: UpgradeLocationCollector,
 ): Iterable<Discrepancy> {
 	// check root field discrepancies
-	yield* getFieldDiscrepancies(view.root, stored.rootFieldSchema, undefined, undefined);
+	yield* getFieldDiscrepancies(
+		view.root,
+		stored.rootFieldSchema,
+		undefined,
+		undefined,
+		upgradeCollector,
+	);
 
 	// Check all of the stored nodes, including their fields for discrepancies.
 	for (const [identifier, storedSchema] of stored.nodeSchema) {
@@ -190,7 +232,7 @@ export function* getDiscrepanciesInAllowedContent(
 
 		// if the view schema has a node that's also in the stored schema, check it.
 		if (viewSchema !== undefined) {
-			yield* getNodeDiscrepancies(identifier, viewSchema, storedSchema);
+			yield* getNodeDiscrepancies(identifier, viewSchema, storedSchema, upgradeCollector);
 		}
 		// Note that nodes that are missing in the view schema are only a problem if other stored schema nodes actually reference them which will produce its own discrepancy, so we can rely on that to produce any needed discrepancies.
 	}
@@ -200,6 +242,7 @@ function* getNodeDiscrepancies(
 	identifier: TreeNodeSchemaIdentifier,
 	view: TreeNodeSchema,
 	stored: TreeNodeStoredSchema,
+	upgradeCollector?: UpgradeLocationCollector,
 ): Iterable<Discrepancy> {
 	if (!doesNodeKindMatchStoredNodeKind(view.kind, getStoredNodeSchemaType(stored))) {
 		yield {
@@ -221,6 +264,7 @@ function* getNodeDiscrepancies(
 				identifier,
 				view,
 				stored as ObjectNodeStoredSchema,
+				upgradeCollector,
 			);
 			break;
 		}
@@ -246,6 +290,8 @@ function* getNodeDiscrepancies(
 				arrayStoredSchema,
 				brand(view.identifier),
 				EmptyKey,
+				false,
+				upgradeCollector,
 			);
 
 			break;
@@ -261,6 +307,7 @@ function* getNodeDiscrepancies(
 				(stored as MapNodeStoredSchema).mapFields,
 				identifier,
 				undefined,
+				upgradeCollector,
 			);
 			break;
 		}
@@ -275,6 +322,7 @@ function* getNodeDiscrepancies(
 				(stored as MapNodeStoredSchema).mapFields,
 				identifier,
 				undefined,
+				upgradeCollector,
 			);
 			break;
 		}
@@ -308,7 +356,7 @@ function* getNodeDiscrepancies(
 export function findExtraAllowedTypes(
 	viewAllowedTypes: readonly AnnotatedAllowedType<TreeNodeSchema>[],
 	storedAllowedTypes: TreeTypeSet,
-): Pick<AllowedTypeDiscrepancy, "view" | "stored"> {
+): Pick<AllowedTypeDiscrepancy, "view" | "stagedView" | "stored"> {
 	const viewNodeSchemaIdentifiers = new Set(
 		viewAllowedTypes.map((value) => value.type.identifier),
 	);
@@ -322,10 +370,19 @@ export function findExtraAllowedTypes(
 			!storedAllowedTypes.has(brand(value.type.identifier)) &&
 			value.metadata.stagedSchemaUpgrade === undefined,
 	);
+	const stagedView = viewAllowedTypes.filter(
+		(value) =>
+			!storedAllowedTypes.has(brand(value.type.identifier)) &&
+			value.metadata.stagedSchemaUpgrade !== undefined,
+	);
 	const stored = [...storedAllowedTypes].filter(
 		(value) => !viewNodeSchemaIdentifiers.has(value),
 	);
-	return { view, stored };
+	return {
+		view,
+		...(stagedView.length === 0 ? {} : { stagedView }),
+		stored,
+	};
 }
 
 /**
@@ -346,16 +403,28 @@ function* getFieldDiscrepancies(
 	stored: TreeFieldStoredSchema,
 	identifier: TreeNodeSchemaIdentifier | undefined,
 	fieldKey: FieldKey | undefined,
+	upgradeCollector?: UpgradeLocationCollector,
 ): Iterable<FieldDiscrepancy> {
 	assert(
 		view instanceof FieldSchemaAlpha,
 		0xbee /* all field schema should be FieldSchemaAlpha */,
 	);
+
+	// Collect staged-optional upgrade location if present.
+	if (upgradeCollector !== undefined && view.isStagedOptional !== false) {
+		upgradeCollector.optionalField(
+			view.isStagedOptional,
+			stored.kind === FieldKinds.optional.identifier,
+		);
+	}
+
 	yield* getAllowedTypeDiscrepancies(
 		view.allowedTypesFull.evaluate().types,
 		stored.types,
 		identifier,
 		fieldKey,
+		view.isStagedOptional !== false,
+		upgradeCollector,
 	);
 
 	const viewKind =
@@ -375,6 +444,7 @@ function* getFieldDiscrepancies(
 			mismatch: "fieldKind",
 			view: viewKind.identifier,
 			stored: stored.kind,
+			...(view.isStagedOptional === false ? {} : { viewIsStagedOptional: true }),
 		} satisfies FieldKindDiscrepancy;
 	}
 }
@@ -396,7 +466,21 @@ function* getAllowedTypeDiscrepancies(
 	stored: TreeTypeSet,
 	identifier: TreeNodeSchemaIdentifier | undefined,
 	fieldKey: FieldKey | undefined,
+	viewIsStagedOptional: boolean,
+	upgradeCollector?: UpgradeLocationCollector,
 ): Iterable<FieldDiscrepancy> {
+	// Collect staged allowed type upgrade locations if present.
+	if (upgradeCollector !== undefined) {
+		for (const allowedType of view) {
+			if (allowedType.metadata.stagedSchemaUpgrade !== undefined) {
+				upgradeCollector.allowedType(
+					allowedType.metadata.stagedSchemaUpgrade,
+					stored.has(brand(allowedType.type.identifier)),
+				);
+			}
+		}
+	}
+
 	const discrepancies = findExtraAllowedTypes(view, stored);
 	if (discrepancies.view.length > 0 || discrepancies.stored.length > 0) {
 		yield {
@@ -404,6 +488,7 @@ function* getAllowedTypeDiscrepancies(
 			identifier,
 			fieldKey,
 			mismatch: "allowedTypes",
+			...(viewIsStagedOptional ? { viewIsStagedOptional: true } : {}),
 		} satisfies AllowedTypeDiscrepancy;
 	}
 }
@@ -424,6 +509,7 @@ function* computeObjectNodeDiscrepancies(
 	identifier: TreeNodeSchemaIdentifier,
 	view: ObjectNodeSchemaPrivate,
 	stored: ObjectNodeStoredSchema,
+	upgradeCollector?: UpgradeLocationCollector,
 ): Iterable<FieldDiscrepancy> {
 	/**
 	 * Similar to the logic used for tracking discrepancies between two node schemas, we will identify
@@ -453,9 +539,18 @@ function* computeObjectNodeDiscrepancies(
 				mismatch: "fieldKind",
 				view: viewKind.identifier,
 				stored: storedEmptyFieldSchema.kind,
+				...(fieldSchema instanceof FieldSchemaAlpha && fieldSchema.isStagedOptional !== false
+					? { viewIsStagedOptional: true }
+					: {}),
 			} satisfies FieldKindDiscrepancy;
 		} else {
-			yield* getFieldDiscrepancies(fieldSchema, storedSchema, identifier, fieldKey);
+			yield* getFieldDiscrepancies(
+				fieldSchema,
+				storedSchema,
+				identifier,
+				fieldKey,
+				upgradeCollector,
+			);
 		}
 	}
 

@@ -271,12 +271,39 @@ export interface SnapshotSchemaCompatibilityOptions {
 	 * and not erased when regenerating snapshots.
 	 *
 	 * This directory will be created if it does not already exist.
-	 * All ".json" files in this directory will be treated as schema snapshots.
+	 * By default, all ".json" files in this directory will be treated as schema snapshots.
+	 * When {@link SnapshotSchemaCompatibilityOptions.snapshotFileNameFormat} is provided,
+	 * only JSON files matching that format will be treated as schema snapshots.
 	 * It is recommended to use a dedicated directory for each {@link snapshotSchemaCompatibility} powered test.
 	 *
 	 * This can use any path syntax supported by the provided {@link SnapshotSchemaCompatibilityOptions.fileSystem}.
 	 */
 	readonly snapshotDirectory: string;
+
+	/**
+	 * Customizes the names of schema snapshot files.
+	 * @remarks
+	 * Snapshot files are named by surrounding the version with the provided strings, followed by the ".json" extension.
+	 * For example, `{ prefix: "schema-", suffix: "-snapshot" }` produces `schema-1.0.0-snapshot.json` for version `1.0.0`.
+	 *
+	 * Only JSON files matching this format are treated as schema snapshots.
+	 * The prefix and suffix must not contain ASCII control characters or characters that are invalid in cross-platform file names.
+	 */
+	readonly snapshotFileNameFormat?: {
+		/**
+		 * Text to include before the version.
+		 *
+		 * @defaultValue `""`
+		 */
+		readonly prefix?: string;
+
+		/**
+		 * Text to include after the version and before the ".json" extension.
+		 *
+		 * @defaultValue `""`
+		 */
+		readonly suffix?: string;
+	};
 
 	/**
 	 * How the `snapshotDirectory` is accessed.
@@ -328,7 +355,7 @@ export interface SnapshotSchemaCompatibilityOptions {
 	 * Such applications can set this to the oldest version currently deployed,
 	 * then rely on {@link snapshotSchemaCompatibility} to verify that no schema changes are made which would break collaboration with that (or newer) versions.
 	 *
-	 * This is the same approach used by {@link @fluidframework/runtime-definitions#MinimumVersionForCollab}
+	 * This is the same approach used by {@link @fluidframework/runtime-definitions#OldestSupportedClientVersion}
 	 * except that type is specifically for use with the version of the Fluid Framework client packages,
 	 * and this corresponds to whatever versioning scheme is used with {@link SnapshotSchemaCompatibilityOptions.version}.
 	 */
@@ -507,6 +534,7 @@ export function snapshotSchemaCompatibility(
 	const checker = new SnapshotCompatibilityChecker(
 		options.snapshotDirectory,
 		options.fileSystem,
+		options.snapshotFileNameFormat,
 	);
 	const {
 		version: currentVersion,
@@ -758,12 +786,33 @@ export class SnapshotCompatibilityChecker {
 		 * How the `snapshotDirectory` is accessed.
 		 */
 		private readonly fileSystemMethods: SnapshotFileSystem,
-	) {}
+		/**
+		 * Text surrounding the version in snapshot file names.
+		 */
+		private readonly snapshotFileNameFormat: {
+			readonly prefix?: string;
+			readonly suffix?: string;
+		} = {},
+	) {
+		const { prefix = "", suffix = "" } = snapshotFileNameFormat;
+		// eslint-disable-next-line no-control-regex -- The control character range is intentionally invalid for cross-platform file names.
+		const invalidFileNameCharacters = /[\u0000-\u001F<>:"/\\|?*]/u;
+		for (const [property, value] of [
+			["prefix", prefix],
+			["suffix", suffix],
+		] as const) {
+			if (invalidFileNameCharacters.test(value)) {
+				throw new UsageError(
+					`Invalid snapshotFileNameFormat.${property}: ${JSON.stringify(value)}. Must not contain ASCII control characters or any of <>:"/\\|?*.`,
+				);
+			}
+		}
+	}
 
 	public writeSchemaSnapshot(snapshotName: string, snapshot: JsonCompatibleReadOnly): void {
 		const fullPath = this.fileSystemMethods.join(
 			this.snapshotDirectory,
-			`${snapshotName}.json`,
+			this.getSnapshotFileName(snapshotName),
 		);
 		this.ensureSnapshotDirectoryExists();
 		this.fileSystemMethods.writeFileSync(fullPath, JSON.stringify(snapshot, undefined, "\t"), {
@@ -779,7 +828,7 @@ export class SnapshotCompatibilityChecker {
 	public readSchemaSnapshotRaw(snapshotName: string): JsonCompatibleReadOnly {
 		const fullPath = this.fileSystemMethods.join(
 			this.snapshotDirectory,
-			`${snapshotName}.json`,
+			this.getSnapshotFileName(snapshotName),
 		);
 		const snapshot = JSON.parse(
 			this.fileSystemMethods.readFileSync(fullPath, "utf8"),
@@ -797,8 +846,8 @@ export class SnapshotCompatibilityChecker {
 		const files = this.fileSystemMethods.readdirSync(this.snapshotDirectory);
 		const versions: string[] = [];
 		for (const file of files) {
-			if (file.endsWith(".json")) {
-				const snapshotName = file.slice(0, ".json".length * -1);
+			const snapshotName = this.getSnapshotName(file);
+			if (snapshotName !== undefined) {
 				versions.push(snapshotName);
 			}
 		}
@@ -814,6 +863,38 @@ export class SnapshotCompatibilityChecker {
 
 	public ensureSnapshotDirectoryExists(): void {
 		this.fileSystemMethods.mkdirSync(this.snapshotDirectory, { recursive: true });
+	}
+
+	/**
+	 * Builds the file name used to read or write a snapshot with a known snapshot name.
+	 */
+	private getSnapshotFileName(snapshotName: string): string {
+		const { prefix = "", suffix = "" } = this.snapshotFileNameFormat;
+		return `${prefix}${snapshotName}${suffix}.json`;
+	}
+
+	/**
+	 * Extracts the snapshot name from a matching file found while scanning the snapshot directory.
+	 */
+	private getSnapshotName(fileName: string): string | undefined {
+		const extension = ".json";
+		if (!fileName.endsWith(extension)) {
+			return undefined;
+		}
+
+		const { prefix = "", suffix = "" } = this.snapshotFileNameFormat;
+		const fileNameWithoutExtension = fileName.slice(0, -extension.length);
+		if (
+			!fileNameWithoutExtension.startsWith(prefix) ||
+			!fileNameWithoutExtension.endsWith(suffix)
+		) {
+			return undefined;
+		}
+
+		return fileNameWithoutExtension.slice(
+			prefix.length,
+			fileNameWithoutExtension.length - suffix.length,
+		);
 	}
 }
 

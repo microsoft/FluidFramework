@@ -15,7 +15,7 @@ import {
 	EphemeralServiceContainer,
 } from "../ephemeralService.js";
 
-const options = { minVersionForCollaboration: "2.20.0" } as const;
+const options = { oldestSupportedClient: "2.20.0" } as const;
 const stubFactory = makeStubDataStoreKind("ephemeral-test-stub");
 
 describe("EphemeralService", () => {
@@ -38,15 +38,14 @@ describe("EphemeralService", () => {
 	it("closing the service closes its open containers", async () => {
 		const service = newService();
 		const client = service.newClient(options);
-		const container = await client.createContainer(stubFactory);
-		const attached = await container.attach();
+		const container = await client.createAttachedContainer(stubFactory);
 
 		// We currently lack public APIs for checking the closed state of a container:
-		EphemeralServiceContainer.narrow(attached);
-		assert.strictEqual(attached.container.closed, false);
+		EphemeralServiceContainer.narrow(container);
+		assert.strictEqual(container.container.closed, false);
 
 		await service.close();
-		assert.strictEqual(attached.container.closed, true);
+		assert.strictEqual(container.container.closed, true);
 	});
 
 	describe("EphemeralServiceClient", () => {
@@ -100,8 +99,7 @@ describe("EphemeralService", () => {
 
 		it("two containers on the same service share the same in-memory server", async () => {
 			const client = newService().newClient(options);
-			const detached = await client.createContainer(stubFactory);
-			const container1 = await detached.attach();
+			const container1 = await client.createAttachedContainer(stubFactory);
 			const container2 = await client.loadContainer(container1.id, stubFactory);
 			await client.service.synchronize();
 
@@ -111,10 +109,8 @@ describe("EphemeralService", () => {
 
 		it("multiple attach calls each produce unique ids", async () => {
 			const client = newService().newClient(options);
-			const detached1 = await client.createContainer(stubFactory);
-			const detached2 = await client.createContainer(stubFactory);
-			const container1 = await detached1.attach();
-			const container2 = await detached2.attach();
+			const container1 = await client.createAttachedContainer(stubFactory);
+			const container2 = await client.createAttachedContainer(stubFactory);
 			assert.notStrictEqual(container1.id, container2.id);
 		});
 	});

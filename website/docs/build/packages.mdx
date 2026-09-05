@@ -3,14 +3,16 @@ title: Packages
 sidebar_position: 9
 ---
 
+import { PackageLink } from "@site/src/components/shortLinks";
+
 The Fluid Framework is a multi-layered system consisting of dozens of individual npm packages.
 Most developers will only need two or three of these packages for typical Fluid development:
-- The [fluid-framework][] package, which contains the public API for the Fluid Framework
-- A service-specific client package, such as the [@fluidframework/azure-client](../api/azure-client/index.md).
+- The <PackageLink package="fluid-framework" /> package, which contains the public API for the Fluid Framework
+- A service-specific client package, such as the <PackageLink package="azure-client">@fluidframework/azure-client</PackageLink>.
 
 ## Primary API: fluid-framework
 
-The [fluid-framework][] package consists primarily of two portions: the [FluidContainer][] object and a selection of
+The <PackageLink package="fluid-framework" /> package consists primarily of two portions: the [FluidContainer][] object and a selection of
 distributed data structures (DDSes).
 
 ### FluidContainer
@@ -21,7 +23,7 @@ It includes functionality to retrieve the Fluid data contained within itself, as
 ### Distributed Data Structures (DDSes)
 
 You'll use one or more DDSes in your container to model your collaborative data.
-The [fluid-framework][] package includes a few such data structures that cover a broad range of scenarios:
+The <PackageLink package="fluid-framework" /> package includes a few such data structures that cover a broad range of scenarios:
 
 - [SharedTree](../data-structures/tree/index.mdx): a collaborative tree data structure for building complex, hierarchical data models.
 	:::tip
@@ -49,7 +51,7 @@ Fluid Framework packages are published under one of the following npm scopes:
 -   @fluid-internal
 -   @fluid-tools
 
-In addition to the scoped packages, two unscoped packages are published: the [fluid-framework][] package, described earlier, and the `tinylicious` package, which contains a minimal Fluid server.
+In addition to the scoped packages, two unscoped packages are published: the <PackageLink package="fluid-framework" /> package, described earlier, and the `tinylicious` package, which contains a minimal Fluid server.
 For more information, see [Tinylicious](../testing/tinylicious.mdx).
 
 Unless you are contributing to the Fluid Framework, you should only need the unscoped packages and packages from the **@fluidframework** scope.
@@ -58,5 +60,4 @@ You can [read more about the scopes and their intent][scopes] in the Fluid Frame
 
 {/* Links */}
 [FluidContainer]: ./containers.mdx
-[fluid-framework]: ../api/fluid-framework/index.md
-[scopes]: https://github.com/microsoft/FluidFramework/wiki/npm-package-scopes
+[scopes]: https://github.com/microsoft/FluidFramework/blob/main/docs/content/Contributing/npm-Package-Scopes.md

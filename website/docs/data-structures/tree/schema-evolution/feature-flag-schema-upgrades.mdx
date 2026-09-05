@@ -3,6 +3,8 @@ title: How to Enable Staged Schema Upgrades with Feature Flags
 sidebar\_position: 6
 ---
 
+import { ApiLink, PackageLink } from "@site/src/components/shortLinks";
+
 # How to Enable Staged Schema Upgrades with Feature Flags
 
 The standard [staged rollout](./index.mdx#staged-rollouts) strategy requires two separate code deployments: one to add reading support, and another to enable writing.
@@ -19,7 +21,7 @@ Import them from `@fluidframework/tree/alpha`.
 
 ## How It Works
 
-When you define a [staged schema upgrade](./index.mdx#staged-schema-upgrades) (using [`staged()`](../../../api/fluid-framework/schemafactorybeta-class#staged-property) for allowed types or [`stagedOptional()`](../../../api/tree/schemafactoryalpha-class#stagedoptional-property) for field optionality), the staged parts are excluded from stored schema by default.
+When you define a [staged schema upgrade](./index.mdx#staged-schema-upgrades) (using <ApiLink package="fluid-framework" api="SchemaFactoryBeta.staged">`staged()`</ApiLink> for allowed types or <ApiLink package="fluid-framework" api="SchemaFactoryAlpha.stagedOptional">`stagedOptional()`</ApiLink> for field optionality), the staged parts are excluded from stored schema by default.
 
 With `TreeViewConfigurationAlpha`, you can selectively enable specific staged upgrades at view construction time:
 
@@ -46,8 +48,8 @@ const view = tree.viewWith(
 ```
 
 When a view is constructed with enabled staged upgrades:
-- `initialize()` includes the enabled staged changes in the new document's stored schema.
-- `upgradeSchema()` includes them when upgrading an existing document.
+- <ApiLink package="fluid-framework" api="(TreeViewAlpha:interface).initialize">`initialize()`</ApiLink> includes the enabled staged changes in the new document's stored schema.
+- <ApiLink package="fluid-framework" api="TreeView.upgradeSchema">`upgradeSchema()`</ApiLink> includes them when upgrading an existing document.
 - `compatibility` reflects the enabled upgrades when determining what actions are possible.
 
 The upgrade set is fixed at view construction time and cannot be changed afterwards.
@@ -162,16 +164,17 @@ const config = new TreeViewConfiguration({ schema: Board });
 
 ## Understanding Irreversibility
 
-:::warning
-Once a document's stored schema has been upgraded, it cannot be downgraded. Do not disable a feature flag that has already been enabled in production — there is currently no API to determine which documents have been upgraded, so you cannot safely roll back without risking incompatibility for clients that encounter already-upgraded documents. An API for querying per-document upgrade status is in progress.
-:::
+Once a document's stored schema has been upgraded, it cannot be downgraded.
+However, rolling back a feature flag is safe.
+With the feature flag rolled back, new documents and any documents that haven't been upgraded yet will not have the upgrade enabled.
+{/* TODO: link directly to `isStagedUpgradeEnabled` property once it has been released. */}
+You can use <ApiLink package="fluid-framework" api="(TreeViewAlpha:interface)"/>'s `isStagedUpgradeEnabled` property to check whether a document has already been upgraded and conditionally include that upgrade token for those documents.
 
 Disabling the feature flag prevents **new** documents from being upgraded, but documents that have already been upgraded retain the new schema.
 This means:
 
 - **Clients running the staged code** (Step 1 and above) can still open and read upgraded documents — their view schema is compatible.
 - **Clients running older code** (before the staged type was added) **cannot** open upgraded documents. This is why [client saturation](./index.mdx#staged-rollouts) of the staged code is important before enabling the flag.
-- There is currently no API to query whether a particular document has already been upgraded (this capability is in progress). This means there is no built-in mechanism to selectively target only non-upgraded documents when disabling the flag.
 
 Plan your rollout with this in mind: ensure that all active clients have the staged code before turning on the flag.
 
@@ -187,7 +190,7 @@ Plan your rollout with this in mind: ensure that all active clients have the sta
   Use [testing schema upgrades](./testing-schema-upgrades.mdx) to verify your code handles the upgraded schema correctly before turning on the flag in production.
 
 - **Use `snapshotSchemaCompatibility` tests.**
-  Write [`snapshotSchemaCompatibility`](../../../api/fluid-framework/#snapshotschemacompatibility-function) tests to verify compatibility across all schema states in your rollout. Only use schema configurations in production that are covered by these tests.
+    Write <ApiLink package="fluid-framework" api="snapshotSchemaCompatibility">`snapshotSchemaCompatibility`</ApiLink> tests to verify compatibility across all schema states in your rollout. Only use schema configurations in production that are covered by these tests.
 
 - **Avoid diverging upgrade paths.**
   `snapshotSchemaCompatibility` assumes a linear version history and cannot model branching upgrade paths. If different documents enable different combinations of staged upgrades (e.g., one enables A+C while another enables B+C), the resulting schema states diverge and cannot be validated in a single snapshot test. Keep your rollout linear — enable staged upgrades in the same order for all documents — so that every schema state you encounter in production is covered by your compatibility tests.

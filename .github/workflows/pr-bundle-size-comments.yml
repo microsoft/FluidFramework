@@ -65,23 +65,24 @@ jobs:
       contains(github.event.check_run.details_url, '10f9b53e-c7fd-4538-9fff-13cd088a436c')
     runs-on: ubuntu-latest
     permissions:
+      # `contents: read` for the getCommit call that resolves the base commit.
+      contents: read
       pull-requests: write
     steps:
       - name: Resolve PR for check SHA
         id: find_pr
         # release notes: https://github.com/actions/github-script/releases/tag/v9.0.0
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # ratchet:actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const { owner, repo } = context.repo;
             const sha = context.payload.check_run.head_sha;
 
-            // Find the open PR whose head SHA matches this check. A single GraphQL query returns the
-            // PR number, head SHA, and base ref in one round-trip (we use all three: number to address
-            // the sticky, head + base to compute merge-base for the pending body). At most one PR is
-            // expected in practice. Two open PRs *can* share a head SHA (same branch PR'd against two
-            // base refs), in which case only the first one matched here gets a sticky — accepted
-            // limitation.
+            // Find the open PR whose head SHA matches this check. A single GraphQL query returns
+            // the PR number and head SHA in one round-trip (we use both: number to address the
+            // sticky, head to report in the body). At most one PR is expected in practice. Two open
+            // PRs *can* share a head SHA (same branch PR'd against two base refs), in which case
+            // only the first one matched here gets a sticky — accepted limitation.
             const { search } = await github.graphql(
               `query($q: String!) {
                  search(query: $q, type: ISSUE, first: 1) {
@@ -89,7 +90,6 @@ jobs:
                      ... on PullRequest {
                        number
                        headRefOid
-                       baseRefName
                      }
                    }
                  }
@@ -102,45 +102,93 @@ jobs:
               return;
             }
 
-            // Server-side merge-base lookup. compareCommits resolves to the SHA on shared history (or
-            // null on disjoint history) for any successful HTTP response, and throws for HTTP/network/
-            // rate-limit failure. API failure here is fatal.
-            let mb;
-            try {
-              const { data } = await github.rest.repos.compareCommits({
-                owner, repo, base: pr.baseRefName, head: pr.headRefOid,
-              });
-              mb = data.merge_base_commit?.sha ?? undefined;
-            } catch (err) {
-              core.error(`Merge-base lookup failed for PR #${pr.number} (base=${pr.baseRefName}, head=${pr.headRefOid}): ${err.message}`);
-              throw err;
-            }
-            if (!mb) {
-              core.info(`PR #${pr.number} has no shared history with ${pr.baseRefName}; nothing to do.`);
+            core.info(`Matched PR #${pr.number} head=${pr.headRefOid}`);
+            core.setOutput("pr_num", pr.number);
+            core.setOutput("head_sha", pr.headRefOid);
+
+      - name: Resolve base commit from the ADO build
+        id: find_base
+        if: steps.find_pr.outputs.pr_num != ''
+        # release notes: https://github.com/actions/github-script/releases/tag/v9.0.0
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            // The check run's details_url points at the exact ADO build behind it, so its
+            // sourceVersion — the `refs/pull/<n>/merge` commit ADO resolved at queue time — can be
+            // read without searching for a matching build. Its first parent is the target-branch
+            // commit that build merged the PR into, i.e. the comparison's baseline.
+            //
+            // Best-effort: the sticky just shows a nicer pending body, and the real comparison
+            // derives the base itself. Any failure here leaves the base unresolved in the body.
+            const detailsUrl = new URL(context.payload.check_run.details_url);
+            const buildId = detailsUrl.searchParams.get("buildId");
+            if (!buildId) {
+              core.info(`No buildId in details_url ${detailsUrl}; leaving the base unresolved.`);
               return;
             }
 
-            core.info(`Matched PR #${pr.number} head=${pr.headRefOid} base=${pr.baseRefName} mergeBase=${mb}`);
-            core.setOutput("pr_num", pr.number);
-            core.setOutput("head_sha", pr.headRefOid);
-            core.setOutput("merge_base", mb);
+            // `details_url` is <origin>/<org>/<projectId>/_build/results, so the project-scoped API
+            // root is the first two path segments.
+            const [, org, projectId] = detailsUrl.pathname.split("/");
+            const buildUrl = `${detailsUrl.origin}/${org}/${projectId}/_apis/build/builds/${buildId}?api-version=7.1`;
+
+            let sourceVersion;
+            try {
+              const response = await fetch(buildUrl);
+              if (!response.ok) {
+                core.info(`ADO build ${buildId} lookup failed (${response.status}); leaving the base unresolved.`);
+                return;
+              }
+              ({ sourceVersion } = await response.json());
+            } catch (error) {
+              core.info(`ADO build ${buildId} lookup failed (${error}); leaving the base unresolved.`);
+              return;
+            }
+
+            // Not yet populated if ADO hasn't resolved the merge ref for a just-queued build.
+            if (!sourceVersion) {
+              core.info(`ADO build ${buildId} has no sourceVersion yet; leaving the base unresolved.`);
+              return;
+            }
+
+            const { owner, repo } = context.repo;
+            let parents;
+            try {
+              ({ data: { parents } } = await github.rest.repos.getCommit({ owner, repo, ref: sourceVersion }));
+            } catch (error) {
+              core.info(`Could not read ${sourceVersion} (${error}); leaving the base unresolved.`);
+              return;
+            }
+
+            // A test-merge commit always has two parents: [target branch tip, PR HEAD].
+            if (parents.length < 2) {
+              core.info(`${sourceVersion} is not a merge commit; leaving the base unresolved.`);
+              return;
+            }
+
+            core.info(`ADO build ${buildId} merged PR into ${parents[0].sha}`);
+            core.setOutput("base_sha", parents[0].sha);
 
       - name: Render initial comment body
         id: render
         if: steps.find_pr.outputs.pr_num != ''
         # release notes: https://github.com/actions/github-script/releases/tag/v9.0.0
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # ratchet:actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           PR_NUM: ${{ steps.find_pr.outputs.pr_num }}
           HEAD_SHA: ${{ steps.find_pr.outputs.head_sha }}
-          MERGE_BASE: ${{ steps.find_pr.outputs.merge_base }}
+          BASE_SHA: ${{ steps.find_base.outputs.base_sha }}
         with:
           script: |
             const fs = require("fs");
+            const baseSha = process.env.BASE_SHA;
             const body = [
               "## Bundle size comparison",
               "",
-              `Base commit: \`${process.env.MERGE_BASE}\``,
+              // An empty baseSha means the lookup failed — normally the base is readable off the
+              // ADO build. Harmless for correctness: the comparison derives the base independently,
+              // so it will be filled in when this comment is replaced with the results.
+              `Base commit: ${baseSha ? `\`${baseSha}\`` : "_could not be determined; will be reported when the comparison runs_"}`,
               `Head commit: \`${process.env.HEAD_SHA}\``,
               "",
               "Pending — `Build - client packages` is running. Results will appear here when the build completes.",
@@ -158,7 +206,7 @@ jobs:
 
       - if: steps.render.outcome == 'success'
         # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v3.0.4
-        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # ratchet:marocchino/sticky-pull-request-comment@v3
+        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # v3.0.4
         with:
           header: bundle-size-report
           number: ${{ steps.find_pr.outputs.pr_num }}
@@ -184,7 +232,7 @@ jobs:
       - name: Resolve PR for check SHA
         id: find_pr
         # release notes: https://github.com/actions/github-script/releases/tag/v9.0.0
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # ratchet:actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const { owner, repo } = context.repo;
@@ -209,7 +257,7 @@ jobs:
 
       - if: steps.find_pr.outputs.pr_num != ''
         # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v3.0.4
-        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # ratchet:marocchino/sticky-pull-request-comment@v3
+        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # v3.0.4
         with:
           header: bundle-size-report
           number: ${{ steps.find_pr.outputs.pr_num }}
@@ -234,17 +282,18 @@ jobs:
       - name: Collect affected PRs
         id: collect
         # release notes: https://github.com/actions/github-script/releases/tag/v9.0.0
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # ratchet:actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const { owner, repo } = context.repo;
             const sha = context.payload.check_run.head_sha;
 
-            // Find the open PR whose head SHA matches this check. A single GraphQL query returns the
-            // PR number, head SHA, and base ref in one round-trip; the REST search API would return
-            // only the number, requiring a follow-up pulls.get() call. At most one PR is expected in
-            // practice. Two open PRs *can* share a head SHA (same branch PR'd against two base refs),
-            // in which case only the first one matched here gets a comparison — accepted limitation.
+            // Find the open PR whose head SHA matches this check. A single GraphQL query returns
+            // the PR number, head SHA, and base ref in one round-trip; the REST search API would
+            // return only the number, requiring a follow-up pulls.get() call. At most one PR is
+            // expected in practice. Two open PRs *can* share a head SHA (same branch PR'd against
+            // two base refs), in which case only the first one matched here gets a comparison —
+            // accepted limitation.
             //
             // Also acts as the cross-SHA staleness guard: an event for a stale SHA (e.g. push A then
             // B, A's build completes anyway) finds no open PR with head A and emits no matrix entry.
@@ -269,41 +318,19 @@ jobs:
               return;
             }
 
-            // Server-side merge-base lookup. compareCommits resolves to the SHA on shared history (or null
-            // on disjoint history) for any successful HTTP response, and throws for HTTP/network/rate-limit
-            // failure — distinguishing "no shared history" (legitimate, emit no entry and stay green) from
-            // "API call failed" (often actionable, e.g. a rate limit). API failure here is fatal.
-            let mb;
-            try {
-              const { data } = await github.rest.repos.compareCommits({
-                owner, repo, base: pr.baseRefName, head: pr.headRefOid,
-              });
-              mb = data.merge_base_commit?.sha ?? undefined;
-            } catch (err) {
-              core.error(`Merge-base lookup failed for PR #${pr.number} (base=${pr.baseRefName}, head=${pr.headRefOid}): ${err.message}`);
-              throw err;
-            }
-            if (!mb) {
-              core.info(`Affected PRs (0): PR #${pr.number} has no shared history with ${pr.baseRefName}`);
-              core.setOutput("prs", "[]");
-              return;
-            }
-
             const affected = [{
               number: pr.number,
               head: pr.headRefOid,
-              baseRef: pr.baseRefName,
-              mergeBase: mb,
             }];
-            core.info(`Affected PRs (1): #${pr.number} head=${pr.headRefOid} base=${pr.baseRefName} mergeBase=${mb}`);
+            core.info(`Affected PRs (1): #${pr.number} head=${pr.headRefOid} base=${pr.baseRefName}`);
             core.setOutput("prs", JSON.stringify(affected));
 
   # Reacts to the baseline pipeline (`Build - Client bundle size artifacts`) completing on a main/release
-  # commit. The check SHA is on the base branch, so we produce a matrix entry per open PR whose merge-base
-  # equals this SHA — typically 0–few PRs. Fires on `success` or `failure` so a baseline failure also
-  # re-triggers affected PRs (the compare job's flub call returns the appropriate failure kind and the
-  # sticky updates from "Pending — …" to a per-kind body), but skips `neutral` / `cancelled` / `skipped`
-  # so path-filtered or otherwise no-op baseline completions don't generate noise.
+  # commit. The check SHA is on the base branch, so we produce a matrix entry per open PR that is likely
+  # to be waiting on this baseline — typically 0–few PRs. Fires on `success` or `failure` so a baseline
+  # failure also re-triggers affected PRs (the compare job's flub call returns the appropriate failure
+  # kind and the sticky updates from "Pending — …" to a per-kind body), but skips `neutral` / `cancelled`
+  # / `skipped` so path-filtered or otherwise no-op baseline completions don't generate noise.
   identify-from-baseline-build:
     if: >-
       github.event.action == 'completed' &&
@@ -317,50 +344,177 @@ jobs:
       - name: Collect affected PRs
         id: collect
         # release notes: https://github.com/actions/github-script/releases/tag/v9.0.0
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # ratchet:actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const { owner, repo } = context.repo;
-            const sha = context.payload.check_run.head_sha;
+            const completedBaselineSha = context.payload.check_run.head_sha;
 
-            const prs = await github.paginate(github.rest.pulls.list, {
-              owner, repo, state: "open", per_page: 100,
-            });
+            // SHA terminology:
+            // - `completedBaselineSha`: target-branch commit whose baseline build just completed.
+            // - ADO `triggerInfo["pr.sourceSha"]`: PR HEAD commit that triggered the PR build.
+            // - ADO `sourceVersion`: ephemeral test-merge commit consumed by flub.
+            //
+            // ADO is authoritative for which baseline a PR is waiting on: the test-merge commit's
+            // first parent is the target-branch commit used by the PR build. GitHub's
+            // `potentialMergeCommit` cannot be used here because GitHub recomputes it whenever the
+            // target branch advances, even though the existing ADO PR build remains based on the
+            // older target-branch commit.
+            //
+            // One paginated GraphQL query returns every open PR's head SHA, versus two REST calls
+            // per PR (~250 for this repo). We later resolve all retained ADO merge commits through
+            // one GraphQL query, avoiding another REST call per PR.
+            const query = `
+              query($owner: String!, $repo: String!, $cursor: String) {
+                repository(owner: $owner, name: $repo) {
+                  pullRequests(states: OPEN, first: 100, after: $cursor) {
+                    pageInfo { hasNextPage endCursor }
+                    nodes {
+                      number
+                      headRefOid
+                    }
+                  }
+                }
+              }`;
 
+            // Collect the complete open-PR set. `github.paginate.graphql` is unavailable in
+            // actions/github-script, so advance the GraphQL cursor manually.
+            const openPrs = [];
+            let cursor = undefined;
+            do {
+              const { repository } = await github.graphql(query, { owner, repo, cursor });
+              const page = repository.pullRequests;
+              openPrs.push(...page.nodes);
+              cursor = page.pageInfo.hasNextPage ? page.pageInfo.endCursor : undefined;
+            } while (cursor);
+
+            if (openPrs.length === 0) {
+              core.info("Scanned 0 open PRs; affected PRs (0)");
+              core.setOutput("prs", "[]");
+              return;
+            }
+
+            // ADO has no query-by-PR-head-SHA API. Fetch the same bounded recent PR-build window
+            // flub searches, then match each PR HEAD against `triggerInfo["pr.sourceSha"]`.
+            // `sourceVersion` is the separate ephemeral `refs/pull/<n>/merge` commit SHA.
+            const prBuildsUrl = new URL("https://dev.azure.com/fluidframework/public/_apis/build/builds");
+            prBuildsUrl.searchParams.set("definitions", "11");
+            prBuildsUrl.searchParams.set("maxBuildsPerDefinition", "500");
+            prBuildsUrl.searchParams.set("queryOrder", "queueTimeDescending");
+            prBuildsUrl.searchParams.set("api-version", "7.1");
+
+            // Public ADO project reads are anonymous. Treat malformed or failed PR-build responses
+            // as job failures rather than silently reporting that no PRs are waiting.
+            const prBuildsResponse = await fetch(prBuildsUrl);
+            if (!prBuildsResponse.ok) {
+              throw new Error(
+                `ADO PR build lookup failed (${prBuildsResponse.status} ${prBuildsResponse.statusText})`,
+              );
+            }
+            const { value: adoPrBuilds } = await prBuildsResponse.json();
+            if (!Array.isArray(adoPrBuilds)) {
+              throw new Error("ADO PR build lookup returned no build list");
+            }
+
+            // Match flub's selection by retaining the newest completed PR build with an id for
+            // each PR HEAD. Prefer fully successful builds, then fall back to partially successful
+            // builds whose bundle artifact flub will validate before using.
+            const retainedPrBuildByHeadSha = new Map();
+            for (const prBuild of adoPrBuilds) {
+              const prHeadSha = prBuild.triggerInfo?.["pr.sourceSha"];
+              const currentlyRetainedBuild = retainedPrBuildByHeadSha.get(prHeadSha);
+              if (
+                prHeadSha &&
+                prBuild.id !== undefined &&
+                prBuild.status === "completed" &&
+                ["succeeded", "partiallySucceeded"].includes(prBuild.result) &&
+                (currentlyRetainedBuild === undefined ||
+                  (currentlyRetainedBuild.result === "partiallySucceeded" &&
+                    prBuild.result === "succeeded"))
+              ) {
+                retainedPrBuildByHeadSha.set(prHeadSha, prBuild);
+              }
+            }
+
+            // Join open PRs to the retained PR build flub would use. Match both the HEAD SHA and
+            // ADO's PR number: multiple open PRs can share a HEAD SHA, but flub will select only
+            // this same newest successful PR build for that SHA. PRs with no exact retained match
+            // cannot be waiting on the baseline build that just completed.
+            const prBuildCandidates = [];
+            for (const pr of openPrs) {
+              const prBuild = retainedPrBuildByHeadSha.get(pr.headRefOid);
+              const prNumberFromBuild = prBuild?.triggerInfo?.["pr.number"];
+              const mergeCommitSha = prBuild?.sourceVersion;
+              if (prNumberFromBuild === String(pr.number) && mergeCommitSha) {
+                prBuildCandidates.push({ pr, prBuild, mergeCommitSha });
+              }
+            }
+
+            // Resolve all test-merge parents in one query. Each `mergeCommitSha` came from ADO's
+            // `sourceVersion`, so it is safe to pass as a GraphQL variable; only generated aliases
+            // appear in the query text.
+            const mergeCommitShas = [
+              ...new Set(prBuildCandidates.map(({ mergeCommitSha }) => mergeCommitSha)),
+            ];
+            const baselineByMergeCommit = new Map();
+            if (mergeCommitShas.length > 0) {
+              const declarations = [];
+              const fields = [];
+              const variables = { owner, repo };
+              for (const [index, mergeCommitSha] of mergeCommitShas.entries()) {
+                const alias = `commit${index}`;
+                declarations.push(`$${alias}: String!`);
+                fields.push(`
+                  ${alias}: object(expression: $${alias}) {
+                    ... on Commit {
+                      parents(first: 2) { nodes { oid } }
+                    }
+                  }`);
+                variables[alias] = mergeCommitSha;
+              }
+
+              // Each generated field resolves one ADO test-merge commit. A missing object is
+              // returned as null and handled below as an unavailable merge commit.
+              const commitQuery = `
+                query($owner: String!, $repo: String!, ${declarations.join(", ")}) {
+                  repository(owner: $owner, name: $repo) {
+                    ${fields.join("\n")}
+                  }
+                }`;
+              const { repository } = await github.graphql(commitQuery, variables);
+              for (const [index, mergeCommitSha] of mergeCommitShas.entries()) {
+                const parents = repository[`commit${index}`]?.parents?.nodes;
+                if (parents?.length >= 2) {
+                  baselineByMergeCommit.set(mergeCommitSha, parents[0].oid);
+                }
+              }
+            }
+
+            // Emit only PRs whose retained PR build actually merged into the completed baseline.
             const affected = [];
-            for (const pr of prs) {
-              // Server-side merge-base lookup. Resolves to the SHA on shared history (or null on disjoint
-              // history) for any successful HTTP response, and throws for HTTP/network/rate-limit failure.
-              // Per-PR API failure is logged and skipped so a transient hit doesn't abort the whole scan;
-              // disjoint history naturally falls through the match check below.
-              let mb;
-              try {
-                const { data } = await github.rest.repos.compareCommits({
-                  owner, repo, base: pr.base.ref, head: pr.head.sha,
-                });
-                mb = data.merge_base_commit?.sha ?? undefined;
-              } catch (err) {
-                core.warning(`Skipping PR #${pr.number}: merge-base lookup failed (base=${pr.base.ref}, head=${pr.head.sha}): ${err.message}`);
+            for (const { pr, prBuild, mergeCommitSha } of prBuildCandidates) {
+              const prBuildBaseline = baselineByMergeCommit.get(mergeCommitSha);
+              if (prBuildBaseline !== completedBaselineSha) {
+                core.info(
+                  prBuildBaseline
+                    ? `  excluded #${pr.number}: ADO PR build ${prBuild.id} used baseline ${prBuildBaseline}`
+                    : `  excluded #${pr.number}: ADO test-merge commit ${mergeCommitSha} is unavailable or invalid`,
+                );
                 continue;
               }
 
-              if (mb === sha) {
-                affected.push({
-                  number: pr.number,
-                  head: pr.head.sha,
-                  baseRef: pr.base.ref,
-                  mergeBase: mb,
-                });
-              }
+              core.info(
+                `  matched #${pr.number}: ADO PR build ${prBuild.id} used baseline ${completedBaselineSha}`,
+              );
+              affected.push({
+                number: pr.number,
+                head: pr.headRefOid,
+              });
             }
-            if (affected.length === 0) {
-              core.info("Affected PRs (0): none");
-            } else {
-              core.info(`Affected PRs (${affected.length}):`);
-              for (const a of affected) {
-                core.info(`  - #${a.number} head=${a.head} base=${a.baseRef} mergeBase=${a.mergeBase}`);
-              }
-            }
+
+            core.info(
+              `Scanned ${openPrs.length} open PRs with ${prBuildCandidates.length} retained PR builds; affected PRs (${affected.length})`,
+            );
             core.setOutput("prs", JSON.stringify(affected));
 
   compare:
@@ -380,23 +534,28 @@ jobs:
       fail-fast: false
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       pull-requests: write
     steps:
-      # Check out the PR's base branch (never PR HEAD — PR-authored code isn't trusted) just to get build-tools
+      # Check out the default branch (never PR HEAD — PR-authored code isn't trusted) just to get build-tools
       # source so we can build flub. The comparison itself reads only ADO artifacts identified by SHA — no local
       # git state is required.
+      #
+      # The default branch — not the PR's base ref — because `check_run` workflows always run the default
+      # branch's copy of this file, so that's the only branch guaranteed to have a flub whose CLI contract
+      # matches the invocation below. Release branches lag main and don't carry this command at all.
       # release notes: https://github.com/actions/checkout/releases/tag/v6.0.2
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ref: ${{ matrix.pr.baseRef }}
+          ref: ${{ github.event.repository.default_branch }}
           fetch-depth: "1"
           persist-credentials: false
 
       # release notes: https://github.com/pnpm/action-setup/releases/tag/v5.0.0
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # ratchet:pnpm/action-setup@v5
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
 
       # release notes: https://github.com/actions/setup-node/releases/tag/v6.3.0
-      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # ratchet:actions/setup-node@v6
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version-file: .nvmrc
           cache: "pnpm"
@@ -412,18 +571,22 @@ jobs:
           npm link
 
       - name: Compare bundle sizes
-        # Expected failure modes (missing/in-progress/failed baseline, no
-        # analyzer.json) come back as a structured `{ kind, side }` payload
+        # The baseline commit isn't passed in: flub derives it from the PR's ADO build (the first
+        # parent of the `refs/pull/<n>/merge` commit that build checked out), which is the only
+        # baseline that isolates this PR's delta. Expected failure modes (missing/in-progress/failed
+        # baseline, no analyzer.json) come back as a structured `{ kind, side }` payload
         # under `--json` and a zero exit — the render step dispatches on
         # `kind` to produce a friendly sticky body. Non-zero exit is reserved
         # for *unexpected* errors (network, malformed zip, …); upstream oclif
         # bug oclif/core#1608 swallows their message in `--json` mode, so we
         # re-run without `--json` to surface it in the action log.
+        env:
+          # Used only to raise the rate limit on the read-only commit lookup flub does.
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -uo pipefail
           set +e
           flub report comparePipelineBundleArtifacts \
-            --base ${{ matrix.pr.mergeBase }} \
             --head ${{ matrix.pr.head }} \
             --json > bundle-comparison.json
           EC=$?
@@ -434,7 +597,6 @@ jobs:
             echo
             echo "flub --json exited $EC; re-running without --json so the error message is visible:"
             flub report comparePipelineBundleArtifacts \
-              --base ${{ matrix.pr.mergeBase }} \
               --head ${{ matrix.pr.head }} 2>&1
             exit "$EC"
           fi
@@ -446,10 +608,9 @@ jobs:
       # friendly per-(kind, side) message.
       - name: Render bundle-size comment body
         # release notes: https://github.com/actions/github-script/releases/tag/v9.0.0
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # ratchet:actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           PR_NUM: ${{ matrix.pr.number }}
-          BASE_SHA: ${{ matrix.pr.mergeBase }}
           HEAD_SHA: ${{ matrix.pr.head }}
         with:
           script: |
@@ -541,11 +702,12 @@ jobs:
               // Friendly per-(side, kind) sticky body for expected failure modes.
               const failureMessages = {
                 base: {
-                  "no-build": "No baseline CI build was found for the merge-base commit. It may be older than the workflow's search horizon, or the baseline pipeline may not have run on it. Try merging a recent main commit into this PR.",
-                  "in-progress": "Pending — the baseline CI build for the merge-base commit hasn't completed yet. Results will appear here when the build finishes.",
-                  "all-failed": "The baseline CI build for the merge-base commit failed — likely a flaky producer build. Try merging a recent main commit into this PR, or re-queue the baseline pipeline manually.",
+                  "no-build": "No baseline CI build was found for the target-branch commit this PR was built against. It may be older than the workflow's search horizon, or the baseline pipeline may not have run on it. Pushing to the PR re-runs the comparison against a newer baseline.",
+                  "in-progress": "Pending — the baseline CI build for the target-branch commit this PR was built against hasn't completed yet. Results will appear here when the build finishes.",
+                  "all-failed": "The baseline CI build for the target-branch commit this PR was built against failed — likely a flaky producer build. Pushing to the PR re-runs the comparison against a newer baseline, or the baseline pipeline can be re-queued manually.",
                   "no-id": "An ADO state anomaly prevented looking up the baseline build (no usable build id). This shouldn't happen in practice — please report.",
-                  "no-analyzer-jsons": "The baseline build completed but didn't publish a bundle-size artifact for the merge-base commit. Try merging a recent main commit into this PR.",
+                  "no-analyzer-jsons": "The baseline build completed but didn't publish a bundle-size artifact for the target-branch commit this PR was built against. Pushing to the PR re-runs the comparison against a newer baseline.",
+                  "no-base-commit": "Couldn't determine which target-branch commit the PR build was based on. Pushing to the PR re-runs the comparison; if it persists, please report.",
                 },
                 head: {
                   "no-build": "No CI build was found for the PR HEAD commit. This shouldn't happen — the workflow only runs after the PR's `Build - client packages` check completes. Please report.",
@@ -563,7 +725,10 @@ jobs:
             const body = [
               "## Bundle size comparison",
               "",
-              `Base commit: \`${process.env.BASE_SHA}\``,
+              // The base is the target-branch commit the PR's ADO build merged into — reported by
+              // flub, since only that build knows it. Absent when the failure happened before it
+              // could be resolved.
+              `Base commit: ${data.baseCommit ? `\`${data.baseCommit}\`` : "_unresolved_"}`,
               `Head commit: \`${process.env.HEAD_SHA}\``,
               "",
               data.kind === "completed"
@@ -582,7 +747,7 @@ jobs:
             core.endGroup();
 
       # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v3.0.4
-      - uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # ratchet:marocchino/sticky-pull-request-comment@v3
+      - uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # v3.0.4
         with:
           header: bundle-size-report
           number: ${{ matrix.pr.number }}

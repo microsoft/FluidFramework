@@ -778,6 +778,7 @@ describe("SquashingTransactionStacks", () => {
 		const initCommit: GraphCommit<DefaultChangeset> = {
 			change: defaultChangeFamily.rebaser.compose([]),
 			revision: initialRevision,
+			customMetadata: undefined,
 		};
 
 		return new SharedTreeBranch(initCommit, defaultChangeFamily, mintRevisionTag);

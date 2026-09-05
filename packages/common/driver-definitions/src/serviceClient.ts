@@ -117,41 +117,42 @@ export function createBasicRegistryKey<T>(type: string): RegistryKey<T, T> {
 // #region ServiceClient types
 
 /**
- * Oldest version of Fluid Framework client packages to support collaborating with.
+ * Oldest Fluid Framework client version that must be able to open and process documents written
+ * by a service client.
  * @remarks
- * A string in SemVer format indicating a specific version of the Fluid Framework client package, or the special case of {@link @fluidframework/runtime-utils#defaultMinVersionForCollab}.
+ * A string in SemVer format indicating a specific stable version of the Fluid Framework client package.
  *
- * Collaboration with other clients is only supported when all Fluid Framework client packages used by the client have a version that is greater than or equal
- * to the specified `MinimumVersionForCollaboration`.
+ * Service clients use this value to select write formats and features. Clients using this version
+ * or newer must be able to open and process documents written by the service client. Choosing an
+ * older version may limit the features and write formats the application can use to those
+ * supported by that version.
  *
  * Cannot exceed the version of any Fluid Framework client package in use by the local client.
  *
- * The higher the version specified, the more features and optimizations will be enabled. *
  * @privateRemarks
- * This is similar to, and a subset of, the `MinimumVersionForCollab` type in `@fluidframework/runtime-definitions`.
+ * This is similar to, and a subset of, the `OldestSupportedClientVersion` type in `@fluidframework/runtime-definitions`.
  * This differs in that:
- * - This avoids the shorthand "collab" to instead align with our preferred whole word naming convention.
  * - This is `alpha` instead of `public`.
  * - This is available to drivers due to its location in `driver-definitions` instead of `runtime-definitions`.
- * - This does not allow requesting collaboration with pre-2.0.0 versions, including the special case of `2.0.0-defaults`.
  * - Patch versions cannot be set: a given minor release is not guaranteed to be greater or equal compat wise to all patches of the previous release, so we do not enable features based on patch versions (instead fall back to the next minor if needed).
  * Therefore allowing patch versions here could be misleading and could lead to bugs.
  *
  * @input
  * @alpha
  */
-export type MinimumVersionForCollaboration = `2.${bigint}.0`;
+export type OldestSupportedServiceClientVersion = `${2 | 3}.${bigint}.0`;
 
 /**
- * Strips patch and prerelease from a SemVer string, returning only the major and minor version.
+ * Strips patch and prerelease from a SemVer string, returning only the major and minor version with a ".0" patch.
  * @remarks
- * This formats a version in the same style used by {@link MinimumVersionForCollaboration}, specifying only the major and minor versions,
+ * This formats a version in the same style used by {@link OldestSupportedServiceClientVersion}, specifying only the major and minor versions,
  * which are the portions used for feature selection.
  * @typeParam major - The major version number of `version` as a string, preserved in the result type.
  * @typeParam minor - The minor version number of `version` as a string, preserved in the result type.
  * @privateRemarks
  * This fills a similar role as cleanedPackageVersion in `@fluidframework/runtime-utils`.
- * It can be used to workaround our generated pkgVersion values being invalid `MinimumVersionForCollaboration` on CI (due to prerelease) or patched release branches.
+ * It can be used to workaround our generated pkgVersion values being invalid
+ * `OldestSupportedServiceClientVersion` on CI due to prerelease or patched release branches.
  * @alpha
  */
 export function featureVersion<major extends `${bigint}`, minor extends `${bigint}`>(
@@ -175,7 +176,17 @@ export function featureVersion<major extends `${bigint}`, minor extends `${bigin
  * @alpha
  */
 export interface ServiceOptions {
-	readonly minVersionForCollaboration: MinimumVersionForCollaboration;
+	/**
+	 * Oldest Fluid Framework client version that must be able to open and process documents written
+	 * by the service client.
+	 *
+	 * @remarks
+	 * Choosing an older version may limit the features and write formats the application can use to
+	 * those supported by that version.
+	 *
+	 * A service may provide a default when this option is omitted.
+	 */
+	readonly oldestSupportedClient?: OldestSupportedServiceClientVersion;
 }
 
 /**
@@ -380,6 +391,31 @@ export interface ServiceClient {
 		root: DataStoreKey<T>,
 		registry: DataStoreRegistry,
 	): Promise<FluidContainerWithService<T>>;
+
+	/**
+	 * A shorthand for {@link ServiceClient.(createContainer:1)} followed by {@link FluidContainerWithService.attach}.
+	 * @remarks
+	 * Due to current implementation limitations making container creation async and service specific,
+	 * creating then attaching one is a bit verbose with two awaits that are messy to include inline.
+	 * This provides a convenient way to create and attach a container in a single step.
+	 * @privateRemarks
+	 * TODO: We should fix ergonomics issues that make this helpful,
+	 * then remove (or deprecate) this method in favor of `service.attach(createContainer(root))` as a better orthogonalized API.
+	 * See private remarks on {@link ServiceClient.(createContainer:1)}.
+	 */
+	createAttachedContainer<T>(root: DataStoreKind<T>): Promise<FluidContainerAttached<T>>;
+
+	/**
+	 * A shorthand for {@link ServiceClient.(createContainer:2)} followed by {@link FluidContainerWithService.attach}.
+	 * @remarks
+	 * Due to current implementation limitations making container creation async and service specific,
+	 * creating then attaching one is a bit verbose with two awaits that are messy to include inline.
+	 * This provides a convenient way to create and attach a container in a single step.
+	 */
+	createAttachedContainer<T>(
+		root: DataStoreKey<T>,
+		registry: DataStoreRegistry,
+	): Promise<FluidContainerAttached<T>>;
 
 	/**
 	 * Loads an existing container from the service.

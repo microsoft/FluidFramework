@@ -7,13 +7,14 @@ import type { ErasedType, IFluidLoadable } from "@fluidframework/core-interfaces
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor, StableId } from "@fluidframework/id-compressor";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/internal";
 import type {
 	IChannelView,
 	IFluidSerializer,
 	SharedKernel,
 } from "@fluidframework/shared-object-base/internal";
-import { type TelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { lt } from "semver-ts";
 
 import {
 	type CodecTree,
@@ -206,7 +207,6 @@ export class SharedTreeKernel
 		submitLocalMessage: (content: unknown, localOpMetadata?: unknown) => void,
 		lastSequenceNumber: () => number | undefined,
 		initialSequenceNumber: number,
-		private readonly logger: TelemetryLoggerExt | undefined,
 		idCompressor: IIdCompressor,
 		optionsParam: SharedTreeOptionsInternal,
 	) {
@@ -214,7 +214,7 @@ export class SharedTreeKernel
 			...defaultSharedTreeOptions,
 			...optionsParam,
 		};
-		if (options.minVersionForCollab < FluidClientVersion.v2_0) {
+		if (lt(options.minVersionForCollab, FluidClientVersion.v2_0)) {
 			throw new UsageError("SharedTree requires minVersionForCollab of at least 2.0.0");
 		}
 		const schema = new TreeStoredSchemaRepository();
@@ -252,7 +252,7 @@ export class SharedTreeKernel
 			idCompressor,
 			healing:
 				options.healUnresolvableIdentifiersOnDecode === true
-					? { sharedObjectId: sharedObject.id }
+					? { sharedObjectId: sharedObject.id, logger: breaker.logger }
 					: undefined,
 		});
 		const forestSummarizer = new ForestSummarizer(
@@ -305,7 +305,6 @@ export class SharedTreeKernel
 			sharedObject,
 			serializer,
 			submitLocalMessage,
-			logger,
 			[schemaSummarizer, forestSummarizer, removedRootsSummarizer],
 			changeFamily,
 			options,
@@ -324,8 +323,6 @@ export class SharedTreeKernel
 			fieldBatchCodec,
 			removedRoots,
 			chunkCompressionStrategy: options.treeEncodeType,
-			logger,
-			breaker: this.breaker,
 		});
 
 		this.registerSharedBranchForEditing("main", this.checkout);
@@ -534,6 +531,7 @@ export const changeFormatVersionForEditManager = DependentFormatVersion.fromPair
 	[EditManagerFormatVersion.v4, SharedTreeChangeFormatVersion.v4],
 	[EditManagerFormatVersion.vSharedBranches, SharedTreeChangeFormatVersion.v4],
 	[EditManagerFormatVersion.v6, SharedTreeChangeFormatVersion.v5],
+	[EditManagerFormatVersion.v7, SharedTreeChangeFormatVersion.v5],
 ]);
 
 /**
@@ -550,16 +548,19 @@ export const changeFormatVersionForMessage = DependentFormatVersion.fromPairs<
 	[MessageFormatVersion.v4, SharedTreeChangeFormatVersion.v4],
 	[MessageFormatVersion.vSharedBranches, SharedTreeChangeFormatVersion.v4],
 	[MessageFormatVersion.v6, SharedTreeChangeFormatVersion.v5],
+	[MessageFormatVersion.v7, SharedTreeChangeFormatVersion.v5],
 ]);
 
-function getCodecTreeForEditManagerFormat(clientVersion: MinimumVersionForCollab): CodecTree {
+function getCodecTreeForEditManagerFormat(
+	clientVersion: OldestSupportedClientVersion,
+): CodecTree {
 	const editManagerVersion = makeEditManagerCodecBuilder().getCodecTree(clientVersion).version;
 	const change = changeFormatVersionForEditManager.lookup(editManagerVersion);
 	const changeCodecTree = getCodecTreeForChangeFormat(change, clientVersion);
 	return getCodecTreeForEditManagerFormatWithChange(clientVersion, changeCodecTree);
 }
 
-function getCodecTreeForMessageFormat(clientVersion: MinimumVersionForCollab): CodecTree {
+function getCodecTreeForMessageFormat(clientVersion: OldestSupportedClientVersion): CodecTree {
 	const messageVersion = makeMessageCodecBuilder().getCodecTree(clientVersion).version;
 	assert(
 		messageVersion !== undefined,
@@ -571,7 +572,7 @@ function getCodecTreeForMessageFormat(clientVersion: MinimumVersionForCollab): C
 }
 
 export function getCodecTreeForSharedTreeFormat(
-	clientVersion: MinimumVersionForCollab,
+	clientVersion: OldestSupportedClientVersion,
 ): CodecTree {
 	const children: CodecTree[] = [];
 	children.push(forestCodecBuilder.getCodecTree(clientVersion));
@@ -607,6 +608,11 @@ export interface SharedTreeOptionsBeta extends ForestOptions, Partial<CodecWrite
 	 * so every reader of the same blob (other than the originator) agrees on the resulting in-memory id.
 	 * Healed identifiers are written back out at the next summary in their stable UUID form,
 	 * so the inconsistency does not need to be re-healed on every load.
+	 *
+	 * When this flag is enabled, each time an unresolvable identifier is healed a
+	 * `HealUnresolvableIdentifierOnDecode` telemetry event is emitted (at
+	 * {@link @fluidframework/core-interfaces#LogLevelConst.info | LogLevel.info}) through the shared
+	 * object's logger, allowing applications to detect which documents actually required healing.
 	 *
 	 * Off by default because enabling it for documents that are not actually corrupt
 	 * would mask genuine bugs that otherwise surface as decode failures.
@@ -662,10 +668,40 @@ export interface SharedTreeOptions
 	 * @remarks
 	 * By default, SharedTree evicts trunk commits once all peers have acknowledged them (i.e. once they
 	 * are outside the collaboration window), and they are not otherwise retained (e.g. by revertibles or
-	 * local branches), to bound memory usage. Enabling this flag retains the full trunk history for the
-	 * lifetime of the client, which increases memory usage over time and should be used with care.
+	 * local branches), to bound memory usage and document size.
+	 * As long as this flag is enabled, trunk commits are retained - this increases memory usage and document size
+	 * over time and should be used with care.
 	 */
 	readonly retainHistory?: boolean;
+
+	/**
+	 * When `true`, validates that commits being submitted for the first time can be applied without errors to a view.
+	 * In the event that a commit cannot be applied, SharedTree will throw an error and will enter a "broken" state, preventing the offending commit (and any further commits) from being submitted.
+	 *
+	 * This can be enabled (at the cost of performance) to improve safety against document corruption in the event of a bug in the SharedTree code:
+	 * when the additional validation is enabled, a client will error instead of potentially corrupting the document.
+	 *
+	 * @defaultValue `false`
+	 *
+	 * @remarks
+	 * This validation is more expensive than {@link SharedTreeOptions.validateRebasedCommitsBeforeResubmission} because it is likely to be performed more often.
+	 * We recommend {@link ForestOptions.forest|configuring SharedTree} with the {@link ForestTypeOptimized|optimized forest implementation} to reduce its performance impact.
+	 */
+	readonly validateCommitsOnFirstSubmission?: boolean;
+
+	/**
+	 * When `true`, validates that the commits being resubmitted can be applied without errors to a view.
+	 * In the event that a commit cannot be applied, SharedTree will throw an error and will enter a "broken" state, preventing the offending commit (and any further commits) from being submitted.
+	 *
+	 * This can be enabled (at the cost of performance) to improve safety against document corruption in the event of a bug in the SharedTree code:
+	 * when the additional validation is enabled, a client will error instead of potentially corrupting the document.
+	 *
+	 * @defaultValue `false`
+	 *
+	 * @remarks
+	 * We recommend {@link ForestOptions.forest|configuring SharedTree} with the {@link ForestTypeOptimized|optimized forest implementation} to reduce the performance impact of this validation.
+	 */
+	readonly validateRebasedCommitsBeforeResubmission?: boolean;
 }
 
 export interface SharedTreeOptionsInternal
@@ -742,6 +778,7 @@ export const ForestTypeOptimized = toForestType(
 			makeTreeChunker(schema, defaultSchemaPolicy, shouldEncodeIncrementally),
 			undefined,
 			idCompressor,
+			breaker,
 		),
 );
 
@@ -768,6 +805,7 @@ export const ForestTypeExpensiveDebug = toForestType(
 				makeTreeChunker(schema, defaultSchemaPolicy, shouldEncodeIncrementally),
 				undefined,
 				idCompressor,
+				breaker,
 			),
 			buildForest(breaker, schema, undefined, true),
 		),
@@ -813,6 +851,8 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	writeVersionOverrides: new Map(),
 	allowPossiblyIncompatibleWriteVersionOverrides: false,
 	retainHistory: false,
+	validateCommitsOnFirstSubmission: false,
+	validateRebasedCommitsBeforeResubmission: false,
 };
 
 /**

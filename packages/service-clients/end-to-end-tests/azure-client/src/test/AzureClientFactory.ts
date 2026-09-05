@@ -15,13 +15,17 @@ import {
 	AzureClient as AzureClientLegacy,
 	type AzureLocalConnectionConfig as AzureLocalConnectionConfigLegacy,
 	type AzureRemoteConnectionConfig as AzureRemoteConnectionConfigLegacy,
-	type ITelemetryBaseLogger as ITelemetryBaseLoggerLegacy,
 } from "@fluidframework/azure-client-legacy";
 import type { IRuntimeFactory } from "@fluidframework/container-definitions/legacy";
-import type { IConfigProviderBase } from "@fluidframework/core-interfaces";
+import type {
+	IConfigProviderBase,
+	ITelemetryBaseEvent,
+} from "@fluidframework/core-interfaces";
+
+import { LogLevel } from "@fluidframework/core-interfaces";
 import { ScopeType } from "@fluidframework/driver-definitions/legacy";
 import type { ContainerSchema } from "@fluidframework/fluid-static";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions";
+import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions";
 import {
 	type MockLogger,
 	createChildLogger,
@@ -60,7 +64,7 @@ export function createAzureClient(
 		minVersionForCollaboration,
 	}: {
 		schema: ContainerSchema;
-		minVersionForCollaboration: MinimumVersionForCollab;
+		minVersionForCollaboration: OldestSupportedClientVersion;
 	}) => IRuntimeFactory,
 ): AzureClient {
 	const args = process.argv.slice(2);
@@ -168,7 +172,7 @@ export function createAzureClientLegacy(
 					endpoint: "http://localhost:7071", // Port for local Azure Fluid Relay (AFR) service
 					type: "local",
 				};
-	const getLogger = (): ITelemetryBaseLoggerLegacy | undefined => {
+	const getLogger = (): ITelemetryBaseLogger | undefined => {
 		const testLogger = getTestLogger?.();
 		if (!logger && !testLogger) {
 			return undefined;
@@ -178,9 +182,15 @@ export function createAzureClientLegacy(
 		}
 		return logger ?? testLogger;
 	};
+	const baseLogger = getLogger();
 	return new AzureClientLegacy({
 		connection: connectionProps,
-		logger: getLogger(),
+		logger:
+			baseLogger === undefined
+				? undefined
+				: {
+						send: (event: ITelemetryBaseEvent) => baseLogger.send(event, LogLevel.essential),
+					},
 	});
 }
 

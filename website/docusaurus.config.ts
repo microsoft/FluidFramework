@@ -10,6 +10,11 @@ import type { Config } from "@docusaurus/types";
 import { themes as prismThemes } from "prism-react-renderer";
 
 import DocsVersions from "./config/docs-versions.mjs";
+import {
+	type ApiLinkManifestPaths,
+	apiLinkManifestPlugin,
+} from "./src/plugins/apiLinkManifestPlugin.js";
+import type { SiteVersion } from "./src/utilityTypes.js";
 
 dotenv.config();
 const includeLocalApiDocs = process.env.LOCAL_API_DOCS === "true";
@@ -38,7 +43,7 @@ const trustedTypesPlugin = () => {
 
 // #region Generate the Docusaurus versions from our versions config.
 
-const versionsConfig: { [versionName: string]: VersionOptions } = {
+const versionsConfig: Partial<Record<SiteVersion, VersionOptions>> = {
 	current: {
 		label: DocsVersions.currentVersion.label,
 		badge: false,
@@ -47,7 +52,7 @@ const versionsConfig: { [versionName: string]: VersionOptions } = {
 };
 
 for (const version of DocsVersions.otherVersions) {
-	versionsConfig[version.version] = {
+	versionsConfig[version.version as SiteVersion] = {
 		label: version.label,
 		path: version.path,
 		badge: true,
@@ -56,13 +61,26 @@ for (const version of DocsVersions.otherVersions) {
 }
 
 if (includeLocalApiDocs) {
-	versionsConfig[DocsVersions.local.version] = {
+	versionsConfig[DocsVersions.local.version as SiteVersion] = {
 		label: DocsVersions.local.label,
 		path: DocsVersions.local.path,
 		badge: true,
 		banner: "unreleased",
 	};
 }
+
+const apiLinkManifestPaths: ApiLinkManifestPaths = {
+	current: DocsVersions.currentVersion.apiDocs.manifestPath,
+	...Object.fromEntries(
+		DocsVersions.otherVersions.map((version) => [
+			version.version,
+			version.apiDocs.manifestPath,
+		]),
+	),
+	...(includeLocalApiDocs
+		? { [DocsVersions.local.version]: DocsVersions.local.apiDocs.manifestPath }
+		: {}),
+};
 
 // #endregion
 
@@ -79,7 +97,6 @@ const config: Config = {
 
 	onBrokenAnchors: "throw",
 	onBrokenLinks: "throw",
-	onBrokenMarkdownLinks: "throw",
 	onDuplicateRoutes: "throw",
 
 	// Even if you don't use internationalization, you can use this field to set
@@ -92,7 +109,11 @@ const config: Config = {
 	// TODO: consider re-enabling after the following issue is resolved:
 	// <https://github.com/Azure/static-web-apps/issues/1036>
 	// trailingSlash: false,
-	plugins: ["docusaurus-plugin-sass", trustedTypesPlugin],
+	plugins: [
+		"docusaurus-plugin-sass",
+		trustedTypesPlugin,
+		() => apiLinkManifestPlugin(apiLinkManifestPaths),
+	],
 	presets: [
 		[
 			"classic",
@@ -101,7 +122,7 @@ const config: Config = {
 					sidebarPath: "./sidebars.ts",
 					lastVersion: "current",
 					includeCurrentVersion: true,
-					versions: versionsConfig,
+					versions: versionsConfig as Record<SiteVersion, VersionOptions>,
 					// Determines whether or not to display an "Edit this page" link at
 					// the bottom of each page.
 					editUrl: ({ version, versionDocsDirPath, docPath, permalink, locale }) => {
@@ -124,6 +145,9 @@ const config: Config = {
 		// `.mdx` files will be treated as MDX, and `.md` files will be treated as standard Markdown.
 		// Needed to support current API docs output, which is not MDX compatible.
 		format: "detect",
+		hooks: {
+			onBrokenMarkdownLinks: "throw",
+		},
 		mermaid: true,
 	},
 	themes: [

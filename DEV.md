@@ -162,13 +162,18 @@ All workspace `pnpm-workspace.yaml` files include security-hardening settings to
 
 The default value for this setting is 1440 (1 day).
 The azure artifact feeds that are used by internal developers and our PR/CI pipelines already have similar built-in protections against recently released packages.
-Specifically, these feeds quaratine recently released packages based on risk profile (on the order of 1 to 7 days, where packages with install-time scripts are quaratined for longer).
+Specifically, these feeds quarantine recently released packages based on risk profile (on the order of 1 to 7 days, where packages with install-time scripts are quarantined for longer).
 
 Unfortunately, artifact feeds do not preserve package publish time when ingesting a package from npmjs upstream.
 Rather, they record when the package was first added to the downstream artifact feed.
 Therefore using a nonzero value here may arbitrarily block internal developers from installing a package until an additional delay period after they first try to install it.
 
 This does not solve the issue that users of the public registry can make changes which can get through CI and merge but include dependencies internal developers cannot install: such cases are expected to be uncommon and for now will require case by case handling to avoid or fix.
+
+#### Updating dependencies while respecting minimum release age
+
+Contributors should use `pnpm --config.minimum-release-age=10080 i --no-frozen-lockfile` when updating dependencies to mimic the repository policy for consuming packages from npmjs registry.
+
 ### Why `resolutionMode: highest` instead of `time-based`
 
 We would prefer to use `resolutionMode: time-based` to avoid pulling in the newest packages from npm. This delays ingestion of newly published packages, which helps avoid supply chain attacks.
@@ -204,7 +209,7 @@ To approve a new package's build scripts, add it to the appropriate `onlyBuiltDe
 The default configuration of the codespace Docker container is not compatible with [Claude sandboxing](https://code.claude.com/docs/en/sandboxing).
 There are multiple settings that need to be tweaked in both the container and Claude.
 
-### Container security flags ([`devcontainer.json`](.devcontainer/ai-agent/devcontainer.json) `runArgs`)
+### Container security flags ([`devcontainer.json`](.devcontainer/devcontainer.json) `runArgs`)
 
 Claude's sandbox uses [bubblewrap (bwrap)](https://github.com/containers/bubblewrap) to isolate processes in a user namespace with restricted mount/filesystem access. bwrap requires three capabilities that Docker containers don't grant by default:
 
@@ -214,7 +219,7 @@ Claude's sandbox uses [bubblewrap (bwrap)](https://github.com/containers/bubblew
 | `--cap-add SYS_ADMIN` | bwrap needs `CAP_SYS_ADMIN` to create new mount namespaces and perform bind mounts inside them. |
 | `--security-opt seccomp=unconfined` | Docker's default seccomp profile blocks `unshare`, `pivot_root`, and some `mount` calls. bwrap needs all three. |
 
-### Root mount propagation ([`postStartCommand`](.devcontainer/ai-agent/devcontainer.json))
+### Root mount propagation ([`postStartCommand`](.devcontainer/devcontainer.json))
 
 bwrap bind-mounts host paths into its sandbox namespace. For these mounts to propagate correctly, the root mount (`/`) must be marked as **shared**. Docker defaults to **private** propagation, which causes bwrap mounts to silently fail. The `postStartCommand` runs:
 
@@ -224,7 +229,7 @@ sudo mount --make-rshared /
 
 This recursively marks all mount points as shared, allowing bwrap's bind mounts to work.
 
-### Sandbox TMPDIR ([`postStartCommand`](.devcontainer/ai-agent/devcontainer.json))
+### Sandbox TMPDIR ([`postStartCommand`](.devcontainer/devcontainer.json))
 
 Claude Code sets `TMPDIR=/tmp/claude` inside the sandbox, but doesn't create the directory itself. The sandbox allowlist permits writes to `/tmp/claude`, and the weaker sandbox bind-mounts the real `/tmp` into the namespace, so the directory just needs to exist on the host. Without it, any tool that resolves `TMPDIR` on startup (pnpm, node, etc.) crashes with `ENOENT`. The `postStartCommand` runs `mkdir -p /tmp/claude` to pre-create it. This is a workaround for a Claude Code bug ([anthropics/claude-code#21654](https://github.com/anthropics/claude-code/issues/21654)).
 
