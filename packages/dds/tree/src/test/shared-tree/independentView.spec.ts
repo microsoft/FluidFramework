@@ -29,6 +29,8 @@ import {
 	SchemaFactoryAlpha,
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
+	asTreeViewAlpha,
+	type LibraryId,
 } from "../../simple-tree/index.js";
 import { ajvValidator } from "../codec/index.js";
 import { testIdCompressor } from "../utils.js";
@@ -62,6 +64,7 @@ describe("independentView", () => {
 				forest: ForestTypeExpensiveDebug,
 				idCompressor: testIdCompressor,
 			});
+
 			const emptySchema = tree.exportSimpleSchema();
 			assert.deepEqual(emptySchema.definitions, new Map());
 			assert.equal(emptySchema.root.kind, FieldKind.Optional);
@@ -84,6 +87,49 @@ describe("independentView", () => {
 			);
 
 			view.dispose();
+		});
+
+		it("exposes view and stored schema versions", () => {
+			const testLibraryId = "test" as LibraryId;
+			const tree = createIndependentTreeAlpha({ idCompressor: testIdCompressor });
+			const config = new TreeViewConfigurationAlpha({
+				schema: SchemaFactory.number,
+				schemaVersion: { [testLibraryId]: 1 },
+			});
+			const view = asTreeViewAlpha(tree.viewWith(config));
+
+			assert.deepEqual(view.schemaVersion, { test: 1 });
+			assert.equal(view.storedSchemaVersion, undefined);
+
+			view.initialize(1);
+			assert.deepEqual(view.storedSchemaVersion, { test: 1 });
+		});
+
+		it("applies a versioned non-monotonic schema upgrade", () => {
+			const testLibraryId = "test" as LibraryId;
+			const factory = new SchemaFactory("versioned-upgrade");
+			const tree = createIndependentTreeAlpha({ idCompressor: testIdCompressor });
+			const originalView = tree.viewWith(
+				new TreeViewConfigurationAlpha({
+					schema: factory.string,
+					schemaVersion: { [testLibraryId]: 1 },
+				}),
+			);
+			originalView.initialize("id");
+			originalView.dispose();
+
+			const upgradedView = asTreeViewAlpha(
+				tree.viewWith(
+					new TreeViewConfigurationAlpha({
+						schema: factory.identifier,
+						schemaVersion: { [testLibraryId]: 2 },
+					}),
+				),
+			);
+			assert.equal(upgradedView.compatibility.canUpgrade, true);
+
+			upgradedView.upgradeSchema();
+			assert.deepEqual(upgradedView.storedSchemaVersion, { test: 2 });
 		});
 
 		it("uninitialized: staged schema upgrade", () => {

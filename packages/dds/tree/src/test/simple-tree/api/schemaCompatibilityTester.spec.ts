@@ -15,6 +15,7 @@ import { allowsRepoSuperset, defaultSchemaPolicy } from "../../../feature-librar
 import { checkSchemaCompatibility } from "../../../simple-tree/api/schemaCompatibilityTester.js";
 import {
 	type ImplicitFieldSchema,
+	type LibraryId,
 	type SchemaCompatibilityStatus,
 	TreeViewConfigurationAlpha,
 	toUpgradeSchema,
@@ -27,6 +28,7 @@ const emptySchema: TreeStoredSchema = {
 };
 
 const factory = new SchemaFactoryAlpha("");
+const testLibraryId = "test" as LibraryId;
 
 function expectCompatibility(
 	{ view, stored }: { view: ImplicitFieldSchema; stored: TreeStoredSchema },
@@ -231,6 +233,44 @@ describe("checkSchemaCompatibility", () => {
 							isEquivalent: false,
 						},
 					);
+				});
+
+				it("required string to identifier succeeds with an increased schema version", () => {
+					const stored = toUpgradeSchema(factory.string, undefined, {
+						[testLibraryId]: 1,
+					});
+					const view = new TreeViewConfigurationAlpha({
+						schema: factory.identifier,
+						schemaVersion: { [testLibraryId]: 2 },
+					});
+					assert.deepEqual(checkSchemaCompatibility(view, stored), {
+						canView: false,
+						canUpgrade: true,
+						isEquivalent: false,
+					});
+				});
+
+				it("required string to identifier fails with a decreased schema version", () => {
+					const stored = toUpgradeSchema(factory.string, undefined, {
+						[testLibraryId]: 2,
+					});
+					const view = new TreeViewConfigurationAlpha({
+						schema: factory.identifier,
+						schemaVersion: { [testLibraryId]: 1 },
+					});
+					assert.equal(checkSchemaCompatibility(view, stored).canUpgrade, false);
+				});
+
+				it("reports differing schema versions as non-equivalent", () => {
+					const stored = toUpgradeSchema(factory.string, undefined, {
+						[testLibraryId]: 1,
+					});
+					const view = new TreeViewConfigurationAlpha({
+						schema: factory.string,
+						schemaVersion: { [testLibraryId]: 2 },
+					});
+
+					assert.equal(checkSchemaCompatibility(view, stored).isEquivalent, false);
 				});
 
 				it("to sequence", () => {

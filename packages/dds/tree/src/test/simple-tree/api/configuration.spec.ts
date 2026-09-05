@@ -17,11 +17,13 @@ import {
 } from "../../../simple-tree/api/configuration.js";
 import {
 	type TreeNodeSchema,
+	type LibraryId,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 } from "../../../simple-tree/index.js";
 
 const schema = new SchemaFactory("com.example");
+const testLibraryId = "test" as LibraryId;
 
 describe("simple-tree configuration", () => {
 	it("preventAmbiguity", () => {
@@ -261,5 +263,43 @@ describe("simple-tree configuration", () => {
 	it("creates TreeViewConfigurationAlpha", () => {
 		const config = new TreeViewConfiguration({ schema: [] });
 		assert(config instanceof TreeViewConfigurationAlpha);
+	});
+
+	it("validates schema versions", () => {
+		assert.throws(
+			() =>
+				new TreeViewConfigurationAlpha({
+					schema: [],
+					schemaVersion: { [testLibraryId]: -1 },
+				}),
+			/non-negative integer/,
+		);
+		assert.throws(
+			() =>
+				new TreeViewConfigurationAlpha({
+					schema: [],
+					schemaVersion: { [testLibraryId]: 1.5 },
+				}),
+			/non-negative integer/,
+		);
+	});
+
+	it("accepts zero as a schema version", () => {
+		const config = new TreeViewConfigurationAlpha({
+			schema: [],
+			schemaVersion: { [testLibraryId]: 0 },
+		});
+
+		assert.equal(config.schemaVersion?.[testLibraryId], 0);
+	});
+
+	it("accepts positive integers larger than Number.MAX_SAFE_INTEGER", () => {
+		const version = Number.MAX_SAFE_INTEGER + 1;
+		const config = new TreeViewConfigurationAlpha({
+			schema: [],
+			schemaVersion: { [testLibraryId]: version },
+		});
+
+		assert.equal(config.schemaVersion?.[testLibraryId], version);
 	});
 });

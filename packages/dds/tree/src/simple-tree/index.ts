@@ -75,6 +75,8 @@ export {
 	TreeViewConfigurationAlpha,
 	type ITreeViewConfiguration,
 	type ITreeViewConfigurationAlpha,
+	type LibraryId,
+	type SchemaVersionMap,
 	type SchemaCompatibilityStatus,
 	type ITreeConfigurationOptions,
 	SchemaFactory,

@@ -228,6 +228,7 @@ export {
 	JsonStringKeyPatternProperties, 
 	JsonTreeSchema, 
 	LabelTree, 
+	LibraryId,
 	LocalChangeMetadata, 
 	MapNodeCustomizableSchema, 
 	MapNodeCustomizableSchemaUnsafe, 
@@ -256,6 +257,7 @@ export {
 	SchemaFactoryAlpha, 
 	SchemaStaticsAlpha, 
 	SchemaType, 
+	SchemaVersionMap,
 	SharedTreeAlpha,
 	SharedTreeFormatOptions,
 	SharedTreeOptions,
@@ -309,6 +311,7 @@ export {
 	createArrayInsertionAnchor, 
 	createIndependentTreeAlpha, 
 	decodeSchemaCompatibilitySnapshot, 
+	defineTreeDataStore,
 	encodeSchemaCompatibilitySnapshot, 
 	eraseSchemaDetails, 
 	eraseSchemaDetailsSubclassable, 
@@ -330,7 +333,6 @@ export {
 	replaceConciseTreeHandles, 
 	replaceHandles, 
 	replaceVerboseTreeHandles, 
-	trackDirtyNodes, 
-	defineTreeDataStore
+	trackDirtyNodes
 	// #endregion
 } from "../index.js";

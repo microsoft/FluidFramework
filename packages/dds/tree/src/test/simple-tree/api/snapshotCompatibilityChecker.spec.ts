@@ -28,10 +28,12 @@ import {
 	normalizeFieldSchema,
 	SchemaFactory,
 	TreeViewConfiguration,
+	TreeViewConfigurationAlpha,
 	SchemaFactoryBeta,
 	stringSchema,
 	numberSchema,
 	allowUnused,
+	type LibraryId,
 } from "../../../simple-tree/index.js";
 import { testSrcPath } from "../../testSrcPath.cjs";
 import { inMemorySnapshotFileSystem } from "../../utils.js";
@@ -56,6 +58,44 @@ describe("snapshotCompatibilityChecker", () => {
 		assert.equal(
 			normalizedView.allowedTypesIdentifiers.has("com.fluidframework.leaf.string"),
 			true,
+		);
+	});
+
+	it("parse and snapshot can roundtrip schema versions", () => {
+		const testLibraryId = "test" as LibraryId;
+		const view = new TreeViewConfigurationAlpha({
+			schema: SchemaFactory.number,
+			schemaVersion: { [testLibraryId]: 2 },
+		});
+		const snapshot = exportCompatibilitySchemaSnapshot(view);
+		assert.deepEqual((snapshot as { schemaVersion: unknown }).schemaVersion, [["test", 2]]);
+
+		const parsedView = importCompatibilitySchemaSnapshot(snapshot);
+		assert.deepEqual(parsedView.schemaVersion, { test: 2 });
+	});
+
+	it("rejects negative schema versions", () => {
+		const testLibraryId = "test" as LibraryId;
+		const snapshot = exportCompatibilitySchemaSnapshot({
+			schema: SchemaFactory.number,
+			schemaVersion: { [testLibraryId]: 1 },
+		}) as { schemaVersion: [string, number][] };
+		snapshot.schemaVersion[0][1] = -1;
+
+		assert.throws(
+			() => importCompatibilitySchemaSnapshot(snapshot),
+			/must be non-negative integers/,
+		);
+	});
+
+	it("rejects negative schema versions when exporting", () => {
+		assert.throws(
+			() =>
+				exportCompatibilitySchemaSnapshot({
+					schema: SchemaFactory.number,
+					schemaVersion: { ["test" as LibraryId]: -1 },
+				}),
+			/must be a non-negative integer/,
 		);
 	});
 

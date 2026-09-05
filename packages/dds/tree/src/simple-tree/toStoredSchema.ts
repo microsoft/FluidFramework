@@ -22,6 +22,7 @@ import {
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
+	type SchemaVersionMap,
 	type TreeTypeSet,
 } from "../core/index.js";
 import { FieldKinds, type FlexFieldKind } from "../feature-libraries/index.js";
@@ -103,8 +104,13 @@ export function resolveStoredSchemaGenerationOptions(
 export function toUpgradeSchema(
 	root: ImplicitFieldSchema,
 	stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
+	schemaVersion?: SchemaVersionMap,
 ): TreeStoredSchema {
-	return toStoredSchema(root, resolveStoredSchemaGenerationOptions(stagedSchemaUpgrades));
+	const stored = toStoredSchema(
+		root,
+		resolveStoredSchemaGenerationOptions(stagedSchemaUpgrades),
+	);
+	return schemaVersion === undefined ? stored : { ...stored, schemaVersion };
 }
 
 /**
@@ -113,8 +119,13 @@ export function toUpgradeSchema(
 export function toInitialSchema(
 	root: ImplicitFieldSchema,
 	stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
+	schemaVersion?: SchemaVersionMap,
 ): TreeStoredSchema {
-	return toStoredSchema(root, resolveStoredSchemaGenerationOptions(stagedSchemaUpgrades));
+	const stored = toStoredSchema(
+		root,
+		resolveStoredSchemaGenerationOptions(stagedSchemaUpgrades),
+	);
+	return schemaVersion === undefined ? stored : { ...stored, schemaVersion };
 }
 
 /**
@@ -235,7 +246,11 @@ export function transformSimpleSchema(
 		definitions.size === simpleNodeSchema.size,
 		0xcaa /* Reachable schema missing from input TreeSchema */,
 	);
-	return { root, definitions };
+	return {
+		root,
+		definitions,
+		...(schema.schemaVersion === undefined ? {} : { schemaVersion: schema.schemaVersion }),
+	};
 }
 
 /**
@@ -254,6 +269,9 @@ export function simpleStoredSchemaToStoredSchema(
 			getStoredSchema(schema),
 		) as Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>,
 		rootFieldSchema: convertField(treeSchema.root),
+		...(treeSchema.schemaVersion === undefined
+			? {}
+			: { schemaVersion: treeSchema.schemaVersion }),
 	};
 	return result;
 }
