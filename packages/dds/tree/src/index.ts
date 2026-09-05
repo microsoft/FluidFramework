@@ -77,6 +77,8 @@ export {
 	TreeViewConfiguration,
 	type ITreeViewConfiguration,
 	type ITreeViewConfigurationAlpha,
+	type LibraryId,
+	type SchemaVersionMap,
 	type ITreeConfigurationOptions,
 	type TreeView,
 	type TreeViewEvents,

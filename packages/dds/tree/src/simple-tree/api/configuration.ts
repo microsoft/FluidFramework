@@ -8,6 +8,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { getOrCreate } from "../../util/index.js";
 import type { MakeNominal } from "../../util/index.js";
+import type { SchemaVersionMap } from "../../core/index.js";
 import {
 	type AllowedTypesFullEvaluated,
 	NodeKind,
@@ -183,6 +184,37 @@ export interface ITreeViewConfigurationAlpha<
 	 * ```
 	 */
 	readonly stagedUpgradePolicy?: StagedSchemaUpgradePolicy;
+
+	/**
+	 * Application-defined versions for the view schema.
+	 *
+	 * @remarks
+	 * Each value must be a non-negative integer.
+	 * These versions are stored in documents initialized or upgraded through a {@link TreeViewAlpha}.
+	 *
+	 * Without versions, schema upgrades are limited to changes that only expand what may be stored.
+	 * Providing versions also allows other changes that keep all existing documents valid.
+	 * Such a change must increase at least one version, and stored versions cannot decrease or be removed.
+	 *
+	 * @example Changing a required string field to an identifier field
+	 * Required string and identifier fields accept the same stored values, so changing between them keeps existing documents valid.
+	 * Increasing the application version establishes which schema is newer and allows the change without older applications changing it back.
+	 *
+	 * ```typescript
+	 * const schemaFactory = new SchemaFactory("com.example");
+	 * const libraryId = "com.example" as LibraryId;
+	 *
+	 * const oldConfig = new TreeViewConfigurationAlpha({
+	 * 	schema: schemaFactory.string,
+	 * 	schemaVersion: { [libraryId]: 0 },
+	 * });
+	 * const newConfig = new TreeViewConfigurationAlpha({
+	 * 	schema: schemaFactory.identifier,
+	 * 	schemaVersion: { [libraryId]: 1 },
+	 * });
+	 * ```
+	 */
+	readonly schemaVersion?: SchemaVersionMap;
 }
 
 /**
@@ -287,6 +319,11 @@ export class TreeViewConfigurationAlpha<
 	 */
 	public readonly stagedUpgradePolicy: StagedSchemaUpgradePolicy;
 
+	/**
+	 * {@inheritDoc ITreeViewConfigurationAlpha.schemaVersion}
+	 */
+	public readonly schemaVersion: SchemaVersionMap | undefined;
+
 	public constructor(props: ITreeViewConfigurationAlpha<TSchema>) {
 		super(props);
 		const treeSchema = createTreeSchema(this.schema);
@@ -295,11 +332,32 @@ export class TreeViewConfigurationAlpha<
 
 		this.stagedUpgradePolicy =
 			props.stagedUpgradePolicy ?? StagedSchemaUpgradePolicy.restrictive;
+		this.schemaVersion = validateSchemaVersion(props.schemaVersion);
 
 		// Eagerly perform these conversions to surface errors sooner.
-		toInitialSchema(this.root, this.stagedUpgradePolicy);
+		toInitialSchema(this.root, this.stagedUpgradePolicy, this.schemaVersion);
 		transformSimpleSchema(treeSchema, toUnhydratedSchema);
 	}
+}
+
+/**
+ * Validates and freezes an application-defined schema version map.
+ * A valid map is `undefined` or maps each library identifier to a non-negative integer.
+ */
+export function validateSchemaVersion(
+	schemaVersion: SchemaVersionMap | undefined,
+): SchemaVersionMap | undefined {
+	if (schemaVersion === undefined) {
+		return undefined;
+	}
+	for (const [libraryId, version] of Object.entries(schemaVersion)) {
+		if (!Number.isInteger(version) || version < 0) {
+			throw new UsageError(
+				`Schema version for library ${JSON.stringify(libraryId)} must be a non-negative integer.`,
+			);
+		}
+	}
+	return Object.freeze({ ...schemaVersion });
 }
 
 /**

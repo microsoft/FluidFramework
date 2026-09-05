@@ -1,0 +1,29 @@
+{
+  "version": "schemaVersion",
+  "nodes": {
+    "test.recursiveType": {
+      "kind": {
+        "object": {
+          "field": {
+            "kind": "Optional",
+            "types": [
+              "test.recursiveType"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "root": {
+    "kind": "Value",
+    "types": [
+      "test.recursiveType"
+    ]
+  },
+  "schemaVersion": [
+    [
+      "com.fluidframework.test",
+      1
+    ]
+  ]
+}

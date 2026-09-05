@@ -12,6 +12,7 @@ import { compareStrings } from "../../util/index.js";
 import type { TreeNodeSchemaIdentifier } from "./formatV1.js";
 import {
 	type StoredSchemaCollection,
+	type SchemaVersionMap,
 	type TreeFieldStoredSchema,
 	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
@@ -63,6 +64,7 @@ export interface MutableTreeStoredSchema extends TreeStoredSchemaSubscription {
 export class TreeStoredSchemaRepository implements MutableTreeStoredSchema {
 	protected nodeSchemaData: BTree<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>;
 	protected rootFieldSchemaData: TreeFieldStoredSchema;
+	protected schemaVersionData: SchemaVersionMap | undefined;
 	protected readonly _events = createEmitter<SchemaEvents>();
 	public readonly events: Listenable<SchemaEvents> = this._events;
 
@@ -82,6 +84,7 @@ export class TreeStoredSchemaRepository implements MutableTreeStoredSchema {
 	public constructor(data?: TreeStoredSchema) {
 		if (data === undefined) {
 			this.rootFieldSchemaData = storedEmptyFieldSchema;
+			this.schemaVersionData = undefined;
 			this.nodeSchemaData = new BTree<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>(
 				[],
 				compareStrings,
@@ -89,9 +92,11 @@ export class TreeStoredSchemaRepository implements MutableTreeStoredSchema {
 		} else {
 			if (data instanceof TreeStoredSchemaRepository) {
 				this.rootFieldSchemaData = data.rootFieldSchema;
+				this.schemaVersionData = data.schemaVersion;
 				this.nodeSchemaData = data.nodeSchemaData.clone();
 			} else {
 				this.rootFieldSchemaData = data.rootFieldSchema;
+				this.schemaVersionData = cloneSchemaVersion(data.schemaVersion);
 				this.nodeSchemaData = cloneNodeSchemaData(data.nodeSchema);
 			}
 		}
@@ -109,11 +114,16 @@ export class TreeStoredSchemaRepository implements MutableTreeStoredSchema {
 		return this.rootFieldSchemaData;
 	}
 
+	public get schemaVersion(): SchemaVersionMap | undefined {
+		return this.schemaVersionData;
+	}
+
 	public apply(newSchema: TreeStoredSchema): void {
 		this._events.emit("beforeSchemaChange", newSchema);
 		const clone = new TreeStoredSchemaRepository(newSchema);
 		// In the future, we could use btree's delta functionality to do a more efficient update
 		this.rootFieldSchemaData = clone.rootFieldSchemaData;
+		this.schemaVersionData = clone.schemaVersionData;
 		this.nodeSchemaData = clone.nodeSchemaData;
 		this._events.emit("afterSchemaChange", newSchema);
 	}
@@ -124,7 +134,14 @@ export class TreeStoredSchemaRepository implements MutableTreeStoredSchema {
 }
 
 export function schemaDataIsEmpty(data: TreeStoredSchema): boolean {
-	return data.nodeSchema.size === 0;
+	// A version-only schema is initialized state and must not be overwritten by initialization.
+	return data.nodeSchema.size === 0 && data.schemaVersion === undefined;
+}
+
+function cloneSchemaVersion(
+	schemaVersion: SchemaVersionMap | undefined,
+): SchemaVersionMap | undefined {
+	return schemaVersion === undefined ? undefined : Object.freeze({ ...schemaVersion });
 }
 
 function cloneNodeSchemaData(

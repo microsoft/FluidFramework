@@ -36,6 +36,7 @@ import type {
 	TreeFieldFromImplicitField,
 } from "../fieldSchema.js";
 import type { SimpleTreeSchema } from "../simpleSchema.js";
+import type { SchemaVersionMap } from "../../core/index.js";
 import type { UnsafeUnknownSchema } from "../unsafeUnknownSchema.js";
 
 import type { TreeViewConfiguration } from "./configuration.js";
@@ -103,6 +104,15 @@ export interface ITree extends ViewableTree, IFluidLoadable {}
  * @sealed @alpha
  */
 export interface ITreeAlpha extends ITree {
+	/**
+	 * Application-defined versions in the document's stored schema.
+	 *
+	 * @remarks
+	 * This is `undefined` when the stored schema has no application-defined versions.
+	 * The value can change when a {@link TreeViewAlpha} updates the stored schema.
+	 */
+	readonly storedSchemaVersion: SchemaVersionMap | undefined;
+
 	/**
 	 * Exports root in the same format as {@link (TreeAlpha:interface).(exportVerbose:1)} using stored keys.
 	 * @remarks
@@ -981,6 +991,20 @@ export interface TreeViewAlpha<
 			"root" | "initialize" | "fork" | "runTransaction" | "runTransactionAsync" | "isView"
 		>,
 		UntypedTreeViewAlpha {
+	/**
+	 * Application-defined versions declared by this view's {@link TreeViewConfigurationAlpha}.
+	 */
+	readonly schemaVersion: SchemaVersionMap | undefined;
+
+	/**
+	 * Application-defined versions in the document's stored schema.
+	 *
+	 * @remarks
+	 * This value may change when the stored schema changes.
+	 * Subscribe to {@link TreeViewEvents.schemaChanged} to observe changes.
+	 */
+	readonly storedSchemaVersion: SchemaVersionMap | undefined;
+
 	get root(): ReadableField<TSchema>;
 
 	set root(newRoot: InsertableField<TSchema>);

@@ -13,7 +13,12 @@ import {
 } from "../../core/index.js";
 import type { SchemaUpgrade, StagedSchemaUpgradePolicy } from "../core/index.js";
 import { NodeKind } from "../core/index.js";
-import { allowsRepoSuperset, defaultSchemaPolicy } from "../../feature-libraries/index.js";
+import {
+	allowsRepoSuperset,
+	allowsSchemaUpgrade,
+	areSchemaVersionsEqual,
+	defaultSchemaPolicy,
+} from "../../feature-libraries/index.js";
 import { resolveStoredSchemaGenerationOptions, toUpgradeSchema } from "../toStoredSchema.js";
 import type { TreeSchema } from "../treeSchema.js";
 
@@ -181,14 +186,19 @@ export function checkSchemaCompatibility(
 	const upgradePolicy = includeAlreadyEnabledUpgrades
 		? includeEnabledUpgrades(configuredPolicy, enabledUpgrades)
 		: configuredPolicy;
-	const wouldUpgradeTo = toUpgradeSchema(viewSchema.root, upgradePolicy);
+	const wouldUpgradeTo = toUpgradeSchema(
+		viewSchema.root,
+		upgradePolicy,
+		viewSchema.schemaVersion,
+	);
 
-	const canUpgrade = allowsRepoSuperset(policy, stored, wouldUpgradeTo);
+	const canUpgrade = allowsSchemaUpgrade(policy, stored, wouldUpgradeTo);
 
-	// If true, then upgrading has no effect on what can be stored in the document.
-	// TODO: This should likely be changed to indicate up a schema upgrade would be a no-op, including stored schema metadata.
 	const isEquivalent =
-		canView && canUpgrade && allowsRepoSuperset(policy, wouldUpgradeTo, stored);
+		canView &&
+		canUpgrade &&
+		allowsRepoSuperset(policy, wouldUpgradeTo, stored) &&
+		areSchemaVersionsEqual(wouldUpgradeTo.schemaVersion, stored.schemaVersion);
 
 	return {
 		canView,

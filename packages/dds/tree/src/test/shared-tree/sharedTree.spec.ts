@@ -75,9 +75,11 @@ import { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
 import { simpleTreeNodeSlot } from "../../simple-tree/core/treeNodeKernel.js";
 import {
 	SchemaFactory,
+	type LibraryId,
 	type TreeFieldFromImplicitField,
 	type TreeViewAlpha,
 	TreeViewConfiguration,
+	TreeViewConfigurationAlpha,
 	type ValidateRecursiveSchema,
 	SchemaFactoryAlpha,
 	type ITree,
@@ -403,6 +405,21 @@ describe("SharedTree", () => {
 			]);
 			expectSchemaEqual(snapshot.schema, toInitialSchema(StringArray));
 		}
+	});
+
+	it("exposes stored schema versions", () => {
+		const libraryId = "test" as LibraryId;
+		const tree = treeTestFactory();
+		const view = tree.viewWith(
+			new TreeViewConfigurationAlpha({
+				schema: numberSchema,
+				schemaVersion: { [libraryId]: 1 },
+			}),
+		);
+
+		assert.equal(tree.storedSchemaVersion, undefined);
+		view.initialize(1);
+		assert.deepEqual(tree.storedSchemaVersion, { test: 1 });
 	});
 
 	it("can be connected to another tree", async () => {
