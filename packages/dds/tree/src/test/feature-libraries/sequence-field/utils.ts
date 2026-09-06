@@ -839,7 +839,7 @@ export function inlineRevision(change: Changeset, revision: RevisionTag): Change
 	return sequenceFieldChangeRebaser.replaceRevisions(change, replacer);
 }
 
-interface CrossFieldTable<T = unknown> extends CrossFieldManager<T> {
+export interface CrossFieldTable<T = unknown> extends CrossFieldManager<T> {
 	srcQueries: CrossFieldQuerySet;
 	dstQueries: CrossFieldQuerySet;
 	isInvalidated: boolean;
@@ -848,7 +848,7 @@ interface CrossFieldTable<T = unknown> extends CrossFieldManager<T> {
 	reset: () => void;
 }
 
-function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
+export function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 	const srcQueries: CrossFieldQuerySet = newChangeAtomIdRangeMap();
 	const dstQueries: CrossFieldQuerySet = newChangeAtomIdRangeMap();
 	const mapSrc = newChangeAtomIdRangeMap<T>();
