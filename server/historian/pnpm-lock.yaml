@@ -1035,8 +1035,8 @@ packages:
   '@microsoft/tsdoc@0.16.0':
     resolution: {integrity: sha512-xgAyonlVVS+q7Vc7qLW0UrJU7rSFcETRWsqdXZtjzRU8dF+6CkozTK4V4y1LwOX7j8r/vHphjDeMeGI4tNGeGA==}
 
-  '@mongodb-js/saslprep@1.5.2':
-    resolution: {integrity: sha512-UBvCBdPHAmiiDNEpD2ORBGzna4qYr06fLELfGDPW3/KZ9uLK+cGT9npAc/x/6/8SLzdbILMuc3HWFQ0FvJMhCw==}
+  '@mongodb-js/saslprep@1.5.0':
+    resolution: {integrity: sha512-Hk1SKJCMcCos38+vqDnZzlIo4XRj9yCGzYkjB4LcqpeXRIYfia1UWTz+VrueLxoU+uSRJzgkufxoRZg8gi52YA==}
 
   '@napi-rs/wasm-runtime@0.2.12':
     resolution: {integrity: sha512-ZVWUcfwY4E/yPitQJl481FjFo3K22D6qF0DuFH6Y/nbnE11GY5uguDxZMGXPQ8WQ0128MXQD7TnfHyK4oWoIJQ==}
@@ -4163,8 +4163,8 @@ packages:
       socks:
         optional: true
 
-  morgan@1.12.0:
-    resolution: {integrity: sha512-OHpTRQwn2ezasILW8iKe+Yww1XsfWsZIpUOLF7RDb2g5GwO3trPaRwi7+8BDiJ7HFx2Kg2mfUdCBcVhwYlOz2g==}
+  morgan@1.11.0:
+    resolution: {integrity: sha512-zSkVu3t18r39pw4ixfBKvfZi3y2UOqr7d4WYwcj3m8nXpEQK4rPO6GLzs/CExoRgmX3y9EjmmcXqv6jq0SK46g==}
     engines: {node: '>= 0.8.0'}
 
   ms@2.0.0:
@@ -6535,7 +6535,7 @@ snapshots:
       ioredis: 5.6.1(supports-color@10.2.2)
       json-stringify-safe: 5.0.1
       jsonwebtoken: 9.0.2
-      morgan: 1.12.0(supports-color@10.2.2)
+      morgan: 1.11.0(supports-color@10.2.2)
       nconf: 0.12.0
       serialize-error: 8.1.0
       sillyname: 0.1.0
@@ -6557,7 +6557,7 @@ snapshots:
       ioredis: 5.6.1(supports-color@8.1.1)
       json-stringify-safe: 5.0.1
       jsonwebtoken: 9.0.2
-      morgan: 1.12.0(supports-color@8.1.1)
+      morgan: 1.11.0(supports-color@8.1.1)
       nconf: 0.12.0
       serialize-error: 8.1.0
       sillyname: 0.1.0
@@ -7080,7 +7080,7 @@ snapshots:
 
   '@microsoft/tsdoc@0.16.0': {}
 
-  '@mongodb-js/saslprep@1.5.2':
+  '@mongodb-js/saslprep@1.5.0':
     dependencies:
       sparse-bitfield: 3.0.3
 
@@ -11276,13 +11276,13 @@ snapshots:
 
   mongodb@6.21.0(socks@2.8.3):
     dependencies:
-      '@mongodb-js/saslprep': 1.5.2
+      '@mongodb-js/saslprep': 1.5.0
       bson: 6.10.4
       mongodb-connection-string-url: 3.0.2
     optionalDependencies:
       socks: 2.8.3
 
-  morgan@1.12.0(supports-color@10.2.2):
+  morgan@1.11.0(supports-color@10.2.2):
     dependencies:
       basic-auth: 2.0.1
       debug: 2.6.9(supports-color@10.2.2)
@@ -11292,7 +11292,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  morgan@1.12.0(supports-color@8.1.1):
+  morgan@1.11.0(supports-color@8.1.1):
     dependencies:
       basic-auth: 2.0.1
       debug: 2.6.9(supports-color@8.1.1)
