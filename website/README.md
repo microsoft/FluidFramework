@@ -226,9 +226,6 @@ The component preserves the child content when it renders a link or inline code:
 </ApiLink>
 ```
 
-Transition behavior is version-specific.
-A component can render inline code or use its old target in one documentation version and use its new target in another version.
-
 #### Comments
 
 A common pattern for adding inline comments in `.md` files looks like:
