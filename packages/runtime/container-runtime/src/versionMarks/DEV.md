@@ -526,6 +526,8 @@ moment tracking flips on may be missed, which is harmless: an app's own captured
 - `src/test/containerRuntime.spec.ts` covers the complete context `fetchOps` -> historical unpack -> resolver path
   (including system/server-op filtering and abort-after-match), plus the ordering guarantee that failed inbound
   validation does not notify listeners.
+- `packages/test/test-end-to-end-tests/src/test/versionMarks.spec.ts` covers real-container capture and resolution for a
+  normal pending edit, plus multi-batch staging commit where the post mark resolves to the final staged batch.
 
 ## Future work
 
@@ -550,8 +552,9 @@ known sequence number and exercise loading. They do not create that sequence num
    inbound/history pipelines recover the same effective batch identity.
 1. **Pending and retention outcomes:** Resolve before the batch sequences and observe `pending`; when the test
    environment can deterministically trim the target ops, verify the same stored locator becomes `unresolvable`.
-1. **Offline and staging lifecycles:** Cover stash/rehydration plus staging commit and discard once those capture
-   contracts are finalized.
+1. **Offline and staging lifecycles:** Cover stash/rehydration and define and test the behavior of marks captured for
+   staged changes that are later discarded. Multi-batch staging commit is covered by
+   `packages/test/test-end-to-end-tests/src/test/versionMarks.spec.ts`.
 1. **Repeated capture and multiple pending batches:** Capture twice while the same batch remains unacknowledged, then
    capture after a second local batch is flushed. Verify each mark identifies the latest batch whose state it includes
    and that changing remote sequence numbers between captures does not produce an invalid lower bound.
@@ -748,8 +751,9 @@ Suggested test coverage:
    capture flushes the op into `PendingStateManager` and returns that exact batch's ID rather than a mocked ID.
 1. **Unsafe contexts:** Call capture during inbound processing and inside `orderSequentially`; verify `notCaptured` with
    `reason: "unsafeToFlush"`, no flush, and no container closure. Also verify a later retry succeeds.
-1. **Staging commit and discard:** Capture staged edits and verify nothing is sent immediately. Verify that commit
-   preserves the captured ID through resubmit and resolution, and define and test the result after discard.
+1. **Staging discard:** Define and test the result of capturing a mark for staged edits that are later discarded.
+   Staging commit preservation and resolution are covered by
+   `packages/test/test-end-to-end-tests/src/test/versionMarks.spec.ts`.
 1. **Offline rehydration:** Capture while disconnected, stash and rehydrate, resubmit from the new client, and resolve
    using the original ID. This also covers end-to-end preservation and stamping of the batch identity through
    pending-state rehydration, beyond the existing unit tests for explicit original `batchId` metadata.
