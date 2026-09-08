@@ -141,7 +141,8 @@ export function checkSchemaCompatibility(
 	// The public API surface assumes defaultSchemaPolicy
 	const policy = defaultSchemaPolicy;
 	const configuredPolicy = resolveStoredSchemaGenerationOptions(stagedSchemaUpgrades);
-	const includeAlreadyEnabledUpgrades = configuredPolicy.includeAlreadyEnabledUpgrades ?? true;
+	const includeAlreadyEnabledUpgrades =
+		configuredPolicy.includeAlreadyEnabledUpgrades ?? false;
 
 	// Collect upgrade locations during the discrepancy walk (single pass).
 	const totalLocations = new Map<SchemaUpgrade, number>();
