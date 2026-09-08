@@ -14,10 +14,17 @@ export {
 	treeNodeFromAnchor,
 	getSimpleNodeSchemaFromInnerNode,
 	SimpleContextSlot,
-	withBufferedTreeEvents,
-	BufferedTreeEvent,
-	type StatusChangedEventData,
 } from "./treeNodeKernel.js";
+export {
+	bufferTreeEvent,
+	removeTreeEventBuffer,
+	withBufferedTreeEvents,
+	type TreeEventBuffer,
+} from "./treeEventBuffer.js";
+export {
+	onTreeNodeHydrated,
+	notifyTreeNodeHydrated,
+} from "./treeNodeLifecycle.js";
 export {
 	type WithType,
 	schemaIdentifierBrand,

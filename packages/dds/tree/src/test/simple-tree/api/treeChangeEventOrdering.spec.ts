@@ -16,7 +16,7 @@ import type { TreeNode } from "../../../simple-tree/index.js";
 import {
 	withBufferedTreeEvents,
 	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../simple-tree/core/treeNodeKernel.js";
+} from "../../../simple-tree/core/treeEventBuffer.js";
 import { getView } from "../../utils.js";
 import { hydrate } from "../utils.js";
 

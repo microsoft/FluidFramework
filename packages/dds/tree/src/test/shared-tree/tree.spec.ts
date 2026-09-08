@@ -494,7 +494,7 @@ describe("treeApi", () => {
 			// and nodeChanged fires (this location's single child changed).
 			log.length = 0;
 			view.root = new ParentNode({ child: { value: 4 } });
-			assert.deepEqual(log, ["root:treeChanged", "root:nodeChanged"]);
+			assert.deepEqual(log, ["root:nodeChanged", "root:treeChanged"]);
 		});
 
 		it("fires treeChanged on forked branch and survives rebase", () => {
@@ -546,7 +546,7 @@ describe("treeApi", () => {
 			// location's single child changed (nodeChanged).
 			log.length = 0;
 			forkedView.rebaseOnto(view);
-			assert.deepEqual(log, ["treeChanged", "nodeChanged"]);
+			assert.deepEqual(log, ["nodeChanged", "treeChanged"]);
 			assert.equal(forkedView.root.child.value, 100);
 
 			// Content listener still works after root replacement
@@ -613,6 +613,48 @@ describe("treeApi", () => {
 				assert.notEqual(TreeAlpha.parent2(item), parent);
 				undoRedoStacks.unsubscribe();
 			});
+
+			it("notifies nodeChanged before treeChanged when the location is invalidated", () => {
+				const view = getView(new TreeViewConfiguration({ schema: Container }));
+				view.initialize({ items: [{ value: 42 }] });
+				const undoRedoStacks = createTestUndoRedoStacks(view.events);
+				const item = view.root.items[0];
+				view.root.items.removeAt(0);
+
+				const parent = TreeAlpha.parent2(item);
+				assert(parent instanceof RemovedRootParent);
+				const log: string[] = [];
+				TreeAlpha.on(parent, "nodeChanged", () => log.push("nodeChanged"));
+				TreeAlpha.on(parent, "treeChanged", () => log.push("treeChanged"));
+
+				undoRedoStacks.undoStack.pop()?.revert();
+
+				assert.deepEqual(log, ["nodeChanged", "treeChanged"]);
+				undoRedoStacks.unsubscribe();
+			});
+
+			it("does not observe later transitions after the location is invalidated", () => {
+				const view = getView(new TreeViewConfiguration({ schema: Container }));
+				view.initialize({ items: [{ value: 42 }] });
+				const undoRedoStacks = createTestUndoRedoStacks(view.events);
+				const item = view.root.items[0];
+				view.root.items.removeAt(0);
+
+				const oldParent = TreeAlpha.parent2(item);
+				assert(oldParent instanceof RemovedRootParent);
+				undoRedoStacks.undoStack.pop()?.revert();
+
+				let changed = false;
+				TreeAlpha.on(oldParent, "nodeChanged", () => {
+					changed = true;
+				});
+
+				view.root.items.removeAt(0);
+				undoRedoStacks.undoStack.pop()?.revert();
+
+				assert.equal(changed, false);
+				undoRedoStacks.unsubscribe();
+			});
 		});
 
 		describe("UnhydratedParent", () => {
@@ -668,6 +710,22 @@ describe("treeApi", () => {
 
 				assert.deepEqual(log, ["nodeChanged"]);
 			});
+
+			it("notifies nodeChanged before treeChanged on hydration", () => {
+				const view = getView(new TreeViewConfiguration({ schema: Container }));
+				view.initialize({ items: [] });
+				const item = new ChildNode({ value: 42 });
+				const parent = TreeAlpha.parent2(item);
+				assert(parent instanceof UnhydratedParent);
+
+				const log: string[] = [];
+				TreeAlpha.on(parent, "treeChanged", () => log.push("treeChanged"));
+				TreeAlpha.on(parent, "nodeChanged", () => log.push("nodeChanged"));
+
+				view.root.items.insertAtEnd(item);
+
+				assert.deepEqual(log, ["nodeChanged", "treeChanged"]);
+			});
 		});
 
 		it("treeChanged fires on root replacement and re-subscribes to the new root", () => {
@@ -717,12 +775,12 @@ describe("treeApi", () => {
 			// (nodeChanged, location now empty).
 			log.length = 0;
 			view.root = undefined;
-			assert.deepEqual(log, ["treeChanged", "nodeChanged"]);
+			assert.deepEqual(log, ["nodeChanged", "treeChanged"]);
 
 			// Set root back to a node — treeChanged and nodeChanged (now occupied); content re-subscribes.
 			log.length = 0;
 			view.root = new ChildNode({ value: 3 });
-			assert.deepEqual(log, ["treeChanged", "nodeChanged"]);
+			assert.deepEqual(log, ["nodeChanged", "treeChanged"]);
 
 			// Modify the new root — content listener should still work.
 			log.length = 0;
@@ -759,6 +817,89 @@ describe("treeApi", () => {
 			// Both events are coalesced to a single delivery for the whole window.
 			assert.equal(nodeChangedCount, 1);
 			assert.equal(treeChangedCount, 1);
+		});
+
+		it("coalesces root replacement and new-root content changes in one buffering window", () => {
+			const view = getView(new TreeViewConfigurationAlpha({ schema: sf.optional(ChildNode) }));
+			view.initialize({ value: 1 });
+
+			const root = view.root;
+			assert(root !== undefined);
+			const rootParent = TreeAlpha.parent2(root);
+			assert(rootParent instanceof DocumentRootParent);
+
+			let nodeChangedCount = 0;
+			let treeChangedCount = 0;
+			TreeAlpha.on(rootParent, "nodeChanged", () => {
+				nodeChangedCount++;
+			});
+			TreeAlpha.on(rootParent, "treeChanged", () => {
+				treeChangedCount++;
+			});
+
+			withBufferedTreeEvents(() => {
+				view.root = new ChildNode({ value: 2 });
+				const newRoot = view.root;
+				assert(newRoot !== undefined);
+				newRoot.value = 3;
+			});
+
+			assert.equal(nodeChangedCount, 1);
+			assert.equal(treeChangedCount, 1);
+		});
+
+		it("discards a buffered parent event when the callback throws", () => {
+			const view = getView(new TreeViewConfigurationAlpha({ schema: sf.optional(ChildNode) }));
+			view.initialize({ value: 1 });
+
+			const root = view.root;
+			assert(root !== undefined);
+			const rootParent = TreeAlpha.parent2(root);
+			assert(rootParent instanceof DocumentRootParent);
+
+			let nodeChangedCount = 0;
+			TreeAlpha.on(rootParent, "nodeChanged", () => {
+				nodeChangedCount++;
+			});
+
+			assert.throws(
+				() =>
+					withBufferedTreeEvents(() => {
+						view.root = new ChildNode({ value: 2 });
+						throw new Error("callback failure");
+					}),
+				/callback failure/,
+			);
+
+			assert.equal(nodeChangedCount, 0);
+
+			// The ParentKernel remains subscribed to the current root after discarding the event.
+			view.root = new ChildNode({ value: 3 });
+			assert.equal(nodeChangedCount, 1);
+		});
+
+		it("removes a pending parent event when unsubscribed", () => {
+			const view = getView(new TreeViewConfigurationAlpha({ schema: sf.optional(ChildNode) }));
+			view.initialize({ value: 1 });
+
+			const root = view.root;
+			assert(root !== undefined);
+			const rootParent = TreeAlpha.parent2(root);
+			assert(rootParent instanceof DocumentRootParent);
+
+			let nodeChangedCount = 0;
+			const unsubscribe = TreeAlpha.on(rootParent, "nodeChanged", () => {
+				nodeChangedCount++;
+			});
+
+			withBufferedTreeEvents(() => {
+				view.root = new ChildNode({ value: 2 });
+				unsubscribe();
+			});
+
+			assert.equal(nodeChangedCount, 0);
+			view.root = new ChildNode({ value: 3 });
+			assert.equal(nodeChangedCount, 0);
 		});
 
 		it("does not coalesce nodeChanged when not inside a buffering window", () => {

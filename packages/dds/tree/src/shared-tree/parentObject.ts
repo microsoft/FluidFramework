@@ -16,12 +16,10 @@ import {
 	type TreeLeafValue,
 	type TreeChangeEventsBeta,
 	type ImplicitFieldSchema,
-	getKernel,
-	treeNodeApi,
 	isTreeNode,
-	BufferedTreeEvent,
 } from "../simple-tree/index.js";
 
+import { ParentKernel } from "./parentKernel.js";
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 
 /**
@@ -59,24 +57,6 @@ export interface ParentObject extends ErasedBaseType<"@fluidframework/tree.Paren
  * @alpha
  */
 export type TreeNodeParent = TreeNode | ParentObject;
-
-/**
- * Builds a no-argument callback that delivers a {@link ParentObject}'s occupancy change to the given
- * `nodeChanged`/`treeChanged` listener.
- *
- * @remarks
- * `nodeChanged` carries a data payload; since a {@link ParentObject} is a location without schema, it is
- * delivered with an empty payload (no {@link NodeChangedData.changedProperties}). `treeChanged` takes no
- * argument. This lets both events flow through the no-argument {@link BufferedTreeEvent}.
- */
-function makeOccupancyNotifier<K extends keyof TreeChangeEventsBeta>(
-	eventName: K,
-	listener: TreeChangeEventsBeta[K],
-): () => void {
-	return eventName === "nodeChanged"
-		? () => (listener as TreeChangeEventsBeta["nodeChanged"])({})
-		: (listener as TreeChangeEventsBeta["treeChanged"]);
-}
 
 /**
  * Abstract base class for all {@link ParentObject} implementations.
@@ -145,11 +125,13 @@ export class DocumentRootParent extends ParentObjectBase {
 	 * Using a {@link WeakMap} ensures entries are cleaned up when the branch is garbage collected.
 	 */
 	private static readonly cache = new WeakMap<UntypedTreeView, DocumentRootParent>();
+	readonly #kernel: ParentKernel;
 
 	private constructor(
 		private readonly branch: SchematizingSimpleTreeView<ImplicitFieldSchema>,
 	) {
 		super();
+		this.#kernel = ParentKernel.documentRoot(branch);
 	}
 
 	/**
@@ -220,77 +202,8 @@ export class DocumentRootParent extends ParentObjectBase {
 		eventName: K,
 		listener: TreeChangeEventsBeta[K],
 	): () => void {
-		const branch = this.getViewableBranch();
-
-		// Reads the current root value (node, leaf, or undefined), or `undefined` if the schema is
-		// not currently viewable (in which case `branch.root` cannot be safely accessed).
-		const readRoot = (): TreeNode | TreeLeafValue | undefined =>
-			branch.compatibility.canView ? branch.root : undefined;
-
-		// Whether this subscription is still active (cleared by the returned unsubscribe function).
-		let isSubscribed = true;
-		// Unsubscribe handle for the listener currently attached to the root node (if the root is a TreeNode).
-		let currentNodeUnsubscribe: (() => void) | undefined;
-		// The root value we last observed, used to detect actual root replacements.
-		let lastRoot: TreeNode | TreeLeafValue | undefined;
-
-		const locationChanged = new BufferedTreeEvent(makeOccupancyNotifier(eventName, listener));
-
-		const subscribeToRoot = (): void => {
-			// Skip (re-)subscribing if the caller has already unsubscribed (this is also invoked from the
-			// "rootChanged" handler below), or if the branch's schema is not currently viewable.
-			if (!isSubscribed || !branch.compatibility.canView) {
-				return;
-			}
-
-			const rootNode = branch.root;
-			lastRoot = rootNode;
-			// Only `treeChanged` proxies to the current root node (for its deep content changes).
-			// `nodeChanged` reports occupancy changes of the location itself, and root replacement for
-			// `treeChanged` is both handled in the "rootChanged" listener below.
-			currentNodeUnsubscribe =
-				eventName === "treeChanged" && isTreeNode(rootNode)
-					? treeNodeApi.on(
-							rootNode,
-							"treeChanged",
-							listener as TreeChangeEventsBeta["treeChanged"],
-						)
-					: undefined;
-		};
-
-		subscribeToRoot();
-
-		// Note: "rootChanged" fires for any batch that touches the tree, not just
-		// actual root replacements, so we track the root value ourselves.
-		const unsubscribeRootChanged = branch.events.on("rootChanged", () => {
-			const newRoot = readRoot();
-			if (newRoot === lastRoot) {
-				return;
-			}
-
-			if (currentNodeUnsubscribe !== undefined) {
-				currentNodeUnsubscribe();
-				currentNodeUnsubscribe = undefined;
-			}
-
-			// Root replacement is a change within this location's subtree AND a shallow (occupancy) change:
-			// - `treeChanged` fires because something in the tree changed (the root was replaced).
-			// - `nodeChanged` fires because this location's single child changed.
-			// Merge repeated replacements during a buffered event window.
-			locationChanged.emit();
-
-			subscribeToRoot();
-		});
-
-		return () => {
-			isSubscribed = false;
-			locationChanged.dispose();
-			if (currentNodeUnsubscribe !== undefined) {
-				currentNodeUnsubscribe();
-				currentNodeUnsubscribe = undefined;
-			}
-			unsubscribeRootChanged();
-		};
+		this.getViewableBranch();
+		return this.#kernel.on(eventName, listener);
 	}
 }
 
@@ -316,6 +229,7 @@ export class RemovedRootParent extends ParentObjectBase {
 	 * {@link DetachedField}) are detected and replaced on access.
 	 */
 	private static readonly cache = new WeakMap<TreeNode, RemovedRootParent>();
+	readonly #kernel: ParentKernel;
 
 	private constructor(
 		/**
@@ -333,6 +247,7 @@ export class RemovedRootParent extends ParentObjectBase {
 		private readonly detachedNode: TreeNode,
 	) {
 		super();
+		this.#kernel = ParentKernel.removedRoot(detachedNode, detachedField);
 	}
 
 	/**
@@ -375,24 +290,7 @@ export class RemovedRootParent extends ParentObjectBase {
 		eventName: K,
 		listener: TreeChangeEventsBeta[K],
 	): () => void {
-		// A removed-root location reports the occupant leaving via both `nodeChanged` (the shallow
-		// change to its single child) and `treeChanged` (a change within its subtree). Both fire from
-		// the same transition; any other event name is a no-op.
-		if (eventName !== "nodeChanged" && eventName !== "treeChanged") {
-			return () => {};
-		}
-		const kernel = getKernel(this.detachedNode);
-		const notify = makeOccupancyNotifier(eventName, listener);
-
-		// The kernel's status event is batch-aligned and participates in tree event buffering.
-		const unsubscribeStatus = kernel.events.on("statusChanged", () => {
-			// The transition is one-shot for this location: once the node leaves, stop listening.
-			unsubscribeStatus();
-			// The node left this location (e.g., re-attached into the document), leaving it empty.
-			notify();
-		});
-
-		return unsubscribeStatus;
+		return this.#kernel.on(eventName, listener);
 	}
 }
 
@@ -406,9 +304,11 @@ export class RemovedRootParent extends ParentObjectBase {
  */
 export class UnhydratedParent extends ParentObjectBase {
 	private static readonly cache = new WeakMap<UnhydratedFlexTreeNode, UnhydratedParent>();
+	readonly #kernel: ParentKernel;
 
 	private constructor(private readonly unhydratedRoot: UnhydratedFlexTreeNode) {
 		super();
+		this.#kernel = ParentKernel.unhydratedRoot(this.getTreeNode());
 	}
 
 	/**
@@ -458,23 +358,6 @@ export class UnhydratedParent extends ParentObjectBase {
 		eventName: K,
 		listener: TreeChangeEventsBeta[K],
 	): () => void {
-		// An unhydrated-root location reports the occupant leaving (on hydration) via both `nodeChanged`
-		// (the shallow change to its single child) and `treeChanged` (a change within its subtree). Both
-		// fire from the same transition; any other event name is a no-op.
-		if (eventName !== "nodeChanged" && eventName !== "treeChanged") {
-			return () => {};
-		}
-		const node = this.getTreeNode();
-		const kernel = getKernel(node);
-		const notify = makeOccupancyNotifier(eventName, listener);
-
-		// The kernel's status event handles batch alignment and tree event buffering.
-		const unsubscribeStatus = kernel.events.on("statusChanged", () => {
-			// One-shot: hydration is a single New -> InDocument transition for this location.
-			unsubscribeStatus();
-			// The node was hydrated into the document, leaving this unhydrated location empty.
-			notify();
-		});
-		return unsubscribeStatus;
+		return this.#kernel.on(eventName, listener);
 	}
 }
