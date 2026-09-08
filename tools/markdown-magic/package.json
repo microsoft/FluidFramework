@@ -28,7 +28,7 @@
 	},
 	"dependencies": {
 		"chalk": "^4.1.2",
-		"globby": "^14.1.0",
+		"globby": "^13.2.2",
 		"jiti": "^2.6.1",
 		"remark": "^15.0.1",
 		"remark-gfm": "^4.0.1",
