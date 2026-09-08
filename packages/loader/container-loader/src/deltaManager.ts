@@ -212,7 +212,23 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	private opsSize: number = 0;
 	private prevEnqueueMessagesReason: string | undefined;
 	private previouslyProcessedMessage: ISequencedDocumentMessage | undefined;
+	/**
+	 * Sequence number already reflected in the loaded snapshot or restored state.
+	 * Set by attachOpHandler from lastProcessedSequenceNumber, which defaults to the snapshot
+	 * sequence number but may be higher for restored state. Undefined until initialization.
+	 *
+	 * Retained unchanged across message processing and reconnects for self-join error telemetry.
+	 * This is not the per-connection validation baseline, which may include subsequently queued ops.
+	 */
 	private loadedSequenceNumber: number | undefined;
+	/**
+	 * Driver-reported checkpoint for the most recently observed connection, before ConnectionManager
+	 * normalizes it using initial messages. Updated by incomingOpHandler, including for an empty
+	 * initial batch; undefined if the driver does not provide a checkpoint.
+	 *
+	 * Used only for self-join error telemetry. It may legitimately lag or reflect regressed service
+	 * history, so it neither determines the immutable connection baseline nor triggers closure.
+	 */
 	private serviceCheckpointSequenceNumber: number | undefined;
 	/**
 	 * Sequence state known before processing messages from the current connection.
@@ -620,6 +636,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			connectionSequenceBaseline.sequenceNumber === undefined
 		) {
 			connectionSequenceBaseline.sequenceNumber = lastProcessedSequenceNumber;
+			// Connection messages may arrive before the loaded sequence state is known.
+			// Now that the baseline is available, reject incompatible buffered self-joins before replay.
 			if (this.pending.some((message) => this.validateSelfJoinSequenceNumber(message))) {
 				return;
 			}
@@ -1069,6 +1087,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		);
 
 		for (const message of messages) {
+			// A newly assigned connection's self-join must follow the client's pre-connection state.
+			// Check before duplicate filtering can discard evidence of incompatible history. The
+			// immutable baseline still allows duplicate delivery of a valid join after later ops.
 			if (this.validateSelfJoinSequenceNumber(message)) {
 				return;
 			}
@@ -1137,6 +1158,14 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 	/**
 	 * Closes when the current connection's self-join is incompatible with its captured baseline.
+	 *
+	 * @param message - An incoming or buffered sequenced message to inspect before duplicate
+	 * filtering. Only ClientJoin messages whose embedded client ID matches the current
+	 * connection's client ID are subject to this check.
+	 * @returns true if a matching self-join is at or below the immutable pre-connection baseline
+	 * and this method closes the DeltaManager; the caller must stop processing messages.
+	 * Returns false if no violation is detected, including when the baseline is not yet
+	 * initialized. A false result does not imply that the message is otherwise valid.
 	 */
 	private validateSelfJoinSequenceNumber(message: ISequencedDocumentMessage): boolean {
 		const baseline = this.connectionSequenceBaseline;
