@@ -10,6 +10,7 @@ import {
 	MockDocumentDeltaConnection,
 	MockDocumentService,
 } from "@fluid-private/test-loader-utils";
+import { Deferred } from "@fluidframework/core-utils/internal";
 import type { IClient } from "@fluidframework/driver-definitions";
 import {
 	type IDocumentDeltaStorageService,
@@ -300,6 +301,84 @@ describe("Loader", () => {
 				);
 				assert.strictEqual(expectedError.getTelemetryProperties().contentsDiffer, true);
 			});
+
+			for (const { name, serviceValue, telemetryProperty } of [
+				{
+					name: "client sequence number",
+					serviceValue: { clientSequenceNumber: 99 },
+					telemetryProperty: "clientSequenceNumberDiffer",
+				},
+				{
+					name: "metadata",
+					serviceValue: { metadata: { batch: false } },
+					telemetryProperty: "metadataDiffer",
+				},
+				{
+					name: "compression",
+					serviceValue: { compression: "different" },
+					telemetryProperty: "compressionDiffer",
+				},
+				{
+					name: "system data",
+					serviceValue: { data: "different" },
+					telemetryProperty: "dataDiffer",
+				},
+			] as const) {
+				it(`rejects a saved op with different ${name}`, async () => {
+					const savedOp = {
+						...generateOp(),
+						sequenceNumber: 13,
+						minimumSequenceNumber: 10,
+						timestamp: 1000,
+						referenceSequenceNumber: 12,
+						contents: { value: "same" },
+						metadata: { batch: true },
+						compression: "lz4",
+						data: "same",
+					};
+					const fetchStarted = new Deferred<void>();
+					const releaseFetch = new Deferred<void>();
+					let read = false;
+					const loadP = startDeltaManager(
+						true,
+						logger,
+						() => ({
+							fetchMessages: (): IStream<ISequencedDocumentMessage[]> => ({
+								read: async (): Promise<IStreamResult<ISequencedDocumentMessage[]>> => {
+									if (read) {
+										return { done: true };
+									}
+									read = true;
+									fetchStarted.resolve();
+									await releaseFetch.promise;
+									return {
+										done: false,
+										value: [{ ...savedOp, ...serviceValue }],
+									};
+								},
+							}),
+						}),
+						5,
+						savedOp,
+						"all",
+						[],
+						true,
+					);
+					await fetchStarted.promise;
+					deltaManager.on("closed", (error: Error) => {
+						expectedError = error;
+					});
+					releaseFetch.resolve();
+					await loadP;
+
+					assert.match(
+						expectedError?.message ?? "",
+						/same sequenceNumber but different payloads/,
+					);
+					assert(isFluidError(expectedError));
+					assert.strictEqual(expectedError.getTelemetryProperties()[telemetryProperty], true);
+				});
+			}
 
 			it("continues loading when the saved op matches service history", async () => {
 				const savedOp = JSON.parse(

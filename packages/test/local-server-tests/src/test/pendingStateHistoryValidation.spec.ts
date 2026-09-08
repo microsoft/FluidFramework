@@ -31,11 +31,13 @@ import {
 
 import { createLoader } from "./utils.js";
 
-function delayMismatchedAnchor(
+function wrapAnchorValidation(
 	inner: IDocumentServiceFactory,
 	anchorSequenceNumber: number,
 	validationStarted: Deferred<void>,
 	releaseValidation: Deferred<void>,
+	validationCompleted?: Deferred<void>,
+	matchingAnchor?: ISequencedDocumentMessage,
 ): IDocumentServiceFactory {
 	const wrapService = (service: IDocumentService): IDocumentService =>
 		new Proxy(service, {
@@ -53,15 +55,26 @@ function delayMismatchedAnchor(
 								read: async () => {
 									const result = await stream.read();
 									if (!firstRead || result.done) {
+										if (result.done) {
+											validationCompleted?.resolve();
+										}
 										return result;
 									}
 									firstRead = false;
-									assert.strictEqual(result.value[0]?.sequenceNumber, anchorSequenceNumber);
 									validationStarted.resolve();
 									await releaseValidation.promise;
+									if (matchingAnchor !== undefined) {
+										return { done: false, value: [matchingAnchor] };
+									}
+									assert.strictEqual(result.value[0]?.sequenceNumber, anchorSequenceNumber);
 									return {
 										done: false,
-										value: [{ ...result.value[0], clientId: "restored-history-client" }],
+										value: [
+											{
+												...result.value[0],
+												clientId: "restored-history-client",
+											},
+										],
 									};
 								},
 							};
@@ -116,6 +129,52 @@ async function createPendingState(): Promise<{
 }
 
 describe("Pending-state history validation", () => {
+	it("remains usable after validating unchanged pending state", async () => {
+		const { codeLoader, documentServiceFactory, urlResolver, url, pendingLocalState, anchor } =
+			await createPendingState();
+		const validationStarted = new Deferred<void>();
+		const releaseValidation = new Deferred<void>();
+		const validationCompleted = new Deferred<void>();
+		releaseValidation.resolve();
+		const rehydrated = await timeoutAwait(
+			loadExistingContainer({
+				codeLoader,
+				documentServiceFactory: wrapAnchorValidation(
+					documentServiceFactory,
+					anchor.sequenceNumber,
+					validationStarted,
+					releaseValidation,
+					validationCompleted,
+					anchor,
+				),
+				urlResolver,
+				request: {
+					url,
+					headers: { [LoaderHeader.loadMode]: { deltaConnection: "none" } },
+				},
+				pendingLocalState,
+			}),
+		);
+
+		const connectedP = new Promise<void>((resolve) =>
+			rehydrated.once("connected", () => resolve()),
+		);
+		let closeError: IErrorBase | undefined;
+		rehydrated.once("closed", (error) => {
+			closeError = error;
+		});
+		rehydrated.connect();
+		await Promise.all([timeoutAwait(validationCompleted.promise), timeoutAwait(connectedP)]);
+		await new Promise<void>((resolve) => setImmediate(resolve));
+		assert.strictEqual(rehydrated.closed, false, closeError?.message);
+		const entryPoint = (await rehydrated.getEntryPoint()) as ITestFluidObject;
+		const map = await entryPoint.getSharedObject<ISharedMap>("map");
+		map.set("after-validation", "value");
+		assert.strictEqual(map.get("after-validation"), "value");
+		assert.strictEqual(rehydrated.closed, false);
+		rehydrated.close();
+	});
+
 	it("returns before validation completes and closes on a delayed mismatch", async () => {
 		const { codeLoader, documentServiceFactory, urlResolver, url, pendingLocalState, anchor } =
 			await createPendingState();
@@ -124,7 +183,7 @@ describe("Pending-state history validation", () => {
 		const releaseValidation = new Deferred<void>();
 		const loadP = loadExistingContainer({
 			codeLoader,
-			documentServiceFactory: delayMismatchedAnchor(
+			documentServiceFactory: wrapAnchorValidation(
 				documentServiceFactory,
 				anchor.sequenceNumber,
 				validationStarted,
@@ -155,7 +214,7 @@ describe("Pending-state history validation", () => {
 		const rehydrated = await timeoutAwait(
 			loadExistingContainer({
 				codeLoader,
-				documentServiceFactory: delayMismatchedAnchor(
+				documentServiceFactory: wrapAnchorValidation(
 					documentServiceFactory,
 					anchor.sequenceNumber,
 					validationStarted,

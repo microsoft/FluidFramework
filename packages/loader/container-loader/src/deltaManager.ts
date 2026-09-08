@@ -908,23 +908,59 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		return `${m.clientId}-${m.type}-${m.minimumSequenceNumber}-${m.referenceSequenceNumber}-${m.timestamp}`;
 	}
 
-	private comparableMessageContents(m: ISequencedDocumentMessage): string | undefined {
-		let contents = m.contents;
-		if (typeof contents === "string") {
-			const serializedContents = contents;
+	/**
+	 * Canonicalizes JSON-compatible message fields that may be represented as either parsed values
+	 * or strings, or whose object keys may be ordered differently after serialization.
+	 */
+	private comparableMessageProperty(value: unknown): string | undefined {
+		let comparableValue = value;
+		if (typeof comparableValue === "string") {
+			const serializedValue = comparableValue;
 			try {
-				contents = JSON.parse(contents) as unknown;
+				comparableValue = JSON.parse(comparableValue) as unknown;
 			} catch {
-				return serializedContents;
+				return serializedValue;
 			}
 		}
-		return JSON.stringify(contents, (_key, value: unknown) =>
-			typeof value === "object" && value !== null && !Array.isArray(value)
+		return JSON.stringify(comparableValue, (_key, child: unknown) =>
+			typeof child === "object" && child !== null && !Array.isArray(child)
 				? Object.fromEntries(
-						Object.entries(value).sort(([left], [right]) => left.localeCompare(right)),
+						Object.entries(child).sort(([left], [right]) => left.localeCompare(right)),
 					)
-				: value,
+				: child,
 		);
+	}
+
+	/**
+	 * Compares fields that identify or change the replay semantics of a pending-state anchor.
+	 *
+	 * `clientSequenceNumber` identifies the original submission; `contents`, `metadata`, and
+	 * `compression` determine runtime and batch interpretation; and `data` is the payload for
+	 * system messages. Service or diagnostic decorations such as `serverMetadata`, `origin`,
+	 * `traces`, and `expHash1` are intentionally omitted because they may be rewritten without
+	 * changing the operation replayed by the client.
+	 */
+	private pendingStateAnchorDifferences(
+		anchor: ISequencedDocumentMessage,
+		message: ISequencedDocumentMessage,
+	): {
+		clientSequenceNumberDiffer: boolean;
+		contentsDiffer: boolean;
+		metadataDiffer: boolean;
+		compressionDiffer: boolean;
+		dataDiffer: boolean;
+	} {
+		return {
+			clientSequenceNumberDiffer: anchor.clientSequenceNumber !== message.clientSequenceNumber,
+			contentsDiffer:
+				this.comparableMessageProperty(anchor.contents) !==
+				this.comparableMessageProperty(message.contents),
+			metadataDiffer:
+				this.comparableMessageProperty(anchor.metadata) !==
+				this.comparableMessageProperty(message.metadata),
+			compressionDiffer: anchor.compression !== message.compression,
+			dataDiffer: anchor.data !== message.data,
+		};
 	}
 
 	/**
@@ -1094,11 +1130,15 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				if (previouslyObservedMessage?.sequenceNumber === message.sequenceNumber) {
 					const message1 = this.comparableMessagePayload(previouslyObservedMessage);
 					const message2 = this.comparableMessagePayload(message);
-					const contentsDiffer =
-						previouslyObservedMessage === this.pendingStateAnchor &&
-						this.comparableMessageContents(previouslyObservedMessage) !==
-							this.comparableMessageContents(message);
-					if (message1 !== message2 || contentsDiffer) {
+					const anchorDifferences =
+						previouslyObservedMessage === this.pendingStateAnchor
+							? this.pendingStateAnchorDifferences(previouslyObservedMessage, message)
+							: undefined;
+					if (
+						message1 !== message2 ||
+						(anchorDifferences !== undefined &&
+							Object.values(anchorDifferences).includes(true))
+					) {
 						const error = new NonRetryableError(
 							// This looks like a data corruption but the culprit was that the file was overwritten
 							// in storage.  See PR #5882.
@@ -1116,7 +1156,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 								serviceCheckpointSequenceNumber: this.serviceCheckpointSequenceNumber,
 								message1,
 								message2,
-								contentsDiffer,
+								...anchorDifferences,
 								driverVersion: undefined,
 							},
 						);
