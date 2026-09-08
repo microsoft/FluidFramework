@@ -32,10 +32,11 @@ chmod 600 data-transfer.config.json
 ```
 
 Edit `data-transfer.config.json` to replace every placeholder. Each
-`sourceTenants` key must match a source tenant in the inventory, and each
-`selfHostTenantId` must be the target tenant created for it. Set
+`sourceTenants` key must match a source tenant in the inventory. Set
 `sourceResourceGroup` and `sourceServerName` to the source Azure Fluid Relay
-server that hosts the tenant.
+server that hosts the tenant. Set each target `selfHostTenantId` in the
+inventory file, not in this configuration. If it is omitted, the source AFR
+tenant ID is used and configuration validation prints a warning.
 
 Later transfer tools retrieve only `key2` with Azure CLI and use it only for
 the document operation that needs it. Do not run `az fluid-relay server
@@ -48,9 +49,10 @@ or include it in logs, errors, results, or telemetry.
 Before running a later phase, verify its non-secret inputs are available:
 
 ```bash
-test -f ../inventory/document-inventory.json
-test -f ../../azure/deploy.parameters.json
+node validate-config.mjs
 ```
+
+Validation reads only local files. It does not call Azure CLI or retrieve keys.
 
 ## Next steps
 
