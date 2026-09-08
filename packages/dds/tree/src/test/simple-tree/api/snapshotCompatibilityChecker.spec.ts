@@ -174,6 +174,10 @@ describe("snapshotCompatibilityChecker", () => {
 
 		// The current schema's string schema is supported by the old schema's staged string schema
 		assert.equal(forwardsCompatibilityStatus.canView, true);
+
+		const combinedCompatibility = getCompatibility(currentViewSchema, oldViewSchema);
+		assert.equal(combinedCompatibility.currentViewOfSnapshotDocument.isEquivalent, false);
+		assert.equal(combinedCompatibility.snapshotViewOfCurrentDocument.isEquivalent, false);
 	});
 
 	it("SnapshotFileSystem", () => {
