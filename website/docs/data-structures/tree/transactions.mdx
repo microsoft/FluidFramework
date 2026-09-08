@@ -46,18 +46,18 @@ There are example transactions here: [Shared Tree Demo](https://github.com/micro
 
 The APIs described in this section are currently beta and may change in future releases.
 
-Unlike <ApiLink package="fluid-framework" api="Tree.runTransaction" />, the `@beta` <ApiLink package="fluid-framework" api="UntypedTreeView.runTransaction">runTransaction</ApiLink> does **not** automatically roll back the transaction if the callback throws an error.
+Unlike <ApiLink package="fluid-framework" api="Tree.runTransaction" />, the `@beta` <ApiLink package="fluid-framework" api={{ previous: "UntypedTreeViewAlpha.runTransaction", new: "UntypedTreeView.runTransaction" }}>runTransaction</ApiLink> does **not** automatically roll back the transaction if the callback throws an error.
 If your callback may throw, you should handle errors explicitly and return `{ rollback: true }` when required.
 
 :::
 
-The beta APIs introduce <ApiLink package="fluid-framework" api="TreeBranchBeta.runTransaction">UntypedTreeViewBeta.runTransaction</ApiLink> as a replacement for `Tree.runTransaction`.
+The beta APIs introduce <ApiLink package="fluid-framework" api={{ previous: "UntypedTreeViewAlpha.runTransaction", new: "UntypedTreeView.runTransaction" }}>runTransaction</ApiLink> as a replacement for `Tree.runTransaction`.
 This new API exists to solve correctness issues where errors being thrown in runTransaction could result in an undefined state.
 This new API enables developers to customize how their application handles this error case.
 
 ### Running a Transaction
 
-For a node in a tree, use <ApiLink package="fluid-framework" api="TreeBeta.context" /> to get its <ApiLink package="fluid-framework" api="TreeContextBeta" />, then call <ApiLink package="fluid-framework" api="TreeContextBeta.runTransaction">runTransaction</ApiLink> on that context.
+For a node in a tree, use <ApiLink package="fluid-framework" api={{ previous: "TreeAlpha.context", new: "TreeBeta.context" }}/> to get its <ApiLink package="fluid-framework" api={{ previous: "TreeContextAlpha", new: "TreeContextBeta" }}/> , then call <ApiLink package="fluid-framework" api={{ previous: "TreeContextAlpha.runTransaction", new: "TreeContextBeta.runTransaction" }}>runTransaction</ApiLink> on that context.
 
 ```typescript
 import { TreeBeta } from "@fluidframework/tree/beta";
@@ -108,7 +108,7 @@ if (result.success) {
 
 ### Asynchronous Transactions
 
-<ApiLink package="fluid-framework" api="TreeBranchBeta.runTransactionAsync">runTransactionAsync</ApiLink> works like <ApiLink package="fluid-framework" api="TreeBranchBeta.runTransaction">runTransaction</ApiLink> but accepts an `async` callback.
+<ApiLink package="fluid-framework" api={{ previous: "UntypedTreeViewAlpha.runTransactionAsync", new: "UntypedTreeView.runTransactionAsync" }}>runTransactionAsync</ApiLink> works like <ApiLink package="fluid-framework" api={{ previous: "UntypedTreeViewAlpha.runTransaction", new: "UntypedTreeView.runTransaction" }}>runTransaction</ApiLink> but accepts an `async` callback.
 
 ```typescript
 const result = await view.runTransactionAsync(async () => {
@@ -141,7 +141,7 @@ If transactions are nested, only the outermost transaction's label is used.
 
 ### Nested Transactions
 
-<ApiLink package="fluid-framework" api="TreeBranchBeta.runTransaction">runTransaction</ApiLink> and <ApiLink package="fluid-framework" api="TreeBranchBeta.runTransactionAsync">runTransactionAsync</ApiLink> can be called from within the callback of another transaction, with some limitations.
+<ApiLink package="fluid-framework" api={{ previous: "UntypedTreeViewAlpha.runTransaction", new: "UntypedTreeView.runTransaction" }}>runTransaction</ApiLink> and <ApiLink package="fluid-framework" api={{ previous: "UntypedTreeViewAlpha.runTransactionAsync", new: "UntypedTreeView.runTransactionAsync" }}>runTransactionAsync</ApiLink> can be called from within the callback of another transaction, with some limitations.
 Nested transactions have the following behavior:
 
 -   If the inner transaction rolls back, only the inner transaction's changes are discarded. The outer transaction continues.
