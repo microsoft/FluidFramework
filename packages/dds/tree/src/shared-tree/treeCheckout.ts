@@ -413,6 +413,7 @@ export function createTreeCheckout(
 				change: changeFamily.rebaser.compose([]),
 				revision: "root",
 				customMetadata: undefined,
+				wasTrimmed: true,
 			},
 			changeFamily,
 			() => idCompressor.generateCompressedId(),
