@@ -95,7 +95,7 @@ export interface ISummarizerObservabilityProps {
     numUnsummarizedRuntimeOps: number;
 }
 
-// @beta @legacy
+// @beta @sealed @legacy
 export interface IVersionMarkResolver {
     onBatchSequenced(listener: (batchId: string, sequenceNumber: number, timestamp?: number) => void): () => void;
     resolve(batchId: string, sequenceNumberLowerBound: number): Promise<ResolveResult>;

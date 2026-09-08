@@ -76,6 +76,10 @@ export type VersionMarkCapture =
 /**
  * Runtime-owned resolver for app-stored version mark locators.
  *
+ * @remarks This interface is implemented only by the Fluid runtime. Hosts obtain it from
+ * {@link IContainerRuntime.versionMarkResolver} and consume it, never implement it.
+ *
+ * @sealed
  * @legacy @beta
  */
 export interface IVersionMarkResolver {
