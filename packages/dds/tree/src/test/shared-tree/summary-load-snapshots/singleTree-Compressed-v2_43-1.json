@@ -1,0 +1,66 @@
+{
+	"type": 1,
+	"tree": {
+		".metadata": {
+			"type": 2,
+			"content": "{\"version\":2}"
+		},
+		"indexes": {
+			"type": 1,
+			"tree": {
+				"EditManager": {
+					"type": 1,
+					"tree": {
+						".metadata": {
+							"type": 2,
+							"content": "{\"version\":2}"
+						},
+						"String": {
+							"type": 2,
+							"content": "{\"trunk\":[],\"branches\":[],\"version\":4}"
+						}
+					}
+				},
+				"Schema": {
+					"type": 1,
+					"tree": {
+						".metadata": {
+							"type": 2,
+							"content": "{\"version\":2}"
+						},
+						"SchemaString": {
+							"type": 2,
+							"content": "{\"version\":2,\"nodes\":{\"com.fluidframework.leaf.number\":{\"kind\":{\"leaf\":0}},\"com.fluidframework.leaf.string\":{\"kind\":{\"leaf\":1}},\"test schema.child\":{\"kind\":{\"object\":{\"count\":{\"kind\":\"Value\",\"types\":[\"com.fluidframework.leaf.number\"]}}}},\"test schema.nodes\":{\"kind\":{\"object\":{\"\":{\"kind\":\"Sequence\",\"types\":[\"test schema.child\"]}}}},\"test schema.parent\":{\"kind\":{\"object\":{\"child\":{\"kind\":\"Value\",\"types\":[\"test schema.nodes\"]},\"label\":{\"kind\":\"Value\",\"types\":[\"com.fluidframework.leaf.string\"]}}}}},\"root\":{\"kind\":\"Value\",\"types\":[\"test schema.parent\"]}}"
+						}
+					}
+				},
+				"Forest": {
+					"type": 1,
+					"tree": {
+						".metadata": {
+							"type": 2,
+							"content": "{\"version\":2}"
+						},
+						"ForestTree": {
+							"type": 2,
+							"content": "{\"keys\":[\"rootFieldKey\"],\"fields\":{\"version\":1,\"identifiers\":[],\"shapes\":[{\"c\":{\"type\":\"test schema.parent\",\"value\":false,\"fields\":[[\"label\",1],[\"child\",2]]}},{\"c\":{\"type\":\"com.fluidframework.leaf.string\",\"value\":true}},{\"c\":{\"type\":\"test schema.nodes\",\"value\":false,\"fields\":[[\"\",3]]}},{\"a\":4},{\"c\":{\"type\":\"test schema.child\",\"value\":false,\"fields\":[[\"count\",5]]}},{\"c\":{\"type\":\"com.fluidframework.leaf.number\",\"value\":true}}],\"data\":[[0,\"foo\",[1,2]]]},\"version\":1}"
+						}
+					}
+				},
+				"DetachedFieldIndex": {
+					"type": 1,
+					"tree": {
+						".metadata": {
+							"type": 2,
+							"content": "{\"version\":2}"
+						},
+						"DetachedFieldIndexBlob": {
+							"type": 2,
+							"content": "{\"version\":1,\"data\":[],\"maxId\":4}"
+						}
+					}
+				}
+			}
+		}
+	}
+}

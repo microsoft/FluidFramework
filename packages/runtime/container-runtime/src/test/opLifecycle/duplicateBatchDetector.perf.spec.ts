@@ -4,12 +4,9 @@
  */
 
 import {
-	BenchmarkType,
-	TestType,
 	benchmarkDuration,
+	benchmarkDurationBatchless,
 	benchmarkIt,
-	collectDurationData,
-	type BenchmarkTimingOptions,
 } from "@fluid-tools/benchmark";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
@@ -63,15 +60,7 @@ function makeBatch(
 describe("DuplicateBatchDetector benchmark", () => {
 	const trackedBatchCounts = [100, 500, 1000];
 
-	/**
-	 * For cleanup scenarios, we use benchmarkFnCustom so we can recreate the detector
-	 * for each measurement (since cleanup mutates state). We run 1 iteration per batch
-	 * to keep each measurement isolated.
-	 */
-	const customExecutionOptions: BenchmarkTimingOptions = {
-		minBatchDurationSeconds: 0,
-		minBatchCount: 20,
-	};
+	const minSampleCount = 20;
 
 	for (const trackedBatchCount of trackedBatchCounts) {
 		describe(`${trackedBatchCount} tracked batches`, () => {
@@ -83,13 +72,11 @@ describe("DuplicateBatchDetector benchmark", () => {
 			// so detector state remains valid across iterations.
 			benchmarkIt({
 				title: `processInboundBatch - no cleanup (${trackedBatchCount} tracked)`,
-				type: BenchmarkType.Measurement,
-				testType: TestType.ExecutionTime,
-				run: async () => {
-					entries = generateSnapshotEntries(trackedBatchCount);
-					detector = new DuplicateBatchDetector(entries);
-					return collectDurationData({
-						benchmarkFn: () => {
+				...benchmarkDuration({
+					benchmarkFnCustom: async (state) => {
+						entries = generateSnapshotEntries(trackedBatchCount);
+						detector = new DuplicateBatchDetector(entries);
+						state.timeAllBatches(() => {
 							// MSN=0 means clearOldBatchIds hits the early exit (msn <= minSeqNum).
 							// This measures: early-exit check + getEffectiveBatchId + map lookup + map insert.
 							// Note: detector grows by 1 entry per iteration, but that doesn't affect the
@@ -97,19 +84,18 @@ describe("DuplicateBatchDetector benchmark", () => {
 							const nextSeqNum = trackedBatchCount + 1;
 							const batch = makeBatch(nextSeqNum, 0, `new-batch-${nextSeqNum}`);
 							detector.processInboundBatch(batch);
-						},
-					});
-				},
+						});
+					},
+				}),
 			});
 
 			// Scenario 2: Partial cleanup (MSN advances past half the entries)
 			benchmarkIt({
 				title: `processInboundBatch - 50% cleanup (${trackedBatchCount} tracked)`,
-				type: BenchmarkType.Measurement,
-				...benchmarkDuration({
-					...customExecutionOptions,
-					async benchmarkFnCustom(state) {
-						let running = true;
+				...benchmarkDurationBatchless({
+					minSampleCount,
+					benchmarkFn: (state) => {
+						let running: boolean;
 						do {
 							// Fresh detector for each measurement
 							entries = generateSnapshotEntries(trackedBatchCount);
@@ -119,11 +105,9 @@ describe("DuplicateBatchDetector benchmark", () => {
 							const msn = Math.floor(trackedBatchCount / 2);
 							const batch = makeBatch(nextSeqNum, msn, `new-batch-${nextSeqNum}`);
 
-							const start = state.timer.now();
-							detector.processInboundBatch(batch);
-							const end = state.timer.now();
-
-							running = state.recordBatch(state.timer.toSeconds(start, end));
+							running = state.time(() => {
+								detector.processInboundBatch(batch);
+							});
 						} while (running);
 					},
 				}),
@@ -132,11 +116,10 @@ describe("DuplicateBatchDetector benchmark", () => {
 			// Scenario 3: Full cleanup (MSN advances past all entries)
 			benchmarkIt({
 				title: `processInboundBatch - 100% cleanup (${trackedBatchCount} tracked)`,
-				type: BenchmarkType.Measurement,
-				...benchmarkDuration({
-					...customExecutionOptions,
-					async benchmarkFnCustom(state) {
-						let running = true;
+				...benchmarkDurationBatchless({
+					minSampleCount,
+					benchmarkFn: (state) => {
+						let running: boolean;
 						do {
 							// Fresh detector for each measurement
 							entries = generateSnapshotEntries(trackedBatchCount);
@@ -146,11 +129,9 @@ describe("DuplicateBatchDetector benchmark", () => {
 							const msn = trackedBatchCount + 1;
 							const batch = makeBatch(nextSeqNum, msn, `new-batch-${nextSeqNum}`);
 
-							const start = state.timer.now();
-							detector.processInboundBatch(batch);
-							const end = state.timer.now();
-
-							running = state.recordBatch(state.timer.toSeconds(start, end));
+							running = state.time(() => {
+								detector.processInboundBatch(batch);
+							});
 						} while (running);
 					},
 				}),

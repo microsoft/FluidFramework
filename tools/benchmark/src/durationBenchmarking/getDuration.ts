@@ -9,6 +9,7 @@ import {
 	type BenchmarkDescription,
 	type BenchmarkFunction,
 } from "../Configuration.js";
+import { assertProperUse } from "../assert.js";
 import { stripUndefined } from "../benchmarkAuthoringUtilities.js";
 import { ValueType, type CollectedData } from "../reportTypes.js";
 import { getArrayStatistics } from "../sampling.js";
@@ -17,7 +18,7 @@ import {
 	isCustomBenchmark,
 	validateBenchmarkArguments,
 	type DurationBenchmark,
-	type BenchmarkTimer,
+	type BatchedDurationTimer,
 	type BenchmarkTimingOptions,
 	type DurationBenchmarkSync,
 	type DurationBenchmarkAsync,
@@ -104,14 +105,15 @@ export async function collectDurationData(args: DurationBenchmark): Promise<Coll
 	return data;
 }
 
-export class BenchmarkState<T> implements BenchmarkTimer<T> {
+export class BenchmarkState<T> implements BatchedDurationTimer<T> {
 	/**
 	 * Duration for each batch, in seconds.
 	 */
 	private readonly samples: number[];
-	private readonly options: Readonly<Required<BenchmarkTimingOptions>>;
+	public readonly options: Readonly<Required<BenchmarkTimingOptions>>;
 	private readonly startTime: T;
 	private phase: Phase;
+	private collectionComplete = false;
 	public iterationsPerBatch: number;
 	public constructor(
 		public readonly timer: Timer<T>,
@@ -133,23 +135,36 @@ export class BenchmarkState<T> implements BenchmarkTimer<T> {
 	}
 
 	public recordBatch(duration: number): boolean {
+		assertProperUse(
+			!this.collectionComplete,
+			"recordBatch() called after data collection is already complete.",
+		);
+		let keepGoing: boolean;
 		switch (this.phase) {
 			case Phase.WarmUp: {
 				this.phase = Phase.AdjustIterationPerBatch;
-				return true;
+				keepGoing = true;
+				break;
 			}
 			case Phase.AdjustIterationPerBatch: {
-				if (!this.growBatchSize(duration)) {
+				if (this.growBatchSize(duration)) {
+					keepGoing = true;
+				} else {
 					this.phase = Phase.CollectData;
 					// Since batch is big enough, include it in data collection.
-					return this.addSample(duration);
+					keepGoing = this.addSample(duration);
 				}
-				return true;
+				break;
 			}
 			default: {
-				return this.addSample(duration);
+				keepGoing = this.addSample(duration);
+				break;
 			}
 		}
+		if (!keepGoing) {
+			this.collectionComplete = true;
+		}
+		return keepGoing;
 	}
 
 	/**
@@ -197,6 +212,10 @@ export class BenchmarkState<T> implements BenchmarkTimer<T> {
 	}
 
 	public computeData(): CollectedData {
+		assertProperUse(
+			this.collectionComplete,
+			"Data collection is not complete. Either call a batch recording method (e.g. recordBatch(), timeBatch()) in a loop until it returns false, or use a method that records all batches at once (e.g. timeAllBatches(), timeAllBatchesAsync()).",
+		);
 		const stats = getArrayStatistics(this.samples.map((v) => v / this.iterationsPerBatch));
 		const data: CollectedData = [
 			{

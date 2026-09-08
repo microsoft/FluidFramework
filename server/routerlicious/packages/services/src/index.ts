@@ -37,6 +37,7 @@ export {
 	IDistributedTokenBucketThrottlerConfig,
 } from "./throttling";
 export { RedisThrottleAndUsageStorageManager } from "./redisThrottleAndUsageStorageManager";
+export { configureThrottler } from "./utils";
 export {
 	BasicWebServerFactory,
 	NodeClusterWebServerFactory,

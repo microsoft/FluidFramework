@@ -61,9 +61,13 @@ describe("Test utils", () => {
 				withHandle,
 				{ type: brand("foo"), fields: { f: [withHandle] } },
 			];
+
 			assert.deepEqual(prepareTreeForCompare(cases), [
 				{ type: "foo" },
-				withHandleExpected,
+				// This test is known to be impacted by https://github.com/nodejs/node/issues/62422 and thus can fail when running the full test suite (but not just this test) in NodeJS 24.
+				// Adding the extra clone here works around that bug.
+				// TODO: remove this unnecessary structuredClone call when it is no longer needed (likely once we drop support for NodeJS 24 when adopting NodeJS 26).
+				structuredClone(withHandleExpected),
 				{ type: "foo", fields: { f: [withHandleExpected] } },
 			]);
 		});

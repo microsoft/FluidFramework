@@ -13,4 +13,3 @@ export {
 	getSessionFromCache,
 	setGetSessionResultInCache,
 } from "./sessionHelper";
-export { configureThrottler } from "./throttling";

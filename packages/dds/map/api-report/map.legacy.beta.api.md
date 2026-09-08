@@ -14,6 +14,14 @@ export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {
     get type(): string;
 }
 
+// @beta @sealed @legacy
+export interface FluidMapLegacy<K, V> extends Omit<FluidMap<K, V>, "get" | "set" | "forEach"> {
+    clear(): void;
+    delete(key: K): boolean;
+    forEach(callbackfn: (value: V, key: K, map: FluidMap<K, V>) => void, thisArg?: any): void;
+    forEach(callbackfn: (value: V, key: K, map: Map<K, V>) => void, thisArg?: any): void;
+}
+
 // @beta @deprecated @legacy
 export interface ICreateInfo {
     ccIds: string[];
@@ -21,17 +29,19 @@ export interface ICreateInfo {
 }
 
 // @public @sealed @legacy
-export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable> {
+export interface IDirectory extends FluidMap<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable> {
     readonly absolutePath: string;
+    clear(): void;
     countSubDirectory?(): number;
     createSubDirectory(subdirName: string): IDirectory;
+    delete(key: string): boolean;
     deleteSubDirectory(subdirName: string): boolean;
     get<T = any>(key: string): T | undefined;
     getSubDirectory(subdirName: string): IDirectory | undefined;
     getWorkingDirectory(relativePath: string): IDirectory | undefined;
     hasSubDirectory(subdirName: string): boolean;
     set<T = unknown>(key: string, value: T): this;
-    subdirectories(): IterableIterator<[string, IDirectory]>;
+    subdirectories(): FluidIterableIterator<[string, IDirectory]>;
 }
 
 // @beta @deprecated @legacy
@@ -70,7 +80,7 @@ export interface ISerializableValue {
 // @beta @sealed @legacy
 export interface ISharedDirectory extends ISharedObject<ISharedDirectoryEvents & IDirectoryEvents>, Omit<IDirectory, "on" | "once" | "off"> {
     // (undocumented)
-    [Symbol.iterator](): IterableIterator<[string, any]>;
+    [Symbol.iterator](): FluidIterableIterator<[string, any]>;
     // (undocumented)
     readonly [Symbol.toStringTag]: string;
 }
@@ -86,9 +96,15 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 }
 
 // @beta @sealed @legacy
-export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
+export interface ISharedMap extends ISharedObject<ISharedMapEvents>, FluidMap<string, any> {
+    clear(): void;
+    delete(key: string): boolean;
     get<T = any>(key: string): T | undefined;
     set<T = unknown>(key: string, value: T): this;
+}
+
+// @beta @sealed @legacy
+export interface ISharedMapBeta extends Omit<ISharedMap, Exclude<keyof FluidMap<string, unknown>, "get" | "set">>, FluidMapLegacy<string, any> {
 }
 
 // @beta @sealed @legacy

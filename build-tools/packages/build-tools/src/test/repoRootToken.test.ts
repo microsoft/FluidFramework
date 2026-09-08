@@ -8,7 +8,7 @@ import {
 	REPO_ROOT_TOKEN,
 	replaceRepoRootToken,
 	replaceRepoRootTokens,
-} from "../fluidBuild/fluidBuildConfig";
+} from "../fluidBuild/fluidBuildConfig.js";
 
 describe("Repo Root Token", () => {
 	const testRepoRoot = "/home/user/repo";

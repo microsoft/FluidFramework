@@ -4,6 +4,7 @@
  */
 
 import type {
+	IDocumentManager,
 	IStorageNameRetriever,
 	IRevokedTokenChecker,
 	IReadinessCheck,
@@ -13,6 +14,7 @@ import type { IRedisClientConnectionManager } from "@fluidframework/server-servi
 import type { IPostEphemeralContainerChecker, ISimplifiedCustomDataRetriever } from "./services";
 
 export interface IHistorianResourcesCustomizations {
+	documentManager?: IDocumentManager;
 	storageNameRetriever?: IStorageNameRetriever;
 	revokedTokenChecker?: IRevokedTokenChecker;
 	redisClientConnectionManager?: IRedisClientConnectionManager;

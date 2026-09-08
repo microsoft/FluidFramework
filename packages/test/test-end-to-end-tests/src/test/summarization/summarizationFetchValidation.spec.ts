@@ -7,7 +7,10 @@ import { strict as assert } from "assert";
 
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { ISummarizeResults, ISummarizer } from "@fluidframework/container-runtime/internal";
+import type {
+	ISummarizeResults,
+	ISummarizer,
+} from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
 import { ISummaryContext, ISnapshotTree } from "@fluidframework/driver-definitions/internal";

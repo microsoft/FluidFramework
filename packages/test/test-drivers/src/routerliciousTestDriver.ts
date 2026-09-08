@@ -44,7 +44,7 @@ const dockerConfig = (driverPolicies?: IRouterliciousDriverPolicies): IConfig =>
 	},
 	tenantId: "fluid",
 	tenantSecret: "create-new-tenants-if-going-to-production",
-	driverPolicies,
+	...(driverPolicies === undefined ? {} : { driverPolicies }),
 });
 
 function getConfig(
@@ -52,6 +52,9 @@ function getConfig(
 	fluidHost?: string,
 	tenantId?: string,
 	tenantSecret?: string,
+	ordererUrl?: string,
+	deltaStorageUrl?: string,
+	deltaStreamUrl?: string,
 	driverPolicies?: IRouterliciousDriverPolicies,
 ): IConfig {
 	assert(tenantId !== undefined, "Missing tenantId");
@@ -68,10 +71,34 @@ function getConfig(
 			},
 			tenantId,
 			tenantSecret,
-			driverPolicies,
+			...(driverPolicies !== undefined ? { driverPolicies } : {}),
 		};
 	}
 	assert(fluidHost !== undefined, "Missing Fluid host");
+	const hasCustomServiceEndpoints =
+		ordererUrl !== undefined || deltaStorageUrl !== undefined || deltaStreamUrl !== undefined;
+	if (hasCustomServiceEndpoints) {
+		assert(typeof ordererUrl === "string" && ordererUrl !== "", "Missing orderer URL");
+		assert(
+			typeof deltaStorageUrl === "string" && deltaStorageUrl !== "",
+			"Missing delta storage URL",
+		);
+		assert(
+			typeof deltaStreamUrl === "string" && deltaStreamUrl !== "",
+			"Missing delta stream URL",
+		);
+		return {
+			serviceEndpoint: {
+				hostUrl: fluidHost,
+				ordererUrl,
+				deltaStorageUrl,
+				deltaStreamUrl,
+			},
+			tenantId,
+			tenantSecret,
+			...(driverPolicies !== undefined ? { driverPolicies } : {}),
+		};
+	}
 	return {
 		serviceEndpoint: {
 			hostUrl: fluidHost,
@@ -81,7 +108,7 @@ function getConfig(
 		},
 		tenantId,
 		tenantSecret,
-		driverPolicies,
+		...(driverPolicies !== undefined ? { driverPolicies } : {}),
 	};
 }
 
@@ -111,6 +138,9 @@ function getEndpointConfigFromEnv(r11sEndpointName: RouterliciousEndpoint): ICon
 		config.host,
 		config.tenantId,
 		config.tenantSecret,
+		config.ordererUrl,
+		config.deltaStorageUrl,
+		config.deltaStreamUrl,
 		config.driverPolicies,
 	);
 }
@@ -139,7 +169,8 @@ export function assertRouterliciousEndpoint(
 		endpoint === "frs" ||
 		endpoint === "frsCanary" ||
 		endpoint === "r11s" ||
-		endpoint === "docker"
+		endpoint === "docker" ||
+		endpoint === "custom"
 	) {
 		return;
 	}
@@ -169,6 +200,7 @@ export class RouterliciousTestDriver implements ITestDriver {
 	}
 
 	public readonly type = "routerlicious";
+	public readonly endpointName?: string;
 	public get version(): string {
 		return this.api.version;
 	}
@@ -178,8 +210,12 @@ export class RouterliciousTestDriver implements ITestDriver {
 		private readonly serviceEndpoints: IServiceEndpoint,
 		private readonly api: RouterliciousDriverApiType = RouterliciousDriverApi,
 		private readonly driverPolicies: IRouterliciousDriverPolicies | undefined,
-		public readonly endpointName?: string,
-	) {}
+		endpointName?: string,
+	) {
+		if (endpointName !== undefined) {
+			this.endpointName = endpointName;
+		}
+	}
 
 	async createContainerUrl(testId: string, containerUrl?: IResolvedUrl): Promise<string> {
 		const containerId = containerUrl && "id" in containerUrl ? containerUrl.id : testId;

@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { type Static, type TSchema, Type } from "@sinclair/typebox";
+import * as Type from "@sinclair/typebox";
+import type { Static, TSchema } from "@sinclair/typebox";
 
 import type { FieldBatchFormatVersion } from "./versions.js";
 
@@ -28,7 +29,6 @@ export const Count = Type.Number({ multipleOf: 1, minimum: 0 });
 
 const EncodedFieldBatchBase = Type.Object(
 	{
-		version: Type.Number(),
 		identifiers: Type.Array(Type.String()),
 		/**
 		 * Top level array is list of field from batch.

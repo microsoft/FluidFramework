@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import {
+import type {
 	IContainerRuntimeOptions,
 	ISummarizer,
 } from "@fluidframework/container-runtime/internal";
@@ -24,6 +24,7 @@ import {
 	TestFluidObjectFactory,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	createSummarizerFromFactory,
+	defaultTestOldestSupportedClient,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
@@ -57,6 +58,7 @@ describeCompat("GC version update", "NoCompat", (getTestObjectProvider, apis) =>
 		ContainerRuntimeFactoryWithDefaultDataStore,
 		{
 			defaultFactory,
+			oldestSupportedClient: defaultTestOldestSupportedClient,
 			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
 			runtimeOptions,
 		},

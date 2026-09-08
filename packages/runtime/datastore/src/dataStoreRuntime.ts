@@ -29,7 +29,6 @@ import type {
 	IFluidDataStoreRuntime,
 	IFluidDataStoreRuntimeEvents,
 	IDeltaManagerErased,
-	IFluidDataStoreRuntimeAlpha,
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	type IClientDetails,
@@ -63,8 +62,7 @@ import {
 	notifiesReadOnlyState,
 	encodeHandlesInContainerRuntime,
 	type IFluidDataStorePolicies,
-	type MinimumVersionForCollab,
-	asLegacyAlpha,
+	type OldestSupportedClientVersion,
 	currentSummarizeStepPrefix,
 	currentSummarizeStepPropertyName,
 } from "@fluidframework/runtime-definitions/internal";
@@ -80,6 +78,7 @@ import {
 	exceptionToResponse,
 	generateHandleContextPath,
 	processAttachMessageGCData,
+	dataStoreLoadTelemetryProps,
 	toFluidHandleInternal,
 	unpackChildNodesUsedRoutes,
 	toDeltaManagerErased,
@@ -392,7 +391,7 @@ export class FluidDataStoreRuntime
 	 * and we keep this property as private, but consumers may optimistically cast
 	 * to the internal interface to access this property.
 	 */
-	public readonly minVersionForCollab: MinimumVersionForCollab;
+	public readonly minVersionForCollab: OldestSupportedClientVersion;
 
 	/**
 	 * Create an instance of a DataStore runtime.
@@ -424,8 +423,12 @@ export class FluidDataStoreRuntime
 			logger: dataStoreContext.baseLogger,
 			namespace: "FluidDataStoreRuntime",
 			properties: {
-				all: { dataStoreId: uuid(), dataStoreVersion: pkgVersion },
-				error: { inStagingMode: () => this.inStagingMode, isDirty: () => this.isDirty },
+				all: {
+					dataStoreVersion: pkgVersion,
+					...dataStoreLoadTelemetryProps(dataStoreContext),
+					inStagingMode: () => this.inStagingMode,
+					isDirty: () => this.isDirty,
+				},
 			},
 		});
 
@@ -505,7 +508,28 @@ export class FluidDataStoreRuntime
 		}
 
 		this.entryPoint = new FluidObjectHandle<FluidObject>(
-			new LazyPromise(async () => provideEntryPoint(this)),
+			new LazyPromise(async () =>
+				provideEntryPoint(this).catch((error) => {
+					let packagePath: readonly string[] = [];
+					try {
+						packagePath = this.dataStoreContext.packagePath;
+					} catch {
+						// `packagePath` may not be available during early load failures.
+					}
+					const errorWrapped = DataProcessingError.wrapIfUnrecognized(
+						error,
+						"entryPointInitialization",
+					);
+					errorWrapped.addTelemetryProperties(
+						dataStoreLoadTelemetryProps({ id: this.dataStoreContext.id, packagePath }),
+					);
+					this.mc.logger.sendErrorEvent(
+						{ eventName: "EntryPointInitializationFailure" },
+						errorWrapped,
+					);
+					throw errorWrapped;
+				}),
+			),
 			"",
 			this.objectsRoutingContext,
 		);
@@ -545,16 +569,16 @@ export class FluidDataStoreRuntime
 	}
 
 	/**
-	 * Implementation of IFluidDataStoreRuntimeAlpha.inStagingMode
+	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.inStagingMode}
 	 */
-	private get inStagingMode(): IFluidDataStoreRuntimeAlpha["inStagingMode"] {
-		return asLegacyAlpha(this.dataStoreContext.containerRuntime)?.inStagingMode;
+	public get inStagingMode(): boolean {
+		return this.dataStoreContext.containerRuntime.inStagingMode;
 	}
 
 	/**
-	 * Implementation of IFluidDataStoreRuntimeAlpha.isDirty
+	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.isDirty}
 	 */
-	private get isDirty(): IFluidDataStoreRuntimeAlpha["isDirty"] {
+	public get isDirty(): boolean {
 		return this.pendingOpCount.value > 0;
 	}
 
@@ -1551,8 +1575,9 @@ export class FluidDataStoreRuntime
 			...tagCodeArtifacts({
 				channelType,
 				channelId,
-				fluidDataStoreId: this.id,
-				fluidDataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
+				// Properties renamed in 2.103.0 (present via logger common props):
+				// fluidDataStoreId -> dataStoreId
+				// fluidDataStorePackagePath -> dataStorePackagePath
 			}),
 			stack: generateStack(30),
 		});
@@ -1635,6 +1660,9 @@ export const mixinRequestHandler = (
  * Or undefined not to add anything to summary.
  * @param Base - base class, inherits from FluidDataStoreRuntime
  * @legacy @beta
+ * @deprecated This API is deprecated and will be removed in a future release. There is no replacement for it.
+ * @privateRemarks
+ * This should not be removed until all consumers are migrated off using it. See AB#78575.
  */
 export const mixinSummaryHandler = (
 	handler: (

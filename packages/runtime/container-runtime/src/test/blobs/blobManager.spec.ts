@@ -5,13 +5,17 @@
 
 import { strict as assert } from "node:assert";
 
+import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import type { ISequencedMessageEnvelope } from "@fluidframework/runtime-definitions/internal";
 import {
 	isFluidHandlePayloadPending,
 	isLocalFluidHandle,
+	toFluidHandleInternal,
 } from "@fluidframework/runtime-utils/internal";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
+// eslint-disable-next-line import-x/no-internal-modules
+import { BlobHandle } from "../../blobManager/blobManager.js";
 import {
 	getGCNodePathFromLocalId,
 	type IBlobManagerLoadInfo,
@@ -30,6 +34,37 @@ import {
 	waitHandlePayloadShared,
 	type UnprocessedMessage,
 } from "./blobTestUtils.js";
+
+describe("BlobHandle", () => {
+	it("Does not invoke the sharing callback for an already-shared payload", () => {
+		let sharePayloadCallbackCalls = 0;
+		const routeContext: IFluidHandleContext = {
+			get IFluidHandleContext() {
+				return routeContext;
+			},
+			absolutePath: "",
+			isAttached: true,
+			attachGraph: () => undefined,
+			resolveHandle: async () => {
+				throw new Error("Not implemented");
+			},
+		};
+		const handle = new BlobHandle(
+			"/blob",
+			routeContext,
+			async () => textToBlob("hello"),
+			false,
+			() => {
+				sharePayloadCallbackCalls++;
+			},
+		);
+
+		handle.sharePayload();
+
+		assert.strictEqual(handle.payloadState, "shared");
+		assert.strictEqual(sharePayloadCallbackCalls, 0);
+	});
+});
 
 for (const createBlobPayloadPending of [false, true]) {
 	describe(`BlobManager (pending payloads: ${createBlobPayloadPending})`, () => {
@@ -175,6 +210,130 @@ for (const createBlobPayloadPending of [false, true]) {
 					assert(blobManager.hasBlob(localId));
 					const blobFromManager = await blobManager.getBlob(localId, createBlobPayloadPending);
 					assert.strictEqual(blobToText(blobFromManager), "hello", "Blob content mismatch");
+				});
+
+				it("Can start sharing a payload before attaching its handle", async function () {
+					if (!createBlobPayloadPending) {
+						this.skip();
+					}
+
+					const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
+						createBlobPayloadPending,
+					});
+					// Hold each service at its boundary so the test can inspect upload, BlobAttach
+					// submission, and sequencing independently.
+					mockBlobStorage.pause();
+					mockOrderingService.pause();
+
+					const handle = await blobManager.createBlob(textToBlob("hello"));
+					assert(isLocalFluidHandle(handle), "Expected a local pending-payload handle");
+					assert(handle.sharePayload !== undefined, "Expected sharePayload to be available");
+					const internalHandle = toFluidHandleInternal(handle);
+
+					assert.strictEqual(internalHandle.isAttached, false);
+					assert.strictEqual(mockBlobStorage.blobsReceived, 0);
+
+					// Repeated calls before the first upload completes must still start only one flow.
+					handle.sharePayload();
+					handle.sharePayload();
+
+					await mockBlobStorage.waitBlobAvailable();
+					assert.strictEqual(
+						mockBlobStorage.blobsReceived,
+						1,
+						"Repeated sharePayload calls should not start another upload",
+					);
+					assert.strictEqual(
+						internalHandle.isAttached,
+						false,
+						"Sharing the payload should not attach the handle",
+					);
+
+					// Complete the upload while leaving BlobAttach queued but unsequenced.
+					await mockBlobStorage.waitCreateOne();
+					await mockOrderingService.waitMessageAvailable();
+					assert.strictEqual(
+						mockOrderingService.messagesReceived,
+						1,
+						"Expected one BlobAttach message",
+					);
+
+					// Graph attachment after sharing starts must not restart the payload-sharing flow.
+					attachHandle(handle);
+					handle.sharePayload();
+					assert.strictEqual(internalHandle.isAttached, true);
+					assert.strictEqual(
+						mockBlobStorage.blobsReceived,
+						1,
+						"Attaching the handle after sharing starts should not start another upload",
+					);
+
+					// Processing BlobAttach completes payload sharing.
+					mockOrderingService.sequenceOne();
+					await waitHandlePayloadShared(handle);
+					assert.strictEqual(handle.payloadShareError, undefined);
+					assert.strictEqual(handle.payloadState, "shared");
+				});
+
+				it("Surfaces failures when payload sharing starts imperatively", async function () {
+					if (!createBlobPayloadPending) {
+						this.skip();
+					}
+
+					const { mockBlobStorage, blobManager } = createTestMaterial({
+						createBlobPayloadPending,
+					});
+					// Hold the upload so the test can complete it with a controlled failure.
+					mockBlobStorage.pause();
+
+					const handle = await blobManager.createBlob(textToBlob("hello"));
+					assert(isLocalFluidHandle(handle), "Expected a local pending-payload handle");
+					assert(handle.sharePayload !== undefined, "Expected sharePayload to be available");
+					const payloadSharedP = waitHandlePayloadShared(handle);
+
+					handle.sharePayload();
+					// Fail before a BlobAttach message can be submitted.
+					await mockBlobStorage.waitCreateOne({
+						error: new LoggingError("fake driver error"),
+					});
+
+					await assert.rejects(payloadSharedP, { message: "fake driver error" });
+					assert.strictEqual(handle.payloadState, "pending");
+					assert(handle.payloadShareError instanceof Error);
+					assert.strictEqual(handle.payloadShareError.message, "fake driver error");
+					assert.strictEqual(toFluidHandleInternal(handle).isAttached, false);
+
+					attachHandle(handle);
+					assert.strictEqual(toFluidHandleInternal(handle).isAttached, true);
+					assert.strictEqual(
+						blobManager.getPendingBlobs(),
+						undefined,
+						"A failed payload should not be added to pending state when later attached",
+					);
+				});
+
+				it("Treats sharing an already-shared payload as a no-op", async function () {
+					if (createBlobPayloadPending) {
+						this.skip();
+					}
+
+					const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
+						createBlobPayloadPending,
+					});
+					// Legacy creation waits for upload and BlobAttach processing, so this handle's
+					// payload is already shared when createBlob returns.
+					const handle = await blobManager.createBlob(textToBlob("hello"));
+					assert(isLocalFluidHandle(handle), "Expected a local blob handle");
+					assert(handle.sharePayload !== undefined, "Expected sharePayload to be available");
+
+					// Calling sharePayload again must not repeat either side effect.
+					const blobsReceived = mockBlobStorage.blobsReceived;
+					const messagesReceived = mockOrderingService.messagesReceived;
+					handle.sharePayload();
+
+					assert.strictEqual(handle.payloadState, "shared");
+					assert.strictEqual(mockBlobStorage.blobsReceived, blobsReceived);
+					assert.strictEqual(mockOrderingService.messagesReceived, messagesReceived);
 				});
 
 				it("Can retrieve a blob using its storageId", async () => {

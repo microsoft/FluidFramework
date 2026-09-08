@@ -375,7 +375,7 @@ export interface IDocumentService extends IEventProvider<IDocumentServiceEvents>
 	/**
 	 * Policies implemented/instructed by driver.
 	 */
-	policies?: IDocumentServicePolicies;
+	policies?: IDocumentServicePolicies | undefined;
 
 	/**
 	 * Access to storage associated with the document

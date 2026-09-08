@@ -11,7 +11,7 @@ import type {
 	IConnect,
 } from "@fluidframework/driver-definitions/internal";
 import type { DriverErrorTelemetryProps } from "@fluidframework/driver-utils/internal";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import type { Socket } from "socket.io-client";
 
 import type { IR11sSocketError } from "./errorUtils.js";
@@ -32,7 +32,7 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection {
 		io: typeof SocketIOClientStatic,
 		client: IClient,
 		url: string,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		timeoutMs = 20000,
 		enableLongPollingDowngrade = true,
 	): Promise<IDocumentDeltaConnection> {
@@ -74,7 +74,7 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection {
 	private constructor(
 		socket: Socket,
 		documentId: string,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		private readonly url: string,
 		enableLongPollingDowngrades?: boolean,
 	) {

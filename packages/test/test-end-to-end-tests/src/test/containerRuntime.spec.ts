@@ -9,6 +9,7 @@ import { describeCompat, ITestDataObject } from "@fluid-private/test-version-uti
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { CompressionAlgorithms } from "@fluidframework/container-runtime/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
+import { cleanedPackageVersion } from "@fluidframework/runtime-utils/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	type ITestContainerConfig,
@@ -57,8 +58,6 @@ describeCompat(
 			let crash = false;
 			let crash2 = false;
 			if (provider.type === "TestObjectProviderWithVersionedLoad") {
-				assert(apis.containerRuntime !== undefined);
-				assert(apis.containerRuntimeForLoading !== undefined);
 				// 1st container is defined by apis.containerRuntime, 2nd and 3rd are defined by apis.containerRuntimeForLoading.
 				// If first container is running 1.3, then it does not understand neither compression or document schema ops,
 				// and thus it will see either of those.
@@ -311,7 +310,6 @@ describeCompat(
 		it.skip("sends a warning telemetry event for clients less than minVersionForCollab", async function () {
 			const releaseMinVersionForCollabWarningAdded = "2.43.0";
 			if (
-				apis.containerRuntimeForLoading === undefined ||
 				semverGt(
 					releaseMinVersionForCollabWarningAdded,
 					apis.containerRuntimeForLoading.version,
@@ -334,7 +332,7 @@ describeCompat(
 			};
 			const optionsWithMinVersionForCollab: ITestContainerConfig = {
 				...options,
-				minVersionForCollab: pkgVersion,
+				minVersionForCollab: cleanedPackageVersion,
 			};
 
 			await provider.makeTestContainer(optionsWithMinVersionForCollab);
@@ -345,7 +343,7 @@ describeCompat(
 					{
 						eventName: "fluid:telemetry:ContainerRuntime:ContainerLoadStats",
 						category: "generic",
-						minVersionForCollab: pkgVersion,
+						minVersionForCollab: cleanedPackageVersion,
 					},
 				],
 				"ContainerLoadStats should have minVersionForCollab",
@@ -358,7 +356,7 @@ describeCompat(
 					{
 						eventName: "fluid:telemetry:MinVersionForCollabWarning",
 						category: "generic",
-						message: `WARNING: The version of Fluid Framework used by this client (${apis.containerRuntimeForLoading.version}) is not supported by this document! Please upgrade to version ${pkgVersion} or later to ensure compatibility.`,
+						message: `WARNING: The version of Fluid Framework used by this client (${apis.containerRuntimeForLoading.version}) is not supported by this document! Please upgrade to version ${cleanedPackageVersion} or later to ensure compatibility.`,
 					},
 				],
 				"MinVersionForCollabWarning should be logged",

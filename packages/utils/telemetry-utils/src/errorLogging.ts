@@ -128,7 +128,7 @@ export function normalizeError(
 	const { message, stack } = extractLogSafeErrorProperties(error, false /* sanitizeStack */);
 	const fluidError: IFluidErrorBase = new NormalizedLoggingError({
 		message,
-		stack,
+		...(stack === undefined ? {} : { stack }),
 	});
 
 	// We need to preserve these properties which are used in a non-typesafe way throughout driver code (see #8743)

@@ -5,6 +5,10 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
+/**
+ * Builds the request headers carrying the given Authorization header value.
+ * @internal
+ */
 export function getHeadersWithAuth(
 	// eslint-disable-next-line @rushstack/no-new-null
 	authHeader: string | null,

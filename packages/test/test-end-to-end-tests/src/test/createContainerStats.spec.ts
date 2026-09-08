@@ -14,12 +14,13 @@ import {
 	ISummaryConfiguration,
 	SummaryCollection,
 } from "@fluidframework/container-runtime/internal";
-import { ISharedDirectory } from "@fluidframework/map/internal";
+import type { ISharedDirectory } from "@fluidframework/map/internal";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
+	defaultTestOldestSupportedClient,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 
@@ -63,6 +64,7 @@ describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider, api
 		ContainerRuntimeFactoryWithDefaultDataStore,
 		{
 			defaultFactory: dataObjectFactory,
+			oldestSupportedClient: defaultTestOldestSupportedClient,
 			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
 			runtimeOptions,
 		},

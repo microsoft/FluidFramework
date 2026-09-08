@@ -4,6 +4,10 @@
  */
 
 import { findPackageOrReleaseGroup, packageOrReleaseGroupArg, semverArg } from "../../args.js";
+import {
+	generateSetVariableString,
+	generateWarningString,
+} from "../../library/azureDevops/pipelineCommands.js";
 import { BaseCommand } from "../../library/commands/base.js";
 import { isLatestInMajor } from "../../library/latestVersions.js";
 
@@ -52,30 +56,34 @@ export default class LatestVersionsCommand extends BaseCommand<typeof LatestVers
 			this.log(
 				`Version ${versionInput.version} is the latest version for major version ${result.majorVersion}`,
 			);
-			this.log(`##vso[task.setvariable variable=shouldDeploy;isoutput=true]true`);
+			this.log(generateSetVariableString("shouldDeploy", "true", { isOutput: true }));
 			this.log(
-				`##vso[task.setvariable variable=majorVersion;isoutput=true]${result.majorVersion}`,
+				generateSetVariableString("majorVersion", result.majorVersion, { isOutput: true }),
 			);
 			return;
 		}
 
 		if (result.latestVersion !== undefined) {
 			this.log(
-				`##[warning]skipping deployment stage. input version ${versionInput.version} does not match the latest version ${result.latestVersion}`,
+				generateWarningString(
+					`skipping deployment stage. input version ${versionInput.version} does not match the latest version ${result.latestVersion}`,
+				),
 			);
-			this.log(`##vso[task.setvariable variable=shouldDeploy;isoutput=true]false`);
+			this.log(generateSetVariableString("shouldDeploy", "false", { isOutput: true }));
 			this.log(
-				`##vso[task.setvariable variable=majorVersion;isoutput=true]${result.majorVersion}`,
+				generateSetVariableString("majorVersion", result.majorVersion, { isOutput: true }),
 			);
 			return;
 		}
 
 		this.log(
-			`##[warning]No major version found corresponding to input version ${versionInput.version}`,
+			generateWarningString(
+				`No major version found corresponding to input version ${versionInput.version}`,
+			),
 		);
-		this.log(`##vso[task.setvariable variable=shouldDeploy;isoutput=true]false`);
+		this.log(generateSetVariableString("shouldDeploy", "false", { isOutput: true }));
 		this.log(
-			`##vso[task.setvariable variable=majorVersion;isoutput=true]${result.majorVersion}`,
+			generateSetVariableString("majorVersion", result.majorVersion, { isOutput: true }),
 		);
 	}
 }

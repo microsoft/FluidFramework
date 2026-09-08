@@ -16,7 +16,7 @@ import {
 } from "@fluid-private/test-version-utils";
 import type { ISharedCell } from "@fluidframework/cell/internal";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
-import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import type { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { AttributionInfo } from "@fluidframework/runtime-definitions/internal";
 import {

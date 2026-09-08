@@ -7,15 +7,19 @@
  * @fileoverview In this file, we will test the functions of a EnumArrayProperty object
  * described in /src/properties/enumArrayProperty.js
  */
-var PropertyFactory, MSG;
+import { constants } from "@fluid-experimental/property-common";
+
+// Ideally this would import from "@fluid-experimental/property-properties", but these
+// tests use internal APIs that are not part of the typed API that comes with the package.
+import { PropertyFactory } from "../../index.js";
+
+const { MSG } = constants;
 
 describe("EnumArrayProperty", function () {
 	/**
 	 * Get all the objects we need in this test here.
 	 */
 	before(function () {
-		MSG = require("@fluid-experimental/property-common").constants.MSG;
-		PropertyFactory = require("../..").PropertyFactory;
 		const enumUnoDosTresSchema = {
 			inherits: "Enum",
 			properties: [

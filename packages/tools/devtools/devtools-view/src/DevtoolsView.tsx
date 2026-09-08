@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { FluentProvider, makeStyles, shorthands, tokens } from "@fluentui/react-components";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
 	CloseContainer,
@@ -20,6 +19,7 @@ import {
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { type ReactElement, useCallback, useEffect, useMemo, useState } from "react";
 
+import { FluentReactComponents } from "./FluentUi.cjs";
 import { useMessageRelay } from "./MessageRelayContext.js";
 import {
 	ConsoleVerboseLogger,
@@ -39,6 +39,8 @@ import {
 	TelemetryView,
 	Waiting,
 } from "./components/index.js";
+
+const { FluentProvider, makeStyles, shorthands, tokens } = FluentReactComponents;
 
 const loggingContext = "INLINE(DevtoolsView)";
 
@@ -208,14 +210,14 @@ export function DevtoolsView(props: DevtoolsViewProps): ReactElement {
 							{modalVisible && (
 								<TelemetryConsentModal onClose={(): void => setModalVisible(false)} />
 							)}
-							<_DevtoolsView supportedFeatures={{}} />
+							<DevtoolsViewInternal supportedFeatures={{}} />
 						</>
 					) : (
 						<>
 							{modalVisible && (
 								<TelemetryConsentModal onClose={(): void => setModalVisible(false)} />
 							)}
-							<_DevtoolsView supportedFeatures={supportedFeatures} />
+							<DevtoolsViewInternal supportedFeatures={supportedFeatures} />
 						</>
 					)}
 				</FluentProvider>
@@ -224,7 +226,7 @@ export function DevtoolsView(props: DevtoolsViewProps): ReactElement {
 	);
 }
 
-interface _DevtoolsViewProps {
+interface DevtoolsViewInternalProps {
 	/**
 	 * Set of features supported by the Devtools.
 	 */
@@ -234,7 +236,7 @@ interface _DevtoolsViewProps {
 /**
  * Internal {@link DevtoolsView}, displayed once the supported feature set has been acquired from the webpage.
  */
-function _DevtoolsView(props: _DevtoolsViewProps): ReactElement {
+function DevtoolsViewInternal(props: DevtoolsViewInternalProps): ReactElement {
 	const { supportedFeatures } = props;
 
 	const [containers, setContainers] = useState<ContainerKey[] | undefined>();

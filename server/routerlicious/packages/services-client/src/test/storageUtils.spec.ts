@@ -238,6 +238,10 @@ describe("Storage Utils", () => {
 					content: JSON.stringify([]),
 					type: SummaryType.Blob,
 				},
+				binaryContent: {
+					content: new Uint8Array([0, 128, 255]),
+					type: SummaryType.Blob,
+				},
 			},
 			type: SummaryType.Tree,
 		};

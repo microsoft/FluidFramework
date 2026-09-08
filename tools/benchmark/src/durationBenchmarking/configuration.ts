@@ -51,15 +51,18 @@ export interface DurationBenchmarkAsync extends BenchmarkTimingOptions {
  * @public
  * @sealed
  */
-export interface BenchmarkTimer<T> {
+export interface BatchedDurationTimer<T> {
 	/** The number of times the operation should be run per batch. */
 	readonly iterationsPerBatch: number;
 	/** The timer to use for measuring elapsed time of a batch. */
 	readonly timer: Timer<T>;
 	/**
-	 * Records the duration of a completed batch and advances internal state.
+	 * Records the duration of running {@link BatchedDurationTimer.iterationsPerBatch} iterations and advances internal state.
 	 * @param duration - The elapsed time for the batch in seconds. Compute this using {@link Timer.toSeconds}.
 	 * @returns `true` if another batch should be run, `false` if data collection is complete.
+	 * @remarks
+	 * When possible, prefer higher level functions like {@link BatchedDurationTimer.timeBatch}
+	 * or {@link BatchedDurationTimer.timeAllBatches} which handle timing and batch management for you.
 	 * @example
 	 * ```typescript
 	 * benchmarkFnCustom: async (state) => {
@@ -79,7 +82,7 @@ export interface BenchmarkTimer<T> {
 	recordBatch(duration: number): boolean;
 
 	/**
-	 * Convenience method: times `callback` running `iterationsPerBatch` times, records the batch, and returns the result of {@link BenchmarkTimer.recordBatch}.
+	 * Convenience method: times `callback` running `iterationsPerBatch` times, records the batch, and returns the result of {@link BatchedDurationTimer.recordBatch}.
 	 * @remarks
 	 * Use this when no per-batch setup or teardown is needed outside the measured callback.
 	 * Implemented in terms of the other public APIs on this interface.
@@ -98,7 +101,7 @@ export interface BenchmarkTimer<T> {
 	timeBatch(callback: () => void): boolean;
 
 	/**
-	 * Async variant of {@link BenchmarkTimer.timeBatch}: times `callback` running `iterationsPerBatch` times, records the batch, and returns the result of {@link BenchmarkTimer.recordBatch}.
+	 * Async variant of {@link BatchedDurationTimer.timeBatch}: times `callback` running `iterationsPerBatch` times, records the batch, and returns the result of {@link BatchedDurationTimer.recordBatch}.
 	 * @remarks
 	 * Use this when no per-batch setup or teardown is needed outside the measured async callback.
 	 * Implemented in terms of the other public APIs on this interface.
@@ -117,7 +120,7 @@ export interface BenchmarkTimer<T> {
 	timeBatchAsync(callback: () => Promise<unknown>): Promise<boolean>;
 
 	/**
-	 * Convenience method: runs {@link BenchmarkTimer.timeBatch} in a loop until data collection is complete.
+	 * Convenience method: runs {@link BatchedDurationTimer.timeBatch} in a loop until data collection is complete.
 	 * @remarks
 	 * Use this when no per-batch setup or teardown is needed outside the measured callback.
 	 * Implemented in terms of the other public APIs on this interface.
@@ -133,7 +136,7 @@ export interface BenchmarkTimer<T> {
 	timeAllBatches(callback: () => void): void;
 
 	/**
-	 * Async variant of {@link BenchmarkTimer.timeAllBatches}: runs {@link BenchmarkTimer.timeBatchAsync} in a loop until data collection is complete.
+	 * Async variant of {@link BatchedDurationTimer.timeAllBatches}: runs {@link BatchedDurationTimer.timeBatchAsync} in a loop until data collection is complete.
 	 * @remarks
 	 * Use this when no per-batch setup or teardown is needed outside the measured async callback.
 	 * Implemented in terms of the other public APIs on this interface.
@@ -185,7 +188,7 @@ export interface DurationBenchmarkCustom extends BenchmarkTimingOptions {
 	 * },
 	 * ```
 	 */
-	benchmarkFnCustom<T>(state: BenchmarkTimer<T>): Promise<void>;
+	benchmarkFnCustom<T>(state: BatchedDurationTimer<T>): Promise<void>;
 }
 
 /**

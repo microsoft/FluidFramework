@@ -4,6 +4,12 @@
 
 ```ts
 
+// @public @deprecated @input
+export type MinimumVersionForCollab = OldestSupportedClientVersion;
+
+// @public @input
+export type OldestSupportedClientVersion = `3.${bigint}.0` | `2.${bigint}.${bigint}`;
+
 // (No @packageDocumentation comment for this package)
 
 ```

@@ -4,7 +4,8 @@
  */
 
 import { type FC, type JSX, useEffect, useState } from "react";
-import ReactDOM from "react-dom";
+// eslint-disable-next-line import-x/no-internal-modules -- This is the pattern prescribed by React
+import { createRoot } from "react-dom/client";
 
 import { IDiceRoller } from "../dataObject.js";
 
@@ -14,7 +15,8 @@ import { IDiceRoller } from "../dataObject.js";
  * @param div - The HTMLElement to render into
  */
 export function reactRenderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivElement): void {
-	ReactDOM.render(<DiceRollerView model={diceRoller} />, div);
+	const root = createRoot(div);
+	root.render(<DiceRollerView model={diceRoller} />);
 }
 
 interface IDiceRollerViewProps {

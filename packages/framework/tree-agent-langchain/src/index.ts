@@ -4,9 +4,9 @@
  */
 
 /**
- * LangChain integration helpers for the {@link @fluidframework/tree-agent#SharedTreeSemanticAgent | SharedTreeSemanticAgent}.
+ * LangChain integration helpers for `@fluidframework/tree-agent`.
  *
  * @packageDocumentation
  */
 
-export { createLangchainChatModel, createLegacyLangchainChatModel } from "./chatModel.js";
+export { createLangchainChatModel } from "./chatModel.js";

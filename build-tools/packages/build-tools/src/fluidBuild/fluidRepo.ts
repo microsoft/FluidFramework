@@ -5,10 +5,14 @@
 
 import * as path from "path";
 
-import { MonoRepo } from "../common/monoRepo";
-import { type Package, Packages } from "../common/npmPackage";
-import type { ExecAsyncResult } from "../common/utils";
-import type { IFluidBuildDir, IFluidBuildDirEntry, IFluidBuildDirs } from "./fluidBuildConfig";
+import { MonoRepo } from "../common/monoRepo.js";
+import { type Package, Packages } from "../common/npmPackage.js";
+import type { ExecAsyncResult } from "../common/utils.js";
+import type {
+	IFluidBuildDir,
+	IFluidBuildDirEntry,
+	IFluidBuildDirs,
+} from "./fluidBuildConfig.js";
 
 /**
  * @deprecated Should not be used outside the build-tools package.
@@ -34,13 +38,13 @@ export class FluidRepo {
 			if (typeof item === "string") {
 				return {
 					directory: path.join(resolvedRoot, item),
-					ignoredDirs: undefined,
 				};
 			}
 			const directory = path.join(resolvedRoot, item.directory);
+			const ignoredDirs = item.ignoredDirs?.map((dir) => path.join(directory, dir));
 			return {
 				directory,
-				ignoredDirs: item.ignoredDirs?.map((dir) => path.join(directory, dir)),
+				...(ignoredDirs === undefined ? {} : { ignoredDirs }),
 			};
 		};
 		const loadOneEntry = (item: IFluidBuildDir, group: string): Package[] => {

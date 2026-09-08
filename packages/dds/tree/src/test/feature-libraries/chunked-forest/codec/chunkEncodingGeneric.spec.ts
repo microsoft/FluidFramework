@@ -5,7 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
-import { type Static, Type } from "@sinclair/typebox";
+import * as Type from "@sinclair/typebox";
+import type { Static } from "@sinclair/typebox";
 
 import { unionOptions } from "../../../../codec/index.js";
 import type {

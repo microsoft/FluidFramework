@@ -7,19 +7,18 @@
  * @fileoverview In this file, we will test the Int64ArrayProperty object described in /src/properties/arrayProperty.js
  */
 
+import { ChangeSet } from "@fluid-experimental/property-changeset";
+import { Int64, constants } from "@fluid-experimental/property-common";
+
+import { BaseProperty, PropertyFactory } from "../../index.js";
+
+const { MSG } = constants;
+
 describe("Int64ArrayProperty", function () {
-	var PropertyFactory, BaseProperty, ChangeSet, MSG;
 	var changeSetWithEntries, removalChangeSet;
-	var myInt64Prop, Int64;
+	var myInt64Prop;
 
 	before(function () {
-		// Get all the objects we need in this test here.
-		PropertyFactory = require("../..").PropertyFactory;
-		BaseProperty = require("../..").BaseProperty;
-		ChangeSet = require("@fluid-experimental/property-changeset").ChangeSet;
-		Int64 = require("@fluid-experimental/property-common").Int64;
-		MSG = require("@fluid-experimental/property-common").constants.MSG;
-
 		// Register a template with a set property for the tests
 		var SimpleInt64TestPropertyTemplate = {
 			typeid: "autodesk.tests:SimpleInt64TestProperty-1.0.0",
@@ -251,7 +250,7 @@ describe("Int64ArrayProperty", function () {
 				in_options.pre(testProperty._properties.int64Property);
 			}
 
-			var initialChangeset = new ChangeSet(testProperty.serialize({ dirtyOnly: false }));
+			const initialChangeset = new ChangeSet(testProperty.serialize({ dirtyOnly: false }));
 			initialChangeset.setIsNormalized(true);
 
 			innerTestChangeSetSquashing(
@@ -261,13 +260,13 @@ describe("Int64ArrayProperty", function () {
 				in_options,
 			);
 
-			var initialChangeset = initialChangeset.getSerializedChangeSet();
-			if (ChangeSet.isEmptyChangeSet(initialChangeset)) {
+			const initialChangesetSerialized = initialChangeset.getSerializedChangeSet();
+			if (ChangeSet.isEmptyChangeSet(initialChangesetSerialized)) {
 				// if one is empty the other should be empty, too
 				expect(testProperty.serialize({ dirtyOnly: false })).to.be.empty;
 			} else {
 				// else they must be deep equal
-				expect(initialChangeset["array<Int64>"].int64Property).to.deep.equal(
+				expect(initialChangesetSerialized["array<Int64>"].int64Property).to.deep.equal(
 					testProperty.serialize({ dirtyOnly: false })["array<Int64>"].int64Property,
 				);
 			}

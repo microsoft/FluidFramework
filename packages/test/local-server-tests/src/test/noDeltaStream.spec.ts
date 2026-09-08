@@ -30,7 +30,7 @@ import {
 	createLoaderProps,
 } from "@fluidframework/test-utils/internal";
 
-describe("No Delta Stream", () => {
+describe("Frozen Delta Stream", () => {
 	const documentId = "localServerTest";
 	const documentLoadUrl = `https://localhost/${documentId}`;
 	const stringId = "stringKey";
@@ -118,7 +118,7 @@ describe("No Delta Stream", () => {
 		loaderContainerTracker.reset();
 	});
 
-	it("Validate Properties on Loaded Container With No Delta Stream", async () => {
+	it("Validate Properties on Loaded Container With Frozen Delta Stream", async () => {
 		// Load the Container that was created by the first client.
 		const container = await loadContainer(true);
 

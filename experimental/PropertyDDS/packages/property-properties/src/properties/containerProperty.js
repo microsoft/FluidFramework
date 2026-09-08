@@ -6,15 +6,17 @@
 /**
  * @fileoverview This file contains the implementation of the ContainerProperty class
  */
-const { MSG } = require("@fluid-experimental/property-common").constants;
-const { ConsoleUtils } = require("@fluid-experimental/property-common");
-const _ = require("underscore");
+import { constants } from "@fluid-experimental/property-common";
+import { ConsoleUtils } from "@fluid-experimental/property-common";
+import _ from "underscore";
 
-const { validationsEnabled } = require("../enableValidations");
+import { validationsEnabled } from "../enableValidations.js";
 
-const { AbstractStaticCollectionProperty } = require("./abstractStaticCollectionProperty");
-const { BaseProperty } = require("./baseProperty");
-const { IndexedCollectionBaseProperty } = require("./indexedCollectionBaseProperty");
+import { AbstractStaticCollectionProperty } from "./abstractStaticCollectionProperty.js";
+import { BaseProperty } from "./baseProperty.js";
+import { IndexedCollectionBaseProperty } from "./indexedCollectionBaseProperty.js";
+
+const { MSG } = constants;
 
 /**
  * A property object that allows to add child properties dynamically.

@@ -7,8 +7,8 @@
  * @fileoverview Definition of the named node property class
  */
 
-const { NamedProperty } = require("./namedProperty");
-const { NodeProperty } = require("./nodeProperty");
+import { NamedProperty } from "./namedProperty.js";
+import { NodeProperty } from "./nodeProperty.js";
 
 /**
  * A NamedNodeProperty is a NodeProperty that has a GUID which unique identifies the property object.

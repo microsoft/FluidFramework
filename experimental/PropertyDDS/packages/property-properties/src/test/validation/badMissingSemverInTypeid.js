@@ -46,4 +46,4 @@ var templateSchema = {
 	typeid: "TeamLeoValidation2:PointID",
 };
 
-module.exports = templateSchema;
+export default templateSchema;

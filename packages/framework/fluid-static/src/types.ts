@@ -18,15 +18,6 @@ import type {
 import type { ITree } from "@fluidframework/tree";
 
 /**
- * Determines the set of runtime options that Fluid Framework will use when running.
- * In "1" mode we support full interop between 2.x clients and 1.x clients,
- * while in "2" mode we only support interop between 2.x clients.
- *
- * @public
- */
-export type CompatibilityMode = "1" | "2";
-
-/**
  * A mapping of string identifiers to instantiated `DataObject`s or `SharedObject`s.
  */
 export type LoadableObjectRecord = Record<string, IFluidLoadable>;

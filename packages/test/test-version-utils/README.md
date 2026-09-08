@@ -13,8 +13,10 @@ exports to get the versioned Fluid APIs.
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 **NOTE: This package is private to the `@microsoft/fluid-framework` repository.**
-**It is not published, and therefore may only be used in packages within the same pnpm workspace in this repo using the [workspace:*](https://pnpm.io/workspaces#workspace-protocol-workspace) schema.**
-**Since this package is not published, it may also only be used as a dev dependency, or as a dependency in packages that are not published.**
+**This package is not published.**
+**Use it only in packages in the same pnpm workspace.**
+**Specify [`workspace:*`](https://pnpm.io/workspaces#workspace-protocol-workspace) as the version.**
+**Use this package only as a development dependency or as a dependency of an unpublished package.**
 
 <!-- prettier-ignore-end -->
 
@@ -45,14 +47,13 @@ are generated (empty entries are current versions):
 In addition to the layer version combinations seen above, this package also provides functions to generate variations
 intended to test all layers of one version against all layers of another version in tests that feature more than one client.
 The intention is to simulate scenarios where the client that created a document was using a different version than the client
-loading the document. These variations are applied in our cross-client tests where we test the current version against the
-most recent **public** release.
+loading the document. The matrix pairs the current build against every in-window prior **Compatibility Checkpoint**
+at or above the deployed-client compatibility floor (see
+[`CompatibilityCheckpoints.md`](../../../CompatibilityCheckpoints.md)) in both directions, with
+each prior checkpoint resolved to the **earliest minor** in its range (e.g. CC#3 → latest patch of
+`2.40.x`).
 
-For example, at the time of writing, main is on version `2.0.0-internal.7.3.0` and the latest **public** release is `1.3.7`.
-Therefore, we would test the following combinations:
-
--   Client A is running `2.0.0-internal.7.3.0` across **all** layers and Client B is running `1.3.7` across **all** layers.
--   Client A is running `1.3.7` across **all** layers and Client B is running `2.0.0-internal.7.3.0` across **all** layers.
+The data driving the matrix lives in [`src/checkpoints.ts`](./src/checkpoints.ts).
 
 ### Mocha test setup with layer version combinations
 
@@ -74,8 +75,9 @@ to enable compat testing easily in the future just by changing the compatVersion
 
 ### Legacy version defaults and installation
 
-By default, N-1 (public release), N-1 (internal release), N-2 (internal release), and LTS (hard coded) test variants are
-generated. The versions can be specified using command line (see below) to run the test against any two versions. This
+By default, the cross-client checkpoint matrix described above is generated, a layer-compat permutation against
+the most recent prior in-window checkpoint, and a hard-coded "Oldest Compatible Version" (OCV) for Loader / Driver
+layer-compat. The versions can be specified using command line (see below) to run the test against any two versions. This
 package includes a `mocha` global hook that will install legacy packages at the beginning of the package based on the
 `compatVersion` settings.
 
@@ -126,8 +128,7 @@ We also accept some of the flags via environment variables.
 
 This bypasses any configuration of version used by the describe\* functions and provides direct access to the versioned APIs.
 
-First make sure to call `ensurePackageInstalled` before running the tests to make sure the necessary legacy version are
-installed.
+First make sure to call `ensureVersionLoaded` before running the tests to make sure the necessary legacy versions are available.
 
 The main entry point is `getVersionedTestObjectProvider` to get a `TestObjectProvider` for a specific version combinations
 and driver config. Additionally, you can get versioned API for specific layers using these API.
@@ -146,13 +147,39 @@ resolve the latest version that matches it.
 OPEN ISSUE: while these API can be used directly, currently the default global mocha hook will still run and install the
 default set of legacy versions whether it is necessary or not.
 
+## Updating compat versions
+
+After a Fluid Framework version bump or after a new compatibility checkpoint is designated, run from this package's
+directory:
+
+```
+pnpm run update-compat-versions
+```
+
+The script (`scripts/updateCompatVersions.ts`) does the following:
+
+1. Reads the current package version from `src/packageVersion.ts`.
+2. Maps that version to a checkpoint via [`src/checkpoints.ts`](./src/checkpoints.ts) and queries the npm registry to
+   resolve every in-window prior checkpoint, plus the full back-compat versions, to exact versions.
+3. Writes `compat-workspaces/generated-versions.cjs` with the resolved exact versions.
+4. Creates or updates per-version `package.json` files in `compat-workspaces/full/`.
+5. Removes version directories that are no longer needed.
+6. Runs `pnpm install --no-frozen-lockfile` in the workspace to regenerate the committed lockfile.
+
+Commit all files produced by the script: `generated-versions.cjs`, per-version `package.json` files, and
+`compat-workspaces/full/pnpm-lock.yaml`.
+
+### Adding pinned versions for specific tests
+
+When adding a test that uses `describeInstallVersions({ requestAbsoluteVersions: [...] })` for some pinned version,
+add that version to `compat-workspaces/explicit-versions.mjs`. Then re-run `update-compat-versions` and commit the changes.
+
 ## Implementation notes
 
-The legacy version are installed in their own version folder
-`./../node_modules/.legacy/<version>` (current package root's node_module directory).
-
-Legacy versions of all packages in all categories are installed regardless of what compat combination is requested.
-(See `packageList` in `src/testApi.ts`).
+Legacy packages are installed in a committed pnpm sub-workspace at `compat-workspaces/full/`.
+The workspace is installed automatically when `pnpm install` is run from the repo root (via the
+`postinstall` hook in this package's `package.json`), so no runtime installation step is required
+in tests.
 
 For now, the current versions are statically bound to also provide typings.
 This is a lie since the public API of a package may change over time: `ContainerRuntime` in FF@10.0.0 will not have the
@@ -181,17 +208,18 @@ Test authors are encouraged to use the `apis` argument of `describeCompat`'s tes
 
 ## Contribution Guidelines
 
-There are many ways to [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid.
+You can [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid Framework in these ways:
 
--   Participate in Q&A in our [GitHub Discussions](https://github.com/microsoft/FluidFramework/discussions).
--   [Submit bugs](https://github.com/microsoft/FluidFramework/issues) and help us verify fixes as they are checked in.
--   Review the [source code changes](https://github.com/microsoft/FluidFramework/pulls).
+-   Answer questions in [GitHub Discussions](https://github.com/microsoft/FluidFramework/discussions).
+-   [Submit bug reports](https://github.com/microsoft/FluidFramework/issues) and help verify fixes.
+-   Review [source code changes](https://github.com/microsoft/FluidFramework/pulls).
 -   [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
 
-Detailed instructions for working in the repo can be found in the [Wiki](https://github.com/microsoft/FluidFramework/wiki).
+For detailed instructions, read the [repo documentation](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Home.md).
 
-This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
-For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+This project follows the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
+For more information, read the [Code of Conduct frequently asked questions](https://opensource.microsoft.com/codeofconduct/faq/).
+For questions or comments, contact [opencode@microsoft.com](mailto:opencode@microsoft.com).
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
 Use of these trademarks or logos must follow Microsoft’s [Trademark & Brand Guidelines](https://www.microsoft.com/trademarks).
@@ -199,11 +227,9 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 
 ## Help
 
-Not finding what you're looking for in this README? Check out [fluidframework.com](https://fluidframework.com/docs/).
+Read the [Fluid Framework documentation](https://fluidframework.com/docs/) for information about Fluid Framework concepts and APIs.
 
-Still not finding what you're looking for? Please [file an issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
-
-Thank you!
+To request information that the documentation does not contain, [create an issue](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Contributing/Submitting-Bugs-and-Feature-Requests.md).
 
 ## Trademark
 

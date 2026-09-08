@@ -30,6 +30,11 @@ export type {
 } from "./messageTypes.js";
 export { ContainerMessageType } from "./messageTypes.js";
 export type { IBlobManagerLoadInfo } from "./blobManager/index.js";
+export {
+	blobManagerBasePath,
+	blobsTreeName,
+	redirectTableBlobName,
+} from "./blobManager/index.js";
 export type { IDataStoreAliasMessage } from "./dataStore.js";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
 export {
@@ -118,6 +123,11 @@ export {
 	DefaultSummaryConfiguration,
 } from "./summary/index.js";
 export { type IChunkedOp, unpackRuntimeMessage } from "./opLifecycle/index.js";
+export {
+	type IVersionMarkResolver,
+	type ResolveResult,
+	type VersionMarkCapture,
+} from "./versionMarks/index.js";
 export {
 	runtimeCoreCompatDetails,
 	runtimeCompatDetailsForLoader,

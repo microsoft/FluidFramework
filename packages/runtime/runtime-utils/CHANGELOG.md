@@ -1,5 +1,156 @@
 # @fluidframework/runtime-utils
 
+## 3.0.0
+
+### Minor Changes
+
+- Removal of direct CommonJS support ([#28124](https://github.com/microsoft/FluidFramework/pull/28124)) [0f84e3b8878](https://github.com/microsoft/FluidFramework/commit/0f84e3b8878a5e75b2253976d98fd963bbd9db88)
+
+  Direct `require()` import is no longer directly supported.
+  Package is transpiled as ECMAScript Module.
+
+  See [Removal of direct CommonJS support in v3.0](https://github.com/microsoft/FluidFramework/issues/27444) for more information.
+
+- Require modern TypeScript module resolution ([#27970](https://github.com/microsoft/FluidFramework/pull/27970)) [325e2016ca9](https://github.com/microsoft/FluidFramework/commit/325e2016ca9978d4a1f7552c97ba34feac9df41f)
+
+  Fluid Framework Client packages no longer include type declaration compatibility entrypoints for TypeScript's legacy Node10 resolution mode (`"moduleResolution": "node"` or `"node10"`).
+  Applications upgrading to Fluid Framework 3.0 must use one of the following supported configurations:
+  - `"module": "Node16"` with `"moduleResolution": "Node16"`
+  - `"module": "NodeNext"` with `"moduleResolution": "NodeNext"`
+  - `"module": "ESNext"` with `"moduleResolution": "Bundler"`
+
+  Existing public package entrypoints exposed through `package.json` exports, including `/alpha`, `/beta`, and `/legacy`, remain available under supported module resolution modes.
+
+  See [Removal of Node10 resolutions in v3.0](https://github.com/microsoft/FluidFramework/issues/27457) for more information.
+
+- Client packages now target ES2022 ([#27846](https://github.com/microsoft/FluidFramework/pull/27846)) [91c78541bdd](https://github.com/microsoft/FluidFramework/commit/91c78541bddcbca5d6c5f357b023eeaee617d885)
+
+  The TypeScript compilation `target` and `lib` for the Fluid Framework client packages have been raised from ES2021/ES2020 to **ES2022**.
+  The published JavaScript now uses ES2022 language features (with correspondingly less down-leveling), so consuming these packages requires a runtime that supports ES2022.
+  All actively supported Node.js versions and evergreen browsers already meet this requirement.
+
+  Note that Fluid Framework has not officially supported targets older than ES2022 since before 2.0: this is documented in [ClientRequirements.md](https://github.com/microsoft/FluidFramework/blob/main/ClientRequirements.md) as well as the README for every client package.
+
+  It is possible this change could impact users of less up to date JavaScript runtimes.
+  Impacted users can use a tool like [babel](https://babeljs.io/) to transpile out unsupported language features.
+
+- Build with TypeScript 6 ([#28052](https://github.com/microsoft/FluidFramework/pull/28052)) [7ab015c49de](https://github.com/microsoft/FluidFramework/commit/7ab015c49deec84833cdfe1fb5e1606b901f6e81)
+
+  FluidFramework Client SDK is now built using TypeScript 6. Consumers should build with TypeScript v6 or v7 or compatible tooling.
+
+## 2.116.0
+
+Dependency updates only.
+
+## 2.115.0
+
+Dependency updates only.
+
+## 2.114.0
+
+### Minor Changes
+
+- Add new @alpha ServiceClient API for creating and loading Fluid containers ([#27693](https://github.com/microsoft/FluidFramework/pull/27693)) [ee47192d4a](https://github.com/microsoft/FluidFramework/commit/ee47192d4ae91bc28f9154c4d1ead2acad762f3c)
+
+  This introduces an experimental (`@alpha`), service-agnostic API for working with Fluid containers whose root is an arbitrary data store, along with an in-memory implementation for testing.
+
+  The new surface is made up of:
+  - `ServiceClient` (`@fluidframework/driver-definitions`): the entry point for creating and loading containers. Along with it come the supporting container types (`FluidContainer`, `FluidContainerWithService`, `FluidContainerAttached`), the data store model (`DataStoreKind`, `DataStoreKey`, `DataStoreRegistry`, `DataStoreCreator`), and the generic registry primitives (`Registry`, `RegistryKey`, `lookupInRegistry`, `createBasicRegistryKey`).
+  - `defineDataStore` and `sharedObjectRegistryFromIterable` (`@fluidframework/shared-object-base`): build a `DataStoreKind` from a root shared object and a registry of shared object kinds.
+  - `defineTreeDataStore` and `instantiateTreeFirstTime` (`@fluidframework/tree`): a SharedTree-specific convenience wrapper that produces a `DataStoreKind` backed by a `TreeView`.
+  - `startEphemeralService` (`@fluidframework/local-driver`): starts an in-memory `EphemeralService` for tests. The service owns the lifetime of the in-memory documents and resources, and produces `ServiceClient`s connected to it (via `EphemeralService.newClient` or `EphemeralService.defaultClient`). The helpers `cleanupEphemeralService` and `getDefaultEphemeralService` manage an optional default service instance.
+
+  Apart from the `@fluidframework/local-driver` helpers (which come from `@fluidframework/local-driver/alpha`), these APIs are also re-exported from `fluid-framework`. None reference any `@legacy` types.
+
+  Example:
+
+  ```typescript
+  import { startEphemeralService } from "@fluidframework/local-driver/alpha";
+  import {
+    ServiceClient,
+    defineTreeDataStore,
+    TreeViewConfiguration,
+    SchemaFactory,
+  } from "fluid-framework/alpha";
+  import { strict as assert } from "node:assert";
+
+  // Start an ephemeral in-memory service and get a ServiceClient connected to it.
+  const service = startEphemeralService();
+  const client: ServiceClient = service.defaultClient;
+  // Define a DataStoreKind which uses a SharedTree.
+  // In this case the schema is for a single number with an initializer that starts the it at 1.
+  // This schema is captures in the type allowing for strongly typed access to the data in the tree,
+  // where the type matches the schema based runtime enforcement of the schema.
+  const numberStore = defineTreeDataStore({
+    type: "my-app-root",
+    config: new TreeViewConfiguration({ schema: SchemaFactory.number }),
+    initializer: () => 1,
+  });
+
+  // Create a container in the service with the above DataStoreKind.
+  // Ideally this creation would use a service independent API, and only the attach call would be service dependent,
+  // but that is not supported yet.
+  const detachedContainer1 = await client.createContainer(numberStore);
+  const container1 = await detachedContainer1.attach();
+
+  // We now have easy and type safe access to the data in the tree, which will be synced over the service.
+  assert.equal(container1.data.root, 1);
+
+  // A second client can load the same container from the service, and will see the same data.
+  const container2 = await client.loadContainer(container1.id, numberStore);
+  assert.equal(container2.data.root, 1);
+
+  // Both clients can modify the data, and the changes will be synced over the service.
+  container2.data.root = 2;
+  // Since we are using an ephemeral service, we can await the synchronization using service.synchronize.
+  await service.synchronize();
+
+  // And now the changes are visible for all clients.
+  assert.equal(container1.data.root, 2);
+  assert.equal(container2.data.root, 2);
+  ```
+
+  Note that this example does a couple of things which are difficult to do with the other API surfaces:
+  1. It creates a container, then loads a second copy of it, allowing for collaboration. There is currently no non-legacy API surface which allows this without spawning a server process. This is also cleaner than the exacting legacy API options, and can replace the test specific APIs for this as well.
+  2. It creates a container which has a SharedTree at the root, and nothing else. This avoids depending on legacy DDS implementations, which is great for long-term document support and bundle size. This is currently impossible using `fluid-static`, which forces a special root data store. It is also impossible if using `aqueduct`, which forces a root directory in every data store. It can be done using the low level legacy APIs directly, but this new API for it is much simpler.
+  3. There is a common interface all services implement (`ServiceClient`), making the container creation part of the code work for any service implementation.
+
+## 2.113.0
+
+Dependency updates only.
+
+## 2.112.0
+
+Dependency updates only.
+
+## 2.111.0
+
+Dependency updates only.
+
+## 2.110.0
+
+Dependency updates only.
+
+## 2.103.0
+
+Dependency updates only.
+
+## 2.102.0
+
+Dependency updates only.
+
+## 2.101.0
+
+Dependency updates only.
+
+## 2.100.0
+
+### Minor Changes
+
+- Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
+
+  All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
+
 ## 2.93.0
 
 Dependency updates only.

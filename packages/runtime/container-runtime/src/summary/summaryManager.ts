@@ -17,9 +17,9 @@ import type {
 import { assert } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import {
-	type ITelemetryLoggerExt,
-	PerformanceEvent,
 	createChildLogger,
+	PerformanceEvent,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { IThrottler } from "../throttler.js";
@@ -96,7 +96,7 @@ export class SummaryManager
 	extends TypedEventEmitter<ISummarizerEvents>
 	implements IDisposable
 {
-	private readonly logger: ITelemetryLoggerExt;
+	private readonly logger: TelemetryLoggerExt;
 	private readonly opsToBypassInitialDelay: number;
 	private readonly initialDelayMs: number;
 	private latestClientId: string | undefined;

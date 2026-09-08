@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { fake, match, type SinonFakeTimers, useFakeTimers } from "sinon";
 
-import * as idleTask from "../../idleTaskScheduler";
+import * as idleTask from "../../idleTaskScheduler.js";
 
 describe("Idle task scheduler", () => {
 	let clock: SinonFakeTimers;

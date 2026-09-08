@@ -7,6 +7,7 @@ import { performanceNow } from "@fluid-internal/client-utils";
 import type { IDeltaManagerFull } from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
 import type { ITelemetryBaseLogger, IEventProvider } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type IDocumentMessage,
@@ -15,12 +16,12 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import {
-	type IEventSampler,
-	type ITelemetryLoggerExt,
-	type ISampledTelemetryLogger,
 	createChildLogger,
 	createSampledLogger,
 	formatTick,
+	type IEventSampler,
+	type ISampledTelemetryLogger,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 /**
@@ -104,7 +105,7 @@ class OpPerfTelemetry {
 	 */
 	private processedOpSizeForTelemetry = 0;
 
-	private readonly logger: ITelemetryLoggerExt;
+	private readonly logger: TelemetryLoggerExt;
 
 	private static readonly OP_LATENCY_SAMPLE_RATE = 500;
 	private readonly opLatencyLogger: ISampledTelemetryLogger;
@@ -150,7 +151,7 @@ class OpPerfTelemetry {
 		/**
 		 * Telemetry logger to write events to.
 		 */
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 	) {
 		this.logger = createChildLogger({ logger, namespace: "OpPerf" });
 
@@ -303,16 +304,20 @@ class OpPerfTelemetry {
 
 	private reportGettingUpToDate(): void {
 		this.connectionOpSeqNumber = undefined;
-		this.logger.sendPerformanceEvent({
-			eventName: "ConnectionSpeed",
-			duration: performanceNow() - this.connectionStartTime,
-			ops: this.gap,
-			// track time to connect only for first connection.
-			timeToConnect: this.firstConnection
-				? formatTick(this.connectionStartTime - this.bootTime)
-				: undefined,
-			firstConnection: this.firstConnection,
-		});
+		this.logger.sendPerformanceEvent(
+			{
+				eventName: "ConnectionSpeed",
+				duration: performanceNow() - this.connectionStartTime,
+				ops: this.gap,
+				// track time to connect only for first connection.
+				timeToConnect: this.firstConnection
+					? formatTick(this.connectionStartTime - this.bootTime)
+					: undefined,
+				firstConnection: this.firstConnection,
+			},
+			undefined, // error
+			LogLevel.info,
+		);
 	}
 
 	private recordPingTime(latency: number): void {

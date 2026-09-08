@@ -5,30 +5,26 @@
 
 import { strict as assert } from "assert";
 
-import { describeCompat } from "@fluid-private/test-version-utils";
-import {
-	ITestObjectProvider,
-	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils/internal";
-
 import { TableDocument } from "../document.js";
 import { TableSlice } from "../slice.js";
 import { TableDocumentItem } from "../table.js";
+import { createLocalTableDocument } from "./localServerTestUtils.js";
 
-describeCompat("TableDocument", "LoaderCompat", (getTestObjectProvider) => {
+describe("TableDocument", () => {
 	let tableDocument: TableDocument;
+	let ensureSynchronized: () => Promise<void>;
+	let disposeContainerAndLocalService: () => Promise<void>;
 
 	function makeId(type: string): string {
 		const newId = Math.random().toString(36).substr(2);
 		return newId;
 	}
 
-	let provider: ITestObjectProvider;
 	beforeEach(async () => {
-		provider = getTestObjectProvider();
-		const container = await provider.createContainer(TableDocument.getFactory());
-		tableDocument = await getContainerEntryPointBackCompat<TableDocument>(container);
+		({ tableDocument, ensureSynchronized, disposeContainerAndLocalService } =
+			await createLocalTableDocument());
 	});
+	afterEach(async () => disposeContainerAndLocalService());
 
 	const extract = (table: TableDocument): TableDocumentItem[][] => {
 		const rows: TableDocumentItem[][] = [];
@@ -47,7 +43,7 @@ describeCompat("TableDocument", "LoaderCompat", (getTestObjectProvider) => {
 		assert.deepStrictEqual(extract(tableDocument), expected);
 
 		// Paranoid check that awaiting incoming messages does not change test results.
-		await provider.ensureSynchronized();
+		await ensureSynchronized();
 		assert.strictEqual(tableDocument.numRows, expected.length);
 		assert.deepStrictEqual(extract(tableDocument), expected);
 	};

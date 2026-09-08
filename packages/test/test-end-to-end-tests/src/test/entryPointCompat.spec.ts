@@ -10,18 +10,26 @@ import {
 	describeInstallVersions,
 	getVersionedTestObjectProvider,
 } from "@fluid-private/test-version-utils";
-// TODO:AB#6558: describeInstallVersions doesn't support dynamically providing package APIs.
+// TODO:AB#6558: describeInstallVersions doesn't support dynamically providing package APIs. Until
+// that gap is closed, this file deliberately uses direct aqueduct imports because the shared
+// TestDataObject/createContainer helpers are reused by both describeCompat (which has `apis`) and
+// describeInstallVersions (which does not).
+/* eslint-disable @typescript-eslint/no-restricted-imports */
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
+/* eslint-enable @typescript-eslint/no-restricted-imports */
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { FluidObject } from "@fluidframework/core-interfaces";
-import { IDirectory } from "@fluidframework/map/internal";
+import type { IDirectory } from "@fluidframework/map/internal";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
-import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
+import {
+	defaultTestOldestSupportedClient,
+	ITestObjectProvider,
+} from "@fluidframework/test-utils/internal";
 
 import { pkgVersion } from "../packageVersion.js";
 
@@ -49,6 +57,7 @@ describe("entryPoint compat", () => {
 		});
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: dataObjectFactory,
+			oldestSupportedClient: defaultTestOldestSupportedClient,
 			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
 			provideEntryPoint: async (runtime: IContainerRuntime) => getDefaultFluidObject(runtime),
 		});

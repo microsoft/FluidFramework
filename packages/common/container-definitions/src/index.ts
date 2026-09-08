@@ -67,6 +67,7 @@ export type {
 	ConnectionStatusTemplate,
 	IBatchMessage,
 	IContainerContext,
+	IContainerContextInternal,
 	IProvideRuntimeFactory,
 	IRuntime,
 	IGetPendingLocalStateProps,

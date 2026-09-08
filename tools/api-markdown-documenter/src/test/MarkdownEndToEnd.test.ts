@@ -7,8 +7,8 @@ import Path from "node:path";
 
 import {
 	ApiItemKind,
+	ApiModel,
 	ReleaseTag,
-	type ApiModel,
 	type ApiPackage,
 } from "@microsoft/api-extractor-model";
 
@@ -119,4 +119,24 @@ describe("Markdown end-to-end tests", () => {
 			}
 		});
 	}
+
+	describe("empty model", () => {
+		const modelName = "empty-model";
+		const configName = "default-config";
+		const temporaryOutputPath = Path.join(testTemporaryDirectoryPath, modelName, configName);
+		const snapshotPath = Path.join(snapshotsDirectoryPath, modelName, configName);
+
+		it("Renders model document when API model has no packages", async () => {
+			// loadModel throws when no .api.json files are present, so construct the model directly.
+			const apiModel = new ApiModel();
+
+			await MarkdownRenderer.renderApiModel({
+				apiModel,
+				uriRoot: "",
+				outputDirectoryPath: temporaryOutputPath,
+			});
+
+			await compareDocumentationSuiteSnapshot(snapshotPath, temporaryOutputPath);
+		});
+	});
 });

@@ -35,6 +35,7 @@ import {
 	requiredIdentifier,
 } from "../fieldKindIdentifiers.js";
 import {
+	EditFilterStatus,
 	type FieldChangeHandler,
 	type FieldChangeRebaser,
 	type FieldEditor,
@@ -45,9 +46,11 @@ import {
 	type NodeId,
 	type RelevantRemovedRootsFromChild,
 	type ToDelta,
-	type NestedChangesIndices,
 	type FieldChangeDelta,
 	FlexFieldKind,
+	type FilterDetachFunc,
+	type FilterAttachFunc,
+	type ChildChangeInfo,
 } from "../modular-schema/index.js";
 
 import type {
@@ -466,9 +469,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		return updated;
 	},
 
-	mute: (change: OptionalChangeset): OptionalChangeset => {
-		return { childChanges: change.childChanges, moves: [] };
-	},
+	filterEdits,
 };
 
 function replaceReplaceRevisions(
@@ -535,16 +536,6 @@ function getIdAfterMoves(id: ChangeAtomId, moves: readonly Move[]): ChangeAtomId
 
 function areEqualRegisterIds(id1: RegisterId, id2: RegisterId): boolean {
 	return id1 === "self" || id2 === "self" ? id1 === id2 : areEqualChangeAtomIds(id1, id2);
-}
-
-function areEqualRegisterIdsOpt(
-	id1: RegisterId | undefined,
-	id2: RegisterId | undefined,
-): boolean {
-	if (id1 === undefined || id2 === undefined) {
-		return id1 === id2;
-	}
-	return areEqualRegisterIds(id1, id2);
 }
 
 function getBidirectionalMaps(moves: OptionalChangeset["moves"]): {
@@ -738,28 +729,17 @@ export const optionalChangeHandler: FieldChangeHandler<
 	getCrossFieldKeys: (_change) => [],
 };
 
-function getNestedChanges(change: OptionalChangeset): NestedChangesIndices {
-	// True iff the content of the field changes in some way
-	const isFieldContentChanged =
-		change.valueReplace !== undefined && change.valueReplace.src !== "self";
-
-	// The node that is moved into the field (if any).
-	const nodeMovedIntoField = change.valueReplace?.src;
+function getNestedChanges(change: OptionalChangeset): ChildChangeInfo[] {
+	const detachId = change.valueReplace?.dst;
 
 	return change.childChanges.map(([register, nodeId]) => {
-		// The node is removed in the input context iif register is not self.
-		const inputIndex = register === "self" ? 0 : undefined;
-		const outputIndex =
-			register === "self"
-				? // If the node starts out as not-removed, it is removed in the output context iff the field content is changed
-					isFieldContentChanged
-					? undefined
-					: 0
-				: // If the node starts out as removed, then it remains removed in the output context iff it is not the node that is moved into the field
-					areEqualRegisterIdsOpt(register, nodeMovedIntoField)
-					? 0
-					: undefined;
-		return [nodeId, inputIndex, outputIndex];
+		// The node is attached in the input context iif register is self.
+		const inputDetachId = register === "self" ? undefined : register;
+		return {
+			nodeId,
+			inputRootId: inputDetachId,
+			detachId: register === "self" ? detachId : undefined,
+		};
 	});
 }
 
@@ -814,3 +794,51 @@ export const optional: Optional = new FlexFieldKind(
 		]),
 	},
 );
+
+function filterEdits(
+	change: OptionalChangeset,
+	options: {
+		filterDetach: FilterDetachFunc;
+		filterAttach: FilterAttachFunc;
+		preserveOtherEdits: boolean;
+	},
+): OptionalChangeset {
+	const filtered: Mutable<OptionalChangeset> = { ...change };
+	if (change.valueReplace !== undefined) {
+		if (isReplaceEffectful(change.valueReplace)) {
+			const detachId = getEffectfulDst(change.valueReplace);
+			const detachResult =
+				detachId === undefined
+					? undefined
+					: options.filterDetach(detachId, 1, undefined).value;
+
+			const attachId = change.valueReplace.src;
+			const attachResult =
+				attachId === undefined
+					? undefined
+					: options.filterAttach(attachId, 1, undefined).value.action;
+
+			if (detachResult?.action === EditFilterStatus.Remove) {
+				assert(
+					attachId === undefined || attachResult === EditFilterStatus.Remove,
+					0xd0e /* Cannot remove detach without also removing attach */,
+				);
+
+				delete filtered.valueReplace;
+				if (detachResult.shouldRemoveChild === true) {
+					filtered.childChanges = filtered.childChanges.filter(([id]) => id !== "self");
+				}
+			} else if (attachResult === EditFilterStatus.Remove) {
+				filtered.valueReplace = { ...change.valueReplace };
+				delete (filtered.valueReplace as Mutable<Replace>).src;
+			}
+		} else if (!options.preserveOtherEdits) {
+			delete filtered.valueReplace;
+		}
+	}
+
+	if (!options.preserveOtherEdits) {
+		filtered.moves = [];
+	}
+	return filtered;
+}

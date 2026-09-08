@@ -6,9 +6,10 @@
 import { strict as assert } from "node:assert";
 
 import {
+	BenchmarkMode,
 	benchmarkIt,
 	benchmarkMemoryUse,
-	isInPerformanceTestingMode,
+	currentBenchmarkMode,
 	memoryUseOfValue,
 } from "@fluid-tools/benchmark";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
@@ -129,10 +130,11 @@ describe("SharedTree memory usage", () => {
 		),
 	});
 
-	const numbersOfEntriesForTests = isInPerformanceTestingMode
-		? [100, 10_000]
-		: // When not measuring perf, use a single smaller data size so the tests run faster.
-			[10];
+	const numbersOfEntriesForTests =
+		currentBenchmarkMode === BenchmarkMode.Performance
+			? [100, 10_000]
+			: // When not measuring perf, use a single smaller data size so the tests run faster.
+				[10];
 
 	for (const numberOfEntries of numbersOfEntriesForTests) {
 		benchmarkIt({
@@ -237,7 +239,8 @@ describe("SharedTree memory usage", () => {
 		});
 	}
 
-	const numberOfNodesForTests = isInPerformanceTestingMode ? [1, 10, 100, 1000] : [10];
+	const numberOfNodesForTests =
+		currentBenchmarkMode === BenchmarkMode.Performance ? [1, 10, 100, 1000] : [10];
 	// TODO: AB#24885 needs .only to describe block when running in performance mode if you need to see the results. Check to see why it does not run without .only.
 	describe("Forest memory usage", () => {
 		describeMemoryBenchmarksForSubtrees(

@@ -29,10 +29,16 @@ pnpm stop
 
 ### Port
 
-Tinylicious uses port 7070 by default. You can change the port number by setting an environment
-variable named PORT to the desired number. For example:
+Tinylicious uses port 7070 by default.
+You can change the port number by passing a `--port` command line argument, or by setting an environment variable named PORT to the desired number.
+If both are provided, the `--port` argument takes precedence.
+For example:
 
 ```sh
+# Using the command line argument:
+pnpm start -- --port 6502
+
+# Using the environment variable:
 $env:PORT=6502
 pnpm start
 ```

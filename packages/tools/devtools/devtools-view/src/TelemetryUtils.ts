@@ -6,8 +6,9 @@
 import type {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
+	LogLevel,
 } from "@fluidframework/core-interfaces";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
 	createContext,
 	type Dispatch,
@@ -24,15 +25,15 @@ import {
  * receives; it should only pass them to the logger provided via {@link DevtoolsPanelProps.usageTelemetryLogger | the
  * usageTelemetryLogger prop for DevtoolsPanel} instead (if any).
  */
-export const LoggerContext = createContext<ITelemetryLoggerExt | undefined>(undefined);
+export const LoggerContext = createContext<TelemetryLoggerExt | undefined>(undefined);
 
 /**
- * Gets the {@link @fluidframework/telemetry-utils#ITelemetryLoggerExt} provided through an {@link LoggerContext}.
+ * Gets the {@link @fluidframework/telemetry-utils#TelemetryLoggerExt} provided through an {@link LoggerContext}.
  *
  * @returns
  * The logger from the context, or undefined is no logger was provided.
  */
-export function useLogger(): ITelemetryLoggerExt | undefined {
+export function useLogger(): TelemetryLoggerExt | undefined {
 	return useContext(LoggerContext);
 }
 
@@ -50,11 +51,11 @@ export function useLogger(): ITelemetryLoggerExt | undefined {
 export class ConsoleVerboseLogger implements ITelemetryBaseLogger {
 	public constructor(private readonly baseLogger?: ITelemetryBaseLogger) {}
 
-	public send(event: ITelemetryBaseEvent): void {
+	public send(event: ITelemetryBaseEvent, logLevel: LogLevel): void {
 		// Deliberately using console.debug() instead of console.log() so the events are only shown when the console's
 		// verbosity level is set to "Verbose".
 		console.debug(`USAGE_TELEMETRY: ${JSON.stringify(event)}`);
-		this.baseLogger?.send(event);
+		this.baseLogger?.send(event, logLevel);
 	}
 }
 
@@ -104,10 +105,10 @@ export const useTelemetryOptIn = (): [boolean, Dispatch<SetStateAction<boolean>>
 export class TelemetryOptInLogger implements ITelemetryBaseLogger {
 	public constructor(private readonly baseLogger?: ITelemetryBaseLogger) {}
 
-	public send(event: ITelemetryBaseEvent): void {
+	public send(event: ITelemetryBaseEvent, logLevel: LogLevel): void {
 		const optIn = getStorageValue(telemetryOptInKey);
 		if (optIn === true) {
-			this.baseLogger?.send(event);
+			this.baseLogger?.send(event, logLevel);
 		}
 	}
 }

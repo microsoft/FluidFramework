@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { FluidIterableIterator } from "@fluidframework/core-interfaces";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -45,6 +46,7 @@ export class PendingLocalStateStore<TKey> {
 	readonly #pendingStates = new Map<TKey, IPendingContainerState>();
 	readonly #savedOps: Record<number, ISequencedDocumentMessage> = {};
 	readonly #blobs: Record<string, string> = {};
+	readonly #attachmentBlobs: Record<string, string> = {};
 	readonly #loadingGroups: Record<string, SerializedSnapshotInfo> = {};
 
 	/**
@@ -92,7 +94,8 @@ export class PendingLocalStateStore<TKey> {
 	 */
 	set(key: TKey, pendingLocalState: string): this {
 		const state = getAttachedContainerStateFromSerializedContainer(pendingLocalState);
-		const { savedOps, snapshotBlobs, loadedGroupIdSnapshots, url } = state;
+		const { savedOps, snapshotBlobs, attachmentBlobContents, loadedGroupIdSnapshots, url } =
+			state;
 
 		// Normalize URL by removing trailing slash for comparison
 		const normalizedUrl = url.replace(/\/$/, "");
@@ -107,6 +110,11 @@ export class PendingLocalStateStore<TKey> {
 		}
 		for (const [id, blob] of Object.entries(snapshotBlobs)) {
 			snapshotBlobs[id] = this.#blobs[id] ??= blob;
+		}
+		if (attachmentBlobContents !== undefined) {
+			for (const [id, blob] of Object.entries(attachmentBlobContents)) {
+				attachmentBlobContents[id] = this.#attachmentBlobs[id] ??= blob;
+			}
 		}
 		if (loadedGroupIdSnapshots !== undefined) {
 			for (const [id, lg] of Object.entries(loadedGroupIdSnapshots)) {
@@ -133,7 +141,7 @@ export class PendingLocalStateStore<TKey> {
 	/**
 	 * Returns an iterator over [key, serializedState] pairs.
 	 */
-	entries(): Iterator<[TKey, string]> {
+	entries(): FluidIterableIterator<[TKey, string]> {
 		const iterator = this.#pendingStates.entries();
 		return {
 			next: (): IteratorResult<[TKey, string]> => {
@@ -144,20 +152,23 @@ export class PendingLocalStateStore<TKey> {
 				}
 				return { done, value: [value[0], JSON.stringify(value[1])] };
 			},
+			[Symbol.iterator](): FluidIterableIterator<[TKey, string]> {
+				return this;
+			},
 		};
 	}
 
 	/**
 	 * Returns an iterator over the stored keys.
 	 */
-	keys(): IterableIterator<TKey> {
+	keys(): FluidIterableIterator<TKey> {
 		return this.#pendingStates.keys();
 	}
 
 	/**
 	 * Makes the store iterable with `for...of` loops.
 	 */
-	[Symbol.iterator](): Iterator<[TKey, string]> {
+	[Symbol.iterator](): FluidIterableIterator<[TKey, string]> {
 		return this.entries();
 	}
 }

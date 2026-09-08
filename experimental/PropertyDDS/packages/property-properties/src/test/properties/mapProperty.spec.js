@@ -7,19 +7,24 @@
  * @fileoverview In this file, we will test the map property object described in /src/properties/mapProperty.js
  */
 
+import { ChangeSet } from "@fluid-experimental/property-changeset";
+import { GuidUtils } from "@fluid-experimental/property-common";
+import _ from "lodash";
+
+// Ideally this would import from "@fluid-experimental/property-properties", but these
+// tests use internal APIs that are not part of the typed API that comes with the package.
+import { BaseProperty, PropertyFactory } from "../../index.js";
+
+const generateGuid = GuidUtils.generateGUID;
+
 describe("MapProperty", function () {
-	var PropertyFactory, BaseProperty, ChangeSet, generateGuid, PATH_TOKENS;
-	var changeSetWithTwoMapEntries, _, changeSetWithTwoMapEntries_full, removalChangeSet;
+	var PATH_TOKENS;
+	var changeSetWithTwoMapEntries, changeSetWithTwoMapEntries_full, removalChangeSet;
 	var myNode, mapNode1, mapNode2, map;
 
 	before(function () {
 		// Get all the objects we need in this test here.
-		PropertyFactory = require("../..").PropertyFactory;
-		BaseProperty = require("../..").BaseProperty;
-		ChangeSet = require("@fluid-experimental/property-changeset").ChangeSet;
-		_ = require("lodash");
-		generateGuid = require("@fluid-experimental/property-common").GuidUtils.generateGUID;
-		PATH_TOKENS = require("../..").BaseProperty.PATH_TOKENS;
+		PATH_TOKENS = BaseProperty.PATH_TOKENS;
 
 		// Register a template with a set property for the tests
 		var TestPropertyTemplate = {

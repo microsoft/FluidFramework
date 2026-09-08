@@ -1,5 +1,53 @@
 # @fluid-example/bubblebench-baseline
 
+## 3.0.0
+
+Dependency updates only.
+
+## 2.116.0
+
+Dependency updates only.
+
+## 2.115.0
+
+Dependency updates only.
+
+## 2.114.0
+
+Dependency updates only.
+
+## 2.113.0
+
+Dependency updates only.
+
+## 2.112.0
+
+Dependency updates only.
+
+## 2.111.0
+
+Dependency updates only.
+
+## 2.110.0
+
+Dependency updates only.
+
+## 2.103.0
+
+Dependency updates only.
+
+## 2.102.0
+
+Dependency updates only.
+
+## 2.101.0
+
+Dependency updates only.
+
+## 2.100.0
+
+Dependency updates only.
+
 ## 2.93.0
 
 Dependency updates only.

@@ -7,16 +7,17 @@
  * @fileoverview Abstract base class for indexed collections (sets and maps)
  */
 
-const { ChangeSet } = require("@fluid-experimental/property-changeset");
-const { ConsoleUtils } = require("@fluid-experimental/property-common");
-const { MSG } = require("@fluid-experimental/property-common").constants;
-const _ = require("lodash");
+import { ChangeSet } from "@fluid-experimental/property-changeset";
+import { ConsoleUtils, constants } from "@fluid-experimental/property-common";
+import _ from "lodash";
 
-const { deserialize } = require("../containerSerializer");
-const { validationsEnabled } = require("../enableValidations");
+import { deserialize } from "../containerSerializer.js";
+import { validationsEnabled } from "../enableValidations.js";
 
-const { AbstractStaticCollectionProperty } = require("./abstractStaticCollectionProperty");
-const { BaseProperty } = require("./baseProperty");
+import { AbstractStaticCollectionProperty } from "./abstractStaticCollectionProperty.js";
+import { BaseProperty } from "./baseProperty.js";
+
+const { MSG } = constants;
 
 /**
  * typedef {property-properties.BaseProperty|string|number|boolean} property-properties.IndexedCollectionBaseProperty~ValueType

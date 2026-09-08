@@ -1,7 +1,7 @@
 {
 	"name": "@fluid-private/test-version-utils",
-	"version": "2.100.0",
-	"description": "End to end tests",
+	"version": "3.1.0",
+	"description": "End to end compatibility test infrastructure",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
@@ -14,41 +14,42 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"types": "./lib/index.d.ts",
 			"import": "./lib/index.js"
 		},
 		"./mocharc-common": {
-			"require": "./mocharc-common.cjs"
+			"import": "./lib/mocharcCommon.js"
 		}
 	},
-	"main": "lib/index.js",
-	"types": "lib/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
+		"build:api-reports": "api-extractor run --local --config api-extractor/api-extractor-report.json",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "api-extractor run --local",
-		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:docs": "api-extractor run --local --config api-extractor/api-extractor-model.json",
+		"build:esm": "tsc --project ./tsconfig.json",
 		"build:genver": "gen-version",
 		"build:test": "npm run build:test:esm",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack . --exclude-entrypoints ./mocharc-common",
+		"check:are-the-types-wrong": "attw --pack . --profile esm-only",
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
 		"check:exports:index": "api-extractor run --config api-extractor/api-extractor-lint-index.json",
 		"check:format": "npm run check:biome",
-		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp node_modules/.legacy nyc",
+		"ci:build:api-reports": "api-extractor run --config api-extractor/api-extractor-report.json",
+		"ci:build:docs": "api-extractor run --config api-extractor/api-extractor-model.json",
+		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --quiet --format stylish src",
 		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
+		"postinstall": "pnpm --dir compat-workspaces/full install --frozen-lockfile --config.confirmModulesPurge=false",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"test": "npm run test:mocha",
-		"test:mocha": "mocha --timeout=10000",
+		"test:mocha": "npm run test:mocha:esm",
+		"test:mocha:esm": "mocha --timeout=10000",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
+		"update-compat-versions": "jiti scripts/updateCompatVersions.ts"
 	},
 	"c8": {
 		"all": true,
@@ -75,7 +76,7 @@
 		"@fluid-experimental/sequence-deprecated": "workspace:~",
 		"@fluid-internal/test-driver-definitions": "workspace:~",
 		"@fluid-private/test-drivers": "workspace:~",
-		"@fluid-tools/benchmark": "^0.55.0",
+		"@fluid-tools/benchmark": "^0.59.0",
 		"@fluid-tools/version-tools": "catalog:buildTools",
 		"@fluidframework/agent-scheduler": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
@@ -96,6 +97,7 @@
 		"@fluidframework/ordered-collection": "workspace:~",
 		"@fluidframework/register-collection": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
+		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
@@ -106,10 +108,11 @@
 		"semver": "^7.7.1"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.18.2",
+		"@arethetypeswrong/cli": "^0.18.5",
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "catalog:buildTools",
+		"@fluid-tools/build-infrastructure": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
@@ -119,7 +122,7 @@
 		"@types/node": "catalog:types",
 		"@types/semver": "^7.7.0",
 		"c8": "^10.1.3",
-		"concurrently": "^9.2.1",
+		"concurrently": "^10.0.3",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^10.1.0",
 		"eslint": "catalog:eslint",
@@ -129,7 +132,7 @@
 		"nock": "^13.3.3",
 		"rimraf": "^6.1.3",
 		"ts-loader": "^9.5.1",
-		"typescript": "~5.4.5",
+		"typescript": "~6.0.3",
 		"uuid": "^11.1.0",
 		"webpack": "^5.94.0",
 		"webpack-cli": "^5.1.4"
@@ -137,7 +140,7 @@
 	"fluidBuild": {
 		"tasks": {
 			"check:exports:index": [
-				"build:esnext"
+				"build:esm"
 			]
 		}
 	},

@@ -18,7 +18,7 @@ import {
 	type StringLiteral,
 	SyntaxKind,
 } from "ts-morph";
-import { PackageCommand } from "../../BasePackageCommand.js";
+import { PackageCommand, type PackageProcessingError } from "../../BasePackageCommand.js";
 import type { PackageKind, PackageWithKind } from "../../filter.js";
 
 /**
@@ -181,7 +181,9 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 		throw new Error("Method not implemented.");
 	}
 
-	protected override async processPackages(packages: PackageWithKind[]): Promise<string[]> {
+	protected override async processPackages(
+		packages: PackageWithKind[],
+	): Promise<PackageProcessingError[]> {
 		const errors: string[] = [];
 
 		const collected: CollectedData = {
@@ -249,7 +251,7 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 
 		// If there are errors, avoid making code changes and just report the errors.
 		if (errors.length > 0) {
-			return errors;
+			return errors.map((details) => ({ packageName: undefined, details }));
 		}
 
 		const makeChanges = !this.flags.validate && !this.flags.requireTagged;
@@ -281,7 +283,7 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 			}
 		}
 
-		return errors;
+		return errors.map((details) => ({ packageName: undefined, details }));
 	}
 
 	private collectAssertData(

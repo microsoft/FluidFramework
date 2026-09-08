@@ -6,14 +6,17 @@
 /**
  * @fileoverview Definition of the reference map property class
  */
-const { PathHelper, TypeIdHelper } = require("@fluid-experimental/property-changeset");
-const { MSG } = require("@fluid-experimental/property-common").constants;
-const _ = require("lodash");
+import { PathHelper, TypeIdHelper } from "@fluid-experimental/property-changeset";
+import { constants } from "@fluid-experimental/property-common";
+import _ from "lodash";
 
-const { BaseProperty } = require("./baseProperty");
-const { ContainerProperty } = require("./containerProperty");
-const { ReferenceProperty } = require("./referenceProperty");
-const { StringMapProperty } = require("./valueMapProperty");
+import { BaseProperty } from "./baseProperty.js";
+// eslint-disable-next-line unused-imports/no-unused-imports -- preserving imports as-is during migration to module format
+import { ContainerProperty } from "./containerProperty.js";
+import { ReferenceProperty } from "./referenceProperty.js";
+import { StringMapProperty } from "./valueMapProperty.js";
+
+const { MSG } = constants;
 
 /**
  * A StringMapProperty which stores reference values

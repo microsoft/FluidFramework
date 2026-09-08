@@ -81,9 +81,15 @@ const config: Linter.Config[] = [
 			"unicorn/throw-new-error": "off",
 		},
 	},
-	// Migrated from .eslintignore
 	{
-		ignores: ["src/index.d.ts"],
+		ignores: ["src/api.ts"],
+	},
+	// Test overrides
+	{
+		files: ["src/test/validation/*.js"],
+		rules: {
+			"import-x/no-default-export": "off",
+		},
 	},
 ];
 

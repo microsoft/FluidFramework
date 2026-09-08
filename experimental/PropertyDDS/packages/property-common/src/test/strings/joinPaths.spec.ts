@@ -9,7 +9,7 @@
  */
 import { expect } from "chai";
 
-import { joinPaths } from "../../index";
+import { joinPaths } from "../../index.js";
 
 describe("property-common.joinPaths", function () {
 	it("should exist", function () {

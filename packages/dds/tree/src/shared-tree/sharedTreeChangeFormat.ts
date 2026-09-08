@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { type Static, type TSchema, Type } from "@sinclair/typebox";
+import * as Type from "@sinclair/typebox";
+import type { Static, TSchema } from "@sinclair/typebox";
 
 import type { EncodedSchemaChange } from "../feature-libraries/index.js";
 import { JsonCompatibleReadOnlySchema } from "../util/index.js";

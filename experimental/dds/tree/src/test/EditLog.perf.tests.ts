@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { BenchmarkType, benchmarkDuration, benchmarkIt } from '@fluid-tools/benchmark';
+import { benchmarkDuration, benchmarkIt } from '@fluid-tools/benchmark';
 
 import { Change, StablePlace } from '../ChangeTypes.js';
 import { EditLog } from '../EditLog.js';
@@ -24,7 +24,6 @@ describe('EditLog Perf', () => {
 		}
 
 		benchmarkIt({
-			type: BenchmarkType.Measurement,
 			title: `process ${numberOfInserts} sequenced inserts`,
 			...benchmarkDuration({
 				benchmarkFn: () => {
@@ -39,7 +38,6 @@ describe('EditLog Perf', () => {
 
 		const targetEditLogSize = Math.floor(numberOfInserts / 4);
 		benchmarkIt({
-			type: BenchmarkType.Measurement,
 			title: `process ${numberOfInserts} sequenced inserts with a target edit log size of ${targetEditLogSize}`,
 			...benchmarkDuration({
 				benchmarkFn: () => {

@@ -1,0 +1,11 @@
+# PR Review Process
+
+When pull requests (PRs) are submitted to the FluidFramework repo, reviewers are automatically assigned to the PR using a [GitHub action.](https://github.com/shufo/auto-assign-reviewer-by-files)
+
+The PR assignments are based on the mappings in the [.github/CODEOWNERS](../../../.github/CODEOWNERS) in the repo.
+Each entry is a glob path followed by the GitHub usernames of people that should be added as reviewers.
+If any files under the glob path have changed, then the reviewers in that entry will be added.
+**All reviewers are always added.**
+
+If you want to adjust the code reviewers, edit [.github/CODEOWNERS](../../../.github/CODEOWNERS) and open a PR.
+See [PR #5125](https://github.com/microsoft/FluidFramework/pull/5125) for an example.

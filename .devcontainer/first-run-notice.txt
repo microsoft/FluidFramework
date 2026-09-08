@@ -1,23 +1,24 @@
-Welcome to Fluid Framework's Standard codespace!
+ _________   _____       __    __    _____   ______       ________    ________
+(_   _____) (_   _)      ) )  ( (   (_   _) (_  __ \     /_______/\  /_______/\
+  ) (___      | |       ( (    ) )    | |     ) ) \ \    \::: _  \ \ \__.::._\/
+ (   ___)     | |        ) )  ( (     | |    ( (   ) )    \::(_)  \ \   \::\ \
+  ) (         | |   __  ( (    ) )    | |     ) )  ) )     \:: __  \ \  _\::\ \__
+ (   )      __| |___) )  ) \__/ (    _| |__  / /__/ /       \:.\ \  \ \/__\::\__/\
+  \_/       \________/   \______/   /_____( (______/         \__\/\__\/\________\/
 
-This codespace is configured for full-repo development with 16 CPUs and 64 GB RAM.
+COPILOT COMMANDS:
+  start                  Let an assistant choose the right workflow
+  dev                    Launch Copilot CLI configured for FF development
+  copilot                Launch Copilot CLI without an FF-specific profile
+  oce                    Launch Copilot CLI for on-call engineer workflows
 
-Getting started:
-  pnpm install          Install all dependencies
-  pnpm build            Build all packages
-  pnpm test             Run tests
-  fluid-build .         Build only the current package and its dependencies
+Custom MCP servers:
+  See GETTING_STARTED.md for how to launch agents with your own MCP servers.
 
-Key documentation:
-  DEV.md                Development setup and workflow guide
-  CONTRIBUTING.md       Contribution guidelines
-  PACKAGES.md           Package overview and organization
+Other commands:
+  pnpm install           Install all dependencies
+  pnpm build             Build all packages
+  pnpm test              Run tests
+  pnpm fluid-build .     Build only the current package and its dependencies
 
-Monorepo structure:
-  packages/             Core Fluid Framework packages (DDS, runtime, loader, etc.)
-  server/               Routerlicious server components
-  build-tools/          Internal build tooling and release infrastructure
-  examples/             Example applications and benchmarks
-  experimental/         Experimental packages (not yet stable)
-
-For more info, see https://fluidframework.com
+More information on this codespace: https://github.com/microsoft/FluidFramework/blob/main/docs/content/Development-Environment/AI-enabled-Codespace.md

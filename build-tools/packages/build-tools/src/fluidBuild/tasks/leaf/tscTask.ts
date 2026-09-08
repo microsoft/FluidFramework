@@ -8,16 +8,32 @@ import { type BigIntStats, existsSync, lstatSync, type Stats } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import isEqual from "lodash.isequal";
-import type * as tsTypes from "typescript";
+import type * as ts54Types from "typescript-5.4";
+import type * as ts59Types from "typescript-5.9";
+import type * as ts60Types from "typescript-6.0";
 
-import { getTscUtils, type TscUtil } from "../../tscUtils";
-import { getInstalledPackageVersion } from "../taskUtils";
-import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
+import type { TscUtil } from "../../tscUtils.js";
+import {
+	getResolvedTsConfig,
+	getTsBuildInfoFullPath,
+	getTscUtils,
+	remapOutFile,
+} from "../../tscUtils.js";
+import { getInstalledPackageVersion } from "../taskUtils.js";
+import { LeafTask, LeafWithDoneFileTask } from "./leafTask.js";
+
+type tsParsedCommandLine =
+	| ts54Types.ParsedCommandLine
+	| ts59Types.ParsedCommandLine
+	| ts60Types.ParsedCommandLine;
 
 interface ITsBuildInfo {
 	program: {
 		fileNames: string[];
-		fileInfos: (string | { version: string; affectsGlobalScope: true })[];
+		fileInfos: (
+			| string
+			| { version: string; affectsGlobalScope?: true; impliedFormat?: number }
+		)[];
 		affectedFilesPendingEmit?: any[];
 		emitDiagnosticsPerFile?: any[];
 		semanticDiagnosticsPerFile?: any[];
@@ -27,10 +43,40 @@ interface ITsBuildInfo {
 	version: string;
 }
 
+/**
+ * Normalizes a raw tsbuildinfo JSON object into the canonical {@link ITsBuildInfo} shape.
+ *
+ * TypeScript 5.x stores build info under a `program` wrapper, while TypeScript 6+
+ * places the same keys at the top level. This function detects which format is present
+ * and returns a unified structure, or `undefined` if the input is not recognizable.
+ */
+export function normalizeTsBuildInfo(raw: any): ITsBuildInfo | undefined {
+	// TS5 format: { program: { fileNames, fileInfos, options, ... }, version }
+	if (raw.program?.fileNames && raw.program?.fileInfos && raw.program?.options) {
+		return raw as ITsBuildInfo;
+	}
+	// TS6 format: { fileNames, fileInfos, options, ..., version }
+	if (raw.fileNames && raw.fileInfos && raw.options) {
+		return {
+			program: {
+				fileNames: raw.fileNames,
+				fileInfos: raw.fileInfos,
+				options: raw.options,
+				affectedFilesPendingEmit: raw.affectedFilesPendingEmit,
+				emitDiagnosticsPerFile: raw.emitDiagnosticsPerFile,
+				semanticDiagnosticsPerFile: raw.semanticDiagnosticsPerFile,
+				changeFileSet: raw.changeFileSet,
+			},
+			version: raw.version,
+		};
+	}
+	return undefined;
+}
+
 export class TscTask extends LeafTask {
 	private _tsBuildInfoFullPath: string | undefined;
 	private _tsBuildInfo: ITsBuildInfo | undefined;
-	private _tsConfig: tsTypes.ParsedCommandLine | undefined;
+	private _tsConfig: tsParsedCommandLine | undefined;
 	private _tsConfigFullPath: string | undefined;
 	private _projectReference: TscTask | undefined;
 	private _sourceStats: (Stats | BigIntStats)[] | undefined;
@@ -213,7 +259,7 @@ export class TscTask extends LeafTask {
 			}
 		} catch (e) {
 			this.traceTrigger(
-				`Unable to get installed package version for typescript from ${this.node.pkg.directory}`,
+				`Unable to get installed package version for typescript from ${this.node.pkg.directory}: ${e}`,
 			);
 			return false;
 		}
@@ -222,7 +268,7 @@ export class TscTask extends LeafTask {
 		return this.checkTsConfig(tsBuildInfoFileDirectory, tsBuildInfo, config);
 	}
 
-	private remapSrcDeclFile(fullPath: string, config: tsTypes.ParsedCommandLine): string {
+	private remapSrcDeclFile(fullPath: string, config: tsParsedCommandLine): string {
 		if (!this._sourceStats) {
 			this._sourceStats = config ? config.fileNames.map((v) => lstatSync(v)) : [];
 		}
@@ -231,7 +277,7 @@ export class TscTask extends LeafTask {
 		if (this._sourceStats.some((value) => isEqual(value, stat))) {
 			const parsed = path.parse(fullPath);
 			const directory = parsed.dir;
-			return this.remapOutFile(config, directory, `${parsed.name}.d.ts`);
+			return remapOutFile(config, directory, `${parsed.name}.d.ts`);
 		}
 		return fullPath;
 	}
@@ -239,7 +285,7 @@ export class TscTask extends LeafTask {
 	private checkTsConfig(
 		tsBuildInfoFileDirectory: string,
 		tsBuildInfo: ITsBuildInfo,
-		options: tsTypes.ParsedCommandLine,
+		options: tsParsedCommandLine,
 	): boolean {
 		const configFileFullPath = this.configFileFullPath;
 		if (!configFileFullPath) {
@@ -272,7 +318,7 @@ export class TscTask extends LeafTask {
 		return true;
 	}
 
-	private readTsConfig(): tsTypes.ParsedCommandLine | undefined {
+	private readTsConfig(): tsParsedCommandLine | undefined {
 		if (this._tsConfig == undefined) {
 			const parsedCommand = this.parsedCommandLine;
 			if (!parsedCommand) {
@@ -284,33 +330,14 @@ export class TscTask extends LeafTask {
 				return undefined;
 			}
 
-			const tscUtils = this.getTscUtils();
-			const config = tscUtils.readConfigFile(configFileFullPath);
-			if (!config) {
-				this.traceError(`ts fail to parse ${configFileFullPath}`);
-				return undefined;
-			}
-
-			// Fix up relative path from the command line based on the package directory
-			const commandOptions = tscUtils.convertOptionPaths(
-				parsedCommand.options,
+			const options = getResolvedTsConfig(
+				this.getTscUtils(),
 				this.node.pkg.directory,
-				path.resolve,
-			);
-
-			// Parse the config file relative to the config file directory
-			const configDir = path.parse(configFileFullPath).dir;
-			const ts = tscUtils.tsLib;
-			const options = ts.parseJsonConfigFileContent(
-				config,
-				ts.sys,
-				configDir,
-				commandOptions,
+				parsedCommand,
 				configFileFullPath,
 			);
-
-			if (options.errors.length) {
-				this.traceError(`ts fail to parse file content ${configFileFullPath}`);
+			if (options === undefined) {
+				this.traceError(`ts fail to parse ${configFileFullPath}`);
 				return undefined;
 			}
 			this._tsConfig = options;
@@ -337,7 +364,7 @@ export class TscTask extends LeafTask {
 		return this._tsConfigFullPath;
 	}
 
-	private get parsedCommandLine(): tsTypes.ParsedCommandLine | undefined {
+	private get parsedCommandLine(): tsParsedCommandLine | undefined {
 		const parsedCommand = this.getTscUtils().parseCommandLine(this.command);
 		if (!parsedCommand) {
 			this.traceError(`ts fail to parse command line ${this.command}`);
@@ -345,71 +372,16 @@ export class TscTask extends LeafTask {
 		return parsedCommand;
 	}
 
-	private get tsBuildInfoFileName(): string | undefined {
-		const configFileFullPath = this.configFileFullPath;
-		if (!configFileFullPath) {
-			return undefined;
-		}
-
-		const configFileParsed = path.parse(configFileFullPath);
-		if (configFileParsed.ext === ".json") {
-			return `${configFileParsed.name}.tsbuildinfo`;
-		}
-		return `${configFileParsed.name}${configFileParsed.ext}.tsbuildinfo`;
-	}
-
-	private getTsBuildInfoFileFromConfig(): string | undefined {
-		const options = this.readTsConfig();
-		if (!options || !options.options.incremental) {
-			return undefined;
-		}
-
-		if (options.options.tsBuildInfoFile) {
-			return options.options.tsBuildInfoFile;
-		}
-
-		const outFile = options.options.out ? options.options.out : options.options.outFile;
-		if (outFile) {
-			return `${outFile}.tsbuildinfo`;
-		}
-
-		const configFileFullPath = this.configFileFullPath;
-		if (!configFileFullPath) {
-			return undefined;
-		}
-
-		const tsBuildInfoFileName = this.tsBuildInfoFileName;
-		if (!tsBuildInfoFileName) {
-			return undefined;
-		}
-
-		return this.remapOutFile(options, path.parse(configFileFullPath).dir, tsBuildInfoFileName);
-	}
-
-	private remapOutFile(
-		options: tsTypes.ParsedCommandLine,
-		directory: string,
-		fileName: string,
-	): string {
-		if (options.options.outDir) {
-			if (options.options.rootDir) {
-				const relative = path.relative(options.options.rootDir, directory);
-				return path.join(options.options.outDir, relative, fileName);
-			}
-			return path.join(options.options.outDir, fileName);
-		}
-		return path.join(directory, fileName);
-	}
-
 	private get tsBuildInfoFileFullPath(): string | undefined {
 		if (this._tsBuildInfoFullPath === undefined) {
-			const infoFile = this.getTsBuildInfoFileFromConfig();
-			if (infoFile) {
-				if (path.isAbsolute(infoFile)) {
-					this._tsBuildInfoFullPath = infoFile;
-				} else {
-					this._tsBuildInfoFullPath = this.getPackageFileFullPath(infoFile);
-				}
+			const options = this.readTsConfig();
+			const configFileFullPath = this.configFileFullPath;
+			if (options && configFileFullPath) {
+				this._tsBuildInfoFullPath = getTsBuildInfoFullPath(
+					options,
+					this.node.pkg.directory,
+					configFileFullPath,
+				);
 			}
 		}
 		return this._tsBuildInfoFullPath;
@@ -431,14 +403,10 @@ export class TscTask extends LeafTask {
 			const tsBuildInfoFileFullPath = this.tsBuildInfoFileFullPath;
 			if (tsBuildInfoFileFullPath && existsSync(tsBuildInfoFileFullPath)) {
 				try {
-					const tsBuildInfo = JSON.parse(await readFile(tsBuildInfoFileFullPath, "utf8"));
-					if (
-						tsBuildInfo.program &&
-						tsBuildInfo.program.fileNames &&
-						tsBuildInfo.program.fileInfos &&
-						tsBuildInfo.program.options
-					) {
-						this._tsBuildInfo = tsBuildInfo;
+					const raw = JSON.parse(await readFile(tsBuildInfoFileFullPath, "utf8"));
+					const normalized = normalizeTsBuildInfo(raw);
+					if (normalized) {
+						this._tsBuildInfo = normalized;
 					} else {
 						this.traceError(`Invalid format ${tsBuildInfoFileFullPath}`);
 					}
@@ -528,8 +496,11 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 				tsBuildInfoFiles,
 			});
 		} catch (e) {
+			// Re-throw so that the user-visible warning in markExecDone surfaces the real
+			// cause (e.g. a ReferenceError from missing tooling). Returning undefined here
+			// would silently mark the task as non-incremental with no actionable detail.
 			this.traceError(`error generating done file content ${e}`);
-			return undefined;
+			throw e;
 		}
 	}
 

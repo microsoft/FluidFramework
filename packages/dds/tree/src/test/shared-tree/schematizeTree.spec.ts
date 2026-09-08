@@ -27,6 +27,7 @@ import type {
 	ITreeCheckout,
 	CheckoutEvents,
 	ISharedTreeEditor,
+	TreeTransactor,
 } from "../../shared-tree/index.js";
 import {
 	canInitialize,
@@ -34,12 +35,15 @@ import {
 	initializerFromChunk,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree/schematizeTree.js";
-import type { Transactor } from "../../shared-tree-core/index.js";
 import {
 	SchemaFactory,
 	type ImplicitFieldSchema,
+	type TreeBranchAlpha,
 	type TreeView,
+	type TreeViewAlpha,
 	type TreeViewConfiguration,
+	type TreeBranchHistory,
+	type UntypedTreeViewAlpha,
 } from "../../simple-tree/index.js";
 import { toInitialSchema } from "../../simple-tree/index.js";
 import { Breakable } from "../../util/index.js";
@@ -179,15 +183,26 @@ describe("schematizeTree", () => {
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			forest: { isEmpty } as IForestSubscription,
 			editor: undefined as unknown as ISharedTreeEditor,
-			transaction: undefined as unknown as Transactor,
+			transaction: undefined as unknown as TreeTransactor,
 			fork(): ITreeCheckout {
 				throw new Error("Function not implemented.");
 			},
-			isBranch(): boolean {
+			isBranch(): this is TreeBranchAlpha {
 				return true;
 			},
-			hasRootSchema(): boolean {
+			isView(): this is UntypedTreeViewAlpha {
+				return true;
+			},
+			hasRootSchema<TSchema extends ImplicitFieldSchema>(
+				_schema: TSchema,
+			): this is TreeViewAlpha<TSchema> {
 				return false;
+			},
+			rewindTo(): void {
+				throw new Error("Function not implemented.");
+			},
+			revertTo(): void {
+				throw new Error("Function not implemented.");
 			},
 			runTransaction(): never {
 				throw new Error("Function not implemented.");
@@ -204,6 +219,13 @@ describe("schematizeTree", () => {
 			rebaseOnto(): void {
 				throw new Error("Function not implemented.");
 			},
+			computeNetChangeIfRebasedOnto(branch: unknown): never {
+				throw new Error("Function not implemented.");
+			},
+			isMissingEditsFrom(branch: unknown): never {
+				throw new Error("Function not implemented.");
+			},
+			branchHistory: undefined as unknown as TreeBranchHistory,
 			dispose(): void {
 				throw new Error("Function not implemented.");
 			},

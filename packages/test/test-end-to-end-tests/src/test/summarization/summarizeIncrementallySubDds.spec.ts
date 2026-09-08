@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { describeCompat, getContainerRuntimeApi } from "@fluid-private/test-version-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
-import {
+import type {
 	IContainerRuntimeOptions,
 	ISummarizer,
 } from "@fluidframework/container-runtime/internal";
@@ -35,6 +35,7 @@ import {
 	createSharedObjectKind,
 } from "@fluidframework/shared-object-base/internal";
 import {
+	defaultTestOldestSupportedClient,
 	ITestFluidObject,
 	ITestObjectProvider,
 	TestFluidObjectFactory,
@@ -489,6 +490,7 @@ describeCompat(
 		};
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory,
+			oldestSupportedClient: defaultTestOldestSupportedClient,
 			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
 			runtimeOptions,
 		});

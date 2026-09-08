@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
-/* globals */
+/* globals expect */
 
-let _;
-let PropertyFactory;
-let PsetUtils;
-let DeferredPromise;
-let ChangeSet;
-let deepCopy;
+import { Utils as PsetUtils } from "@fluid-experimental/property-changeset";
+import { DeferredPromise } from "@fluid-experimental/property-common";
+
+// Ideally this would import from "@fluid-experimental/property-properties", but these
+// tests use internal APIs that are not part of the typed API that comes with the package.
+import { PropertyFactory } from "../../index.js";
+
 const AllProperties = {
 	typeid: "mysample:all-1.0.0",
 	inherits: "NamedProperty",
@@ -55,11 +56,6 @@ describe("property-properties.Utils isLeafNode", function () {
 	 * Get all the objects we need in this test here.
 	 */
 	before(function () {
-		PropertyFactory = require("../..").PropertyFactory;
-		ChangeSet = require("@fluid-experimental/property-changeset").ChangeSet;
-		_ = require("lodash");
-		deepCopy = _.cloneDeep;
-
 		PropertyFactory.register(AllProperties);
 		PropertyFactory.register({
 			typeid: "autodesk.tests:entry-1.0.0",
@@ -106,9 +102,6 @@ describe("property-properties.Utils isLeafNode", function () {
 				},
 			],
 		});
-
-		PsetUtils = require("@fluid-experimental/property-changeset").Utils;
-		DeferredPromise = require("@fluid-experimental/property-common").DeferredPromise;
 	});
 
 	beforeEach(async function () {
@@ -132,6 +125,7 @@ describe("property-properties.Utils isLeafNode", function () {
 		PsetUtils.traverseChangeSetRecursivelyAsync(
 			changeSet,
 			{ preCallback: propertyCb },
+			// @ts-expect-error traverseChangeSetRecursivelyAsync and Return<DeferredPromise.getCb> signatures mismatch - value is always `void` and results in `undefined` Promise value
 			dp.getCb(),
 		);
 		await dp;
@@ -156,6 +150,7 @@ describe("property-properties.Utils isLeafNode", function () {
 		PsetUtils.traverseChangeSetRecursivelyAsync(
 			changeSet,
 			{ preCallback: propertyCb },
+			// @ts-expect-error traverseChangeSetRecursivelyAsync and Return<DeferredPromise.getCb> signatures mismatch - value is always `void` and results in `undefined` Promise value
 			dp.getCb(),
 		);
 		await dp;
@@ -180,6 +175,7 @@ describe("property-properties.Utils isLeafNode", function () {
 		PsetUtils.traverseChangeSetRecursivelyAsync(
 			changeSet,
 			{ preCallback: propertyCb },
+			// @ts-expect-error traverseChangeSetRecursivelyAsync and Return<DeferredPromise.getCb> signatures mismatch - value is always `void` and results in `undefined` Promise value
 			dp.getCb(),
 		);
 		await dp;
@@ -204,6 +200,7 @@ describe("property-properties.Utils isLeafNode", function () {
 		PsetUtils.traverseChangeSetRecursivelyAsync(
 			changeSet,
 			{ preCallback: propertyCb },
+			// @ts-expect-error traverseChangeSetRecursivelyAsync and Return<DeferredPromise.getCb> signatures mismatch - value is always `void` and results in `undefined` Promise value
 			dp.getCb(),
 		);
 		await dp;
@@ -228,6 +225,7 @@ describe("property-properties.Utils isLeafNode", function () {
 		PsetUtils.traverseChangeSetRecursivelyAsync(
 			changeSet,
 			{ preCallback: propertyCb },
+			// @ts-expect-error traverseChangeSetRecursivelyAsync and Return<DeferredPromise.getCb> signatures mismatch - value is always `void` and results in `undefined` Promise value
 			dp.getCb(),
 		);
 		await dp;
@@ -252,6 +250,7 @@ describe("property-properties.Utils isLeafNode", function () {
 		PsetUtils.traverseChangeSetRecursivelyAsync(
 			changeSet,
 			{ preCallback: propertyCb },
+			// @ts-expect-error traverseChangeSetRecursivelyAsync and Return<DeferredPromise.getCb> signatures mismatch - value is always `void` and results in `undefined` Promise value
 			dp.getCb(),
 		);
 		await dp;
@@ -276,6 +275,7 @@ describe("property-properties.Utils isLeafNode", function () {
 		PsetUtils.traverseChangeSetRecursivelyAsync(
 			changeSet,
 			{ preCallback: propertyCb },
+			// @ts-expect-error traverseChangeSetRecursivelyAsync and Return<DeferredPromise.getCb> signatures mismatch - value is always `void` and results in `undefined` Promise value
 			dp.getCb(),
 		);
 		await dp;
@@ -302,6 +302,7 @@ describe("property-properties.Utils isLeafNode", function () {
 		PsetUtils.traverseChangeSetRecursivelyAsync(
 			changeSet,
 			{ preCallback: propertyCb },
+			// @ts-expect-error traverseChangeSetRecursivelyAsync and Return<DeferredPromise.getCb> signatures mismatch - value is always `void` and results in `undefined` Promise value
 			dp.getCb(),
 		);
 		await dp;
@@ -331,6 +332,7 @@ describe("property-properties.Utils isLeafNode", function () {
 		PsetUtils.traverseChangeSetRecursivelyAsync(
 			nonReversibleChangesetSerialized,
 			{ preCallback: propertyCb },
+			// @ts-expect-error traverseChangeSetRecursivelyAsync and Return<DeferredPromise.getCb> signatures mismatch - value is always `void` and results in `undefined` Promise value
 			dp.getCb(),
 		);
 		await dp;

@@ -10,16 +10,17 @@
  * object described in /src/properties/valueMapProperty.js
  */
 
+import { ChangeSet } from "@fluid-experimental/property-changeset";
+import { Int64 } from "@fluid-experimental/property-common";
+
+// Ideally this would import from "@fluid-experimental/property-properties", but these
+// tests use internal APIs that are not part of the typed API that comes with the package.
+import { BaseProperty, PropertyFactory } from "../../index.js";
+
 describe("Int64MapProperty", function () {
-	var PropertyFactory, BaseProperty, ChangeSet, myNode, Int64Map, Int64;
+	var myNode, Int64Map;
 
 	before(function () {
-		// Get all the objects we need in this test here.
-		PropertyFactory = require("../..").PropertyFactory;
-		BaseProperty = require("../..").BaseProperty;
-		ChangeSet = require("@fluid-experimental/property-changeset").ChangeSet;
-		Int64 = require("@fluid-experimental/property-common").Int64;
-
 		// Register a template with a set property for the tests
 		var TestPropertyTemplate = {
 			typeid: "autodesk.tests:Int64MapTestPropertyID-1.0.0",

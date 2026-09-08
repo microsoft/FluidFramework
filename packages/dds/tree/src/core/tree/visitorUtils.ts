@@ -3,11 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { IIdCompressor } from "@fluidframework/id-compressor";
-
-import type { CodecWriteOptions } from "../../codec/index.js";
-import { type IdAllocator, idAllocatorFromMaxId } from "../../util/index.js";
-import type { RevisionTag, RevisionTagCodec } from "../rebase/index.js";
+import { type Breakable, type IdAllocator, idAllocatorFromMaxId } from "../../util/index.js";
+import type { RevisionTag } from "../rebase/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
 import type { ITreeCursorSynchronous } from "./cursor.js";
@@ -17,19 +14,8 @@ import type { ForestRootId } from "./detachedFieldIndexTypes.js";
 import type { PlaceIndex, Range } from "./pathTree.js";
 import { type DeltaVisitor, visitDelta } from "./visitDelta.js";
 
-export function makeDetachedFieldIndex(
-	prefix: string = "Temp",
-	revisionTagCodec: RevisionTagCodec,
-	idCompressor: IIdCompressor,
-	options?: CodecWriteOptions,
-): DetachedFieldIndex {
-	return new DetachedFieldIndex(
-		prefix,
-		idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
-		revisionTagCodec,
-		idCompressor,
-		options,
-	);
+export function makeDetachedFieldIndex(prefix: string = "Temp"): DetachedFieldIndex {
+	return new DetachedFieldIndex(prefix, idAllocatorFromMaxId() as IdAllocator<ForestRootId>);
 }
 
 export function applyDelta(
@@ -43,27 +29,52 @@ export function applyDelta(
 	visitor.free();
 }
 
-export function announceDelta(
-	delta: Root,
-	latestRevision: RevisionTag | undefined,
-	deltaProcessor: { acquireVisitor: () => DeltaVisitor & AnnouncedVisitor },
-	detachedFieldIndex: DetachedFieldIndex,
-): void {
-	const visitor = deltaProcessor.acquireVisitor();
-	visitDelta(delta, combineVisitors([visitor]), detachedFieldIndex, latestRevision);
-	visitor.free();
-}
-
 export interface CombinedVisitor extends DeltaVisitor {
 	readonly type: "Combined";
 
 	readonly visitors: readonly CombinableVisitor[];
 }
 
+/**
+ * A visitor accepted by {@link combineVisitors}.
+ *
+ * @remarks
+ * Plain {@link DeltaVisitor}s are intersected with `{ readonly type?: never }` so this forms a
+ * discriminated union with {@link AnnouncedVisitor} and {@link CombinedVisitor}. The optional
+ * `never` property permits visitors without a `type`, while preventing a visitor with an unknown
+ * or widened `type` from being treated as plain and losing its specialized composition behavior.
+ */
 export type CombinableVisitor =
 	| (DeltaVisitor & { type?: never })
 	| AnnouncedVisitor
 	| CombinedVisitor;
+
+/**
+ * Wraps a visitor so any error breaks the supplied scope and all subsequent calls fail.
+ *
+ * @remarks
+ * The `{ readonly type?: never }` intersection restricts this helper to plain visitors. Wrapping
+ * an {@link AnnouncedVisitor} or {@link CombinedVisitor} as a plain visitor would hide its `type`
+ * discriminator and prevent {@link combineVisitors} from preserving announced-event ordering or
+ * flattening nested combined visitors.
+ */
+export function makeBreakingVisitor(
+	visitor: DeltaVisitor & { readonly type?: never },
+	breaker: Breakable,
+): DeltaVisitor & { readonly type?: never } {
+	return {
+		free: () => breaker.run(() => visitor.free()),
+		create: (...args) => breaker.run(() => visitor.create(...args)),
+		destroy: (...args) => breaker.run(() => visitor.destroy(...args)),
+		attach: (...args) => breaker.run(() => visitor.attach(...args)),
+		detach: (...args) => breaker.run(() => visitor.detach(...args)),
+		enterNode: (...args) => breaker.run(() => visitor.enterNode(...args)),
+		exitNode: (...args) => breaker.run(() => visitor.exitNode(...args)),
+		enterField: (...args) => breaker.run(() => visitor.enterField(...args)),
+		exitField: (...args) => breaker.run(() => visitor.exitField(...args)),
+		fieldMarks: (...args) => breaker.run(() => visitor.fieldMarks?.(...args)),
+	};
+}
 
 /**
  * Combines multiple visitors into a single visitor.

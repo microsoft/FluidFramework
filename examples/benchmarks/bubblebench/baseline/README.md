@@ -7,14 +7,21 @@
 
 ## Getting Started
 
-You can run this example using the following steps:
+Complete these steps to run the example:
 
-1. Enable [corepack](https://nodejs.org/docs/latest-v16.x/api/corepack.html) by running `corepack enable`.
-1. Run `pnpm install` and `pnpm run build:fast --nolint` from the `FluidFramework` root directory.
-    - For an even faster build, you can add the package name to the build command, like this:
+1. Run `corepack enable` to enable [Corepack](https://nodejs.org/docs/latest-v16.x/api/corepack.html).
+1. From the `FluidFramework` root directory, run `pnpm install`.
+1. From the `FluidFramework` root directory, run `pnpm run build:fast --nolint`.
+    - To build only this package, add the package name to the command:
       `pnpm run build:fast --nolint @fluid-example/bubblebench-baseline`
-1. Run `pnpm start` from this directory and open <http://localhost:8080> in a web browser to see the app running.
-1. If you want to run the app against SharePoint, follow the instructions in [webpack-fluid-loader](https://github.com/microsoft/FluidFramework/blob/main/examples/utils/webpack-fluid-loader/README.md#sharepoint) to get auth credentials. Then run `pnpm start:spo` or `pnpm start:spo-df` and open <http://localhost:8080> like above.
+1. Run `pnpm start` from this directory.
+1. Open <http://localhost:8080> in a web browser.
+
+To run the example with SharePoint, complete these steps:
+
+1. Follow the [webpack-fluid-loader instructions](https://github.com/microsoft/FluidFramework/blob/main/examples/utils/webpack-fluid-loader/README.md#sharepoint) to get authentication credentials.
+1. Run `pnpm start:spo` or `pnpm start:spo-df` from this directory.
+1. Open <http://localhost:8080> in a web browser.
 
 <!-- prettier-ignore-end -->
 
@@ -23,15 +30,11 @@ You can run this example using the following steps:
 ## Testing
 
 ```bash
-    npm run test:jest
+npm run test:playwright
 ```
 
-For in browser testing update `./jest-puppeteer.config.js` to:
+To run the tests in a visible browser with the Playwright inspector:
 
-```javascript
-  launch: {
-    dumpio: true, // output browser console to cmd line
-    slowMo: 500,
-    headless: false,
-  },
+```bash
+npm run test:playwright -- --headed --debug
 ```

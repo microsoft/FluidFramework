@@ -3,13 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	BenchmarkType,
-	TestType,
-	benchmarkDuration,
-	benchmarkIt,
-	collectDurationData,
-} from "@fluid-tools/benchmark";
+import { benchmarkDuration, benchmarkIt } from "@fluid-tools/benchmark";
 
 import { compareArrays } from "@fluidframework/core-utils/internal";
 
@@ -56,7 +50,6 @@ describe("compareArrays()", () => {
 		describe("using for-loop", () => {
 			for (const [title, left, right] of comparisons) {
 				benchmarkIt({
-					type: BenchmarkType.Measurement,
 					title: `${title}`,
 					...benchmarkDuration({
 						benchmarkFn: () => {
@@ -70,7 +63,6 @@ describe("compareArrays()", () => {
 		describe("using Array.every()", () => {
 			for (const [title, left, right] of comparisons) {
 				benchmarkIt({
-					type: BenchmarkType.Measurement,
 					title: `${title}`,
 					...benchmarkDuration({
 						benchmarkFn: () => {
@@ -84,7 +76,6 @@ describe("compareArrays()", () => {
 		describe("using Object.is()", () => {
 			for (const [title, left, right] of comparisons) {
 				benchmarkIt({
-					type: BenchmarkType.Measurement,
 					title: `${title}`,
 					...benchmarkDuration({
 						benchmarkFn: () => {
@@ -99,7 +90,6 @@ describe("compareArrays()", () => {
 	describe("no callback", () => {
 		for (const [title, left, right] of comparisons) {
 			benchmarkIt({
-				type: BenchmarkType.Measurement,
 				title: `${title}`,
 				...benchmarkDuration({
 					benchmarkFn: () => {
@@ -115,22 +105,19 @@ describe("compareArrays()", () => {
 
 		for (const [title, left, right] of comparisons) {
 			benchmarkIt({
-				type: BenchmarkType.Measurement,
-				testType: TestType.ExecutionTime,
 				title: `${title}`,
-				run: async () => {
-					const result = await collectDurationData({
-						benchmarkFn: () => {
+				...benchmarkDuration({
+					benchmarkFnCustom: async (state) => {
+						state.timeAllBatches(() => {
 							compareArrays(left, right, (leftItem, rightItem, index) => {
 								sum += index;
 								return Object.is(leftItem, rightItem);
 							});
-						},
-					});
-					// Paranoid usage of 'sum' to prevent dead code optimization.
-					console.log(`after: ${sum}`);
-					return result;
-				},
+						});
+						// Paranoid usage of 'sum' to prevent dead code optimization.
+						console.log(`after: ${sum}`);
+					},
+				}),
 			});
 		}
 	});

@@ -25,8 +25,8 @@ import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
-	type ITelemetryLoggerExt,
 	LoggingError,
+	type TelemetryLoggerExt,
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -193,7 +193,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 */
 	constructor(
 		public readonly specToSegment: (spec: IJSONSegment) => ISegment,
-		public readonly logger: ITelemetryLoggerExt,
+		public readonly logger: TelemetryLoggerExt,
 		options?: IMergeTreeOptionsInternal & PropertySet,
 		private readonly getMinInFlightRefSeq: () => number | undefined = (): undefined =>
 			undefined,

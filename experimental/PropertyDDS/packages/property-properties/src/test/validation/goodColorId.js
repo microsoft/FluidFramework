@@ -189,4 +189,4 @@ const objToExport = {
 	"2-0-0": templateSchema200,
 };
 
-module.exports = objToExport;
+export default objToExport;

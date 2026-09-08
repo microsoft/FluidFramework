@@ -8,8 +8,10 @@ import { strict as assert } from "node:assert";
 import {
 	TypedEventEmitter,
 	type IProvideLayerCompatDetails,
+	type IProvideLayerCompatSupportRequirements,
 } from "@fluid-internal/client-utils";
-import type { AttachState, IAudience } from "@fluidframework/container-definitions/";
+import type { IAudience } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
 import type {
 	ICriticalContainerError,
 	IContainer,
@@ -80,9 +82,10 @@ class MockContainer
 }
 
 const documentServiceFactoryProxy = failSometimeProxy<
-	IDocumentServiceFactory & IProvideLayerCompatDetails
+	IDocumentServiceFactory & IProvideLayerCompatDetails & IProvideLayerCompatSupportRequirements
 >({
 	ILayerCompatDetails: AbsentProperty,
+	ILayerCompatSupportRequirements: AbsentProperty,
 });
 
 function createTestContainer(mockLogger: MockLogger): Container {
@@ -136,6 +139,21 @@ describe("Container close/dispose telemetry", () => {
 			"generic",
 			"ContainerDispose should be category 'generic' when disposed with an error after close",
 		);
+		assert.strictEqual(
+			disposeEvent.isDirty,
+			false,
+			"ContainerDispose should log isDirty for a never-attached container",
+		);
+		assert.strictEqual(
+			typeof disposeEvent.lastSequenceNumber,
+			"number",
+			"ContainerDispose should log lastSequenceNumber as a number",
+		);
+		assert.strictEqual(
+			disposeEvent.containerAttachState,
+			AttachState.Detached,
+			"ContainerDispose should log containerAttachState for a never-attached container",
+		);
 	});
 
 	it("ContainerClose is logged as generic when close is called without an error", () => {
@@ -155,7 +173,7 @@ describe("Container close/dispose telemetry", () => {
 		);
 	});
 
-	it("ContainerDispose is logged as generic when dispose is called without an error", () => {
+	it("ContainerDispose is logged as generic with isDirty, lastSequenceNumber, and containerAttachState fields when dispose is called without an error", () => {
 		const mockLogger = new MockLogger();
 		const container = createTestContainer(mockLogger);
 
@@ -170,6 +188,21 @@ describe("Container close/dispose telemetry", () => {
 			disposeEvent.category,
 			"generic",
 			"ContainerDispose should be category 'generic' when disposed without an error",
+		);
+		assert.strictEqual(
+			disposeEvent.isDirty,
+			false,
+			"ContainerDispose should log isDirty for a never-attached container",
+		);
+		assert.strictEqual(
+			typeof disposeEvent.lastSequenceNumber,
+			"number",
+			"ContainerDispose should log lastSequenceNumber as a number",
+		);
+		assert.strictEqual(
+			disposeEvent.containerAttachState,
+			AttachState.Detached,
+			"ContainerDispose should log containerAttachState for a never-attached container",
 		);
 	});
 });

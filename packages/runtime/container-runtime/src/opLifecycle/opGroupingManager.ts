@@ -8,7 +8,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	createChildLogger,
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type {
@@ -65,7 +65,7 @@ export interface EmptyGroupedBatch {
 
 export class OpGroupingManager {
 	static readonly groupedBatchOp = "groupedBatch";
-	private readonly logger: ITelemetryLoggerExt;
+	private readonly logger: TelemetryLoggerExt;
 
 	constructor(
 		private readonly config: OpGroupingManagerConfig,
@@ -100,7 +100,7 @@ export class OpGroupingManager {
 		const serializedOp = JSON.stringify(emptyGroupedBatch);
 
 		const placeholderMessage: LocalEmptyBatchPlaceholder = {
-			metadata: { batchId: resubmittingBatchId },
+			metadata: { batchId: resubmittingBatchId, groupedOpCount: 0 },
 			localOpMetadata: { emptyBatch: true },
 			referenceSequenceNumber,
 			runtimeOp: emptyGroupedBatch,
@@ -169,7 +169,7 @@ export class OpGroupingManager {
 			...batch,
 			messages: [
 				{
-					metadata: { batchId: groupedBatchId },
+					metadata: { batchId: groupedBatchId, groupedOpCount: batch.messages.length },
 					referenceSequenceNumber: batch.messages[0].referenceSequenceNumber,
 					contents: serializedContent,
 				},

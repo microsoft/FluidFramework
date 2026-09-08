@@ -210,8 +210,8 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 	}
 
 	private getStackedChunkIndex(height: number): number {
-		assert(height % 2 === 1, "must be node height");
-		assert(height >= 0, "must not be above root");
+		assert(height % 2 === 1, 0xcf3 /* must be node height */);
+		assert(height >= 0, 0xcf4 /* must not be above root */);
 		return this.indexOfChunkStack[this.getNodeOnlyHeightFromHeight(height)] ?? oob();
 	}
 
@@ -524,9 +524,10 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 			this.siblingStack.pop() ?? fail(0xaf0 /* Unexpected siblingStack.length */);
 		this.index = this.indexStack.pop() ?? fail(0xaf1 /* Unexpected indexStack.length */);
 		this.indexOfChunk =
-			this.indexOfChunkStack.pop() ?? fail("Unexpected indexOfChunkStack.length");
+			this.indexOfChunkStack.pop() ?? fail(0xcf5 /* Unexpected indexOfChunkStack.length */);
 		this.indexWithinChunk =
-			this.indexWithinChunkStack.pop() ?? fail("Unexpected indexWithinChunkStack.length");
+			this.indexWithinChunkStack.pop() ??
+			fail(0xcf6 /* Unexpected indexWithinChunkStack.length */);
 		this.assertChunkStacksMatchNodeDepth();
 	}
 

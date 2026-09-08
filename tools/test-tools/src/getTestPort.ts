@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import fs from "fs";
-import os from "os";
-import path from "path";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 
 /**
  * Get the port for the pkg from the mapping.  Use a default if the file or the entry doesn't exist

@@ -16,8 +16,11 @@ export function transformApiModel(
 	apiModel: ApiModel,
 	config: ApiItemTransformationConfiguration,
 ): Section[] {
-	if (apiModel.packages.length === 0) {
-		// If no packages under model, print simple note.
+	const filteredPackages = apiModel.packages.filter(
+		(apiPackage) => !config.exclude(apiPackage),
+	);
+
+	if (filteredPackages.length === 0) {
 		return [
 			{
 				type: "section",
@@ -40,11 +43,6 @@ export function transformApiModel(
 			},
 		];
 	}
-
-	// Filter out packages not wanted per user config
-	const filteredPackages = apiModel.packages.filter(
-		(apiPackage) => !config.exclude(apiPackage),
-	);
 
 	// Render packages table
 	const packagesTable = createPackagesTable(filteredPackages, config);

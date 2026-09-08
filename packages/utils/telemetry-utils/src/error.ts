@@ -295,8 +295,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
 		messageLike?: MessageLike,
 	): IFluidErrorBase {
 		return wrapDataProcessingErrorIfUnrecognized(
-			(errorMessage: string, props?: ITelemetryBaseProperties) =>
-				new DataProcessingError(errorMessage, props),
+			(errorMessage: string) => new DataProcessingError(errorMessage),
 			originalError,
 			dataProcessingCodepath,
 			messageLike,

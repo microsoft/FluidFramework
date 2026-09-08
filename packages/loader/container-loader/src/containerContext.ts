@@ -15,6 +15,7 @@ import type {
 import type {
 	IBatchMessage,
 	IContainerContext,
+	IContainerContextInternal,
 	ILoader,
 	ILoaderOptions,
 	IDeltaManager,
@@ -32,7 +33,7 @@ import type {
 	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type { ConnectionState } from "./connectionState.js";
 import { loaderCompatDetailsForRuntime } from "./loaderLayerCompatState.js";
@@ -69,9 +70,12 @@ export interface IContainerContextConfig
 	readonly getAttachState: () => AttachState;
 	readonly getConnected: () => boolean;
 	readonly existing: boolean;
-	readonly taggedLogger: ITelemetryLoggerExt;
+	readonly taggedLogger: TelemetryLoggerExt;
 	// This "overrides" IContainerContext.snapshotWithContents to be required but allow `undefined`.
 	readonly snapshotWithContents: IContainerContext["snapshotWithContents"] | undefined;
+	// fetchOps is an internal-only capability (IContainerContextInternal), not part of the public
+	// IContainerContext contract. Optional: hosts may not provide op reading.
+	readonly fetchOps: IContainerContextInternal["fetchOps"];
 }
 
 /**
@@ -81,6 +85,7 @@ export class ContainerContext
 	implements
 		Required<Omit<IContainerContext, "snapshotWithContents">>,
 		Pick<IContainerContext, "snapshotWithContents">,
+		Pick<IContainerContextInternal, "fetchOps">,
 		IProvideLayerCompatDetails
 {
 	/**
@@ -130,13 +135,14 @@ export class ContainerContext
 		content: unknown | ISignalEnvelope,
 		targetClientId?: string,
 	) => void;
+	public readonly fetchOps: IContainerContextInternal["fetchOps"];
 	public readonly disposeFn: (error?: ICriticalContainerError) => void;
 	public readonly closeFn: (error?: ICriticalContainerError) => void;
 	public readonly updateDirtyContainerState: (dirty: boolean) => void;
 	public readonly getAbsoluteUrl: (relativeUrl: string) => Promise<string | undefined>;
 	public readonly clientDetails: IClientDetails;
 	public readonly existing: boolean;
-	public readonly taggedLogger: ITelemetryLoggerExt;
+	public readonly taggedLogger: TelemetryLoggerExt;
 	public readonly pendingLocalState: unknown;
 	public readonly snapshotWithContents?: ISnapshot;
 
@@ -189,6 +195,7 @@ export class ContainerContext
 		this.submitSummaryFn = config.submitSummaryFn;
 		this.submitBatchFn = config.submitBatchFn;
 		this.submitSignalFn = config.submitSignalFn;
+		this.fetchOps = config.fetchOps;
 		this.disposeFn = config.disposeFn;
 		this.closeFn = config.closeFn;
 		this.updateDirtyContainerState = config.updateDirtyContainerState;

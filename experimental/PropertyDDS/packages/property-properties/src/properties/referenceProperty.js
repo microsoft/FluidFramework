@@ -7,14 +7,16 @@
  * @fileoverview Definition of the ReferenceProperty class
  */
 
-const { PathHelper, TypeIdHelper } = require("@fluid-experimental/property-changeset");
-const { MSG } = require("@fluid-experimental/property-common").constants;
-const _ = require("lodash");
+import { PathHelper, TypeIdHelper } from "@fluid-experimental/property-changeset";
+import { constants } from "@fluid-experimental/property-common";
+import _ from "lodash";
 
-const { AbstractStaticCollectionProperty } = require("./abstractStaticCollectionProperty");
-const { BaseProperty } = require("./baseProperty");
-const { _castFunctors } = require("./primitiveTypeCasts");
-const { ValueProperty } = require("./valueProperty");
+import { AbstractStaticCollectionProperty } from "./abstractStaticCollectionProperty.js";
+import { BaseProperty } from "./baseProperty.js";
+import { _castFunctors } from "./primitiveTypeCasts.js";
+import { ValueProperty } from "./valueProperty.js";
+
+const { MSG } = constants;
 
 /**
  * This class serves as a view to read, write and listen to changes in an

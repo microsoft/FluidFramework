@@ -1,4 +1,3 @@
 🔗 Found some broken links! 💔
 
-Run a link check locally to find them. See
-<https://github.com/microsoft/FluidFramework/wiki/Checking-for-broken-links-in-the-documentation> for more information.
+Run a link check locally to find them. See [Checking for Broken Links](../../../docs/content/Contributing/Working-with-the-Website/Checking-for-Broken-Links.md) for more information.

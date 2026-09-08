@@ -15,7 +15,10 @@ import type {
 	IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
-import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
+import {
+	defaultTestOldestSupportedClient,
+	ITestObjectProvider,
+} from "@fluidframework/test-utils/internal";
 import { createSandbox } from "sinon";
 
 describeCompat(
@@ -45,6 +48,7 @@ describeCompat(
 		});
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: dataObjectFactory,
+			oldestSupportedClient: defaultTestOldestSupportedClient,
 			registryEntries: [["testDataObject", Promise.resolve(dataObjectFactory)]],
 		});
 

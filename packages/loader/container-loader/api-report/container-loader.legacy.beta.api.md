@@ -39,21 +39,34 @@ export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComp
 }
 
 // @beta @legacy
-export interface ICreateAndLoadContainerProps {
-    readonly allowReconnect?: boolean | undefined;
-    readonly clientDetailsOverride?: IClientDetails | undefined;
-    readonly codeLoader: ICodeDetailsLoader_2;
-    readonly configProvider?: IConfigProviderBase | undefined;
+export interface IContainerDriverServices {
     readonly documentServiceFactory: IDocumentServiceFactory;
-    readonly logger?: ITelemetryBaseLogger | undefined;
-    readonly options?: IContainerPolicies | undefined;
-    readonly protocolHandlerBuilder?: ProtocolHandlerBuilder | undefined;
-    readonly scope?: FluidObject | undefined;
     readonly urlResolver: IUrlResolver;
 }
 
 // @beta @legacy
-export interface ICreateDetachedContainerProps extends ICreateAndLoadContainerProps {
+export interface IContainerHostProps {
+    readonly allowReconnect?: boolean | undefined;
+    readonly clientDetailsOverride?: IClientDetails | undefined;
+    readonly codeLoader: ICodeDetailsLoader_2;
+    readonly configProvider?: IConfigProviderBase | undefined;
+    readonly logger?: ITelemetryBaseLogger | undefined;
+    readonly options?: IContainerPolicies | undefined;
+    readonly protocolHandlerBuilder?: ProtocolHandlerBuilder | undefined;
+    readonly scope?: FluidObject | undefined;
+}
+
+// @beta @legacy
+export interface IContainerLoadDriverProps extends IContainerDriverServices {
+    readonly request: IRequest;
+}
+
+// @beta @deprecated @legacy
+export interface ICreateAndLoadContainerProps extends IContainerHostProps, IContainerDriverServices {
+}
+
+// @beta @legacy
+export interface ICreateDetachedContainerProps extends IContainerHostProps, IContainerDriverServices {
     readonly codeDetails: IFluidCodeDetails;
 }
 
@@ -61,6 +74,13 @@ export interface ICreateDetachedContainerProps extends ICreateAndLoadContainerPr
 export interface IFluidModuleWithDetails {
     details: IFluidCodeDetails;
     module: IFluidModule;
+}
+
+// @beta @legacy
+export interface ILoadContainerToSequenceNumberProps extends IContainerHostProps, IContainerDriverServices {
+    readonly loadToSequenceNumber: number;
+    readonly request: IRequest;
+    readonly signal?: AbortSignal | undefined;
 }
 
 // @beta @legacy
@@ -87,7 +107,7 @@ export interface ILoaderServices {
 }
 
 // @beta @legacy
-export interface ILoadExistingContainerProps extends ICreateAndLoadContainerProps {
+export interface ILoadExistingContainerProps extends IContainerHostProps, IContainerDriverServices {
     readonly pendingLocalState?: string | undefined;
     readonly request: IRequest;
 }
@@ -119,7 +139,7 @@ export interface IQuorumSnapshot {
 }
 
 // @beta @legacy
-export interface IRehydrateDetachedContainerProps extends ICreateAndLoadContainerProps {
+export interface IRehydrateDetachedContainerProps extends IContainerHostProps, IContainerDriverServices {
     readonly serializedState: string;
 }
 
@@ -136,6 +156,9 @@ export interface IScribeProtocolState {
     // (undocumented)
     values: [string, ICommittedProposal][];
 }
+
+// @beta @legacy
+export function loadContainerToSequenceNumber(props: ILoadContainerToSequenceNumberProps): Promise<IContainer>;
 
 // @beta @legacy
 export class Loader implements IHostLoader {

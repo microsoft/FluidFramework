@@ -6,7 +6,7 @@
 /* eslint-disable no-bitwise */
 
 import type { IDisposable } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type {
 	Client,
@@ -308,15 +308,15 @@ export class BaseSequenceInterval implements SequenceInterval, ISerializableInte
 	 * Whether this interval overlaps the provided numerical positions.
 	 */
 	public overlapsPos(_bstart: number, _bend: number): boolean {
-		assert(false, 0xcd7 /* overlapsPos not supported on BaseSequenceInterval */);
+		fail(0xcd7 /* overlapsPos not supported on BaseSequenceInterval */);
 	}
 
 	public clone(): BaseSequenceInterval {
-		assert(false, 0xcd8 /* clone not supported on BaseSequenceInterval */);
+		fail(0xcd8 /* clone not supported on BaseSequenceInterval */);
 	}
 
 	public union(_b: BaseSequenceInterval): BaseSequenceInterval {
-		assert(false, 0xcd9 /* union not supported on BaseSequenceInterval */);
+		fail(0xcd9 /* union not supported on BaseSequenceInterval */);
 	}
 
 	protected verifyNotDispose(): void {

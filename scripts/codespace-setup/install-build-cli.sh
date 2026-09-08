@@ -7,7 +7,7 @@
 set -euo pipefail
 
 echo "Installing @fluid-tools/build-cli globally..."
-pnpm add -g @fluid-tools/build-cli
+CI=true pnpm add -g --allow-build=core-js @fluid-tools/build-cli
 
 echo "flub installed: $(which flub)"
 flub --version

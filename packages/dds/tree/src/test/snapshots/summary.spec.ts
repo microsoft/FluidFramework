@@ -29,6 +29,7 @@ describe("snapshot tests", () => {
 				const testTrees = generateTestTrees(options);
 
 				for (const { name: testName, runScenario, skip = false, only = false } of testTrees) {
+					// eslint-disable-next-line no-only-tests/no-only-tests -- controlled by test data
 					const itFn = only ? it.only : skip ? it.skip : it;
 
 					itFn(testName, async () => {

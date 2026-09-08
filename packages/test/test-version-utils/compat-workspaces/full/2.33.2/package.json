@@ -1,0 +1,33 @@
+{
+  "name": "compat-2.33.2",
+  "version": "1.0.0",
+  "private": true,
+  "homepage": "https://fluidframework.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microsoft/FluidFramework.git",
+    "directory": "packages/test/test-version-utils/compat-workspaces/full/2.33.2"
+  },
+  "license": "MIT",
+  "author": "Microsoft and contributors",
+  "dependencies": {
+    "@fluid-experimental/sequence-deprecated": "2.33.2",
+    "@fluidframework/agent-scheduler": "2.33.2",
+    "@fluidframework/aqueduct": "2.33.2",
+    "@fluidframework/cell": "2.33.2",
+    "@fluidframework/container-loader": "2.33.2",
+    "@fluidframework/container-runtime": "2.33.2",
+    "@fluidframework/counter": "2.33.2",
+    "@fluidframework/datastore": "2.33.2",
+    "@fluidframework/local-driver": "2.33.2",
+    "@fluidframework/map": "2.33.2",
+    "@fluidframework/matrix": "2.33.2",
+    "@fluidframework/odsp-driver": "2.33.2",
+    "@fluidframework/ordered-collection": "2.33.2",
+    "@fluidframework/register-collection": "2.33.2",
+    "@fluidframework/routerlicious-driver": "2.33.2",
+    "@fluidframework/sequence": "2.33.2",
+    "@fluidframework/test-utils": "2.33.2",
+    "@fluidframework/tree": "2.33.2"
+  }
+}

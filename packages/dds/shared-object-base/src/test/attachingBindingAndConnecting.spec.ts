@@ -62,6 +62,7 @@ type OverridableType = Overridable<{
 		serializer: IFluidSerializer,
 		telemetryContext?: ITelemetryContext | undefined,
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined,
+		fullTree?: boolean,
 	) => ISummaryTreeWithStats;
 	loadCore: (this: SharedObject, services: IChannelStorageService) => Promise<void>;
 	processMessagesCore: (
@@ -78,11 +79,46 @@ function createTestSharedObject(overrides: OverridableType): {
 	sharedObject: SharedObject;
 } {
 	class TestSharedObject extends SharedObject {
-		protected summarizeCore = overrides?.summarizeCore?.bind(this);
-		protected loadCore = overrides?.loadCore?.bind(this);
-		protected processMessagesCore = overrides?.processMessagesCore?.bind(this);
-		protected onDisconnect = overrides?.onDisconnect?.bind(this);
-		protected applyStashedOp = overrides?.applyStashedOp?.bind(this);
+		protected summarizeCore(
+			serializer: IFluidSerializer,
+			telemetryContext?: ITelemetryContext,
+			incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
+			fullTree?: boolean,
+		): ISummaryTreeWithStats {
+			assert(
+				overrides.summarizeCore !== undefined,
+				"overrides.summarizeCore was not provided",
+			);
+			return overrides.summarizeCore.call(
+				this,
+				serializer,
+				telemetryContext,
+				incrementalSummaryContext,
+				fullTree,
+			);
+		}
+		protected async loadCore(services: IChannelStorageService): Promise<void> {
+			assert(overrides.loadCore !== undefined, "overrides.loadCore was not provided");
+			await overrides.loadCore.call(this, services);
+		}
+		protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+			assert(
+				overrides.processMessagesCore !== undefined,
+				"overrides.processMessagesCore was not provided",
+			);
+			overrides.processMessagesCore.call(this, messagesCollection);
+		}
+		protected onDisconnect(): void {
+			assert(overrides.onDisconnect !== undefined, "overrides.onDisconnect was not provided");
+			overrides.onDisconnect.call(this);
+		}
+		protected applyStashedOp(content: unknown): void {
+			assert(
+				overrides.applyStashedOp !== undefined,
+				"overrides.applyStashedOp was not provided",
+			);
+			overrides.applyStashedOp.call(this, content);
+		}
 		protected didAttach =
 			overrides.didAttach?.bind(this) ?? (() => assert.fail("didAttach not set"));
 	}

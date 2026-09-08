@@ -5,18 +5,14 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type {
-	EditResult,
 	SharedTreeChatModel,
 	TreeAgentChatMessage,
 	TreeAgentChatResponse,
-	SharedTreeChatQuery, // eslint-disable-line import-x/no-deprecated
 } from "@fluidframework/tree-agent/alpha";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models"; // eslint-disable-line import-x/no-internal-modules
 import type { BaseMessage } from "@langchain/core/messages"; // eslint-disable-line import-x/no-internal-modules
 import { AIMessage, HumanMessage, SystemMessage, ToolMessage } from "@langchain/core/messages"; // eslint-disable-line import-x/no-internal-modules
 import { tool } from "@langchain/core/tools"; // eslint-disable-line import-x/no-internal-modules
-
-// #region New stateless implementation
 
 /**
  * Creates a stateless {@link @fluidframework/tree-agent#SharedTreeChatModel} backed by LangChain.
@@ -140,100 +136,3 @@ function convertToLangchainMessages(history: readonly TreeAgentChatMessage[]): B
 	}
 	return messages;
 }
-
-// #endregion
-
-// #region Legacy stateful implementation
-
-/**
- * Creates a legacy stateful {@link @fluidframework/tree-agent#SharedTreeChatModel} backed by LangChain.
- * @remarks This implementation maintains internal message history and manages the edit loop via the
- * {@link @fluidframework/tree-agent#SharedTreeChatQuery.edit | edit} callback pattern.
- * Use with {@link @fluidframework/tree-agent#SharedTreeSemanticAgent}.
- * @param langchainModel - The LangChain chat model to use.
- * @deprecated Use {@link createLangchainChatModel} with
- * {@link @fluidframework/tree-agent#createTreeAgent | createTreeAgent} instead.
- * @alpha
- */
-export function createLegacyLangchainChatModel(
-	langchainModel: BaseChatModel,
-): SharedTreeChatModel {
-	return new LegacyLangchainChatModel(langchainModel);
-}
-
-class LegacyLangchainChatModel implements SharedTreeChatModel {
-	private readonly messages: BaseMessage[] = [];
-
-	public constructor(private readonly model: BaseChatModel) {}
-
-	public readonly editToolName = "GenerateTreeEditingCode";
-
-	public get name(): string | undefined {
-		const name = this.model.metadata?.modelName;
-		return typeof name === "string" ? name : undefined;
-	}
-
-	public appendContext(text: string): void {
-		this.messages.push(new SystemMessage(text));
-	}
-
-	// eslint-disable-next-line import-x/no-deprecated
-	public async query(query: SharedTreeChatQuery): Promise<string> {
-		this.messages.push(new HumanMessage(query.text));
-		return this.queryEdit(async (js: string) => query.edit(js));
-	}
-
-	private async queryEdit(
-		edit: SharedTreeChatQuery["edit"], // eslint-disable-line import-x/no-deprecated
-	): Promise<string> {
-		const editingTool = tool(edit, {
-			name: this.editToolName,
-			description: "Invokes a JavaScript code snippet to edit a tree of application data.",
-		});
-		const runnable = this.model.bindTools?.([editingTool], {
-			tool_choice: "auto",
-		});
-		if (runnable === undefined) {
-			throw new UsageError("LLM client must support function calling or tool use.");
-		}
-
-		const responseMessage = await runnable.invoke(this.messages);
-		this.messages.push(responseMessage);
-
-		if (responseMessage.tool_calls !== undefined && responseMessage.tool_calls.length > 0) {
-			for (const toolCall of responseMessage.tool_calls) {
-				switch (toolCall.name) {
-					case editingTool.name: {
-						const toolResult = await editingTool.invoke(toolCall);
-						this.messages.push(toolResult);
-						const editResult: unknown = JSON.parse(toolResult.text);
-						if (isEditResult(editResult) && editResult.type === "tooManyEditsError") {
-							return editResult.message;
-						}
-						return this.queryEdit(edit);
-					}
-					default: {
-						this.messages.push(new HumanMessage(`Unrecognized tool call: ${toolCall.name}`));
-					}
-				}
-			}
-		}
-
-		return responseMessage.text;
-	}
-}
-
-/**
- * Type guard for {@link EditResult}.
- */
-function isEditResult(value: unknown): value is EditResult {
-	if (value === null || typeof value !== "object") {
-		return false;
-	}
-	return (
-		typeof (value as EditResult).type === "string" &&
-		typeof (value as EditResult).message === "string"
-	);
-}
-
-// #endregion

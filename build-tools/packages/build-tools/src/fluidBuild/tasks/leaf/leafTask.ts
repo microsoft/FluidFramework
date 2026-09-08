@@ -12,24 +12,26 @@ import registerDebug from "debug";
 import * as path from "path";
 import chalk from "picocolors";
 
-import { defaultLogger } from "../../../common/logging";
+import { defaultLogger } from "../../../common/logging.js";
 import {
 	type ExecAsyncResult,
 	execAsync,
 	getExecutableFromCommand,
-} from "../../../common/utils";
-import type { BuildContext } from "../../buildContext";
-import type { BuildPackage } from "../../buildGraph";
-import { BuildResult, summarizeBuildResult } from "../../buildResult";
+} from "../../../common/utils.js";
+import type { BuildContext } from "../../buildContext.js";
+import type { BuildPackage } from "../../buildGraph.js";
+import type { Seconds } from "../../buildMetrics.js";
+import { TaskCacheOutcome } from "../../buildMetrics.js";
+import { BuildResult, summarizeBuildResult } from "../../buildResult.js";
 import {
 	type GitIgnoreSettingValue,
 	gitignoreDefaultValue,
 	replaceRepoRootToken,
-} from "../../fluidBuildConfig";
-import type { GitIgnoreSetting } from "../../fluidTaskDefinitions";
-import { options } from "../../options";
-import { Task, type TaskExec } from "../task";
-import { globWithGitignore } from "../taskUtils";
+} from "../../fluidBuildConfig.js";
+import type { GitIgnoreSetting } from "../../fluidTaskDefinitions.js";
+import { options } from "../../options.js";
+import { Task, type TaskExec } from "../task.js";
+import { globWithGitignore } from "../taskUtils.js";
 
 const { log } = defaultLogger;
 const traceTaskTrigger = registerDebug("fluid-build:task:trigger");
@@ -51,6 +53,8 @@ export abstract class LeafTask extends Task {
 	private directParentLeafTasks: LeafTask[] = [];
 	private _parentLeafTasks: Set<LeafTask> | undefined | null;
 	private parentWeight = -1;
+
+	public lastQueueWaitTime = 0;
 
 	// For task that needs to override the actual command to execute
 	protected get executionCommand(): string {
@@ -174,6 +178,23 @@ export abstract class LeafTask extends Task {
 	protected get useWorker(): boolean {
 		return false;
 	}
+	private recordMetric(outcome: TaskCacheOutcome, startTime?: number, worker?: boolean): void {
+		this.node.context.buildMetrics.recordTask({
+			taskName: this.taskName ?? this.command,
+			packageName: this.node.pkg.name,
+			command: this.command,
+			executable: this.executable,
+			outcome,
+			isIncremental: this.isIncremental,
+			supportsRecheck: this.recheckLeafIsUpToDate,
+			execTimeSeconds: (startTime !== undefined
+				? (Date.now() - startTime) / 1000
+				: 0) as Seconds,
+			queueWaitSeconds: this.lastQueueWaitTime as Seconds,
+			worker: worker ?? false,
+		});
+	}
+
 	public async exec(): Promise<BuildResult> {
 		if (this.isDisabled) {
 			return BuildResult.UpToDate;
@@ -190,6 +211,7 @@ export abstract class LeafTask extends Task {
 		}
 		const startTime = Date.now();
 		if (this.recheckLeafIsUpToDate && !this.forced && (await this.checkLeafIsUpToDate())) {
+			this.recordMetric(TaskCacheOutcome.CacheHitRecheck, startTime);
 			return this.execDone(startTime, BuildResult.UpToDate);
 		}
 		const ret = await this.execCore();
@@ -200,6 +222,7 @@ export abstract class LeafTask extends Task {
 				`${this.node.pkg.nameColored}: error during command '${this.command}'${codeStr}`,
 			);
 			console.error(this.getExecErrors(ret));
+			this.recordMetric(TaskCacheOutcome.Failed, startTime, ret.worker);
 			return this.execDone(startTime, BuildResult.Failed);
 		}
 		if (ret.stderr) {
@@ -209,6 +232,11 @@ export abstract class LeafTask extends Task {
 		}
 
 		await this.markExecDone();
+		this.recordMetric(
+			this.isIncremental ? TaskCacheOutcome.CacheMiss : TaskCacheOutcome.NonIncremental,
+			startTime,
+			ret.worker,
+		);
 		return this.execDone(startTime, BuildResult.Success, ret.worker);
 	}
 
@@ -328,6 +356,7 @@ export abstract class LeafTask extends Task {
 		// Build all the dependent tasks first
 		const result = await this.buildDependentTask(q);
 		if (result === BuildResult.Failed) {
+			this.recordMetric(TaskCacheOutcome.NotRun);
 			return BuildResult.Failed;
 		}
 
@@ -357,6 +386,7 @@ export abstract class LeafTask extends Task {
 		traceTaskCheck(`${this.nameColored}: checkLeafIsUpToDate: ${Date.now() - start}ms`);
 		if (leafIsUpToDate) {
 			this.node.context.taskStats.leafUpToDateCount++;
+			this.recordMetric(TaskCacheOutcome.CacheHitInitial);
 			this.traceExec(`Skipping Leaf Task`);
 		}
 
@@ -492,34 +522,49 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 			}
 		} catch (error) {
 			this._isIncremental = false;
+			const stack = error instanceof Error && error.stack ? `\n${error.stack}` : "";
 			console.warn(
-				`${this.node.pkg.nameColored}: warning: unable to write ${doneFileFullPath}\n error: ${error}`,
+				`${this.node.pkg.nameColored}: warning: unable to generate or write done file ${doneFileFullPath}\n error: ${error}${stack}`,
 			);
 		}
 	}
 
 	protected async checkLeafIsUpToDate(): Promise<boolean> {
 		const doneFileFullPath = this.doneFileFullPath;
+		let doneFileExpectedContent: string | undefined;
 		try {
-			const doneFileExpectedContent = await this.getDoneFileContent();
-			if (doneFileExpectedContent !== undefined) {
-				const doneFileContent = await readFile(doneFileFullPath, "utf8");
-				if (doneFileContent === doneFileExpectedContent) {
-					return true;
-				}
-				this.traceTrigger(`mismatched compare file: ${doneFileFullPath}`);
-				// These log statements can be useful for debugging, but they're extremely long and completely
-				// obscure other logs.
-				// In the future we can consider logging just the diff between the input and output.
-				// this.traceTrigger(doneFileExpectedContent);
-				// this.traceTrigger(doneFileContent);
-			} else {
-				this.traceTrigger(
-					"unable to generate done file expected content (getDoneFileContent returned undefined)",
-				);
+			doneFileExpectedContent = await this.getDoneFileContent();
+		} catch (error) {
+			// Errors here come from computing expected content (e.g. missing input/output files).
+			// Don't conflate them with a missing done file in the ENOENT branch below.
+			this.traceTrigger(`unable to generate done file expected content: ${error}`);
+			return false;
+		}
+		if (doneFileExpectedContent === undefined) {
+			this.traceTrigger(
+				"unable to generate done file expected content (getDoneFileContent returned undefined)",
+			);
+			return false;
+		}
+		try {
+			const doneFileContent = await readFile(doneFileFullPath, "utf8");
+			if (doneFileContent === doneFileExpectedContent) {
+				return true;
 			}
-		} catch {
-			this.traceTrigger(`unable to read compare file: ${doneFileFullPath}`);
+			this.traceTrigger(`mismatched compare file: ${doneFileFullPath}`);
+			// These log statements can be useful for debugging, but they're extremely long and completely
+			// obscure other logs.
+			// In the future we can consider logging just the diff between the input and output.
+			// this.traceTrigger(doneFileExpectedContent);
+			// this.traceTrigger(doneFileContent);
+		} catch (error) {
+			// ENOENT on the done file is expected on the first run; don't spam the user.
+			const code = (error as NodeJS.ErrnoException | undefined)?.code;
+			if (code === "ENOENT") {
+				this.traceTrigger(`done file not found: ${doneFileFullPath}`);
+			} else {
+				this.traceTrigger(`unable to read compare file ${doneFileFullPath}: ${error}`);
+			}
 		}
 		return false;
 	}
@@ -676,7 +721,7 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 		} catch (e: any) {
 			this.traceError(`error comparing file times: ${e.message}`);
 			this.traceTrigger("failed to get file stats");
-			return undefined;
+			throw e;
 		}
 	}
 
@@ -707,7 +752,7 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 		} catch (e: any) {
 			this.traceError(`error calculating file hashes: ${e.message}`);
 			this.traceTrigger("failed to get file hash");
-			return undefined;
+			throw e;
 		}
 	}
 }

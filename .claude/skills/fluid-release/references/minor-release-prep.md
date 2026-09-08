@@ -132,6 +132,22 @@ pnpm -r run build:genver
 pnpm install --no-frozen-lockfile
 ```
 
+### Update compat workspace versions
+
+The compat-test workspaces under `packages/test/test-version-utils/compat-workspaces/` are pinned to specific prior versions and must be refreshed after every version bump (per the docstring in `packages/test/test-version-utils/scripts/updateCompatVersions.ts`):
+
+```bash
+pnpm run --filter=@fluid-private/test-version-utils update-compat-versions
+```
+
+This regenerates:
+- `compat-workspaces/generated-versions.cjs`
+- `compat-workspaces/full/<version>/package.json` files (adds/removes as needed)
+- `compat-workspaces/full/pnpm-lock.yaml`
+- The auto-generated table in `CompatibilityCheckpoints.md`
+
+If the bump doesn't cross a compatibility checkpoint and the newly released version isn't yet on npm, this is often a no-op — but **always run it** so the next release doesn't conflate changes. The script will be re-run during [type test updates](type-test-updates.md) Step 8 to pick up the freshly published version as N-1.
+
 Create branch `release-prep/<VERSION>/4-bump-<NEXT_VERSION>`, commit, push to upstream, and create a PR. **This PR must merge LAST.**
 
 ## Step 5: Create the Release Branch

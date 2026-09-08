@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import chalk from "chalk";
+import { styleText } from "node:util";
 
 /**
  * Function signature for logging a message or error.
@@ -74,19 +74,19 @@ export const verboseConsoleLogger: Logger = {
  * Logs a warning message to the console in yellow, prefixed with "WARNING: ".
  */
 function logWarningToConsole(message: string | Error, ...parameters: unknown[]): void {
-	console.log(`${chalk.yellow(`WARNING`)}: ${message}`, ...parameters);
+	console.log(`${styleText("yellow", "WARNING")}: ${message}`, ...parameters);
 }
 
 /**
  * Logs an error message to the console in red, prefixed with "ERROR: ".
  */
 function logErrorToConsole(message: string | Error, ...parameters: unknown[]): void {
-	console.log(`${chalk.red(`ERROR`)}: ${message}`, ...parameters);
+	console.log(`${styleText("red", "ERROR")}: ${message}`, ...parameters);
 }
 
 /**
  * Logs a "success" message to the console in green, prefixed with "SUCCESS: ".
  */
 function logSuccessToConsole(message: string | Error, ...parameters: unknown[]): void {
-	console.log(`${chalk.green(`SUCCESS`)}: ${message}`, ...parameters);
+	console.log(`${styleText("green", "SUCCESS")}: ${message}`, ...parameters);
 }

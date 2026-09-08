@@ -18,7 +18,8 @@ export {
 export { checkUrl } from "./checkUrl.js";
 export { createOdspUrl } from "./createOdspUrl.js";
 export { getHashedDocumentId, type ISnapshotContents } from "./odspPublicUtils.js";
-export { getOdspUrlParts, isOdcUrl, isSpoUrl } from "./odspUrlHelper.js";
+export { getApiRoot, getOdspUrlParts, isOdcUrl, isSpoUrl } from "./odspUrlHelper.js";
+export { getHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
 
 // prefetch latest snapshot before container load
 export { prefetchLatestSnapshot } from "./prefetchLatestSnapshot.js";
@@ -26,9 +27,16 @@ export { prefetchLatestSnapshot } from "./prefetchLatestSnapshot.js";
 // Factory
 export {
 	createLocalOdspDocumentServiceFactory,
+	createOdspDocumentServiceFactory,
+	type IOdspDocumentServiceFactoryOptions,
 	OdspDocumentServiceFactory,
 } from "./odspDocumentServiceFactory.js";
-export { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore.js";
+export {
+	type IOdspPointInTimeDocumentServiceImplementationProps,
+	type IPointInTimeDocumentServiceFactory,
+	type OdspPointInTimeDocumentServiceImplementation,
+	OdspDocumentServiceFactoryCore,
+} from "./odspDocumentServiceFactoryCore.js";
 
 // File creation
 export { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest.js";
@@ -68,4 +76,7 @@ export {
 } from "./compactSnapshotParser.js";
 
 // Layer Compat details
-export { odspDriverCompatDetailsForLoader } from "./odspLayerCompatState.js";
+export {
+	odspDriverCompatDetailsForLoader,
+	odspDriverCompatRequirementsForLoader,
+} from "./odspLayerCompatState.js";

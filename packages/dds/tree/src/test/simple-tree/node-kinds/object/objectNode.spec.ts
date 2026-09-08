@@ -25,7 +25,7 @@ import {
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TreeViewConfiguration,
-	typeNameSymbol,
+	schemaIdentifierBrand,
 	typeSchemaSymbol,
 	type LeafSchema,
 	type NodeBuilderData,
@@ -851,7 +851,7 @@ describeHydration(
 			const Pojo = schemaFactory.object("A", {});
 			const node = new Pojo({});
 			assert.equal(Tree.schema(node), Pojo);
-			assert.equal(node[typeNameSymbol], Pojo.identifier);
+			assert.equal(node[schemaIdentifierBrand], Pojo.identifier);
 			assert.equal(node[typeSchemaSymbol], Pojo);
 		});
 
@@ -859,7 +859,7 @@ describeHydration(
 			const Customizable = schemaFactory.object("A", {});
 			const node = new Customizable({});
 			assert.equal(Tree.schema(node), Customizable);
-			assert.equal(node[typeNameSymbol], Customizable.identifier);
+			assert.equal(node[schemaIdentifierBrand], Customizable.identifier);
 			assert.equal(node[typeSchemaSymbol], Customizable);
 		});
 

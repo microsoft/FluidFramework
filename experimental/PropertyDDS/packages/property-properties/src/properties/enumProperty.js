@@ -7,14 +7,15 @@
  * @fileoverview Definition of the EnumProperty classes
  */
 
-const { TypeIdHelper } = require("@fluid-experimental/property-changeset");
-const { MSG } = require("@fluid-experimental/property-common").constants;
-const { ConsoleUtils } = require("@fluid-experimental/property-common");
-const _ = require("lodash");
+import { TypeIdHelper } from "@fluid-experimental/property-changeset";
+import { ConsoleUtils, constants } from "@fluid-experimental/property-common";
+import _ from "lodash";
 
-const { Int32Property } = require("./intProperties");
-const { _castFunctors } = require("./primitiveTypeCasts");
-const { ValueProperty } = require("./valueProperty");
+import { Int32Property } from "./intProperties.js";
+import { _castFunctors } from "./primitiveTypeCasts.js";
+import { ValueProperty } from "./valueProperty.js";
+
+const { MSG } = constants;
 
 /**
  * A primitive property for enums.

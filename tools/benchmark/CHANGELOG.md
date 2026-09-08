@@ -1,6 +1,24 @@
 # @fluid-tools/benchmark
 
+## 0.60.0
+
 ## 0.59.0
+
+-   Added `BenchmarkMode` enum with `Correctness` and `Performance` values to represent the mode in which benchmarks are run.
+-   Added `currentBenchmarkMode` constant that reflects the active `BenchmarkMode` at process startup (determined by `--perfMode` flag or `FLUID_TEST_PERF_MODE` environment variable).
+-   `isInPerformanceTestingMode` is now deprecated. Use `currentBenchmarkMode === BenchmarkMode.Performance` instead.
+-   Added `MochaBenchmarkOptions` as the options type for `benchmarkIt`, replacing `BenchmarkOptions`. It adds:
+    -   `correctnessTimeoutMs?: number` — sets the Mocha timeout for this test when running in `BenchmarkMode.Correctness`. Useful for extending correctness-mode timeouts without affecting the (typically much longer) performance-mode timeouts.
+    -   `skip?: BenchmarkMode | true` — skips this test. When set to `true`, the test is skipped in all modes. When set to a `BenchmarkMode` value, the test is skipped only in that mode.
+    -   `only?: boolean` — restricts the run to this test (equivalent to Mocha's `it.only`).
+-   Added `benchmarkDurationBatchless` and the `BatchlessDurationTimer` interface for benchmarks that require per-iteration setup and/or teardown, making batching impractical. Each timed sample covers exactly one invocation of the operation. Prefer `benchmarkDuration` with batching when possible, as batchless measurements have significantly higher noise and measurement bias.
+    Tests previously using `minBatchDurationSeconds: 0` to force a single iteration per batch should migrate to this API.
+-   Improved error reporting: if a benchmark function exits before data collection is complete (e.g. by never recording timing data via the relevant API, such as `state.timeBatch()`/`state.recordBatch()` for custom duration benchmarks or `time()`/`timeAsync()` for batchless benchmarks, or by breaking out of the timing loop while it is still returning `true`), an error is now thrown with a descriptive message.
+
+### ⚠ BREAKING CHANGES
+
+-   `BenchmarkTimer` has been renamed to `BatchedDurationTimer`.
+-   Removed `MochaExclusiveOptions` interface. Consumers who referenced this type should use `MochaBenchmarkOptions` instead, which includes the same `only` field plus the new `correctnessTimeoutMs` and `skip` options.
 
 ## 0.58.0
 

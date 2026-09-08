@@ -25,8 +25,8 @@ import type { IEmitter, Listenable } from "@fluidframework/core-interfaces/inter
 import { assert } from "@fluidframework/core-utils/internal";
 import { createSessionId } from "@fluidframework/id-compressor/internal";
 import type {
-	ITelemetryLoggerExt,
 	MonitoringContext,
+	TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { createChildMonitoringContext } from "@fluidframework/telemetry-utils/internal";
 
@@ -223,7 +223,7 @@ function setupSubComponents(
 	runtime: IEphemeralRuntime,
 	events: Listenable<PresenceEvents & AttendeesEvents> &
 		IEmitter<PresenceEvents & AttendeesEvents>,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	presence: Presence,
 ): [PresenceDatastoreManager, SystemWorkspace] {
 	const systemWorkspaceDatastore: SystemWorkspaceDatastore = {

@@ -14,7 +14,7 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import { UsageError } from "@fluidframework/driver-utils/internal";
 import type { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import { LocalOdspDeltaStorageService } from "./localOdspDeltaStorageService.js";
 import { LocalOdspDocumentStorageService } from "./localOdspDocumentStorageManager.js";
@@ -31,7 +31,7 @@ export class LocalOdspDocumentService
 
 	constructor(
 		private readonly odspResolvedUrl: IOdspResolvedUrl,
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 		private readonly localSnapshot: Uint8Array | string,
 	) {
 		super();
@@ -58,7 +58,7 @@ export class LocalOdspDocumentService
 		throw toThrow;
 	}
 
-	public dispose(error?: unknown): void {
+	public dispose(): void {
 		// Do nothing
 	}
 }

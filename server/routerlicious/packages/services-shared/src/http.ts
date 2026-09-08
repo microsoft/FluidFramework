@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { parse } from "path";
+import { posix, win32 } from "path";
 
 import { NetworkError, getNetworkInformationFromIP } from "@fluidframework/server-services-client";
 import { ITenantManager, type ITenantConfig } from "@fluidframework/server-services-core";
@@ -11,12 +11,27 @@ import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import type { RequestHandler, Response } from "express";
 
 /**
- * Check a given path string for path traversal (e.g. "../" or "/").
+ * Check a given path string for path traversal (e.g. "..", "../", "/", "\\").
+ *
+ * A value is considered to contain path traversal if it is an absolute path or if any
+ * of its segments (split on either separator) is "." or "..". This intentionally still
+ * allows nested downward paths such as "path/other".
+ *
+ * Note: the previous implementation relied on `parse(x).dir`, but Node returns an empty
+ * `dir` for a bare ".." (and "foo" for "foo/.."), so those traversal values slipped
+ * through. This segment-based check closes that gap.
  * @internal
  */
 export function containsPathTraversal(path: string): boolean {
-	const parsedPath = parse(path);
-	return parsedPath.dir.includes("..") || parsedPath.dir.startsWith("/");
+	if (!path) {
+		return false;
+	}
+	// Absolute paths (POSIX "/..." or Windows "C:\\..." / "\\...") are not allowed.
+	if (posix.isAbsolute(path) || win32.isAbsolute(path)) {
+		return true;
+	}
+	// Reject any "." or ".." segment (using either separator).
+	return path.split(/[/\\]/).some((segment) => segment === "." || segment === "..");
 }
 
 /**

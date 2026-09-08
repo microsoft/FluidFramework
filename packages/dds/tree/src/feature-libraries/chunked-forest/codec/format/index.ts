@@ -17,12 +17,18 @@ export {
 } from "./formatV1.js";
 export { EncodedIncrementalChunkShape, EncodedChunkShapeV2 } from "./formatV2.js";
 export {
+	EncodedChunkShapeVTextExperimental,
+	EncodedSpecializedNodeShape,
+} from "./formatVText.js";
+export {
 	FieldBatchFormatVersion,
 	EncodedFieldBatchV1,
 	EncodedFieldBatchV2,
+	EncodedFieldBatchVTextExperimental,
+	supportsIncrementalEncoding,
 	type EncodedFieldBatchV1OrV2,
 	type EncodedFieldBatchV1AndV2,
-	type EncodedChunkShapeV1OrV2,
+	type EncodedChunkShape,
 } from "./versions.js";
 export type {
 	ShapeIndex,

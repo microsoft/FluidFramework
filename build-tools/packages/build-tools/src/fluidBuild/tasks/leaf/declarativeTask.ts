@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import type { BuildContext } from "../../buildContext";
-import type { BuildPackage } from "../../buildGraph";
+import type { BuildContext } from "../../buildContext.js";
+import type { BuildPackage } from "../../buildGraph.js";
 import {
 	type DeclarativeTask,
 	gitignoreDefaultValue,
 	replaceRepoRootTokens,
-} from "../../fluidBuildConfig";
-import type { GitIgnoreSetting } from "../../fluidTaskDefinitions";
-import { LeafWithGlobInputOutputDoneFileTask } from "./leafTask";
+} from "../../fluidBuildConfig.js";
+import type { GitIgnoreSetting } from "../../fluidTaskDefinitions.js";
+import { LeafWithGlobInputOutputDoneFileTask } from "./leafTask.js";
 
 export class DeclarativeLeafTask extends LeafWithGlobInputOutputDoneFileTask {
 	constructor(

@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { getDataStoreEntryPoint } from "@fluid-example/example-utils";
+import {
+	exampleOldestSupportedClient,
+	getDataStoreEntryPoint,
+} from "@fluid-example/example-utils";
 import type {
 	IContainerContext,
 	IRuntime,
@@ -47,6 +50,7 @@ export class GroceryListContainerRuntimeFactory implements IRuntimeFactory {
 			]),
 			provideEntryPoint,
 			existing,
+			oldestSupportedClient: exampleOldestSupportedClient,
 		});
 
 		if (!existing) {

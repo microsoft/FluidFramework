@@ -4,7 +4,7 @@
  */
 
 import type { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
-import { createRef, type FC, useEffect } from "react";
+import { type FC, useEffect, useRef } from "react";
 // eslint-disable-next-line import-x/no-unassigned-import
 import "./style.css";
 
@@ -35,7 +35,7 @@ interface ITriangleViewProps {
  * @internal
  */
 export const TriangleView: FC<ITriangleViewProps> = (props: ITriangleViewProps) => {
-	const canvasRef = createRef<HTMLCanvasElement>();
+	const canvasRef = useRef<HTMLCanvasElement>(null);
 	const rerenderCanvas = (): void => {
 		if (canvasRef.current !== null) {
 			const ctx = canvasRef.current.getContext("2d");

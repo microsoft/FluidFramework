@@ -9,6 +9,7 @@ import { AzureClient } from "@fluidframework/azure-client";
 import type { AzureClientPropsInternal } from "@fluidframework/azure-client/internal";
 import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/beta";
 import {
+	// eslint-disable-next-line import-x/no-deprecated -- not actually deprecated, eslint doesn't properly distinguish the overloads
 	createTreeContainerRuntimeFactory,
 	isTreeContainerSchema,
 	// TODO: Fix this once the tree-only mode API has been stabilized.
@@ -40,11 +41,12 @@ async function start(): Promise<void> {
 	const clientProps: AzureClientPropsInternal = {
 		connection: connectionConfig,
 		logger: devtoolsLogger,
-		createContainerRuntimeFactory: ({ schema, compatibilityMode }) => {
+		createContainerRuntimeFactory: ({ schema, minVersionForCollaboration }) => {
 			if (!isTreeContainerSchema(schema)) {
 				throw new Error("Invalid container schema");
 			}
-			return createTreeContainerRuntimeFactory({ schema, compatibilityMode });
+			// eslint-disable-next-line import-x/no-deprecated -- not actually deprecated, eslint doesn't properly distinguish the overloads
+			return createTreeContainerRuntimeFactory({ schema, minVersionForCollaboration });
 		},
 	};
 	const client = new AzureClient(clientProps);
@@ -57,7 +59,7 @@ async function start(): Promise<void> {
 	if (createNew) {
 		// The client will create a new detached container using the schema
 		// A detached container will enable the app to modify the container before attaching it to the client
-		({ container } = await client.createContainer(todoListContainerSchema, "2"));
+		({ container } = await client.createContainer(todoListContainerSchema, "2.0.0"));
 		// Initialize our models so they are ready for use with our controllers
 		appModel = await initializeAppForNewContainer(container);
 
@@ -71,7 +73,7 @@ async function start(): Promise<void> {
 		containerId = location.hash.slice(1);
 		// Use the unique container ID to fetch the container created earlier.  It will already be connected to the
 		// collaboration session.
-		({ container } = await client.getContainer(containerId, todoListContainerSchema, "2"));
+		({ container } = await client.getContainer(containerId, todoListContainerSchema, "2.0.0"));
 		appModel = loadAppFromExistingContainer(container);
 	}
 

@@ -6,12 +6,11 @@
 import { strict as assert } from 'assert';
 
 import {
+	BenchmarkMode,
 	BenchmarkType,
-	TestType,
 	benchmarkDuration,
 	benchmarkIt,
-	collectDurationData,
-	isInPerformanceTestingMode,
+	currentBenchmarkMode,
 } from '@fluid-tools/benchmark';
 import { v4 } from 'uuid';
 
@@ -27,7 +26,7 @@ import { refreshTestTree } from './utilities/TestUtilities.js';
 describe('Forest Perf', () => {
 	const testTree = refreshTestTree();
 	// Larger sizes can slow down correctness test runs, or even time out, so only run smaller sizes as correctness tests.
-	const sizes = isInPerformanceTestingMode ? [100, 1_000, 10_000, 100_000] : [100, 1_000];
+	const sizes = currentBenchmarkMode === BenchmarkMode.Performance ? [100, 1_000, 10_000, 100_000] : [100, 1_000];
 
 	for (const count of sizes) {
 		// Pick a single representative size for the 'Measurement' suite to keep it small.
@@ -41,62 +40,59 @@ describe('Forest Perf', () => {
 
 		benchmarkIt({
 			type,
-			testType: TestType.ExecutionTime,
 			title: `walk ${count} node TreeView`,
-			run: async () => {
-				const [built, rootId] = buildRandomTree(testTree, count);
-				return collectDurationData({
-					benchmarkFn: () => {
+			...benchmarkDuration({
+				benchmarkFnCustom: async (state) => {
+					const [built, rootId] = buildRandomTree(testTree, count);
+					state.timeAllBatches(() => {
 						const nodes = walk(built, rootId);
 						assert(nodes === count);
-					},
-				});
-			},
+					});
+				},
+			}),
 		});
 
 		benchmarkIt({
 			type,
-			testType: TestType.ExecutionTime,
 			title: `insert ${count} nodes into Forest`,
-			run: async () => {
-				const forest = Forest.create(true);
-				const nodes: ForestNode[] = [];
-				for (let i = 0; i < count; i++) {
-					nodes.push(makeTestForestNode(testTree));
-				}
-				return collectDurationData({
-					benchmarkFn: () => {
+			...benchmarkDuration({
+				benchmarkFnCustom: async (state) => {
+					const forest = Forest.create(true);
+					const nodes: ForestNode[] = [];
+					for (let i = 0; i < count; i++) {
+						nodes.push(makeTestForestNode(testTree));
+					}
+					state.timeAllBatches(() => {
 						forest.add(nodes);
-					},
-				});
-			},
+					});
+				},
+			}),
 		});
 
 		for (const otherCount of sizes) {
 			benchmarkIt({
 				type,
-				testType: TestType.ExecutionTime,
 				title: `invoke delta on Forest with ${count} nodes against Forest with ${otherCount} nodes`,
-				run: async () => {
-					let forest = Forest.create(true);
-					let otherForest = Forest.create(true);
-					const nodes: ForestNode[] = [];
-					for (let i = 0; i < count; i++) {
-						nodes.push(makeTestForestNode(testTree));
-					}
-					forest = forest.add(nodes);
+				...benchmarkDuration({
+					benchmarkFnCustom: async (state) => {
+						let forest = Forest.create(true);
+						let otherForest = Forest.create(true);
+						const nodes: ForestNode[] = [];
+						for (let i = 0; i < count; i++) {
+							nodes.push(makeTestForestNode(testTree));
+						}
+						forest = forest.add(nodes);
 
-					const otherNodes: ForestNode[] = [];
-					for (let i = 0; i < otherCount; i++) {
-						otherNodes.push(makeTestForestNode(testTree));
-					}
-					otherForest = otherForest.add(otherNodes);
-					return collectDurationData({
-						benchmarkFn: () => {
+						const otherNodes: ForestNode[] = [];
+						for (let i = 0; i < otherCount; i++) {
+							otherNodes.push(makeTestForestNode(testTree));
+						}
+						otherForest = otherForest.add(otherNodes);
+						state.timeAllBatches(() => {
 							forest.delta(otherForest);
-						},
-					});
-				},
+						});
+					},
+				}),
 			});
 		}
 	}

@@ -8,9 +8,8 @@ import { strict as assert } from "node:assert";
 import { IsoBuffer } from "@fluid-internal/client-utils";
 import {
 	BenchmarkType,
-	TestType,
+	benchmarkDuration,
 	benchmarkIt,
-	collectDurationData,
 	ValueType,
 	type CollectedData,
 } from "@fluid-tools/benchmark";
@@ -86,8 +85,6 @@ describe("Summary benchmarks", () => {
 
 		for (const [numberOfNodes, minLength, maxLength] of nodesCountWide) {
 			benchmarkIt({
-				only: false,
-				type: BenchmarkType.Measurement,
 				title: `a wide tree with ${numberOfNodes} nodes.`,
 				run: async () => {
 					const summaryTree = getSummaryTree({
@@ -100,8 +97,6 @@ describe("Summary benchmarks", () => {
 		}
 		for (const [numberOfNodes, minLength, maxLength] of nodesCountDeep) {
 			benchmarkIt({
-				only: false,
-				type: BenchmarkType.Measurement,
 				title: `a deep tree with ${numberOfNodes} nodes.`,
 				run: async () => {
 					const summaryTree = getSummaryTree({
@@ -126,11 +121,10 @@ describe("Summary benchmarks", () => {
 			benchmarkIt({
 				title,
 				type,
-				testType: TestType.ExecutionTime,
-				run: async () => {
-					const summaryTree = convertSummaryTreeToITree(getSummaryTree(content));
-					return collectDurationData({
-						benchmarkFnAsync: async () => {
+				...benchmarkDuration({
+					benchmarkFnCustom: async (state) => {
+						const summaryTree = convertSummaryTreeToITree(getSummaryTree(content));
+						await state.timeAllBatchesAsync(async () => {
 							const services: IChannelServices = {
 								deltaConnection: new MockDeltaConnection(
 									() => 0,
@@ -142,9 +136,9 @@ describe("Summary benchmarks", () => {
 								idCompressor: testIdCompressor,
 							});
 							await factory.load(datastoreRuntime, "test", services, factory.attributes);
-						},
-					});
-				},
+						});
+					},
+				}),
 			});
 		}
 

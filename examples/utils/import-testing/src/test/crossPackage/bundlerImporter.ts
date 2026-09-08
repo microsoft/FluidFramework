@@ -12,7 +12,7 @@ resolves import paths in .d.ts files. These imports should compile without error
 */
 import { TreeViewConfiguration } from "@fluidframework/tree";
 
-/* eslint-disable import-x/no-internal-modules */
+/* eslint-disable import-x/no-internal-modules -- Compile-time test imports its generated package subpath. */
 import {
 	AppState,
 	Container,

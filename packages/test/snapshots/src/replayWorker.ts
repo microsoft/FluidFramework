@@ -3,18 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import threads from "worker_threads";
+import { strict as assert } from "node:assert";
+import threads from "node:worker_threads";
 
 import { IWorkerArgs, processOneNode } from "./replayMultipleFiles.js";
 
-const data = threads.workerData as IWorkerArgs;
+const data = threads.workerData as IWorkerArgs | null;
+assert(!!data, `replayWorker: worker data is ${JSON.stringify(data)}`);
+const parentPort = threads.parentPort;
+assert(parentPort !== null, "replayWorker: parent port is null");
 processOneNode(data)
-	.then(() => threads.parentPort.postMessage("true"))
+	.then(() => parentPort.postMessage("true"))
 	.catch((error) => {
 		const typedError = error as Error;
 		if (typeof error === "object" && error !== null && typedError.message !== undefined) {
-			threads.parentPort.postMessage(typedError.stack ?? typedError.message);
+			parentPort.postMessage(typedError.stack ?? typedError.message);
 		} else {
-			threads.parentPort.postMessage(`Error AAA processing ${data.folder}`);
+			parentPort.postMessage(`Error AAA processing ${data.folder}`);
 		}
 	});

@@ -28,15 +28,14 @@ describe("mocha integration", () => {
 		testArgs: string[],
 		shouldFail: boolean,
 		options?: {
-			/** Defaults to "mocha-integration-inner". */
 			testName?: string;
 			env?: NodeJS.ProcessEnv;
 		},
 	): { stdout: string; stderr: string } {
 		// Disable colors with "--no-color" does not seem to work on CI (perhaps due to an environment variable),
 		// but enabling colors does seem to work locally, so we enable colors to get consistent results for these tests.
-		const testName = options?.testName ?? "mocha-integration-inner";
-		const args = [...testArgs, "--fgrep", testName, "--color"];
+		const fgrepArgs = options?.testName === undefined ? [] : ["--fgrep", options.testName];
+		const args = [...testArgs, ...fgrepArgs, "--color"];
 		const result = childProcess.spawnSync("mocha", args, {
 			encoding: "utf8",
 			env: { ...process.env, ...options?.env },
@@ -46,20 +45,24 @@ describe("mocha integration", () => {
 	}
 
 	it("correctness", () => {
-		const { stdout } = integrationTest([], false);
+		const { stdout } = integrationTest([], false, { testName: "mocha-integration-inner" });
 		assert.match(stdout, /✔.*@Benchmark @Measurement mocha-integration-inner/);
 		assert.match(stdout, / 1 passing/);
 	});
 
 	it("correctness with error", () => {
-		const { stdout } = integrationTest(["--integrationFail"], true);
+		const { stdout } = integrationTest(["--integrationFail"], true, {
+			testName: "mocha-integration-inner",
+		});
 		assert.match(stdout, / 0 passing/);
 	});
 	for (const parentProcess of [false, true]) {
 		describe(parentProcess ? "with parent process" : "without parent process", () => {
 			const args = [...perfModeArgs, ...(parentProcess ? ["--parentProcess"] : [])];
 			it("perf", () => {
-				const { stdout } = integrationTest(args, false);
+				const { stdout } = integrationTest(args, false, {
+					testName: "mocha-integration-inner",
+				});
 				// From suite table:
 				assert.match(stdout, /✔.+mocha-integration-inner.+1\.000 ms/);
 				// From summary table:
@@ -68,6 +71,7 @@ describe("mocha integration", () => {
 
 			it("perf with error", () => {
 				const { stdout, stderr } = integrationTest([...args, "--integrationFail"], true, {
+					testName: "mocha-integration-inner",
 					// FLUID_TEST_VERBOSE prevents @fluid-internal/mocha-test-setup from suppressing
 					// console.error during test execution, so the error output reaches stderr.
 					env: { FLUID_TEST_VERBOSE: "1" },
@@ -142,6 +146,35 @@ describe("mocha integration", () => {
 				return sampleResult;
 			},
 		}).timeout(1);
+	}
+
+	it("only option restricts run to only that test", () => {
+		// Run a child mocha process with --integrationOnly, which registers:
+		// 1. benchmarkIt({ only: true, title: "only-integration-inner" }) — should run
+		// 2. benchmarkIt({ title: "only-integration-excluded" }) — should be skipped
+		// Mocha's exclusive mode (triggered by only: true) skips all non-only tests.
+		const { stdout } = integrationTest(["--integrationOnly", "--no-forbid-only"], false);
+		assert.match(stdout, /✔.*@Benchmark @Measurement only-integration-inner/);
+		assert.match(stdout, / 1 passing/);
+		// The excluded test must not have run (running it throws, which would fail the suite).
+		// But validate it is not in the output anyway:
+		assert.doesNotMatch(stdout, /only-integration-excluded/);
+	});
+
+	// Tests used by the "only option" integration test above.
+	// Gated so that only: true does not put the outer test run into exclusive mode.
+	if (argv.includes("--integrationOnly")) {
+		benchmarkIt({
+			title: "only-integration-inner",
+			only: true,
+			run: (): CollectedData => sampleResult,
+		});
+		benchmarkIt({
+			title: "only-integration-excluded",
+			run: (): CollectedData => {
+				throw new Error("This test should not run when 'only' is used");
+			},
+		});
 	}
 });
 

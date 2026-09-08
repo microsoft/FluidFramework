@@ -163,6 +163,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getEntryPoint(): Promise<FluidObject>;
     getLoadedCodeDetails(): IFluidCodeDetails | undefined;
+    getPendingLocalState?(): Promise<string>;
     getQuorum(): IQuorumClients;
     getSpecifiedCodeDetails(): IFluidCodeDetails | undefined;
     readonly isDirty: boolean;
@@ -183,13 +184,11 @@ export interface IContainerContext {
     readonly clientDetails: IClientDetails;
     // (undocumented)
     readonly clientId: string | undefined;
-    // (undocumented)
     readonly closeFn: (error?: ICriticalContainerError) => void;
     // (undocumented)
     readonly connected: boolean;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    // (undocumented)
     readonly disposeFn?: (error?: ICriticalContainerError) => void;
     getAbsoluteUrl?(relativeUrl: string): Promise<string | undefined>;
     readonly getConnectionState?: () => ConnectionState;
@@ -438,7 +437,6 @@ export interface ILoader extends Partial<IProvideLoader> {
 export type ILoaderOptions = {
     cache?: boolean;
     client?: IClient;
-    enableOfflineLoad?: boolean;
     provideScopeLoader?: boolean;
     maxClientLeaveWaitTime?: number;
 };
@@ -463,6 +461,7 @@ export interface IProvideRuntimeFactory {
 
 // @beta @legacy
 export interface IRuntime extends IDisposable {
+    close?(): void;
     createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
     getEntryPoint(): Promise<FluidObject>;
     getPendingLocalState(props?: IGetPendingLocalStateProps): unknown;

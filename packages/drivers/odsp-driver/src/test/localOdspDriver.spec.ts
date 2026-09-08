@@ -67,10 +67,7 @@ describe("Local Odsp driver", () => {
 
 		it("createContainer throws error", async () => {
 			await assertThrowsUsageError(async () =>
-				new LocalOdspDocumentServiceFactory("sample data").createContainer(
-					undefined,
-					fakeOdspResolvedUrl,
-				),
+				new LocalOdspDocumentServiceFactory("sample data").createContainer(),
 			);
 		});
 
@@ -199,9 +196,6 @@ describe("Local Odsp driver", () => {
 				localSnapshot,
 			);
 			assert.doesNotThrow(() => service.dispose());
-			assert.doesNotThrow(() => service.dispose(null));
-			assert.doesNotThrow(() => service.dispose(undefined));
-			assert.doesNotThrow(() => service.dispose(new Error("I am an error")));
 		});
 	});
 

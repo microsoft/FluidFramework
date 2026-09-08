@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "nodes": {
+    "com.fluidframework.leaf.number": {
+      "leaf": 0
+    },
+    "com.fluidframework.leaf.string": {
+      "leaf": 1
+    },
+    "test.NestedStagedOptional": {
+      "object": {
+        "a": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.leaf.number"
+          ]
+        },
+        "b": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.leaf.string"
+          ]
+        }
+      }
+    }
+  },
+  "root": {
+    "kind": "Value",
+    "types": [
+      "test.NestedStagedOptional"
+    ]
+  }
+}

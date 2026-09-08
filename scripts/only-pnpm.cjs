@@ -21,7 +21,7 @@ const message = `
 ╚══════════════════════════════════════════════════════════════════╝
 `;
 
-const used_pnpm = process.env.npm_config_user_agent.startsWith(`pnpm`);
+const used_pnpm = (process.env.npm_execpath ?? "").includes(`pnpm`);
 
 if (!used_pnpm) {
 	console.error(message);

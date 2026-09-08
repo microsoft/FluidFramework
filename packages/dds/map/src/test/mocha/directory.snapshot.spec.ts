@@ -139,6 +139,7 @@ describe("SharedDirectory Snapshot Tests", () => {
 		skip = false,
 		writeCompatible = true,
 	} of testScenarios) {
+		// eslint-disable-next-line no-only-tests/no-only-tests -- controlled by test data
 		const itFn = only ? it.only : skip ? it.skip : it;
 		itFn(name, async () => {
 			const testDirectory = runScenario() as SharedDirectory;

@@ -287,4 +287,5 @@ export function itCorrectlyObliterates(args: ObliterateTestArgs): Mocha.Test {
 itCorrectlyObliterates.skip = (args: ObliterateTestArgs) =>
 	it.skip(args.title, createObliterateTestBody(args));
 itCorrectlyObliterates.only = (args: ObliterateTestArgs) =>
+	// eslint-disable-next-line no-only-tests/no-only-tests -- intentionally provides an `.only` variant for focused debugging
 	it.only(args.title, createObliterateTestBody(args));

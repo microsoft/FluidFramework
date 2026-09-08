@@ -5,9 +5,10 @@
 
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
-import type {
-	SerializedIdCompressorWithNoSession,
-	SerializedIdCompressorWithOngoingSession,
+import {
+	serializeIdCompressor,
+	type SerializedIdCompressorWithNoSession,
+	type SerializedIdCompressorWithOngoingSession,
 } from "@fluidframework/id-compressor/internal";
 import type {
 	MockContainerRuntimeForReconnection,
@@ -79,8 +80,14 @@ export function createLoadData(
 				compressor === undefined
 					? undefined
 					: withSession
-						? { withSession: true, serializedCompressor: compressor.serialize(true) }
-						: { withSession: false, serializedCompressor: compressor.serialize(false) },
+						? {
+								withSession: true,
+								serializedCompressor: serializeIdCompressor(compressor, true),
+							}
+						: {
+								withSession: false,
+								serializedCompressor: serializeIdCompressor(compressor, false),
+							},
 		},
 	};
 }
@@ -103,7 +110,10 @@ export function createLoadDataFromStashData(
 			idCompressorSummary:
 				compressor === undefined
 					? undefined
-					: { withSession: true, serializedCompressor: compressor.serialize(true) },
+					: {
+							withSession: true,
+							serializedCompressor: serializeIdCompressor(compressor, true),
+						},
 		},
 	};
 }

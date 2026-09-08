@@ -4,12 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import type { PackageJson } from "../common/npmPackage";
+import type { PackageJson } from "../common/npmPackage.js";
 import {
 	getTaskDefinitions,
 	normalizeGlobalTaskDefinitions,
 	type TaskDefinitionsOnDisk,
-} from "../fluidBuild/fluidTaskDefinitions";
+} from "../fluidBuild/fluidTaskDefinitions.js";
 
 describe("Task Definitions", () => {
 	describe("File Dependencies Extension", () => {

@@ -1,0 +1,213 @@
+# In-cluster backends for full-stack Routerlicious on AKS.
+#
+# Storage:
+#   gitrest snapshots -> Azure Files PV (RWX SMB) via the custom StorageClass below. gitrest
+#     has no Blob backend in OSS (only local-fs / mem / redis), so Azure Files is the
+#     zero-code managed filesystem option.
+#   mongo (ops/metadata) -> Cosmos DB for MongoDB (managed, see azure/deploy.sh
+#     phase8_cosmos), not in-cluster. routerlicious/riddler get the connection string via Key
+#     Vault + the Secrets Store CSI driver, through the one workload identity
+#     (phase8_workload_identity) -- never a plain Kubernetes Secret.
+#   redis -> Azure Managed Redis (managed, TLS, access-key auth -- see azure/deploy.sh
+#     phase8_redis), not in-cluster. gitrest and historian below get the key the same way.
+#
+# Replace <ACR> with your ACR resource name (for example, myregistry; do not include
+# .azurecr.io) and <IMAGE_TAG> with the unique immutable release tag created in README
+# Phase 1. Images are built from source and pushed to ACR.
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: azurefile-gitrest
+provisioner: file.csi.azure.com
+allowVolumeExpansion: true
+reclaimPolicy: Retain
+parameters:
+  skuName: Standard_LRS
+  resourceGroup: <RG>
+  storageAccount: <STORAGE>
+  useDataPlaneAPI: "false"
+  # No secretName/secretNamespace: the CSI driver's own managed identity (granted
+  # "Storage Account Key Operator Service Role" above) fetches the key from ARM at
+  # mount time instead of reading a static Kubernetes Secret.
+mountOptions:
+  - dir_mode=0777
+  - file_mode=0777
+  - uid=1000
+  - gid=1000
+  - mfsymlinks
+  - cache=strict
+  - actimeo=30
+  - nobrl
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gitrest-data
+spec:
+  accessModes: [ReadWriteMany]
+  storageClassName: azurefile-gitrest
+  resources:
+    # <GITREST_STORAGE_QUOTA> default (20Ti): a ceiling sized for sustained growth (no GC,
+    # repo-per-tenant pooling -- see azure/README.md "Production hardening"), not a pre-paid
+    # allocation. Costs nothing beyond actual bytes used (Standard/pay-as-you-go tier).
+    requests: { storage: <GITREST_STORAGE_QUOTA> }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitrest
+  labels: { app: gitrest }
+spec:
+  replicas: 1
+  strategy: { type: Recreate }
+  selector: { matchLabels: { app: gitrest } }
+  template:
+    metadata:
+      labels: { app: gitrest, azure.workload.identity/use: "true" }
+    spec:
+      serviceAccountName: fluid-workload-identity
+      # Pinned to the dedicated gitrestpool node (azure/deploy.sh phase1_gitrest_nodepool) --
+      # the current selfhost design only supports 1 gitrest replica (see the Recreate strategy
+      # above; horizontal scaling would need a customized storage-layer design, not the default
+      # solution), so isolating its one pod from noisy neighbors is the only scaling lever left
+      # (design spec Section 7.9).
+      tolerations:
+        - { key: dedicated, operator: Equal, value: gitrest, effect: NoSchedule }
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - { key: kubernetes.azure.com/agentpool, operator: In, values: [gitrestpool] }
+      securityContext:
+        fsGroup: 1000
+      initContainers:
+        # Same CSI-mount + init-container pattern the Helm-deployed services use (see
+        # azure/deploy.sh phase5_helm) -- fetches the Key-Vault-backed redis-password via the
+        # one workload identity, never a plain Kubernetes Secret.
+        - name: load-secrets
+          image: busybox
+          command:
+            - sh
+            - -c
+            - 'REDIS_PASS="$(cat /mnt/secrets/redis-password)"; printf "export redis__pass=\"%s\"\n" "$REDIS_PASS" > /config/secrets.env'
+          volumeMounts:
+            - { name: fluid-secrets, mountPath: /mnt/secrets, readOnly: true }
+            - { name: fluid-secrets-env, mountPath: /config }
+      containers:
+        - name: gitrest
+          image: <ACR>.azurecr.io/gitrest:<IMAGE_TAG>
+          command: ["sh", "-c", "test -f /config/secrets.env && . /config/secrets.env; exec node packages/gitrest/dist/www.js"]
+          ports: [{ containerPort: 3000 }]
+          # No HPA (single replica, see gitrestpool nodeAffinity above) -- sized for its own
+          # dedicated Standard_D8as_v5 node (8 vCPU/32Gi), not matched to the other services'
+          # smaller shared-node defaults. Limit is capped well below node capacity so a spike
+          # is OOM-killed at the container instead of starving the node's kubelet/system pods.
+          resources:
+            requests: { cpu: "1", memory: 1Gi }
+            limits: { cpu: "4", memory: 16Gi }
+          env:
+            - { name: IS_FLUID_SERVER, value: "true" }
+            - { name: NODE_ENV, value: "production" }
+            - { name: git__enableLowIoWrite, value: "true" }
+            - { name: redis__host, value: "<REDIS_HOSTNAME>" }
+            - { name: redis__port, value: "10000" }
+            - { name: redis__tls, value: "true" }
+            # redis__pass: sourced from /config/secrets.env (written by the load-secrets init
+            # container above) -- no plain Kubernetes Secret exists for this credential.
+          volumeMounts:
+            - { name: data, mountPath: /home/node/documents }
+            - { name: fluid-secrets-env, mountPath: /config, readOnly: true }
+      volumes:
+        - name: data
+          persistentVolumeClaim: { claimName: gitrest-data }
+        - name: fluid-secrets
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes: { secretProviderClass: fluid-secrets }
+        - name: fluid-secrets-env
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata: { name: gitrest }
+spec:
+  selector: { app: gitrest }
+  ports: [{ port: 80, targetPort: 3000 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: historian
+  labels: { app: historian }
+spec:
+  replicas: <HISTORIAN_REPLICAS>
+  selector: { matchLabels: { app: historian } }
+  template:
+    metadata:
+      labels: { app: historian, azure.workload.identity/use: "true" }
+    spec:
+      serviceAccountName: fluid-workload-identity
+      initContainers:
+        # Same CSI-mount + init-container pattern the Helm-deployed services use (see
+        # azure/deploy.sh phase5_helm) -- fetches the Key-Vault-backed redis-password via the
+        # one workload identity, never a plain Kubernetes Secret.
+        - name: load-secrets
+          image: busybox
+          command:
+            - sh
+            - -c
+            - 'REDIS_PASS="$(cat /mnt/secrets/redis-password)"; printf "export redis__pass=\"%s\"\n" "$REDIS_PASS" > /config/secrets.env; printf "export redisForThrottling__pass=\"%s\"\n" "$REDIS_PASS" >> /config/secrets.env'
+          volumeMounts:
+            - { name: fluid-secrets, mountPath: /mnt/secrets, readOnly: true }
+            - { name: fluid-secrets-env, mountPath: /config }
+      containers:
+        - name: historian
+          image: <ACR>.azurecr.io/historian:<IMAGE_TAG>
+          command: ["sh", "-c", "test -f /config/secrets.env && . /config/secrets.env; exec node packages/historian/dist/www.js"]
+          ports: [{ containerPort: 3000 }]
+          # Required for historian-hpa (azure/hpa.yaml) to compute a CPU utilization percentage.
+          resources:
+            requests: { cpu: 50m, memory: 450Mi }
+            limits: { cpu: "3", memory: 2Gi }
+          env:
+            - { name: IS_FLUID_SERVER, value: "true" }
+            - { name: NODE_ENV, value: "production" }
+            - { name: riddler, value: "http://fluid-riddler" }
+            # Historian resolves this to reach alfred, for the document-ownership check it runs on
+            # every summary route. Its image default is http://alfred:3000, which does not resolve
+            # here because the Helm chart prefixes its Service names with the release name
+            # (fluid-alfred), while historian and gitrest are deployed from this file under bare
+            # names -- the same reason `riddler` is overridden just above. Left unset, historian
+            # fails with "getaddrinfo ENOTFOUND alfred" and returns 502 on both container creation
+            # and reads.
+            - { name: alfred, value: "http://fluid-alfred" }
+            - { name: storageUrl, value: "http://gitrest" }
+            - { name: redis__host, value: "<REDIS_HOSTNAME>" }
+            - { name: redis__port, value: "10000" }
+            - { name: redis__tls, value: "true" }
+            - { name: redisForThrottling__host, value: "<REDIS_HOSTNAME>" }
+            - { name: redisForThrottling__port, value: "10000" }
+            - { name: redisForThrottling__tls, value: "true" }
+            # redis__pass / redisForThrottling__pass: sourced from /config/secrets.env (written
+            # by the load-secrets init container above) -- no plain Kubernetes Secret exists
+            # for either credential.
+          volumeMounts:
+            - { name: fluid-secrets-env, mountPath: /config, readOnly: true }
+      volumes:
+        - name: fluid-secrets
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes: { secretProviderClass: fluid-secrets }
+        - name: fluid-secrets-env
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata: { name: historian }
+spec:
+  selector: { app: historian }
+  ports: [{ port: 80, targetPort: 3000 }]

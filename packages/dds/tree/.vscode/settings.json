@@ -28,6 +28,7 @@
 		"fluidframework",
 		"insertable",
 		"jsonable",
+		"Originatorless",
 		"parameterizing",
 		"Poset",
 		"rebaser",

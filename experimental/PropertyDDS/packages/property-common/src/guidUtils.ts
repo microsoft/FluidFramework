@@ -11,7 +11,6 @@
 
 import base64js from "base64-js";
 
-import { generateRandomUInt32Array } from "../platform-dependent";
 const UINT_32HASH_PRIME = 16777619;
 
 /**
@@ -50,7 +49,8 @@ const guidRNG = {
 			this.isInitialized = true;
 
 			if (in_seed === undefined) {
-				const randomValues = generateRandomUInt32Array(4);
+				const randomValues = new Uint32Array(4);
+				crypto.getRandomValues(randomValues);
 				this.u = randomValues[0];
 				this.v = randomValues[1];
 				this.w1 = randomValues[2];

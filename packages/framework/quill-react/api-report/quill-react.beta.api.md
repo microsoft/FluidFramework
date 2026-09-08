@@ -4,8 +4,6 @@
 
 ```ts
 
-export { FormattedTextAsTree }
-
 // (No @packageDocumentation comment for this package)
 
 ```

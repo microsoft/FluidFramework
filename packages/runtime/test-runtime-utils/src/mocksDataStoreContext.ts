@@ -17,8 +17,6 @@ import {
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
-import type { IIdCompressorCore } from "@fluidframework/id-compressor/internal";
 import {
 	CreateChildSummarizerNodeFn,
 	CreateChildSummarizerNodeParam,
@@ -27,7 +25,7 @@ import {
 	IFluidDataStoreRegistry,
 	IGarbageCollectionDetailsBase,
 	type IRuntimeStorageService,
-	type MinimumVersionForCollab,
+	type OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
 import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
@@ -42,7 +40,7 @@ import { MockDeltaManager } from "./mockDeltas.js";
  */
 export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public isLocalDataStore: boolean = true;
-	public packagePath: readonly string[] = undefined as any;
+	public packagePath: readonly string[] = []; // unused besides logging
 
 	public options: Record<string | number, any> = {};
 	public clientId: string | undefined = uuid();
@@ -53,12 +51,16 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> =
 		new MockDeltaManager(() => this.clientId);
 
-	public containerRuntime: IContainerRuntimeBase = undefined as any;
+	public containerRuntime: IContainerRuntimeBase = {
+		inStagingMode: false,
+		on: () => {},
+		off: () => {},
+		once: () => {},
+	} as any;
 	public storage: IRuntimeStorageService = undefined as any;
 	public IFluidDataStoreRegistry: IFluidDataStoreRegistry = undefined as any;
 	public IFluidHandleContext: IFluidHandleContext = undefined as any;
-	// eslint-disable-next-line import-x/no-deprecated -- Will be undeprecated in 2.100.0 when it becomes an internal API
-	public idCompressor: IIdCompressorCore & IIdCompressor = undefined as any;
+	public idCompressor: IIdCompressor = undefined as any;
 	public readonly gcThrowOnTombstoneUsage = false;
 	public readonly gcTombstoneEnforcementAllowed = false;
 
@@ -81,7 +83,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	/**
 	 * {@inheritdoc @fluidframework/runtime-definitions#IFluidDataStoreContext.minVersionForCollab}
 	 */
-	public minVersionForCollab: MinimumVersionForCollab = defaultMinVersionForCollab;
+	public minVersionForCollab: OldestSupportedClientVersion = defaultMinVersionForCollab;
 
 	constructor(
 		public readonly id: string = uuid(),

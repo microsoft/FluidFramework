@@ -4,12 +4,6 @@
  */
 
 import type {
-	IChannelAttributes,
-	IChannelFactory,
-	IFluidDataStoreRuntime,
-	IChannelServices,
-} from "@fluidframework/datastore-definitions/internal";
-import type {
 	ISharedObject,
 	ISharedObjectEvents,
 } from "@fluidframework/shared-object-base/internal";
@@ -28,24 +22,6 @@ export enum ConsensusResult {
  * @legacy @beta
  */
 export type ConsensusCallback<T> = (value: T) => Promise<ConsensusResult>;
-
-/**
- * Consensus Ordered Collection channel factory interface
- *
- * Extends the base IChannelFactory to return a more definite type of IConsensusOrderedCollection
- * Use for the runtime to create and load distributed data structure by type name of each channel
- * @internal
- */
-export interface IConsensusOrderedCollectionFactory extends IChannelFactory {
-	load(
-		document: IFluidDataStoreRuntime,
-		id: string,
-		services: IChannelServices,
-		attributes: IChannelAttributes,
-	): Promise<IConsensusOrderedCollection>;
-
-	create(document: IFluidDataStoreRuntime, id: string): IConsensusOrderedCollection;
-}
 
 /**
  * Events notifying about addition, acquisition, release and completion of items

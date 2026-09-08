@@ -26,6 +26,7 @@ import type {
 	ISnapshotFetchOptions,
 	FetchSource,
 	IDocumentStorageServicePolicies,
+	IStream,
 } from "@fluidframework/driver-definitions/internal";
 
 import type { IAudience } from "./audience.js";
@@ -223,6 +224,32 @@ export interface IRuntime extends IDisposable {
 	 * @see {@link IContainer.getEntryPoint}
 	 */
 	getEntryPoint(): Promise<FluidObject>;
+
+	/**
+	 * Closes the runtime, releasing timers and other transient resources which are only useful while changes to the content or service are still possible.
+	 * The entryPoint is preserved, allowing content to still be read/inspected.
+	 *
+	 * @remarks
+	 * This enters an intermediate lifecycle stage between connected operation and full disposal.
+	 * The container may call this when it closes, before eventually calling
+	 * {@link @fluidframework/core-interfaces#IDisposable.dispose}.
+	 * Any resources this cleans up should also be cleaned up by `dispose`
+	 * in the case when `close` is not called.
+	 *
+	 * This is optional for backwards compatibility with older runtime implementations.
+	 *
+	 * Do not confuse this with with the various `closeFn` callbacks (such as {@link IContainerContext.closeFn} or `IGarbageCollectorCreateParams.closeFn`:
+	 * those callbacks expose a way to initiate container close, not a way to get notified of container close (which might come from another source).
+	 * This method on the other hand is invoked for all the cases in which the container is closing (though this does not include when its disposing without closing first!),
+	 * and thus this is where the runtime should actually transition to the closed state, and do any appropriate cleanup.
+	 * @privateRemarks
+	 * This method is for communication between two parts of the Fluid client code, and thus should not need to be exposed as a beta+legacy API.
+	 * At some point this whole interface should likely be marked `@sealed` and use an opaque type.
+	 * At that point most of its members, including `close`, could be moved to an internal interface.
+	 * After that, pending any needed layer compat delays, this method could be made required instead of optional.
+	 * This likely applies to the other optional methods on this interface as well.
+	 */
+	close?(): void;
 }
 
 /**
@@ -373,7 +400,25 @@ export interface IContainerContext {
 		referenceSequenceNumber?: number,
 	) => number;
 	readonly submitSignalFn: (contents: unknown, targetClientId?: string) => void;
+	/**
+	 * Initiate disposing of the container due to a critical error.
+	 * @param error - The critical error that caused the container to dispose.
+	 * @remarks
+	 * This is only one of many ways which the container might get disposed.
+	 * To enable the runtime to respond to disposed from any source, it exposes {@link @fluidframework/core-interfaces#IDisposable.dispose}.
+	 */
 	readonly disposeFn?: (error?: ICriticalContainerError) => void;
+	/**
+	 * Initiate closing of the container due to a critical error.
+	 * @param error - The critical error that caused the container to close.
+	 * @remarks
+	 * This is only one of many ways which the container might get closed.
+	 * To enable the runtime to respond to close from any source, it exposes {@link IRuntime.close}.
+	 *
+	 * @privateRemarks
+	 * `error` is optional here to handle the case where `disposeFn` is not provided, so that the `closeFn` is used as a fallback
+	 * and the summarizier wants to initiate a dispose (via {@link ISummarizerRuntime.disposeFn}) which doesn't take in an error.
+	 */
 	readonly closeFn: (error?: ICriticalContainerError) => void;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	readonly quorum: IQuorumClients;
@@ -436,6 +481,31 @@ export interface IContainerContext {
 	 * This contains all parts of a snapshot like blobContents, ops etc.
 	 */
 	readonly snapshotWithContents?: ISnapshot;
+}
+
+/**
+ * Internal extension of {@link IContainerContext} for capabilities the loader injects into the runtime
+ * that are not part of the public container/runtime contract.
+ *
+ * @internal
+ */
+export interface IContainerContextInternal extends IContainerContext {
+	/**
+	 * Reads a range of sequenced ops from delta storage, the read counterpart of `submitFn`. The container
+	 * owns delta storage and injects this so the runtime can pull historical ops (e.g. to resolve a batch
+	 * identity to a sequence number). `abortSignal` cancels an in-flight fetch when the runtime stops reading
+	 * early. The range is `[from, to)`: `from` is inclusive, `to` is exclusive, and an undefined `to`
+	 * means there is no fixed upper bound. Optional: absent means the runtime has no historical-op read.
+	 *
+	 * @param from - The inclusive sequence number at which to start reading.
+	 * @param to - The exclusive sequence number at which to stop reading, or undefined for no fixed bound.
+	 * @param abortSignal - Cancels the in-flight fetch when the runtime stops reading early.
+	 */
+	readonly fetchOps?: (
+		from: number,
+		to?: number,
+		abortSignal?: AbortSignal,
+	) => Promise<IStream<ISequencedDocumentMessage[]>>;
 }
 
 /**

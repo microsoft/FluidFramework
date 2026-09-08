@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import type { SemanticVersion } from "@fluidframework/runtime-utils/internal";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
 import { gt, lt, parse } from "semver-ts";
 
@@ -107,9 +107,9 @@ export interface IDocumentSchemaInfo {
 	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams} for additional details on `minVersionForCollab`.
 	 *
 	 * @remarks
-	 * We use `SemanticVersion` instead of `MinimumVersionForCollab` since we may open future documents with a
-	 * minVersionForCollab version that `MinimumVersionForCollab` does not support.
-	 * Note that in such a case (where minVersionForCollab is not a valid `MinimumVersionForCollab`),
+	 * We use `SemanticVersion` instead of `OldestSupportedClientVersion` since we may open future documents with a
+	 * minVersionForCollab version that `OldestSupportedClientVersion` does not support.
+	 * Note that in such a case (where minVersionForCollab is not a valid `OldestSupportedClientVersion`),
 	 * loading the document might not work since this version of the runtime may not support it.
 	 */
 	minVersionForCollab: SemanticVersion;
@@ -304,6 +304,58 @@ const documentSchemaSupportedConfigs = {
 };
 
 /**
+ * Entry in {@link retiredDocumentSchemaFeatures}.
+ *
+ * - `handler` validates/merges the persisted value (same as a "non-retired" feature).
+ * - `value` is the hardcoded value that this runtime will always use for the desired schema.
+ */
+interface IRetiredFeatureEntry {
+	handler: IProperty;
+	value: DocumentSchemaValueType;
+}
+
+/**
+ * Retired runtime features. A retired feature is one this runtime version no longer toggles
+ * via {@link IDocumentSchemaFeatures}, but that older documents may still carry in their
+ * persisted schema. Each entry bundles the property handler with the hardcoded value for the feature.
+ *
+ * Retired features participate in the normal merge / schema-change-op flow exactly like
+ * non-retired features — the only difference is that their values are hardcoded.
+ */
+const retiredDocumentSchemaFeatures = {
+	// Note: There are currently no retired retired features. To retire a feature, remove it from IDocumentSchemaFeatures
+	// and documentSchemaSupportedConfigs and add an entry here, e.g.:
+	//   featureFoo: { handler: new TrueOrUndefined(), value: true },
+} satisfies Record<string, IRetiredFeatureEntry> & {
+	// This ensures that retiredDocumentSchemaFeatures and IDocumentSchemaFeatures are mutually exclusive.
+	[K in keyof IDocumentSchemaFeatures]?: never;
+};
+
+/**
+ * Looks up the validator/merger for a given runtime property name across both supported and
+ * retired configs. Returns `undefined` if the property is unknown to this runtime.
+ */
+function getRuntimeConfigHandler(name: string): IProperty | undefined {
+	return (
+		(documentSchemaSupportedConfigs as Record<string, IProperty>)[name] ??
+		(retiredDocumentSchemaFeatures as Record<string, IRetiredFeatureEntry>)[name]?.handler
+	);
+}
+
+/**
+ * Builds the `{ key: value }` for retired features (for building the desired schema).
+ */
+function retiredFeatureValues(): Record<string, DocumentSchemaValueType> {
+	const result: Record<string, DocumentSchemaValueType> = {};
+	for (const [key, entry] of Object.entries(
+		retiredDocumentSchemaFeatures as Record<string, IRetiredFeatureEntry>,
+	)) {
+		result[key] = entry.value;
+	}
+	return result;
+}
+
+/**
  * Checks if a given schema is compatible with current code, i.e. if current code can understand all the features of that schema.
  * If schema is not compatible with current code, it throws an exception.
  * @param documentSchema - current schema
@@ -343,7 +395,7 @@ function checkRuntimeCompatibility(
 		unknownProperty = "runtime";
 	} else {
 		for (const [name, value] of Object.entries(documentSchema.runtime)) {
-			const validator = documentSchemaSupportedConfigs[name] as IProperty | undefined;
+			const validator = getRuntimeConfigHandler(name);
 			if (!(validator?.validate(value) ?? false)) {
 				unknownProperty = `runtime/${name}`;
 			}
@@ -377,16 +429,18 @@ function and(
 		...Object.keys(persistedSchema.runtime),
 		...Object.keys(providedSchema.runtime),
 	])) {
-		runtime[key] = (documentSchemaSupportedConfigs[key] as IProperty).and(
+		runtime[key] = (getRuntimeConfigHandler(key) as IProperty).and(
 			persistedSchema.runtime[key],
 			providedSchema.runtime[key],
 		);
 	}
 
 	// We keep the persisted minVersionForCollab if present, even if the provided minVersionForCollab
-	// is higher.
+	// is higher, after migrating historical 2.x prerelease values to their stable versions.
 	const minVersionForCollab =
-		persistedSchema.info?.minVersionForCollab ?? providedSchema.info.minVersionForCollab;
+		persistedSchema.info === undefined
+			? providedSchema.info.minVersionForCollab
+			: normalizePersistedMinVersionForCollab(persistedSchema.info.minVersionForCollab);
 
 	return {
 		version: currentDocumentVersionSchema,
@@ -405,18 +459,22 @@ function or(
 		...Object.keys(persistedSchema.runtime),
 		...Object.keys(providedSchema.runtime),
 	])) {
-		runtime[key] = (documentSchemaSupportedConfigs[key] as IProperty).or(
+		runtime[key] = (getRuntimeConfigHandler(key) as IProperty).or(
 			persistedSchema.runtime[key],
 			providedSchema.runtime[key],
 		);
 	}
 
-	// We take the greater of the persisted/provided minVersionForCollab
-	const minVersionForCollab =
+	// We take the greater of the normalized persisted/provided minVersionForCollab.
+	const persistedMinVersionForCollab =
 		persistedSchema.info === undefined
+			? undefined
+			: normalizePersistedMinVersionForCollab(persistedSchema.info.minVersionForCollab);
+	const minVersionForCollab =
+		persistedMinVersionForCollab === undefined
 			? providedSchema.info.minVersionForCollab
-			: gt(persistedSchema.info.minVersionForCollab, providedSchema.info.minVersionForCollab)
-				? persistedSchema.info.minVersionForCollab
+			: gt(persistedMinVersionForCollab, providedSchema.info.minVersionForCollab)
+				? persistedMinVersionForCollab
 				: providedSchema.info.minVersionForCollab;
 
 	return {
@@ -425,6 +483,25 @@ function or(
 		info: { minVersionForCollab },
 		runtime,
 	};
+}
+
+/**
+ * Migrates 2.x prerelease values accepted by older clients to the corresponding stable version.
+ *
+ * @remarks
+ * This is monotonic under SemVer and can cross a compatibility checkpoint when the prerelease
+ * shares that checkpoint's major, minor, and patch. Client 3.0 no longer supports active
+ * prerelease collaborators, so the persisted requirement advances before format selection.
+ */
+function normalizePersistedMinVersionForCollab(
+	minVersionForCollab: SemanticVersion,
+): SemanticVersion {
+	const parsed = parse(minVersionForCollab);
+	if (parsed?.major === 2 && parsed.prerelease.length > 0) {
+		// `parse` validates each numeric component before this template is constructed.
+		return `${parsed.major}.${parsed.minor}.${parsed.patch}` as SemanticVersion;
+	}
+	return minVersionForCollab;
 }
 
 /**
@@ -581,7 +658,7 @@ export class DocumentsSchemaController {
 		features: IDocumentSchemaFeatures,
 		private readonly onSchemaChange: (schema: IDocumentSchemaCurrent) => void,
 		info: IDocumentSchemaInfo,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		private readonly disableSchemaUpgrade: boolean,
 	) {
 		// For simplicity, let's only support new schema features for explicit schema control mode
@@ -625,6 +702,7 @@ export class DocumentsSchemaController {
 				opGroupingEnabled: boolToProp(features.opGroupingEnabled),
 				createBlobPayloadPending: features.createBlobPayloadPending,
 				disallowedVersions: arrayToProp(features.disallowedVersions),
+				...retiredFeatureValues(),
 			},
 		};
 

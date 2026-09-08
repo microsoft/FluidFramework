@@ -26,17 +26,14 @@ import type {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import { applyStorageCompression } from "@fluidframework/driver-utils/internal";
-import type {
-	ContainerSchema,
-	IFluidContainer,
-	CompatibilityMode,
-} from "@fluidframework/fluid-static";
+import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import {
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
 	createServiceAudience,
 } from "@fluidframework/fluid-static/internal";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
+import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 
 import { createAzureAudienceMember } from "./AzureAudience.js";
@@ -97,10 +94,10 @@ export class AzureClient {
 
 	private readonly createContainerRuntimeFactory?: ({
 		schema,
-		compatibilityMode,
+		minVersionForCollaboration,
 	}: {
 		schema: ContainerSchema;
-		compatibilityMode: CompatibilityMode;
+		minVersionForCollaboration: OldestSupportedClientVersion;
 	}) => IRuntimeFactory;
 
 	/**
@@ -138,17 +135,27 @@ export class AzureClient {
 	 * @typeparam TContainerSchema - Used to infer the the type of 'initialObjects' in the returned container.
 	 * (normally not explicitly specified.)
 	 * @param containerSchema - Container schema for the new container.
-	 * @param compatibilityMode - Compatibility mode the container should run in.
+	 * @param oldestSupportedClient - Oldest Fluid Framework client version that must be able to
+	 * open and process documents written by this client. Choosing an older version may limit
+	 * available features and write formats. Prefer the current Fluid Framework version so the
+	 * container opts into the latest defaults.
 	 * @returns New detached container instance along with associated services.
 	 */
 	public async createContainer<const TContainerSchema extends ContainerSchema>(
 		containerSchema: TContainerSchema,
-		compatibilityMode: CompatibilityMode,
+		oldestSupportedClient: OldestSupportedClientVersion,
+	): Promise<{
+		container: IFluidContainer<TContainerSchema>;
+		services: AzureContainerServices;
+	}>;
+	public async createContainer<const TContainerSchema extends ContainerSchema>(
+		containerSchema: TContainerSchema,
+		oldestSupportedClient: OldestSupportedClientVersion,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 		services: AzureContainerServices;
 	}> {
-		const loaderProps = this.getLoaderProps(containerSchema, compatibilityMode);
+		const loaderProps = this.getLoaderProps(containerSchema, oldestSupportedClient);
 
 		const container = await createDetachedContainer({
 			...loaderProps,
@@ -172,18 +179,29 @@ export class AzureClient {
 	 * (normally not explicitly specified.)
 	 * @param id - Unique ID of the container in Azure Fluid Relay.
 	 * @param containerSchema - Container schema used to access data objects in the container.
-	 * @param compatibilityMode - Compatibility mode the container should run in.
+	 * @param oldestSupportedClient - Oldest Fluid Framework client version that must be able to
+	 * open and process documents written by this client. Choosing an older version may limit
+	 * available features and write formats. Prefer the current Fluid Framework version so the
+	 * container opts into the latest defaults.
 	 * @returns Existing container instance along with associated services.
 	 */
 	public async getContainer<TContainerSchema extends ContainerSchema>(
 		id: string,
 		containerSchema: TContainerSchema,
-		compatibilityMode: CompatibilityMode,
+		oldestSupportedClient: OldestSupportedClientVersion,
+	): Promise<{
+		container: IFluidContainer<TContainerSchema>;
+		services: AzureContainerServices;
+	}>;
+	public async getContainer<TContainerSchema extends ContainerSchema>(
+		id: string,
+		containerSchema: TContainerSchema,
+		oldestSupportedClient: OldestSupportedClientVersion,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 		services: AzureContainerServices;
 	}> {
-		const loaderProps = this.getLoaderProps(containerSchema, compatibilityMode);
+		const loaderProps = this.getLoaderProps(containerSchema, oldestSupportedClient);
 		const url = new URL(this.connectionConfig.endpoint);
 		url.searchParams.append("storage", encodeURIComponent(this.connectionConfig.endpoint));
 		url.searchParams.append(
@@ -210,18 +228,29 @@ export class AzureClient {
 	 * @param id - Unique ID of the source container in Azure Fluid Relay.
 	 * @param containerSchema - Container schema used to access data objects in the container.
 	 * @param version - Unique version of the source container in Azure Fluid Relay.
-	 * @param compatibilityMode - Compatibility mode the container should run in.
+	 * @param oldestSupportedClient - Oldest Fluid Framework client version that must be able to
+	 * open and process documents written by this client. Choosing an older version may limit
+	 * available features and write formats. Prefer the current Fluid Framework version so the
+	 * container opts into the latest defaults.
 	 * @returns Loaded container instance at the specified version.
 	 */
 	public async viewContainerVersion<TContainerSchema extends ContainerSchema>(
 		id: string,
 		containerSchema: TContainerSchema,
 		version: AzureContainerVersion,
-		compatibilityMode: CompatibilityMode,
+		oldestSupportedClient: OldestSupportedClientVersion,
+	): Promise<{
+		container: IFluidContainer<TContainerSchema>;
+	}>;
+	public async viewContainerVersion<TContainerSchema extends ContainerSchema>(
+		id: string,
+		containerSchema: TContainerSchema,
+		version: AzureContainerVersion,
+		oldestSupportedClient: OldestSupportedClientVersion,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 	}> {
-		const loaderProps = this.getLoaderProps(containerSchema, compatibilityMode);
+		const loaderProps = this.getLoaderProps(containerSchema, oldestSupportedClient);
 		const url = new URL(this.connectionConfig.endpoint);
 		url.searchParams.append("storage", encodeURIComponent(this.connectionConfig.endpoint));
 		url.searchParams.append(
@@ -286,16 +315,16 @@ export class AzureClient {
 
 	private getLoaderProps(
 		schema: ContainerSchema,
-		compatibilityMode: CompatibilityMode,
+		oldestSupportedClient: OldestSupportedClientVersion,
 	): ILoaderProps {
 		const runtimeFactory = this.createContainerRuntimeFactory
 			? this.createContainerRuntimeFactory({
 					schema,
-					compatibilityMode,
+					minVersionForCollaboration: oldestSupportedClient,
 				})
 			: createDOProviderContainerRuntimeFactory({
 					schema,
-					compatibilityMode,
+					minVersionForCollaboration: oldestSupportedClient,
 				});
 
 		const load = async (): Promise<IFluidModuleWithDetails> => {

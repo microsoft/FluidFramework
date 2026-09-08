@@ -13,7 +13,6 @@ import {
 	type UnknownObjectNode,
 	VisualNodeKind,
 } from "@fluidframework/devtools-core/internal";
-import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 
 import { MessageRelayContext } from "../MessageRelayContext.js";

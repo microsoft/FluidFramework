@@ -5,7 +5,11 @@
 
 import { strict as assert } from "node:assert";
 
-import { createIdCompressor, createSessionId } from "@fluidframework/id-compressor/internal";
+import {
+	createIdCompressor,
+	createSessionId,
+	toIdCompressorWithCore,
+} from "@fluidframework/id-compressor/internal";
 
 import { type RevisionTag, RevisionTagCodec } from "../../core/index.js";
 import { testIdCompressor } from "../utils.js";
@@ -20,6 +24,7 @@ describe("RevisionTagCodec", () => {
 		assert.deepEqual(encoded, rootRevisionTag);
 		const decoded = codec.decode(encoded, {
 			originatorId: localCompressor.localSessionId,
+			isSummary: false,
 			revision: undefined,
 			idCompressor: testIdCompressor,
 		});
@@ -27,6 +32,7 @@ describe("RevisionTagCodec", () => {
 		const remoteEncoded = new RevisionTagCodec(remoteCompressor).encode(rootRevisionTag);
 		const decodedFromRemote = codec.decode(remoteEncoded, {
 			originatorId: remoteCompressor.localSessionId,
+			isSummary: false,
 			revision: undefined,
 			idCompressor: testIdCompressor,
 		});
@@ -51,6 +57,7 @@ describe("RevisionTagCodec", () => {
 			localId,
 			localCodec.decode(localEncoded, {
 				originatorId: localSession,
+				isSummary: false,
 				revision: undefined,
 				idCompressor: testIdCompressor,
 			}),
@@ -60,19 +67,21 @@ describe("RevisionTagCodec", () => {
 		assert.throws(() =>
 			remoteCodec.decode(localEncoded, {
 				originatorId: localSession,
+				isSummary: false,
 				revision: undefined,
 				idCompressor: testIdCompressor,
 			}),
 		);
 
 		// Simulate the remote client receiving the creation range for the local ID
-		const range = localCompressor.takeNextCreationRange();
-		localCompressor.finalizeCreationRange(range);
-		remoteCompressor.finalizeCreationRange(range);
+		const range = toIdCompressorWithCore(localCompressor).takeNextCreationRange();
+		toIdCompressorWithCore(localCompressor).finalizeCreationRange(range);
+		toIdCompressorWithCore(remoteCompressor).finalizeCreationRange(range);
 		// Locally encoding will have the final ID form, as will the remote client
 		localEncoded = localCodec.encode(localId);
 		const remoteDecoded = remoteCodec.decode(localEncoded, {
 			originatorId: localSession,
+			isSummary: false,
 			revision: undefined,
 			idCompressor: testIdCompressor,
 		});
@@ -85,6 +94,7 @@ describe("RevisionTagCodec", () => {
 			localEncoded,
 			remoteCodec.decode(localEncoded, {
 				originatorId: localSession,
+				isSummary: false,
 				revision: undefined,
 				idCompressor: testIdCompressor,
 			}),
@@ -94,6 +104,7 @@ describe("RevisionTagCodec", () => {
 			localId,
 			localCodec.decode(remoteEncoded, {
 				originatorId: remoteSession,
+				isSummary: false,
 				revision: undefined,
 				idCompressor: testIdCompressor,
 			}),

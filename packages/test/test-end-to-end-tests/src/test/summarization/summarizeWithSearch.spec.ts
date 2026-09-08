@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
-	ContainerRuntime,
+	type ContainerRuntime,
 	type ISummarizer,
 	SummaryCollection,
 	neverCancelledSummaryToken,
@@ -27,6 +27,7 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
+	defaultTestOldestSupportedClient,
 	ITestObjectProvider,
 	createSummarizerFromFactory,
 	summarizeNow,
@@ -104,6 +105,7 @@ describeCompat(
 		]);
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: dataStoreFactory1,
+			oldestSupportedClient: defaultTestOldestSupportedClient,
 			registryEntries: registryStoreEntries,
 			runtimeOptions: {
 				summaryOptions: {

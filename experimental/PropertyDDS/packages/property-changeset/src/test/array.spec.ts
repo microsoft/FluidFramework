@@ -151,6 +151,70 @@ describe("Array Operations", function () {
 		});
 	}
 
+	it("Concurrent replace (remove+insert) vs multi-position insert should not produce duplicate inserts", () => {
+		// Regression test: without the advanceRebaseIteratorB skip mechanism, the paired
+		// INSERT was emitted twice during rebase — once by splitOverlapping's special case
+		// and again by the iterator's standalone yield. This caused duplicate elements in the
+		// converged state and, downstream, an infinite loop in mergeWithLastIfPossible
+		// crashing with "RangeError: Invalid array length".
+		//
+		// Scenario:
+		//   Initial array: 5 elements at positions 0–4
+		//   Client 2 (remote): insert 1 element at position 0, insert 1 element at position 3
+		//   Client 1 (local):  replace first 3 elements (remove 3 at 0, insert 3 at 0)
+
+		// Client 2 (remote, sequenced first)
+		const remoteCS = createArrayCS({
+			insert: [
+				[0, generateNamedEntities(1)],
+				[3, generateNamedEntities(1)],
+			],
+		});
+
+		// Client 1 (local, being rebased)
+		const rebaseCS = createArrayCS({
+			remove: [[0, generateNamedEntities(3)]],
+			insert: [[0, generateNamedEntities(3)]],
+		});
+
+		const conflicts = [];
+		const CS = new ChangeSet(remoteCS);
+		CS._rebaseChangeSet(rebaseCS, conflicts);
+
+		const rebasedArray = (rebaseCS as SerializedChangeSet).modify[
+			"array<test:namedEntry-1.0.0>"
+		].array;
+
+		// The rebased output must contain exactly one INSERT (not two)
+		expect(rebasedArray.insert).to.have.length(1);
+		// Positions should be shifted from 0 to 1 (due to remote insert at position 0)
+		expect(rebasedArray.remove[0][0]).to.equal(1);
+		expect(rebasedArray.insert[0][0]).to.equal(1);
+	});
+
+	it("Convergence: concurrent replace (remove+insert) vs multi-position insert", () => {
+		// Verify that after rebasing, both paths (applying local-then-delta vs
+		// applying remote-then-rebased-local) converge to the same final state.
+		const baseEntities = generateNamedEntities(5);
+		const baseState = createArrayCS({ insert: [[0, cloneDeep(baseEntities)]] });
+
+		// Client 2 (remote): insert at position 0 and position 3
+		const remoteCS = createArrayCS({
+			insert: [
+				[0, generateNamedEntities(1)],
+				[3, generateNamedEntities(1)],
+			],
+		});
+
+		// Client 1 (local): replace first 3 elements
+		const localCS = createArrayCS({
+			remove: [[0, cloneDeep(baseEntities.slice(0, 3))]],
+			insert: [[0, generateNamedEntities(3)]],
+		});
+
+		testRebasedApplies(localCS, remoteCS, baseState);
+	});
+
 	it("Inserts should happen at the beginning of a remove range", () => {
 		const op1 = createArrayCS({
 			insert: [[1, generateNamedEntities(3)]],

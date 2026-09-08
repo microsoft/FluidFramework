@@ -24,5 +24,5 @@ export {
 } from "./interfaces.js";
 export { TinyliciousClient } from "./TinyliciousClient.js";
 
-// Re-export so developers have access to parameter types for createContainer/getContainer without pulling in fluid-static
-export type { CompatibilityMode } from "@fluidframework/fluid-static";
+// Re-export so developers can use parameter types without pulling in runtime-definitions.
+export type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions";

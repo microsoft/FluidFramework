@@ -31,7 +31,6 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import {
-	type ChangeFamily,
 	type ChangeFamilyEditor,
 	type GraphCommit,
 	type RevisionTag,
@@ -822,19 +821,19 @@ describe("SharedTreeCore", () => {
 });
 
 /** Makes an arbitrary change to the given tree */
-function changeTree<TChange, TEditor extends DefaultEditBuilder>(
-	tree: SharedTreeCore<TEditor, TChange>,
+function changeTree<TChange, TEditor extends DefaultEditBuilder, TChangeProcessingContext>(
+	tree: SharedTreeCore<TEditor, TChange, TChangeProcessingContext>,
 ): void {
 	const field = tree.getEditor().sequenceField({ parent: undefined, field: rootFieldKey });
 	field.insert(0, chunkFromJsonableTrees([{ type: brand("Node"), value: 42 }]));
 }
 
 /** Returns the length of the trunk branch in the given tree. Acquired via unholy cast; use for glass-box tests only. */
-function getTrunkLength<TEditor extends ChangeFamilyEditor, TChange>(
-	tree: SharedTreeCore<TEditor, TChange>,
+function getTrunkLength<TEditor extends ChangeFamilyEditor, TChange, TChangeProcessingContext>(
+	tree: SharedTreeCore<TEditor, TChange, TChangeProcessingContext>,
 ): number {
 	const { editManager } = tree as unknown as {
-		editManager: EditManager<TEditor, TChange, ChangeFamily<TEditor, TChange>>;
+		editManager: EditManager<TEditor, TChange>;
 	};
 	assert(
 		editManager !== undefined,

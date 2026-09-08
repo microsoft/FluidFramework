@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { type ObjectOptions, type Static, Type } from "@sinclair/typebox";
+import * as Type from "@sinclair/typebox";
+import type { ObjectOptions, Static } from "@sinclair/typebox";
 
 import { SchemaFormatVersion, schemaFormatV2 } from "../../core/index.js";
 

@@ -40,11 +40,11 @@ export interface GetBuildOptions {
  * A wrapper around the terrible API signature for ADO getBuilds
  */
 export async function getBuilds(
-	adoConnection: WebApi,
+	adoApi: WebApi,
 	options: GetBuildOptions,
 	build_id?: string,
 ): Promise<Build[]> {
-	const buildApi = await adoConnection.getBuildApi();
+	const buildApi = await adoApi.getBuildApi();
 
 	return buildApi.getBuilds(
 		options.project,
@@ -72,11 +72,11 @@ export async function getBuilds(
  * A wrapper around the API signature for ADO getBuild
  */
 export async function getBuild(
-	adoConnection: WebApi,
+	adoApi: WebApi,
 	options: GetBuildOptions,
 	buildId: number,
 ): Promise<Build> {
-	const buildApi = await adoConnection.getBuildApi();
+	const buildApi = await adoApi.getBuildApi();
 
 	return buildApi.getBuild(options.project, buildId);
 }

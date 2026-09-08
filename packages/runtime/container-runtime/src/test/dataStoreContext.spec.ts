@@ -139,7 +139,7 @@ describe("Data Store Context Tests", () => {
 					);
 					const props = error.getTelemetryProperties();
 					assert.strictEqual(
-						(props.fullPackageName as Tagged<TelemetryBaseEventPropertyType>)?.value,
+						(props.dataStorePackagePath as Tagged<TelemetryBaseEventPropertyType>)?.value,
 						fullPackageName.join("/"),
 						"The error should have the full package name in its telemetry properties",
 					);
@@ -149,9 +149,9 @@ describe("Data Store Context Tests", () => {
 						"The error should have the failed package path in its telemetry properties",
 					);
 					assert.equal(
-						(props.fluidDataStoreId as Tagged<TelemetryBaseEventPropertyType>)?.value,
+						(props.dataStoreId as Tagged<TelemetryBaseEventPropertyType>)?.value,
 						"Test1",
-						"The error should have the fluidDataStoreId in its telemetry properties",
+						"The error should have the dataStoreId in its telemetry properties",
 					);
 				}
 			});

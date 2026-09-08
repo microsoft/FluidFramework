@@ -3,40 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import puppeteer, { Browser, Page } from "puppeteer";
-import { globals } from "../jest.config.cjs";
-import type { IDiceRoller } from "../src/container/diceRoller/index.js";
 import type { IFluidMountableViewEntryPoint } from "@fluid-example/example-utils";
 
-describe("app-integration-container-views", () => {
-	let browser: Browser;
-	let page: Page;
+import { expect, test } from "@playwright/test";
 
-	beforeAll(async () => {
-		// Launch the browser once for all tests
-		// Use chrome-headless-shell since some tests don't work as-is with the new headless mode.
-		// AB#7150: Remove this once we have fixed the tests.
-		browser = await puppeteer.launch({ headless: "shell" });
-		// Load the page once to avoid a cold load on first test - otherwise the first test takes
-		// significantly longer to load. This way we can extend just the timeout for the cold load.
-		page = await browser.newPage();
-		await page.goto(globals.PATH);
-		await page.waitForFunction(() => typeof globalThis.loadAdditionalContainer === "function");
-		await page.close();
-	}, 20_000);
+import type { IDiceRoller } from "../src/container/diceRoller/index.js";
 
-	beforeEach(async () => {
-		page = await browser.newPage();
-		await page.goto(globals.PATH);
+test.describe("app-integration-container-views", () => {
+	test.beforeEach(async ({ page }) => {
+		await page.goto("/");
 		await page.waitForFunction(() => typeof globalThis.loadAdditionalContainer === "function");
 	});
 
-	it("The page loads and there's a button with Roll", async () => {
+	test("The page loads and there's a button with Roll", async ({ page }) => {
 		// Validate there is a button that can be clicked
-		await expect(page).toClick("button", { text: "Roll" });
+		await page.getByRole("button", { name: "Roll" }).first().click();
 	});
 
-	it("raises an event in other connected containers", async () => {
+	test("raises an event in other connected containers", async ({ page }) => {
 		const diceValueP = page.evaluate(async () => {
 			// Load an additional container, and use it to watch for an expected roll
 			const container = await globalThis.loadAdditionalContainer();
@@ -48,17 +32,9 @@ describe("app-integration-container-views", () => {
 			});
 		});
 		// Click the button, triggering a roll from the main container
-		await expect(page).toClick("button", { text: "Roll" });
+		await page.getByRole("button", { name: "Roll" }).first().click();
 		const diceValue = await diceValueP;
 		expect(diceValue).toBeGreaterThanOrEqual(1);
 		expect(diceValue).toBeLessThanOrEqual(6);
-	});
-
-	afterEach(async () => {
-		await page.close();
-	});
-
-	afterAll(async () => {
-		await browser.close();
 	});
 });

@@ -4,11 +4,11 @@
  */
 
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/internal";
 import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 
 import {
-	ClientVersionDispatchingCodecBuilder,
+	VersionDispatchingCodecBuilder,
 	type CodecTree,
 	type CodecVersion,
 	type DependentFormatVersion,
@@ -36,6 +36,14 @@ export interface MessageEncodingContext {
 }
 
 /**
+ * Context required for decoding a message. Unlike {@link MessageEncodingContext}, no schema is
+ * needed: message decoding is schema-agnostic.
+ */
+export interface MessageDecodingContext {
+	idCompressor: IIdCompressor;
+}
+
+/**
  * Codec name used to identify the message codec, see {@link makeMessageCodecBuilder}.
  */
 export const messageCodecName = "Message";
@@ -58,21 +66,23 @@ interface MessageCodecBuilderOptions<TChangeset> extends ICodecOptions {
 }
 
 /**
- * Creates a {@link ClientVersionDispatchingCodecBuilder} for encoding/decoding messages.
+ * Creates a {@link VersionDispatchingCodecBuilder} for encoding/decoding messages.
  */
-export function makeMessageCodecBuilder<TChangeset>(): ClientVersionDispatchingCodecBuilder<
+export function makeMessageCodecBuilder<TChangeset>(): VersionDispatchingCodecBuilder<
 	MessageCodecBuilderOptions<TChangeset>,
 	DecodedMessage<TChangeset>,
 	MessageEncodingContext,
 	MessageFormatVersion | undefined,
-	typeof messageCodecName
+	typeof messageCodecName,
+	MessageDecodingContext
 > {
 	// See MessageFormatVersion and its members for documentation on what changed in each version.
 	const versions: CodecVersion<
 		DecodedMessage<TChangeset>,
 		MessageEncodingContext,
 		MessageFormatVersion | undefined,
-		MessageCodecBuilderOptions<TChangeset>
+		MessageCodecBuilderOptions<TChangeset>,
+		MessageDecodingContext
 	>[] = [
 		// The "undefined" wire format (no version field) is discontinued.
 		makeDiscontinuedCodecAndSchema(undefined, "2.73.0"),
@@ -116,6 +126,18 @@ export function makeMessageCodecBuilder<TChangeset>(): ClientVersionDispatchingC
 				),
 		},
 		{
+			minVersionForCollab: FluidClientVersion.v2_117,
+			formatVersion: MessageFormatVersion.v7,
+			codec: (options: MessageCodecBuilderOptions<TChangeset>) =>
+				makeV1ToV4CodecWithVersion(
+					options.changeCodecs.resolve(
+						options.dependentChangeFormatVersion.lookup(MessageFormatVersion.v7),
+					),
+					options.revisionTagCodec,
+					MessageFormatVersion.v7,
+				),
+		},
+		{
 			minVersionForCollab: undefined,
 			formatVersion: MessageFormatVersion.vSharedBranches,
 			codec: (options: MessageCodecBuilderOptions<TChangeset>) =>
@@ -129,11 +151,11 @@ export function makeMessageCodecBuilder<TChangeset>(): ClientVersionDispatchingC
 		},
 	];
 
-	return ClientVersionDispatchingCodecBuilder.build(messageCodecName, versions);
+	return VersionDispatchingCodecBuilder.build(messageCodecName, versions);
 }
 
 export function getCodecTreeForMessageFormatWithChange(
-	clientVersion: MinimumVersionForCollab,
+	clientVersion: OldestSupportedClientVersion,
 	changeFormat: CodecTree,
 ): CodecTree {
 	const builder = makeMessageCodecBuilder();

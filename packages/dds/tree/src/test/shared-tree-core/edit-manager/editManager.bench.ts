@@ -3,12 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
-
-import { BenchmarkType, benchmarkDuration, benchmarkIt } from "@fluid-tools/benchmark";
+import {
+	BenchmarkMode,
+	BenchmarkType,
+	benchmarkDurationBatchless,
+	benchmarkIt,
+	currentBenchmarkMode,
+} from "@fluid-tools/benchmark";
+import type { SessionId } from "@fluidframework/id-compressor";
 
 import {
 	type ChangeFamily,
+	CommitKind,
+	type GraphCommit,
 	type RevisionTag,
 	rootFieldKey,
 	type ChangeFamilyEditor,
@@ -18,7 +25,6 @@ import {
 	DefaultRevisionReplacer,
 } from "../../../feature-libraries/index.js";
 import { FluidClientVersion, FormatValidatorBasic } from "../../../index.js";
-import type { Commit } from "../../../shared-tree-core/index.js";
 import { brand } from "../../../util/index.js";
 import { type Editor, makeEditMinter } from "../../editMinter.js";
 import { NoOpChangeRebaser, TestChange, testChangeFamilyFactory } from "../../testChange.js";
@@ -41,18 +47,25 @@ describe("EditManager - Bench", () => {
 
 	const scenarios: Scenario[] = [
 		{ type: BenchmarkType.Perspective, rebasedEditCount: 1, trunkEditCount: 1 },
-		{ type: BenchmarkType.Perspective, rebasedEditCount: 10, trunkEditCount: 1 },
-		{ type: BenchmarkType.Perspective, rebasedEditCount: 100, trunkEditCount: 1 },
-		{ type: BenchmarkType.Perspective, rebasedEditCount: 1000, trunkEditCount: 1 },
-		{ type: BenchmarkType.Perspective, rebasedEditCount: 1, trunkEditCount: 10 },
-		{ type: BenchmarkType.Perspective, rebasedEditCount: 1, trunkEditCount: 100 },
-		{ type: BenchmarkType.Perspective, rebasedEditCount: 1, trunkEditCount: 1000 },
-		{ type: BenchmarkType.Measurement, rebasedEditCount: 100, trunkEditCount: 100 },
+		// These tests, even in correctness mode, are a bit slow, and occasionally time out,
+		// so run a smaller set with smaller sizes in correctness mode.
+		...(currentBenchmarkMode === BenchmarkMode.Performance
+			? [
+					{ type: BenchmarkType.Perspective, rebasedEditCount: 10, trunkEditCount: 1 },
+					{ type: BenchmarkType.Perspective, rebasedEditCount: 100, trunkEditCount: 1 },
+					{ type: BenchmarkType.Perspective, rebasedEditCount: 1000, trunkEditCount: 1 },
+					{ type: BenchmarkType.Perspective, rebasedEditCount: 1, trunkEditCount: 10 },
+					{ type: BenchmarkType.Perspective, rebasedEditCount: 1, trunkEditCount: 100 },
+					{ type: BenchmarkType.Perspective, rebasedEditCount: 1, trunkEditCount: 1000 },
+					{ type: BenchmarkType.Measurement, rebasedEditCount: 100, trunkEditCount: 100 },
+				]
+			: // Ensure in correctness mode we have a case where both counts are greater than 1
+				[{ type: BenchmarkType.Perspective, rebasedEditCount: 2, trunkEditCount: 2 }]),
 	];
 
 	interface Family<TChange> {
 		readonly name: string;
-		readonly changeFamily: ChangeFamily<ChangeFamilyEditor, TChange>;
+		readonly changeFamily: ChangeFamily<ChangeFamilyEditor, TChange, unknown>;
 		readonly mintChange: (revision: RevisionTag | undefined) => TChange;
 		readonly maxEditCount: number;
 	}
@@ -105,13 +118,10 @@ describe("EditManager - Bench", () => {
 					benchmarkIt({
 						type,
 						title: `Rebase ${rebasedEditCount} local commits over ${trunkEditCount} trunk commits`,
-						...benchmarkDuration({
-							benchmarkFnCustom: async (state) => {
-								let duration: number;
+						...benchmarkDurationBatchless({
+							benchmarkFn: (state) => {
+								let running: boolean;
 								do {
-									// Since this setup one collects data from one iteration, assert that this is what is expected.
-									assert.equal(state.iterationsPerBatch, 1);
-
 									// Setup
 									const manager = editManagerFactory(family.changeFamily);
 									const rebasing = rebaseLocalEditsOverTrunkEdits(
@@ -122,16 +132,9 @@ describe("EditManager - Bench", () => {
 										true,
 									);
 
-									// Measure
-									const before = state.timer.now();
-									rebasing();
-									const after = state.timer.now();
-									duration = state.timer.toSeconds(before, after);
-									// Collect data
-								} while (state.recordBatch(duration));
+									running = state.time(rebasing);
+								} while (running);
 							},
-							// Force batch size of 1
-							minBatchDurationSeconds: 0,
 						}),
 					});
 				}
@@ -144,13 +147,10 @@ describe("EditManager - Bench", () => {
 					benchmarkIt({
 						type,
 						title: `Receive ${peerEditCount} peer commits that need to be rebased over ${trunkEditCount} trunk commits`,
-						...benchmarkDuration({
-							benchmarkFnCustom: async (state) => {
-								let duration: number;
+						...benchmarkDurationBatchless({
+							benchmarkFn: (state) => {
+								let running: boolean;
 								do {
-									// Since this setup one collects data from one iteration, assert that this is what is expected.
-									assert.equal(state.iterationsPerBatch, 1);
-
 									// Setup
 									const manager = editManagerFactory(family.changeFamily);
 									const rebasing = rebasePeerEditsOverTrunkEdits(
@@ -161,16 +161,9 @@ describe("EditManager - Bench", () => {
 										true,
 									);
 
-									// Measure
-									const before = state.timer.now();
-									rebasing();
-									const after = state.timer.now();
-									duration = state.timer.toSeconds(before, after);
-									// Collect data
-								} while (state.recordBatch(duration));
+									running = state.time(rebasing);
+								} while (running);
 							},
-							// Force batch size of 1
-							minBatchDurationSeconds: 0,
 						}),
 					});
 				}
@@ -187,13 +180,10 @@ describe("EditManager - Bench", () => {
 					benchmarkIt({
 						type,
 						title: `for ${editCount} peer commits and ${editCount} trunk commits`,
-						...benchmarkDuration({
-							benchmarkFnCustom: async (state) => {
-								let duration: number;
+						...benchmarkDurationBatchless({
+							benchmarkFn: (state) => {
+								let running: boolean;
 								do {
-									// Since this setup one collects data from one iteration, assert that this is what is expected.
-									assert.equal(state.iterationsPerBatch, 1);
-
 									// Setup
 									const manager = editManagerFactory(family.changeFamily);
 									const rebasing = rebaseAdvancingPeerEditsOverTrunkEdits(
@@ -203,16 +193,9 @@ describe("EditManager - Bench", () => {
 										true,
 									);
 
-									// Measure
-									const before = state.timer.now();
-									rebasing();
-									const after = state.timer.now();
-									duration = state.timer.toSeconds(before, after);
-									// Collect data
-								} while (state.recordBatch(duration));
+									running = state.time(rebasing);
+								} while (running);
 							},
-							// Force batch size of 1
-							minBatchDurationSeconds: 0,
 						}),
 					});
 				}
@@ -237,13 +220,15 @@ describe("EditManager - Bench", () => {
 					benchmarkIt({
 						type,
 						title: `Rebase edits from ${peerCount} peers each sending ${editsPerPeerCount} commits`,
-						...benchmarkDuration({
-							benchmarkFnCustom: async (state) => {
-								let duration: number;
+						// Occasionally exceeds the default 2s mocha timeout in correctness mode on
+						// slow CI agents (ICM 792323064 / 787811568).
+						// TODO:AB#72685: Speed up these tests and/or address cause of occasional slowdowns on CI,
+						// and remove (or at least reduce) this timeout override.
+						correctnessTimeoutMs: 5000,
+						...benchmarkDurationBatchless({
+							benchmarkFn: (state) => {
+								let running: boolean;
 								do {
-									// Since this setup one collects data from one iteration, assert that this is what is expected.
-									assert.equal(state.iterationsPerBatch, 1);
-
 									// Setup
 									const manager = editManagerFactory(family.changeFamily);
 									const rebasing = rebaseConcurrentPeerEdits(
@@ -254,16 +239,9 @@ describe("EditManager - Bench", () => {
 										true,
 									);
 
-									// Measure
-									const before = state.timer.now();
-									rebasing();
-									const after = state.timer.now();
-									duration = state.timer.toSeconds(before, after);
-									// Collect data
-								} while (state.recordBatch(duration));
+									running = state.time(rebasing);
+								} while (running);
 							},
-							// Force batch size of 1
-							minBatchDurationSeconds: 0,
 						}),
 					});
 				}
@@ -282,50 +260,49 @@ describe("EditManager - Bench", () => {
 				benchmarkIt({
 					type,
 					title: `Process the sequencing of ${count} local commits`,
-					...benchmarkDuration({
-						benchmarkFnCustom: async (state) => {
-							let duration: number;
+					...benchmarkDurationBatchless({
+						benchmarkFn: (state) => {
+							let running: boolean;
 							do {
-								// Since this setup one collects data from one iteration, assert that this is what is expected.
-								assert.equal(state.iterationsPerBatch, 1);
-
 								// Setup
 								const family = testChangeFamilyFactory(new NoOpChangeRebaser());
 								const manager = editManagerFactory(family);
 								// Subscribe to the local branch to emulate the behavior of SharedTree
 								manager.getLocalBranch("main").events.on("afterChange", ({ change }) => {});
-								const sequencedEdits: Commit<TestChange>[] = [];
+								const sequencedEdits: (GraphCommit<TestChange> & {
+									readonly sessionId: SessionId;
+								})[] = [];
 								for (let iChange = 0; iChange < count; iChange++) {
 									const revision = mintRevisionTag();
 									manager
 										.getLocalBranch("main")
-										.apply({ change: TestChange.emptyChange, revision });
+										.apply(
+											{ change: TestChange.emptyChange, revision },
+											CommitKind.Default,
+											undefined,
+										);
 									sequencedEdits.push({
 										change: TestChange.emptyChange,
 										revision,
 										sessionId: manager.localSessionId,
+										customMetadata: undefined,
 									});
 								}
 
-								// Measure
-								const before = state.timer.now();
-								for (let iChange = 0; iChange < count; iChange++) {
-									const commit = sequencedEdits[iChange];
-									manager.addSequencedChanges(
-										[commit],
-										commit.sessionId,
-										brand(iChange + 1),
-										brand(0),
-										"main",
-									);
-								}
-								const after = state.timer.now();
-								duration = state.timer.toSeconds(before, after);
-								// Collect data
-							} while (state.recordBatch(duration));
+								running = state.time(() => {
+									for (let iChange = 0; iChange < count; iChange++) {
+										const commit = sequencedEdits[iChange];
+										manager.addSequencedChanges(
+											[commit],
+											commit.sessionId,
+											brand(iChange + 1),
+											brand(0),
+											"main",
+										);
+									}
+								});
+							} while (running);
 						},
-						// Force batch size of 1
-						minBatchDurationSeconds: 0,
 					}),
 				});
 			}

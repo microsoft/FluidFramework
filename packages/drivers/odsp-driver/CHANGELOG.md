@@ -1,5 +1,157 @@
 # @fluidframework/odsp-driver
 
+## 3.0.0
+
+### Minor Changes
+
+- Removal of direct CommonJS support ([#28124](https://github.com/microsoft/FluidFramework/pull/28124)) [0f84e3b8878](https://github.com/microsoft/FluidFramework/commit/0f84e3b8878a5e75b2253976d98fd963bbd9db88)
+
+  Direct `require()` import is no longer directly supported.
+  Package is transpiled as ECMAScript Module.
+
+  See [Removal of direct CommonJS support in v3.0](https://github.com/microsoft/FluidFramework/issues/27444) for more information.
+
+- New ILayerCompatSupportRequirements property on LocalDocumentServiceFactory and OdspDocumentServiceFactoryCore ([#27516](https://github.com/microsoft/FluidFramework/pull/27516)) [f8bcc56859f](https://github.com/microsoft/FluidFramework/commit/f8bcc56859fc51957d45453bcf59ce154a2e0c18)
+
+  A new optional property, `ILayerCompatSupportRequirements`, has been added to [`LocalDocumentServiceFactory`](https://fluidframework.com/docs/api/local-driver/localdocumentservicefactory-class) and [`OdspDocumentServiceFactoryCore`](https://fluidframework.com/docs/api/odsp-driver/odspdocumentservicefactorycore-class).
+
+  The Driver layer uses this property to publish the requirements that the Loader layer must meet to be compatible with it. Because the Driver has no reference to the Loader, it cannot validate the Loader directly; instead the Loader reads these requirements and validates itself against them on the Driver's behalf. This enables the Loader / Driver compatibility check to run in both directions.
+
+- Make point-in-time support optional and consumer-supplied ([#28055](https://github.com/microsoft/FluidFramework/pull/28055)) [9a55f89f0ac](https://github.com/microsoft/FluidFramework/commit/9a55f89f0acb4afde7b189bab352b6140a668b92)
+
+  Point-in-time loading is now an optional implementation supplied by the host. Consumers that do
+  not enable the feature no longer include its implementation in their dependency graph. Hosts can
+  control when the feature is loaded by dynamically importing its dedicated entrypoint:
+
+  ```typescript
+  const factory = createOdspDocumentServiceFactory({
+    getStorageToken,
+    getWebsocketToken,
+    persistedCache,
+    hostPolicy,
+    pointInTimeDocumentServiceImplementation: async (props) => {
+      const { createPointInTimeDocumentService } = await import(
+        "@fluidframework/odsp-driver/legacy/point-in-time"
+      );
+      return createPointInTimeDocumentService(props);
+    },
+  });
+  ```
+
+  The legacy-beta `getOdspPointInTimeDocumentServiceFactory` helper is removed. Point-in-time
+  consumers should use `createOdspDocumentServiceFactory`, which accepts tokens, cache, host policy,
+  and optional feature implementations in one options object. Existing `OdspDocumentServiceFactory`
+  and `OdspDocumentServiceFactoryCore` constructor signatures remain unchanged.
+
+- Require modern TypeScript module resolution ([#27970](https://github.com/microsoft/FluidFramework/pull/27970)) [325e2016ca9](https://github.com/microsoft/FluidFramework/commit/325e2016ca9978d4a1f7552c97ba34feac9df41f)
+
+  Fluid Framework Client packages no longer include type declaration compatibility entrypoints for TypeScript's legacy Node10 resolution mode (`"moduleResolution": "node"` or `"node10"`).
+  Applications upgrading to Fluid Framework 3.0 must use one of the following supported configurations:
+  - `"module": "Node16"` with `"moduleResolution": "Node16"`
+  - `"module": "NodeNext"` with `"moduleResolution": "NodeNext"`
+  - `"module": "ESNext"` with `"moduleResolution": "Bundler"`
+
+  Existing public package entrypoints exposed through `package.json` exports, including `/alpha`, `/beta`, and `/legacy`, remain available under supported module resolution modes.
+
+  See [Removal of Node10 resolutions in v3.0](https://github.com/microsoft/FluidFramework/issues/27457) for more information.
+
+- Enable point-in-time loading on the standard ODSP document service factory ([#28007](https://github.com/microsoft/FluidFramework/pull/28007)) [1336342a572](https://github.com/microsoft/FluidFramework/commit/1336342a572d620d9390802c82a8f6d06727087b)
+
+  [`OdspDocumentServiceFactoryCore`](https://fluidframework.com/docs/api/odsp-driver/odspdocumentservicefactorycore-class)
+  now exposes the optional `createPointInTimeDocumentService` capability.
+  [`OdspDocumentServiceFactory`](https://fluidframework.com/docs/api/odsp-driver/odspdocumentservicefactory-class)
+  inherits this capability, so hosts can use the standard factory with
+  [`loadContainerToSequenceNumber`](https://fluidframework.com/docs/api/container-loader/loadcontainertosequencenumber-function)
+  for sequence-number-based document loading. Factories that do not support point-in-time loading
+  leave the capability undefined.
+
+  ```typescript
+  const factory = new OdspDocumentServiceFactory(
+    getStorageToken,
+    getWebsocketToken,
+  );
+
+  if (factory.createPointInTimeDocumentService !== undefined) {
+    const documentService = await factory.createPointInTimeDocumentService(
+      resolvedUrl,
+      targetSequenceNumber,
+    );
+  }
+  ```
+
+- Client packages now target ES2022 ([#27846](https://github.com/microsoft/FluidFramework/pull/27846)) [91c78541bdd](https://github.com/microsoft/FluidFramework/commit/91c78541bddcbca5d6c5f357b023eeaee617d885)
+
+  The TypeScript compilation `target` and `lib` for the Fluid Framework client packages have been raised from ES2021/ES2020 to **ES2022**.
+  The published JavaScript now uses ES2022 language features (with correspondingly less down-leveling), so consuming these packages requires a runtime that supports ES2022.
+  All actively supported Node.js versions and evergreen browsers already meet this requirement.
+
+  Note that Fluid Framework has not officially supported targets older than ES2022 since before 2.0: this is documented in [ClientRequirements.md](https://github.com/microsoft/FluidFramework/blob/main/ClientRequirements.md) as well as the README for every client package.
+
+  It is possible this change could impact users of less up to date JavaScript runtimes.
+  Impacted users can use a tool like [babel](https://babeljs.io/) to transpile out unsupported language features.
+
+- Build with TypeScript 6 ([#28052](https://github.com/microsoft/FluidFramework/pull/28052)) [7ab015c49de](https://github.com/microsoft/FluidFramework/commit/7ab015c49deec84833cdfe1fb5e1606b901f6e81)
+
+  FluidFramework Client SDK is now built using TypeScript 6. Consumers should build with TypeScript v6 or v7 or compatible tooling.
+
+## 2.116.0
+
+Dependency updates only.
+
+## 2.115.0
+
+Dependency updates only.
+
+## 2.114.0
+
+Dependency updates only.
+
+## 2.113.0
+
+Dependency updates only.
+
+## 2.112.0
+
+Dependency updates only.
+
+## 2.111.0
+
+Dependency updates only.
+
+## 2.110.0
+
+### Minor Changes
+
+- OdspFluidDataStoreLocator optional properties may also be explicitly undefined ([#27551](https://github.com/microsoft/FluidFramework/pull/27551)) [6a323dbb4e6](https://github.com/microsoft/FluidFramework/commit/6a323dbb4e6ed4d985d03d37eb1f0347184d1764)
+
+  Typing for `OdspFluidDataStoreLocator` optional properties are updated to reflect that in some implementations those are present but evaluate to `undefined`.
+  When building with `excactOptionalPropertyTypes:false` as suggested in [compatibility requirements](https://github.com/microsoft/FluidFramework/blob/68732d93a6cc8be2df966b9bb40f58bdd9fad69b/packages/drivers/odsp-driver/README.md#supported-tools), there is no apparent type change.
+  If a type error is experienced, make sure to check for `undefined` when reading.
+
+## 2.103.0
+
+Dependency updates only.
+
+## 2.102.0
+
+Dependency updates only.
+
+## 2.101.0
+
+### Patch Changes
+
+- Remove fully-rolled-out `setSensitivityLabelHeaderPostFix` config gate ([#27261](https://github.com/microsoft/FluidFramework/pull/27261)) [69228c498d8](https://github.com/microsoft/FluidFramework/commit/69228c498d8ef491c565e64a1888e4c4ac71abd2)
+
+  The `Fluid.Driver.Odsp.setSensitivityLabelHeaderPostFix` config gate is fully rolled out, so it has been removed along with the now-dead conditional code path. The `Prefer: Return-Sensitivity-Labels` header is now always sent on join-session requests, matching the post-rollout production behavior. The `setSensitivityLabelHeader` property emitted on the `JoinSession` telemetry event has also been removed because it would always be `true`.
+
+## 2.100.0
+
+### Minor Changes
+
+- Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
+
+  All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
+
 ## 2.93.0
 
 Dependency updates only.

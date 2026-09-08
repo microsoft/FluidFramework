@@ -51,8 +51,8 @@ export interface TreeStoredSchemaSubscription extends TreeStoredSchema {
 export interface MutableTreeStoredSchema extends TreeStoredSchemaSubscription {
 	/**
 	 * Mutates the stored schema.
-	 * Replaces all schema with the provided schema.
-	 * Can over-write preexisting schema, and removes unmentioned schema.
+	 * Replaces all schemas with the provided schema.
+	 * Can overwrite preexisting schemas, and removes unmentioned schemas.
 	 */
 	apply(newSchema: TreeStoredSchema): void;
 }

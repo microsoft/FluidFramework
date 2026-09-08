@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
-const { ChangeSet } = require("@fluid-experimental/property-changeset");
-const { MSG } = require("@fluid-experimental/property-common").constants;
+import { ChangeSet } from "@fluid-experimental/property-changeset";
+import { constants } from "@fluid-experimental/property-common";
 
-const { BaseProperty } = require("./baseProperty");
+import { BaseProperty } from "./baseProperty.js";
+
+const { MSG } = constants;
 
 /**
  * This class serves as a view to read, write and listen to changes in an

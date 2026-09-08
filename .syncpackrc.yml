@@ -87,6 +87,9 @@ semverGroups:
   - label: "Must use exact dependency ranges"
     dependencies:
       - "@tiny-calc/*"
+      # @tylerbu/markdown-magic is currently pinned to a tagged prerelease (e.g. 2.4.0-tylerbu-1); a caret range on a
+      # prerelease won't include other prereleases, so an exact pin is the intended behavior.
+      - "@tylerbu/markdown-magic"
       - "@graphql-codegen/cli"
       - "@graphql-codegen/typescript"
       - "@material-ui/*"
@@ -94,10 +97,7 @@ semverGroups:
       - "@microsoft/api-extractor"
       - "@types/chrome"
       - "@types/codemirror"
-      - "@types/expect-puppeteer"
-      - "@types/jest-environment-puppeteer"
       - "@types/jest"
-      - "@types/puppeteer"
       - "@types/url-parse"
       - "fake-indexeddb"
       - "json-stringify-safe"
@@ -202,18 +202,6 @@ versionGroups:
       - "**"
     isIgnored: true
 
-  # Workaround for this private internal package. Can be removed once our types wrapper around
-  # the package is no longer needed - see https://github.com/argos-ci/jest-puppeteer/issues/568.
-  - label: "Ignore private workaround package @types/jest-environment-puppeteer"
-    dependencies:
-      - "@types/jest-environment-puppeteer"
-    dependencyTypes:
-      - "dev"
-      - "prod"
-    packages:
-      - "**"
-    isIgnored: true
-
   # eslint-config-fluid is an independent workspace linked via the link: protocol,
   # which syncpack cannot resolve. Ignore it from version matching.
   - label: "Ignore eslint-config-fluid (independent workspace with link: protocol)"
@@ -225,7 +213,6 @@ versionGroups:
 
   - label: "Versions of common Fluid packages should all match"
     dependencies:
-      - "@fluid-internal/eslint-plugin-fluid"
       - "@fluid-tools/benchmark"
       - "@fluid-tools/build-cli"
       - "@fluidframework/build-common"

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 
 import type { MergeTree } from "./mergeTree.js";
 import {
@@ -1179,7 +1179,7 @@ function verifyPartialLengthsInner(
 		} else {
 			// Len adjustment should not make length negative
 			if (partialSeqLengths["minLength"] + partialLength.len < 0) {
-				assert(false, 0x057 /* "Negative length after length adjustment!" */);
+				fail(0x057 /* "Negative length after length adjustment!" */);
 			}
 		}
 	}

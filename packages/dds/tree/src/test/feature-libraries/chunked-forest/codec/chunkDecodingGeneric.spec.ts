@@ -5,7 +5,8 @@
 
 import { strict as assert, fail } from "node:assert";
 
-import { type Static, Type } from "@sinclair/typebox";
+import * as Type from "@sinclair/typebox";
+import type { Static } from "@sinclair/typebox";
 
 import { DiscriminatedUnionDispatcher, unionOptions } from "../../../../codec/index.js";
 import type { ChunkedCursor } from "../../../../core/index.js";
@@ -22,6 +23,7 @@ import {
 	readStreamIdentifier,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkDecodingGeneric.js";
+import { IdDecodingContext } from "../../../../util/index.js";
 import {
 	EncodedFieldBatchGeneric,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -118,10 +120,10 @@ const rootDecoder: ChunkDecoder = {
 	},
 };
 
-const idDecodingContext = {
+const idDecodingContext = new IdDecodingContext({
 	idCompressor: testIdCompressor,
 	originatorId: testIdCompressor.localSessionId,
-};
+});
 
 describe("chunkDecodingGeneric", () => {
 	it("DecoderContext", () => {

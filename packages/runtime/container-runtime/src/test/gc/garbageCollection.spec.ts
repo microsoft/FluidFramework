@@ -191,7 +191,6 @@ describe("Garbage Collection Tests", () => {
 			updateTombstonedRoutes: (tombstoneRoutes: string[]) => {},
 			getNodeType,
 			getCurrentReferenceTimestampMs: () => Date.now(),
-			closeFn,
 		};
 
 		let metadata = createParams.metadata;
@@ -210,6 +209,7 @@ describe("Garbage Collection Tests", () => {
 		return GarbageCollector.create({
 			...createParams,
 			runtime: gcRuntime,
+			closeFn,
 			gcOptions: createParams.gcOptions ?? {},
 			baseSnapshot: createParams.baseSnapshot,
 			baseLogger: createChildLogger({ logger: mc.logger }),

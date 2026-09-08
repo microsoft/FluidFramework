@@ -10,7 +10,7 @@ import {
 	ContainerErrorTypes,
 	IContainer,
 } from "@fluidframework/container-definitions/internal";
-import { ILoaderProps, Loader } from "@fluidframework/container-loader/internal";
+import type { ILoaderProps } from "@fluidframework/container-loader/internal";
 import {
 	IDocumentServiceFactory,
 	IResolvedUrl,
@@ -28,7 +28,8 @@ import { v4 as uuid } from "uuid";
 import { wrapObjectAndOverride } from "../mocking.js";
 
 // REVIEW: enable compat testing?
-describeCompat("Errors Types", "NoCompat", (getTestObjectProvider) => {
+describeCompat("Errors Types", "NoCompat", (getTestObjectProvider, apis) => {
+	const { Loader } = apis.loader;
 	let provider: ITestObjectProvider;
 	let fileName: string;
 	let containerUrl: IResolvedUrl;
@@ -125,6 +126,12 @@ describeCompat("Errors Types", "NoCompat", (getTestObjectProvider) => {
 			(await cache?.get?.(cacheFileEntry)) !== undefined,
 			"create container should have cached the snapshot",
 		);
+		provider.tracker?.registerExpectedEvent({
+			eventName: "fluid:telemetry:Container:ContainerClose",
+			error: "Injected error",
+			errorType: ContainerErrorTypes.genericError,
+			category: "error",
+		});
 		try {
 			const mockFactory = wrapObjectAndOverride<IDocumentServiceFactory>(
 				provider.documentServiceFactory,

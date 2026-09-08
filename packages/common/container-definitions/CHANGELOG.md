@@ -1,5 +1,131 @@
 # @fluidframework/container-definitions
 
+## 3.0.0
+
+### Minor Changes
+
+- Correct dirty and saved event transition documentation ([#28141](https://github.com/microsoft/FluidFramework/pull/28141)) [99478406687](https://github.com/microsoft/FluidFramework/commit/99478406687e435f0f763f590ca67fe154d6923a)
+
+  The `IContainerEvents` documentation now correctly states that the `"dirty"` event represents `isDirty` changing from `false` to `true`, while the `"saved"` event represents it changing from `true` to `false`.
+
+- Removal of direct CommonJS support ([#28124](https://github.com/microsoft/FluidFramework/pull/28124)) [0f84e3b8878](https://github.com/microsoft/FluidFramework/commit/0f84e3b8878a5e75b2253976d98fd963bbd9db88)
+
+  Direct `require()` import is no longer directly supported.
+  Package is transpiled as ECMAScript Module.
+
+  See [Removal of direct CommonJS support in v3.0](https://github.com/microsoft/FluidFramework/issues/27444) for more information.
+
+- Require modern TypeScript module resolution ([#27970](https://github.com/microsoft/FluidFramework/pull/27970)) [325e2016ca9](https://github.com/microsoft/FluidFramework/commit/325e2016ca9978d4a1f7552c97ba34feac9df41f)
+
+  Fluid Framework Client packages no longer include type declaration compatibility entrypoints for TypeScript's legacy Node10 resolution mode (`"moduleResolution": "node"` or `"node10"`).
+  Applications upgrading to Fluid Framework 3.0 must use one of the following supported configurations:
+  - `"module": "Node16"` with `"moduleResolution": "Node16"`
+  - `"module": "NodeNext"` with `"moduleResolution": "NodeNext"`
+  - `"module": "ESNext"` with `"moduleResolution": "Bundler"`
+
+  Existing public package entrypoints exposed through `package.json` exports, including `/alpha`, `/beta`, and `/legacy`, remain available under supported module resolution modes.
+
+  See [Removal of Node10 resolutions in v3.0](https://github.com/microsoft/FluidFramework/issues/27457) for more information.
+
+- Client packages now target ES2022 ([#27846](https://github.com/microsoft/FluidFramework/pull/27846)) [91c78541bdd](https://github.com/microsoft/FluidFramework/commit/91c78541bddcbca5d6c5f357b023eeaee617d885)
+
+  The TypeScript compilation `target` and `lib` for the Fluid Framework client packages have been raised from ES2021/ES2020 to **ES2022**.
+  The published JavaScript now uses ES2022 language features (with correspondingly less down-leveling), so consuming these packages requires a runtime that supports ES2022.
+  All actively supported Node.js versions and evergreen browsers already meet this requirement.
+
+  Note that Fluid Framework has not officially supported targets older than ES2022 since before 2.0: this is documented in [ClientRequirements.md](https://github.com/microsoft/FluidFramework/blob/main/ClientRequirements.md) as well as the README for every client package.
+
+  It is possible this change could impact users of less up to date JavaScript runtimes.
+  Impacted users can use a tool like [babel](https://babeljs.io/) to transpile out unsupported language features.
+
+- Build with TypeScript 6 ([#28052](https://github.com/microsoft/FluidFramework/pull/28052)) [7ab015c49de](https://github.com/microsoft/FluidFramework/commit/7ab015c49deec84833cdfe1fb5e1606b901f6e81)
+
+  FluidFramework Client SDK is now built using TypeScript 6. Consumers should build with TypeScript v6 or v7 or compatible tooling.
+
+## 2.116.0
+
+Dependency updates only.
+
+## 2.115.0
+
+Dependency updates only.
+
+## 2.114.0
+
+Dependency updates only.
+
+## 2.113.0
+
+Dependency updates only.
+
+## 2.112.0
+
+Dependency updates only.
+
+## 2.111.0
+
+Dependency updates only.
+
+## 2.110.0
+
+### Minor Changes
+
+- Remove deprecated ILoaderOptions.enableOfflineLoad ([#27574](https://github.com/microsoft/FluidFramework/pull/27574)) [daf022b3f36](https://github.com/microsoft/FluidFramework/commit/daf022b3f36560cf52ce9586f95c5843dea99900)
+
+  The `enableOfflineLoad` property has been removed from `ILoaderOptions` in `@fluidframework/container-definitions`.
+  This property was previously marked `@deprecated Do not use.`
+
+  The legacy `Fluid.Container.enableOfflineLoad` config-provider feature gate has also been removed from `@fluidframework/container-loader`.
+  Offline load is now unconditionally enabled for interactive clients; it can still be controlled via the `Fluid.Container.enableOfflineFull` config.
+
+  **Migration:** Remove any usage of `enableOfflineLoad` from `ILoaderOptions` objects.
+  No replacement is needed — offline load is on by default.
+
+## 2.103.0
+
+Dependency updates only.
+
+## 2.102.0
+
+### Minor Changes
+
+- Add optional `getPendingLocalState` to `IContainer` ([#27269](https://github.com/microsoft/FluidFramework/pull/27269)) [1f12b8e36e](https://github.com/microsoft/FluidFramework/commit/1f12b8e36ec8e4a743a65905de8d5ccf5e9337a0)
+
+  `IContainer` now exposes `getPendingLocalState?(): Promise<string>`. The serialized blob can be passed back as `pendingLocalState` to `loadExistingContainer` (or `ILoader.resolve`) to rehydrate an attached container at the same position without data loss.
+
+  The member is optional during this minor release so external implementers of `IContainer` (test mocks, wrapper containers, partner runtimes) remain forward-compatible. A future breaking release will make it required.
+
+  The `ContainerAlpha` interface and `asLegacyAlpha` helper in `@fluidframework/container-loader` continue to expose this functionality at `@legacy @alpha` for callers that prefer the typed-required shape.
+
+  Lifecycle: misuse of this API can result in duplicate op submission and potential document corruption. The blob returned MUST be discarded if and when the container emits a `"connected"` event — any subsequent rehydrate from that blob would submit the same ops a second time. The container must also be neither closed nor disposed when calling; otherwise the call throws `UsageError`.
+
+  Runtime behavior is unchanged.
+
+## 2.101.0
+
+### Minor Changes
+
+- GC timers are now cancelled when a container closes, not just when it is disposed ([#27130](https://github.com/microsoft/FluidFramework/pull/27130)) [86c0fffbf49](https://github.com/microsoft/FluidFramework/commit/86c0fffbf499981af297f018c7b570802ebdbeeb)
+
+  Adds an optional `close()` hook to `IRuntime` that `Container` calls on close.
+  `ContainerRuntime` implements it by cancelling all GC timers (session expiry and unreferenced-node timers)
+  without clearing tracked state.
+
+  This prevents the timers from causing memory leaks after a `Container` is closed but not disposed.
+  In Node.js environments this also prevents the timers from keeping the event loop alive until `dispose()`.
+  This can reduce the need for Mocha's --exit in tests which create containers which are closed but not disposed.
+
+  Disposing of closed containers is still recommended, but it is now less critical for avoiding timer-related hangs after close.
+  Disposal still helps clean up resources and can reduce the size of memory leaks if references to the container are leaked.
+
+## 2.100.0
+
+### Minor Changes
+
+- Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
+
+  All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
+
 ## 2.93.0
 
 Dependency updates only.

@@ -31,7 +31,9 @@ import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
 import { createAzureTokenProvider } from "../AzureTokenFactory.js";
 import { TestDataObject } from "../TestDataObject.js";
+import { currentVersion } from "../utils.js";
 
+import { isObjectRecord } from "./messageTypes.js";
 import type {
 	MessageFromChild as MessageToParent,
 	MessageToChild as MessageFromParent,
@@ -145,10 +147,14 @@ const getOrCreateContainer = async (params: {
 	});
 	let services: AzureContainerServices;
 	if (containerId === undefined) {
-		({ container, services } = await client.createContainer(containerSchema, "2"));
+		({ container, services } = await client.createContainer(containerSchema, currentVersion));
 		containerId = await container.attach();
 	} else {
-		({ container, services } = await client.getContainer(containerId, containerSchema, "2"));
+		({ container, services } = await client.getContainer(
+			containerId,
+			containerSchema,
+			currentVersion,
+		));
 	}
 	container.on("disconnected", onDisconnected);
 
@@ -209,6 +215,17 @@ function isStringOrNumberRecord(value: unknown): value is Record<string, string 
 		}
 	}
 	return true;
+}
+
+function getErrorEventDetails(error: unknown): { errorType?: string; statusCode?: number } {
+	if (!isObjectRecord(error)) {
+		return {};
+	}
+
+	return {
+		errorType: typeof error.errorType === "string" ? error.errorType : undefined,
+		statusCode: typeof error.statusCode === "number" ? error.statusCode : undefined,
+	};
 }
 
 // NOTE:
@@ -737,7 +754,11 @@ function setupMessageHandler(): void {
 	process.on("message", (msg: MessageFromParent) => {
 		messageHandler.onMessage(msg).catch((error: Error) => {
 			console.error(`[${testLabel}] Error in client ${process_id}`, error);
-			send({ event: "error", error: `${process_id}: ${error.message}` });
+			send({
+				event: "error",
+				error: `${process_id}: ${error.message}`,
+				...getErrorEventDetails(error),
+			});
 		});
 	});
 }

@@ -1,5 +1,221 @@
 # @fluidframework/core-interfaces
 
+## 3.0.0
+
+### Minor Changes
+
+- Removal of direct CommonJS support ([#28124](https://github.com/microsoft/FluidFramework/pull/28124)) [0f84e3b8878](https://github.com/microsoft/FluidFramework/commit/0f84e3b8878a5e75b2253976d98fd963bbd9db88)
+
+  Direct `require()` import is no longer directly supported.
+  Package is transpiled as ECMAScript Module.
+
+  See [Removal of direct CommonJS support in v3.0](https://github.com/microsoft/FluidFramework/issues/27444) for more information.
+
+- Require modern TypeScript module resolution ([#27970](https://github.com/microsoft/FluidFramework/pull/27970)) [325e2016ca9](https://github.com/microsoft/FluidFramework/commit/325e2016ca9978d4a1f7552c97ba34feac9df41f)
+
+  Fluid Framework Client packages no longer include type declaration compatibility entrypoints for TypeScript's legacy Node10 resolution mode (`"moduleResolution": "node"` or `"node10"`).
+  Applications upgrading to Fluid Framework 3.0 must use one of the following supported configurations:
+  - `"module": "Node16"` with `"moduleResolution": "Node16"`
+  - `"module": "NodeNext"` with `"moduleResolution": "NodeNext"`
+  - `"module": "ESNext"` with `"moduleResolution": "Bundler"`
+
+  Existing public package entrypoints exposed through `package.json` exports, including `/alpha`, `/beta`, and `/legacy`, remain available under supported module resolution modes.
+
+  See [Removal of Node10 resolutions in v3.0](https://github.com/microsoft/FluidFramework/issues/27457) for more information.
+
+- Deprecated log level aliases have been removed ([#27983](https://github.com/microsoft/FluidFramework/pull/27983)) [5cfbf099792](https://github.com/microsoft/FluidFramework/commit/5cfbf099792473eb49ff811032b7f83a120fdbee)
+
+  The deprecated [`LogLevel`](https://fluidframework.com/docs/api/fluid-framework/loglevelconst-interface) values `default` and `error` have been removed.
+  They were aliases for existing numeric levels, and the semantically clearer `LogLevel.info` (`20`) and `LogLevel.essential` (`30`) should be used instead.
+
+  #### Migration
+
+  The replacement for `LogLevel.default` depends on how the value is used:
+  - For an event's `logLevel` (for example the `logLevel` argument to [`ITelemetryBaseLogger.send`](https://fluidframework.com/docs/api/core-interfaces/itelemetrybaselogger-interface#send-methodsignature)), use `LogLevel.essential`.
+  - For a logger's `minLogLevel` threshold, use `LogLevel.info`.
+
+  The replacement for `LogLevel.error` is always `LogLevel.essential`.
+
+  ```typescript
+  // Before
+  // ...
+  logger.send(event, LogLevel.default);
+  logger.send(errorEvent, LogLevel.error);
+  logger.minLogLevel = LogLevel.default;
+  // ...
+
+  // After
+  // ...
+  logger.send(event, LogLevel.essential);
+  logger.send(errorEvent, LogLevel.essential);
+  logger.minLogLevel = LogLevel.info;
+  // ...
+  ```
+
+  See [issue #26969](https://github.com/microsoft/FluidFramework/issues/26969) for removal tracking.
+
+- Require a log level for every telemetry event ([#27982](https://github.com/microsoft/FluidFramework/pull/27982)) [f2410e1380d](https://github.com/microsoft/FluidFramework/commit/f2410e1380db9e22717cbb4d87055d94480e3f1b)
+
+  The `logLevel` parameter of `ITelemetryBaseLogger.send` and the inherited `ITelemetryLoggerExt.send` is now required.
+  Callers must select a `LogLevel` for every event they log.
+
+  Explicitly specifying a level makes logging intent part of every call site, which enables consistent filtering and sampling of telemetry.
+
+  #### Migration for callers
+
+  Pass a `LogLevel` for every event.
+  To preserve the behavior of a call that previously omitted the level, use `LogLevel.essential`:
+
+  ```typescript
+  import { LogLevel } from "@fluidframework/core-interfaces";
+
+  // Before
+  logger.send({ category: "generic", eventName: "ExampleEvent" });
+
+  // After
+  logger.send(
+    { category: "generic", eventName: "ExampleEvent" },
+    LogLevel.essential,
+  );
+  ```
+
+  #### Migration for logger implementations
+
+  This is a compile-time requirement on callers only; nothing about how events are dispatched at runtime has changed.
+
+  Logger implementations should keep declaring `logLevel` as optional and treat an omitted level as `LogLevel.essential`:
+
+  ```typescript
+  import {
+    LogLevel,
+    type ITelemetryBaseEvent,
+    type ITelemetryBaseLogger,
+  } from "@fluidframework/core-interfaces";
+
+  class MyLogger implements ITelemetryBaseLogger {
+    public send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
+      const level = logLevel ?? LogLevel.essential;
+      // ...
+    }
+  }
+  ```
+
+  Fluid supports running with a mix of package versions, so code compiled before `logLevel` became required still calls `send(event)` with a single argument, and will for as long as those versions are supported.
+  An implementation that assumes `logLevel` is always defined can therefore silently drop those events or handle them at the wrong level.
+
+  This layer-compatibility guidance can be retired only after the compatibility window for callers that may omit `logLevel` has closed in a future coordinated breaking change.
+  See the `ITelemetryBaseLogger` API documentation and [microsoft/FluidFramework#27595](https://github.com/microsoft/FluidFramework/issues/27595) for more information.
+
+- Client packages now target ES2022 ([#27846](https://github.com/microsoft/FluidFramework/pull/27846)) [91c78541bdd](https://github.com/microsoft/FluidFramework/commit/91c78541bddcbca5d6c5f357b023eeaee617d885)
+
+  The TypeScript compilation `target` and `lib` for the Fluid Framework client packages have been raised from ES2021/ES2020 to **ES2022**.
+  The published JavaScript now uses ES2022 language features (with correspondingly less down-leveling), so consuming these packages requires a runtime that supports ES2022.
+  All actively supported Node.js versions and evergreen browsers already meet this requirement.
+
+  Note that Fluid Framework has not officially supported targets older than ES2022 since before 2.0: this is documented in [ClientRequirements.md](https://github.com/microsoft/FluidFramework/blob/main/ClientRequirements.md) as well as the README for every client package.
+
+  It is possible this change could impact users of less up to date JavaScript runtimes.
+  Impacted users can use a tool like [babel](https://babeljs.io/) to transpile out unsupported language features.
+
+- Build with TypeScript 6 ([#28052](https://github.com/microsoft/FluidFramework/pull/28052)) [7ab015c49de](https://github.com/microsoft/FluidFramework/commit/7ab015c49deec84833cdfe1fb5e1606b901f6e81)
+
+  FluidFramework Client SDK is now built using TypeScript 6. Consumers should build with TypeScript v6 or v7 or compatible tooling.
+
+## 2.116.0
+
+Dependency updates only.
+
+## 2.115.0
+
+Dependency updates only.
+
+## 2.114.0
+
+### Minor Changes
+
+- Add FluidReadonlyArray type independent of TypeScript lib ([#27747](https://github.com/microsoft/FluidFramework/pull/27747)) [040d35bc29](https://github.com/microsoft/FluidFramework/commit/040d35bc29901d58e9e778f5f2e75ba581a80dc0)
+
+  `FluidReadonlyArray<T>` provides an equivalent of the built-in `ReadonlyArray` type that is independent of TypeScript [`lib`](https://www.typescriptlang.org/tsconfig/#lib), following the same pattern as `FluidReadonlyMap` and `FluidMap`.
+  The interface includes stable methods through ES2023 (`at()`, `findLast()`, `findLastIndex()`) but excludes newer copy-on-write methods (`toReversed()`, `toSorted()`, `toSpliced()`, `with()`) that Fluid Framework implementations don't yet support.
+  This ensures these types remain safe to implement without `lib` changes breaking them.
+
+- Promote Fluid container type interfaces to public ([#27746](https://github.com/microsoft/FluidFramework/pull/27746)) [33e014ac63](https://github.com/microsoft/FluidFramework/commit/33e014ac636d43a5f90b1ce1f64b95e60aaf2bca)
+
+  `FluidIterable`, `FluidIterableIterator`, `FluidReadonlyMap`, `FluidMap`, and `FluidReadonlyArray` are promoted from `@beta` to `@public`.
+  These sealed interfaces provide equivalents of the built-in `Iterable`, `IterableIterator`, `ReadonlyMap`, `Map`, and `ReadonlyArray` types that are independent of TypeScript [`lib`](https://www.typescriptlang.org/tsconfig/#lib).
+  They can now be used in public API surfaces.
+
+## 2.113.0
+
+Dependency updates only.
+
+## 2.112.0
+
+### Minor Changes
+
+- Start sharing local handle payloads before attachment ([#27704](https://github.com/microsoft/FluidFramework/pull/27704)) [2c4d5aaf8a](https://github.com/microsoft/FluidFramework/commit/2c4d5aaf8a31dfe9bccd19096d3717cd041489fc)
+
+  Locally created Fluid handles can now expose an optional `sharePayload()` method that starts
+  sharing their payload without attaching the handle to the Fluid object graph. Blob handles
+  implement this method, allowing applications to begin uploading a blob before serializing its
+  handle into a DDS.
+
+  ```typescript
+  const handle = await runtime.uploadBlob(bytes);
+
+  if (isLocalFluidHandle(handle) && handle.sharePayload !== undefined) {
+    handle.sharePayload();
+  }
+  ```
+
+## 2.111.0
+
+Dependency updates only.
+
+## 2.110.0
+
+### Minor Changes
+
+- ITelemetryBaseLogger.minLogLevel may be undefined ([#27546](https://github.com/microsoft/FluidFramework/pull/27546)) [6afb933be51](https://github.com/microsoft/FluidFramework/commit/6afb933be5119722134d3e9c4ca61dfaf8024d8a)
+
+  Typing for `ITelemetryBaseLogger.minLogLevel` is updated to reflect that in some implementations `minLogLevel` is present but evaluates to `undefined`.
+  When building with `excactOptionalPropertyTypes:false` as suggested in [compatibility requirements](https://github.com/microsoft/FluidFramework/blob/68732d93a6cc8be2df966b9bb40f58bdd9fad69b/packages/common/core-interfaces/README.md#supported-tools), there is no apparent type change.
+  If a type error is experienced, make sure to check for `undefined` or use `?? LogLevel.info` when reading.
+
+## 2.103.0
+
+Dependency updates only.
+
+## 2.102.0
+
+Dependency updates only.
+
+## 2.101.0
+
+### Minor Changes
+
+- Deprecate LogLevel.default and LogLevel.error ([#27207](https://github.com/microsoft/FluidFramework/pull/27207)) [77ef3355fdf](https://github.com/microsoft/FluidFramework/commit/77ef3355fdf9611524cad86f00b1ce8ba3263861)
+
+  `LogLevel.default` and `LogLevel.error` in `@fluidframework/core-interfaces` are deprecated in favor of the semantically clearer `LogLevel.info` and `LogLevel.essential`.
+
+  #### Migration
+
+  The recommended replacement for `LogLevel.default` depends on how the value is used:
+  - For an **event's default `logLevel`** (e.g. the `logLevel` argument to `ITelemetryBaseLogger.send`), the recommendation is `LogLevel.essential`.
+  - For a logger's **default `minLogLevel`** (the threshold that filters events), `LogLevel.info` is the recommendation.
+
+  The replacement for `LogLevel.error` should always be `LogLevel.essential`.
+
+  See [issue #26969](https://github.com/microsoft/FluidFramework/issues/26969) for full guidance and removal tracking (planned for v3.0).
+
+## 2.100.0
+
+### Minor Changes
+
+- Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
+
+  All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
+
 ## 2.93.0
 
 ### Minor Changes

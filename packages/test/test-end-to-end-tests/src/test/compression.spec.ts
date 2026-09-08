@@ -17,9 +17,12 @@ import {
 	type IContainerRuntimeOptions,
 	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
-// TODO:AB#6558: This should be provided based on the compatibility configuration.
-import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+// SharedMap is used as a fallback for the describeInstallVersions path which does not provide `apis`.
+// For describeCompat callers, the compat-version-aware factory is read from apis.dds.SharedMap below.
+// TODO:AB#6558: Once describeInstallVersions supports `apis`, this fallback can be removed.
+// eslint-disable-next-line @typescript-eslint/no-restricted-imports
+import { SharedMap, type ISharedMap } from "@fluidframework/map/internal";
+import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/internal";
 import {
 	DataObjectFactoryType,
 	ITestContainerConfig,
@@ -31,6 +34,12 @@ import {
 import { pkgVersion } from "../packageVersion.js";
 
 const compressionSuite = (getProvider, apis?): void => {
+	// In cross-client compat, the local (creating) and remote (loading) clients may be different
+	// versions. Use the create-side factory for makeTestContainer and the load-side factory for
+	// loadTestContainer. Both fall back to the directly-imported SharedMap when apis is not
+	// available (describeInstallVersions path). (Outside cross-client compat ddsForLoading matches dds.)
+	const SharedMapForCreate = apis?.dds.SharedMap ?? SharedMap;
+	const SharedMapForLoad = apis?.ddsForLoading.SharedMap ?? SharedMap;
 	describe("Compression", () => {
 		let provider: ITestObjectProvider;
 		let localDataObject: ITestFluidObject;
@@ -43,34 +52,30 @@ const compressionSuite = (getProvider, apis?): void => {
 			},
 		};
 
-		let compatLocalVersionIsOld: boolean = false;
-		let compatOldRemoteVersionIsOld: boolean = false;
-
 		beforeEach("createLocalAndRemoteMaps", async () => {
 			provider = await getProvider();
-			// If the runtime version for the local or remote container runtime is 1.4.0, then we need to skip the tests as a lot of the options being tested fail in this version.
-			if (provider.type === "TestObjectProviderWithVersionedLoad") {
-				compatLocalVersionIsOld = apis.containerRuntime.version === "1.4.0";
-				compatOldRemoteVersionIsOld = apis.containerRuntimeForLoading.version === "1.4.0";
-			}
 		});
 
 		async function setupContainers(
 			runtimeOptions: IContainerRuntimeOptionsInternal = defaultRuntimeOptions,
-			minVersionForCollab: MinimumVersionForCollab | undefined = undefined,
+			minVersionForCollab: OldestSupportedClientVersion | undefined = undefined,
 		): Promise<void> {
-			const containerConfig: ITestContainerConfig = {
-				registry: [["mapKey", SharedMap.getFactory()]],
+			const createContainerConfig: ITestContainerConfig = {
+				registry: [["mapKey", SharedMapForCreate.getFactory()]],
 				runtimeOptions,
 				fluidDataObjectType: DataObjectFactoryType.Test,
 				minVersionForCollab,
 			};
-			const localContainer = await provider.makeTestContainer(containerConfig);
+			const loadContainerConfig: ITestContainerConfig = {
+				...createContainerConfig,
+				registry: [["mapKey", SharedMapForLoad.getFactory()]],
+			};
+			const localContainer = await provider.makeTestContainer(createContainerConfig);
 			localDataObject =
 				await getContainerEntryPointBackCompat<ITestFluidObject>(localContainer);
 			localMap = await localDataObject.getSharedObject<ISharedMap>("mapKey");
 
-			const remoteContainer = await provider.loadTestContainer(containerConfig);
+			const remoteContainer = await provider.loadTestContainer(loadContainerConfig);
 			const remoteDataObject =
 				await getContainerEntryPointBackCompat<ITestFluidObject>(remoteContainer);
 			remoteMap = await remoteDataObject.getSharedObject<ISharedMap>("mapKey");
@@ -81,9 +86,6 @@ const compressionSuite = (getProvider, apis?): void => {
 		});
 
 		it("Can compress and process compressed op", async function () {
-			if (compatLocalVersionIsOld || compatOldRemoteVersionIsOld) {
-				this.skip();
-			}
 			await setupContainers();
 			const values = [
 				generateRandomStringOfSize(100),
@@ -103,9 +105,6 @@ const compressionSuite = (getProvider, apis?): void => {
 		});
 
 		it("Processes ops that weren't worth compressing", async function () {
-			if (compatLocalVersionIsOld || compatOldRemoteVersionIsOld) {
-				this.skip();
-			}
 			await setupContainers();
 			const value = generateRandomStringOfSize(5);
 			localMap.set("testKey", value);
@@ -122,10 +121,6 @@ const compressionSuite = (getProvider, apis?): void => {
 			{ compression: true, grouping: true, chunking: false },
 		].forEach((option) => {
 			it(`Correctly processes messages: compression [${option.compression}] chunking [${option.chunking}] grouping [${option.grouping}]`, async function () {
-				// The tests are skipped when it is testing cross compatibility and the remote version is 1.4.0.
-				if (compatOldRemoteVersionIsOld) {
-					this.skip();
-				}
 				// This test has unreproducible flakiness against r11s (non-FRS).
 				// This test simply verifies all combinations of compression, chunking, and op grouping work end-to-end.
 				if (

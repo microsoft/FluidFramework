@@ -51,15 +51,15 @@ export function transformApiModel(options: ApiItemTransformationOptions): ApiDoc
 
 	if (packages.length === 0) {
 		logger.warning("No packages found.");
-		return [];
+		return [...documentsMap.values()];
 	}
 
 	// Filter out packages not wanted per user config
 	const filteredPackages = apiModel.packages.filter((apiPackage) => !excludeItem(apiPackage));
 
 	if (filteredPackages.length === 0) {
-		logger.warning("No packages found after filtering per `skipPackages` configuration.");
-		return [];
+		logger.warning("No packages found after filtering per `exclude` configuration.");
+		return [...documentsMap.values()];
 	}
 
 	// For each package, walk the child graph to find API items which should be rendered to their own document

@@ -10,12 +10,22 @@
 import { expect } from "chai";
 import semver from "semver";
 
-import { SortedCollection } from "../../index";
+import { SortedCollection } from "../../index.js";
+
+type SortedCollectionWithSortedKeys<T> = Omit<SortedCollection<T>, "_sortedKeys"> & {
+	_sortedKeys: (string | number)[];
+};
+
+function exposeSortedKeys<T>(
+	collection: SortedCollection<T>,
+): SortedCollectionWithSortedKeys<T> {
+	return collection as unknown as SortedCollectionWithSortedKeys<T>;
+}
 
 describe("SortedCollection", function () {
-	let collection;
+	let collection: SortedCollectionWithSortedKeys<string>;
 	beforeEach(function () {
-		collection = new SortedCollection();
+		collection = exposeSortedKeys(new SortedCollection());
 		collection.setComparisonFunction(function (a, b) {
 			if (semver.gt(a, b)) {
 				return 1;
@@ -151,7 +161,7 @@ describe("SortedCollection", function () {
 	});
 
 	it("should clone the sorted collection", function () {
-		const clone = collection.clone();
+		const clone = exposeSortedKeys(collection.clone());
 		expect(clone instanceof SortedCollection).to.equal(true);
 		expect(clone._sortedKeys).to.eql([
 			"1.1.0",

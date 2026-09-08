@@ -1,5 +1,174 @@
 # @fluidframework/container-loader
 
+## 3.0.0
+
+### Minor Changes
+
+- Removal of direct CommonJS support ([#28124](https://github.com/microsoft/FluidFramework/pull/28124)) [0f84e3b8878](https://github.com/microsoft/FluidFramework/commit/0f84e3b8878a5e75b2253976d98fd963bbd9db88)
+
+  Direct `require()` import is no longer directly supported.
+  Package is transpiled as ECMAScript Module.
+
+  See [Removal of direct CommonJS support in v3.0](https://github.com/microsoft/FluidFramework/issues/27444) for more information.
+
+- Full container state capture now includes recently sequenced operations ([#28009](https://github.com/microsoft/FluidFramework/pull/28009)) [6a2354f2146](https://github.com/microsoft/FluidFramework/commit/6a2354f2146440e6cbb8121957c4558cb47f6d5b)
+
+  `captureFullContainerState` now connects to the delta stream and catches up through the latest operation known when the connection is established.
+  This prevents captured state from omitting operations that have been broadcast over the websocket but have not yet reached delta storage.
+
+- Require modern TypeScript module resolution ([#27970](https://github.com/microsoft/FluidFramework/pull/27970)) [325e2016ca9](https://github.com/microsoft/FluidFramework/commit/325e2016ca9978d4a1f7552c97ba34feac9df41f)
+
+  Fluid Framework Client packages no longer include type declaration compatibility entrypoints for TypeScript's legacy Node10 resolution mode (`"moduleResolution": "node"` or `"node10"`).
+  Applications upgrading to Fluid Framework 3.0 must use one of the following supported configurations:
+  - `"module": "Node16"` with `"moduleResolution": "Node16"`
+  - `"module": "NodeNext"` with `"moduleResolution": "NodeNext"`
+  - `"module": "ESNext"` with `"moduleResolution": "Bundler"`
+
+  Existing public package entrypoints exposed through `package.json` exports, including `/alpha`, `/beta`, and `/legacy`, remain available under supported module resolution modes.
+
+  See [Removal of Node10 resolutions in v3.0](https://github.com/microsoft/FluidFramework/issues/27457) for more information.
+
+- Add reference-only capture for reusable container baselines ([#28006](https://github.com/microsoft/FluidFramework/pull/28006)) [4374770404e](https://github.com/microsoft/FluidFramework/commit/4374770404ee485456abc128c3266f24f25251c3)
+
+  [`captureFullContainerState`](https://fluidframework.com/docs/api/container-loader/#capturefullcontainerstate-function) now accepts a `blobCaptureMode` option. The default `"inline"` mode remains self-contained, while `"reference"` omits structural and attachment blob payloads so repeated online loads can fetch them from live storage.
+
+  ```typescript
+  const baseline = await captureFullContainerState({
+    urlResolver,
+    documentServiceFactory,
+    request,
+    blobCaptureMode: "reference",
+  });
+
+  const container = await loadExistingContainer({
+    ...loaderProps,
+    request,
+    pendingLocalState: baseline,
+  });
+  ```
+
+- Client packages now target ES2022 ([#27846](https://github.com/microsoft/FluidFramework/pull/27846)) [91c78541bdd](https://github.com/microsoft/FluidFramework/commit/91c78541bddcbca5d6c5f357b023eeaee617d885)
+
+  The TypeScript compilation `target` and `lib` for the Fluid Framework client packages have been raised from ES2021/ES2020 to **ES2022**.
+  The published JavaScript now uses ES2022 language features (with correspondingly less down-leveling), so consuming these packages requires a runtime that supports ES2022.
+  All actively supported Node.js versions and evergreen browsers already meet this requirement.
+
+  Note that Fluid Framework has not officially supported targets older than ES2022 since before 2.0: this is documented in [ClientRequirements.md](https://github.com/microsoft/FluidFramework/blob/main/ClientRequirements.md) as well as the README for every client package.
+
+  It is possible this change could impact users of less up to date JavaScript runtimes.
+  Impacted users can use a tool like [babel](https://babeljs.io/) to transpile out unsupported language features.
+
+- Pending local state uses Fluid-owned iterator types ([#27908](https://github.com/microsoft/FluidFramework/pull/27908)) [5035f7cfed4](https://github.com/microsoft/FluidFramework/commit/5035f7cfed4dedec8ded17b29be97f91f2a4b675)
+
+  [`PendingLocalStateStore`](https://fluidframework.com/docs/api/container-loader/pendinglocalstatestore-class) iteration methods now return [`FluidIterableIterator`](https://fluidframework.com/docs/api/core-interfaces/fluiditerableiterator-interface) instead of TypeScript's built-in iterator types.
+  This prevents changes to TypeScript's standard iterator interfaces from affecting the container loader API.
+
+  #### Migration
+
+  The returned iterators continue to support `next()`, spreading, and `for...of`.
+  Methods available only on newer built-in iterator types are not available.
+
+  ```typescript
+  for (const [key, pendingState] of pendingLocalStateStore.entries()) {
+    // ...
+  }
+  ```
+
+- Build with TypeScript 6 ([#28052](https://github.com/microsoft/FluidFramework/pull/28052)) [7ab015c49de](https://github.com/microsoft/FluidFramework/commit/7ab015c49deec84833cdfe1fb5e1606b901f6e81)
+
+  FluidFramework Client SDK is now built using TypeScript 6. Consumers should build with TypeScript v6 or v7 or compatible tooling.
+
+## 2.116.0
+
+Dependency updates only.
+
+## 2.115.0
+
+Dependency updates only.
+
+## 2.114.0
+
+Dependency updates only.
+
+## 2.113.0
+
+Dependency updates only.
+
+## 2.112.0
+
+Dependency updates only.
+
+## 2.111.0
+
+### Minor Changes
+
+- Fix container crash when read-only mode is forced from a connected event handler ([#27637](https://github.com/microsoft/FluidFramework/pull/27637)) [32bbb06cf7f](https://github.com/microsoft/FluidFramework/commit/32bbb06cf7f7a59075624cc48c89c81b7687d890)
+
+  Forcing a container into read-only mode synchronously from within a "connected" event handler could leave an internal catch-up monitor in an inconsistent state, causing a later reconnection to fail with an assert ("catchUpMonitor should be gone", `0x3eb`).
+
+  This occurred when a client established an already-caught-up read connection and application code reacted to the resulting connection transition by disconnecting (for example, by forcing read-only mode). The catch-up monitor is now stored before it can synchronously notify listeners, so a re-entrant disconnect during the connection transition is handled correctly and subsequent reconnections proceed normally.
+
+## 2.110.0
+
+### Minor Changes
+
+- Remove deprecated ILoaderOptions.enableOfflineLoad ([#27574](https://github.com/microsoft/FluidFramework/pull/27574)) [daf022b3f36](https://github.com/microsoft/FluidFramework/commit/daf022b3f36560cf52ce9586f95c5843dea99900)
+
+  The `enableOfflineLoad` property has been removed from `ILoaderOptions` in `@fluidframework/container-definitions`.
+  This property was previously marked `@deprecated Do not use.`
+
+  The legacy `Fluid.Container.enableOfflineLoad` config-provider feature gate has also been removed from `@fluidframework/container-loader`.
+  Offline load is now unconditionally enabled for interactive clients; it can still be controlled via the `Fluid.Container.enableOfflineFull` config.
+
+  **Migration:** Remove any usage of `enableOfflineLoad` from `ILoaderOptions` objects.
+  No replacement is needed — offline load is on by default.
+
+## 2.103.0
+
+### Minor Changes
+
+- Deprecate ICreateAndLoadContainerProps in favor of composable building blocks ([#27347](https://github.com/microsoft/FluidFramework/pull/27347)) [4091373ee5a](https://github.com/microsoft/FluidFramework/commit/4091373ee5a60204d5f08736eede03af242fc425)
+
+  `ICreateAndLoadContainerProps` is now `@deprecated`. It remains as a structurally-identical alias and the props types that previously extended it (`ILoadExistingContainerProps`, `ICreateDetachedContainerProps`, `IRehydrateDetachedContainerProps`) now extend the building blocks directly, so no caller migration is required for those.
+
+  Callers writing new props types should compose from the building blocks directly:
+
+  ```ts
+  import type {
+    IContainerHostProps,
+    IContainerDriverServices,
+  } from "@fluidframework/container-loader/legacy";
+
+  // Equivalent to the old ICreateAndLoadContainerProps
+  type MyProps = IContainerHostProps & IContainerDriverServices;
+
+  // Add only what you need
+  interface MyHostOnlyProps extends IContainerHostProps {
+    readonly extraOption: boolean;
+  }
+  ```
+
+  - `IContainerHostProps` covers the code loader plus optional policy / observability fields (`options`, `scope`, `logger`, `configProvider`, `protocolHandlerBuilder`, `allowReconnect`, `clientDetailsOverride`).
+  - `IContainerDriverServices` covers the `urlResolver` + `documentServiceFactory` pair.
+
+  `ICreateAndLoadContainerProps` will be removed in a future major release.
+
+## 2.102.0
+
+Dependency updates only.
+
+## 2.101.0
+
+Dependency updates only.
+
+## 2.100.0
+
+### Minor Changes
+
+- Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
+
+  All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
+
 ## 2.93.0
 
 Dependency updates only.

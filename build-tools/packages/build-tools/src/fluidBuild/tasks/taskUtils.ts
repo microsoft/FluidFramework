@@ -5,13 +5,16 @@
 
 import { existsSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import { pathToFileURL } from "node:url";
 import * as glob from "glob";
 import globby from "globby";
 import * as path from "path";
 
-import type { PackageJson } from "../../common/npmPackage";
-import { lookUpDirSync } from "../../common/utils";
+import type { PackageJson } from "../../common/npmPackage.js";
+import { lookUpDirSync } from "../../common/utils.js";
+
+const require = createRequire(import.meta.url);
 
 export function getEsLintConfigFilePath(dir: string): string | undefined {
 	// ESLint 9 flat config files (checked first as they take precedence)

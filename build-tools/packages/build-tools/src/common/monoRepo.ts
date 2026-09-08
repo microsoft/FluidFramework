@@ -7,12 +7,14 @@ import { existsSync } from "node:fs";
 import * as path from "node:path";
 import { getPackagesSync } from "@manypkg/get-packages";
 import registerDebug from "debug";
-import { readFileSync, readJsonSync } from "fs-extra";
+import fsExtra from "fs-extra";
 import YAML from "yaml";
-import type { IFluidBuildDir } from "../fluidBuild/fluidBuildConfig";
-import { defaultLogger, type Logger } from "./logging";
-import { Package } from "./npmPackage";
-import { type ExecAsyncResult, execWithErrorAsync, rimrafWithErrorAsync } from "./utils";
+import type { IFluidBuildDir } from "../fluidBuild/fluidBuildConfig.js";
+import { defaultLogger, type Logger } from "./logging.js";
+import { Package } from "./npmPackage.js";
+import { type ExecAsyncResult, execWithErrorAsync, rimrafWithErrorAsync } from "./utils.js";
+
+const { readFileSync, readJsonSync } = fsExtra;
 
 const traceInit = registerDebug("fluid-build:init");
 

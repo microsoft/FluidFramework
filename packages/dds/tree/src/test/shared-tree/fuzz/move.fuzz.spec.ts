@@ -13,6 +13,7 @@ import {
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 
+import { ForestTypeExpensiveDebug } from "../../../shared-tree/index.js";
 import { SharedTreeTestFactory, validateFuzzTreeConsistency } from "../../utils.js";
 
 import {
@@ -54,7 +55,9 @@ describe("Fuzz - move", () => {
 		DDSFuzzTestState<SharedTreeTestFactory>
 	> = {
 		workloadName: "move",
-		factory: new SharedTreeTestFactory(createOnCreate(populatedInitialState)),
+		factory: new SharedTreeTestFactory(createOnCreate(populatedInitialState), undefined, {
+			forest: ForestTypeExpensiveDebug,
+		}),
 		generatorFactory,
 		reducer: fuzzReducer,
 		validateConsistency: validateFuzzTreeConsistency,

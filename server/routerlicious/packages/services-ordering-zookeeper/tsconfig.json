@@ -2,6 +2,9 @@
 	"extends": "@fluidframework/build-common/ts-common-config.json",
 	"exclude": ["dist", "node_modules"],
 	"compilerOptions": {
+		"paths": {
+			"@fluidframework/server-services-ordering-zookeeper": ["./src/index.ts"],
+		},
 		"strictNullChecks": true,
 		"rootDir": "./src",
 		"outDir": "./dist",

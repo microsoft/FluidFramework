@@ -100,4 +100,28 @@ export interface IPersistedCache {
 	 * @param entry - cache entry to be deleted.
 	 */
 	removeEntry?(entry: ICacheEntry): Promise<void>;
+
+	/**
+	 * Atomically read the currently-cached value, hand it to `updater`, and write a new value
+	 * iff `updater` calls the supplied `set` callback inside the same atomic transaction.
+	 * Enables compare-and-set / read-modify-write across consumers that share the underlying
+	 * storage (for example, multiple browser tabs).
+	 *
+	 * Implementations must invoke `updater` synchronously between reading the existing value
+	 * and committing the write, so the get/decide/put runs atomically. The updater is passed
+	 * `(existing, set)`; calling `set(value)` schedules a write, calling `set(undefined)`
+	 * schedules a delete of the row at the key, and returning without calling `set` leaves
+	 * the cache untouched. If the updater throws, the existing row is preserved.
+	 *
+	 * @param entry - cache entry, identifies file and particular key for this file.
+	 * @param updater - synchronous callback invoked with `(existing, set)`. `existing` matches
+	 * what `get` would return (typically `undefined` when the row is missing or invisible
+	 * under implementation-specific staleness rules).
+	 * @returns `true` if `set` was called and the write (or delete) committed; `false` if the
+	 * updater returned without calling `set`, threw, or the implementation observed an error.
+	 */
+	update?(
+		entry: ICacheEntry,
+		updater: (existing: unknown, set: (value: unknown) => void) => void,
+	): Promise<boolean>;
 }

@@ -9,7 +9,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	createChildLogger,
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { decompress } from "lz4js";
 
@@ -40,7 +40,7 @@ export class OpDecompressor {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	private rootMessageContents: any | undefined;
 	private processedCount = 0;
-	private readonly logger: ITelemetryLoggerExt;
+	private readonly logger: TelemetryLoggerExt;
 
 	constructor(logger: ITelemetryBaseLogger) {
 		this.logger = createChildLogger({ logger, namespace: "OpDecompressor" });

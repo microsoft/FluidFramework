@@ -8,7 +8,6 @@ export {
 	ConsensusResult,
 	type IConsensusOrderedCollection,
 	type IConsensusOrderedCollectionEvents,
-	type IConsensusOrderedCollectionFactory,
 	type IOrderedCollection,
 	type ISnapshotable,
 } from "./interfaces.js";

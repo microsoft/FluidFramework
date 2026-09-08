@@ -4,10 +4,11 @@
  */
 
 import { ScopeType } from "@fluidframework/protocol-definitions";
-import type {
-	IWholeFlatSummary,
-	IWholeSummaryPayload,
-	IWriteSummaryResponse,
+import {
+	LatestSummaryId,
+	type IWholeFlatSummary,
+	type IWholeSummaryPayload,
+	type IWriteSummaryResponse,
 } from "@fluidframework/server-services-client";
 import type {
 	IStorageNameRetriever,
@@ -17,7 +18,11 @@ import type {
 	IDenyList,
 } from "@fluidframework/server-services-core";
 import { validateRequestParams } from "@fluidframework/server-services-shared";
-import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import {
+	BaseTelemetryProperties,
+	getGlobalTelemetryContext,
+	Lumberjack,
+} from "@fluidframework/server-services-telemetry";
 import {
 	denyListMiddleware,
 	type IThrottleMiddlewareOptions,
@@ -33,8 +38,9 @@ import type {
 	ITenantService,
 	ISimplifiedCustomDataRetriever,
 	IPostEphemeralContainerChecker,
+	RestGitService,
 } from "../services";
-import { parseToken, Constants } from "../utils";
+import { parseToken, Constants, getDocumentIdFromRequest } from "../utils";
 
 import * as utils from "./utils";
 
@@ -96,14 +102,24 @@ export function create(
 		Constants.getSummaryThrottleIdPrefix,
 	);
 
-	async function getSummary(
+	async function createProtectedSummaryService(
 		tenantId: string,
 		authorization: string | undefined,
-		sha: string,
-		useCache: boolean,
+		operation: utils.SummaryOperation,
+		routeType: utils.SummaryRouteType,
+		allowDisabledTenant = false,
 		query?: Query,
-	): Promise<IWholeFlatSummary> {
-		const service = await utils.createGitService({
+	): Promise<RestGitService> {
+		await utils.validateSummaryDocument({
+			tenantId,
+			authorization,
+			documentManager,
+			operation,
+			routeType,
+			ephemeralDocumentTTLSec: ephemeralDocumentTTLSec ?? 24 * 60 * 60,
+			ignoreEphemeralFlag: ignoreIsEphemeralFlag,
+		});
+		return utils.createGitService({
 			config,
 			tenantId,
 			authorization,
@@ -111,10 +127,30 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
+			allowDisabledTenant,
 			ephemeralDocumentTTLSec,
+			simplifiedCustomDataRetriever,
 			postEphemeralContainerChecker,
 			query,
 		});
+	}
+
+	async function getSummary(
+		tenantId: string,
+		authorization: string | undefined,
+		sha: string,
+		useCache: boolean,
+		query?: Query,
+	): Promise<IWholeFlatSummary> {
+		const routeType: utils.SummaryRouteType = sha === LatestSummaryId ? "latest" : "sha";
+		const service = await createProtectedSummaryService(
+			tenantId,
+			authorization,
+			"get",
+			routeType,
+			false,
+			query,
+		);
 		return service.getSummary(sha, useCache);
 	}
 
@@ -125,25 +161,53 @@ export function create(
 		initial?: boolean,
 		storageName?: string,
 		isEphemeralContainer?: boolean,
-		ignoreEphemeralFlag?: boolean,
 		query?: Query,
 	): Promise<IWriteSummaryResponse> {
-		const service = await utils.createGitService({
-			config,
-			tenantId,
-			authorization,
-			tenantService,
-			storageNameRetriever,
-			documentManager,
-			cache,
-			initialUpload: initial,
-			storageName,
-			isEphemeralContainer,
-			ephemeralDocumentTTLSec,
-			simplifiedCustomDataRetriever,
-			postEphemeralContainerChecker,
-			query,
-		});
+		let service: RestGitService;
+		if (initial === true) {
+			await utils.validateInitialSummaryUpload({
+				tenantId,
+				authorization,
+				documentManager,
+			});
+			Lumberjack.info("HistorianInitialSummaryUploadExemption", {
+				[BaseTelemetryProperties.correlationId]:
+					getGlobalTelemetryContext().getProperties().correlationId,
+				[BaseTelemetryProperties.tenantId]: tenantId,
+				[BaseTelemetryProperties.documentId]: getDocumentIdFromRequest(
+					tenantId,
+					authorization,
+				),
+				operation: "post",
+				routeType: "notApplicable",
+				outcome: "exempted",
+			});
+			service = await utils.createGitService({
+				config,
+				tenantId,
+				authorization,
+				tenantService,
+				storageNameRetriever,
+				documentManager,
+				cache,
+				initialUpload: true,
+				storageName,
+				isEphemeralContainer,
+				ephemeralDocumentTTLSec,
+				simplifiedCustomDataRetriever,
+				postEphemeralContainerChecker,
+				query,
+			});
+		} else {
+			service = await createProtectedSummaryService(
+				tenantId,
+				authorization,
+				"post",
+				"notApplicable",
+				false,
+				query,
+			);
+		}
 		return service.createSummary(params, initial);
 	}
 
@@ -152,17 +216,13 @@ export function create(
 		authorization: string | undefined,
 		softDelete: boolean,
 	): Promise<boolean[]> {
-		const service = await utils.createGitService({
-			config,
+		const service = await createProtectedSummaryService(
 			tenantId,
 			authorization,
-			tenantService,
-			storageNameRetriever,
-			documentManager,
-			cache,
-			allowDisabledTenant: true,
-			ephemeralDocumentTTLSec,
-		});
+			"delete",
+			"notApplicable",
+			true,
+		);
 		const deletionPs = [service.deleteSummary(softDelete)];
 		if (!softDelete) {
 			const token = parseToken(tenantId, authorization);
@@ -252,7 +312,6 @@ export function create(
 				initial,
 				request.get("StorageName"),
 				isEphemeralContainer,
-				ignoreIsEphemeralFlag,
 				request.query,
 			);
 

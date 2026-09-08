@@ -11,7 +11,8 @@ import type {
 } from "@fluidframework/server-services-core";
 
 export class TestDocumentManager implements IDocumentManager {
-	public async readDocument(tenantId: string, documentId: string): Promise<IDocument> {
+	// eslint-disable-next-line @rushstack/no-new-null
+	public async readDocument(tenantId: string, documentId: string): Promise<IDocument | null> {
 		throw new NetworkError(501, "Not implemented", false, true);
 	}
 
@@ -22,7 +23,12 @@ export class TestDocumentManager implements IDocumentManager {
 		throw new NetworkError(501, "Not implemented", false, true);
 	}
 
-	public async purgeStaticCache(documentId: string): Promise<void> {
+	public async purgeStaticCache(documentId: string): Promise<void>;
+	public async purgeStaticCache(tenantId: string, documentId: string): Promise<void>;
+	public async purgeStaticCache(
+		tenantIdOrDocumentId: string,
+		documentId?: string,
+	): Promise<void> {
 		throw new NetworkError(501, "Not implemented", false, true);
 	}
 }

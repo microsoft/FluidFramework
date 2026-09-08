@@ -87,27 +87,28 @@ fi
 
 # For each changed file, walk up the directory tree to find the nearest
 # package.json (skipping the repo root's package.json). This maps each file
-# to the monorepo package it belongs to. An associative array deduplicates.
-declare -A CHANGED_PACKAGES_MAP=()
+# to the monorepo package it belongs to. Collected into a newline-delimited
+# string, then sorted and deduplicated with `sort -u` (bash 3.2 compatible —
+# macOS ships bash 3.2, which lacks associative arrays and `mapfile`).
+CHANGED_PACKAGES_LIST=""
 while IFS= read -r file; do
     d="$(dirname "${REPO_ROOT}/${file}")"
     while [ "${d}" != "${REPO_ROOT}" ] && [ "${d}" != "/" ]; do
         if [ -f "${d}/package.json" ] && [ "${d}" != "${REPO_ROOT}" ]; then
             rel="${d#"${REPO_ROOT}"/}"
-            CHANGED_PACKAGES_MAP["${rel}"]=1
+            CHANGED_PACKAGES_LIST="${CHANGED_PACKAGES_LIST}${rel}"$'\n'
             break
         fi
         d="$(dirname "${d}")"
     done
 done <<< "${CHANGED_FILES}"
 
-# Convert the associative array keys into a sorted regular array.
+# Convert the collected list into a sorted, deduplicated regular array.
 PACKAGES=()
-if [ ${#CHANGED_PACKAGES_MAP[@]} -gt 0 ]; then
-    for pkg in "${!CHANGED_PACKAGES_MAP[@]}"; do
-        PACKAGES+=("${pkg}")
-    done
-    mapfile -t PACKAGES < <(printf '%s\n' "${PACKAGES[@]}" | sort)
+if [ -n "${CHANGED_PACKAGES_LIST}" ]; then
+    while IFS= read -r pkg; do
+        [ -n "${pkg}" ] && PACKAGES+=("${pkg}")
+    done <<< "$(printf '%s' "${CHANGED_PACKAGES_LIST}" | sort -u)"
 fi
 
 # If no changed files mapped to a package (e.g., only root config changed),

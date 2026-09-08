@@ -11,7 +11,7 @@
 
 import { expect } from "chai";
 
-import { HTTPError, HTTPErrorNoStack } from "../../index";
+import { HTTPError, HTTPErrorNoStack } from "../../index.js";
 
 describe("property-common.HTTPErrorNoStack", function () {
 	const errorMsg = "a test error message";

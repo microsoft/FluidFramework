@@ -13,8 +13,9 @@ import type { SharedCounter } from "@fluidframework/counter/internal";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
-import { SharedStringClass, type SharedString } from "@fluidframework/sequence/internal";
+import type { SharedString } from "@fluidframework/sequence/internal";
 import {
+	defaultTestOldestSupportedClient,
 	ITestFluidObject,
 	ITestObjectProvider,
 	LoaderContainerTracker,
@@ -31,6 +32,7 @@ const counterKey = "count";
 describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedCounter, SharedString } = apis.dds;
 	const { DataObject, DataObjectFactory } = apis.dataRuntime;
+	const { SharedStringClass } = apis.dataRuntime.packages.sequence;
 	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 
 	/**
@@ -114,6 +116,7 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider, apis) => {
 	): Promise<IContainer> {
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory,
+			oldestSupportedClient: defaultTestOldestSupportedClient,
 			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
 		});
 		const loader = createLoader(
@@ -138,6 +141,7 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider, apis) => {
 	): Promise<IContainer> {
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory,
+			oldestSupportedClient: defaultTestOldestSupportedClient,
 			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
 		});
 		const loader = createLoader(

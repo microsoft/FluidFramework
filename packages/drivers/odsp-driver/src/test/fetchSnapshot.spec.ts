@@ -120,7 +120,6 @@ describe("Tests1 for snapshot fetch", () => {
 			{
 				docId: hashedDocumentId,
 				resolvedUrl,
-				fileVersion: undefined,
 			},
 			logger,
 		);
@@ -684,7 +683,7 @@ describe("Tests1 for snapshot fetch", () => {
 
 	it("Location redirection error without shareLink skips redeem", async () => {
 		// No shareLinkInfo set on resolved URL
-		resolved.shareLinkInfo = undefined;
+		delete resolved.shareLinkInfo;
 
 		const newSiteUrl = "https://microsoft.sharepoint.com/siteUrl";
 
@@ -720,6 +719,35 @@ describe("Tests1 for snapshot fetch", () => {
 		assert(
 			!mockLogger.matchAnyEvent([{ eventName: "RedirectRedeemFallback" }]),
 			"Should not have logged redirect redeem fallback without a shareLink",
+		);
+	});
+
+	it("SnapshotAuthHeaderObtained and SnapshotFetchResponseReceived events are logged on snapshot fetch", async () => {
+		const snapshot: ISnapshot = {
+			blobContents,
+			snapshotTree: snapshotTreeWithGroupId,
+			ops: [],
+			latestSequenceNumber: 0,
+			sequenceNumber: 0,
+			snapshotFormatV: 1,
+		};
+		const response = (await createResponse(
+			{ "x-fluid-epoch": "epoch1", "content-type": "application/ms-fluid" },
+			convertToCompactSnapshot(snapshot),
+			200,
+		)) as unknown as Response;
+
+		await mockFetchMultiple(
+			async () => service.getSnapshot({}),
+			[async (): Promise<Response> => response],
+		);
+
+		mockLogger.assertMatch(
+			[
+				{ eventName: "SnapshotAuthHeaderObtained" },
+				{ eventName: "SnapshotFetchResponseReceived" },
+			],
+			"SnapshotAuthHeaderObtained and SnapshotFetchResponseReceived events should be logged on snapshot fetch",
 		);
 	});
 

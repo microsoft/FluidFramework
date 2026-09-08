@@ -5,7 +5,7 @@
 
 /**
  * The release level of an API.
- * @remarks Derived from {@link https://github.com/microsoft/FluidFramework/wiki/Release-Tags | TSDoc release tags}.
+ * @remarks Derived from {@link https://github.com/microsoft/FluidFramework/blob/main/docs/content/Guidelines/Documentation-Guidelines/Documenting-TypeScript/Release-Tags.md | TSDoc release tags}.
  */
 export const ReleaseLevel = {
 	/**

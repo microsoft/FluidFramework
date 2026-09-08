@@ -214,7 +214,7 @@ export class OdspDelayLoadedDeltaStream {
 					websocketEndpoint.deltaStreamSocketUrl,
 					connectionId,
 				);
-				connection.on("op", (documentId, ops: ISequencedDocumentMessage[]) => {
+				connection.on("op", (_documentId, ops: ISequencedDocumentMessage[]) => {
 					this.opsReceived(ops);
 				});
 				connection.on("signal", this.signalHandler);
@@ -416,10 +416,6 @@ export class OdspDelayLoadedDeltaStream {
 		const disableJoinSessionRefresh = this.mc.config.getBoolean(
 			"Fluid.Driver.Odsp.disableJoinSessionRefresh",
 		);
-		// Previous gate "Fluid.Driver.Odsp.setSensitivityLabelHeader" was removed because it was sensitive to a timestamp-related bug that was fixed by PR #26318; using this new gate ensures that the bug fix is present.
-		const setSensitivityLabelHeader = this.mc.config.getBoolean(
-			"Fluid.Driver.Odsp.setSensitivityLabelHeaderPostFix",
-		);
 		const executeFetch = async (): Promise<{
 			entryTime: number;
 			joinSessionResponse: ISocketStorageDiscovery;
@@ -434,7 +430,6 @@ export class OdspDelayLoadedDeltaStream {
 				requestSocketToken,
 				options,
 				disableJoinSessionRefresh,
-				setSensitivityLabelHeader,
 				isRefreshingJoinSession,
 				displayName,
 			);
@@ -578,9 +573,9 @@ export class OdspDelayLoadedDeltaStream {
 		return connection;
 	}
 
-	public dispose(error?: unknown): void {
+	public dispose(): void {
 		this.clearJoinSessionTimer();
 		this.currentConnection?.dispose();
-		this.currentConnection = undefined;
+		delete this.currentConnection;
 	}
 }

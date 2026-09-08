@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IsoBuffer } from "@fluid-internal/client-utils";
+import { Uint8ArrayToString } from "@fluid-internal/client-utils";
 import { compress } from "lz4js";
 
 import { CompressionAlgorithms } from "../../index.js";
@@ -33,7 +33,7 @@ function serializeBatchContents(batch: OutboundBatch): string {
 export function compressMultipleMessageBatch(batch: OutboundBatch): OutboundBatch {
 	const contentsAsBuffer = new TextEncoder().encode(serializeBatchContents(batch));
 	const compressedContents = compress(contentsAsBuffer);
-	const compressedContent = IsoBuffer.from(compressedContents).toString("base64");
+	const compressedContent = Uint8ArrayToString(compressedContents, "base64");
 
 	const messages: OutboundBatchMessage[] = [];
 	messages.push({

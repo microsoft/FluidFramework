@@ -4,12 +4,16 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { UsageError, type TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * An object which can enter a "broken" state where trying to use it is a UsageError.
  * @remarks
  * Use {@link WithBreakable} to apply this to another object.
+ *
+ * A common pattern is to pass a single breaker to all code which shares mutable state and thus could be put into an invalidate state together.
+ * Thus a breaker often represents a scope for or dependency on mutable state which also forms a scope for fault isolation.
+ * As such a scope can have issues (if it couldn't it would need a breaker), an optional {@link Breakable.logger} is included which can be used to log telemetry within this scope.
  * @sealed
  */
 export class Breakable {
@@ -22,6 +26,17 @@ export class Breakable {
 		 * This is useful for documenting the semantics of a given Breakable and when inspecting things in the debugger, but is currently otherwise unused.
 		 */
 		private readonly name: string,
+		/**
+		 * Optional logger for telemetry.
+		 * @remarks
+		 * When provided, subsystems that have access to a Breakable can use this logger to emit telemetry
+		 * without requiring additional plumbing of a logger which also corresponds to the same scope/context of this Breakable.
+		 *
+		 * Currently, Breakable itself does not eagerly log breakages into the logger, but we may want to change that in the future.
+		 * Instead it is assumed that fatal errors will result in exceptions logged through other means,
+		 * and the logger here is exposed for users of breaker to log telemetry as desired (for example reporting non-fatal errors or other telemetry).
+		 */
+		public readonly logger?: TelemetryLoggerExt,
 	) {}
 
 	/**
@@ -29,13 +44,14 @@ export class Breakable {
 	 * @remarks
 	 * Can use {@link throwIfBroken} to apply this to a method.
 	 */
-	public use(): void {
+	public use(
+		message: (brokenBy: Error) => string = (brokenBy) =>
+			`Invalid use of ${this.name} after it was put into an invalid state by another error.\nOriginal Error:\n${brokenBy}`,
+	): void {
 		if (this.brokenBy !== undefined) {
-			const error = new UsageError(
-				`Invalid use of ${this.name} after it was put into an invalid state by another error.\nOriginal Error:\n${this.brokenBy}`,
-			);
+			const error = new UsageError(message(this.brokenBy));
 
-			// This "cause" field is added in ES2022, but using if even without that built in support, it is still helpful.
+			// This "cause" field is added in ES2022, but using it even without that built in support, it is still helpful.
 			// See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/cause
 			// TODO: remove this cast when targeting ES2022 lib or later.
 			(error as { cause?: unknown }).cause =
@@ -80,11 +96,31 @@ export class Breakable {
 	 * Like {@link Breakable.use}, this also throws if already broken.
 	 * Any exceptions this catches are re-thrown.
 	 * Can use {@link breakingMethod} to apply this to a method.
+	 *
+	 * If `breaker` returns a Promise, the breakable is also broken if that Promise rejects, and the broken state is rechecked when it resolves:
+	 * if the breakable was put into a broken state during the async operation (by some other code path), the resolved value is discarded and the returned Promise rejects with a {@link UsageError}.
+	 *
+	 * This does not serialize concurrent runs: a synchronous run invoked while an async run is in flight will execute immediately, and is only blocked if the breakable is already broken.
+	 * Detection of an async result uses `instanceof Promise`, so custom Promise-like objects and Promises from other realms will be treated as synchronous results.
 	 */
 	public run<TResult>(breaker: () => TResult): TResult {
 		this.use();
 		try {
-			return breaker();
+			const result = breaker();
+			if (result instanceof Promise) {
+				return result.then(
+					(value: Awaited<TResult>) => {
+						// If broken while process was running: this will throw instead of returning the value.
+						this.use(
+							(brokenBy) =>
+								`${this.name} was put into a broken state during an async operation.\nOriginal Error:\n${brokenBy}`,
+						);
+						return value;
+					},
+					(error: unknown) => this.rethrowCaught(error),
+				) as TResult;
+			}
+			return result;
 		} catch (error: unknown) {
 			this.rethrowCaught(error);
 		}

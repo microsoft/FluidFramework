@@ -18,12 +18,12 @@ import {
 	LocalResolver,
 } from "@fluidframework/local-driver/internal";
 import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import { asLegacyAlpha } from "@fluidframework/runtime-definitions/internal";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import {
+	defaultTestOldestSupportedClient,
 	createAndAttachContainerUsingProps,
 	ITestFluidObject,
 	LoaderContainerTracker,
@@ -137,6 +137,7 @@ describe("Document Dirty", () => {
 
 			const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 				defaultFactory,
+				oldestSupportedClient: defaultTestOldestSupportedClient,
 				registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
 			});
 
@@ -299,7 +300,7 @@ describe("Document Dirty", () => {
 				// Submit a non-dirtyable op
 				containerRuntime.submit(nonDirtyableOp);
 
-				const stageControls = asLegacyAlpha(containerRuntime).enterStagingMode();
+				const stageControls = containerRuntime.enterStagingMode();
 
 				// Submit an op in staging mode - we will discard it later
 				sharedMap.set("key", "value");
@@ -530,6 +531,7 @@ describe("Document Dirty", () => {
 
 			const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 				defaultFactory,
+				oldestSupportedClient: defaultTestOldestSupportedClient,
 				registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
 			});
 

@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { WorkerExecResult, WorkerMessage } from "./worker";
+import { createRequire } from "node:module";
+import type { WorkerExecResult, WorkerMessage } from "./worker.js";
+
+const require = createRequire(import.meta.url);
 
 export async function lint(message: WorkerMessage): Promise<WorkerExecResult> {
 	const oldArgv = process.argv;
