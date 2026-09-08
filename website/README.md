@@ -234,7 +234,6 @@ The component preserves the child content when it renders a link or inline code:
 
 Transition behavior is version-specific.
 A component can render inline code or use its old target in one documentation version and use its new target in another version.
-For implementation details and the complete behavior tables, see the [API link transitions design](./STAGED_API_LINKS_DESIGN.md).
 
 #### Comments
 
