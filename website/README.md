@@ -178,8 +178,8 @@ See <PackageLink package="fluid-framework" /> and <ApiLink package="fluid-framew
 Add `newApi` when the current published API model does not contain a new package or API.
 The component renders its content as inline code until the target exists.
 The component writes a build debug message when it renders inline code.
-When the target exists, the component renders a link and writes a build warning.
-Remove `newApi` when this warning occurs.
+When the target exists, the component renders a link.
+`newApi` can be removed once the target exists.
 
 ```mdx
 <PackageLink package="new-package" newApi />
