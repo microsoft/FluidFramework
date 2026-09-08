@@ -378,7 +378,7 @@ export interface IDocumentService extends IEventProvider<IDocumentServiceEvents>
 	 * @remarks
 	 * The value returned by `get` is serialized as part of the containing pending state. It must
 	 * round-trip through `JSON.stringify` and `JSON.parse` without custom serialization or
-	 * information loss, and it must not contain customer-identifying information. Returning
+	 * information loss, and it must not contain customer-identifying information. `get` returning
 	 * `undefined` indicates that there is no driver state to preserve. `set` receives the
 	 * JSON-deserialized value previously returned by `get` before the document service connects
 	 * to storage or the delta stream. Persisted state must contain enough information for `set` to
