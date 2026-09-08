@@ -25,26 +25,23 @@ function process(markdown: string): string {
 const alertTypes = ["NOTE", "TIP", "IMPORTANT", "WARNING", "CAUTION"] as const;
 
 /**
- * These tests describe what GitHub actually does, rather than what the current implementation does. Every expectation
- * below was verified by rendering the markdown through GitHub's own renderer (`POST /markdown`) and checking whether
- * the result carried a `markdown-alert` class.
+ * GitHub renders a blockquote as an alert only when all of the following hold:
  *
- * The rules that came out of that exercise:
+ * - The blockquote's first paragraph begins with a `[!TYPE]` marker, where the type is one of NOTE, TIP, IMPORTANT,
+ * WARNING or CAUTION. The type is matched case-insensitively, so `[!note]` and `[!Note]` are alerts too.
+ * - The marker is the very first thing in the blockquote. Text in front of it means the blockquote is ordinary prose.
+ * - The marker is alone on its line. Body content on the marker's line means the blockquote is ordinary prose.
+ * - The alert has a body. A marker on its own is just a blockquote.
+ * - The blockquote is at the top level of the document, because alerts do not nest inside other elements.
  *
- * 1. An alert is a blockquote whose first paragraph begins with a `[!TYPE]` marker.
- * 2. The marker must be the very first thing in the blockquote. Text in front of it means it is not an alert.
- * 3. The marker must be alone on its line. Body content on the marker's line means it is not an alert.
- * 4. Matching is case-insensitive: `[!note]` and `[!Note]` are alerts just like `[!NOTE]`.
- * 5. Only NOTE, TIP, IMPORTANT, WARNING and CAUTION are alert types.
- * 6. An alert needs a body. A marker on its own is just a blockquote.
- * 7. Trailing whitespace after the marker is fine, as is a blank line between the marker and the body.
- * 8. A backslash-escaped marker (`\[!NOTE]`) still renders as an alert, so the escaping that remark-stringify applies
- * on output is harmless.
- * 9. Nested blockquotes are not alerts, and neither is a marker outside a blockquote.
+ * Trailing whitespace after the marker is allowed, as is a blank line between the marker and the body. A
+ * backslash-escaped marker (`\[!NOTE]`) still renders as an alert, so the escaping that remark-stringify applies on
+ * output does not affect any of this.
  *
  * `stripSoftBreaks` collapses single line breaks, which would otherwise pull the body up onto the marker's line and
- * break rule 3. So the contract under test is: markdown that GitHub renders as an alert must still be rendered as an
- * alert afterwards, and markdown that is not an alert must not be rewritten into something that looks like one.
+ * stop the alert from rendering. The contract these tests cover is therefore twofold: markdown that GitHub renders as
+ * an alert must still render as one afterwards, and markdown that GitHub does not render as an alert must not be
+ * rewritten into something that looks like one.
  */
 describe("stripSoftBreaks and GitHub alerts", () => {
 	describe("keeps the marker on its own line for every alert type", () => {
