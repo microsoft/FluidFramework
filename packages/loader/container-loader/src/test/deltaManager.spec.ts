@@ -58,7 +58,7 @@ describe("Loader", () => {
 				deltaStorageFactory?: () => IDocumentDeltaStorageService,
 				sequenceState?: {
 					snapshotSequenceNumber?: number;
-					lastProcessedSequenceNumber?: number;
+					lastProcessedSequenceNumber?: number | undefined;
 					initialMessages?: ISequencedDocumentMessage[];
 					connectBeforeAttach?: boolean;
 					earlySocketMessages?: ISequencedDocumentMessage[];
