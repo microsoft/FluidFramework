@@ -41,7 +41,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@types/mdast": "^4.0.4",
 		"@types/node": "catalog:types",
-		"@types/yargs": "^17.0.35",
+		"@types/yargs": "^17.0.32",
 		"typescript": "~6.0.3"
 	},
 	"typeValidation": {
