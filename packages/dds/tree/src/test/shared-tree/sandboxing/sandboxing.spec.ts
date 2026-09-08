@@ -1205,11 +1205,11 @@ describe("Host and Guest Demo", () => {
 			 */
 			class TrackedParticipantPort extends EventTarget {
 				public constructor(
-					/** The MessagePort that carries messages across the structured-clone boundary. */
-					private readonly innerPort: MessagePort,
+					/** The MessagePort that is being observed and tracked. */
+					private readonly observedPort: MessagePort,
 				) {
 					super();
-					this.innerPort.addEventListener("message", (event: MessageEvent<unknown>) => {
+					this.observedPort.addEventListener("message", (event: MessageEvent<unknown>) => {
 						try {
 							this.dispatchEvent(new MessageEvent("message", { data: event.data }));
 						} finally {
@@ -1217,7 +1217,7 @@ describe("Host and Guest Demo", () => {
 							resolveIfSettled();
 						}
 					});
-					this.innerPort.addEventListener("messageerror", () => {
+					this.observedPort.addEventListener("messageerror", () => {
 						try {
 							this.dispatchEvent(new MessageEvent("messageerror"));
 						} finally {
@@ -1242,9 +1242,9 @@ describe("Host and Guest Demo", () => {
 						// The branches select different `MessagePort.postMessage` overloads.
 						// TypeScript cannot pass the union directly because no overload accepts both types.
 						if (Array.isArray(transferOrOptions)) {
-							this.innerPort.postMessage(message, transferOrOptions);
+							this.observedPort.postMessage(message, transferOrOptions);
 						} else {
-							this.innerPort.postMessage(message, transferOrOptions);
+							this.observedPort.postMessage(message, transferOrOptions);
 						}
 					} catch (error) {
 						messagesMovingToRelay -= 1;
@@ -1255,12 +1255,12 @@ describe("Host and Guest Demo", () => {
 
 				/** Starts message delivery on the inner port. */
 				public start(): void {
-					this.innerPort.start();
+					this.observedPort.start();
 				}
 
 				/** Closes the inner port. */
 				public close(): void {
-					this.innerPort.close();
+					this.observedPort.close();
 				}
 			}
 
