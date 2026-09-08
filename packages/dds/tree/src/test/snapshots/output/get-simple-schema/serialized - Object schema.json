@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "root": {
     "kind": 1,
     "simpleAllowedTypes": {
@@ -31,8 +31,7 @@
               "com.fluidframework.leaf.number": {
                 "isStaged": false
               }
-            },
-            "storedKey": "foo"
+            }
           },
           "bar": {
             "kind": 1,
@@ -40,8 +39,7 @@
               "com.fluidframework.leaf.string": {
                 "isStaged": false
               }
-            },
-            "storedKey": "bar"
+            }
           }
         },
         "allowUnknownOptionalFields": false

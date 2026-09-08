@@ -28,7 +28,8 @@ import type {
 	SimpleRecordNodeSchema,
 	SimpleTreeSchema,
 } from "../simpleSchema.js";
-import * as Format from "../simpleSchemaFormatV1.js";
+import * as FormatV1 from "../simpleSchemaFormatV1.js";
+import * as Format from "../simpleSchemaFormatV2.js";
 
 /**
  * Encodes the compatibility impacting subset of simple schema (view or stored) into a serializable format.
@@ -57,7 +58,7 @@ export function encodeSchemaCompatibilitySnapshot(
 	}
 
 	const encodedSchema: Format.SimpleTreeSchemaFormat = {
-		version: Format.SimpleSchemaFormatVersion.v1,
+		version: Format.SimpleSchemaFormatVersion.v2,
 		root: encodeField(simpleSchema.root),
 		definitions: encodedDefinitions,
 	};
@@ -85,15 +86,45 @@ export function decodeSchemaCompatibilitySnapshot(
 	validator?: FormatValidator,
 ): SimpleTreeSchema {
 	const effectiveValidator = validator ?? FormatValidatorNoOp;
-	const compiledValidator = extractJsonValidator(effectiveValidator).compile(
-		Format.SimpleTreeSchemaFormat,
-	);
-	if (!compiledValidator.check(encodedSchema)) {
-		throw new UsageError(
-			"The provided simple schema is not valid according to the schema format.",
-		);
+	const jsonValidator = extractJsonValidator(effectiveValidator);
+	const formatVersion = getFormatVersion(encodedSchema);
+	if (formatVersion === Format.SimpleSchemaFormatVersion.v2) {
+		const currentFormatValidator = jsonValidator.compile(Format.SimpleTreeSchemaFormat);
+		if (currentFormatValidator.check(encodedSchema)) {
+			return decodeCurrentFormat(encodedSchema);
+		}
+	} else if (formatVersion === FormatV1.SimpleSchemaFormatVersion.v1) {
+		const previousFormatValidator = jsonValidator.compile(FormatV1.SimpleTreeSchemaFormat);
+		if (previousFormatValidator.check(encodedSchema)) {
+			return decodeCurrentFormat(upgradeFormat(encodedSchema));
+		}
 	}
 
+	throw new UsageError(
+		"The provided simple schema is not valid according to the schema format.",
+	);
+}
+
+/**
+ * Gets the format version from an encoded schema, if present.
+ */
+function getFormatVersion(encodedSchema: JsonCompatibleReadOnly): number | undefined {
+	if (
+		encodedSchema !== null &&
+		typeof encodedSchema === "object" &&
+		!Array.isArray(encodedSchema) &&
+		"version" in encodedSchema &&
+		typeof encodedSchema.version === "number"
+	) {
+		return encodedSchema.version;
+	}
+	return undefined;
+}
+
+/**
+ * Decodes a schema that uses the current persisted format.
+ */
+function decodeCurrentFormat(encodedSchema: Format.SimpleTreeSchemaFormat): SimpleTreeSchema {
 	return {
 		root: decodeSimpleFieldSchema(encodedSchema.root),
 		definitions: new Map(
@@ -101,6 +132,46 @@ export function decodeSchemaCompatibilitySnapshot(
 				return decodeNodeSchema(value);
 			}),
 		),
+	};
+}
+
+/**
+ * Upgrades a version 1 schema to the current persisted format.
+ */
+function upgradeFormat(
+	encodedSchema: FormatV1.SimpleTreeSchemaFormat,
+): Format.SimpleTreeSchemaFormat {
+	const definitions: Format.SimpleSchemaDefinitionsFormat = {};
+	for (const [identifier, schema] of Object.entries(encodedSchema.definitions)) {
+		if (schema.object === undefined) {
+			definitions[identifier] = schema;
+			continue;
+		}
+
+		const fieldEntries: [string, Format.SimpleFieldSchemaFormat][] = [];
+		const storedKeys = new Set<string>();
+		for (const field of Object.values(schema.object.fields)) {
+			const { storedKey, ...fieldSchema } = field;
+			if (storedKeys.has(storedKey)) {
+				throw new UsageError(
+					`The provided simple schema contains duplicate stored key ${JSON.stringify(storedKey)}.`,
+				);
+			}
+			storedKeys.add(storedKey);
+			fieldEntries.push([storedKey, fieldSchema]);
+		}
+		definitions[identifier] = {
+			object: {
+				...schema.object,
+				fields: Object.fromEntries(fieldEntries),
+			},
+		};
+	}
+
+	return {
+		version: Format.SimpleSchemaFormatVersion.v2,
+		root: encodedSchema.root,
+		definitions,
 	};
 }
 
@@ -187,28 +258,16 @@ function encodeSimpleAllowedTypes(
 function encodeObjectNode(
 	schema: SimpleObjectNodeSchema,
 ): Format.SimpleObjectNodeSchemaFormat {
-	const encodedFields: Format.SimpleObjectFieldSchemasFormat = {};
-	for (const [fieldKey, fieldSchema] of schema.fields) {
-		encodedFields[fieldKey] = encodeObjectField(fieldSchema);
-	}
-
 	return {
 		kind: schema.kind,
-		fields: encodedFields,
+		fields: Object.fromEntries(
+			Array.from(schema.fields.values(), (fieldSchema) => [
+				fieldSchema.storedKey,
+				encodeField(fieldSchema),
+			]),
+		),
 		allowUnknownOptionalFields: schema.allowUnknownOptionalFields,
 	};
-}
-
-/**
- * Encodes an object field schema to a serializable object.
- * @param fieldSchema - The object field schema to convert.
- * @returns A serializable representation of the object field schema.
- */
-function encodeObjectField(
-	fieldSchema: SimpleObjectFieldSchema,
-): Format.SimpleObjectFieldSchemaFormat {
-	const encodedField = encodeField(fieldSchema);
-	return { ...encodedField, storedKey: fieldSchema.storedKey };
 }
 
 /**
@@ -321,8 +380,8 @@ function decodeObjectFields(
 	encodedFields: Format.SimpleObjectFieldSchemasFormat,
 ): ReadonlyMap<string, SimpleObjectFieldSchema> {
 	const fields = new Map<string, SimpleObjectFieldSchema>();
-	for (const [fieldKey, fieldSchema] of Object.entries(encodedFields)) {
-		fields.set(fieldKey, decodeObjectField(fieldSchema));
+	for (const [storedKey, fieldSchema] of Object.entries(encodedFields)) {
+		fields.set(storedKey, decodeObjectField(fieldSchema, storedKey));
 	}
 	return fields;
 }
@@ -333,12 +392,13 @@ function decodeObjectFields(
  * @returns The decoded simple object field schema.
  */
 function decodeObjectField(
-	encodedField: Format.SimpleObjectFieldSchemaFormat,
+	encodedField: Format.SimpleFieldSchemaFormat,
+	storedKey: string,
 ): SimpleObjectFieldSchema {
 	const baseField = decodeSimpleFieldSchema(encodedField);
 	return {
 		...baseField,
-		storedKey: encodedField.storedKey,
+		storedKey,
 	};
 }
 
