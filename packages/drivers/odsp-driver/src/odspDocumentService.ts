@@ -181,10 +181,13 @@ export class OdspDocumentService
 				Array.isArray(state) ||
 				!("epoch" in state) ||
 				typeof state.epoch !== "string" ||
+				state.epoch.length === 0 ||
 				!("documentId" in state) ||
 				typeof state.documentId !== "string"
 			) {
-				throw new UsageError("ODSP driver state must contain epoch and document ID strings");
+				throw new UsageError(
+					"ODSP driver state must contain a non-empty epoch and document ID string",
+				);
 			}
 			if (state.documentId !== this.odspResolvedUrl.hashedDocumentId) {
 				throw new UsageError("ODSP driver state belongs to a different document");

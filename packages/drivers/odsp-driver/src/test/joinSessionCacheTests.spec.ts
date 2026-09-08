@@ -68,6 +68,10 @@ describe("expose joinSessionInfo Tests", () => {
 		);
 		assert(service.driverStatePersistence !== undefined);
 		const driverState = { documentId: odspResolvedUrl.hashedDocumentId, epoch: "epoch1" };
+		assert.throws(
+			() => service.driverStatePersistence?.set({ ...driverState, epoch: "" }),
+			/ODSP driver state must contain a non-empty epoch/,
+		);
 		service.driverStatePersistence.set(driverState);
 		logger.assertMatch([
 			{
