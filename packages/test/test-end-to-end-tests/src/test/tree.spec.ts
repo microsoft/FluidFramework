@@ -15,6 +15,7 @@ import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	createSummarizerFromFactory,
+	defaultTestOldestSupportedClient,
 	summarizeNow,
 	type ContainerRuntimeFactoryWithDefaultDataStoreProps,
 } from "@fluidframework/test-utils/internal";
@@ -121,6 +122,7 @@ function makeTestSetup(apis: CompatApis) {
 
 	const runtimeProps: ContainerRuntimeFactoryWithDefaultDataStoreProps = {
 		defaultFactory,
+		oldestSupportedClient: defaultTestOldestSupportedClient,
 		registryEntries,
 		runtimeOptions: {
 			// SharedTree requires the runtime id compressor.

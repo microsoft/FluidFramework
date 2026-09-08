@@ -30,6 +30,7 @@ import type { CodecWriteOptions, DependentFormatVersion, IJsonCodec } from "../c
 import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
+	CommitKind,
 	type GraphCommit,
 	replaceChange,
 	type RevisionTag,
@@ -669,10 +670,12 @@ export class SharedTreeCore<
 		switch (type) {
 			case "commit": {
 				const {
-					commit: { revision, change },
+					commit: { revision, change, customMetadata },
 					branchId,
 				} = message;
-				this.editManager.getLocalBranch(branchId).apply({ change, revision });
+				this.editManager
+					.getLocalBranch(branchId)
+					.apply({ change, revision }, CommitKind.Default, customMetadata);
 				break;
 			}
 			case "branch": {

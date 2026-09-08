@@ -8,8 +8,8 @@
 #     phase8_cosmos), not in-cluster. routerlicious/riddler get the connection string via Key
 #     Vault + the Secrets Store CSI driver, through the one workload identity
 #     (phase8_workload_identity) -- never a plain Kubernetes Secret.
-#   redis -> Azure Cache for Redis (managed, TLS, password-based -- see azure/deploy.sh
-#     phase8_redis), not in-cluster. gitrest and historian below get the password the same way.
+#   redis -> Azure Managed Redis (managed, TLS, access-key auth -- see azure/deploy.sh
+#     phase8_redis), not in-cluster. gitrest and historian below get the key the same way.
 #
 # Replace <ACR> with your ACR resource name (for example, myregistry; do not include
 # .azurecr.io) and <IMAGE_TAG> with the unique immutable release tag created in README
@@ -112,7 +112,7 @@ spec:
             - { name: NODE_ENV, value: "production" }
             - { name: git__enableLowIoWrite, value: "true" }
             - { name: redis__host, value: "<REDIS_HOSTNAME>" }
-            - { name: redis__port, value: "6380" }
+            - { name: redis__port, value: "10000" }
             - { name: redis__tls, value: "true" }
             # redis__pass: sourced from /config/secrets.env (written by the load-secrets init
             # container above) -- no plain Kubernetes Secret exists for this credential.
@@ -186,10 +186,10 @@ spec:
             - { name: alfred, value: "http://fluid-alfred" }
             - { name: storageUrl, value: "http://gitrest" }
             - { name: redis__host, value: "<REDIS_HOSTNAME>" }
-            - { name: redis__port, value: "6380" }
+            - { name: redis__port, value: "10000" }
             - { name: redis__tls, value: "true" }
             - { name: redisForThrottling__host, value: "<REDIS_HOSTNAME>" }
-            - { name: redisForThrottling__port, value: "6380" }
+            - { name: redisForThrottling__port, value: "10000" }
             - { name: redisForThrottling__tls, value: "true" }
             # redis__pass / redisForThrottling__pass: sourced from /config/secrets.env (written
             # by the load-secrets init container above) -- no plain Kubernetes Secret exists

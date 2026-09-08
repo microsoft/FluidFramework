@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Supporting functions for end-to-end-tests.sh parameter loading, tool checks, 
+# Supporting functions for end-to-end-tests.sh parameter loading, tool checks,
 # Azure authentication and endpoint discovery, and custom routerlicious driver configuration.
 
 E2E_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -31,6 +31,7 @@ load_parameters() {
   AKS="$(jqr '.aks.name')"
   AFD="$(jqr '.frontDoor.profileName')"
   TENANT_ID="$(jqr '.tenantId')"; TENANT_ID="${TENANT_ID:-fluid}"
+  LOW_IO_WRITE="$(jqr '.lowIoWriteEnabled')"
 
   if [ -z "$RG" ]; then
     echo "ERROR: 'resourceGroup' is required in $PARAMETERS_FILE." >&2
@@ -42,6 +43,10 @@ load_parameters() {
   fi
   if [ -z "$AFD" ]; then
     echo "ERROR: 'frontDoor.profileName' is required in $PARAMETERS_FILE." >&2
+    exit 1
+  fi
+  if [ "$LOW_IO_WRITE" != "true" ] && [ "$LOW_IO_WRITE" != "false" ]; then
+    echo "ERROR: 'lowIoWriteEnabled' is required in $PARAMETERS_FILE and must be a boolean (true or false)." >&2
     exit 1
   fi
 }
@@ -98,6 +103,7 @@ configure_test_environment() {
 # Export the custom driver configuration built from the discovered endpoints and tenant secret.
 export_custom_driver_config() {
   export fluid__test__driver__custom
+  # enableWholeSummaryUpload is required to read summaries when low-IO write is enabled in gitrest
   fluid__test__driver__custom="$(jq -n \
     --arg tenantId "$TENANT_ID" \
     --arg tenantSecret "$TENANT_SECRET" \
@@ -105,5 +111,6 @@ export_custom_driver_config() {
     --arg ordererUrl "https://$ALFRED_HOST" \
     --arg deltaStorageUrl "https://$HISTORIAN_HOST" \
     --arg deltaStreamUrl "https://$NEXUS_HOST" \
-    '{tenantId: $tenantId, tenantSecret: $tenantSecret, host: $host, ordererUrl: $ordererUrl, deltaStorageUrl: $deltaStorageUrl, deltaStreamUrl: $deltaStreamUrl}')"
+    --argjson enableWholeSummaryUpload "$LOW_IO_WRITE" \
+    '{tenantId: $tenantId, tenantSecret: $tenantSecret, host: $host, ordererUrl: $ordererUrl, deltaStorageUrl: $deltaStorageUrl, deltaStreamUrl: $deltaStreamUrl, driverPolicies: {enableWholeSummaryUpload: $enableWholeSummaryUpload}}')"
 }

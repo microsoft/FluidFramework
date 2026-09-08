@@ -3,7 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { DriverEndpoint, TestDriverTypes } from "@fluid-internal/test-driver-definitions";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import type {
+	DriverEndpoint,
+	ITestDriver,
+	TestDriverTypes,
+} from "@fluid-internal/test-driver-definitions";
 import commander from "commander";
 
 import { createLogger } from "./FileLogger.js";
@@ -86,7 +93,7 @@ const main = async (): Promise<void> => {
 		process.env.DEBUG = log;
 	}
 
-	const testDriver = await createTestDriver(
+	const testDriver: ITestDriver = await createTestDriver(
 		driver,
 		endpoint,
 		seed,
@@ -94,10 +101,15 @@ const main = async (): Promise<void> => {
 	);
 
 	const startTime = Date.now();
-	const outputDir = `${__dirname}/output/${startTime}`;
+	const outputDir = path.join(
+		path.dirname(fileURLToPath(import.meta.url)),
+		"output",
+		`${startTime}`,
+	);
 	const { logger, flush } = await createLogger(outputDir, "orchestrator", {
 		driverType: testDriver.type,
 		driverEndpointName: testDriver.endpointName,
+		driverTenantName: testDriver.tenantName,
 		profile: profileName,
 		runId: undefined,
 	});

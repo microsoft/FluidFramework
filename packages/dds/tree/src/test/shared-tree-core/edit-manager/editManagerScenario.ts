@@ -8,9 +8,13 @@ import { strict as assert } from "node:assert";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type { SessionId } from "@fluidframework/id-compressor";
 
-import type { ChangeFamilyEditor, ChangeRebaser } from "../../../core/index.js";
+import {
+	type ChangeFamilyEditor,
+	type ChangeRebaser,
+	CommitKind,
+} from "../../../core/index.js";
 import type { Commit, EditManager, SeqNumber } from "../../../shared-tree-core/index.js";
-import { brand } from "../../../util/index.js";
+import { brand, type JsonCompatibleReadOnlyObject } from "../../../util/index.js";
 import { TestChange, asDelta } from "../../testChange.js";
 import { mintRevisionTag } from "../../utils.js";
 
@@ -118,6 +122,8 @@ type TestCommit = Commit<TestChange> & {
 	seqNumber: SeqNumber;
 	refNumber: SeqNumber;
 	intention: number;
+	// Required rather than optional because these commits are handed to `addSequencedChanges`.
+	customMetadata: JsonCompatibleReadOnlyObject | undefined;
 };
 
 const localSessionId: SessionId = "0" as SessionId;
@@ -318,11 +324,14 @@ export function runUnitTestScenario(
 							refNumber: brand(localRef),
 							change: changeset,
 							intention,
+							customMetadata: undefined,
 						};
 						localCommits.push(commit);
 						knownToLocal.push({ intention, seq });
 						// Local changes should always lead to a delta that is equivalent to the local change.
-						manager.getLocalBranch("main").apply({ change: changeset, revision });
+						manager
+							.getLocalBranch("main")
+							.apply({ change: changeset, revision }, CommitKind.Default, undefined);
 						assert.deepEqual(
 							asDelta(manager.getLocalBranch("main").getHead().change.intentions),
 							asDelta([intention]),
@@ -385,6 +394,7 @@ export function runUnitTestScenario(
 							refNumber: brand(step.ref),
 							change: TestChange.mint(knownToPeer, intention),
 							intention,
+							customMetadata: undefined,
 						};
 						commits.push(commit);
 						break;

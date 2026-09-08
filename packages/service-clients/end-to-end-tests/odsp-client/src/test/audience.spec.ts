@@ -12,13 +12,17 @@ import type { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map/internal";
 import type { OdspClient } from "@fluidframework/odsp-client/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
+// eslint-disable-next-line import-x/no-internal-modules -- fluid-framework currently does not have an internal export, so we use its user facing alpha one. This seems fine for end-to-end testing.
+import { featureVersion } from "fluid-framework/alpha";
 
 // `pkgVersion` is this package's own version, which tracks the Fluid Framework release group; we use it as
 // `minVersionForCollab` in tests so they exercise the latest defaults rather than a hardcoded version.
-import { pkgVersion as currentVersion } from "../packageVersion.js";
+import { pkgVersion } from "../packageVersion.js";
 
 import { createOdspClient, getCredentials } from "./OdspClientFactory.js";
 import { waitForMember } from "./utils.js";
+
+const currentVersion = featureVersion(pkgVersion);
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],

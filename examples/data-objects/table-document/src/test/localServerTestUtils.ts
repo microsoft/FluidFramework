@@ -36,6 +36,10 @@ export async function createLocalTableDocument(): Promise<LocalTableDocumentTest
 	const tableDocumentFactory = TableDocument.getFactory();
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: tableDocumentFactory,
+		// To keep this code simple and portable, we hard code an arbitrary oldest supported client version here.
+		// As there is no collab, what version is used here does not matter, but using an older one helps ensure this doesn't accidentally depend on the latest features.
+		// In a real application, this should be set to the actual oldest supported client version for the package.
+		oldestSupportedClient: "2.0.0",
 		registryEntries: [tableDocumentFactory.registryEntry],
 	});
 	const loader = new Loader({

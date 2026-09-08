@@ -14,6 +14,7 @@ import {
 import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import {
 	createContainerRuntimeFactoryWithDefaultDataStore,
+	defaultTestOldestSupportedClient,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 import type { TreeView } from "@fluidframework/tree/internal";
@@ -79,6 +80,7 @@ describeCompat("TreeDataObject", "NoCompat", (getTestObjectProvider, apis) => {
 		ContainerRuntimeFactoryWithDefaultDataStore,
 		{
 			defaultFactory: TestTreeDataObject.getFactory(),
+			oldestSupportedClient: defaultTestOldestSupportedClient,
 			registryEntries: [[TestTreeDataObject.type, TestTreeDataObject.getFactory()]],
 			runtimeOptions,
 		},

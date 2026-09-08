@@ -3,28 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import {
-	Badge,
-	Button,
-	InfoLabel,
-	Table,
-	TableBody,
-	TableCell,
-	TableCellLayout,
-	type TableColumnDefinition,
-	type TableColumnSizingOptions,
-	TableRow,
-	createTableColumn,
-	makeStyles,
-	shorthands,
-	useTableColumnSizing_unstable,
-	useTableFeatures,
+import type {
+	TableColumnDefinition,
+	TableColumnSizingOptions,
 } from "@fluentui/react-components";
-import {
-	Delete20Regular,
-	PlugConnected20Regular,
-	PlugDisconnected20Regular,
-} from "@fluentui/react-icons";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import {
@@ -43,6 +25,7 @@ import {
 import { type ReactElement, useEffect, useState } from "react";
 
 import { useContainerFeaturesContext } from "../ContainerFeatureFlagHelper.js";
+import { FluentReactComponents, FluentReactIcons } from "../FluentUi.cjs";
 import { useMessageRelay } from "../MessageRelayContext.js";
 import { useLogger } from "../TelemetryUtils.js";
 import { connectionStateToString } from "../Utilities.js";
@@ -53,6 +36,24 @@ import {
 	userIdTooltipText,
 } from "./TooltipTexts.js";
 import { Waiting } from "./Waiting.js";
+
+const {
+	Badge,
+	Button,
+	InfoLabel,
+	Table,
+	TableBody,
+	TableCell,
+	TableCellLayout,
+	TableRow,
+	createTableColumn,
+	makeStyles,
+	shorthands,
+	useTableColumnSizing_unstable,
+	useTableFeatures,
+} = FluentReactComponents;
+const { Delete20Regular, PlugConnected20Regular, PlugDisconnected20Regular } =
+	FluentReactIcons;
 
 /**
  * {@link ContainerSummaryView} input props.

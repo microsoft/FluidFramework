@@ -12,6 +12,14 @@ import type { SchemaUpgrade } from "./allowedTypes.js";
  */
 export interface StagedSchemaUpgradePolicy {
 	/**
+	 * Whether schema upgrades should include staged upgrades that are already enabled in the
+	 * document's stored schema.
+	 *
+	 * @defaultValue `true`
+	 */
+	readonly includeAlreadyEnabledUpgrades?: boolean;
+
+	/**
 	 * Determines whether to include staged allowed types in the resulting stored schema.
 	 * @remarks
 	 * Due to caching, the behavior of this function must be pure.

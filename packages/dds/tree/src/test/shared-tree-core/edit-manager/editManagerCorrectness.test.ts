@@ -8,7 +8,12 @@ import { strict as assert } from "node:assert";
 import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils";
 import type { SessionId } from "@fluidframework/id-compressor";
 
-import type { ChangeFamilyEditor, GraphCommit, RevisionTag } from "../../../core/index.js";
+import {
+	type ChangeFamilyEditor,
+	CommitKind,
+	type GraphCommit,
+	type RevisionTag,
+} from "../../../core/index.js";
 import type {
 	Commit,
 	EditManager,
@@ -25,6 +30,14 @@ import { checkChangeList, testChangeEditManagerFactory } from "./editManagerTest
 const localSessionId: SessionId = "0" as SessionId;
 const peer1: SessionId = "1" as SessionId;
 const peer2: SessionId = "2" as SessionId;
+
+/**
+ * A {@link Commit} that is also usable as a {@link GraphCommit}.
+ * @remarks
+ * {@link Commit} declares `customMetadata` optionally, but these commits are handed to
+ * `addSequencedChanges`, which requires the `GraphCommit` shape where the property is always present.
+ */
+type SequencedTestCommit = GraphCommit<TestChange> & { readonly sessionId: SessionId };
 
 export function testCorrectness(): void {
 	describe("Rebasing Correctness", () => {
@@ -619,6 +632,7 @@ export function testCorrectness(): void {
 								revision,
 								sessionId: "0" as SessionId,
 								sequenceNumber: brand(1),
+								customMetadata: undefined,
 							},
 						],
 						peerLocalBranches: new Map(),
@@ -629,6 +643,7 @@ export function testCorrectness(): void {
 						{
 							change: TestChange.mint([0, 1], [2]),
 							revision: mintRevisionTag(),
+							customMetadata: undefined,
 						},
 					],
 					"1" as SessionId,
@@ -661,6 +676,7 @@ export function testCorrectness(): void {
 										[intention],
 									),
 									revision: mintRevisionTag(),
+									customMetadata: undefined,
 								},
 							],
 							peer1,
@@ -823,18 +839,30 @@ export function testCorrectness(): void {
 						rebaser: new NoOpChangeRebaser(),
 					});
 					const sequencedLocalChange = mintRevisionTag();
-					manager.getLocalBranch("main").apply({
-						change: TestChange.emptyChange,
-						revision: sequencedLocalChange,
-					});
+					manager.getLocalBranch("main").apply(
+						{
+							change: TestChange.emptyChange,
+							revision: sequencedLocalChange,
+						},
+						CommitKind.Default,
+						undefined,
+					);
 					const revision1 = mintRevisionTag();
 					manager
 						.getLocalBranch("main")
-						.apply({ change: TestChange.emptyChange, revision: revision1 });
+						.apply(
+							{ change: TestChange.emptyChange, revision: revision1 },
+							CommitKind.Default,
+							undefined,
+						);
 					const revision2 = mintRevisionTag();
 					manager
 						.getLocalBranch("main")
-						.apply({ change: TestChange.emptyChange, revision: revision2 });
+						.apply(
+							{ change: TestChange.emptyChange, revision: revision2 },
+							CommitKind.Default,
+							undefined,
+						);
 					const commit1 = {
 						change: TestChange.emptyChange,
 						revision: mintRevisionTag(),
@@ -845,6 +873,7 @@ export function testCorrectness(): void {
 							{
 								change: TestChange.emptyChange,
 								revision: mintRevisionTag(),
+								customMetadata: undefined,
 							},
 						],
 						peer1,
@@ -857,6 +886,7 @@ export function testCorrectness(): void {
 							{
 								change: TestChange.emptyChange,
 								revision: sequencedLocalChange,
+								customMetadata: undefined,
 							},
 						],
 						manager.localSessionId,
@@ -871,19 +901,28 @@ export function testCorrectness(): void {
 						rebaser: new NoOpChangeRebaser(),
 					});
 					const sequencedLocalChange = mintRevisionTag();
-					manager.getLocalBranch("main").apply({
-						change: TestChange.emptyChange,
-						revision: sequencedLocalChange,
-					});
+					manager.getLocalBranch("main").apply(
+						{
+							change: TestChange.emptyChange,
+							revision: sequencedLocalChange,
+						},
+						CommitKind.Default,
+						undefined,
+					);
 					const revision1 = mintRevisionTag();
 					manager
 						.getLocalBranch("main")
-						.apply({ change: TestChange.emptyChange, revision: revision1 });
+						.apply(
+							{ change: TestChange.emptyChange, revision: revision1 },
+							CommitKind.Default,
+							undefined,
+						);
 					manager.addSequencedChanges(
 						[
 							{
 								change: TestChange.emptyChange,
 								revision: sequencedLocalChange,
+								customMetadata: undefined,
 							},
 						],
 						manager.localSessionId,
@@ -896,6 +935,7 @@ export function testCorrectness(): void {
 							{
 								change: TestChange.emptyChange,
 								revision: mintRevisionTag(),
+								customMetadata: undefined,
 							},
 						],
 						peer1,
@@ -908,6 +948,7 @@ export function testCorrectness(): void {
 							{
 								change: TestChange.emptyChange,
 								revision: mintRevisionTag(),
+								customMetadata: undefined,
 							},
 						],
 						peer1,
@@ -1183,7 +1224,7 @@ function applyLocalCommit(
 	manager: EditManager<ChangeFamilyEditor, TestChange>,
 	inputContext: readonly number[] = [],
 	intention: number | number[] = [],
-): Commit<TestChange> {
+): SequencedTestCommit {
 	return applyBranchCommit(manager.getLocalBranch("main"), inputContext, intention);
 }
 
@@ -1191,17 +1232,22 @@ function applyBranchCommit(
 	branch: SharedTreeBranch<ChangeFamilyEditor, TestChange, TestChangeFamily>,
 	inputContext: readonly number[] = [],
 	intention: number | number[] = [],
-): Commit<TestChange> {
+): SequencedTestCommit {
 	const revision = mintRevisionTag();
-	branch.apply({
-		change: TestChange.mint(inputContext, intention),
-		revision,
-	});
+	branch.apply(
+		{
+			change: TestChange.mint(inputContext, intention),
+			revision,
+		},
+		CommitKind.Default,
+		undefined,
+	);
 	const commit = branch.getHead();
 	return {
 		change: commit.change,
 		revision: commit.revision,
 		sessionId: localSessionId,
+		customMetadata: commit.customMetadata,
 	};
 }
 
@@ -1209,11 +1255,12 @@ function peerCommit(
 	peer: typeof peer1 | typeof peer2 = peer1,
 	inputContext: readonly number[] = [],
 	intention: number | number[] = [],
-): Commit<TestChange> {
+): SequencedTestCommit {
 	return {
 		change: TestChange.mint(inputContext, intention),
 		revision: mintRevisionTag(),
 		sessionId: peer,
+		customMetadata: undefined,
 	};
 }
 

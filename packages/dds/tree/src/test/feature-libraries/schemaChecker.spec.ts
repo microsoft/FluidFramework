@@ -541,11 +541,11 @@ describe("schema validation", () => {
 				path: [0],
 				telemetryProperties: {
 					allowedTypes: {
-						tag: TelemetryDataTag.CodeArtifact,
+						tag: TelemetryDataTag.SchemaArtifact,
 						value: '["myNumberNode"]',
 					},
 					nodeType: {
-						tag: TelemetryDataTag.CodeArtifact,
+						tag: TelemetryDataTag.SchemaArtifact,
 						value: 'my"StringNode',
 					},
 				},
@@ -576,11 +576,11 @@ describe("schema validation", () => {
 				telemetryProperties: {
 					actualValueType: "string",
 					expectedValueType: {
-						tag: TelemetryDataTag.CodeArtifact,
+						tag: TelemetryDataTag.SchemaArtifact,
 						value: "Number",
 					},
 					nodeType: {
-						tag: TelemetryDataTag.CodeArtifact,
+						tag: TelemetryDataTag.SchemaArtifact,
 						value: "number",
 					},
 				},
@@ -614,11 +614,11 @@ describe("schema validation", () => {
 				);
 				const telemetryProperties = error.getTelemetryProperties();
 				assert.deepEqual(telemetryProperties.schemaValidationError, {
-					tag: TelemetryDataTag.CodeArtifact,
+					tag: TelemetryDataTag.SchemaArtifact,
 					value: "LeafNode_InvalidValue",
 				});
 				assert.deepEqual(telemetryProperties.schemaValidationPath, {
-					tag: TelemetryDataTag.UserData,
+					tag: TelemetryDataTag.SchemaArtifact,
 					value: '["child",0]',
 				});
 				assert.deepEqual(telemetryProperties.nodeType, {

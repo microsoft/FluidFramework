@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/monaco",
-	"version": "3.0.0",
+	"version": "3.1.0",
 	"private": true,
 	"description": "Monaco code editor",
 	"homepage": "https://fluidframework.com",
@@ -19,7 +19,7 @@
 		"build:esm": "tsc --project ./tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
-		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
+		"clean": "rimraf --glob bundle dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"eslint": "eslint --quiet --format stylish src",
 		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
@@ -76,7 +76,7 @@
 		"browser": {
 			"umd": {
 				"files": [
-					"dist/main.bundle.js"
+					"bundle/main.bundle.js"
 				],
 				"library": "main"
 			}

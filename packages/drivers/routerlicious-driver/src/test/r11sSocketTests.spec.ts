@@ -12,7 +12,7 @@ import {
 	type IAnyDriverError,
 } from "@fluidframework/driver-definitions/internal";
 import { isFluidError } from "@fluidframework/telemetry-utils/internal";
-import { stub, spy } from "sinon";
+import { spy } from "sinon";
 import type { Socket } from "socket.io-client";
 
 import { R11sServiceClusterDrainingErrorCode } from "../contracts.js";
@@ -20,8 +20,8 @@ import { DefaultTokenProvider } from "../defaultTokenProvider.js";
 import { DocumentService } from "../documentService.js";
 import { RouterliciousDocumentServiceFactory } from "../documentServiceFactory.js";
 import { RouterliciousErrorTypes } from "../errorUtils.js";
-import * as socketModule from "../socketModule.js";
 
+import { resetSocketFactory, setSocketFactory } from "./socketModuleMock.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { ClientSocketMock } from "./socketTestUtils.ts/socketMock.js";
 
@@ -35,14 +35,13 @@ async function mockSocket<T>(
 	_response: ClientSocketMock,
 	callback: () => Promise<T>,
 ): Promise<T> {
-	const getSocketCreationStub = stub(socketModule, "SocketIOClientStatic");
 	// Cast needed because ClientSocketMock doesn't implement the full Socket interface,
 	// but provides the minimal functionality needed for our tests
-	getSocketCreationStub.returns(_response as unknown as Socket);
+	setSocketFactory(() => _response as unknown as Socket);
 	try {
 		return await callback();
 	} finally {
-		getSocketCreationStub.restore();
+		resetSocketFactory();
 	}
 }
 

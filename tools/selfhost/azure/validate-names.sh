@@ -94,11 +94,11 @@ if [[ -n "$cosmos" && "${#cosmos}" -gt 40 ]]; then
   note "Cosmos DB name '$cosmos' is >40 chars -- a Cosmos DB for MongoDB vCore cluster caps the name at 40"
 fi
 
-# Azure Cache for Redis: 1-63 chars, alphanumerics and hyphens, start/end alphanumeric,
+# Azure Managed Redis: 1-60 chars, alphanumerics and hyphens, start/end alphanumeric,
 # no consecutive hyphens.
-check "Redis cache" ".redis.clusterName" "$(jqr '.redis.clusterName')" \
-  '^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$' 1 63 \
-  "1-63 chars: alphanumerics and hyphens; start and end alphanumeric, no consecutive hyphens" \
+check "Azure Managed Redis" ".redis.clusterName" "$(jqr '.redis.clusterName')" \
+  '^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$' 1 60 \
+  "1-60 chars: alphanumerics and hyphens; start and end alphanumeric, no consecutive hyphens" \
   nohyphen
 
 # AKS managed cluster: 1-63 chars, alphanumerics, '-' and '_', start/end alphanumeric.

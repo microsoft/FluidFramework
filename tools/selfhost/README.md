@@ -4,14 +4,14 @@ Run Fluid Framework as a service you operate yourself, in your own Azure subscri
 
 This repository deploys the full, multi-service Routerlicious topology onto Azure Kubernetes
 Service, with Azure Event Hubs for ordering, Azure Cosmos DB for MongoDB for document data and
-operations, Azure Cache for Redis, and Azure Files for snapshots. You own every resource it
+operations, Azure Managed Redis, and Azure Files for snapshots. You own every resource it
 creates.
 
 ## Cost
 
 > **Planned:** a basic cost estimate for the default configuration will be added here.
 
-This deployment provisions managed Azure services — AKS nodes, Premium Redis,
+This deployment provisions managed Azure services — AKS nodes, Azure Managed Redis,
 provisioned-throughput Cosmos DB, Event Hubs, and Front Door. They bill from the moment they are
 created, not only while you are actively using them. Until an estimate is published here, price
 your own configuration with the
@@ -36,7 +36,21 @@ Work through these in order. Each folder has its own README with the detail.
 Steps 1–4 get you a running, verified deployment. Steps 5–6 are what you need before real users.
 
 Once step 1 is done, `release/create-and-deploy-release.sh` runs steps 2 and 3 as a single command
-if you would rather not do them separately.
+if you would rather not do them separately. It needs the `FLUID_DIR` environment variable set (see
+below) and a tag or a real commit SHA rather than a branch name — two ways to get one:
+
+- **Use an existing release tag** — search [the release list](https://github.com/microsoft/FluidFramework/releases?page=1)
+  for one (for example, `server_v7.0.1`).
+- **Resolve a SHA from a branch** with `git rev-parse`, e.g. `git rev-parse origin/main`.
+
+Also sign in to the build registry first: this step pushes freshly built images, and an expired ACR
+login is a common cause of a failed push partway through the build.
+
+```bash
+az acr login -n <buildAcr.name from your parameters file>
+FLUID_DIR=/path/to/your/FluidFramework/clone ACR_LOGIN_SERVER=<buildAcr.name>.azurecr.io \
+  ./release/create-and-deploy-release.sh <tag-or-sha> <release-id>
+```
 
 ## What each folder is
 

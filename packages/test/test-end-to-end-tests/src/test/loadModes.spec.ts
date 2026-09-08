@@ -16,6 +16,7 @@ import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import {
+	defaultTestOldestSupportedClient,
 	DataObjectFactoryType,
 	ITestContainerConfig,
 	ITestFluidObject,
@@ -117,6 +118,7 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis: CompatApis
 	async function createContainer(): Promise<IContainer> {
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: testDataObjectFactory,
+			oldestSupportedClient: defaultTestOldestSupportedClient,
 			registryEntries: [[testDataObjectFactory.type, Promise.resolve(testDataObjectFactory)]],
 		});
 		const loader = createLoader(
@@ -142,6 +144,7 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis: CompatApis
 	): Promise<IContainer> {
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory,
+			oldestSupportedClient: defaultTestOldestSupportedClient,
 			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
 		});
 		const loaderProps = createLoaderProps(

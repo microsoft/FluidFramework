@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { FluentProvider, makeStyles, shorthands, tokens } from "@fluentui/react-components";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
 	CloseContainer,
@@ -20,6 +19,7 @@ import {
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { type ReactElement, useCallback, useEffect, useMemo, useState } from "react";
 
+import { FluentReactComponents } from "./FluentUi.cjs";
 import { useMessageRelay } from "./MessageRelayContext.js";
 import {
 	ConsoleVerboseLogger,
@@ -39,6 +39,8 @@ import {
 	TelemetryView,
 	Waiting,
 } from "./components/index.js";
+
+const { FluentProvider, makeStyles, shorthands, tokens } = FluentReactComponents;
 
 const loggingContext = "INLINE(DevtoolsView)";
 

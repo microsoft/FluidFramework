@@ -33,6 +33,8 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 import { RequestParser, RuntimeFactoryHelper } from "@fluidframework/runtime-utils/internal";
 
+import { defaultTestOldestSupportedClient } from "./testCompatibility.js";
+
 interface backCompat_IFluidRouter {
 	IFluidRouter?: backCompat_IFluidRouter;
 	request(request: IRequest): Promise<IResponse>;
@@ -107,7 +109,7 @@ export const createTestContainerRuntimeFactory = (
 					},
 				},
 			},
-			public minVersionForCollab: OldestSupportedClientVersion | undefined = undefined,
+			public minVersionForCollab: OldestSupportedClientVersion = defaultTestOldestSupportedClient,
 			// eslint-disable-next-line import-x/no-deprecated
 			public requestHandlers: RuntimeRequestHandler[] = [],
 		) {

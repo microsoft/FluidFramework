@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/blobs",
-	"version": "3.0.0",
+	"version": "3.1.0",
 	"private": true,
 	"description": "Example of using blobs in Fluid Framework",
 	"homepage": "https://fluidframework.com",
@@ -23,7 +23,7 @@
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
-		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
+		"clean": "rimraf --glob bundle dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --quiet --format stylish src",
 		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
@@ -46,6 +46,7 @@
 	},
 	"dependencies": {
 		"@fluid-example/example-driver": "workspace:~",
+		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",

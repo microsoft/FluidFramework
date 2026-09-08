@@ -284,7 +284,7 @@ describeCompat(
 				const abortController = new AbortController();
 				let aborted = false;
 				const abortingLogger: ITelemetryBaseLogger = {
-					send: (event: ITelemetryBaseEvent, logLevel?: LogLevel): void => {
+					send: (event: ITelemetryBaseEvent, logLevel: LogLevel): void => {
 						if (!aborted && event.eventName.includes("GetDeltas")) {
 							aborted = true;
 							abortController.abort();

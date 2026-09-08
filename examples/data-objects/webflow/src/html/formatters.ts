@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/legacy";
 import { Marker, TextSegment } from "@fluidframework/sequence/legacy";
 
 import { DocSegmentKind, getCss, getDocSegmentKind } from "../document/index.js";
@@ -51,10 +50,9 @@ class HtmlFormatter extends RootFormatter<IFormatterState> {
 			case DocSegmentKind.endTags: {
 				// If the DocumentFormatter encounters an 'endRange', presumably this is because the 'beginTag'
 				// has not yet been inserted.  Ignore it.
-				assert(
-					layout.doc.getStart(segment as Marker) === undefined,
-					"beginTag inserted before encountering endTag!",
-				);
+				if (layout.doc.getStart(segment as Marker) !== undefined) {
+					throw new Error("beginTag inserted before encountering endTag!");
+				}
 				return { state, consumed: true };
 			}
 

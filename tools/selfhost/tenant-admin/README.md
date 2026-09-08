@@ -209,9 +209,16 @@ App reads to sign tokens.
 The full safe sequence is then:
 
 ```bash
-NEW_KEY="$(./tenant-admin.sh rotate contoso --key key2 | jq -r '.keys.key2')"
-az keyvault secret set --vault-name <kv> \
-  --name fluid-tenant-key-contoso --value "$NEW_KEY"
+(
+  NEW_KEY="$(./tenant-admin.sh rotate contoso --key key2 | jq -r '.keys.key2')"
+  KEY_FILE="$(mktemp)"
+  trap 'rm -f "$KEY_FILE"' EXIT
+  chmod 600 "$KEY_FILE"
+  printf '%s' "$NEW_KEY" > "$KEY_FILE"
+  unset NEW_KEY
+  az keyvault secret set --vault-name <kv> \
+    --name fluid-tenant-key-contoso --file "$KEY_FILE" --encoding utf-8
+)
 # restart the Function App or wait for its Key Vault reference to refresh
 # confirm minting is healthy
 ./tenant-admin.sh rotate contoso --key key1                  # key2 now signs tokens

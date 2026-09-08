@@ -40,7 +40,7 @@ module.exports = (env = {}) => {
 		},
 		output: {
 			filename: "[name].bundle.js",
-			path: path.resolve(__dirname, "dist"),
+			path: path.resolve(__dirname, "bundle"),
 		},
 		plugins: [
 			new HtmlWebpackPlugin({
@@ -55,7 +55,7 @@ module.exports = (env = {}) => {
 		],
 		devServer: {
 			static: {
-				directory: path.join(__dirname, "dist"),
+				directory: path.join(__dirname, "bundle"),
 			},
 			open: true,
 		},

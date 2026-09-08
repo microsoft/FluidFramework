@@ -53,7 +53,7 @@ import {
 } from "./schemaFactory.js";
 import { SchemaFactoryBeta } from "./schemaFactoryBeta.js";
 import { schemaStatics } from "./schemaStatics.js";
-import { TreeBeta } from "./treeBeta.js";
+import { cloneTree } from "./cloneTree.js";
 import type {
 	ArrayNodeCustomizableSchemaUnsafe,
 	FieldSchemaAlphaUnsafe,
@@ -297,7 +297,7 @@ const withDefault = <
 		// This prevents multi-parenting errors.
 		if (isTreeNode(insertableValue)) {
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			insertableValue = TreeBeta.clone(insertableValue as any);
+			insertableValue = cloneTree(insertableValue as any);
 		}
 
 		// For optional fields with an undefined default, return an empty array (no value).

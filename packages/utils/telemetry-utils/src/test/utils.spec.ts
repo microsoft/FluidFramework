@@ -13,7 +13,7 @@ import type {
 import { LogLevel } from "@fluidframework/core-interfaces";
 
 import { mixinMonitoringContext } from "../config.js";
-import { TelemetryDataTag, tagCodeArtifacts, tagData } from "../logger.js";
+import { TelemetryDataTag, tagCodeArtifacts, tagData, tagSchemaArtifacts } from "../logger.js";
 import type {
 	ITelemetryGenericEventExt,
 	TelemetryLoggerExt,
@@ -522,6 +522,139 @@ describe("tagCodeArtifacts", () => {
 		};
 
 		const taggedData = tagCodeArtifacts({
+			string: "foo",
+			number: 0,
+			boolean: true,
+			stringGetter: () => "foo",
+			numberGetter: () => 0,
+			booleanGetter: () => true,
+		});
+
+		// Validate basic properties are tagged.
+		assert.deepStrictEqual(
+			taggedData.string,
+			expectedStringValue,
+			"string property not tagged as expected",
+		);
+		assert.deepStrictEqual(
+			taggedData.number,
+			expectedNumberValue,
+			"number property not tagged as expected",
+		);
+		assert.deepStrictEqual(
+			taggedData.boolean,
+			expectedBooleanValue,
+			"boolean property not tagged as expected",
+		);
+
+		// Validate getters are tagged.
+		const stringValue = taggedData.stringGetter();
+		const numberValue = taggedData.numberGetter();
+		const booleanValue = taggedData.booleanGetter();
+		assert.deepStrictEqual(
+			stringValue,
+			expectedStringValue,
+			"string getter not tagged as expected",
+		);
+		assert.deepStrictEqual(
+			numberValue,
+			expectedNumberValue,
+			"number getter not tagged as expected",
+		);
+		assert.deepStrictEqual(
+			booleanValue,
+			expectedBooleanValue,
+			"boolean getter not tagged as expected",
+		);
+	});
+});
+
+describe("tagSchemaArtifacts", () => {
+	it("tagSchemaArtifacts with undefined", () => {
+		const taggedData = tagSchemaArtifacts({ node: undefined });
+		const expected: Partial<typeof taggedData> = {};
+		assert.deepStrictEqual(taggedData, expected, "undefined not tagged as expected");
+	});
+
+	it("tagSchemaArtifacts with TelemetryBaseEventPropertyType properties", () => {
+		const taggedData = tagSchemaArtifacts({
+			string: "foo",
+			number: 0,
+			boolean: true,
+			none: undefined,
+		});
+		const expected: Partial<typeof taggedData> = {
+			string: {
+				value: "foo",
+				tag: TelemetryDataTag.SchemaArtifact,
+			},
+			number: {
+				value: 0,
+				tag: TelemetryDataTag.SchemaArtifact,
+			},
+			boolean: {
+				value: true,
+				tag: TelemetryDataTag.SchemaArtifact,
+			},
+		};
+		assert.deepStrictEqual(
+			taggedData,
+			expected,
+			"TelemetryBaseEventPropertyType not tagged as expected",
+		);
+	});
+
+	it("tagSchemaArtifacts with TelemetryBaseEventPropertyType getters", () => {
+		const taggedData = tagSchemaArtifacts({
+			string: () => "foo",
+			number: () => 0,
+			boolean: () => true,
+		});
+		const stringValue = taggedData.string();
+		const numberValue = taggedData.number();
+		const booleanValue = taggedData.boolean();
+
+		assert.deepStrictEqual(
+			stringValue,
+			{
+				tag: TelemetryDataTag.SchemaArtifact,
+				value: "foo",
+			},
+			"string getter not tagged as expected",
+		);
+		assert.deepStrictEqual(
+			numberValue,
+			{
+				tag: TelemetryDataTag.SchemaArtifact,
+				value: 0,
+			},
+			"number getter not tagged as expected",
+		);
+		assert.deepStrictEqual(
+			booleanValue,
+			{
+				tag: TelemetryDataTag.SchemaArtifact,
+				value: true,
+			},
+			"boolean getter not tagged as expected",
+		);
+	});
+
+	it("tagSchemaArtifacts with both TelemetryBaseEventPropertyType properties and getters", () => {
+		const expectedStringValue = {
+			tag: TelemetryDataTag.SchemaArtifact,
+			value: "foo",
+		};
+		const expectedNumberValue = {
+			tag: TelemetryDataTag.SchemaArtifact,
+			value: 0,
+		};
+		const expectedBooleanValue = {
+			tag: TelemetryDataTag.SchemaArtifact,
+			value: true,
+		};
+
+		const taggedData = tagSchemaArtifacts({
 			string: "foo",
 			number: 0,
 			boolean: true,

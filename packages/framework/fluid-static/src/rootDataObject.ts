@@ -270,7 +270,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 				...config.runtimeOptions,
 			},
 			provideEntryPoint,
-			minVersionForCollab: config.minVersionForCollab,
+			oldestSupportedClient: config.minVersionForCollab,
 		});
 		this.rootDataObjectFactory = rootDataObjectFactory;
 		this.initialObjects = schema.initialObjects;

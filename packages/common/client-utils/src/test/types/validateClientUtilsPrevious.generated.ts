@@ -415,6 +415,7 @@ declare type current_as_old_for_Variable_IsoBuffer = requireAssignableTo<TypeOnl
  * typeValidation.broken:
  * "Variable_LayerCompatibilityPolicyWindowMonths": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Variable_LayerCompatibilityPolicyWindowMonths = requireAssignableTo<TypeOnly<typeof current.LayerCompatibilityPolicyWindowMonths>, TypeOnly<typeof old.LayerCompatibilityPolicyWindowMonths>>
 
 /*
