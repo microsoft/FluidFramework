@@ -1160,17 +1160,34 @@ describe("Host and Guest Demo", () => {
 
 		/**
 		 * Builds a two-channel relay that controls message delivery.
+		 *
+		 * @remarks
+		 * Serves as a middle-man between the Host and Guest, allowing
+		 * tests to control when messages are delivered, and to monitor them.
+		 *
 		 * @returns The session ports and relay controls.
 		 */
 		function buildMessageRelay(): SessionPorts<MessageRelay> {
-			const hostChannel = new MessageChannel();
-			const guestChannel = new MessageChannel();
-			const hostRelayPort = hostChannel.port2;
-			const guestRelayPort = guestChannel.port1;
+			// Host <--hostRelayChannel--> Relay <--guestRelayChannel--> Guest
+
+			/** Connects the Host to the relay. */
+			const hostRelayChannel = new MessageChannel();
+
+			/** Connects the relay to the Guest. */
+			const guestRelayChannel = new MessageChannel();
+
+			/** The relay-owned endpoint that receives Host messages and sends messages to the Host. */
+			const relayPortConnectedToHost = hostRelayChannel.port2;
+
+			/** The relay-owned endpoint that receives Guest messages and sends messages to the Guest. */
+			const relayPortConnectedToGuest = guestRelayChannel.port1;
+
 			/** The number of messages that participants sent but the relay has not received. */
 			let messagesMovingToRelay = 0;
+
 			/** The number of messages that the relay sent but participants have not processed. */
 			let messagesMovingToParticipants = 0;
+
 			/** Functions that resolve calls to `waitForMessages()`. */
 			const settledResolvers: (() => void)[] = [];
 
@@ -1247,8 +1264,10 @@ describe("Host and Guest Demo", () => {
 				}
 			}
 
-			const hostPort = new TrackedParticipantPort(hostChannel.port1);
-			const guestPort = new TrackedParticipantPort(guestChannel.port2);
+			/** The Host-owned endpoint, wrapped to track messages moving through its channel. */
+			const trackedHostPort = new TrackedParticipantPort(hostRelayChannel.port1);
+			/** The Guest-owned endpoint, wrapped to track messages moving through its channel. */
+			const trackedGuestPort = new TrackedParticipantPort(guestRelayChannel.port2);
 
 			const relay: MessageRelay = {
 				hostToGuest: [],
@@ -1257,7 +1276,7 @@ describe("Host and Guest Demo", () => {
 					const message = relay.hostToGuest.shift() ?? fail("No Guest-bound messages");
 					messagesMovingToParticipants += 1;
 					try {
-						guestRelayPort.postMessage(message);
+						relayPortConnectedToGuest.postMessage(message);
 					} catch (error) {
 						messagesMovingToParticipants -= 1;
 						resolveIfSettled();
@@ -1268,7 +1287,7 @@ describe("Host and Guest Demo", () => {
 					const message = relay.guestToHost.shift() ?? fail("No Host-bound messages");
 					messagesMovingToParticipants += 1;
 					try {
-						hostRelayPort.postMessage(message);
+						relayPortConnectedToHost.postMessage(message);
 					} catch (error) {
 						messagesMovingToParticipants -= 1;
 						resolveIfSettled();
@@ -1282,7 +1301,7 @@ describe("Host and Guest Demo", () => {
 				},
 			};
 
-			hostRelayPort.addEventListener("message", (event: MessageEvent<unknown>) => {
+			relayPortConnectedToHost.addEventListener("message", (event: MessageEvent<unknown>) => {
 				try {
 					relay.hostToGuest.push(parseHostGuestMessage(event.data));
 				} finally {
@@ -1290,7 +1309,7 @@ describe("Host and Guest Demo", () => {
 					resolveIfSettled();
 				}
 			});
-			guestRelayPort.addEventListener("message", (event: MessageEvent<unknown>) => {
+			relayPortConnectedToGuest.addEventListener("message", (event: MessageEvent<unknown>) => {
 				try {
 					relay.guestToHost.push(parseHostGuestMessage(event.data));
 				} finally {
@@ -1298,16 +1317,16 @@ describe("Host and Guest Demo", () => {
 					resolveIfSettled();
 				}
 			});
-			hostRelayPort.start();
-			guestRelayPort.start();
+			relayPortConnectedToHost.start();
+			relayPortConnectedToGuest.start();
 
 			return {
-				hostPort: hostPort as unknown as MessagePort,
-				guestPort: guestPort as unknown as MessagePort,
+				hostPort: trackedHostPort as unknown as MessagePort,
+				guestPort: trackedGuestPort as unknown as MessagePort,
 				interop: relay,
 				dispose: () => {
-					hostRelayPort.close();
-					guestRelayPort.close();
+					relayPortConnectedToHost.close();
+					relayPortConnectedToGuest.close();
 				},
 			};
 		}
