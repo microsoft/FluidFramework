@@ -72,8 +72,7 @@ describe("expose joinSessionInfo Tests", () => {
 		logger.assertMatch([
 			{
 				eventName: "OdspDriver:EpochLearnedFirstTime",
-				fetchType: "pendingState",
-				fromCache: true,
+				source: "pendingState",
 			},
 		]);
 		service.driverStatePersistence.set(driverState);

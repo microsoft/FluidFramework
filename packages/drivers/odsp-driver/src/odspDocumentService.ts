@@ -196,11 +196,7 @@ export class OdspDocumentService
 			if (currentEpoch !== undefined) {
 				throw new UsageError("ODSP driver state epoch does not match the current epoch");
 			}
-			assert(
-				this.epochTracker.setEpochFromPendingState !== undefined,
-				"EpochTracker must support pending state restoration",
-			);
-			this.epochTracker.setEpochFromPendingState(state.epoch);
+			this.epochTracker.setEpoch(state.epoch, "pendingState");
 		},
 	};
 

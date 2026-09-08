@@ -122,8 +122,10 @@ export interface IPendingContainerState extends SnapshotWithBlobs {
 	clientId?: string;
 	/**
 	 * Opaque state supplied by the document service for use when rehydrating. This value is
-	 * persisted by the host, must not contain customer-identifying information, and is responsible
-	 * for validating that it belongs to the document being loaded.
+	 * serialized as part of the containing pending state and persisted by the host. It must
+	 * round-trip through `JSON.stringify` and `JSON.parse` without custom serialization or
+	 * information loss, must not contain customer-identifying information, and is responsible for
+	 * validating that it belongs to the document being loaded.
 	 */
 	driverState?: unknown;
 }

@@ -126,35 +126,38 @@ export class EpochTracker implements IPersistedFileCache {
 			: maximumCacheDurationMs;
 	}
 
-	// Sets the initial epoch from cache, network, or tests.
-	public setEpoch(epoch: string, fromCache: boolean, fetchType: FetchTypeInternal): void {
-		this.setEpochCore(epoch, fromCache, fetchType);
-	}
-
 	/**
-	 * Sets the initial epoch restored from pending container state.
-	 *
-	 * Optional to preserve structural compatibility with older `EpochTracker` implementations.
-	 *
-	 * @internal
+	 * Sets the initial epoch and records where it was learned.
 	 */
-	public readonly setEpochFromPendingState?: (epoch: string) => void = (epoch) => {
-		this.setEpochCore(epoch, true, "pendingState");
-	};
-
-	private setEpochCore(
+	public setEpoch(epoch: string, source: FetchTypeInternal | "pendingState"): void;
+	/**
+	 * Sets the initial epoch.
+	 *
+	 * @deprecated Use the overload that accepts a source instead.
+	 */
+	public setEpoch(epoch: string, fromCache: boolean, fetchType: FetchTypeInternal): void;
+	public setEpoch(
 		epoch: string,
-		fromCache: boolean,
-		fetchType: FetchTypeInternal | "pendingState",
+		sourceOrFromCache: boolean | FetchTypeInternal | "pendingState",
+		fetchType?: FetchTypeInternal,
 	): void {
+		const source =
+			typeof sourceOrFromCache === "boolean"
+				? sourceOrFromCache
+					? "cache"
+					: fetchType
+				: sourceOrFromCache;
+		assert(
+			source !== undefined,
+			"Fetch type is required when using the legacy setEpoch overload",
+		);
 		assert(this._fluidEpoch === undefined, 0x1db /* "epoch exists" */);
 		this._fluidEpoch = epoch;
 
 		this.loggerInternal.sendTelemetryEvent({
 			eventName: "EpochLearnedFirstTime",
 			epoch,
-			fetchType,
-			fromCache,
+			source,
 		});
 	}
 
@@ -174,7 +177,7 @@ export class EpochTracker implements IPersistedFileCache {
 			}
 			assert(value.fluidEpoch !== undefined, 0x1dc /* "all entries have to have epoch" */);
 			if (this._fluidEpoch === undefined) {
-				this.setEpoch(value.fluidEpoch, true, "cache");
+				this.setEpoch(value.fluidEpoch, "cache");
 				// Epoch mismatch, the cached value is considerably different from what the current state of
 				// the runtime and should not be used
 			} else if (this._fluidEpoch !== value.fluidEpoch) {
@@ -474,7 +477,7 @@ export class EpochTracker implements IPersistedFileCache {
 			throw error;
 		}
 		if (epochFromResponse !== undefined && this._fluidEpoch === undefined) {
-			this.setEpoch(epochFromResponse, fromCache, fetchType);
+			this.setEpoch(epochFromResponse, fromCache ? "cache" : fetchType);
 		}
 	}
 
