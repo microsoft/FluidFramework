@@ -37,8 +37,9 @@ function wrapAnchorValidation(
 	validationStarted: Deferred<void>,
 	releaseValidation: Deferred<void>,
 	validationCompleted?: Deferred<void>,
-	matchingAnchor?: ISequencedDocumentMessage,
+	introduceMismatch = true,
 ): IDocumentServiceFactory {
+	let anchorObserved = false;
 	const wrapService = (service: IDocumentService): IDocumentService =>
 		new Proxy(service, {
 			get: (target, property, receiver) => {
@@ -50,31 +51,36 @@ function wrapAnchorValidation(
 					return {
 						fetchMessages: (...args): IStream<ISequencedDocumentMessage[]> => {
 							const stream = storage.fetchMessages(...args);
-							let firstRead = true;
+							let validatingFetch = false;
 							return {
 								read: async () => {
 									const result = await stream.read();
-									if (!firstRead || result.done) {
-										if (result.done) {
+									if (result.done) {
+										if (validatingFetch) {
 											validationCompleted?.resolve();
 										}
 										return result;
 									}
-									firstRead = false;
+									const anchorIndex = result.value.findIndex(
+										(message) => message.sequenceNumber === anchorSequenceNumber,
+									);
+									if (anchorObserved || anchorIndex === -1) {
+										return result;
+									}
+									anchorObserved = true;
+									validatingFetch = true;
 									validationStarted.resolve();
 									await releaseValidation.promise;
-									if (matchingAnchor !== undefined) {
-										return { done: false, value: [matchingAnchor] };
+									if (!introduceMismatch) {
+										return result;
 									}
-									assert.strictEqual(result.value[0]?.sequenceNumber, anchorSequenceNumber);
 									return {
 										done: false,
-										value: [
-											{
-												...result.value[0],
-												clientId: "restored-history-client",
-											},
-										],
+										value: result.value.map((message, index) =>
+											index === anchorIndex
+												? { ...message, clientId: "restored-history-client" }
+												: message,
+										),
 									};
 								},
 							};
@@ -129,9 +135,24 @@ async function createPendingState(): Promise<{
 }
 
 describe("Pending-state history validation", () => {
-	it("remains usable after validating unchanged pending state", async () => {
+	it("remains usable after re-stashing offline state and validating unchanged service history", async () => {
 		const { codeLoader, documentServiceFactory, urlResolver, url, pendingLocalState, anchor } =
 			await createPendingState();
+		const offline = asLegacyAlpha(
+			await loadExistingContainer({
+				codeLoader,
+				documentServiceFactory,
+				urlResolver,
+				request: {
+					url,
+					headers: { [LoaderHeader.loadMode]: { deltaConnection: "none" } },
+				},
+				pendingLocalState,
+			}),
+		);
+		// Re-stashing preserves the loader's savedOp replay marker, which is absent in storage.
+		const restashedState = await getRequiredPendingLocalState(offline);
+		offline.close();
 		const validationStarted = new Deferred<void>();
 		const releaseValidation = new Deferred<void>();
 		const validationCompleted = new Deferred<void>();
@@ -145,14 +166,14 @@ describe("Pending-state history validation", () => {
 					validationStarted,
 					releaseValidation,
 					validationCompleted,
-					anchor,
+					false,
 				),
 				urlResolver,
 				request: {
 					url,
 					headers: { [LoaderHeader.loadMode]: { deltaConnection: "none" } },
 				},
-				pendingLocalState,
+				pendingLocalState: restashedState,
 			}),
 		);
 
@@ -170,6 +191,9 @@ describe("Pending-state history validation", () => {
 		const entryPoint = (await rehydrated.getEntryPoint()) as ITestFluidObject;
 		const map = await entryPoint.getSharedObject<ISharedMap>("map");
 		map.set("after-validation", "value");
+		if (rehydrated.isDirty) {
+			await timeoutPromise((resolve) => rehydrated.once("saved", () => resolve()));
+		}
 		assert.strictEqual(map.get("after-validation"), "value");
 		assert.strictEqual(rehydrated.closed, false);
 		rehydrated.close();

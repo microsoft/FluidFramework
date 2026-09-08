@@ -389,7 +389,12 @@ describe("Loader", () => {
 				},
 				{
 					name: "metadata",
-					serviceValue: { metadata: { batch: false } },
+					serviceValue: { metadata: { batch: false, nested: { savedOp: true } } },
+					telemetryProperty: "metadataDiffer",
+				},
+				{
+					name: "nested savedOp metadata",
+					serviceValue: { metadata: { batch: true, nested: { savedOp: false } } },
 					telemetryProperty: "metadataDiffer",
 				},
 				{
@@ -411,7 +416,7 @@ describe("Loader", () => {
 						timestamp: 1000,
 						referenceSequenceNumber: 12,
 						contents: { value: "same" },
-						metadata: { batch: true },
+						metadata: { batch: true, nested: { savedOp: true }, savedOp: true },
 						compression: "lz4",
 						data: "same",
 					};
@@ -459,66 +464,76 @@ describe("Loader", () => {
 				});
 			}
 
-			it("continues loading when the saved op matches service history", async () => {
-				const savedOp = JSON.parse(
-					JSON.stringify({
-						...generateOp(),
-						sequenceNumber: 13,
-						minimumSequenceNumber: 10,
-						timestamp: 1000,
-						referenceSequenceNumber: 12,
-						contents: {
-							first: 1,
-							nested: { second: 2, third: 3 },
-						},
-					}),
-				) as ISequencedDocumentMessage;
-				let read = false;
-				await startDeltaManager(
-					true,
-					logger,
-					() => ({
-						fetchMessages: (): IStream<ISequencedDocumentMessage[]> => ({
-							read: async (): Promise<IStreamResult<ISequencedDocumentMessage[]>> => {
-								if (read) {
-									return { done: true };
-								}
-								read = true;
-								return {
-									done: false,
-									value: [
-										{
-											...savedOp,
-											contents: JSON.stringify({
-												nested: { third: 3, second: 2 },
-												first: 1,
-											}),
-										},
-									],
-								};
+			for (const serviceMetadata of [
+				undefined,
+				{},
+				{ batch: true, batchId: "same-batch", nested: { savedOp: true } },
+			]) {
+				it(`continues loading when the saved op matches service metadata '${JSON.stringify(serviceMetadata)}'`, async () => {
+					const savedOp = JSON.parse(
+						JSON.stringify({
+							...generateOp(),
+							sequenceNumber: 13,
+							minimumSequenceNumber: 10,
+							timestamp: 1000,
+							referenceSequenceNumber: 12,
+							metadata: { ...serviceMetadata, savedOp: true },
+							contents: {
+								first: 1,
+								nested: { second: 2, third: 3 },
 							},
 						}),
-					}),
-					5,
-					savedOp,
-					"all",
-				);
-				deltaManager.on("closed", (error: Error) => {
-					expectedError = error;
+					) as ISequencedDocumentMessage;
+					let read = false;
+					await startDeltaManager(
+						true,
+						logger,
+						() => ({
+							fetchMessages: (): IStream<ISequencedDocumentMessage[]> => ({
+								read: async (): Promise<IStreamResult<ISequencedDocumentMessage[]>> => {
+									if (read) {
+										return { done: true };
+									}
+									read = true;
+									return {
+										done: false,
+										value: [
+											{
+												...savedOp,
+												metadata: serviceMetadata,
+												contents: JSON.stringify({
+													nested: { third: 3, second: 2 },
+													first: 1,
+												}),
+											},
+										],
+									};
+								},
+							}),
+						}),
+						5,
+						savedOp,
+						"all",
+					);
+					assert.strictEqual(deltaManager.hasPendingStateAnchor, false);
+					assert.deepStrictEqual(savedOp.metadata, { ...serviceMetadata, savedOp: true });
+					deltaManager.on("closed", (error: Error) => {
+						expectedError = error;
+					});
+
+					const continuingOp = {
+						...savedOp,
+						clientSequenceNumber: savedOp.clientSequenceNumber + 1,
+						sequenceNumber: savedOp.sequenceNumber + 1,
+						timestamp: savedOp.timestamp + 1,
+					};
+					deltaConnection.emitOp(docId, [continuingOp]);
+					await yieldEventLoop();
+
+					assert.strictEqual(deltaManager.lastSequenceNumber, continuingOp.sequenceNumber);
+					assert.strictEqual(expectedError, undefined);
 				});
-
-				const continuingOp = {
-					...savedOp,
-					clientSequenceNumber: savedOp.clientSequenceNumber + 1,
-					sequenceNumber: savedOp.sequenceNumber + 1,
-					timestamp: savedOp.timestamp + 1,
-				};
-				deltaConnection.emitOp(docId, [continuingOp]);
-				await yieldEventLoop();
-
-				assert.strictEqual(deltaManager.lastSequenceNumber, continuingOp.sequenceNumber);
-				assert.strictEqual(expectedError, undefined);
-			});
+			}
 
 			it("continues fetching when the saved op is no longer available", async () => {
 				const savedOp = {

@@ -942,13 +942,30 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	}
 
 	/**
+	 * Removes the loader's replay-only marker before comparing service metadata.
+	 * Container adds `savedOp` during offline replay, and re-stashing persists that marker.
+	 * It is not part of service history. Empty metadata and absent metadata are equivalent;
+	 * all other fields (including nested fields named `savedOp`) remain significant.
+	 */
+	private comparableMessageMetadata(metadata: unknown): string | undefined {
+		if (typeof metadata !== "object" || metadata === null || Array.isArray(metadata)) {
+			return this.comparableMessageProperty(metadata);
+		}
+		const entries = Object.entries(metadata).filter(([key]) => key !== "savedOp");
+		return entries.length === 0
+			? undefined
+			: this.comparableMessageProperty(Object.fromEntries(entries));
+	}
+
+	/**
 	 * Compares fields that identify or change the replay semantics of a pending-state anchor.
 	 *
 	 * `clientSequenceNumber` identifies the original submission; `contents`, `metadata`, and
 	 * `compression` determine runtime and batch interpretation; and `data` is the payload for
 	 * system messages. Service or diagnostic decorations such as `serverMetadata`, `origin`,
 	 * `traces`, and `expHash1` are intentionally omitted because they may be rewritten without
-	 * changing the operation replayed by the client.
+	 * changing the operation replayed by the client. Metadata excludes only the loader's
+	 * top-level `savedOp` replay marker, not service batch metadata.
 	 */
 	private pendingStateAnchorDifferences(
 		anchor: ISequencedDocumentMessage,
@@ -966,8 +983,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				this.comparableMessageProperty(anchor.contents) !==
 				this.comparableMessageProperty(message.contents),
 			metadataDiffer:
-				this.comparableMessageProperty(anchor.metadata) !==
-				this.comparableMessageProperty(message.metadata),
+				this.comparableMessageMetadata(anchor.metadata) !==
+				this.comparableMessageMetadata(message.metadata),
 			compressionDiffer: anchor.compression !== message.compression,
 			dataDiffer: anchor.data !== message.data,
 		};
