@@ -309,7 +309,10 @@ describe("Loader", () => {
 						minimumSequenceNumber: 10,
 						timestamp: 1000,
 						referenceSequenceNumber: 12,
-						contents: { value: "same" },
+						contents: {
+							first: 1,
+							nested: { second: 2, third: 3 },
+						},
 					}),
 				) as ISequencedDocumentMessage;
 				let read = false;
@@ -325,7 +328,15 @@ describe("Loader", () => {
 								read = true;
 								return {
 									done: false,
-									value: [{ ...savedOp, contents: JSON.stringify(savedOp.contents) }],
+									value: [
+										{
+											...savedOp,
+											contents: JSON.stringify({
+												nested: { third: 3, second: 2 },
+												first: 1,
+											}),
+										},
+									],
 								};
 							},
 						}),

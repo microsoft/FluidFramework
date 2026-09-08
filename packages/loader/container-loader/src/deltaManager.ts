@@ -909,7 +909,22 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	}
 
 	private comparableMessageContents(m: ISequencedDocumentMessage): string | undefined {
-		return typeof m.contents === "string" ? m.contents : JSON.stringify(m.contents);
+		let contents = m.contents;
+		if (typeof contents === "string") {
+			const serializedContents = contents;
+			try {
+				contents = JSON.parse(contents) as unknown;
+			} catch {
+				return serializedContents;
+			}
+		}
+		return JSON.stringify(contents, (_key, value: unknown) =>
+			typeof value === "object" && value !== null && !Array.isArray(value)
+				? Object.fromEntries(
+						Object.entries(value).sort(([left], [right]) => left.localeCompare(right)),
+					)
+				: value,
+		);
 	}
 
 	/**
