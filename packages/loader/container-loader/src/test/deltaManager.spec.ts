@@ -10,6 +10,7 @@ import {
 	MockDocumentDeltaConnection,
 	MockDocumentService,
 } from "@fluid-private/test-loader-utils";
+import { Deferred } from "@fluidframework/core-utils/internal";
 import type { IClient } from "@fluidframework/driver-definitions";
 import {
 	DriverErrorTypes,
@@ -63,6 +64,7 @@ describe("Loader", () => {
 					connectBeforeAttach?: boolean;
 					earlySocketMessages?: ISequencedDocumentMessage[];
 					clientIds?: string[];
+					beforeConnectionReturns?: () => Promise<void>;
 				},
 			): Promise<void> {
 				const service = new MockDocumentService(deltaStorageFactory, () => {
@@ -78,6 +80,15 @@ describe("Loader", () => {
 					deltaConnection.initialMessages = sequenceState?.initialMessages ?? [];
 					return deltaConnection;
 				});
+				const beforeConnectionReturns = sequenceState?.beforeConnectionReturns;
+				if (beforeConnectionReturns !== undefined) {
+					const connectToDeltaStream = service.connectToDeltaStream.bind(service);
+					service.connectToDeltaStream = async (connectingClient) => {
+						const connection = await connectToDeltaStream(connectingClient);
+						await beforeConnectionReturns();
+						return connection;
+					};
+				}
 				const client: Partial<IClient> = {
 					mode: "write",
 					details: { capabilities: { interactive: true } },
@@ -232,6 +243,53 @@ describe("Loader", () => {
 			});
 
 			describe("Self-join sequence validation", () => {
+				/**
+				 * Loads state at 13 and processes a storage batch before stream setup can finish.
+				 * The batch must end with a new operation above 13 so processing provides the barrier.
+				 */
+				async function startStorageFirstConnection(
+					messages: ISequencedDocumentMessage[],
+					initialMessages: ISequencedDocumentMessage[] = [],
+					clientIds: string[] = ["test"],
+				): Promise<void> {
+					const finalSequenceNumber = messages[messages.length - 1].sequenceNumber;
+					const connectionStarted = new Deferred<void>();
+					const storageProcessed = new Deferred<void>();
+					let storageRead = false;
+					await startDeltaManager(
+						true,
+						logger,
+						() => ({
+							fetchMessages: () => ({
+								read: async (): Promise<IStreamResult<ISequencedDocumentMessage[]>> => {
+									await connectionStarted.promise;
+									if (storageRead) {
+										return { done: true };
+									}
+									storageRead = true;
+									return { done: false, value: messages };
+								},
+							}),
+						}),
+						{
+							lastProcessedSequenceNumber: 13,
+							initialMessages,
+							clientIds,
+							beforeConnectionReturns: async () => {
+								// Sequence the batch through storage while stream setup is still
+								// awaiting its connection. Do not let socket delivery win this race.
+								deltaManager.on("op", (message) => {
+									if (message.sequenceNumber === finalSequenceNumber) {
+										storageProcessed.resolve();
+									}
+								});
+								connectionStarted.resolve();
+								await storageProcessed.promise;
+							},
+						},
+					);
+				}
+
 				it("closes when the current connection's self-join predates pending state", async () => {
 					await startDeltaManager(true, logger, undefined, {
 						lastProcessedSequenceNumber: 13,
@@ -286,6 +344,112 @@ describe("Loader", () => {
 				});
 
 				for (const source of ["initial", "socket"] as const) {
+					for (const advanceBeyondJoin of [false, true]) {
+						it(`accepts a storage-first self-join duplicated through ${source} messages (later ops: ${advanceBeyondJoin})`, async () => {
+							const join = generateClientJoin("test", 14);
+							const messages = advanceBeyondJoin
+								? [join, { ...generateOp(), sequenceNumber: 15 }]
+								: [join];
+							const finalSequenceNumber = advanceBeyondJoin ? 15 : 14;
+							await startStorageFirstConnection(messages, source === "initial" ? [join] : []);
+							assert.strictEqual(deltaManager.lastSequenceNumber, finalSequenceNumber);
+							if (source === "socket") {
+								deltaConnection.emitOp(docId, [join]);
+							}
+							const overlapError = expectedError;
+							assert.strictEqual(
+								overlapError,
+								undefined,
+								"Valid storage overlap must not close",
+							);
+							assert.strictEqual(deltaManager.disposed, false);
+
+							// Recognizing the valid duplicate must not allow an actually stale join.
+							deltaConnection.emitOp(docId, [generateClientJoin("test", 6)]);
+							assert(isFluidError(expectedError));
+							assert.strictEqual(
+								expectedError.errorType,
+								DriverErrorTypes.fileOverwrittenInStorage,
+							);
+							assert.strictEqual(
+								expectedError.getTelemetryProperties().connectionSequenceBaseline,
+								13,
+							);
+						});
+					}
+				}
+
+				it("selects the current client's pre-join baseline, not another client's or the latest storage sequence", async () => {
+					const join = generateClientJoin("test", 15);
+					await startStorageFirstConnection(
+						[generateClientJoin("other", 14), join, { ...generateOp(), sequenceNumber: 16 }],
+						[join],
+					);
+					assert.strictEqual(deltaManager.disposed, false);
+					assert.strictEqual(deltaManager.lastSequenceNumber, 16);
+					// The current join followed sequence 14, not the attempt's starting state at 13.
+					deltaConnection.emitOp(docId, [generateClientJoin("test", 14)]);
+					assert(isFluidError(expectedError));
+					assert.strictEqual(
+						expectedError.errorType,
+						DriverErrorTypes.fileOverwrittenInStorage,
+					);
+					assert.strictEqual(
+						expectedError.getTelemetryProperties().connectionSequenceBaseline,
+						14,
+					);
+				});
+
+				it("does not use an overlapping storage join to lower the baseline", async () => {
+					const join = generateClientJoin("test", 6);
+					await startStorageFirstConnection(
+						[join, { ...generateOp(), sequenceNumber: 14 }],
+						[join],
+					);
+					assert(isFluidError(expectedError));
+					assert.strictEqual(
+						expectedError.errorType,
+						DriverErrorTypes.fileOverwrittenInStorage,
+					);
+					assert.strictEqual(
+						expectedError.getTelemetryProperties().connectionSequenceBaseline,
+						14,
+					);
+					assert.strictEqual(expectedError.getTelemetryProperties().loadedSequenceNumber, 13);
+				});
+
+				for (const clientId of ["test", "other"]) {
+					it(`discards storage-first join baselines before reconnecting as '${clientId}'`, async () => {
+						const join = generateClientJoin("test", 15);
+						await startStorageFirstConnection(
+							[generateClientJoin("other", 14), join, { ...generateOp(), sequenceNumber: 16 }],
+							[],
+							["test", clientId],
+						);
+						deltaConnection.emitOp(docId, [join]);
+						assert.strictEqual(deltaManager.disposed, false);
+						const reconnected = new Deferred<void>();
+						deltaManager.once("connect", () => reconnected.resolve());
+						deltaConnection.emitError({
+							errorType: DriverErrorTypes.genericError,
+							message: "Reconnect after storage-first join",
+							canRetry: true,
+						});
+						await reconnected.promise;
+						deltaConnection.emitOp(docId, [generateClientJoin(clientId, 15)]);
+						assert(isFluidError(expectedError));
+						assert.strictEqual(
+							expectedError.errorType,
+							DriverErrorTypes.fileOverwrittenInStorage,
+						);
+						assert.strictEqual(
+							expectedError.getTelemetryProperties().connectionSequenceBaseline,
+							16,
+						);
+					});
+				}
+
+				for (const source of ["initial", "socket"] as const) {
 					for (const state of ["pending", "snapshot"] as const) {
 						it(`uses ${state} state for ${source} messages delivered before attach`, async () => {
 							const messages = [generateClientJoin("test", 6)];
@@ -305,6 +469,38 @@ describe("Loader", () => {
 								expectedError.getTelemetryProperties().connectionSequenceBaseline,
 								13,
 							);
+						});
+
+						it(`rejects a contiguous ${source} replay before attaching ${state} state`, async () => {
+							// Unlike the isolated join above, this replay could fill an inbound queue
+							// starting at zero. Before attachment, all of it must instead be buffered.
+							const messages = [
+								...Array.from({ length: 5 }, () => generateOp()),
+								generateClientJoin("test", 6),
+							];
+							await startDeltaManager(true, logger, undefined, {
+								connectBeforeAttach: true,
+								lastProcessedSequenceNumber: state === "pending" ? 13 : undefined,
+								snapshotSequenceNumber: state === "snapshot" ? 13 : 0,
+								initialMessages: source === "initial" ? messages : [],
+								earlySocketMessages: source === "socket" ? messages : [],
+							});
+							assert(isFluidError(expectedError));
+							assert.strictEqual(
+								expectedError.errorType,
+								DriverErrorTypes.fileOverwrittenInStorage,
+							);
+							assert.strictEqual(deltaManager.disposed, true);
+							const telemetry = expectedError.getTelemetryProperties();
+							assert.strictEqual(telemetry.canRetry, false);
+							assert.strictEqual(telemetry.selfJoinSequenceNumber, 6);
+							assert.strictEqual(telemetry.connectionSequenceBaseline, 13);
+							assert.strictEqual(telemetry.loadedSequenceNumber, 13);
+							assert.strictEqual(
+								telemetry.snapshotSequenceNumber,
+								state === "snapshot" ? 13 : 0,
+							);
+							assert.strictEqual(telemetry.serviceCheckpointSequenceNumber, 5);
 						});
 					}
 				}

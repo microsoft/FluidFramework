@@ -231,6 +231,13 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	 */
 	private serviceCheckpointSequenceNumber: number | undefined;
 	/**
+	 * Pre-enqueue baselines for joins accepted from storage while a stream connection is being
+	 * established. Its client ID is not known yet, and storage may deliver its join first.
+	 * Only newly accepted joins are recorded, so overlap cannot lower the loaded baseline.
+	 * Discarded when the connection is identified, cancelled, disconnected, or closed.
+	 */
+	private pendingConnectionJoinBaselines: Map<string, number> | undefined;
+	/**
 	 * Sequence state known before processing messages from the current connection.
 	 */
 	private connectionSequenceBaseline:
@@ -543,10 +550,12 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	}
 
 	private cancelEstablishingConnection(reason: IConnectionStateChangeReason): void {
+		this.pendingConnectionJoinBaselines = undefined;
 		this.emit("cancelEstablishingConnection", reason);
 	}
 
 	private establishingConnection(reason: IConnectionStateChangeReason): void {
+		this.pendingConnectionJoinBaselines = new Map();
 		this.emit("establishingConnection", reason);
 	}
 
@@ -872,6 +881,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	}
 
 	private clearQueues(): void {
+		this.pendingConnectionJoinBaselines = undefined;
 		this.closeAbortController.abort("DeltaManager is closed");
 
 		this._inbound.clear();
@@ -896,6 +906,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	private disconnectHandler(reason: IConnectionStateChangeReason): void {
 		this.messageBuffer.length = 0;
 		this.connectionSequenceBaseline = undefined;
+		this.pendingConnectionJoinBaselines = undefined;
 		this.emit("disconnect", reason.text, reason.error);
 	}
 
@@ -1125,6 +1136,18 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				}
 			} else if (message.sequenceNumber === this.lastQueuedSequenceNumber + 1) {
 				this.validateClientSequenceNumberConsistency(message);
+				if (this.pendingConnectionJoinBaselines !== undefined) {
+					const joiningClientId = this.getClientJoinId(message);
+					if (
+						joiningClientId !== undefined &&
+						!this.pendingConnectionJoinBaselines.has(joiningClientId)
+					) {
+						this.pendingConnectionJoinBaselines.set(
+							joiningClientId,
+							this.lastQueuedSequenceNumber,
+						);
+					}
+				}
 				this.lastQueuedSequenceNumber = message.sequenceNumber;
 				this.previouslyProcessedMessage = message;
 				this._inbound.push(message);
@@ -1142,6 +1165,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 	/**
 	 * Captures the immutable sequence baseline before this connection's first messages are enqueued.
+	 * If storage already delivered its join during connection setup, uses the baseline saved before
+	 * that join was accepted instead of a sequence number advanced by the same connection's history.
 	 */
 	private captureConnectionSequenceBaseline(
 		clientId: string,
@@ -1150,10 +1175,28 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		if (this.connectionSequenceBaseline?.clientId !== clientId) {
 			this.connectionSequenceBaseline = {
 				clientId,
-				sequenceNumber: this.handler === undefined ? undefined : this.lastQueuedSequenceNumber,
+				sequenceNumber:
+					this.handler === undefined
+						? undefined
+						: (this.pendingConnectionJoinBaselines?.get(clientId) ??
+							this.lastQueuedSequenceNumber),
 			};
 		}
+		this.pendingConnectionJoinBaselines = undefined;
 		this.serviceCheckpointSequenceNumber = serviceCheckpointSequenceNumber;
+	}
+
+	/**
+	 * Reads only the embedded client ID from a ClientJoin system message.
+	 * Returns undefined for other messages or a join without a string client ID.
+	 */
+	private getClientJoinId(message: ISequencedDocumentMessage): string | undefined {
+		if (message.type !== MessageType.ClientJoin) {
+			return undefined;
+		}
+		const systemJoinMessage = message as ISequencedDocumentSystemMessage;
+		const join = JSON.parse(systemJoinMessage.data) as { clientId: unknown };
+		return typeof join.clientId === "string" ? join.clientId : undefined;
 	}
 
 	/**
@@ -1177,9 +1220,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			return false;
 		}
 
-		const systemJoinMessage = message as ISequencedDocumentSystemMessage;
-		const join = JSON.parse(systemJoinMessage.data) as { clientId: unknown };
-		if (join.clientId !== baseline.clientId) {
+		if (this.getClientJoinId(message) !== baseline.clientId) {
 			return false;
 		}
 
