@@ -15,7 +15,7 @@ export interface StagedSchemaUpgradePolicy {
 	 * Whether schema upgrades should include staged upgrades that are already enabled in the
 	 * document's stored schema.
 	 *
-	 * @defaultValue `true`
+	 * @defaultValue `false`
 	 */
 	readonly includeAlreadyEnabledUpgrades?: boolean;
 
