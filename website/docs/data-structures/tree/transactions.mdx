@@ -44,26 +44,26 @@ There are example transactions here: [Shared Tree Demo](https://github.com/micro
 
 :::caution
 
-The APIs described in this section are currently `@alpha` and may change in future releases.
+The APIs described in this section are currently beta and may change in future releases.
 
-Unlike <ApiLink package="fluid-framework" api="Tree.runTransaction" />, the Alpha <ApiLink package="fluid-framework" api="TreeBranchAlpha.runTransaction">runTransaction</ApiLink> does **not** automatically roll back the transaction if the callback throws an error.
+Unlike <ApiLink package="fluid-framework" api="Tree.runTransaction" />, the `@beta` <ApiLink package="fluid-framework" api={{ previous: "UntypedTreeViewAlpha.runTransaction", new: "UntypedTreeView.runTransaction" }}>runTransaction</ApiLink> does **not** automatically roll back the transaction if the callback throws an error.
 If your callback may throw, you should handle errors explicitly and return `{ rollback: true }` when required.
 
 :::
 
-The alpha APIs introduce <ApiLink package="fluid-framework" api="TreeBranchAlpha.runTransaction">UntypedTreeViewAlpha.runTransaction</ApiLink> as a replacement for `Tree.runTransaction`.
+The beta APIs introduce <ApiLink package="fluid-framework" api={{ previous: "UntypedTreeViewAlpha.runTransaction", new: "UntypedTreeView.runTransaction" }}>runTransaction</ApiLink> as a replacement for `Tree.runTransaction`.
 This new API exists to solve correctness issues where errors being thrown in runTransaction could result in an undefined state.
 This new API enables developers to customize how their application handles this error case.
 
 ### Running a Transaction
 
-For a node in a tree, use <ApiLink package="fluid-framework" api="TreeAlpha.context" /> to get its <ApiLink package="fluid-framework" api="TreeContextAlpha" />, then call <ApiLink package="fluid-framework" api="TreeContextAlpha.runTransaction">runTransaction</ApiLink> on that context.
+For a node in a tree, use <ApiLink package="fluid-framework" api={{ previous: "TreeAlpha.context", new: "TreeBeta.context" }}/> to get its <ApiLink package="fluid-framework" api={{ previous: "TreeContextAlpha", new: "TreeContextBeta" }}/> , then call <ApiLink package="fluid-framework" api={{ previous: "TreeContextAlpha.runTransaction", new: "TreeContextBeta.runTransaction" }}>runTransaction</ApiLink> on that context.
 
 ```typescript
-import { TreeAlpha } from "@fluidframework/tree/alpha";
+import { TreeBeta } from "@fluidframework/tree/beta";
 
 // Using a context:
-const context = TreeAlpha.context(myNode);
+const context = TreeBeta.context(myNode);
 context.runTransaction(/* ... */);
 
 // Using a typed view directly:
@@ -108,7 +108,7 @@ if (result.success) {
 
 ### Asynchronous Transactions
 
-<ApiLink package="fluid-framework" api="TreeBranchAlpha.runTransactionAsync">runTransactionAsync</ApiLink> works like <ApiLink package="fluid-framework" api="TreeBranchAlpha.runTransaction">runTransaction</ApiLink> but accepts an `async` callback.
+<ApiLink package="fluid-framework" api={{ previous: "UntypedTreeViewAlpha.runTransactionAsync", new: "UntypedTreeView.runTransactionAsync" }}>runTransactionAsync</ApiLink> works like <ApiLink package="fluid-framework" api={{ previous: "UntypedTreeViewAlpha.runTransaction", new: "UntypedTreeView.runTransaction" }}>runTransaction</ApiLink> but accepts an `async` callback.
 
 ```typescript
 const result = await view.runTransactionAsync(async () => {
@@ -141,7 +141,7 @@ If transactions are nested, only the outermost transaction's label is used.
 
 ### Nested Transactions
 
-<ApiLink package="fluid-framework" api="TreeBranchAlpha.runTransaction">runTransaction</ApiLink> and <ApiLink package="fluid-framework" api="TreeBranchAlpha.runTransactionAsync">runTransactionAsync</ApiLink> can be called from within the callback of another transaction, with some limitations.
+<ApiLink package="fluid-framework" api={{ previous: "UntypedTreeViewAlpha.runTransaction", new: "UntypedTreeView.runTransaction" }}>runTransaction</ApiLink> and <ApiLink package="fluid-framework" api={{ previous: "UntypedTreeViewAlpha.runTransactionAsync", new: "UntypedTreeView.runTransactionAsync" }}>runTransactionAsync</ApiLink> can be called from within the callback of another transaction, with some limitations.
 Nested transactions have the following behavior:
 
 -   If the inner transaction rolls back, only the inner transaction's changes are discarded. The outer transaction continues.

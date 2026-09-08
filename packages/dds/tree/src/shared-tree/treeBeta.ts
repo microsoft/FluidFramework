@@ -245,7 +245,7 @@ export const TreeBeta: TreeBeta = {
 			return UnhydratedTreeContext.instance;
 		}
 		const view = kernel.anchorNode.anchorSet.slots.get(ViewSlot);
-		assert(view !== undefined, "A hydrated node must be associated with a view.");
+		assert(view !== undefined, 0xd34 /* A hydrated node must be associated with a view. */);
 		return view;
 	},
 

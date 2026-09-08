@@ -101,15 +101,20 @@ In other configurations, make sure that the Guest does not keep an unlimited his
 
 ### `MessagePort` and IFrame Testing
 
-The current tests pass messages by reference and therefore do not validate the actual cross-realm serialization boundary.
-Production tests should send all messages through a real `MessagePort`.
-They should also include an integration test that uses an isolated iframe.
+The Host and the Guest send runtime data changes and acknowledgments through a real `MessagePort`.
+The unit tests validate the structured-clone boundary.
+The permutation test uses a two-channel relay to control message delivery in each direction.
+
+Initialization data does not yet pass through the port.
+Complete the ID sharding and Fluid handle work before initialization uses the message protocol.
+
+Add an integration test that uses an isolated iframe.
 This test makes sure that the implementation does not depend on shared global values.
 
 ### Edge Case Unit Testing
 
 The tests should cover concurrent Host and Guest edits, delayed and interleaved messages,
-Guest reloads or disposal with messages in flight, malformed messages, and incompatible protocol versions.
+Guest reloads or disposal with messages in flight, and malformed messages.
 Handle-specific tests should cover repeated references, concurrent `get()` calls, resolution failures.
 
 Validate undo and redo operations.
