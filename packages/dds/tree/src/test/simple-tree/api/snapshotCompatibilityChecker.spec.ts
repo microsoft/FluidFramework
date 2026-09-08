@@ -21,14 +21,16 @@ import {
 	type SnapshotFileSystem,
 	snapshotSchemaCompatibility,
 	getCompatibility,
-	// Allow importing file which is being tested.
-	// eslint-disable-next-line import-x/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules -- Allow importing file which is being tested.
 } from "../../../simple-tree/api/snapshotCompatibilityChecker.js";
 import {
 	normalizeFieldSchema,
 	SchemaFactory,
+	SchemaFactoryAlpha,
 	TreeViewConfiguration,
+	TreeViewConfigurationAlpha,
 	SchemaFactoryBeta,
+	StagedSchemaUpgradePolicy,
 	stringSchema,
 	numberSchema,
 	allowUnused,
@@ -57,6 +59,20 @@ describe("snapshotCompatibilityChecker", () => {
 			normalizedView.allowedTypesIdentifiers.has("com.fluidframework.leaf.string"),
 			true,
 		);
+	});
+
+	// TODO:AB#82814: Fix compatibility logic and enable this test.
+	it.skip("parse and snapshot preserve staged optional fields", () => {
+		const originalView = new TreeViewConfiguration({
+			schema: SchemaFactoryAlpha.stagedOptional(SchemaFactoryAlpha.number),
+		});
+		const snapshot = exportCompatibilitySchemaSnapshot(originalView);
+		const parsedView = importCompatibilitySchemaSnapshot(snapshot);
+
+		const result = getCompatibility(originalView, parsedView);
+		assert.equal(result.currentViewOfSnapshotDocument.isEquivalent, true);
+		assert.equal(result.snapshotViewOfCurrentDocument.isEquivalent, true);
+		assert.equal(result.identicalCompatibility, true);
 	});
 
 	function checkCompatibilityDetectsUpgradeableSchemas(roundtripSnapshot: boolean): void {
@@ -1095,5 +1111,134 @@ Snapshots exist for versions: [
 			assert.equal(result.snapshotViewOfCurrentDocument.canView, true);
 			assert.equal(result.snapshotViewOfCurrentDocument.canUpgrade, true);
 		}
+	});
+
+	// TODO:AB#82814: Fix compatibility logic and enable this test.
+	it.skip("getCompatibility handles staged schema symmetrically", () => {
+		const factory = new SchemaFactoryBeta("test");
+		const stagedString = factory.staged(factory.string);
+		const stagedSchema = factory.optional(factory.types([factory.number, stagedString]));
+		const enabledSchema = factory.optional([factory.number, factory.string]);
+
+		const result = getCompatibility(
+			/* current: */ new TreeViewConfiguration({ schema: enabledSchema }),
+			/* previous: */ new TreeViewConfiguration({ schema: stagedSchema }),
+		);
+
+		assert.equal(result.currentViewOfSnapshotDocument.isEquivalent, false);
+		assert.equal(result.snapshotViewOfCurrentDocument.isEquivalent, true);
+		assert.equal(result.identicalCompatibility, false);
+	});
+
+	// TODO:AB#82814: Fix compatibility logic and enable this test.
+	it.skip("getCompatibility distinguishes identical view schema with different staged policies", () => {
+		const factory = new SchemaFactoryBeta("test");
+		const stagedString = factory.staged(factory.string);
+		const stringUpgrade = stagedString.metadata.stagedSchemaUpgrade;
+		assert(stringUpgrade !== undefined);
+		const schema = factory.optional(factory.types([factory.number, stagedString]));
+		const enabledConfig = new TreeViewConfigurationAlpha({
+			schema,
+			stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(stringUpgrade),
+		});
+		const restrictiveConfig = new TreeViewConfiguration({ schema });
+
+		const result = getCompatibility(
+			/* current: */ enabledConfig,
+			/* previous: */ restrictiveConfig,
+		);
+
+		assert.equal(result.currentViewOfSnapshotDocument.isEquivalent, false);
+		assert.equal(result.snapshotViewOfCurrentDocument.isEquivalent, true);
+		assert.equal(result.identicalCompatibility, false);
+	});
+
+	// TODO:AB#82814: Fix compatibility logic and enable this test.
+	it.skip("checkCompatibility uses the stored schema configuration's staged upgrade policy", () => {
+		const factory = new SchemaFactoryBeta("test");
+		const stagedString = factory.staged(factory.string);
+		const stringUpgrade = stagedString.metadata.stagedSchemaUpgrade;
+		assert(stringUpgrade !== undefined);
+		const stagedSchema = factory.optional(factory.types([factory.number, stagedString]));
+		const enabledSchema = factory.optional([factory.number, factory.string]);
+		const storedSchemaConfig = new TreeViewConfigurationAlpha({
+			schema: stagedSchema,
+			stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(stringUpgrade),
+		});
+
+		const result = checkCompatibility(
+			storedSchemaConfig,
+			new TreeViewConfiguration({ schema: enabledSchema }),
+		);
+
+		assert.equal(result.isEquivalent, true);
+	});
+
+	// TODO:AB#82814: Fix compatibility logic and enable this test.
+	it.skip("checkCompatibility uses the viewing configuration's staged upgrade policy", () => {
+		const factory = new SchemaFactoryBeta("test");
+		const stagedString = factory.staged(factory.string);
+		const stagedSchema = factory.optional(factory.types([factory.number, stagedString]));
+		const enabledSchema = factory.optional([factory.number, factory.string]);
+		const view = new TreeViewConfigurationAlpha({
+			schema: stagedSchema,
+			stagedUpgradePolicy: {
+				includeAlreadyEnabledUpgrades: false,
+				includeStaged: () => false,
+				includeStagedOptional: () => false,
+			},
+		});
+
+		const result = checkCompatibility(
+			new TreeViewConfiguration({ schema: enabledSchema }),
+			view,
+		);
+
+		assert.equal(result.canView, true);
+		assert.equal(result.canUpgrade, false);
+		assert.equal(result.isEquivalent, false);
+	});
+
+	it("parse and snapshot preserve enabled staged upgrades", () => {
+		const factory = new SchemaFactoryBeta("test");
+		const stagedString = factory.staged(factory.string);
+		const stringUpgrade = stagedString.metadata.stagedSchemaUpgrade;
+		assert(stringUpgrade !== undefined);
+		const originalView = new TreeViewConfigurationAlpha({
+			schema: factory.optional(factory.types([factory.number, stagedString])),
+			stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(stringUpgrade),
+		});
+		const parsedView = importCompatibilitySchemaSnapshot(
+			exportCompatibilitySchemaSnapshot(originalView),
+		);
+
+		const result = getCompatibility(/* current: */ originalView, /* previous: */ parsedView);
+		assert.equal(result.currentViewOfSnapshotDocument.isEquivalent, true);
+		assert.equal(result.snapshotViewOfCurrentDocument.isEquivalent, true);
+		assert.equal(result.identicalCompatibility, true);
+	});
+
+	it("parse and snapshot preserve includeAlreadyEnabledUpgrades", () => {
+		const factory = new SchemaFactoryBeta("test");
+		const stagedString = factory.staged(factory.string);
+		const stagedSchema = factory.optional(factory.types([factory.number, stagedString]));
+		const enabledSchema = factory.optional([factory.number, factory.string]);
+		const originalView = new TreeViewConfigurationAlpha({
+			schema: stagedSchema,
+			stagedUpgradePolicy: {
+				includeAlreadyEnabledUpgrades: false,
+				includeStaged: () => false,
+				includeStagedOptional: () => false,
+			},
+		});
+		const parsedView = importCompatibilitySchemaSnapshot(
+			exportCompatibilitySchemaSnapshot(originalView),
+		);
+		const documentConfig = new TreeViewConfiguration({ schema: enabledSchema });
+
+		assert.deepEqual(
+			checkCompatibility(documentConfig, parsedView),
+			checkCompatibility(documentConfig, originalView),
+		);
 	});
 });
