@@ -46,7 +46,7 @@ There are example transactions here: [Shared Tree Demo](https://github.com/micro
 
 The APIs described in this section are currently beta and may change in future releases.
 
-Unlike <ApiLink package="fluid-framework" api="Tree.runTransaction" />, the Beta <ApiLink package="fluid-framework" api="TreeBranchBeta.runTransaction">runTransaction</ApiLink> does **not** automatically roll back the transaction if the callback throws an error.
+Unlike <ApiLink package="fluid-framework" api="Tree.runTransaction" />, the `@beta` <ApiLink package="fluid-framework" api="UntypedTreeView.runTransaction">runTransaction</ApiLink> does **not** automatically roll back the transaction if the callback throws an error.
 If your callback may throw, you should handle errors explicitly and return `{ rollback: true }` when required.
 
 :::
