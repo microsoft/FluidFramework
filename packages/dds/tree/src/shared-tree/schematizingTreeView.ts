@@ -322,7 +322,7 @@ export class SchematizingSimpleTreeView<
 
 	private get effectiveUpgradePolicy(): StagedSchemaUpgradePolicy {
 		const configuredPolicy = this.stagedUpgradePolicy;
-		if (configuredPolicy.includeAlreadyEnabledUpgrades === false) {
+		if (configuredPolicy.includeAlreadyEnabledUpgrades !== true) {
 			return configuredPolicy;
 		}
 		const enabledUpgrades = this.currentEnabledUpgrades;
