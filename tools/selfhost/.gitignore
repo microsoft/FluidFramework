@@ -23,10 +23,13 @@ package-lock.json
 data/
 dist/
 
+# AFR to self-hosted fluid data transfer
+data-transfer/inventory/document-inventory.json
+data-transfer/configuration/data-transfer.config.json
+
 # OS
 .DS_Store
 Thumbs.db
 
 # Release artifacts
 release-artifacts/
-
