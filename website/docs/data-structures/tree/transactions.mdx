@@ -51,7 +51,7 @@ If your callback may throw, you should handle errors explicitly and return `{ ro
 
 :::
 
-The alpha APIs introduce <ApiLink package="fluid-framework" api="TreeBranchAlpha.runTransaction">UntypedTreeViewAlpha.runTransaction</ApiLink> as a replacement for `Tree.runTransaction`.
+The beta APIs introduce <ApiLink package="fluid-framework" api="TreeBranchBeta.runTransaction">UntypedTreeViewBeta.runTransaction</ApiLink> as a replacement for `Tree.runTransaction`.
 This new API exists to solve correctness issues where errors being thrown in runTransaction could result in an undefined state.
 This new API enables developers to customize how their application handles this error case.
 
