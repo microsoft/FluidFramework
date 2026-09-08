@@ -61,10 +61,21 @@ describe("expose joinSessionInfo Tests", () => {
 		const odspResolvedUrl = await resolver.resolve({
 			url: createOdspUrl({ driveId, itemId, siteUrl, dataStorePath: "/" }),
 		});
-		const service = await odspDocumentServiceFactory.createDocumentService(odspResolvedUrl);
+		const logger = new MockLogger();
+		const service = await odspDocumentServiceFactory.createDocumentService(
+			odspResolvedUrl,
+			logger.toTelemetryLogger(),
+		);
 		assert(service.driverStatePersistence !== undefined);
 		const driverState = { documentId: odspResolvedUrl.hashedDocumentId, epoch: "epoch1" };
 		service.driverStatePersistence.set(driverState);
+		logger.assertMatch([
+			{
+				eventName: "OdspDriver:EpochLearnedFirstTime",
+				fetchType: "pendingState",
+				fromCache: true,
+			},
+		]);
 		service.driverStatePersistence.set(driverState);
 		assert.deepStrictEqual(service.driverStatePersistence.get(), driverState);
 		assert.throws(

@@ -126,8 +126,27 @@ export class EpochTracker implements IPersistedFileCache {
 			: maximumCacheDurationMs;
 	}
 
-	// Sets the initial epoch from cache, restored driver state, or tests.
+	// Sets the initial epoch from cache, network, or tests.
 	public setEpoch(epoch: string, fromCache: boolean, fetchType: FetchTypeInternal): void {
+		this.setEpochCore(epoch, fromCache, fetchType);
+	}
+
+	/**
+	 * Sets the initial epoch restored from pending container state.
+	 *
+	 * Optional to preserve structural compatibility with older `EpochTracker` implementations.
+	 *
+	 * @internal
+	 */
+	public readonly setEpochFromPendingState?: (epoch: string) => void = (epoch) => {
+		this.setEpochCore(epoch, true, "pendingState");
+	};
+
+	private setEpochCore(
+		epoch: string,
+		fromCache: boolean,
+		fetchType: FetchTypeInternal | "pendingState",
+	): void {
 		assert(this._fluidEpoch === undefined, 0x1db /* "epoch exists" */);
 		this._fluidEpoch = epoch;
 
