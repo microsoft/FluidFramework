@@ -124,13 +124,14 @@ export class ReplayControllerStatic extends ReplayController {
 	): Promise<void> {
 		let current = this.skipToIndex(fetchedOps);
 
-		return new Promise((resolve) => {
+		return new Promise((resolve, reject) => {
 			const replayNextOps = (): void => {
 				// Emit the ops from replay to the end every "deltainterval" milliseconds
 				// to simulate the socket stream
 				const currentOp = fetchedOps[current];
 				if (currentOp === undefined) {
-					throw new Error(`No op found at replay index ${current}`);
+					reject(new Error(`No op found at replay index ${current}`));
+					return;
 				}
 				const playbackOps = [currentOp];
 				let nextInterval = ReplayControllerStatic.DelayInterval;
@@ -144,7 +145,8 @@ export class ReplayControllerStatic extends ReplayController {
 						while (current < fetchedOps.length) {
 							const op = fetchedOps[current];
 							if (op === undefined) {
-								throw new Error(`No op found at replay index ${current}`);
+								reject(new Error(`No op found at replay index ${current}`));
+								return;
 							}
 							if (op.timestamp === undefined) {
 								// Missing timestamp, just delay the standard amount of time
