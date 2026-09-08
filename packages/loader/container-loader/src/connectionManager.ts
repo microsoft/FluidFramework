@@ -910,16 +910,18 @@ export class ConnectionManager implements IConnectionManager {
 			}
 		}
 
-		this.props.incomingOpHandler(
-			initialMessages,
-			this.connectFirstConnection ? "InitialOps" : "ReconnectOps",
-		);
-
-		this._connectionDetails = ConnectionManager.detailsFromConnection(
+		const connectionDetails = ConnectionManager.detailsFromConnection(
 			connection,
 			reason,
 			checkpointSequenceNumber,
 		);
+		this.props.incomingOpHandler(
+			initialMessages,
+			this.connectFirstConnection ? "InitialOps" : "ReconnectOps",
+			connectionDetails,
+		);
+
+		this._connectionDetails = connectionDetails;
 		this.props.connectHandler(this._connectionDetails);
 
 		this.connectFirstConnection = false;

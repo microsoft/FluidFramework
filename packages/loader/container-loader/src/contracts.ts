@@ -140,9 +140,15 @@ export interface IConnectionManager {
 export interface IConnectionManagerFactoryArgs {
 	/**
 	 * Called by connection manager for each incoming op. Some ops maybe delivered before
-	 * connectHandler is called (initial ops on socket connection)
+	 * connectHandler is called (initial ops on socket connection).
+	 * Connection details are supplied for initial ops so diagnostics use the current connection
+	 * before connectHandler runs. They are omitted for subsequent socket ops.
 	 */
-	readonly incomingOpHandler: (messages: ISequencedDocumentMessage[], reason: string) => void;
+	readonly incomingOpHandler: (
+		messages: ISequencedDocumentMessage[],
+		reason: string,
+		connection?: IConnectionDetailsInternal,
+	) => void;
 
 	/**
 	 * Called by connection manager for each incoming signal.

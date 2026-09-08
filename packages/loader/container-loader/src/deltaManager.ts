@@ -445,7 +445,17 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			this.close(normalizeError(error));
 		});
 		const props: IConnectionManagerFactoryArgs = {
-			incomingOpHandler: (messages: ISequencedDocumentMessage[], reason: string) => {
+			incomingOpHandler: (
+				messages: ISequencedDocumentMessage[],
+				reason: string,
+				connection?: IConnectionDetailsInternal,
+			) => {
+				if (connection !== undefined) {
+					// Initial ops can fail anchor validation before connectHandler runs. Snapshot
+					// this connection's raw checkpoint first, including clearing a previous value
+					// when the service omits it. Do not change connect-event or catch-up ordering.
+					this.serviceCheckpointSequenceNumber = connection.serviceCheckpointSequenceNumber;
+				}
 				try {
 					this.enqueueMessages(messages, reason);
 				} catch (error) {

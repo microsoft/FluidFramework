@@ -29,7 +29,7 @@ import {
 import { type SinonFakeTimers, useFakeTimers } from "sinon";
 
 import { ConnectionManager } from "../connectionManager.js";
-import type { IConnectionManagerFactoryArgs } from "../contracts.js";
+import { type IConnectionManagerFactoryArgs, ReconnectMode } from "../contracts.js";
 import { DeltaManager } from "../deltaManager.js";
 import { NoopHeuristic } from "../noopHeuristic.js";
 
@@ -209,6 +209,85 @@ describe("Loader", () => {
 			after(() => {
 				clock.restore();
 			});
+
+			for (const checkpoint of [7, undefined]) {
+				it(`reports the current raw checkpoint '${checkpoint}' for a conflicting reconnect anchor`, async () => {
+					const savedOp = {
+						...generateOp(),
+						sequenceNumber: 13,
+						minimumSequenceNumber: 10,
+						timestamp: 1000,
+						referenceSequenceNumber: 12,
+					};
+					let connectionCount = 0;
+					const service = new MockDocumentService(undefined, () => {
+						const reconnect = connectionCount++ > 0;
+						const rawCheckpoint = reconnect ? checkpoint : 5;
+						return Object.assign(new MockDocumentDeltaConnection("test"), {
+							...(rawCheckpoint === undefined
+								? {}
+								: { checkpointSequenceNumber: rawCheckpoint }),
+							initialMessages: reconnect
+								? [{ ...savedOp, clientId: "restored-history-client" }]
+								: [],
+						});
+					});
+					const client: Partial<IClient> = {
+						mode: "write",
+						details: { capabilities: { interactive: true } },
+					};
+					deltaManager = new DeltaManager<ConnectionManager>(
+						() => service,
+						logger,
+						() => false,
+						(props) =>
+							new ConnectionManager(
+								() => service,
+								() => false,
+								client as IClient,
+								true,
+								logger,
+								props,
+							),
+					);
+					await deltaManager.attachOpHandler(
+						0,
+						0,
+						{ process() {}, processSignal() {} },
+						"none",
+						savedOp,
+					);
+					const connected = new Deferred<void>();
+					deltaManager.once("connect", () => connected.resolve());
+					deltaManager.connect({
+						reason: { text: "first connection" },
+						fetchOpsFromStorage: false,
+					});
+					await connected.promise;
+					assert.strictEqual(deltaManager.hasPendingStateAnchor, true);
+					deltaManager.connectionManager.setAutoReconnect(ReconnectMode.Disabled, {
+						text: "test disconnect",
+					});
+					deltaManager.connectionManager.setAutoReconnect(ReconnectMode.Enabled, {
+						text: "test reconnect",
+					});
+					const closed = new Deferred<unknown>();
+					deltaManager.once("closed", (closeError) => closed.resolve(closeError));
+					deltaManager.connect({
+						reason: { text: "second connection" },
+						fetchOpsFromStorage: false,
+					});
+					const error = await closed.promise;
+
+					assert(isFluidError(error));
+					assert.match(error.message, /same sequenceNumber but different payloads/);
+					assert.strictEqual(
+						error.getTelemetryProperties().serviceCheckpointSequenceNumber,
+						checkpoint,
+					);
+					assert.strictEqual(connectionCount, 2);
+				});
+			}
 
 			it("rejects a saved op that differs from service history", async () => {
 				const savedOp = JSON.parse(
