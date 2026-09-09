@@ -81,8 +81,8 @@ importers:
         specifier: ^0.65.0
         version: 0.65.0(@types/node@22.19.17)(supports-color@8.1.1)
       '@fluidframework/common-utils-previous':
-        specifier: npm:@fluidframework/common-utils@1.0.0
-        version: '@fluidframework/common-utils@1.0.0'
+        specifier: npm:@fluidframework/common-utils@3.1.0
+        version: '@fluidframework/common-utils@3.1.0'
       '@fluidframework/eslint-config-fluid':
         specifier: ^10.0.0
         version: 10.0.0(@typescript-eslint/utils@8.56.1(eslint@9.39.2(jiti@2.6.1)(supports-color@8.1.1))(supports-color@8.1.1)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9(supports-color@8.1.1))(eslint-plugin-import@2.32.0)(eslint@9.39.2(jiti@2.6.1)(supports-color@8.1.1))(supports-color@8.1.1)(typescript@5.4.5)
@@ -508,11 +508,11 @@ packages:
   '@fluidframework/bundle-size-tools@0.65.0':
     resolution: {integrity: sha512-rI6Kdf3BpsYhUmyTRSD3Cude0AZzcPuvH13CsHs+kvEGz4dJWklHoZK8l3bvNz/mj+h7MHz2Gh8DHg5zNJAM8g==}
 
-  '@fluidframework/common-definitions@0.20.1':
-    resolution: {integrity: sha512-KaoQ7w2MDH5OeRKVatL5yVOCFg+9wD6bLSLFh1/TV1EZM46l49iBqO7UVjUtPE6BIm0jvvOzJXULGVSpzokX3g==}
+  '@fluidframework/common-definitions@1.1.0':
+    resolution: {integrity: sha512-WQYtG9tkx2j7i1JSXPvwLnQsqCOZAghMj0aGciqjZVNppUly/XBpAjb4V6FEUCEjxCScPKhyE+1rhV1ep52NgA==}
 
-  '@fluidframework/common-utils@1.0.0':
-    resolution: {integrity: sha512-O3UoZ2dQR/ZWMXTSbDcTH93WMqHmEKoYhYMn6cybESswmMOA2E9UF3B2TkJ+aofBLOLllDKXXGtuhPmu/9rTqQ==}
+  '@fluidframework/common-utils@3.1.0':
+    resolution: {integrity: sha512-KpBQqpZKAHCKFMoxtAdrgqL1nIJhT7r2IRGmS3Rm5CMTLsegQ8ifX5lFvd6IbjeWmvLz1qLsY3eS5HBYqy9CVQ==}
 
   '@fluidframework/core-interfaces@2.101.0':
     resolution: {integrity: sha512-IiXDdB348COUdPImPisEu2W/14dHTOoA8j5ep8pSePkX471Iw1j5DZ65fgxoIPK9K9EfYIAqxAFuQtyOuWRrIQ==}
@@ -6354,11 +6354,11 @@ snapshots:
       - uglify-js
       - webpack-cli
 
-  '@fluidframework/common-definitions@0.20.1': {}
+  '@fluidframework/common-definitions@1.1.0': {}
 
-  '@fluidframework/common-utils@1.0.0':
+  '@fluidframework/common-utils@3.1.0':
     dependencies:
-      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-definitions': 1.1.0
       '@types/events': 3.0.0
       base64-js: 1.5.1
       buffer: 6.0.3
