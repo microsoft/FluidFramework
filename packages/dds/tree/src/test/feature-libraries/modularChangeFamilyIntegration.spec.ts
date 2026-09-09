@@ -36,6 +36,8 @@ import {
 	intoDelta,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/modular-schema/modularChangeFamily.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { validateChangeset } from "../../feature-libraries/modular-schema/modularChangeUtils.js";
 import type {
 	NodeId,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -629,7 +631,7 @@ describe("ModularChangeFamily integration", () => {
 			const remove = tagChangeInline(removeD, tagForCompare);
 
 			const composed = family.compose([moves, remove]);
-			family.validateChangeset(composed);
+			validateChangeset(composed, family.fieldKinds);
 			const composedDelta = normalizeDelta(intoDelta(makeAnonChange(composed), fieldKinds));
 
 			const nodeAChanges: DeltaFieldMap = new Map([
@@ -712,7 +714,7 @@ describe("ModularChangeFamily integration", () => {
 				]),
 			};
 
-			family.validateChangeset(composed);
+			validateChangeset(composed, family.fieldKinds);
 			const delta = intoDelta(taggedComposed, family.fieldKinds);
 			assertDeltaEqual(delta, expected);
 		});
@@ -751,7 +753,7 @@ describe("ModularChangeFamily integration", () => {
 
 			const moveAndInsert = family.compose([tagChangeInline(insert, tag2), moveTagged]);
 			const composed = family.compose([returnTagged, makeAnonChange(moveAndInsert)]);
-			family.validateChangeset(composed);
+			validateChangeset(composed, family.fieldKinds);
 
 			const actual = intoDelta(makeAnonChange(composed), family.fieldKinds);
 			const expected: DeltaRoot = {
@@ -815,7 +817,7 @@ describe("ModularChangeFamily integration", () => {
 			const [move1, move2, expected] = getChanges();
 			const composed = family.compose([makeAnonChange(move1), makeAnonChange(move2)]);
 			const tagForCompare = mintRevisionTag();
-			family.validateChangeset(composed);
+			validateChangeset(composed, family.fieldKinds);
 			const actualDelta = normalizeDelta(
 				intoDelta(tagChangeInline(composed, tagForCompare), family.fieldKinds),
 			);

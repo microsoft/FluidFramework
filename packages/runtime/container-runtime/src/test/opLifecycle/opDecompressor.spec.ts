@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { IsoBuffer } from "@fluid-internal/client-utils";
+import { Uint8ArrayToString } from "@fluid-internal/client-utils";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type {
 	FluidDataStoreMessage,
@@ -44,7 +44,7 @@ function generateCompressedBatchMessage(length: number): ISequencedDocumentMessa
 
 	const contentsAsBuffer = new TextEncoder().encode(JSON.stringify(batch));
 	const compressedContents = compress(contentsAsBuffer);
-	const compressedContent = IsoBuffer.from(compressedContents).toString("base64");
+	const compressedContent = Uint8ArrayToString(compressedContents, "base64");
 
 	const messageBase: ISequencedDocumentMessage = {
 		contents: { packedContents: compressedContent },

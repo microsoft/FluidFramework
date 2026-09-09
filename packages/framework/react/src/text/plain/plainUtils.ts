@@ -26,48 +26,24 @@ export interface TextSelection {
 }
 
 /**
- * The result of applying a character-level delta to an existing text value via {@link applyTextOps}.
- */
-export interface ApplyTextOpsResult {
-	/** The updated text value after applying the ops. */
-	readonly value: string;
-	/**
-	 * The input selection, adjusted to follow the same logical position across the edit.
-	 * @remarks
-	 * Always a valid range within {@link ApplyTextOpsResult.value} (each offset is clamped to
-	 * `[0, value.length]`), so it can be written straight back to an element without further bounds checks.
-	 */
-	readonly selection: TextSelection;
-}
-
-/**
- * Apply a character-level delta to an existing text value, producing the new value and a
- * selection range adjusted to track the same logical position across the edit.
+ * Apply a character-level delta to an existing text value, producing the new value.
  * @remarks
  * `ops` are the deltas delivered by {@link @fluidframework/tree#PlainText.Members.onCharactersChanged}.
  * Applying them incrementally avoids a full O(N) re-read of the text on every change.
  *
  * This function is intentionally DOM-free so consumers maintaining their own UI (a custom React
  * component, a non-`textarea` element, or a non-React renderer) can reuse it: read the current value
- * and selection from your view, call this, then write the result back.
+ * from your view, call this, then write the result back.
  *
  * `onCharactersChanged` delivers `undefined` (rather than an op list) when an incremental delta is
  * unavailable; in that case skip this function and re-read the whole text via `root.fullString()`.
  *
  * Writing the result back must not re-enter the tree — see {@link syncTextToTree} for the re-entrancy pattern.
  */
-export function applyTextOps(
-	oldValue: string,
-	selection: TextSelection,
-	ops: readonly PlainText.TextOp[],
-): ApplyTextOpsResult {
-	const { start: selectionStart, end: selectionEnd } = selection;
-
+export function applyTextOps(oldValue: string, ops: readonly PlainText.TextOp[]): string {
 	// readPos is a UTF-16 code-unit index into oldValue.
 	let readPos = 0;
 	let value = "";
-	let newCursorStart = selectionStart;
-	let newCursorEnd = selectionEnd;
 
 	for (const op of ops) {
 		if (op.type === "retain") {
@@ -76,45 +52,16 @@ export function applyTextOps(
 			value += oldValue.slice(readPos, readPos + utf16Count);
 			readPos += utf16Count;
 		} else if (op.type === "insert") {
-			// op.text is a JS string; use its UTF-16 length for cursor adjustment.
-			if (readPos <= selectionStart) {
-				newCursorStart += op.text.length;
-			}
-			if (readPos <= selectionEnd) {
-				newCursorEnd += op.text.length;
-			}
 			value += op.text;
 		} else {
-			// remove
-			// Convert the code-point count to UTF-16 units before adjusting cursors.
 			const utf16Count = utf16LengthForCodePoints(oldValue, readPos, op.count);
-			const removeEnd = readPos + utf16Count;
-			if (removeEnd <= selectionStart) {
-				newCursorStart -= utf16Count;
-			} else if (readPos < selectionStart) {
-				newCursorStart -= selectionStart - readPos;
-			}
-			if (removeEnd <= selectionEnd) {
-				newCursorEnd -= utf16Count;
-			} else if (readPos < selectionEnd) {
-				newCursorEnd -= selectionEnd - readPos;
-			}
 			readPos += utf16Count;
 		}
 	}
 
 	// Append any tail not covered by ops (e.g. trailing retained content).
 	value += oldValue.slice(readPos);
-
-	// Clamp to a valid range within `value` so the result can be written back without further checks.
-	// A stale input selection (e.g. beyond `oldValue`) can otherwise land outside the new value.
-	return {
-		value,
-		selection: {
-			start: clamp(newCursorStart, 0, value.length),
-			end: clamp(newCursorEnd, 0, value.length),
-		},
-	};
+	return value;
 }
 
 /**

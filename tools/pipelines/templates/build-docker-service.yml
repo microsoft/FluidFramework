@@ -480,23 +480,18 @@ extends:
                 volumes:
                   $(hostPathToPackArtifact)/tarballs:/usr/src/pack
 
-            # Generating package lists manually because using scripts/pack-packages.sh (like build-npm-package.yml does)
-            # inside the Docker container is proving problematic.
-            # See https://github.com/microsoft/FluidFramework/pull/18445 for details.
+            # Package metadata can be read from the host checkout, but packing must remain in the built
+            # container above because its generated output is not present on the host.
+            # See https://github.com/microsoft/FluidFramework/pull/22072 for the regression this avoids.
             - task: Bash@3
               displayName: Generate package lists
               env:
                 RELEASE_GROUP: ${{ parameters.tagName }}
                 STAGING_PATH: $(Build.ArtifactStagingDirectory)
               inputs:
-                targetType: 'inline'
+                targetType: filePath
                 workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
-                script: |
-                  set -eu -o pipefail
-                  flub list --no-private $RELEASE_GROUP --tarball --feed public --outFile $STAGING_PATH/pack/packagePublishOrder-public.txt
-                  flub list --no-private $RELEASE_GROUP --tarball --feed internal-build --outFile $STAGING_PATH/pack/packagePublishOrder-internal-build.txt
-                  flub list --no-private $RELEASE_GROUP --tarball --feed internal-dev --outFile $STAGING_PATH/pack/packagePublishOrder-internal-dev.txt
-                  flub list --no-private $RELEASE_GROUP --tarball --feed internal-test --outFile $STAGING_PATH/pack/packagePublishOrder-internal-test.txt
+                filePath: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/scripts/generate-package-publish-order.sh
 
             - template: /tools/pipelines/templates/include-generate-publish-metadata.yml@self
               parameters:

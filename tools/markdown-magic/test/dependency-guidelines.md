@@ -3,11 +3,11 @@
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
-When taking a dependency on a Fluid Framework library's public APIs, we recommend using a `^` (caret) version range, such as `^1.3.4`.
-While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
-library consumers should always prefer `^`.
+For a dependency on a Fluid Framework library's public APIs, we recommend a `^` (caret) version range.
+For example, use `^1.3.4`.
 
-If using any of Fluid Framework's unstable APIs (for example, its `beta` APIs), we recommend using a more constrained version range, such as `~`.
+For a dependency on an unstable API, such as a `beta` API, we recommend a more restrictive version range.
+For example, use a `~` version range.
 
 <!-- prettier-ignore-end -->
 
@@ -20,11 +20,11 @@ If using any of Fluid Framework's unstable APIs (for example, its `beta` APIs), 
 
 ## Using Fluid Framework libraries
 
-When taking a dependency on a Fluid Framework library's public APIs, we recommend using a `^` (caret) version range, such as `^1.3.4`.
-While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
-library consumers should always prefer `^`.
+For a dependency on a Fluid Framework library's public APIs, we recommend a `^` (caret) version range.
+For example, use `^1.3.4`.
 
-If using any of Fluid Framework's unstable APIs (for example, its `beta` APIs), we recommend using a more constrained version range, such as `~`.
+For a dependency on an unstable API, such as a `beta` API, we recommend a more restrictive version range.
+For example, use a `~` version range.
 
 <!-- prettier-ignore-end -->
 

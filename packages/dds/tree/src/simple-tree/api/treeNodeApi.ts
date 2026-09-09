@@ -39,90 +39,11 @@ import {
 import { isArrayNodeSchema, isObjectNodeSchema } from "../node-kinds/index.js";
 
 import type { TreeChangeEvents } from "./treeChangeEvents.js";
-
-/**
- * A `"retain"` op in an {@link ArrayNodeDeltaOp} sequence.
- * Represents elements that were neither inserted into nor removed from the array.
- * @sealed @alpha
- */
-export interface ArrayNodeRetainOp {
-	readonly type: "retain";
-	readonly count: number;
-}
-
-/**
- * A `"retain"` op in an {@link ArrayNodeTreeChangedDeltaOp} sequence, used in
- * {@link NodeChangedDataTreeDelta} payloads delivered to
- * {@link TreeChangeEventsAlpha.treeChanged} on array nodes.
- *
- * Extends {@link ArrayNodeRetainOp} with a {@link ArrayNodeTreeChangedRetainOp.subtreeChanged}
- * flag that indicates whether any descendant of the retained element changed.
- * @sealed @alpha
- */
-export interface ArrayNodeTreeChangedRetainOp extends ArrayNodeRetainOp {
-	/**
-	 * Whether any descendant of this retained element changed.
-	 * `true` if the element's subtree changed; `false` if nothing changed within it.
-	 * @remarks
-	 * Subscribe to `nodeChanged` or `treeChanged` on the element node itself for details.
-	 */
-	readonly subtreeChanged: boolean;
-}
-
-/**
- * A single operation in an array-node delta delivered by {@link TreeChangeEventsAlpha.treeChanged}.
- * Extends {@link ArrayNodeDeltaOp}: retain ops carry a {@link ArrayNodeTreeChangedRetainOp.subtreeChanged}
- * flag indicating whether any descendant of the retained element changed.
- * @alpha
- */
-export type ArrayNodeTreeChangedDeltaOp =
-	| ArrayNodeTreeChangedRetainOp
-	| ArrayNodeInsertOp
-	| ArrayNodeRemoveOp;
-
-/**
- * An `"insert"` op in an {@link ArrayNodeDeltaOp} sequence.
- * Represents elements added to the array.
- * Read the new element values from the current tree at the positions described by this op.
- * @sealed @alpha
- */
-export interface ArrayNodeInsertOp {
-	readonly type: "insert";
-	readonly count: number;
-}
-
-/**
- * A `"remove"` op in an {@link ArrayNodeDeltaOp} sequence.
- * Represents elements removed from the array.
- * @sealed @alpha
- */
-export interface ArrayNodeRemoveOp {
-	readonly type: "remove";
-	readonly count: number;
-}
-
-/**
- * A single operation in an array node change delta. Used to efficiently sync an external
- * representation of an array (e.g. a text editor or virtual list) with tree changes without
- * needing to snapshot the old state or diff the entire array. Each op describes a contiguous run
- * of positions in the array before the change. For inserts, read the new element values from the
- * current tree at those positions.
- *
- * @remarks
- * There is no dedicated `"move"` op. Moves are represented as `"remove"` + `"insert"`.
- * When an element is moved within the same array it appears
- * as a `"remove"` at the source position followed by an `"insert"` at the destination position.
- * When an element is moved across two different arrays, the source array's delta contains a
- * `"remove"` and the destination array's delta contains an `"insert"` — they cannot be
- * correlated without additional bookkeeping on the caller's side.
- *
- * The operations cover the complete array: trailing elements that were not changed are included
- * in a final `"retain"` op. Applying every operation therefore consumes the entire pre-edit array
- * and produces the entire post-edit array.
- *
- * @sealed @alpha
- */
-export type ArrayNodeDeltaOp = ArrayNodeRetainOp | ArrayNodeInsertOp | ArrayNodeRemoveOp;
+import type {
+	ArrayNodeInsertOp,
+	ArrayNodeRemoveOp,
+	ArrayNodeRetainOp,
+} from "./treeChangeEventsBeta.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
@@ -284,7 +205,7 @@ export const treeNodeApi: TreeNodeApi = {
 						const marks = fieldMarks.get(EmptyKey);
 						// nodeChanged fires only for shallow changes (insert, remove, move).
 						// Deep changes (e.g. a property of an element changed) are
-						// surfaced via TreeChangeEventsAlpha.treeChanged with a delta payload instead.
+						// surfaced via TreeChangeEventsBeta.treeChanged with a delta payload instead.
 						// When marks are undefined (marks could not be composed across multiple
 						// internal passes), we conservatively fire nodeChanged rather than silently
 						// dropping the event, even though the underlying change may have been

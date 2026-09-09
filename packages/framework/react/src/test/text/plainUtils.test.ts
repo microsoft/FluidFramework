@@ -24,84 +24,35 @@ import {
 
 describe("plainUtils", () => {
 	describe("applyTextOps", () => {
-		it("inserts text, leaving the selection start before the edit and extending the end past it", () => {
-			// "hello" with selection "el" (1-3); insert "XX" at index 2, inside the selection.
-			// start (before the insert) is unchanged; end (after it) shifts by the inserted length.
-			const result = applyTextOps("hello", { start: 1, end: 3 }, [
+		it("inserts text", () => {
+			const result = applyTextOps("hello", [
 				{ type: "retain", count: 2 },
 				{ type: "insert", text: "XX" },
 				{ type: "retain", count: 3 },
 			]);
-			assert.deepEqual(result, { value: "heXXllo", selection: { start: 1, end: 5 } });
+			assert.equal(result, "heXXllo");
 		});
 
-		it("removes text, clamping a selection start inside the removal and pulling back the end after it", () => {
-			// "hello" with selection "llo" (2-5); remove "ell" (1-4).
-			// start sits inside the removal and clamps to its start; end is past it and pulls back.
-			const result = applyTextOps("hello", { start: 2, end: 5 }, [
+		it("removes text", () => {
+			const result = applyTextOps("hello", [
 				{ type: "retain", count: 1 },
 				{ type: "remove", count: 3 },
 				{ type: "retain", count: 1 },
 			]);
-			assert.deepEqual(result, { value: "ho", selection: { start: 1, end: 2 } });
+			assert.equal(result, "ho");
 		});
 
 		it("treats op counts as code points, not UTF-16 units, for astral characters", () => {
-			// "😀" is one code point but two UTF-16 units. Retain it, then insert after.
-			const value = "😀x";
-			// Cursor was at end (3 UTF-16 units); the insert is before it, so it shifts by 1.
-			const result = applyTextOps(value, { start: value.length, end: value.length }, [
+			const result = applyTextOps("😀x", [
 				{ type: "retain", count: 1 },
 				{ type: "insert", text: "Y" },
 				{ type: "retain", count: 1 },
 			]);
-			assert.deepEqual(result, { value: "😀Yx", selection: { start: 4, end: 4 } });
+			assert.equal(result, "😀Yx");
 		});
 
 		it("appends the tail of the old value not covered by trailing ops", () => {
-			const result = applyTextOps("hello", { start: 0, end: 0 }, [
-				{ type: "retain", count: 2 },
-			]);
-			assert.deepEqual(result, { value: "hello", selection: { start: 0, end: 0 } });
-		});
-
-		it("clamps a stale selection that lands outside the new value", () => {
-			// Selection points past the end of oldValue; after a shrinking edit it must not exceed value.length.
-			const result = applyTextOps("hello", { start: 10, end: 10 }, [
-				{ type: "remove", count: 3 },
-				{ type: "retain", count: 2 },
-			]);
-			assert.deepEqual(result, { value: "lo", selection: { start: 2, end: 2 } });
-		});
-
-		it("collapses a range to an empty selection when its whole range is removed", () => {
-			// "abcdef" with selection "cd" (2-4); remove "bcde" (1-5), which fully contains the selection.
-			// Both offsets pull back to the removal start, leaving an empty selection.
-			const result = applyTextOps("abcdef", { start: 2, end: 4 }, [
-				{ type: "retain", count: 1 },
-				{ type: "remove", count: 4 },
-				{ type: "retain", count: 1 },
-			]);
-			assert.deepEqual(result, { value: "af", selection: { start: 1, end: 1 } });
-		});
-
-		it("leaves a selection unchanged when the edit is entirely after it", () => {
-			// "abcdef" with selection "a" (0-1); remove "de" (3-5), which is past the selection.
-			const result = applyTextOps("abcdef", { start: 0, end: 1 }, [
-				{ type: "retain", count: 3 },
-				{ type: "remove", count: 2 },
-				{ type: "retain", count: 1 },
-			]);
-			assert.deepEqual(result, { value: "abcf", selection: { start: 0, end: 1 } });
-		});
-
-		it("shifts an empty selection right when text is inserted before it", () => {
-			// "ab" with an empty selection at the end (2); insert "XYZ" at that position.
-			const result = applyTextOps("ab", { start: 2, end: 2 }, [
-				{ type: "retain", count: 2 },
-				{ type: "insert", text: "XYZ" },
-			]);
-			assert.deepEqual(result, { value: "abXYZ", selection: { start: 5, end: 5 } });
+			assert.equal(applyTextOps("hello", [{ type: "retain", count: 2 }]), "hello");
 		});
 	});
 

@@ -5,17 +5,19 @@
 ```ts
 
 // @public @sealed @legacy
-export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable> {
+export interface IDirectory extends FluidMap<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable> {
     readonly absolutePath: string;
+    clear(): void;
     countSubDirectory?(): number;
     createSubDirectory(subdirName: string): IDirectory;
+    delete(key: string): boolean;
     deleteSubDirectory(subdirName: string): boolean;
     get<T = any>(key: string): T | undefined;
     getSubDirectory(subdirName: string): IDirectory | undefined;
     getWorkingDirectory(relativePath: string): IDirectory | undefined;
     hasSubDirectory(subdirName: string): boolean;
     set<T = unknown>(key: string, value: T): this;
-    subdirectories(): IterableIterator<[string, IDirectory]>;
+    subdirectories(): FluidIterableIterator<[string, IDirectory]>;
 }
 
 // @public @sealed @legacy

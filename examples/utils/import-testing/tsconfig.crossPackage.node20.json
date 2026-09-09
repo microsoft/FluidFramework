@@ -1,0 +1,7 @@
+{
+	"extends": "./tsconfig.crossPackage.base.json",
+	"compilerOptions": {
+		"outDir": "./lib/crossPackage/node20",
+		"module": "node20",
+	},
+}

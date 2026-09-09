@@ -708,6 +708,7 @@ declare type current_as_old_for_Interface_IVersionMarkResolver = requireAssignab
  * typeValidation.broken:
  * "Interface_LoadContainerRuntimeParams": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_LoadContainerRuntimeParams = requireAssignableTo<TypeOnly<old.LoadContainerRuntimeParams>, TypeOnly<current.LoadContainerRuntimeParams>>
 
 /*

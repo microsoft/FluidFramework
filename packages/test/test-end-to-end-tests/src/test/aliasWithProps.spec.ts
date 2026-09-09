@@ -12,6 +12,7 @@ import { FluidObject, IEvent, IFluidHandle } from "@fluidframework/core-interfac
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import type { ITestObjectProvider } from "@fluidframework/test-utils/internal";
+import { defaultTestOldestSupportedClient } from "@fluidframework/test-utils/internal";
 
 interface TestDataObjectTypes {
 	/**
@@ -65,6 +66,7 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
 		constructor(private readonly defaultFactory: TestDataObjectFactory) {
 			const props = {
 				registryEntries: [defaultFactory.registryEntry],
+				oldestSupportedClient: defaultTestOldestSupportedClient,
 				provideEntryPoint: async (runtime: IContainerRuntime) => {
 					const entrypoint = await runtime.getAliasedDataStoreEntryPoint(defaultDataStoreId);
 					assert(entrypoint !== undefined, "default dataStore must exist");

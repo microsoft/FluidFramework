@@ -42,7 +42,6 @@ import {
 	getKernel,
 	TreeNode,
 	type Unhydrated,
-	TreeBeta,
 	tryGetSchema,
 	createFromCursor,
 	FieldKind,
@@ -75,11 +74,8 @@ import {
 	toInitialSchema,
 	type TreeParsingOptions,
 	type NodeChangedData,
-	type TreeChangeEventsAlpha,
+	type TreeChangeEventsBeta,
 	type ConciseTree,
-	importConcise,
-	exportConcise,
-	borrowCursorFromTreeNodeOrValue,
 	contentSchemaSymbol,
 	type TreeContextAlpha,
 	type TreeNodeSchema,
@@ -88,7 +84,13 @@ import {
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 
 import { independentInitializedView, type ViewContent } from "./independentView.js";
-import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
+import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
+import {
+	borrowCursorFromTreeNodeOrValue,
+	exportConcise,
+	importConcise,
+	TreeBeta,
+} from "./treeBeta.js";
 import { UnhydratedTreeContext } from "./unhydratedTreeContext.js";
 
 const identifier: TreeIdentifierUtils = (node: TreeNode): string | undefined => {
@@ -232,24 +234,13 @@ export interface TreeIdentifierUtils {
  */
 export interface TreeAlpha {
 	/**
-	 * Register an event listener on the given node.
-	 * @param node - The node whose events should be subscribed to.
-	 * @param eventName - Which event to subscribe to.
-	 * @param listener - The callback to trigger for the event. The tree can be read during the callback, but it is invalid to modify the tree during this callback.
-	 * @returns A callback function which will deregister the event.
-	 * This callback should be called only once.
-	 * @remarks
-	 * Provides richer events than {@link (TreeBeta:interface).on} for array nodes:
-	 * - `nodeChanged` includes a {@link NodeChangedDataDelta.delta | delta} payload for direct
-	 * changes (insert, remove, move).
-	 * - `treeChanged` also includes a {@link NodeChangedDataDelta.delta | delta} payload and fires
-	 * for both shallow changes and deep changes (e.g. a property of an element changed without
-	 * any direct array change).
+	 * {@inheritDoc (TreeBeta:interface).on}
+	 * @deprecated Use {@link (TreeBeta:interface).on} instead.
 	 */
-	on<K extends keyof TreeChangeEventsAlpha<TNode>, TNode extends TreeNode>(
+	on<K extends keyof TreeChangeEventsBeta<TNode>, TNode extends TreeNode>(
 		node: TNode,
 		eventName: K,
-		listener: NoInfer<TreeChangeEventsAlpha<TNode>[K]>,
+		listener: NoInfer<TreeChangeEventsBeta<TNode>[K]>,
 	): () => void;
 
 	/**
@@ -371,7 +362,7 @@ export interface TreeAlpha {
 	 * @param options - If {@link (TreeAlpha:interface).exportCompressed} was given an `idCompressor`, it must be provided here.
 	 *
 	 * @remarks
-	 * If the data could have been encoded with a different schema, consider encoding the schema along side it using {@link extractPersistedSchema} and loading the data using {@link independentView}.
+	 * If the data could have been encoded with a different schema, consider encoding the schema along side it using {@link extractPersistedSchema} and loading the data using {@link createIndependentTreeViewAlpha}.
 	 *
 	 * @privateRemarks
 	 * This API could be improved:
@@ -795,12 +786,12 @@ function trackObservations<TResult>(
  * @alpha
  */
 export const TreeAlpha: TreeAlpha = {
-	on<K extends keyof TreeChangeEventsAlpha<TNode>, TNode extends TreeNode>(
+	on<K extends keyof TreeChangeEventsBeta<TNode>, TNode extends TreeNode>(
 		node: TNode,
 		eventName: K,
-		listener: NoInfer<TreeChangeEventsAlpha<TNode>[K]>,
+		listener: NoInfer<TreeChangeEventsBeta<TNode>[K]>,
 	): () => void {
-		return treeNodeApi.on(node, eventName, listener);
+		return TreeBeta.on(node, eventName, listener);
 	},
 
 	trackObservations<TResult>(
@@ -832,12 +823,7 @@ export const TreeAlpha: TreeAlpha = {
 		if (!kernel.isHydrated()) {
 			return UnhydratedTreeContext.instance;
 		}
-		const view = kernel.anchorNode.anchorSet.slots.get(ViewSlot);
-		assert(
-			view instanceof SchematizingSimpleTreeView,
-			0xa5c /* Unexpected view implementation */,
-		);
-		return view;
+		return TreeBeta.context(node) as TreeContextAlpha;
 	},
 
 	create<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(

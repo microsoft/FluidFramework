@@ -46,6 +46,7 @@ export interface SchemaIncompatibleProps {
 // @alpha @sealed
 export interface SynchronizedString {
     readonly selection: TextSelection | undefined;
+    readonly setSelection: (selection: TextSelection | undefined) => void;
     readonly text: string;
 }
 

@@ -26,7 +26,7 @@ This package runs in two different modes: Orchestrator Mode and Test Runner mode
 _This is the main entry point to the test - this Orchestrator process will spawn many Test Runner processes._
 
 ```bash
-node ./dist/main.js [--url <url>] [--tenant <tenant>] [--profile <profile>] [--debug] [--log <filterTerm>]
+node ./lib/main.js [--url <url>] [--tenant <tenant>] [--profile <profile>] [--debug] [--log <filterTerm>]
 ```
 
 ### Test Runner Mode
@@ -34,11 +34,11 @@ node ./dist/main.js [--url <url>] [--tenant <tenant>] [--profile <profile>] [--d
 _This is not typically invoked manually - rather, the Orchestrator process spawns Test Runners using this mode._
 _See the call to `child_process.spawn` in the source code to refer to arguments used to launch in this mode_
 
-### npm scripts
+### package scripts
 
-There are several npm scripts in [package.json](./package.json) to make it quicker to launch this tool. Among others:
-`npm run start` - Launches in Orchestrator Mode with default options
-`npm run debug` - Debugs in Orchestrator Mode with `--debug` provided to allow for attaching to child test runners.
+There are several scripts in [package.json](./package.json) to make it quicker to launch this tool. Among others:
+`pnpm start` - Launches in Orchestrator Mode with default options
+`pnpm debug` - Debugs in Orchestrator Mode with `--debug` provided to allow for attaching to child test runners.
 
 ### URL
 
@@ -95,17 +95,18 @@ The value passed here should be a filter string for the logger namespace.
 
 ## Contribution Guidelines
 
-There are many ways to [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid.
+You can [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid Framework in these ways:
 
--   Participate in Q&A in our [GitHub Discussions](https://github.com/microsoft/FluidFramework/discussions).
--   [Submit bugs](https://github.com/microsoft/FluidFramework/issues) and help us verify fixes as they are checked in.
--   Review the [source code changes](https://github.com/microsoft/FluidFramework/pulls).
+-   Answer questions in [GitHub Discussions](https://github.com/microsoft/FluidFramework/discussions).
+-   [Submit bug reports](https://github.com/microsoft/FluidFramework/issues) and help verify fixes.
+-   Review [source code changes](https://github.com/microsoft/FluidFramework/pulls).
 -   [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
 
-Detailed instructions for working in the repo can be found in the [Wiki](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Home.md).
+For detailed instructions, read the [repo documentation](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Home.md).
 
-This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
-For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+This project follows the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
+For more information, read the [Code of Conduct frequently asked questions](https://opensource.microsoft.com/codeofconduct/faq/).
+For questions or comments, contact [opencode@microsoft.com](mailto:opencode@microsoft.com).
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
 Use of these trademarks or logos must follow Microsoft’s [Trademark & Brand Guidelines](https://www.microsoft.com/trademarks).
@@ -113,13 +114,9 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 
 ## Help
 
-Not finding what you're looking for in this README?
-Check out [fluidframework.com](https://fluidframework.com/docs/).
+Read the [Fluid Framework documentation](https://fluidframework.com/docs/) for information about Fluid Framework concepts and APIs.
 
-Still not finding what you're looking for?
-Please [file an issue](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Contributing/Submitting-Bugs-and-Feature-Requests.md).
-
-Thank you!
+To request information that the documentation does not contain, [create an issue](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Contributing/Submitting-Bugs-and-Feature-Requests.md).
 
 ## Trademark
 

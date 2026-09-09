@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { FluidIterableIterator } from "@fluidframework/core-interfaces";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -140,7 +141,7 @@ export class PendingLocalStateStore<TKey> {
 	/**
 	 * Returns an iterator over [key, serializedState] pairs.
 	 */
-	entries(): Iterator<[TKey, string]> {
+	entries(): FluidIterableIterator<[TKey, string]> {
 		const iterator = this.#pendingStates.entries();
 		return {
 			next: (): IteratorResult<[TKey, string]> => {
@@ -151,20 +152,23 @@ export class PendingLocalStateStore<TKey> {
 				}
 				return { done, value: [value[0], JSON.stringify(value[1])] };
 			},
+			[Symbol.iterator](): FluidIterableIterator<[TKey, string]> {
+				return this;
+			},
 		};
 	}
 
 	/**
 	 * Returns an iterator over the stored keys.
 	 */
-	keys(): IterableIterator<TKey> {
+	keys(): FluidIterableIterator<TKey> {
 		return this.#pendingStates.keys();
 	}
 
 	/**
 	 * Makes the store iterable with `for...of` loops.
 	 */
-	[Symbol.iterator](): Iterator<[TKey, string]> {
+	[Symbol.iterator](): FluidIterableIterator<[TKey, string]> {
 		return this.entries();
 	}
 }

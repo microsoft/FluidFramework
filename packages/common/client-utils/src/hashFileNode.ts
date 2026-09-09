@@ -20,9 +20,13 @@ import type { IsoBuffer } from "./bufferNode.js";
  * @returns The hash of the content of the buffer.
  *
  * @internal
+ *
+ * @privateRemarks
+ * This function does not strictly require `<ArrayBuffer>` backing, but it is typed
+ * that way to match the browser implementation, which does require `<ArrayBuffer>` backing.
  */
 export async function hashFile(
-	file: IsoBuffer,
+	file: IsoBuffer<ArrayBuffer>,
 	algorithm: "SHA-1" | "SHA-256" = "SHA-1",
 	hashEncoding: "hex" | "base64" = "hex",
 ): Promise<string> {
@@ -50,8 +54,12 @@ export async function hashFile(
  * @returns The sha1 hash of the content of the buffer with the `blob` prefix and size
  *
  * @internal
+ *
+ * @privateRemarks
+ * This function does not strictly require `<ArrayBuffer>` backing, but it is typed
+ * that way to match the browser implementation, which does require `<ArrayBuffer>` backing.
  */
-export async function gitHashFile(file: IsoBuffer): Promise<string> {
+export async function gitHashFile(file: IsoBuffer<ArrayBuffer>): Promise<string> {
 	const size = file.byteLength;
 	// eslint-disable-next-line unicorn/prefer-code-point
 	const filePrefix = `blob ${size.toString()}${String.fromCharCode(0)}`;

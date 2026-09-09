@@ -15,6 +15,8 @@ import {
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedDirectory, type IDirectory } from "@fluidframework/map/internal";
 
+import { defaultTestOldestSupportedClient } from "@fluidframework/test-utils/internal";
+
 import { runtimeOptions } from "./utils.js";
 
 /**
@@ -222,6 +224,7 @@ export const RootDOFactory = new DataObjectFactory({
 
 export const oldRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 	defaultFactory: RootDOFactory,
+	oldestSupportedClient: defaultTestOldestSupportedClient,
 	registryEntries: [RootDOFactory.registryEntry],
 	runtimeOptions,
 });

@@ -87,6 +87,9 @@
 			"Interface_IWebSocket": {
 				"forwardCompat": false
 			},
+			"Interface_IOrdererManager": {
+				"forwardCompat": false
+			},
 			"Interface_ITenantManager": {
 				"forwardCompat": false
 			}

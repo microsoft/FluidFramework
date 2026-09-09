@@ -7,10 +7,13 @@ import type { AzureMember, IAzureAudience } from "@fluidframework/azure-client";
 import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import type { IMember } from "@fluidframework/fluid-static";
 import type { ISharedMap, IValueChanged } from "@fluidframework/map/legacy";
+import { featureVersion } from "fluid-framework/alpha";
 
-// `pkgVersion` is this package's own version, which tracks the Fluid Framework release group; we use it as
-// `oldestSupportedClient` in tests so they exercise the latest defaults rather than a hardcoded version.
-export { pkgVersion as currentVersion } from "../packageVersion.js";
+// `pkgVersion` is this package's own version, which tracks the Fluid Framework release group; we use its
+// feature version as `oldestSupportedClient` in tests so they exercise the latest defaults rather than a hardcoded version.
+import { pkgVersion } from "../packageVersion.js";
+
+export const currentVersion = featureVersion(pkgVersion);
 
 export const waitForMember = async (
 	audience: IAzureAudience,

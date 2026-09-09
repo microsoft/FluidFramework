@@ -5,7 +5,6 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IEventProvider } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/legacy";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/legacy";
 import type {
 	IChannelFactory,
@@ -42,7 +41,9 @@ class DiceRoller implements IDiceRoller {
 
 	public get value(): number {
 		const value: unknown = this.map.get(diceValueKey);
-		assert(typeof value === "number", "Bad dice value");
+		if (typeof value !== "number") {
+			throw new TypeError("Bad dice value");
+		}
 		return value;
 	}
 

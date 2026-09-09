@@ -772,7 +772,6 @@ describe("SchemaFactory Recursive methods", () => {
 				}
 
 				{
-					// @ts-expect-error Objects take a record type with fields, not a field directly.
 					class Test extends schemaFactory.objectRecursive(
 						"Test",
 						// @ts-expect-error Objects take a record type with fields, not a field directly.
@@ -783,7 +782,6 @@ describe("SchemaFactory Recursive methods", () => {
 				}
 
 				{
-					// @ts-expect-error 'MapRecursive' is referenced directly or indirectly in its own base expression.
 					class MapRecursive extends schemaFactory.mapRecursive(
 						"Test",
 						// @ts-expect-error Maps accept allowed types, not field schema.
@@ -1528,7 +1526,7 @@ describe("SchemaFactory Recursive methods", () => {
 	 * They also have poorer error quality and IntelliSense (for example the compiler and IntelliSense disagree on which are valid).
 	 *
 	 * These tests are all about the typing.
-	 * They mostly check which cases TypeScript gives "referenced directly or indirectly in its own base expression" errors.
+	 * They document recursive schema patterns whose compiler support has changed over time.
 	 */
 	describe("Use of recursive schema without explicit sub-classing", () => {
 		it("recursive with non-subclassed array", () => {
@@ -1536,7 +1534,6 @@ describe("SchemaFactory Recursive methods", () => {
 		});
 
 		it("co-recursive object with out of line non-lazy array", () => {
-			// @ts-expect-error co-recursive arrays without named subclass cause "referenced directly or indirectly in its own base expression" errors.
 			const TheArray = schemaFactory.arrayRecursive("FooList", [() => Foo]);
 			{
 				// In this case the error above does not cause ValidateRecursiveSchema to fail to compile.
@@ -1546,24 +1543,19 @@ describe("SchemaFactory Recursive methods", () => {
 				type _check = ValidateRecursiveSchema<typeof TheArray>;
 			}
 
-			// @ts-expect-error due to error above
 			class Foo extends schemaFactory.objectRecursive("Foo", {
 				fooList: TheArray,
 			}) {}
 			{
-				// @ts-expect-error due to error above
 				type _check = ValidateRecursiveSchema<typeof Foo>;
 			}
 		});
 
 		it("co-recursive object with inline array", () => {
-			// @ts-expect-error Inline co-recursive arrays without named subclass cause "referenced directly or indirectly in its own base expression" errors.
 			class Foo extends schemaFactory.objectRecursive("Foo", {
-				// @ts-expect-error due to error above
 				fooList: schemaFactory.arrayRecursive("FooList", [() => Foo]),
 			}) {}
 			{
-				// @ts-expect-error due to error above
 				type _check = ValidateRecursiveSchema<typeof Foo>;
 			}
 		});
@@ -1590,14 +1582,11 @@ describe("SchemaFactory Recursive methods", () => {
 		});
 
 		it("co-recursive map with inline array", () => {
-			// @ts-expect-error Inline non-lazy co-recursive arrays cause "referenced directly or indirectly in its own base expression" errors.
 			class Foo extends schemaFactory.mapRecursive(
 				"Foo",
-				// @ts-expect-error Implicit any due to error above
 				schemaFactory.arrayRecursive("FooList", [() => Foo]),
 			) {}
 			{
-				// @ts-expect-error due to error above
 				type _check = ValidateRecursiveSchema<typeof Foo>;
 			}
 		});
@@ -1612,14 +1601,11 @@ describe("SchemaFactory Recursive methods", () => {
 		});
 
 		it("co-recursive array with inline array", () => {
-			// @ts-expect-error Inline non-lazy co-recursive arrays cause "referenced directly or indirectly in its own base expression" errors.
 			class Foo extends schemaFactory.arrayRecursive(
 				"Foo",
-				// @ts-expect-error Implicit any due to error above
 				schemaFactory.arrayRecursive("FooList", [() => Foo]),
 			) {}
 			{
-				// @ts-expect-error due to error above
 				type _check = ValidateRecursiveSchema<typeof Foo>;
 			}
 		});

@@ -214,13 +214,13 @@ export const typeFactory: {
     object(shape: Record<string, TypeFactoryType>): TypeFactoryObject;
     record(keyType: TypeFactoryType, valueType: TypeFactoryType): TypeFactoryRecord;
     map(keyType: TypeFactoryType, valueType: TypeFactoryType): TypeFactoryMap;
-    tuple(items: readonly TypeFactoryType[], rest?: TypeFactoryType | undefined): TypeFactoryTuple;
+    tuple(items: readonly TypeFactoryType[], rest?: TypeFactoryType): TypeFactoryTuple;
     union(options: readonly TypeFactoryType[]): TypeFactoryUnion;
     intersection(types: readonly TypeFactoryType[]): TypeFactoryIntersection;
     literal(value: string | number | boolean): TypeFactoryLiteral;
     optional(innerType: TypeFactoryType): TypeFactoryOptional;
     readonly(innerType: TypeFactoryType): TypeFactoryReadonly;
-    function(parameters: readonly TypeFactoryFunctionParameter[], returnType: TypeFactoryType, restParameter?: TypeFactoryFunctionParameter | undefined): TypeFactoryFunction;
+    function(parameters: readonly TypeFactoryFunctionParameter[], returnType: TypeFactoryType, restParameter?: TypeFactoryFunctionParameter): TypeFactoryFunction;
 };
 
 // @alpha

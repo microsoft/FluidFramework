@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { test, expect, type Page } from "@playwright/test";
 import { retryWithEventualValue } from "@fluidframework/test-utils/internal";
 
-import { globals } from "../jest.config.cjs";
-
-describe("collaborativetext", () => {
-	const getValue = async (index: number, expectedValue: string) =>
+test.describe("collaborativetext", () => {
+	const getValue = async (page: Page, index: number, expectedValue: string) =>
 		retryWithEventualValue(
 			() =>
 				page.evaluate((i: number) => {
@@ -25,9 +24,9 @@ describe("collaborativetext", () => {
 			"not propagated" /* defaultValue */,
 		);
 
-	const setText = async (index: number, text: string) => {
+	const setText = async (page: Page, index: number, text: string) => {
 		return page.evaluate(
-			(i: number, t: string) => {
+			({ i, t }: { i: number; t: string }) => {
 				const divs = document.getElementsByClassName("text-area");
 				const textAreaElements = divs[i].getElementsByTagName("textarea");
 				const textarea = textAreaElements[0] as HTMLTextAreaElement;
@@ -43,42 +42,34 @@ describe("collaborativetext", () => {
 					textarea.dispatchEvent(ev);
 				}
 			},
-			index,
-			text,
+			{ i: index, t: text },
 		);
 	};
 
-	beforeAll(async () => {
-		// Wait for the page to load first before running any tests
-		// so this time isn't attributed to the first test
-		await page.goto(globals.PATH, { waitUntil: "load", timeout: 0 });
-		await page.waitForFunction(() => window["fluidStarted"]);
-	}, 45000);
-
-	beforeEach(async () => {
-		await page.goto(globals.PATH, { waitUntil: "load" });
+	test.beforeEach(async ({ page }) => {
+		await page.goto("/", { waitUntil: "load" });
 		await page.waitForFunction(() => window["fluidStarted"]);
 		await page.waitForSelector(".text-area");
 	});
 
-	it("Initial textarea is empty", async () => {
-		const ta1 = await getValue(0, "");
+	test("Initial textarea is empty", async ({ page }) => {
+		const ta1 = await getValue(page, 0, "");
 		expect(ta1).toEqual("");
 
-		const ta2 = await getValue(1, "");
+		const ta2 = await getValue(page, 1, "");
 		expect(ta2).toEqual("");
 	});
 
-	it("User1 types hello", async () => {
-		const ta1 = await getValue(0, "");
+	test("User1 types hello", async ({ page }) => {
+		const ta1 = await getValue(page, 0, "");
 		expect(ta1).toEqual("");
 
-		setText(0, "hello");
+		setText(page, 0, "hello");
 
-		const ta12 = await getValue(0, "hello");
+		const ta12 = await getValue(page, 0, "hello");
 		expect(ta12).toEqual("hello");
 
-		const ta2 = await getValue(1, "hello");
+		const ta2 = await getValue(page, 1, "hello");
 		expect(ta2).toEqual("hello");
 	});
 });

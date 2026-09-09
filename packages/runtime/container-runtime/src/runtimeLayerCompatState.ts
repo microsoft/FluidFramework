@@ -61,13 +61,14 @@ export const runtimeCompatDetailsForLoader: ILayerCompatDetails = {
 export const loaderSupportRequirementsForRuntime: ILayerCompatSupportRequirements = {
 	/**
 	 * Minimum generation that Loader must be at to be compatible with this Runtime. This is calculated
-	 * based on the LayerCompatibilityPolicyWindowMonths.RuntimeLoader value which defines how many months old can
-	 * the Loader layer be compared to the Runtime layer for them to still be considered compatible.
+	 * based on the LayerCompatibilityPolicyWindowMonths.NewRuntimeOldLoader value which defines how many months
+	 * old can the Loader layer be compared to the Runtime layer for them to still be considered compatible.
 	 * The minimum valid generation value is 0.
 	 */
 	minSupportedGeneration: Math.max(
 		0,
-		runtimeCoreCompatDetails.generation - LayerCompatibilityPolicyWindowMonths.RuntimeLoader,
+		runtimeCoreCompatDetails.generation -
+			LayerCompatibilityPolicyWindowMonths.NewRuntimeOldLoader,
 	),
 	/**
 	 * The features that the Loader must support to be compatible with Runtime.
@@ -94,14 +95,14 @@ export const runtimeCompatDetailsForDataStore: ILayerCompatDetails = {
 export const dataStoreSupportRequirementsForRuntime: ILayerCompatSupportRequirements = {
 	/**
 	 * Minimum generation that DataStore must be at to be compatible with this Runtime. This is calculated
-	 * based on the LayerCompatibilityPolicyWindowMonths.RuntimeDataStore value which defines how many months old can
-	 * the DataStore layer be compared to the Runtime layer for them to still be considered compatible.
+	 * based on the LayerCompatibilityPolicyWindowMonths.NewRuntimeOldDataStore value which defines how many months
+	 * old can the DataStore layer be compared to the Runtime layer for them to still be considered compatible.
 	 * The minimum valid generation value is 0.
 	 */
 	minSupportedGeneration: Math.max(
 		0,
 		runtimeCoreCompatDetails.generation -
-			LayerCompatibilityPolicyWindowMonths.RuntimeDataStore,
+			LayerCompatibilityPolicyWindowMonths.NewRuntimeOldDataStore,
 	),
 	/**
 	 * The features that the DataStore must support to be compatible with Runtime.
@@ -127,14 +128,17 @@ export function validateLoaderCompatibility(
 	);
 
 	validateLayerCompatibility(
-		"runtime",
-		"loader",
-		runtimeCompatDetailsForLoader,
-		loaderSupportRequirementsForRuntime,
-		maybeLoaderCompatDetailsForRuntime,
-		disposeFn,
-		mc,
-		disableStrictLoaderLayerCompatibilityCheck !== true /* strictCompatibilityCheck */,
+		/* validatingLayer */ {
+			layer: "runtime",
+			packageInfo: runtimeCoreCompatDetails,
+			compatSupportRequirements: loaderSupportRequirementsForRuntime,
+		},
+		/* targetLayer */ {
+			layer: "loader",
+			compatDetails: maybeLoaderCompatDetailsForRuntime,
+			strictCompatibilityCheck: disableStrictLoaderLayerCompatibilityCheck !== true,
+		},
+		{ disposeFn, mc },
 	);
 }
 
@@ -148,12 +152,15 @@ export function validateDatastoreCompatibility(
 	mc: MonitoringContext,
 ): void {
 	validateLayerCompatibility(
-		"runtime",
-		"dataStore",
-		runtimeCompatDetailsForDataStore,
-		dataStoreSupportRequirementsForRuntime,
-		maybeDataStoreCompatDetailsForRuntime,
-		disposeFn,
-		mc,
+		/* validatingLayer */ {
+			layer: "runtime",
+			packageInfo: runtimeCoreCompatDetails,
+			compatSupportRequirements: dataStoreSupportRequirementsForRuntime,
+		},
+		/* targetLayer */ {
+			layer: "dataStore",
+			compatDetails: maybeDataStoreCompatDetailsForRuntime,
+		},
+		{ disposeFn, mc },
 	);
 }

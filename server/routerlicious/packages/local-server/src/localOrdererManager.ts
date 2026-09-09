@@ -26,7 +26,7 @@ export class LocalOrdererManager implements IOrdererManager {
 	/**
 	 * Map of "tenantId/documentId" to the orderer for that document.
 	 */
-	private readonly ordererMap = new Map<string, Promise<IOrderer>>();
+	private readonly ordererMap = new Map<string, Promise<LocalOrderer>>();
 
 	constructor(
 		private readonly storage: IDocumentStorage,
@@ -55,8 +55,7 @@ export class LocalOrdererManager implements IOrdererManager {
 	public async hasPendingWork(): Promise<boolean> {
 		return Promise.all(this.ordererMap.values()).then((orderers) => {
 			for (const orderer of orderers) {
-				// We know that it ia LocalOrderer, break the abstraction
-				if ((orderer as LocalOrderer).hasPendingWork()) {
+				if (orderer.hasPendingWork()) {
 					return true;
 				}
 			}
@@ -65,6 +64,10 @@ export class LocalOrdererManager implements IOrdererManager {
 	}
 
 	public async getOrderer(tenantId: string, documentId: string): Promise<IOrderer> {
+		return this.getLocalOrderer(tenantId, documentId);
+	}
+
+	private getLocalOrderer(tenantId: string, documentId: string): Promise<LocalOrderer> {
 		const key = this.getOrdererMapKey(tenantId, documentId);
 
 		let orderer = this.ordererMap.get(key);
@@ -76,7 +79,20 @@ export class LocalOrdererManager implements IOrdererManager {
 		return orderer;
 	}
 
-	private async createLocalOrderer(tenantId: string, documentId: string): Promise<IOrderer> {
+	/**
+	 * Implements
+	 * {@link @fluidframework/server-services-core#IOrdererManager.getCheckpointSequenceNumber}.
+	 *
+	 */
+	public async getCheckpointSequenceNumber(
+		tenantId: string,
+		documentId: string,
+	): Promise<number | undefined> {
+		const orderer = await this.getLocalOrderer(tenantId, documentId);
+		return orderer.getCheckpointSequenceNumber();
+	}
+
+	private async createLocalOrderer(tenantId: string, documentId: string): Promise<LocalOrderer> {
 		const historian = await this.createHistorian(tenantId);
 		const gitManager = new GitManager(historian);
 		const documentRepository =

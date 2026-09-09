@@ -83,5 +83,6 @@ export {
 	type ContainerRuntimeFactoryWithDefaultDataStoreProps,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 } from "./testContainerRuntimeFactoryWithDefaultDataStore.js";
+export { defaultTestOldestSupportedClient } from "./testCompatibility.js";
 
 export { TestFluidObjectInternal } from "./testFluidObjectInternal.js";

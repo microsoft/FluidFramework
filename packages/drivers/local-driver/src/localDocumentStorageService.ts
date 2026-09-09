@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { IsoBufferEncoding } from "@fluid-internal/client-utils";
 import {
 	ArrayBufferLikeToArrayBuffer,
 	IsoBuffer,
@@ -292,7 +293,11 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 	public async readBlob(blobId: string): Promise<ArrayBufferLike> {
 		const blob = await this.manager.getBlob(blobId);
 		this.blobsShaCache.set(blob.sha, "");
-		const bufferContent = stringToBuffer(blob.content, blob.encoding);
+		// stringToBuffer has only ever reliably supported limited encodings.
+		// Despite server `IBlob.encoding` type being string, cast as one of
+		// the supported types and expect throw under browser if not.
+		// TODO: AB:#81373: Consider formalizing `IBlob.encoding` literals allowed.
+		const bufferContent = stringToBuffer(blob.content, blob.encoding as IsoBufferEncoding);
 		return bufferContent;
 	}
 

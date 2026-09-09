@@ -5,6 +5,7 @@
 		"outDir": "./dist",
 		"composite": true,
 		"types": ["mocha", "node"],
+		"exactOptionalPropertyTypes": true,
 	},
 	"include": ["src/**/*"],
 	"exclude": ["src/test/**/*"],

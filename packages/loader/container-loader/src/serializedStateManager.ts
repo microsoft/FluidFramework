@@ -76,6 +76,12 @@ export interface IPendingContainerState extends SnapshotWithBlobs {
 	 */
 	attached: true;
 	/**
+	 * Indicates that blob payloads are omitted and must be read from live storage.
+	 *
+	 * Undefined for existing and self-contained pending state.
+	 */
+	blobContentsMode?: "reference";
+	/**
 	 * Runtime-specific state that will be needed to properly rehydrate
 	 * (it's included in ContainerContext passed to instantiateRuntime)
 	 */

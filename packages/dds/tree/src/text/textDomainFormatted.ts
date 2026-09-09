@@ -14,19 +14,20 @@ import {
 	type TreeValue,
 } from "../core/index.js";
 import { currentObserver, buildNodeComparator } from "../feature-libraries/index.js";
-import { TreeAlpha, Tree as TreeStatic } from "../shared-tree/index.js";
+import { TreeAlpha, Tree as TreeStatic, TreeBeta } from "../shared-tree/index.js";
 import {
+	createArrayInsertionAnchor,
 	getInnerNode,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TreeArrayNode,
-	TreeBeta,
 	createCustomizedFluidFrameworkScopedFactory,
 	eraseSchemaDetails,
 	isObjectNodeSchema,
 	eraseSchemaDetailsSubclassable,
 } from "../simple-tree/index.js";
 import type {
+	ArrayPlaceAnchor,
 	TreeNodeSchema,
 	LazyItem,
 	ImplicitAllowedTypes,
@@ -390,7 +391,7 @@ export namespace FormattedText {
 			public onCharactersChanged(
 				callback: (ops: readonly PlainText.TextOp[] | undefined) => void,
 			): () => void {
-				return TreeAlpha.on(this.content, "nodeChanged", ({ delta }) =>
+				return TreeBeta.on(this.content, "nodeChanged", ({ delta }) =>
 					processCharactersChangedDelta(
 						delta,
 						(index) => this.getAtomCharacterAt(index),
@@ -399,10 +400,14 @@ export namespace FormattedText {
 				);
 			}
 
+			public createInsertionAnchor(index: number): ArrayPlaceAnchor {
+				return createArrayInsertionAnchor(this.content, index);
+			}
+
 			public onContentChanged(
 				callback: (ops: readonly PlainText.TextOp[] | undefined) => void,
 			): () => void {
-				return TreeAlpha.on(this.content, "treeChanged", ({ delta }) =>
+				return TreeBeta.on(this.content, "treeChanged", ({ delta }) =>
 					processCharactersChangedDelta(
 						delta,
 						(index) => this.getAtomCharacterAt(index),

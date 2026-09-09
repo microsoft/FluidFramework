@@ -17,7 +17,7 @@ cd packages/dds/tree && pnpm run generate:entrypoint-sources
 This script writes to both `src/entrypoints/*.ts` and `lib/entrypoints/*.d.ts`. The `lib/` copy has wrong import paths and must be fixed by rebuilding immediately after:
 
 ```bash
-pnpm run build:esnext
+pnpm run build:esm
 ```
 
 Verify the fix: `grep "from " lib/entrypoints/public.d.ts` should show `../index.js`, not `./index.js`. Then stage the `src/entrypoints/` changes and proceed to `build:api-reports`.

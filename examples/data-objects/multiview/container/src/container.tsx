@@ -6,6 +6,7 @@
 import {
 	type IFluidMountableViewEntryPoint,
 	MountableView,
+	exampleOldestSupportedClient,
 	getDataStoreEntryPoint,
 } from "@fluid-example/example-utils";
 import { Constellation } from "@fluid-example/multiview-constellation-model";
@@ -48,6 +49,7 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
 		// and add our default view request handler.
 		super({
 			registryEntries,
+			oldestSupportedClient: exampleOldestSupportedClient,
 			provideEntryPoint: async (
 				containerRuntime: IContainerRuntime,
 			): Promise<IFluidMountableViewEntryPoint> => {

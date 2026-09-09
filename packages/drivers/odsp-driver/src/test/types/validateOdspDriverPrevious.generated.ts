@@ -240,6 +240,7 @@ declare type current_as_old_for_Function_getLocatorFromOdspUrl = requireAssignab
  * typeValidation.broken:
  * "Function_getOdspPointInTimeDocumentServiceFactory": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Function_getOdspPointInTimeDocumentServiceFactory = requireAssignableTo<TypeOnly<typeof current.getOdspPointInTimeDocumentServiceFactory>, TypeOnly<typeof old.getOdspPointInTimeDocumentServiceFactory>>
 
 /*
