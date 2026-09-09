@@ -23,9 +23,7 @@ const generatedContentNotice =
  * @returns An HTML or MDX comment for the selected format.
  */
 function formatComment(format: DocumentFormat, value: string): string {
-	return format === "mdx"
-		? `{/* ${value} */}`
-		: `<!-- ${value} -->`;
+	return format === "mdx" ? `{/* ${value} */}` : `<!-- ${value} -->`;
 }
 
 /**
