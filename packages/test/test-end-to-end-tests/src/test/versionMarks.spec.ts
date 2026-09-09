@@ -38,15 +38,22 @@ describeCompat("Version marks", "NoCompat", function (getTestObjectProvider) {
 		return { containerRuntime, sharedMap: dataObject.root };
 	};
 
-	it("resolves a mark captured after a normal edit", async () => {
+	it("resolves a pending mark after its batch is sequenced", async () => {
 		const { containerRuntime, sharedMap } = await createTestContext();
 		const sequenceNumberBeforeEdit = containerRuntime.deltaManager.lastSequenceNumber;
+		const sequencedBatches = new Map<string, number>();
+		const unsubscribe = containerRuntime.versionMarkResolver.onBatchSequenced(
+			(batchId, sequenceNumber) => {
+				sequencedBatches.set(batchId, sequenceNumber);
+			},
+		);
 
 		sharedMap.set("normalEdit", true);
 		const mark = containerRuntime.versionMarkResolver.sealAndCaptureVersionMark();
 		assert(mark.kind === "pending", "the unacknowledged edit should produce a pending mark");
 
 		await provider.ensureSynchronized();
+		unsubscribe();
 
 		const resolved = await containerRuntime.versionMarkResolver.resolve(
 			mark.batchId,
@@ -60,7 +67,38 @@ describeCompat("Version marks", "NoCompat", function (getTestObjectProvider) {
 			resolved.sequenceNumber > sequenceNumberBeforeEdit,
 			"the mark should resolve after the state captured before the edit",
 		);
+		assert.equal(
+			sequencedBatches.get(mark.batchId),
+			resolved.sequenceNumber,
+			"the live sequencing notification should identify the resolved batch",
+		);
 		assert.equal(sharedMap.get("normalEdit"), true);
+	});
+
+	it("resolves a pending pre-edit mark after entering staging mode", async () => {
+		const { containerRuntime, sharedMap } = await createTestContext();
+
+		sharedMap.set("beforeStaging", true);
+		const stageControls = containerRuntime.enterStagingMode();
+
+		const preMark = containerRuntime.versionMarkResolver.sealAndCaptureVersionMark();
+		assert(
+			preMark.kind === "pending",
+			"the unacknowledged pre-staging edit should produce a pending mark",
+		);
+
+		stageControls.commitChanges();
+		await provider.ensureSynchronized();
+
+		const resolved = await containerRuntime.versionMarkResolver.resolve(
+			preMark.batchId,
+			preMark.sequenceNumberLowerBound,
+		);
+		assert(
+			resolved.kind === "resolved",
+			"the pre-staging mark should resolve after its batch is sequenced",
+		);
+		assert.equal(sharedMap.get("beforeStaging"), true);
 	});
 
 	it("resolves a staged mark to the final staged batch", async () => {

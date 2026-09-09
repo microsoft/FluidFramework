@@ -527,7 +527,8 @@ moment tracking flips on may be missed, which is harmless: an app's own captured
   (including system/server-op filtering and abort-after-match), plus the ordering guarantee that failed inbound
   validation does not notify listeners.
 - `packages/test/test-end-to-end-tests/src/test/versionMarks.spec.ts` covers real-container capture and resolution for a
-  normal pending edit, plus multi-batch staging commit where the post mark resolves to the final staged batch.
+  normal pending edit, live `onBatchSequenced` notification, a pending pre-edit mark when staging begins with
+  unacknowledged changes, and multi-batch staging commit where the post mark resolves to the final staged batch.
 
 ## Future work
 
