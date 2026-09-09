@@ -3,9 +3,9 @@ title: Sequences
 sidebar_position: 3
 ---
 
-<!-- markdown-magic:begin {"transform":"include","path":"../../../../packages/dds/sequence/README.md","start":40,"end":531} -->
-<!-- prettier-ignore-start -->
-<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+{/* markdown-magic:begin {"transform":"include","path":"../../../../packages/dds/sequence/README.md","start":40,"end":531} */}
+{/* prettier-ignore-start */}
+{/* NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. */}
 
 The **@fluidframework/sequence** package supports distributed data structures which are list-like.
 Its main export is [SharedString](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/sequence/src/sharedString.ts), a DDS for storing and simultaneously editing a sequence of text.
@@ -51,9 +51,9 @@ sequence. However, it is possible to enumerate the segments that intersect a ran
 In this case it is important to not retain references to the segments (outside of the enumeration), and to make no
 assumptions based on the length of the segments themselves.
 
-<!-- When talking about positions in a sequence we use the terms *near*, and *far*. The nearest position in a sequence is 0,
-and the farthest position is its length. When comparing two positions the nearer position is closer to 0, and the
-farther position is closer to the length. -->
+{/* When talking about positions in a sequence we use the terms *near*, and *far*. The nearest position in a sequence is 0,
+  and the farthest position is its length. When comparing two positions the nearer position is closer to 0, and the
+  farther position is closer to the length. */}
 
 ## Using a Sequence
 
@@ -497,10 +497,10 @@ when the character is removed. When content containing endpoints is removed,
 `After` endpoints move backward and `Before` endpoints move forward to maintain their
 side value and inclusive/exclusive behavior.
 
-<!-- This line ends the content that is copied to the sequences.md README -->
+{/* This line ends the content that is copied to the sequences.md README */}
 
-<!-- prettier-ignore-end -->
-<!-- markdown-magic:end -->
+{/* prettier-ignore-end */}
+{/* markdown-magic:end */}
 
 ### Examples
 
