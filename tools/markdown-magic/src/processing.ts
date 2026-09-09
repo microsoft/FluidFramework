@@ -117,6 +117,10 @@ export async function processDocument(
 	}
 
 	if (output !== source) {
+		// Generated content can introduce active region markers, so validate the complete
+		// document before writing to preserve atomic processing behavior.
+		findGeneratedRegions(parseDocument(output, filePath));
+
 		await writeFile(filePath, output);
 	}
 	return output !== source;

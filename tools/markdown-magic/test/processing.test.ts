@@ -72,6 +72,31 @@ test("include parses Markdown into nodes before generation", async () => {
 	assert.match(output, /<!-- markdown-magic:end -->\n\nAfter\.$/);
 });
 
+test("include rejects generated regions without modifying the destination", async () => {
+	const directory = await createTempDirectory();
+	const sourcePath = path.join(directory, "source.md");
+	const destinationPath = path.join(directory, "destination.md");
+	await writeFile(
+		sourcePath,
+		[
+			'<!-- markdown-magic:begin {"transform":"help"} -->',
+			"<!-- markdown-magic:end -->",
+		].join("\n"),
+	);
+	const destination = [
+		'<!-- markdown-magic:begin {"transform":"include","path":"./source.md"} -->',
+		"Original content.",
+		"<!-- markdown-magic:end -->",
+	].join("\n");
+	await writeFile(destinationPath, destination);
+
+	await assert.rejects(
+		processDocument(destinationPath, createTransformRegistry()),
+		/Generated regions must not nest\./,
+	);
+	assert.equal(await readFile(destinationPath, "utf8"), destination);
+});
+
 test("include-code creates a code node", async () => {
 	const directory = await createTempDirectory();
 	const sourcePath = path.join(directory, "source.ts");
