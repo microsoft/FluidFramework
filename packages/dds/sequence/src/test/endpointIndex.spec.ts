@@ -161,13 +161,11 @@ describe("EndpointIndex", () => {
 		});
 	});
 
-	// EndpointIndex compares intervals using `compareEnd` alone, which is a partial order:
-	// two distinct intervals sharing an end position (and end side) compare equal. The
-	// underlying RedBlackTree treats "compares equal" as "same key", so such intervals
-	// collide on a single node. These tests describe the intended behavior and currently
-	// fail; they should be enabled alongside the fix.
-	// TODO: enable once equal-endpoint intervals are tracked individually.
-	describe.skip("with multiple intervals sharing an end position", () => {
+	// EndpointIndex orders intervals by end position alone, which is only a partial
+	// order: two distinct intervals sharing an end position (and end side) compare
+	// equal. Identity must therefore be tracked separately from ordering so that such
+	// intervals remain individually addressable.
+	describe("with multiple intervals sharing an end position", () => {
 		it("retains every interval ending at that position", () => {
 			const first = createTestInterval(1, 5);
 			const second = createTestInterval(3, 5);
