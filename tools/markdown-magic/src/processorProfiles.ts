@@ -42,7 +42,7 @@ export function createProcessor(format: DocumentFormat) {
 			// For consistency with the rest of the repo, which uses prettier for formatting.
 			// Prettier prefers `-`s for unordered list bullets.
 			bullet: "-",
-			listItemIndent: "one"
+			listItemIndent: "one",
 		})
 		.use(remarkGfm, {
 			// Use compact table delimiters to keep generated output stable.
