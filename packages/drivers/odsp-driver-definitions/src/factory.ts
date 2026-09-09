@@ -109,7 +109,7 @@ export interface HostStoragePolicy {
 	 * Custom WebSocket headers, including `User-Agent`, depend on Node.js transport support and
 	 * might not be sent by browsers.
 	 */
-	requestHeaders?: Readonly<Record<string, string>>;
+	hostProvidedRequestHeaders?: Readonly<Record<string, string>>;
 
 	/**
 	 * If set to true, tells driver to concurrently fetch snapshot from storage (SPO) and cache

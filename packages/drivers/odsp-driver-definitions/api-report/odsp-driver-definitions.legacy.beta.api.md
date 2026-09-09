@@ -21,11 +21,11 @@ export interface HostStoragePolicy {
     enableSingleRequestForShareLinkWithCreate?: boolean;
     // @deprecated (undocumented)
     fetchBinarySnapshotFormat?: boolean;
+    hostProvidedRequestHeaders?: Readonly<Record<string, string>>;
     isolateSocketCache?: boolean;
     // (undocumented)
     opsBatchSize?: number;
     opsCaching?: IOpsCachingPolicy;
-    requestHeaders?: Readonly<Record<string, string>>;
     sessionOptions?: ICollabSessionOptions;
     // (undocumented)
     snapshotOptions?: ISnapshotOptions;

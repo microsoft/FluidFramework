@@ -315,11 +315,11 @@ export class OdspDocumentServiceFactoryCore
 		protected persistedCache: IPersistedCache = new LocalPersistentCache(),
 		hostPolicy: HostStoragePolicy = {},
 	) {
-		this.requestHeaders = copyRequestHeaders(hostPolicy.requestHeaders);
+		this.requestHeaders = copyRequestHeaders(hostPolicy.hostProvidedRequestHeaders);
 		this.hostPolicy =
 			this.requestHeaders === undefined
 				? hostPolicy
-				: { ...hostPolicy, requestHeaders: this.requestHeaders };
+				: { ...hostPolicy, hostProvidedRequestHeaders: this.requestHeaders };
 		if (this.hostPolicy.isolateSocketCache === true || this.requestHeaders !== undefined) {
 			// create the key to separate the socket reuse cache
 			this.socketReferenceKeyPrefix = uuid();

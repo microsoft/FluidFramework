@@ -84,7 +84,7 @@ describe("Tests1 for snapshot fetch", () => {
 		summarizerClient: true,
 		fetchBinarySnapshotFormat: false,
 		concurrentSnapshotFetch: true,
-		requestHeaders: { "X-Agent-Id": "snapshot-agent" },
+		hostProvidedRequestHeaders: { "X-Agent-Id": "snapshot-agent" },
 	};
 
 	const resolver = new OdspDriverUrlResolver();

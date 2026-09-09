@@ -163,14 +163,14 @@ describe("OdspDocumentDeltaConnection tests", () => {
 			undefined,
 			undefined,
 			{
-				requestHeaders: firstHeaders,
+				hostProvidedRequestHeaders: firstHeaders,
 			},
 		);
 		const secondFactory = new OdspDocumentServiceFactory(
 			async () => "token",
 			undefined,
 			undefined,
-			{ requestHeaders: secondHeaders },
+			{ hostProvidedRequestHeaders: secondHeaders },
 		);
 		const prefixOf = (factory: OdspDocumentServiceFactory): string | undefined =>
 			(factory as unknown as { socketReferenceKeyPrefix?: string }).socketReferenceKeyPrefix;

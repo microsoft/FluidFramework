@@ -191,7 +191,7 @@ describe("Tests for prefetching snapshot", () => {
 				async () => "token",
 				async () => "token",
 				localCache,
-				{ ...GetHostStoragePolicyInternal(), requestHeaders: mutableHeaders },
+				{ ...GetHostStoragePolicyInternal(), hostProvidedRequestHeaders: mutableHeaders },
 			);
 			mutableHeaders["X-Agent-Id"] = "mutated-agent";
 
