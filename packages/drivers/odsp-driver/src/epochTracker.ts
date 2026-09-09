@@ -141,12 +141,12 @@ export class EpochTracker implements IPersistedFileCache {
 		sourceOrFromCache: boolean | FetchTypeInternal | "pendingState",
 		fetchType?: FetchTypeInternal,
 	): void {
-		const source =
-			typeof sourceOrFromCache === "boolean"
-				? sourceOrFromCache
-					? "cache"
-					: fetchType
-				: sourceOrFromCache;
+		const usingLegacyOverload = typeof sourceOrFromCache === "boolean";
+		const source = usingLegacyOverload
+			? sourceOrFromCache
+				? "cache"
+				: fetchType
+			: sourceOrFromCache;
 		assert(
 			source !== undefined,
 			"Fetch type is required when using the legacy setEpoch overload",
@@ -158,6 +158,10 @@ export class EpochTracker implements IPersistedFileCache {
 			eventName: "EpochLearnedFirstTime",
 			epoch,
 			source,
+			fetchType: usingLegacyOverload ? fetchType : source,
+			fromCache: usingLegacyOverload
+				? sourceOrFromCache
+				: source === "cache" || source === "pendingState",
 		});
 	}
 
