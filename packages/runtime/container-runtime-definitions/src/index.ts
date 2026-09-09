@@ -45,4 +45,4 @@ export type {
 	IVersionMarkResolver,
 	ResolveResult,
 	VersionMarkCapture,
-} from "./versionMarks.js";
+} from "@fluidframework/runtime-definitions/internal";

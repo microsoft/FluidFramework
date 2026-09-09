@@ -7,7 +7,7 @@ export type {
 	IVersionMarkResolver,
 	ResolveResult,
 	VersionMarkCapture,
-} from "@fluidframework/container-runtime-definitions/internal";
+} from "@fluidframework/runtime-definitions/internal";
 export {
 	VersionMarkResolver,
 	type VersionMarkResolverRuntimeHooks,

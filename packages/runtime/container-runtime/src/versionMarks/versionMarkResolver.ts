@@ -7,7 +7,7 @@ import type {
 	IVersionMarkResolver,
 	ResolveResult,
 	VersionMarkCapture,
-} from "@fluidframework/container-runtime-definitions/internal";
+} from "@fluidframework/runtime-definitions/internal";
 import type {
 	ISequencedDocumentMessage,
 	IStream,

@@ -25,7 +25,6 @@ export interface IContainerRuntime extends IProvideFluidDataStoreRegistry, ICont
     readonly scope: FluidObject;
     // (undocumented)
     readonly storage: IContainerStorageService;
-    readonly versionMarkResolver: IVersionMarkResolver;
 }
 
 // @beta @sealed @legacy (undocumented)
