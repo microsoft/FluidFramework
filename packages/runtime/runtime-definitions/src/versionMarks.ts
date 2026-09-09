@@ -31,12 +31,6 @@ export type ResolveResult =
 	| {
 			/**
 			 * The mark has not resolved yet but should be retained because it may become resolvable later.
-			 *
-			 * @remarks Diagnostic strings the runtime may set on `reason` (log-only, do not branch on them):
-			 *
-			 * - `awaitingSequence`: the runtime has not sequenced far enough to resolve the mark yet.
-			 * - `historicalOpsUnavailable`: the current loader does not provide the historical-op capability
-			 * needed to resolve an older mark; a later load with a capable loader may resolve it.
 			 */
 			readonly kind: "pending";
 			readonly reason?: string;
@@ -44,10 +38,6 @@ export type ResolveResult =
 	| {
 			/**
 			 * Resolution is terminal. Stop retrying and leave the mark unresolved.
-			 *
-			 * @remarks Diagnostic strings the runtime may set on `reason` (log-only, do not branch on them):
-			 *
-			 * - `historyTrimmed`: the historical ops required to resolve the mark are no longer retained.
 			 */
 			readonly kind: "unresolvable";
 			readonly reason?: string;

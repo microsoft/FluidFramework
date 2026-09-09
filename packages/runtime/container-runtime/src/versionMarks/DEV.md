@@ -90,9 +90,11 @@ are ignored until they are applied into the current session's pending queue.
   fault logs and continues rather than faulting the container.
 
 Host exposure: `ContainerRuntime` exposes a `versionMarkResolver` getter backed by the concrete
-`versionMarkResolverInternal`, and the resolver is now exposed on the `@legacy @beta` `IContainerRuntime` interface (in
-`@fluidframework/container-runtime-definitions`). An app gets it from the runtime instance passed to
-`provideEntryPoint`, or exposes it from its own entryPoint.
+`versionMarkResolverInternal`, and the resolver is exposed on the `@legacy @beta` `IContainerRuntimeBase` interface (in
+`@fluidframework/runtime-definitions`), which `IContainerRuntime` extends. It is placed on the base so a data store can
+reach it type-safely via `IFluidDataStoreContext.containerRuntime` (which is typed `IContainerRuntimeBase`), not only a
+host holding the full `IContainerRuntime`. An app gets it from the runtime instance passed to `provideEntryPoint`, from
+its data store context, or exposes it from its own entryPoint.
 
 ### Capture implementation
 
@@ -119,12 +121,14 @@ state between flushing, reading the sequence number, and reading the batch id.
 
 An app (e.g. the Loop/office-bohemia host) consumes a small `@legacy @beta` surface:
 
-- Get the resolver: `IContainerRuntime.versionMarkResolver` -> `IVersionMarkResolver`.
+- Get the resolver: `IContainerRuntimeBase.versionMarkResolver` -> `IVersionMarkResolver`. A data store reaches it via
+  `IFluidDataStoreContext.containerRuntime`, and a host via `IContainerRuntime` (which extends the base).
 - `IVersionMarkResolver` methods: `sealAndCaptureVersionMark()` -> `VersionMarkCapture` (seals the batch and returns the
   locator data atomically), `onBatchSequenced(listener)` (live promotion), `resolve(batchId, sequenceNumberLowerBound)`
   -> `ResolveResult` (load-time sweep / restore).
-- Types `IVersionMarkResolver`, `ResolveResult`, and `VersionMarkCapture` are exported from
-  `@fluidframework/container-runtime/legacy`.
+- Types `IVersionMarkResolver`, `ResolveResult`, and `VersionMarkCapture` are defined in
+  `@fluidframework/runtime-definitions` and re-exported from `@fluidframework/container-runtime/legacy`, which is where
+  consumers import them today.
 - Restore side: `loadContainerToSequenceNumber` and `ILoadContainerToSequenceNumberProps` (`@legacy @beta`) are exported
   from `@fluidframework/container-loader/legacy`, fed the `resolved` sequence number.
 - ODSP point-in-time support: `createOdspDocumentServiceFactory` accepts the implementation
@@ -156,11 +160,12 @@ Not consumed by the app (internal plumbing): `IContainerContextInternal.fetchOps
 `IHistoricalOpReader`, `VersionMarkResolverRuntimeHooks` (including `getHistoricalOpReader` and
 `createHistoricalOpUnpacker`), `inboundVersionMarkUpdate`, and `processInboundBatch`.
 
-Before promotion beyond `@legacy @beta`, move the access point off the concrete `@internal` `ContainerRuntime` class
-onto a public runtime interface (container-runtime-definitions) or the entryPoint / `FluidObject` provider pattern, and
-resolve the API-shape questions in [Future work](#future-work). The interface is primitive-typed (no `MarkLocator` or
-driver types leak). The `fetchOps` plumbing remains loader→runtime internal wiring on `IContainerContextInternal`; the
-resolver, loader helper, and ODSP factory are the host-facing touchpoints.
+The access point is exposed on the `@legacy @beta` `IContainerRuntimeBase` interface
+(`@fluidframework/runtime-definitions`) rather than the concrete `@internal` `ContainerRuntime` class, so hosts and data
+stores consume it through a supported surface. Any remaining API-shape questions are tracked in
+[Future work](#future-work). The interface is primitive-typed (no `MarkLocator` or driver types leak). The `fetchOps`
+plumbing remains loader→runtime internal wiring on `IContainerContextInternal`; the resolver, loader helper, and ODSP
+factory are the host-facing touchpoints.
 
 ## Loader-to-runtime wiring
 
@@ -687,16 +692,14 @@ proven gone. A later container load with a newer loader could resolve a mark tha
 inspect.
 
 `ResolveResult` keeps its three existing `kind` values. The `pending` and `unresolvable` members also carry an optional
-`reason?: string` with transient, log-only diagnostic context:
-
-- `pending` currently reports `awaitingSequence` or `historicalOpsUnavailable`.
-- `unresolvable` currently reports `historyTrimmed`.
+`reason?: string` with transient, log-only diagnostic context. The current set of `reason` strings is defined where the
+resolver sets them in `versionMarkResolver.ts`, and it may change over time.
 
 Hosts drive behavior from `kind` and must not branch on or persist `reason`. Keeping `reason` as a plain string allows
-new diagnostic values without creating a second discriminator; a state that requires different host behavior should be
-represented by a new `kind`. `unresolvable` remains terminal. A host using an older loader may receive
-`historicalOpsUnavailable` as the reason for `pending`, then successfully resolve the same mark after loading with a
-newer loader.
+new diagnostic values without creating a second discriminator. A state that requires different host behavior should be
+represented by a new `kind`. `unresolvable` remains terminal. For example, a host using an older loader may receive a
+`pending` result whose reason indicates historical ops are unavailable, then successfully resolve the same mark after
+loading with a newer loader.
 
 Before the changes are ready for production:
 
