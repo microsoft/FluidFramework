@@ -12,8 +12,8 @@ Credentials remain outside the configuration file and must never be committed.
   `document-inventory.json` output. Its `errors` collection must be empty.
 - Create the corresponding self-host tenant for every source tenant with
   [tenant-admin](../../tenant-admin/README.md), if it does not already exist.
-- A deployed self-hosted Fluid environment with
-  `azure/deploy.parameters.json` available locally.
+- A deployed self-hosted Fluid environment. Record its Historian endpoint,
+  subscription ID, resource group, and AKS name in the transfer configuration.
 - Azure CLI signed in to the source subscription with permission to retrieve
   keys for each source Azure Fluid Relay server:
 
@@ -27,11 +27,11 @@ Credentials remain outside the configuration file and must never be committed.
 Create a local configuration from the non-sensitive template:
 
 ```bash
-cp data-transfer.config.example.json data-transfer.config.json
-chmod 600 data-transfer.config.json
+cp parameters/data-transfer.config.example.json parameters/data-transfer.config.json
+chmod 600 parameters/data-transfer.config.json
 ```
 
-Edit `data-transfer.config.json` to replace every placeholder. Each
+Edit `parameters/data-transfer.config.json` to replace every placeholder. Each
 `sourceTenants` key must match a source tenant in the inventory. Set
 `sourceResourceGroup` and `sourceServerName` to the source Azure Fluid Relay
 server that hosts the tenant. Set each target `selfHostTenantId` in the

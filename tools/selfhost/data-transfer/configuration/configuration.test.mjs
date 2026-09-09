@@ -16,18 +16,11 @@ test("loads a complete configuration", async () => {
 			tenants: { source: { selfHostTenantId: "target", documents: ["document"] } },
 			errors: [],
 		});
-		await writeJson(directory, "deployment.json", {
-			subscriptionId: "subscription",
-			resourceGroup: "resource-group",
-			aks: { name: "aks" },
-			cosmos: { clusterName: "cosmos" },
-			storage: { accountName: "storage" },
-		});
 		await writeJson(directory, "config.json", {
 			inventoryPath: "inventory.json",
-			targetDeploymentParametersPath: "deployment.json",
 			targetNamespace: "default",
 			resultsDirectory: "results",
+			target: { historianEndpoint: "https://target.example", subscriptionId: "subscription", resourceGroup: "resource-group", aksName: "aks", contact: "owner@example.com" },
 			sourceTenants: {
 				source: {
 					sourceFluidRelayEndpoint: "https://source.fluidrelay.azure.com",
@@ -49,8 +42,7 @@ test("uses the source tenant ID when selfHostTenantId is missing", async () => {
 	const directory = await mkdtemp(path.join(os.tmpdir(), "data-transfer-config-"));
 	try {
 		await writeJson(directory, "inventory.json", { tenants: { source: { documents: ["document"] } }, errors: [] });
-		await writeJson(directory, "deployment.json", { subscriptionId: "subscription", resourceGroup: "resource-group", aks: { name: "aks" }, cosmos: { clusterName: "cosmos" }, storage: { accountName: "storage" } });
-		await writeJson(directory, "config.json", { inventoryPath: "inventory.json", targetDeploymentParametersPath: "deployment.json", targetNamespace: "default", resultsDirectory: "results", sourceTenants: { source: { sourceFluidRelayEndpoint: "https://source.fluidrelay.azure.com", sourceResourceGroup: "source-resource-group", sourceServerName: "source-server" } } });
+		await writeJson(directory, "config.json", { inventoryPath: "inventory.json", targetNamespace: "default", resultsDirectory: "results", target: { historianEndpoint: "https://target.example", subscriptionId: "subscription", resourceGroup: "resource-group", aksName: "aks", contact: "owner@example.com" }, sourceTenants: { source: { sourceFluidRelayEndpoint: "https://source.fluidrelay.azure.com", sourceResourceGroup: "source-resource-group", sourceServerName: "source-server" } } });
 
 		const result = await loadConfiguration(path.join(directory, "config.json"));
 		assert.deepEqual(result.warnings, ["Inventory tenant source has no selfHostTenantId; using the Azure Fluid Relay tenant ID"]);
@@ -63,8 +55,7 @@ test("rejects a source tenant missing from the inventory", async () => {
 	const directory = await mkdtemp(path.join(os.tmpdir(), "data-transfer-config-"));
 	try {
 		await writeJson(directory, "inventory.json", { tenants: { source: { selfHostTenantId: "target", documents: ["document"] } }, errors: [] });
-		await writeJson(directory, "deployment.json", { subscriptionId: "subscription", resourceGroup: "resource-group", aks: { name: "aks" }, cosmos: { clusterName: "cosmos" }, storage: { accountName: "storage" } });
-		await writeJson(directory, "config.json", { inventoryPath: "inventory.json", targetDeploymentParametersPath: "deployment.json", targetNamespace: "default", resultsDirectory: "results", sourceTenants: {} });
+		await writeJson(directory, "config.json", { inventoryPath: "inventory.json", targetNamespace: "default", resultsDirectory: "results", target: { historianEndpoint: "https://target.example", subscriptionId: "subscription", resourceGroup: "resource-group", aksName: "aks", contact: "owner@example.com" }, sourceTenants: {} });
 
 		await assert.rejects(loadConfiguration(path.join(directory, "config.json")), (error) => {
 			assert.ok(error instanceof ConfigurationError);

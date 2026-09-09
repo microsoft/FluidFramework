@@ -4,6 +4,7 @@
  */
 
 import { execFile } from "node:child_process";
+import path from "node:path";
 import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
@@ -67,6 +68,51 @@ export async function withSourceTenantKey2(sourceServer, operation) {
 	}
 
 	let key2 = await getSourceTenantKey2(sourceServer);
+	try {
+		return await operation(key2);
+	} finally {
+		key2 = undefined;
+	}
+}
+
+async function getTargetTenantKey2({ subscriptionId, resourceGroup, aksName, targetNamespace, selfHostTenantId }) {
+	const tenantId = requiredString(selfHostTenantId, "selfHostTenantId");
+	const selfhostRoot = path.resolve(import.meta.dirname, "..", "..");
+	const tenantAdmin = path.join(selfhostRoot, "tenant-admin", "tenant-admin.sh");
+	let output;
+	try {
+		({ stdout: output } = await execFileAsync(tenantAdmin, [
+			"--subscription", requiredString(subscriptionId, "subscriptionId"),
+			"--resource-group", requiredString(resourceGroup, "resourceGroup"),
+			"--aks-name", requiredString(aksName, "aksName"),
+			"--namespace", requiredString(targetNamespace, "targetNamespace"),
+			"get-key", tenantId, "--key", "key2",
+		], { maxBuffer: 4096 }));
+	} catch {
+		throw new CredentialError("Unable to retrieve the target tenant secondary key");
+	}
+
+	let key2;
+	try {
+		key2 = JSON.parse(output).key2;
+	} catch {
+		throw new CredentialError("Target tenant key response was invalid");
+	} finally {
+		output = undefined;
+	}
+	if (typeof key2 !== "string" || key2 === "") {
+		throw new CredentialError("Target deployment returned no secondary key");
+	}
+	return key2;
+}
+
+/** Run an operation with the target key2, then release this helper's reference. */
+export async function withTargetTenantKey2(target, operation) {
+	if (typeof operation !== "function") {
+		throw new TypeError("operation must be a function");
+	}
+
+	let key2 = await getTargetTenantKey2(target);
 	try {
 		return await operation(key2);
 	} finally {

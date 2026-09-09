@@ -25,7 +25,7 @@ dist/
 
 # AFR to self-hosted fluid data transfer
 data-transfer/inventory/document-inventory.json
-data-transfer/configuration/data-transfer.config.json
+data-transfer/configuration/parameters/data-transfer.config.json
 
 # OS
 .DS_Store

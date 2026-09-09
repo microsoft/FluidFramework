@@ -78,12 +78,12 @@ function validateInventory(inventory, config, errors, warnings) {
 	}
 }
 
-function validateTargetParameters(parameters, errors) {
-	requireString(parameters?.subscriptionId, "Target deployment subscriptionId", errors);
-	requireString(parameters?.resourceGroup, "Target deployment resourceGroup", errors);
-	requireString(parameters?.aks?.name, "Target deployment aks.name", errors);
-	requireString(parameters?.cosmos?.clusterName, "Target deployment cosmos.clusterName", errors);
-	requireString(parameters?.storage?.accountName, "Target deployment storage.accountName", errors);
+function validateTarget(target, errors) {
+	requireString(target?.historianEndpoint, "target.historianEndpoint", errors);
+	requireString(target?.subscriptionId, "target.subscriptionId", errors);
+	requireString(target?.resourceGroup, "target.resourceGroup", errors);
+	requireString(target?.aksName, "target.aksName", errors);
+	requireString(target?.contact, "target.contact", errors);
 }
 
 /** Load and validate the non-secret inputs for transfer phases. */
@@ -96,22 +96,17 @@ export async function loadConfiguration(configPath) {
 	const errors = [];
 	const warnings = [];
 	requireString(config?.inventoryPath, "inventoryPath", errors);
-	requireString(config?.targetDeploymentParametersPath, "targetDeploymentParametersPath", errors);
 	requireString(config?.targetNamespace, "targetNamespace", errors);
 	requireString(config?.resultsDirectory, "resultsDirectory", errors);
+	validateTarget(config?.target, errors);
 	if (errors.length > 0) throw new ConfigurationError(errors);
 
 	const configDirectory = path.dirname(resolvedConfigPath);
 	const inventoryPath = path.resolve(configDirectory, config.inventoryPath);
-	const targetParametersPath = path.resolve(configDirectory, config.targetDeploymentParametersPath);
-	const [inventory, targetDeploymentParameters] = await Promise.all([
-		readJson(inventoryPath, "inventory file", errors),
-		readJson(targetParametersPath, "target deployment parameters", errors),
-	]);
+	const inventory = await readJson(inventoryPath, "inventory file", errors);
 
 	if (inventory !== undefined) validateInventory(inventory, config, errors, warnings);
-	if (targetDeploymentParameters !== undefined) validateTargetParameters(targetDeploymentParameters, errors);
 	if (errors.length > 0) throw new ConfigurationError(errors);
 
-	return { config, inventory, targetDeploymentParameters, inventoryPath, targetParametersPath, warnings };
+	return { config, inventory, inventoryPath, warnings };
 }

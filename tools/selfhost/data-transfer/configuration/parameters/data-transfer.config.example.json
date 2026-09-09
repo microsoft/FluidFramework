@@ -1,0 +1,20 @@
+{
+	"inventoryPath": "../../inventory/document-inventory.json",
+	"targetNamespace": "default",
+	"resultsDirectory": "../../results",
+	"target": {
+		"historianEndpoint": "https://<target-historian-endpoint>",
+		"subscriptionId": "<target-subscription-id>",
+		"resourceGroup": "<target-resource-group>",
+		"aksName": "<target-aks-name>",
+		"contact": "<target-tenant-contact-email>"
+	},
+	"sourceTenants": {
+		"<source-fluid-tenant-id>": {
+			"selfHostTenantId": "<target-self-host-tenant-id>",
+			"sourceFluidRelayEndpoint": "https://<source-fluid-relay-server>.fluidrelay.azure.com",
+			"sourceResourceGroup": "<source-resource-group>",
+			"sourceServerName": "<source-fluid-relay-server>"
+		}
+	}
+}
