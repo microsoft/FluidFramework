@@ -14,7 +14,6 @@ import { FluidObject, IFluidLoadable, IRequest } from "@fluidframework/core-inte
 import { IFluidHandleContext, type IResponse } from "@fluidframework/core-interfaces/internal";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
-import { featureVersion } from "@fluidframework/driver-definitions/internal";
 import { ISharedDirectory } from "@fluidframework/map/internal";
 import {
 	IContainerRuntimeBase,
@@ -67,19 +66,11 @@ export function getMinVersionForCollab(
 	runtimeVersion: string,
 	runtimeVersionForLoading: string,
 ): OldestSupportedClientVersion {
-	// Represent the current package by its major/minor feature version, regardless of its patch or
-	// prerelease metadata.
-	// This discards the prerelease, ensuring that features that would be enabled in the next release are tested.
-	// This discards patch versions, which is required (due to how OldestSupportedClientVersion is defined),
-	// and is safe as lowering versions is safe from an OldestSupportedClientVersion perspective.
-	// Preserve explicitly requested versions because featureVersion would discard
-	// meaningful values such as `2.0.0-defaults` and 1.x/2.x patches.
-	const normalizedRuntimeVersion =
-		runtimeVersion === pkgVersion ? featureVersion(pkgVersion) : runtimeVersion;
-	const normalizedRuntimeVersionForLoading =
-		runtimeVersionForLoading === pkgVersion
-			? featureVersion(pkgVersion)
-			: runtimeVersionForLoading;
+	// Represent the current package and all 3.x-or-later packages by their major/minor feature
+	// versions. Active compatibility settings at those major versions require patch zero.
+	// Preserve stable 1.x/2.x patches needed when compatibility tests run older runtime packages.
+	const normalizedRuntimeVersion = normalizeRuntimeVersion(runtimeVersion);
+	const normalizedRuntimeVersionForLoading = normalizeRuntimeVersion(runtimeVersionForLoading);
 	assertValidMinVersionForCollab(normalizedRuntimeVersion);
 	assertValidMinVersionForCollab(normalizedRuntimeVersionForLoading);
 	// Use the lower of the two versions to ensure compatibility between the two runtimes.
@@ -89,14 +80,28 @@ export function getMinVersionForCollab(
 		: normalizedRuntimeVersionForLoading;
 }
 
+function normalizeRuntimeVersion(version: string): string {
+	const parsed = semver.parse(version);
+	if (parsed === null) {
+		return version;
+	}
+	return version === pkgVersion || parsed.major >= 3
+		? `${parsed.major}.${parsed.minor}.0`
+		: version;
+}
+
 /**
- * Asserts the given version is valid semver and is type OldestSupportedClientVersion.
+ * Asserts the given version is stable, valid semver and is type OldestSupportedClientVersion.
+ *
+ * @remarks
+ * Compatibility tests can exercise older runtime packages whose accepted floor predates the
+ * current `OldestSupportedClientVersion` type, so this intentionally does not apply today's floor.
  */
 function assertValidMinVersionForCollab(
 	version: string,
 ): asserts version is OldestSupportedClientVersion {
-	if (semver.valid(version) === null) {
-		throw new Error(`Runtime version must be valid semver: ${version}`);
+	if (semver.valid(version) === null || semver.prerelease(version) !== null) {
+		throw new Error(`Runtime version must be stable, valid semver: ${version}`);
 	}
 }
 

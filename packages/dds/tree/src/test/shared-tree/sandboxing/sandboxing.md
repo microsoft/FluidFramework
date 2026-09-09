@@ -16,19 +16,14 @@ Application developers can use its existing APIs and conflict resolution instead
 Use the terms "Host" and "Guest" for the two sides.
 These terms are similar to the terms for virtual machines.
 
-- Host: The SharedTree that connects to Fluid services.
-- Guest: The TreeView and its related internal components. A message protocol separates the Guest from the Host. The Guest does not share state with the Host.
+- **Host**: The SharedTree that connects to Fluid services.
+- **Guest**: The TreeView and its related internal components. A message protocol separates the Guest from the Host. The Guest does not share state with the Host.
 
 - Host-local edits: Edits on the Host that are not sequenced.
 - Guest-local edits: Edits on the Guest that the Host has not acknowledged.
 - Host-originated edits: Edits that the Host makes directly. These edits do not come from a Guest.
 
 Add new terminology decisions to this section when necessary.
-
-Some current documentation uses "sandbox" for the Guest.
-Use "Guest" because this protocol does not require a security boundary.
-
-Update the documentation and code to use the terms in this section.
 
 ## Key Assumptions
 
@@ -91,7 +86,7 @@ The simplest method is probably to copy an `ArrayBuffer`.
 
 ### Host Lifetime Extensions
 
-How the host manages the lifetime of some data must be adjusted.
+How the Host manages the lifetime of some data must be adjusted.
 The Host revision manager must retain additional branches to support the Guest.
 
 A branch-based solution should be able to address the Guest's use of revertables as well as local branches.
@@ -106,15 +101,20 @@ In other configurations, make sure that the Guest does not keep an unlimited his
 
 ### `MessagePort` and IFrame Testing
 
-The current tests pass messages by reference and therefore do not validate the actual cross-realm serialization boundary.
-Production tests should send all messages through a real `MessagePort`.
-They should also include an integration test that uses an isolated iframe.
+The Host and the Guest send runtime data changes and acknowledgments through a real `MessagePort`.
+The unit tests validate the structured-clone boundary.
+The permutation test uses a two-channel relay to control message delivery in each direction.
+
+Initialization data does not yet pass through the port.
+Complete the ID sharding and Fluid handle work before initialization uses the message protocol.
+
+Add an integration test that uses an isolated iframe.
 This test makes sure that the implementation does not depend on shared global values.
 
 ### Edge Case Unit Testing
 
 The tests should cover concurrent Host and Guest edits, delayed and interleaved messages,
-Guest reloads or disposal with messages in flight, malformed messages, and incompatible protocol versions.
+Guest reloads or disposal with messages in flight, and malformed messages.
 Handle-specific tests should cover repeated references, concurrent `get()` calls, resolution failures.
 
 Validate undo and redo operations.

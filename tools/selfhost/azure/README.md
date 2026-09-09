@@ -251,6 +251,11 @@ You can leave these alone. Every one has a working default:
   you intend to peer with.
 - **`workloadIdentity`** — the managed identity your pods use to read Key Vault. Defaults to
   `<aks-name>-workload-identity`.
+- **`aks.nodeOsUpgradeChannel`** / **`aks.upgradeChannel`** — AKS auto-upgrade channels for the
+  node OS image and the Kubernetes version. Both default to fully manual (`None` / `none`)
+  rather than Azure's own defaults, since an unattended node-image rotation with no surge
+  capacity can take an entire small node pool down near-simultaneously. Override either to opt
+  into scheduled auto-upgrades instead.
 - **`tokenService`** — an optional reference token service. It is **not** deployed by the main
   script. See [`token-service/README.md`](../token-service/README.md).
 

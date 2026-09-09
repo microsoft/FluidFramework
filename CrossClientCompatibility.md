@@ -81,7 +81,9 @@ compatibility window for a client toward the end of a Range can be up to ~24 mon
 1. **Document access enforcement**: Clients running a Fluid version older than what the document requires may be blocked from opening it, preventing data corruption or runtime errors. This applies even when only one client reads the document. See [Errors and Warnings to Monitor](#errors-and-warnings-to-monitor) for the specific error signals.
 2. **Write format and feature selection**: It automatically enables or disables features based on the specified version so clients at that version or newer can interpret the resulting data format. For example, if `oldestSupportedClient` is set to `"2.0.0"`, features like grouped batching are safely enabled because all clients at version 2.0.0 or later can interpret that format.
 
-If `oldestSupportedClient` is not explicitly set, the runtime uses a default derived from the currently supported compatibility checkpoints. Passing a value below the supported floor is not permitted — the runtime will fail to instantiate and throw a `UsageError` (see [Errors and Warnings to Monitor](#errors-and-warnings-to-monitor)). For details on the default value, see `defaultMinVersionForCollab` in [compatibilityBase.ts](./packages/runtime/runtime-utils/src/compatibilityBase.ts).
+If `oldestSupportedClient` is not explicitly set, Client 3.0 uses `"2.0.0"`. Omission and explicitly passing `"2.0.0"` therefore select the same runtime defaults and validation. Passing a value below the supported floor or a prerelease value is not permitted — the runtime will fail to instantiate and throw a `UsageError` (see [Errors and Warnings to Monitor](#errors-and-warnings-to-monitor)). For details on the default value, see `defaultMinVersionForCollab` in [compatibilityBase.ts](./packages/runtime/runtime-utils/src/compatibilityBase.ts).
+
+Client 3.0 accepts stable 2.x versions and 3.x minor checkpoints whose patch is zero. Before upgrading an application to Client 3.0, ensure every active deployment that must collaborate uses Fluid Framework 2.0.0 or later.
 
 ### What This Means for an Application
 
@@ -147,9 +149,9 @@ const runtime = await loadContainerRuntime(loadContainerRuntimeParams);
 
 `oldestSupportedClient` is a semver string representing the oldest Fluid client version that must be able to access documents written by the runtime. It automatically configures default values for runtime options and write formats to ensure compatibility with the specified version. For example, setting `oldestSupportedClient` to `"2.0.0"` enables features like grouped batching that are safe for all 2.x clients.
 
-You may also set individual runtime options via `IContainerRuntimeOptions`, but they must be consistent with your `oldestSupportedClient` value. If there is a mismatch (e.g., enabling a 2.x feature with `oldestSupportedClient: "1.0.0"`), a `UsageError` will be thrown (see [Errors and Warnings to Monitor](#errors-and-warnings-to-monitor)).
+You may also set individual runtime options via `IContainerRuntimeOptions`, but they must be consistent with your `oldestSupportedClient` value. If there is a mismatch (e.g., enabling a feature introduced in 2.40.0 with `oldestSupportedClient: "2.0.0"`), a `UsageError` will be thrown (see [Errors and Warnings to Monitor](#errors-and-warnings-to-monitor)).
 
-If `oldestSupportedClient` is not explicitly set, the runtime uses a default derived from the currently supported compatibility checkpoints (see `defaultMinVersionForCollab` in [compatibilityBase.ts](./packages/runtime/runtime-utils/src/compatibilityBase.ts)). Passing a value below the supported floor is not permitted and will throw a `UsageError`.
+If `oldestSupportedClient` is not explicitly set, Client 3.0 uses `"2.0.0"` (see `defaultMinVersionForCollab` in [compatibilityBase.ts](./packages/runtime/runtime-utils/src/compatibilityBase.ts)). Passing a value below the supported floor or a prerelease value is not permitted and will throw a `UsageError`.
 
 Setting `oldestSupportedClient` explicitly is **highly recommended**. Set it to the oldest Fluid Framework
 version your users are [saturated](#terminology) on. This will ensure:
@@ -162,9 +164,10 @@ version your users are [saturated](#terminology) on. This will ensure:
 We recommend following the below pattern to ensure cross-client compatibility. Keeping your compatibility configuration up-to-date on an ongoing basis ensures you are always within a safe compatibility window.
 
 1. Observe the distribution of Fluid versions across your application's clients. See [Observing Client Version Distribution](./FluidCompatibilityConsiderations.md#observing-client-version-distribution) for how to do this using telemetry.
-2. Update your compatibility configuration to match the oldest deployed version that your clients are
+2. Update your compatibility configuration to match the oldest active deployed version that your clients are
    [saturated](#terminology) on. In both the declarative and encapsulated models, set `oldestSupportedClient`
-   to that saturated version (e.g., `"2.10.0"`).
+   to that saturated version (e.g., `"2.10.0"`). With Client 3.0, this value and every active deployment
+   that must collaborate must be at least `"2.0.0"`.
 3. Verify that the configured compatibility checkpoint is within the supported compatibility window of the Fluid Framework version you want to upgrade to. If it is, bump your Fluid Framework dependencies and update your lock file (so a newer version isn't picked up implicitly); no further action is required. If not, wait for further saturation and return to step 1.
 4. Monitor telemetry for warnings/errors to ensure safe rollout (see [Errors and Warnings to Monitor](#errors-and-warnings-to-monitor) below). At this point any clients running a version older than the configured `oldestSupportedClient` may be blocked from accessing the document.
 

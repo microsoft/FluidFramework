@@ -819,10 +819,10 @@ export interface LoadContainerRuntimeParams {
 	 *
 	 * @privateRemarks
 	 * Used to determine the default configuration for {@link IContainerRuntimeOptionsInternal} that affect the document schema.
-	 * For example, let's say that feature `foo` was added in 2.0 which introduces a new op type. Additionally, option `bar`
-	 * was added to `IContainerRuntimeOptionsInternal` in 2.0 to enable/disable `foo` since clients prior to 2.0 would not
-	 * understand the new op type. If a customer were to set oldestSupportedClient to 2.0.0, then `bar` would be set to
-	 * enable `foo` by default. If a customer were to set oldestSupportedClient to 1.0.0, then `bar` would be set to
+	 * For example, let's say that feature `foo` was added in 2.40 which introduces a new op type. Additionally, option `bar`
+	 * was added to `IContainerRuntimeOptionsInternal` in 2.40 to enable/disable `foo` since clients prior to 2.40 would not
+	 * understand the new op type. If a customer were to set oldestSupportedClient to 2.40.0, then `bar` would be set to
+	 * enable `foo` by default. If a customer were to set oldestSupportedClient to 2.0.0, then `bar` would be set to
 	 * disable `foo` by default.
 	 */
 	oldestSupportedClient?: OldestSupportedClientVersion;
@@ -1034,8 +1034,8 @@ export class ContainerRuntime
 
 		// Some options require a minimum version of the FF runtime to operate, so the default configs will be generated
 		// based on the minVersionForCollab.
-		// For example, if minVersionForCollab is set to "1.0.0", the default configs will ensure compatibility with FF runtime
-		// 1.0.0 or later. If the minVersionForCollab is set to "2.10.0", the default values will be generated to ensure compatibility
+		// For example, if minVersionForCollab is set to "2.0.0", the default configs will ensure compatibility with FF runtime
+		// 2.0.0 or later. If the minVersionForCollab is set to "2.10.0", the default values will be generated to ensure compatibility
 		// with FF runtime 2.10.0 or later.
 		if (!isValidMinVersionForCollab(minVersionForCollab)) {
 			throw new UsageError(
@@ -1953,7 +1953,8 @@ export class ContainerRuntime
 			// Seal the current outbound batch so a just-submitted edit gets a stable batchId in the pending
 			// state before sealAndCaptureVersionMark reads it (a batchId is only assigned when flushed).
 			flushPendingBatch: () => this.flush(),
-			// Wire the container-provided op reader (if any) so resolution can read historical ops.
+			// Keep this optional while a supported older loader may not provide fetchOps. AB#81034 tracks
+			// making it required once the Runtime -> Loader compatibility window reaches generation 21.
 			getHistoricalOpReader: fetchOps ? () => ({ fetchMessages: fetchOps }) : undefined,
 			// Unpack scanned historical ops through the same pipeline the live inbound path uses, so a
 			// chunked batch's batchId (only restored after reassembly) is observed by the history scan too.

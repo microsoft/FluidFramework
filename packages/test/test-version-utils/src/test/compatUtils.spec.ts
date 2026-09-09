@@ -20,8 +20,18 @@ describe("compatUtils", () => {
 			assert.equal(getMinVersionForCollab("2.42.1", "2.43.2"), "2.42.1");
 		});
 
-		it("preserves explicitly requested 2.0.0-defaults", () => {
-			assert.equal(getMinVersionForCollab("2.42.1", "2.0.0-defaults"), "2.0.0-defaults");
+		it("normalizes explicit 3.x patch versions for feature selection", () => {
+			assert.equal(getMinVersionForCollab("3.0.1", "3.1.2"), "3.0.0");
+			assert.equal(getMinVersionForCollab("2.80.1", "3.1.2"), "2.80.1");
+		});
+
+		it("rejects explicitly requested prerelease versions", () => {
+			for (const prerelease of ["2.0.0-defaults", "2.41.0-beta.1"]) {
+				assert.throws(
+					() => getMinVersionForCollab("2.42.1", prerelease),
+					/Runtime version must be stable, valid semver/,
+				);
+			}
 		});
 	});
 });

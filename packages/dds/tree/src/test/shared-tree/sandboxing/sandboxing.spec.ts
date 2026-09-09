@@ -26,7 +26,7 @@ import {
 import {
 	extractPersistedSchema,
 	type TreeViewAlpha,
-	// eslint-disable-next-line import-x/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules -- The test requires internal Simple Tree APIs.
 } from "../../../simple-tree/api/index.js";
 import {
 	TreeViewConfiguration,
@@ -78,86 +78,194 @@ function getRevision(newChange: JsonCompatibleReadOnly) {
 	return (newChange as unknown as { revision: RevisionTag }).revision;
 }
 
+/**
+ * A serialized SharedTree change that one participant sends to the other participant.
+ */
+interface DataChangeMessage {
+	/** Identifies this message as a data-change message. */
+	readonly type: "dataChange";
+	/** The serialized SharedTree change to apply. */
+	readonly change: JsonCompatibleReadOnly;
+}
+
+/**
+ * Confirms that the receiver applied one data-change message.
+ */
+interface AcknowledgmentMessage {
+	/** Identifies this message as an acknowledgment message. */
+	readonly type: "acknowledgment";
+}
+
+/** A message that the Host and the Guest can send through their shared protocol. */
+type HostGuestMessage = DataChangeMessage | AcknowledgmentMessage;
+
+/**
+ * Validates data from a Host and Guest message channel.
+ *
+ * @param data - The message data to validate.
+ * @returns The validated protocol message.
+ * @throws An error if the data is not a valid protocol message envelope.
+ */
+function parseHostGuestMessage(data: unknown): HostGuestMessage {
+	if (typeof data !== "object" || data === null || !("type" in data)) {
+		throw new Error("Invalid Host and Guest protocol message.");
+	}
+
+	if (data.type === "acknowledgment") {
+		return data as AcknowledgmentMessage;
+	}
+
+	if (data.type === "dataChange" && "change" in data) {
+		return data as DataChangeMessage;
+	}
+
+	throw new Error("Invalid Host and Guest protocol message.");
+}
+
+/** A promise and the function that resolves it. */
 interface PromiseWithResolver {
+	/** The synchronization operation that a caller can await. */
 	readonly promise: Promise<void>;
+	/** Resolves the synchronization operation. */
 	readonly resolver: () => void;
 }
 
 /**
- * Creates a promise and a resolver for the promise.
+ * Creates a promise and the function that resolves it.
+ *
+ * @returns The promise and its resolver.
  */
 function makePromiseWithResolver(): PromiseWithResolver {
 	let resolver: undefined | (() => void);
 	const promise = new Promise<void>((resolve) => {
 		resolver = resolve;
 	});
-	assert(resolver !== undefined, "Resolver should have been assigned");
+	assert(resolver !== undefined, "Resolve function should have been assigned");
 	return { promise, resolver };
 }
 
+/**
+ * Implements the default protocol-error behavior.
+ *
+ * @param error - The protocol error to throw.
+ * @throws The specified protocol error.
+ */
+function throwProtocolError(error: Error): never {
+	throw error;
+}
+
+/**
+ * Converts a thrown value to an error that the protocol-error handler can process.
+ *
+ * @param error - The value that message processing threw.
+ * @returns The original error, or a new error that has the thrown value as its cause.
+ */
+function normalizeProtocolError(error: unknown): Error {
+	return error instanceof Error
+		? error
+		: new Error("Host and Guest protocol processing failed.", { cause: error });
+}
+
 class Host<const TSchema extends ImplicitFieldSchema> {
-	/** The main branch on the host. Is automatically updated when peer changes are received. */
+	/** The main branch on the Host. Is automatically updated when peer changes are received. */
 	public readonly main: TreeViewAlpha<TSchema>;
-	/** The local branch on the host. Always reflects the state of the sandbox (though lags behind it due to async) */
+	/** The local branch on the Host. Always reflects the state of the Guest (though lags behind it due to async) */
 	public readonly local: TreeViewAlpha<TSchema>;
 	/**
-	 * The promise and resolver for the process of sending changes to the sandbox.
-	 * When defined, the sandbox is behind the host's main branch. The promise resolves when the sandbox has caught up with the host's main branch.
-	 * When undefined, no update is in progress and the sandbox is up-to-date with the host's main branch.
+	 * The promise and resolver for the process of sending changes to the Guest.
+	 * When defined, the Guest is behind the Host's main branch. The promise resolves when the Guest has caught up with the Host's main branch.
+	 * When undefined, no update is in progress and the Guest is up-to-date with the Host's main branch.
 	 */
 	private updateInProgress?: PromiseWithResolver;
 	/**
-	 * Clone of main branch from when the last update to the sandbox was initiated.
+	 * Clone of main branch from when the last update to the Guest was initiated.
 	 */
 	private mainHeadFromLastUpdate?: TreeViewAlpha<TSchema>;
 	/**
-	 * True when the host is applying changes from the sandbox to the main branch.
+	 * True when the Host is applying changes from the Guest to the main branch.
 	 */
-	private isApplyingSandboxChanges: boolean = false;
+	private isApplyingGuestChanges: boolean = false;
 	/**
 	 * The callback to unsubscribe from main branch changes.
 	 */
 	private readonly offMainChanged: () => void;
 
+	/** Receives and routes protocol messages from the Guest. */
+	private readonly onMessage = (event: MessageEvent<unknown>): void => {
+		try {
+			const message = parseHostGuestMessage(event.data);
+			switch (message.type) {
+				case "dataChange": {
+					this.receiveChangeFromGuest(message.change);
+					break;
+				}
+				case "acknowledgment": {
+					this.receiveAckFromGuest();
+					break;
+				}
+				default: {
+					fail("Unexpected Host and Guest message type");
+				}
+			}
+		} catch (error) {
+			this.handleProtocolError(normalizeProtocolError(error));
+		}
+	};
+
+	/** Reports a protocol message that the platform cannot deserialize. */
+	private readonly onMessageError = (): void => {
+		this.handleProtocolError(new Error("The Host could not deserialize a protocol message."));
+	};
+
 	public constructor(
 		main: TreeViewAlpha<TSchema>,
-		/** The callback to send changes from the host to the sandbox. */
-		private readonly sendChangeToSandbox: (change: JsonCompatibleReadOnly) => void,
-		/** The callback to acknowledge changes from the sandbox. */
-		private readonly ackChangeFromSandbox: () => void,
+		/** The Host endpoint of the Host and Guest message channel. */
+		private readonly port: MessagePort,
+		/** Receives errors from protocol validation and message processing. */
+		private readonly handleProtocolError: (error: Error) => void = throwProtocolError,
+		/** Receives diagnostic messages from the synchronization algorithm. */
 		private readonly logger: (message: string) => void = () => {},
 	) {
 		this.main = main;
 		this.local = main.fork();
 
 		this.offMainChanged = this.main.events.on("changed", () => {
-			if (this.isApplyingSandboxChanges) {
-				// While we may need to update the sandbox after applying changes from the sandbox,
-				// we don't want to do so until we have sent an acknowledgment back to the sandbox.
+			if (this.isApplyingGuestChanges) {
+				// While we may need to update the Guest after applying changes from the Guest,
+				// we don't want to do so until we have sent an acknowledgment back to the Guest.
 			} else {
-				this.tryUpdateSandbox("after main branch changed");
+				this.tryUpdateGuest("after main branch changed");
 			}
 		});
+		this.port.addEventListener("message", this.onMessage);
+		this.port.addEventListener("messageerror", this.onMessageError);
+		this.port.start();
 	}
 
 	public dispose(): void {
+		this.port.removeEventListener("message", this.onMessage);
+		this.port.removeEventListener("messageerror", this.onMessageError);
+		this.port.close();
+		this.updateInProgress = undefined;
 		this.offMainChanged();
+		this.mainHeadFromLastUpdate?.dispose();
+		this.mainHeadFromLastUpdate = undefined;
 		this.local.dispose();
 		this.main.dispose();
 	}
 
 	/**
-	 * Informs the host of a new change made on the sandbox.
-	 * This method synchronously applies the change to the host's local and main branches
-	 * then asynchronously attempts to update the sandbox if need be.
+	 * Informs the Host of a new change made on the Guest.
+	 * This method synchronously applies the change to the Host's local and main branches
+	 * then asynchronously attempts to update the Guest if need be.
 	 */
-	public receiveChangeFromSandbox(change: JsonCompatibleReadOnly): void {
-		this.logger(`Host: received change [${getRevision(change)}] from sandbox`);
+	private receiveChangeFromGuest(change: JsonCompatibleReadOnly): void {
+		this.logger(`Host: received change [${getRevision(change)}] from Guest`);
 		if (this.mainHeadFromLastUpdate !== undefined) {
-			// There is an update in progress but the sandbox has authored and sent a new change before applying that update.
-			// This means that by the time the sandbox processes the update, that update will be out-of-date
-			// (because it does not take into account this new change) and will be rejected by the sandbox.
-			// A new update will be sent to the sandbox after the new change is taken into account,
+			// There is an update in progress but the Guest has authored and sent a new change before applying that update.
+			// This means that by the time the Guest processes the update, that update will be out-of-date
+			// (because it does not take into account this new change) and will be rejected by the Guest.
+			// A new update will be sent to the Guest after the new change is taken into account,
 			// and that update will be based on the updated main head that includes the new change.
 			// We can therefore stop tracking the head of the main branch from when the last update was initiated.
 			this.logger(
@@ -168,31 +276,34 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 		}
 		this.local.applyChange(change);
 		this.logger(
-			`Host:   merging changes from sandbox: ${getMissingCommits(this.main, this.local)}`,
+			`Host:   merging changes from Guest: ${getMissingCommits(this.main, this.local)}`,
 		);
-		this.isApplyingSandboxChanges = true;
-		this.main.merge(this.local, false);
-		this.isApplyingSandboxChanges = false;
-		this.ackChangeFromSandbox();
-		this.tryUpdateSandbox("after receiving change from sandbox");
+		this.isApplyingGuestChanges = true;
+		try {
+			this.main.merge(this.local, false);
+		} finally {
+			this.isApplyingGuestChanges = false;
+		}
+		this.port.postMessage({ type: "acknowledgment" } satisfies AcknowledgmentMessage);
+		this.tryUpdateGuest("after receiving change from Guest");
 	}
 
 	/**
-	 * Attempts to send changes to the sandbox if the sandbox is behind the host's main branch.
-	 * If the sandbox is already up-to-date with the host's main branch,
+	 * Attempts to send changes to the Guest if the Guest is behind the Host's main branch.
+	 * If the Guest is already up-to-date with the Host's main branch,
 	 * or if update is already in progress, then this method has no effect beyond logging.
 	 *
 	 * @remarks
-	 * Updating the sandbox is asynchronous, so the sandbox may still be behind the host's main branch after this method returns.
-	 * See {@link updateSandboxPromise} for a promise that resolves when the sandbox is fully up-to-date with the host's main branch.
+	 * Updating the Guest is asynchronous, so the Guest may still be behind the Host's main branch after this method returns.
+	 * See {@link updateGuestPromise} for a promise that resolves when the Guest is fully up-to-date with the Host's main branch.
 	 *
-	 * @param prompt - A string to include in the log message to indicate why the sandbox update is being considered.
+	 * @param prompt - A string to include in the log message to indicate why the Guest update is being considered.
 	 */
-	private tryUpdateSandbox(prompt: string): void {
+	private tryUpdateGuest(prompt: string): void {
 		this.logger(`Host: considering sync ${prompt}...`);
 		if (this.local.isMissingEditsFrom(this.main)) {
 			this.logger(
-				`Host:   detected changes that need to be reflected in sandbox ${getMissingCommits(this.local, this.main)}`,
+				`Host:   detected changes that need to be reflected in Guest ${getMissingCommits(this.local, this.main)}`,
 			);
 			if (this.mainHeadFromLastUpdate !== undefined) {
 				this.logger(
@@ -214,11 +325,14 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 				update !== undefined,
 				"Expected update to be defined since local is missing edits from main",
 			);
-			this.logger("Host:   sending update to sandbox");
-			this.sendChangeToSandbox(update);
+			this.logger("Host:   sending update to Guest");
+			this.port.postMessage({
+				type: "dataChange",
+				change: update,
+			} satisfies DataChangeMessage);
 		} else {
-			this.logger("Host:   no changes that need to be reflected in sandbox");
-			// The sandbox is now caught up with the host's main branch
+			this.logger("Host:   no changes that need to be reflected in Guest");
+			// The Guest is now caught up with the Host's main branch
 			if (this.updateInProgress !== undefined) {
 				this.logger("Host:   resolving update promise");
 				const resolver = this.updateInProgress.resolver;
@@ -229,51 +343,51 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 	}
 
 	/**
-	 * Informs the host that the sandbox has acknowledged a change that the host has sent.
-	 * This allows the host to reflect the acknowledged change on the local branch.
-	 * This may also trigger the host to send new changes to the sandbox if the sandbox is currently behind the host's main branch.
+	 * Informs the Host that the Guest has acknowledged a change that the Host has sent.
+	 * This allows the Host to reflect the acknowledged change on the local branch.
+	 * This may also trigger the Host to send new changes to the Guest if the Guest is currently behind the Host's main branch.
 	 */
-	public receiveAckFromSandbox(): void {
+	private receiveAckFromGuest(): void {
 		assert(this.updateInProgress !== undefined, "Expected update to be in progress");
 		assert(
 			this.mainHeadFromLastUpdate !== undefined,
 			"Expected main head from last update to be defined",
 		);
 		this.logger(
-			`Host: received ack of update from sandbox for ${getMissingCommits(this.local, this.mainHeadFromLastUpdate)}`,
+			`Host: received ack of update from Guest for ${getMissingCommits(this.local, this.mainHeadFromLastUpdate)}`,
 		);
 		// Reflect the acknowledged update on the local branch
 		this.local.rebaseOnto(this.mainHeadFromLastUpdate);
 		this.mainHeadFromLastUpdate.dispose();
 		this.mainHeadFromLastUpdate = undefined;
 		// New changes could have come in since the update was sent,
-		// so we try to sync again to ensure the sandbox is fully up-to-date.
-		this.tryUpdateSandbox("after receiving ack of update");
+		// so we try to sync again to ensure the Guest is fully up-to-date.
+		this.tryUpdateGuest("after receiving ack of update");
 	}
 
 	/**
-	 * Returns a promise that resolves when all changes know to the host have been reflected in the sandbox,
-	 * or undefined if all such changes have already been reflected on the sandbox.
+	 * Returns a promise that resolves when all changes known to the Host have been reflected in the Guest,
+	 * or undefined if all such changes have already been reflected on the Guest.
 	 *
 	 * If new changes are received while a promise is already in progress,
-	 * the existing promise will only resolve once all sandbox-bound changes (including the new ones) have been reflected in the sandbox.
+	 * the existing promise will only resolve once all Guest-bound changes (including the new ones) have been reflected in the Guest.
 	 * This means that there's no need to call this function again after receiving new changes if the previous promise is still pending.
 	 */
-	public get updateSandboxPromise(): Promise<void> | undefined {
+	public get updateGuestPromise(): Promise<void> | undefined {
 		return this.updateInProgress?.promise;
 	}
 }
 
-class Sandbox<const TSchema extends ImplicitFieldSchema> {
-	/** The independent view on the sandbox. */
+class Guest<const TSchema extends ImplicitFieldSchema> {
+	/** The independent view on the Guest. */
 	public readonly view: TreeViewAlpha<TSchema>;
-	/** The number of local changes that have been made in the sandbox but not yet reflected on the host. */
+	/** The number of local changes that have been made in the Guest but not yet reflected on the Host. */
 	private inFlight: number = 0;
 	/**
-	 * The promise and resolver for the process of sending changes to the host.
-	 * When defined, the host has not yet acknowledged the sandbox changes.
-	 * The promise resolves when the host acknowledges the sandbox changes.
-	 * When undefined, the host is up-to-date with the sandbox.
+	 * The promise and resolver for the process of sending changes to the Host.
+	 * When defined, the Host has not yet acknowledged the Guest changes.
+	 * The promise resolves when the Host acknowledges the Guest changes.
+	 * When undefined, the Host is up-to-date with the Guest.
 	 */
 	private pushInProgress?: PromiseWithResolver;
 	/**
@@ -281,18 +395,46 @@ class Sandbox<const TSchema extends ImplicitFieldSchema> {
 	 */
 	private readonly offViewChanged: () => void;
 	/**
-	 * True when the sandbox is applying changes from the host.
+	 * True when the Guest is applying changes from the Host.
 	 */
 	private isApplyingChangesFromHost: boolean = false;
+
+	/** Receives and routes protocol messages from the Host. */
+	private readonly onMessage = (event: MessageEvent<unknown>): void => {
+		try {
+			const message = parseHostGuestMessage(event.data);
+			switch (message.type) {
+				case "dataChange": {
+					this.receiveChangeFromHost(message.change);
+					break;
+				}
+				case "acknowledgment": {
+					this.receiveAckFromHost();
+					break;
+				}
+				default: {
+					fail("Unexpected Host and Guest message type");
+				}
+			}
+		} catch (error) {
+			this.handleProtocolError(normalizeProtocolError(error));
+		}
+	};
+
+	/** Reports a protocol message that the platform cannot deserialize. */
+	private readonly onMessageError = (): void => {
+		this.handleProtocolError(new Error("The Guest could not deserialize a protocol message."));
+	};
 
 	public constructor(
 		config: TreeViewConfiguration<TSchema>,
 		options: ForestOptions & ICodecOptions,
 		content: ViewContent,
-		/** The callback to send changes from to the host. */
-		sendChangeToHost: (change: JsonCompatibleReadOnly) => void,
-		/** The callback to send acknowledgements of changes received from the host. */
-		private readonly ackChangeFromHost: () => void,
+		/** The Guest endpoint of the Host and Guest message channel. */
+		private readonly port: MessagePort,
+		/** Receives errors from protocol validation and message processing. */
+		private readonly handleProtocolError: (error: Error) => void = throwProtocolError,
+		/** Receives diagnostic messages from the synchronization algorithm. */
 		private readonly logger: (message: string) => void = () => {},
 	) {
 		this.view = independentInitializedView(config, options, content);
@@ -300,73 +442,86 @@ class Sandbox<const TSchema extends ImplicitFieldSchema> {
 			if (metadata.isLocal && !this.isApplyingChangesFromHost) {
 				const newChange = metadata.getChange();
 				this.logger(
-					`Sand: new change [${getRevision(newChange)}] (inFlight:${this.inFlight}->${this.inFlight + 1})`,
+					`Guest: new change [${getRevision(newChange)}] (inFlight:${this.inFlight}->${this.inFlight + 1})`,
 				);
 				if (this.pushInProgress === undefined) {
-					this.logger("Sand:   no pre-existing push in progress. Creating new push promise.");
+					this.logger("Guest:   no pre-existing push in progress. Creating new push promise.");
 					this.pushInProgress = makePromiseWithResolver();
 				} else {
-					this.logger("Sand:   Reusing existing push promise.");
+					this.logger("Guest:   Reusing existing push promise.");
 				}
 				this.inFlight += 1;
-				sendChangeToHost(newChange);
+				this.port.postMessage({
+					type: "dataChange",
+					change: newChange,
+				} satisfies DataChangeMessage);
 			}
 		});
+		this.port.addEventListener("message", this.onMessage);
+		this.port.addEventListener("messageerror", this.onMessageError);
+		this.port.start();
 	}
 
 	public dispose(): void {
+		this.port.removeEventListener("message", this.onMessage);
+		this.port.removeEventListener("messageerror", this.onMessageError);
+		this.port.close();
+		this.pushInProgress = undefined;
 		this.offViewChanged();
 		this.view.dispose();
 	}
 
 	/**
-	 * Attempts to apply a change from the host.
-	 * The change is ignored if there are local changes that have not yet been reflected on the host.
+	 * Attempts to apply a change from the Host.
+	 * The change is ignored if there are local changes that have not yet been reflected on the Host.
 	 * The `ackChangeFromHost` callback will be invoked iff the update is applied.
 	 * @param change - The change to apply.
 	 */
-	public receiveChangeFromHost(change: JsonCompatibleReadOnly): void {
+	private receiveChangeFromHost(change: JsonCompatibleReadOnly): void {
 		if (this.inFlight > 0) {
-			// There are local changes that have not yet been reflected on the host,
-			// so this change is not applicable to the current state of the sandbox.
-			// We ignore it (another will come once the host has caught up to the sandbox).
-			this.logger(`Sand: ignoring update from host (inFlight=${this.inFlight})`);
+			// There are local changes that have not yet been reflected on the Host,
+			// so this change is not applicable to the current state of the Guest.
+			// We ignore it (another will come once the Host has caught up to the Guest).
+			this.logger(`Guest: ignoring update from Host (inFlight=${this.inFlight})`);
 			return;
 		}
 		this.isApplyingChangesFromHost = true;
-		this.view.applyChange(change);
-		this.isApplyingChangesFromHost = false;
-		this.logger("Sand: applied update from host");
-		this.ackChangeFromHost();
+		try {
+			this.view.applyChange(change);
+		} finally {
+			this.isApplyingChangesFromHost = false;
+		}
+		this.logger("Guest: applied update from Host");
+		this.port.postMessage({ type: "acknowledgment" } satisfies AcknowledgmentMessage);
 	}
 
 	/**
-	 * Must be called when the host acknowledges a new local change.
+	 * Must be called when the Host acknowledges a new local change.
 	 */
-	public receiveAckFromHost(): void {
-		assert(this.inFlight > 0, "Unexpectedly received ack from host");
-		this.logger(`Sand: local change acked (inFlight:${this.inFlight}->${this.inFlight - 1})`);
+	private receiveAckFromHost(): void {
+		assert(this.inFlight > 0, "Unexpectedly received ack from Host");
+		this.logger(`Guest: local change acked (inFlight:${this.inFlight}->${this.inFlight - 1})`);
 		this.inFlight -= 1;
 
 		if (this.inFlight === 0) {
-			// The host has now caught up with all local changes
+			// The Host has now caught up with all local changes
 			assert(
 				this.pushInProgress !== undefined,
 				"Missing push promise despite in-flight changes",
 			);
 			const resolver = this.pushInProgress.resolver;
 			this.pushInProgress = undefined;
-			this.logger(`Sand:   all my changes were acked. Resolving push promise.`);
+			this.logger(`Guest:   all my changes were acked. Resolving push promise.`);
 			resolver();
 		}
 	}
 
 	/**
-	 * Returns a promise that resolves when all changes made on the sandbox have been acknowledged by the host.
+	 * Returns a promise that resolves when all changes made on the Guest have been acknowledged by the Host.
 	 * Undefined if there are no such changes in flight.
 	 *
 	 * If new local changes are made while a promise is already in progress,
-	 * the existing promise will only resolve once all local changes (including the new ones) have been reflected on the host.
+	 * the existing promise will only resolve once all local changes (including the new ones) have been reflected on the Host.
 	 * This means that there's no need to call this function again after making new local changes if the previous promise is still pending.
 	 */
 	public get updateHostPromise(): Promise<void> | undefined {
@@ -374,71 +529,122 @@ class Sandbox<const TSchema extends ImplicitFieldSchema> {
 	}
 }
 
-describe("Host and Sandbox Demo", () => {
+describe("Host and Guest message protocol", () => {
+	it("accepts data changes and acknowledgments", () => {
+		const dataChange: DataChangeMessage = { type: "dataChange", change: { value: 1 } };
+		const acknowledgment: AcknowledgmentMessage = { type: "acknowledgment" };
+
+		strict.equal(parseHostGuestMessage(dataChange), dataChange);
+		strict.equal(parseHostGuestMessage(acknowledgment), acknowledgment);
+	});
+
+	it("rejects invalid message envelopes", () => {
+		const invalidMessages: unknown[] = [
+			null,
+			"dataChange",
+			{},
+			{ type: "unknown" },
+			{ type: "dataChange" },
+		];
+
+		for (const message of invalidMessages) {
+			strict.throws(
+				() => parseHostGuestMessage(message),
+				/Invalid Host and Guest protocol message/,
+			);
+		}
+	});
+});
+
+describe("Host and Guest Demo", () => {
 	/**
-	 * The set of functions that are used to emulate communications between the host and sandbox.
+	 * The ports and test controls for one Host and Guest session.
 	 */
-	interface InteropFunctions {
-		readonly sendChangeFromHostToSandbox: (update: JsonCompatibleReadOnly) => void;
-		readonly sendChangeFromSandboxToHost: (change: JsonCompatibleReadOnly) => void;
-		readonly sendAckOfHostBoundChangeFromHostToSandbox: () => void;
-		readonly sendAckOfSandboxBoundChangeFromSandboxToHost: () => void;
+	interface SessionPorts<TInterop> {
+		/** The port that the Host owns. */
+		readonly hostPort: MessagePort;
+		/** The port that the Guest owns. */
+		readonly guestPort: MessagePort;
+		/** The controls that the test uses to manage message delivery. */
+		readonly interop: TInterop;
+		/** Releases transport resources that the Host and the Guest do not own. */
+		dispose(): void;
+	}
+
+	/** A function that builds the ports and test controls for one session. */
+	type SessionPortsBuilder<TInterop> = () => SessionPorts<TInterop>;
+
+	/**
+	 * Builds a direct channel between the Host and the Guest.
+	 */
+	function buildDirectSessionPorts(): SessionPorts<undefined> {
+		const channel = new MessageChannel();
+		return {
+			hostPort: channel.port1,
+			guestPort: channel.port2,
+			interop: undefined,
+			dispose: () => {},
+		};
+	}
+
+	/** Ports that let a test send messages to each participant independently. */
+	interface IsolatedPortControls {
+		/** Sends a test message to the Host. */
+		readonly sendToHost: MessagePort;
+		/** Sends a test message to the Guest. */
+		readonly sendToGuest: MessagePort;
 	}
 
 	/**
-	 * A function that builds interop functions given getters for the host and sandbox.
+	 * Builds separate channels that let a test send messages to each participant.
 	 */
-	type InteropFunctionsBuilder<T extends InteropFunctions> = (
-		getHost: () => Host<typeof StringArray>,
-		getSandbox: () => Sandbox<typeof StringArray>,
-	) => T;
-
-	/**
-	 * Builds interop functions that use setTimeout to simulate async communication between the host and sandbox.
-	 * @param getHost - A function that returns the host. Used to avoid circular dependencies when building the interop functions.
-	 * @param getSandbox - A function that returns the sandbox. Used to avoid circular dependencies when building the interop functions.
-	 * @returns An object containing the interop functions.
-	 */
-	function buildTimeoutInterop(
-		getHost: () => Host<typeof StringArray>,
-		getSandbox: () => Sandbox<typeof StringArray>,
-	): InteropFunctions {
+	function buildIsolatedSessionPorts(): SessionPorts<IsolatedPortControls> {
+		const hostChannel = new MessageChannel();
+		const guestChannel = new MessageChannel();
 		return {
-			sendChangeFromHostToSandbox: (update: JsonCompatibleReadOnly): void => {
-				setTimeout(() => getSandbox().receiveChangeFromHost(update));
+			hostPort: hostChannel.port1,
+			guestPort: guestChannel.port1,
+			interop: {
+				sendToHost: hostChannel.port2,
+				sendToGuest: guestChannel.port2,
 			},
-			sendChangeFromSandboxToHost: (change: JsonCompatibleReadOnly): void => {
-				setTimeout(() => getHost().receiveChangeFromSandbox(change));
-			},
-			sendAckOfHostBoundChangeFromHostToSandbox: (): void => {
-				setTimeout(() => getSandbox().receiveAckFromHost());
-			},
-			sendAckOfSandboxBoundChangeFromSandboxToHost: (): void => {
-				setTimeout(() => getHost().receiveAckFromSandbox());
+			dispose: () => {
+				hostChannel.port2.close();
+				guestChannel.port2.close();
 			},
 		};
 	}
 
+	const activeTeardowns = new Set<() => void>();
+
+	afterEach(() => {
+		for (const teardown of [...activeTeardowns]) {
+			teardown();
+		}
+	});
+
 	/**
-	 * Sets up a host, sandbox, and peer with the given initial state and timeout-based interop functions.
+	 * Sets up a Host, Guest, and peer with the given initial state and a direct message channel.
 	 * @param initialState - The initial state of the shared tree.
-	 * @returns An object containing the host, sandbox, peer, and interop functions.
+	 * @returns The session components and teardown function.
 	 */
 	function setup(initialState: string[]) {
-		return setupCustom(initialState, buildTimeoutInterop);
+		return setupCustom(initialState, buildDirectSessionPorts);
 	}
 
 	/**
-	 * Sets up a host, sandbox, and peer with the given initial state and custom interop functions.
+	 * Sets up a Host, Guest, and peer with the given initial state and session ports.
 	 * @param initialState - The initial state of the shared tree.
-	 * @param interopBuilder - A function that builds the interop functions.
+	 * @param sessionPortsBuilder - A function that builds the ports and test controls.
 	 * @param logging - Whether to enable logging.
-	 * @returns An object containing the host, sandbox, peer, and interop functions.
+	 * @param handleProtocolError - A function that handles protocol errors.
+	 * @returns The session components and test controls.
 	 */
-	function setupCustom<T extends InteropFunctions>(
+	function setupCustom<TInterop>(
 		initialState: string[],
-		interopBuilder: InteropFunctionsBuilder<T>,
+		sessionPortsBuilder: SessionPortsBuilder<TInterop>,
 		logging: boolean = false,
+		handleProtocolError: (error: Error) => void = throwProtocolError,
 	) {
 		const logger = (message: string) => {
 			if (logging) {
@@ -462,22 +668,8 @@ describe("Host and Sandbox Demo", () => {
 		provider.synchronizeMessages();
 
 		const main = asAlpha(provider.trees[1].viewWith(config));
-		// eslint-disable-next-line prefer-const -- it is assigned below
-		let sandbox: Sandbox<typeof StringArray>;
-		// eslint-disable-next-line prefer-const -- it is assigned below
-		let host: Host<typeof StringArray>;
-
-		const interop = interopBuilder(
-			() => host ?? fail("Interop function called before host was initialized"),
-			() => sandbox ?? fail("Interop function called before sandbox was initialized"),
-		);
-
-		host = new Host(
-			main,
-			interop.sendChangeFromHostToSandbox,
-			interop.sendAckOfHostBoundChangeFromHostToSandbox,
-			logger,
-		);
+		const sessionPorts = sessionPortsBuilder();
+		const host = new Host(main, sessionPorts.hostPort, handleProtocolError, logger);
 
 		const hostCompressor = provider.getCompressor(provider.trees[1]);
 		const startingState = TreeAlpha.exportCompressed(host.local.root, {
@@ -486,7 +678,7 @@ describe("Host and Sandbox Demo", () => {
 			minVersionForCollab: FluidClientVersion.v2_80,
 		});
 
-		sandbox = new Sandbox(
+		const guest = new Guest(
 			config,
 			{ jsonValidator: FormatValidatorBasic },
 			{
@@ -495,347 +687,433 @@ describe("Host and Sandbox Demo", () => {
 				// TODO: shard the compressor here?
 				idCompressor: hostCompressor,
 			},
-			interop.sendChangeFromSandboxToHost,
-			interop.sendAckOfSandboxBoundChangeFromSandboxToHost,
+			sessionPorts.guestPort,
+			handleProtocolError,
 			logger,
 		);
 
 		const teardown = () => {
-			sandbox.dispose();
+			if (!activeTeardowns.delete(teardown)) {
+				return;
+			}
+			guest.dispose();
 			host.dispose();
+			sessionPorts.dispose();
 		};
+		activeTeardowns.add(teardown);
 
-		return { teardown, peer, host, sandbox, provider, interop, logger };
+		return {
+			teardown,
+			peer,
+			host,
+			guest,
+			provider,
+			interop: sessionPorts.interop,
+			logger,
+		};
 	}
 
-	it("the initial state is consistent across the host and sandbox", async () => {
-		const { host, sandbox } = setup(["A"]);
-		strict.deepEqual([...sandbox.view.root], ["A"]);
+	// The Host and Guest are intended to support being run in separate JavaScript realms.
+	// Verify that protocol messages are serializable and that synchronization does not depend on shared object identity.
+	it("uses structured clones for protocol messages", async () => {
+		const channel = new MessageChannel();
+		const change = { revision: "test revision" };
+		const message: DataChangeMessage = { type: "dataChange", change };
+		const received = new Promise<HostGuestMessage>((resolve) => {
+			channel.port2.addEventListener(
+				"message",
+				(event: MessageEvent<unknown>) => resolve(parseHostGuestMessage(event.data)),
+				{ once: true },
+			);
+			channel.port2.start();
+		});
+
+		channel.port1.postMessage(message);
+		const receivedMessage = await received;
+
+		strict.deepEqual(receivedMessage, message);
+		strict.notEqual(receivedMessage, message);
+		if (receivedMessage.type === "dataChange") {
+			strict.notEqual(receivedMessage.change, change);
+		}
+		channel.port1.close();
+		channel.port2.close();
+	});
+
+	it("routes invalid messages to the protocol-error handler", async () => {
+		let reportProtocolError: ((error: Error) => void) | undefined;
+		const protocolError = new Promise<Error>((resolve) => {
+			reportProtocolError = resolve;
+		});
+		assert(reportProtocolError !== undefined, "Protocol error reporter should be assigned");
+		const { interop } = setupCustom([], buildIsolatedSessionPorts, false, reportProtocolError);
+
+		interop.sendToHost.postMessage({ type: "unknown" });
+
+		const error = await protocolError;
+		strict.match(error.message, /Invalid Host and Guest protocol message/);
+	});
+
+	it("does not acknowledge an invalid SharedTree change", async () => {
+		let reportProtocolError: ((error: Error) => void) | undefined;
+		const protocolError = new Promise<Error>((resolve) => {
+			reportProtocolError = resolve;
+		});
+		assert(reportProtocolError !== undefined, "Protocol error reporter should be assigned");
+		const channel = new MessageChannel();
+		const local = {
+			applyChange: () => {
+				throw new Error("Cannot apply change. Invalid serialized change format.");
+			},
+			dispose: () => {},
+		} as unknown as TreeViewAlpha<typeof StringArray>;
+		const main = {
+			fork: () => local,
+			events: { on: () => () => {} },
+			dispose: () => {},
+		} as unknown as TreeViewAlpha<typeof StringArray>;
+		const host = new Host(main, channel.port1, reportProtocolError);
+		let acknowledgmentReceived = false;
+		channel.port2.addEventListener("message", () => {
+			acknowledgmentReceived = true;
+		});
+		channel.port2.start();
+
+		channel.port2.postMessage({ type: "dataChange", change: {} });
+		await protocolError;
+		await new Promise((resolve) => setTimeout(resolve, 0));
+
+		strict.equal(acknowledgmentReceived, false);
+		host.dispose();
+		channel.port2.close();
+	});
+
+	it("the initial state is consistent across the Host and Guest", async () => {
+		const { host, guest } = setup(["A"]);
+		strict.deepEqual([...guest.view.root], ["A"]);
 		strict.deepEqual([...host.local.root], ["A"]);
 		strict.deepEqual([...host.main.root], ["A"]);
 	});
 
-	it("one sandbox edit", async () => {
-		const { peer, host, sandbox, provider } = setup([]);
+	it("one Guest edit", async () => {
+		const { peer, host, guest, provider } = setup([]);
 
-		// Edit in the sandbox
-		sandbox.view.root.push("B(s)");
-		// The edit is synchronously reflected in the sandbox
-		strict.deepEqual([...sandbox.view.root], ["B(s)"]);
-		// The edit is not reflected in the host yet
+		// Edit in the Guest
+		guest.view.root.push("B(g)");
+		// The edit is synchronously reflected in the Guest
+		strict.deepEqual([...guest.view.root], ["B(g)"]);
+		// The edit is not reflected in the Host yet
 		strict.deepEqual([...host.local.root], []);
 		strict.deepEqual([...host.main.root], []);
 
-		// The sandbox should have started the process of pushing the edit to the host
+		// The Guest should have started the process of pushing the edit to the Host
 		const pushPromise =
-			sandbox.updateHostPromise ?? strict.fail("Expected push to be in progress");
-		// Wait for the edit to be pushed to the host
+			guest.updateHostPromise ?? strict.fail("Expected push to be in progress");
+		// Wait for the edit to be pushed to the Host
 		await pushPromise;
 
-		// The edit is now reflected in the host
-		strict.deepEqual([...host.local.root], ["B(s)"]);
-		strict.deepEqual([...host.main.root], ["B(s)"]);
+		// The edit is now reflected in the Host
+		strict.deepEqual([...host.local.root], ["B(g)"]);
+		strict.deepEqual([...host.main.root], ["B(g)"]);
 		// The edit is not reflected in the peer yet
 		strict.deepEqual([...peer.root], []);
 
 		provider.synchronizeMessages();
 
 		// The edit is now reflected in the peer
-		strict.deepEqual([...peer.root], ["B(s)"]);
+		strict.deepEqual([...peer.root], ["B(g)"]);
 	});
 
-	it("new sandbox edits during sandbox edit push", async () => {
-		const { peer, host, sandbox, provider } = setup([]);
+	it("new Guest edits during Guest edit push", async () => {
+		const { peer, host, guest, provider } = setup([]);
 
-		// Edit in the sandbox
-		sandbox.view.root.push("B(s)");
-		// The edit is synchronously reflected in the sandbox
-		strict.deepEqual([...sandbox.view.root], ["B(s)"]);
-		// The edit is not reflected in the host yet
+		// Edit in the Guest
+		guest.view.root.push("B(g)");
+		// The edit is synchronously reflected in the Guest
+		strict.deepEqual([...guest.view.root], ["B(g)"]);
+		// The edit is not reflected in the Host yet
 		strict.deepEqual([...host.local.root], []);
 		strict.deepEqual([...host.main.root], []);
 
-		// The sandbox should have started the process of pushing the edit to the host
+		// The Guest should have started the process of pushing the edit to the Host
 		const pushPromise =
-			sandbox.updateHostPromise ?? strict.fail("Expected push to be in progress");
+			guest.updateHostPromise ?? strict.fail("Expected push to be in progress");
 
-		// Before the push completes, other edits are made in the sandbox
-		sandbox.view.root.push("C(s)");
-		sandbox.view.root.push("D(s)");
+		// Before the push completes, other edits are made in the Guest
+		guest.view.root.push("C(g)");
+		guest.view.root.push("D(g)");
 
-		// The new edits are synchronously reflected in the sandbox
-		strict.deepEqual([...sandbox.view.root], ["B(s)", "C(s)", "D(s)"]);
-		// The new edits are not reflected in the host yet
+		// The new edits are synchronously reflected in the Guest
+		strict.deepEqual([...guest.view.root], ["B(g)", "C(g)", "D(g)"]);
+		// The new edits are not reflected in the Host yet
 		strict.deepEqual([...host.local.root], []);
 		strict.deepEqual([...host.main.root], []);
 
 		await pushPromise;
 
-		// The edits are now reflected in the host
-		strict.deepEqual([...host.local.root], ["B(s)", "C(s)", "D(s)"]);
-		strict.deepEqual([...host.main.root], ["B(s)", "C(s)", "D(s)"]);
+		// The edits are now reflected in the Host
+		strict.deepEqual([...host.local.root], ["B(g)", "C(g)", "D(g)"]);
+		strict.deepEqual([...host.main.root], ["B(g)", "C(g)", "D(g)"]);
 		// The edits are not reflected in the peer yet
 		strict.deepEqual([...peer.root], []);
 
 		provider.synchronizeMessages();
 
 		// The edits are now reflected in the peer
-		strict.deepEqual([...peer.root], ["B(s)", "C(s)", "D(s)"]);
+		strict.deepEqual([...peer.root], ["B(g)", "C(g)", "D(g)"]);
 	});
 
 	it("one peer edit", async () => {
-		const { peer, host, sandbox, provider } = setup([]);
+		const { peer, host, guest, provider } = setup([]);
 
 		// Edit on the peer
 		peer.root.push("B(p)");
 		// The edit is synchronously reflected in the peer
 		strict.deepEqual([...peer.root], ["B(p)"]);
-		// The edit is not reflected in the host or the sandbox yet
+		// The edit is not reflected in the Host or the Guest yet
 		strict.deepEqual([...host.local.root], []);
 		strict.deepEqual([...host.main.root], []);
-		strict.deepEqual([...sandbox.view.root], []);
+		strict.deepEqual([...guest.view.root], []);
 
 		provider.synchronizeMessages();
 
-		// The edit is now reflected in the host but not the local or sandbox yet
+		// The edit is now reflected in the Host but not the local or Guest yet
 		strict.deepEqual([...host.main.root], ["B(p)"]);
 		strict.deepEqual([...host.local.root], []);
-		strict.deepEqual([...sandbox.view.root], []);
+		strict.deepEqual([...guest.view.root], []);
 
-		// The host should have started the process of updating the sandbox with the peer change
+		// The Host should have started the process of updating the Guest with the peer change
 		const updatePromise =
-			host.updateSandboxPromise ?? strict.fail("Expected update to be in progress");
-		// Wait for the update to be applied to the sandbox
+			host.updateGuestPromise ?? strict.fail("Expected update to be in progress");
+		// Wait for the update to be applied to the Guest
 		await updatePromise;
 
-		// The peer edit is now reflected in the local and sandbox
+		// The peer edit is now reflected in the local and Guest
 		strict.deepEqual([...host.local.root], ["B(p)"]);
-		strict.deepEqual([...sandbox.view.root], ["B(p)"]);
+		strict.deepEqual([...guest.view.root], ["B(p)"]);
 	});
 
-	it("new peer edits during sandbox update", async () => {
-		const { peer, host, sandbox, provider } = setup([]);
+	it("new peer edits during Guest update", async () => {
+		const { peer, host, guest, provider } = setup([]);
 
 		// Edit on the peer
 		peer.root.push("B(p)");
 		provider.synchronizeMessages();
-		// The new peer edit is reflected in the host but not the local or sandbox yet.
+		// The new peer edit is reflected in the Host but not the local or Guest yet.
 		strict.deepEqual([...host.main.root], ["B(p)"]);
 		strict.deepEqual([...host.local.root], []);
-		strict.deepEqual([...sandbox.view.root], []);
+		strict.deepEqual([...guest.view.root], []);
 
-		// The host should have started the process of updating the sandbox with the peer change
+		// The Host should have started the process of updating the Guest with the peer change
 		const updatePromise =
-			host.updateSandboxPromise ?? strict.fail("Expected update to be in progress");
+			host.updateGuestPromise ?? strict.fail("Expected update to be in progress");
 
-		// Before the update is applied to the sandbox, other edits come in from the peer
+		// Before the update is applied to the Guest, other edits come in from the peer
 		peer.root.push("C(p)");
 		peer.root.push("D(p)");
 		provider.synchronizeMessages();
-		// The new peer edits are reflected in the host but not the local or sandbox yet.
+		// The new peer edits are reflected in the Host but not the local or Guest yet.
 		strict.deepEqual([...host.main.root], ["B(p)", "C(p)", "D(p)"]);
 		strict.deepEqual([...host.local.root], []);
-		strict.deepEqual([...sandbox.view.root], []);
+		strict.deepEqual([...guest.view.root], []);
 
 		await updatePromise;
 
-		// Once the promise resolves, all the peer edits should be reflected in the local and sandbox
+		// Once the promise resolves, all the peer edits should be reflected in the local and Guest
 		strict.deepEqual([...host.local.root], ["B(p)", "C(p)", "D(p)"]);
-		strict.deepEqual([...sandbox.view.root], ["B(p)", "C(p)", "D(p)"]);
+		strict.deepEqual([...guest.view.root], ["B(p)", "C(p)", "D(p)"]);
 	});
 
-	it("attempts by the host and sandbox to concurrently notify one-another of concurrent edits do not lead to inconsistencies or dropped edits", async () => {
-		const { peer, host, sandbox, provider } = setup([]);
+	it("attempts by the Host and Guest to concurrently notify one-another of concurrent edits do not lead to inconsistencies or dropped edits", async () => {
+		const { peer, host, guest, provider } = setup([]);
 
-		// Make edits in the sandbox
-		sandbox.view.root.push("B(s)");
-		sandbox.view.root.push("C(s)");
-		// The sandbox edits are synchronously reflected in the sandbox
-		strict.deepEqual([...sandbox.view.root], ["B(s)", "C(s)"]);
-		// The sandbox edits are not reflected in the host yet
+		// Make edits in the Guest
+		guest.view.root.push("B(g)");
+		guest.view.root.push("C(g)");
+		// The Guest edits are synchronously reflected in the Guest
+		strict.deepEqual([...guest.view.root], ["B(g)", "C(g)"]);
+		// The Guest edits are not reflected in the Host yet
 		strict.deepEqual([...host.local.root], []);
 		strict.deepEqual([...host.main.root], []);
 
-		// The sandbox should have started the process of pushing the edit to the host
+		// The Guest should have started the process of pushing the edit to the Host
 		const pushPromise =
-			sandbox.updateHostPromise ?? strict.fail("Expected push to be in progress");
+			guest.updateHostPromise ?? strict.fail("Expected push to be in progress");
 
-		// Before the host has a chance to process the edits from the sandbox, the peer makes an edit
+		// Before the Host has a chance to process the edits from the Guest, the peer makes an edit
 		peer.root.push("B(p)");
 		strict.deepEqual([...peer.root], ["B(p)"]);
 		provider.synchronizeMessages();
-		// The peer edit is now reflected in the host but not the local or sandbox yet
+		// The peer edit is now reflected in the Host but not the local or Guest yet
 		strict.deepEqual([...host.main.root], ["B(p)"]);
 		strict.deepEqual([...host.local.root], []);
-		strict.deepEqual([...sandbox.view.root], ["B(s)", "C(s)"]);
+		strict.deepEqual([...guest.view.root], ["B(g)", "C(g)"]);
 
-		// The host should have started the process of updating the sandbox with the peer change
+		// The Host should have started the process of updating the Guest with the peer change
 		const updatePromise =
-			host.updateSandboxPromise ?? strict.fail("Expected update to be in progress");
+			host.updateGuestPromise ?? strict.fail("Expected update to be in progress");
 
-		// Wait for the sandbox edits to be pushed to the host
+		// Wait for the Guest edits to be pushed to the Host
 		await pushPromise;
 
-		// The sandbox edits are now reflected in the host
-		strict.deepEqual([...host.local.root], ["B(s)", "C(s)"]);
-		strict.deepEqual([...host.main.root], ["B(s)", "C(s)", "B(p)"]);
-		// The sandbox edits are not reflected in the peer yet
+		// The Guest edits are now reflected in the Host
+		strict.deepEqual([...host.local.root], ["B(g)", "C(g)"]);
+		strict.deepEqual([...host.main.root], ["B(g)", "C(g)", "B(p)"]);
+		// The Guest edits are not reflected in the peer yet
 		strict.deepEqual([...peer.root], ["B(p)"]);
 
 		provider.synchronizeMessages();
 
-		// The sandbox edits are now reflected in the peer
-		strict.deepEqual([...peer.root], ["B(s)", "C(s)", "B(p)"]);
+		// The Guest edits are now reflected in the peer
+		strict.deepEqual([...peer.root], ["B(g)", "C(g)", "B(p)"]);
 
-		// Wait for the update to be applied to the sandbox
+		// Wait for the update to be applied to the Guest
 		await updatePromise;
 
-		// The peer edit is now reflected in the local and sandbox
-		strict.deepEqual([...host.local.root], ["B(s)", "C(s)", "B(p)"]);
-		strict.deepEqual([...sandbox.view.root], ["B(s)", "C(s)", "B(p)"]);
+		// The peer edit is now reflected in the local and Guest
+		strict.deepEqual([...host.local.root], ["B(g)", "C(g)", "B(p)"]);
+		strict.deepEqual([...guest.view.root], ["B(g)", "C(g)", "B(p)"]);
 	});
 
-	it("host edits sequenced before peer edits", async () => {
-		const { peer, host, sandbox, provider } = setup([]);
+	it("Host edits sequenced before peer edits", async () => {
+		const { peer, host, guest, provider } = setup([]);
 
-		// Make an edit on the host
+		// Make an edit on the Host
 		host.main.root.push("H");
 		strict.deepEqual([...host.main.root], ["H"]);
 
-		// The sandbox edits are not reflected in the sandbox or peer yet
+		// The Guest edits are not reflected in the Guest or peer yet
 		strict.deepEqual([...host.local.root], []);
-		strict.deepEqual([...sandbox.view.root], []);
+		strict.deepEqual([...guest.view.root], []);
 		strict.deepEqual([...peer.root], []);
 
-		// The host should have started the process of updating the sandbox with the peer change
+		// The Host should have started the process of updating the Guest with the peer change
 		const updatePromise =
-			host.updateSandboxPromise ?? strict.fail("Expected update to be in progress");
+			host.updateGuestPromise ?? strict.fail("Expected update to be in progress");
 
-		// Before the sandbox has a chance to process the edits from the host, the peer makes an edit
+		// Before the Guest has a chance to process the edits from the Host, the peer makes an edit
 		peer.root.push("P");
 		strict.deepEqual([...peer.root], ["P"]);
 
 		provider.synchronizeMessages();
-		// The peer and host edits are sequenced
+		// The peer and Host edits are sequenced
 		strict.deepEqual([...host.main.root], ["P", "H"]);
 		strict.deepEqual([...peer.root], ["P", "H"]);
 
-		// The sandbox is still in the process of updating
+		// The Guest is still in the process of updating
 		strict.deepEqual([...host.local.root], []);
-		strict.deepEqual([...sandbox.view.root], []);
+		strict.deepEqual([...guest.view.root], []);
 
-		// Wait for the update to be applied to the sandbox
+		// Wait for the update to be applied to the Guest
 		await updatePromise;
 
-		// The peer edit is now reflected in the local and sandbox
+		// The peer edit is now reflected in the local and Guest
 		strict.deepEqual([...host.local.root], ["P", "H"]);
-		strict.deepEqual([...sandbox.view.root], ["P", "H"]);
+		strict.deepEqual([...guest.view.root], ["P", "H"]);
 	});
 
-	it("peer edits sequenced before host edits", async () => {
-		const { peer, host, sandbox, provider } = setup([]);
+	it("peer edits sequenced before Host edits", async () => {
+		const { peer, host, guest, provider } = setup([]);
 
 		// Make an edit on the peer
 		peer.root.push("P");
 		strict.deepEqual([...peer.root], ["P"]);
 
-		// Make an edit on the host
+		// Make an edit on the Host
 		host.main.root.push("H");
 		strict.deepEqual([...host.main.root], ["H"]);
 
-		// The host should have started the process of updating the sandbox with the peer change
+		// The Host should have started the process of updating the Guest with the peer change
 		const updatePromise =
-			host.updateSandboxPromise ?? strict.fail("Expected update to be in progress");
+			host.updateGuestPromise ?? strict.fail("Expected update to be in progress");
 
 		provider.synchronizeMessages();
 
-		// The peer and host edits are sequenced
+		// The peer and Host edits are sequenced
 		strict.deepEqual([...host.main.root], ["H", "P"]);
 		strict.deepEqual([...peer.root], ["H", "P"]);
 
-		// The sandbox is still in the process of updating
+		// The Guest is still in the process of updating
 		strict.deepEqual([...host.local.root], []);
-		strict.deepEqual([...sandbox.view.root], []);
+		strict.deepEqual([...guest.view.root], []);
 
-		// Wait for the update to be applied to the sandbox
+		// Wait for the update to be applied to the Guest
 		await updatePromise;
 
-		// The peer edit is now reflected in the local and sandbox
+		// The peer edit is now reflected in the local and Guest
 		strict.deepEqual([...host.local.root], ["H", "P"]);
-		strict.deepEqual([...sandbox.view.root], ["H", "P"]);
+		strict.deepEqual([...guest.view.root], ["H", "P"]);
 	});
 
-	it("sandbox edits can be reverted", async () => {
-		const { host, sandbox } = setup([]);
-		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
-			sandbox.view.events,
-		);
+	it("Guest edits can be reverted", async () => {
+		const { host, guest } = setup([]);
+		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(guest.view.events);
 
-		// Make undoable edits in the sandbox
-		sandbox.view.root.push("Sa");
-		sandbox.view.root.push("Sb");
-		sandbox.view.root.push("Sc");
-		strict.deepEqual([...sandbox.view.root], ["Sa", "Sb", "Sc"]);
+		// Make undoable edits in the Guest
+		guest.view.root.push("Ga");
+		guest.view.root.push("Gb");
+		guest.view.root.push("Gc");
+		strict.deepEqual([...guest.view.root], ["Ga", "Gb", "Gc"]);
 		strict.deepEqual(undoStack.length, 3, "Expected undo stack to have 3 entries");
 
-		// The sandbox should have started the process of pushing the edit to the host
+		// The Guest should have started the process of pushing the edit to the Host
 		let pushPromise =
-			sandbox.updateHostPromise ?? strict.fail("Expected push to be in progress");
+			guest.updateHostPromise ?? strict.fail("Expected push to be in progress");
 		await pushPromise;
 
-		strict.deepEqual([...sandbox.view.root], ["Sa", "Sb", "Sc"]);
-		strict.deepEqual([...host.local.root], ["Sa", "Sb", "Sc"]);
-		strict.deepEqual([...host.main.root], ["Sa", "Sb", "Sc"]);
+		strict.deepEqual([...guest.view.root], ["Ga", "Gb", "Gc"]);
+		strict.deepEqual([...host.local.root], ["Ga", "Gb", "Gc"]);
+		strict.deepEqual([...host.main.root], ["Ga", "Gb", "Gc"]);
 
-		// Make an edit on the host
+		// Make an edit on the Host
 		host.main.root.insertAtStart("H");
-		strict.deepEqual([...host.main.root], ["H", "Sa", "Sb", "Sc"]);
+		strict.deepEqual([...host.main.root], ["H", "Ga", "Gb", "Gc"]);
 
-		// Wait for the update to be applied to the sandbox
+		// Wait for the update to be applied to the Guest
 		const updatePromise =
-			host.updateSandboxPromise ?? strict.fail("Expected update to be in progress");
+			host.updateGuestPromise ?? strict.fail("Expected update to be in progress");
 		await updatePromise;
 
-		strict.deepEqual([...host.local.root], ["H", "Sa", "Sb", "Sc"]);
-		strict.deepEqual([...sandbox.view.root], ["H", "Sa", "Sb", "Sc"]);
+		strict.deepEqual([...host.local.root], ["H", "Ga", "Gb", "Gc"]);
+		strict.deepEqual([...guest.view.root], ["H", "Ga", "Gb", "Gc"]);
 
 		strict.deepEqual(
 			undoStack.length,
 			4,
-			"Expected host change to add an entry to the undo stack",
+			"Expected Host change to add an entry to the undo stack",
 		);
 		undoStack.pop()?.dispose();
 
-		// Undo the sandbox edits
+		// Undo the Guest edits
 		undoStack.pop()?.revert();
 		undoStack.pop()?.revert();
 		undoStack.pop()?.revert();
 
-		// The sandbox should have started the process of pushing the edits to the host
-		pushPromise = sandbox.updateHostPromise ?? strict.fail("Expected push to be in progress");
+		// The Guest should have started the process of pushing the edits to the Host
+		pushPromise = guest.updateHostPromise ?? strict.fail("Expected push to be in progress");
 		await pushPromise;
 
-		strict.deepEqual([...sandbox.view.root], ["H"]);
+		strict.deepEqual([...guest.view.root], ["H"]);
 		strict.deepEqual([...host.local.root], ["H"]);
 		strict.deepEqual([...host.main.root], ["H"]);
 		assert(redoStack.length === 3, "Expected redo stack to have 3 entries");
 
-		// Undo the sandbox edits
+		// Undo the Guest edits
 		redoStack.pop()?.revert();
 		redoStack.pop()?.revert();
 		redoStack.pop()?.revert();
 
-		// The sandbox should have started the process of pushing the edits to the host
-		pushPromise = sandbox.updateHostPromise ?? strict.fail("Expected push to be in progress");
+		// The Guest should have started the process of pushing the edits to the Host
+		pushPromise = guest.updateHostPromise ?? strict.fail("Expected push to be in progress");
 		await pushPromise;
 
-		strict.deepEqual([...host.local.root], ["H", "Sa", "Sb", "Sc"]);
-		strict.deepEqual([...sandbox.view.root], ["H", "Sa", "Sb", "Sc"]);
+		strict.deepEqual([...host.local.root], ["H", "Ga", "Gb", "Gc"]);
+		strict.deepEqual([...guest.view.root], ["H", "Ga", "Gb", "Gc"]);
 		unsubscribe();
 	});
 
 	// TODO: investigate and fix the memory leaks in this test, then run it with higher number of steps.
-	it("All permutations", function () {
+	it("All permutations", async function () {
 		this.timeout(20_000);
 		/**
 		 * The number of {@link Step | steps} in each scenario.
@@ -845,82 +1123,212 @@ describe("Host and Sandbox Demo", () => {
 		 * A potential action that could be taken at each step of a run.
 		 */
 		enum Step {
-			/** Make an edit on the host */
+			/** Make an edit on the Host */
 			HostEdit = "He",
-			/** Make an edit on the sandbox */
-			SandboxEdit = "Ve",
+			/** Make an edit on the Guest */
+			GuestEdit = "Ge",
 			/** Make an edit on the peer */
 			PeerEdit = "Pe",
-			/** Make the host receive a sequenced edit from the peer */
+			/** Make the Host receive a sequenced edit from the peer */
 			SequenceEdit = "Se",
-			/** Make the host receive its own sequenced edit */
+			/** Make the Host receive its own sequenced edit */
 			SequenceAck = "Sa",
-			/** Notify the sandbox of an update sent by the host. */
-			HostToSandboxEdit = "H2Se",
-			/** Notify the host of a sandbox-bound update ack sent by the sandbox. */
-			SandboxToHostAck = "S2Ha",
-			/** Notify the host of an edit sent by the sandbox. */
-			SandboxToHostEdit = "S2He",
-			/** Notify the sandbox of an host-bound edit ack sent by the host. */
-			HostToSandboxAck = "H2Sa",
+			/** Notify the Guest of an update sent by the Host. */
+			HostToGuestEdit = "H2Ge",
+			/** Notify the Host of a Guest-bound update ack sent by the Guest. */
+			GuestToHostAck = "G2Ha",
+			/** Notify the Host of an edit sent by the Guest. */
+			GuestToHostEdit = "G2He",
+			/** Notify the Guest of a Host-bound edit ack sent by the Host. */
+			HostToGuestAck = "H2Ga",
 		}
 
-		type Ack = "Ack";
-		const Ack: Ack = "Ack";
-		type Message = JsonCompatibleReadOnly | Ack;
-		interface QueueInteropFunctions extends InteropFunctions {
-			readonly hostToSandbox: Message[];
-			readonly sandboxToHost: Message[];
+		/** Controls queued message delivery between the Host and the Guest. */
+		interface MessageRelay {
+			/** Messages that the Host sent and the relay has not sent to the Guest. */
+			readonly hostToGuest: HostGuestMessage[];
+			/** Messages that the Guest sent and the relay has not sent to the Host. */
+			readonly guestToHost: HostGuestMessage[];
 
-			dispatchToSandbox(): void;
+			/** Sends the first queued Host message to the Guest. */
+			dispatchToGuest(): void;
+			/** Sends the first queued Guest message to the Host. */
 			dispatchToHost(): void;
+			/** Waits until all dispatched messages reach a relay queue or participant. */
+			waitForMessages(): Promise<void>;
 		}
 
 		/**
-		 * Generates a set of interop functions that keep messages in queues,
-		 * making it possible to control which queue progresses and when.
-		 * @param getHost - A function that returns the host instance.
-		 * @param getSandbox - A function that returns the sandbox instance.
-		 * @returns An object containing the queued interop functions.
+		 * Builds a two-channel relay that controls message delivery.
+		 *
+		 * @remarks
+		 * Serves as a middle-man between the Host and Guest, allowing
+		 * tests to control when messages are delivered, and to monitor them.
+		 *
+		 * @returns The session ports and relay controls.
 		 */
-		function buildQueueInterop(
-			getHost: () => Host<typeof StringArray>,
-			getSandbox: () => Sandbox<typeof StringArray>,
-		): QueueInteropFunctions {
-			const out: QueueInteropFunctions = {
-				hostToSandbox: [],
-				sandboxToHost: [],
-				sendChangeFromHostToSandbox: (update: JsonCompatibleReadOnly): void => {
-					out.hostToSandbox.push(update);
-				},
-				dispatchToSandbox: (): void => {
-					const message =
-						out.hostToSandbox.shift() ?? fail("No sandbox-bound changes in the queue");
-					if (message === Ack) {
-						getSandbox().receiveAckFromHost();
-					} else {
-						getSandbox().receiveChangeFromHost(message);
+		function buildMessageRelay(): SessionPorts<MessageRelay> {
+			// Host <--hostRelayChannel--> Relay <--guestRelayChannel--> Guest
+
+			/** Connects the Host to the relay. */
+			const hostRelayChannel = new MessageChannel();
+
+			/** Connects the relay to the Guest. */
+			const guestRelayChannel = new MessageChannel();
+
+			/** The relay-owned endpoint that receives Host messages and sends messages to the Host. */
+			const relayPortConnectedToHost = hostRelayChannel.port2;
+
+			/** The relay-owned endpoint that receives Guest messages and sends messages to the Guest. */
+			const relayPortConnectedToGuest = guestRelayChannel.port1;
+
+			/** The number of messages that participants sent but the relay has not received. */
+			let messagesMovingToRelay = 0;
+
+			/** The number of messages that the relay sent but participants have not processed. */
+			let messagesMovingToParticipants = 0;
+
+			/** Functions that resolve calls to `waitForMessages()`. */
+			const settledResolvers: (() => void)[] = [];
+
+			/** Resolves each waiter when no message is moving through a channel. */
+			const resolveIfSettled = (): void => {
+				if (messagesMovingToRelay === 0 && messagesMovingToParticipants === 0) {
+					for (const resolve of settledResolvers.splice(0)) {
+						resolve();
 					}
-				},
-				sendAckOfSandboxBoundChangeFromSandboxToHost: (): void => {
-					out.sandboxToHost.push(Ack);
-				},
-				sendChangeFromSandboxToHost: (change: JsonCompatibleReadOnly): void => {
-					out.sandboxToHost.push(change);
+				}
+			};
+
+			/**
+			 * Tracks messages that move between a participant and its relay endpoint.
+			 */
+			class TrackedParticipantPort extends EventTarget {
+				public constructor(
+					/** The MessagePort that is being observed and tracked. */
+					private readonly observedPort: MessagePort,
+				) {
+					super();
+					this.observedPort.addEventListener("message", (event: MessageEvent<unknown>) => {
+						try {
+							this.dispatchEvent(new MessageEvent("message", { data: event.data }));
+						} finally {
+							messagesMovingToParticipants -= 1;
+							resolveIfSettled();
+						}
+					});
+					this.observedPort.addEventListener("messageerror", () => {
+						try {
+							this.dispatchEvent(new MessageEvent("messageerror"));
+						} finally {
+							messagesMovingToParticipants -= 1;
+							resolveIfSettled();
+						}
+					});
+				}
+
+				/**
+				 * Sends a message to the relay and tracks its delivery.
+				 *
+				 * @param message - The message to send.
+				 * @param transferOrOptions - Transferable objects or structured-clone options.
+				 */
+				public postMessage(
+					message: unknown,
+					transferOrOptions?: Transferable[] | StructuredSerializeOptions,
+				): void {
+					messagesMovingToRelay += 1;
+					try {
+						// The branches select different `MessagePort.postMessage` overloads.
+						// TypeScript cannot pass the union directly because no overload accepts both types.
+						if (Array.isArray(transferOrOptions)) {
+							this.observedPort.postMessage(message, transferOrOptions);
+						} else {
+							this.observedPort.postMessage(message, transferOrOptions);
+						}
+					} catch (error) {
+						messagesMovingToRelay -= 1;
+						resolveIfSettled();
+						throw error;
+					}
+				}
+
+				/** Starts message delivery on the inner port. */
+				public start(): void {
+					this.observedPort.start();
+				}
+
+				/** Closes the inner port. */
+				public close(): void {
+					this.observedPort.close();
+				}
+			}
+
+			/** The Host-owned endpoint, wrapped to track messages moving through its channel. */
+			const trackedHostPort = new TrackedParticipantPort(hostRelayChannel.port1);
+			/** The Guest-owned endpoint, wrapped to track messages moving through its channel. */
+			const trackedGuestPort = new TrackedParticipantPort(guestRelayChannel.port2);
+
+			const relay: MessageRelay = {
+				hostToGuest: [],
+				guestToHost: [],
+				dispatchToGuest: (): void => {
+					const message = relay.hostToGuest.shift() ?? fail("No Guest-bound messages");
+					messagesMovingToParticipants += 1;
+					try {
+						relayPortConnectedToGuest.postMessage(message);
+					} catch (error) {
+						messagesMovingToParticipants -= 1;
+						resolveIfSettled();
+						throw error;
+					}
 				},
 				dispatchToHost: (): void => {
-					const message = out.sandboxToHost.shift() ?? fail("No host-bound changes in queue");
-					if (message === Ack) {
-						getHost().receiveAckFromSandbox();
-					} else {
-						getHost().receiveChangeFromSandbox(message);
+					const message = relay.guestToHost.shift() ?? fail("No Host-bound messages");
+					messagesMovingToParticipants += 1;
+					try {
+						relayPortConnectedToHost.postMessage(message);
+					} catch (error) {
+						messagesMovingToParticipants -= 1;
+						resolveIfSettled();
+						throw error;
 					}
 				},
-				sendAckOfHostBoundChangeFromHostToSandbox: (): void => {
-					out.hostToSandbox.push(Ack);
+				waitForMessages: async (): Promise<void> => {
+					if (messagesMovingToRelay !== 0 || messagesMovingToParticipants !== 0) {
+						await new Promise<void>((resolve) => settledResolvers.push(resolve));
+					}
 				},
 			};
-			return out;
+
+			relayPortConnectedToHost.addEventListener("message", (event: MessageEvent<unknown>) => {
+				try {
+					relay.hostToGuest.push(parseHostGuestMessage(event.data));
+				} finally {
+					messagesMovingToRelay -= 1;
+					resolveIfSettled();
+				}
+			});
+			relayPortConnectedToGuest.addEventListener("message", (event: MessageEvent<unknown>) => {
+				try {
+					relay.guestToHost.push(parseHostGuestMessage(event.data));
+				} finally {
+					messagesMovingToRelay -= 1;
+					resolveIfSettled();
+				}
+			});
+			relayPortConnectedToHost.start();
+			relayPortConnectedToGuest.start();
+
+			return {
+				hostPort: trackedHostPort as unknown as MessagePort,
+				guestPort: trackedGuestPort as unknown as MessagePort,
+				interop: relay,
+				dispose: () => {
+					relayPortConnectedToHost.close();
+					relayPortConnectedToGuest.close();
+				},
+			};
 		}
 
 		type Edit = "Edit";
@@ -932,19 +1340,19 @@ describe("Host and Sandbox Demo", () => {
 		 * The outer array represents the steps of the run.
 		 *
 		 * Note: to test a specific scenario, you can initialize `potential` with a specific sequence of steps.
-		 * E.g., `[[Step.SandboxEdit], [Step.SandboxEdit], [Step.Sandbox2HostEdit], [Step.SequenceAck], [Step.Sandbox2HostEdit], [Step.SequenceAck]]`.
+		 * E.g., `[[Step.GuestEdit], [Step.GuestEdit], [Step.GuestToHostEdit], [Step.SequenceAck], [Step.GuestToHostEdit], [Step.SequenceAck]]`.
 		 */
-		const potential: Step[][] = [[Step.SandboxEdit, Step.HostEdit, Step.PeerEdit]];
+		const potential: Step[][] = [[Step.GuestEdit, Step.HostEdit, Step.PeerEdit]];
 		while (hasSome(potential)) {
 			scenario += 1;
-			const { teardown, peer, host, sandbox, provider, interop, logger } = setupCustom(
+			const { teardown, peer, host, guest, provider, interop, logger } = setupCustom(
 				[],
-				buildQueueInterop,
+				buildMessageRelay,
 				false,
 			);
 			let peerEditCounter = 0;
 			let hostEditCounter = 0;
-			let sandboxEditCounter = 0;
+			let guestEditCounter = 0;
 			const serviceQueue: (Step.SequenceEdit | Step.SequenceAck)[] = [];
 			const offPeerChange = peer.events.on("changed", ({ isLocal }) => {
 				if (isLocal) {
@@ -959,22 +1367,22 @@ describe("Host and Sandbox Demo", () => {
 			const actual: Step[] = [];
 			while (actual.length < maxSteps) {
 				if (actual.length === potential.length) {
-					const potentialNext: Step[] = [Step.SandboxEdit, Step.HostEdit, Step.PeerEdit];
+					const potentialNext: Step[] = [Step.GuestEdit, Step.HostEdit, Step.PeerEdit];
 					if (hasSome(serviceQueue)) {
 						potentialNext.push(serviceQueue[0]);
 					}
-					if (hasSome(interop.hostToSandbox)) {
+					if (hasSome(interop.hostToGuest)) {
 						potentialNext.push(
-							interop.hostToSandbox[0] === Ack
-								? Step.HostToSandboxAck
-								: Step.HostToSandboxEdit,
+							interop.hostToGuest[0].type === "acknowledgment"
+								? Step.HostToGuestAck
+								: Step.HostToGuestEdit,
 						);
 					}
-					if (hasSome(interop.sandboxToHost)) {
+					if (hasSome(interop.guestToHost)) {
 						potentialNext.push(
-							interop.sandboxToHost[0] === Ack
-								? Step.SandboxToHostAck
-								: Step.SandboxToHostEdit,
+							interop.guestToHost[0].type === "acknowledgment"
+								? Step.GuestToHostAck
+								: Step.GuestToHostEdit,
 						);
 					}
 					potential.push(potentialNext);
@@ -982,9 +1390,9 @@ describe("Host and Sandbox Demo", () => {
 				const step: Step = potential[actual.length][0] ?? fail("No next step available");
 				logger(`--> [${actual.join(", ")}] + ${step}`);
 				switch (step) {
-					case Step.SandboxEdit: {
-						sandboxEditCounter += 1;
-						sandbox.view.root.push(`V${sandboxEditCounter}`);
+					case Step.GuestEdit: {
+						guestEditCounter += 1;
+						guest.view.root.push(`G${guestEditCounter}`);
 						break;
 					}
 					case Step.HostEdit: {
@@ -1012,13 +1420,13 @@ describe("Host and Sandbox Demo", () => {
 						provider.synchronizeMessages({ count: 1 });
 						break;
 					}
-					case Step.HostToSandboxEdit:
-					case Step.HostToSandboxAck: {
-						interop.dispatchToSandbox();
+					case Step.HostToGuestEdit:
+					case Step.HostToGuestAck: {
+						interop.dispatchToGuest();
 						break;
 					}
-					case Step.SandboxToHostEdit:
-					case Step.SandboxToHostAck: {
+					case Step.GuestToHostEdit:
+					case Step.GuestToHostAck: {
 						interop.dispatchToHost();
 						break;
 					}
@@ -1026,13 +1434,14 @@ describe("Host and Sandbox Demo", () => {
 						throw new Error(`Unexpected step: ${step}`);
 					}
 				}
+				await interop.waitForMessages();
 				actual.push(step);
-				if (interop.hostToSandbox.length === 0 && interop.sandboxToHost.length === 0) {
-					strict.deepEqual([...host.main.root], [...sandbox.view.root]);
-					strict.deepEqual([...host.local.root], [...sandbox.view.root]);
+				if (interop.hostToGuest.length === 0 && interop.guestToHost.length === 0) {
+					strict.deepEqual([...host.main.root], [...guest.view.root]);
+					strict.deepEqual([...host.local.root], [...guest.view.root]);
 				}
 
-				if (host.updateSandboxPromise === undefined) {
+				if (host.updateGuestPromise === undefined) {
 					strict.equal(host.local.isMissingEditsFrom(host.main), false);
 				}
 

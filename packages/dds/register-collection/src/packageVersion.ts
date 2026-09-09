@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/register-collection";
-export const pkgVersion = "3.0.0";
+export const pkgVersion = "3.1.0";

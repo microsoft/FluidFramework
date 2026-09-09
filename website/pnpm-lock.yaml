@@ -83,8 +83,8 @@ importers:
         specifier: ^3.10.2
         version: 3.10.2(acorn@8.15.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@8.1.1)
       '@fluid-tools/api-markdown-documenter':
-        specifier: ^0.23.2
-        version: 0.23.2(@types/node@22.19.17)(supports-color@8.1.1)
+        specifier: ^0.24.0
+        version: 0.24.0(@types/node@22.19.17)(supports-color@8.1.1)
       '@fluid-tools/markdown-magic':
         specifier: file:../tools/markdown-magic
         version: file:../tools/markdown-magic(@types/node@22.19.17)(markdown-magic@2.6.1(supports-color@8.1.1))(supports-color@8.1.1)
@@ -100,6 +100,9 @@ importers:
       '@microsoft/applicationinsights-web':
         specifier: ^3.3.4
         version: 3.3.4(tslib@2.8.1)
+      '@microsoft/tsdoc':
+        specifier: ^0.15.1
+        version: 0.15.1
       '@playwright/test':
         specifier: ^1.49.0
         version: 1.49.0
@@ -1546,8 +1549,9 @@ packages:
   '@fluid-internal/eslint-plugin-fluid@0.2.0':
     resolution: {integrity: sha512-KAES3hOge6htTmYCTjBObjhi1oaVkT+XPyFV7tgOgIicaS9PZgD9ErFV2wiFdWtZiqoThKFlZewfwWNd+mqeXg==}
 
-  '@fluid-tools/api-markdown-documenter@0.23.2':
-    resolution: {integrity: sha512-TCAVqt3M9OdFZkL1JuhpAQAZRaF6Y6AB7XJuAKt94Ek9CBnDFZIwnpRS+ZRw74RkHB4cNaeXKtY0BP1W+Ha2RA==}
+  '@fluid-tools/api-markdown-documenter@0.24.0':
+    resolution: {integrity: sha512-C7eAzbXsphRPiFWiAyOoeSJCmftF8r+MfqlzwUlTPVuDB3Y5sbT7PCWztaQ1aOZs3PXYUgQBEZ7Aindjj3eBtg==}
+    engines: {node: '>=22.22.2'}
 
   '@fluid-tools/markdown-magic@file:../tools/markdown-magic':
     resolution: {directory: ../tools/markdown-magic, type: directory}
@@ -7810,11 +7814,6 @@ packages:
   resolve-pkg-maps@1.0.0:
     resolution: {integrity: sha512-seS2Tj26TBVOC2NIc2rOe2y2ZO7efxITtLZcGSOnHHNOQ7CkiUBfw0Iw2ck6xkIhPwLhKNLS8BO+hEpngQlqzw==}
 
-  resolve@1.22.11:
-    resolution: {integrity: sha512-RfqAvLnMl313r7c9oclB1HhUEAezcpLjz95wFH4LVuhk9JF/r22qmVP9AMmOU4vMX7Q8pN8jwNg/CSpdFnMjTQ==}
-    engines: {node: '>= 0.4'}
-    hasBin: true
-
   resolve@1.22.12:
     resolution: {integrity: sha512-TyeJ1zif53BPfHootBGwPRYT1RUt6oGWsaQr8UyZW/eAm9bKoijtvruSDEmZHm92CwS9nj7/fWttqPCgzep8CA==}
     engines: {node: '>= 0.4'}
@@ -11565,12 +11564,11 @@ snapshots:
       - supports-color
       - typescript
 
-  '@fluid-tools/api-markdown-documenter@0.23.2(@types/node@22.19.17)(supports-color@8.1.1)':
+  '@fluid-tools/api-markdown-documenter@0.24.0(@types/node@22.19.17)(supports-color@8.1.1)':
     dependencies:
       '@microsoft/api-extractor-model': 7.30.7(@types/node@22.19.17)
       '@microsoft/tsdoc': 0.15.1
       '@rushstack/node-core-library': 5.14.0(@types/node@22.19.17)
-      chalk: 5.6.2
       hast-util-format: 1.1.0
       hast-util-from-html: 2.0.3
       hast-util-to-html: 9.0.5
@@ -11997,7 +11995,7 @@ snapshots:
       '@microsoft/tsdoc': 0.15.1
       ajv: 8.12.0
       jju: 1.4.0
-      resolve: 1.22.11
+      resolve: 1.22.12
 
   '@microsoft/tsdoc@0.15.1': {}
 
@@ -19189,12 +19187,6 @@ snapshots:
   resolve-pathname@3.0.0: {}
 
   resolve-pkg-maps@1.0.0: {}
-
-  resolve@1.22.11:
-    dependencies:
-      is-core-module: 2.16.2
-      path-parse: 1.0.7
-      supports-preserve-symlinks-flag: 1.0.0
 
   resolve@1.22.12:
     dependencies:

@@ -37,12 +37,12 @@ Next, to build the code, run `npm run build` from the root of the mono-repo, or 
 
 ### Testing
 
-This package uses [jest](https://jestjs.io/) and [testing-library/react](https://testing-library.com/docs/react-testing-library/intro/)
+This package uses [Mocha](https://mochajs.org/) and [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/)
 to power its unit tests.
 The corresponding test modules can be found under `src/test`.
 
 To run only the unit tests, first ensure you have followed the [build](#build) steps above.
-Next, run `npm run test:jest` from a terminal within this directory.
+Next, run `npm run test:mocha` from a terminal within this directory.
 
 ### Accessibility Best Practices
 

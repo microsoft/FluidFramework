@@ -62,7 +62,7 @@ import type { VerboseTree } from "./verboseTree.js";
  * Add exportSimpleSchema and exportJsonSchema methods (which should exactly match the concise format, and match the free functions for exporting view schema).
  * Maybe rename "exportJsonSchema" to align on "concise" terminology.
  * Ensure schema exporting APIs here align and reference APIs for exporting view schema to the same formats (which should include stored vs property key choice).
- * Make sure users of independentView can use these export APIs (maybe provide a reference back to the ViewableTree from the TreeView to accomplish that).
+ * Make sure users of createIndependentTreeViewAlpha can use these export APIs (maybe provide a reference back to the ViewableTree from the TreeView to accomplish that).
  * @system @sealed @public
  */
 export interface ViewableTree {
@@ -160,7 +160,92 @@ export interface ITreeAlpha extends ITree {
  * See {@link UntypedTreeViewAlpha} for additional APIs that are in an earlier stage of development.
  * @sealed @beta
  */
-export interface UntypedTreeView extends IDisposable {
+export interface UntypedTreeView extends IDisposable, TreeContextBeta {
+	runTransaction<TValue>(
+		transaction: () => WithValue<TValue>,
+		params?: RunTransactionParamsBeta,
+	): TransactionValueResult<TValue, TValue>;
+
+	runTransaction(
+		transaction: () => void,
+		params?: RunTransactionParamsBeta,
+	): TransactionVoidResult;
+
+	/**
+	 * Run a synchronous transaction which groups sequential edits to the tree into a single atomic edit if possible.
+	 *
+	 * @param transaction - The function to run as the body of the transaction, which may optionally return a {@link TransactionCallbackStatusBeta | value or rollback signal}.
+	 * It may optionally return a {@link WithValue | value }, which will be returned by the `runTransaction` call.
+	 *
+	 * @param params - Optional {@link RunTransactionParamsBeta | parameters} for the transaction.
+	 *
+	 * @returns A {@link TransactionValueResult | value } indicating whether or not the transaction succeeded, and containing the value returned by `transaction`.
+	 *
+	 * @remarks
+	 * All of the changes in the transaction are applied synchronously and therefore no other changes from a remote client can be interleaved with those changes.
+	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
+	 *
+	 * {@link (TreeBeta:interface).on | Change events } will be emitted for changed nodes on this client _as each edit happens_, just as they would be if the changes were made outside of a transaction.
+	 * Any other/future clients or contexts will process the transaction "squashed", i.e. they will apply its changes all at once, emitting only a single event per node (even if that node was edited multiple times in the transaction).
+	 * Edits to the tree are not permitted within these event callbacks, therefore no other local changes from this client will be interleaved with the changes in this transaction.
+	 *
+	 * Using a transaction has the following additional consequences:
+	 *
+	 * - If {@link Revertible | reverted } (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
+	 * Only the "outermost" transaction commits a change to the synchronized tree state and therefore only the outermost transaction can be reverted.
+	 * If a transaction is started and completed while another transaction is already in progress, then the inner transaction will be reverted together with the outer transaction.
+	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
+	 *
+	 * If the transaction is rolled back, a corresponding {@link TreeBranchEvents.changed | `changed`} event will also be emitted for the rollback.
+	 */
+	runTransaction<
+		TOut extends
+			| TransactionCallbackStatusBeta<unknown, unknown>
+			| VoidTransactionCallbackStatusBeta
+			| void,
+	>(
+		transaction: () => TOut,
+		params?: RunTransactionParamsBeta,
+	): TOut extends TransactionCallbackStatusBeta<infer TSuccessValue, infer TFailureValue>
+		? TransactionValueResult<TSuccessValue, TFailureValue>
+		: TransactionVoidResult;
+
+	runTransactionAsync<TValue>(
+		transaction: () => Promise<WithValue<TValue>>,
+		params?: RunTransactionParamsBeta,
+	): Promise<TransactionValueResult<TValue, TValue>>;
+
+	runTransactionAsync(
+		transaction: () => Promise<void>,
+		params?: RunTransactionParamsBeta,
+	): Promise<TransactionVoidResult>;
+
+	/**
+	 * An asynchronous version of {@link UntypedTreeView.(runTransaction:1) | runTransaction}.
+	 *
+	 * @remarks
+	 * As with synchronous transactions, all of the changes in an asynchronous transaction are treated as a unit.
+	 * Therefore, no other changes (either from this client or from a remote client) can be interleaved with the transaction changes.
+	 *
+	 * Unlike with synchronous transactions, it is possible that other changes (e.g. from a remote client) may be applied to the branch while this transaction is in progress.
+	 * Those other changes will be not be reflected on the branch until after this transaction completes, at which point the transaction changes will be applied after those other changes.
+	 *
+	 * An asynchronous transaction may not be started while any other transaction is in progress in this view.
+	 */
+	runTransactionAsync<
+		TOut extends
+			| TransactionCallbackStatusBeta<unknown, unknown>
+			| VoidTransactionCallbackStatusBeta
+			| void,
+	>(
+		transaction: () => Promise<TOut>,
+		params?: RunTransactionParamsBeta,
+	): Promise<
+		TOut extends TransactionCallbackStatusBeta<infer TSuccessValue, infer TFailureValue>
+			? TransactionValueResult<TSuccessValue, TFailureValue>
+			: TransactionVoidResult
+	>;
+
 	/**
 	 * Fork a new branch off of this branch which is based off of this branch's current state.
 	 * @remarks Any changes to the tree on the new view will not apply to this view until the new view is e.g. {@link UntypedTreeView.merge | merged} back into this view.
@@ -213,15 +298,15 @@ export interface UntypedTreeView extends IDisposable {
 export type TreeBranch = UntypedTreeView;
 
 /**
- * Provides additional APIs that may be used to interact with a tree node or a tree node's SharedTree.
- * @alpha
+ * Provides additional APIs that may be used to interact with a tree node.
+ * @sealed @beta
  */
-export interface TreeContextAlpha {
+export interface TreeContextBeta {
 	/**
 	 * Run a synchronous transaction which groups sequential edits to the tree into a single atomic edit if possible.
 	 * @param transaction - A callback run during the transaction to perform user-supplied operations.
 	 * It may optionally return a {@link WithValue | value }, which will be returned by the `runTransaction` call.
-	 * @param params - Optional {@link RunTransactionParamsAlpha | parameters} for the transaction.
+	 * @param params - Optional {@link RunTransactionParamsBeta | parameters} for the transaction.
 	 * @returns A {@link TransactionValueResult | value } indicating whether or not the transaction succeeded, and containing the value returned by `transaction`.
 	 * @remarks
 	 * All of the changes in the transaction are applied synchronously and therefore no other changes from a remote client can be interleaved with those changes.
@@ -239,15 +324,15 @@ export interface TreeContextAlpha {
 	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
 	 *
 	 * `runTransaction` may be invoked on the context of a {@link TreeStatus.InDocument | hydrated } or {@link Unhydrated | unhydrated } node.
-	 * Use {@link TreeContextAlpha.isView | isView() } to check whether this context is associated with a view and gain {@link UntypedTreeViewAlpha.(runTransaction:1) | access to more transaction capabilities} if so.
+	 * Use {@link TreeContextBeta.isView | isView()} to check whether this context is associated with a view and gain {@link UntypedTreeView.(runTransaction:1) | access to more transaction capabilities} if so.
 	 */
 	runTransaction<TValue>(
 		transaction: () => WithValue<TValue>,
-		params?: RunTransactionParamsAlpha,
+		params?: RunTransactionParamsBeta,
 	): TransactionValueResult<TValue, TValue>;
 
 	/**
-	 * An overload of {@link TreeContextAlpha.(runTransaction:1) | runTransaction } which does not return a value.
+	 * An overload of {@link TreeContextBeta.(runTransaction:1) | runTransaction } which does not return a value.
 	 *
 	 * @privateRemarks
 	 * TODO: Consider updating these methods to avoid the need for overloads.
@@ -255,11 +340,11 @@ export interface TreeContextAlpha {
 	 */
 	runTransaction(
 		transaction: () => void,
-		params?: RunTransactionParamsAlpha,
+		params?: RunTransactionParamsBeta,
 	): TransactionVoidResult;
 
 	/**
-	 * An asynchronous version of {@link TreeContextAlpha.(runTransaction:1) | runTransaction}.
+	 * An asynchronous version of {@link TreeContextBeta.(runTransaction:1) | runTransaction}.
 	 * @remarks
 	 * As with synchronous transactions, all of the changes in an asynchronous transaction are treated as a unit.
 	 * Therefore, no other changes (either from this client or from a remote client) can be interleaved with the transaction changes.
@@ -271,16 +356,49 @@ export interface TreeContextAlpha {
 	 */
 	runTransactionAsync<TValue>(
 		transaction: () => Promise<WithValue<TValue>>,
-		params?: RunTransactionParamsAlpha,
+		params?: RunTransactionParamsBeta,
 	): Promise<TransactionValueResult<TValue, TValue>>;
 
 	/**
-	 * An overload of {@link TreeContextAlpha.(runTransactionAsync:1) | runTransactionAsync } which does not return a value.
+	 * An overload of {@link TreeContextBeta.(runTransactionAsync:1) | runTransactionAsync } which does not return a value.
 	 *
 	 * @privateRemarks
 	 * TODO: Consider updating these methods to avoid the need for overloads.
 	 * See {@link TreeViewBeta.runTransactionAsync} for an example of how to do this.
 	 */
+	runTransactionAsync(
+		transaction: () => Promise<void>,
+		params?: RunTransactionParamsBeta,
+	): Promise<TransactionVoidResult>;
+
+	/**
+	 * True if this context is associated with an {@link UntypedTreeView | untyped view} and false if it is associated with an {@link Unhydrated | unhydrated } node.
+	 * @remarks If this returns true, the context can be safely inferred or cast to {@link UntypedTreeView} to access additional view-specific APIs.
+	 * @returns Whether this context is associated with an untyped view.
+	 */
+	isView(): this is UntypedTreeView;
+}
+
+/**
+ * Provides additional APIs that may be used to interact with a tree node or a tree node's SharedTree.
+ * @sealed @alpha
+ */
+export interface TreeContextAlpha extends TreeContextBeta {
+	runTransaction<TValue>(
+		transaction: () => WithValue<TValue>,
+		params?: RunTransactionParamsAlpha,
+	): TransactionValueResult<TValue, TValue>;
+
+	runTransaction(
+		transaction: () => void,
+		params?: RunTransactionParamsAlpha,
+	): TransactionVoidResult;
+
+	runTransactionAsync<TValue>(
+		transaction: () => Promise<WithValue<TValue>>,
+		params?: RunTransactionParamsAlpha,
+	): Promise<TransactionValueResult<TValue, TValue>>;
+
 	runTransactionAsync(
 		transaction: () => Promise<void>,
 		params?: RunTransactionParamsAlpha,
@@ -390,7 +508,9 @@ export interface TreeBranchHistory {
  * An untyped view does not necessarily know the schema of its SharedTree. To convert it to a {@link TreeViewAlpha | view with a schema}, use {@link UntypedTreeViewAlpha.hasRootSchema | hasRootSchema()}.
  * @sealed @alpha
  */
-export interface UntypedTreeViewAlpha extends UntypedTreeView, TreeContextAlpha {
+export interface UntypedTreeViewAlpha
+	extends Omit<UntypedTreeView, "runTransaction" | "runTransactionAsync" | "isView">,
+		TreeContextAlpha {
 	/**
 	 * Events for the view's underlying branch.
 	 */
@@ -602,9 +722,8 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	 *
 	 * When using {@link TreeViewConfigurationAlpha} with a {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy},
 	 * staged schema upgrades matching the configured policy are included in the target stored schema.
-	 * Once a staged schema upgrade has been enabled in a document's stored schema, loading that document
-	 * with a view that does not include equivalent staged members in its construction-time policy will cause
-	 * `upgradeSchema` to throw a `UsageError` because the requested target would narrow the stored schema.
+	 * Set {@link (StagedSchemaUpgradePolicy:interface).includeAlreadyEnabledUpgrades} to `true` to
+	 * also include staged upgrades that are already enabled in the document.
 	 *
 	 * @example Enabling a staged allowed type for documents, selected by a feature flag
 	 *
@@ -677,79 +796,177 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 }
 
 /**
+ * A discrepancy between a view schema and a document's stored schema.
+ *
+ * @remarks
+ * The `mismatch` property discriminates the different discrepancy shapes.
+ *
+ * @sealed @beta
+ */
+export type SchemaDiscrepancy =
+	| {
+			/**
+			 * Indicates that a field allows different node types in the view and stored schemas.
+			 */
+			readonly mismatch: "allowedTypes";
+			/**
+			 * The field with the discrepancy.
+			 *
+			 * `"root"` identifies the root field. Otherwise, `nodeType` identifies the containing
+			 * node schema and `fieldKey` identifies its field. `fieldKey` is undefined for a map
+			 * node's implicit field.
+			 */
+			readonly location:
+				| "root"
+				| {
+						readonly nodeType: string;
+						readonly fieldKey: string | undefined;
+				  };
+			/**
+			 * Non-staged node type identifiers allowed by the view schema but not the stored schema.
+			 */
+			readonly view: readonly string[];
+			/**
+			 * Staged node type identifiers allowed by the view schema but not the stored schema.
+			 *
+			 * @remarks These types provide rollout context but do not cause the discrepancy.
+			 */
+			readonly stagedView?: readonly string[];
+			/**
+			 * Node type identifiers allowed by the stored schema but not the view schema.
+			 */
+			readonly stored: readonly string[];
+			/**
+			 * Whether the view field is a staged optional field.
+			 *
+			 * @remarks Omitted when false.
+			 */
+			readonly viewIsStagedOptional?: true;
+	  }
+	| {
+			/**
+			 * Indicates that a field has different field kinds in the view and stored schemas.
+			 */
+			readonly mismatch: "fieldKind";
+			/**
+			 * The field with the discrepancy.
+			 *
+			 * `"root"` identifies the root field. Otherwise, `nodeType` identifies the containing
+			 * node schema and `fieldKey` identifies its field. `fieldKey` is undefined for a map
+			 * node's implicit field.
+			 */
+			readonly location:
+				| "root"
+				| {
+						readonly nodeType: string;
+						readonly fieldKey: string | undefined;
+				  };
+			/**
+			 * The field kind required by the view schema.
+			 */
+			readonly view: string;
+			/**
+			 * The field kind recorded in the stored schema.
+			 */
+			readonly stored: string;
+			/**
+			 * Whether the view field is a staged optional field.
+			 *
+			 * @remarks Omitted when false.
+			 */
+			readonly viewIsStagedOptional?: true;
+	  }
+	| {
+			/**
+			 * Indicates that a leaf node accepts different value types in the view and stored schemas.
+			 */
+			readonly mismatch: "valueSchema";
+			/**
+			 * The identifier of the leaf node schema with the discrepancy.
+			 */
+			readonly nodeType: string;
+			/**
+			 * The value schema required by the view, or undefined when it does not constrain values.
+			 */
+			readonly view: string | undefined;
+			/**
+			 * The value schema recorded in the stored schema, or undefined when it does not constrain values.
+			 */
+			readonly stored: string | undefined;
+	  }
+	| {
+			/**
+			 * Indicates that a node is represented by different node kinds in the view and stored schemas.
+			 */
+			readonly mismatch: "nodeKind";
+			/**
+			 * The identifier of the node schema with the discrepancy.
+			 */
+			readonly nodeType: string;
+			/**
+			 * The node kind required by the view schema.
+			 */
+			readonly view: string;
+			/**
+			 * The node kind recorded in the stored schema.
+			 */
+			readonly stored: string;
+	  };
+
+/**
+ * {@link SchemaCompatibilityStatus} with additional beta APIs.
+ *
+ * @sealed @beta
+ */
+export interface SchemaCompatibilityStatusBeta extends SchemaCompatibilityStatus {
+	/**
+	 * Details about the schema discrepancies that prevent this view from accessing the tree.
+	 *
+	 * @remarks
+	 * This property is undefined when {@link SchemaCompatibilityStatus.canView} is true and present
+	 * when `canView` is false.
+	 * It can include application-defined schema identifiers and field keys.
+	 *
+	 * @example Interpreting an allowed-types discrepancy
+	 *
+	 * If a document's stored schema allows `string` for `Todo.title`, but the view schema expects
+	 * `number`, the discrepancy identifies the field and the type permitted by each schema:
+	 *
+	 * ```typescript
+	 * const sf = new SchemaFactory("com.example");
+	 * class Todo extends sf.object("Todo", {
+	 * 	title: sf.number,
+	 * }) {}
+	 *
+	 * const view = asBeta(tree.viewWith(new TreeViewConfiguration({ schema: Todo })));
+	 * if (!view.compatibility.canView) {
+	 * 	// [{
+	 * 	//   mismatch: "allowedTypes",
+	 * 	//   location: { nodeType: "com.example.Todo", fieldKey: "title" },
+	 * 	//   view: ["com.fluidframework.leaf.number"],
+	 * 	//   stored: ["com.fluidframework.leaf.string"],
+	 * 	// }]
+	 * 	console.error(view.compatibility.discrepancies);
+	 * }
+	 * ```
+	 */
+	readonly discrepancies: readonly SchemaDiscrepancy[] | undefined;
+}
+
+/**
  * {@link TreeView} with additional beta APIs.
  * @sealed @beta
  */
 export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema>
 	extends TreeView<TSchema>,
 		UntypedTreeView {
+	/**
+	 * {@inheritDoc TreeView.compatibility}
+	 */
+	readonly compatibility: SchemaCompatibilityStatusBeta;
+
 	// Override the base branch method to return a typed view rather than merely a branch.
 	fork(): ReturnType<UntypedTreeView["fork"]> & TreeViewBeta<TSchema>;
-
-	/**
-	 * Run a synchronous transaction which groups sequential edits to the tree into a single atomic edit if possible.
-	 *
-	 * @param transaction - The function to run as the body of the transaction, which may optionally return a {@link TransactionCallbackStatusBeta | value or rollback signal}.
-	 * It may optionally return a {@link WithValue | value }, which will be returned by the `runTransaction` call.
-	 *
-	 * @param params - Optional {@link RunTransactionParamsBeta | parameters} for the transaction.
-	 *
-	 * @returns A {@link TransactionValueResult | value } indicating whether or not the transaction succeeded, and containing the value returned by `transaction`.
-	 *
-	 * @remarks
-	 * All of the changes in the transaction are applied synchronously and therefore no other changes from a remote client can be interleaved with those changes.
-	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
-	 *
-	 * {@link (TreeBeta:interface).on | Change events } will be emitted for changed nodes on this client _as each edit happens_, just as they would be if the changes were made outside of a transaction.
-	 * Any other/future clients or contexts will process the transaction "squashed", i.e. they will apply its changes all at once, emitting only a single event per node (even if that node was edited multiple times in the transaction).
-	 * Edits to the tree are not permitted within these event callbacks, therefore no other local changes from this client will be interleaved with the changes in this transaction.
-	 *
-	 * Using a transaction has the following additional consequences:
-	 *
-	 * - If {@link Revertible | reverted } (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
-	 * Only the "outermost" transaction commits a change to the synchronized tree state and therefore only the outermost transaction can be reverted.
-	 * If a transaction is started and completed while another transaction is already in progress, then the inner transaction will be reverted together with the outer transaction.
-	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
-	 *
-	 * If the transaction is rolled back, a corresponding {@link TreeBranchEvents.changed | `changed`} event will also be emitted for the rollback.
-	 */
-	runTransaction<
-		TOut extends
-			| TransactionCallbackStatusBeta<unknown, unknown>
-			| VoidTransactionCallbackStatusBeta
-			| void,
-	>(
-		transaction: () => TOut,
-		params?: RunTransactionParamsBeta,
-	): TOut extends TransactionCallbackStatusBeta<infer TSuccessValue, infer TFailureValue>
-		? TransactionValueResult<TSuccessValue, TFailureValue>
-		: TransactionVoidResult;
-
-	/**
-	 * An asynchronous version of {@link TreeViewBeta.runTransaction | runTransaction}.
-	 *
-	 * @remarks
-	 * As with synchronous transactions, all of the changes in an asynchronous transaction are treated as a unit.
-	 * Therefore, no other changes (either from this client or from a remote client) can be interleaved with the transaction changes.
-	 *
-	 * Unlike with synchronous transactions, it is possible that other changes (e.g. from a remote client) may be applied to the branch while this transaction is in progress.
-	 * Those other changes will be not be reflected on the branch until after this transaction completes, at which point the transaction changes will be applied after those other changes.
-	 *
-	 * An asynchronous transaction may not be started while any other transaction is in progress in this view.
-	 */
-	runTransactionAsync<
-		TOut extends
-			| TransactionCallbackStatusBeta<unknown, unknown>
-			| VoidTransactionCallbackStatusBeta
-			| void,
-	>(
-		transaction: () => Promise<TOut>,
-		params?: RunTransactionParamsBeta,
-	): Promise<
-		TOut extends TransactionCallbackStatusBeta<infer TSuccessValue, infer TFailureValue>
-			? TransactionValueResult<TSuccessValue, TFailureValue>
-			: TransactionVoidResult
-	>;
 }
 
 /**
@@ -760,7 +977,7 @@ export interface TreeViewAlpha<
 	in out TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema,
 > extends Omit<
 			TreeViewBeta<ReadSchema<TSchema>>,
-			"root" | "initialize" | "fork" | "runTransaction" | "runTransactionAsync"
+			"root" | "initialize" | "fork" | "runTransaction" | "runTransactionAsync" | "isView"
 		>,
 		UntypedTreeViewAlpha {
 	get root(): ReadableField<TSchema>;
@@ -774,10 +991,6 @@ export interface TreeViewAlpha<
 	 * Only valid to call when this view's {@link SchemaCompatibilityStatus.canInitialize} is true.
 	 *
 	 * Enables staged schema upgrades declared by {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy} when generating the initial stored schema.
-	 * Once a staged schema upgrade has been enabled in a document's stored schema, loading that document
-	 * with a view that does not include equivalent staged members in its construction-time policy will cause
-	 * a subsequent `upgradeSchema` call to throw a `UsageError` because the stored schema already contains
-	 * the upgraded members and the new target would narrow it.
 	 *
 	 * Applications should typically call this function before attaching a `SharedTree`.
 	 * @param content - The content to initialize the tree with.
@@ -796,8 +1009,8 @@ export interface TreeViewAlpha<
 	 * whether to include an upgrade token in the view configuration after a feature flag rollback.
 	 *
 	 * Results are derived from this view's schema and the current stored schema.
-	 * When the view is not compatible with the stored schema (i.e. `compatibility.canView` is
-	 * false), the result may be incomplete because the schema walk is interrupted early.
+	 * The full schema is checked even when the view is incompatible with the stored schema, so the
+	 * result includes all locations declared by the view schema.
 	 */
 	isStagedUpgradeEnabled(upgrade: SchemaUpgrade): StagedUpgradeStatus;
 

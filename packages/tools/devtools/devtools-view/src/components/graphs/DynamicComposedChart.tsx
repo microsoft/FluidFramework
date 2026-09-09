@@ -413,11 +413,7 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): ReactEle
 
 	return (
 		<ResponsiveContainer width="100%" height="100%">
-			<ComposedChart
-				data={mergeDataSets(props.dataSets)}
-				margin={props.margin}
-				data-testId="test-dynamic-composed-chart"
-			>
+			<ComposedChart data={mergeDataSets(props.dataSets)} margin={props.margin}>
 				<CartesianGrid strokeDasharray="2 2" stroke={graphColorPalette.cartesianGrid} />
 				<XAxis dataKey={"x"} tick={CustomizedXAxisTick}>
 					<Label value="Timestamp" offset={12} position="bottom" />

@@ -48,8 +48,10 @@ In addition to the layer version combinations seen above, this package also prov
 intended to test all layers of one version against all layers of another version in tests that feature more than one client.
 The intention is to simulate scenarios where the client that created a document was using a different version than the client
 loading the document. The matrix pairs the current build against every in-window prior **Compatibility Checkpoint**
-(see [`CompatibilityCheckpoints.md`](../../../CompatibilityCheckpoints.md)) in both directions, with each prior
-checkpoint resolved to the **earliest minor** in its range (e.g. CC#3 → latest patch of `2.40.x`).
+at or above the deployed-client compatibility floor (see
+[`CompatibilityCheckpoints.md`](../../../CompatibilityCheckpoints.md)) in both directions, with
+each prior checkpoint resolved to the **earliest minor** in its range (e.g. CC#3 → latest patch of
+`2.40.x`).
 
 The data driving the matrix lives in [`src/checkpoints.ts`](./src/checkpoints.ts).
 

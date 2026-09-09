@@ -44,7 +44,7 @@ However, there are many other types of changes that could impact cross-client co
 
 If a change affects the data format (see above), it should be gated by a **container runtime option**. Runtime options are enforced via the `oldestSupportedClient` property to ensure customers do not accidentally break older clients by enabling cross-client compatibility breaking features prematurely.
 
-`oldestSupportedClient` defines the oldest Fluid client version that must be able to access documents written by the runtime. Customers are encouraged to set `oldestSupportedClient` to the highest version their users are saturated on. If the customer does not set `oldestSupportedClient`, a default value is assigned. `oldestSupportedClient` controls the "default configurations" and "unsafe configuration prevention" mechanisms explained below.
+`oldestSupportedClient` defines the oldest Fluid client version that must be able to access documents written by the runtime. Customers are encouraged to set `oldestSupportedClient` to the highest version their users are saturated on. Client 3.0 accepts stable 2.x versions and 3.x minor checkpoints whose patch is zero, so all active deployments that must collaborate need to be running Fluid Framework 2.0.0 or later. If the customer does not set `oldestSupportedClient`, Client 3.0 uses `"2.0.0"` and applies the same defaults and validation as an explicit `"2.0.0"`. `oldestSupportedClient` controls the "default configurations" and "unsafe configuration prevention" mechanisms explained below.
 
 ### Default Configurations
 
@@ -56,35 +56,34 @@ The runtime uses `oldestSupportedClient` to automatically set certain container 
 // Simplified view of the config map (see containerCompatibility.ts for full details)
 const runtimeOptionsAffectingDocSchemaConfigMap: ConfigMap<RuntimeOptionsAffectingDocSchema> = {
 	enableGroupedBatching: {
-		"1.0.0": false,
-		"2.0.0-defaults": true,
+		"2.0.0": true,
 	},
 	createBlobPayloadPending: {
-		"1.0.0": undefined,
+		"2.0.0": undefined,
 		// Could be enabled by default in a future version
 	},
 	// ... other options
 };
 ```
 
-> **Note on `"2.0.0-defaults"`:** This is a special version string (considered less than `"2.0.0"` by `semver`) used as the default when a customer does not explicitly set `oldestSupportedClient`. It exists to distinguish the unspecified case from an explicit `"2.0.0"` setting. Some options (e.g., `explicitSchemaControl`) use a threshold of `"2.0.0"` rather than `"2.0.0-defaults"`, meaning they only activate when the customer _explicitly_ sets `oldestSupportedClient` to `"2.0.0"` or higher. See `defaultMinVersionForCollab` in [compatibilityBase.ts](./packages/runtime/runtime-utils/src/compatibilityBase.ts) for more information.
+When the setting is omitted, Client 3.0 uses `"2.0.0"` before consulting this map. Omitted and explicit `"2.0.0"` settings therefore produce the same configuration.
 
 ### Unsafe Configuration Prevention
 
 If a client tries to enable a runtime option that requires a version higher than the document's `oldestSupportedClient`, the runtime will fail to instantiate and throw a `UsageError`. This is handled by the `runtimeOptionsAffectingDocSchemaConfigValidationMap` in [containerCompatibility.ts](./packages/runtime/container-runtime/src/containerCompatibility.ts).
 
-**Example:** A container author sets `oldestSupportedClient` to `"1.4.0"` and `enableGroupedBatching` to `true`. The runtime fails immediately stating that `oldestSupportedClient` must be updated, since clients running runtime version 1.4.0 cannot understand the data format of grouped batching being enabled.
+**Example:** A container author sets `oldestSupportedClient` to `"2.0.0"` and `createBlobPayloadPending` to `true`. The runtime fails immediately stating that `oldestSupportedClient` must be updated to at least `"2.40.0"`, when support for the associated data format was introduced.
 
 ```typescript
 // Simplified view of the validation map (see containerCompatibility.ts for full details)
 const runtimeOptionsAffectingDocSchemaConfigValidationMap: ConfigValidationMap<RuntimeOptionsAffectingDocSchema> =
 	{
 		enableGroupedBatching: configValueToMinVersionForCollab([
-			[false, "1.0.0"],
-			[true, "2.0.0-defaults"],
+			[false, "2.0.0"],
+			[true, "2.0.0"],
 		]),
 		createBlobPayloadPending: configValueToMinVersionForCollab([
-			[undefined, "1.0.0"],
+			[undefined, "2.0.0"],
 			[true, "2.40.0"],
 		]),
 		// ... other options
@@ -209,10 +208,7 @@ Once a checkpoint has aged out of the supported window, the runtime's compatibil
 
 To tighten runtime enforcement:
 
-1. **Advance `defaultMinVersionForCollab`:** Update the default in
-   [compatibilityBase.ts](./packages/runtime/runtime-utils/src/compatibilityBase.ts)
-   to the oldest checkpoint still in the supported window.
-2. **Advance `lowestMinVersionForCollab`:** Update the floor in
+1. **Advance `lowestMinVersionForCollab`:** Update the deployed-client floor in
    [compatibilityBase.ts](./packages/runtime/runtime-utils/src/compatibilityBase.ts)
    to match the oldest checkpoint still in the supported window.
    `lowestMinVersionForCollab` is the absolute minimum value a customer can
@@ -223,30 +219,37 @@ To tighten runtime enforcement:
    (e.g., `2.x` → `3.x`), also narrow the `OldestSupportedClientVersion` type in
    [compatibilityDefinitions.ts](./packages/runtime/runtime-definitions/src/compatibilityDefinitions.ts)
    to drop the now-unsupported major from its definition.
+2. **Keep omission aligned with the floor:** While customer-facing APIs still permit
+   `oldestSupportedClient` to be omitted, update `defaultMinVersionForCollab` to the same
+   value as `lowestMinVersionForCollab`. Omitted and explicit floor values must use the
+   same configuration and unsafe-option validation. Remove this fallback once those APIs
+   require the setting.
 
 ## Testing
 
 Fluid's end-to-end test suite automatically generates cross-client compatibility
 variations using `describeCompat()` with `"FullCompat"`. The variations test
 cross-client compatibility scenarios by using one version of the Fluid runtime for
-creating containers and a different version for loading containers.
+creating containers and a different version for loading containers. Prior checkpoints
+below `lowestMinVersionForCollab` are excluded because they are outside the supported
+deployed-client range.
 
-**Example:** With current build `2.101.0` (N) and in-window prior Compatibility
-Checkpoints `2.40.0` (CC#3), `2.0.9` (CC#2), and `1.4.0` (CC#1), a SharedCell
+**Example:** With current build `3.0.0` (N) and in-window prior Compatibility
+Checkpoints `2.80.0` (CC#4), `2.40.0` (CC#3), and `2.0.9` (CC#2), a SharedCell
 test generates these cross-client variations:
 
 ```
-compat cross-client - create with 2.101.0 (N) + load with 2.40.0 (CC#3)
+compat cross-client - create with 3.0.0 (N) + load with 2.80.0 (CC#4)
   ✔ Example test
-compat cross-client - create with 2.101.0 (N) + load with 2.0.9 (CC#2)
+compat cross-client - create with 3.0.0 (N) + load with 2.40.0 (CC#3)
   ✔ Example test
-compat cross-client - create with 2.101.0 (N) + load with 1.4.0 (CC#1)
+compat cross-client - create with 3.0.0 (N) + load with 2.0.9 (CC#2)
   ✔ Example test
-compat cross-client - create with 2.40.0 (CC#3) + load with 2.101.0 (N)
+compat cross-client - create with 2.80.0 (CC#4) + load with 3.0.0 (N)
   ✔ Example test
-compat cross-client - create with 2.0.9 (CC#2) + load with 2.101.0 (N)
+compat cross-client - create with 2.40.0 (CC#3) + load with 3.0.0 (N)
   ✔ Example test
-compat cross-client - create with 1.4.0 (CC#1) + load with 2.101.0 (N)
+compat cross-client - create with 2.0.9 (CC#2) + load with 3.0.0 (N)
   ✔ Example test
 ```
 

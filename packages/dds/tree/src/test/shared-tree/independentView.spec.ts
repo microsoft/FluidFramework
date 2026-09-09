@@ -19,6 +19,9 @@ import {
 	independentInitializedView,
 	createIndependentTreeAlpha,
 	createIndependentTreeBeta,
+	createIndependentTreeView,
+	createIndependentTreeViewAlpha,
+	independentView,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree/independentView.js";
 import { ForestTypeExpensiveDebug, TreeAlpha } from "../../shared-tree/index.js";
@@ -27,6 +30,7 @@ import {
 	FieldKind,
 	SchemaFactory,
 	SchemaFactoryAlpha,
+	type TreeViewBeta,
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
 } from "../../simple-tree/index.js";
@@ -34,6 +38,19 @@ import { ajvValidator } from "../codec/index.js";
 import { testIdCompressor } from "../utils.js";
 
 describe("independentView", () => {
+	it("createIndependentTreeViewAlpha", () => {
+		const config = new TreeViewConfiguration({ schema: SchemaFactory.number });
+		// Keep this deprecated call to verify compatibility with the previous API name.
+		const view = independentView(config);
+		view.initialize(42);
+		assert.equal(view.root, 42);
+		view.dispose();
+
+		const renamedView = createIndependentTreeViewAlpha(config);
+		assert(renamedView.compatibility.canInitialize);
+		renamedView.dispose();
+	});
+
 	describe("independentInitializedView", () => {
 		// Regression test for debug forest erroring during initialization due to being out of schema.
 		it("debug forest", () => {
@@ -279,6 +296,16 @@ describe("independentView", () => {
 		const view = tree.viewWith(
 			new TreeViewConfigurationAlpha({ schema: SchemaFactory.number }),
 		);
+		view.initialize(42);
+		assert.equal(view.root, 42);
+		view.dispose();
+	});
+
+	it("createIndependentTreeView", () => {
+		const view: TreeViewBeta<typeof SchemaFactory.number> = createIndependentTreeView(
+			new TreeViewConfiguration({ schema: SchemaFactory.number }),
+		);
+		assert(view.compatibility.canInitialize);
 		view.initialize(42);
 		assert.equal(view.root, 42);
 		view.dispose();

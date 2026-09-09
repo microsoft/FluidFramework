@@ -52,6 +52,7 @@ function createBranch(branchTrimmer?: Listenable<BranchTrimmingEvents>): BranchT
 			change: changeFamily.rebaser.compose([]),
 			revision: "root",
 			customMetadata: undefined,
+			wasTrimmed: true,
 		},
 		changeFamily,
 		mintRevisionTag,
