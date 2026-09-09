@@ -571,7 +571,10 @@ The injected implementation:
    document services: a **recoverable** one bound to that base version (its storage is the base
    snapshot) and a **live** one (its delta storage supplies the ops to replay). Both are created via
    `createDocumentServiceCore` with a **single shared** `EpochTracker` (the same one the version
-   manager reads through) — this is the structural lineage guard; see the next question.
+   manager reads through) — this is the structural lineage guard; see the next question. The
+   point-in-time storage wrapper forces the recoverable service's initial snapshot read to bypass
+   the persistent latest-snapshot cache so the selected base cannot be replaced by a newer cached
+   snapshot.
 3. Return an `OdspPointInTimeDocumentService` composing the two.
 
 It lives in this package rather than a generic wrapping driver (e.g. `@fluidframework/replay-driver`)

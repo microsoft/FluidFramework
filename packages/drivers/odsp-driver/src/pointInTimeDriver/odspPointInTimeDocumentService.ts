@@ -4,16 +4,31 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import type {
-	IClient,
-	IDocumentDeltaConnection,
-	IDocumentDeltaStorageService,
-	IDocumentService,
-	IDocumentServiceEvents,
-	IDocumentServicePolicies,
-	IDocumentStorageService,
-	IResolvedUrl,
+import {
+	FetchSource,
+	type IClient,
+	type IDocumentDeltaConnection,
+	type IDocumentDeltaStorageService,
+	type IDocumentService,
+	type IDocumentServiceEvents,
+	type IDocumentServicePolicies,
+	type IDocumentStorageService,
+	type IResolvedUrl,
+	type ISnapshot,
+	type ISnapshotFetchOptions,
 } from "@fluidframework/driver-definitions/internal";
+import { DocumentStorageServiceProxy } from "@fluidframework/driver-utils/internal";
+
+class PointInTimeDocumentStorageService extends DocumentStorageServiceProxy {
+	public override async getSnapshot(
+		snapshotFetchOptions?: ISnapshotFetchOptions,
+	): Promise<ISnapshot> {
+		return super.getSnapshot({
+			...snapshotFetchOptions,
+			fetchSource: FetchSource.noCache,
+		});
+	}
+}
 
 /**
  * A read-only document service that materializes a document at a target sequence number by combining
@@ -64,7 +79,8 @@ export class OdspPointInTimeDocumentService
 	}
 
 	public async connectToStorage(): Promise<IDocumentStorageService> {
-		return this.recoverableDocumentService.connectToStorage();
+		const storage = await this.recoverableDocumentService.connectToStorage();
+		return new PointInTimeDocumentStorageService(storage);
 	}
 
 	public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {

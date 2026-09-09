@@ -45,6 +45,8 @@ The result is a historical view with these invariants:
 3. `PointInTimeDocumentServiceFactory` adapts that capability to the normal `createDocumentService` call used by container loading, preserving the requested target sequence number.
 4. The driver creates a point-in-time document service:
    - storage serves a recoverable snapshot whose sequence number is at or before the target;
+   - the initial snapshot read bypasses the persistent latest-snapshot cache so it cannot replace
+     the selected recoverable snapshot with a newer snapshot;
    - delta storage serves the live document's retained ops, bounded so replay cannot pass the target;
    - the service is storage-only, preventing a live delta-stream connection.
 5. `loadContainerPaused` loads the selected snapshot with automatic op processing disabled and forces the container into read-only mode.

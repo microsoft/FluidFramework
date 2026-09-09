@@ -6,15 +6,18 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 import { strict as assert } from "node:assert";
 
-import type {
-	IClient,
-	IDocumentDeltaStorageService,
-	IDocumentService,
-	IDocumentStorageService,
-	IResolvedUrl,
-	ISequencedDocumentMessage,
-	IStream,
-	IStreamResult,
+import {
+	FetchSource,
+	type IClient,
+	type IDocumentDeltaStorageService,
+	type IDocumentService,
+	type IDocumentStorageService,
+	type IResolvedUrl,
+	type ISequencedDocumentMessage,
+	type ISnapshot,
+	type ISnapshotFetchOptions,
+	type IStream,
+	type IStreamResult,
 } from "@fluidframework/driver-definitions/internal";
 
 // eslint-disable-next-line import-x/no-internal-modules
@@ -109,7 +112,21 @@ class FakeLiveDocumentService {
 class FakeRecoverableDocumentService {
 	public disposeCount = 0;
 	public connectToStorageCount = 0;
-	public readonly storage = {} as IDocumentStorageService;
+	public snapshotFetchOptions: ISnapshotFetchOptions | undefined;
+	public readonly snapshot = {
+		snapshotTree: { blobs: {}, trees: {} },
+		blobContents: new Map(),
+		ops: [],
+		sequenceNumber: 0,
+		latestSequenceNumber: 0,
+		snapshotFormatV: 1,
+	} satisfies ISnapshot;
+	public readonly storage = {
+		getSnapshot: async (snapshotFetchOptions?: ISnapshotFetchOptions) => {
+			this.snapshotFetchOptions = snapshotFetchOptions;
+			return this.snapshot;
+		},
+	} as IDocumentStorageService;
 
 	public async connectToStorage(): Promise<IDocumentStorageService> {
 		this.connectToStorageCount++;
@@ -207,10 +224,15 @@ describe("OdspPointInTimeDocumentService", () => {
 			assert.equal(service.policies?.storageOnly, true);
 		});
 
-		it("serves storage from the recoverable (snapshot) document service", async () => {
+		it("serves the recoverable snapshot without consulting the persistent cache", async () => {
 			const { service, recoverable } = makeService(100, streamFromBatches([]));
 			const storage = await service.connectToStorage();
-			assert.equal(storage, recoverable.storage);
+			const snapshot = await storage.getSnapshot?.({ scenarioName: "point-in-time-test" });
+			assert.equal(snapshot, recoverable.snapshot);
+			assert.deepEqual(recoverable.snapshotFetchOptions, {
+				scenarioName: "point-in-time-test",
+				fetchSource: FetchSource.noCache,
+			});
 			assert.equal(recoverable.connectToStorageCount, 1);
 		});
 
