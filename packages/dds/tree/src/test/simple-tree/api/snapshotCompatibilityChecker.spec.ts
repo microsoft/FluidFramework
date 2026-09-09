@@ -26,7 +26,6 @@ import {
 import {
 	normalizeFieldSchema,
 	SchemaFactory,
-	SchemaFactoryAlpha,
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
 	SchemaFactoryBeta,
@@ -35,6 +34,7 @@ import {
 	numberSchema,
 	allowUnused,
 } from "../../../simple-tree/index.js";
+import { testDocuments } from "../../testTrees.js";
 import { testSrcPath } from "../../testSrcPath.cjs";
 import { inMemorySnapshotFileSystem } from "../../utils.js";
 
@@ -61,18 +61,36 @@ describe("snapshotCompatibilityChecker", () => {
 		);
 	});
 
-	// TODO:AB#82814: Fix compatibility logic and enable this test.
-	it.skip("parse and snapshot preserve staged optional fields", () => {
-		const originalView = new TreeViewConfiguration({
-			schema: SchemaFactoryAlpha.stagedOptional(SchemaFactoryAlpha.number),
-		});
-		const snapshot = exportCompatibilitySchemaSnapshot(originalView);
-		const parsedView = importCompatibilitySchemaSnapshot(snapshot);
+	describe("parse and snapshot preserve test schemas", () => {
+		// TODO:AB#82814: Fix compatibility logic and enable these staged optional cases, which are currently skipped below.
+		const stagedOptionalTestCases = new Set([
+			"HasStagedOptionalFieldBeforeUpdate",
+			"HasStagedOptionalFieldAfterUpdate",
+			"Staged optional in root",
+			"Staged optional empty root",
+			"NestedStagedOptional with no upgrades",
+			"NestedStagedOptional with one upgrade",
+			"NestedStagedOptional with all upgrades",
+		]);
 
-		const result = getCompatibility(originalView, parsedView);
-		assert.equal(result.currentViewOfSnapshotDocument.isEquivalent, true);
-		assert.equal(result.snapshotViewOfCurrentDocument.isEquivalent, true);
-		assert.equal(result.identicalCompatibility, true);
+		for (const testCase of testDocuments) {
+			// TODO:AB#82814: Fix compatibility logic and enable the staged optional cases.
+			const test = stagedOptionalTestCases.has(testCase.name) ? it.skip : it;
+			test(testCase.name, () => {
+				// Every test schema, including staged optional fields, must equal its snapshot.
+				const originalView = new TreeViewConfigurationAlpha({
+					schema: testCase.schema,
+					preventAmbiguity: !testCase.ambiguous,
+				});
+				const snapshot = exportCompatibilitySchemaSnapshot(originalView);
+				const parsedView = importCompatibilitySchemaSnapshot(snapshot);
+
+				const result = getCompatibility(originalView, parsedView);
+				assert.equal(result.currentViewOfSnapshotDocument.isEquivalent, true);
+				assert.equal(result.snapshotViewOfCurrentDocument.isEquivalent, true);
+				assert.equal(result.identicalCompatibility, true);
+			});
+		}
 	});
 
 	function checkCompatibilityDetectsUpgradeableSchemas(roundtripSnapshot: boolean): void {
