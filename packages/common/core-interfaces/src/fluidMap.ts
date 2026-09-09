@@ -121,7 +121,8 @@ export interface FluidReadonlyMap<K, V> {
  *
  * @sealed @public
  */
-export interface FluidMap<K, V> extends FluidReadonlyMap<K, V> {
+export interface FluidMap<K, V, TMap extends FluidReadonlyMap<K, V> = FluidMap<K, V, never>>
+	extends FluidReadonlyMap<K, V> {
 	/**
 	 * Removes the specified element from the map by its key.
 	 *
@@ -137,7 +138,7 @@ export interface FluidMap<K, V> extends FluidReadonlyMap<K, V> {
 	 * Executes the provided function once per each key/value pair in the map.
 	 */
 	forEach(
-		callbackfn: (value: V, key: K, map: FluidMap<K, V>) => void,
+		callbackfn: (value: V, key: K, map: TMap) => void,
 		// Typing inherited from Map.
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		thisArg?: any,

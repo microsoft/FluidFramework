@@ -16,13 +16,13 @@ declare type _iDirectory_to_fluidMap = requireAssignableTo<
 	IDirectory,
 	// TODO: Use `unknown` instead (breaking change).
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	FluidMap<string, any>
+	FluidMap<string, any, IDirectory>
 >;
 declare type _iSharedMap_to_fluidMap = requireAssignableTo<
 	ISharedMap,
 	// TODO: Use `unknown` instead (breaking change).
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	FluidMap<string, any>
+	FluidMap<string, any, Map<string, any>>
 >;
 declare type _iSharedMapBeta_to_fluidMap = requireAssignableTo<
 	ISharedMapBeta,

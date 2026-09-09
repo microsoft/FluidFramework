@@ -527,7 +527,7 @@ export class SharedDirectory
 	 */
 	// TODO: Use `unknown` instead (breaking change).
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	public forEach(callback: (value: any, key: string, map: Map<string, any>) => void): void {
+	public forEach(callback: (value: any, key: string, map: IDirectory) => void): void {
 		// eslint-disable-next-line unicorn/no-array-for-each
 		this.root.forEach(callback);
 	}
@@ -1590,9 +1590,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * Issue a callback on each entry under this IDirectory.
 	 * @param callback - Callback to issue
 	 */
-	public forEach(
-		callback: (value: unknown, key: string, map: Map<string, unknown>) => void,
-	): void {
+	public forEach(callback: (value: unknown, key: string, map: this) => void): void {
 		this.throwIfDisposed();
 		for (const [key, localValue] of this.internalIterator()) {
 			callback(localValue, key, this);
