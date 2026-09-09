@@ -19,9 +19,7 @@ Core Examples repo can be found at <https://github.com/microsoft/FluidExamples>.
 Have questions? Engage with other Fluid Framework users and developers in the [Discussions](https://github.com/microsoft/FluidFramework/discussions) section of our GitHub repo.
 
 <!-- markdown-magic:begin {"transform":"dependency-guidelines","includeHeading":true,"headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Using Fluid Framework libraries
@@ -33,7 +31,6 @@ For a dependency on an unstable API, such as a `beta` API, we recommend a more r
 For example, use a `~` version range.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 ## Code structure
@@ -371,9 +368,7 @@ to prevent phantom dependencies from being introduced but they're not foolproof.
 ## Contributing
 
 <!-- markdown-magic:begin {"transform":"contribution-guidelines","includeHeading":false,"headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 You can [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid Framework in these ways:
@@ -394,5 +389,4 @@ Use of these trademarks or logos must follow Microsoft’s [Trademark & Brand Gu
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->

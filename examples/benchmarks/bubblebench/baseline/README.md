@@ -1,9 +1,7 @@
 # @fluid-example/bubblebench-baseline
 
 <!-- markdown-magic:begin {"transform":"example-app-readme-header","usesTinylicious":false,"headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Getting Started
@@ -25,7 +23,6 @@ To run the example with SharePoint, complete these steps:
 3. Open <http://localhost:8080> in a web browser.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 ## Testing

@@ -11,9 +11,7 @@ There are some packages there are not included as part of this `fluid-framework`
 -   `@fluidframework/react (ALPHA)`: to help integrate Fluid content (mainly SharedTree) into [React](https://react.dev/) applications.
 
 <!-- markdown-magic:begin {"transform":"library-readme-header","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Using Fluid Framework libraries
@@ -50,7 +48,6 @@ Import the `legacy` APIs from `fluid-framework/legacy`.
 Read the **fluid-framework** API documentation at <https://fluidframework.com/docs/apis/fluid-framework>.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 ## Contents
@@ -76,9 +73,7 @@ The `fluid-framework` package offers the following data structures:
 Check out the [Hello World tutorial](https://fluidframework.com/docs/start/tutorial/) using `fluid-framework`.
 
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Minimum Client Requirements
@@ -166,7 +161,6 @@ Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guid
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 <!-- Links -->

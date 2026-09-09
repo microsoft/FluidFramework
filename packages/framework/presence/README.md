@@ -7,9 +7,7 @@ A session is a period of time when one or more clients are connected to a Fluid 
 For more details and examples of how to use the library, please refer to the documentation on the Fluid Framework [website](https://fluidframework.com/docs/build/presence).
 
 <!-- markdown-magic:begin {"transform":"library-readme-header","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Using Fluid Framework libraries
@@ -44,13 +42,10 @@ Import the `alpha` APIs from `@fluidframework/presence/alpha`.
 Read the **@fluidframework/presence** API documentation at <https://fluidframework.com/docs/apis/presence>.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Minimum Client Requirements
@@ -138,5 +133,4 @@ Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guid
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->

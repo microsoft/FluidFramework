@@ -1,9 +1,7 @@
 # @fluidframework/container-runtime
 
 <!-- markdown-magic:begin {"transform":"library-readme-header","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Using Fluid Framework libraries
@@ -36,7 +34,6 @@ Import the `legacy` APIs from `@fluidframework/container-runtime/legacy`.
 Read the **@fluidframework/container-runtime** API documentation at <https://fluidframework.com/docs/apis/container-runtime>.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 ## Data Virtualization For DataStores (Work in Progress)
@@ -85,9 +82,7 @@ can get fairly big in size content wise and which are not required to be loaded 
 groupId.
 
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Minimum Client Requirements
@@ -175,5 +170,4 @@ Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guid
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->

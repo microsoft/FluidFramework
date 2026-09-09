@@ -29,9 +29,7 @@ This example follows the external-views pattern: the container code establishes 
 In a connected container, `trySetClaim` returns `"Pending"`; awaiting the promise yields a `ClaimConfirmation` whose status is `"Accepted"`, `"AlreadyClaimed"`, or `"Aborted"`. `ClaimsDataObject.trySetClaim(key)` collapses that lifecycle into a simple `boolean` (whether this client won) for the view to consume. On `"AlreadyClaimed"` the data object resolves the winning key's handle (via the Claims DDS, using `claims.get(key)`) to read and report the winner's owner.
 
 <!-- markdown-magic:begin {"transform":"example-app-readme-header","usesTinylicious":true,"headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Getting Started
@@ -55,7 +53,6 @@ To run the example with SharePoint, complete these steps:
 3. Open <http://localhost:8080> in a web browser.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 ## Testing
@@ -78,9 +75,7 @@ The claims example uses the following distributed data structures:
 -   SharedDirectory - one per claimed key, holding its owner (plus the data object's own root directory)
 
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Contribution Guidelines
@@ -117,5 +112,4 @@ Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guid
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->

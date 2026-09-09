@@ -12,9 +12,7 @@ This could be general machine related health being automatically reported to the
 In our case, we are sending custom metrics. [Learn more about Azure App Insights with their docs](https://learn.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview?tabs=net)
 
 <!-- markdown-magic:begin {"transform":"library-readme-header","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Using Fluid Framework libraries
@@ -47,7 +45,6 @@ Import the `beta` APIs from `@fluidframework/app-insights-logger/beta`.
 Read the **@fluidframework/app-insights-logger** API documentation at <https://fluidframework.com/docs/apis/app-insights-logger>.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 ## Use case
@@ -104,9 +101,7 @@ From the Azure web portal, navigate to your app insights instance. Now, go to th
     ```
 
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Minimum Client Requirements
@@ -194,5 +189,4 @@ Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guid
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->

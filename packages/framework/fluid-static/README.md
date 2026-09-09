@@ -3,9 +3,7 @@
 The `fluid-static` package provides a simple and powerful way to consume collaborative Fluid data.
 
 <!-- markdown-magic:begin {"transform":"library-readme-header","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Using Fluid Framework libraries
@@ -40,7 +38,6 @@ Import the `legacy` APIs from `@fluidframework/fluid-static/legacy`.
 Read the **@fluidframework/fluid-static** API documentation at <https://fluidframework.com/docs/apis/fluid-static>.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 ## Using fluid-static
@@ -50,9 +47,7 @@ The `fluid-static` package contains a container with a pre-created default data 
 This is consumed by separate client packages, such as [TinyliciousClient](../tinylicious-client/README.MD) for the Tinylicious service, to provide an easy way of creating and fetching FluidContainer instances that are backed by data stored on the respective services.
 
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Minimum Client Requirements
@@ -140,5 +135,4 @@ Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guid
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->

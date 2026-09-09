@@ -1,17 +1,11 @@
 <!-- markdown-magic:begin {"transform":"package-scope-notice","scopeKind":"FRAMEWORK"} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 <!-- markdown-magic:begin {"transform":"package-scope-notice","scopeKind":"PRIVATE"} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 **NOTE: This package is private to the `@microsoft/fluid-framework` repository.**
@@ -21,13 +15,10 @@
 **Use this package only as a development dependency or as a dependency of an unpublished package.**
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 <!-- markdown-magic:begin {"transform":"package-scope-notice","scopeKind":"INTERNAL"} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 **IMPORTANT: Fluid Framework uses this package as an implementation detail.**
@@ -35,13 +26,10 @@
 **We do not guarantee the stability of this package or its APIs.**
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 <!-- markdown-magic:begin {"transform":"package-scope-notice","scopeKind":"TOOLS"} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 **NOTE: This package is a library for use in the [microsoft/FluidFramework](https://github.com/microsoft/FluidFramework) repository.**
@@ -49,13 +37,10 @@
 **We do not guarantee the stability of this package or its APIs.**
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 <!-- markdown-magic:begin {"transform":"package-scope-notice","scopeKind":"EXAMPLE"} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 **NOTE: This package contains an example that uses [Fluid Framework](https://fluidframework.com).**
@@ -64,13 +49,10 @@
 **We do not guarantee the stability of this package or its APIs.**
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 <!-- markdown-magic:begin {"transform":"package-scope-notice","scopeKind":"EXPERIMENTAL"} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 **IMPORTANT: This package is experimental.**
@@ -80,5 +62,4 @@
 **We do not guarantee the stability of this package or its APIs.**
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->

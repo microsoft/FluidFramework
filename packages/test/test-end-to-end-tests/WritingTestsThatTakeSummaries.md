@@ -223,9 +223,7 @@ Putting it together — create, summarize, load-and-validate, then summarize fro
 This is a real, runnable test ([summarizeSmokeTest.spec.ts](src/test/summarization/summarizeSmokeTest.spec.ts)) embedded here via markdown-magic, so it stays in sync with code that actually compiles and passes:
 
 <!-- markdown-magic:begin {"transform":"include-code","path":"./src/test/summarization/summarizeSmokeTest.spec.ts","language":"typescript","start":5} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ```typescript
@@ -301,7 +299,6 @@ describeCompat("Summarization smoke test", "NoCompat", (getTestObjectProvider) =
 ```
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 ## Reference: key imports

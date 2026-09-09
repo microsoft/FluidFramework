@@ -19,9 +19,7 @@ You can run this example using the following steps:
 1. Login with your M365 tenant email and password to see the example in action on your web browser. If you encounter issues like `Need admin approval`, consider using a private or incognito window to execute the example. In particular, beware of Edge's work profiles which will sign in automatically with the linked Microsoft credentials, which might not have access to the M356 tenant.
 
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Contribution Guidelines
@@ -58,5 +56,4 @@ Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guid
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->

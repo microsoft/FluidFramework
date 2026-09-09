@@ -3,9 +3,7 @@
 Contains handshake interfaces for communication between the container runtime layer and the data store runtime layer.
 
 <!-- markdown-magic:begin {"transform":"library-readme-header","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Using Fluid Framework libraries
@@ -40,7 +38,6 @@ Import the `legacy` APIs from `@fluidframework/runtime-definitions/legacy`.
 Read the **@fluidframework/runtime-definitions** API documentation at <https://fluidframework.com/docs/apis/runtime-definitions>.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 -   `IFluidDataStoreRuntimeChannel` includes the minimal set of data and functionalities that are needed by the ContainerRuntime to bind and control a FluidDataStoreRuntime, including attach, snapshot, op/signal processing, request routes, and connection state notifications.
@@ -53,9 +50,7 @@ Read the **@fluidframework/runtime-definitions** API documentation at <https://f
 These interfaces needs to have strong back-compat guaranetee to support dynamic data store loading scenario where the FluidDataStoreRuntime might be built with different version.
 
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Minimum Client Requirements
@@ -143,5 +138,4 @@ Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guid
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->

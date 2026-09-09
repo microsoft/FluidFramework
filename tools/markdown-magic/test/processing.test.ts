@@ -63,7 +63,12 @@ test("include parses Markdown into nodes before generation", async () => {
 	await processDocument(destinationPath, registry);
 	const output = await readFile(destinationPath, "utf8");
 	assert.match(output, /^Before\.\n\n<!-- markdown-magic:begin/m);
+	assert.match(
+		output,
+		/markdown-magic:begin[^\n]*-->\n<!-- prettier-ignore-start -->\n<!-- NOTE:/,
+	);
 	assert.match(output, /Read the \[guide\]\(https:\/\/example\.com\/guide\)\./);
+	assert.match(output, /<!-- prettier-ignore-end -->\n<!-- markdown-magic:end -->/);
 	assert.match(output, /<!-- markdown-magic:end -->\n\nAfter\.$/);
 });
 
@@ -141,10 +146,15 @@ test("include resolves reference links defined outside the selected range", asyn
 
 	await processDocument(destinationPath, createTransformRegistry());
 	const output = await readFile(destinationPath, "utf8");
+	assert.match(
+		output,
+		/markdown-magic:begin[^\n]*\*\/}\n{\/\* prettier-ignore-start \*\/}\n{\/\* NOTE:/,
+	);
 	assert.match(output, /\[guide\]\(https:\/\/example\.com\/guide "Guide title"\)/);
 	assert.match(output, /!\[diagram\]\(https:\/\/example\.com\/diagram\.png\)/);
 	assert.doesNotMatch(output, /^\[guide\]:/m);
 	assert.doesNotMatch(output, /^\[diagram\]:/m);
+	assert.match(output, /{\/\* prettier-ignore-end \*\/}\n{\/\* markdown-magic:end \*\/}/);
 });
 
 test("include rejects relative link and image targets", async () => {

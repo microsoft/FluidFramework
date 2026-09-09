@@ -6,9 +6,7 @@ containers more than once. This implementation has a dependency on indexeddb, so
 context.
 
 <!-- markdown-magic:begin {"transform":"library-readme-header","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Using Fluid Framework libraries
@@ -41,7 +39,6 @@ Import the `legacy` APIs from `@fluidframework/driver-web-cache/legacy`.
 Read the **@fluidframework/driver-web-cache** API documentation at <https://fluidframework.com/docs/apis/driver-web-cache>.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 ## Usage
@@ -145,9 +142,7 @@ deleteFluidCacheIndexDbInstance().catch(() => {});
 ```
 
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Minimum Client Requirements
@@ -235,5 +230,4 @@ Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guid
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->

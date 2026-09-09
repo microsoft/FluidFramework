@@ -7,9 +7,7 @@ Driver for the `tinylicious` Fluid service.
 Some additional test utilities are provided via `@fluidframework/tinylicious-driver/test-utils`. These are not meant for production use and may change in any minor update.
 
 <!-- markdown-magic:begin {"transform":"library-readme-header","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Using Fluid Framework libraries
@@ -33,13 +31,10 @@ npm i @fluidframework/tinylicious-driver
 Read the **@fluidframework/tinylicious-driver** API documentation at <https://fluidframework.com/docs/apis/tinylicious-driver>.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Minimum Client Requirements
@@ -127,5 +122,4 @@ Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guid
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->

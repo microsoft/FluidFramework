@@ -3,9 +3,7 @@
 Definitions for test drivers. Test should only take a dependency on these definitions, and not the implementations provided in the `@fluid-private/test-drivers` package. At runtime the environment should provide an implementation for the global getFluidTestDriver driver function, which tests can then use to access the implementation.
 
 <!-- markdown-magic:begin {"transform":"library-readme-header","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 **IMPORTANT: Fluid Framework uses this package as an implementation detail.**
@@ -13,13 +11,10 @@ Definitions for test drivers. Test should only take a dependency on these defini
 **We do not guarantee the stability of this package or its APIs.**
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Contribution Guidelines
@@ -56,5 +51,4 @@ Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guid
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->

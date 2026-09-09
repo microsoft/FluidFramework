@@ -102,9 +102,7 @@ SavedData - Data that comes in fresh from the external data source is first stor
 DraftData - Local collaboration state between the Fluid clients is stored in a SharedMap known as "DraftData". This is known as draft data because we are treating the Fluid collaboration session as a drafting surface.
 
 <!-- markdown-magic:begin {"transform":"example-app-readme-header","usesTinylicious":false,"headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Getting Started
@@ -126,7 +124,6 @@ To run the example with SharePoint, complete these steps:
 3. Open <http://localhost:8080> in a web browser.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 ## Testing
@@ -142,9 +139,7 @@ npm run test:playwright -- --headed --debug
 ```
 
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Contribution Guidelines
@@ -181,5 +176,4 @@ Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guid
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->

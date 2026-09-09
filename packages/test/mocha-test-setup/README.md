@@ -1,9 +1,7 @@
 # @fluid-internal/mocha-test-setup
 
 <!-- markdown-magic:begin {"transform":"library-readme-header","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 **IMPORTANT: Fluid Framework uses this package as an implementation detail.**
@@ -11,7 +9,6 @@
 **We do not guarantee the stability of this package or its APIs.**
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 This package has a few main purposes:
@@ -189,9 +186,7 @@ This package has logic that needs the custom logger to be imported/executed at a
 by requiring that the path be provided through that environment variable.
 
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Contribution Guidelines
@@ -228,5 +223,4 @@ Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guid
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->

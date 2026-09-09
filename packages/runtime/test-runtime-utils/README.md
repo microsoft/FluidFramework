@@ -4,9 +4,7 @@ Test utilities for the Fluid Framework Runtime. Include mock implementation of v
 mock logger for validating a particular log sequence.
 
 <!-- markdown-magic:begin {"transform":"library-readme-header","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Using Fluid Framework libraries
@@ -39,7 +37,6 @@ Import the `legacy` APIs from `@fluidframework/test-runtime-utils/legacy`.
 Read the **@fluidframework/test-runtime-utils** API documentation at <https://fluidframework.com/docs/apis/test-runtime-utils>.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 ## Writing unit test for a DDS
@@ -117,9 +114,7 @@ const tokenProvider = new InsecureTokenProvider("YOUR-TENANT-KEY-HERE", {
 Again, this should ONLY be used for local development as including the tenant key in the client code risks allowing malicious users to sniff it from the client bundle. Please consider using the [AzureFunctionTokenProvider](https://github.com/microsoft/FluidFramework/blob/main/packages/framework/azure-client/src/AzureFunctionTokenProvider.ts) or your own implementation that fulfills the `ITokenProvider` interface as an alternative for production scenarios.
 
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Minimum Client Requirements
@@ -207,5 +202,4 @@ Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guid
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->

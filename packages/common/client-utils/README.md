@@ -4,9 +4,7 @@ This package is intended for sharing and promoting utility functions across pack
 primarily within the client release group.
 
 <!-- markdown-magic:begin {"transform":"library-readme-header","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 **IMPORTANT: Fluid Framework uses this package as an implementation detail.**
@@ -14,7 +12,6 @@ primarily within the client release group.
 **We do not guarantee the stability of this package or its APIs.**
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 ## Adding code to this package
@@ -80,9 +77,7 @@ Package scripts `check:exports:esm:indexBrowser:legacy` and `check:exports:esm:i
 verifying actual exports, but the consistency of tags within the legacy API set.
 
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Contribution Guidelines
@@ -119,5 +114,4 @@ Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guid
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->

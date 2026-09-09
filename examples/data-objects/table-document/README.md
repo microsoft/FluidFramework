@@ -1,9 +1,7 @@
 # @fluid-example/table-document
 
 <!-- markdown-magic:begin {"transform":"library-readme-header","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 **NOTE: This package contains an example that uses [Fluid Framework](https://fluidframework.com).**
@@ -12,7 +10,6 @@
 **We do not guarantee the stability of this package or its APIs.**
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 ## Table Slice With Interception
@@ -38,9 +35,7 @@ taking a dependency on it, so we can't do that yet.
 Once it can be converted, or once that consumer confirms they don't need both ESNext and CommonJS modules, it should also drop the CommonJS build (this has already been done for the package's tests, but not its public API).
 
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Contribution Guidelines
@@ -77,5 +72,4 @@ Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guid
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->

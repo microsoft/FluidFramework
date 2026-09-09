@@ -7,9 +7,7 @@ A set of helper utilities for building backend APIs for use with Azure Fluid Rel
 This function will generate a JWT token that can be sent to an `ITokenProvider` instance that is being passed into the constructor of `AzureClient`. The `tenantId` and `key` map to the values provided to you as part of the onboarding process for the Azure Fluid Relay service. The `user` objects allows you to define the properties for the current user that this token will be used to authenticate for. The values passed in here represent the values that will be supplied as part of the `audience` in the `FluidContainer` that will be provided by the `AzureClient`.
 
 <!-- markdown-magic:begin {"transform":"library-readme-header","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Using Fluid Framework libraries
@@ -42,13 +40,10 @@ Import the `legacy` APIs from `@fluidframework/azure-service-utils/legacy`.
 Read the **@fluidframework/azure-service-utils** API documentation at <https://fluidframework.com/docs/apis/azure-service-utils>.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Minimum Client Requirements
@@ -136,5 +131,4 @@ Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guid
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->

@@ -5,9 +5,7 @@ In order to connect to ODSP, the clientID must be set as the environment variabl
 Beware that to use fetch-tool on documents in the Microsoft tenant, you will need to follow the fetch tool usage instructions on the "Debugging Tools" page of the internal Fluid wiki.
 
 <!-- markdown-magic:begin {"transform":"library-readme-header","installation":true,"devDependency":true,"headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 **NOTE: This package is a library for use in the [microsoft/FluidFramework](https://github.com/microsoft/FluidFramework) repository.**
@@ -23,7 +21,6 @@ npm i @fluid-tools/fetch-tool -D
 ```
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 ## Usage
@@ -151,9 +148,7 @@ describe("fetch tool", () => {
 ```
 
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Contribution Guidelines
@@ -190,5 +185,4 @@ Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guid
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->

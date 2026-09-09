@@ -3,9 +3,7 @@
 This package contains definitions and implementations for framework-provided attribution functionality.
 
 <!-- markdown-magic:begin {"transform":"library-readme-header","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 **IMPORTANT: This package is experimental.**
@@ -35,7 +33,6 @@ npm i @fluid-experimental/attributor
 Read the **@fluid-experimental/attributor** API documentation at <https://fluidframework.com/docs/apis/attributor>.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 ## Status
@@ -142,9 +139,7 @@ The behavior of `"Fluid.Attribution.WriteOnNewFile"` supports the standard strat
 During the "waiting to saturate" period, developers are free to experiment with turning the feature flag on locally and testing various compatability scenarios.
 
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Minimum Client Requirements
@@ -232,5 +227,4 @@ Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guid
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->

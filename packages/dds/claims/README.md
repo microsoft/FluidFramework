@@ -3,9 +3,7 @@
 A distributed data structure (DDS) for first-writer-wins claim management with optional compare-and-swap (CAS) support.
 
 <!-- markdown-magic:begin {"transform":"library-readme-header","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 **IMPORTANT: Fluid Framework uses this package as an implementation detail.**
@@ -13,7 +11,6 @@ A distributed data structure (DDS) for first-writer-wins claim management with o
 **We do not guarantee the stability of this package or its APIs.**
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 ## Overview
@@ -86,9 +83,7 @@ claims.events.on("claimed", (key: string) => {
 -   **`ClaimConfirmation`**: `{ status: "Accepted" }` | `{ status: "AlreadyClaimed" }` | `{ status: "Aborted" }`
 
 <!-- markdown-magic:begin {"transform":"readme-footer","clientRequirements":true,"headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Minimum Client Requirements
@@ -176,5 +171,4 @@ Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guid
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->

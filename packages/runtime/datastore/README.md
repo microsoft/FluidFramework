@@ -1,9 +1,7 @@
 # @fluidframework/datastore
 
 <!-- markdown-magic:begin {"transform":"library-readme-header","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Using Fluid Framework libraries
@@ -36,7 +34,6 @@ Import the `legacy` APIs from `@fluidframework/datastore/legacy`.
 Read the **@fluidframework/datastore** API documentation at <https://fluidframework.com/docs/apis/datastore>.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 # Fluid Handle
@@ -56,9 +53,7 @@ The two major interfaces required to implement a Fluid handle are `IFluidHandle`
 For more details on Fluid Handles, check this [doc](../../../content/docs/advanced/handles.md).
 
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Minimum Client Requirements
@@ -146,5 +141,4 @@ Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guid
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->

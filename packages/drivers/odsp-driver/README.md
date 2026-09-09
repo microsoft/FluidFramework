@@ -27,9 +27,7 @@ In the table I have used the failure ones.
 | OdspDriver:odspFileLink_cancel<br>OdspDriver:getShareLink_cancel | `/_api/web/GetFileById(@a1)/ListItemAllFields/GetSharingInformation?@a1=guid${encodeURIComponent(`'${fileItem.sharepointIds.listItemUniqueId}'`)}` | Error when fetching sharing link with `requestName` = `getSharingInformation` in Telemetry. `getShareLink` event is parent of `odspFileLink` event. |
 
 <!-- markdown-magic:begin {"transform":"library-readme-header","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Using Fluid Framework libraries
@@ -62,7 +60,6 @@ Import the `legacy` APIs from `@fluidframework/odsp-driver/legacy`.
 Read the **@fluidframework/odsp-driver** API documentation at <https://fluidframework.com/docs/apis/odsp-driver>.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 ## ODSP APIs
@@ -84,9 +81,7 @@ Documenting some basics about opds-driver specific apis that are relevant for cr
 -   This api is also preflight-less, which means it is not preceded by an OPTIONS call in the browsers to reduce the network trips to the server.
 
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Minimum Client Requirements
@@ -174,5 +169,4 @@ Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guid
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->

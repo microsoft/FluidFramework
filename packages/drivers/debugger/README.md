@@ -5,9 +5,7 @@ Fluid Debugger is useful tool to replay file history. This can be useful as lear
 Fluid Debugger works as an adapter on top of any document storage. In other words, it can be integrated into any app using any storage endpoint (like SPO or Routerlicious) with minimal changes to application and can be used to replay history with full app code running, thus helping investigating bugs in any layer of application stack
 
 <!-- markdown-magic:begin {"transform":"library-readme-header","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Using Fluid Framework libraries
@@ -40,7 +38,6 @@ Import the `legacy` APIs from `@fluidframework/debugger/legacy`.
 Read the **@fluidframework/debugger** API documentation at <https://fluidframework.com/docs/apis/debugger>.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 
@@ -105,9 +102,7 @@ There are useful stand-alone implementations of **IDocumentStorageService** inte
 3. **OpStorage** - op-based storage (i.e. it rejects all requests for snapshots / trees).
 
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Minimum Client Requirements
@@ -195,5 +190,4 @@ Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guid
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->

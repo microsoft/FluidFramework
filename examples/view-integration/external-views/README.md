@@ -7,9 +7,7 @@ This example demonstrates the external-views pattern.  In this pattern, the cont
 This is distinct from the container-views pattern, where the container brings a view and its binding to the model/controller as well.  Although it can sometimes be convenient to have a view provided by the container, the container-views pattern may result in less view flexibility (depending on what is exposed to the container consumer) and larger-than-necessary bundle size (especially for headless usage).  The external-views pattern is therefore recommended over the container-views pattern for general use.
 
 <!-- markdown-magic:begin {"transform":"example-app-readme-header","usesTinylicious":true,"headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Getting Started
@@ -33,7 +31,6 @@ To run the example with SharePoint, complete these steps:
 3. Open <http://localhost:8080> in a web browser.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 ## Testing
@@ -55,9 +52,7 @@ DiceRoller uses the following distributed data structures:
 -   SharedMap
 
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Contribution Guidelines
@@ -94,5 +89,4 @@ Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guid
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->

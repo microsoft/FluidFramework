@@ -1,9 +1,7 @@
 # Platform Requirements for Fluid Framework Client Packages
 
 <!-- markdown-magic:begin {"transform":"client-requirements","includeHeading":false,"headingLevel":1} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 Fluid Framework client libraries support the platforms in this document.
@@ -56,5 +54,4 @@ Do not use `Node10` module resolution.
   Fluid Framework does not officially support CommonJS in version 3.0 or later.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->

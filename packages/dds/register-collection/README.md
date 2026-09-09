@@ -3,9 +3,7 @@
 A consensus register collection is a distributed data structure (DDS), which holds a set of registers and their versions generated during concurrent updates. In the simplest definition, two updates on a single register are concurrent if there is no causal relationship between them (i.e., neither knows about the other). On such cases of concurrent updates, a register internally stores all possible versions of a value.
 
 <!-- markdown-magic:begin {"transform":"library-readme-header","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Using Fluid Framework libraries
@@ -38,7 +36,6 @@ Import the `legacy` APIs from `@fluidframework/register-collection/legacy`.
 Read the **@fluidframework/register-collection** API documentation at <https://fluidframework.com/docs/apis/register-collection>.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 ### Detecting concurrency in Fluid
@@ -58,9 +55,7 @@ Below are the policies that the DDS implements:
 -   Atomic: The policy follows the same semantics of a shared distributed lock. Amongst all concurrent updates, only the first writer wins. In distributed systems literature, the register update policy is called `Atomic`. This behavior requires a linearizable register. A linearizable register behaves as if there is only a single copy of the data, and that every operation appears to take effect atomically at one point in time. This definition implies that operations are executed in an well-defined order. On a concurrent update, we perform a `compare-and-set` operation, where we compare a register's stored `seq` with the incoming `refSeq`. The earliest operation overwriting the stored `seq` wins since every client reaches to an agreement on the value. Hence we can safely return the first value.
 
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Minimum Client Requirements
@@ -148,5 +143,4 @@ Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guid
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->

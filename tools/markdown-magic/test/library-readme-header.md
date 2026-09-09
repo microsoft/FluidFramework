@@ -1,7 +1,5 @@
 <!-- markdown-magic:begin {"transform":"library-readme-header","packageJsonPath":"./package.json","devDependency":true,"packageScopeNotice":"EXPERIMENTAL","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 **IMPORTANT: This package is experimental.**
@@ -42,5 +40,4 @@ Import the `legacy` APIs from `@fluidframework/test-package/legacy`.
 Read the **@fluidframework/test-package** API documentation at <https://fluidframework.com/docs/apis/test-package>.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->

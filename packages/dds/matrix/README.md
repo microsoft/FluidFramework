@@ -3,9 +3,7 @@
 SharedMatrix is a rectangular 2D array of values. Matrix values are a superset of JSON serializable types that includes embedded IFluidHandle references to Fluid object.
 
 <!-- markdown-magic:begin {"transform":"library-readme-header","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Using Fluid Framework libraries
@@ -38,7 +36,6 @@ Import the `legacy` APIs from `@fluidframework/matrix/legacy`.
 Read the **@fluidframework/matrix** API documentation at <https://fluidframework.com/docs/apis/matrix>.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 ## Operations
@@ -178,9 +175,7 @@ It can receive many ops for C1 during catchup and will raise `conflict` event fo
 ops for C1.
 
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Minimum Client Requirements
@@ -268,5 +263,4 @@ Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guid
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->

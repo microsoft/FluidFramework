@@ -16,16 +16,16 @@ const generatedContentNotice =
 	"NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly.";
 
 /**
- * Creates a comment node for the selected document format.
+ * Creates a comment for the selected document format.
  *
  * @param format - The destination document format.
  * @param value - The comment text without comment delimiters.
- * @returns An HTML or MDX comment node for the selected format.
+ * @returns An HTML or MDX comment for the selected format.
  */
-function commentNode(format: DocumentFormat, value: string): RootContent {
+function formatComment(format: DocumentFormat, value: string): string {
 	return format === "mdx"
-		? { type: "mdxFlowExpression", value: `/* ${value} */` }
-		: { type: "html", value: `<!-- ${value} -->` };
+		? `{/* ${value} */}`
+		: `<!-- ${value} -->`;
 }
 
 /**
@@ -43,17 +43,17 @@ async function serializeGeneratedBody(
 	sourcePath: string,
 	destinationPath: string,
 ): Promise<string> {
-	const wrappedNodes: RootContent[] = [
-		commentNode(format, "prettier-ignore-start"),
-		commentNode(format, generatedContentNotice),
-		...nodes,
-		commentNode(format, "prettier-ignore-end"),
-	];
 	let serialized: string;
 	try {
 		// Remark does not expose a capability check for node types. Serialization is its
 		// authoritative compatibility check and automatically covers node types added later.
-		serialized = await serializeNodes(wrappedNodes, format);
+		const content = await serializeNodes(nodes, format);
+		serialized = [
+			formatComment(format, "prettier-ignore-start"),
+			formatComment(format, generatedContentNotice),
+			...(content === "" ? [] : ["", content, ""]),
+			formatComment(format, "prettier-ignore-end"),
+		].join("\n");
 	} catch (error) {
 		const formatName = format === "mdx" ? "MDX" : "Markdown";
 		throw new Error(
@@ -63,7 +63,7 @@ async function serializeGeneratedBody(
 	}
 	// Parse the output before any write so invalid generated syntax cannot replace valid content.
 	parseDocument(serialized, format === "mdx" ? "generated.mdx" : "generated.md");
-	return `\n\n${serialized}\n\n`;
+	return `\n${serialized}\n`;
 }
 
 /**

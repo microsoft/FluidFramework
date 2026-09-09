@@ -4,9 +4,7 @@ SharedSummaryBlock is a DDS that does not generate ops but is part of the summar
 The data on this object must only be set in response to a remote op. Basically, if we replay same ops, the set of calls on this object to set data should be the same. This is critical because it does not generate ops of its own, but relies on the above principle to maintain eventual consistency and to summarize.
 
 <!-- markdown-magic:begin {"transform":"library-readme-header","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Using Fluid Framework libraries
@@ -39,13 +37,10 @@ Import the `legacy` APIs from `@fluidframework/shared-summary-block/legacy`.
 Read the **@fluidframework/shared-summary-block** API documentation at <https://fluidframework.com/docs/apis/shared-summary-block>.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Minimum Client Requirements
@@ -133,5 +128,4 @@ Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guid
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->

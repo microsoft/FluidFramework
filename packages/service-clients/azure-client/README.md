@@ -3,9 +3,7 @@
 The azure-client package provides a simple and powerful way to consume collaborative Fluid data with the Azure Fluid Relay service.
 
 <!-- markdown-magic:begin {"transform":"library-readme-header","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Using Fluid Framework libraries
@@ -38,7 +36,6 @@ Import the `legacy` APIs from `@fluidframework/azure-client/legacy`.
 Read the **@fluidframework/azure-client** API documentation at <https://fluidframework.com/docs/apis/azure-client>.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 ## Using azure-client
@@ -209,9 +206,7 @@ const text1 = await map1.get("text1-unique-id").get();
 ```
 
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Minimum Client Requirements
@@ -299,5 +294,4 @@ Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guid
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->

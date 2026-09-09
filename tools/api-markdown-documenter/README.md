@@ -27,9 +27,7 @@ The following terms are leveraged heavily in this package's APIs and documentati
     -   This is the granularity by which documentation is generated, and the granularity at which most configuration options are presented.
 
 <!-- markdown-magic:begin {"transform":"library-readme-header","installation":true,"devDependency":true,"headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 **NOTE: This package is a library for use in the [microsoft/FluidFramework](https://github.com/microsoft/FluidFramework) repository.**
@@ -54,7 +52,6 @@ Import the `public` APIs from `@fluid-tools/api-markdown-documenter`.
 Import the `beta` APIs from `@fluid-tools/api-markdown-documenter/beta`.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 ## Usage
@@ -70,9 +67,7 @@ Are you already generating `.api.json` report files as a part of your build?
 If yes, create a file called `api-markdown-documenter.js` and paste the following code:
 
 <!-- markdown-magic:begin {"transform":"include-code","path":"./examples/RenderMarkdown.ts","language":"typescript","start":5} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ```typescript
@@ -93,7 +88,6 @@ await MarkdownRenderer.renderApiModel({
 ```
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 The above script can be invoked as an `npm` script by adding the following to your `package.json`'s `scripts` property:
@@ -225,9 +219,7 @@ While this library does not include a built-in solution for rendering contents a
 #### Example
 
 <!-- markdown-magic:begin {"transform":"include-code","path":"./examples/RenderHtml.ts","language":"typescript","start":5} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ```typescript
@@ -276,7 +268,6 @@ await saveDocuments(htmlDocuments, {
 ```
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 ## Preview APIs
@@ -327,9 +318,7 @@ Other validation may be added in the future as needed.
     For the couple of special concepts this library does have (e.g. hierarchical sections with contextual heading levels), we can leverage `mdast`'s extensibility model.
 
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Contribution Guidelines
@@ -366,7 +355,6 @@ Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guid
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 <!-- Links -->

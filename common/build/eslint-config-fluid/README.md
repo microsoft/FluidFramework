@@ -138,9 +138,7 @@ print out the applied config as a JSON file. As we make changes to the config, w
 a diff to review as part of a PR -- just like we do with API reports for code changes.
 
 <!-- markdown-magic:begin {"transform":"package-scripts","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Scripts
@@ -162,7 +160,6 @@ a diff to review as part of a PR -- just like we do with API reports for code ch
 | `test:mocha` | `mocha "src/{rules/test,test}/**/*.test.{js,mts}"` | |
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 See [GitHub](https://github.com/microsoft/FluidFramework) for more details on the Fluid Framework and packages within.

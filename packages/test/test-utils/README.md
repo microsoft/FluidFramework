@@ -5,9 +5,7 @@ This package contains utilities for writing end-to-end tests in Fluid Framework.
 Internal note: Currently, it also has a load side-effect when loaded under mocha where `@fluid-internal/mocha-test-setup` is used. The side-effect will attempt to inject an error 15ms before a test case would otherwise timeout.
 
 <!-- markdown-magic:begin {"transform":"library-readme-header","devDependency":true,"headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Using Fluid Framework libraries
@@ -40,7 +38,6 @@ Import the `legacy` APIs from `@fluidframework/test-utils/legacy`.
 Read the **@fluidframework/test-utils** API documentation at <https://fluidframework.com/docs/apis/test-utils>.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
 
 ## Local Code Loader
@@ -222,9 +219,7 @@ The above usage is taken from [SharedStringTest](../end-to-end-tests/src/test/sh
 There are a number of other examples (some a little more complex) in the same [directory](../end-to-end-tests/src/test).
 
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
-
 <!-- prettier-ignore-start -->
-
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Minimum Client Requirements
@@ -312,5 +307,4 @@ Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guid
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->
-
 <!-- markdown-magic:end -->
