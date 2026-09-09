@@ -13,7 +13,7 @@ Complete these steps to run the example:
 1. Run `corepack enable` to enable [Corepack](https://nodejs.org/docs/latest-v16.x/api/corepack.html).
 2. From the `FluidFramework` root directory, run `pnpm install`.
 3. From the `FluidFramework` root directory, run `pnpm run build:fast --nolint`.
-   * To build only this package, add the package name to the command:
+   - To build only this package, add the package name to the command:
      `pnpm run build:fast --nolint @fluid-example/multiview-container`
 4. Run `pnpm start` from this directory.
 5. Open <http://localhost:8080> in a web browser.
@@ -35,10 +35,10 @@ To run the example with SharePoint, complete these steps:
 
 You can [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid Framework in these ways:
 
-* Answer questions in [GitHub Discussions](https://github.com/microsoft/FluidFramework/discussions).
-* [Submit bug reports](https://github.com/microsoft/FluidFramework/issues) and help verify fixes.
-* Review [source code changes](https://github.com/microsoft/FluidFramework/pulls).
-* [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
+- Answer questions in [GitHub Discussions](https://github.com/microsoft/FluidFramework/discussions).
+- [Submit bug reports](https://github.com/microsoft/FluidFramework/issues) and help verify fixes.
+- Review [source code changes](https://github.com/microsoft/FluidFramework/pulls).
+- [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
 
 For detailed instructions, read the [repo documentation](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Home.md).
 

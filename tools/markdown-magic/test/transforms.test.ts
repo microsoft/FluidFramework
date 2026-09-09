@@ -66,6 +66,16 @@ test("package scripts include optional descriptions in a separate column", async
 	assert.match(output, /\| `test-script-2` \| `echo This is another test script` \|\s*\|/);
 });
 
+test("package scripts omit the description column when no descriptions are supplied", async () => {
+	const output = await generate("package-scripts", {
+		packageJsonPath: "./package.json",
+	});
+
+	assert.match(output, /\| Script Name \| Script Body \|/);
+	assert.doesNotMatch(output, /Description/);
+	assert.match(output, /\| `test-script-1` \| `echo This is a test script` \|/);
+});
+
 test("package scripts reject non-string descriptions", async () => {
 	await assert.rejects(
 		generate("package-scripts", {

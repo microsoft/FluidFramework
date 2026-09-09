@@ -143,21 +143,21 @@ a diff to review as part of a PR -- just like we do with API reports for code ch
 
 ## Scripts
 
-| Script Name | Script Body | Description |
-| - | - | - |
-| `build` | `npm run build:readme && npm run build:test:examples && npm run print-configs && npm run prettier` | |
-| `build:readme` | `markdown-magic --files "**/*.md"` | |
-| `build:test:examples` | `tsc --project ./src/rules/test/test-cases/tsconfig.json` | |
-| `clean` | `rimraf --glob dist "**/*.build.log" nyc` | |
-| `format` | `npm run prettier:fix` | |
-| `install-no-frozen` | `pnpm --config.minimum-release-age=10080 i --no-frozen-lockfile` | |
-| `prettier` | `prettier --check . --cache --ignore-path ../../../.prettierignore` | |
-| `prettier:fix` | `prettier --write . --cache --ignore-path ../../../.prettierignore` | |
-| `print-configs` | `jiti scripts/print-configs.ts printed-configs` | |
-| `test` | `npm run test:eslint9 && npm run test:eslint8` | |
-| `test:eslint8` | `cross-env ESLINT_PACKAGE=eslint8 mocha "src/rules/test/**/*.test.js"` | |
-| `test:eslint9` | `npm run test:mocha` | |
-| `test:mocha` | `mocha "src/{rules/test,test}/**/*.test.{js,mts}"` | |
+| Script Name | Script Body |
+| - | - |
+| `build` | `npm run build:readme && npm run build:test:examples && npm run print-configs && npm run prettier` |
+| `build:readme` | `markdown-magic --files "**/*.md"` |
+| `build:test:examples` | `tsc --project ./src/rules/test/test-cases/tsconfig.json` |
+| `clean` | `rimraf --glob dist "**/*.build.log" nyc` |
+| `format` | `npm run prettier:fix` |
+| `install-no-frozen` | `pnpm --config.minimum-release-age=10080 i --no-frozen-lockfile` |
+| `prettier` | `prettier --check . --cache --ignore-path ../../../.prettierignore` |
+| `prettier:fix` | `prettier --write . --cache --ignore-path ../../../.prettierignore` |
+| `print-configs` | `jiti scripts/print-configs.ts printed-configs` |
+| `test` | `npm run test:eslint9 && npm run test:eslint8` |
+| `test:eslint8` | `cross-env ESLINT_PACKAGE=eslint8 mocha "src/rules/test/**/*.test.js"` |
+| `test:eslint9` | `npm run test:mocha` |
+| `test:mocha` | `mocha "src/{rules/test,test}/**/*.test.{js,mts}"` |
 
 <!-- prettier-ignore-end -->
 <!-- markdown-magic:end -->

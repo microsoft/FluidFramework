@@ -37,10 +37,17 @@ export function getDocumentFormat(filePath: string): DocumentFormat {
  * @returns A remark processor configured for the selected format and GitHub Flavored Markdown.
  */
 export function createProcessor(format: DocumentFormat) {
-	const processor = remark().use(remarkGfm, {
-		// Use compact table delimiters to keep generated output stable.
-		tablePipeAlign: false,
-	});
+	const processor = remark()
+		.data("settings", {
+			// For consistency with the rest of the repo, which uses prettier for formatting.
+			// Prettier prefers `-`s for unordered list bullets.
+			bullet: "-",
+			listItemIndent: "one"
+		})
+		.use(remarkGfm, {
+			// Use compact table delimiters to keep generated output stable.
+			tablePipeAlign: false,
+		});
 	return format === "mdx" ? processor.use(remarkMdx) : processor;
 }
 

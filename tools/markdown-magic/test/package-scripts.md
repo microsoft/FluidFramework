@@ -16,10 +16,10 @@
 
 # Scripts
 
-| Script Name | Script Body | Description |
-| - | - | - |
-| `test-script-1` | `echo This is a test script` | |
-| `test-script-2` | `echo This is another test script` | |
+| Script Name | Script Body |
+| - | - |
+| `test-script-1` | `echo This is a test script` |
+| `test-script-2` | `echo This is another test script` |
 
 <!-- prettier-ignore-end -->
 <!-- markdown-magic:end -->

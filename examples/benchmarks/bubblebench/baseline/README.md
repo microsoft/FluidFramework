@@ -11,7 +11,7 @@ Complete these steps to run the example:
 1. Run `corepack enable` to enable [Corepack](https://nodejs.org/docs/latest-v16.x/api/corepack.html).
 2. From the `FluidFramework` root directory, run `pnpm install`.
 3. From the `FluidFramework` root directory, run `pnpm run build:fast --nolint`.
-   * To build only this package, add the package name to the command:
+   - To build only this package, add the package name to the command:
      `pnpm run build:fast --nolint @fluid-example/bubblebench-baseline`
 4. Run `pnpm start` from this directory.
 5. Open <http://localhost:8080> in a web browser.

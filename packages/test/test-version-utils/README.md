@@ -207,10 +207,10 @@ Test authors are encouraged to use the `apis` argument of `describeCompat`'s tes
 
 You can [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid Framework in these ways:
 
-* Answer questions in [GitHub Discussions](https://github.com/microsoft/FluidFramework/discussions).
-* [Submit bug reports](https://github.com/microsoft/FluidFramework/issues) and help verify fixes.
-* Review [source code changes](https://github.com/microsoft/FluidFramework/pulls).
-* [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
+- Answer questions in [GitHub Discussions](https://github.com/microsoft/FluidFramework/discussions).
+- [Submit bug reports](https://github.com/microsoft/FluidFramework/issues) and help verify fixes.
+- Review [source code changes](https://github.com/microsoft/FluidFramework/pulls).
+- [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
 
 For detailed instructions, read the [repo documentation](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Home.md).
 

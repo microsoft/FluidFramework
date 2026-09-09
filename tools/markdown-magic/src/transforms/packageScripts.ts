@@ -26,6 +26,7 @@ export function generateScripts(
 	options: HeadingOptions,
 	context: TransformContext,
 ): RootContent[] {
+	const includeDescriptions = Object.keys(scriptDescriptions).length > 0;
 	const rows: TableRow[] = Object.entries(scripts).map(([name, command]) => {
 		const description = Object.hasOwn(scriptDescriptions, name)
 			? scriptDescriptions[name]
@@ -38,28 +39,35 @@ export function generateScripts(
 			}
 			descriptionChildren = descriptionNodes[0].children;
 		}
+		const cells: TableRow["children"] = [
+			{
+				type: "tableCell",
+				children: [{ type: "inlineCode", value: name }],
+			},
+			{
+				type: "tableCell",
+				children: [{ type: "inlineCode", value: command }],
+			},
+		];
+		if (includeDescriptions) {
+			cells.push({ type: "tableCell", children: descriptionChildren });
+		}
 		return {
 			type: "tableRow",
-			children: [
-				{
-					type: "tableCell",
-					children: [{ type: "inlineCode", value: name }],
-				},
-				{
-					type: "tableCell",
-					children: [{ type: "inlineCode", value: command }],
-				},
-				{ type: "tableCell", children: descriptionChildren },
-			],
+			children: cells,
 		};
 	});
 	const table: Table = {
 		type: "table",
-		align: [null, null, null],
+		align: includeDescriptions ? [null, null, null] : [null, null],
 		children: [
 			{
 				type: "tableRow",
-				children: ["Script Name", "Script Body", "Description"].map((value) => ({
+				children: [
+					"Script Name",
+					"Script Body",
+					...(includeDescriptions ? ["Description"] : []),
+				].map((value) => ({
 					type: "tableCell",
 					children: [{ type: "text", value }],
 				})),
