@@ -31,6 +31,19 @@ import {
 
 import { createLoader } from "./utils.js";
 
+/**
+ * Intercepts the first storage response containing the saved-op anchor so tests can control
+ * when history validation proceeds. Other messages, later fetches, and socket traffic pass through.
+ *
+ * @param inner - Factory backed by the real local service.
+ * @param anchorSequenceNumber - Sequence number of the final op in the saved pending state.
+ * @param validationStarted - Resolved when a storage read finds the anchor, before returning it.
+ * @param releaseValidation - The intercepted read waits for this to resolve.
+ * @param validationCompleted - Optionally resolved when the stream that returned the anchor ends.
+ * This signals storage completion, not successful validation or container connection.
+ * @param introduceMismatch - If true, changes only the returned anchor's client ID to simulate
+ * overwritten history. If false, returns the service response unchanged.
+ */
 function wrapAnchorValidation(
 	inner: IDocumentServiceFactory,
 	anchorSequenceNumber: number,
@@ -39,54 +52,69 @@ function wrapAnchorValidation(
 	validationCompleted?: Deferred<void>,
 	introduceMismatch = true,
 ): IDocumentServiceFactory {
+	// Shared across streams so only one read is intercepted, even if catch-up starts more fetches.
 	let anchorObserved = false;
+
+	/**
+	 * Delays the anchor-bearing response and optionally changes that anchor without dropping
+	 * other ops. Completion belongs to this stream, not to unrelated concurrent fetches.
+	 */
+	function wrapStream(
+		stream: IStream<ISequencedDocumentMessage[]>,
+	): IStream<ISequencedDocumentMessage[]> {
+		let validatingFetch = false;
+		return {
+			read: async () => {
+				const result = await stream.read();
+				if (result.done) {
+					if (validatingFetch) {
+						validationCompleted?.resolve();
+					}
+					return result;
+				}
+				const anchorIndex = result.value.findIndex(
+					(message) => message.sequenceNumber === anchorSequenceNumber,
+				);
+				if (anchorObserved || anchorIndex === -1) {
+					return result;
+				}
+				anchorObserved = true;
+				validatingFetch = true;
+				validationStarted.resolve();
+				await releaseValidation.promise;
+				if (!introduceMismatch) {
+					return result;
+				}
+				return {
+					done: false,
+					value: result.value.map((message, index) =>
+						index === anchorIndex
+							? { ...message, clientId: "restored-history-client" }
+							: message,
+					),
+				};
+			},
+		};
+	}
+
+	/** Wraps storage fetch streams while preserving their requested ranges and abort signals. */
+	async function connectToDeltaStorage(
+		service: IDocumentService,
+	): Promise<IDocumentDeltaStorageService> {
+		const storage = await service.connectToDeltaStorage();
+		return {
+			fetchMessages: (...args) => wrapStream(storage.fetchMessages(...args)),
+		};
+	}
+
+	/** Overrides only delta storage access; all other service operations remain unchanged. */
 	const wrapService = (service: IDocumentService): IDocumentService =>
 		new Proxy(service, {
 			get: (target, property, receiver) => {
 				if (property !== "connectToDeltaStorage") {
 					return Reflect.get(target, property, receiver) as unknown;
 				}
-				return async (): Promise<IDocumentDeltaStorageService> => {
-					const storage = await target.connectToDeltaStorage();
-					return {
-						fetchMessages: (...args): IStream<ISequencedDocumentMessage[]> => {
-							const stream = storage.fetchMessages(...args);
-							let validatingFetch = false;
-							return {
-								read: async () => {
-									const result = await stream.read();
-									if (result.done) {
-										if (validatingFetch) {
-											validationCompleted?.resolve();
-										}
-										return result;
-									}
-									const anchorIndex = result.value.findIndex(
-										(message) => message.sequenceNumber === anchorSequenceNumber,
-									);
-									if (anchorObserved || anchorIndex === -1) {
-										return result;
-									}
-									anchorObserved = true;
-									validatingFetch = true;
-									validationStarted.resolve();
-									await releaseValidation.promise;
-									if (!introduceMismatch) {
-										return result;
-									}
-									return {
-										done: false,
-										value: result.value.map((message, index) =>
-											index === anchorIndex
-												? { ...message, clientId: "restored-history-client" }
-												: message,
-										),
-									};
-								},
-							};
-						},
-					};
-				};
+				return async () => connectToDeltaStorage(target);
 			},
 		});
 
@@ -97,6 +125,14 @@ function wrapAnchorValidation(
 	};
 }
 
+/**
+ * Creates a local container, waits for an edit to be saved, then disconnects and captures its
+ * pending state before closing it. The saved ops include an anchor backed by unchanged service
+ * history, which tests can compare directly or deliberately corrupt in intercepted responses.
+ *
+ * @returns The serialized pending state, its final saved-op anchor, and the URL and loader
+ * dependencies needed to rehydrate the same document against the existing local service.
+ */
 async function createPendingState(): Promise<{
 	codeLoader: Parameters<typeof loadExistingContainer>[0]["codeLoader"];
 	documentServiceFactory: IDocumentServiceFactory;
