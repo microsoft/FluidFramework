@@ -206,7 +206,7 @@ jobs:
 
       - if: steps.render.outcome == 'success'
         # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v3.0.4
-        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # v3.0.4
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
         with:
           header: bundle-size-report
           number: ${{ steps.find_pr.outputs.pr_num }}
@@ -257,7 +257,7 @@ jobs:
 
       - if: steps.find_pr.outputs.pr_num != ''
         # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v3.0.4
-        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # v3.0.4
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
         with:
           header: bundle-size-report
           number: ${{ steps.find_pr.outputs.pr_num }}
@@ -545,17 +545,17 @@ jobs:
       # branch's copy of this file, so that's the only branch guaranteed to have a flub whose CLI contract
       # matches the invocation below. Release branches lag main and don't carry this command at all.
       # release notes: https://github.com/actions/checkout/releases/tag/v6.0.2
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.repository.default_branch }}
           fetch-depth: "1"
           persist-credentials: false
 
       # release notes: https://github.com/pnpm/action-setup/releases/tag/v5.0.0
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
 
       # release notes: https://github.com/actions/setup-node/releases/tag/v6.3.0
-      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .nvmrc
           cache: "pnpm"
@@ -747,7 +747,7 @@ jobs:
             core.endGroup();
 
       # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v3.0.4
-      - uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # v3.0.4
+      - uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
         with:
           header: bundle-size-report
           number: ${{ matrix.pr.number }}
