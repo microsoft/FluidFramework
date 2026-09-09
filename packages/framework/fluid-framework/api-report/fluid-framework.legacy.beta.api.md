@@ -322,9 +322,9 @@ export interface FluidIterableIterator<T> extends FluidIterable<T> {
 }
 
 // @public @sealed
-export interface FluidMap<K, V> extends FluidReadonlyMap<K, V> {
+export interface FluidMap<K, V, TMap extends FluidReadonlyMap<K, V> = FluidMap<K, V, never>> extends FluidReadonlyMap<K, V> {
     delete(key: K): void;
-    forEach(callbackfn: (value: V, key: K, map: FluidMap<K, V>) => void, thisArg?: any): void;
+    forEach(callbackfn: (value: V, key: K, map: TMap) => void, thisArg?: any): void;
     set(key: K, value: V): void;
 }
 
@@ -457,7 +457,7 @@ export type ICriticalContainerError = IErrorBase;
 export type IdentifierIndex = TreeIndex<string, TreeNode>;
 
 // @public @sealed @legacy
-export interface IDirectory extends FluidMap<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable> {
+export interface IDirectory extends FluidMap<string, any, IDirectory>, IEventProvider<IDirectoryEvents>, Partial<IDisposable> {
     readonly absolutePath: string;
     clear(): void;
     countSubDirectory?(): number;
@@ -961,7 +961,7 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 }
 
 // @beta @sealed @legacy
-export interface ISharedMap extends ISharedObject<ISharedMapEvents>, FluidMap<string, any> {
+export interface ISharedMap extends ISharedObject<ISharedMapEvents>, FluidMap<string, any, Map<string, any>> {
     clear(): void;
     delete(key: string): boolean;
     get<T = any>(key: string): T | undefined;

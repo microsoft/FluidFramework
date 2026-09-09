@@ -5,7 +5,7 @@
 ```ts
 
 // @public @sealed @legacy
-export interface IDirectory extends FluidMap<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable> {
+export interface IDirectory extends FluidMap<string, any, IDirectory>, IEventProvider<IDirectoryEvents>, Partial<IDisposable> {
     readonly absolutePath: string;
     clear(): void;
     countSubDirectory?(): number;

@@ -80,9 +80,9 @@ export interface FluidIterableIterator<T> extends FluidIterable<T> {
 }
 
 // @public @sealed
-export interface FluidMap<K, V> extends FluidReadonlyMap<K, V> {
+export interface FluidMap<K, V, TMap extends FluidReadonlyMap<K, V> = FluidMap<K, V, never>> extends FluidReadonlyMap<K, V> {
     delete(key: K): void;
-    forEach(callbackfn: (value: V, key: K, map: FluidMap<K, V>) => void, thisArg?: any): void;
+    forEach(callbackfn: (value: V, key: K, map: TMap) => void, thisArg?: any): void;
     set(key: K, value: V): void;
 }
 
