@@ -247,11 +247,15 @@ function parseSelectedSource(
 	context: TransformContext,
 ): RootContent[] {
 	const sourceDocument = context.parseDocument(source, sourcePath);
-	const definitionsByIdentifier = new Map(
-		sourceDocument.tree.children
-			.filter((node): node is Definition => node.type === "definition")
-			.map((definition) => [definition.identifier, definition]),
-	);
+	const definitionsByIdentifier = new Map<string, Definition>();
+	for (const node of sourceDocument.tree.children) {
+		// The parser visits definitions in source order and normalizes their identifiers.
+		// The CommonMark specification dictates that the first definition with a given identifier should be used.
+		// Do not replace an existing entry because it came from an earlier definition in the source.
+		if (node.type === "definition" && !definitionsByIdentifier.has(node.identifier)) {
+			definitionsByIdentifier.set(node.identifier, node);
+		}
+	}
 	const definitions = sourceDocument.tree.children.flatMap((node) => {
 		const start = node.position?.start.offset;
 		const end = node.position?.end.offset;

@@ -76,6 +76,8 @@ test("include rejects generated regions without modifying the destination", asyn
 	const directory = await createTempDirectory();
 	const sourcePath = path.join(directory, "source.md");
 	const destinationPath = path.join(directory, "destination.md");
+	// The labels use different letter casing, but the parser normalizes them to the same
+	// identifier. Both definitions are outside the selected first line.
 	await writeFile(
 		sourcePath,
 		[
@@ -180,6 +182,40 @@ test("include resolves reference links defined outside the selected range", asyn
 	assert.doesNotMatch(output, /^\[guide\]:/m);
 	assert.doesNotMatch(output, /^\[diagram\]:/m);
 	assert.match(output, /{\/\* prettier-ignore-end \*\/}\n{\/\* markdown-magic:end \*\/}/);
+});
+
+test("include uses the first duplicate reference definition", async () => {
+	const directory = await createTempDirectory();
+	const sourcePath = path.join(directory, "source.md");
+	const destinationPath = path.join(directory, "destination.md");
+
+	// The document includes 2 reference declarations with the same identifier but different targets.
+	// The CommonMark specification dictates that the first definition with a given identifier should be used.
+	await writeFile(
+		sourcePath,
+		[
+			"Read [the guide][guide].",
+			"",
+			"[Guide]: https://first.example",
+			"[guide]: https://second.example",
+		].join("\n"),
+	);
+
+	const registry = createTransformRegistry();
+	const includeTransform = registry.transforms.include;
+	assert(includeTransform !== undefined);
+	const nodes = await includeTransform.generate(
+		{ path: "./source.md", start: 0, end: 1 },
+		registry.createContext(destinationPath, "markdown", 2),
+	);
+
+	// The included reference must resolve to the first definition. A map that replaces an
+	// existing entry would resolve the reference to https://second.example instead.
+	const paragraph = nodes[0];
+	assert(paragraph?.type === "paragraph");
+	const link = paragraph.children[1];
+	assert(link?.type === "link");
+	assert.equal(link.url, "https://first.example");
 });
 
 test("include does not absorb definitions into an unclosed selected construct", async () => {
