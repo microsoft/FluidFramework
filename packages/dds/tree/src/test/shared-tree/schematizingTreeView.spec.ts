@@ -405,6 +405,7 @@ describe("SchematizingSimpleTreeView", () => {
 			canUpgrade: false,
 			isEquivalent: false,
 			canInitialize: false,
+			discrepancies: undefined,
 		});
 
 		assert.equal(Object.keys(viewSpecific.root).length, 2);
@@ -423,6 +424,7 @@ describe("SchematizingSimpleTreeView", () => {
 			canUpgrade: true,
 			isEquivalent: true,
 			canInitialize: false,
+			discrepancies: undefined,
 		});
 		assert.equal(Object.keys(viewGeneralized.root).length, 3);
 		assert.equal(Object.entries(viewGeneralized.root).length, 3);
@@ -469,6 +471,7 @@ describe("SchematizingSimpleTreeView", () => {
 			canUpgrade: false,
 			isEquivalent: false,
 			canInitialize: false,
+			discrepancies: undefined,
 		});
 
 		viewSpecific.root.moveRangeToEnd(0, 1);
@@ -490,6 +493,7 @@ describe("SchematizingSimpleTreeView", () => {
 			canUpgrade: true,
 			isEquivalent: true,
 			canInitialize: false,
+			discrepancies: undefined,
 		});
 
 		// ...however, despite that client making an edit to Alice, the field is preserved via the move APIs.
@@ -593,6 +597,14 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(view.compatibility.canView, false);
 		assert.equal(view.compatibility.canUpgrade, true);
 		assert.equal(view.compatibility.isEquivalent, false);
+		assert.deepEqual(view.compatibility.discrepancies, [
+			{
+				mismatch: "allowedTypes",
+				location: "root",
+				view: ["com.fluidframework.leaf.string"],
+				stored: [],
+			},
+		]);
 		assert.throws(
 			() => view.root,
 			(error) => {
@@ -605,6 +617,7 @@ describe("SchematizingSimpleTreeView", () => {
 					tag: TelemetryDataTag.SchemaArtifact,
 					value: JSON.stringify([
 						{
+							mismatch: "allowedTypes",
 							location: "root",
 							view: ["com.fluidframework.leaf.string"],
 							stored: [],
@@ -620,6 +633,7 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.deepEqual(log, [["rootChanged", 5]]);
 
 		assert.equal(view.compatibility.isEquivalent, true);
+		assert.equal(view.compatibility.discrepancies, undefined);
 		assert.equal(view.root, 5);
 	});
 
@@ -634,6 +648,14 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(view.compatibility.canView, false);
 		assert.equal(view.compatibility.canUpgrade, false);
 		assert.equal(view.compatibility.isEquivalent, false);
+		assert.deepEqual(view.compatibility.discrepancies, [
+			{
+				mismatch: "allowedTypes",
+				location: "root",
+				view: [],
+				stored: ["com.fluidframework.leaf.string"],
+			},
+		]);
 		assert.throws(
 			() => view.root,
 			(error) => {
@@ -646,6 +668,7 @@ describe("SchematizingSimpleTreeView", () => {
 					tag: TelemetryDataTag.SchemaArtifact,
 					value: JSON.stringify([
 						{
+							mismatch: "allowedTypes",
 							location: "root",
 							view: [],
 							stored: ["com.fluidframework.leaf.string"],
@@ -683,6 +706,7 @@ describe("SchematizingSimpleTreeView", () => {
 				tag: TelemetryDataTag.SchemaArtifact,
 				value: JSON.stringify([
 					{
+						mismatch: "allowedTypes",
 						location: "root",
 						view: ["com.fluidframework.leaf.boolean"],
 						stored: ["com.fluidframework.leaf.string"],

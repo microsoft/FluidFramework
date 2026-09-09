@@ -1953,7 +1953,8 @@ export class ContainerRuntime
 			// Seal the current outbound batch so a just-submitted edit gets a stable batchId in the pending
 			// state before sealAndCaptureVersionMark reads it (a batchId is only assigned when flushed).
 			flushPendingBatch: () => this.flush(),
-			// Wire the container-provided op reader (if any) so resolution can read historical ops.
+			// Keep this optional while a supported older loader may not provide fetchOps. AB#81034 tracks
+			// making it required once the Runtime -> Loader compatibility window reaches generation 21.
 			getHistoricalOpReader: fetchOps ? () => ({ fetchMessages: fetchOps }) : undefined,
 			// Unpack scanned historical ops through the same pipeline the live inbound path uses, so a
 			// chunked batch's batchId (only restored after reassembly) is observed by the history scan too.
