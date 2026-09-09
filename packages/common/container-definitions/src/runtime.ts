@@ -491,12 +491,14 @@ export interface IContainerContext {
  */
 export interface IContainerContextInternal extends IContainerContext {
 	/**
-	 * Reports whether the runtime has local operations that have not been acknowledged.
+	 * Reports the runtime's operation-only dirty state.
 	 *
 	 * @remarks
-	 * This is intentionally distinct from {@link IContainerContext.updateDirtyContainerState}, whose
-	 * host-facing state may include local work that has not produced an operation. The loader uses the
-	 * op-only state for reconnect ordering and pending-state snapshot management.
+	 * This state is true while the container is not attached or while the runtime has dirtyable local
+	 * operations that have not been acknowledged. It is intentionally distinct from
+	 * {@link IContainerContext.updateDirtyContainerState}, whose host-facing state may include local work
+	 * that has not produced an operation. The loader uses the op-only state for reconnect ordering and
+	 * pending-state snapshot management.
 	 *
 	 * Optional for compatibility with older loaders. A runtime must report op-only state separately before
 	 * broadening host-facing dirty state, since older loaders use the host-facing state for op-specific

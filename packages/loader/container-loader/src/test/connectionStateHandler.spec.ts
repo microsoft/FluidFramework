@@ -55,7 +55,7 @@ describe("ConnectionStateHandler Tests", () => {
 	let handlerInputs: IConnectionStateHandlerInputs;
 	let connectionStateHandler: IConnectionStateHandler;
 	let protocolHandler: ProtocolHandler;
-	let shouldClientJoinWrite: boolean;
+	let hasPendingOps: boolean;
 	let connectionDetails: IConnectionDetailsInternal;
 	let connectionDetails2: IConnectionDetailsInternal;
 	let connectionDetails3: IConnectionDetailsInternal;
@@ -152,11 +152,11 @@ describe("ConnectionStateHandler Tests", () => {
 			new Audience(),
 			(clientId: string) => false, // shouldClientHaveLeft
 		);
-		shouldClientJoinWrite = false;
+		hasPendingOps = false;
 		const logger = createChildLogger();
 		handlerInputs = {
 			maxClientLeaveWaitTime: expectedTimeout,
-			hasPendingOps: (): boolean => shouldClientJoinWrite,
+			hasPendingOps: (): boolean => hasPendingOps,
 			logConnectionIssue: (
 				eventName: string,
 				category: TelemetryEventCategory,
@@ -591,7 +591,7 @@ describe("ConnectionStateHandler Tests", () => {
 			"Client should be in connected state",
 		);
 
-		shouldClientJoinWrite = true;
+		hasPendingOps = true;
 		// Disconnect the client
 		connectionStateHandler.receivedDisconnectEvent({ text: "Test" });
 		assert.strictEqual(
@@ -628,7 +628,7 @@ describe("ConnectionStateHandler Tests", () => {
 			"Client should be in connected state",
 		);
 
-		shouldClientJoinWrite = true;
+		hasPendingOps = true;
 		// Disconnect the client
 		connectionStateHandler.receivedDisconnectEvent({ text: "Test" });
 		assert.strictEqual(
@@ -668,7 +668,7 @@ describe("ConnectionStateHandler Tests", () => {
 		);
 
 		// Disconnect the first client, indicating all pending ops were ack'd
-		shouldClientJoinWrite = false;
+		hasPendingOps = false;
 		connectionStateHandler.receivedDisconnectEvent({ text: "Test" });
 		assert.strictEqual(
 			connectionStateHandler.connectionState,
@@ -676,7 +676,7 @@ describe("ConnectionStateHandler Tests", () => {
 			"Client should be in disconnected state",
 		);
 
-		// Make new client join as read - no waiting for leave since shouldClientJoinWrite is false
+		// Make new client join as read - no waiting for leave since there are no pending ops.
 		connectionDetails3.mode = "read";
 		connectionStateHandler.receivedConnectEvent(connectionDetails3);
 		assert.strictEqual(
@@ -697,7 +697,7 @@ describe("ConnectionStateHandler Tests", () => {
 		);
 
 		// The next connection is writable, but no op was submitted under Client 1.
-		shouldClientJoinWrite = false;
+		hasPendingOps = false;
 		connectionStateHandler.receivedDisconnectEvent({ text: "Test" });
 
 		connectionStateHandler.receivedConnectEvent(connectionDetails2);
@@ -719,7 +719,7 @@ describe("ConnectionStateHandler Tests", () => {
 			"Client should be in connected state",
 		);
 
-		shouldClientJoinWrite = true;
+		hasPendingOps = true;
 		// Disconnect the client
 		connectionStateHandler.receivedDisconnectEvent({ text: "Test" });
 		assert.strictEqual(
@@ -763,7 +763,7 @@ describe("ConnectionStateHandler Tests", () => {
 			"Client should be in connected state",
 		);
 
-		shouldClientJoinWrite = true;
+		hasPendingOps = true;
 		// Disconnect the client
 		connectionStateHandler.receivedDisconnectEvent({ text: "Test" });
 		assert.strictEqual(
@@ -823,7 +823,7 @@ describe("ConnectionStateHandler Tests", () => {
 			"Client 1 should be in connected state",
 		);
 
-		shouldClientJoinWrite = true;
+		hasPendingOps = true;
 		// Disconnect the client
 		connectionStateHandler.receivedDisconnectEvent({ text: "Test" });
 		assert.strictEqual(
@@ -848,7 +848,7 @@ describe("ConnectionStateHandler Tests", () => {
 
 		// Make new client 3 join so that it waits for client 1 to leave
 		// This is rather tricky case when client3mode === "read", as we are testing adding "read" client when
-		// shouldClientJoinWrite() reports true.
+		// hasPendingOps() reports true.
 		connectionDetails3.mode = client3mode;
 		connectionStateHandler.receivedConnectEvent(connectionDetails3);
 		connectionStateHandler_receivedAddMemberEvent(pendingClientId3);
@@ -892,7 +892,7 @@ describe("ConnectionStateHandler Tests", () => {
 			"Client 1 should be in connected state",
 		);
 
-		shouldClientJoinWrite = true;
+		hasPendingOps = true;
 		// Disconnect the client
 		connectionStateHandler.receivedDisconnectEvent({ text: "Test" });
 		assert.strictEqual(
@@ -962,7 +962,7 @@ describe("ConnectionStateHandler Tests", () => {
 			"Client 1 should be in connected state",
 		);
 
-		shouldClientJoinWrite = true;
+		hasPendingOps = true;
 		// Disconnect the client
 		connectionStateHandler.receivedDisconnectEvent({ text: "Test" });
 		assert.strictEqual(
@@ -1036,7 +1036,7 @@ describe("ConnectionStateHandler Tests", () => {
 				"Client 1 should be in connected state",
 			);
 
-			shouldClientJoinWrite = true;
+			hasPendingOps = true;
 			// Disconnect the client
 			connectionStateHandler.receivedDisconnectEvent({ text: "Test" });
 			assert.strictEqual(
@@ -1104,7 +1104,7 @@ describe("ConnectionStateHandler Tests", () => {
 				"Client 1 should be in connected state",
 			);
 
-			shouldClientJoinWrite = true;
+			hasPendingOps = true;
 			// Disconnect the client
 			connectionStateHandler.receivedDisconnectEvent({ text: "Test" });
 			assert.strictEqual(
@@ -1180,7 +1180,7 @@ describe("ConnectionStateHandler Tests", () => {
 				"Client 1 should be in connected state",
 			);
 
-			shouldClientJoinWrite = true;
+			hasPendingOps = true;
 			// Disconnect the client
 			connectionStateHandler.receivedDisconnectEvent({ text: "Test" });
 			assert.strictEqual(
