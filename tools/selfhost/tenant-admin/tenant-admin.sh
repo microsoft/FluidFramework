@@ -39,7 +39,8 @@
 # writes, and the read happens inside the cluster so the vault stays closed to the internet.
 #
 # Usage:
-#   tenant-admin/tenant-admin.sh [--params <file>] [--namespace <ns>] <command> [args...]
+#   tenant-admin/tenant-admin.sh [--params <file>] [--subscription <id>] [--resource-group <name>]
+#                                     [--aks-name <name>] [--namespace <ns>] <command> [args...]
 #
 # Examples:
 #   tenant-admin/tenant-admin.sh create contoso --contact owner@contoso.com
@@ -54,6 +55,9 @@ CLI_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SELFHOST_ROOT="$(cd "$CLI_DIR/.." && pwd)"
 PARAMS_FILE="$SELFHOST_ROOT/azure/deploy.parameters.json"
 NAMESPACE="default"
+SUBSCRIPTION=""
+RESOURCE_GROUP=""
+AKS_NAME=""
 
 # ---------------------------------------------------------------------------
 # Wrapper-level flags. Everything not consumed here is forwarded to the CLI.
@@ -63,6 +67,12 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --params) PARAMS_FILE="$2"; shift 2 ;;
     --params=*) PARAMS_FILE="${1#*=}"; shift ;;
+    --subscription) SUBSCRIPTION="$2"; shift 2 ;;
+    --subscription=*) SUBSCRIPTION="${1#*=}"; shift ;;
+    --resource-group) RESOURCE_GROUP="$2"; shift 2 ;;
+    --resource-group=*) RESOURCE_GROUP="${1#*=}"; shift ;;
+    --aks-name) AKS_NAME="$2"; shift 2 ;;
+    --aks-name=*) AKS_NAME="${1#*=}"; shift ;;
     --namespace) NAMESPACE="$2"; shift 2 ;;
     --namespace=*) NAMESPACE="${1#*=}"; shift ;;
     *) CLI_ARGS+=("$1"); shift ;;
@@ -83,12 +93,17 @@ fi
 for tool in az jq kubectl; do
   command -v "$tool" >/dev/null 2>&1 || { echo "ERROR: required tool '$tool' not found." >&2; exit 1; }
 done
-[ -f "$PARAMS_FILE" ] || { echo "ERROR: parameters file not found: $PARAMS_FILE" >&2; exit 1; }
-
 jqr() { jq -r "$1 // empty" "$PARAMS_FILE"; }
-SUB="$(jqr '.subscriptionId')"
-RG="$(jqr '.resourceGroup')"
-AKS="$(jqr '.aks.name')"
+if [ -f "$PARAMS_FILE" ]; then
+  SUB="${SUBSCRIPTION:-$(jqr '.subscriptionId')}"
+  RG="${RESOURCE_GROUP:-$(jqr '.resourceGroup')}"
+  AKS="${AKS_NAME:-$(jqr '.aks.name')}"
+else
+  SUB="$SUBSCRIPTION"
+  RG="$RESOURCE_GROUP"
+  AKS="$AKS_NAME"
+fi
+[ -n "$SUB" ] && [ -n "$RG" ] && [ -n "$AKS" ] || { echo "ERROR: provide --subscription, --resource-group, and --aks-name, or a parameters file" >&2; exit 1; }
 [ -n "$RG" ] && [ -n "$AKS" ] || { echo "ERROR: resourceGroup / aks.name missing from $PARAMS_FILE" >&2; exit 1; }
 
 [ -n "$SUB" ] && az account set --subscription "$SUB" >/dev/null 2>&1 || true
