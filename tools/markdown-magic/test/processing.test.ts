@@ -80,10 +80,9 @@ test("include rejects generated regions without modifying the destination", asyn
 	// identifier. Both definitions are outside the selected first line.
 	await writeFile(
 		sourcePath,
-		[
-			'<!-- markdown-magic:begin {"transform":"help"} -->',
-			"<!-- markdown-magic:end -->",
-		].join("\n"),
+		['<!-- markdown-magic:begin {"transform":"help"} -->', "<!-- markdown-magic:end -->"].join(
+			"\n",
+		),
 	);
 	const destination = [
 		'<!-- markdown-magic:begin {"transform":"include","path":"./source.md"} -->',
@@ -226,9 +225,7 @@ test("include does not absorb definitions into an unclosed selected construct", 
 	// is outside the selected range.
 	await writeFile(
 		sourcePath,
-		["```", "Selected content.", "```", "", "[guide]: https://example.com/guide"].join(
-			"\n",
-		),
+		["```", "Selected content.", "```", "", "[guide]: https://example.com/guide"].join("\n"),
 	);
 
 	const registry = createTransformRegistry();
