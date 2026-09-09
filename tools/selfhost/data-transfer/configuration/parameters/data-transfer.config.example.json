@@ -3,6 +3,7 @@
 	"targetNamespace": "default",
 	"resultsDirectory": "../../results",
 	"target": {
+		"alfredEndpoint": "https://<target-alfred-endpoint>",
 		"historianEndpoint": "https://<target-historian-endpoint>",
 		"subscriptionId": "<target-subscription-id>",
 		"resourceGroup": "<target-resource-group>",

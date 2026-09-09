@@ -11,7 +11,7 @@ test("creates only missing target tenants", async () => {
 	const calls = [];
 	const execute = async (_file, argumentsList) => {
 		calls.push(argumentsList);
-		if (argumentsList.at(-1) === "list") return { stdout: JSON.stringify([{ _id: "existing" }]) };
+		if (argumentsList.at(-1) === "list") return { stdout: JSON.stringify([{ id: "existing" }]) };
 		return { stdout: JSON.stringify({ tenantId: "missing", key1: "secret", key2: "secret" }) };
 	};
 	const created = await createMissingTenants(config, {

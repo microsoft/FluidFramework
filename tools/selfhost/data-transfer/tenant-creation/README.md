@@ -1,6 +1,6 @@
 # Create target tenants
 
-Run this phase after configuration and before `historian-gitrest-data`. It
+Run this phase after configuration and before `document-transfer`. It
 creates each mapped self-host tenant that does not already exist. Existing
 tenants are left unchanged.
 
@@ -27,4 +27,4 @@ captures and immediately discards that response: it never writes or logs keys.
 
 ## Next steps
 
-Run `historian-gitrest-data` after this phase completes successfully.
+Run `document-transfer` after this phase completes successfully.

@@ -21,7 +21,7 @@ class ConfirmationError extends Error {
 }
 
 function parseArgs(argv) {
-	const options = { configPath: "../configuration/parameters/data-transfer.config.json", execute: false };
+	const options = { configPath: "configuration/parameters/data-transfer.config.json", execute: false };
 	for (let index = 0; index < argv.length; index++) {
 		switch (argv[index]) {
 			case "--config": options.configPath = argv[++index]; break;

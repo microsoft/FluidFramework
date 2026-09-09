@@ -79,6 +79,7 @@ function validateInventory(inventory, config, errors, warnings) {
 }
 
 function validateTarget(target, errors) {
+	requireString(target?.alfredEndpoint, "target.alfredEndpoint", errors);
 	requireString(target?.historianEndpoint, "target.historianEndpoint", errors);
 	requireString(target?.subscriptionId, "target.subscriptionId", errors);
 	requireString(target?.resourceGroup, "target.resourceGroup", errors);
@@ -108,5 +109,5 @@ export async function loadConfiguration(configPath) {
 	if (inventory !== undefined) validateInventory(inventory, config, errors, warnings);
 	if (errors.length > 0) throw new ConfigurationError(errors);
 
-	return { config, inventory, inventoryPath, warnings };
+	return { config, configDirectory, inventory, inventoryPath, warnings };
 }

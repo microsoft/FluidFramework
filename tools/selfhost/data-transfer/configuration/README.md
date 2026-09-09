@@ -56,7 +56,7 @@ Validation reads only local files. It does not call Azure CLI or retrieve keys.
 
 ## Next steps
 
-Run the `historian-gitrest-data` phase after validating this configuration. It
-will use the reviewed inventory and this file to replicate each selected
-document's historian/gitrest repository to the mapped self-host tenant. Rotate
-both source and target tenant keys after migration.
+Run the `document-transfer` phase after validating this configuration. It uses
+the reviewed inventory and this file to read each selected document's source
+summary and create it through the mapped self-host tenant's Alfred API. Rotate
+both source and target tenant keys after the data has been transferred.
