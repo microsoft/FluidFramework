@@ -182,6 +182,34 @@ test("include resolves reference links defined outside the selected range", asyn
 	assert.match(output, /{\/\* prettier-ignore-end \*\/}\n{\/\* markdown-magic:end \*\/}/);
 });
 
+test("include does not absorb definitions into an unclosed selected construct", async () => {
+	const directory = await createTempDirectory();
+	const sourcePath = path.join(directory, "source.md");
+	const destinationPath = path.join(directory, "destination.md");
+	// The selected first two lines open a code fence but do not close it. The link definition
+	// is outside the selected range.
+	await writeFile(
+		sourcePath,
+		["```", "Selected content.", "```", "", "[guide]: https://example.com/guide"].join(
+			"\n",
+		),
+	);
+
+	const registry = createTransformRegistry();
+	const includeTransform = registry.transforms.include;
+	assert(includeTransform !== undefined);
+	const nodes = await includeTransform.generate(
+		{ path: "./source.md", start: 0, end: 2 },
+		registry.createContext(destinationPath, "markdown", 2),
+	);
+
+	// The parser closes the selected code block at the end of the selection. If the external
+	// definition leaks into the selection, the code value contains an additional line.
+	assert.equal(nodes.length, 1);
+	assert.equal(nodes[0]?.type, "code");
+	assert.equal(nodes[0].value, "Selected content.");
+});
+
 test("include rejects relative link and image targets", async () => {
 	const cases = [
 		{ source: "Read the [guide](./guide.md).", target: "./guide.md" },

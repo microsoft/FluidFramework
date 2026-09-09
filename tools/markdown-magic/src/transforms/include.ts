@@ -238,7 +238,7 @@ function validateLinkTargets(node: Nodes, sourcePath: string): void {
 /**
  * Parses selected source with the source document's link definitions as temporary context.
  * Definitions outside the selection let remark recognize reference-style links. The resulting
- * references are resolved to inline links, and definitions outside the requested range are removed.
+ * references are resolved to inline links, and the prefixed definition context is removed.
  */
 function parseSelectedSource(
 	source: string,
@@ -263,15 +263,19 @@ function parseSelectedSource(
 		return context.parseDocument(selectedSource, sourcePath).tree.children;
 	}
 
+	// Put definitions before the selected source. An open construct in the selected source
+	// cannot consume definitions that are outside the selected range.
 	const separator = "\n\n";
-	const definitionStart = selectedSource.length + separator.length;
-	const contextualSource = `${selectedSource}${separator}${definitions.join("\n")}`;
+	const definitionContext = definitions.join("\n");
+	const selectedSourceStart = definitionContext.length + separator.length;
+	const contextualSource = `${definitionContext}${separator}${selectedSource}`;
+	// Keep nodes that start in the selected source. Remove the temporary definition context.
 	return context
 		.parseDocument(contextualSource, sourcePath)
 		.tree.children.filter(
 			(node) =>
 				node.type !== "definition" &&
-				(node.position?.start.offset ?? definitionStart) < definitionStart,
+				(node.position?.start.offset ?? selectedSourceStart) >= selectedSourceStart,
 		)
 		.map((node) => resolveReferences(node, definitionsByIdentifier) as RootContent);
 }
