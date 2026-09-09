@@ -1,0 +1,14 @@
+{
+  "version": "schemaVersion",
+  "nodes": {},
+  "root": {
+    "kind": "Optional",
+    "types": []
+  },
+  "schemaVersion": [
+    [
+      "com.fluidframework.test",
+      1
+    ]
+  ]
+}

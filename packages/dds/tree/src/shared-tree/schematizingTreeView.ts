@@ -64,6 +64,7 @@ import {
 	type SchemaUpgrade,
 	type StagedUpgradeStatus,
 } from "../simple-tree/index.js";
+import type { SchemaVersionMap } from "../core/index.js";
 import {
 	type Breakable,
 	breakingClass,
@@ -185,6 +186,8 @@ export class SchematizingSimpleTreeView<
 		const configAlpha = new TreeViewConfigurationAlpha({
 			...config,
 			stagedUpgradePolicy,
+			schemaVersion:
+				config instanceof TreeViewConfigurationAlpha ? config.schemaVersion : undefined,
 		});
 		this.stagedUpgradePolicy = configAlpha.stagedUpgradePolicy;
 
@@ -231,6 +234,14 @@ export class SchematizingSimpleTreeView<
 		return this.config.schema;
 	}
 
+	public get schemaVersion(): SchemaVersionMap | undefined {
+		return this.viewSchema.schemaVersion;
+	}
+
+	public get storedSchemaVersion(): SchemaVersionMap | undefined {
+		return this.checkout.storedSchema.schemaVersion;
+	}
+
 	public initialize(content: InsertableField<TRootSchema>): void {
 		this.ensureUndisposed();
 
@@ -240,7 +251,11 @@ export class SchematizingSimpleTreeView<
 		}
 
 		this.runSchemaEdit(() => {
-			const schema = toInitialSchema(this.config.schema, this.stagedUpgradePolicy);
+			const schema = toInitialSchema(
+				this.config.schema,
+				this.stagedUpgradePolicy,
+				this.schemaVersion,
+			);
 			// This has to be the contextless version, since when "initialize" is called (right after this),
 			// it will do a schema change which would dispose of the current context (see inside `update`).
 			// Thus using the current context (if any) would hydrate nodes then
@@ -298,19 +313,30 @@ export class SchematizingSimpleTreeView<
 	public upgradeSchema(): void {
 		this.ensureUndisposed();
 
-		const newSchema = toUpgradeSchema(this.viewSchema.root, this.effectiveUpgradePolicy);
+		const newSchema = toUpgradeSchema(
+			this.viewSchema.root,
+			this.effectiveUpgradePolicy,
+			this.schemaVersion,
+		);
 		const storedSchema = this.checkout.storedSchema.clone();
-		if (!allowsRepoSuperset(defaultSchemaPolicy, storedSchema, newSchema)) {
+		const isMonotonicUpgrade = allowsRepoSuperset(
+			defaultSchemaPolicy,
+			storedSchema,
+			newSchema,
+		);
+		if (!this.compatibility.canUpgrade) {
 			throw new UsageError(
 				"Existing stored schema cannot be upgraded to the requested schema (see TreeView.compatibility.canUpgrade).",
 			);
 		}
-		if (allowsRepoSuperset(defaultSchemaPolicy, newSchema, storedSchema)) {
+		if (this.compatibility.isEquivalent) {
 			// No-op
 			return;
 		}
 
-		this.runSchemaEdit(() => this.checkout.updateSchema(newSchema));
+		this.runSchemaEdit(() =>
+			this.checkout.updateSchema(newSchema, isMonotonicUpgrade ? undefined : true),
+		);
 	}
 
 	public isStagedUpgradeEnabled(upgrade: SchemaUpgrade): StagedUpgradeStatus {

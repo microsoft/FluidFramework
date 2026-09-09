@@ -16,6 +16,7 @@ import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-ut
 
 import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
 import {
+	type LibraryId,
 	SchemaFormatVersion,
 	storedEmptyFieldSchema,
 	TreeStoredSchemaRepository,
@@ -54,7 +55,14 @@ describe("schemaSummarizer", () => {
 		for (const schemaFormat of schemaCodecBuilder.registry) {
 			const encode = (schema: TreeStoredSchema): JsonCompatibleReadOnly => {
 				const codec = schemaFormat.codec({ jsonValidator: FormatValidatorBasic });
-				const result: JsonCompatibleReadOnly = codec.encode(schema);
+				const schemaWithVersion =
+					schemaFormat.formatVersion === SchemaFormatVersion.v3Experimental
+						? {
+								...schema,
+								schemaVersion: { ["com.fluidframework.test" as LibraryId]: 1 },
+							}
+						: schema;
+				const result: JsonCompatibleReadOnly = codec.encode(schemaWithVersion);
 				return result;
 			};
 

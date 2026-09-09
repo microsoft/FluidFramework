@@ -1,0 +1,40 @@
+{
+  "version": "schemaVersion",
+  "nodes": {
+    "test.hasAmbiguousField": {
+      "kind": {
+        "object": {
+          "field": {
+            "kind": "Value",
+            "types": [
+              "test.minimal",
+              "test.minimal2"
+            ]
+          }
+        }
+      }
+    },
+    "test.minimal": {
+      "kind": {
+        "object": {}
+      }
+    },
+    "test.minimal2": {
+      "kind": {
+        "object": {}
+      }
+    }
+  },
+  "root": {
+    "kind": "Value",
+    "types": [
+      "test.hasAmbiguousField"
+    ]
+  },
+  "schemaVersion": [
+    [
+      "com.fluidframework.test",
+      1
+    ]
+  ]
+}

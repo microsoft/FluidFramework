@@ -12,7 +12,8 @@ import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import { toInitialSchema } from "../toStoredSchema.js";
 import { createTreeSchema } from "../treeSchema.js";
 
-import { TreeViewConfigurationAlpha, TreeViewConfiguration } from "./configuration.js";
+import type { ITreeViewConfigurationAlpha, TreeViewConfiguration } from "./configuration.js";
+import { TreeViewConfigurationAlpha, validateSchemaVersion } from "./configuration.js";
 import { checkSchemaCompatibility } from "./schemaCompatibilityTester.js";
 import { generateSchemaFromSimpleSchema } from "./schemaFromSimple.js";
 import {
@@ -73,11 +74,18 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  * @alpha
  */
 export function checkCompatibility(
-	viewWhichCreatedStoredSchema: TreeViewConfiguration,
-	view: TreeViewConfiguration,
+	viewWhichCreatedStoredSchema: ITreeViewConfigurationAlpha,
+	view: ITreeViewConfigurationAlpha,
 ): Omit<SchemaCompatibilityStatus, "canInitialize"> {
-	const viewAsAlpha = new TreeViewConfigurationAlpha({ schema: view.schema });
-	const stored = toInitialSchema(viewWhichCreatedStoredSchema.schema);
+	const viewAsAlpha = new TreeViewConfigurationAlpha({
+		schema: view.schema,
+		schemaVersion: view.schemaVersion,
+	});
+	const stored = toInitialSchema(
+		viewWhichCreatedStoredSchema.schema,
+		undefined,
+		viewWhichCreatedStoredSchema.schemaVersion,
+	);
 	return checkSchemaCompatibility(viewAsAlpha, stored);
 }
 
@@ -88,7 +96,7 @@ export function checkCompatibility(
  *
  * @see {@link importCompatibilitySchemaSnapshot} which loads these snapshots.
  *
- * @param config - The schema to snapshot. Only the schema field of the `TreeViewConfiguration` is used.
+ * @param config - The schema and application-defined versions to snapshot.
  * @returns The JSON representation of the schema.
  *
  * @example This example creates and persists a snapshot of a Point2D schema.
@@ -110,10 +118,13 @@ export function checkCompatibility(
  * @alpha
  */
 export function exportCompatibilitySchemaSnapshot(
-	config: Pick<TreeViewConfiguration, "schema">,
+	config: Pick<ITreeViewConfigurationAlpha, "schema" | "schemaVersion">,
 ): JsonCompatibleReadOnly {
 	const treeSchema = createTreeSchema(config.schema);
-	return encodeSchemaCompatibilitySnapshot(treeSchema);
+	return encodeSchemaCompatibilitySnapshot({
+		...treeSchema,
+		schemaVersion: validateSchemaVersion(config.schemaVersion),
+	});
 }
 
 /**
@@ -124,7 +135,8 @@ export function exportCompatibilitySchemaSnapshot(
  * @see {@link exportCompatibilitySchemaSnapshot} which creates these snapshots.
  *
  * @param config - The JSON representation of the schema.
- * @returns The schema. Only the schema field of the {@link TreeViewConfiguration} is populated.
+ * @returns The schema.
+ * Only the schema and schema version fields of the {@link TreeViewConfigurationAlpha} are populated.
  * @throws Will throw a usage error if the encoded schema is not in the expected format.
  *
  * @example This example loads and parses a snapshot of a Point2D schema.
@@ -138,13 +150,16 @@ export function exportCompatibilitySchemaSnapshot(
  */
 export function importCompatibilitySchemaSnapshot(
 	config: JsonCompatibleReadOnly,
-): TreeViewConfiguration {
+): TreeViewConfigurationAlpha {
 	const simpleSchema = decodeSchemaCompatibilitySnapshot(config);
 	const viewSchema = generateSchemaFromSimpleSchema(simpleSchema);
 
 	// We construct a TreeViewConfiguration here with the default parameters. The default set of validation parameters are fine for
 	// a schema produced by `generateSchemaFromSimpleSchema`.
-	return new TreeViewConfiguration({ schema: viewSchema.root });
+	return new TreeViewConfigurationAlpha({
+		schema: viewSchema.root,
+		schemaVersion: simpleSchema.schemaVersion,
+	});
 }
 
 /**

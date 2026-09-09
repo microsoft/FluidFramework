@@ -12,6 +12,7 @@ import {
 	normalizeFieldSchema,
 } from "./fieldSchema.js";
 import type { SchemaType, SimpleNodeSchema, SimpleTreeSchema } from "./simpleSchema.js";
+import type { SchemaVersionMap } from "../core/index.js";
 import { walkFieldSchema } from "./walkFieldSchema.js";
 
 export function createTreeSchema(rootSchema: ImplicitFieldSchema): TreeSchema {
@@ -40,6 +41,11 @@ export function createTreeSchema(rootSchema: ImplicitFieldSchema): TreeSchema {
  * @sealed @alpha
  */
 export interface TreeSchema extends SimpleTreeSchema<SchemaType.View> {
+	/**
+	 * Application-defined version for this schema.
+	 */
+	readonly schemaVersion?: SchemaVersionMap;
+
 	/**
 	 * {@inheritDoc SimpleTreeSchema.root}
 	 */

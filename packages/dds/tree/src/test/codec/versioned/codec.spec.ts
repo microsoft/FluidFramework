@@ -115,6 +115,35 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 			assert.equal(codec2.decode(v2), 42);
 		});
 
+		it("selects write versions per value", () => {
+			const perValueBuilder = VersionDispatchingCodecBuilder.build(
+				"PerValue",
+				[
+					{
+						minVersionForCollab: lowestMinVersionForCollab,
+						formatVersion: 1,
+						codec: codecV1,
+					},
+					{
+						minVersionForCollab: undefined,
+						formatVersion: "X",
+						codec: codecVX,
+					},
+				],
+				{
+					selectWriteFormatVersion: (data, defaultVersion) =>
+						data < 0 ? "X" : defaultVersion,
+				},
+			);
+			const codec = perValueBuilder.build({
+				minVersionForCollab: "2.0.0",
+				jsonValidator: FormatValidatorBasic,
+			});
+
+			assert.deepEqual(codec.encode(42), { version: 1, value1: 42 });
+			assert.deepEqual(codec.encode(-1), { version: "X", valueX: -1 });
+		});
+
 		it("bad override", () => {
 			assert.throws(
 				() =>

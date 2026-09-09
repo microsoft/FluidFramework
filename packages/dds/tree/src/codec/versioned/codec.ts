@@ -318,6 +318,26 @@ export interface VersionDispatchingCodec<
 }
 
 /**
+ * Options which customize how a {@link VersionDispatchingCodecBuilder} selects a write format.
+ */
+export interface VersionDispatchingCodecBuilderOptions<
+	TDecoded,
+	TFormatVersion extends FormatVersion,
+> {
+	/**
+	 * Selects a write format for each value.
+	 * @param data - The value being encoded.
+	 * @param defaultVersion - The format selected from the codec write options.
+	 * @param hasExplicitOverride - Whether the codec write options explicitly override this codec's format.
+	 */
+	readonly selectWriteFormatVersion?: (
+		data: TDecoded,
+		defaultVersion: TFormatVersion,
+		hasExplicitOverride: boolean,
+	) => TFormatVersion;
+}
+
+/**
  * Creates a {@link VersionDispatchingCodec} using a {@link CodecVersion} to select the {@link VersionDispatchingCodec.writeVersion}.
  * @privateRemarks
  * This is a two stage builder so the first stage (the static build) can encapsulate all codec specific details and
@@ -362,6 +382,10 @@ export class VersionDispatchingCodecBuilder<
 			TBuildOptions,
 			TDecodeContext
 		>[],
+		private readonly builderOptions: VersionDispatchingCodecBuilderOptions<
+			TDecoded,
+			TFormatVersion
+		>,
 	) {
 		type Normalized = NormalizedCodecVersion<
 			TDecoded,
@@ -433,10 +457,25 @@ export class VersionDispatchingCodecBuilder<
 	): VersionDispatchingCodec<TDecoded, TEncodeContext, TFormatVersion, TDecodeContext> {
 		const [applied, decoder] = this.buildDecoderInternal(options);
 		const writeVersion = getWriteVersion(this.name, options, applied);
+		const fromFormatVersion = new Map(
+			applied.map((codec) => [codec.formatVersion, codec] as const),
+		);
 		return {
 			...decoder,
 			encode: (data: TDecoded, context: TEncodeContext): JsonCompatibleReadOnly => {
-				return writeVersion.codec.encode(data, context);
+				const selectedFormatVersion =
+					this.builderOptions.selectWriteFormatVersion?.(
+						data,
+						writeVersion.formatVersion,
+						options.writeVersionOverrides?.has(this.name) === true,
+					) ?? writeVersion.formatVersion;
+				const selected = fromFormatVersion.get(selectedFormatVersion);
+				if (selected === undefined) {
+					throw new UsageError(
+						`Codec "${this.name}" selected unsupported format version ${JSON.stringify(selectedFormatVersion)} while encoding. Supported versions are: ${versionList(applied)}.`,
+					);
+				}
+				return selected.codec.encode(data, context);
 			},
 			writeVersion: writeVersion.formatVersion,
 		};
@@ -528,7 +567,14 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 	public static build<
 		Name extends CodecName,
 		Entry extends CodecVersion<unknown, unknown, FormatVersion, never, unknown>,
-	>(name: Name, inputRegistry: readonly Entry[]) {
+	>(
+		name: Name,
+		inputRegistry: readonly Entry[],
+		options: VersionDispatchingCodecBuilderOptions<
+			Entry extends CodecVersion<infer D, unknown, FormatVersion, never, unknown> ? D : never,
+			Entry extends CodecVersion<unknown, unknown, infer F, never, unknown> ? F : never
+		> = {},
+	) {
 		type TDecoded2 =
 			Entry extends CodecVersion<infer D, unknown, FormatVersion, never, unknown> ? D : never;
 		type TEncodeContext2 =
@@ -565,7 +611,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 			TFormatVersion2,
 			Name,
 			ResolvedDecodeContext
-		>(name, input);
+		>(name, input, options);
 		return builder;
 	}
 }
