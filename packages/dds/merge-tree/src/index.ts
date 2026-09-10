@@ -93,8 +93,6 @@ export {
 export {
 	compareReferencePositions,
 	DetachedReferencePosition,
-	maxReferencePosition,
-	minReferencePosition,
 	type ReferencePosition,
 	refGetTileLabels,
 	refHasTileLabel,
