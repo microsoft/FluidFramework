@@ -8,8 +8,8 @@ import { PackageLink } from "@site/src/components/shortLinks";
 The Fluid Framework is a multi-layered system consisting of dozens of individual npm packages.
 Most developers will only need two or three of these packages for typical Fluid development:
 
--   The <PackageLink package="fluid-framework" /> package, which contains the public API for the Fluid Framework
--   A service-specific client package, such as the <PackageLink package="azure-client">@fluidframework/azure-client</PackageLink>.
+- The <PackageLink package="fluid-framework" /> package, which contains the public API for the Fluid Framework
+- A service-specific client package, such as the <PackageLink package="azure-client">@fluidframework/azure-client</PackageLink>.
 
 ## Primary API: fluid-framework
 
@@ -26,22 +26,21 @@ It includes functionality to retrieve the Fluid data contained within itself, as
 You'll use one or more DDSes in your container to model your collaborative data.
 The <PackageLink package="fluid-framework" /> package includes a few such data structures that cover a broad range of scenarios:
 
--   [SharedTree](../data-structures/tree/index.mdx): a collaborative tree data structure for building complex, hierarchical data models.
-    :::tip
-    This is the DDS we recommend for most new applications.
-    :::
--   [SharedString](../data-structures/string.mdx): a data structure for collaborative text data.
-    :::tip
-    This DDS can be used when live, collaborative text editing is required.
-    `SharedTree` supports text content, but does not yet support many rich collaborative text editing features.
+- [SharedTree](../data-structures/tree/index.mdx): a collaborative tree data structure for building complex, hierarchical data models.
+	:::tip
+	This is the DDS we recommend for most new applications.
+	:::
+- [SharedString](../data-structures/string.mdx): a data structure for collaborative text data.
+	:::tip
+	This DDS can be used when live, collaborative text editing is required.
+	`SharedTree` supports text content, but does not yet support many rich collaborative text editing features.
 
-    For scenarios where collaborative text editing is required, we recommend using `SharedString` _with_ `SharedTree` via [handles](../data-structures/tree/node-types.mdx#leaf-nodes).
-    :::
-
--   [SharedMap](../data-structures/map.mdx): a map-like data structure for storing key/value pair data.
-    :::warning
-    We do not recommend this DDS for new applications. `SharedTree` is a more powerful and flexible alternative that can easily model key/value pair data.
-    :::
+	For scenarios where collaborative text editing is required, we recommend using `SharedString` _with_ `SharedTree` via [handles](../data-structures/tree/node-types.mdx#leaf-nodes).
+	:::
+- [SharedMap](../data-structures/map.mdx): a map-like data structure for storing key/value pair data.
+	:::warning
+	We do not recommend this DDS for new applications. `SharedTree` is a more powerful and flexible alternative that can easily model key/value pair data.
+	:::
 
 ## Package scopes
 

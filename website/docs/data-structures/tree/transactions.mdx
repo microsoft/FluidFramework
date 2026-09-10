@@ -81,16 +81,16 @@ It can optionally return a status object indicating success or failure, and incl
 
 ```typescript
 const result = view.runTransaction(() => {
-	view.root.name = "Alice";
-	view.root.score = 100;
-	// If something goes wrong, we can roll back this transaction by returning an object with rollback: true
-	// return { rollback: true };
+    view.root.name = "Alice";
+    view.root.score = 100;
+    // If something goes wrong, we can roll back this transaction by returning an object with rollback: true
+    // return { rollback: true };
 });
 
 if (result.success) {
-	// Transaction was committed
+    // Transaction was committed
 } else {
-	// Transaction was rolled back
+    // Transaction was rolled back
 }
 ```
 
@@ -98,37 +98,24 @@ if (result.success) {
 
 ```typescript
 const result = view.runTransaction(() => {
-	const oldName = view.root.name;
-	view.root.name = "Bob";
-	return { value: oldName };
+    const oldName = view.root.name;
+    view.root.name = "Bob";
+    return { value: oldName };
 });
 
 if (result.success) {
-	console.log("Previous name was:", result.value);
+    console.log("Previous name was:", result.value);
 }
 ```
 
 ### Asynchronous Transactions
 
-<ApiLink
-	package="fluid-framework"
-	api={{
-		previous: "UntypedTreeViewAlpha.runTransactionAsync",
-		new: "UntypedTreeView.runTransactionAsync",
-	}}
->
-	runTransactionAsync
-</ApiLink> works like <ApiLink
-	package="fluid-framework"
-	api={{ previous: "UntypedTreeViewAlpha.runTransaction", new: "UntypedTreeView.runTransaction" }}
->
-	runTransaction
-</ApiLink> but accepts an `async` callback.
+<ApiLink package="fluid-framework" api={{ previous: "UntypedTreeViewAlpha.runTransactionAsync", new: "UntypedTreeView.runTransactionAsync" }}>runTransactionAsync</ApiLink> works like <ApiLink package="fluid-framework" api={{ previous: "UntypedTreeViewAlpha.runTransaction", new: "UntypedTreeView.runTransaction" }}>runTransaction</ApiLink> but accepts an `async` callback.
 
 ```typescript
 const result = await view.runTransactionAsync(async () => {
-	const data = await fetchExternalData();
-	view.root.externalValue = data;
+    const data = await fetchExternalData();
+    view.root.externalValue = data;
 });
 ```
 
@@ -139,16 +126,16 @@ The label is surfaced through `ChangeMetadata`, and can be useful for grouping r
 
 ```typescript
 view.runTransaction(
-	() => {
-		view.root.name = "Dave";
-	},
-	{ label: "rename-user" },
+    () => {
+        view.root.name = "Dave";
+    },
+    { label: "rename-user" },
 );
 
 // Label "rename-user" will now be associated with the commit for this transaction and will appear in relevant metadata
 // Here's an example of accessing the label from a change event:
 view.checkout.events.on("changed", (meta) => {
-	console.log(meta.label); // will log "rename-user" if this event handler is applied before the above transaction is run
+    console.log(meta.label); // will log "rename-user" if this event handler is applied before the above transaction is run
 });
 ```
 
@@ -156,20 +143,7 @@ If transactions are nested, only the outermost transaction's label is used.
 
 ### Nested Transactions
 
-<ApiLink
-	package="fluid-framework"
-	api={{ previous: "UntypedTreeViewAlpha.runTransaction", new: "UntypedTreeView.runTransaction" }}
->
-	runTransaction
-</ApiLink> and <ApiLink
-	package="fluid-framework"
-	api={{
-		previous: "UntypedTreeViewAlpha.runTransactionAsync",
-		new: "UntypedTreeView.runTransactionAsync",
-	}}
->
-	runTransactionAsync
-</ApiLink> can be called from within the callback of another transaction, with some limitations.
+<ApiLink package="fluid-framework" api={{ previous: "UntypedTreeViewAlpha.runTransaction", new: "UntypedTreeView.runTransaction" }}>runTransaction</ApiLink> and <ApiLink package="fluid-framework" api={{ previous: "UntypedTreeViewAlpha.runTransactionAsync", new: "UntypedTreeView.runTransactionAsync" }}>runTransactionAsync</ApiLink> can be called from within the callback of another transaction, with some limitations.
 Nested transactions have the following behavior:
 
 -   If the inner transaction rolls back, only the inner transaction's changes are discarded. The outer transaction continues.
@@ -210,25 +184,29 @@ Constraints are specified via the `preconditions` field in the `params` argument
 
 ```typescript
 view.runTransaction(
-	() => {
-		view.root.content = "new value";
-	},
-	{
-		// `preconditions` applies to the transaction itself.
-		// Here we add a `nodeInDocument` constraint which will ensure that this transaction will only be applied if someNode is still in the document at the time this transaction is sequenced.
-		preconditions: [{ type: "nodeInDocument", node: someNode }],
-	},
+    () => {
+        view.root.content = "new value";
+    },
+    {
+        // `preconditions` applies to the transaction itself.
+        // Here we add a `nodeInDocument` constraint which will ensure that this transaction will only be applied if someNode is still in the document at the time this transaction is sequenced.
+        preconditions: [
+            { type: "nodeInDocument", node: someNode },
+        ],
+    },
 );
 ```
 
 ```typescript
 view.runTransaction(() => {
-	view.root.content = "updated";
-	return {
-		// `preconditionsOnRevert` only applies if the transaction is reverted (e.g. via an undo operation).
-		// Here we add a `nodeInDocument` constraint which will ensure that the changes made by this transaction can only be reverted if view.root is still in the document at the time of revert.
-		preconditionsOnRevert: [{ type: "nodeInDocument", node: view.root }],
-	};
+    view.root.content = "updated";
+    return {
+        // `preconditionsOnRevert` only applies if the transaction is reverted (e.g. via an undo operation).
+        // Here we add a `nodeInDocument` constraint which will ensure that the changes made by this transaction can only be reverted if view.root is still in the document at the time of revert.
+        preconditionsOnRevert: [
+            { type: "nodeInDocument", node: view.root },
+        ],
+    };
 });
 ```
 
@@ -244,12 +222,14 @@ Requires that a specific node exists in the document.
 const importantNode = view.root;
 
 view.runTransaction(
-	() => {
-		view.root.value = 42;
-	},
-	{
-		preconditions: [{ type: "nodeInDocument", node: importantNode }],
-	},
+    () => {
+        view.root.value = 42;
+    },
+    {
+        preconditions: [
+            { type: "nodeInDocument", node: importantNode },
+        ],
+    },
 );
 ```
 
@@ -277,11 +257,11 @@ This is currently only the case for `noChange` constraints in reverts, but we ma
 
 ```typescript
 view.runTransaction(
-	() => {
-		view.root.items.insertAtEnd("new item");
-	},
-	{
-		preconditions: [{ type: "noChange" }],
-	},
+    () => {
+        view.root.items.insertAtEnd("new item");
+    },
+    {
+        preconditions: [{ type: "noChange" }],
+    },
 );
 ```
