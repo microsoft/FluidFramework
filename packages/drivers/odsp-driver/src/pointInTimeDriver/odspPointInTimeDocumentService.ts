@@ -31,6 +31,7 @@ class PointInTimeDocumentStorageService extends DocumentStorageServiceProxy {
 	}
 
 	public override async getVersions(
+		// eslint-disable-next-line @rushstack/no-new-null -- IDocumentStorageService is a legacy API that requires null.
 		versionId: string | null,
 		count: number,
 		scenarioName?: string,

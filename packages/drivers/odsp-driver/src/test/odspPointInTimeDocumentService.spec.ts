@@ -129,6 +129,7 @@ class FakeRecoverableDocumentService {
 			return this.snapshot;
 		},
 		getVersions: async (
+			// eslint-disable-next-line @rushstack/no-new-null -- IDocumentStorageService is a legacy API that requires null.
 			_versionId: string | null,
 			_count: number,
 			_scenarioName?: string,
