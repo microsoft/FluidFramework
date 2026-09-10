@@ -393,7 +393,7 @@ The following npm scripts are supported in this directory:
     "build": "Build everything: the API documentation, the website, the tests, etc.",
     "build:api-documentation": "Download API model artifacts and generate API documentation.",
     "prebuild:docusaurus": "Runs pre-site build metadata generation.",
-    "build:docusaurus": "Build the website with Docusaurus.",
+    "build:docusaurus": "Build the website with Docusaurus. Note that 3 documentation suite versions taxes Docusaurus and causes it to run out of memory. The default heap limit is increased to accommodate this.",
     "build:generate-content": "Generate site content. Includes API documentation, as well as content generated / embedded by `markdown-magic`.",
     "build:markdown-magic": "Run `markdown-magic` to generate / embed contents in Markdown files.",
     "build:site": "Build the site, including API documentation.",
@@ -435,7 +435,7 @@ The following npm scripts are supported in this directory:
 | `build` | `concurrently npm:build:site npm:build:test` | Build everything: the API documentation, the website, the tests, etc. |
 | `build:api-documentation` | `npm run download-doc-models && npm run generate-api-documentation` | Download API model artifacts and generate API documentation. |
 | `prebuild:docusaurus` | `npm run generate-versions` | Runs pre-site build metadata generation. |
-| `build:docusaurus` | `cross-env NODE_OPTIONS=--max-old-space-size=8192 docusaurus build` | Build the website with Docusaurus. |
+| `build:docusaurus` | `cross-env NODE_OPTIONS=--max-old-space-size=8192 docusaurus build` | Build the website with Docusaurus. Note that 3 documentation suite versions taxes Docusaurus and causes it to run out of memory. The default heap limit is increased to accommodate this. |
 | `build:generate-content` | `concurrently npm:build:markdown-magic npm:build:api-documentation` | Generate site content. Includes API documentation, as well as content generated / embedded by `markdown-magic`. |
 | `build:markdown-magic` | `markdown-magic` | Run `markdown-magic` to generate / embed contents in Markdown files. |
 | `build:search` | `pagefind --site build` | |
