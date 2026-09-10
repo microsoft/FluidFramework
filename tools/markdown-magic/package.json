@@ -27,7 +27,7 @@
 		"test": "node --import jiti/register --test \"test/*.test.ts\" && node --import jiti/register src/index.ts --files \"test/**/*.md\" !test/README.md"
 	},
 	"dependencies": {
-		"chalk": "^4.1.2",
+		"chalk": "^6.0.0",
 		"globby": "^13.2.2",
 		"jiti": "^2.6.1",
 		"remark": "^15.0.1",
