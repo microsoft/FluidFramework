@@ -55,14 +55,14 @@ async function runTenantAdmin(target, namespace, argumentsList, execute = execFi
 
 /** Create missing self-host tenants without exposing generated tenant keys. */
 export async function createMissingTenants(config, inventory, execute) {
-	const existingTenants = await runTenantAdmin(config.target, config.targetNamespace, tenantAdminArguments(config.target, config.targetNamespace, "list"), execute);
+	const existingTenants = await runTenantAdmin(config.selfHost, config.selfHostNamespace, tenantAdminArguments(config.selfHost, config.selfHostNamespace, "list"), execute);
 	const existingIds = new Set(existingTenants.map((tenant) =>  tenant.id));
 	const created = [];
 	for (const [sourceTenantId, tenant] of Object.entries(inventory.tenants)) {
 		const targetTenantId = (tenant.selfHostTenantId || sourceTenantId).toLowerCase();
 		if (!existingIds.has(targetTenantId)) {
 			console.log(`Creating new tenant: ${targetTenantId}`);
-			await runTenantAdmin(config.target, config.targetNamespace, [...tenantAdminArguments(config.target, config.targetNamespace, "create", targetTenantId), "--contact", config.target.contact], execute);
+			await runTenantAdmin(config.selfHost, config.selfHostNamespace, [...tenantAdminArguments(config.selfHost, config.selfHostNamespace, "create", targetTenantId), "--contact", config.selfHost.contact], execute);
 			created.push(targetTenantId);
 		}
 	}

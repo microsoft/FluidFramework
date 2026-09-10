@@ -48,9 +48,9 @@ function validateInventory(inventory, config, errors, warnings) {
 		errors.push("Inventory contains unreadable source servers");
 	}
 
-	const sourceTenants = config.sourceTenants;
-	if (!sourceTenants || typeof sourceTenants !== "object") {
-		errors.push("sourceTenants must be an object");
+	const azureFluidRelayTenants = config.azureFluidRelayTenants;
+	if (!azureFluidRelayTenants || typeof azureFluidRelayTenants !== "object") {
+		errors.push("azureFluidRelayTenants must be an object");
 		return;
 	}
 
@@ -61,30 +61,30 @@ function validateInventory(inventory, config, errors, warnings) {
 		if (!Array.isArray(tenant?.documents) || tenant.documents.length === 0) {
 			errors.push(`Inventory tenant ${tenantId} must contain documents`);
 		}
-		const sourceTenant = sourceTenants[tenantId];
-		if (!sourceTenant || typeof sourceTenant !== "object") {
-			errors.push(`sourceTenants must include inventory tenant ${tenantId}`);
+		const azureFluidRelayTenant = azureFluidRelayTenants[tenantId];
+		if (!azureFluidRelayTenant || typeof azureFluidRelayTenant !== "object") {
+			errors.push(`azureFluidRelayTenants must include inventory tenant ${tenantId}`);
 			continue;
 		}
-		requireString(sourceTenant.sourceFluidRelayEndpoint, `sourceTenants.${tenantId}.sourceFluidRelayEndpoint`, errors);
-		requireString(sourceTenant.sourceResourceGroup, `sourceTenants.${tenantId}.sourceResourceGroup`, errors);
-		requireString(sourceTenant.sourceServerName, `sourceTenants.${tenantId}.sourceServerName`, errors);
+		requireString(azureFluidRelayTenant.azureFluidRelayEndpoint, `azureFluidRelayTenants.${tenantId}.azureFluidRelayEndpoint`, errors);
+		requireString(azureFluidRelayTenant.azureFluidRelayResourceGroup, `azureFluidRelayTenants.${tenantId}.azureFluidRelayResourceGroup`, errors);
+		requireString(azureFluidRelayTenant.azureFluidRelayServerName, `azureFluidRelayTenants.${tenantId}.azureFluidRelayServerName`, errors);
 	}
 
-	for (const tenantId of Object.keys(sourceTenants)) {
+	for (const tenantId of Object.keys(azureFluidRelayTenants)) {
 		if (!(tenantId in inventory.tenants)) {
-			errors.push(`sourceTenants.${tenantId} is not in the inventory`);
+			errors.push(`azureFluidRelayTenants.${tenantId} is not in the inventory`);
 		}
 	}
 }
 
-function validateTarget(target, errors) {
-	requireString(target?.alfredEndpoint, "target.alfredEndpoint", errors);
-	requireString(target?.historianEndpoint, "target.historianEndpoint", errors);
-	requireString(target?.subscriptionId, "target.subscriptionId", errors);
-	requireString(target?.resourceGroup, "target.resourceGroup", errors);
-	requireString(target?.aksName, "target.aksName", errors);
-	requireString(target?.contact, "target.contact", errors);
+function validateSelfHost(selfHost, errors) {
+	requireString(selfHost?.alfredEndpoint, "selfHost.alfredEndpoint", errors);
+	requireString(selfHost?.historianEndpoint, "selfHost.historianEndpoint", errors);
+	requireString(selfHost?.subscriptionId, "selfHost.subscriptionId", errors);
+	requireString(selfHost?.resourceGroup, "selfHost.resourceGroup", errors);
+	requireString(selfHost?.aksName, "selfHost.aksName", errors);
+	requireString(selfHost?.contact, "selfHost.contact", errors);
 }
 
 /** Load and validate the non-secret inputs for transfer phases. */
@@ -97,9 +97,9 @@ export async function loadConfiguration(configPath) {
 	const errors = [];
 	const warnings = [];
 	requireString(config?.inventoryPath, "inventoryPath", errors);
-	requireString(config?.targetNamespace, "targetNamespace", errors);
+	requireString(config?.selfHostNamespace, "selfHostNamespace", errors);
 	requireString(config?.resultsDirectory, "resultsDirectory", errors);
-	validateTarget(config?.target, errors);
+	validateSelfHost(config?.selfHost, errors);
 	if (errors.length > 0) throw new ConfigurationError(errors);
 
 	const configDirectory = path.dirname(resolvedConfigPath);

@@ -10,6 +10,7 @@ import { execFile } from "node:child_process";
 import { writeFile, chmod, mkdir } from "node:fs/promises";
 import { promisify } from "node:util";
 import path from "node:path";
+import { redact } from "../configuration/redaction.mjs";
 
 const execFileAsync = promisify(execFile);
 
@@ -20,44 +21,8 @@ const MAX_BUFFER = 64 * 1024 * 1024;
 /** Owner read/write only. */
 const OUTPUT_MODE = 0o600;
 
-let verbose = false;
-
-/** Credential patterns to redact from output. */
-const SECRET_PATTERNS = [
-	[/\b[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b/g, "[redacted-jwt]"],
-	[/\b(Bearer|Basic|SharedKey|SharedAccessSignature)\s+\S+/gi, "$1 [redacted]"],
-	[
-		/(["']?(?:access_token|refresh_token|id_token|client_secret|password|secret|sig|key|tenantKey|accountKey)["']?\s*[:=]\s*["']?)([^"'&,\s}]+)/gi,
-		"$1[redacted]",
-	],
-	[/(AccountKey|SharedAccessKey)=([^;"'\s]+)/gi, "$1=[redacted]"],
-];
-
-/** Redact credentials before displaying or writing a value. */
-function scrub(value) {
-	let text = typeof value === "string" ? value : String(value ?? "");
-	for (const [pattern, replacement] of SECRET_PATTERNS) {
-		text = text.replace(pattern, replacement);
-	}
-	return text;
-}
-
-/** Redact URL query strings before display. */
-function redactUrl(value) {
-	try {
-		const url = new URL(value);
-		return `${url.origin}${url.pathname}${url.search ? "?[redacted]" : ""}`;
-	} catch {
-		return scrub(value);
-	}
-}
-
 function log(message) {
-	console.log(scrub(message));
-}
-
-function debug(message) {
-	if (verbose) console.log(`  [debug] ${scrub(message)}`);
+	console.log(redact(message));
 }
 
 /** An Azure CLI error with safe status codes. */
@@ -76,22 +41,9 @@ function getAzFailureCodes(err) {
 	return { exitCode, httpStatus };
 }
 
-/** Format safe Azure CLI arguments for debug logging. */
-function formatArgs(argv) {
-	const masked = ["--subscription"];
-	return argv
-		.map((arg, index) => {
-			if (index > 0 && masked.includes(argv[index - 1])) return "[redacted]";
-			if (/^https?:\/\//i.test(arg)) return redactUrl(arg);
-			return arg;
-		})
-		.join(" ");
-}
-
 /** Run Azure CLI with argument-array execution and parse JSON output. */
 async function az(args) {
 	const argv = [...args, "--output", "json"];
-	debug(`az ${formatArgs(argv)}`);
 
 	let stdout;
 	try {
@@ -150,10 +102,6 @@ function parseArgs(argv) {
 			case "-o":
 				options.output = next();
 				break;
-			case "--verbose":
-			case "-v":
-				verbose = true;
-				break;
 			case "--help":
 			case "-h":
 				options.help = true;
@@ -179,7 +127,6 @@ Options:
       --subscription <id>      Subscription to query (default: az CLI active subscription)
       --tenant-id <id>         Limit to one Fluid tenant (frsTenantId).
   -o, --output <file>          Output path (default: ${DEFAULT_OUTPUT})
-  -v, --verbose                Show each az invocation
   -h, --help                   Show this message
 
 Prerequisites:
@@ -281,7 +228,6 @@ async function main() {
 		// the server reports a tenant; if it doesn't, filter per document,
 		// since the tenant may only be visible on the containers.
 		if (options.tenantId && server.frsTenantId && server.frsTenantId !== options.tenantId) {
-			debug(`skipping server '${server.name}' (different tenant)`);
 			continue;
 		}
 

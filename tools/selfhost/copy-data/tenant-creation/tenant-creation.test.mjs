@@ -3,8 +3,8 @@ import test from "node:test";
 import { createMissingTenants } from "./tenant-creation.mjs";
 
 const config = {
-	targetNamespace: "default",
-	target: { subscriptionId: "subscription", resourceGroup: "resource-group", aksName: "aks", contact: "owner@example.com" },
+	selfHostNamespace: "default",
+	selfHost: { subscriptionId: "subscription", resourceGroup: "resource-group", aksName: "aks", contact: "owner@example.com" },
 };
 
 test("creates only missing target tenants", async () => {

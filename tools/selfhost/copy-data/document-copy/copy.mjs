@@ -14,6 +14,7 @@ import { createResults, recordFailure, recordSuccess, writeStageResults } from "
 
 // The source summary read and target document creation need these document-scoped permissions.
 const scopes = ["doc:read", "doc:write", "summary:write"];
+const tokenLifetimeSeconds = 60;
 
 // Carries only safe HTTP and endpoint metadata into results and console output.
 class TransferError extends Error {
@@ -29,7 +30,7 @@ class TransferError extends Error {
 // Historian Git API Authorization
 function sourceAuthorization(tenantId, documentId, key) {
 	try {
-		const token = generateToken(tenantId, documentId, key, scopes, undefined, 60);
+		const token = generateToken(tenantId, documentId, key, scopes, undefined, tokenLifetimeSeconds);
 		return `Basic ${Buffer.from(`${tenantId}:${token}`).toString("base64")}`;
 	} catch {
 		throw new TransferError("Unable to generate a source Historian token", "source-historian-token-generation-failed", undefined, "source-historian");
@@ -39,7 +40,7 @@ function sourceAuthorization(tenantId, documentId, key) {
 // Session discovery uses the source document token
 function discoveryAuthorization(tenantId, documentId, key) {
 	try {
-		return `Basic ${generateToken(tenantId, documentId, key, scopes, undefined, 60)}`;
+		return `Basic ${generateToken(tenantId, documentId, key, scopes, undefined, tokenLifetimeSeconds)}`;
 	} catch {
 		throw new TransferError("Unable to generate a source discovery token", "source-discovery-token-generation-failed", undefined, "source-discovery");
 	}
@@ -48,7 +49,7 @@ function discoveryAuthorization(tenantId, documentId, key) {
 // Alfred document APIs accept the short-lived JWT directly in the Basic header.
 function targetAuthorization(tenantId, documentId, key) {
 	try {
-		return `Basic ${generateToken(tenantId, documentId, key, scopes, undefined, 60)}`;
+		return `Basic ${generateToken(tenantId, documentId, key, scopes, undefined, tokenLifetimeSeconds)}`;
 	} catch {
 		throw new TransferError("Unable to generate a target API token", "token-generation-failed", undefined, "target");
 	}
@@ -274,7 +275,7 @@ export async function main(argv) {
 	const results = createResults(inventory);
 	// Process one tenant and document at a time so keys have the shortest practical lifetime.
 	for (const [sourceTenantId, tenant] of Object.entries(inventory.tenants)) {
-		const sourceTenant = config.sourceTenants[sourceTenantId];
+		const sourceTenant = config.azureFluidRelayTenants[sourceTenantId];
 		const targetTenantId = (tenant.selfHostTenantId || sourceTenantId).toLowerCase();
 		for (const documentId of tenant.documents) {
 			let failureContext = { errorCode: "source-key-retrieval", endpoint: "source-credentials" };
@@ -282,9 +283,9 @@ export async function main(argv) {
 				// Retrieve each tenant key only around the corresponding document operation.
 				const targetDocumentId = await withSourceTenantKey2(sourceTenant, (sourceKey) => {
 					failureContext = { errorCode: "target-key-retrieval", endpoint: "target-credentials" };
-					return withTargetTenantKey2({ ...config.target, targetNamespace: config.targetNamespace, selfHostTenantId: targetTenantId }, (targetKey) => {
+					return withTargetTenantKey2({ ...config.selfHost, targetNamespace: config.selfHostNamespace, selfHostTenantId: targetTenantId }, (targetKey) => {
 						failureContext = { errorCode: "transfer-operation", endpoint: "target" };
-						return transferDocument({ sourceEndpoint: sourceTenant.sourceFluidRelayEndpoint, sourceTenantId, targetEndpoint: config.target.alfredEndpoint, targetTenantId, documentId, sourceKey, targetKey });
+						return transferDocument({ sourceEndpoint: sourceTenant.azureFluidRelayEndpoint, sourceTenantId, targetEndpoint: config.selfHost.alfredEndpoint, targetTenantId, documentId, sourceKey, targetKey });
 					});
 				});
 				recordSuccess(results, sourceTenantId, documentId, targetDocumentId);

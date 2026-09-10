@@ -1,0 +1,24 @@
+{
+	"name": "fluid-selfhost-data-transfer",
+	"version": "1.0.0",
+	"private": true,
+	"description": "Tools for transferring Azure Fluid Relay documents to a self-hosted Fluid deployment.",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "tools/selfhost/data-transfer"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"type": "module",
+	"scripts": {
+		"test": "node --test \"*.test.mjs\" \"configuration/*.test.mjs\" \"tenant-creation/*.test.mjs\" \"document-transfer/*.test.mjs\""
+	},
+	"dependencies": {
+		"@fluidframework/server-services-client": "^7.0.1"
+	},
+	"engines": {
+		"node": ">=22.0.0"
+	}
+}

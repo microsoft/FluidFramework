@@ -25,15 +25,15 @@ function requiredString(value, name) {
 }
 
 /** Retrieve key2 without logging or persisting either key. */
-async function getSourceTenantKey2({ sourceResourceGroup, sourceServerName, subscription }) {
+async function getSourceTenantKey2({ azureFluidRelayResourceGroup, azureFluidRelayServerName, subscription }) {
 	const args = [
 		"fluid-relay",
 		"server",
 		"list-key",
 		"--resource-group",
-		requiredString(sourceResourceGroup, "sourceResourceGroup"),
+		requiredString(azureFluidRelayResourceGroup, "azureFluidRelayResourceGroup"),
 		"--server-name",
-		requiredString(sourceServerName, "sourceServerName"),
+		requiredString(azureFluidRelayServerName, "azureFluidRelayServerName"),
 		"--query",
 		"key2",
 		"--output",

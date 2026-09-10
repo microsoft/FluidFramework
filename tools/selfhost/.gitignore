@@ -23,10 +23,10 @@ package-lock.json
 data/
 dist/
 
-# AFR to self-hosted fluid data transfer
-data-transfer/inventory/document-inventory.json
-data-transfer/configuration/parameters/data-transfer.config.json
-data-transfer/results/*.json
+# AFR to self-hosted data copy
+copy-data/inventory/document-inventory.json
+copy-data/configuration/parameters/copy-data.config.json
+copy-data/results/*.json
 
 # OS
 .DS_Store
