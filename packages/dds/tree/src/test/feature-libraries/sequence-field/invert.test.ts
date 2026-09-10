@@ -41,6 +41,174 @@ function invert(change: Changeset, tag: RevisionTag = tag1): Changeset {
 
 export function testInvert(): void {
 	describe("Invert", () => {
+		describe("non-rollback IDs", () => {
+			it("allocates disjoint detach ranges for inserts from different revisions", () => {
+				const input = [
+					Mark.insert(2, { revision: tag1, localId: brand(0) }),
+					Mark.insert(3, { revision: tag2, localId: brand(0) }),
+				];
+				const actual = invertChange(tagChangeInline(input, tag1), tagForInvert, false);
+				assertChangesetsEqual(actual, [Mark.remove(5, brand(0), { revision: tagForInvert })]);
+			});
+
+			it("qualifies freshly allocated rename references", () => {
+				const input = [
+					Mark.rename(
+						2,
+						{ revision: tag1, localId: brand(10) },
+						{ revision: tag2, localId: brand(20) },
+					),
+				];
+				const actual = invertChange(tagChangeInline(input, tag1), tagForInvert, false);
+				assertChangesetsEqual(actual, [
+					Mark.rename(
+						2,
+						{ revision: tag2, localId: brand(20) },
+						{ revision: tagForInvert, localId: brand(0) },
+					),
+				]);
+			});
+
+			it("keeps move pairs distinct when their original local IDs overlap", () => {
+				const input = [
+					Mark.moveOut(2, { revision: tag1, localId: brand(0) }),
+					Mark.moveOut(2, { revision: tag2, localId: brand(0) }),
+					Mark.moveIn(2, { revision: tag1, localId: brand(0) }),
+					Mark.moveIn(2, { revision: tag2, localId: brand(0) }),
+				];
+				const actual = invertChange(tagChangeInline(input, tag1), tagForInvert, false);
+				assertChangesetsEqual(actual, [
+					Mark.returnTo(
+						2,
+						brand(0),
+						{ revision: tag1, localId: brand(0) },
+						{ revision: tagForInvert },
+					),
+					Mark.returnTo(
+						2,
+						brand(2),
+						{ revision: tag2, localId: brand(0) },
+						{ revision: tagForInvert },
+					),
+					Mark.moveOut(4, brand(0), { revision: tagForInvert }),
+				]);
+			});
+
+			it("remaps final endpoints without losing moved child changes", () => {
+				const input = [
+					Mark.moveOut(1, brand(10), {
+						changes: childChange1,
+						finalEndpoint: { revision: tag2, localId: brand(20) },
+					}),
+					Mark.rename(
+						1,
+						{ revision: tag1, localId: brand(11) },
+						{ revision: tag2, localId: brand(20) },
+					),
+					Mark.moveIn(
+						1,
+						{ revision: tag2, localId: brand(20) },
+						{
+							finalEndpoint: { revision: tag1, localId: brand(10) },
+						},
+					),
+				];
+				const actual = invertChange(tagChangeInline(input, tag1), tagForInvert, false);
+				assertChangesetsEqual(actual, [
+					Mark.returnTo(
+						1,
+						brand(0),
+						{ revision: tag1, localId: brand(10) },
+						{
+							revision: tagForInvert,
+							finalEndpoint: { revision: tagForInvert, localId: brand(1) },
+						},
+					),
+					Mark.rename(
+						1,
+						{ revision: tag2, localId: brand(20) },
+						{ revision: tagForInvert, localId: brand(2) },
+					),
+					Mark.moveOut(1, brand(1), {
+						revision: tagForInvert,
+						finalEndpoint: { revision: tagForInvert, localId: brand(0) },
+						changes: { ...childChange1, revision: tag1 },
+					}),
+				]);
+			});
+
+			it("splits a destination at noncontiguous inverse ID ranges", () => {
+				const input = [
+					Mark.moveOut(1, brand(10)),
+					Mark.insert(1, brand(20)),
+					Mark.moveOut(1, brand(11)),
+					Mark.skip(1),
+					Mark.moveIn(2, brand(10)),
+				];
+				const actual = invertChange(tagChangeInline(input, tag1), tagForInvert, false);
+				assertChangesetsEqual(actual, [
+					Mark.returnTo(
+						1,
+						brand(0),
+						{ revision: tag1, localId: brand(10) },
+						{ revision: tagForInvert },
+					),
+					Mark.remove(1, brand(1), { revision: tagForInvert }),
+					Mark.returnTo(
+						1,
+						brand(2),
+						{ revision: tag1, localId: brand(11) },
+						{ revision: tagForInvert },
+					),
+					Mark.skip(1),
+					Mark.moveOut(1, brand(0), { revision: tagForInvert }),
+					Mark.moveOut(1, brand(2), { revision: tagForInvert }),
+				]);
+			});
+
+			it("preserves range offsets and moved changes when the destination is visited first", () => {
+				const input = [
+					Mark.moveIn(3, brand(10)),
+					Mark.skip(1),
+					Mark.moveOut(1, brand(10)),
+					Mark.skip(1),
+					Mark.moveOut(1, brand(11), { changes: childChange1 }),
+					Mark.skip(1),
+					Mark.moveOut(1, brand(12)),
+				];
+				const actual = invertChange(tagChangeInline(input, tag1), tagForInvert, false);
+				assertChangesetsEqual(actual, [
+					Mark.moveOut(1, brand(0), { revision: tagForInvert }),
+					Mark.moveOut(1, brand(1), {
+						revision: tagForInvert,
+						changes: { ...childChange1, revision: tag1 },
+					}),
+					Mark.moveOut(1, brand(2), { revision: tagForInvert }),
+					Mark.skip(1),
+					Mark.returnTo(
+						1,
+						brand(0),
+						{ revision: tag1, localId: brand(10) },
+						{ revision: tagForInvert },
+					),
+					Mark.skip(1),
+					Mark.returnTo(
+						1,
+						brand(1),
+						{ revision: tag1, localId: brand(11) },
+						{ revision: tagForInvert },
+					),
+					Mark.skip(1),
+					Mark.returnTo(
+						1,
+						brand(2),
+						{ revision: tag1, localId: brand(12) },
+						{ revision: tagForInvert },
+					),
+				]);
+			});
+		});
+
 		it("no changes", () => {
 			const input: Changeset = [];
 			const expected: Changeset = [];
