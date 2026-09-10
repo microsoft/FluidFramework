@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import { EndpointIndex } from "../intervalIndex/index.js";
@@ -221,6 +222,112 @@ describe("EndpointIndex", () => {
 				undefined,
 				"expected the remaining interval to still be indexed",
 			);
+		});
+
+		it("ignores a second add of an interval already stored under the same id", () => {
+			const original = createTestInterval(1, 5);
+			endpointIndex.add(original);
+
+			// Same id and end position, so the set treats it as already present. Adding it
+			// must not replace the stored instance, nor create a second entry for it.
+			const duplicate = createTestSequenceInterval(sharedString, 2, 5);
+			duplicate.getIntervalId = () => original.getIntervalId();
+			endpointIndex.add(duplicate);
+
+			assert.equal(
+				endpointIndex.previousInterval(5),
+				original,
+				"expected the originally stored instance, not the duplicate",
+			);
+
+			endpointIndex.remove(original);
+			assert.equal(
+				endpointIndex.previousInterval(5),
+				undefined,
+				"expected no second entry to have been created",
+			);
+		});
+	});
+
+	describe("agrees with a brute force scan", () => {
+		/**
+		 * End positions are drawn from a range far smaller than the interval count so that
+		 * many intervals share an end, which is the case the ordering has to get right.
+		 */
+		const intervalCount = 300;
+		const maxEnd = 40;
+
+		it("over random adds and removes", () => {
+			const random = makeRandom(0x5eed);
+			const live = new Set<SequenceInterval>();
+			const created: SequenceInterval[] = [];
+
+			const endOf = (interval: SequenceInterval): number =>
+				sharedString.localReferencePositionToPosition(interval.end);
+
+			const checkAgainstBruteForce = (): void => {
+				const liveEnds = [...live].map((interval) => endOf(interval));
+				for (let pos = 0; pos <= maxEnd + 1; pos++) {
+					const endsAtOrBefore = liveEnds.filter((end) => end <= pos);
+					const endsAtOrAfter = liveEnds.filter((end) => end >= pos);
+
+					const previous = endpointIndex.previousInterval(pos);
+					if (endsAtOrBefore.length === 0) {
+						assert.equal(previous, undefined, `expected no interval ending at or before ${pos}`);
+					} else {
+						assert(previous !== undefined, `expected an interval ending at or before ${pos}`);
+						assert(live.has(previous), "previousInterval returned a removed interval");
+						assert.equal(
+							endOf(previous),
+							Math.max(...endsAtOrBefore),
+							`previousInterval(${pos}) did not return the greatest end at or before it`,
+						);
+					}
+
+					const next = endpointIndex.nextInterval(pos);
+					if (endsAtOrAfter.length === 0) {
+						assert.equal(next, undefined, `expected no interval ending at or after ${pos}`);
+					} else {
+						assert(next !== undefined, `expected an interval ending at or after ${pos}`);
+						assert(live.has(next), "nextInterval returned a removed interval");
+						assert.equal(
+							endOf(next),
+							Math.min(...endsAtOrAfter),
+							`nextInterval(${pos}) did not return the least end at or after it`,
+						);
+					}
+				}
+			};
+
+			for (let round = 0; round < 20; round++) {
+				const addCount = random.integer(1, intervalCount / 20);
+				for (let i = 0; i < addCount; i++) {
+					const end = random.integer(1, maxEnd);
+					const interval = createTestInterval(random.integer(0, end), end);
+					created.push(interval);
+					live.add(interval);
+					endpointIndex.add(interval);
+				}
+
+				// Remove a random subset, so the set both grows and shrinks over the run.
+				const removable = created.filter((interval) => live.has(interval));
+				const removeCount = random.integer(0, Math.floor(removable.length / 3));
+				for (let i = 0; i < removeCount; i++) {
+					const interval = removable[random.integer(0, removable.length - 1)];
+					if (live.delete(interval)) {
+						endpointIndex.remove(interval);
+					}
+				}
+
+				checkAgainstBruteForce();
+			}
+
+			// Drain it, checking the whole way down.
+			for (const interval of [...live]) {
+				live.delete(interval);
+				endpointIndex.remove(interval);
+			}
+			checkAgainstBruteForce();
 		});
 	});
 });
