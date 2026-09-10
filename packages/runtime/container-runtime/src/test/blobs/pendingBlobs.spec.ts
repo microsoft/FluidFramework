@@ -18,6 +18,7 @@ import {
 	getSerializedBlobForString,
 	getSummaryContentsWithFormatValidation,
 	MIN_TTL,
+	recordOutstandingBlobWork,
 	textToBlob,
 	unpackHandle,
 } from "./blobTestUtils.js";
@@ -894,6 +895,101 @@ for (const createBlobPayloadPending of [false, true]) {
 					assert.strictEqual(mockBlobStorage.blobsReceived, 2);
 					assert.strictEqual(mockOrderingService.messagesReceived, 6);
 				});
+			});
+		});
+
+		// Blobs restored from pending state are non-durable local content that this BlobManager is
+		// responsible for, so they remain outstanding even before sharing has started.
+		describe("Unshared blob tracking across pending state", () => {
+			const twoPendingBlobs = async (): Promise<IPendingBlobs> => ({
+				["blob1"]: {
+					state: "localOnly",
+					blob: getSerializedBlobForString("hello"),
+				},
+				["blob2"]: {
+					state: "uploaded",
+					blob: getSerializedBlobForString("world"),
+					storageId: await getDedupedStorageIdForString("world"),
+					uploadTime: Date.now(),
+					minTTLInSeconds: MIN_TTL,
+				},
+			});
+
+			it("Counts restored blobs from load, before sharing has been started", async () => {
+				const { blobManager } = createTestMaterial({
+					pendingBlobs: await twoPendingBlobs(),
+					createBlobPayloadPending,
+				});
+
+				// sharePendingBlobs() has deliberately not been called: a frozen container never calls it,
+				// and it must still report the restored blobs as outstanding.
+				assert.strictEqual(blobManager.unsharedBlobCount, 2);
+			});
+
+			it("Stops counting restored blobs once sharing completes", async () => {
+				const { blobManager } = createTestMaterial({
+					pendingBlobs: await twoPendingBlobs(),
+					createBlobPayloadPending,
+				});
+				const outstandingWorkTransitions = recordOutstandingBlobWork(blobManager);
+
+				await blobManager.sharePendingBlobs();
+
+				assert.strictEqual(blobManager.unsharedBlobCount, 0);
+				assert.deepStrictEqual(
+					outstandingWorkTransitions,
+					[false],
+					"Restored blobs are already outstanding at load, so sharing them must only end that span",
+				);
+			});
+
+			it("Stops counting a restored blob attached by a prior client", async () => {
+				const { mockOrderingService, blobManager } = createTestMaterial({
+					pendingBlobs: await twoPendingBlobs(),
+					createBlobPayloadPending,
+				});
+				assert.strictEqual(blobManager.unsharedBlobCount, 2);
+
+				// The prior client's BlobAttach ops land before this client starts sharing, which makes the
+				// blobs durable without any work from this client.
+				mockOrderingService.sendBlobAttachMessage("priorClientId", "blob1", "remoteBlob1");
+				assert.strictEqual(blobManager.unsharedBlobCount, 1);
+				mockOrderingService.sendBlobAttachMessage("priorClientId", "blob2", "remoteBlob2");
+				assert.strictEqual(blobManager.unsharedBlobCount, 0);
+
+				// The (now no-op) share call must not resurrect them.
+				await blobManager.sharePendingBlobs();
+				assert.strictEqual(blobManager.unsharedBlobCount, 0);
+			});
+
+			it("Keeps counting a blob that is round-tripped back out to pending state", async () => {
+				const { mockBlobStorage, blobManager } = createTestMaterial({
+					createBlobPayloadPending,
+				});
+				mockBlobStorage.pause();
+
+				const handleP = blobManager.createBlob(textToBlob("hello"));
+				if (createBlobPayloadPending) {
+					attachHandle(await handleP);
+				}
+				await mockBlobStorage.waitBlobAvailable();
+				assert.strictEqual(blobManager.unsharedBlobCount, 1);
+
+				const pendingBlobs = blobManager.getPendingBlobs();
+				if (createBlobPayloadPending) {
+					// The handle is in the document, so the outstanding blob work round-trips.
+					assert.notStrictEqual(pendingBlobs, undefined);
+					const { blobManager: blobManager2 } = createTestMaterial({
+						pendingBlobs,
+						createBlobPayloadPending,
+					});
+					assert.strictEqual(blobManager2.unsharedBlobCount, 1);
+				} else {
+					// Legacy creation has no handle to store yet, so there is nothing to preserve even
+					// though this BlobManager still has outstanding work.
+					assert.strictEqual(pendingBlobs, undefined);
+					assert.strictEqual(blobManager.unsharedBlobCount, 1);
+				}
 			});
 		});
 	});

@@ -7,6 +7,7 @@ export {
 	BlobManager,
 	blobManagerBasePath,
 	getGCNodePathFromLocalId,
+	type IBlobManagerEvents,
 	type IBlobManagerRuntime,
 	type ICreateBlobResponseWithTTL,
 	type IPendingBlobs,

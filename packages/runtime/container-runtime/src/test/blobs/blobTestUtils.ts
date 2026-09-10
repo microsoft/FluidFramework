@@ -441,7 +441,9 @@ interface TestMaterial {
 	blobManager: BlobManager;
 }
 
-type TestMaterialOverrides = Partial<Omit<TestMaterial, "blobManager">>;
+type TestMaterialOverrides = Partial<Omit<TestMaterial, "blobManager">> & {
+	readonly storageCreateBlob?: IContainerStorageService["createBlob"];
+};
 
 export const createTestMaterial = (
 	overrides?: TestMaterialOverrides | undefined,
@@ -456,13 +458,20 @@ export const createTestMaterial = (
 	const blobManagerLoadInfo = overrides?.blobManagerLoadInfo ?? {};
 	const pendingBlobs = overrides?.pendingBlobs ?? undefined;
 	const createBlobPayloadPending = overrides?.createBlobPayloadPending ?? false;
+	const storage =
+		overrides?.storageCreateBlob === undefined
+			? mockBlobStorage
+			: {
+					createBlob: overrides.storageCreateBlob,
+					readBlob: mockBlobStorage.readBlob,
+				};
 
 	const blobManager = new BlobManager({
 		// The routeContext is only needed by the BlobHandles to determine isAttached, so this
 		// cast is good enough
 		routeContext: mockRuntime as unknown as IFluidHandleContext,
 		blobManagerLoadInfo,
-		storage: mockBlobStorage,
+		storage,
 		sendBlobAttachMessage: (localId: string, storageId: string) =>
 			mockOrderingService.sendBlobAttachMessage(clientId, localId, storageId),
 		blobRequested: () => undefined,
@@ -595,4 +604,22 @@ export const ensureBlobsShared = async (handles: IFluidHandle[]): Promise<void[]
 			return waitHandlePayloadShared(handle);
 		}),
 	);
+};
+
+/**
+ * Records each transition of the BlobManager's aggregate outstanding-work state, seeded with the state
+ * at the time of the call. An expected `[true, false]` means one continuous span of outstanding work,
+ * and any flicker shows up as extra entries.
+ */
+export const recordOutstandingBlobWork = (blobManager: BlobManager): boolean[] => {
+	const transitions: boolean[] = [];
+	let last = blobManager.hasOutstandingBlobWork;
+	blobManager.events.on("outstandingBlobWorkChanged", () => {
+		const current = blobManager.hasOutstandingBlobWork;
+		if (current !== last) {
+			last = current;
+			transitions.push(current);
+		}
+	});
+	return transitions;
 };
