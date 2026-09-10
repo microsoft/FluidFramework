@@ -6,8 +6,9 @@
 import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 
 import type { RevisionTag } from "../../core/index.js";
-import { type IdAllocator, type Mutable, hasSingle } from "../../util/index.js";
+import { type Mutable, hasSingle } from "../../util/index.js";
 import {
+	type AtomIdAliasAllocator,
 	type CrossFieldManager,
 	CrossFieldTarget,
 	type NodeId,
@@ -58,7 +59,7 @@ import {
 export function invert(
 	change: Changeset,
 	isRollback: boolean,
-	genId: IdAllocator,
+	genId: AtomIdAliasAllocator,
 	revision: RevisionTag | undefined,
 	crossFieldManager: CrossFieldManager,
 ): Changeset {
@@ -66,6 +67,7 @@ export function invert(
 		change,
 		isRollback,
 		crossFieldManager as CrossFieldManager<NodeId>,
+		genId,
 		revision,
 	);
 }
@@ -74,12 +76,13 @@ function invertMarkList(
 	markList: MarkList,
 	isRollback: boolean,
 	crossFieldManager: CrossFieldManager<NodeId>,
+	genId: AtomIdAliasAllocator,
 	revision: RevisionTag | undefined,
 ): MarkList {
 	const inverseMarkList = new MarkListFactory();
 
 	for (const mark of markList) {
-		const inverseMarks = invertMark(mark, isRollback, crossFieldManager, revision);
+		const inverseMarks = invertMark(mark, isRollback, crossFieldManager, genId, revision);
 		inverseMarkList.push(...inverseMarks);
 	}
 
@@ -90,6 +93,7 @@ function invertMark(
 	mark: Mark,
 	isRollback: boolean,
 	crossFieldManager: CrossFieldManager<NodeId>,
+	genId: AtomIdAliasAllocator,
 	revision: RevisionTag | undefined,
 ): Mark[] {
 	if (!isImpactful(mark)) {
@@ -124,7 +128,7 @@ function invertMark(
 			if (inputId === undefined) {
 				inverse = {
 					type: "Insert",
-					id: mark.id,
+					id: genId.getAlias(mark.revision, mark.id),
 					cellId: outputId,
 					count: mark.count,
 					revision,
@@ -132,7 +136,7 @@ function invertMark(
 			} else {
 				inverse = {
 					type: "Remove",
-					id: mark.id,
+					id: genId.getAlias(mark.revision, mark.id),
 					cellId: outputId,
 					count: mark.count,
 					revision,
@@ -149,7 +153,7 @@ function invertMark(
 			const removeMark: Mutable<CellMark<Remove>> = {
 				type: "Remove",
 				count: mark.count,
-				id: inputId.localId,
+				id: genId.getAlias(inputId.revision, inputId.localId),
 				revision,
 			};
 
@@ -182,13 +186,13 @@ function invertMark(
 
 			const moveIn: MoveIn = {
 				type: "MoveIn",
-				id: mark.id,
+				id: genId.getAlias(mark.revision, mark.id),
 				revision,
 			};
 
 			if (mark.finalEndpoint !== undefined) {
 				moveIn.finalEndpoint = {
-					localId: mark.finalEndpoint.localId,
+					localId: genId.getAlias(mark.revision, mark.finalEndpoint.localId),
 					revision,
 				};
 			}
@@ -197,7 +201,7 @@ function invertMark(
 			if (inputId !== undefined) {
 				const detach: Mutable<Detach> = {
 					type: "Remove",
-					id: mark.id,
+					id: genId.getAlias(mark.revision, mark.id),
 					revision,
 				};
 				if (isRollback) {
@@ -216,7 +220,7 @@ function invertMark(
 			assert(inputId !== undefined, 0x89e /* Active move-ins should target empty cells */);
 			const invertedMark: Mutable<CellMark<MoveOut>> = {
 				type: "MoveOut",
-				id: mark.id,
+				id: genId.getAlias(mark.revision, mark.id),
 				count: mark.count,
 				revision,
 			};
@@ -227,7 +231,7 @@ function invertMark(
 
 			if (mark.finalEndpoint) {
 				invertedMark.finalEndpoint = {
-					localId: mark.finalEndpoint.localId,
+					localId: genId.getAlias(mark.revision, mark.finalEndpoint.localId),
 					revision,
 				};
 			}
@@ -249,8 +253,20 @@ function invertMark(
 				changes: mark.changes,
 				...mark.detach,
 			};
-			const attachInverses = invertMark(attach, isRollback, crossFieldManager, revision);
-			const detachInverses = invertMark(detach, isRollback, crossFieldManager, revision);
+			const attachInverses = invertMark(
+				attach,
+				isRollback,
+				crossFieldManager,
+				genId,
+				revision,
+			);
+			const detachInverses = invertMark(
+				detach,
+				isRollback,
+				crossFieldManager,
+				genId,
+				revision,
+			);
 
 			if (detachInverses.length === 0) {
 				return attachInverses;

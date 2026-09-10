@@ -388,9 +388,15 @@ export interface AtomIdAliasAllocator extends IdAllocator<ChangesetLocalId> {
 	 * Reserves a contiguous block of IDs for the given original revision up to the specified maximum local ID.
 	 * Can be called multiple times for the same revision (later calls have no effect), but the maximum local ID must be consistent.
 	 */
-	reserve(originalRevision: RevisionTag, originalMaxLocalId: ChangesetLocalId): void;
+	reserve(
+		originalRevision: RevisionTag | undefined,
+		originalMaxLocalId: ChangesetLocalId,
+	): void;
 	/**
 	 * @returns The alias for the given original local ID within the specified revision.
 	 */
-	getAlias(originalRevision: RevisionTag, originalLocalId: ChangesetLocalId): ChangesetLocalId;
+	getAlias(
+		originalRevision: RevisionTag | undefined,
+		originalLocalId: ChangesetLocalId,
+	): ChangesetLocalId;
 }

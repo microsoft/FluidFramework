@@ -18,13 +18,16 @@ export class DefaultAtomIdAliasAllocator implements AtomIdAliasAllocator {
 	 * Mapping from original revision tag to the offset that should be applied to local IDs from that revision.
 	 */
 	private readonly offsets: Map<
-		RevisionTag,
+		RevisionTag | undefined,
 		{ readonly offset: number; readonly originalMaxLocalId: ChangesetLocalId }
 	> = new Map();
 
 	private readonly allocator: IdAllocator = idAllocatorFromMaxId();
 
-	public reserve(originalRevision: RevisionTag, originalMaxLocalId: ChangesetLocalId): void {
+	public reserve(
+		originalRevision: RevisionTag | undefined,
+		originalMaxLocalId: ChangesetLocalId,
+	): void {
 		const current = this.offsets.get(originalRevision);
 		if (current === undefined) {
 			const offset =
@@ -41,7 +44,7 @@ export class DefaultAtomIdAliasAllocator implements AtomIdAliasAllocator {
 	}
 
 	public getAlias(
-		originalRevision: RevisionTag,
+		originalRevision: RevisionTag | undefined,
 		originalLocalId: ChangesetLocalId,
 	): ChangesetLocalId {
 		const current = this.offsets.get(originalRevision);

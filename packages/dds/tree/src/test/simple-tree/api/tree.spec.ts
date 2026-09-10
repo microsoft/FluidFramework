@@ -653,28 +653,28 @@ describe("simple-tree tree", () => {
 			assert(revision5 !== undefined, "revision should be defined");
 
 			// Verify
-			assert.equal([...view.root], ["A"]);
+			assert.deepEqual([...view.root], ["A"]);
 			assert.equal(view.branchHistory.length, 5);
 
 			// Act
 			view.revertTo(revision1);
 
 			// Verify
-			assert.equal([...view.root], []);
+			assert.deepEqual([...view.root], []);
 			assert.equal(view.branchHistory.length, 6);
 
 			// Act
 			view.revertTo(revision5);
 
 			// Verify
-			assert.equal([...view.root], ["A"]);
+			assert.deepEqual([...view.root], ["A"]);
 			assert.equal(view.branchHistory.length, 7);
 
 			// Act
 			view.revertTo(revision4);
 
 			// Verify
-			assert.equal([...view.root], ["A", "B", "C"]);
+			assert.deepEqual([...view.root], ["A", "B", "C"]);
 			assert.equal(view.branchHistory.length, 8);
 		});
 
