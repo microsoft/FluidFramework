@@ -20,6 +20,10 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { DocumentStorageServiceProxy } from "@fluidframework/driver-utils/internal";
 
+/**
+ * Forces point-in-time snapshot reads to bypass caches while forwarding all other storage operations
+ * to the selected historical document service.
+ */
 class PointInTimeDocumentStorageService extends DocumentStorageServiceProxy {
 	public override async getSnapshot(
 		snapshotFetchOptions?: ISnapshotFetchOptions,
