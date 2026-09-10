@@ -14,7 +14,7 @@
 		"build": "concurrently npm:build:site npm:build:test",
 		"build:api-documentation": "npm run download-doc-models && npm run generate-api-documentation",
 		"prebuild:docusaurus": "npm run generate-versions",
-		"build:docusaurus": "docusaurus build",
+		"build:docusaurus": "cross-env NODE_OPTIONS=--max-old-space-size=8192 docusaurus build",
 		"build:generate-content": "concurrently npm:build:markdown-magic npm:build:api-documentation",
 		"build:markdown-magic": "markdown-magic",
 		"build:search": "pagefind --site build",
