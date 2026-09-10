@@ -163,8 +163,6 @@ import {
 	GenericError,
 	LoggingError,
 	PerformanceEvent,
-	// eslint-disable-next-line import-x/no-deprecated
-	TaggedLoggerAdapter,
 	UsageError,
 	createChildLogger,
 	createChildMonitoringContext,
@@ -592,17 +590,6 @@ export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
 const defaultStagingCommitOptions = { squash: false };
 
 /**
- * @deprecated
- * Untagged logger is unsupported going forward. There are old loaders with old ContainerContexts that only
- * have the untagged logger, so to accommodate that scenario the below interface is used. It can be removed once
- * its usage is removed from TaggedLoggerAdapter fallback.
- */
-interface OldContainerContextWithLogger extends Omit<IContainerContext, "taggedLogger"> {
-	logger: ITelemetryBaseLogger;
-	taggedLogger: undefined;
-}
-
-/**
  * State saved when the container closes, to be given back to a newly
  * instantiated runtime in a new instance of the container, so it can load to the
  * same state
@@ -1014,15 +1001,14 @@ export class ContainerRuntime
 			deprecatedMinVersionForCollab ??
 			defaultMinVersionForCollab;
 
-		// If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
-		// back-compat: Remove the TaggedLoggerAdapter fallback once all the host are using loader > 0.45
-		const backCompatContext: IContainerContext | OldContainerContextWithLogger = context;
-		const passLogger =
-			backCompatContext.taggedLogger ??
-			// eslint-disable-next-line import-x/no-deprecated
-			new TaggedLoggerAdapter((backCompatContext as OldContainerContextWithLogger).logger);
+		if (context.taggedLogger === undefined) {
+			const error = new UsageError("Loader must provide a tagged logger");
+			context.closeFn(error);
+			throw error;
+		}
+
 		const logger = createChildLogger({
-			logger: passLogger,
+			logger: context.taggedLogger,
 			properties: {
 				all: {
 					runtimeVersion: pkgVersion,
