@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/type-factory",
-	"version": "3.0.1",
+	"version": "3.0.2",
 	"description": "Shared types for exposing schema methods and properties to an LLM agent",
 	"homepage": "https://fluidframework.com",
 	"repository": {
