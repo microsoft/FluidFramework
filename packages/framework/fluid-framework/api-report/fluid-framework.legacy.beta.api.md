@@ -464,6 +464,7 @@ export interface IDirectory extends FluidMap<string, any>, IEventProvider<IDirec
     createSubDirectory(subdirName: string): IDirectory;
     delete(key: string): boolean;
     deleteSubDirectory(subdirName: string): boolean;
+    forEach(callbackfn: (value: any, key: string, map: Map<string, any>) => void, thisArg?: any): void;
     get<T = any>(key: string): T | undefined;
     getSubDirectory(subdirName: string): IDirectory | undefined;
     getWorkingDirectory(relativePath: string): IDirectory | undefined;
@@ -964,6 +965,7 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 export interface ISharedMap extends ISharedObject<ISharedMapEvents>, FluidMap<string, any> {
     clear(): void;
     delete(key: string): boolean;
+    forEach(callbackfn: (value: any, key: string, map: Map<string, any>) => void, thisArg?: any): void;
     get<T = any>(key: string): T | undefined;
     set<T = unknown>(key: string, value: T): this;
 }

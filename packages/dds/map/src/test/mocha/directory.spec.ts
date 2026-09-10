@@ -124,6 +124,13 @@ describe("Directory", () => {
 				registry: [SharedDirectory.getFactory()],
 			});
 			directory = SharedDirectory.create(dataStoreRuntime, "directory");
+
+			// Check that `IDirectory` via `ISharedDirectory` is `Map` compatible.
+			// This is not a hard requirement, but an expectation of multiple customers historically.
+			// `FluidMap` mostly replicates that with a notable exception of `clear`.
+			// If this breaks, determine at the time what elements are critical to check.
+			// This may mean checking that subset of ES target are respected.
+			directory satisfies Map<string, unknown>;
 		});
 
 		describe("API", () => {

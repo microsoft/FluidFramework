@@ -53,6 +53,13 @@ describe("Map", () => {
 
 		beforeEach("createLocalMap", async () => {
 			map = createLocalMap("testMap");
+
+			// Check that `ISharedMap` is `Map` compatible.
+			// This is not a hard requirement, but an expectation of multiple customers historically.
+			// `FluidMap` mostly replicates that with a notable exception of `clear`.
+			// If this breaks, determine at the time what elements are critical to check.
+			// This may mean checking that subset of ES target are respected.
+			map satisfies Map<string, unknown>;
 		});
 
 		describe("API", () => {

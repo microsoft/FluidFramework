@@ -73,6 +73,21 @@ export interface IDirectory
 	set<T = unknown>(key: string, value: T): this;
 
 	/**
+	 * Executes the provided function once per each key/value pair in the map.
+	 *
+	 * @privateRemarks
+	 * Override `FluidMap`'s forEach method to maintain compatibility with the `Map` interface.
+	 * Note that `map` historically does not refer to `this` instance.
+	 */
+	forEach(
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any -- to `unknown` is a breaking change
+		callbackfn: (value: any, key: string, map: Map<string, any>) => void,
+		// Typing inherited from Map.
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any -- to `unknown` is a breaking change
+		thisArg?: any,
+	): void;
+
+	/**
 	 * Removes all entries from the directory.
 	 */
 	clear(): void;
@@ -453,6 +468,21 @@ export interface ISharedMap
 	 * @returns The {@link ISharedMap} itself
 	 */
 	set<T = unknown>(key: string, value: T): this;
+
+	/**
+	 * Executes the provided function once per each key/value pair in the map.
+	 *
+	 * @privateRemarks
+	 * Override `FluidMap`'s forEach method to maintain compatibility with the `Map` interface.
+	 * Note that `map` historically does not refer to `this` instance.
+	 */
+	forEach(
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any -- to `unknown` is a breaking change
+		callbackfn: (value: any, key: string, map: Map<string, any>) => void,
+		// Typing inherited from Map.
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any -- to `unknown` is a breaking change
+		thisArg?: any,
+	): void;
 
 	/**
 	 * Removes all entries from the map.
