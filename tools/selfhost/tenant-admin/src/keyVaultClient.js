@@ -17,17 +17,13 @@
 // managed identity holds "Key Vault Secrets User" on the vault (azure/deploy.sh phase8_keyvault).
 // Nothing has to be opened, and no credential is passed in from outside.
 //
-// WHY IT IS HAND-ROLLED
-//
-// This package has zero runtime dependencies on purpose: tenant-admin.sh mounts these files into
-// a Pod built from the routerlicious image, with no package.json and no node_modules (see
-// test/deployedLayout.test.js). @azure/identity and @azure/keyvault-secrets are not available and
-// cannot be added without changing how the tool is deployed. The federated-token exchange is a
-// documented OAuth2 client-credentials flow, so it is a short fetch() away.
+// Authentication is delegated to Azure Identity's WorkloadIdentityCredential. The wrapper mounts
+// the self-contained CLI bundle, where the credential implementation and its transitive MSAL
+// dependency are pinned at bundle-build time.
 
 "use strict";
 
-const fs = require("node:fs");
+const { WorkloadIdentityCredential } = require("@azure/identity");
 
 const VAULT_SCOPE = "https://vault.azure.net/.default";
 // Key Vault data-plane API. 7.4 is GA and supports plain secret GET.
@@ -66,51 +62,27 @@ function readWorkloadIdentityEnv(env = process.env) {
 	return { clientId, tenantId, tokenFile, authorityHost };
 }
 
-/**
- * Trade the projected ServiceAccount token for an Entra access token for the Key Vault
- * data plane (OAuth2 client credentials with a client assertion).
- */
-async function getVaultAccessToken(
-	{ clientId, tenantId, tokenFile, authorityHost },
-	fetchImpl,
-) {
-	let assertion;
+function createWorkloadIdentityCredential({ clientId, tenantId, tokenFile, authorityHost }) {
+	return new WorkloadIdentityCredential({
+		clientId,
+		tenantId,
+		tokenFilePath: tokenFile,
+		authorityHost,
+	});
+}
+
+async function getVaultAccessToken(identity, credentialFactory = createWorkloadIdentityCredential) {
 	try {
-		assertion = fs.readFileSync(tokenFile, "utf8").trim();
+		const token = await credentialFactory(identity).getToken(VAULT_SCOPE);
+		if (!token?.token) {
+			throw new Error("Azure Identity returned no access token.");
+		}
+		return token.token;
 	} catch (error) {
 		throw new KeyVaultAccessError(
-			`Could not read the projected federated token at ${tokenFile}: ${error.message}`,
+			`Azure Identity could not acquire a Key Vault token with the AKS workload identity: ${error.message}`,
 		);
 	}
-
-	const base = authorityHost.endsWith("/") ? authorityHost : `${authorityHost}/`;
-	const body = new URLSearchParams({
-		client_id: clientId,
-		grant_type: "client_credentials",
-		scope: VAULT_SCOPE,
-		client_assertion_type: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
-		client_assertion: assertion,
-	});
-
-	const response = await fetchImpl(`${base}${tenantId}/oauth2/v2.0/token`, {
-		method: "POST",
-		headers: { "Content-Type": "application/x-www-form-urlencoded" },
-		body,
-	});
-	if (!response.ok) {
-		// The response body carries an AADSTS code that is the whole diagnosis (a missing
-		// federated credential, a wrong subject, an unconsented scope), and contains no secret.
-		const detail = await response.text().catch(() => "");
-		throw new KeyVaultAccessError(
-			`Exchanging the workload identity token for a Key Vault token failed with ` +
-				`${response.status}. ${detail}`.trim(),
-		);
-	}
-	const { access_token: accessToken } = await response.json();
-	if (!accessToken) {
-		throw new KeyVaultAccessError("Entra returned no access_token for the Key Vault scope.");
-	}
-	return accessToken;
 }
 
 /**
@@ -120,9 +92,13 @@ async function getVaultAccessToken(
  *   secret genuinely does not exist (HTTP 404). Every other failure throws KeyVaultAccessError,
  *   so "no token service uses this tenant" is never confused with "could not check".
  */
-async function getSecret(vaultName, secretName, { env, fetchImpl = fetch } = {}) {
+async function getSecret(
+	vaultName,
+	secretName,
+	{ env, fetchImpl = fetch, credentialFactory } = {},
+) {
 	const identity = readWorkloadIdentityEnv(env);
-	const accessToken = await getVaultAccessToken(identity, fetchImpl);
+	const accessToken = await getVaultAccessToken(identity, credentialFactory);
 
 	const url =
 		`https://${vaultName}.vault.azure.net/secrets/${encodeURIComponent(secretName)}` +
@@ -158,6 +134,7 @@ async function getSecret(vaultName, secretName, { env, fetchImpl = fetch } = {})
 
 module.exports = {
 	KeyVaultAccessError,
+	createWorkloadIdentityCredential,
 	getSecret,
 	getVaultAccessToken,
 	readWorkloadIdentityEnv,

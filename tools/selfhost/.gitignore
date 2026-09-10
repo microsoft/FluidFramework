@@ -22,6 +22,8 @@ package-lock.json
 # Local data / build output
 data/
 dist/
+!tenant-admin/bundle/
+!tenant-admin/bundle/tenant-admin.cjs
 
 # OS
 .DS_Store
@@ -29,4 +31,3 @@ Thumbs.db
 
 # Release artifacts
 release-artifacts/
-

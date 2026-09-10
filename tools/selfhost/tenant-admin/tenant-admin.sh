@@ -7,7 +7,7 @@
 # riddler and gitrest are ClusterIP-only Services with NO authentication (riddler's
 # GET /api/tenants/:id/keys returns plaintext signing keys to any caller that can reach it).
 # They are deliberately not exposed, so tenant management runs *inside* the cluster: this script
-# ships tenant-admin's source into a short-lived Pod built from the same routerlicious image the
+# ships a self-contained tenant-admin bundle into a short-lived Pod built from the same image the
 # stack already runs, executes one command, collects the JSON result and deletes the Pod.
 #
 # Running in-cluster rather than locally also means the only prerequisites are the ones
@@ -52,6 +52,7 @@ set -euo pipefail
 
 CLI_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SELFHOST_ROOT="$(cd "$CLI_DIR/.." && pwd)"
+BUNDLE="$CLI_DIR/bundle/tenant-admin.cjs"
 PARAMS_FILE="$SELFHOST_ROOT/azure/deploy.parameters.json"
 NAMESPACE="default"
 
@@ -76,7 +77,7 @@ COMMAND="${CLI_ARGS[0]}"
 
 # `help` needs no cluster and no parameters file -- answer it locally.
 if [ "$COMMAND" = "help" ] || [ "$COMMAND" = "--help" ] || [ "$COMMAND" = "-h" ]; then
-  node "$CLI_DIR/bin/tenant-admin.js" help 2>/dev/null || sed -n '1,45p' "${BASH_SOURCE[0]}"
+  node "$BUNDLE" help 2>/dev/null || sed -n '1,45p' "${BASH_SOURCE[0]}"
   exit 0
 fi
 
@@ -114,8 +115,7 @@ az aks get-credentials -g "$RG" -n "$AKS" --overwrite-existing --file "$KUBECONF
 # A function rather than a `K="kubectl ..."` string, so no argument is subject to word splitting.
 k() { kubectl --kubeconfig "$KUBECONFIG_FILE" -n "$NAMESPACE" "$@"; }
 
-# Run in the same image the stack runs, so there is nothing extra to build, push or keep in
-# sync with the deployed revision.
+# Use the running stack's image as the Node.js runtime for the checked-in tenant-admin bundle.
 IMAGE="$(k get deploy fluid-riddler -o jsonpath='{.spec.template.spec.containers[0].image}' 2>/dev/null || true)"
 [ -n "$IMAGE" ] || { echo "ERROR: could not read the routerlicious image from deploy/fluid-riddler." >&2; exit 1; }
 
@@ -147,18 +147,14 @@ if [ "$COMMAND" = "rotate" ] && [ "$FORCE" != "true" ]; then
   fi
 fi
 
-# ConfigMap keys cannot contain "/", so each file is stored flat and remapped to its real path
-# by the volume's items[].path. This keeps the CLI's relative require()s working unchanged.
+# The production bundle includes Azure Identity and is small enough for a ConfigMap.
+[ -f "$BUNDLE" ] || {
+  echo "ERROR: tenant-admin bundle not found: $BUNDLE" >&2
+  echo "       Run 'pnpm --dir $CLI_DIR install && pnpm --dir $CLI_DIR build'." >&2
+  exit 1
+}
 k create configmap "$CONFIGMAP_NAME" \
-  --from-file="$CLI_DIR/bin/tenant-admin.js" \
-  --from-file="$CLI_DIR/src/validation.js" \
-  --from-file="$CLI_DIR/src/httpClient.js" \
-  --from-file="$CLI_DIR/src/riddlerClient.js" \
-  --from-file="$CLI_DIR/src/gitrestClient.js" \
-  --from-file="$CLI_DIR/src/keyVaultGuard.js" \
-  --from-file="$CLI_DIR/src/keyVaultClient.js" \
-  --from-file="$CLI_DIR/src/tenantManager.js" \
-  --dry-run=client -o yaml | k apply -f - >/dev/null
+  --from-file="$BUNDLE" >/dev/null
 
 # The ServiceAccount + label are what let the CLI read Key Vault for the `rotate` check: the AKS
 # workload-identity webhook only injects AZURE_CLIENT_ID / AZURE_TENANT_ID /
@@ -196,22 +192,13 @@ overrides="$(jq -n --arg name "$POD_NAME" --arg image "$IMAGE" --arg cm "$CONFIG
       name: $name,
       image: $image,
       command: ["sh", "-c", "sleep 900"],
-      volumeMounts: [{ name: "src", mountPath: "/app" }]
+      volumeMounts: [{ name: "tenant-admin", mountPath: "/opt/tenant-admin", readOnly: true }]
     }],
     volumes: [{
-      name: "src",
+      name: "tenant-admin",
       configMap: {
         name: $cm,
-        items: [
-          { key: "tenant-admin.js",   path: "bin/tenant-admin.js" },
-          { key: "validation.js",     path: "src/validation.js" },
-          { key: "httpClient.js",     path: "src/httpClient.js" },
-          { key: "riddlerClient.js",  path: "src/riddlerClient.js" },
-          { key: "gitrestClient.js",  path: "src/gitrestClient.js" },
-          { key: "keyVaultGuard.js",  path: "src/keyVaultGuard.js" },
-          { key: "keyVaultClient.js", path: "src/keyVaultClient.js" },
-          { key: "tenantManager.js",  path: "src/tenantManager.js" }
-        ]
+        items: [{ key: "tenant-admin.cjs", path: "tenant-admin.cjs" }]
       }
     }]
   } + (if $sa == "" then {} else { serviceAccountName: $sa } end))
@@ -227,7 +214,7 @@ fi
 
 # `--json` keeps the exec stream to one machine-readable document. Errors remain on stderr and
 # are displayed directly to the requester without being copied through the Pod log.
-if ! OUTPUT="$(k exec "$POD_NAME" -- node /app/bin/tenant-admin.js \
+if ! OUTPUT="$(k exec "$POD_NAME" -- node /opt/tenant-admin/tenant-admin.cjs \
   "${CLI_ARGS[@]}" "${KV_ARGS[@]+"${KV_ARGS[@]}"}" \
   --requestor "$REQUESTOR" --json)"; then
   echo "ERROR: tenant-admin command failed." >&2
