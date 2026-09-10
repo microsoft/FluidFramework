@@ -273,7 +273,11 @@ describe("EndpointIndex", () => {
 
 					const previous = endpointIndex.previousInterval(pos);
 					if (endsAtOrBefore.length === 0) {
-						assert.equal(previous, undefined, `expected no interval ending at or before ${pos}`);
+						assert.equal(
+							previous,
+							undefined,
+							`expected no interval ending at or before ${pos}`,
+						);
 					} else {
 						assert(previous !== undefined, `expected an interval ending at or before ${pos}`);
 						assert(live.has(previous), "previousInterval returned a removed interval");
