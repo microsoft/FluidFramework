@@ -161,10 +161,10 @@ describe("EndpointIndex", () => {
 		});
 	});
 
-	// EndpointIndex orders intervals by end position alone, which is only a partial
-	// order: two distinct intervals sharing an end position (and end side) compare
-	// equal. Identity must therefore be tracked separately from ordering so that such
-	// intervals remain individually addressable.
+	// Storage is ordered by (end position, interval id), a total order, so intervals
+	// sharing an end position each occupy their own entry and stay individually
+	// addressable. Endpoint probes deliberately ignore the id and compare end positions
+	// alone, so previousInterval/nextInterval remain well defined across such a group.
 	describe("with multiple intervals sharing an end position", () => {
 		it("retains every interval ending at that position", () => {
 			const first = createTestInterval(1, 5);
