@@ -464,6 +464,75 @@ describe("Loader", () => {
 				});
 			}
 
+			for (const field of ["contents", "metadata"] as const) {
+				for (const changedValues of [false, true]) {
+					it(`compares reordered Unicode keys in ${field} with changed values '${changedValues}'`, async () => {
+						// These distinct keys collate equally, but must retain separate values.
+						const savedOp = {
+							...generateOp(),
+							sequenceNumber: 13,
+							minimumSequenceNumber: 10,
+							[field]: { nested: { "\u00E9": 1, "e\u0301": 2 } },
+						};
+						const fetchStarted = new Deferred<void>();
+						const releaseFetch = new Deferred<void>();
+						let read = false;
+						const loadP = startDeltaManager(
+							true,
+							logger,
+							() => ({
+								fetchMessages: (): IStream<ISequencedDocumentMessage[]> => ({
+									read: async (): Promise<IStreamResult<ISequencedDocumentMessage[]>> => {
+										if (read) {
+											return { done: true };
+										}
+										read = true;
+										fetchStarted.resolve();
+										await releaseFetch.promise;
+										return {
+											done: false,
+											value: [
+												{
+													...savedOp,
+													[field]: JSON.stringify({
+														nested: {
+															"e\u0301": changedValues ? 1 : 2,
+															"\u00E9": changedValues ? 2 : 1,
+														},
+													}),
+												},
+											],
+										};
+									},
+								}),
+							}),
+							5,
+							savedOp,
+							"all",
+							[],
+							true,
+						);
+						await fetchStarted.promise;
+						deltaManager.on("closed", (error: Error) => {
+							expectedError = error;
+						});
+						releaseFetch.resolve();
+						await loadP;
+						assert.strictEqual(deltaManager.hasPendingStateAnchor, false);
+						if (changedValues) {
+							assert(isFluidError(expectedError));
+							assert.strictEqual(
+								expectedError.getTelemetryProperties()[`${field}Differ`],
+								true,
+							);
+						} else {
+							assert.strictEqual(expectedError, undefined);
+							assert.strictEqual(deltaManager.connectionManager.outbound.paused, false);
+						}
+					});
+				}
+			}
+
 			for (const serviceMetadata of [
 				undefined,
 				{},

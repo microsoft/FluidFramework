@@ -933,6 +933,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	/**
 	 * Canonicalizes JSON-compatible message fields that may be represented as either parsed values
 	 * or strings, or whose object keys may be ordered differently after serialization.
+	 * Order keys by UTF-16 code units, not locale collation, which can equate distinct keys.
 	 */
 	private comparableMessageProperty(value: unknown): string | undefined {
 		let comparableValue = value;
@@ -947,7 +948,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		return JSON.stringify(comparableValue, (_key, child: unknown) =>
 			typeof child === "object" && child !== null && !Array.isArray(child)
 				? Object.fromEntries(
-						Object.entries(child).sort(([left], [right]) => left.localeCompare(right)),
+						Object.entries(child).sort(([left], [right]) =>
+							left < right ? -1 : left > right ? 1 : 0,
+						),
 					)
 				: child,
 		);
