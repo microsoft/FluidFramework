@@ -16,6 +16,7 @@ import {
 	type IResolvedUrl,
 	type ISnapshot,
 	type ISnapshotFetchOptions,
+	type IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import { DocumentStorageServiceProxy } from "@fluidframework/driver-utils/internal";
 
@@ -27,6 +28,14 @@ class PointInTimeDocumentStorageService extends DocumentStorageServiceProxy {
 			...snapshotFetchOptions,
 			fetchSource: FetchSource.noCache,
 		});
+	}
+
+	public override async getVersions(
+		versionId: string | null,
+		count: number,
+		scenarioName?: string,
+	): Promise<IVersion[]> {
+		return super.getVersions(versionId, count, scenarioName, FetchSource.noCache);
 	}
 }
 

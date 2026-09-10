@@ -573,8 +573,9 @@ The injected implementation:
    `createDocumentServiceCore` with a **single shared** `EpochTracker` (the same one the version
    manager reads through) — this is the structural lineage guard; see the next question. The
    point-in-time storage wrapper forces the recoverable service's initial snapshot read to bypass
-   the persistent latest-snapshot cache so the selected base cannot be replaced by a newer cached
-   snapshot.
+   both the persistent latest-snapshot cache and the in-memory snapshot-prefetch cache so the
+   selected base cannot be replaced by a newer cached live snapshot. Both loader snapshot paths
+   (`getSnapshot` and the legacy `getVersions` + `getSnapshotTree` path) apply this rule.
 3. Return an `OdspPointInTimeDocumentService` composing the two.
 
 It lives in this package rather than a generic wrapping driver (e.g. `@fluidframework/replay-driver`)

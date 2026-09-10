@@ -18,6 +18,7 @@ import {
 	type ISnapshotFetchOptions,
 	type IStream,
 	type IStreamResult,
+	type IVersion,
 } from "@fluidframework/driver-definitions/internal";
 
 // eslint-disable-next-line import-x/no-internal-modules
@@ -113,6 +114,7 @@ class FakeRecoverableDocumentService {
 	public disposeCount = 0;
 	public connectToStorageCount = 0;
 	public snapshotFetchOptions: ISnapshotFetchOptions | undefined;
+	public versionsFetchSource: FetchSource | undefined;
 	public readonly snapshot = {
 		snapshotTree: { blobs: {}, trees: {} },
 		blobContents: new Map(),
@@ -126,7 +128,31 @@ class FakeRecoverableDocumentService {
 			this.snapshotFetchOptions = snapshotFetchOptions;
 			return this.snapshot;
 		},
-	} as IDocumentStorageService;
+		getVersions: async (
+			_versionId: string | null,
+			_count: number,
+			_scenarioName?: string,
+			fetchSource?: FetchSource,
+		): Promise<IVersion[]> => {
+			this.versionsFetchSource = fetchSource;
+			return [{ id: "version", treeId: undefined! }];
+		},
+		getSnapshotTree: async () => null,
+		createBlob: async () => {
+			throw new Error("createBlob should not be used by the point-in-time service");
+		},
+		readBlob: async () => {
+			throw new Error("readBlob should not be used by this test");
+		},
+		uploadSummaryWithContext: async () => {
+			throw new Error(
+				"uploadSummaryWithContext should not be used by the point-in-time service",
+			);
+		},
+		downloadSummary: async () => {
+			throw new Error("downloadSummary should not be used by the point-in-time service");
+		},
+	} satisfies IDocumentStorageService;
 
 	public async connectToStorage(): Promise<IDocumentStorageService> {
 		this.connectToStorageCount++;
@@ -224,7 +250,7 @@ describe("OdspPointInTimeDocumentService", () => {
 			assert.equal(service.policies?.storageOnly, true);
 		});
 
-		it("serves the recoverable snapshot without consulting the persistent cache", async () => {
+		it("serves the recoverable snapshot without consulting snapshot caches", async () => {
 			const { service, recoverable } = makeService(100, streamFromBatches([]));
 			const storage = await service.connectToStorage();
 			const snapshot = await storage.getSnapshot?.({ scenarioName: "point-in-time-test" });
@@ -234,6 +260,13 @@ describe("OdspPointInTimeDocumentService", () => {
 				fetchSource: FetchSource.noCache,
 			});
 			assert.equal(recoverable.connectToStorageCount, 1);
+		});
+
+		it("bypasses caches when the loader uses the getVersions snapshot path", async () => {
+			const { service, recoverable } = makeService(100, streamFromBatches([]));
+			const storage = await service.connectToStorage();
+			await storage.getVersions(null, 1, "point-in-time-test");
+			assert.equal(recoverable.versionsFetchSource, FetchSource.noCache);
 		});
 
 		it("refuses connectToDeltaStream (the service is storage-only)", async () => {
