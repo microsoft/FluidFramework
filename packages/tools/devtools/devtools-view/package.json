@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/devtools-view",
-	"version": "3.0.0",
+	"version": "3.1.0",
 	"private": true,
 	"description": "Contains a visualization suite for use alongside the Fluid Devtools",
 	"homepage": "https://fluidframework.com",
@@ -91,7 +91,7 @@
 		"@types/sinon": "^17.0.3",
 		"axe-core": "^4.9.1",
 		"c8": "^10.1.3",
-		"chalk": "^4.1.2",
+		"chalk": "^6.0.0",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^10.1.0",
 		"eslint": "catalog:eslint",

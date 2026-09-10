@@ -31,7 +31,6 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { MergeTreeTextHelper, type IMergeTreeTextHelper } from "./MergeTreeTextHelper.js";
-import { RedBlackTree } from "./collections/index.js";
 import { NonCollabClient, SquashClient, UniversalSequenceNumber } from "./constants.js";
 import { type LocalReferencePosition, SlidingPreference } from "./localReference.js";
 import {
@@ -54,7 +53,6 @@ import {
 	type ISegmentPrivate,
 	type Marker,
 	type SegmentGroup,
-	compareStrings,
 	isSegmentLeaf,
 	type ISegmentInternal,
 	type ISegmentLeaf,
@@ -173,7 +171,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 	private readonly _mergeTree: MergeTree;
 
-	private readonly clientNameToIds = new RedBlackTree<string, number>(compareStrings);
+	private readonly clientNameToIds = new Map<string, number>();
 	private readonly shortClientIdMap: string[] = [];
 
 	/**
@@ -829,14 +827,14 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	}
 
 	getOrAddShortClientId(longClientId: string): number {
-		if (!this.clientNameToIds.get(longClientId)) {
+		if (!this.clientNameToIds.has(longClientId)) {
 			this.addLongClientId(longClientId);
 		}
 		return this.getShortClientId(longClientId);
 	}
 
 	protected getShortClientId(longClientId: string): number {
-		return this.clientNameToIds.get(longClientId)!.data;
+		return this.clientNameToIds.get(longClientId)!;
 	}
 
 	getLongClientId(shortClientId: number): string {
@@ -844,7 +842,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	}
 
 	addLongClientId(longClientId: string): void {
-		this.clientNameToIds.put(longClientId, this.shortClientIdMap.length);
+		this.clientNameToIds.set(longClientId, this.shortClientIdMap.length);
 		this.shortClientIdMap.push(longClientId);
 	}
 
@@ -1718,9 +1716,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				);
 			} else {
 				const oldClientId = this.longClientId;
-				const oldData = this.clientNameToIds.get(oldClientId)!.data;
+				const oldData = this.clientNameToIds.get(oldClientId)!;
 				this.longClientId = longClientId;
-				this.clientNameToIds.put(longClientId, oldData);
+				this.clientNameToIds.set(longClientId, oldData);
 				this.shortClientIdMap[oldData] = longClientId;
 			}
 		}
