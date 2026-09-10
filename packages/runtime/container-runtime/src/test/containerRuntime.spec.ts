@@ -3005,7 +3005,7 @@ describe("Runtime", () => {
 
 				assert.deepEqual(
 					await containerRuntime.versionMarkResolver.resolve("targetBatch", 11),
-					{ kind: "pending" },
+					{ kind: "pending", reason: "historicalOpsUnavailable" },
 					"an older loader without fetchOps should not break the newer runtime",
 				);
 				logger.assertMatch([
@@ -3013,6 +3013,7 @@ describe("Runtime", () => {
 						eventName: "VersionMarkResolver:Resolve",
 						outcome: "pending",
 						path: "noReader",
+						reason: "historicalOpsUnavailable",
 					},
 				]);
 			});
