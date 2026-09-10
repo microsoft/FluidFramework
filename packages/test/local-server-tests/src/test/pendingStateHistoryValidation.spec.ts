@@ -27,6 +27,8 @@ import {
 	type ITestFluidObject,
 	timeoutAwait,
 	timeoutPromise,
+	toIDeltaManagerFull,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
 import { createLoader } from "./utils.js";
@@ -41,8 +43,8 @@ import { createLoader } from "./utils.js";
  * @param releaseValidation - The intercepted read waits for this to resolve.
  * @param validationCompleted - Optionally resolved when the stream that returned the anchor ends.
  * This signals storage completion, not successful validation or container connection.
- * @param introduceMismatch - If true, changes only the returned anchor's client ID to simulate
- * overwritten history. If false, returns the service response unchanged.
+ * @param anchorBehavior - Preserves the response, changes the anchor's client ID to simulate
+ * overwritten history, or omits the anchor to simulate history retention.
  */
 function wrapAnchorValidation(
 	inner: IDocumentServiceFactory,
@@ -50,7 +52,7 @@ function wrapAnchorValidation(
 	validationStarted: Deferred<void>,
 	releaseValidation: Deferred<void>,
 	validationCompleted?: Deferred<void>,
-	introduceMismatch = true,
+	anchorBehavior: "preserve" | "change" | "omit" = "change",
 ): IDocumentServiceFactory {
 	// Shared across streams so only one read is intercepted, even if catch-up starts more fetches.
 	let anchorObserved = false;
@@ -82,8 +84,14 @@ function wrapAnchorValidation(
 				validatingFetch = true;
 				validationStarted.resolve();
 				await releaseValidation.promise;
-				if (!introduceMismatch) {
+				if (anchorBehavior === "preserve") {
 					return result;
+				}
+				if (anchorBehavior === "omit") {
+					return {
+						done: false,
+						value: result.value.filter((_, index) => index !== anchorIndex),
+					};
 				}
 				return {
 					done: false,
@@ -171,6 +179,152 @@ async function createPendingState(): Promise<{
 }
 
 describe("Pending-state history validation", () => {
+	for (const scenario of [
+		"match",
+		"mismatch",
+		"unavailable",
+		"reconnect",
+		"host-pause",
+	] as const) {
+		it(`holds host edits during blocked anchor validation: ${scenario}`, async () => {
+			const {
+				codeLoader,
+				documentServiceFactory,
+				urlResolver,
+				url,
+				pendingLocalState,
+				anchor,
+			} = await createPendingState();
+			const observer = await loadExistingContainer({
+				codeLoader,
+				documentServiceFactory,
+				urlResolver,
+				request: { url },
+			});
+			const validationStarted = new Deferred<void>();
+			const releaseValidation = new Deferred<void>();
+			const validationCompleted = new Deferred<void>();
+			const loadP = loadExistingContainer({
+				codeLoader,
+				documentServiceFactory: wrapAnchorValidation(
+					documentServiceFactory,
+					anchor.sequenceNumber,
+					validationStarted,
+					releaseValidation,
+					validationCompleted,
+					scenario === "mismatch"
+						? "change"
+						: scenario === "unavailable"
+							? "omit"
+							: "preserve",
+				),
+				urlResolver,
+				request: { url },
+				pendingLocalState,
+			});
+			await timeoutAwait(validationStarted.promise);
+			const rehydrated = asLegacyAlpha(await timeoutAwait(loadP));
+			const outbound = toIDeltaManagerFull(rehydrated.deltaManager).outbound;
+			try {
+				const entryPoint = (await rehydrated.getEntryPoint()) as ITestFluidObject;
+				const map = await entryPoint.getSharedObject<ISharedMap>("map");
+				const observerEntryPoint = (await observer.getEntryPoint()) as ITestFluidObject;
+				const observerMap = await observerEntryPoint.getSharedObject<ISharedMap>("map");
+				const observedEdit = new Deferred<void>();
+				const key = "edit-before-validation";
+				observerMap.on("valueChanged", (changed) => {
+					if (changed.key === key) {
+						observedEdit.resolve();
+					}
+				});
+				const closed = new Deferred<IErrorBase | undefined>();
+				rehydrated.once("closed", (error) => closed.resolve(error));
+
+				await waitForContainerConnection(rehydrated);
+				const queuedEdit = new Deferred<void>();
+				outbound.once("push", () => queuedEdit.resolve());
+				map.set(key, "host-value");
+				assert.strictEqual(rehydrated.isDirty, true);
+				const capturedState = await getRequiredPendingLocalState(rehydrated);
+				await timeoutAwait(queuedEdit.promise);
+
+				if (scenario === "reconnect") {
+					rehydrated.disconnect();
+					rehydrated.connect();
+					await waitForContainerConnection(rehydrated);
+				}
+				// Prove socket traffic progresses independently of the storage gate. The host
+				// edit has been queued, but must not reach the service even across reconnect.
+				const receivedBarrier = new Deferred<void>();
+				map.on("valueChanged", (changed) => {
+					if (changed.key === "inbound-barrier") {
+						receivedBarrier.resolve();
+					}
+				});
+				observerMap.set("inbound-barrier", true);
+				await timeoutAwait(receivedBarrier.promise);
+				assert.strictEqual(outbound.paused, true);
+				assert(outbound.length > 0);
+				assert.strictEqual(observerMap.has(key), false);
+				assert.strictEqual(rehydrated.isDirty, true);
+				assert.strictEqual(rehydrated.closed, false);
+				if (scenario === "host-pause") {
+					await outbound.pause();
+				}
+				releaseValidation.resolve();
+
+				if (scenario === "mismatch") {
+					const error = await timeoutAwait(closed.promise);
+					assert.strictEqual(error?.errorType, "fileOverwrittenInStorage");
+					assert.strictEqual(rehydrated.closed, true);
+					await assert.rejects(
+						rehydrated.getPendingLocalState(),
+						/Pending state cannot be retried if the container is closed or disposed/,
+					);
+					assert.strictEqual(outbound.length, 0);
+					assert.strictEqual(observerMap.has(key), false);
+				} else {
+					await timeoutAwait(validationCompleted.promise);
+					if (scenario === "host-pause") {
+						assert.strictEqual(outbound.paused, true);
+						assert.strictEqual(observerMap.has(key), false);
+						outbound.resume();
+					}
+					await timeoutAwait(observedEdit.promise);
+					if (rehydrated.isDirty) {
+						await timeoutPromise((resolve) => rehydrated.once("saved", () => resolve()));
+					}
+					assert.strictEqual(rehydrated.closed, false);
+					assert.strictEqual(observerMap.get(key), "host-value");
+				}
+
+				// Only a state capture made before closure is available for offline recovery.
+				// Reload it without a connection so storage cannot supply the edited value.
+				const recovered = await loadExistingContainer({
+					codeLoader,
+					documentServiceFactory,
+					urlResolver,
+					request: {
+						url,
+						headers: { [LoaderHeader.loadMode]: { deltaConnection: "none" } },
+					},
+					pendingLocalState: capturedState,
+				});
+				try {
+					const recoveredEntryPoint = (await recovered.getEntryPoint()) as ITestFluidObject;
+					const recoveredMap = await recoveredEntryPoint.getSharedObject<ISharedMap>("map");
+					assert.strictEqual(recoveredMap.get(key), "host-value");
+				} finally {
+					recovered.close();
+				}
+			} finally {
+				releaseValidation.resolve();
+				rehydrated.close();
+				observer.close();
+			}
+		});
+	}
+
 	it("remains usable after re-stashing offline state and validating unchanged service history", async () => {
 		const { codeLoader, documentServiceFactory, urlResolver, url, pendingLocalState, anchor } =
 			await createPendingState();
@@ -202,7 +356,7 @@ describe("Pending-state history validation", () => {
 					validationStarted,
 					releaseValidation,
 					validationCompleted,
-					false,
+					"preserve",
 				),
 				urlResolver,
 				request: {

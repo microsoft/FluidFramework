@@ -600,7 +600,10 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	 * background.
 	 * @param lastProcessedMessage - The latest message already reflected in the loaded state.
 	 * Offline loads use it to skip already processed ops and validate that the service history has
-	 * not changed.
+	 * not changed. Local edits and inbound processing can continue during validation, but outbound
+	 * submissions wait for an anchor match or a completed non-cache fetch that cannot find it.
+	 * A mismatch closes the container without sending queued edits; hosts must capture pending
+	 * state before closure if they need it for recovery.
 	 */
 	public async attachOpHandler(
 		minSequenceNumber: number,
@@ -646,6 +649,15 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 		if (this._closed) {
 			return;
+		}
+
+		if (this.pendingStateAnchor !== undefined) {
+			// Hold submissions, not local edits or inbound catch-up, until history is checked.
+			// DeltaQueue counts pauses, so connection/reconnection and host pauses stay independent.
+			// On mismatch, close clears queued submissions without releasing this pause.
+			this.connectionManager.outbound
+				.pause()
+				.catch((error) => this.close(normalizeError(error)));
 		}
 
 		let prefetchP: Promise<void> | undefined;
@@ -1191,6 +1203,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 					}
 					if (previouslyObservedMessage === this.pendingStateAnchor) {
 						this.pendingStateAnchor = undefined;
+						if (!this._closed) {
+							this.connectionManager.outbound.resume();
+						}
 					}
 				}
 			} else if (message.sequenceNumber === this.lastQueuedSequenceNumber + 1) {
@@ -1400,6 +1415,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 					serviceCheckpointSequenceNumber: this.serviceCheckpointSequenceNumber,
 				});
 				this.pendingStateAnchor = undefined;
+				// Preserve the availability-first policy when retention removes the anchor.
+				this.connectionManager.outbound.resume();
 				if (this.previouslyProcessedMessage === pendingStateAnchor) {
 					this.previouslyProcessedMessage = undefined;
 				}
