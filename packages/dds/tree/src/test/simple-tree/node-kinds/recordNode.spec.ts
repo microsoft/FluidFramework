@@ -232,10 +232,15 @@ describe("RecordNode", () => {
 			});
 
 			it("setting value to undefined behaves as a delete", () => {
-				const record = init(schemaType, { foo: 1 });
+				const record = init(schemaType, { foo: 1, bar: 2 });
 				assert.equal(record.foo, 1);
-				(record as Record<string, number | undefined>).foo = undefined;
+
+				record.foo = undefined;
+
 				assert.equal(record.foo, undefined);
+				// Confirm the entry was removed, rather than being present with an undefined value.
+				assert(!("foo" in record));
+				assert.deepEqual(Object.keys(record), ["bar"]);
 			});
 
 			it("can delete values", () => {

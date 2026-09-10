@@ -411,9 +411,17 @@ export function recordSchema<
 function* recordIterator<TAllowedTypes extends ImplicitAllowedTypes>(
 	record: TreeRecordNode<TAllowedTypes>,
 ): FluidIterableIterator<[string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes>]> {
-	for (const [key, value] of Object.entries(record)) {
-		assert(value !== undefined, "Record entries must not contain undefined values.");
-		yield [key, value];
+	// Entries are read from the inner node rather than through the record's index signature.
+	// Reads through the index signature are typed as possibly undefined (since an arbitrary key may have no entry),
+	// but every key reported by the inner node has associated content, so the values yielded here are always defined.
+	const innerNode = getInnerNode(record);
+	for (const key of innerNode.keys()) {
+		const field = innerNode.tryGetField(brand(key));
+		assert(field !== undefined, "Expected a field for each key of the inner node.");
+		yield [
+			key,
+			tryGetTreeNodeForField(field) as TreeNodeFromImplicitAllowedTypes<TAllowedTypes>,
+		];
 	}
 }
 

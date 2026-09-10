@@ -60,9 +60,9 @@ export interface TreeRecordNode<
  * Content which can be used to construct a Record node, explicitly or implicitly.
  * @system @beta
  */
-export type RecordNodeInsertableData<T extends ImplicitAllowedTypes> =
-	| RestrictiveStringRecord<InsertableTreeNodeFromImplicitAllowedTypes<T>>
-	| TreeRecordNode<T>;
+export type RecordNodeInsertableData<T extends ImplicitAllowedTypes> = RestrictiveStringRecord<
+	InsertableTreeNodeFromImplicitAllowedTypes<T>
+>;
 
 /**
  * A schema for customizable {@link (TreeMapNode:interface)}s.
