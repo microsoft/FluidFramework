@@ -69,7 +69,11 @@ test("the checked-in bundle is current and fits in a ConfigMap", async () => {
 	const expected = await buildBundle();
 	const actual = fs.readFileSync(BUNDLE);
 
-	assert.deepEqual(actual, Buffer.from(expected), "run 'pnpm build' and commit the updated bundle");
+	assert.deepEqual(
+		actual,
+		Buffer.from(expected),
+		"run 'pnpm build' and commit the updated bundle",
+	);
 	assert.ok(actual.byteLength < 900 * 1024, `bundle is too large: ${actual.byteLength} bytes`);
 });
 

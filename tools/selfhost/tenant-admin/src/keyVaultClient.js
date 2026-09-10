@@ -71,7 +71,10 @@ function createWorkloadIdentityCredential({ clientId, tenantId, tokenFile, autho
 	});
 }
 
-async function getVaultAccessToken(identity, credentialFactory = createWorkloadIdentityCredential) {
+async function getVaultAccessToken(
+	identity,
+	credentialFactory = createWorkloadIdentityCredential,
+) {
 	try {
 		const token = await credentialFactory(identity).getToken(VAULT_SCOPE);
 		if (!token?.token) {
