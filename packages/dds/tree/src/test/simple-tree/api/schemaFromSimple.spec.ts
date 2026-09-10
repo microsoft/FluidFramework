@@ -64,8 +64,16 @@ describe("schemaFromSimple", () => {
 			roundtrip(SchemaFactory.number);
 		});
 
+		const stagedOptionalTestCases = new Set([
+			"HasStagedOptionalFieldBeforeUpdate",
+			"Staged optional in root",
+			"NestedStagedOptional with no upgrades",
+		]);
+
 		for (const testSchema of testSimpleTrees) {
-			it(testSchema.name, () => {
+			// TODO: AB#82814: Fix simple schema conversion for staged optional fields and enable these cases.
+			const test = stagedOptionalTestCases.has(testSchema.name) ? it.skip : it;
+			test(testSchema.name, () => {
 				roundtrip(testSchema.schema);
 			});
 		}

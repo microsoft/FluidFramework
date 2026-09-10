@@ -14,7 +14,7 @@ import {
 } from "../../../simple-tree/api/storedSchema.js";
 import { TreeViewConfigurationAlpha, type SchemaUpgrade } from "../../../simple-tree/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
-import { testDocuments } from "../../testTrees.js";
+import { getStagedSchemaUpgrades, testDocuments } from "../../testTrees.js";
 
 describe("simple-tree storedSchema", () => {
 	describe("test-schema", () => {
@@ -40,7 +40,7 @@ describe("simple-tree storedSchema", () => {
 					FluidClientVersion.v2_0,
 					() => false,
 				);
-				if (test.hasStagedSchema) {
+				if (getStagedSchemaUpgrades(test.schema).size > 0) {
 					assert.notDeepEqual(withoutStaged, persisted);
 					takeJsonSnapshot(withoutStaged, " - without staged");
 				} else {
@@ -51,7 +51,7 @@ describe("simple-tree storedSchema", () => {
 
 			// These tests assert that extractPersistedSchema gives the same result as the stored schema.
 			// This is not always the case if there are staged schema. As the details of such cases are tested elsewhere, its fine to filter them out here.
-			if (!test.hasStagedSchema) {
+			if (getStagedSchemaUpgrades(test.schema).size === 0) {
 				// comparePersistedSchema is a trivial wrapper around functionality that is tested elsewhere,
 				// but might as will give it a simple smoke test for the various test schema.
 				it(`comparePersistedSchema to self ${test.name} - schema v1`, () => {
