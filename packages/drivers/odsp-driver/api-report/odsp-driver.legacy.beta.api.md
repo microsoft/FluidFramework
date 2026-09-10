@@ -24,7 +24,7 @@ export function encodeOdspFluidDataStoreLocator(locator: OdspFluidDataStoreLocat
 
 // @beta @legacy
 export class EpochTracker implements IPersistedFileCache {
-    constructor(cache: IPersistedCache, fileEntry: IFileEntry, logger: ITelemetryLoggerExt, clientIsSummarizer?: boolean | undefined);
+    constructor(cache: IPersistedCache, fileEntry: IFileEntry, logger: ITelemetryLoggerExt, clientIsSummarizer?: boolean | undefined, requestHeaders?: Readonly<Record<string, string>>);
     // (undocumented)
     protected readonly cache: IPersistedCache;
     // (undocumented)
@@ -107,6 +107,7 @@ export interface IOdspPointInTimeDocumentServiceImplementationProps {
     readonly getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>;
     readonly logger?: ITelemetryBaseLogger;
     readonly persistedCache: IPersistedCache;
+    readonly requestHeaders?: Readonly<Record<string, string>>;
     readonly resolvedUrl: IResolvedUrl;
     readonly targetSequenceNumber: number;
 }
@@ -193,6 +194,8 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory, 
     // (undocumented)
     protected persistedCache: IPersistedCache;
     // (undocumented)
+    readonly requestHeaders?: Readonly<Record<string, string>>;
+    // (undocumented)
     get snapshotPrefetchResultCache(): PromiseCache<string, IPrefetchSnapshotContents>;
 }
 
@@ -236,6 +239,7 @@ export function prefetchLatestSnapshot(resolvedUrl: IResolvedUrl, getStorageToke
 // @beta @legacy
 export interface ShareLinkFetcherProps {
     identityType: IdentityType;
+    requestHeaders?: Readonly<Record<string, string>>;
     tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>;
 }
 
