@@ -623,17 +623,25 @@ describe("simple-tree tree", () => {
 	describe("revertTo", () => {
 		it("restores the state of the given revision with a new commit", () => {
 			// Setup
-			const config = new TreeViewConfiguration({ schema: schema.number });
+			const config = new TreeViewConfiguration({ schema: StringArray });
 			const view = getView(config);
-			view.initialize(1);
+			view.initialize([]);
 
 			const revision1 = view.branchHistory.getHead()?.revision;
 			assert(revision1 !== undefined, "revision should be defined");
-			view.root = 2;
+			// Test with some changes made outside of a transaction
+			view.root.insertAtEnd("A");
 			const revision2 = view.branchHistory.getHead()?.revision;
 			assert(revision2 !== undefined, "revision should be defined");
-			view.root = 3;
-			view.root = 4;
+			// Test with some changes made in a transaction
+			view.runTransaction(() => {
+				view.root.insertAtEnd("B");
+			});
+			view.runTransaction(() => {
+				view.root.insertAtEnd("C");
+			});
+			const revision4 = view.branchHistory.getHead()?.revision;
+			assert(revision4 !== undefined, "revision should be defined");
 
 			// Consistency check
 			assert.equal(view.branchHistory.length, 4);
@@ -645,22 +653,29 @@ describe("simple-tree tree", () => {
 			assert(revision5 !== undefined, "revision should be defined");
 
 			// Verify
-			assert.equal(view.root, 2);
+			assert.equal([...view.root], ["A"]);
 			assert.equal(view.branchHistory.length, 5);
 
 			// Act
 			view.revertTo(revision1);
 
 			// Verify
-			assert.equal(view.root, 1);
+			assert.equal([...view.root], []);
 			assert.equal(view.branchHistory.length, 6);
 
 			// Act
 			view.revertTo(revision5);
 
 			// Verify
-			assert.equal(view.root, 2);
+			assert.equal([...view.root], ["A"]);
 			assert.equal(view.branchHistory.length, 7);
+
+			// Act
+			view.revertTo(revision4);
+
+			// Verify
+			assert.equal([...view.root], ["A", "B", "C"]);
+			assert.equal(view.branchHistory.length, 8);
 		});
 
 		it("is a no-op when given the revision of the head commit", () => {
