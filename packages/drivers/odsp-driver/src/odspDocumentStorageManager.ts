@@ -284,7 +284,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 						hostSnapshotOptions,
 						snapshotFetchOptions.loadingGroupIds,
 						snapshotFetchOptions.scenarioName,
-						true,
+						true /* avoidPrefetchSnapshotCache */,
 					);
 					method = "networkOnly";
 				} else {
@@ -356,7 +356,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 							hostSnapshotOptions,
 							snapshotFetchOptions.loadingGroupIds,
 							snapshotFetchOptions.scenarioName,
-							false,
+							false /* avoidPrefetchSnapshotCache */,
 						);
 
 						// Ensure that failures on both paths are ignored initially.
@@ -414,7 +414,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 								hostSnapshotOptions,
 								snapshotFetchOptions.loadingGroupIds,
 								snapshotFetchOptions.scenarioName,
-								false,
+								false /* avoidPrefetchSnapshotCache */,
 							);
 						}
 					}

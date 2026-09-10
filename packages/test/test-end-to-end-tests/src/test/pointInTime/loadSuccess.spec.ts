@@ -156,9 +156,7 @@ describeCompat(
 			);
 		});
 
-		it("loads the target on the first attempt when the persisted cache contains a newer live snapshot", async function (this: Mocha.Context) {
-			this.timeout(120_000);
-
+		it("loads the target on the first attempt when the persisted cache contains a newer live snapshot", async () => {
 			const ctx = await createPointInTimeTestContext(suite, apis, { withSummarizer: true });
 			const { container, dataObject, incrementAndSync, snapVersion } = ctx;
 
