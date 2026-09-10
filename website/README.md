@@ -157,6 +157,75 @@ For an overview of how to leverage React components in MDX documentation, see [h
 React components should be saved under `src/components/...`.
 They can be imported in other components, pages, and documents via `@site/src/components/...`.
 
+##### Linking to API documentation
+
+Use `PackageLink` and `ApiLink` to link to generated API documentation from an MDX document.
+These components select the API documentation for the active documentation version.
+
+Import the components that the document uses:
+
+```tsx
+import { ApiLink, PackageLink } from "@site/src/components/shortLinks";
+```
+
+Use the unscoped package name with both components.
+Use a TSDoc declaration reference for the `api` value of `ApiLink`:
+
+```mdx
+See <PackageLink package="fluid-framework" /> and <ApiLink package="fluid-framework" api="TreeView.upgradeSchema" />.
+```
+
+Add `newApi` when the current published API model does not contain a new package or API.
+The component renders its content as inline code until the target exists.
+The component writes a build debug message when it renders inline code.
+When the target exists, the component renders a link.
+`newApi` can be removed once the target exists.
+
+```mdx
+<PackageLink package="new-package" newApi />
+
+<ApiLink package="fluid-framework" api="NewApi" newApi />
+```
+
+The `newApi` shorthand is equivalent to `newApi={true}`.
+Invalid references and ambiguous references remain build errors.
+Use a TSDoc selector to resolve an ambiguous API kind, such as `(NewApi:class)` or `(NewApi:interface)`.
+
+For an API rename, set `api` to an object with `previous` and `new` declaration references:
+
+```mdx
+<ApiLink package="fluid-framework" api={{ previous: "OldApi", new: "(NewApi:class)" }} />
+```
+
+The component tries `new` first.
+It uses `previous` while the published model contains only the old API.
+When child content is omitted, the component displays the name of the API that resolves.
+
+```mdx
+<ApiLink package="fluid-framework" api="(NewApi:class)" />
+```
+
+For a package rename, set `package` to an object with `previous` and `new` names:
+
+```mdx
+<PackageLink package={{ previous: "old-package", new: "new-package" }} />
+```
+
+The component uses `previous` while the published model contains only the old package.
+
+```mdx
+<PackageLink package="new-package" />
+```
+
+All transition modes permit explicit rich child content.
+The component preserves the child content when it renders a link or inline code:
+
+```mdx
+<ApiLink package="fluid-framework" api="NewApi" newApi>
+	**New API**
+</ApiLink>
+```
+
 #### Comments
 
 A common pattern for adding inline comments in `.md` files looks like:
@@ -317,51 +386,89 @@ import { YoutubeVideo } from "@site/src/components/youtubeVideo";
 
 The following npm scripts are supported in this directory:
 
-<!-- AUTO-GENERATED-CONTENT:START (PACKAGE_SCRIPTS:includeHeading=FALSE) -->
-
+<!-- markdown-magic:begin {
+  "transform": "package-scripts",
+  "includeHeading": false,
+  "scriptDescriptions": {
+    "build": "Build everything: the API documentation, the website, the tests, etc.",
+    "build:api-documentation": "Download API model artifacts and generate API documentation.",
+    "prebuild:docusaurus": "Runs pre-site build metadata generation.",
+    "build:docusaurus": "Build the website with Docusaurus.",
+    "build:generate-content": "Generate site content. Includes API documentation, as well as content generated / embedded by `markdown-magic`.",
+    "build:markdown-magic": "Run `markdown-magic` to generate / embed contents in Markdown files.",
+    "build:site": "Build the site, including API documentation.",
+    "build:test": "TSC build of the test code as a sanity check.",
+    "check-links": "Run link validation on the website. Requires the website to be running locally, either via `start` or `serve`.",
+    "ci:check-links": "`check-links` variant for CI. Serves the site before running checks.",
+    "clean": "Clean up generated artifacts (build output, etc.).",
+    "clean:api-documentation": "Clean up generate API documentation content.",
+    "clean:doc-models": "Clean up downloaded API model artifacts.",
+    "clean:docusaurus": "Run Docusaurus's \"clean\".",
+    "clean:test": "Clean up generated test output",
+    "clean:versions-json": "Clean up generated `versions.json` file.",
+    "download-doc-models": "Download API model artifacts published from our release branches.",
+    "eslint": "Run `eslint`.",
+    "eslint:fix": "Run `eslint` with auto-fix enabled.",
+    "format": "Fix formatting issues with `prettier`.",
+    "generate-api-documentation": "Generate API documentation from downloaded API model artifacts.",
+    "preinstall": "Ensure developer is using `pnpm`.",
+    "lint": "Check for linter violations.",
+    "lint:fix": "Auto-fix linter violations.",
+    "prettier": "Check for formatting issues with `prettier`.",
+    "prettier:fix": "Fix formatting issues with `prettier`.",
+    "rebuild": "Clean up existing generated artifacts and re-run the build.",
+    "serve": "Serves the built website using Docusaurus.",
+    "serve-with-azure-emulation": "Serves the built website using Docusaurus, including Azure service emulation for our Azure functions.",
+    "prestart": "Runs pre-site build metadata generation.",
+    "start": "Runs the website in watch mode with Docusaurus.",
+    "pretest": "Install necessary `playwright` dependencies before running tests.",
+    "test": "Run all tests (`playwright` UX tests and `vitest` unit tests)",
+    "test:site": "Run UX tests using `playwright`",
+    "test:unit": "Run unit tests using `vitest`"
+  }
+} -->
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
-| Script | Description |
-|--------|-------------|
-| `build` | Build everything: the API documentation, the website, the tests, etc. |
-| `build:api-documentation` | Download API model artifacts and generate API documentation. |
-| `prebuild:docusaurus` | Runs pre-site build metadata generation. |
-| `build:docusaurus` | Build the website with Docusaurus. |
-| `build:generate-content` | Generate site content. Includes API documentation, as well as content generated / embedded by `markdown-magic`. |
-| `build:markdown-magic` | Run `markdown-magic` to generate / embed contents in Markdown files. |
-| `build:search` | `pagefind --site build` |
-| `build:site` | Build the site, including API documentation. |
-| `build:test` | TSC build of the test code as a sanity check. |
-| `check-links` | Run link validation on the website. Requires the website to be running locally, either via `start` or `serve`. |
-| `ci:check-links` | `check-links` variant for CI. Serves the site before running checks. |
-| `clean` | Clean up generated artifacts (build output, etc.). |
-| `clean:api-documentation` | Clean up generate API documentation content. |
-| `clean:doc-models` | Clean up downloaded API model artifacts. |
-| `clean:docusaurus` | Run Docusaurus's "clean". |
-| `clean:test` | Clean up generated test output |
-| `clean:versions-json` | Clean up generated `versions.json` file. |
-| `download-doc-models` | Download API model artifacts published from our release branches. |
-| `eslint` | Run `eslint`. |
-| `eslint:fix` | Run `eslint` with auto-fix enabled. |
-| `format` | Fix formatting issues with `prettier`. |
-| `generate-api-documentation` | Generate API documentation from downloaded API model artifacts. |
-| `generate-versions` | `dotenv -- node ./infra/generate-versions.mjs` |
-| `lint` | Check for linter violations. |
-| `lint:fix` | Auto-fix linter violations. |
-| `preinstall` | Ensure developer is using `pnpm`. |
-| `prettier` | Check for formatting issues with `prettier`. |
-| `prettier:fix` | Fix formatting issues with `prettier`. |
-| `rebuild` | Clean up existing generated artifacts and re-run the build. |
-| `serve` | Serves the built website using Docusaurus. |
-| `serve-with-azure-emulation` | Serves the built website using Docusaurus, including Azure service emulation for our Azure functions. |
-| `prestart` | Runs pre-site build metadata generation. |
-| `start` | Runs the website in watch mode with Docusaurus. |
-| `pretest` | Install necessary `playwright` dependencies before running tests. |
-| `test` | Run all tests (`playwright` UX tests and `vitest` unit tests) |
-| `test:site` | Run UX tests using `playwright` |
-| `test:unit` | Run unit tests using `vitest` |
+| Script Name | Script Body | Description |
+| - | - | - |
+| `build` | `concurrently npm:build:site npm:build:test` | Build everything: the API documentation, the website, the tests, etc. |
+| `build:api-documentation` | `npm run download-doc-models && npm run generate-api-documentation` | Download API model artifacts and generate API documentation. |
+| `prebuild:docusaurus` | `npm run generate-versions` | Runs pre-site build metadata generation. |
+| `build:docusaurus` | `docusaurus build` | Build the website with Docusaurus. |
+| `build:generate-content` | `concurrently npm:build:markdown-magic npm:build:api-documentation` | Generate site content. Includes API documentation, as well as content generated / embedded by `markdown-magic`. |
+| `build:markdown-magic` | `markdown-magic` | Run `markdown-magic` to generate / embed contents in Markdown files. |
+| `build:search` | `pagefind --site build` | |
+| `build:site` | `npm run build:generate-content && npm run build:docusaurus && npm run build:search` | Build the site, including API documentation. |
+| `build:test` | `tsc --project test/tsconfig.json --pretty --noEmit` | TSC build of the test code as a sanity check. |
+| `check-links` | `linkcheck http://127.0.0.1:3000 --skip-file skipped-urls.txt` | Run link validation on the website. Requires the website to be running locally, either via `start` or `serve`. |
+| `ci:check-links` | `start-server-and-test "npm run serve -- --host 127.0.0.1 --no-open" http://127.0.0.1:3000 check-links` | `check-links` variant for CI. Serves the site before running checks. |
+| `clean` | `concurrently "npm:clean:*"` | Clean up generated artifacts (build output, etc.). |
+| `clean:api-documentation` | `node ./infra/clean-api-documentation.mjs` | Clean up generate API documentation content. |
+| `clean:doc-models` | `rimraf --glob .doc-models` | Clean up downloaded API model artifacts. |
+| `clean:docusaurus` | `docusaurus clear` | Run Docusaurus's "clean". |
+| `clean:test` | `rimraf --glob test-results` | Clean up generated test output |
+| `clean:versions-json` | `rimraf --glob ./versions.json` | Clean up generated `versions.json` file. |
+| `download-doc-models` | `node ./infra/download-doc-models.mjs` | Download API model artifacts published from our release branches. |
+| `eslint` | `eslint . --format stylish` | Run `eslint`. |
+| `eslint:fix` | `eslint . --format stylish --fix` | Run `eslint` with auto-fix enabled. |
+| `format` | `npm run prettier:fix` | Fix formatting issues with `prettier`. |
+| `generate-api-documentation` | `dotenv -- node ./infra/generate-api-documentation.mjs` | Generate API documentation from downloaded API model artifacts. |
+| `generate-versions` | `dotenv -- node ./infra/generate-versions.mjs` | |
+| `preinstall` | `node ../scripts/only-pnpm.cjs` | Ensure developer is using `pnpm`. |
+| `lint` | `concurrently npm:eslint npm:prettier` | Check for linter violations. |
+| `lint:fix` | `npm run eslint:fix && npm run prettier:fix` | Auto-fix linter violations. |
+| `prettier` | `prettier --check . --cache --ignore-path ../.prettierignore` | Check for formatting issues with `prettier`. |
+| `prettier:fix` | `prettier --write . --cache --ignore-path ../.prettierignore` | Fix formatting issues with `prettier`. |
+| `rebuild` | `npm run clean && npm run build` | Clean up existing generated artifacts and re-run the build. |
+| `serve` | `docusaurus serve` | Serves the built website using Docusaurus. |
+| `serve-with-azure-emulation` | `swa start --config-name ff-doc-site` | Serves the built website using Docusaurus, including Azure service emulation for our Azure functions. |
+| `prestart` | `npm run generate-versions` | Runs pre-site build metadata generation. |
+| `start` | `docusaurus start` | Runs the website in watch mode with Docusaurus. |
+| `pretest` | `playwright install --with-deps` | Install necessary `playwright` dependencies before running tests. |
+| `test` | `npm run test:unit && npm run test:site` | Run all tests (`playwright` UX tests and `vitest` unit tests) |
+| `test:site` | `playwright test` | Run UX tests using `playwright` |
+| `test:unit` | `vitest run` | Run unit tests using `vitest` |
 
 <!-- prettier-ignore-end -->
-
-<!-- AUTO-GENERATED-CONTENT:END -->
+<!-- markdown-magic:end -->

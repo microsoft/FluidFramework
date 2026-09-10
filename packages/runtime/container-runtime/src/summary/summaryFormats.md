@@ -48,8 +48,8 @@ Each tree node in a summary tree is represented by the `ISummaryTree` interface 
 
         ```typescript
         export interface ISummaryBlob {
-        	type: SummaryType.Blob;
-        	content: string | Uint8Array;
+                type: SummaryType.Blob;
+                content: string | Uint8Array;
         }
         ```
 
@@ -57,8 +57,8 @@ Each tree node in a summary tree is represented by the `ISummaryTree` interface 
 
         ```typescript
         export interface ISummaryAttachment {
-        	type: SummaryType.Attachment;
-        	id: string;
+                type: SummaryType.Attachment;
+                id: string;
         }
         ```
 
@@ -222,5 +222,5 @@ flowchart TD
     A --> M["handle: '/gc'"]:::handle
 ```
 
-[summary-protocol]: /common/lib/protocol-definitions/src/summary.ts
-[storage-protocol]: /common/lib/protocol-definitions/src/storage.ts
+[summary-protocol]: https://github.com/microsoft/FluidFramework/blob/main/common/lib/protocol-definitions/src/summary.ts
+[storage-protocol]: https://github.com/microsoft/FluidFramework/blob/main/common/lib/protocol-definitions/src/storage.ts

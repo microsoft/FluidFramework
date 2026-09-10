@@ -3,15 +3,18 @@ title: Transactions
 sidebar_position: 6
 ---
 
+import { ApiLink } from "@site/src/components/shortLinks";
+
 If you want the `SharedTree` to treat a set of changes atomically, then you can wrap these changes in a transaction.
 Using a transaction guarantees that (if applied) all of the changes will be applied together synchronously and no other changes (either from this client or from a remote client) can be interleaved with those changes.
 Note that the Fluid Framework guarantees this already for any sequence of changes that are submitted synchronously.
 However, using a transaction has the following additional implications:
+
 -   If [reverted](./undo-redo.mdx) (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
 -   It is also more efficient for SharedTree to process and transmit a large number of changes as a transaction rather than as changes submitted separately.
 -   It is possible to specify constraints on a transaction so that the transaction will be ignored if one or more of these constraints are not met.
 
-To create a transaction use [Tree.runTransaction](../../api/fluid-framework/tree-interface#runtransaction-propertysignature).
+To create a transaction use <ApiLink package="fluid-framework" api="Tree.runTransaction" />.
 You can cancel a transaction from within the callback function by returning the special "rollback object", available via `Tree.runTransaction.rollback`.
 If an error occurs within the callback, the transaction will be canceled automatically before propagating the error.
 
@@ -42,36 +45,35 @@ There are example transactions here: [Shared Tree Demo](https://github.com/micro
 
 :::caution
 
-The APIs described in this section are currently `@alpha` and may change in future releases.
+The APIs described in this section are currently beta and may change in future releases.
 
-Unlike [Tree.runTransaction](../../api/fluid-framework/tree-interface#runtransaction-propertysignature), the Alpha [runTransaction](../../api/fluid-framework/treebranchalpha-interface#runtransaction-methodsignature) does **not** automatically roll back the transaction if the callback throws an error.
+Unlike <ApiLink package="fluid-framework" api="Tree.runTransaction" />, the `@beta` <ApiLink package="fluid-framework" api={{ previous: "UntypedTreeViewAlpha.runTransaction", new: "UntypedTreeView.runTransaction" }}>runTransaction</ApiLink> does **not** automatically roll back the transaction if the callback throws an error.
 If your callback may throw, you should handle errors explicitly and return `{ rollback: true }` when required.
 
 :::
 
-The alpha APIs introduce [TreeBranchAlpha.runTransaction](../../api/fluid-framework/treebranchalpha-interface#runtransaction-methodsignature) as a replacement for `Tree.runTransaction`.
+The beta APIs introduce <ApiLink package="fluid-framework" api={{ previous: "UntypedTreeViewAlpha.runTransaction", new: "UntypedTreeView.runTransaction" }}>runTransaction</ApiLink> as a replacement for `Tree.runTransaction`.
 This new API exists to solve correctness issues where errors being thrown in runTransaction could result in an undefined state.
 This new API enables developers to customize how their application handles this error case.
 
 ### Running a Transaction
 
-Transactions are started via [runTransaction](../../api/fluid-framework/treebranchalpha-interface#runtransaction-methodsignature) on any [TreeBranchAlpha](../../api/fluid-framework/treebranchalpha-interface)
+For a node in a tree, use <ApiLink package="fluid-framework" api={{ previous: "TreeAlpha.context", new: "TreeBeta.context" }}/> to get its <ApiLink package="fluid-framework" api={{ previous: "TreeContextAlpha", new: "TreeContextBeta" }}/> , then call <ApiLink package="fluid-framework" api={{ previous: "TreeContextAlpha.runTransaction", new: "TreeContextBeta.runTransaction" }}>runTransaction</ApiLink> on that context.
 
 ```typescript
-import { TreeAlpha } from "@fluidframework/tree/alpha";
+import { TreeBeta } from "@fluidframework/tree/beta";
 
-// Using a branch:
-const branch = TreeAlpha.branch(myNode);
-if (branch !== undefined) {
-    branch.runTransaction(/* ... */);
-}
+// Using a context:
+const context = TreeBeta.context(myNode);
+context.runTransaction(/* ... */);
 
-// Using a view directly:
-const view = tree.viewWith(config);
-view.runTransaction(/* ... */);
+// Using a typed view directly:
+const typedView = tree.viewWith(config);
+typedView.runTransaction(/* ... */);
 ```
 
 ### The `transaction` Callback Function
+
 The callback function passed to runTransaction implements the transaction logic.
 It can optionally return a status object indicating success or failure, and include a user-defined value.
 
@@ -79,16 +81,16 @@ It can optionally return a status object indicating success or failure, and incl
 
 ```typescript
 const result = view.runTransaction(() => {
-    view.root.name = "Alice";
-    view.root.score = 100;
-    // If something goes wrong, we can roll back this transaction by returning an object with rollback: true
-    // return { rollback: true };
+	view.root.name = "Alice";
+	view.root.score = 100;
+	// If something goes wrong, we can roll back this transaction by returning an object with rollback: true
+	// return { rollback: true };
 });
 
 if (result.success) {
-    // Transaction was committed
+	// Transaction was committed
 } else {
-    // Transaction was rolled back
+	// Transaction was rolled back
 }
 ```
 
@@ -96,24 +98,37 @@ if (result.success) {
 
 ```typescript
 const result = view.runTransaction(() => {
-    const oldName = view.root.name;
-    view.root.name = "Bob";
-    return { value: oldName };
+	const oldName = view.root.name;
+	view.root.name = "Bob";
+	return { value: oldName };
 });
 
 if (result.success) {
-    console.log("Previous name was:", result.value);
+	console.log("Previous name was:", result.value);
 }
 ```
 
 ### Asynchronous Transactions
 
-[runTransactionAsync](../../api/fluid-framework/treebranchalpha-interface#runtransactionasync-methodsignature) works like [runTransaction](../../api/fluid-framework/treebranchalpha-interface#runtransaction-methodsignature) but accepts an `async` callback.
+<ApiLink
+	package="fluid-framework"
+	api={{
+		previous: "UntypedTreeViewAlpha.runTransactionAsync",
+		new: "UntypedTreeView.runTransactionAsync",
+	}}
+>
+	runTransactionAsync
+</ApiLink> works like <ApiLink
+	package="fluid-framework"
+	api={{ previous: "UntypedTreeViewAlpha.runTransaction", new: "UntypedTreeView.runTransaction" }}
+>
+	runTransaction
+</ApiLink> but accepts an `async` callback.
 
 ```typescript
 const result = await view.runTransactionAsync(async () => {
-    const data = await fetchExternalData();
-    view.root.externalValue = data;
+	const data = await fetchExternalData();
+	view.root.externalValue = data;
 });
 ```
 
@@ -124,16 +139,16 @@ The label is surfaced through `ChangeMetadata`, and can be useful for grouping r
 
 ```typescript
 view.runTransaction(
-    () => {
-        view.root.name = "Dave";
-    },
-    { label: "rename-user" },
+	() => {
+		view.root.name = "Dave";
+	},
+	{ label: "rename-user" },
 );
 
 // Label "rename-user" will now be associated with the commit for this transaction and will appear in relevant metadata
 // Here's an example of accessing the label from a change event:
 view.checkout.events.on("changed", (meta) => {
-    console.log(meta.label); // will log "rename-user" if this event handler is applied before the above transaction is run
+	console.log(meta.label); // will log "rename-user" if this event handler is applied before the above transaction is run
 });
 ```
 
@@ -141,7 +156,20 @@ If transactions are nested, only the outermost transaction's label is used.
 
 ### Nested Transactions
 
-[runTransaction](../../api/fluid-framework/treebranchalpha-interface#runtransaction-methodsignature) and [runTransactionAsync](../../api/fluid-framework/treebranchalpha-interface#runtransactionasync-methodsignature) can be called from within the callback of another transaction, with some limitations.
+<ApiLink
+	package="fluid-framework"
+	api={{ previous: "UntypedTreeViewAlpha.runTransaction", new: "UntypedTreeView.runTransaction" }}
+>
+	runTransaction
+</ApiLink> and <ApiLink
+	package="fluid-framework"
+	api={{
+		previous: "UntypedTreeViewAlpha.runTransactionAsync",
+		new: "UntypedTreeView.runTransactionAsync",
+	}}
+>
+	runTransactionAsync
+</ApiLink> can be called from within the callback of another transaction, with some limitations.
 Nested transactions have the following behavior:
 
 -   If the inner transaction rolls back, only the inner transaction's changes are discarded. The outer transaction continues.
@@ -176,36 +204,31 @@ On other clients, the transaction's constraints are fully settled by the time th
 
 :::
 
-
 ### Specifying Constraints
 
 Constraints are specified via the `preconditions` field in the `params` argument to `runTransaction`, or returned from the transaction callback via the `preconditionsOnRevert` field:
 
 ```typescript
 view.runTransaction(
-    () => {
-        view.root.content = "new value";
-    },
-    {
-        // `preconditions` applies to the transaction itself.
-        // Here we add a `nodeInDocument` constraint which will ensure that this transaction will only be applied if someNode is still in the document at the time this transaction is sequenced.
-        preconditions: [
-            { type: "nodeInDocument", node: someNode },
-        ],
-    },
+	() => {
+		view.root.content = "new value";
+	},
+	{
+		// `preconditions` applies to the transaction itself.
+		// Here we add a `nodeInDocument` constraint which will ensure that this transaction will only be applied if someNode is still in the document at the time this transaction is sequenced.
+		preconditions: [{ type: "nodeInDocument", node: someNode }],
+	},
 );
 ```
 
 ```typescript
 view.runTransaction(() => {
-    view.root.content = "updated";
-    return {
-        // `preconditionsOnRevert` only applies if the transaction is reverted (e.g. via an undo operation).
-        // Here we add a `nodeInDocument` constraint which will ensure that the changes made by this transaction can only be reverted if view.root is still in the document at the time of revert.
-        preconditionsOnRevert: [
-            { type: "nodeInDocument", node: view.root },
-        ],
-    };
+	view.root.content = "updated";
+	return {
+		// `preconditionsOnRevert` only applies if the transaction is reverted (e.g. via an undo operation).
+		// Here we add a `nodeInDocument` constraint which will ensure that the changes made by this transaction can only be reverted if view.root is still in the document at the time of revert.
+		preconditionsOnRevert: [{ type: "nodeInDocument", node: view.root }],
+	};
 });
 ```
 
@@ -221,14 +244,12 @@ Requires that a specific node exists in the document.
 const importantNode = view.root;
 
 view.runTransaction(
-    () => {
-        view.root.value = 42;
-    },
-    {
-        preconditions: [
-            { type: "nodeInDocument", node: importantNode },
-        ],
-    },
+	() => {
+		view.root.value = 42;
+	},
+	{
+		preconditions: [{ type: "nodeInDocument", node: importantNode }],
+	},
 );
 ```
 
@@ -256,11 +277,11 @@ This is currently only the case for `noChange` constraints in reverts, but we ma
 
 ```typescript
 view.runTransaction(
-    () => {
-        view.root.items.insertAtEnd("new item");
-    },
-    {
-        preconditions: [{ type: "noChange" }],
-    },
+	() => {
+		view.root.items.insertAtEnd("new item");
+	},
+	{
+		preconditions: [{ type: "noChange" }],
+	},
 );
 ```

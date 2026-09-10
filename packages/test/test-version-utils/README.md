@@ -7,8 +7,7 @@ combinations and driver selection can be controlled via the `mocha` command line
 `describe*` functions. For advanced usage, a test can bypass this mechanism and directly call our
 exports to get the versioned Fluid APIs.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
-
+<!-- markdown-magic:begin {"transform":"library-readme-header","headingLevel":2} -->
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
@@ -19,8 +18,7 @@ exports to get the versioned Fluid APIs.
 **Use this package only as a development dependency or as a dependency of an unpublished package.**
 
 <!-- prettier-ignore-end -->
-
-<!-- AUTO-GENERATED-CONTENT:END -->
+<!-- markdown-magic:end -->
 
 ## Versioned combination test generation
 
@@ -201,8 +199,7 @@ This means that statically importing and referencing a DDS in a test file _will_
 but this happens implicitly.
 Test authors are encouraged to use the `apis` argument of `describeCompat`'s test creation callback to reference the DDS instead.
 
-<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
-
+<!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
@@ -210,16 +207,16 @@ Test authors are encouraged to use the `apis` argument of `describeCompat`'s tes
 
 You can [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid Framework in these ways:
 
--   Answer questions in [GitHub Discussions](https://github.com/microsoft/FluidFramework/discussions).
--   [Submit bug reports](https://github.com/microsoft/FluidFramework/issues) and help verify fixes.
--   Review [source code changes](https://github.com/microsoft/FluidFramework/pulls).
--   [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
+- Answer questions in [GitHub Discussions](https://github.com/microsoft/FluidFramework/discussions).
+- [Submit bug reports](https://github.com/microsoft/FluidFramework/issues) and help verify fixes.
+- Review [source code changes](https://github.com/microsoft/FluidFramework/pulls).
+- [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
 
 For detailed instructions, read the [repo documentation](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Home.md).
 
 This project follows the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
 For more information, read the [Code of Conduct frequently asked questions](https://opensource.microsoft.com/codeofconduct/faq/).
-For questions or comments, contact [opencode@microsoft.com](mailto:opencode@microsoft.com).
+For questions or comments, contact <opencode@microsoft.com>.
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
 Use of these trademarks or logos must follow Microsoft’s [Trademark & Brand Guidelines](https://www.microsoft.com/trademarks).
@@ -240,5 +237,4 @@ Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guid
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->
-
-<!-- AUTO-GENERATED-CONTENT:END -->
+<!-- markdown-magic:end -->
