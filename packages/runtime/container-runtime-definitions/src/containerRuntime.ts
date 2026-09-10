@@ -185,7 +185,6 @@ export interface IContainerRuntime
 	readonly storage: IContainerStorageService;
 	readonly flushMode: FlushMode;
 	readonly scope: FluidObject;
-
 	/**
 	 * Indicates the attachment state of the container to a host service.
 	 */

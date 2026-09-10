@@ -41,8 +41,3 @@ export type {
 	ISummarizerObservabilityProps,
 	ISummarizerEvents,
 } from "./containerRuntime.js";
-export type {
-	IVersionMarkResolver,
-	ResolveResult,
-	VersionMarkCapture,
-} from "@fluidframework/runtime-definitions/internal";

@@ -94,26 +94,6 @@ export interface ISummarizerObservabilityProps {
     numUnsummarizedRuntimeOps: number;
 }
 
-// @beta @sealed @legacy
-export interface IVersionMarkResolver {
-    onBatchSequenced(listener: (batchId: string, sequenceNumber: number, timestamp?: number) => void): () => void;
-    resolve(batchId: string, sequenceNumberLowerBound: number): Promise<ResolveResult>;
-    sealAndCaptureVersionMark(): VersionMarkCapture;
-}
-
-// @beta @legacy
-export type ResolveResult = {
-    readonly kind: "resolved";
-    readonly sequenceNumber: number;
-    readonly timestamp?: number;
-} | {
-    readonly kind: "pending";
-    readonly reason?: string;
-} | {
-    readonly kind: "unresolvable";
-    readonly reason?: string;
-};
-
 // @beta @sealed @legacy (undocumented)
 export type SummarizerStopReason =
 /**
@@ -148,17 +128,6 @@ export type SummarizerStopReason =
 * first submitSummary attempt fails for any reason and there's a 2nd summary attempt without an ack
 */
 | "latestSummaryStateStale";
-
-// @beta @legacy
-export type VersionMarkCapture = {
-    readonly kind: "pending";
-    readonly batchId: string;
-    readonly sequenceNumberLowerBound: number;
-} | {
-    readonly kind: "resolved";
-    readonly sequenceNumber: number;
-    readonly timestamp?: number;
-};
 
 // (No @packageDocumentation comment for this package)
 
