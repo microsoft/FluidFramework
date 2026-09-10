@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/test-tools",
-	"version": "3.0.0",
+	"version": "2.1.0",
 	"description": "Fluid test tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -13,7 +13,8 @@
 	"main": "dist/getTestPort.js",
 	"types": "dist/getTestPort.d.ts",
 	"bin": {
-		"assign-test-ports": "bin/assign-test-ports"
+		"assign-test-ports": "bin/assign-test-ports",
+		"with-test-port": "bin/with-test-port"
 	},
 	"scripts": {
 		"build": "fluid-build --task build",
