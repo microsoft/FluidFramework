@@ -1,5 +1,4 @@
-<!-- AUTO-GENERATED-CONTENT:START (DEPENDENCY_GUIDELINES:includeHeading=FALSE) -->
-
+<!-- markdown-magic:begin {"transform":"dependency-guidelines","includeHeading":false,"headingLevel":2} -->
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
@@ -10,11 +9,9 @@ For a dependency on an unstable API, such as a `beta` API, we recommend a more r
 For example, use a `~` version range.
 
 <!-- prettier-ignore-end -->
+<!-- markdown-magic:end -->
 
-<!-- AUTO-GENERATED-CONTENT:END -->
-
-<!-- AUTO-GENERATED-CONTENT:START (DEPENDENCY_GUIDELINES:headingLevel=2) -->
-
+<!-- markdown-magic:begin {"transform":"dependency-guidelines","headingLevel":2} -->
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
@@ -27,5 +24,4 @@ For a dependency on an unstable API, such as a `beta` API, we recommend a more r
 For example, use a `~` version range.
 
 <!-- prettier-ignore-end -->
-
-<!-- AUTO-GENERATED-CONTENT:END -->
+<!-- markdown-magic:end -->

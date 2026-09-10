@@ -338,7 +338,7 @@ export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "
     readonly uploadDuration: number;
 }
 
-// @beta @legacy
+// @beta @sealed @legacy
 export interface IVersionMarkResolver {
     onBatchSequenced(listener: (batchId: string, sequenceNumber: number, timestamp?: number) => void): () => void;
     resolve(batchId: string, sequenceNumberLowerBound: number): Promise<ResolveResult>;
@@ -382,8 +382,10 @@ export type ResolveResult = {
     readonly timestamp?: number;
 } | {
     readonly kind: "pending";
+    readonly reason?: string;
 } | {
     readonly kind: "unresolvable";
+    readonly reason?: string;
 };
 
 // @beta @legacy
