@@ -17,6 +17,7 @@ import {
 	type NodeId,
 	type RebaseRevisionMetadata,
 	genericChangeHandler,
+	DefaultAtomIdAliasAllocator,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import { fakeIdAllocator, brand, idAllocatorFromMaxId } from "../../../util/index.js";
@@ -172,7 +173,7 @@ describe("GenericField", () => {
 		const actual = genericChangeHandler.rebaser.invert(
 			forward,
 			true,
-			idAllocatorFromMaxId(),
+			new DefaultAtomIdAliasAllocator(),
 			mintRevisionTag(),
 			crossFieldManager,
 			defaultRevisionMetadataFromChanges([]),

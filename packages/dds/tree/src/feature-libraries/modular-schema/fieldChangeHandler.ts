@@ -7,6 +7,7 @@ import type { ICodecFamily, JsonCodecPart } from "../../codec/index.js";
 import type {
 	ChangeAtomId,
 	ChangeEncodingContext,
+	ChangesetLocalId,
 	DeltaDetachedNodeChanges,
 	DeltaDetachedNodeId,
 	DeltaDetachedNodeRename,
@@ -150,7 +151,7 @@ export interface FieldChangeRebaser<TChangeset> {
 	invert(
 		change: TChangeset,
 		isRollback: boolean,
-		genId: IdAllocator,
+		genId: AtomIdAliasAllocator,
 		revision: RevisionTag | undefined,
 		crossFieldManager: CrossFieldManager,
 		revisionMetadata: RevisionMetadataSource,
@@ -377,4 +378,19 @@ export interface FieldChangeEncodingContext {
 export interface FieldChangeDecodingContext {
 	readonly baseContext: ChangeEncodingContext;
 	decodeNode(encodedNode: EncodedNodeChangeset): NodeId;
+}
+
+/**
+ * Allocates and manages aliases for local IDs within different revisions.
+ */
+export interface AtomIdAliasAllocator extends IdAllocator<ChangesetLocalId> {
+	/**
+	 * Reserves a contiguous block of IDs for the given original revision up to the specified maximum local ID.
+	 * Can be called multiple times for the same revision (later calls have no effect), but the maximum local ID must be consistent.
+	 */
+	reserve(originalRevision: RevisionTag, originalMaxLocalId: ChangesetLocalId): void;
+	/**
+	 * @returns The alias for the given original local ID within the specified revision.
+	 */
+	getAlias(originalRevision: RevisionTag, originalLocalId: ChangesetLocalId): ChangesetLocalId;
 }
