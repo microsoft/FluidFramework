@@ -30,6 +30,10 @@ type _recordNodeUnsafeIterator = requireAssignableTo<
 	FluidIterableIterator<[string, number]>
 >;
 
+type _recordNodeUnsafeRead = requireTrue<
+	areSafelyAssignable<TreeRecordNodeUnsafe<typeof numberSchema>[string], number | undefined>
+>;
+
 // UnannotateAllowedTypeUnsafe
 {
 	type num = UnannotateAllowedTypeUnsafe<typeof numberSchema>;

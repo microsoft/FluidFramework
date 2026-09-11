@@ -593,7 +593,10 @@ export interface MapNodeCustomizableSchemaUnsafe<
  */
 export interface TreeRecordNodeUnsafe<
 	TAllowedTypes extends System_Unsafe.ImplicitAllowedTypesUnsafe,
-> extends Record<string, System_Unsafe.TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>>,
+> extends Record<
+			string,
+			System_Unsafe.TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes> | undefined
+		>,
 		TreeNode {
 	[Symbol.iterator](): FluidIterableIterator<
 		[string, System_Unsafe.TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>]

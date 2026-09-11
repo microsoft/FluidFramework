@@ -45,6 +45,7 @@ import {
 import { SharedTree } from "../../../treeFactory.js";
 import type {
 	areSafelyAssignable,
+	isAssignableTo,
 	requireAssignableTo,
 	requireTrue,
 	requireFalse,
@@ -1059,17 +1060,21 @@ describe("SchemaFactory Recursive methods", () => {
 
 				// Check constructor
 				type TBuild = NodeBuilderData<typeof RecordRecursive>;
-				type _check2 = requireAssignableTo<RecordRecursive, TBuild>;
+				// Existing nodes are rejected at runtime when used as constructor data
+				// (see the UsageError thrown by TreeNodeValid's constructor), and are also rejected by the type system.
+				type _check2 = requireFalse<isAssignableTo<RecordRecursive, TBuild>>;
 				type _check3 = requireAssignableTo<{}, TBuild>;
 				type _check4 = requireAssignableTo<{ a: RecordRecursive }, TBuild>;
 				type _check5 = requireAssignableTo<Record<string, TInsert>, TBuild>;
 			}
 
-			node.x = new RecordRecursive();
-			node.x.x = new RecordRecursive({});
+			const x = new RecordRecursive();
+			node.x = x;
+			x.x = new RecordRecursive({});
 
-			// This should not build, but it does.
 			assert.throws(() => {
+				// @ts-expect-error Each record read may be undefined.
+				// eslint-disable-next-line @fluid-internal/fluid/no-unchecked-record-access -- Intentionally testing an unchecked record read.
 				node.y.x.z.q = new RecordRecursive({});
 			}, validateTypeError("Cannot read properties of undefined (reading 'x')"));
 		});
